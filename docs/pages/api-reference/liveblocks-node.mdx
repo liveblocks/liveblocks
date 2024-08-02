@@ -314,7 +314,7 @@ const {
   // Optional, the amount of rooms to load, between 1 and 100, defaults to 20
   limit: 20,
 
-  // Optional, filter for rooms that allow entry to group ID(s) in `groupAccesses`
+  // Optional, filter for rooms that allow entry to group ID(s) in `groupsAccesses`
   groupIds: ["engineering", "design"],
 
   // Optional, filter for rooms that allow entry to a user's ID in `usersAccesses`
@@ -390,13 +390,13 @@ const room = await liveblocks.createRoom("my-room-id", {
   defaultAccesses: [],
 
   // Optional, the room's group ID permissions
-  groupAccesses: {
+  groupsAccesses: {
     design: ["room:write"],
     engineering: ["room:presence:write", "room:read"],
   },
 
   // Optional, the room's user ID permissions
-  userAccesses: {
+  usersAccesses: {
     "my-user-id": ["room:write"],
   },
 
@@ -452,13 +452,13 @@ const room = await liveblocks.createRoom("my-room-id", {
   defaultAccesses: [],
 
   // Optional, update the room's group ID permissions
-  groupAccesses: {
+  groupsAccesses: {
     design: ["room:write"],
     engineering: ["room:presence:write", "room:read"],
   },
 
   // Optional, update the room's user ID permissions
-  userAccesses: {
+  usersAccesses: {
     "my-user-id": ["room:write"],
   },
 
@@ -1093,10 +1093,12 @@ const { data: threads } = await liveblocks.getThreads({
 
   // Optional, use advanced filtering
   query: {
+    // Optional, filter based on resolved status
+    resolved: false,
     // Optional, filter for metadata values
     metadata: {
       status: "open",
-      resolved: true,
+      pinned: true,
       priority: 3,
 
       // You can match the start of a metadata string
@@ -1112,7 +1114,7 @@ You can also pass a
 [query language](/docs/guides/how-to-filter-threads-using-query-language) string
 instead of a `query` object.
 
-#### Liveblocks.createThread [#post-rooms-roomId-threads] [@badge=Beta]
+#### Liveblocks.createThread [#post-rooms-roomId-threads]
 
 Creates a new thread within a specific room, using room ID and thread data. This
 is a wrapper around the
@@ -1184,7 +1186,7 @@ const thread = await liveblocks.createThread({
     metadata: {
       color: "blue",
       page: 3,
-      resolved: true,
+      pinned: true,
     },
 
     // Data for the first comment in the thread
@@ -1245,7 +1247,7 @@ const { participantIds } = await liveblocks.getThreadParticipants({
 console.log(participantIds);
 ```
 
-#### Liveblocks.editThreadMetadata [#post-rooms-roomId-threads-threadId-metadata] [@badge=Beta]
+#### Liveblocks.editThreadMetadata [#post-rooms-roomId-threads-threadId-metadata]
 
 Updates the metadata of a specific thread within a room. This method allows you
 to modify the metadata of a thread, including user information and the date of
@@ -1268,7 +1270,7 @@ const editedMetadata = await liveblocks.editThreadMetadata({
   },
 });
 
-// { color: "yellow", page: 3, resolved: true }
+// { color: "yellow", page: 3, pinned: true }
 console.log(editedMetadata);
 ```
 
@@ -1286,7 +1288,7 @@ const editedMetadata = await liveblocks.editThreadMetadata({
       // Metadata can be a string, number, or boolean
       title: "My thread title",
       page: 3,
-      resolved: true,
+      pinned: true,
 
       // Remove metadata with null
       color: null,
@@ -1300,11 +1302,11 @@ const editedMetadata = await liveblocks.editThreadMetadata({
   },
 });
 
-// { title: "My thread title", page: 3, resolved: true }
+// { title: "My thread title", page: 3, pinned: true }
 console.log(editedMetadata);
 ```
 
-#### Liveblocks.deleteThread [#delete-rooms-roomId-threads-threadId] [@badge=Beta]
+#### Liveblocks.deleteThread [#delete-rooms-roomId-threads-threadId]
 
 Deletes a thread. Throws an error if the room or thread isn’t found. This is a
 wrapper around the
@@ -1318,7 +1320,7 @@ await liveblocks.deleteThread({
 });
 ```
 
-#### Liveblocks.createComment [#post-rooms-roomId-threads-threadId-comments] [@badge=Beta]
+#### Liveblocks.createComment [#post-rooms-roomId-threads-threadId-comments]
 
 Creates a new comment in a specific thread within a room. This method allows
 users to add comments to a conversation thread, specifying the user who made the
@@ -1418,7 +1420,7 @@ const comment = await liveblocks.getComment({
 console.log(comment);
 ```
 
-#### Liveblocks.editComment [#post-rooms-roomId-threads-threadId-comments-commentId] [@badge=Beta]
+#### Liveblocks.editComment [#post-rooms-roomId-threads-threadId-comments-commentId]
 
 Edits an existing comment in a specific thread within a room. This method allows
 users to update the content of their previously posted comments, with the option
@@ -1506,7 +1508,7 @@ const editedComment = await liveblocks.editComment({
 console.log(editedComment);
 ```
 
-#### Liveblocks.deleteComment [#delete-rooms-roomId-threads-threadId-comments-commentId] [@badge=Beta]
+#### Liveblocks.deleteComment [#delete-rooms-roomId-threads-threadId-comments-commentId]
 
 Deletes a specific comment from a thread within a room. If there are no
 remaining comments in the thread, the thread is also deleted. This method throws
@@ -1522,7 +1524,7 @@ await liveblocks.deleteComment({
 });
 ```
 
-#### Liveblocks.addCommentReaction [#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction] [@badge=Beta]
+#### Liveblocks.addCommentReaction [#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction]
 
 Adds a reaction to a specific comment in a thread within a room. Throws an error
 if the comment isn’t found or if the user has already added the same reaction on
@@ -1547,7 +1549,7 @@ const reaction = await liveblocks.addCommentReaction({
 console.log(reaction);
 ```
 
-#### Liveblocks.removeCommentReaction [#post-rooms-roomId-threads-threadId-comments-commentId-remove-reaction] [@badge=Beta]
+#### Liveblocks.removeCommentReaction [#post-rooms-roomId-threads-threadId-comments-commentId-remove-reaction]
 
 Removes a reaction from a specific comment in a thread within a room. Throws an
 error if the comment reaction isn’t found. This is a wrapper around the
@@ -1568,7 +1570,7 @@ await liveblocks.removeCommentReaction({
 });
 ```
 
-#### Liveblocks.getRoomNotificationSettings [#get-rooms-roomId-users-userId-notification-settings] [@badge=Beta]
+#### Liveblocks.getRoomNotificationSettings [#get-rooms-roomId-users-userId-notification-settings]
 
 Returns a user’s notification settings for a specific room. This is a wrapper
 around the
@@ -1584,7 +1586,7 @@ const notificationSettings = await liveblocks.getRoomNotificationSettings({
 console.log(notificationSettings);
 ```
 
-#### Liveblocks.updateRoomNotificationSettings [#post-rooms-roomId-users-userId-notification-settings] [@badge=Beta]
+#### Liveblocks.updateRoomNotificationSettings [#post-rooms-roomId-users-userId-notification-settings]
 
 Updates a user’s notification settings for a specific room. This is a wrapper
 around the
@@ -1604,7 +1606,7 @@ const updatedNotificationSettings =
 console.log(updatedNotificationSettings);
 ```
 
-#### Liveblocks.deleteRoomNotificationSettings [#delete-rooms-roomId-users-userId-notification-settings] [@badge=Beta]
+#### Liveblocks.deleteRoomNotificationSettings [#delete-rooms-roomId-users-userId-notification-settings]
 
 Deletes a user’s notification settings for a specific room. This is a wrapper
 around the
@@ -1619,7 +1621,7 @@ await liveblocks.deleteRoomNotificationSettings({
 
 ### Notifications
 
-#### Liveblocks.getInboxNotification [#get-users-userId-inboxNotifications-inboxNotificationId] [@badge=Beta]
+#### Liveblocks.getInboxNotification [#get-users-userId-inboxNotifications-inboxNotificationId]
 
 Returns a user’s inbox notification. This is a wrapper around the
 [Get Inbox Notification API](/docs/api-reference/rest-api-endpoints#get-users-userId-inboxNotifications-inboxNotificationId).
@@ -1636,7 +1638,7 @@ const inboxNotification = await liveblocks.getInboxNotification({
 console.log(inboxNotification);
 ```
 
-#### Liveblocks.triggerInboxNotification [#post-inbox-notifications-trigger] [@badge=Beta]
+#### Liveblocks.triggerInboxNotification [#post-inbox-notifications-trigger]
 
 Triggers a custom inbox notification. `kind` must start with a `$`, and
 represents the type of notification. `activityData` is used to send custom data
@@ -1689,6 +1691,29 @@ declare global {
     // ...
   }
 }
+```
+
+#### Liveblocks.deleteInboxNotification [#delete-users-userId-inboxNotifications-inboxNotificationId]
+
+Deletes a user’s inbox notification. This is a wrapper around the
+[Delete Inbox Notification API](/docs/api-reference/rest-api-endpoints#delete-users-userId-inboxNotifications-inboxNotificationId).
+
+```ts
+await liveblocks.deleteInboxNotification({
+  userId: "steven@example.com",
+  inboxNotificationId: "in_3dH7sF3...",
+});
+```
+
+#### Liveblocks.deleteAllInboxNotifications [#delete-users-userId-inboxNotifications-inboxNotificationId]
+
+Deletes all the user’s inbox notifications. This is a wrapper around the
+[Delete Inbox Notifications API](/docs/api-reference/rest-api-endpoints#delete-users-userId-inboxNotifications).
+
+```ts
+await liveblocks.deleteAllInboxNotifications({
+  userId: "steven@example.com",
+});
 ```
 
 ### Error handling [#error-handling]

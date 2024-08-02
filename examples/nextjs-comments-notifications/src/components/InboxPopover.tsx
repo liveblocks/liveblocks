@@ -3,6 +3,7 @@
 import { InboxNotification, InboxNotificationList } from "@liveblocks/react-ui";
 import * as Popover from "@radix-ui/react-popover";
 import {
+  useDeleteAllInboxNotifications,
   useInboxNotifications,
   useMarkAllInboxNotificationsAsRead,
   useUnreadInboxNotificationsCount,
@@ -51,6 +52,7 @@ export function InboxPopover({
 }: Popover.PopoverContentProps) {
   const [isOpen, setOpen] = useState(false);
   const markAllInboxNotificationsAsRead = useMarkAllInboxNotificationsAsRead();
+  const deleteAllInboxNotifications = useDeleteAllInboxNotifications();
   const pathname = usePathname();
 
   useEffect(() => {
@@ -94,12 +96,20 @@ export function InboxPopover({
         >
           <div className="inbox-header">
             <span className="inbox-title">Notifications</span>
-            <button
-              className="button"
-              onClick={markAllInboxNotificationsAsRead}
-            >
-              Mark all as read
-            </button>
+            <div className="inbox-buttons">
+              <button
+                className="button"
+                onClick={markAllInboxNotificationsAsRead}
+              >
+                Mark all as read
+              </button>
+              <button
+                className="button destructive"
+                onClick={deleteAllInboxNotifications}
+              >
+                Delete all
+              </button>
+            </div>
           </div>
           <ErrorBoundary
             fallback={

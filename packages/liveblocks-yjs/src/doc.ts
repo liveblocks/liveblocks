@@ -38,28 +38,30 @@ export default class yDocHandler extends Observable<unknown> {
   public handleServerUpdate = ({
     update,
     stateVector,
+    readOnly,
   }: {
     update: string;
     stateVector: string | null;
+    readOnly: boolean;
   }): void => {
     // apply update from the server
     Y.applyUpdate(this.doc, Base64.toUint8Array(update), "backend");
     // if this update is the result of a fetch, the state vector is included
     if (stateVector) {
-      // Use server state to calculate a diff and send it
-      try {
-        const local = Y.encodeStateAsUpdate(this.doc);
-        const diff = Y.diffUpdate(local, Base64.toUint8Array(stateVector));
-        Y.logUpdate(diff);
-        if (diff.length === 2 && diff.at(1) === 0 && diff.at(0) === 0) {
-          return;
+      if (!readOnly) {
+        // Use server state to calculate a diff and send it
+        try {
+          const localUpdate = Y.encodeStateAsUpdate(
+            this.doc,
+            Base64.toUint8Array(stateVector)
+          );
+          this.updateRoomDoc(Base64.fromUint8Array(localUpdate));
+        } catch (e) {
+          // something went wrong encoding local state to send to the server
+          console.warn(e);
         }
-        this.updateRoomDoc(Base64.fromUint8Array(diff));
-      } catch (e) {
-        // something went wrong encoding local state to send to the server
-        console.warn(e);
       }
-      // now that we've sent our local  and received from server, we're in sync
+      // now that we've sent our local and received from server, we're in sync
       // calling `syncDoc` again will sync up the documents
       this.synced = true;
     }

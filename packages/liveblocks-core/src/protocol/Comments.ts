@@ -65,6 +65,7 @@ export type CommentBodyMention = {
 export type CommentBodyLink = {
   type: "link";
   url: string;
+  text?: string;
 };
 
 export type CommentBodyText = {
@@ -99,6 +100,7 @@ export type ThreadData<M extends BaseMetadata = DM> = {
   updatedAt?: Date;
   comments: CommentData[];
   metadata: M;
+  resolved: boolean;
 };
 
 export interface ThreadDataWithDeleteInfo<M extends BaseMetadata = DM>

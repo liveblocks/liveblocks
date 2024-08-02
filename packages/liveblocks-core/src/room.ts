@@ -36,8 +36,9 @@ import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
 import { Batch } from "./lib/batch";
 import { Promise_withResolvers } from "./lib/controlledPromise";
+import { createCommentId, createThreadId } from "./lib/createIds";
 import { captureStackTrace } from "./lib/debug";
-import type { Callback, Observable } from "./lib/EventSource";
+import type { Callback, EventSource, Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
@@ -46,7 +47,12 @@ import { objectToQuery } from "./lib/objectToQuery";
 import { asPos } from "./lib/position";
 import type { QueryParams } from "./lib/url";
 import { urljoin } from "./lib/url";
-import { compact, deepClone, memoize, tryParseJson } from "./lib/utils";
+import {
+  compact,
+  deepClone,
+  memoizeOnSuccess,
+  tryParseJson,
+} from "./lib/utils";
 import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 import type { ClientMsg, UpdateYDocClientMsg } from "./protocol/ClientMsg";
@@ -173,6 +179,7 @@ type RoomEventCallbackMap<
   error: Callback<Error>;
   history: Callback<HistoryEvent>;
   "storage-status": Callback<StorageStatus>;
+  comments: Callback<CommentsEventServerMsg>;
 };
 
 export interface History {
@@ -382,7 +389,6 @@ type SubscribeFn<
 
   /**
    * Subscribes to changes made on a Live structure. Returns an unsubscribe function.
-   * In a future version, we will also expose what exactly changed in the Live structure.
    *
    * @param callback The callback this called when the Live structure changes.
    *
@@ -453,62 +459,190 @@ type SubscribeFn<
    * });
    */
   (type: "storage-status", listener: Callback<StorageStatus>): () => void;
+
+  (type: "comments", listener: Callback<CommentsEventServerMsg>): () => void;
 };
 
 export type GetThreadsOptions<M extends BaseMetadata> = {
   query?: {
+    resolved?: boolean;
     metadata?: Partial<QueryMetadata<M>>;
   };
-  since?: Date;
 };
 
 type CommentsApi<M extends BaseMetadata> = {
+  /**
+   * Returns the threads within the current room and their associated inbox notifications.
+   * It also returns the request date that can be used for subsequent polling.
+   *
+   * @example
+   * const {
+   *   threads,
+   *   inboxNotifications,
+   *   requestedAt
+   * } = await room.getThreads({ query: { resolved: false }});
+   */
   getThreads(options?: GetThreadsOptions<M>): Promise<{
     threads: ThreadData<M>[];
     inboxNotifications: InboxNotificationData[];
-    deletedThreads: ThreadDeleteInfo[];
-    deletedInboxNotifications: InboxNotificationDeleteInfo[];
-    meta: {
-      requestedAt: Date;
-    };
+    requestedAt: Date;
   }>;
-  getThread(options: { threadId: string }): Promise<
-    | {
-        thread: ThreadData<M>;
-        inboxNotification?: InboxNotificationData;
-      }
-    | undefined
-  >;
+
+  /**
+   * Returns the updated and deleted threads and their associated inbox notifications since the requested date.
+   *
+   * @example
+   * const result = await room.getThreads();
+   * // ... //
+   * await room.getThreadsSince({ since: result.requestedAt });
+   */
+  getThreadsSince(options: { since: Date }): Promise<{
+    threads: {
+      updated: ThreadData<M>[];
+      deleted: ThreadDeleteInfo[];
+    };
+    inboxNotifications: {
+      updated: InboxNotificationData[];
+      deleted: InboxNotificationDeleteInfo[];
+    };
+    requestedAt: Date;
+  }>;
+
+  /**
+   * Returns a thread and the associated inbox notification if it exists.
+   *
+   * @example
+   * const { thread, inboxNotification } = await room.getThread("th_xxx");
+   */
+  getThread(threadId: string): Promise<{
+    thread?: ThreadData<M>;
+    inboxNotification?: InboxNotificationData;
+  }>;
+
+  /**
+   * Creates a thread.
+   *
+   * @example
+   * const thread = await room.createThread({
+   *   body: {
+   *     version: 1,
+   *     content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
+   *   },
+   * })
+   */
   createThread(options: {
-    threadId: string;
-    commentId: string;
+    threadId?: string;
+    commentId?: string;
     metadata: M | undefined;
     body: CommentBody;
   }): Promise<ThreadData<M>>;
-  deleteThread(options: { threadId: string }): Promise<void>;
+
+  /**
+   * Deletes a thread.
+   *
+   * @example
+   * await room.deleteThread("th_xxx");
+   */
+  deleteThread(threadId: string): Promise<void>;
+
+  /**
+   * Edits a thread's metadata.
+   * To delete an existing metadata property, set its value to `null`.
+   *
+   * @example
+   * await room.editThreadMetadata({ threadId: "th_xxx", metadata: { x: 100, y: 100 } })
+   */
   editThreadMetadata(options: {
     metadata: Patchable<M>;
     threadId: string;
   }): Promise<M>;
+
+  /**
+   * Marks a thread as resolved.
+   *
+   * @example
+   * await room.markThreadAsResolved("th_xxx");
+   */
+  markThreadAsResolved(threadId: string): Promise<void>;
+
+  /**
+   * Marks a thread as unresolved.
+   *
+   * @example
+   * await room.markThreadAsUnresolved("th_xxx");
+   */
+  markThreadAsUnresolved(threadId: string): Promise<void>;
+
+  /**
+   * Creates a comment.
+   *
+   * @example
+   * await room.createComment({
+   *   threadId: "th_xxx",
+   *   body: {
+   *     version: 1,
+   *     content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
+   *   },
+   * });
+   */
   createComment(options: {
     threadId: string;
-    commentId: string;
+    commentId?: string;
     body: CommentBody;
   }): Promise<CommentData>;
+
+  /**
+   * Edits a comment.
+   *
+   * @example
+   * await room.editComment({
+   *   threadId: "th_xxx",
+   *   commentId: "cm_xxx"
+   *   body: {
+   *     version: 1,
+   *     content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
+   *   },
+   * });
+   */
   editComment(options: {
     threadId: string;
     commentId: string;
     body: CommentBody;
   }): Promise<CommentData>;
+
+  /**
+   * Deletes a comment.
+   * If it is the last non-deleted comment, the thread also gets deleted.
+   *
+   * @example
+   * await room.deleteComment({
+   *   threadId: "th_xxx",
+   *   commentId: "cm_xxx"
+   * });
+   */
   deleteComment(options: {
     threadId: string;
     commentId: string;
   }): Promise<void>;
+
+  /**
+   * Adds a reaction from a comment for the current user.
+   *
+   * @example
+   * await room.addReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" })
+   */
   addReaction(options: {
     threadId: string;
     commentId: string;
     emoji: string;
   }): Promise<CommentUserReaction>;
+
+  /**
+   * Removes a reaction from a comment.
+   *
+   * @example
+   * await room.removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" })
+   */
   removeReaction(options: {
     threadId: string;
     commentId: string;
@@ -543,7 +677,7 @@ export type Room<
    * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
    * will probably happen if you do.
    */
-  readonly [kInternal]: PrivateRoomApi<M>;
+  readonly [kInternal]: PrivateRoomApi;
 
   /**
    * The id of the room.
@@ -772,6 +906,35 @@ export type Room<
    * connection. If the room is not connected yet, initiate it.
    */
   reconnect(): void;
+
+  /**
+   * Gets the user's notification settings for the current room.
+   *
+   * @example
+   * const settings = await room.getNotificationSettings();
+   */
+  getNotificationSettings(): Promise<RoomNotificationSettings>;
+
+  /**
+   * Updates the user's notification settings for the current room.
+   *
+   * @example
+   * await room.updateNotificationSettings({ threads: "replies_and_mentions" });
+   */
+  updateNotificationSettings(
+    settings: Partial<RoomNotificationSettings>
+  ): Promise<RoomNotificationSettings>;
+
+  /**
+   * Internal use only. Signature might change in the future.
+   */
+  markInboxNotificationAsRead(notificationId: string): Promise<void>;
+} & CommentsApi<M>;
+
+type Provider = {
+  synced: boolean;
+  on(event: "sync", listener: (synced: boolean) => void): void;
+  off(event: "sync", listener: (synced: boolean) => void): void;
 };
 
 /**
@@ -782,11 +945,17 @@ export type Room<
  * Liveblocks, NEVER USE ANY OF THESE METHODS DIRECTLY, because bad things
  * will probably happen if you do.
  */
-export type PrivateRoomApi<M extends BaseMetadata> = {
+export type PrivateRoomApi = {
   // For introspection in unit tests only
   presenceBuffer: Json | undefined;
   undoStack: readonly (readonly Readonly<HistoryOp<JsonObject>>[])[];
   nodeCount: number;
+
+  // For usage in Y.js provider
+  getProvider(): Provider | undefined;
+  setProvider(provider: Provider | undefined): void;
+
+  onProviderUpdate: Observable<void>;
 
   // For DevTools support (Liveblocks browser extension)
   getSelf_forDevTools(): DevTools.UserTreeNode | null;
@@ -804,16 +973,6 @@ export type PrivateRoomApi<M extends BaseMetadata> = {
   simulate: {
     explicitClose(event: IWebSocketCloseEvent): void;
     rawSend(data: string): void;
-  };
-
-  comments: CommentsApi<M>;
-
-  notifications: {
-    getRoomNotificationSettings(): Promise<RoomNotificationSettings>;
-    updateRoomNotificationSettings(
-      settings: Partial<RoomNotificationSettings>
-    ): Promise<RoomNotificationSettings>;
-    markInboxNotificationAsRead(notificationId: string): Promise<void>;
   };
 };
 
@@ -888,6 +1047,9 @@ type RoomState<
 
   idFactory: IdFactory | null;
   initialStorage: S;
+
+  provider: Provider | undefined;
+  readonly onProviderUpdate: EventSource<void>;
 
   clock: number;
   opClock: number;
@@ -1117,6 +1279,60 @@ function createCommentsApi<M extends BaseMetadata>(
     return body;
   }
 
+  async function getThreadsSince(options: { since: Date }) {
+    const response = await fetchCommentsApi(
+      "/threads",
+      {
+        since: options?.since?.toISOString(),
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (response.ok) {
+      const json = await (response.json() as Promise<{
+        data: ThreadDataPlain<M>[];
+        inboxNotifications: InboxNotificationDataPlain[];
+        deletedThreads: ThreadDeleteInfoPlain[];
+        deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+        meta: {
+          requestedAt: string;
+        };
+      }>);
+
+      return {
+        threads: {
+          updated: json.data.map(convertToThreadData),
+          deleted: json.deletedThreads.map(convertToThreadDeleteInfo),
+        },
+        inboxNotifications: {
+          updated: json.inboxNotifications.map(convertToInboxNotificationData),
+          deleted: json.deletedInboxNotifications.map(
+            convertToInboxNotificationDeleteInfo
+          ),
+        },
+        requestedAt: new Date(json.meta.requestedAt),
+      };
+    } else if (response.status === 404) {
+      return {
+        threads: {
+          updated: [],
+          deleted: [],
+        },
+        inboxNotifications: {
+          updated: [],
+          deleted: [],
+        },
+        requestedAt: new Date(),
+      };
+    } else {
+      throw new Error("There was an error while getting threads.");
+    }
+  }
+
   async function getThreads(options?: GetThreadsOptions<M>) {
     let query: string | undefined;
 
@@ -1127,7 +1343,6 @@ function createCommentsApi<M extends BaseMetadata>(
     const response = await fetchCommentsApi(
       "/threads",
       {
-        since: options?.since?.toISOString(),
         query,
       },
       {
@@ -1149,19 +1364,11 @@ function createCommentsApi<M extends BaseMetadata>(
       }>);
 
       return {
-        threads: json.data.map((thread) => convertToThreadData(thread)),
-        inboxNotifications: json.inboxNotifications.map((notification) =>
-          convertToInboxNotificationData(notification)
+        threads: json.data.map(convertToThreadData),
+        inboxNotifications: json.inboxNotifications.map(
+          convertToInboxNotificationData
         ),
-        deletedThreads: json.deletedThreads.map((info) =>
-          convertToThreadDeleteInfo(info)
-        ),
-        deletedInboxNotifications: json.deletedInboxNotifications.map((info) =>
-          convertToInboxNotificationDeleteInfo(info)
-        ),
-        meta: {
-          requestedAt: new Date(json.meta.requestedAt),
-        },
+        requestedAt: new Date(json.meta.requestedAt),
       };
     } else if (response.status === 404) {
       return {
@@ -1169,16 +1376,14 @@ function createCommentsApi<M extends BaseMetadata>(
         inboxNotifications: [],
         deletedThreads: [],
         deletedInboxNotifications: [],
-        meta: {
-          requestedAt: new Date(),
-        },
+        requestedAt: new Date(),
       };
     } else {
       throw new Error("There was an error while getting threads.");
     }
   }
 
-  async function getThread({ threadId }: { threadId: string }) {
+  async function getThread(threadId: string) {
     const response = await fetchCommentsApi(
       `/thread-with-notification/${threadId}`
     );
@@ -1196,7 +1401,10 @@ function createCommentsApi<M extends BaseMetadata>(
           : undefined,
       };
     } else if (response.status === 404) {
-      return;
+      return {
+        thread: undefined,
+        inboxNotification: undefined,
+      };
     } else {
       throw new Error(`There was an error while getting thread ${threadId}.`);
     }
@@ -1205,12 +1413,12 @@ function createCommentsApi<M extends BaseMetadata>(
   async function createThread({
     metadata,
     body,
-    commentId,
-    threadId,
+    commentId = createCommentId(),
+    threadId = createThreadId(),
   }: {
     roomId: string;
-    threadId: string;
-    commentId: string;
+    threadId?: string;
+    commentId?: string;
     metadata: M | undefined;
     body: CommentBody;
   }) {
@@ -1232,7 +1440,7 @@ function createCommentsApi<M extends BaseMetadata>(
     return convertToThreadData(thread);
   }
 
-  async function deleteThread({ threadId }: { threadId: string }) {
+  async function deleteThread(threadId: string) {
     await fetchJson(`/threads/${encodeURIComponent(threadId)}`, {
       method: "DELETE",
     });
@@ -1258,13 +1466,31 @@ function createCommentsApi<M extends BaseMetadata>(
     );
   }
 
+  async function markThreadAsResolved(threadId: string) {
+    await fetchJson(
+      `/threads/${encodeURIComponent(threadId)}/mark-as-resolved`,
+      {
+        method: "POST",
+      }
+    );
+  }
+
+  async function markThreadAsUnresolved(threadId: string) {
+    await fetchJson(
+      `/threads/${encodeURIComponent(threadId)}/mark-as-unresolved`,
+      {
+        method: "POST",
+      }
+    );
+  }
+
   async function createComment({
     threadId,
-    commentId,
+    commentId = createCommentId(),
     body,
   }: {
     threadId: string;
-    commentId: string;
+    commentId?: string;
     body: CommentBody;
   }) {
     const comment = await fetchJson<CommentDataPlain>(
@@ -1375,10 +1601,13 @@ function createCommentsApi<M extends BaseMetadata>(
 
   return {
     getThreads,
+    getThreadsSince,
     getThread,
     createThread,
     deleteThread,
     editThreadMetadata,
+    markThreadAsResolved,
+    markThreadAsUnresolved,
     createComment,
     editComment,
     deleteComment,
@@ -1458,6 +1687,10 @@ export function createRoom<
 
     initialStorage,
     idFactory: null,
+
+    // Y.js
+    provider: undefined,
+    onProviderUpdate: makeEventSource(),
 
     // Storage
     clock: 0,
@@ -2488,6 +2721,7 @@ export function createRoom<
           case ServerMsgCode.THREAD_CREATED:
           case ServerMsgCode.THREAD_DELETED:
           case ServerMsgCode.THREAD_METADATA_UPDATED:
+          case ServerMsgCode.THREAD_UPDATED:
           case ServerMsgCode.COMMENT_REACTION_ADDED:
           case ServerMsgCode.COMMENT_REACTION_REMOVED:
           case ServerMsgCode.COMMENT_CREATED:
@@ -2982,13 +3216,13 @@ export function createRoom<
     return body;
   }
 
-  function getRoomNotificationSettings(): Promise<RoomNotificationSettings> {
+  function getNotificationSettings(): Promise<RoomNotificationSettings> {
     return fetchNotificationsJson<RoomNotificationSettings>(
       "/notification-settings"
     );
   }
 
-  function updateRoomNotificationSettings(
+  function updateNotificationSettings(
     settings: Partial<RoomNotificationSettings>
   ): Promise<RoomNotificationSettings> {
     return fetchNotificationsJson<RoomNotificationSettings>(
@@ -3003,6 +3237,12 @@ export function createRoom<
     );
   }
 
+  // This method (and the following batch handling) isn't the same as the one in
+  // src/notifications.ts, this one is room-based: /v2/c/rooms/:roomId/inbox-notifications/read.
+  //
+  // The reason for this is that unlike the room-based Comments ones, the Notifications endpoints
+  // don't work with a public key. Since `markThreadAsRead` needs to mark the related inbox notifications
+  // as read, this room-based method is necessary to keep all Comments features working with a public key.
   async function markInboxNotificationsAsRead(inboxNotificationIds: string[]) {
     await fetchNotificationsJson("/inbox-notifications/read", {
       method: "POST",
@@ -3013,8 +3253,8 @@ export function createRoom<
     });
   }
 
-  const batchedMarkInboxNotificationsAsRead = new Batch(
-    async (batchedInboxNotificationIds: [string][]) => {
+  const batchedMarkInboxNotificationsAsRead = new Batch<string, string>(
+    async (batchedInboxNotificationIds) => {
       const inboxNotificationIds = batchedInboxNotificationIds.flat();
 
       await markInboxNotificationsAsRead(inboxNotificationIds);
@@ -3034,6 +3274,17 @@ export function createRoom<
         get presenceBuffer() { return deepClone(context.buffer.presenceUpdates?.data ?? null) }, // prettier-ignore
         get undoStack() { return deepClone(context.undoStack) }, // prettier-ignore
         get nodeCount() { return context.nodes.size }, // prettier-ignore
+
+        getProvider() {
+          return context.provider;
+        },
+
+        setProvider(provider: Provider | undefined) {
+          context.provider = provider;
+          context.onProviderUpdate.notify();
+        },
+
+        onProviderUpdate: context.onProviderUpdate.observable,
 
         // send metadata when using a text editor
         reportTextEditor,
@@ -3056,16 +3307,6 @@ export function createRoom<
           // These exist only for our E2E testing app
           explicitClose: (event) => managedSocket._privateSendMachineEvent({ type: "EXPLICIT_SOCKET_CLOSE", event }),
           rawSend: (data) => managedSocket.send(data),
-        },
-
-        comments: {
-          ...commentsApi,
-        },
-
-        notifications: {
-          getRoomNotificationSettings,
-          updateRoomNotificationSettings,
-          markInboxNotificationAsRead,
         },
       },
 
@@ -3104,8 +3345,8 @@ export function createRoom<
 
       isPresenceReady,
       isStorageReady,
-      waitUntilPresenceReady: memoize(waitUntilPresenceReady),
-      waitUntilStorageReady: memoize(waitUntilStorageReady),
+      waitUntilPresenceReady: memoizeOnSuccess(waitUntilPresenceReady),
+      waitUntilStorageReady: memoizeOnSuccess(waitUntilStorageReady),
 
       events,
 
@@ -3116,6 +3357,12 @@ export function createRoom<
       // Presence
       getPresence: () => context.myPresence.current,
       getOthers: () => context.others.current,
+
+      getNotificationSettings,
+      updateNotificationSettings,
+      markInboxNotificationAsRead,
+
+      ...commentsApi,
     },
 
     // Explictly make the internal field non-enumerable, to avoid aggressive
@@ -3136,12 +3383,7 @@ function makeClassicSubscribeFn<
   U extends BaseUserMeta,
   E extends Json,
   M extends BaseMetadata,
->(
-  events: Omit<
-    Room<P, S, U, E, M>["events"],
-    "comments" // comments is an internal events so we omit it from the subscribe method
-  >
-): SubscribeFn<P, S, U, E> {
+>(events: Room<P, S, U, E, M>["events"]): SubscribeFn<P, S, U, E> {
   // Set up the "subscribe" wrapper API
   function subscribeToLiveStructureDeeply<L extends LiveStructure>(
     node: L,
@@ -3226,6 +3468,11 @@ function makeClassicSubscribeFn<
             callback as Callback<StorageStatus>
           );
 
+        case "comments":
+          return events.comments.subscribe(
+            callback as Callback<CommentsEventServerMsg>
+          );
+
         // istanbul ignore next
         default:
           return assertNever(
@@ -3274,7 +3521,8 @@ function isRoomEventName(value: string): value is RoomEventName {
     value === "status" ||
     value === "storage-status" ||
     value === "lost-connection" ||
-    value === "connection"
+    value === "connection" ||
+    value === "comments"
   );
 }
 

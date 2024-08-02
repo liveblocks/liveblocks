@@ -1,15 +1,15 @@
 import type { CommentBody, ThreadData } from "@liveblocks/core";
-import { createClient } from "@liveblocks/core";
+import { nanoid } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { addMinutes } from "date-fns";
 import type { ResponseComposition, RestContext, RestRequest } from "msw";
 import { setupServer } from "msw/node";
 import React from "react";
 
-import { createRoomContext } from "../room";
 import { dummyCommentData, dummyThreadData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import { mockCreateThread, mockGetThreads } from "./_restMocks";
+import { createContextsForTest } from "./_utils";
 
 const server = setupServer();
 
@@ -26,20 +26,9 @@ afterEach(() => {
 
 afterAll(() => server.close());
 
-// TODO: Dry up and create utils that wrap renderHook
-function createRoomContextForTest() {
-  const client = createClient({
-    publicApiKey: "pk_xxx",
-    polyfills: {
-      WebSocket: MockWebSocket as any,
-    },
-  });
-
-  return createRoomContext(client);
-}
-
 describe("useCreateThread", () => {
   test("should create a thread optimistically and override with thread coming from server", async () => {
+    const roomId = nanoid();
     const fakeCreatedAt = addMinutes(new Date(), 5);
 
     server.use(
@@ -62,24 +51,29 @@ describe("useCreateThread", () => {
             comment: { id: string; body: CommentBody };
           }>();
 
-          const comment = dummyCommentData();
-          comment.threadId = json.id;
-          comment.id = json.comment.id;
-          comment.body = json.comment.body;
-          comment.createdAt = fakeCreatedAt;
+          const comment = dummyCommentData({
+            roomId,
+            threadId: json.id,
+            id: json.comment.id,
+            body: json.comment.body,
+            createdAt: fakeCreatedAt,
+          });
 
-          const thread = dummyThreadData();
-          thread.id = json.id;
-          thread.comments = [comment];
-          thread.createdAt = fakeCreatedAt;
+          const thread = dummyThreadData({
+            roomId,
+            id: json.id,
+            comments: [comment],
+            createdAt: fakeCreatedAt,
+          });
 
           return res(ctx.json(thread));
         }
       )
     );
 
-    const { RoomProvider, useThreads, useCreateThread } =
-      createRoomContextForTest();
+    const {
+      room: { RoomProvider, useThreads, useCreateThread },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(
       () => ({
@@ -88,7 +82,7 @@ describe("useCreateThread", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -117,6 +111,8 @@ describe("useCreateThread", () => {
   });
 
   test("should rollback optimistic update", async () => {
+    const roomId = nanoid();
+
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
         return res(
@@ -131,8 +127,9 @@ describe("useCreateThread", () => {
       })
     );
 
-    const { RoomProvider, useThreads, useCreateThread } =
-      createRoomContextForTest();
+    const {
+      room: { RoomProvider, useThreads, useCreateThread },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(
       () => ({
@@ -141,7 +138,7 @@ describe("useCreateThread", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );

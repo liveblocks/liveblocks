@@ -18,7 +18,6 @@ declare global {
     };
     // Custom metadata set on threads, for useThreads, useCreateThread, etc.
     ThreadMetadata: {
-      resolved: boolean;
       time: number | -1;
       timePercentage: number | -1;
     };

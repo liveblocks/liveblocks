@@ -1,15 +1,14 @@
 import "@testing-library/jest-dom";
 
-import { createClient } from "@liveblocks/core";
+import { nanoid } from "@liveblocks/core";
 import { renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
 import React, { Suspense } from "react";
 
-import { createLiveblocksContext } from "../liveblocks";
 import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import { mockGetInboxNotifications } from "./_restMocks";
-import { generateFakeJwt } from "./_utils";
+import { createContextsForTest } from "./_utils";
 
 const server = setupServer();
 
@@ -26,28 +25,15 @@ afterEach(() => {
 
 afterAll(() => server.close());
 
-// TODO: Dry up and create utils that wrap renderHook
-function createLiveblocksContextForTest() {
-  const client = createClient({
-    async authEndpoint() {
-      return {
-        token: await generateFakeJwt({ userId: "userId" }),
-      };
-    },
-    polyfills: {
-      WebSocket: MockWebSocket as any,
-    },
-  });
-
-  return createLiveblocksContext(client);
-}
-
 describe("useUnreadInboxNotificationsCount", () => {
-  test("should fetch inbox notifications", async () => {
-    const threads = [dummyThreadData()];
-    const inboxNotification = dummyThreadInboxNotificationData();
-    inboxNotification.readAt = null;
-    inboxNotification.threadId = threads[0].id;
+  test("should fetch inbox notification count", async () => {
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+    const inboxNotification = dummyThreadInboxNotificationData({
+      roomId,
+      threadId: threads[0].id,
+      readAt: null,
+    });
     const inboxNotifications = [inboxNotification];
 
     server.use(
@@ -66,8 +52,9 @@ describe("useUnreadInboxNotificationsCount", () => {
       })
     );
 
-    const { LiveblocksProvider, useUnreadInboxNotificationsCount } =
-      createLiveblocksContextForTest();
+    const {
+      liveblocks: { LiveblocksProvider, useUnreadInboxNotificationsCount },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(
       () => useUnreadInboxNotificationsCount(),
@@ -95,10 +82,13 @@ describe("useUnreadInboxNotificationsCount", () => {
 
 describe("useUnreadInboxNotificationsCount - Suspense", () => {
   test("should be referentially stable after rerendering", async () => {
-    const threads = [dummyThreadData()];
-    const inboxNotification = dummyThreadInboxNotificationData();
-    inboxNotification.threadId = threads[0].id;
-    inboxNotification.readAt = null;
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+    const inboxNotification = dummyThreadInboxNotificationData({
+      roomId,
+      threadId: threads[0].id,
+      readAt: null,
+    });
     const inboxNotifications = [inboxNotification];
 
     server.use(
@@ -118,8 +108,10 @@ describe("useUnreadInboxNotificationsCount - Suspense", () => {
     );
 
     const {
-      suspense: { LiveblocksProvider, useUnreadInboxNotificationsCount },
-    } = createLiveblocksContextForTest();
+      liveblocks: {
+        suspense: { LiveblocksProvider, useUnreadInboxNotificationsCount },
+      },
+    } = createContextsForTest();
 
     const { result, unmount, rerender } = renderHook(
       () => useUnreadInboxNotificationsCount(),

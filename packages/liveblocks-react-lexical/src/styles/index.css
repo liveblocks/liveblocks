@@ -2,7 +2,7 @@
 @import "./constants";
 
 /*************************************
- *       Suggestions                 *
+ *            Suggestions            *
  *************************************/
 
 .lb-lexical-suggestions-list {
@@ -12,7 +12,7 @@
 }
 
 /*************************************
- *   Mention suggestions             *
+ *        Mention suggestions        *
  *************************************/
 
 .lb-lexical-mention-suggestions {
@@ -94,7 +94,7 @@
 }
 
 /*************************************
- *       Mention                     *
+ *              Mention              *
  *************************************/
 
 .lb-lexical-mention {
@@ -114,18 +114,10 @@
 }
 
 /*************************************
- *       Active selection            *
+ *            Thread mark            *
  *************************************/
 
-.lb-lexical-active-selection {
-  background-color: var(--lb-selection);
-}
-
-/*************************************
- *              Thread Mark          *
- *************************************/
-
-.lb-thread-mark {
+.lb-lexical-thread-mark {
   background: var(--lb-accent-subtle);
   color: var(--lb-foreground);
   outline: none;
@@ -142,5 +134,72 @@
 }
 
 /*************************************
- *              Version List         *
+ *          Anchored threads         *
  *************************************/
+
+.lb-lexical-anchored-threads {
+  --lb-lexical-anchored-threads-gap: 1.25rem;
+  --lb-lexical-anchored-threads-active-thread-offset: -0.75rem;
+}
+
+.lb-lexical-anchored-threads-thread-container {
+  transition-duration: calc(var(--lb-transition-duration) * 2);
+  transition-property: transform;
+}
+
+@media (prefers-reduced-motion) {
+  .lb-lexical-anchored-threads-thread-container {
+    transition-duration: 0s;
+  }
+}
+
+.lb-lexical-anchored-threads-thread {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--lb-radius);
+  background: var(--lb-dynamic-background);
+  box-shadow: $lb-lexical-anchored-threads-shadow;
+  transition-property: background, box-shadow;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    box-shadow: var(--lb-inset-shadow);
+    pointer-events: none;
+  }
+
+  &:where([data-state="active"]) {
+    box-shadow: $lb-lexical-anchored-threads-active-shadow;
+  }
+}
+
+/*************************************
+ *        Floating components        *
+ *************************************/
+
+.lb-lexical-floating {
+  --lb-lexical-floating-size: 350px;
+}
+
+/*************************************
+ *         Floating threads          *
+ *************************************/
+
+.lb-lexical-floating-threads-thread {
+  inline-size: var(--lb-lexical-floating-size);
+
+  &:where(:not(:last-of-type)) {
+    border-block-end: 1px solid var(--lb-foreground-subtle);
+  }
+}
+
+/*************************************
+ *         Floating composer         *
+ *************************************/
+
+.lb-lexical-floating-composer {
+  inline-size: var(--lb-lexical-floating-size);
+}

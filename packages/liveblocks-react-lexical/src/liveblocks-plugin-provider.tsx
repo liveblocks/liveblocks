@@ -1,5 +1,4 @@
 import { autoUpdate, useFloating } from "@floating-ui/react-dom";
-import { CollaborationContext } from "@lexical/react/LexicalCollaborationContext";
 import { CollaborationPlugin } from "@lexical/react/LexicalCollaborationPlugin";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { Provider } from "@lexical/yjs";
@@ -9,7 +8,6 @@ import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import type { MutableRefObject } from "react";
 import React, {
   useCallback,
-  useContext,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -43,14 +41,21 @@ export type EditorStatus =
   /* The editor state is sync with Liveblocks servers */
   | "synchronized";
 
-function getEditorStatus(
-  provider?: LiveblocksYjsProvider<never, never, never, never, never>
-) {
-  if (provider === undefined) {
-    return "not-loaded";
-  }
+function useProvider() {
+  const room = useRoom();
 
-  return provider.synced ? "synchronized" : "loading";
+  const subscribe = useCallback(
+    (onStoreChange: () => void) => {
+      return room[kInternal].onProviderUpdate.subscribe(onStoreChange);
+    },
+    [room]
+  );
+
+  const getSnapshot = useCallback(() => {
+    return room[kInternal].getProvider();
+  }, [room]);
+
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
 /**
@@ -62,28 +67,27 @@ function getEditorStatus(
  * - `synchronized`:  The editor state is sync with Liveblocks servers.
  */
 export function useEditorStatus(): EditorStatus {
-  const room = useRoom();
-  const provider = providersMap.get(room.id);
+  const provider = useProvider();
 
-  const [status, setStatus] = useState<EditorStatus>(getEditorStatus(provider));
+  const subscribe = useCallback(
+    (onStoreChange: () => void) => {
+      if (provider === undefined) return () => {};
+      provider.on("sync", onStoreChange);
+      return () => {
+        provider.off("sync", onStoreChange);
+      };
+    },
+    [provider]
+  );
 
-  useEffect(() => {
-    const provider = providersMap.get(room.id);
-
-    setStatus(getEditorStatus(provider));
-
+  const getSnapshot = useCallback(() => {
     if (provider === undefined) {
-      return;
+      return "not-loaded";
     }
+    return provider.synced ? "synchronized" : "loading";
+  }, [provider]);
 
-    const cb = () => setStatus(getEditorStatus(provider));
-
-    provider.on("sync", cb);
-
-    return () => provider.off("sync", cb);
-  }, [room]);
-
-  return status;
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
 export type LiveblocksPluginProps = {
@@ -131,7 +135,6 @@ export const LiveblocksPlugin = ({
     client[kInternal].resolveMentionSuggestions !== undefined;
   const [editor] = useLexicalComposerContext();
   const room = useRoom();
-  const collabContext = useContext(CollaborationContext);
   const previousRoomIdRef = useRef<string | null>(null);
 
   if (!editor.hasNodes([ThreadMarkNode, MentionNode])) {
@@ -181,9 +184,7 @@ export const LiveblocksPlugin = ({
   }, [room]);
 
   // Get user info or allow override from props
-  const info = useSelf((me) => me.info);
-  const username = info?.name || ""; // use empty string to prevent random name
-  const cursorcolor = info?.color as string | undefined;
+  const self = useSelf();
 
   const providerFactory = useCallback(
     (id: string, yjsDocMap: Map<string, Doc>): Provider => {
@@ -216,10 +217,6 @@ export const LiveblocksPlugin = ({
     [room]
   );
 
-  useEffect(() => {
-    collabContext.name = username || "";
-  }, [collabContext, username]);
-
   const root = useRootElement();
 
   useLayoutEffect(() => {
@@ -250,17 +247,19 @@ export const LiveblocksPlugin = ({
         }}
       />
 
-      <CollaborationPlugin
-        // Setting the key allows us to reset the internal Y.doc used by useYjsCollaboration
-        // without implementing `reload` event
-        key={room.id}
-        id={room.id}
-        providerFactory={providerFactory}
-        username={username}
-        cursorColor={cursorcolor}
-        cursorsContainerRef={containerRef}
-        shouldBootstrap={true}
-      />
+      {self && (
+        <CollaborationPlugin
+          // Setting the key allows us to reset the internal Y.doc used by useYjsCollaboration
+          // without implementing `reload` event
+          key={room.id}
+          id={room.id}
+          providerFactory={providerFactory}
+          username={self.info?.name ?? ""} // use empty string to prevent random name
+          cursorColor={self.info?.color as string | undefined}
+          cursorsContainerRef={containerRef}
+          shouldBootstrap={true}
+        />
+      )}
 
       {hasResolveMentionSuggestions && <MentionPlugin />}
       <VersionProvider>
@@ -270,7 +269,7 @@ export const LiveblocksPlugin = ({
   );
 };
 
-function useRootElement(): HTMLElement | null {
+export function useRootElement(): HTMLElement | null {
   const [editor] = useLexicalComposerContext();
 
   const subscribe = useCallback(

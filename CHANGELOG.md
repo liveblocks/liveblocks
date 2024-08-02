@@ -1,3 +1,110 @@
+## 2.4.1 (Not yet published)
+
+### `@liveblocks/react-lexical`
+
+- Fix a bug in `useEditorStatus` which prevented the hook from returning correct
+  status when `LexicalPlugin` was rendered conditionally.
+- Fix remote cursors not displaying user name.
+
+## v2.4.0
+
+### `@liveblocks/client`
+
+- Add vanilla Comments and Notifications APIs to `Client` and `Room`.
+
+## v2.3.0
+
+### `@liveblocks/react-lexical`
+
+- New default components: `AnchoredThreads` and `FloatingThreads` to display
+  threads that are tied to a specific part of the document, similar to Notion,
+  Linear, etc:
+  - [`FloatingThreads`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#FloatingThreads)
+    displays floating `Thread` components below text highlights in the editor.
+  - [`AnchoredThreads`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#AnchoredThreads)
+    displays a list of `Thread` components vertically alongside the editor.
+  - These components can be used in the same application to create a UI that
+    works on both mobile and desktop.
+
+### `@liveblocks/react`
+
+- Add `useDeleteInboxNotification` and `useDeleteAllInboxNotifications` hooks.
+- Fix `resolved` query not being applied when filtering threads with
+  `useThreads`.
+- Various refactorings to Suspense internals.
+
+### `@liveblocks/react-ui`
+
+- Add "Delete notification" action to `InboxNotification`.
+- Hide "Mark as read" action in `InboxNotification` when already read.
+- Improve keyboard navigation within emoji pickers.
+
+### `@liveblocks/node`
+
+- Add `deleteInboxNotification` and `deleteAllInboxNotifications` methods.
+
+## v2.2.2
+
+### `@liveblocks/react-ui`
+
+- Fix missing avatar in `textMention` inbox notifications.
+- Fix `textMention` usage (and its props type) when customizing rendering via
+  `kinds` on `InboxNotification`.
+- Fix broken CSS selector in default styles.
+
+## v2.2.1
+
+### `@liveblocks/yjs`
+
+- Don’t attempt to write Yjs changes if the current user has no write access.
+
+## v2.2.0
+
+We are making `resolved` a first-class citizen property on
+[threads](https://liveblocks.io/docs/products/comments/concepts#Threads), for
+more information about this change please read our
+[Upgrade Guide for 2.2](https://liveblocks.io/docs/platform/upgrading/2.2).
+
+### `@liveblocks/react`
+
+- Add `useMarkThreadAsResolved` and `useMarkThreadAsUnresolved` hooks.
+- Support `query.resolved` when filtering threads.
+- The
+  [`useStorageStatus`](https://liveblocks.io/docs/api-reference/liveblocks-react#useStorageStatus)
+  hook now also has a `{ smooth: true }` setting to make building calm UIs with
+  it a bit easier.
+- The `useClient()` hook is now also available for users of
+  `createRoomContext()` and/or `createLiveblocksContext()`
+- Fix: avoid unnecessary re-renders if inbox notifications haven't changed
+
+### `@liveblocks/react-ui`
+
+- Use first-class citizen `resolved` property in `Thread` component.
+- Preserve rich text when pasting into the composer.
+- Add support for custom links to the composer. (either by pasting URLs with
+  plain text selected or by pasting existing links)
+- Preserve whitespace and empty lines in comments.
+- Mark threads as read when visible (like before), but only if the window is
+  focused.
+- Fix improper `useTransition` fallback which would break on React versions
+  lower than 18.
+
+### `@liveblocks/node`
+
+- Add `markThreadAsResolved` and `markThreadAsUnresolved` methods.
+- Add `ThreadMarkedAsResolvedEvent` and `ThreadMarkedAsUnresolvedEvent` webhook
+  events.
+- Support `query.resolved` when querying threads.
+
+### `@liveblocks/react-lexical`
+
+- Upgrade `lexical` peer dependency to version `^0.16.1` that fixes
+  compatibility issues with Next.js versions 14.2.0 and above.
+
+### `@liveblocks/node-lexical`
+
+- Upgrade `lexical` peer dependency to version `0.16.1`.
+
 ## v2.1.0
 
 ### `@liveblocks/client`
@@ -19,7 +126,8 @@
 
 ### `@liveblocks/react-ui`
 
-- Fix improper `useSyncExternalStore` import which would break on React <18.
+- Fix improper `useSyncExternalStore` import which would break on React versions
+  lower than 18.
 
 ## v2.0.5
 
@@ -39,8 +147,8 @@
 ### `@liveblocks/client`
 
 - Add missing type export for `CommentReaction`
-- Don’t attempt to write missing initialStorage keys if the current user has no
-  write access to storage. This will no longer throw, but issue a warning
+- Don’t attempt to write missing `initialStorage` keys if the current user has
+  no write access to storage. This will no longer throw, but issue a warning
   message in the console.
 
 ### `@liveblocks/react`
@@ -65,7 +173,7 @@
 ### `@liveblocks/react-ui`
 
 - Prevent the composer from splitting text being composed.
-- Handle parentheses around and within auto-links.
+- Handle parentheses around and within auto links.
 - Count whitespace as empty to prevent posting empty comments.
 - Prevent clearing the composer if it's not handled. (via `onComposerSubmit`)
 
@@ -832,7 +940,7 @@ leave();
 
 ### `@liveblocks/react-comments`
 
-- Add support for auto-links. (e.g. `"www.liveblocks.io"`)
+- Add support for auto links. (e.g. `"www.liveblocks.io"`)
 
 ## v1.3.2
 
@@ -1124,7 +1232,7 @@ Recommended steps to upgrade:
 ### `create-liveblocks-app`
 
 - Added
-  [flags](https://github.com/liveblocks/liveblocks/tree/main/packages/create-liveblocks-app#flags-optional)
+  [flags](https://github.com/liveblocks/liveblocks/tree/main/tools/create-liveblocks-app#flags-optional)
   for creating config files with `--init`. (e.g. `--framework react`)
 - Added an error if an incorrect flag is used.
 - Slightly changed the format of the default config file.
@@ -1177,7 +1285,7 @@ Non-existent.
 ## v1.0.0
 
 This major release marks the maturity of Liveblocks. For upgrade instructions,
-see the [1.0 upgrade guide](https://liveblocks.io/docs/guides/upgrading/1.0).
+see the [1.0 upgrade guide](https://liveblocks.io/docs/platform/upgrading/1.0).
 
 ## `@liveblocks/node`
 
@@ -1457,7 +1565,7 @@ In **@liveblocks/react**:
 ## v0.18.0
 
 For information, please read our
-[Upgrade Guide for 0.18](https://liveblocks.io/docs/guides/upgrading/0.18).
+[Upgrade Guide for 0.18](https://liveblocks.io/docs/platform/upgrading/0.18).
 
 ### New React hooks ✨
 
@@ -1487,8 +1595,8 @@ For information, please read our
 - Remove support for directly importing hooks from **@liveblocks/client** (e.g.
   `import { useMyPresence } from '@liveblocks/react'`). If you’re still using
   these imports, see the
-  [Upgrade Guide for 0.17](https://liveblocks.io/docs/guides/upgrading/0.17) for
-  instructions.
+  [Upgrade Guide for 0.17](https://liveblocks.io/docs/platform/upgrading/0.17)
+  for instructions.
 - Remove `ClientProvider` and `useClient` hook
 - Remove `defaultPresence` and `defaultStorageRoot` arguments. (Just use
   `initialPresence` and `initialStorage` arguments now.)
@@ -1636,7 +1744,7 @@ Fix `@liveblocks/nodes` packaging.
 ## v0.17.0
 
 For information, please read our
-[Upgrade Guide](https://liveblocks.io/docs/guides/upgrading/0.17).
+[Upgrade Guide](https://liveblocks.io/docs/platform/upgrading/0.17).
 
 ### TypeScript improvements ✨
 
@@ -1647,7 +1755,7 @@ longer need to provide any extra type annotations anywhere for your Liveblocks
 code! 🙌
 
 To learn how to set that up, follow the instructions in our
-[Upgrade Guide](https://liveblocks.io/docs/guides/upgrading/0.17).
+[Upgrade Guide](https://liveblocks.io/docs/platform/upgrading/0.17).
 
 - No more `any` types used (in `@liveblocks/client` and `@liveblocks/react`)
 - All APIs that work with Presence data will now require it to be
@@ -1708,8 +1816,9 @@ It's surprisingly simple!
 
   - Importing the React hooks directly is deprecated, instead use the new
     `createRoomContext()` helper. For help, read the
-    [Recommended Upgrade Steps section](https://liveblocks.io/docs/guides/upgrading/0.17#recommended-upgrade-steps)
-    within our [Upgrade Guide](https://liveblocks.io/docs/guides/upgrading/0.17)
+    [Recommended Upgrade Steps section](https://liveblocks.io/docs/platform/upgrading/0.17#recommended-upgrade-steps)
+    within our
+    [Upgrade Guide](https://liveblocks.io/docs/platform/upgrading/0.17)
   - The second argument to `useList()`, `useObject()`, and `useMap()` is
     deprecated
   - The RoomProvider's `defaultPresence` is renamed to `initialPresence`
