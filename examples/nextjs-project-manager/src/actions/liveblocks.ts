@@ -4,9 +4,11 @@ import { nanoid } from "nanoid";
 import { redirect } from "next/navigation";
 import { getRoomId, Metadata, RoomWithMetadata } from "@/config";
 import { liveblocks } from "@/liveblocks.server.config";
+import { LiveList, LiveObject, toPlainLson } from "@liveblocks/core";
 
 export async function createIssue() {
   const issueId = nanoid();
+  const roomId = getRoomId(issueId);
 
   const metadata: Metadata = {
     issueId,
@@ -17,10 +19,25 @@ export async function createIssue() {
     labels: [],
   };
 
-  await liveblocks.createRoom(getRoomId(issueId), {
+  await liveblocks.createRoom(roomId, {
     defaultAccesses: ["room:write"],
     metadata,
   });
+
+  const initialStorage: LiveObject<Liveblocks["Storage"]> = new LiveObject({
+    meta: new LiveObject({ title: "Untitled" }),
+    properties: new LiveObject({
+      progress: "none",
+      priority: "none",
+      assignedTo: "none",
+    }),
+    labels: new LiveList([]),
+  });
+
+  await liveblocks.initializeStorageDocument(
+    roomId,
+    toPlainLson(initialStorage) as any
+  );
 
   redirect(`/issue/${issueId}`);
 }
