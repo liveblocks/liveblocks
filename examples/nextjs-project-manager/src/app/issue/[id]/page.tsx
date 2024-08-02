@@ -4,7 +4,6 @@ import { Issue } from "@/components/Issue";
 import { Nav } from "@/components/Nav";
 import { Inbox } from "@/components/Inbox";
 import { DisplayWhenInboxOpen } from "@/components/InboxContext";
-import { Suspense } from "react";
 
 export const revalidate = 0;
 

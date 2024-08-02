@@ -7,11 +7,26 @@ import {
 } from "@liveblocks/react/suspense";
 import { LABELS } from "@/config";
 
-export function IssueLabels() {
+export function IssueLabels({ storageFallback }: any) {
   return (
     <ClientSideSuspense
       fallback={
-        <div className="bg-neutral-100 animate-pulse h-6 my-px w-24 rounded-full" />
+        <div className="text-sm flex gap-1.5 justify-start items-start font-medium max-w-full flex-wrap min-h-[26px]">
+          {LABELS.filter((label) =>
+            storageFallback.labels.includes(label.id)
+          ).map(({ id, text }) => (
+            <div
+              key={id}
+              className="text-sm font-medium rounded-full px-2 py-0.5 border shadow-xs flex items-center gap-1.5 select-none text-neutral-700"
+            >
+              <div className="bg-neutral-400/60 rounded-full w-2 h-2" />
+              {text}{" "}
+              <div className="text-base leading-none pb-0.5 text-neutral-400">
+                ×
+              </div>
+            </div>
+          ))}
+        </div>
       }
     >
       <Labels />
