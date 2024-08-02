@@ -72,7 +72,7 @@ export async function Issue({ issueId }: { issueId: string }) {
               <div className="text-xs font-medium text-neutral-600 mb-0 h-10 flex items-center">
                 Actions
               </div>
-              <IssueActions />
+              <IssueActions issueId={issueId} />
             </div>
           </div>
         </div>

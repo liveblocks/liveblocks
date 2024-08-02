@@ -1,26 +1,13 @@
 "use client";
 
-import { ClientSideSuspense, useRoom } from "@liveblocks/react/suspense";
 import { deleteRoom } from "@/actions/liveblocks";
+import { getRoomId } from "@/config";
 
-export function IssueActions() {
-  return (
-    // <ClientSideSuspense
-    //   fallback={
-    //     <div className="bg-red-100/40 animate-pulse h-6 w-[81px] rounded-lg" />
-    //   }
-    // >
-    <DeleteButton />
-    // </ClientSideSuspense>
-  );
-}
-
-function DeleteButton() {
-  const room = useRoom();
+export function IssueActions({ issueId }: { issueId: string }) {
   return (
     <button
       className="text-red-600 text-sm"
-      onClick={() => deleteRoom(room.id)}
+      onClick={() => deleteRoom(getRoomId(issueId))}
     >
       Delete issue
     </button>

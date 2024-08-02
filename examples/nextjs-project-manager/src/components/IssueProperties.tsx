@@ -12,22 +12,22 @@ export function IssueProperties({ storageFallback }: any) {
   return (
     <ClientSideSuspense
       fallback={
-        <div className="text-sm flex flex-col gap-3 justify-start items-start font-medium pt-1 -mb-1">
-          <div className="block bg-transparent border-0 h-7 w-28 px-2 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-neutral-200 appearance-none">
+        <div className="text-sm flex flex-col gap-3 justify-start items-start font-medium pt-1 -mb-1 pointer-events-none">
+          <div className="block bg-transparent border-0 h-7 w-28 px-2 rounded-md transition-colors">
             {
               PROGRESS_STATES.find(
                 (p) => p.id === storageFallback.properties.progress
               )?.text
             }
           </div>
-          <div className="block bg-transparent border-0 h-7 w-28 px-2 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-neutral-200 appearance-none">
+          <div className="block bg-transparent border-0 h-7 w-28 px-2 rounded-md transition-colors">
             {
               PRIORITY_STATES.find(
                 (p) => p.id === storageFallback.properties.priority
               )?.text
             }
           </div>
-          <div className="block bg-transparent border-0 h-7 w-28 px-2 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-neutral-200 appearance-none">
+          <div className="block bg-transparent border-0 h-7 w-28 px-2 rounded-md transition-colors">
             {storageFallback.properties.assignedTo === "none"
               ? "Unassigned"
               : getUsers().find(

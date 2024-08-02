@@ -11,7 +11,7 @@ export function IssueLabels({ storageFallback }: any) {
   return (
     <ClientSideSuspense
       fallback={
-        <div className="text-sm flex gap-1.5 justify-start items-start font-medium max-w-full flex-wrap min-h-[26px]">
+        <div className="text-sm flex gap-1.5 justify-start items-start font-medium max-w-full flex-wrap min-h-[26px] pointer-events-none">
           {LABELS.filter((label) =>
             storageFallback.labels.includes(label.id)
           ).map(({ id, text }) => (

@@ -36,12 +36,12 @@ export function Editor({
   return (
     <ClientSideSuspense
       fallback={
-        <>
+        <div className="pointer-events-none">
           <div className="block w-full text-2xl font-bold my-6">
             {storageFallback.meta.title}
           </div>
           {contentFallback}
-        </>
+        </div>
       }
     >
       <LexicalEditor contentFallback={contentFallback} />
