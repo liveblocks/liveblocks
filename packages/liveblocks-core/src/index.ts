@@ -145,9 +145,12 @@ export type {
   CommentBodyText,
 } from "./protocol/Comments";
 export type {
+  CommentAttachment,
   CommentData,
   CommentDataPlain,
+  CommentLocalAttachment,
   CommentReaction,
+  CommentUploadedAttachment,
 } from "./protocol/Comments";
 export type {
   CommentUserReaction,
@@ -219,7 +222,7 @@ export type {
   RoomEventMessage,
   StorageStatus,
 } from "./room";
-export type { GetThreadsOptions } from "./room";
+export type { GetThreadsOptions, UploadAttachmentOptions } from "./room";
 export { CommentsApiError } from "./room";
 export type { Immutable } from "./types/Immutable";
 export type {

@@ -36,7 +36,11 @@ import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
 import { Batch } from "./lib/batch";
 import { Promise_withResolvers } from "./lib/controlledPromise";
-import { createCommentId, createThreadId } from "./lib/createIds";
+import {
+  createCommentAttachmentId,
+  createCommentId,
+  createThreadId,
+} from "./lib/createIds";
 import { captureStackTrace } from "./lib/debug";
 import type { Callback, Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
@@ -52,6 +56,7 @@ import {
   deepClone,
   memoizeOnSuccess,
   tryParseJson,
+  wait,
 } from "./lib/utils";
 import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
@@ -62,6 +67,8 @@ import type {
   CommentBody,
   CommentData,
   CommentDataPlain,
+  CommentLocalAttachment,
+  CommentUploadedAttachment,
   CommentUserReaction,
   CommentUserReactionPlain,
   QueryMetadata,
@@ -470,6 +477,10 @@ export type GetThreadsOptions<M extends BaseMetadata> = {
   };
 };
 
+export type UploadAttachmentOptions = {
+  signal?: AbortSignal;
+};
+
 type CommentsApi<M extends BaseMetadata> = {
   /**
    * Returns the threads within the current room and their associated inbox notifications.
@@ -648,6 +659,18 @@ type CommentsApi<M extends BaseMetadata> = {
     commentId: string;
     emoji: string;
   }): Promise<void>;
+
+  /**
+   * TODO:
+   */
+  prepareAttachment(file: File): CommentLocalAttachment;
+
+  /**
+   * TODO:
+   */
+  uploadAttachment(
+    attachment: CommentLocalAttachment
+  ): Promise<CommentUploadedAttachment>;
 };
 
 /**
@@ -1582,6 +1605,40 @@ function createCommentsApi<M extends BaseMetadata>(
     );
   }
 
+  function prepareAttachment(file: File): CommentLocalAttachment {
+    return {
+      id: createCommentAttachmentId(),
+      name: file.name,
+      size: file.size,
+      mimeType: file.type,
+      file,
+    };
+  }
+
+  async function uploadAttachment(
+    attachment: CommentLocalAttachment,
+    options: UploadAttachmentOptions = {}
+  ): Promise<CommentUploadedAttachment> {
+    // TODO: Single-part or multi-part upload based on file size
+
+    console.warn(
+      "TODO: Handle AbortSignal, abort upload cleanly and abort this promise",
+      options.signal
+    );
+
+    await wait(1000);
+
+    return {
+      id: attachment.id,
+      name: attachment.name,
+      size: attachment.size,
+      mimeType: attachment.mimeType,
+    };
+  }
+
+  // TODO: Add room.events.attachmentUpload (or similar) to listen to upload progress? { attachmentId: string; progress: number; }
+  //       Error handling can done by handling `uploadAttachment` rejecting/throwing
+
   return {
     getThreads,
     getThreadsSince,
@@ -1596,6 +1653,8 @@ function createCommentsApi<M extends BaseMetadata>(
     deleteComment,
     addReaction,
     removeReaction,
+    prepareAttachment,
+    uploadAttachment,
   };
 }
 

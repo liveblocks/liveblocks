@@ -14,6 +14,21 @@ export type CommentReaction = {
   }[];
 };
 
+export type CommentUploadedAttachment = {
+  id: string;
+  name: string;
+  size: number;
+  mimeType: string;
+};
+
+export type CommentLocalAttachment = CommentUploadedAttachment & {
+  file: File;
+};
+
+export type CommentAttachment =
+  | CommentUploadedAttachment
+  | CommentLocalAttachment;
+
 /**
  * Represents a comment.
  */
@@ -26,6 +41,7 @@ export type CommentData = {
   createdAt: Date;
   editedAt?: Date;
   reactions: CommentReaction[];
+  attachments: CommentUploadedAttachment[];
 } & (
   | { body: CommentBody; deletedAt?: never }
   | { body?: never; deletedAt: Date }
