@@ -13,6 +13,23 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
 
+# Week 31 (2024-08-02)
+
+## Dashboard
+
+- Add the Room API docs to the dashboard. Copy pre-filled code snippets from the API reference directly from the Room detail page.
+- Optimize the width of rooms, schemas, and webhooks lists when a detail view is opened for more comfort on medium-sized screens.
+
+## Documentation
+
+- Updated [How to modify Storage from the server](https://liveblocks.io/docs/guides/how-to-modify-liveblocks-storage-from-the-server) for Liveblocks 2.0.
+- Fixed various typos.
+- Show public/secret keys within the Bash code snippets for connected users.
+
+## Contributors
+
+pierrelevaillant, sugardarius, teddarific, assaadhalabi
+
 # Week 30 (2024-07-26)
 
 ## v2.4.0
