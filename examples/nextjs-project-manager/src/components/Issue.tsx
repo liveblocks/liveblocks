@@ -13,10 +13,12 @@ import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { ListItemNode, ListNode } from "@lexical/list";
 
 export async function Issue({ issueId }: { issueId: string }) {
+  const roomId = getRoomId(issueId);
+
   const markdown = (
     await withLexicalDocument(
       {
-        roomId: getRoomId(issueId),
+        roomId,
         client: liveblocks,
         nodes: [HeadingNode, QuoteNode, ListNode, ListItemNode],
       },
@@ -26,6 +28,8 @@ export async function Issue({ issueId }: { issueId: string }) {
 
   const processedContent = await remark().use(html).process(markdown);
   const contentHtml = processedContent.toString();
+
+  const storage = await liveblocks.getStorageDocument(roomId, "json");
 
   return (
     <div className="h-full flex flex-col">
@@ -39,6 +43,7 @@ export async function Issue({ issueId }: { issueId: string }) {
             <div className="max-w-[840px] mx-auto py-6">
               <div className="px-12">
                 <Editor
+                  storageFallback={storage}
                   contentFallback={
                     <div dangerouslySetInnerHTML={{ __html: contentHtml }} />
                   }
@@ -53,14 +58,14 @@ export async function Issue({ issueId }: { issueId: string }) {
               <div className="text-xs font-medium text-neutral-600 mb-2 h-10 flex items-center">
                 Properties
               </div>
-              <IssueProperties />
+              <IssueProperties storageFallback={storage} />
             </div>
 
             <div>
               <div className="text-xs font-medium text-neutral-600 mb-0 h-10 flex items-center">
                 Labels
               </div>
-              <IssueLabels />
+              <IssueLabels storageFallback={storage} />
             </div>
 
             <div>

@@ -8,14 +8,32 @@ import {
 import { PRIORITY_STATES, PROGRESS_STATES } from "@/config";
 import { getUsers } from "@/database";
 
-export function IssueProperties() {
+export function IssueProperties({ storageFallback }: any) {
   return (
     <ClientSideSuspense
       fallback={
-        <div className="flex flex-col gap-[18px]">
-          <div className="bg-neutral-100 animate-pulse h-6 w-24 rounded-lg" />
-          <div className="bg-neutral-100 animate-pulse h-6 w-24 rounded-lg" />
-          <div className="bg-neutral-100 animate-pulse h-6 w-24 rounded-lg" />
+        <div className="text-sm flex flex-col gap-3 justify-start items-start font-medium pt-1 -mb-1">
+          <div className="block bg-transparent border-0 h-7 w-28 px-2 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-neutral-200 appearance-none">
+            {
+              PROGRESS_STATES.find(
+                (p) => p.id === storageFallback.properties.progress
+              )?.text
+            }
+          </div>
+          <div className="block bg-transparent border-0 h-7 w-28 px-2 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-neutral-200 appearance-none">
+            {
+              PRIORITY_STATES.find(
+                (p) => p.id === storageFallback.properties.priority
+              )?.text
+            }
+          </div>
+          <div className="block bg-transparent border-0 h-7 w-28 px-2 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-neutral-200 appearance-none">
+            {storageFallback.properties.assignedTo === "none"
+              ? "Unassigned"
+              : getUsers().find(
+                  (p) => p.id === storageFallback.properties.assignedTo
+                )?.info.name}
+          </div>
         </div>
       }
     >

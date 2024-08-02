@@ -26,12 +26,20 @@ const initialConfig = liveblocksConfig({
   },
 });
 
-export function Editor({ contentFallback }: { contentFallback: ReactNode }) {
+export function Editor({
+  contentFallback,
+  storageFallback,
+}: {
+  contentFallback: ReactNode;
+  storageFallback: any;
+}) {
   return (
     <ClientSideSuspense
       fallback={
         <>
-          <div className="bg-neutral-100 animate-pulse h-8 rounded-lg my-6" />
+          <div className="block w-full text-2xl font-bold my-6">
+            {storageFallback.meta.title}
+          </div>
           {contentFallback}
         </>
       }

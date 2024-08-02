@@ -33,11 +33,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           type="image/png"
         />
       </head>
-      <Suspense>
-        <body className="bg-neutral-200/50 text-neutral-900 antialiased h-full w-full overflow-hidden">
-          <Providers>{children}</Providers>
-        </body>
-      </Suspense>
+      <body className="bg-neutral-200/50 text-neutral-900 antialiased h-full w-full overflow-hidden">
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

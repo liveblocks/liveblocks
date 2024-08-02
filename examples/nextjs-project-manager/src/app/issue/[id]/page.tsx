@@ -4,10 +4,11 @@ import { Issue } from "@/components/Issue";
 import { Nav } from "@/components/Nav";
 import { Inbox } from "@/components/Inbox";
 import { DisplayWhenInboxOpen } from "@/components/InboxContext";
+import { Suspense } from "react";
 
-export const fetchCache = "force-no-store";
+export const revalidate = 0;
 
-export default function PageHome({
+export default async function PageHome({
   params: { id },
 }: {
   params: { id: string };
@@ -25,7 +26,9 @@ export default function PageHome({
             </div>
           </DisplayWhenInboxOpen>
           <div className="flex-grow">
+            {/*<Suspense>*/}
             <Issue issueId={id} />
+            {/*</Suspense>*/}
           </div>
         </main>
       </div>
