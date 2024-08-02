@@ -14,6 +14,7 @@ import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { ListNode, ListItemNode } from "@lexical/list";
 import { ClientSideSuspense } from "@liveblocks/react/suspense";
 import { EditorFloatingToolbar } from "@/components/EditorFloatingToolbar";
+import { ReactNode } from "react";
 
 // Wrap your Lexical config with `liveblocksConfig`
 const initialConfig = liveblocksConfig({
@@ -25,23 +26,22 @@ const initialConfig = liveblocksConfig({
   },
 });
 
-export function Editor() {
+export function Editor({ contentFallback }: { contentFallback: ReactNode }) {
   return (
     <ClientSideSuspense
       fallback={
         <>
           <div className="bg-neutral-100 animate-pulse h-8 rounded-lg my-6" />
-          <div className="bg-neutral-100 animate-pulse h-[98px] rounded-lg my-5" />
-          <div className="bg-neutral-100 animate-pulse h-[98px] rounded-lg my-5" />
+          {contentFallback}
         </>
       }
     >
-      <LexicalEditor />
+      <LexicalEditor contentFallback={contentFallback} />
     </ClientSideSuspense>
   );
 }
 
-function LexicalEditor() {
+function LexicalEditor({ contentFallback }: { contentFallback: ReactNode }) {
   const status = useEditorStatus();
 
   return (
@@ -53,10 +53,7 @@ function LexicalEditor() {
         <div className="relative">
           <LiveblocksPlugin>
             {status === "not-loaded" || status === "loading" ? (
-              <>
-                <div className="bg-neutral-100 animate-pulse h-[98px] rounded-lg my-5" />
-                <div className="bg-neutral-100 animate-pulse h-[98px] rounded-lg my-5" />
-              </>
+              contentFallback
             ) : (
               <RichTextPlugin
                 contentEditable={<ContentEditable className="outline-none" />}

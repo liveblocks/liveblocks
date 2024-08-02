@@ -4,8 +4,29 @@ import { Editor } from "@/components/Editor";
 import { IssueProperties } from "@/components/IssueProperties";
 import { IssueLabels } from "@/components/IssueLabels";
 import { IssueActions } from "@/components/IssueActions";
+import { liveblocks } from "@/liveblocks.server.config";
+import { withLexicalDocument } from "@liveblocks/node-lexical";
+import { getRoomId } from "@/config";
+import { remark } from "remark";
+import html from "remark-html";
+import { HeadingNode, QuoteNode } from "@lexical/rich-text";
+import { ListItemNode, ListNode } from "@lexical/list";
 
-export function Issue() {
+export async function Issue({ issueId }: { issueId: string }) {
+  const markdown = (
+    await withLexicalDocument(
+      {
+        roomId: getRoomId(issueId),
+        client: liveblocks,
+        nodes: [HeadingNode, QuoteNode, ListNode, ListItemNode],
+      },
+      (doc) => doc.toMarkdown()
+    )
+  ).replace(/^\s*$/gm, "\n&nbsp;\n");
+
+  const processedContent = await remark().use(html).process(markdown);
+  const contentHtml = processedContent.toString();
+
   return (
     <div className="h-full flex flex-col">
       <header className="flex justify-between border-b h-10 px-4 items-center">
@@ -17,7 +38,11 @@ export function Issue() {
           <div className="flex-grow h-full overflow-y-scroll">
             <div className="max-w-[840px] mx-auto py-6">
               <div className="px-12">
-                <Editor />
+                <Editor
+                  contentFallback={
+                    <div dangerouslySetInnerHTML={{ __html: contentHtml }} />
+                  }
+                />
                 <div className="border-t my-6" />
                 <Comments />
               </div>

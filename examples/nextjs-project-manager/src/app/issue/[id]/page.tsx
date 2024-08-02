@@ -5,6 +5,8 @@ import { Nav } from "@/components/Nav";
 import { Inbox } from "@/components/Inbox";
 import { DisplayWhenInboxOpen } from "@/components/InboxContext";
 
+export const fetchCache = "force-no-store";
+
 export default function PageHome({
   params: { id },
 }: {
@@ -23,7 +25,7 @@ export default function PageHome({
             </div>
           </DisplayWhenInboxOpen>
           <div className="flex-grow">
-            <Issue />
+            <Issue issueId={id} />
           </div>
         </main>
       </div>
