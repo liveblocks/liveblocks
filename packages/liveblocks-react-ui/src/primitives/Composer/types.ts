@@ -1,4 +1,8 @@
-import type { CommentBody } from "@liveblocks/core";
+import type {
+  CommentBody,
+  CommentLocalAttachment,
+  CommentUploadedAttachment,
+} from "@liveblocks/core";
 import type {
   ComponentPropsWithoutRef,
   ComponentType,
@@ -144,22 +148,15 @@ export interface ComposerAttachmentsDropAreaProps
   disabled?: boolean;
 }
 
-export type ComposerLocalAttachment = {
-  type: "local";
-  id: string;
-  file: File;
-  preview?: any;
+export type ComposerLocalAttachment = CommentLocalAttachment & {
+  error?: Error;
 };
 
-export type ComposerRemoteAttachment = {
-  type: "remote";
-  id: string;
-  url: string;
-};
+export type ComposerUploadedAttachment = CommentUploadedAttachment;
 
 export type ComposerAttachment =
   | ComposerLocalAttachment
-  | ComposerRemoteAttachment;
+  | ComposerUploadedAttachment;
 
 export interface ComposerSubmitComment {
   /**
@@ -170,7 +167,7 @@ export interface ComposerSubmitComment {
   /**
    * TODO:
    */
-  attachments: ComposerAttachment[];
+  attachmentIds: string[];
 }
 
 export interface ComposerEditorElementProps extends RenderElementProps {

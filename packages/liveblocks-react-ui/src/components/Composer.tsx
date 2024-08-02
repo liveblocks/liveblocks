@@ -34,6 +34,7 @@ import {
   useComposerAttachmentsContext,
 } from "../primitives/Composer/contexts";
 import type {
+  ComposerAttachment,
   ComposerEditorComponents,
   ComposerEditorLinkProps,
   ComposerEditorMentionProps,
@@ -42,7 +43,10 @@ import type {
   ComposerLocalAttachment,
   ComposerSubmitComment,
 } from "../primitives/Composer/types";
-import { useComposerAttachmentsDropArea } from "../primitives/Composer/utils";
+import {
+  isComposerLocalAttachment,
+  useComposerAttachmentsDropArea,
+} from "../primitives/Composer/utils";
 import { MENTION_CHARACTER } from "../slate/plugins/mentions";
 import { classNames } from "../utils/class-names";
 import { useControllableState } from "../utils/use-controllable-state";
@@ -330,11 +334,20 @@ function ComposerFileAttachment({
   className,
   ...props
 }: ComponentPropsWithoutRef<"div"> & {
-  attachment: ComposerLocalAttachment;
+  attachment: ComposerAttachment;
 }) {
   const { deleteAttachment } = useComposer();
   // TODO: Take into account the locale passed to the Composer
   const $ = useOverrides();
+  const [error, isUploading] = useMemo(() => {
+    const isLocalAttachment = isComposerLocalAttachment(attachment);
+
+    if (isLocalAttachment) {
+      return [attachment.error, attachment.error ? false : true];
+    } else {
+      return [undefined, false];
+    }
+  }, [attachment]);
 
   const handleDeleteClick = useCallback(() => {
     deleteAttachment(attachment.id);
@@ -344,46 +357,18 @@ function ComposerFileAttachment({
     <FileAttachment
       className={classNames("lb-composer-attachment", className)}
       {...props}
-      name={attachment.file.name}
-      mimeType={attachment.file.type}
-      size={attachment.file.size}
+      name={attachment.name}
+      mimeType={attachment.mimeType}
+      size={attachment.size}
+      file={(attachment as ComposerLocalAttachment).file}
+      isUploading={isUploading}
+      error={error}
       locale={$.locale}
       onDeleteClick={handleDeleteClick}
       preventFocusOnDelete
     />
   );
 }
-
-// function ComposerImageAttachment({
-//   attachment,
-//   className,
-//   ...props
-// }: ComponentPropsWithoutRef<"div"> & { attachment: ComposerLocalAttachment }) {
-//   const { deleteAttachment } = useComposer();
-
-//   return (
-//     <div
-//       className={classNames(
-//         "lb-attachment lb-image-attachment lb-composer-attachment",
-//         className
-//       )}
-//       {...props}
-//     >
-//       <img
-//         className="lb-image-attachment-image"
-//         alt={attachment.file.name}
-//         // src="https://placekitten.com/200/300"
-//       />
-//       <div className="lb-attachment-details">
-//         <span className="lb-attachment-name">{attachment.file.name}</span>
-//         <span className="lb-attachment-size">{attachment.file.size}</span>
-//       </div>
-//       <button onClick={() => deleteAttachment(attachment.id)}>
-//         <CrossIcon />
-//       </button>
-//     </div>
-//   );
-// }
 
 function ComposerAttachments({
   className,
@@ -401,10 +386,6 @@ function ComposerAttachments({
       {...props}
     >
       {attachments.map((attachment) => {
-        if (attachment.type === "remote") {
-          return null;
-        }
-
         return (
           <ComposerFileAttachment key={attachment.id} attachment={attachment} />
         );

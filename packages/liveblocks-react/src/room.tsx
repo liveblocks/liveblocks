@@ -1492,6 +1492,8 @@ function useCreateThread<M extends BaseMetadata>(): (
         userId: getCurrentUserId(room),
         body,
         reactions: [],
+        // TODO: Use attachments from options
+        attachments: [],
       };
       const newThread: ThreadData<M> = {
         id: threadId,
@@ -1721,6 +1723,8 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
         userId: getCurrentUserId(room),
         body,
         reactions: [],
+        // TODO: Use attachments from options
+        attachments: [],
       };
 
       const optimisticUpdateId = nanoid();

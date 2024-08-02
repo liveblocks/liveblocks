@@ -77,6 +77,7 @@ export type ComposerEditorContext = {
 
 export type ComposerAttachmentsContext = {
   createAttachments: (files: File[]) => void;
+  hasUploadingAttachments: boolean;
 };
 
 export type ComposerSuggestionsContext = {

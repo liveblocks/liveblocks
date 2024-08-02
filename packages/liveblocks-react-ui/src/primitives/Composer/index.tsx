@@ -14,8 +14,7 @@ import {
   useFloating,
 } from "@floating-ui/react-dom";
 import type { CommentBody } from "@liveblocks/core";
-import { nanoid } from "@liveblocks/core";
-import { useSelf } from "@liveblocks/react";
+import { useRoom, useSelf } from "@liveblocks/react";
 import { Slot, Slottable } from "@radix-ui/react-slot";
 import type {
   AriaAttributes,
@@ -124,6 +123,7 @@ import type {
   ComposerSuggestionsListItemProps,
   ComposerSuggestionsListProps,
   ComposerSuggestionsProps,
+  ComposerUploadedAttachment,
   SuggestionsPosition,
 } from "./types";
 import {
@@ -132,6 +132,7 @@ import {
   getAcceptedFilesFromFileList,
   getPlacementFromPosition,
   getSideAndAlignFromPlacement,
+  isComposerLocalAttachment,
   useComposerAttachmentsDropArea,
 } from "./utils";
 
@@ -935,6 +936,39 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
   }
 );
 
+function ComposerAttachmentUploadHandler({
+  attachment,
+  onAttachmentUpload,
+  onAttachmentUploadError,
+}: {
+  attachment: ComposerLocalAttachment;
+  onAttachmentUpload: (attachment: ComposerUploadedAttachment) => void;
+  onAttachmentUploadError: (attachment: ComposerLocalAttachment) => void;
+}) {
+  const room = useRoom();
+
+  useEffect(() => {
+    const abortController = new AbortController();
+
+    room
+      .uploadAttachment(attachment, { signal: abortController.signal })
+      .then((attachment) => {
+        onAttachmentUpload(attachment);
+      })
+      .catch((error: Error) => {
+        if (!abortController.signal.aborted) {
+          onAttachmentUploadError({ ...attachment, error });
+        }
+      });
+
+    return () => {
+      abortController.abort();
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return null;
+}
+
 /**
  * Surrounds the composer's content and handles submissions.
  *
@@ -951,12 +985,21 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
   ) => {
     const Component = asChild ? Slot : "form";
     const editor = useInitial(createComposerEditor);
+    const room = useRoom();
     const [isEmpty, setEmpty] = useState(true);
     const [isFocused, setFocused] = useState(false);
     const [attachments, setAttachments] = useState<ComposerAttachment[]>([]);
+    const uploadingAttachments = useMemo(() => {
+      return attachments.filter(
+        (attachment) =>
+          isComposerLocalAttachment(attachment) && !attachment.error
+      ) as ComposerLocalAttachment[];
+    }, [attachments]);
     const ref = useRef<HTMLFormElement>(null);
     const mergedRefs = useRefs(forwardedRef, ref);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    console.log("Composer.Form: render");
 
     const validate = useCallback(
       (value: SlateElement[]) => {
@@ -1029,24 +1072,20 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       }
     }, []);
 
-    const createAttachments = useCallback((files: File[]) => {
-      const localAttachments: ComposerLocalAttachment[] = files.map((file) => ({
-        type: "local",
-        id: nanoid(),
-        file,
-      }));
+    const createAttachments = useCallback(
+      (files: File[]) => {
+        const localAttachments = files.map((file) =>
+          room.prepareAttachment(file)
+        );
 
-      // TODO: Start uploading the local attachments
+        setAttachments((attachments) => [...attachments, ...localAttachments]);
+      },
+      [room]
+    );
 
-      setAttachments((attachments) => [...attachments, ...localAttachments]);
-    }, []);
-
-    const deleteAttachment = useCallback((id: string) => {
-      // TODO: If the attachment is remote, we should remove it from the server
-      // TODO: If the attachment is local but not yet fully uploaded, we should cancel the upload
-
+    const deleteAttachment = useCallback((attachmentId: string) => {
       setAttachments((attachments) =>
-        attachments.filter((attachment) => attachment.id !== id)
+        attachments.filter((attachment) => attachment.id !== attachmentId)
       );
     }, []);
 
@@ -1089,9 +1128,12 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
         const body = composerBodyToCommentBody(
           editor.children as ComposerBodyData
         );
-        const comment = { body, attachments };
+        // Filter out local attachments (errored or for some reason still uploading)
+        const attachmentIds = attachments
+          .filter((attachment) => !isComposerLocalAttachment(attachment))
+          .map((attachment) => attachment.id);
 
-        console.log(attachments);
+        const comment = { body, attachmentIds };
 
         const promise = onComposerSubmit(comment, event);
 
@@ -1118,6 +1160,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
         <ComposerAttachmentsContext.Provider
           value={{
             createAttachments,
+            hasUploadingAttachments: uploadingAttachments.length > 0,
           }}
         >
           <ComposerContext.Provider
@@ -1136,6 +1179,30 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
               deleteAttachment,
             }}
           >
+            {uploadingAttachments.map((attachment) => (
+              <ComposerAttachmentUploadHandler
+                key={attachment.id}
+                attachment={attachment}
+                onAttachmentUpload={(uploadedAttachment) => {
+                  setAttachments((attachments) =>
+                    attachments.map((attachment) =>
+                      attachment.id === uploadedAttachment.id
+                        ? uploadedAttachment
+                        : attachment
+                    )
+                  );
+                }}
+                onAttachmentUploadError={(erroredAttachment) => {
+                  setAttachments((attachments) =>
+                    attachments.map((attachment) =>
+                      attachment.id === erroredAttachment.id
+                        ? erroredAttachment
+                        : attachment
+                    )
+                  );
+                }}
+              />
+            ))}
             <Component {...props} onSubmit={handleSubmit} ref={mergedRefs}>
               <input
                 type="file"
@@ -1163,11 +1230,12 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 const ComposerSubmit = forwardRef<HTMLButtonElement, ComposerSubmitProps>(
   ({ children, disabled, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "button";
+    const { hasUploadingAttachments } = useComposerAttachmentsContext();
     const { isEmpty } = useComposer();
     const self = useSelf();
     const isDisabled = useMemo(
-      () => disabled || isEmpty || !self?.canComment,
-      [disabled, isEmpty, self?.canComment]
+      () => disabled || isEmpty || hasUploadingAttachments || !self?.canComment,
+      [disabled, isEmpty, hasUploadingAttachments, self?.canComment]
     );
 
     return (

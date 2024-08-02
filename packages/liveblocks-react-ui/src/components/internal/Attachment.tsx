@@ -3,10 +3,11 @@ import type {
   MouseEventHandler,
   PointerEvent,
 } from "react";
-import React, { memo, useCallback, useMemo } from "react";
+import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
 
 import { FLOATING_ELEMENT_SIDE_OFFSET } from "../../constants";
 import { CrossIcon } from "../../icons/Cross";
+import { SpinnerIcon } from "../../icons/Spinner";
 import { classNames } from "../../utils/class-names";
 import { formatFileSize } from "../../utils/format-file-size";
 import { Tooltip } from "./Tooltip";
@@ -15,6 +16,9 @@ interface FileAttachmentProps extends ComponentPropsWithoutRef<"div"> {
   name: string;
   mimeType: string;
   size: number;
+  isUploading: boolean;
+  error?: Error;
+  file?: File;
   onContentClick?: MouseEventHandler<HTMLButtonElement>;
   onDeleteClick?: MouseEventHandler<HTMLButtonElement>;
   preventFocusOnDelete?: boolean;
@@ -107,10 +111,30 @@ const FileAttachmentIcon = memo(({ mimeType }: { mimeType: string }) => {
   );
 });
 
+function FileAttachmentPreview({ file }: { file: File }) {
+  const [objectUrl, setObjectUrl] = useState<string | undefined>();
+
+  useEffect(() => {
+    const objectUrl = URL.createObjectURL(file);
+    setObjectUrl(objectUrl);
+
+    return () => {
+      URL.revokeObjectURL(objectUrl);
+    };
+  }, [file]);
+
+  console.log("test");
+
+  return objectUrl ? <img src={objectUrl} /> : null;
+}
+
 export function FileAttachment({
   name,
   mimeType,
   size,
+  file,
+  isUploading,
+  error,
   onContentClick,
   onDeleteClick,
   preventFocusOnDelete,
@@ -134,6 +158,8 @@ export function FileAttachment({
   return (
     <div
       className={classNames("lb-attachment lb-file-attachment", className)}
+      data-error={error ? "" : undefined}
+      data-uploading={isUploading ? "" : undefined}
       {...props}
     >
       <Tooltip
@@ -148,20 +174,29 @@ export function FileAttachment({
           tabIndex={onContentClick ? undefined : -1}
         >
           <div className="lb-attachment-preview">
-            {/* TODO: Preview image if possible instead of icon */}
             <FileAttachmentIcon mimeType={mimeType} />
+            {file && mimeType.startsWith("image/") && (
+              <FileAttachmentPreview file={file} />
+            )}
           </div>
           <div className="lb-attachment-details">
             <span className="lb-attachment-name">{name}</span>
-            <span className="lb-attachment-size">{formattedFileSize}</span>
+            <span className="lb-attachment-description">
+              {error ? error.message : formattedFileSize}
+            </span>
           </div>
         </button>
       </Tooltip>
+      {isUploading && (
+        <div className="lb-attachment-corner lb-attachment-uploading">
+          <SpinnerIcon />
+        </div>
+      )}
       {onDeleteClick && (
         // TODO: Use $.DELETE_ATTACHMENT
         <Tooltip content="Delete attachment">
           <button
-            className="lb-attachment-delete"
+            className="lb-attachment-corner lb-attachment-delete"
             onClick={onDeleteClick}
             onPointerDown={handleDeletePointerDown}
             // TODO: Use $.DELETE_ATTACHMENT

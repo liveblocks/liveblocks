@@ -1,5 +1,6 @@
 import type { DM } from "../globals/augmentation";
 import type { DateToString } from "../lib/DateToString";
+import type { Resolve } from "../lib/Resolve";
 
 export type BaseMetadata = Record<
   string,
@@ -14,16 +15,20 @@ export type CommentReaction = {
   }[];
 };
 
-export type CommentUploadedAttachment = {
+type CommentAttachmentShared = {
   id: string;
   name: string;
   size: number;
   mimeType: string;
 };
 
-export type CommentLocalAttachment = CommentUploadedAttachment & {
-  file: File;
-};
+export type CommentUploadedAttachment = Resolve<CommentAttachmentShared>;
+
+export type CommentLocalAttachment = Resolve<
+  CommentAttachmentShared & {
+    file: File;
+  }
+>;
 
 export type CommentAttachment =
   | CommentUploadedAttachment

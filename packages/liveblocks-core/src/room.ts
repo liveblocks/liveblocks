@@ -56,7 +56,6 @@ import {
   deepClone,
   memoizeOnSuccess,
   tryParseJson,
-  wait,
 } from "./lib/utils";
 import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
@@ -669,7 +668,8 @@ type CommentsApi<M extends BaseMetadata> = {
    * TODO:
    */
   uploadAttachment(
-    attachment: CommentLocalAttachment
+    attachment: CommentLocalAttachment,
+    options?: UploadAttachmentOptions
   ): Promise<CommentUploadedAttachment>;
 };
 
@@ -1615,25 +1615,63 @@ function createCommentsApi<M extends BaseMetadata>(
     };
   }
 
+  class AbortError extends Error {
+    constructor() {
+      super();
+      this.name = "AbortError";
+    }
+  }
+
+  function isAbortError(error: unknown) {
+    return (error as Error)?.name && (error as Error).name === "AbortError";
+  }
+
   async function uploadAttachment(
     attachment: CommentLocalAttachment,
     options: UploadAttachmentOptions = {}
   ): Promise<CommentUploadedAttachment> {
     // TODO: Single-part or multi-part upload based on file size
 
-    console.warn(
-      "TODO: Handle AbortSignal, abort upload cleanly and abort this promise",
-      options.signal
-    );
+    const abortSignal = options.signal;
+    const abortError = abortSignal ? new AbortError() : undefined;
 
-    await wait(1000);
+    if (abortSignal?.aborted) {
+      throw abortError;
+    }
 
-    return {
-      id: attachment.id,
-      name: attachment.name,
-      size: attachment.size,
-      mimeType: attachment.mimeType,
-    };
+    try {
+      // Simulate a 1s abortable upload
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(resolve, 2000);
+
+        abortSignal?.addEventListener("abort", () => {
+          clearTimeout(timeout);
+          reject(abortError);
+        });
+      });
+
+      if (abortSignal?.aborted) {
+        throw abortError;
+      }
+
+      // Simulate an upload error half the time
+      if (Math.random() < 0.5) {
+        throw new Error("There was an error while uploading the attachment.");
+      }
+
+      return {
+        id: attachment.id,
+        name: attachment.name,
+        size: attachment.size,
+        mimeType: attachment.mimeType,
+      };
+    } catch (error) {
+      if (isAbortError(error)) {
+        // TODO: Clean up?
+      }
+
+      throw error;
+    }
   }
 
   // TODO: Add room.events.attachmentUpload (or similar) to listen to upload progress? { attachmentId: string; progress: number; }

@@ -25,7 +25,11 @@ import {
   isCommentBodyMention,
   isCommentBodyText,
 } from "../Comment/utils";
-import type { SuggestionsPosition } from "./types";
+import type {
+  ComposerAttachment,
+  ComposerLocalAttachment,
+  SuggestionsPosition,
+} from "./types";
 
 export function composerBodyMentionToCommentBodyMention(
   mention: ComposerBodyMention
@@ -292,4 +296,10 @@ export function useComposerAttachmentsDropArea<
       "data-drop": isDraggingOver ? "" : undefined,
     } as const,
   ] as const;
+}
+
+export function isComposerLocalAttachment(
+  attachment: ComposerAttachment
+): attachment is ComposerLocalAttachment {
+  return (attachment as ComposerLocalAttachment).file !== undefined;
 }

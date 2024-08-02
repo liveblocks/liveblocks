@@ -1065,7 +1065,7 @@
   }
 }
 
-.lb-attachment-delete {
+.lb-attachment-corner {
   position: absolute;
   inset-inline-end: -0.35rem;
   inset-block-start: -0.35rem;
@@ -1075,10 +1075,21 @@
   align-items: center;
   inline-size: 1.1rem;
   block-size: 1.1rem;
+}
+
+.lb-attachment-uploading,
+.lb-attachment-delete {
   border-radius: 50%;
   background: var(--lb-foreground-subtle);
   color: var(--lb-foreground-secondary);
   box-shadow: 0 0 0 2px var(--lb-dynamic-background);
+
+  :where(.lb-icon) {
+    inline-size: 0.75rem;
+  }
+}
+
+.lb-attachment-delete {
   opacity: 0;
 
   /* Invisibly increase the button's hit target size */
@@ -1098,10 +1109,6 @@
   :where(.lb-attachment:focus-within, .lb-attachment:hover) & {
     opacity: 1;
   }
-
-  :where(.lb-icon) {
-    inline-size: 0.75rem;
-  }
 }
 
 .lb-file-attachment {
@@ -1120,18 +1127,28 @@
     flex: none;
     justify-content: center;
     align-items: center;
+    overflow: hidden;
     aspect-ratio: 1;
     inline-size: 2.65rem;
     border-radius: calc(0.5 * var(--lb-radius));
     background: var(--lb-dynamic-background);
 
-    &::before {
+    &::after {
       content: "";
       position: absolute;
       inset: 0;
       border-radius: inherit;
       box-shadow: inset 0 0 0 1px var(--lb-foreground-subtle);
       pointer-events: none;
+    }
+
+    img {
+      position: absolute;
+      inset: 0;
+      display: block;
+      object-fit: cover;
+      inline-size: 100%;
+      block-size: 100%;
     }
   }
 
@@ -1166,7 +1183,7 @@
   }
 
   :where(.lb-attachment-name),
-  :where(.lb-attachment-size) {
+  :where(.lb-attachment-description) {
     @include truncate;
 
     transition-property: color;
@@ -1177,7 +1194,7 @@
     font-weight: 500;
   }
 
-  :where(.lb-attachment-size) {
+  :where(.lb-attachment-description) {
     color: var(--lb-foreground-tertiary);
   }
 
@@ -1187,7 +1204,7 @@
         color: var(--lb-foreground);
       }
 
-      :where(.lb-attachment-size) {
+      :where(.lb-attachment-description) {
         color: var(--lb-foreground-secondary);
       }
     }

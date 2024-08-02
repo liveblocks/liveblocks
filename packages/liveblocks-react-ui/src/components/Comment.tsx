@@ -59,7 +59,6 @@ import { useRefs } from "../utils/use-refs";
 import { useVisibleCallback } from "../utils/use-visible";
 import { useWindowFocus } from "../utils/use-window-focus";
 import { Composer } from "./Composer";
-import { FileAttachment } from "./internal/Attachment";
 import { Avatar } from "./internal/Avatar";
 import { Button } from "./internal/Button";
 import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
@@ -330,58 +329,6 @@ export const CommentNonInteractiveReaction = forwardRef<
     />
   );
 });
-
-function CommentFileAttachment({
-  // attachment,
-  className,
-  ...props
-}: ComponentPropsWithoutRef<"div">) {
-  // const deleteCommentAttachment = useDeleteCommentAttachment();
-  // TODO: Take into account the locale passed to the Comment
-  const $ = useOverrides();
-
-  // const handleDeleteClick = useCallback(() => {
-  //   deleteAttachment(attachment.id);
-  // }, [attachment.id, deleteAttachment]);
-
-  return (
-    <FileAttachment
-      className={classNames("lb-comment-attachment", className)}
-      {...props}
-      name="image.png"
-      mimeType="image/png"
-      size={300}
-      locale={$.locale}
-      onContentClick={console.log}
-      // onDeleteClick={handleDeleteClick}
-    />
-  );
-}
-
-// function CommentImageAttachment({
-//   className,
-//   ...props
-// }: ComponentPropsWithoutRef<"div">) {
-//   return (
-//     <div
-//       className={classNames(
-//         "lb-attachment lb-image-attachment lb-comment-attachment",
-//         className
-//       )}
-//       {...props}
-//     >
-//       <img
-//         className="lb-image-attachment-image"
-//         alt="image.png"
-//         // src="https://placekitten.com/200/300"
-//       />
-//       <div className="lb-attachment-details">
-//         <span className="lb-attachment-name">image.png</span>
-//         <span className="lb-attachment-size">35.2 KB</span>
-//       </div>
-//     </div>
-//   );
-// }
 
 // A void component (which doesn't render anything) responsible for marking a thread
 // as read when the comment it's used in becomes visible.
@@ -738,12 +685,11 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                     Link: CommentLink,
                   }}
                 />
-                {showAttachments /* && comment.attachments.length > 0 */ ? (
+                {/* {showAttachments && comment.attachments.length > 0 ? (
                   <div className="lb-comment-attachments">
                     <CommentFileAttachment />
-                    <CommentFileAttachment />
                   </div>
-                ) : null}
+                ) : null} */}
                 {showReactions && comment.reactions.length > 0 && (
                   <div className="lb-comment-reactions">
                     {comment.reactions.map((reaction) => (
