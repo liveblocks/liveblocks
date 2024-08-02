@@ -1,5 +1,6 @@
-import { LABELS, RoomWithMetadata } from "@/config";
+import { LABELS, PRIORITY_STATES, RoomWithMetadata } from "@/config";
 import { getUser } from "@/database";
+
 export function IssuesList({
   initialRooms,
 }: {
@@ -82,7 +83,9 @@ export function Row({ room }: { room: RoomWithMetadata }) {
       className="flex h-10 items-center justify-between px-4 text-sm transition-colors hover:bg-neutral-100 border-b"
     >
       <div className="flex gap-2 items-center">
-        <div className="w-12">{priority}</div>
+        <div className="w-20">
+          {PRIORITY_STATES.find((p) => p.id === priority)?.text}
+        </div>
         <div className="font-medium">{title}</div>
       </div>
       <div className="flex gap-3 items-center">

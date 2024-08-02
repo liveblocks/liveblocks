@@ -12,7 +12,7 @@ export function Comments() {
       <ClientSideSuspense
         fallback={
           <>
-            <div className="bg-gray-100 animate-pulse h-[130px] rounded-lg my-6" />
+            <div className="bg-gray-100/80 animate-pulse h-[130px] rounded-lg my-6" />
             {/*<div className="bg-gray-100 animate-pulse h-[130px] rounded-lg my-6" />*/}
           </>
         }
