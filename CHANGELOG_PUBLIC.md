@@ -13,6 +13,10 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
 
+# Week 32 (2024-08-09)
+
+## Contributors
+
 # Week 31 (2024-08-02)
 
 ## Dashboard
