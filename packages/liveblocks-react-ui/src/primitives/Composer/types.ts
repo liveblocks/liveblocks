@@ -2,6 +2,7 @@ import type {
   CommentBody,
   CommentLocalAttachment,
   CommentUploadedAttachment,
+  Resolve,
 } from "@liveblocks/core";
 import type {
   ComponentPropsWithoutRef,
@@ -148,14 +149,35 @@ export interface ComposerAttachmentsDropAreaProps
   disabled?: boolean;
 }
 
-export type ComposerLocalAttachment = CommentLocalAttachment & {
-  error?: Error;
-};
+export type ComposerLocalIdleAttachment = Resolve<
+  CommentLocalAttachment & {
+    status: "idle";
+  }
+>;
 
-export type ComposerUploadedAttachment = CommentUploadedAttachment;
+export type ComposerLocalUploadingAttachment = Resolve<
+  CommentLocalAttachment & {
+    status: "uploading";
+  }
+>;
+
+export type ComposerLocalErrorAttachment = Resolve<
+  CommentLocalAttachment & {
+    status: "error";
+    error: Error;
+  }
+>;
+
+export type ComposerUploadedAttachment = Resolve<
+  CommentUploadedAttachment & {
+    status: "uploaded";
+  }
+>;
 
 export type ComposerAttachment =
-  | ComposerLocalAttachment
+  | ComposerLocalIdleAttachment
+  | ComposerLocalUploadingAttachment
+  | ComposerLocalErrorAttachment
   | ComposerUploadedAttachment;
 
 export interface ComposerSubmitComment {

@@ -12,6 +12,7 @@ export type { ComposerContext } from "./Composer/contexts";
 export { useComposer } from "./Composer/contexts";
 export type {
   ComposerAddAttachmentsProps,
+  ComposerAttachment,
   ComposerAttachmentsDropAreaProps,
   ComposerEditorComponents,
   ComposerEditorLinkProps,

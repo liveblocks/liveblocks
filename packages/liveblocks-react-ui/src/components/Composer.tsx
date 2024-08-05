@@ -40,13 +40,9 @@ import type {
   ComposerEditorMentionProps,
   ComposerEditorMentionSuggestionsProps,
   ComposerEditorProps,
-  ComposerLocalAttachment,
   ComposerSubmitComment,
 } from "../primitives/Composer/types";
-import {
-  isComposerLocalAttachment,
-  useComposerAttachmentsDropArea,
-} from "../primitives/Composer/utils";
+import { useComposerAttachmentsDropArea } from "../primitives/Composer/utils";
 import { MENTION_CHARACTER } from "../slate/plugins/mentions";
 import { classNames } from "../utils/class-names";
 import { useControllableState } from "../utils/use-controllable-state";
@@ -339,15 +335,6 @@ function ComposerFileAttachment({
   const { deleteAttachment } = useComposer();
   // TODO: Take into account the locale passed to the Composer
   const $ = useOverrides();
-  const [error, isUploading] = useMemo(() => {
-    const isLocalAttachment = isComposerLocalAttachment(attachment);
-
-    if (isLocalAttachment) {
-      return [attachment.error, attachment.error ? false : true];
-    } else {
-      return [undefined, false];
-    }
-  }, [attachment]);
 
   const handleDeleteClick = useCallback(() => {
     deleteAttachment(attachment.id);
@@ -360,9 +347,9 @@ function ComposerFileAttachment({
       name={attachment.name}
       mimeType={attachment.mimeType}
       size={attachment.size}
-      file={(attachment as ComposerLocalAttachment).file}
-      isUploading={isUploading}
-      error={error}
+      // file={attachment.file}
+      isUploading={attachment.status === "uploading"}
+      // error={attachment.error}
       locale={$.locale}
       onDeleteClick={handleDeleteClick}
       preventFocusOnDelete

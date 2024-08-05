@@ -1,11 +1,17 @@
 import type { Placement } from "@floating-ui/react-dom";
-import type {
-  CommentBody,
-  CommentBodyLink,
-  CommentBodyMention,
+import {
+  type CommentAttachment,
+  type CommentBody,
+  type CommentBodyLink,
+  type CommentBodyMention,
+  type CommentUploadedAttachment,
+  makeEventSource,
+  type Room,
 } from "@liveblocks/core";
+import { useRoom } from "@liveblocks/react";
 import type { DragEvent } from "react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
 import { isComposerBodyAutoLink } from "../../slate/plugins/auto-links";
 import { isComposerBodyCustomLink } from "../../slate/plugins/custom-links";
@@ -20,16 +26,13 @@ import type {
   Direction,
 } from "../../types";
 import { exists } from "../../utils/exists";
+import { useInitial } from "../../utils/use-initial";
 import {
   isCommentBodyLink,
   isCommentBodyMention,
   isCommentBodyText,
 } from "../Comment/utils";
-import type {
-  ComposerAttachment,
-  ComposerLocalAttachment,
-  SuggestionsPosition,
-} from "./types";
+import type { ComposerAttachment, SuggestionsPosition } from "./types";
 
 export function composerBodyMentionToCommentBodyMention(
   mention: ComposerBodyMention
@@ -298,8 +301,134 @@ export function useComposerAttachmentsDropArea<
   ] as const;
 }
 
-export function isComposerLocalAttachment(
-  attachment: ComposerAttachment
-): attachment is ComposerLocalAttachment {
-  return (attachment as ComposerLocalAttachment).file !== undefined;
+function createComposerAttachmentsManager(
+  defaultAttachments: CommentUploadedAttachment[],
+  uploadAttachment: Room["uploadAttachment"]
+) {
+  const attachments: Map<string, ComposerAttachment> = new Map();
+  const abortControllers: Map<string, AbortController> = new Map();
+  const eventSource = makeEventSource<void>();
+  let cachedSnapshot: ComposerAttachment[] | null = null;
+
+  function setAttachment(attachment: ComposerAttachment) {
+    attachments.set(attachment.id, attachment);
+
+    // Invalidate the cached snapshot
+    cachedSnapshot = null;
+    eventSource.notify();
+  }
+
+  function addAttachment(attachment: CommentAttachment) {
+    if (attachment.file) {
+      const abortController = new AbortController();
+      abortControllers.set(attachment.id, abortController);
+
+      setAttachment({
+        ...attachment,
+        status: "uploading",
+      });
+
+      // Start uploading the attachment immediately
+      uploadAttachment(attachment, {
+        signal: abortController.signal,
+      })
+        .then((uploadedAttachment) => {
+          setAttachment({
+            ...uploadedAttachment,
+            status: "uploaded",
+          });
+        })
+        .catch((error) => {
+          if (error instanceof Error && error.name !== "AbortError") {
+            setAttachment({
+              ...attachment,
+              status: "error",
+              error,
+            });
+          }
+        });
+    } else {
+      // The attachment is already uploaded
+      setAttachment({
+        ...attachment,
+        status: "uploaded",
+      });
+    }
+  }
+
+  function deleteAttachment(attachmentId: string) {
+    const abortController = abortControllers.get(attachmentId);
+
+    abortController?.abort();
+
+    attachments.delete(attachmentId);
+    abortControllers.delete(attachmentId);
+
+    // Invalidate the cached snapshot
+    cachedSnapshot = null;
+    eventSource.notify();
+  }
+
+  function getSnapshot() {
+    if (!cachedSnapshot) {
+      cachedSnapshot = Array.from(attachments.values());
+    }
+
+    return cachedSnapshot;
+  }
+
+  function clear() {
+    abortControllers.forEach((controller) => controller.abort());
+    abortControllers.clear();
+    eventSource.clear();
+    attachments.clear();
+
+    // Invalidate the cached snapshot
+    cachedSnapshot = null;
+  }
+
+  // Initialize with default attachments
+  defaultAttachments.forEach(addAttachment);
+
+  return {
+    addAttachment,
+    deleteAttachment,
+    getSnapshot,
+    subscribe: eventSource.subscribe,
+    clear,
+  };
+}
+
+export function useComposerAttachmentsManager(
+  defaultAttachments: CommentUploadedAttachment[]
+) {
+  const room = useRoom();
+  const attachmentsManager = useInitial(() =>
+    createComposerAttachmentsManager(defaultAttachments, room.uploadAttachment)
+  );
+
+  useEffect(() => {
+    // TODO: Handle changing rooms?
+    // attachmentsManager.uploadAttachment = room.uploadAttachment;
+
+    return () => {
+      attachmentsManager.clear();
+    };
+  }, [attachmentsManager, room]);
+
+  const attachments = useSyncExternalStore(
+    attachmentsManager.subscribe,
+    attachmentsManager.getSnapshot
+  );
+
+  const isUploadingAttachments = useMemo(() => {
+    return attachments.some((attachment) => attachment.status === "uploading");
+  }, [attachments]);
+
+  return {
+    attachments,
+    isUploadingAttachments,
+    addAttachment: attachmentsManager.addAttachment,
+    deleteAttachment: attachmentsManager.deleteAttachment,
+  };
 }

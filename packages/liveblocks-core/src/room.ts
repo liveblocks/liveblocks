@@ -1615,17 +1615,6 @@ function createCommentsApi<M extends BaseMetadata>(
     };
   }
 
-  class AbortError extends Error {
-    constructor() {
-      super();
-      this.name = "AbortError";
-    }
-  }
-
-  function isAbortError(error: unknown) {
-    return (error as Error)?.name && (error as Error).name === "AbortError";
-  }
-
   async function uploadAttachment(
     attachment: CommentLocalAttachment,
     options: UploadAttachmentOptions = {}
@@ -1633,7 +1622,12 @@ function createCommentsApi<M extends BaseMetadata>(
     // TODO: Single-part or multi-part upload based on file size
 
     const abortSignal = options.signal;
-    const abortError = abortSignal ? new AbortError() : undefined;
+    const abortError = abortSignal
+      ? new DOMException(
+          `Upload of attachment ${attachment.id} was aborted.`,
+          "AbortError"
+        )
+      : undefined;
 
     if (abortSignal?.aborted) {
       throw abortError;
@@ -1666,7 +1660,7 @@ function createCommentsApi<M extends BaseMetadata>(
         mimeType: attachment.mimeType,
       };
     } catch (error) {
-      if (isAbortError(error)) {
+      if ((error as Error)?.name && (error as Error).name === "AbortError") {
         // TODO: Clean up?
       }
 

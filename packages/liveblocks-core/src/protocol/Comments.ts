@@ -22,7 +22,9 @@ type CommentAttachmentShared = {
   mimeType: string;
 };
 
-export type CommentUploadedAttachment = Resolve<CommentAttachmentShared>;
+export type CommentUploadedAttachment = Resolve<
+  CommentAttachmentShared & { file?: never }
+>;
 
 export type CommentLocalAttachment = Resolve<
   CommentAttachmentShared & {

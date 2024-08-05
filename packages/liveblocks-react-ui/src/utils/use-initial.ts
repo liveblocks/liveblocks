@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useState } from "react";
 
 /**
  * "Freezes" a given value, so that it will return the same value/instance on
@@ -7,5 +7,7 @@ import { useRef } from "react";
  * `useRef(initialValue)` works.
  */
 export function useInitial<T>(value: T | (() => T)): T {
-  return useRef(value instanceof Function ? value() : value).current;
+  const [initialValue] = useState(value);
+
+  return initialValue;
 }

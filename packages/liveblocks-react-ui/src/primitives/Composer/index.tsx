@@ -107,7 +107,6 @@ import {
 } from "./contexts";
 import type {
   ComposerAddAttachmentsProps,
-  ComposerAttachment,
   ComposerAttachmentsDropAreaProps,
   ComposerEditorComponents,
   ComposerEditorElementProps,
@@ -117,13 +116,11 @@ import type {
   ComposerEditorProps,
   ComposerFormProps,
   ComposerLinkProps,
-  ComposerLocalAttachment,
   ComposerMentionProps,
   ComposerSubmitProps,
   ComposerSuggestionsListItemProps,
   ComposerSuggestionsListProps,
   ComposerSuggestionsProps,
-  ComposerUploadedAttachment,
   SuggestionsPosition,
 } from "./types";
 import {
@@ -132,8 +129,8 @@ import {
   getAcceptedFilesFromFileList,
   getPlacementFromPosition,
   getSideAndAlignFromPlacement,
-  isComposerLocalAttachment,
   useComposerAttachmentsDropArea,
+  useComposerAttachmentsManager,
 } from "./utils";
 
 const MENTION_SUGGESTIONS_POSITION: SuggestionsPosition = "top";
@@ -936,39 +933,6 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
   }
 );
 
-function ComposerAttachmentUploadHandler({
-  attachment,
-  onAttachmentUpload,
-  onAttachmentUploadError,
-}: {
-  attachment: ComposerLocalAttachment;
-  onAttachmentUpload: (attachment: ComposerUploadedAttachment) => void;
-  onAttachmentUploadError: (attachment: ComposerLocalAttachment) => void;
-}) {
-  const room = useRoom();
-
-  useEffect(() => {
-    const abortController = new AbortController();
-
-    room
-      .uploadAttachment(attachment, { signal: abortController.signal })
-      .then((attachment) => {
-        onAttachmentUpload(attachment);
-      })
-      .catch((error: Error) => {
-        if (!abortController.signal.aborted) {
-          onAttachmentUploadError({ ...attachment, error });
-        }
-      });
-
-    return () => {
-      abortController.abort();
-    };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  return null;
-}
-
 /**
  * Surrounds the composer's content and handles submissions.
  *
@@ -988,13 +952,13 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const room = useRoom();
     const [isEmpty, setEmpty] = useState(true);
     const [isFocused, setFocused] = useState(false);
-    const [attachments, setAttachments] = useState<ComposerAttachment[]>([]);
-    const uploadingAttachments = useMemo(() => {
-      return attachments.filter(
-        (attachment) =>
-          isComposerLocalAttachment(attachment) && !attachment.error
-      ) as ComposerLocalAttachment[];
-    }, [attachments]);
+    // TODO: Pass defaultAttachments from props instead of []
+    const {
+      attachments,
+      isUploadingAttachments,
+      addAttachment,
+      deleteAttachment,
+    } = useComposerAttachmentsManager([]);
     const ref = useRef<HTMLFormElement>(null);
     const mergedRefs = useRefs(forwardedRef, ref);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1074,20 +1038,13 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 
     const createAttachments = useCallback(
       (files: File[]) => {
-        const localAttachments = files.map((file) =>
-          room.prepareAttachment(file)
-        );
-
-        setAttachments((attachments) => [...attachments, ...localAttachments]);
+        for (const file of files) {
+          const attachment = room.prepareAttachment(file);
+          addAttachment(attachment);
+        }
       },
-      [room]
+      [room, addAttachment]
     );
-
-    const deleteAttachment = useCallback((attachmentId: string) => {
-      setAttachments((attachments) =>
-        attachments.filter((attachment) => attachment.id !== attachmentId)
-      );
-    }, []);
 
     const handleAttachmentsInputChange = useCallback(
       (event: ChangeEvent<HTMLInputElement>) => {
@@ -1128,9 +1085,9 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
         const body = composerBodyToCommentBody(
           editor.children as ComposerBodyData
         );
-        // Filter out local attachments (errored or for some reason still uploading)
+        // Only uploaded attachments are included to be submitted.
         const attachmentIds = attachments
-          .filter((attachment) => !isComposerLocalAttachment(attachment))
+          .filter((attachment) => attachment.status === "uploaded")
           .map((attachment) => attachment.id);
 
         const comment = { body, attachmentIds };
@@ -1160,7 +1117,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
         <ComposerAttachmentsContext.Provider
           value={{
             createAttachments,
-            hasUploadingAttachments: uploadingAttachments.length > 0,
+            isUploadingAttachments,
           }}
         >
           <ComposerContext.Provider
@@ -1179,30 +1136,6 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
               deleteAttachment,
             }}
           >
-            {uploadingAttachments.map((attachment) => (
-              <ComposerAttachmentUploadHandler
-                key={attachment.id}
-                attachment={attachment}
-                onAttachmentUpload={(uploadedAttachment) => {
-                  setAttachments((attachments) =>
-                    attachments.map((attachment) =>
-                      attachment.id === uploadedAttachment.id
-                        ? uploadedAttachment
-                        : attachment
-                    )
-                  );
-                }}
-                onAttachmentUploadError={(erroredAttachment) => {
-                  setAttachments((attachments) =>
-                    attachments.map((attachment) =>
-                      attachment.id === erroredAttachment.id
-                        ? erroredAttachment
-                        : attachment
-                    )
-                  );
-                }}
-              />
-            ))}
             <Component {...props} onSubmit={handleSubmit} ref={mergedRefs}>
               <input
                 type="file"
@@ -1230,12 +1163,12 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 const ComposerSubmit = forwardRef<HTMLButtonElement, ComposerSubmitProps>(
   ({ children, disabled, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "button";
-    const { hasUploadingAttachments } = useComposerAttachmentsContext();
+    const { isUploadingAttachments } = useComposerAttachmentsContext();
     const { isEmpty } = useComposer();
     const self = useSelf();
     const isDisabled = useMemo(
-      () => disabled || isEmpty || hasUploadingAttachments || !self?.canComment,
-      [disabled, isEmpty, hasUploadingAttachments, self?.canComment]
+      () => disabled || isEmpty || isUploadingAttachments || !self?.canComment,
+      [disabled, isEmpty, isUploadingAttachments, self?.canComment]
     );
 
     return (
