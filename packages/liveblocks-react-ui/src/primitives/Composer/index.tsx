@@ -768,9 +768,13 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
           }
 
           // Submit the editor on Enter
-          if (isKey(event, "Enter", { shift: false }) && canSubmit) {
+          if (isKey(event, "Enter", { shift: false })) {
+            // Even if submitting is not possible, don't do anything else on Enter. (e.g. creating a new line)
             event.preventDefault();
-            submit();
+
+            if (canSubmit) {
+              submit();
+            }
           }
 
           // Create a new line on Shift + Enter
