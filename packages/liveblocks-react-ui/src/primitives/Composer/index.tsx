@@ -965,6 +965,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       isUploadingAttachments,
       addAttachment,
       deleteAttachment,
+      clearAttachments,
     } = useComposerAttachmentsManager([]);
     const isDisabled = useMemo(() => {
       const self = room.getSelf();
@@ -1078,7 +1079,8 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const onSubmitEnd = useCallback(() => {
       clear();
       blur();
-    }, [blur, clear]);
+      clearAttachments();
+    }, [blur, clear, clearAttachments]);
 
     const handleSubmit = useCallback(
       (event: FormEvent<HTMLFormElement>) => {

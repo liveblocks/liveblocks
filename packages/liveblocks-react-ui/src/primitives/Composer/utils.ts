@@ -310,12 +310,16 @@ function createComposerAttachmentsManager(
   const eventSource = makeEventSource<void>();
   let cachedSnapshot: ComposerAttachment[] | null = null;
 
-  function setAttachment(attachment: ComposerAttachment) {
-    attachments.set(attachment.id, attachment);
-
+  function notifySubscribers() {
     // Invalidate the cached snapshot
     cachedSnapshot = null;
     eventSource.notify();
+  }
+
+  function setAttachment(attachment: ComposerAttachment) {
+    attachments.set(attachment.id, attachment);
+
+    notifySubscribers();
   }
 
   function addAttachment(attachment: CommentAttachment) {
@@ -366,9 +370,7 @@ function createComposerAttachmentsManager(
     attachments.delete(attachmentId);
     abortControllers.delete(attachmentId);
 
-    // Invalidate the cached snapshot
-    cachedSnapshot = null;
-    eventSource.notify();
+    notifySubscribers();
   }
 
   function getSnapshot() {
@@ -385,8 +387,7 @@ function createComposerAttachmentsManager(
     eventSource.clear();
     attachments.clear();
 
-    // Invalidate the cached snapshot
-    cachedSnapshot = null;
+    notifySubscribers();
   }
 
   // Initialize with default attachments
@@ -429,5 +430,6 @@ export function useComposerAttachmentsManager(
     isUploadingAttachments,
     addAttachment: frozenAttachmentsManager.addAttachment,
     deleteAttachment: frozenAttachmentsManager.deleteAttachment,
+    clearAttachments: frozenAttachmentsManager.clear,
   };
 }
