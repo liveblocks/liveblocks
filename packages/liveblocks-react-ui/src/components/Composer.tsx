@@ -7,7 +7,6 @@ import {
   useCreateComment,
   useCreateThread,
   useEditComment,
-  useSelf,
 } from "@liveblocks/react";
 import type {
   ComponentPropsWithoutRef,
@@ -20,7 +19,7 @@ import type {
   RefAttributes,
   SyntheticEvent,
 } from "react";
-import React, { forwardRef, useCallback, useMemo, useRef } from "react";
+import React, { forwardRef, useCallback, useRef } from "react";
 
 import { AttachmentIcon } from "../icons/Attachment";
 import { EmojiIcon } from "../icons/Emoji";
@@ -40,6 +39,7 @@ import type {
   ComposerEditorMentionProps,
   ComposerEditorMentionSuggestionsProps,
   ComposerEditorProps,
+  ComposerFormProps,
   ComposerSubmitComment,
 } from "../primitives/Composer/types";
 import { useComposerAttachmentsDropArea } from "../primitives/Composer/utils";
@@ -146,7 +146,7 @@ export type ComposerProps<M extends BaseMetadata = DM> = Omit<
     /**
      * Whether the composer is disabled.
      */
-    disabled?: ComposerEditorProps["disabled"];
+    disabled?: ComposerFormProps["disabled"];
 
     /**
      * Whether to focus the composer on mount.
@@ -178,8 +178,8 @@ interface ComposerEditorContainerProps
     | "overrides"
     | "actions"
     | "autoFocus"
+    | "disabled"
   > {
-  isDisabled: boolean;
   isCollapsed: boolean | undefined;
   onEmptyChange: (isEmpty: boolean) => void;
   hasResolveMentionSuggestions: boolean;
@@ -391,7 +391,7 @@ function ComposerEditorContainer({
   showAttachments = true,
   showAttribution,
   defaultValue,
-  isDisabled,
+  disabled,
   isCollapsed,
   overrides,
   actions,
@@ -402,7 +402,8 @@ function ComposerEditorContainer({
   onEditorClick,
 }: ComposerEditorContainerProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const { isEmpty } = useComposer();
+  const { isDisabled: isComposerDisabled, isEmpty } = useComposer();
+  const isDisabled = disabled || isComposerDisabled;
   const $ = useOverrides(overrides);
   const { createAttachments } = useComposerAttachmentsContext();
   const ignoreDropAreaLeaveEvent = useCallback(
@@ -541,11 +542,6 @@ export const Composer = forwardRef(
     const editComment = useEditComment();
     const hasResolveMentionSuggestions =
       client[kInternal].resolveMentionSuggestions !== undefined;
-    const self = useSelf();
-    const isDisabled = useMemo(
-      () => disabled || !self?.canComment,
-      [disabled, self?.canComment]
-    );
     const isEmptyRef = useRef(true);
     const isEmojiPickerOpenRef = useRef(false);
     const $ = useOverrides(overrides);
@@ -668,7 +664,7 @@ export const Composer = forwardRef(
             defaultValue={defaultValue}
             actions={actions}
             overrides={overrides}
-            isDisabled={isDisabled}
+            disabled={disabled}
             isCollapsed={isCollapsed}
             showAttachments={showAttachments}
             showAttribution={showAttribution}

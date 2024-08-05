@@ -9,6 +9,16 @@ import type { ComposerAttachment } from "./types";
 
 export type ComposerContext = {
   /**
+   * Whether the composer is currently disabled.
+   */
+  isDisabled: boolean;
+
+  /**
+   * Whether the composer can currently submit.
+   */
+  canSubmit: boolean;
+
+  /**
    * Whether the editor is currently focused.
    */
   isFocused: boolean;

@@ -138,6 +138,11 @@ export interface ComposerFormProps extends ComponentPropsWithSlot<"form"> {
     comment: ComposerSubmitComment,
     event: FormEvent<HTMLFormElement>
   ) => Promise<void> | void;
+
+  /**
+   * Whether the composer is disabled.
+   */
+  disabled?: boolean;
 }
 
 export type ComposerSubmitProps = ComponentPropsWithSlot<"button">;

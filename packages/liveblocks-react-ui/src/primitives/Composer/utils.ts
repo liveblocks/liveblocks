@@ -6,7 +6,7 @@ import {
   type CommentBodyMention,
   type CommentUploadedAttachment,
   makeEventSource,
-  type Room,
+  type OpaqueRoom,
 } from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
 import type { DragEvent } from "react";
@@ -303,7 +303,7 @@ export function useComposerAttachmentsDropArea<
 
 function createComposerAttachmentsManager(
   defaultAttachments: CommentUploadedAttachment[],
-  uploadAttachment: Room["uploadAttachment"]
+  room: OpaqueRoom
 ) {
   const attachments: Map<string, ComposerAttachment> = new Map();
   const abortControllers: Map<string, AbortController> = new Map();
@@ -329,9 +329,11 @@ function createComposerAttachmentsManager(
       });
 
       // Start uploading the attachment immediately
-      uploadAttachment(attachment, {
-        signal: abortController.signal,
-      })
+      // TODO: Queue uploads and keep them in "idle" state until they actually start uploading?
+      room
+        .uploadAttachment(attachment, {
+          signal: abortController.signal,
+        })
         .then((uploadedAttachment) => {
           setAttachment({
             ...uploadedAttachment,
@@ -403,22 +405,19 @@ export function useComposerAttachmentsManager(
   defaultAttachments: CommentUploadedAttachment[]
 ) {
   const room = useRoom();
-  const attachmentsManager = useInitial(() =>
-    createComposerAttachmentsManager(defaultAttachments, room.uploadAttachment)
+  const frozenAttachmentsManager = useInitial(() =>
+    createComposerAttachmentsManager(defaultAttachments, room)
   );
 
   useEffect(() => {
-    // TODO: Handle changing rooms?
-    // attachmentsManager.uploadAttachment = room.uploadAttachment;
-
     return () => {
-      attachmentsManager.clear();
+      frozenAttachmentsManager.clear();
     };
-  }, [attachmentsManager, room]);
+  }, [frozenAttachmentsManager]);
 
   const attachments = useSyncExternalStore(
-    attachmentsManager.subscribe,
-    attachmentsManager.getSnapshot
+    frozenAttachmentsManager.subscribe,
+    frozenAttachmentsManager.getSnapshot
   );
 
   const isUploadingAttachments = useMemo(() => {
@@ -428,7 +427,7 @@ export function useComposerAttachmentsManager(
   return {
     attachments,
     isUploadingAttachments,
-    addAttachment: attachmentsManager.addAttachment,
-    deleteAttachment: attachmentsManager.deleteAttachment,
+    addAttachment: frozenAttachmentsManager.addAttachment,
+    deleteAttachment: frozenAttachmentsManager.deleteAttachment,
   };
 }

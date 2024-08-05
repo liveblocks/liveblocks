@@ -14,7 +14,7 @@ import {
   useFloating,
 } from "@floating-ui/react-dom";
 import type { CommentBody } from "@liveblocks/core";
-import { useRoom, useSelf } from "@liveblocks/react";
+import { useRoom } from "@liveblocks/react";
 import { Slot, Slottable } from "@radix-ui/react-slot";
 import type {
   AriaAttributes,
@@ -646,13 +646,16 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     },
     forwardedRef
   ) => {
-    const self = useSelf();
-    const isDisabled = useMemo(
-      () => disabled || !self?.canComment,
-      [disabled, self?.canComment]
-    );
     const { editor, validate, setFocused } = useComposerEditorContext();
-    const { submit, focus, select, isEmpty, isFocused } = useComposer();
+    const {
+      submit,
+      focus,
+      select,
+      canSubmit,
+      isDisabled: isComposerDisabled,
+      isFocused,
+    } = useComposer();
+    const isDisabled = isComposerDisabled || disabled;
     const initialBody = useInitial(defaultValue ?? emptyCommentBody);
     const initialEditorValue = useMemo(() => {
       return commentBodyToComposerBody(initialBody);
@@ -765,7 +768,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
           }
 
           // Submit the editor on Enter
-          if (isKey(event, "Enter", { shift: false }) && !isEmpty) {
+          if (isKey(event, "Enter", { shift: false }) && canSubmit) {
             event.preventDefault();
             submit();
           }
@@ -804,7 +807,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       [
         createMention,
         editor,
-        isEmpty,
+        canSubmit,
         mentionDraft,
         mentionSuggestions,
         selectedMentionSuggestionIndex,
@@ -944,7 +947,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
  */
 const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
   (
-    { children, onSubmit, onComposerSubmit, asChild, ...props },
+    { children, onSubmit, onComposerSubmit, disabled, asChild, ...props },
     forwardedRef
   ) => {
     const Component = asChild ? Slot : "form";
@@ -959,6 +962,15 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       addAttachment,
       deleteAttachment,
     } = useComposerAttachmentsManager([]);
+    const isDisabled = useMemo(() => {
+      const self = room.getSelf();
+      const canComment = self?.canComment ?? true;
+
+      return disabled || !canComment;
+    }, [disabled, room]);
+    const canSubmit = useMemo(() => {
+      return !isEmpty && !isUploadingAttachments;
+    }, [isEmpty, isUploadingAttachments]);
     const ref = useRef<HTMLFormElement>(null);
     const mergedRefs = useRefs(forwardedRef, ref);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -973,6 +985,10 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     );
 
     const submit = useCallback(() => {
+      if (!canSubmit) {
+        return;
+      }
+
       // We need to wait for the next frame in some cases like when composing diacritics,
       // we want any native handling to be done first while still being handled on `keydown`.
       requestAnimationFrame(() => {
@@ -980,7 +996,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
           requestSubmit(ref.current);
         }
       });
-    }, []);
+    }, [canSubmit]);
 
     const clear = useCallback(() => {
       SlateTransforms.delete(editor, {
@@ -1122,8 +1138,10 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
         >
           <ComposerContext.Provider
             value={{
+              isDisabled,
               isFocused,
               isEmpty,
+              canSubmit,
               submit,
               clear,
               select,
@@ -1163,13 +1181,8 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 const ComposerSubmit = forwardRef<HTMLButtonElement, ComposerSubmitProps>(
   ({ children, disabled, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "button";
-    const { isUploadingAttachments } = useComposerAttachmentsContext();
-    const { isEmpty } = useComposer();
-    const self = useSelf();
-    const isDisabled = useMemo(
-      () => disabled || isEmpty || isUploadingAttachments || !self?.canComment,
-      [disabled, isEmpty, isUploadingAttachments, self?.canComment]
-    );
+    const { canSubmit, isDisabled: isComposerDisabled } = useComposer();
+    const isDisabled = isComposerDisabled || disabled || !canSubmit;
 
     return (
       <Component
@@ -1193,9 +1206,10 @@ const ComposerSubmit = forwardRef<HTMLButtonElement, ComposerSubmitProps>(
 const ComposerAddAttachments = forwardRef<
   HTMLButtonElement,
   ComposerAddAttachmentsProps
->(({ children, onClick, asChild, ...props }, forwardedRef) => {
+>(({ children, onClick, disabled, asChild, ...props }, forwardedRef) => {
   const Component = asChild ? Slot : "button";
-  const { addAttachments } = useComposer();
+  const { isDisabled: isComposerDisabled, addAttachments } = useComposer();
+  const isDisabled = isComposerDisabled || disabled;
 
   const handleClick = useCallback(
     (event: MouseEvent<HTMLButtonElement>) => {
@@ -1209,7 +1223,12 @@ const ComposerAddAttachments = forwardRef<
   );
 
   return (
-    <Component {...props} onClick={handleClick} ref={forwardedRef}>
+    <Component
+      {...props}
+      onClick={handleClick}
+      ref={forwardedRef}
+      disabled={isDisabled}
+    >
       {children}
     </Component>
   );
@@ -1235,6 +1254,8 @@ const ComposerAttachmentsDropArea = forwardRef<
     forwardedRef
   ) => {
     const Component = asChild ? Slot : "div";
+    const { isDisabled: isComposerDisabled } = useComposer();
+    const isDisabled = isComposerDisabled || disabled;
     const { createAttachments } = useComposerAttachmentsContext();
     const [, dropAreaProps] = useComposerAttachmentsDropArea({
       onDragEnter,
@@ -1242,13 +1263,13 @@ const ComposerAttachmentsDropArea = forwardRef<
       onDragOver,
       onDrop,
       handleFiles: createAttachments,
-      disabled,
+      disabled: isDisabled,
     });
 
     return (
       <Component
         {...dropAreaProps}
-        data-disabled={disabled ? "" : undefined}
+        data-disabled={isDisabled ? "" : undefined}
         {...props}
         ref={forwardedRef}
       />
