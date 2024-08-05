@@ -1,26 +1,23 @@
+import type { CommentAttachment } from "@liveblocks/core";
 import type {
   ComponentPropsWithoutRef,
   MouseEventHandler,
   PointerEvent,
 } from "react";
-import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
+import React, { memo, useCallback, useMemo } from "react";
 
-import { FLOATING_ELEMENT_SIDE_OFFSET } from "../../constants";
 import { CrossIcon } from "../../icons/Cross";
 import { SpinnerIcon } from "../../icons/Spinner";
+import type { ComposerAttachment } from "../../primitives";
 import { classNames } from "../../utils/class-names";
 import { formatFileSize } from "../../utils/format-file-size";
 import { Tooltip } from "./Tooltip";
 
 interface FileAttachmentProps extends ComponentPropsWithoutRef<"div"> {
-  name: string;
-  mimeType: string;
-  size: number;
-  isUploading: boolean;
-  error?: Error;
-  file?: File;
+  attachment: CommentAttachment | ComposerAttachment;
   onContentClick?: MouseEventHandler<HTMLButtonElement>;
   onDeleteClick?: MouseEventHandler<HTMLButtonElement>;
+  deleteLabel?: string;
   preventFocusOnDelete?: boolean;
   locale?: string;
 }
@@ -111,40 +108,22 @@ const FileAttachmentIcon = memo(({ mimeType }: { mimeType: string }) => {
   );
 });
 
-function FileAttachmentPreview({ file }: { file: File }) {
-  const [objectUrl, setObjectUrl] = useState<string | undefined>();
-
-  useEffect(() => {
-    const objectUrl = URL.createObjectURL(file);
-    setObjectUrl(objectUrl);
-
-    return () => {
-      URL.revokeObjectURL(objectUrl);
-    };
-  }, [file]);
-
-  console.log("test");
-
-  return objectUrl ? <img src={objectUrl} /> : null;
-}
-
 export function FileAttachment({
-  name,
-  mimeType,
-  size,
-  file,
-  isUploading,
-  error,
+  attachment,
   onContentClick,
   onDeleteClick,
+  deleteLabel,
   preventFocusOnDelete,
   locale,
   className,
   ...props
 }: FileAttachmentProps) {
   const formattedFileSize = useMemo(() => {
-    return formatFileSize(size, locale);
-  }, [size, locale]);
+    return formatFileSize(attachment.size, locale);
+  }, [attachment.size, locale]);
+  const error = "error" in attachment ? attachment.error : undefined;
+  const isUploading =
+    "status" in attachment && attachment.status === "uploading";
 
   const handleDeletePointerDown = useCallback(
     (event: PointerEvent<HTMLButtonElement>) => {
@@ -162,45 +141,39 @@ export function FileAttachment({
       data-uploading={isUploading ? "" : undefined}
       {...props}
     >
-      <Tooltip
-        content={name}
-        multiline
-        // Take into account the delete button
-        sideOffset={FLOATING_ELEMENT_SIDE_OFFSET + 6}
+      <button
+        className="lb-attachment-content"
+        onClick={onContentClick}
+        tabIndex={onContentClick ? undefined : -1}
       >
-        <button
-          className="lb-attachment-content"
-          onClick={onContentClick}
-          tabIndex={onContentClick ? undefined : -1}
-        >
-          <div className="lb-attachment-preview">
-            <FileAttachmentIcon mimeType={mimeType} />
-            {file && mimeType.startsWith("image/") && (
-              <FileAttachmentPreview file={file} />
-            )}
-          </div>
-          <div className="lb-attachment-details">
-            <span className="lb-attachment-name">{name}</span>
-            <span className="lb-attachment-description">
-              {error ? error.message : formattedFileSize}
-            </span>
-          </div>
-        </button>
-      </Tooltip>
-      {isUploading && (
-        <div className="lb-attachment-corner lb-attachment-uploading">
-          <SpinnerIcon />
+        <div className="lb-attachment-preview">
+          {isUploading ? (
+            <SpinnerIcon />
+          ) : error ? (
+            <div>error icon</div>
+          ) : (
+            <FileAttachmentIcon mimeType={attachment.mimeType} />
+          )}
         </div>
-      )}
-      {onDeleteClick && (
-        // TODO: Use $.DELETE_ATTACHMENT
-        <Tooltip content="Delete attachment">
+        <div className="lb-attachment-details">
+          <span className="lb-attachment-name" title={attachment.name}>
+            {attachment.name}
+          </span>
+          <span
+            className="lb-attachment-description"
+            title={error ? error.message : undefined}
+          >
+            {error ? error.message : formattedFileSize}
+          </span>
+        </div>
+      </button>
+      {onDeleteClick && deleteLabel && (
+        <Tooltip content={deleteLabel}>
           <button
-            className="lb-attachment-corner lb-attachment-delete"
+            className="lb-attachment-delete"
             onClick={onDeleteClick}
             onPointerDown={handleDeletePointerDown}
-            // TODO: Use $.DELETE_ATTACHMENT
-            aria-label="Delete attachment"
+            aria-label={deleteLabel}
           >
             <CrossIcon />
           </button>

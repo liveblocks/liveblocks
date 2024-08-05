@@ -323,7 +323,7 @@ function createComposerAttachmentsManager(
   }
 
   function addAttachment(attachment: CommentAttachment) {
-    if (attachment.file) {
+    if ("file" in attachment) {
       const abortController = new AbortController();
       abortControllers.set(attachment.id, abortController);
 

@@ -689,11 +689,9 @@
 }
 
 .lb-composer-attachments {
-  @include invisible-scrollbar;
-
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: calc(0.75 * var(--lb-spacing));
-  overflow: auto;
   padding-inline: var(--lb-spacing);
   padding-block-start: calc(0.75 * var(--lb-spacing));
   padding-block-end: var(--lb-spacing);
@@ -962,7 +960,7 @@
     min-block-size: calc(var(--lb-comment-avatar-size) + var(--lb-spacing));
   }
 
-  &:where(:first-of-type) {
+  &:where(:first-of-type, [data-editing]) {
     padding-block-start: var(--lb-spacing);
 
     &:where(.lb-comment\:indent-content) {
@@ -972,7 +970,7 @@
     }
   }
 
-  &:where(:last-of-type) {
+  &:where(:last-of-type, [data-editing]) {
     padding-block-end: var(--lb-spacing);
 
     &:where(.lb-comment\:indent-content) {
@@ -1041,6 +1039,7 @@
 
 .lb-attachment {
   position: relative;
+  min-inline-size: 0;
 }
 
 .lb-attachment-content,
@@ -1049,7 +1048,7 @@
 }
 
 .lb-attachment-content {
-  max-inline-size: 100%;
+  inline-size: 100%;
   border-radius: var(--lb-radius);
   background: var(--lb-dynamic-background);
   box-shadow: inset 0 0 0 1px var(--lb-foreground-subtle);
@@ -1065,7 +1064,7 @@
   }
 }
 
-.lb-attachment-corner {
+.lb-attachment-delete {
   position: absolute;
   inset-inline-end: -0.35rem;
   inset-block-start: -0.35rem;
@@ -1075,21 +1074,10 @@
   align-items: center;
   inline-size: 1.1rem;
   block-size: 1.1rem;
-}
-
-.lb-attachment-uploading,
-.lb-attachment-delete {
   border-radius: 50%;
   background: var(--lb-foreground-subtle);
   color: var(--lb-foreground-secondary);
   box-shadow: 0 0 0 2px var(--lb-dynamic-background);
-
-  :where(.lb-icon) {
-    inline-size: 0.75rem;
-  }
-}
-
-.lb-attachment-delete {
   opacity: 0;
 
   /* Invisibly increase the button's hit target size */
@@ -1109,14 +1097,18 @@
   :where(.lb-attachment:focus-within, .lb-attachment:hover) & {
     opacity: 1;
   }
+
+  :where(.lb-icon) {
+    inline-size: 0.75rem;
+  }
 }
 
 .lb-file-attachment {
   :where(.lb-attachment-content) {
     display: flex;
-    gap: calc(0.65 * var(--lb-spacing));
-    inline-size: max-content;
+    gap: calc(0.6 * var(--lb-spacing));
     padding: calc(0.5 * var(--lb-spacing));
+    padding-inline-end: calc(0.6 * var(--lb-spacing));
   }
 
   :where(.lb-attachment-preview) {
@@ -1176,10 +1168,8 @@
     gap: calc(0.25 * var(--lb-spacing));
     justify-content: center;
     min-inline-size: 0;
-    max-inline-size: 200px;
     margin-inline-end: calc(0.15 * var(--lb-spacing));
     font-size: 0.875em;
-    pointer-events: none;
   }
 
   :where(.lb-attachment-name),

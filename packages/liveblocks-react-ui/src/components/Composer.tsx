@@ -325,16 +325,23 @@ function ComposerLink({ href, children }: ComposerEditorLinkProps) {
   );
 }
 
+interface ComposerAttachmentsProps extends ComponentPropsWithoutRef<"div"> {
+  overrides?: Partial<GlobalOverrides & ComposerOverrides>;
+}
+
+interface ComposerFileAttachmentProps extends ComponentPropsWithoutRef<"div"> {
+  attachment: ComposerAttachment;
+  overrides?: Partial<GlobalOverrides & ComposerOverrides>;
+}
+
 function ComposerFileAttachment({
   attachment,
   className,
+  overrides,
   ...props
-}: ComponentPropsWithoutRef<"div"> & {
-  attachment: ComposerAttachment;
-}) {
+}: ComposerFileAttachmentProps) {
   const { deleteAttachment } = useComposer();
-  // TODO: Take into account the locale passed to the Composer
-  const $ = useOverrides();
+  const $ = useOverrides(overrides);
 
   const handleDeleteClick = useCallback(() => {
     deleteAttachment(attachment.id);
@@ -344,23 +351,20 @@ function ComposerFileAttachment({
     <FileAttachment
       className={classNames("lb-composer-attachment", className)}
       {...props}
-      name={attachment.name}
-      mimeType={attachment.mimeType}
-      size={attachment.size}
-      // file={attachment.file}
-      isUploading={attachment.status === "uploading"}
-      // error={attachment.error}
+      attachment={attachment}
       locale={$.locale}
       onDeleteClick={handleDeleteClick}
+      deleteLabel={$.COMPOSER_DELETE_ATTACHMENT}
       preventFocusOnDelete
     />
   );
 }
 
 function ComposerAttachments({
+  overrides,
   className,
   ...props
-}: ComponentPropsWithoutRef<"div">) {
+}: ComposerAttachmentsProps) {
   const { attachments } = useComposer();
 
   if (attachments.length === 0) {
@@ -374,7 +378,11 @@ function ComposerAttachments({
     >
       {attachments.map((attachment) => {
         return (
-          <ComposerFileAttachment key={attachment.id} attachment={attachment} />
+          <ComposerFileAttachment
+            key={attachment.id}
+            attachment={attachment}
+            overrides={overrides}
+          />
         );
       })}
     </div>
@@ -405,7 +413,8 @@ function ComposerEditorContainer({
   const { isDisabled: isComposerDisabled, isEmpty } = useComposer();
   const isDisabled = disabled || isComposerDisabled;
   const $ = useOverrides(overrides);
-  const { createAttachments } = useComposerAttachmentsContext();
+  const { createAttachments, isUploadingAttachments } =
+    useComposerAttachmentsContext();
   const ignoreDropAreaLeaveEvent = useCallback(
     (event: DragEvent<HTMLDivElement>) => {
       return Boolean(
@@ -436,7 +445,12 @@ function ComposerEditorContainer({
   }, []);
 
   return (
-    <div className="lb-composer-editor-container" ref={ref} {...dropAreaProps}>
+    <div
+      className="lb-composer-editor-container"
+      ref={ref}
+      {...dropAreaProps}
+      data-uploading={isUploadingAttachments ? "" : undefined}
+    >
       <ComposerPrimitive.Editor
         className="lb-composer-editor"
         onClick={onEditorClick}
@@ -447,7 +461,7 @@ function ComposerEditorContainer({
         components={editorComponents}
         dir={$.dir}
       />
-      {showAttachments && <ComposerAttachments />}
+      {showAttachments && <ComposerAttachments overrides={overrides} />}
       {(!isCollapsed || isDraggingOver) && (
         <div className="lb-composer-footer">
           <div className="lb-composer-editor-actions">
