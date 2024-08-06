@@ -690,7 +690,7 @@
 
 .lb-composer-attachments {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
   gap: calc(0.75 * var(--lb-spacing));
   padding-inline: var(--lb-spacing);
   padding-block-start: calc(0.75 * var(--lb-spacing));
