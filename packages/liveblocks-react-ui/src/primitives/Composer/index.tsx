@@ -966,6 +966,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const editor = useInitial(createComposerEditor);
     const room = useRoom();
     const [isEmpty, setEmpty] = useState(true);
+    const [isSubmitting, setSubmitting] = useState(false);
     const [isFocused, setFocused] = useState(false);
     const {
       attachments,
@@ -978,8 +979,8 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       const self = room.getSelf();
       const canComment = self?.canComment ?? true;
 
-      return disabled || !canComment;
-    }, [disabled, room]);
+      return isSubmitting || disabled || !canComment;
+    }, [isSubmitting, disabled, room]);
     const canSubmit = useMemo(() => {
       return !isEmpty && !isUploadingAttachments;
     }, [isEmpty, isUploadingAttachments]);
@@ -1085,6 +1086,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       clear();
       blur();
       clearAttachments();
+      setSubmitting(false);
     }, [blur, clear, clearAttachments]);
 
     const handleSubmit = useCallback(
@@ -1124,7 +1126,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
         event.preventDefault();
 
         if (promise) {
-          // TODO: Loading/disabled state while the promise is running?
+          setSubmitting(true);
           promise.then(onSubmitEnd);
         } else {
           onSubmitEnd();
