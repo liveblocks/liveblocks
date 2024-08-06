@@ -1103,6 +1103,15 @@
   }
 }
 
+.lb-attachment-name {
+  display: flex;
+}
+
+.lb-attachment-name-base,
+.lb-attachment-description {
+  @include truncate;
+}
+
 .lb-file-attachment {
   :where(.lb-attachment-content) {
     display: flex;
@@ -1174,8 +1183,6 @@
 
   :where(.lb-attachment-name),
   :where(.lb-attachment-description) {
-    @include truncate;
-
     transition-property: color;
   }
 

@@ -22,6 +22,14 @@ interface FileAttachmentProps extends ComponentPropsWithoutRef<"div"> {
   locale?: string;
 }
 
+const fileExtensionRegex = /^(.+?)(\.[^.]+)?$/;
+
+function splitFileName(name: string) {
+  const match = name.match(fileExtensionRegex);
+
+  return { base: match?.[1] ?? name, extension: match?.[2] };
+}
+
 function getFileAttcachmentIconGlyph(mimeType: string) {
   if (mimeType.startsWith("image/")) {
     return (
@@ -121,6 +129,9 @@ export function FileAttachment({
   const formattedFileSize = useMemo(() => {
     return formatFileSize(attachment.size, locale);
   }, [attachment.size, locale]);
+  const { base: fileBaseName, extension: fileExtension } = useMemo(() => {
+    return splitFileName(attachment.name);
+  }, [attachment.name]);
   const error = "error" in attachment ? attachment.error : undefined;
   const isUploading =
     "status" in attachment && attachment.status === "uploading";
@@ -157,7 +168,12 @@ export function FileAttachment({
         </div>
         <div className="lb-attachment-details">
           <span className="lb-attachment-name" title={attachment.name}>
-            {attachment.name}
+            <span className="lb-attachment-name-base">{fileBaseName}</span>
+            {fileExtension && (
+              <span className="lb-attachment-name-extension">
+                {fileExtension}
+              </span>
+            )}
           </span>
           <span
             className="lb-attachment-description"
