@@ -32,6 +32,7 @@ import {
   isCommentBodyMention,
   isCommentBodyText,
 } from "../Comment/utils";
+import { useComposerAttachmentsContext } from "./contexts";
 import type { ComposerAttachment, SuggestionsPosition } from "./types";
 
 export function composerBodyMentionToCommentBodyMention(
@@ -184,16 +185,6 @@ export function getSideAndAlignFromPlacement(placement: Placement) {
   return [side, align] as const;
 }
 
-export function getAcceptedFilesFromFileList(fileList: FileList | null) {
-  if (!fileList) {
-    return [];
-  }
-
-  const files = Array.from(fileList);
-
-  return files.filter((file) => file.type);
-}
-
 export function useComposerAttachmentsDropArea<
   T extends HTMLElement = HTMLElement,
 >({
@@ -213,6 +204,7 @@ export function useComposerAttachmentsDropArea<
   ignoreLeaveEvent?: (event: DragEvent<T>) => boolean;
   disabled?: boolean;
 }) {
+  const { getAcceptedFiles } = useComposerAttachmentsContext();
   const [isDraggingOver, setDraggingOver] = useState(false);
 
   const handleDragEnter = useCallback(
@@ -282,11 +274,11 @@ export function useComposerAttachmentsDropArea<
 
       setDraggingOver(false);
 
-      const files = getAcceptedFilesFromFileList(event.dataTransfer.files);
+      const files = getAcceptedFiles(event.dataTransfer.files);
 
       handleFiles(files);
     },
-    [onDrop, handleFiles, disabled]
+    [onDrop, handleFiles, getAcceptedFiles, disabled]
   );
 
   return [

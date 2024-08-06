@@ -126,7 +126,6 @@ import type {
 import {
   commentBodyToComposerBody,
   composerBodyToCommentBody,
-  getAcceptedFilesFromFileList,
   getPlacementFromPosition,
   getSideAndAlignFromPlacement,
   useComposerAttachmentsDropArea,
@@ -940,6 +939,10 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
   }
 );
 
+// TODO: Convert to Composer.Form props?
+const MAX_ATTACHMENTS = 5;
+const MAX_ATTACHMENT_SIZE = 20 * 1024 * 1024; // 10 MB
+
 /**
  * Surrounds the composer's content and handles submissions.
  *
@@ -975,6 +978,9 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       deleteAttachment,
       clearAttachments,
     } = useComposerAttachmentsManager(defaultAttachments);
+    const numberOfAttachments = attachments.length;
+    // TODO: Disable button and drop area when attachments are already at the limit
+    // const hasMaxAttachments = numberOfAttachments >= MAX_ATTACHMENTS;
     const isDisabled = useMemo(() => {
       const self = room.getSelf();
       const canComment = self?.canComment ?? true;
@@ -1057,6 +1063,28 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       [editor, focus]
     );
 
+    const getAcceptedFiles = useCallback(
+      (fileList: FileList | null) => {
+        if (!fileList) {
+          return [];
+        }
+
+        const files = Array.from(fileList).filter(
+          (file) => file.type && file.size <= MAX_ATTACHMENT_SIZE
+        );
+
+        const numberOfAcceptedFiles = Math.max(
+          0,
+          MAX_ATTACHMENTS - numberOfAttachments
+        );
+
+        files.splice(numberOfAcceptedFiles);
+
+        return files;
+      },
+      [numberOfAttachments]
+    );
+
     const addAttachments = useCallback(() => {
       if (fileInputRef.current) {
         fileInputRef.current.click();
@@ -1075,11 +1103,11 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 
     const handleAttachmentsInputChange = useCallback(
       (event: ChangeEvent<HTMLInputElement>) => {
-        const files = getAcceptedFilesFromFileList(event.target.files);
+        const files = getAcceptedFiles(event.target.files);
 
         createAttachments(files);
       },
-      [createAttachments]
+      [createAttachments, getAcceptedFiles]
     );
 
     const onSubmitEnd = useCallback(() => {
@@ -1147,6 +1175,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
           value={{
             createAttachments,
             isUploadingAttachments,
+            getAcceptedFiles,
           }}
         >
           <ComposerContext.Provider
