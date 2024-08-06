@@ -951,7 +951,15 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
  */
 const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
   (
-    { children, onSubmit, onComposerSubmit, disabled, asChild, ...props },
+    {
+      children,
+      onSubmit,
+      onComposerSubmit,
+      defaultAttachments,
+      disabled,
+      asChild,
+      ...props
+    },
     forwardedRef
   ) => {
     const Component = asChild ? Slot : "form";
@@ -959,14 +967,13 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const room = useRoom();
     const [isEmpty, setEmpty] = useState(true);
     const [isFocused, setFocused] = useState(false);
-    // TODO: Pass defaultAttachments from props instead of []
     const {
       attachments,
       isUploadingAttachments,
       addAttachment,
       deleteAttachment,
       clearAttachments,
-    } = useComposerAttachmentsManager([]);
+    } = useComposerAttachmentsManager(defaultAttachments);
     const isDisabled = useMemo(() => {
       const self = room.getSelf();
       const canComment = self?.canComment ?? true;
@@ -979,8 +986,6 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const ref = useRef<HTMLFormElement>(null);
     const mergedRefs = useRefs(forwardedRef, ref);
     const fileInputRef = useRef<HTMLInputElement>(null);
-
-    console.log("Composer.Form: render");
 
     const validate = useCallback(
       (value: SlateElement[]) => {

@@ -143,6 +143,11 @@ export interface ComposerFormProps extends ComponentPropsWithSlot<"form"> {
    * Whether the composer is disabled.
    */
   disabled?: boolean;
+
+  /**
+   * The composer's initial existing attachments.
+   */
+  defaultAttachments?: CommentUploadedAttachment[];
 }
 
 export type ComposerSubmitProps = ComponentPropsWithSlot<"button">;

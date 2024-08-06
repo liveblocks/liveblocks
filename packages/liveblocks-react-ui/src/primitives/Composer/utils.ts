@@ -403,7 +403,7 @@ function createComposerAttachmentsManager(
 }
 
 export function useComposerAttachmentsManager(
-  defaultAttachments: CommentUploadedAttachment[]
+  defaultAttachments: CommentUploadedAttachment[] = []
 ) {
   const room = useRoom();
   const frozenAttachmentsManager = useInitial(() =>
