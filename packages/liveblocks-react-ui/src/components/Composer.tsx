@@ -340,7 +340,6 @@ function ComposerFileAttachment({
   ...props
 }: ComposerFileAttachmentProps) {
   const { deleteAttachment } = useComposer();
-  const $ = useOverrides(overrides);
 
   const handleDeleteClick = useCallback(() => {
     deleteAttachment(attachment.id);
@@ -351,10 +350,9 @@ function ComposerFileAttachment({
       className={classNames("lb-composer-attachment", className)}
       {...props}
       attachment={attachment}
-      locale={$.locale}
       onDeleteClick={handleDeleteClick}
-      deleteLabel={$.COMPOSER_DELETE_ATTACHMENT}
       preventFocusOnDelete
+      overrides={overrides}
     />
   );
 }

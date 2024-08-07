@@ -178,6 +178,12 @@ export type ComposerLocalErrorAttachment = Resolve<
   }
 >;
 
+export type ComposerLocalTooLargeAttachment = Resolve<
+  CommentLocalAttachment & {
+    status: "too-large";
+  }
+>;
+
 export type ComposerUploadedAttachment = Resolve<
   CommentUploadedAttachment & {
     status: "uploaded";
@@ -186,6 +192,7 @@ export type ComposerUploadedAttachment = Resolve<
 
 export type ComposerAttachment =
   | ComposerLocalIdleAttachment
+  | ComposerLocalTooLargeAttachment
   | ComposerLocalUploadingAttachment
   | ComposerLocalErrorAttachment
   | ComposerUploadedAttachment;

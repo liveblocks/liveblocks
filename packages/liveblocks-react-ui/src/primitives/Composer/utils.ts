@@ -204,8 +204,7 @@ export function useComposerAttachmentsDropArea<
 }) {
   const { isDisabled: isComposerDisabled } = useComposer();
   const isDisabled = isComposerDisabled || disabled;
-  const { createAttachments, getAcceptedFiles } =
-    useComposerAttachmentsContext();
+  const { createAttachments } = useComposerAttachmentsContext();
   const [isDraggingOver, setDraggingOver] = useState(false);
 
   const handleDragEnter = useCallback(
@@ -275,11 +274,9 @@ export function useComposerAttachmentsDropArea<
 
       setDraggingOver(false);
 
-      const files = getAcceptedFiles(event.dataTransfer.files);
-
-      createAttachments(files);
+      createAttachments(event.dataTransfer.files);
     },
-    [onDrop, createAttachments, getAcceptedFiles, isDisabled]
+    [onDrop, createAttachments, isDisabled]
   );
 
   return [
@@ -295,9 +292,14 @@ export function useComposerAttachmentsDropArea<
   ] as const;
 }
 
+interface ComposerAttachmentsManagerOptions {
+  maxFileSize: number;
+}
+
 function createComposerAttachmentsManager(
   defaultAttachments: CommentUploadedAttachment[],
-  room: OpaqueRoom
+  room: OpaqueRoom,
+  options: ComposerAttachmentsManagerOptions
 ) {
   const attachments: Map<string, ComposerAttachment> = new Map();
   const abortControllers: Map<string, AbortController> = new Map();
@@ -317,7 +319,22 @@ function createComposerAttachmentsManager(
   }
 
   function addAttachment(attachment: CommentAttachment) {
+    // The attachment already exists
+    if (attachments.has(attachment.id)) {
+      return;
+    }
+
     if ("file" in attachment) {
+      // The file is too large to be uploaded
+      if (attachment.file.size > options.maxFileSize) {
+        setAttachment({
+          ...attachment,
+          status: "too-large",
+        });
+
+        return;
+      }
+
       const abortController = new AbortController();
       abortControllers.set(attachment.id, abortController);
 
@@ -385,7 +402,7 @@ function createComposerAttachmentsManager(
   }
 
   // Initialize with default attachments
-  defaultAttachments.forEach(addAttachment);
+  defaultAttachments.forEach((attachment) => addAttachment(attachment));
 
   return {
     addAttachment,
@@ -397,11 +414,12 @@ function createComposerAttachmentsManager(
 }
 
 export function useComposerAttachmentsManager(
-  defaultAttachments: CommentUploadedAttachment[] = []
+  defaultAttachments: CommentUploadedAttachment[],
+  options: ComposerAttachmentsManagerOptions
 ) {
   const room = useRoom();
   const frozenAttachmentsManager = useInitial(() =>
-    createComposerAttachmentsManager(defaultAttachments, room)
+    createComposerAttachmentsManager(defaultAttachments, room, options)
   );
 
   useEffect(() => {

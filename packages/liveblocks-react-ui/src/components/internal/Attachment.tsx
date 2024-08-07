@@ -8,7 +8,10 @@ import React, { memo, useCallback, useMemo } from "react";
 
 import { CrossIcon } from "../../icons/Cross";
 import { SpinnerIcon } from "../../icons/Spinner";
+import type { GlobalOverrides } from "../../overrides";
+import { useOverrides } from "../../overrides";
 import type { ComposerAttachment } from "../../primitives";
+import { useComposerAttachmentsContextOrNull } from "../../primitives/Composer/contexts";
 import { classNames } from "../../utils/class-names";
 import { formatFileSize } from "../../utils/format-file-size";
 import { Tooltip } from "./Tooltip";
@@ -17,9 +20,8 @@ interface FileAttachmentProps extends ComponentPropsWithoutRef<"div"> {
   attachment: CommentAttachment | ComposerAttachment;
   onContentClick?: MouseEventHandler<HTMLButtonElement>;
   onDeleteClick?: MouseEventHandler<HTMLButtonElement>;
-  deleteLabel?: string;
   preventFocusOnDelete?: boolean;
-  locale?: string;
+  overrides?: Partial<GlobalOverrides>;
 }
 
 const fileExtensionRegex = /^(.+?)(\.[^.]+)?$/;
@@ -118,23 +120,40 @@ const FileAttachmentIcon = memo(({ mimeType }: { mimeType: string }) => {
 
 export function FileAttachment({
   attachment,
+  overrides,
   onContentClick,
   onDeleteClick,
-  deleteLabel,
   preventFocusOnDelete,
-  locale,
   className,
   ...props
 }: FileAttachmentProps) {
-  const formattedFileSize = useMemo(() => {
-    return formatFileSize(attachment.size, locale);
-  }, [attachment.size, locale]);
+  const $ = useOverrides(overrides);
+  const composerAttachmentsContext = useComposerAttachmentsContextOrNull();
   const { base: fileBaseName, extension: fileExtension } = useMemo(() => {
     return splitFileName(attachment.name);
   }, [attachment.name]);
-  const error = "error" in attachment ? attachment.error : undefined;
-  const isUploading =
-    "status" in attachment && attachment.status === "uploading";
+  const status = (attachment as ComposerAttachment).status;
+  const isError = status === "error" || status === "too-large";
+  const isUploading = status === "uploading";
+  const description = useMemo(() => {
+    if (composerAttachmentsContext && "status" in attachment) {
+      switch (attachment.status) {
+        case "too-large":
+          return $.ATTACHMENT_TOO_LARGE(
+            formatFileSize(
+              composerAttachmentsContext.maxAttachmentSize,
+              $.locale
+            )
+          );
+        case "error":
+          return $.ATTACHMENT_ERROR(attachment.error);
+        default:
+          return formatFileSize(attachment.size, $.locale);
+      }
+    } else {
+      return formatFileSize(attachment.size, $.locale);
+    }
+  }, [composerAttachmentsContext, attachment, $]);
 
   const handleDeletePointerDown = useCallback(
     (event: PointerEvent<HTMLButtonElement>) => {
@@ -148,7 +167,7 @@ export function FileAttachment({
   return (
     <div
       className={classNames("lb-attachment lb-file-attachment", className)}
-      data-error={error ? "" : undefined}
+      data-error={isError ? "" : undefined}
       data-uploading={isUploading ? "" : undefined}
       {...props}
     >
@@ -160,7 +179,7 @@ export function FileAttachment({
         <div className="lb-attachment-preview">
           {isUploading ? (
             <SpinnerIcon />
-          ) : error ? (
+          ) : isError ? (
             <div>error icon</div>
           ) : (
             <FileAttachmentIcon mimeType={attachment.mimeType} />
@@ -175,21 +194,18 @@ export function FileAttachment({
               </span>
             )}
           </span>
-          <span
-            className="lb-attachment-description"
-            title={error ? error.message : undefined}
-          >
-            {error ? error.message : formattedFileSize}
+          <span className="lb-attachment-description" title={description}>
+            {description}
           </span>
         </div>
       </button>
-      {onDeleteClick && deleteLabel && (
-        <Tooltip content={deleteLabel}>
+      {onDeleteClick && (
+        <Tooltip content={$.ATTACHMENT_DELETE}>
           <button
             className="lb-attachment-delete"
             onClick={onDeleteClick}
             onPointerDown={handleDeletePointerDown}
-            aria-label={deleteLabel}
+            aria-label={$.ATTACHMENT_DELETE}
           >
             <CrossIcon />
           </button>

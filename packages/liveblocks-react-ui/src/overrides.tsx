@@ -22,6 +22,9 @@ export interface GlobalOverrides {
   EMOJI_PICKER_SEARCH_PLACEHOLDER: string;
   EMOJI_PICKER_EMPTY: ReactNode;
   EMOJI_PICKER_ERROR: (error: Error) => ReactNode;
+  ATTACHMENT_DELETE: string;
+  ATTACHMENT_TOO_LARGE: (maxSize: string) => string;
+  ATTACHMENT_ERROR: (error: Error) => string;
 }
 
 export interface CommentOverrides {
@@ -46,7 +49,6 @@ export interface ComposerOverrides {
   COMPOSER_INSERT_MENTION: string;
   COMPOSER_INSERT_EMOJI: string;
   COMPOSER_ADD_ATTACHMENTS: string;
-  COMPOSER_DELETE_ATTACHMENT: string;
   COMPOSER_PLACEHOLDER: string;
   COMPOSER_SEND: string;
 }
@@ -103,10 +105,12 @@ export const defaultOverrides: Overrides = {
   EMOJI_PICKER_EMPTY: "No emoji found.",
   EMOJI_PICKER_ERROR: () =>
     "There was an error while getting the list of emoji.",
+  ATTACHMENT_DELETE: "Delete attachment",
+  ATTACHMENT_TOO_LARGE: (maxSize) => `The file is larger than ${maxSize}`,
+  ATTACHMENT_ERROR: () => "The file couldn’t be uploaded.",
   COMPOSER_INSERT_MENTION: "Mention someone",
   COMPOSER_INSERT_EMOJI: "Add emoji",
   COMPOSER_ADD_ATTACHMENTS: "Attach files",
-  COMPOSER_DELETE_ATTACHMENT: "Delete attachment",
   COMPOSER_PLACEHOLDER: "Write a comment…",
   COMPOSER_SEND: "Send",
   COMMENT_EDITED: "(edited)",

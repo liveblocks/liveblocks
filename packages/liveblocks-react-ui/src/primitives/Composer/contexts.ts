@@ -87,9 +87,10 @@ export type ComposerEditorContext = {
 
 export type ComposerAttachmentsContext = {
   canAddAttachments: boolean;
-  createAttachments: (files: File[]) => void;
+  createAttachments: (fileList: FileList | null) => void;
   isUploadingAttachments: boolean;
-  getAcceptedFiles: (fileList: FileList | null) => File[];
+  maxAttachments: number;
+  maxAttachmentSize: number;
 };
 
 export type ComposerSuggestionsContext = {
@@ -120,8 +121,12 @@ export function useComposerEditorContext() {
   );
 }
 
+export function useComposerAttachmentsContextOrNull() {
+  return useContext(ComposerAttachmentsContext);
+}
+
 export function useComposerAttachmentsContext() {
-  const composerAttachmentsContext = useContext(ComposerAttachmentsContext);
+  const composerAttachmentsContext = useComposerAttachmentsContextOrNull();
 
   return nn(
     composerAttachmentsContext,
