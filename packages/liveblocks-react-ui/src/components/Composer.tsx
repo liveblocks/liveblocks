@@ -178,7 +178,6 @@ interface ComposerEditorContainerProps
     | "overrides"
     | "actions"
     | "autoFocus"
-    | "disabled"
   > {
   isCollapsed: boolean | undefined;
   onEmptyChange: (isEmpty: boolean) => void;
@@ -399,7 +398,6 @@ function ComposerEditorContainer({
   showAttachments = true,
   showAttribution,
   defaultValue,
-  disabled,
   isCollapsed,
   overrides,
   actions,
@@ -410,11 +408,9 @@ function ComposerEditorContainer({
   onEditorClick,
 }: ComposerEditorContainerProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const { isDisabled: isComposerDisabled, isEmpty } = useComposer();
-  const isDisabled = disabled || isComposerDisabled;
+  const { isEmpty } = useComposer();
   const $ = useOverrides(overrides);
-  const { createAttachments, isUploadingAttachments } =
-    useComposerAttachmentsContext();
+  const { isUploadingAttachments } = useComposerAttachmentsContext();
   const ignoreDropAreaLeaveEvent = useCallback(
     (event: DragEvent<HTMLDivElement>) => {
       return Boolean(
@@ -428,8 +424,6 @@ function ComposerEditorContainer({
   );
   const [isDraggingOver, dropAreaProps] = useComposerAttachmentsDropArea({
     ignoreLeaveEvent: ignoreDropAreaLeaveEvent,
-    handleFiles: createAttachments,
-    disabled: isDisabled,
   });
 
   useLayoutEffect(() => {
@@ -456,7 +450,6 @@ function ComposerEditorContainer({
         onClick={onEditorClick}
         placeholder={$.COMPOSER_PLACEHOLDER}
         defaultValue={defaultValue}
-        disabled={isDisabled}
         autoFocus={autoFocus}
         components={editorComponents}
         dir={$.dir}
@@ -468,18 +461,15 @@ function ComposerEditorContainer({
             {hasResolveMentionSuggestions && (
               <ComposerInsertMentionEditorAction
                 label={$.COMPOSER_INSERT_MENTION}
-                disabled={isDisabled}
               />
             )}
             <ComposerInsertEmojiEditorAction
               label={$.COMPOSER_INSERT_EMOJI}
               onPickerOpenChange={onEmojiPickerOpenChange}
-              disabled={isDisabled}
             />
             {showAttachments && (
               <ComposerAddAttachmentsEditorAction
                 label={$.COMPOSER_ADD_ATTACHMENTS}
-                disabled={isDisabled}
               />
             )}
           </div>
@@ -491,7 +481,7 @@ function ComposerEditorContainer({
                   content={$.COMPOSER_SEND}
                   shortcut={<ShortcutTooltipKey name="enter" />}
                 >
-                  <ComposerPrimitive.Submit disabled={isDisabled} asChild>
+                  <ComposerPrimitive.Submit asChild>
                     <Button
                       onMouseDown={preventDefault}
                       onClick={stopPropagation}
@@ -673,12 +663,12 @@ export const Composer = forwardRef(
           data-collapsed={isCollapsed ? "" : undefined}
           onFocus={handleFocus}
           onBlur={handleBlur}
+          disabled={disabled}
         >
           <ComposerEditorContainer
             defaultValue={defaultValue}
             actions={actions}
             overrides={overrides}
-            disabled={disabled}
             isCollapsed={isCollapsed}
             showAttachments={showAttachments}
             showAttribution={showAttribution}

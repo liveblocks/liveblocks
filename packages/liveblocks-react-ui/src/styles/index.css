@@ -714,6 +714,7 @@
     content: "";
     position: absolute;
     inset: calc(0.5 * var(--lb-spacing));
+    z-index: 0;
     border-radius: calc(0.75 * var(--lb-radius));
   }
 
@@ -729,6 +730,7 @@
 }
 
 .lb-composer-attachments-drop-area-label {
+  position: relative;
   display: flex;
   gap: calc(0.25 * var(--lb-spacing));
   place-items: center;

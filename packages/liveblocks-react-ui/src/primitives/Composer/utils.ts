@@ -32,7 +32,7 @@ import {
   isCommentBodyMention,
   isCommentBodyText,
 } from "../Comment/utils";
-import { useComposerAttachmentsContext } from "./contexts";
+import { useComposer, useComposerAttachmentsContext } from "./contexts";
 import type { ComposerAttachment, SuggestionsPosition } from "./types";
 
 export function composerBodyMentionToCommentBodyMention(
@@ -188,7 +188,6 @@ export function getSideAndAlignFromPlacement(placement: Placement) {
 export function useComposerAttachmentsDropArea<
   T extends HTMLElement = HTMLElement,
 >({
-  handleFiles,
   onDragEnter,
   onDragLeave,
   onDragOver,
@@ -196,7 +195,6 @@ export function useComposerAttachmentsDropArea<
   ignoreLeaveEvent,
   disabled,
 }: {
-  handleFiles: (files: File[]) => void;
   onDragEnter?: (event: DragEvent<T>) => void;
   onDragLeave?: (event: DragEvent<T>) => void;
   onDragOver?: (event: DragEvent<T>) => void;
@@ -204,14 +202,17 @@ export function useComposerAttachmentsDropArea<
   ignoreLeaveEvent?: (event: DragEvent<T>) => boolean;
   disabled?: boolean;
 }) {
-  const { getAcceptedFiles } = useComposerAttachmentsContext();
+  const { isDisabled: isComposerDisabled } = useComposer();
+  const isDisabled = isComposerDisabled || disabled;
+  const { createAttachments, getAcceptedFiles } =
+    useComposerAttachmentsContext();
   const [isDraggingOver, setDraggingOver] = useState(false);
 
   const handleDragEnter = useCallback(
     (event: DragEvent<T>) => {
       onDragEnter?.(event);
 
-      if (disabled || event.isDefaultPrevented()) {
+      if (isDisabled || event.isDefaultPrevented()) {
         return;
       }
 
@@ -224,14 +225,14 @@ export function useComposerAttachmentsDropArea<
         setDraggingOver(true);
       }
     },
-    [onDragEnter, disabled]
+    [onDragEnter, isDisabled]
   );
 
   const handleDragLeave = useCallback(
     (event: DragEvent<T>) => {
       onDragLeave?.(event);
 
-      if (disabled || event.isDefaultPrevented()) {
+      if (isDisabled || event.isDefaultPrevented()) {
         return;
       }
 
@@ -244,28 +245,28 @@ export function useComposerAttachmentsDropArea<
 
       setDraggingOver(false);
     },
-    [onDragLeave, ignoreLeaveEvent, disabled]
+    [onDragLeave, ignoreLeaveEvent, isDisabled]
   );
 
   const handleDragOver = useCallback(
     (event: DragEvent<T>) => {
       onDragOver?.(event);
 
-      if (disabled || !isDraggingOver || event.isDefaultPrevented()) {
+      if (isDisabled || !isDraggingOver || event.isDefaultPrevented()) {
         return;
       }
 
       event.preventDefault();
       event.stopPropagation();
     },
-    [onDragOver, isDraggingOver, disabled]
+    [onDragOver, isDraggingOver, isDisabled]
   );
 
   const handleDrop = useCallback(
     (event: DragEvent<T>) => {
       onDrop?.(event);
 
-      if (disabled || event.isDefaultPrevented()) {
+      if (isDisabled || event.isDefaultPrevented()) {
         return;
       }
 
@@ -276,9 +277,9 @@ export function useComposerAttachmentsDropArea<
 
       const files = getAcceptedFiles(event.dataTransfer.files);
 
-      handleFiles(files);
+      createAttachments(files);
     },
-    [onDrop, handleFiles, getAcceptedFiles, disabled]
+    [onDrop, createAttachments, getAcceptedFiles, isDisabled]
   );
 
   return [
@@ -289,6 +290,7 @@ export function useComposerAttachmentsDropArea<
       onDragOver: handleDragOver,
       onDrop: handleDrop,
       "data-drop": isDraggingOver ? "" : undefined,
+      "data-disabled": isDisabled ? "" : undefined,
     } as const,
   ] as const;
 }

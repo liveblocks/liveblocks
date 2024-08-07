@@ -941,7 +941,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
 
 // TODO: Convert to Composer.Form props?
 const MAX_ATTACHMENTS = 5;
-const MAX_ATTACHMENT_SIZE = 20 * 1024 * 1024; // 10 MB
+const MAX_ATTACHMENT_SIZE = 20 * 1024 * 1024; // 20 MB
 
 /**
  * Surrounds the composer's content and handles submissions.
@@ -979,8 +979,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       clearAttachments,
     } = useComposerAttachmentsManager(defaultAttachments);
     const numberOfAttachments = attachments.length;
-    // TODO: Disable button and drop area when attachments are already at the limit
-    // const hasMaxAttachments = numberOfAttachments >= MAX_ATTACHMENTS;
+    const canAddAttachments = numberOfAttachments < MAX_ATTACHMENTS;
     const isDisabled = useMemo(() => {
       const self = room.getSelf();
       const canComment = self?.canComment ?? true;
@@ -1175,6 +1174,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
           value={{
             createAttachments,
             isUploadingAttachments,
+            canAddAttachments,
             getAcceptedFiles,
           }}
         >
@@ -1250,8 +1250,9 @@ const ComposerAddAttachments = forwardRef<
   ComposerAddAttachmentsProps
 >(({ children, onClick, disabled, asChild, ...props }, forwardedRef) => {
   const Component = asChild ? Slot : "button";
+  const { canAddAttachments } = useComposerAttachmentsContext();
   const { isDisabled: isComposerDisabled, addAttachments } = useComposer();
-  const isDisabled = isComposerDisabled || disabled;
+  const isDisabled = isComposerDisabled || !canAddAttachments || disabled;
 
   const handleClick = useCallback(
     (event: MouseEvent<HTMLButtonElement>) => {
@@ -1298,13 +1299,11 @@ const ComposerAttachmentsDropArea = forwardRef<
     const Component = asChild ? Slot : "div";
     const { isDisabled: isComposerDisabled } = useComposer();
     const isDisabled = isComposerDisabled || disabled;
-    const { createAttachments } = useComposerAttachmentsContext();
     const [, dropAreaProps] = useComposerAttachmentsDropArea({
       onDragEnter,
       onDragLeave,
       onDragOver,
       onDrop,
-      handleFiles: createAttachments,
       disabled: isDisabled,
     });
 
