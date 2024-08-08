@@ -269,16 +269,16 @@ declare global {
 
 // ---------------------------------------------------------
 
-// useInRoom()
+// useInsideRoom()
 {
-  const inRoom = classic.useInRoom();
-  expectType<true>(inRoom);
+  const insideRoom = classic.useInsideRoom();
+  expectType<boolean>(insideRoom);
 }
 
-// useInRoom() (suspense)
+// useInsideRoom() (suspense)
 {
-  const inRoom = suspense.useInRoom();
-  expectType<true>(inRoom);
+  const insideRoom = suspense.useInsideRoom();
+  expectType<boolean>(insideRoom);
 }
 
 // ---------------------------------------------------------

@@ -251,9 +251,9 @@ const ctx = createRoomContext<P, S, U, E, M>(client);
 // The useRoom() hook
 expectType<Room<P, S, U, E, M>>(ctx.useRoom());
 
-// useInRoom()
-expectType<true>(ctx.useInRoom);
-expectType<false>(lbctx.useInRoom);
+// useInsideRoom()
+expectType<boolean>(ctx.useInsideRoom());
+expectType<boolean>(lbctx.useInsideRoom());
 
 // The presence hooks
 expectType<P>(ctx.useSelf()!.presence);

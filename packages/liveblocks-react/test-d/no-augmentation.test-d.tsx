@@ -172,16 +172,16 @@ import { expectAssignable, expectError, expectType } from "tsd";
 
 // ---------------------------------------------------------
 
-// useInRoom()
+// useInsideRoom()
 {
-  const inRoom = classic.useInRoom();
-  expectType<true>(inRoom);
+  const insideRoom = classic.useInsideRoom();
+  expectType<boolean>(insideRoom);
 }
 
-// useInRoom() (suspense)
+// useInsideRoom() (suspense)
 {
-  const inRoom = suspense.useRoom();
-  expectType<true>(inRoom);
+  const insideRoom = suspense.useInsideRoom();
+  expectType<boolean>(insideRoom);
 }
 
 // ---------------------------------------------------------

@@ -50,7 +50,7 @@ import type {
   UserAsyncResult,
   UserAsyncSuccess,
 } from "./types";
-import { useInRoom } from "./room";
+import { useInsideRoom } from "./room";
 
 /**
  * Raw access to the React context where the LiveblocksProvider stores the
@@ -879,14 +879,14 @@ export function createSharedContext<U extends BaseUserMeta>(
       useClient,
       useUser: (userId: string) => useUser_withClient(client, userId),
       useRoomInfo: (roomId: string) => useRoomInfo_withClient(client, roomId),
-      useInRoom,
+      useInsideRoom,
     },
     suspense: {
       useClient,
       useUser: (userId: string) => useUserSuspense_withClient(client, userId),
       useRoomInfo: (roomId: string) =>
         useRoomInfoSuspense_withClient(client, roomId),
-      useInRoom,
+      useInsideRoom,
     },
   };
 }
