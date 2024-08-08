@@ -1,6 +1,10 @@
 import { LABELS, PRIORITY_STATES, RoomWithMetadata } from "@/config";
 import { getUser } from "@/database";
 import { getStorageDocument } from "@/actions/liveblocks";
+import { Dash } from "@/icons/Dash";
+import { Review } from "@/icons/Review";
+import { Progress } from "@/icons/Progress";
+import { Todo } from "@/icons/Todo";
 
 export function IssuesList({
   initialRooms,
@@ -20,7 +24,8 @@ export function IssuesList({
   return (
     <div>
       {inReview.length ? (
-        <div className="bg-neutral-200/60 px-4 py-1.5 text-sm font-medium text-neutral-800 w-full">
+        <div className="flex items-center gap-2 bg-neutral-200/60 px-4 py-1.5 text-sm font-medium text-neutral-800 w-full">
+          <Review className="w-4 h-4 text-emerald-500" />
           In Review
         </div>
       ) : null}
@@ -29,7 +34,8 @@ export function IssuesList({
       ))}
 
       {inProgress.length ? (
-        <div className="bg-neutral-200/60 px-4 py-1.5 text-sm font-medium text-neutral-800 w-full">
+        <div className="flex items-center gap-2 bg-neutral-200/60 px-4 py-1.5 text-sm font-medium text-neutral-800 w-full">
+          <Progress className="w-4 h-4 text-yellow-500" />
           In Progress
         </div>
       ) : null}
@@ -38,7 +44,8 @@ export function IssuesList({
       ))}
 
       {todo.length ? (
-        <div className="bg-neutral-200/60 px-4 py-1.5 text-sm font-medium text-neutral-800 w-full">
+        <div className="flex items-center gap-2 bg-neutral-200/60 px-4 py-1.5 text-sm font-medium text-neutral-800 w-full">
+          <Todo className="w-4 h-4 text-neutral-500" />
           Todo
         </div>
       ) : null}
@@ -47,7 +54,8 @@ export function IssuesList({
       ))}
 
       {none.length ? (
-        <div className="bg-neutral-200/60 px-4 py-1.5 text-sm font-medium text-neutral-800 w-full">
+        <div className="flex items-center gap-2 bg-neutral-200/60 px-4 py-1.5 text-sm font-medium text-neutral-800 w-full">
+          <Dash className="w-4 h-4 text-neutral-500" />
           None
         </div>
       ) : null}
@@ -84,7 +92,7 @@ export async function Row({ room }: { room: RoomWithMetadata }) {
       className="flex h-10 items-center justify-between px-4 text-sm transition-colors hover:bg-neutral-100 border-b"
     >
       <div className="flex gap-2 items-center">
-        <div className="w-20">
+        <div className="w-28">
           {PRIORITY_STATES.find((p) => p.id === priority)?.jsx}
         </div>
         <div className="font-medium">{title}</div>

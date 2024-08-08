@@ -17,7 +17,7 @@ export function Select({ id, onValueChange, value, items }: Props) {
     <RadixSelect.Root onValueChange={onValueChange} value={value}>
       <RadixSelect.Trigger
         aria-label={id}
-        className="flex items-center justify-between bg-transparent border-0 min-w-28 h-7 px-2 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-neutral-200/60 appearance-none data-[state=open]:bg-neutral-200/60"
+        className="flex items-center justify-between bg-transparent border-0 min-w-32 h-7 px-2 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-neutral-200/60 appearance-none data-[state=open]:bg-neutral-200/60"
       >
         <RadixSelect.Value />
       </RadixSelect.Trigger>

@@ -1,4 +1,13 @@
 import { RoomData } from "@liveblocks/node";
+import { Tally4 } from "@/icons/Tally4";
+import { Tally3 } from "@/icons/Tally3";
+import { Tally2 } from "@/icons/Tally2";
+import { Tally5 } from "@/icons/Tally5";
+import { Dash } from "@/icons/Dash";
+import { Todo } from "@/icons/Todo";
+import { Progress } from "@/icons/Progress";
+import { Review } from "@/icons/Review";
+import { Done } from "@/icons/Done";
 
 export const LABELS = [
   { id: "feature", text: "Feature" },
@@ -9,19 +18,99 @@ export const LABELS = [
 ] as const;
 
 export const PRIORITY_STATES = [
-  { id: "none", jsx: <div>No priority</div> },
-  { id: "urgent", jsx: <div>Urgent</div> },
-  { id: "high", jsx: <div>High</div> },
-  { id: "medium", jsx: <div>Medium</div> },
-  { id: "low", jsx: <div>Low</div> },
+  {
+    id: "none",
+    jsx: (
+      <div className="flex gap-2 items-center">
+        <Dash className="w-4 h-4 text-neutral-600" />
+        No priority
+      </div>
+    ),
+  },
+  {
+    id: "urgent",
+    jsx: (
+      <div className="flex gap-2 items-center">
+        <Tally5 className="w-4 h-4 text-neutral-600" />
+        Urgent
+      </div>
+    ),
+  },
+  {
+    id: "high",
+    jsx: (
+      <div className="flex gap-2 items-center">
+        <Tally4 className="w-4 h-4 text-neutral-600" />
+        High
+      </div>
+    ),
+  },
+  {
+    id: "medium",
+    jsx: (
+      <div className="flex gap-2 items-center">
+        <Tally3 className="w-4 h-4 text-neutral-600" />
+        Medium
+      </div>
+    ),
+  },
+  {
+    id: "low",
+    jsx: (
+      <div className="flex gap-2 items-center">
+        <Tally2 className="w-4 h-4 text-neutral-600" />
+        Low
+      </div>
+    ),
+  },
 ] as const;
 
 export const PROGRESS_STATES = [
-  { id: "none", jsx: <div>No progress</div> },
-  { id: "todo", jsx: <div>Todo</div> },
-  { id: "progress", jsx: <div>In Progress</div> },
-  { id: "review", jsx: <div>In Review</div> },
-  { id: "done", jsx: <div>Done</div> },
+  {
+    id: "none",
+    jsx: (
+      <div className="flex gap-2 items-center">
+        <Dash className="w-4 h-4 text-neutral-600" />
+        No progress
+      </div>
+    ),
+  },
+  {
+    id: "todo",
+    jsx: (
+      <div className="flex gap-2 items-center">
+        <Todo className="w-4 h-4 text-neutral-600" />
+        Todo
+      </div>
+    ),
+  },
+  {
+    id: "progress",
+    jsx: (
+      <div className="flex gap-2 items-center">
+        <Progress className="w-4 h-4 text-yellow-600" />
+        In Progress
+      </div>
+    ),
+  },
+  {
+    id: "review",
+    jsx: (
+      <div className="flex gap-2 items-center">
+        <Review className="w-4 h-4 text-emerald-600" />
+        In Review
+      </div>
+    ),
+  },
+  {
+    id: "done",
+    jsx: (
+      <div className="flex gap-2 items-center">
+        <Done className="w-4 h-4 text-blue-600" />
+        Done
+      </div>
+    ),
+  },
 ] as const;
 
 export type ProgressState = (typeof PROGRESS_STATES)[number]["id"];
