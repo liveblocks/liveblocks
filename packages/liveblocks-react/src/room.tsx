@@ -927,6 +927,14 @@ function useRoom<
 }
 
 /**
+ * Returns whether the hook is called within a RoomProvider context.
+ */
+function useInRoom(): boolean {
+  const room = useRoomOrNull();
+  return room !== null;
+}
+
+/**
  * Returns the current connection status for the Room, and triggers
  * a re-render whenever it changes. Can be used to render a status badge.
  */
@@ -3282,6 +3290,7 @@ export {
   useErrorListener,
   _useEventListener as useEventListener,
   useHistory,
+  useInRoom,
   useLostConnectionListener,
   useMarkThreadAsRead,
   useMarkThreadAsResolved,

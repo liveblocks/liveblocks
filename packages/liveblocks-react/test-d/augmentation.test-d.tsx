@@ -269,6 +269,20 @@ declare global {
 
 // ---------------------------------------------------------
 
+// useInRoom()
+{
+  const inRoom = classic.useInRoom();
+  expectType<true>(inRoom);
+}
+
+// useInRoom() (suspense)
+{
+  const inRoom = suspense.useInRoom();
+  expectType<true>(inRoom);
+}
+
+// ---------------------------------------------------------
+
 // useStorageStatus()
 {
   expectType<"not-loaded" | "loading" | "synchronizing" | "synchronized">(
