@@ -7,6 +7,8 @@ import {
 } from "@liveblocks/react/suspense";
 import { PRIORITY_STATES, PROGRESS_STATES } from "@/config";
 import { getUsers } from "@/database";
+import { Select } from "@/components/Select";
+import { useMemo, useState } from "react";
 
 export function IssueProperties({ storageFallback }: any) {
   return (
@@ -42,6 +44,11 @@ export function IssueProperties({ storageFallback }: any) {
   );
 }
 
+const USERS = getUsers().map((user) => ({
+  id: user.id,
+  jsx: <div>{user.info.name}</div>,
+}));
+
 function Properties() {
   const properties = useStorage((root) => root.properties);
 
@@ -51,51 +58,26 @@ function Properties() {
 
   return (
     <div className="text-sm flex flex-col gap-3 justify-start items-start font-medium">
-      <select
+      <Select
         id="progress"
-        onInput={(e) => {
-          editProperty("progress", e.currentTarget.value);
-        }}
-        className="block bg-transparent border-0 h-7 w-28 px-2 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-neutral-200 appearance-none"
-        value={properties.progress || undefined}
-      >
-        {PROGRESS_STATES.map(({ id, text }) => (
-          <option key={id} value={id}>
-            {text}
-          </option>
-        ))}
-      </select>
+        value={properties.progress}
+        items={PROGRESS_STATES}
+        onValueChange={(val) => editProperty("progress", val)}
+      />
 
-      <select
+      <Select
         id="priority"
-        onInput={(e) => {
-          editProperty("priority", e.currentTarget.value);
-        }}
-        className="block bg-transparent border-0 h-7 w-28 px-2 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-neutral-200 appearance-none"
-        value={properties.priority || undefined}
-      >
-        {PRIORITY_STATES.map(({ id, text }) => (
-          <option key={id} value={id}>
-            {text}
-          </option>
-        ))}
-      </select>
+        value={properties.priority}
+        items={PRIORITY_STATES}
+        onValueChange={(val) => editProperty("priority", val)}
+      />
 
-      <select
-        id="assigned-to"
-        onInput={(e) => {
-          editProperty("assignedTo", e.currentTarget.value);
-        }}
-        className="block bg-transparent border-0 h-7 w-28 px-2 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-neutral-200 appearance-none"
+      <Select
+        id="assignedTo"
         value={properties.assignedTo}
-      >
-        <option value="none">Unassigned</option>
-        {getUsers().map(({ id, info: { name } }) => (
-          <option key={id} value={id}>
-            {name}
-          </option>
-        ))}
-      </select>
+        items={USERS}
+        onValueChange={(val) => editProperty("assignedTo", val)}
+      />
     </div>
   );
 }

@@ -9,19 +9,19 @@ export const LABELS = [
 ] as const;
 
 export const PRIORITY_STATES = [
-  { id: "none", text: "No priority" },
-  { id: "urgent", text: "Urgent" },
-  { id: "high", text: "High" },
-  { id: "medium", text: "Medium" },
-  { id: "low", text: "Low" },
+  { id: "none", text: "No priority", jsx: <div>No priority</div> },
+  { id: "urgent", text: "Urgent", jsx: <div>Urgent</div> },
+  { id: "high", text: "High", jsx: <div>High</div> },
+  { id: "medium", text: "Medium", jsx: <div>Medium</div> },
+  { id: "low", text: "Low", jsx: <div>Low</div> },
 ] as const;
 
 export const PROGRESS_STATES = [
-  { id: "none", text: "No progress" },
-  { id: "todo", text: "Todo" },
-  { id: "progress", text: "In Progress" },
-  { id: "review", text: "In Review" },
-  { id: "done", text: "Done" },
+  { id: "none", text: "No progress", jsx: <div>No progress</div> },
+  { id: "todo", text: "Todo", jsx: <div>Todo</div> },
+  { id: "progress", text: "In Progress", jsx: <div>In Progress</div> },
+  { id: "review", text: "In Review", jsx: <div>In Review</div> },
+  { id: "done", text: "Done", jsx: <div>Done</div> },
 ] as const;
 
 export type ProgressState = (typeof PROGRESS_STATES)[number]["id"];
