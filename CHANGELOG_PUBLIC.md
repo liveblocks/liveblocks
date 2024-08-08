@@ -15,7 +15,13 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 32 (2024-08-09)
 
+## Documentation
+
+- Add API info for [`liveblocks.markThreadAsResolved`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-mark-as-resolved) and [`liveblocks.markThreadAsUnresolved`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-mark-as-unresolved).
+
 ## Contributors
+
+ctnicholas
 
 # Week 31 (2024-08-02)
 
