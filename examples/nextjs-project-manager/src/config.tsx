@@ -9,19 +9,19 @@ export const LABELS = [
 ] as const;
 
 export const PRIORITY_STATES = [
-  { id: "none", text: "No priority", jsx: <div>No priority</div> },
-  { id: "urgent", text: "Urgent", jsx: <div>Urgent</div> },
-  { id: "high", text: "High", jsx: <div>High</div> },
-  { id: "medium", text: "Medium", jsx: <div>Medium</div> },
-  { id: "low", text: "Low", jsx: <div>Low</div> },
+  { id: "none", jsx: <div>No priority</div> },
+  { id: "urgent", jsx: <div>Urgent</div> },
+  { id: "high", jsx: <div>High</div> },
+  { id: "medium", jsx: <div>Medium</div> },
+  { id: "low", jsx: <div>Low</div> },
 ] as const;
 
 export const PROGRESS_STATES = [
-  { id: "none", text: "No progress", jsx: <div>No progress</div> },
-  { id: "todo", text: "Todo", jsx: <div>Todo</div> },
-  { id: "progress", text: "In Progress", jsx: <div>In Progress</div> },
-  { id: "review", text: "In Review", jsx: <div>In Review</div> },
-  { id: "done", text: "Done", jsx: <div>Done</div> },
+  { id: "none", jsx: <div>No progress</div> },
+  { id: "todo", jsx: <div>Todo</div> },
+  { id: "progress", jsx: <div>In Progress</div> },
+  { id: "review", jsx: <div>In Review</div> },
+  { id: "done", jsx: <div>Done</div> },
 ] as const;
 
 export type ProgressState = (typeof PROGRESS_STATES)[number]["id"];

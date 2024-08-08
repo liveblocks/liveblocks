@@ -85,7 +85,7 @@ export async function Row({ room }: { room: RoomWithMetadata }) {
     >
       <div className="flex gap-2 items-center">
         <div className="w-20">
-          {PRIORITY_STATES.find((p) => p.id === priority)?.text}
+          {PRIORITY_STATES.find((p) => p.id === priority)?.jsx}
         </div>
         <div className="font-medium">{title}</div>
       </div>
