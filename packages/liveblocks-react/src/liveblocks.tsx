@@ -40,6 +40,7 @@ import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifi
 import { autoRetry } from "./lib/retry-error";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { use } from "./lib/use-polyfill";
+import { useInsideRoom } from "./room";
 import type {
   InboxNotificationsState,
   LiveblocksContextBundle,
@@ -50,7 +51,6 @@ import type {
   UserAsyncResult,
   UserAsyncSuccess,
 } from "./types";
-import { useInsideRoom } from "./room";
 
 /**
  * Raw access to the React context where the LiveblocksProvider stores the
