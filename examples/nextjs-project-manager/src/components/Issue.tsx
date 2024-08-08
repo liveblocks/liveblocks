@@ -7,7 +7,7 @@ import { IssueActions } from "@/components/IssueActions";
 import { liveblocks } from "@/liveblocks.server.config";
 import { withLexicalDocument } from "@liveblocks/node-lexical";
 import { getRoomId } from "@/config";
-import { remark } from "remark";
+import remark from "remark";
 import html from "remark-html";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { ListItemNode, ListNode } from "@lexical/list";
