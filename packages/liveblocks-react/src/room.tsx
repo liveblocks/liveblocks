@@ -1478,6 +1478,9 @@ function useCreateThread<M extends BaseMetadata>(): (
     (options: CreateThreadOptions<M>): ThreadData<M> => {
       const body = options.body;
       const metadata = options.metadata ?? ({} as M);
+      const attachmentIds = options.attachmentIds;
+
+      console.warn("attachmentIds", attachmentIds);
 
       const threadId = createThreadId();
       const commentId = createCommentId();
@@ -1516,33 +1519,35 @@ function useCreateThread<M extends BaseMetadata>(): (
         roomId: room.id,
       });
 
-      room.createThread({ threadId, commentId, body, metadata }).then(
-        (thread) => {
-          store.set((state) => ({
-            ...state,
-            threads: {
-              ...state.threads,
-              [threadId]: thread,
-            },
-            optimisticUpdates: state.optimisticUpdates.filter(
-              (update) => update.id !== optimisticUpdateId
-            ),
-          }));
-        },
-        (err: Error) =>
-          onMutationFailure(
-            err,
-            optimisticUpdateId,
-            (err) =>
-              new CreateThreadError(err, {
-                roomId: room.id,
-                threadId,
-                commentId,
-                body,
-                metadata,
-              })
-          )
-      );
+      room
+        .createThread({ threadId, commentId, body, metadata, attachmentIds })
+        .then(
+          (thread) => {
+            store.set((state) => ({
+              ...state,
+              threads: {
+                ...state.threads,
+                [threadId]: thread,
+              },
+              optimisticUpdates: state.optimisticUpdates.filter(
+                (update) => update.id !== optimisticUpdateId
+              ),
+            }));
+          },
+          (err: Error) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (err) =>
+                new CreateThreadError(err, {
+                  roomId: room.id,
+                  threadId,
+                  commentId,
+                  body,
+                  metadata,
+                })
+            )
+        );
 
       return newThread;
     },
@@ -1710,9 +1715,11 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
   const client = useClient();
   const room = useRoom();
   return React.useCallback(
-    ({ threadId, body }: CreateCommentOptions): CommentData => {
+    ({ threadId, body, attachmentIds }: CreateCommentOptions): CommentData => {
       const commentId = createCommentId();
       const createdAt = new Date();
+
+      console.warn("attachmentIds", attachmentIds);
 
       const comment: CommentData = {
         id: commentId,
@@ -1736,7 +1743,7 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
         id: optimisticUpdateId,
       });
 
-      room.createComment({ threadId, commentId, body }).then(
+      room.createComment({ threadId, commentId, body, attachmentIds }).then(
         (newComment) => {
           store.set((state) => {
             const existingThread = state.threads[threadId];
@@ -1814,9 +1821,16 @@ function useEditComment(): (options: EditCommentOptions) => void {
   const client = useClient();
   const room = useRoom();
   return React.useCallback(
-    ({ threadId, commentId, body }: EditCommentOptions): void => {
+    ({
+      threadId,
+      commentId,
+      body,
+      attachmentIds,
+    }: EditCommentOptions): void => {
       const editedAt = new Date();
       const optimisticUpdateId = nanoid();
+
+      console.warn("attachmentIds", attachmentIds);
 
       const { store, onMutationFailure } = getExtrasForClient(client);
       const thread = store.get().threads[threadId];
@@ -1844,11 +1858,13 @@ function useEditComment(): (options: EditCommentOptions) => void {
           ...comment,
           editedAt,
           body,
+          // TODO: Use attachments from options
+          attachments: [],
         },
         id: optimisticUpdateId,
       });
 
-      room.editComment({ threadId, commentId, body }).then(
+      room.editComment({ threadId, commentId, body, attachmentIds }).then(
         (editedComment) => {
           store.set((state) => {
             const existingThread = state.threads[threadId];

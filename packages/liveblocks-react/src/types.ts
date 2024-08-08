@@ -96,7 +96,7 @@ export type RoomInfoAsyncSuccess = Resolve<
 // prettier-ignore
 export type CreateThreadOptions<M extends BaseMetadata> =
   Resolve<
-    { body: CommentBody }
+    { body: CommentBody, attachmentIds?: string[]; }
     & PartialUnless<M, { metadata: M }>
   >;
 
@@ -108,12 +108,14 @@ export type EditThreadMetadataOptions<M extends BaseMetadata> = {
 export type CreateCommentOptions = {
   threadId: string;
   body: CommentBody;
+  attachmentIds?: string[];
 };
 
 export type EditCommentOptions = {
   threadId: string;
   commentId: string;
   body: CommentBody;
+  attachmentIds?: string[];
 };
 
 export type DeleteCommentOptions = {

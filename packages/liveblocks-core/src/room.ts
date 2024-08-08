@@ -545,6 +545,7 @@ type CommentsApi<M extends BaseMetadata> = {
     commentId?: string;
     metadata: M | undefined;
     body: CommentBody;
+    attachmentIds?: string[];
   }): Promise<ThreadData<M>>;
 
   /**
@@ -599,6 +600,7 @@ type CommentsApi<M extends BaseMetadata> = {
     threadId: string;
     commentId?: string;
     body: CommentBody;
+    attachmentIds?: string[];
   }): Promise<CommentData>;
 
   /**
@@ -618,6 +620,7 @@ type CommentsApi<M extends BaseMetadata> = {
     threadId: string;
     commentId: string;
     body: CommentBody;
+    attachmentIds?: string[];
   }): Promise<CommentData>;
 
   /**
@@ -1421,12 +1424,14 @@ function createCommentsApi<M extends BaseMetadata>(
     body,
     commentId = createCommentId(),
     threadId = createThreadId(),
+    attachmentIds,
   }: {
     roomId: string;
     threadId?: string;
     commentId?: string;
     metadata: M | undefined;
     body: CommentBody;
+    attachmentIds?: string[];
   }) {
     const thread = await fetchJson<ThreadDataPlain<M>>("/threads", {
       method: "POST",
@@ -1438,6 +1443,7 @@ function createCommentsApi<M extends BaseMetadata>(
         comment: {
           id: commentId,
           body,
+          attachmentIds,
         },
         metadata,
       }),
@@ -1494,10 +1500,12 @@ function createCommentsApi<M extends BaseMetadata>(
     threadId,
     commentId = createCommentId(),
     body,
+    attachmentIds,
   }: {
     threadId: string;
     commentId?: string;
     body: CommentBody;
+    attachmentIds?: string[];
   }) {
     const comment = await fetchJson<CommentDataPlain>(
       `/threads/${encodeURIComponent(threadId)}/comments`,
@@ -1509,6 +1517,7 @@ function createCommentsApi<M extends BaseMetadata>(
         body: JSON.stringify({
           id: commentId,
           body,
+          attachmentIds,
         }),
       }
     );
@@ -1520,10 +1529,12 @@ function createCommentsApi<M extends BaseMetadata>(
     threadId,
     commentId,
     body,
+    attachmentIds,
   }: {
     threadId: string;
     commentId: string;
     body: CommentBody;
+    attachmentIds?: string[];
   }) {
     const comment = await fetchJson<CommentDataPlain>(
       `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
@@ -1536,6 +1547,7 @@ function createCommentsApi<M extends BaseMetadata>(
         },
         body: JSON.stringify({
           body,
+          attachmentIds,
         }),
       }
     );
