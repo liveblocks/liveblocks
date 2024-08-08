@@ -47,6 +47,7 @@ export {
   useErrorListener,
   useEventListener,
   useHistory,
+  useInRoom,
   useLostConnectionListener,
   useMarkThreadAsRead,
   useMutation,
@@ -70,7 +71,6 @@ export { selectedThreads } from "./comments/lib/selected-threads";
 // Export the classic (non-Suspense) versions of our hooks
 // (This part differs from src/suspense.ts)
 export {
-  useInRoom,
   useOther,
   useOthers,
   useOthersConnectionIds,

@@ -928,6 +928,9 @@ function useRoom<
 
 /**
  * Returns whether the hook is called within a RoomProvider context.
+ *
+ * @example
+ * const inRoom = useInRoom();
  */
 function useInRoom(): boolean {
   const room = useRoomOrNull();
@@ -2823,6 +2826,14 @@ const _useOthersListener: TypedBundle["useOthersListener"] = useOthersListener;
 const _useRoom: TypedBundle["useRoom"] = useRoom;
 
 /**
+ * Returns whether the hook is called within a RoomProvider context.
+ *
+ * @example
+ * const inRoom = useInRoom();
+ */
+const _useInRoom: TypedBundle["useInRoom"] = useInRoom;
+
+/**
  * Returns a function that adds a reaction from a comment.
  *
  * @example
@@ -3290,7 +3301,7 @@ export {
   useErrorListener,
   _useEventListener as useEventListener,
   useHistory,
-  useInRoom,
+  _useInRoom as useInRoom,
   useLostConnectionListener,
   useMarkThreadAsRead,
   useMarkThreadAsResolved,

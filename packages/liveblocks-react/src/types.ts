@@ -343,6 +343,14 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * const { info, error, isLoading } = useRoomInfo("room-id");
      */
     useRoomInfo(roomId: string): RoomInfoAsyncResult;
+
+    /**
+     * Returns whether the hook is called within a RoomProvider context.
+     *
+     * @example
+     * const inRoom = useInRoom();
+     */
+    useInRoom(): boolean;
   };
 
   suspense: {
@@ -366,6 +374,14 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * const { info } = useRoomInfo("room-id");
      */
     useRoomInfo(roomId: string): RoomInfoAsyncSuccess;
+
+    /**
+     * Returns whether the hook is called within a RoomProvider context.
+     *
+     * @example
+     * const inRoom = useInRoom();
+     */
+    useInRoom(): boolean;
   };
 };
 
@@ -398,11 +414,6 @@ type RoomContextBundleCommon<
    * tree.
    */
   useRoom(): Room<P, S, U, E, M>;
-
-  /**
-   * Returns whether the hook is called within a RoomProvider context.
-   */
-  useInRoom(): boolean;
 
   /**
    * Returns the current connection status for the Room, and triggers
