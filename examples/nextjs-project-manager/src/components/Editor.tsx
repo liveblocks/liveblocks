@@ -36,7 +36,7 @@ export function Editor({
   return (
     <ClientSideSuspense
       fallback={
-        <div className="pointer-events-none">
+        <div className="select-none cursor-wait">
           <div className="block w-full text-2xl font-bold my-6">
             {storageFallback.meta.title}
           </div>
@@ -61,7 +61,7 @@ function LexicalEditor({ contentFallback }: { contentFallback: ReactNode }) {
         <div className="relative">
           <LiveblocksPlugin>
             {status === "not-loaded" || status === "loading" ? (
-              contentFallback
+              <div className="select-none cursor-wait">{contentFallback}</div>
             ) : (
               <RichTextPlugin
                 contentEditable={<ContentEditable className="outline-none" />}
