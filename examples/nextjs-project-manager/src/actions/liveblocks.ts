@@ -42,6 +42,11 @@ export async function createIssue() {
   redirect(`/issue/${issueId}`);
 }
 
+export async function getStorageDocument(roomId: string) {
+  const storage = await liveblocks.getStorageDocument(roomId, "json");
+  return storage;
+}
+
 export async function getRoomsFromIds(roomIds: string[]) {
   const promises = [];
 

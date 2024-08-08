@@ -1,5 +1,6 @@
 import { LABELS, PRIORITY_STATES, RoomWithMetadata } from "@/config";
 import { getUser } from "@/database";
+import { getStorageDocument } from "@/actions/liveblocks";
 
 export function IssuesList({
   initialRooms,
@@ -66,9 +67,9 @@ export function IssuesList({
   );
 }
 
-export function Row({ room }: { room: RoomWithMetadata }) {
+export async function Row({ room }: { room: RoomWithMetadata }) {
   const { issueId, title, priority, progress, assignedTo, labels } =
-    room.metadata;
+    await getMetadataFromRoom(room);
 
   const assignedUser = assignedTo !== "none" ? getUser(assignedTo) : null;
 
@@ -116,4 +117,29 @@ export function Row({ room }: { room: RoomWithMetadata }) {
       </div>
     </a>
   );
+}
+
+async function getMetadataFromRoom(room: RoomWithMetadata) {
+  // We recommend setting up webhooks to automatically attach the Storage data
+  // to room metadata on changes. Then you can directly use the room instead
+  // of calling the Storage API below.
+  // More info inside the webhook route at /app/api/storage-webhook/route.ts
+  // return room.metadata;
+
+  // This will be much slower than the solution above, but it makes it easier
+  // for us to deploy our example.
+  const {
+    meta: { title },
+    properties: { progress, priority, assignedTo },
+    labels,
+  } = await getStorageDocument(room.id);
+
+  return {
+    issueId: room.metadata.issueId,
+    title,
+    progress,
+    priority,
+    assignedTo,
+    labels,
+  };
 }
