@@ -1215,6 +1215,27 @@ function installBackgroundTabSpy(): [
   return [inBackgroundSince, unsub];
 }
 
+const ATTACHMENT_PART_SIZE = 5 * 1024 * 1024; // 5 MB
+
+function splitFileIntoParts(file: File) {
+  const parts: { partNumber: number; part: Blob }[] = [];
+
+  let start = 0;
+
+  while (start < file.size) {
+    const end = Math.min(start + ATTACHMENT_PART_SIZE, file.size);
+
+    parts.push({
+      partNumber: parts.length + 1,
+      part: file.slice(start, end),
+    });
+
+    start = end;
+  }
+
+  return parts;
+}
+
 export class CommentsApiError extends Error {
   constructor(
     public message: string,
@@ -1627,12 +1648,61 @@ function createCommentsApi<M extends BaseMetadata>(
     };
   }
 
+  // async function uploadAttachment(
+  //   attachment: CommentLocalAttachment,
+  //   options: UploadAttachmentOptions = {}
+  // ): Promise<CommentUploadedAttachment> {
+  //   const abortSignal = options.signal;
+  //   const abortError = abortSignal
+  //     ? new DOMException(
+  //         `Upload of attachment ${attachment.id} was aborted.`,
+  //         "AbortError"
+  //       )
+  //     : undefined;
+
+  //   if (abortSignal?.aborted) {
+  //     throw abortError;
+  //   }
+
+  //   try {
+  //     // Simulate a 1s abortable upload
+  //     await new Promise((resolve, reject) => {
+  //       const timeout = setTimeout(resolve, 2000);
+
+  //       abortSignal?.addEventListener("abort", () => {
+  //         clearTimeout(timeout);
+  //         reject(abortError);
+  //       });
+  //     });
+
+  //     if (abortSignal?.aborted) {
+  //       throw abortError;
+  //     }
+
+  //     // Simulate an upload error half the time
+  //     if (Math.random() < 0.5) {
+  //       throw new Error("There was an error while uploading the attachment.");
+  //     }
+
+  //     return {
+  //       id: attachment.id,
+  //       name: attachment.name,
+  //       size: attachment.size,
+  //       mimeType: attachment.mimeType,
+  //     };
+  //   } catch (error) {
+  //     if ((error as Error)?.name && (error as Error).name === "AbortError") {
+  //       // TODO: Clean up?
+  //     }
+
+  //     throw error;
+  //   }
+  // }
+
   async function uploadAttachment(
     attachment: CommentLocalAttachment,
     options: UploadAttachmentOptions = {}
   ): Promise<CommentUploadedAttachment> {
-    // TODO: Single-part or multi-part upload based on file size
-
     const abortSignal = options.signal;
     const abortError = abortSignal
       ? new DOMException(
@@ -1645,38 +1715,97 @@ function createCommentsApi<M extends BaseMetadata>(
       throw abortError;
     }
 
-    try {
-      // Simulate a 1s abortable upload
-      await new Promise((resolve, reject) => {
-        const timeout = setTimeout(resolve, 2000);
+    if (attachment.file.size <= ATTACHMENT_PART_SIZE) {
+      // If the file is small enough, upload it in a single request
+      return fetchJson<CommentUploadedAttachment>(
+        `/attachments/${encodeURIComponent(attachment.id)}`,
+        {
+          body: attachment.file,
+          signal: abortSignal,
+        }
+      );
+    } else {
+      // Otherwise, upload it in multiple parts
+      let uploadId: string | undefined;
+      const uploadedParts: {
+        etag: string;
+        partNumber: number;
+      }[] = [];
 
-        abortSignal?.addEventListener("abort", () => {
-          clearTimeout(timeout);
-          reject(abortError);
+      try {
+        // Create a multi-part upload
+        const createMultiPartUpload = await fetchJson<{
+          uploadId: string;
+          key: string;
+        }>(`/attachments/${encodeURIComponent(attachment.id)}/multipart`, {
+          method: "POST",
+          signal: abortSignal,
         });
-      });
 
-      if (abortSignal?.aborted) {
-        throw abortError;
+        uploadId = createMultiPartUpload.uploadId;
+
+        const parts = splitFileIntoParts(attachment.file);
+
+        // Check if the upload was aborted
+        if (abortSignal?.aborted) {
+          throw abortError;
+        }
+
+        // TODO: Retry failed parts individually?
+        // TODO: Upload parts in parallel/batches?
+        // Upload each part individually
+        for (const { part, partNumber } of parts) {
+          const uploadedPart = await fetchJson<{
+            partNumber: number;
+            etag: string;
+          }>(
+            `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(uploadId)}/${encodeURIComponent(partNumber)}`,
+            {
+              method: "PUT",
+              body: part,
+            }
+          );
+
+          uploadedParts.push({
+            etag: uploadedPart.etag,
+            partNumber,
+          });
+        }
+
+        // Check if the upload was aborted
+        if (abortSignal?.aborted) {
+          throw abortError;
+        }
+
+        return fetchJson<CommentUploadedAttachment>(
+          `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(uploadId)}/complete`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ parts: uploadedParts }),
+            signal: abortSignal,
+          }
+        );
+      } catch (error) {
+        if (
+          uploadId &&
+          (error as Error)?.name &&
+          (error as Error).name === "AbortError"
+        ) {
+          // Abort the multi-part upload if it was created
+          await fetchCommentsApi(
+            `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(uploadId)}`,
+            undefined,
+            {
+              method: "DELETE",
+            }
+          );
+        }
+
+        throw error;
       }
-
-      // Simulate an upload error half the time
-      if (Math.random() < 0.5) {
-        throw new Error("There was an error while uploading the attachment.");
-      }
-
-      return {
-        id: attachment.id,
-        name: attachment.name,
-        size: attachment.size,
-        mimeType: attachment.mimeType,
-      };
-    } catch (error) {
-      if ((error as Error)?.name && (error as Error).name === "AbortError") {
-        // TODO: Clean up?
-      }
-
-      throw error;
     }
   }
 
