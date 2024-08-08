@@ -623,16 +623,19 @@ export const Composer = forwardRef(
             commentId,
             threadId,
             body: comment.body,
+            attachments: comment.attachments,
           });
         } else if (threadId) {
           createComment({
             threadId,
             body: comment.body,
+            attachments: comment.attachments,
           });
         } else {
           createThread({
             body: comment.body,
             metadata: metadata ?? {},
+            attachments: comment.attachments,
           });
         }
       },
