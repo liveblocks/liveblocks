@@ -204,9 +204,9 @@ export interface ComposerSubmitComment {
   body: CommentBody;
 
   /**
-   * TODO:
+   * The submitted comment's uploaded attachments.
    */
-  attachmentIds: string[];
+  attachments: CommentUploadedAttachment[];
 }
 
 export interface ComposerEditorElementProps extends RenderElementProps {

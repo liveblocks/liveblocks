@@ -19,6 +19,7 @@ import type {
   Client,
   CommentBody,
   CommentData,
+  CommentUploadedAttachment,
   DRI,
   InboxNotificationData,
   LiveblocksError,
@@ -96,7 +97,7 @@ export type RoomInfoAsyncSuccess = Resolve<
 // prettier-ignore
 export type CreateThreadOptions<M extends BaseMetadata> =
   Resolve<
-    { body: CommentBody, attachmentIds?: string[]; }
+    { body: CommentBody, attachments?: CommentUploadedAttachment[]; }
     & PartialUnless<M, { metadata: M }>
   >;
 
@@ -108,14 +109,14 @@ export type EditThreadMetadataOptions<M extends BaseMetadata> = {
 export type CreateCommentOptions = {
   threadId: string;
   body: CommentBody;
-  attachmentIds?: string[];
+  attachments?: CommentUploadedAttachment[];
 };
 
 export type EditCommentOptions = {
   threadId: string;
   commentId: string;
   body: CommentBody;
-  attachmentIds?: string[];
+  attachments?: CommentUploadedAttachment[];
 };
 
 export type DeleteCommentOptions = {

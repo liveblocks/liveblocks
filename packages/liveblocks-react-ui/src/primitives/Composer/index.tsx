@@ -1137,13 +1137,14 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
           editor.children as ComposerBodyData
         );
         // Only uploaded attachments are included to be submitted.
-        const attachmentIds = attachments
+        const commentAttachments = attachments
           .filter((attachment) => attachment.status === "uploaded")
-          .map((attachment) => attachment.id);
+          .map(({ status: _, ...attachment }) => attachment);
 
-        const comment = { body, attachmentIds };
-
-        const promise = onComposerSubmit(comment, event);
+        const promise = onComposerSubmit(
+          { body, attachments: commentAttachments },
+          event
+        );
 
         event.preventDefault();
 

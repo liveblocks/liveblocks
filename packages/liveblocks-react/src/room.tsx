@@ -1478,9 +1478,7 @@ function useCreateThread<M extends BaseMetadata>(): (
     (options: CreateThreadOptions<M>): ThreadData<M> => {
       const body = options.body;
       const metadata = options.metadata ?? ({} as M);
-      const attachmentIds = options.attachmentIds;
-
-      console.warn("attachmentIds", attachmentIds);
+      const attachments = options.attachments;
 
       const threadId = createThreadId();
       const commentId = createCommentId();
@@ -1495,8 +1493,7 @@ function useCreateThread<M extends BaseMetadata>(): (
         userId: getCurrentUserId(room),
         body,
         reactions: [],
-        // TODO: Use attachments from options
-        attachments: [],
+        attachments: attachments ?? [],
       };
       const newThread: ThreadData<M> = {
         id: threadId,
@@ -1518,6 +1515,8 @@ function useCreateThread<M extends BaseMetadata>(): (
         id: optimisticUpdateId,
         roomId: room.id,
       });
+
+      const attachmentIds = attachments?.map((attachment) => attachment.id);
 
       room
         .createThread({ threadId, commentId, body, metadata, attachmentIds })
@@ -1715,11 +1714,9 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
   const client = useClient();
   const room = useRoom();
   return React.useCallback(
-    ({ threadId, body, attachmentIds }: CreateCommentOptions): CommentData => {
+    ({ threadId, body, attachments }: CreateCommentOptions): CommentData => {
       const commentId = createCommentId();
       const createdAt = new Date();
-
-      console.warn("attachmentIds", attachmentIds);
 
       const comment: CommentData = {
         id: commentId,
@@ -1730,8 +1727,7 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
         userId: getCurrentUserId(room),
         body,
         reactions: [],
-        // TODO: Use attachments from options
-        attachments: [],
+        attachments: attachments ?? [],
       };
 
       const optimisticUpdateId = nanoid();
@@ -1742,6 +1738,8 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
         comment,
         id: optimisticUpdateId,
       });
+
+      const attachmentIds = attachments?.map((attachment) => attachment.id);
 
       room.createComment({ threadId, commentId, body, attachmentIds }).then(
         (newComment) => {
@@ -1821,16 +1819,9 @@ function useEditComment(): (options: EditCommentOptions) => void {
   const client = useClient();
   const room = useRoom();
   return React.useCallback(
-    ({
-      threadId,
-      commentId,
-      body,
-      attachmentIds,
-    }: EditCommentOptions): void => {
+    ({ threadId, commentId, body, attachments }: EditCommentOptions): void => {
       const editedAt = new Date();
       const optimisticUpdateId = nanoid();
-
-      console.warn("attachmentIds", attachmentIds);
 
       const { store, onMutationFailure } = getExtrasForClient(client);
       const thread = store.get().threads[threadId];
@@ -1858,11 +1849,12 @@ function useEditComment(): (options: EditCommentOptions) => void {
           ...comment,
           editedAt,
           body,
-          // TODO: Use attachments from options
-          attachments: [],
+          attachments: attachments ?? [],
         },
         id: optimisticUpdateId,
       });
+
+      const attachmentIds = attachments?.map((attachment) => attachment.id);
 
       room.editComment({ threadId, commentId, body, attachmentIds }).then(
         (editedComment) => {
