@@ -413,6 +413,10 @@ function createComposerAttachmentsManager(
   };
 }
 
+function preventBeforeUnloadDefault(event: BeforeUnloadEvent) {
+  event.preventDefault();
+}
+
 export function useComposerAttachmentsManager(
   defaultAttachments: CommentUploadedAttachment[],
   options: ComposerAttachmentsManagerOptions
@@ -436,6 +440,18 @@ export function useComposerAttachmentsManager(
   const isUploadingAttachments = useMemo(() => {
     return attachments.some((attachment) => attachment.status === "uploading");
   }, [attachments]);
+
+  useEffect(() => {
+    if (!isUploadingAttachments) {
+      return;
+    }
+
+    window.addEventListener("beforeunload", preventBeforeUnloadDefault);
+
+    return () => {
+      window.removeEventListener("beforeunload", preventBeforeUnloadDefault);
+    };
+  }, [isUploadingAttachments]);
 
   return {
     attachments,
