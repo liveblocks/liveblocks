@@ -9,6 +9,7 @@ import { createRoomContext } from "../room";
 import {
   useCanRedo,
   useCanUndo,
+  useInsideRoom,
   useMutation,
   useMyPresence,
   useOthers,
@@ -99,6 +100,22 @@ describe("useRoom", () => {
         },
       ])
     );
+  });
+});
+
+describe("useInsideRoom", () => {
+  test("useInsideRoom should return true inside a room", () => {
+    const { result } = renderHook(() => useInsideRoom());
+    const insideRoom = result.current;
+    expect(insideRoom).toBe(true);
+  });
+
+  test("useInsideRoom should return false outside a room", () => {
+    const { result } = renderHook(() => useInsideRoom(), {
+      wrapper: undefined, // Skip using RoomProvider wrapper
+    });
+    const insideRoom = result.current;
+    expect(insideRoom).toBe(false);
   });
 });
 
