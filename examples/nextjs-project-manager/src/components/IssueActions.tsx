@@ -11,7 +11,7 @@ export function IssueActions({ issueId }: { issueId: string }) {
   return (
     <>
       {deleting ? (
-        <div className="inset-0 bg-gray-100/50 absolute">
+        <div className="inset-0 bg-neutral-100/50 fixed z-50">
           <Loading />
         </div>
       ) : null}

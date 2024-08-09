@@ -11,14 +11,21 @@ import {
   ClientSideSuspense,
   useUnreadInboxNotificationsCount,
 } from "@liveblocks/react/suspense";
-import { ComponentProps } from "react";
+import { ComponentProps, useState } from "react";
+import { Loading } from "@/components/Loading";
 
 export function Nav() {
   const { isOpen, toggleInbox } = useInbox();
   const pathname = usePathname();
+  const [creating, setCreating] = useState(false);
 
   return (
     <div>
+      {creating ? (
+        <div className="inset-0 bg-neutral-100/50 fixed z-50">
+          <Loading />
+        </div>
+      ) : null}
       <div className="text-sm font-semibold p-2 pr-0 flex justify-between items-center mb-2">
         <Link href="/" className="flex items-center gap-1.5">
           <span className="w-4 text-gray-600">
@@ -27,7 +34,10 @@ export function Nav() {
           Liveblocks
         </Link>
         <button
-          onClick={() => createIssue()}
+          onClick={() => {
+            setCreating(true);
+            createIssue();
+          }}
           className="bg-white rounded-lg p-1.5 shadow-sm border border-neutral-200 text"
         >
           <Create className="w-4 h-4" />

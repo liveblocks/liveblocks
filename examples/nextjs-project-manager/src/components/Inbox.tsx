@@ -10,11 +10,7 @@ import {
 import { InboxNotificationList } from "@liveblocks/react-ui";
 import { Comment } from "@liveblocks/react-ui/primitives";
 import { ErrorBoundary } from "react-error-boundary";
-import {
-  CommentData,
-  InboxNotificationData,
-  stringifyCommentBody,
-} from "@liveblocks/core";
+import { InboxNotificationData } from "@liveblocks/core";
 import { Avatar } from "@/components/Avatar";
 import classNames from "classnames";
 import { useRoomInfo, useInboxNotificationThread } from "@liveblocks/react";
@@ -23,8 +19,8 @@ import { useParams } from "next/navigation";
 import { Mention } from "@/components/Mention";
 import { Link } from "@/components/Link";
 import { CheckCheck } from "@/icons/CheckCheck";
-import { Delete } from "@/icons/Delete";
 import { useMemo } from "react";
+import { Trash } from "@/icons/Trash";
 
 export function Inbox() {
   return (
@@ -52,7 +48,7 @@ function InboxActionButtons() {
         <CheckCheck className="w-4 h-4 text-emerald-700" />
       </button>
       <button onClick={deleteAll}>
-        <Delete className="w-4 h-4 text-red-700" />
+        <Trash className="w-4 h-4 text-red-700" />
       </button>
     </>
   );
@@ -61,21 +57,18 @@ function InboxActionButtons() {
 function InboxNotifications() {
   const { inboxNotifications } = useInboxNotifications();
 
-  // Only show one notification for each thread
+  // Only show thread notifications, and only one notification for each thread
   const filteredNotifications = useMemo(() => {
     const filtered: InboxNotificationData[] = [];
 
     for (const notification of inboxNotifications) {
-      if (notification.kind !== "thread") {
+      if (
+        notification.kind === "thread" &&
+        !filtered.find(
+          (n) => n.kind === "thread" && n.threadId === notification.threadId
+        )
+      ) {
         filtered.push(notification);
-      } else {
-        if (
-          !filtered.find(
-            (n) => n.kind === "thread" && n.threadId === notification.threadId
-          )
-        ) {
-          filtered.push(notification);
-        }
       }
     }
 
@@ -128,7 +121,6 @@ function SmallInboxNotification({
 }) {
   const params = useParams();
   const thread = useInboxNotificationThread(inboxNotification.id);
-  const { user } = useUser(thread.comments[0].userId);
   const { info, error, isLoading } = useRoomInfo(
     inboxNotification?.roomId || ""
   );
@@ -140,6 +132,8 @@ function SmallInboxNotification({
     );
     return filterDeleted[filterDeleted.length - 1];
   }, [thread]);
+
+  const { user } = useUser(latestComment.userId);
 
   if (
     !latestComment ||
