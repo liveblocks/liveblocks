@@ -927,6 +927,17 @@ function useRoom<
 }
 
 /**
+ * Returns whether the hook is called within a RoomProvider context.
+ *
+ * @example
+ * const insideRoom = useInsideRoom();
+ */
+function useInsideRoom(): boolean {
+  const room = useRoomOrNull();
+  return room !== null;
+}
+
+/**
  * Returns the current connection status for the Room, and triggers
  * a re-render whenever it changes. Can be used to render a status badge.
  */
@@ -2815,6 +2826,14 @@ const _useOthersListener: TypedBundle["useOthersListener"] = useOthersListener;
 const _useRoom: TypedBundle["useRoom"] = useRoom;
 
 /**
+ * Returns whether the hook is called within a RoomProvider context.
+ *
+ * @example
+ * const insideRoom = useInsideRoom();
+ */
+const _useInsideRoom: TypedBundle["useInsideRoom"] = useInsideRoom;
+
+/**
  * Returns a function that adds a reaction from a comment.
  *
  * @example
@@ -3282,6 +3301,7 @@ export {
   useErrorListener,
   _useEventListener as useEventListener,
   useHistory,
+  _useInsideRoom as useInsideRoom,
   useLostConnectionListener,
   useMarkThreadAsRead,
   useMarkThreadAsResolved,
