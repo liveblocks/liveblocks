@@ -8,13 +8,16 @@ import {
   useDeleteAllInboxNotifications,
 } from "@liveblocks/react/suspense";
 import { InboxNotificationList } from "@liveblocks/react-ui";
+import { Comment } from "@liveblocks/react-ui/primitives";
 import { ErrorBoundary } from "react-error-boundary";
 import { InboxNotificationData, stringifyCommentBody } from "@liveblocks/core";
 import { Avatar } from "@/components/Avatar";
 import classNames from "classnames";
 import { useRoomInfo, useInboxNotificationThread } from "@liveblocks/react";
-import Link from "next/link";
+import NextLink from "next/link";
 import { useParams } from "next/navigation";
+import { Mention } from "@/components/Mention";
+import { Link } from "@/components/Link";
 
 export function Inbox() {
   return (
@@ -58,10 +61,10 @@ function InboxNotifications() {
   return (
     <InboxNotificationList>
       {inboxNotifications.map((inboxNotification, index) => (
-        <div className="relative h-[66px] p-1">
+        <div className="relative h-[66px] p-1" key={inboxNotification.id}>
           <ClientSideSuspense
             fallback={
-              <li className="absolute inset-0 w-full [h-165px] px-3 py-2.5 gap-2 m-1 rounded flex flex-row items-center">
+              <div className="absolute inset-0 w-full [h-165px] px-3 py-2.5 gap-2 m-1 rounded flex flex-row items-center">
                 <div className="h-8 w-8">
                   <div className="rounded-full overflow-hidden">
                     <div className="w-7 h-7 bg-neutral-100 rounded-full animate-pulse" />
@@ -75,13 +78,10 @@ function InboxNotifications() {
                     <div className="w-48 h-4 bg-neutral-100 animate-pulse mt-1 rounded" />
                   </div>
                 </div>
-              </li>
+              </div>
             }
           >
-            <SmallInboxNotification
-              key={inboxNotification.id}
-              inboxNotification={inboxNotification}
-            />
+            <SmallInboxNotification inboxNotification={inboxNotification} />
           </ClientSideSuspense>
         </div>
       ))}
@@ -111,7 +111,7 @@ function SmallInboxNotification({
     return null;
   }
   return (
-    <Link href={`/issue/${info?.metadata.issueId}`}>
+    <NextLink href={`/issue/${info?.metadata.issueId}`}>
       <div
         className={classNames(
           "flex flex-row items-center px-3 py-2.5 gap-2 rounded",
@@ -130,14 +130,18 @@ function SmallInboxNotification({
           <div className="font-medium text-neutral-700 truncate">
             {info.metadata.title}
           </div>
-          <div className="text-xs text-neutral-400 w-full truncate">
-            {user.name} commented:{" "}
-            {stringifyCommentBody(thread.comments[0].body)}
+          <div className="text-xs text-neutral-400 w-full truncate flex items-center gap-[3px] overflow-hidden">
+            <span>{user.name}:</span>
+            <div className="flex-grow-0 truncate">
+              <Comment.Body
+                className="*:truncate"
+                body={thread.comments[0].body}
+                components={{ Mention, Link }}
+              />
+            </div>
           </div>
         </div>
       </div>
-    </Link>
+    </NextLink>
   );
 }
-
-function useInRoom() {}
