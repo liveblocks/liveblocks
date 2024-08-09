@@ -4,7 +4,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        accent: "#FB233B",
+        accent: "#7223fb",
       },
       animation: {
         "spin-slow": "spin 10s linear infinite",

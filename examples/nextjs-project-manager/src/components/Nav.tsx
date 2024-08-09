@@ -11,6 +11,7 @@ import {
   ClientSideSuspense,
   useUnreadInboxNotificationsCount,
 } from "@liveblocks/react/suspense";
+import { ComponentProps } from "react";
 
 export function Nav() {
   const { isOpen, toggleInbox } = useInbox();
@@ -19,7 +20,12 @@ export function Nav() {
   return (
     <div>
       <div className="text-sm font-semibold p-2 pr-0 flex justify-between items-center mb-2">
-        <Link href="/">Liveblocks</Link>
+        <Link href="/" className="flex items-center gap-1.5">
+          <span className="w-4 text-gray-600">
+            <Logo />
+          </span>
+          Liveblocks
+        </Link>
         <button
           onClick={() => createIssue()}
           className="bg-white rounded-lg p-1.5 shadow-sm border border-neutral-200 text"
@@ -31,7 +37,7 @@ export function Nav() {
         <button
           onClick={toggleInbox}
           className={classNames(
-            "flex items-center justify-between gap-2 w-full text-sm text-neutral-700 font-semibold p-2 rounded text-left",
+            "flex items-center justify-between gap-2 w-full text-sm text-neutral-700 font-semibold p-2 rounded text-left hover:bg-neutral-200",
             { "bg-neutral-200": isOpen }
           )}
         >
@@ -47,7 +53,7 @@ export function Nav() {
         <Link href="/inbox">
           <div
             className={classNames(
-              "flex items-center justify-between gap-2 w-full text-sm text-neutral-700 font-semibold p-2 rounded text-left",
+              "flex items-center justify-between gap-2 w-full text-sm text-neutral-700 font-semibold p-2 rounded text-left hover:bg-neutral-200",
               { "bg-neutral-200": pathname === "/inbox" }
             )}
           >
@@ -73,8 +79,48 @@ function UnreadBadge() {
   }
 
   return (
-    <div className="w-5 h-5 flex justify-center items-center bg-neutral-200 font-normal text-xs rounded">
+    <div className="w-5 h-5 flex justify-center items-center bg-neutral-200 font-medium text-xs rounded">
       {count}
     </div>
+  );
+}
+
+function Logo(props: ComponentProps<"svg">) {
+  return (
+    <svg
+      className="w-full h-auto"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="30 30 68 68"
+      fill="none"
+      {...props}
+    >
+      <g
+        fill="#000"
+        fillRule="evenodd"
+        clipRule="evenodd"
+        style={{
+          transformBox: "fill-box",
+          transformOrigin: "center",
+          animation: "rotate var(--duration) infinite var(--ease-in-out-expo)",
+        }}
+      >
+        <path
+          d="M96 83H51l32.05-32v18.56L96 83z"
+          style={{
+            transformOrigin: "73.5px 67px",
+            animation:
+              "offset-distance var(--duration) infinite var(--ease-in-out-quart),offset-rotate var(--duration) infinite var(--ease-in-out-expo)",
+          }}
+        />
+        <path
+          d="M32 45h45L44.95 77V58.44L32 45z"
+          style={{
+            transformOrigin: "54.5px 61px",
+            animation:
+              "offset-distance var(--duration) infinite var(--ease-in-out-quart),offset-rotate var(--duration) infinite var(--ease-in-out-expo)",
+          }}
+        />
+      </g>
+    </svg>
   );
 }

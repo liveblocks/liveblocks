@@ -10,7 +10,11 @@ import {
 import { InboxNotificationList } from "@liveblocks/react-ui";
 import { Comment } from "@liveblocks/react-ui/primitives";
 import { ErrorBoundary } from "react-error-boundary";
-import { InboxNotificationData, stringifyCommentBody } from "@liveblocks/core";
+import {
+  CommentData,
+  InboxNotificationData,
+  stringifyCommentBody,
+} from "@liveblocks/core";
 import { Avatar } from "@/components/Avatar";
 import classNames from "classnames";
 import { useRoomInfo, useInboxNotificationThread } from "@liveblocks/react";
@@ -57,7 +61,7 @@ function InboxActionButtons() {
 function InboxNotifications() {
   const { inboxNotifications } = useInboxNotifications();
 
-  // Only show each thread notification once
+  // Only show one notification for each thread
   const filteredNotifications = useMemo(() => {
     const filtered: InboxNotificationData[] = [];
 
@@ -128,7 +132,14 @@ function SmallInboxNotification({
   const { info, error, isLoading } = useRoomInfo(
     inboxNotification?.roomId || ""
   );
-  const latestComment = thread.comments[thread.comments.length - 1];
+
+  // Get latest non-deleted comment for notification preview
+  const latestComment = useMemo(() => {
+    const filterDeleted = thread.comments.filter(
+      (comment) => !comment?.deletedAt
+    );
+    return filterDeleted[filterDeleted.length - 1];
+  }, [thread]);
 
   if (
     !latestComment ||
@@ -159,15 +170,13 @@ function SmallInboxNotification({
           <div className="font-medium text-neutral-700 truncate">
             {info.metadata.title}
           </div>
-          <div className="text-xs text-neutral-400 w-full truncate flex items-center gap-[3px] overflow-hidden">
+          <div className="text-xs text-neutral-400 w-full truncate flex items-center gap-[3px]">
             <span>{user.name}:</span>
-            <div className="flex-grow-0 truncate">
-              <Comment.Body
-                className="*:truncate"
-                body={latestComment.body}
-                components={{ Mention, Link }}
-              />
-            </div>
+            <Comment.Body
+              className="overflow-hidden *:truncate"
+              body={latestComment.body}
+              components={{ Mention, Link }}
+            />
           </div>
         </div>
       </div>
