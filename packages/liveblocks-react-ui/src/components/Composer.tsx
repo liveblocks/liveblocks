@@ -206,6 +206,10 @@ function ComposerInsertEmojiEditorAction({
     event.preventDefault();
   }, []);
 
+  const stopPropagation = useCallback((event: SyntheticEvent) => {
+    event.stopPropagation();
+  }, []);
+
   return (
     <EmojiPicker onEmojiSelect={insertText} onOpenChange={onPickerOpenChange}>
       <Tooltip content={label}>
@@ -213,6 +217,7 @@ function ComposerInsertEmojiEditorAction({
           <Button
             className={classNames("lb-composer-editor-action", className)}
             onMouseDown={preventDefault}
+            onClick={stopPropagation}
             aria-label={label}
             {...props}
           >
@@ -301,8 +306,8 @@ const ComposerWithContext = forwardRef<
       client[kInternal].resolveMentionSuggestions !== undefined;
     const self = useSelf();
     const isDisabled = useMemo(
-      () => disabled || !self?.canComment,
-      [disabled, self?.canComment]
+      () => disabled || (self ? !self.canComment : false),
+      [disabled, self?.canComment] // eslint-disable-line react-hooks/exhaustive-deps
     );
     const { isEmpty } = useComposer();
     const $ = useOverrides(overrides);
