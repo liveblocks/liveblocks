@@ -1,6 +1,6 @@
 import { ComponentProps } from "react";
 
-export function Check(props: ComponentProps<"svg">) {
+export function CheckCheck(props: ComponentProps<"svg">) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -14,7 +14,7 @@ export function Check(props: ComponentProps<"svg">) {
       strokeLinejoin="round"
       {...props}
     >
-      <path d="M20 6L9 17l-5-5" />
+      <path d="M18 6L7 17l-5-5M22 10l-7.5 7.5L13 16" />
     </svg>
   );
 }

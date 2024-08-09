@@ -18,13 +18,16 @@ import NextLink from "next/link";
 import { useParams } from "next/navigation";
 import { Mention } from "@/components/Mention";
 import { Link } from "@/components/Link";
+import { CheckCheck } from "@/icons/CheckCheck";
+import { Delete } from "@/icons/Delete";
+import { useMemo } from "react";
 
 export function Inbox() {
   return (
     <ErrorBoundary fallback={<div>Error</div>}>
       <div className="flex items-center justify-between px-4 text-sm border-b h-10">
         <div>Inbox</div>
-        <div className="flex gap-2 text-xl">
+        <div className="flex gap-2">
           <InboxActionButtons />
         </div>
       </div>
@@ -41,14 +44,39 @@ function InboxActionButtons() {
 
   return (
     <>
-      <button onClick={markAsRead}>✓</button>
-      <button onClick={deleteAll}>✗</button>
+      <button onClick={markAsRead}>
+        <CheckCheck className="w-4 h-4 text-emerald-700" />
+      </button>
+      <button onClick={deleteAll}>
+        <Delete className="w-4 h-4 text-red-700" />
+      </button>
     </>
   );
 }
 
 function InboxNotifications() {
   const { inboxNotifications } = useInboxNotifications();
+
+  // Only show each thread notification once
+  const filteredNotifications = useMemo(() => {
+    const filtered: InboxNotificationData[] = [];
+
+    for (const notification of inboxNotifications) {
+      if (notification.kind !== "thread") {
+        filtered.push(notification);
+      } else {
+        if (
+          !filtered.find(
+            (n) => n.kind === "thread" && n.threadId === notification.threadId
+          )
+        ) {
+          filtered.push(notification);
+        }
+      }
+    }
+
+    return filtered;
+  }, [inboxNotifications]);
 
   if (!inboxNotifications.length) {
     return (
@@ -60,7 +88,7 @@ function InboxNotifications() {
 
   return (
     <InboxNotificationList>
-      {inboxNotifications.map((inboxNotification, index) => (
+      {filteredNotifications.map((inboxNotification) => (
         <div className="relative h-[66px] p-1" key={inboxNotification.id}>
           <ClientSideSuspense
             fallback={
@@ -94,15 +122,16 @@ function SmallInboxNotification({
 }: {
   inboxNotification: InboxNotificationData;
 }) {
+  const params = useParams();
   const thread = useInboxNotificationThread(inboxNotification.id);
   const { user } = useUser(thread.comments[0].userId);
   const { info, error, isLoading } = useRoomInfo(
     inboxNotification?.roomId || ""
   );
-  const params = useParams();
+  const latestComment = thread.comments[thread.comments.length - 1];
 
   if (
-    !thread.comments[0].body ||
+    !latestComment ||
     !inboxNotification?.roomId ||
     isLoading ||
     error ||
@@ -123,7 +152,7 @@ function SmallInboxNotification({
       >
         <div className="h-8 w-8">
           <div className="rounded-full overflow-hidden">
-            <Avatar userId={thread.comments[0].userId} />
+            <Avatar userId={latestComment.userId} />
           </div>
         </div>
         <div className="flex-grow w-full overflow-hidden">
@@ -135,7 +164,7 @@ function SmallInboxNotification({
             <div className="flex-grow-0 truncate">
               <Comment.Body
                 className="*:truncate"
-                body={thread.comments[0].body}
+                body={latestComment.body}
                 components={{ Mention, Link }}
               />
             </div>
