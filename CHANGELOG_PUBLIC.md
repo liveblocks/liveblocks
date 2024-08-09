@@ -13,6 +13,10 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
 
+# Week 33 (2024-08-16)
+
+## Contributors
+
 # Week 32 (2024-08-09)
 
 ## Website
