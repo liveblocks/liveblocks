@@ -1,3 +1,11 @@
+## 2.4.1 (Not yet published)
+
+### `@liveblocks/react-lexical`
+
+- Fix a bug in `useEditorStatus` which prevented the hook from returning correct
+  status when `LexicalPlugin` was rendered conditionally.
+- Fix remote cursors not displaying user name.
+
 ## v2.4.0
 
 ### `@liveblocks/client`
