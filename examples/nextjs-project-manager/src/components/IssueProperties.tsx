@@ -8,7 +8,6 @@ import {
 import { PRIORITY_STATES, PROGRESS_STATES } from "@/config";
 import { getUsers } from "@/database";
 import { Select } from "@/components/Select";
-import { Avatar } from "@/components/Avatar";
 
 export function IssueProperties({ storageFallback }: any) {
   return (
@@ -29,12 +28,18 @@ export function IssueProperties({ storageFallback }: any) {
               )?.jsx
             }
           </div>
-          <div className="block bg-transparent border-0 h-7 w-32 px-2 rounded-md transition-colors whitespace-nowrap">
-            {storageFallback.properties.assignedTo === "none"
-              ? "Unassigned"
-              : getUsers().find(
-                  (p) => p.id === storageFallback.properties.assignedTo
-                )?.info.name}
+          <div className="block bg-transparent border-0 pl-2 pb-2 rounded-md transition-colors whitespace-nowrap">
+            {storageFallback.properties.assignedTo === "none" ? (
+              "Unassigned"
+            ) : (
+              <AvatarAndName
+                user={
+                  getUsers().find(
+                    (p) => p.id === storageFallback.properties.assignedTo
+                  ) || null
+                }
+              />
+            )}
           </div>
         </div>
       }
@@ -51,14 +56,7 @@ const USERS = [
   },
   ...getUsers().map((user) => ({
     id: user.id,
-    jsx: (
-      <div className="flex items-center gap-2">
-        <div className="block w-5 h-5 rounded-full overflow-hidden">
-          <Avatar userId={user.id} />
-        </div>
-        {user.info.name}
-      </div>
-    ),
+    jsx: <AvatarAndName user={user} />,
   })),
 ];
 
@@ -94,6 +92,21 @@ function Properties() {
         splitFirstItem={true}
         onValueChange={(val) => editProperty("assignedTo", val)}
       />
+    </div>
+  );
+}
+
+function AvatarAndName({ user }: { user: Liveblocks["UserMeta"] | null }) {
+  if (!user) {
+    return <div className="text-neutral-600">Not assigned</div>;
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <div className="block w-4 h-4 rounded-full overflow-hidden">
+        <img src={user.info.avatar} alt={user.info.name} />
+      </div>
+      {user.info.name}
     </div>
   );
 }

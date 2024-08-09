@@ -5,6 +5,7 @@ import { Dash } from "@/icons/Dash";
 import { Review } from "@/icons/Review";
 import { Progress } from "@/icons/Progress";
 import { Todo } from "@/icons/Todo";
+import { Done } from "@/icons/Done";
 
 export function IssuesList({
   initialRooms,
@@ -64,7 +65,8 @@ export function IssuesList({
       ))}
 
       {done.length ? (
-        <div className="bg-neutral-200/60 px-4 py-1.5 text-sm font-medium text-neutral-800 w-full">
+        <div className="flex items-center gap-2 bg-neutral-200/60 px-4 py-1.5 text-sm font-medium text-neutral-800 w-full">
+          <Done className="w-4 h-4 text-blue-500" />
           Done
         </div>
       ) : null}
