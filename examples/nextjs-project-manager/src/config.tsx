@@ -20,15 +20,17 @@ export const LABELS = [
 export const PRIORITY_STATES = [
   {
     id: "none",
+    icon: <Dash className="w-4 h-4 text-neutral-600" />,
     jsx: (
-      <div className="flex gap-2 items-center">
-        <Dash className="w-4 h-4 text-neutral-600" />
+      <div className="flex gap-2 items-center text-neutral-600">
+        {/*<Dash className="w-4 h-4 text-neutral-600" />*/}
         No priority
       </div>
     ),
   },
   {
     id: "urgent",
+    icon: <Tally5 className="w-4 h-4 text-neutral-600" />,
     jsx: (
       <div className="flex gap-2 items-center">
         <Tally5 className="w-4 h-4 text-neutral-600" />
@@ -38,6 +40,7 @@ export const PRIORITY_STATES = [
   },
   {
     id: "high",
+    icon: <Tally4 className="w-4 h-4 text-neutral-600" />,
     jsx: (
       <div className="flex gap-2 items-center">
         <Tally4 className="w-4 h-4 text-neutral-600" />
@@ -47,6 +50,7 @@ export const PRIORITY_STATES = [
   },
   {
     id: "medium",
+    icon: <Tally3 className="w-4 h-4 text-neutral-600" />,
     jsx: (
       <div className="flex gap-2 items-center">
         <Tally3 className="w-4 h-4 text-neutral-600" />
@@ -56,6 +60,7 @@ export const PRIORITY_STATES = [
   },
   {
     id: "low",
+    icon: <Tally2 className="w-4 h-4 text-neutral-600" />,
     jsx: (
       <div className="flex gap-2 items-center">
         <Tally2 className="w-4 h-4 text-neutral-600" />
@@ -69,8 +74,8 @@ export const PROGRESS_STATES = [
   {
     id: "none",
     jsx: (
-      <div className="flex gap-2 items-center">
-        <Dash className="w-4 h-4 text-neutral-600" />
+      <div className="flex gap-2 items-center text-neutral-600">
+        {/*<Dash className="w-4 h-4 text-neutral-600" />*/}
         No progress
       </div>
     ),

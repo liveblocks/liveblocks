@@ -92,8 +92,8 @@ export async function Row({ room }: { room: RoomWithMetadata }) {
       className="flex h-10 items-center justify-between px-4 text-sm transition-colors hover:bg-neutral-100 border-b"
     >
       <div className="flex gap-2 items-center">
-        <div className="w-28">
-          {PRIORITY_STATES.find((p) => p.id === priority)?.jsx}
+        <div className="w-5">
+          {PRIORITY_STATES.find((p) => p.id === priority)?.icon}
         </div>
         <div className="font-medium">{title}</div>
       </div>

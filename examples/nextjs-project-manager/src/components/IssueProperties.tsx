@@ -8,6 +8,7 @@ import {
 import { PRIORITY_STATES, PROGRESS_STATES } from "@/config";
 import { getUsers } from "@/database";
 import { Select } from "@/components/Select";
+import { Avatar } from "@/components/Avatar";
 
 export function IssueProperties({ storageFallback }: any) {
   return (
@@ -43,10 +44,23 @@ export function IssueProperties({ storageFallback }: any) {
   );
 }
 
-const USERS = getUsers().map((user) => ({
-  id: user.id,
-  jsx: <div>{user.info.name}</div>,
-}));
+const USERS = [
+  {
+    id: "none",
+    jsx: <div className="text-neutral-600">Not assigned</div>,
+  },
+  ...getUsers().map((user) => ({
+    id: user.id,
+    jsx: (
+      <div className="flex items-center gap-2">
+        <div className="block w-5 h-5 rounded-full overflow-hidden">
+          <Avatar userId={user.id} />
+        </div>
+        {user.info.name}
+      </div>
+    ),
+  })),
+];
 
 function Properties() {
   const properties = useStorage((root) => root.properties);
@@ -61,6 +75,7 @@ function Properties() {
         id="progress"
         value={properties.progress}
         items={PROGRESS_STATES as any}
+        splitFirstItem={true}
         onValueChange={(val) => editProperty("progress", val)}
       />
 
@@ -68,6 +83,7 @@ function Properties() {
         id="priority"
         value={properties.priority}
         items={PRIORITY_STATES as any}
+        splitFirstItem={true}
         onValueChange={(val) => editProperty("priority", val)}
       />
 
@@ -75,6 +91,7 @@ function Properties() {
         id="assignedTo"
         value={properties.assignedTo}
         items={USERS}
+        splitFirstItem={true}
         onValueChange={(val) => editProperty("assignedTo", val)}
       />
     </div>

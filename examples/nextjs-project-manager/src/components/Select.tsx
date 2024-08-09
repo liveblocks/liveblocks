@@ -9,10 +9,20 @@ type Props = {
   id: string;
   value: string;
   items: { id: string; jsx: ReactNode }[];
+  splitFirstItem?: boolean;
   onValueChange: (value: string) => void;
 };
 
-export function Select({ id, onValueChange, value, items }: Props) {
+export function Select({
+  id,
+  onValueChange,
+  value,
+  items,
+  splitFirstItem = false,
+}: Props) {
+  const [firstItem, ...otherItems] = items;
+  const itemList = splitFirstItem ? otherItems : items;
+
   return (
     <RadixSelect.Root onValueChange={onValueChange} value={value}>
       <RadixSelect.Trigger
@@ -30,21 +40,39 @@ export function Select({ id, onValueChange, value, items }: Props) {
           <RadixSelect.ScrollUpButton className="flex items-center justify-center h-[25px] bg-white cursor-default">
             <ChevronUp className="w-4 h-4" />
           </RadixSelect.ScrollUpButton>
-          <RadixSelect.Viewport className="p-1">
-            {items.map((item) => (
-              <RadixSelect.Item
-                key={item.id}
-                value={item.id}
-                className={classnames(
-                  "text-sm leading-none flex items-center h-7 pr-8 pl-2 relative select-none data-[disabled]:pointer-events-none data-[highlighted]:outline-none hover:bg-neutral-200/60 rounded"
-                )}
-              >
-                <RadixSelect.ItemText>{item.jsx}</RadixSelect.ItemText>
-                <RadixSelect.ItemIndicator className="absolute right-0 w-[25px] inline-flex items-center justify-center">
-                  <Check className="w-4 h-4" />
-                </RadixSelect.ItemIndicator>
-              </RadixSelect.Item>
-            ))}
+          <RadixSelect.Viewport>
+            {splitFirstItem ? (
+              <RadixSelect.Group className="border-b p-1">
+                <RadixSelect.Item
+                  key={firstItem.id}
+                  value={firstItem.id}
+                  className={classnames(
+                    "text-sm leading-none flex items-center h-7 pr-8 pl-2 relative select-none data-[disabled]:pointer-events-none data-[highlighted]:outline-none hover:bg-neutral-200/60 rounded"
+                  )}
+                >
+                  <RadixSelect.ItemText>{firstItem.jsx}</RadixSelect.ItemText>
+                  <RadixSelect.ItemIndicator className="absolute right-0 w-[25px] inline-flex items-center justify-center">
+                    <Check className="w-4 h-4" />
+                  </RadixSelect.ItemIndicator>
+                </RadixSelect.Item>
+              </RadixSelect.Group>
+            ) : null}
+            <RadixSelect.Group className="p-1">
+              {itemList.map((item) => (
+                <RadixSelect.Item
+                  key={item.id}
+                  value={item.id}
+                  className={classnames(
+                    "text-sm leading-none flex items-center h-7 pr-8 pl-2 relative select-none data-[disabled]:pointer-events-none data-[highlighted]:outline-none hover:bg-neutral-200/60 rounded"
+                  )}
+                >
+                  <RadixSelect.ItemText>{item.jsx}</RadixSelect.ItemText>
+                  <RadixSelect.ItemIndicator className="absolute right-0 w-[25px] inline-flex items-center justify-center">
+                    <Check className="w-4 h-4" />
+                  </RadixSelect.ItemIndicator>
+                </RadixSelect.Item>
+              ))}
+            </RadixSelect.Group>
           </RadixSelect.Viewport>
           <RadixSelect.ScrollDownButton className="flex items-center justify-center h-[25px] bg-white cursor-default">
             <ChevronDown className="w-4 h-4" />

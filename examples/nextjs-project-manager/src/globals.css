@@ -1,5 +1,5 @@
-@import url("@liveblocks/react-ui/styles.css");
-
+@import "@liveblocks/react-ui/styles.css";
+@import "@liveblocks/react-lexical/styles.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
