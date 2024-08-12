@@ -1,4 +1,4 @@
-## 2.4.1 (Not yet published)
+## 2.5.0
 
 ### `@liveblocks/react`
 
@@ -9,9 +9,13 @@
 
 ### `@liveblocks/react-lexical`
 
-- Fix a bug in `useEditorStatus` which prevented the hook from returning correct
+- Fix a bug in `useEditorStatus` which prevented it from returning a correct
   status when `LexicalPlugin` was rendered conditionally.
-- Fix remote cursors not displaying user name.
+- Fix remote cursors not displaying user names.
+
+### `@liveblocks/react-ui`
+
+- Improve event propagation in `Composer`.
 
 ## v2.4.0
 

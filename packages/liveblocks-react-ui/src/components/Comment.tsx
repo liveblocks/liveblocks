@@ -5,12 +5,12 @@ import type {
   CommentReaction as CommentReactionData,
 } from "@liveblocks/core";
 import {
+  RoomContext,
   useAddReaction,
   useDeleteComment,
   useEditComment,
   useMarkThreadAsRead,
   useRemoveReaction,
-  useSelf,
 } from "@liveblocks/react";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
@@ -24,6 +24,7 @@ import type {
 import React, {
   forwardRef,
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -261,6 +262,10 @@ export const CommentReaction = forwardRef<
     [$, reaction]
   );
 
+  const stopPropagation = useCallback((event: SyntheticEvent) => {
+    event.stopPropagation();
+  }, []);
+
   const handlePressedChange = useCallback(
     (isPressed: boolean) => {
       if (isPressed) {
@@ -290,6 +295,7 @@ export const CommentReaction = forwardRef<
         asChild
         pressed={isActive}
         onPressedChange={handlePressedChange}
+        onClick={stopPropagation}
         disabled={disabled}
         ref={forwardedRef}
       >
@@ -384,9 +390,10 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     },
     forwardedRef
   ) => {
+    const isInRoom = Boolean(useContext(RoomContext));
     const ref = useRef<HTMLDivElement>(null);
     const mergedRefs = useRefs(forwardedRef, ref);
-    const self = useSelf();
+    const currentUserId = useCurrentUserId();
     const deleteComment = useDeleteComment();
     const editComment = useEditComment();
     const addReaction = useAddReaction();
@@ -454,9 +461,9 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
 
         if (
           reactionIndex >= 0 &&
-          self?.id &&
+          currentUserId &&
           comment.reactions[reactionIndex].users.some(
-            (user) => user.id === self?.id
+            (user) => user.id === currentUserId
           )
         ) {
           removeReaction({
@@ -478,7 +485,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
         comment.reactions,
         comment.threadId,
         removeReaction,
-        self?.id,
+        currentUserId,
       ]
     );
 
@@ -500,7 +507,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
 
     return (
       <TooltipProvider>
-        {autoMarkReadThreadId && (
+        {isInRoom && autoMarkReadThreadId && (
           <AutoMarkReadThreadIdHandler
             commentRef={ref}
             threadId={autoMarkReadThreadId}
@@ -580,7 +587,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                     </Tooltip>
                   </EmojiPicker>
                 )}
-                {comment.userId === self?.id && (
+                {comment.userId === currentUserId && (
                   <Dropdown
                     open={isMoreActionOpen}
                     onOpenChange={setMoreActionOpen}
