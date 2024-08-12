@@ -348,9 +348,9 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * Returns whether the hook is called within a RoomProvider context.
      *
      * @example
-     * const insideRoom = useInsideRoom();
+     * const isInsideRoom = useIsInsideRoom();
      */
-    useInsideRoom(): boolean;
+    useIsInsideRoom(): boolean;
   };
 
   suspense: {
@@ -379,9 +379,9 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * Returns whether the hook is called within a RoomProvider context.
      *
      * @example
-     * const insideRoom = useInsideRoom();
+     * const isInsideRoom = useIsInsideRoom();
      */
-    useInsideRoom(): boolean;
+    useIsInsideRoom(): boolean;
   };
 };
 

@@ -45,7 +45,7 @@ export {
   useErrorListener,
   useEventListener,
   useHistory,
-  useInsideRoom,
+  useIsInsideRoom,
   useLostConnectionListener,
   useMarkThreadAsRead,
   useMutation,

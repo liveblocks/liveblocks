@@ -9,7 +9,7 @@ import { createRoomContext } from "../room";
 import {
   useCanRedo,
   useCanUndo,
-  useInsideRoom,
+  useIsInsideRoom,
   useMutation,
   useMyPresence,
   useOthers,
@@ -103,19 +103,19 @@ describe("useRoom", () => {
   });
 });
 
-describe("useInsideRoom", () => {
-  test("useInsideRoom should return true inside a room", () => {
-    const { result } = renderHook(() => useInsideRoom());
-    const insideRoom = result.current;
-    expect(insideRoom).toBe(true);
+describe("useIsInsideRoom", () => {
+  test("useIsInsideRoom should return true inside a room", () => {
+    const { result } = renderHook(() => useIsInsideRoom());
+    const isInsideRoom = result.current;
+    expect(isInsideRoom).toBe(true);
   });
 
-  test("useInsideRoom should return false outside a room", () => {
-    const { result } = renderHook(() => useInsideRoom(), {
+  test("useIsInsideRoom should return false outside a room", () => {
+    const { result } = renderHook(() => useIsInsideRoom(), {
       wrapper: undefined, // Skip using RoomProvider wrapper
     });
-    const insideRoom = result.current;
-    expect(insideRoom).toBe(false);
+    const isInsideRoom = result.current;
+    expect(isInsideRoom).toBe(false);
   });
 });
 
