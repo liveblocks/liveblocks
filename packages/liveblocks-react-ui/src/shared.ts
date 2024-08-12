@@ -12,22 +12,47 @@ import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
 const MENTION_SUGGESTIONS_DEBOUNCE = 500;
 
-const _cachesByClient = new WeakMap<OpaqueClient, Map<string, string[]>>();
+interface MentionSuggestionsState {
+  pendingInvocation: Promise<string[]> | null;
+  lastSearch: string;
+  debounceTimeout: number | null;
+  lastInvokedAt: number;
+}
+
+const _mentionSuggestionsCachesByClient = new WeakMap<
+  OpaqueClient,
+  Map<string, string[]>
+>();
+const _mentionSuggestionsStatesByClient = new WeakMap<
+  OpaqueClient,
+  MentionSuggestionsState
+>();
 
 function getMentionSuggestionsCacheForClient(client: OpaqueClient) {
-  let cache = _cachesByClient.get(client);
+  let cache = _mentionSuggestionsCachesByClient.get(client);
   if (!cache) {
     cache = new Map();
-    _cachesByClient.set(client, cache);
+    _mentionSuggestionsCachesByClient.set(client, cache);
   }
   return cache;
 }
 
+function getMentionSuggestionsStateForClient(client: OpaqueClient) {
+  let state = _mentionSuggestionsStatesByClient.get(client);
+  if (!state) {
+    state = {
+      pendingInvocation: null,
+      lastSearch: "",
+      debounceTimeout: null,
+      lastInvokedAt: 0,
+    };
+    _mentionSuggestionsStatesByClient.set(client, state);
+  }
+  return state;
+}
+
 /**
  * @private For internal use only. Do not rely on this hook.
- *
- * Simplistic debounced search, we don't need to worry too much about deduping
- * and race conditions as there can only be one search at a time.
  */
 export function useMentionSuggestions(search?: string) {
   const client = useClient();
@@ -35,64 +60,95 @@ export function useMentionSuggestions(search?: string) {
   const room = useRoom();
   const [mentionSuggestions, setMentionSuggestions] =
     React.useState<string[]>();
-  const lastInvokedAt = React.useRef<number>();
 
   React.useEffect(() => {
     const resolveMentionSuggestions =
       client[kInternal].resolveMentionSuggestions;
 
-    if (search === undefined || !resolveMentionSuggestions) {
+    if (!resolveMentionSuggestions) {
       return;
     }
 
-    const resolveMentionSuggestionsArgs = { text: search, roomId: room.id };
-    const mentionSuggestionsCacheKey = stringify(resolveMentionSuggestionsArgs);
-    let debounceTimeout: number | undefined;
-    let isCanceled = false;
-
-    const mentionSuggestionsCache = getMentionSuggestionsCacheForClient(client);
-    const getMentionSuggestions = async () => {
-      try {
-        lastInvokedAt.current = performance.now();
-        const mentionSuggestions = await resolveMentionSuggestions(
-          resolveMentionSuggestionsArgs
-        );
-
-        if (!isCanceled) {
-          setMentionSuggestions(mentionSuggestions);
-          mentionSuggestionsCache.set(
-            mentionSuggestionsCacheKey,
-            mentionSuggestions
-          );
-        }
-      } catch (error) {
-        console.error((error as Error)?.message);
-      }
+    const searchText = search ?? "";
+    const resolveMentionSuggestionsArgs = {
+      text: searchText,
+      roomId: room.id,
     };
+    const mentionSuggestionsCacheKey = stringify(resolveMentionSuggestionsArgs);
+    const mentionSuggestionsCache = getMentionSuggestionsCacheForClient(client);
+    const mentionSuggestionsState = getMentionSuggestionsStateForClient(client);
+
+    let isCanceled = false;
 
     if (mentionSuggestionsCache.has(mentionSuggestionsCacheKey)) {
       // If there are already cached mention suggestions, use them immediately.
       setMentionSuggestions(
         mentionSuggestionsCache.get(mentionSuggestionsCacheKey)
       );
-    } else if (
-      !lastInvokedAt.current ||
-      Math.abs(performance.now() - lastInvokedAt.current) >
-        MENTION_SUGGESTIONS_DEBOUNCE
+      return;
+    }
+
+    // If another invocation is already pending, wait for it to resolve and use its result.
+    if (
+      mentionSuggestionsState.pendingInvocation &&
+      mentionSuggestionsState.lastSearch === searchText
     ) {
-      // If on the debounce's leading edge (either because it's the first invokation or enough
+      mentionSuggestionsState.pendingInvocation.then(setMentionSuggestions);
+      return;
+    }
+
+    const getMentionSuggestions = async () => {
+      try {
+        mentionSuggestionsState.lastInvokedAt = performance.now();
+        const suggestions = await resolveMentionSuggestions(
+          resolveMentionSuggestionsArgs
+        );
+
+        mentionSuggestionsCache.set(mentionSuggestionsCacheKey, suggestions);
+
+        if (!isCanceled) {
+          setMentionSuggestions(suggestions);
+        }
+
+        return suggestions;
+      } catch (error) {
+        console.error((error as Error)?.message);
+        return [];
+      } finally {
+        mentionSuggestionsState.pendingInvocation = null;
+      }
+    };
+
+    const invokeResolveMentionSuggestions = () => {
+      mentionSuggestionsState.pendingInvocation = getMentionSuggestions();
+      mentionSuggestionsState.lastSearch = searchText;
+    };
+
+    const now = performance.now();
+    const timeSinceLastInvocation = now - mentionSuggestionsState.lastInvokedAt;
+
+    if (timeSinceLastInvocation > MENTION_SUGGESTIONS_DEBOUNCE) {
+      // If on the debounce's leading edge (either because it's the first invocation or enough
       // time has passed since the last debounce), get mention suggestions immediately.
-      void getMentionSuggestions();
+      invokeResolveMentionSuggestions();
     } else {
       // Otherwise, wait for the debounce delay.
-      debounceTimeout = window.setTimeout(() => {
-        void getMentionSuggestions();
-      }, MENTION_SUGGESTIONS_DEBOUNCE);
+      if (mentionSuggestionsState.debounceTimeout !== null) {
+        clearTimeout(mentionSuggestionsState.debounceTimeout);
+      }
+
+      mentionSuggestionsState.debounceTimeout = window.setTimeout(
+        invokeResolveMentionSuggestions,
+        MENTION_SUGGESTIONS_DEBOUNCE
+      );
     }
 
     return () => {
       isCanceled = true;
-      window.clearTimeout(debounceTimeout);
+
+      if (mentionSuggestionsState.debounceTimeout !== null) {
+        clearTimeout(mentionSuggestionsState.debounceTimeout);
+      }
     };
   }, [client, room.id, search]);
 

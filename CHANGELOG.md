@@ -9,6 +9,7 @@
 ### `@liveblocks/react-ui`
 
 - Improve event propagation in `Composer`.
+- `resolveMentionSuggestions` is now called ahead of the first `@` being typed.
 
 ## v2.4.0
 
