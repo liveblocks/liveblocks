@@ -1220,6 +1220,71 @@ import { useRoom } from "@liveblocks/react/suspense";
 const room = useRoom();
 ```
 
+### useIsInsideRoom [@badge=Both]
+
+Returns a boolean, `true` if the hook was called inside a
+[`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider) context, and
+`false` otherwise.
+
+```ts
+import { useisInsideRoom } from "@liveblocks/react/suspense";
+
+const isInsideRoom = useIsInsideRoom();
+```
+
+#### Displaying different components inside rooms
+
+`useIsInsideRoom` is helpful for rendering different components depending on
+whether they’re inside a room, or not. One example is a header component that
+only displays a live avatar stack when users are connected to the room.
+
+```tsx
+import { useIsInsideRoom, useOthers } from "@liveblocks/react/suspense";
+
+function Header() {
+  // +++
+  const isInsideRoom = useIsInsideRoom();
+  // +++
+
+  return (
+    <div>
+      // +++
+      {isInsideRoom ? <LiveAvatars /> : null}
+      // +++
+      <MyAvatar />
+    </div>
+  );
+}
+
+function LiveAvatars() {
+  const others = useOthers();
+  return others.map((other) => <img src={other.info.picture} />);
+}
+```
+
+Here’s how the example above would render in three different
+[`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider)
+and [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider)
+contexts.
+
+```tsx
+// 👥👤 Live avatar stack and your avatar
+<LiveblocksProvider /* ... */>
+  <RoomProvider /* ... */>
+    <Header />
+  </RoomProvider>
+</LiveblocksProvider>
+
+
+// 👤 Just your avatar
+<LiveblocksProvider /* ... */>
+  <Header />
+</LiveblocksProvider>
+
+// 👤 Just your avatar
+<Header />
+```
+
 ### useErrorListener [@badge=RoomProvider]
 
 Listen to potential room connection errors.
