@@ -15,7 +15,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 33 (2024-08-16)
 
-## 2.5.0
+## v2.5.0
 
 ### `@liveblocks/react`
 
