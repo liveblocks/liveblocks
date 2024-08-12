@@ -1,5 +1,12 @@
 ## 2.4.1 (Not yet published)
 
+### `@liveblocks/react`
+
+- Add
+  [`useIsInsideRoom`](https://liveblocks.io/docs/api-reference/liveblocks-react#useIsInsideRoom)
+  hook, useful for rendering different components inside and outside of
+  [`RoomProvider`](https://liveblocks.io/docs/api-reference/liveblocks-react#RoomProvider).
+
 ### `@liveblocks/react-lexical`
 
 - Fix a bug in `useEditorStatus` which prevented the hook from returning correct
