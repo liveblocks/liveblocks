@@ -41,6 +41,7 @@ import { selectedUserThreads } from "./comments/lib/selected-threads";
 import { autoRetry } from "./lib/retry-error";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { use } from "./lib/use-polyfill";
+import { useIsInsideRoom } from "./room";
 import type {
   InboxNotificationsState,
   LiveblocksContextBundle,
@@ -1084,12 +1085,14 @@ export function createSharedContext<U extends BaseUserMeta>(
       useClient,
       useUser: (userId: string) => useUser_withClient(client, userId),
       useRoomInfo: (roomId: string) => useRoomInfo_withClient(client, roomId),
+      useIsInsideRoom,
     },
     suspense: {
       useClient,
       useUser: (userId: string) => useUserSuspense_withClient(client, userId),
       useRoomInfo: (roomId: string) =>
         useRoomInfoSuspense_withClient(client, roomId),
+      useIsInsideRoom,
     },
   };
 }

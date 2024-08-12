@@ -1,4 +1,11 @@
-## 2.4.1 (Not yet published)
+## 2.5.0
+
+### `@liveblocks/react`
+
+- Add
+  [`useIsInsideRoom`](https://liveblocks.io/docs/api-reference/liveblocks-react#useIsInsideRoom)
+  hook, useful for rendering different components inside and outside of
+  [`RoomProvider`](https://liveblocks.io/docs/api-reference/liveblocks-react#RoomProvider).
 
 ### `@liveblocks/react-lexical`
 
