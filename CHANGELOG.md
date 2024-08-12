@@ -1,10 +1,5 @@
 ## 2.4.1 (Not yet published)
 
-### `@liveblocks/client`
-
-- `resolveMentionSuggestions` is now called earlier than when typing a mention
-  for the first time.
-
 ### `@liveblocks/react-lexical`
 
 - Fix a bug in `useEditorStatus` which prevented it from returning a correct
@@ -14,6 +9,7 @@
 ### `@liveblocks/react-ui`
 
 - Improve event propagation in `Composer`.
+- `resolveMentionSuggestions` is now called ahead of the first `@` being typed.
 
 ## v2.4.0
 
