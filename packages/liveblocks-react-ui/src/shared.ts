@@ -41,11 +41,14 @@ export function useMentionSuggestions(search?: string) {
     const resolveMentionSuggestions =
       client[kInternal].resolveMentionSuggestions;
 
-    if (search === undefined || !resolveMentionSuggestions) {
+    if (!resolveMentionSuggestions) {
       return;
     }
 
-    const resolveMentionSuggestionsArgs = { text: search, roomId: room.id };
+    const resolveMentionSuggestionsArgs = {
+      text: search ?? "",
+      roomId: room.id,
+    };
     const mentionSuggestionsCacheKey = stringify(resolveMentionSuggestionsArgs);
     let debounceTimeout: number | undefined;
     let isCanceled = false;

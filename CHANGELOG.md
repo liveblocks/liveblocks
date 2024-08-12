@@ -1,5 +1,10 @@
 ## 2.4.1 (Not yet published)
 
+### `@liveblocks/client`
+
+- `resolveMentionSuggestions` is now called earlier than when typing a mention
+  for the first time.
+
 ### `@liveblocks/react-lexical`
 
 - Fix a bug in `useEditorStatus` which prevented it from returning a correct
