@@ -172,6 +172,20 @@ import { expectAssignable, expectError, expectType } from "tsd";
 
 // ---------------------------------------------------------
 
+// useIsInsideRoom()
+{
+  const isInsideRoom = classic.useIsInsideRoom();
+  expectType<boolean>(isInsideRoom);
+}
+
+// useIsInsideRoom() (suspense)
+{
+  const isInsideRoom = suspense.useIsInsideRoom();
+  expectType<boolean>(isInsideRoom);
+}
+
+// ---------------------------------------------------------
+
 // useStorageStatus()
 {
   expectType<"not-loaded" | "loading" | "synchronizing" | "synchronized">(
