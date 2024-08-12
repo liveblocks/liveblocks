@@ -15,7 +15,28 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 33 (2024-08-16)
 
+## 2.5.0
+
+### `@liveblocks/react`
+
+- Add
+  [`useIsInsideRoom`](https://liveblocks.io/docs/api-reference/liveblocks-react#useIsInsideRoom)
+  hook, useful for rendering different components inside and outside of
+  [`RoomProvider`](https://liveblocks.io/docs/api-reference/liveblocks-react#RoomProvider).
+
+### `@liveblocks/react-lexical`
+
+- Fix a bug in `useEditorStatus` which prevented it from returning a correct
+  status when `LexicalPlugin` was rendered conditionally.
+- Fix remote cursors not displaying user names.
+
+### `@liveblocks/react-ui`
+
+- Improve event propagation in `Composer`.
+
 ## Contributors
+
+ctnicholas, nimeshnayaju, jrowny
 
 # Week 32 (2024-08-09)
 
