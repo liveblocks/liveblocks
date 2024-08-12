@@ -26,13 +26,13 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ### `@liveblocks/react-lexical`
 
-- Fix a bug in `useEditorStatus` which prevented it from returning a correct
-  status when `LexicalPlugin` was rendered conditionally.
+- Fix a bug in [`useEditorStatus`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#useEditorStatus) which prevented it from returning a correct status when `LexicalPlugin` was rendered conditionally.
 - Fix remote cursors not displaying user names.
 
 ### `@liveblocks/react-ui`
 
-- Improve event propagation in `Composer`.
+- Improve event propagation in [`Composer`](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Composer).
+
 
 ## Contributors
 
