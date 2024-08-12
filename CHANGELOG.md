@@ -1,4 +1,4 @@
-## 2.4.1 (Not yet published)
+## 2.5.0
 
 ### `@liveblocks/react`
 
