@@ -163,6 +163,7 @@ export function FileAttachment({
       {...props}
     >
       <button
+        type="button"
         className="lb-attachment-content"
         onClick={onContentClick}
         tabIndex={onContentClick ? undefined : -1}
@@ -193,6 +194,7 @@ export function FileAttachment({
       {onDeleteClick && (
         <Tooltip content={$.ATTACHMENT_DELETE}>
           <button
+            type="button"
             className="lb-attachment-delete"
             onClick={onDeleteClick}
             onPointerDown={handleDeletePointerDown}
