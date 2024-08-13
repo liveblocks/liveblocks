@@ -237,6 +237,10 @@ function ComposerInsertEmojiEditorAction({
     event.preventDefault();
   }, []);
 
+  const stopPropagation = useCallback((event: SyntheticEvent) => {
+    event.stopPropagation();
+  }, []);
+
   return (
     <EmojiPicker onEmojiSelect={insertText} onOpenChange={onPickerOpenChange}>
       <Tooltip content={label}>
@@ -244,6 +248,7 @@ function ComposerInsertEmojiEditorAction({
           <Button
             className={classNames("lb-composer-editor-action", className)}
             onMouseDown={preventDefault}
+            onClick={stopPropagation}
             aria-label={label}
             {...props}
           >
