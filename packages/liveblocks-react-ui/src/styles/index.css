@@ -1061,7 +1061,7 @@
 
   &:where(:not([tabindex="-1"])) {
     &:where(:hover, :focus-visible) {
-      --lb-dynamic-background: var(--lb-background-foreground-faint);
+      background: var(--lb-foreground-subtle);
     }
   }
 }
@@ -1114,17 +1114,38 @@
   @include truncate;
 }
 
+.lb-attachment-icon {
+  flex: none;
+  overflow: visible;
+  color: var(--lb-foreground);
+}
+
+.lb-attachment-icon-glyph {
+  fill: var(--lb-foreground-moderate);
+}
+
+.lb-attachment-icon-background {
+  fill: var(--lb-dynamic-background);
+}
+
+.lb-attachment-icon-fold {
+  fill-opacity: var(--lb-foreground-contrast);
+}
+
+.lb-attachment-icon-shadow {
+  filter: blur(6px);
+  fill-opacity: var(--lb-foreground-contrast);
+}
+
 .lb-file-attachment {
   :where(.lb-attachment-content) {
     display: flex;
-    gap: calc(0.6 * var(--lb-spacing));
+    gap: calc(0.5 * var(--lb-spacing));
     padding: calc(0.5 * var(--lb-spacing));
-    padding-inline-end: calc(0.6 * var(--lb-spacing));
+    padding-inline-end: calc(0.65 * var(--lb-spacing));
   }
 
   :where(.lb-attachment-preview) {
-    --lb-dynamic-background: var(--lb-background);
-
     position: relative;
     display: flex;
     flex: none;
@@ -1132,45 +1153,22 @@
     align-items: center;
     overflow: hidden;
     aspect-ratio: 1;
-    inline-size: 2.65rem;
+    inline-size: 2.5rem;
     border-radius: calc(0.5 * var(--lb-radius));
-    background: var(--lb-dynamic-background);
+    background: color-mix(
+      in srgb,
+      transparent,
+      var(--lb-foreground) var(--lb-foreground-contrast)
+    );
+    color: var(--lb-foreground-tertiary);
+    transition-property: background, color;
+  }
 
-    &::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      box-shadow: inset 0 0 0 1px var(--lb-foreground-subtle);
-      pointer-events: none;
+  &:where([data-error]) {
+    :where(.lb-attachment-preview) {
+      background: var(--lb-destructive);
+      color: var(--lb-destructive-foreground);
     }
-
-    img {
-      position: absolute;
-      inset: 0;
-      display: block;
-      object-fit: cover;
-      inline-size: 100%;
-      block-size: 100%;
-    }
-  }
-
-  :where(.lb-attachment-icon) {
-    flex: none;
-    color: var(--lb-foreground);
-    vector-effect: non-scaling-stroke;
-  }
-
-  :where(.lb-attachment-icon-background) {
-    fill-opacity: calc(1.5 * var(--lb-foreground-contrast));
-  }
-
-  :where(.lb-attachment-icon-fold) {
-    fill-opacity: calc(4 * var(--lb-foreground-contrast));
-  }
-
-  :where(.lb-attachment-icon-glyph) {
-    stroke: var(--lb-foreground-tertiary);
   }
 
   :where(.lb-attachment-details) {
@@ -1179,7 +1177,6 @@
     gap: calc(0.25 * var(--lb-spacing));
     justify-content: center;
     min-inline-size: 0;
-    margin-inline-end: calc(0.15 * var(--lb-spacing));
     font-size: 0.875em;
   }
 

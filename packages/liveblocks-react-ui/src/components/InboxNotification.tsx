@@ -31,7 +31,7 @@ import { useComponents } from "../components";
 import { CheckIcon } from "../icons/Check";
 import { DeleteIcon } from "../icons/Delete";
 import { EllipsisIcon } from "../icons/Ellipsis";
-import { MissingIcon } from "../icons/Missing";
+import { WarningIcon } from "../icons/Warning";
 import type {
   CommentOverrides,
   GlobalOverrides,
@@ -648,7 +648,7 @@ const InboxNotificationCustomMissing = forwardRef<
       }
       aside={
         <InboxNotificationIcon>
-          <MissingIcon />
+          <WarningIcon />
         </InboxNotificationIcon>
       }
       ref={forwardedRef}

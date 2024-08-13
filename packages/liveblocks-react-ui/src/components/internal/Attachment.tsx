@@ -8,6 +8,7 @@ import React, { memo, useCallback, useMemo } from "react";
 
 import { CrossIcon } from "../../icons/Cross";
 import { SpinnerIcon } from "../../icons/Spinner";
+import { WarningIcon } from "../../icons/Warning";
 import type { GlobalOverrides } from "../../overrides";
 import { useOverrides } from "../../overrides";
 import type { ComposerAttachment } from "../../primitives";
@@ -33,25 +34,6 @@ function splitFileName(name: string) {
 }
 
 function getFileAttcachmentIconGlyph(mimeType: string) {
-  if (mimeType.startsWith("image/")) {
-    return (
-      <>
-        <rect x={16} y={20} width={8} height={8} rx={1} />
-        <path d="m24 25-.71-.355a2 2 0 0 0-2.31.374L18 28" />
-        <path d="M19 23h.007" />
-        <circle cx={19} cy={23} r={0.25} />
-      </>
-    );
-  }
-
-  if (mimeType.startsWith("video/")) {
-    return <path d="m17.5 20.5 6 3.5-6 3.5v-7Z" />;
-  }
-
-  if (mimeType.startsWith("audio/")) {
-    return <path d="M15.5 23v2m3-3v4m3-6v8m3-6v4" />;
-  }
-
   if (
     mimeType === "application/zip" ||
     mimeType === "application/x-rar-compressed" ||
@@ -61,10 +43,31 @@ function getFileAttcachmentIconGlyph(mimeType: string) {
     mimeType === "application/gzip"
   ) {
     return (
-      <>
-        <rect x={16} y={20} width={8} height={8} rx={1} />
-        <path d="M19 20v1m0 2h.007M19 25h.007" />
-      </>
+      <path d="M13 15h2v1h-1.5a.5.5 0 0 0 0 1H15v1h-1.5a.5.5 0 0 0 0 1H15v1h-1.5a.5.5 0 0 0 0 1h1a.5.5 0 0 0 .5-.5V20h1.5a.5.5 0 0 0 0-1H15v-1h1.5a.5.5 0 0 0 0-1H15v-1h1.5a.5.5 0 0 0 .5-.5V15a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2Z" />
+    );
+  }
+
+  if (mimeType.startsWith("text/")) {
+    return (
+      <path d="M10 16a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5Zm0 2a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5Zm0 2a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5Zm0 2a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 0 1h-8a.5.5 0 0 1-.5-.5Z" />
+    );
+  }
+
+  if (mimeType.startsWith("image/")) {
+    return (
+      <path d="M12 16h6a1 1 0 0 1 1 1v3l-1.293-1.293a1 1 0 0 0-1.414 0L14.09 20.91l-.464-.386a1 1 0 0 0-1.265-.013l-1.231.985A.995.995 0 0 1 11 21v-4a1 1 0 0 1 1-1Zm-2 1a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-6a2 2 0 0 1-2-2v-4Zm3 2a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" />
+    );
+  }
+
+  if (mimeType.startsWith("video/")) {
+    return (
+      <path d="M12 15.71a1 1 0 0 1 1.49-.872l4.96 2.79a1 1 0 0 1 0 1.744l-4.96 2.79A1 1 0 0 1 12 21.29v-5.58Z" />
+    );
+  }
+
+  if (mimeType.startsWith("audio/")) {
+    return (
+      <path d="M15 15a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 1 0v-7a.5.5 0 0 0-.5-.5Zm-2.5 2.5a.5.5 0 0 1 1 0v3a.5.5 0 0 1-1 0v-3Zm-2 1a.5.5 0 0 1 1 0v1a.5.5 0 0 1-1 0v-1Zm6-1a.5.5 0 0 1 1 0v3a.5.5 0 0 1-1 0v-3ZM19 16a.5.5 0 0 0-.5.5v5a.5.5 0 0 0 1 0v-5a.5.5 0 0 0-.5-.5Z" />
     );
   }
 
@@ -80,40 +83,28 @@ const FileAttachmentIcon = memo(({ mimeType }: { mimeType: string }) => {
   return (
     <svg
       className="lb-attachment-icon"
-      width={40}
-      height={40}
-      viewBox="0 0 40 40"
-      fill="none"
+      width={30}
+      height={30}
+      viewBox="0 0 30 30"
+      fill="currentColor"
+      fillRule="evenodd"
+      clipRule="evenodd"
       xmlns="http://www.w3.org/2000/svg"
     >
       <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M12 7a2 2 0 0 0-2 2v22a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V17.157c0-.181-.012-.361-.037-.54A2 2 0 0 0 28 15h-4a2 2 0 0 1-2-2V9a2 2 0 0 0-1.618-1.964A4 4 0 0 0 19.843 7H12Z"
-        fill="currentColor"
-        fillOpacity={0.2}
+        d="M6 5a2 2 0 0 1 2-2h5.843a4 4 0 0 1 2.829 1.172l6.156 6.156A4 4 0 0 1 24 13.157V25a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5Z"
+        className="lb-attachment-icon-shadow"
+      />
+      <path
+        d="M6 5a2 2 0 0 1 2-2h5.843a4 4 0 0 1 2.829 1.172l6.156 6.156A4 4 0 0 1 24 13.157V25a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5Z"
         className="lb-attachment-icon-background"
       />
       <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M20.382 7.036a4 4 0 0 1 2.29 1.136l6.156 6.156a4 4 0 0 1 1.136 2.29A2 2 0 0 0 28 15h-4a2 2 0 0 1-2-2V9a2 2 0 0 0-1.618-1.964Z"
-        fill="currentColor"
-        fillOpacity={0.4}
+        d="M14.382 3.037a4 4 0 0 1 2.29 1.135l6.156 6.157a4 4 0 0 1 1.136 2.289A2 2 0 0 0 22 11h-4a2 2 0 0 1-2-2V5a2 2 0 0 0-1.618-1.963Z"
         className="lb-attachment-icon-fold"
       />
 
-      {iconGlyph && (
-        <g
-          stroke="currentColor"
-          strokeWidth={1.5}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="lb-attachment-icon-glyph"
-        >
-          {iconGlyph}
-        </g>
-      )}
+      {iconGlyph && <g className="lb-attachment-icon-glyph">{iconGlyph}</g>}
     </svg>
   );
 });
@@ -180,7 +171,7 @@ export function FileAttachment({
           {isUploading ? (
             <SpinnerIcon />
           ) : isError ? (
-            <div>error icon</div>
+            <WarningIcon />
           ) : (
             <FileAttachmentIcon mimeType={attachment.mimeType} />
           )}
