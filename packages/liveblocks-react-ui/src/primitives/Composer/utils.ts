@@ -274,7 +274,15 @@ export function useComposerAttachmentsDropArea<
 
       setDraggingOver(false);
 
-      createAttachments(event.dataTransfer.files);
+      const files = Array.from(event.dataTransfer.items)
+        .map((item) => {
+          const entry = item.webkitGetAsEntry();
+
+          return entry && entry.isFile ? item.getAsFile() : null;
+        })
+        .filter(exists);
+
+      createAttachments(files);
     },
     [onDrop, createAttachments, isDisabled]
   );

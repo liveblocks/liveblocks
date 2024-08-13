@@ -1068,12 +1068,10 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     );
 
     const createAttachments = useCallback(
-      (fileList: FileList | null) => {
-        if (!fileList) {
+      (files: File[]) => {
+        if (!files.length) {
           return;
         }
-
-        const files = Array.from(fileList).filter((file) => file.type);
 
         const numberOfAcceptedFiles = Math.max(
           0,
@@ -1099,7 +1097,9 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 
     const handleAttachmentsInputChange = useCallback(
       (event: ChangeEvent<HTMLInputElement>) => {
-        createAttachments(event.target.files);
+        if (event.target.files) {
+          createAttachments(Array.from(event.target.files));
+        }
       },
       [createAttachments]
     );
