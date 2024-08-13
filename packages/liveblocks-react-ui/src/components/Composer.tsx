@@ -269,12 +269,17 @@ function ComposerAddAttachmentsEditorAction({
     event.preventDefault();
   }, []);
 
+  const stopPropagation = useCallback((event: SyntheticEvent) => {
+    event.stopPropagation();
+  }, []);
+
   return (
     <Tooltip content={label}>
       <ComposerPrimitive.AddAttachments asChild>
         <Button
           className={classNames("lb-composer-editor-action", className)}
           onMouseDown={preventDefault}
+          onClick={stopPropagation}
           aria-label={label}
           {...props}
         >
