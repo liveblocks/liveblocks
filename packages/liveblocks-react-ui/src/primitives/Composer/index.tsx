@@ -106,7 +106,7 @@ import {
   useComposerSuggestionsContext,
 } from "./contexts";
 import type {
-  ComposerAddAttachmentsProps,
+  ComposerAttachFilesProps,
   ComposerAttachmentsDropAreaProps,
   ComposerEditorComponents,
   ComposerEditorElementProps,
@@ -141,7 +141,7 @@ const COMPOSER_SUGGESTIONS_LIST_NAME = "ComposerSuggestionsList";
 const COMPOSER_SUGGESTIONS_LIST_ITEM_NAME = "ComposerSuggestionsListItem";
 const COMPOSER_SUBMIT_NAME = "ComposerSubmit";
 const COMPOSER_EDITOR_NAME = "ComposerEditor";
-const COMPOSER_ADD_ATTACHMENTS_NAME = "ComposerAddAttachments";
+const COMPOSER_ATTACH_FILES_NAME = "ComposerAttachFiles";
 const COMPOSER_ATTACHMENTS_DROP_AREA_NAME = "ComposerAttachmentsDropArea";
 const COMPOSER_FORM_NAME = "ComposerForm";
 
@@ -978,7 +978,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       attachments,
       isUploadingAttachments,
       addAttachment,
-      deleteAttachment,
+      removeAttachment,
       clearAttachments,
     } = useComposerAttachmentsManager(defaultAttachments, {
       maxFileSize: maxAttachmentSize,
@@ -1089,7 +1089,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       [addAttachment, maxAttachments, numberOfAttachments, room]
     );
 
-    const addAttachments = useCallback(() => {
+    const attachFiles = useCallback(() => {
       if (fileInputRef.current) {
         fileInputRef.current.click();
       }
@@ -1189,8 +1189,8 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
               createMention,
               insertText,
               attachments,
-              addAttachments,
-              deleteAttachment,
+              attachFiles,
+              removeAttachment,
             }}
           >
             <Component {...props} onSubmit={handleSubmit} ref={mergedRefs}>
@@ -1237,18 +1237,18 @@ const ComposerSubmit = forwardRef<HTMLButtonElement, ComposerSubmitProps>(
 );
 
 /**
- * A button to add attachments to the composer.
+ * A button which opens a file picker to create attachments.
  *
  * @example
- * <Composer.AddAttachments>Attach files</Composer.AddAttachments>
+ * <Composer.AttachFiles>Attach files</Composer.AttachFiles>
  */
-const ComposerAddAttachments = forwardRef<
+const ComposerAttachFiles = forwardRef<
   HTMLButtonElement,
-  ComposerAddAttachmentsProps
+  ComposerAttachFilesProps
 >(({ children, onClick, disabled, asChild, ...props }, forwardedRef) => {
   const Component = asChild ? Slot : "button";
   const { canAddAttachments } = useComposerAttachmentsContext();
-  const { isDisabled: isComposerDisabled, addAttachments } = useComposer();
+  const { isDisabled: isComposerDisabled, attachFiles } = useComposer();
   const isDisabled = isComposerDisabled || !canAddAttachments || disabled;
 
   const handleClick = useCallback(
@@ -1256,10 +1256,10 @@ const ComposerAddAttachments = forwardRef<
       onClick?.(event);
 
       if (!event.isDefaultPrevented()) {
-        addAttachments();
+        attachFiles();
       }
     },
-    [addAttachments, onClick]
+    [attachFiles, onClick]
   );
 
   return (
@@ -1316,7 +1316,7 @@ const ComposerAttachmentsDropArea = forwardRef<
 );
 
 if (process.env.NODE_ENV !== "production") {
-  ComposerAddAttachments.displayName = COMPOSER_ADD_ATTACHMENTS_NAME;
+  ComposerAttachFiles.displayName = COMPOSER_ATTACH_FILES_NAME;
   ComposerAttachmentsDropArea.displayName = COMPOSER_ATTACHMENTS_DROP_AREA_NAME;
   ComposerEditor.displayName = COMPOSER_EDITOR_NAME;
   ComposerForm.displayName = COMPOSER_FORM_NAME;
@@ -1330,7 +1330,7 @@ if (process.env.NODE_ENV !== "production") {
 
 // NOTE: Every export from this file will be available publicly as Composer.*
 export {
-  ComposerAddAttachments as AddAttachments,
+  ComposerAttachFiles as AttachFiles,
   ComposerAttachmentsDropArea as AttachmentsDropArea,
   ComposerEditor as Editor,
   ComposerForm as Form,

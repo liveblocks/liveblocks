@@ -381,7 +381,7 @@ function createComposerAttachmentsManager(
     }
   }
 
-  function deleteAttachment(attachmentId: string) {
+  function removeAttachment(attachmentId: string) {
     const abortController = abortControllers.get(attachmentId);
 
     abortController?.abort();
@@ -414,7 +414,7 @@ function createComposerAttachmentsManager(
 
   return {
     addAttachment,
-    deleteAttachment,
+    removeAttachment,
     getSnapshot,
     subscribe: eventSource.subscribe,
     clear,
@@ -465,7 +465,7 @@ export function useComposerAttachmentsManager(
     attachments,
     isUploadingAttachments,
     addAttachment: frozenAttachmentsManager.addAttachment,
-    deleteAttachment: frozenAttachmentsManager.deleteAttachment,
+    removeAttachment: frozenAttachmentsManager.removeAttachment,
     clearAttachments: frozenAttachmentsManager.clear,
   };
 }

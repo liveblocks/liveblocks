@@ -9,7 +9,7 @@ import React, { memo, useCallback, useMemo } from "react";
 import { CrossIcon } from "../../icons/Cross";
 import { SpinnerIcon } from "../../icons/Spinner";
 import { WarningIcon } from "../../icons/Warning";
-import type { GlobalOverrides } from "../../overrides";
+import type { GlobalOverrides, Overrides } from "../../overrides";
 import { useOverrides } from "../../overrides";
 import type { ComposerAttachment } from "../../primitives";
 import { useComposerAttachmentsContextOrNull } from "../../primitives/Composer/contexts";
@@ -109,6 +109,30 @@ const FileAttachmentIcon = memo(({ mimeType }: { mimeType: string }) => {
   );
 });
 
+function formatAttachmentDescription(
+  $: Overrides,
+  attachment: CommentAttachment | ComposerAttachment
+) {
+  return formatFileSize(attachment.size, $.locale);
+}
+
+function formatComposerAttachmentDescription(
+  $: Overrides,
+  attachment: ComposerAttachment,
+  maxAttachmentSize: number
+) {
+  switch (attachment.status) {
+    case "too-large":
+      return $.ATTACHMENT_TOO_LARGE(
+        formatFileSize(maxAttachmentSize, $.locale)
+      );
+    case "error":
+      return $.ATTACHMENT_ERROR(attachment.error);
+    default:
+      return formatAttachmentDescription($, attachment);
+  }
+}
+
 export function FileAttachment({
   attachment,
   overrides,
@@ -120,31 +144,26 @@ export function FileAttachment({
 }: FileAttachmentProps) {
   const $ = useOverrides(overrides);
   const composerAttachmentsContext = useComposerAttachmentsContextOrNull();
+  const isInComposer = Boolean(composerAttachmentsContext);
   const { base: fileBaseName, extension: fileExtension } = useMemo(() => {
     return splitFileName(attachment.name);
   }, [attachment.name]);
   const status = (attachment as ComposerAttachment).status;
   const isError = status === "error" || status === "too-large";
   const isUploading = status === "uploading";
-  const description = useMemo(() => {
-    if (composerAttachmentsContext && "status" in attachment) {
-      switch (attachment.status) {
-        case "too-large":
-          return $.ATTACHMENT_TOO_LARGE(
-            formatFileSize(
-              composerAttachmentsContext.maxAttachmentSize,
-              $.locale
-            )
-          );
-        case "error":
-          return $.ATTACHMENT_ERROR(attachment.error);
-        default:
-          return formatFileSize(attachment.size, $.locale);
-      }
-    } else {
-      return formatFileSize(attachment.size, $.locale);
-    }
-  }, [composerAttachmentsContext, attachment, $]);
+
+  const description =
+    status && isInComposer
+      ? formatComposerAttachmentDescription(
+          $,
+          attachment as ComposerAttachment,
+          composerAttachmentsContext!.maxAttachmentSize
+        )
+      : formatAttachmentDescription($, attachment);
+
+  const deleteLabel = isInComposer
+    ? $.COMPOSER_REMOVE_ATTACHMENT
+    : $.COMMENT_DELETE_ATTACHMENT;
 
   const handleDeletePointerDown = useCallback(
     (event: PointerEvent<HTMLButtonElement>) => {
@@ -192,13 +211,13 @@ export function FileAttachment({
         </div>
       </button>
       {onDeleteClick && (
-        <Tooltip content={$.ATTACHMENT_DELETE}>
+        <Tooltip content={deleteLabel}>
           <button
             type="button"
             className="lb-attachment-delete"
             onClick={onDeleteClick}
             onPointerDown={handleDeletePointerDown}
-            aria-label={$.ATTACHMENT_DELETE}
+            aria-label={deleteLabel}
           >
             <CrossIcon />
           </button>

@@ -260,7 +260,7 @@ function ComposerInsertEmojiEditorAction({
   );
 }
 
-function ComposerAddAttachmentsEditorAction({
+function ComposerAttachFilesEditorAction({
   label,
   className,
   ...props
@@ -275,7 +275,7 @@ function ComposerAddAttachmentsEditorAction({
 
   return (
     <Tooltip content={label}>
-      <ComposerPrimitive.AddAttachments asChild>
+      <ComposerPrimitive.AttachFiles asChild>
         <Button
           className={classNames("lb-composer-editor-action", className)}
           onMouseDown={preventDefault}
@@ -285,7 +285,7 @@ function ComposerAddAttachmentsEditorAction({
         >
           <AttachmentIcon className="lb-button-icon" />
         </Button>
-      </ComposerPrimitive.AddAttachments>
+      </ComposerPrimitive.AttachFiles>
     </Tooltip>
   );
 }
@@ -349,11 +349,11 @@ function ComposerFileAttachment({
   overrides,
   ...props
 }: ComposerFileAttachmentProps) {
-  const { deleteAttachment } = useComposer();
+  const { removeAttachment } = useComposer();
 
   const handleDeleteClick = useCallback(() => {
-    deleteAttachment(attachment.id);
-  }, [attachment.id, deleteAttachment]);
+    removeAttachment(attachment.id);
+  }, [attachment.id, removeAttachment]);
 
   return (
     <FileAttachment
@@ -476,8 +476,8 @@ function ComposerEditorContainer({
               onPickerOpenChange={onEmojiPickerOpenChange}
             />
             {showAttachments && (
-              <ComposerAddAttachmentsEditorAction
-                label={$.COMPOSER_ADD_ATTACHMENTS}
+              <ComposerAttachFilesEditorAction
+                label={$.COMPOSER_ATTACH_FILES}
               />
             )}
           </div>
@@ -510,7 +510,7 @@ function ComposerEditorContainer({
         <div className="lb-composer-attachments-drop-area">
           <div className="lb-composer-attachments-drop-area-label">
             <AttachmentIcon />
-            {$.COMPOSER_ADD_ATTACHMENTS}
+            {$.COMPOSER_ATTACH_FILES}
           </div>
         </div>
       )}

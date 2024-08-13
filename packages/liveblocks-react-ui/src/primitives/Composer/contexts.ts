@@ -69,14 +69,14 @@ export type ComposerContext = {
   attachments: ComposerAttachment[];
 
   /**
-   * Open the file picker to add attachments.
+   * Open a file picker to create attachments.
    */
-  addAttachments: () => void;
+  attachFiles: () => void;
 
   /**
-   * Delete an attachment by its ID.
+   * Remove an attachment by its ID.
    */
-  deleteAttachment: (attachmentId: string) => void;
+  removeAttachment: (attachmentId: string) => void;
 };
 
 export type ComposerEditorContext = {
