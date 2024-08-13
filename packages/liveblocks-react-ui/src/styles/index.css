@@ -609,6 +609,7 @@
  *************************************/
 
 .lb-composer {
+  position: relative;
   background: var(--lb-dynamic-background);
   color: var(--lb-foreground);
   transition-property: background;
