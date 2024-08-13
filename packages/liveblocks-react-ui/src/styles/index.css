@@ -136,6 +136,11 @@
   }
 }
 
+.lb-icon-spinner {
+  transform-origin: center;
+  animation: lb-animation-spin 0.75s linear infinite;
+}
+
 /*************************************
  *              Button               *
  *************************************/
@@ -1621,5 +1626,15 @@
 
   to {
     mask-position: -200% 0;
+  }
+}
+
+@keyframes lb-animation-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
   }
 }
