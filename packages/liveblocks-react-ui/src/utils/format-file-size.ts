@@ -22,14 +22,30 @@ export function formatFileSize(bytes: number, locale?: string) {
     );
   }
 
-  const value = bytes / BASE ** unit;
-  // Hide decimals for KB values above 10
-  const hideDecimals = unit === 1 ? value >= 10 : false;
+  let value = bytes / BASE ** unit;
+  let maximumDecimals = 1;
+
+  if (unit === 1) {
+    // Hide decimals for KB values above 10
+    if (value >= 10) {
+      maximumDecimals = 0;
+    }
+
+    // Allow 2 decimals instead of 1 for KB values below 0.1
+    if (value < 0.1 && value > 0) {
+      maximumDecimals = 2;
+    }
+
+    // Display tiny KB values as 0.01 KB instead of 0 KB
+    if (value < 0.01) {
+      value = 0.01;
+    }
+  }
 
   const formattedUnit = UNITS[unit];
   const formattedValue = numberFormat(locale, {
     minimumFractionDigits: 0,
-    maximumFractionDigits: hideDecimals ? 0 : 1,
+    maximumFractionDigits: maximumDecimals,
   }).format(value);
 
   return `${formattedValue} ${formattedUnit}`;
