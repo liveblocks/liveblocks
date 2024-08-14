@@ -178,7 +178,6 @@ export function FileAttachment({
     <div
       className={classNames("lb-attachment lb-file-attachment", className)}
       data-error={isError ? "" : undefined}
-      data-uploading={isUploading ? "" : undefined}
       {...props}
     >
       <button

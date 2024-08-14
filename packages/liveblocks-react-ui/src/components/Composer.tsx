@@ -28,10 +28,7 @@ import { SendIcon } from "../icons/Send";
 import type { ComposerOverrides, GlobalOverrides } from "../overrides";
 import { useOverrides } from "../overrides";
 import * as ComposerPrimitive from "../primitives/Composer";
-import {
-  useComposer,
-  useComposerAttachmentsContext,
-} from "../primitives/Composer/contexts";
+import { useComposer } from "../primitives/Composer/contexts";
 import type {
   ComposerAttachment,
   ComposerEditorComponents,
@@ -418,7 +415,6 @@ function ComposerEditorContainer({
   const ref = useRef<HTMLDivElement>(null);
   const { isEmpty } = useComposer();
   const $ = useOverrides(overrides);
-  const { isUploadingAttachments } = useComposerAttachmentsContext();
   const ignoreDropAreaLeaveEvent = useCallback(
     (event: DragEvent<HTMLDivElement>) => {
       return Boolean(
@@ -447,12 +443,7 @@ function ComposerEditorContainer({
   }, []);
 
   return (
-    <div
-      className="lb-composer-editor-container"
-      ref={ref}
-      {...dropAreaProps}
-      data-uploading={isUploadingAttachments ? "" : undefined}
-    >
+    <div className="lb-composer-editor-container" ref={ref} {...dropAreaProps}>
       <ComposerPrimitive.Editor
         className="lb-composer-editor"
         onClick={onEditorClick}
