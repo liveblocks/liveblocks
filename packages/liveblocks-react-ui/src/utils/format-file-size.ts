@@ -1,6 +1,6 @@
 import { numberFormat } from "./intl";
 
-const BASE = 1024;
+const BASE = 1000;
 const UNITS = ["B", "KB", "MB", "GB"] as const;
 
 export function formatFileSize(bytes: number, locale?: string) {
