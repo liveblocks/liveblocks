@@ -1,6 +1,10 @@
 "use client";
 
-import type { BaseMetadata, DM } from "@liveblocks/core";
+import type {
+  BaseMetadata,
+  CommentUploadedAttachment,
+  DM,
+} from "@liveblocks/core";
 import { kInternal } from "@liveblocks/core";
 import {
   useClient,
@@ -119,6 +123,11 @@ export type ComposerProps<M extends BaseMetadata = DM> = Omit<
      * The composer's initial value.
      */
     defaultValue?: ComposerEditorProps["defaultValue"];
+
+    /**
+     * The composer's initial attachments.
+     */
+    defaultAttachments?: CommentUploadedAttachment[];
 
     /**
      * Whether the composer is collapsed. Setting a value will make the composer controlled.
@@ -522,6 +531,7 @@ export const Composer = forwardRef(
       commentId,
       metadata,
       defaultValue,
+      defaultAttachments,
       onComposerSubmit,
       collapsed: controlledCollapsed,
       defaultCollapsed,
@@ -666,6 +676,7 @@ export const Composer = forwardRef(
           onFocus={handleFocus}
           onBlur={handleBlur}
           disabled={disabled}
+          defaultAttachments={defaultAttachments}
         >
           <ComposerEditorContainer
             defaultValue={defaultValue}

@@ -56,6 +56,7 @@ import { Timestamp } from "../primitives/Timestamp";
 import { useCurrentUserId } from "../shared";
 import { MENTION_CHARACTER } from "../slate/plugins/mentions";
 import { classNames } from "../utils/class-names";
+import { formatFileSize } from "../utils/format-file-size";
 import { useRefs } from "../utils/use-refs";
 import { useVisibleCallback } from "../utils/use-visible";
 import { useWindowFocus } from "../utils/use-window-focus";
@@ -640,6 +641,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                 className="lb-comment-composer"
                 onComposerSubmit={handleEditSubmit}
                 defaultValue={comment.body}
+                defaultAttachments={comment.attachments}
                 autoFocus
                 showAttribution={false}
                 showAttachments={showAttachments}
