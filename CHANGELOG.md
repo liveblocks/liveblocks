@@ -1,3 +1,10 @@
+## 2.5.1 (unreleased)
+
+### `@liveblocks/yjs`
+
+- Fix `LiveblocksProvider` `update`/`change` event not returning `removed`
+  users.
+
 ## 2.5.0
 
 ### `@liveblocks/react`
