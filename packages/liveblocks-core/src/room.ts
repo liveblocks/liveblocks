@@ -3255,8 +3255,9 @@ export function createRoom<
     if (attachment.file.size <= ATTACHMENT_PART_SIZE) {
       // If the file is small enough, upload it in a single request
       return fetchCommentsJson<CommentUploadedAttachment>(
-        `/attachments/${encodeURIComponent(attachment.id)}`,
+        `/attachments/${encodeURIComponent(attachment.id)}/upload/${encodeURIComponent(attachment.name)}`,
         {
+          method: "PUT",
           body: attachment.file,
           signal: abortSignal,
         }
@@ -3274,10 +3275,13 @@ export function createRoom<
         const createMultiPartUpload = await fetchCommentsJson<{
           uploadId: string;
           key: string;
-        }>(`/attachments/${encodeURIComponent(attachment.id)}/multipart`, {
-          method: "POST",
-          signal: abortSignal,
-        });
+        }>(
+          `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(attachment.name)}`,
+          {
+            method: "POST",
+            signal: abortSignal,
+          }
+        );
 
         uploadId = createMultiPartUpload.uploadId;
 
