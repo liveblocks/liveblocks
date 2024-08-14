@@ -1,0 +1,20 @@
+@import url("@liveblocks/react-ui/styles.css");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Waveform total height */
+  --wave-height: 70px;
+
+  /* How far down the waveform the timeline starts */
+  --wave-timeline-modifier: 0.5;
+}
+
+.lb-root {
+  --lb-accent: theme("colors.accent");
+  --lb-background: theme("colors.white");
+  --lb-foreground: theme("colors.neutral[900]");
+  --lb-foreground-subtle: theme("colors.neutral[200]");
+}
