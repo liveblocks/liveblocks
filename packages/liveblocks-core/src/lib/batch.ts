@@ -154,11 +154,7 @@ export class Batch<O, I> {
  * Create a store based on a batch callback.
  * Each call will be cached and get its own state in addition to being batched.
  */
-export function createBatchStore<O, I>(
-  callback: BatchCallback<O, I>,
-  options: Options
-): BatchStore<O, I> {
-  const batch = new Batch(callback, options);
+export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
   const cache = new Map<string, AsyncResult<O>>();
   const eventSource = makeEventSource<void>();
 

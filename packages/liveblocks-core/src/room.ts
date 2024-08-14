@@ -480,202 +480,6 @@ export type UploadAttachmentOptions = {
   signal?: AbortSignal;
 };
 
-type CommentsApi<M extends BaseMetadata> = {
-  /**
-   * Returns the threads within the current room and their associated inbox notifications.
-   * It also returns the request date that can be used for subsequent polling.
-   *
-   * @example
-   * const {
-   *   threads,
-   *   inboxNotifications,
-   *   requestedAt
-   * } = await room.getThreads({ query: { resolved: false }});
-   */
-  getThreads(options?: GetThreadsOptions<M>): Promise<{
-    threads: ThreadData<M>[];
-    inboxNotifications: InboxNotificationData[];
-    requestedAt: Date;
-  }>;
-
-  /**
-   * Returns the updated and deleted threads and their associated inbox notifications since the requested date.
-   *
-   * @example
-   * const result = await room.getThreads();
-   * // ... //
-   * await room.getThreadsSince({ since: result.requestedAt });
-   */
-  getThreadsSince(options: { since: Date }): Promise<{
-    threads: {
-      updated: ThreadData<M>[];
-      deleted: ThreadDeleteInfo[];
-    };
-    inboxNotifications: {
-      updated: InboxNotificationData[];
-      deleted: InboxNotificationDeleteInfo[];
-    };
-    requestedAt: Date;
-  }>;
-
-  /**
-   * Returns a thread and the associated inbox notification if it exists.
-   *
-   * @example
-   * const { thread, inboxNotification } = await room.getThread("th_xxx");
-   */
-  getThread(threadId: string): Promise<{
-    thread?: ThreadData<M>;
-    inboxNotification?: InboxNotificationData;
-  }>;
-
-  /**
-   * Creates a thread.
-   *
-   * @example
-   * const thread = await room.createThread({
-   *   body: {
-   *     version: 1,
-   *     content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
-   *   },
-   * })
-   */
-  createThread(options: {
-    threadId?: string;
-    commentId?: string;
-    metadata: M | undefined;
-    body: CommentBody;
-    attachmentIds?: string[];
-  }): Promise<ThreadData<M>>;
-
-  /**
-   * Deletes a thread.
-   *
-   * @example
-   * await room.deleteThread("th_xxx");
-   */
-  deleteThread(threadId: string): Promise<void>;
-
-  /**
-   * Edits a thread's metadata.
-   * To delete an existing metadata property, set its value to `null`.
-   *
-   * @example
-   * await room.editThreadMetadata({ threadId: "th_xxx", metadata: { x: 100, y: 100 } })
-   */
-  editThreadMetadata(options: {
-    metadata: Patchable<M>;
-    threadId: string;
-  }): Promise<M>;
-
-  /**
-   * Marks a thread as resolved.
-   *
-   * @example
-   * await room.markThreadAsResolved("th_xxx");
-   */
-  markThreadAsResolved(threadId: string): Promise<void>;
-
-  /**
-   * Marks a thread as unresolved.
-   *
-   * @example
-   * await room.markThreadAsUnresolved("th_xxx");
-   */
-  markThreadAsUnresolved(threadId: string): Promise<void>;
-
-  /**
-   * Creates a comment.
-   *
-   * @example
-   * await room.createComment({
-   *   threadId: "th_xxx",
-   *   body: {
-   *     version: 1,
-   *     content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
-   *   },
-   * });
-   */
-  createComment(options: {
-    threadId: string;
-    commentId?: string;
-    body: CommentBody;
-    attachmentIds?: string[];
-  }): Promise<CommentData>;
-
-  /**
-   * Edits a comment.
-   *
-   * @example
-   * await room.editComment({
-   *   threadId: "th_xxx",
-   *   commentId: "cm_xxx"
-   *   body: {
-   *     version: 1,
-   *     content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
-   *   },
-   * });
-   */
-  editComment(options: {
-    threadId: string;
-    commentId: string;
-    body: CommentBody;
-    attachmentIds?: string[];
-  }): Promise<CommentData>;
-
-  /**
-   * Deletes a comment.
-   * If it is the last non-deleted comment, the thread also gets deleted.
-   *
-   * @example
-   * await room.deleteComment({
-   *   threadId: "th_xxx",
-   *   commentId: "cm_xxx"
-   * });
-   */
-  deleteComment(options: {
-    threadId: string;
-    commentId: string;
-  }): Promise<void>;
-
-  /**
-   * Adds a reaction from a comment for the current user.
-   *
-   * @example
-   * await room.addReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" })
-   */
-  addReaction(options: {
-    threadId: string;
-    commentId: string;
-    emoji: string;
-  }): Promise<CommentUserReaction>;
-
-  /**
-   * Removes a reaction from a comment.
-   *
-   * @example
-   * await room.removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" })
-   */
-  removeReaction(options: {
-    threadId: string;
-    commentId: string;
-    emoji: string;
-  }): Promise<void>;
-
-  /**
-   * TODO:
-   */
-  prepareAttachment(file: File): CommentLocalAttachment;
-
-  /**
-   * TODO:
-   */
-  uploadAttachment(
-    attachment: CommentLocalAttachment,
-    options?: UploadAttachmentOptions
-  ): Promise<CommentUploadedAttachment>;
-};
-
 /**
  * @private Widest-possible Room type, matching _any_ Room instance. Note that
  * this type is different from `Room`-without-type-arguments. That represents
@@ -934,6 +738,205 @@ export type Room<
   reconnect(): void;
 
   /**
+   * Returns the threads within the current room and their associated inbox notifications.
+   * It also returns the request date that can be used for subsequent polling.
+   *
+   * @example
+   * const {
+   *   threads,
+   *   inboxNotifications,
+   *   requestedAt
+   * } = await room.getThreads({ query: { resolved: false }});
+   */
+  getThreads(options?: GetThreadsOptions<M>): Promise<{
+    threads: ThreadData<M>[];
+    inboxNotifications: InboxNotificationData[];
+    requestedAt: Date;
+  }>;
+
+  /**
+   * Returns the updated and deleted threads and their associated inbox notifications since the requested date.
+   *
+   * @example
+   * const result = await room.getThreads();
+   * // ... //
+   * await room.getThreadsSince({ since: result.requestedAt });
+   */
+  getThreadsSince(options: { since: Date }): Promise<{
+    threads: {
+      updated: ThreadData<M>[];
+      deleted: ThreadDeleteInfo[];
+    };
+    inboxNotifications: {
+      updated: InboxNotificationData[];
+      deleted: InboxNotificationDeleteInfo[];
+    };
+    requestedAt: Date;
+  }>;
+
+  /**
+   * Returns a thread and the associated inbox notification if it exists.
+   *
+   * @example
+   * const { thread, inboxNotification } = await room.getThread("th_xxx");
+   */
+  getThread(threadId: string): Promise<{
+    thread?: ThreadData<M>;
+    inboxNotification?: InboxNotificationData;
+  }>;
+
+  /**
+   * Creates a thread.
+   *
+   * @example
+   * const thread = await room.createThread({
+   *   body: {
+   *     version: 1,
+   *     content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
+   *   },
+   * })
+   */
+  createThread(options: {
+    threadId?: string;
+    commentId?: string;
+    metadata: M | undefined;
+    body: CommentBody;
+    attachmentIds?: string[];
+  }): Promise<ThreadData<M>>;
+
+  /**
+   * Deletes a thread.
+   *
+   * @example
+   * await room.deleteThread("th_xxx");
+   */
+  deleteThread(threadId: string): Promise<void>;
+
+  /**
+   * Edits a thread's metadata.
+   * To delete an existing metadata property, set its value to `null`.
+   *
+   * @example
+   * await room.editThreadMetadata({ threadId: "th_xxx", metadata: { x: 100, y: 100 } })
+   */
+  editThreadMetadata(options: {
+    metadata: Patchable<M>;
+    threadId: string;
+  }): Promise<M>;
+
+  /**
+   * Marks a thread as resolved.
+   *
+   * @example
+   * await room.markThreadAsResolved("th_xxx");
+   */
+  markThreadAsResolved(threadId: string): Promise<void>;
+
+  /**
+   * Marks a thread as unresolved.
+   *
+   * @example
+   * await room.markThreadAsUnresolved("th_xxx");
+   */
+  markThreadAsUnresolved(threadId: string): Promise<void>;
+
+  /**
+   * Creates a comment.
+   *
+   * @example
+   * await room.createComment({
+   *   threadId: "th_xxx",
+   *   body: {
+   *     version: 1,
+   *     content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
+   *   },
+   * });
+   */
+  createComment(options: {
+    threadId: string;
+    commentId?: string;
+    body: CommentBody;
+    attachmentIds?: string[];
+  }): Promise<CommentData>;
+
+  /**
+   * Edits a comment.
+   *
+   * @example
+   * await room.editComment({
+   *   threadId: "th_xxx",
+   *   commentId: "cm_xxx"
+   *   body: {
+   *     version: 1,
+   *     content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
+   *   },
+   * });
+   */
+  editComment(options: {
+    threadId: string;
+    commentId: string;
+    body: CommentBody;
+    attachmentIds?: string[];
+  }): Promise<CommentData>;
+
+  /**
+   * Deletes a comment.
+   * If it is the last non-deleted comment, the thread also gets deleted.
+   *
+   * @example
+   * await room.deleteComment({
+   *   threadId: "th_xxx",
+   *   commentId: "cm_xxx"
+   * });
+   */
+  deleteComment(options: {
+    threadId: string;
+    commentId: string;
+  }): Promise<void>;
+
+  /**
+   * Adds a reaction from a comment for the current user.
+   *
+   * @example
+   * await room.addReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" })
+   */
+  addReaction(options: {
+    threadId: string;
+    commentId: string;
+    emoji: string;
+  }): Promise<CommentUserReaction>;
+
+  /**
+   * Removes a reaction from a comment.
+   *
+   * @example
+   * await room.removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" })
+   */
+  removeReaction(options: {
+    threadId: string;
+    commentId: string;
+    emoji: string;
+  }): Promise<void>;
+
+  /**
+   * TODO:
+   */
+  prepareAttachment(file: File): CommentLocalAttachment;
+
+  /**
+   * TODO:
+   */
+  uploadAttachment(
+    attachment: CommentLocalAttachment,
+    options?: UploadAttachmentOptions
+  ): Promise<CommentUploadedAttachment>;
+
+  /**
+   * TODO:
+   */
+  getAttachmentUrl(attachmentId: string): Promise<string>;
+
+  /**
    * Gets the user's notification settings for the current room.
    *
    * @example
@@ -955,7 +958,7 @@ export type Room<
    * Internal use only. Signature might change in the future.
    */
   markInboxNotificationAsRead(notificationId: string): Promise<void>;
-} & CommentsApi<M>;
+};
 
 type Provider = {
   synced: boolean;
@@ -999,6 +1002,8 @@ export type PrivateRoomApi = {
     explicitClose(event: IWebSocketCloseEvent): void;
     rawSend(data: string): void;
   };
+
+  batchedGetAttachmentUrls: Batch<string, string>;
 };
 
 // The maximum message size on websockets is 1MB. We'll set the threshold
@@ -1231,6 +1236,7 @@ function installBackgroundTabSpy(): [
   return [inBackgroundSince, unsub];
 }
 
+const GET_ATTACHMENT_URLS_BATCH_DELAY = 50;
 const ATTACHMENT_PART_SIZE = 5 * 1024 * 1024; // 5 MB
 
 function splitFileIntoParts(file: File) {
@@ -1260,591 +1266,6 @@ export class CommentsApiError extends Error {
   ) {
     super(message);
   }
-}
-
-/**
- * Handles all Comments-related API calls.
- */
-function createCommentsApi<M extends BaseMetadata>(
-  roomId: string,
-  getAuthValue: () => Promise<AuthValue>,
-  fetchClientApi: (
-    roomId: string,
-    endpoint: string,
-    authValue: AuthValue,
-    options?: RequestInit,
-    params?: QueryParams
-  ) => Promise<Response>
-): CommentsApi<M> {
-  async function fetchCommentsApi(
-    endpoint: string,
-    params?: QueryParams,
-    options?: RequestInit
-  ): Promise<Response> {
-    // TODO: Use the right scope
-    const authValue = await getAuthValue();
-
-    return fetchClientApi(roomId, endpoint, authValue, options, params);
-  }
-
-  async function fetchJson<T>(
-    endpoint: string,
-    options?: RequestInit,
-    params?: QueryParams
-  ): Promise<T> {
-    const response = await fetchCommentsApi(endpoint, params, options);
-
-    if (!response.ok) {
-      if (response.status >= 400 && response.status < 600) {
-        let error: CommentsApiError;
-
-        try {
-          const errorBody = (await response.json()) as { message: string };
-
-          error = new CommentsApiError(
-            errorBody.message,
-            response.status,
-            errorBody
-          );
-        } catch {
-          error = new CommentsApiError(response.statusText, response.status);
-        }
-
-        throw error;
-      }
-    }
-
-    let body;
-
-    try {
-      body = (await response.json()) as T;
-    } catch {
-      body = {} as T;
-    }
-
-    return body;
-  }
-
-  async function getThreadsSince(options: { since: Date }) {
-    const response = await fetchCommentsApi(
-      "/threads",
-      {
-        since: options?.since?.toISOString(),
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    if (response.ok) {
-      const json = await (response.json() as Promise<{
-        data: ThreadDataPlain<M>[];
-        inboxNotifications: InboxNotificationDataPlain[];
-        deletedThreads: ThreadDeleteInfoPlain[];
-        deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
-        meta: {
-          requestedAt: string;
-        };
-      }>);
-
-      return {
-        threads: {
-          updated: json.data.map(convertToThreadData),
-          deleted: json.deletedThreads.map(convertToThreadDeleteInfo),
-        },
-        inboxNotifications: {
-          updated: json.inboxNotifications.map(convertToInboxNotificationData),
-          deleted: json.deletedInboxNotifications.map(
-            convertToInboxNotificationDeleteInfo
-          ),
-        },
-        requestedAt: new Date(json.meta.requestedAt),
-      };
-    } else if (response.status === 404) {
-      return {
-        threads: {
-          updated: [],
-          deleted: [],
-        },
-        inboxNotifications: {
-          updated: [],
-          deleted: [],
-        },
-        requestedAt: new Date(),
-      };
-    } else {
-      throw new Error("There was an error while getting threads.");
-    }
-  }
-
-  async function getThreads(options?: GetThreadsOptions<M>) {
-    let query: string | undefined;
-
-    if (options?.query) {
-      query = objectToQuery(options.query);
-    }
-
-    const response = await fetchCommentsApi(
-      "/threads",
-      {
-        query,
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    if (response.ok) {
-      const json = await (response.json() as Promise<{
-        data: ThreadDataPlain<M>[];
-        inboxNotifications: InboxNotificationDataPlain[];
-        deletedThreads: ThreadDeleteInfoPlain[];
-        deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
-        meta: {
-          requestedAt: string;
-        };
-      }>);
-
-      return {
-        threads: json.data.map(convertToThreadData),
-        inboxNotifications: json.inboxNotifications.map(
-          convertToInboxNotificationData
-        ),
-        requestedAt: new Date(json.meta.requestedAt),
-      };
-    } else if (response.status === 404) {
-      return {
-        threads: [],
-        inboxNotifications: [],
-        deletedThreads: [],
-        deletedInboxNotifications: [],
-        requestedAt: new Date(),
-      };
-    } else {
-      throw new Error("There was an error while getting threads.");
-    }
-  }
-
-  async function getThread(threadId: string) {
-    const response = await fetchCommentsApi(
-      `/thread-with-notification/${threadId}`
-    );
-
-    if (response.ok) {
-      const json = (await response.json()) as {
-        thread: ThreadDataPlain<M>;
-        inboxNotification?: InboxNotificationDataPlain;
-      };
-
-      return {
-        thread: convertToThreadData(json.thread),
-        inboxNotification: json.inboxNotification
-          ? convertToInboxNotificationData(json.inboxNotification)
-          : undefined,
-      };
-    } else if (response.status === 404) {
-      return {
-        thread: undefined,
-        inboxNotification: undefined,
-      };
-    } else {
-      throw new Error(`There was an error while getting thread ${threadId}.`);
-    }
-  }
-
-  async function createThread({
-    metadata,
-    body,
-    commentId = createCommentId(),
-    threadId = createThreadId(),
-    attachmentIds,
-  }: {
-    roomId: string;
-    threadId?: string;
-    commentId?: string;
-    metadata: M | undefined;
-    body: CommentBody;
-    attachmentIds?: string[];
-  }) {
-    const thread = await fetchJson<ThreadDataPlain<M>>("/threads", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        id: threadId,
-        comment: {
-          id: commentId,
-          body,
-          attachmentIds,
-        },
-        metadata,
-      }),
-    });
-
-    return convertToThreadData(thread);
-  }
-
-  async function deleteThread(threadId: string) {
-    await fetchJson(`/threads/${encodeURIComponent(threadId)}`, {
-      method: "DELETE",
-    });
-  }
-
-  async function editThreadMetadata({
-    metadata,
-    threadId,
-  }: {
-    roomId: string;
-    metadata: Patchable<M>;
-    threadId: string;
-  }) {
-    return await fetchJson<M>(
-      `/threads/${encodeURIComponent(threadId)}/metadata`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(metadata),
-      }
-    );
-  }
-
-  async function markThreadAsResolved(threadId: string) {
-    await fetchJson(
-      `/threads/${encodeURIComponent(threadId)}/mark-as-resolved`,
-      {
-        method: "POST",
-      }
-    );
-  }
-
-  async function markThreadAsUnresolved(threadId: string) {
-    await fetchJson(
-      `/threads/${encodeURIComponent(threadId)}/mark-as-unresolved`,
-      {
-        method: "POST",
-      }
-    );
-  }
-
-  async function createComment({
-    threadId,
-    commentId = createCommentId(),
-    body,
-    attachmentIds,
-  }: {
-    threadId: string;
-    commentId?: string;
-    body: CommentBody;
-    attachmentIds?: string[];
-  }) {
-    const comment = await fetchJson<CommentDataPlain>(
-      `/threads/${encodeURIComponent(threadId)}/comments`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id: commentId,
-          body,
-          attachmentIds,
-        }),
-      }
-    );
-
-    return convertToCommentData(comment);
-  }
-
-  async function editComment({
-    threadId,
-    commentId,
-    body,
-    attachmentIds,
-  }: {
-    threadId: string;
-    commentId: string;
-    body: CommentBody;
-    attachmentIds?: string[];
-  }) {
-    const comment = await fetchJson<CommentDataPlain>(
-      `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
-        commentId
-      )}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          body,
-          attachmentIds,
-        }),
-      }
-    );
-
-    return convertToCommentData(comment);
-  }
-
-  async function deleteComment({
-    threadId,
-    commentId,
-  }: {
-    roomId: string;
-    threadId: string;
-    commentId: string;
-  }) {
-    await fetchJson(
-      `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
-        commentId
-      )}`,
-      {
-        method: "DELETE",
-      }
-    );
-  }
-
-  async function addReaction({
-    threadId,
-    commentId,
-    emoji,
-  }: {
-    threadId: string;
-    commentId: string;
-    emoji: string;
-  }) {
-    const reaction = await fetchJson<CommentUserReactionPlain>(
-      `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
-        commentId
-      )}/reactions`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ emoji }),
-      }
-    );
-
-    return convertToCommentUserReaction(reaction);
-  }
-
-  async function removeReaction({
-    threadId,
-    commentId,
-    emoji,
-  }: {
-    threadId: string;
-    commentId: string;
-    emoji: string;
-  }) {
-    await fetchJson<CommentData>(
-      `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
-        commentId
-      )}/reactions/${encodeURIComponent(emoji)}`,
-      {
-        method: "DELETE",
-      }
-    );
-  }
-
-  function prepareAttachment(file: File): CommentLocalAttachment {
-    return {
-      id: createCommentAttachmentId(),
-      name: file.name,
-      size: file.size,
-      mimeType: file.type,
-      file,
-    };
-  }
-
-  // async function uploadAttachment(
-  //   attachment: CommentLocalAttachment,
-  //   options: UploadAttachmentOptions = {}
-  // ): Promise<CommentUploadedAttachment> {
-  //   const abortSignal = options.signal;
-  //   const abortError = abortSignal
-  //     ? new DOMException(
-  //         `Upload of attachment ${attachment.id} was aborted.`,
-  //         "AbortError"
-  //       )
-  //     : undefined;
-
-  //   if (abortSignal?.aborted) {
-  //     throw abortError;
-  //   }
-
-  //   try {
-  //     // Simulate a 1s abortable upload
-  //     await new Promise((resolve, reject) => {
-  //       const timeout = setTimeout(resolve, 2000);
-
-  //       abortSignal?.addEventListener("abort", () => {
-  //         clearTimeout(timeout);
-  //         reject(abortError);
-  //       });
-  //     });
-
-  //     if (abortSignal?.aborted) {
-  //       throw abortError;
-  //     }
-
-  //     // Simulate an upload error half the time
-  //     if (Math.random() < 0.5) {
-  //       throw new Error("There was an error while uploading the attachment.");
-  //     }
-
-  //     return {
-  //       id: attachment.id,
-  //       name: attachment.name,
-  //       size: attachment.size,
-  //       mimeType: attachment.mimeType,
-  //     };
-  //   } catch (error) {
-  //     if ((error as Error)?.name && (error as Error).name === "AbortError") {
-  //       // TODO: Clean up?
-  //     }
-
-  //     throw error;
-  //   }
-  // }
-
-  async function uploadAttachment(
-    attachment: CommentLocalAttachment,
-    options: UploadAttachmentOptions = {}
-  ): Promise<CommentUploadedAttachment> {
-    const abortSignal = options.signal;
-    const abortError = abortSignal
-      ? new DOMException(
-          `Upload of attachment ${attachment.id} was aborted.`,
-          "AbortError"
-        )
-      : undefined;
-
-    if (abortSignal?.aborted) {
-      throw abortError;
-    }
-
-    if (attachment.file.size <= ATTACHMENT_PART_SIZE) {
-      // If the file is small enough, upload it in a single request
-      return fetchJson<CommentUploadedAttachment>(
-        `/attachments/${encodeURIComponent(attachment.id)}`,
-        {
-          body: attachment.file,
-          signal: abortSignal,
-        }
-      );
-    } else {
-      // Otherwise, upload it in multiple parts
-      let uploadId: string | undefined;
-      const uploadedParts: {
-        etag: string;
-        partNumber: number;
-      }[] = [];
-
-      try {
-        // Create a multi-part upload
-        const createMultiPartUpload = await fetchJson<{
-          uploadId: string;
-          key: string;
-        }>(`/attachments/${encodeURIComponent(attachment.id)}/multipart`, {
-          method: "POST",
-          signal: abortSignal,
-        });
-
-        uploadId = createMultiPartUpload.uploadId;
-
-        const parts = splitFileIntoParts(attachment.file);
-
-        // Check if the upload was aborted
-        if (abortSignal?.aborted) {
-          throw abortError;
-        }
-
-        // TODO: Retry failed parts individually?
-        // TODO: Upload parts in parallel/batches?
-        // Upload each part individually
-        for (const { part, partNumber } of parts) {
-          const uploadedPart = await fetchJson<{
-            partNumber: number;
-            etag: string;
-          }>(
-            `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(uploadId)}/${encodeURIComponent(partNumber)}`,
-            {
-              method: "PUT",
-              body: part,
-            }
-          );
-
-          uploadedParts.push({
-            etag: uploadedPart.etag,
-            partNumber,
-          });
-        }
-
-        // Check if the upload was aborted
-        if (abortSignal?.aborted) {
-          throw abortError;
-        }
-
-        return fetchJson<CommentUploadedAttachment>(
-          `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(uploadId)}/complete`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ parts: uploadedParts }),
-            signal: abortSignal,
-          }
-        );
-      } catch (error) {
-        if (
-          uploadId &&
-          (error as Error)?.name &&
-          (error as Error).name === "AbortError"
-        ) {
-          // Abort the multi-part upload if it was created
-          await fetchCommentsApi(
-            `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(uploadId)}`,
-            undefined,
-            {
-              method: "DELETE",
-            }
-          );
-        }
-
-        throw error;
-      }
-    }
-  }
-
-  // TODO: Add room.events.attachmentUpload (or similar) to listen to upload progress? { attachmentId: string; progress: number; }
-  //       Error handling can done by handling `uploadAttachment` rejecting/throwing
-
-  return {
-    getThreads,
-    getThreadsSince,
-    getThread,
-    createThread,
-    deleteThread,
-    editThreadMetadata,
-    markThreadAsResolved,
-    markThreadAsUnresolved,
-    createComment,
-    editComment,
-    deleteComment,
-    addReaction,
-    removeReaction,
-    prepareAttachment,
-    uploadAttachment,
-  };
 }
 
 const MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY = 50;
@@ -3376,11 +2797,578 @@ export function createRoom<
     comments: eventHub.comments.observable,
   };
 
-  const commentsApi = createCommentsApi<M>(
-    config.roomId,
-    delegates.authenticate,
-    fetchClientApi
+  async function fetchCommentsApi(
+    endpoint: string,
+    params?: QueryParams,
+    options?: RequestInit
+  ): Promise<Response> {
+    // TODO: Use the right scope
+    const authValue = await delegates.authenticate();
+
+    return fetchClientApi(config.roomId, endpoint, authValue, options, params);
+  }
+
+  async function fetchCommentsJson<T>(
+    endpoint: string,
+    options?: RequestInit,
+    params?: QueryParams
+  ): Promise<T> {
+    const response = await fetchCommentsApi(endpoint, params, options);
+
+    if (!response.ok) {
+      if (response.status >= 400 && response.status < 600) {
+        let error: CommentsApiError;
+
+        try {
+          const errorBody = (await response.json()) as { message: string };
+
+          error = new CommentsApiError(
+            errorBody.message,
+            response.status,
+            errorBody
+          );
+        } catch {
+          error = new CommentsApiError(response.statusText, response.status);
+        }
+
+        throw error;
+      }
+    }
+
+    let body;
+
+    try {
+      body = (await response.json()) as T;
+    } catch {
+      body = {} as T;
+    }
+
+    return body;
+  }
+
+  async function getThreadsSince(options: { since: Date }) {
+    const response = await fetchCommentsApi(
+      "/threads",
+      {
+        since: options?.since?.toISOString(),
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (response.ok) {
+      const json = await (response.json() as Promise<{
+        data: ThreadDataPlain<M>[];
+        inboxNotifications: InboxNotificationDataPlain[];
+        deletedThreads: ThreadDeleteInfoPlain[];
+        deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+        meta: {
+          requestedAt: string;
+        };
+      }>);
+
+      return {
+        threads: {
+          updated: json.data.map(convertToThreadData),
+          deleted: json.deletedThreads.map(convertToThreadDeleteInfo),
+        },
+        inboxNotifications: {
+          updated: json.inboxNotifications.map(convertToInboxNotificationData),
+          deleted: json.deletedInboxNotifications.map(
+            convertToInboxNotificationDeleteInfo
+          ),
+        },
+        requestedAt: new Date(json.meta.requestedAt),
+      };
+    } else if (response.status === 404) {
+      return {
+        threads: {
+          updated: [],
+          deleted: [],
+        },
+        inboxNotifications: {
+          updated: [],
+          deleted: [],
+        },
+        requestedAt: new Date(),
+      };
+    } else {
+      throw new Error("There was an error while getting threads.");
+    }
+  }
+
+  async function getThreads(options?: GetThreadsOptions<M>) {
+    let query: string | undefined;
+
+    if (options?.query) {
+      query = objectToQuery(options.query);
+    }
+
+    const response = await fetchCommentsApi(
+      "/threads",
+      {
+        query,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (response.ok) {
+      const json = await (response.json() as Promise<{
+        data: ThreadDataPlain<M>[];
+        inboxNotifications: InboxNotificationDataPlain[];
+        deletedThreads: ThreadDeleteInfoPlain[];
+        deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+        meta: {
+          requestedAt: string;
+        };
+      }>);
+
+      return {
+        threads: json.data.map(convertToThreadData),
+        inboxNotifications: json.inboxNotifications.map(
+          convertToInboxNotificationData
+        ),
+        requestedAt: new Date(json.meta.requestedAt),
+      };
+    } else if (response.status === 404) {
+      return {
+        threads: [],
+        inboxNotifications: [],
+        deletedThreads: [],
+        deletedInboxNotifications: [],
+        requestedAt: new Date(),
+      };
+    } else {
+      throw new Error("There was an error while getting threads.");
+    }
+  }
+
+  async function getThread(threadId: string) {
+    const response = await fetchCommentsApi(
+      `/thread-with-notification/${threadId}`
+    );
+
+    if (response.ok) {
+      const json = (await response.json()) as {
+        thread: ThreadDataPlain<M>;
+        inboxNotification?: InboxNotificationDataPlain;
+      };
+
+      return {
+        thread: convertToThreadData(json.thread),
+        inboxNotification: json.inboxNotification
+          ? convertToInboxNotificationData(json.inboxNotification)
+          : undefined,
+      };
+    } else if (response.status === 404) {
+      return {
+        thread: undefined,
+        inboxNotification: undefined,
+      };
+    } else {
+      throw new Error(`There was an error while getting thread ${threadId}.`);
+    }
+  }
+
+  async function createThread({
+    metadata,
+    body,
+    commentId = createCommentId(),
+    threadId = createThreadId(),
+    attachmentIds,
+  }: {
+    roomId: string;
+    threadId?: string;
+    commentId?: string;
+    metadata: M | undefined;
+    body: CommentBody;
+    attachmentIds?: string[];
+  }) {
+    const thread = await fetchCommentsJson<ThreadDataPlain<M>>("/threads", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: threadId,
+        comment: {
+          id: commentId,
+          body,
+          attachmentIds,
+        },
+        metadata,
+      }),
+    });
+
+    return convertToThreadData(thread);
+  }
+
+  async function deleteThread(threadId: string) {
+    await fetchCommentsJson(`/threads/${encodeURIComponent(threadId)}`, {
+      method: "DELETE",
+    });
+  }
+
+  async function editThreadMetadata({
+    metadata,
+    threadId,
+  }: {
+    roomId: string;
+    metadata: Patchable<M>;
+    threadId: string;
+  }) {
+    return await fetchCommentsJson<M>(
+      `/threads/${encodeURIComponent(threadId)}/metadata`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(metadata),
+      }
+    );
+  }
+
+  async function markThreadAsResolved(threadId: string) {
+    await fetchCommentsJson(
+      `/threads/${encodeURIComponent(threadId)}/mark-as-resolved`,
+      {
+        method: "POST",
+      }
+    );
+  }
+
+  async function markThreadAsUnresolved(threadId: string) {
+    await fetchCommentsJson(
+      `/threads/${encodeURIComponent(threadId)}/mark-as-unresolved`,
+      {
+        method: "POST",
+      }
+    );
+  }
+
+  async function createComment({
+    threadId,
+    commentId = createCommentId(),
+    body,
+    attachmentIds,
+  }: {
+    threadId: string;
+    commentId?: string;
+    body: CommentBody;
+    attachmentIds?: string[];
+  }) {
+    const comment = await fetchCommentsJson<CommentDataPlain>(
+      `/threads/${encodeURIComponent(threadId)}/comments`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: commentId,
+          body,
+          attachmentIds,
+        }),
+      }
+    );
+
+    return convertToCommentData(comment);
+  }
+
+  async function editComment({
+    threadId,
+    commentId,
+    body,
+    attachmentIds,
+  }: {
+    threadId: string;
+    commentId: string;
+    body: CommentBody;
+    attachmentIds?: string[];
+  }) {
+    const comment = await fetchCommentsJson<CommentDataPlain>(
+      `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
+        commentId
+      )}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          body,
+          attachmentIds,
+        }),
+      }
+    );
+
+    return convertToCommentData(comment);
+  }
+
+  async function deleteComment({
+    threadId,
+    commentId,
+  }: {
+    roomId: string;
+    threadId: string;
+    commentId: string;
+  }) {
+    await fetchCommentsJson(
+      `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
+        commentId
+      )}`,
+      {
+        method: "DELETE",
+      }
+    );
+  }
+
+  async function addReaction({
+    threadId,
+    commentId,
+    emoji,
+  }: {
+    threadId: string;
+    commentId: string;
+    emoji: string;
+  }) {
+    const reaction = await fetchCommentsJson<CommentUserReactionPlain>(
+      `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
+        commentId
+      )}/reactions`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ emoji }),
+      }
+    );
+
+    return convertToCommentUserReaction(reaction);
+  }
+
+  async function removeReaction({
+    threadId,
+    commentId,
+    emoji,
+  }: {
+    threadId: string;
+    commentId: string;
+    emoji: string;
+  }) {
+    await fetchCommentsJson<CommentData>(
+      `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
+        commentId
+      )}/reactions/${encodeURIComponent(emoji)}`,
+      {
+        method: "DELETE",
+      }
+    );
+  }
+
+  function prepareAttachment(file: File): CommentLocalAttachment {
+    return {
+      id: createCommentAttachmentId(),
+      name: file.name,
+      size: file.size,
+      mimeType: file.type,
+      file,
+    };
+  }
+
+  // async function uploadAttachment(
+  //   attachment: CommentLocalAttachment,
+  //   options: UploadAttachmentOptions = {}
+  // ): Promise<CommentUploadedAttachment> {
+  //   const abortSignal = options.signal;
+  //   const abortError = abortSignal
+  //     ? new DOMException(
+  //         `Upload of attachment ${attachment.id} was aborted.`,
+  //         "AbortError"
+  //       )
+  //     : undefined;
+
+  //   if (abortSignal?.aborted) {
+  //     throw abortError;
+  //   }
+
+  //   try {
+  //     // Simulate a 1s abortable upload
+  //     await new Promise((resolve, reject) => {
+  //       const timeout = setTimeout(resolve, 2000);
+
+  //       abortSignal?.addEventListener("abort", () => {
+  //         clearTimeout(timeout);
+  //         reject(abortError);
+  //       });
+  //     });
+
+  //     if (abortSignal?.aborted) {
+  //       throw abortError;
+  //     }
+
+  //     // Simulate an upload error half the time
+  //     if (Math.random() < 0.5) {
+  //       throw new Error("There was an error while uploading the attachment.");
+  //     }
+
+  //     return {
+  //       id: attachment.id,
+  //       name: attachment.name,
+  //       size: attachment.size,
+  //       mimeType: attachment.mimeType,
+  //     };
+  //   } catch (error) {
+  //     if ((error as Error)?.name && (error as Error).name === "AbortError") {
+  //       // TODO: Clean up?
+  //     }
+
+  //     throw error;
+  //   }
+  // }
+
+  async function uploadAttachment(
+    attachment: CommentLocalAttachment,
+    options: UploadAttachmentOptions = {}
+  ): Promise<CommentUploadedAttachment> {
+    const abortSignal = options.signal;
+    const abortError = abortSignal
+      ? new DOMException(
+          `Upload of attachment ${attachment.id} was aborted.`,
+          "AbortError"
+        )
+      : undefined;
+
+    if (abortSignal?.aborted) {
+      throw abortError;
+    }
+
+    if (attachment.file.size <= ATTACHMENT_PART_SIZE) {
+      // If the file is small enough, upload it in a single request
+      return fetchCommentsJson<CommentUploadedAttachment>(
+        `/attachments/${encodeURIComponent(attachment.id)}`,
+        {
+          body: attachment.file,
+          signal: abortSignal,
+        }
+      );
+    } else {
+      // Otherwise, upload it in multiple parts
+      let uploadId: string | undefined;
+      const uploadedParts: {
+        etag: string;
+        partNumber: number;
+      }[] = [];
+
+      try {
+        // Create a multi-part upload
+        const createMultiPartUpload = await fetchCommentsJson<{
+          uploadId: string;
+          key: string;
+        }>(`/attachments/${encodeURIComponent(attachment.id)}/multipart`, {
+          method: "POST",
+          signal: abortSignal,
+        });
+
+        uploadId = createMultiPartUpload.uploadId;
+
+        const parts = splitFileIntoParts(attachment.file);
+
+        // Check if the upload was aborted
+        if (abortSignal?.aborted) {
+          throw abortError;
+        }
+
+        // TODO: Retry failed parts individually?
+        // TODO: Upload parts in parallel/batches?
+        // Upload each part individually
+        for (const { part, partNumber } of parts) {
+          const uploadedPart = await fetchCommentsJson<{
+            partNumber: number;
+            etag: string;
+          }>(
+            `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(uploadId)}/${encodeURIComponent(partNumber)}`,
+            {
+              method: "PUT",
+              body: part,
+            }
+          );
+
+          uploadedParts.push({
+            etag: uploadedPart.etag,
+            partNumber,
+          });
+        }
+
+        // Check if the upload was aborted
+        if (abortSignal?.aborted) {
+          throw abortError;
+        }
+
+        return fetchCommentsJson<CommentUploadedAttachment>(
+          `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(uploadId)}/complete`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ parts: uploadedParts }),
+            signal: abortSignal,
+          }
+        );
+      } catch (error) {
+        if (
+          uploadId &&
+          (error as Error)?.name &&
+          (error as Error).name === "AbortError"
+        ) {
+          // Abort the multi-part upload if it was created
+          await fetchCommentsApi(
+            `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(uploadId)}`,
+            undefined,
+            {
+              method: "DELETE",
+            }
+          );
+        }
+
+        throw error;
+      }
+    }
+  }
+
+  // TODO: Add room.events.attachmentUpload (or similar) to listen to upload progress? { attachmentId: string; progress: number; }
+  //       Error handling can done by handling `uploadAttachment` rejecting/throwing
+
+  async function getAttachmentUrls(attachmentIds: string[]) {
+    // TODO: Implement batched endpoint to fetch multiple attachment URLs at once
+
+    return Promise.resolve(attachmentIds);
+  }
+
+  const batchedGetAttachmentUrls = new Batch<string, string>(
+    async (batchedAttachmentIds) => {
+      const attachmentIds = batchedAttachmentIds.flat();
+
+      await getAttachmentUrls(attachmentIds);
+
+      return attachmentIds;
+    },
+    { delay: GET_ATTACHMENT_URLS_BATCH_DELAY }
   );
+
+  function getAttachmentUrl(attachmentId: string) {
+    return batchedGetAttachmentUrls.get(attachmentId);
+  }
 
   async function fetchNotificationsJson<T>(
     endpoint: string,
@@ -3516,6 +3504,8 @@ export function createRoom<
           explicitClose: (event) => managedSocket._privateSendMachineEvent({ type: "EXPLICIT_SOCKET_CLOSE", event }),
           rawSend: (data) => managedSocket.send(data),
         },
+
+        batchedGetAttachmentUrls,
       },
 
       id: config.roomId,
@@ -3566,11 +3556,28 @@ export function createRoom<
       getPresence: () => context.myPresence.current,
       getOthers: () => context.others.current,
 
+      // Comments
+      getThreads,
+      getThreadsSince,
+      getThread,
+      createThread,
+      deleteThread,
+      editThreadMetadata,
+      markThreadAsResolved,
+      markThreadAsUnresolved,
+      createComment,
+      editComment,
+      deleteComment,
+      addReaction,
+      removeReaction,
+      prepareAttachment,
+      uploadAttachment,
+      getAttachmentUrl,
+
+      // Notifications
       getNotificationSettings,
       updateNotificationSettings,
       markInboxNotificationAsRead,
-
-      ...commentsApi,
     },
 
     // Explictly make the internal field non-enumerable, to avoid aggressive

@@ -7,7 +7,7 @@ import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import type { DE, DM, DP, DRI, DS, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
 import type { BatchStore } from "./lib/batch";
-import { createBatchStore } from "./lib/batch";
+import { Batch, createBatchStore } from "./lib/batch";
 import type { Store } from "./lib/create-store";
 import { createStore } from "./lib/create-store";
 import * as console from "./lib/fancy-console";
@@ -613,7 +613,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     "Set the resolveUsers option in createClient to specify user info."
   );
 
-  const usersStore = createBatchStore(
+  const batchedResolveUsers = new Batch(
     async (batchedUserIds: string[]) => {
       const userIds = batchedUserIds.flat();
       const users = await resolveUsers?.({ userIds });
@@ -624,6 +624,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     },
     { delay: RESOLVE_USERS_BATCH_DELAY }
   );
+  const usersStore = createBatchStore(batchedResolveUsers);
 
   const resolveRoomsInfo = clientOptions.resolveRoomsInfo;
   const warnIfNoResolveRoomsInfo = createDevelopmentWarning(
@@ -631,7 +632,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     "Set the resolveRoomsInfo option in createClient to specify room info."
   );
 
-  const roomsInfoStore = createBatchStore(
+  const batchedResolveRoomsInfo = new Batch(
     async (batchedRoomIds: string[]) => {
       const roomIds = batchedRoomIds.flat();
       const roomsInfo = await resolveRoomsInfo?.({ roomIds });
@@ -642,6 +643,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     },
     { delay: RESOLVE_ROOMS_INFO_BATCH_DELAY }
   );
+  const roomsInfoStore = createBatchStore(batchedResolveRoomsInfo);
 
   return Object.defineProperty(
     {
