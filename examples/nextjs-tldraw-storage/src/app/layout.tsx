@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "../globals.css";
 import { Providers } from "./Providers";
 
@@ -6,13 +7,19 @@ export const metadata: Metadata = {
   title: "Liveblocks",
 };
 
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  display: "swap",
+});
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={inter.className}>
       <head>
         <link
           href="https://liveblocks.io/favicon-32x32.png"

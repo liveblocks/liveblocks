@@ -18,7 +18,6 @@ import {
   TLStoreEventInfo,
   TLStoreWithStatus,
 } from "tldraw";
-import { LiveMap } from "@liveblocks/core";
 
 export function useStorageStore({
   shapeUtils = [],
@@ -53,44 +52,26 @@ export function useStorageStore({
     setStoreWithStatus({ status: "loading" });
 
     async function setup() {
-      if (!room) return;
+      // Get Liveblocks Storage values
+      const { root } = await room.getStorage();
+      const liveRecords = root.get("records");
 
-      const storage = await room.getStorage();
-      const recordsSnapshot = room.getStorageSnapshot()?.get("records");
-
-      console.log(recordsSnapshot);
-
-      if (!recordsSnapshot) {
-        console.log("NO RECORDS");
-        // Initialize Storage with records from tldraw
-        storage.root.set("records", new LiveMap());
-        const liveRecords = storage.root.get("records");
-        room.batch(() => {
-          store.allRecords().forEach((record) => {
-            liveRecords.set(record.id, record);
-          });
-        });
-      } else {
-        // Initialize tldraw with records from Storage
-        store.clear();
-        store.put(
-          [
-            DocumentRecordType.create({
-              id: "document:document" as TLDocument["id"],
-            }),
-            PageRecordType.create({
-              id: "page:page" as TLPageId,
-              name: "Page 1",
-              index: "a1" as IndexKey,
-            }),
-            ...[...recordsSnapshot.values()],
-          ],
-          "initialize"
-        );
-      }
-
-      // LiveMap of all objects
-      const liveRecords = storage.root.get("records");
+      // Initialize tldraw with records from Storage
+      store.clear();
+      store.put(
+        [
+          DocumentRecordType.create({
+            id: "document:document" as TLDocument["id"],
+          }),
+          PageRecordType.create({
+            id: "page:page" as TLPageId,
+            name: "Page 1",
+            index: "a1" as IndexKey,
+          }),
+          ...[...liveRecords.values()],
+        ],
+        "initialize"
+      );
 
       // Sync tldraw changes with Storage
       unsubs.push(
@@ -145,6 +126,7 @@ export function useStorageStore({
         })
       );
 
+      // Update tldraw when Storage changes
       unsubs.push(
         room.subscribe(
           liveRecords,
@@ -156,6 +138,7 @@ export function useStorageStore({
               if (update.type !== "LiveMap") {
                 return;
               }
+
               for (const [id, { type }] of Object.entries(update.updates)) {
                 switch (type) {
                   // Object deleted from Liveblocks, remove from tldraw
@@ -190,9 +173,7 @@ export function useStorageStore({
         )
       );
 
-      // === PRESENCE ===================================================
-
-      // Set users name
+      // Set user's info
       const userPreferences = computed<{
         id: string;
         color: string;
@@ -222,7 +203,7 @@ export function useStorageStore({
         presence: presenceDerivation.get() ?? null,
       });
 
-      // When the derivation change, sync presence to presence
+      // Update Liveblocks when tldraw presence changes
       unsubs.push(
         react("when presence changes", () => {
           const presence = presenceDerivation.get() ?? null;
@@ -232,7 +213,7 @@ export function useStorageStore({
         })
       );
 
-      // Sync room presence changes with the store
+      // Sync Liveblocks presence with tldraw
       unsubs.push(
         room.subscribe("others", (others, event) => {
           const toRemove: TLInstancePresence["id"][] = [];
