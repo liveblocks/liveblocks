@@ -451,7 +451,10 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     );
 
     const handleEditSubmit = useCallback(
-      ({ body }: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => {
+      (
+        { body, attachments }: ComposerSubmitComment,
+        event: FormEvent<HTMLFormElement>
+      ) => {
         // TODO: Add a way to preventDefault from within this callback, to override the default behavior (e.g. showing a confirmation dialog)
         onCommentEdit?.(comment);
 
@@ -461,6 +464,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
           commentId: comment.id,
           threadId: comment.threadId,
           body,
+          attachments,
         });
       },
       [comment, editComment, onCommentEdit]
