@@ -305,7 +305,6 @@ interface ComposerAttachmentsManagerOptions {
 }
 
 function createComposerAttachmentsManager(
-  defaultAttachments: CommentUploadedAttachment[],
   room: OpaqueRoom,
   options: ComposerAttachmentsManagerOptions
 ) {
@@ -409,9 +408,6 @@ function createComposerAttachmentsManager(
     notifySubscribers();
   }
 
-  // Initialize with default attachments
-  defaultAttachments.forEach((attachment) => addAttachment(attachment));
-
   return {
     addAttachment,
     removeAttachment,
@@ -430,19 +426,25 @@ export function useComposerAttachmentsManager(
   options: ComposerAttachmentsManagerOptions
 ) {
   const room = useRoom();
-  const frozenAttachmentsManager = useInitial(() =>
-    createComposerAttachmentsManager(defaultAttachments, room, options)
+  const frozenDefaultAttachments = useInitial(defaultAttachments);
+  const attachmentsManager = useInitial(() =>
+    createComposerAttachmentsManager(room, options)
   );
 
   useEffect(() => {
+    // Initialize default attachments
+    frozenDefaultAttachments.forEach((attachment) => {
+      attachmentsManager.addAttachment(attachment);
+    });
+
     return () => {
-      frozenAttachmentsManager.clear();
+      attachmentsManager.clear();
     };
-  }, [frozenAttachmentsManager]);
+  }, [frozenDefaultAttachments, attachmentsManager]);
 
   const attachments = useSyncExternalStore(
-    frozenAttachmentsManager.subscribe,
-    frozenAttachmentsManager.getSnapshot
+    attachmentsManager.subscribe,
+    attachmentsManager.getSnapshot
   );
 
   const isUploadingAttachments = useMemo(() => {
@@ -464,8 +466,8 @@ export function useComposerAttachmentsManager(
   return {
     attachments,
     isUploadingAttachments,
-    addAttachment: frozenAttachmentsManager.addAttachment,
-    removeAttachment: frozenAttachmentsManager.removeAttachment,
-    clearAttachments: frozenAttachmentsManager.clear,
+    addAttachment: attachmentsManager.addAttachment,
+    removeAttachment: attachmentsManager.removeAttachment,
+    clearAttachments: attachmentsManager.clear,
   };
 }
