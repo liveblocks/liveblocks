@@ -695,9 +695,6 @@
 }
 
 .lb-composer-attachments {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
-  gap: calc(0.75 * var(--lb-spacing));
   padding-inline: var(--lb-spacing);
   padding-block-start: calc(0.75 * var(--lb-spacing));
   padding-block-end: var(--lb-spacing);
@@ -857,9 +854,6 @@
 }
 
 .lb-comment-attachments {
-  display: flex;
-  flex-wrap: wrap;
-  gap: calc(0.75 * var(--lb-spacing));
   margin-block-start: calc(0.75 * var(--lb-spacing));
 }
 
@@ -1044,6 +1038,13 @@
 /*************************************
  *            Attachments            *
  *************************************/
+
+.lb-comment-attachments,
+.lb-composer-attachments {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
+  gap: calc(0.75 * var(--lb-spacing));
+}
 
 .lb-attachment {
   position: relative;

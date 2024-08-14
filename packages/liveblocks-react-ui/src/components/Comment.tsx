@@ -1,6 +1,7 @@
 "use client";
 
 import type {
+  CommentAttachment,
   CommentData,
   CommentReaction as CommentReactionData,
 } from "@liveblocks/core";
@@ -56,11 +57,11 @@ import { Timestamp } from "../primitives/Timestamp";
 import { useCurrentUserId } from "../shared";
 import { MENTION_CHARACTER } from "../slate/plugins/mentions";
 import { classNames } from "../utils/class-names";
-import { formatFileSize } from "../utils/format-file-size";
 import { useRefs } from "../utils/use-refs";
 import { useVisibleCallback } from "../utils/use-visible";
 import { useWindowFocus } from "../utils/use-window-focus";
 import { Composer } from "./Composer";
+import { FileAttachment } from "./internal/Attachment";
 import { Avatar } from "./internal/Avatar";
 import { Button } from "./internal/Button";
 import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
@@ -162,6 +163,11 @@ interface CommentReactionProps extends ComponentPropsWithoutRef<"button"> {
 }
 
 type CommentNonInteractiveReactionProps = Omit<CommentReactionProps, "comment">;
+
+interface CommentFileAttachmentProps extends ComponentPropsWithoutRef<"div"> {
+  attachment: CommentAttachment;
+  overrides?: Partial<GlobalOverrides & CommentAttachment>;
+}
 
 export function CommentMention({
   userId,
@@ -336,6 +342,23 @@ export const CommentNonInteractiveReaction = forwardRef<
     />
   );
 });
+
+function CommentFileAttachment({
+  attachment,
+  className,
+  overrides,
+  ...props
+}: CommentFileAttachmentProps) {
+  return (
+    <FileAttachment
+      className={classNames("lb-comment-attachment", className)}
+      {...props}
+      onContentClick={console.log}
+      attachment={attachment}
+      overrides={overrides}
+    />
+  );
+}
 
 // A void component (which doesn't render anything) responsible for marking a thread
 // as read when the comment it's used in becomes visible.
@@ -694,11 +717,17 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                     Link: CommentLink,
                   }}
                 />
-                {/* {showAttachments && comment.attachments.length > 0 ? (
+                {showAttachments && comment.attachments.length > 0 ? (
                   <div className="lb-comment-attachments">
-                    <CommentFileAttachment />
+                    {comment.attachments.map((attachment) => (
+                      <CommentFileAttachment
+                        key={attachment.id}
+                        attachment={attachment}
+                        overrides={overrides}
+                      />
+                    ))}
                   </div>
-                ) : null} */}
+                ) : null}
                 {showReactions && comment.reactions.length > 0 && (
                   <div className="lb-comment-reactions">
                     {comment.reactions.map((reaction) => (
