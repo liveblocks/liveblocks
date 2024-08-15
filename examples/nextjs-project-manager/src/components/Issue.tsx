@@ -53,7 +53,7 @@ export async function Issue({ issueId }: { issueId: string }) {
               </div>
             </div>
           </div>
-          <div className="border-l flex-grow-0 flex-shrink-0 w-[280px] px-4 flex flex-col gap-4">
+          <div className="border-l flex-grow-0 flex-shrink-0 w-[200px] lg:w-[260px] px-4 flex flex-col gap-4">
             <div>
               <div className="text-xs font-medium text-neutral-600 mb-2 h-10 flex items-center">
                 Properties

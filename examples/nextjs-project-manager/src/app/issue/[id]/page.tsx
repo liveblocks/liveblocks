@@ -15,19 +15,17 @@ export default async function PageHome({
   return (
     <Room issueId={id}>
       <div className="flex flex-row h-full">
-        <nav className="p-2 w-[250px]">
+        <nav className="p-2 w-[200px] xl:w-[250px]">
           <Nav />
         </nav>
         <main className="m-2 border flex-grow bg-neutral-50 rounded flex flex-row overflow-hidden">
           <DisplayWhenInboxOpen>
-            <div className="border-r w-[300px]">
+            <div className="border-r w-[200px] xl:w-[300px]">
               <Inbox />
             </div>
           </DisplayWhenInboxOpen>
           <div className="flex-grow">
-            {/*<Suspense>*/}
             <Issue issueId={id} />
-            {/*</Suspense>*/}
           </div>
         </main>
       </div>
