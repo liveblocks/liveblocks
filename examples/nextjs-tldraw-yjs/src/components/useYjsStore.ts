@@ -4,17 +4,17 @@ import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import { YKeyValue } from "y-utility/y-keyvalue";
 import * as Y from "yjs";
 import {
+  computed,
+  createPresenceStateDerivation,
+  createTLStore,
+  transact,
+  react,
+  defaultShapeUtils,
   InstancePresenceRecordType,
   TLAnyShapeUtilConstructor,
   TLInstancePresence,
   TLRecord,
   TLStoreWithStatus,
-  computed,
-  createPresenceStateDerivation,
-  createTLStore,
-  defaultShapeUtils,
-  react,
-  transact,
 } from "tldraw";
 
 /**
@@ -24,12 +24,10 @@ import {
  */
 
 export function useYjsStore({
-  roomId = "my-liveblocks-room",
   shapeUtils = [],
   user,
 }: Partial<{
   hostUrl: string;
-  roomId: string;
   version: number;
   shapeUtils: TLAnyShapeUtilConstructor[];
   user: {
@@ -45,7 +43,7 @@ export function useYjsStore({
   // Set up Liveblocks Yjs and get multiplayer store
   const { yDoc, yStore, yProvider } = useMemo(() => {
     const yDoc = new Y.Doc({ gc: true });
-    const yArr = yDoc.getArray<{ key: string; val: TLRecord }>(`tl_${roomId}`);
+    const yArr = yDoc.getArray<{ key: string; val: TLRecord }>("tl_records");
     const yStore = new YKeyValue(yArr);
 
     return {
@@ -53,7 +51,7 @@ export function useYjsStore({
       yStore,
       yProvider: new LiveblocksYjsProvider(room, yDoc),
     };
-  }, [room, roomId]);
+  }, [room]);
 
   // Set up tldraw store and status
   const [store] = useState(() => {
