@@ -22,8 +22,7 @@
 
 This example shows how to build a collaborative [tldraw](https://tldraw.dev/)
 canvas with [Liveblocks](https://liveblocks.io) Yjs, and
-[Next.js](https://nextjs.org/). tldraw requires a
-[license for commercial use](https://tldraw.dev/community/license).
+[Next.js](https://nextjs.org/).
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/comments-audio.png" width="536" alt="Audio Comments" />
 
@@ -87,3 +86,10 @@ on CodeSandbox, create the `LIVEBLOCKS_SECRET_KEY` environment variable as a
 [secret](https://codesandbox.io/docs/secrets).
 
 </details>
+
+## License
+
+The `tldraw` library is provided under the
+[tldraw license](https://github.com/tldraw/tldraw/blob/main/LICENSE.md) which
+does not allow their use for commercial purposes. To purchase an alternative
+license for commercial use, contact [sales@tldraw.com](mailto:sales@tldraw.com).
