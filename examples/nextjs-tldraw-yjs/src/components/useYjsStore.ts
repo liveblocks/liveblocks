@@ -261,8 +261,13 @@ export function useYjsStore({
       });
     }
 
-    yProvider.on("synced", handleSync);
-    unsubs.push(() => yProvider.off("synced", handleSync));
+    if (yProvider.synced) {
+      handleSync();
+    } else {
+      yProvider.on("synced", handleSync);
+      unsubs.push(() => yProvider.off("synced", handleSync));
+    }
+
     return () => {
       unsubs.forEach((fn) => fn());
       unsubs.length = 0;
