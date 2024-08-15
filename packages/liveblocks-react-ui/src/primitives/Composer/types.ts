@@ -159,12 +159,6 @@ export interface ComposerAttachmentsDropAreaProps
   disabled?: boolean;
 }
 
-export type ComposerLocalIdleAttachment = Resolve<
-  CommentLocalAttachment & {
-    status: "idle";
-  }
->;
-
 export type ComposerLocalUploadingAttachment = Resolve<
   CommentLocalAttachment & {
     status: "uploading";
@@ -191,7 +185,6 @@ export type ComposerUploadedAttachment = Resolve<
 >;
 
 export type ComposerAttachment =
-  | ComposerLocalIdleAttachment
   | ComposerLocalTooLargeAttachment
   | ComposerLocalUploadingAttachment
   | ComposerLocalErrorAttachment

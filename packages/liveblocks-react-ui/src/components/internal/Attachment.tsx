@@ -1,4 +1,10 @@
-import type { CommentAttachment } from "@liveblocks/core";
+"use client";
+
+import type {
+  CommentAttachment,
+  CommentUploadedAttachment,
+} from "@liveblocks/core";
+import { useAttachmentUrl, useIsInsideRoom } from "@liveblocks/react";
 import type {
   ComponentPropsWithoutRef,
   MouseEventHandler,
@@ -24,6 +30,8 @@ interface FileAttachmentProps extends ComponentPropsWithoutRef<"div"> {
   preventFocusOnDelete?: boolean;
   overrides?: Partial<GlobalOverrides>;
 }
+
+const IMAGE_PREVIEW_MAX_SIZE = 50 * 1024 * 1024; // 50 MB
 
 const fileExtensionRegex = /^(.+?)(\.[^.]+)?$/;
 
@@ -109,6 +117,42 @@ const FileAttachmentIcon = memo(({ mimeType }: { mimeType: string }) => {
   );
 });
 
+function FileAttachmentImagePreview({
+  attachment,
+}: {
+  attachment: CommentUploadedAttachment;
+}) {
+  const { url } = useAttachmentUrl(attachment.id);
+
+  return url ? (
+    <div className="lb-attachment-preview-image">
+      <img src={url} />
+    </div>
+  ) : null;
+}
+
+function FileAttachmentPreview({
+  attachment,
+}: {
+  attachment: CommentAttachment | ComposerAttachment;
+}) {
+  const isInsideRoom = useIsInsideRoom();
+  const status = (attachment as ComposerAttachment).status;
+  const isUploaded = status === "uploaded" || !status;
+
+  if (attachment.mimeType.startsWith("image/")) {
+    if (
+      isInsideRoom &&
+      isUploaded &&
+      attachment.size < IMAGE_PREVIEW_MAX_SIZE
+    ) {
+      return <FileAttachmentImagePreview attachment={attachment} />;
+    }
+  }
+
+  return null;
+}
+
 function formatAttachmentDescription(
   $: Overrides,
   attachment: CommentAttachment | ComposerAttachment
@@ -192,7 +236,12 @@ export function FileAttachment({
           ) : isError ? (
             <WarningIcon />
           ) : (
-            <FileAttachmentIcon mimeType={attachment.mimeType} />
+            <>
+              {!isError ? (
+                <FileAttachmentPreview attachment={attachment} />
+              ) : null}
+              <FileAttachmentIcon mimeType={attachment.mimeType} />
+            </>
           )}
         </div>
         <div className="lb-attachment-details">

@@ -23,6 +23,7 @@
   --lb-button-radius: calc(0.75 * var(--lb-radius));
   --lb-transition-duration: 0.1s;
   --lb-transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
+  --lb-highlight-shadow: inset 0 0 0 1px rgb(0 0 0 / 10%);
   --lb-elevation-shadow: $lb-elevation-shadow;
   --lb-tooltip-shadow: $lb-tooltip-shadow;
   --lb-accent-contrast: 8%;
@@ -1121,6 +1122,34 @@
   @include truncate;
 }
 
+.lb-attachment-preview {
+  position: relative;
+}
+
+.lb-attachment-preview-image {
+  border-radius: inherit;
+
+  &,
+  &::after,
+  img {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+  }
+
+  img {
+    object-fit: cover;
+  }
+
+  &::after {
+    content: "";
+    border-radius: inherit;
+    box-shadow: var(--lb-highlight-shadow);
+    pointer-events: none;
+  }
+}
+
 .lb-attachment-icon {
   flex: none;
   overflow: visible;
@@ -1153,7 +1182,6 @@
   }
 
   :where(.lb-attachment-preview) {
-    position: relative;
     display: flex;
     flex: none;
     justify-content: center;
