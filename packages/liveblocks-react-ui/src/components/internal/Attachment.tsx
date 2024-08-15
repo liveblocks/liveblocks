@@ -10,7 +10,7 @@ import type {
   MouseEventHandler,
   PointerEvent,
 } from "react";
-import React, { memo, useCallback, useMemo } from "react";
+import React, { memo, useCallback, useMemo, useState } from "react";
 
 import { CrossIcon } from "../../icons/Cross";
 import { SpinnerIcon } from "../../icons/Spinner";
@@ -123,10 +123,18 @@ function FileAttachmentImagePreview({
   attachment: CommentUploadedAttachment;
 }) {
   const { url } = useAttachmentUrl(attachment.id);
+  const [isLoaded, setLoaded] = useState(false);
+
+  const handleLoad = useCallback(() => {
+    setLoaded(true);
+  }, []);
 
   return url ? (
-    <div className="lb-attachment-preview-image">
-      <img src={url} />
+    <div
+      className="lb-attachment-preview-image"
+      data-hidden={!isLoaded ? "" : undefined}
+    >
+      <img src={url} loading="lazy" onLoad={handleLoad} />
     </div>
   ) : null;
 }

@@ -1128,6 +1128,7 @@
 
 .lb-attachment-preview-image {
   border-radius: inherit;
+  transition-property: opacity;
 
   &,
   &::after,
@@ -1147,6 +1148,10 @@
     border-radius: inherit;
     box-shadow: var(--lb-highlight-shadow);
     pointer-events: none;
+  }
+
+  &:where([data-hidden]) {
+    opacity: 0;
   }
 }
 
