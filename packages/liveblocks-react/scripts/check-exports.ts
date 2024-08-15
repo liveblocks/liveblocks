@@ -21,6 +21,7 @@ const ALLOW_DIFFERENT_JSDOCS = [
   "useThreads",
   "useUnreadInboxNotificationsCount",
   "useUser",
+  "useAttachmentUrl",
 ];
 
 // These exports may exist at the top-level without a factory equivalent

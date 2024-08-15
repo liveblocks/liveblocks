@@ -34,7 +34,8 @@ import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
 import type { DE, DM, DP, DS, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
-import { Batch } from "./lib/batch";
+import type { BatchStore } from "./lib/batch";
+import { Batch, createBatchStore } from "./lib/batch";
 import { Promise_withResolvers } from "./lib/controlledPromise";
 import {
   createCommentAttachmentId,
@@ -1003,7 +1004,7 @@ export type PrivateRoomApi = {
     rawSend(data: string): void;
   };
 
-  batchedGetAttachmentUrls: Batch<string, string>;
+  attachmentUrlsStore: BatchStore<string, string>;
 };
 
 // The maximum message size on websockets is 1MB. We'll set the threshold
@@ -3354,21 +3355,35 @@ export function createRoom<
   //       Error handling can done by handling `uploadAttachment` rejecting/throwing
 
   async function getAttachmentUrls(attachmentIds: string[]) {
-    // TODO: Implement batched endpoint to fetch multiple attachment URLs at once
+    const { urls } = await fetchCommentsJson<{ urls: (string | null)[] }>(
+      "/attachments/presigned-urls",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ attachmentIds }),
+      }
+    );
 
-    return Promise.resolve(attachmentIds);
+    return urls;
   }
 
   const batchedGetAttachmentUrls = new Batch<string, string>(
     async (batchedAttachmentIds) => {
       const attachmentIds = batchedAttachmentIds.flat();
 
-      await getAttachmentUrls(attachmentIds);
+      const attachmentUrls = await getAttachmentUrls(attachmentIds);
 
-      return attachmentIds;
+      return attachmentUrls.map(
+        (url) =>
+          url ??
+          new Error("There was an error while getting this attachment's URL")
+      );
     },
     { delay: GET_ATTACHMENT_URLS_BATCH_DELAY }
   );
+  const attachmentUrlsStore = createBatchStore(batchedGetAttachmentUrls);
 
   function getAttachmentUrl(attachmentId: string) {
     return batchedGetAttachmentUrls.get(attachmentId);
@@ -3509,7 +3524,7 @@ export function createRoom<
           rawSend: (data) => managedSocket.send(data),
         },
 
-        batchedGetAttachmentUrls,
+        attachmentUrlsStore,
       },
 
       id: config.roomId,

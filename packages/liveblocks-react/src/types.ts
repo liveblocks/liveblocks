@@ -94,6 +94,14 @@ export type RoomInfoAsyncSuccess = Resolve<
   }
 >;
 
+export type AttachmentUrlAsyncResult = AsyncResultWithDataField<string, "url">;
+export type AttachmentUrlAsyncSuccess = Resolve<
+  AttachmentUrlAsyncResult & {
+    readonly isLoading: false;
+    readonly error?: undefined;
+  }
+>;
+
 // prettier-ignore
 export type CreateThreadOptions<M extends BaseMetadata> =
   Resolve<
@@ -973,6 +981,14 @@ export type RoomContextBundle<
         (settings: Partial<RoomNotificationSettings>) => void,
       ];
 
+      /**
+       * Returns a presigned URL for an attachment by its ID.
+       *
+       * @example
+       * const { url, error, isLoading } = useAttachmentUrl("at_xxx");
+       */
+      useAttachmentUrl(attachmentId: string): AttachmentUrlAsyncResult;
+
       suspense: Resolve<
         RoomContextBundleCommon<P, S, U, E, M> &
           SharedContextBundle<U>["suspense"] & {
@@ -1061,6 +1077,14 @@ export type RoomContextBundle<
               RoomNotificationSettingsStateSuccess,
               (settings: Partial<RoomNotificationSettings>) => void,
             ];
+
+            /**
+             * Returns a presigned URL for an attachment by its ID.
+             *
+             * @example
+             * const { url } = useAttachmentUrl("at_xxx");
+             */
+            useAttachmentUrl(attachmentId: string): AttachmentUrlAsyncSuccess;
           }
       >;
     } & PrivateRoomContextApi

@@ -79,6 +79,7 @@ export {
   useStorage,
   useStorageStatus,
   useThreads,
+  useAttachmentUrl,
 } from "./room";
 export {
   useInboxNotifications,

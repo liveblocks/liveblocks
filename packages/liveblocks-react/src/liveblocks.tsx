@@ -215,7 +215,7 @@ function selectorFor_useRoomInfo(
   }
 
   // If this is a "success" state, but there still is no data, then it means
-  // the "resolving of this user" returned undefined. In that case, still treat
+  // the "resolving of this room info" returned undefined. In that case, still treat
   // this as an error state.
   if (!state.data) {
     return {

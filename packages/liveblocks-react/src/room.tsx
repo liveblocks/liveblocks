@@ -16,6 +16,7 @@ import type {
 } from "@liveblocks/client";
 import { shallow } from "@liveblocks/client";
 import type {
+  AsyncResult,
   CacheState,
   CacheStore,
   CommentData,
@@ -37,6 +38,7 @@ import type {
 } from "@liveblocks/core";
 import {
   addReaction,
+  assert,
   CommentsApiError,
   console,
   createCommentId,
@@ -86,6 +88,7 @@ import {
   useClientOrNull,
 } from "./liveblocks";
 import type {
+  AttachmentUrlAsyncResult,
   CommentReactionOptions,
   CreateCommentOptions,
   CreateThreadOptions,
@@ -611,6 +614,7 @@ function makeRoomContextBundle<
     useRemoveReaction,
     useMarkThreadAsRead,
     useThreadSubscription,
+    useAttachmentUrl,
 
     useRoomNotificationSettings,
     useUpdateRoomNotificationSettings,
@@ -671,6 +675,7 @@ function makeRoomContextBundle<
       useRemoveReaction,
       useMarkThreadAsRead,
       useThreadSubscription,
+      useAttachmentUrl: useAttachmentUrlSuspense,
 
       useRoomNotificationSettings: useRoomNotificationSettingsSuspense,
       useUpdateRoomNotificationSettings,
@@ -2695,6 +2700,97 @@ function useThreadsSuspense<M extends BaseMetadata>(
   return state;
 }
 
+function selectorFor_useAttachmentUrl(
+  state: AsyncResult<string | undefined> | undefined
+): AttachmentUrlAsyncResult {
+  if (state === undefined || state?.isLoading) {
+    return state ?? { isLoading: true };
+  }
+
+  if (state.error) {
+    return state;
+  }
+
+  // For now `useAttachmentUrl` doesn't support a custom resolver so this case
+  // will never happen as `getAttachmentUrl` will either return a URL or throw.
+  // But we might decide to offer a custom resolver in the future to allow
+  // self-hosting attachments.
+  assert(state.data !== undefined, "Unexpected missing attachment URL");
+
+  return {
+    isLoading: false,
+    url: state.data,
+  };
+}
+
+/**
+ * Returns a presigned URL for an attachment by its ID.
+ *
+ * @example
+ * const { url, error, isLoading } = useAttachmentUrl("at_xxx");
+ */
+function useAttachmentUrl(attachmentId: string): AttachmentUrlAsyncResult {
+  const room = useRoom();
+  const { attachmentUrlsStore } = room[kInternal];
+
+  const getAttachmentUrlState = React.useCallback(
+    () => attachmentUrlsStore.getState(attachmentId),
+    [attachmentUrlsStore, attachmentId]
+  );
+
+  React.useEffect(() => {
+    // NOTE: .get() will trigger any actual fetches, whereas .getState() will not
+    void attachmentUrlsStore.get(attachmentId);
+  }, [attachmentUrlsStore, attachmentId]);
+
+  return useSyncExternalStoreWithSelector(
+    attachmentUrlsStore.subscribe,
+    getAttachmentUrlState,
+    getAttachmentUrlState,
+    selectorFor_useAttachmentUrl,
+    shallow
+  );
+}
+
+/**
+ * Returns a presigned URL for an attachment by its ID.
+ *
+ * @example
+ * const { url } = useAttachmentUrl("at_xxx");
+ */
+function useAttachmentUrlSuspense(attachmentId: string) {
+  const room = useRoom();
+  const { attachmentUrlsStore } = room[kInternal];
+
+  const getAttachmentUrlState = React.useCallback(
+    () => attachmentUrlsStore.getState(attachmentId),
+    [attachmentUrlsStore, attachmentId]
+  );
+  const attachmentUrlState = getAttachmentUrlState();
+
+  if (!attachmentUrlState || attachmentUrlState.isLoading) {
+    throw attachmentUrlsStore.get(attachmentId);
+  }
+
+  if (attachmentUrlState.error) {
+    throw attachmentUrlState.error;
+  }
+
+  const state = useSyncExternalStore(
+    attachmentUrlsStore.subscribe,
+    getAttachmentUrlState,
+    getAttachmentUrlState
+  );
+  assert(state !== undefined, "Unexpected missing state");
+  assert(!state.isLoading, "Unexpected loading state");
+  assert(!state.error, "Unexpected error state");
+  return {
+    isLoading: false,
+    url: state.data,
+    error: undefined,
+  } as const;
+}
+
 /**
  * Returns the user's notification settings for the current room
  * and a function to update them.
@@ -3298,6 +3394,8 @@ export {
   RoomContext,
   _RoomProvider as RoomProvider,
   _useAddReaction as useAddReaction,
+  useAttachmentUrl,
+  useAttachmentUrlSuspense,
   useBatch,
   _useBroadcastEvent as useBroadcastEvent,
   useCanRedo,
