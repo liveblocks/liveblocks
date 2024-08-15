@@ -12,6 +12,7 @@ import { usePathname } from "next/navigation";
 type InboxContextType = {
   isOpen: boolean;
   toggleInbox: () => void;
+  openInbox: () => void;
 };
 
 const InboxContext = createContext<InboxContextType | undefined>(undefined);
@@ -29,8 +30,10 @@ export function InboxProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   useLayoutEffect(() => {
-    // Reset when going to dashboard
-    localStorage.setItem("inboxOpen", "false");
+    // Reset when changing to dashboard
+    if (pathname === "/") {
+      localStorage.setItem("inboxOpen", "false");
+    }
   }, [pathname]);
 
   useLayoutEffect(() => {
@@ -49,7 +52,9 @@ export function InboxProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <InboxContext.Provider value={{ isOpen, toggleInbox }}>
+    <InboxContext.Provider
+      value={{ isOpen, toggleInbox, openInbox: () => setIsOpen(true) }}
+    >
       {children}
     </InboxContext.Provider>
   );

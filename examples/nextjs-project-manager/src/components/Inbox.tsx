@@ -21,6 +21,7 @@ import { Link } from "@/components/Link";
 import { CheckCheck } from "@/icons/CheckCheck";
 import { useMemo } from "react";
 import { Trash } from "@/icons/Trash";
+import { useInbox } from "@/components/InboxContext";
 
 export function Inbox() {
   return (
@@ -135,6 +136,8 @@ function SmallInboxNotification({
 
   const { user } = useUser(latestComment.userId);
 
+  const { openInbox } = useInbox();
+
   if (
     !latestComment ||
     !inboxNotification?.roomId ||
@@ -145,7 +148,7 @@ function SmallInboxNotification({
     return null;
   }
   return (
-    <NextLink href={`/issue/${info?.metadata.issueId}`}>
+    <NextLink href={`/issue/${info?.metadata.issueId}`} onClick={openInbox}>
       <div
         className={classNames(
           "flex flex-row items-center px-3 py-2.5 gap-2 rounded",
