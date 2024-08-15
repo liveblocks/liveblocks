@@ -1380,7 +1380,8 @@
     font-size: 0.875rem;
   }
 
-  :where(.lb-comment-reaction) {
+  :where(.lb-comment-reaction),
+  :where(.lb-comment-attachment) {
     pointer-events: none;
   }
 }

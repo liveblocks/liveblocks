@@ -17,6 +17,7 @@ import * as CommentPrimitive from "../../primitives/Comment";
 import { classNames } from "../../utils/class-names";
 import {
   CommentMention,
+  CommentNonInteractiveFileAttachment,
   CommentNonInteractiveLink,
   CommentNonInteractiveReaction,
 } from "../Comment";
@@ -95,6 +96,17 @@ export function InboxNotificationComment({
                 ))}
               </div>
             )}
+            {comment.attachments.length > 0 ? (
+              <div className="lb-comment-attachments">
+                {comment.attachments.map((attachment) => (
+                  <CommentNonInteractiveFileAttachment
+                    key={attachment.id}
+                    attachment={attachment}
+                    overrides={overrides}
+                  />
+                ))}
+              </div>
+            ) : null}
           </>
         ) : (
           <div className="lb-comment-body">

@@ -15,6 +15,7 @@ import {
 } from "@liveblocks/react";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
+  ComponentProps,
   ComponentPropsWithoutRef,
   FormEvent,
   MouseEvent,
@@ -164,9 +165,9 @@ interface CommentReactionProps extends ComponentPropsWithoutRef<"button"> {
 
 type CommentNonInteractiveReactionProps = Omit<CommentReactionProps, "comment">;
 
-interface CommentFileAttachmentProps extends ComponentPropsWithoutRef<"div"> {
+interface CommentFileAttachmentProps
+  extends ComponentProps<typeof FileAttachment> {
   attachment: CommentAttachment;
-  overrides?: Partial<GlobalOverrides & CommentAttachment>;
 }
 
 export function CommentMention({
@@ -353,11 +354,16 @@ function CommentFileAttachment({
     <FileAttachment
       className={classNames("lb-comment-attachment", className)}
       {...props}
-      onContentClick={console.log}
       attachment={attachment}
       overrides={overrides}
     />
   );
+}
+
+export function CommentNonInteractiveFileAttachment(
+  props: CommentFileAttachmentProps
+) {
+  return <CommentFileAttachment {...props} />;
 }
 
 // A void component (which doesn't render anything) responsible for marking a thread
@@ -728,6 +734,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                         key={attachment.id}
                         attachment={attachment}
                         overrides={overrides}
+                        onContentClick={console.log}
                       />
                     ))}
                   </div>
