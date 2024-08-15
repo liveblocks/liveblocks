@@ -6,6 +6,12 @@ import { useSelf } from "@liveblocks/react/suspense";
 import { Avatars } from "@/components/Avatars";
 import { useYjsStore } from "@/components/useYjsStore";
 
+/**
+ * IMPORTANT: LICENCE REQUIRED
+ * To use tldraw commercially, you must first purchase a license
+ * Learn more: https://tldraw.dev/community/license
+ */
+
 export function YjsTldraw() {
   // Getting authenticated user info. Doing this using selectors instead
   // of just `useSelf()` to prevent re-renders on Presence changes
