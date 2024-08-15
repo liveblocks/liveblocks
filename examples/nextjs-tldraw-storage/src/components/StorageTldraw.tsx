@@ -7,7 +7,7 @@ import { useSelf } from "@liveblocks/react/suspense";
 import { Avatars } from "@/components/Avatars";
 
 /**
- * IMPORTANT: LICENCE REQUIRED
+ * IMPORTANT: LICENSE REQUIRED
  * To use tldraw commercially, you must first purchase a license
  * Learn more: https://tldraw.dev/community/license
  */

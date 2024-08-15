@@ -7,7 +7,7 @@ import { Avatars } from "@/components/Avatars";
 import { useYjsStore } from "@/components/useYjsStore";
 
 /**
- * IMPORTANT: LICENCE REQUIRED
+ * IMPORTANT: LICENSE REQUIRED
  * To use tldraw commercially, you must first purchase a license
  * Learn more: https://tldraw.dev/community/license
  */

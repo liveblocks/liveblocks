@@ -17,6 +17,12 @@ import {
   transact,
 } from "tldraw";
 
+/**
+ * IMPORTANT: LICENSE REQUIRED
+ * To use tldraw commercially, you must first purchase a license
+ * Learn more: https://tldraw.dev/community/license
+ */
+
 export function useYjsStore({
   roomId = "my-liveblocks-room",
   shapeUtils = [],
