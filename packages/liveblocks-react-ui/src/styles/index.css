@@ -1166,7 +1166,7 @@
 }
 
 .lb-attachment-icon-background {
-  fill: var(--lb-dynamic-background);
+  fill: var(--lb-background);
 }
 
 .lb-attachment-icon-fold {
