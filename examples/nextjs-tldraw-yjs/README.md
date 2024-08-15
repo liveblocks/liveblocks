@@ -20,11 +20,10 @@
   <img src="https://img.shields.io/badge/next.js-message?style=flat&logo=next.js&color=07f&logoColor=fff" alt="Next.js" />
 </p>
 
-This example shows how to build a tldraw with
-[Liveblocks](https://liveblocks.io) Yjs, and [Next.js](https://nextjs.org/).
-
-Users can place comments at certain times on the audio, and also see a summary
-of each thread.
+This example shows how to build a collaborative [tldraw](https://tldraw.dev/)
+canvas with [Liveblocks](https://liveblocks.io) Yjs, and
+[Next.js](https://nextjs.org/). tldraw requires a
+[license for commercial use](https://tldraw.dev/community/license).
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/comments-audio.png" width="536" alt="Audio Comments" />
 
