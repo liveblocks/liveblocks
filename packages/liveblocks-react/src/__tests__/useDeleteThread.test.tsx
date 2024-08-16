@@ -1,4 +1,4 @@
-import { nanoid, wait } from "@liveblocks/core";
+import { nanoid } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
 import React from "react";
@@ -43,6 +43,7 @@ describe("useDeleteThread", () => {
   test("should delete a thread optimistically", async () => {
     const roomId = nanoid();
     const threads = createDummyThreads(roomId, userId);
+    let hasCalledDeleteThread = false;
 
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
@@ -59,6 +60,7 @@ describe("useDeleteThread", () => {
         );
       }),
       mockDeleteThread({ threadId: threads[0].id }, async (_req, res, ctx) => {
+        hasCalledDeleteThread = true;
         return res(ctx.status(204));
       })
     );
@@ -91,8 +93,8 @@ describe("useDeleteThread", () => {
 
     // TODO: We should wait for the `deleteThread` call to be finished but we don't have APIs for that yet
     //       We should expose a way to know (and be updated about) if there are still pending optimistic updates
-    //       Until then, we'll just wait a bit to make sure the request doesn't leak into the next tests
-    await wait(1000);
+    //       Until then, we'll just wait for the mock to be called
+    await waitFor(() => expect(hasCalledDeleteThread).toEqual(true));
 
     unmount();
   });
