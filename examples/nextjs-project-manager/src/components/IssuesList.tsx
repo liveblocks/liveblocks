@@ -14,6 +14,7 @@ export function IssuesList({
 }) {
   const rooms = initialRooms;
 
+  // Need webhook set up to see these filters, check comment at bottom of this file
   const inReview = rooms.filter((room) => room.metadata.progress === "review");
   const inProgress = rooms.filter(
     (room) => room.metadata.progress === "progress"
@@ -134,10 +135,12 @@ async function getMetadataFromRoom(room: RoomWithMetadata) {
   // to room metadata on changes. Then you can directly use the room instead
   // of calling the Storage API below.
   // More info inside the webhook route at /app/api/storage-webhook/route.ts
-  // return room.metadata;
+  if (process.env.LIVEBLOCKS_WEBHOOK_SECRET_KEY) {
+    return room.metadata;
+  }
 
   // This will be much slower than the solution above, but it makes it easier
-  // for us to deploy our example.
+  // to try up the example.
   const {
     meta: { title },
     properties: { progress, priority, assignedTo },
