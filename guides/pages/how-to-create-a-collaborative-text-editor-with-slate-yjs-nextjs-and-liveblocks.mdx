@@ -211,7 +211,7 @@ Now that we’ve set up Liveblocks, we can start integrating Slate and Yjs in th
 `Editor.tsx` file.
 
 ```tsx file="Editor.tsx"
-import LiveblocksProvider from "@liveblocks/yjs";
+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import { useEffect, useMemo, useState } from "react";
 import { createEditor, Editor, Transforms } from "slate";
 import { Editable, Slate, withReact } from "slate-react";

@@ -137,11 +137,11 @@ We’ll also need another type for this tutorial. After creating the config file
 open it up and insert the following:
 
 ```tsx file="liveblocks.config.ts"
-import LiveblocksProvider from "@liveblocks/yjs";
+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 
 // ...
 
-export type TypedLiveblocksProvider = LiveblocksProvider<
+export type TypedLiveblocksProvider = LiveblocksYjsProvider<
   Presence,
   Storage,
   UserMeta,
@@ -200,7 +200,7 @@ Now that we’ve set up Liveblocks, we can start integrating Monaco and Yjs in t
 "use client";
 
 import * as Y from "yjs";
-import LiveblocksProvider from "@liveblocks/yjs";
+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import { TypedLiveblocksProvider, useRoom } from "@/liveblocks.config";
 import { useCallback, useEffect, useState } from "react";
 import styles from "./CollaborativeEditor.module.css";

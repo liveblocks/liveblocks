@@ -139,11 +139,11 @@ We’ll also need another type for this tutorial. After creating the config file
 open it up and insert the following:
 
 ```tsx file="liveblocks.config.ts"
-import LiveblocksProvider from "@liveblocks/yjs";
+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 
 // ...
 
-export type TypedLiveblocksProvider = LiveblocksProvider<
+export type TypedLiveblocksProvider = LiveblocksYjsProvider<
   Presence,
   Storage,
   UserMeta,
@@ -207,7 +207,7 @@ import { EditorView, basicSetup } from "codemirror";
 import { EditorState } from "@codemirror/state";
 import { javascript } from "@codemirror/lang-javascript";
 import { useCallback, useEffect, useState } from "react";
-import LiveblocksProvider from "@liveblocks/yjs";
+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import { TypedLiveblocksProvider, useRoom } from "@/liveblocks.config";
 import styles from "./CollaborativeEditor.module.css";
 
