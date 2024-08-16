@@ -146,7 +146,7 @@ collaboration to your React application using the APIs from the
 
           // Create Yjs provider and document
           ydoc = new Y.Doc();
-          provider = new LiveblocksProvider(room as any, ydoc);
+          provider = new LiveblocksYjsProvider(room as any, ydoc);
           const ytext = ydoc.getText("codemirror");
           const undoManager = new Y.UndoManager(ytext);
 

@@ -140,7 +140,7 @@ collaboration to your React application using the APIs from the
           if (editorRef) {
             yDoc = new Y.Doc();
             const yText = yDoc.getText("monaco");
-            yProvider = new LiveblocksProvider(room, yDoc);
+            yProvider = new LiveblocksYjsProvider(room, yDoc);
 
             // Attach Yjs to Monaco
             binding = new MonacoBinding(
