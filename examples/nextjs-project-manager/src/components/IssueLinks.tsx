@@ -64,7 +64,7 @@ function Links() {
   return (
     <div>
       <div className="flex justify-between items-center text-sm font-medium text-neutral-500">
-        Links{" "}
+        Links
         <button onClick={() => setCreating(!creating)}>
           {creating ? (
             <span>
@@ -150,14 +150,14 @@ function LinkPreview({
   return (
     <div className="h-10 text-sm flex justify-between items-center border border-neutral-200 rounded-lg max-w-full shadow-sm bg-white my-2 cursor-pointer w-full overflow-hidden">
       {loading ? (
-        <div className="animate-pulse flex w-full justify-between items-center px-3 py-2 gap-2">
+        <div className="flex w-full justify-between items-center px-3 py-2 gap-2">
           <span className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-neutral-100 rounded"></div>
+            <div className="animate-pulse w-4 h-4 bg-neutral-100 rounded"></div>
             <span className="font-medium text-neutral-500">
               {new URL(link).hostname}
             </span>
           </span>
-          <div className="w-4 h-4 bg-neutral-100 rounded"></div>
+          <div className="animate-pulse w-4 h-4 bg-neutral-100 rounded"></div>
         </div>
       ) : (
         <>
