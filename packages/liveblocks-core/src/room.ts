@@ -920,12 +920,19 @@ export type Room<
   }): Promise<void>;
 
   /**
-   * TODO:
+   * Creates a local attachment from a file.
+   *
+   * @example
+   * room.prepareAttachment(file);
    */
   prepareAttachment(file: File): CommentLocalAttachment;
 
   /**
-   * TODO:
+   * Uploads a local attachment.
+   *
+   * @example
+   * const attachment = room.prepareAttachment(file);
+   * await room.uploadAttachment(attachment);
    */
   uploadAttachment(
     attachment: CommentLocalAttachment,
@@ -933,7 +940,10 @@ export type Room<
   ): Promise<CommentUploadedAttachment>;
 
   /**
-   * TODO:
+   * Returns a presigned URL for an attachment by its ID.
+   *
+   * @example
+   * await room.getAttachmentUrl("at_xxx");
    */
   getAttachmentUrl(attachmentId: string): Promise<string>;
 

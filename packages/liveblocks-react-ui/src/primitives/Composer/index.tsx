@@ -1275,7 +1275,10 @@ const ComposerAttachFiles = forwardRef<
 });
 
 /**
- * TODO:
+ * A drop area which accepts files to create attachments.
+ *
+ * @example
+ * <Composer.AttachmentsDropArea />
  */
 const ComposerAttachmentsDropArea = forwardRef<
   HTMLDivElement,
