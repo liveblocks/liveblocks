@@ -1486,7 +1486,10 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    const data = (await res.json()) as InboxNotificationDataPlain[];
+    const { data } = (await res.json()) as {
+      data: InboxNotificationDataPlain[];
+    };
+
     return {
       data: data.map(convertToInboxNotificationData),
     };

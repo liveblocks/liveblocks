@@ -902,7 +902,7 @@ describe("client", () => {
       http.get(
         `${DEFAULT_BASE_URL}/v2/users/:userId/inbox-notifications`,
         () => {
-          return HttpResponse.json(notifications, { status: 200 });
+          return HttpResponse.json({ data: notifications }, { status: 200 });
         }
       )
     );
@@ -910,6 +910,64 @@ describe("client", () => {
     const client = new Liveblocks({ secret: "sk_xxx" });
 
     return expect(client.getInboxNotifications({ userId })).resolves.toEqual({
+      data: notifications.map((notification) => ({
+        ...notification,
+        notifiedAt: new Date(notification.notifiedAt),
+        readAt: notification.readAt ? new Date(notification.readAt) : null,
+      })),
+    });
+  });
+
+  test("getInboxNotifications works with a query", () => {
+    const userId = "user1";
+    const notifications = [
+      {
+        id: "notification1",
+        kind: "thread",
+        notifiedAt: new Date().toISOString(),
+        readAt: null,
+        threadId: "thread1",
+      },
+    ];
+
+    server.use(
+      http.get(
+        `${DEFAULT_BASE_URL}/v2/users/:userId/inbox-notifications`,
+        (res) => {
+          const url = new URL(res.request.url);
+
+          expect(url.searchParams.size).toEqual(1);
+          expect(url.searchParams.get("query")).toEqual("unread:true");
+
+          return HttpResponse.json({ data: notifications }, { status: 200 });
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    expect(
+      client.getInboxNotifications({
+        userId,
+        query: {
+          unread: true,
+        },
+      })
+    ).resolves.toEqual({
+      data: notifications.map((notification) => ({
+        ...notification,
+        notifiedAt: new Date(notification.notifiedAt),
+        readAt: notification.readAt ? new Date(notification.readAt) : null,
+      })),
+    });
+
+    // with a string query
+    expect(
+      client.getInboxNotifications({
+        userId,
+        query: "unread:true",
+      })
+    ).resolves.toEqual({
       data: notifications.map((notification) => ({
         ...notification,
         notifiedAt: new Date(notification.notifiedAt),
