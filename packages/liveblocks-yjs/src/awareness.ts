@@ -61,7 +61,6 @@ export class Awareness<
         | { added: number[]; updated: number[]; removed: number[] }
         | undefined;
 
-      this.rebuildActorToClientMap(event.others);
       // When others are changed, we emit an event that contains arrays added/updated/removed.
       if (event.type === "leave") {
         const targetClientId = this.actorToClientMap.get(
@@ -85,6 +84,9 @@ export class Awareness<
             removed: [],
           };
         }
+      }
+      if (event.type === "reset") {
+        this.rebuildActorToClientMap(event.others);
       }
       if (updates !== undefined) {
         this.emit("change", [updates, "presence"]);

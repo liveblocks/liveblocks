@@ -447,7 +447,7 @@ need only pass the properties you’re updating. Setting a property to `null` wi
 delete the property.
 
 ```ts
-const room = await liveblocks.createRoom("my-room-id", {
+const room = await liveblocks.updateRoom("my-room-id", {
   // Optional, update the default room permissions. `[]` for private, `["room:write"]` for public.
   defaultAccesses: [],
 

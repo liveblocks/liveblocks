@@ -133,7 +133,7 @@ collaboration to your React application using the APIs from the
         // Set up Liveblocks Yjs provider
         useEffect(() => {
           const yDoc = new Y.Doc();
-          const yProvider = new LiveblocksProvider(room, yDoc);
+          const yProvider = new LiveblocksYjsProvider(room, yDoc);
           const sharedDoc = yDoc.get("slate", Y.XmlText) as Y.XmlText;
           yProvider.on("sync", setConnected);
 
