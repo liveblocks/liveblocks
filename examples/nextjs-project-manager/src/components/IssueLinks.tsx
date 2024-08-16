@@ -44,7 +44,7 @@ function Links() {
     ({ storage }, e) => {
       e.preventDefault();
 
-      // Already added
+      // Already added, no duplicates
       if (storage.get("links").findIndex((val) => val === url) !== -1) {
         return;
       }
@@ -56,7 +56,8 @@ function Links() {
     [url]
   );
 
-  const removeLink = useMutation(({ storage }, index) => {
+  const removeLink = useMutation(({ storage }, link) => {
+    const index = storage.get("links").findIndex((val) => val === link);
     storage.get("links").delete(index);
   }, []);
 
@@ -98,11 +99,11 @@ function Links() {
         </form>
       ) : null}
       <div>
-        {links.toReversed().map((link, index) => (
+        {links.toReversed().map((link) => (
           <LinkPreview
             key={link}
             link={link}
-            onRemove={() => removeLink(index)}
+            onRemove={() => removeLink(link)}
           />
         ))}
       </div>
