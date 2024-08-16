@@ -15,6 +15,12 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 33 (2024-08-16)
 
+## 2.5.1
+
+### `@liveblocks/yjs`
+
+- Fix `LiveblocksProvider` `update`/`change` event not returning `removed` users.
+
 ## v2.5.0
 
 ### `@liveblocks/react`
@@ -32,7 +38,6 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 ### `@liveblocks/react-ui`
 
 - Improve event propagation in [`Composer`](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Composer).
-
 
 ## Contributors
 
