@@ -49,6 +49,7 @@ export function createComment(
       content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
     },
     reactions = [],
+    attachments = [],
   } = overrides;
 
   return {
@@ -61,5 +62,6 @@ export function createComment(
     editedAt,
     body,
     reactions,
+    attachments,
   };
 }
