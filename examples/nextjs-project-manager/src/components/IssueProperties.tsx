@@ -30,7 +30,7 @@ export function IssueProperties({ storageFallback }: any) {
           </div>
           <div className="block bg-transparent border-0 pl-2 pb-2 rounded-md transition-colors whitespace-nowrap">
             {storageFallback.properties.assignedTo === "none" ? (
-              "Unassigned"
+              <span className="text-neutral-600">Not assigned</span>
             ) : (
               <AvatarAndName
                 user={
