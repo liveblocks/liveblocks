@@ -3,7 +3,7 @@
 import { RoomProvider } from "@liveblocks/react/suspense";
 import { LiveList, LiveObject } from "@liveblocks/client";
 import { useSearchParams } from "next/navigation";
-import { createContext, ReactNode, useContext, useMemo, useState } from "react";
+import { ReactNode, useMemo } from "react";
 import { getRoomId } from "@/config";
 
 export function Room({
@@ -26,6 +26,7 @@ export function Room({
           assignedTo: "none",
         }),
         labels: new LiveList([]),
+        links: new LiveList([]),
       }}
     >
       {children}

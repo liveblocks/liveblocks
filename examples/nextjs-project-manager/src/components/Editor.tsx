@@ -66,7 +66,7 @@ function LexicalEditor({ contentFallback }: { contentFallback: ReactNode }) {
               <RichTextPlugin
                 contentEditable={<ContentEditable className="outline-none" />}
                 placeholder={
-                  <div className="absolute top-0 left-0 pointer-events-none text-neutral-500">
+                  <div className="absolute top-0 left-0 pointer-events-none text-neutral-500 whitespace-nowrap">
                     Start typing here…
                   </div>
                 }

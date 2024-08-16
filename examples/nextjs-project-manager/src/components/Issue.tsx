@@ -11,6 +11,7 @@ import remark from "remark";
 import html from "remark-html";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { ListItemNode, ListNode } from "@lexical/list";
+import { IssueLinks } from "@/components/IssueLinks";
 
 export async function Issue({ issueId }: { issueId: string }) {
   const roomId = getRoomId(issueId);
@@ -48,6 +49,9 @@ export async function Issue({ issueId }: { issueId: string }) {
                     <div dangerouslySetInnerHTML={{ __html: contentHtml }} />
                   }
                 />
+                <div className="my-6">
+                  <IssueLinks />
+                </div>
                 <div className="border-t my-6" />
                 <Comments />
               </div>

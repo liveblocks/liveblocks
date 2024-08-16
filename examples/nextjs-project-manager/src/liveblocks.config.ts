@@ -1,5 +1,5 @@
 import { LiveList, LiveObject } from "@liveblocks/core";
-import { Label, Metadata, PriorityState, ProgressState } from "@/config";
+import { Metadata, PriorityState, ProgressState } from "@/config";
 
 declare global {
   interface Liveblocks {
@@ -21,7 +21,8 @@ declare global {
         priority: PriorityState;
         assignedTo: string | "none";
       }>;
-      labels: LiveList<Label>;
+      labels: LiveList<string>;
+      links: LiveList<string>;
     };
     RoomInfo: {
       id: string;
