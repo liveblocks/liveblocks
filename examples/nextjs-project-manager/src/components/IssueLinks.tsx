@@ -126,7 +126,6 @@ function LinkPreview({
     title: null,
     description: null,
     canonical: null,
-    icon: null,
   });
 
   useEffect(() => {

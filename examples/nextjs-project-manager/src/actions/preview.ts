@@ -6,7 +6,6 @@ export type LinkPreviewMetadata = {
   title: string | null;
   canonical: string | null;
   description: string | null;
-  icon: string | null;
 };
 
 export async function getPreviewData(
@@ -32,13 +31,7 @@ export async function getPreviewData(
       description:
         $.querySelector("meta[name=description]")?.getAttribute("content") ||
         null,
-      icon:
-        $.querySelector(
-          'link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]'
-        )?.getAttribute("href") || null,
     };
-
-    console.log(data);
 
     return { data };
   } catch (err) {
