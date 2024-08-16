@@ -12,9 +12,24 @@ import { Delete } from "@/icons/Delete";
 import { Plus } from "@/icons/Plus";
 import { Submit } from "@/icons/Submit";
 
-export function IssueLinks() {
+export function IssueLinks({ storageFallback }: any) {
   return (
-    <ClientSideSuspense fallback={null}>
+    <ClientSideSuspense
+      fallback={
+        <div>
+          <div className="flex justify-between items-center text-sm font-medium text-neutral-500">
+            Links{" "}
+          </div>
+          {storageFallback.links ? (
+            <div>
+              {storageFallback.links.toReversed().map((link: string) => (
+                <LinkPreview key={link} link={link} onlyPlaceholder={true} />
+              ))}
+            </div>
+          ) : null}
+        </div>
+      }
+    >
       <Links />
     </ClientSideSuspense>
   );
@@ -83,7 +98,7 @@ function Links() {
         </form>
       ) : null}
       <div>
-        {links.map((link, index) => (
+        {links.toReversed().map((link, index) => (
           <LinkPreview
             key={link}
             link={link}
@@ -97,11 +112,15 @@ function Links() {
 
 function LinkPreview({
   link,
+  onlyPlaceholder = false,
   onRemove,
 }: {
   link: string;
-  onRemove: () => void;
+  onlyPlaceholder?: boolean;
+  onRemove?: () => void;
 }) {
+  const [loading, setLoading] = useState(true);
+
   const [metadata, setMetadata] = useState<LinkPreviewMetadata>({
     title: null,
     description: null,
@@ -110,8 +129,13 @@ function LinkPreview({
   });
 
   useEffect(() => {
+    if (onlyPlaceholder) {
+      return;
+    }
+
     async function run() {
       const { data, error } = await getPreviewData(link);
+      setLoading(false);
 
       if (error || !data) {
         return;
@@ -121,32 +145,46 @@ function LinkPreview({
     }
 
     run();
-  }, [link]);
+  }, [link, onlyPlaceholder]);
 
   return (
-    <div className="text-sm flex justify-between items-center border border-neutral-200 rounded-lg max-w-full shadow-sm bg-white my-2 cursor-pointer w-full overflow-hidden">
-      <div className="flex items-center gap-2 whitespace-nowrap flex-grow-1 flex-shrink-1 truncate px-3 py-2">
-        <img
-          src={`https://www.google.com/s2/favicons?domain=${new URL(link).hostname}?size=32`}
-          alt=""
-          className="w-4 h-4 flex-shrink-0 flex-grow-0"
-        />
-        <span className="font-medium">
-          {metadata.title || metadata.canonical || link}
-        </span>
-        {metadata.description ? (
-          <span className="truncate text-neutral-500 flex-shrink-[100]">
-            {metadata.description}
+    <div className="h-10 text-sm flex justify-between items-center border border-neutral-200 rounded-lg max-w-full shadow-sm bg-white my-2 cursor-pointer w-full overflow-hidden">
+      {loading ? (
+        <div className="animate-pulse flex w-full justify-between items-center px-3 py-2 gap-2">
+          <span className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-neutral-100 rounded"></div>
+            <span className="font-medium text-neutral-500">
+              {new URL(link).hostname}
+            </span>
           </span>
-        ) : null}
-      </div>
-      <button
-        onClick={onRemove}
-        className="flex-shrink-0 text-neutral-400 hover:text-neutral-600 transition-colors px-3 py-2"
-      >
-        <span className="sr-only">Remove link</span>
-        <Trash className="w-4 h-4" />
-      </button>
+          <div className="w-4 h-4 bg-neutral-100 rounded"></div>
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center gap-2 whitespace-nowrap flex-grow-1 flex-shrink-1 truncate px-3 py-2">
+            <img
+              src={`https://www.google.com/s2/favicons?domain=${new URL(link).hostname}?size=32`}
+              alt=""
+              className="w-4 h-4 flex-shrink-0 flex-grow-0"
+            />
+            <span className="font-medium">
+              {metadata.title || metadata.canonical || link}
+            </span>
+            {metadata.description ? (
+              <span className="truncate text-neutral-500 flex-shrink-[100]">
+                {metadata.description}
+              </span>
+            ) : null}
+          </div>
+          <button
+            onClick={onRemove}
+            className="flex-shrink-0 text-neutral-400 hover:text-neutral-600 transition-colors px-3 py-2"
+          >
+            <span className="sr-only">Remove link</span>
+            <Trash className="w-4 h-4" />
+          </button>
+        </>
+      )}
     </div>
   );
 }

@@ -50,7 +50,7 @@ export async function Issue({ issueId }: { issueId: string }) {
                   }
                 />
                 <div className="my-6">
-                  <IssueLinks />
+                  <IssueLinks storageFallback={storage} />
                 </div>
                 <div className="border-t my-6" />
                 <Comments />
