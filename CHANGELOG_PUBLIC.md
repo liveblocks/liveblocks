@@ -39,6 +39,10 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 - Improve event propagation in [`Composer`](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Composer).
 
+## `@liveblocks/codemod`
+
+- Prevent modifying files that weren’t changed by the codemods. 
+
 ## Contributors
 
 ctnicholas, nimeshnayaju, marcbouchenoire
