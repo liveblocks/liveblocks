@@ -1,4 +1,4 @@
-## 2.5.1 (unreleased)
+## 2.5.1
 
 ### `@liveblocks/yjs`
 
