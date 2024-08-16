@@ -9,6 +9,7 @@ export default function transformer(
 ) {
   const j = api.jscodeshift.withParser("tsx");
   const root = j(file.source);
+  let isDirty = false;
   let isCommentsConfigImported = false;
 
   /**
@@ -31,12 +32,14 @@ export default function transformer(
           specifier.type === "ImportSpecifier" &&
           specifier.imported.name === "CommentsConfig"
         ) {
-          isCommentsConfigImported = true;
           specifier.imported.name = "LiveblocksUIConfig";
 
           if (specifier.local.name === "CommentsConfig") {
             specifier.local.name = "LiveblocksUIConfig";
           }
+
+          isCommentsConfigImported = true;
+          isDirty = true;
         }
       });
     });
@@ -49,6 +52,8 @@ export default function transformer(
     root
       .find(j.JSXIdentifier, { name: "CommentsConfig" })
       .replaceWith(j.jsxIdentifier("LiveblocksUIConfig"));
+
+    isDirty = true;
   }
 
   /**
@@ -63,6 +68,8 @@ export default function transformer(
       importDeclaration.node.source = j.stringLiteral(
         "@liveblocks/react-ui/primitives"
       );
+
+      isDirty = true;
     });
 
   /**
@@ -80,9 +87,11 @@ export default function transformer(
           "@liveblocks/react-comments",
           "@liveblocks/react-ui"
         );
+
+        isDirty = true;
       }
     }
   });
 
-  return root.toSource(options);
+  return isDirty ? root.toSource(options) : file.source;
 }

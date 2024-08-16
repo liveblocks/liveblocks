@@ -9,6 +9,7 @@ export default function transformer(
 ) {
   const j = api.jscodeshift.withParser("tsx");
   const root = j(file.source);
+  let isDirty = false;
   let isRoomInfoImported = false;
 
   /**
@@ -22,8 +23,10 @@ export default function transformer(
           specifier.type === "ImportSpecifier" &&
           specifier.imported.name === "RoomInfo"
         ) {
-          isRoomInfoImported = true;
           specifier.imported.name = "RoomData";
+
+          isRoomInfoImported = true;
+          isDirty = true;
         }
       });
     }
@@ -44,7 +47,9 @@ export default function transformer(
       .replaceWith((path) =>
         j.tsTypeReference(j.identifier("RoomData"), path.node.typeParameters)
       );
+
+    isDirty = true;
   }
 
-  return root.toSource(options);
+  return isDirty ? root.toSource(options) : file.source;
 }
