@@ -9,6 +9,7 @@ export default function transformer(
 ) {
   const j = api.jscodeshift.withParser("tsx");
   const root = j(file.source);
+  let isDirty = false;
   let liveblocksProviderName: string | null = null;
 
   /**
@@ -33,6 +34,8 @@ export default function transformer(
         j(path).replaceWith(
           j.importDeclaration(newSpecifiers, j.literal("@liveblocks/yjs"))
         );
+
+        isDirty = true;
       }
     }
   });
@@ -53,9 +56,11 @@ export default function transformer(
             path.node.arguments
           )
         );
+
+        isDirty = true;
       }
     });
   }
 
-  return root.toSource(options);
+  return isDirty ? root.toSource(options) : file.source;
 }
