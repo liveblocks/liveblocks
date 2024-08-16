@@ -224,7 +224,7 @@ export function CollaborativeEditor() {
     if (editorRef) {
       yDoc = new Y.Doc();
       const yText = yDoc.getText("monaco");
-      yProvider = new LiveblocksProvider(room, yDoc);
+      yProvider = new LiveblocksYjsProvider(room, yDoc);
       setProvider(yProvider);
 
       // Attach Yjs to Monaco

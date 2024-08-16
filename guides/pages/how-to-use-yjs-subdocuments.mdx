@@ -51,12 +51,14 @@ example we’ll create a [`Y.Map`](https://docs.yjs.dev/api/shared-types/y.map) 
 store them in, making sure to lazy load any subdocuments.
 
 ```ts
-import { LiveblocksProvider } from "@liveblocks/yjs";
+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import * as Y from "yjs";
 
 // Create main document and connect, disabling auto-loading of subdocuments
 const yDoc = new Y.Doc();
-const yProvider = new LiveblocksProvider(room, doc, { autoloadSubdocs: false });
+const yProvider = new LiveblocksYjsProvider(room, doc, {
+  autoloadSubdocs: false,
+});
 
 // Create a Y.Map to hold subdocuments
 const subdocMap = yDoc.getMap("subdocs");
@@ -67,12 +69,14 @@ const subdocMap = yDoc.getMap("subdocs");
 To create a new subdocument, create a `new Y.Doc()`, and use this it any other.
 
 ```ts highlight="8-9,11-14,16-17"
-import { LiveblocksProvider } from "@liveblocks/yjs";
+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import * as Y from "yjs";
 
 // Create main document and connect, disabling auto-loading of subdocuments
 const yDoc = new Y.Doc();
-const yProvider = new LiveblocksProvider(room, doc, { autoloadSubdocs: false });
+const yProvider = new LiveblocksYjsProvider(room, doc, {
+  autoloadSubdocs: false,
+});
 
 // Create a Y.Map to hold subdocuments
 const subdocMap = yDoc.getMap("subdocs");
@@ -93,12 +97,14 @@ Make sure to keep track of its `guid`.
 To load the subdocument on _another client_, use its `guid`.
 
 ```ts highlight="8-9"
-import { LiveblocksProvider } from "@liveblocks/yjs";
+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import * as Y from "yjs";
 
 // Create main document and connect, disabling auto-loading of subdocuments
 const yDoc = new Y.Doc();
-const yProvider = new LiveblocksProvider(room, doc, { autoloadSubdocs: false });
+const yProvider = new LiveblocksYjsProvider(room, doc, {
+  autoloadSubdocs: false,
+});
 
 // From another client, load the subdoc using the GUID from `subdoc.guid` or `doc.getSubdocGuids`
 yProvider.loadSubdoc("c4a755...");
@@ -112,12 +118,12 @@ yProvider.loadSubdoc("c4a755...");
 To keep track of subdocument changes, you can use `Y.Doc.on("subdocs")`.
 
 ```ts highlight="10-13"
-import { LiveblocksProvider } from "@liveblocks/yjs";
+import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import * as Y from "yjs";
 
 // Create main document and connect, disabling auto-loading of subdocuments
 const yDoc = new Y.Doc();
-const yProvider = new LiveblocksProvider(room, yDoc, {
+const yProvider = new LiveblocksYjsProvider(room, yDoc, {
   autoloadSubdocs: false,
 });
 
