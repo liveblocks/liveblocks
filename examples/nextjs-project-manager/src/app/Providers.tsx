@@ -4,12 +4,13 @@ import { LiveblocksProvider } from "@liveblocks/react/suspense";
 import { PropsWithChildren } from "react";
 import { InboxProvider } from "@/components/InboxContext";
 import { getRoomsFromIds } from "@/actions/liveblocks";
+import { authWithRandomUser } from "@/example";
 
 export function Providers({ children }: PropsWithChildren) {
   return (
     <InboxProvider>
       <LiveblocksProvider
-        authEndpoint="/api/liveblocks-auth"
+        authEndpoint={authWithRandomUser("/api/liveblocks-auth")}
         // Get users' info from their ID
         resolveUsers={async ({ userIds }) => {
           const searchParams = new URLSearchParams(
