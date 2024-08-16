@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import React, { createContext, useState } from "react";
 
 
-type Version = { id: string, data: Uint8Array }
+type Version = { id: string, createdAt: Date, authors: string[], data: Uint8Array }
 
 export const VersionContext = createContext<{
   version: Version | null;

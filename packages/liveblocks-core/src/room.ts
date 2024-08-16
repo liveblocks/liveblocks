@@ -2017,7 +2017,7 @@ export function createRoom<
 
   async function listTextVersions() {
     const authValue = await delegates.authenticate();
-    return fetchClientApi(config.roomId, "/y-versions/", authValue, {
+    return fetchClientApi(config.roomId, "/versions/", authValue, {
       method: "GET",
     });
   }

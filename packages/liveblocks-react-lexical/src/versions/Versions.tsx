@@ -7,7 +7,8 @@ import { User } from "../mentions/user";
 import { VersionContext } from "./VersionContext";
 
 type VersionResponse = {
-  date: number,
+  createdAt: number,
+  id: string,
   authors: string[],
 };
 
@@ -24,7 +25,7 @@ export function useVersions() {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       const data = await response.json() as { versions: VersionResponse[] };
 
-      setVersions(data.versions.reverse());
+      setVersions(data.versions);
       setIsLoading(false);
     }
     load();
@@ -44,15 +45,16 @@ export function Versions() {
   // Usage in the component:
   const { versions, isLoading } = useVersions();
 
-  const handleGetVersion = useCallback(async (date: number) => {
+  const handleGetVersion = useCallback(async (version: VersionResponse) => {
     setIsLoading(true);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-    const response = await room[kInternal].getTextVersion(date.toString())
+    const response = await room[kInternal].getTextVersion(version.id)
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     const buffer = await response.arrayBuffer();
     const data = new Uint8Array(buffer);
     setIsLoading(false);
-    setVersion({ id: date.toString(), data })
+    const { id, authors, createdAt } = version;
+    setVersion({ id, createdAt: new Date(createdAt), authors, data })
   }, [room, setVersion, setIsLoading]);
 
   return (
@@ -61,16 +63,16 @@ export function Versions() {
       {isLoading && <div style={{ padding: "16px" }}>Loading...</div>}
       {versions.map((v) => (
         <div
-          key={v.date}
-          onClick={() => handleGetVersion(v.date)}
+          key={v.id}
+          onClick={() => handleGetVersion(v)}
           style={{
             cursor: "pointer",
-            backgroundColor: version?.id === v.date.toString() ? "rgba(255,255,255,0.05)" : "transparent",
+            backgroundColor: version?.id === v.createdAt.toString() ? "rgba(255,255,255,0.05)" : "transparent",
             padding: "8px",
           }}
         >
-          <p><Timestamp locale={$.locale} date={new Date(v.date)} /></p>
-          {v.authors?.length && v.authors.map((a, i) => (
+          <p><Timestamp locale={$.locale} date={new Date(v.createdAt)} /></p>
+          {v.authors?.length !== 0 && v.authors.map((a, i) => (
             <span key={a} style={{ fontSize: "0.75rem", color: "#838383" }}>{i !== 0 && ","}<User userId={a} /></span>
           ))}
         </div>
