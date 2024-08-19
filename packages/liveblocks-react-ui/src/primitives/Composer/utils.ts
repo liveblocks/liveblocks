@@ -363,7 +363,11 @@ function createComposerAttachmentsManager(
           });
         })
         .catch((error) => {
-          if (error instanceof Error && error.name !== "AbortError") {
+          if (
+            error instanceof Error &&
+            error.name !== "AbortError" &&
+            error.name !== "TimeoutError"
+          ) {
             setAttachment({
               ...attachment,
               status: "error",

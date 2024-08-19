@@ -3344,7 +3344,8 @@ export function createRoom<
         if (
           uploadId &&
           (error as Error)?.name &&
-          (error as Error).name === "AbortError"
+          ((error as Error).name === "AbortError" ||
+            (error as Error).name === "TimeoutError")
         ) {
           // Abort the multi-part upload if it was created
           await fetchCommentsApi(
