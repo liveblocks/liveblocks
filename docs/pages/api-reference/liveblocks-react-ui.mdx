@@ -545,6 +545,7 @@ Used to render a composer for creating, or editing, threads and comments.
 
 ```tsx
 <Composer.Form>
+  <Composer.AttachmentsDropArea />
   <Composer.Editor
     components={{
       Mention: () => <Composer.Mention />,
@@ -558,6 +559,7 @@ Used to render a composer for creating, or editing, threads and comments.
       Link: () => <Composer.Link />,
     }}
   />
+  <Composer.AttachFiles />
   <Composer.Submit />
 </Composer.Form>
 ```
@@ -661,6 +663,12 @@ occurs when the composer is submitted. You must create your own mutations within
 ```
 
 <PropertiesList>
+  <PropertiesListItem
+    name="defaultAttachments"
+    type="CommentUploadedAttachment[]"
+  >
+    The composer's initial attachments.
+  </PropertiesListItem>
   <PropertiesListItem
     name="onComposerSubmit"
     type="function"
@@ -913,6 +921,34 @@ A button to submit the composer.
 
 ```tsx
 <Composer.Submit>Send</Composer.Submit>
+```
+
+<PropertiesList>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropertiesListItem>
+</PropertiesList>
+
+##### Composer.AttachFiles [#primitives-Composer.AttachFiles]
+
+A button which opens a file picker to create attachments.
+
+```tsx
+<Composer.AttachFiles>Attach files</Composer.AttachFiles>
+```
+
+<PropertiesList>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropertiesListItem>
+</PropertiesList>
+
+##### Composer.AttachmentsDropArea [#primitives-Composer.AttachmentsDropArea]
+
+A drop area which accepts files to create attachments.
+
+```tsx
+<Composer.AttachmentsDropArea>Drop files here</Composer.AttachmentsDropArea>
 ```
 
 <PropertiesList>
