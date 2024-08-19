@@ -2451,6 +2451,9 @@ const thread = await room.createThread({
     The content of the comment, see [creating thread
     content](#creating-thread-content).
   </PropertiesListItem>
+  <PropertiesListItem name="attachmentIds" type="string">
+    The IDs of the comment’s attachments.
+  </PropertiesListItem>
   <PropertiesListItem name="metadata" type="ThreadMetadata">
     Custom metadata to be attached to the thread, see [defining thread
     metadata](#defining-thread-metadata).
@@ -2636,6 +2639,9 @@ const comment = await room.createComment({
   <PropertiesListItem name="threadId" type="string" required>
     The ID of the thread that the comment will be added to.
   </PropertiesListItem>
+  <PropertiesListItem name="attachmentIds" type="string">
+    The IDs of the comment’s attachments.
+  </PropertiesListItem>
   <PropertiesListItem name="body" type="CommentBody" required>
     The content of the comment, see [creating comment
     content](#creating-comment-content).
@@ -2711,7 +2717,6 @@ attachments. Learn more about
 const comment = await room.editComment({
   threadId: "th_xxx",
   commentId: "cm_xxx"
-  attachmentIds: ["at_xxx", "at_xxx"],
   body: {
     version: 1,
     content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
