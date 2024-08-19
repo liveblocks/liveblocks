@@ -2492,6 +2492,19 @@ const removeReaction = useRemoveReaction();
 removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
 ```
 
+### useAttachmentUrl [@badge=RoomProvider]
+
+Returns a presigned URL for an attachment by its ID.
+
+```tsx
+import { useAttachmentUrl } from "@liveblocks/react/suspense";
+
+const { url, error, isLoading } = useAttachmentUrl("at_xxx");
+```
+
+👉 A [Suspense version][] of this hook is also available, which will never return
+a loading state and will throw when there’s an error.
+
 ## Notifications
 
 ### useInboxNotifications [@badge=LiveblocksProvider]
