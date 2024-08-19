@@ -48,12 +48,16 @@ type InboxNotificationThreadContents =
 interface InboxNotificationCommentProps extends ComponentProps<"div"> {
   comment: CommentData;
   showHeader?: boolean;
+  showAttachments?: boolean;
+  showReactions?: boolean;
   overrides?: Partial<GlobalOverrides & CommentOverrides>;
 }
 
 export function InboxNotificationComment({
   comment,
   showHeader = true,
+  showAttachments,
+  showReactions,
   overrides,
   className,
   ...props
@@ -84,7 +88,7 @@ export function InboxNotificationComment({
                 Link: CommentNonInteractiveLink,
               }}
             />
-            {comment.reactions.length > 0 && (
+            {showReactions && comment.reactions.length > 0 && (
               <div className="lb-comment-reactions">
                 {comment.reactions.map((reaction) => (
                   <CommentNonInteractiveReaction
@@ -96,7 +100,7 @@ export function InboxNotificationComment({
                 ))}
               </div>
             )}
-            {comment.attachments.length > 0 ? (
+            {showAttachments && comment.attachments.length > 0 ? (
               <div className="lb-comment-attachments">
                 {comment.attachments.map((attachment) => (
                   <CommentNonInteractiveFileAttachment

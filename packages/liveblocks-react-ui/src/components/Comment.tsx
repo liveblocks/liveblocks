@@ -101,7 +101,7 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   showReactions?: boolean;
 
   /**
-   * Whether to show attachments (if there are any).
+   * Whether to show attachments.
    */
   showAttachments?: boolean;
 

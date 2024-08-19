@@ -83,7 +83,7 @@ export interface ThreadProps<M extends BaseMetadata = DM>
   showDeletedComments?: CommentProps["showDeleted"];
 
   /**
-   * Whether to show attachments (if there are any).
+   * Whether to show attachments.
    */
   showAttachments?: boolean;
 
