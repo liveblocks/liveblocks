@@ -2888,6 +2888,26 @@ controller.abort();
   </PropertiesListItem>
 </PropertiesList>
 
+### Room.getAttachmentUrl
+
+Returns a presigned URL for an attachment by its ID.
+
+```ts
+const url = await room.getAttachmentUrl("at_xxx");
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="value" type="string">
+    A presigned URL for the attachment.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="attachmentId" type="string" required>
+    The ID of the attachment to get the URL for.
+  </PropertiesListItem>
+</PropertiesList>
+
 ## Notifications
 
 ### Client.getInboxNotifications
