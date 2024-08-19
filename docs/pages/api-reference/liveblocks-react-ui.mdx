@@ -1185,6 +1185,71 @@ function MyComments({ thread }: { thread: ThreadData }) {
   </PropertiesListItem>
 </PropertiesList>
 
+#### FileSize [#primitives-FileSize]
+
+Displays a formatted file size.
+
+```tsx
+<FileSize size={100000} />
+```
+
+Use with `attachment.size` to display a human-readable file size.
+
+```tsx highlight="8"
+import { CommentData, FileSize } from "@liveblocks/react-ui";
+
+function MyComment({ comment }: { comment: CommentData }) {
+  return (
+    <div>
+      {/* ... */}
+
+      {comment.attachments.map((attachment) => (
+        <div key={attachment.id}>
+          {attachment.name}
+          <FileSize size={attachment.size} />
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+<PropertiesList>
+  <PropertiesListItem name="date" type="Date | string | number" required>
+    The date to display.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="children"
+    type="function"
+    detailedType="(date: Date) => ReactNode"
+  >
+    A function to format the displayed date. Defaults to a relative date
+    formatting function.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="title"
+    type="string | function"
+    detailedType="string | ((date: Date) => string)"
+  >
+    The `title` attribute’s value or a function to format it. Defaults to an
+    absolute date formatting function.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="interval"
+    type="number | false"
+    defaultValue="30000"
+  >
+    The interval in milliseconds at which the component will re-render. Can be
+    set to `false` to disable re-rendering.
+  </PropertiesListItem>
+  <PropertiesListItem name="locale" type="string">
+    The locale used when formatting the date. Defaults to the browser’s locale.
+  </PropertiesListItem>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### Hooks
 
 #### useComposer
@@ -1291,7 +1356,7 @@ function MyComposerAttachments() {
     <div>
       {attachments.map((attachment) => (
         <div key={attachment.id}>
-          {attachment.name} (attachment.status)
+          {attachment.name} ({attachment.status})
           <button onClick={() => removeAttachment(attachment.id)}>Remove</button>
         </div>
       )}

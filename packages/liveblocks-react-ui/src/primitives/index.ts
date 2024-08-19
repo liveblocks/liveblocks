@@ -41,5 +41,7 @@ export type {
   EmojiPickerRootProps,
   EmojiPickerSearchProps,
 } from "./EmojiPicker/types";
+export type { FileSizeProps } from "./FileSize";
+export { FileSize } from "./FileSize";
 export type { TimestampProps } from "./Timestamp";
 export { Timestamp } from "./Timestamp";
