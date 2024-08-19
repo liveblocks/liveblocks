@@ -2861,14 +2861,10 @@ Optionally, an
 can be passed to cancel the upload.
 
 ```ts
-const controller = new AbortController();
-
 const attachment = room.prepareAttachment(file);
-room.uploadAttachment(attachment, { signal: controller.signal }).then(...)
 
-// ...
-
-controller.abort();
+// Cancel the upload after 5 seconds
+room.uploadAttachment(attachment, { signal: AbortSignal.timeout(5000) });
 ```
 
 <PropertiesList title="Returns">
