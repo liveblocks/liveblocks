@@ -1440,6 +1440,62 @@ export class Liveblocks {
   }
 
   /**
+   * Returns the inbox notifications for a user.
+   * @param params.userId The user ID to get the inbox notifications from.
+   * @param params.query The query to filter inbox notifications by. It is based on our query language and can filter by unread.
+   */
+  public async getInboxNotifications(params: {
+    userId: string;
+    /**
+     * The query to filter inbox notifications by. It is based on our query language.
+     *
+     * @example
+     * ```
+     * {
+     *  query: "unread:true"
+     * }
+     * ```
+     *
+     * @example
+     * ```
+     * {
+     *   query: {
+     *     unread: true
+     *   }
+     * }
+     * ```
+     *
+     */
+    query?: string | { unread: boolean };
+  }): Promise<{ data: InboxNotificationData[] }> {
+    const { userId } = params;
+
+    let query: string | undefined;
+
+    if (typeof params.query === "string") {
+      query = params.query;
+    } else if (typeof params.query === "object") {
+      query = objectToQuery(params.query);
+    }
+
+    const res = await this.get(url`/v2/users/${userId}/inbox-notifications`, {
+      query,
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    const { data } = (await res.json()) as {
+      data: InboxNotificationDataPlain[];
+    };
+
+    return {
+      data: data.map(convertToInboxNotificationData),
+    };
+  }
+
+  /**
    * Gets the user's room notification settings.
    * @param params.userId The user ID to get the room notifications from.
    * @param params.roomId The room ID to get the room notification settings from.
