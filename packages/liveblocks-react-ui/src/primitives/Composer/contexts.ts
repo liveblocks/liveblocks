@@ -14,7 +14,7 @@ export type ComposerContext = {
   isDisabled: boolean;
 
   /**
-   * Whether the composer can currently submit.
+   * Whether the composer can currently be submitted.
    */
   canSubmit: boolean;
 
@@ -64,14 +64,14 @@ export type ComposerContext = {
   insertText: (text: string) => void;
 
   /**
-   * The current attachments.
-   */
-  attachments: ComposerAttachment[];
-
-  /**
-   * Open a file picker to create attachments.
+   * Open a file picker programmatically to create attachments.
    */
   attachFiles: () => void;
+
+  /**
+   * The composer's current attachments.
+   */
+  attachments: ComposerAttachment[];
 
   /**
    * Remove an attachment by its ID.

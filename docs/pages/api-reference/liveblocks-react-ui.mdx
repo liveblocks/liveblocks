@@ -1195,32 +1195,107 @@ Returns states and methods related to the composer. Can only be used within the
 ```tsx
 import { useComposer } from "@liveblocks/react-ui/primitives";
 
-const { isEmpty, submit } = useComposer();
+const { isEmpty, attachments, submit } = useComposer();
 ```
 
-This hook has a number of uses, for example constructing a custom button that
-submits threads, and disabling it when the composer input is empty.
+<PropertiesList title="Values">
+  <PropertiesListItem name="isDisabled" type="boolean">
+    Whether the composer is currently disabled.
+  </PropertiesListItem>
+  <PropertiesListItem name="isFocused" type="boolean">
+    Whether the editor is currently focused.
+  </PropertiesListItem>
+  <PropertiesListItem name="isEmpty" type="boolean">
+    Whether the editor is currently empty.
+  </PropertiesListItem>
+  <PropertiesListItem name="canSubmit" type="boolean">
+    Whether the composer can currently be submitted.
+  </PropertiesListItem>
+  <PropertiesListItem name="submit" type="() => void">
+    Submit the editor programmatically.
+  </PropertiesListItem>
+  <PropertiesListItem name="clear" type="() => void">
+    Clear the editor programmatically.
+  </PropertiesListItem>
+  <PropertiesListItem name="select" type="() => void">
+    Select the editor programmatically.
+  </PropertiesListItem>
+  <PropertiesListItem name="focus" type="() => void">
+    Focus the editor programmatically.
+  </PropertiesListItem>
+  <PropertiesListItem name="blur" type="() => void">
+    Blur the editor programmatically.
+  </PropertiesListItem>
+  <PropertiesListItem name="createMention" type="() => void">
+    Start creating a mention at the current selection.
+  </PropertiesListItem>
+  <PropertiesListItem name="insertText" type="(text: string) => void">
+    Insert text at the current selection.
+  </PropertiesListItem>
+  <PropertiesListItem name="attachFiles" type="() => void">
+    Open a file picker programmatically to create attachments.
+  </PropertiesListItem>
+  <PropertiesListItem name="attachments" type="ComposerAttachment[]">
+    The composer’s current attachments.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="removeAttachment"
+    type="(attachmentId: string) => void"
+  >
+    Remove an attachment by its ID.
+  </PropertiesListItem>
+</PropertiesList>
+
+This hook can be used along the [`Composer` primitives](#primitives-Composer) to
+create a custom composer and control its behavior. (e.g. create an "Add mention"
+button with `createMention` which focuses the editor, adds an `@` and opens the
+mention suggestions dropdown)
+
+It can also be used to support attachments since they are managed internally by
+the composer itself. Adding primitives such as
+[`Composer.AttachFiles`](#primitives-Composer.AttachFiles) and
+[`Composer.AttachmentsDropArea`](#primitives-Composer.AttachmentsDropArea) will
+automatically work and add attachments to the composer but they won't be visible
+out-of-the-box. `useComposer` exposes an `attachments` array which represents
+the current state of the composer’s attachments, so it can be used to render
+them. After that the `removeAttachment` method can be used to allow removing
+attachments from the composer.
 
 ```tsx highlight="14,17-19"
 import { Composer, useComposer } from "@liveblocks/react-ui/primitives";
+import { useCreateThread } from "@liveblocks/react/suspense";
 
 function MyComposer() {
+  const createThread = useCreateThread();
+
   return (
-    <Composer.Form onComposerSubmit={/* handle submit */}>
+    <Composer.Form onComposerSubmit={({ body, attachments } => {
+      const thread = createThread({
+        body,
+        attachments,
+        metadata: {},
+      });
+    })}>
       <Composer.Editor components={/* Your custom component parts */} />
-      <MyComposerButton />
+      <MyComposerAttachments />
+      <Composer.AttachFiles>Attach Files</Composer.AttachFiles>
+      <Composer.Submit>Submit</Composer.Submit>
     </Composer.Form>
   );
 }
 
-// Button that submits the form, and is disabled when the input is empty
-function MyComposerButton() {
-  const { isEmpty, submit } = useComposer();
+function MyComposerAttachments() {
+  const { attachments, removeAttachment } = useComposer();
 
   return (
-    <button onClick={submit} disabled={isEmpty}>
-      Create thread
-    </button>
+    <div>
+      {attachments.map((attachment) => (
+        <div key={attachment.id}>
+          {attachment.name} (attachment.status)
+          <button onClick={() => removeAttachment(attachment.id)}>Remove</button>
+        </div>
+      )}
+    </div>
   );
 }
 ```
