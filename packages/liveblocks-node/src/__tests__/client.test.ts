@@ -918,7 +918,7 @@ describe("client", () => {
     });
   });
 
-  test("getInboxNotifications works with a query", () => {
+  test("getInboxNotifications works with a query", async () => {
     const userId = "user1";
     const notifications = [
       {
@@ -946,7 +946,7 @@ describe("client", () => {
 
     const client = new Liveblocks({ secret: "sk_xxx" });
 
-    expect(
+    await expect(
       client.getInboxNotifications({
         userId,
         query: {
@@ -962,7 +962,7 @@ describe("client", () => {
     });
 
     // with a string query
-    expect(
+    await expect(
       client.getInboxNotifications({
         userId,
         query: "unread:true",
