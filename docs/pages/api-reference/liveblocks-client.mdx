@@ -2851,6 +2851,21 @@ const attachment = room.prepareAttachment(file);
 await room.uploadAttachment(attachment);
 ```
 
+Optionally, an
+[`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
+can be passed to cancel the upload.
+
+```ts
+const controller = new AbortController();
+
+const attachment = room.prepareAttachment(file);
+room.uploadAttachment(attachment, { signal: controller.signal }).then(...)
+
+// ...
+
+controller.abort();
+```
+
 <PropertiesList title="Returns">
   <PropertiesListItem name="value" type="CommentUploadedAttachment">
     The attachment that has been uploaded.
@@ -2860,6 +2875,16 @@ await room.uploadAttachment(attachment);
 <PropertiesList title="Arguments">
   <PropertiesListItem name="attachment" type="CommentLocalAttachment" required>
     The file to create the attachment from.
+  </PropertiesListItem>
+  <PropertiesListItem name="options" type="UploadAttachmentOptions">
+    A set of options.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Options">
+  <PropertiesListItem name="signal" type="AbortSignal">
+    Only the inbox notifications updated or deleted after this date will be
+    returned.
   </PropertiesListItem>
 </PropertiesList>
 
