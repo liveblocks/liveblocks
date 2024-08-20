@@ -2777,7 +2777,7 @@
           },
           "403": {
             "description": "Forbidden"
-          },
+          }
         }
       }
     },
