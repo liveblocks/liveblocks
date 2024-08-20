@@ -2,6 +2,7 @@
 
 import type {
   BaseMetadata,
+  CommentAttachment,
   CommentData,
   DM,
   ThreadData,
@@ -15,6 +16,7 @@ import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
   ComponentPropsWithoutRef,
   ForwardedRef,
+  MouseEvent,
   RefAttributes,
   SyntheticEvent,
 } from "react";
@@ -119,6 +121,15 @@ export interface ThreadProps<M extends BaseMetadata = DM>
   onMentionClick?: CommentProps["onMentionClick"];
 
   /**
+   * The event handler called when clicking on a comment's attachment.
+   */
+  onAttachmentClick?: (
+    attachment: CommentAttachment,
+    attachmentUrl: string,
+    event: MouseEvent<HTMLElement>
+  ) => void;
+
+  /**
    * Override the component's strings.
    */
   overrides?: Partial<
@@ -153,6 +164,7 @@ export const Thread = forwardRef(
       onThreadDelete,
       onAuthorClick,
       onMentionClick,
+      onAttachmentClick,
       overrides,
       className,
       ...props
@@ -286,6 +298,7 @@ export const Thread = forwardRef(
                   onCommentDelete={handleCommentDelete}
                   onAuthorClick={onAuthorClick}
                   onMentionClick={onMentionClick}
+                  onAttachmentClick={onAttachmentClick}
                   autoMarkReadThreadId={
                     index === lastCommentIndex && isUnread
                       ? thread.id

@@ -168,6 +168,13 @@ about this change in our
     The event handler called when clicking on a mention.
   </PropertiesListItem>
   <PropertiesListItem
+    name="onAttachmentClick"
+    type="function"
+    detailedType="(attachment: CommentAttachment, attachmentUrl: string, event: MouseEvent<HTMLElement>) => void"
+  >
+    The event handler called when clicking on a comment's attachment.
+  </PropertiesListItem>
+  <PropertiesListItem
     name="overrides"
     type="Partial<GlobalOverrides & ThreadOverrides & CommentOverrides & ComposerOverrides>"
   >
@@ -491,6 +498,13 @@ function Component() {
     detailedType="(userId: string, event: MouseEvent<HTMLElement>) => void"
   >
     The event handler called when clicking on a mention.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onAttachmentClick"
+    type="function"
+    detailedType="(attachment: CommentAttachment, attachmentUrl: string, event: MouseEvent<HTMLElement>) => void"
+  >
+    The event handler called when clicking on a comment's attachment.
   </PropertiesListItem>
   <PropertiesListItem
     name="overrides"

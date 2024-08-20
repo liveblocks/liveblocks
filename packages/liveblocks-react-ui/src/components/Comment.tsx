@@ -8,6 +8,7 @@ import type {
 import {
   RoomContext,
   useAddReaction,
+  useAttachmentUrl,
   useDeleteComment,
   useEditComment,
   useMarkThreadAsRead,
@@ -131,6 +132,15 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   onMentionClick?: (userId: string, event: MouseEvent<HTMLElement>) => void;
 
   /**
+   * The event handler called when clicking on a comment's attachment.
+   */
+  onAttachmentClick?: (
+    attachment: CommentAttachment,
+    attachmentUrl: string,
+    event: MouseEvent<HTMLElement>
+  ) => void;
+
+  /**
    * Override the component's strings.
    */
   overrides?: Partial<GlobalOverrides & CommentOverrides & ComposerOverrides>;
@@ -168,6 +178,7 @@ type CommentNonInteractiveReactionProps = Omit<CommentReactionProps, "comment">;
 interface CommentFileAttachmentProps
   extends ComponentProps<typeof FileAttachment> {
   attachment: CommentAttachment;
+  onAttachmentClick?: CommentProps["onAttachmentClick"];
 }
 
 export function CommentMention({
@@ -346,16 +357,37 @@ export const CommentNonInteractiveReaction = forwardRef<
 
 function CommentFileAttachment({
   attachment,
+  onAttachmentClick,
   className,
   overrides,
   ...props
 }: CommentFileAttachmentProps) {
+  const { url } = useAttachmentUrl(attachment.id);
+
+  const handleContentClick = useCallback(
+    (event: MouseEvent<HTMLElement>) => {
+      if (!url) {
+        return;
+      }
+
+      onAttachmentClick?.(attachment, url, event);
+
+      if (event.isDefaultPrevented()) {
+        return;
+      }
+
+      window.open(url, "_blank");
+    },
+    [attachment, onAttachmentClick, url]
+  );
+
   return (
     <FileAttachment
       className={classNames("lb-comment-attachment", className)}
       {...props}
       attachment={attachment}
       overrides={overrides}
+      onContentClick={url ? handleContentClick : undefined}
     />
   );
 }
@@ -415,6 +447,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       showAttachments = true,
       onAuthorClick,
       onMentionClick,
+      onAttachmentClick,
       onCommentEdit,
       onCommentDelete,
       overrides,
