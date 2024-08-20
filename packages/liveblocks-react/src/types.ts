@@ -20,6 +20,8 @@ import type {
   CommentBody,
   CommentData,
   DRI,
+  HistoryVersion,
+  HistoryVersionWithData,
   InboxNotificationData,
   LiveblocksError,
   PartialUnless,
@@ -217,6 +219,52 @@ export type RoomNotificationSettingsState =
   | RoomNotificationSettingsStateLoading
   | RoomNotificationSettingsStateError
   | RoomNotificationSettingsStateSuccess;
+
+export type VersionWithDataStateLoading = {
+  isLoading: true;
+  version?: never;
+  error?: never;
+};
+
+export type VersionWithDataStateResolved = {
+  isLoading: false;
+  version: HistoryVersionWithData;
+  error?: Error;
+};
+
+export type VersionWithDataStateError = {
+  isLoading: false;
+  version?: never;
+  error: Error;
+};
+
+export type VersionWithDataState =
+  | VersionWithDataStateLoading
+  | VersionWithDataStateResolved
+  | VersionWithDataStateError;
+
+export type VersionsStateLoading = {
+  isLoading: true;
+  versions?: never;
+  error?: never;
+};
+
+export type VersionsStateResolved = {
+  isLoading: false;
+  versions: HistoryVersion[];
+  error?: Error;
+};
+
+export type VersionsStateError = {
+  isLoading: false;
+  versions?: never;
+  error: Error;
+};
+
+export type VersionsState =
+  | VersionsStateLoading
+  | VersionsStateResolved
+  | VersionsStateError;
 
 export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
   // prettier-ignore
@@ -953,6 +1001,9 @@ export type RoomContextBundle<
         RoomNotificationSettingsState,
         (settings: Partial<RoomNotificationSettings>) => void,
       ];
+
+      useVersions(): VersionsState;
+      useVersionWithData(version: HistoryVersion): VersionWithDataState;
 
       suspense: Resolve<
         RoomContextBundleCommon<P, S, U, E, M> &

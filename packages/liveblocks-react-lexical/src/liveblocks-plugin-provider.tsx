@@ -20,7 +20,6 @@ import { CommentPluginProvider } from "./comments/comment-plugin-provider";
 import { ThreadMarkNode } from "./comments/thread-mark-node";
 import { MentionNode } from "./mentions/mention-node";
 import { MentionPlugin } from "./mentions/mention-plugin";
-import { VersionProvider } from "./versions/VersionContext";
 
 // TODO: Replace by ref once I understand why useRef is not stable (?!)
 const providersMap = new Map<
@@ -71,7 +70,7 @@ export function useEditorStatus(): EditorStatus {
 
   const subscribe = useCallback(
     (onStoreChange: () => void) => {
-      if (provider === undefined) return () => {};
+      if (provider === undefined) return () => { };
       provider.on("sync", onStoreChange);
       return () => {
         provider.off("sync", onStoreChange);
@@ -262,9 +261,7 @@ export const LiveblocksPlugin = ({
       )}
 
       {hasResolveMentionSuggestions && <MentionPlugin />}
-      <VersionProvider>
-        <CommentPluginProvider>{children}</CommentPluginProvider>
-      </VersionProvider>
+      <CommentPluginProvider>{children}</CommentPluginProvider>
     </>
   );
 };

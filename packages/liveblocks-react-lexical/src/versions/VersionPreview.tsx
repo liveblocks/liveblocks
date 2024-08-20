@@ -10,13 +10,13 @@ import {
   syncLexicalUpdateToYjs,
   syncYjsChangesToLexical,
 } from "@lexical/yjs";
+import type { HistoryVersionWithData } from "@liveblocks/core";
 import type { LexicalEditor } from "lexical";
-import React, { useCallback, useContext, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import type { Transaction, YEvent } from "yjs";
 import { applyUpdate, Doc } from "yjs";
 
 import { liveblocksConfig } from "../liveblocks-config";
-import { VersionContext } from "./VersionContext";
 
 function createNoOpProvider(): Provider {
   const emptyFunction = () => { };
@@ -82,12 +82,10 @@ function registerCollaborationListeners(
 
 
 
-export function Version({ onRestore }: { onRestore?: () => void }) {
+export function VersionPreview({ version, onRestore }: { version: HistoryVersionWithData, onRestore?: () => void }) {
   const [parentEditor, parentContext] = useLexicalComposerContext();
   const nodes = Array.from(parentEditor._nodes.values()).map((n) => n.klass);
   const editor = useRef<LexicalEditor>();
-
-  const { version, isLoading } = useContext(VersionContext);
 
   const initialConfig = liveblocksConfig({
     namespace: "VersionViewer",
@@ -127,31 +125,24 @@ export function Version({ onRestore }: { onRestore?: () => void }) {
 
   return (
     <>
-      {!isLoading && !version && <div style={{ padding: "16px" }}>Select a version</div>}
-      {isLoading && <div style={{ padding: "16px" }}>Loading...</div>}
-      {!isLoading && version &&
-        <>
-          <button onClick={restore} style={{
-            padding: "8px 16px",
-            textTransform: "capitalize",
-            border: "1px solid #d3d3d3",
-            borderRadius: "4px"
-          }}>
-            restore
-          </button>
+      <button onClick={restore} style={{
+        padding: "8px 16px",
+        textTransform: "capitalize",
+        border: "1px solid #d3d3d3",
+        borderRadius: "4px"
+      }}>
+        restore
+      </button>
 
-          {!version && <div className="text-center">Select a version to view</div>}
-          <div style={{ padding: "12px" }}>
-            <LexicalComposer initialConfig={initialConfig}>
-              <EditorRefPlugin editorRef={editor} />
-              <RichTextPlugin
-                contentEditable={<ContentEditable />}
-                placeholder={<div>Empty Version History</div>}
-                ErrorBoundary={LexicalErrorBoundary}
-              />
-            </LexicalComposer></div>
-        </>
-      }
+      <div style={{ padding: "12px" }}>
+        <LexicalComposer initialConfig={initialConfig}>
+          <EditorRefPlugin editorRef={editor} />
+          <RichTextPlugin
+            contentEditable={<ContentEditable />}
+            placeholder={<div>Empty Version History</div>}
+            ErrorBoundary={LexicalErrorBoundary}
+          />
+        </LexicalComposer></div>
     </>)
 
 }

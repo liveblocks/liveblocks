@@ -62,6 +62,8 @@ export {
   useUndo,
   useUpdateMyPresence,
   useUpdateRoomNotificationSettings,
+  useVersions,
+  useVersionWithData,
 } from "./room";
 
 export { useCommentsErrorListener, CreateThreadError } from "./room";

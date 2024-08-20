@@ -2,10 +2,22 @@
 import * as Popover from "@radix-ui/react-popover";
 import { Suspense, useState } from "react";
 import Loading from "./loading";
-import { Version, Versions } from "@liveblocks/react-lexical";
+import { VersionHistoryList, Version } from "@liveblocks/react-ui";
+import { useVersions, useVersionWithData } from "@liveblocks/react";
+import { HistoryVersion } from "@liveblocks/core";
+import { VersionPreview } from "@liveblocks/react-lexical";
+
+function VersionContainer({ version }: { version: HistoryVersion }) {
+  const { version: versionWithData, isLoading } = useVersionWithData(version)
+  return (
+    <>{isLoading ? <Loading /> : <VersionPreview version={versionWithData!} />}</>
+  );
+}
 
 export default function VersionsPopover() {
   const [versionsOpen, setVersionsOpen] = useState(false);
+  const [version, setVersion] = useState<HistoryVersion>();
+  const { versions, isLoading } = useVersions();
   return (
     <Popover.Root open={versionsOpen} onOpenChange={setVersionsOpen}>
       <Popover.Trigger className="inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground w-8 h-8">
@@ -27,10 +39,20 @@ export default function VersionsPopover() {
         >
           <Suspense fallback={<Loading />}>
             <div className="grow p-4">
-              <Version onRestore={() => { setVersionsOpen(false) }} />
+              {version && <VersionContainer version={version} />}
             </div>
             <div className="text-sm relative w-[250px] h-full overflow-auto border-l border-border/80 min-w-[250px]">
-              <Versions />
+              {isLoading ? <Loading /> :
+                <VersionHistoryList>
+                  {versions?.map((version) => (
+                    <Version
+                      onSelect={() => { setVersion(version) }}
+                      key={version.id}
+                      version={version}
+                    />
+                  ))}
+                </VersionHistoryList>
+              }
             </div>
 
           </Suspense>

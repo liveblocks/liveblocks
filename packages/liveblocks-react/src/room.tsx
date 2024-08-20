@@ -26,6 +26,8 @@ import type {
   DS,
   DU,
   EnterOptions,
+  HistoryVersion,
+  HistoryVersionType,
   LiveblocksError,
   OpaqueClient,
   OpaqueRoom,
@@ -104,12 +106,14 @@ import type {
   ThreadSubscription,
   UseStorageStatusOptions,
   UseThreadsOptions,
+  VersionsState,
+  VersionWithDataState,
 } from "./types";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
 
 const SMOOTH_DELAY = 1000;
 
-const noop = () => {};
+const noop = () => { };
 const identity: <T>(x: T) => T = (x) => x;
 
 const missing_unstable_batchedUpdates = (
@@ -121,8 +125,8 @@ const missing_unstable_batchedUpdates = (
     import { unstable_batchedUpdates } from "react-dom";  // or "react-native"
 
     <RoomProvider id=${JSON.stringify(
-      roomId
-    )} ... unstable_batchedUpdates={unstable_batchedUpdates}>
+    roomId
+  )} ... unstable_batchedUpdates={unstable_batchedUpdates}>
       ...
     </RoomProvider>
 
@@ -611,6 +615,9 @@ function makeRoomContextBundle<
     useRemoveReaction,
     useMarkThreadAsRead,
     useThreadSubscription,
+
+    useVersions,
+    useVersionWithData,
 
     useRoomNotificationSettings,
     useUpdateRoomNotificationSettings,
@@ -1759,13 +1766,13 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
             const updatedInboxNotifications =
               inboxNotification !== undefined
                 ? {
-                    ...state.inboxNotifications,
-                    [inboxNotification.id]: {
-                      ...inboxNotification,
-                      notifiedAt: newComment.createdAt,
-                      readAt: newComment.createdAt,
-                    },
-                  }
+                  ...state.inboxNotifications,
+                  [inboxNotification.id]: {
+                    ...inboxNotification,
+                    notifiedAt: newComment.createdAt,
+                    readAt: newComment.createdAt,
+                  },
+                }
                 : state.inboxNotifications;
 
             return {
@@ -2440,6 +2447,82 @@ function useRoomNotificationSettings(): [
   return React.useMemo(() => {
     return [settings, updateRoomNotificationSettings];
   }, [settings, updateRoomNotificationSettings]);
+}
+
+function useVersionWithData(version: HistoryVersion): VersionWithDataState {
+  const [state, setState] = React.useState<VersionWithDataState>({
+    isLoading: true,
+  });
+  const room = useRoom();
+  React.useEffect(() => {
+    setState({ isLoading: true });
+    const load = async () => {
+      try {
+        const response = await room[kInternal].getTextVersion(version.id);
+        const buffer = await response.arrayBuffer();
+        const data = new Uint8Array(buffer);
+        setState({
+          isLoading: false,
+          version: {
+            ...version,
+            data
+          }
+        });
+      } catch (error) {
+        setState({
+          isLoading: false,
+          error: error instanceof Error ? error : new Error("An unknown error occurre loading version"),
+        });
+      }
+    }
+    void load();
+  }, [room, version]);
+  return state;
+}
+
+/**
+ * 
+ * Loads version history
+ * 
+ * @returns {
+ *   isLoading: boolean,
+ *   error: Error | undefined,
+ *   versions: HistoryVersion[] | undefined,
+ * }
+ */
+function useVersions(
+): VersionsState {
+  const room = useRoom();
+  const [state, setState] = React.useState<VersionsState>({
+    isLoading: true,
+  });
+  React.useEffect(() => {
+    setState({ isLoading: true });
+    const load = async () => {
+      try {
+        const response = await room[kInternal].listTextVersions();
+        const data = await response.json() as { versions: { createdAt: string, authors: string[], id: string, type: HistoryVersionType }[] };
+        setState({
+          isLoading: false,
+          versions: data.versions.map(({ createdAt, authors, id, type }) => {
+            return {
+              createdAt: new Date(createdAt),
+              authors,
+              id,
+              type,
+            };
+          })
+        });
+      } catch (error) {
+        setState({
+          isLoading: false,
+          error: error instanceof Error ? error : new Error("An unknown error occurre loading versions"),
+        });
+      }
+    }
+    void load();
+  }, [room]);
+  return state;
 }
 
 /**
@@ -3315,4 +3398,6 @@ export {
   useUndo,
   _useUpdateMyPresence as useUpdateMyPresence,
   useUpdateRoomNotificationSettings,
+  useVersions,
+  useVersionWithData,
 };
