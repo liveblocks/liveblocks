@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/react-ui",
-  "version": "2.3.0",
+  "version": "2.5.1",
   "description": "A set of React pre-built components for the Liveblocks products. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
   "type": "commonjs",
@@ -63,9 +63,9 @@
   },
   "dependencies": {
     "@floating-ui/react-dom": "^2.0.8",
-    "@liveblocks/client": "2.3.0",
-    "@liveblocks/core": "2.3.0",
-    "@liveblocks/react": "2.3.0",
+    "@liveblocks/client": "2.5.1",
+    "@liveblocks/core": "2.5.1",
+    "@liveblocks/react": "2.5.1",
     "@radix-ui/react-dropdown-menu": "^2.0.6",
     "@radix-ui/react-popover": "^1.0.7",
     "@radix-ui/react-slot": "^1.0.2",
@@ -93,7 +93,6 @@
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "msw": "^0.27.1",
-    "nanoid": "^3",
     "postcss": "^8.4.31",
     "postcss-advanced-variables": "^3.0.1",
     "postcss-combine-duplicated-selectors": "^10.0.3",

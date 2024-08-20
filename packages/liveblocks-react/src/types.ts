@@ -343,6 +343,14 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * const { info, error, isLoading } = useRoomInfo("room-id");
      */
     useRoomInfo(roomId: string): RoomInfoAsyncResult;
+
+    /**
+     * Returns whether the hook is called within a RoomProvider context.
+     *
+     * @example
+     * const isInsideRoom = useIsInsideRoom();
+     */
+    useIsInsideRoom(): boolean;
   };
 
   suspense: {
@@ -366,6 +374,14 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * const { info } = useRoomInfo("room-id");
      */
     useRoomInfo(roomId: string): RoomInfoAsyncSuccess;
+
+    /**
+     * Returns whether the hook is called within a RoomProvider context.
+     *
+     * @example
+     * const isInsideRoom = useIsInsideRoom();
+     */
+    useIsInsideRoom(): boolean;
   };
 };
 
@@ -1133,6 +1149,14 @@ export type LiveblocksContextBundle<
        */
       useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountState;
 
+      /**
+       * @experimental
+       *
+       * This hook is experimental and could be removed or changed at any time!
+       * Do not use unless explicitely recommended by the Liveblocks team.
+       */
+      useUserThreads_experimental(): ThreadsState<M>;
+
       suspense: Resolve<
         LiveblocksContextBundleCommon<M> &
           SharedContextBundle<U>["suspense"] & {
@@ -1151,6 +1175,14 @@ export type LiveblocksContextBundle<
              * const { count } = useUnreadInboxNotificationsCount();
              */
             useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountStateSuccess;
+
+            /**
+             * @experimental
+             *
+             * This hook is experimental and could be removed or changed at any time!
+             * Do not use unless explicitely recommended by the Liveblocks team.
+             */
+            useUserThreads_experimental(): ThreadsStateSuccess<M>;
           }
       >;
     }

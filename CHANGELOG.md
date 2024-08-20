@@ -1,3 +1,35 @@
+## 2.5.1
+
+### `@liveblocks/yjs`
+
+- Fix `LiveblocksProvider` `update`/`change` event not returning `removed`
+  users.
+
+## 2.5.0
+
+### `@liveblocks/react`
+
+- Add
+  [`useIsInsideRoom`](https://liveblocks.io/docs/api-reference/liveblocks-react#useIsInsideRoom)
+  hook, useful for rendering different components inside and outside of
+  [`RoomProvider`](https://liveblocks.io/docs/api-reference/liveblocks-react#RoomProvider).
+
+### `@liveblocks/react-lexical`
+
+- Fix a bug in `useEditorStatus` which prevented it from returning a correct
+  status when `LexicalPlugin` was rendered conditionally.
+- Fix remote cursors not displaying user names.
+
+### `@liveblocks/react-ui`
+
+- Improve event propagation in `Composer`.
+
+## v2.4.0
+
+### `@liveblocks/client`
+
+- Add vanilla Comments and Notifications APIs to `Client` and `Room`.
+
 ## v2.3.0
 
 ### `@liveblocks/react-lexical`

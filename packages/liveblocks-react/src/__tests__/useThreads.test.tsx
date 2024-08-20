@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 
-import { kInternal, ServerMsgCode } from "@liveblocks/core";
+import { kInternal, nanoid, ServerMsgCode } from "@liveblocks/core";
 import type { AST } from "@liveblocks/query-parser";
 import { QueryParser } from "@liveblocks/query-parser";
 import {
@@ -12,9 +12,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { addSeconds } from "date-fns";
-import { rest } from "msw";
 import { setupServer } from "msw/node";
-import { nanoid } from "nanoid";
 import type { ReactNode } from "react";
 import React, { Suspense } from "react";
 import type { FallbackProps } from "react-error-boundary";
@@ -508,9 +506,9 @@ describe("useThreads", () => {
     const room2Threads = [dummyThreadData({ roomId: room2Id })];
 
     server.use(
-      rest.get(
-        `https://api.liveblocks.io/v2/c/rooms/${room1Id}/threads`,
-        async (_req, res, ctx) => {
+      mockGetThreads((req, res, ctx) => {
+        const roomId = req.params.roomId;
+        if (roomId === room1Id) {
           return res(
             ctx.json({
               data: room1Threads,
@@ -522,11 +520,7 @@ describe("useThreads", () => {
               },
             })
           );
-        }
-      ),
-      rest.get(
-        `https://api.liveblocks.io/v2/c/rooms/${room2Id}/threads`,
-        async (_req, res, ctx) => {
+        } else if (roomId === room2Id) {
           return res(
             ctx.json({
               data: room2Threads,
@@ -539,7 +533,9 @@ describe("useThreads", () => {
             })
           );
         }
-      )
+
+        return res(ctx.status(404));
+      })
     );
 
     const {
@@ -592,9 +588,8 @@ describe("useThreads", () => {
     const room2Threads = [dummyThreadData({ roomId: room2Id })];
 
     server.use(
-      rest.get(
-        `https://api.liveblocks.io/v2/c/rooms/${room1Id}/threads`,
-        async (_req, res, ctx) => {
+      mockGetThreads((req, res, ctx) => {
+        if (req.params.roomId === room1Id) {
           return res(
             ctx.json({
               data: room1Threads,
@@ -606,11 +601,7 @@ describe("useThreads", () => {
               },
             })
           );
-        }
-      ),
-      rest.get(
-        `https://api.liveblocks.io/v2/c/rooms/${room2Id}/threads`,
-        async (_req, res, ctx) => {
+        } else if (req.params.roomId === room2Id) {
           return res(
             ctx.json({
               data: room2Threads,
@@ -623,7 +614,9 @@ describe("useThreads", () => {
             })
           );
         }
-      )
+
+        return res(ctx.status(404));
+      })
     );
 
     const {
@@ -1148,14 +1141,11 @@ describe("useThreads", () => {
     expect(room).not.toBeNull();
     if (room === null) return;
 
-    // Mock the getThreads method so we can verify it wasn't called
-    room[kInternal].comments.getThreads = jest.fn();
-
     // Rerender the first RoomProvider and verify a new fetch request wasn't initiated
     rerender(<FirstRoom />);
 
     // A new fetch request for the threads should not have been made
-    expect(room[kInternal].comments.getThreads).not.toHaveBeenCalled();
+    expect(getThreadsReqCount).toBe(1);
 
     unmountFirstRoom();
     unmountSecondRoom();

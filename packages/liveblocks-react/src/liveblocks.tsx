@@ -21,10 +21,10 @@ import {
   kInternal,
   makePoller,
   memoizeOnSuccess,
+  nanoid,
   raise,
   shallow,
 } from "@liveblocks/core";
-import { nanoid } from "nanoid";
 import type { PropsWithChildren } from "react";
 import React, {
   createContext,
@@ -37,15 +37,19 @@ import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
+import { selectedUserThreads } from "./comments/lib/selected-threads";
 import { autoRetry } from "./lib/retry-error";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { use } from "./lib/use-polyfill";
+import { useIsInsideRoom } from "./room";
 import type {
   InboxNotificationsState,
   LiveblocksContextBundle,
   RoomInfoAsyncResult,
   RoomInfoAsyncSuccess,
   SharedContextBundle,
+  ThreadsState,
+  ThreadsStateSuccess,
   UnreadInboxNotificationsCountState,
   UserAsyncResult,
   UserAsyncSuccess,
@@ -80,6 +84,7 @@ const _bundles = new WeakMap<
 
 export const POLLING_INTERVAL = 60 * 1000; // 1 minute
 export const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
+export const USER_THREADS_QUERY = "USER_THREADS";
 
 function selectorFor_useInboxNotifications(
   state: CacheState<BaseMetadata>
@@ -101,6 +106,31 @@ function selectorFor_useInboxNotifications(
 
   return {
     inboxNotifications: selectedInboxNotifications(state),
+    isLoading: false,
+  };
+}
+
+function selectorFor_useUserThreads<M extends BaseMetadata>(
+  state: CacheState<M>
+): ThreadsState<M> {
+  const query = state.queries[USER_THREADS_QUERY];
+
+  if (query === undefined || query.isLoading) {
+    return {
+      isLoading: true,
+    };
+  }
+
+  if (query.error !== undefined) {
+    return {
+      threads: [],
+      error: query.error,
+      isLoading: false,
+    };
+  }
+
+  return {
+    threads: selectedUserThreads(state),
     isLoading: false,
   };
 }
@@ -232,7 +262,6 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
 ) {
   const internals = client[kInternal] as PrivateClientApi<U, M>;
   const store = internals.cacheStore;
-  const notifications = internals.notifications;
 
   let lastRequestedAt: Date | undefined;
 
@@ -241,30 +270,36 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
    * date if successful. If unsuccessful, will throw.
    */
   async function fetchInboxNotifications() {
-    const since =
-      lastRequestedAt !== undefined ? { since: lastRequestedAt } : undefined;
+    // If inbox notifications have not been fetched yet, we get all of them
+    // Else, we fetch only what changed since the last request
+    if (lastRequestedAt === undefined) {
+      const result = await client.getInboxNotifications();
 
-    const result = await notifications.getInboxNotifications(since);
+      store.updateThreadsAndNotifications(
+        result.threads,
+        result.inboxNotifications,
+        [],
+        [],
+        INBOX_NOTIFICATIONS_QUERY
+      );
 
-    store.updateThreadsAndNotifications(
-      result.threads,
-      result.inboxNotifications,
-      result.deletedThreads,
-      result.deletedInboxNotifications,
-      INBOX_NOTIFICATIONS_QUERY
-    );
+      lastRequestedAt = result.requestedAt;
+    } else {
+      const result = await client.getInboxNotificationsSince({
+        since: lastRequestedAt,
+      });
 
-    /**
-     * We set the `lastRequestedAt` to the timestamp returned by the current request if:
-     * 1. The `lastRequestedAt` has not been set
-     * OR
-     * 2. The current `lastRequestedAt` is older than the timestamp returned by the current request
-     */
-    if (
-      lastRequestedAt === undefined ||
-      lastRequestedAt < result.meta.requestedAt
-    ) {
-      lastRequestedAt = result.meta.requestedAt;
+      store.updateThreadsAndNotifications(
+        result.threads.updated,
+        result.inboxNotifications.updated,
+        result.threads.deleted,
+        result.inboxNotifications.deleted,
+        INBOX_NOTIFICATIONS_QUERY
+      );
+
+      if (lastRequestedAt < result.requestedAt) {
+        lastRequestedAt = result.requestedAt;
+      }
     }
   }
 
@@ -349,12 +384,144 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
     }, []);
   }
 
+  /**
+   * BEGIN USER THREADS CODE DUPLICATION
+   *
+   * This code is duplicated from the inbox notifications code above.
+   * Code could be dried up, but we're not 100% we will support useUserThreads officially,
+   * so until then, we keep it as is for easier removal.
+   */
+
+  let userThreadsPollerSubscribers = 0;
+  const userThreadsPoller = makePoller(async () => {
+    try {
+      await waitUntilUserThreadsLoaded();
+      await fetchUserThreads();
+    } catch (err) {
+      // When polling, we don't want to throw errors, ever
+      console.warn(`Polling new user threads failed: ${String(err)}`);
+    }
+  });
+
+  let userThreadslastRequestedAt: Date | undefined;
+
+  /**
+   * Triggers an initial fetch of user threads if this hasn't
+   * already happened.
+   */
+  function loadUserThreads(): void {
+    void waitUntilUserThreadsLoaded().catch(() => {
+      // Deliberately catch and ignore any errors here
+    });
+  }
+
+  /**
+   * Will trigger an initial fetch of user threads if this hasn't
+   * already happened. Will resolve once there is initial data. Will retry
+   * a few times automatically in case fetching fails, with incremental backoff
+   * delays. Will throw eventually only if all retries fail.
+   */
+  const waitUntilUserThreadsLoaded = memoizeOnSuccess(async () => {
+    store.setQueryState(USER_THREADS_QUERY, {
+      isLoading: true,
+    });
+
+    try {
+      await autoRetry(() => fetchUserThreads(), 5, [5000, 5000, 10000, 15000]);
+    } catch (err) {
+      // Store the error in the cache as a side-effect, for non-Suspense
+      store.setQueryState(USER_THREADS_QUERY, {
+        isLoading: false,
+        error: err as Error,
+      });
+
+      // Rethrow it for Suspense, where this promise must fail
+      throw err;
+    }
+  });
+
+  /**
+   * Performs one network fetch, and updates the store and last requested at
+   * date if successful. If unsuccessful, will throw.
+   */
+  async function fetchUserThreads() {
+    // If inbox notifications have not been fetched yet, we get all of them
+    // Else, we fetch only what changed since the last request
+    if (userThreadslastRequestedAt === undefined) {
+      const result = await client[kInternal].getThreads();
+
+      store.updateThreadsAndNotifications(
+        result.threads,
+        result.inboxNotifications,
+        [],
+        [],
+        USER_THREADS_QUERY
+      );
+
+      userThreadslastRequestedAt = result.requestedAt;
+    } else {
+      const result = await client[kInternal].getThreadsSince({
+        since: userThreadslastRequestedAt,
+      });
+
+      store.updateThreadsAndNotifications(
+        result.threads.updated,
+        result.inboxNotifications.updated,
+        result.threads.deleted,
+        result.inboxNotifications.deleted,
+        USER_THREADS_QUERY
+      );
+
+      if (userThreadslastRequestedAt < result.requestedAt) {
+        userThreadslastRequestedAt = result.requestedAt;
+      }
+    }
+  }
+
+  /**
+   * Enables polling for inbox notifications when the component mounts. Stops
+   * polling on unmount.
+   *
+   * Safe to be called multiple times from different components. The first
+   * component to mount starts the polling. The last component to unmount stops
+   * the polling.
+   */
+  function useEnableUserThreadsPolling() {
+    useEffect(() => {
+      // Increment
+      userThreadsPollerSubscribers++;
+      userThreadsPoller.start(POLLING_INTERVAL);
+
+      return () => {
+        // Decrement
+        if (userThreadsPollerSubscribers <= 0) {
+          console.warn(
+            `Internal unexpected behavior. Cannot decrease subscriber count for query "${USER_THREADS_QUERY}"`
+          );
+          return;
+        }
+
+        userThreadsPollerSubscribers--;
+        if (userThreadsPollerSubscribers <= 0) {
+          userThreadsPoller.stop();
+        }
+      };
+    }, []);
+
+    /**
+     * END USER THREADS CODE DUPLICATION
+     */
+  }
+
   return {
     store,
-    notifications,
     useEnableInboxNotificationsPolling,
     waitUntilInboxNotificationsLoaded,
     loadInboxNotifications,
+
+    useEnableUserThreadsPolling,
+    waitUntilUserThreadsLoaded,
+    loadUserThreads,
   };
 }
 
@@ -405,6 +572,7 @@ function makeLiveblocksContextBundle<
     useDeleteAllInboxNotifications,
 
     useInboxNotificationThread,
+    useUserThreads_experimental: () => useUserThreads_withClient<M>(client),
 
     ...shared.classic,
 
@@ -424,10 +592,51 @@ function makeLiveblocksContextBundle<
 
       useInboxNotificationThread,
 
+      useUserThreads_experimental: () =>
+        useUserThreadsSuspense_withClient(client),
+
       ...shared.suspense,
     },
   };
   return bundle;
+}
+
+function useUserThreads_withClient<M extends BaseMetadata>(
+  client: OpaqueClient
+): ThreadsState<M> {
+  const { loadUserThreads, store, useEnableUserThreadsPolling } =
+    getExtrasForClient<M>(client);
+
+  // Trigger initial loading of user threads if it hasn't started
+  // already, but don't await its promise.
+  useEffect(() => {
+    loadUserThreads();
+  }, [loadUserThreads]);
+
+  useEnableUserThreadsPolling();
+  return useSyncExternalStoreWithSelector(
+    store.subscribe,
+    store.get,
+    store.get,
+    selectorFor_useUserThreads,
+    shallow
+  );
+}
+
+function useUserThreadsSuspense_withClient<M extends BaseMetadata>(
+  client: OpaqueClient
+): ThreadsStateSuccess<M> {
+  const { waitUntilUserThreadsLoaded } = getExtrasForClient(client);
+
+  // Suspend until there are at least some user threads
+  use(waitUntilUserThreadsLoaded());
+
+  // We're in a Suspense world here, and as such, the useUserThreads()
+  // hook is expected to only return success results when we're here.
+  const result = useUserThreads_withClient<M>(client);
+  assert(!result.error, "Did not expect error");
+  assert(!result.isLoading, "Did not expect loading");
+  return result as ThreadsStateSuccess<M>; // TODO: Remove casting
 }
 
 function useInboxNotifications_withClient(client: OpaqueClient) {
@@ -501,7 +710,7 @@ function useUnreadInboxNotificationsCountSuspense_withClient(
 function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
   return useCallback(
     (inboxNotificationId: string) => {
-      const { store, notifications } = getExtrasForClient(client);
+      const { store } = getExtrasForClient(client);
 
       const optimisticUpdateId = nanoid();
       const readAt = new Date();
@@ -512,7 +721,7 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
         readAt,
       });
 
-      notifications.markInboxNotificationAsRead(inboxNotificationId).then(
+      client.markInboxNotificationAsRead(inboxNotificationId).then(
         () => {
           store.set((state) => {
             const existingNotification =
@@ -560,7 +769,7 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
 
 function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
   return useCallback(() => {
-    const { store, notifications } = getExtrasForClient(client);
+    const { store } = getExtrasForClient(client);
     const optimisticUpdateId = nanoid();
     const readAt = new Date();
     store.pushOptimisticUpdate({
@@ -569,7 +778,7 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
       readAt,
     });
 
-    notifications.markAllInboxNotificationsAsRead().then(
+    client.markAllInboxNotificationsAsRead().then(
       () => {
         store.set((state) => ({
           ...state,
@@ -602,7 +811,7 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
 function useDeleteInboxNotification_withClient(client: OpaqueClient) {
   return useCallback(
     (inboxNotificationId: string) => {
-      const { store, notifications } = getExtrasForClient(client);
+      const { store } = getExtrasForClient(client);
 
       const optimisticUpdateId = nanoid();
       const deletedAt = new Date();
@@ -613,7 +822,7 @@ function useDeleteInboxNotification_withClient(client: OpaqueClient) {
         deletedAt,
       });
 
-      notifications.deleteInboxNotification(inboxNotificationId).then(
+      client.deleteInboxNotification(inboxNotificationId).then(
         () => {
           store.set((state) => {
             const existingNotification =
@@ -658,7 +867,7 @@ function useDeleteInboxNotification_withClient(client: OpaqueClient) {
 
 function useDeleteAllInboxNotifications_withClient(client: OpaqueClient) {
   return useCallback(() => {
-    const { store, notifications } = getExtrasForClient(client);
+    const { store } = getExtrasForClient(client);
     const optimisticUpdateId = nanoid();
     const deletedAt = new Date();
     store.pushOptimisticUpdate({
@@ -667,7 +876,7 @@ function useDeleteAllInboxNotifications_withClient(client: OpaqueClient) {
       deletedAt,
     });
 
-    notifications.deleteAllInboxNotifications().then(
+    client.deleteAllInboxNotifications().then(
       () => {
         store.set((state) => ({
           ...state,
@@ -876,12 +1085,14 @@ export function createSharedContext<U extends BaseUserMeta>(
       useClient,
       useUser: (userId: string) => useUser_withClient(client, userId),
       useRoomInfo: (roomId: string) => useRoomInfo_withClient(client, roomId),
+      useIsInsideRoom,
     },
     suspense: {
       useClient,
       useUser: (userId: string) => useUserSuspense_withClient(client, userId),
       useRoomInfo: (roomId: string) =>
         useRoomInfoSuspense_withClient(client, roomId),
+      useIsInsideRoom,
     },
   };
 }
@@ -997,6 +1208,28 @@ export function createLiveblocksContext<
   M extends BaseMetadata = DM,
 >(client: OpaqueClient): LiveblocksContextBundle<U, M> {
   return getOrCreateContextBundle<U, M>(client);
+}
+
+/**
+ * @experimental
+ *
+ * This hook is experimental and could be removed or changed at any time!
+ * Do not use unless explicitely recommended by the Liveblocks team.
+ */
+function useUserThreads_experimental() {
+  return useUserThreads_withClient(useClient());
+}
+
+/**
+ * @experimental
+ *
+ * This hook is experimental and could be removed or changed at any time!
+ * Do not use unless explicitely recommended by the Liveblocks team.
+ */
+function useUserThreadsSuspense_experimental<
+  M extends BaseMetadata,
+>(): ThreadsStateSuccess<M> {
+  return useUserThreadsSuspense_withClient<M>(useClient());
 }
 
 /**
@@ -1160,6 +1393,24 @@ const _useUser: TypedBundle["useUser"] = useUser;
  */
 const _useUserSuspense: TypedBundle["suspense"]["useUser"] = useUserSuspense;
 
+/**
+ * @experimental
+ *
+ * This hook is experimental and could be removed or changed at any time!
+ * Do not use unless explicitely recommended by the Liveblocks team.
+ */
+const _useUserThreads_experimental: TypedBundle["useUserThreads_experimental"] =
+  useUserThreads_experimental;
+
+/**
+ * @experimental
+ *
+ * This hook is experimental and could be removed or changed at any time!
+ * Do not use unless explicitely recommended by the Liveblocks team.
+ */
+const _useUserThreadsSuspense_experimental: TypedBundle["suspense"]["useUserThreads_experimental"] =
+  useUserThreadsSuspense_experimental;
+
 // eslint-disable-next-line simple-import-sort/exports
 export {
   _useInboxNotificationThread as useInboxNotificationThread,
@@ -1175,4 +1426,6 @@ export {
   useRoomInfoSuspense,
   useUnreadInboxNotificationsCount,
   useUnreadInboxNotificationsCountSuspense,
+  _useUserThreads_experimental as useUserThreads_experimental,
+  _useUserThreadsSuspense_experimental as useUserThreadsSuspense_experimental,
 };

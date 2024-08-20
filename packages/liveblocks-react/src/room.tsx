@@ -29,7 +29,6 @@ import type {
   LiveblocksError,
   OpaqueClient,
   OpaqueRoom,
-  PrivateRoomApi,
   RoomEventMessage,
   RoomNotificationSettings,
   StorageStatus,
@@ -40,19 +39,21 @@ import {
   addReaction,
   CommentsApiError,
   console,
+  createCommentId,
+  createThreadId,
   deleteComment,
   deprecateIf,
   errorIf,
   kInternal,
   makeEventSource,
   makePoller,
+  nanoid,
   NotificationsApiError,
   removeReaction,
   ServerMsgCode,
   stringify,
   upsertComment,
 } from "@liveblocks/core";
-import { nanoid } from "nanoid";
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
@@ -71,7 +72,6 @@ import {
   RemoveReactionError,
   UpdateNotificationSettingsError,
 } from "./comments/errors";
-import { createCommentId, createThreadId } from "./comments/lib/createIds";
 import { selectNotificationSettings } from "./comments/lib/select-notification-settings";
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 import { selectedThreads } from "./comments/lib/selected-threads";
@@ -329,7 +329,13 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
    * @param roomId The id of the room for which to retrieve threads updates
    */
   async function getThreadsUpdates(roomId: string) {
-    const room = client.getRoom(roomId);
+    const room = client.getRoom(roomId) as Room<
+      never,
+      never,
+      never,
+      never,
+      M
+    > | null; // TODO: Figure out how to remove this casting
     if (room === null) return;
 
     const since = lastRequestedAtByRoom.get(room.id);
@@ -343,8 +349,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
       // Set the isFetchingThreadsUpdates flag to true to prevent multiple requests to fetch threads updates for the room from being made at the same time
       requestStatusByRoom.set(room.id, true);
 
-      const commentsAPI = (room[kInternal] as PrivateRoomApi<M>).comments;
-      const updates = await commentsAPI.getThreads({ since });
+      const updates = await room.getThreadsSince({ since });
 
       // Set the isFetchingThreadsUpdates flag to false after a certain interval to prevent multiple requests from being made at the same time
       setTimeout(() => {
@@ -352,14 +357,14 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
       }, DEFAULT_DEDUPING_INTERVAL);
 
       store.updateThreadsAndNotifications(
-        updates.threads,
-        updates.inboxNotifications,
-        updates.deletedThreads,
-        updates.deletedInboxNotifications
+        updates.threads.updated,
+        updates.inboxNotifications.updated,
+        updates.threads.deleted,
+        updates.inboxNotifications.deleted
       );
 
       // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
-      lastRequestedAtByRoom.set(room.id, updates.meta.requestedAt);
+      lastRequestedAtByRoom.set(room.id, updates.requestedAt);
     } catch (err) {
       requestStatusByRoom.set(room.id, false);
       // TODO: Implement error handling
@@ -378,8 +383,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     // If a request was already made for the query, we do not make another request and return the existing promise of the request
     if (existingRequest !== undefined) return existingRequest;
 
-    const commentsAPI = (room[kInternal] as PrivateRoomApi<M>).comments;
-    const request = commentsAPI.getThreads(options);
+    const request = room.getThreads(options);
 
     // Store the promise of the request for the query so that we do not make another request for the same query
     requestsByQuery.set(queryKey, request);
@@ -392,10 +396,10 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
       const result = await request;
 
       store.updateThreadsAndNotifications(
-        result.threads,
+        result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
         result.inboxNotifications,
-        result.deletedThreads,
-        result.deletedInboxNotifications,
+        [],
+        [],
         queryKey
       );
 
@@ -409,9 +413,9 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
        */
       if (
         lastRequestedAt === undefined ||
-        lastRequestedAt > result.meta.requestedAt
+        lastRequestedAt > result.requestedAt
       ) {
-        lastRequestedAtByRoom.set(room.id, result.meta.requestedAt);
+        lastRequestedAtByRoom.set(room.id, result.requestedAt);
       }
 
       poller.start(POLLING_INTERVAL);
@@ -445,8 +449,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     if (existingRequest !== undefined) return existingRequest;
 
     try {
-      const request =
-        room[kInternal].notifications.getRoomNotificationSettings();
+      const request = room.getNotificationSettings();
 
       requestsByQuery.set(queryKey, request);
 
@@ -826,12 +829,10 @@ function RoomProviderInner<
       }
 
       // TODO: Error handling
-      const info = await room[kInternal].comments.getThread({
-        threadId: message.threadId,
-      });
+      const info = await room.getThread(message.threadId);
 
       // If no thread info was returned (i.e., 404), we remove the thread and relevant inbox notifications from local cache.
-      if (!info) {
+      if (!info.thread) {
         store.deleteThread(message.threadId);
         return;
       }
@@ -923,6 +924,17 @@ function useRoom<
     throw new Error("RoomProvider is missing from the React tree.");
   }
   return room;
+}
+
+/**
+ * Returns whether the hook is called within a RoomProvider context.
+ *
+ * @example
+ * const isInsideRoom = useIsInsideRoom();
+ */
+function useIsInsideRoom(): boolean {
+  const room = useRoomOrNull();
+  return room !== null;
 }
 
 /**
@@ -1513,8 +1525,7 @@ function useCreateThread<M extends BaseMetadata>(): (
         roomId: room.id,
       });
 
-      const commentsAPI = (room[kInternal] as PrivateRoomApi<M>).comments;
-      commentsAPI.createThread({ threadId, commentId, body, metadata }).then(
+      room.createThread({ threadId, commentId, body, metadata }).then(
         (thread) => {
           store.set((state) => ({
             ...state,
@@ -1573,8 +1584,7 @@ function useDeleteThread(): (threadId: string) => void {
         deletedAt: new Date(),
       });
 
-      const commentsAPI = room[kInternal].comments;
-      commentsAPI.deleteThread({ threadId }).then(
+      room.deleteThread(threadId).then(
         () => {
           store.set((state) => {
             const existingThread = state.threads[threadId];
@@ -1634,8 +1644,7 @@ function useEditThreadMetadata<M extends BaseMetadata>() {
         updatedAt,
       });
 
-      const commentsAPI = (room[kInternal] as PrivateRoomApi<M>).comments;
-      commentsAPI.editThreadMetadata({ metadata, threadId }).then(
+      room.editThreadMetadata({ metadata, threadId }).then(
         (metadata) => {
           store.set((state) => {
             const existingThread = state.threads[threadId];
@@ -1734,68 +1743,66 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
         id: optimisticUpdateId,
       });
 
-      room[kInternal].comments
-        .createComment({ threadId, commentId, body })
-        .then(
-          (newComment) => {
-            store.set((state) => {
-              const existingThread = state.threads[threadId];
-              const updatedOptimisticUpdates = state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              );
+      room.createComment({ threadId, commentId, body }).then(
+        (newComment) => {
+          store.set((state) => {
+            const existingThread = state.threads[threadId];
+            const updatedOptimisticUpdates = state.optimisticUpdates.filter(
+              (update) => update.id !== optimisticUpdateId
+            );
 
-              if (existingThread === undefined) {
-                return {
-                  ...state,
-                  optimisticUpdates: updatedOptimisticUpdates,
-                };
-              }
-
-              const inboxNotification = Object.values(
-                state.inboxNotifications
-              ).find(
-                (notification) =>
-                  notification.kind === "thread" &&
-                  notification.threadId === threadId
-              );
-
-              // If the thread has an inbox notification associated with it, we update the notification's `notifiedAt` and `readAt` values
-              const updatedInboxNotifications =
-                inboxNotification !== undefined
-                  ? {
-                      ...state.inboxNotifications,
-                      [inboxNotification.id]: {
-                        ...inboxNotification,
-                        notifiedAt: newComment.createdAt,
-                        readAt: newComment.createdAt,
-                      },
-                    }
-                  : state.inboxNotifications;
-
+            if (existingThread === undefined) {
               return {
                 ...state,
-                threads: {
-                  ...state.threads,
-                  [threadId]: upsertComment(existingThread, newComment), // Upsert the new comment into the thread comments list (if applicable)
-                },
-                inboxNotifications: updatedInboxNotifications,
                 optimisticUpdates: updatedOptimisticUpdates,
               };
-            });
-          },
-          (err: Error) =>
-            onMutationFailure(
-              err,
-              optimisticUpdateId,
-              (err) =>
-                new CreateCommentError(err, {
-                  roomId: room.id,
-                  threadId,
-                  commentId,
-                  body,
-                })
-            )
-        );
+            }
+
+            const inboxNotification = Object.values(
+              state.inboxNotifications
+            ).find(
+              (notification) =>
+                notification.kind === "thread" &&
+                notification.threadId === threadId
+            );
+
+            // If the thread has an inbox notification associated with it, we update the notification's `notifiedAt` and `readAt` values
+            const updatedInboxNotifications =
+              inboxNotification !== undefined
+                ? {
+                    ...state.inboxNotifications,
+                    [inboxNotification.id]: {
+                      ...inboxNotification,
+                      notifiedAt: newComment.createdAt,
+                      readAt: newComment.createdAt,
+                    },
+                  }
+                : state.inboxNotifications;
+
+            return {
+              ...state,
+              threads: {
+                ...state.threads,
+                [threadId]: upsertComment(existingThread, newComment), // Upsert the new comment into the thread comments list (if applicable)
+              },
+              inboxNotifications: updatedInboxNotifications,
+              optimisticUpdates: updatedOptimisticUpdates,
+            };
+          });
+        },
+        (err: Error) =>
+          onMutationFailure(
+            err,
+            optimisticUpdateId,
+            (err) =>
+              new CreateCommentError(err, {
+                roomId: room.id,
+                threadId,
+                commentId,
+                body,
+              })
+          )
+      );
 
       return comment;
     },
@@ -1848,7 +1855,7 @@ function useEditComment(): (options: EditCommentOptions) => void {
         id: optimisticUpdateId,
       });
 
-      room[kInternal].comments.editComment({ threadId, commentId, body }).then(
+      room.editComment({ threadId, commentId, body }).then(
         (editedComment) => {
           store.set((state) => {
             const existingThread = state.threads[threadId];
@@ -1919,7 +1926,7 @@ function useDeleteComment() {
         roomId: room.id,
       });
 
-      room[kInternal].comments.deleteComment({ threadId, commentId }).then(
+      room.deleteComment({ threadId, commentId }).then(
         () => {
           store.set((state) => {
             const existingThread = state.threads[threadId];
@@ -1985,7 +1992,7 @@ function useAddReaction<M extends BaseMetadata>() {
         id: optimisticUpdateId,
       });
 
-      room[kInternal].comments.addReaction({ threadId, commentId, emoji }).then(
+      room.addReaction({ threadId, commentId, emoji }).then(
         (addedReaction) => {
           store.set((state): CacheState<M> => {
             const existingThread = state.threads[threadId];
@@ -2061,53 +2068,51 @@ function useRemoveReaction() {
         id: optimisticUpdateId,
       });
 
-      room[kInternal].comments
-        .removeReaction({ threadId, commentId, emoji })
-        .then(
-          () => {
-            store.set((state) => {
-              const existingThread = state.threads[threadId];
-              const updatedOptimisticUpdates = state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              );
+      room.removeReaction({ threadId, commentId, emoji }).then(
+        () => {
+          store.set((state) => {
+            const existingThread = state.threads[threadId];
+            const updatedOptimisticUpdates = state.optimisticUpdates.filter(
+              (update) => update.id !== optimisticUpdateId
+            );
 
-              // If the thread doesn't exist in the cache, we do not update the metadata
-              if (existingThread === undefined) {
-                return {
-                  ...state,
-                  optimisticUpdates: updatedOptimisticUpdates,
-                };
-              }
-
+            // If the thread doesn't exist in the cache, we do not update the metadata
+            if (existingThread === undefined) {
               return {
                 ...state,
-                threads: {
-                  ...state.threads,
-                  [threadId]: removeReaction(
-                    existingThread,
-                    commentId,
-                    emoji,
-                    userId,
-                    removedAt
-                  ),
-                },
                 optimisticUpdates: updatedOptimisticUpdates,
               };
-            });
-          },
-          (err: Error) =>
-            onMutationFailure(
-              err,
-              optimisticUpdateId,
-              (error) =>
-                new RemoveReactionError(error, {
-                  roomId: room.id,
-                  threadId,
+            }
+
+            return {
+              ...state,
+              threads: {
+                ...state.threads,
+                [threadId]: removeReaction(
+                  existingThread,
                   commentId,
                   emoji,
-                })
-            )
-        );
+                  userId,
+                  removedAt
+                ),
+              },
+              optimisticUpdates: updatedOptimisticUpdates,
+            };
+          });
+        },
+        (err: Error) =>
+          onMutationFailure(
+            err,
+            optimisticUpdateId,
+            (error) =>
+              new RemoveReactionError(error, {
+                roomId: room.id,
+                threadId,
+                commentId,
+                emoji,
+              })
+          )
+      );
     },
     [client, room]
   );
@@ -2146,36 +2151,34 @@ function useMarkThreadAsRead() {
         readAt: now,
       });
 
-      room[kInternal].notifications
-        .markInboxNotificationAsRead(inboxNotification.id)
-        .then(
-          () => {
-            store.set((state) => ({
-              ...state,
-              inboxNotifications: {
-                ...state.inboxNotifications,
-                [inboxNotification.id]: {
-                  ...inboxNotification,
-                  readAt: now,
-                },
+      room.markInboxNotificationAsRead(inboxNotification.id).then(
+        () => {
+          store.set((state) => ({
+            ...state,
+            inboxNotifications: {
+              ...state.inboxNotifications,
+              [inboxNotification.id]: {
+                ...inboxNotification,
+                readAt: now,
               },
-              optimisticUpdates: state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              ),
-            }));
-          },
-          (err: Error) => {
-            onMutationFailure(
-              err,
-              optimisticUpdateId,
-              (error) =>
-                new MarkInboxNotificationAsReadError(error, {
-                  inboxNotificationId: inboxNotification.id,
-                })
-            );
-            return;
-          }
-        );
+            },
+            optimisticUpdates: state.optimisticUpdates.filter(
+              (update) => update.id !== optimisticUpdateId
+            ),
+          }));
+        },
+        (err: Error) => {
+          onMutationFailure(
+            err,
+            optimisticUpdateId,
+            (error) =>
+              new MarkInboxNotificationAsReadError(error, {
+                inboxNotificationId: inboxNotification.id,
+              })
+          );
+          return;
+        }
+      );
     },
     [client, room]
   );
@@ -2204,8 +2207,7 @@ function useMarkThreadAsResolved() {
         updatedAt,
       });
 
-      const commentsAPI = room[kInternal].comments;
-      commentsAPI.markThreadAsResolved({ threadId }).then(
+      room.markThreadAsResolved(threadId).then(
         () => {
           store.set((state) => {
             const existingThread = state.threads[threadId];
@@ -2291,8 +2293,7 @@ function useMarkThreadAsUnresolved() {
         updatedAt,
       });
 
-      const commentsAPI = room[kInternal].comments;
-      commentsAPI.markThreadAsUnresolved({ threadId }).then(
+      room.markThreadAsUnresolved(threadId).then(
         () => {
           store.set((state) => {
             const existingThread = state.threads[threadId];
@@ -2475,30 +2476,28 @@ function useUpdateRoomNotificationSettings() {
         settings,
       });
 
-      room[kInternal].notifications
-        .updateRoomNotificationSettings(settings)
-        .then(
-          (settings) => {
-            store.set((state) => ({
-              ...state,
-              notificationSettings: {
-                [room.id]: settings,
-              },
-              optimisticUpdates: state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              ),
-            }));
-          },
-          (err: Error) =>
-            onMutationFailure(
-              err,
-              optimisticUpdateId,
-              (error) =>
-                new UpdateNotificationSettingsError(error, {
-                  roomId: room.id,
-                })
-            )
-        );
+      room.updateNotificationSettings(settings).then(
+        (settings) => {
+          store.set((state) => ({
+            ...state,
+            notificationSettings: {
+              [room.id]: settings,
+            },
+            optimisticUpdates: state.optimisticUpdates.filter(
+              (update) => update.id !== optimisticUpdateId
+            ),
+          }));
+        },
+        (err: Error) =>
+          onMutationFailure(
+            err,
+            optimisticUpdateId,
+            (error) =>
+              new UpdateNotificationSettingsError(error, {
+                roomId: room.id,
+              })
+          )
+      );
     },
     [client, room]
   );
@@ -2825,6 +2824,14 @@ const _useOthersListener: TypedBundle["useOthersListener"] = useOthersListener;
  * tree.
  */
 const _useRoom: TypedBundle["useRoom"] = useRoom;
+
+/**
+ * Returns whether the hook is called within a RoomProvider context.
+ *
+ * @example
+ * const isInsideRoom = useIsInsideRoom();
+ */
+const _useIsInsideRoom: TypedBundle["useIsInsideRoom"] = useIsInsideRoom;
 
 /**
  * Returns a function that adds a reaction from a comment.
@@ -3294,6 +3301,7 @@ export {
   useErrorListener,
   _useEventListener as useEventListener,
   useHistory,
+  _useIsInsideRoom as useIsInsideRoom,
   useLostConnectionListener,
   useMarkThreadAsRead,
   useMarkThreadAsResolved,

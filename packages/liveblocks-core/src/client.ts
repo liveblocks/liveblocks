@@ -14,7 +14,6 @@ import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import type { NoInfr } from "./lib/NoInfer";
 import type { Resolve } from "./lib/Resolve";
-import type { GetInboxNotificationsOptions } from "./notifications";
 import { createNotificationsApi } from "./notifications";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
@@ -139,29 +138,106 @@ export type EnterOptions<P extends JsonObject = DP, S extends LsonObject = DS> =
  * will probably happen if you do.
  */
 export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
-  readonly notifications: NotificationsApi<M>;
   readonly currentUserIdStore: Store<string | null>;
   readonly resolveMentionSuggestions: ClientOptions<U>["resolveMentionSuggestions"];
   readonly cacheStore: CacheStore<BaseMetadata>;
   readonly usersStore: BatchStore<U["info"] | undefined, string>;
   readonly roomsInfoStore: BatchStore<DRI | undefined, string>;
   readonly getRoomIds: () => string[];
+  readonly getThreads: () => Promise<{
+    threads: ThreadData<M>[];
+    inboxNotifications: InboxNotificationData[];
+    requestedAt: Date;
+  }>;
+  readonly getThreadsSince: (options: { since: Date }) => Promise<{
+    inboxNotifications: {
+      updated: InboxNotificationData[];
+      deleted: InboxNotificationDeleteInfo[];
+    };
+    threads: {
+      updated: ThreadData<M>[];
+      deleted: ThreadDeleteInfo[];
+    };
+    requestedAt: Date;
+  }>;
 };
 
 export type NotificationsApi<M extends BaseMetadata> = {
-  getInboxNotifications(options?: GetInboxNotificationsOptions): Promise<{
+  /**
+   * Gets the current user inbox notifications and their associated threads.
+   * It also returns the request date that can be used for subsequent polling.
+   *
+   * @example
+   * const {
+   *   inboxNotifications,
+   *   threads,
+   *   requestedAt
+   * } = await client.getInboxNotifications();
+   */
+  getInboxNotifications(): Promise<{
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<M>[];
-    deletedThreads: ThreadDeleteInfo[];
-    deletedInboxNotifications: InboxNotificationDeleteInfo[];
-    meta: {
-      requestedAt: Date;
-    };
+    requestedAt: Date;
   }>;
+
+  /**
+   * Gets the updated and deleted inbox notifications and their associated threads since the requested date.
+   *
+   * @example
+   * const result = await client.getInboxNotifications();
+   * // ... //
+   * await client.getInboxNotificationsSince({ since: result.requestedAt }});
+   */
+  getInboxNotificationsSince(options: { since: Date }): Promise<{
+    inboxNotifications: {
+      updated: InboxNotificationData[];
+      deleted: InboxNotificationDeleteInfo[];
+    };
+    threads: {
+      updated: ThreadData<M>[];
+      deleted: ThreadDeleteInfo[];
+    };
+    requestedAt: Date;
+  }>;
+
+  /**
+   * Gets the number of unread inbox notifications for the current user.
+   *
+   * @example
+   * const count = await client.getUnreadInboxNotificationsCount();
+   */
   getUnreadInboxNotificationsCount(): Promise<number>;
+
+  /**
+   * Marks all inbox notifications as read.
+   *
+   * @example
+   * await client.markAllInboxNotificationsAsRead();
+   */
   markAllInboxNotificationsAsRead(): Promise<void>;
+
+  /**
+   * Marks an inbox notification as read.
+   *
+   * @example
+   * await client.markInboxNotificationAsRead("in_xxx");
+   */
   markInboxNotificationAsRead(inboxNotificationId: string): Promise<void>;
+
+  /**
+   * Deletes all inbox notifications for the current user.
+   *
+   * @example
+   * await client.deleteAllInboxNotifications();
+   */
   deleteAllInboxNotifications(): Promise<void>;
+
+  /**
+   * Deletes an inbox notification for the current user.
+   *
+   * @example
+   * await client.deleteInboxNotification("in_xxx");
+   */
   deleteInboxNotification(inboxNotificationId: string): Promise<void>;
 };
 
@@ -173,7 +249,7 @@ export type NotificationsApi<M extends BaseMetadata> = {
  */
 export type OpaqueClient = Client<BaseUserMeta>;
 
-export type Client<U extends BaseUserMeta = DU> = {
+export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
   /**
    * Gets a room. Returns null if {@link Client.enter} has not been called previously.
    *
@@ -226,8 +302,8 @@ export type Client<U extends BaseUserMeta = DU> = {
    * will probably happen if you do.
    */
   // TODO Make this a getter, so we can provide M
-  readonly [kInternal]: PrivateClientApi<U, BaseMetadata>;
-};
+  readonly [kInternal]: PrivateClientApi<U, M>;
+} & NotificationsApi<M>;
 
 export type AuthEndpoint =
   | string
@@ -514,11 +590,14 @@ export function createClient<U extends BaseUserMeta = DU>(
 
   const {
     getInboxNotifications,
+    getInboxNotificationsSince,
     getUnreadInboxNotificationsCount,
     markAllInboxNotificationsAsRead,
     markInboxNotificationAsRead,
     deleteAllInboxNotifications,
     deleteInboxNotification,
+    getThreads,
+    getThreadsSince,
   } = createNotificationsApi({
     baseUrl,
     fetcher: clientOptions.polyfills?.fetch || /* istanbul ignore next */ fetch,
@@ -571,16 +650,17 @@ export function createClient<U extends BaseUserMeta = DU>(
 
       logout,
 
+      getInboxNotifications,
+      getInboxNotificationsSince,
+      getUnreadInboxNotificationsCount,
+      markAllInboxNotificationsAsRead,
+      markInboxNotificationAsRead,
+      deleteAllInboxNotifications,
+      deleteInboxNotification,
+      getThreads,
+
       // Internal
       [kInternal]: {
-        notifications: {
-          getInboxNotifications,
-          getUnreadInboxNotificationsCount,
-          markAllInboxNotificationsAsRead,
-          markInboxNotificationAsRead,
-          deleteAllInboxNotifications,
-          deleteInboxNotification,
-        },
         currentUserIdStore,
         resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,
         cacheStore,
@@ -589,6 +669,8 @@ export function createClient<U extends BaseUserMeta = DU>(
         getRoomIds() {
           return Array.from(roomsById.keys());
         },
+        getThreads,
+        getThreadsSince,
       },
     },
     kInternal,

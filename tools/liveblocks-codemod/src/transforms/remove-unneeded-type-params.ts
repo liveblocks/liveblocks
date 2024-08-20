@@ -9,6 +9,7 @@ export default function transformer(
 ) {
   const j = api.jscodeshift.withParser("tsx");
   const root = j(file.source);
+  let isDirty = false;
 
   /**
    * Matches: import { type User, User as U1 } from "@liveblocks/client";
@@ -58,7 +59,9 @@ export default function transformer(
       .replaceWith((path) =>
         j.tsTypeReference(path.node.typeName /* no typeParameters */)
       );
+
+    isDirty = true;
   }
 
-  return root.toSource(options);
+  return isDirty ? root.toSource(options) : file.source;
 }

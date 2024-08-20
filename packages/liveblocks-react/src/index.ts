@@ -47,6 +47,7 @@ export {
   useErrorListener,
   useEventListener,
   useHistory,
+  useIsInsideRoom,
   useLostConnectionListener,
   useMarkThreadAsRead,
   useMutation,
@@ -81,6 +82,7 @@ export {
 } from "./room";
 export {
   useInboxNotifications,
+  useUserThreads_experimental as useUserThreads_experimental,
   useRoomInfo,
   useUnreadInboxNotificationsCount,
   useUser,
