@@ -100,6 +100,9 @@ about this change in our
   <PropertiesListItem name="showReactions" type="boolean" defaultValue="true">
     Whether to show reactions.
   </PropertiesListItem>
+  <PropertiesListItem name="showAttachments" type="boolean" defaultValue="true">
+    Whether to show attachments.
+  </PropertiesListItem>
   <PropertiesListItem
     name="showResolveAction"
     type="boolean"
@@ -672,6 +675,9 @@ occurs when the composer is submitted. You must create your own mutations within
     detailedType="(comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => Promise<void> | void"
   >
     The event handler called when the form is submitted.
+  </PropertiesListItem>
+  <PropertiesListItem name="disabled" type="boolean">
+    Whether the composer is disabled.
   </PropertiesListItem>
   <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
     Replace the rendered element by the one passed as a child.
@@ -1273,28 +1279,40 @@ const { isEmpty, attachments, submit } = useComposer();
   <PropertiesListItem name="canSubmit" type="boolean">
     Whether the composer can currently be submitted.
   </PropertiesListItem>
-  <PropertiesListItem name="submit" type="() => void">
+  <PropertiesListItem name="submit" type="function" detailedType="() => void">
     Submit the editor programmatically.
   </PropertiesListItem>
-  <PropertiesListItem name="clear" type="() => void">
+  <PropertiesListItem name="clear" type="function" detailedType="() => void">
     Clear the editor programmatically.
   </PropertiesListItem>
-  <PropertiesListItem name="select" type="() => void">
+  <PropertiesListItem name="select" type="function" detailedType="() => void">
     Select the editor programmatically.
   </PropertiesListItem>
-  <PropertiesListItem name="focus" type="() => void">
+  <PropertiesListItem name="focus" type="function" detailedType="() => void">
     Focus the editor programmatically.
   </PropertiesListItem>
-  <PropertiesListItem name="blur" type="() => void">
+  <PropertiesListItem name="blur" type="function" detailedType="() => void">
     Blur the editor programmatically.
   </PropertiesListItem>
-  <PropertiesListItem name="createMention" type="() => void">
+  <PropertiesListItem
+    name="createMention"
+    type="function"
+    detailedType="() => void"
+  >
     Start creating a mention at the current selection.
   </PropertiesListItem>
-  <PropertiesListItem name="insertText" type="(text: string) => void">
+  <PropertiesListItem
+    name="insertText"
+    type="function"
+    detailedType="(text: string) => void"
+  >
     Insert text at the current selection.
   </PropertiesListItem>
-  <PropertiesListItem name="attachFiles" type="() => void">
+  <PropertiesListItem
+    name="attachFiles"
+    type="function"
+    detailedType="() => void"
+  >
     Open a file picker programmatically to create attachments.
   </PropertiesListItem>
   <PropertiesListItem name="attachments" type="ComposerAttachment[]">
@@ -1302,7 +1320,8 @@ const { isEmpty, attachments, submit } = useComposer();
   </PropertiesListItem>
   <PropertiesListItem
     name="removeAttachment"
-    type="(attachmentId: string) => void"
+    type="function"
+    detailedType="(attachmentId: string) => void"
   >
     Remove an attachment by its ID.
   </PropertiesListItem>
@@ -1631,8 +1650,14 @@ Displays a thread inbox notification.
   <PropertiesListItem name="showActions" type='boolean | "hover"'>
     How to show or hide the actions.
   </PropertiesListItem>
-  <PropertiesListItem name="showRoomName" type="boolean">
+  <PropertiesListItem name="showRoomName" type="boolean" defaultValue="true">
     Whether to show the room name in the title.
+  </PropertiesListItem>
+  <PropertiesListItem name="showReactions" type="boolean" defaultValue="true">
+    Whether to show reactions.
+  </PropertiesListItem>
+  <PropertiesListItem name="showAttachments" type="boolean" defaultValue="true">
+    Whether to show attachments.
   </PropertiesListItem>
 </PropertiesList>
 
