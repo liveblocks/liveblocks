@@ -64,11 +64,11 @@ import type { ClientMsg, UpdateYDocClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
 import type {
   BaseMetadata,
+  CommentAttachment,
   CommentBody,
   CommentData,
   CommentDataPlain,
   CommentLocalAttachment,
-  CommentUploadedAttachment,
   CommentUserReaction,
   CommentUserReactionPlain,
   QueryMetadata,
@@ -937,7 +937,7 @@ export type Room<
   uploadAttachment(
     attachment: CommentLocalAttachment,
     options?: UploadAttachmentOptions
-  ): Promise<CommentUploadedAttachment>;
+  ): Promise<CommentAttachment>;
 
   /**
    * Returns a presigned URL for an attachment by its ID.
@@ -3188,6 +3188,8 @@ export function createRoom<
 
   function prepareAttachment(file: File): CommentLocalAttachment {
     return {
+      type: "localAttachment",
+      status: "idle",
       id: createCommentAttachmentId(),
       name: file.name,
       size: file.size,
@@ -3199,7 +3201,7 @@ export function createRoom<
   // async function uploadAttachment(
   //   attachment: CommentLocalAttachment,
   //   options: UploadAttachmentOptions = {}
-  // ): Promise<CommentUploadedAttachment> {
+  // ): Promise<CommentAttachment> {
   //   const abortSignal = options.signal;
   //   const abortError = abortSignal
   //     ? new DOMException(
@@ -3250,7 +3252,7 @@ export function createRoom<
   async function uploadAttachment(
     attachment: CommentLocalAttachment,
     options: UploadAttachmentOptions = {}
-  ): Promise<CommentUploadedAttachment> {
+  ): Promise<CommentAttachment> {
     const abortSignal = options.signal;
     const abortError = abortSignal
       ? new DOMException(
@@ -3263,9 +3265,9 @@ export function createRoom<
       throw abortError;
     }
 
-    if (attachment.file.size <= ATTACHMENT_PART_SIZE) {
+    if (attachment.size <= ATTACHMENT_PART_SIZE) {
       // If the file is small enough, upload it in a single request
-      return fetchCommentsJson<CommentUploadedAttachment>(
+      return fetchCommentsJson<CommentAttachment>(
         `/attachments/${encodeURIComponent(attachment.id)}/upload/${encodeURIComponent(attachment.name)}`,
         {
           method: "PUT",
@@ -3329,7 +3331,7 @@ export function createRoom<
           throw abortError;
         }
 
-        return fetchCommentsJson<CommentUploadedAttachment>(
+        return fetchCommentsJson<CommentAttachment>(
           `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(uploadId)}/complete`,
           {
             method: "POST",

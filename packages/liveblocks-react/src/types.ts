@@ -17,9 +17,9 @@ import type {
   AsyncResultWithDataField,
   BaseMetadata,
   Client,
+  CommentAttachment,
   CommentBody,
   CommentData,
-  CommentUploadedAttachment,
   DRI,
   InboxNotificationData,
   LiveblocksError,
@@ -105,7 +105,7 @@ export type AttachmentUrlAsyncSuccess = Resolve<
 // prettier-ignore
 export type CreateThreadOptions<M extends BaseMetadata> =
   Resolve<
-    { body: CommentBody, attachments?: CommentUploadedAttachment[]; }
+    { body: CommentBody, attachments?: CommentAttachment[]; }
     & PartialUnless<M, { metadata: M }>
   >;
 
@@ -117,14 +117,14 @@ export type EditThreadMetadataOptions<M extends BaseMetadata> = {
 export type CreateCommentOptions = {
   threadId: string;
   body: CommentBody;
-  attachments?: CommentUploadedAttachment[];
+  attachments?: CommentAttachment[];
 };
 
 export type EditCommentOptions = {
   threadId: string;
   commentId: string;
   body: CommentBody;
-  attachments?: CommentUploadedAttachment[];
+  attachments?: CommentAttachment[];
 };
 
 export type DeleteCommentOptions = {

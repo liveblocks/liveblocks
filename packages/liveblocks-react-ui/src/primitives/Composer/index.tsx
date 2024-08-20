@@ -13,7 +13,7 @@ import {
   size,
   useFloating,
 } from "@floating-ui/react-dom";
-import type { CommentBody } from "@liveblocks/core";
+import type { CommentAttachment, CommentBody } from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
 import { Slot, Slottable } from "@radix-ui/react-slot";
 import type {
@@ -1136,10 +1136,10 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
         const body = composerBodyToCommentBody(
           editor.children as ComposerBodyData
         );
-        // Only uploaded attachments are included to be submitted.
-        const commentAttachments = attachments
-          .filter((attachment) => attachment.status === "uploaded")
-          .map(({ status: _, ...attachment }) => attachment);
+        // Only non-local attachments are included to be submitted.
+        const commentAttachments = attachments.filter(
+          (attachment) => attachment.type === "attachment"
+        ) as CommentAttachment[];
 
         const promise = onComposerSubmit(
           { body, attachments: commentAttachments },

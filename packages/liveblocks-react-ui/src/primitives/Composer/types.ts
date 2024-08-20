@@ -1,9 +1,4 @@
-import type {
-  CommentBody,
-  CommentLocalAttachment,
-  CommentUploadedAttachment,
-  Resolve,
-} from "@liveblocks/core";
+import type { CommentAttachment, CommentBody } from "@liveblocks/core";
 import type {
   ComponentPropsWithoutRef,
   ComponentType,
@@ -147,7 +142,7 @@ export interface ComposerFormProps extends ComponentPropsWithSlot<"form"> {
   /**
    * The composer's initial attachments.
    */
-  defaultAttachments?: CommentUploadedAttachment[];
+  defaultAttachments?: CommentAttachment[];
 }
 
 export type ComposerSubmitProps = ComponentPropsWithSlot<"button">;
@@ -159,37 +154,6 @@ export interface ComposerAttachmentsDropAreaProps
   disabled?: boolean;
 }
 
-export type ComposerLocalUploadingAttachment = Resolve<
-  CommentLocalAttachment & {
-    status: "uploading";
-  }
->;
-
-export type ComposerLocalErrorAttachment = Resolve<
-  CommentLocalAttachment & {
-    status: "error";
-    error: Error;
-  }
->;
-
-export type ComposerLocalTooLargeAttachment = Resolve<
-  CommentLocalAttachment & {
-    status: "too-large";
-  }
->;
-
-export type ComposerUploadedAttachment = Resolve<
-  CommentUploadedAttachment & {
-    status: "uploaded";
-  }
->;
-
-export type ComposerAttachment =
-  | ComposerLocalTooLargeAttachment
-  | ComposerLocalUploadingAttachment
-  | ComposerLocalErrorAttachment
-  | ComposerUploadedAttachment;
-
 export interface ComposerSubmitComment {
   /**
    * The submitted comment's body.
@@ -199,7 +163,7 @@ export interface ComposerSubmitComment {
   /**
    * The submitted comment's uploaded attachments.
    */
-  attachments: CommentUploadedAttachment[];
+  attachments: CommentAttachment[];
 }
 
 export interface ComposerEditorElementProps extends RenderElementProps {

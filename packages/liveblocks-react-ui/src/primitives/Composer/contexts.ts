@@ -1,11 +1,10 @@
 import type { Placement } from "@floating-ui/react-dom";
+import type { CommentMixedAttachment } from "@liveblocks/core";
 import { nn } from "@liveblocks/core";
 import type { Direction } from "@radix-ui/react-dropdown-menu";
 import type { Dispatch, Ref, SetStateAction } from "react";
 import { createContext, useContext } from "react";
 import type { Editor as SlateEditor, Element as SlateElement } from "slate";
-
-import type { ComposerAttachment } from "./types";
 
 export type ComposerContext = {
   /**
@@ -71,7 +70,7 @@ export type ComposerContext = {
   /**
    * The composer's current attachments.
    */
-  attachments: ComposerAttachment[];
+  attachments: CommentMixedAttachment[];
 
   /**
    * Remove an attachment by its ID.

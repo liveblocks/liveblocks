@@ -2,7 +2,8 @@
 
 import type {
   BaseMetadata,
-  CommentUploadedAttachment,
+  CommentAttachment,
+  CommentMixedAttachment,
   DM,
 } from "@liveblocks/core";
 import { kInternal } from "@liveblocks/core";
@@ -34,7 +35,6 @@ import { useOverrides } from "../overrides";
 import * as ComposerPrimitive from "../primitives/Composer";
 import { useComposer } from "../primitives/Composer/contexts";
 import type {
-  ComposerAttachment,
   ComposerEditorComponents,
   ComposerEditorLinkProps,
   ComposerEditorMentionProps,
@@ -127,7 +127,7 @@ export type ComposerProps<M extends BaseMetadata = DM> = Omit<
     /**
      * The composer's initial attachments.
      */
-    defaultAttachments?: CommentUploadedAttachment[];
+    defaultAttachments?: CommentAttachment[];
 
     /**
      * Whether the composer is collapsed. Setting a value will make the composer controlled.
@@ -345,7 +345,7 @@ interface ComposerAttachmentsProps extends ComponentPropsWithoutRef<"div"> {
 }
 
 interface ComposerFileAttachmentProps extends ComponentPropsWithoutRef<"div"> {
-  attachment: ComposerAttachment;
+  attachment: CommentMixedAttachment;
   overrides?: Partial<GlobalOverrides & ComposerOverrides>;
 }
 

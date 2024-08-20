@@ -4,7 +4,7 @@ import {
   type CommentBody,
   type CommentBodyLink,
   type CommentBodyMention,
-  type CommentUploadedAttachment,
+  type CommentMixedAttachment,
   makeEventSource,
   type OpaqueRoom,
 } from "@liveblocks/core";
@@ -33,7 +33,7 @@ import {
   isCommentBodyText,
 } from "../Comment/utils";
 import { useComposer, useComposerAttachmentsContext } from "./contexts";
-import type { ComposerAttachment, SuggestionsPosition } from "./types";
+import type { SuggestionsPosition } from "./types";
 
 export function composerBodyMentionToCommentBodyMention(
   mention: ComposerBodyMention
@@ -304,14 +304,18 @@ interface ComposerAttachmentsManagerOptions {
   maxFileSize: number;
 }
 
+export class AttachmentTooLargeError extends Error {
+  name = "AttachmentTooLargeError";
+}
+
 function createComposerAttachmentsManager(
   room: OpaqueRoom,
   options: ComposerAttachmentsManagerOptions
 ) {
-  const attachments: Map<string, ComposerAttachment> = new Map();
+  const attachments: Map<string, CommentMixedAttachment> = new Map();
   const abortControllers: Map<string, AbortController> = new Map();
   const eventSource = makeEventSource<void>();
-  let cachedSnapshot: ComposerAttachment[] | null = null;
+  let cachedSnapshot: CommentMixedAttachment[] | null = null;
 
   function notifySubscribers() {
     // Invalidate the cached snapshot
@@ -319,24 +323,25 @@ function createComposerAttachmentsManager(
     eventSource.notify();
   }
 
-  function setAttachment(attachment: ComposerAttachment) {
+  function setAttachment(attachment: CommentMixedAttachment) {
     attachments.set(attachment.id, attachment);
 
     notifySubscribers();
   }
 
-  function addAttachment(attachment: CommentAttachment) {
+  function addAttachment(attachment: CommentMixedAttachment) {
     // The attachment already exists
     if (attachments.has(attachment.id)) {
       return;
     }
 
-    if ("file" in attachment) {
+    if (attachment.type === "localAttachment") {
       // The file is too large to be uploaded
       if (attachment.file.size > options.maxFileSize) {
         setAttachment({
           ...attachment,
-          status: "too-large",
+          status: "error",
+          error: new AttachmentTooLargeError("File is too large."),
         });
 
         return;
@@ -357,10 +362,7 @@ function createComposerAttachmentsManager(
           signal: abortController.signal,
         })
         .then((uploadedAttachment) => {
-          setAttachment({
-            ...uploadedAttachment,
-            status: "uploaded",
-          });
+          setAttachment(uploadedAttachment);
         })
         .catch((error) => {
           if (
@@ -377,10 +379,7 @@ function createComposerAttachmentsManager(
         });
     } else {
       // The attachment is already uploaded
-      setAttachment({
-        ...attachment,
-        status: "uploaded",
-      });
+      setAttachment(attachment);
     }
   }
 
@@ -426,7 +425,7 @@ function preventBeforeUnloadDefault(event: BeforeUnloadEvent) {
 }
 
 export function useComposerAttachmentsManager(
-  defaultAttachments: CommentUploadedAttachment[],
+  defaultAttachments: CommentAttachment[],
   options: ComposerAttachmentsManagerOptions
 ) {
   const room = useRoom();
@@ -452,7 +451,11 @@ export function useComposerAttachmentsManager(
   );
 
   const isUploadingAttachments = useMemo(() => {
-    return attachments.some((attachment) => attachment.status === "uploading");
+    return attachments.some(
+      (attachment) =>
+        attachment.type === "localAttachment" &&
+        attachment.status === "uploading"
+    );
   }, [attachments]);
 
   useEffect(() => {

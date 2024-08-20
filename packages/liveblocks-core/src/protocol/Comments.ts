@@ -1,6 +1,5 @@
 import type { DM } from "../globals/augmentation";
 import type { DateToString } from "../lib/DateToString";
-import type { Resolve } from "../lib/Resolve";
 
 export type BaseMetadata = Record<
   string,
@@ -15,24 +14,51 @@ export type CommentReaction = {
   }[];
 };
 
-type CommentAttachmentShared = {
+export type CommentAttachment = {
+  type: "attachment";
   id: string;
   name: string;
   size: number;
   mimeType: string;
 };
 
-export type CommentUploadedAttachment = Resolve<CommentAttachmentShared>;
+export type CommentLocalAttachmentIdle = {
+  type: "localAttachment";
+  status: "idle";
+  id: string;
+  name: string;
+  size: number;
+  mimeType: string;
+  file: File;
+};
 
-export type CommentLocalAttachment = Resolve<
-  CommentAttachmentShared & {
-    file: File;
-  }
->;
+export type CommentLocalAttachmentUploading = {
+  type: "localAttachment";
+  status: "uploading";
+  id: string;
+  name: string;
+  size: number;
+  mimeType: string;
+  file: File;
+};
 
-export type CommentAttachment =
-  | CommentUploadedAttachment
-  | CommentLocalAttachment;
+export type CommentLocalAttachmentError = {
+  type: "localAttachment";
+  status: "error";
+  id: string;
+  name: string;
+  size: number;
+  mimeType: string;
+  file: File;
+  error: Error;
+};
+
+export type CommentLocalAttachment =
+  | CommentLocalAttachmentIdle
+  | CommentLocalAttachmentUploading
+  | CommentLocalAttachmentError;
+
+export type CommentMixedAttachment = CommentAttachment | CommentLocalAttachment;
 
 /**
  * Represents a comment.
@@ -46,7 +72,7 @@ export type CommentData = {
   createdAt: Date;
   editedAt?: Date;
   reactions: CommentReaction[];
-  attachments: CommentUploadedAttachment[];
+  attachments: CommentAttachment[];
 } & (
   | { body: CommentBody; deletedAt?: never }
   | { body?: never; deletedAt: Date }

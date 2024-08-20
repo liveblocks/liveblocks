@@ -149,8 +149,8 @@ export type {
   CommentData,
   CommentDataPlain,
   CommentLocalAttachment,
+  CommentMixedAttachment,
   CommentReaction,
-  CommentUploadedAttachment,
 } from "./protocol/Comments";
 export type {
   CommentUserReaction,

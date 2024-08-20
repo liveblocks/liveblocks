@@ -2,7 +2,7 @@
 
 import type {
   CommentAttachment,
-  CommentUploadedAttachment,
+  CommentMixedAttachment,
 } from "@liveblocks/core";
 import { useAttachmentUrl, useIsInsideRoom } from "@liveblocks/react";
 import type {
@@ -15,16 +15,16 @@ import React, { memo, useCallback, useMemo, useState } from "react";
 import { CrossIcon } from "../../icons/Cross";
 import { SpinnerIcon } from "../../icons/Spinner";
 import { WarningIcon } from "../../icons/Warning";
-import type { GlobalOverrides, Overrides } from "../../overrides";
+import type { GlobalOverrides } from "../../overrides";
 import { useOverrides } from "../../overrides";
-import type { ComposerAttachment } from "../../primitives";
+import { AttachmentTooLargeError } from "../../primitives";
 import { useComposerAttachmentsContextOrNull } from "../../primitives/Composer/contexts";
 import { classNames } from "../../utils/class-names";
 import { formatFileSize } from "../../utils/format-file-size";
 import { Tooltip } from "./Tooltip";
 
 interface FileAttachmentProps extends ComponentPropsWithoutRef<"div"> {
-  attachment: CommentAttachment | ComposerAttachment;
+  attachment: CommentMixedAttachment;
   onContentClick?: MouseEventHandler<HTMLButtonElement>;
   onDeleteClick?: MouseEventHandler<HTMLButtonElement>;
   preventFocusOnDelete?: boolean;
@@ -41,7 +41,7 @@ function splitFileName(name: string) {
   return { base: match?.[1] ?? name, extension: match?.[2] };
 }
 
-function getFileAttcachmentIconGlyph(mimeType: string) {
+function getFileAttachmentIconGlyph(mimeType: string) {
   if (
     mimeType === "application/zip" ||
     mimeType === "application/x-rar-compressed" ||
@@ -84,7 +84,7 @@ function getFileAttcachmentIconGlyph(mimeType: string) {
 
 const FileAttachmentIcon = memo(({ mimeType }: { mimeType: string }) => {
   const iconGlyph = useMemo(
-    () => getFileAttcachmentIconGlyph(mimeType),
+    () => getFileAttachmentIconGlyph(mimeType),
     [mimeType]
   );
 
@@ -120,7 +120,7 @@ const FileAttachmentIcon = memo(({ mimeType }: { mimeType: string }) => {
 function FileAttachmentImagePreview({
   attachment,
 }: {
-  attachment: CommentUploadedAttachment;
+  attachment: CommentAttachment;
 }) {
   const { url } = useAttachmentUrl(attachment.id);
   const [isLoaded, setLoaded] = useState(false);
@@ -142,11 +142,10 @@ function FileAttachmentImagePreview({
 function FileAttachmentPreview({
   attachment,
 }: {
-  attachment: CommentAttachment | ComposerAttachment;
+  attachment: CommentMixedAttachment;
 }) {
   const isInsideRoom = useIsInsideRoom();
-  const status = (attachment as ComposerAttachment).status;
-  const isUploaded = status === "uploaded" || !status;
+  const isUploaded = attachment.type === "attachment";
 
   if (attachment.mimeType.startsWith("image/")) {
     if (
@@ -161,30 +160,6 @@ function FileAttachmentPreview({
   return null;
 }
 
-function formatAttachmentDescription(
-  $: Overrides,
-  attachment: CommentAttachment | ComposerAttachment
-) {
-  return formatFileSize(attachment.size, $.locale);
-}
-
-function formatComposerAttachmentDescription(
-  $: Overrides,
-  attachment: ComposerAttachment,
-  maxAttachmentSize: number
-) {
-  switch (attachment.status) {
-    case "too-large":
-      return $.ATTACHMENT_TOO_LARGE(
-        formatFileSize(maxAttachmentSize, $.locale)
-      );
-    case "error":
-      return $.ATTACHMENT_ERROR(attachment.error);
-    default:
-      return formatAttachmentDescription($, attachment);
-  }
-}
-
 export function FileAttachment({
   attachment,
   overrides,
@@ -197,21 +172,30 @@ export function FileAttachment({
   const $ = useOverrides(overrides);
   const composerAttachmentsContext = useComposerAttachmentsContextOrNull();
   const isInComposer = Boolean(composerAttachmentsContext);
+  const maxAttachmentSize = composerAttachmentsContext?.maxAttachmentSize;
   const { base: fileBaseName, extension: fileExtension } = useMemo(() => {
     return splitFileName(attachment.name);
   }, [attachment.name]);
-  const status = (attachment as ComposerAttachment).status;
-  const isError = status === "error" || status === "too-large";
+  const status =
+    attachment.type === "localAttachment" ? attachment.status : undefined;
   const isUploading = status === "uploading";
+  const isError = status === "error";
 
-  const description =
-    status && isInComposer
-      ? formatComposerAttachmentDescription(
-          $,
-          attachment as ComposerAttachment,
-          composerAttachmentsContext!.maxAttachmentSize
-        )
-      : formatAttachmentDescription($, attachment);
+  let description: string;
+
+  if (attachment.type === "localAttachment" && attachment.status === "error") {
+    if (attachment.error instanceof AttachmentTooLargeError) {
+      description = $.ATTACHMENT_TOO_LARGE(
+        maxAttachmentSize
+          ? formatFileSize(maxAttachmentSize, $.locale)
+          : undefined
+      );
+    } else {
+      description = $.ATTACHMENT_ERROR(attachment.error);
+    }
+  } else {
+    description = formatFileSize(attachment.size, $.locale);
+  }
 
   const deleteLabel = isInComposer
     ? $.COMPOSER_REMOVE_ATTACHMENT
