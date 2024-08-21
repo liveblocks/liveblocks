@@ -1669,7 +1669,7 @@ await liveblocks.deleteRoomNotificationSettings({
 
 Returns a list of a user’s inbox notifications. This is a wrapper around the
 [Get Inbox Notifications API](/docs/api-reference/rest-api-endpoints#get-users-userId-inboxNotifications).
-It also handles an unread query parameter to filter unread notifications.
+It also provides an unread query parameter to filter unread notifications.
 
 ```ts
 const { data: inboxNotifications } = await liveblocks.getInboxNotifications({
