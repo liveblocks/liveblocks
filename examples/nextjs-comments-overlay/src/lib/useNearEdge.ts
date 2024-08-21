@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 
+const HORIZONTAL_DISTANCE = 350;
+const VERTICAL_DISTANCE = 350;
+
 export function useNearEdge(ref: React.RefObject<HTMLElement>) {
   const [nearRightEdge, setNearRightEdge] = useState(false);
   const [nearBottomEdge, setNearBottomEdge] = useState(false);
@@ -7,8 +10,8 @@ export function useNearEdge(ref: React.RefObject<HTMLElement>) {
   const updatePosition = useCallback(() => {
     if (ref.current) {
       const rect = ref.current.getBoundingClientRect();
-      const nearRight = window.innerWidth - rect.right <= 300;
-      const nearBottom = window.innerHeight - rect.bottom <= 300;
+      const nearRight = rect.left >= window.innerWidth - HORIZONTAL_DISTANCE;
+      const nearBottom = rect.top >= window.innerHeight - VERTICAL_DISTANCE;
 
       setNearRightEdge(nearRight);
       setNearBottomEdge(nearBottom);

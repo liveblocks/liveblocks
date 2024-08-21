@@ -67,12 +67,21 @@ export function PinnedThread({
     [onPointerUp]
   );
 
+  // If cursor moved, toggle minimized
+  const handlePointerMove = useCallback(
+    (e: PointerEvent<HTMLDivElement>) => {
+      onPointerMove(e);
+      updatePosition();
+    },
+    [onPointerMove]
+  );
+
   return (
     <div ref={ref} className={styles.pinned} {...props} onClick={onFocus}>
       <div
         className={styles.avatarPin}
         onPointerDown={handlePointerDown}
-        onPointerMove={onPointerMove}
+        onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         data-draggable={true}
       >
