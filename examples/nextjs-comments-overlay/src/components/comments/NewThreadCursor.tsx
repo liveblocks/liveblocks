@@ -29,8 +29,10 @@ export function NewThreadCursor({ display }: { display: boolean }) {
 
   useEffect(() => {
     if (display) {
+      document.documentElement.dataset.placingComposer = "true";
       document.documentElement.classList.add("hide-cursor");
     } else {
+      delete document.documentElement.dataset.placingComposer;
       document.documentElement.classList.remove("hide-cursor");
     }
   }, [display]);
