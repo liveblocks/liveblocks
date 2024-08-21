@@ -45,13 +45,22 @@
 
 .pinnedContent[data-flip-vertical] {
   position: absolute;
-  bottom: 100%;
-  margin-bottom: 16px;
+  bottom: 0;
+  margin-left: 16px;
+  left: 100%;
 }
 
 .pinnedContent[data-flip-horizontal] {
   position: absolute;
   right: 100%;
+  margin-right: 16px;
+}
+
+.pinnedContent[data-flip-vertical][data-flip-horizontal] {
+  position: absolute;
+  bottom: 0;
+  right: 100%;
+  left: auto;
   margin-right: 16px;
 }
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 
-const HORIZONTAL_DISTANCE = 350;
+const HORIZONTAL_DISTANCE = 370;
 const VERTICAL_DISTANCE = 350;
 
 export function useNearEdge(ref: React.RefObject<HTMLElement>) {
@@ -20,6 +20,7 @@ export function useNearEdge(ref: React.RefObject<HTMLElement>) {
 
   useEffect(() => {
     updatePosition();
+    setTimeout(updatePosition);
 
     window.addEventListener("scroll", updatePosition);
     window.addEventListener("resize", updatePosition);

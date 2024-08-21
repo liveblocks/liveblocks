@@ -5,6 +5,7 @@ import {
   PointerEvent,
   PointerEventHandler,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -42,6 +43,10 @@ export function PinnedThread({
   // Flip pinnedContent away from edge of screen
   const ref = useRef(null);
   const { nearRightEdge, nearBottomEdge, updatePosition } = useNearEdge(ref);
+
+  useEffect(() => {
+    updatePosition();
+  }, []);
 
   // Record starting click position
   const handlePointerDown = useCallback(
