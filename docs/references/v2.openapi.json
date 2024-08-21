@@ -2726,6 +2726,59 @@
             "description": "Not Found"
           }
         }
+      },
+      "get": {
+        "summary": "Get all inbox notifications",
+        "tags": ["Notifications"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the user"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "query",
+            "description": "Query to filter notifications. You can filter by `unread`, for example, `unread:true`."
+          }
+        ],
+        "operationId": "get-users-userId-inboxNotifications",
+        "description": "This endpoint returns all the user’s inbox notifications. Corresponds to [`liveblocks.getInboxNotifications`](/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications).",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "$ref": "#/components/schemas/InboxNotificationThreadData"
+                      },
+                      {
+                        "$ref": "#/components/schemas/InboxNotificationCustomData"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
       }
     },
     "/rooms/{roomId}/users/{userId}/notification-settings": {
