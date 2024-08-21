@@ -1676,8 +1676,8 @@ const { data: inboxNotifications } = await liveblocks.getInboxNotifications({
   userId: "steven@example.com",
 });
 
-console.log(inboxNotifications);
 // [{ id: "in_3dH7sF3...", kind: "thread", ... }, { id: "in_3dH7sF3...", kind: "textMention", ... }, ...]
+console.log(inboxNotifications);
 
 // Filter unread notifications
 const { data: unreadInboxNotifications } =
