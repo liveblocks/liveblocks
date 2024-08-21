@@ -1687,14 +1687,6 @@ const { data: unreadInboxNotifications } =
       unread: true,
     },
   });
-
-// OR
-
-const { data: unreadInboxNotifications } =
-  await liveblocks.getInboxNotifications({
-    userId: "steven@example.com",
-    query: "unread:true",
-  });
 ```
 
 #### Liveblocks.getInboxNotification [#get-users-userId-inboxNotifications-inboxNotificationId]
