@@ -39,8 +39,20 @@
   display: flex;
   flex-direction: column;
   font-size: 14px;
-  min-width: 300px;
+  min-width: 320px;
   overflow: hidden;
+}
+
+.pinnedContent[data-flip-vertical] {
+  position: absolute;
+  bottom: 100%;
+  margin-bottom: 16px;
+}
+
+.pinnedContent[data-flip-horizontal] {
+  position: absolute;
+  right: 100%;
+  margin-right: 16px;
 }
 
 .composer {
