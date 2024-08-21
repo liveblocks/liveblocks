@@ -62,6 +62,7 @@ export function NewThread({ children }: Props) {
       // If already placed, click outside to close composer
       if (creatingCommentState === "placed") {
         setCreatingCommentState("complete");
+        setAllowUseComposer(false);
         return;
       }
 
@@ -147,6 +148,7 @@ export function NewThread({ children }: Props) {
       if (creatingCommentState === "placing") {
         e.preventDefault();
         setCreatingCommentState("complete");
+        setAllowUseComposer(false);
       }
     }
 

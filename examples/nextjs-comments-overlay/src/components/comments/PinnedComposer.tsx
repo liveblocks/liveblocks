@@ -29,7 +29,13 @@ export function PinnedComposer({
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
       >
-        <img src={user.avatar} alt={user.name} width="28px" height="28px" />
+        <img
+          src={user.avatar}
+          alt={user.name}
+          width="28px"
+          height="28px"
+          draggable={false}
+        />
       </div>
       <div className={styles.pinnedContent}>
         <Composer
