@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback, useLayoutEffect } from "react";
 
 export function useNearEdge(ref: React.RefObject<HTMLElement>) {
   const [nearRightEdge, setNearRightEdge] = useState(false);
@@ -19,9 +19,8 @@ export function useNearEdge(ref: React.RefObject<HTMLElement>) {
     }
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     updatePosition();
-    setTimeout(updatePosition);
 
     window.addEventListener("scroll", updatePosition);
     window.addEventListener("resize", updatePosition);
@@ -30,7 +29,7 @@ export function useNearEdge(ref: React.RefObject<HTMLElement>) {
       window.removeEventListener("scroll", updatePosition);
       window.removeEventListener("resize", updatePosition);
     };
-  }, [ref]);
+  }, [ref.current]);
 
   return { nearRightEdge, nearBottomEdge, updatePosition };
 }
