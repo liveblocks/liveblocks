@@ -2,7 +2,6 @@
 
 import type {
   BaseMetadata,
-  CommentAttachment,
   CommentData,
   DM,
   ThreadData,
@@ -16,7 +15,6 @@ import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
   ComponentPropsWithoutRef,
   ForwardedRef,
-  MouseEvent,
   RefAttributes,
   SyntheticEvent,
 } from "react";
@@ -123,11 +121,7 @@ export interface ThreadProps<M extends BaseMetadata = DM>
   /**
    * The event handler called when clicking on a comment's attachment.
    */
-  onAttachmentClick?: (
-    attachment: CommentAttachment,
-    attachmentUrl: string,
-    event: MouseEvent<HTMLElement>
-  ) => void;
+  onAttachmentClick?: CommentProps["onAttachmentClick"];
 
   /**
    * Override the component's strings.

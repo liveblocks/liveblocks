@@ -37,3 +37,4 @@ export type {
 export { useOverrides } from "./overrides";
 export type { ComposerSubmitComment } from "./primitives";
 export { useMentionSuggestions } from "./shared";
+export type { CommentAttachmentArgs } from "./types";

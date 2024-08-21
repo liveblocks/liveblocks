@@ -58,6 +58,7 @@ import * as ComposerPrimitive from "../primitives/Composer";
 import { Timestamp } from "../primitives/Timestamp";
 import { useCurrentUserId } from "../shared";
 import { MENTION_CHARACTER } from "../slate/plugins/mentions";
+import type { CommentAttachmentArgs } from "../types";
 import { classNames } from "../utils/class-names";
 import { useRefs } from "../utils/use-refs";
 import { useVisibleCallback } from "../utils/use-visible";
@@ -135,8 +136,7 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
    * The event handler called when clicking on a comment's attachment.
    */
   onAttachmentClick?: (
-    attachment: CommentAttachment,
-    attachmentUrl: string,
+    args: CommentAttachmentArgs,
     event: MouseEvent<HTMLElement>
   ) => void;
 
@@ -370,7 +370,9 @@ function CommentFileAttachment({
         return;
       }
 
-      onAttachmentClick?.(attachment, url, event);
+      const args: CommentAttachmentArgs = { attachment, url };
+
+      onAttachmentClick?.(args, event);
 
       if (event.isDefaultPrevented()) {
         return;
@@ -392,10 +394,16 @@ function CommentFileAttachment({
   );
 }
 
-export function CommentNonInteractiveFileAttachment(
-  props: CommentFileAttachmentProps
-) {
-  return <CommentFileAttachment {...props} />;
+export function CommentNonInteractiveFileAttachment({
+  className,
+  ...props
+}: CommentFileAttachmentProps) {
+  return (
+    <FileAttachment
+      className={classNames("lb-comment-attachment", className)}
+      {...props}
+    />
+  );
 }
 
 // A void component (which doesn't render anything) responsible for marking a thread
@@ -767,7 +775,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                         key={attachment.id}
                         attachment={attachment}
                         overrides={overrides}
-                        onContentClick={console.log}
+                        onAttachmentClick={onAttachmentClick}
                       />
                     ))}
                   </div>
