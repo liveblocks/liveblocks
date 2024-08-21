@@ -46,6 +46,8 @@ export function NewThread({ children }: Props) {
   const self = useSelf((me) => me.id);
   const { user } = useUser(self);
 
+  const [moving, setMoving] = useState(false);
+
   useEffect(() => {
     if (creatingCommentState === "complete") {
       return;
@@ -63,6 +65,8 @@ export function NewThread({ children }: Props) {
       if (creatingCommentState === "placed") {
         setCreatingCommentState("complete");
         setAllowUseComposer(false);
+        setMoving(false);
+        dragOffset.current = { x: 0, y: 0 };
         return;
       }
 
@@ -87,6 +91,7 @@ export function NewThread({ children }: Props) {
       if (!dragging.current) {
         return;
       }
+      setMoving(true);
 
       // Prevents issue with composedPath getting removed
       (e as any)._savedComposedPath = e.composedPath();
@@ -104,6 +109,8 @@ export function NewThread({ children }: Props) {
       if (!dragging.current) {
         return;
       }
+      setMoving(false);
+      dragOffset.current = { x: 0, y: 0 };
 
       setTimeout(() => {
         dragging.current = false;
@@ -149,6 +156,8 @@ export function NewThread({ children }: Props) {
         e.preventDefault();
         setCreatingCommentState("complete");
         setAllowUseComposer(false);
+        setMoving(false);
+        dragOffset.current = { x: 0, y: 0 };
       }
     }
 
@@ -167,7 +176,7 @@ export function NewThread({ children }: Props) {
     };
   }, [creatingCommentState]);
 
-  // Enabling dragging with the top bar
+  // Enabling dragging the avatar
   const handlePointerDownOverlay = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
       if (!composerRef.current) {
@@ -202,8 +211,8 @@ export function NewThread({ children }: Props) {
         cursorX = -10000,
         cursorY = -10000,
       } = getCoordsFromPointerEvent(lastPointerEvent.current, {
-        x: 0,
-        y: 0,
+        x: dragOffset.current.x,
+        y: dragOffset.current.y,
       }) || {};
 
       createThread({
@@ -219,6 +228,8 @@ export function NewThread({ children }: Props) {
       setComposerCoords(null);
       setCreatingCommentState("complete");
       setAllowUseComposer(false);
+      setMoving(false);
+      dragOffset.current = { x: 0, y: 0 };
     },
     [createThread, composerCoords, maxZIndex]
   );
@@ -243,9 +254,10 @@ export function NewThread({ children }: Props) {
         <Portal.Root
           className={styles.composerWrapper}
           style={{
-            pointerEvents: allowUseComposer ? "initial" : "none",
+            pointerEvents: allowUseComposer && !moving ? "initial" : "none",
             transform: `translate(${composerCoords.x}px, ${composerCoords.y}px)`,
           }}
+          ref={composerRef}
           data-hide-cursors
         >
           <PinnedComposer

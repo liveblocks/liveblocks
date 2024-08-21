@@ -24,12 +24,14 @@ export function useNearEdge(ref: React.RefObject<HTMLElement>) {
 
     window.addEventListener("scroll", updatePosition);
     window.addEventListener("resize", updatePosition);
+    document.addEventListener("mousemove", updatePosition);
 
     return () => {
       window.removeEventListener("scroll", updatePosition);
       window.removeEventListener("resize", updatePosition);
+      document.removeEventListener("mousemove", updatePosition);
     };
   }, [ref.current]);
 
-  return { nearRightEdge, nearBottomEdge, updatePosition };
+  return { nearRightEdge, nearBottomEdge };
 }

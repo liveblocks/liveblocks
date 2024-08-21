@@ -22,7 +22,7 @@ export function PinnedComposer({
   onComposerSubmit,
   ...props
 }: Props) {
-  // Flip pinedContent away from edge of screen
+  // Flip pinnedContent away from edge of screen
   const ref = useRef(null);
   const { nearRightEdge, nearBottomEdge } = useNearEdge(ref);
 
@@ -33,6 +33,7 @@ export function PinnedComposer({
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
+        data-draggable={true}
       >
         <img
           src={user.avatar}
