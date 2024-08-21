@@ -1,3 +1,9 @@
+## 2.6.0 (Not released yet)
+
+### `@liveblocks/node`
+
+- Add `getInboxNotifications` method which supports an `unread` query parameter.
+
 ## 2.5.1
 
 ### `@liveblocks/yjs`
