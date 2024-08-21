@@ -1,4 +1,4 @@
-## 2.6.0
+## 2.6.0 (Not released yet)
 
 ### `@liveblocks/node`
 
