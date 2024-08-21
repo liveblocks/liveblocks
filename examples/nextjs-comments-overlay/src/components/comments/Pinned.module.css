@@ -5,6 +5,7 @@
 }
 
 .avatarPin {
+  flex-shrink: 0;
   user-select: none;
   position: relative;
   width: 36px;
@@ -38,7 +39,7 @@
   display: flex;
   flex-direction: column;
   font-size: 14px;
-  min-width: 240px;
+  min-width: 300px;
   overflow: hidden;
 }
 
