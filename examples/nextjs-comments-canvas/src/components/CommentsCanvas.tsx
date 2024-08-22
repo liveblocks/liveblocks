@@ -62,8 +62,8 @@ export function CommentsCanvas() {
       <div className={styles.threads}>
         <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
           {threads.map((thread) => (
-            <ClientSideSuspense fallback={null}>
-              <DraggableThread key={thread.id} thread={thread} />
+            <ClientSideSuspense key={thread.id} fallback={null}>
+              <DraggableThread thread={thread} />
             </ClientSideSuspense>
           ))}
         </DndContext>
