@@ -3,9 +3,9 @@ import * as Popover from "@radix-ui/react-popover";
 import { Suspense, useState } from "react";
 import Loading from "./loading";
 import { VersionHistoryList, Version } from "@liveblocks/react-ui";
-import { useVersions } from "@liveblocks/react";
 import type { HistoryVersion } from "@liveblocks/core";
 import { VersionPreview } from "@liveblocks/react-lexical";
+import { useVersions } from "@liveblocks/react";
 
 
 export default function VersionsPopover() {
@@ -31,25 +31,23 @@ export default function VersionsPopover() {
           style={{ width: "90vw", height: "90vh" }}
           className="rounded-xl border border-border bg-card text-card-foreground shadow text-sm overflow-hidden w-full z-20 flex"
         >
-          <Suspense fallback={<Loading />}>
-            <div className="grow p-4">
-              {version && <VersionPreview version={version} />}
-            </div>
-            <div className="text-sm relative w-[250px] h-full overflow-auto border-l border-border/80 min-w-[250px]">
-              {isLoading ? <Loading /> :
-                <VersionHistoryList>
-                  {versions?.map((version) => (
-                    <Version
-                      onClick={() => { setVersion(version) }}
-                      key={version.id}
-                      version={version}
-                    />
-                  ))}
-                </VersionHistoryList>
-              }
-            </div>
+          <div className="grow p-4">
+            {version && <VersionPreview version={version} />}
+          </div>
+          <div className="text-sm relative w-[250px] h-full overflow-auto border-l border-border/80 min-w-[250px]">
+            {isLoading ? <Loading /> :
+              <VersionHistoryList>
+                {versions?.map((version) => (
+                  <Version
+                    onClick={() => { setVersion(version) }}
+                    key={version.id}
+                    version={version}
+                  />
+                ))}
+              </VersionHistoryList>
+            }
+          </div>
 
-          </Suspense>
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>
