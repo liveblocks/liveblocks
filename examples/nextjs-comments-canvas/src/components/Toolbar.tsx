@@ -1,10 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Composer } from "@liveblocks/react-ui";
-import {
-  ClientSideSuspense,
-  useCreateThread,
-  useSelf,
-} from "@liveblocks/react/suspense";
+import { useCreateThread } from "@liveblocks/react/suspense";
+import { useSelf } from "@liveblocks/react";
 import styles from "./Toolbar.module.css";
 import avatarStyles from "./CommentsCanvas.module.css";
 import { useMaxZIndex, useNearEdge } from "../hooks";
@@ -65,12 +62,7 @@ export function Toolbar() {
 
       {/* When cursor placed, show a composer on the canvas */}
       {state === "placed" ? (
-        <ClientSideSuspense fallback={null}>
-          <ThreadComposer
-            coords={coords}
-            onSubmit={() => setState("initial")}
-          />
-        </ClientSideSuspense>
+        <ThreadComposer coords={coords} onSubmit={() => setState("initial")} />
       ) : null}
     </>
   );
@@ -130,6 +122,7 @@ function ThreadComposer({
           });
           onSubmit();
         }}
+        autoFocus={true}
         data-flip-vertical={nearBottomEdge || undefined}
         data-flip-horizontal={nearRightEdge || undefined}
       />

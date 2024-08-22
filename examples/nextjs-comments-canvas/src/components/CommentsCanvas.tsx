@@ -1,11 +1,7 @@
 import { Thread } from "@liveblocks/react-ui";
 import { ThreadData } from "@liveblocks/core";
-import {
-  useThreads,
-  useEditThreadMetadata,
-  useUser,
-  ClientSideSuspense,
-} from "@liveblocks/react/suspense";
+import { useThreads, useEditThreadMetadata } from "@liveblocks/react/suspense";
+import { useUser } from "@liveblocks/react";
 import {
   DataRef,
   DndContext,
@@ -62,9 +58,7 @@ export function CommentsCanvas() {
       <div className={styles.threads}>
         <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
           {threads.map((thread) => (
-            <ClientSideSuspense key={thread.id} fallback={null}>
-              <DraggableThread thread={thread} />
-            </ClientSideSuspense>
+            <DraggableThread key={thread.id} thread={thread} />
           ))}
         </DndContext>
       </div>
