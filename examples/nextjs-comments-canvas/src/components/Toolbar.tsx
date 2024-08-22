@@ -3,6 +3,7 @@ import { Composer } from "@liveblocks/react-ui";
 import { useCreateThread, useSelf } from "@liveblocks/react/suspense";
 import styles from "./Toolbar.module.css";
 import avatarStyles from "./CommentsCanvas.module.css";
+import { useMaxZIndex } from "../hooks";
 
 export function Toolbar() {
   // Get create thread function and the current user
@@ -18,6 +19,8 @@ export function Toolbar() {
     setState("initial");
     setCoords({ x: 0, y: 0 });
   }, []);
+
+  const maxZIndex = useMaxZIndex();
 
   return (
     <>
@@ -88,7 +91,10 @@ export function Toolbar() {
                 e.preventDefault();
                 setState("initial");
                 // Create a new thread with the current coords as metadata
-                createThread({ body, metadata: { x: coords.x, y: coords.y } });
+                createThread({
+                  body,
+                  metadata: { x: coords.x, y: coords.y, zIndex: maxZIndex + 1 },
+                });
               }}
             />
           </div>

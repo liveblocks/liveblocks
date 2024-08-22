@@ -19,6 +19,7 @@ import {
 import { useCallback, useMemo, useState } from "react";
 import styles from "./CommentsCanvas.module.css";
 import { Toolbar } from "./Toolbar";
+import { useMaxZIndex } from "../hooks";
 
 export function CommentsCanvas() {
   const { threads } = useThreads();
@@ -91,12 +92,23 @@ function DraggableThread({ thread }: { thread: ThreadData }) {
   // Get the creator of the thread
   const { user: creator } = useUser(thread.comments[0].userId);
 
+  // Used to set z-index higher than other threads when pointer down
+  const editThreadMetadata = useEditThreadMetadata();
+  const maxZIndex = useMaxZIndex();
+
   return (
     <div
       ref={setNodeRef}
       className={styles.draggableThread}
+      onPointerDown={() =>
+        editThreadMetadata({
+          threadId: thread.id,
+          metadata: { zIndex: maxZIndex + 1 },
+        })
+      }
       style={{
         transform: `translate3d(${x}px, ${y}px, 0)`,
+        zIndex: thread.metadata?.zIndex || 0,
       }}
     >
       <div {...listeners} {...attributes}>
