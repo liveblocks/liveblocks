@@ -4,6 +4,7 @@ import {
   useThreads,
   useEditThreadMetadata,
   useUser,
+  ClientSideSuspense,
 } from "@liveblocks/react/suspense";
 import {
   DataRef,
@@ -59,7 +60,9 @@ export function CommentsCanvas() {
     <div className={`${styles.wrapper} lb-root`}>
       <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
         {threads.map((thread) => (
-          <DraggableThread key={thread.id} thread={thread} />
+          <ClientSideSuspense fallback={null}>
+            <DraggableThread key={thread.id} thread={thread} />
+          </ClientSideSuspense>
         ))}
       </DndContext>
       <Toolbar />
