@@ -36,6 +36,7 @@ import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
 import type { BatchStore } from "./lib/batch";
 import { Batch, createBatchStore } from "./lib/batch";
+import { chunk } from "./lib/chunk";
 import { Promise_withResolvers } from "./lib/controlledPromise";
 import {
   createCommentAttachmentId,
@@ -1249,6 +1250,7 @@ function installBackgroundTabSpy(): [
 
 const GET_ATTACHMENT_URLS_BATCH_DELAY = 50;
 const ATTACHMENT_PART_SIZE = 5 * 1024 * 1024; // 5 MB
+const ATTACHMENT_PART_BATCH_SIZE = 5;
 
 function splitFileIntoParts(file: File) {
   const parts: { partNumber: number; part: Blob }[] = [];
@@ -3198,57 +3200,6 @@ export function createRoom<
     };
   }
 
-  // async function uploadAttachment(
-  //   attachment: CommentLocalAttachment,
-  //   options: UploadAttachmentOptions = {}
-  // ): Promise<CommentAttachment> {
-  //   const abortSignal = options.signal;
-  //   const abortError = abortSignal
-  //     ? new DOMException(
-  //         `Upload of attachment ${attachment.id} was aborted.`,
-  //         "AbortError"
-  //       )
-  //     : undefined;
-
-  //   if (abortSignal?.aborted) {
-  //     throw abortError;
-  //   }
-
-  //   try {
-  //     // Simulate a 1s abortable upload
-  //     await new Promise((resolve, reject) => {
-  //       const timeout = setTimeout(resolve, 2000);
-
-  //       abortSignal?.addEventListener("abort", () => {
-  //         clearTimeout(timeout);
-  //         reject(abortError);
-  //       });
-  //     });
-
-  //     if (abortSignal?.aborted) {
-  //       throw abortError;
-  //     }
-
-  //     // Simulate an upload error half the time
-  //     if (Math.random() < 0.5) {
-  //       throw new Error("There was an error while uploading the attachment.");
-  //     }
-
-  //     return {
-  //       id: attachment.id,
-  //       name: attachment.name,
-  //       size: attachment.size,
-  //       mimeType: attachment.mimeType,
-  //     };
-  //   } catch (error) {
-  //     if ((error as Error)?.name && (error as Error).name === "AbortError") {
-  //       // TODO: Clean up?
-  //     }
-
-  //     throw error;
-  //   }
-  // }
-
   async function uploadAttachment(
     attachment: CommentLocalAttachment,
     options: UploadAttachmentOptions = {}
@@ -3305,31 +3256,43 @@ export function createRoom<
           throw abortError;
         }
 
-        // TODO: Retry failed parts individually?
-        // TODO: Upload parts in parallel/batches?
-        // Upload each part individually
-        for (const { part, partNumber } of parts) {
-          const uploadedPart = await fetchCommentsJson<{
+        const batches = chunk(parts, ATTACHMENT_PART_BATCH_SIZE);
+
+        // Batches are uploaded one after the other
+        for (const parts of batches) {
+          const uploadedPartsPromises: Promise<{
             partNumber: number;
             etag: string;
-          }>(
-            `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(uploadId)}/${encodeURIComponent(partNumber)}`,
-            {
-              method: "PUT",
-              body: part,
-            }
-          );
+          }>[] = [];
 
-          uploadedParts.push({
-            etag: uploadedPart.etag,
-            partNumber,
-          });
+          for (const { part, partNumber } of parts) {
+            uploadedPartsPromises.push(
+              fetchCommentsJson<{
+                partNumber: number;
+                etag: string;
+              }>(
+                `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(uploadId)}/${encodeURIComponent(partNumber)}`,
+                {
+                  method: "PUT",
+                  body: part,
+                  signal: abortSignal,
+                }
+              )
+            );
+          }
+
+          // Parts are uploaded in parallel
+          uploadedParts.push(...(await Promise.all(uploadedPartsPromises)));
         }
 
         // Check if the upload was aborted
         if (abortSignal?.aborted) {
           throw abortError;
         }
+
+        const sortedUploadedParts = uploadedParts.sort(
+          (a, b) => a.partNumber - b.partNumber
+        );
 
         return fetchCommentsJson<CommentAttachment>(
           `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(uploadId)}/complete`,
@@ -3338,7 +3301,7 @@ export function createRoom<
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ parts: uploadedParts }),
+            body: JSON.stringify({ parts: sortedUploadedParts }),
             signal: abortSignal,
           }
         );

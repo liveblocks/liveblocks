@@ -84,6 +84,7 @@ export {
 export { kInternal } from "./internal";
 export { assert, assertNever, nn } from "./lib/assert";
 export type { AsyncResult, AsyncResultWithDataField } from "./lib/AsyncResult";
+export { chunk } from "./lib/chunk";
 export {
   createCommentId,
   createInboxNotificationId,
