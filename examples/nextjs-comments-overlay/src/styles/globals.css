@@ -137,6 +137,11 @@ html.hide-cursor {
   cursor: none !important;
 }
 
+html[data-placing-composer] [data-ignore-when-placing-composer],
+html[data-placing-composer] [data-ignore-when-placing-composer] * {
+  pointer-events: none !important;
+}
+
 .button {
   background-color: #7af167;
   color: black;
