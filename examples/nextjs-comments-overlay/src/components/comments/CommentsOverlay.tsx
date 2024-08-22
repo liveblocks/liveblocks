@@ -232,6 +232,7 @@ function OverlayThread({
         transform: `translate(${coords.x}px, ${coords.y}px)`,
         zIndex: draggingRef.current ? 9999999 : thread.metadata.zIndex,
       }}
+      data-ignore-when-placing-composer
     >
       <PinnedThread
         user={user}
