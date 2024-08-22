@@ -26,7 +26,6 @@ import type {
   DS,
   DU,
   EnterOptions,
-  HistoryVersion,
   HistoryVersionType,
   LiveblocksError,
   OpaqueClient,
@@ -107,6 +106,7 @@ import type {
   UseStorageStatusOptions,
   UseThreadsOptions,
   VersionsState,
+  VersionsStateResolved,
   VersionWithDataState,
 } from "./types";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
@@ -376,6 +376,46 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     }
   }
 
+  async function getRoomVersions(
+    room: OpaqueRoom,
+    { retryCount }: { retryCount: number } = { retryCount: 0 }
+  ) {
+    const queryKey = getVersionsQueryKey(room.id);
+    const existingRequest = requestsByQuery.get(queryKey);
+    if (existingRequest !== undefined) return existingRequest;
+    const request = room[kInternal].listTextVersions();
+    requestsByQuery.set(queryKey, request);
+    store.setQueryState(queryKey, {
+      isLoading: true,
+    });
+    try {
+      const result = await request;
+      const data = await result.json() as { versions: { createdAt: string, authors: string[], id: string, type: HistoryVersionType }[] };
+      const versions = data.versions.map(({ createdAt, authors, id, type }) => {
+        return {
+          createdAt: new Date(createdAt),
+          authors,
+          id,
+          type,
+        };
+      });
+      store.updateRoomVersions(room.id, versions, queryKey);
+    } catch (err) {
+      requestsByQuery.delete(queryKey);
+      // Retry the action using the exponential backoff algorithm
+      retryError(() => {
+        void getRoomVersions(room, {
+          retryCount: retryCount + 1,
+        });
+      }, retryCount);
+      store.setQueryState(queryKey, {
+        isLoading: false,
+        error: err as Error,
+      });
+    }
+    return;
+  }
+
   async function getThreadsAndInboxNotifications(
     room: OpaqueRoom,
     queryKey: string,
@@ -516,6 +556,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     getThreadsUpdates,
     getThreadsAndInboxNotifications,
     getInboxNotificationSettings,
+    getRoomVersions,
     onMutationFailure,
   };
 }
@@ -617,7 +658,7 @@ function makeRoomContextBundle<
     useThreadSubscription,
 
     useVersions,
-    useVersionWithData,
+    useVersionData,
 
     useRoomNotificationSettings,
     useUpdateRoomNotificationSettings,
@@ -678,6 +719,8 @@ function makeRoomContextBundle<
       useRemoveReaction,
       useMarkThreadAsRead,
       useThreadSubscription,
+
+      useVersions: useVersionsSuspense,
 
       useRoomNotificationSettings: useRoomNotificationSettingsSuspense,
       useUpdateRoomNotificationSettings,
@@ -2449,7 +2492,7 @@ function useRoomNotificationSettings(): [
   }, [settings, updateRoomNotificationSettings]);
 }
 
-function useVersionWithData(version: HistoryVersion): VersionWithDataState {
+function useVersionData(id: string): VersionWithDataState {
   const [state, setState] = React.useState<VersionWithDataState>({
     isLoading: true,
   });
@@ -2458,15 +2501,12 @@ function useVersionWithData(version: HistoryVersion): VersionWithDataState {
     setState({ isLoading: true });
     const load = async () => {
       try {
-        const response = await room[kInternal].getTextVersion(version.id);
+        const response = await room[kInternal].getTextVersion(id);
         const buffer = await response.arrayBuffer();
         const data = new Uint8Array(buffer);
         setState({
           isLoading: false,
-          version: {
-            ...version,
-            data
-          }
+          version: data
         });
       } catch (error) {
         setState({
@@ -2476,7 +2516,7 @@ function useVersionWithData(version: HistoryVersion): VersionWithDataState {
       }
     }
     void load();
-  }, [room, version]);
+  }, [room, id]);
   return state;
 }
 
@@ -2492,36 +2532,43 @@ function useVersionWithData(version: HistoryVersion): VersionWithDataState {
  */
 function useVersions(
 ): VersionsState {
+  const client = useClient();
   const room = useRoom();
-  const [state, setState] = React.useState<VersionsState>({
-    isLoading: true,
-  });
+  const queryKey = getVersionsQueryKey(room.id);
+
+  const { store, getRoomVersions, incrementQuerySubscribers } =
+    getExtrasForClient(client);
+
   React.useEffect(() => {
-    setState({ isLoading: true });
-    const load = async () => {
-      try {
-        const response = await room[kInternal].listTextVersions();
-        const data = await response.json() as { versions: { createdAt: string, authors: string[], id: string, type: HistoryVersionType }[] };
-        setState({
-          isLoading: false,
-          versions: data.versions.map(({ createdAt, authors, id, type }) => {
-            return {
-              createdAt: new Date(createdAt),
-              authors,
-              id,
-              type,
-            };
-          })
-        });
-      } catch (error) {
-        setState({
-          isLoading: false,
-          error: error instanceof Error ? error : new Error("An unknown error occurre loading versions"),
-        });
+    void getRoomVersions(room);
+    return incrementQuerySubscribers(queryKey);
+  }, [room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const selector = React.useCallback(
+    (state: CacheState<BaseMetadata>): VersionsState => {
+      const query = state.queries[queryKey];
+      if (query === undefined || query.isLoading) {
+        return {
+          isLoading: true,
+        };
       }
-    }
-    void load();
-  }, [room]);
+
+      return {
+        versions: state.versions[room.id],
+        isLoading: false,
+        error: query.error,
+      };
+    },
+    [room, queryKey] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  const state = useSyncExternalStoreWithSelector(
+    store.subscribe,
+    store.get,
+    store.get,
+    selector
+  );
+
   return state;
 }
 
@@ -2755,6 +2802,51 @@ function useThreadsSuspense<M extends BaseMetadata>(
   return state;
 }
 
+function useVersionsSuspense(
+): VersionsState {
+
+  const client = useClient();
+  const room = useRoom();
+  const queryKey = getVersionsQueryKey(room.id);
+
+  const { store, getRoomVersions } =
+    getExtrasForClient(client);
+
+  const query = store.get().queries[queryKey];
+
+  if (query === undefined || query.isLoading) {
+    throw getRoomVersions(room);
+  }
+
+  if (query.error) {
+    throw query.error;
+  }
+
+  const selector = React.useCallback(
+    (state: CacheState<BaseMetadata>): VersionsStateResolved => {
+      return {
+        versions: state.versions[room.id],
+        isLoading: false,
+      };
+    },
+    [room, queryKey] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  React.useEffect(() => {
+    const { incrementQuerySubscribers } = getExtrasForClient(client);
+    return incrementQuerySubscribers(queryKey);
+  }, [client, queryKey]);
+
+  const state = useSyncExternalStoreWithSelector(
+    store.subscribe,
+    store.get,
+    store.get,
+    selector
+  );
+
+  return state;
+}
+
 /**
  * Returns the user's notification settings for the current room
  * and a function to update them.
@@ -2856,6 +2948,12 @@ export function generateQueryKey(
   options: UseThreadsOptions<BaseMetadata>["query"]
 ) {
   return `${roomId}-${stringify(options ?? {})}`;
+}
+
+export function getVersionsQueryKey(
+  roomId: string,
+) {
+  return `${roomId}-VERSIONS`;
 }
 
 type TypedBundle = RoomContextBundle<DP, DS, DU, DE, DM>;
@@ -3075,13 +3173,30 @@ const _useOthersMappedSuspense: TypedBundle["suspense"]["useOthersMapped"] =
 const _useThreads: TypedBundle["useThreads"] = useThreads;
 
 /**
- * Returns the threads within the current room.
- *
- * @example
- * const { threads } = useThreads();
- */
+* Returns the text versions within the current room.
+*
+* @example
+* const { versions } = useVersions();
+*/
 const _useThreadsSuspense: TypedBundle["suspense"]["useThreads"] =
   useThreadsSuspense;
+
+/**
+* Returns the text versions within the current room.
+*
+* @example
+* const { versions } = useVersions();
+*/
+const _useVersions: TypedBundle["useVersions"] = useVersions;
+
+/**
+ * Returns the text versions within the current room.
+ *
+ * @example
+ * const { versions } = useVersions();
+ */
+const _useVersionsSuspense: TypedBundle["suspense"]["useVersions"] =
+  useVersionsSuspense;
 
 /**
  * Given a connection ID (as obtained by using `useOthersConnectionIds`), you
@@ -3398,6 +3513,7 @@ export {
   useUndo,
   _useUpdateMyPresence as useUpdateMyPresence,
   useUpdateRoomNotificationSettings,
-  useVersions,
-  useVersionWithData,
+  useVersionData,
+  _useVersions as useVersions,
+  _useVersionsSuspense as useVersionsSuspense,
 };

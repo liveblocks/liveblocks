@@ -10,7 +10,8 @@ import {
   syncLexicalUpdateToYjs,
   syncYjsChangesToLexical,
 } from "@lexical/yjs";
-import type { HistoryVersionWithData } from "@liveblocks/core";
+import { type HistoryVersion, kInternal } from "@liveblocks/core";
+import { useRoom, useVersionData } from "@liveblocks/react";
 import type { LexicalEditor } from "lexical";
 import React, { useCallback, useEffect, useRef } from "react";
 import type { Transaction, YEvent } from "yjs";
@@ -80,12 +81,12 @@ function registerCollaborationListeners(
   };
 }
 
-
-
-export function VersionPreview({ version, onRestore }: { version: HistoryVersionWithData, onRestore?: () => void }) {
+export function VersionPreview({ version, onRestore }: { version: HistoryVersion, onRestore?: () => void }) {
   const [parentEditor, parentContext] = useLexicalComposerContext();
+  const room = useRoom();
   const nodes = Array.from(parentEditor._nodes.values()).map((n) => n.klass);
   const editor = useRef<LexicalEditor>();
+  const { isLoading, version: versionData } = useVersionData(version.id);
 
   const initialConfig = liveblocksConfig({
     namespace: "VersionViewer",
@@ -96,53 +97,62 @@ export function VersionPreview({ version, onRestore }: { version: HistoryVersion
   });
 
   useEffect(() => {
-    if (!version || !editor.current) {
+
+  }, [])
+
+  useEffect(() => {
+    if (isLoading || !versionData || !editor.current) {
       return;
     }
-    const id = version.id;
     const doc = new Doc();
-    const docMap = new Map([[id, doc]]);
+    const docMap = new Map([[version.id, doc]]);
     const provider = createNoOpProvider();
-    const binding = createBinding(editor.current, provider, id, doc, docMap);
-
+    const binding = createBinding(editor.current, provider, version.id, doc, docMap);
     const unsubscribe = registerCollaborationListeners(editor.current, provider, binding);
 
-    applyUpdate(doc, version.data);
+    applyUpdate(doc, versionData);
 
     return unsubscribe;
-  }, [version])
+  }, [versionData, version.id, isLoading])
 
   const restore = useCallback(() => {
     if (!editor.current || !parentEditor) {
       return;
     }
     parentEditor.setEditorState(editor.current.getEditorState());
+    // create a new version after restoring
+    // TODO: this should be done from a command that waits for synchronization
+    void room[kInternal].createTextVersion();
     if (onRestore) {
       onRestore();
     }
-  }, [parentEditor, onRestore]);
-
+  }, [parentEditor, onRestore, room]);
 
   return (
     <>
-      <button onClick={restore} style={{
-        padding: "8px 16px",
-        textTransform: "capitalize",
-        border: "1px solid #d3d3d3",
-        borderRadius: "4px"
-      }}>
-        restore
-      </button>
+      {isLoading ? <div>Loading...</div> :
+        <>
+          <button onClick={restore} style={{
+            padding: "8px 16px",
+            textTransform: "capitalize",
+            border: "1px solid #d3d3d3",
+            borderRadius: "4px"
+          }}>
+            restore
+          </button>
 
-      <div style={{ padding: "12px" }}>
-        <LexicalComposer initialConfig={initialConfig}>
-          <EditorRefPlugin editorRef={editor} />
-          <RichTextPlugin
-            contentEditable={<ContentEditable />}
-            placeholder={<div>Empty Version History</div>}
-            ErrorBoundary={LexicalErrorBoundary}
-          />
-        </LexicalComposer></div>
-    </>)
-
+          <div style={{ padding: "12px" }}>
+            <LexicalComposer initialConfig={initialConfig}>
+              <EditorRefPlugin editorRef={editor} />
+              <RichTextPlugin
+                contentEditable={<ContentEditable />}
+                placeholder={<div>Empty Version History</div>}
+                ErrorBoundary={LexicalErrorBoundary}
+              />
+            </LexicalComposer>
+          </div>
+        </>
+      }
+    </>
+  )
 }

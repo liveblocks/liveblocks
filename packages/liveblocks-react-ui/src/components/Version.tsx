@@ -8,18 +8,19 @@ import { Timestamp } from "../primitives";
 import { classNames } from "../utils/class-names";
 import { User } from "./internal/User";
 
-export type VersionHistoryListProps = { version: HistoryVersion, onSelect?: (version: HistoryVersion) => void } & ComponentPropsWithRef<"li">;
+export type VersionHistoryListProps = { version: HistoryVersion, onSelect?: (version: HistoryVersion) => void } & ComponentPropsWithRef<"div">;
 
 export const Version = forwardRef<
   HTMLDivElement,
   VersionHistoryListProps
->(({ className, version, onSelect }, forwardedRef) => {
+>(({ className, version, ...props }, forwardedRef) => {
   const $ = useOverrides();
   const { id, authors, createdAt } = version;
 
+  // todo: add props
   return (
     <div
-      onClick={() => onSelect?.(version)}
+      {...props}
       className={classNames("lb-version-item", className)}
       key={id}
       ref={forwardedRef}

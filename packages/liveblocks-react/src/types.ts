@@ -21,7 +21,6 @@ import type {
   CommentData,
   DRI,
   HistoryVersion,
-  HistoryVersionWithData,
   InboxNotificationData,
   LiveblocksError,
   PartialUnless,
@@ -228,7 +227,7 @@ export type VersionWithDataStateLoading = {
 
 export type VersionWithDataStateResolved = {
   isLoading: false;
-  version: HistoryVersionWithData;
+  version: Uint8Array;
   error?: Error;
 };
 
@@ -1003,7 +1002,7 @@ export type RoomContextBundle<
       ];
 
       useVersions(): VersionsState;
-      useVersionWithData(version: HistoryVersion): VersionWithDataState;
+      useVersionData(id: string): VersionWithDataState;
 
       suspense: Resolve<
         RoomContextBundleCommon<P, S, U, E, M> &
@@ -1081,6 +1080,14 @@ export type RoomContextBundle<
              * const { threads } = useThreads();
              */
             useThreads(options?: UseThreadsOptions<M>): ThreadsStateSuccess<M>;
+
+            /**
+             * Returns the versions within the current room.
+             *
+             * @example
+             * const { versions } = useVersions();
+             */
+            useVersions(): VersionsState;
 
             /**
              * Returns the user's notification settings for the current room

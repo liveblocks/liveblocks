@@ -17,6 +17,7 @@ import type {
   InboxNotificationData,
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
+import type { HistoryVersion } from "./protocol/VersionHistory";
 import type { Patchable } from "./types/Patchable";
 import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 
@@ -171,6 +172,10 @@ export type CacheState<M extends BaseMetadata> = {
    * Notification settings per room id
    */
   notificationSettings: Record<string, RoomNotificationSettings>;
+  /**
+   * Versions per roomId
+   */
+  versions: Record<string, HistoryVersion[]>;
 };
 
 export interface CacheStore<M extends BaseMetadata>
@@ -192,6 +197,11 @@ export interface CacheStore<M extends BaseMetadata>
     settings: RoomNotificationSettings,
     queryKey: string
   ): void;
+  updateRoomVersions(
+    roomId: string,
+    versions: HistoryVersion[],
+    queryKey: string
+  ): void;
   pushOptimisticUpdate(optimisticUpdate: OptimisticUpdate<M>): void;
   setQueryState(queryKey: string, queryState: QueryState): void;
 
@@ -211,6 +221,7 @@ export function createClientStore<M extends BaseMetadata>(): CacheStore<M> {
     optimisticUpdates: [],
     inboxNotifications: {},
     notificationSettings: {},
+    versions: {},
   });
 
   const optimisticUpdatesEventSource = makeEventSource<OptimisticUpdate<M>>();
@@ -257,6 +268,27 @@ export function createClientStore<M extends BaseMetadata>(): CacheStore<M> {
                 },
         };
       });
+    },
+
+    updateRoomVersions(
+      roomId: string,
+      versions: HistoryVersion[],
+      queryKey?: string
+    ) {
+      store.set((state) => ({
+        ...state,
+        versions: {
+          ...state.versions,
+          [roomId]: versions,
+        },
+        queries:
+          queryKey !== undefined
+            ? {
+                ...state.queries,
+                [queryKey]: { isLoading: false, data: undefined },
+              }
+            : state.queries,
+      }));
     },
 
     updateThreadsAndNotifications(

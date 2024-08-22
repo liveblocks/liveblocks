@@ -968,6 +968,7 @@ export type PrivateRoomApi = {
   deleteTextMention(mentionId: string): Promise<Response>;
   listTextVersions(): Promise<Response>;
   getTextVersion(version: string): Promise<Response>;
+  createTextVersion(): Promise<Response>;
 
   // NOTE: These are only used in our e2e test app!
   simulate: {
@@ -2032,6 +2033,13 @@ export function createRoom<
         method: "GET",
       }
     );
+  }
+
+  async function createTextVersion() {
+    const authValue = await delegates.authenticate();
+    return fetchClientApi(config.roomId, "/version", authValue, {
+      method: "POST",
+    });
   }
 
   function sendMessages(messages: ClientMsg<P, E>[]) {
@@ -3296,6 +3304,8 @@ export function createRoom<
         listTextVersions,
         // get a specific version
         getTextVersion,
+        // create a version
+        createTextVersion,
 
         // Support for the Liveblocks browser extension
         getSelf_forDevTools: () => selfAsTreeNode.current,

@@ -9,7 +9,3 @@ export type HistoryVersion = {
   type: HistoryVersionType;
   authors: string[];
 };
-
-export type HistoryVersionWithData = HistoryVersion & {
-  data: Uint8Array;
-};

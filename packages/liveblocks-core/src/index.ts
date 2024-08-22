@@ -211,7 +211,6 @@ export { ServerMsgCode } from "./protocol/ServerMsg";
 export type {
   HistoryVersion,
   HistoryVersionType,
-  HistoryVersionWithData,
 } from "./protocol/VersionHistory";
 export type { PrivateRoomApi } from "./room";
 export type {

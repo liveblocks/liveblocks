@@ -3,16 +3,10 @@ import * as Popover from "@radix-ui/react-popover";
 import { Suspense, useState } from "react";
 import Loading from "./loading";
 import { VersionHistoryList, Version } from "@liveblocks/react-ui";
-import { useVersions, useVersionWithData } from "@liveblocks/react";
-import { HistoryVersion } from "@liveblocks/core";
+import { useVersions } from "@liveblocks/react";
+import type { HistoryVersion } from "@liveblocks/core";
 import { VersionPreview } from "@liveblocks/react-lexical";
 
-function VersionContainer({ version }: { version: HistoryVersion }) {
-  const { version: versionWithData, isLoading } = useVersionWithData(version)
-  return (
-    <>{isLoading ? <Loading /> : <VersionPreview version={versionWithData!} />}</>
-  );
-}
 
 export default function VersionsPopover() {
   const [versionsOpen, setVersionsOpen] = useState(false);
@@ -39,14 +33,14 @@ export default function VersionsPopover() {
         >
           <Suspense fallback={<Loading />}>
             <div className="grow p-4">
-              {version && <VersionContainer version={version} />}
+              {version && <VersionPreview version={version} />}
             </div>
             <div className="text-sm relative w-[250px] h-full overflow-auto border-l border-border/80 min-w-[250px]">
               {isLoading ? <Loading /> :
                 <VersionHistoryList>
                   {versions?.map((version) => (
                     <Version
-                      onSelect={() => { setVersion(version) }}
+                      onClick={() => { setVersion(version) }}
                       key={version.id}
                       version={version}
                     />
