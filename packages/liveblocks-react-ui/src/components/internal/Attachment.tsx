@@ -2,6 +2,7 @@
 
 import type {
   CommentAttachment,
+  CommentLocalAttachment,
   CommentMixedAttachment,
 } from "@liveblocks/core";
 import { useAttachmentUrl, useIsInsideRoom } from "@liveblocks/react";
@@ -10,7 +11,7 @@ import type {
   MouseEventHandler,
   PointerEvent,
 } from "react";
-import React, { memo, useCallback, useMemo, useState } from "react";
+import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
 
 import { CrossIcon } from "../../icons/Cross";
 import { SpinnerIcon } from "../../icons/Spinner";
@@ -117,12 +118,7 @@ const FileAttachmentIcon = memo(({ mimeType }: { mimeType: string }) => {
   );
 });
 
-function FileAttachmentImagePreview({
-  attachment,
-}: {
-  attachment: CommentAttachment;
-}) {
-  const { url } = useAttachmentUrl(attachment.id);
+function FileAttachmentImagePreview({ url }: { url?: string }) {
   const [isLoaded, setLoaded] = useState(false);
 
   const handleLoad = useCallback(() => {
@@ -139,21 +135,52 @@ function FileAttachmentImagePreview({
   ) : null;
 }
 
+function FileAttachmentLocalImagePreview({
+  attachment,
+}: {
+  attachment: CommentLocalAttachment;
+}) {
+  const [url, setUrl] = useState<string>();
+
+  useEffect(() => {
+    const url = URL.createObjectURL(attachment.file);
+
+    setUrl(url);
+
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [attachment.file]);
+
+  return <FileAttachmentImagePreview url={url} />;
+}
+
+function FileAttachmentRemoteImagePreview({
+  attachment,
+}: {
+  attachment: CommentAttachment;
+}) {
+  const { url } = useAttachmentUrl(attachment.id);
+
+  return <FileAttachmentImagePreview url={url} />;
+}
+
 function FileAttachmentPreview({
   attachment,
 }: {
   attachment: CommentMixedAttachment;
 }) {
   const isInsideRoom = useIsInsideRoom();
-  const isUploaded = attachment.type === "attachment";
+  const isLocal = attachment.type === "localAttachment";
 
-  if (attachment.mimeType.startsWith("image/")) {
-    if (
-      isInsideRoom &&
-      isUploaded &&
-      attachment.size < IMAGE_PREVIEW_MAX_SIZE
-    ) {
-      return <FileAttachmentImagePreview attachment={attachment} />;
+  if (
+    attachment.mimeType.startsWith("image/") &&
+    attachment.size < IMAGE_PREVIEW_MAX_SIZE
+  ) {
+    if (isLocal) {
+      return <FileAttachmentLocalImagePreview attachment={attachment} />;
+    } else if (isInsideRoom) {
+      return <FileAttachmentRemoteImagePreview attachment={attachment} />;
     }
   }
 

@@ -42,6 +42,16 @@ export type CommentLocalAttachmentUploading = {
   file: File;
 };
 
+export type CommentLocalAttachmentUploaded = {
+  type: "localAttachment";
+  status: "uploaded";
+  id: string;
+  name: string;
+  size: number;
+  mimeType: string;
+  file: File;
+};
+
 export type CommentLocalAttachmentError = {
   type: "localAttachment";
   status: "error";
@@ -56,6 +66,7 @@ export type CommentLocalAttachmentError = {
 export type CommentLocalAttachment =
   | CommentLocalAttachmentIdle
   | CommentLocalAttachmentUploading
+  | CommentLocalAttachmentUploaded
   | CommentLocalAttachmentError;
 
 export type CommentMixedAttachment = CommentAttachment | CommentLocalAttachment;

@@ -1137,9 +1137,22 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
           editor.children as ComposerBodyData
         );
         // Only non-local attachments are included to be submitted.
-        const commentAttachments = attachments.filter(
-          (attachment) => attachment.type === "attachment"
-        ) as CommentAttachment[];
+        const commentAttachments: CommentAttachment[] = attachments
+          .filter(
+            (attachment) =>
+              attachment.type === "attachment" ||
+              (attachment.type === "localAttachment" &&
+                attachment.status === "uploaded")
+          )
+          .map((attachment) => {
+            return {
+              id: attachment.id,
+              type: "attachment",
+              mimeType: attachment.mimeType,
+              size: attachment.size,
+              name: attachment.name,
+            };
+          });
 
         const promise = onComposerSubmit(
           { body, attachments: commentAttachments },

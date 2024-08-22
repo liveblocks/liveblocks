@@ -336,6 +336,10 @@ function createComposerAttachmentsManager(
     }
 
     if (attachment.type === "localAttachment") {
+      if (attachment.status !== "idle") {
+        return;
+      }
+
       // The file is too large to be uploaded
       if (attachment.file.size > options.maxFileSize) {
         setAttachment({
@@ -361,8 +365,11 @@ function createComposerAttachmentsManager(
         .uploadAttachment(attachment, {
           signal: abortController.signal,
         })
-        .then((uploadedAttachment) => {
-          setAttachment(uploadedAttachment);
+        .then(() => {
+          setAttachment({
+            ...attachment,
+            status: "uploaded",
+          });
         })
         .catch((error) => {
           if (
