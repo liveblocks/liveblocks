@@ -16,10 +16,10 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import styles from "./CommentsCanvas.module.css";
 import { Toolbar } from "./Toolbar";
-import { useMaxZIndex } from "../hooks";
+import { useMaxZIndex, useNearEdge } from "../hooks";
 
 export function CommentsCanvas() {
   const { threads } = useThreads();
@@ -80,7 +80,7 @@ function DraggableThread({ thread }: { thread: ThreadData }) {
   const [open, setOpen] = useState(startOpen);
 
   // Enable drag
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+  const { attributes, listeners, setNodeRef, transform, node } = useDraggable({
     id: thread.id,
     data: { thread }, // Pass thread to DndContext drag end event
   });
@@ -95,6 +95,9 @@ function DraggableThread({ thread }: { thread: ThreadData }) {
   // Used to set z-index higher than other threads when pointer down
   const editThreadMetadata = useEditThreadMetadata();
   const maxZIndex = useMaxZIndex();
+
+  // Used to flip thread near edge of screen
+  const { nearRightEdge, nearBottomEdge } = useNearEdge(node);
 
   return (
     <div
@@ -126,7 +129,14 @@ function DraggableThread({ thread }: { thread: ThreadData }) {
           )}
         </div>
       </div>
-      {open ? <Thread thread={thread} className="thread" /> : null}
+      {open ? (
+        <Thread
+          thread={thread}
+          className="thread"
+          data-flip-vertical={nearBottomEdge || undefined}
+          data-flip-horizontal={nearRightEdge || undefined}
+        />
+      ) : null}
     </div>
   );
 }
