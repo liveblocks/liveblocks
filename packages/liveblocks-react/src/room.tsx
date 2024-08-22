@@ -2536,13 +2536,12 @@ function useVersions(
   const room = useRoom();
   const queryKey = getVersionsQueryKey(room.id);
 
-  const { store, getRoomVersions, incrementQuerySubscribers } =
+  const { store, getRoomVersions } =
     getExtrasForClient(client);
 
   React.useEffect(() => {
     void getRoomVersions(room);
-    return incrementQuerySubscribers(queryKey);
-  }, [room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [room]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selector = React.useCallback(
     (state: CacheState<BaseMetadata>): VersionsState => {
@@ -2831,11 +2830,6 @@ function useVersionsSuspense(
     },
     [room, queryKey] // eslint-disable-line react-hooks/exhaustive-deps
   );
-
-  React.useEffect(() => {
-    const { incrementQuerySubscribers } = getExtrasForClient(client);
-    return incrementQuerySubscribers(queryKey);
-  }, [client, queryKey]);
 
   const state = useSyncExternalStoreWithSelector(
     store.subscribe,
