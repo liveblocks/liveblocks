@@ -110,7 +110,6 @@ export function NewThread({ children }: Props) {
         return;
       }
       setMoving(false);
-      dragOffset.current = { x: 0, y: 0 };
 
       setTimeout(() => {
         dragging.current = false;
@@ -229,7 +228,7 @@ export function NewThread({ children }: Props) {
       setCreatingCommentState("complete");
       setAllowUseComposer(false);
       setMoving(false);
-      dragOffset.current = { x: 0, y: 0 };
+      setTimeout(() => (dragOffset.current = { x: 0, y: 0 }));
     },
     [createThread, composerCoords, maxZIndex]
   );
