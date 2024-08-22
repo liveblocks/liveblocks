@@ -5,6 +5,10 @@
   overflow: hidden;
 }
 
+.threads {
+  isolation: isolate;
+}
+
 .draggableThread {
   position: absolute;
   top: 0;

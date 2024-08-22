@@ -59,13 +59,15 @@ export function CommentsCanvas() {
 
   return (
     <div className={`${styles.wrapper} lb-root`}>
-      <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
-        {threads.map((thread) => (
-          <ClientSideSuspense fallback={null}>
-            <DraggableThread key={thread.id} thread={thread} />
-          </ClientSideSuspense>
-        ))}
-      </DndContext>
+      <div className={styles.threads}>
+        <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
+          {threads.map((thread) => (
+            <ClientSideSuspense fallback={null}>
+              <DraggableThread key={thread.id} thread={thread} />
+            </ClientSideSuspense>
+          ))}
+        </DndContext>
+      </div>
       <Toolbar />
     </div>
   );
