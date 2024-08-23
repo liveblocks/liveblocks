@@ -45,18 +45,25 @@ function splitFileName(name: string) {
 function getFileAttachmentIconGlyph(mimeType: string) {
   if (
     mimeType === "application/zip" ||
+    mimeType === "application/gzip" ||
+    mimeType === "application/vnd.rar" ||
     mimeType === "application/x-rar-compressed" ||
     mimeType === "application/x-7z-compressed" ||
     mimeType === "application/x-zip-compressed" ||
     mimeType === "application/x-tar" ||
-    mimeType === "application/gzip"
+    mimeType === "application/x-bzip" ||
+    mimeType === "application/x-bzip2"
   ) {
     return (
       <path d="M13 15h2v1h-1.5a.5.5 0 0 0 0 1H15v1h-1.5a.5.5 0 0 0 0 1H15v1h-1.5a.5.5 0 0 0 0 1h1a.5.5 0 0 0 .5-.5V20h1.5a.5.5 0 0 0 0-1H15v-1h1.5a.5.5 0 0 0 0-1H15v-1h1.5a.5.5 0 0 0 .5-.5V15a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2Z" />
     );
   }
 
-  if (mimeType.startsWith("text/")) {
+  if (
+    mimeType.startsWith("text/") ||
+    mimeType.startsWith("font/") ||
+    mimeType.startsWith("application/")
+  ) {
     return (
       <path d="M10 16a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5Zm0 2a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5Zm0 2a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5Zm0 2a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 0 1h-8a.5.5 0 0 1-.5-.5Z" />
     );
