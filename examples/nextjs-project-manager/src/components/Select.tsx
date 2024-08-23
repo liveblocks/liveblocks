@@ -8,7 +8,7 @@ import { Check } from "@/icons/Check";
 type Props = {
   id: string;
   value: string;
-  items: { id: string; jsx: ReactNode }[];
+  items: { id: string; jsx: ReactNode; text?: string }[];
   splitFirstItem?: boolean;
   onValueChange: (value: string) => void;
 };
@@ -23,13 +23,15 @@ export function Select({
   const [firstItem, ...otherItems] = items;
   const itemList = splitFirstItem ? otherItems : items;
 
+  const current = items.find((item) => item.id === value);
+
   return (
     <RadixSelect.Root onValueChange={onValueChange} value={value}>
       <RadixSelect.Trigger
         aria-label={id}
-        className="flex items-center justify-between bg-transparent border-0 min-w-32 h-7 px-2 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-neutral-200/60 appearance-none data-[state=open]:bg-neutral-200/60"
+        className="flex items-center justify-between bg-transparent border-0 h-7 px-2 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-neutral-200/60 appearance-none data-[state=open]:bg-neutral-200/60"
       >
-        <RadixSelect.Value />
+        {current ? current.text || current.jsx : <RadixSelect.Value />}
       </RadixSelect.Trigger>
       <RadixSelect.Portal>
         <RadixSelect.Content

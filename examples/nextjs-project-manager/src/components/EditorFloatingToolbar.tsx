@@ -14,10 +14,10 @@ import {
   $getSelection,
   $isRangeSelection,
   $isTextNode,
-  FORMAT_TEXT_COMMAND,
   LexicalEditor,
   LexicalNode,
 } from "lexical";
+import { EditorFloatingToolbarOptions } from "@/components/EditorFloatingToolbarOptions";
 
 export function EditorFloatingToolbar() {
   const padding = 20;
@@ -81,39 +81,9 @@ export function EditorFloatingToolbar() {
         minWidth: "max-content",
       }}
     >
-      <ToolbarOptions />
+      <EditorFloatingToolbarOptions />
     </div>,
     document.body
-  );
-}
-
-function ToolbarOptions() {
-  const [editor] = useLexicalComposerContext();
-  return (
-    <div className="w-full bg-white text-sm leading-relaxed">
-      <div className="flex items-center justify-center gap-2 p-1 w-full min-w-max rounded-lg border border-neutral-300 shadow">
-        <button
-          onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")}
-          className="inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-neutral-200/60 w-[26px] h-[26px] data-[active]:bg-neutral-200"
-        >
-          B
-        </button>
-        <button
-          onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic")}
-          className="inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-neutral-200/60 w-[26px] h-[26px] data-[active]:bg-neutral-200"
-        >
-          i
-        </button>
-        <button
-          onClick={() =>
-            editor.dispatchCommand(FORMAT_TEXT_COMMAND, "strikethrough")
-          }
-          className="inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-neutral-200/60 w-[26px] h-[26px] data-[active]:bg-neutral-200"
-        >
-          S
-        </button>
-      </div>
-    </div>
   );
 }
 

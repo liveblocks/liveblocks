@@ -15,14 +15,31 @@ import { ListNode, ListItemNode } from "@lexical/list";
 import { ClientSideSuspense } from "@liveblocks/react/suspense";
 import { EditorFloatingToolbar } from "@/components/EditorFloatingToolbar";
 import { ReactNode } from "react";
+import { LinkNode } from "@lexical/link";
+import { CodeNode } from "@lexical/code";
+import { HorizontalRuleNode } from "@lexical/react/LexicalHorizontalRuleNode";
 
 // Wrap your Lexical config with `liveblocksConfig`
 const initialConfig = liveblocksConfig({
   namespace: "Demo",
-  nodes: [HeadingNode, QuoteNode, ListNode, ListItemNode],
+  nodes: [
+    HorizontalRuleNode,
+    CodeNode,
+    LinkNode,
+    ListNode,
+    ListItemNode,
+    HeadingNode,
+    QuoteNode,
+  ],
   onError: (error: unknown) => {
     console.error(error);
     throw error;
+  },
+  theme: {
+    text: {
+      underline: "lexical-underline",
+      strikethrough: "lexical-strikethrough",
+    },
   },
 });
 
@@ -36,7 +53,7 @@ export function Editor({
   return (
     <ClientSideSuspense
       fallback={
-        <div className="select-none cursor-wait">
+        <div className="select-none cursor-wait editor-styles">
           <div className="block w-full text-2xl font-bold my-6">
             {storageFallback.meta.title}
           </div>
@@ -61,10 +78,14 @@ function LexicalEditor({ contentFallback }: { contentFallback: ReactNode }) {
         <div className="relative">
           <LiveblocksPlugin>
             {status === "not-loaded" || status === "loading" ? (
-              <div className="select-none cursor-wait">{contentFallback}</div>
+              <div className="select-none cursor-wait editor-styles">
+                {contentFallback}
+              </div>
             ) : (
               <RichTextPlugin
-                contentEditable={<ContentEditable className="outline-none" />}
+                contentEditable={
+                  <ContentEditable className="outline-none editor-styles" />
+                }
                 placeholder={
                   <div className="absolute top-0 left-0 pointer-events-none text-neutral-500 whitespace-nowrap">
                     Start typing here…
