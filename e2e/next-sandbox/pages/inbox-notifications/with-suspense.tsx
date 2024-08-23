@@ -202,7 +202,7 @@ function usePendingUpdatesCount() {
     () => store.get().optimisticUpdates.length,
     [store]
   );
-  return React.useSyncExternalStore(store.subscribe, getter);
+  return React.useSyncExternalStore(store.subscribe, getter, getter);
 }
 
 function LeftSide() {

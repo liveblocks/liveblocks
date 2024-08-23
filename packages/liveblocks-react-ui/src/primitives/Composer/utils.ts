@@ -454,6 +454,7 @@ export function useComposerAttachmentsManager(
 
   const attachments = useSyncExternalStore(
     attachmentsManager.subscribe,
+    attachmentsManager.getSnapshot,
     attachmentsManager.getSnapshot
   );
 
