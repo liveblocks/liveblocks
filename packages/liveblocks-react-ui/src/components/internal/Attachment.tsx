@@ -1,10 +1,6 @@
 "use client";
 
-import type {
-  CommentAttachment,
-  CommentLocalAttachment,
-  CommentMixedAttachment,
-} from "@liveblocks/core";
+import type { CommentMixedAttachment } from "@liveblocks/core";
 import { useAttachmentUrl, useIsInsideRoom } from "@liveblocks/react";
 import type {
   ComponentPropsWithoutRef,
@@ -12,7 +8,7 @@ import type {
   MouseEventHandler,
   PointerEvent,
 } from "react";
-import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
+import React, { memo, useCallback, useMemo, useState } from "react";
 
 import { CrossIcon } from "../../icons/Cross";
 import { SpinnerIcon } from "../../icons/Spinner";
@@ -142,30 +138,10 @@ function FileAttachmentImagePreview({ url }: { url?: string }) {
   ) : null;
 }
 
-function FileAttachmentLocalImagePreview({
-  attachment,
-}: {
-  attachment: CommentLocalAttachment;
-}) {
-  const [url, setUrl] = useState<string>();
-
-  useEffect(() => {
-    const url = URL.createObjectURL(attachment.file);
-
-    setUrl(url);
-
-    return () => {
-      URL.revokeObjectURL(url);
-    };
-  }, [attachment.file]);
-
-  return <FileAttachmentImagePreview url={url} />;
-}
-
 function FileAttachmentRemoteImagePreview({
   attachment,
 }: {
-  attachment: CommentAttachment;
+  attachment: CommentMixedAttachment;
 }) {
   const { url } = useAttachmentUrl(attachment.id);
 
@@ -178,15 +154,14 @@ function FileAttachmentPreview({
   attachment: CommentMixedAttachment;
 }) {
   const isInsideRoom = useIsInsideRoom();
-  const isLocal = attachment.type === "localAttachment";
+  const isUploaded =
+    attachment.type === "attachment" || attachment.status === "uploaded";
 
   if (
     attachment.mimeType.startsWith("image/") &&
     attachment.size < IMAGE_PREVIEW_MAX_SIZE
   ) {
-    if (isLocal) {
-      return <FileAttachmentLocalImagePreview attachment={attachment} />;
-    } else if (isInsideRoom) {
+    if (isUploaded && isInsideRoom) {
       return <FileAttachmentRemoteImagePreview attachment={attachment} />;
     }
   }
