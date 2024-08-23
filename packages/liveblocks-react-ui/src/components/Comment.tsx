@@ -60,6 +60,7 @@ import { useCurrentUserId } from "../shared";
 import { MENTION_CHARACTER } from "../slate/plugins/mentions";
 import type { CommentAttachmentArgs } from "../types";
 import { classNames } from "../utils/class-names";
+import { download } from "../utils/download";
 import { useRefs } from "../utils/use-refs";
 import { useVisibleCallback } from "../utils/use-visible";
 import { useWindowFocus } from "../utils/use-window-focus";
@@ -378,7 +379,18 @@ function CommentFileAttachment({
         return;
       }
 
-      window.open(url, "_blank");
+      // Open the attachment in a new tab if the attachment is a PDF,
+      // an image, a video, or audio. Otherwise, download it.
+      if (
+        attachment.mimeType === "application/pdf" ||
+        attachment.mimeType.startsWith("image/") ||
+        attachment.mimeType.startsWith("video/") ||
+        attachment.mimeType.startsWith("audio/")
+      ) {
+        window.open(url, "_blank");
+      } else {
+        download(url, attachment.name);
+      }
     },
     [attachment, onAttachmentClick, url]
   );
