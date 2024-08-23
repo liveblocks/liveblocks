@@ -18,6 +18,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 ## Examples
 
 - Add new features and polish to the [Next.js Overlay Comments](https://liveblocks.io/examples/overlay-comments/nextjs-comments-overlay) and [Next.js Canvas Comments](https://liveblocks.io/examples/canvas-comments/nextjs-comments-canvas) examples.
+- Comments now flip when previously they would go offscreen, and other small bugs were fixed.
 
 ## Contributors
 
