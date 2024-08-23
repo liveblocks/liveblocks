@@ -56,8 +56,8 @@ interface InboxNotificationCommentProps extends ComponentProps<"div"> {
 export function InboxNotificationComment({
   comment,
   showHeader = true,
-  showAttachments,
-  showReactions,
+  showAttachments = true,
+  showReactions = true,
   overrides,
   className,
   ...props

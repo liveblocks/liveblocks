@@ -467,6 +467,8 @@ const InboxNotificationThread = forwardRef<
                   key={comment.id}
                   comment={comment}
                   showHeader={contents.comments.length > 1}
+                  showAttachments={showAttachments}
+                  showReactions={showReactions}
                   overrides={overrides}
                 />
               ))}
@@ -501,6 +503,7 @@ const InboxNotificationThread = forwardRef<
                 showHeader={false}
                 showAttachments={showAttachments}
                 showReactions={showReactions}
+                overrides={overrides}
               />
             </div>
           );
