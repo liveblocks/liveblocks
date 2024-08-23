@@ -15,7 +15,13 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 35 (2024-08-30)
 
+## Documentation
+
+- New guide on [setting initial/default state in BlockNote](https://liveblocks.io/docs/guides/setting-an-initial-or-default-value-in-blocknote).
+
 ## Contributors
+
+ctnicholas
 
 # Week 34 (2024-08-23)
 
