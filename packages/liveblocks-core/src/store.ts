@@ -813,6 +813,7 @@ export function deleteComment<M extends BaseMetadata>(
           ...comment,
           deletedAt,
           body: undefined,
+          attachments: [],
         }
       : comment
   );
