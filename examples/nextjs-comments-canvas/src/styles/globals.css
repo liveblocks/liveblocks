@@ -56,12 +56,33 @@ main {
 .thread,
 .composer {
   position: relative;
+  width: 300px;
   border-radius: 0.75rem;
   overflow: hidden;
   box-shadow:
     0 0 0 1px rgb(0 0 0 / 4%),
     0 2px 6px rgb(0 0 0 / 4%),
     0 8px 26px rgb(0 0 0 / 6%);
+}
+
+.thread[data-flip-vertical],
+.composer[data-flip-vertical] {
+  position: absolute;
+  bottom: -36px;
+  left: 0;
+}
+
+.thread[data-flip-horizontal],
+.composer[data-flip-horizontal] {
+  position: absolute;
+  left: -348px;
+}
+
+.thread[data-flip-vertical][data-flip-horizontal],
+.composer[data-flip-vertical][data-flip-horizontal] {
+  position: absolute;
+  bottom: -36px;
+  left: -348px;
 }
 
 @media (prefers-color-scheme: dark) {
