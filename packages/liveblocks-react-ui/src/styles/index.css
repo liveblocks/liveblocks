@@ -643,6 +643,10 @@
   padding: var(--lb-spacing);
   outline: none;
 
+  :where(.lb-composer-editor-container:has(.lb-composer-attachments)) & {
+    padding-block-end: calc(0.25 * var(--lb-spacing));
+  }
+
   :where([data-placeholder]) {
     color: var(--lb-foreground-moderate);
   }
@@ -689,10 +693,6 @@
   :where(svg) {
     block-size: calc(0.75 * $lb-button-size);
   }
-}
-
-.lb-composer-editor:where(:has(+ .lb-composer-attachments)) {
-  padding-block-end: calc(0.25 * var(--lb-spacing));
 }
 
 .lb-composer-attachments {
