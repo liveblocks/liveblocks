@@ -8,6 +8,7 @@ import type {
 import { useAttachmentUrl, useIsInsideRoom } from "@liveblocks/react";
 import type {
   ComponentPropsWithoutRef,
+  KeyboardEvent,
   MouseEventHandler,
   PointerEvent,
 } from "react";
@@ -26,7 +27,6 @@ import { Tooltip } from "./Tooltip";
 
 interface FileAttachmentProps extends ComponentPropsWithoutRef<"div"> {
   attachment: CommentMixedAttachment;
-  onContentClick?: MouseEventHandler<HTMLButtonElement>;
   onDeleteClick?: MouseEventHandler<HTMLButtonElement>;
   preventFocusOnDelete?: boolean;
   overrides?: Partial<GlobalOverrides>;
@@ -190,7 +190,7 @@ function FileAttachmentPreview({
 export function FileAttachment({
   attachment,
   overrides,
-  onContentClick,
+  onClick,
   onDeleteClick,
   preventFocusOnDelete,
   className,
@@ -237,46 +237,57 @@ export function FileAttachment({
     [preventFocusOnDelete]
   );
 
+  const handleKeyDown = useCallback((event: KeyboardEvent<HTMLDivElement>) => {
+    // Simulate a click event on Enter or Space because it's a div
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+
+      const clickEvent = new MouseEvent("click", {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+      });
+      event.target.dispatchEvent(clickEvent);
+    }
+  }, []);
+
   return (
     <div
       className={classNames("lb-attachment lb-file-attachment", className)}
       data-error={isError ? "" : undefined}
       {...props}
+      role={onClick ? "button" : undefined}
+      onClick={onClick}
+      tabIndex={onClick ? 0 : -1}
+      onKeyDown={onClick ? handleKeyDown : undefined}
     >
-      <button
-        type="button"
-        className="lb-attachment-content"
-        onClick={onContentClick}
-        tabIndex={onContentClick ? undefined : -1}
-      >
-        <div className="lb-attachment-preview">
-          {isUploading ? (
-            <SpinnerIcon />
-          ) : isError ? (
-            <WarningIcon />
-          ) : (
-            <>
-              {!isError ? (
-                <FileAttachmentPreview attachment={attachment} />
-              ) : null}
-              <FileAttachmentIcon mimeType={attachment.mimeType} />
-            </>
+      <div className="lb-attachment-preview">
+        {isUploading ? (
+          <SpinnerIcon />
+        ) : isError ? (
+          <WarningIcon />
+        ) : (
+          <>
+            {!isError ? (
+              <FileAttachmentPreview attachment={attachment} />
+            ) : null}
+            <FileAttachmentIcon mimeType={attachment.mimeType} />
+          </>
+        )}
+      </div>
+      <div className="lb-attachment-details">
+        <span className="lb-attachment-name" title={attachment.name}>
+          <span className="lb-attachment-name-base">{fileBaseName}</span>
+          {fileExtension && (
+            <span className="lb-attachment-name-extension">
+              {fileExtension}
+            </span>
           )}
-        </div>
-        <div className="lb-attachment-details">
-          <span className="lb-attachment-name" title={attachment.name}>
-            <span className="lb-attachment-name-base">{fileBaseName}</span>
-            {fileExtension && (
-              <span className="lb-attachment-name-extension">
-                {fileExtension}
-              </span>
-            )}
-          </span>
-          <span className="lb-attachment-description" title={description}>
-            {description}
-          </span>
-        </div>
-      </button>
+        </span>
+        <span className="lb-attachment-description" title={description}>
+          {description}
+        </span>
+      </div>
       {onDeleteClick && (
         <Tooltip content={deleteLabel}>
           <button

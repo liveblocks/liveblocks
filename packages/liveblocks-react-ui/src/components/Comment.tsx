@@ -365,7 +365,7 @@ function CommentFileAttachment({
 }: CommentFileAttachmentProps) {
   const { url } = useAttachmentUrl(attachment.id);
 
-  const handleContentClick = useCallback(
+  const handleClick = useCallback(
     (event: MouseEvent<HTMLElement>) => {
       if (!url) {
         return;
@@ -401,7 +401,7 @@ function CommentFileAttachment({
       {...props}
       attachment={attachment}
       overrides={overrides}
-      onContentClick={url ? handleContentClick : undefined}
+      onClick={url ? handleClick : undefined}
     />
   );
 }

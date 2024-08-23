@@ -1047,18 +1047,15 @@
   gap: calc(0.75 * var(--lb-spacing));
 }
 
-.lb-attachment {
-  position: relative;
-  min-inline-size: 0;
-}
-
-.lb-attachment-content,
+.lb-attachment,
 .lb-attachment-delete {
   @include button;
 }
 
-.lb-attachment-content {
+.lb-attachment {
+  position: relative;
   inline-size: 100%;
+  min-inline-size: 0;
   border-radius: var(--lb-radius);
   background: var(--lb-dynamic-background);
   box-shadow: inset 0 0 0 1px var(--lb-foreground-subtle);
@@ -1179,12 +1176,10 @@
 }
 
 .lb-file-attachment {
-  :where(.lb-attachment-content) {
-    display: flex;
-    gap: calc(0.5 * var(--lb-spacing));
-    padding: calc(0.5 * var(--lb-spacing));
-    padding-inline-end: calc(0.65 * var(--lb-spacing));
-  }
+  display: flex;
+  gap: calc(0.5 * var(--lb-spacing));
+  padding: calc(0.5 * var(--lb-spacing));
+  padding-inline-end: calc(0.65 * var(--lb-spacing));
 
   :where(.lb-attachment-preview) {
     display: flex;
@@ -1234,7 +1229,7 @@
     color: var(--lb-foreground-tertiary);
   }
 
-  :where(.lb-attachment-content:not([tabindex="-1"])) {
+  :where(:not([tabindex="-1"])) {
     &:where(:hover, :focus-visible) {
       :where(.lb-attachment-name) {
         color: var(--lb-foreground);
