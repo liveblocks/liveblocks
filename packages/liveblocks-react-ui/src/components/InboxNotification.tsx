@@ -444,6 +444,7 @@ const InboxNotificationThread = forwardRef<
               ))}
               formatRemaining={$.LIST_REMAINING_USERS}
               truncate={INBOX_NOTIFICATION_THREAD_MAX_COMMENTS - 1}
+              locale={$.locale}
             />,
             showRoomName ? <Room roomId={thread.roomId} /> : undefined,
             reversedUserIds.length

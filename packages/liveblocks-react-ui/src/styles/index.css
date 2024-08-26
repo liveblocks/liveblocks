@@ -121,6 +121,33 @@
 }
 
 /*************************************
+ *              States               *
+ *************************************/
+
+.lb-loading,
+.lb-empty,
+.lb-error {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.lb-loading {
+  color: var(--lb-foreground-moderate);
+}
+
+.lb-empty,
+.lb-error {
+  padding: var(--lb-spacing);
+  color: var(--lb-foreground-tertiary);
+  font-size: 0.875em;
+  text-align: center;
+  text-wrap: balance;
+}
+
+/*************************************
  *               Icon                *
  *************************************/
 
@@ -231,6 +258,10 @@
   &:where([data-variant="outline"]) {
     box-shadow: inset 0 0 0 1px var(--lb-foreground-subtle);
     transition-property: background, color, opacity, box-shadow;
+  }
+
+  &:where([data-size="large"]) {
+    padding: calc(0.5 * var(--lb-spacing));
   }
 }
 
@@ -368,29 +399,6 @@
 .lb-emoji-picker-content {
   position: relative;
   flex: 1;
-}
-
-.lb-emoji-picker-loading,
-.lb-emoji-picker-empty,
-.lb-emoji-picker-error {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.lb-emoji-picker-loading {
-  color: var(--lb-foreground-moderate);
-}
-
-.lb-emoji-picker-empty,
-.lb-emoji-picker-error {
-  padding: var(--lb-spacing);
-  color: var(--lb-foreground-tertiary);
-  font-size: 0.875em;
-  text-align: center;
-  text-wrap: balance;
 }
 
 .lb-emoji-picker-category-header {
@@ -1205,16 +1213,65 @@
 }
 
 /*************************************
- *      Inbox Notification List      *
+ *          Version Summary          *
  *************************************/
 
-.lb-inbox-notification-list {
+.lb-version-summary {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: calc(0.25 * var(--lb-spacing));
+  justify-content: center;
+  min-inline-size: 0;
+  padding: var(--lb-spacing);
+  background: var(--lb-background);
+}
+
+.lb-version-summary-date,
+.lb-version-summary-authors {
+  @include truncate;
+}
+
+.lb-version-summary-date {
+  color: var(--lb-foreground-secondary);
+  font-weight: 500;
+}
+
+.lb-version-summary-authors {
+  color: var(--lb-foreground-tertiary);
+}
+
+/*************************************
+ *          Version Preview          *
+ *************************************/
+
+.lb-version-preview {
+  position: relative;
+  overflow-block: auto;
+}
+
+.lb-version-preview-actions {
+  position: absolute;
+  inset-inline-end: var(--lb-spacing);
+  inset-block-end: var(--lb-spacing);
+  display: flex;
+  gap: calc(0.35 * var(--lb-spacing));
+  align-items: center;
+}
+
+/*************************************
+ *               Lists               *
+ *************************************/
+
+.lb-inbox-notification-list,
+.lb-version-summary-list {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.lb-inbox-notification-list-item {
+.lb-inbox-notification-list-item,
+.lb-version-summary-list-item {
   &:where(:not(:last-of-type)) {
     border-block-end: 1px solid var(--lb-foreground-subtle);
   }

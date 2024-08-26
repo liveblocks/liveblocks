@@ -77,12 +77,17 @@ export interface InboxNotificationOverrides {
   ) => ReactNode;
 }
 
+export interface VersionPreviewOverrides {
+  VERSION_PREVIEW_RESTORE: string;
+}
+
 export type Overrides = LocalizationOverrides &
   GlobalOverrides &
   ComposerOverrides &
   CommentOverrides &
   ThreadOverrides &
-  InboxNotificationOverrides;
+  InboxNotificationOverrides &
+  VersionPreviewOverrides;
 
 type OverridesProviderProps = PropsWithChildren<{
   overrides?: Partial<Overrides>;
@@ -149,6 +154,7 @@ export const defaultOverrides: Overrides = {
       {user} mentioned you{room ? <> in {room}</> : null}
     </>
   ),
+  VERSION_PREVIEW_RESTORE: "Restore",
 };
 
 export const OverridesContext = createContext<Overrides | undefined>(undefined);

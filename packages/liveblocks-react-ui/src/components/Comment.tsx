@@ -252,6 +252,7 @@ export const CommentReaction = forwardRef<
             ))}
             formatRemaining={$.LIST_REMAINING_USERS}
             truncate={REACTIONS_TRUNCATE}
+            locale={$.locale}
           />,
           reaction.emoji,
           reaction.users.length

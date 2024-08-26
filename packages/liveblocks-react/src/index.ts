@@ -79,7 +79,7 @@ export {
   useStorage,
   useStorageStatus,
   useThreads,
-  useVersionHistory,
+  useVersions,
 } from "./room";
 export {
   useInboxNotifications,
