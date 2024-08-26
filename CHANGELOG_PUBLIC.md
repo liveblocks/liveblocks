@@ -23,6 +23,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
     - Introduced a new Text Editor tab with enhanced features:
         - Preview Lexical documents directly from the dashboard, including mentions, comment annotations, and custom nodes.
         - Access comment threads from text annotations and browse their comments and metadata.
+    - Broadcast custom events to people connected in the room using a typed editor.
 - New inline view for comment threads:
     - Offers a more visual and intuitive way to browse comments.
     - Added ability to sort threads by latest activity, most replies, or creation date.
