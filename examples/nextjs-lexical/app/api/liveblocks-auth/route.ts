@@ -9,7 +9,6 @@ import { USER_INFO } from "../dummy-users";
 
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
-  baseUrl: "http://localhost:8787",
 });
 
 export async function POST(request: NextRequest) {
