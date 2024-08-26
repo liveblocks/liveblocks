@@ -15,13 +15,26 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 35 (2024-08-30)
 
+## Dashboard
+
+- Room detail page enhancements:
+    - Renamed "Document" tab to "Realtime APIs" (Storage + Yjs) to reflect new product offerings.
+    - Reordered tabs: Comments, Text Editor, Realtime APIs, Metadata, Permissions.
+    - Introduced a new Text Editor tab with enhanced features:
+        - Preview Lexical documents directly from the dashboard, including mentions, comment annotations, and custom nodes.
+        - Access comment threads from text annotations and browse their comments and metadata.
+- New inline view for comment threads:
+    - Offers a more visual and intuitive way to browse comments.
+    - Added ability to sort threads by latest activity, most replies, or creation date.
+    - Introduced an option to delete all threads in a room at once.
+
 ## Documentation
 
 - New guide on [setting initial/default state in BlockNote](https://liveblocks.io/docs/guides/setting-an-initial-or-default-value-in-blocknote).
 
 ## Contributors
 
-ctnicholas
+ctnicholas, sugardarius, pierrelevaillant
 
 # Week 34 (2024-08-23)
 
