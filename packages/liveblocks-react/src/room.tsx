@@ -2507,7 +2507,7 @@ function useVersionData(versionId: string): VersionDataState {
         const data = new Uint8Array(buffer);
         setState({
           isLoading: false,
-          version: data,
+          data,
         });
       } catch (error) {
         setState({

@@ -221,19 +221,19 @@ export type RoomNotificationSettingsState =
 
 export type VersionDataStateLoading = {
   isLoading: true;
-  version?: never;
+  data?: never;
   error?: never;
 };
 
 export type VersionDataStateResolved = {
   isLoading: false;
-  version: Uint8Array;
+  data: Uint8Array;
   error?: Error;
 };
 
 export type VersionDataStateError = {
   isLoading: false;
-  version?: never;
+  data?: never;
   error: Error;
 };
 
@@ -1013,7 +1013,7 @@ export type RoomContextBundle<
        * Returns the data of a specific version of the current room.
        *
        * @example
-       * const { versions, error, isLoading } = useVersionHistory();
+       * const { data, error, isLoading } = useVersionData(version.id);
        */
       useVersionData(id: string): VersionDataState;
 
