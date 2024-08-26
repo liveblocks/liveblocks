@@ -389,8 +389,10 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
       isLoading: true,
     });
     try {
-      // const result = await request;
-      const data = { versions: [] as Version[] };
+      const result = await request;
+      const data = (await result.json()) as {
+        versions: Version[];
+      };
       const versions = data.versions.map(({ createdAt, ...version }) => {
         return {
           createdAt: new Date(createdAt),
