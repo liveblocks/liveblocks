@@ -79,6 +79,8 @@ export interface InboxNotificationOverrides {
 
 export interface VersionPreviewOverrides {
   VERSION_PREVIEW_RESTORE: string;
+  VERSION_PREVIEW_EMPTY: ReactNode;
+  VERSION_PREVIEW_ERROR: (error: Error) => ReactNode;
 }
 
 export type Overrides = LocalizationOverrides &
@@ -155,6 +157,8 @@ export const defaultOverrides: Overrides = {
     </>
   ),
   VERSION_PREVIEW_RESTORE: "Restore",
+  VERSION_PREVIEW_EMPTY: "No content.",
+  VERSION_PREVIEW_ERROR: () => "There was an error while getting this version.",
 };
 
 export const OverridesContext = createContext<Overrides | undefined>(undefined);

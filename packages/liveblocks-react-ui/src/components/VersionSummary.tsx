@@ -47,8 +47,8 @@ export const VersionSummary = forwardRef<
         <List
           values={version.authors.map((author, index) => (
             <User
-              key={author}
-              userId={author}
+              key={author.id}
+              userId={author.id}
               capitalize={index === 0}
               replaceSelf
             />

@@ -1100,7 +1100,7 @@ export type RoomContextBundle<
              * @example
              * const { versions } = useVersions();
              */
-            useVersions(): VersionsState;
+            useVersions(): VersionsStateResolved;
 
             // /**
             //  * Returns the data of a specific version of the current room's history.

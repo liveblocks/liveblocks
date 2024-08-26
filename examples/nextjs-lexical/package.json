@@ -21,6 +21,7 @@
     "@liveblocks/react": "file:../../packages/liveblocks-react",
     "@liveblocks/react-lexical": "file:../../packages/liveblocks-react-lexical",
     "@liveblocks/react-ui": "file:../../packages/liveblocks-react-ui",
+    "@radix-ui/react-dialog": "^1.1.1",
     "@radix-ui/react-popover": "^1.0.7",
     "@types/node": "^18.11.18",
     "@types/react": "^18.0.27",

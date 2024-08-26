@@ -108,7 +108,7 @@ export const VersionPreview = forwardRef<HTMLDivElement, VersionPreviewProps>(
     const room = useRoom();
     const editor = useRef<LexicalEditor>();
     const $ = useOverrides();
-    const { isLoading, data: versionData } = useVersionData(version.id);
+    const { isLoading, data, error } = useVersionData(version.id);
 
     const initialConfig = useMemo(() => {
       const nodes = Array.from(parentEditor._nodes.values()).map(
@@ -125,7 +125,7 @@ export const VersionPreview = forwardRef<HTMLDivElement, VersionPreviewProps>(
     }, [parentEditor, parentContext]);
 
     useEffect(() => {
-      if (isLoading || !versionData || !editor.current) {
+      if (!data || !editor.current) {
         return;
       }
       const doc = new Doc();
@@ -144,10 +144,10 @@ export const VersionPreview = forwardRef<HTMLDivElement, VersionPreviewProps>(
         binding
       );
 
-      applyUpdate(doc, versionData);
+      applyUpdate(doc, data);
 
       return unsubscribe;
-    }, [versionData, version.id, isLoading]);
+    }, [data, version.id, isLoading]);
 
     const restore = useCallback(() => {
       if (!editor.current || !parentEditor) {
@@ -174,14 +174,21 @@ export const VersionPreview = forwardRef<HTMLDivElement, VersionPreviewProps>(
           <div className="lb-loading lb-version-preview-loading">
             <SpinnerIcon />
           </div>
+        ) : error ? (
+          <div className="lb-error lb-version-preview-error">
+            {$.VERSION_PREVIEW_ERROR(error)}
+          </div>
         ) : (
           <div className="lb-lexical-version-preview-editor-container">
             <LexicalComposer initialConfig={initialConfig}>
               <EditorRefPlugin editorRef={editor} />
               <RichTextPlugin
                 contentEditable={<ContentEditable />}
-                // TODO: Possible to inherit parent's placeholder? Is it even necessary?
-                placeholder={null}
+                placeholder={
+                  <div className="lb-empty lb-version-preview-empty">
+                    {$.VERSION_PREVIEW_EMPTY}
+                  </div>
+                }
                 ErrorBoundary={LexicalErrorBoundary}
               />
             </LexicalComposer>
@@ -190,7 +197,7 @@ export const VersionPreview = forwardRef<HTMLDivElement, VersionPreviewProps>(
         <div className="lb-version-preview-actions">
           <Button
             onClick={restore}
-            disabled={isLoading || !versionData || !parentEditor}
+            disabled={!data || !parentEditor}
             variant="primary"
             size="large"
             className="lb-version-preview-action"

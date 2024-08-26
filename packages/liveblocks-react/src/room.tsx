@@ -389,10 +389,8 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
       isLoading: true,
     });
     try {
-      const result = await request;
-      const data = (await result.json()) as {
-        versions: Version[];
-      };
+      // const result = await request;
+      const data = { versions: [] as Version[] };
       const versions = data.versions.map(({ createdAt, ...version }) => {
         return {
           createdAt: new Date(createdAt),
@@ -2801,7 +2799,7 @@ function useThreadsSuspense<M extends BaseMetadata>(
   return state;
 }
 
-function useVersionsSuspense(): VersionsState {
+function useVersionsSuspense(): VersionsStateResolved {
   const client = useClient();
   const room = useRoom();
   const queryKey = getVersionsQueryKey(room.id);
