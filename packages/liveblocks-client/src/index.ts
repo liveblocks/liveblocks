@@ -28,7 +28,6 @@ export type {
   EnsureJson,
   History,
   HistoryVersion,
-  HistoryVersionType,
   Immutable,
   InboxNotificationData,
   IUserInfo,

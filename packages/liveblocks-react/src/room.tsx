@@ -26,7 +26,7 @@ import type {
   DS,
   DU,
   EnterOptions,
-  HistoryVersionType,
+  HistoryVersion,
   LiveblocksError,
   OpaqueClient,
   OpaqueRoom,
@@ -391,19 +391,12 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     try {
       const result = await request;
       const data = (await result.json()) as {
-        versions: {
-          createdAt: string;
-          authors: string[];
-          id: string;
-          type: HistoryVersionType;
-        }[];
+        versions: HistoryVersion[];
       };
-      const versions = data.versions.map(({ createdAt, authors, id, type }) => {
+      const versions = data.versions.map(({ createdAt, ...version }) => {
         return {
           createdAt: new Date(createdAt),
-          authors,
-          id,
-          type,
+          ...version,
         };
       });
       store.updateRoomVersions(room.id, versions, queryKey);
