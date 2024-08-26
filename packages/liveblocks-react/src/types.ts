@@ -20,7 +20,6 @@ import type {
   CommentBody,
   CommentData,
   DRI,
-  HistoryVersion,
   InboxNotificationData,
   LiveblocksError,
   PartialUnless,
@@ -31,6 +30,7 @@ import type {
   StorageStatus,
   ThreadData,
   ToImmutable,
+  Version,
 } from "@liveblocks/core";
 
 export type UseStorageStatusOptions = {
@@ -242,28 +242,28 @@ export type VersionDataState =
   | VersionDataStateResolved
   | VersionDataStateError;
 
-export type VersionHistoryStateLoading = {
+export type VersionsStateLoading = {
   isLoading: true;
   versions?: never;
   error?: never;
 };
 
-export type VersionHistoryStateResolved = {
+export type VersionsStateResolved = {
   isLoading: false;
-  versions: HistoryVersion[];
+  versions: Version[];
   error?: Error;
 };
 
-export type VersionHistoryStateError = {
+export type VersionsStateError = {
   isLoading: false;
   versions?: never;
   error: Error;
 };
 
-export type VersionHistoryState =
-  | VersionHistoryStateLoading
-  | VersionHistoryStateResolved
-  | VersionHistoryStateError;
+export type VersionsState =
+  | VersionsStateLoading
+  | VersionsStateResolved
+  | VersionsStateError;
 
 export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
   // prettier-ignore
@@ -1002,12 +1002,12 @@ export type RoomContextBundle<
       ];
 
       /**
-       * Returns a history of versions of the current room.
+       * Returns a list of versions of the current room.
        *
        * @example
-       * const { versions, error, isLoading } = useVersionHistory();
+       * const { versions, error, isLoading } = useVersions();
        */
-      useVersionHistory(): VersionHistoryState;
+      useVersions(): VersionsState;
 
       /**
        * Returns the data of a specific version of the current room.
@@ -1095,12 +1095,12 @@ export type RoomContextBundle<
             useThreads(options?: UseThreadsOptions<M>): ThreadsStateSuccess<M>;
 
             /**
-             * Returns the versions within the current room.
+             * Returns a list of versions of the current room.
              *
              * @example
-             * const { versions } = useVersionHistory();
+             * const { versions } = useVersions();
              */
-            useVersionHistory(): VersionHistoryState;
+            useVersions(): VersionsState;
 
             // /**
             //  * Returns the data of a specific version of the current room's history.

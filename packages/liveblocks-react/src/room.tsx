@@ -26,7 +26,6 @@ import type {
   DS,
   DU,
   EnterOptions,
-  HistoryVersion,
   LiveblocksError,
   OpaqueClient,
   OpaqueRoom,
@@ -35,6 +34,7 @@ import type {
   StorageStatus,
   ThreadData,
   ToImmutable,
+  Version,
 } from "@liveblocks/core";
 import {
   addReaction,
@@ -106,8 +106,8 @@ import type {
   UseStorageStatusOptions,
   UseThreadsOptions,
   VersionDataState,
-  VersionHistoryState,
-  VersionHistoryStateResolved,
+  VersionsState,
+  VersionsStateResolved,
 } from "./types";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
 
@@ -391,7 +391,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     try {
       const result = await request;
       const data = (await result.json()) as {
-        versions: HistoryVersion[];
+        versions: Version[];
       };
       const versions = data.versions.map(({ createdAt, ...version }) => {
         return {
@@ -657,7 +657,7 @@ function makeRoomContextBundle<
     useMarkThreadAsRead,
     useThreadSubscription,
 
-    useVersionHistory,
+    useVersions,
     useVersionData,
 
     useRoomNotificationSettings,
@@ -721,7 +721,7 @@ function makeRoomContextBundle<
       useThreadSubscription,
 
       // TODO: useVersionData: useVersionDataSuspense,
-      useVersionHistory: useVersionHistorySuspense,
+      useVersions: useVersionsSuspense,
 
       useRoomNotificationSettings: useRoomNotificationSettingsSuspense,
       useUpdateRoomNotificationSettings,
@@ -2527,12 +2527,12 @@ function useVersionData(versionId: string): VersionDataState {
 }
 
 /**
- * Returns a history of versions of the current room.
+ * Returns a list of versions of the current room.
  *
  * @example
- * const { versions, error, isLoading } = useVersionHistory();
+ * const { versions, error, isLoading } = useVersions();
  */
-function useVersionHistory(): VersionHistoryState {
+function useVersions(): VersionsState {
   const client = useClient();
   const room = useRoom();
   const queryKey = getVersionsQueryKey(room.id);
@@ -2544,7 +2544,7 @@ function useVersionHistory(): VersionHistoryState {
   }, [room]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selector = React.useCallback(
-    (state: CacheState<BaseMetadata>): VersionHistoryState => {
+    (state: CacheState<BaseMetadata>): VersionsState => {
       const query = state.queries[queryKey];
       if (query === undefined || query.isLoading) {
         return {
@@ -2801,7 +2801,7 @@ function useThreadsSuspense<M extends BaseMetadata>(
   return state;
 }
 
-function useVersionHistorySuspense(): VersionHistoryState {
+function useVersionsSuspense(): VersionsState {
   const client = useClient();
   const room = useRoom();
   const queryKey = getVersionsQueryKey(room.id);
@@ -2819,7 +2819,7 @@ function useVersionHistorySuspense(): VersionHistoryState {
   }
 
   const selector = React.useCallback(
-    (state: CacheState<BaseMetadata>): VersionHistoryStateResolved => {
+    (state: CacheState<BaseMetadata>): VersionsStateResolved => {
       return {
         versions: state.versions[room.id],
         isLoading: false,
@@ -3171,21 +3171,21 @@ const _useThreadsSuspense: TypedBundle["suspense"]["useThreads"] =
   useThreadsSuspense;
 
 /**
- * Returns a history of versions of the current room.
+ * Returns a list of versions of the current room.
  *
  * @example
- * const { versions, error, isLoading } = useVersionHistory();
+ * const { versions, error, isLoading } = useVersions();
  */
-const _useVersionHistory: TypedBundle["useVersionHistory"] = useVersionHistory;
+const _useVersions: TypedBundle["useVersions"] = useVersions;
 
 /**
- * Returns a history of versions of the current room.
+ * Returns a list of versions of the current room.
  *
  * @example
- * const { versions } = useVersionHistory();
+ * const { versions } = useVersions();
  */
-const _useVersionHistorySuspense: TypedBundle["suspense"]["useVersionHistory"] =
-  useVersionHistorySuspense;
+const _useVersionsSuspense: TypedBundle["suspense"]["useVersions"] =
+  useVersionsSuspense;
 
 /**
  * Given a connection ID (as obtained by using `useOthersConnectionIds`), you
@@ -3503,6 +3503,6 @@ export {
   _useUpdateMyPresence as useUpdateMyPresence,
   useUpdateRoomNotificationSettings,
   useVersionData,
-  _useVersionHistory as useVersionHistory,
-  _useVersionHistorySuspense as useVersionHistorySuspense,
+  _useVersions as useVersions,
+  _useVersionsSuspense as useVersionsSuspense,
 };
