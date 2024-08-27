@@ -146,6 +146,7 @@ function useSyncExternalStore<Snapshot>(
 const STABLE_EMPTY_LIST = Object.freeze([]);
 
 export const POLLING_INTERVAL = 5 * 60 * 1000; // 5 minutes
+export const VERSION_HISTORY_POLLING_INTERVAL = 30 * 1000; // 30 seconds
 
 function makeNotificationSettingsQueryKey(roomId: string) {
   return `${roomId}:NOTIFICATION_SETTINGS`;
@@ -287,13 +288,6 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   async function refreshThreadsAndNotifications() {
     const requests: Promise<unknown>[] = [];
 
-    client[kInternal].getRoomIds().map((roomId) => {
-      const room = client.getRoom(roomId);
-      if (room === null) return;
-
-      // Retrieve threads that have been updated/deleted since the last requestedAt value
-      requests.push(getThreadsUpdates(room.id));
-    });
 
     await Promise.allSettled(requests);
   }
@@ -2540,7 +2534,14 @@ function useVersions(
     getExtrasForClient(client);
 
   React.useEffect(() => {
-    void getRoomVersions(room);
+    const poller = makePoller(async () => {
+      await getRoomVersions(room);
+      return;
+    })
+    poller.start(VERSION_HISTORY_POLLING_INTERVAL);
+    return () => {
+      poller.stop();
+    }
   }, [room]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selector = React.useCallback(
@@ -2820,6 +2821,18 @@ function useVersionsSuspense(
   if (query.error) {
     throw query.error;
   }
+
+  // setup polling
+  React.useEffect(() => {
+    const poller = makePoller(async () => {
+      await getRoomVersions(room);
+      return;
+    })
+    poller.start(VERSION_HISTORY_POLLING_INTERVAL);
+    return () => {
+      poller.stop();
+    }
+  }, [room]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selector = React.useCallback(
     (state: CacheState<BaseMetadata>): VersionsStateResolved => {
