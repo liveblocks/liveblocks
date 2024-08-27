@@ -146,7 +146,6 @@ function useSyncExternalStore<Snapshot>(
 const STABLE_EMPTY_LIST = Object.freeze([]);
 
 export const POLLING_INTERVAL = 5 * 60 * 1000; // 5 minutes
-export const VERSION_HISTORY_POLLING_INTERVAL = 30 * 1000; // 30 seconds
 
 function makeNotificationSettingsQueryKey(roomId: string) {
   return `${roomId}:NOTIFICATION_SETTINGS`;
@@ -376,6 +375,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   ) {
     const queryKey = getVersionsQueryKey(room.id);
     const existingRequest = requestsByQuery.get(queryKey);
+    console.warn("existing request", existingRequest);
     if (existingRequest !== undefined) return existingRequest;
     const request = room[kInternal].listTextVersions();
     requestsByQuery.set(queryKey, request);
@@ -394,6 +394,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
         };
       });
       store.updateRoomVersions(room.id, versions, queryKey);
+      requestsByQuery.delete(queryKey);
     } catch (err) {
       requestsByQuery.delete(queryKey);
       // Retry the action using the exponential backoff algorithm
@@ -2534,14 +2535,7 @@ function useVersions(
     getExtrasForClient(client);
 
   React.useEffect(() => {
-    const poller = makePoller(async () => {
-      await getRoomVersions(room);
-      return;
-    })
-    poller.start(VERSION_HISTORY_POLLING_INTERVAL);
-    return () => {
-      poller.stop();
-    }
+    void getRoomVersions(room);
   }, [room]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selector = React.useCallback(
@@ -2821,18 +2815,6 @@ function useVersionsSuspense(
   if (query.error) {
     throw query.error;
   }
-
-  // setup polling
-  React.useEffect(() => {
-    const poller = makePoller(async () => {
-      await getRoomVersions(room);
-      return;
-    })
-    poller.start(VERSION_HISTORY_POLLING_INTERVAL);
-    return () => {
-      poller.stop();
-    }
-  }, [room]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selector = React.useCallback(
     (state: CacheState<BaseMetadata>): VersionsStateResolved => {
