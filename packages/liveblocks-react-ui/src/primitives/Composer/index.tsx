@@ -993,7 +993,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       maxFileSize: maxAttachmentSize,
     });
     const numberOfAttachments = attachments.length;
-    const canAddAttachments = numberOfAttachments < maxAttachments;
+    const hasMaxAttachments = numberOfAttachments >= maxAttachments;
     const isDisabled = useMemo(() => {
       const self = room.getSelf();
       const canComment = self?.canComment ?? true;
@@ -1196,7 +1196,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
           value={{
             createAttachments,
             isUploadingAttachments,
-            canAddAttachments,
+            hasMaxAttachments,
             maxAttachments,
             maxAttachmentSize,
           }}
@@ -1273,9 +1273,9 @@ const ComposerAttachFiles = forwardRef<
   ComposerAttachFilesProps
 >(({ children, onClick, disabled, asChild, ...props }, forwardedRef) => {
   const Component = asChild ? Slot : "button";
-  const { canAddAttachments } = useComposerAttachmentsContext();
+  const { hasMaxAttachments } = useComposerAttachmentsContext();
   const { isDisabled: isComposerDisabled, attachFiles } = useComposer();
-  const isDisabled = isComposerDisabled || !canAddAttachments || disabled;
+  const isDisabled = isComposerDisabled || hasMaxAttachments || disabled;
 
   const handleClick = useCallback(
     (event: MouseEvent<HTMLButtonElement>) => {

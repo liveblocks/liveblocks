@@ -33,7 +33,10 @@ import { SendIcon } from "../icons/Send";
 import type { ComposerOverrides, GlobalOverrides } from "../overrides";
 import { useOverrides } from "../overrides";
 import * as ComposerPrimitive from "../primitives/Composer";
-import { useComposer } from "../primitives/Composer/contexts";
+import {
+  useComposer,
+  useComposerAttachmentsContext,
+} from "../primitives/Composer/contexts";
 import type {
   ComposerEditorComponents,
   ComposerEditorLinkProps,
@@ -64,6 +67,7 @@ import { User } from "./internal/User";
 
 interface EditorActionProps extends ComponentPropsWithoutRef<"button"> {
   label: string;
+  tooltipLabel?: string;
 }
 
 interface EmojiEditorActionProps extends EditorActionProps {
@@ -194,6 +198,7 @@ interface ComposerEditorContainerProps
 
 function ComposerInsertMentionEditorAction({
   label,
+  tooltipLabel,
   className,
   onClick,
   ...props
@@ -217,7 +222,7 @@ function ComposerInsertMentionEditorAction({
   );
 
   return (
-    <Tooltip content={label}>
+    <Tooltip content={tooltipLabel ?? label}>
       <Button
         className={classNames("lb-composer-editor-action", className)}
         onMouseDown={preventDefault}
@@ -233,6 +238,7 @@ function ComposerInsertMentionEditorAction({
 
 function ComposerInsertEmojiEditorAction({
   label,
+  tooltipLabel,
   onPickerOpenChange,
   className,
   ...props
@@ -249,7 +255,7 @@ function ComposerInsertEmojiEditorAction({
 
   return (
     <EmojiPicker onEmojiSelect={insertText} onOpenChange={onPickerOpenChange}>
-      <Tooltip content={label}>
+      <Tooltip content={tooltipLabel ?? label}>
         <EmojiPickerTrigger asChild>
           <Button
             className={classNames("lb-composer-editor-action", className)}
@@ -268,6 +274,7 @@ function ComposerInsertEmojiEditorAction({
 
 function ComposerAttachFilesEditorAction({
   label,
+  tooltipLabel,
   className,
   ...props
 }: EditorActionProps) {
@@ -280,7 +287,7 @@ function ComposerAttachFilesEditorAction({
   }, []);
 
   return (
-    <Tooltip content={label}>
+    <Tooltip content={tooltipLabel ?? label}>
       <ComposerPrimitive.AttachFiles asChild>
         <Button
           className={classNames("lb-composer-editor-action", className)}
@@ -423,6 +430,7 @@ function ComposerEditorContainer({
 }: ComposerEditorContainerProps) {
   const ref = useRef<HTMLDivElement>(null);
   const { isEmpty } = useComposer();
+  const { hasMaxAttachments } = useComposerAttachmentsContext();
   const $ = useOverrides(overrides);
   const ignoreDropAreaLeaveEvent = useCallback(
     (event: DragEvent<HTMLDivElement>) => {
@@ -437,6 +445,7 @@ function ComposerEditorContainer({
   );
   const [isDraggingOver, dropAreaProps] = useComposerAttachmentsDropArea({
     ignoreLeaveEvent: ignoreDropAreaLeaveEvent,
+    disabled: hasMaxAttachments,
   });
 
   useLayoutEffect(() => {
