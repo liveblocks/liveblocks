@@ -150,13 +150,20 @@ const emptyCommentBody: CommentBody = {
   content: [{ type: "paragraph", children: [{ text: "" }] }],
 };
 
-function createComposerEditor() {
+function createComposerEditor({
+  createAttachments,
+}: {
+  createAttachments: (files: File[]) => void;
+}) {
   return withMentions(
     withCustomLinks(
       withAutoLinks(
         withAutoFormatting(
           withEmptyClearFormatting(
-            withPasteHtml(withHistory(withReact(createEditor())))
+            withPasteHtml(
+              withHistory(withReact(createEditor())),
+              createAttachments
+            )
           )
         )
       )
@@ -966,7 +973,6 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     forwardedRef
   ) => {
     const Component = asChild ? Slot : "form";
-    const editor = useInitial(createComposerEditor);
     const room = useRoom();
     const [isEmpty, setEmpty] = useState(true);
     const [isSubmitting, setSubmitting] = useState(false);
@@ -997,6 +1003,32 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const ref = useRef<HTMLFormElement>(null);
     const mergedRefs = useRefs(forwardedRef, ref);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const createAttachments = useCallback(
+      (files: File[]) => {
+        if (!files.length) {
+          return;
+        }
+
+        const numberOfAcceptedFiles = Math.max(
+          0,
+          maxAttachments - numberOfAttachments
+        );
+
+        files.splice(numberOfAcceptedFiles);
+
+        for (const file of files) {
+          const attachment = room.prepareAttachment(file);
+
+          addAttachment(attachment);
+        }
+      },
+      [addAttachment, maxAttachments, numberOfAttachments, room]
+    );
+
+    const editor = useInitial(() =>
+      createComposerEditor({ createAttachments })
+    );
 
     const validate = useCallback(
       (value: SlateElement[]) => {
@@ -1065,28 +1097,6 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
         insertSlateText(editor, text);
       },
       [editor, focus]
-    );
-
-    const createAttachments = useCallback(
-      (files: File[]) => {
-        if (!files.length) {
-          return;
-        }
-
-        const numberOfAcceptedFiles = Math.max(
-          0,
-          maxAttachments - numberOfAttachments
-        );
-
-        files.splice(numberOfAcceptedFiles);
-
-        for (const file of files) {
-          const attachment = room.prepareAttachment(file);
-
-          addAttachment(attachment);
-        }
-      },
-      [addAttachment, maxAttachments, numberOfAttachments, room]
     );
 
     const attachFiles = useCallback(() => {

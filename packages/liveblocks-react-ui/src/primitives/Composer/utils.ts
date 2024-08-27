@@ -25,6 +25,7 @@ import type {
   ComposerBodyText,
   Direction,
 } from "../../types";
+import { getFiles, hasFiles } from "../../utils/data-transfer";
 import { exists } from "../../utils/exists";
 import { useInitial } from "../../utils/use-initial";
 import {
@@ -217,7 +218,7 @@ export function useComposerAttachmentsDropArea<
 
       const dataTransfer = event.dataTransfer;
 
-      if (dataTransfer.types.includes("Files")) {
+      if (hasFiles(dataTransfer)) {
         event.preventDefault();
         event.stopPropagation();
 
@@ -274,13 +275,7 @@ export function useComposerAttachmentsDropArea<
 
       setDraggingOver(false);
 
-      const files = Array.from(event.dataTransfer.items)
-        .map((item) => {
-          const entry = item.webkitGetAsEntry();
-
-          return entry && entry.isFile ? item.getAsFile() : null;
-        })
-        .filter(exists);
+      const files = getFiles(event.dataTransfer);
 
       createAttachments(files);
     },

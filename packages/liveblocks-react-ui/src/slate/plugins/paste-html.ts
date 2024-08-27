@@ -10,6 +10,7 @@ import type {
   ComposerBodyParagraph,
   ComposerBodyText,
 } from "../../types";
+import { getFiles, hasFiles } from "../../utils/data-transfer";
 
 // Based on: https://github.com/ianstormtaylor/slate/blob/main/site/examples/paste-html.tsx
 
@@ -136,13 +137,16 @@ function deserialize(node: Node): DeserializedNode {
   return children as DeserializedNode;
 }
 
-export function withPasteHtml(editor: Editor) {
+export function withPasteHtml(
+  editor: Editor,
+  createAttachments: (files: File[]) => void
+) {
   const { insertData } = editor;
 
-  // Deserialize rich text from HTML when pasting
   editor.insertData = (data) => {
     const html = data.getData("text/html");
 
+    // Deserialize rich text from HTML when pasting
     if (html) {
       const parsed = new DOMParser().parseFromString(html, "text/html");
       const fragment = deserialize(parsed.body);
@@ -152,6 +156,13 @@ export function withPasteHtml(editor: Editor) {
 
         return;
       }
+    }
+
+    // Create attachments from files when pasting
+    if (hasFiles(data)) {
+      const files = getFiles(data);
+
+      createAttachments(files);
     }
 
     insertData(data);
