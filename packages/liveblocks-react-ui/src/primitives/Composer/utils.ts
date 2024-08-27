@@ -25,7 +25,7 @@ import type {
   ComposerBodyText,
   Direction,
 } from "../../types";
-import { getFiles, hasFiles } from "../../utils/data-transfer";
+import { getFiles } from "../../utils/data-transfer";
 import { exists } from "../../utils/exists";
 import { useInitial } from "../../utils/use-initial";
 import {
@@ -218,7 +218,7 @@ export function useComposerAttachmentsDropArea<
 
       const dataTransfer = event.dataTransfer;
 
-      if (hasFiles(dataTransfer)) {
+      if (dataTransfer.types.includes("Files")) {
         event.preventDefault();
         event.stopPropagation();
 

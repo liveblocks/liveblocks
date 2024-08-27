@@ -75,7 +75,7 @@ import {
   MENTION_CHARACTER,
   withMentions,
 } from "../../slate/plugins/mentions";
-import { withPasteHtml } from "../../slate/plugins/paste-html";
+import { withPaste } from "../../slate/plugins/paste";
 import { getDOMRange } from "../../slate/utils/get-dom-range";
 import { isEmpty as isEditorEmpty } from "../../slate/utils/is-empty";
 import { leaveMarkEdge, toggleMark } from "../../slate/utils/marks";
@@ -152,18 +152,20 @@ const emptyCommentBody: CommentBody = {
 
 function createComposerEditor({
   createAttachments,
+  supportPastingAttachments,
 }: {
   createAttachments: (files: File[]) => void;
+  supportPastingAttachments?: boolean;
 }) {
   return withMentions(
     withCustomLinks(
       withAutoLinks(
         withAutoFormatting(
           withEmptyClearFormatting(
-            withPasteHtml(
-              withHistory(withReact(createEditor())),
-              createAttachments
-            )
+            withPaste(withHistory(withReact(createEditor())), {
+              createAttachments,
+              supportPastingAttachments,
+            })
           )
         )
       )
@@ -966,6 +968,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       onSubmit,
       onComposerSubmit,
       defaultAttachments = [],
+      supportPastingAttachments,
       disabled,
       asChild,
       ...props
@@ -1027,7 +1030,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     );
 
     const editor = useInitial(() =>
-      createComposerEditor({ createAttachments })
+      createComposerEditor({ createAttachments, supportPastingAttachments })
     );
 
     const validate = useCallback(
