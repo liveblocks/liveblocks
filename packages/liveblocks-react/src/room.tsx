@@ -287,13 +287,6 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   async function refreshThreadsAndNotifications() {
     const requests: Promise<unknown>[] = [];
 
-    client[kInternal].getRoomIds().map((roomId) => {
-      const room = client.getRoom(roomId);
-      if (room === null) return;
-
-      // Retrieve threads that have been updated/deleted since the last requestedAt value
-      requests.push(getThreadsUpdates(room.id));
-    });
 
     await Promise.allSettled(requests);
   }
@@ -382,6 +375,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   ) {
     const queryKey = getVersionsQueryKey(room.id);
     const existingRequest = requestsByQuery.get(queryKey);
+    console.warn("existing request", existingRequest);
     if (existingRequest !== undefined) return existingRequest;
     const request = room[kInternal].listTextVersions();
     requestsByQuery.set(queryKey, request);
@@ -400,6 +394,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
         };
       });
       store.updateRoomVersions(room.id, versions, queryKey);
+      requestsByQuery.delete(queryKey);
     } catch (err) {
       requestsByQuery.delete(queryKey);
       // Retry the action using the exponential backoff algorithm
