@@ -233,7 +233,7 @@ async function migrateDocument({ oldDocumentId, oldDocumentThreads }) {
   // The unique ID for the room
   const roomId = oldDocumentId;
 
-  // Create a room
+  // Create a Liveblocks room
   const room = await liveblocks.createRoom(roomId, {
     // If you're using ID tokens, set your permissions/accesses, examples below
     defaultAccesses: [
@@ -247,10 +247,11 @@ async function migrateDocument({ oldDocumentId, oldDocumentThreads }) {
     // }
   });
 
+  // Loop through your existing threads for the current room
   for (const oldThread of oldDocumentThreads) {
     const [firstComment, ...otherComments] = oldThread.comments;
 
-    // Create a thread
+    // Create a Liveblocks thread
     const thread = await liveblocks.createThread({
       roomId: room.id,
 
@@ -267,7 +268,9 @@ async function migrateDocument({ oldDocumentId, oldDocumentThreads }) {
       },
     });
 
+    // Loop through this existing thread's comments
     for (const oldComment of otherComments) {
+      // Create a Liveblocks comment
       const comment = await liveblocks.createComment({
         roomId: room.id,
         threadId: thread.id,
@@ -286,8 +289,9 @@ async function migrateDocument({ oldDocumentId, oldDocumentThreads }) {
         },
       });
 
+      // Loop through this existing comment's reactions
       for (const oldReaction of oldComment.reactions) {
-        // Add a reaction to a comment
+        // Add a reaction to a Liveblocks comment
         await liveblocks.addCommentReaction({
           roomId: room.id,
           threadId: thread.id,
