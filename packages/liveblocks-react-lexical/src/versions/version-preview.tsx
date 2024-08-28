@@ -183,7 +183,7 @@ export const VersionPreview = forwardRef<HTMLDivElement, VersionPreviewProps>(
             {$.VERSION_PREVIEW_ERROR(error)}
           </div>
         ) : (
-          <div className="lb-lexical-version-preview-editor-container">
+          <div className="lb-lexical-editor-container lb-lexical-version-preview-editor-container">
             <LexicalComposer initialConfig={initialConfig}>
               <EditorRefPlugin editorRef={editor} />
               <RichTextPlugin

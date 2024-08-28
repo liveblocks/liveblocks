@@ -1269,7 +1269,11 @@
 
 .lb-version-preview {
   position: relative;
-  overflow-block: auto;
+  padding: var(--lb-spacing);
+
+  /* overflow-block: auto; doesn't work as expected */
+  /* stylelint-disable-next-line plugin/use-logical-properties-and-values */
+  overflow-y: auto;
 }
 
 .lb-version-preview-actions {
