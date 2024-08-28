@@ -25,9 +25,10 @@ deciding on either _ID tokens_ or _access tokens_.
 ## Creating rooms
 
 The first step is to create the multiplayer room where the comments are stored.
-This equivalent to a document in your project. Make sure to read the sections on
-permissions under [access tokens](/docs/authentication/access-token#permissions)
-or [ID tokens](/docs/authentication/id-token#permissions) to fully understand
+This is equivalent to a document in your project. Make sure to read the sections
+on permissions under
+[access tokens](/docs/authentication/access-token#permissions) or
+[ID tokens](/docs/authentication/id-token#permissions) to fully understand
 setting up your room.
 
 Create a room using
@@ -56,9 +57,10 @@ const room = await liveblocks.createRoom(roomId, {
 
 ## Creating threads
 
-Next up is creating threads in the room. Before starting, make sure you under
-the [concepts behind Comments](/docs/products/comments/concepts). When a thread
-is created, the first comment is also created, and you can do this with
+Next up is creating threads in the room. Before starting, make sure you
+understand the [concepts behind Comments](/docs/products/comments/concepts).
+When a thread is created, the first comment is also created, and you can do this
+with
 [`liveblocks.createThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads)
 or the
 [Create Thread API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads).
