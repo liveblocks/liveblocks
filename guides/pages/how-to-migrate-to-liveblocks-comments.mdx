@@ -284,7 +284,7 @@ async function migrateDocument({ oldDocumentId, oldDocumentThreads }) {
         },
       });
 
-      for (const oldReaction of oldComment) {
+      for (const oldReaction of oldComment.reactions) {
         // Add a reaction to a comment
         await liveblocks.addCommentReaction({
           roomId: room.id,
