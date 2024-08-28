@@ -50,11 +50,17 @@ function Versions() {
       No versions yet
     </div>
   ) : (
-    <>
-      <div className="grow p-4">
-        {version && <VersionPreview version={version} />}
+    <div className="flex h-full">
+      <div className="grow h-full">
+        {version ? (
+          <VersionPreview version={version} className="w-full h-full" />
+        ) : (
+          <div className="flex h-full items-center justify-center p-6 text-muted-foreground">
+            No version selected
+          </div>
+        )}
       </div>
-      <div className="text-sm relative w-[250px] h-full overflow-auto border-l border-border/80 min-w-[250px]">
+      <div className="text-sm relative w-[250px] h-full overflow-auto border-l border-border/80">
         <VersionSummaryList>
           {versions.map((version) => (
             <VersionSummary
@@ -67,6 +73,6 @@ function Versions() {
           ))}
         </VersionSummaryList>
       </div>
-    </>
+    </div>
   );
 }

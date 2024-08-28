@@ -203,7 +203,7 @@ export const VersionPreview = forwardRef<HTMLDivElement, VersionPreviewProps>(
             className="lb-version-preview-action"
           >
             {/* TODO: Add icon */}
-            {$.VERSION_PREVIEW_RESTORE}
+            <span className="lb-button-label">{$.VERSION_PREVIEW_RESTORE}</span>
           </Button>
         </div>
       </div>

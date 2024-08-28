@@ -260,13 +260,25 @@
     transition-property: background, color, opacity, box-shadow;
   }
 
+  &:where(:has(.lb-button-label)) {
+    padding-inline: calc(0.5 * var(--lb-spacing));
+  }
+
   &:where([data-size="large"]) {
     padding: calc(0.5 * var(--lb-spacing));
+
+    &:where(:has(.lb-button-label)) {
+      padding-inline: calc(0.75 * var(--lb-spacing));
+    }
   }
 }
 
 .lb-button-icon {
   --lb-icon-background: var(--lb-button-background);
+}
+
+.lb-button-label {
+  font-weight: 500;
 }
 
 /*************************************
@@ -1222,14 +1234,22 @@
   flex-direction: column;
   gap: calc(0.25 * var(--lb-spacing));
   justify-content: center;
+  inline-size: 100%;
   min-inline-size: 0;
   padding: var(--lb-spacing);
-  background: var(--lb-background);
+  background: var(--lb-dynamic-background);
+
+  &:where(:hover, :focus-visible, :focus-within) {
+    --lb-dynamic-background: var(--lb-background-foreground-faint);
+  }
 }
 
 .lb-version-summary-date,
 .lb-version-summary-authors {
   @include truncate;
+
+  min-inline-size: 0;
+  max-inline-size: 100%;
 }
 
 .lb-version-summary-date {
