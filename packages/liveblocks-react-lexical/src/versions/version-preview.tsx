@@ -13,7 +13,11 @@ import {
 import { kInternal, type Version } from "@liveblocks/core";
 import { useRoom, useVersionData } from "@liveblocks/react";
 import { useOverrides } from "@liveblocks/react-ui";
-import { Button, SpinnerIcon } from "@liveblocks/react-ui/_private";
+import {
+  Button,
+  SpinnerIcon,
+  VersionHistoryIcon,
+} from "@liveblocks/react-ui/_private";
 import type { LexicalEditor } from "lexical";
 import type { ComponentPropsWithoutRef } from "react";
 import React, {
@@ -202,7 +206,7 @@ export const VersionPreview = forwardRef<HTMLDivElement, VersionPreviewProps>(
             size="large"
             className="lb-version-preview-action"
           >
-            {/* TODO: Add icon */}
+            <VersionHistoryIcon className="lb-button-icon" />
             <span className="lb-button-label">{$.VERSION_PREVIEW_RESTORE}</span>
           </Button>
         </div>

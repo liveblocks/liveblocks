@@ -261,6 +261,7 @@
   }
 
   &:where(:has(.lb-button-label)) {
+    gap: calc(0.25 * var(--lb-spacing));
     padding-inline: calc(0.5 * var(--lb-spacing));
   }
 
@@ -268,7 +269,8 @@
     padding: calc(0.5 * var(--lb-spacing));
 
     &:where(:has(.lb-button-label)) {
-      padding-inline: calc(0.75 * var(--lb-spacing));
+      gap: calc(0.35 * var(--lb-spacing));
+      padding-inline: calc(0.7 * var(--lb-spacing));
     }
   }
 }

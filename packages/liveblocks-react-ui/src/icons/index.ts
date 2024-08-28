@@ -14,3 +14,4 @@ export { ResolvedIcon } from "./Resolved";
 export { SearchIcon } from "./Search";
 export { SendIcon } from "./Send";
 export { SpinnerIcon } from "./Spinner";
+export { VersionHistoryIcon } from "./VersionHistory";
