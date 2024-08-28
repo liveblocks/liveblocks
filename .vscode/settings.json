@@ -3,10 +3,12 @@
   "editor.formatOnSave": true,
   "editor.tabSize": 2,
   "editor.detectIndentation": false,
-  "grammarly.selectors": [
+  "eslint.workingDirectories": [
     {
-      "language": "markdown",
-      "scheme": "file"
+      "mode": "auto"
     }
-  ]
+  ],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  }
 }
