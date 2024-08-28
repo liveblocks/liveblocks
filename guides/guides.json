@@ -378,5 +378,13 @@
     "topics": ["text-editors"],
     "technologies": ["yjs", "blocknote", "react"],
     "date": "2024-08-23"
+  },
+  {
+    "title": "How to migrate to Liveblocks Comments",
+    "path": "/how-to-migrate-to-liveblocks-comments",
+    "topics": ["comments", "rest-api"],
+    "technologies": ["nodejs"],
+    "date": "2024-08-28",
+    "featured": true
   }
 ]
