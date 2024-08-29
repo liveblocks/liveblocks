@@ -207,7 +207,7 @@ export const VersionPreview = forwardRef<HTMLDivElement, VersionPreviewProps>(
             {$.VERSION_PREVIEW_AUTHORS_LIST(
               <List
                 values={version.authors.map((author) => (
-                  <User key={author} userId={author} replaceSelf />
+                  <User key={author.id} userId={author.id} replaceSelf />
                 ))}
                 formatRemaining={$.LIST_REMAINING_USERS}
                 truncate={AUTHORS_TRUNCATE}
