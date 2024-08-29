@@ -15,7 +15,6 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 35 (2024-08-30)
 
-
 ## v2.6.0
 
 ### `@liveblocks/node`
