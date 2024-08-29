@@ -1,5 +1,5 @@
 import * as Dialog from "@radix-ui/react-dialog";
-import { Suspense, useState } from "react";
+import { Suspense, useCallback, useState } from "react";
 import Loading from "./loading";
 import { VersionSummaryList, VersionSummary } from "@liveblocks/react-ui";
 import type { Version } from "@liveblocks/core";
@@ -7,8 +7,14 @@ import { VersionPreview } from "@liveblocks/react-lexical";
 import { useVersions } from "@liveblocks/react/suspense";
 
 export default function VersionsDialog() {
+  const [isOpen, setOpen] = useState(false);
+
+  const onVersionRestore = useCallback(() => {
+    setOpen(false);
+  }, []);
+
   return (
-    <Dialog.Root>
+    <Dialog.Root open={isOpen} onOpenChange={setOpen}>
       <Dialog.Trigger className="inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground w-8 h-8">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -33,7 +39,7 @@ export default function VersionsDialog() {
             Previous versions of this document
           </Dialog.Description>
           <Suspense fallback={<Loading />}>
-            <Versions />
+            <Versions onVersionRestore={onVersionRestore} />
           </Suspense>
         </Dialog.Content>
       </Dialog.Portal>
@@ -41,7 +47,7 @@ export default function VersionsDialog() {
   );
 }
 
-function Versions() {
+function Versions({ onVersionRestore }: { onVersionRestore: () => void }) {
   const [version, setVersion] = useState<Version>();
   const { versions } = useVersions();
 
@@ -53,7 +59,11 @@ function Versions() {
     <div className="flex h-full">
       <div className="flex-1 h-full min-w-0">
         {version ? (
-          <VersionPreview version={version} className="w-full h-full" />
+          <VersionPreview
+            version={version}
+            className="w-full h-full"
+            onVersionRestore={onVersionRestore}
+          />
         ) : (
           <div className="flex h-full items-center justify-center p-6 text-muted-foreground">
             No version selected
