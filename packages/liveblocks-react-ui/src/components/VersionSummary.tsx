@@ -15,6 +15,7 @@ const AUTHORS_TRUNCATE = 3;
 export interface VersionSummaryProps
   extends ComponentPropsWithoutRef<"button"> {
   version: Version;
+  selected?: boolean;
 }
 
 /**
@@ -26,7 +27,7 @@ export interface VersionSummaryProps
 export const VersionSummary = forwardRef<
   HTMLButtonElement,
   VersionSummaryProps
->(({ version, className, ...props }, forwardedRef) => {
+>(({ version, selected, className, ...props }, forwardedRef) => {
   const $ = useOverrides();
 
   return (
@@ -34,6 +35,7 @@ export const VersionSummary = forwardRef<
       {...props}
       className={classNames("lb-root lb-version-summary", className)}
       ref={forwardedRef}
+      data-selected={selected ? "" : undefined}
     >
       <span className="lb-version-summary-date">
         <Timestamp

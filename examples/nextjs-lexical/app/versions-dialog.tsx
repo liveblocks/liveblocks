@@ -48,7 +48,7 @@ export default function VersionsDialog() {
 }
 
 function Versions({ onVersionRestore }: { onVersionRestore: () => void }) {
-  const [version, setVersion] = useState<Version>();
+  const [selectedVersion, setSelectedVersion] = useState<Version>();
   const { versions } = useVersions();
 
   return versions.length === 0 ? (
@@ -58,9 +58,9 @@ function Versions({ onVersionRestore }: { onVersionRestore: () => void }) {
   ) : (
     <div className="flex h-full">
       <div className="flex-1 h-full min-w-0">
-        {version ? (
+        {selectedVersion ? (
           <VersionPreview
-            version={version}
+            version={selectedVersion}
             className="w-full h-full"
             onVersionRestore={onVersionRestore}
           />
@@ -75,10 +75,11 @@ function Versions({ onVersionRestore }: { onVersionRestore: () => void }) {
           {versions.map((version) => (
             <VersionSummary
               onClick={() => {
-                setVersion(version);
+                setSelectedVersion(version);
               }}
               key={version.id}
               version={version}
+              selected={version.id === selectedVersion?.id}
             />
           ))}
         </VersionSummaryList>

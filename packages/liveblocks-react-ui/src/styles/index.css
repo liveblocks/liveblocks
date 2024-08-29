@@ -1240,8 +1240,9 @@
   min-inline-size: 0;
   padding: var(--lb-spacing);
   background: var(--lb-dynamic-background);
+  transition-property: background;
 
-  &:where(:hover, :focus-visible, :focus-within) {
+  &:where(:hover, :focus-visible, :focus-within, [data-selected]) {
     --lb-dynamic-background: var(--lb-background-foreground-faint);
   }
 }
