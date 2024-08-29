@@ -1269,17 +1269,34 @@
 
 .lb-version-preview {
   position: relative;
-  padding: var(--lb-spacing);
+  display: flex;
+  flex-direction: column;
+  background: var(--lb-dynamic-background);
 
   /* overflow-block: auto; doesn't work as expected */
   /* stylelint-disable-next-line plugin/use-logical-properties-and-values */
   overflow-y: auto;
 }
 
+.lb-version-preview-content {
+  flex: 1 0 auto;
+  padding: var(--lb-spacing);
+}
+
+.lb-version-preview-footer {
+  position: sticky;
+  inset-block-end: 0;
+  display: flex;
+  flex: none;
+  justify-content: end;
+  align-items: center;
+  margin-block-start: auto;
+  padding: var(--lb-spacing);
+  border-block-start: 1px solid var(--lb-foreground-subtle);
+  background: var(--lb-dynamic-background);
+}
+
 .lb-version-preview-actions {
-  position: absolute;
-  inset-inline-end: var(--lb-spacing);
-  inset-block-end: var(--lb-spacing);
   display: flex;
   gap: calc(0.35 * var(--lb-spacing));
   align-items: center;

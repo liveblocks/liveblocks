@@ -183,7 +183,7 @@ export const VersionPreview = forwardRef<HTMLDivElement, VersionPreviewProps>(
             {$.VERSION_PREVIEW_ERROR(error)}
           </div>
         ) : (
-          <div className="lb-lexical-editor-container lb-lexical-version-preview-editor-container">
+          <div className="lb-version-preview-content lb-lexical-editor-container lb-lexical-version-preview-editor-container">
             <LexicalComposer initialConfig={initialConfig}>
               <EditorRefPlugin editorRef={editor} />
               <RichTextPlugin
@@ -198,17 +198,21 @@ export const VersionPreview = forwardRef<HTMLDivElement, VersionPreviewProps>(
             </LexicalComposer>
           </div>
         )}
-        <div className="lb-version-preview-actions">
-          <Button
-            onClick={restore}
-            disabled={!data || !parentEditor}
-            variant="primary"
-            size="large"
-            className="lb-version-preview-action"
-          >
-            <VersionHistoryIcon className="lb-button-icon" />
-            <span className="lb-button-label">{$.VERSION_PREVIEW_RESTORE}</span>
-          </Button>
+        <div className="lb-version-preview-footer">
+          <div className="lb-version-preview-actions">
+            <Button
+              onClick={restore}
+              disabled={!data || !parentEditor}
+              variant="primary"
+              size="large"
+              className="lb-version-preview-action"
+            >
+              <VersionHistoryIcon className="lb-button-icon" />
+              <span className="lb-button-label">
+                {$.VERSION_PREVIEW_RESTORE}
+              </span>
+            </Button>
+          </div>
         </div>
       </div>
     );
