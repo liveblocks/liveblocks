@@ -50,7 +50,7 @@ ctnicholas
 
 # Week 33 (2024-08-16)
 
-## 2.5.1
+## v2.5.1
 
 ### `@liveblocks/yjs`
 
