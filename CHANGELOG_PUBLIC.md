@@ -37,6 +37,9 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Documentation
 
+- Improved search dialog box:
+  - Returns more accurate results, and is generally much more useful.
+  - Returns more results than before, allowing you to accessibly scroll through the list.
 - New guide on [setting initial/default state in BlockNote](https://liveblocks.io/docs/guides/setting-an-initial-or-default-value-in-blocknote).
 
 ## Contributors
