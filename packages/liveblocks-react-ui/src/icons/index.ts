@@ -11,7 +11,7 @@ export { MentionIcon } from "./Mention";
 export { MissingIcon } from "./Missing";
 export { ResolveIcon } from "./Resolve";
 export { ResolvedIcon } from "./Resolved";
+export { RestoreIcon } from "./Restore";
 export { SearchIcon } from "./Search";
 export { SendIcon } from "./Send";
 export { SpinnerIcon } from "./Spinner";
-export { VersionHistoryIcon } from "./VersionHistory";

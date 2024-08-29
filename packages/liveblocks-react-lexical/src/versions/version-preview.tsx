@@ -15,8 +15,8 @@ import { useRoom, useVersionData } from "@liveblocks/react";
 import { useOverrides } from "@liveblocks/react-ui";
 import {
   Button,
+  RestoreIcon,
   SpinnerIcon,
-  VersionHistoryIcon,
 } from "@liveblocks/react-ui/_private";
 import type { LexicalEditor } from "lexical";
 import type { ComponentPropsWithoutRef } from "react";
@@ -207,7 +207,7 @@ export const VersionPreview = forwardRef<HTMLDivElement, VersionPreviewProps>(
               size="large"
               className="lb-version-preview-action"
             >
-              <VersionHistoryIcon className="lb-button-icon" />
+              <RestoreIcon className="lb-button-icon" />
               <span className="lb-button-label">
                 {$.VERSION_PREVIEW_RESTORE}
               </span>
