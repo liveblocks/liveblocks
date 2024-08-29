@@ -3,9 +3,7 @@ export type YjsVersion = {
   kind: "yjs";
   createdAt: Date;
   id: string;
-  authors: {
-    id: string;
-  }[];
+  authors: string[];
 };
 
 // export type StorageVersion = {

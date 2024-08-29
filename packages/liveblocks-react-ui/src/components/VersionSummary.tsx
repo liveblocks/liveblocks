@@ -42,13 +42,12 @@ export const VersionSummary = forwardRef<
           className="lb-version-summary-date-created"
         />
       </span>
-      {/* TODO: Display avatars */}
       <span className="lb-version-summary-authors">
         <List
           values={version.authors.map((author, index) => (
             <User
-              key={author.id}
-              userId={author.id}
+              key={author}
+              userId={author}
               capitalize={index === 0}
               replaceSelf
             />

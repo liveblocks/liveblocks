@@ -15,8 +15,10 @@ import { useRoom, useVersionData } from "@liveblocks/react";
 import { useOverrides } from "@liveblocks/react-ui";
 import {
   Button,
+  List,
   RestoreIcon,
   SpinnerIcon,
+  User,
 } from "@liveblocks/react-ui/_private";
 import type { LexicalEditor } from "lexical";
 import type { ComponentPropsWithoutRef } from "react";
@@ -32,6 +34,8 @@ import { applyUpdate, Doc } from "yjs";
 
 import { classNames } from "../classnames";
 import { liveblocksConfig } from "../liveblocks-config";
+
+const AUTHORS_TRUNCATE = 3;
 
 export interface VersionPreviewProps extends ComponentPropsWithoutRef<"div"> {
   version: Version;
@@ -199,6 +203,18 @@ export const VersionPreview = forwardRef<HTMLDivElement, VersionPreviewProps>(
           </div>
         )}
         <div className="lb-version-preview-footer">
+          <span className="lb-version-preview-authors">
+            {$.VERSION_PREVIEW_AUTHORS_LIST(
+              <List
+                values={version.authors.map((author) => (
+                  <User key={author} userId={author} replaceSelf />
+                ))}
+                formatRemaining={$.LIST_REMAINING_USERS}
+                truncate={AUTHORS_TRUNCATE}
+                locale={$.locale}
+              />
+            )}
+          </span>
           <div className="lb-version-preview-actions">
             <Button
               onClick={restore}

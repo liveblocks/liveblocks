@@ -1288,7 +1288,7 @@
   inset-block-end: 0;
   display: flex;
   flex: none;
-  justify-content: end;
+  gap: var(--lb-spacing);
   align-items: center;
   margin-block-start: auto;
   padding: var(--lb-spacing);
@@ -1296,10 +1296,20 @@
   background: var(--lb-dynamic-background);
 }
 
+.lb-version-preview-authors {
+  @include truncate;
+
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  color: var(--lb-foreground-tertiary);
+}
+
 .lb-version-preview-actions {
   display: flex;
+  flex: none;
   gap: calc(0.35 * var(--lb-spacing));
   align-items: center;
+  margin-inline-start: auto;
 }
 
 /*************************************

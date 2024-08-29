@@ -51,7 +51,7 @@ function Versions() {
     </div>
   ) : (
     <div className="flex h-full">
-      <div className="grow h-full">
+      <div className="flex-1 h-full min-w-0">
         {version ? (
           <VersionPreview version={version} className="w-full h-full" />
         ) : (
