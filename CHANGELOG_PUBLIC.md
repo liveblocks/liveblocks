@@ -15,6 +15,13 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 35 (2024-08-30)
 
+
+## v2.6.0
+
+### `@liveblocks/node`
+
+- Add `getInboxNotifications` method which supports an `unread` query parameter.
+
 ## Dashboard
 
 - Room detail page enhancements:
