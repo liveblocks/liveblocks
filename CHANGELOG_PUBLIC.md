@@ -48,7 +48,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Contributors
 
-ctnicholas, sugardarius, pierrelevaillant
+ctnicholas, sugardarius, pierrelevaillant, stevenfabre
 
 # Week 34 (2024-08-23)
 
