@@ -37,22 +37,15 @@ export const VersionSummary = forwardRef<
       ref={forwardedRef}
       data-selected={selected ? "" : undefined}
     >
-      <span className="lb-version-summary-date">
-        <Timestamp
-          locale={$.locale}
-          date={version.createdAt}
-          className="lb-version-summary-date-created"
-        />
-      </span>
+      <Timestamp
+        locale={$.locale}
+        date={version.createdAt}
+        className="lb-date lb-version-summary-date"
+      />
       <span className="lb-version-summary-authors">
         <List
-          values={version.authors.map((author, index) => (
-            <User
-              key={author.id}
-              userId={author.id}
-              capitalize={index === 0}
-              replaceSelf
-            />
+          values={version.authors.map((author) => (
+            <User key={author.id} userId={author.id} replaceSelf />
           ))}
           formatRemaining={$.LIST_REMAINING_USERS}
           truncate={AUTHORS_TRUNCATE}

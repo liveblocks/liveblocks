@@ -341,6 +341,18 @@
 
 .lb-list {
   display: contents;
+
+  :where(:first-child) {
+    @include capitalize;
+  }
+}
+
+/*************************************
+ *                Date               *
+ *************************************/
+
+.lb-date {
+  @include capitalize;
 }
 
 /*************************************
@@ -824,15 +836,17 @@
   min-inline-size: 0;
 }
 
-.lb-comment-author {
+.lb-comment-author,
+.lb-comment-date {
   @include truncate;
+  @include capitalize;
+}
 
+.lb-comment-author {
   font-weight: 500;
 }
 
 .lb-comment-date {
-  @include truncate;
-
   color: var(--lb-foreground-tertiary);
   font-size: 0.875em;
 }
@@ -1159,6 +1173,8 @@
 }
 
 .lb-inbox-notification-title {
+  @include capitalize;
+
   min-block-size: $lb-button-size;
 
   :where(strong, .lb-list, .lb-name) {
@@ -1250,6 +1266,7 @@
 .lb-version-summary-date,
 .lb-version-summary-authors {
   @include truncate;
+  @include capitalize;
 
   min-inline-size: 0;
   max-inline-size: 100%;
