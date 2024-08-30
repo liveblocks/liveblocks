@@ -42,6 +42,10 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
   - Returns more results than before, allowing you to accessibly scroll through the list.
 - New guide on [setting initial/default state in BlockNote](https://liveblocks.io/docs/guides/setting-an-initial-or-default-value-in-blocknote).
 
+## Website
+
+- New [book a demo](http://liveblocks.io/contact/sales) page, allowing you to easily set up a meeting with our sales team.
+
 ## Contributors
 
 ctnicholas, sugardarius, pierrelevaillant
