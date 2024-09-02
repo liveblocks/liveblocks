@@ -967,7 +967,7 @@ export type PrivateRoomApi = {
   createTextMention(userId: string, mentionId: string): Promise<Response>;
   deleteTextMention(mentionId: string): Promise<Response>;
   listTextVersions(): Promise<Response>;
-  getTextVersion(version: string): Promise<Response>;
+  getTextVersion(versionId: string): Promise<Response>;
   createTextVersion(): Promise<Response>;
 
   // NOTE: These are only used in our e2e test app!
@@ -2023,11 +2023,11 @@ export function createRoom<
     });
   }
 
-  async function getTextVersion(version: string) {
+  async function getTextVersion(versionId: string) {
     const authValue = await delegates.authenticate();
     return fetchClientApi(
       config.roomId,
-      `/y-version/${encodeURIComponent(version)}`,
+      `/y-version/${encodeURIComponent(versionId)}`,
       authValue,
       {
         method: "GET",
@@ -3300,7 +3300,7 @@ export function createRoom<
         createTextMention,
         // delete a text mention when using a text editor
         deleteTextMention,
-        // list verions of the document
+        // list versions of the document
         listTextVersions,
         // get a specific version
         getTextVersion,

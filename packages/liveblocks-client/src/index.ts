@@ -55,6 +55,7 @@ export type {
   StringifyCommentBodyOptions,
   ThreadData,
   User,
+  Version,
 } from "@liveblocks/core";
 export {
   createClient,

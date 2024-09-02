@@ -77,12 +77,20 @@ export interface InboxNotificationOverrides {
   ) => ReactNode;
 }
 
+export interface VersionPreviewOverrides {
+  VERSION_PREVIEW_AUTHORS_LIST: (list: ReactNode) => ReactNode;
+  VERSION_PREVIEW_RESTORE: string;
+  VERSION_PREVIEW_EMPTY: ReactNode;
+  VERSION_PREVIEW_ERROR: (error: Error) => ReactNode;
+}
+
 export type Overrides = LocalizationOverrides &
   GlobalOverrides &
   ComposerOverrides &
   CommentOverrides &
   ThreadOverrides &
-  InboxNotificationOverrides;
+  InboxNotificationOverrides &
+  VersionPreviewOverrides;
 
 type OverridesProviderProps = PropsWithChildren<{
   overrides?: Partial<Overrides>;
@@ -149,6 +157,10 @@ export const defaultOverrides: Overrides = {
       {user} mentioned you{room ? <> in {room}</> : null}
     </>
   ),
+  VERSION_PREVIEW_AUTHORS_LIST: (list: ReactNode) => <>Edits from {list}</>,
+  VERSION_PREVIEW_RESTORE: "Restore",
+  VERSION_PREVIEW_EMPTY: "No content.",
+  VERSION_PREVIEW_ERROR: () => "There was an error while getting this version.",
 };
 
 export const OverridesContext = createContext<Overrides | undefined>(undefined);

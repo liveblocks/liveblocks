@@ -20,7 +20,6 @@ import type {
   CommentBody,
   CommentData,
   DRI,
-  HistoryVersion,
   InboxNotificationData,
   LiveblocksError,
   PartialUnless,
@@ -31,6 +30,7 @@ import type {
   StorageStatus,
   ThreadData,
   ToImmutable,
+  Version,
 } from "@liveblocks/core";
 
 export type UseStorageStatusOptions = {
@@ -219,28 +219,28 @@ export type RoomNotificationSettingsState =
   | RoomNotificationSettingsStateError
   | RoomNotificationSettingsStateSuccess;
 
-export type VersionWithDataStateLoading = {
+export type VersionDataStateLoading = {
   isLoading: true;
-  version?: never;
+  data?: never;
   error?: never;
 };
 
-export type VersionWithDataStateResolved = {
+export type VersionDataStateResolved = {
   isLoading: false;
-  version: Uint8Array;
+  data: Uint8Array;
   error?: Error;
 };
 
-export type VersionWithDataStateError = {
+export type VersionDataStateError = {
   isLoading: false;
-  version?: never;
+  data?: never;
   error: Error;
 };
 
-export type VersionWithDataState =
-  | VersionWithDataStateLoading
-  | VersionWithDataStateResolved
-  | VersionWithDataStateError;
+export type VersionDataState =
+  | VersionDataStateLoading
+  | VersionDataStateResolved
+  | VersionDataStateError;
 
 export type VersionsStateLoading = {
   isLoading: true;
@@ -250,7 +250,7 @@ export type VersionsStateLoading = {
 
 export type VersionsStateResolved = {
   isLoading: false;
-  versions: HistoryVersion[];
+  versions: Version[];
   error?: Error;
 };
 
@@ -1001,8 +1001,21 @@ export type RoomContextBundle<
         (settings: Partial<RoomNotificationSettings>) => void,
       ];
 
+      /**
+       * Returns a list of versions of the current room.
+       *
+       * @example
+       * const { versions, error, isLoading } = useVersions();
+       */
       useVersions(): VersionsState;
-      useVersionData(id: string): VersionWithDataState;
+
+      /**
+       * Returns the data of a specific version of the current room.
+       *
+       * @example
+       * const { data, error, isLoading } = useVersionData(version.id);
+       */
+      useVersionData(id: string): VersionDataState;
 
       suspense: Resolve<
         RoomContextBundleCommon<P, S, U, E, M> &
@@ -1082,12 +1095,20 @@ export type RoomContextBundle<
             useThreads(options?: UseThreadsOptions<M>): ThreadsStateSuccess<M>;
 
             /**
-             * Returns the versions within the current room.
+             * Returns a list of versions of the current room.
              *
              * @example
              * const { versions } = useVersions();
              */
-            useVersions(): VersionsState;
+            useVersions(): VersionsStateResolved;
+
+            // /**
+            //  * Returns the data of a specific version of the current room's history.
+            //  *
+            //  * @example
+            //  * const { data } = useVersionData(version.id);
+            //  */
+            // useVersionData(versionId: string): VersionDataState;
 
             /**
              * Returns the user's notification settings for the current room

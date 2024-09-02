@@ -19,4 +19,5 @@ export {
   LiveblocksPlugin,
   useEditorStatus,
 } from "./liveblocks-plugin-provider";
-export { VersionPreview } from "./versions/VersionPreview";
+export type { VersionPreviewProps } from "./versions/version-preview";
+export { VersionPreview } from "./versions/version-preview";
