@@ -152,10 +152,10 @@ const emptyCommentBody: CommentBody = {
 
 function createComposerEditor({
   createAttachments,
-  supportPastingAttachments,
+  pasteFilesAsAttachments,
 }: {
   createAttachments: (files: File[]) => void;
-  supportPastingAttachments?: boolean;
+  pasteFilesAsAttachments?: boolean;
 }) {
   return withMentions(
     withCustomLinks(
@@ -164,7 +164,7 @@ function createComposerEditor({
           withEmptyClearFormatting(
             withPaste(withHistory(withReact(createEditor())), {
               createAttachments,
-              supportPastingAttachments,
+              pasteFilesAsAttachments,
             })
           )
         )
@@ -968,7 +968,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       onSubmit,
       onComposerSubmit,
       defaultAttachments = [],
-      supportPastingAttachments,
+      pasteFilesAsAttachments,
       disabled,
       asChild,
       ...props
@@ -1028,7 +1028,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     );
 
     const editor = useInitial(() =>
-      createComposerEditor({ createAttachments, supportPastingAttachments })
+      createComposerEditor({ createAttachments, pasteFilesAsAttachments })
     );
 
     const validate = useCallback(

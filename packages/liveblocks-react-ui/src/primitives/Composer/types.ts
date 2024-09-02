@@ -147,7 +147,7 @@ export interface ComposerFormProps extends ComponentPropsWithSlot<"form"> {
   /**
    * Whether to create attachments when pasting files into the editor.
    */
-  supportPastingAttachments?: boolean;
+  pasteFilesAsAttachments?: boolean;
 }
 
 export type ComposerSubmitProps = ComponentPropsWithSlot<"button">;

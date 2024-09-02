@@ -141,10 +141,10 @@ export function withPaste(
   editor: Editor,
   {
     createAttachments,
-    supportPastingAttachments,
+    pasteFilesAsAttachments,
   }: {
     createAttachments: (files: File[]) => void;
-    supportPastingAttachments?: boolean;
+    pasteFilesAsAttachments?: boolean;
   }
 ) {
   const { insertData } = editor;
@@ -165,7 +165,7 @@ export function withPaste(
     }
 
     // Create attachments from files when pasting
-    if (supportPastingAttachments && data.types.includes("Files")) {
+    if (pasteFilesAsAttachments && data.types.includes("Files")) {
       const files = getFiles(data);
 
       createAttachments(files);

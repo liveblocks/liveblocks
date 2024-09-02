@@ -686,7 +686,7 @@ export const Composer = forwardRef(
           onBlur={handleBlur}
           disabled={disabled}
           defaultAttachments={defaultAttachments}
-          supportPastingAttachments={showAttachments}
+          pasteFilesAsAttachments={showAttachments}
         >
           <ComposerEditorContainer
             defaultValue={defaultValue}
