@@ -4,6 +4,7 @@ import {
   type CommentBody,
   type CommentBodyLink,
   type CommentBodyMention,
+  type CommentLocalAttachment,
   type CommentMixedAttachment,
   makeEventSource,
   type OpaqueRoom,
@@ -318,70 +319,78 @@ function createComposerAttachmentsManager(
     eventSource.notify();
   }
 
-  function setAttachment(attachment: CommentMixedAttachment) {
-    attachments.set(attachment.id, attachment);
+  function uploadAttachment(attachment: CommentLocalAttachment) {
+    const abortController = new AbortController();
+    abortControllers.set(attachment.id, abortController);
 
-    notifySubscribers();
+    room
+      .uploadAttachment(attachment, {
+        signal: abortController.signal,
+      })
+      .then(() => {
+        attachments.set(attachment.id, {
+          ...attachment,
+          status: "uploaded",
+        });
+        notifySubscribers();
+      })
+      .catch((error) => {
+        if (
+          error instanceof Error &&
+          error.name !== "AbortError" &&
+          error.name !== "TimeoutError"
+        ) {
+          attachments.set(attachment.id, {
+            ...attachment,
+            status: "error",
+            error,
+          });
+          notifySubscribers();
+        }
+      });
   }
 
-  function addAttachment(attachment: CommentMixedAttachment) {
-    // The attachment already exists
-    if (attachments.has(attachment.id)) {
-      return;
+  function addAttachments(attachments2: CommentMixedAttachment[]) {
+    // Ignore attachments that are already in the manager
+    const newAttachments = attachments2.filter(
+      (attachment) => !attachments.has(attachment.id)
+    );
+
+    const attachmentsToUpload: CommentLocalAttachment[] = [];
+
+    // Add all the new attachments to the manager
+    for (const attachment of newAttachments) {
+      if (attachment.type === "localAttachment") {
+        // The file is too large to be uploaded
+        if (attachment.file.size > options.maxFileSize) {
+          attachments.set(attachment.id, {
+            ...attachment,
+            status: "error",
+            error: new AttachmentTooLargeError("File is too large."),
+          });
+
+          continue;
+        }
+
+        // Otherwise, mark the attachment to be uploaded
+        attachments.set(attachment.id, {
+          ...attachment,
+          status: "uploading",
+        });
+        attachmentsToUpload.push(attachment);
+      } else {
+        attachments.set(attachment.id, attachment);
+      }
     }
 
-    if (attachment.type === "localAttachment") {
-      if (attachment.status !== "idle") {
-        return;
-      }
+    // Notify subscribers about the new attachments that were added
+    if (newAttachments.length > 0) {
+      notifySubscribers();
+    }
 
-      // The file is too large to be uploaded
-      if (attachment.file.size > options.maxFileSize) {
-        setAttachment({
-          ...attachment,
-          status: "error",
-          error: new AttachmentTooLargeError("File is too large."),
-        });
-
-        return;
-      }
-
-      const abortController = new AbortController();
-      abortControllers.set(attachment.id, abortController);
-
-      setAttachment({
-        ...attachment,
-        status: "uploading",
-      });
-
-      // Start uploading the attachment immediately
-      // TODO: Queue uploads and keep them in "idle" state until they actually start uploading?
-      room
-        .uploadAttachment(attachment, {
-          signal: abortController.signal,
-        })
-        .then(() => {
-          setAttachment({
-            ...attachment,
-            status: "uploaded",
-          });
-        })
-        .catch((error) => {
-          if (
-            error instanceof Error &&
-            error.name !== "AbortError" &&
-            error.name !== "TimeoutError"
-          ) {
-            setAttachment({
-              ...attachment,
-              status: "error",
-              error,
-            });
-          }
-        });
-    } else {
-      // The attachment is already uploaded
-      setAttachment(attachment);
+    // Upload all the new local attachments
+    for (const attachment of attachmentsToUpload) {
+      uploadAttachment(attachment);
     }
   }
 
@@ -414,7 +423,7 @@ function createComposerAttachmentsManager(
   }
 
   return {
-    addAttachment,
+    addAttachments,
     removeAttachment,
     getSnapshot,
     subscribe: eventSource.subscribe,
@@ -432,25 +441,26 @@ export function useComposerAttachmentsManager(
 ) {
   const room = useRoom();
   const frozenDefaultAttachments = useInitial(defaultAttachments);
-  const attachmentsManager = useInitial(() =>
+  const frozenAttachmentsManager = useInitial(() =>
     createComposerAttachmentsManager(room, options)
   );
 
+  // Initialize default attachments on mount
   useEffect(() => {
-    // Initialize default attachments
-    frozenDefaultAttachments.forEach((attachment) => {
-      attachmentsManager.addAttachment(attachment);
-    });
+    frozenAttachmentsManager.addAttachments(frozenDefaultAttachments);
+  }, [frozenDefaultAttachments, frozenAttachmentsManager]);
 
+  // Clear attachments on unmount
+  useEffect(() => {
     return () => {
-      attachmentsManager.clear();
+      frozenAttachmentsManager.clear();
     };
-  }, [frozenDefaultAttachments, attachmentsManager]);
+  }, [frozenAttachmentsManager]);
 
   const attachments = useSyncExternalStore(
-    attachmentsManager.subscribe,
-    attachmentsManager.getSnapshot,
-    attachmentsManager.getSnapshot
+    frozenAttachmentsManager.subscribe,
+    frozenAttachmentsManager.getSnapshot,
+    frozenAttachmentsManager.getSnapshot
   );
 
   const isUploadingAttachments = useMemo(() => {
@@ -476,8 +486,8 @@ export function useComposerAttachmentsManager(
   return {
     attachments,
     isUploadingAttachments,
-    addAttachment: attachmentsManager.addAttachment,
-    removeAttachment: attachmentsManager.removeAttachment,
-    clearAttachments: attachmentsManager.clear,
+    addAttachments: frozenAttachmentsManager.addAttachments,
+    removeAttachment: frozenAttachmentsManager.removeAttachment,
+    clearAttachments: frozenAttachmentsManager.clear,
   };
 }

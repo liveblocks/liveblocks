@@ -986,7 +986,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const {
       attachments,
       isUploadingAttachments,
-      addAttachment,
+      addAttachments,
       removeAttachment,
       clearAttachments,
     } = useComposerAttachmentsManager(defaultAttachments, {
@@ -1020,13 +1020,11 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 
         files.splice(numberOfAcceptedFiles);
 
-        for (const file of files) {
-          const attachment = room.prepareAttachment(file);
+        const attachments = files.map((file) => room.prepareAttachment(file));
 
-          addAttachment(attachment);
-        }
+        addAttachments(attachments);
       },
-      [addAttachment, maxAttachments, numberOfAttachments, room]
+      [addAttachments, maxAttachments, numberOfAttachments, room]
     );
 
     const editor = useInitial(() =>
