@@ -26,6 +26,7 @@ import type {
   DS,
   DU,
   EnterOptions,
+  HistoryVersion,
   LiveblocksError,
   OpaqueClient,
   OpaqueRoom,
@@ -34,7 +35,6 @@ import type {
   StorageStatus,
   ThreadData,
   ToImmutable,
-  HistoryVersion,
 } from "@liveblocks/core";
 import {
   addReaction,
@@ -93,6 +93,9 @@ import type {
   DeleteCommentOptions,
   EditCommentOptions,
   EditThreadMetadataOptions,
+  HistoryVersionDataState,
+  HistoryVersionsState,
+  HistoryVersionsStateResolved,
   MutationContext,
   OmitFirstArg,
   RoomContextBundle,
@@ -105,15 +108,12 @@ import type {
   ThreadSubscription,
   UseStorageStatusOptions,
   UseThreadsOptions,
-  VersionDataState,
-  VersionsState,
-  VersionsStateResolved,
 } from "./types";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
 
 const SMOOTH_DELAY = 1000;
 
-const noop = () => { };
+const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
 
 const missing_unstable_batchedUpdates = (
@@ -125,8 +125,8 @@ const missing_unstable_batchedUpdates = (
     import { unstable_batchedUpdates } from "react-dom";  // or "react-native"
 
     <RoomProvider id=${JSON.stringify(
-    roomId
-  )} ... unstable_batchedUpdates={unstable_batchedUpdates}>
+      roomId
+    )} ... unstable_batchedUpdates={unstable_batchedUpdates}>
       ...
     </RoomProvider>
 
@@ -286,7 +286,6 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
 
   async function refreshThreadsAndNotifications() {
     const requests: Promise<unknown>[] = [];
-
 
     await Promise.allSettled(requests);
   }
@@ -652,8 +651,8 @@ function makeRoomContextBundle<
     useMarkThreadAsRead,
     useThreadSubscription,
 
-    useVersions,
-    useVersionData,
+    useHistoryVersions,
+    useHistoryVersionData,
 
     useRoomNotificationSettings,
     useUpdateRoomNotificationSettings,
@@ -715,8 +714,8 @@ function makeRoomContextBundle<
       useMarkThreadAsRead,
       useThreadSubscription,
 
-      // TODO: useVersionData: useVersionDataSuspense,
-      useVersions: useVersionsSuspense,
+      // TODO: useHistoryVersionData: useHistoryVersionDataSuspense,
+      useHistoryVersions: useHistoryVersionsSuspense,
 
       useRoomNotificationSettings: useRoomNotificationSettingsSuspense,
       useUpdateRoomNotificationSettings,
@@ -1805,13 +1804,13 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
             const updatedInboxNotifications =
               inboxNotification !== undefined
                 ? {
-                  ...state.inboxNotifications,
-                  [inboxNotification.id]: {
-                    ...inboxNotification,
-                    notifiedAt: newComment.createdAt,
-                    readAt: newComment.createdAt,
-                  },
-                }
+                    ...state.inboxNotifications,
+                    [inboxNotification.id]: {
+                      ...inboxNotification,
+                      notifiedAt: newComment.createdAt,
+                      readAt: newComment.createdAt,
+                    },
+                  }
                 : state.inboxNotifications;
 
             return {
@@ -2488,8 +2487,8 @@ function useRoomNotificationSettings(): [
   }, [settings, updateRoomNotificationSettings]);
 }
 
-function useVersionData(versionId: string): VersionDataState {
-  const [state, setState] = React.useState<VersionDataState>({
+function useHistoryVersionData(versionId: string): HistoryVersionDataState {
+  const [state, setState] = React.useState<HistoryVersionDataState>({
     isLoading: true,
   });
   const room = useRoom();
@@ -2511,8 +2510,8 @@ function useVersionData(versionId: string): VersionDataState {
             error instanceof Error
               ? error
               : new Error(
-                "An unknown error occurred while loading this version"
-              ),
+                  "An unknown error occurred while loading this version"
+                ),
         });
       }
     };
@@ -2522,12 +2521,12 @@ function useVersionData(versionId: string): VersionDataState {
 }
 
 /**
- * Returns a list of versions of the current room.
+ * Returns a history of versions of the current room.
  *
  * @example
- * const { versions, error, isLoading } = useVersions();
+ * const { versions, error, isLoading } = useHistoryVersions();
  */
-function useVersions(): VersionsState {
+function useHistoryVersions(): HistoryVersionsState {
   const client = useClient();
   const room = useRoom();
   const queryKey = getVersionsQueryKey(room.id);
@@ -2539,7 +2538,7 @@ function useVersions(): VersionsState {
   }, [room]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selector = React.useCallback(
-    (state: CacheState<BaseMetadata>): VersionsState => {
+    (state: CacheState<BaseMetadata>): HistoryVersionsState => {
       const query = state.queries[queryKey];
       if (query === undefined || query.isLoading) {
         return {
@@ -2796,7 +2795,13 @@ function useThreadsSuspense<M extends BaseMetadata>(
   return state;
 }
 
-function useVersionsSuspense(): VersionsStateResolved {
+/**
+ * Returns a history of versions of the current room.
+ *
+ * @example
+ * const { versions } = useHistoryVersions();
+ */
+function useHistoryVersionsSuspense(): HistoryVersionsStateResolved {
   const client = useClient();
   const room = useRoom();
   const queryKey = getVersionsQueryKey(room.id);
@@ -2814,7 +2819,7 @@ function useVersionsSuspense(): VersionsStateResolved {
   }
 
   const selector = React.useCallback(
-    (state: CacheState<BaseMetadata>): VersionsStateResolved => {
+    (state: CacheState<BaseMetadata>): HistoryVersionsStateResolved => {
       return {
         versions: state.versions[room.id],
         isLoading: false,
@@ -3166,21 +3171,22 @@ const _useThreadsSuspense: TypedBundle["suspense"]["useThreads"] =
   useThreadsSuspense;
 
 /**
- * Returns a list of versions of the current room.
+ * Returns a history of versions of the current room.
  *
  * @example
- * const { versions, error, isLoading } = useVersions();
+ * const { versions, error, isLoading } = useHistoryVersions();
  */
-const _useVersions: TypedBundle["useVersions"] = useVersions;
+const _useHistoryVersions: TypedBundle["useHistoryVersions"] =
+  useHistoryVersions;
 
 /**
- * Returns a list of versions of the current room.
+ * Returns a history of versions of the current room.
  *
  * @example
- * const { versions } = useVersions();
+ * const { versions } = useHistoryVersions();
  */
-const _useVersionsSuspense: TypedBundle["suspense"]["useVersions"] =
-  useVersionsSuspense;
+const _useHistoryVersionsSuspense: TypedBundle["suspense"]["useHistoryVersions"] =
+  useHistoryVersionsSuspense;
 
 /**
  * Given a connection ID (as obtained by using `useOthersConnectionIds`), you
@@ -3464,6 +3470,9 @@ export {
   useErrorListener,
   _useEventListener as useEventListener,
   useHistory,
+  useHistoryVersionData,
+  _useHistoryVersions as useHistoryVersions,
+  _useHistoryVersionsSuspense as useHistoryVersionsSuspense,
   useLostConnectionListener,
   useMarkThreadAsRead,
   useMarkThreadAsResolved,
@@ -3497,7 +3506,4 @@ export {
   useUndo,
   _useUpdateMyPresence as useUpdateMyPresence,
   useUpdateRoomNotificationSettings,
-  useVersionData,
-  _useVersions as useVersions,
-  _useVersionsSuspense as useVersionsSuspense,
 };

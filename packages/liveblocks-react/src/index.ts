@@ -62,7 +62,7 @@ export {
   useUndo,
   useUpdateMyPresence,
   useUpdateRoomNotificationSettings,
-  useVersionData,
+  useHistoryVersionData,
 } from "./room";
 
 export { useCommentsErrorListener, CreateThreadError } from "./room";
@@ -79,7 +79,7 @@ export {
   useStorage,
   useStorageStatus,
   useThreads,
-  useVersions,
+  useHistoryVersions,
 } from "./room";
 export {
   useInboxNotifications,

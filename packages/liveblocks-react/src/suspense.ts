@@ -73,7 +73,7 @@ export {
   useStorageSuspense as useStorage,
   useStorageStatusSuspense as useStorageStatus,
   useThreadsSuspense as useThreads,
-  useVersionsSuspense as useVersions,
+  useHistoryVersionsSuspense as useHistoryVersions,
 } from "./room";
 export {
   useInboxNotificationsSuspense as useInboxNotifications,

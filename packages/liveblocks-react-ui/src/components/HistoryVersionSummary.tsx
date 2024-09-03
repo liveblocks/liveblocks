@@ -12,7 +12,7 @@ import { User } from "./internal/User";
 
 const AUTHORS_TRUNCATE = 3;
 
-export interface VersionSummaryProps
+export interface HistoryVersionSummaryProps
   extends ComponentPropsWithoutRef<"button"> {
   version: HistoryVersion;
   selected?: boolean;
@@ -22,27 +22,27 @@ export interface VersionSummaryProps
  * Displays some information about a version.
  *
  * @example
- * <VersionSummary version={version} />
+ * <HistoryVersionSummary version={version} />
  */
-export const VersionSummary = forwardRef<
+export const HistoryVersionSummary = forwardRef<
   HTMLButtonElement,
-  VersionSummaryProps
+  HistoryVersionSummaryProps
 >(({ version, selected, className, ...props }, forwardedRef) => {
   const $ = useOverrides();
 
   return (
     <button
       {...props}
-      className={classNames("lb-root lb-version-summary", className)}
+      className={classNames("lb-root lb-history-version-summary", className)}
       ref={forwardedRef}
       data-selected={selected ? "" : undefined}
     >
       <Timestamp
         locale={$.locale}
         date={version.createdAt}
-        className="lb-date lb-version-summary-date"
+        className="lb-date lb-history-version-summary-date"
       />
-      <span className="lb-version-summary-authors">
+      <span className="lb-history-version-summary-authors">
         <List
           values={version.authors.map((author) => (
             <User key={author.id} userId={author.id} replaceSelf />

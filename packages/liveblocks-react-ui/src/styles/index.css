@@ -1243,10 +1243,10 @@
 }
 
 /*************************************
- *          Version Summary          *
+ *      History Version Summary      *
  *************************************/
 
-.lb-version-summary {
+.lb-history-version-summary {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -1263,8 +1263,8 @@
   }
 }
 
-.lb-version-summary-date,
-.lb-version-summary-authors {
+.lb-history-version-summary-date,
+.lb-history-version-summary-authors {
   @include truncate;
   @include capitalize;
 
@@ -1272,20 +1272,20 @@
   max-inline-size: 100%;
 }
 
-.lb-version-summary-date {
+.lb-history-version-summary-date {
   color: var(--lb-foreground-secondary);
   font-weight: 500;
 }
 
-.lb-version-summary-authors {
+.lb-history-version-summary-authors {
   color: var(--lb-foreground-tertiary);
 }
 
 /*************************************
- *          Version Preview          *
+ *      History Version Previe       *
  *************************************/
 
-.lb-version-preview {
+.lb-history-version-preview {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -1296,12 +1296,12 @@
   overflow-y: auto;
 }
 
-.lb-version-preview-content {
+.lb-history-version-preview-content {
   flex: 1 0 auto;
   padding: var(--lb-spacing);
 }
 
-.lb-version-preview-footer {
+.lb-history-version-preview-footer {
   position: sticky;
   inset-block-end: 0;
   display: flex;
@@ -1314,7 +1314,7 @@
   background: var(--lb-dynamic-background);
 }
 
-.lb-version-preview-authors {
+.lb-history-version-preview-authors {
   @include truncate;
 
   flex: 1 1 auto;
@@ -1322,7 +1322,7 @@
   color: var(--lb-foreground-tertiary);
 }
 
-.lb-version-preview-actions {
+.lb-history-version-preview-actions {
   display: flex;
   flex: none;
   gap: calc(0.35 * var(--lb-spacing));
@@ -1335,14 +1335,14 @@
  *************************************/
 
 .lb-inbox-notification-list,
-.lb-version-summary-list {
+.lb-history-version-summary-list {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .lb-inbox-notification-list-item,
-.lb-version-summary-list-item {
+.lb-history-version-summary-list-item {
   &:where(:not(:last-of-type)) {
     border-block-end: 1px solid var(--lb-foreground-subtle);
   }

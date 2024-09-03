@@ -8,6 +8,10 @@ export type { CommentProps } from "./components/Comment";
 export { Comment } from "./components/Comment";
 export type { ComposerProps } from "./components/Composer";
 export { Composer } from "./components/Composer";
+export type { HistoryVersionSummaryProps } from "./components/HistoryVersionSummary";
+export { HistoryVersionSummary } from "./components/HistoryVersionSummary";
+export type { HistoryVersionSummaryListProps } from "./components/HistoryVersionSummaryList";
+export { HistoryVersionSummaryList } from "./components/HistoryVersionSummaryList";
 export type {
   InboxNotificationAvatarProps,
   InboxNotificationCustomKindProps,
@@ -24,10 +28,6 @@ export type { InboxNotificationListProps } from "./components/InboxNotificationL
 export { InboxNotificationList } from "./components/InboxNotificationList";
 export type { ThreadProps } from "./components/Thread";
 export { Thread } from "./components/Thread";
-export type { VersionSummaryProps } from "./components/VersionSummary";
-export { VersionSummary } from "./components/VersionSummary";
-export type { VersionSummaryListProps } from "./components/VersionSummaryList";
-export { VersionSummaryList } from "./components/VersionSummaryList";
 export { LiveblocksUIConfig } from "./config";
 export type {
   CommentOverrides,

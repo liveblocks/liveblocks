@@ -19,5 +19,5 @@ export {
   LiveblocksPlugin,
   useEditorStatus,
 } from "./liveblocks-plugin-provider";
-export type { VersionPreviewProps } from "./versions/version-preview";
-export { VersionPreview } from "./versions/version-preview";
+export type { HistoryVersionPreviewProps } from "./version-history/history-version-preview";
+export { HistoryVersionPreview } from "./version-history/history-version-preview";

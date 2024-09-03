@@ -5,30 +5,33 @@ import React, { Children, forwardRef } from "react";
 
 import { classNames } from "../utils/class-names";
 
-export type VersionSummaryListProps = ComponentPropsWithoutRef<"ol">;
+export type HistoryVersionSummaryListProps = ComponentPropsWithoutRef<"ol">;
 
 /**
  * Displays versions summaries as a list.
  *
  * @example
- * <VersionSummaryList>
+ * <HistoryVersionSummaryList>
  *   {versions.map((version) => (
- *     <VersionSummary key={version.id} version={version} />
+ *     <HistoryVersionSummary key={version.id} version={version} />
  *   ))}
- * </VersionSummaryList>
+ * </HistoryVersionSummaryList>
  */
-export const VersionSummaryList = forwardRef<
+export const HistoryVersionSummaryList = forwardRef<
   HTMLOListElement,
-  VersionSummaryListProps
+  HistoryVersionSummaryListProps
 >(({ children, className, ...props }, forwardedRef) => {
   return (
     <ol
-      className={classNames("lb-root lb-version-summary-list", className)}
+      className={classNames(
+        "lb-root lb-history-version-summary-list",
+        className
+      )}
       {...props}
       ref={forwardedRef}
     >
       {Children.map(children, (child, index) => (
-        <li key={index} className="lb-version-summary-list-item">
+        <li key={index} className="lb-history-version-summary-list-item">
           {child}
         </li>
       ))}

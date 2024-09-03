@@ -20,6 +20,7 @@ import type {
   CommentBody,
   CommentData,
   DRI,
+  HistoryVersion,
   InboxNotificationData,
   LiveblocksError,
   PartialUnless,
@@ -30,7 +31,6 @@ import type {
   StorageStatus,
   ThreadData,
   ToImmutable,
-  HistoryVersion,
 } from "@liveblocks/core";
 
 export type UseStorageStatusOptions = {
@@ -219,51 +219,51 @@ export type RoomNotificationSettingsState =
   | RoomNotificationSettingsStateError
   | RoomNotificationSettingsStateSuccess;
 
-export type VersionDataStateLoading = {
+export type HistoryVersionDataStateLoading = {
   isLoading: true;
   data?: never;
   error?: never;
 };
 
-export type VersionDataStateResolved = {
+export type HistoryVersionDataStateResolved = {
   isLoading: false;
   data: Uint8Array;
   error?: Error;
 };
 
-export type VersionDataStateError = {
+export type HistoryVersionDataStateError = {
   isLoading: false;
   data?: never;
   error: Error;
 };
 
-export type VersionDataState =
-  | VersionDataStateLoading
-  | VersionDataStateResolved
-  | VersionDataStateError;
+export type HistoryVersionDataState =
+  | HistoryVersionDataStateLoading
+  | HistoryVersionDataStateResolved
+  | HistoryVersionDataStateError;
 
-export type VersionsStateLoading = {
+export type HistoryVersionsStateLoading = {
   isLoading: true;
   versions?: never;
   error?: never;
 };
 
-export type VersionsStateResolved = {
+export type HistoryVersionsStateResolved = {
   isLoading: false;
   versions: HistoryVersion[];
   error?: Error;
 };
 
-export type VersionsStateError = {
+export type HistoryVersionsStateError = {
   isLoading: false;
   versions?: never;
   error: Error;
 };
 
-export type VersionsState =
-  | VersionsStateLoading
-  | VersionsStateResolved
-  | VersionsStateError;
+export type HistoryVersionsState =
+  | HistoryVersionsStateLoading
+  | HistoryVersionsStateResolved
+  | HistoryVersionsStateError;
 
 export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
   // prettier-ignore
@@ -1002,20 +1002,20 @@ export type RoomContextBundle<
       ];
 
       /**
-       * Returns a list of versions of the current room.
+       * Returns a history of versions of the current room.
        *
        * @example
-       * const { versions, error, isLoading } = useVersions();
+       * const { versions, error, isLoading } = useHistoryVersions();
        */
-      useVersions(): VersionsState;
+      useHistoryVersions(): HistoryVersionsState;
 
       /**
        * Returns the data of a specific version of the current room.
        *
        * @example
-       * const { data, error, isLoading } = useVersionData(version.id);
+       * const { data, error, isLoading } = useHistoryVersionData(version.id);
        */
-      useVersionData(id: string): VersionDataState;
+      useHistoryVersionData(id: string): HistoryVersionDataState;
 
       suspense: Resolve<
         RoomContextBundleCommon<P, S, U, E, M> &
@@ -1095,20 +1095,20 @@ export type RoomContextBundle<
             useThreads(options?: UseThreadsOptions<M>): ThreadsStateSuccess<M>;
 
             /**
-             * Returns a list of versions of the current room.
+             * Returns a history of versions of the current room.
              *
              * @example
-             * const { versions } = useVersions();
+             * const { versions } = useHistoryVersions();
              */
-            useVersions(): VersionsStateResolved;
+            useHistoryVersions(): HistoryVersionsStateResolved;
 
             // /**
             //  * Returns the data of a specific version of the current room's history.
             //  *
             //  * @example
-            //  * const { data } = useVersionData(version.id);
+            //  * const { data } = useHistoryVersionData(version.id);
             //  */
-            // useVersionData(versionId: string): VersionDataState;
+            // useHistoryVersionData(versionId: string): HistoryVersionDataState;
 
             /**
              * Returns the user's notification settings for the current room

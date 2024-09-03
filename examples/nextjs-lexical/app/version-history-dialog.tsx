@@ -1,10 +1,12 @@
 import * as Dialog from "@radix-ui/react-dialog";
-import { Suspense, useCallback, useState } from "react";
+import { Suspense, useCallback, useMemo, useState } from "react";
 import Loading from "./loading";
-import { VersionSummaryList, VersionSummary } from "@liveblocks/react-ui";
-import type { Version } from "@liveblocks/core";
-import { VersionPreview } from "@liveblocks/react-lexical";
-import { useVersions } from "@liveblocks/react/suspense";
+import {
+  HistoryVersionSummaryList,
+  HistoryVersionSummary,
+} from "@liveblocks/react-ui";
+import { HistoryVersionPreview } from "@liveblocks/react-lexical";
+import { useHistoryVersions } from "@liveblocks/react/suspense";
 
 export default function VersionsDialog() {
   const [isOpen, setOpen] = useState(false);
@@ -48,8 +50,12 @@ export default function VersionsDialog() {
 }
 
 function Versions({ onVersionRestore }: { onVersionRestore: () => void }) {
-  const [selectedVersion, setSelectedVersion] = useState<Version>();
-  const { versions } = useVersions();
+  const [selectedVersionId, setSelectedVersionId] = useState<string>();
+  const { versions } = useHistoryVersions();
+  const selectedVersion = useMemo(
+    () => versions.find((version) => version.id === selectedVersionId),
+    [selectedVersionId, versions]
+  );
 
   return versions.length === 0 ? (
     <div className="flex h-full items-center justify-center p-6 text-muted-foreground">
@@ -59,7 +65,7 @@ function Versions({ onVersionRestore }: { onVersionRestore: () => void }) {
     <div className="flex h-full">
       <div className="flex-1 h-full min-w-0">
         {selectedVersion ? (
-          <VersionPreview
+          <HistoryVersionPreview
             version={selectedVersion}
             className="w-full h-full"
             onVersionRestore={onVersionRestore}
@@ -71,18 +77,18 @@ function Versions({ onVersionRestore }: { onVersionRestore: () => void }) {
         )}
       </div>
       <div className="text-sm relative w-[250px] h-full overflow-auto border-l border-border/80">
-        <VersionSummaryList>
+        <HistoryVersionSummaryList>
           {versions.map((version) => (
-            <VersionSummary
+            <HistoryVersionSummary
               onClick={() => {
-                setSelectedVersion(version);
+                setSelectedVersionId(version.id);
               }}
               key={version.id}
               version={version}
-              selected={version.id === selectedVersion?.id}
+              selected={version.id === selectedVersionId}
             />
           ))}
-        </VersionSummaryList>
+        </HistoryVersionSummaryList>
       </div>
     </div>
   );
