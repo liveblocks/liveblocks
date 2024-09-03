@@ -29,6 +29,7 @@ import type {
 import { getFiles } from "../../utils/data-transfer";
 import { exists } from "../../utils/exists";
 import { useInitial } from "../../utils/use-initial";
+import { useLatest } from "../../utils/use-latest";
 import {
   isCommentBodyLink,
   isCommentBodyMention,
@@ -206,24 +207,32 @@ export function useComposerAttachmentsDropArea<
   const isDisabled = isComposerDisabled || disabled;
   const { createAttachments } = useComposerAttachmentsContext();
   const [isDraggingOver, setDraggingOver] = useState(false);
+  const latestIsDraggingOver = useLatest(isDraggingOver);
 
   const handleDragEnter = useCallback(
     (event: DragEvent<T>) => {
       onDragEnter?.(event);
 
-      if (isDisabled || event.isDefaultPrevented()) {
+      if (
+        latestIsDraggingOver.current ||
+        isDisabled ||
+        event.isDefaultPrevented()
+      ) {
         return;
       }
 
       const dataTransfer = event.dataTransfer;
 
-      if (dataTransfer.types.includes("Files")) {
-        event.preventDefault();
-        event.stopPropagation();
-
-        setDraggingOver(true);
+      if (!dataTransfer.types.includes("Files")) {
+        return;
       }
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      setDraggingOver(true);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [onDragEnter, isDisabled]
   );
 
@@ -231,14 +240,20 @@ export function useComposerAttachmentsDropArea<
     (event: DragEvent<T>) => {
       onDragLeave?.(event);
 
-      if (isDisabled || event.isDefaultPrevented()) {
+      if (
+        !latestIsDraggingOver.current ||
+        isDisabled ||
+        event.isDefaultPrevented()
+      ) {
         return;
       }
 
+      // Ignore drag leave events that are not actually leaving the drop area
       if (
-        event.relatedTarget &&
-        event.relatedTarget === event.currentTarget &&
-        event.currentTarget.contains(event.target as HTMLElement)
+        event.relatedTarget
+          ? event.relatedTarget === event.currentTarget ||
+            event.currentTarget.contains(event.relatedTarget as HTMLElement)
+          : event.currentTarget !== event.target
       ) {
         return;
       }
@@ -248,6 +263,7 @@ export function useComposerAttachmentsDropArea<
 
       setDraggingOver(false);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [onDragLeave, isDisabled]
   );
 
@@ -269,7 +285,11 @@ export function useComposerAttachmentsDropArea<
     (event: DragEvent<T>) => {
       onDrop?.(event);
 
-      if (isDisabled || event.isDefaultPrevented()) {
+      if (
+        !latestIsDraggingOver.current ||
+        isDisabled ||
+        event.isDefaultPrevented()
+      ) {
         return;
       }
 
@@ -282,7 +302,8 @@ export function useComposerAttachmentsDropArea<
 
       createAttachments(files);
     },
-    [onDrop, createAttachments, isDisabled]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [onDrop, isDisabled, createAttachments]
   );
 
   return [
