@@ -15,7 +15,6 @@ import {
 } from "@liveblocks/react";
 import type {
   ComponentPropsWithoutRef,
-  DragEvent,
   FocusEvent,
   FormEvent,
   ForwardedRef,
@@ -428,23 +427,11 @@ function ComposerEditorContainer({
   onEmptyChange,
   onEditorClick,
 }: ComposerEditorContainerProps) {
-  const ref = useRef<HTMLDivElement>(null);
   const { isEmpty } = useComposer();
   const { hasMaxAttachments } = useComposerAttachmentsContext();
   const $ = useOverrides(overrides);
-  const ignoreDropAreaLeaveEvent = useCallback(
-    (event: DragEvent<HTMLDivElement>) => {
-      return Boolean(
-        event.relatedTarget &&
-          event.target &&
-          event.relatedTarget === ref.current &&
-          ref.current?.contains(event.target as HTMLElement)
-      );
-    },
-    []
-  );
+
   const [isDraggingOver, dropAreaProps] = useComposerAttachmentsDropArea({
-    ignoreLeaveEvent: ignoreDropAreaLeaveEvent,
     disabled: hasMaxAttachments,
   });
 
@@ -461,7 +448,7 @@ function ComposerEditorContainer({
   }, []);
 
   return (
-    <div className="lb-composer-editor-container" ref={ref} {...dropAreaProps}>
+    <div className="lb-composer-editor-container" {...dropAreaProps}>
       <ComposerPrimitive.Editor
         className="lb-composer-editor"
         onClick={onEditorClick}

@@ -194,14 +194,12 @@ export function useComposerAttachmentsDropArea<
   onDragLeave,
   onDragOver,
   onDrop,
-  ignoreLeaveEvent,
   disabled,
 }: {
   onDragEnter?: (event: DragEvent<T>) => void;
   onDragLeave?: (event: DragEvent<T>) => void;
   onDragOver?: (event: DragEvent<T>) => void;
   onDrop?: (event: DragEvent<T>) => void;
-  ignoreLeaveEvent?: (event: DragEvent<T>) => boolean;
   disabled?: boolean;
 }) {
   const { isDisabled: isComposerDisabled } = useComposer();
@@ -237,7 +235,11 @@ export function useComposerAttachmentsDropArea<
         return;
       }
 
-      if (ignoreLeaveEvent?.(event)) {
+      if (
+        event.relatedTarget &&
+        event.relatedTarget === event.currentTarget &&
+        event.currentTarget.contains(event.target as HTMLElement)
+      ) {
         return;
       }
 
@@ -246,21 +248,21 @@ export function useComposerAttachmentsDropArea<
 
       setDraggingOver(false);
     },
-    [onDragLeave, ignoreLeaveEvent, isDisabled]
+    [onDragLeave, isDisabled]
   );
 
   const handleDragOver = useCallback(
     (event: DragEvent<T>) => {
       onDragOver?.(event);
 
-      if (isDisabled || !isDraggingOver || event.isDefaultPrevented()) {
+      if (isDisabled || event.isDefaultPrevented()) {
         return;
       }
 
       event.preventDefault();
       event.stopPropagation();
     },
-    [onDragOver, isDraggingOver, isDisabled]
+    [onDragOver, isDisabled]
   );
 
   const handleDrop = useCallback(
