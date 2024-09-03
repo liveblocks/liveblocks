@@ -30,7 +30,7 @@ import type {
   StorageStatus,
   ThreadData,
   ToImmutable,
-  Version,
+  HistoryVersion,
 } from "@liveblocks/core";
 
 export type UseStorageStatusOptions = {
@@ -250,7 +250,7 @@ export type VersionsStateLoading = {
 
 export type VersionsStateResolved = {
   isLoading: false;
-  versions: Version[];
+  versions: HistoryVersion[];
   error?: Error;
 };
 

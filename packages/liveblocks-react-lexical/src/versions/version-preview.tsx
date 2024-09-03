@@ -10,7 +10,7 @@ import {
   syncLexicalUpdateToYjs,
   syncYjsChangesToLexical,
 } from "@lexical/yjs";
-import { kInternal, type Version } from "@liveblocks/core";
+import { type HistoryVersion, kInternal } from "@liveblocks/core";
 import { useRoom, useVersionData } from "@liveblocks/react";
 import { useOverrides } from "@liveblocks/react-ui";
 import {
@@ -38,12 +38,12 @@ import { liveblocksConfig } from "../liveblocks-config";
 const AUTHORS_TRUNCATE = 3;
 
 export interface VersionPreviewProps extends ComponentPropsWithoutRef<"div"> {
-  version: Version;
-  onVersionRestore?: (version: Version) => void;
+  version: HistoryVersion;
+  onVersionRestore?: (version: HistoryVersion) => void;
 }
 
 function createNoOpProvider(): Provider {
-  const emptyFunction = () => {};
+  const emptyFunction = () => { };
 
   return {
     awareness: {

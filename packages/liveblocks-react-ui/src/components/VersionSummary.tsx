@@ -1,6 +1,6 @@
 "use client";
 
-import type { Version } from "@liveblocks/core";
+import type { HistoryVersion } from "@liveblocks/core";
 import type { ComponentPropsWithoutRef } from "react";
 import React, { forwardRef } from "react";
 
@@ -14,7 +14,7 @@ const AUTHORS_TRUNCATE = 3;
 
 export interface VersionSummaryProps
   extends ComponentPropsWithoutRef<"button"> {
-  version: Version;
+  version: HistoryVersion;
   selected?: boolean;
 }
 

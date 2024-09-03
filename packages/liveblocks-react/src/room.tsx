@@ -34,7 +34,7 @@ import type {
   StorageStatus,
   ThreadData,
   ToImmutable,
-  Version,
+  HistoryVersion,
 } from "@liveblocks/core";
 import {
   addReaction,
@@ -113,7 +113,7 @@ import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-
 
 const SMOOTH_DELAY = 1000;
 
-const noop = () => {};
+const noop = () => { };
 const identity: <T>(x: T) => T = (x) => x;
 
 const missing_unstable_batchedUpdates = (
@@ -125,8 +125,8 @@ const missing_unstable_batchedUpdates = (
     import { unstable_batchedUpdates } from "react-dom";  // or "react-native"
 
     <RoomProvider id=${JSON.stringify(
-      roomId
-    )} ... unstable_batchedUpdates={unstable_batchedUpdates}>
+    roomId
+  )} ... unstable_batchedUpdates={unstable_batchedUpdates}>
       ...
     </RoomProvider>
 
@@ -385,7 +385,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     try {
       const result = await request;
       const data = (await result.json()) as {
-        versions: Version[];
+        versions: HistoryVersion[];
       };
       const versions = data.versions.map(({ createdAt, ...version }) => {
         return {
@@ -1805,13 +1805,13 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
             const updatedInboxNotifications =
               inboxNotification !== undefined
                 ? {
-                    ...state.inboxNotifications,
-                    [inboxNotification.id]: {
-                      ...inboxNotification,
-                      notifiedAt: newComment.createdAt,
-                      readAt: newComment.createdAt,
-                    },
-                  }
+                  ...state.inboxNotifications,
+                  [inboxNotification.id]: {
+                    ...inboxNotification,
+                    notifiedAt: newComment.createdAt,
+                    readAt: newComment.createdAt,
+                  },
+                }
                 : state.inboxNotifications;
 
             return {
@@ -2511,8 +2511,8 @@ function useVersionData(versionId: string): VersionDataState {
             error instanceof Error
               ? error
               : new Error(
-                  "An unknown error occurred while loading this version"
-                ),
+                "An unknown error occurred while loading this version"
+              ),
         });
       }
     };

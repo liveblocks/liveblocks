@@ -17,7 +17,7 @@ import type {
   InboxNotificationData,
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
-import type { Version } from "./protocol/VersionHistory";
+import type { HistoryVersion } from "./protocol/VersionHistory";
 import type { Patchable } from "./types/Patchable";
 import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 
@@ -175,7 +175,7 @@ export type CacheState<M extends BaseMetadata> = {
   /**
    * Versions per roomId
    */
-  versions: Record<string, Version[]>;
+  versions: Record<string, HistoryVersion[]>;
 };
 
 export interface CacheStore<M extends BaseMetadata>
@@ -199,7 +199,7 @@ export interface CacheStore<M extends BaseMetadata>
   ): void;
   updateRoomVersions(
     roomId: string,
-    versions: Version[],
+    versions: HistoryVersion[],
     queryKey: string
   ): void;
   pushOptimisticUpdate(optimisticUpdate: OptimisticUpdate<M>): void;
@@ -270,7 +270,11 @@ export function createClientStore<M extends BaseMetadata>(): CacheStore<M> {
       });
     },
 
-    updateRoomVersions(roomId: string, versions: Version[], queryKey?: string) {
+    updateRoomVersions(
+      roomId: string,
+      versions: HistoryVersion[],
+      queryKey?: string
+    ) {
       store.set((state) => ({
         ...state,
         versions: {

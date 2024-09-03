@@ -1,5 +1,5 @@
-export type YjsVersion = {
-  type: "version";
+export type HistoryVersion = {
+  type: "historyVersion";
   kind: "yjs";
   createdAt: Date;
   id: string;
@@ -7,17 +7,3 @@ export type YjsVersion = {
     id: string;
   }[];
 };
-
-// export type StorageVersion = {
-//   type: "version";
-//   kind: "storage";
-//   createdAt: Date;
-//   id: string;
-//   authors: {
-//     id: string;
-//   }[]
-// };
-
-export type Version = YjsVersion;
-
-// export type Version = YjsVersion | StorageVersion;
