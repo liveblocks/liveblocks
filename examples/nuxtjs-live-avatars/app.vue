@@ -84,14 +84,11 @@ export default {
     this._room = room;
     this._leave = leave;
     this._unsubscribeOthers = room.subscribe("others", this.onOthersChange);
-    this._unsubscribeConnection = room.subscribe(
-      "connection",
-      this.onConnectionChange
-    );
+    this._unsubscribeStatus = room.subscribe("status", this.onStatusChange);
   },
   destroyed() {
     this._unsubscribeOthers();
-    this._unsubscribeConnection();
+    this._unsubscribeStatus();
     this._leave();
   },
   methods: {
@@ -104,7 +101,8 @@ export default {
         name: user.info?.name,
       }));
     },
-    onConnectionChange() {
+    onStatusChange(status) {
+      console.log("on status change", status, this._room.getSelf(), this._room);
       this.currentUser = this._room.getSelf();
     },
   },
