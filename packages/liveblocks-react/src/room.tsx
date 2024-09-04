@@ -287,6 +287,14 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   async function refreshThreadsAndNotifications() {
     const requests: Promise<unknown>[] = [];
 
+    client[kInternal].getRoomIds().map((roomId) => {
+      const room = client.getRoom(roomId);
+      if (room === null) return;
+
+      // Retrieve threads that have been updated/deleted since the last requestedAt value
+      requests.push(getThreadsUpdates(room.id));
+    });
+
     await Promise.allSettled(requests);
   }
 
