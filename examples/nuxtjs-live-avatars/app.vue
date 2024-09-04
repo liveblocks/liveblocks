@@ -102,7 +102,6 @@ export default {
       }));
     },
     onStatusChange(status) {
-      console.log("on status change", status, this._room.getSelf(), this._room);
       this.currentUser = this._room.getSelf();
     },
   },
