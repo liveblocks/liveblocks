@@ -21,7 +21,7 @@ collaboration to your JavaScript application using the APIs from the
       Every Liveblocks package should use the same version.
 
       ```bash
-      npm install @liveblocks/client @liveblocks/yjs yjs @tiptap/core @tiptap/pm @tiptap/starter-kit  @tiptap/extension-collaboration @tiptap/extension-collaboration-cursor
+      npm install @liveblocks/client @liveblocks/yjs yjs @tiptap/core @tiptap/pm @tiptap/starter-kit @tiptap/extension-collaboration @tiptap/extension-collaboration-cursor y-prosemirror
       ```
     </StepContent>
 
@@ -76,7 +76,7 @@ collaboration to your JavaScript application using the APIs from the
 
       // Set up Yjs document and Liveblocks Yjs provider
       const yDoc = new Y.Doc();
-      const yProvider = new LiveblocksProvider(room, yDoc);
+      const yProvider = new LiveblocksYjsProvider(room, yDoc);
 
       // Set up the Tiptap editor
       const element = document.querySelector("editor");

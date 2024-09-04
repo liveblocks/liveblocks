@@ -77,7 +77,7 @@ collaboration to your JavaScript application using the APIs from the
       // Set up Yjs document, shared text, and Liveblocks Yjs provider
       const yDoc = new Y.Doc();
       const yText = yDoc.getText("codemirror");
-      const yProvider = new LiveblocksProvider(room, yDoc);
+      const yProvider = new LiveblocksYjsProvider(room, yDoc);
 
       // Set up CodeMirror and extensions
       const state = EditorState.create({

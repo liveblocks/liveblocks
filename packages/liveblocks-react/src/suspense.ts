@@ -45,6 +45,7 @@ export {
   useErrorListener,
   useEventListener,
   useHistory,
+  useIsInsideRoom,
   useLostConnectionListener,
   useMarkThreadAsRead,
   useMutation,
@@ -80,4 +81,5 @@ export {
   useRoomInfoSuspense as useRoomInfo,
   useUnreadInboxNotificationsCountSuspense as useUnreadInboxNotificationsCount,
   useUserSuspense as useUser,
+  useUserThreadsSuspense_experimental as useUserThreads_experimental,
 } from "./liveblocks";

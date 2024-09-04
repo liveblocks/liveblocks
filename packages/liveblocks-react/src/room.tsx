@@ -113,7 +113,7 @@ import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-
 
 const SMOOTH_DELAY = 1000;
 
-const noop = () => {};
+const noop = () => { };
 const identity: <T>(x: T) => T = (x) => x;
 
 const missing_unstable_batchedUpdates = (
@@ -125,8 +125,8 @@ const missing_unstable_batchedUpdates = (
     import { unstable_batchedUpdates } from "react-dom";  // or "react-native"
 
     <RoomProvider id=${JSON.stringify(
-      roomId
-    )} ... unstable_batchedUpdates={unstable_batchedUpdates}>
+    roomId
+  )} ... unstable_batchedUpdates={unstable_batchedUpdates}>
       ...
     </RoomProvider>
 
@@ -972,6 +972,17 @@ function useRoom<
 }
 
 /**
+ * Returns whether the hook is called within a RoomProvider context.
+ *
+ * @example
+ * const isInsideRoom = useIsInsideRoom();
+ */
+function useIsInsideRoom(): boolean {
+  const room = useRoomOrNull();
+  return room !== null;
+}
+
+/**
  * Returns the current connection status for the Room, and triggers
  * a re-render whenever it changes. Can be used to render a status badge.
  */
@@ -1804,13 +1815,13 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
             const updatedInboxNotifications =
               inboxNotification !== undefined
                 ? {
-                    ...state.inboxNotifications,
-                    [inboxNotification.id]: {
-                      ...inboxNotification,
-                      notifiedAt: newComment.createdAt,
-                      readAt: newComment.createdAt,
-                    },
-                  }
+                  ...state.inboxNotifications,
+                  [inboxNotification.id]: {
+                    ...inboxNotification,
+                    notifiedAt: newComment.createdAt,
+                    readAt: newComment.createdAt,
+                  },
+                }
                 : state.inboxNotifications;
 
             return {
@@ -2510,8 +2521,8 @@ function useHistoryVersionData(versionId: string): HistoryVersionDataState {
             error instanceof Error
               ? error
               : new Error(
-                  "An unknown error occurred while loading this version"
-                ),
+                "An unknown error occurred while loading this version"
+              ),
         });
       }
     };
@@ -2983,6 +2994,14 @@ const _useOthersListener: TypedBundle["useOthersListener"] = useOthersListener;
  * tree.
  */
 const _useRoom: TypedBundle["useRoom"] = useRoom;
+
+/**
+ * Returns whether the hook is called within a RoomProvider context.
+ *
+ * @example
+ * const isInsideRoom = useIsInsideRoom();
+ */
+const _useIsInsideRoom: TypedBundle["useIsInsideRoom"] = useIsInsideRoom;
 
 /**
  * Returns a function that adds a reaction from a comment.
@@ -3473,6 +3492,7 @@ export {
   useHistoryVersionData,
   _useHistoryVersions as useHistoryVersions,
   _useHistoryVersionsSuspense as useHistoryVersionsSuspense,
+  _useIsInsideRoom as useIsInsideRoom,
   useLostConnectionListener,
   useMarkThreadAsRead,
   useMarkThreadAsResolved,

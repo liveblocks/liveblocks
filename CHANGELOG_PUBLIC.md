@@ -13,6 +13,123 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
 
+# Week 35 (2024-08-30)
+
+## v2.6.0
+
+### `@liveblocks/node`
+
+- Add `getInboxNotifications` method which supports an `unread` query parameter.
+
+## Dashboard
+
+- Room detail page enhancements:
+    - Renamed "Document" tab to "Realtime APIs" (Storage + Yjs) to reflect new product offerings.
+    - Reordered tabs: Comments, Text Editor, Realtime APIs, Metadata, Permissions.
+    - Introduced a new Text Editor tab with enhanced features:
+        - Preview Lexical documents directly from the dashboard, including mentions, comment annotations, and custom nodes.
+        - Access comment threads from text annotations and browse their comments and metadata.
+    - Broadcast custom events to people connected in the room using a typed editor.
+- New inline view for comment threads:
+    - Offers a more visual and intuitive way to browse comments.
+    - Added ability to sort threads by latest activity, most replies, or creation date.
+    - Introduced an option to delete all threads in a room at once.
+
+## Documentation
+
+- Improved search dialog box:
+  - Returns more accurate results, and is generally much more useful.
+  - Returns more results than before, allowing you to accessibly scroll through the list.
+- New guide on [setting initial/default state in BlockNote](https://liveblocks.io/docs/guides/setting-an-initial-or-default-value-in-blocknote).
+
+## Website
+
+- New [book a demo](http://liveblocks.io/contact/sales) page, allowing you to easily set up a meeting with our sales team.
+
+## Contributors
+
+ctnicholas, sugardarius, pierrelevaillant, stevenfabre
+
+# Week 34 (2024-08-23)
+
+## Examples
+
+- Add new features and polish to the [Next.js Overlay Comments](https://liveblocks.io/examples/overlay-comments/nextjs-comments-overlay) and [Next.js Canvas Comments](https://liveblocks.io/examples/canvas-comments/nextjs-comments-canvas) examples.
+- Comments now flip when previously they would go offscreen, and other small bugs were fixed.
+
+## Contributors
+
+ctnicholas
+
+# Week 33 (2024-08-16)
+
+## v2.5.1
+
+### `@liveblocks/yjs`
+
+- Fix `LiveblocksProvider` `update`/`change` event not returning `removed` users.
+
+## v2.5.0
+
+### `@liveblocks/react`
+
+- Add
+  [`useIsInsideRoom`](https://liveblocks.io/docs/api-reference/liveblocks-react#useIsInsideRoom)
+  hook, useful for rendering different components inside and outside of
+  [`RoomProvider`](https://liveblocks.io/docs/api-reference/liveblocks-react#RoomProvider).
+
+### `@liveblocks/react-lexical`
+
+- Fix a bug in [`useEditorStatus`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#useEditorStatus) which prevented it from returning a correct status when `LexicalPlugin` was rendered conditionally.
+- Fix remote cursors not displaying user names.
+
+### `@liveblocks/react-ui`
+
+- Improve event propagation in [`Composer`](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Composer).
+
+## `@liveblocks/codemod`
+
+- Prevent modifying files that weren’t changed by the codemods. 
+
+## Contributors
+
+ctnicholas, nimeshnayaju, marcbouchenoire
+
+# Week 32 (2024-08-09)
+
+## Website
+
+- New blog post: [What’s new in Liveblocks: July edition](https://liveblocks.io/blog/whats-new-in-liveblocks-july-edition-2024).
+
+## Dashboard
+
+- Add the ability to see the response body of webhook attempts in the webhook event details dialog (found in the "more" dropdown).
+
+## Documentation
+
+- Add API reference for [`liveblocks.markThreadAsResolved`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-mark-as-resolved) and [`liveblocks.markThreadAsUnresolved`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-mark-as-unresolved).
+
+## Contributors
+
+ctnicholas
+
+# Week 31 (2024-08-02)
+
+## Dashboard
+
+- Add the Room API docs to the dashboard. Copy pre-filled code snippets from the API reference directly from the Room detail page.
+- Optimize the width of rooms, schemas, and webhooks lists when a detail view is opened for more comfort on medium-sized screens.
+
+## Documentation
+
+- Updated [How to modify Storage from the server](https://liveblocks.io/docs/guides/how-to-modify-liveblocks-storage-from-the-server) for Liveblocks 2.0.
+- Fixed various typos.
+- Show public/secret keys within the Bash code snippets for connected users.
+
+## Contributors
+
+pierrelevaillant, sugardarius, teddarific, assaadhalabi
+
 # Week 30 (2024-07-26)
 
 ## v2.4.0
