@@ -1,17 +1,14 @@
 "use server";
 
-import { Liveblocks } from "@liveblocks/node";
+import { getRoomTitle } from "../lib/liveblocks";
 
-const liveblocks = new Liveblocks({
-  secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
-});
+export async function getRoomInfo(roomIds: string[]) {
+  const promises = [];
 
-export async function getRoomTitle(roomId: string) {
-  const room = await liveblocks.getRoom(roomId);
-  return (room.metadata?.title as string) || "";
-}
+  for (const roomId of roomIds) {
+    promises.push(getRoomTitle(roomId));
+  }
 
-export async function setRoomTitle(roomId: string, title: string) {
-  const room = await liveblocks.updateRoom(roomId, { metadata: { title } });
-  return room.metadata?.title || null;
+  const titles = await Promise.all(promises);
+  return titles.map((title) => ({ name: title }));
 }

@@ -3,9 +3,16 @@
 import { RoomProvider } from "@liveblocks/react/suspense";
 import { ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
+import { getRoomId } from "./config";
 
-export function Room({ children }: { children: ReactNode }) {
-  const roomId = useExampleRoomId("liveblocks:examples:nextjs-lexical-ai");
+export function Room({
+  pageId,
+  children,
+}: {
+  pageId: string;
+  children: ReactNode;
+}) {
+  const roomId = useExampleRoomId(getRoomId(pageId));
 
   return (
     <RoomProvider
@@ -15,7 +22,6 @@ export function Room({ children }: { children: ReactNode }) {
       }}
       initialStorage={{
         title: "Untitled document",
-        lastModified: new Date().getTime(),
       }}
     >
       {children}

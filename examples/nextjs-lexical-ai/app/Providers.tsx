@@ -3,6 +3,7 @@
 import { LiveblocksProvider } from "@liveblocks/react/suspense";
 import { ReactNode } from "react";
 import { authWithRandomUser } from "./example";
+import { getRoomInfo } from "./actions/liveblocks";
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
@@ -34,6 +35,10 @@ export function Providers({ children }: { children: ReactNode }) {
 
         const userIds = await response.json();
         return userIds;
+      }}
+      resolveRoomsInfo={async ({ roomIds }) => {
+        const info = await getRoomInfo(roomIds);
+        return info;
       }}
     >
       {children}

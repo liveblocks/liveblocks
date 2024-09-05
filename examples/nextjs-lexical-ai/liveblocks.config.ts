@@ -10,7 +10,6 @@ declare global {
     };
     Storage: {
       title: string;
-      lastModified: number;
     };
   }
 }
