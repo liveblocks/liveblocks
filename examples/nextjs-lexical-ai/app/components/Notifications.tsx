@@ -44,7 +44,7 @@ export function Notifications() {
       </Dialog.Trigger>
 
       <Dialog.Portal>
-        <Dialog.Content className="bg-white shadow text-sm overflow-hidden w-[380px] z-20 fixed top-0 left-[240px] bottom-0">
+        <Dialog.Content className="bg-white shadow-xl text-sm overflow-hidden w-[380px] z-20 fixed top-0 left-[240px] bottom-0">
           <ClientSideSuspense fallback={<Loading />}>
             <Inbox />
           </ClientSideSuspense>
