@@ -71,7 +71,7 @@ collaboration to your Svelte application using the APIs from the
         const yDoc = new Y.Doc();
         const yText = yDoc.getText("codemirror");
         const undoManager = new Y.UndoManager(yText);
-        const yProvider = new LiveblocksProvider(room, yDoc);
+        const yProvider = new LiveblocksYjsProvider(room, yDoc);
 
         // Set up CodeMirror and extensions
         const state = EditorState.create({

@@ -1,7 +1,8 @@
 import "@testing-library/jest-dom";
 
-import { createClient, kInternal } from "@liveblocks/core";
+import { kInternal, nanoid, wait } from "@liveblocks/core";
 import {
+  act,
   fireEvent,
   render,
   renderHook,
@@ -12,15 +13,11 @@ import { setupServer } from "msw/node";
 import React, { Suspense } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 
-import {
-  createLiveblocksContext,
-  INBOX_NOTIFICATIONS_QUERY,
-  POLLING_INTERVAL,
-} from "../liveblocks";
+import { INBOX_NOTIFICATIONS_QUERY, POLLING_INTERVAL } from "../liveblocks";
 import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import { mockGetInboxNotifications } from "./_restMocks";
-import { generateFakeJwt } from "./_utils";
+import { createContextsForTest } from "./_utils";
 
 const server = setupServer();
 
@@ -37,28 +34,13 @@ afterEach(() => {
 
 afterAll(() => server.close());
 
-// TODO: Dry up and create utils that wrap renderHook
-function createLiveblocksContextForTest() {
-  const client = createClient({
-    async authEndpoint() {
-      return {
-        token: await generateFakeJwt({ userId: "userId" }),
-      };
-    },
-    polyfills: {
-      WebSocket: MockWebSocket as any,
-    },
-  });
-
-  return { liveblocksCtx: createLiveblocksContext(client), client };
-}
-
 describe("useInboxNotifications", () => {
   test("should fetch inbox notifications", async () => {
-    const threads = [dummyThreadData()];
-    const inboxNotification = dummyThreadInboxNotificationData();
-    inboxNotification.threadId = threads[0].id;
-    const inboxNotifications = [inboxNotification];
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+    const inboxNotifications = [
+      dummyThreadInboxNotificationData({ roomId, threadId: threads[0].id }),
+    ];
 
     server.use(
       mockGetInboxNotifications(async (_req, res, ctx) => {
@@ -77,8 +59,8 @@ describe("useInboxNotifications", () => {
     );
 
     const {
-      liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
-    } = createLiveblocksContextForTest();
+      liveblocks: { LiveblocksProvider, useInboxNotifications },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(() => useInboxNotifications(), {
       wrapper: ({ children }) => (
@@ -101,10 +83,11 @@ describe("useInboxNotifications", () => {
   });
 
   test("should be referentially stable after rerendering", async () => {
-    const threads = [dummyThreadData()];
-    const inboxNotification = dummyThreadInboxNotificationData();
-    inboxNotification.threadId = threads[0].id;
-    const inboxNotifications = [inboxNotification];
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+    const inboxNotifications = [
+      dummyThreadInboxNotificationData({ roomId, threadId: threads[0].id }),
+    ];
 
     server.use(
       mockGetInboxNotifications(async (_req, res, ctx) => {
@@ -123,8 +106,8 @@ describe("useInboxNotifications", () => {
     );
 
     const {
-      liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
-    } = createLiveblocksContextForTest();
+      liveblocks: { LiveblocksProvider, useInboxNotifications },
+    } = createContextsForTest();
 
     const { result, unmount, rerender } = renderHook(
       () => useInboxNotifications(),
@@ -152,10 +135,11 @@ describe("useInboxNotifications", () => {
   });
 
   test("multiple instances of useInboxNotifications should dedupe requests", async () => {
-    const threads = [dummyThreadData()];
-    const inboxNotification = dummyThreadInboxNotificationData();
-    inboxNotification.threadId = threads[0].id;
-    const inboxNotifications = [inboxNotification];
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+    const inboxNotifications = [
+      dummyThreadInboxNotificationData({ roomId, threadId: threads[0].id }),
+    ];
 
     server.use(
       mockGetInboxNotifications(async (_req, res, ctx) => {
@@ -192,8 +176,8 @@ describe("useInboxNotifications", () => {
     );
 
     const {
-      liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
-    } = createLiveblocksContextForTest();
+      liveblocks: { LiveblocksProvider, useInboxNotifications },
+    } = createContextsForTest();
 
     const { rerender, unmount } = renderHook(
       () => {
@@ -225,8 +209,8 @@ describe("useInboxNotifications", () => {
     );
 
     const {
-      liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
-    } = createLiveblocksContextForTest();
+      liveblocks: { LiveblocksProvider, useInboxNotifications },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(() => useInboxNotifications(), {
       wrapper: ({ children }) => (
@@ -234,30 +218,32 @@ describe("useInboxNotifications", () => {
       ),
     });
 
-    expect(result.current).toEqual({
-      isLoading: true,
-    });
+    expect(result.current).toEqual({ isLoading: true });
 
-    await waitFor(() =>
-      expect(result.current).toEqual({
-        isLoading: false,
-        error: expect.any(Error),
-      })
-    );
+    // An error will only be thrown after the initial load failed, which
+    // happens after 5 retries (>1 minute) at earliest, so this is annoying
+    // to test here.
+    await wait(1000);
+
+    expect(result.current).toEqual({ isLoading: true });
 
     unmount();
   });
 
   test("sort inbox notifications by notified at date before returning", async () => {
-    const thread1 = dummyThreadData();
-    const oldInboxNotification = dummyThreadInboxNotificationData();
-    oldInboxNotification.threadId = thread1.id;
-    oldInboxNotification.notifiedAt = new Date("2021-01-01");
-
-    const thread2 = dummyThreadData();
-    const newInboxNotification = dummyThreadInboxNotificationData();
-    newInboxNotification.threadId = thread2.id;
-    newInboxNotification.notifiedAt = new Date("2021-01-02");
+    const roomId = nanoid();
+    const thread1 = dummyThreadData({ roomId });
+    const oldInboxNotification = dummyThreadInboxNotificationData({
+      roomId,
+      threadId: thread1.id,
+      notifiedAt: new Date("2021-01-01"),
+    });
+    const thread2 = dummyThreadData({ roomId });
+    const newInboxNotification = dummyThreadInboxNotificationData({
+      roomId,
+      threadId: thread2.id,
+      notifiedAt: new Date("2021-01-02"),
+    });
 
     server.use(
       mockGetInboxNotifications(async (_req, res, ctx) => {
@@ -276,9 +262,9 @@ describe("useInboxNotifications", () => {
     );
 
     const {
-      liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
+      liveblocks: { LiveblocksProvider, useInboxNotifications },
       client,
-    } = createLiveblocksContextForTest();
+    } = createContextsForTest();
 
     const store = client[kInternal].cacheStore;
     store.set((state) => ({
@@ -289,9 +275,7 @@ describe("useInboxNotifications", () => {
         [newInboxNotification.id]: newInboxNotification,
       },
       queries: {
-        [INBOX_NOTIFICATIONS_QUERY]: {
-          isLoading: false,
-        },
+        [INBOX_NOTIFICATIONS_QUERY]: { isLoading: false, data: undefined },
       },
     }));
 
@@ -336,8 +320,8 @@ describe("useInboxNotifications: error", () => {
     );
 
     const {
-      liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
-    } = createLiveblocksContextForTest();
+      liveblocks: { LiveblocksProvider, useInboxNotifications },
+    } = createContextsForTest();
 
     const { result, unmount } = renderHook(() => useInboxNotifications(), {
       wrapper: ({ children }) => (
@@ -349,156 +333,46 @@ describe("useInboxNotifications: error", () => {
       isLoading: true,
     });
 
-    await waitFor(() =>
-      expect(result.current).toEqual({
-        isLoading: false,
-        error: expect.any(Error),
-      })
-    );
+    // An error will only be thrown after the initial load failed, which
+    // happens after 5 retries (>1 minute) at earliest, so this is annoying
+    // to test here.
+    await jest.advanceTimersByTimeAsync(1_000);
+
+    expect(result.current).toEqual({ isLoading: true });
 
     // Unmount so polling doesn't interfere with the test
     unmount();
 
-    // The first retry should be made after 5000ms * 2^0 (5000ms is the currently set error retry interval)
-    jest.advanceTimersByTime(5000);
+    // The first retry should be made after 5s
+    await jest.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the inbox notifications should have been made after the first retry
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(2));
 
-    // The second retry should be made after 5000ms * 2^1
-    jest.advanceTimersByTime(5000 * Math.pow(2, 1));
+    // The second retry should be made after 5s
+    await jest.advanceTimersByTimeAsync(5_000);
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(3));
 
-    // The third retry should be made after 5000ms * 2^2
-    jest.advanceTimersByTime(5000 * Math.pow(2, 2));
+    // The third retry should be made after 10s
+    await jest.advanceTimersByTimeAsync(10_000);
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(4));
 
-    // The fourth retry should be made after 5000ms * 2^3
-    jest.advanceTimersByTime(5000 * Math.pow(2, 3));
+    // The fourth retry should be made after 10s
+    await jest.advanceTimersByTimeAsync(15_000);
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(5));
 
-    // and so on...
-  });
-
-  test("should retry with exponential backoff with a maximum retry limit 1", async () => {
-    let getInboxNotificationsReqCount = 0;
-    server.use(
-      mockGetInboxNotifications(async (_req, res, ctx) => {
-        getInboxNotificationsReqCount++;
-        return res(ctx.status(500));
-      })
-    );
-
-    const {
-      liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
-    } = createLiveblocksContextForTest();
-
-    const { result, unmount } = renderHook(() => useInboxNotifications(), {
-      wrapper: ({ children }) => (
-        <LiveblocksProvider>{children}</LiveblocksProvider>
-      ),
-    });
-
-    expect(result.current).toEqual({
-      isLoading: true,
-    });
-
-    await waitFor(() =>
-      expect(result.current).toEqual({
-        isLoading: false,
-        error: expect.any(Error),
-      })
-    );
-
-    // Unmount so polling doesn't interfere with the test
-    unmount();
-
-    // Simulate retries up to maximum retry count (currently set to 5)
-    for (let i = 0; i < 5; i++) {
-      const interval = 5000 * Math.pow(2, i); // 5000ms is the currently set error retry interval
-
-      jest.advanceTimersByTime(interval);
-
-      await waitFor(() => expect(getInboxNotificationsReqCount).toBe(i + 2));
-    }
-
-    expect(getInboxNotificationsReqCount).toBe(1 + 5); // initial request + 5 retries
-
-    // No more retries should be made after the maximum number of retries
-    await jest.advanceTimersByTimeAsync(5 * Math.pow(2, 5));
-
-    // The number of requests should not have increased after the maximum number of retries
-    expect(getInboxNotificationsReqCount).toBe(1 + 5);
-  });
-
-  test("should retry with exponential backoff with a maximum retry limit 2", async () => {
-    let getInboxNotificationsReqCount = 0;
-    server.use(
-      mockGetInboxNotifications(async (_req, res, ctx) => {
-        getInboxNotificationsReqCount++;
-        if (getInboxNotificationsReqCount === 1) {
-          return res(ctx.status(500));
-        } else {
-          return res(
-            ctx.json({
-              threads: [],
-              inboxNotifications: [],
-              deletedThreads: [],
-              deletedInboxNotifications: [],
-              meta: {
-                requestedAt: new Date().toISOString(),
-              },
-            })
-          );
-        }
-      })
-    );
-
-    const {
-      liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
-    } = createLiveblocksContextForTest();
-
-    const { result, unmount } = renderHook(() => useInboxNotifications(), {
-      wrapper: ({ children }) => (
-        <LiveblocksProvider>{children}</LiveblocksProvider>
-      ),
-    });
-
-    expect(result.current).toEqual({
-      isLoading: true,
-    });
-
-    await waitFor(() =>
-      expect(result.current).toEqual({
-        isLoading: false,
-        error: expect.any(Error),
-      })
-    );
-
-    // The first retry should be made after 5000ms * 2^0 (5000ms is the currently set error retry interval)
-    jest.advanceTimersByTime(5000);
-    // A new fetch request for inbox notifications should have been made after the first retry
-    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(2));
-
-    expect(result.current).toEqual({
-      inboxNotifications: [],
-      isLoading: false,
-    });
-
-    // No more retries should be made after successful retry
-    await jest.advanceTimersByTimeAsync(5000 * Math.pow(2, 1));
-    expect(getInboxNotificationsReqCount).toBe(2);
-
-    // Unmount so polling doesn't interfere with the test
-    unmount();
+    // Won't try more than 5 attempts
+    await jest.advanceTimersByTimeAsync(20_000);
+    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(5));
   });
 });
 
 describe("useInboxNotifications - Suspense", () => {
   test("should be referentially stable after rerendering", async () => {
-    const threads = [dummyThreadData()];
-    const inboxNotification = dummyThreadInboxNotificationData();
-    inboxNotification.threadId = threads[0].id;
-    const inboxNotifications = [inboxNotification];
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+    const inboxNotifications = [
+      dummyThreadInboxNotificationData({ roomId, threadId: threads[0].id }),
+    ];
 
     server.use(
       mockGetInboxNotifications(async (_req, res, ctx) => {
@@ -517,10 +391,10 @@ describe("useInboxNotifications - Suspense", () => {
     );
 
     const {
-      liveblocksCtx: {
+      liveblocks: {
         suspense: { LiveblocksProvider, useInboxNotifications },
       },
-    } = createLiveblocksContextForTest();
+    } = createContextsForTest();
 
     const { result, unmount, rerender } = renderHook(
       () => useInboxNotifications(),
@@ -561,12 +435,12 @@ describe("useInboxNotifications: polling", () => {
     jest.useRealTimers();
   });
   test("should poll threads every x seconds", async () => {
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+    const inboxNotifications = [
+      dummyThreadInboxNotificationData({ roomId, threadId: threads[0].id }),
+    ];
     let getInboxNotificationsReqCount = 0;
-
-    const threads = [dummyThreadData()];
-    const inboxNotification = dummyThreadInboxNotificationData();
-    inboxNotification.threadId = threads[0].id;
-    const inboxNotifications = [inboxNotification];
 
     server.use(
       mockGetInboxNotifications(async (_req, res, ctx) => {
@@ -586,8 +460,8 @@ describe("useInboxNotifications: polling", () => {
     );
 
     const {
-      liveblocksCtx: { LiveblocksProvider, useInboxNotifications },
-    } = createLiveblocksContextForTest();
+      liveblocks: { LiveblocksProvider, useInboxNotifications },
+    } = createContextsForTest();
 
     const Room = () => {
       return (
@@ -620,7 +494,7 @@ describe("useInboxNotifications: polling", () => {
   });
 });
 
-describe("useThreadsSuspense: error", () => {
+describe("useInboxNotificationsSuspense: error", () => {
   beforeEach(() => {
     jest.useFakeTimers();
   });
@@ -639,15 +513,15 @@ describe("useThreadsSuspense: error", () => {
     );
 
     const {
-      liveblocksCtx: {
+      liveblocks: {
         suspense: { LiveblocksProvider, useInboxNotifications },
       },
-    } = createLiveblocksContextForTest();
+    } = createContextsForTest();
 
     function Fallback({ resetErrorBoundary }: FallbackProps) {
       return (
         <div>
-          <p>There was an error while getting inbox notifications.</p>
+          <p>Oops, error grabbing inbox notifications.</p>
           <button onClick={resetErrorBoundary}>Retry</button>
         </div>
       );
@@ -657,110 +531,108 @@ describe("useThreadsSuspense: error", () => {
       wrapper: ({ children }) => (
         <LiveblocksProvider>
           <ErrorBoundary FallbackComponent={Fallback}>
-            <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
+            <Suspense fallback="Loading, yo">{children}</Suspense>
           </ErrorBoundary>
         </LiveblocksProvider>
       ),
     });
 
+    // Hook did not return a value. Instead, an error was thrown
     expect(result.current).toEqual(null);
 
-    await waitFor(() =>
-      // Check if the error boundary's fallback is displayed
-      expect(
-        screen.getByText(
-          "There was an error while getting inbox notifications."
-        )
-      ).toBeInTheDocument()
-    );
+    expect(screen.getByText("Loading, yo")).toBeInTheDocument();
 
-    unmount();
-  });
+    // Wait until all fetch attempts have been done
+    await act(() => jest.advanceTimersToNextTimerAsync()); // fetch attempt 1
+    await act(() => jest.advanceTimersByTimeAsync(5_000)); // fetch attempt 2
+    await act(() => jest.advanceTimersByTimeAsync(5_000)); // fetch attempt 3
+    await act(() => jest.advanceTimersByTimeAsync(10_000)); // fetch attempt 4
+    await act(() => jest.advanceTimersByTimeAsync(15_000)); // fetch attempt 5
 
-  test("should retry with exponential backoff on error and clear error boundary", async () => {
-    const threads = [dummyThreadData()];
-    const inboxNotification = dummyThreadInboxNotificationData();
-    inboxNotification.threadId = threads[0].id;
-    const inboxNotifications = [inboxNotification];
-
-    let getInboxNotificationsReqCount = 0;
-    server.use(
-      mockGetInboxNotifications((_req, res, ctx) => {
-        getInboxNotificationsReqCount++;
-
-        if (getInboxNotificationsReqCount === 1) {
-          // Mock an error response from the server
-          return res(ctx.status(500));
-        } else {
-          // Mock a successful response from the server for the subsequent fetches
-          return res(
-            ctx.json({
-              threads,
-              inboxNotifications,
-              deletedThreads: [],
-              deletedInboxNotifications: [],
-              meta: {
-                requestedAt: new Date().toISOString(),
-              },
-            })
-          );
-        }
-      })
-    );
-
-    const {
-      liveblocksCtx: {
-        suspense: { LiveblocksProvider, useInboxNotifications },
-      },
-    } = createLiveblocksContextForTest();
-
-    function Fallback({ resetErrorBoundary }: FallbackProps) {
-      return (
-        <div>
-          <p>There was an error while getting inbox notifications.</p>
-          <button onClick={resetErrorBoundary}>Retry</button>
-        </div>
-      );
-    }
-
-    const { result, unmount } = renderHook(() => useInboxNotifications(), {
-      wrapper: ({ children }) => (
-        <LiveblocksProvider>
-          <ErrorBoundary FallbackComponent={Fallback}>
-            <Suspense fallback={<div>Loading</div>}>{children}</Suspense>
-          </ErrorBoundary>
-        </LiveblocksProvider>
-      ),
-    });
-
-    expect(result.current).toEqual(null);
-
-    // A new fetch request for the threads should have been made after the initial render
-    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(1));
     // Check if the error boundary's fallback is displayed
     expect(
-      screen.getByText("There was an error while getting inbox notifications.")
+      screen.getByText("Oops, error grabbing inbox notifications.")
     ).toBeInTheDocument();
 
-    // The first retry should be made after 5000ms * 2^0 (5000ms is the currently set error retry interval)
-    jest.advanceTimersByTime(5000);
-    // A new fetch request for the threads should have been made after the first retry
-    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(2));
+    // Wait until the error boundary auto-clears
+    await act(() => jest.advanceTimersByTimeAsync(5_000));
 
     // Simulate clicking the retry button
     fireEvent.click(screen.getByText("Retry"));
 
     // The error boundary's fallback should be cleared
-    expect(
-      screen.queryByText(
-        "There was an error while getting inbox notifications."
-      )
-    ).not.toBeInTheDocument();
+    expect(screen.getByText("Loading, yo")).toBeInTheDocument();
 
-    expect(result.current).toEqual({
-      isLoading: false,
-      inboxNotifications,
+    unmount();
+  });
+
+  test("loads initial inbox notification data, even if there is a fetch hiccup", async () => {
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+    const inboxNotifications = [
+      dummyThreadInboxNotificationData({ roomId, threadId: threads[0].id }),
+    ];
+
+    let n = 0;
+    server.use(
+      mockGetInboxNotifications((_req, res, ctx) => {
+        n++;
+        if (n <= 1) {
+          // Mock an error response from the server
+          return res(ctx.status(500));
+        }
+
+        // Mock a successful response from the server for the subsequent fetches
+        return res(
+          ctx.json({
+            threads,
+            inboxNotifications,
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      liveblocks: {
+        suspense: { LiveblocksProvider, useInboxNotifications },
+      },
+    } = createContextsForTest();
+
+    function Fallback({ resetErrorBoundary }: FallbackProps) {
+      return (
+        <div>
+          <p>Oops, couldnt load notifications.</p>
+          <button onClick={resetErrorBoundary}>Retry</button>
+        </div>
+      );
+    }
+
+    const { result, unmount } = renderHook(() => useInboxNotifications(), {
+      wrapper: ({ children }) => (
+        <LiveblocksProvider>
+          <ErrorBoundary FallbackComponent={Fallback}>
+            <Suspense fallback="Loading your notifications">
+              <div>Done loading!</div>
+              {children}
+            </Suspense>
+          </ErrorBoundary>
+        </LiveblocksProvider>
+      ),
     });
+
+    expect(result.current).toEqual(null);
+    expect(screen.getByText("Loading your notifications")).toBeInTheDocument();
+
+    // Wait until all fetch attempts have been done
+    await act(() => jest.advanceTimersToNextTimerAsync()); // fetch attempt 1
+
+    // Check if the error boundary's fallback is displayed
+    expect(screen.getByText("Done loading!")).toBeInTheDocument();
 
     unmount();
   });

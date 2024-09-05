@@ -18,7 +18,7 @@ subscribe to events, and secure your endpoint.
 - [Edit endpoint events](#edit-endpoint-events)
 - [Security verification](#security-verification)
 - [Replaying events](#replaying-events)
-- [Testing locally]('testing-locally)
+- [Testing locally](#testing-locally)
 
 ### Creating an endpoint [#creating-an-endpoint]
 
@@ -879,6 +879,68 @@ const threadMetadataUpdatedEvent = {
 };
 ```
 
+#### ThreadMarkedAsResolvedEvent
+
+An event is triggered when a thread is marked as resolved. This event is not
+throttled.
+
+```ts
+// Schema
+type ThreadMarkedAsResolvedEvent = {
+  type: "threadMarkedAsResolved";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    updatedAt: string;
+    updatedBy: string;
+  };
+};
+
+// Example
+const ThreadMarkedAsResolvedEvent = {
+  type: "threadMarkedAsResolved",
+  data: {
+    projectId: "my-project-id",
+    roomId: "my-room-id",
+    threadId: "my-thread-id",
+    updatedAt: "2021-10-06T01:45:56.558Z",
+    updatedBy: "my-user-id",
+  },
+};
+```
+
+#### ThreadMarkedAsUnresolvedEvent
+
+An event is triggered when a thread is marked as unresolved. This event is not
+throttled.
+
+```ts
+// Schema
+type ThreadMarkedAsUnresolvedEvent = {
+  type: "threadMarkedAsUnresolved";
+  data: {
+    projectId: string;
+    roomId: string;
+    threadId: string;
+    updatedAt: string;
+    updatedBy: string;
+  };
+};
+
+// Example
+const ThreadMarkedAsUnresolvedEvent = {
+  type: "threadMarkedAsUnresolved",
+  data: {
+    projectId: "my-project-id",
+    roomId: "my-room-id",
+    threadId: "my-thread-id",
+    updatedAt: "2021-10-06T01:45:56.558Z",
+    updatedBy: "my-user-id",
+  },
+};
+```
+
 #### NotificationEvent
 
 Notification events are designed to help you create notification emails for your
@@ -891,7 +953,7 @@ This webhook event is triggered by both Liveblocks and custom notification
 
 ##### Thread notification
 
-When using [Comments](/docs/product/comments), an event is triggered 30 minutes
+When using [Comments](/docs/products/comments), an event is triggered 30 minutes
 after a user has been mentioned or replied to in a thread, and has not seen the
 thread. It will also be triggered if the user has subscribed to the thread and
 has not seen the thread. The event won’t be triggered if the user has seen the
@@ -932,7 +994,7 @@ const threadNotificationEvent = {
 
 ##### TextMention notification
 
-When using [Text editor](/docs/product/text-editor), an event is triggered 30
+When using [Text editor](/docs/products/text-editor), an event is triggered 30
 minutes after a user has been mentioned in a text and has not seen the text
 mention. This is the Liveblocks `textMention` notification kind.
 

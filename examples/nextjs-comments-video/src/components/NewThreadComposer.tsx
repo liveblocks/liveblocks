@@ -36,7 +36,6 @@ export function NewThreadComposer({
       createThread({
         body,
         metadata: {
-          resolved: false,
           time: attachTime ? time : -1,
           timePercentage: attachTime ? getCurrentPercentage() : -1,
         },

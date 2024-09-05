@@ -7,6 +7,31 @@ import {
 
 import type { UseThreadsOptions } from "../../types";
 
+export function selectedUserThreads<M extends BaseMetadata>(
+  state: CacheState<M>
+) {
+  const result = applyOptimisticUpdates(state);
+
+  // Filter threads to only include the non-deleted threads
+  const threads = Object.values(result.threads).filter<ThreadData<M>>(
+    (thread): thread is ThreadData<M> => {
+      // We do not want to include threads that have been marked as deleted
+      if (thread.deletedAt !== undefined) {
+        return false;
+      }
+
+      return true;
+    }
+  );
+
+  // Sort threads by updated date (newest first) and then created date
+  return threads.sort(
+    (a, b) =>
+      (b.updatedAt ?? b.createdAt).getTime() -
+      (a.updatedAt ?? a.createdAt).getTime()
+  );
+}
+
 /**
  * @private Do not rely on this internal API.
  */
@@ -29,6 +54,11 @@ export function selectedThreads<M extends BaseMetadata>(
 
       const query = options.query;
       if (!query) return true;
+
+      // If the query includes 'resolved' filter and the thread's 'resolved' value does not match the query's 'resolved' value, exclude the thread
+      if (query.resolved !== undefined && thread.resolved !== query.resolved) {
+        return false;
+      }
 
       for (const key in query.metadata) {
         const metadataValue = thread.metadata[key];

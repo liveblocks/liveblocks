@@ -16,7 +16,7 @@ declare global {
   interface Liveblocks {
     ThreadMetadata: {
       // Your custom fields go here...
-      resolved: boolean;
+      pinned: boolean;
       color: string | null; // ❌ Values may not be null
       position: { x: number; y: number }; // ❌ Values must be simple
       zIndex?: number;
@@ -39,7 +39,7 @@ declare global {
   interface Liveblocks {
     ThreadMetadata: {
       // Your custom fields go here...
-      resolved: boolean;
+      pinned: boolean;
       color?: string; // ✅
       positionX: number; // ✅
       positionY: number; // ✅

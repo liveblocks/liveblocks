@@ -1,36 +1,16 @@
-import type {
-  BaseMetadata,
-  BaseUserMeta,
-  ClientOptions,
-  JsonObject,
-  ResolveMentionSuggestionsArgs,
-} from "@liveblocks/core";
-import { createClient } from "@liveblocks/core";
-import { createRoomContext } from "@liveblocks/react";
+import type { ResolveMentionSuggestionsArgs } from "@liveblocks/core";
 import { renderHook, waitFor } from "@testing-library/react";
+import { nanoid } from "@liveblocks/core";
 import React from "react";
 
 import { useMentionSuggestions } from "../shared";
-import { generateFakeJwt } from "./_utils";
+import { createContextsForTest } from "./_utils";
 
-// TODO: Dry up and create utils that wrap renderHook
-function createRoomContextForTest<M extends BaseMetadata>(
-  options?: Omit<ClientOptions<BaseUserMeta>, "authEndpoint" | "publicApiKey">
-) {
-  const client = createClient({
-    async authEndpoint() {
-      return {
-        token: await generateFakeJwt({ userId: "userId" }),
-      };
-    },
-    // eslint-disable-next-line @typescript-eslint/require-await
-    resolveMentionSuggestions: async ({ text }) => {
-      return text.split("");
-    },
-    ...options,
-  });
-
-  return createRoomContext<JsonObject, never, never, never, M>(client);
+// eslint-disable-next-line @typescript-eslint/require-await
+async function defaultResolveMentionSuggestions({
+  text,
+}: ResolveMentionSuggestionsArgs) {
+  return text.split("");
 }
 
 describe("useMentionSuggestions", () => {
@@ -43,7 +23,13 @@ describe("useMentionSuggestions", () => {
   });
 
   test("should return the results from resolveMentionSuggestions", async () => {
-    const { RoomProvider } = createRoomContextForTest();
+    const roomId = nanoid();
+
+    const {
+      room: { RoomProvider },
+    } = createContextsForTest({
+      resolveMentionSuggestions: defaultResolveMentionSuggestions,
+    });
 
     const { result, unmount } = renderHook(
       () => ({
@@ -51,7 +37,7 @@ describe("useMentionSuggestions", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
       }
     );
@@ -68,7 +54,13 @@ describe("useMentionSuggestions", () => {
   });
 
   test("should update whenever the text changes", async () => {
-    const { RoomProvider } = createRoomContextForTest();
+    const roomId = nanoid();
+
+    const {
+      room: { RoomProvider },
+    } = createContextsForTest({
+      resolveMentionSuggestions: defaultResolveMentionSuggestions,
+    });
 
     const { result, rerender, unmount } = renderHook(
       ({ text }: { text: string }) => ({
@@ -76,7 +68,7 @@ describe("useMentionSuggestions", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
         initialProps: { text: "abc" },
       }
@@ -100,10 +92,14 @@ describe("useMentionSuggestions", () => {
   });
 
   test("should invoke resolveMentionSuggestions with the expected arguments", async () => {
+    const roomId = nanoid();
+
     const resolveMentionSuggestions = jest.fn(
       ({ text }: ResolveMentionSuggestionsArgs) => text.split("")
     );
-    const { RoomProvider } = createRoomContextForTest({
+    const {
+      room: { RoomProvider },
+    } = createContextsForTest({
       resolveMentionSuggestions,
     });
 
@@ -113,7 +109,7 @@ describe("useMentionSuggestions", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
         initialProps: { text: "abc" },
       }
@@ -125,17 +121,21 @@ describe("useMentionSuggestions", () => {
 
     expect(resolveMentionSuggestions).toHaveBeenCalledWith({
       text: "abc",
-      roomId: "room-id",
+      roomId,
     });
 
     unmount();
   });
 
   test("should cache results and not invoke resolveMentionSuggestions with previously provided arguments", async () => {
+    const roomId = nanoid();
+
     const resolveMentionSuggestions = jest.fn(
       ({ text }: ResolveMentionSuggestionsArgs) => text.split("")
     );
-    const { RoomProvider } = createRoomContextForTest({
+    const {
+      room: { RoomProvider },
+    } = createContextsForTest({
       resolveMentionSuggestions,
     });
 
@@ -145,7 +145,7 @@ describe("useMentionSuggestions", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
         initialProps: { text: "abc" },
       }
@@ -172,22 +172,26 @@ describe("useMentionSuggestions", () => {
 
     expect(resolveMentionSuggestions).toHaveBeenNthCalledWith(1, {
       text: "abc",
-      roomId: "room-id",
+      roomId,
     });
 
     expect(resolveMentionSuggestions).toHaveBeenNthCalledWith(2, {
       text: "123",
-      roomId: "room-id",
+      roomId,
     });
 
     unmount();
   });
 
   test("should debounce the invokations of resolveMentionSuggestions", async () => {
+    const roomId = nanoid();
+
     const resolveMentionSuggestions = jest.fn(
       ({ text }: ResolveMentionSuggestionsArgs) => text.split("")
     );
-    const { RoomProvider } = createRoomContextForTest({
+    const {
+      room: { RoomProvider },
+    } = createContextsForTest({
       resolveMentionSuggestions,
     });
 
@@ -197,7 +201,7 @@ describe("useMentionSuggestions", () => {
       }),
       {
         wrapper: ({ children }) => (
-          <RoomProvider id="room-id">{children}</RoomProvider>
+          <RoomProvider id={roomId}>{children}</RoomProvider>
         ),
         initialProps: { text: "" },
       }
@@ -219,12 +223,12 @@ describe("useMentionSuggestions", () => {
 
     expect(resolveMentionSuggestions).toHaveBeenNthCalledWith(1, {
       text: "",
-      roomId: "room-id",
+      roomId,
     });
 
     expect(resolveMentionSuggestions).toHaveBeenNthCalledWith(2, {
       text: "abc",
-      roomId: "room-id",
+      roomId,
     });
 
     unmount();

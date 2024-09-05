@@ -31,7 +31,7 @@ type MyRoomEvent =
 
 type MyThreadMetadata = {
   color: "red" | "blue";
-  resolved?: boolean;
+  pinned?: boolean;
 };
 
 type P = MyPresence;
@@ -250,6 +250,10 @@ const ctx = createRoomContext<P, S, U, E, M>(client);
 
 // The useRoom() hook
 expectType<Room<P, S, U, E, M>>(ctx.useRoom());
+
+// useIsInsideRoom()
+expectType<boolean>(ctx.useIsInsideRoom());
+expectType<boolean>(lbctx.useIsInsideRoom());
 
 // The presence hooks
 expectType<P>(ctx.useSelf()!.presence);
@@ -701,7 +705,7 @@ ctx.useErrorListener((err) => {
     expectType<void>(
       editMetadata({
         threadId: "th_xxx",
-        metadata: { color: "red", resolved: null },
+        metadata: { color: "red", pinned: null },
       })
     );
     expectError(
@@ -743,7 +747,7 @@ ctx.useErrorListener((err) => {
     expectType<void>(
       editMetadata({
         threadId: "th_xxx",
-        metadata: { color: "red", resolved: null },
+        metadata: { color: "red", pinned: null },
       })
     );
     expectError(
@@ -998,6 +1002,35 @@ ctx.useErrorListener((err) => {
 {
   const markAllRead = lbctx.suspense.useMarkAllInboxNotificationsAsRead();
   expectType<void>(markAllRead());
+}
+
+// ---------------------------------------------------------
+
+// The useDeleteInboxNotification() hook
+{
+  const deleteNotification = lbctx.useDeleteInboxNotification();
+  expectType<void>(deleteNotification("in_xxx"));
+}
+
+// The useDeleteInboxNotification() hook (suspense)
+{
+  const deleteNotification = lbctx.suspense.useDeleteInboxNotification();
+  expectType<void>(deleteNotification("in_xxx"));
+}
+
+// ---------------------------------------------------------
+
+// The useDeleteAllInboxNotifications() hook
+{
+  const deleteAllNotifications = lbctx.useDeleteAllInboxNotifications();
+  expectType<void>(deleteAllNotifications());
+}
+
+// The useDeleteAllInboxNotifications() hook (suspense)
+{
+  const deleteAllNotifications =
+    lbctx.suspense.useDeleteAllInboxNotifications();
+  expectType<void>(deleteAllNotifications());
 }
 
 // ---------------------------------------------------------

@@ -9,9 +9,286 @@ https://liveblocks.io/changelog
 
 TEAM MEMBERS
 adigau, ctnicholas, flowflorent, guillaumesalles, jrowny, marcbouchenoire,
-nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
+nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
+
+# Week 35 (2024-08-30)
+
+## v2.6.0
+
+### `@liveblocks/node`
+
+- Add `getInboxNotifications` method which supports an `unread` query parameter.
+
+## Dashboard
+
+- Room detail page enhancements:
+    - Renamed "Document" tab to "Realtime APIs" (Storage + Yjs) to reflect new product offerings.
+    - Reordered tabs: Comments, Text Editor, Realtime APIs, Metadata, Permissions.
+    - Introduced a new Text Editor tab with enhanced features:
+        - Preview Lexical documents directly from the dashboard, including mentions, comment annotations, and custom nodes.
+        - Access comment threads from text annotations and browse their comments and metadata.
+    - Broadcast custom events to people connected in the room using a typed editor.
+- New inline view for comment threads:
+    - Offers a more visual and intuitive way to browse comments.
+    - Added ability to sort threads by latest activity, most replies, or creation date.
+    - Introduced an option to delete all threads in a room at once.
+
+## Documentation
+
+- Improved search dialog box:
+  - Returns more accurate results, and is generally much more useful.
+  - Returns more results than before, allowing you to accessibly scroll through the list.
+- New guide on [setting initial/default state in BlockNote](https://liveblocks.io/docs/guides/setting-an-initial-or-default-value-in-blocknote).
+
+## Website
+
+- New [book a demo](http://liveblocks.io/contact/sales) page, allowing you to easily set up a meeting with our sales team.
+
+## Contributors
+
+ctnicholas, sugardarius, pierrelevaillant, stevenfabre
+
+# Week 34 (2024-08-23)
+
+## Examples
+
+- Add new features and polish to the [Next.js Overlay Comments](https://liveblocks.io/examples/overlay-comments/nextjs-comments-overlay) and [Next.js Canvas Comments](https://liveblocks.io/examples/canvas-comments/nextjs-comments-canvas) examples.
+- Comments now flip when previously they would go offscreen, and other small bugs were fixed.
+
+## Contributors
+
+ctnicholas
+
+# Week 33 (2024-08-16)
+
+## v2.5.1
+
+### `@liveblocks/yjs`
+
+- Fix `LiveblocksProvider` `update`/`change` event not returning `removed` users.
+
+## v2.5.0
+
+### `@liveblocks/react`
+
+- Add
+  [`useIsInsideRoom`](https://liveblocks.io/docs/api-reference/liveblocks-react#useIsInsideRoom)
+  hook, useful for rendering different components inside and outside of
+  [`RoomProvider`](https://liveblocks.io/docs/api-reference/liveblocks-react#RoomProvider).
+
+### `@liveblocks/react-lexical`
+
+- Fix a bug in [`useEditorStatus`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#useEditorStatus) which prevented it from returning a correct status when `LexicalPlugin` was rendered conditionally.
+- Fix remote cursors not displaying user names.
+
+### `@liveblocks/react-ui`
+
+- Improve event propagation in [`Composer`](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Composer).
+
+## `@liveblocks/codemod`
+
+- Prevent modifying files that weren’t changed by the codemods. 
+
+## Contributors
+
+ctnicholas, nimeshnayaju, marcbouchenoire
+
+# Week 32 (2024-08-09)
+
+## Website
+
+- New blog post: [What’s new in Liveblocks: July edition](https://liveblocks.io/blog/whats-new-in-liveblocks-july-edition-2024).
+
+## Dashboard
+
+- Add the ability to see the response body of webhook attempts in the webhook event details dialog (found in the "more" dropdown).
+
+## Documentation
+
+- Add API reference for [`liveblocks.markThreadAsResolved`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-mark-as-resolved) and [`liveblocks.markThreadAsUnresolved`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-mark-as-unresolved).
+
+## Contributors
+
+ctnicholas
+
+# Week 31 (2024-08-02)
+
+## Dashboard
+
+- Add the Room API docs to the dashboard. Copy pre-filled code snippets from the API reference directly from the Room detail page.
+- Optimize the width of rooms, schemas, and webhooks lists when a detail view is opened for more comfort on medium-sized screens.
+
+## Documentation
+
+- Updated [How to modify Storage from the server](https://liveblocks.io/docs/guides/how-to-modify-liveblocks-storage-from-the-server) for Liveblocks 2.0.
+- Fixed various typos.
+- Show public/secret keys within the Bash code snippets for connected users.
+
+## Contributors
+
+pierrelevaillant, sugardarius, teddarific, assaadhalabi
+
+# Week 30 (2024-07-26)
+
+## v2.4.0
+
+### `@liveblocks/client`
+
+- Add vanilla [Comments](https://liveblocks.io/docs/api-reference/liveblocks-client#Comments) and [Notifications](https://liveblocks.io/docs/api-reference/liveblocks-client#Notifications) APIs to `Client` and `Room`, enabling these products outside of React.
+
+## Documentation
+
+- Add info on new [Comments](https://liveblocks.io/docs/api-reference/liveblocks-client#Comments) and [Notifications](https://liveblocks.io/docs/api-reference/liveblocks-client#Notifications) methods in `@liveblocks/client` API reference.
+- Add info on [typing thread metadata](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Typed-metadata) to React UI API reference.
+- Various small fixes.
+
+## Dashboard
+
+- Add room search functionality in the Rooms tab of a project.
+- Include creation dates in the rooms table list.
+- Fix number formatting issues for document sizes.
+- Implement sorting options by room ID, last connection date, comments count, documents size, and creation date.
+- Improve date formatting across the dashboard. Now using more human-readable relative dates, with absolute dates displayed on hover.
+- Display the number of currently online users on the room details page.
+- Add room deletion option in the detail page menu.
+- Improve rooms table list responsiveness on mobile.
+
+## Contributors
+
+guillaumesalles, ctnicholas, sugardarius, pierrelevaillant, nimeshnayaju
+
+# Week 29 (2024-07-19)
+
+## v2.3.0
+
+### `@liveblocks/react-lexical`
+
+- New default components: `AnchoredThreads` and `FloatingThreads` to display
+  threads that are tied to a specific part of the document, similar to Notion,
+  Linear, etc:
+  - [`FloatingThreads`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#FloatingThreads)
+    displays floating `Thread` components below text highlights in the editor.
+  - [`AnchoredThreads`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#AnchoredThreads)
+    displays a list of `Thread` components vertically alongside the editor.
+  - These components can be used in the same application to create a UI that
+    works on both mobile and desktop.
+
+### `@liveblocks/react`
+
+- Add `useDeleteInboxNotification` and `useDeleteAllInboxNotifications` hooks.
+- Fix `resolved` query not being applied when filtering threads with
+  `useThreads`.
+- Various refactorings to Suspense internals.
+
+### `@liveblocks/react-ui`
+
+- Add "Delete notification" action to `InboxNotification`.
+- Hide "Mark as read" action in `InboxNotification` when already read.
+- Improve keyboard navigation within emoji pickers.
+
+### `@liveblocks/node`
+
+- Add `deleteInboxNotification` and `deleteAllInboxNotifications` methods.
+
+## Examples
+
+- Added delete all notifications button to notifications examples.
+
+## Documentation
+
+- Open the config file by default in the interactive [broadcasting events tutorial](https://liveblocks.io/docs/tutorial/react/getting-started/broadcasting-events).
+
+## Website
+
+- Fix changelog images on mobile.
+
+## Contributors
+
+nimeshnayaju, ofoucherot, nvie, marcbouchenoire, dant2021, ctnicholas
+
+# Week 28 (2024-07-12)
+
+## v2.2.2
+
+### `@liveblocks/react-ui`
+
+- Fix missing avatar in `textMention` inbox notifications.
+- Fix `textMention` usage (and its props type) when customizing rendering via `kinds` on `InboxNotification`.
+- Fix broken CSS selector in default styles.
+
+## v2.2.1
+
+### `@liveblocks/yjs`
+
+- Don’t attempt to write Yjs changes if the current user has no write access
+
+## Contributors
+
+jrowny, nvie, marcbouchenoire
+
+# Week 27 (2024-07-05)
+
+## v2.2.0
+
+We are making `resolved` a first-class citizen property on
+[threads](https://liveblocks.io/docs/products/comments/concepts#Threads), for
+more information about this change please read our
+[Upgrade Guide for 2.2](https://liveblocks.io/docs/platform/upgrading/2.2).
+
+### `@liveblocks/react`
+
+- Add `useMarkThreadAsResolved` and `useMarkThreadAsUnresolved` hooks.
+- Support `query.resolved` when filtering threads.
+- The
+  [`useStorageStatus`](https://liveblocks.io/docs/api-reference/liveblocks-react#useStorageStatus)
+  hook now also has a `{ smooth: true }` setting to make building calm UIs with
+  it a bit easier.
+- The `useClient()` hook is now also available for users of
+  `createRoomContext()` and/or `createLiveblocksContext()`.
+- Fix: avoid unnecessary re-renders if inbox notifications haven't changed.
+
+### `@liveblocks/react-ui`
+
+- Use first-class citizen `resolved` property in `Thread` component.
+- Preserve rich text when pasting into the composer.
+- Add support for custom links to the composer. (either by pasting URLs with
+  plain text selected or by pasting existing links)
+- Preserve whitespace and empty lines in comments.
+- Mark threads as read when visible (like before), but only if the window is
+  focused.
+- Fix improper `useTransition` fallback which would break on React versions
+  lower than 18.
+
+### `@liveblocks/node`
+
+- Add `markThreadAsResolved` and `markThreadAsUnresolved` methods.
+- Add `ThreadMarkedAsResolvedEvent` and `ThreadMarkedAsUnresolvedEvent` webhook
+  events.
+- Support `query.resolved` when querying threads.
+
+### `@liveblocks/react-lexical`
+
+- Upgrade `lexical` peer dependency to version `^0.16.1` that fixes
+  compatibility issues with Next.js versions 14.2.0 and above.
+
+### `@liveblocks/node-lexical`
+
+- Upgrade `lexical` peer dependency to version `0.16.1`.
+
+## Documentation
+
+- Add [`useStorageStatus`](https://liveblocks.io/docs/api-reference/liveblocks-react#useStorageStatus) information.
+- Fix code snippet in [Nested data types page](https://liveblocks.io/docs/tutorial/react/getting-started/nesting-data-types) of interactive tutorial.
+
+## Website
+
+- New blog post: [How Hashnode added collaboration to their text editor to sell to larger organizations](https://liveblocks.io/blog/how-hashnode-added-collaboration-to-their-text-editor-to-sell-to-larger-organizations).
+
+## Contributors
+
+flowflorent, ofoucherot, nvie, marcbouchenoire, nimeshnayaju, ctnicholas, Teddarific, stevenfabre
 
 # Week 26 (2024-06-28)
 
@@ -36,7 +313,8 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 ### `@liveblocks/react-ui`
 
-- Fix improper `useSyncExternalStore` import which would break on React versions lower than 18.
+- Fix improper `useSyncExternalStore` import which would break on React versions
+  lower than 18.
 
 ## v2.0.5
 
@@ -46,19 +324,47 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
   else than the thread owner tries to delete the thread. This will help you
   catch and handle this case more easily.
 
+## Documentation
+
+- Updated the
+  [interactive tutorial](https://liveblocks.io/docs/tutorial/react/getting-started/welcome)
+  for Liveblocks 2.0.
+
+## Website
+
+- New blog post:
+  [Introducing Liveblocks collaboration kit for Figma](https://liveblocks.io/blog/introducing-liveblocks-collaboration-kit-for-figma).
+- Updated [contact page](https://liveblocks.io/contact) with two separate forms
+  for sales and support.
+
+## Processes
+
+- Versioning and publishing of public packages is now decoupled from
+  versioning/publishing of our CLI tools.
+
+## Contributors
+
+flowflorent, ctnicholas, nvie, stevenfabre, pierrelevaillant, marcbouchenoire
+
+# Week 25 (2024-06-21)
+
 ## v2.0.4
 
-### All packages
-
 - Improve TS error messages and error locations if custom `UserMeta` or
-  `ActivitiesData` types do not match their requirements
+  `ActivitiesData` types do not match their requirements.
 
 ### `@liveblocks/client`
 
 - Add missing type export for `CommentReaction`
-- Don’t attempt to write missing `initialStorage` keys if the current user has no
+- Don’t attempt to write missing initialStorage keys if the current user has no
   write access to storage. This will no longer throw, but issue a warning
   message in the console.
+
+### `@liveblocks/react`
+
+- Add
+  [`useDeleteThread`](https://liveblocks.io/docs/api-reference/liveblocks-react#useDeleteThread)
+  hook to delete a thread and its associated comments.
 
 ## v2.0.3
 
@@ -71,55 +377,6 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre
 
 - In `<RoomProvider>`, the props `initialPresence` and `initialStorage` are now
   only mandatory if your custom type requires them to be.
-- Nesting `<LiveblocksProvider>`s will now throw to prevent incorrect usage.
-
-### `@liveblocks/react-ui`
-
-- Prevent the composer from splitting text being composed.
-- Handle parentheses around and within auto links.
-- Count whitespace as empty to prevent posting empty comments.
-- Prevent clearing the composer if it's not handled. (via `onComposerSubmit`)
-
-### `@liveblocks/yjs`
-
-- Add missing type exports
-
-## Documentation
-
-- Updated the [interactive tutorial](https://liveblocks.io/docs/tutorial/react/getting-started/welcome) for Liveblocks 2.0.
-
-## Website
-
-- New blog post: [Introducing Liveblocks collaboration kit for Figma](https://liveblocks.io/blog/introducing-liveblocks-collaboration-kit-for-figma).
-- Updated [contact page](https://liveblocks.io/contact) with two separate forms for sales and support.
-
-## Processes
-
-- Versioning and publishing of public packages is now decoupled from versioning/publishing of our CLI tools.
-
-## Contributors
-
-flowflorent, ctnicholas, nvie, stevenfabre, pierrelevaillant, marcbouchenoire
-
-# Week 25 (2024-06-21)
-
-## v2.0.2
-
-### `@liveblocks/node`
-
-- Add `deleteThread` method to the client to delete a room's thread.
-- Add the `threadDeleted` webhook event to notify when a thread is deleted.
-- Fix type signatures of `client.identifyUser()` and `client.prepareSession()` to require `userInfo` if it's mandatory according to your global `UserMeta` type definition.
-
-## v2.0.3
-
-### `@liveblocks/client`
-
-- In `client.enterRoom()`, the options `initialPresence` and `initialStorage` are now only mandatory if your custom type requires them to be.
-
-### `@liveblocks/react`
-
-- In `<RoomProvider>`, the props `initialPresence` and `initialStorage` are now only mandatory if your custom type requires them to be.
 - Nesting `<LiveblocksProvider>`s will now throw to prevent incorrect usage
 
 ### `@liveblocks/react-ui`
@@ -133,35 +390,41 @@ flowflorent, ctnicholas, nvie, stevenfabre, pierrelevaillant, marcbouchenoire
 
 - Add missing type exports
 
-## v2.0.4
+## v2.0.2
 
-- Improve TS error messages and error locations if custom `UserMeta` or `ActivitiesData` types do not match their requirements.
+### `@liveblocks/node`
 
-### `@liveblocks/client`
-
-- Add missing type export for `CommentReaction`
-- Don’t attempt to write missing initialStorage keys if the current user has no write access to storage. This will no longer throw, but issue a warning message in the console.
-
-### `@liveblocks/react`
-
-- Add [`useDeleteThread`](https://liveblocks.io/docs/api-reference/liveblocks-react#useDeleteThread) hook to delete a thread and its associated comments.
+- Add `deleteThread` method to the client to delete a room's thread.
+- Add the `threadDeleted` webhook event to notify when a thread is deleted.
+- Fix type signatures of `client.identifyUser()` and `client.prepareSession()`
+  to require `userInfo` if it's mandatory according to your global `UserMeta`
+  type definition.
 
 ## Examples
 
-- New [custom notifications example](https://liveblocks.io/examples/notifications-custom/nextjs-notifications-custom).
-- Updated [BlockNote example](https://liveblocks.io/examples/collaborative-text-editor-advanced/nextjs-yjs-blocknote-advanced) and guide to v0.14.1.
+- New
+  [custom notifications example](https://liveblocks.io/examples/notifications-custom/nextjs-notifications-custom).
+- Updated
+  [BlockNote example](https://liveblocks.io/examples/collaborative-text-editor-advanced/nextjs-yjs-blocknote-advanced)
+  and guide to v0.14.1.
 
 ## Documentation
 
-- Create new guide on [how to add users to Liveblocks text editor](https://liveblocks.io/docs/guides/how-to-add-users-to-liveblocks-text-editor).
-- Updated [Lexical product page](https://liveblocks.io/docs/products/text-editor/lexical) with new information.
+- Create new guide on
+  [how to add users to Liveblocks text editor](https://liveblocks.io/docs/guides/how-to-add-users-to-liveblocks-text-editor).
+- Updated
+  [Lexical product page](https://liveblocks.io/docs/products/text-editor/lexical)
+  with new information.
 - Improved Lexical get started guides.
-- Improved [`Liveblocks.initializeStorageDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-storage) section.
+- Improved
+  [`Liveblocks.initializeStorageDocument`](https://liveblocks.io/docs/api-reference/liveblocks-node#post-rooms-roomId-storage)
+  section.
 - Fixed typo with token syntax passed to `authEndpoint`.
 
 ## Website
 
-- New blog post: [How Zapier added collaborative features to their Canvas product in just a couple of weeks](https://liveblocks.io/blog/how-zapier-added-collaborative-features-to-their-canvas-product-in-just-a-couple-of-weeks).
+- New blog post:
+  [How Zapier added collaborative features to their Canvas product in just a couple of weeks](https://liveblocks.io/blog/how-zapier-added-collaborative-features-to-their-canvas-product-in-just-a-couple-of-weeks).
 
 ## Contributors
 
@@ -173,11 +436,10 @@ ctnicholas, stevenfabre, matthewlipski, flowflorent, nvie
 
 This major release marks the maturity of Liveblocks. It contains new products
 (`@liveblocks/react-lexical`) and clarifications (e.g.
-`@liveblocks/react-comments` is now called `@liveblocks/react-ui`).
-t
-Also, we bring major DX improvements by allowing you to specify your types
-globally now. These types will be typed once and shared across all Liveblocks
-APIs, which includes your Node backend.
+`@liveblocks/react-comments` is now called `@liveblocks/react-ui`). t Also, we
+bring major DX improvements by allowing you to specify your types globally now.
+These types will be typed once and shared across all Liveblocks APIs, which
+includes your Node backend.
 
 ```ts file="liveblocks.config.ts"
 // ❌ Before
@@ -220,7 +482,7 @@ const client = createClient(/* options */);
 ```
 
 For full upgrade instructions and codemods, see the
-[2.0 upgrade guide](https://liveblocks.io/docs/guides/upgrading/2.0).
+[2.0 upgrade guide](https://liveblocks.io/docs/platform/upgrading/2.0).
 
 ### `create-liveblocks-app`
 
@@ -324,7 +586,8 @@ For full upgrade instructions and codemods, see the
     [Liveblocks Realtime APIs](https://liveblocks.io/realtime-apis)
   - Improved [pricing page](https://liveblocks.io)
   - New navigation
-- New blog post: [Introducing Liveblocks 2.0](https://liveblocks.io/blog/introducing-liveblocks-2-0).
+- New blog post:
+  [Introducing Liveblocks 2.0](https://liveblocks.io/blog/introducing-liveblocks-2-0).
 
 ## Examples
 
@@ -1422,7 +1685,7 @@ Non-existent.
 # v1.0.0
 
 This major release marks the maturity of Liveblocks. For upgrade instructions,
-see the [1.0 upgrade guide](https://liveblocks.io/docs/guides/upgrading/1.0).
+see the [1.0 upgrade guide](https://liveblocks.io/docs/platform/upgrading/1.0).
 
 ## `@liveblocks/node`
 
@@ -1702,7 +1965,7 @@ In **@liveblocks/react**:
 # v0.18.0
 
 For information, please read our
-[Upgrade Guide for 0.18](https://liveblocks.io/docs/guides/upgrading/0.18).
+[Upgrade Guide for 0.18](https://liveblocks.io/docs/platform/upgrading/0.18).
 
 ## New React hooks ✨
 
@@ -1732,7 +1995,7 @@ For information, please read our
 - Remove support for directly importing hooks from **@liveblocks/client** (e.g.
   `import { useMyPresence } from '@liveblocks/react'`). If you’re still using
   these imports, see the
-  [Upgrade Guide for 0.17](https://liveblocks.io/docs/guides/upgrading/0.17) for
+  [Upgrade Guide for 0.17](https://liveblocks.io/docs/platform/upgrading/0.17) for
   instructions.
 - Remove `ClientProvider` and `useClient` hook
 - Remove `defaultPresence` and `defaultStorageRoot` arguments. (Just use
@@ -1881,7 +2144,7 @@ Fix `@liveblocks/nodes` packaging.
 # v0.17.0
 
 For information, please read our
-[Upgrade Guide](https://liveblocks.io/docs/guides/upgrading/0.17).
+[Upgrade Guide](https://liveblocks.io/docs/platform/upgrading/0.17).
 
 ## TypeScript improvements ✨
 
@@ -1892,7 +2155,7 @@ longer need to provide any extra type annotations anywhere for your Liveblocks
 code! 🙌
 
 To learn how to set that up, follow the instructions in our
-[Upgrade Guide](https://liveblocks.io/docs/guides/upgrading/0.17).
+[Upgrade Guide](https://liveblocks.io/docs/platform/upgrading/0.17).
 
 - No more `any` types used (in `@liveblocks/client` and `@liveblocks/react`)
 - All APIs that work with Presence data will now require it to be
@@ -1953,8 +2216,8 @@ It's surprisingly simple!
 
   - Importing the React hooks directly is deprecated, instead use the new
     `createRoomContext()` helper. For help, read the
-    [Recommended Upgrade Steps section](https://liveblocks.io/docs/guides/upgrading/0.17#recommended-upgrade-steps)
-    within our [Upgrade Guide](https://liveblocks.io/docs/guides/upgrading/0.17)
+    [Recommended Upgrade Steps section](https://liveblocks.io/docs/platform/upgrading/0.17#recommended-upgrade-steps)
+    within our [Upgrade Guide](https://liveblocks.io/docs/platform/upgrading/0.17)
   - The second argument to `useList()`, `useObject()`, and `useMap()` is
     deprecated
   - The RoomProvider's `defaultPresence` is renamed to `initialPresence`

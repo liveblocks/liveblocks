@@ -20,6 +20,7 @@ export function Toolbar({ ...props }) {
       onOpenChange={setOpen}
       {...props}
       data-hide-cursors
+      data-ignore-when-placing-composer
     >
       <div className={styles.toolbar}>
         <div className={styles.toolbarActions}>

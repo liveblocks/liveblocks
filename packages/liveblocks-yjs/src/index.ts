@@ -6,9 +6,10 @@ import type {
   Room,
 } from "@liveblocks/client";
 import type { BaseMetadata, DE, DM, DP, DS, DU } from "@liveblocks/core";
-import { ClientMsgCode, detectDupes } from "@liveblocks/core";
+import { ClientMsgCode, detectDupes, kInternal } from "@liveblocks/core";
+import { Base64 } from "js-base64";
 import { Observable } from "lib0/observable";
-import type * as Y from "yjs";
+import * as Y from "yjs";
 
 import { Awareness } from "./awareness";
 import yDocHandler from "./doc";
@@ -17,12 +18,14 @@ import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 type ProviderOptions = {
-  autoloadSubdocs: boolean;
+  autoloadSubdocs?: boolean;
 };
 
-const DefaultOptions: ProviderOptions = {
-  autoloadSubdocs: false,
-};
+enum SyncStatus {
+  Loading = "loading",
+  Synchronizing = "synchronizing",
+  Synchronized = "synchronized",
+}
 
 export class LiveblocksYjsProvider<
   P extends JsonObject = DP,
@@ -42,10 +45,12 @@ export class LiveblocksYjsProvider<
   public rootDocHandler: yDocHandler;
   public subdocHandlers: Map<string, yDocHandler> = new Map();
 
+  private pending: string[] = [];
+
   constructor(
     room: Room<P, S, U, E, M>,
     doc: Y.Doc,
-    options: ProviderOptions | undefined = DefaultOptions
+    options: ProviderOptions | undefined = {}
   ) {
     super();
     this.rootDoc = doc;
@@ -57,6 +62,10 @@ export class LiveblocksYjsProvider<
       updateDoc: this.updateDoc,
       fetchDoc: this.fetchDoc,
     });
+
+    // TODO: Display a warning if a provider is already attached to the room
+    room[kInternal].setProvider(this);
+
     // if we have a connectionId already during construction, use that
     this.awareness = new Awareness(this.rootDoc, this.room);
 
@@ -67,6 +76,7 @@ export class LiveblocksYjsProvider<
         } else {
           this.rootDocHandler.synced = false;
         }
+        this.emit("status", [this.getStatus()]);
       })
     );
 
@@ -77,18 +87,42 @@ export class LiveblocksYjsProvider<
           // don't apply updates that came from the client
           return;
         }
-        const { stateVector, update, guid } = message;
-        // find the right doc and update
-        if (guid !== undefined) {
-          this.subdocHandlers
-            .get(guid)
-            ?.handleServerUpdate({ update, stateVector });
-        } else {
-          this.rootDocHandler.handleServerUpdate({ update, stateVector });
+        const { stateVector, update: updateStr, guid } = message;
+        const canWrite = this.room.getSelf()?.canWrite ?? true;
+        const update = Base64.toUint8Array(updateStr);
+        let foundPendingUpdate = false;
+        const updateId = this.getUniqueUpdateId(update);
+        this.pending = this.pending.filter((pendingUpdate) => {
+          if (pendingUpdate === updateId) {
+            foundPendingUpdate = true;
+            return false;
+          }
+          return true;
+        });
+        // if we found this update in our queue, we don't need to apply it
+        if (!foundPendingUpdate) {
+          // find the right doc and update
+          if (guid !== undefined) {
+            this.subdocHandlers.get(guid)?.handleServerUpdate({
+              update,
+              stateVector,
+              readOnly: !canWrite,
+            });
+          } else {
+            this.rootDocHandler.handleServerUpdate({
+              update,
+              stateVector,
+              readOnly: !canWrite,
+            });
+          }
         }
+
+        // notify any listeners that the status has changed
+        this.emit("status", [this.getStatus()]);
       })
     );
 
+    // different consumers listen to sync and synced
     this.rootDocHandler.on("synced", () => {
       const state = this.rootDocHandler.synced;
       for (const [_, handler] of this.subdocHandlers) {
@@ -96,6 +130,7 @@ export class LiveblocksYjsProvider<
       }
       this.emit("synced", [state]);
       this.emit("sync", [state]);
+      this.emit("status", [this.getStatus()]);
     });
     this.rootDoc.on("subdocs", this.handleSubdocs);
     this.syncDoc();
@@ -126,8 +161,20 @@ export class LiveblocksYjsProvider<
     }
   };
 
-  private updateDoc = (update: string, guid?: string) => {
-    this.room.updateYDoc(update, guid);
+  private getUniqueUpdateId = (update: Uint8Array) => {
+    const clock =
+      Y.parseUpdateMeta(update).to.get(this.rootDoc.clientID) ?? "-1";
+    return this.rootDoc.clientID + ":" + clock;
+  };
+
+  private updateDoc = (update: Uint8Array, guid?: string) => {
+    const canWrite = this.room.getSelf()?.canWrite ?? true;
+    if (canWrite) {
+      const updateId = this.getUniqueUpdateId(update);
+      this.pending.push(updateId);
+      this.room.updateYDoc(Base64.fromUint8Array(update), guid);
+      this.emit("status", [this.getStatus()]);
+    }
   };
 
   private fetchDoc = (vector: string, guid?: string) => {
@@ -171,6 +218,15 @@ export class LiveblocksYjsProvider<
   // The sync'd property is required by some provider implementations
   get synced(): boolean {
     return this.rootDocHandler.synced;
+  }
+
+  public getStatus(): SyncStatus {
+    if (!this.synced) {
+      return SyncStatus.Loading;
+    }
+    return this.pending.length === 0
+      ? SyncStatus.Synchronized
+      : SyncStatus.Synchronizing;
   }
 
   destroy(): void {

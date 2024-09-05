@@ -1,6 +1,7 @@
 "use client";
 
-import { type BaseMetadata, kInternal } from "@liveblocks/core";
+import type { BaseMetadata, DM } from "@liveblocks/core";
+import { kInternal } from "@liveblocks/core";
 import {
   useClient,
   useCreateComment,
@@ -36,7 +37,6 @@ import type {
   ComposerSubmitComment,
 } from "../primitives/Composer/types";
 import { MENTION_CHARACTER } from "../slate/plugins/mentions";
-import type { ThreadMetadata } from "../types";
 import { classNames } from "../utils/class-names";
 import { useControllableState } from "../utils/use-controllable-state";
 import { Attribution } from "./internal/Attribution";
@@ -92,7 +92,7 @@ type ComposerEditCommentProps = {
   metadata?: never;
 };
 
-export type ComposerProps<M extends BaseMetadata = ThreadMetadata> = Omit<
+export type ComposerProps<M extends BaseMetadata = DM> = Omit<
   ComponentPropsWithoutRef<"form">,
   "defaultValue"
 > &
@@ -206,6 +206,10 @@ function ComposerInsertEmojiEditorAction({
     event.preventDefault();
   }, []);
 
+  const stopPropagation = useCallback((event: SyntheticEvent) => {
+    event.stopPropagation();
+  }, []);
+
   return (
     <EmojiPicker onEmojiSelect={insertText} onOpenChange={onPickerOpenChange}>
       <Tooltip content={label}>
@@ -213,6 +217,7 @@ function ComposerInsertEmojiEditorAction({
           <Button
             className={classNames("lb-composer-editor-action", className)}
             onMouseDown={preventDefault}
+            onClick={stopPropagation}
             aria-label={label}
             {...props}
           >
@@ -301,8 +306,8 @@ const ComposerWithContext = forwardRef<
       client[kInternal].resolveMentionSuggestions !== undefined;
     const self = useSelf();
     const isDisabled = useMemo(
-      () => disabled || !self?.canComment,
-      [disabled, self?.canComment]
+      () => disabled || (self ? !self.canComment : false),
+      [disabled, self?.canComment] // eslint-disable-line react-hooks/exhaustive-deps
     );
     const { isEmpty } = useComposer();
     const $ = useOverrides(overrides);
@@ -442,7 +447,7 @@ const ComposerWithContext = forwardRef<
  * <Composer />
  */
 export const Composer = forwardRef(
-  <M extends BaseMetadata = ThreadMetadata>(
+  <M extends BaseMetadata = DM>(
     {
       threadId,
       commentId,
@@ -506,6 +511,6 @@ export const Composer = forwardRef(
       </TooltipProvider>
     );
   }
-) as <M extends BaseMetadata = ThreadMetadata>(
+) as <M extends BaseMetadata = DM>(
   props: ComposerProps<M> & RefAttributes<HTMLFormElement>
 ) => JSX.Element;

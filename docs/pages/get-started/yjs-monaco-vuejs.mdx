@@ -71,7 +71,7 @@ collaboration to your Vue.js application using the APIs from the
       // Set up Yjs document, shared text, and Liveblocks Yjs provider
       const yDoc = new Y.Doc();
       const yText = yDoc.getText("monaco");
-      const yProvider = new LiveblocksProvider(room, yDoc);
+      const yProvider = new LiveblocksYjsProvider(room, yDoc);
 
       onMounted(() => {
         // Set up the Monaco editor

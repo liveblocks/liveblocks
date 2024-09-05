@@ -22,6 +22,9 @@ properties, values, or even for string prefixes. Filters can be combined using
 `AND` logic.
 
 ```js
+// Resolved threads
+resolved:true
+
 // Threads with { status: 'open' } string metadata
 metadata['status']:'open'
 
@@ -31,11 +34,11 @@ metadata['org']^'liveblocks:'
 // Threads with { priority: 3 } number metadata
 metadata['priority']:3
 
-// Threads with { resolved: false } boolean metadata
-metadata['resolved']:false
+// Threads with { pinned: false } boolean metadata
+metadata['pinned']:false
 
 // Combine queries with AND
-metadata['status']:'open' AND metadata['priority']:3
+resolved:true AND metadata['priority']:3
 
 // A more complex combination
 metadata['status']:'closed' AND metadata['org']^'liveblocks:'

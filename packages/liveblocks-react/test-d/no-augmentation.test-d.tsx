@@ -172,6 +172,20 @@ import { expectAssignable, expectError, expectType } from "tsd";
 
 // ---------------------------------------------------------
 
+// useIsInsideRoom()
+{
+  const isInsideRoom = classic.useIsInsideRoom();
+  expectType<boolean>(isInsideRoom);
+}
+
+// useIsInsideRoom() (suspense)
+{
+  const isInsideRoom = suspense.useIsInsideRoom();
+  expectType<boolean>(isInsideRoom);
+}
+
+// ---------------------------------------------------------
+
 // useStorageStatus()
 {
   expectType<"not-loaded" | "loading" | "synchronizing" | "synchronized">(
@@ -756,6 +770,34 @@ import { expectAssignable, expectError, expectType } from "tsd";
 {
   const markAllRead = suspense.useMarkAllInboxNotificationsAsRead();
   expectType<void>(markAllRead());
+}
+
+// ---------------------------------------------------------
+
+// The useDeleteInboxNotification() hook
+{
+  const deleteNotification = classic.useDeleteInboxNotification();
+  expectType<void>(deleteNotification("in_xxx"));
+}
+
+// The useDeleteInboxNotification() hook (suspense)
+{
+  const deleteNotification = suspense.useDeleteInboxNotification();
+  expectType<void>(deleteNotification("in_xxx"));
+}
+
+// ---------------------------------------------------------
+
+// The useDeleteAllInboxNotifications() hook
+{
+  const deleteAllNotifications = classic.useDeleteAllInboxNotifications();
+  expectType<void>(deleteAllNotifications());
+}
+
+// The useDeleteAllInboxNotifications() hook (suspense)
+{
+  const deleteAllNotifications = suspense.useDeleteAllInboxNotifications();
+  expectType<void>(deleteAllNotifications());
 }
 
 // ---------------------------------------------------------

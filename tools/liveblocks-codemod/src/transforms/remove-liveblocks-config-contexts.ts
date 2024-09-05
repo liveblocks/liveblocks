@@ -23,6 +23,7 @@ export default function transformer(
 ) {
   const j = api.jscodeshift.withParser("tsx");
   const root = j(file.source);
+  let isDirty = false;
   const isConfig = CONFIG_PATH_REGEX.test(path.basename(file.path));
   const withSuspense = (options as { suspense?: boolean }).suspense;
   let shouldUpdateDeclareGlobal = false;
@@ -130,6 +131,8 @@ export default function transformer(
 
         if (parentPath?.value?.type === "VariableDeclarator") {
           j(parentPath).remove();
+
+          isDirty = true;
         }
       }
     });
@@ -154,6 +157,8 @@ export default function transformer(
           }
 
           j(path).remove();
+
+          isDirty = true;
         });
     }
 
@@ -218,7 +223,9 @@ export default function transformer(
       );
 
       (root.get() as ASTPath<File>).node.program.body.push(globalDeclaration);
+
       shouldUpdateDeclareGlobal = true;
+      isDirty = true;
     }
 
     // Clean up exported values
@@ -232,6 +239,8 @@ export default function transformer(
     root.find(j.ExportNamedDeclaration).forEach((path) => {
       if (path.node.specifiers.length === 0 && !path.node.declaration) {
         j(path).remove();
+
+        isDirty = true;
       }
     });
 
@@ -246,6 +255,8 @@ export default function transformer(
       (root.get() as ASTPath<File>).node.program.body.push(
         j.exportNamedDeclaration(null, [])
       );
+
+      isDirty = true;
     }
   } else {
     /**
@@ -288,10 +299,12 @@ export default function transformer(
         }
 
         j(path).remove();
+
+        isDirty = true;
       });
   }
 
-  const ouput = root.toSource(options);
+  const ouput = isDirty ? root.toSource(options) : file.source;
 
   if (shouldUpdateDeclareGlobal) {
     return ouput.replace("declare module global", "declare global");

@@ -5,12 +5,12 @@ import type {
   CommentReaction as CommentReactionData,
 } from "@liveblocks/core";
 import {
+  RoomContext,
   useAddReaction,
   useDeleteComment,
   useEditComment,
   useMarkThreadAsRead,
   useRemoveReaction,
-  useSelf,
 } from "@liveblocks/react";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
@@ -18,11 +18,13 @@ import type {
   FormEvent,
   MouseEvent,
   ReactNode,
+  RefObject,
   SyntheticEvent,
 } from "react";
 import React, {
   forwardRef,
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -56,6 +58,7 @@ import { MENTION_CHARACTER } from "../slate/plugins/mentions";
 import { classNames } from "../utils/class-names";
 import { useRefs } from "../utils/use-refs";
 import { useVisibleCallback } from "../utils/use-visible";
+import { useWindowFocus } from "../utils/use-window-focus";
 import { Composer } from "./Composer";
 import { Avatar } from "./internal/Avatar";
 import { Button } from "./internal/Button";
@@ -127,7 +130,7 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   /**
    * @internal
    */
-  markThreadAsReadWhenVisible?: string;
+  autoMarkReadThreadId?: string;
 
   /**
    * @internal
@@ -259,6 +262,10 @@ export const CommentReaction = forwardRef<
     [$, reaction]
   );
 
+  const stopPropagation = useCallback((event: SyntheticEvent) => {
+    event.stopPropagation();
+  }, []);
+
   const handlePressedChange = useCallback(
     (isPressed: boolean) => {
       if (isPressed) {
@@ -288,6 +295,7 @@ export const CommentReaction = forwardRef<
         asChild
         pressed={isActive}
         onPressedChange={handlePressedChange}
+        onClick={stopPropagation}
         disabled={disabled}
         ref={forwardedRef}
       >
@@ -323,6 +331,34 @@ export const CommentNonInteractiveReaction = forwardRef<
   );
 });
 
+// A void component (which doesn't render anything) responsible for marking a thread
+// as read when the comment it's used in becomes visible.
+// Moving this logic into a separate component allows us to use the visibility
+// and focus hooks "conditionally" by conditionally rendering this component.
+function AutoMarkReadThreadIdHandler({
+  threadId,
+  commentRef,
+}: {
+  threadId: string;
+  commentRef: RefObject<HTMLElement>;
+}) {
+  const markThreadAsRead = useMarkThreadAsRead();
+  const isWindowFocused = useWindowFocus();
+
+  useVisibleCallback(
+    commentRef,
+    () => {
+      markThreadAsRead(threadId);
+    },
+    {
+      // The underlying IntersectionObserver is only enabled when the window is focused
+      enabled: isWindowFocused,
+    }
+  );
+
+  return null;
+}
+
 /**
  * Displays a single comment.
  *
@@ -349,34 +385,24 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       className,
       additionalActions,
       additionalActionsClassName,
-      markThreadAsReadWhenVisible,
+      autoMarkReadThreadId,
       ...props
     },
     forwardedRef
   ) => {
+    const isInRoom = Boolean(useContext(RoomContext));
     const ref = useRef<HTMLDivElement>(null);
     const mergedRefs = useRefs(forwardedRef, ref);
-    const self = useSelf();
+    const currentUserId = useCurrentUserId();
     const deleteComment = useDeleteComment();
     const editComment = useEditComment();
     const addReaction = useAddReaction();
     const removeReaction = useRemoveReaction();
-    const markThreadAsRead = useMarkThreadAsRead();
     const $ = useOverrides(overrides);
     const [isEditing, setEditing] = useState(false);
     const [isTarget, setTarget] = useState(false);
     const [isMoreActionOpen, setMoreActionOpen] = useState(false);
     const [isReactionActionOpen, setReactionActionOpen] = useState(false);
-
-    const markVisibleThreadAsRead = useCallback(() => {
-      if (markThreadAsReadWhenVisible) {
-        markThreadAsRead(markThreadAsReadWhenVisible);
-      }
-    }, [markThreadAsRead, markThreadAsReadWhenVisible]);
-
-    useVisibleCallback(ref, markVisibleThreadAsRead, {
-      enabled: Boolean(markThreadAsReadWhenVisible),
-    });
 
     const stopPropagation = useCallback((event: SyntheticEvent) => {
       event.stopPropagation();
@@ -435,9 +461,9 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
 
         if (
           reactionIndex >= 0 &&
-          self?.id &&
+          currentUserId &&
           comment.reactions[reactionIndex].users.some(
-            (user) => user.id === self?.id
+            (user) => user.id === currentUserId
           )
         ) {
           removeReaction({
@@ -459,7 +485,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
         comment.reactions,
         comment.threadId,
         removeReaction,
-        self?.id,
+        currentUserId,
       ]
     );
 
@@ -481,6 +507,12 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
 
     return (
       <TooltipProvider>
+        {isInRoom && autoMarkReadThreadId && (
+          <AutoMarkReadThreadIdHandler
+            commentRef={ref}
+            threadId={autoMarkReadThreadId}
+          />
+        )}
         <div
           id={comment.id}
           className={classNames(
@@ -555,7 +587,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                     </Tooltip>
                   </EmojiPicker>
                 )}
-                {comment.userId === self?.id && (
+                {comment.userId === currentUserId && (
                   <Dropdown
                     open={isMoreActionOpen}
                     onOpenChange={setMoreActionOpen}

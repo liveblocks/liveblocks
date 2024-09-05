@@ -1,11 +1,13 @@
-import type { API, FileInfo } from "jscodeshift";
+import type { API, FileInfo, Options } from "jscodeshift";
 
 export default function transform(
   file: FileInfo,
-  api: API
+  api: API,
+  options: Options
 ): string | undefined {
   const j = api.jscodeshift;
   const root = j(file.source);
+  let isDirty = false;
 
   const sources = ["@liveblocks/react", "@liveblocks/react/suspense"];
   const identifiersToChange = [];
@@ -20,6 +22,8 @@ export default function transform(
           identifiersToChange.push(
             specifier.local?.name ?? specifier.imported.name
           );
+
+          isDirty = true;
         }
       });
     }
@@ -62,10 +66,12 @@ export default function transform(
                   : j.jsxExpressionContainer(node.expression.body);
 
               j(innerPath).replaceWith(newNode);
+
+              isDirty = true;
             }
           }
         });
     });
 
-  return root.toSource();
+  return isDirty ? root.toSource(options) : file.source;
 }

@@ -61,6 +61,29 @@ function BlockNote({ doc, provider }: EditorProps) {
     },
   });
 
+  // Set default state if you wish
+  // useEffect(() => {
+  //   function setDefault() {
+  //     if (!editor) {
+  //       return;
+  //     }
+  //
+  //     if (editor.document.length === 1) {
+  //       editor.insertBlocks(
+  //         [{ type: "paragraph", content: "Hello world" }],
+  //         editor.document[0]
+  //       );
+  //     }
+  //   }
+  //
+  //   if (provider.isReady) {
+  //     setDefault();
+  //   }
+  //
+  //   provider.on("sync", setDefault);
+  //   return () => provider.off("sync", setDefault);
+  // }, [provider, editor]);
+
   return (
     <div className={styles.container}>
       <div className={styles.editorHeader}>

@@ -16,20 +16,19 @@ import { type QueryParams, urljoin } from "./lib/url";
 import { TokenKind } from "./protocol/AuthToken";
 import type {
   BaseMetadata,
+  ThreadData,
   ThreadDataPlain,
+  ThreadDeleteInfo,
   ThreadDeleteInfoPlain,
 } from "./protocol/Comments";
 import type {
+  InboxNotificationData,
   InboxNotificationDataPlain,
+  InboxNotificationDeleteInfo,
   InboxNotificationDeleteInfoPlain,
 } from "./protocol/InboxNotifications";
 
 const MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY = 50;
-
-export type GetInboxNotificationsOptions = {
-  limit?: number;
-  since?: Date;
-};
 
 export function createNotificationsApi<M extends BaseMetadata>({
   baseUrl,
@@ -41,7 +40,24 @@ export function createNotificationsApi<M extends BaseMetadata>({
   authManager: AuthManager;
   currentUserIdStore: Store<string | null>;
   fetcher: (url: string, init?: RequestInit) => Promise<Response>;
-}): NotificationsApi<M> {
+}): NotificationsApi<M> & {
+  getThreads(): Promise<{
+    threads: ThreadData<M>[];
+    inboxNotifications: InboxNotificationData[];
+    requestedAt: Date;
+  }>;
+  getThreadsSince(options: { since: Date }): Promise<{
+    inboxNotifications: {
+      updated: InboxNotificationData[];
+      deleted: InboxNotificationDeleteInfo[];
+    };
+    threads: {
+      updated: ThreadData<M>[];
+      deleted: ThreadDeleteInfo[];
+    };
+    requestedAt: Date;
+  }>;
+} {
   async function fetchJson<T>(
     endpoint: string,
     options?: RequestInit,
@@ -102,7 +118,27 @@ export function createNotificationsApi<M extends BaseMetadata>({
     return body;
   }
 
-  async function getInboxNotifications(options?: GetInboxNotificationsOptions) {
+  async function getInboxNotifications() {
+    const json = await fetchJson<{
+      threads: ThreadDataPlain<M>[];
+      inboxNotifications: InboxNotificationDataPlain[];
+      deletedThreads: ThreadDeleteInfoPlain[];
+      deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+      meta: {
+        requestedAt: string;
+      };
+    }>("/inbox-notifications", undefined, {});
+
+    return {
+      threads: json.threads.map(convertToThreadData),
+      inboxNotifications: json.inboxNotifications.map(
+        convertToInboxNotificationData
+      ),
+      requestedAt: new Date(json.meta.requestedAt),
+    };
+  }
+
+  async function getInboxNotificationsSince(options: { since: Date }) {
     const json = await fetchJson<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
@@ -112,24 +148,21 @@ export function createNotificationsApi<M extends BaseMetadata>({
         requestedAt: string;
       };
     }>("/inbox-notifications", undefined, {
-      limit: options?.limit,
-      since: options?.since?.toISOString(),
+      since: options.since.toISOString(),
     });
 
     return {
-      threads: json.threads.map((thread) => convertToThreadData(thread)),
-      inboxNotifications: json.inboxNotifications.map((notification) =>
-        convertToInboxNotificationData(notification)
-      ),
-      deletedThreads: json.deletedThreads.map((info) =>
-        convertToThreadDeleteInfo(info)
-      ),
-      deletedInboxNotifications: json.deletedInboxNotifications.map((info) =>
-        convertToInboxNotificationDeleteInfo(info)
-      ),
-      meta: {
-        requestedAt: new Date(json.meta.requestedAt),
+      threads: {
+        updated: json.threads.map(convertToThreadData),
+        deleted: json.deletedThreads.map(convertToThreadDeleteInfo),
       },
+      inboxNotifications: {
+        updated: json.inboxNotifications.map(convertToInboxNotificationData),
+        deleted: json.deletedInboxNotifications.map(
+          convertToInboxNotificationDeleteInfo
+        ),
+      },
+      requestedAt: new Date(json.meta.requestedAt),
     };
   }
 
@@ -161,8 +194,8 @@ export function createNotificationsApi<M extends BaseMetadata>({
     });
   }
 
-  const batchedMarkInboxNotificationsAsRead = new Batch(
-    async (batchedInboxNotificationIds: [string][]) => {
+  const batchedMarkInboxNotificationsAsRead = new Batch<string, string>(
+    async (batchedInboxNotificationIds) => {
       const inboxNotificationIds = batchedInboxNotificationIds.flat();
 
       await markInboxNotificationsAsRead(inboxNotificationIds);
@@ -176,10 +209,78 @@ export function createNotificationsApi<M extends BaseMetadata>({
     await batchedMarkInboxNotificationsAsRead.get(inboxNotificationId);
   }
 
+  async function deleteAllInboxNotifications() {
+    await fetchJson("/inbox-notifications", {
+      method: "DELETE",
+    });
+  }
+
+  async function deleteInboxNotification(inboxNotificationId: string) {
+    await fetchJson(
+      `/inbox-notifications/${encodeURIComponent(inboxNotificationId)}`,
+      {
+        method: "DELETE",
+      }
+    );
+  }
+
+  async function getThreads() {
+    const json = await fetchJson<{
+      threads: ThreadDataPlain<M>[];
+      inboxNotifications: InboxNotificationDataPlain[];
+      deletedThreads: ThreadDeleteInfoPlain[];
+      deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+      meta: {
+        requestedAt: string;
+      };
+    }>("/threads", undefined, {});
+
+    return {
+      threads: json.threads.map(convertToThreadData),
+      inboxNotifications: json.inboxNotifications.map(
+        convertToInboxNotificationData
+      ),
+      requestedAt: new Date(json.meta.requestedAt),
+    };
+  }
+
+  async function getThreadsSince(options: { since: Date }) {
+    const json = await fetchJson<{
+      threads: ThreadDataPlain<M>[];
+      inboxNotifications: InboxNotificationDataPlain[];
+      deletedThreads: ThreadDeleteInfoPlain[];
+      deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+      meta: {
+        requestedAt: string;
+      };
+    }>("/threads", undefined, {
+      since: options.since.toISOString(),
+    });
+
+    return {
+      threads: {
+        updated: json.threads.map(convertToThreadData),
+        deleted: json.deletedThreads.map(convertToThreadDeleteInfo),
+      },
+      inboxNotifications: {
+        updated: json.inboxNotifications.map(convertToInboxNotificationData),
+        deleted: json.deletedInboxNotifications.map(
+          convertToInboxNotificationDeleteInfo
+        ),
+      },
+      requestedAt: new Date(json.meta.requestedAt),
+    };
+  }
+
   return {
     getInboxNotifications,
+    getInboxNotificationsSince,
     getUnreadInboxNotificationsCount,
     markAllInboxNotificationsAsRead,
     markInboxNotificationAsRead,
+    deleteAllInboxNotifications,
+    deleteInboxNotification,
+    getThreads,
+    getThreadsSince,
   };
 }

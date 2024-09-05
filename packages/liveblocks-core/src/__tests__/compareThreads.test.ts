@@ -9,6 +9,7 @@ describe("compareThreads", () => {
     roomId: "room_1",
     comments: [],
     metadata: {},
+    resolved: false,
   };
 
   const thread2: ThreadData = {
@@ -18,6 +19,7 @@ describe("compareThreads", () => {
     roomId: "room_1",
     comments: [],
     metadata: {},
+    resolved: false,
   };
 
   it("should return 1 when thread1 is updated more recently than thread2", () => {

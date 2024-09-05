@@ -27,7 +27,7 @@ export function CommentsOverlay() {
       data-hide-cursors
     >
       {threads
-        .filter((thread) => !thread.metadata.resolved)
+        .filter((thread) => !thread.resolved)
         .map((thread) => (
           <OverlayThread
             key={thread.id}
@@ -232,6 +232,7 @@ function OverlayThread({
         transform: `translate(${coords.x}px, ${coords.y}px)`,
         zIndex: draggingRef.current ? 9999999 : thread.metadata.zIndex,
       }}
+      data-ignore-when-placing-composer
     >
       <PinnedThread
         user={user}

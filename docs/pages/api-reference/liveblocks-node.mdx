@@ -314,7 +314,7 @@ const {
   // Optional, the amount of rooms to load, between 1 and 100, defaults to 20
   limit: 20,
 
-  // Optional, filter for rooms that allow entry to group ID(s) in `groupAccesses`
+  // Optional, filter for rooms that allow entry to group ID(s) in `groupsAccesses`
   groupIds: ["engineering", "design"],
 
   // Optional, filter for rooms that allow entry to a user's ID in `usersAccesses`
@@ -390,13 +390,13 @@ const room = await liveblocks.createRoom("my-room-id", {
   defaultAccesses: [],
 
   // Optional, the room's group ID permissions
-  groupAccesses: {
+  groupsAccesses: {
     design: ["room:write"],
     engineering: ["room:presence:write", "room:read"],
   },
 
   // Optional, the room's user ID permissions
-  userAccesses: {
+  usersAccesses: {
     "my-user-id": ["room:write"],
   },
 
@@ -447,18 +447,18 @@ need only pass the properties you’re updating. Setting a property to `null` wi
 delete the property.
 
 ```ts
-const room = await liveblocks.createRoom("my-room-id", {
+const room = await liveblocks.updateRoom("my-room-id", {
   // Optional, update the default room permissions. `[]` for private, `["room:write"]` for public.
   defaultAccesses: [],
 
   // Optional, update the room's group ID permissions
-  groupAccesses: {
+  groupsAccesses: {
     design: ["room:write"],
     engineering: ["room:presence:write", "room:read"],
   },
 
   // Optional, update the room's user ID permissions
-  userAccesses: {
+  usersAccesses: {
     "my-user-id": ["room:write"],
   },
 
@@ -1093,10 +1093,12 @@ const { data: threads } = await liveblocks.getThreads({
 
   // Optional, use advanced filtering
   query: {
+    // Optional, filter based on resolved status
+    resolved: false,
     // Optional, filter for metadata values
     metadata: {
       status: "open",
-      resolved: true,
+      pinned: true,
       priority: 3,
 
       // You can match the start of a metadata string
@@ -1184,7 +1186,7 @@ const thread = await liveblocks.createThread({
     metadata: {
       color: "blue",
       page: 3,
-      resolved: true,
+      pinned: true,
     },
 
     // Data for the first comment in the thread
@@ -1268,7 +1270,7 @@ const editedMetadata = await liveblocks.editThreadMetadata({
   },
 });
 
-// { color: "yellow", page: 3, resolved: true }
+// { color: "yellow", page: 3, pinned: true }
 console.log(editedMetadata);
 ```
 
@@ -1286,7 +1288,7 @@ const editedMetadata = await liveblocks.editThreadMetadata({
       // Metadata can be a string, number, or boolean
       title: "My thread title",
       page: 3,
-      resolved: true,
+      pinned: true,
 
       // Remove metadata with null
       color: null,
@@ -1300,8 +1302,52 @@ const editedMetadata = await liveblocks.editThreadMetadata({
   },
 });
 
-// { title: "My thread title", page: 3, resolved: true }
+// { title: "My thread title", page: 3, pinned: true }
 console.log(editedMetadata);
+```
+
+#### Liveblocks.markThreadAsResolved [#post-rooms-roomId-threads-threadId-mark-as-resolved]
+
+Marks a thread as resolved, which means it sets the `resolved` property on the
+specified thread to `true`. Takes a `userId`, which is the ID of the user that
+resolved the thread. Throws an error if the room or thread isn’t found. This is
+a wrapper around the
+[Mark Thread As Resolved API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-mark-as-resolved)
+and returns the same response.
+
+```ts
+const thread = await liveblocks.markThreadAsResolved({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+  data: {
+    userId: "steven@example.com",
+  },
+});
+
+// { type: "thread", id: "th_d75sF3...", ... }
+console.log(thread);
+```
+
+#### Liveblocks.markThreadAsUnresolved [#post-rooms-roomId-threads-threadId-mark-as-unresolved]
+
+Marks a thread as unresolved, which means it sets the `resolved` property on the
+specified thread to `false`. Takes a `userId`, which is the ID of the user that
+unresolved the thread. Throws an error if the room or thread isn’t found. This
+is a wrapper around the
+[Mark Thread As Unresolved API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-mark-as-unresolved)
+and returns the same response.
+
+```ts
+const thread = await liveblocks.markThreadAsUnresolved({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+  data: {
+    userId: "steven@example.com",
+  },
+});
+
+// { type: "thread", id: "th_d75sF3...", ... }
+console.log(thread);
 ```
 
 #### Liveblocks.deleteThread [#delete-rooms-roomId-threads-threadId]
@@ -1619,6 +1665,30 @@ await liveblocks.deleteRoomNotificationSettings({
 
 ### Notifications
 
+#### Liveblocks.getInboxNotifications [#get-users-userId-inboxNotifications]
+
+Returns a list of a user’s inbox notifications. This is a wrapper around the
+[Get Inbox Notifications API](/docs/api-reference/rest-api-endpoints#get-users-userId-inboxNotifications).
+It also provides an unread query parameter to filter unread notifications.
+
+```ts
+const { data: inboxNotifications } = await liveblocks.getInboxNotifications({
+  userId: "steven@example.com",
+});
+
+// [{ id: "in_3dH7sF3...", kind: "thread", ... }, { id: "in_3dH7sF3...", kind: "textMention", ... }, ...]
+console.log(inboxNotifications);
+
+// Filter unread notifications
+const { data: unreadInboxNotifications } =
+  await liveblocks.getInboxNotifications({
+    userId: "steven@example.com",
+    query: {
+      unread: true,
+    },
+  });
+```
+
 #### Liveblocks.getInboxNotification [#get-users-userId-inboxNotifications-inboxNotificationId]
 
 Returns a user’s inbox notification. This is a wrapper around the
@@ -1689,6 +1759,29 @@ declare global {
     // ...
   }
 }
+```
+
+#### Liveblocks.deleteInboxNotification [#delete-users-userId-inboxNotifications-inboxNotificationId]
+
+Deletes a user’s inbox notification. This is a wrapper around the
+[Delete Inbox Notification API](/docs/api-reference/rest-api-endpoints#delete-users-userId-inboxNotifications-inboxNotificationId).
+
+```ts
+await liveblocks.deleteInboxNotification({
+  userId: "steven@example.com",
+  inboxNotificationId: "in_3dH7sF3...",
+});
+```
+
+#### Liveblocks.deleteAllInboxNotifications [#delete-users-userId-inboxNotifications]
+
+Deletes all the user’s inbox notifications. This is a wrapper around the
+[Delete Inbox Notifications API](/docs/api-reference/rest-api-endpoints#delete-users-userId-inboxNotifications).
+
+```ts
+await liveblocks.deleteAllInboxNotifications({
+  userId: "steven@example.com",
+});
 ```
 
 ### Error handling [#error-handling]

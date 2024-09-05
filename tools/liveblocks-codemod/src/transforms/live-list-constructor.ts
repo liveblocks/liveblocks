@@ -9,6 +9,7 @@ export default function transformer(
 ) {
   const j = api.jscodeshift.withParser("tsx");
   const root = j(file.source);
+  let isDirty = false;
 
   const sources = ["@liveblocks/core", "@liveblocks/client"];
   const identifiersToChange = [];
@@ -43,9 +44,11 @@ export default function transformer(
             j.newExpression(path.node.callee, [j.arrayExpression([])])
           );
         }
+
+        isDirty = true;
       }
     });
   }
 
-  return root.toSource(options);
+  return isDirty ? root.toSource(options) : file.source;
 }

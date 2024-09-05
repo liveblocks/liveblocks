@@ -1,10 +1,6 @@
 import type { Status } from "../connection";
-import { withTimeout } from "../lib/utils";
+import { wait, withTimeout } from "../lib/utils";
 import type { OpaqueRoom } from "../room";
-
-export function sleep(delay: number) {
-  return new Promise((resolve) => setTimeout(resolve, delay));
-}
 
 export async function waitFor(predicate: () => boolean): Promise<void> {
   const result = predicate();
@@ -15,7 +11,7 @@ export async function waitFor(predicate: () => boolean): Promise<void> {
   const time = new Date().getTime();
 
   while (new Date().getTime() - time < 2000) {
-    await sleep(100);
+    await wait(100);
     if (predicate()) {
       return;
     }

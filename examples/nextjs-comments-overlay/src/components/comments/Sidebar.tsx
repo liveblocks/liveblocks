@@ -18,11 +18,11 @@ export function Sidebar({ onClose }: Props) {
   const { threads } = useThreads();
 
   const resolvedThreadCount = useMemo(() => {
-    return threads.filter((thread) => thread.metadata.resolved).length;
+    return threads.filter((thread) => thread.resolved).length;
   }, [threads]);
 
   return (
-    <div className={styles.sidebarWrapper}>
+    <div className={styles.sidebarWrapper} data-ignore-when-placing-composer>
       <div className={styles.sidebar} data-scrollbar="thin">
         <div className={styles.sidebarTop}>
           <div className={styles.sidebarThreadsResolved}>
@@ -44,7 +44,7 @@ export function Sidebar({ onClose }: Props) {
               <div
                 key={thread.id}
                 className={styles.sidebarThread}
-                data-thread-resolved={thread.metadata.resolved || undefined}
+                data-thread-resolved={thread.resolved || undefined}
               >
                 <Thread thread={thread} indentCommentContent={false} />
               </div>
@@ -73,11 +73,11 @@ function CreateThreadMessage() {
 }
 
 function sortResolved(a: ThreadData, b: ThreadData) {
-  if (a.metadata.resolved && !b.metadata.resolved) {
+  if (a.resolved && !b.resolved) {
     return 1;
   }
 
-  if (!a.metadata.resolved && b.metadata.resolved) {
+  if (!a.resolved && b.resolved) {
     return -1;
   }
 

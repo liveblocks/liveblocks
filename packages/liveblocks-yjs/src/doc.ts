@@ -7,7 +7,7 @@ export default class yDocHandler extends Observable<unknown> {
 
   private _synced = false;
   private doc: Y.Doc;
-  private updateRoomDoc: (update: string) => void;
+  private updateRoomDoc: (update: Uint8Array) => void;
   private fetchRoomDoc: (vector: string) => void;
 
   constructor({
@@ -18,14 +18,14 @@ export default class yDocHandler extends Observable<unknown> {
   }: {
     doc: Y.Doc;
     isRoot: boolean;
-    updateDoc: (update: string, guid?: string) => void;
+    updateDoc: (update: Uint8Array, guid?: string) => void;
     fetchDoc: (vector: string, guid?: string) => void;
   }) {
     super();
     this.doc = doc;
     // this.doc.load(); // this just emits a load event, it doesn't actually load anything
     this.doc.on("update", this.updateHandler);
-    this.updateRoomDoc = (update: string) => {
+    this.updateRoomDoc = (update: Uint8Array) => {
       updateDoc(update, isRoot ? undefined : this.doc.guid);
     };
     this.fetchRoomDoc = (vector: string) => {
@@ -38,26 +38,30 @@ export default class yDocHandler extends Observable<unknown> {
   public handleServerUpdate = ({
     update,
     stateVector,
+    readOnly,
   }: {
-    update: string;
+    update: Uint8Array;
     stateVector: string | null;
+    readOnly: boolean;
   }): void => {
     // apply update from the server
-    Y.applyUpdate(this.doc, Base64.toUint8Array(update), "backend");
+    Y.applyUpdate(this.doc, update, "backend");
     // if this update is the result of a fetch, the state vector is included
     if (stateVector) {
-      // Use server state to calculate a diff and send it
-      try {
-        const localUpdate = Y.encodeStateAsUpdate(
-          this.doc,
-          Base64.toUint8Array(stateVector)
-        );
-        this.updateRoomDoc(Base64.fromUint8Array(localUpdate));
-      } catch (e) {
-        // something went wrong encoding local state to send to the server
-        console.warn(e);
+      if (!readOnly) {
+        // Use server state to calculate a diff and send it
+        try {
+          const localUpdate = Y.encodeStateAsUpdate(
+            this.doc,
+            Base64.toUint8Array(stateVector)
+          );
+          this.updateRoomDoc(localUpdate);
+        } catch (e) {
+          // something went wrong encoding local state to send to the server
+          console.warn(e);
+        }
       }
-      // now that we've sent our local  and received from server, we're in sync
+      // now that we've sent our local and received from server, we're in sync
       // calling `syncDoc` again will sync up the documents
       this.synced = true;
     }
@@ -87,8 +91,7 @@ export default class yDocHandler extends Observable<unknown> {
 
   private updateHandler = (update: Uint8Array, origin: string) => {
     if (origin !== "backend") {
-      const encodedUpdate = Base64.fromUint8Array(update);
-      this.updateRoomDoc(encodedUpdate);
+      this.updateRoomDoc(update);
     }
   };
 
