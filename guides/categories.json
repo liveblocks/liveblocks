@@ -127,6 +127,10 @@
       "name": "Tiptap"
     },
     {
+      "id": "blocknote",
+      "name": "BlockNote"
+    },
+    {
       "id": "quill",
       "name": "Quill"
     },

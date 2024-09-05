@@ -11,6 +11,7 @@ import {
 } from "react";
 import { ThreadData } from "@liveblocks/client";
 import { Thread } from "@liveblocks/react-ui";
+import { useNearEdge } from "@/lib/useNearEdge";
 
 type Props = {
   user: Liveblocks["UserMeta"]["info"];
@@ -38,6 +39,10 @@ export function PinnedThread({
   const [minimized, setMinimized] = useState(startMinimized);
   const dragStart = useRef({ x: 0, y: 0 });
 
+  // Flip pinnedContent away from edge of screen
+  const ref = useRef(null);
+  const { nearRightEdge, nearBottomEdge } = useNearEdge(ref);
+
   // Record starting click position
   const handlePointerDown = useCallback(
     (e: PointerEvent<HTMLDivElement>) => {
@@ -61,12 +66,20 @@ export function PinnedThread({
     [onPointerUp]
   );
 
+  // If cursor moved, toggle minimized
+  const handlePointerMove = useCallback(
+    (e: PointerEvent<HTMLDivElement>) => {
+      onPointerMove(e);
+    },
+    [onPointerMove]
+  );
+
   return (
-    <div className={styles.pinned} {...props} onClick={onFocus}>
+    <div ref={ref} className={styles.pinned} {...props} onClick={onFocus}>
       <div
         className={styles.avatarPin}
         onPointerDown={handlePointerDown}
-        onPointerMove={onPointerMove}
+        onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         data-draggable={true}
       >
@@ -79,7 +92,11 @@ export function PinnedThread({
         />
       </div>
       {!minimized ? (
-        <div className={styles.pinnedContent}>
+        <div
+          className={styles.pinnedContent}
+          data-flip-vertical={nearBottomEdge || undefined}
+          data-flip-horizontal={nearRightEdge || undefined}
+        >
           <Thread
             thread={thread}
             indentCommentContent={false}

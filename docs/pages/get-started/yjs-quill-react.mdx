@@ -137,7 +137,7 @@ collaboration to your React application using the APIs from the
         useEffect(() => {
           const yDoc = new Y.Doc();
           const yText = yDoc.getText("quill");
-          const yProvider = new LiveblocksProvider(room, yDoc);
+          const yProvider = new LiveblocksYjsProvider(room, yDoc);
           setText(yText);
           setProvider(yProvider);
 

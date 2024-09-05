@@ -22,7 +22,7 @@ export function Sidebar({ onClose }: Props) {
   }, [threads]);
 
   return (
-    <div className={styles.sidebarWrapper}>
+    <div className={styles.sidebarWrapper} data-ignore-when-placing-composer>
       <div className={styles.sidebar} data-scrollbar="thin">
         <div className={styles.sidebarTop}>
           <div className={styles.sidebarThreadsResolved}>

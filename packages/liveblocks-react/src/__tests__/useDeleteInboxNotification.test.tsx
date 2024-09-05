@@ -1,4 +1,4 @@
-import { nanoid, wait } from "@liveblocks/core";
+import { nanoid } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
 import React from "react";
@@ -285,6 +285,7 @@ describe("useDeleteInboxNotification", () => {
       readAt: null,
     });
     const inboxNotifications = [notification1, notification2];
+    let hasCalledDeleteThread = false;
 
     server.use(
       mockGetInboxNotifications((_req, res, ctx) =>
@@ -306,6 +307,7 @@ describe("useDeleteInboxNotification", () => {
         (_req, res, ctx) => res(ctx.status(500))
       ),
       mockDeleteThread({ threadId: threads[0].id }, async (_req, res, ctx) => {
+        hasCalledDeleteThread = true;
         return res(ctx.status(204));
       })
     );
@@ -359,8 +361,8 @@ describe("useDeleteInboxNotification", () => {
 
     // TODO: We should wait for the `deleteThread` call to be finished but we don't have APIs for that yet
     //       We should expose a way to know (and be updated about) if there are still pending optimistic updates
-    //       Until then, we'll just wait a bit to make sure the request doesn't leak into the next tests
-    await wait(1000);
+    //       Until then, we'll just wait for the mock to be called
+    await waitFor(() => expect(hasCalledDeleteThread).toEqual(true));
 
     unmount();
   });
@@ -377,6 +379,7 @@ describe("useDeleteInboxNotification", () => {
       readAt: null,
     });
     const inboxNotifications = [notification];
+    let hasCalledDeleteComment = false;
 
     server.use(
       mockGetInboxNotifications((_req, res, ctx) =>
@@ -400,6 +403,7 @@ describe("useDeleteInboxNotification", () => {
       mockDeleteComment(
         { threadId: thread.id, commentId: comment.id },
         async (_req, res, ctx) => {
+          hasCalledDeleteComment = true;
           return res(ctx.status(204));
         }
       )
@@ -457,8 +461,8 @@ describe("useDeleteInboxNotification", () => {
 
     // TODO: We should wait for the `deleteComment` call to be finished but we don't have APIs for that yet
     //       We should expose a way to know (and be updated about) if there are still pending optimistic updates
-    //       Until then, we'll just wait a bit to make sure the request doesn't leak into the next tests
-    await wait(1000);
+    //       Until then, we'll just wait for the mock to be called
+    await waitFor(() => expect(hasCalledDeleteComment).toEqual(true));
 
     unmount();
   });

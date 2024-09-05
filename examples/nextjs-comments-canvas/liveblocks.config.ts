@@ -12,6 +12,7 @@ declare global {
     ThreadMetadata: {
       x: number;
       y: number;
+      zIndex: number;
     };
   }
 }

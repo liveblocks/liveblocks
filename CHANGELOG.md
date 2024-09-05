@@ -1,3 +1,16 @@
+## 2.6.0
+
+### `@liveblocks/node`
+
+- Add `getInboxNotifications` method which supports an `unread` query parameter.
+
+## 2.5.1
+
+### `@liveblocks/yjs`
+
+- Fix `LiveblocksProvider` `update`/`change` event not returning `removed`
+  users.
+
 ## 2.5.0
 
 ### `@liveblocks/react`

@@ -12,12 +12,12 @@
   },
   "devDependencies": {
     "@types/node": "^18",
-    "nuxt": "^3.5.0",
+    "nuxt": "^3.13.1",
     "prettier": "^3.3.2",
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "@liveblocks/client": "^2.2.0",
-    "@liveblocks/node": "^2.2.0"
+    "@liveblocks/client": "^2.5.2",
+    "@liveblocks/node": "^2.5.2"
   }
 }
