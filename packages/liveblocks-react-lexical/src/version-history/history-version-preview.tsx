@@ -10,8 +10,8 @@ import {
   syncLexicalUpdateToYjs,
   syncYjsChangesToLexical,
 } from "@lexical/yjs";
-import { type HistoryVersion, kInternal } from "@liveblocks/core";
-import { useHistoryVersionData, useRoom } from "@liveblocks/react";
+import type { HistoryVersion } from "@liveblocks/core";
+import { useHistoryVersionData } from "@liveblocks/react";
 import { useOverrides } from "@liveblocks/react-ui";
 import {
   Button,
@@ -44,7 +44,7 @@ export interface HistoryVersionPreviewProps
 }
 
 function createNoOpProvider(): Provider {
-  const emptyFunction = () => {};
+  const emptyFunction = () => { };
 
   return {
     awareness: {
@@ -116,7 +116,6 @@ export const HistoryVersionPreview = forwardRef<
   HistoryVersionPreviewProps
 >(({ version, onVersionRestore, className, ...props }, forwardedRef) => {
   const [parentEditor, parentContext] = useLexicalComposerContext();
-  const room = useRoom();
   const editor = useRef<LexicalEditor>();
   const $ = useOverrides();
   const { isLoading, data, error } = useHistoryVersionData(version.id);
@@ -134,7 +133,7 @@ export const HistoryVersionPreview = forwardRef<
   }, [parentEditor, parentContext]);
 
   useEffect(() => {
-    if (!data || !editor.current) {
+    if (error || !data || !editor.current || !data.length) {
       return;
     }
     const doc = new Doc();
@@ -153,10 +152,14 @@ export const HistoryVersionPreview = forwardRef<
       binding
     );
 
-    applyUpdate(doc, data);
+    try {
+      applyUpdate(doc, data);
+    } catch (err) {
+      console.warn(err);
+    }
 
     return unsubscribe;
-  }, [data, version.id, isLoading]);
+  }, [data, version.id, isLoading, error]);
 
   const restore = useCallback(() => {
     if (!editor.current || !parentEditor) {
@@ -164,11 +167,8 @@ export const HistoryVersionPreview = forwardRef<
     }
 
     parentEditor.setEditorState(editor.current.getEditorState());
-    // create a new version after restoring
-    // TODO: this should be done from a command that waits for synchronization
-    void room[kInternal].createTextVersion();
     onVersionRestore?.(version);
-  }, [parentEditor, room, onVersionRestore, version]);
+  }, [parentEditor, onVersionRestore, version]);
 
   return (
     <div

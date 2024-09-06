@@ -382,7 +382,6 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   ) {
     const queryKey = getVersionsQueryKey(room.id);
     const existingRequest = requestsByQuery.get(queryKey);
-    console.warn("existing request", existingRequest);
     if (existingRequest !== undefined) return existingRequest;
     const request = room[kInternal].listTextVersions();
     requestsByQuery.set(queryKey, request);

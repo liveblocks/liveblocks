@@ -6,7 +6,7 @@ import {
   HistoryVersionSummary,
 } from "@liveblocks/react-ui";
 import { HistoryVersionPreview } from "@liveblocks/react-lexical";
-import { useHistoryVersions } from "@liveblocks/react/suspense";
+import { useHistoryVersions } from "@liveblocks/react";
 
 export default function VersionsDialog() {
   const [isOpen, setOpen] = useState(false);
@@ -40,9 +40,7 @@ export default function VersionsDialog() {
           <Dialog.Description className="sr-only">
             Previous versions of this document
           </Dialog.Description>
-          <Suspense fallback={<Loading />}>
-            <Versions onVersionRestore={onVersionRestore} />
-          </Suspense>
+          <Versions onVersionRestore={onVersionRestore} />
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
@@ -51,13 +49,13 @@ export default function VersionsDialog() {
 
 function Versions({ onVersionRestore }: { onVersionRestore: () => void }) {
   const [selectedVersionId, setSelectedVersionId] = useState<string>();
-  const { versions } = useHistoryVersions();
+  const { versions, isLoading } = useHistoryVersions();
   const selectedVersion = useMemo(
-    () => versions.find((version) => version.id === selectedVersionId),
+    () => versions?.find((version) => version.id === selectedVersionId),
     [selectedVersionId, versions]
   );
 
-  return versions.length === 0 ? (
+  return isLoading ? <Loading /> : versions?.length === 0 ? (
     <div className="flex h-full items-center justify-center p-6 text-muted-foreground">
       No versions yet
     </div>
@@ -78,7 +76,7 @@ function Versions({ onVersionRestore }: { onVersionRestore: () => void }) {
       </div>
       <div className="text-sm relative w-[250px] h-full overflow-auto border-l border-border/80">
         <HistoryVersionSummaryList>
-          {versions.map((version) => (
+          {versions?.map((version) => (
             <HistoryVersionSummary
               onClick={() => {
                 setSelectedVersionId(version.id);
