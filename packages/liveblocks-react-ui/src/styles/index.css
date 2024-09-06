@@ -1123,21 +1123,24 @@
   position: relative;
 }
 
-.lb-attachment-preview-image {
+.lb-attachment-preview-media {
   border-radius: inherit;
   transition-property: opacity;
 
   &,
   &::after,
-  img {
+  img,
+  video {
     position: absolute;
     inset: 0;
     inline-size: 100%;
     block-size: 100%;
   }
 
-  img {
+  img,
+  video {
     object-fit: cover;
+    pointer-events: none;
   }
 
   &::after {

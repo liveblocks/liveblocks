@@ -28,8 +28,6 @@ interface FileAttachmentProps extends ComponentPropsWithoutRef<"div"> {
   overrides?: Partial<GlobalOverrides>;
 }
 
-const IMAGE_PREVIEW_MAX_SIZE = 50 * 1024 * 1024; // 50 MB
-
 const fileExtensionRegex = /^(.+?)(\.[^.]+)?$/;
 
 function splitFileName(name: string) {
@@ -121,7 +119,12 @@ const FileAttachmentIcon = memo(({ mimeType }: { mimeType: string }) => {
   );
 });
 
-function FileAttachmentImagePreview({ url }: { url?: string }) {
+function FileAttachmentImagePreview({
+  attachment,
+}: {
+  attachment: CommentMixedAttachment;
+}) {
+  const { url } = useAttachmentUrl(attachment.id);
   const [isLoaded, setLoaded] = useState(false);
 
   const handleLoad = useCallback(() => {
@@ -129,23 +132,45 @@ function FileAttachmentImagePreview({ url }: { url?: string }) {
   }, []);
 
   return url ? (
-    <div
-      className="lb-attachment-preview-image"
-      data-hidden={!isLoaded ? "" : undefined}
-    >
-      <img src={url} loading="lazy" onLoad={handleLoad} />
-    </div>
-  ) : null;
+    <>
+      {!isLoaded ? <SpinnerIcon /> : null}
+      <div
+        className="lb-attachment-preview-media"
+        data-hidden={!isLoaded ? "" : undefined}
+      >
+        <img src={url} loading="lazy" onLoad={handleLoad} />
+      </div>
+    </>
+  ) : (
+    <FileAttachmentIcon mimeType={attachment.mimeType} />
+  );
 }
 
-function FileAttachmentRemoteImagePreview({
+function FileAttachmentVideoPreview({
   attachment,
 }: {
   attachment: CommentMixedAttachment;
 }) {
   const { url } = useAttachmentUrl(attachment.id);
+  const [isLoaded, setLoaded] = useState(false);
 
-  return <FileAttachmentImagePreview url={url} />;
+  const handleLoad = useCallback(() => {
+    setLoaded(true);
+  }, []);
+
+  return url ? (
+    <>
+      {!isLoaded ? <SpinnerIcon /> : null}
+      <div
+        className="lb-attachment-preview-media"
+        data-hidden={!isLoaded ? "" : undefined}
+      >
+        <video src={url} onLoadedData={handleLoad} />
+      </div>
+    </>
+  ) : (
+    <FileAttachmentIcon mimeType={attachment.mimeType} />
+  );
 }
 
 function FileAttachmentPreview({
@@ -157,16 +182,19 @@ function FileAttachmentPreview({
   const isUploaded =
     attachment.type === "attachment" || attachment.status === "uploaded";
 
-  if (
-    attachment.mimeType.startsWith("image/") &&
-    attachment.size < IMAGE_PREVIEW_MAX_SIZE
-  ) {
+  if (attachment.mimeType.startsWith("image/")) {
     if (isUploaded && isInsideRoom) {
-      return <FileAttachmentRemoteImagePreview attachment={attachment} />;
+      return <FileAttachmentImagePreview attachment={attachment} />;
     }
   }
 
-  return null;
+  if (attachment.mimeType.startsWith("video/")) {
+    if (isUploaded && isInsideRoom) {
+      return <FileAttachmentVideoPreview attachment={attachment} />;
+    }
+  }
+
+  return <FileAttachmentIcon mimeType={attachment.mimeType} />;
 }
 
 export function FileAttachment({
@@ -249,12 +277,7 @@ export function FileAttachment({
         ) : isError ? (
           <WarningIcon />
         ) : (
-          <>
-            {!isError ? (
-              <FileAttachmentPreview attachment={attachment} />
-            ) : null}
-            <FileAttachmentIcon mimeType={attachment.mimeType} />
-          </>
+          <FileAttachmentPreview attachment={attachment} />
         )}
       </div>
       <div className="lb-attachment-details">
