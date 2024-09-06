@@ -13,6 +13,21 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
 
+# Week 36 (2024-09-06)
+
+## Website
+
+- New blog post: [Dashboard enhancements to improve observability and developer experience](https://liveblocks.io/blog/dashboard-enhancements-to-improve-observability-and-developer-experience).
+- New blog post: [What’s new in Liveblocks: August edition](https://liveblocks.io/blog/whats-new-in-liveblocks-august-edition-2024).
+
+## Documentation
+
+- New guide on [migrating to Comments](https://liveblocks.io/docs/guides/how-to-migrate-to-liveblocks-comments).
+
+## Contributors
+
+ctnicholas
+
 # Week 35 (2024-08-30)
 
 ## v2.6.0
