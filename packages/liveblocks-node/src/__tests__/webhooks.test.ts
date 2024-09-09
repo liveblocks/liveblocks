@@ -1,6 +1,7 @@
 import { Webhook } from "svix";
 
 import {
+  isTextMentionNotificationEvent,
   isThreadNotificationEvent,
   type WebhookEvent,
   WebhookHandler,
@@ -575,6 +576,65 @@ describe("Type guards", () => {
       'should check if the "$name" event is a thread notification event - ($expected)',
       ({ event, expected }) => {
         expect(isThreadNotificationEvent(event)).toBe(expected);
+      }
+    );
+  });
+
+  describe("isTextMentionNotificationEvent", () => {
+    it.each<{ name: string; event: WebhookEvent; expected: boolean }>([
+      {
+        name: "notification/textMention",
+        event: {
+          type: "notification",
+          data: {
+            kind: "textMention",
+            channel: "email",
+            projectId: "605a50b01a36d5ea7a2e9104",
+            roomId: "examples-hero-21-07-2022",
+            inboxNotificationId: "605a50b01a36d5ea7a2e9104",
+            mentionId: "605a50b01a36d5ea7a2e9104",
+            userId: "userId",
+            createdAt: "2023-01-27T20:33:23.737Z",
+          },
+        },
+        expected: true,
+      },
+      {
+        name: "notification/thread",
+        event: {
+          type: "notification",
+          data: {
+            kind: "thread",
+            channel: "email",
+            projectId: "605a50b01a36d5ea7a2e9104",
+            roomId: "examples-hero-21-07-2022",
+            inboxNotificationId: "605a50b01a36d5ea7a2e9104",
+            threadId: "605a50b01a36d5ea7a2e9104",
+            userId: "userId",
+            createdAt: "2023-01-27T20:33:23.737Z",
+          },
+        },
+        expected: false,
+      },
+      {
+        name: "commentCreated",
+        event: {
+          type: "commentCreated",
+          data: {
+            projectId: "605a50b01a36d5ea7a2e9104",
+            threadId: "605a50b01a36d5ea7a2e9104",
+            commentId: "605a50b01a36d5ea7a2e9104",
+            createdAt: "2023-01-27T20:33:23.737Z",
+            createdBy: "authorId",
+            roomId: "examples-hero-21-07-2022",
+          },
+        },
+        expected: false,
+      },
+    ])(
+      'should check if the "$name" event is a text mention notification event - ($expected)',
+      ({ event, expected }) => {
+        expect(isTextMentionNotificationEvent(event)).toBe(expected);
       }
     );
   });

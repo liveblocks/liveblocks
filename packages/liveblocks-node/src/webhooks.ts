@@ -575,3 +575,23 @@ export function isThreadNotificationEvent(
     event.data.channel === "email"
   );
 }
+
+/**
+ * Type guard to check if a webhook event is a `TextMentionNotificationEvent`
+ *
+ * The check is made against the event type, event data kind and event data channel.
+ * You should use this guard to safely check the webhook event you received
+ * when you're expecting a `TextMentionNotificationEvent`.
+ *
+ * @param event The webhook event received after calling `webhookHandler.verifyRequest()`.
+ * @returns A boolean type predicate.
+ */
+export function isTextMentionNotificationEvent(
+  event: WebhookEvent
+): event is TextMentionNotificationEvent {
+  return (
+    event.type === "notification" &&
+    event.data.kind === "textMention" &&
+    event.data.channel === "email"
+  );
+}
