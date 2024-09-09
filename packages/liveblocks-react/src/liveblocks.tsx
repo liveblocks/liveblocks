@@ -725,7 +725,7 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
 
       client.markInboxNotificationAsRead(inboxNotificationId).then(
         () => {
-          store.set((state) => {
+          store.set_ibn_and_optm((state) => {
             const existingNotification =
               state.inboxNotifications[inboxNotificationId];
 
@@ -733,6 +733,7 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
             if (existingNotification === undefined) {
               return {
                 ...state,
+                inboxNotifications: state.inboxNotifications,
                 optimisticUpdates: state.optimisticUpdates.filter(
                   (update) => update.id !== optimisticUpdateId
                 ),
@@ -756,7 +757,7 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
         },
         () => {
           // TODO: Broadcast errors to client
-          store.set((state) => ({
+          store.set_optm((state) => ({
             ...state,
             optimisticUpdates: state.optimisticUpdates.filter(
               (update) => update.id !== optimisticUpdateId
@@ -782,7 +783,7 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
 
     client.markAllInboxNotificationsAsRead().then(
       () => {
-        store.set((state) => ({
+        store.set_ibn_and_optm((state) => ({
           ...state,
           inboxNotifications: Object.fromEntries(
             Array.from(Object.entries(state.inboxNotifications)).map(
@@ -799,7 +800,7 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
       },
       () => {
         // TODO: Broadcast errors to client
-        store.set((state) => ({
+        store.set_optm((state) => ({
           ...state,
           optimisticUpdates: state.optimisticUpdates.filter(
             (update) => update.id !== optimisticUpdateId
@@ -826,7 +827,7 @@ function useDeleteInboxNotification_withClient(client: OpaqueClient) {
 
       client.deleteInboxNotification(inboxNotificationId).then(
         () => {
-          store.set((state) => {
+          store.set_ibn_and_optm((state) => {
             const existingNotification =
               state.inboxNotifications[inboxNotificationId];
 
@@ -854,7 +855,7 @@ function useDeleteInboxNotification_withClient(client: OpaqueClient) {
         },
         () => {
           // TODO: Broadcast errors to client
-          store.set((state) => ({
+          store.set_optm((state) => ({
             ...state,
             optimisticUpdates: state.optimisticUpdates.filter(
               (update) => update.id !== optimisticUpdateId
@@ -880,7 +881,7 @@ function useDeleteAllInboxNotifications_withClient(client: OpaqueClient) {
 
     client.deleteAllInboxNotifications().then(
       () => {
-        store.set((state) => ({
+        store.set_ibn_and_optm((state) => ({
           ...state,
           inboxNotifications: {},
           optimisticUpdates: state.optimisticUpdates.filter(
@@ -890,7 +891,7 @@ function useDeleteAllInboxNotifications_withClient(client: OpaqueClient) {
       },
       () => {
         // TODO: Broadcast errors to client
-        store.set((state) => ({
+        store.set_optm((state) => ({
           ...state,
           optimisticUpdates: state.optimisticUpdates.filter(
             (update) => update.id !== optimisticUpdateId

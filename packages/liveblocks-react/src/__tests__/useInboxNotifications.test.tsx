@@ -267,7 +267,7 @@ describe("useInboxNotifications", () => {
     } = createContextsForTest();
 
     const store = client[kInternal].umbrellaStore;
-    store.set((state) => ({
+    store.force_set__call_from_unit_tests_only_plz((state) => ({
       ...state,
       inboxNotifications: {
         // Explicitly set the order to be reversed to test that the hook sorts the notifications

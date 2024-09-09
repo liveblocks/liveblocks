@@ -483,7 +483,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     optimisticUpdateId: string,
     createPublicError: (error: Error) => CommentsError<M>
   ) {
-    store.set((state) => ({
+    store.set_optm((state) => ({
       ...state,
       optimisticUpdates: state.optimisticUpdates.filter(
         (update) => update.id !== optimisticUpdateId
@@ -1529,7 +1529,7 @@ function useCreateThread<M extends BaseMetadata>(): (
 
       room.createThread({ threadId, commentId, body, metadata }).then(
         (thread) => {
-          store.set((state) => ({
+          store.set_thr_and_optm((state) => ({
             ...state,
             threads: {
               ...state.threads,
@@ -1588,7 +1588,7 @@ function useDeleteThread(): (threadId: string) => void {
 
       room.deleteThread(threadId).then(
         () => {
-          store.set((state) => {
+          store.set_thr_and_optm((state) => {
             const existingThread = state.threads[threadId];
             if (existingThread === undefined) {
               return state;
@@ -1648,7 +1648,7 @@ function useEditThreadMetadata<M extends BaseMetadata>() {
 
       room.editThreadMetadata({ metadata, threadId }).then(
         (metadata) => {
-          store.set((state) => {
+          store.set_thr_and_optm((state) => {
             const existingThread = state.threads[threadId];
             const updatedOptimisticUpdates = state.optimisticUpdates.filter(
               (update) => update.id !== optimisticUpdateId
@@ -1747,7 +1747,7 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
 
       room.createComment({ threadId, commentId, body }).then(
         (newComment) => {
-          store.set((state) => {
+          store.set_thr_ibn_and_optm((state) => {
             const existingThread = state.threads[threadId];
             const updatedOptimisticUpdates = state.optimisticUpdates.filter(
               (update) => update.id !== optimisticUpdateId
@@ -1859,7 +1859,7 @@ function useEditComment(): (options: EditCommentOptions) => void {
 
       room.editComment({ threadId, commentId, body }).then(
         (editedComment) => {
-          store.set((state) => {
+          store.set_thr_and_optm((state) => {
             const existingThread = state.threads[threadId];
             const updatedOptimisticUpdates = state.optimisticUpdates.filter(
               (update) => update.id !== optimisticUpdateId
@@ -1930,7 +1930,7 @@ function useDeleteComment() {
 
       room.deleteComment({ threadId, commentId }).then(
         () => {
-          store.set((state) => {
+          store.set_thr_and_optm((state) => {
             const existingThread = state.threads[threadId];
             const updatedOptimisticUpdates = state.optimisticUpdates.filter(
               (update) => update.id !== optimisticUpdateId
@@ -1996,7 +1996,7 @@ function useAddReaction<M extends BaseMetadata>() {
 
       room.addReaction({ threadId, commentId, emoji }).then(
         (addedReaction) => {
-          store.set((state): UmbrellaStoreState<M> => {
+          store.set_thr_and_optm((state): UmbrellaStoreState<M> => {
             const existingThread = state.threads[threadId];
             const updatedOptimisticUpdates = state.optimisticUpdates.filter(
               (update) => update.id !== optimisticUpdateId
@@ -2072,7 +2072,7 @@ function useRemoveReaction() {
 
       room.removeReaction({ threadId, commentId, emoji }).then(
         () => {
-          store.set((state) => {
+          store.set_thr_and_optm((state) => {
             const existingThread = state.threads[threadId];
             const updatedOptimisticUpdates = state.optimisticUpdates.filter(
               (update) => update.id !== optimisticUpdateId
@@ -2155,7 +2155,7 @@ function useMarkThreadAsRead() {
 
       room.markInboxNotificationAsRead(inboxNotification.id).then(
         () => {
-          store.set((state) => ({
+          store.set_ibn_and_optm((state) => ({
             ...state,
             inboxNotifications: {
               ...state.inboxNotifications,
@@ -2211,7 +2211,7 @@ function useMarkThreadAsResolved() {
 
       room.markThreadAsResolved(threadId).then(
         () => {
-          store.set((state) => {
+          store.set_thr_and_optm((state) => {
             const existingThread = state.threads[threadId];
             const updatedOptimisticUpdates = state.optimisticUpdates.filter(
               (update) => update.id !== optimisticUpdateId
@@ -2297,7 +2297,7 @@ function useMarkThreadAsUnresolved() {
 
       room.markThreadAsUnresolved(threadId).then(
         () => {
-          store.set((state) => {
+          store.set_thr_and_optm((state) => {
             const existingThread = state.threads[threadId];
             const updatedOptimisticUpdates = state.optimisticUpdates.filter(
               (update) => update.id !== optimisticUpdateId
@@ -2482,7 +2482,7 @@ function useUpdateRoomNotificationSettings() {
 
       room.updateNotificationSettings(settings).then(
         (settings) => {
-          store.set((state) => ({
+          store.set_ibn_and_optm((state) => ({
             ...state,
             notificationSettings: {
               [room.id]: settings,

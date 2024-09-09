@@ -196,15 +196,54 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // Auto-bind all of this class methods once here, so we can use stable
     // references to them (most important for use in useSyncExternalStore)
     this.get = this.get.bind(this);
-    this.set = this.set.bind(this);
     this.subscribe = this.subscribe.bind(this);
+
+    // Setters
+    this.force_set__call_from_unit_tests_only_plz =
+      this.force_set__call_from_unit_tests_only_plz.bind(this);
+    this.set_thr_ibn_and_optm = this.set_thr_ibn_and_optm.bind(this);
+    this.set_thr_and_optm = this.set_thr_and_optm.bind(this);
+    this.set_ibn_and_optm = this.set_ibn_and_optm.bind(this);
+    this.set_optm = this.set_optm.bind(this);
   }
 
   public get(): Readonly<UmbrellaStoreState<M>> {
     return this._store.get();
   }
 
-  public set(
+  public force_set__call_from_unit_tests_only_plz(
+    callback: (
+      currentState: Readonly<UmbrellaStoreState<M>>
+    ) => Readonly<UmbrellaStoreState<M>>
+  ): void {
+    return this._store.set(callback);
+  }
+
+  public set_thr_ibn_and_optm(
+    callback: (
+      currentState: Readonly<UmbrellaStoreState<M>>
+    ) => Readonly<UmbrellaStoreState<M>>
+  ): void {
+    return this._store.set(callback);
+  }
+
+  public set_thr_and_optm(
+    callback: (
+      currentState: Readonly<UmbrellaStoreState<M>>
+    ) => Readonly<UmbrellaStoreState<M>>
+  ): void {
+    return this._store.set(callback);
+  }
+
+  public set_ibn_and_optm(
+    callback: (
+      currentState: Readonly<UmbrellaStoreState<M>>
+    ) => Readonly<UmbrellaStoreState<M>>
+  ): void {
+    return this._store.set(callback);
+  }
+
+  public set_optm(
     callback: (
       currentState: Readonly<UmbrellaStoreState<M>>
     ) => Readonly<UmbrellaStoreState<M>>
