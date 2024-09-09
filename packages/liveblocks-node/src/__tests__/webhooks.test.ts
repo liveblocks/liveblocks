@@ -1,6 +1,10 @@
 import { Webhook } from "svix";
 
-import { WebhookHandler } from "../webhooks";
+import {
+  isThreadNotificationEventEmail,
+  type WebhookEvent,
+  WebhookHandler,
+} from "../webhooks";
 
 describe("WebhookHandler", () => {
   const secret = "whsec_sFOoBaR78ZZNyOl0TxbObFZWeo3rLg+dA";
@@ -512,5 +516,66 @@ describe("WebhookHandler", () => {
         "Unknown event type, please upgrade to a higher version of @liveblocks/node"
       );
     });
+  });
+});
+
+describe("Type guards", () => {
+  describe("isThreadNotificationEventEmail", () => {
+    it.each<{ name: string; event: WebhookEvent; expected: boolean }>([
+      {
+        name: "notification/thread",
+        event: {
+          type: "notification",
+          data: {
+            kind: "thread",
+            channel: "email",
+            projectId: "605a50b01a36d5ea7a2e9104",
+            roomId: "examples-hero-21-07-2022",
+            inboxNotificationId: "605a50b01a36d5ea7a2e9104",
+            threadId: "605a50b01a36d5ea7a2e9104",
+            userId: "userId",
+            createdAt: "2023-01-27T20:33:23.737Z",
+          },
+        },
+        expected: true,
+      },
+      {
+        name: "notification/textMention",
+        event: {
+          type: "notification",
+          data: {
+            kind: "textMention",
+            channel: "email",
+            projectId: "605a50b01a36d5ea7a2e9104",
+            roomId: "examples-hero-21-07-2022",
+            inboxNotificationId: "605a50b01a36d5ea7a2e9104",
+            mentionId: "605a50b01a36d5ea7a2e9104",
+            userId: "userId",
+            createdAt: "2023-01-27T20:33:23.737Z",
+          },
+        },
+        expected: false,
+      },
+      {
+        name: "commentCreated",
+        event: {
+          type: "commentCreated",
+          data: {
+            projectId: "605a50b01a36d5ea7a2e9104",
+            threadId: "605a50b01a36d5ea7a2e9104",
+            commentId: "605a50b01a36d5ea7a2e9104",
+            createdAt: "2023-01-27T20:33:23.737Z",
+            createdBy: "authorId",
+            roomId: "examples-hero-21-07-2022",
+          },
+        },
+        expected: false,
+      },
+    ])(
+      "should check if the $name event is a thread notification event email - ($expected)",
+      ({ event, expected }) => {
+        expect(isThreadNotificationEventEmail(event)).toBe(expected);
+      }
+    );
   });
 });
