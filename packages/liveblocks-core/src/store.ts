@@ -149,7 +149,7 @@ type UpdateNotificationSettingsOptimisticUpdate = {
 type QueryState = AsyncResult<undefined>;
 //                            ^^^^^^^^^ We don't store the actual query result in this status
 
-export type CacheState<M extends BaseMetadata> = {
+export type UmbrellaStoreState<M extends BaseMetadata> = {
   /**
    * Keep track of loading and error status of all the queries made by the client.
    * e.g. 'room-abc-{"color":"red"}'  - ok
@@ -183,7 +183,7 @@ export type CacheState<M extends BaseMetadata> = {
 };
 
 export interface CacheStore<M extends BaseMetadata>
-  extends Store<CacheState<M>> {
+  extends Store<UmbrellaStoreState<M>> {
   deleteThread(threadId: string): void;
   updateThreadAndNotification(
     thread: ThreadData<M>,
@@ -214,7 +214,7 @@ export interface CacheStore<M extends BaseMetadata>
  * Keep all the state required to return data from our hooks.
  */
 export function createClientStore<M extends BaseMetadata>(): CacheStore<M> {
-  const store = createStore<CacheState<M>>({
+  const store = createStore<UmbrellaStoreState<M>>({
     threads: {},
     queries: {},
     optimisticUpdates: [],
@@ -383,9 +383,9 @@ export function compareThreads<M extends BaseMetadata>(
 }
 
 export function applyOptimisticUpdates<M extends BaseMetadata>(
-  state: CacheState<M>
+  state: UmbrellaStoreState<M>
 ): Pick<
-  CacheState<M>,
+  UmbrellaStoreState<M>,
   "threads" | "inboxNotifications" | "notificationSettings"
 > {
   const result = {

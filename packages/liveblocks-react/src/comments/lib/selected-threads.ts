@@ -1,14 +1,14 @@
 import {
   applyOptimisticUpdates,
   type BaseMetadata,
-  type CacheState,
   type ThreadData,
+  type UmbrellaStoreState,
 } from "@liveblocks/core";
 
 import type { UseThreadsOptions } from "../../types";
 
 export function selectedUserThreads<M extends BaseMetadata>(
-  state: CacheState<M>
+  state: UmbrellaStoreState<M>
 ) {
   const result = applyOptimisticUpdates(state);
 
@@ -37,7 +37,7 @@ export function selectedUserThreads<M extends BaseMetadata>(
  */
 export function selectedThreads<M extends BaseMetadata>(
   roomId: string,
-  state: CacheState<M>,
+  state: UmbrellaStoreState<M>,
   options: UseThreadsOptions<M>
 ): ThreadData<M>[] {
   // Here, result contains copies of 3 out of the 5 caches with all optimistic

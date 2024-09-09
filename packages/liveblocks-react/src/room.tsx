@@ -16,7 +16,6 @@ import type {
 } from "@liveblocks/client";
 import { shallow } from "@liveblocks/client";
 import type {
-  CacheState,
   CacheStore,
   CommentData,
   CommentsEventServerMsg,
@@ -34,6 +33,7 @@ import type {
   StorageStatus,
   ThreadData,
   ToImmutable,
+  UmbrellaStoreState,
 } from "@liveblocks/core";
 import {
   addReaction,
@@ -1437,7 +1437,7 @@ function useThreads<M extends BaseMetadata>(
   }, [room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selector = React.useCallback(
-    (state: CacheState<M>): ThreadsState<M> => {
+    (state: UmbrellaStoreState<M>): ThreadsState<M> => {
       const query = state.queries[queryKey];
       if (query === undefined || query.isLoading) {
         return {
@@ -1996,7 +1996,7 @@ function useAddReaction<M extends BaseMetadata>() {
 
       room.addReaction({ threadId, commentId, emoji }).then(
         (addedReaction) => {
-          store.set((state): CacheState<M> => {
+          store.set((state): UmbrellaStoreState<M> => {
             const existingThread = state.threads[threadId];
             const updatedOptimisticUpdates = state.optimisticUpdates.filter(
               (update) => update.id !== optimisticUpdateId
@@ -2369,7 +2369,7 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
   const { store } = getExtrasForClient(client);
 
   const selector = React.useCallback(
-    (state: CacheState<BaseMetadata>): ThreadSubscription => {
+    (state: UmbrellaStoreState<BaseMetadata>): ThreadSubscription => {
       const inboxNotification = selectedInboxNotifications(state).find(
         (inboxNotification) =>
           inboxNotification.kind === "thread" &&
@@ -2424,7 +2424,9 @@ function useRoomNotificationSettings(): [
   const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
 
   const selector = React.useCallback(
-    (state: CacheState<BaseMetadata>): RoomNotificationSettingsState => {
+    (
+      state: UmbrellaStoreState<BaseMetadata>
+    ): RoomNotificationSettingsState => {
       const query = state.queries[makeNotificationSettingsQueryKey(room.id)];
 
       if (query === undefined || query.isLoading) {
@@ -2659,7 +2661,7 @@ function useThreadsSuspense<M extends BaseMetadata>(
   }
 
   const selector = React.useCallback(
-    (state: CacheState<M>): ThreadsStateSuccess<M> => {
+    (state: UmbrellaStoreState<M>): ThreadsStateSuccess<M> => {
       return {
         threads: selectedThreads(room.id, state, options),
         isLoading: false,
@@ -2713,7 +2715,9 @@ function useRoomNotificationSettingsSuspense(): [
   }
 
   const selector = React.useCallback(
-    (state: CacheState<BaseMetadata>): RoomNotificationSettingsStateSuccess => {
+    (
+      state: UmbrellaStoreState<BaseMetadata>
+    ): RoomNotificationSettingsStateSuccess => {
       return {
         isLoading: false,
         settings: selectNotificationSettings(room.id, state),

@@ -7,13 +7,13 @@ import type {
 import type {
   AsyncResult,
   BaseRoomInfo,
-  CacheState,
   CacheStore,
   ClientOptions,
   DM,
   DU,
   OpaqueClient,
   PrivateClientApi,
+  UmbrellaStoreState,
 } from "@liveblocks/core";
 import {
   assert,
@@ -87,7 +87,7 @@ export const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
 export const USER_THREADS_QUERY = "USER_THREADS";
 
 function selectorFor_useInboxNotifications(
-  state: CacheState<BaseMetadata>
+  state: UmbrellaStoreState<BaseMetadata>
 ): InboxNotificationsState {
   const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
 
@@ -111,7 +111,7 @@ function selectorFor_useInboxNotifications(
 }
 
 function selectorFor_useUserThreads<M extends BaseMetadata>(
-  state: CacheState<M>
+  state: UmbrellaStoreState<M>
 ): ThreadsState<M> {
   const query = state.queries[USER_THREADS_QUERY];
 
@@ -135,7 +135,9 @@ function selectorFor_useUserThreads<M extends BaseMetadata>(
   };
 }
 
-function selectUnreadInboxNotificationsCount(state: CacheState<BaseMetadata>) {
+function selectUnreadInboxNotificationsCount(
+  state: UmbrellaStoreState<BaseMetadata>
+) {
   let count = 0;
 
   for (const notification of selectedInboxNotifications(state)) {
@@ -151,7 +153,7 @@ function selectUnreadInboxNotificationsCount(state: CacheState<BaseMetadata>) {
 }
 
 function selectorFor_useUnreadInboxNotificationsCount(
-  state: CacheState<BaseMetadata>
+  state: UmbrellaStoreState<BaseMetadata>
 ): UnreadInboxNotificationsCountState {
   const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
 
@@ -906,7 +908,7 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
   const { store } = getExtrasForClient<M>(client);
 
   const selector = useCallback(
-    (state: CacheState<M>) => {
+    (state: UmbrellaStoreState<M>) => {
       const inboxNotification =
         state.inboxNotifications[inboxNotificationId] ??
         raise(`Inbox notification with ID "${inboxNotificationId}" not found`);
