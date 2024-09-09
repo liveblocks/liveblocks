@@ -1421,6 +1421,8 @@ function useThreads<M extends BaseMetadata>(
   const { scrollOnLoad = true } = options;
   const client = useClient();
   const room = useRoom();
+
+  // e.g. 'room-abc-{"color":"red","xyz":123}'
   const queryKey = React.useMemo(
     () => generateQueryKey(room.id, options.query),
     [room, options]
@@ -2779,6 +2781,11 @@ export function createRoomContext<
   return getOrCreateRoomContextBundle<P, S, U, E, M>(client);
 }
 
+/**
+ * Example:
+ * generateQueryKey('room-abc', { xyz: 123, abc: "red" })
+ * → 'room-abc-{"color":"red","xyz":123}'
+ */
 export function generateQueryKey(
   roomId: string,
   options: UseThreadsOptions<BaseMetadata>["query"]

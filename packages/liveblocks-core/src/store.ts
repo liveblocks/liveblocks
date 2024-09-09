@@ -151,11 +151,9 @@ type QueryState = AsyncResult<undefined>;
 
 export type CacheState<M extends BaseMetadata> = {
   /**
-   * Threads by ID.
-   */
-  threads: Record<string, ThreadDataWithDeleteInfo<M>>;
-  /**
    * Keep track of loading and error status of all the queries made by the client.
+   * e.g. 'room-abc-{"color":"red"}'  - ok
+   * e.g. 'room-abc-{}'               - loading
    */
   queries: Record<string, QueryState>;
   /**
@@ -163,12 +161,23 @@ export type CacheState<M extends BaseMetadata> = {
    * They are applied on top of the threads in selectors.
    */
   optimisticUpdates: OptimisticUpdate<M>[];
+
+  /**
+   * Threads by ID
+   * e.g. `th_${string}`
+   */
+  threads: Record<string, ThreadDataWithDeleteInfo<M>>;
   /**
    * Inbox notifications by ID.
+   * e.g. `in_${string}`
    */
   inboxNotifications: Record<string, InboxNotificationData>;
   /**
-   * Notification settings per room id
+   * Notification settings by room ID.
+   * e.g. { 'room-abc': { threads: "all" },
+   *        'room-def': { threads: "replies_and_mentions" },
+   *        'room-xyz': { threads: "none" },
+   *      }
    */
   notificationSettings: Record<string, RoomNotificationSettings>;
 };

@@ -1,3 +1,6 @@
+/**
+ * A Store is just a mini Zustand store.
+ */
 export type Store<T> = {
   get: () => T;
   set: (callback: (currentState: T) => T) => void;

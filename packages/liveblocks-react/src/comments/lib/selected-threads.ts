@@ -40,6 +40,8 @@ export function selectedThreads<M extends BaseMetadata>(
   state: CacheState<M>,
   options: UseThreadsOptions<M>
 ): ThreadData<M>[] {
+  // Here, result contains copies of 3 out of the 5 caches with all optimistic
+  // updates mixed in
   const result = applyOptimisticUpdates(state);
 
   // Filter threads to only include the non-deleted threads from the specified room and that match the specified filter options
