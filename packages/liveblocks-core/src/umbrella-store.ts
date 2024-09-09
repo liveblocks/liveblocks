@@ -376,7 +376,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     callback: (
       thread: Readonly<ThreadDataWithDeleteInfo<M>>
     ) => Readonly<ThreadDataWithDeleteInfo<M>>,
-    updatedAt?: Date // XXX We could look this up from the optimisticUpdate instead?
+    updatedAt?: Date // TODO We could look this up from the optimisticUpdate instead?
   ): void {
     return this.replaceOptimisticUpdate(
       optimisticUpdateId,
