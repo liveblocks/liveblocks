@@ -7,12 +7,12 @@ import type {
 import type {
   AsyncResult,
   BaseRoomInfo,
-  CacheStore,
   ClientOptions,
   DM,
   DU,
   OpaqueClient,
   PrivateClientApi,
+  UmbrellaStore,
   UmbrellaStoreState,
 } from "@liveblocks/core";
 import {
@@ -255,7 +255,7 @@ function getExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   }
 
   return extras as unknown as Omit<typeof extras, "store"> & {
-    store: CacheStore<M>;
+    store: UmbrellaStore<M>;
   };
 }
 
@@ -263,7 +263,7 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
   client: OpaqueClient
 ) {
   const internals = client[kInternal] as PrivateClientApi<U, M>;
-  const store = internals.cacheStore;
+  const store = internals.umbrellaStore;
 
   let lastRequestedAt: Date | undefined;
 

@@ -278,9 +278,9 @@ export type { Store } from "./lib/create-store";
 export {
   addReaction,
   applyOptimisticUpdates,
-  type CacheStore,
   deleteComment,
   removeReaction,
+  type UmbrellaStore,
   type UmbrellaStoreState,
   upsertComment,
 } from "./store";

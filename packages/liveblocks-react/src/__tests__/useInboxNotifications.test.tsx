@@ -266,7 +266,7 @@ describe("useInboxNotifications", () => {
       client,
     } = createContextsForTest();
 
-    const store = client[kInternal].cacheStore;
+    const store = client[kInternal].umbrellaStore;
     store.set((state) => ({
       ...state,
       inboxNotifications: {

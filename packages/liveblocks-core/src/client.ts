@@ -39,8 +39,8 @@ import {
   makeAuthDelegateForRoom,
   makeCreateSocketDelegateForRoom,
 } from "./room";
-import type { CacheStore } from "./store";
-import { createClientStore } from "./store";
+import type { UmbrellaStore } from "./store";
+import { createUmbrellaStore } from "./store";
 import type { OptionalPromise } from "./types/OptionalPromise";
 
 const MIN_THROTTLE = 16;
@@ -140,7 +140,7 @@ export type EnterOptions<P extends JsonObject = DP, S extends LsonObject = DS> =
 export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
   readonly currentUserIdStore: Store<string | null>;
   readonly resolveMentionSuggestions: ClientOptions<U>["resolveMentionSuggestions"];
-  readonly cacheStore: CacheStore<BaseMetadata>;
+  readonly umbrellaStore: UmbrellaStore<BaseMetadata>;
   readonly usersStore: BatchStore<U["info"] | undefined, string>;
   readonly roomsInfoStore: BatchStore<DRI | undefined, string>;
   readonly getRoomIds: () => string[];
@@ -605,7 +605,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     currentUserIdStore,
   });
 
-  const cacheStore = createClientStore();
+  const umbrellaStore = createUmbrellaStore();
 
   const resolveUsers = clientOptions.resolveUsers;
   const warnIfNoResolveUsers = createDevelopmentWarning(
@@ -663,7 +663,7 @@ export function createClient<U extends BaseUserMeta = DU>(
       [kInternal]: {
         currentUserIdStore,
         resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,
-        cacheStore,
+        umbrellaStore,
         usersStore,
         roomsInfoStore,
         getRoomIds() {

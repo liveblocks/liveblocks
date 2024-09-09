@@ -16,7 +16,6 @@ import type {
 } from "@liveblocks/client";
 import { shallow } from "@liveblocks/client";
 import type {
-  CacheStore,
   CommentData,
   CommentsEventServerMsg,
   DE,
@@ -33,6 +32,7 @@ import type {
   StorageStatus,
   ThreadData,
   ToImmutable,
+  UmbrellaStore,
   UmbrellaStoreState,
 } from "@liveblocks/core";
 import {
@@ -264,12 +264,12 @@ function getExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   }
 
   return extras as unknown as Omit<typeof extras, "store"> & {
-    store: CacheStore<M>;
+    store: UmbrellaStore<M>;
   };
 }
 
 function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
-  const store = client[kInternal].cacheStore as unknown as CacheStore<M>;
+  const store = client[kInternal].umbrellaStore as unknown as UmbrellaStore<M>;
 
   const DEFAULT_DEDUPING_INTERVAL = 2000; // 2 seconds
 

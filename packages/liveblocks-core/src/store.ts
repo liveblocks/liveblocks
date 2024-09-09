@@ -182,7 +182,7 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
   notificationSettings: Record<string, RoomNotificationSettings>;
 };
 
-export interface CacheStore<M extends BaseMetadata>
+export interface UmbrellaStore<M extends BaseMetadata>
   extends Store<UmbrellaStoreState<M>> {
   deleteThread(threadId: string): void;
   updateThreadAndNotification(
@@ -213,7 +213,9 @@ export interface CacheStore<M extends BaseMetadata>
  * Create internal immutable store for comments and notifications.
  * Keep all the state required to return data from our hooks.
  */
-export function createClientStore<M extends BaseMetadata>(): CacheStore<M> {
+export function createUmbrellaStore<
+  M extends BaseMetadata,
+>(): UmbrellaStore<M> {
   const store = createStore<UmbrellaStoreState<M>>({
     threads: {},
     queries: {},

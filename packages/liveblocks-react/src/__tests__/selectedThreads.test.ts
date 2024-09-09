@@ -1,4 +1,4 @@
-import type { BaseMetadata, CacheStore, ThreadData } from "@liveblocks/core";
+import type { BaseMetadata, ThreadData, UmbrellaStore } from "@liveblocks/core";
 import { createClient, kInternal } from "@liveblocks/core";
 
 import { selectedThreads } from "../comments/lib/selected-threads";
@@ -34,7 +34,7 @@ describe("selectedThreads", () => {
     };
 
     const store = client[kInternal]
-      .cacheStore as unknown as CacheStore<BaseMetadata>;
+      .umbrellaStore as unknown as UmbrellaStore<BaseMetadata>;
 
     store.updateThreadsAndNotifications([thread1, thread2], [], [], []);
 
