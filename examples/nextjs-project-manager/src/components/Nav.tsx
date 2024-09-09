@@ -13,6 +13,7 @@ import {
 } from "@liveblocks/react/suspense";
 import { ComponentProps, useState } from "react";
 import { Loading } from "@/components/Loading";
+import { Progress } from "@/icons/Progress";
 
 export function Nav() {
   const { isOpen, toggleInbox } = useInbox();
@@ -28,9 +29,7 @@ export function Nav() {
       ) : null}
       <div className="text-sm font-semibold p-2 pr-0 flex justify-between items-center mb-2">
         <Link href="/" className="flex items-center gap-1.5">
-          <span className="w-28 text-black">
-            <Logo />
-          </span>
+          <span className="w-28 text-black font-semibold">Acme Inc</span>
         </Link>
         <button
           onClick={() => {
@@ -76,6 +75,19 @@ export function Nav() {
           </div>
         </Link>
       )}
+      <Link href="/">
+        <div
+          className={classNames(
+            "flex items-center justify-between gap-2 w-full text-sm text-neutral-700 font-semibold p-2 rounded text-left hover:bg-neutral-200",
+            { "bg-neutral-200": pathname === "/" }
+          )}
+        >
+          <span className="flex items-center gap-2">
+            <Progress className="w-4 h-4" />
+            Issues
+          </span>
+        </div>
+      </Link>
     </div>
   );
 }

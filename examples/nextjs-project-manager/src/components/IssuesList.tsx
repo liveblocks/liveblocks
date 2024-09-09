@@ -6,6 +6,7 @@ import { Review } from "@/icons/Review";
 import { Progress } from "@/icons/Progress";
 import { Todo } from "@/icons/Todo";
 import { Done } from "@/icons/Done";
+import Link from "next/link";
 
 export function IssuesList({
   initialRooms,
@@ -25,6 +26,9 @@ export function IssuesList({
 
   return (
     <div>
+      <div className="flex items-center justify-between px-4 text-sm border-b h-10">
+        Issues
+      </div>
       {inReview.length ? (
         <div className="flex items-center gap-2 bg-neutral-200/60 px-4 py-1.5 text-sm font-medium text-neutral-800 w-full">
           <Review className="w-4 h-4 text-emerald-500" />
@@ -90,7 +94,7 @@ export async function Row({ room }: { room: RoomWithMetadata }) {
   });
 
   return (
-    <a
+    <Link
       href={`/issue/${issueId}`}
       className="flex h-10 items-center justify-between px-4 text-sm transition-colors hover:bg-neutral-100 border-b"
     >
@@ -126,7 +130,7 @@ export async function Row({ room }: { room: RoomWithMetadata }) {
           )}
         </div>
       </div>
-    </a>
+    </Link>
   );
 }
 

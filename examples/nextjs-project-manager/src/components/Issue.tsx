@@ -16,14 +16,16 @@ import { IssueLinks } from "@/components/IssueLinks";
 export async function Issue({ issueId }: { issueId: string }) {
   const roomId = getRoomId(issueId);
 
-  const markdown = await withLexicalDocument(
-    {
-      roomId,
-      client: liveblocks,
-      nodes: [HeadingNode, QuoteNode, ListNode, ListItemNode],
-    },
-    (doc) => doc.toMarkdown()
-  ); //.replace(/^\s*$(\r?\n^\s*$)+/gm, "\n&nbsp;\n");
+  const markdown = (
+    await withLexicalDocument(
+      {
+        roomId,
+        client: liveblocks,
+        nodes: [HeadingNode, QuoteNode, ListNode, ListItemNode],
+      },
+      (doc) => doc.toMarkdown()
+    )
+  ).replace(/^\s*$(\r?\n^\s*$)+/gm, "\n&nbsp;\n");
 
   console.log(markdown);
   //.replace(/^\s*$/gm, "\n");

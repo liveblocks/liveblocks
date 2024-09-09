@@ -35,9 +35,10 @@ export function Select({
       </RadixSelect.Trigger>
       <RadixSelect.Portal>
         <RadixSelect.Content
+          className="overflow-hidden bg-white rounded-lg border border-neutral-200 shadow relative right-full -top-8 -mt-0.5 mr-1"
           position="popper"
           sideOffset={5}
-          className="overflow-hidden bg-white rounded-lg border border-neutral-200 shadow relative right-full -top-8 -mt-0.5 mr-1"
+          avoidCollisions={false}
         >
           <RadixSelect.ScrollUpButton className="flex items-center justify-center h-[25px] bg-white cursor-default">
             <ChevronUp className="w-4 h-4" />
