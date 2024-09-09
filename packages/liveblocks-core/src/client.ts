@@ -40,8 +40,7 @@ import {
   makeCreateSocketDelegateForRoom,
 } from "./room";
 import type { OptionalPromise } from "./types/OptionalPromise";
-import type { UmbrellaStore } from "./umbrella-store";
-import { createUmbrellaStore } from "./umbrella-store";
+import { UmbrellaStore } from "./umbrella-store";
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1_000;
@@ -605,7 +604,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     currentUserIdStore,
   });
 
-  const umbrellaStore = createUmbrellaStore();
+  const umbrellaStore = new UmbrellaStore();
 
   const resolveUsers = clientOptions.resolveUsers;
   const warnIfNoResolveUsers = createDevelopmentWarning(

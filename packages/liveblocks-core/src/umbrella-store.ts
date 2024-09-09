@@ -181,153 +181,145 @@ export type UmbrellaStoreState<M extends BaseMetadata> = Readonly<{
   notificationSettings: Record<string, RoomNotificationSettings>;
 }>;
 
-export interface UmbrellaStore<M extends BaseMetadata>
-  extends Store<UmbrellaStoreState<M>> {
-  deleteThread(threadId: string): void;
-  updateThreadAndNotification(
+export class UmbrellaStore<M extends BaseMetadata> {
+  #store: Store<UmbrellaStoreState<M>>;
+
+  constructor() {
+    this.#store = createStore<UmbrellaStoreState<M>>({
+      threads: {},
+      queries: {},
+      optimisticUpdates: [],
+      inboxNotifications: {},
+      notificationSettings: {},
+    });
+
+    // Auto-bind all of this class methods once here, so we can use stable
+    // references to them (most important for use in useSyncExternalStore)
+    this.get = this.get.bind(this);
+    this.set = this.set.bind(this);
+    this.subscribe = this.subscribe.bind(this);
+  }
+
+  public get(): Readonly<UmbrellaStoreState<M>> {
+    return this.#store.get();
+  }
+
+  public set(
+    callback: (
+      currentState: Readonly<UmbrellaStoreState<M>>
+    ) => Readonly<UmbrellaStoreState<M>>
+  ) {
+    return this.#store.set(callback);
+  }
+
+  public subscribe(
+    callback: (state: Readonly<UmbrellaStoreState<M>>) => void
+  ): () => void {
+    return this.#store.subscribe(callback);
+  }
+
+  public deleteThread(threadId: string) {
+    this.#store.set((state) => {
+      return {
+        ...state,
+        threads: deleteKeyImmutable(state.threads, threadId),
+        inboxNotifications: Object.fromEntries(
+          Object.entries(state.inboxNotifications).filter(
+            ([_id, notification]) =>
+              notification.kind === "thread" &&
+              notification.threadId === threadId
+          )
+        ),
+      };
+    });
+  }
+
+  public updateThreadAndNotification(
     thread: ThreadData<M>,
     inboxNotification?: InboxNotificationData
-  ): void;
-  updateThreadsAndNotifications(
+  ): void {
+    this.#store.set((state) => {
+      const existingThread = state.threads[thread.id];
+
+      return {
+        ...state,
+        threads:
+          existingThread === undefined ||
+          compareThreads(thread, existingThread) === 1
+            ? { ...state.threads, [thread.id]: thread }
+            : state.threads,
+        inboxNotifications:
+          inboxNotification === undefined // TODO: Compare notification dates to make sure it's not stale
+            ? state.inboxNotifications
+            : {
+                ...state.inboxNotifications,
+                [inboxNotification.id]: inboxNotification,
+              },
+      };
+    });
+  }
+
+  public updateThreadsAndNotifications(
     threads: ThreadData<M>[],
     inboxNotifications: InboxNotificationData[],
     deletedThreads: ThreadDeleteInfo[],
     deletedInboxNotifications: InboxNotificationDeleteInfo[],
     queryKey?: string
-  ): void;
-  updateRoomInboxNotificationSettings(
+  ) {
+    this.#store.set((state) => ({
+      ...state,
+      threads: applyThreadUpdates(state.threads, {
+        newThreads: threads,
+        deletedThreads,
+      }),
+      inboxNotifications: applyNotificationsUpdates(state.inboxNotifications, {
+        newInboxNotifications: inboxNotifications,
+        deletedNotifications: deletedInboxNotifications,
+      }),
+      queries:
+        queryKey !== undefined
+          ? {
+              ...state.queries,
+              [queryKey]: { isLoading: false, data: undefined },
+            }
+          : state.queries,
+    }));
+  }
+
+  public updateRoomInboxNotificationSettings(
     roomId: string,
     settings: RoomNotificationSettings,
     queryKey: string
-  ): void;
-  pushOptimisticUpdate(optimisticUpdate: OptimisticUpdate<M>): void;
-  setQueryState(queryKey: string, queryState: QueryState): void;
-}
+  ) {
+    this.#store.set((state) => ({
+      ...state,
+      notificationSettings: {
+        ...state.notificationSettings,
+        [roomId]: settings,
+      },
+      queries: {
+        ...state.queries,
+        [queryKey]: { isLoading: false, data: undefined },
+      },
+    }));
+  }
 
-/**
- * Create internal immutable store for comments and notifications.
- * Keep all the state required to return data from our hooks.
- */
-export function createUmbrellaStore<
-  M extends BaseMetadata,
->(): UmbrellaStore<M> {
-  const store = createStore<UmbrellaStoreState<M>>({
-    threads: {},
-    queries: {},
-    optimisticUpdates: [],
-    inboxNotifications: {},
-    notificationSettings: {},
-  });
+  public pushOptimisticUpdate(optimisticUpdate: OptimisticUpdate<M>) {
+    this.#store.set((state) => ({
+      ...state,
+      optimisticUpdates: [...state.optimisticUpdates, optimisticUpdate],
+    }));
+  }
 
-  return {
-    ...store,
-
-    deleteThread(threadId: string) {
-      store.set((state) => {
-        return {
-          ...state,
-          threads: deleteKeyImmutable(state.threads, threadId),
-          inboxNotifications: Object.fromEntries(
-            Object.entries(state.inboxNotifications).filter(
-              ([_id, notification]) =>
-                notification.kind === "thread" &&
-                notification.threadId === threadId
-            )
-          ),
-        };
-      });
-    },
-
-    updateThreadAndNotification(
-      thread: ThreadData<M>,
-      inboxNotification?: InboxNotificationData
-    ) {
-      store.set((state) => {
-        const existingThread = state.threads[thread.id];
-
-        return {
-          ...state,
-          threads:
-            existingThread === undefined ||
-            compareThreads(thread, existingThread) === 1
-              ? { ...state.threads, [thread.id]: thread }
-              : state.threads,
-          inboxNotifications:
-            inboxNotification === undefined // TODO: Compare notification dates to make sure it's not stale
-              ? state.inboxNotifications
-              : {
-                  ...state.inboxNotifications,
-                  [inboxNotification.id]: inboxNotification,
-                },
-        };
-      });
-    },
-
-    updateThreadsAndNotifications(
-      threads: ThreadData<M>[],
-      inboxNotifications: InboxNotificationData[],
-      deletedThreads: ThreadDeleteInfo[],
-      deletedInboxNotifications: InboxNotificationDeleteInfo[],
-      queryKey?: string
-    ) {
-      store.set((state) => ({
-        ...state,
-        threads: applyThreadUpdates(state.threads, {
-          newThreads: threads,
-          deletedThreads,
-        }),
-        inboxNotifications: applyNotificationsUpdates(
-          state.inboxNotifications,
-          {
-            newInboxNotifications: inboxNotifications,
-            deletedNotifications: deletedInboxNotifications,
-          }
-        ),
-        queries:
-          queryKey !== undefined
-            ? {
-                ...state.queries,
-                [queryKey]: { isLoading: false, data: undefined },
-              }
-            : state.queries,
-      }));
-    },
-
-    updateRoomInboxNotificationSettings(
-      roomId: string,
-      settings: RoomNotificationSettings,
-      queryKey: string
-    ) {
-      store.set((state) => ({
-        ...state,
-        notificationSettings: {
-          ...state.notificationSettings,
-          [roomId]: settings,
-        },
-        queries: {
-          ...state.queries,
-          [queryKey]: { isLoading: false, data: undefined },
-        },
-      }));
-    },
-
-    pushOptimisticUpdate(optimisticUpdate: OptimisticUpdate<M>) {
-      store.set((state) => ({
-        ...state,
-        optimisticUpdates: [...state.optimisticUpdates, optimisticUpdate],
-      }));
-    },
-
-    setQueryState(queryKey: string, queryState: QueryState) {
-      store.set((state) => ({
-        ...state,
-        queries: {
-          ...state.queries,
-          [queryKey]: queryState,
-        },
-      }));
-    },
-  };
+  public setQueryState(queryKey: string, queryState: QueryState) {
+    this.#store.set((state) => ({
+      ...state,
+      queries: {
+        ...state.queries,
+        [queryKey]: queryState,
+      },
+    }));
+  }
 }
 
 function deleteKeyImmutable<TKey extends string | number | symbol, TValue>(
