@@ -46,12 +46,17 @@ import {
 
 import { Session } from "./Session";
 import {
+  getLastUnreadCommentWithMention,
+  type ThreadNotificationData,
+} from "./thread-notification";
+import {
   assertNonEmpty,
   assertSecretKey,
   fetchPolyfill,
   getBaseUrl,
   normalizeStatusCode,
 } from "./utils";
+import { type ThreadNotificationEvent } from "./webhooks";
 
 type ToSimplifiedJson<S extends LsonObject> = LsonObject extends S
   ? JsonObject
@@ -1643,6 +1648,65 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
+  }
+
+  /**
+   * Get thread notification data.
+   *
+   * It returns either an object containing a list of unread replies for a thread
+   * or either an object containing a list of one unread comment containing a mentioned user.
+   *
+   * @param event The thread notification event
+   * @returns A thread notification data object
+   * @example
+   * {
+   *  type: "unreadReplies",
+   *  comments: [unread_comment_0, unread_comment_1],
+   * }
+   *
+   * @example
+   * {
+   *  type: "unreadMentions",
+   *  comments: [unreadCommentWithMention]
+   * }
+   */
+  public async getThreadNotificationData(params: {
+    event: ThreadNotificationEvent;
+  }): Promise<ThreadNotificationData> {
+    const { event } = params;
+    const { threadId, roomId, userId, inboxNotificationId } = event.data;
+
+    const [thread, inboxNotification] = await Promise.all([
+      this.getThread({ roomId, threadId }),
+      this.getInboxNotification({ inboxNotificationId, userId }),
+    ]);
+
+    const readAt = inboxNotification.readAt;
+    const unreadComments = thread.comments
+      .filter((c) => c.userId !== userId)
+      .filter((c) => c.body !== undefined && c.deletedAt === undefined)
+      .filter((c) =>
+        readAt
+          ? c.createdAt > readAt && c.createdAt <= inboxNotification.notifiedAt
+          : c.createdAt <= inboxNotification.notifiedAt
+      );
+
+    const lastUnreadCommentWithMention = getLastUnreadCommentWithMention({
+      unreadComments,
+      mentionUserId: userId,
+    });
+
+    if (lastUnreadCommentWithMention) {
+      return {
+        type: "unreadMention",
+        comments: [lastUnreadCommentWithMention],
+      };
+    }
+
+    return {
+      type: "unreadReplies",
+      comments: unreadComments,
+    };
   }
 }
 
