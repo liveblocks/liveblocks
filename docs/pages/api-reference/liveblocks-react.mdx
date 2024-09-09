@@ -2616,6 +2616,20 @@ const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
 updateRoomNotificationSettings({ threads: "all" });
 ```
 
+## Version History (Private Beta)
+
+### useHistoryVersions [@badge=RoomProvider]
+
+Returns the versions of the room. See
+[Version History Components](/docs/api-reference/liveblocks-react-ui#Version-history-components)
+for more information on how to display versions.
+
+```tsx
+import { useHistoryVersions } from "@liveblocks/react";
+
+const { versions, error, isLoading } = useHistoryVersions();
+```
+
 ## Miscellaneous
 
 ### useUser [@badge=Both]
