@@ -958,7 +958,7 @@ describe("useThreads", () => {
     } = createContextsForTest();
 
     const store = client[kInternal].umbrellaStore;
-    store.force_set__call_from_unit_tests_only_plz((state) => ({
+    store.force_set((state) => ({
       ...state,
       threads: {
         [thread1.id]: thread1,

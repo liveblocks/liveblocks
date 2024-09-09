@@ -722,35 +722,12 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
 
       client.markInboxNotificationAsRead(inboxNotificationId).then(
         () => {
-          store.set_ibn_and_optm((state) => {
-            const existingNotification =
-              state.inboxNotifications[inboxNotificationId];
-
-            // If existing notification has been deleted, we return the existing state
-            if (existingNotification === undefined) {
-              return {
-                ...state,
-                inboxNotifications: state.inboxNotifications,
-                optimisticUpdates: state.optimisticUpdates.filter(
-                  (update) => update.id !== optimisticUpdateId
-                ),
-              };
-            }
-
-            return {
-              ...state,
-              inboxNotifications: {
-                ...state.inboxNotifications,
-                [inboxNotificationId]: {
-                  ...existingNotification,
-                  readAt,
-                },
-              },
-              optimisticUpdates: state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              ),
-            };
-          });
+          // Replace the optimistic update by the real thing
+          store.updateInboxNotification(
+            inboxNotificationId,
+            optimisticUpdateId,
+            (inboxNotification) => ({ ...inboxNotification, readAt })
+          );
         },
         () => {
           // TODO: Broadcast errors to client
@@ -773,20 +750,11 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
 
     client.markAllInboxNotificationsAsRead().then(
       () => {
-        store.set_ibn_and_optm((state) => ({
-          ...state,
-          inboxNotifications: Object.fromEntries(
-            Array.from(Object.entries(state.inboxNotifications)).map(
-              ([id, inboxNotification]) => [
-                id,
-                { ...inboxNotification, readAt },
-              ]
-            )
-          ),
-          optimisticUpdates: state.optimisticUpdates.filter(
-            (update) => update.id !== optimisticUpdateId
-          ),
-        }));
+        // Replace the optimistic update by the real thing
+        store.updateAllInboxNotifications(
+          optimisticUpdateId,
+          (inboxNotification) => ({ ...inboxNotification, readAt })
+        );
       },
       () => {
         // TODO: Broadcast errors to client
@@ -810,31 +778,11 @@ function useDeleteInboxNotification_withClient(client: OpaqueClient) {
 
       client.deleteInboxNotification(inboxNotificationId).then(
         () => {
-          store.set_ibn_and_optm((state) => {
-            const existingNotification =
-              state.inboxNotifications[inboxNotificationId];
-
-            // If existing notification has been deleted, we return the existing state
-            if (existingNotification === undefined) {
-              return {
-                ...state,
-                optimisticUpdates: state.optimisticUpdates.filter(
-                  (update) => update.id !== optimisticUpdateId
-                ),
-              };
-            }
-
-            const { [inboxNotificationId]: _, ...inboxNotifications } =
-              state.inboxNotifications;
-
-            return {
-              ...state,
-              inboxNotifications,
-              optimisticUpdates: state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              ),
-            };
-          });
+          // Replace the optimistic update by the real thing
+          store.deleteInboxNotification(
+            inboxNotificationId,
+            optimisticUpdateId
+          );
         },
         () => {
           // TODO: Broadcast errors to client
@@ -857,13 +805,8 @@ function useDeleteAllInboxNotifications_withClient(client: OpaqueClient) {
 
     client.deleteAllInboxNotifications().then(
       () => {
-        store.set_ibn_and_optm((state) => ({
-          ...state,
-          inboxNotifications: {},
-          optimisticUpdates: state.optimisticUpdates.filter(
-            (update) => update.id !== optimisticUpdateId
-          ),
-        }));
+        // Replace the optimistic update by the real thing
+        store.deleteAllInboxNotifications(optimisticUpdateId);
       },
       () => {
         // TODO: Broadcast errors to client

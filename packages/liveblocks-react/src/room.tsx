@@ -818,7 +818,7 @@ function RoomProviderInner<
       // If thread deleted event is received, we remove the thread from the local cache
       // no need for more processing
       if (message.type === ServerMsgCode.THREAD_DELETED) {
-        store.deleteThread(message.threadId);
+        store.hardDeleteThread(message.threadId);
         return;
       }
 
@@ -827,7 +827,7 @@ function RoomProviderInner<
 
       // If no thread info was returned (i.e., 404), we remove the thread and relevant inbox notifications from local cache.
       if (!info.thread) {
-        store.deleteThread(message.threadId);
+        store.hardDeleteThread(message.threadId);
         return;
       }
       const { thread, inboxNotification } = info;
@@ -1520,16 +1520,8 @@ function useCreateThread<M extends BaseMetadata>(): (
 
       room.createThread({ threadId, commentId, body, metadata }).then(
         (thread) => {
-          store.set_thr_and_optm((state) => ({
-            ...state,
-            threads: {
-              ...state.threads,
-              [threadId]: thread,
-            },
-            optimisticUpdates: state.optimisticUpdates.filter(
-              (update) => update.id !== optimisticUpdateId
-            ),
-          }));
+          // Replace the optimistic update by the real thing
+          store.createThread(optimisticUpdateId, thread);
         },
         (err: Error) =>
           onMutationFailure(
@@ -1576,27 +1568,8 @@ function useDeleteThread(): (threadId: string) => void {
 
       room.deleteThread(threadId).then(
         () => {
-          store.set_thr_and_optm((state) => {
-            const existingThread = state.threads[threadId];
-            if (existingThread === undefined) {
-              return state;
-            }
-
-            return {
-              ...state,
-              threads: {
-                ...state.threads,
-                [threadId]: {
-                  ...existingThread,
-                  updatedAt: new Date(),
-                  deletedAt: new Date(),
-                },
-              },
-              optimisticUpdates: state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              ),
-            };
-          });
+          // Replace the optimistic update by the real thing
+          store.softDeleteThread(threadId, optimisticUpdateId);
         },
         (err: Error) =>
           onMutationFailure(
@@ -1631,53 +1604,15 @@ function useEditThreadMetadata<M extends BaseMetadata>() {
         updatedAt,
       });
 
-      room.editThreadMetadata({ metadata, threadId }).then(
-        (metadata) => {
-          store.set_thr_and_optm((state) => {
-            const existingThread = state.threads[threadId];
-            const updatedOptimisticUpdates = state.optimisticUpdates.filter(
-              (update) => update.id !== optimisticUpdateId
-            );
-
-            // If the thread doesn't exist in the cache, we do not update the metadata
-            if (existingThread === undefined) {
-              return {
-                ...state,
-                optimisticUpdates: updatedOptimisticUpdates,
-              };
-            }
-
-            // If the thread has been deleted, we do not update the metadata
-            if (existingThread.deletedAt !== undefined) {
-              return {
-                ...state,
-                optimisticUpdates: updatedOptimisticUpdates,
-              };
-            }
-
-            if (
-              existingThread.updatedAt &&
-              existingThread.updatedAt > updatedAt
-            ) {
-              return {
-                ...state,
-                optimisticUpdates: updatedOptimisticUpdates,
-              };
-            }
-
-            return {
-              ...state,
-              threads: {
-                ...state.threads,
-                [threadId]: {
-                  ...existingThread,
-                  metadata,
-                },
-              },
-              optimisticUpdates: updatedOptimisticUpdates,
-            };
-          });
-        },
+      room.editThreadMetadata({ threadId, metadata }).then(
+        (metadata) =>
+          // Replace the optimistic update by the real thing
+          store.updateThread(
+            threadId,
+            optimisticUpdateId,
+            (thread) => ({ ...thread, metadata }),
+            updatedAt
+          ),
         (err: Error) =>
           onMutationFailure(
             err,
@@ -1729,50 +1664,8 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
 
       room.createComment({ threadId, commentId, body }).then(
         (newComment) => {
-          store.set_thr_ibn_and_optm((state) => {
-            const existingThread = state.threads[threadId];
-            const updatedOptimisticUpdates = state.optimisticUpdates.filter(
-              (update) => update.id !== optimisticUpdateId
-            );
-
-            if (existingThread === undefined) {
-              return {
-                ...state,
-                optimisticUpdates: updatedOptimisticUpdates,
-              };
-            }
-
-            const inboxNotification = Object.values(
-              state.inboxNotifications
-            ).find(
-              (notification) =>
-                notification.kind === "thread" &&
-                notification.threadId === threadId
-            );
-
-            // If the thread has an inbox notification associated with it, we update the notification's `notifiedAt` and `readAt` values
-            const updatedInboxNotifications =
-              inboxNotification !== undefined
-                ? {
-                    ...state.inboxNotifications,
-                    [inboxNotification.id]: {
-                      ...inboxNotification,
-                      notifiedAt: newComment.createdAt,
-                      readAt: newComment.createdAt,
-                    },
-                  }
-                : state.inboxNotifications;
-
-            return {
-              ...state,
-              threads: {
-                ...state.threads,
-                [threadId]: upsertComment(existingThread, newComment), // Upsert the new comment into the thread comments list (if applicable)
-              },
-              inboxNotifications: updatedInboxNotifications,
-              optimisticUpdates: updatedOptimisticUpdates,
-            };
-          });
+          // Replace the optimistic update by the real thing
+          store.createComment(newComment, optimisticUpdateId);
         },
         (err: Error) =>
           onMutationFailure(
@@ -1839,28 +1732,10 @@ function useEditComment(): (options: EditCommentOptions) => void {
 
       room.editComment({ threadId, commentId, body }).then(
         (editedComment) => {
-          store.set_thr_and_optm((state) => {
-            const existingThread = state.threads[threadId];
-            const updatedOptimisticUpdates = state.optimisticUpdates.filter(
-              (update) => update.id !== optimisticUpdateId
-            );
-
-            if (existingThread === undefined) {
-              return {
-                ...state,
-                optimisticUpdates: updatedOptimisticUpdates,
-              };
-            }
-
-            return {
-              ...state,
-              threads: {
-                ...state.threads,
-                [threadId]: upsertComment(existingThread, editedComment), // Upsert the edited comment into the thread comments list (if applicable)
-              },
-              optimisticUpdates: updatedOptimisticUpdates,
-            };
-          });
+          // Replace the optimistic update by the real thing
+          store.updateThread(threadId, optimisticUpdateId, (thread) =>
+            upsertComment(thread, editedComment)
+          );
         },
         (err: Error) =>
           onMutationFailure(
@@ -1908,29 +1783,13 @@ function useDeleteComment() {
 
       room.deleteComment({ threadId, commentId }).then(
         () => {
-          store.set_thr_and_optm((state) => {
-            const existingThread = state.threads[threadId];
-            const updatedOptimisticUpdates = state.optimisticUpdates.filter(
-              (update) => update.id !== optimisticUpdateId
-            );
-
-            // If thread does not exist, we return the existing state
-            if (existingThread === undefined) {
-              return {
-                ...state,
-                optimisticUpdates: updatedOptimisticUpdates,
-              };
-            }
-
-            return {
-              ...state,
-              threads: {
-                ...state.threads,
-                [threadId]: deleteComment(existingThread, commentId, deletedAt),
-              },
-              optimisticUpdates: updatedOptimisticUpdates,
-            };
-          });
+          // Replace the optimistic update by the real thing
+          store.updateThread(
+            threadId,
+            optimisticUpdateId,
+            (thread) => deleteComment(thread, commentId, deletedAt),
+            deletedAt
+          );
         },
         (err: Error) =>
           onMutationFailure(
@@ -1972,33 +1831,13 @@ function useAddReaction<M extends BaseMetadata>() {
 
       room.addReaction({ threadId, commentId, emoji }).then(
         (addedReaction) => {
-          store.set_thr_and_optm((state): UmbrellaStoreState<M> => {
-            const existingThread = state.threads[threadId];
-            const updatedOptimisticUpdates = state.optimisticUpdates.filter(
-              (update) => update.id !== optimisticUpdateId
-            );
-
-            // If the thread doesn't exist in the cache, we do not update the metadata
-            if (existingThread === undefined) {
-              return {
-                ...state,
-                optimisticUpdates: updatedOptimisticUpdates,
-              };
-            }
-
-            return {
-              ...state,
-              threads: {
-                ...state.threads,
-                [threadId]: addReaction(
-                  existingThread,
-                  commentId,
-                  addedReaction
-                ),
-              },
-              optimisticUpdates: updatedOptimisticUpdates,
-            };
-          });
+          // Replace the optimistic update by the real thing
+          store.updateThread(
+            threadId,
+            optimisticUpdateId,
+            (thread) => addReaction(thread, commentId, addedReaction),
+            createdAt
+          );
         },
         (err: Error) =>
           onMutationFailure(
@@ -2046,35 +1885,14 @@ function useRemoveReaction() {
 
       room.removeReaction({ threadId, commentId, emoji }).then(
         () => {
-          store.set_thr_and_optm((state) => {
-            const existingThread = state.threads[threadId];
-            const updatedOptimisticUpdates = state.optimisticUpdates.filter(
-              (update) => update.id !== optimisticUpdateId
-            );
-
-            // If the thread doesn't exist in the cache, we do not update the metadata
-            if (existingThread === undefined) {
-              return {
-                ...state,
-                optimisticUpdates: updatedOptimisticUpdates,
-              };
-            }
-
-            return {
-              ...state,
-              threads: {
-                ...state.threads,
-                [threadId]: removeReaction(
-                  existingThread,
-                  commentId,
-                  emoji,
-                  userId,
-                  removedAt
-                ),
-              },
-              optimisticUpdates: updatedOptimisticUpdates,
-            };
-          });
+          // Replace the optimistic update by the real thing
+          store.updateThread(
+            threadId,
+            optimisticUpdateId,
+            (thread) =>
+              removeReaction(thread, commentId, emoji, userId, removedAt),
+            removedAt
+          );
         },
         (err: Error) =>
           onMutationFailure(
@@ -2127,19 +1945,12 @@ function useMarkThreadAsRead() {
 
       room.markInboxNotificationAsRead(inboxNotification.id).then(
         () => {
-          store.set_ibn_and_optm((state) => ({
-            ...state,
-            inboxNotifications: {
-              ...state.inboxNotifications,
-              [inboxNotification.id]: {
-                ...inboxNotification,
-                readAt: now,
-              },
-            },
-            optimisticUpdates: state.optimisticUpdates.filter(
-              (update) => update.id !== optimisticUpdateId
-            ),
-          }));
+          // Replace the optimistic update by the real thing
+          store.updateInboxNotification(
+            inboxNotification.id,
+            optimisticUpdateId,
+            (inboxNotification) => ({ ...inboxNotification, readAt: now })
+          );
         },
         (err: Error) => {
           onMutationFailure(
@@ -2181,50 +1992,13 @@ function useMarkThreadAsResolved() {
 
       room.markThreadAsResolved(threadId).then(
         () => {
-          store.set_thr_and_optm((state) => {
-            const existingThread = state.threads[threadId];
-            const updatedOptimisticUpdates = state.optimisticUpdates.filter(
-              (update) => update.id !== optimisticUpdateId
-            );
-
-            // If the thread doesn't exist in the cache, we do not update the resolved property
-            if (existingThread === undefined) {
-              return {
-                ...state,
-                optimisticUpdates: updatedOptimisticUpdates,
-              };
-            }
-
-            // If the thread has been deleted, we do not update the resolved property
-            if (existingThread.deletedAt !== undefined) {
-              return {
-                ...state,
-                optimisticUpdates: updatedOptimisticUpdates,
-              };
-            }
-
-            if (
-              existingThread.updatedAt &&
-              existingThread.updatedAt > updatedAt
-            ) {
-              return {
-                ...state,
-                optimisticUpdates: updatedOptimisticUpdates,
-              };
-            }
-
-            return {
-              ...state,
-              threads: {
-                ...state.threads,
-                [threadId]: {
-                  ...existingThread,
-                  resolved: true,
-                },
-              },
-              optimisticUpdates: updatedOptimisticUpdates,
-            };
-          });
+          // Replace the optimistic update by the real thing
+          store.updateThread(
+            threadId,
+            optimisticUpdateId,
+            (thread) => ({ ...thread, resolved: true }),
+            updatedAt
+          );
         },
         (err: Error) =>
           onMutationFailure(
@@ -2265,50 +2039,13 @@ function useMarkThreadAsUnresolved() {
 
       room.markThreadAsUnresolved(threadId).then(
         () => {
-          store.set_thr_and_optm((state) => {
-            const existingThread = state.threads[threadId];
-            const updatedOptimisticUpdates = state.optimisticUpdates.filter(
-              (update) => update.id !== optimisticUpdateId
-            );
-
-            // If the thread doesn't exist in the cache, we do not update the resolved property
-            if (existingThread === undefined) {
-              return {
-                ...state,
-                optimisticUpdates: updatedOptimisticUpdates,
-              };
-            }
-
-            // If the thread has been deleted, we do not update the resolved property
-            if (existingThread.deletedAt !== undefined) {
-              return {
-                ...state,
-                optimisticUpdates: updatedOptimisticUpdates,
-              };
-            }
-
-            if (
-              existingThread.updatedAt &&
-              existingThread.updatedAt > updatedAt
-            ) {
-              return {
-                ...state,
-                optimisticUpdates: updatedOptimisticUpdates,
-              };
-            }
-
-            return {
-              ...state,
-              threads: {
-                ...state.threads,
-                [threadId]: {
-                  ...existingThread,
-                  resolved: false,
-                },
-              },
-              optimisticUpdates: updatedOptimisticUpdates,
-            };
-          });
+          // Replace the optimistic update by the real thing
+          store.updateThread(
+            threadId,
+            optimisticUpdateId,
+            (thread) => ({ ...thread, resolved: false }),
+            updatedAt
+          );
         },
         (err: Error) =>
           onMutationFailure(
@@ -2447,15 +2184,12 @@ function useUpdateRoomNotificationSettings() {
 
       room.updateNotificationSettings(settings).then(
         (settings) => {
-          store.set_ibn_and_optm((state) => ({
-            ...state,
-            notificationSettings: {
-              [room.id]: settings,
-            },
-            optimisticUpdates: state.optimisticUpdates.filter(
-              (update) => update.id !== optimisticUpdateId
-            ),
-          }));
+          // Replace the optimistic update by the real thing
+          store.updateRoomInboxNotificationSettings2(
+            room.id,
+            optimisticUpdateId,
+            settings
+          );
         },
         (err: Error) =>
           onMutationFailure(
