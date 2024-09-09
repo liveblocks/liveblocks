@@ -182,10 +182,10 @@ export type UmbrellaStoreState<M extends BaseMetadata> = Readonly<{
 }>;
 
 export class UmbrellaStore<M extends BaseMetadata> {
-  #store: Store<UmbrellaStoreState<M>>;
+  private _store: Store<UmbrellaStoreState<M>>;
 
   constructor() {
-    this.#store = createStore<UmbrellaStoreState<M>>({
+    this._store = createStore<UmbrellaStoreState<M>>({
       threads: {},
       queries: {},
       optimisticUpdates: [],
@@ -201,25 +201,25 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   public get(): Readonly<UmbrellaStoreState<M>> {
-    return this.#store.get();
+    return this._store.get();
   }
 
   public set(
     callback: (
       currentState: Readonly<UmbrellaStoreState<M>>
     ) => Readonly<UmbrellaStoreState<M>>
-  ) {
-    return this.#store.set(callback);
+  ): void {
+    return this._store.set(callback);
   }
 
   public subscribe(
     callback: (state: Readonly<UmbrellaStoreState<M>>) => void
   ): () => void {
-    return this.#store.subscribe(callback);
+    return this._store.subscribe(callback);
   }
 
-  public deleteThread(threadId: string) {
-    this.#store.set((state) => {
+  public deleteThread(threadId: string): void {
+    this._store.set((state) => {
       return {
         ...state,
         threads: deleteKeyImmutable(state.threads, threadId),
@@ -238,7 +238,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     thread: ThreadData<M>,
     inboxNotification?: InboxNotificationData
   ): void {
-    this.#store.set((state) => {
+    this._store.set((state) => {
       const existingThread = state.threads[thread.id];
 
       return {
@@ -265,8 +265,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
     deletedThreads: ThreadDeleteInfo[],
     deletedInboxNotifications: InboxNotificationDeleteInfo[],
     queryKey?: string
-  ) {
-    this.#store.set((state) => ({
+  ): void {
+    this._store.set((state) => ({
       ...state,
       threads: applyThreadUpdates(state.threads, {
         newThreads: threads,
@@ -290,8 +290,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
     roomId: string,
     settings: RoomNotificationSettings,
     queryKey: string
-  ) {
-    this.#store.set((state) => ({
+  ): void {
+    this._store.set((state) => ({
       ...state,
       notificationSettings: {
         ...state.notificationSettings,
@@ -304,15 +304,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }));
   }
 
-  public pushOptimisticUpdate(optimisticUpdate: OptimisticUpdate<M>) {
-    this.#store.set((state) => ({
+  public pushOptimisticUpdate(optimisticUpdate: OptimisticUpdate<M>): void {
+    this._store.set((state) => ({
       ...state,
       optimisticUpdates: [...state.optimisticUpdates, optimisticUpdate],
     }));
   }
 
-  public setQueryState(queryKey: string, queryState: QueryState) {
-    this.#store.set((state) => ({
+  public setQueryState(queryKey: string, queryState: QueryState): void {
+    this._store.set((state) => ({
       ...state,
       queries: {
         ...state.queries,
