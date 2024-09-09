@@ -1,13 +1,10 @@
-import { Editor } from "../components/Editor";
-import { Room } from "../Room";
 import { Notifications } from "../components/Notifications";
-import { Avatars } from "../components/Avatars";
 import { Logo } from "../components/Logo";
 import {
-  createPage,
-  getPages,
-  getPageTitle,
+  createRoom,
+  getRooms,
   TypedRoomData,
+  getRoomTitle,
 } from "../lib/liveblocks";
 import { redirect } from "next/navigation";
 import { CreateIcon } from "../icons/CreateIcon";
@@ -21,13 +18,15 @@ import Link from "next/link";
 // export const revalidate = 0;
 
 export default async function Page({ children }: { children: ReactNode }) {
-  const pages = await getPages();
+  const rooms = await getRooms();
+
   async function create() {
     "use server";
 
-    const room = await createPage();
+    const room = await createRoom();
     redirect(`/${room.metadata.pageId}`);
   }
+
   return (
     <div className="flex h-full max-h-full">
       <div className="w-[240px] h-full bg-gray-50 border-r border-gray-100 flex-shrink-0 flex flex-col">
@@ -49,9 +48,9 @@ export default async function Page({ children }: { children: ReactNode }) {
 
         <div className="text-sm font-medium text-gray-500 mt-6 pl-2">Pages</div>
         <div className="overflow-y-auto p-2">
-          {pages.map((page) => (
-            <Suspense key={page.id} fallback={<div />}>
-              <PageLink page={page} />
+          {rooms.map((room) => (
+            <Suspense key={room.id} fallback={<div />}>
+              <PageLink room={room} />
             </Suspense>
           ))}
         </div>
@@ -62,13 +61,13 @@ export default async function Page({ children }: { children: ReactNode }) {
   );
 }
 
-async function PageLink({ page }: { page: TypedRoomData }) {
-  const title = await getPageTitle(page.metadata.pageId);
+async function PageLink({ room }: { room: TypedRoomData }) {
+  const title = await getRoomTitle(room.id);
 
   return (
     <div className="flex justify-between items-center hover:bg-gray-200 transition-colors rounded text-medium text-gray-700 hover:text-gray-900 pr-2">
       <Link
-        href={`/${page.metadata.pageId}`}
+        href={`/${room.metadata.pageId}`}
         className="py-1 px-3 flex-1  truncate"
       >
         {title}

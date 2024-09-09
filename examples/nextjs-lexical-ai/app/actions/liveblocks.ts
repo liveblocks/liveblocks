@@ -1,6 +1,7 @@
 "use server";
 
 import { getRoomTitle } from "../lib/liveblocks";
+import { getPageId } from "../config";
 
 export async function getRoomInfo(roomIds: string[]) {
   const promises = [];
@@ -10,5 +11,9 @@ export async function getRoomInfo(roomIds: string[]) {
   }
 
   const titles = await Promise.all(promises);
-  return titles.map((title) => ({ name: title }));
+
+  return titles.map((title, index) => ({
+    name: title,
+    url: `/${getPageId(roomIds[index])}`,
+  }));
 }

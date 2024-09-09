@@ -186,3 +186,7 @@ select {
 .lb-thread-composer:after {
   content: none;
 }
+
+.lb-portal {
+  z-index: 9999999;
+}
