@@ -102,13 +102,15 @@ export function InboxNotificationComment({
             )}
             {showAttachments && comment.attachments.length > 0 ? (
               <div className="lb-comment-attachments">
-                {comment.attachments.map((attachment) => (
-                  <CommentNonInteractiveFileAttachment
-                    key={attachment.id}
-                    attachment={attachment}
-                    overrides={overrides}
-                  />
-                ))}
+                <div className="lb-attachments">
+                  {comment.attachments.map((attachment) => (
+                    <CommentNonInteractiveFileAttachment
+                      key={attachment.id}
+                      attachment={attachment}
+                      overrides={overrides}
+                    />
+                  ))}
+                </div>
               </div>
             ) : null}
           </>

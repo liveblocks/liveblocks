@@ -65,7 +65,10 @@ import { useRefs } from "../utils/use-refs";
 import { useVisibleCallback } from "../utils/use-visible";
 import { useWindowFocus } from "../utils/use-window-focus";
 import { Composer } from "./Composer";
-import { FileAttachment } from "./internal/Attachment";
+import {
+  FileAttachment,
+  separateMediaAttachments,
+} from "./internal/Attachment";
 import { Avatar } from "./internal/Avatar";
 import { Button } from "./internal/Button";
 import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
@@ -402,6 +405,7 @@ function CommentFileAttachment({
       attachment={attachment}
       overrides={overrides}
       onClick={url ? handleClick : undefined}
+      enlargeMediaAttachments
     />
   );
 }
@@ -492,6 +496,9 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     const [isTarget, setTarget] = useState(false);
     const [isMoreActionOpen, setMoreActionOpen] = useState(false);
     const [isReactionActionOpen, setReactionActionOpen] = useState(false);
+    const attachments = useMemo(() => {
+      return separateMediaAttachments(comment.attachments);
+    }, [comment.attachments]);
 
     const stopPropagation = useCallback((event: SyntheticEvent) => {
       event.stopPropagation();
@@ -780,15 +787,19 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                     Link: CommentLink,
                   }}
                 />
-                {showAttachments && comment.attachments.length > 0 ? (
+                {showAttachments && attachments.length > 0 ? (
                   <div className="lb-comment-attachments">
-                    {comment.attachments.map((attachment) => (
-                      <CommentFileAttachment
-                        key={attachment.id}
-                        attachment={attachment}
-                        overrides={overrides}
-                        onAttachmentClick={onAttachmentClick}
-                      />
+                    {attachments.map((attachments, index) => (
+                      <div key={index} className="lb-attachments">
+                        {attachments.map((attachment) => (
+                          <CommentFileAttachment
+                            key={attachment.id}
+                            attachment={attachment}
+                            overrides={overrides}
+                            onAttachmentClick={onAttachmentClick}
+                          />
+                        ))}
+                      </div>
                     ))}
                   </div>
                 ) : null}

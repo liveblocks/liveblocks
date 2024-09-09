@@ -1042,6 +1042,12 @@
 
 .lb-comment-attachments,
 .lb-composer-attachments {
+  display: flex;
+  flex-direction: column;
+  gap: calc(0.75 * var(--lb-spacing));
+}
+
+.lb-attachments {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
   gap: calc(0.75 * var(--lb-spacing));
@@ -1054,6 +1060,7 @@
 
 .lb-attachment {
   position: relative;
+  display: flex;
   inline-size: 100%;
   min-inline-size: 0;
   border-radius: var(--lb-radius);
@@ -1067,6 +1074,13 @@
   &:where(:not([tabindex="-1"])) {
     &:where(:hover, :focus-visible) {
       background: var(--lb-foreground-subtle);
+    }
+  }
+
+  &:where([data-error]) {
+    :where(.lb-attachment-preview) {
+      background: var(--lb-destructive);
+      color: var(--lb-destructive-foreground);
     }
   }
 }
@@ -1110,17 +1124,42 @@
   }
 }
 
+.lb-attachment-details {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: calc(0.25 * var(--lb-spacing));
+  justify-content: center;
+  min-inline-size: 0;
+  font-size: 0.875em;
+}
+
 .lb-attachment-name {
   display: flex;
+  font-weight: 500;
 }
 
 .lb-attachment-name-base,
 .lb-attachment-description {
   @include truncate;
+
+  transition-property: color;
 }
 
 .lb-attachment-preview {
   position: relative;
+  display: flex;
+  flex: none;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  background: color-mix(
+    in srgb,
+    transparent,
+    var(--lb-foreground) var(--lb-foreground-contrast)
+  );
+  color: var(--lb-foreground-tertiary);
+  transition-property: background, color;
 }
 
 .lb-attachment-preview-media {
@@ -1179,53 +1218,18 @@
 }
 
 .lb-file-attachment {
-  display: flex;
   gap: calc(0.5 * var(--lb-spacing));
   padding: calc(0.5 * var(--lb-spacing));
   padding-inline-end: calc(0.65 * var(--lb-spacing));
 
   :where(.lb-attachment-preview) {
-    display: flex;
-    flex: none;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
     aspect-ratio: 1;
     inline-size: 2.5rem;
     border-radius: calc(0.5 * var(--lb-radius));
-    background: color-mix(
-      in srgb,
-      transparent,
-      var(--lb-foreground) var(--lb-foreground-contrast)
-    );
-    color: var(--lb-foreground-tertiary);
-    transition-property: background, color;
-  }
-
-  &:where([data-error]) {
-    :where(.lb-attachment-preview) {
-      background: var(--lb-destructive);
-      color: var(--lb-destructive-foreground);
-    }
-  }
-
-  :where(.lb-attachment-details) {
-    display: flex;
-    flex-direction: column;
-    gap: calc(0.25 * var(--lb-spacing));
-    justify-content: center;
-    min-inline-size: 0;
-    font-size: 0.875em;
-  }
-
-  :where(.lb-attachment-name),
-  :where(.lb-attachment-description) {
-    transition-property: color;
   }
 
   :where(.lb-attachment-name) {
     color: var(--lb-foreground-secondary);
-    font-weight: 500;
   }
 
   :where(.lb-attachment-description) {
@@ -1233,13 +1237,55 @@
   }
 
   :where(:not([tabindex="-1"])) {
-    &:where(:hover, :focus-visible) {
+    &:where(:hover, :focus-visible, :focus-within) {
       :where(.lb-attachment-name) {
         color: var(--lb-foreground);
       }
 
       :where(.lb-attachment-description) {
         color: var(--lb-foreground-secondary);
+      }
+    }
+  }
+}
+
+.lb-media-attachment {
+  aspect-ratio: 16 / 10;
+
+  :where(.lb-attachment-preview) {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: #000;
+    color: #fff;
+  }
+
+  :where(.lb-attachment-details) {
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: 0;
+    padding: calc(0.75 * var(--lb-spacing));
+    border-end-start-radius: inherit;
+    border-end-end-radius: inherit;
+    background: linear-gradient(to bottom, transparent, rgba(0 0 0 / 80%));
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0 0 0 / 40%);
+    opacity: 0;
+    transition-property: opacity;
+  }
+
+  /* :where(.lb-attachment-name) {
+    color: var(--lb-foreground-secondary);
+  }
+
+  :where(.lb-attachment-description) {
+    color: var(--lb-foreground-tertiary);
+  } */
+
+  &:where(:not([tabindex="-1"])) {
+    &:where(:hover, :focus-visible, :focus-within) {
+      :where(.lb-attachment-details) {
+        opacity: 1;
       }
     }
   }

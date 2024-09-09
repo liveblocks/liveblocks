@@ -395,15 +395,17 @@ function ComposerAttachments({
       className={classNames("lb-composer-attachments", className)}
       {...props}
     >
-      {attachments.map((attachment) => {
-        return (
-          <ComposerFileAttachment
-            key={attachment.id}
-            attachment={attachment}
-            overrides={overrides}
-          />
-        );
-      })}
+      <div className="lb-attachments">
+        {attachments.map((attachment) => {
+          return (
+            <ComposerFileAttachment
+              key={attachment.id}
+              attachment={attachment}
+              overrides={overrides}
+            />
+          );
+        })}
+      </div>
     </div>
   );
 }
