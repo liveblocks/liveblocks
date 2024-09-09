@@ -818,7 +818,7 @@ function RoomProviderInner<
       // If thread deleted event is received, we remove the thread from the local cache
       // no need for more processing
       if (message.type === ServerMsgCode.THREAD_DELETED) {
-        store.hardDeleteThread(message.threadId);
+        store.deleteThread(message.threadId, null);
         return;
       }
 
@@ -827,7 +827,7 @@ function RoomProviderInner<
 
       // If no thread info was returned (i.e., 404), we remove the thread and relevant inbox notifications from local cache.
       if (!info.thread) {
-        store.hardDeleteThread(message.threadId);
+        store.deleteThread(message.threadId, null);
         return;
       }
       const { thread, inboxNotification } = info;
@@ -1569,7 +1569,7 @@ function useDeleteThread(): (threadId: string) => void {
       room.deleteThread(threadId).then(
         () => {
           // Replace the optimistic update by the real thing
-          store.softDeleteThread(threadId, optimisticUpdateId);
+          store.deleteThread(threadId, optimisticUpdateId);
         },
         (err: Error) =>
           onMutationFailure(

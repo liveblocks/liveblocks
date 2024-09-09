@@ -224,16 +224,19 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * optimistic update. This helper lies at the core of all state updates.
    */
   private replaceOptimisticUpdate(
-    optimisticUpdateId: string,
+    optimisticUpdateId: string | null,
     callback: (
       state: Readonly<UmbrellaStoreState<M>>
     ) => Readonly<UmbrellaStoreState<M>>
   ): void {
     return this._store.set((state) => {
       const newState = callback(state);
-      const newOptimisticUpdates = newState.optimisticUpdates.filter(
-        (ou) => ou.id !== optimisticUpdateId
-      );
+      const newOptimisticUpdates =
+        optimisticUpdateId !== null
+          ? newState.optimisticUpdates.filter(
+              (ou) => ou.id !== optimisticUpdateId
+            )
+          : newState.optimisticUpdates;
       return { ...newState, optimisticUpdates: newOptimisticUpdates };
     });
   }
@@ -372,7 +375,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
    */
   public updateThread(
     threadId: string,
-    optimisticUpdateId: string,
+    optimisticUpdateId: string | null,
     callback: (
       thread: Readonly<ThreadDataWithDeleteInfo<M>>
     ) => Readonly<ThreadDataWithDeleteInfo<M>>,
@@ -416,7 +419,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * - The thread ID isn't found in the cache; or
    * - The thread ID was already deleted from the cache
    */
-  public softDeleteThread(threadId: string, optimisticUpdateId: string): void {
+  public deleteThread(
+    threadId: string,
+    optimisticUpdateId: string | null
+  ): void {
     return this.updateThread(
       threadId,
       optimisticUpdateId,
@@ -424,23 +430,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
       // A deletion is actually an update of the deletedAt property internally
       (thread) => ({ ...thread, updatedAt: new Date(), deletedAt: new Date() })
     );
-  }
-
-  // XXX Should we deprecate this and only ever do soft-deletes in the cache?
-  public hardDeleteThread(threadId: string): void {
-    this._store.set((state) => {
-      return {
-        ...state,
-        threads: deleteKeyImmutable(state.threads, threadId),
-        inboxNotifications: Object.fromEntries(
-          Object.entries(state.inboxNotifications).filter(
-            ([_id, notification]) =>
-              notification.kind === "thread" &&
-              notification.threadId === threadId
-          )
-        ),
-      };
-    });
   }
 
   /**
@@ -493,7 +482,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     );
   }
 
-  // XXX Should ideally take a corresponding optimistic update ID to replace
   public updateThreadAndNotification(
     thread: ThreadData<M>,
     inboxNotification?: InboxNotificationData
@@ -622,18 +610,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
       },
     }));
   }
-}
-
-function deleteKeyImmutable<TKey extends string | number | symbol, TValue>(
-  record: Record<TKey, TValue>,
-  key: TKey
-) {
-  if (Object.prototype.hasOwnProperty.call(record, key)) {
-    const { [key]: _toDelete, ...rest } = record;
-    return rest;
-  }
-
-  return record;
 }
 
 /**
