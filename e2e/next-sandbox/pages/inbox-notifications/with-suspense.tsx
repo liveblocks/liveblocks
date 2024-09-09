@@ -197,7 +197,7 @@ function TopPart() {
 
 function usePendingUpdatesCount() {
   const client = useClient();
-  const store = client[kInternal].cacheStore;
+  const store = client[kInternal].umbrellaStore;
   const getter = React.useCallback(
     () => store.get().optimisticUpdates.length,
     [store]
