@@ -566,7 +566,7 @@ export type {
  * @param event The webhook event received after calling `webhookHandler.verifyRequest()`.
  * @returns A boolean type predicate.
  */
-export function isThreadNotificationEventEmail(
+export function isThreadNotificationEvent(
   event: WebhookEvent
 ): event is ThreadNotificationEvent {
   return (

@@ -1,7 +1,7 @@
 import { Webhook } from "svix";
 
 import {
-  isThreadNotificationEventEmail,
+  isThreadNotificationEvent,
   type WebhookEvent,
   WebhookHandler,
 } from "../webhooks";
@@ -572,9 +572,9 @@ describe("Type guards", () => {
         expected: false,
       },
     ])(
-      "should check if the $name event is a thread notification event email - ($expected)",
+      'should check if the "$name" event is a thread notification event - ($expected)',
       ({ event, expected }) => {
-        expect(isThreadNotificationEventEmail(event)).toBe(expected);
+        expect(isThreadNotificationEvent(event)).toBe(expected);
       }
     );
   });
