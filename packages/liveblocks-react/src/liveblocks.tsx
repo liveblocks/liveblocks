@@ -757,12 +757,7 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
         },
         () => {
           // TODO: Broadcast errors to client
-          store.set_optm((state) => ({
-            ...state,
-            optimisticUpdates: state.optimisticUpdates.filter(
-              (update) => update.id !== optimisticUpdateId
-            ),
-          }));
+          store.removeOptimisticUpdate(optimisticUpdateId);
         }
       );
     },
@@ -800,12 +795,7 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
       },
       () => {
         // TODO: Broadcast errors to client
-        store.set_optm((state) => ({
-          ...state,
-          optimisticUpdates: state.optimisticUpdates.filter(
-            (update) => update.id !== optimisticUpdateId
-          ),
-        }));
+        store.removeOptimisticUpdate(optimisticUpdateId);
       }
     );
   }, [client]);
@@ -855,12 +845,7 @@ function useDeleteInboxNotification_withClient(client: OpaqueClient) {
         },
         () => {
           // TODO: Broadcast errors to client
-          store.set_optm((state) => ({
-            ...state,
-            optimisticUpdates: state.optimisticUpdates.filter(
-              (update) => update.id !== optimisticUpdateId
-            ),
-          }));
+          store.removeOptimisticUpdate(optimisticUpdateId);
         }
       );
     },
@@ -891,12 +876,7 @@ function useDeleteAllInboxNotifications_withClient(client: OpaqueClient) {
       },
       () => {
         // TODO: Broadcast errors to client
-        store.set_optm((state) => ({
-          ...state,
-          optimisticUpdates: state.optimisticUpdates.filter(
-            (update) => update.id !== optimisticUpdateId
-          ),
-        }));
+        store.removeOptimisticUpdate(optimisticUpdateId);
       }
     );
   }, [client]);

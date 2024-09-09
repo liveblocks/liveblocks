@@ -483,12 +483,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     optimisticUpdateId: string,
     createPublicError: (error: Error) => CommentsError<M>
   ) {
-    store.set_optm((state) => ({
-      ...state,
-      optimisticUpdates: state.optimisticUpdates.filter(
-        (update) => update.id !== optimisticUpdateId
-      ),
-    }));
+    store.removeOptimisticUpdate(optimisticUpdateId);
 
     if (innerError instanceof CommentsApiError) {
       const error = handleApiError(innerError);

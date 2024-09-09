@@ -159,7 +159,7 @@ export type UmbrellaStoreState<M extends BaseMetadata> = Readonly<{
    * Optimistic updates that have not been acknowledged by the server yet.
    * They are applied on top of the threads in selectors.
    */
-  optimisticUpdates: OptimisticUpdate<M>[];
+  optimisticUpdates: readonly OptimisticUpdate<M>[];
 
   /**
    * Threads by ID
@@ -204,7 +204,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.set_thr_ibn_and_optm = this.set_thr_ibn_and_optm.bind(this);
     this.set_thr_and_optm = this.set_thr_and_optm.bind(this);
     this.set_ibn_and_optm = this.set_ibn_and_optm.bind(this);
-    this.set_optm = this.set_optm.bind(this);
   }
 
   public get(): Readonly<UmbrellaStoreState<M>> {
@@ -236,14 +235,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   public set_ibn_and_optm(
-    callback: (
-      currentState: Readonly<UmbrellaStoreState<M>>
-    ) => Readonly<UmbrellaStoreState<M>>
-  ): void {
-    return this._store.set(callback);
-  }
-
-  public set_optm(
     callback: (
       currentState: Readonly<UmbrellaStoreState<M>>
     ) => Readonly<UmbrellaStoreState<M>>
@@ -347,6 +338,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this._store.set((state) => ({
       ...state,
       optimisticUpdates: [...state.optimisticUpdates, optimisticUpdate],
+    }));
+  }
+
+  public removeOptimisticUpdate(optimisticUpdateId: string): void {
+    return this._store.set((state) => ({
+      ...state,
+      optimisticUpdates: state.optimisticUpdates.filter(
+        (update) => update.id !== optimisticUpdateId
+      ),
     }));
   }
 
