@@ -2125,6 +2125,30 @@ this event.
 The check is made against the event type, event data kind and event data
 channel.
 
+### isTextMentionNotificationEvent [# isTextMentionNotificationEvent]
+
+Type guard to check if a received event is a `TextMentionNotificationEvent`.
+
+```js highlight="8-10"
+import { isTextMentionNotificationEvent } from "@liveblocks/node";
+
+const event = webhookHandler.verifyRequest({
+  headers: req.headers,
+  rawBody: req.body,
+});
+
+if (isTextMentionNotificationEvent(event)) {
+  // Handle `TextMentionNotificationEvent`
+}
+```
+
+This type guard is here to help you better identify that a `NotificationEvent`
+is a `TextMentionNotificationEvent` in the case you want to send emails when
+receving this event.
+
+The check is made against the event type, event data kind and event data
+channel.
+
 ## Deprecated
 
 ### authorize [#authorize] [@badge=Deprecated]
