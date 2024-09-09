@@ -1,6 +1,9 @@
 import { ComponentProps } from "react";
 
-export function Logo(props: ComponentProps<"svg">) {
-  return <div>Acme Inc</div>;
+export function Logo(props: ComponentProps<"div">) {
+  return (
+    <div className="text-black font-medium text-sm" {...props}>
+      Acme Inc
+    </div>
+  );
 }
-z`

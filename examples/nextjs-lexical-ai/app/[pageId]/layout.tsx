@@ -14,9 +14,9 @@ import Link from "next/link";
 import { getPageUrl } from "../config";
 
 // Force the page to be dynamic and allow streaming responses up to 30 seconds for AI
-// export const dynamic = "force-dynamic";
-// export const maxDuration = 30;
-// export const revalidate = 0;
+export const dynamic = "force-dynamic";
+export const maxDuration = 30;
+export const revalidate = 0;
 
 export default async function Layout({ children }: { children: ReactNode }) {
   const rooms = await getRooms();
@@ -38,7 +38,7 @@ export default async function Layout({ children }: { children: ReactNode }) {
           <form action={create} className="flex items-center">
             <button>
               <span className="sr-only">Create new page</span>
-              <CreateIcon className="w-5 h-5" />
+              <CreateIcon className="w-4 h-4" />
             </button>
           </form>
         </div>
@@ -67,8 +67,8 @@ async function PageLink({ room }: { room: TypedRoomData }) {
   const url = getPageUrl(room.id);
 
   return (
-    <div className="flex justify-between items-center hover:bg-gray-200 transition-colors rounded text-medium text-gray-700 hover:text-gray-900 pr-2 text-sm">
-      <Link href={url} className="py-1 px-3 flex-1 truncate">
+    <div className="flex justify-between items-center hover:bg-gray-200 transition-colors rounded text-medium text-gray-700 hover:text-gray-900 pr-2 text-sm font-medium">
+      <Link href={url} className="py-1.5 px-3 flex-1 truncate">
         {title}
       </Link>
       {/*<button>*/}

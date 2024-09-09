@@ -14,7 +14,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 export function Notifications() {
   return (
     <Dialog.Root>
-      <Dialog.Trigger className="flex relative items-center justify-between whitespace-nowrap rounded-md font-medium transition-colors w-full px-2 py-1 hover:bg-gray-200">
+      <Dialog.Trigger className="flex relative items-center justify-between whitespace-nowrap rounded-md font-medium transition-colors w-full px-2 py-1.5 hover:bg-gray-200">
         <div className="flex items-center gap-1.5 flex-1 text-sm">
           <svg
             width="20"
