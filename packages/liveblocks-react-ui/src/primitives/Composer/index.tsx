@@ -237,7 +237,11 @@ function ComposerEditorMentionSuggestionsWrapper({
           },
         }),
       ],
-      whileElementsMounted: autoUpdate,
+      whileElementsMounted: (...args) => {
+        return autoUpdate(...args, {
+          animationFrame: true,
+        });
+      },
     };
   }, [position, dir]);
   const {

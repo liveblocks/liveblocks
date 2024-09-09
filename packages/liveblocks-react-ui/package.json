@@ -62,7 +62,7 @@
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
   "dependencies": {
-    "@floating-ui/react-dom": "^2.0.8",
+    "@floating-ui/react-dom": "^2.1.1",
     "@liveblocks/client": "2.6.0",
     "@liveblocks/core": "2.6.0",
     "@liveblocks/react": "2.6.0",

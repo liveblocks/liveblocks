@@ -1,3 +1,9 @@
+## 2.6.1
+
+### `@liveblocks/react-ui`
+
+- Fix mention suggestions dropdown not following scroll in some scenarios.
+
 ## 2.6.0
 
 ### `@liveblocks/node`
