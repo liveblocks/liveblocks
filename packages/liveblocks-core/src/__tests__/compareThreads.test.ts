@@ -1,5 +1,5 @@
 import type { ThreadData } from "../protocol/Comments";
-import { compareThreads } from "../store";
+import { compareThreads } from "../umbrella-store";
 
 describe("compareThreads", () => {
   const thread1: ThreadData = {

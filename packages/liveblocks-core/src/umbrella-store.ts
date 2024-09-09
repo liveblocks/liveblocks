@@ -149,7 +149,7 @@ type UpdateNotificationSettingsOptimisticUpdate = {
 type QueryState = AsyncResult<undefined>;
 //                            ^^^^^^^^^ We don't store the actual query result in this status
 
-export type UmbrellaStoreState<M extends BaseMetadata> = {
+export type UmbrellaStoreState<M extends BaseMetadata> = Readonly<{
   /**
    * Keep track of loading and error status of all the queries made by the client.
    * e.g. 'room-abc-{"color":"red"}'  - ok
@@ -180,7 +180,7 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
    *      }
    */
   notificationSettings: Record<string, RoomNotificationSettings>;
-};
+}>;
 
 export interface UmbrellaStore<M extends BaseMetadata>
   extends Store<UmbrellaStoreState<M>> {

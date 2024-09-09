@@ -1,5 +1,5 @@
 import type { InboxNotificationData } from "../protocol/InboxNotifications";
-import { compareInboxNotifications } from "../store";
+import { compareInboxNotifications } from "../umbrella-store";
 
 describe("compareInboxNotifications", () => {
   const inboxNotificationA: InboxNotificationData = {

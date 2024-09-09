@@ -39,9 +39,9 @@ import {
   makeAuthDelegateForRoom,
   makeCreateSocketDelegateForRoom,
 } from "./room";
-import type { UmbrellaStore } from "./store";
-import { createUmbrellaStore } from "./store";
 import type { OptionalPromise } from "./types/OptionalPromise";
+import type { UmbrellaStore } from "./umbrella-store";
+import { createUmbrellaStore } from "./umbrella-store";
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1_000;

@@ -283,4 +283,4 @@ export {
   type UmbrellaStore,
   type UmbrellaStoreState,
   upsertComment,
-} from "./store";
+} from "./umbrella-store";

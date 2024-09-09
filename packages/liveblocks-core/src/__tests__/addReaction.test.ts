@@ -1,4 +1,4 @@
-import { addReaction } from "../store";
+import { addReaction } from "../umbrella-store";
 import { createComment, createThread } from "./_dummies";
 
 describe("addReaction", () => {

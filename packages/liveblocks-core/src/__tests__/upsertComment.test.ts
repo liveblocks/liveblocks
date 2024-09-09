@@ -1,4 +1,4 @@
-import { upsertComment } from "../store";
+import { upsertComment } from "../umbrella-store";
 import { createComment, createThread } from "./_dummies";
 
 describe("upsertComment", () => {
