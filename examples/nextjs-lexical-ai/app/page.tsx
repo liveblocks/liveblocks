@@ -1,6 +1,7 @@
 import { Liveblocks } from "@liveblocks/node";
 import { redirect } from "next/navigation";
 import { createRoom, getLatestRoom } from "./lib/liveblocks";
+import { getPageUrl } from "./config";
 
 // Force the page to be dynamic and allow streaming responses up to 30 seconds for AI
 export const dynamic = "force-dynamic";
@@ -15,9 +16,9 @@ export default async function Page() {
   const room = await getLatestRoom();
 
   if (!room) {
-    const room = await createRoom();
-    redirect(`/${room.metadata.pageId}`);
+    const newRoom = await createRoom();
+    redirect(getPageUrl(newRoom.id));
   }
 
-  redirect(`/${room.metadata.pageId}`);
+  redirect(getPageUrl(room.id));
 }

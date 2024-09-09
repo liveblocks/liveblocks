@@ -1,5 +1,5 @@
 import { Editor } from "../components/Editor";
-import { Room } from "../Room";
+import { Room } from "./Room";
 import { Avatars } from "../components/Avatars";
 
 // Force the page to be dynamic and allow streaming responses up to 30 seconds for AI

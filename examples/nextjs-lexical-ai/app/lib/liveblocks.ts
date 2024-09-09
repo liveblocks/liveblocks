@@ -35,6 +35,6 @@ export async function getRoomTitle(roomId: string) {
     return storage.title;
   } catch (err) {
     console.log(err);
-    return null;
+    return "";
   }
 }

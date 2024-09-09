@@ -3,7 +3,7 @@
 import { RoomProvider } from "@liveblocks/react/suspense";
 import { ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
-import { getRoomId } from "./config";
+import { getRoomId } from "../config";
 
 export function Room({
   pageId,

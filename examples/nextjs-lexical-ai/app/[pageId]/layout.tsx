@@ -11,20 +11,21 @@ import { CreateIcon } from "../icons/CreateIcon";
 import { ReactNode, Suspense } from "react";
 import { TrashIcon } from "../icons/TrashIcon";
 import Link from "next/link";
+import { getPageUrl } from "../config";
 
 // Force the page to be dynamic and allow streaming responses up to 30 seconds for AI
 // export const dynamic = "force-dynamic";
 // export const maxDuration = 30;
 // export const revalidate = 0;
 
-export default async function Page({ children }: { children: ReactNode }) {
+export default async function Layout({ children }: { children: ReactNode }) {
   const rooms = await getRooms();
 
   async function create() {
     "use server";
 
     const room = await createRoom();
-    redirect(`/${room.metadata.pageId}`);
+    redirect(getPageUrl(room.id));
   }
 
   return (
@@ -46,7 +47,7 @@ export default async function Page({ children }: { children: ReactNode }) {
           <Notifications />
         </div>
 
-        <div className="text-sm font-medium text-gray-500 mt-6 pl-2">Pages</div>
+        <div className="text-xs font-medium text-gray-500 mt-6 pl-2">Pages</div>
         <div className="overflow-y-auto p-2">
           {rooms.map((room) => (
             <Suspense key={room.id} fallback={<div />}>
@@ -63,19 +64,17 @@ export default async function Page({ children }: { children: ReactNode }) {
 
 async function PageLink({ room }: { room: TypedRoomData }) {
   const title = await getRoomTitle(room.id);
+  const url = getPageUrl(room.id);
 
   return (
-    <div className="flex justify-between items-center hover:bg-gray-200 transition-colors rounded text-medium text-gray-700 hover:text-gray-900 pr-2">
-      <Link
-        href={`/${room.metadata.pageId}`}
-        className="py-1 px-3 flex-1  truncate"
-      >
+    <div className="flex justify-between items-center hover:bg-gray-200 transition-colors rounded text-medium text-gray-700 hover:text-gray-900 pr-2 text-sm">
+      <Link href={url} className="py-1 px-3 flex-1 truncate">
         {title}
       </Link>
-      <button>
-        <span className="sr-only">Delete page</span>
-        <TrashIcon className="w-4 h-4 text-red-400" />
-      </button>
+      {/*<button>*/}
+      {/*  <span className="sr-only">Delete page</span>*/}
+      {/*  <TrashIcon className="w-4 h-4 text-red-400" />*/}
+      {/*</button>*/}
     </div>
   );
 }

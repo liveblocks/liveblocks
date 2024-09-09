@@ -54,7 +54,26 @@ const initialConfig = liveblocksConfig({
 
 export function Editor() {
   return (
-    <ClientSideSuspense fallback={<Loading />}>
+    <ClientSideSuspense
+      fallback={
+        <div className="relative flex flex-row justify-between h-[calc(100%-60px)] w-full flex-1">
+          {/* Editable */}
+          <div className="relative h-full w-full overflow-auto">
+            <div className="lg:mr-[300px] xl:mr-[100px]">
+              <div className="relative max-w-[740px] w-full mx-auto pb-[400px] p-8"></div>
+              <div className="mt-20 mb-0">
+                <div>loading</div>
+              </div>
+              <section className="relative">
+                <div>
+                  <div className="relative outline-none w-full h-full px-8 py-4" />
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      }
+    >
       <LexicalEditor />
     </ClientSideSuspense>
   );

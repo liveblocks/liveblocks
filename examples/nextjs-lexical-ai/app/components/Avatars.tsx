@@ -5,7 +5,18 @@ import { ClientSideSuspense } from "@liveblocks/react";
 
 export function Avatars() {
   return (
-    <ClientSideSuspense fallback={<div />}>
+    <ClientSideSuspense
+      fallback={
+        <div className="flex items-center">
+          <div className="relative ml-2">
+            <AvatarPlaceholder />
+          </div>
+          <div className="ml-2 text-gray-500 text-sm select-none">
+            1 user editing
+          </div>
+        </div>
+      }
+    >
       <AvatarStack />
     </ClientSideSuspense>
   );
@@ -54,6 +65,17 @@ export function Avatar({ src, name }: { src: string; name: string }) {
         className="w-full h-full rounded-full"
         data-tooltip={name}
       />
+    </div>
+  );
+}
+
+export function AvatarPlaceholder() {
+  return (
+    <div
+      style={{ width: AVATAR_SIZE, height: AVATAR_SIZE }}
+      className="group -ml-2 flex shrink-0 place-content-center relative border-4 border-white rounded-full bg-gray-400"
+    >
+      <div className="w-full h-full rounded-full bg-neutral-200" />
     </div>
   );
 }
