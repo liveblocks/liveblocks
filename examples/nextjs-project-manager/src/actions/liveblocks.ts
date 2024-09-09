@@ -32,6 +32,7 @@ export async function createIssue() {
       assignedTo: "none",
     }),
     labels: new LiveList([]),
+    links: new LiveList([]),
   });
 
   await liveblocks.initializeStorageDocument(
