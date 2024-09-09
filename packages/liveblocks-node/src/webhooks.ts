@@ -557,7 +557,7 @@ export type {
 };
 
 /**
- * Type guard to check if a webhook event is a `ThreadNotificationEvent`.
+ * Type guard to check if a webhook event is a `ThreadNotificationEvent`
  *
  * The check is made against the event type, event data kind and event data channel.
  * You should use this guard to safely check the webhook event you received

@@ -520,7 +520,7 @@ describe("WebhookHandler", () => {
 });
 
 describe("Type guards", () => {
-  describe("isThreadNotificationEventEmail", () => {
+  describe("isThreadNotificationEvent", () => {
     it.each<{ name: string; event: WebhookEvent; expected: boolean }>([
       {
         name: "notification/thread",
