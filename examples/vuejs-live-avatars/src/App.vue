@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { client, type Presence } from "@/liveblocks.config";
+import { client, type Presence } from "@liveblocks/react";
 import { onUnmounted } from "vue";
 import LiveAvatars from "@/components/LiveAvatars.vue";
 

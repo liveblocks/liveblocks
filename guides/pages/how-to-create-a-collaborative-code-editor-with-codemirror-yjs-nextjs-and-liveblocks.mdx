@@ -207,7 +207,7 @@ import { EditorState } from "@codemirror/state";
 import { javascript } from "@codemirror/lang-javascript";
 import { useCallback, useEffect, useState } from "react";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
-import { TypedLiveblocksProvider, useRoom } from "@/liveblocks.config";
+import { TypedLiveblocksProvider, useRoom } from "@liveblocks/react";
 import styles from "./CollaborativeEditor.module.css";
 
 // Collaborative code editor with undo/redo, live cursors, and live avatars
@@ -325,7 +325,7 @@ attach it Yjs awareness. After adding the following, you should see live
 cursors:
 
 ```tsx file="Cursors.tsx" highlight="1,10-11,35-40"
-import { useRoom, useSelf } from "@/liveblocks.config";
+import { useRoom, useSelf } from "@liveblocks/react";
 // ...
 
 // Collaborative code editor with undo/redo, live cursors, and live avatars
@@ -546,7 +546,7 @@ view information about each user currently online, and we can turn this into a
 live avatars component.
 
 ```tsx file="Avatars.tsx"
-import { useOthers, useSelf } from "@/liveblocks.config";
+import { useOthers, useSelf } from "@liveblocks/react";
 import styles from "./Avatars.module.css";
 
 export function Avatars() {

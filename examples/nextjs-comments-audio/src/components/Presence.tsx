@@ -1,7 +1,7 @@
 "use client";
 
 import { useOthers, useSelf } from "@liveblocks/react/suspense";
-import { PresenceStates } from "@/liveblocks.config";
+import { PresenceStates } from "@liveblocks/react";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { Pause as PauseIcon, Play as PlayIcon } from "react-feather";
 

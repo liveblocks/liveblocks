@@ -188,7 +188,7 @@ import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
 import * as Y from "yjs";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
-import { useRoom } from "@/liveblocks.config";
+import { useRoom } from "@liveblocks/react";
 import { useEffect, useState } from "react";
 import styles from "./CollaborativeEditor.module.css";
 
@@ -523,7 +523,7 @@ view information about each user currently online, and we can turn this into a
 live avatars component.
 
 ```tsx file="Avatars.tsx"
-import { useOthers, useSelf } from "@/liveblocks.config";
+import { useOthers, useSelf } from "@liveblocks/react";
 import styles from "./Avatars.module.css";
 
 export function Avatars() {

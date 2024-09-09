@@ -1,4 +1,4 @@
-import { AccurateCursorPositions, DragOffset } from "@/liveblocks.config";
+import { AccurateCursorPositions, DragOffset } from "@liveblocks/react";
 
 export function getCoordsFromPointerEvent<El>(
   e: PointerEvent,

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSelf } from "@liveblocks/react/suspense";
-import { AwarenessList, UserAwareness } from "@/liveblocks.config";
+import { AwarenessList, UserAwareness } from "@liveblocks/react";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 
 type Props = {

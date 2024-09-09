@@ -187,7 +187,7 @@ import ReactQuill from "react-quill";
 import { QuillBinding } from "y-quill";
 import * as Y from "yjs";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
-import { useRoom } from "@/liveblocks.config";
+import { useRoom } from "@liveblocks/react";
 import { useEffect, useRef, useState } from "react";
 import styles from "./Editor.module.css";
 
@@ -564,7 +564,7 @@ view information about each user currently online, and we can turn this into a
 live avatars component.
 
 ```tsx file="Avatars.tsx"
-import { useOthers, useSelf } from "@/liveblocks.config";
+import { useOthers, useSelf } from "@liveblocks/react";
 import styles from "./Avatars.module.css";
 
 export function Avatars() {

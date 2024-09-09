@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { client } from "@/liveblocks.config";
+import { client } from "@liveblocks/react";
 import { onUnmounted } from "vue";
 import LiveCursors from "@/components/LiveCursors.vue";
 

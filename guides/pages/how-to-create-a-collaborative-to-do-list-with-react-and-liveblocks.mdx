@@ -114,7 +114,7 @@ file. Every component wrapped inside `RoomProvider` will have access to the
 React hooks we’ll be using to interact with this room.
 
 ```tsx file="pages/index.tsx" highlight="1,4"
-import { RoomProvider } from "@/liveblocks.config";
+import { RoomProvider } from "@liveblocks/react";
 
 export default function Page() {
   return <RoomProvider id="nextjs-todo-list">{/* ... */}</RoomProvider>;
@@ -132,7 +132,7 @@ information can be found
 
 ```tsx file="pages/index.tsx" highlight="1,7-9,14-20"
 import { ClientSideSuspense } from "@liveblocks/react";
-import { RoomProvider } from "@/liveblocks.config";
+import { RoomProvider } from "@liveblocks/react";
 
 export default function Page() {
   return (
@@ -198,7 +198,7 @@ your app in multiple windows to see it in action.
 
 ```tsx file="pages/index.tsx" highlight="2,4-10,13-17"
 import { ClientSideSuspense } from "@liveblocks/react";
-import { RoomProvider, useOthers } from "@/liveblocks.config";
+import { RoomProvider, useOthers } from "@liveblocks/react";
 
 function WhoIsHere() {
   const userCount = useOthers((others) => others.length);
@@ -359,7 +359,7 @@ import {
   RoomProvider,
   useOthers,
   useUpdateMyPresence,
-} from "@/liveblocks.config";
+} from "@liveblocks/react";
 import { useState } from "react";
 
 /* WhoIsHere */
@@ -405,7 +405,7 @@ import {
   RoomProvider,
   useOthers,
   useUpdateMyPresence,
-} from "@/liveblocks.config";
+} from "@liveblocks/react";
 import { useState } from "react";
 
 /* WhoIsHere */
@@ -556,7 +556,7 @@ import {
   useOthers,
   useUpdateMyPresence,
   useStorage
-} from "@/liveblocks.config";
+} from "@liveblocks/react";
 import { useState } from "react";
 import { LiveList } from "@liveblocks/client";
 
@@ -634,7 +634,7 @@ import {
   useUpdateMyPresence,
   useStorage,
   useMutation
-} from "@/liveblocks.config";
+} from "@liveblocks/react";
 import { useState } from "react";
 import { LiveList } from "@liveblocks/client";
 
