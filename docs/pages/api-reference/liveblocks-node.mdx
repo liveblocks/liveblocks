@@ -2101,6 +2101,30 @@ export function POST(request) {
 }
 ```
 
+### isThreadNotificationEvent [#isThreadNotificationEvent]
+
+Type guard to check if a received event is a `ThreadNotificationEvent`.
+
+```js highlight="8-10"
+import { isThreadNotificationEvent } from "@liveblocks/node";
+
+const event = webhookHandler.verifyRequest({
+  headers: req.headers,
+  rawBody: req.body,
+});
+
+if (isThreadNotificationEvent(event)) {
+  // Handle `ThreadNotificationEvent`
+}
+```
+
+This type guard is here to help you better identify that a `NotificationEvent`
+is a `ThreadNotificationEvent` in the case you want to send emails when receving
+this event.
+
+The check is made against the event type, event data kind and event data
+channel.
+
 ## Deprecated
 
 ### authorize [#authorize] [@badge=Deprecated]
