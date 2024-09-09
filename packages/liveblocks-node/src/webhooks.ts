@@ -555,3 +555,23 @@ export type {
   WebhookRequest,
   YDocUpdatedEvent,
 };
+
+/**
+ * Type guard to check if a webhook event is a `ThreadNotificationEvent`.
+ *
+ * The check is made against the event type, event data kind and event data channel.
+ * You should use this guard to safely check the webhook event you received
+ * when you're expecting a `ThreadNotificationEvent`.
+ *
+ * @param event The webhook event received after calling `webhookHandler.verifyRequest()`.
+ * @returns A boolean type predicate.
+ */
+export function isThreadNotificationEventEmail(
+  event: WebhookEvent
+): event is ThreadNotificationEvent {
+  return (
+    event.type === "notification" &&
+    event.data.kind === "thread" &&
+    event.data.channel === "email"
+  );
+}
