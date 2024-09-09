@@ -2,7 +2,9 @@ import type { AsyncResult } from "./lib/AsyncResult";
 import type { Store } from "./lib/create-store";
 import { createStore } from "./lib/create-store";
 import * as console from "./lib/fancy-console";
+import { nanoid } from "./lib/nanoid";
 import type { Resolve } from "./lib/Resolve";
+import type { DistributiveOmit } from "./lib/utils";
 import type {
   BaseMetadata,
   CommentData,
@@ -334,11 +336,16 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }));
   }
 
-  public pushOptimisticUpdate(optimisticUpdate: OptimisticUpdate<M>): void {
+  public addOptimisticUpdate(
+    optimisticUpdate: DistributiveOmit<OptimisticUpdate<M>, "id">
+  ): string {
+    const id = nanoid();
+    const newUpdate: OptimisticUpdate<M> = { ...optimisticUpdate, id };
     this._store.set((state) => ({
       ...state,
-      optimisticUpdates: [...state.optimisticUpdates, optimisticUpdate],
+      optimisticUpdates: [...state.optimisticUpdates, newUpdate],
     }));
+    return id;
   }
 
   public removeOptimisticUpdate(optimisticUpdateId: string): void {

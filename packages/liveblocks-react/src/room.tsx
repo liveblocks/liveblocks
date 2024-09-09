@@ -47,7 +47,6 @@ import {
   kInternal,
   makeEventSource,
   makePoller,
-  nanoid,
   NotificationsApiError,
   removeReaction,
   ServerMsgCode,
@@ -1512,13 +1511,10 @@ function useCreateThread<M extends BaseMetadata>(): (
         resolved: false,
       };
 
-      const optimisticUpdateId = nanoid();
-
       const { store, onMutationFailure } = getExtrasForClient(client);
-      store.pushOptimisticUpdate({
+      const optimisticUpdateId = store.addOptimisticUpdate({
         type: "create-thread",
         thread: newThread,
-        id: optimisticUpdateId,
         roomId: room.id,
       });
 
@@ -1561,8 +1557,6 @@ function useDeleteThread(): (threadId: string) => void {
   const room = useRoom();
   return React.useCallback(
     (threadId: string): void => {
-      const optimisticUpdateId = nanoid();
-
       const { store, onMutationFailure } = getExtrasForClient(client);
 
       const thread = store.get().threads[threadId];
@@ -1573,9 +1567,8 @@ function useDeleteThread(): (threadId: string) => void {
         throw new Error("Only the thread creator can delete the thread");
       }
 
-      store.pushOptimisticUpdate({
+      const optimisticUpdateId = store.addOptimisticUpdate({
         type: "delete-thread",
-        id: optimisticUpdateId,
         roomId: room.id,
         threadId,
         deletedAt: new Date(),
@@ -1630,13 +1623,10 @@ function useEditThreadMetadata<M extends BaseMetadata>() {
       const metadata = options.metadata;
       const updatedAt = new Date();
 
-      const optimisticUpdateId = nanoid();
-
       const { store, onMutationFailure } = getExtrasForClient(client);
-      store.pushOptimisticUpdate({
+      const optimisticUpdateId = store.addOptimisticUpdate({
         type: "edit-thread-metadata",
         metadata,
-        id: optimisticUpdateId,
         threadId,
         updatedAt,
       });
@@ -1731,13 +1721,10 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
         reactions: [],
       };
 
-      const optimisticUpdateId = nanoid();
-
       const { store, onMutationFailure } = getExtrasForClient(client);
-      store.pushOptimisticUpdate({
+      const optimisticUpdateId = store.addOptimisticUpdate({
         type: "create-comment",
         comment,
-        id: optimisticUpdateId,
       });
 
       room.createComment({ threadId, commentId, body }).then(
@@ -1820,7 +1807,6 @@ function useEditComment(): (options: EditCommentOptions) => void {
   return React.useCallback(
     ({ threadId, commentId, body }: EditCommentOptions): void => {
       const editedAt = new Date();
-      const optimisticUpdateId = nanoid();
 
       const { store, onMutationFailure } = getExtrasForClient(client);
       const thread = store.get().threads[threadId];
@@ -1842,14 +1828,13 @@ function useEditComment(): (options: EditCommentOptions) => void {
         return;
       }
 
-      store.pushOptimisticUpdate({
+      const optimisticUpdateId = store.addOptimisticUpdate({
         type: "edit-comment",
         comment: {
           ...comment,
           editedAt,
           body,
         },
-        id: optimisticUpdateId,
       });
 
       room.editComment({ threadId, commentId, body }).then(
@@ -1911,15 +1896,13 @@ function useDeleteComment() {
     ({ threadId, commentId }: DeleteCommentOptions): void => {
       const deletedAt = new Date();
 
-      const optimisticUpdateId = nanoid();
-
       const { store, onMutationFailure } = getExtrasForClient(client);
-      store.pushOptimisticUpdate({
+
+      const optimisticUpdateId = store.addOptimisticUpdate({
         type: "delete-comment",
         threadId,
         commentId,
         deletedAt,
-        id: optimisticUpdateId,
         roomId: room.id,
       });
 
@@ -1974,10 +1957,9 @@ function useAddReaction<M extends BaseMetadata>() {
       const createdAt = new Date();
       const userId = getCurrentUserId(room);
 
-      const optimisticUpdateId = nanoid();
-
       const { store, onMutationFailure } = getExtrasForClient<M>(client);
-      store.pushOptimisticUpdate({
+
+      const optimisticUpdateId = store.addOptimisticUpdate({
         type: "add-reaction",
         threadId,
         commentId,
@@ -1986,7 +1968,6 @@ function useAddReaction<M extends BaseMetadata>() {
           userId,
           createdAt,
         },
-        id: optimisticUpdateId,
       });
 
       room.addReaction({ threadId, commentId, emoji }).then(
@@ -2052,17 +2033,15 @@ function useRemoveReaction() {
       const userId = getCurrentUserId(room);
 
       const removedAt = new Date();
-      const optimisticUpdateId = nanoid();
 
       const { store, onMutationFailure } = getExtrasForClient(client);
-      store.pushOptimisticUpdate({
+      const optimisticUpdateId = store.addOptimisticUpdate({
         type: "remove-reaction",
         threadId,
         commentId,
         emoji,
         userId,
         removedAt,
-        id: optimisticUpdateId,
       });
 
       room.removeReaction({ threadId, commentId, emoji }).then(
@@ -2138,12 +2117,10 @@ function useMarkThreadAsRead() {
 
       if (!inboxNotification) return;
 
-      const optimisticUpdateId = nanoid();
       const now = new Date();
 
-      store.pushOptimisticUpdate({
+      const optimisticUpdateId = store.addOptimisticUpdate({
         type: "mark-inbox-notification-as-read",
-        id: optimisticUpdateId,
         inboxNotificationId: inboxNotification.id,
         readAt: now,
       });
@@ -2193,13 +2170,11 @@ function useMarkThreadAsResolved() {
   const room = useRoom();
   return React.useCallback(
     (threadId: string) => {
-      const optimisticUpdateId = nanoid();
       const updatedAt = new Date();
 
       const { store, onMutationFailure } = getExtrasForClient(client);
-      store.pushOptimisticUpdate({
+      const optimisticUpdateId = store.addOptimisticUpdate({
         type: "mark-thread-as-resolved",
-        id: optimisticUpdateId,
         threadId,
         updatedAt,
       });
@@ -2279,13 +2254,11 @@ function useMarkThreadAsUnresolved() {
   const room = useRoom();
   return React.useCallback(
     (threadId: string) => {
-      const optimisticUpdateId = nanoid();
       const updatedAt = new Date();
 
       const { store, onMutationFailure } = getExtrasForClient(client);
-      store.pushOptimisticUpdate({
+      const optimisticUpdateId = store.addOptimisticUpdate({
         type: "mark-thread-as-unresolved",
-        id: optimisticUpdateId,
         threadId,
         updatedAt,
       });
@@ -2465,11 +2438,8 @@ function useUpdateRoomNotificationSettings() {
   const room = useRoom();
   return React.useCallback(
     (settings: Partial<RoomNotificationSettings>) => {
-      const optimisticUpdateId = nanoid();
-
       const { store, onMutationFailure } = getExtrasForClient(client);
-      store.pushOptimisticUpdate({
-        id: optimisticUpdateId,
+      const optimisticUpdateId = store.addOptimisticUpdate({
         type: "update-notification-settings",
         roomId: room.id,
         settings,

@@ -21,7 +21,6 @@ import {
   kInternal,
   makePoller,
   memoizeOnSuccess,
-  nanoid,
   raise,
   shallow,
 } from "@liveblocks/core";
@@ -714,11 +713,9 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
     (inboxNotificationId: string) => {
       const { store } = getExtrasForClient(client);
 
-      const optimisticUpdateId = nanoid();
       const readAt = new Date();
-      store.pushOptimisticUpdate({
+      const optimisticUpdateId = store.addOptimisticUpdate({
         type: "mark-inbox-notification-as-read",
-        id: optimisticUpdateId,
         inboxNotificationId,
         readAt,
       });
@@ -768,11 +765,9 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
 function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
   return useCallback(() => {
     const { store } = getExtrasForClient(client);
-    const optimisticUpdateId = nanoid();
     const readAt = new Date();
-    store.pushOptimisticUpdate({
+    const optimisticUpdateId = store.addOptimisticUpdate({
       type: "mark-all-inbox-notifications-as-read",
-      id: optimisticUpdateId,
       readAt,
     });
 
@@ -806,11 +801,9 @@ function useDeleteInboxNotification_withClient(client: OpaqueClient) {
     (inboxNotificationId: string) => {
       const { store } = getExtrasForClient(client);
 
-      const optimisticUpdateId = nanoid();
       const deletedAt = new Date();
-      store.pushOptimisticUpdate({
+      const optimisticUpdateId = store.addOptimisticUpdate({
         type: "delete-inbox-notification",
-        id: optimisticUpdateId,
         inboxNotificationId,
         deletedAt,
       });
@@ -856,11 +849,9 @@ function useDeleteInboxNotification_withClient(client: OpaqueClient) {
 function useDeleteAllInboxNotifications_withClient(client: OpaqueClient) {
   return useCallback(() => {
     const { store } = getExtrasForClient(client);
-    const optimisticUpdateId = nanoid();
     const deletedAt = new Date();
-    store.pushOptimisticUpdate({
+    const optimisticUpdateId = store.addOptimisticUpdate({
       type: "delete-all-inbox-notifications",
-      id: optimisticUpdateId,
       deletedAt,
     });
 
