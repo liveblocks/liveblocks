@@ -20,7 +20,8 @@ export type {
   ThreadNotificationData,
   ThreadNotificationUnreadMention,
   ThreadNotificationUnreadReplies,
-} from "./thread-notification";
+} from "./thread-notification-helpers";
+export { getThreadNotificationData } from "./thread-notification-helpers";
 export type {
   CommentCreatedEvent,
   CommentDeletedEvent,
