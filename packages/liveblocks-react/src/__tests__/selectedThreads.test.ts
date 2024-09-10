@@ -1,4 +1,5 @@
-import { ThreadData, UmbrellaStore } from "@liveblocks/core";
+import type { ThreadData } from "@liveblocks/core";
+import { UmbrellaStore } from "@liveblocks/core";
 
 import { selectedThreads } from "../comments/lib/selected-threads";
 
