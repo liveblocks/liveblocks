@@ -266,8 +266,8 @@ describe("useInboxNotifications", () => {
       client,
     } = createContextsForTest();
 
-    const store = client[kInternal].cacheStore;
-    store.set((state) => ({
+    const store = client[kInternal].umbrellaStore;
+    store.force_set((state) => ({
       ...state,
       inboxNotifications: {
         // Explicitly set the order to be reversed to test that the hook sorts the notifications

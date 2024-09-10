@@ -1,0 +1,317 @@
+---
+meta:
+  title: "How to migrate to Liveblocks Comments"
+  description:
+    "Learn how to import your threads, comments, and reaction to Liveblocks
+    Comments in this migration guide."
+---
+
+To migrate your threads, comments, and reactions to Liveblocks Comments, you can
+create a migration script using our
+[Node.js methods](https://liveblocks.io/docs/api-reference/liveblocks-node) or
+[REST API](https://liveblocks.io/docs/api-reference/rest-api-endpoints). This
+guide will take you through all the Liveblocks features required to create a
+migration script in Node.js. Note that each Node.js method also has an
+equivalent REST API which could be used instead.
+
+<Banner title="Before starting" type="warning">
+
+Before starting to migrate, make sure to
+[set up authentication](https://liveblocks.io/docs/authentication) in your app,
+deciding on either _ID tokens_ or _access tokens_.
+
+</Banner>
+
+## Creating rooms
+
+The first step is to create the multiplayer room where the comments are stored.
+This is equivalent to a document in your project. Make sure to read the sections
+on permissions under
+[access tokens](/docs/authentication/access-token#permissions) or
+[ID tokens](/docs/authentication/id-token#permissions) to fully understand
+setting up your room.
+
+Create a room using
+[`liveblocks.createRoom`](/docs/api-reference/liveblocks-node#post-rooms) or the
+[Create Room API](/docs/api-reference/rest-api-endpoints#post-rooms), and set
+permissions if you’re using ID tokens.
+
+```ts
+// The unique ID for the room
+const roomId = "my-room-id";
+
+// Create a room
+const room = await liveblocks.createRoom(roomId, {
+  // If you're using ID tokens, set your permissions/accesses, examples below
+  defaultAccesses: [
+    // "room:write"`
+  ],
+  // groupsAccesses: {
+  //   my-group: ["room:write"]
+  // }
+  // usersAccesses: {
+  //   my-user: ["room:write"]
+  // }
+});
+```
+
+## Creating threads
+
+Next up is creating threads in the room. Before starting, make sure you
+understand the [concepts behind Comments](/docs/products/comments/concepts).
+When a thread is created, the first comment is also created, and you can do this
+with
+[`liveblocks.createThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads)
+or the
+[Create Thread API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads).
+
+```ts
+// The unique ID for the room
+const roomId = "my-room-id";
+
+// Create a room
+const room = await liveblocks.createRoom(roomId, {
+  defaultAccesses: [],
+});
+
+//+++
+// Create a thread
+const thread = await liveblocks.createThread({
+  roomId,
+
+  data: {
+    comment: {
+      // ID of the user that created the thread
+      userId: "florent@example.com",
+
+      body: {
+        version: 1,
+        content: [
+          // The initial comment's body text goes here
+          // {
+          //   type: "paragraph",
+          //   children: [{ text: "Hello " }, { text: "world", bold: true }],
+          // },
+        ],
+      },
+    },
+  },
+});
+// +++
+```
+
+Read under
+[`liveblocks.createThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads)
+to learn how to create a Comment body, and check in
+[GitHub](https://github.com/liveblocks/liveblocks/blob/64a2f5707785b95b1f56d7ff3b53a234dfc9ccd7/packages/liveblocks-core/src/protocol/Comments.ts#L55)
+for information about each comment body element.
+
+## Adding further comments
+
+To add more comments to the new thread, use
+[`liveblocks.createComment`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments)
+or the
+[Create Comment API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-comments).
+We’re just sharing a simple code snippet below, but of course, we recommend you
+use a loop.
+
+```ts
+// The unique ID for the room
+const roomId = "my-room-id";
+
+// Create a room
+const room = await liveblocks.createRoom(roomId, {
+  defaultAccesses: [],
+});
+
+// Create a thread
+const thread = await liveblocks.createThread({
+  /* ... */
+});
+
+// +++
+// Adding a comment to the existing thread
+const comment = await liveblocks.createComment({
+  roomId,
+  threadId: thread.id,
+
+  data: {
+    // ID of the user that created the comment
+    userId: "pierre@example.com",
+
+    // Optional, when the comment was created
+    createdAt: new Date(),
+
+    body: {
+      version: 1,
+      content: [
+        // The comment's body text goes here
+        // {
+        //   type: "paragraph",
+        //   children: [{ text: "Hello " }, { text: "world", bold: true }],
+        // },
+      ],
+    },
+  },
+});
+// +++
+```
+
+## Adding reactions
+
+To add reactions to each comment, use
+[`liveblocks.addCommentReaction`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction)
+or the
+[Add Comment Reaction API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction).
+
+```ts
+// The unique ID for the room
+const roomId = "my-room-id";
+
+// Create a room
+const room = await liveblocks.createRoom(roomId, {
+  defaultAccesses: [],
+});
+
+// Create a thread
+const thread = await liveblocks.createThread({
+  /* ... */
+});
+
+// Adding a comment to the existing thread
+const comment = await liveblocks.createComment({
+  /* ... */
+});
+
+// +++
+// Add a reaction to a comment
+const reaction = await liveblocks.addCommentReaction({
+  roomId,
+  threadId: thread.id,
+  commentId: comment.id,
+
+  data: {
+    // The reaction emoji
+    emoji: "✅",
+
+    // ID of the user that reacted
+    userId: "guillaume@example.com",
+
+    // Optional, the time the reaction was added
+    createdAt: new Date(),
+  },
+});
+// +++
+```
+
+## Migrating users
+
+There’s no need to migrate users to Comments, as the only user information
+Liveblocks stores
+[is each user’s ID](/docs/products/comments/users-and-mentions). Other user info
+is retrieved in-app by Comments with
+[`resolveUserInfo`](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers).
+
+## Putting it together
+
+To create a migration script, put everything together and loop through all the
+functions we’ve listed above. Below is an example of a migration script, though
+you’ll need to make changes based on the format of the comment system you’re
+migrating from. `oldDocumentId` and `oldDocumentThreads` represent your current
+data.
+
+```tsx
+import { Liveblocks } from "@liveblocks/node";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+async function migrateDocument({ oldDocumentId, oldDocumentThreads }) {
+  console.log(`Migrating document: ${oldDocumentId}`);
+
+  // The unique ID for the room
+  const roomId = oldDocumentId;
+
+  // Create a Liveblocks room
+  const room = await liveblocks.createRoom(roomId, {
+    // If you're using ID tokens, set your permissions/accesses, examples below
+    defaultAccesses: [
+      // "room:write"`
+    ],
+    // groupsAccesses: {
+    //   my-group: ["room:write"]
+    // }
+    // usersAccesses: {
+    //   my-user: ["room:write"]
+    // }
+  });
+
+  // Loop through your existing threads for the current room
+  for (const oldThread of oldDocumentThreads) {
+    const [firstComment, ...otherComments] = oldThread.comments;
+
+    // Create a Liveblocks thread
+    const thread = await liveblocks.createThread({
+      roomId: room.id,
+
+      data: {
+        comment: {
+          // ID of the user that created the thread
+          userId: firstComment.userId,
+
+          body: {
+            version: 1,
+            content: __convertCommentToLiveblocksFormat__(firstComment.body),
+          },
+        },
+      },
+    });
+
+    // Loop through this existing thread's comments
+    for (const oldComment of otherComments) {
+      // Create a Liveblocks comment
+      const comment = await liveblocks.createComment({
+        roomId: room.id,
+        threadId: thread.id,
+
+        data: {
+          // ID of the user that created the comment
+          userId: oldComment.userId,
+
+          // Optional, when the comment was created
+          createdAt: new Date(oldComment.timestamp),
+
+          body: {
+            version: 1,
+            content: __convertCommentToLiveblocksFormat__(oldComment.body),
+          },
+        },
+      });
+
+      // Loop through this existing comment's reactions
+      for (const oldReaction of oldComment.reactions) {
+        // Add a reaction to a Liveblocks comment
+        await liveblocks.addCommentReaction({
+          roomId: room.id,
+          threadId: thread.id,
+          commentId: comment.id,
+
+          data: {
+            // The reaction emoji
+            emoji: oldReaction.emoji,
+
+            // ID of the user that reacted
+            userId: oldReaction.userId,
+
+            // Optional, the time the reaction was added
+            createdAt: new Date(oldReaction.timestamp),
+          },
+        });
+      }
+    }
+  }
+
+  console.log(`Document migrated: ${oldDocumentId}`);
+}
+```

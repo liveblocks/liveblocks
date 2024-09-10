@@ -1,0 +1,31 @@
+{
+  "name": "@liveblocks-examples/nextjs-tldraw-storage",
+  "description": "This example shows how to build a tldraw app using Liveblocks Storage, and Next.js.",
+  "license": "Apache-2.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@liveblocks/client": "^2.5.0",
+    "@liveblocks/node": "^2.5.0",
+    "@liveblocks/react": "^2.2.5",
+    "@liveblocks/react-ui": "^2.5.0",
+    "@types/node": "20.3.1",
+    "@types/react-dom": "18.2.5",
+    "autoprefixer": "^10.4.17",
+    "next": "^13.5.4",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "react-error-boundary": "^4.0.11",
+    "tldraw": "2.4.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "prettier": "^3.3.2",
+    "typescript": "^5.4.5"
+  }
+}

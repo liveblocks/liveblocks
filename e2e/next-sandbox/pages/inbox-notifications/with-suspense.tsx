@@ -197,12 +197,17 @@ function TopPart() {
 
 function usePendingUpdatesCount() {
   const client = useClient();
-  const store = client[kInternal].cacheStore;
+  const store = client[kInternal].umbrellaStore;
   const getter = React.useCallback(
     () => store.get().optimisticUpdates.length,
     [store]
   );
-  return React.useSyncExternalStore(store.subscribe, getter);
+  return React.useSyncExternalStore(
+    // Here, store.subscribe is guaranteed to be bound, so it's fine
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    store.subscribe,
+    getter
+  );
 }
 
 function LeftSide() {

@@ -1,7 +1,10 @@
+/**
+ * A Store is just a mini Zustand store.
+ */
 export type Store<T> = {
-  get: () => T;
-  set: (callback: (currentState: T) => T) => void;
-  subscribe: (callback: (state: T) => void) => () => void;
+  get: () => Readonly<T>;
+  set: (callback: (currentState: Readonly<T>) => Readonly<T>) => void;
+  subscribe: (callback: (state: Readonly<T>) => void) => () => void;
 };
 
 /**

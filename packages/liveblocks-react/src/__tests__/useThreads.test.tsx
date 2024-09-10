@@ -957,8 +957,8 @@ describe("useThreads", () => {
       client,
     } = createContextsForTest();
 
-    const store = client[kInternal].cacheStore;
-    store.set((state) => ({
+    const store = client[kInternal].umbrellaStore;
+    store.force_set((state) => ({
       ...state,
       threads: {
         [thread1.id]: thread1,

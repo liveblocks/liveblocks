@@ -1,12 +1,12 @@
 import type {
   BaseMetadata,
-  CacheState,
   InboxNotificationData,
+  UmbrellaStoreState,
 } from "@liveblocks/core";
 import { applyOptimisticUpdates } from "@liveblocks/core";
 
 export function selectedInboxNotifications<M extends BaseMetadata>(
-  state: CacheState<M>
+  state: UmbrellaStoreState<M>
 ): InboxNotificationData[] {
   const result = applyOptimisticUpdates(state);
 

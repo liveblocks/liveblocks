@@ -4,9 +4,11 @@ export default defineNuxtConfig({
     liveblocksSecretKey: process.env.LIVEBLOCKS_SECRET_KEY || "",
     codeSandboxSse: process.env.CODESANDBOX_SSE || "",
   },
+
   nitro: {
     preset: "vercel-edge",
   },
+
   app: {
     head: {
       title: "Liveblocks",
@@ -35,5 +37,7 @@ export default defineNuxtConfig({
       ],
     },
   },
+
   css: ["~/assets/globals.css"],
+  compatibilityDate: "2024-09-04",
 });

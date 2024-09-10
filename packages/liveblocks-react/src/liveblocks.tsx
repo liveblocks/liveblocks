@@ -7,13 +7,13 @@ import type {
 import type {
   AsyncResult,
   BaseRoomInfo,
-  CacheState,
-  CacheStore,
   ClientOptions,
   DM,
   DU,
   OpaqueClient,
   PrivateClientApi,
+  UmbrellaStore,
+  UmbrellaStoreState,
 } from "@liveblocks/core";
 import {
   assert,
@@ -21,7 +21,6 @@ import {
   kInternal,
   makePoller,
   memoizeOnSuccess,
-  nanoid,
   raise,
   shallow,
 } from "@liveblocks/core";
@@ -87,7 +86,7 @@ export const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
 export const USER_THREADS_QUERY = "USER_THREADS";
 
 function selectorFor_useInboxNotifications(
-  state: CacheState<BaseMetadata>
+  state: UmbrellaStoreState<BaseMetadata>
 ): InboxNotificationsState {
   const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
 
@@ -111,7 +110,7 @@ function selectorFor_useInboxNotifications(
 }
 
 function selectorFor_useUserThreads<M extends BaseMetadata>(
-  state: CacheState<M>
+  state: UmbrellaStoreState<M>
 ): ThreadsState<M> {
   const query = state.queries[USER_THREADS_QUERY];
 
@@ -135,7 +134,9 @@ function selectorFor_useUserThreads<M extends BaseMetadata>(
   };
 }
 
-function selectUnreadInboxNotificationsCount(state: CacheState<BaseMetadata>) {
+function selectUnreadInboxNotificationsCount(
+  state: UmbrellaStoreState<BaseMetadata>
+) {
   let count = 0;
 
   for (const notification of selectedInboxNotifications(state)) {
@@ -151,7 +152,7 @@ function selectUnreadInboxNotificationsCount(state: CacheState<BaseMetadata>) {
 }
 
 function selectorFor_useUnreadInboxNotificationsCount(
-  state: CacheState<BaseMetadata>
+  state: UmbrellaStoreState<BaseMetadata>
 ): UnreadInboxNotificationsCountState {
   const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
 
@@ -253,7 +254,7 @@ function getExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   }
 
   return extras as unknown as Omit<typeof extras, "store"> & {
-    store: CacheStore<M>;
+    store: UmbrellaStore<M>;
   };
 }
 
@@ -261,7 +262,7 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
   client: OpaqueClient
 ) {
   const internals = client[kInternal] as PrivateClientApi<U, M>;
-  const store = internals.cacheStore;
+  const store = internals.umbrellaStore;
 
   let lastRequestedAt: Date | undefined;
 
@@ -712,54 +713,25 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
     (inboxNotificationId: string) => {
       const { store } = getExtrasForClient(client);
 
-      const optimisticUpdateId = nanoid();
       const readAt = new Date();
-      store.pushOptimisticUpdate({
+      const optimisticUpdateId = store.addOptimisticUpdate({
         type: "mark-inbox-notification-as-read",
-        id: optimisticUpdateId,
         inboxNotificationId,
         readAt,
       });
 
       client.markInboxNotificationAsRead(inboxNotificationId).then(
         () => {
-          store.set((state) => {
-            const existingNotification =
-              state.inboxNotifications[inboxNotificationId];
-
-            // If existing notification has been deleted, we return the existing state
-            if (existingNotification === undefined) {
-              return {
-                ...state,
-                optimisticUpdates: state.optimisticUpdates.filter(
-                  (update) => update.id !== optimisticUpdateId
-                ),
-              };
-            }
-
-            return {
-              ...state,
-              inboxNotifications: {
-                ...state.inboxNotifications,
-                [inboxNotificationId]: {
-                  ...existingNotification,
-                  readAt,
-                },
-              },
-              optimisticUpdates: state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              ),
-            };
-          });
+          // Replace the optimistic update by the real thing
+          store.updateInboxNotification(
+            inboxNotificationId,
+            optimisticUpdateId,
+            (inboxNotification) => ({ ...inboxNotification, readAt })
+          );
         },
         () => {
           // TODO: Broadcast errors to client
-          store.set((state) => ({
-            ...state,
-            optimisticUpdates: state.optimisticUpdates.filter(
-              (update) => update.id !== optimisticUpdateId
-            ),
-          }));
+          store.removeOptimisticUpdate(optimisticUpdateId);
         }
       );
     },
@@ -770,39 +742,23 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
 function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
   return useCallback(() => {
     const { store } = getExtrasForClient(client);
-    const optimisticUpdateId = nanoid();
     const readAt = new Date();
-    store.pushOptimisticUpdate({
+    const optimisticUpdateId = store.addOptimisticUpdate({
       type: "mark-all-inbox-notifications-as-read",
-      id: optimisticUpdateId,
       readAt,
     });
 
     client.markAllInboxNotificationsAsRead().then(
       () => {
-        store.set((state) => ({
-          ...state,
-          inboxNotifications: Object.fromEntries(
-            Array.from(Object.entries(state.inboxNotifications)).map(
-              ([id, inboxNotification]) => [
-                id,
-                { ...inboxNotification, readAt },
-              ]
-            )
-          ),
-          optimisticUpdates: state.optimisticUpdates.filter(
-            (update) => update.id !== optimisticUpdateId
-          ),
-        }));
+        // Replace the optimistic update by the real thing
+        store.updateAllInboxNotifications(
+          optimisticUpdateId,
+          (inboxNotification) => ({ ...inboxNotification, readAt })
+        );
       },
       () => {
         // TODO: Broadcast errors to client
-        store.set((state) => ({
-          ...state,
-          optimisticUpdates: state.optimisticUpdates.filter(
-            (update) => update.id !== optimisticUpdateId
-          ),
-        }));
+        store.removeOptimisticUpdate(optimisticUpdateId);
       }
     );
   }, [client]);
@@ -813,51 +769,24 @@ function useDeleteInboxNotification_withClient(client: OpaqueClient) {
     (inboxNotificationId: string) => {
       const { store } = getExtrasForClient(client);
 
-      const optimisticUpdateId = nanoid();
       const deletedAt = new Date();
-      store.pushOptimisticUpdate({
+      const optimisticUpdateId = store.addOptimisticUpdate({
         type: "delete-inbox-notification",
-        id: optimisticUpdateId,
         inboxNotificationId,
         deletedAt,
       });
 
       client.deleteInboxNotification(inboxNotificationId).then(
         () => {
-          store.set((state) => {
-            const existingNotification =
-              state.inboxNotifications[inboxNotificationId];
-
-            // If existing notification has been deleted, we return the existing state
-            if (existingNotification === undefined) {
-              return {
-                ...state,
-                optimisticUpdates: state.optimisticUpdates.filter(
-                  (update) => update.id !== optimisticUpdateId
-                ),
-              };
-            }
-
-            const { [inboxNotificationId]: _, ...inboxNotifications } =
-              state.inboxNotifications;
-
-            return {
-              ...state,
-              inboxNotifications,
-              optimisticUpdates: state.optimisticUpdates.filter(
-                (update) => update.id !== optimisticUpdateId
-              ),
-            };
-          });
+          // Replace the optimistic update by the real thing
+          store.deleteInboxNotification(
+            inboxNotificationId,
+            optimisticUpdateId
+          );
         },
         () => {
           // TODO: Broadcast errors to client
-          store.set((state) => ({
-            ...state,
-            optimisticUpdates: state.optimisticUpdates.filter(
-              (update) => update.id !== optimisticUpdateId
-            ),
-          }));
+          store.removeOptimisticUpdate(optimisticUpdateId);
         }
       );
     },
@@ -868,32 +797,20 @@ function useDeleteInboxNotification_withClient(client: OpaqueClient) {
 function useDeleteAllInboxNotifications_withClient(client: OpaqueClient) {
   return useCallback(() => {
     const { store } = getExtrasForClient(client);
-    const optimisticUpdateId = nanoid();
     const deletedAt = new Date();
-    store.pushOptimisticUpdate({
+    const optimisticUpdateId = store.addOptimisticUpdate({
       type: "delete-all-inbox-notifications",
-      id: optimisticUpdateId,
       deletedAt,
     });
 
     client.deleteAllInboxNotifications().then(
       () => {
-        store.set((state) => ({
-          ...state,
-          inboxNotifications: {},
-          optimisticUpdates: state.optimisticUpdates.filter(
-            (update) => update.id !== optimisticUpdateId
-          ),
-        }));
+        // Replace the optimistic update by the real thing
+        store.deleteAllInboxNotifications(optimisticUpdateId);
       },
       () => {
         // TODO: Broadcast errors to client
-        store.set((state) => ({
-          ...state,
-          optimisticUpdates: state.optimisticUpdates.filter(
-            (update) => update.id !== optimisticUpdateId
-          ),
-        }));
+        store.removeOptimisticUpdate(optimisticUpdateId);
       }
     );
   }, [client]);
@@ -906,7 +823,7 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
   const { store } = getExtrasForClient<M>(client);
 
   const selector = useCallback(
-    (state: CacheState<M>) => {
+    (state: UmbrellaStoreState<M>) => {
       const inboxNotification =
         state.inboxNotifications[inboxNotificationId] ??
         raise(`Inbox notification with ID "${inboxNotificationId}" not found`);

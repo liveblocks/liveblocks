@@ -1,9 +1,11 @@
 import type { AsyncResult } from "./lib/AsyncResult";
 import type { Store } from "./lib/create-store";
 import { createStore } from "./lib/create-store";
-import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
+import { nanoid } from "./lib/nanoid";
 import type { Resolve } from "./lib/Resolve";
+import type { DistributiveOmit } from "./lib/utils";
+import { mapValues } from "./lib/utils";
 import type {
   BaseMetadata,
   CommentData,
@@ -149,196 +151,465 @@ type UpdateNotificationSettingsOptimisticUpdate = {
 type QueryState = AsyncResult<undefined>;
 //                            ^^^^^^^^^ We don't store the actual query result in this status
 
-export type CacheState<M extends BaseMetadata> = {
-  /**
-   * Threads by ID.
-   */
-  threads: Record<string, ThreadDataWithDeleteInfo<M>>;
+export type UmbrellaStoreState<M extends BaseMetadata> = Readonly<{
   /**
    * Keep track of loading and error status of all the queries made by the client.
+   * e.g. 'room-abc-{"color":"red"}'  - ok
+   * e.g. 'room-abc-{}'               - loading
    */
   queries: Record<string, QueryState>;
   /**
    * Optimistic updates that have not been acknowledged by the server yet.
    * They are applied on top of the threads in selectors.
    */
-  optimisticUpdates: OptimisticUpdate<M>[];
+  optimisticUpdates: readonly OptimisticUpdate<M>[];
+
+  /**
+   * Threads by ID
+   * e.g. `th_${string}`
+   */
+  threads: Record<string, ThreadDataWithDeleteInfo<M>>;
   /**
    * Inbox notifications by ID.
+   * e.g. `in_${string}`
    */
   inboxNotifications: Record<string, InboxNotificationData>;
   /**
-   * Notification settings per room id
+   * Notification settings by room ID.
+   * e.g. { 'room-abc': { threads: "all" },
+   *        'room-def': { threads: "replies_and_mentions" },
+   *        'room-xyz': { threads: "none" },
+   *      }
    */
   notificationSettings: Record<string, RoomNotificationSettings>;
-};
+}>;
 
-export interface CacheStore<M extends BaseMetadata>
-  extends Store<CacheState<M>> {
-  deleteThread(threadId: string): void;
-  updateThreadAndNotification(
+export class UmbrellaStore<M extends BaseMetadata> {
+  private _store: Store<UmbrellaStoreState<M>>;
+
+  constructor() {
+    this._store = createStore<UmbrellaStoreState<M>>({
+      threads: {},
+      queries: {},
+      optimisticUpdates: [],
+      inboxNotifications: {},
+      notificationSettings: {},
+    });
+
+    // Auto-bind all of this class methods once here, so we can use stable
+    // references to them (most important for use in useSyncExternalStore)
+    this.get = this.get.bind(this);
+    this.subscribe = this.subscribe.bind(this);
+  }
+
+  public get(): Readonly<UmbrellaStoreState<M>> {
+    return this._store.get();
+  }
+
+  /**
+   * Only call this method from unit tests.
+   *
+   * @private
+   */
+  public force_set(
+    callback: (
+      currentState: Readonly<UmbrellaStoreState<M>>
+    ) => Readonly<UmbrellaStoreState<M>>
+  ): void {
+    return this._store.set(callback);
+  }
+
+  /**
+   * Mutate the state by returning a newly computed state, and removing the
+   * optimistic update. This helper lies at the core of all state updates.
+   */
+  private replaceOptimisticUpdate(
+    optimisticUpdateId: string | null,
+    callback: (
+      state: Readonly<UmbrellaStoreState<M>>
+    ) => Readonly<UmbrellaStoreState<M>>
+  ): void {
+    return this._store.set((state) => {
+      const newState = callback(state);
+      const newOptimisticUpdates =
+        optimisticUpdateId !== null
+          ? newState.optimisticUpdates.filter(
+              (ou) => ou.id !== optimisticUpdateId
+            )
+          : newState.optimisticUpdates;
+      return { ...newState, optimisticUpdates: newOptimisticUpdates };
+    });
+  }
+
+  /**
+   * Updates an existing inbox notification with a new value, replacing the
+   * corresponding optimistic update.
+   *
+   * This will not update anything if the inbox notification ID isn't found in
+   * the cache.
+   */
+  public updateInboxNotification(
+    inboxNotificationId: string,
+    optimisticUpdateId: string,
+    callback: (
+      ibn: Readonly<InboxNotificationData>
+    ) => Readonly<InboxNotificationData>
+  ): void {
+    return this.replaceOptimisticUpdate(
+      optimisticUpdateId,
+
+      (state) => {
+        const existing = state.inboxNotifications[inboxNotificationId];
+
+        // If the inbox notification doesn't exist in the cache, we do not change anything
+        if (!existing) {
+          return state;
+        }
+
+        const inboxNotifications = {
+          ...state.inboxNotifications,
+          [inboxNotificationId]: callback(existing),
+        };
+        return { ...state, inboxNotifications };
+      }
+    );
+  }
+
+  /**
+   * Updates *all* inbox notifications by running a mapper function over all of
+   * them, replacing the corresponding optimistic update.
+   */
+  public updateAllInboxNotifications(
+    optimisticUpdateId: string,
+    mapFn: (
+      ibn: Readonly<InboxNotificationData>
+    ) => Readonly<InboxNotificationData>
+  ): void {
+    return this.replaceOptimisticUpdate(
+      optimisticUpdateId,
+
+      (state) => {
+        const inboxNotifications = mapValues(state.inboxNotifications, mapFn);
+        return { ...state, inboxNotifications };
+      }
+    );
+  }
+
+  /**
+   * Deletes an existing inbox notification, replacing the corresponding
+   * optimistic update.
+   */
+  public deleteInboxNotification(
+    inboxNotificationId: string,
+    optimisticUpdateId: string
+  ): void {
+    return this.replaceOptimisticUpdate(
+      optimisticUpdateId,
+
+      (state) => {
+        // If the inbox notification doesn't exist in the cache, we do not
+        // change anything
+        const existing = state.inboxNotifications[inboxNotificationId];
+        if (!existing) {
+          return state;
+        }
+
+        // Delete it
+        const { [inboxNotificationId]: _, ...inboxNotifications } =
+          state.inboxNotifications;
+
+        return { ...state, inboxNotifications };
+      }
+    );
+  }
+
+  /**
+   * Deletes *all* inbox notifications, replacing the corresponding optimistic
+   * update.
+   */
+  public deleteAllInboxNotifications(optimisticUpdateId: string): void {
+    return this.replaceOptimisticUpdate(
+      optimisticUpdateId,
+
+      (state) => {
+        // Set empty
+        return { ...state, inboxNotifications: {} };
+      }
+    );
+  }
+
+  public subscribe(
+    callback: (state: Readonly<UmbrellaStoreState<M>>) => void
+  ): () => void {
+    return this._store.subscribe(callback);
+  }
+
+  /**
+   * Creates an new thread, replacing the corresponding optimistic update.
+   */
+  public createThread(
+    optimisticUpdateId: string,
+    thread: Readonly<ThreadDataWithDeleteInfo<M>>
+  ): void {
+    return this.replaceOptimisticUpdate(
+      optimisticUpdateId,
+
+      (state) => {
+        return {
+          ...state,
+          threads: { ...state.threads, [thread.id]: thread },
+        };
+      }
+    );
+  }
+
+  /**
+   * Updates an existing thread with a new value, replacing the corresponding
+   * optimistic update.
+   *
+   * This will not update anything if:
+   * - The thread ID isn't found in the cache; or
+   * - The thread ID was already deleted from the cache; or
+   * - The thread ID in the cache was updated more recently than the optimistic
+   *   update's timestamp (if given)
+   */
+  public updateThread(
+    threadId: string,
+    optimisticUpdateId: string | null,
+    callback: (
+      thread: Readonly<ThreadDataWithDeleteInfo<M>>
+    ) => Readonly<ThreadDataWithDeleteInfo<M>>,
+    updatedAt?: Date // TODO We could look this up from the optimisticUpdate instead?
+  ): void {
+    return this.replaceOptimisticUpdate(
+      optimisticUpdateId,
+
+      (state) => {
+        const existing = state.threads[threadId];
+
+        // If the thread doesn't exist in the cache, we do not update the metadata
+        if (!existing) {
+          return state;
+        }
+
+        // If the thread has been deleted, we do not update the metadata
+        if (existing.deletedAt !== undefined) {
+          return state;
+        }
+
+        if (
+          !!updatedAt &&
+          !!existing.updatedAt &&
+          existing.updatedAt > updatedAt
+        ) {
+          return state;
+        }
+
+        const threads = { ...state.threads, [threadId]: callback(existing) };
+        return { ...state, threads };
+      }
+    );
+  }
+
+  /**
+   * Soft-deletes an existing thread by setting its `deletedAt` value,
+   * replacing the corresponding optimistic update.
+   *
+   * This will not update anything if:
+   * - The thread ID isn't found in the cache; or
+   * - The thread ID was already deleted from the cache
+   */
+  public deleteThread(
+    threadId: string,
+    optimisticUpdateId: string | null
+  ): void {
+    return this.updateThread(
+      threadId,
+      optimisticUpdateId,
+
+      // A deletion is actually an update of the deletedAt property internally
+      (thread) => ({ ...thread, updatedAt: new Date(), deletedAt: new Date() })
+    );
+  }
+
+  /**
+   * Creates an existing comment and ensures the associated notification is
+   * updated correctly, replacing the corresponding optimistic update.
+   */
+  public createComment(
+    newComment: CommentData,
+    optimisticUpdateId: string
+  ): void {
+    return this.replaceOptimisticUpdate(
+      optimisticUpdateId,
+
+      (state) => {
+        const existingThread = state.threads[newComment.threadId];
+        if (!existingThread) {
+          return state;
+        }
+
+        const inboxNotification = Object.values(state.inboxNotifications).find(
+          (notification) =>
+            notification.kind === "thread" &&
+            notification.threadId === newComment.threadId
+        );
+
+        const threads = {
+          ...state.threads,
+          [newComment.threadId]: upsertComment(existingThread, newComment),
+        };
+
+        // If the thread has an inbox notification associated with it, we update the notification's `notifiedAt` and `readAt` values
+        const inboxNotifications =
+          inboxNotification !== undefined
+            ? {
+                ...state.inboxNotifications,
+                [inboxNotification.id]: {
+                  ...inboxNotification,
+                  notifiedAt: newComment.createdAt,
+                  readAt: newComment.createdAt,
+                },
+              }
+            : state.inboxNotifications;
+
+        return {
+          ...state,
+          threads,
+          inboxNotifications,
+        };
+      }
+    );
+  }
+
+  public updateThreadAndNotification(
     thread: ThreadData<M>,
     inboxNotification?: InboxNotificationData
-  ): void;
-  updateThreadsAndNotifications(
+  ): void {
+    this._store.set((state) => {
+      const existingThread = state.threads[thread.id];
+
+      return {
+        ...state,
+        threads:
+          existingThread === undefined ||
+          compareThreads(thread, existingThread) === 1
+            ? { ...state.threads, [thread.id]: thread }
+            : state.threads,
+        inboxNotifications:
+          inboxNotification === undefined // TODO: Compare notification dates to make sure it's not stale
+            ? state.inboxNotifications
+            : {
+                ...state.inboxNotifications,
+                [inboxNotification.id]: inboxNotification,
+              },
+      };
+    });
+  }
+
+  public updateThreadsAndNotifications(
     threads: ThreadData<M>[],
     inboxNotifications: InboxNotificationData[],
     deletedThreads: ThreadDeleteInfo[],
     deletedInboxNotifications: InboxNotificationDeleteInfo[],
     queryKey?: string
-  ): void;
-  updateRoomInboxNotificationSettings(
+  ): void {
+    this._store.set((state) => ({
+      ...state,
+      threads: applyThreadUpdates(state.threads, {
+        newThreads: threads,
+        deletedThreads,
+      }),
+      inboxNotifications: applyNotificationsUpdates(state.inboxNotifications, {
+        newInboxNotifications: inboxNotifications,
+        deletedNotifications: deletedInboxNotifications,
+      }),
+      queries:
+        queryKey !== undefined
+          ? {
+              ...state.queries,
+              [queryKey]: { isLoading: false, data: undefined },
+            }
+          : state.queries,
+    }));
+  }
+
+  /**
+   * Updates existing notification setting for a room with a new value,
+   * replacing the corresponding optimistic update.
+   */
+  public updateRoomInboxNotificationSettings2(
+    roomId: string,
+    optimisticUpdateId: string,
+    settings: Readonly<RoomNotificationSettings>
+  ): void {
+    return this.replaceOptimisticUpdate(
+      optimisticUpdateId,
+
+      (state) => {
+        // If the notification setting doesn't exist in the cache, we do not change anything
+        const existing = state.notificationSettings[roomId];
+        if (!existing) {
+          return state;
+        }
+
+        const notificationSettings = {
+          ...state.notificationSettings,
+          [roomId]: settings,
+        };
+        return { ...state, notificationSettings };
+      }
+    );
+  }
+
+  public updateRoomInboxNotificationSettings(
     roomId: string,
     settings: RoomNotificationSettings,
     queryKey: string
-  ): void;
-  pushOptimisticUpdate(optimisticUpdate: OptimisticUpdate<M>): void;
-  setQueryState(queryKey: string, queryState: QueryState): void;
-
-  optimisticUpdatesEventSource: ReturnType<
-    typeof makeEventSource<OptimisticUpdate<M>>
-  >;
-}
-
-/**
- * Create internal immutable store for comments and notifications.
- * Keep all the state required to return data from our hooks.
- */
-export function createClientStore<M extends BaseMetadata>(): CacheStore<M> {
-  const store = createStore<CacheState<M>>({
-    threads: {},
-    queries: {},
-    optimisticUpdates: [],
-    inboxNotifications: {},
-    notificationSettings: {},
-  });
-
-  const optimisticUpdatesEventSource = makeEventSource<OptimisticUpdate<M>>();
-
-  return {
-    ...store,
-
-    deleteThread(threadId: string) {
-      store.set((state) => {
-        return {
-          ...state,
-          threads: deleteKeyImmutable(state.threads, threadId),
-          inboxNotifications: Object.fromEntries(
-            Object.entries(state.inboxNotifications).filter(
-              ([_id, notification]) =>
-                notification.kind === "thread" &&
-                notification.threadId === threadId
-            )
-          ),
-        };
-      });
-    },
-
-    updateThreadAndNotification(
-      thread: ThreadData<M>,
-      inboxNotification?: InboxNotificationData
-    ) {
-      store.set((state) => {
-        const existingThread = state.threads[thread.id];
-
-        return {
-          ...state,
-          threads:
-            existingThread === undefined ||
-            compareThreads(thread, existingThread) === 1
-              ? { ...state.threads, [thread.id]: thread }
-              : state.threads,
-          inboxNotifications:
-            inboxNotification === undefined // TODO: Compare notification dates to make sure it's not stale
-              ? state.inboxNotifications
-              : {
-                  ...state.inboxNotifications,
-                  [inboxNotification.id]: inboxNotification,
-                },
-        };
-      });
-    },
-
-    updateThreadsAndNotifications(
-      threads: ThreadData<M>[],
-      inboxNotifications: InboxNotificationData[],
-      deletedThreads: ThreadDeleteInfo[],
-      deletedInboxNotifications: InboxNotificationDeleteInfo[],
-      queryKey?: string
-    ) {
-      store.set((state) => ({
-        ...state,
-        threads: applyThreadUpdates(state.threads, {
-          newThreads: threads,
-          deletedThreads,
-        }),
-        inboxNotifications: applyNotificationsUpdates(
-          state.inboxNotifications,
-          {
-            newInboxNotifications: inboxNotifications,
-            deletedNotifications: deletedInboxNotifications,
-          }
-        ),
-        queries:
-          queryKey !== undefined
-            ? {
-                ...state.queries,
-                [queryKey]: { isLoading: false, data: undefined },
-              }
-            : state.queries,
-      }));
-    },
-
-    updateRoomInboxNotificationSettings(
-      roomId: string,
-      settings: RoomNotificationSettings,
-      queryKey: string
-    ) {
-      store.set((state) => ({
-        ...state,
-        notificationSettings: {
-          ...state.notificationSettings,
-          [roomId]: settings,
-        },
-        queries: {
-          ...state.queries,
-          [queryKey]: { isLoading: false, data: undefined },
-        },
-      }));
-    },
-
-    pushOptimisticUpdate(optimisticUpdate: OptimisticUpdate<M>) {
-      optimisticUpdatesEventSource.notify(optimisticUpdate);
-      store.set((state) => ({
-        ...state,
-        optimisticUpdates: [...state.optimisticUpdates, optimisticUpdate],
-      }));
-    },
-
-    setQueryState(queryKey: string, queryState: QueryState) {
-      store.set((state) => ({
-        ...state,
-        queries: {
-          ...state.queries,
-          [queryKey]: queryState,
-        },
-      }));
-    },
-
-    optimisticUpdatesEventSource,
-  };
-}
-
-function deleteKeyImmutable<TKey extends string | number | symbol, TValue>(
-  record: Record<TKey, TValue>,
-  key: TKey
-) {
-  if (Object.prototype.hasOwnProperty.call(record, key)) {
-    const { [key]: _toDelete, ...rest } = record;
-    return rest;
+  ): void {
+    this._store.set((state) => ({
+      ...state,
+      notificationSettings: {
+        ...state.notificationSettings,
+        [roomId]: settings,
+      },
+      queries: {
+        ...state.queries,
+        [queryKey]: { isLoading: false, data: undefined },
+      },
+    }));
   }
 
-  return record;
+  public addOptimisticUpdate(
+    optimisticUpdate: DistributiveOmit<OptimisticUpdate<M>, "id">
+  ): string {
+    const id = nanoid();
+    const newUpdate: OptimisticUpdate<M> = { ...optimisticUpdate, id };
+    this._store.set((state) => ({
+      ...state,
+      optimisticUpdates: [...state.optimisticUpdates, newUpdate],
+    }));
+    return id;
+  }
+
+  public removeOptimisticUpdate(optimisticUpdateId: string): void {
+    return this._store.set((state) => ({
+      ...state,
+      optimisticUpdates: state.optimisticUpdates.filter(
+        (update) => update.id !== optimisticUpdateId
+      ),
+    }));
+  }
+
+  public setQueryState(queryKey: string, queryState: QueryState): void {
+    this._store.set((state) => ({
+      ...state,
+      queries: {
+        ...state.queries,
+        [queryKey]: queryState,
+      },
+    }));
+  }
 }
 
 /**
@@ -374,9 +645,9 @@ export function compareThreads<M extends BaseMetadata>(
 }
 
 export function applyOptimisticUpdates<M extends BaseMetadata>(
-  state: CacheState<M>
+  state: UmbrellaStoreState<M>
 ): Pick<
-  CacheState<M>,
+  UmbrellaStoreState<M>,
   "threads" | "inboxNotifications" | "notificationSettings"
 > {
   const result = {
