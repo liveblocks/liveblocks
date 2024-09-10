@@ -1076,13 +1076,6 @@
       background: var(--lb-foreground-subtle);
     }
   }
-
-  &:where([data-error]) {
-    :where(.lb-attachment-preview) {
-      background: var(--lb-destructive);
-      color: var(--lb-destructive-foreground);
-    }
-  }
 }
 
 .lb-attachment-delete {
@@ -1286,6 +1279,13 @@
         opacity: 1;
       }
     }
+  }
+}
+
+.lb-attachment:where([data-error]) {
+  :where(.lb-attachment-preview) {
+    background: var(--lb-destructive);
+    color: var(--lb-destructive-foreground);
   }
 }
 
