@@ -1,5 +1,5 @@
-import { deleteComment } from "../umbrella-store";
-import { createComment, createThread } from "./_dummies";
+import { deleteComment } from "../../umbrella-store";
+import { createComment, createThread } from "../_dummies";
 
 describe("deleteComment", () => {
   it("should mark a comment as deleted in a thread", () => {
