@@ -32,7 +32,7 @@ function Chat() {
     });
 
   return (
-    <div className="relative w-full mx-auto  h-full flex flex-col">
+    <div className="relative w-full mx-auto h-full flex flex-col">
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-[740px] mx-auto flex-1 px-8 py-4 flex flex-col gap-2">
           {messages.map((message) => (
@@ -76,6 +76,25 @@ function Chat() {
           </button>
         </div>
       </form>
+
+      <a
+        className="fixed top-4 right-4"
+        href="https://liveblocks.io"
+        rel="noreferrer"
+        target="_blank"
+      >
+        <picture>
+          <source
+            srcSet="https://liveblocks.io/badge-dark.svg"
+            media="(prefers-color-scheme: dark)"
+          />
+          <img
+            src="https://liveblocks.io/badge-light.svg"
+            alt="Made with Liveblocks"
+            className=""
+          />
+        </picture>
+      </a>
     </div>
   );
 }

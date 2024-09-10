@@ -77,10 +77,6 @@ async function PageLink({ room }: { room: TypedRoomData }) {
       <Link href={url} className="py-1.5 px-3 flex-1 truncate">
         {title}
       </Link>
-      {/*<button>*/}
-      {/*  <span className="sr-only">Delete page</span>*/}
-      {/*  <TrashIcon className="w-4 h-4 text-red-400" />*/}
-      {/*</button>*/}
     </div>
   );
 }

@@ -18,7 +18,7 @@ export function Notifications() {
   return (
     <Dialog.Root>
       <Dialog.Trigger className="flex relative items-center justify-between whitespace-nowrap rounded-md font-medium transition-colors w-full px-2 py-1.5 hover:bg-gray-200">
-        <div className="flex items-center gap-1.5 flex-1 text-sm text-gray-700">
+        <div className="flex items-center gap-1.5 flex-1 text-sm text-gray-700 pointer-events-none">
           <InboxIcon className="w-5 h-5" />
           Inbox
         </div>
@@ -55,13 +55,14 @@ function Inbox() {
   const { inboxNotifications } = useInboxNotifications();
   const markAllNotificationsAsRead = useMarkAllInboxNotificationsAsRead();
   const deleteAllNotifications = useDeleteAllInboxNotifications();
+  const { count } = useUnreadInboxNotificationsCount();
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex py-1.5 px-3 border-b border-border justify-end gap-1.5 flex-0">
         <button
           className="inline-flex gap-1.5 items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 h-8 px-2 hover:bg-gray-100 text-gray-600 hover:text-gray-800"
-          disabled={inboxNotifications.length === 0}
+          disabled={count === 0}
           onClick={markAllNotificationsAsRead}
         >
           <MailReadIcon className="w-4 h-4 opacity-70" />
