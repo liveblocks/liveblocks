@@ -1,16 +1,8 @@
-@import "@liveblocks/react-ui/styles.css";
-@import "@liveblocks/react-lexical/styles.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-:root {
-  /* Waveform total height */
-  --wave-height: 70px;
-
-  /* How far down the waveform the timeline starts */
-  --wave-timeline-modifier: 0.5;
-}
+@import "@liveblocks/react-ui/styles.css";
+@import "@liveblocks/react-lexical/styles.css";
 
 .lb-root {
   --lb-accent: theme("colors.accent");
@@ -18,6 +10,10 @@
   --lb-foreground: theme("colors.neutral[900]");
   --lb-foreground-subtle: theme("colors.neutral[200]");
   font-size: 14px;
+}
+
+.lb-root.lb-lexical-thread-mark {
+  font-size: inherit;
 }
 
 .editor-styles p {

@@ -5,6 +5,8 @@ import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import {
+  FloatingComposer,
+  FloatingThreads,
   liveblocksConfig,
   LiveblocksPlugin,
   useEditorStatus,
@@ -12,7 +14,7 @@ import {
 import { EditorTitle } from "@/components/EditorTitle";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { ListNode, ListItemNode } from "@lexical/list";
-import { ClientSideSuspense } from "@liveblocks/react/suspense";
+import { ClientSideSuspense, useThreads } from "@liveblocks/react/suspense";
 import { EditorFloatingToolbar } from "@/components/EditorFloatingToolbar";
 import { ReactNode } from "react";
 import { LinkNode } from "@lexical/link";
@@ -94,10 +96,20 @@ function LexicalEditor({ contentFallback }: { contentFallback: ReactNode }) {
                 ErrorBoundary={LexicalErrorBoundary}
               />
             )}
+            <ClientSideSuspense fallback={null}>
+              <TextEditorThreads />
+            </ClientSideSuspense>
+            <FloatingComposer />
           </LiveblocksPlugin>
         </div>
       </div>
       <EditorFloatingToolbar />
     </LexicalComposer>
   );
+}
+
+function TextEditorThreads() {
+  const { threads } = useThreads({ query: { resolved: false } });
+
+  return <FloatingThreads threads={threads} />;
 }

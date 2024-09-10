@@ -1,11 +1,11 @@
 import { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "../globals.css";
-import { ReactNode, Suspense } from "react";
+import { ReactNode } from "react";
 import { Providers } from "./Providers";
 
 export const metadata: Metadata = {
-  title: "Parallel | Liveblocks example",
+  title: "Liveblocks",
   description:
     "This example shows how to build a project manager using Liveblocks, and Next.js.",
 };
