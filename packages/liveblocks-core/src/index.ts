@@ -48,6 +48,7 @@ export {
   stringifyCommentBody,
   transformCommentBody,
 } from "./comments/comment-body";
+export { generateCommentUrl } from "./comments/comment-url";
 export type { BaseAuthResult, Delegates, LiveblocksError } from "./connection";
 export type { LostConnectionEvent, Status } from "./connection";
 export {
