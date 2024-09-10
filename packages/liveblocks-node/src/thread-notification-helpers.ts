@@ -30,30 +30,22 @@ export type ThreadNotificationData =
   | ThreadNotificationUnreadMention;
 
 /** @internal */
-export const getLastUnreadCommentWithMention = ({
-  unreadComments,
-  mentionUserId,
+export const getLastCommentWithMention = ({
+  comments,
+  mentionedUserId,
 }: {
-  unreadComments: ThreadNotificationCommentData[];
-  mentionUserId: string;
+  comments: ThreadNotificationCommentData[];
+  mentionedUserId: string;
 }): ThreadNotificationCommentData | null => {
-  const startIndex = unreadComments.length - 1;
-  for (let i = startIndex; i >= 0; i--) {
-    const comment = unreadComments[i];
-    if (comment) {
-      const { userId, body } = comment;
-
-      if (userId !== mentionUserId) {
-        const mentionedIds = getMentionedIdsFromCommentBody(body);
-
-        if (mentionedIds.includes(mentionUserId)) {
-          return comment;
-        }
-      }
-    }
-  }
-
-  return null;
+  return (
+    Array.from(comments)
+      .reverse()
+      .filter((c) => c.userId !== mentionedUserId)
+      .find((c) => {
+        const mentionedUserIds = getMentionedIdsFromCommentBody(c.body);
+        return mentionedUserIds.includes(mentionedUserId);
+      }) ?? null
+  );
 };
 
 /**
@@ -98,9 +90,9 @@ export async function getThreadNotificationData(params: {
         : c.createdAt <= inboxNotification.notifiedAt
     ) as ThreadNotificationCommentData[];
 
-  const lastUnreadCommentWithMention = getLastUnreadCommentWithMention({
-    unreadComments,
-    mentionUserId: userId,
+  const lastUnreadCommentWithMention = getLastCommentWithMention({
+    comments: unreadComments,
+    mentionedUserId: userId,
   });
 
   if (lastUnreadCommentWithMention !== null) {
