@@ -1,11 +1,8 @@
-import {
-  applyOptimisticUpdates,
-  type BaseMetadata,
-  type ThreadData,
-  type UmbrellaStoreState,
-} from "@liveblocks/core";
+import type { BaseMetadata, ThreadData } from "@liveblocks/core";
 
 import type { UseThreadsOptions } from "../../types";
+import type { UmbrellaStoreState } from "../../umbrella-store";
+import { applyOptimisticUpdates } from "../../umbrella-store";
 
 export function selectedUserThreads<M extends BaseMetadata>(
   state: UmbrellaStoreState<M>,

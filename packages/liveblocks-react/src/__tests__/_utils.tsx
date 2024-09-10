@@ -4,8 +4,6 @@ import type {
   JsonObject,
 } from "@liveblocks/client";
 import { createClient, LiveList, LiveObject } from "@liveblocks/client";
-import type { UmbrellaStore } from "@liveblocks/core";
-import { kInternal } from "@liveblocks/core";
 import type { RenderHookResult, RenderOptions } from "@testing-library/react";
 import { render, renderHook } from "@testing-library/react";
 import type { ReactElement } from "react";
@@ -13,6 +11,7 @@ import * as React from "react";
 
 import { createLiveblocksContext } from "../liveblocks";
 import { createRoomContext } from "../room";
+import { UmbrellaStore } from "../umbrella-store";
 import { RoomProvider } from "./_liveblocks.config";
 import MockWebSocket from "./_MockWebSocket";
 
@@ -86,7 +85,7 @@ export function createContextsForTest<M extends BaseMetadata>(
   }
 
   const client = createClient(clientOptions);
-  const umbrellaStore = client[kInternal].umbrellaStore as UmbrellaStore<M>;
+  const umbrellaStore = new UmbrellaStore<M>();
 
   return {
     room: createRoomContext<JsonObject, never, never, never, M>(client),

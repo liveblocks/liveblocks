@@ -1,4 +1,5 @@
-import type { InboxNotificationData } from "../../protocol/InboxNotifications";
+import type { InboxNotificationData } from "@liveblocks/core";
+
 import { compareInboxNotifications } from "../../umbrella-store";
 
 describe("compareInboxNotifications", () => {

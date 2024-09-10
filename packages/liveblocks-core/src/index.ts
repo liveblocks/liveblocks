@@ -109,10 +109,11 @@ export { asPos, makePosition } from "./lib/position";
 export type { Resolve } from "./lib/Resolve";
 export { shallow } from "./lib/shallow";
 export { stringify } from "./lib/stringify";
-export type { Brand } from "./lib/utils";
+export type { Brand, DistributiveOmit } from "./lib/utils";
 export {
   b64decode,
   isPlainObject,
+  mapValues,
   memoizeOnSuccess,
   raise,
   tryParseJson,
@@ -154,7 +155,11 @@ export type {
   CommentUserReactionPlain,
 } from "./protocol/Comments";
 export type { QueryMetadata } from "./protocol/Comments";
-export type { ThreadData, ThreadDataPlain } from "./protocol/Comments";
+export type {
+  ThreadData,
+  ThreadDataPlain,
+  ThreadDataWithDeleteInfo,
+} from "./protocol/Comments";
 export type { ThreadDeleteInfo } from "./protocol/Comments";
 export type {
   ActivityData,
@@ -276,12 +281,4 @@ export type { DevTools };
 
 // Store
 export type { Store } from "./lib/create-store";
-export {
-  addReaction,
-  applyOptimisticUpdates,
-  deleteComment,
-  removeReaction,
-  UmbrellaStore,
-  type UmbrellaStoreState,
-  upsertComment,
-} from "./umbrella-store";
+export { createStore } from "./lib/create-store";

@@ -2,7 +2,8 @@ import type {
   ThreadData,
   ThreadDataWithDeleteInfo,
   ThreadDeleteInfo,
-} from "../../protocol/Comments";
+} from "@liveblocks/core";
+
 import { applyThreadUpdates } from "../../umbrella-store";
 
 describe("applyThreadUpdates", () => {

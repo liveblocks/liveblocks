@@ -33,26 +33,20 @@ import type {
   StorageStatus,
   ThreadData,
   ToImmutable,
-  UmbrellaStore,
-  UmbrellaStoreState,
 } from "@liveblocks/core";
 import {
-  addReaction,
   CommentsApiError,
   console,
   createCommentId,
   createThreadId,
-  deleteComment,
   deprecateIf,
   errorIf,
   kInternal,
   makeEventSource,
   makePoller,
   NotificationsApiError,
-  removeReaction,
   ServerMsgCode,
   stringify,
-  upsertComment,
 } from "@liveblocks/core";
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
@@ -108,6 +102,14 @@ import type {
   UseStorageStatusOptions,
   UseThreadsOptions,
 } from "./types";
+import type { UmbrellaStoreState } from "./umbrella-store";
+import {
+  addReaction,
+  deleteComment,
+  removeReaction,
+  UmbrellaStore,
+  upsertComment,
+} from "./umbrella-store";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
 
 const SMOOTH_DELAY = 1000;
@@ -272,7 +274,7 @@ function getExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
 }
 
 function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
-  const store = client[kInternal].umbrellaStore as unknown as UmbrellaStore<M>;
+  const store = new UmbrellaStore<M>();
 
   const DEFAULT_DEDUPING_INTERVAL = 2000; // 2 seconds
 

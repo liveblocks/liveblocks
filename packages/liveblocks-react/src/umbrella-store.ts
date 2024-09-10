@@ -1,27 +1,22 @@
-import type { AsyncResult } from "./lib/AsyncResult";
-import type { Store } from "./lib/create-store";
-import { createStore } from "./lib/create-store";
-import * as console from "./lib/fancy-console";
-import { nanoid } from "./lib/nanoid";
-import type { Resolve } from "./lib/Resolve";
-import type { DistributiveOmit } from "./lib/utils";
-import { mapValues } from "./lib/utils";
 import type {
+  AsyncResult,
   BaseMetadata,
   CommentData,
   CommentReaction,
   CommentUserReaction,
+  DistributiveOmit,
+  HistoryVersion,
+  InboxNotificationData,
+  InboxNotificationDeleteInfo,
+  Patchable,
+  Resolve,
+  RoomNotificationSettings,
+  Store,
   ThreadData,
   ThreadDataWithDeleteInfo,
   ThreadDeleteInfo,
-} from "./protocol/Comments";
-import type {
-  InboxNotificationData,
-  InboxNotificationDeleteInfo,
-} from "./protocol/InboxNotifications";
-import type { HistoryVersion } from "./protocol/VersionHistory";
-import type { Patchable } from "./types/Patchable";
-import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
+} from "@liveblocks/core";
+import { console, createStore, mapValues, nanoid } from "@liveblocks/core";
 
 type OptimisticUpdate<M extends BaseMetadata> =
   | CreateThreadOptimisticUpdate<M>

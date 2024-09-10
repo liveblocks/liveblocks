@@ -11,9 +11,6 @@ import type {
   DM,
   DU,
   OpaqueClient,
-  PrivateClientApi,
-  UmbrellaStore,
-  UmbrellaStoreState,
 } from "@liveblocks/core";
 import {
   assert,
@@ -55,6 +52,8 @@ import type {
   UserAsyncSuccess,
   UseUserThreadsOptions,
 } from "./types";
+import type { UmbrellaStoreState } from "./umbrella-store";
+import { UmbrellaStore } from "./umbrella-store";
 
 /**
  * Raw access to the React context where the LiveblocksProvider stores the
@@ -235,11 +234,8 @@ function getExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   };
 }
 
-function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
-  client: OpaqueClient
-) {
-  const internals = client[kInternal] as PrivateClientApi<U, M>;
-  const store = internals.umbrellaStore;
+function makeExtrasForClient(client: OpaqueClient) {
+  const store = new UmbrellaStore();
 
   let lastRequestedAt: Date | undefined;
 
