@@ -206,6 +206,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this._store.get();
   }
 
+  public subscribe(
+    callback: (state: Readonly<UmbrellaStoreState<M>>) => void
+  ): () => void {
+    return this._store.subscribe(callback);
+  }
+
   /**
    * Only call this method from unit tests.
    *
@@ -336,12 +342,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
         return { ...state, inboxNotifications: {} };
       }
     );
-  }
-
-  public subscribe(
-    callback: (state: Readonly<UmbrellaStoreState<M>>) => void
-  ): () => void {
-    return this._store.subscribe(callback);
   }
 
   /**
