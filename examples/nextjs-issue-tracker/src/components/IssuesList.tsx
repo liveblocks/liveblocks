@@ -71,7 +71,7 @@ export function IssuesList({
 
       {done.length ? (
         <div className="flex items-center gap-2 bg-neutral-200/60 px-4 py-1.5 text-sm font-medium text-neutral-800 w-full">
-          <Done className="w-4 h-4 text-blue-500" />
+          <Done className="w-4 h-4 text-indigo-500" />
           Done
         </div>
       ) : null}

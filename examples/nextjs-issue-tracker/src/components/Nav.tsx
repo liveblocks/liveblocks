@@ -14,6 +14,7 @@ import {
 import { ComponentProps, useState } from "react";
 import { Loading } from "@/components/Loading";
 import { Progress } from "@/icons/Progress";
+import { MyIssues } from "@/icons/MyIssues";
 
 export function Nav() {
   const { isOpen, toggleInbox } = useInbox();
@@ -83,7 +84,7 @@ export function Nav() {
           )}
         >
           <span className="flex items-center gap-2">
-            <Progress className="w-4 h-4" />
+            <MyIssues className="w-4 h-4" />
             Issues
           </span>
         </div>

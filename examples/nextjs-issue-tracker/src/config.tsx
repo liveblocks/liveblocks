@@ -74,7 +74,7 @@ export const PROGRESS_STATES = [
   {
     id: "none",
     jsx: (
-      <div className="flex gap-2 items-center text-neutral-600">
+      <div className="flex gap-2 items-center text-neutral-500">
         {/*<Dash className="w-4 h-4 text-neutral-600" />*/}
         No progress
       </div>
@@ -84,7 +84,7 @@ export const PROGRESS_STATES = [
     id: "todo",
     jsx: (
       <div className="flex gap-2 items-center">
-        <Todo className="w-4 h-4 text-neutral-600" />
+        <Todo className="w-4 h-4 text-neutral-500" />
         Todo
       </div>
     ),
@@ -93,7 +93,7 @@ export const PROGRESS_STATES = [
     id: "progress",
     jsx: (
       <div className="flex gap-2 items-center">
-        <Progress className="w-4 h-4 text-yellow-600" />
+        <Progress className="w-4 h-4 text-yellow-500" />
         In Progress
       </div>
     ),
@@ -102,7 +102,7 @@ export const PROGRESS_STATES = [
     id: "review",
     jsx: (
       <div className="flex gap-2 items-center">
-        <Review className="w-4 h-4 text-emerald-600" />
+        <Review className="w-4 h-4 text-emerald-500" />
         In Review
       </div>
     ),
@@ -111,7 +111,7 @@ export const PROGRESS_STATES = [
     id: "done",
     jsx: (
       <div className="flex gap-2 items-center">
-        <Done className="w-4 h-4 text-blue-600" />
+        <Done className="w-4 h-4 text-indigo-500" />
         Done
       </div>
     ),

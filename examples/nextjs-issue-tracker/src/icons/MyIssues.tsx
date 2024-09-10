@@ -1,6 +1,6 @@
 import { ComponentProps } from "react";
 
-export function Todo(props: ComponentProps<"svg">) {
+export function MyIssues(props: ComponentProps<"svg">) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -11,7 +11,7 @@ export function Todo(props: ComponentProps<"svg">) {
     >
       <path
         fill="currentColor"
-        d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10s-4.477 10-10 10m0-2a8 8 0 1 0 0-16a8 8 0 0 0 0 16"
+        d="M2 12c0 5.523 4.477 10 10 10s10-4.477 10-10S17.523 2 12 2S2 6.477 2 12m18 0a8 8 0 1 1-16 0a8 8 0 0 1 16 0m-8 6a6 6 0 1 0 0-12a6 6 0 0 0 0 12"
       ></path>
     </svg>
   );
