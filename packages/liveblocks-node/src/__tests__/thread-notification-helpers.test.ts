@@ -308,5 +308,73 @@ describe("thread notification helpers", () => {
 
       expect(threadNotificationData).toEqual(expected);
     });
+
+    it("should get last unread comment with a mention even w/ unread replies", async () => {
+      const threadId = generateThreadId();
+      const comment1 = makeComment({
+        userId: "user-leon",
+        threadId,
+        body: commentBody1,
+        createdAt: new Date("2024-09-10T08:10:00.000Z"),
+      });
+      const comment2 = makeComment({
+        userId: "user-trevor",
+        threadId,
+        body: commentBody2,
+        createdAt: new Date("2024-09-10T08:14:00.000Z"),
+      });
+      const comment3 = makeComment({
+        userId: "user-julius",
+        threadId,
+        body: buildCommentBodyWithMention({ mentionedUserId: "user-leon" }),
+        createdAt: new Date("2024-09-10T08:16:00.000Z"),
+      });
+      const comment4 = makeComment({
+        userId: "user-ritcher",
+        threadId,
+        body: commentBody3,
+        createdAt: new Date("2024-09-10T08:18:00.000Z"),
+      });
+
+      const thread = makeThread({
+        threadId,
+        comments: [comment1, comment2, comment3, comment4],
+      });
+      const inboxNotification = makeThreadInboxNotification({
+        threadId,
+        notifiedAt: new Date("2024-09-10T08:20:00.000Z"),
+      });
+
+      server.use(
+        http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`, () =>
+          HttpResponse.json(thread, { status: 200 })
+        )
+      );
+
+      server.use(
+        http.get(
+          `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
+          () => HttpResponse.json(inboxNotification, { status: 200 })
+        )
+      );
+
+      const event = makeThreadNotificationEvent({
+        threadId,
+        userId: "user-leon",
+        inboxNotificationId: inboxNotification.id,
+      });
+
+      const threadNotificationData = await getThreadNotificationData({
+        client,
+        event,
+      });
+
+      const expected: ThreadNotificationData = {
+        type: "unreadMention",
+        comments: [makeThreadNotificationComment({ comment: comment3 })],
+      };
+
+      expect(threadNotificationData).toEqual(expected);
+    });
   });
 });
