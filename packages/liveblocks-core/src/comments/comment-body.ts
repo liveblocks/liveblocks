@@ -632,3 +632,110 @@ export async function stringifyCommentBody(
 
   return blocks.join(separator);
 }
+
+export type TransformCommentBodyOptions<U extends BaseUserMeta = DU> = {
+  /**
+   * Which format to transform the comment body to.
+   */
+  format?: "html" | "json";
+  /**
+   * A function that returns info from user IDs.
+   */
+  resolveUsers?: (
+    args: ResolveUsersArgs
+  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+};
+
+export type CommentBodyJsonMention = {
+  type: "mention";
+  user: string;
+};
+export type CommentBodyJsonLink = CommentBodyLink;
+export type CommentBodyJsonText = CommentBodyText;
+
+export type CommentBodyJsonInlineElement =
+  | CommentBodyJsonMention
+  | CommentBodyJsonLink
+  | CommentBodyJsonText;
+export type CommentBodyJsonParagraph = {
+  type: "paragraph";
+  children: CommentBodyJsonInlineElement[];
+};
+export type CommentBodyJsonBlockElement = CommentBodyJsonParagraph;
+/**
+ * A `CommentBodyJson` represents the content of a `CommentBody`
+ * with resolved users or not and with absolute urls
+ */
+export type CommentBodyJson = {
+  version: 1;
+  content: CommentBodyJsonBlockElement[];
+};
+
+/**
+ * Transform a `CommentBody` into either an HTML format (HTML safe string)
+ * or into a JSON format and resolves users.
+ *
+ * By default the format is set to "HTML".
+ */
+export async function transformCommentBody(
+  body: CommentBody,
+  options?: TransformCommentBodyOptions<BaseUserMeta>
+): Promise<string | CommentBodyJson> {
+  const format = options?.format ?? "html";
+
+  switch (format) {
+    case "html":
+      return await stringifyCommentBody(body, {
+        format: "html",
+        resolveUsers: options?.resolveUsers,
+      });
+    case "json": {
+      const resolvedUsers = await resolveUsersInCommentBody(
+        body,
+        options?.resolveUsers
+      );
+
+      const content: CommentBodyJsonBlockElement[] = body.content.map(
+        (block) => {
+          return {
+            type: "paragraph",
+            children: block.children.map(
+              (inline): CommentBodyJsonInlineElement => {
+                if (isCommentBodyMention(inline)) {
+                  const user = resolvedUsers.get(inline.id);
+                  return {
+                    type: "mention",
+                    user: `@${user ? user.name : inline.id}`,
+                  };
+                } else if (isCommentBodyLink(inline)) {
+                  return {
+                    type: "link",
+                    url: toAbsoluteUrl(inline.url) ?? inline.url,
+                    text: inline.text,
+                  };
+                } else if (isCommentBodyText(inline)) {
+                  return { ...inline };
+                }
+                throw new TransformCommentBodyError(
+                  `unsupported comment body inline element: "${JSON.stringify(inline)}"`
+                );
+              }
+            ),
+          };
+        }
+      );
+      return { version: 1, content };
+    }
+    default:
+      throw new TransformCommentBodyError(
+        `unsupported format: "${JSON.stringify(format)}"`
+      );
+  }
+}
+
+export class TransformCommentBodyError extends Error {
+  constructor(message = "") {
+    super(message);
+    Object.setPrototypeOf(this, TransformCommentBodyError.prototype);
+  }
+}
