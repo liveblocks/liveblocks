@@ -593,12 +593,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   public removeOptimisticUpdate(optimisticUpdateId: string): void {
-    return this._store.set((state) => ({
-      ...state,
-      optimisticUpdates: state.optimisticUpdates.filter(
-        (update) => update.id !== optimisticUpdateId
-      ),
-    }));
+    return this.replaceOptimisticUpdate(optimisticUpdateId, (state) => state);
   }
 
   public setQueryState(queryKey: string, queryState: QueryState): void {
