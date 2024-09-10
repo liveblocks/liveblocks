@@ -524,6 +524,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
         newInboxNotifications: inboxNotifications,
         deletedNotifications: deletedInboxNotifications,
       }),
+
+      // XXX Direct mutation of query state here (this should ideally only happen through setQueryOK()
       queries:
         queryKey !== undefined
           ? {
@@ -573,6 +575,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
         ...state.notificationSettings,
         [roomId]: settings,
       },
+
+      // XXX Direct mutation of query state here (this should ideally only happen through setQueryOK()
       queries: {
         ...state.queries,
         [queryKey]: { isLoading: false, data: undefined },
@@ -596,7 +600,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this.replaceOptimisticUpdate(optimisticUpdateId, (state) => state);
   }
 
-  public setQueryState(queryKey: string, queryState: QueryState): void {
+  //
+  // Query State APIs
+  //
+
+  private setQueryState(queryKey: string, queryState: QueryState): void {
     this._store.set((state) => ({
       ...state,
       queries: {
@@ -604,6 +612,18 @@ export class UmbrellaStore<M extends BaseMetadata> {
         [queryKey]: queryState,
       },
     }));
+  }
+
+  public setQueryLoading(queryKey: string): void {
+    this.setQueryState(queryKey, { isLoading: true });
+  }
+
+  // public setQueryOK(queryKey: string): void {
+  //   this.setQueryState(queryKey, { isLoading: false, data: undefined });
+  // }
+
+  public setQueryError(queryKey: string, error: Error): void {
+    this.setQueryState(queryKey, { isLoading: false, error });
   }
 }
 
