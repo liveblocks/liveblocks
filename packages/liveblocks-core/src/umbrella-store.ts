@@ -579,7 +579,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // Batch 1️⃣ + 2️⃣
     this._store.batch(() => {
       this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
-      this.setNotificationSettings(roomId, settings, "only-update"); // 2️⃣
+      this.setNotificationSettings(roomId, settings); // 2️⃣
     });
   }
 
@@ -591,7 +591,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // Batch 1️⃣ + 2️⃣
     this._store.batch(() => {
       this.setQueryOK(queryKey); // 1️⃣
-      this.setNotificationSettings(roomId, settings, "upsert"); // 2️⃣
+      this.setNotificationSettings(roomId, settings); // 2️⃣
     });
   }
 
