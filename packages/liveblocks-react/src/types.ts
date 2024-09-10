@@ -1018,7 +1018,7 @@ export type RoomContextBundle<
       ];
 
       /**
-       * Returns a history of versions of the current room.
+       * (Private beta)  Returns a history of versions of the current room.
        *
        * @example
        * const { versions, error, isLoading } = useHistoryVersions();
@@ -1026,7 +1026,7 @@ export type RoomContextBundle<
       useHistoryVersions(): HistoryVersionsState;
 
       /**
-       * Returns the data of a specific version of the current room.
+       * (Private beta) Returns the data of a specific version of the current room.
        *
        * @example
        * const { data, error, isLoading } = useHistoryVersionData(version.id);
@@ -1111,7 +1111,7 @@ export type RoomContextBundle<
             useThreads(options?: UseThreadsOptions<M>): ThreadsStateSuccess<M>;
 
             /**
-             * Returns a history of versions of the current room.
+             * (Private beta) Returns a history of versions of the current room.
              *
              * @example
              * const { versions } = useHistoryVersions();

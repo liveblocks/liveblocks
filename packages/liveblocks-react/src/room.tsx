@@ -2248,7 +2248,7 @@ function useHistoryVersionData(versionId: string): HistoryVersionDataState {
 }
 
 /**
- * Returns a history of versions of the current room.
+ * (Private beta) Returns a history of versions of the current room.
  *
  * @example
  * const { versions, error, isLoading } = useHistoryVersions();
@@ -2517,7 +2517,7 @@ function useThreadsSuspense<M extends BaseMetadata>(
 }
 
 /**
- * Returns a history of versions of the current room.
+ * (Private beta) Returns a history of versions of the current room.
  *
  * @example
  * const { versions } = useHistoryVersions();
@@ -2907,7 +2907,7 @@ const _useThreadsSuspense: TypedBundle["suspense"]["useThreads"] =
   useThreadsSuspense;
 
 /**
- * Returns a history of versions of the current room.
+ * (Private beta) Returns a history of versions of the current room.
  *
  * @example
  * const { versions, error, isLoading } = useHistoryVersions();
@@ -2916,7 +2916,7 @@ const _useHistoryVersions: TypedBundle["useHistoryVersions"] =
   useHistoryVersions;
 
 /**
- * Returns a history of versions of the current room.
+ * (Private beta) Returns a history of versions of the current room.
  *
  * @example
  * const { versions } = useHistoryVersions();
