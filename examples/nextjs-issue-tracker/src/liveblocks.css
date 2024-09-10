@@ -1,0 +1,113 @@
+@import "@liveblocks/react-ui/styles.css";
+@import "@liveblocks/react-lexical/styles.css";
+
+.lb-root {
+  --lb-accent: theme("colors.accent");
+  --lb-background: theme("colors.white");
+  --lb-foreground: theme("colors.neutral[900]");
+  --lb-foreground-subtle: theme("colors.neutral[200]");
+  font-size: 14px;
+}
+
+.lb-root.lb-lexical-thread-mark {
+  font-size: inherit;
+}
+
+.editor-styles p {
+  margin: 0.8rem 0;
+}
+
+.editor-styles h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.editor-styles h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.editor-styles h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.editor-styles h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.editor-styles h5 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.editor-styles h6 {
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.editor-styles blockquote {
+  box-sizing: border-box;
+  border-left: 3px solid rgb(90, 88, 99);
+  padding-left: 0.9rem;
+  margin: 0.8rem 0;
+}
+
+.editor-styles ul {
+  display: block;
+  list-style-type: disc;
+  margin-block-start: 1rem;
+  margin-block-end: 1rem;
+  margin-inline-start: 0;
+  margin-inline-end: 0;
+  padding-inline-start: 40px;
+  unicode-bidi: isolate;
+}
+
+.editor-styles ol {
+  display: block;
+  list-style-type: decimal;
+  margin-block-start: 1rem;
+  margin-block-end: 1rem;
+  margin-inline-start: 0;
+  margin-inline-end: 0;
+  padding-inline-start: 40px;
+  unicode-bidi: isolate;
+}
+
+.editor-styles li {
+  display: list-item;
+  text-align: -webkit-match-parent;
+  unicode-bidi: isolate;
+}
+
+.editor-styles li::marker {
+  unicode-bidi: isolate;
+  font-variant-numeric: tabular-nums;
+  text-transform: none;
+  text-indent: 0 !important;
+  text-align: start !important;
+  text-align-last: start !important;
+}
+
+.editor-styles code {
+  background: rgb(241, 241, 244);
+  padding: 1px;
+  font-size: 0.94em;
+  border-radius: 4px;
+}
+
+.editor-styles .lexical-underline {
+  text-decoration: underline;
+}
+
+.editor-styles .lexical-strikethrough {
+  text-decoration: line-through;
+}

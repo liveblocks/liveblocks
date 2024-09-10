@@ -1,8 +1,9 @@
 import { Metadata } from "next";
 import { Inter } from "next/font/google";
-import "../globals.css";
 import { ReactNode } from "react";
 import { Providers } from "./Providers";
+import "../globals.css";
+import "../liveblocks.css";
 
 export const metadata: Metadata = {
   title: "Liveblocks",
