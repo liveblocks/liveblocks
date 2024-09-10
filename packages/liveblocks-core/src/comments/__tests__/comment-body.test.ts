@@ -1,5 +1,6 @@
 import type { ResolveUsersArgs } from "../../client";
 import type { CommentBody } from "../../protocol/Comments";
+import type { CommentBodyJson } from "../comment-body";
 import {
   getMentionedIdsFromCommentBody,
   stringifyCommentBody,
@@ -448,8 +449,8 @@ describe("stringifyCommentBody", () => {
   });
 });
 
-describe.only("transformCommentBody", () => {
-  test("throws and error when the format is not valid", async () => {
+describe("transformCommentBody", () => {
+  test("throws an error when the format is not valid", async () => {
     await expect(
       transformCommentBody(commentBody, {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -457,5 +458,138 @@ describe.only("transformCommentBody", () => {
         format: "unknown",
       })
     ).rejects.toThrow('unsupported format: "unknown"');
+  });
+
+  test("transforms in an HTML safe string", async () => {
+    await expect(
+      transformCommentBody(commentBody, { format: "html", resolveUsers })
+    ).resolves.toBe(
+      "<p>Hello <strong>world</strong> and <span data-mention>@Chris</span></p>"
+    );
+  });
+
+  describe("transforms in an CommentBodyJson", () => {
+    test("throws an error when the comment inline element isn't recognized", async () => {
+      await expect(
+        transformCommentBody(
+          {
+            version: 1,
+            content: [
+              {
+                type: "paragraph",
+                children: [
+                  { text: "Hello " },
+                  { text: "world", bold: true },
+                  { text: " and " },
+                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                  // @ts-expect-error
+                  { a: "", b: false },
+                ],
+              },
+            ],
+          },
+          {
+            format: "json",
+          }
+        )
+      ).rejects.toThrow(
+        `unsupported comment body inline element: ${JSON.stringify({ a: "", b: false })}`
+      );
+    });
+    test("w/ an existing user id", async () => {
+      const expected: CommentBodyJson = {
+        version: 1,
+        content: [
+          {
+            type: "paragraph",
+            children: [
+              { text: "Hello " },
+              { text: "world", bold: true },
+              { text: " and " },
+              { type: "mention", user: "@Chris" },
+            ],
+          },
+        ],
+      };
+      await expect(
+        transformCommentBody(commentBody, { format: "json", resolveUsers })
+      ).resolves.toEqual(expected);
+    });
+
+    test("w/o an existing user id", async () => {
+      const expected: CommentBodyJson = {
+        version: 1,
+        content: [
+          {
+            type: "paragraph",
+            children: [
+              { text: "Hello " },
+              { text: "world", bold: true },
+              { text: " and " },
+              { type: "mention", user: "@User-0" },
+            ],
+          },
+        ],
+      };
+      await expect(
+        transformCommentBody(
+          {
+            version: 1,
+            content: [
+              {
+                type: "paragraph",
+                children: [
+                  { text: "Hello " },
+                  { text: "world", bold: true },
+                  { text: " and " },
+                  { type: "mention", id: "user-0" },
+                ],
+              },
+            ],
+          },
+          { format: "json", resolveUsers }
+        )
+      ).resolves.toEqual(expected);
+    });
+
+    test("w/ a link", async () => {
+      const expected: CommentBodyJson = {
+        version: 1,
+        content: [
+          {
+            type: "paragraph",
+            children: [
+              { text: "Check this link " },
+              {
+                type: "link",
+                text: "Liveblocks",
+                url: "https://www.liveblocks.io",
+              },
+            ],
+          },
+        ],
+      };
+      await expect(
+        transformCommentBody(
+          {
+            version: 1,
+            content: [
+              {
+                type: "paragraph",
+                children: [
+                  { text: "Check this link " },
+                  {
+                    type: "link",
+                    text: "Liveblocks",
+                    url: "www.liveblocks.io",
+                  },
+                ],
+              },
+            ],
+          },
+          { format: "json" }
+        )
+      ).resolves.toEqual(expected);
+    });
   });
 });
