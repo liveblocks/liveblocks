@@ -240,29 +240,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   private setNotificationSettings(
     roomId: string,
-    settings: RoomNotificationSettings,
-    // XXX: This mode reflects the two modes of updating that CURRENTLY EXIST
-    // XXX: Note sure if this difference is relevant here, or if we could always assume upsert?
-    // XXX: I think we can, but will make that behavior change in a separate commit
-    mode: "only-update" | "upsert"
+    settings: RoomNotificationSettings
   ): void {
-    this._store.set((state) => {
-      // If the notification setting doesn't exist in the cache, we do not change anything
-      if (mode === "only-update") {
-        const existing = state.notificationSettings[roomId];
-        if (!existing) {
-          return state;
-        }
-      }
-
-      return {
-        ...state,
-        notificationSettings: {
-          ...state.notificationSettings,
-          [roomId]: settings,
-        },
-      };
-    });
+    this._store.set((state) => ({
+      ...state,
+      notificationSettings: {
+        ...state.notificationSettings,
+        [roomId]: settings,
+      },
+    }));
   }
 
   private setQueryState(queryKey: string, queryState: QueryState): void {
