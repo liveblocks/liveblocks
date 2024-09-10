@@ -107,20 +107,20 @@ function LexicalEditor() {
             <div className="relative h-full w-full overflow-auto">
               <FloatingComposer className="w-[350px]" />
 
-              <FloatingThreads threads={threads} className="block lg:hidden" />
+              <FloatingThreads threads={threads} className="block xl:hidden" />
               {status === "not-loaded" || status === "loading" ? (
                 <Loading />
               ) : (
-                <div className="lg:mr-[300px] xl:mr-[100px]">
+                <div className="xl:mr-[200px]">
                   <div className="relative max-w-[740px] w-full mx-auto pb-[400px] p-8">
                     <div className="absolute left-full -ml-6">
                       <AnchoredThreads
                         threads={threads}
-                        className="w-[300px] hidden lg:block"
+                        className="w-[300px] hidden xl:block"
                       />
                     </div>
                     <header className="mt-20 mb-0">
-                      <h1>
+                      <h1 className="mb-0">
                         <DocumentName />
                       </h1>
                     </header>

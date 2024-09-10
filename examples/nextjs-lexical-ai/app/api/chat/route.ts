@@ -10,7 +10,7 @@ export async function POST(req: Request) {
   const result = await streamText({
     model: openai("gpt-4-turbo"),
     system:
-      "You generate markdown documents for users. Unless specified, this is a draft. Keep things shortish.",
+      "You generate markdown documents for users. Unless specified, this is a draft. Keep things shortish. Do not add any supplementary text, as everything you say will be placed into a document. If you're confused however, it's okay to ask a user for info. Responses must be either a chat response, or a document.",
     messages: convertToCoreMessages(messages),
   });
 

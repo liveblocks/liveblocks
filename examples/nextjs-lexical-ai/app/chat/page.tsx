@@ -8,9 +8,10 @@ import Markdown from "markdown-to-jsx";
 import { SparklesIcon } from "../icons/SparklesIcon";
 import * as React from "react";
 import { Message } from "ai";
-import { useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import { CreateIcon } from "../icons/CreateIcon";
 import { ClientSideSuspense } from "@liveblocks/react";
+import { StopIcon } from "../icons/StopIcon";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -24,7 +25,8 @@ export default function Page() {
 }
 
 function Chat() {
-  const { messages, input, handleInputChange, handleSubmit, isLoading } =
+  // Check `app/api/chat/route.ts` for the back-end
+  const { messages, input, handleInputChange, handleSubmit, isLoading, stop } =
     useChat({
       keepLastMessageOnError: true,
     });
@@ -38,19 +40,20 @@ function Chat() {
           ))}
         </div>
       </div>
+
       <form
         onSubmit={handleSubmit}
-        className="max-w-[740px] mx-auto w-full flex-0 my-0 relative overflow-hidden rounded-lg"
+        className="max-w-[740px] mx-auto w-full flex-0 my-0 relative"
       >
         {messages.length === 0 ? (
           <div className="mx-8 m-4 text-sm">
-            Hi there! try asking me to write a draft.
+            Hi there! Try asking me to write a draft.
           </div>
         ) : null}
         <div className="mx-8 m-4 relative">
           <input
-            placeholder="Create a draft about…"
-            className="border block w-full p-2 pl-3 rounded-lg outline-none transition-all focus:outline-indigo-500 disabled:bg-gray-50 disabled:outline-gray-400"
+            placeholder={isLoading ? "Generating…" : "Create a draft about…"}
+            className="border block w-full p-2 pl-3 rounded-lg outline-none transition-all focus:outline-indigo-500 disabled:bg-gray-50 disabled:outline-none"
             name="prompt"
             value={input}
             onChange={handleInputChange}
@@ -58,13 +61,18 @@ function Chat() {
             autoFocus={true}
           />
           <button
-            className="absolute right-0 px-2 top-0 bottom-0 disabled:opacity-50 hover:enabled:bg-gray-100 disabled:transition-opacity"
-            disabled={isLoading || !input}
+            className="absolute right-0 px-2 top-0 bottom-0 transition-colors rounded-r-lg border border-transparent hover:border-gray-200 hover:disabled:border-transparent hover:bg-gray-100 hover:disabled:bg-transparent"
+            onClick={isLoading ? stop : undefined}
+            disabled={!isLoading && !input}
           >
-            <SparklesIcon
-              style={isLoading || !input ? { opacity: 0.6 } : {}}
-              className="h-4 text-indigo-500  pointer-events-none disabled:transition-opacity"
-            />
+            {isLoading ? (
+              <StopIcon className="h-4 text-red-500  pointer-events-none" />
+            ) : (
+              <SparklesIcon
+                style={isLoading || !input ? { opacity: 0.6 } : {}}
+                className="h-4 text-indigo-500  pointer-events-none"
+              />
+            )}
           </button>
         </div>
       </form>
@@ -75,59 +83,71 @@ function Chat() {
 function MessageLine({ message }: { message: Message }) {
   const [title, setTitle] = useState("null");
   const [content, setContent] = useState(message.content);
+  const [loading, setLoading] = useState(false);
 
+  // If the message starts with an H1 heading (#), extract it as the title
   useEffect(() => {
-    const match = message.content.match(/^#\s(.+)/); // Check if string starts with "# "
+    const match = message.content.match(/^#\s(.+)/);
     if (match) {
       setTitle(match[1]);
-      setContent(message.content.replace(/^#\s.+/, "").trim()); // Remove the title from the string
+      setContent(message.content.replace(/^#\s.+/, "").trim());
     } else {
       setTitle("");
       setContent(message.content);
     }
   }, [message.content]);
 
+  // Create new document with content/title and redirect
+  const handleSubmit = useCallback(
+    async (e: FormEvent) => {
+      e.preventDefault();
+      setLoading(true);
+      const room = await createRoomWithLexicalDocument(content, title);
+      redirect(getPageUrl(room.id));
+      setLoading(false);
+    },
+    [content, title]
+  );
+
   return (
     <div key={message.id}>
       {message.role === "user" ? (
+        // Your messages
         <div className="flex justify-end">
           <div className="bg-gray-100 rounded-full py-1.5 px-3">{content}</div>
         </div>
       ) : (
+        // AI messages
         <div className="flex flex-col gap-2">
           <div className="border rounded-2xl shadow-sm">
             {title ? (
               <div className="font-semibold border-b px-4 py-2 pr-2 text-sm flex justify-start items-center gap-1.5">
                 <span>{title}</span>
-                <form
-                  action={async () => {
-                    const room = await createRoomWithLexicalDocument(
-                      content,
-                      title
-                    );
-                    redirect(getPageUrl(room.id));
-                  }}
-                >
-                  <button className="font-normal text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors rounded-lg py-1 px-1.5 flex gap-1 items-center">
+                <form onSubmit={handleSubmit}>
+                  <button
+                    disabled={loading}
+                    className="font-normal text-gray-500 hover:text-gray-700 hover:bg-gray-100 disabled:hover:text-gray-500 disabled:hover:bg-transparent transition-colors rounded-lg py-1 px-1.5 flex gap-1 items-center disabled:opacity-70"
+                  >
                     <CreateIcon className="w-3 h-3 opacity-70" />
-                    Create
+                    {loading ? "Creating…" : "Create"}
                   </button>
                 </form>
               </div>
             ) : null}
+
+            {/*Render markdown message as HTML */}
             <Markdown options={{ forceBlock: true }} className="px-4">
               {content}
             </Markdown>
           </div>
-          <form
-            action={async () => {
-              const room = await createRoomWithLexicalDocument(content, title);
-              redirect(getPageUrl(room.id));
-            }}
-          >
-            <button className="bg-gray-100 hover:bg-gray-200 transition-colors rounded-full py-1.5 px-3 flex gap-1.5 items-center">
+
+          <form onSubmit={handleSubmit}>
+            <button
+              disabled={loading}
+              className="bg-gray-100 hover:bg-gray-200 transition-colors rounded-full py-1.5 px-3 flex gap-1.5 items-center disabled:opacity-70 hover:disabled:bg-gray-100"
+            >
               <CreateIcon className="w-4 h-4 opacity-70" />
-              Create document
+              {loading ? "Creating…" : "Create document"}
             </button>
           </form>
         </div>

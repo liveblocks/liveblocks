@@ -9,7 +9,6 @@ import {
 import { redirect } from "next/navigation";
 import { CreateIcon } from "../icons/CreateIcon";
 import { ReactNode, Suspense } from "react";
-import { TrashIcon } from "../icons/TrashIcon";
 import Link from "next/link";
 import { getPageUrl } from "../config";
 import { SparklesIcon } from "../icons/SparklesIcon";
@@ -43,11 +42,11 @@ export default async function DefaultLayout({
           </form>
         </div>
 
-        <div className="p-2 text-sm">
+        <div className="p-2">
           <Notifications />
           <Link
             href="/chat"
-            className="py-1.5 px-3 flex-1 truncate flex gap-1.5 font-medium items-center"
+            className="py-1.5 px-3 flex-1 truncate flex gap-1.5 font-medium items-center hover:bg-gray-200 transition-colors rounded text-medium text-gray-700 hover:text-gray-900 pr-2 text-sm"
           >
             <SparklesIcon className="w-4 h-4 -ml-0.5" />
             Create with AI
