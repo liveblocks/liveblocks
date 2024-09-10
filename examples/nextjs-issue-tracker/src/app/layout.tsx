@@ -35,6 +35,25 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body className="bg-neutral-200/50 text-neutral-900 antialiased h-full w-full overflow-hidden">
         <Providers>{children}</Providers>
+
+        <a
+          className="fixed bottom-4 right-4"
+          href="https://liveblocks.io"
+          rel="noreferrer"
+          target="_blank"
+        >
+          <picture>
+            <source
+              srcSet="https://liveblocks.io/badge-dark.svg"
+              media="(prefers-color-scheme: dark)"
+            />
+            <img
+              src="https://liveblocks.io/badge-light.svg"
+              alt="Made with Liveblocks"
+              className=""
+            />
+          </picture>
+        </a>
       </body>
     </html>
   );
