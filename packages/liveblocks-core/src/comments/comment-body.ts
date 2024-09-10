@@ -717,7 +717,7 @@ export async function transformCommentBody(
                   return { ...inline };
                 }
                 throw new TransformCommentBodyError(
-                  `unsupported comment body inline element: "${JSON.stringify(inline)}"`
+                  `unsupported comment body inline element: ${JSON.stringify(inline)}`
                 );
               }
             ),
@@ -728,7 +728,7 @@ export async function transformCommentBody(
     }
     default:
       throw new TransformCommentBodyError(
-        `unsupported format: "${JSON.stringify(format)}"`
+        `unsupported format: ${JSON.stringify(format)}`
       );
   }
 }

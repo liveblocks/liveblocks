@@ -3,6 +3,7 @@ import type { CommentBody } from "../../protocol/Comments";
 import {
   getMentionedIdsFromCommentBody,
   stringifyCommentBody,
+  transformCommentBody,
 } from "../comment-body";
 
 function capitalize(string: string) {
@@ -444,5 +445,17 @@ describe("stringifyCommentBody", () => {
       },
       3
     );
+  });
+});
+
+describe.only("transformCommentBody", () => {
+  test("throws and error when the format is not valid", async () => {
+    await expect(
+      transformCommentBody(commentBody, {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-expect-error
+        format: "unknown",
+      })
+    ).rejects.toThrow('unsupported format: "unknown"');
   });
 });
