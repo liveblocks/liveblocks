@@ -27,6 +27,7 @@ import { DocumentName } from "./DocumentName";
 import DraggableBlockPlugin from "../plugins/DraggableBlockPlugin";
 import { useThreads } from "@liveblocks/react/suspense";
 import { ClientSideSuspense } from "@liveblocks/react";
+import { InitialContentPlugin } from "../plugins/InitialContentPlugin";
 
 // Wrap your initial config with `liveblocksConfig`
 const initialConfig = liveblocksConfig({
@@ -95,6 +96,7 @@ function LexicalEditor() {
 
   return (
     <LexicalComposer initialConfig={initialConfig}>
+      <InitialContentPlugin />
       <div
         // Target the cursors and raise their z-index above the editor
         className="first:*:z-10 contents"

@@ -1,8 +1,9 @@
-import { Liveblocks, RoomData } from "@liveblocks/node";
+import { Liveblocks as LiveblocksNode, RoomData } from "@liveblocks/node";
 import { nanoid } from "nanoid";
 import { getRoomId } from "../config";
+import { LiveObject, toPlainLson } from "@liveblocks/core";
 
-const liveblocks = new Liveblocks({
+export const liveblocks = new LiveblocksNode({
   secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
 });
 
@@ -14,13 +15,22 @@ export async function getLatestRoom() {
   return rooms.length ? (rooms[0] as TypedRoomData) : null;
 }
 
-export async function createRoom() {
+export async function createRoom(title?: string) {
   const pageId = nanoid();
 
-  return (await liveblocks.createRoom(getRoomId(pageId), {
+  const room = (await liveblocks.createRoom(getRoomId(pageId), {
     defaultAccesses: ["room:write"],
     metadata: { pageId },
   })) as TypedRoomData;
+
+  if (title) {
+    await liveblocks.initializeStorageDocument(room.id, {
+      liveblocksType: "LiveObject",
+      data: { title },
+    });
+  }
+
+  return room;
 }
 
 export async function getRooms() {
@@ -38,3 +48,5 @@ export async function getRoomTitle(roomId: string) {
     return "";
   }
 }
+
+export function setRoomTitle(roomId: string, title: string) {}

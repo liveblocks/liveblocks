@@ -48,7 +48,7 @@ export function DocumentName() {
       value={title}
       onChange={handleChange}
       onKeyDown={handleKeyDown}
-      className="outline-none px-8"
+      className="outline-none px-8 block w-full"
     />
   );
 }
