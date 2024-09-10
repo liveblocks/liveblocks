@@ -3,6 +3,14 @@ import type { Json } from "./Json";
 declare const brand: unique symbol;
 export type Brand<T, TBrand extends string> = T & { [brand]: TBrand };
 
+export type DistributiveOmit<T, K extends PropertyKey> = T extends any
+  ? Omit<T, K>
+  : never;
+
+// export type DistributivePick<T, K extends keyof T> = T extends any
+//   ? Pick<T, K>
+//   : never;
+
 /**
  * Throw an error, but as an expression instead of a statement.
  */

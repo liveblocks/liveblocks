@@ -1,3 +1,15 @@
+## 2.6.2 (not released yet)
+
+### `@liveblocks/core`
+
+- Refactor caching internals to prepare for upcoming features
+
+## 2.6.1
+
+### `@liveblocks/react-ui`
+
+- Fix mention suggestions dropdown not following scroll in some scenarios.
+
 ## 2.6.0
 
 ### `@liveblocks/node`
