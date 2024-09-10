@@ -52,7 +52,8 @@ export const getLastCommentWithMention = ({
  * Get thread notification data helper.
  *
  * It returns either an object containing a list of unread replies for a thread
- * or either an object containing a list of one unread comment containing a mentioned user.
+ * or either an object containing a list of the last unread comment where the notification
+ * receiver was mentioned in.
  *
  * @param params.event The thread notification event
  * @returns A thread notification data object
