@@ -219,7 +219,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
       cache: Readonly<Record<string, ThreadDataWithDeleteInfo<M>>>
     ) => Readonly<Record<string, ThreadDataWithDeleteInfo<M>>>
   ): void {
-    this._store.set((state) => ({ ...state, threads: mapFn(state.threads) }));
+    this._store.set((state) => {
+      const threads = mapFn(state.threads);
+      return threads !== state.threads ? { ...state, threads } : state;
+    });
   }
 
   private updateInboxNotificationsCache(
@@ -227,23 +230,39 @@ export class UmbrellaStore<M extends BaseMetadata> {
       cache: Readonly<Record<string, InboxNotificationData>>
     ) => Readonly<Record<string, InboxNotificationData>>
   ): void {
-    this._store.set((state) => ({
-      ...state,
-      inboxNotifications: mapFn(state.inboxNotifications),
-    }));
+    this._store.set((state) => {
+      const inboxNotifications = mapFn(state.inboxNotifications);
+      return inboxNotifications !== state.inboxNotifications
+        ? { ...state, inboxNotifications }
+        : state;
+    });
   }
 
   private setNotificationSettings(
     roomId: string,
-    settings: RoomNotificationSettings
+    settings: RoomNotificationSettings,
+    // XXX: This mode reflects the two modes of updating that CURRENTLY EXIST
+    // XXX: Note sure if this difference is relevant here, or if we could always assume upsert?
+    // XXX: I think we can, but will make that behavior change in a separate commit
+    mode: "only-update" | "upsert"
   ): void {
-    this._store.set((state) => ({
-      ...state,
-      notificationSettings: {
-        ...state.notificationSettings,
-        [roomId]: settings,
-      },
-    }));
+    this._store.set((state) => {
+      // If the notification setting doesn't exist in the cache, we do not change anything
+      if (mode === "only-update") {
+        const existing = state.notificationSettings[roomId];
+        if (!existing) {
+          return state;
+        }
+      }
+
+      return {
+        ...state,
+        notificationSettings: {
+          ...state.notificationSettings,
+          [roomId]: settings,
+        },
+      };
+    });
   }
 
   private setQueryState(queryKey: string, queryState: QueryState): void {
@@ -283,28 +302,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   /**
-   * Mutate the state by returning a newly computed state, and removing the
-   * optimistic update. This helper lies at the core of all state updates.
-   */
-  private replaceOptimisticUpdate(
-    optimisticUpdateId: string | null,
-    callback: (
-      state: Readonly<UmbrellaStoreState<M>>
-    ) => Readonly<UmbrellaStoreState<M>>
-  ): void {
-    return this._store.set((state) => {
-      const newState = callback(state);
-      const newOptimisticUpdates =
-        optimisticUpdateId !== null
-          ? newState.optimisticUpdates.filter(
-              (ou) => ou.id !== optimisticUpdateId
-            )
-          : newState.optimisticUpdates;
-      return { ...newState, optimisticUpdates: newOptimisticUpdates };
-    });
-  }
-
-  /**
    * Updates an existing inbox notification with a new value, replacing the
    * corresponding optimistic update.
    *
@@ -315,27 +312,29 @@ export class UmbrellaStore<M extends BaseMetadata> {
     inboxNotificationId: string,
     optimisticUpdateId: string,
     callback: (
-      ibn: Readonly<InboxNotificationData>
+      notification: Readonly<InboxNotificationData>
     ) => Readonly<InboxNotificationData>
   ): void {
-    return this.replaceOptimisticUpdate(
-      optimisticUpdateId,
+    // Batch 1️⃣ + 2️⃣
+    this._store.batch(() => {
+      this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
 
-      (state) => {
-        const existing = state.inboxNotifications[inboxNotificationId];
-
-        // If the inbox notification doesn't exist in the cache, we do not change anything
+      // 2️⃣
+      this.updateInboxNotificationsCache((cache) => {
+        const existing = cache[inboxNotificationId];
         if (!existing) {
-          return state;
+          // If the inbox notification doesn't exist in the cache, we do not
+          // change anything
+          return cache;
         }
 
         const inboxNotifications = {
-          ...state.inboxNotifications,
+          ...cache,
           [inboxNotificationId]: callback(existing),
         };
-        return { ...state, inboxNotifications };
-      }
-    );
+        return inboxNotifications;
+      });
+    });
   }
 
   /**
@@ -345,17 +344,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
   public updateAllInboxNotifications(
     optimisticUpdateId: string,
     mapFn: (
-      ibn: Readonly<InboxNotificationData>
+      notification: Readonly<InboxNotificationData>
     ) => Readonly<InboxNotificationData>
   ): void {
-    return this.replaceOptimisticUpdate(
-      optimisticUpdateId,
-
-      (state) => {
-        const inboxNotifications = mapValues(state.inboxNotifications, mapFn);
-        return { ...state, inboxNotifications };
-      }
-    );
+    // Batch 1️⃣ + 2️⃣
+    this._store.batch(() => {
+      this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
+      this.updateInboxNotificationsCache((cache) => mapValues(cache, mapFn)); // 2️⃣
+    });
   }
 
   /**
@@ -366,24 +362,17 @@ export class UmbrellaStore<M extends BaseMetadata> {
     inboxNotificationId: string,
     optimisticUpdateId: string
   ): void {
-    return this.replaceOptimisticUpdate(
-      optimisticUpdateId,
+    // Batch 1️⃣ + 2️⃣
+    this._store.batch(() => {
+      this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
 
-      (state) => {
-        // If the inbox notification doesn't exist in the cache, we do not
-        // change anything
-        const existing = state.inboxNotifications[inboxNotificationId];
-        if (!existing) {
-          return state;
-        }
-
+      // 2️⃣
+      this.updateInboxNotificationsCache((cache) => {
         // Delete it
-        const { [inboxNotificationId]: _, ...inboxNotifications } =
-          state.inboxNotifications;
-
-        return { ...state, inboxNotifications };
-      }
-    );
+        const { [inboxNotificationId]: removed, ...newCache } = cache;
+        return removed === undefined ? cache : newCache;
+      });
+    });
   }
 
   /**
@@ -391,14 +380,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * update.
    */
   public deleteAllInboxNotifications(optimisticUpdateId: string): void {
-    return this.replaceOptimisticUpdate(
-      optimisticUpdateId,
-
-      (state) => {
-        // Set empty
-        return { ...state, inboxNotifications: {} };
-      }
-    );
+    // Batch 1️⃣ + 2️⃣
+    this._store.batch(() => {
+      this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
+      this.updateInboxNotificationsCache(() => ({})); // 2️⃣ empty the cache
+    });
   }
 
   /**
@@ -408,16 +394,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
     optimisticUpdateId: string,
     thread: Readonly<ThreadDataWithDeleteInfo<M>>
   ): void {
-    return this.replaceOptimisticUpdate(
-      optimisticUpdateId,
-
-      (state) => {
-        return {
-          ...state,
-          threads: { ...state.threads, [thread.id]: thread },
-        };
-      }
-    );
+    // Batch 1️⃣ + 2️⃣
+    this._store.batch(() => {
+      this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣j
+      this.updateThreadsCache((cache) => ({ ...cache, [thread.id]: thread })); // 2️⃣
+    });
   }
 
   /**
@@ -438,20 +419,24 @@ export class UmbrellaStore<M extends BaseMetadata> {
     ) => Readonly<ThreadDataWithDeleteInfo<M>>,
     updatedAt?: Date // TODO We could look this up from the optimisticUpdate instead?
   ): void {
-    return this.replaceOptimisticUpdate(
-      optimisticUpdateId,
+    // Batch 1️⃣ + 2️⃣
+    this._store.batch(() => {
+      if (optimisticUpdateId !== null) {
+        this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
+      }
 
-      (state) => {
-        const existing = state.threads[threadId];
+      // 2️⃣
+      this.updateThreadsCache((cache) => {
+        const existing = cache[threadId];
 
         // If the thread doesn't exist in the cache, we do not update the metadata
         if (!existing) {
-          return state;
+          return cache;
         }
 
         // If the thread has been deleted, we do not update the metadata
         if (existing.deletedAt !== undefined) {
-          return state;
+          return cache;
         }
 
         if (
@@ -459,13 +444,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
           !!existing.updatedAt &&
           existing.updatedAt > updatedAt
         ) {
-          return state;
+          return cache;
         }
 
-        const threads = { ...state.threads, [threadId]: callback(existing) };
-        return { ...state, threads };
-      }
-    );
+        return { ...cache, [threadId]: callback(existing) };
+      });
+    });
   }
 
   /**
@@ -497,46 +481,47 @@ export class UmbrellaStore<M extends BaseMetadata> {
     newComment: CommentData,
     optimisticUpdateId: string
   ): void {
-    return this.replaceOptimisticUpdate(
-      optimisticUpdateId,
+    // Batch 1️⃣ + 2️⃣ + 3️⃣
+    this._store.batch(() => {
+      // 1️⃣
+      this.removeOptimisticUpdate(optimisticUpdateId);
 
-      (state) => {
-        const existingThread = state.threads[newComment.threadId];
-        if (!existingThread) {
-          return state;
-        }
+      // If the associated thread is not found, we cannot create a comment under it
+      const existingThread = this._store.get().threads[newComment.threadId];
+      if (!existingThread) {
+        return;
+      }
 
-        const inboxNotification = Object.values(state.inboxNotifications).find(
+      // 2️⃣ Update the thread instance by adding a comment under it
+      this.updateThreadsCache((cache) => ({
+        ...cache,
+        [newComment.threadId]: upsertComment(existingThread, newComment),
+      }));
+
+      // 3️⃣ Update the associated inbox notification (if any)
+      this.updateInboxNotificationsCache((cache) => {
+        const existingNotification = Object.values(cache).find(
           (notification) =>
             notification.kind === "thread" &&
             notification.threadId === newComment.threadId
         );
 
-        const threads = {
-          ...state.threads,
-          [newComment.threadId]: upsertComment(existingThread, newComment),
-        };
+        if (!existingNotification) {
+          // Nothing to update here
+          return cache;
+        }
 
         // If the thread has an inbox notification associated with it, we update the notification's `notifiedAt` and `readAt` values
-        const inboxNotifications =
-          inboxNotification !== undefined
-            ? {
-                ...state.inboxNotifications,
-                [inboxNotification.id]: {
-                  ...inboxNotification,
-                  notifiedAt: newComment.createdAt,
-                  readAt: newComment.createdAt,
-                },
-              }
-            : state.inboxNotifications;
-
         return {
-          ...state,
-          threads,
-          inboxNotifications,
+          ...cache,
+          [existingNotification.id]: {
+            ...existingNotification,
+            notifiedAt: newComment.createdAt,
+            readAt: newComment.createdAt,
+          },
         };
-      }
-    );
+      });
+    });
   }
 
   public updateThreadAndNotification(
@@ -605,23 +590,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
     optimisticUpdateId: string,
     settings: Readonly<RoomNotificationSettings>
   ): void {
-    return this.replaceOptimisticUpdate(
-      optimisticUpdateId,
-
-      (state) => {
-        // If the notification setting doesn't exist in the cache, we do not change anything
-        const existing = state.notificationSettings[roomId];
-        if (!existing) {
-          return state;
-        }
-
-        const notificationSettings = {
-          ...state.notificationSettings,
-          [roomId]: settings,
-        };
-        return { ...state, notificationSettings };
-      }
-    );
+    // Batch 1️⃣ + 2️⃣
+    this._store.batch(() => {
+      this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
+      this.setNotificationSettings(roomId, settings, "only-update"); // 2️⃣
+    });
   }
 
   public updateRoomInboxNotificationSettings(
@@ -631,8 +604,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): void {
     // Batch 1️⃣ + 2️⃣
     this._store.batch(() => {
-      this.setNotificationSettings(roomId, settings); // 1️⃣
-      this.setQueryOK(queryKey); // 2️⃣
+      this.setQueryOK(queryKey); // 1️⃣
+      this.setNotificationSettings(roomId, settings, "upsert"); // 2️⃣
     });
   }
 
@@ -646,7 +619,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   public removeOptimisticUpdate(optimisticUpdateId: string): void {
-    return this.replaceOptimisticUpdate(optimisticUpdateId, (state) => state);
+    this.updateOptimisticUpdatesCache((cache) =>
+      cache.filter((ou) => ou.id !== optimisticUpdateId)
+    );
   }
 
   //
