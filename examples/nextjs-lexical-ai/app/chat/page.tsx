@@ -10,18 +10,27 @@ import * as React from "react";
 import { Message } from "ai";
 import { useEffect, useState } from "react";
 import { CreateIcon } from "../icons/CreateIcon";
+import { ClientSideSuspense } from "@liveblocks/react";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
 export default function Page() {
+  return (
+    <ClientSideSuspense fallback={null}>
+      <Chat />
+    </ClientSideSuspense>
+  );
+}
+
+function Chat() {
   const { messages, input, handleInputChange, handleSubmit, isLoading } =
     useChat({
       keepLastMessageOnError: true,
     });
 
   return (
-    <div className="relative w-full mx-auto  h-full flex flex-col gap-4">
+    <div className="relative w-full mx-auto  h-full flex flex-col">
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-[740px] mx-auto flex-1 px-8 py-4 flex flex-col gap-2">
           {messages.map((message) => (
@@ -33,14 +42,20 @@ export default function Page() {
         onSubmit={handleSubmit}
         className="max-w-[740px] mx-auto w-full flex-0 my-0 relative overflow-hidden rounded-lg"
       >
+        {messages.length === 0 ? (
+          <div className="mx-8 m-4 text-sm">
+            Hi there! try asking me to write a draft.
+          </div>
+        ) : null}
         <div className="mx-8 m-4 relative">
           <input
             placeholder="Create a draft about…"
-            className="border block w-full p-2 pl-3 rounded-lg outline-none disabled:transition-colors focus:outline outline-indigo-500 disabled:bg-gray-50 disabled:outline-gray-400"
+            className="border block w-full p-2 pl-3 rounded-lg outline-none transition-all focus:outline-indigo-500 disabled:bg-gray-50 disabled:outline-gray-400"
             name="prompt"
             value={input}
             onChange={handleInputChange}
             disabled={isLoading}
+            autoFocus={true}
           />
           <button
             className="absolute right-0 px-2 top-0 bottom-0 disabled:opacity-50 hover:enabled:bg-gray-100 disabled:transition-opacity"
