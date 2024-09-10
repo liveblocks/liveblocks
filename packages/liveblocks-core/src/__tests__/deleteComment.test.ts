@@ -1,4 +1,4 @@
-import { deleteComment } from "../store";
+import { deleteComment } from "../umbrella-store";
 import { createComment, createThread } from "./_dummies";
 
 describe("deleteComment", () => {

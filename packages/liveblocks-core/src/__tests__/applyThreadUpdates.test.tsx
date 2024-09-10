@@ -3,7 +3,7 @@ import type {
   ThreadDataWithDeleteInfo,
   ThreadDeleteInfo,
 } from "../protocol/Comments";
-import { applyThreadUpdates } from "../store";
+import { applyThreadUpdates } from "../umbrella-store";
 
 describe("applyThreadUpdates", () => {
   const thread1: ThreadDataWithDeleteInfo = {

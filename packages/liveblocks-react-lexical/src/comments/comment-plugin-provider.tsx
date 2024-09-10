@@ -101,7 +101,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     }
   });
 
-  const store = client[kInternal].cacheStore;
+  const store = client[kInternal].umbrellaStore;
 
   const threads = useSyncExternalStoreWithSelector(
     store.subscribe,
