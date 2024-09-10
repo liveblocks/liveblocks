@@ -5,16 +5,16 @@ import { createIssue } from "@/actions/liveblocks";
 import { useInbox } from "@/components/InboxContext";
 import classNames from "classnames";
 import { usePathname } from "next/navigation";
-import { Create } from "@/icons/Create";
-import { InboxIcon } from "@/icons/Inbox";
+import { CreateIcon } from "@/icons/CreateIcon";
+import { InboxIcon } from "@/icons/InboxIcon";
 import {
   ClientSideSuspense,
   useUnreadInboxNotificationsCount,
 } from "@liveblocks/react/suspense";
 import { ComponentProps, useState } from "react";
 import { Loading } from "@/components/Loading";
-import { Progress } from "@/icons/Progress";
-import { MyIssues } from "@/icons/MyIssues";
+import { ProgressInProgressIcon } from "@/icons/ProgressInProgressIcon";
+import { MyIssuesIcon } from "@/icons/MyIssuesIcon";
 
 export function Nav() {
   const { isOpen, toggleInbox } = useInbox();
@@ -39,7 +39,7 @@ export function Nav() {
           }}
           className="bg-white rounded-lg p-1.5 shadow-sm border border-neutral-200 text"
         >
-          <Create className="w-4 h-4" />
+          <CreateIcon className="w-4 h-4" />
         </button>
       </div>
       {pathname.startsWith("/issue/") ? (
@@ -84,7 +84,7 @@ export function Nav() {
           )}
         >
           <span className="flex items-center gap-2">
-            <MyIssues className="w-4 h-4" />
+            <MyIssuesIcon className="w-4 h-4" />
             Issues
           </span>
         </div>

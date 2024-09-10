@@ -1,6 +1,6 @@
 import { ComponentProps } from "react";
 
-export function Tally2(props: ComponentProps<"svg">) {
+export function PriorityMediumIcon(props: ComponentProps<"svg">) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -10,7 +10,7 @@ export function Tally2(props: ComponentProps<"svg">) {
       {...props}
     >
       <path fill="currentColor" d="M3 16h4v5H3"></path>
-      <path fill="currentColor" d="M10 10h4v11h-4" opacity={0.3}></path>
+      <path fill="currentColor" d="M10 10h4v11h-4"></path>
       <path fill="currentColor" d="M17 1h4v20h-4" opacity={0.3}></path>
     </svg>
   );

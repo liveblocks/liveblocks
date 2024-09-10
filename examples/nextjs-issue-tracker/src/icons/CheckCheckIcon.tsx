@@ -1,6 +1,6 @@
 import { ComponentProps } from "react";
 
-export function Underline(props: ComponentProps<"svg">) {
+export function CheckCheckIcon(props: ComponentProps<"svg">) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -14,8 +14,7 @@ export function Underline(props: ComponentProps<"svg">) {
       strokeLinejoin="round"
       {...props}
     >
-      <path d="M6 4v6a6 6 0 0012 0V4" />
-      <path d="M4 20L20 20" />
+      <path d="M18 6L7 17l-5-5M22 10l-7.5 7.5L13 16" />
     </svg>
   );
 }

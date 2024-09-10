@@ -1,6 +1,6 @@
 import { ComponentProps } from "react";
 
-export function Trash(props: ComponentProps<"svg">) {
+export function ChevronUpIcon(props: ComponentProps<"svg">) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -14,9 +14,7 @@ export function Trash(props: ComponentProps<"svg">) {
       strokeLinejoin="round"
       {...props}
     >
-      <path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-      <path d="M10 11L10 17" />
-      <path d="M14 11L14 17" />
+      <path d="M18 15l-6-6-6 6" />
     </svg>
   );
 }

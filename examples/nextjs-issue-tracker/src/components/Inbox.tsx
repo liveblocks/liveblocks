@@ -18,9 +18,9 @@ import NextLink from "next/link";
 import { useParams } from "next/navigation";
 import { Mention } from "@/components/Mention";
 import { Link } from "@/components/Link";
-import { CheckCheck } from "@/icons/CheckCheck";
+import { CheckCheckIcon } from "@/icons/CheckCheckIcon";
 import { useMemo } from "react";
-import { Trash } from "@/icons/Trash";
+import { RubbishIcon } from "@/icons/RubbishIcon";
 import { useInbox } from "@/components/InboxContext";
 
 export function Inbox() {
@@ -46,10 +46,10 @@ function InboxActionButtons() {
   return (
     <>
       <button onClick={markAsRead}>
-        <CheckCheck className="w-4 h-4 text-emerald-700" />
+        <CheckCheckIcon className="w-4 h-4 text-emerald-700" />
       </button>
       <button onClick={deleteAll}>
-        <Trash className="w-4 h-4 text-red-700" />
+        <RubbishIcon className="w-4 h-4 text-red-700" />
       </button>
     </>
   );

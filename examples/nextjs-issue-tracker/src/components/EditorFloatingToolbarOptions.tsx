@@ -17,12 +17,12 @@ import {
 } from "react";
 import { $setBlocksType } from "@lexical/selection";
 import { $createHeadingNode, $createQuoteNode } from "@lexical/rich-text";
-import { Bold } from "@/icons/Bold";
-import { Italic } from "@/icons/Italic";
-import { Underline } from "@/icons/Underline";
-import { Strikethrough } from "@/icons/Strikethough";
-import { Code } from "@/icons/Code";
-import { Comment } from "@/icons/Comment";
+import { BoldIcon } from "@/icons/BoldIcon";
+import { ItalicIcon } from "@/icons/ItalicIcon";
+import { UnderlineIcon } from "@/icons/UnderlineIcon";
+import { StrikethroughIcon } from "@/icons/StrikethroughIcon";
+import { CodeIcon } from "@/icons/CodeIcon";
+import { CommentIcon } from "@/icons/CommentIcon";
 import { Select } from "@/components/Select";
 
 const DROPDOWN_OPTIONS = [
@@ -110,7 +110,7 @@ export function EditorFloatingToolbarOptions() {
             editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
           }}
         >
-          <Bold className="w-4 h-4" />
+          <BoldIcon className="w-4 h-4" />
         </ToolbarButton>
 
         <ToolbarButton
@@ -118,7 +118,7 @@ export function EditorFloatingToolbarOptions() {
             editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
           }}
         >
-          <Italic className="w-4 h-4" />
+          <ItalicIcon className="w-4 h-4" />
         </ToolbarButton>
 
         <ToolbarButton
@@ -126,7 +126,7 @@ export function EditorFloatingToolbarOptions() {
             editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline");
           }}
         >
-          <Underline className="w-4 h-4" />
+          <UnderlineIcon className="w-4 h-4" />
         </ToolbarButton>
 
         <ToolbarButton
@@ -134,7 +134,7 @@ export function EditorFloatingToolbarOptions() {
             editor.dispatchCommand(FORMAT_TEXT_COMMAND, "strikethrough");
           }}
         >
-          <Strikethrough className="w-4 h-4" />
+          <StrikethroughIcon className="w-4 h-4" />
         </ToolbarButton>
 
         <ToolbarButton
@@ -142,7 +142,7 @@ export function EditorFloatingToolbarOptions() {
             editor.dispatchCommand(FORMAT_TEXT_COMMAND, "code");
           }}
         >
-          <Code className="w-4 h-4" />
+          <CodeIcon className="w-4 h-4" />
         </ToolbarButton>
 
         <span className="w-[1px] py-3.5 bg-border/50" />
@@ -152,7 +152,7 @@ export function EditorFloatingToolbarOptions() {
             editor.dispatchCommand(OPEN_FLOATING_COMPOSER_COMMAND, undefined);
           }}
         >
-          <Comment className="w-4 h-4" />
+          <CommentIcon className="w-4 h-4" />
         </ToolbarButton>
       </div>
     </div>

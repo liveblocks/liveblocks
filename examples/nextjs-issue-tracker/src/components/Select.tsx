@@ -1,9 +1,9 @@
 import React, { ReactNode } from "react";
 import * as RadixSelect from "@radix-ui/react-select";
 import classnames from "classnames";
-import { ChevronUp } from "@/icons/ChevronUp";
-import { ChevronDown } from "@/icons/ChevronDown";
-import { Check } from "@/icons/Check";
+import { ChevronUpIcon } from "@/icons/ChevronUpIcon";
+import { ChevronDownIcon } from "@/icons/ChevronDownIcon";
+import { CheckIcon } from "@/icons/CheckIcon";
 
 type Props = {
   id: string;
@@ -41,7 +41,7 @@ export function Select({
           avoidCollisions={false}
         >
           <RadixSelect.ScrollUpButton className="flex items-center justify-center h-[25px] bg-white cursor-default">
-            <ChevronUp className="w-4 h-4" />
+            <ChevronUpIcon className="w-4 h-4" />
           </RadixSelect.ScrollUpButton>
           <RadixSelect.Viewport>
             {splitFirstItem ? (
@@ -55,7 +55,7 @@ export function Select({
                 >
                   <RadixSelect.ItemText>{firstItem.jsx}</RadixSelect.ItemText>
                   <RadixSelect.ItemIndicator className="absolute right-0 w-[25px] inline-flex items-center justify-center">
-                    <Check className="w-4 h-4" />
+                    <CheckIcon className="w-4 h-4" />
                   </RadixSelect.ItemIndicator>
                 </RadixSelect.Item>
               </RadixSelect.Group>
@@ -71,14 +71,14 @@ export function Select({
                 >
                   <RadixSelect.ItemText>{item.jsx}</RadixSelect.ItemText>
                   <RadixSelect.ItemIndicator className="absolute right-0 w-[25px] inline-flex items-center justify-center">
-                    <Check className="w-4 h-4" />
+                    <CheckIcon className="w-4 h-4" />
                   </RadixSelect.ItemIndicator>
                 </RadixSelect.Item>
               ))}
             </RadixSelect.Group>
           </RadixSelect.Viewport>
           <RadixSelect.ScrollDownButton className="flex items-center justify-center h-[25px] bg-white cursor-default">
-            <ChevronDown className="w-4 h-4" />
+            <ChevronDownIcon className="w-4 h-4" />
           </RadixSelect.ScrollDownButton>
         </RadixSelect.Content>
       </RadixSelect.Portal>

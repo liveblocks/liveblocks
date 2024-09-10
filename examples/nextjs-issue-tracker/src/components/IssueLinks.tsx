@@ -6,11 +6,11 @@ import {
   useStorage,
 } from "@liveblocks/react/suspense";
 import { useEffect, useState } from "react";
-import { Trash } from "@/icons/Trash";
+import { RubbishIcon } from "@/icons/RubbishIcon";
 import { getPreviewData, LinkPreviewMetadata } from "@/actions/preview";
-import { Delete } from "@/icons/Delete";
-import { Plus } from "@/icons/Plus";
-import { Submit } from "@/icons/Submit";
+import { DeleteIcon } from "@/icons/DeleteIcon";
+import { PlusIcon } from "@/icons/PlusIcon";
+import { SubmitIcon } from "@/icons/SubmitIcon";
 
 export function IssueLinks({ storageFallback }: any) {
   return (
@@ -69,12 +69,12 @@ function Links() {
           {creating ? (
             <span>
               <span className="sr-only">Close new link</span>
-              <Delete className="w-4 h-4" />
+              <DeleteIcon className="w-4 h-4" />
             </span>
           ) : (
             <span>
               <span className="sr-only">New Link</span>
-              <Plus className="w-4 h-4" />
+              <PlusIcon className="w-4 h-4" />
             </span>
           )}
         </button>
@@ -94,7 +94,7 @@ function Links() {
           />
           <button className="text-neutral-600 hover:text-neutral-900 transition-colors px-3 py-2">
             <span className="sr-only">Add new link</span>
-            <Submit className="w-4 h-4" />
+            <SubmitIcon className="w-4 h-4" />
           </button>
         </form>
       ) : null}
@@ -181,7 +181,7 @@ function LinkPreview({
             className="flex-shrink-0 text-neutral-400 hover:text-neutral-600 transition-colors px-3 py-2"
           >
             <span className="sr-only">Remove link</span>
-            <Trash className="w-4 h-4" />
+            <RubbishIcon className="w-4 h-4" />
           </button>
         </>
       )}

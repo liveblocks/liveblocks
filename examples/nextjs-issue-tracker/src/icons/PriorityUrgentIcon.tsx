@@ -1,6 +1,6 @@
 import { ComponentProps } from "react";
 
-export function Tally5(props: ComponentProps<"svg">) {
+export function PriorityUrgentIcon(props: ComponentProps<"svg">) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

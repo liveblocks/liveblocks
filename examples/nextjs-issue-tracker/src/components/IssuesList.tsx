@@ -1,11 +1,11 @@
 import { LABELS, PRIORITY_STATES, RoomWithMetadata } from "@/config";
 import { getUser } from "@/database";
 import { getStorageDocument } from "@/actions/liveblocks";
-import { Dash } from "@/icons/Dash";
-import { Review } from "@/icons/Review";
-import { Progress } from "@/icons/Progress";
-import { Todo } from "@/icons/Todo";
-import { Done } from "@/icons/Done";
+import { DashIcon } from "@/icons/DashIcon";
+import { ProgressInReviewIcon } from "@/icons/ProgressInReviewIcon";
+import { ProgressInProgressIcon } from "@/icons/ProgressInProgressIcon";
+import { ProgressTodoIcon } from "@/icons/ProgressTodoIcon";
+import { ProgressDoneIcon } from "@/icons/ProgressDoneIcon";
 import Link from "next/link";
 
 export function IssuesList({
@@ -31,7 +31,7 @@ export function IssuesList({
       </div>
       {inReview.length ? (
         <div className="flex items-center gap-2 bg-neutral-200/60 px-4 py-1.5 text-sm font-medium text-neutral-800 w-full">
-          <Review className="w-4 h-4 text-emerald-500" />
+          <ProgressInReviewIcon className="w-4 h-4 text-emerald-500" />
           In Review
         </div>
       ) : null}
@@ -41,7 +41,7 @@ export function IssuesList({
 
       {inProgress.length ? (
         <div className="flex items-center gap-2 bg-neutral-200/60 px-4 py-1.5 text-sm font-medium text-neutral-800 w-full">
-          <Progress className="w-4 h-4 text-yellow-500" />
+          <ProgressInProgressIcon className="w-4 h-4 text-yellow-500" />
           In Progress
         </div>
       ) : null}
@@ -51,7 +51,7 @@ export function IssuesList({
 
       {todo.length ? (
         <div className="flex items-center gap-2 bg-neutral-200/60 px-4 py-1.5 text-sm font-medium text-neutral-800 w-full">
-          <Todo className="w-4 h-4 text-neutral-500" />
+          <ProgressTodoIcon className="w-4 h-4 text-neutral-500" />
           Todo
         </div>
       ) : null}
@@ -61,7 +61,7 @@ export function IssuesList({
 
       {none.length ? (
         <div className="flex items-center gap-2 bg-neutral-200/60 px-4 py-1.5 text-sm font-medium text-neutral-800 w-full">
-          <Dash className="w-4 h-4 text-neutral-500" />
+          <DashIcon className="w-4 h-4 text-neutral-500" />
           None
         </div>
       ) : null}
@@ -71,7 +71,7 @@ export function IssuesList({
 
       {done.length ? (
         <div className="flex items-center gap-2 bg-neutral-200/60 px-4 py-1.5 text-sm font-medium text-neutral-800 w-full">
-          <Done className="w-4 h-4 text-indigo-500" />
+          <ProgressDoneIcon className="w-4 h-4 text-indigo-500" />
           Done
         </div>
       ) : null}

@@ -1,6 +1,6 @@
 import { ComponentProps } from "react";
 
-export function Code(props: ComponentProps<"svg">) {
+export function DashIcon(props: ComponentProps<"svg">) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -14,8 +14,7 @@ export function Code(props: ComponentProps<"svg">) {
       strokeLinejoin="round"
       {...props}
     >
-      <path d="M16 18L22 12 16 6" />
-      <path d="M8 6L2 12 8 18" />
+      <path d="M5 12h14" />
     </svg>
   );
 }

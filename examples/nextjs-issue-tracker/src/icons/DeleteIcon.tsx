@@ -1,7 +1,6 @@
-import React from "react";
-import { SVGAttributes } from "react";
+import { ComponentProps } from "react";
 
-export function Comment(props: SVGAttributes<SVGElement>) {
+export function DeleteIcon(props: ComponentProps<"svg">) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -15,7 +14,7 @@ export function Comment(props: SVGAttributes<SVGElement>) {
       strokeLinejoin="round"
       {...props}
     >
-      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2zM12 7v6M9 10h6" />
+      <path d="M18 6L6 18M6 6l12 12" />
     </svg>
   );
 }

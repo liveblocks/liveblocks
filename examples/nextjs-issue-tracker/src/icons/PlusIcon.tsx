@@ -1,6 +1,6 @@
 import { ComponentProps } from "react";
 
-export function Submit(props: ComponentProps<"svg">) {
+export function PlusIcon(props: ComponentProps<"svg">) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -14,7 +14,7 @@ export function Submit(props: ComponentProps<"svg">) {
       strokeLinejoin="round"
       {...props}
     >
-      <path d="M3 3l3 9-3 9 19-9zM6 12h16" />
+      <path d="M5 12h14M12 5v14" />
     </svg>
   );
 }

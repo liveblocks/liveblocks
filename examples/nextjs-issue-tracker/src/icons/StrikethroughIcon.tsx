@@ -1,6 +1,6 @@
 import { ComponentProps } from "react";
 
-export function CheckCheck(props: ComponentProps<"svg">) {
+export function StrikethroughIcon(props: ComponentProps<"svg">) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -14,7 +14,8 @@ export function CheckCheck(props: ComponentProps<"svg">) {
       strokeLinejoin="round"
       {...props}
     >
-      <path d="M18 6L7 17l-5-5M22 10l-7.5 7.5L13 16" />
+      <path d="M16 4H9a3 3 0 00-2.83 4M14 12a4 4 0 010 8H6" />
+      <path d="M4 12L20 12" />
     </svg>
   );
 }

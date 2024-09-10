@@ -1,6 +1,6 @@
 import { ComponentProps } from "react";
 
-export function Create(props: ComponentProps<"svg">) {
+export function ItalicIcon(props: ComponentProps<"svg">) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -12,10 +12,12 @@ export function Create(props: ComponentProps<"svg">) {
       strokeWidth={2}
       strokeLinecap="round"
       strokeLinejoin="round"
+      className="lucide lucide-italic"
       {...props}
     >
-      <path d="M12 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-      <path d="M18.375 2.625a1 1 0 013 3l-9.013 9.014a2 2 0 01-.853.505l-2.873.84a.5.5 0 01-.62-.62l.84-2.873a2 2 0 01.506-.852z" />
+      <path d="M19 4L10 4" />
+      <path d="M14 20L5 20" />
+      <path d="M15 4L9 20" />
     </svg>
   );
 }

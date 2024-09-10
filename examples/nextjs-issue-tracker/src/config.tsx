@@ -1,13 +1,13 @@
 import { RoomData } from "@liveblocks/node";
-import { Tally4 } from "@/icons/Tally4";
-import { Tally3 } from "@/icons/Tally3";
-import { Tally2 } from "@/icons/Tally2";
-import { Tally5 } from "@/icons/Tally5";
-import { Dash } from "@/icons/Dash";
-import { Todo } from "@/icons/Todo";
-import { Progress } from "@/icons/Progress";
-import { Review } from "@/icons/Review";
-import { Done } from "@/icons/Done";
+import { PriorityHighIcon } from "@/icons/PriorityHighIcon";
+import { PriorityMediumIcon } from "@/icons/PriorityMediumIcon";
+import { PriorityLowIcon } from "@/icons/PriorityLowIcon";
+import { PriorityUrgentIcon } from "@/icons/PriorityUrgentIcon";
+import { DashIcon } from "@/icons/DashIcon";
+import { ProgressTodoIcon } from "@/icons/ProgressTodoIcon";
+import { ProgressInProgressIcon } from "@/icons/ProgressInProgressIcon";
+import { ProgressInReviewIcon } from "@/icons/ProgressInReviewIcon";
+import { ProgressDoneIcon } from "@/icons/ProgressDoneIcon";
 
 export const LABELS = [
   { id: "feature", text: "Feature" },
@@ -20,7 +20,7 @@ export const LABELS = [
 export const PRIORITY_STATES = [
   {
     id: "none",
-    icon: <Dash className="w-4 h-4 text-neutral-600" />,
+    icon: <DashIcon className="w-4 h-4 text-neutral-600" />,
     jsx: (
       <div className="flex gap-2 items-center text-neutral-600">
         {/*<Dash className="w-4 h-4 text-neutral-600" />*/}
@@ -30,40 +30,40 @@ export const PRIORITY_STATES = [
   },
   {
     id: "urgent",
-    icon: <Tally5 className="w-4 h-4 text-neutral-600" />,
+    icon: <PriorityUrgentIcon className="w-4 h-4 text-neutral-600" />,
     jsx: (
       <div className="flex gap-2 items-center">
-        <Tally5 className="w-4 h-4 text-neutral-600" />
+        <PriorityUrgentIcon className="w-4 h-4 text-neutral-600" />
         Urgent
       </div>
     ),
   },
   {
     id: "high",
-    icon: <Tally4 className="w-4 h-4 text-neutral-600" />,
+    icon: <PriorityHighIcon className="w-4 h-4 text-neutral-600" />,
     jsx: (
       <div className="flex gap-2 items-center">
-        <Tally4 className="w-4 h-4 text-neutral-600" />
+        <PriorityHighIcon className="w-4 h-4 text-neutral-600" />
         High
       </div>
     ),
   },
   {
     id: "medium",
-    icon: <Tally3 className="w-4 h-4 text-neutral-600" />,
+    icon: <PriorityMediumIcon className="w-4 h-4 text-neutral-600" />,
     jsx: (
       <div className="flex gap-2 items-center">
-        <Tally3 className="w-4 h-4 text-neutral-600" />
+        <PriorityMediumIcon className="w-4 h-4 text-neutral-600" />
         Medium
       </div>
     ),
   },
   {
     id: "low",
-    icon: <Tally2 className="w-4 h-4 text-neutral-600" />,
+    icon: <PriorityLowIcon className="w-4 h-4 text-neutral-600" />,
     jsx: (
       <div className="flex gap-2 items-center">
-        <Tally2 className="w-4 h-4 text-neutral-600" />
+        <PriorityLowIcon className="w-4 h-4 text-neutral-600" />
         Low
       </div>
     ),
@@ -84,7 +84,7 @@ export const PROGRESS_STATES = [
     id: "todo",
     jsx: (
       <div className="flex gap-2 items-center">
-        <Todo className="w-4 h-4 text-neutral-500" />
+        <ProgressTodoIcon className="w-4 h-4 text-neutral-500" />
         Todo
       </div>
     ),
@@ -93,7 +93,7 @@ export const PROGRESS_STATES = [
     id: "progress",
     jsx: (
       <div className="flex gap-2 items-center">
-        <Progress className="w-4 h-4 text-yellow-500" />
+        <ProgressInProgressIcon className="w-4 h-4 text-yellow-500" />
         In Progress
       </div>
     ),
@@ -102,7 +102,7 @@ export const PROGRESS_STATES = [
     id: "review",
     jsx: (
       <div className="flex gap-2 items-center">
-        <Review className="w-4 h-4 text-emerald-500" />
+        <ProgressInReviewIcon className="w-4 h-4 text-emerald-500" />
         In Review
       </div>
     ),
@@ -111,7 +111,7 @@ export const PROGRESS_STATES = [
     id: "done",
     jsx: (
       <div className="flex gap-2 items-center">
-        <Done className="w-4 h-4 text-indigo-500" />
+        <ProgressDoneIcon className="w-4 h-4 text-indigo-500" />
         Done
       </div>
     ),

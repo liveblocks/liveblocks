@@ -1,6 +1,6 @@
 import { ComponentProps } from "react";
 
-export function Review(props: ComponentProps<"svg">) {
+export function ProgressInReviewIcon(props: ComponentProps<"svg">) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

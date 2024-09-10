@@ -1,6 +1,6 @@
 import { ComponentProps } from "react";
 
-export function Delete(props: ComponentProps<"svg">) {
+export function ChevronDownIcon(props: ComponentProps<"svg">) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -14,7 +14,7 @@ export function Delete(props: ComponentProps<"svg">) {
       strokeLinejoin="round"
       {...props}
     >
-      <path d="M18 6L6 18M6 6l12 12" />
+      <path d="M6 9l6 6 6-6" />
     </svg>
   );
 }
