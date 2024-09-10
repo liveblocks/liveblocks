@@ -28,16 +28,25 @@ export type {
 } from "./client";
 export { createClient, NotificationsApiError } from "./client";
 export type {
+  CommentBodyJson,
+  CommentBodyJsonBlockElement,
+  CommentBodyJsonInlineElement,
+  CommentBodyJsonLink,
+  CommentBodyJsonMention,
+  CommentBodyJsonParagraph,
+  CommentBodyJsonText,
   CommentBodyLinkElementArgs,
   CommentBodyMentionElementArgs,
   CommentBodyParagraphElementArgs,
   CommentBodyTextElementArgs,
   StringifyCommentBodyElements,
   StringifyCommentBodyOptions,
+  TransformCommentBodyOptions,
 } from "./comments/comment-body";
 export {
   getMentionedIdsFromCommentBody,
   stringifyCommentBody,
+  transformCommentBody,
 } from "./comments/comment-body";
 export type { BaseAuthResult, Delegates, LiveblocksError } from "./connection";
 export type { LostConnectionEvent, Status } from "./connection";
