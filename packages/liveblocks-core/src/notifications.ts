@@ -1,3 +1,4 @@
+import { type GetThreadsOptions, objectToQuery } from ".";
 import type { AuthManager } from "./auth-manager";
 import type { NotificationsApi } from "./client";
 import {
@@ -41,12 +42,12 @@ export function createNotificationsApi<M extends BaseMetadata>({
   currentUserIdStore: Store<string | null>;
   fetcher: (url: string, init?: RequestInit) => Promise<Response>;
 }): NotificationsApi<M> & {
-  getThreads(): Promise<{
+  getThreads(options?: GetThreadsOptions<M>): Promise<{
     threads: ThreadData<M>[];
     inboxNotifications: InboxNotificationData[];
     requestedAt: Date;
   }>;
-  getThreadsSince(options: { since: Date }): Promise<{
+  getThreadsSince(options: { since: Date } & GetThreadsOptions<M>): Promise<{
     inboxNotifications: {
       updated: InboxNotificationData[];
       deleted: InboxNotificationDeleteInfo[];
@@ -224,7 +225,13 @@ export function createNotificationsApi<M extends BaseMetadata>({
     );
   }
 
-  async function getThreads() {
+  async function getThreads(options: GetThreadsOptions<M>) {
+    let query: string | undefined;
+
+    if (options?.query) {
+      query = objectToQuery(options.query);
+    }
+
     const json = await fetchJson<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
@@ -233,7 +240,9 @@ export function createNotificationsApi<M extends BaseMetadata>({
       meta: {
         requestedAt: string;
       };
-    }>("/threads", undefined, {});
+    }>("/threads", undefined, {
+      query,
+    });
 
     return {
       threads: json.threads.map(convertToThreadData),
@@ -244,7 +253,15 @@ export function createNotificationsApi<M extends BaseMetadata>({
     };
   }
 
-  async function getThreadsSince(options: { since: Date }) {
+  async function getThreadsSince(
+    options: { since: Date } & GetThreadsOptions<M>
+  ) {
+    let query: string | undefined;
+
+    if (options?.query) {
+      query = objectToQuery(options.query);
+    }
+
     const json = await fetchJson<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
@@ -255,6 +272,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
       };
     }>("/threads", undefined, {
       since: options.since.toISOString(),
+      query,
     });
 
     return {

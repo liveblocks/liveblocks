@@ -47,24 +47,33 @@ export type StorageStatusSuccess = Exclude<
   "not-loaded" | "loading"
 >;
 
+export type ThreadsQuery<M extends BaseMetadata> = {
+  /**
+   * Whether to only return threads marked as resolved or unresolved. If not provided,
+   * all threads will be returned.
+   */
+  resolved?: boolean;
+  /**
+   * The metadata to filter the threads by. If provided, only threads with metadata that matches
+   * the provided metadata will be returned. If not provided, all threads will be returned.
+   */
+  metadata?: Partial<QueryMetadata<M>>;
+};
+
+export type UseUserThreadsOptions<M extends BaseMetadata> = {
+  /**
+   * The query (including metadata) to filter the threads by. If provided, only threads
+   * that match the query will be returned. If not provided, all threads will be returned.
+   */
+  query?: ThreadsQuery<M>;
+};
+
 export type UseThreadsOptions<M extends BaseMetadata> = {
   /**
    * The query (including metadata) to filter the threads by. If provided, only threads
    * that match the query will be returned. If not provided, all threads will be returned.
    */
-  query?: {
-    /**
-     * Whether to only return threads marked as resolved or unresolved. If not provided,
-     * all threads will be returned.
-     */
-    resolved?: boolean;
-
-    /**
-     * The metadata to filter the threads by. If provided, only threads with metadata that matches
-     * the provided metadata will be returned. If not provided, all threads will be returned.
-     */
-    metadata?: Partial<QueryMetadata<M>>;
-  };
+  query?: ThreadsQuery<M>;
 
   /**
    * Whether to scroll to a comment on load based on the URL hash. Defaults to `true`.

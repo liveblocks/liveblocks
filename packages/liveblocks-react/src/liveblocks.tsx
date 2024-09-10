@@ -52,6 +52,7 @@ import type {
   UnreadInboxNotificationsCountState,
   UserAsyncResult,
   UserAsyncSuccess,
+  UseThreadsOptions,
 } from "./types";
 
 /**
@@ -410,8 +411,9 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
    * Triggers an initial fetch of user threads if this hasn't
    * already happened.
    */
-  function loadUserThreads(): void {
-    void waitUntilUserThreadsLoaded().catch(() => {
+  function loadUserThreads(options?: UseThreadsOptions<M>): void {
+    // TODO: check typing
+    void waitUntilUserThreadsLoaded(options).catch(() => {
       // Deliberately catch and ignore any errors here
     });
   }
@@ -422,34 +424,44 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
    * a few times automatically in case fetching fails, with incremental backoff
    * delays. Will throw eventually only if all retries fail.
    */
-  const waitUntilUserThreadsLoaded = memoizeOnSuccess(async () => {
-    store.setQueryState(USER_THREADS_QUERY, {
-      isLoading: true,
-    });
-
-    try {
-      await autoRetry(() => fetchUserThreads(), 5, [5000, 5000, 10000, 15000]);
-    } catch (err) {
-      // Store the error in the cache as a side-effect, for non-Suspense
+  const waitUntilUserThreadsLoaded = memoizeOnSuccess(
+    async (options?: UseThreadsOptions<M>) => {
+      // TODO: set query state based on the options?
       store.setQueryState(USER_THREADS_QUERY, {
-        isLoading: false,
-        error: err as Error,
+        isLoading: true,
       });
 
-      // Rethrow it for Suspense, where this promise must fail
-      throw err;
+      try {
+        await autoRetry(
+          () => fetchUserThreads(options),
+          5,
+          [5000, 5000, 10000, 15000]
+        );
+      } catch (err) {
+        // Store the error in the cache as a side-effect, for non-Suspense
+        store.setQueryState(USER_THREADS_QUERY, {
+          isLoading: false,
+          error: err as Error,
+        });
+
+        // Rethrow it for Suspense, where this promise must fail
+        throw err;
+      }
     }
-  });
+  );
 
   /**
    * Performs one network fetch, and updates the store and last requested at
    * date if successful. If unsuccessful, will throw.
    */
-  async function fetchUserThreads() {
+  async function fetchUserThreads(options?: UseThreadsOptions<M>) {
+    // TODO: add query for user threads
     // If inbox notifications have not been fetched yet, we get all of them
     // Else, we fetch only what changed since the last request
     if (userThreadslastRequestedAt === undefined) {
-      const result = await client[kInternal].getThreads();
+      const result = await client[kInternal].getThreads({
+        query: options?.query,
+      });
 
       store.updateThreadsAndNotifications(
         result.threads,
@@ -463,6 +475,7 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
     } else {
       const result = await client[kInternal].getThreadsSince({
         since: userThreadslastRequestedAt,
+        query: options?.query,
       });
 
       store.updateThreadsAndNotifications(
@@ -573,7 +586,8 @@ function makeLiveblocksContextBundle<
     useDeleteAllInboxNotifications,
 
     useInboxNotificationThread,
-    useUserThreads_experimental: () => useUserThreads_withClient<M>(client),
+    useUserThreads_experimental: (options?: UseThreadsOptions<M>) =>
+      useUserThreads_withClient<M>(client, options),
 
     ...shared.classic,
 
@@ -593,8 +607,8 @@ function makeLiveblocksContextBundle<
 
       useInboxNotificationThread,
 
-      useUserThreads_experimental: () =>
-        useUserThreadsSuspense_withClient(client),
+      useUserThreads_experimental: (options?: UseThreadsOptions<M>) =>
+        useUserThreadsSuspense_withClient(client, options),
 
       ...shared.suspense,
     },
@@ -603,7 +617,8 @@ function makeLiveblocksContextBundle<
 }
 
 function useUserThreads_withClient<M extends BaseMetadata>(
-  client: OpaqueClient
+  client: OpaqueClient,
+  options?: UseThreadsOptions<M>
 ): ThreadsState<M> {
   const { loadUserThreads, store, useEnableUserThreadsPolling } =
     getExtrasForClient<M>(client);
@@ -611,8 +626,8 @@ function useUserThreads_withClient<M extends BaseMetadata>(
   // Trigger initial loading of user threads if it hasn't started
   // already, but don't await its promise.
   useEffect(() => {
-    loadUserThreads();
-  }, [loadUserThreads]);
+    loadUserThreads(options);
+  }, [loadUserThreads, options]);
 
   useEnableUserThreadsPolling();
   return useSyncExternalStoreWithSelector(
@@ -625,7 +640,8 @@ function useUserThreads_withClient<M extends BaseMetadata>(
 }
 
 function useUserThreadsSuspense_withClient<M extends BaseMetadata>(
-  client: OpaqueClient
+  client: OpaqueClient,
+  options?: UseThreadsOptions<M>
 ): ThreadsStateSuccess<M> {
   const { waitUntilUserThreadsLoaded } = getExtrasForClient(client);
 
@@ -634,7 +650,7 @@ function useUserThreadsSuspense_withClient<M extends BaseMetadata>(
 
   // We're in a Suspense world here, and as such, the useUserThreads()
   // hook is expected to only return success results when we're here.
-  const result = useUserThreads_withClient<M>(client);
+  const result = useUserThreads_withClient<M>(client, options);
   assert(!result.error, "Did not expect error");
   assert(!result.isLoading, "Did not expect loading");
   return result as ThreadsStateSuccess<M>; // TODO: Remove casting
@@ -1133,8 +1149,10 @@ export function createLiveblocksContext<
  * This hook is experimental and could be removed or changed at any time!
  * Do not use unless explicitely recommended by the Liveblocks team.
  */
-function useUserThreads_experimental() {
-  return useUserThreads_withClient(useClient());
+function useUserThreads_experimental<M extends BaseMetadata>(
+  options?: UseThreadsOptions<M>
+) {
+  return useUserThreads_withClient(useClient(), options);
 }
 
 /**
