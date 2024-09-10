@@ -4,6 +4,7 @@ import type {
   JsonObject,
 } from "@liveblocks/client";
 import { createClient, LiveList, LiveObject } from "@liveblocks/client";
+import { kInternal, UmbrellaStore } from "@liveblocks/core";
 import type { RenderHookResult, RenderOptions } from "@testing-library/react";
 import { render, renderHook } from "@testing-library/react";
 import type { ReactElement } from "react";
@@ -84,11 +85,13 @@ export function createContextsForTest<M extends BaseMetadata>(
   }
 
   const client = createClient(clientOptions);
+  const umbrellaStore = client[kInternal].umbrellaStore as UmbrellaStore<M>;
 
   return {
     room: createRoomContext<JsonObject, never, never, never, M>(client),
     liveblocks: createLiveblocksContext(client),
     client,
+    umbrellaStore,
   };
 }
 
