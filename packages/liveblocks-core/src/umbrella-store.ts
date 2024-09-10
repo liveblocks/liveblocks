@@ -212,6 +212,63 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this._store.subscribe(callback);
   }
 
+  // Direct low-level cache mutations ------------------------------------------------- {{{
+
+  private updateThreadsCache(
+    mapFn: (
+      cache: Readonly<Record<string, ThreadDataWithDeleteInfo<M>>>
+    ) => Readonly<Record<string, ThreadDataWithDeleteInfo<M>>>
+  ): void {
+    this._store.set((state) => ({ ...state, threads: mapFn(state.threads) }));
+  }
+
+  private updateInboxNotificationsCache(
+    mapFn: (
+      cache: Readonly<Record<string, InboxNotificationData>>
+    ) => Readonly<Record<string, InboxNotificationData>>
+  ): void {
+    this._store.set((state) => ({
+      ...state,
+      inboxNotifications: mapFn(state.inboxNotifications),
+    }));
+  }
+
+  private setNotificationSettings(
+    roomId: string,
+    settings: RoomNotificationSettings
+  ): void {
+    this._store.set((state) => ({
+      ...state,
+      notificationSettings: {
+        ...state.notificationSettings,
+        [roomId]: settings,
+      },
+    }));
+  }
+
+  private setQueryState(queryKey: string, queryState: QueryState): void {
+    this._store.set((state) => ({
+      ...state,
+      queries: {
+        ...state.queries,
+        [queryKey]: queryState,
+      },
+    }));
+  }
+
+  private updateOptimisticUpdatesCache(
+    mapFn: (
+      cache: readonly OptimisticUpdate<M>[]
+    ) => readonly OptimisticUpdate<M>[]
+  ): void {
+    this._store.set((state) => ({
+      ...state,
+      optimisticUpdates: mapFn(state.optimisticUpdates),
+    }));
+  }
+
+  // ---------------------------------------------------------------------------------- }}}
+
   /**
    * Only call this method from unit tests.
    *
@@ -486,24 +543,24 @@ export class UmbrellaStore<M extends BaseMetadata> {
     thread: ThreadData<M>,
     inboxNotification?: InboxNotificationData
   ): void {
-    this._store.set((state) => {
-      const existingThread = state.threads[thread.id];
-
-      return {
-        ...state,
-        threads:
-          existingThread === undefined ||
+    // Batch 1️⃣ + 2️⃣
+    this._store.batch(() => {
+      // 1️⃣
+      this.updateThreadsCache((cache) => {
+        const existingThread = cache[thread.id];
+        return existingThread === undefined ||
           compareThreads(thread, existingThread) === 1
-            ? { ...state.threads, [thread.id]: thread }
-            : state.threads,
-        inboxNotifications:
-          inboxNotification === undefined // TODO: Compare notification dates to make sure it's not stale
-            ? state.inboxNotifications
-            : {
-                ...state.inboxNotifications,
-                [inboxNotification.id]: inboxNotification,
-              },
-      };
+          ? { ...cache, [thread.id]: thread }
+          : cache;
+      });
+
+      // 2️⃣
+      if (inboxNotification !== undefined) {
+        this.updateInboxNotificationsCache((cache) => ({
+          ...cache,
+          [inboxNotification.id]: inboxNotification,
+        }));
+      }
     });
   }
 
@@ -514,26 +571,29 @@ export class UmbrellaStore<M extends BaseMetadata> {
     deletedInboxNotifications: InboxNotificationDeleteInfo[],
     queryKey?: string
   ): void {
-    this._store.set((state) => ({
-      ...state,
-      threads: applyThreadUpdates(state.threads, {
-        newThreads: threads,
-        deletedThreads,
-      }),
-      inboxNotifications: applyNotificationsUpdates(state.inboxNotifications, {
-        newInboxNotifications: inboxNotifications,
-        deletedNotifications: deletedInboxNotifications,
-      }),
+    // Batch 1️⃣ + 2️⃣ + 3️⃣
+    this._store.batch(() => {
+      // 1️⃣
+      this.updateThreadsCache((cache) =>
+        applyThreadUpdates(cache, {
+          newThreads: threads,
+          deletedThreads,
+        })
+      );
 
-      // XXX Direct mutation of query state here (this should ideally only happen through setQueryOK()
-      queries:
-        queryKey !== undefined
-          ? {
-              ...state.queries,
-              [queryKey]: { isLoading: false, data: undefined },
-            }
-          : state.queries,
-    }));
+      // 2️⃣
+      this.updateInboxNotificationsCache((cache) =>
+        applyNotificationsUpdates(cache, {
+          newInboxNotifications: inboxNotifications,
+          deletedNotifications: deletedInboxNotifications,
+        })
+      );
+
+      // 3️⃣
+      if (queryKey !== undefined) {
+        this.setQueryOK(queryKey);
+      }
+    });
   }
 
   /**
@@ -569,19 +629,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
     settings: RoomNotificationSettings,
     queryKey: string
   ): void {
-    this._store.set((state) => ({
-      ...state,
-      notificationSettings: {
-        ...state.notificationSettings,
-        [roomId]: settings,
-      },
-
-      // XXX Direct mutation of query state here (this should ideally only happen through setQueryOK()
-      queries: {
-        ...state.queries,
-        [queryKey]: { isLoading: false, data: undefined },
-      },
-    }));
+    // Batch 1️⃣ + 2️⃣
+    this._store.batch(() => {
+      this.setNotificationSettings(roomId, settings); // 1️⃣
+      this.setQueryOK(queryKey); // 2️⃣
+    });
   }
 
   public addOptimisticUpdate(
@@ -589,10 +641,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): string {
     const id = nanoid();
     const newUpdate: OptimisticUpdate<M> = { ...optimisticUpdate, id };
-    this._store.set((state) => ({
-      ...state,
-      optimisticUpdates: [...state.optimisticUpdates, newUpdate],
-    }));
+    this.updateOptimisticUpdatesCache((cache) => [...cache, newUpdate]);
     return id;
   }
 
@@ -604,23 +653,16 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // Query State APIs
   //
 
-  private setQueryState(queryKey: string, queryState: QueryState): void {
-    this._store.set((state) => ({
-      ...state,
-      queries: {
-        ...state.queries,
-        [queryKey]: queryState,
-      },
-    }));
-  }
-
   public setQueryLoading(queryKey: string): void {
     this.setQueryState(queryKey, { isLoading: true });
   }
 
-  // public setQueryOK(queryKey: string): void {
-  //   this.setQueryState(queryKey, { isLoading: false, data: undefined });
-  // }
+  // XXX Ideally, we should somehow call this one externally to keep the
+  // symmetry with the loading/error states in the same call sites, or make the
+  // other two ones private to retain that symmetry
+  private setQueryOK(queryKey: string): void {
+    this.setQueryState(queryKey, { isLoading: false, data: undefined });
+  }
 
   public setQueryError(queryKey: string, error: Error): void {
     this.setQueryState(queryKey, { isLoading: false, error });
