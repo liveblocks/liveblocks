@@ -13,7 +13,7 @@ import React, { memo, useCallback, useMemo, useState } from "react";
 import { CrossIcon } from "../../icons/Cross";
 import { SpinnerIcon } from "../../icons/Spinner";
 import { WarningIcon } from "../../icons/Warning";
-import type { GlobalOverrides } from "../../overrides";
+import type { Overrides } from "../../overrides";
 import { useOverrides } from "../../overrides";
 import { AttachmentTooLargeError } from "../../primitives";
 import { useComposerAttachmentsContextOrNull } from "../../primitives/Composer/contexts";
@@ -21,12 +21,11 @@ import { classNames } from "../../utils/class-names";
 import { formatFileSize } from "../../utils/format-file-size";
 import { Tooltip } from "./Tooltip";
 
-interface FileAttachmentProps extends ComponentPropsWithoutRef<"div"> {
+interface AttachmentProps extends ComponentPropsWithoutRef<"div"> {
   attachment: CommentMixedAttachment;
   onDeleteClick?: MouseEventHandler<HTMLButtonElement>;
   preventFocusOnDelete?: boolean;
-  overrides?: Partial<GlobalOverrides>;
-  enlargeMediaAttachments?: boolean;
+  overrides?: Partial<Overrides>;
 }
 
 const fileExtensionRegex = /^(.+?)(\.[^.]+)?$/;
@@ -37,7 +36,7 @@ function splitFileName(name: string) {
   return { base: match?.[1] ?? name, extension: match?.[2] };
 }
 
-function getFileAttachmentIconGlyph(mimeType: string) {
+function getAttachmentIconGlyph(mimeType: string) {
   if (
     mimeType === "application/zip" ||
     mimeType === "application/gzip" ||
@@ -85,11 +84,8 @@ function getFileAttachmentIconGlyph(mimeType: string) {
   return null;
 }
 
-const FileAttachmentIcon = memo(({ mimeType }: { mimeType: string }) => {
-  const iconGlyph = useMemo(
-    () => getFileAttachmentIconGlyph(mimeType),
-    [mimeType]
-  );
+const AttachmentFileIcon = memo(({ mimeType }: { mimeType: string }) => {
+  const iconGlyph = useMemo(() => getAttachmentIconGlyph(mimeType), [mimeType]);
 
   return (
     <svg
@@ -120,12 +116,10 @@ const FileAttachmentIcon = memo(({ mimeType }: { mimeType: string }) => {
   );
 });
 
-function FileAttachmentImagePreview({
+function AttachmentImagePreview({
   attachment,
-  isMediaAttachment,
 }: {
   attachment: CommentMixedAttachment;
-  isMediaAttachment?: boolean;
 }) {
   const { url } = useAttachmentUrl(attachment.id);
   const [isLoaded, setLoaded] = useState(false);
@@ -134,29 +128,25 @@ function FileAttachmentImagePreview({
     setLoaded(true);
   }, []);
 
-  return url ? (
+  return (
     <>
       {!isLoaded ? <SpinnerIcon /> : null}
-      <div
-        className="lb-attachment-preview-media"
-        data-hidden={!isLoaded ? "" : undefined}
-      >
-        <img src={url} loading="lazy" onLoad={handleLoad} />
-      </div>
+      {url ? (
+        <div
+          className="lb-attachment-preview-media"
+          data-hidden={!isLoaded ? "" : undefined}
+        >
+          <img src={url} loading="lazy" onLoad={handleLoad} />
+        </div>
+      ) : null}
     </>
-  ) : isMediaAttachment ? (
-    <SpinnerIcon />
-  ) : (
-    <FileAttachmentIcon mimeType={attachment.mimeType} />
   );
 }
 
-function FileAttachmentVideoPreview({
+function AttachmentVideoPreview({
   attachment,
-  isMediaAttachment,
 }: {
   attachment: CommentMixedAttachment;
-  isMediaAttachment?: boolean;
 }) {
   const { url } = useAttachmentUrl(attachment.id);
   const [isLoaded, setLoaded] = useState(false);
@@ -165,91 +155,104 @@ function FileAttachmentVideoPreview({
     setLoaded(true);
   }, []);
 
-  return url ? (
+  return (
     <>
       {!isLoaded ? <SpinnerIcon /> : null}
-      <div
-        className="lb-attachment-preview-media"
-        data-hidden={!isLoaded ? "" : undefined}
-      >
-        <video src={url} onLoadedData={handleLoad} />
-      </div>
+      {url ? (
+        <div
+          className="lb-attachment-preview-media"
+          data-hidden={!isLoaded ? "" : undefined}
+        >
+          <video src={url} onLoadedData={handleLoad} />
+        </div>
+      ) : null}
     </>
-  ) : isMediaAttachment ? (
-    <SpinnerIcon />
-  ) : (
-    <FileAttachmentIcon mimeType={attachment.mimeType} />
   );
 }
 
-function FileAttachmentPreview({
+function AttachmentPreview({
   attachment,
-  isMediaAttachment,
 }: {
   attachment: CommentMixedAttachment;
-  isMediaAttachment?: boolean;
 }) {
   const isInsideRoom = useIsInsideRoom();
   const isUploaded =
     attachment.type === "attachment" || attachment.status === "uploaded";
 
-  if (attachment.mimeType.startsWith("image/")) {
-    if (isUploaded && isInsideRoom) {
-      return (
-        <FileAttachmentImagePreview
-          attachment={attachment}
-          isMediaAttachment={isMediaAttachment}
-        />
-      );
+  if (isUploaded && isInsideRoom) {
+    if (attachment.mimeType.startsWith("image/")) {
+      return <AttachmentImagePreview attachment={attachment} />;
+    }
+
+    if (attachment.mimeType.startsWith("video/")) {
+      return <AttachmentVideoPreview attachment={attachment} />;
     }
   }
 
-  if (attachment.mimeType.startsWith("video/")) {
-    if (isUploaded && isInsideRoom) {
-      return (
-        <FileAttachmentVideoPreview
-          attachment={attachment}
-          isMediaAttachment={isMediaAttachment}
-        />
-      );
-    }
-  }
+  return <AttachmentFileIcon mimeType={attachment.mimeType} />;
+}
 
-  return isMediaAttachment ? (
-    <SpinnerIcon />
-  ) : (
-    <FileAttachmentIcon mimeType={attachment.mimeType} />
+function AttachmentName({
+  attachment,
+}: {
+  attachment: CommentMixedAttachment;
+}) {
+  const { base: fileBaseName, extension: fileExtension } = useMemo(() => {
+    return splitFileName(attachment.name);
+  }, [attachment.name]);
+
+  return (
+    <span className="lb-attachment-name" title={attachment.name}>
+      <span className="lb-attachment-name-base">{fileBaseName}</span>
+      {fileExtension && (
+        <span className="lb-attachment-name-extension">{fileExtension}</span>
+      )}
+    </span>
   );
 }
 
-export function FileAttachment({
-  attachment,
-  overrides,
-  onClick,
-  onDeleteClick,
-  preventFocusOnDelete,
-  enlargeMediaAttachments,
-  className,
-  ...props
-}: FileAttachmentProps) {
+function useClickOnKeyDown(
+  onKeyDown?: (event: KeyboardEvent<HTMLDivElement>) => void
+) {
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>) => {
+      onKeyDown?.(event);
+
+      if (event.isDefaultPrevented()) {
+        return;
+      }
+
+      // Simulate a click event on Enter or Space because it's a div
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+
+        const clickEvent = new MouseEvent("click", {
+          bubbles: true,
+          cancelable: true,
+          view: window,
+        });
+        event.target.dispatchEvent(clickEvent);
+      }
+    },
+    [onKeyDown]
+  );
+
+  return handleKeyDown;
+}
+
+function useAttachmentContent(
+  attachment: CommentMixedAttachment,
+  overrides?: Partial<Overrides>
+) {
   const $ = useOverrides(overrides);
   const composerAttachmentsContext = useComposerAttachmentsContextOrNull();
   const isInComposer = Boolean(composerAttachmentsContext);
   const maxAttachmentSize = composerAttachmentsContext?.maxAttachmentSize;
-  const { base: fileBaseName, extension: fileExtension } = useMemo(() => {
-    return splitFileName(attachment.name);
-  }, [attachment.name]);
+
   const status =
     attachment.type === "localAttachment" ? attachment.status : undefined;
   const isUploading = status === "uploading";
   const isError = status === "error";
-  const isMediaAttachment = useMemo(() => {
-    return (
-      enlargeMediaAttachments &&
-      (attachment.mimeType.startsWith("image/") ||
-        attachment.mimeType.startsWith("video/"))
-    );
-  }, [attachment.mimeType, enlargeMediaAttachments]);
 
   let description: string;
 
@@ -271,6 +274,27 @@ export function FileAttachment({
     ? $.COMPOSER_REMOVE_ATTACHMENT
     : $.COMMENT_DELETE_ATTACHMENT;
 
+  return {
+    isUploading,
+    isError,
+    description,
+    deleteLabel,
+  };
+}
+
+export function MediaAttachment({
+  attachment,
+  overrides,
+  onClick,
+  onDeleteClick,
+  preventFocusOnDelete,
+  className,
+  onKeyDown,
+  ...props
+}: AttachmentProps) {
+  const { isUploading, isError, description, deleteLabel } =
+    useAttachmentContent(attachment, overrides);
+
   const handleDeletePointerDown = useCallback(
     (event: PointerEvent<HTMLButtonElement>) => {
       if (preventFocusOnDelete) {
@@ -280,27 +304,11 @@ export function FileAttachment({
     [preventFocusOnDelete]
   );
 
-  const handleKeyDown = useCallback((event: KeyboardEvent<HTMLDivElement>) => {
-    // Simulate a click event on Enter or Space because it's a div
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-
-      const clickEvent = new MouseEvent("click", {
-        bubbles: true,
-        cancelable: true,
-        view: window,
-      });
-      event.target.dispatchEvent(clickEvent);
-    }
-  }, []);
+  const handleKeyDown = useClickOnKeyDown(onKeyDown);
 
   return (
     <div
-      className={classNames(
-        "lb-attachment",
-        isMediaAttachment ? "lb-media-attachment" : "lb-file-attachment",
-        className
-      )}
+      className={classNames("lb-attachment lb-media-attachment", className)}
       data-error={isError ? "" : undefined}
       {...props}
       role={onClick ? "button" : undefined}
@@ -314,21 +322,77 @@ export function FileAttachment({
         ) : isError ? (
           <WarningIcon />
         ) : (
-          <FileAttachmentPreview
-            attachment={attachment}
-            isMediaAttachment={isMediaAttachment}
-          />
+          <AttachmentPreview attachment={attachment} />
         )}
       </div>
       <div className="lb-attachment-details">
-        <span className="lb-attachment-name" title={attachment.name}>
-          <span className="lb-attachment-name-base">{fileBaseName}</span>
-          {fileExtension && (
-            <span className="lb-attachment-name-extension">
-              {fileExtension}
-            </span>
-          )}
+        <AttachmentName attachment={attachment} />
+        <span className="lb-attachment-description" title={description}>
+          {description}
         </span>
+      </div>
+      {onDeleteClick && (
+        <Tooltip content={deleteLabel}>
+          <button
+            type="button"
+            className="lb-attachment-delete"
+            onClick={onDeleteClick}
+            onPointerDown={handleDeletePointerDown}
+            aria-label={deleteLabel}
+          >
+            <CrossIcon />
+          </button>
+        </Tooltip>
+      )}
+    </div>
+  );
+}
+
+export function FileAttachment({
+  attachment,
+  overrides,
+  onClick,
+  onDeleteClick,
+  preventFocusOnDelete,
+  className,
+  onKeyDown,
+  ...props
+}: AttachmentProps) {
+  const { isUploading, isError, description, deleteLabel } =
+    useAttachmentContent(attachment, overrides);
+
+  const handleDeletePointerDown = useCallback(
+    (event: PointerEvent<HTMLButtonElement>) => {
+      if (preventFocusOnDelete) {
+        event.preventDefault();
+      }
+    },
+    [preventFocusOnDelete]
+  );
+
+  const handleKeyDown = useClickOnKeyDown(onKeyDown);
+
+  return (
+    <div
+      className={classNames("lb-attachment lb-file-attachment", className)}
+      data-error={isError ? "" : undefined}
+      {...props}
+      role={onClick ? "button" : undefined}
+      onClick={onClick}
+      tabIndex={onClick ? 0 : -1}
+      onKeyDown={onClick ? handleKeyDown : undefined}
+    >
+      <div className="lb-attachment-preview">
+        {isUploading ? (
+          <SpinnerIcon />
+        ) : isError ? (
+          <WarningIcon />
+        ) : (
+          <AttachmentPreview attachment={attachment} />
+        )}
+      </div>
+      <div className="lb-attachment-details">
+        <AttachmentName attachment={attachment} />
         <span className="lb-attachment-description" title={description}>
           {description}
         </span>
@@ -367,7 +431,8 @@ export function separateMediaAttachments<T extends CommentMixedAttachment>(
     }
   }
 
-  return [mediaAttachments, fileAttachments].filter(
-    (attachments) => attachments.length > 0
-  );
+  return {
+    mediaAttachments,
+    fileAttachments,
+  };
 }

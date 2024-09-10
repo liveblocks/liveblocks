@@ -67,6 +67,7 @@ import { useWindowFocus } from "../utils/use-window-focus";
 import { Composer } from "./Composer";
 import {
   FileAttachment,
+  MediaAttachment,
   separateMediaAttachments,
 } from "./internal/Attachment";
 import { Avatar } from "./internal/Avatar";
@@ -179,8 +180,7 @@ interface CommentReactionProps extends ComponentPropsWithoutRef<"button"> {
 
 type CommentNonInteractiveReactionProps = Omit<CommentReactionProps, "comment">;
 
-interface CommentFileAttachmentProps
-  extends ComponentProps<typeof FileAttachment> {
+interface CommentAttachmentProps extends ComponentProps<typeof FileAttachment> {
   attachment: CommentAttachment;
   onAttachmentClick?: CommentProps["onAttachmentClick"];
 }
@@ -359,13 +359,28 @@ export const CommentNonInteractiveReaction = forwardRef<
   );
 });
 
-function CommentFileAttachment({
+function openAttachment({ attachment, url }: CommentAttachmentArgs) {
+  // Open the attachment in a new tab if the attachment is a PDF,
+  // an image, a video, or audio. Otherwise, download it.
+  if (
+    attachment.mimeType === "application/pdf" ||
+    attachment.mimeType.startsWith("image/") ||
+    attachment.mimeType.startsWith("video/") ||
+    attachment.mimeType.startsWith("audio/")
+  ) {
+    window.open(url, "_blank");
+  } else {
+    download(url, attachment.name);
+  }
+}
+
+function CommentMediaAttachment({
   attachment,
   onAttachmentClick,
   className,
   overrides,
   ...props
-}: CommentFileAttachmentProps) {
+}: CommentAttachmentProps) {
   const { url } = useAttachmentUrl(attachment.id);
 
   const handleClick = useCallback(
@@ -382,18 +397,46 @@ function CommentFileAttachment({
         return;
       }
 
-      // Open the attachment in a new tab if the attachment is a PDF,
-      // an image, a video, or audio. Otherwise, download it.
-      if (
-        attachment.mimeType === "application/pdf" ||
-        attachment.mimeType.startsWith("image/") ||
-        attachment.mimeType.startsWith("video/") ||
-        attachment.mimeType.startsWith("audio/")
-      ) {
-        window.open(url, "_blank");
-      } else {
-        download(url, attachment.name);
+      openAttachment(args);
+    },
+    [attachment, onAttachmentClick, url]
+  );
+
+  return (
+    <MediaAttachment
+      className={classNames("lb-comment-attachment", className)}
+      {...props}
+      attachment={attachment}
+      overrides={overrides}
+      onClick={url ? handleClick : undefined}
+    />
+  );
+}
+
+function CommentFileAttachment({
+  attachment,
+  onAttachmentClick,
+  className,
+  overrides,
+  ...props
+}: CommentAttachmentProps) {
+  const { url } = useAttachmentUrl(attachment.id);
+
+  const handleClick = useCallback(
+    (event: MouseEvent<HTMLElement>) => {
+      if (!url) {
+        return;
       }
+
+      const args: CommentAttachmentArgs = { attachment, url };
+
+      onAttachmentClick?.(args, event);
+
+      if (event.isDefaultPrevented()) {
+        return;
+      }
+
+      openAttachment(args);
     },
     [attachment, onAttachmentClick, url]
   );
@@ -405,7 +448,6 @@ function CommentFileAttachment({
       attachment={attachment}
       overrides={overrides}
       onClick={url ? handleClick : undefined}
-      enlargeMediaAttachments
     />
   );
 }
@@ -413,7 +455,7 @@ function CommentFileAttachment({
 export function CommentNonInteractiveFileAttachment({
   className,
   ...props
-}: CommentFileAttachmentProps) {
+}: CommentAttachmentProps) {
   return (
     <FileAttachment
       className={classNames("lb-comment-attachment", className)}
@@ -496,7 +538,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     const [isTarget, setTarget] = useState(false);
     const [isMoreActionOpen, setMoreActionOpen] = useState(false);
     const [isReactionActionOpen, setReactionActionOpen] = useState(false);
-    const attachments = useMemo(() => {
+    const { mediaAttachments, fileAttachments } = useMemo(() => {
       return separateMediaAttachments(comment.attachments);
     }, [comment.attachments]);
 
@@ -787,11 +829,24 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                     Link: CommentLink,
                   }}
                 />
-                {showAttachments && attachments.length > 0 ? (
+                {showAttachments &&
+                (mediaAttachments.length > 0 || fileAttachments.length > 0) ? (
                   <div className="lb-comment-attachments">
-                    {attachments.map((attachments, index) => (
-                      <div key={index} className="lb-attachments">
-                        {attachments.map((attachment) => (
+                    {mediaAttachments.length > 0 ? (
+                      <div className="lb-attachments">
+                        {mediaAttachments.map((attachment) => (
+                          <CommentMediaAttachment
+                            key={attachment.id}
+                            attachment={attachment}
+                            overrides={overrides}
+                            onAttachmentClick={onAttachmentClick}
+                          />
+                        ))}
+                      </div>
+                    ) : null}
+                    {fileAttachments.length > 0 ? (
+                      <div className="lb-attachments">
+                        {fileAttachments.map((attachment) => (
                           <CommentFileAttachment
                             key={attachment.id}
                             attachment={attachment}
@@ -800,7 +855,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                           />
                         ))}
                       </div>
-                    ))}
+                    ) : null}
                   </div>
                 ) : null}
                 {showReactions && comment.reactions.length > 0 && (

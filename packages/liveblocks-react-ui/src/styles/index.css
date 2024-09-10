@@ -1184,6 +1184,7 @@
 
   &::after {
     content: "";
+    z-index: 1;
     border-radius: inherit;
     box-shadow: var(--lb-highlight-shadow);
     pointer-events: none;
@@ -1236,7 +1237,7 @@
     color: var(--lb-foreground-tertiary);
   }
 
-  :where(:not([tabindex="-1"])) {
+  &:where(:not([tabindex="-1"])) {
     &:where(:hover, :focus-visible, :focus-within) {
       :where(.lb-attachment-name) {
         color: var(--lb-foreground);
@@ -1256,8 +1257,6 @@
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    background: #000;
-    color: #fff;
   }
 
   :where(.lb-attachment-details) {
@@ -1268,19 +1267,18 @@
     border-end-start-radius: inherit;
     border-end-end-radius: inherit;
     background: linear-gradient(to bottom, transparent, rgba(0 0 0 / 80%));
-    color: #fff;
-    text-shadow: 0 1px 2px rgba(0 0 0 / 40%);
+    text-shadow: 0 0 2px rgba(0 0 0 / 40%);
     opacity: 0;
     transition-property: opacity;
   }
 
-  /* :where(.lb-attachment-name) {
-    color: var(--lb-foreground-secondary);
+  :where(.lb-attachment-name) {
+    color: #fff;
   }
 
   :where(.lb-attachment-description) {
-    color: var(--lb-foreground-tertiary);
-  } */
+    color: rgba(255 255 255 / 80%);
+  }
 
   &:where(:not([tabindex="-1"])) {
     &:where(:hover, :focus-visible, :focus-within) {
