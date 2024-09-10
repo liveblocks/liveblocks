@@ -1,7 +1,17 @@
+import type {
+  BaseUserMeta,
+  CommentBody,
+  CommentBodyJson,
+  CommentData,
+  DRI,
+  DU,
+  OptionalPromise,
+  ResolveRoomsInfoArgs,
+  ResolveUsersArgs,
+} from "@liveblocks/core";
 import {
-  type CommentBody,
-  type CommentData,
   getMentionedIdsFromCommentBody,
+  transformCommentBody,
 } from "@liveblocks/core";
 
 import type { Liveblocks } from "./client";
@@ -15,19 +25,19 @@ export type ThreadNotificationCommentData = Omit<
   deletedAt?: never;
 };
 
-export type ThreadNotificationUnreadReplies = {
+export type ThreadNotificationUnreadRepliesData = {
   type: "unreadReplies";
   comments: ThreadNotificationCommentData[];
 };
 
-export type ThreadNotificationUnreadMention = {
+export type ThreadNotificationUnreadMentionData = {
   type: "unreadMention";
   comments: ThreadNotificationCommentData[];
 };
 
 export type ThreadNotificationData =
-  | ThreadNotificationUnreadReplies
-  | ThreadNotificationUnreadMention;
+  | ThreadNotificationUnreadRepliesData
+  | ThreadNotificationUnreadMentionData;
 
 /** @internal */
 export const getLastCommentWithMention = ({
@@ -55,17 +65,19 @@ export const getLastCommentWithMention = ({
  * or either an object containing a list of the last unread comment where the notification
  * receiver was mentioned in.
  *
+ * @param params.client Liveblocks node client
  * @param params.event The thread notification event
  * @returns A thread notification data object
- * @example
+ *
+ * @example Unread replies:
  * {
  *  type: "unreadReplies",
  *  comments: [unread_comment_0, unread_comment_1, ...],
  * }
  *
- * @example
+ * @example Unread mention:
  * {
- *  type: "unreadMentions",
+ *  type: "unreadMention",
  *  comments: [unread_comment_with_mention]
  * }
  */
@@ -106,5 +118,153 @@ export async function getThreadNotificationData(params: {
   return {
     type: "unreadReplies",
     comments: unreadComments,
+  };
+}
+
+export type GetThreadNotificationUnreadCommentsDataOptions<
+  U extends BaseUserMeta = DU,
+> = {
+  /**
+   * Which format to transform the comment body to.
+   */
+  format?: "html" | "json";
+  /**
+   * A function that returns info from user IDs.
+   */
+  resolveUsers?: (
+    args: ResolveUsersArgs
+  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+  /**
+   * A function that returns room info from room IDs.
+   */
+  resolveRoomsInfo?: (
+    args: ResolveRoomsInfoArgs
+  ) => OptionalPromise<(DRI | undefined)[] | undefined>;
+};
+
+export type UnreadCommentAuthor = {
+  id: string;
+  name: string;
+  avatar?: string;
+};
+
+/** @internal */
+export const getAuthor = async <U extends BaseUserMeta = DU>({
+  userId,
+  resolveUsers,
+}: {
+  userId: string;
+  resolveUsers?: (
+    args: ResolveUsersArgs
+  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+}): Promise<UnreadCommentAuthor> => {
+  const fallback = {
+    id: userId,
+    name: userId,
+  };
+  if (resolveUsers) {
+    const users = await resolveUsers({ userIds: [userId] });
+    return users?.[0] && users?.[0].name
+      ? { id: userId, name: users[0].name }
+      : fallback;
+  }
+  return fallback;
+};
+
+export type UnreadComment = {
+  id: string;
+  threadId: string;
+  roomId: string;
+  author: UnreadCommentAuthor;
+  createdAt: Date;
+  body: string | CommentBodyJson;
+  commentUrl?: string;
+  roomName: string;
+};
+
+export type UnreadReplies = {
+  type: "unreadReplies";
+  roomName: string;
+  comments: UnreadComment[];
+};
+export type UnreadMention = {
+  type: "unreadMention";
+  comments: UnreadComment[];
+  roomName: string;
+};
+export type UnreadComments = (UnreadReplies | UnreadMention) & {
+  roomName: string;
+};
+
+/**
+ *
+ * Get unread comments from a `ThreadNotificationEvent`
+ * It returns either an object containing a list of unread replies for a thread
+ * or either an object containing a list of the last unread comment where the notification
+ * receiver was mentioned in.
+ *
+ * @param params.client Liveblocks node client
+ * @param params.event The thread notification event
+ * @returns An unread comments object
+ *
+ * @example Unread replies:
+ * {
+ *  type: "unreadReplies",
+ *  comments: [unread_comment_0, unread_comment_1, ...],
+ *  roomName: "acme"
+ * }
+ *
+ * @example Unread mention:
+ * {
+ *  type: "unreadMention",
+ *  comments: [unread_comment_with_mention],
+ *  roomName: "acme"
+ * }
+ */
+export async function getThreadNotificationUnreadComments(params: {
+  client: Liveblocks;
+  event: ThreadNotificationEvent;
+  options?: GetThreadNotificationUnreadCommentsDataOptions<BaseUserMeta>;
+}): Promise<UnreadComments> {
+  const { client, event, options } = params;
+  const { roomId } = event.data;
+
+  const roomInfos = options?.resolveRoomsInfo
+    ? await options.resolveRoomsInfo({ roomIds: [roomId] })
+    : undefined;
+  const roomName = roomInfos?.[0]?.name ?? roomId;
+
+  const { type, comments } = await getThreadNotificationData({
+    client,
+    event,
+  });
+
+  const unreadComments = await Promise.all(
+    comments.map(async (comment): Promise<UnreadComment> => {
+      const body = await transformCommentBody(comment.body, {
+        format: options?.format,
+        resolveUsers: options?.resolveUsers,
+      });
+      const author = await getAuthor({
+        userId: comment.userId,
+        resolveUsers: options?.resolveUsers,
+      });
+
+      return {
+        id: comment.id,
+        threadId: comment.threadId,
+        roomId: comment.roomId,
+        createdAt: comment.createdAt,
+        author,
+        body,
+        roomName,
+      };
+    })
+  );
+
+  return {
+    type,
+    comments: unreadComments,
+    roomName,
   };
 }
