@@ -34,6 +34,7 @@ export function StorageTldraw() {
               <DefaultStylePanel />
             </div>
           ),
+          DebugPanel: null,
         }}
         autoFocus
       />

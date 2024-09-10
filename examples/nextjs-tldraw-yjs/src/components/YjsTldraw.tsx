@@ -34,6 +34,7 @@ export function YjsTldraw() {
               <DefaultStylePanel />
             </div>
           ),
+          DebugPanel: null,
         }}
         autoFocus
       />
