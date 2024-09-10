@@ -618,9 +618,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.setQueryState(queryKey, { isLoading: true });
   }
 
-  // XXX Ideally, we should somehow call this one externally to keep the
-  // symmetry with the loading/error states in the same call sites, or make the
-  // other two ones private to retain that symmetry
   private setQueryOK(queryKey: string): void {
     this.setQueryState(queryKey, { isLoading: false, data: undefined });
   }
