@@ -57,6 +57,36 @@ const buildCommentBodyWithMention = ({
   ],
 });
 
+const commentBody1: CommentBody = {
+  version: 1,
+  content: [
+    {
+      type: "paragraph",
+      children: [{ text: "What do you think of this team? 🤔" }],
+    },
+  ],
+};
+
+const commentBody2: CommentBody = {
+  version: 1,
+  content: [
+    {
+      type: "paragraph",
+      children: [{ text: "I think it's really neat mate 👌" }],
+    },
+  ],
+};
+
+const commentBody3: CommentBody = {
+  version: 1,
+  content: [
+    {
+      type: "paragraph",
+      children: [{ text: "Yeah dude let's ship it right away 🚀" }],
+    },
+  ],
+};
+
 const makeComment = ({
   userId,
   threadId,
@@ -211,6 +241,69 @@ describe("thread notification helpers", () => {
       const expected: ThreadNotificationData = {
         type: "unreadMention",
         comments: [makeThreadNotificationComment({ comment })],
+      };
+
+      expect(threadNotificationData).toEqual(expected);
+    });
+
+    it("should get unread replies", async () => {
+      const threadId = generateThreadId();
+      const comment1 = makeComment({
+        userId: "user-dracula",
+        threadId,
+        body: commentBody1,
+        createdAt: new Date("2024-09-10T08:10:00.000Z"),
+      });
+      const comment2 = makeComment({
+        userId: "user-mina",
+        threadId,
+        body: commentBody2,
+        createdAt: new Date("2024-09-10T08:14:00.000Z"),
+      });
+      const comment3 = makeComment({
+        userId: "user-carmilla",
+        threadId,
+        body: commentBody3,
+        createdAt: new Date("2024-09-10T08:16:00.000Z"),
+      });
+      const thread = makeThread({
+        threadId,
+        comments: [comment1, comment2, comment3],
+      });
+      const inboxNotification = makeThreadInboxNotification({
+        threadId,
+        notifiedAt: new Date("2024-09-10T08:20:00.000Z"),
+      });
+
+      server.use(
+        http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`, () =>
+          HttpResponse.json(thread, { status: 200 })
+        )
+      );
+
+      server.use(
+        http.get(
+          `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
+          () => HttpResponse.json(inboxNotification, { status: 200 })
+        )
+      );
+
+      const event = makeThreadNotificationEvent({
+        threadId,
+        userId: "user-dracula",
+        inboxNotificationId: inboxNotification.id,
+      });
+      const threadNotificationData = await getThreadNotificationData({
+        client,
+        event,
+      });
+
+      const expected: ThreadNotificationData = {
+        type: "unreadReplies",
+        comments: [
+          makeThreadNotificationComment({ comment: comment2 }),
+          makeThreadNotificationComment({ comment: comment3 }),
+        ],
       };
 
       expect(threadNotificationData).toEqual(expected);
