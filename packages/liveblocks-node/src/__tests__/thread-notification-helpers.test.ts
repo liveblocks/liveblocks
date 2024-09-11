@@ -217,8 +217,8 @@ const resolveUsers = async ({ userIds }: ResolveUsersArgs) => {
 };
 
 // eslint-disable-next-line @typescript-eslint/require-await
-const resolveRoomsInfo = async () => {
-  return [{ name: `${ROOM_ID_TEST}-resolved`, url: "https://resend.com/" }];
+const resolveRoomInfo = async () => {
+  return { name: `${ROOM_ID_TEST}-resolved`, url: "https://resend.com/" };
 };
 
 describe("thread notification helpers", () => {
@@ -588,7 +588,7 @@ describe("thread notification helpers", () => {
             getThreadNotificationUnreadComments({
               client,
               event,
-              options: { resolveUsers, resolveRoomsInfo },
+              options: { resolveUsers, resolveRoomInfo },
             }),
           expected: expected2,
         },
@@ -600,7 +600,7 @@ describe("thread notification helpers", () => {
             getThreadNotificationUnreadComments({
               client,
               event,
-              options: { format: "html", resolveUsers, resolveRoomsInfo },
+              options: { format: "html", resolveUsers, resolveRoomInfo },
             }),
           expected: expected2,
         },
@@ -624,7 +624,7 @@ describe("thread notification helpers", () => {
             getThreadNotificationUnreadComments({
               client,
               event,
-              options: { format: "json", resolveUsers, resolveRoomsInfo },
+              options: { format: "json", resolveUsers, resolveRoomInfo },
             }),
           expected: expected4,
         },
@@ -813,7 +813,7 @@ describe("thread notification helpers", () => {
             getThreadNotificationUnreadComments({
               client,
               event,
-              options: { resolveUsers, resolveRoomsInfo },
+              options: { resolveUsers, resolveRoomInfo },
             }),
           expected: expected2,
         },
@@ -825,7 +825,7 @@ describe("thread notification helpers", () => {
             getThreadNotificationUnreadComments({
               client,
               event,
-              options: { format: "html", resolveUsers, resolveRoomsInfo },
+              options: { format: "html", resolveUsers, resolveRoomInfo },
             }),
           expected: expected2,
         },
@@ -849,7 +849,7 @@ describe("thread notification helpers", () => {
             getThreadNotificationUnreadComments({
               client,
               event,
-              options: { format: "json", resolveUsers, resolveRoomsInfo },
+              options: { format: "json", resolveUsers, resolveRoomInfo },
             }),
           expected: expected4,
         },

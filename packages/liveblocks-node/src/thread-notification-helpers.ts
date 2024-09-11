@@ -6,7 +6,6 @@ import type {
   DRI,
   DU,
   OptionalPromise,
-  ResolveRoomsInfoArgs,
   ResolveUsersArgs,
 } from "@liveblocks/core";
 import {
@@ -122,6 +121,13 @@ export async function getThreadNotificationData(params: {
   };
 }
 
+export type ResolveRoomInfoArgs = {
+  /**
+   * The ID of the room to resolve
+   */
+  roomId: string;
+};
+
 export type GetThreadNotificationUnreadCommentsDataOptions<
   U extends BaseUserMeta = DU,
 > = {
@@ -138,9 +144,9 @@ export type GetThreadNotificationUnreadCommentsDataOptions<
   /**
    * A function that returns room info from room IDs.
    */
-  resolveRoomsInfo?: (
-    args: ResolveRoomsInfoArgs
-  ) => OptionalPromise<(DRI | undefined)[] | undefined>;
+  resolveRoomInfo?: (
+    args: ResolveRoomInfoArgs
+  ) => OptionalPromise<DRI | undefined>;
 };
 
 export type UnreadCommentAuthorData = {
@@ -230,10 +236,10 @@ export async function getThreadNotificationUnreadComments(params: {
   const { client, event, options } = params;
   const { roomId } = event.data;
 
-  const roomInfos = options?.resolveRoomsInfo
-    ? await options.resolveRoomsInfo({ roomIds: [roomId] })
+  const roomInfos = options?.resolveRoomInfo
+    ? await options.resolveRoomInfo({ roomId })
     : undefined;
-  const roomName = roomInfos?.[0]?.name ?? roomId;
+  const roomName = roomInfos?.name ?? roomId;
 
   const { type, comments } = await getThreadNotificationData({
     client,
@@ -250,9 +256,9 @@ export async function getThreadNotificationUnreadComments(params: {
         userId: comment.userId,
         resolveUsers: options?.resolveUsers,
       });
-      const commentUrl = roomInfos?.[0]?.url
+      const commentUrl = roomInfos?.url
         ? generateCommentUrl({
-            roomUrl: roomInfos[0].url,
+            roomUrl: roomInfos.url,
             commentId: comment.id,
           })
         : undefined;
