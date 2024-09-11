@@ -112,7 +112,7 @@ import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-
 
 const SMOOTH_DELAY = 1000;
 
-const noop = () => {};
+const noop = () => { };
 const identity: <T>(x: T) => T = (x) => x;
 
 const missing_unstable_batchedUpdates = (
@@ -124,8 +124,8 @@ const missing_unstable_batchedUpdates = (
     import { unstable_batchedUpdates } from "react-dom";  // or "react-native"
 
     <RoomProvider id=${JSON.stringify(
-      roomId
-    )} ... unstable_batchedUpdates={unstable_batchedUpdates}>
+    roomId
+  )} ... unstable_batchedUpdates={unstable_batchedUpdates}>
       ...
     </RoomProvider>
 
@@ -2199,6 +2199,12 @@ function useRoomNotificationSettings(): [
   }, [settings, updateRoomNotificationSettings]);
 }
 
+/**
+ * Returns the version data bianry for a given version
+ *
+ * @example
+ * const {data} = useHistoryVersionData(versionId);
+ */
 function useHistoryVersionData(versionId: string): HistoryVersionDataState {
   const [state, setState] = React.useState<HistoryVersionDataState>({
     isLoading: true,
@@ -2222,8 +2228,8 @@ function useHistoryVersionData(versionId: string): HistoryVersionDataState {
             error instanceof Error
               ? error
               : new Error(
-                  "An unknown error occurred while loading this version"
-                ),
+                "An unknown error occurred while loading this version"
+              ),
         });
       }
     };

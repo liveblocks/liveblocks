@@ -50,7 +50,11 @@ const ALLOW_NO_FACTORY = [
  *
  * To make an exception for public APIs here, add it to this list.
  */
-const CLASSIC_ONLY = ["createLiveblocksContext", "createRoomContext"];
+const CLASSIC_ONLY = [
+  "createLiveblocksContext",
+  "createRoomContext",
+  "useHistoryVersionData",
+];
 const SUSPENSE_ONLY = [];
 
 // -------------------------------------------------------------------------------------
