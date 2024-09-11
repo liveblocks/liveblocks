@@ -158,7 +158,7 @@ export const getAuthor = async <U extends BaseUserMeta = DU>({
     args: ResolveUsersArgs
   ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
 }): Promise<UnreadCommentAuthor> => {
-  const fallback = {
+  const fallback: UnreadCommentAuthor = {
     id: userId,
     name: userId,
   };

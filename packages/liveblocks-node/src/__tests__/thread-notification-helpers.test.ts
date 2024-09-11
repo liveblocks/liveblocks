@@ -2,6 +2,7 @@ import type {
   CommentBody,
   CommentData,
   InboxNotificationThreadData,
+  ResolveUsersArgs,
   ThreadData,
 } from "@liveblocks/core";
 import { nanoid } from "@liveblocks/core";
@@ -13,8 +14,12 @@ import { Liveblocks } from "../client";
 import type {
   ThreadNotificationCommentData,
   ThreadNotificationData,
+  UnreadComments,
 } from "../thread-notification-helpers";
-import { getThreadNotificationData } from "../thread-notification-helpers";
+import {
+  getThreadNotificationData,
+  getThreadNotificationUnreadComments,
+} from "../thread-notification-helpers";
 import { getBaseUrl } from "../utils";
 import type { ThreadNotificationEvent } from "../webhooks";
 
@@ -31,6 +36,25 @@ const ROOM_TEST: RoomData = {
   groupsAccesses: {},
   usersAccesses: {},
 };
+
+const USERS_DB = [
+  {
+    id: "user-0",
+    name: "Charlie Layne",
+  },
+  {
+    id: "user-1",
+    name: "Mislav Abha",
+  },
+  {
+    id: "user-2",
+    name: "Tatum Paolo",
+  },
+  {
+    id: "user-3",
+    name: "Anjali Wanda",
+  },
+];
 
 const generateProjectId = (): string => "pr_" + nanoid();
 const generateCommentId = (): string => "cm_" + nanoid();
@@ -176,6 +200,25 @@ const makeThreadNotificationComment = ({
     body: body ?? { version: 1, content: [] },
     deletedAt: undefined,
   };
+};
+
+// eslint-disable-next-line @typescript-eslint/require-await
+const resolveUsers = async ({ userIds }: ResolveUsersArgs) => {
+  const users = [];
+
+  for (const userId of userIds) {
+    const user = USERS_DB.find((u) => u.id === userId);
+    if (user) {
+      users.push(user);
+    }
+  }
+
+  return users;
+};
+
+// eslint-disable-next-line @typescript-eslint/require-await
+const resolveRoomsInfo = async () => {
+  return [{ name: `${ROOM_ID_TEST}-resolved`, url: "https://resend.com/" }];
 };
 
 describe("thread notification helpers", () => {
@@ -375,6 +418,115 @@ describe("thread notification helpers", () => {
       };
 
       expect(threadNotificationData).toEqual(expected);
+    });
+  });
+
+  describe("get thread notification unread comments", () => {
+    it("should get last unread comment with a mention in HTML format", async () => {
+      const threadId = generateThreadId();
+      const comment = makeComment({
+        userId: "user-0",
+        threadId,
+        body: buildCommentBodyWithMention({ mentionedUserId: "user-1" }),
+        createdAt: new Date("2024-09-10T08:04:00.000Z"),
+      });
+      const thread = makeThread({ threadId, comments: [comment] });
+      const inboxNotification = makeThreadInboxNotification({
+        threadId,
+        notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
+      });
+
+      server.use(
+        http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`, () =>
+          HttpResponse.json(thread, { status: 200 })
+        )
+      );
+
+      server.use(
+        http.get(
+          `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
+          () => HttpResponse.json(inboxNotification, { status: 200 })
+        )
+      );
+      const event = makeThreadNotificationEvent({
+        threadId,
+        userId: "user-1",
+        inboxNotificationId: inboxNotification.id,
+      });
+
+      const [
+        unreadComments1,
+        unreadComments2,
+        unreadComments3,
+        unreadComments4,
+      ] = await Promise.all([
+        // with format option unset - no resolvers
+        getThreadNotificationUnreadComments({
+          client,
+          event,
+        }),
+        // with format option set - no resolvers
+        getThreadNotificationUnreadComments({
+          client,
+          event,
+          options: { format: "html" },
+        }),
+        // with format option unset - defined resolvers
+        getThreadNotificationUnreadComments({
+          client,
+          event,
+          options: { resolveUsers, resolveRoomsInfo },
+        }),
+        // with format option set - defined resolvers
+        getThreadNotificationUnreadComments({
+          client,
+          event,
+          options: { format: "html", resolveUsers, resolveRoomsInfo },
+        }),
+      ]);
+
+      const expected1: UnreadComments = {
+        type: "unreadMention",
+        comments: [
+          {
+            id: comment.id,
+            threadId: thread.id,
+            roomId: ROOM_ID_TEST,
+            createdAt: comment.createdAt,
+            author: {
+              id: comment.userId,
+              name: comment.userId,
+            },
+            body: "<p>Hello <span data-mention>@user-1</span> !</p>",
+            roomName: ROOM_ID_TEST,
+          },
+        ],
+        roomName: ROOM_ID_TEST,
+      };
+
+      const expected2: UnreadComments = {
+        type: "unreadMention",
+        comments: [
+          {
+            id: comment.id,
+            threadId: thread.id,
+            roomId: ROOM_ID_TEST,
+            createdAt: comment.createdAt,
+            author: {
+              id: comment.userId,
+              name: "Charlie Layne",
+            },
+            body: "<p>Hello <span data-mention>@Mislav Abha</span> !</p>",
+            roomName: `${ROOM_ID_TEST}-resolved`,
+          },
+        ],
+        roomName: `${ROOM_ID_TEST}-resolved`,
+      };
+
+      expect(unreadComments1).toEqual(expected1);
+      expect(unreadComments2).toEqual(expected1);
+      expect(unreadComments3).toEqual(expected2);
+      expect(unreadComments4).toEqual(expected2);
     });
   });
 });
