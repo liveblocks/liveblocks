@@ -1,5 +1,5 @@
 {
-  "name": "@liveblocks-examples/nextjs-lexical-ai",
+  "name": "@liveblocks-examples/nextjs-notion-like-ai-editor",
   "description": "This example shows how to build a collaborative text editor with an AI toolbar using Liveblocks, Lexical, Vercel AI SDK, and Next.js.",
   "license": "Apache-2.0",
   "private": true,
