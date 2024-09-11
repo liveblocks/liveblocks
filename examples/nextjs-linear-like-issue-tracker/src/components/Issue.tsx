@@ -7,11 +7,12 @@ import { IssueActions } from "@/components/IssueActions";
 import { liveblocks } from "@/liveblocks.server.config";
 import { withLexicalDocument } from "@liveblocks/node-lexical";
 import { getRoomId } from "@/config";
-import remark from "remark";
-import html from "remark-html";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { ListItemNode, ListNode } from "@lexical/list";
 import { IssueLinks } from "@/components/IssueLinks";
+import { $generateHtmlFromNodes } from "@lexical/html";
+import { $convertToMarkdownString, TRANSFORMERS } from "@lexical/markdown";
+import { marked } from "marked";
 
 export async function Issue({ issueId }: { issueId: string }) {
   const roomId = getRoomId(issueId);
@@ -26,15 +27,52 @@ export async function Issue({ issueId }: { issueId: string }) {
       client: liveblocks,
       nodes: [HeadingNode, QuoteNode, ListNode, ListItemNode],
     },
-    (doc) => doc.toMarkdown().replace(/^\s*$(\r?\n^\s*$)+/gm, "\n&nbsp;\n")
-  )
-    .then((markdown) => remark().use(html).process(markdown))
-    .then((processedContent) => processedContent.toString());
+    async (doc) => {
+      let markdown = "";
+      doc.getEditorState().read(() => {
+        markdown = $convertToMarkdownString(TRANSFORMERS, undefined, true)
+          .replace(/\n{2,}/g, (match) => {
+            return "<p><br></p>".repeat(match.length / 2);
+          })
+          .replace(/\n/g, "\n\n");
+      });
+
+      console.log(1, markdown);
+
+      // console.log(1, markdown);
+      const html = marked(markdown);
+
+      // const content = (await remark().use(html).process(markdown)).toString();
+      console.log(2, html);
+
+      return html;
+      //return "<br>" + markdown; //.replace(/\n/g, "\n<br />\n");
+      //return doc
+      //.toMarkdown()
+      //.replace(/^\s*$(\r?\n^\s*$)+/gm, "\n<p>&nbsp;a</p>\n");
+    }
+  );
+  //.then((markdown) => remark().use(html).process(markdown))
+  //.then((processedContent) => processedContent.toString());
 
   const [storage, contentHtml] = await Promise.all([
     storagePromise,
     contentHtmlPromise,
   ]);
+
+  //console.log(2, contentHtml);
+
+  // await withLexicalDocument(
+  //   {
+  //     roomId,
+  //     client: liveblocks,
+  //     nodes: [HeadingNode, QuoteNode, ListNode, ListItemNode],
+  //   },
+  //   async (doc) =>
+  //     // await doc.update(() => {
+  //     $generateHtmlFromNodes(doc.getLexicalEditor(), null)
+  //   // })
+  // );
 
   return (
     <div className="h-full flex flex-col">
