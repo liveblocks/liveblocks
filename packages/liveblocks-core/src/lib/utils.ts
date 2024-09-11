@@ -1,4 +1,3 @@
-import { nn } from "./assert";
 import type { Json } from "./Json";
 
 declare const brand: unique symbol;
