@@ -208,6 +208,7 @@ export type {
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 export { ServerMsgCode } from "./protocol/ServerMsg";
+export type { HistoryVersion } from "./protocol/VersionHistory";
 export type { PrivateRoomApi } from "./room";
 export type {
   BroadcastOptions,
@@ -280,7 +281,7 @@ export {
   applyOptimisticUpdates,
   deleteComment,
   removeReaction,
-  type UmbrellaStore,
+  UmbrellaStore,
   type UmbrellaStoreState,
   upsertComment,
 } from "./umbrella-store";

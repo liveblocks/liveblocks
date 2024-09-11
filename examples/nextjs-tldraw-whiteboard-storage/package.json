@@ -1,6 +1,6 @@
 {
-  "name": "@liveblocks-examples/nextjs-tldraw-yjs",
-  "description": "This example shows how to build a tldraw app using Liveblocks Yjs, and Next.js.",
+  "name": "@liveblocks-examples/nextjs-tldraw-whiteboard-storage",
+  "description": "This example shows how to build a tldraw app using Liveblocks Storage, and Next.js.",
   "license": "Apache-2.0",
   "private": true,
   "scripts": {
@@ -14,7 +14,6 @@
     "@liveblocks/node": "^2.5.0",
     "@liveblocks/react": "^2.2.5",
     "@liveblocks/react-ui": "^2.5.0",
-    "@liveblocks/yjs": "^2.5.0",
     "@types/node": "20.3.1",
     "@types/react-dom": "18.2.5",
     "autoprefixer": "^10.4.17",
@@ -22,9 +21,7 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-error-boundary": "^4.0.11",
-    "tldraw": "2.4.0",
-    "y-utility": "^0.1.4",
-    "yjs": "13.6.1"
+    "tldraw": "2.4.0"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",

@@ -299,9 +299,7 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
    * delays. Will throw eventually only if all retries fail.
    */
   const waitUntilInboxNotificationsLoaded = memoizeOnSuccess(async () => {
-    store.setQueryState(INBOX_NOTIFICATIONS_QUERY, {
-      isLoading: true,
-    });
+    store.setQueryLoading(INBOX_NOTIFICATIONS_QUERY);
 
     try {
       await autoRetry(
@@ -311,10 +309,7 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
       );
     } catch (err) {
       // Store the error in the cache as a side-effect, for non-Suspense
-      store.setQueryState(INBOX_NOTIFICATIONS_QUERY, {
-        isLoading: false,
-        error: err as Error,
-      });
+      store.setQueryError(INBOX_NOTIFICATIONS_QUERY, err as Error);
 
       // Rethrow it for Suspense, where this promise must fail
       throw err;
@@ -448,9 +443,7 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
     // Store the promise of the request for the query so that we do not make another request for the same query
     userThreadsRequestsByQuery.set(queryKey, request);
 
-    store.setQueryState(queryKey, {
-      isLoading: true,
-    });
+    store.setQueryLoading(queryKey);
 
     try {
       const result = await request;
@@ -488,10 +481,7 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
       }, retryCount);
 
       // Set the query state to the error state
-      store.setQueryState(queryKey, {
-        isLoading: false,
-        error: err as Error,
-      });
+      store.setQueryError(queryKey, err as Error);
     }
 
     return;

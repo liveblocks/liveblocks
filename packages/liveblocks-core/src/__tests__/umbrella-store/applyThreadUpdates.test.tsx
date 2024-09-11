@@ -2,8 +2,8 @@ import type {
   ThreadData,
   ThreadDataWithDeleteInfo,
   ThreadDeleteInfo,
-} from "../protocol/Comments";
-import { applyThreadUpdates } from "../umbrella-store";
+} from "../../protocol/Comments";
+import { applyThreadUpdates } from "../../umbrella-store";
 
 describe("applyThreadUpdates", () => {
   const thread1: ThreadDataWithDeleteInfo = {

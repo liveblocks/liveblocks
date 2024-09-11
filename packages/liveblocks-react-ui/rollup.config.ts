@@ -10,7 +10,11 @@ import { styles } from "./plugins/rollup/styles";
 
 const SRC_DIR = "src";
 const DIST_DIR = "dist";
-const ENTRIES = [`${SRC_DIR}/index.ts`, `${SRC_DIR}/primitives/index.ts`];
+const ENTRIES = [
+  `${SRC_DIR}/index.ts`,
+  `${SRC_DIR}/primitives/index.ts`,
+  `${SRC_DIR}/_private/index.ts`,
+];
 
 interface Pkg {
   version: string;
