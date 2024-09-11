@@ -53,7 +53,7 @@ import type {
   UnreadInboxNotificationsCountState,
   UserAsyncResult,
   UserAsyncSuccess,
-  UseThreadsOptions,
+  UseUserThreadsOptions,
 } from "./types";
 
 /**
@@ -107,34 +107,6 @@ function selectorFor_useInboxNotifications(
 
   return {
     inboxNotifications: selectedInboxNotifications(state),
-    isLoading: false,
-  };
-}
-
-function selectorFor_useUserThreads<M extends BaseMetadata>(
-  state: UmbrellaStoreState<M>,
-  options: UseThreadsOptions<M>
-): ThreadsState<M> {
-  const queryKey = makeUserThreadsQueryKey(options.query);
-
-  const query = state.queries[queryKey];
-
-  if (query === undefined || query.isLoading) {
-    return {
-      isLoading: true,
-    };
-  }
-
-  if (query.error !== undefined) {
-    return {
-      threads: [],
-      error: query.error,
-      isLoading: false,
-    };
-  }
-
-  return {
-    threads: selectedUserThreads(state, options),
     isLoading: false,
   };
 }
@@ -463,7 +435,7 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
 
   async function getUserThreads(
     queryKey: string,
-    options: UseThreadsOptions<M>,
+    options: UseUserThreadsOptions<M>,
     { retryCount }: { retryCount: number } = { retryCount: 0 }
   ) {
     const existingRequest = userThreadsRequestsByQuery.get(queryKey);
@@ -1105,7 +1077,7 @@ export function createLiveblocksContext<
  * REGULAR useUserThreads_experimental
  */
 function useUserThreads_experimental<M extends BaseMetadata>(
-  options: UseThreadsOptions<M> = {
+  options: UseUserThreadsOptions<M> = {
     query: {
       metadata: {},
     },
@@ -1169,7 +1141,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
  * SUSPENSE useUserThreadsSuspense_experimental
  */
 function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
-  options: UseThreadsOptions<M> = {
+  options: UseUserThreadsOptions<M> = {
     query: {
       metadata: {},
     },
@@ -1418,5 +1390,5 @@ export {
   _useUserThreadsSuspense_experimental as useUserThreadsSuspense_experimental,
 };
 
-const makeUserThreadsQueryKey = (options: UseThreadsOptions<DM>["query"]) =>
+const makeUserThreadsQueryKey = (options: UseUserThreadsOptions<DM>["query"]) =>
   `${USER_THREADS_QUERY}:${stringify(options)}`;
