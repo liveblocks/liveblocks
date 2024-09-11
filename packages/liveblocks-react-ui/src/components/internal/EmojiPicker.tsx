@@ -34,7 +34,7 @@ function EmojiPickerLoading({
 }: EmojiPickerContentLoadingProps) {
   return (
     <div
-      className={classNames("lb-emoji-picker-loading", className)}
+      className={classNames("lb-loading lb-emoji-picker-loading", className)}
       {...props}
     >
       <SpinnerIcon />
@@ -49,7 +49,10 @@ function EmojiPickerEmpty({
   const $ = useOverrides();
 
   return (
-    <div className={classNames("lb-emoji-picker-empty", className)} {...props}>
+    <div
+      className={classNames("lb-empty lb-emoji-picker-empty", className)}
+      {...props}
+    >
       {$.EMOJI_PICKER_EMPTY}
     </div>
   );
@@ -63,7 +66,10 @@ function EmojiPickerError({
   const $ = useOverrides();
 
   return (
-    <div className={classNames("lb-emoji-picker-error", className)} {...props}>
+    <div
+      className={classNames("lb-error lb-emoji-picker-error", className)}
+      {...props}
+    >
       {$.EMOJI_PICKER_ERROR(error)}
     </div>
   );

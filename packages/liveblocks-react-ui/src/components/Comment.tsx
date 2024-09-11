@@ -243,16 +243,12 @@ export const CommentReaction = forwardRef<
       <span>
         {$.COMMENT_REACTION_LIST(
           <List
-            values={reaction.users.map((users, index) => (
-              <User
-                key={users.id}
-                userId={users.id}
-                capitalize={index === 0}
-                replaceSelf
-              />
+            values={reaction.users.map((users) => (
+              <User key={users.id} userId={users.id} replaceSelf />
             ))}
             formatRemaining={$.LIST_REMAINING_USERS}
             truncate={REACTIONS_TRUNCATE}
+            locale={$.locale}
           />,
           reaction.emoji,
           reaction.users.length
@@ -548,7 +544,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                   <Timestamp
                     locale={$.locale}
                     date={comment.createdAt}
-                    className="lb-comment-date-created"
+                    className="lb-date lb-comment-date-created"
                   />
                   {comment.editedAt && comment.body && (
                     <>

@@ -307,7 +307,7 @@ const InboxNotificationLayout = forwardRef<
                   <Timestamp
                     locale={$.locale}
                     date={date}
-                    className="lb-inbox-notification-date"
+                    className="lb-date lb-inbox-notification-date"
                   />
                   {unread && (
                     <span
@@ -434,16 +434,12 @@ const InboxNotificationThread = forwardRef<
           const aside = <InboxNotificationAvatar userId={firstUserId} />;
           const title = $.INBOX_NOTIFICATION_THREAD_COMMENTS_LIST(
             <List
-              values={reversedUserIds.map((userId, index) => (
-                <User
-                  key={userId}
-                  userId={userId}
-                  capitalize={index === 0}
-                  replaceSelf
-                />
+              values={reversedUserIds.map((userId) => (
+                <User key={userId} userId={userId} replaceSelf />
               ))}
               formatRemaining={$.LIST_REMAINING_USERS}
               truncate={INBOX_NOTIFICATION_THREAD_MAX_COMMENTS - 1}
+              locale={$.locale}
             />,
             showRoomName ? <Room roomId={thread.roomId} /> : undefined,
             reversedUserIds.length
@@ -478,7 +474,7 @@ const InboxNotificationThread = forwardRef<
 
           const aside = <InboxNotificationAvatar userId={mentionUserId} />;
           const title = $.INBOX_NOTIFICATION_THREAD_MENTION(
-            <User key={mentionUserId} userId={mentionUserId} capitalize />,
+            <User key={mentionUserId} userId={mentionUserId} />,
             showRoomName ? <Room roomId={thread.roomId} /> : undefined
           );
           const content = (
@@ -573,7 +569,6 @@ const InboxNotificationTextMention = forwardRef<
           <User
             key={inboxNotification.createdBy}
             userId={inboxNotification.createdBy}
-            capitalize
           />,
           showRoomName ? <Room roomId={inboxNotification.roomId} /> : undefined
         )}

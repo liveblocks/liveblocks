@@ -19,6 +19,7 @@ import type {
   InboxNotificationData,
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
+import type { HistoryVersion } from "./protocol/VersionHistory";
 import type { Patchable } from "./types/Patchable";
 import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 
@@ -182,6 +183,11 @@ export type UmbrellaStoreState<M extends BaseMetadata> = Readonly<{
    *      }
    */
   notificationSettings: Record<string, RoomNotificationSettings>;
+  /**
+   * Versions per roomId
+   * e.g. { 'room-abc': {versions: "all versions"}}
+   */
+  versions: Record<string, HistoryVersion[]>;
 }>;
 
 export class UmbrellaStore<M extends BaseMetadata> {
@@ -194,6 +200,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       optimisticUpdates: [],
       inboxNotifications: {},
       notificationSettings: {},
+      versions: {},
     });
 
     // Auto-bind all of this class methods once here, so we can use stable
@@ -247,6 +254,16 @@ export class UmbrellaStore<M extends BaseMetadata> {
       notificationSettings: {
         ...state.notificationSettings,
         [roomId]: settings,
+      },
+    }));
+  }
+
+  private setVersions(roomId: string, versions: HistoryVersion[]): void {
+    this._store.set((state) => ({
+      ...state,
+      versions: {
+        ...state.versions,
+        [roomId]: versions,
       },
     }));
   }
@@ -592,6 +609,22 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this._store.batch(() => {
       this.setQueryOK(queryKey); // 1️⃣
       this.setNotificationSettings(roomId, settings); // 2️⃣
+    });
+  }
+
+  public updateRoomVersions(
+    roomId: string,
+    versions: HistoryVersion[],
+    queryKey?: string
+  ): void {
+    // Batch 1️⃣ + 2️⃣
+    this._store.batch(() => {
+      this.setVersions(roomId, versions); // 1️⃣
+
+      // 2️⃣
+      if (queryKey !== undefined) {
+        this.setQueryOK(queryKey);
+      }
     });
   }
 
