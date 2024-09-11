@@ -423,9 +423,6 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
     };
   }
 
-  /**
-   * TODO: check if it should be by queryKey?
-   */
   let userThreadslastRequestedAt: Date | undefined;
 
   async function getUserThreads(
