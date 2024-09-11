@@ -44,7 +44,7 @@ export interface HistoryVersionPreviewProps
 }
 
 function createNoOpProvider(): Provider {
-  const emptyFunction = () => { };
+  const emptyFunction = () => {};
 
   return {
     awareness: {

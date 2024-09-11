@@ -27,6 +27,7 @@ export type {
   CommentReaction,
   EnsureJson,
   History,
+  HistoryVersion,
   Immutable,
   InboxNotificationData,
   IUserInfo,
@@ -55,7 +56,6 @@ export type {
   StringifyCommentBodyOptions,
   ThreadData,
   User,
-  HistoryVersion,
 } from "@liveblocks/core";
 export {
   createClient,
