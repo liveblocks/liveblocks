@@ -7,7 +7,9 @@ import { LiveMap } from "@liveblocks/core";
 import { Loading } from "@/components/Loading";
 
 export function Room({ children }: { children: ReactNode }) {
-  const roomId = useExampleRoomId("liveblocks:examples:nextjs-tldraw-yjs");
+  const roomId = useExampleRoomId(
+    "liveblocks:examples:nextjs-tldraw-whiteboard-yjs"
+  );
 
   return (
     <RoomProvider
