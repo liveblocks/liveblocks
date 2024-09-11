@@ -10,6 +10,7 @@ import type {
   ResolveUsersArgs,
 } from "@liveblocks/core";
 import {
+  generateCommentUrl,
   getMentionedIdsFromCommentBody,
   transformCommentBody,
 } from "@liveblocks/core";
@@ -249,6 +250,12 @@ export async function getThreadNotificationUnreadComments(params: {
         userId: comment.userId,
         resolveUsers: options?.resolveUsers,
       });
+      const commentUrl = roomInfos?.[0]?.url
+        ? generateCommentUrl({
+            roomUrl: roomInfos[0].url,
+            commentId: comment.id,
+          })
+        : undefined;
 
       return {
         id: comment.id,
@@ -257,6 +264,7 @@ export async function getThreadNotificationUnreadComments(params: {
         createdAt: comment.createdAt,
         author,
         body,
+        commentUrl,
         roomName,
       };
     })
