@@ -16,26 +16,10 @@ import { IssueLinks } from "@/components/IssueLinks";
 export async function Issue({ issueId }: { issueId: string }) {
   const roomId = getRoomId(issueId);
 
-  // const markdown = (
-  //   await withLexicalDocument(
-  //     {
-  //       roomId,
-  //       client: liveblocks,
-  //       nodes: [HeadingNode, QuoteNode, ListNode, ListItemNode],
-  //     },
-  //     (doc) => doc.toMarkdown()
-  //   )
-  // ).replace(/^\s*$(\r?\n^\s*$)+/gm, "\n&nbsp;\n");
-  //
-  // console.log(markdown);
-  // //.replace(/^\s*$/gm, "\n");
-  // //.replace(/^\s*$/gm, "\n&nbsp;\n");
-  //
-  // const processedContent = await remark().use(html).process(markdown);
-  // const contentHtml = processedContent.toString();
-
+  // Get storage contents of room (e.g. issue properties) to render placeholder on load
   const storagePromise = liveblocks.getStorageDocument(roomId, "json");
 
+  // Get content and convert it to markdown for displaying a placeholder
   const contentHtmlPromise = withLexicalDocument(
     {
       roomId,
