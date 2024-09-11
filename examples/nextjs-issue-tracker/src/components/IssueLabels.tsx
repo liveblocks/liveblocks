@@ -6,6 +6,8 @@ import {
   useStorage,
 } from "@liveblocks/react/suspense";
 import { LABELS } from "@/config";
+import { Select } from "@/components/Select";
+import { PlusIcon } from "@/icons/PlusIcon";
 
 export function IssueLabels({ storageFallback }: any) {
   return (
@@ -46,6 +48,11 @@ function Labels() {
     storage.get("labels").delete(index);
   }, []);
 
+  const LABEL_LIST = LABELS.map((label) => ({
+    ...label,
+    disabled: labels.includes(label.id),
+  }));
+
   return (
     <div className="text-sm flex gap-1.5 justify-start items-start font-medium max-w-full flex-wrap">
       {LABELS.filter((label) => labels.includes(label.id)).map(
@@ -65,28 +72,23 @@ function Labels() {
           </div>
         )
       )}
-      <select
-        id="add-label"
-        onInput={(e) => {
-          addLabel(e.currentTarget.value);
-        }}
-        className="flex items-center bg-transparent border-0 h-[26px] w-[26px] pl-1.5 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-neutral-200 appearance-none"
-        value="add"
-      >
-        <option value="add" disabled hidden>
-          ＋
-        </option>
-        {LABELS.map(({ id, text }) => (
-          <option
-            key={id}
-            value={id}
-            disabled={labels.includes(id)}
-            className="text-sm"
-          >
-            {text}
-          </option>
-        ))}
-      </select>
+      <div className="overflow-hidden bg-transparent rounded-full transition-colors">
+        <Select
+          id="add1-label"
+          value={"add"}
+          items={[
+            {
+              id: "add",
+              jsx: <PlusIcon className="w-4 h-4" />,
+            },
+            ...LABEL_LIST,
+          ]}
+          adjustFirstItem="hide"
+          onValueChange={(value) => {
+            addLabel(value);
+          }}
+        />
+      </div>
     </div>
   );
 }

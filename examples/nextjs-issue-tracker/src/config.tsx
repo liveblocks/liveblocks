@@ -10,11 +10,11 @@ import { ProgressInReviewIcon } from "@/icons/ProgressInReviewIcon";
 import { ProgressDoneIcon } from "@/icons/ProgressDoneIcon";
 
 export const LABELS = [
-  { id: "feature", text: "Feature" },
-  { id: "bug", text: "Bug" },
-  { id: "engineering", text: "Engineering" },
-  { id: "design", text: "Design" },
-  { id: "product", text: "Product" },
+  { id: "feature", text: "Feature", jsx: <>Feature</> },
+  { id: "bug", text: "Bug", jsx: <>Bug</> },
+  { id: "engineering", text: "Engineering", jsx: <>Engineering</> },
+  { id: "design", text: "Design", jsx: <>Design</> },
+  { id: "product", text: "Product", jsx: <>Product</> },
 ] as const;
 
 export const PRIORITY_STATES = [

@@ -8,8 +8,8 @@ import { CheckIcon } from "@/icons/CheckIcon";
 type Props = {
   id: string;
   value: string;
-  items: { id: string; jsx: ReactNode; text?: string }[];
-  splitFirstItem?: boolean;
+  items: { id: string; jsx: ReactNode; text?: string; disabled?: boolean }[];
+  adjustFirstItem?: "split" | "hide";
   onValueChange: (value: string) => void;
 };
 
@@ -18,10 +18,13 @@ export function Select({
   onValueChange,
   value,
   items,
-  splitFirstItem = false,
+  adjustFirstItem,
 }: Props) {
   const [firstItem, ...otherItems] = items;
-  const itemList = splitFirstItem ? otherItems : items;
+  const itemList =
+    adjustFirstItem === "split" || adjustFirstItem === "hide"
+      ? otherItems
+      : items;
 
   const current = items.find((item) => item.id === value);
 
@@ -44,7 +47,7 @@ export function Select({
             <ChevronUpIcon className="w-4 h-4" />
           </RadixSelect.ScrollUpButton>
           <RadixSelect.Viewport>
-            {splitFirstItem ? (
+            {adjustFirstItem === "split" ? (
               <RadixSelect.Group className="border-b p-1">
                 <RadixSelect.Item
                   key={firstItem.id}
@@ -66,8 +69,9 @@ export function Select({
                   key={item.id}
                   value={item.id}
                   className={classnames(
-                    "text-sm leading-none flex items-center h-7 pr-8 pl-2 relative select-none data-[disabled]:pointer-events-none data-[highlighted]:outline-none hover:bg-neutral-200/60 rounded"
+                    "text-sm leading-none flex items-center h-7 pr-8 pl-2 relative select-none data-[disabled]:pointer-events-none data-[highlighted]:outline-none hover:bg-neutral-200/60 rounded data-[disabled]:opacity-40"
                   )}
+                  disabled={item.disabled}
                 >
                   <RadixSelect.ItemText>{item.jsx}</RadixSelect.ItemText>
                   <RadixSelect.ItemIndicator className="absolute right-0 w-[25px] inline-flex items-center justify-center">

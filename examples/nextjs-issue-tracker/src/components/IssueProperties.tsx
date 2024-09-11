@@ -73,7 +73,7 @@ function Properties() {
         id="progress"
         value={properties.progress}
         items={PROGRESS_STATES as any}
-        splitFirstItem={true}
+        adjustFirstItem="split"
         onValueChange={(val) => editProperty("progress", val)}
       />
 
@@ -81,7 +81,7 @@ function Properties() {
         id="priority"
         value={properties.priority}
         items={PRIORITY_STATES as any}
-        splitFirstItem={true}
+        adjustFirstItem="split"
         onValueChange={(val) => editProperty("priority", val)}
       />
 
@@ -89,7 +89,7 @@ function Properties() {
         id="assignedTo"
         value={properties.assignedTo}
         items={USERS}
-        splitFirstItem={true}
+        adjustFirstItem="split"
         onValueChange={(val) => editProperty("assignedTo", val)}
       />
     </div>
