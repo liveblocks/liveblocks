@@ -1,5 +1,5 @@
 {
-  "name": "@liveblocks-examples/nextjs-tldraw-yjs",
+  "name": "@liveblocks-examples/nextjs-tldraw-whiteboard-yjs",
   "description": "This example shows how to build a tldraw app using Liveblocks Yjs, and Next.js.",
   "license": "Apache-2.0",
   "private": true,
