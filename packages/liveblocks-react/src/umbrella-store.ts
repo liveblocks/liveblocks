@@ -286,11 +286,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   // ---------------------------------------------------------------------------------- }}}
 
-  /**
-   * Only call this method from unit tests.
-   *
-   * @private
-   */
+  /** @internal - Only call this method from unit tests. */
   public force_set(
     callback: (
       currentState: Readonly<UmbrellaStoreState<M>>
