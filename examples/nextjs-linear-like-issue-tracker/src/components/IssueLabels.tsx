@@ -72,14 +72,14 @@ function Labels() {
           </div>
         )
       )}
-      <div className="overflow-hidden bg-transparent rounded-full transition-colors">
+      <div className="overflow-hidden bg-transparent rounded-full transition-colors h-[26px]">
         <Select
           id="add1-label"
           value={"add"}
           items={[
             {
               id: "add",
-              jsx: <PlusIcon className="w-4 h-4" />,
+              jsx: <PlusIcon className="w-4 h-4 -mt-0.5" />,
             },
             ...LABEL_LIST,
           ]}
