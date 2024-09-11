@@ -142,7 +142,7 @@ export type GetThreadNotificationUnreadCommentsDataOptions<
   ) => OptionalPromise<(DRI | undefined)[] | undefined>;
 };
 
-export type UnreadCommentAuthor = {
+export type UnreadCommentAuthorData = {
   id: string;
   name: string;
   avatar?: string;
@@ -157,8 +157,8 @@ export const getAuthor = async <U extends BaseUserMeta = DU>({
   resolveUsers?: (
     args: ResolveUsersArgs
   ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
-}): Promise<UnreadCommentAuthor> => {
-  const fallback: UnreadCommentAuthor = {
+}): Promise<UnreadCommentAuthorData> => {
+  const fallback: UnreadCommentAuthorData = {
     id: userId,
     name: userId,
   };
@@ -171,28 +171,28 @@ export const getAuthor = async <U extends BaseUserMeta = DU>({
   return fallback;
 };
 
-export type UnreadComment = {
+export type UnreadCommentData = {
   id: string;
   threadId: string;
   roomId: string;
-  author: UnreadCommentAuthor;
+  author: UnreadCommentAuthorData;
   createdAt: Date;
   body: string | CommentBodyJson;
   commentUrl?: string;
   roomName: string;
 };
 
-export type UnreadReplies = {
+export type UnreadRepliesData = {
   type: "unreadReplies";
   roomName: string;
-  comments: UnreadComment[];
+  comments: UnreadCommentData[];
 };
-export type UnreadMention = {
+export type UnreadMentionData = {
   type: "unreadMention";
-  comments: UnreadComment[];
+  comments: UnreadCommentData[];
   roomName: string;
 };
-export type UnreadComments = (UnreadReplies | UnreadMention) & {
+export type UnreadCommentsData = (UnreadRepliesData | UnreadMentionData) & {
   roomName: string;
 };
 
@@ -225,7 +225,7 @@ export async function getThreadNotificationUnreadComments(params: {
   client: Liveblocks;
   event: ThreadNotificationEvent;
   options?: GetThreadNotificationUnreadCommentsDataOptions<BaseUserMeta>;
-}): Promise<UnreadComments> {
+}): Promise<UnreadCommentsData> {
   const { client, event, options } = params;
   const { roomId } = event.data;
 
@@ -240,7 +240,7 @@ export async function getThreadNotificationUnreadComments(params: {
   });
 
   const unreadComments = await Promise.all(
-    comments.map(async (comment): Promise<UnreadComment> => {
+    comments.map(async (comment): Promise<UnreadCommentData> => {
       const body = await transformCommentBody(comment.body, {
         format: options?.format,
         resolveUsers: options?.resolveUsers,

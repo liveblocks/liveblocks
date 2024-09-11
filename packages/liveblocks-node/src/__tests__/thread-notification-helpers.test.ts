@@ -14,7 +14,7 @@ import { Liveblocks } from "../client";
 import type {
   ThreadNotificationCommentData,
   ThreadNotificationData,
-  UnreadComments,
+  UnreadCommentsData,
 } from "../thread-notification-helpers";
 import {
   getThreadNotificationData,
@@ -442,7 +442,7 @@ describe("thread notification helpers", () => {
         inboxNotificationId: inboxNotification.id,
       });
 
-      const expected1: UnreadComments = {
+      const expected1: UnreadCommentsData = {
         type: "unreadMention",
         comments: [
           {
@@ -461,7 +461,7 @@ describe("thread notification helpers", () => {
         roomName: ROOM_ID_TEST,
       };
 
-      const expected2: UnreadComments = {
+      const expected2: UnreadCommentsData = {
         type: "unreadMention",
         comments: [
           {
@@ -485,8 +485,8 @@ describe("thread notification helpers", () => {
         withResolversOption: "yes" | "no";
         thread: ThreadData;
         inboxNotification: InboxNotificationThreadData;
-        getUnreadComments: () => Promise<UnreadComments>;
-        expected: UnreadComments;
+        getUnreadComments: () => Promise<UnreadCommentsData>;
+        expected: UnreadCommentsData;
       }>([
         {
           withFormatOption: "no",

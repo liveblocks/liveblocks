@@ -21,11 +21,11 @@ export type {
   ThreadNotificationData,
   ThreadNotificationUnreadMentionData,
   ThreadNotificationUnreadRepliesData,
-  UnreadComment,
-  UnreadCommentAuthor,
-  UnreadComments,
-  UnreadMention,
-  UnreadReplies,
+  UnreadCommentAuthorData,
+  UnreadCommentData,
+  UnreadCommentsData,
+  UnreadMentionData,
+  UnreadRepliesData,
 } from "./thread-notification-helpers";
 export {
   getThreadNotificationData,
