@@ -24,7 +24,7 @@ This example shows how to build a collaborative [tldraw](https://tldraw.dev/)
 canvas with [Liveblocks](https://liveblocks.io) Storage, and
 [Next.js](https://nextjs.org/).
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/tldraw-collaborative-canvas.png" width="536" alt="tldraw collaborative canvas" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/tldraw-whiteboard.png" width="536" alt="tldraw collaborative canvas" />
 
 ## Getting started
 
