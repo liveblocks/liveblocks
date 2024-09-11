@@ -422,7 +422,7 @@ describe("thread notification helpers", () => {
   });
 
   describe("get thread notification unread comments", () => {
-    describe("HTML format - unread mention", () => {
+    describe("unread mention", () => {
       const threadId = generateThreadId();
       const comment = makeComment({
         userId: "user-0",
@@ -481,12 +481,14 @@ describe("thread notification helpers", () => {
       };
 
       it.each<{
+        format: "html" | "json";
         withFormatOption: "yes" | "no";
         withResolversOption: "yes" | "no";
         getUnreadComments: () => Promise<UnreadCommentsData>;
         expected: UnreadCommentsData;
       }>([
         {
+          format: "html",
           withFormatOption: "no",
           withResolversOption: "no",
           getUnreadComments: () =>
@@ -497,6 +499,7 @@ describe("thread notification helpers", () => {
           expected: expected1,
         },
         {
+          format: "html",
           withFormatOption: "yes",
           withResolversOption: "no",
           getUnreadComments: () =>
@@ -508,6 +511,7 @@ describe("thread notification helpers", () => {
           expected: expected1,
         },
         {
+          format: "html",
           withFormatOption: "no",
           withResolversOption: "yes",
           getUnreadComments: () =>
@@ -519,6 +523,7 @@ describe("thread notification helpers", () => {
           expected: expected2,
         },
         {
+          format: "html",
           withFormatOption: "yes",
           withResolversOption: "yes",
           getUnreadComments: () =>
@@ -530,7 +535,7 @@ describe("thread notification helpers", () => {
           expected: expected2,
         },
       ])(
-        'should return unread mention with format option set "$withFormatOption" and with resolvers: "$withResolversOption"',
+        'should return unread mention in "$format" format with options { format: $withFormatOption; resolvers: $withResolversOption }',
         async ({ getUnreadComments, expected }) => {
           server.use(
             http.get(
@@ -552,7 +557,7 @@ describe("thread notification helpers", () => {
       );
     });
 
-    describe("HTML format - unread replies", () => {
+    describe("unread replies", () => {
       const threadId = generateThreadId();
       const comment1 = makeComment({
         userId: "user-0",
@@ -619,12 +624,14 @@ describe("thread notification helpers", () => {
       };
 
       it.each<{
+        format: "html" | "json";
         withFormatOption: "yes" | "no";
         withResolversOption: "yes" | "no";
         getUnreadComments: () => Promise<UnreadCommentsData>;
         expected: UnreadCommentsData;
       }>([
         {
+          format: "html",
           withFormatOption: "no",
           withResolversOption: "no",
           getUnreadComments: () =>
@@ -635,6 +642,7 @@ describe("thread notification helpers", () => {
           expected: expected1,
         },
         {
+          format: "html",
           withFormatOption: "yes",
           withResolversOption: "no",
           getUnreadComments: () =>
@@ -646,6 +654,7 @@ describe("thread notification helpers", () => {
           expected: expected1,
         },
         {
+          format: "html",
           withFormatOption: "no",
           withResolversOption: "yes",
           getUnreadComments: () =>
@@ -657,6 +666,7 @@ describe("thread notification helpers", () => {
           expected: expected2,
         },
         {
+          format: "html",
           withFormatOption: "yes",
           withResolversOption: "yes",
           getUnreadComments: () =>
@@ -668,7 +678,7 @@ describe("thread notification helpers", () => {
           expected: expected2,
         },
       ])(
-        'should return unread replies with format option set "$withFormatOption" and with resolvers: "$withResolversOption"',
+        'should return unread replies in "$format" format with options { format: $withFormatOption; resolvers: $withResolversOption }',
         async ({ getUnreadComments, expected }) => {
           server.use(
             http.get(
