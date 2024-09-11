@@ -75,6 +75,7 @@ import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
 import {
   createSharedContext,
+  getUmbrellaStoreForClient,
   LiveblocksProviderWithClient,
   useClient,
   useClientOrNull,
@@ -102,12 +103,11 @@ import type {
   UseStorageStatusOptions,
   UseThreadsOptions,
 } from "./types";
-import type { UmbrellaStoreState } from "./umbrella-store";
+import type { UmbrellaStore, UmbrellaStoreState } from "./umbrella-store";
 import {
   addReaction,
   deleteComment,
   removeReaction,
-  UmbrellaStore,
   upsertComment,
 } from "./umbrella-store";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
@@ -274,7 +274,7 @@ function getExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
 }
 
 function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
-  const store = new UmbrellaStore<M>();
+  const store = getUmbrellaStoreForClient(client);
 
   const DEFAULT_DEDUPING_INTERVAL = 2000; // 2 seconds
 

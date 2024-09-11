@@ -9,9 +9,8 @@ import { render, renderHook } from "@testing-library/react";
 import type { ReactElement } from "react";
 import * as React from "react";
 
-import { createLiveblocksContext } from "../liveblocks";
+import { createLiveblocksContext, getExtrasForClient } from "../liveblocks";
 import { createRoomContext } from "../room";
-import { UmbrellaStore } from "../umbrella-store";
 import { RoomProvider } from "./_liveblocks.config";
 import MockWebSocket from "./_MockWebSocket";
 
@@ -85,7 +84,7 @@ export function createContextsForTest<M extends BaseMetadata>(
   }
 
   const client = createClient(clientOptions);
-  const umbrellaStore = new UmbrellaStore<M>();
+  const { store: umbrellaStore } = getExtrasForClient<M>(client);
 
   return {
     room: createRoomContext<JsonObject, never, never, never, M>(client),

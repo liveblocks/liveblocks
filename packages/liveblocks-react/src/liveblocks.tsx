@@ -73,6 +73,10 @@ function missingRoomInfoError(roomId: string) {
   );
 }
 
+const _umbrellaStores = new WeakMap<
+  OpaqueClient,
+  UmbrellaStore<BaseMetadata>
+>();
 const _extras = new WeakMap<
   OpaqueClient,
   ReturnType<typeof makeExtrasForClient>
@@ -219,10 +223,25 @@ function getOrCreateContextBundle<
   return bundle as LiveblocksContextBundle<U, M>;
 }
 
+// Gets or creates a unique Umbrella store for each unique client instance
+export function getUmbrellaStoreForClient<M extends BaseMetadata>(
+  client: OpaqueClient
+): UmbrellaStore<M> {
+  let store = _umbrellaStores.get(client);
+  if (!store) {
+    store = new UmbrellaStore();
+    _umbrellaStores.set(client, store);
+  }
+  return store as unknown as UmbrellaStore<M>;
+}
+
 // TODO: Likely a better / more clear name for this helper will arise. I'll
 // rename this later. All of these are implementation details to support inbox
 // notifications on a per-client basis.
-function getExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
+/** @internal Only exported for unit tests. */
+export function getExtrasForClient<M extends BaseMetadata>(
+  client: OpaqueClient
+) {
   let extras = _extras.get(client);
   if (!extras) {
     extras = makeExtrasForClient(client);
@@ -235,7 +254,8 @@ function getExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
 }
 
 function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
-  const store = new UmbrellaStore();
+  const store = getUmbrellaStoreForClient(client);
+  // TODO                                ^ Bind to M type param here
 
   let lastRequestedAt: Date | undefined;
 
