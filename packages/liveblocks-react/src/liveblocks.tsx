@@ -1061,7 +1061,6 @@ export function createLiveblocksContext<
  *
  * This hook is experimental and could be removed or changed at any time!
  * Do not use unless explicitely recommended by the Liveblocks team.
- * REGULAR useUserThreads_experimental
  */
 function useUserThreads_experimental<M extends BaseMetadata>(
   options: UseUserThreadsOptions<M> = {
@@ -1125,7 +1124,6 @@ function useUserThreads_experimental<M extends BaseMetadata>(
  *
  * This hook is experimental and could be removed or changed at any time!
  * Do not use unless explicitely recommended by the Liveblocks team.
- * SUSPENSE useUserThreadsSuspense_experimental
  */
 function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
   options: UseUserThreadsOptions<M> = {
@@ -1343,7 +1341,6 @@ const _useUserSuspense: TypedBundle["suspense"]["useUser"] = useUserSuspense;
  *
  * This hook is experimental and could be removed or changed at any time!
  * Do not use unless explicitely recommended by the Liveblocks team.
- * REGULAR
  */
 const _useUserThreads_experimental: TypedBundle["useUserThreads_experimental"] =
   useUserThreads_experimental;
@@ -1353,7 +1350,6 @@ const _useUserThreads_experimental: TypedBundle["useUserThreads_experimental"] =
  *
  * This hook is experimental and could be removed or changed at any time!
  * Do not use unless explicitely recommended by the Liveblocks team.
- * SUSPENSE
  */
 const _useUserThreadsSuspense_experimental: TypedBundle["suspense"]["useUserThreads_experimental"] =
   useUserThreadsSuspense_experimental;
