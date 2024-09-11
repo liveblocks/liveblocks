@@ -111,6 +111,19 @@ const commentBody3: CommentBody = {
   ],
 };
 
+const commentBody4: CommentBody = {
+  version: 1,
+  content: [
+    {
+      type: "paragraph",
+      children: [
+        { text: "I agree 😍 it completes well this guide: " },
+        { type: "link", url: "https://www.liveblocks.io" },
+      ],
+    },
+  ],
+};
+
 const makeComment = ({
   userId,
   threadId,
@@ -662,7 +675,7 @@ describe("thread notification helpers", () => {
       const comment2 = makeComment({
         userId: "user-1",
         threadId,
-        body: commentBody2,
+        body: commentBody4,
         createdAt: new Date("2024-09-10T08:14:00.000Z"),
       });
       const thread = makeThread({
@@ -691,7 +704,7 @@ describe("thread notification helpers", () => {
               id: comment2.userId,
               name: comment2.userId,
             },
-            body: "<p>I think it's really neat mate 👌</p>",
+            body: '<p>I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer">https://www.liveblocks.io</a></p>',
             commentUrl: undefined,
             roomName: ROOM_ID_TEST,
           },
@@ -711,7 +724,7 @@ describe("thread notification helpers", () => {
               id: comment2.userId,
               name: "Mislav Abha",
             },
-            body: "<p>I think it's really neat mate 👌</p>",
+            body: '<p>I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer">https://www.liveblocks.io</a></p>',
             commentUrl: `https://resend.com/#${comment2.id}`,
             roomName: `${ROOM_ID_TEST}-resolved`,
           },
@@ -736,7 +749,10 @@ describe("thread notification helpers", () => {
               content: [
                 {
                   type: "paragraph",
-                  children: [{ text: "I think it's really neat mate 👌" }],
+                  children: [
+                    { text: "I agree 😍 it completes well this guide: " },
+                    { type: "link", url: "https://www.liveblocks.io" },
+                  ],
                 },
               ],
             },
@@ -764,7 +780,10 @@ describe("thread notification helpers", () => {
               content: [
                 {
                   type: "paragraph",
-                  children: [{ text: "I think it's really neat mate 👌" }],
+                  children: [
+                    { text: "I agree 😍 it completes well this guide: " },
+                    { type: "link", url: "https://www.liveblocks.io" },
+                  ],
                 },
               ],
             },
