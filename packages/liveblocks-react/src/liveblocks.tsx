@@ -23,6 +23,7 @@ import {
   memoizeOnSuccess,
   raise,
   shallow,
+  stringify,
 } from "@liveblocks/core";
 import type { PropsWithChildren } from "react";
 import React, {
@@ -37,7 +38,7 @@ import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/w
 
 import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
 import { selectedUserThreads } from "./comments/lib/selected-threads";
-import { autoRetry } from "./lib/retry-error";
+import { autoRetry, retryError } from "./lib/retry-error";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { use } from "./lib/use-polyfill";
 import { useIsInsideRoom } from "./room";
@@ -111,9 +112,12 @@ function selectorFor_useInboxNotifications(
 }
 
 function selectorFor_useUserThreads<M extends BaseMetadata>(
-  state: UmbrellaStoreState<M>
+  state: UmbrellaStoreState<M>,
+  options: UseThreadsOptions<M>
 ): ThreadsState<M> {
-  const query = state.queries[USER_THREADS_QUERY];
+  const queryKey = makeUserThreadsQueryKey(options.query);
+
+  const query = state.queries[queryKey];
 
   if (query === undefined || query.isLoading) {
     return {
@@ -130,7 +134,7 @@ function selectorFor_useUserThreads<M extends BaseMetadata>(
   }
 
   return {
-    threads: selectedUserThreads(state),
+    threads: selectedUserThreads(state, options),
     isLoading: false,
   };
 }
@@ -386,145 +390,139 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
     }, []);
   }
 
-  /**
-   * BEGIN USER THREADS CODE DUPLICATION
-   *
-   * This code is duplicated from the inbox notifications code above.
-   * Code could be dried up, but we're not 100% we will support useUserThreads officially,
-   * so until then, we keep it as is for easier removal.
-   */
+  const userThreadsPoller = makePoller(refreshUserThreads);
 
-  let userThreadsPollerSubscribers = 0;
-  const userThreadsPoller = makePoller(async () => {
-    try {
-      await waitUntilUserThreadsLoaded();
-      await fetchUserThreads();
-    } catch (err) {
-      // When polling, we don't want to throw errors, ever
-      console.warn(`Polling new user threads failed: ${String(err)}`);
+  let isFetchingUserThreadsUpdates = false;
+
+  async function refreshUserThreads() {
+    console.log("refreshUserThreads", userThreadslastRequestedAt);
+    const since = userThreadslastRequestedAt;
+
+    if (since === undefined || isFetchingUserThreadsUpdates) {
+      return;
     }
-  });
+    try {
+      isFetchingUserThreadsUpdates = true;
+      const updates = await client[kInternal].getThreadsSince({
+        since,
+      });
+      isFetchingUserThreadsUpdates = false;
+      console.log("got updates", updates);
+      store.updateThreadsAndNotifications(
+        updates.threads.updated,
+        [],
+        updates.threads.deleted,
+        [],
+        USER_THREADS_QUERY
+      );
 
-  let userThreadslastRequestedAt: Date | undefined;
+      userThreadslastRequestedAt = updates.requestedAt;
+    } catch (err) {
+      isFetchingUserThreadsUpdates = false;
+      return;
+    }
+  }
 
-  /**
-   * Triggers an initial fetch of user threads if this hasn't
-   * already happened.
-   */
-  function loadUserThreads(options?: UseThreadsOptions<M>): void {
-    // TODO: check typing
-    void waitUntilUserThreadsLoaded(options).catch(() => {
-      // Deliberately catch and ignore any errors here
-    });
+  const userThreadsSubscribersByQuery = new Map<string, number>();
+  const userThreadsRequestsByQuery = new Map<string, Promise<unknown>>();
+
+  function incrementUserThreadsQuerySubscribers(queryKey: string) {
+    const subscribers = userThreadsSubscribersByQuery.get(queryKey) ?? 0;
+    userThreadsSubscribersByQuery.set(queryKey, subscribers + 1);
+
+    userThreadsPoller.start(POLLING_INTERVAL);
+
+    // Decrement in the unsub function
+    return () => {
+      const subscribers = userThreadsSubscribersByQuery.get(queryKey);
+
+      if (subscribers === undefined || subscribers <= 0) {
+        console.warn(
+          `Internal unexpected behavior. Cannot decrease subscriber count for query "${queryKey}"`
+        );
+        return;
+      }
+
+      userThreadsSubscribersByQuery.set(queryKey, subscribers - 1);
+
+      let totalSubscribers = 0;
+      for (const subscribers of userThreadsSubscribersByQuery.values()) {
+        totalSubscribers += subscribers;
+      }
+
+      if (totalSubscribers <= 0) {
+        userThreadsPoller.stop();
+      }
+    };
   }
 
   /**
-   * Will trigger an initial fetch of user threads if this hasn't
-   * already happened. Will resolve once there is initial data. Will retry
-   * a few times automatically in case fetching fails, with incremental backoff
-   * delays. Will throw eventually only if all retries fail.
+   * TODO: check if it should be by queryKey?
    */
-  const waitUntilUserThreadsLoaded = memoizeOnSuccess(
-    async (options?: UseThreadsOptions<M>) => {
-      // TODO: set query state based on the options?
-      store.setQueryState(USER_THREADS_QUERY, {
-        isLoading: true,
-      });
+  let userThreadslastRequestedAt: Date | undefined;
 
-      try {
-        await autoRetry(
-          () => fetchUserThreads(options),
-          5,
-          [5000, 5000, 10000, 15000]
-        );
-      } catch (err) {
-        // Store the error in the cache as a side-effect, for non-Suspense
-        store.setQueryState(USER_THREADS_QUERY, {
-          isLoading: false,
-          error: err as Error,
-        });
+  async function getUserThreads(
+    queryKey: string,
+    options: UseThreadsOptions<M>,
+    { retryCount }: { retryCount: number } = { retryCount: 0 }
+  ) {
+    const existingRequest = userThreadsRequestsByQuery.get(queryKey);
 
-        // Rethrow it for Suspense, where this promise must fail
-        throw err;
-      }
-    }
-  );
+    // If a request was already made for the query, we do not make another request and return the existing promise of the request
+    if (existingRequest !== undefined) return existingRequest;
 
-  /**
-   * Performs one network fetch, and updates the store and last requested at
-   * date if successful. If unsuccessful, will throw.
-   */
-  async function fetchUserThreads(options?: UseThreadsOptions<M>) {
-    // TODO: add query for user threads
-    // If inbox notifications have not been fetched yet, we get all of them
-    // Else, we fetch only what changed since the last request
-    if (userThreadslastRequestedAt === undefined) {
-      const result = await client[kInternal].getThreads({
-        query: options?.query,
-      });
+    const request = client[kInternal].getThreads(options);
+
+    // Store the promise of the request for the query so that we do not make another request for the same query
+    userThreadsRequestsByQuery.set(queryKey, request);
+
+    store.setQueryState(queryKey, {
+      isLoading: true,
+    });
+
+    try {
+      const result = await request;
 
       store.updateThreadsAndNotifications(
         result.threads,
         result.inboxNotifications,
         [],
         [],
-        USER_THREADS_QUERY
+        queryKey
       );
 
-      userThreadslastRequestedAt = result.requestedAt;
-    } else {
-      const result = await client[kInternal].getThreadsSince({
-        since: userThreadslastRequestedAt,
-        query: options?.query,
-      });
-
-      store.updateThreadsAndNotifications(
-        result.threads.updated,
-        result.inboxNotifications.updated,
-        result.threads.deleted,
-        result.inboxNotifications.deleted,
-        USER_THREADS_QUERY
-      );
-
-      if (userThreadslastRequestedAt < result.requestedAt) {
+      /**
+       * We set the `userThreadslastRequestedAt` value to the timestamp returned by the current request if:
+       * 1. The `userThreadslastRequestedAt` value has not been set
+       * OR
+       * 2. The `userThreadslastRequestedAt` value is older than the timestamp returned by the current request
+       */
+      if (
+        userThreadslastRequestedAt === undefined ||
+        userThreadslastRequestedAt < result.requestedAt
+      ) {
         userThreadslastRequestedAt = result.requestedAt;
       }
-    }
-  }
 
-  /**
-   * Enables polling for inbox notifications when the component mounts. Stops
-   * polling on unmount.
-   *
-   * Safe to be called multiple times from different components. The first
-   * component to mount starts the polling. The last component to unmount stops
-   * the polling.
-   */
-  function useEnableUserThreadsPolling() {
-    useEffect(() => {
-      // Increment
-      userThreadsPollerSubscribers++;
       userThreadsPoller.start(POLLING_INTERVAL);
+    } catch (err) {
+      userThreadsRequestsByQuery.delete(queryKey);
 
-      return () => {
-        // Decrement
-        if (userThreadsPollerSubscribers <= 0) {
-          console.warn(
-            `Internal unexpected behavior. Cannot decrease subscriber count for query "${USER_THREADS_QUERY}"`
-          );
-          return;
-        }
+      // Retry the action using the exponential backoff algorithm
+      retryError(() => {
+        void getUserThreads(queryKey, options, {
+          retryCount: retryCount + 1,
+        });
+      }, retryCount);
 
-        userThreadsPollerSubscribers--;
-        if (userThreadsPollerSubscribers <= 0) {
-          userThreadsPoller.stop();
-        }
-      };
-    }, []);
+      // Set the query state to the error state
+      store.setQueryState(queryKey, {
+        isLoading: false,
+        error: err as Error,
+      });
+    }
 
-    /**
-     * END USER THREADS CODE DUPLICATION
-     */
+    return;
   }
 
   return {
@@ -532,10 +530,8 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
     useEnableInboxNotificationsPolling,
     waitUntilInboxNotificationsLoaded,
     loadInboxNotifications,
-
-    useEnableUserThreadsPolling,
-    waitUntilUserThreadsLoaded,
-    loadUserThreads,
+    incrementUserThreadsQuerySubscribers,
+    getUserThreads,
   };
 }
 
@@ -586,8 +582,7 @@ function makeLiveblocksContextBundle<
     useDeleteAllInboxNotifications,
 
     useInboxNotificationThread,
-    useUserThreads_experimental: (options?: UseThreadsOptions<M>) =>
-      useUserThreads_withClient<M>(client, options),
+    useUserThreads_experimental,
 
     ...shared.classic,
 
@@ -607,53 +602,12 @@ function makeLiveblocksContextBundle<
 
       useInboxNotificationThread,
 
-      useUserThreads_experimental: (options?: UseThreadsOptions<M>) =>
-        useUserThreadsSuspense_withClient(client, options),
+      useUserThreads_experimental: useUserThreadsSuspense_experimental,
 
       ...shared.suspense,
     },
   };
   return bundle;
-}
-
-function useUserThreads_withClient<M extends BaseMetadata>(
-  client: OpaqueClient,
-  options?: UseThreadsOptions<M>
-): ThreadsState<M> {
-  const { loadUserThreads, store, useEnableUserThreadsPolling } =
-    getExtrasForClient<M>(client);
-
-  // Trigger initial loading of user threads if it hasn't started
-  // already, but don't await its promise.
-  useEffect(() => {
-    loadUserThreads(options);
-  }, [loadUserThreads, options]);
-
-  useEnableUserThreadsPolling();
-  return useSyncExternalStoreWithSelector(
-    store.subscribe,
-    store.get,
-    store.get,
-    selectorFor_useUserThreads,
-    shallow
-  );
-}
-
-function useUserThreadsSuspense_withClient<M extends BaseMetadata>(
-  client: OpaqueClient,
-  options?: UseThreadsOptions<M>
-): ThreadsStateSuccess<M> {
-  const { waitUntilUserThreadsLoaded } = getExtrasForClient(client);
-
-  // Suspend until there are at least some user threads
-  use(waitUntilUserThreadsLoaded());
-
-  // We're in a Suspense world here, and as such, the useUserThreads()
-  // hook is expected to only return success results when we're here.
-  const result = useUserThreads_withClient<M>(client, options);
-  assert(!result.error, "Did not expect error");
-  assert(!result.isLoading, "Did not expect loading");
-  return result as ThreadsStateSuccess<M>; // TODO: Remove casting
 }
 
 function useInboxNotifications_withClient(client: OpaqueClient) {
@@ -1148,11 +1102,63 @@ export function createLiveblocksContext<
  *
  * This hook is experimental and could be removed or changed at any time!
  * Do not use unless explicitely recommended by the Liveblocks team.
+ * REGULAR useUserThreads_experimental
  */
 function useUserThreads_experimental<M extends BaseMetadata>(
-  options?: UseThreadsOptions<M>
-) {
-  return useUserThreads_withClient(useClient(), options);
+  options: UseThreadsOptions<M> = {
+    query: {
+      metadata: {},
+    },
+  }
+): ThreadsState<M> {
+  const queryKey = React.useMemo(
+    () => makeUserThreadsQueryKey(options.query),
+    [options]
+  );
+
+  const client = useClient<M>();
+
+  const { store, incrementUserThreadsQuerySubscribers, getUserThreads } =
+    getExtrasForClient<M>(client);
+
+  useEffect(() => {
+    void getUserThreads(queryKey, options);
+    return incrementUserThreadsQuerySubscribers(queryKey);
+  }, [queryKey, incrementUserThreadsQuerySubscribers, getUserThreads, options]);
+
+  const selector = useCallback(
+    (state: UmbrellaStoreState<M>): ThreadsState<M> => {
+      const query = state.queries[queryKey];
+
+      if (query === undefined || query.isLoading) {
+        return {
+          isLoading: true,
+        };
+      }
+
+      if (query.error !== undefined) {
+        return {
+          threads: [],
+          error: query.error,
+          isLoading: false,
+        };
+      }
+
+      return {
+        threads: selectedUserThreads(state, options),
+        isLoading: false,
+      };
+    },
+    [queryKey, options]
+  );
+
+  return useSyncExternalStoreWithSelector(
+    store.subscribe,
+    store.get,
+    store.get,
+    selector,
+    shallow
+  );
 }
 
 /**
@@ -1160,11 +1166,56 @@ function useUserThreads_experimental<M extends BaseMetadata>(
  *
  * This hook is experimental and could be removed or changed at any time!
  * Do not use unless explicitely recommended by the Liveblocks team.
+ * SUSPENSE useUserThreadsSuspense_experimental
  */
-function useUserThreadsSuspense_experimental<
-  M extends BaseMetadata,
->(): ThreadsStateSuccess<M> {
-  return useUserThreadsSuspense_withClient<M>(useClient());
+function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
+  options: UseThreadsOptions<M> = {
+    query: {
+      metadata: {},
+    },
+  }
+): ThreadsStateSuccess<M> {
+  const queryKey = React.useMemo(
+    () => makeUserThreadsQueryKey(options.query),
+    [options]
+  );
+
+  const client = useClient<M>();
+
+  const { store, getUserThreads } = getExtrasForClient<M>(client);
+
+  React.useEffect(() => {
+    const { incrementUserThreadsQuerySubscribers } = getExtrasForClient(client);
+    return incrementUserThreadsQuerySubscribers(queryKey);
+  }, [client, queryKey]);
+
+  const query = store.get().queries[queryKey];
+
+  if (query === undefined || query.isLoading) {
+    throw getUserThreads(queryKey, options);
+  }
+
+  if (query.error) {
+    throw query.error;
+  }
+
+  const selector = useCallback(
+    (state: UmbrellaStoreState<M>): ThreadsStateSuccess<M> => {
+      return {
+        threads: selectedUserThreads(state, options),
+        isLoading: false,
+      };
+    },
+    [options]
+  );
+
+  return useSyncExternalStoreWithSelector(
+    store.subscribe,
+    store.get,
+    store.get,
+    selector,
+    shallow
+  );
 }
 
 /**
@@ -1333,6 +1384,7 @@ const _useUserSuspense: TypedBundle["suspense"]["useUser"] = useUserSuspense;
  *
  * This hook is experimental and could be removed or changed at any time!
  * Do not use unless explicitely recommended by the Liveblocks team.
+ * REGULAR
  */
 const _useUserThreads_experimental: TypedBundle["useUserThreads_experimental"] =
   useUserThreads_experimental;
@@ -1342,6 +1394,7 @@ const _useUserThreads_experimental: TypedBundle["useUserThreads_experimental"] =
  *
  * This hook is experimental and could be removed or changed at any time!
  * Do not use unless explicitely recommended by the Liveblocks team.
+ * SUSPENSE
  */
 const _useUserThreadsSuspense_experimental: TypedBundle["suspense"]["useUserThreads_experimental"] =
   useUserThreadsSuspense_experimental;
@@ -1364,3 +1417,6 @@ export {
   _useUserThreads_experimental as useUserThreads_experimental,
   _useUserThreadsSuspense_experimental as useUserThreadsSuspense_experimental,
 };
+
+const makeUserThreadsQueryKey = (options: UseThreadsOptions<DM>["query"]) =>
+  `${USER_THREADS_QUERY}:${stringify(options)}`;
