@@ -16,25 +16,41 @@ import { IssueLinks } from "@/components/IssueLinks";
 export async function Issue({ issueId }: { issueId: string }) {
   const roomId = getRoomId(issueId);
 
-  const markdown = (
-    await withLexicalDocument(
-      {
-        roomId,
-        client: liveblocks,
-        nodes: [HeadingNode, QuoteNode, ListNode, ListItemNode],
-      },
-      (doc) => doc.toMarkdown()
-    )
-  ).replace(/^\s*$(\r?\n^\s*$)+/gm, "\n&nbsp;\n");
+  // const markdown = (
+  //   await withLexicalDocument(
+  //     {
+  //       roomId,
+  //       client: liveblocks,
+  //       nodes: [HeadingNode, QuoteNode, ListNode, ListItemNode],
+  //     },
+  //     (doc) => doc.toMarkdown()
+  //   )
+  // ).replace(/^\s*$(\r?\n^\s*$)+/gm, "\n&nbsp;\n");
+  //
+  // console.log(markdown);
+  // //.replace(/^\s*$/gm, "\n");
+  // //.replace(/^\s*$/gm, "\n&nbsp;\n");
+  //
+  // const processedContent = await remark().use(html).process(markdown);
+  // const contentHtml = processedContent.toString();
 
-  console.log(markdown);
-  //.replace(/^\s*$/gm, "\n");
-  //.replace(/^\s*$/gm, "\n&nbsp;\n");
+  const storagePromise = liveblocks.getStorageDocument(roomId, "json");
 
-  const processedContent = await remark().use(html).process(markdown);
-  const contentHtml = processedContent.toString();
+  const contentHtmlPromise = withLexicalDocument(
+    {
+      roomId,
+      client: liveblocks,
+      nodes: [HeadingNode, QuoteNode, ListNode, ListItemNode],
+    },
+    (doc) => doc.toMarkdown().replace(/^\s*$(\r?\n^\s*$)+/gm, "\n&nbsp;\n")
+  )
+    .then((markdown) => remark().use(html).process(markdown))
+    .then((processedContent) => processedContent.toString());
 
-  const storage = await liveblocks.getStorageDocument(roomId, "json");
+  const [storage, contentHtml] = await Promise.all([
+    storagePromise,
+    contentHtmlPromise,
+  ]);
 
   return (
     <div className="h-full flex flex-col">
