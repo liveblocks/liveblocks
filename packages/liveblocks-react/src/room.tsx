@@ -384,9 +384,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     if (existingRequest !== undefined) return existingRequest;
     const request = room[kInternal].listTextVersions();
     requestsByQuery.set(queryKey, request);
-    store.setQueryState(queryKey, {
-      isLoading: true,
-    });
+    store.setQueryLoading(queryKey);
     try {
       const result = await request;
       const data = (await result.json()) as {
@@ -408,10 +406,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
           retryCount: retryCount + 1,
         });
       }, retryCount);
-      store.setQueryState(queryKey, {
-        isLoading: false,
-        error: err as Error,
-      });
+      store.setQueryError(queryKey, err as Error);
     }
     return;
   }

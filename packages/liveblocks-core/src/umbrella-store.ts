@@ -258,6 +258,16 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }));
   }
 
+  private setVersions(roomId: string, versions: HistoryVersion[]): void {
+    this._store.set((state) => ({
+      ...state,
+      versions: {
+        ...state.versions,
+        [roomId]: versions,
+      },
+    }));
+  }
+
   private setQueryState(queryKey: string, queryState: QueryState): void {
     this._store.set((state) => ({
       ...state,
@@ -607,20 +617,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
     versions: HistoryVersion[],
     queryKey?: string
   ): void {
-    this._store.set((state) => ({
-      ...state,
-      versions: {
-        ...state.versions,
-        [roomId]: versions,
-      },
-      queries:
-        queryKey !== undefined
-          ? {
-              ...state.queries,
-              [queryKey]: { isLoading: false, data: undefined },
-            }
-          : state.queries,
-    }));
+    // Batch 1️⃣ + 2️⃣
+    this._store.batch(() => {
+      this.setVersions(roomId, versions); // 1️⃣
+
+      // 2️⃣
+      if (queryKey !== undefined) {
+        this.setQueryOK(queryKey);
+      }
+    });
   }
 
   public addOptimisticUpdate(
