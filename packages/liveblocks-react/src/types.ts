@@ -1164,7 +1164,9 @@ export type LiveblocksContextBundle<
        * This hook is experimental and could be removed or changed at any time!
        * Do not use unless explicitely recommended by the Liveblocks team.
        */
-      useUserThreads_experimental(): ThreadsState<M>;
+      useUserThreads_experimental(
+        options?: UseUserThreadsOptions<M>
+      ): ThreadsState<M>;
 
       suspense: Resolve<
         LiveblocksContextBundleCommon<M> &
@@ -1191,7 +1193,9 @@ export type LiveblocksContextBundle<
              * This hook is experimental and could be removed or changed at any time!
              * Do not use unless explicitely recommended by the Liveblocks team.
              */
-            useUserThreads_experimental(): ThreadsStateSuccess<M>;
+            useUserThreads_experimental(
+              options?: UseUserThreadsOptions<M>
+            ): ThreadsStateSuccess<M>;
           }
       >;
     }
