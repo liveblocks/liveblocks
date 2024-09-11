@@ -112,7 +112,7 @@ import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-
 
 const SMOOTH_DELAY = 1000;
 
-const noop = () => { };
+const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
 
 const missing_unstable_batchedUpdates = (
@@ -124,8 +124,8 @@ const missing_unstable_batchedUpdates = (
     import { unstable_batchedUpdates } from "react-dom";  // or "react-native"
 
     <RoomProvider id=${JSON.stringify(
-    roomId
-  )} ... unstable_batchedUpdates={unstable_batchedUpdates}>
+      roomId
+    )} ... unstable_batchedUpdates={unstable_batchedUpdates}>
       ...
     </RoomProvider>
 
@@ -384,9 +384,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     if (existingRequest !== undefined) return existingRequest;
     const request = room[kInternal].listTextVersions();
     requestsByQuery.set(queryKey, request);
-    store.setQueryState(queryKey, {
-      isLoading: true,
-    });
+    store.setQueryLoading(queryKey);
     try {
       const result = await request;
       const data = (await result.json()) as {
@@ -408,10 +406,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
           retryCount: retryCount + 1,
         });
       }, retryCount);
-      store.setQueryState(queryKey, {
-        isLoading: false,
-        error: err as Error,
-      });
+      store.setQueryError(queryKey, err as Error);
     }
     return;
   }
@@ -432,10 +427,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     // Store the promise of the request for the query so that we do not make another request for the same query
     requestsByQuery.set(queryKey, request);
 
-    store.setQueryState(queryKey, {
-      isLoading: true,
-    });
-
+    store.setQueryLoading(queryKey);
     try {
       const result = await request;
 
@@ -474,10 +466,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
       }, retryCount);
 
       // Set the query state to the error state
-      store.setQueryState(queryKey, {
-        isLoading: false,
-        error: err as Error,
-      });
+      store.setQueryError(queryKey, err as Error);
     }
     return;
   }
@@ -497,11 +486,10 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
 
       requestsByQuery.set(queryKey, request);
 
-      store.setQueryState(queryKey, {
-        isLoading: true,
-      });
+      store.setQueryLoading(queryKey);
 
       const settings = await request;
+
       store.updateRoomInboxNotificationSettings(room.id, settings, queryKey);
     } catch (err) {
       requestsByQuery.delete(queryKey);
@@ -512,10 +500,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
         });
       }, retryCount);
 
-      store.setQueryState(queryKey, {
-        isLoading: false,
-        error: err as Error,
-      });
+      store.setQueryError(queryKey, err as Error);
     }
     return;
   }
@@ -2237,8 +2222,8 @@ function useHistoryVersionData(versionId: string): HistoryVersionDataState {
             error instanceof Error
               ? error
               : new Error(
-                "An unknown error occurred while loading this version"
-              ),
+                  "An unknown error occurred while loading this version"
+                ),
         });
       }
     };

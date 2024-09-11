@@ -281,7 +281,7 @@ export {
   applyOptimisticUpdates,
   deleteComment,
   removeReaction,
-  type UmbrellaStore,
+  UmbrellaStore,
   type UmbrellaStoreState,
   upsertComment,
 } from "./umbrella-store";
