@@ -483,16 +483,12 @@ describe("thread notification helpers", () => {
       it.each<{
         withFormatOption: "yes" | "no";
         withResolversOption: "yes" | "no";
-        thread: ThreadData;
-        inboxNotification: InboxNotificationThreadData;
         getUnreadComments: () => Promise<UnreadCommentsData>;
         expected: UnreadCommentsData;
       }>([
         {
           withFormatOption: "no",
           withResolversOption: "no",
-          thread,
-          inboxNotification,
           getUnreadComments: () =>
             getThreadNotificationUnreadComments({
               client,
@@ -503,8 +499,6 @@ describe("thread notification helpers", () => {
         {
           withFormatOption: "yes",
           withResolversOption: "no",
-          thread,
-          inboxNotification,
           getUnreadComments: () =>
             getThreadNotificationUnreadComments({
               client,
@@ -516,8 +510,6 @@ describe("thread notification helpers", () => {
         {
           withFormatOption: "no",
           withResolversOption: "yes",
-          thread,
-          inboxNotification,
           getUnreadComments: () =>
             getThreadNotificationUnreadComments({
               client,
@@ -529,8 +521,6 @@ describe("thread notification helpers", () => {
         {
           withFormatOption: "yes",
           withResolversOption: "yes",
-          thread,
-          inboxNotification,
           getUnreadComments: () =>
             getThreadNotificationUnreadComments({
               client,
@@ -540,8 +530,146 @@ describe("thread notification helpers", () => {
           expected: expected2,
         },
       ])(
-        'should return unread comments with format option set "$withFormatOption" and with resolvers: "$withResolversOption"',
-        async ({ thread, inboxNotification, getUnreadComments, expected }) => {
+        'should return unread mention with format option set "$withFormatOption" and with resolvers: "$withResolversOption"',
+        async ({ getUnreadComments, expected }) => {
+          server.use(
+            http.get(
+              `${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`,
+              () => HttpResponse.json(thread, { status: 200 })
+            )
+          );
+
+          server.use(
+            http.get(
+              `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
+              () => HttpResponse.json(inboxNotification, { status: 200 })
+            )
+          );
+
+          const unreadComments = await getUnreadComments();
+          expect(unreadComments).toEqual(expected);
+        }
+      );
+    });
+
+    describe("HTML format - unread replies", () => {
+      const threadId = generateThreadId();
+      const comment1 = makeComment({
+        userId: "user-0",
+        threadId,
+        body: commentBody1,
+        createdAt: new Date("2024-09-10T08:10:00.000Z"),
+      });
+      const comment2 = makeComment({
+        userId: "user-1",
+        threadId,
+        body: commentBody2,
+        createdAt: new Date("2024-09-10T08:14:00.000Z"),
+      });
+      const thread = makeThread({
+        threadId,
+        comments: [comment1, comment2],
+      });
+      const inboxNotification = makeThreadInboxNotification({
+        threadId,
+        notifiedAt: new Date("2024-09-10T08:20:00.000Z"),
+      });
+      const event = makeThreadNotificationEvent({
+        threadId,
+        userId: "user-0",
+        inboxNotificationId: inboxNotification.id,
+      });
+
+      const expected1: UnreadCommentsData = {
+        type: "unreadReplies",
+        comments: [
+          {
+            id: comment2.id,
+            threadId: thread.id,
+            roomId: ROOM_ID_TEST,
+            createdAt: comment2.createdAt,
+            author: {
+              id: comment2.userId,
+              name: comment2.userId,
+            },
+            body: "<p>I think it's really neat mate 👌</p>",
+            roomName: ROOM_ID_TEST,
+          },
+        ],
+        roomName: ROOM_ID_TEST,
+      };
+
+      const expected2: UnreadCommentsData = {
+        type: "unreadReplies",
+        comments: [
+          {
+            id: comment2.id,
+            threadId: thread.id,
+            roomId: ROOM_ID_TEST,
+            createdAt: comment2.createdAt,
+            author: {
+              id: comment2.userId,
+              name: "Mislav Abha",
+            },
+            body: "<p>I think it's really neat mate 👌</p>",
+            roomName: `${ROOM_ID_TEST}-resolved`,
+          },
+        ],
+        roomName: `${ROOM_ID_TEST}-resolved`,
+      };
+
+      it.each<{
+        withFormatOption: "yes" | "no";
+        withResolversOption: "yes" | "no";
+        getUnreadComments: () => Promise<UnreadCommentsData>;
+        expected: UnreadCommentsData;
+      }>([
+        {
+          withFormatOption: "no",
+          withResolversOption: "no",
+          getUnreadComments: () =>
+            getThreadNotificationUnreadComments({
+              client,
+              event,
+            }),
+          expected: expected1,
+        },
+        {
+          withFormatOption: "yes",
+          withResolversOption: "no",
+          getUnreadComments: () =>
+            getThreadNotificationUnreadComments({
+              client,
+              event,
+              options: { format: "html" },
+            }),
+          expected: expected1,
+        },
+        {
+          withFormatOption: "no",
+          withResolversOption: "yes",
+          getUnreadComments: () =>
+            getThreadNotificationUnreadComments({
+              client,
+              event,
+              options: { resolveUsers, resolveRoomsInfo },
+            }),
+          expected: expected2,
+        },
+        {
+          withFormatOption: "yes",
+          withResolversOption: "yes",
+          getUnreadComments: () =>
+            getThreadNotificationUnreadComments({
+              client,
+              event,
+              options: { format: "html", resolveUsers, resolveRoomsInfo },
+            }),
+          expected: expected2,
+        },
+      ])(
+        'should return unread replies with format option set "$withFormatOption" and with resolvers: "$withResolversOption"',
+        async ({ getUnreadComments, expected }) => {
           server.use(
             http.get(
               `${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`,
