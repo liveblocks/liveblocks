@@ -1,6 +1,6 @@
 {
-  "name": "@liveblocks-examples/nextjs-comments-audio",
-  "description": "This example shows how to build an audio player with comments using Liveblocks, and Next.js.",
+  "name": "@liveblocks-examples/nextjs-issue-tracker",
+  "description": "This example shows how to build a collaborative issue tracker using Liveblocks, and Next.js.",
   "license": "Apache-2.0",
   "private": true,
   "scripts": {
