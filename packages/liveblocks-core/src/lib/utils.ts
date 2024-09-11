@@ -211,34 +211,31 @@ export async function withTimeout<T>(
  * promise for a small time period, after which the next attempt will reset the
  * memoized value.
  */
-export function memoizeOnSuccess<T, A>(
-  factoryFn: (arg?: A) => Promise<T>
-): (arg?: A) => Promise<T> {
-  const cache: Map<string, Promise<T>> = new Map();
-  return (arg) => {
-    const key = JSON.stringify(arg);
-    if (cache.has(key)) {
-      return nn(cache.get(key));
+export function memoizeOnSuccess<T>(
+  factoryFn: () => Promise<T>
+): () => Promise<T> {
+  let cached: Promise<T> | null = null;
+  return () => {
+    if (cached === null) {
+      cached = factoryFn().catch((err) => {
+        //
+        // Keep returning the failed promise for any calls to the memoized
+        // promise for the next 5 seconds. This time period is a bit arbitrary,
+        // but exists to make this play nicely with frameworks like React.
+        //
+        // In React, after a component is suspended and its promise is
+        // rejected, React will re-render the component, and expect the next
+        // call to this function to return the rejected promise, so its error
+        // can be shown. If we immediately reset this value, then such next
+        // render would instantly trigger a new promise which would trigger an
+        // infinite loop and keeping the component in loading state forever.
+        //
+        setTimeout(() => {
+          cached = null;
+        }, 5_000);
+        throw err;
+      });
     }
-    //
-    // Keep returning the failed promise for any calls to the memoized
-    // promise for the next 5 seconds. This time period is a bit arbitrary,
-    // but exists to make this play nicely with frameworks like React.
-    //
-    // In React, after a component is suspended and its promise is
-    // rejected, React will re-render the component, and expect the next
-    // call to this function to return the rejected promise, so its error
-    // can be shown. If we immediately reset this value, then such next
-    // render would instantly trigger a new promise which would trigger an
-    // infinite loop and keeping the component in loading state forever.
-    //
-    const promise = factoryFn(arg).catch((err) => {
-      setTimeout(() => {
-        cache.delete(key);
-      }, 5_000);
-      throw err;
-    });
-    cache.set(key, promise);
-    return promise;
+    return cached;
   };
 }
