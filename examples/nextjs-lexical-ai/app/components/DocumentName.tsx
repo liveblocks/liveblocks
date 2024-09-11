@@ -15,6 +15,7 @@ import {
   COMMAND_PRIORITY_NORMAL,
   KEY_ARROW_UP_COMMAND,
 } from "lexical";
+import TextareaAutosize from "react-textarea-autosize";
 
 export function DocumentName() {
   const title = useStorage((root) => root.title);
@@ -22,33 +23,38 @@ export function DocumentName() {
 
   // Update title
   const handleChange = useMutation(
-    ({ storage }, e: ChangeEvent<HTMLInputElement>) => {
+    ({ storage }, e: ChangeEvent<HTMLTextAreaElement>) => {
       storage.set("title", e.target.value);
     },
     []
   );
 
   // Go to editor when down arrow pressed
-  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLTextAreaElement>) => {
+    // Prevent multi-line with enter
+    if (e.key === "Enter") {
+      e.preventDefault();
+      return;
+    }
+
     if (e.key === "ArrowDown") {
       setTimeout(() => editor._rootElement?.focus());
     }
   }, []);
 
   // Go to input when up arrow pressed in first position of editor
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
   useUpArrowAtTopListener(() => {
     inputRef.current?.focus();
   });
 
   return (
-    <input
+    <TextareaAutosize
       ref={inputRef}
-      type="text"
       value={title}
       onChange={handleChange}
       onKeyDown={handleKeyDown}
-      className="outline-none px-8 block w-full"
+      className="outline-none px-8 block w-full resize-none overflow-hidden"
     />
   );
 }
