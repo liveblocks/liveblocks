@@ -119,42 +119,56 @@ function selectUserThreads<M extends BaseMetadata>(
   state: UmbrellaStoreState<M>,
   options: UseThreadsOptions<M>
 ) {
+  // XXX This should not be the responsibility of this select function
   const result = applyOptimisticUpdates(state);
 
-  // Filter threads to only include the non-deleted threads
-  const threads = Object.values(result.threads).filter<ThreadData<M>>(
-    (thread): thread is ThreadData<M> => {
-      // We do not want to include threads that have been marked as deleted
-      if (thread.deletedAt !== undefined) {
-        return false;
-      }
+  // First filter pass: remove all soft-deleted threads
+  // XXX This should not be the responsibility of this select function
+  let threads = Object.values(result.threads).filter(
+    (thread): thread is ThreadData<M> => !thread.deletedAt
+  );
 
-      const query = options.query;
-      if (!query) return true;
+  // Second filter pass: only select the threads for this *user*??
+  // XXX This should ideally also not be the responsibility of this select function!
+  threads = threads.filter(
+    // XXX This *should* be thread.userId === userId, right???????????
+    () => true
+  );
 
-      // If the query includes 'resolved' filter and the thread's 'resolved' value does not match the query's 'resolved' value, exclude the thread
-      if (query.resolved !== undefined && thread.resolved !== query.resolved) {
-        return false;
-      }
+  // Third filter pass: only select the threads for this *room*
+  const query = options.query;
+  threads = !query
+    ? threads
+    : threads.filter((thread) => {
+        // If the query includes 'resolved' filter and the thread's 'resolved' value does not match the query's 'resolved' value, exclude the thread
+        if (
+          query.resolved !== undefined &&
+          thread.resolved !== query.resolved
+        ) {
+          return false;
+        }
 
-      for (const key in query.metadata) {
-        const metadataValue = thread.metadata[key];
-        const filterValue = query.metadata[key];
+        for (const key in query.metadata) {
+          const metadataValue = thread.metadata[key];
+          const filterValue = query.metadata[key];
 
-        if (isStartsWith(filterValue) && isString(metadataValue)) {
-          if (metadataValue.startsWith(filterValue.startsWith)) {
-            return true;
+          if (isStartsWith(filterValue) && isString(metadataValue)) {
+            if (metadataValue.startsWith(filterValue.startsWith)) {
+              // XXX Double-check the logic here! Early-returning true in
+              // a filter is a smell. What if other filter criteria do NOT
+              // match? We should still reject it then, even if the startsWith
+              // criterium matches.
+              return true;
+            }
+          }
+
+          if (metadataValue !== filterValue) {
+            return false;
           }
         }
 
-        if (metadataValue !== filterValue) {
-          return false;
-        }
-      }
-
-      return true;
-    }
-  );
+        return true;
+      });
 
   // Sort threads by updated date (newest first) and then created date
   return threads.sort(
@@ -264,6 +278,7 @@ function selectorFor_useRoomInfo(
 export function selectInboxNotifications<M extends BaseMetadata>(
   state: UmbrellaStoreState<M>
 ): InboxNotificationData[] {
+  // XXX This should not be the responsibility of this select function
   const result = applyOptimisticUpdates(state);
 
   return Object.values(result.inboxNotifications).sort(

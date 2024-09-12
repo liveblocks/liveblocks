@@ -182,44 +182,53 @@ export function selectRoomThreads<M extends BaseMetadata>(
 ): ThreadData<M>[] {
   // Here, result contains copies of 3 out of the 5 caches with all optimistic
   // updates mixed in
+  // XXX This should not be the responsibility of this select function
   const result = applyOptimisticUpdates(state);
 
-  // Filter threads to only include the non-deleted threads from the specified room and that match the specified filter options
-  const threads = Object.values(result.threads).filter<ThreadData<M>>(
-    (thread): thread is ThreadData<M> => {
-      if (thread.roomId !== roomId) return false;
+  // First filter pass: remove all soft-deleted threads
+  // XXX This should not be the responsibility of this select function
+  let threads = Object.values(result.threads).filter(
+    (thread): thread is ThreadData<M> => !thread.deletedAt
+  );
 
-      // We do not want to include threads that have been marked as deleted
-      if (thread.deletedAt !== undefined) {
-        return false;
-      }
+  // Second filter pass: only select the threads for this *room*
+  // XXX This should ideally also not be the responsibility of this select function!
+  threads = threads.filter((thread) => thread.roomId === roomId);
 
-      const query = options.query;
-      if (!query) return true;
+  // Third filter pass: check filter criteria
+  const query = options.query;
+  threads = !query
+    ? threads
+    : threads.filter((thread) => {
+        // If the query includes 'resolved' filter and the thread's 'resolved' value does not match the query's 'resolved' value, exclude the thread
+        if (
+          query.resolved !== undefined &&
+          thread.resolved !== query.resolved
+        ) {
+          return false;
+        }
 
-      // If the query includes 'resolved' filter and the thread's 'resolved' value does not match the query's 'resolved' value, exclude the thread
-      if (query.resolved !== undefined && thread.resolved !== query.resolved) {
-        return false;
-      }
+        for (const key in query.metadata) {
+          const metadataValue = thread.metadata[key];
+          const filterValue = query.metadata[key];
 
-      for (const key in query.metadata) {
-        const metadataValue = thread.metadata[key];
-        const filterValue = query.metadata[key];
+          if (isStartsWith(filterValue) && isString(metadataValue)) {
+            if (metadataValue.startsWith(filterValue.startsWith)) {
+              // XXX Double-check the logic here! Early-returning true in
+              // a filter is a smell. What if other filter criteria do NOT
+              // match? We should still reject it then, even if the startsWith
+              // criterium matches.
+              return true;
+            }
+          }
 
-        if (isStartsWith(filterValue) && isString(metadataValue)) {
-          if (metadataValue.startsWith(filterValue.startsWith)) {
-            return true;
+          if (metadataValue !== filterValue) {
+            return false;
           }
         }
 
-        if (metadataValue !== filterValue) {
-          return false;
-        }
-      }
-
-      return true;
-    }
-  );
+        return true;
+      });
 
   // Sort threads by creation date (oldest first)
   return threads.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
