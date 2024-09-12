@@ -234,7 +234,7 @@ function getExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   };
 }
 
-function makeExtrasForClient(client: OpaqueClient) {
+function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   const store = new UmbrellaStore();
 
   let lastRequestedAt: Date | undefined;
