@@ -1,8 +1,14 @@
-## 2.6.2 (not released yet)
+## 2.6.2
 
-### `@liveblocks/core`
+### `@liveblocks/client`
 
 - Refactor caching internals to prepare for upcoming features
+
+### `@liveblocks/react`
+
+- Add support for `query` argument to `useUserThreads_experimental`
+- Fix bug where some combinations of `query` criteria could over-select threads
+  in `useThreads`
 
 ## 2.6.1
 
