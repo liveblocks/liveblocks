@@ -7,7 +7,7 @@
   </a>
 </p>
 
-# Issue Tracker
+# Linear-like Issue Tracker
 
 <p>
   <a href="https://liveblocks.io/examples/linear-like-issue-tracker/nextjs-linear-like-issue-tracker/preview">
