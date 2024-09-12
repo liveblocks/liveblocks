@@ -67,10 +67,7 @@ import {
   RemoveReactionError,
   UpdateNotificationSettingsError,
 } from "./comments/errors";
-import {
-  assertFilterIsStartsWithOperator,
-  assertMetadataValueIsString,
-} from "./comments/lib/selected-threads";
+import { isStartsWith, isString } from "./lib/guards";
 import { retryError } from "./lib/retry-error";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
@@ -209,10 +206,7 @@ export function selectRoomThreads<M extends BaseMetadata>(
         const metadataValue = thread.metadata[key];
         const filterValue = query.metadata[key];
 
-        if (
-          assertFilterIsStartsWithOperator(filterValue) &&
-          assertMetadataValueIsString(metadataValue)
-        ) {
+        if (isStartsWith(filterValue) && isString(metadataValue)) {
           if (metadataValue.startsWith(filterValue.startsWith)) {
             return true;
           }
@@ -887,7 +881,7 @@ function RoomProviderInner<
       );
     }
 
-    if (typeof roomId !== "string") {
+    if (!isString(roomId)) {
       throw new Error("RoomProvider id property should be a string.");
     }
 

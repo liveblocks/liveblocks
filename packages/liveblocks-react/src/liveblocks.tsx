@@ -34,10 +34,7 @@ import React, {
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
-import {
-  assertFilterIsStartsWithOperator,
-  assertMetadataValueIsString,
-} from "./comments/lib/selected-threads";
+import { isStartsWith, isString } from "./lib/guards";
 import { autoRetry, retryError } from "./lib/retry-error";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { use } from "./lib/use-polyfill";
@@ -144,10 +141,7 @@ function selectUserThreads<M extends BaseMetadata>(
         const metadataValue = thread.metadata[key];
         const filterValue = query.metadata[key];
 
-        if (
-          assertFilterIsStartsWithOperator(filterValue) &&
-          assertMetadataValueIsString(metadataValue)
-        ) {
+        if (isStartsWith(filterValue) && isString(metadataValue)) {
           if (metadataValue.startsWith(filterValue.startsWith)) {
             return true;
           }
