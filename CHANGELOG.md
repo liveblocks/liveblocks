@@ -13,8 +13,8 @@
 ### Version History (private beta)
 
 This release adds some new hooks for Version History in text documents, which is
-now available in private beta. If you're interested in joining the private beta,
-please contact us:
+now available in private beta. If you’re interested in joining the private beta,
+please [contact us](https://liveblocks.io/contact/sales).
 
 - Add `useHistoryVersion` hook to retrieve version history (in
   `@liveblocks/react`)
