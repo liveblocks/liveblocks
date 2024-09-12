@@ -3,7 +3,9 @@ import type {
   BaseUserMeta,
   BroadcastOptions,
   Client,
+  CommentData,
   History,
+  HistoryVersion,
   Json,
   JsonObject,
   LiveObject,
@@ -11,12 +13,14 @@ import type {
   LsonObject,
   OthersEvent,
   Room,
+  RoomNotificationSettings,
   Status,
+  StorageStatus,
+  ThreadData,
   User,
 } from "@liveblocks/client";
 import { shallow } from "@liveblocks/client";
 import type {
-  CommentData,
   CommentsEventServerMsg,
   DE,
   DM,
@@ -24,14 +28,10 @@ import type {
   DS,
   DU,
   EnterOptions,
-  HistoryVersion,
   LiveblocksError,
   OpaqueClient,
   OpaqueRoom,
   RoomEventMessage,
-  RoomNotificationSettings,
-  StorageStatus,
-  ThreadData,
   ToImmutable,
 } from "@liveblocks/core";
 import {
@@ -44,6 +44,7 @@ import {
   kInternal,
   makeEventSource,
   makePoller,
+  nn,
   NotificationsApiError,
   ServerMsgCode,
   stringify,
@@ -66,9 +67,10 @@ import {
   RemoveReactionError,
   UpdateNotificationSettingsError,
 } from "./comments/errors";
-import { selectNotificationSettings } from "./comments/lib/select-notification-settings";
-import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
-import { selectedThreads } from "./comments/lib/selected-threads";
+import {
+  assertFilterIsStartsWithOperator,
+  assertMetadataValueIsString,
+} from "./comments/lib/selected-threads";
 import { retryError } from "./lib/retry-error";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
@@ -77,6 +79,7 @@ import {
   createSharedContext,
   getUmbrellaStoreForClient,
   LiveblocksProviderWithClient,
+  selectInboxNotifications,
   useClient,
   useClientOrNull,
 } from "./liveblocks";
@@ -106,6 +109,7 @@ import type {
 import type { UmbrellaStore, UmbrellaStoreState } from "./umbrella-store";
 import {
   addReaction,
+  applyOptimisticUpdates,
   deleteComment,
   removeReaction,
   upsertComment,
@@ -168,6 +172,71 @@ function selectorFor_useOthersConnectionIds(
   others: readonly User<JsonObject, BaseUserMeta>[]
 ): number[] {
   return others.map((user) => user.connectionId);
+}
+
+/**
+ * @private Do not rely on this internal API.
+ */
+// XXX This helper should not be exposed at the package level!
+export function selectRoomThreads<M extends BaseMetadata>(
+  roomId: string,
+  state: UmbrellaStoreState<M>,
+  options: UseThreadsOptions<M>
+): ThreadData<M>[] {
+  // Here, result contains copies of 3 out of the 5 caches with all optimistic
+  // updates mixed in
+  const result = applyOptimisticUpdates(state);
+
+  // Filter threads to only include the non-deleted threads from the specified room and that match the specified filter options
+  const threads = Object.values(result.threads).filter<ThreadData<M>>(
+    (thread): thread is ThreadData<M> => {
+      if (thread.roomId !== roomId) return false;
+
+      // We do not want to include threads that have been marked as deleted
+      if (thread.deletedAt !== undefined) {
+        return false;
+      }
+
+      const query = options.query;
+      if (!query) return true;
+
+      // If the query includes 'resolved' filter and the thread's 'resolved' value does not match the query's 'resolved' value, exclude the thread
+      if (query.resolved !== undefined && thread.resolved !== query.resolved) {
+        return false;
+      }
+
+      for (const key in query.metadata) {
+        const metadataValue = thread.metadata[key];
+        const filterValue = query.metadata[key];
+
+        if (
+          assertFilterIsStartsWithOperator(filterValue) &&
+          assertMetadataValueIsString(metadataValue)
+        ) {
+          if (metadataValue.startsWith(filterValue.startsWith)) {
+            return true;
+          }
+        }
+
+        if (metadataValue !== filterValue) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+  );
+
+  // Sort threads by creation date (oldest first)
+  return threads.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+}
+
+function selectNotificationSettings<M extends BaseMetadata>(
+  roomId: string,
+  state: UmbrellaStoreState<M>
+): RoomNotificationSettings {
+  const { notificationSettings } = applyOptimisticUpdates(state);
+  return nn(notificationSettings[roomId]);
 }
 
 function makeMutationContext<
@@ -1479,7 +1548,7 @@ function useThreads<M extends BaseMetadata>(
       }
 
       return {
-        threads: selectedThreads(room.id, state, options),
+        threads: selectRoomThreads(room.id, state, options),
         isLoading: false,
         error: query.error,
       };
@@ -2114,7 +2183,7 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
 
   const selector = React.useCallback(
     (state: UmbrellaStoreState<BaseMetadata>): ThreadSubscription => {
-      const inboxNotification = selectedInboxNotifications(state).find(
+      const inboxNotification = selectInboxNotifications(state).find(
         (inboxNotification) =>
           inboxNotification.kind === "thread" &&
           inboxNotification.threadId === threadId
@@ -2485,7 +2554,7 @@ function useThreadsSuspense<M extends BaseMetadata>(
   const selector = React.useCallback(
     (state: UmbrellaStoreState<M>): ThreadsStateSuccess<M> => {
       return {
-        threads: selectedThreads(room.id, state, options),
+        threads: selectRoomThreads(room.id, state, options),
         isLoading: false,
       };
     },

@@ -2,12 +2,13 @@ import type {
   BaseMetadata,
   BaseUserMeta,
   Client,
+  ClientOptions,
+  InboxNotificationData,
   ThreadData,
 } from "@liveblocks/client";
 import type {
   AsyncResult,
   BaseRoomInfo,
-  ClientOptions,
   DM,
   DU,
   OpaqueClient,
@@ -33,8 +34,10 @@ import React, {
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
-import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
-import { selectedUserThreads } from "./comments/lib/selected-threads";
+import {
+  assertFilterIsStartsWithOperator,
+  assertMetadataValueIsString,
+} from "./comments/lib/selected-threads";
 import { autoRetry, retryError } from "./lib/retry-error";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { use } from "./lib/use-polyfill";
@@ -50,10 +53,11 @@ import type {
   UnreadInboxNotificationsCountState,
   UserAsyncResult,
   UserAsyncSuccess,
+  UseThreadsOptions,
   UseUserThreadsOptions,
 } from "./types";
 import type { UmbrellaStoreState } from "./umbrella-store";
-import { UmbrellaStore } from "./umbrella-store";
+import { applyOptimisticUpdates, UmbrellaStore } from "./umbrella-store";
 
 /**
  * Raw access to the React context where the LiveblocksProvider stores the
@@ -109,9 +113,61 @@ function selectorFor_useInboxNotifications(
   }
 
   return {
-    inboxNotifications: selectedInboxNotifications(state),
+    inboxNotifications: selectInboxNotifications(state),
     isLoading: false,
   };
+}
+
+function selectUserThreads<M extends BaseMetadata>(
+  state: UmbrellaStoreState<M>,
+  options: UseThreadsOptions<M>
+) {
+  const result = applyOptimisticUpdates(state);
+
+  // Filter threads to only include the non-deleted threads
+  const threads = Object.values(result.threads).filter<ThreadData<M>>(
+    (thread): thread is ThreadData<M> => {
+      // We do not want to include threads that have been marked as deleted
+      if (thread.deletedAt !== undefined) {
+        return false;
+      }
+
+      const query = options.query;
+      if (!query) return true;
+
+      // If the query includes 'resolved' filter and the thread's 'resolved' value does not match the query's 'resolved' value, exclude the thread
+      if (query.resolved !== undefined && thread.resolved !== query.resolved) {
+        return false;
+      }
+
+      for (const key in query.metadata) {
+        const metadataValue = thread.metadata[key];
+        const filterValue = query.metadata[key];
+
+        if (
+          assertFilterIsStartsWithOperator(filterValue) &&
+          assertMetadataValueIsString(metadataValue)
+        ) {
+          if (metadataValue.startsWith(filterValue.startsWith)) {
+            return true;
+          }
+        }
+
+        if (metadataValue !== filterValue) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+  );
+
+  // Sort threads by updated date (newest first) and then created date
+  return threads.sort(
+    (a, b) =>
+      (b.updatedAt ?? b.createdAt).getTime() -
+      (a.updatedAt ?? a.createdAt).getTime()
+  );
 }
 
 function selectUnreadInboxNotificationsCount(
@@ -119,7 +175,7 @@ function selectUnreadInboxNotificationsCount(
 ) {
   let count = 0;
 
-  for (const notification of selectedInboxNotifications(state)) {
+  for (const notification of selectInboxNotifications(state)) {
     if (
       notification.readAt === null ||
       notification.readAt < notification.notifiedAt
@@ -209,6 +265,17 @@ function selectorFor_useRoomInfo(
     isLoading: false,
     info: state.data,
   };
+}
+
+export function selectInboxNotifications<M extends BaseMetadata>(
+  state: UmbrellaStoreState<M>
+): InboxNotificationData[] {
+  const result = applyOptimisticUpdates(state);
+
+  return Object.values(result.inboxNotifications).sort(
+    // Sort so that the most recent notifications are first
+    (a, b) => b.notifiedAt.getTime() - a.notifiedAt.getTime()
+  );
 }
 
 function getOrCreateContextBundle<
@@ -1121,7 +1188,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
       }
 
       return {
-        threads: selectedUserThreads(state, options),
+        threads: selectUserThreads(state, options),
         isLoading: false,
       };
     },
@@ -1177,7 +1244,7 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
   const selector = useCallback(
     (state: UmbrellaStoreState<M>): ThreadsStateSuccess<M> => {
       return {
-        threads: selectedUserThreads(state, options),
+        threads: selectUserThreads(state, options),
         isLoading: false,
       };
     },
