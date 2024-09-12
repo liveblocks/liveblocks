@@ -167,14 +167,7 @@ function selectUserThreads<M extends BaseMetadata>(
     (thread): thread is ThreadData<M> => !thread.deletedAt
   );
 
-  // Second filter pass: only select the threads for this *user*??
-  // XXX This should ideally also not be the responsibility of this select function!
-  threads = threads.filter(
-    // XXX This *should* be thread.userId === userId, right???????????
-    () => true
-  );
-
-  // Third filter pass: select only threads matching query filter
+  // Second filter pass: select only threads matching query filter
   const query = options.query;
   if (query) {
     threads = threads.filter(makeThreadsFilter(query));
