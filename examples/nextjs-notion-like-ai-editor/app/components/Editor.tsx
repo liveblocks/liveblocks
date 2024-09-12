@@ -55,27 +55,7 @@ const initialConfig = liveblocksConfig({
 
 export function Editor() {
   return (
-    <ClientSideSuspense
-      fallback={
-        <Loading />
-        // <div className="relative flex flex-row justify-between h-[calc(100%-60px)] w-full flex-1">
-        //   {/* Editable */}
-        //   <div className="relative h-full w-full overflow-auto">
-        //     <div className="lg:mr-[300px] xl:mr-[100px]">
-        //       <div className="relative max-w-[740px] w-full mx-auto pb-[400px] p-8"></div>
-        //       <div className="mt-20 mb-0">
-        //         <div>loading</div>
-        //       </div>
-        //       <section className="relative">
-        //         <div>
-        //           <div className="relative outline-none w-full h-full px-8 py-4" />
-        //         </div>
-        //       </section>
-        //     </div>
-        //   </div>
-        // </div>
-      }
-    >
+    <ClientSideSuspense fallback={<Skeleton />}>
       <LexicalEditor />
     </ClientSideSuspense>
   );
@@ -104,19 +84,19 @@ function LexicalEditor() {
         <LiveblocksPlugin>
           <div className="relative flex flex-row justify-between h-[calc(100%-60px)] w-full flex-1">
             {/* Editable */}
-            <div className="relative h-full w-full overflow-auto">
+            <div className="relative h-full w-full overflow-y-auto overflow-x-hidden">
               <FloatingComposer className="w-[350px]" />
 
               <FloatingThreads threads={threads} className="block xl:hidden" />
               {status === "not-loaded" || status === "loading" ? (
-                <Loading />
+                <Skeleton />
               ) : (
                 <div className="xl:mr-[200px]">
                   <div className="relative max-w-[740px] w-full mx-auto pb-[400px] p-8">
-                    <div className="absolute left-full -ml-6">
+                    <div className="absolute left-full -ml-8">
                       <AnchoredThreads
                         threads={threads}
-                        className="w-[300px] hidden xl:block"
+                        className="w-[280px] hidden xl:block"
                       />
                     </div>
                     <header className="mt-20 mb-0">
@@ -153,5 +133,19 @@ function LexicalEditor() {
         </LiveblocksPlugin>
       </div>
     </LexicalComposer>
+  );
+}
+
+function Skeleton() {
+  return (
+    <div className=" xl:mr-[200px]">
+      <div className="relative max-w-[740px] w-full mx-auto p-8">
+        <div className="h-[60px]" />
+        <div className="mx-8 mt-4">
+          <div className="bg-gray-200/40 animate-pulse h-11 rounded-lg w-[400px] max-w-full" />
+          <div className="bg-gray-200/40 animate-pulse w-full h-24 rounded-lg mt-8"></div>
+        </div>
+      </div>
+    </div>
   );
 }
