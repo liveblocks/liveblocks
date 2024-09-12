@@ -905,7 +905,7 @@ export function applyThreadUpdates<M extends BaseMetadata>(
   updates.newThreads.forEach((thread) => {
     const existingThread = updatedThreads[thread.id];
 
-    // If a thread already exists and it's never, don't touch it
+    // If a thread already exists but it's been already more recent, don't update it
     if (existingThread) {
       if (isMoreRecentlyUpdated(existingThread, thread)) {
         return; // Do not update the existing thread
