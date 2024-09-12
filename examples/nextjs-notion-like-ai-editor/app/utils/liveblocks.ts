@@ -1,7 +1,6 @@
 import { Liveblocks as LiveblocksNode, RoomData } from "@liveblocks/node";
 import { nanoid } from "nanoid";
 import { getRoomId } from "../config";
-import { LiveObject, toPlainLson } from "@liveblocks/core";
 
 export const liveblocks = new LiveblocksNode({
   secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
@@ -32,16 +31,22 @@ export async function createRoom(title?: string) {
     });
   }
 
-  // We don't want the example to have too many rooms
-  deleteRoomsIfTooMany();
-
   return room;
 }
 
-export async function getRooms() {
-  const { data: rooms = [] } = await liveblocks.getRooms();
+export async function getRooms({
+  cursor,
+  limit,
+}: {
+  cursor?: string;
+  limit?: number;
+}) {
+  const { data: rooms = [], nextCursor } = await liveblocks.getRooms({
+    startingAfter: cursor,
+    limit,
+  });
 
-  return rooms as TypedRoomData[];
+  return { rooms: rooms as TypedRoomData[], nextCursor };
 }
 
 export async function getRoomTitle(roomId: string) {
@@ -51,17 +56,5 @@ export async function getRoomTitle(roomId: string) {
   } catch (err) {
     console.log(err);
     return "";
-  }
-}
-
-async function deleteRoomsIfTooMany() {
-  const rooms = await getRooms();
-  console.log(rooms.length > 2);
-
-  if (rooms.length > 2) {
-    for (const room of rooms) {
-      console.log("deetling", room.metadata.pageId);
-      liveblocks.deleteRoom(room.id);
-    }
   }
 }

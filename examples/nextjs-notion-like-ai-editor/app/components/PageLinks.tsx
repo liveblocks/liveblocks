@@ -2,17 +2,60 @@
 
 import { TypedRoomDataWithInfo } from "../utils/liveblocks";
 import Link from "next/link";
-import useSWR from "swr";
+import useSWRInfinite from "swr/infinite";
 import { getRoomsAndInfo } from "../actions/liveblocks";
 import { useParams } from "next/navigation";
+import { useState } from "react";
 
+const PAGE_LOAD_COUNT = 10;
+const NO_CURSOR = Symbol();
+
+// Infinitely load all pages
 export function PageLinks() {
   const params = useParams();
+  const [reachedEnd, setReachedEnd] = useState(false);
 
-  // Fetch all pages for sidebar, refresh every 10 seconds
-  const { data, error, isLoading, mutate } = useSWR("pages", getRoomsAndInfo, {
-    refreshInterval: 10000,
-  });
+  // Fetch all pages for sidebar
+  const { data, error, isLoading, mutate, size, setSize } = useSWRInfinite(
+    (pageIndex, previousPageData) => {
+      // First set of pages requires no cursor
+      if (pageIndex === 0 || !previousPageData) {
+        return NO_CURSOR; // Symbol because `undefined` halts function
+      }
+
+      // No cursor for next pages, reached end
+      if (!previousPageData.nextCursor) {
+        return null;
+      }
+
+      // Pass previous cursor to `getRoomsAndInfo`
+      return previousPageData.nextCursor;
+    },
+    async (cursor) => {
+      // Get data with cursor
+      const data = await getRoomsAndInfo({
+        cursor: cursor === NO_CURSOR ? undefined : cursor,
+        limit: PAGE_LOAD_COUNT,
+      });
+
+      // If no cursor, end has been reached
+      if (!data.nextCursor) {
+        setReachedEnd(true);
+      }
+
+      return data;
+    },
+    {
+      /// Refresh every 10 seconds
+      refreshInterval: 10000,
+
+      // On load, fetch `initialSize * PAGE_LOAD_COUNT` pages
+      initialSize: 1,
+    }
+  );
+
+  const isLoadingMore =
+    isLoading || (size > 0 && data && typeof data[size - 1] === "undefined");
 
   if (error) {
     return <div className="p-2">Error loading pages</div>;
@@ -40,7 +83,7 @@ export function PageLinks() {
     );
   }
 
-  if (!data || data.length === 0) {
+  if (!data || data[0].rooms.length === 0) {
     return (
       <div className="px-5 py-3.5 text-sm text-gray-700 font-medium">
         No pages have been created
@@ -50,13 +93,25 @@ export function PageLinks() {
 
   return (
     <div className="overflow-y-auto p-2 flex flex-col gap-0.5">
-      {data.map((room) => (
-        <PageLink
-          key={room.id}
-          room={room}
-          active={params.pageId === room.metadata.pageId}
-        />
-      ))}
+      {data.map((d) =>
+        d.rooms.map((room) => (
+          <PageLink
+            key={room.id}
+            room={room}
+            active={params.pageId === room.metadata.pageId}
+          />
+        ))
+      )}
+
+      {!reachedEnd ? (
+        <button
+          onClick={() => setSize(size + 1)}
+          disabled={isLoadingMore}
+          className="text-center py-1.5 px-3 bg-gray-200/60 transition-colors rounded text-medium text-gray-700 hover:text-gray-900 pr-2 text-sm font-medium data-[active]:bg-gray-200/80 data-[active]:text-gray-900 disabled:opacity-60"
+        >
+          {isLoadingMore ? "Loading…" : "Load more"}
+        </button>
+      ) : null}
     </div>
   );
 }

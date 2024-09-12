@@ -60,13 +60,21 @@ export async function createRoomWithLexicalDocument(
   return room;
 }
 
-export async function getRoomsAndInfo(): Promise<TypedRoomDataWithInfo[]> {
-  const rooms = await getRooms();
+export async function getRoomsAndInfo({
+  cursor,
+  limit,
+}: {
+  cursor?: string;
+  limit?: number;
+}) {
+  const { rooms, nextCursor } = await getRooms({ cursor, limit });
   const roomIds = rooms.map((room) => room.id);
   const roomsInfo = await getRoomInfo(roomIds);
 
-  return rooms.map((room, index) => ({
+  const finalRooms: TypedRoomDataWithInfo[] = rooms.map((room, index) => ({
     ...room,
     info: roomsInfo[index],
   }));
+
+  return { rooms: finalRooms, nextCursor };
 }
