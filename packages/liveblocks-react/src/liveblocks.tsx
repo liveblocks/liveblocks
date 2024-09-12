@@ -55,7 +55,11 @@ import type {
   UseUserThreadsOptions,
 } from "./types";
 import type { UmbrellaStoreState } from "./umbrella-store";
-import { applyOptimisticUpdates, UmbrellaStore } from "./umbrella-store";
+import {
+  applyOptimisticUpdates,
+  compareThreadsDesc,
+  UmbrellaStore,
+} from "./umbrella-store";
 
 /**
  * Raw access to the React context where the LiveblocksProvider stores the
@@ -177,12 +181,7 @@ function selectUserThreads<M extends BaseMetadata>(
   }
 
   // Sort threads by updated date (newest first) and then created date
-  return threads.sort(
-    // XXX This implementation is different from the one in useThreads()... deliberate or should we DRY it up?
-    (a, b) =>
-      (b.updatedAt ?? b.createdAt).getTime() -
-      (a.updatedAt ?? a.createdAt).getTime()
-  );
+  return threads.sort(compareThreadsDesc);
 }
 
 function selectUnreadInboxNotificationsCount(
