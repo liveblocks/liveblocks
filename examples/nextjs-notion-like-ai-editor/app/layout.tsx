@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Suspense } from "react";
 import { Providers } from "./Providers";
+import DefaultLayout from "./components/DefaultLayout";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -30,7 +31,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <body className={inter.className}>
         <main className="text-base relative h-screen max-h-screen bg-background/95 text-foreground">
           <Suspense>
-            <Providers>{children}</Providers>
+            <Providers>
+              <DefaultLayout>{children}</DefaultLayout>
+            </Providers>
           </Suspense>
         </main>
       </body>

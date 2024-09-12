@@ -7,7 +7,9 @@ export const liveblocks = new LiveblocksNode({
   secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
 });
 
+export type RoomInfo = { name: string; url: string };
 export type TypedRoomData = RoomData & { metadata: { pageId: string } };
+export type TypedRoomDataWithInfo = TypedRoomData & { info: RoomInfo };
 
 export async function getLatestRoom() {
   const { data: rooms } = await liveblocks.getRooms({ limit: 1 });

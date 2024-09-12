@@ -1,25 +1,20 @@
 import { Notifications } from "./Notifications";
 import { Logo } from "./Logo";
-import {
-  createRoom,
-  getRooms,
-  TypedRoomData,
-  getRoomTitle,
-} from "../lib/liveblocks";
+import { createRoom } from "../lib/liveblocks";
 import { redirect } from "next/navigation";
 import { CreateIcon } from "../icons/CreateIcon";
-import { ReactNode, Suspense } from "react";
+import { ReactNode } from "react";
 import Link from "next/link";
 import { getPageUrl } from "../config";
 import { SparklesIcon } from "../icons/SparklesIcon";
+import { PageLinks } from "./PageLinks";
+import { CreateWithAiLink } from "./CreateWithAiLink";
 
 export default async function DefaultLayout({
   children,
 }: {
   children: ReactNode;
 }) {
-  const rooms = await getRooms();
-
   async function create() {
     "use server";
 
@@ -42,41 +37,17 @@ export default async function DefaultLayout({
           </form>
         </div>
 
-        <div className="p-2">
+        <div className="p-2 flex flex-col gap-0.5">
           <Notifications />
-          <Link
-            href="/chat"
-            className="py-1.5 px-3 flex-1 truncate flex gap-1.5 font-medium items-center hover:bg-gray-200 transition-colors rounded text-medium text-gray-700 hover:text-gray-900 pr-2 text-sm"
-          >
-            <SparklesIcon className="w-4 h-4 -ml-0.5" />
-            Create with AI
-          </Link>
+          <CreateWithAiLink />
         </div>
 
         <div className="text-xs font-medium text-gray-500 mt-6 pl-2">Pages</div>
-        <div className="overflow-y-auto p-2">
-          {rooms.map((room) => (
-            <Suspense key={room.id} fallback={<div />}>
-              <PageLink room={room} />
-            </Suspense>
-          ))}
-        </div>
+
+        <PageLinks />
       </div>
 
       <div className="relative flex flex-col h-full w-full">{children}</div>
-    </div>
-  );
-}
-
-async function PageLink({ room }: { room: TypedRoomData }) {
-  const title = await getRoomTitle(room.id);
-  const url = getPageUrl(room.id);
-
-  return (
-    <div className="flex justify-between items-center hover:bg-gray-200 transition-colors rounded text-medium text-gray-700 hover:text-gray-900 pr-2 text-sm font-medium">
-      <Link href={url} className="py-1.5 px-3 flex-1 truncate">
-        {title}
-      </Link>
     </div>
   );
 }
