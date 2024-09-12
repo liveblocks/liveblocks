@@ -8,7 +8,7 @@ import { Metadata } from "@/config";
 
 // Not your secret key, but your _webhook_ secret key
 const webhookHandler = new WebhookHandler(
-  process.env.LIVEBLOCKS_WEBHOOK_SECRET_KEY as string
+  process.env.LIVEBLOCKS_WEBHOOK_SECRET_KEY || "whsec_..."
 );
 
 export async function POST(req: Request) {
