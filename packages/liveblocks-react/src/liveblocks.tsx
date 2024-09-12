@@ -33,6 +33,7 @@ import React, {
 } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
+import { byMostRecentlyUpdated } from "./lib/compare";
 
 import { isStartsWith, isString } from "./lib/guards";
 import { autoRetry, retryError } from "./lib/retry-error";
@@ -55,11 +56,7 @@ import type {
   UseUserThreadsOptions,
 } from "./types";
 import type { UmbrellaStoreState } from "./umbrella-store";
-import {
-  applyOptimisticUpdates,
-  compareThreadsDesc,
-  UmbrellaStore,
-} from "./umbrella-store";
+import { applyOptimisticUpdates, UmbrellaStore } from "./umbrella-store";
 
 /**
  * Raw access to the React context where the LiveblocksProvider stores the
@@ -174,7 +171,7 @@ function selectUserThreads<M extends BaseMetadata>(
   }
 
   // Sort threads by updated date (newest first) and then created date
-  return threads.sort(compareThreadsDesc);
+  return threads.sort(byMostRecentlyUpdated);
 }
 
 function selectUnreadInboxNotificationsCount(

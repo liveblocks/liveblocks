@@ -67,6 +67,7 @@ import {
   RemoveReactionError,
   UpdateNotificationSettingsError,
 } from "./comments/errors";
+import { byFirstCreated } from "./lib/compare";
 import { isString } from "./lib/guards";
 import { retryError } from "./lib/retry-error";
 import { useInitial } from "./lib/use-initial";
@@ -107,7 +108,6 @@ import type {
 import {
   addReaction,
   applyOptimisticUpdates,
-  compareThreads,
   deleteComment,
   removeReaction,
   UmbrellaStore,
@@ -201,7 +201,7 @@ export function selectRoomThreads<M extends BaseMetadata>(
   }
 
   // Sort threads by creation date (oldest first)
-  return threads.sort(compareThreads);
+  return threads.sort(byFirstCreated);
 }
 
 function selectNotificationSettings<M extends BaseMetadata>(
