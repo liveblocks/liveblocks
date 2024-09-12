@@ -18,6 +18,7 @@ import { UnderlineIcon } from "../icons/UnderlineIcon";
 import { StrikethroughIcon } from "../icons/StrikethroughIcon";
 import { CodeIcon } from "../icons/CodeIcon";
 
+// Options in the toolbar's dropdown
 const DROPDOWN_OPTIONS = [
   {
     id: "paragraph",
@@ -67,6 +68,7 @@ export function FloatingToolbarOptions({
   const [editor] = useLexicalComposerContext();
   const activeBlock = useActiveBlock();
 
+  // Change between block types
   const toggleBlock = useCallback(
     (type: DropdownIds) => {
       const selection = $getSelection();
@@ -201,16 +203,6 @@ export function FloatingToolbarOptions({
         </ToolbarButton>
 
         <span className="w-[1px] py-3.5 bg-border/50" />
-
-        {/*<button*/}
-        {/*  onClick={() => editor.update(() => toggleBlock("quote"))}*/}
-        {/*  data-active={activeBlock === "quote" ? "" : undefined}*/}
-        {/*  className={*/}
-        {/*    "inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground w-8 h-8 data-[active]:bg-accent"*/}
-        {/*  }*/}
-        {/*>*/}
-        {/*  <BlockquoteIcon />*/}
-        {/*</button>*/}
 
         <ToolbarButton
           onClick={() => {

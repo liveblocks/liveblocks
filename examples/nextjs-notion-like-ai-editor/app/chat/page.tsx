@@ -41,6 +41,7 @@ function Chat() {
         </div>
       </div>
 
+      {/* Submit queries to Vercel AI */}
       <form
         onSubmit={handleSubmit}
         className="max-w-[740px] mx-auto w-full flex-0 my-0 relative"
@@ -77,24 +78,7 @@ function Chat() {
         </div>
       </form>
 
-      <a
-        className="fixed top-4 right-4"
-        href="https://liveblocks.io"
-        rel="noreferrer"
-        target="_blank"
-      >
-        <picture>
-          <source
-            srcSet="https://liveblocks.io/badge-dark.svg"
-            media="(prefers-color-scheme: dark)"
-          />
-          <img
-            src="https://liveblocks.io/badge-light.svg"
-            alt="Made with Liveblocks"
-            className=""
-          />
-        </picture>
-      </a>
+      <LiveblocksBadge />
     </div>
   );
 }
@@ -176,5 +160,28 @@ function MessageLine({ message }: { message: Message }) {
         </div>
       )}
     </div>
+  );
+}
+
+function LiveblocksBadge() {
+  return (
+    <a
+      className="fixed top-4 right-4"
+      href="https://liveblocks.io"
+      rel="noreferrer"
+      target="_blank"
+    >
+      <picture>
+        <source
+          srcSet="https://liveblocks.io/badge-dark.svg"
+          media="(prefers-color-scheme: dark)"
+        />
+        <img
+          src="https://liveblocks.io/badge-light.svg"
+          alt="Made with Liveblocks"
+          className=""
+        />
+      </picture>
+    </a>
   );
 }

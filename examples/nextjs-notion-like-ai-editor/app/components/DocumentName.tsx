@@ -17,6 +17,7 @@ import {
 } from "lexical";
 import TextareaAutosize from "react-textarea-autosize";
 
+// Title is stored in Liveblocks Storage, part of Realtime APIs
 export function DocumentName() {
   const title = useStorage((root) => root.title);
   const [editor] = useLexicalComposerContext();

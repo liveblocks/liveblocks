@@ -13,6 +13,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 export const SAVE_SELECTION_COMMAND: LexicalCommand<null> = createCommand();
 export const RESTORE_SELECTION_COMMAND: LexicalCommand<null> = createCommand();
 
+// Saves a selection and allows you reload it later
 export function PreserveSelectionPlugin() {
   const [editor] = useLexicalComposerContext();
   const savedSelection = useRef<RangeSelection | null>(null);

@@ -4,6 +4,7 @@ import { SparklesIcon } from "../icons/SparklesIcon";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+// Client component just to show when it's active
 export function CreateWithAiLink() {
   const pathname = usePathname();
 

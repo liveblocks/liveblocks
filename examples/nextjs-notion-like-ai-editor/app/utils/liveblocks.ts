@@ -32,6 +32,9 @@ export async function createRoom(title?: string) {
     });
   }
 
+  // We don't want the example to have too many rooms
+  deleteRoomsIfTooMany();
+
   return room;
 }
 
@@ -51,4 +54,14 @@ export async function getRoomTitle(roomId: string) {
   }
 }
 
-export function setRoomTitle(roomId: string, title: string) {}
+async function deleteRoomsIfTooMany() {
+  const rooms = await getRooms();
+  console.log(rooms.length > 2);
+
+  if (rooms.length > 2) {
+    for (const room of rooms) {
+      console.log("deetling", room.metadata.pageId);
+      liveblocks.deleteRoom(room.id);
+    }
+  }
+}

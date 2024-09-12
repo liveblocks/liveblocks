@@ -1,12 +1,10 @@
 import { Notifications } from "./Notifications";
 import { Logo } from "./Logo";
-import { createRoom } from "../lib/liveblocks";
+import { createRoom } from "../utils/liveblocks";
 import { redirect } from "next/navigation";
 import { CreateIcon } from "../icons/CreateIcon";
 import { ReactNode } from "react";
-import Link from "next/link";
 import { getPageUrl } from "../config";
-import { SparklesIcon } from "../icons/SparklesIcon";
 import { PageLinks } from "./PageLinks";
 import { CreateWithAiLink } from "./CreateWithAiLink";
 

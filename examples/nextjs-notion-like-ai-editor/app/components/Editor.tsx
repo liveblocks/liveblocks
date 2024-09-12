@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
@@ -19,15 +20,12 @@ import {
   LiveblocksPlugin,
   useEditorStatus,
 } from "@liveblocks/react-lexical";
-import { FloatingToolbar } from "./FloatingToolbar";
-import { useState } from "react";
-import { Loading } from "./Loading";
-import { PreserveSelectionPlugin } from "./PreserveSelection";
-import { DocumentName } from "./DocumentName";
-import DraggableBlockPlugin from "../plugins/DraggableBlockPlugin";
 import { useThreads } from "@liveblocks/react/suspense";
 import { ClientSideSuspense } from "@liveblocks/react";
-import { InitialContentPlugin } from "../plugins/InitialContentPlugin";
+import DraggableBlockPlugin from "../plugins/DraggableBlockPlugin";
+import { PreserveSelectionPlugin } from "../plugins/PreserveSelectionPlugin";
+import { DocumentName } from "./DocumentName";
+import { FloatingToolbar } from "./FloatingToolbar";
 
 // Wrap your initial config with `liveblocksConfig`
 const initialConfig = liveblocksConfig({
@@ -63,7 +61,9 @@ export function Editor() {
 
 function LexicalEditor() {
   const status = useEditorStatus();
+  const { threads } = useThreads();
 
+  // Used by the drag handle
   const [floatingAnchorElem, setFloatingAnchorElem] =
     useState<HTMLDivElement | null>(null);
   const onRef = (_floatingAnchorElem: HTMLDivElement) => {
@@ -72,39 +72,42 @@ function LexicalEditor() {
     }
   };
 
-  const { threads } = useThreads();
-
   return (
     <LexicalComposer initialConfig={initialConfig}>
-      <InitialContentPlugin />
       <div
         // Target the cursors and raise their z-index above the editor
         className="first:*:z-10 contents"
       >
         <LiveblocksPlugin>
           <div className="relative flex flex-row justify-between h-[calc(100%-60px)] w-full flex-1">
-            {/* Editable */}
             <div className="relative h-full w-full overflow-y-auto overflow-x-hidden">
+              {/* The floating composer for creating new threads */}
               <FloatingComposer className="w-[350px]" />
 
+              {/* The floating threads that appear on mobile */}
               <FloatingThreads threads={threads} className="block xl:hidden" />
+
               {status === "not-loaded" || status === "loading" ? (
                 <Skeleton />
               ) : (
                 <div className="xl:mr-[200px]">
                   <div className="relative max-w-[740px] w-full mx-auto pb-[400px] p-8">
                     <div className="absolute left-full -ml-8">
+                      {/* The anchored threads in the sidebar, on desktop */}
                       <AnchoredThreads
                         threads={threads}
                         className="w-[280px] hidden xl:block"
                       />
                     </div>
+
                     <header className="mt-20 mb-0">
                       <h1 className="mb-0">
                         <DocumentName />
                       </h1>
                     </header>
+
                     <section className="relative">
+                      {/* The editor */}
                       <RichTextPlugin
                         contentEditable={
                           <div ref={onRef}>
@@ -118,9 +121,13 @@ function LexicalEditor() {
                         }
                         ErrorBoundary={LexicalErrorBoundary}
                       />
+
+                      {/* Click and drag editor blocks by their handle */}
                       {floatingAnchorElem ? (
                         <DraggableBlockPlugin anchorElem={floatingAnchorElem} />
                       ) : null}
+
+                      {/* Text modification and AI toolbar */}
                       <FloatingToolbar />
                     </section>
                   </div>

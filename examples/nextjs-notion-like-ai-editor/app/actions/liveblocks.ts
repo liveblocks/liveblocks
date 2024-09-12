@@ -6,9 +6,8 @@ import {
   getRoomTitle,
   liveblocks,
   RoomInfo,
-  TypedRoomData,
   TypedRoomDataWithInfo,
-} from "../lib/liveblocks";
+} from "../utils/liveblocks";
 import { getPageUrl } from "../config";
 import { withLexicalDocument } from "@liveblocks/node-lexical";
 import { $convertFromMarkdownString, TRANSFORMERS } from "@lexical/markdown";

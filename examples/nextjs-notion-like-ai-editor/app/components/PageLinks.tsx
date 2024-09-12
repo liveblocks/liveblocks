@@ -1,6 +1,6 @@
 "use client";
 
-import { TypedRoomDataWithInfo } from "../lib/liveblocks";
+import { TypedRoomDataWithInfo } from "../utils/liveblocks";
 import Link from "next/link";
 import useSWR from "swr";
 import { getRoomsAndInfo } from "../actions/liveblocks";
@@ -9,13 +9,10 @@ import { useParams } from "next/navigation";
 export function PageLinks() {
   const params = useParams();
 
-  const { data, error, isLoading, mutate } = useSWR(
-    "/api/user",
-    getRoomsAndInfo,
-    {
-      refreshInterval: 10000,
-    }
-  );
+  // Fetch all pages for sidebar, refresh every 10 seconds
+  const { data, error, isLoading, mutate } = useSWR("pages", getRoomsAndInfo, {
+    refreshInterval: 10000,
+  });
 
   if (error) {
     return <div className="p-2">Error loading pages</div>;

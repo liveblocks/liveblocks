@@ -29,7 +29,7 @@ import { OptionsIcon } from "../icons/OptionsIcon";
 import {
   RESTORE_SELECTION_COMMAND,
   SAVE_SELECTION_COMMAND,
-} from "./PreserveSelection";
+} from "../plugins/PreserveSelectionPlugin";
 import { RubbishIcon } from "../icons/RubbishIcon";
 import { InsertParagraphIcon } from "../icons/InsertParagraphIcon";
 import { SparklesIcon } from "../icons/SparklesIcon";

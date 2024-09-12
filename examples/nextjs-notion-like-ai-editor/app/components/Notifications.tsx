@@ -17,6 +17,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
+// Render a Radix UI dialog with notifications inside
 export function Notifications() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -49,10 +50,13 @@ export function Notifications() {
   );
 }
 
+// Show number of unread notifications in a badge
 function UnreadNotificationsCount() {
   const { count } = useUnreadInboxNotificationsCount();
 
-  if (count <= 0) return null;
+  if (count <= 0) {
+    return null;
+  }
 
   return (
     <span className="text-[10px] inline-flex items-center p-1 bg-blue-500 text-white justify-center rounded w-4 h-4">
@@ -69,6 +73,7 @@ function Inbox() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
+      {/* Top bar with buttons */}
       <div className="flex py-1.5 px-3 border-b border-border justify-end gap-1.5 flex-0">
         <button
           className="inline-flex gap-1.5 items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 h-8 px-2 hover:bg-gray-100 text-gray-600 hover:text-gray-800"
@@ -88,6 +93,7 @@ function Inbox() {
         </button>
       </div>
 
+      {/* Render a list of notifications */}
       <div className="flex-1 min-h-0">
         <div className="h-full overflow-y-auto">
           {inboxNotifications.length === 0 ? (
@@ -103,6 +109,7 @@ function Inbox() {
                     inboxNotification={inboxNotification}
                     components={{
                       Anchor: (props) =>
+                        // When clicking on a notification, use next/link component
                         props.href ? (
                           <Link {...props} href={props.href} />
                         ) : (

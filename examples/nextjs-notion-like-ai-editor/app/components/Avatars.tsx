@@ -7,6 +7,7 @@ export function Avatars() {
   return (
     <ClientSideSuspense
       fallback={
+        // Fallback as Liveblocks loads
         <div className="flex items-center">
           <div className="relative ml-2">
             <AvatarPlaceholder />
@@ -24,17 +25,21 @@ export function Avatars() {
 
 const AVATAR_SIZE = 36;
 
+// Get all currently connected users and render a live avatar stack
 function AvatarStack() {
   const users = useOthers();
   const currentUser = useSelf();
 
   return (
     <div className="flex items-center">
+      {/* Your avatar */}
       {currentUser && (
         <div className="relative ml-2">
           <Avatar src={currentUser.info.avatar} name="You" />
         </div>
       )}
+
+      {/* Others' avatars */}
       <div className="flex">
         {users.map(({ connectionId, info }) => {
           return (
@@ -42,6 +47,7 @@ function AvatarStack() {
           );
         })}
       </div>
+
       <div className="ml-2 text-gray-500 text-sm select-none">
         {users.length + 1} user{users.length ? "s" : ""} editing
       </div>

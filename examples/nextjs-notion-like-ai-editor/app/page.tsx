@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createRoom, getLatestRoom } from "./lib/liveblocks";
+import { createRoom, getLatestRoom } from "./utils/liveblocks";
 import { getPageUrl } from "./config";
 
 // Force the page to be dynamic and allow streaming responses up to 30 seconds for AI
