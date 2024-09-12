@@ -109,7 +109,8 @@ import {
 import type { UmbrellaStore, UmbrellaStoreState } from "./umbrella-store";
 import {
   addReaction,
-  applyOptimisticUpdates,
+  applyOptimisticUpdates_notificationSettings,
+  applyOptimisticUpdates_threads,
   deleteComment,
   removeReaction,
   upsertComment,
@@ -186,13 +187,7 @@ export function selectRoomThreads<M extends BaseMetadata>(
   // Here, result contains copies of 3 out of the 5 caches with all optimistic
   // updates mixed in
   // XXX This should not be the responsibility of this select function
-  const result = applyOptimisticUpdates(state);
-
-  // First filter pass: remove all soft-deleted threads
-  // XXX This should not be the responsibility of this select function
-  let threads = Object.values(result.threads).filter(
-    (thread): thread is ThreadData<M> => !thread.deletedAt
-  );
+  let threads = applyOptimisticUpdates_threads(state);
 
   // Second filter pass: only select the threads for this *room*
   // XXX This should ideally also not be the responsibility of this select function!
@@ -212,7 +207,8 @@ function selectNotificationSettings<M extends BaseMetadata>(
   roomId: string,
   state: UmbrellaStoreState<M>
 ): RoomNotificationSettings {
-  const { notificationSettings } = applyOptimisticUpdates(state);
+  const notificationSettings =
+    applyOptimisticUpdates_notificationSettings(state);
   return nn(notificationSettings[roomId]);
 }
 

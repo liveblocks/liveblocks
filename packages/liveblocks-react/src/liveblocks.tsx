@@ -55,7 +55,11 @@ import type {
   UseUserThreadsOptions,
 } from "./types";
 import type { UmbrellaStoreState } from "./umbrella-store";
-import { applyOptimisticUpdates, UmbrellaStore } from "./umbrella-store";
+import {
+  applyOptimisticUpdates_inboxNotifications,
+  applyOptimisticUpdates_threads,
+  UmbrellaStore,
+} from "./umbrella-store";
 
 /**
  * Raw access to the React context where the LiveblocksProvider stores the
@@ -121,13 +125,7 @@ function selectUserThreads<M extends BaseMetadata>(
   options: UseThreadsOptions<M>
 ) {
   // XXX This should not be the responsibility of this select function
-  const result = applyOptimisticUpdates(state);
-
-  // First filter pass: remove all soft-deleted threads
-  // XXX This should not be the responsibility of this select function
-  let threads = Object.values(result.threads).filter(
-    (thread): thread is ThreadData<M> => !thread.deletedAt
-  );
+  let threads = applyOptimisticUpdates_threads(state);
 
   // Second filter pass: select only threads matching query filter
   const query = options.query;
@@ -240,9 +238,9 @@ export function selectInboxNotifications<M extends BaseMetadata>(
   state: UmbrellaStoreState<M>
 ): InboxNotificationData[] {
   // XXX This should not be the responsibility of this select function
-  const result = applyOptimisticUpdates(state);
+  const inboxNotifications = applyOptimisticUpdates_inboxNotifications(state);
 
-  return Object.values(result.inboxNotifications).sort(
+  return Object.values(inboxNotifications).sort(
     // Sort so that the most recent notifications are first
     (a, b) => b.notifiedAt.getTime() - a.notifiedAt.getTime()
   );

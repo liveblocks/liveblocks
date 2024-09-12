@@ -658,7 +658,30 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 }
 
-export function applyOptimisticUpdates<M extends BaseMetadata>(
+export function applyOptimisticUpdates_threads<M extends BaseMetadata>(
+  state: UmbrellaStoreState<M>
+): ThreadData<M>[] {
+  const allThreads = Object.values(applyOptimisticUpdates(state).threads);
+
+  // Don't expose any soft-deleted threads
+  return allThreads.filter(
+    (thread): thread is ThreadData<M> => !thread.deletedAt
+  );
+}
+
+export function applyOptimisticUpdates_inboxNotifications<
+  M extends BaseMetadata,
+>(state: UmbrellaStoreState<M>): UmbrellaStoreState<M>["inboxNotifications"] {
+  return applyOptimisticUpdates(state).inboxNotifications;
+}
+
+export function applyOptimisticUpdates_notificationSettings<
+  M extends BaseMetadata,
+>(state: UmbrellaStoreState<M>): UmbrellaStoreState<M>["notificationSettings"] {
+  return applyOptimisticUpdates(state).notificationSettings;
+}
+
+function applyOptimisticUpdates<M extends BaseMetadata>(
   state: UmbrellaStoreState<M>
 ): Pick<
   UmbrellaStoreState<M>,
