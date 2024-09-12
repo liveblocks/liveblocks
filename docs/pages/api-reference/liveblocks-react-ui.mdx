@@ -1567,6 +1567,7 @@ specific verions. These components aid in displaying a list of those versions.
 
 Displays a version summary which includes the author and date.
 
+```tsx
 <HistoryVersionSummary
   onClick={() => {
     setSelectedVersionId(version.id);
@@ -1574,6 +1575,7 @@ Displays a version summary which includes the author and date.
   version={version}
   selected={version.id === selectedVersionId}
 />
+```
 
 ##### Props [#HistoryVersionSummary-props]
 
