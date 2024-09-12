@@ -288,8 +288,6 @@ describe("useThreads", () => {
   });
 
   test("should fetch threads for a given query (multiple criteria)", async () => {
-    // COPIED FROM THE TEST ABOVE HERE
-
     const roomId = nanoid();
     const redPinnedThread = dummyThreadData({
       roomId,
@@ -309,16 +307,7 @@ describe("useThreads", () => {
     });
 
     server.use(
-      mockGetThreads(async (req, res, ctx) => {
-        const query = req.url.searchParams.get("query");
-        const parseRes = parser.parse(query ?? "");
-
-        const metadataPinned = getFilter(
-          parseRes.query.clauses,
-          "metadata",
-          "pinned"
-        );
-
+      mockGetThreads(async (_req, res, ctx) => {
         return res(
           ctx.json({
             data: [
@@ -326,10 +315,7 @@ describe("useThreads", () => {
               blueUnpinnedThread,
               redPinnedThread,
               redUnpinnedThread,
-            ].filter(
-              // XXX Not sure if/how we should update this mock logic?
-              (thread) => thread.metadata.pinned === metadataPinned.value
-            ),
+            ], // removed any filtering so that we ensure the filtering is done properly on the client side, it shouldn't matter what the server returns
             inboxNotifications: [],
             deletedThreads: [],
             deletedInboxNotifications: [],
@@ -345,17 +331,14 @@ describe("useThreads", () => {
       room: { RoomProvider, useThreads },
     } = createContextsForTest<{
       pinned: boolean;
+      color: string;
     }>();
 
-    // XXX Also add some assertions for this:
-    // () => useThreads({ query: { metadata: { pinned: true } } }),  // I want to see both red and blue pinned ones
-    // () => useThreads({ query: { metadata: { color: 'red' } } }),  // I want to see both red ones (pinned + unpinned)
-    // () => useThreads({ query: { metadata: { color: 'red', pinned: true } } }),  // I want to see only one result
-    // () => useThreads({ query: { metadata: { color: 'nonexisting', pinned: true } } }),  // I want to see no results
-    // () => useThreads({ query: { metadata: { color: 'nonexisting' } } }),  // Same
     const { result, unmount } = renderHook(
-      // XXX Here I want to see both pinned ones (red + blue)
-      () => useThreads({ query: { metadata: { pinned: true } } }),
+      () =>
+        useThreads({
+          query: { metadata: { pinned: true, color: "red" } },
+        }),
       {
         wrapper: ({ children }) => (
           <RoomProvider id={roomId}>{children}</RoomProvider>
@@ -373,6 +356,118 @@ describe("useThreads", () => {
     );
 
     unmount();
+
+    const { result: result2, unmount: unmount2 } = renderHook(
+      () =>
+        useThreads({
+          query: { metadata: { color: "red" } },
+        }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id={roomId}>{children}</RoomProvider>
+        ),
+      }
+    );
+
+    expect(result2.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result2.current).toEqual({
+        isLoading: false,
+        threads: [redPinnedThread, redUnpinnedThread],
+      })
+    );
+
+    unmount2();
+
+    const { result: result3, unmount: unmount3 } = renderHook(
+      () =>
+        useThreads({
+          query: { metadata: { color: "red", pinned: true } },
+        }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id={roomId}>{children}</RoomProvider>
+        ),
+      }
+    );
+
+    expect(result3.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result3.current).toEqual({
+        isLoading: false,
+        threads: [redPinnedThread],
+      })
+    );
+
+    unmount3();
+
+    const { result: result4, unmount: unmount4 } = renderHook(
+      () =>
+        useThreads({
+          query: { metadata: { color: "nonexisting", pinned: true } },
+        }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id={roomId}>{children}</RoomProvider>
+        ),
+      }
+    );
+
+    expect(result4.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result4.current).toEqual({
+        isLoading: false,
+        threads: [],
+      })
+    );
+
+    unmount4();
+
+    const { result: result5, unmount: unmount5 } = renderHook(
+      () =>
+        useThreads({
+          query: { metadata: { color: "nonexisting" } },
+        }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id={roomId}>{children}</RoomProvider>
+        ),
+      }
+    );
+
+    expect(result5.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result5.current).toEqual({
+        isLoading: false,
+        threads: [],
+      })
+    );
+
+    unmount5();
+
+    const { result: result6, unmount: unmount6 } = renderHook(
+      () => useThreads({ query: { metadata: { pinned: true } } }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id={roomId}>{children}</RoomProvider>
+        ),
+      }
+    );
+
+    expect(result6.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result6.current).toEqual({
+        isLoading: false,
+        threads: [bluePinnedThread, redPinnedThread],
+      })
+    );
+
+    unmount6();
   });
 
   test("shoud fetch threads for a given query with a startsWith filter", async () => {
