@@ -1111,7 +1111,7 @@ export function createLiveblocksContext<
  * @experimental
  *
  * This hook is experimental and could be removed or changed at any time!
- * Do not use unless explicitely recommended by the Liveblocks team.
+ * Do not use unless explicitly recommended by the Liveblocks team.
  */
 function useUserThreads_experimental<M extends BaseMetadata>(
   options: UseUserThreadsOptions<M> = {
@@ -1174,7 +1174,16 @@ function useUserThreads_experimental<M extends BaseMetadata>(
  * @experimental
  *
  * This hook is experimental and could be removed or changed at any time!
- * Do not use unless explicitely recommended by the Liveblocks team.
+ * Do not use unless explicitly recommended by the Liveblocks team.
+ *
+ * WARNING:
+ * Please note that this hook currently returns all threads by most recently
+ * updated threads first. This is inconsistent with the default sort order of
+ * the useThreads() hook, which returns them in chronological order (by
+ * creation date). In the final version, we will make these hooks behave
+ * consistently, so expect that in the final version, you'll have to explicitly
+ * specify the sort order to be by most recently updated first somehow.
+ * The final API for that is still TBD.
  */
 function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
   options: UseUserThreadsOptions<M> = {
@@ -1391,7 +1400,17 @@ const _useUserSuspense: TypedBundle["suspense"]["useUser"] = useUserSuspense;
  * @experimental
  *
  * This hook is experimental and could be removed or changed at any time!
- * Do not use unless explicitely recommended by the Liveblocks team.
+ * Do not use unless explicitly recommended by the Liveblocks team.
+ *
+ *
+ * WARNING:
+ * Please note that this hook currently returns all threads by most recently
+ * updated threads first. This is inconsistent with the default sort order of
+ * the useThreads() hook, which returns them in chronological order (by
+ * creation date). In the final version, we will make these hooks behave
+ * consistently, so expect that in the final version, you'll have to explicitly
+ * specify the sort order to be by most recently updated first somehow.
+ * The final API for that is still TBD.
  */
 const _useUserThreads_experimental: TypedBundle["useUserThreads_experimental"] =
   useUserThreads_experimental;
@@ -1400,7 +1419,17 @@ const _useUserThreads_experimental: TypedBundle["useUserThreads_experimental"] =
  * @experimental
  *
  * This hook is experimental and could be removed or changed at any time!
- * Do not use unless explicitely recommended by the Liveblocks team.
+ * Do not use unless explicitly recommended by the Liveblocks team.
+ *
+ *
+ * WARNING:
+ * Please note that this hook currently returns all threads by most recently
+ * updated threads first. This is inconsistent with the default sort order of
+ * the useThreads() hook, which returns them in chronological order (by
+ * creation date). In the final version, we will make these hooks behave
+ * consistently, so expect that in the final version, you'll have to explicitly
+ * specify the sort order to be by most recently updated first somehow.
+ * The final API for that is still TBD.
  */
 const _useUserThreadsSuspense_experimental: TypedBundle["suspense"]["useUserThreads_experimental"] =
   useUserThreadsSuspense_experimental;

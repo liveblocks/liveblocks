@@ -1241,7 +1241,7 @@ export type LiveblocksContextBundle<
        * @experimental
        *
        * This hook is experimental and could be removed or changed at any time!
-       * Do not use unless explicitely recommended by the Liveblocks team.
+       * Do not use unless explicitly recommended by the Liveblocks team.
        */
       useUserThreads_experimental(
         options?: UseUserThreadsOptions<M>
@@ -1270,7 +1270,7 @@ export type LiveblocksContextBundle<
              * @experimental
              *
              * This hook is experimental and could be removed or changed at any time!
-             * Do not use unless explicitely recommended by the Liveblocks team.
+             * Do not use unless explicitly recommended by the Liveblocks team.
              */
             useUserThreads_experimental(
               options?: UseUserThreadsOptions<M>
