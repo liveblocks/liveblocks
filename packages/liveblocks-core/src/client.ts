@@ -27,6 +27,7 @@ import type {
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
 import type {
+  GetThreadsOptions,
   OpaqueRoom,
   OptionalTupleUnless,
   PartialUnless,
@@ -40,7 +41,6 @@ import {
   makeCreateSocketDelegateForRoom,
 } from "./room";
 import type { OptionalPromise } from "./types/OptionalPromise";
-import { UmbrellaStore } from "./umbrella-store";
 
 const MIN_THROTTLE = 16;
 const MAX_THROTTLE = 1_000;
@@ -139,16 +139,17 @@ export type EnterOptions<P extends JsonObject = DP, S extends LsonObject = DS> =
 export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
   readonly currentUserIdStore: Store<string | null>;
   readonly resolveMentionSuggestions: ClientOptions<U>["resolveMentionSuggestions"];
-  readonly umbrellaStore: UmbrellaStore<BaseMetadata>;
   readonly usersStore: BatchStore<U["info"] | undefined, string>;
   readonly roomsInfoStore: BatchStore<DRI | undefined, string>;
   readonly getRoomIds: () => string[];
-  readonly getThreads: () => Promise<{
+  readonly getThreads: (options: GetThreadsOptions<M>) => Promise<{
     threads: ThreadData<M>[];
     inboxNotifications: InboxNotificationData[];
     requestedAt: Date;
   }>;
-  readonly getThreadsSince: (options: { since: Date }) => Promise<{
+  readonly getThreadsSince: (
+    options: { since: Date } & GetThreadsOptions<M>
+  ) => Promise<{
     inboxNotifications: {
       updated: InboxNotificationData[];
       deleted: InboxNotificationDeleteInfo[];
@@ -604,8 +605,6 @@ export function createClient<U extends BaseUserMeta = DU>(
     currentUserIdStore,
   });
 
-  const umbrellaStore = new UmbrellaStore();
-
   const resolveUsers = clientOptions.resolveUsers;
   const warnIfNoResolveUsers = createDevelopmentWarning(
     () => !resolveUsers,
@@ -662,7 +661,6 @@ export function createClient<U extends BaseUserMeta = DU>(
       [kInternal]: {
         currentUserIdStore,
         resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,
-        umbrellaStore,
         usersStore,
         roomsInfoStore,
         getRoomIds() {

@@ -1546,6 +1546,80 @@ element.
   </PropertiesListItem>
 </PropertiesList>
 
+## Version History
+
+<Banner title="Private beta">
+
+Version history is currently in private beta. If you would like access to the
+beta, please [contact us](https://liveblocks.io/contact/sales). We’d love to
+hear from you.
+
+</Banner>
+
+When enabled, version history will automatically create versions of your
+[Lexical](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical) or
+[Yjs](/docs/api-reference/liveblocks-yjs) document and allow you to restore to
+specific verions. These components aid in displaying a list of those versions.
+
+### Default components
+
+### HistoryVersionSummary
+
+Displays a version summary which includes the author and date.
+
+```tsx
+<HistoryVersionSummary
+  onClick={() => {
+    setSelectedVersionId(version.id);
+  }}
+  version={version}
+  selected={version.id === selectedVersionId}
+/>
+```
+
+##### Props [#HistoryVersionSummary-props]
+
+<PropertiesList>
+  <PropertiesListItem name="onClick" type="() => void">
+    The function to call when the version summary is clicked.
+  </PropertiesListItem>
+  <PropertiesListItem name="version" type="Version">
+    The version object containing information about the specific version.
+  </PropertiesListItem>
+  <PropertiesListItem name="selected" type="boolean">
+    Whether this version is currently selected.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### HistoryVersionSummaryList
+
+Displays a list of version summaries for a document's history including authors
+and dates.
+
+```tsx
+<HistoryVersionSummaryList>
+  {versions?.map((version) => (
+    <HistoryVersionSummary
+      onClick={() => {
+        setSelectedVersionId(version.id);
+      }}
+      key={version.id}
+      version={version}
+      selected={version.id === selectedVersionId}
+    />
+  ))}
+</HistoryVersionSummaryList>
+```
+
+##### Props [#HistoryVersionSummaryList-props]
+
+<PropertiesList>
+  <PropertiesListItem name="children" type="ReactNode">
+    The version summaries to display, typically an array of
+    HistoryVersionSummary components.
+  </PropertiesListItem>
+</PropertiesList>
+
 ## Utilities
 
 ### Components

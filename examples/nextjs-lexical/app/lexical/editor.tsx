@@ -17,6 +17,7 @@ import {
 import FloatingToolbar from "./floating-toolbar";
 import NotificationsPopover from "../notifications-popover";
 import Loading from "../loading";
+import VersionHistoryDialog from "../version-history-dialog";
 import { useThreads } from "@liveblocks/react/suspense";
 import { useIsMobile } from "./use-is-mobile";
 
@@ -42,6 +43,7 @@ export default function Editor() {
           ) : (
             <>
               <div className="h-[60px] flex items-center justify-end px-4 border-b border-border/80 bg-background">
+                <VersionHistoryDialog />
                 <NotificationsPopover />
               </div>
 

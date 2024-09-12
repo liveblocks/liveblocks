@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 
-import { kInternal, nanoid, ServerMsgCode } from "@liveblocks/core";
+import { nanoid, ServerMsgCode } from "@liveblocks/core";
 import type { AST } from "@liveblocks/query-parser";
 import { QueryParser } from "@liveblocks/query-parser";
 import {
@@ -954,11 +954,10 @@ describe("useThreads", () => {
 
     const {
       room: { RoomProvider, useThreads },
-      client,
+      umbrellaStore,
     } = createContextsForTest();
 
-    const store = client[kInternal].umbrellaStore;
-    store.force_set((state) => ({
+    umbrellaStore.force_set((state) => ({
       ...state,
       threads: {
         [thread1.id]: thread1,

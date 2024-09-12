@@ -19,14 +19,14 @@
     users = others;
   });
 
-  const unsubscribeConnection = room.subscribe("connection", () => {
+  const unsubscribeMyPresence = room.subscribe("my-presence", () => {
     currentUser = room.getSelf();
   });
 
   // Unsubscribe when unmounting
   onDestroy(() => {
     unsubscribeOthers();
-    unsubscribeConnection();
+    unsubscribeMyPresence();
   });
 
   $: hasMoreUsers = users ? [...users].length > 3 : false;

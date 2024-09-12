@@ -10,7 +10,7 @@ module.exports = {
 
   preset: "ts-jest",
   modulePathIgnorePatterns: ["<rootDir>/dist/"],
-  testPathIgnorePatterns: ["__tests__/_.*"],
+  testPathIgnorePatterns: ["__tests__/_.*", "__tests__/(.+/)*_.*"],
   roots: ["<rootDir>/src"],
 
   // Ensure `window.fetch` is polyfilled if it isn't available in the runtime

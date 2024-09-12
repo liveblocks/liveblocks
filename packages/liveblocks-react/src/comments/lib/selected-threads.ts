@@ -1,14 +1,12 @@
-import {
-  applyOptimisticUpdates,
-  type BaseMetadata,
-  type ThreadData,
-  type UmbrellaStoreState,
-} from "@liveblocks/core";
+import type { BaseMetadata, ThreadData } from "@liveblocks/core";
 
 import type { UseThreadsOptions } from "../../types";
+import type { UmbrellaStoreState } from "../../umbrella-store";
+import { applyOptimisticUpdates } from "../../umbrella-store";
 
 export function selectedUserThreads<M extends BaseMetadata>(
-  state: UmbrellaStoreState<M>
+  state: UmbrellaStoreState<M>,
+  options: UseThreadsOptions<M>
 ) {
   const result = applyOptimisticUpdates(state);
 
@@ -18,6 +16,32 @@ export function selectedUserThreads<M extends BaseMetadata>(
       // We do not want to include threads that have been marked as deleted
       if (thread.deletedAt !== undefined) {
         return false;
+      }
+
+      const query = options.query;
+      if (!query) return true;
+
+      // If the query includes 'resolved' filter and the thread's 'resolved' value does not match the query's 'resolved' value, exclude the thread
+      if (query.resolved !== undefined && thread.resolved !== query.resolved) {
+        return false;
+      }
+
+      for (const key in query.metadata) {
+        const metadataValue = thread.metadata[key];
+        const filterValue = query.metadata[key];
+
+        if (
+          assertFilterIsStartsWithOperator(filterValue) &&
+          assertMetadataValueIsString(metadataValue)
+        ) {
+          if (metadataValue.startsWith(filterValue.startsWith)) {
+            return true;
+          }
+        }
+
+        if (metadataValue !== filterValue) {
+          return false;
+        }
       }
 
       return true;

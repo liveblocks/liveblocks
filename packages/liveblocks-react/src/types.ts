@@ -20,6 +20,7 @@ import type {
   CommentBody,
   CommentData,
   DRI,
+  HistoryVersion,
   InboxNotificationData,
   LiveblocksError,
   PartialUnless,
@@ -47,24 +48,33 @@ export type StorageStatusSuccess = Exclude<
   "not-loaded" | "loading"
 >;
 
+export type ThreadsQuery<M extends BaseMetadata> = {
+  /**
+   * Whether to only return threads marked as resolved or unresolved. If not provided,
+   * all threads will be returned.
+   */
+  resolved?: boolean;
+  /**
+   * The metadata to filter the threads by. If provided, only threads with metadata that matches
+   * the provided metadata will be returned. If not provided, all threads will be returned.
+   */
+  metadata?: Partial<QueryMetadata<M>>;
+};
+
+export type UseUserThreadsOptions<M extends BaseMetadata> = {
+  /**
+   * The query (including metadata) to filter the threads by. If provided, only threads
+   * that match the query will be returned. If not provided, all threads will be returned.
+   */
+  query?: ThreadsQuery<M>;
+};
+
 export type UseThreadsOptions<M extends BaseMetadata> = {
   /**
    * The query (including metadata) to filter the threads by. If provided, only threads
    * that match the query will be returned. If not provided, all threads will be returned.
    */
-  query?: {
-    /**
-     * Whether to only return threads marked as resolved or unresolved. If not provided,
-     * all threads will be returned.
-     */
-    resolved?: boolean;
-
-    /**
-     * The metadata to filter the threads by. If provided, only threads with metadata that matches
-     * the provided metadata will be returned. If not provided, all threads will be returned.
-     */
-    metadata?: Partial<QueryMetadata<M>>;
-  };
+  query?: ThreadsQuery<M>;
 
   /**
    * Whether to scroll to a comment on load based on the URL hash. Defaults to `true`.
@@ -217,6 +227,52 @@ export type RoomNotificationSettingsState =
   | RoomNotificationSettingsStateLoading
   | RoomNotificationSettingsStateError
   | RoomNotificationSettingsStateSuccess;
+
+export type HistoryVersionDataStateLoading = {
+  isLoading: true;
+  data?: never;
+  error?: never;
+};
+
+export type HistoryVersionDataStateResolved = {
+  isLoading: false;
+  data: Uint8Array;
+  error?: Error;
+};
+
+export type HistoryVersionDataStateError = {
+  isLoading: false;
+  data?: never;
+  error: Error;
+};
+
+export type HistoryVersionDataState =
+  | HistoryVersionDataStateLoading
+  | HistoryVersionDataStateResolved
+  | HistoryVersionDataStateError;
+
+export type HistoryVersionsStateLoading = {
+  isLoading: true;
+  versions?: never;
+  error?: never;
+};
+
+export type HistoryVersionsStateResolved = {
+  isLoading: false;
+  versions: HistoryVersion[];
+  error?: Error;
+};
+
+export type HistoryVersionsStateError = {
+  isLoading: false;
+  versions?: never;
+  error: Error;
+};
+
+export type HistoryVersionsState =
+  | HistoryVersionsStateLoading
+  | HistoryVersionsStateResolved
+  | HistoryVersionsStateError;
 
 export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
   // prettier-ignore
@@ -970,6 +1026,22 @@ export type RoomContextBundle<
         (settings: Partial<RoomNotificationSettings>) => void,
       ];
 
+      /**
+       * (Private beta)  Returns a history of versions of the current room.
+       *
+       * @example
+       * const { versions, error, isLoading } = useHistoryVersions();
+       */
+      useHistoryVersions(): HistoryVersionsState;
+
+      /**
+       * (Private beta) Returns the data of a specific version of the current room.
+       *
+       * @example
+       * const { data, error, isLoading } = useHistoryVersionData(version.id);
+       */
+      useHistoryVersionData(id: string): HistoryVersionDataState;
+
       suspense: Resolve<
         RoomContextBundleCommon<P, S, U, E, M> &
           SharedContextBundle<U>["suspense"] & {
@@ -1046,6 +1118,22 @@ export type RoomContextBundle<
              * const { threads } = useThreads();
              */
             useThreads(options?: UseThreadsOptions<M>): ThreadsStateSuccess<M>;
+
+            /**
+             * (Private beta) Returns a history of versions of the current room.
+             *
+             * @example
+             * const { versions } = useHistoryVersions();
+             */
+            useHistoryVersions(): HistoryVersionsStateResolved;
+
+            // /**
+            //  * Returns the data of a specific version of the current room's history.
+            //  *
+            //  * @example
+            //  * const { data } = useHistoryVersionData(version.id);
+            //  */
+            // useHistoryVersionData(versionId: string): HistoryVersionDataState;
 
             /**
              * Returns the user's notification settings for the current room
@@ -1155,7 +1243,9 @@ export type LiveblocksContextBundle<
        * This hook is experimental and could be removed or changed at any time!
        * Do not use unless explicitely recommended by the Liveblocks team.
        */
-      useUserThreads_experimental(): ThreadsState<M>;
+      useUserThreads_experimental(
+        options?: UseUserThreadsOptions<M>
+      ): ThreadsState<M>;
 
       suspense: Resolve<
         LiveblocksContextBundleCommon<M> &
@@ -1182,7 +1272,9 @@ export type LiveblocksContextBundle<
              * This hook is experimental and could be removed or changed at any time!
              * Do not use unless explicitely recommended by the Liveblocks team.
              */
-            useUserThreads_experimental(): ThreadsStateSuccess<M>;
+            useUserThreads_experimental(
+              options?: UseUserThreadsOptions<M>
+            ): ThreadsStateSuccess<M>;
           }
       >;
     }
