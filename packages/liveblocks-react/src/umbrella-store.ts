@@ -18,6 +18,8 @@ import type {
 } from "@liveblocks/core";
 import { console, createStore, mapValues, nanoid } from "@liveblocks/core";
 
+import { isMoreRecentlyUpdated } from "./lib/compare";
+
 type OptimisticUpdate<M extends BaseMetadata> =
   | CreateThreadOptimisticUpdate<M>
   | DeleteThreadOptimisticUpdate
@@ -528,7 +530,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this.updateThreadsCache((cache) => {
         const existingThread = cache[thread.id];
         return existingThread === undefined ||
-          compareThreads(thread, existingThread) === 1
+          isMoreRecentlyUpdated(thread, existingThread)
           ? { ...cache, [thread.id]: thread }
           : cache;
       });
@@ -649,38 +651,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
   public setQueryError(queryKey: string, error: Error): void {
     this.setQueryState(queryKey, { isLoading: false, error });
   }
-}
-
-/**
- * Compares two threads to determine which one is newer.
- * @param threadA The first thread to compare.
- * @param threadB The second thread to compare.
- * @returns 1 if threadA is newer, -1 if threadB is newer, or 0 if they are the same age or can't be compared.
- */
-export function compareThreads<M extends BaseMetadata>(
-  thread1: ThreadData<M>,
-  thread2: ThreadData<M>
-): number {
-  // Compare updatedAt if available
-  if (thread1.updatedAt && thread2.updatedAt) {
-    return thread1.updatedAt > thread2.updatedAt
-      ? 1
-      : thread1.updatedAt < thread2.updatedAt
-        ? -1
-        : 0;
-  } else if (thread1.updatedAt || thread2.updatedAt) {
-    return thread1.updatedAt ? 1 : -1;
-  }
-
-  // Finally, compare createdAt
-  if (thread1.createdAt > thread2.createdAt) {
-    return 1;
-  } else if (thread1.createdAt < thread2.createdAt) {
-    return -1;
-  }
-
-  // If all dates are equal, return 0
-  return 0;
 }
 
 export function applyOptimisticUpdates<M extends BaseMetadata>(
@@ -936,12 +906,13 @@ export function applyThreadUpdates<M extends BaseMetadata>(
   updates.newThreads.forEach((thread) => {
     const existingThread = updatedThreads[thread.id];
 
-    // If the thread already exists, we need to compare the two threads to determine which one is newer.
+    // If a thread already exists but it's been already more recent, don't update it
     if (existingThread) {
-      const result = compareThreads(existingThread, thread);
-      // If the existing thread is newer than the new thread, we do not update the existing thread.
-      if (result === 1) return;
+      if (isMoreRecentlyUpdated(existingThread, thread)) {
+        return; // Do not update the existing thread
+      }
     }
+
     updatedThreads[thread.id] = thread;
   });
 
