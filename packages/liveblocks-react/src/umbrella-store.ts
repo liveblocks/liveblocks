@@ -18,6 +18,8 @@ import type {
 } from "@liveblocks/core";
 import { console, createStore, mapValues, nanoid } from "@liveblocks/core";
 
+import { reverseCmp } from "./lib/sort-cmp";
+
 type OptimisticUpdate<M extends BaseMetadata> =
   | CreateThreadOptimisticUpdate<M>
   | DeleteThreadOptimisticUpdate
@@ -653,10 +655,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
 }
 
 /**
- * Compares two threads to determine which one is newer.
- * @param threadA The first thread to compare.
- * @param threadB The second thread to compare.
- * @returns 1 if threadA is newer, -1 if threadB is newer, or 0 if they are the same age or can't be compared.
+ * Comparison function to be used in .sort() which will sort threads from
+ * oldest to newest.
+ *
+ * Think:
+ *   if a < b, then -1
+ *   if a > b, then 1
+ *   if a == b, then 0
+ *
  */
 export function compareThreads<M extends BaseMetadata>(
   a: ThreadData<M>,
@@ -667,6 +673,12 @@ export function compareThreads<M extends BaseMetadata>(
     (b.updatedAt ?? b.createdAt).getTime()
   );
 }
+
+/**
+ * Comparison function to be used in .sort() which will sort threads from
+ * newest to oldest.
+ */
+export const compareThreadsDesc = reverseCmp(compareThreads);
 
 export function applyOptimisticUpdates<M extends BaseMetadata>(
   state: UmbrellaStoreState<M>
