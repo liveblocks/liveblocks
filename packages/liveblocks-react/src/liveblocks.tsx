@@ -172,6 +172,7 @@ function selectUserThreads<M extends BaseMetadata>(
 
   // Sort threads by updated date (newest first) and then created date
   return threads.sort(
+    // XXX This implementation is different from the one in useThreads()... deliberate or should we DRY it up?
     (a, b) =>
       (b.updatedAt ?? b.createdAt).getTime() -
       (a.updatedAt ?? a.createdAt).getTime()

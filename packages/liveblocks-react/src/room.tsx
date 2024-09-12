@@ -231,7 +231,10 @@ export function selectRoomThreads<M extends BaseMetadata>(
       });
 
   // Sort threads by creation date (oldest first)
-  return threads.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  return threads.sort(
+    // XXX This implementation is different from the one in useUserThreads_experimental()... deliberate or should we DRY it up?
+    (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
+  );
 }
 
 function selectNotificationSettings<M extends BaseMetadata>(
