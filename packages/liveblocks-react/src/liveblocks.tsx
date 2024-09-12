@@ -223,7 +223,11 @@ function getOrCreateContextBundle<
   return bundle as LiveblocksContextBundle<U, M>;
 }
 
-// Gets or creates a unique Umbrella store for each unique client instance
+/**
+ * Gets or creates a unique Umbrella store for each unique client instance.
+ *
+ * @private
+ */
 export function getUmbrellaStoreForClient<M extends BaseMetadata>(
   client: OpaqueClient
 ): UmbrellaStore<M> {
