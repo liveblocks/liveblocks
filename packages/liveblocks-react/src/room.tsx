@@ -33,26 +33,20 @@ import type {
   StorageStatus,
   ThreadData,
   ToImmutable,
-  UmbrellaStore,
-  UmbrellaStoreState,
 } from "@liveblocks/core";
 import {
-  addReaction,
   CommentsApiError,
   console,
   createCommentId,
   createThreadId,
-  deleteComment,
   deprecateIf,
   errorIf,
   kInternal,
   makeEventSource,
   makePoller,
   NotificationsApiError,
-  removeReaction,
   ServerMsgCode,
   stringify,
-  upsertComment,
 } from "@liveblocks/core";
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
@@ -81,6 +75,7 @@ import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
 import {
   createSharedContext,
+  getUmbrellaStoreForClient,
   LiveblocksProviderWithClient,
   useClient,
   useClientOrNull,
@@ -108,11 +103,18 @@ import type {
   UseStorageStatusOptions,
   UseThreadsOptions,
 } from "./types";
+import type { UmbrellaStore, UmbrellaStoreState } from "./umbrella-store";
+import {
+  addReaction,
+  deleteComment,
+  removeReaction,
+  upsertComment,
+} from "./umbrella-store";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
 
 const SMOOTH_DELAY = 1000;
 
-const noop = () => { };
+const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
 
 const missing_unstable_batchedUpdates = (
@@ -124,8 +126,8 @@ const missing_unstable_batchedUpdates = (
     import { unstable_batchedUpdates } from "react-dom";  // or "react-native"
 
     <RoomProvider id=${JSON.stringify(
-    roomId
-  )} ... unstable_batchedUpdates={unstable_batchedUpdates}>
+      roomId
+    )} ... unstable_batchedUpdates={unstable_batchedUpdates}>
       ...
     </RoomProvider>
 
@@ -272,7 +274,7 @@ function getExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
 }
 
 function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
-  const store = client[kInternal].umbrellaStore as unknown as UmbrellaStore<M>;
+  const store = getUmbrellaStoreForClient(client);
 
   const DEFAULT_DEDUPING_INTERVAL = 2000; // 2 seconds
 
@@ -2228,8 +2230,8 @@ function useHistoryVersionData(versionId: string): HistoryVersionDataState {
             error instanceof Error
               ? error
               : new Error(
-                "An unknown error occurred while loading this version"
-              ),
+                  "An unknown error occurred while loading this version"
+                ),
         });
       }
     };

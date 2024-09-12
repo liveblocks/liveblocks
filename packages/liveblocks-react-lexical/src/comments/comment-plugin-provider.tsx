@@ -4,9 +4,10 @@ import {
   registerNestedElementResolver,
   removeClassNamesFromElement,
 } from "@lexical/utils";
-import { kInternal, shallow } from "@liveblocks/core";
+import { shallow } from "@liveblocks/core";
 import {
   CreateThreadError,
+  getUmbrellaStoreForClient,
   selectedThreads,
   useClient,
   useCommentsErrorListener,
@@ -101,7 +102,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     }
   });
 
-  const store = client[kInternal].umbrellaStore;
+  const store = getUmbrellaStoreForClient(client);
 
   const threads = useSyncExternalStoreWithSelector(
     store.subscribe,

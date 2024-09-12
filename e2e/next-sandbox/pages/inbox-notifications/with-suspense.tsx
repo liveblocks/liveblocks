@@ -1,8 +1,8 @@
-import { kInternal } from "@liveblocks/core";
 import {
   ClientSideSuspense,
   createLiveblocksContext,
   createRoomContext,
+  getUmbrellaStoreForClient,
   useClient,
 } from "@liveblocks/react";
 import {
@@ -197,7 +197,7 @@ function TopPart() {
 
 function usePendingUpdatesCount() {
   const client = useClient();
-  const store = client[kInternal].umbrellaStore;
+  const store = getUmbrellaStoreForClient(client);
   const getter = React.useCallback(
     () => store.get().optimisticUpdates.length,
     [store]

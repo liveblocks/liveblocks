@@ -89,3 +89,6 @@ export {
   useUnreadInboxNotificationsCount,
   useUser,
 } from "./liveblocks";
+
+// Private APIs (for use in react-lexical only)
+export { getUmbrellaStoreForClient } from "./liveblocks";

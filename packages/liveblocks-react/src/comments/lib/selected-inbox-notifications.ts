@@ -1,9 +1,7 @@
-import type {
-  BaseMetadata,
-  InboxNotificationData,
-  UmbrellaStoreState,
-} from "@liveblocks/core";
-import { applyOptimisticUpdates } from "@liveblocks/core";
+import type { BaseMetadata, InboxNotificationData } from "@liveblocks/core";
+
+import type { UmbrellaStoreState } from "../../umbrella-store";
+import { applyOptimisticUpdates } from "../../umbrella-store";
 
 export function selectedInboxNotifications<M extends BaseMetadata>(
   state: UmbrellaStoreState<M>

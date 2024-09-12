@@ -1,7 +1,7 @@
 import type { ThreadData } from "@liveblocks/core";
-import { UmbrellaStore } from "@liveblocks/core";
 
 import { selectedThreads } from "../comments/lib/selected-threads";
+import { UmbrellaStore } from "../umbrella-store";
 
 describe("selectedThreads", () => {
   it("should only return resolved threads from a list of threads", () => {

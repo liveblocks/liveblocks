@@ -1,9 +1,9 @@
-import { nanoid } from "../lib/nanoid";
 import type {
   BaseMetadata,
   CommentData,
   ThreadDataWithDeleteInfo,
-} from "../protocol/Comments";
+} from "@liveblocks/core";
+import { nanoid } from "@liveblocks/core";
 
 export function createThread(
   overrides: Partial<ThreadDataWithDeleteInfo<BaseMetadata>> = {}
