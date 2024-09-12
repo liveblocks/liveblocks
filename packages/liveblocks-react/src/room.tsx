@@ -67,7 +67,7 @@ import {
   RemoveReactionError,
   UpdateNotificationSettingsError,
 } from "./comments/errors";
-import { isStartsWith, isString } from "./lib/guards";
+import { isString } from "./lib/guards";
 import { retryError } from "./lib/retry-error";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
@@ -76,6 +76,7 @@ import {
   createSharedContext,
   getUmbrellaStoreForClient,
   LiveblocksProviderWithClient,
+  makeThreadsFilter,
   selectInboxNotifications,
   useClient,
   useClientOrNull,
@@ -174,7 +175,6 @@ function selectorFor_useOthersConnectionIds(
 /**
  * @private Do not rely on this internal API.
  */
-// XXX This helper should not be exposed at the package level!
 export function selectRoomThreads<M extends BaseMetadata>(
   roomId: string,
   state: UmbrellaStoreState<M>,
@@ -182,53 +182,21 @@ export function selectRoomThreads<M extends BaseMetadata>(
 ): ThreadData<M>[] {
   // Here, result contains copies of 3 out of the 5 caches with all optimistic
   // updates mixed in
-  // XXX This should not be the responsibility of this select function
   const result = applyOptimisticUpdates(state);
 
   // First filter pass: remove all soft-deleted threads
-  // XXX This should not be the responsibility of this select function
   let threads = Object.values(result.threads).filter(
     (thread): thread is ThreadData<M> => !thread.deletedAt
   );
 
   // Second filter pass: only select the threads for this *room*
-  // XXX This should ideally also not be the responsibility of this select function!
   threads = threads.filter((thread) => thread.roomId === roomId);
 
-  // Third filter pass: check filter criteria
+  // Third filter pass: select only threads matching query filter
   const query = options.query;
-  threads = !query
-    ? threads
-    : threads.filter((thread) => {
-        // If the query includes 'resolved' filter and the thread's 'resolved' value does not match the query's 'resolved' value, exclude the thread
-        if (
-          query.resolved !== undefined &&
-          thread.resolved !== query.resolved
-        ) {
-          return false;
-        }
-
-        for (const key in query.metadata) {
-          const metadataValue = thread.metadata[key];
-          const filterValue = query.metadata[key];
-
-          if (isStartsWith(filterValue) && isString(metadataValue)) {
-            if (metadataValue.startsWith(filterValue.startsWith)) {
-              // XXX Double-check the logic here! Early-returning true in
-              // a filter is a smell. What if other filter criteria do NOT
-              // match? We should still reject it then, even if the startsWith
-              // criterium matches.
-              return true;
-            }
-          }
-
-          if (metadataValue !== filterValue) {
-            return false;
-          }
-        }
-
-        return true;
-      });
+  if (query) {
+    threads = threads.filter(makeThreadsFilter(query));
+  }
 
   // Sort threads by creation date (oldest first)
   return threads.sort(

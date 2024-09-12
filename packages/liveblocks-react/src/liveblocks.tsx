@@ -45,6 +45,7 @@ import type {
   RoomInfoAsyncResult,
   RoomInfoAsyncSuccess,
   SharedContextBundle,
+  ThreadsQuery,
   ThreadsState,
   ThreadsStateSuccess,
   UnreadInboxNotificationsCountState,
@@ -115,15 +116,49 @@ function selectorFor_useInboxNotifications(
   };
 }
 
+/**
+ * Creates a predicate function that will filter all ThreadData instances that
+ * match the given query.
+ */
+export function makeThreadsFilter<M extends BaseMetadata>(
+  query: ThreadsQuery<M>
+): (thread: ThreadData<M>) => boolean {
+  return (thread: ThreadData<M>) => {
+    // If the query includes 'resolved' filter and the thread's 'resolved' value does not match the query's 'resolved' value, exclude the thread
+    if (query.resolved !== undefined && thread.resolved !== query.resolved) {
+      return false;
+    }
+
+    for (const key in query.metadata) {
+      const metadataValue = thread.metadata[key];
+      const filterValue = query.metadata[key];
+
+      if (isStartsWith(filterValue) && isString(metadataValue)) {
+        if (metadataValue.startsWith(filterValue.startsWith)) {
+          // XXX Double-check the logic here! Early-returning true in
+          // a filter is a smell. What if other filter criteria do NOT
+          // match? We should still reject it then, even if the startsWith
+          // criterium matches.
+          return true;
+        }
+      }
+
+      if (metadataValue !== filterValue) {
+        return false;
+      }
+    }
+
+    return true;
+  };
+}
+
 function selectUserThreads<M extends BaseMetadata>(
   state: UmbrellaStoreState<M>,
   options: UseThreadsOptions<M>
 ) {
-  // XXX This should not be the responsibility of this select function
   const result = applyOptimisticUpdates(state);
 
   // First filter pass: remove all soft-deleted threads
-  // XXX This should not be the responsibility of this select function
   let threads = Object.values(result.threads).filter(
     (thread): thread is ThreadData<M> => !thread.deletedAt
   );
@@ -135,40 +170,11 @@ function selectUserThreads<M extends BaseMetadata>(
     () => true
   );
 
-  // Third filter pass: only select the threads for this *room*
+  // Third filter pass: select only threads matching query filter
   const query = options.query;
-  threads = !query
-    ? threads
-    : threads.filter((thread) => {
-        // If the query includes 'resolved' filter and the thread's 'resolved' value does not match the query's 'resolved' value, exclude the thread
-        if (
-          query.resolved !== undefined &&
-          thread.resolved !== query.resolved
-        ) {
-          return false;
-        }
-
-        for (const key in query.metadata) {
-          const metadataValue = thread.metadata[key];
-          const filterValue = query.metadata[key];
-
-          if (isStartsWith(filterValue) && isString(metadataValue)) {
-            if (metadataValue.startsWith(filterValue.startsWith)) {
-              // XXX Double-check the logic here! Early-returning true in
-              // a filter is a smell. What if other filter criteria do NOT
-              // match? We should still reject it then, even if the startsWith
-              // criterium matches.
-              return true;
-            }
-          }
-
-          if (metadataValue !== filterValue) {
-            return false;
-          }
-        }
-
-        return true;
-      });
+  if (query) {
+    threads = threads.filter(makeThreadsFilter(query));
+  }
 
   // Sort threads by updated date (newest first) and then created date
   return threads.sort(
@@ -279,9 +285,7 @@ function selectorFor_useRoomInfo(
 export function selectInboxNotifications<M extends BaseMetadata>(
   state: UmbrellaStoreState<M>
 ): InboxNotificationData[] {
-  // XXX This should not be the responsibility of this select function
   const result = applyOptimisticUpdates(state);
-
   return Object.values(result.inboxNotifications).sort(
     // Sort so that the most recent notifications are first
     (a, b) => b.notifiedAt.getTime() - a.notifiedAt.getTime()
