@@ -104,12 +104,14 @@ import type {
   UseStorageStatusOptions,
   UseThreadsOptions,
 } from "./types";
-import type { UmbrellaStore, UmbrellaStoreState } from "./umbrella-store";
 import {
   addReaction,
   applyOptimisticUpdates,
+  compareThreads,
   deleteComment,
   removeReaction,
+  UmbrellaStore,
+  UmbrellaStoreState,
   upsertComment,
 } from "./umbrella-store";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
@@ -199,10 +201,7 @@ export function selectRoomThreads<M extends BaseMetadata>(
   }
 
   // Sort threads by creation date (oldest first)
-  return threads.sort(
-    // XXX This implementation is different from the one in useUserThreads_experimental()... deliberate or should we DRY it up?
-    (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
-  );
+  return threads.sort(compareThreads);
 }
 
 function selectNotificationSettings<M extends BaseMetadata>(
