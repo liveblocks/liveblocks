@@ -2,7 +2,6 @@
 
 import { useChat } from "ai/react";
 import { createRoomWithLexicalDocument } from "../actions/liveblocks";
-import { redirect } from "next/navigation";
 import { getPageUrl } from "../config";
 import Markdown from "markdown-to-jsx";
 import { SparklesIcon } from "../icons/SparklesIcon";
@@ -12,6 +11,7 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import { CreateIcon } from "../icons/CreateIcon";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { StopIcon } from "../icons/StopIcon";
+import { useRouter } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -100,7 +100,9 @@ function Chat() {
 }
 
 function MessageLine({ message }: { message: Message }) {
-  const [title, setTitle] = useState("null");
+  const router = useRouter();
+
+  const [title, setTitle] = useState("");
   const [content, setContent] = useState(message.content);
   const [loading, setLoading] = useState(false);
 
@@ -121,9 +123,11 @@ function MessageLine({ message }: { message: Message }) {
     async (e: FormEvent) => {
       e.preventDefault();
       setLoading(true);
-      const room = await createRoomWithLexicalDocument(content, title);
-      redirect(getPageUrl(room.id));
-      setLoading(false);
+      const room = await createRoomWithLexicalDocument(
+        content,
+        title || "Untitled document"
+      );
+      router.push(getPageUrl(room.id));
     },
     [content, title]
   );

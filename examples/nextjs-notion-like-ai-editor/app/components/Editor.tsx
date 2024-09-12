@@ -143,7 +143,7 @@ function Skeleton() {
         <div className="h-[60px]" />
         <div className="mx-8 mt-4">
           <div className="bg-gray-200/40 animate-pulse h-11 rounded-lg w-[400px] max-w-full" />
-          <div className="bg-gray-200/40 animate-pulse w-full h-24 rounded-lg mt-8"></div>
+          <div className="bg-gray-200/40 animate-pulse w-full h-32 rounded-lg mt-8"></div>
         </div>
       </div>
     </div>
