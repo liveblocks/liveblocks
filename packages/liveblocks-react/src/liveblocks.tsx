@@ -120,9 +120,11 @@ function selectUserThreads<M extends BaseMetadata>(
   state: UmbrellaStoreState<M>,
   options: UseThreadsOptions<M>
 ) {
+  // XXX This should not be the responsibility of this select function
   const result = applyOptimisticUpdates(state);
 
   // First filter pass: remove all soft-deleted threads
+  // XXX This should not be the responsibility of this select function
   let threads = Object.values(result.threads).filter(
     (thread): thread is ThreadData<M> => !thread.deletedAt
   );
@@ -237,7 +239,9 @@ function selectorFor_useRoomInfo(
 export function selectInboxNotifications<M extends BaseMetadata>(
   state: UmbrellaStoreState<M>
 ): InboxNotificationData[] {
+  // XXX This should not be the responsibility of this select function
   const result = applyOptimisticUpdates(state);
+
   return Object.values(result.inboxNotifications).sort(
     // Sort so that the most recent notifications are first
     (a, b) => b.notifiedAt.getTime() - a.notifiedAt.getTime()

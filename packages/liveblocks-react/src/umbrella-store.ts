@@ -149,6 +149,7 @@ type UpdateNotificationSettingsOptimisticUpdate = {
 type QueryState = AsyncResult<undefined>;
 //                            ^^^^^^^^^ We don't store the actual query result in this status
 
+// XXX This type should not be exported
 export type UmbrellaStoreState<M extends BaseMetadata> = Readonly<{
   /**
    * Keep track of loading and error status of all the queries made by the client.
@@ -206,6 +207,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.subscribe = this.subscribe.bind(this);
   }
 
+  // XXX Split this one getter into three separate ones:
+  // - getThreadsSnapshot()              - returning a stable, cached, list of all threads, with optimistic updates applied, and with all deleted threads filtered out
+  // - getInboxNotificationsSnapshot()   - returning a stable, cached, list (?) of all inbox notifications, with optimistic updates applied
+  // - getNotificationSettingsSnapshot() - returning a stable, cached, list (?) of all notification settings
   public get(): Readonly<UmbrellaStoreState<M>> {
     return this._store.get();
   }

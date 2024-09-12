@@ -177,6 +177,7 @@ function selectorFor_useOthersConnectionIds(
 /**
  * @private Do not rely on this internal API.
  */
+// XXX This helper should not be exposed at the package level!
 export function selectRoomThreads<M extends BaseMetadata>(
   roomId: string,
   state: UmbrellaStoreState<M>,
@@ -184,14 +185,17 @@ export function selectRoomThreads<M extends BaseMetadata>(
 ): ThreadData<M>[] {
   // Here, result contains copies of 3 out of the 5 caches with all optimistic
   // updates mixed in
+  // XXX This should not be the responsibility of this select function
   const result = applyOptimisticUpdates(state);
 
   // First filter pass: remove all soft-deleted threads
+  // XXX This should not be the responsibility of this select function
   let threads = Object.values(result.threads).filter(
     (thread): thread is ThreadData<M> => !thread.deletedAt
   );
 
   // Second filter pass: only select the threads for this *room*
+  // XXX This should ideally also not be the responsibility of this select function!
   threads = threads.filter((thread) => thread.roomId === roomId);
 
   // Third filter pass: select only threads matching query filter
