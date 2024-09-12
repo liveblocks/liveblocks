@@ -468,6 +468,29 @@ describe("useThreads", () => {
     );
 
     unmount6();
+
+    const { result: result7, unmount: unmount7 } = renderHook(
+      () =>
+        useThreads({
+          query: { metadata: { color: { startsWith: "blu" }, pinned: true } },
+        }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id={roomId}>{children}</RoomProvider>
+        ),
+      }
+    );
+
+    expect(result7.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result7.current).toEqual({
+        isLoading: false,
+        threads: [bluePinnedThread],
+      })
+    );
+
+    unmount7();
   });
 
   test("shoud fetch threads for a given query with a startsWith filter", async () => {
