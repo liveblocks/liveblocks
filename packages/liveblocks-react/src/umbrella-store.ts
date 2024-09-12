@@ -17,6 +17,7 @@ import type {
   ThreadDeleteInfo,
 } from "@liveblocks/core";
 import { console, createStore, mapValues, nanoid } from "@liveblocks/core";
+
 import { isMoreRecentlyUpdated } from "./lib/compare";
 
 type OptimisticUpdate<M extends BaseMetadata> =

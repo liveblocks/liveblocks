@@ -33,9 +33,9 @@ import React, {
 } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
-import { byMostRecentlyUpdated } from "./lib/compare";
 
-import { isStartsWith, isString } from "./lib/guards";
+import { byMostRecentlyUpdated } from "./lib/compare";
+import { makeThreadsFilter } from "./lib/querying";
 import { autoRetry, retryError } from "./lib/retry-error";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { use } from "./lib/use-polyfill";
@@ -46,7 +46,6 @@ import type {
   RoomInfoAsyncResult,
   RoomInfoAsyncSuccess,
   SharedContextBundle,
-  ThreadsQuery,
   ThreadsState,
   ThreadsStateSuccess,
   UnreadInboxNotificationsCountState,
@@ -114,42 +113,6 @@ function selectorFor_useInboxNotifications(
   return {
     inboxNotifications: selectInboxNotifications(state),
     isLoading: false,
-  };
-}
-
-/**
- * Creates a predicate function that will filter all ThreadData instances that
- * match the given query.
- */
-export function makeThreadsFilter<M extends BaseMetadata>(
-  query: ThreadsQuery<M>
-): (thread: ThreadData<M>) => boolean {
-  return (thread: ThreadData<M>) => {
-    // If the query includes 'resolved' filter and the thread's 'resolved' value does not match the query's 'resolved' value, exclude the thread
-    if (query.resolved !== undefined && thread.resolved !== query.resolved) {
-      return false;
-    }
-
-    for (const key in query.metadata) {
-      const metadataValue = thread.metadata[key];
-      const filterValue = query.metadata[key];
-
-      if (isStartsWith(filterValue) && isString(metadataValue)) {
-        if (metadataValue.startsWith(filterValue.startsWith)) {
-          // XXX Double-check the logic here! Early-returning true in
-          // a filter is a smell. What if other filter criteria do NOT
-          // match? We should still reject it then, even if the startsWith
-          // criterium matches.
-          return true;
-        }
-      }
-
-      if (metadataValue !== filterValue) {
-        return false;
-      }
-    }
-
-    return true;
   };
 }
 

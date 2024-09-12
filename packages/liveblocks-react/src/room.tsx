@@ -69,6 +69,7 @@ import {
 } from "./comments/errors";
 import { byFirstCreated } from "./lib/compare";
 import { isString } from "./lib/guards";
+import { makeThreadsFilter } from "./lib/querying";
 import { retryError } from "./lib/retry-error";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
@@ -77,7 +78,6 @@ import {
   createSharedContext,
   getUmbrellaStoreForClient,
   LiveblocksProviderWithClient,
-  makeThreadsFilter,
   selectInboxNotifications,
   useClient,
   useClientOrNull,
@@ -105,13 +105,12 @@ import type {
   UseStorageStatusOptions,
   UseThreadsOptions,
 } from "./types";
+import type { UmbrellaStore, UmbrellaStoreState } from "./umbrella-store";
 import {
   addReaction,
   applyOptimisticUpdates,
   deleteComment,
   removeReaction,
-  UmbrellaStore,
-  UmbrellaStoreState,
   upsertComment,
 } from "./umbrella-store";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
