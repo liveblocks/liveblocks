@@ -362,7 +362,6 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
   let isFetchingUserThreadsUpdates = false;
 
   async function refreshUserThreads() {
-    console.log("refreshUserThreads", userThreadslastRequestedAt);
     const since = userThreadslastRequestedAt;
 
     if (since === undefined || isFetchingUserThreadsUpdates) {
@@ -374,7 +373,6 @@ function makeExtrasForClient<U extends BaseUserMeta, M extends BaseMetadata>(
         since,
       });
       isFetchingUserThreadsUpdates = false;
-      console.log("got updates", updates);
       store.updateThreadsAndNotifications(
         updates.threads.updated,
         [],
