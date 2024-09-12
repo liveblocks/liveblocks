@@ -9,6 +9,17 @@
 - Add support for `query` argument to `useUserThreads_experimental`
 - Fix bug where some combinations of `query` criteria could over-select threads
   in `useThreads`
+- Add `useHistoryVersion` hook to retreive version history (Private beta)
+
+### `@liveblocks/react-ui`
+
+- Add `HistoryVersionSummaryList` and `HistoryVersionSummary` components to help
+  display version history (Private beta)
+
+### `@liveblocks/react-lexical`
+
+- Add `HistoryVersionPreview` component to display and restore a version
+  (Private beta)
 
 ## 2.6.1
 
