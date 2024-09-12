@@ -39,8 +39,8 @@ export function Toolbar({ editor }: Props) {
         <StrikethroughIcon />
       </button>
       <button className="flex items-center justify-center cursor-pointer rounded-md h-8 w-8 bg-white text-gray-800 border-none shadow-md hover:text-gray-900 hover:shadow-lg focus:outline-offset-2 active:shadow-sm data-[active=is-active]:bg-gray-300"
-        onClick={() => editor.chain().focus().addComment().run()}
-        disabled={!editor.can().chain().focus().addComment().run()}
+        onClick={() => editor.chain().focus().addPendingComment().run()}
+
         data-active={editor.isActive("lb-comment") ? "is-active" : undefined}
         aria-label="strikethrough"
       >

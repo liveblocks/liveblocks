@@ -161,3 +161,7 @@ li::marker {
 .lb-comment {
   background-color: rgba(255, 255, 0, 0.218);
 }
+
+.lb-comment-active-selection {
+  background-color: rgba(58, 58, 255, 0.318);
+}

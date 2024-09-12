@@ -7,6 +7,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import { useLiveblocksExtension } from "./LiveblocksExtension";
 import StarterKit from "@tiptap/starter-kit";
 import { Toolbar } from "./Toolbar";
+import { ThreadList } from "./ThreadList";
 
 
 export default function Editor() {
@@ -41,7 +42,7 @@ export default function Editor() {
 
 
         <div className="xl:[&:not(:has(.lb-lexical-anchored-threads))]:pr-[200px] [&:not(:has(.lb-lexical-anchored-threads))]:pr-[50px]">
-          {/*<Threads />*/}
+          {editor && <ThreadList editor={editor} />}
         </div>
       </div>
     </div>

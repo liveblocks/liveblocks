@@ -4,6 +4,9 @@ import { Extension, mergeAttributes, Mark } from "@tiptap/core";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
 import { Doc } from "yjs";
+import { Plugin, PluginKey, SelectionBookmark } from "@tiptap/pm/state";
+import { Decoration, DecorationSet } from "@tiptap/pm/view";
+import { ySyncPluginKey } from "y-prosemirror";
 
 const providersMap = new Map<
   string,
@@ -16,13 +19,21 @@ type LiveblocksExtensionOptions = {
   field?: string;
 };
 
+const ACTIVE_SELECTOR_PLUGIN_KEY = new PluginKey(
+  "lb-comment-active-selection-decorator"
+);
+
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     comments: {
       /**
        * Add a comment
        */
-      addComment: () => ReturnType;
+      addComment: (id: string) => ReturnType;
+    };
+
+    liveblocks: {
+      addPendingComment: () => ReturnType;
     };
   }
 }
@@ -37,23 +48,36 @@ const Comment = Mark.create({
   addAttributes() {
     // Return an object with attribute configuration
     return {
-      comment_id: {
+      commentId: {
         parseHTML: (element) => element.getAttribute("data-lb-comment-id"),
         renderHTML: (attributes) => {
           return {
-            "data-lb-comment-id": attributes.comment_id,
+            "data-lb-comment-id": attributes.commentId,
           };
         },
         default: "unset",
       },
     };
   },
+
   addCommands() {
     return {
       addComment:
-        () =>
+        (id: string) =>
         ({ commands }) => {
-          return commands.setMark(this.name, { comment_id: "123" });
+          if (
+            !this.editor.storage.liveblocksExtension.pendingCommentSelection
+          ) {
+            return false;
+          }
+          this.editor.state.selection = (
+            this.editor.storage.liveblocksExtension
+              .pendingCommentSelection as SelectionBookmark
+          ).resolve(this.editor.state.doc);
+          commands.setMark(this.name, { commentId: id });
+          this.editor.storage.liveblocksExtension.pendingCommentSelection =
+            null;
+          return true;
         },
     };
   },
@@ -118,8 +142,14 @@ export const useLiveblocksExtension = ({
 
   return Extension.create({
     name: "liveblocksExtension",
-    onSelectionUpdate() {
-      console.log(this.editor.state.selection);
+    // @ts-ignore I have no idea why TS doesn't like this
+    onSelectionUpdate({ transaction }) {
+      // ignore changes made by yjs
+      if (transaction.getMeta(ySyncPluginKey)) {
+        return;
+      }
+      this.storage.pendingCommentSelection = null;
+      console.log("selection updated");
     },
     onCreate() {
       const self = room.getSelf();
@@ -151,6 +181,7 @@ export const useLiveblocksExtension = ({
         doc: docMap.get(room.id),
         provider: providersMap.get(room.id),
         unsub: () => {},
+        pendingCommentSelection: null,
       };
     },
     addExtensions() {
@@ -163,6 +194,44 @@ export const useLiveblocksExtension = ({
         }),
         CollaborationCursor.configure({
           provider: this.storage.provider, //todo change the ! to an assert
+        }),
+      ];
+    },
+
+    addCommands() {
+      return {
+        addPendingComment: () => () => {
+          if (this.editor.state.selection.empty) {
+            return false;
+          }
+          this.storage.pendingCommentSelection =
+            this.editor.state.selection.getBookmark();
+          return true;
+        },
+      };
+    },
+
+    addProseMirrorPlugins() {
+      return [
+        new Plugin({
+          key: ACTIVE_SELECTOR_PLUGIN_KEY,
+          props: {
+            decorations: ({ doc }) => {
+              const active = this.storage.pendingCommentSelection != null;
+              if (!active) {
+                return DecorationSet.create(doc, []);
+              }
+              const { from, to } = (
+                this.storage.pendingCommentSelection as SelectionBookmark
+              ).resolve(doc);
+              const decorations: Decoration[] = [
+                Decoration.inline(from, to, {
+                  class: "lb-comment-active-selection",
+                }),
+              ];
+              return DecorationSet.create(doc, decorations);
+            },
+          },
         }),
       ];
     },
