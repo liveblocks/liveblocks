@@ -14,10 +14,19 @@ import { InboxIcon } from "../icons/InboxIcon";
 import { MailReadIcon } from "../icons/MailReadIcon";
 import { MailDeleteIcon } from "../icons/MailDeleteIcon";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 export function Notifications() {
+  const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
   return (
-    <Dialog.Root>
+    <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger className="flex relative items-center justify-between whitespace-nowrap rounded-md font-medium transition-colors w-full px-2 py-1.5 hover:bg-gray-200/80">
         <div className="flex items-center gap-1.5 flex-1 text-sm text-gray-700 pointer-events-none">
           <InboxIcon className="w-5 h-5" />
@@ -92,7 +101,14 @@ function Inbox() {
                   <InboxNotification
                     key={inboxNotification.id}
                     inboxNotification={inboxNotification}
-                    components={{ Anchor: Link }}
+                    components={{
+                      Anchor: (props) =>
+                        props.href ? (
+                          <Link {...props} href={props.href} />
+                        ) : (
+                          <a {...props} />
+                        ),
+                    }}
                   />
                 );
               })}
