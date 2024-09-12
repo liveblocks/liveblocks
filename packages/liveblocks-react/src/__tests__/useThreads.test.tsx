@@ -287,6 +287,94 @@ describe("useThreads", () => {
     unmount();
   });
 
+  test("should fetch threads for a given query (multiple criteria)", async () => {
+    // COPIED FROM THE TEST ABOVE HERE
+
+    const roomId = nanoid();
+    const redPinnedThread = dummyThreadData({
+      roomId,
+      metadata: { pinned: true, color: "red" },
+    });
+    const bluePinnedThread = dummyThreadData({
+      roomId,
+      metadata: { pinned: true, color: "blue" },
+    });
+    const redUnpinnedThread = dummyThreadData({
+      roomId,
+      metadata: { pinned: false, color: "red" },
+    });
+    const blueUnpinnedThread = dummyThreadData({
+      roomId,
+      metadata: { pinned: false, color: "blue" },
+    });
+
+    server.use(
+      mockGetThreads(async (req, res, ctx) => {
+        const query = req.url.searchParams.get("query");
+        const parseRes = parser.parse(query ?? "");
+
+        const metadataPinned = getFilter(
+          parseRes.query.clauses,
+          "metadata",
+          "pinned"
+        );
+
+        return res(
+          ctx.json({
+            data: [
+              bluePinnedThread,
+              blueUnpinnedThread,
+              redPinnedThread,
+              redUnpinnedThread,
+            ].filter(
+              // XXX Not sure if/how we should update this mock logic?
+              (thread) => thread.metadata.pinned === metadataPinned.value
+            ),
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest<{
+      pinned: boolean;
+    }>();
+
+    // XXX Also add some assertions for this:
+    // () => useThreads({ query: { metadata: { pinned: true } } }),  // I want to see both red and blue pinned ones
+    // () => useThreads({ query: { metadata: { color: 'red' } } }),  // I want to see both red ones (pinned + unpinned)
+    // () => useThreads({ query: { metadata: { color: 'red', pinned: true } } }),  // I want to see only one result
+    // () => useThreads({ query: { metadata: { color: 'nonexisting', pinned: true } } }),  // I want to see no results
+    // () => useThreads({ query: { metadata: { color: 'nonexisting' } } }),  // Same
+    const { result, unmount } = renderHook(
+      // XXX Here I want to see both pinned ones (red + blue)
+      () => useThreads({ query: { metadata: { pinned: true } } }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id={roomId}>{children}</RoomProvider>
+        ),
+      }
+    );
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [redPinnedThread],
+      })
+    );
+
+    unmount();
+  });
+
   test("shoud fetch threads for a given query with a startsWith filter", async () => {
     const roomId = nanoid();
     const liveblocksEngineeringThread = dummyThreadData({
