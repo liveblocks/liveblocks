@@ -1,4 +1,4 @@
-## 2.6.2
+## 2.7.0
 
 ### `@liveblocks/client`
 
@@ -9,17 +9,19 @@
 - Add support for `query` argument to `useUserThreads_experimental`
 - Fix bug where some combinations of `query` criteria could over-select threads
   in `useThreads`
-- Add `useHistoryVersion` hook to retreive version history (Private beta)
 
-### `@liveblocks/react-ui`
+### Version History (private beta)
 
+This release adds some new hooks for Version History in text documents, which is
+now available in private beta. If you're interested in joining the private beta,
+please contact us:
+
+- Add `useHistoryVersion` hook to retrieve version history (in
+  `@liveblocks/react`)
 - Add `HistoryVersionSummaryList` and `HistoryVersionSummary` components to help
-  display version history (Private beta)
-
-### `@liveblocks/react-lexical`
-
-- Add `HistoryVersionPreview` component to display and restore a version
-  (Private beta)
+  display version history (in `@liveblocks/react-ui`)
+- Add `HistoryVersionPreview` component to display and restore a version (in
+  `@liveblocks/react-lexical`)
 
 ## 2.6.1
 
