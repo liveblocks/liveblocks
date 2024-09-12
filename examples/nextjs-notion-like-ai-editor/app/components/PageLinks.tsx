@@ -23,8 +23,22 @@ export function PageLinks() {
 
   if (isLoading) {
     return (
-      <div className="px-5 py-3.5 text-sm text-gray-700 font-medium">
-        Error loading pages
+      <div className="flex flex-col gap-0.5 px-5 py-3">
+        <div className="h-8 flex items-center w-full">
+          <div className="bg-gray-200/60 h-5 w-40 rounded animate-pulse"></div>
+        </div>
+        <div className="h-8 flex items-center w-full">
+          <div className="bg-gray-200/60 h-5 w-40 rounded animate-pulse"></div>
+        </div>
+        <div className="h-8 flex items-center w-full">
+          <div className="bg-gray-200/60 h-5 w-40 rounded animate-pulse"></div>
+        </div>
+        <div className="h-8 flex items-center w-full">
+          <div className="bg-gray-200/60 h-5 w-40 rounded animate-pulse"></div>
+        </div>
+        <div className="h-8 flex items-center w-full">
+          <div className="bg-gray-200/60 h-5 w-40 rounded animate-pulse"></div>
+        </div>
       </div>
     );
   }
