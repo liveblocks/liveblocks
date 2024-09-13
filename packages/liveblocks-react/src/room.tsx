@@ -53,7 +53,7 @@ import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import { RoomContext, useIsInsideRoom, useRoomOrNull } from "./contexts";
-import { byFirstCreated } from "./lib/compare";
+import { byFirstCreated, byMostRecentlyUpdated } from "./lib/compare";
 import { isString } from "./lib/guards";
 import { makeThreadsFilter } from "./lib/querying";
 import { retryError } from "./lib/retry-error";
@@ -107,7 +107,7 @@ import {
   RemoveReactionError,
   UpdateNotificationSettingsError,
 } from "./types/errors";
-import type { UmbrellaStoreState, UmbrellaStore } from "./umbrella-store";
+import type { UmbrellaStore, UmbrellaStoreState } from "./umbrella-store";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
 
 const SMOOTH_DELAY = 1000;
@@ -171,28 +171,34 @@ function selectorFor_useOthersConnectionIds(
 /**
  * @private Do not rely on this internal API.
  */
-// XXX This helper should not be exposed at the package level!
-export function selectRoomThreads<M extends BaseMetadata>(
+// TODO This helper should ideally not have to be exposed at the package level!
+// TODO It's currently used by react-lexical though.
+export function selectThreads<M extends BaseMetadata>(
   state: UmbrellaStoreState<M>,
   options: {
-    roomId: string;
+    roomId: string | null;
     query?: ThreadsQuery<M>;
+    orderBy:
+      | "age" // = default
+      | "last-update";
   }
 ): ThreadData<M>[] {
-  // Second filter pass: only select the threads for this *room*
-  // XXX This should ideally also not be the responsibility of this select function!
-  let threads = state.threads.filter(
-    (thread) => thread.roomId === options.roomId
-  );
+  let threads = state.threads;
+
+  if (options.roomId !== null) {
+    threads = threads.filter((thread) => thread.roomId === options.roomId);
+  }
 
   // Third filter pass: select only threads matching query filter
   const query = options.query;
   if (query) {
-    threads = threads.filter(makeThreadsFilter(query));
+    threads = threads.filter(makeThreadsFilter<M>(query));
   }
 
   // Sort threads by creation date (oldest first)
-  return threads.sort(byFirstCreated);
+  return threads.sort(
+    options.orderBy === "last-update" ? byMostRecentlyUpdated : byFirstCreated
+  );
 }
 
 function selectNotificationSettings<M extends BaseMetadata>(
@@ -1493,9 +1499,10 @@ function useThreads<M extends BaseMetadata>(
       }
 
       return {
-        threads: selectRoomThreads(state, {
+        threads: selectThreads(state, {
           roomId: room.id,
           query: options.query,
+          orderBy: "age",
         }),
         isLoading: false,
         error: query.error,
@@ -2502,9 +2509,10 @@ function useThreadsSuspense<M extends BaseMetadata>(
   const selector = React.useCallback(
     (state: ReturnType<typeof store.getThreads>): ThreadsStateSuccess<M> => {
       return {
-        threads: selectRoomThreads(state, {
+        threads: selectThreads(state, {
           roomId: room.id,
           query: options.query,
+          orderBy: "age",
         }),
         isLoading: false,
       };

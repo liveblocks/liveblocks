@@ -91,4 +91,4 @@ export {
 
 // Private APIs (for use in react-lexical only)
 export { getUmbrellaStoreForClient } from "./liveblocks";
-export { selectRoomThreads } from "./room";
+export { selectThreads } from "./room";

@@ -1,9 +1,9 @@
 import type { ThreadData } from "@liveblocks/core";
 
-import { selectRoomThreads } from "../room";
+import { selectThreads } from "../room";
 import { UmbrellaStore } from "../umbrella-store";
 
-describe("selectedThreads", () => {
+describe("selectThreads", () => {
   it("should only return resolved threads from a list of threads", () => {
     const thread1: ThreadData = {
       type: "thread" as const,
@@ -29,9 +29,10 @@ describe("selectedThreads", () => {
 
     store.updateThreadsAndNotifications([thread1, thread2], [], [], []);
 
-    const resolvedThreads = selectRoomThreads(store.getThreads(), {
+    const resolvedThreads = selectThreads(store.getThreads(), {
       roomId: "room_1",
       query: { resolved: true },
+      orderBy: "age",
     });
 
     expect(resolvedThreads).toEqual([]);

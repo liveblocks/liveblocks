@@ -35,11 +35,10 @@ import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import { useIsInsideRoom } from "./contexts";
-import { byMostRecentlyUpdated } from "./lib/compare";
-import { makeThreadsFilter } from "./lib/querying";
 import { autoRetry, retryError } from "./lib/retry-error";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { use } from "./lib/use-polyfill";
+import { selectThreads } from "./room";
 import type {
   InboxNotificationsState,
   LiveblocksContextBundle,
@@ -51,7 +50,6 @@ import type {
   UnreadInboxNotificationsCountState,
   UserAsyncResult,
   UserAsyncSuccess,
-  UseThreadsOptions,
   UseUserThreadsOptions,
 } from "./types";
 import type { UmbrellaStoreState } from "./umbrella-store";
@@ -114,22 +112,6 @@ function selectorFor_useInboxNotifications(
     inboxNotifications: selectInboxNotifications(state),
     isLoading: false,
   };
-}
-
-function selectUserThreads<M extends BaseMetadata>(
-  state: ReturnType<UmbrellaStore<M>["getThreads"]>,
-  options: UseThreadsOptions<M>
-) {
-  let threads = state.threads;
-
-  // Second filter pass: select only threads matching query filter
-  const query = options.query;
-  if (query) {
-    threads = threads.filter(makeThreadsFilter<M>(query));
-  }
-
-  // Sort threads by updated date (newest first) and then created date
-  return threads.sort(byMostRecentlyUpdated);
 }
 
 function selectUnreadInboxNotificationsCount(
@@ -1158,7 +1140,11 @@ function useUserThreads_experimental<M extends BaseMetadata>(
       }
 
       return {
-        threads: selectUserThreads(state, options),
+        threads: selectThreads(state, {
+          roomId: null, // Do _not_ filter by roomId
+          query: options.query,
+          orderBy: "last-update",
+        }),
         isLoading: false,
       };
     },
@@ -1223,7 +1209,11 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
   const selector = useCallback(
     (state: ReturnType<typeof store.getThreads>): ThreadsStateSuccess<M> => {
       return {
-        threads: selectUserThreads(state, options),
+        threads: selectThreads(state, {
+          roomId: null, // Do _not_ filter by roomId
+          query: options.query,
+          orderBy: "last-update",
+        }),
         isLoading: false,
       };
     },
