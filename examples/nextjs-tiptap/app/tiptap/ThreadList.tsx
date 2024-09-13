@@ -5,8 +5,9 @@ import { Editor } from "@tiptap/react";
 import { ComposerSubmitComment } from "@liveblocks/react-ui";
 import { ThreadData } from "@liveblocks/client";
 import CommentIcon from "./icons/comment-icon";
-import { threadId } from "worker_threads";
-import { SelectionBookmark } from "@tiptap/pm/state";
+import { ySyncPluginKey, absolutePositionToRelativePosition } from "y-prosemirror";
+import { RelativePosition, createRelativePositionFromJSON } from "yjs";
+const { Base64 } = require('js-base64');
 
 type Props = {
   editor: Editor;
@@ -27,6 +28,22 @@ export function getCommentHighlightContent(commentId: string) {
 export function ThreadList({ editor }: Props) {
   const { threads } = useThreads();
   const showComposer = !!editor.storage.liveblocksExtension.pendingCommentSelection;
+  useEffect(() => {
+    if (!threads || !editor) {
+      return;
+    }
+    editor.storage.liveblocksExtension.threads = threads.reduce((acc, thread) => {
+      if (thread.metadata.anchor && thread.metadata.head) {
+        acc.push({
+          id: thread.id,
+          anchor: createRelativePositionFromJSON(JSON.parse(thread.metadata.anchor)),
+          head: createRelativePositionFromJSON(JSON.parse(thread.metadata.head)),
+        })
+      }
+      return acc;
+    }, [] as { id: string, anchor: RelativePosition, head: RelativePosition }[]);
+
+  }, [threads, editor])
 
   return (
     <>
@@ -81,7 +98,6 @@ function CustomThread({ editor, thread }: Props & { thread: ThreadData }) {
     <div className="hide-collaboration-cursor">
       <div
         data-active={active}
-        data-highlight-id={thread.metadata.highlightId}
       >
         {quoteHtml ? (
           <div
@@ -112,8 +128,28 @@ function ThreadComposer({ editor }: Props) {
     ({ body }: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
 
+
+      const ystate = ySyncPluginKey.getState(editor.state);
+
+      const { anchor, head } = editor.storage.liveblocksExtension.pendingCommentSelection.resolve(editor.state.doc);
+      const absanchor = absolutePositionToRelativePosition(
+        anchor,
+        ystate.type,
+        ystate.binding.mapping
+      );
+
+      const abshead = absolutePositionToRelativePosition(
+        head,
+        ystate.type,
+        ystate.binding.mapping
+      );
+
       const thread = createThread({
         body,
+        metadata: {
+          anchor: JSON.stringify(absanchor),
+          head: JSON.stringify(abshead),
+        }
       });
       editor.commands.addComment(thread.id);
 

@@ -3,10 +3,17 @@ import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import { Extension, mergeAttributes, Mark } from "@tiptap/core";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
-import { Doc } from "yjs";
+import {
+  createAbsolutePositionFromRelativePosition,
+  Doc,
+  RelativePosition,
+} from "yjs";
 import { Plugin, PluginKey, SelectionBookmark } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
-import { ySyncPluginKey } from "y-prosemirror";
+import {
+  ySyncPluginKey,
+  relativePositionToAbsolutePosition,
+} from "y-prosemirror";
 
 const providersMap = new Map<
   string,
@@ -22,6 +29,8 @@ type LiveblocksExtensionOptions = {
 const ACTIVE_SELECTOR_PLUGIN_KEY = new PluginKey(
   "lb-comment-active-selection-decorator"
 );
+
+const COMMENT_PLUGIN_KEY = new PluginKey("lb-comment");
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -70,11 +79,11 @@ const Comment = Mark.create({
           ) {
             return false;
           }
-          this.editor.state.selection = (
+          /*this.editor.state.selection = (
             this.editor.storage.liveblocksExtension
               .pendingCommentSelection as SelectionBookmark
           ).resolve(this.editor.state.doc);
-          commands.setMark(this.name, { commentId: id });
+          commands.setMark(this.name, { commentId: id });*/
           this.editor.storage.liveblocksExtension.pendingCommentSelection =
             null;
           return true;
@@ -182,6 +191,7 @@ export const useLiveblocksExtension = ({
         provider: providersMap.get(room.id),
         unsub: () => {},
         pendingCommentSelection: null,
+        threads: [],
       };
     },
     addExtensions() {
@@ -213,6 +223,71 @@ export const useLiveblocksExtension = ({
 
     addProseMirrorPlugins() {
       return [
+        new Plugin({
+          key: COMMENT_PLUGIN_KEY,
+          props: {
+            decorations: (state) => {
+              if (this.storage.threads.length === 0) {
+                return DecorationSet.create(state.doc, []);
+              }
+
+              const ystate = ySyncPluginKey.getState(state);
+              try {
+                const decorations: Decoration[] = [];
+                this.storage.threads.forEach(
+                  (thread: {
+                    anchor: RelativePosition;
+                    head: RelativePosition;
+                    id: string;
+                  }) => {
+                    let anchor = relativePositionToAbsolutePosition(
+                      ystate.doc,
+                      ystate.type,
+                      thread.anchor,
+                      ystate.binding.mapping
+                    );
+                    let head = relativePositionToAbsolutePosition(
+                      ystate.doc,
+                      ystate.type,
+                      thread.head,
+                      ystate.binding.mapping
+                    );
+
+                    if (anchor !== null && head !== null) {
+                      console.log(anchor, head);
+                      const maxsize = Math.max(state.doc.content.size - 1, 0);
+                      anchor = Math.min(anchor, maxsize); // clamp to max size
+                      head = Math.min(head, maxsize); // clamp to max size
+                      const from = Math.min(anchor, head);
+                      const to = Math.max(anchor, head);
+
+                      console.log(from, to);
+
+                      decorations.push(
+                        Decoration.inline(
+                          from,
+                          to,
+                          {
+                            class: "lb-comment",
+                            "data-dat-comment": thread.id,
+                          },
+                          {
+                            inclusiveEnd: true,
+                            inclusiveStart: false,
+                          }
+                        )
+                      );
+                    }
+                  }
+                );
+                return DecorationSet.create(state.doc, decorations);
+              } catch (e) {
+                console.log(e);
+                return DecorationSet.create(state.doc, []);
+              }
+            },
+          },
+        }),
         new Plugin({
           key: ACTIVE_SELECTOR_PLUGIN_KEY,
           props: {
