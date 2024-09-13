@@ -23,7 +23,6 @@ export const PRIORITY_STATES = [
     icon: <DashIcon className="w-4 h-4 text-neutral-600" />,
     jsx: (
       <div className="flex gap-2 items-center text-neutral-600">
-        {/*<Dash className="w-4 h-4 text-neutral-600" />*/}
         No priority
       </div>
     ),
@@ -74,8 +73,7 @@ export const PROGRESS_STATES = [
   {
     id: "none",
     jsx: (
-      <div className="flex gap-2 items-center text-neutral-500">
-        {/*<Dash className="w-4 h-4 text-neutral-600" />*/}
+      <div className="flex gap-2 items-center text-neutral-600">
         No progress
       </div>
     ),

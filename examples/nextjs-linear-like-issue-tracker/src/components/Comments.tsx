@@ -13,12 +13,11 @@ export function Comments() {
         fallback={
           <>
             <div className="bg-gray-100/80 animate-pulse h-[130px] rounded-lg my-6" />
-            {/*<div className="bg-gray-100 animate-pulse h-[130px] rounded-lg my-6" />*/}
           </>
         }
       >
         <ThreadList />
-        <Composer className="border border-neutral-200 my-4 rounded-lg overflow-hidden shadow-sm bg-white" />
+        <Composer className="border border-neutral-200 !my-4 rounded-lg overflow-hidden shadow-sm bg-white" />
       </ClientSideSuspense>
     </>
   );
