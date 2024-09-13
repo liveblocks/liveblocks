@@ -15,6 +15,14 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 37 (2024-09-13)
 
+### Version History (private beta)
+
+This release adds some new hooks for Version History in text documents, which is now available in private beta. If you’re interested in joining the private beta, please [contact us](https://liveblocks.io/contact/sales).
+
+- Add `useHistoryVersion` hook to retrieve version history (in `@liveblocks/react`)
+- Add `HistoryVersionSummaryList` and `HistoryVersionSummary` components to help display version history (in `@liveblocks/react-ui`)
+- Add `HistoryVersionPreview` component to display and restore a version (in `@liveblocks/react-lexical`)
+
 ## 2.7.0
 
 ### `@liveblocks/client`
@@ -25,14 +33,6 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 - Add support for `query` argument to `useUserThreads_experimental`
 - Fix bug where some combinations of `query` criteria could over-select threads in `useThreads`
-
-### Version History (private beta)
-
-This release adds some new hooks for Version History in text documents, which is now available in private beta. If you’re interested in joining the private beta, please [contact us](https://liveblocks.io/contact/sales).
-
-- Add `useHistoryVersion` hook to retrieve version history (in `@liveblocks/react`)
-- Add `HistoryVersionSummaryList` and `HistoryVersionSummary` components to help display version history (in `@liveblocks/react-ui`)
-- Add `HistoryVersionPreview` component to display and restore a version (in `@liveblocks/react-lexical`)
 
 ## 2.6.1
 
