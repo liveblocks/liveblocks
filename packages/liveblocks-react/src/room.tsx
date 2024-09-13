@@ -85,6 +85,7 @@ import type {
   RoomNotificationSettingsStateSuccess,
   RoomProviderProps,
   StorageStatusSuccess,
+  ThreadsQuery,
   ThreadsState,
   ThreadsStateSuccess,
   ThreadSubscription,
@@ -175,13 +176,17 @@ function selectorFor_useOthersConnectionIds(
  */
 // XXX This helper should not be exposed at the package level!
 export function selectRoomThreads<M extends BaseMetadata>(
-  roomId: string,
   state: BeautifulUmbrellaStoreState<M>,
-  options: UseThreadsOptions<M>
+  options: {
+    roomId: string;
+    query?: ThreadsQuery<M>;
+  }
 ): ThreadData<M>[] {
   // Second filter pass: only select the threads for this *room*
   // XXX This should ideally also not be the responsibility of this select function!
-  let threads = state.threads.filter((thread) => thread.roomId === roomId);
+  let threads = state.threads.filter(
+    (thread) => thread.roomId === options.roomId
+  );
 
   // Third filter pass: select only threads matching query filter
   const query = options.query;
@@ -1491,7 +1496,10 @@ function useThreads<M extends BaseMetadata>(
       }
 
       return {
-        threads: selectRoomThreads(room.id, state, options),
+        threads: selectRoomThreads(state, {
+          roomId: room.id,
+          query: options.query,
+        }),
         isLoading: false,
         error: query.error,
       };
@@ -2497,7 +2505,10 @@ function useThreadsSuspense<M extends BaseMetadata>(
   const selector = React.useCallback(
     (state: ReturnType<typeof store.getThreads>): ThreadsStateSuccess<M> => {
       return {
-        threads: selectRoomThreads(room.id, state, options),
+        threads: selectRoomThreads(state, {
+          roomId: room.id,
+          query: options.query,
+        }),
         isLoading: false,
       };
     },

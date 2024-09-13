@@ -104,16 +104,17 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
 
   const store = getUmbrellaStoreForClient(client);
 
+  const roomId = room.id;
   const threads = useSyncExternalStoreWithSelector(
     store.subscribeThreads,
     store.getThreads,
     store.getThreads,
     useCallback(
       () =>
-        selectRoomThreads(room.id, store.getThreads(), {}).map(
+        selectRoomThreads(store.getThreads(), { roomId }).map(
           (thread) => thread.id
         ),
-      [room.id, store]
+      [roomId, store]
     ),
     shallow
   );
@@ -215,7 +216,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       const selection = $getSelection();
 
       const threadIds = $getThreadIds(selection).filter((id) => {
-        return selectRoomThreads(room.id, store.getThreads(), {}).some(
+        return selectRoomThreads(store.getThreads(), { roomId }).some(
           (thread) => thread.id === id
         );
       });
