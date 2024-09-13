@@ -40,7 +40,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Contributors
 
-nvie, flowflorent, jrowny, marcbouchenoire, sugardarius
+nvie, flowflorent, jrowny, marcbouchenoire, sugardarius, nimeshnayaju
 
 # Week 36 (2024-09-06)
 
