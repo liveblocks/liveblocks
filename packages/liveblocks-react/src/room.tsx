@@ -52,6 +52,7 @@ import {
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
+import { RoomContext, useIsInsideRoom, useRoomOrNull } from "./contexts";
 import { byFirstCreated } from "./lib/compare";
 import { isString } from "./lib/guards";
 import { makeThreadsFilter } from "./lib/querying";
@@ -595,14 +596,6 @@ type RoomLeavePair<
   leave: () => void;
 };
 
-/**
- * Raw access to the React context where the RoomProvider stores the current
- * room. Exposed for advanced use cases only.
- *
- * @private This is a private/advanced API. Do not rely on it.
- */
-const RoomContext = React.createContext<OpaqueRoom | null>(null);
-
 function makeRoomContextBundle<
   P extends JsonObject,
   S extends LsonObject,
@@ -998,17 +991,6 @@ function useRoom<
     throw new Error("RoomProvider is missing from the React tree.");
   }
   return room;
-}
-
-/**
- * Returns whether the hook is called within a RoomProvider context.
- *
- * @example
- * const isInsideRoom = useIsInsideRoom();
- */
-function useIsInsideRoom(): boolean {
-  const room = useRoomOrNull();
-  return room !== null;
 }
 
 /**
@@ -2642,17 +2624,6 @@ function useRoomNotificationSettingsSuspense(): [
   return React.useMemo(() => {
     return [settings, updateRoomNotificationSettings];
   }, [settings, updateRoomNotificationSettings]);
-}
-
-/** @internal */
-export function useRoomOrNull<
-  P extends JsonObject,
-  S extends LsonObject,
-  U extends BaseUserMeta,
-  E extends Json,
-  M extends BaseMetadata,
->(): Room<P, S, U, E, M> | null {
-  return React.useContext(RoomContext) as Room<P, S, U, E, M> | null;
 }
 
 /**
