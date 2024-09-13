@@ -29,7 +29,7 @@ describe("selectedThreads", () => {
 
     store.updateThreadsAndNotifications([thread1, thread2], [], [], []);
 
-    const resolvedThreads = selectRoomThreads("room_1", store.get(), {
+    const resolvedThreads = selectRoomThreads("room_1", store.getThreads(), {
       query: { resolved: true },
     });
 

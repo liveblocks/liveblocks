@@ -106,7 +106,12 @@ import {
   RemoveReactionError,
   UpdateNotificationSettingsError,
 } from "./types/errors";
-import type { UmbrellaStore, UmbrellaStoreState } from "./umbrella-store";
+import type {
+  UmbrellaStore,
+  UmbrellaState_forThreads,
+  UmbrellaState_forNotificationSettings,
+  UmbrellaState_forVersions,
+} from "./umbrella-store";
 import {
   addReaction,
   applyOptimisticUpdates_notificationSettings,
@@ -181,7 +186,7 @@ function selectorFor_useOthersConnectionIds(
 // XXX This helper should not be exposed at the package level!
 export function selectRoomThreads<M extends BaseMetadata>(
   roomId: string,
-  state: UmbrellaStoreState<M>,
+  state: UmbrellaState_forThreads<M>,
   options: UseThreadsOptions<M>
 ): ThreadData<M>[] {
   // Here, result contains copies of 3 out of the 5 caches with all optimistic
@@ -205,7 +210,7 @@ export function selectRoomThreads<M extends BaseMetadata>(
 
 function selectNotificationSettings<M extends BaseMetadata>(
   roomId: string,
-  state: UmbrellaStoreState<M>
+  state: UmbrellaState_forNotificationSettings<M>
 ): RoomNotificationSettings {
   const notificationSettings =
     applyOptimisticUpdates_notificationSettings(state);
@@ -905,7 +910,7 @@ function RoomProviderInner<
       }
       const { thread, inboxNotification } = info;
 
-      const existingThread = store.get().threads[message.threadId];
+      const existingThread = store.getThreads().threads[message.threadId];
 
       switch (message.type) {
         case ServerMsgCode.COMMENT_EDITED:
@@ -1493,7 +1498,7 @@ function useThreads<M extends BaseMetadata>(
   }, [room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selector = React.useCallback(
-    (state: UmbrellaStoreState<M>): ThreadsState<M> => {
+    (state: UmbrellaState_forThreads<M>): ThreadsState<M> => {
       const query = state.queries[queryKey];
       if (query === undefined || query.isLoading) {
         return {
@@ -1511,9 +1516,9 @@ function useThreads<M extends BaseMetadata>(
   );
 
   const state = useSyncExternalStoreWithSelector(
-    store.subscribe,
-    store.get,
-    store.get,
+    store.subscribeThreads,
+    store.getThreads,
+    store.getThreads,
     selector
   );
 
@@ -1613,7 +1618,7 @@ function useDeleteThread(): (threadId: string) => void {
     (threadId: string): void => {
       const { store, onMutationFailure } = getExtrasForClient(client);
 
-      const thread = store.get().threads[threadId];
+      const thread = store.getThreads().threads[threadId];
 
       const userId = getCurrentUserId(room);
 
@@ -1764,7 +1769,7 @@ function useEditComment(): (options: EditCommentOptions) => void {
       const editedAt = new Date();
 
       const { store, onMutationFailure } = getExtrasForClient(client);
-      const thread = store.get().threads[threadId];
+      const thread = store.getThreads().threads[threadId];
       if (thread === undefined) {
         console.warn(
           `Internal unexpected behavior. Cannot edit comment in thread "${threadId}" because the thread does not exist in the cache.`
@@ -1988,7 +1993,7 @@ function useMarkThreadAsRead() {
     (threadId: string) => {
       const { store, onMutationFailure } = getExtrasForClient(client);
       const inboxNotification = Object.values(
-        store.get().inboxNotifications
+        store.getInboxNotifications().inboxNotifications
       ).find(
         (inboxNotification) =>
           inboxNotification.kind === "thread" &&
@@ -2136,7 +2141,7 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
   const { store } = getExtrasForClient(client);
 
   const selector = React.useCallback(
-    (state: UmbrellaStoreState<BaseMetadata>): ThreadSubscription => {
+    (state: UmbrellaState_forThreads<BaseMetadata>): ThreadSubscription => {
       const inboxNotification = selectInboxNotifications(state).find(
         (inboxNotification) =>
           inboxNotification.kind === "thread" &&
@@ -2160,9 +2165,9 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
   );
 
   return useSyncExternalStoreWithSelector(
-    store.subscribe,
-    store.get,
-    store.get,
+    store.subscribeThreads,
+    store.getThreads,
+    store.getThreads,
     selector
   );
 }
@@ -2192,7 +2197,7 @@ function useRoomNotificationSettings(): [
 
   const selector = React.useCallback(
     (
-      state: UmbrellaStoreState<BaseMetadata>
+      state: ReturnType<typeof store.getThreads>
     ): RoomNotificationSettingsState => {
       const query = state.queries[makeNotificationSettingsQueryKey(room.id)];
 
@@ -2213,9 +2218,9 @@ function useRoomNotificationSettings(): [
   );
 
   const settings = useSyncExternalStoreWithSelector(
-    store.subscribe,
-    store.get,
-    store.get,
+    store.subscribeNotificationSettings,
+    store.getThreads,
+    store.getThreads,
     selector
   );
 
@@ -2281,7 +2286,7 @@ function useHistoryVersions(): HistoryVersionsState {
   }, [room]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selector = React.useCallback(
-    (state: UmbrellaStoreState<BaseMetadata>): HistoryVersionsState => {
+    (state: ReturnType<typeof store.getVersions>): HistoryVersionsState => {
       const query = state.queries[queryKey];
       if (query === undefined || query.isLoading) {
         return {
@@ -2299,9 +2304,9 @@ function useHistoryVersions(): HistoryVersionsState {
   );
 
   const state = useSyncExternalStoreWithSelector(
-    store.subscribe,
-    store.get,
-    store.get,
+    store.subscribeVersions,
+    store.getVersions,
+    store.getVersions,
     selector
   );
 
@@ -2495,7 +2500,7 @@ function useThreadsSuspense<M extends BaseMetadata>(
   const { store, getThreadsAndInboxNotifications } =
     getExtrasForClient<M>(client);
 
-  const query = store.get().queries[queryKey];
+  const query = store.getThreads().queries[queryKey];
 
   if (query === undefined || query.isLoading) {
     throw getThreadsAndInboxNotifications(room, queryKey, options);
@@ -2506,7 +2511,7 @@ function useThreadsSuspense<M extends BaseMetadata>(
   }
 
   const selector = React.useCallback(
-    (state: UmbrellaStoreState<M>): ThreadsStateSuccess<M> => {
+    (state: ReturnType<typeof store.getThreads>): ThreadsStateSuccess<M> => {
       return {
         threads: selectRoomThreads(room.id, state, options),
         isLoading: false,
@@ -2521,9 +2526,9 @@ function useThreadsSuspense<M extends BaseMetadata>(
   }, [client, queryKey]);
 
   const state = useSyncExternalStoreWithSelector(
-    store.subscribe,
-    store.get,
-    store.get,
+    store.subscribeThreads,
+    store.getThreads,
+    store.getThreads,
     selector
   );
 
@@ -2545,7 +2550,7 @@ function useHistoryVersionsSuspense(): HistoryVersionsStateResolved {
 
   const { store, getRoomVersions } = getExtrasForClient(client);
 
-  const query = store.get().queries[queryKey];
+  const query = store.getVersions().queries[queryKey];
 
   if (query === undefined || query.isLoading) {
     throw getRoomVersions(room);
@@ -2556,7 +2561,9 @@ function useHistoryVersionsSuspense(): HistoryVersionsStateResolved {
   }
 
   const selector = React.useCallback(
-    (state: UmbrellaStoreState<BaseMetadata>): HistoryVersionsStateResolved => {
+    (
+      state: UmbrellaState_forVersions<BaseMetadata>
+    ): HistoryVersionsStateResolved => {
       return {
         versions: state.versions[room.id],
         isLoading: false,
@@ -2566,9 +2573,9 @@ function useHistoryVersionsSuspense(): HistoryVersionsStateResolved {
   );
 
   const state = useSyncExternalStoreWithSelector(
-    store.subscribe,
-    store.get,
-    store.get,
+    store.subscribeVersions,
+    store.getVersions,
+    store.getVersions,
     selector
   );
 
@@ -2592,7 +2599,7 @@ function useRoomNotificationSettingsSuspense(): [
   const queryKey = makeNotificationSettingsQueryKey(room.id);
 
   const { store, getInboxNotificationSettings } = getExtrasForClient(client);
-  const query = store.get().queries[queryKey];
+  const query = store.getNotificationSettings().queries[queryKey];
 
   if (query === undefined || query.isLoading) {
     throw getInboxNotificationSettings(room, queryKey);
@@ -2604,7 +2611,7 @@ function useRoomNotificationSettingsSuspense(): [
 
   const selector = React.useCallback(
     (
-      state: UmbrellaStoreState<BaseMetadata>
+      state: ReturnType<typeof store.getNotificationSettings>
     ): RoomNotificationSettingsStateSuccess => {
       return {
         isLoading: false,
@@ -2615,9 +2622,9 @@ function useRoomNotificationSettingsSuspense(): [
   );
 
   const settings = useSyncExternalStoreWithSelector(
-    store.subscribe,
-    store.get,
-    store.get,
+    store.subscribeNotificationSettings,
+    store.getNotificationSettings,
+    store.getNotificationSettings,
     selector
   );
 

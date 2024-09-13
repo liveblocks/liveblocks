@@ -105,12 +105,14 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
   const store = getUmbrellaStoreForClient(client);
 
   const threads = useSyncExternalStoreWithSelector(
-    store.subscribe,
-    store.get,
-    store.get,
+    store.subscribeThreads,
+    store.getThreads,
+    store.getThreads,
     useCallback(
       () =>
-        selectRoomThreads(room.id, store.get(), {}).map((thread) => thread.id),
+        selectRoomThreads(room.id, store.getThreads(), {}).map(
+          (thread) => thread.id
+        ),
       [room.id, store]
     ),
     shallow
@@ -213,14 +215,14 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       const selection = $getSelection();
 
       const threadIds = $getThreadIds(selection).filter((id) => {
-        return selectRoomThreads(room.id, store.get(), {}).some(
+        return selectRoomThreads(room.id, store.getThreads(), {}).some(
           (thread) => thread.id === id
         );
       });
       setActiveThreads(threadIds);
     }
 
-    const unsubscribeCache = store.subscribe(() => {
+    const unsubscribeCache = store.subscribeThreads(() => {
       editor.getEditorState().read($onStateRead);
     });
 

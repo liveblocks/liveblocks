@@ -54,7 +54,6 @@ import type {
   UseThreadsOptions,
   UseUserThreadsOptions,
 } from "./types";
-import type { UmbrellaStoreState } from "./umbrella-store";
 import {
   applyOptimisticUpdates_inboxNotifications,
   applyOptimisticUpdates_threads,
@@ -97,7 +96,7 @@ export const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
 export const USER_THREADS_QUERY = "USER_THREADS";
 
 function selectorFor_useInboxNotifications(
-  state: UmbrellaStoreState<BaseMetadata>
+  state: ReturnType<UmbrellaStore<BaseMetadata>["getInboxNotifications"]>
 ): InboxNotificationsState {
   const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
 
@@ -121,7 +120,7 @@ function selectorFor_useInboxNotifications(
 }
 
 function selectUserThreads<M extends BaseMetadata>(
-  state: UmbrellaStoreState<M>,
+  state: ReturnType<UmbrellaStore<M>["getThreads"]>,
   options: UseThreadsOptions<M>
 ) {
   // XXX This should not be the responsibility of this select function
@@ -130,7 +129,7 @@ function selectUserThreads<M extends BaseMetadata>(
   // Second filter pass: select only threads matching query filter
   const query = options.query;
   if (query) {
-    threads = threads.filter(makeThreadsFilter(query));
+    threads = threads.filter(makeThreadsFilter<M>(query));
   }
 
   // Sort threads by updated date (newest first) and then created date
@@ -138,7 +137,7 @@ function selectUserThreads<M extends BaseMetadata>(
 }
 
 function selectUnreadInboxNotificationsCount(
-  state: UmbrellaStoreState<BaseMetadata>
+  state: ReturnType<UmbrellaStore<BaseMetadata>["getInboxNotifications"]>
 ) {
   let count = 0;
 
@@ -155,7 +154,7 @@ function selectUnreadInboxNotificationsCount(
 }
 
 function selectorFor_useUnreadInboxNotificationsCount(
-  state: UmbrellaStoreState<BaseMetadata>
+  state: ReturnType<UmbrellaStore<BaseMetadata>["getInboxNotifications"]>
 ): UnreadInboxNotificationsCountState {
   const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
 
@@ -234,8 +233,8 @@ function selectorFor_useRoomInfo(
   };
 }
 
-export function selectInboxNotifications<M extends BaseMetadata>(
-  state: UmbrellaStoreState<M>
+export function selectInboxNotifications(
+  state: ReturnType<UmbrellaStore<BaseMetadata>["getInboxNotifications"]>
 ): InboxNotificationData[] {
   // XXX This should not be the responsibility of this select function
   const inboxNotifications = applyOptimisticUpdates_inboxNotifications(state);
@@ -634,9 +633,9 @@ function useInboxNotifications_withClient(client: OpaqueClient) {
 
   useEnableInboxNotificationsPolling();
   return useSyncExternalStoreWithSelector(
-    store.subscribe,
-    store.get,
-    store.get,
+    store.subscribeInboxNotifications,
+    store.getInboxNotifications,
+    store.getInboxNotifications,
     selectorFor_useInboxNotifications,
     shallow
   );
@@ -668,9 +667,9 @@ function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
 
   useEnableInboxNotificationsPolling();
   return useSyncExternalStoreWithSelector(
-    store.subscribe,
-    store.get,
-    store.get,
+    store.subscribeInboxNotifications,
+    store.getInboxNotifications,
+    store.getInboxNotifications,
     selectorFor_useUnreadInboxNotificationsCount,
     shallow
   );
@@ -805,7 +804,7 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
   const { store } = getExtrasForClient<M>(client);
 
   const selector = useCallback(
-    (state: UmbrellaStoreState<M>) => {
+    (state: ReturnType<typeof store.getInboxNotifications>) => {
       const inboxNotification =
         state.inboxNotifications[inboxNotificationId] ??
         raise(`Inbox notification with ID "${inboxNotificationId}" not found`);
@@ -828,9 +827,9 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
   );
 
   return useSyncExternalStoreWithSelector(
-    store.subscribe,
-    store.get,
-    store.get,
+    store.subscribeInboxNotifications,
+    store.getInboxNotifications,
+    store.getInboxNotifications,
     selector
   );
 }
@@ -1148,7 +1147,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
   }, [queryKey, incrementUserThreadsQuerySubscribers, getUserThreads, options]);
 
   const selector = useCallback(
-    (state: UmbrellaStoreState<M>): ThreadsState<M> => {
+    (state: ReturnType<typeof store.getThreads>): ThreadsState<M> => {
       const query = state.queries[queryKey];
 
       if (query === undefined || query.isLoading) {
@@ -1174,9 +1173,9 @@ function useUserThreads_experimental<M extends BaseMetadata>(
   );
 
   return useSyncExternalStoreWithSelector(
-    store.subscribe,
-    store.get,
-    store.get,
+    store.subscribeThreads,
+    store.getThreads,
+    store.getThreads,
     selector,
     shallow
   );
@@ -1218,7 +1217,7 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
     return incrementUserThreadsQuerySubscribers(queryKey);
   }, [client, queryKey]);
 
-  const query = store.get().queries[queryKey];
+  const query = store.getThreads().queries[queryKey];
 
   if (query === undefined || query.isLoading) {
     throw getUserThreads(queryKey, options);
@@ -1229,7 +1228,7 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
   }
 
   const selector = useCallback(
-    (state: UmbrellaStoreState<M>): ThreadsStateSuccess<M> => {
+    (state: ReturnType<typeof store.getThreads>): ThreadsStateSuccess<M> => {
       return {
         threads: selectUserThreads(state, options),
         isLoading: false,
@@ -1239,9 +1238,9 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
   );
 
   return useSyncExternalStoreWithSelector(
-    store.subscribe,
-    store.get,
-    store.get,
+    store.subscribeThreads,
+    store.getThreads,
+    store.getThreads,
     selector,
     shallow
   );
