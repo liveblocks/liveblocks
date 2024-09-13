@@ -1,13 +1,13 @@
 import { createStore } from "../create-store";
 
 describe("createStore", () => {
-  test("should notify subscriber right after subscribing", () => {
+  test("should not notify subscriber right after subscribing", () => {
     const fn = jest.fn();
     const store = createStore({ x: 0 });
 
     store.subscribe(fn);
 
-    expect(fn).toHaveBeenCalledTimes(1); // XXX Weird! This is not the behavior that uSES expects
+    expect(fn).toHaveBeenCalledTimes(0);
   });
 
   test("should notify subscriber when state is updated via callback", () => {
@@ -16,11 +16,11 @@ describe("createStore", () => {
 
     store.subscribe(fn);
 
-    expect(fn).toHaveBeenCalledTimes(1); // XXX Weird! This is not the behavior that uSES expects
+    expect(fn).toHaveBeenCalledTimes(0);
 
     store.set((state) => ({ ...state }));
 
-    expect(fn).toHaveBeenCalledTimes(2);
+    expect(fn).toHaveBeenCalledTimes(1);
   });
 
   test("should only notify subscriber if state reference changes", () => {
@@ -29,7 +29,7 @@ describe("createStore", () => {
 
     store.subscribe(fn);
 
-    expect(fn).toHaveBeenCalledTimes(1);
+    expect(fn).toHaveBeenCalledTimes(0);
 
     store.set((state) => state);
     store.set((state) => state);
@@ -43,7 +43,7 @@ describe("createStore", () => {
     store.set((state) => state);
     store.set((state) => state);
 
-    expect(fn).toHaveBeenCalledTimes(4);
+    expect(fn).toHaveBeenCalledTimes(3);
   });
 
   test("batching will only notify once", () => {
@@ -52,7 +52,7 @@ describe("createStore", () => {
 
     store.subscribe(fn);
 
-    expect(fn).toHaveBeenCalledTimes(1);
+    expect(fn).toHaveBeenCalledTimes(0);
 
     store.batch(() => {
       store.set((state) => state);
@@ -68,7 +68,7 @@ describe("createStore", () => {
       store.set((state) => state);
     });
 
-    expect(fn).toHaveBeenCalledTimes(2);
+    expect(fn).toHaveBeenCalledTimes(1);
   });
 
   test("nesting batches has no effect (only the outer batch counts)", () => {
@@ -77,7 +77,7 @@ describe("createStore", () => {
 
     store.subscribe(fn);
 
-    expect(fn).toHaveBeenCalledTimes(1);
+    expect(fn).toHaveBeenCalledTimes(0);
 
     store.batch(() => {
       store.set((state) => state);
@@ -97,6 +97,6 @@ describe("createStore", () => {
       });
     });
 
-    expect(fn).toHaveBeenCalledTimes(2);
+    expect(fn).toHaveBeenCalledTimes(1);
   });
 });

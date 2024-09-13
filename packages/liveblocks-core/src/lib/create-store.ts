@@ -79,9 +79,6 @@ export function createStore<T>(initialState: T): Store<T> {
    */
   function subscribe(callback: () => void): () => void {
     subscribers.add(callback);
-
-    callback(); // XXX Tricky! Need to check if we could/should remove this!!!!!!
-
     return () => {
       subscribers.delete(callback);
     };
