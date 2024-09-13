@@ -54,7 +54,7 @@ import type {
   UseThreadsOptions,
   UseUserThreadsOptions,
 } from "./types";
-import type { BeautifulUmbrellaStoreState } from "./umbrella-store";
+import type { UmbrellaStoreState } from "./umbrella-store";
 import { UmbrellaStore } from "./umbrella-store";
 
 /**
@@ -230,7 +230,7 @@ function selectorFor_useRoomInfo(
 }
 
 export function selectInboxNotifications(
-  state: BeautifulUmbrellaStoreState<BaseMetadata>
+  state: UmbrellaStoreState<BaseMetadata>
 ): InboxNotificationData[] {
   return Object.values(state.inboxNotifications).sort(
     // Sort so that the most recent notifications are first

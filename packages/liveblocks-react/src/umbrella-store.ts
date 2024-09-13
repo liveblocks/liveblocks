@@ -155,24 +155,41 @@ type UpdateNotificationSettingsOptimisticUpdate = {
 type QueryState = AsyncResult<undefined>;
 //                            ^^^^^^^^^ We don't store the actual query result in this status
 
-type RawUmbrellaStoreState<M extends BaseMetadata> = Readonly<{
+type InternalState<M extends BaseMetadata> = Readonly<{
+  queries: Record<string, QueryState>;
+  optimisticUpdates: readonly OptimisticUpdate<M>[];
+  threads: Record<string, ThreadDataWithDeleteInfo<M>>;
+  inboxNotifications: Record<string, InboxNotificationData>;
+  notificationSettings: Record<string, RoomNotificationSettings>;
+  versions: Record<string, HistoryVersion[]>;
+}>;
+
+/**
+ * Externally observable state of the store, which will have:
+ * - Optimistic updates applied
+ * - All deleted threads removed from the threads list
+ */
+export type UmbrellaStoreState<M extends BaseMetadata> = {
   /**
    * Keep track of loading and error status of all the queries made by the client.
    * e.g. 'room-abc-{"color":"red"}'  - ok
    * e.g. 'room-abc-{}'               - loading
    */
   queries: Record<string, QueryState>;
-  /**
-   * Optimistic updates that have not been acknowledged by the server yet.
-   * They are applied on top of the threads in selectors.
-   */
-  optimisticUpdates: readonly OptimisticUpdate<M>[];
 
   /**
-   * Threads by ID
-   * e.g. `th_${string}`
+   * All threads in a sorted array, optimistic updates applied, without deleted
+   * threads.
    */
-  threads: Record<string, ThreadDataWithDeleteInfo<M>>;
+  threads: ThreadData<M>[];
+
+  /**
+   * All threads in a map, keyed by thread ID, with all optimistic updates
+   * applied. Deleted threads are still in this mapping, and will have
+   * a deletedAt field if so.
+   */
+  threadsById: Record<string, ThreadDataWithDeleteInfo<M>>;
+
   /**
    * Inbox notifications by ID.
    * e.g. `in_${string}`
@@ -191,24 +208,15 @@ type RawUmbrellaStoreState<M extends BaseMetadata> = Readonly<{
    * e.g. { 'room-abc': {versions: "all versions"}}
    */
   versions: Record<string, HistoryVersion[]>;
-}>;
-
-export type BeautifulUmbrellaStoreState<M extends BaseMetadata> = Omit<
-  RawUmbrellaStoreState<M>,
-  | "optimisticUpdates" // This field is no longer accessible from the outside...
-  | "threads" // This field is refined to the version below...
-> & {
-  threads: ThreadData<M>[]; // Where the internal record of ThreadDataWithDeleteInfo is replaced by ThreadData[]
-  threadsById: Record<string, ThreadDataWithDeleteInfo<M>>;
 };
 
 export class UmbrellaStore<M extends BaseMetadata> {
-  private _store: Store<RawUmbrellaStoreState<M>>;
-  private _prevState: RawUmbrellaStoreState<M> | null = null;
-  private _stateCached: BeautifulUmbrellaStoreState<M> | null = null;
+  private _store: Store<InternalState<M>>;
+  private _prevState: InternalState<M> | null = null;
+  private _stateCached: UmbrellaStoreState<M> | null = null;
 
   constructor() {
-    this._store = createStore<RawUmbrellaStoreState<M>>({
+    this._store = createStore<InternalState<M>>({
       threads: {},
       queries: {},
       optimisticUpdates: [],
@@ -231,7 +239,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.subscribeVersions = this.subscribeVersions.bind(this);
   }
 
-  private get(): BeautifulUmbrellaStoreState<M> {
+  private get(): UmbrellaStoreState<M> {
     // Don't return the raw internal state immediately! Return a new computed
     // cached state (with optimistic updates applied) instead, and cache that
     // until the next .set() call invalidates it.
@@ -243,19 +251,19 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this._stateCached;
   }
 
-  public getThreads(): BeautifulUmbrellaStoreState<M> {
+  public getThreads(): UmbrellaStoreState<M> {
     return this.get();
   }
 
-  public getInboxNotifications(): BeautifulUmbrellaStoreState<M> {
+  public getInboxNotifications(): UmbrellaStoreState<M> {
     return this.get();
   }
 
-  public getNotificationSettings(): BeautifulUmbrellaStoreState<M> {
+  public getNotificationSettings(): UmbrellaStoreState<M> {
     return this.get();
   }
 
-  public getVersions(): BeautifulUmbrellaStoreState<M> {
+  public getVersions(): UmbrellaStoreState<M> {
     return this.get();
   }
 
@@ -357,9 +365,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   /** @internal - Only call this method from unit tests. */
   public force_set(
-    callback: (
-      currentState: RawUmbrellaStoreState<M>
-    ) => RawUmbrellaStoreState<M>
+    callback: (currentState: InternalState<M>) => InternalState<M>
   ): void {
     return this._store.set(callback);
   }
@@ -794,9 +800,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 }
 
-export function applyOptimisticUpdates<M extends BaseMetadata>(
-  state: RawUmbrellaStoreState<M>
-): BeautifulUmbrellaStoreState<M> {
+function applyOptimisticUpdates<M extends BaseMetadata>(
+  state: InternalState<M>
+): UmbrellaStoreState<M> {
   const output = {
     threads: { ...state.threads },
     inboxNotifications: { ...state.inboxNotifications },
@@ -1028,7 +1034,7 @@ export function applyOptimisticUpdates<M extends BaseMetadata>(
       (thread): thread is ThreadData<M> => !thread.deletedAt
     );
 
-  const x: BeautifulUmbrellaStoreState<M> = {
+  const x: UmbrellaStoreState<M> = {
     ...output,
     threadsById: output.threads,
     threads: cleanedThreads,

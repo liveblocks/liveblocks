@@ -107,10 +107,7 @@ import {
   RemoveReactionError,
   UpdateNotificationSettingsError,
 } from "./types/errors";
-import type {
-  BeautifulUmbrellaStoreState,
-  UmbrellaStore,
-} from "./umbrella-store";
+import type { UmbrellaStoreState, UmbrellaStore } from "./umbrella-store";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
 
 const SMOOTH_DELAY = 1000;
@@ -176,7 +173,7 @@ function selectorFor_useOthersConnectionIds(
  */
 // XXX This helper should not be exposed at the package level!
 export function selectRoomThreads<M extends BaseMetadata>(
-  state: BeautifulUmbrellaStoreState<M>,
+  state: UmbrellaStoreState<M>,
   options: {
     roomId: string;
     query?: ThreadsQuery<M>;
@@ -200,7 +197,7 @@ export function selectRoomThreads<M extends BaseMetadata>(
 
 function selectNotificationSettings<M extends BaseMetadata>(
   roomId: string,
-  state: BeautifulUmbrellaStoreState<M>
+  state: UmbrellaStoreState<M>
 ): RoomNotificationSettings {
   const notificationSettings = state.notificationSettings;
   return nn(notificationSettings[roomId]);
@@ -1487,7 +1484,7 @@ function useThreads<M extends BaseMetadata>(
   }, [room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selector = React.useCallback(
-    (state: BeautifulUmbrellaStoreState<M>): ThreadsState<M> => {
+    (state: UmbrellaStoreState<M>): ThreadsState<M> => {
       const query = state.queries[queryKey];
       if (query === undefined || query.isLoading) {
         return {
@@ -2133,7 +2130,7 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
   const { store } = getExtrasForClient(client);
 
   const selector = React.useCallback(
-    (state: BeautifulUmbrellaStoreState<BaseMetadata>): ThreadSubscription => {
+    (state: UmbrellaStoreState<BaseMetadata>): ThreadSubscription => {
       const inboxNotification = selectInboxNotifications(state).find(
         (inboxNotification) =>
           inboxNotification.kind === "thread" &&
@@ -2556,9 +2553,7 @@ function useHistoryVersionsSuspense(): HistoryVersionsStateResolved {
   }
 
   const selector = React.useCallback(
-    (
-      state: BeautifulUmbrellaStoreState<BaseMetadata>
-    ): HistoryVersionsStateResolved => {
+    (state: UmbrellaStoreState<BaseMetadata>): HistoryVersionsStateResolved => {
       return {
         versions: state.versions[room.id],
         isLoading: false,
