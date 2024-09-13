@@ -37,7 +37,7 @@ export default function Editor() {
   return (
     <div className="relative min-h-screen flex flex-col">
       <LexicalComposer initialConfig={initialConfig}>
-        <LiveblocksPlugin>
+        <LiveblocksPlugin hideResolvedThreadMarks={true}>
           {status === "not-loaded" || status === "loading" ? (
             <Loading />
           ) : (
@@ -80,7 +80,7 @@ export default function Editor() {
 }
 
 function Threads() {
-  const { threads } = useThreads();
+  const { threads } = useThreads({ query: { resolved: false } }); // Only show unresolved threads
   const isMobile = useIsMobile();
 
   return isMobile ? (
