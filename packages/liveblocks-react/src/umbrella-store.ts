@@ -271,36 +271,26 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this.get();
   }
 
-  private subscribe(
-    callback: (state: RawUmbrellaStoreState<M>) => void
-  ): () => void {
+  private subscribe(callback: () => void): () => void {
     return this._store.subscribe(callback);
   }
 
-  public subscribeThreads(
-    callback: (state: UmbrellaState_forThreads<M>) => void
-  ): () => void {
+  public subscribeThreads(callback: () => void): () => void {
     // XXX Make this actually only update when threads are invalidated
     return this.subscribe(callback);
   }
 
-  public subscribeInboxNotifications(
-    callback: (state: UmbrellaState_forInboxNotifications<M>) => void
-  ): () => void {
+  public subscribeInboxNotifications(callback: () => void): () => void {
     // XXX Make this actually only update when inbox notifications are invalidated
     return this.subscribe(callback);
   }
 
-  public subscribeNotificationSettings(
-    callback: (state: UmbrellaState_forNotificationSettings<M>) => void
-  ): () => void {
+  public subscribeNotificationSettings(callback: () => void): () => void {
     // XXX Make this actually only update when notification settings are invalidated
     return this.subscribe(callback);
   }
 
-  public subscribeVersions(
-    callback: (state: UmbrellaState_forVersions<M>) => void
-  ): () => void {
+  public subscribeVersions(callback: () => void): () => void {
     // XXX Make this actually only update when versions are invalidated
     return this.subscribe(callback);
   }
