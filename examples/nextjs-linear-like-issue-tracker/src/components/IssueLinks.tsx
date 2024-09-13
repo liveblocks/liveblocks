@@ -6,6 +6,7 @@ import {
   useStorage,
 } from "@liveblocks/react/suspense";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { RubbishIcon } from "@/icons/RubbishIcon";
 import { getPreviewData, LinkPreviewMetadata } from "@/actions/preview";
 import { DeleteIcon } from "@/icons/DeleteIcon";
@@ -148,7 +149,13 @@ function LinkPreview({
   }, [link, onlyPlaceholder]);
 
   return (
-    <div className="h-10 text-sm flex justify-between items-center border border-neutral-200 rounded-lg max-w-full shadow-sm bg-white my-2 cursor-pointer w-full overflow-hidden">
+    <div className="isolate relative h-10 text-sm flex justify-between items-center border border-neutral-200 rounded-lg max-w-full shadow-sm bg-white my-2 cursor-pointer w-full overflow-hidden">
+      <Link
+        href={link}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inset-0 absolute"
+      />
       {loading ? (
         <div className="flex w-full justify-between items-center px-3 py-2 gap-2">
           <span className="flex items-center gap-2">
@@ -178,7 +185,7 @@ function LinkPreview({
           </div>
           <button
             onClick={onRemove}
-            className="flex-shrink-0 text-neutral-400 hover:text-neutral-600 transition-colors px-3 py-2"
+            className="z-10 flex-shrink-0 text-neutral-400 hover:text-neutral-600 transition-colors px-3 py-2"
           >
             <span className="sr-only">Remove link</span>
             <RubbishIcon className="w-4 h-4" />
