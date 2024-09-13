@@ -187,6 +187,17 @@ type RawUmbrellaStoreState<M extends BaseMetadata> = Readonly<{
   versions: Record<string, HistoryVersion[]>;
 }>;
 
+// XXX Replace with definition below
+type BeautifulUmbrellaStoreState<M extends BaseMetadata> =
+  RawUmbrellaStoreState<M>;
+// type BeautifulUmbrellaStoreState<M extends BaseMetadata> = Omit<
+//   RawUmbrellaStoreState<M>,
+//   | "optimisticUpdates" // This field is no longer accessible from the outside...
+//   | "threads" // This field is refined to the version below...
+// > & {
+//   threads: Record<string, ThreadData<M>>; // Where ThreadDataWithDeleteInfo is replaced by ThreadData
+// };
+
 export type UmbrellaState_forThreads<M extends BaseMetadata> = Pick<
   RawUmbrellaStoreState<M>,
   // XXX Shrink the payload type by removing as much as possible here
@@ -226,6 +237,8 @@ export type UmbrellaState_forVersions<M extends BaseMetadata> = Pick<
 
 export class UmbrellaStore<M extends BaseMetadata> {
   private _store: Store<RawUmbrellaStoreState<M>>;
+  private _prevState: RawUmbrellaStoreState<M> | null = null;
+  private _stateCached: BeautifulUmbrellaStoreState<M> | null = null;
 
   constructor() {
     this._store = createStore<RawUmbrellaStoreState<M>>({
@@ -251,8 +264,21 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.subscribeVersions = this.subscribeVersions.bind(this);
   }
 
-  private get(): RawUmbrellaStoreState<M> {
-    return this._store.get();
+  private get(): BeautifulUmbrellaStoreState<M> {
+    function f<T>(x: T): T {
+      return x;
+    }
+
+    // Don't return the raw internal state immediately! Return a new computed
+    // cached state (with optimistic updates applied) instead, and cache that
+    // until the next .set() call invalidates it.
+    const rawState = this._store.get();
+    if (this._prevState !== rawState || this._stateCached === null) {
+      this._prevState = rawState;
+      this._stateCached = f(rawState);
+      //                  ^ This should become applyOptimisticUpdates()
+    }
+    return this._stateCached;
   }
 
   public getThreads(): UmbrellaState_forThreads<M> {
