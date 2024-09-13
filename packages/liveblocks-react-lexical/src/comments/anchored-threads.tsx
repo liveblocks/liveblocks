@@ -74,7 +74,12 @@ export function AnchoredThreads({
   const Thread = components?.Thread ?? DefaultThread;
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const activeThreads = useActiveThreads();
+  const _activeThreads = useActiveThreads();
+  const activeThreads = useMemo(
+    () =>
+      _activeThreads.filter((id) => threads.some((thread) => thread.id === id)),
+    [_activeThreads, threads]
+  );
 
   const nodes = useThreadToNodes(); // A map of thread ids to a set of thread mark nodes associated with the thread
 

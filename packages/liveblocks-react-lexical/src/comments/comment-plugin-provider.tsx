@@ -116,6 +116,8 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     shallow
   );
 
+  useResolvedDataAttribute({ nodes: threadToNodes });
+
   /**
    * Only add styles to the thread mark elements that currently have threads associated with them.
    */
@@ -312,4 +314,77 @@ export function useIsThreadActive(threadId: string): boolean {
   }
 
   return isActive(threadId);
+}
+
+function useResolvedDataAttribute({ nodes }: { nodes: ThreadToNodesMap }) {
+  const client = useClient();
+  const room = useRoom();
+  const store = getUmbrellaStoreForClient(client);
+  const [editor] = useLexicalComposerContext();
+
+  const getSnapshot = useCallback(() => {
+    const resolved = selectRoomThreads(room.id, store.get(), {
+      query: { resolved: true },
+    }).map((thread) => thread.id);
+
+    const unresolved = selectRoomThreads(room.id, store.get(), {
+      query: { resolved: false },
+    }).map((thread) => thread.id);
+
+    return { resolved, unresolved };
+  }, [room.id, store]);
+
+  const threads = useSyncExternalStoreWithSelector(
+    store.subscribe,
+    store.get,
+    store.get,
+    getSnapshot,
+    (a, b) =>
+      shallow(a.resolved, b.resolved) && shallow(a.unresolved, b.unresolved)
+  );
+
+  /**
+   * Update the data-resolved attribute on elements associated with resolved threads.
+   */
+  useEffect(() => {
+    function getElementsAssociatedWithResolvedThreads() {
+      const elements = new Set<HTMLElement>();
+      for (const id of threads.resolved) {
+        const keys = nodes.get(id);
+        if (keys === undefined) continue;
+
+        for (const key of keys) {
+          const element = editor.getElementByKey(key);
+          if (element === null) continue;
+          elements.add(element);
+        }
+      }
+
+      for (const id of threads.unresolved) {
+        const keys = nodes.get(id);
+        if (keys === undefined) continue;
+
+        for (const key of keys) {
+          const element = editor.getElementByKey(key);
+          if (element === null) continue;
+          elements.delete(element);
+        }
+      }
+
+      return elements;
+    }
+
+    // Get all elements associated with resolved threads and add a data-resolved attribute to them.
+    const elements = getElementsAssociatedWithResolvedThreads();
+    console.log(elements);
+    elements.forEach((element) => {
+      element.setAttribute("data-resolved", "");
+    });
+
+    return () => {
+      elements.forEach((element) => {
+        element.removeAttribute("data-resolved");
+      });
+    };
+  }, [editor, threads, nodes, store]);
 }
