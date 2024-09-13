@@ -20,7 +20,6 @@ import {
   $isRangeSelection,
   $isTextNode,
 } from "lexical";
-import type { PropsWithChildren } from "react";
 import * as React from "react";
 import { createContext, useCallback, useEffect, useState } from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
@@ -49,7 +48,13 @@ export const ThreadToNodesContext = createContext<ThreadToNodesMap | null>(
   null
 );
 
-export function CommentPluginProvider({ children }: PropsWithChildren) {
+export function CommentPluginProvider({
+  children,
+  hideResolvedThreadMarks,
+}: {
+  children: React.ReactNode;
+  hideResolvedThreadMarks: boolean; // Whether to hide resolved thread marks or not
+}) {
   const [editor, context] = useLexicalComposerContext();
 
   const [threadToNodes, setThreadToNodes] = useState<ThreadToNodesMap>(
@@ -109,8 +114,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     store.get,
     store.get,
     useCallback(
-      () =>
-        selectRoomThreads(room.id, store.get(), {}).map((thread) => thread.id),
+      () => selectRoomThreads(room.id, store.get(), {}),
       [room.id, store]
     ),
     shallow
@@ -123,8 +127,11 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     function getThreadMarkElements() {
       const activeElements = new Set<HTMLElement>();
 
-      for (const id of threads) {
-        const keys = threadToNodes.get(id);
+      for (const thread of threads) {
+        // If the thread is resolved and `hideResolvedThreadMarks` is set to true, we do not add styles to the associated nodes
+        if (thread.resolved && hideResolvedThreadMarks) continue;
+
+        const keys = threadToNodes.get(thread.id);
         if (keys === undefined) continue;
 
         for (const key of keys) {
@@ -154,7 +161,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
         removeClassNamesFromElement(element, ...classNames);
       });
     };
-  }, [context, editor, threadToNodes, threads]);
+  }, [context, editor, threadToNodes, threads, hideResolvedThreadMarks]);
 
   /**
    * Register a mutation listener that listens for mutations on 'ThreadMarkNode's and updates the map of thread to node keys accordingly.
@@ -213,10 +220,17 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       const selection = $getSelection();
 
       const threadIds = $getThreadIds(selection).filter((id) => {
-        return selectRoomThreads(room.id, store.get(), {}).some(
+        const thread = selectRoomThreads(room.id, store.get(), {}).find(
           (thread) => thread.id === id
         );
+        if (thread === undefined) return false;
+
+        // If the thread is resolved and `hideResolvedThreadMarks` is set to true, we do not add the thread to the list of active threads
+        if (thread.resolved && hideResolvedThreadMarks) return false;
+
+        return true;
       });
+
       setActiveThreads(threadIds);
     }
 
@@ -234,7 +248,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       unregisterUpdateListener();
       unsubscribeCache();
     };
-  }, [editor, client, room.id, store]);
+  }, [editor, client, room.id, store, hideResolvedThreadMarks]);
 
   /**
    * When active threads change, we add a data-state attribute and set it to "active" for all HTML elements that are associated with the active threads.

@@ -91,6 +91,10 @@ export function useEditorStatus(): EditorStatus {
 
 export type LiveblocksPluginProps = {
   children?: React.ReactNode;
+  /**
+   * Whether to hide thread marks associated to resolved threads or not, defaults to false
+   */
+  hideResolvedThreadMarks?: boolean;
 };
 
 /**
@@ -128,6 +132,7 @@ export type LiveblocksPluginProps = {
  */
 export const LiveblocksPlugin = ({
   children,
+  hideResolvedThreadMarks = false,
 }: LiveblocksPluginProps): JSX.Element => {
   const client = useClient();
   const hasResolveMentionSuggestions =
@@ -261,7 +266,9 @@ export const LiveblocksPlugin = ({
       )}
 
       {hasResolveMentionSuggestions && <MentionPlugin />}
-      <CommentPluginProvider>{children}</CommentPluginProvider>
+      <CommentPluginProvider hideResolvedThreadMarks={hideResolvedThreadMarks}>
+        {children}
+      </CommentPluginProvider>
     </>
   );
 };
