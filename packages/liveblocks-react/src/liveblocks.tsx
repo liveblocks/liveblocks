@@ -2,12 +2,13 @@ import type {
   BaseMetadata,
   BaseUserMeta,
   Client,
+  ClientOptions,
+  InboxNotificationData,
   ThreadData,
 } from "@liveblocks/client";
 import type {
   AsyncResult,
   BaseRoomInfo,
-  ClientOptions,
   DM,
   DU,
   OpaqueClient,
@@ -33,8 +34,8 @@ import React, {
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
-import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
-import { selectedUserThreads } from "./comments/lib/selected-threads";
+import { byMostRecentlyUpdated } from "./lib/compare";
+import { makeThreadsFilter } from "./lib/querying";
 import { autoRetry, retryError } from "./lib/retry-error";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { use } from "./lib/use-polyfill";
@@ -50,10 +51,11 @@ import type {
   UnreadInboxNotificationsCountState,
   UserAsyncResult,
   UserAsyncSuccess,
+  UseThreadsOptions,
   UseUserThreadsOptions,
 } from "./types";
 import type { UmbrellaStoreState } from "./umbrella-store";
-import { UmbrellaStore } from "./umbrella-store";
+import { applyOptimisticUpdates, UmbrellaStore } from "./umbrella-store";
 
 /**
  * Raw access to the React context where the LiveblocksProvider stores the
@@ -109,9 +111,30 @@ function selectorFor_useInboxNotifications(
   }
 
   return {
-    inboxNotifications: selectedInboxNotifications(state),
+    inboxNotifications: selectInboxNotifications(state),
     isLoading: false,
   };
+}
+
+function selectUserThreads<M extends BaseMetadata>(
+  state: UmbrellaStoreState<M>,
+  options: UseThreadsOptions<M>
+) {
+  const result = applyOptimisticUpdates(state);
+
+  // First filter pass: remove all soft-deleted threads
+  let threads = Object.values(result.threads).filter(
+    (thread): thread is ThreadData<M> => !thread.deletedAt
+  );
+
+  // Second filter pass: select only threads matching query filter
+  const query = options.query;
+  if (query) {
+    threads = threads.filter(makeThreadsFilter(query));
+  }
+
+  // Sort threads by updated date (newest first) and then created date
+  return threads.sort(byMostRecentlyUpdated);
 }
 
 function selectUnreadInboxNotificationsCount(
@@ -119,7 +142,7 @@ function selectUnreadInboxNotificationsCount(
 ) {
   let count = 0;
 
-  for (const notification of selectedInboxNotifications(state)) {
+  for (const notification of selectInboxNotifications(state)) {
     if (
       notification.readAt === null ||
       notification.readAt < notification.notifiedAt
@@ -209,6 +232,16 @@ function selectorFor_useRoomInfo(
     isLoading: false,
     info: state.data,
   };
+}
+
+export function selectInboxNotifications<M extends BaseMetadata>(
+  state: UmbrellaStoreState<M>
+): InboxNotificationData[] {
+  const result = applyOptimisticUpdates(state);
+  return Object.values(result.inboxNotifications).sort(
+    // Sort so that the most recent notifications are first
+    (a, b) => b.notifiedAt.getTime() - a.notifiedAt.getTime()
+  );
 }
 
 function getOrCreateContextBundle<
@@ -1078,7 +1111,17 @@ export function createLiveblocksContext<
  * @experimental
  *
  * This hook is experimental and could be removed or changed at any time!
- * Do not use unless explicitely recommended by the Liveblocks team.
+ * Do not use unless explicitly recommended by the Liveblocks team.
+ *
+ * WARNING:
+ * Please note that this hook currently returns all threads by most recently
+ * updated threads first. This is inconsistent with the default sort order of
+ * the useThreads() hook, which returns them in chronological order (by
+ * creation date). In the final version, we will make these hooks behave
+ * consistently, so expect that in the final version, you'll have to explicitly
+ * specify the sort order to be by most recently updated first somehow.
+ * The final API for that is still TBD.
+ *
  */
 function useUserThreads_experimental<M extends BaseMetadata>(
   options: UseUserThreadsOptions<M> = {
@@ -1121,7 +1164,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
       }
 
       return {
-        threads: selectedUserThreads(state, options),
+        threads: selectUserThreads(state, options),
         isLoading: false,
       };
     },
@@ -1141,7 +1184,16 @@ function useUserThreads_experimental<M extends BaseMetadata>(
  * @experimental
  *
  * This hook is experimental and could be removed or changed at any time!
- * Do not use unless explicitely recommended by the Liveblocks team.
+ * Do not use unless explicitly recommended by the Liveblocks team.
+ *
+ * WARNING:
+ * Please note that this hook currently returns all threads by most recently
+ * updated threads first. This is inconsistent with the default sort order of
+ * the useThreads() hook, which returns them in chronological order (by
+ * creation date). In the final version, we will make these hooks behave
+ * consistently, so expect that in the final version, you'll have to explicitly
+ * specify the sort order to be by most recently updated first somehow.
+ * The final API for that is still TBD.
  */
 function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
   options: UseUserThreadsOptions<M> = {
@@ -1177,7 +1229,7 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
   const selector = useCallback(
     (state: UmbrellaStoreState<M>): ThreadsStateSuccess<M> => {
       return {
-        threads: selectedUserThreads(state, options),
+        threads: selectUserThreads(state, options),
         isLoading: false,
       };
     },
@@ -1358,7 +1410,16 @@ const _useUserSuspense: TypedBundle["suspense"]["useUser"] = useUserSuspense;
  * @experimental
  *
  * This hook is experimental and could be removed or changed at any time!
- * Do not use unless explicitely recommended by the Liveblocks team.
+ * Do not use unless explicitly recommended by the Liveblocks team.
+ *
+ * WARNING:
+ * Please note that this hook currently returns all threads by most recently
+ * updated threads first. This is inconsistent with the default sort order of
+ * the useThreads() hook, which returns them in chronological order (by
+ * creation date). In the final version, we will make these hooks behave
+ * consistently, so expect that in the final version, you'll have to explicitly
+ * specify the sort order to be by most recently updated first somehow.
+ * The final API for that is still TBD.
  */
 const _useUserThreads_experimental: TypedBundle["useUserThreads_experimental"] =
   useUserThreads_experimental;
@@ -1367,7 +1428,16 @@ const _useUserThreads_experimental: TypedBundle["useUserThreads_experimental"] =
  * @experimental
  *
  * This hook is experimental and could be removed or changed at any time!
- * Do not use unless explicitely recommended by the Liveblocks team.
+ * Do not use unless explicitly recommended by the Liveblocks team.
+ *
+ * WARNING:
+ * Please note that this hook currently returns all threads by most recently
+ * updated threads first. This is inconsistent with the default sort order of
+ * the useThreads() hook, which returns them in chronological order (by
+ * creation date). In the final version, we will make these hooks behave
+ * consistently, so expect that in the final version, you'll have to explicitly
+ * specify the sort order to be by most recently updated first somehow.
+ * The final API for that is still TBD.
  */
 const _useUserThreadsSuspense_experimental: TypedBundle["suspense"]["useUserThreads_experimental"] =
   useUserThreadsSuspense_experimental;

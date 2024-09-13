@@ -1,6 +1,6 @@
 import type { ThreadData } from "@liveblocks/core";
 
-import { selectedThreads } from "../comments/lib/selected-threads";
+import { selectRoomThreads } from "../room";
 import { UmbrellaStore } from "../umbrella-store";
 
 describe("selectedThreads", () => {
@@ -29,7 +29,7 @@ describe("selectedThreads", () => {
 
     store.updateThreadsAndNotifications([thread1, thread2], [], [], []);
 
-    const resolvedThreads = selectedThreads("room_1", store.get(), {
+    const resolvedThreads = selectRoomThreads("room_1", store.get(), {
       query: { resolved: true },
     });
 
