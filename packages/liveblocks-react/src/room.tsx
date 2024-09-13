@@ -107,8 +107,8 @@ import {
   UpdateNotificationSettingsError,
 } from "./types/errors";
 import type {
-  UmbrellaStore,
   BeautifulUmbrellaStoreState,
+  UmbrellaStore,
 } from "./umbrella-store";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
 
@@ -1658,10 +1658,10 @@ function useEditThreadMetadata<M extends BaseMetadata>() {
       room.editThreadMetadata({ threadId, metadata }).then(
         (metadata) =>
           // Replace the optimistic update by the real thing
-          store.updateThread(
+          store.patchThread(
             threadId,
             optimisticUpdateId,
-            (thread) => ({ ...thread, metadata }),
+            { metadata },
             updatedAt
           ),
         (err: Error) =>
@@ -2044,10 +2044,10 @@ function useMarkThreadAsResolved() {
       room.markThreadAsResolved(threadId).then(
         () => {
           // Replace the optimistic update by the real thing
-          store.updateThread(
+          store.patchThread(
             threadId,
             optimisticUpdateId,
-            (thread) => ({ ...thread, resolved: true }),
+            { resolved: true },
             updatedAt
           );
         },
@@ -2091,10 +2091,10 @@ function useMarkThreadAsUnresolved() {
       room.markThreadAsUnresolved(threadId).then(
         () => {
           // Replace the optimistic update by the real thing
-          store.updateThread(
+          store.patchThread(
             threadId,
             optimisticUpdateId,
-            (thread) => ({ ...thread, resolved: false }),
+            { resolved: false },
             updatedAt
           );
         },

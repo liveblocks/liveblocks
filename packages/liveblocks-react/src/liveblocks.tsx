@@ -54,7 +54,8 @@ import type {
   UseThreadsOptions,
   UseUserThreadsOptions,
 } from "./types";
-import { BeautifulUmbrellaStoreState, UmbrellaStore } from "./umbrella-store";
+import type { BeautifulUmbrellaStoreState } from "./umbrella-store";
+import { UmbrellaStore } from "./umbrella-store";
 
 /**
  * Raw access to the React context where the LiveblocksProvider stores the

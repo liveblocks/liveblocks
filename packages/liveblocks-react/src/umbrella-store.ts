@@ -16,7 +16,13 @@ import type {
   ThreadDataWithDeleteInfo,
   ThreadDeleteInfo,
 } from "@liveblocks/core";
-import { console, createStore, mapValues, nanoid } from "@liveblocks/core";
+import {
+  compactObject,
+  console,
+  createStore,
+  mapValues,
+  nanoid,
+} from "@liveblocks/core";
 
 import { isMoreRecentlyUpdated } from "./lib/compare";
 
@@ -468,8 +474,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * - The thread ID in the cache was updated more recently than the optimistic
    *   update's timestamp (if given)
    */
-  // XXX Make private?
-  public updateThread(
+  private updateThread(
     threadId: string,
     optimisticUpdateId: string | null,
     callback: (
@@ -508,6 +513,24 @@ export class UmbrellaStore<M extends BaseMetadata> {
         return { ...cache, [threadId]: callback(existing) };
       });
     });
+  }
+
+  public patchThread(
+    threadId: string,
+    optimisticUpdateId: string | null,
+    patch: {
+      // Only these fields are currently supported to patch
+      metadata?: M;
+      resolved?: boolean;
+    },
+    updatedAt: Date // TODO We could look this up from the optimisticUpdate instead?
+  ): void {
+    return this.updateThread(
+      threadId,
+      optimisticUpdateId,
+      (thread) => ({ ...thread, ...compactObject(patch) }),
+      updatedAt
+    );
   }
 
   public addReaction(
