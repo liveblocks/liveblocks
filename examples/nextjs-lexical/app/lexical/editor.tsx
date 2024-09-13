@@ -80,7 +80,7 @@ export default function Editor() {
 }
 
 function Threads() {
-  const { threads } = useThreads();
+  const { threads } = useThreads({ query: { resolved: false } });
   const isMobile = useIsMobile();
 
   return isMobile ? (

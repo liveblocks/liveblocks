@@ -130,3 +130,7 @@ li::marker {
   text-align: start !important;
   text-align-last: start !important;
 }
+
+.lb-lexical-thread-mark[data-resolved] {
+  all: unset;
+}
