@@ -717,7 +717,7 @@ export async function transformCommentBody(
                   return { ...inline };
                 }
 
-                // NOTE: safeguard in case we support other types than "paragraph"
+                // NOTE: safeguard in case we support other types than "text", "link", or "mention"
                 throw new TransformCommentBodyError(
                   `unsupported comment body inline element: ${JSON.stringify(inline)}`
                 );
