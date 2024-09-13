@@ -149,7 +149,7 @@ type UpdateNotificationSettingsOptimisticUpdate = {
 type QueryState = AsyncResult<undefined>;
 //                            ^^^^^^^^^ We don't store the actual query result in this status
 
-type UmbrellaStoreState<M extends BaseMetadata> = Readonly<{
+type RawUmbrellaStoreState<M extends BaseMetadata> = Readonly<{
   /**
    * Keep track of loading and error status of all the queries made by the client.
    * e.g. 'room-abc-{"color":"red"}'  - ok
@@ -188,7 +188,7 @@ type UmbrellaStoreState<M extends BaseMetadata> = Readonly<{
 }>;
 
 export type UmbrellaState_forThreads<M extends BaseMetadata> = Pick<
-  UmbrellaStoreState<M>,
+  RawUmbrellaStoreState<M>,
   // XXX Shrink the payload type by removing as much as possible here
   | "queries"
   | "optimisticUpdates"
@@ -198,7 +198,7 @@ export type UmbrellaState_forThreads<M extends BaseMetadata> = Pick<
 >;
 
 export type UmbrellaState_forInboxNotifications<M extends BaseMetadata> = Pick<
-  UmbrellaStoreState<M>,
+  RawUmbrellaStoreState<M>,
   // XXX Shrink the payload type by removing as much as possible here
   | "queries"
   | "optimisticUpdates"
@@ -209,7 +209,7 @@ export type UmbrellaState_forInboxNotifications<M extends BaseMetadata> = Pick<
 
 export type UmbrellaState_forNotificationSettings<M extends BaseMetadata> =
   Pick<
-    UmbrellaStoreState<M>,
+    RawUmbrellaStoreState<M>,
     // XXX Shrink the payload type by removing as much as possible here
     | "queries"
     | "optimisticUpdates"
@@ -219,16 +219,16 @@ export type UmbrellaState_forNotificationSettings<M extends BaseMetadata> =
   >;
 
 export type UmbrellaState_forVersions<M extends BaseMetadata> = Pick<
-  UmbrellaStoreState<M>,
+  RawUmbrellaStoreState<M>,
   // XXX Shrink the payload type by removing as much as possible here
   "queries" | "versions"
 >;
 
 export class UmbrellaStore<M extends BaseMetadata> {
-  private _store: Store<UmbrellaStoreState<M>>;
+  private _store: Store<RawUmbrellaStoreState<M>>;
 
   constructor() {
-    this._store = createStore<UmbrellaStoreState<M>>({
+    this._store = createStore<RawUmbrellaStoreState<M>>({
       threads: {},
       queries: {},
       optimisticUpdates: [],
@@ -251,7 +251,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.subscribeVersions = this.subscribeVersions.bind(this);
   }
 
-  private get(): UmbrellaStoreState<M> {
+  private get(): RawUmbrellaStoreState<M> {
     return this._store.get();
   }
 
@@ -272,7 +272,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   private subscribe(
-    callback: (state: UmbrellaStoreState<M>) => void
+    callback: (state: RawUmbrellaStoreState<M>) => void
   ): () => void {
     return this._store.subscribe(callback);
   }
@@ -379,7 +379,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   /** @internal - Only call this method from unit tests. */
   public force_set(
-    callback: (currentState: UmbrellaStoreState<M>) => UmbrellaStoreState<M>
+    callback: (
+      currentState: RawUmbrellaStoreState<M>
+    ) => RawUmbrellaStoreState<M>
   ): void {
     return this._store.set(callback);
   }
@@ -743,7 +745,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 export function applyOptimisticUpdates_threads<M extends BaseMetadata>(
   // XXX Shrink as much as possible
   state: Pick<
-    UmbrellaStoreState<M>,
+    RawUmbrellaStoreState<M>,
     | "optimisticUpdates"
     | "threads"
     | "inboxNotifications"
@@ -763,13 +765,13 @@ export function applyOptimisticUpdates_inboxNotifications<
 >(
   // XXX Shrink as much as possible
   state: Pick<
-    UmbrellaStoreState<M>,
+    RawUmbrellaStoreState<M>,
     | "optimisticUpdates"
     | "threads"
     | "inboxNotifications"
     | "notificationSettings"
   >
-): UmbrellaStoreState<M>["inboxNotifications"] {
+): RawUmbrellaStoreState<M>["inboxNotifications"] {
   return applyOptimisticUpdates(state).inboxNotifications;
 }
 
@@ -778,27 +780,27 @@ export function applyOptimisticUpdates_notificationSettings<
 >(
   // XXX Shrink as much as possible
   state: Pick<
-    UmbrellaStoreState<M>,
+    RawUmbrellaStoreState<M>,
     | "optimisticUpdates"
     | "threads"
     | "inboxNotifications"
     | "notificationSettings"
   >
-): UmbrellaStoreState<M>["notificationSettings"] {
+): RawUmbrellaStoreState<M>["notificationSettings"] {
   return applyOptimisticUpdates(state).notificationSettings;
 }
 
 function applyOptimisticUpdates<M extends BaseMetadata>(
   // XXX Shrink as much as possible
   state: Pick<
-    UmbrellaStoreState<M>,
+    RawUmbrellaStoreState<M>,
     | "optimisticUpdates"
     | "threads"
     | "inboxNotifications"
     | "notificationSettings"
   >
 ): Pick<
-  UmbrellaStoreState<M>,
+  RawUmbrellaStoreState<M>,
   "threads" | "inboxNotifications" | "notificationSettings"
 > {
   const result = {
