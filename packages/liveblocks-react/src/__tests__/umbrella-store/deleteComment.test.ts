@@ -1,4 +1,4 @@
-import { deleteComment } from "../../umbrella-store";
+import { applyDeleteComment } from "../../umbrella-store";
 import { createComment, createThread } from "./_dummies";
 
 describe("deleteComment", () => {
@@ -15,7 +15,7 @@ describe("deleteComment", () => {
 
     const deletedAt = new Date("2024-01-02");
 
-    const updatedThread = deleteComment(thread, comment.id, deletedAt);
+    const updatedThread = applyDeleteComment(thread, comment.id, deletedAt);
 
     expect(updatedThread.updatedAt).toEqual(deletedAt);
     const updatedComment = updatedThread.comments.find(
@@ -39,7 +39,7 @@ describe("deleteComment", () => {
       comments: [comment],
     });
 
-    const updatedThread = deleteComment(
+    const updatedThread = applyDeleteComment(
       thread,
       comment.id,
       new Date("2024-01-03")
@@ -57,7 +57,7 @@ describe("deleteComment", () => {
 
     expect(thread.comments.length).toBe(1);
 
-    const updatedThread = deleteComment(
+    const updatedThread = applyDeleteComment(
       thread,
       "comment_id",
       new Date("2024-01-02")
@@ -82,7 +82,7 @@ describe("deleteComment", () => {
       comments: [comment],
     });
 
-    const updatedThread = deleteComment(
+    const updatedThread = applyDeleteComment(
       thread,
       comment.id,
       new Date("2024-01-03")
@@ -107,7 +107,7 @@ describe("deleteComment", () => {
     });
 
     const deletedAt = new Date("2024-01-03");
-    const updatedThread = deleteComment(thread, comment.id, deletedAt);
+    const updatedThread = applyDeleteComment(thread, comment.id, deletedAt);
     expect(updatedThread.updatedAt).toEqual(deletedAt); // The thread's updatedAt should reflect the deletion time
   });
 });

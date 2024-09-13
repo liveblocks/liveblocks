@@ -1,4 +1,4 @@
-import { addReaction } from "../../umbrella-store";
+import { applyAddReaction } from "../../umbrella-store";
 import { createComment, createThread } from "./_dummies";
 
 describe("addReaction", () => {
@@ -16,7 +16,7 @@ describe("addReaction", () => {
       userId: "user_1",
     };
 
-    const updatedThread = addReaction(thread, comment.id, reaction);
+    const updatedThread = applyAddReaction(thread, comment.id, reaction);
 
     expect(updatedThread.comments[0].reactions).toHaveLength(1);
     expect(updatedThread.comments[0].reactions[0].emoji).toEqual(
@@ -51,7 +51,7 @@ describe("addReaction", () => {
       userId: "user_2",
     };
 
-    const updatedThread = addReaction(thread, comment.id, newReaction);
+    const updatedThread = applyAddReaction(thread, comment.id, newReaction);
 
     expect(updatedThread.comments[0].reactions).toHaveLength(2);
     expect(updatedThread.comments[0].reactions[0].emoji).toEqual("👍");
@@ -88,7 +88,7 @@ describe("addReaction", () => {
       userId: "user_1",
     };
 
-    const updatedThread = addReaction(thread, comment.id, reaction);
+    const updatedThread = applyAddReaction(thread, comment.id, reaction);
 
     expect(updatedThread.comments[0].reactions[0].users).toHaveLength(1); // No additional user should be added
   });
@@ -113,7 +113,7 @@ describe("addReaction", () => {
       createdAt: new Date("2024-01-03"),
       userId: "user_2",
     };
-    const updatedThread = addReaction(thread, comment.id, reaction);
+    const updatedThread = applyAddReaction(thread, comment.id, reaction);
 
     expect(updatedThread.comments[0].reactions[0].users).toHaveLength(2);
     expect(updatedThread.comments[0].reactions[0].users[1].id).toEqual(
@@ -136,7 +136,7 @@ describe("addReaction", () => {
       createdAt: new Date("2024-01-03"),
       userId: "user_2",
     };
-    const updatedThread = addReaction(thread, comment.id, reaction);
+    const updatedThread = applyAddReaction(thread, comment.id, reaction);
 
     expect(updatedThread).toEqual(thread);
   });

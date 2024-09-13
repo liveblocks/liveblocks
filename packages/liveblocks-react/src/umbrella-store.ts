@@ -468,6 +468,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * - The thread ID in the cache was updated more recently than the optimistic
    *   update's timestamp (if given)
    */
+  // XXX Make private?
   public updateThread(
     threadId: string,
     optimisticUpdateId: string | null,
@@ -507,6 +508,38 @@ export class UmbrellaStore<M extends BaseMetadata> {
         return { ...cache, [threadId]: callback(existing) };
       });
     });
+  }
+
+  public addReaction(
+    threadId: string,
+    optimisticUpdateId: string | null,
+    commentId: string,
+    reaction: CommentUserReaction,
+    createdAt: Date // TODO We could look this up from the optimisticUpdate instead?
+  ): void {
+    this.updateThread(
+      threadId,
+      optimisticUpdateId,
+      (thread) => applyAddReaction(thread, commentId, reaction),
+      createdAt
+    );
+  }
+
+  public removeReaction(
+    threadId: string,
+    optimisticUpdateId: string | null,
+    commentId: string,
+    emoji: string,
+    userId: string,
+    removedAt: Date
+  ): void {
+    this.updateThread(
+      threadId,
+      optimisticUpdateId,
+      (thread) =>
+        applyRemoveReaction(thread, commentId, emoji, userId, removedAt),
+      removedAt
+    );
   }
 
   /**
@@ -552,7 +585,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       // 2️⃣ Update the thread instance by adding a comment under it
       this.updateThreadsCache((cache) => ({
         ...cache,
-        [newComment.threadId]: upsertComment(existingThread, newComment),
+        [newComment.threadId]: applyUpsertComment(existingThread, newComment),
       }));
 
       // 3️⃣ Update the associated inbox notification (if any)
@@ -579,6 +612,30 @@ export class UmbrellaStore<M extends BaseMetadata> {
         };
       });
     });
+  }
+
+  public editComment(
+    threadId: string,
+    optimisticUpdateId: string,
+    editedComment: CommentData
+  ): void {
+    return this.updateThread(threadId, optimisticUpdateId, (thread) =>
+      applyUpsertComment(thread, editedComment)
+    );
+  }
+
+  public deleteComment(
+    threadId: string,
+    optimisticUpdateId: string,
+    commentId: string,
+    deletedAt: Date
+  ): void {
+    return this.updateThread(
+      threadId,
+      optimisticUpdateId,
+      (thread) => applyDeleteComment(thread, commentId, deletedAt),
+      deletedAt
+    );
   }
 
   public updateThreadAndNotification(
@@ -805,7 +862,7 @@ export function applyOptimisticUpdates<M extends BaseMetadata>(
           break;
         }
 
-        output.threads[thread.id] = upsertComment(
+        output.threads[thread.id] = applyUpsertComment(
           thread,
           optimisticUpdate.comment
         );
@@ -835,7 +892,7 @@ export function applyOptimisticUpdates<M extends BaseMetadata>(
           break;
         }
 
-        output.threads[thread.id] = upsertComment(
+        output.threads[thread.id] = applyUpsertComment(
           thread,
           optimisticUpdate.comment
         );
@@ -849,7 +906,7 @@ export function applyOptimisticUpdates<M extends BaseMetadata>(
           break;
         }
 
-        output.threads[thread.id] = deleteComment(
+        output.threads[thread.id] = applyDeleteComment(
           thread,
           optimisticUpdate.commentId,
           optimisticUpdate.deletedAt
@@ -880,7 +937,7 @@ export function applyOptimisticUpdates<M extends BaseMetadata>(
           break;
         }
 
-        output.threads[thread.id] = addReaction(
+        output.threads[thread.id] = applyAddReaction(
           thread,
           optimisticUpdate.commentId,
           optimisticUpdate.reaction
@@ -895,7 +952,7 @@ export function applyOptimisticUpdates<M extends BaseMetadata>(
           break;
         }
 
-        output.threads[thread.id] = removeReaction(
+        output.threads[thread.id] = applyRemoveReaction(
           thread,
           optimisticUpdate.commentId,
           optimisticUpdate.emoji,
@@ -1060,7 +1117,8 @@ export function compareInboxNotifications(
   return 0;
 }
 
-export function upsertComment<M extends BaseMetadata>(
+/** @internal Exported for unit tests only. */
+export function applyUpsertComment<M extends BaseMetadata>(
   thread: ThreadDataWithDeleteInfo<M>,
   comment: CommentData
 ): ThreadDataWithDeleteInfo<M> {
@@ -1130,7 +1188,8 @@ export function upsertComment<M extends BaseMetadata>(
   return thread;
 }
 
-export function deleteComment<M extends BaseMetadata>(
+/** @internal Exported for unit tests only. */
+export function applyDeleteComment<M extends BaseMetadata>(
   thread: ThreadDataWithDeleteInfo<M>,
   commentId: string,
   deletedAt: Date
@@ -1181,7 +1240,8 @@ export function deleteComment<M extends BaseMetadata>(
   };
 }
 
-export function addReaction<M extends BaseMetadata>(
+/** @internal Exported for unit tests only. */
+export function applyAddReaction<M extends BaseMetadata>(
   thread: ThreadDataWithDeleteInfo<M>,
   commentId: string,
   reaction: CommentUserReaction
@@ -1223,7 +1283,8 @@ export function addReaction<M extends BaseMetadata>(
   };
 }
 
-export function removeReaction<M extends BaseMetadata>(
+/** @internal Exported for unit tests only. */
+export function applyRemoveReaction<M extends BaseMetadata>(
   thread: ThreadDataWithDeleteInfo<M>,
   commentId: string,
   emoji: string,

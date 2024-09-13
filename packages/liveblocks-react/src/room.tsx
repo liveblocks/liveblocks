@@ -110,12 +110,6 @@ import type {
   UmbrellaStore,
   BeautifulUmbrellaStoreState,
 } from "./umbrella-store";
-import {
-  addReaction,
-  deleteComment,
-  removeReaction,
-  upsertComment,
-} from "./umbrella-store";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
 
 const SMOOTH_DELAY = 1000;
@@ -1790,9 +1784,7 @@ function useEditComment(): (options: EditCommentOptions) => void {
       room.editComment({ threadId, commentId, body }).then(
         (editedComment) => {
           // Replace the optimistic update by the real thing
-          store.updateThread(threadId, optimisticUpdateId, (thread) =>
-            upsertComment(thread, editedComment)
-          );
+          store.editComment(threadId, optimisticUpdateId, editedComment);
         },
         (err: Error) =>
           onMutationFailure(
@@ -1841,10 +1833,10 @@ function useDeleteComment() {
       room.deleteComment({ threadId, commentId }).then(
         () => {
           // Replace the optimistic update by the real thing
-          store.updateThread(
+          store.deleteComment(
             threadId,
             optimisticUpdateId,
-            (thread) => deleteComment(thread, commentId, deletedAt),
+            commentId,
             deletedAt
           );
         },
@@ -1889,10 +1881,11 @@ function useAddReaction<M extends BaseMetadata>() {
       room.addReaction({ threadId, commentId, emoji }).then(
         (addedReaction) => {
           // Replace the optimistic update by the real thing
-          store.updateThread(
+          store.addReaction(
             threadId,
             optimisticUpdateId,
-            (thread) => addReaction(thread, commentId, addedReaction),
+            commentId,
+            addedReaction,
             createdAt
           );
         },
@@ -1943,11 +1936,12 @@ function useRemoveReaction() {
       room.removeReaction({ threadId, commentId, emoji }).then(
         () => {
           // Replace the optimistic update by the real thing
-          store.updateThread(
+          store.removeReaction(
             threadId,
             optimisticUpdateId,
-            (thread) =>
-              removeReaction(thread, commentId, emoji, userId, removedAt),
+            commentId,
+            emoji,
+            userId,
             removedAt
           );
         },
