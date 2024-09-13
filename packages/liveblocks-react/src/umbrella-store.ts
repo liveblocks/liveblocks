@@ -272,22 +272,22 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   public subscribeThreads(callback: () => void): () => void {
-    // XXX Make this actually only update when threads are invalidated
+    // TODO Make this actually only update when threads are invalidated
     return this.subscribe(callback);
   }
 
   public subscribeInboxNotifications(callback: () => void): () => void {
-    // XXX Make this actually only update when inbox notifications are invalidated
+    // TODO Make this actually only update when inbox notifications are invalidated
     return this.subscribe(callback);
   }
 
   public subscribeNotificationSettings(callback: () => void): () => void {
-    // XXX Make this actually only update when notification settings are invalidated
+    // TODO Make this actually only update when notification settings are invalidated
     return this.subscribe(callback);
   }
 
   public subscribeVersions(callback: () => void): () => void {
-    // XXX Make this actually only update when versions are invalidated
+    // TODO Make this actually only update when versions are invalidated
     return this.subscribe(callback);
   }
 
