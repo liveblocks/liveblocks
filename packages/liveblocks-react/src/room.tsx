@@ -52,21 +52,6 @@ import {
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
-import {
-  AddReactionError,
-  type CommentsError,
-  CreateCommentError,
-  CreateThreadError,
-  DeleteCommentError,
-  DeleteThreadError,
-  EditCommentError,
-  EditThreadMetadataError,
-  MarkInboxNotificationAsReadError,
-  MarkThreadAsResolvedError,
-  MarkThreadAsUnresolvedError,
-  RemoveReactionError,
-  UpdateNotificationSettingsError,
-} from "./comments/errors";
 import { byFirstCreated } from "./lib/compare";
 import { isString } from "./lib/guards";
 import { makeThreadsFilter } from "./lib/querying";
@@ -105,6 +90,21 @@ import type {
   UseStorageStatusOptions,
   UseThreadsOptions,
 } from "./types";
+import {
+  AddReactionError,
+  type CommentsError,
+  CreateCommentError,
+  CreateThreadError,
+  DeleteCommentError,
+  DeleteThreadError,
+  EditCommentError,
+  EditThreadMetadataError,
+  MarkInboxNotificationAsReadError,
+  MarkThreadAsResolvedError,
+  MarkThreadAsUnresolvedError,
+  RemoveReactionError,
+  UpdateNotificationSettingsError,
+} from "./types/errors";
 import type { UmbrellaStore, UmbrellaStoreState } from "./umbrella-store";
 import {
   addReaction,

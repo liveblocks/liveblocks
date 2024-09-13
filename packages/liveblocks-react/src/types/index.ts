@@ -34,7 +34,7 @@ import type {
 } from "@liveblocks/core";
 import type { PropsWithChildren } from "react";
 
-import type { CommentsError } from "./comments/errors";
+import type { CommentsError } from "./errors";
 
 export type UseStorageStatusOptions = {
   /**
