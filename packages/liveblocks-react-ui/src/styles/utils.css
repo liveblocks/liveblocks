@@ -4,6 +4,12 @@
   white-space: nowrap;
 }
 
+@mixin capitalize {
+  &::first-letter {
+    text-transform: capitalize;
+  }
+}
+
 @mixin invisible-selection {
   &::selection,
   *::selection {

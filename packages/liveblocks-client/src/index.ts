@@ -27,6 +27,7 @@ export type {
   CommentReaction,
   EnsureJson,
   History,
+  HistoryVersion,
   Immutable,
   InboxNotificationData,
   IUserInfo,

@@ -1,18 +1,10 @@
-import type { BaseMetadata, ThreadData, UmbrellaStore } from "@liveblocks/core";
-import { createClient, kInternal } from "@liveblocks/core";
+import type { ThreadData } from "@liveblocks/core";
 
 import { selectedThreads } from "../comments/lib/selected-threads";
-import MockWebSocket from "./_MockWebSocket";
+import { UmbrellaStore } from "../umbrella-store";
 
 describe("selectedThreads", () => {
   it("should only return resolved threads from a list of threads", () => {
-    const client = createClient({
-      publicApiKey: "pk_xxx",
-      polyfills: {
-        WebSocket: MockWebSocket as any,
-      },
-    });
-
     const thread1: ThreadData = {
       type: "thread" as const,
       id: "th_1",
@@ -33,8 +25,7 @@ describe("selectedThreads", () => {
       resolved: false,
     };
 
-    const store = client[kInternal]
-      .umbrellaStore as unknown as UmbrellaStore<BaseMetadata>;
+    const store = new UmbrellaStore();
 
     store.updateThreadsAndNotifications([thread1, thread2], [], [], []);
 

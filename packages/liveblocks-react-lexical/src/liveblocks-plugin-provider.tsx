@@ -261,7 +261,6 @@ export const LiveblocksPlugin = ({
       )}
 
       {hasResolveMentionSuggestions && <MentionPlugin />}
-
       <CommentPluginProvider>{children}</CommentPluginProvider>
     </>
   );
