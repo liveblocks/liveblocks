@@ -114,7 +114,7 @@ import type {
 } from "./umbrella-store";
 import {
   addReaction,
-  applyOptimisticUpdates_notificationSettings,
+  applyOptimisticUpdates,
   applyOptimisticUpdates_threads,
   deleteComment,
   removeReaction,
@@ -213,7 +213,7 @@ function selectNotificationSettings<M extends BaseMetadata>(
   state: UmbrellaState_forNotificationSettings<M>
 ): RoomNotificationSettings {
   const notificationSettings =
-    applyOptimisticUpdates_notificationSettings(state);
+    applyOptimisticUpdates(state).notificationSettings;
   return nn(notificationSettings[roomId]);
 }
 

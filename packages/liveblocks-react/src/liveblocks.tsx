@@ -55,7 +55,7 @@ import type {
   UseUserThreadsOptions,
 } from "./types";
 import {
-  applyOptimisticUpdates_inboxNotifications,
+  applyOptimisticUpdates,
   applyOptimisticUpdates_threads,
   UmbrellaStore,
 } from "./umbrella-store";
@@ -237,7 +237,7 @@ export function selectInboxNotifications(
   state: ReturnType<UmbrellaStore<BaseMetadata>["getInboxNotifications"]>
 ): InboxNotificationData[] {
   // XXX This should not be the responsibility of this select function
-  const inboxNotifications = applyOptimisticUpdates_inboxNotifications(state);
+  const inboxNotifications = applyOptimisticUpdates(state).inboxNotifications;
 
   return Object.values(inboxNotifications).sort(
     // Sort so that the most recent notifications are first

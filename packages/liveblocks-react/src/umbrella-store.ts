@@ -776,37 +776,7 @@ export function applyOptimisticUpdates_threads<M extends BaseMetadata>(
   );
 }
 
-export function applyOptimisticUpdates_inboxNotifications<
-  M extends BaseMetadata,
->(
-  // XXX Shrink as much as possible
-  state: Pick<
-    RawUmbrellaStoreState<M>,
-    | "optimisticUpdates"
-    | "threads"
-    | "inboxNotifications"
-    | "notificationSettings"
-  >
-): RawUmbrellaStoreState<M>["inboxNotifications"] {
-  return applyOptimisticUpdates(state).inboxNotifications;
-}
-
-export function applyOptimisticUpdates_notificationSettings<
-  M extends BaseMetadata,
->(
-  // XXX Shrink as much as possible
-  state: Pick<
-    RawUmbrellaStoreState<M>,
-    | "optimisticUpdates"
-    | "threads"
-    | "inboxNotifications"
-    | "notificationSettings"
-  >
-): RawUmbrellaStoreState<M>["notificationSettings"] {
-  return applyOptimisticUpdates(state).notificationSettings;
-}
-
-function applyOptimisticUpdates<M extends BaseMetadata>(
+export function applyOptimisticUpdates<M extends BaseMetadata>(
   // XXX Shrink as much as possible
   state: Pick<
     RawUmbrellaStoreState<M>,
