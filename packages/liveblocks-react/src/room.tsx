@@ -108,14 +108,10 @@ import {
 } from "./types/errors";
 import type {
   UmbrellaStore,
-  UmbrellaState_forThreads,
-  UmbrellaState_forNotificationSettings,
-  UmbrellaState_forVersions,
+  BeautifulUmbrellaStoreState,
 } from "./umbrella-store";
 import {
   addReaction,
-  applyOptimisticUpdates,
-  applyOptimisticUpdates_threads,
   deleteComment,
   removeReaction,
   upsertComment,
@@ -186,17 +182,12 @@ function selectorFor_useOthersConnectionIds(
 // XXX This helper should not be exposed at the package level!
 export function selectRoomThreads<M extends BaseMetadata>(
   roomId: string,
-  state: UmbrellaState_forThreads<M>,
+  state: BeautifulUmbrellaStoreState<M>,
   options: UseThreadsOptions<M>
 ): ThreadData<M>[] {
-  // Here, result contains copies of 3 out of the 5 caches with all optimistic
-  // updates mixed in
-  // XXX This should not be the responsibility of this select function
-  let threads = applyOptimisticUpdates_threads(state);
-
   // Second filter pass: only select the threads for this *room*
   // XXX This should ideally also not be the responsibility of this select function!
-  threads = threads.filter((thread) => thread.roomId === roomId);
+  let threads = state.threads.filter((thread) => thread.roomId === roomId);
 
   // Third filter pass: select only threads matching query filter
   const query = options.query;
@@ -210,10 +201,9 @@ export function selectRoomThreads<M extends BaseMetadata>(
 
 function selectNotificationSettings<M extends BaseMetadata>(
   roomId: string,
-  state: UmbrellaState_forNotificationSettings<M>
+  state: BeautifulUmbrellaStoreState<M>
 ): RoomNotificationSettings {
-  const notificationSettings =
-    applyOptimisticUpdates(state).notificationSettings;
+  const notificationSettings = state.notificationSettings;
   return nn(notificationSettings[roomId]);
 }
 
@@ -910,7 +900,7 @@ function RoomProviderInner<
       }
       const { thread, inboxNotification } = info;
 
-      const existingThread = store.getThreads().threads[message.threadId];
+      const existingThread = store.getThreads().threadsById[message.threadId];
 
       switch (message.type) {
         case ServerMsgCode.COMMENT_EDITED:
@@ -1498,7 +1488,7 @@ function useThreads<M extends BaseMetadata>(
   }, [room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selector = React.useCallback(
-    (state: UmbrellaState_forThreads<M>): ThreadsState<M> => {
+    (state: BeautifulUmbrellaStoreState<M>): ThreadsState<M> => {
       const query = state.queries[queryKey];
       if (query === undefined || query.isLoading) {
         return {
@@ -1618,7 +1608,7 @@ function useDeleteThread(): (threadId: string) => void {
     (threadId: string): void => {
       const { store, onMutationFailure } = getExtrasForClient(client);
 
-      const thread = store.getThreads().threads[threadId];
+      const thread = store.getThreads().threadsById[threadId];
 
       const userId = getCurrentUserId(room);
 
@@ -1769,7 +1759,7 @@ function useEditComment(): (options: EditCommentOptions) => void {
       const editedAt = new Date();
 
       const { store, onMutationFailure } = getExtrasForClient(client);
-      const thread = store.getThreads().threads[threadId];
+      const thread = store.getThreads().threadsById[threadId];
       if (thread === undefined) {
         console.warn(
           `Internal unexpected behavior. Cannot edit comment in thread "${threadId}" because the thread does not exist in the cache.`
@@ -2141,14 +2131,14 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
   const { store } = getExtrasForClient(client);
 
   const selector = React.useCallback(
-    (state: UmbrellaState_forThreads<BaseMetadata>): ThreadSubscription => {
+    (state: BeautifulUmbrellaStoreState<BaseMetadata>): ThreadSubscription => {
       const inboxNotification = selectInboxNotifications(state).find(
         (inboxNotification) =>
           inboxNotification.kind === "thread" &&
           inboxNotification.threadId === threadId
       );
 
-      const thread = state.threads[threadId];
+      const thread = state.threadsById[threadId];
 
       if (inboxNotification === undefined || thread === undefined) {
         return {
@@ -2562,7 +2552,7 @@ function useHistoryVersionsSuspense(): HistoryVersionsStateResolved {
 
   const selector = React.useCallback(
     (
-      state: UmbrellaState_forVersions<BaseMetadata>
+      state: BeautifulUmbrellaStoreState<BaseMetadata>
     ): HistoryVersionsStateResolved => {
       return {
         versions: state.versions[room.id],

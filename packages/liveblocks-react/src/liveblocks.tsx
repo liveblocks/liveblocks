@@ -54,11 +54,7 @@ import type {
   UseThreadsOptions,
   UseUserThreadsOptions,
 } from "./types";
-import {
-  applyOptimisticUpdates,
-  applyOptimisticUpdates_threads,
-  UmbrellaStore,
-} from "./umbrella-store";
+import { BeautifulUmbrellaStoreState, UmbrellaStore } from "./umbrella-store";
 
 /**
  * Raw access to the React context where the LiveblocksProvider stores the
@@ -123,8 +119,7 @@ function selectUserThreads<M extends BaseMetadata>(
   state: ReturnType<UmbrellaStore<M>["getThreads"]>,
   options: UseThreadsOptions<M>
 ) {
-  // XXX This should not be the responsibility of this select function
-  let threads = applyOptimisticUpdates_threads(state);
+  let threads = state.threads;
 
   // Second filter pass: select only threads matching query filter
   const query = options.query;
@@ -234,12 +229,9 @@ function selectorFor_useRoomInfo(
 }
 
 export function selectInboxNotifications(
-  state: ReturnType<UmbrellaStore<BaseMetadata>["getInboxNotifications"]>
+  state: BeautifulUmbrellaStoreState<BaseMetadata>
 ): InboxNotificationData[] {
-  // XXX This should not be the responsibility of this select function
-  const inboxNotifications = applyOptimisticUpdates(state).inboxNotifications;
-
-  return Object.values(inboxNotifications).sort(
+  return Object.values(state.inboxNotifications).sort(
     // Sort so that the most recent notifications are first
     (a, b) => b.notifiedAt.getTime() - a.notifiedAt.getTime()
   );
@@ -816,7 +808,7 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
       }
 
       const thread =
-        state.threads[inboxNotification.threadId] ??
+        state.threadsById[inboxNotification.threadId] ??
         raise(
           `Thread with ID "${inboxNotification.threadId}" not found, this inbox notification might not be of kind "thread"`
         );

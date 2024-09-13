@@ -187,53 +187,14 @@ type RawUmbrellaStoreState<M extends BaseMetadata> = Readonly<{
   versions: Record<string, HistoryVersion[]>;
 }>;
 
-// XXX Replace with definition below
-type BeautifulUmbrellaStoreState<M extends BaseMetadata> =
-  RawUmbrellaStoreState<M>;
-// type BeautifulUmbrellaStoreState<M extends BaseMetadata> = Omit<
-//   RawUmbrellaStoreState<M>,
-//   | "optimisticUpdates" // This field is no longer accessible from the outside...
-//   | "threads" // This field is refined to the version below...
-// > & {
-//   threads: Record<string, ThreadData<M>>; // Where ThreadDataWithDeleteInfo is replaced by ThreadData
-// };
-
-export type UmbrellaState_forThreads<M extends BaseMetadata> = Pick<
+export type BeautifulUmbrellaStoreState<M extends BaseMetadata> = Omit<
   RawUmbrellaStoreState<M>,
-  // XXX Shrink the payload type by removing as much as possible here
-  | "queries"
-  | "optimisticUpdates"
-  | "threads"
-  | "inboxNotifications"
-  | "notificationSettings"
->;
-
-export type UmbrellaState_forInboxNotifications<M extends BaseMetadata> = Pick<
-  RawUmbrellaStoreState<M>,
-  // XXX Shrink the payload type by removing as much as possible here
-  | "queries"
-  | "optimisticUpdates"
-  | "threads"
-  | "inboxNotifications"
-  | "notificationSettings"
->;
-
-export type UmbrellaState_forNotificationSettings<M extends BaseMetadata> =
-  Pick<
-    RawUmbrellaStoreState<M>,
-    // XXX Shrink the payload type by removing as much as possible here
-    | "queries"
-    | "optimisticUpdates"
-    | "threads"
-    | "inboxNotifications"
-    | "notificationSettings"
-  >;
-
-export type UmbrellaState_forVersions<M extends BaseMetadata> = Pick<
-  RawUmbrellaStoreState<M>,
-  // XXX Shrink the payload type by removing as much as possible here
-  "queries" | "versions"
->;
+  | "optimisticUpdates" // This field is no longer accessible from the outside...
+  | "threads" // This field is refined to the version below...
+> & {
+  threads: ThreadData<M>[]; // Where the internal record of ThreadDataWithDeleteInfo is replaced by ThreadData[]
+  threadsById: Record<string, ThreadDataWithDeleteInfo<M>>;
+};
 
 export class UmbrellaStore<M extends BaseMetadata> {
   private _store: Store<RawUmbrellaStoreState<M>>;
@@ -265,35 +226,30 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   private get(): BeautifulUmbrellaStoreState<M> {
-    function f<T>(x: T): T {
-      return x;
-    }
-
     // Don't return the raw internal state immediately! Return a new computed
     // cached state (with optimistic updates applied) instead, and cache that
     // until the next .set() call invalidates it.
     const rawState = this._store.get();
     if (this._prevState !== rawState || this._stateCached === null) {
       this._prevState = rawState;
-      this._stateCached = f(rawState);
-      //                  ^ This should become applyOptimisticUpdates()
+      this._stateCached = applyOptimisticUpdates(rawState);
     }
     return this._stateCached;
   }
 
-  public getThreads(): UmbrellaState_forThreads<M> {
+  public getThreads(): BeautifulUmbrellaStoreState<M> {
     return this.get();
   }
 
-  public getInboxNotifications(): UmbrellaState_forInboxNotifications<M> {
+  public getInboxNotifications(): BeautifulUmbrellaStoreState<M> {
     return this.get();
   }
 
-  public getNotificationSettings(): UmbrellaState_forNotificationSettings<M> {
+  public getNotificationSettings(): BeautifulUmbrellaStoreState<M> {
     return this.get();
   }
 
-  public getVersions(): UmbrellaState_forVersions<M> {
+  public getVersions(): BeautifulUmbrellaStoreState<M> {
     return this.get();
   }
 
@@ -758,57 +714,23 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 }
 
-export function applyOptimisticUpdates_threads<M extends BaseMetadata>(
-  // XXX Shrink as much as possible
-  state: Pick<
-    RawUmbrellaStoreState<M>,
-    | "optimisticUpdates"
-    | "threads"
-    | "inboxNotifications"
-    | "notificationSettings"
-  >
-): ThreadData<M>[] {
-  const allThreads = Object.values(applyOptimisticUpdates(state).threads);
-
-  // Don't expose any soft-deleted threads
-  return allThreads.filter(
-    (thread): thread is ThreadData<M> => !thread.deletedAt
-  );
-}
-
 export function applyOptimisticUpdates<M extends BaseMetadata>(
-  // XXX Shrink as much as possible
-  state: Pick<
-    RawUmbrellaStoreState<M>,
-    | "optimisticUpdates"
-    | "threads"
-    | "inboxNotifications"
-    | "notificationSettings"
-  >
-): Pick<
-  RawUmbrellaStoreState<M>,
-  "threads" | "inboxNotifications" | "notificationSettings"
-> {
-  const result = {
-    threads: {
-      ...state.threads,
-    },
-    inboxNotifications: {
-      ...state.inboxNotifications,
-    },
-    notificationSettings: {
-      ...state.notificationSettings,
-    },
+  state: RawUmbrellaStoreState<M>
+): BeautifulUmbrellaStoreState<M> {
+  const output = {
+    threads: { ...state.threads },
+    inboxNotifications: { ...state.inboxNotifications },
+    notificationSettings: { ...state.notificationSettings },
   };
 
   for (const optimisticUpdate of state.optimisticUpdates) {
     switch (optimisticUpdate.type) {
       case "create-thread": {
-        result.threads[optimisticUpdate.thread.id] = optimisticUpdate.thread;
+        output.threads[optimisticUpdate.thread.id] = optimisticUpdate.thread;
         break;
       }
       case "edit-thread-metadata": {
-        const thread = result.threads[optimisticUpdate.threadId];
+        const thread = output.threads[optimisticUpdate.threadId];
         // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
@@ -827,7 +749,7 @@ export function applyOptimisticUpdates<M extends BaseMetadata>(
           break;
         }
 
-        result.threads[thread.id] = {
+        output.threads[thread.id] = {
           ...thread,
           updatedAt: optimisticUpdate.updatedAt,
           metadata: {
@@ -839,7 +761,7 @@ export function applyOptimisticUpdates<M extends BaseMetadata>(
         break;
       }
       case "mark-thread-as-resolved": {
-        const thread = result.threads[optimisticUpdate.threadId];
+        const thread = output.threads[optimisticUpdate.threadId];
         // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
@@ -850,7 +772,7 @@ export function applyOptimisticUpdates<M extends BaseMetadata>(
           break;
         }
 
-        result.threads[thread.id] = {
+        output.threads[thread.id] = {
           ...thread,
           resolved: true,
         };
@@ -858,7 +780,7 @@ export function applyOptimisticUpdates<M extends BaseMetadata>(
         break;
       }
       case "mark-thread-as-unresolved": {
-        const thread = result.threads[optimisticUpdate.threadId];
+        const thread = output.threads[optimisticUpdate.threadId];
         // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
@@ -869,7 +791,7 @@ export function applyOptimisticUpdates<M extends BaseMetadata>(
           break;
         }
 
-        result.threads[thread.id] = {
+        output.threads[thread.id] = {
           ...thread,
           resolved: false,
         };
@@ -877,18 +799,18 @@ export function applyOptimisticUpdates<M extends BaseMetadata>(
         break;
       }
       case "create-comment": {
-        const thread = result.threads[optimisticUpdate.comment.threadId];
+        const thread = output.threads[optimisticUpdate.comment.threadId];
         // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
         }
 
-        result.threads[thread.id] = upsertComment(
+        output.threads[thread.id] = upsertComment(
           thread,
           optimisticUpdate.comment
         );
 
-        const inboxNotification = Object.values(result.inboxNotifications).find(
+        const inboxNotification = Object.values(output.inboxNotifications).find(
           (notification) =>
             notification.kind === "thread" &&
             notification.threadId === thread.id
@@ -898,7 +820,7 @@ export function applyOptimisticUpdates<M extends BaseMetadata>(
           break;
         }
 
-        result.inboxNotifications[inboxNotification.id] = {
+        output.inboxNotifications[inboxNotification.id] = {
           ...inboxNotification,
           notifiedAt: optimisticUpdate.comment.createdAt,
           readAt: optimisticUpdate.comment.createdAt,
@@ -907,13 +829,13 @@ export function applyOptimisticUpdates<M extends BaseMetadata>(
         break;
       }
       case "edit-comment": {
-        const thread = result.threads[optimisticUpdate.comment.threadId];
+        const thread = output.threads[optimisticUpdate.comment.threadId];
         // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
         }
 
-        result.threads[thread.id] = upsertComment(
+        output.threads[thread.id] = upsertComment(
           thread,
           optimisticUpdate.comment
         );
@@ -921,13 +843,13 @@ export function applyOptimisticUpdates<M extends BaseMetadata>(
         break;
       }
       case "delete-comment": {
-        const thread = result.threads[optimisticUpdate.threadId];
+        const thread = output.threads[optimisticUpdate.threadId];
         // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
         }
 
-        result.threads[thread.id] = deleteComment(
+        output.threads[thread.id] = deleteComment(
           thread,
           optimisticUpdate.commentId,
           optimisticUpdate.deletedAt
@@ -937,14 +859,14 @@ export function applyOptimisticUpdates<M extends BaseMetadata>(
       }
 
       case "delete-thread": {
-        const thread = result.threads[optimisticUpdate.threadId];
+        const thread = output.threads[optimisticUpdate.threadId];
         // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
         }
 
-        result.threads[optimisticUpdate.threadId] = {
-          ...result.threads[optimisticUpdate.threadId],
+        output.threads[optimisticUpdate.threadId] = {
+          ...output.threads[optimisticUpdate.threadId],
           deletedAt: optimisticUpdate.deletedAt,
           updatedAt: optimisticUpdate.deletedAt,
           comments: [],
@@ -952,13 +874,13 @@ export function applyOptimisticUpdates<M extends BaseMetadata>(
         break;
       }
       case "add-reaction": {
-        const thread = result.threads[optimisticUpdate.threadId];
+        const thread = output.threads[optimisticUpdate.threadId];
         // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
         }
 
-        result.threads[thread.id] = addReaction(
+        output.threads[thread.id] = addReaction(
           thread,
           optimisticUpdate.commentId,
           optimisticUpdate.reaction
@@ -967,13 +889,13 @@ export function applyOptimisticUpdates<M extends BaseMetadata>(
         break;
       }
       case "remove-reaction": {
-        const thread = result.threads[optimisticUpdate.threadId];
+        const thread = output.threads[optimisticUpdate.threadId];
         // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
         }
 
-        result.threads[thread.id] = removeReaction(
+        output.threads[thread.id] = removeReaction(
           thread,
           optimisticUpdate.commentId,
           optimisticUpdate.emoji,
@@ -984,16 +906,16 @@ export function applyOptimisticUpdates<M extends BaseMetadata>(
         break;
       }
       case "mark-inbox-notification-as-read": {
-        result.inboxNotifications[optimisticUpdate.inboxNotificationId] = {
+        output.inboxNotifications[optimisticUpdate.inboxNotificationId] = {
           ...state.inboxNotifications[optimisticUpdate.inboxNotificationId],
           readAt: optimisticUpdate.readAt,
         };
         break;
       }
       case "mark-all-inbox-notifications-as-read": {
-        for (const id in result.inboxNotifications) {
-          result.inboxNotifications[id] = {
-            ...result.inboxNotifications[id],
+        for (const id in output.inboxNotifications) {
+          output.inboxNotifications[id] = {
+            ...output.inboxNotifications[id],
             readAt: optimisticUpdate.readAt,
           };
         }
@@ -1003,24 +925,38 @@ export function applyOptimisticUpdates<M extends BaseMetadata>(
         const {
           [optimisticUpdate.inboxNotificationId]: _,
           ...inboxNotifications
-        } = result.inboxNotifications;
-        result.inboxNotifications = inboxNotifications;
+        } = output.inboxNotifications;
+        output.inboxNotifications = inboxNotifications;
         break;
       }
       case "delete-all-inbox-notifications": {
-        result.inboxNotifications = {};
+        output.inboxNotifications = {};
         break;
       }
       case "update-notification-settings": {
-        result.notificationSettings[optimisticUpdate.roomId] = {
-          ...result.notificationSettings[optimisticUpdate.roomId],
+        output.notificationSettings[optimisticUpdate.roomId] = {
+          ...output.notificationSettings[optimisticUpdate.roomId],
           ...optimisticUpdate.settings,
         };
       }
     }
   }
 
-  return result;
+  const cleanedThreads =
+    // Don't expose any soft-deleted threads
+    Object.values(output.threads).filter(
+      (thread): thread is ThreadData<M> => !thread.deletedAt
+    );
+
+  const x: BeautifulUmbrellaStoreState<M> = {
+    ...output,
+    threadsById: output.threads,
+    threads: cleanedThreads,
+    versions: state.versions,
+    queries: state.queries,
+  };
+
+  return x;
 }
 
 export function applyThreadUpdates<M extends BaseMetadata>(

@@ -3,9 +3,9 @@ import { UmbrellaStore } from "../../umbrella-store";
 const empty = {
   inboxNotifications: {},
   notificationSettings: {},
-  optimisticUpdates: [],
   queries: {},
-  threads: {},
+  threads: [],
+  threadsById: {},
   versions: {},
 } as const;
 
