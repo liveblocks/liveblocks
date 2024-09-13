@@ -95,6 +95,7 @@ export const USER_THREADS_QUERY = "USER_THREADS";
 function selectorFor_useInboxNotifications(
   state: ReturnType<UmbrellaStore<BaseMetadata>["getInboxNotifications"]>
 ): InboxNotificationsState {
+  // XXX Can we make this a static property, rather than a static key in a dynamic map?
   const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
 
   if (query === undefined || query.isLoading) {
@@ -249,6 +250,7 @@ export function selectThreads<M extends BaseMetadata>(
 export function selectInboxNotifications(
   state: UmbrellaStoreState<BaseMetadata>
 ): InboxNotificationData[] {
+  // XXX Can we do this sorting centrally in the store?
   return Object.values(state.inboxNotifications).sort(
     // Sort so that the most recent notifications are first
     (a, b) => b.notifiedAt.getTime() - a.notifiedAt.getTime()
