@@ -1,73 +1,65 @@
-import type { ThreadData } from "@liveblocks/core";
+import { pairwise } from "itertools";
 
-import { compareThreads } from "../../umbrella-store";
+import {
+  byFirstCreated,
+  byMostRecentlyUpdated,
+  isMoreRecentlyUpdated,
+  isNewer,
+} from "../../lib/compare";
 
-describe("compareThreads", () => {
-  const thread1: ThreadData = {
-    type: "thread" as const,
-    id: "th_1",
-    createdAt: new Date("2024-01-01"),
-    roomId: "room_1",
-    comments: [],
-    metadata: {},
-    resolved: false,
-  };
+// A bunch of dates
+const examples = [
+  { createdAt: new Date("1999-01-01") },
+  { createdAt: new Date("2024-01-01") },
+  { createdAt: new Date("2010-01-01"), updatedAt: new Date("2024-05-05") },
+  { createdAt: new Date("2024-01-02"), updatedAt: new Date("2024-03-03") },
+  { createdAt: new Date("1999-01-02"), updatedAt: new Date("2000-01-06") },
+];
 
-  const thread2: ThreadData = {
-    type: "thread" as const,
-    id: "th_1",
-    createdAt: new Date("2024-01-01"),
-    roomId: "room_1",
-    comments: [],
-    metadata: {},
-    resolved: false,
-  };
-
-  it("should return 1 when thread1 is updated more recently than thread2", () => {
-    thread1.updatedAt = new Date("2024-01-02");
-    thread2.updatedAt = new Date("2024-01-01");
-    expect(compareThreads(thread1, thread2)).toBe(1);
+describe("simple comparison checks", () => {
+  it("sorts correctly using byFirstCreated", () => {
+    expect([...examples].sort(byFirstCreated)).toEqual([
+      { createdAt: new Date("1999-01-01") },
+      { createdAt: new Date("1999-01-02"), updatedAt: new Date("2000-01-06") },
+      { createdAt: new Date("2010-01-01"), updatedAt: new Date("2024-05-05") },
+      { createdAt: new Date("2024-01-01") },
+      { createdAt: new Date("2024-01-02"), updatedAt: new Date("2024-03-03") },
+    ]);
   });
 
-  it("should return -1 when thread2 is updated more recently than thread1", () => {
-    thread1.updatedAt = new Date("2024-01-01");
-    thread2.updatedAt = new Date("2024-01-02");
-    expect(compareThreads(thread1, thread2)).toBe(-1);
+  it("sorts correctly using byMostRecentlyUpdated", () => {
+    expect([...examples].sort(byMostRecentlyUpdated)).toEqual([
+      { createdAt: new Date("2010-01-01"), updatedAt: new Date("2024-05-05") },
+      { createdAt: new Date("2024-01-02"), updatedAt: new Date("2024-03-03") },
+      { createdAt: new Date("2024-01-01") },
+      { createdAt: new Date("1999-01-02"), updatedAt: new Date("2000-01-06") },
+      { createdAt: new Date("1999-01-01") },
+    ]);
   });
 
-  it("should return 1 when only thread1 has an updatedAt", () => {
-    thread1.updatedAt = new Date("2024-01-02");
-    thread2.updatedAt = undefined;
-    expect(compareThreads(thread1, thread2)).toBe(1);
+  it("isNewer on the same dates is false", () => {
+    for (const t of examples) {
+      expect(isNewer(t, t)).toBe(false);
+    }
   });
 
-  it("should return -1 when only thread2 has an updatedAt", () => {
-    thread1.updatedAt = undefined;
-    thread2.updatedAt = new Date("2024-01-02");
-    expect(compareThreads(thread1, thread2)).toBe(-1);
+  it("isMoreRecentlyUpdated on the same dates is false", () => {
+    for (const t of examples) {
+      expect(isMoreRecentlyUpdated(t, t)).toBe(false);
+    }
   });
 
-  it("should return 1 when thread1 is created more recently and no updatedAt is present", () => {
-    thread1.createdAt = new Date("2024-01-02");
-    thread2.createdAt = new Date("2024-01-01");
-
-    thread1.updatedAt = undefined;
-    thread2.updatedAt = undefined;
-    expect(compareThreads(thread1, thread2)).toBe(1);
+  it("isNewer works", () => {
+    for (const [x, y] of pairwise([...examples].sort(byFirstCreated))) {
+      expect(isNewer(y, x)).toBe(true);
+      expect(isNewer(x, y)).toBe(false);
+    }
   });
 
-  it("should return -1 when thread2 is created more recently and no updatedAt is present", () => {
-    thread1.createdAt = new Date("2024-01-01");
-    thread2.createdAt = new Date("2024-01-02");
-
-    thread1.updatedAt = undefined;
-    thread2.updatedAt = undefined;
-    expect(compareThreads(thread1, thread2)).toBe(-1);
-  });
-
-  it("should return 0 when both threads have the same updatedAt and createdAt", () => {
-    thread1.updatedAt = new Date("2024-01-01");
-    thread2.updatedAt = new Date("2024-01-01");
-    expect(compareThreads(thread1, thread2)).toBe(0);
+  it("isMoreRecentlyUpdated works", () => {
+    for (const [x, y] of pairwise([...examples].sort(byMostRecentlyUpdated))) {
+      expect(isMoreRecentlyUpdated(x, y)).toBe(true);
+      expect(isMoreRecentlyUpdated(y, x)).toBe(false);
+    }
   });
 });

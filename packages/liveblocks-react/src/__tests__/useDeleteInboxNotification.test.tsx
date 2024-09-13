@@ -270,8 +270,9 @@ describe("useDeleteInboxNotification", () => {
   });
 
   test("should support deleting a notification and its related thread", async () => {
+    const now = new Date();
     const roomId = nanoid();
-    const thread1 = dummyThreadData({ roomId });
+    const thread1 = dummyThreadData({ roomId, createdAt: now, updatedAt: now });
     const thread2 = dummyThreadData({ roomId });
     const threads = [thread1, thread2];
     const notification1 = dummyThreadInboxNotificationData({
