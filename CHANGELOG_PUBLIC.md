@@ -13,6 +13,35 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
 
+# Week 37 (2024-09-13)
+
+## 2.7.0
+
+### `@liveblocks/client`
+
+- Refactor caching internals to prepare for upcoming features.
+
+### `@liveblocks/react`
+
+- Add support for `query` argument to `useUserThreads_experimental`.
+- Fix bug where some combinations of `query` criteria could over-select threads in `useThreads`.
+
+## 2.6.1
+
+### `@liveblocks/react-ui`
+
+- Fix mention suggestions dropdown not following scroll in some scenarios.
+
+## Dashboard
+
+- Improved error messages to provide clearer guidance during team creation.
+- Implemented various bug fixes and performed stabilization work to enhance
+  overall system reliability.
+
+## Contributors
+
+nvie, flowflorent, jrowny, marcbouchenoire, sugardarius, nimeshnayaju
+
 # Week 36 (2024-09-06)
 
 ## Website
