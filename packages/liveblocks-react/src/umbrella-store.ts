@@ -192,10 +192,16 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
   threadsById: Record<string, ThreadDataWithDeleteInfo<M>>;
 
   /**
+   * All inbox notifications in a sorted array, optimistic updates applied.
+   */
+  inboxNotifications: InboxNotificationData[];
+
+  /**
    * Inbox notifications by ID.
    * e.g. `in_${string}`
    */
   inboxNotificationsById: Record<string, InboxNotificationData>;
+
   /**
    * Notification settings by room ID.
    * e.g. { 'room-abc': { threads: "all" },
@@ -1040,7 +1046,14 @@ function applyOptimisticUpdates<M extends BaseMetadata>(
       (thread): thread is ThreadData<M> => !thread.deletedAt
     );
 
+  const cleanedNotifications =
+    // Sort so that the most recent notifications are first
+    Object.values(output.inboxNotifications).sort(
+      (a, b) => b.notifiedAt.getTime() - a.notifiedAt.getTime()
+    );
+
   return {
+    inboxNotifications: cleanedNotifications,
     inboxNotificationsById: output.inboxNotifications,
     notificationSettingsByRoomId: output.notificationSettings,
     queries: state.queries,

@@ -3,7 +3,6 @@ import type {
   BaseUserMeta,
   Client,
   ClientOptions,
-  InboxNotificationData,
   ThreadData,
 } from "@liveblocks/client";
 import type {
@@ -112,7 +111,7 @@ function selectorFor_useInboxNotifications(
   }
 
   return {
-    inboxNotifications: selectInboxNotifications(state),
+    inboxNotifications: state.inboxNotifications,
     isLoading: false,
   };
 }
@@ -122,7 +121,7 @@ function selectUnreadInboxNotificationsCount(
 ) {
   let count = 0;
 
-  for (const notification of selectInboxNotifications(state)) {
+  for (const notification of state.inboxNotifications) {
     if (
       notification.readAt === null ||
       notification.readAt < notification.notifiedAt
@@ -244,16 +243,6 @@ export function selectThreads<M extends BaseMetadata>(
   // Sort threads by creation date (oldest first)
   return threads.sort(
     options.orderBy === "last-update" ? byMostRecentlyUpdated : byFirstCreated
-  );
-}
-
-export function selectInboxNotifications(
-  state: UmbrellaStoreState<BaseMetadata>
-): InboxNotificationData[] {
-  // XXX Can we do this sorting centrally in the store?
-  return Object.values(state.inboxNotificationsById).sort(
-    // Sort so that the most recent notifications are first
-    (a, b) => b.notifiedAt.getTime() - a.notifiedAt.getTime()
   );
 }
 

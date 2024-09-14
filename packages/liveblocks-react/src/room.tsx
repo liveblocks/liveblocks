@@ -62,7 +62,6 @@ import {
   createSharedContext,
   getUmbrellaStoreForClient,
   LiveblocksProviderWithClient,
-  selectInboxNotifications,
   selectThreads,
   useClient,
   useClientOrNull,
@@ -2103,7 +2102,7 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
 
   const selector = React.useCallback(
     (state: UmbrellaStoreState<BaseMetadata>): ThreadSubscription => {
-      const inboxNotification = selectInboxNotifications(state).find(
+      const inboxNotification = state.inboxNotifications.find(
         (inboxNotification) =>
           inboxNotification.kind === "thread" &&
           inboxNotification.threadId === threadId
