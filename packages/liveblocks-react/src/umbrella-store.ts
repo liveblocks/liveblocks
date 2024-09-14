@@ -158,9 +158,14 @@ type QueryState = AsyncResult<undefined>;
 type InternalState<M extends BaseMetadata> = Readonly<{
   queries: Record<string, QueryState>;
   optimisticUpdates: readonly OptimisticUpdate<M>[];
+
+  // XXX Rename to rawThreadsById
   threads: Record<string, ThreadDataWithDeleteInfo<M>>;
+  // XXX Rename to inboxNotificationsById
   inboxNotifications: Record<string, InboxNotificationData>;
+  // XXX Rename to notificationSettingsById
   notificationSettings: Record<string, RoomNotificationSettings>;
+  // XXX Rename to versionsById
   versions: Record<string, HistoryVersion[]>;
 }>;
 
@@ -207,6 +212,7 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
    * Versions per roomId
    * e.g. { 'room-abc': {versions: "all versions"}}
    */
+  // XXX Rename to versionsByRoomId
   versions: Record<string, HistoryVersion[]>;
 };
 
@@ -256,10 +262,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   public getInboxNotifications(): UmbrellaStoreState<M> {
+    // XXX Return only the stable reference to the inboxNotifications property
     return this.get();
   }
 
   public getNotificationSettings(): UmbrellaStoreState<M> {
+    // XXX Return only the stable reference to the notificationSettings property
     return this.get();
   }
 
