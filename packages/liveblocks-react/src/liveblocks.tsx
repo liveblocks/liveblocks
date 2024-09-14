@@ -94,7 +94,7 @@ export const USER_THREADS_QUERY = "USER_THREADS";
 function selectorFor_useInboxNotifications(
   state: ReturnType<UmbrellaStore<BaseMetadata>["getInboxNotifications"]>
 ): InboxNotificationsState {
-  // XXX Can we make this a static property, rather than a static key in a dynamic map?
+  // TODO Can we make this a static property, rather than a static key in a dynamic map?
   const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
 
   if (query === undefined || query.isLoading) {
