@@ -251,7 +251,7 @@ export function selectInboxNotifications(
   state: UmbrellaStoreState<BaseMetadata>
 ): InboxNotificationData[] {
   // XXX Can we do this sorting centrally in the store?
-  return Object.values(state.inboxNotifications).sort(
+  return Object.values(state.inboxNotificationsById).sort(
     // Sort so that the most recent notifications are first
     (a, b) => b.notifiedAt.getTime() - a.notifiedAt.getTime()
   );
@@ -818,7 +818,7 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
   const selector = useCallback(
     (state: ReturnType<typeof store.getInboxNotifications>) => {
       const inboxNotification =
-        state.inboxNotifications[inboxNotificationId] ??
+        state.inboxNotificationsById[inboxNotificationId] ??
         raise(`Inbox notification with ID "${inboxNotificationId}" not found`);
 
       if (inboxNotification.kind !== "thread") {

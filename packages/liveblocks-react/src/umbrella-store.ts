@@ -194,7 +194,7 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
    * Inbox notifications by ID.
    * e.g. `in_${string}`
    */
-  inboxNotifications: Record<string, InboxNotificationData>;
+  inboxNotificationsById: Record<string, InboxNotificationData>;
   /**
    * Notification settings by room ID.
    * e.g. { 'room-abc': { threads: "all" },
@@ -1034,15 +1034,14 @@ function applyOptimisticUpdates<M extends BaseMetadata>(
       (thread): thread is ThreadData<M> => !thread.deletedAt
     );
 
-  const x: UmbrellaStoreState<M> = {
-    ...output,
-    threadsById: output.threads,
-    threads: cleanedThreads,
-    versions: state.versions,
+  return {
+    inboxNotificationsById: output.inboxNotifications,
+    notificationSettings: output.notificationSettings,
     queries: state.queries,
+    threads: cleanedThreads,
+    threadsById: output.threads,
+    versions: state.versions,
   };
-
-  return x;
 }
 
 export function applyThreadUpdates<M extends BaseMetadata>(

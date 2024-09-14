@@ -1954,7 +1954,7 @@ function useMarkThreadAsRead() {
     (threadId: string) => {
       const { store, onMutationFailure } = getExtrasForClient(client);
       const inboxNotification = Object.values(
-        store.getInboxNotifications().inboxNotifications
+        store.getInboxNotifications().inboxNotificationsById
       ).find(
         (inboxNotification) =>
           inboxNotification.kind === "thread" &&
