@@ -170,7 +170,7 @@ function selectNotificationSettings<M extends BaseMetadata>(
   roomId: string,
   state: UmbrellaStoreState<M>
 ): RoomNotificationSettings {
-  const notificationSettings = state.notificationSettings;
+  const notificationSettings = state.notificationSettingsByRoomId;
   return nn(notificationSettings[roomId]);
 }
 
@@ -2256,7 +2256,7 @@ function useHistoryVersions(): HistoryVersionsState {
       }
 
       return {
-        versions: state.versions[room.id],
+        versions: state.versionsByRoomId[room.id],
         isLoading: false,
         error: query.error,
       };
@@ -2528,7 +2528,7 @@ function useHistoryVersionsSuspense(): HistoryVersionsStateResolved {
   const selector = React.useCallback(
     (state: UmbrellaStoreState<BaseMetadata>): HistoryVersionsStateResolved => {
       return {
-        versions: state.versions[room.id],
+        versions: state.versionsByRoomId[room.id],
         isLoading: false,
       };
     },

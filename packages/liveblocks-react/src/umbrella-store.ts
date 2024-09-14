@@ -159,14 +159,10 @@ type InternalState<M extends BaseMetadata> = Readonly<{
   queries: Record<string, QueryState>;
   optimisticUpdates: readonly OptimisticUpdate<M>[];
 
-  // XXX Rename to rawThreadsById
-  threads: Record<string, ThreadDataWithDeleteInfo<M>>;
-  // XXX Rename to inboxNotificationsById
-  inboxNotifications: Record<string, InboxNotificationData>;
-  // XXX Rename to notificationSettingsById
-  notificationSettings: Record<string, RoomNotificationSettings>;
-  // XXX Rename to versionsById
-  versions: Record<string, HistoryVersion[]>;
+  rawThreadsById: Record<string, ThreadDataWithDeleteInfo<M>>;
+  inboxNotificationsById: Record<string, InboxNotificationData>;
+  notificationSettingsByRoomId: Record<string, RoomNotificationSettings>;
+  versionsByRoomId: Record<string, HistoryVersion[]>;
 }>;
 
 /**
@@ -207,13 +203,12 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
    *        'room-xyz': { threads: "none" },
    *      }
    */
-  notificationSettings: Record<string, RoomNotificationSettings>;
+  notificationSettingsByRoomId: Record<string, RoomNotificationSettings>;
   /**
-   * Versions per roomId
+   * Versions by roomId
    * e.g. { 'room-abc': {versions: "all versions"}}
    */
-  // XXX Rename to versionsByRoomId
-  versions: Record<string, HistoryVersion[]>;
+  versionsByRoomId: Record<string, HistoryVersion[]>;
 };
 
 export class UmbrellaStore<M extends BaseMetadata> {
@@ -223,12 +218,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   constructor() {
     this._store = createStore<InternalState<M>>({
-      threads: {},
+      rawThreadsById: {},
       queries: {},
       optimisticUpdates: [],
-      inboxNotifications: {},
-      notificationSettings: {},
-      versions: {},
+      inboxNotificationsById: {},
+      notificationSettingsByRoomId: {},
+      versionsByRoomId: {},
     });
 
     // Auto-bind all of this class methods once here, so we can use stable
@@ -307,8 +302,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
     ) => Readonly<Record<string, ThreadDataWithDeleteInfo<M>>>
   ): void {
     this._store.set((state) => {
-      const threads = mapFn(state.threads);
-      return threads !== state.threads ? { ...state, threads } : state;
+      const threads = mapFn(state.rawThreadsById);
+      return threads !== state.rawThreadsById
+        ? { ...state, rawThreadsById: threads }
+        : state;
     });
   }
 
@@ -318,9 +315,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
     ) => Readonly<Record<string, InboxNotificationData>>
   ): void {
     this._store.set((state) => {
-      const inboxNotifications = mapFn(state.inboxNotifications);
-      return inboxNotifications !== state.inboxNotifications
-        ? { ...state, inboxNotifications }
+      const inboxNotifications = mapFn(state.inboxNotificationsById);
+      return inboxNotifications !== state.inboxNotificationsById
+        ? { ...state, inboxNotificationsById: inboxNotifications }
         : state;
     });
   }
@@ -331,8 +328,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): void {
     this._store.set((state) => ({
       ...state,
-      notificationSettings: {
-        ...state.notificationSettings,
+      notificationSettingsByRoomId: {
+        ...state.notificationSettingsByRoomId,
         [roomId]: settings,
       },
     }));
@@ -341,8 +338,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
   private setVersions(roomId: string, versions: HistoryVersion[]): void {
     this._store.set((state) => ({
       ...state,
-      versions: {
-        ...state.versions,
+      versionsByRoomId: {
+        ...state.versionsByRoomId,
         [roomId]: versions,
       },
     }));
@@ -614,7 +611,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this.removeOptimisticUpdate(optimisticUpdateId);
 
       // If the associated thread is not found, we cannot create a comment under it
-      const existingThread = this._store.get().threads[newComment.threadId];
+      const existingThread =
+        this._store.get().rawThreadsById[newComment.threadId];
       if (!existingThread) {
         return;
       }
@@ -812,9 +810,9 @@ function applyOptimisticUpdates<M extends BaseMetadata>(
   state: InternalState<M>
 ): UmbrellaStoreState<M> {
   const output = {
-    threads: { ...state.threads },
-    inboxNotifications: { ...state.inboxNotifications },
-    notificationSettings: { ...state.notificationSettings },
+    threads: { ...state.rawThreadsById },
+    inboxNotifications: { ...state.inboxNotificationsById },
+    notificationSettings: { ...state.notificationSettingsByRoomId },
   };
 
   for (const optimisticUpdate of state.optimisticUpdates) {
@@ -1001,7 +999,7 @@ function applyOptimisticUpdates<M extends BaseMetadata>(
       }
       case "mark-inbox-notification-as-read": {
         output.inboxNotifications[optimisticUpdate.inboxNotificationId] = {
-          ...state.inboxNotifications[optimisticUpdate.inboxNotificationId],
+          ...state.inboxNotificationsById[optimisticUpdate.inboxNotificationId],
           readAt: optimisticUpdate.readAt,
         };
         break;
@@ -1044,11 +1042,11 @@ function applyOptimisticUpdates<M extends BaseMetadata>(
 
   return {
     inboxNotificationsById: output.inboxNotifications,
-    notificationSettings: output.notificationSettings,
+    notificationSettingsByRoomId: output.notificationSettings,
     queries: state.queries,
     threads: cleanedThreads,
     threadsById: output.threads,
-    versions: state.versions,
+    versionsByRoomId: state.versionsByRoomId,
   };
 }
 

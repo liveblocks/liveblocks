@@ -2,11 +2,11 @@ import { UmbrellaStore } from "../../umbrella-store";
 
 const empty = {
   inboxNotificationsById: {},
-  notificationSettings: {},
+  notificationSettingsByRoomId: {},
   queries: {},
   threads: [],
   threadsById: {},
-  versions: {},
+  versionsByRoomId: {},
 } as const;
 
 describe("Umbrella Store", () => {
