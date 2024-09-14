@@ -35,16 +35,18 @@ import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import { useIsInsideRoom } from "./contexts";
+import { byFirstCreated, byMostRecentlyUpdated } from "./lib/compare";
+import { makeThreadsFilter } from "./lib/querying";
 import { autoRetry, retryError } from "./lib/retry-error";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { use } from "./lib/use-polyfill";
-import { selectThreads } from "./room";
 import type {
   InboxNotificationsState,
   LiveblocksContextBundle,
   RoomInfoAsyncResult,
   RoomInfoAsyncSuccess,
   SharedContextBundle,
+  ThreadsQuery,
   ThreadsState,
   ThreadsStateSuccess,
   UnreadInboxNotificationsCountState,
@@ -209,6 +211,39 @@ function selectorFor_useRoomInfo(
     isLoading: false,
     info: state.data,
   };
+}
+
+/**
+ * @private Do not rely on this internal API.
+ */
+// TODO This helper should ideally not have to be exposed at the package level!
+// TODO It's currently used by react-lexical though.
+export function selectThreads<M extends BaseMetadata>(
+  state: UmbrellaStoreState<M>,
+  options: {
+    roomId: string | null;
+    query?: ThreadsQuery<M>;
+    orderBy:
+      | "age" // = default
+      | "last-update";
+  }
+): ThreadData<M>[] {
+  let threads = state.threads;
+
+  if (options.roomId !== null) {
+    threads = threads.filter((thread) => thread.roomId === options.roomId);
+  }
+
+  // Third filter pass: select only threads matching query filter
+  const query = options.query;
+  if (query) {
+    threads = threads.filter(makeThreadsFilter<M>(query));
+  }
+
+  // Sort threads by creation date (oldest first)
+  return threads.sort(
+    options.orderBy === "last-update" ? byMostRecentlyUpdated : byFirstCreated
+  );
 }
 
 export function selectInboxNotifications(

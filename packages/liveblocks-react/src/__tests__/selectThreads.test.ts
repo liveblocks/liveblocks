@@ -1,6 +1,6 @@
 import type { ThreadData } from "@liveblocks/core";
 
-import { selectThreads } from "../room";
+import { selectThreads } from "../liveblocks";
 import { UmbrellaStore } from "../umbrella-store";
 
 describe("selectThreads", () => {
