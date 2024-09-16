@@ -1286,6 +1286,7 @@ export function applyDeleteComment<M extends BaseMetadata>(
           ...comment,
           deletedAt,
           body: undefined,
+          attachments: [],
         }
       : comment
   );
