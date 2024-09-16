@@ -14,10 +14,13 @@ describe("Umbrella Store", () => {
   it("getters returns the expected shapes", () => {
     const store = new UmbrellaStore();
 
+    // Sync getters
     expect(store.getThreads()).toEqual(empty);
-    expect(store.getInboxNotifications()).toEqual(empty);
     expect(store.getNotificationSettings()).toEqual(empty);
     expect(store.getVersions()).toEqual(empty);
+
+    // Sync async-results getters
+    expect(store.getInboxNotificationsAsync()).toEqual(empty);
   });
 
   it("calling getters multiple times should always return a stable result", () => {
@@ -25,10 +28,14 @@ describe("Umbrella Store", () => {
 
     // IMPORTANT! Strict equality expected!
     expect(store.getThreads()).toBe(store.getThreads());
-    expect(store.getInboxNotifications()).toBe(store.getInboxNotifications());
     expect(store.getNotificationSettings()).toBe(
       store.getNotificationSettings()
     );
     expect(store.getVersions()).toBe(store.getVersions());
+
+    // Sync async-results getter
+    expect(store.getInboxNotificationsAsync()).toBe(
+      store.getInboxNotificationsAsync()
+    );
   });
 });
