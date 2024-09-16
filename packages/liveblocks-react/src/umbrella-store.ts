@@ -176,6 +176,7 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
    * e.g. 'room-abc-{"color":"red"}'  - ok
    * e.g. 'room-abc-{}'               - loading
    */
+  // XXX Query state should not be exposed publicly by the store!
   queries: Record<string, QueryState>;
 
   /**
@@ -268,12 +269,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   public getInboxNotifications(): UmbrellaStoreState<M> {
-    // TODO Return only the stable reference to the inboxNotifications property
+    // XXX Return only the stable reference to the inboxNotifications property
     return this.get();
   }
 
   public getNotificationSettings(): UmbrellaStoreState<M> {
-    // TODO Return only the stable reference to the notificationSettings property
+    // XXX Return only the stable reference to the notificationSettings property
     return this.get();
   }
 
@@ -296,27 +297,27 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * @private Only used by the E2E test suite.
    */
   public _subscribeOptimisticUpdates(callback: () => void): () => void {
-    // TODO Make this actually only update when optimistic updates are changed
+    // XXX Make this actually only update when optimistic updates are changed
     return this.subscribe(callback);
   }
 
   public subscribeThreads(callback: () => void): () => void {
-    // TODO Make this actually only update when threads are invalidated
+    // XXX Make this actually only update when threads are invalidated
     return this.subscribe(callback);
   }
 
   public subscribeInboxNotifications(callback: () => void): () => void {
-    // TODO Make this actually only update when inbox notifications are invalidated
+    // XXX Make this actually only update when inbox notifications are invalidated
     return this.subscribe(callback);
   }
 
   public subscribeNotificationSettings(callback: () => void): () => void {
-    // TODO Make this actually only update when notification settings are invalidated
+    // XXX Make this actually only update when notification settings are invalidated
     return this.subscribe(callback);
   }
 
   public subscribeVersions(callback: () => void): () => void {
-    // TODO Make this actually only update when versions are invalidated
+    // XXX Make this actually only update when versions are invalidated
     return this.subscribe(callback);
   }
 

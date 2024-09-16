@@ -106,7 +106,9 @@ export const USER_THREADS_QUERY = "USER_THREADS";
 function selectorFor_useInboxNotifications(
   state: ReturnType<UmbrellaStore<BaseMetadata>["getInboxNotifications"]>
 ): InboxNotificationsState {
-  // TODO Can we make this a static property, rather than a static key in a dynamic map?
+  // XXX Selectors like this should not be responsible for the wrapping back
+  // XXX into loading states. This data should be the _input_ to the selectors.
+  // XXX The _getters_ should get the AsyncResults instead.
   const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
 
   if (query === undefined || query.isLoading) {
@@ -455,6 +457,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     }
   }
 
+  // XXX Hmm. All of this is stuff that should be managed by the cache. Now we have caches in different places.
   const userThreadsSubscribersByQuery = new Map<string, number>();
   const userThreadsRequestsByQuery = new Map<string, Promise<unknown>>();
 
