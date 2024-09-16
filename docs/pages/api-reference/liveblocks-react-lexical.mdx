@@ -202,7 +202,7 @@ function Toolbar() {
   return (
     <button
       onClick={() => {
-        editor.dispatchCommand(OPEN_FLOATING_COMPOSER_COMMAND);
+        editor.dispatchCommand(OPEN_FLOATING_COMPOSER_COMMAND, undefined);
       }}
     >
       💬 New comment
