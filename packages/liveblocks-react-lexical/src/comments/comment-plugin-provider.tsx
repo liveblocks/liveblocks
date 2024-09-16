@@ -114,6 +114,9 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
         selectThreads(store.getThreads(), {
           roomId,
           orderBy: "age",
+          query: {
+            resolved: false,
+          },
         }).map((thread) => thread.id),
       [roomId, store]
     ),
@@ -220,6 +223,9 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
         return selectThreads(store.getThreads(), {
           roomId,
           orderBy: "age",
+          query: {
+            resolved: false,
+          },
         }).some((thread) => thread.id === id);
       });
       setActiveThreads(threadIds);
@@ -239,7 +245,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       unregisterUpdateListener();
       unsubscribeCache();
     };
-  }, [editor, client, room.id, store]);
+  }, [editor, client, roomId, store]);
 
   /**
    * When active threads change, we add a data-state attribute and set it to "active" for all HTML elements that are associated with the active threads.

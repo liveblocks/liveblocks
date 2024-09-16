@@ -80,6 +80,7 @@ export function AnchoredThreads({
 
   const getOrderedThreads = useCallback(() => {
     return threads
+      .filter((thread) => thread.resolved === false)
       .map((thread) => {
         const keys = nodes.get(thread.id);
         if (keys === undefined || keys.size === 0) return null;
