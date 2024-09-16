@@ -1,3 +1,5 @@
+import { isPlainObject } from "./utils";
+
 function shallowArray(xs: unknown[], ys: unknown[]): boolean {
   if (xs.length !== ys.length) {
     return false;
@@ -12,17 +14,10 @@ function shallowArray(xs: unknown[], ys: unknown[]): boolean {
   return true;
 }
 
-function shallowObj<T, U>(objA: T, objB: U): boolean {
+function shallowObj(objA: unknown, objB: unknown): boolean {
   // Only try to compare keys/values if these objects are both "pojos" (plain
   // old JavaScript objects)
-  if (
-    typeof objA !== "object" ||
-    objA === null ||
-    typeof objB !== "object" ||
-    objB === null ||
-    Object.prototype.toString.call(objA) !== "[object Object]" ||
-    Object.prototype.toString.call(objB) !== "[object Object]"
-  ) {
+  if (!isPlainObject(objA) || !isPlainObject(objB)) {
     return false;
   }
 
@@ -34,7 +29,7 @@ function shallowObj<T, U>(objA: T, objB: U): boolean {
   return keysA.every(
     (key) =>
       Object.prototype.hasOwnProperty.call(objB, key) &&
-      Object.is(objA[key as keyof T], objB[key as keyof U])
+      Object.is(objA[key], objB[key])
   );
 }
 

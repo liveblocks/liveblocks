@@ -37,6 +37,7 @@ import { useIsInsideRoom } from "./contexts";
 import { byFirstCreated, byMostRecentlyUpdated } from "./lib/compare";
 import { makeThreadsFilter } from "./lib/querying";
 import { autoRetry, retryError } from "./lib/retry-error";
+import { shallow2 } from "./lib/shallow2";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { use } from "./lib/use-polyfill";
 import type {
@@ -1193,7 +1194,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
     store.getThreads,
     store.getThreads,
     selector,
-    shallow
+    shallow2 // NOTE: Using 2-level-deep shallow check here, because the result of selectThreads() is not stable!
   );
 }
 
@@ -1262,7 +1263,7 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
     store.getThreads,
     store.getThreads,
     selector,
-    shallow
+    shallow2 // NOTE: Using 2-level-deep shallow check here, because the result of selectThreads() is not stable!
   );
 }
 
