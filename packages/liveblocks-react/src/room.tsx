@@ -1456,6 +1456,8 @@ function useThreads<M extends BaseMetadata>(
 
   const selector = React.useCallback(
     (state: UmbrellaStoreState<M>): ThreadsState<M> => {
+      // TODO Don't make this the responsibility of the _selector_. It should be
+      // responsibility of the _getter_.
       const query = state.queries[queryKey];
       if (query === undefined || query.isLoading) {
         return {

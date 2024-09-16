@@ -159,6 +159,7 @@ type QueryState = AsyncResult<undefined>;
 const QUERY_STATE_LOADING = Object.freeze({ isLoading: true });
 const QUERY_STATE_OK = Object.freeze({ isLoading: false, data: undefined });
 
+// TODO Stop exporting this constant!
 export const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
 
 type InternalState<M extends BaseMetadata> = Readonly<{
@@ -182,7 +183,7 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
    * e.g. 'room-abc-{"color":"red"}'  - ok
    * e.g. 'room-abc-{}'               - loading
    */
-  // XXX Query state should not be exposed publicly by the store!
+  // TODO Query state should not be exposed publicly by the store!
   queries: Record<string, QueryState>;
 
   /**
@@ -277,7 +278,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   public getInboxNotifications(): UmbrellaStoreState<M> {
-    // XXX Return only the stable reference to the inboxNotifications property
+    // TODO Now that we have getInboxNotificationsAsync, can we get rid of this method already?
     return this.get();
   }
 
@@ -297,12 +298,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }
 
     const inboxNotifications = this.get().inboxNotifications;
-    // XXX Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
+    // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return { inboxNotifications, isLoading: false };
   }
 
   public getNotificationSettings(): UmbrellaStoreState<M> {
-    // XXX Return only the stable reference to the notificationSettings property
+    // TODO Return only the stable reference to the notificationSettings property
     return this.get();
   }
 
@@ -325,27 +326,27 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * @private Only used by the E2E test suite.
    */
   public _subscribeOptimisticUpdates(callback: () => void): () => void {
-    // XXX Make this actually only update when optimistic updates are changed
+    // TODO Make this actually only update when optimistic updates are changed
     return this.subscribe(callback);
   }
 
   public subscribeThreads(callback: () => void): () => void {
-    // XXX Make this actually only update when threads are invalidated
+    // TODO Make this actually only update when threads are invalidated
     return this.subscribe(callback);
   }
 
   public subscribeInboxNotifications(callback: () => void): () => void {
-    // XXX Make this actually only update when inbox notifications are invalidated
+    // TODO Make this actually only update when inbox notifications are invalidated
     return this.subscribe(callback);
   }
 
   public subscribeNotificationSettings(callback: () => void): () => void {
-    // XXX Make this actually only update when notification settings are invalidated
+    // TODO Make this actually only update when notification settings are invalidated
     return this.subscribe(callback);
   }
 
   public subscribeVersions(callback: () => void): () => void {
-    // XXX Make this actually only update when versions are invalidated
+    // TODO Make this actually only update when versions are invalidated
     return this.subscribe(callback);
   }
 

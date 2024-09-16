@@ -34,6 +34,7 @@ describe("Umbrella Store", () => {
     expect(store.getVersions()).toBe(store.getVersions());
 
     // Sync async-results getter
+    // TODO Add check here for strict-equality of the OK-state, which currently isn't strictly-equal and the selectors/isEqual functions are still "working around" that
     expect(store.getInboxNotificationsAsync()).toBe(
       store.getInboxNotificationsAsync()
     );
