@@ -268,7 +268,7 @@ describe("useInboxNotifications", () => {
 
     umbrellaStore.force_set((state) => ({
       ...state,
-      inboxNotifications: {
+      inboxNotificationsById: {
         // Explicitly set the order to be reversed to test that the hook sorts the notifications
         [oldInboxNotification.id]: oldInboxNotification,
         [newInboxNotification.id]: newInboxNotification,
