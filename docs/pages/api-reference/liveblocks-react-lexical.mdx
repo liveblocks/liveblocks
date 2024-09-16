@@ -32,7 +32,8 @@ Liveblocks plugin for Lexical that adds collaboration to your editor.
 
 `LiveblocksPlugin` should always be nested inside [`LexicalComposer`][], and
 each [Lexical default component](#Default-components) you’re using should be
-placed inside the plugin.
+placed inside the plugin. Learn more in our
+[get started guide](/docs/get-started/yjs-lexical-react).
 
 ```tsx
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
@@ -70,7 +71,35 @@ function Editor() {
 }
 ```
 
-Learn more in our [get started guide](/docs/get-started/yjs-lexical-react).
+<PropertiesList title="Props">
+  <PropertiesListItem name="threadMarksQuery" type="ThreadsQuery" optional>
+    Filter visible highlighted text marks in the editor. Accepts the same query
+    object as [`useThreads`][]. [Learn
+    more](/docs/api-reference/liveblocks-react-lexical#Hiding-certain-thread-marks).
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Hiding certain thread marks
+
+When a thread is created with the [`FloatingComposer`][], a thread mark is left
+in the editor, highlighting the selected text attached to the thread. It’s
+possible to hide certain thread marks by passing a `threadMarksQuery` option to
+`LiveblocksPlugin`, for example when a thread has been resolved.
+
+```tsx
+// Your threads query
+const query = { resolved: false };
+
+// Pass this query to `useThreads`
+const { threads } = useThreads({ query });
+
+// Pass the same query to `threadMarksQuery`
+<LiveblocksPlugin threadMarksQuery={query} />;
+```
+
+In the example above, when a thread is resolved, it will no longer be
+highlighted in the editor. It’s generally recommended to pass the same query
+that you’re passing to [`useThreads`][].
 
 ### liveblocksConfig
 
@@ -412,6 +441,23 @@ rendering until threads have loaded.
 </LexicalComposer>
 ```
 
+When a thread is resolved, its text mark is still highlighted in the editor.
+Finish up by hiding these resolved thread highlights using
+[`threadMarksQuery`][].
+
+```tsx
+<LexicalComposer initialConfig={initialConfig}>
+  // +++
+  <LiveblocksPlugin threadMarksQuery={{ resolved: true }}>
+    // +++
+    <FloatingComposer />
+    <ClientSideSuspense fallback={null}>
+      <ThreadOverlay />
+    </ClientSideSuspense>
+  </LiveblocksPlugin>
+</LexicalComposer>
+```
+
 #### Customization [#FloatingThreads-customization]
 
 The `FloatingThreads` component acts as a wrapper around each individual
@@ -649,6 +695,23 @@ rendering until threads have loaded.
 </LexicalComposer>
 ```
 
+When a thread is resolved, its text mark is still highlighted in the editor.
+Finish up by hiding these resolved thread highlights using
+[`threadMarksQuery`][].
+
+```tsx
+<LexicalComposer initialConfig={initialConfig}>
+  // +++
+  <LiveblocksPlugin threadMarksQuery={{ resolved: true }}>
+    // +++
+    <FloatingComposer />
+    <ClientSideSuspense fallback={null}>
+      <ThreadOverlay />
+    </ClientSideSuspense>
+  </LiveblocksPlugin>
+</LexicalComposer>
+```
+
 #### Customization [#AnchoredThreads-customization]
 
 The `AnchoredThreads` component acts as a wrapper around each [`Thread`][]. It
@@ -865,3 +928,5 @@ learn how to do this under
 [`FloatingThreads`]: /docs/api-reference/liveblocks-react-ui#FloatingThreads
 [`AnchoredThreads`]: /docs/api-reference/liveblocks-react-ui#AnchoredThreads
 [`ClientSideSuspense`]: /docs/api-reference/liveblocks-react#ClientSideSuspense
+[`threadMarksQuery`]:
+  /docs/api-reference/liveblocks-react-lexical#Hiding-certain-thread-marks
