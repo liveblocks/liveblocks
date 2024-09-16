@@ -229,9 +229,13 @@ const resolveUsers = async ({ userIds }: ResolveUsersArgs) => {
   return users;
 };
 
+const RESOLVED_ROOM_INFO_TEST = {
+  name: `${ROOM_ID_TEST}-resolved`,
+  url: "https://resend.com/",
+};
 // eslint-disable-next-line @typescript-eslint/require-await
 const resolveRoomInfo = async () => {
-  return { name: `${ROOM_ID_TEST}-resolved`, url: "https://resend.com/" };
+  return RESOLVED_ROOM_INFO_TEST;
 };
 
 describe("thread notification helpers", () => {
@@ -469,10 +473,9 @@ describe("thread notification helpers", () => {
             },
             body: "<p>Hello <span data-mention>@user-1</span> !</p>",
             commentUrl: undefined,
-            roomName: ROOM_ID_TEST,
           },
         ],
-        roomName: ROOM_ID_TEST,
+        roomInfo: { name: ROOM_ID_TEST },
       };
 
       const expected2: UnreadCommentsData = {
@@ -489,10 +492,9 @@ describe("thread notification helpers", () => {
             },
             body: "<p>Hello <span data-mention>@Mislav Abha</span> !</p>",
             commentUrl: `https://resend.com/#${comment.id}`,
-            roomName: `${ROOM_ID_TEST}-resolved`,
           },
         ],
-        roomName: `${ROOM_ID_TEST}-resolved`,
+        roomInfo: RESOLVED_ROOM_INFO_TEST,
       };
 
       const expected3: UnreadCommentsData = {
@@ -523,10 +525,9 @@ describe("thread notification helpers", () => {
               ],
             },
             commentUrl: undefined,
-            roomName: ROOM_ID_TEST,
           },
         ],
-        roomName: ROOM_ID_TEST,
+        roomInfo: { name: ROOM_ID_TEST },
       };
 
       const expected4: UnreadCommentsData = {
@@ -557,10 +558,9 @@ describe("thread notification helpers", () => {
               ],
             },
             commentUrl: `https://resend.com/#${comment.id}`,
-            roomName: `${ROOM_ID_TEST}-resolved`,
           },
         ],
-        roomName: `${ROOM_ID_TEST}-resolved`,
+        roomInfo: RESOLVED_ROOM_INFO_TEST,
       };
 
       it.each<{
@@ -706,10 +706,9 @@ describe("thread notification helpers", () => {
             },
             body: '<p>I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer">https://www.liveblocks.io</a></p>',
             commentUrl: undefined,
-            roomName: ROOM_ID_TEST,
           },
         ],
-        roomName: ROOM_ID_TEST,
+        roomInfo: { name: ROOM_ID_TEST },
       };
 
       const expected2: UnreadCommentsData = {
@@ -726,10 +725,9 @@ describe("thread notification helpers", () => {
             },
             body: '<p>I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer">https://www.liveblocks.io</a></p>',
             commentUrl: `https://resend.com/#${comment2.id}`,
-            roomName: `${ROOM_ID_TEST}-resolved`,
           },
         ],
-        roomName: `${ROOM_ID_TEST}-resolved`,
+        roomInfo: RESOLVED_ROOM_INFO_TEST,
       };
 
       const expected3: UnreadCommentsData = {
@@ -757,10 +755,9 @@ describe("thread notification helpers", () => {
               ],
             },
             commentUrl: undefined,
-            roomName: ROOM_ID_TEST,
           },
         ],
-        roomName: ROOM_ID_TEST,
+        roomInfo: { name: ROOM_ID_TEST },
       };
 
       const expected4: UnreadCommentsData = {
@@ -788,10 +785,9 @@ describe("thread notification helpers", () => {
               ],
             },
             commentUrl: `https://resend.com/#${comment2.id}`,
-            roomName: `${ROOM_ID_TEST}-resolved`,
           },
         ],
-        roomName: `${ROOM_ID_TEST}-resolved`,
+        roomInfo: RESOLVED_ROOM_INFO_TEST,
       };
 
       it.each<{

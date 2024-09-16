@@ -203,7 +203,6 @@ export type UnreadCommentData = {
   createdAt: Date;
   body: string | CommentBodyJson;
   commentUrl?: string;
-  roomName: string;
 };
 
 export type UnreadRepliesData = {
@@ -215,7 +214,7 @@ export type UnreadMentionData = {
   comments: UnreadCommentData[];
 };
 export type UnreadCommentsData = (UnreadRepliesData | UnreadMentionData) & {
-  roomName: string;
+  roomInfo: DRI;
 };
 
 /**
@@ -254,7 +253,6 @@ export async function getThreadNotificationUnreadComments(params: {
   const roomInfos = options?.resolveRoomInfo
     ? await options.resolveRoomInfo({ roomId })
     : undefined;
-  const roomName = roomInfos?.name ?? roomId;
 
   const { type, comments } = await getThreadNotificationData({
     client,
@@ -286,7 +284,6 @@ export async function getThreadNotificationUnreadComments(params: {
         author,
         body,
         commentUrl,
-        roomName,
       };
     })
   );
@@ -294,6 +291,9 @@ export async function getThreadNotificationUnreadComments(params: {
   return {
     type,
     comments: unreadComments,
-    roomName,
+    roomInfo: {
+      ...roomInfos,
+      name: roomInfos?.name ?? roomId,
+    },
   };
 }
