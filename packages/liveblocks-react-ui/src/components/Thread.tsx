@@ -152,6 +152,7 @@ export const Thread = forwardRef(
       showResolveAction = true,
       showReactions = true,
       showComposer = "collapsed",
+      showAttachments = true,
       onResolvedChange,
       onCommentEdit,
       onCommentDelete,
@@ -288,6 +289,7 @@ export const Thread = forwardRef(
                   showDeleted={showDeletedComments}
                   showActions={showActions}
                   showReactions={showReactions}
+                  showAttachments={showAttachments}
                   onCommentEdit={onCommentEdit}
                   onCommentDelete={handleCommentDelete}
                   onAuthorClick={onAuthorClick}
@@ -362,6 +364,7 @@ export const Thread = forwardRef(
               className="lb-thread-composer"
               threadId={thread.id}
               defaultCollapsed={showComposer === "collapsed" ? true : undefined}
+              showAttachments={showAttachments}
               overrides={{
                 COMPOSER_PLACEHOLDER: $.THREAD_COMPOSER_PLACEHOLDER,
                 COMPOSER_SEND: $.THREAD_COMPOSER_SEND,
