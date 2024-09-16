@@ -1,5 +1,6 @@
 export { ArrowDownIcon } from "./ArrowDown";
 export { ArrowUpIcon } from "./ArrowUp";
+export { AttachmentIcon } from "./Attachment";
 export { CheckIcon } from "./Check";
 export { CrossIcon } from "./Cross";
 export { DeleteIcon } from "./Delete";
