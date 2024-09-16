@@ -262,7 +262,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     const rawState = this._store.get();
     if (this._prevState !== rawState || this._stateCached === null) {
       this._prevState = rawState;
-      this._stateCached = applyOptimisticUpdates(rawState);
+      this._stateCached = internalToExternalState(rawState);
     }
     return this._stateCached;
   }
@@ -836,7 +836,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 }
 
-function applyOptimisticUpdates<M extends BaseMetadata>(
+function internalToExternalState<M extends BaseMetadata>(
   state: InternalState<M>
 ): UmbrellaStoreState<M> {
   const output = {
