@@ -569,11 +569,7 @@ export type {
 export function isThreadNotificationEvent(
   event: WebhookEvent
 ): event is ThreadNotificationEvent {
-  return (
-    event.type === "notification" &&
-    event.data.kind === "thread" &&
-    event.data.channel === "email"
-  );
+  return event.type === "notification" && event.data.kind === "thread";
 }
 
 /**
@@ -589,9 +585,5 @@ export function isThreadNotificationEvent(
 export function isTextMentionNotificationEvent(
   event: WebhookEvent
 ): event is TextMentionNotificationEvent {
-  return (
-    event.type === "notification" &&
-    event.data.kind === "textMention" &&
-    event.data.channel === "email"
-  );
+  return event.type === "notification" && event.data.kind === "textMention";
 }
