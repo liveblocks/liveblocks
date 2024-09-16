@@ -4,7 +4,8 @@ import {
   registerNestedElementResolver,
   removeClassNamesFromElement,
 } from "@lexical/utils";
-import { shallow } from "@liveblocks/core";
+import type { BaseMetadata, QueryMetadata, ThreadData } from "@liveblocks/core";
+import { isPlainObject, shallow } from "@liveblocks/core";
 import {
   CreateThreadError,
   getUmbrellaStoreForClient,
@@ -20,7 +21,6 @@ import {
   $isRangeSelection,
   $isTextNode,
 } from "lexical";
-import type { PropsWithChildren } from "react";
 import * as React from "react";
 import { createContext, useCallback, useEffect, useState } from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
@@ -49,7 +49,26 @@ export const ThreadToNodesContext = createContext<ThreadToNodesMap | null>(
   null
 );
 
-export function CommentPluginProvider({ children }: PropsWithChildren) {
+export type ThreadsQuery<M extends BaseMetadata> = {
+  /**
+   * Whether to only return threads marked as resolved or unresolved. If not provided,
+   * all threads will be returned.
+   */
+  resolved?: boolean;
+  /**
+   * The metadata to filter the threads by. If provided, only threads with metadata that matches
+   * the provided metadata will be returned. If not provided, all threads will be returned.
+   */
+  metadata?: Partial<QueryMetadata<M>>;
+};
+
+export function CommentPluginProvider<M extends BaseMetadata>({
+  children,
+  threadMarksQuery,
+}: {
+  children: React.ReactNode;
+  threadMarksQuery: ThreadsQuery<M>;
+}) {
   const [editor, context] = useLexicalComposerContext();
 
   const [threadToNodes, setThreadToNodes] = useState<ThreadToNodesMap>(
@@ -114,8 +133,9 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
         selectThreads(store.getThreads(), {
           roomId,
           orderBy: "age",
-        }).map((thread) => thread.id),
-      [roomId, store]
+          query: threadMarksQuery,
+        }),
+      [roomId, store, threadMarksQuery]
     ),
     shallow
   );
@@ -127,9 +147,19 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     function getThreadMarkElements() {
       const activeElements = new Set<HTMLElement>();
 
-      for (const id of threads) {
-        const keys = threadToNodes.get(id);
+      for (const thread of threads) {
+        const keys = threadToNodes.get(thread.id);
         if (keys === undefined) continue;
+
+        // If the thread does not match the query, we skip it (i.e., we do not add styles to the associated nodes)
+        if (
+          !(
+            matchesQuery(thread, threadMarksQuery) &&
+            matchesMetadata(thread, threadMarksQuery)
+          )
+        ) {
+          continue;
+        }
 
         for (const key of keys) {
           const element = editor.getElementByKey(key);
@@ -158,7 +188,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
         removeClassNamesFromElement(element, ...classNames);
       });
     };
-  }, [context, editor, threadToNodes, threads]);
+  }, [context, editor, threadToNodes, threads, threadMarksQuery]);
 
   /**
    * Register a mutation listener that listens for mutations on 'ThreadMarkNode's and updates the map of thread to node keys accordingly.
@@ -217,10 +247,15 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       const selection = $getSelection();
 
       const threadIds = $getThreadIds(selection).filter((id) => {
-        return selectThreads(store.getThreads(), {
+        const thread = selectThreads(store.getThreads(), {
           roomId,
           orderBy: "age",
-        }).some((thread) => thread.id === id);
+        }).find((thread) => thread.id === id);
+
+        if (thread === undefined) return false;
+
+        // If the thread does not match the query, we skip it (i.e., we do not add it to the active threads)
+        return matchesQuery(thread, threadMarksQuery);
       });
       setActiveThreads(threadIds);
     }
@@ -239,7 +274,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       unregisterUpdateListener();
       unsubscribeCache();
     };
-  }, [editor, client, room.id, store]);
+  }, [editor, client, roomId, store, threadMarksQuery]);
 
   /**
    * When active threads change, we add a data-state attribute and set it to "active" for all HTML elements that are associated with the active threads.
@@ -317,4 +352,47 @@ export function useIsThreadActive(threadId: string): boolean {
   }
 
   return isActive(threadId);
+}
+
+function matchesQuery(
+  thread: ThreadData<BaseMetadata>,
+  q: ThreadsQuery<BaseMetadata>
+) {
+  // Boolean logic: query.resolved? => q.resolved === t.resolved
+  return q.resolved === undefined || thread.resolved === q.resolved;
+}
+
+function matchesMetadata(
+  thread: ThreadData<BaseMetadata>,
+  q: ThreadsQuery<BaseMetadata>
+) {
+  // Boolean logic: query.metadata? => all metadata matches
+  const metadata = thread.metadata;
+  return (
+    q.metadata === undefined ||
+    Object.entries(q.metadata).every(
+      ([key, op]) =>
+        // Boolean logic: op? => value matches the operator
+        op === undefined || matchesOperator(metadata[key], op)
+    )
+  );
+}
+
+function matchesOperator(
+  value: BaseMetadata[string],
+  op: BaseMetadata[string] | { startsWith: string }
+) {
+  if (isStartsWith(op)) {
+    return isString(value) && value.startsWith(op.startsWith);
+  } else {
+    return value === op;
+  }
+}
+
+function isStartsWith(blob: unknown): blob is { startsWith: string } {
+  return isPlainObject(blob) && isString(blob.startsWith);
+}
+
+export function isString(value: unknown): value is string {
+  return typeof value === "string";
 }

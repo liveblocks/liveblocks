@@ -2,6 +2,7 @@ import { autoUpdate, useFloating } from "@floating-ui/react-dom";
 import { CollaborationPlugin } from "@lexical/react/LexicalCollaborationPlugin";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { Provider } from "@lexical/yjs";
+import type { BaseMetadata } from "@liveblocks/core";
 import { kInternal, nn } from "@liveblocks/core";
 import { useClient, useRoom, useSelf } from "@liveblocks/react";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
@@ -16,6 +17,7 @@ import React, {
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { Doc } from "yjs";
 
+import type { ThreadsQuery } from "./comments/comment-plugin-provider";
 import { CommentPluginProvider } from "./comments/comment-plugin-provider";
 import { ThreadMarkNode } from "./comments/thread-mark-node";
 import { MentionNode } from "./mentions/mention-node";
@@ -89,8 +91,9 @@ export function useEditorStatus(): EditorStatus {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
-export type LiveblocksPluginProps = {
+export type LiveblocksPluginProps<M extends BaseMetadata> = {
   children?: React.ReactNode;
+  threadMarksQuery?: ThreadsQuery<M>;
 };
 
 /**
@@ -126,9 +129,10 @@ export type LiveblocksPluginProps = {
  *   );
  * }
  */
-export const LiveblocksPlugin = ({
+export const LiveblocksPlugin = <M extends BaseMetadata = BaseMetadata>({
   children,
-}: LiveblocksPluginProps): JSX.Element => {
+  threadMarksQuery = {},
+}: LiveblocksPluginProps<M>): JSX.Element => {
   const client = useClient();
   const hasResolveMentionSuggestions =
     client[kInternal].resolveMentionSuggestions !== undefined;
@@ -261,7 +265,9 @@ export const LiveblocksPlugin = ({
       )}
 
       {hasResolveMentionSuggestions && <MentionPlugin />}
-      <CommentPluginProvider>{children}</CommentPluginProvider>
+      <CommentPluginProvider threadMarksQuery={threadMarksQuery}>
+        {children}
+      </CommentPluginProvider>
     </>
   );
 };
