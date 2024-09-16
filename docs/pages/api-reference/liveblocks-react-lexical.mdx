@@ -412,15 +412,6 @@ rendering until threads have loaded.
 </LexicalComposer>
 ```
 
-When a thread is resolved, its text mark is still highlighted in the editor.
-Finish up by hiding these resolved thread highlights using CSS.
-
-```css
-.lb-lexical-thread-mark[data-resolved] {
-  all: unset;
-}
-```
-
 #### Customization [#FloatingThreads-customization]
 
 The `FloatingThreads` component acts as a wrapper around each individual
@@ -658,15 +649,6 @@ rendering until threads have loaded.
 </LexicalComposer>
 ```
 
-When a thread is resolved, its text mark is still highlighted in the editor.
-Finish up by hiding these resolved thread highlights using CSS.
-
-```css
-.lb-lexical-thread-mark[data-resolved] {
-  all: unset;
-}
-```
-
 #### Customization [#AnchoredThreads-customization]
 
 The `AnchoredThreads` component acts as a wrapper around each [`Thread`][]. It
@@ -873,19 +855,6 @@ import "@liveblocks/react-lexical/styles.css";
 Adding dark mode and customizing your styles is part of `@liveblocks/react-ui`,
 learn how to do this under
 [styling and customization](/docs/api-reference/liveblocks-react-ui#Styling-and-customization).
-
-### Hiding resolved thread marks
-
-When a thread is created with the [`FloatingComposer`][], a thread mark is left
-in the editor, highlighting the selected text attached to the thread. However,
-after a thread is resolved, you may wish to hide this mark. To do so, select
-marks with the `data-resolved` attribute and reset their styles.
-
-```css
-.lb-lexical-thread-mark[data-resolved] {
-  all: unset;
-}
-```
 
 [`LiveblocksPlugin`]: #LiveblocksPlugin
 [`LexicalComposer`]: https://lexical.dev/docs/react/plugins
