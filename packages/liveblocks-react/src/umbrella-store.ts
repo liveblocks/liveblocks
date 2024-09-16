@@ -1,5 +1,6 @@
 import type {
   AsyncResult,
+  AsyncResultWithDataField,
   BaseMetadata,
   CommentData,
   CommentReaction,
@@ -158,6 +159,8 @@ type QueryState = AsyncResult<undefined>;
 const QUERY_STATE_LOADING = Object.freeze({ isLoading: true });
 const QUERY_STATE_OK = Object.freeze({ isLoading: false, data: undefined });
 
+export const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
+
 type InternalState<M extends BaseMetadata> = Readonly<{
   queries: Record<string, QueryState>;
   optimisticUpdates: readonly OptimisticUpdate<M>[];
@@ -240,6 +243,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // references to them (most important for use in useSyncExternalStore)
     this.getThreads = this.getThreads.bind(this);
     this.getInboxNotifications = this.getInboxNotifications.bind(this);
+    this.getInboxNotificationsAsync =
+      this.getInboxNotificationsAsync.bind(this);
     this.getNotificationSettings = this.getNotificationSettings.bind(this);
     this.getVersions = this.getVersions.bind(this);
     this.subscribeThreads = this.subscribeThreads.bind(this);
@@ -274,6 +279,26 @@ export class UmbrellaStore<M extends BaseMetadata> {
   public getInboxNotifications(): UmbrellaStoreState<M> {
     // XXX Return only the stable reference to the inboxNotifications property
     return this.get();
+  }
+
+  public getInboxNotificationsAsync(): AsyncResultWithDataField<
+    InboxNotificationData[],
+    "inboxNotifications"
+  > {
+    const internalState = this._store.get();
+
+    const query = internalState.queries[INBOX_NOTIFICATIONS_QUERY];
+    if (query === undefined || query.isLoading) {
+      return QUERY_STATE_LOADING;
+    }
+
+    if (query.error !== undefined) {
+      return query;
+    }
+
+    const inboxNotifications = this.get().inboxNotifications;
+    // XXX Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
+    return { inboxNotifications, isLoading: false };
   }
 
   public getNotificationSettings(): UmbrellaStoreState<M> {
@@ -836,6 +861,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 }
 
+/**
+ * Applies optimistic updates, removes deleted threads, sorts results in
+ * a stable way, removes internal fields that should not be exposed publicly.
+ */
 function internalToExternalState<M extends BaseMetadata>(
   state: InternalState<M>
 ): UmbrellaStoreState<M> {
