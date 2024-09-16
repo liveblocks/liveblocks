@@ -27,6 +27,7 @@ import type {
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
 import type {
+  GetThreadsOptions,
   OpaqueRoom,
   OptionalTupleUnless,
   PartialUnless,
@@ -39,8 +40,6 @@ import {
   makeAuthDelegateForRoom,
   makeCreateSocketDelegateForRoom,
 } from "./room";
-import type { CacheStore } from "./store";
-import { createClientStore } from "./store";
 import type { OptionalPromise } from "./types/OptionalPromise";
 
 const MIN_THROTTLE = 16;
@@ -140,16 +139,17 @@ export type EnterOptions<P extends JsonObject = DP, S extends LsonObject = DS> =
 export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
   readonly currentUserIdStore: Store<string | null>;
   readonly resolveMentionSuggestions: ClientOptions<U>["resolveMentionSuggestions"];
-  readonly cacheStore: CacheStore<BaseMetadata>;
   readonly usersStore: BatchStore<U["info"] | undefined, string>;
   readonly roomsInfoStore: BatchStore<DRI | undefined, string>;
   readonly getRoomIds: () => string[];
-  readonly getThreads: () => Promise<{
+  readonly getThreads: (options: GetThreadsOptions<M>) => Promise<{
     threads: ThreadData<M>[];
     inboxNotifications: InboxNotificationData[];
     requestedAt: Date;
   }>;
-  readonly getThreadsSince: (options: { since: Date }) => Promise<{
+  readonly getThreadsSince: (
+    options: { since: Date } & GetThreadsOptions<M>
+  ) => Promise<{
     inboxNotifications: {
       updated: InboxNotificationData[];
       deleted: InboxNotificationDeleteInfo[];
@@ -605,8 +605,6 @@ export function createClient<U extends BaseUserMeta = DU>(
     currentUserIdStore,
   });
 
-  const cacheStore = createClientStore();
-
   const resolveUsers = clientOptions.resolveUsers;
   const warnIfNoResolveUsers = createDevelopmentWarning(
     () => !resolveUsers,
@@ -665,7 +663,6 @@ export function createClient<U extends BaseUserMeta = DU>(
       [kInternal]: {
         currentUserIdStore,
         resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,
-        cacheStore,
         usersStore,
         roomsInfoStore,
         getRoomIds() {

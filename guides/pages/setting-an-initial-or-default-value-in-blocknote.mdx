@@ -1,0 +1,77 @@
+---
+meta:
+  title: "Setting an initial or default value in BlockNote"
+  description:
+    "Learn how to set an initial value to display when the document is empty"
+---
+
+Yjs doesn’t allow you to set an initial value for a document, as documents are
+stored as a list of changes, rather than as the current state. If you were to
+try add a default value, this would instead be sent as an append command,
+meaning that it would be added to any existing data in the document, instead of
+working as a default value.
+
+## Setting content in BlockNote
+
+BlockNote allows you to set a default value by setting `initialContent` in
+`useCreateBlockNote`, however when connected to Yjs this will trigger the
+duplication problem.
+
+```tsx
+function Editor({ doc, provider }: EditorProps) {
+  const editor: BlockNoteEditor = useCreateBlockNote({
+    // +++
+    initialContent: [{ type: "paragraph", content: "Hello world" }],
+    // +++
+
+    // Other options
+    // ...
+  });
+
+  return <BlockNoteView editor={editor} />;
+}
+```
+
+### Default value with Yjs
+
+To avoid this problem, you can instead wait for Liveblocks Yjs to connect, check
+if the editor’s content is empty, and _then_ set a default value.
+
+```tsx
+function Editor({ doc, provider }: EditorProps) {
+  const editor = useEditor({
+    // Options
+    // ...
+  });
+
+  // +++
+  // Set default state
+  useEffect(() => {
+    function setDefault() {
+      if (!editor) {
+        return;
+      }
+
+      if (editor.document.length === 1) {
+        editor.insertBlocks(
+          [{ type: "paragraph", content: "Hello world" }],
+          editor.document[0]
+        );
+      }
+    }
+
+    if (provider.isReady) {
+      setDefault();
+    }
+
+    provider.on("sync", setDefault);
+    return () => provider.off("sync", setDefault);
+  }, [provider, editor]);
+  // +++
+
+  return <BlockNoteView editor={editor} />;
+}
+```
+
+Note that we’re assuming your BlockNote application is set up as recommended in
+our [getting started guide](/docs/get-started/yjs-blocknote-react).

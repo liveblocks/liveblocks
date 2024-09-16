@@ -202,7 +202,7 @@ function Toolbar() {
   return (
     <button
       onClick={() => {
-        editor.dispatchCommand(OPEN_FLOATING_COMPOSER_COMMAND);
+        editor.dispatchCommand(OPEN_FLOATING_COMPOSER_COMMAND, undefined);
       }}
     >
       💬 New comment
@@ -752,6 +752,55 @@ offset that’s added when a thread is selected.
     component.
   </PropertiesListItem>
 </PropertiesList>
+
+### HistoryVersionPreview
+
+<Banner title="Private beta">
+
+Version history is currently in private beta. If you would like access to the
+beta, please [contact us](https://liveblocks.io/contact/sales). We’d love to
+hear from you.
+
+</Banner>
+
+The `HistoryVersionPreview` component allows you to display a preview of a
+specific version of your Lexical editor's content. It also contains a button and
+logic for restoring. It must be used inside the `<LiveblocksPlugin>` context. To
+render a list of versions, see
+[`VersionHistory`](/docs/api-reference/liveblocks-react-ui#Version-History).
+
+#### Usage
+
+```tsx
+import { HistoryVersionPreview } from "@liveblocks/react-lexical";
+
+function VersionPreview({ selectedVersion, onVersionRestore }) {
+  return (
+    <HistoryVersionPreview
+      version={selectedVersion}
+      onVersionRestore={onVersionRestore}
+    />
+  );
+}
+```
+
+#### Props
+
+<PropertiesList>
+  <PropertiesListItem name="version" type="HistoryVersion" required>
+    The version of the editor content to preview.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onVersionRestore"
+    type="(version: HistoryVersion) => void"
+  >
+    Callback function called when the user chooses to restore this version.
+  </PropertiesListItem>
+</PropertiesList>
+
+The `HistoryVersionPreview` component renders a read-only view of the specified
+version of the editor content. It also provides a button for users to restore
+the displayed version.
 
 ## Hooks
 

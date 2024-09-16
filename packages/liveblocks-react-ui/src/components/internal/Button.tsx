@@ -7,12 +7,19 @@ import { classNames } from "../../utils/class-names";
 
 export interface ButtonProps extends ComponentProps<"button"> {
   variant?: "default" | "outline" | "primary";
+  size?: "default" | "large";
   disableable?: boolean;
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
-    { variant = "default", disableable = true, className, ...props },
+    {
+      variant = "default",
+      size = "default",
+      disableable = true,
+      className,
+      ...props
+    },
     forwardedRef
   ) => {
     return (
@@ -24,6 +31,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           className
         )}
         data-variant={variant}
+        data-size={size}
         {...props}
         ref={forwardedRef}
       />

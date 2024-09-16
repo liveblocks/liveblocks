@@ -135,7 +135,6 @@ to hear from you.
       import {
         liveblocksConfig,
         LiveblocksPlugin,
-        FloatingComposer,
       } from "@liveblocks/react-lexical";
       import { Toolbar } from "./Toolbar";
       import { Threads } from "./Threads";
@@ -153,20 +152,52 @@ to hear from you.
         return (
           <LexicalComposer initialConfig={initialConfig}>
             <Toolbar />
-            <div className="wrapper">
-              <div className="editor">
-                <RichTextPlugin
-                  contentEditable={<ContentEditable />}
-                  placeholder={<div className="placeholder">Start typing here…</div>}
-                  ErrorBoundary={LexicalErrorBoundary}
-                />
-              </div>
-              <Threads />
+            <div className="editor">
+              <RichTextPlugin
+                contentEditable={<ContentEditable />}
+                placeholder={<div className="placeholder">Start typing here…</div>}
+                ErrorBoundary={LexicalErrorBoundary}
+              />
+              <LiveblocksPlugin>
+                <Threads />
+              </LiveblocksPlugin>
             </div>
-            <LiveblocksPlugin>
-              <FloatingComposer className="floating-composer" />
-            </LiveblocksPlugin>
           </LexicalComposer>
+        );
+      }
+      ```
+    </StepContent>
+
+  </Step>
+  <Step>
+    <StepTitle>Render threads and composer</StepTitle>
+    <StepContent>
+
+      To add [Comments](/docs/products/comments) to your text editor, we need to import a thread composer
+      and list each thread on the page. Create a `Threads.tsx` file that uses [`FloatingComposer`](/docs/api-reference/liveblocks-react-lexical#FloatingComposer)
+      for creating new threads, alongside [`AnchoredThreads`](/docs/api-reference/liveblocks-react-lexical#AnchoredThreads) and [`FloatingThreads`](/docs/api-reference/liveblocks-react-lexical#FloatingThreads) for displaying threads on desktop and mobile.
+
+      ```tsx file="app/Threads.tsx"
+      "use client";
+
+      import { useThreads } from "@liveblocks/react/suspense";
+      import {
+        AnchoredThreads,
+        FloatingComposer,
+        FloatingThreads,
+      } from "@liveblocks/react-lexical";
+
+      export function Threads() {
+        const { threads } = useThreads();
+
+        return (
+          <>
+            <div className="anchored-threads">
+              <AnchoredThreads threads={threads} />
+            </div>
+            <FloatingThreads className="floating-threads" threads={threads} />
+            <FloatingComposer className="floating-composer" />
+          </>
         );
       }
       ```
@@ -177,8 +208,9 @@ to hear from you.
     <StepTitle>Create a toolbar</StepTitle>
     <StepContent>
 
-      To create annotations and post comments, we need to create a button for triggers the action.
-      Create a toolbar in `Toolbar.tsx` that enables this.
+      To create threads with the [`FloatingComposer`](/docs/api-reference/liveblocks-react-lexical#FloatingComposer),
+      we need to create a button that opens the composer. Create a toolbar in `Toolbar.tsx`
+      with a button that opens the composer using [`OPEN_FLOATING_COMPOSER_COMMAND`](/docs/api-reference/liveblocks-react-lexical#Opening-the-composer).
 
       ```tsx file="app/Toolbar.tsx"
       "use client";
@@ -192,41 +224,12 @@ to hear from you.
         return (
           <div className="toolbar">
             <button
-              className="add-comment"
               onClick={() =>
                 editor.dispatchCommand(OPEN_FLOATING_COMPOSER_COMMAND, undefined)
               }
             >
               💬 New comment
             </button>
-          </div>
-        );
-      }
-      ```
-    </StepContent>
-
-  </Step>
-  <Step>
-    <StepTitle>Render threads</StepTitle>
-    <StepContent>
-
-      When each thread and comment is created, we need to render it to the page. Create
-      a `Threads.tsx` file that lists each thread.
-
-      ```tsx file="app/Threads.tsx"
-      "use client";
-
-      import { useThreads } from "@liveblocks/react/suspense";
-      import { Thread } from "@liveblocks/react-ui";
-
-      export function Threads() {
-        const { threads } = useThreads();
-
-        return (
-          <div className="threads">
-            {threads.map((thread) => (
-              <Thread key={thread.id} thread={thread} className="thread" />
-            ))}
           </div>
         );
       }
@@ -242,15 +245,11 @@ to hear from you.
       root layout of your app or directly into a CSS file with `@import`.
 
       ```css file="app/globals.css" isCollapsed isCollapsable
-      .wrapper {
+      .editor {
         position: relative;
         display: flex;
         width: 100%;
         height: 100%;
-      }
-
-      .editor {
-        flex-grow: 1;
       }
 
       [data-lexical-editor] {
@@ -263,21 +262,43 @@ to hear from you.
       }
 
       .toolbar {
-        padding: 12px;
+        padding: 8px;
         border-bottom: 1px solid #E6E6E7;
       }
 
-      .threads {
-        width: 350px;
-        border-left: 1px solid #E6E6E7;
+      .toolbar > button {
+        all: unset;
+        font-weight: 500;
+        padding: 8px;
+        border-radius: 6px;
       }
 
-      .thread {
-        border-bottom: 1px solid #E6E6E7;
+      .toolbar > button:hover {
+        background: #F4F4F5;
       }
 
-      .thread .lb-thread-composer:after {
-        content: none;
+      /* For mobile */
+      .floating-threads {
+        display: none;
+      }
+
+      /* For desktop */
+      .anchored-threads {
+        display: block;
+        max-width: 300px;
+        width: 100%;
+        position: absolute;
+        right: 4px;
+      }
+
+      @media (max-width: 640px) {
+        .floating-threads {
+          display: block;
+        }
+
+        .anchored-threads {
+          display: none;
+        }
       }
 
       .placeholder {
@@ -287,24 +308,9 @@ to hear from you.
         pointer-events: none;
         opacity: 0.5;
       }
-
-      .floating-composer {
-        width: 350px;
-      }
-
-      .add-comment {
-        all: unset;
-        font-weight: 500;
-        padding: 12px;
-        border-radius: 6px;
-      }
-
-      .add-comment:hover {
-        background: #F4F4F5;
-      }
       ```
 
-      ```tsx
+      ```tsx file="app/layout.tsx"
       import "@liveblocks/react-ui/styles.css";
       import "@liveblocks/react-lexical/styles.css";
       import "./globals.css";

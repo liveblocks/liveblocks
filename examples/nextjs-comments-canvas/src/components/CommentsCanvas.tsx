@@ -1,10 +1,7 @@
 import { Thread } from "@liveblocks/react-ui";
 import { ThreadData } from "@liveblocks/core";
-import {
-  useThreads,
-  useEditThreadMetadata,
-  useUser,
-} from "@liveblocks/react/suspense";
+import { useThreads, useEditThreadMetadata } from "@liveblocks/react/suspense";
+import { useUser } from "@liveblocks/react";
 import {
   DataRef,
   DndContext,
@@ -15,9 +12,10 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import styles from "./CommentsCanvas.module.css";
 import { Toolbar } from "./Toolbar";
+import { useMaxZIndex, useNearEdge } from "../hooks";
 
 export function CommentsCanvas() {
   const { threads } = useThreads();
@@ -57,11 +55,13 @@ export function CommentsCanvas() {
 
   return (
     <div className={`${styles.wrapper} lb-root`}>
-      <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
-        {threads.map((thread) => (
-          <DraggableThread key={thread.id} thread={thread} />
-        ))}
-      </DndContext>
+      <div className={styles.threads}>
+        <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
+          {threads.map((thread) => (
+            <DraggableThread key={thread.id} thread={thread} />
+          ))}
+        </DndContext>
+      </div>
       <Toolbar />
     </div>
   );
@@ -76,7 +76,7 @@ function DraggableThread({ thread }: { thread: ThreadData }) {
   const [open, setOpen] = useState(startOpen);
 
   // Enable drag
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+  const { attributes, listeners, setNodeRef, transform, node } = useDraggable({
     id: thread.id,
     data: { thread }, // Pass thread to DndContext drag end event
   });
@@ -88,12 +88,26 @@ function DraggableThread({ thread }: { thread: ThreadData }) {
   // Get the creator of the thread
   const { user: creator } = useUser(thread.comments[0].userId);
 
+  // Used to set z-index higher than other threads when pointer down
+  const editThreadMetadata = useEditThreadMetadata();
+  const maxZIndex = useMaxZIndex();
+
+  // Used to flip thread near edge of screen
+  const { nearRightEdge, nearBottomEdge } = useNearEdge(node);
+
   return (
     <div
       ref={setNodeRef}
       className={styles.draggableThread}
+      onPointerDown={() =>
+        editThreadMetadata({
+          threadId: thread.id,
+          metadata: { zIndex: maxZIndex + 1 },
+        })
+      }
       style={{
         transform: `translate3d(${x}px, ${y}px, 0)`,
+        zIndex: thread.metadata?.zIndex || 0,
       }}
     >
       <div {...listeners} {...attributes}>
@@ -111,7 +125,14 @@ function DraggableThread({ thread }: { thread: ThreadData }) {
           )}
         </div>
       </div>
-      {open ? <Thread thread={thread} className="thread" /> : null}
+      {open ? (
+        <Thread
+          thread={thread}
+          className="thread"
+          data-flip-vertical={nearBottomEdge || undefined}
+          data-flip-horizontal={nearRightEdge || undefined}
+        />
+      ) : null}
     </div>
   );
 }

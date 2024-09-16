@@ -63,10 +63,10 @@ export {
   useUndo,
   useUpdateMyPresence,
   useUpdateRoomNotificationSettings,
+  useHistoryVersionData,
 } from "./room";
 
 export { useCommentsErrorListener, CreateThreadError } from "./room";
-export { selectedThreads } from "./comments/lib/selected-threads";
 
 // Export the classic (non-Suspense) versions of our hooks
 // (This part differs from src/suspense.ts)
@@ -80,6 +80,7 @@ export {
   useStorageStatus,
   useThreads,
   useAttachmentUrl,
+  useHistoryVersions,
 } from "./room";
 export {
   useInboxNotifications,
@@ -88,3 +89,6 @@ export {
   useUnreadInboxNotificationsCount,
   useUser,
 } from "./liveblocks";
+
+// Private APIs (for use in react-lexical only)
+export { getUmbrellaStoreForClient, selectThreads } from "./liveblocks";

@@ -1,14 +1,12 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Composer } from "@liveblocks/react-ui";
-import { useCreateThread, useSelf } from "@liveblocks/react/suspense";
+import { useCreateThread } from "@liveblocks/react/suspense";
+import { useSelf } from "@liveblocks/react";
 import styles from "./Toolbar.module.css";
 import avatarStyles from "./CommentsCanvas.module.css";
+import { useMaxZIndex, useNearEdge } from "../hooks";
 
 export function Toolbar() {
-  // Get create thread function and the current user
-  const createThread = useCreateThread();
-  const creator = useSelf((me) => me.info);
-
   const [state, setState] = useState<"initial" | "placing" | "placed">(
     "initial"
   );
@@ -64,37 +62,71 @@ export function Toolbar() {
 
       {/* When cursor placed, show a composer on the canvas */}
       {state === "placed" ? (
-        <>
-          <div
-            className={styles.composerWrapper}
-            style={{ transform: `translate(${coords.x}px, ${coords.y}px)` }}
-          >
-            <div className={avatarStyles.avatar} style={{ cursor: "default" }}>
-              {creator ? (
-                <img
-                  src={creator.avatar}
-                  alt={creator.name}
-                  width="28px"
-                  height="28px"
-                  draggable={false}
-                />
-              ) : (
-                <div />
-              )}
-            </div>
-            <Composer
-              className="composer"
-              onComposerSubmit={({ body }, e) => {
-                e.preventDefault();
-                setState("initial");
-                // Create a new thread with the current coords as metadata
-                createThread({ body, metadata: { x: coords.x, y: coords.y } });
-              }}
-            />
-          </div>
-        </>
+        <ThreadComposer coords={coords} onSubmit={() => setState("initial")} />
       ) : null}
     </>
+  );
+}
+
+function ThreadComposer({
+  coords,
+  onSubmit,
+}: {
+  coords: { x: number; y: number };
+  onSubmit: () => void;
+}) {
+  // Get create thread function and the current user
+  const createThread = useCreateThread();
+  const creator = useSelf((me) => me.info);
+
+  // Create thread above other threads
+  const maxZIndex = useMaxZIndex();
+
+  // Used to flip composer near edge of screen
+  const ref = useRef<HTMLDivElement>(null);
+  const { nearRightEdge, nearBottomEdge } = useNearEdge(ref);
+
+  return (
+    <div
+      ref={ref}
+      className={styles.composerWrapper}
+      style={{
+        transform: `translate(${coords.x}px, ${coords.y}px)`,
+      }}
+    >
+      <div className={avatarStyles.avatar} style={{ cursor: "default" }}>
+        {creator ? (
+          <img
+            src={creator.avatar}
+            alt={creator.name}
+            width="28px"
+            height="28px"
+            draggable={false}
+          />
+        ) : (
+          <div />
+        )}
+      </div>
+      <Composer
+        className="composer"
+        onComposerSubmit={({ body }, e) => {
+          e.preventDefault();
+          // Create a new thread with the current coords as metadata
+          createThread({
+            body,
+            metadata: {
+              x: coords.x,
+              y: coords.y,
+              zIndex: maxZIndex + 1,
+            },
+          });
+          onSubmit();
+        }}
+        autoFocus={true}
+        data-flip-vertical={nearBottomEdge || undefined}
+        data-flip-horizontal={nearRightEdge || undefined}
+      />
+    </div>
   );
 }
 

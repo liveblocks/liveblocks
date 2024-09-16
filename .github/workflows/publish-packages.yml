@@ -10,6 +10,8 @@ on:
           "NPM version to publish (e.g. v1.2.3-test4). See also
           https://github.com/liveblocks/liveblocks/blob/main/CONTRIBUTING.MD#releasing"
 
+run-name: Publishing ${{ github.event.inputs.tag }} packages
+
 jobs:
   publish:
     runs-on: ubuntu-latest

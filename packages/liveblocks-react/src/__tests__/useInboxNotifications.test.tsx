@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 
-import { kInternal, nanoid, wait } from "@liveblocks/core";
+import { nanoid, wait } from "@liveblocks/core";
 import {
   act,
   fireEvent,
@@ -263,13 +263,12 @@ describe("useInboxNotifications", () => {
 
     const {
       liveblocks: { LiveblocksProvider, useInboxNotifications },
-      client,
+      umbrellaStore,
     } = createContextsForTest();
 
-    const store = client[kInternal].cacheStore;
-    store.set((state) => ({
+    umbrellaStore.force_set((state) => ({
       ...state,
-      inboxNotifications: {
+      inboxNotificationsById: {
         // Explicitly set the order to be reversed to test that the hook sorts the notifications
         [oldInboxNotification.id]: oldInboxNotification,
         [newInboxNotification.id]: newInboxNotification,

@@ -1,4 +1,35 @@
-## 2.6.0 (Not released yet)
+## 2.7.0
+
+### `@liveblocks/client`
+
+- Refactor caching internals to prepare for upcoming features
+
+### `@liveblocks/react`
+
+- Add support for `query` argument to `useUserThreads_experimental`
+- Fix bug where some combinations of `query` criteria could over-select threads
+  in `useThreads`
+
+### Version History (private beta)
+
+This release adds some new hooks for Version History in text documents, which is
+now available in private beta. If you’re interested in joining the private beta,
+please [contact us](https://liveblocks.io/contact/sales).
+
+- Add `useHistoryVersion` hook to retrieve version history (in
+  `@liveblocks/react`)
+- Add `HistoryVersionSummaryList` and `HistoryVersionSummary` components to help
+  display version history (in `@liveblocks/react-ui`)
+- Add `HistoryVersionPreview` component to display and restore a version (in
+  `@liveblocks/react-lexical`)
+
+## 2.6.1
+
+### `@liveblocks/react-ui`
+
+- Fix mention suggestions dropdown not following scroll in some scenarios.
+
+## 2.6.0
 
 ### `@liveblocks/node`
 

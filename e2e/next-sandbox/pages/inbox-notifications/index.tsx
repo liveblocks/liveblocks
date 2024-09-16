@@ -1,7 +1,7 @@
-import { kInternal } from "@liveblocks/core";
 import {
   createLiveblocksContext,
   createRoomContext,
+  getUmbrellaStoreForClient,
   useClient,
 } from "@liveblocks/react";
 import {
@@ -118,7 +118,7 @@ function TopPart() {
   const me = useSelf();
   const { threads } = useThreads();
   const inboxNotifications = useInboxNotificationsForThisPage();
-  const pendingCount = usePendingUpdatesCount();
+  const isSynced = !useHasOptimisticUpdates();
 
   const deleteComment = useDeleteComment();
 
@@ -163,25 +163,26 @@ function TopPart() {
                 ?.length
             }
           />
-          <Row
-            id="numPendingUpdates"
-            name="Number of pending updates"
-            value={pendingCount}
-          />
+          <Row id="isSynced" name="Is synchronized?" value={isSynced} />
         </tbody>
       </table>
     </>
   );
 }
 
-function usePendingUpdatesCount() {
+function useHasOptimisticUpdates() {
   const client = useClient();
-  const store = client[kInternal].cacheStore;
-  const getter = React.useCallback(
-    () => store.get().optimisticUpdates.length,
-    [store]
+  const store = getUmbrellaStoreForClient(client);
+  // The store._hasOptimisticUpdates getter is guaranteed to be bound, so it's fine
+  // eslint-disable-next-line @typescript-eslint/unbound-method
+  const getter = store._hasOptimisticUpdates;
+  return React.useSyncExternalStore(
+    // The store._subscribeOptimisticUpdates subscriber is guaranteed to be bound, so it's fine
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    store._subscribeOptimisticUpdates,
+    getter,
+    getter
   );
-  return React.useSyncExternalStore(store.subscribe, getter, getter);
 }
 
 function LeftSide() {

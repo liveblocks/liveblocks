@@ -70,7 +70,7 @@ export function useEditorStatus(): EditorStatus {
 
   const subscribe = useCallback(
     (onStoreChange: () => void) => {
-      if (provider === undefined) return () => { };
+      if (provider === undefined) return () => {};
       provider.on("status", onStoreChange);
       return () => {
         provider.off("status", onStoreChange);
@@ -261,7 +261,6 @@ export const LiveblocksPlugin = ({
       )}
 
       {hasResolveMentionSuggestions && <MentionPlugin />}
-
       <CommentPluginProvider>{children}</CommentPluginProvider>
     </>
   );
