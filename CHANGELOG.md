@@ -1,3 +1,10 @@
+## 2.7.1
+
+### `@liveblocks/react-lexical`
+
+- Fixed a bug where resolved threads remained visible in the editor and the
+  `AnchoredThreads` and `FloatingThreads` components.
+
 ## 2.7.0
 
 ### `@liveblocks/client`
