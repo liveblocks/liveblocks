@@ -244,6 +244,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.subscribeNotificationSettings =
       this.subscribeNotificationSettings.bind(this);
     this.subscribeVersions = this.subscribeVersions.bind(this);
+
+    // APIs only used by the E2E tests at the moment
+    this._hasOptimisticUpdates = this._hasOptimisticUpdates.bind(this);
+    this._subscribeOptimisticUpdates =
+      this._subscribeOptimisticUpdates.bind(this);
   }
 
   private get(): UmbrellaStoreState<M> {
@@ -276,8 +281,23 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this.get();
   }
 
+  /**
+   * @private Only used by the E2E test suite.
+   */
+  public _hasOptimisticUpdates(): boolean {
+    return this._store.get().optimisticUpdates.length > 0;
+  }
+
   private subscribe(callback: () => void): () => void {
     return this._store.subscribe(callback);
+  }
+
+  /**
+   * @private Only used by the E2E test suite.
+   */
+  public _subscribeOptimisticUpdates(callback: () => void): () => void {
+    // TODO Make this actually only update when optimistic updates are changed
+    return this.subscribe(callback);
   }
 
   public subscribeThreads(callback: () => void): () => void {

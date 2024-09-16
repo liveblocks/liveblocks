@@ -55,7 +55,7 @@ test.describe("Inbox notifications", () => {
       await newThreadComposer.press("Enter");
 
       // Await confirmation for the thread creation from the server
-      await waitForJson(page1, "#numPendingUpdates", 0);
+      await waitForJson(page1, "#isSynced", true);
 
       const replyComposer = page1
         .locator(".lb-thread-composer")
