@@ -5,6 +5,7 @@ import type {
   CommentData,
   DRI,
   DU,
+  InboxNotificationData,
   OptionalPromise,
   ResolveUsersArgs,
 } from "@liveblocks/core";
@@ -38,6 +39,27 @@ export type ThreadNotificationUnreadMentionData = {
 export type ThreadNotificationData =
   | ThreadNotificationUnreadRepliesData
   | ThreadNotificationUnreadMentionData;
+
+/** @internal */
+export const getUnreadComments = ({
+  comments,
+  inboxNotification,
+  userId,
+}: {
+  comments: CommentData[];
+  inboxNotification: InboxNotificationData;
+  userId: string;
+}): ThreadNotificationCommentData[] => {
+  const readAt = inboxNotification.readAt;
+  return comments
+    .filter((c) => c.userId !== userId)
+    .filter((c) => c.body !== undefined && c.deletedAt === undefined)
+    .filter((c) =>
+      readAt
+        ? c.createdAt > readAt && c.createdAt <= inboxNotification.notifiedAt
+        : c.createdAt <= inboxNotification.notifiedAt
+    ) as ThreadNotificationCommentData[];
+};
 
 /** @internal */
 export const getLastCommentWithMention = ({
@@ -93,16 +115,11 @@ export async function getThreadNotificationData(params: {
     client.getInboxNotification({ inboxNotificationId, userId }),
   ]);
 
-  const readAt = inboxNotification.readAt;
-  const unreadComments = thread.comments
-    .filter((c) => c.userId !== userId)
-    .filter((c) => c.body !== undefined && c.deletedAt === undefined)
-    .filter((c) =>
-      readAt
-        ? c.createdAt > readAt && c.createdAt <= inboxNotification.notifiedAt
-        : c.createdAt <= inboxNotification.notifiedAt
-    ) as ThreadNotificationCommentData[];
-
+  const unreadComments = getUnreadComments({
+    comments: thread.comments,
+    inboxNotification,
+    userId,
+  });
   const lastUnreadCommentWithMention = getLastCommentWithMention({
     comments: unreadComments,
     mentionedUserId: userId,
