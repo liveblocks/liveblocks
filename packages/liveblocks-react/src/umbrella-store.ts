@@ -155,6 +155,9 @@ type UpdateNotificationSettingsOptimisticUpdate = {
 type QueryState = AsyncResult<undefined>;
 //                            ^^^^^^^^^ We don't store the actual query result in this status
 
+const QUERY_STATE_LOADING = Object.freeze({ isLoading: true });
+const QUERY_STATE_OK = Object.freeze({ isLoading: false, data: undefined });
+
 type InternalState<M extends BaseMetadata> = Readonly<{
   queries: Record<string, QueryState>;
   optimisticUpdates: readonly OptimisticUpdate<M>[];
@@ -821,11 +824,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
   //
 
   public setQueryLoading(queryKey: string): void {
-    this.setQueryState(queryKey, { isLoading: true });
+    this.setQueryState(queryKey, QUERY_STATE_LOADING);
   }
 
   private setQueryOK(queryKey: string): void {
-    this.setQueryState(queryKey, { isLoading: false, data: undefined });
+    this.setQueryState(queryKey, QUERY_STATE_OK);
   }
 
   public setQueryError(queryKey: string, error: Error): void {
