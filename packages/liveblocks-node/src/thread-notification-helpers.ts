@@ -173,26 +173,31 @@ export type UnreadCommentAuthorData = {
 };
 
 /** @internal */
-export const getAuthor = async <U extends BaseUserMeta = DU>({
-  userId,
+const resolveAuthorsInComments = async <U extends BaseUserMeta = DU>({
+  comments,
   resolveUsers,
 }: {
-  userId: string;
+  comments: ThreadNotificationCommentData[];
   resolveUsers?: (
     args: ResolveUsersArgs
   ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
-}): Promise<UnreadCommentAuthorData> => {
-  const fallback: UnreadCommentAuthorData = {
-    id: userId,
-    name: userId,
-  };
-  if (resolveUsers) {
-    const users = await resolveUsers({ userIds: [userId] });
-    return users?.[0] && users?.[0].name
-      ? { id: userId, name: users[0].name }
-      : fallback;
+}): Promise<Map<string, U["info"]>> => {
+  const resolvedAuthors = new Map<string, U["info"]>();
+  if (!resolveUsers) {
+    return resolvedAuthors;
   }
-  return fallback;
+
+  const userIds = comments.map((c) => c.userId);
+  const users = await resolveUsers({ userIds });
+
+  for (const [index, userId] of userIds.entries()) {
+    const user = users?.[index];
+    if (user) {
+      resolvedAuthors.set(userId, user);
+    }
+  }
+
+  return resolvedAuthors;
 };
 
 export type UnreadCommentData = {
@@ -259,16 +264,23 @@ export async function getThreadNotificationUnreadComments(params: {
     event,
   });
 
+  const resolvedAuthors = await resolveAuthorsInComments({
+    comments,
+    resolveUsers: options?.resolveUsers,
+  });
+
   const unreadComments = await Promise.all(
     comments.map(async (comment): Promise<UnreadCommentData> => {
       const body = await transformCommentBody(comment.body, {
         format: options?.format,
         resolveUsers: options?.resolveUsers,
       });
-      const author = await getAuthor({
-        userId: comment.userId,
-        resolveUsers: options?.resolveUsers,
-      });
+      const resolvedAuthor = resolvedAuthors.get(comment.userId);
+      const author: UnreadCommentAuthorData = {
+        id: comment.userId,
+        name: resolvedAuthor?.name ?? comment.userId,
+      };
+
       const commentUrl = roomInfos?.url
         ? generateCommentUrl({
             roomUrl: roomInfos.url,
