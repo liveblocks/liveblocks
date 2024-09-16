@@ -58,6 +58,7 @@ import { retryError } from "./lib/retry-error";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
+import type { GetNotificationSettingsType, GetThreadsType } from "./liveblocks";
 import {
   createSharedContext,
   getUmbrellaStoreForClient,
@@ -2156,9 +2157,7 @@ function useRoomNotificationSettings(): [
   const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
 
   const selector = React.useCallback(
-    (
-      state: ReturnType<typeof store.getThreads>
-    ): RoomNotificationSettingsState => {
+    (state: GetThreadsType): RoomNotificationSettingsState => {
       const query = state.queries[makeNotificationSettingsQueryKey(room.id)];
 
       if (query === undefined || query.isLoading) {
@@ -2573,7 +2572,7 @@ function useRoomNotificationSettingsSuspense(): [
 
   const selector = React.useCallback(
     (
-      state: ReturnType<typeof store.getNotificationSettings>
+      state: GetNotificationSettingsType
     ): RoomNotificationSettingsStateSuccess => {
       return {
         isLoading: false,

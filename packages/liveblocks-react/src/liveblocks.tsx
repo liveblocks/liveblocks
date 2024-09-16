@@ -56,6 +56,17 @@ import type {
 import type { UmbrellaStoreState } from "./umbrella-store";
 import { UmbrellaStore } from "./umbrella-store";
 
+// NOTE: These helper types are only temporarily needed while we're refactoring things
+// NOTE: The reason we cannot inline them into the selectors is that the react-hooks/exchaustive-deps lint rule will think
+type GetInboxNotificationsType<M extends BaseMetadata = BaseMetadata> =
+  ReturnType<UmbrellaStore<M>["getInboxNotifications"]>;
+export type GetThreadsType<M extends BaseMetadata = BaseMetadata> = ReturnType<
+  UmbrellaStore<M>["getThreads"]
+>;
+export type GetNotificationSettingsType = ReturnType<
+  UmbrellaStore<BaseMetadata>["getNotificationSettings"]
+>;
+
 /**
  * Raw access to the React context where the LiveblocksProvider stores the
  * current client. Exposed for advanced use cases only.
@@ -805,7 +816,7 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
   const { store } = getExtrasForClient<M>(client);
 
   const selector = useCallback(
-    (state: ReturnType<typeof store.getInboxNotifications>) => {
+    (state: GetInboxNotificationsType<M>) => {
       const inboxNotification =
         state.inboxNotificationsById[inboxNotificationId] ??
         raise(`Inbox notification with ID "${inboxNotificationId}" not found`);
@@ -1148,7 +1159,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
   }, [queryKey, incrementUserThreadsQuerySubscribers, getUserThreads, options]);
 
   const selector = useCallback(
-    (state: ReturnType<typeof store.getThreads>): ThreadsState<M> => {
+    (state: GetThreadsType<M>): ThreadsState<M> => {
       const query = state.queries[queryKey];
 
       if (query === undefined || query.isLoading) {
@@ -1233,7 +1244,7 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
   }
 
   const selector = useCallback(
-    (state: ReturnType<typeof store.getThreads>): ThreadsStateSuccess<M> => {
+    (state: GetThreadsType<M>): ThreadsStateSuccess<M> => {
       return {
         threads: selectThreads(state, {
           roomId: null, // Do _not_ filter by roomId
