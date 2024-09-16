@@ -173,7 +173,7 @@ export type UnreadCommentAuthorData = {
 };
 
 /** @internal */
-const resolveAuthorsInComments = async <U extends BaseUserMeta = DU>({
+const resolveAuthorsInComments = async <U extends BaseUserMeta>({
   comments,
   resolveUsers,
 }: {
