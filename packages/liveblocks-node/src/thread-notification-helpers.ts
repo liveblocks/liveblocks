@@ -208,13 +208,11 @@ export type UnreadCommentData = {
 
 export type UnreadRepliesData = {
   type: "unreadReplies";
-  roomName: string;
   comments: UnreadCommentData[];
 };
 export type UnreadMentionData = {
   type: "unreadMention";
   comments: UnreadCommentData[];
-  roomName: string;
 };
 export type UnreadCommentsData = (UnreadRepliesData | UnreadMentionData) & {
   roomName: string;
