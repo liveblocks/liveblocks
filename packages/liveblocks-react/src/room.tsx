@@ -46,7 +46,6 @@ import {
   kInternal,
   makeEventSource,
   makePoller,
-  nn,
   NotificationsApiError,
   ServerMsgCode,
   stringify,
@@ -60,7 +59,6 @@ import { retryError } from "./lib/retry-error";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
-import type { GetNotificationSettingsType, GetThreadsType } from "./liveblocks";
 import {
   createSharedContext,
   getUmbrellaStoreForClient,
@@ -109,6 +107,7 @@ import {
   UpdateNotificationSettingsError,
 } from "./types/errors";
 import type { UmbrellaStore, UmbrellaStoreState } from "./umbrella-store";
+import { makeNotificationSettingsQueryKey } from "./umbrella-store";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
 
 const SMOOTH_DELAY = 1000;
@@ -147,10 +146,6 @@ const STABLE_EMPTY_LIST = Object.freeze([]);
 
 export const POLLING_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
-function makeNotificationSettingsQueryKey(roomId: string) {
-  return `${roomId}:NOTIFICATION_SETTINGS`;
-}
-
 // Don't try to inline this. This function is intended to be a stable
 // reference, to avoid a React.useCallback() wrapper.
 function alwaysEmptyList() {
@@ -167,14 +162,6 @@ function selectorFor_useOthersConnectionIds(
   others: readonly User<JsonObject, BaseUserMeta>[]
 ): number[] {
   return others.map((user) => user.connectionId);
-}
-
-function selectNotificationSettings<M extends BaseMetadata>(
-  roomId: string,
-  state: UmbrellaStoreState<M>
-): RoomNotificationSettings {
-  const notificationSettings = state.notificationSettingsByRoomId;
-  return nn(notificationSettings[roomId]);
 }
 
 function makeMutationContext<
@@ -482,9 +469,9 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
 
   async function getInboxNotificationSettings(
     room: OpaqueRoom,
-    queryKey: string,
     { retryCount }: { retryCount: number } = { retryCount: 0 }
   ) {
+    const queryKey = makeNotificationSettingsQueryKey(room.id);
     const existingRequest = requestsByQuery.get(queryKey);
 
     // If a request was already made for the notifications query, we do not make another request and return the existing promise
@@ -504,7 +491,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
       requestsByQuery.delete(queryKey);
 
       retryError(() => {
-        void getInboxNotificationSettings(room, queryKey, {
+        void getInboxNotificationSettings(room, {
           retryCount: retryCount + 1,
         });
       }, retryCount);
@@ -1461,6 +1448,8 @@ function useThreads<M extends BaseMetadata>(
 
   const selector = React.useCallback(
     (state: UmbrellaStoreState<M>): ThreadsState<M> => {
+      // TODO Don't make this the responsibility of the _selector_. It should be
+      // responsibility of the _getter_.
       const query = state.queries[queryKey];
       if (query === undefined || query.isLoading) {
         return {
@@ -2161,44 +2150,70 @@ function useRoomNotificationSettings(): [
   RoomNotificationSettingsState,
   (settings: Partial<RoomNotificationSettings>) => void,
 ] {
+  const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
   const client = useClient();
   const room = useRoom();
   const { store } = getExtrasForClient(client);
 
+  const getter = React.useCallback(
+    () => store.getNotificationSettingsAsync(room.id),
+    [store, room.id]
+  );
+
   React.useEffect(() => {
     const { getInboxNotificationSettings } = getExtrasForClient(client);
-    const queryKey = makeNotificationSettingsQueryKey(room.id);
-    void getInboxNotificationSettings(room, queryKey);
+    void getInboxNotificationSettings(room);
   }, [client, room]);
 
+  const settings = useSyncExternalStoreWithSelector(
+    store.subscribeNotificationSettings,
+    getter,
+    getter,
+    identity,
+    shallow
+  );
+
+  return React.useMemo(() => {
+    return [settings, updateRoomNotificationSettings];
+  }, [settings, updateRoomNotificationSettings]);
+}
+
+/**
+ * Returns the user's notification settings for the current room
+ * and a function to update them.
+ *
+ * @example
+ * const [{ settings }, updateSettings] = useRoomNotificationSettings();
+ */
+function useRoomNotificationSettingsSuspense(): [
+  RoomNotificationSettingsStateSuccess,
+  (settings: Partial<RoomNotificationSettings>) => void,
+] {
   const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
+  const client = useClient();
+  const room = useRoom();
 
-  const selector = React.useCallback(
-    (state: GetThreadsType): RoomNotificationSettingsState => {
-      const query = state.queries[makeNotificationSettingsQueryKey(room.id)];
+  const { store } = getExtrasForClient(client);
 
-      if (query === undefined || query.isLoading) {
-        return { isLoading: true };
-      }
-
-      if (query.error !== undefined) {
-        return { isLoading: false, error: query.error };
-      }
-
-      return {
-        isLoading: false,
-        settings: selectNotificationSettings(room.id, state),
-      };
-    },
-    [room]
+  const getter = React.useCallback(
+    () => store.getNotificationSettingsAsync(room.id),
+    [store, room.id]
   );
 
   const settings = useSyncExternalStoreWithSelector(
     store.subscribeNotificationSettings,
-    store.getThreads,
-    store.getThreads,
-    selector
+    getter,
+    getter,
+    identity,
+    shallow
   );
+
+  if (settings.isLoading) {
+    const { getInboxNotificationSettings } = getExtrasForClient(client);
+    throw getInboxNotificationSettings(room);
+  } else if (settings.error) {
+    throw settings.error;
+  }
 
   return React.useMemo(() => {
     return [settings, updateRoomNotificationSettings];
@@ -2649,57 +2664,6 @@ function useHistoryVersionsSuspense(): HistoryVersionsStateResolved {
   );
 
   return state;
-}
-
-/**
- * Returns the user's notification settings for the current room
- * and a function to update them.
- *
- * @example
- * const [{ settings }, updateSettings] = useRoomNotificationSettings();
- */
-function useRoomNotificationSettingsSuspense(): [
-  RoomNotificationSettingsStateSuccess,
-  (settings: Partial<RoomNotificationSettings>) => void,
-] {
-  const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
-  const client = useClient();
-  const room = useRoom();
-  const queryKey = makeNotificationSettingsQueryKey(room.id);
-
-  const { store, getInboxNotificationSettings } = getExtrasForClient(client);
-  const query = store.getNotificationSettings().queries[queryKey];
-
-  if (query === undefined || query.isLoading) {
-    throw getInboxNotificationSettings(room, queryKey);
-  }
-
-  if (query.error) {
-    throw query.error;
-  }
-
-  const selector = React.useCallback(
-    (
-      state: GetNotificationSettingsType
-    ): RoomNotificationSettingsStateSuccess => {
-      return {
-        isLoading: false,
-        settings: selectNotificationSettings(room.id, state),
-      };
-    },
-    [room]
-  );
-
-  const settings = useSyncExternalStoreWithSelector(
-    store.subscribeNotificationSettings,
-    store.getNotificationSettings,
-    store.getNotificationSettings,
-    selector
-  );
-
-  return React.useMemo(() => {
-    return [settings, updateRoomNotificationSettings];
-  }, [settings, updateRoomNotificationSettings]);
 }
 
 /**

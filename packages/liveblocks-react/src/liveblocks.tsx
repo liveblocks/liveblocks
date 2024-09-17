@@ -7,9 +7,11 @@ import type {
 } from "@liveblocks/client";
 import type {
   AsyncResult,
+  AsyncResultWithDataField,
   BaseRoomInfo,
   DM,
   DU,
+  InboxNotificationData,
   OpaqueClient,
 } from "@liveblocks/core";
 import {
@@ -41,7 +43,6 @@ import { shallow2 } from "./lib/shallow2";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { use } from "./lib/use-polyfill";
 import type {
-  InboxNotificationsState,
   LiveblocksContextBundle,
   RoomInfoAsyncResult,
   RoomInfoAsyncSuccess,
@@ -49,23 +50,19 @@ import type {
   ThreadsQuery,
   ThreadsState,
   ThreadsStateSuccess,
-  UnreadInboxNotificationsCountState,
   UserAsyncResult,
   UserAsyncSuccess,
   UseUserThreadsOptions,
 } from "./types";
 import type { UmbrellaStoreState } from "./umbrella-store";
-import { UmbrellaStore } from "./umbrella-store";
+import { INBOX_NOTIFICATIONS_QUERY, UmbrellaStore } from "./umbrella-store";
 
 // NOTE: These helper types are only temporarily needed while we're refactoring things
 // NOTE: The reason we cannot inline them into the selectors is that the react-hooks/exchaustive-deps lint rule will think
 type GetInboxNotificationsType<M extends BaseMetadata = BaseMetadata> =
   ReturnType<UmbrellaStore<M>["getInboxNotifications"]>;
-export type GetThreadsType<M extends BaseMetadata = BaseMetadata> = ReturnType<
+type GetThreadsType<M extends BaseMetadata = BaseMetadata> = ReturnType<
   UmbrellaStore<M>["getThreads"]
->;
-export type GetNotificationSettingsType = ReturnType<
-  UmbrellaStore<BaseMetadata>["getNotificationSettings"]
 >;
 
 /**
@@ -86,6 +83,10 @@ function missingRoomInfoError(roomId: string) {
   );
 }
 
+function identity<T>(x: T): T {
+  return x;
+}
+
 const _umbrellaStores = new WeakMap<
   OpaqueClient,
   UmbrellaStore<BaseMetadata>
@@ -100,40 +101,14 @@ const _bundles = new WeakMap<
 >();
 
 export const POLLING_INTERVAL = 60 * 1000; // 1 minute
-export const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
 export const USER_THREADS_QUERY = "USER_THREADS";
 
-function selectorFor_useInboxNotifications(
-  state: ReturnType<UmbrellaStore<BaseMetadata>["getInboxNotifications"]>
-): InboxNotificationsState {
-  // TODO Can we make this a static property, rather than a static key in a dynamic map?
-  const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
-
-  if (query === undefined || query.isLoading) {
-    return {
-      isLoading: true,
-    };
-  }
-
-  if (query.error !== undefined) {
-    return {
-      error: query.error,
-      isLoading: false,
-    };
-  }
-
-  return {
-    inboxNotifications: state.inboxNotifications,
-    isLoading: false,
-  };
-}
-
 function selectUnreadInboxNotificationsCount(
-  state: ReturnType<UmbrellaStore<BaseMetadata>["getInboxNotifications"]>
+  inboxNotifications: readonly InboxNotificationData[]
 ) {
   let count = 0;
 
-  for (const notification of state.inboxNotifications) {
+  for (const notification of inboxNotifications) {
     if (
       notification.readAt === null ||
       notification.readAt < notification.notifiedAt
@@ -146,26 +121,20 @@ function selectUnreadInboxNotificationsCount(
 }
 
 function selectorFor_useUnreadInboxNotificationsCount(
-  state: ReturnType<UmbrellaStore<BaseMetadata>["getInboxNotifications"]>
-): UnreadInboxNotificationsCountState {
-  const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
-
-  if (query === undefined || query.isLoading) {
-    return {
-      isLoading: true,
-    };
+  result: AsyncResultWithDataField<
+    InboxNotificationData[],
+    "inboxNotifications"
+  >
+): AsyncResultWithDataField<number, "count"> {
+  if (!result.inboxNotifications) {
+    // Can be loading or error states
+    return result;
   }
 
-  if (query.error !== undefined) {
-    return {
-      error: query.error,
-      isLoading: false,
-    };
-  }
-
+  // OK state
   return {
     isLoading: false,
-    count: selectUnreadInboxNotificationsCount(state),
+    count: selectUnreadInboxNotificationsCount(result.inboxNotifications),
   };
 }
 
@@ -455,6 +424,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     }
   }
 
+  // TODO Hmm. All of this is stuff that should be managed by the cache. Now we have caches in different places.
   const userThreadsSubscribersByQuery = new Map<string, number>();
   const userThreadsRequestsByQuery = new Map<string, Promise<unknown>>();
 
@@ -647,9 +617,9 @@ function useInboxNotifications_withClient(client: OpaqueClient) {
   useEnableInboxNotificationsPolling();
   return useSyncExternalStoreWithSelector(
     store.subscribeInboxNotifications,
-    store.getInboxNotifications,
-    store.getInboxNotifications,
-    selectorFor_useInboxNotifications,
+    store.getInboxNotificationsAsync,
+    store.getInboxNotificationsAsync,
+    identity,
     shallow
   );
 }
@@ -681,8 +651,8 @@ function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
   useEnableInboxNotificationsPolling();
   return useSyncExternalStoreWithSelector(
     store.subscribeInboxNotifications,
-    store.getInboxNotifications,
-    store.getInboxNotifications,
+    store.getInboxNotificationsAsync,
+    store.getInboxNotificationsAsync,
     selectorFor_useUnreadInboxNotificationsCount,
     shallow
   );

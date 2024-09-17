@@ -187,6 +187,7 @@ export type InboxNotificationsStateError = {
   error: Error;
 };
 
+// TODO Think about ways to remove these types as global exports
 export type InboxNotificationsState =
   | InboxNotificationsStateLoading
   | InboxNotificationsStateSuccess
@@ -210,6 +211,7 @@ export type UnreadInboxNotificationsCountStateError = {
   error: Error;
 };
 
+// TODO Think about ways to remove these types as global exports
 export type UnreadInboxNotificationsCountState =
   | UnreadInboxNotificationsCountStateLoading
   | UnreadInboxNotificationsCountStateSuccess
