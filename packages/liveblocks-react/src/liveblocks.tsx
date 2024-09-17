@@ -608,11 +608,8 @@ function useInboxNotifications_withClient(client: OpaqueClient) {
 
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
-  useEffect(() => {
-    loadInboxNotifications();
-  }, [loadInboxNotifications]);
-
-  useEffect(startPolling, []);
+  useEffect(loadInboxNotifications, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(startPolling, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return useSyncExternalStoreWithSelector(
     store.subscribeInboxNotifications,
@@ -643,11 +640,8 @@ function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
 
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
-  useEffect(() => {
-    loadInboxNotifications();
-  }, [loadInboxNotifications]);
-
-  useEffect(startPolling, []);
+  useEffect(loadInboxNotifications, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(startPolling, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return useSyncExternalStoreWithSelector(
     store.subscribeInboxNotifications,
