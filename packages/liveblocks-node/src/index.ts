@@ -16,16 +16,16 @@ export type {
 } from "./client";
 export { Liveblocks, LiveblocksError } from "./client";
 export type {
-  GetThreadNotificationThreadNotificationResolvedOptions,
-  ResolvedCommentAuthorData,
-  ResolvedCommentData,
+  GetThreadNotificationResolvedOptions,
   ResolveRoomInfoArgs,
   ThreadNotificationData,
+  ThreadNotificationResolvedCommentAuthorData,
+  ThreadNotificationResolvedCommentData,
   ThreadNotificationResolvedData,
+  ThreadNotificationResolvedUnreadMentionData,
+  ThreadNotificationResolvedUnreadRepliesData,
   ThreadNotificationUnreadMentionData,
   ThreadNotificationUnreadRepliesData,
-  UnreadMentionData,
-  UnreadRepliesData,
 } from "./thread-notification-helpers";
 export {
   getThreadNotificationData,

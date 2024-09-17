@@ -139,28 +139,27 @@ export type ResolveRoomInfoArgs = {
   roomId: string;
 };
 
-export type GetThreadNotificationThreadNotificationResolvedOptions<
-  U extends BaseUserMeta = DU,
-> = {
-  /**
-   * Which format to transform the comment body to.
-   */
-  format?: "html" | "json";
-  /**
-   * A function that returns info from user IDs.
-   */
-  resolveUsers?: (
-    args: ResolveUsersArgs
-  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
-  /**
-   * A function that returns room info from room IDs.
-   */
-  resolveRoomInfo?: (
-    args: ResolveRoomInfoArgs
-  ) => OptionalPromise<DRI | undefined>;
-};
+export type GetThreadNotificationResolvedOptions<U extends BaseUserMeta = DU> =
+  {
+    /**
+     * Which format to transform the comment body to.
+     */
+    format?: "html" | "json";
+    /**
+     * A function that returns info from user IDs.
+     */
+    resolveUsers?: (
+      args: ResolveUsersArgs
+    ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+    /**
+     * A function that returns room info from room IDs.
+     */
+    resolveRoomInfo?: (
+      args: ResolveRoomInfoArgs
+    ) => OptionalPromise<DRI | undefined>;
+  };
 
-export type ResolvedCommentAuthorData = {
+export type ThreadNotificationResolvedCommentAuthorData = {
   id: string;
   name: string;
   avatar?: string;
@@ -194,27 +193,27 @@ const resolveAuthorsInComments = async <U extends BaseUserMeta>({
   return resolvedAuthors;
 };
 
-export type ResolvedCommentData = {
+export type ThreadNotificationResolvedCommentData = {
   id: string;
   threadId: string;
   roomId: string;
-  author: ResolvedCommentAuthorData;
+  author: ThreadNotificationResolvedCommentAuthorData;
   createdAt: Date;
   body: string | CommentBodyJson;
   commentUrl?: string;
 };
 
-export type UnreadRepliesData = {
+export type ThreadNotificationResolvedUnreadRepliesData = {
   type: "unreadReplies";
-  comments: ResolvedCommentData[];
+  comments: ThreadNotificationResolvedCommentData[];
 };
-export type UnreadMentionData = {
+export type ThreadNotificationResolvedUnreadMentionData = {
   type: "unreadMention";
-  comments: ResolvedCommentData[];
+  comments: ThreadNotificationResolvedCommentData[];
 };
 export type ThreadNotificationResolvedData = (
-  | UnreadRepliesData
-  | UnreadMentionData
+  | ThreadNotificationResolvedUnreadRepliesData
+  | ThreadNotificationResolvedUnreadMentionData
 ) & {
   roomInfo: DRI;
 };
@@ -248,7 +247,7 @@ export type ThreadNotificationResolvedData = (
 export async function getThreadNotificationResolvedData(params: {
   client: Liveblocks;
   event: ThreadNotificationEvent;
-  options?: GetThreadNotificationThreadNotificationResolvedOptions<BaseUserMeta>;
+  options?: GetThreadNotificationResolvedOptions<BaseUserMeta>;
 }): Promise<ThreadNotificationResolvedData> {
   const { client, event, options } = params;
   const { roomId } = event.data;
@@ -268,34 +267,36 @@ export async function getThreadNotificationResolvedData(params: {
   });
 
   const unreadComments = await Promise.all(
-    comments.map(async (comment): Promise<ResolvedCommentData> => {
-      const body = await transformCommentBody(comment.body, {
-        format: options?.format,
-        resolveUsers: options?.resolveUsers,
-      });
-      const resolvedAuthor = resolvedAuthors.get(comment.userId);
-      const author: ResolvedCommentAuthorData = {
-        id: comment.userId,
-        name: resolvedAuthor?.name ?? comment.userId,
-      };
+    comments.map(
+      async (comment): Promise<ThreadNotificationResolvedCommentData> => {
+        const body = await transformCommentBody(comment.body, {
+          format: options?.format,
+          resolveUsers: options?.resolveUsers,
+        });
+        const resolvedAuthor = resolvedAuthors.get(comment.userId);
+        const author: ThreadNotificationResolvedCommentAuthorData = {
+          id: comment.userId,
+          name: resolvedAuthor?.name ?? comment.userId,
+        };
 
-      const commentUrl = roomInfos?.url
-        ? generateCommentUrl({
-            roomUrl: roomInfos.url,
-            commentId: comment.id,
-          })
-        : undefined;
+        const commentUrl = roomInfos?.url
+          ? generateCommentUrl({
+              roomUrl: roomInfos.url,
+              commentId: comment.id,
+            })
+          : undefined;
 
-      return {
-        id: comment.id,
-        threadId: comment.threadId,
-        roomId: comment.roomId,
-        createdAt: comment.createdAt,
-        author,
-        body,
-        commentUrl,
-      };
-    })
+        return {
+          id: comment.id,
+          threadId: comment.threadId,
+          roomId: comment.roomId,
+          createdAt: comment.createdAt,
+          author,
+          body,
+          commentUrl,
+        };
+      }
+    )
   );
 
   return {
