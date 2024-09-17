@@ -1,6 +1,7 @@
 .avatars {
   display: flex;
-  padding: 4px 0px 2px;
+  justify-content: flex-end;
+  padding: 1px 4px;
 }
 
 .avatar {
@@ -14,6 +15,12 @@
   height: 36px;
   background-color: #9ca3af;
   margin-left: -9px;
+}
+
+@media (max-width: 640px) {
+  .avatar {
+    border-color: var(--color-panel);
+  }
 }
 
 .avatar:before {
