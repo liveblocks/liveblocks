@@ -150,10 +150,20 @@ export function withPaste(
   const { insertData } = editor;
 
   editor.insertData = (data) => {
-    const html = data.getData("text/html");
+    // Create attachments from files when pasting
+    if (data.types.includes("Files") && pasteFilesAsAttachments) {
+      const files = getFiles(data);
+
+      if (files.length > 0) {
+        createAttachments(files);
+
+        return;
+      }
+    }
 
     // Deserialize rich text from HTML when pasting
-    if (html) {
+    if (data.types.includes("text/html")) {
+      const html = data.getData("text/html");
       const parsed = new DOMParser().parseFromString(html, "text/html");
       const fragment = deserialize(parsed.body);
 
@@ -162,13 +172,6 @@ export function withPaste(
 
         return;
       }
-    }
-
-    // Create attachments from files when pasting
-    if (pasteFilesAsAttachments && data.types.includes("Files")) {
-      const files = getFiles(data);
-
-      createAttachments(files);
     }
 
     insertData(data);
