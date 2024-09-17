@@ -39,7 +39,7 @@ describe("useInboxNotifications", () => {
     const roomId = nanoid();
     const threads = [dummyThreadData({ roomId })];
     const inboxNotifications = [
-      dummyThreadInboxNotificationData({ roomId, threadId: threads[0].id }),
+      dummyThreadInboxNotificationData({ roomId, threadId: threads[0]!.id }),
     ];
 
     server.use(
@@ -86,7 +86,7 @@ describe("useInboxNotifications", () => {
     const roomId = nanoid();
     const threads = [dummyThreadData({ roomId })];
     const inboxNotifications = [
-      dummyThreadInboxNotificationData({ roomId, threadId: threads[0].id }),
+      dummyThreadInboxNotificationData({ roomId, threadId: threads[0]!.id }),
     ];
 
     server.use(
@@ -138,7 +138,7 @@ describe("useInboxNotifications", () => {
     const roomId = nanoid();
     const threads = [dummyThreadData({ roomId })];
     const inboxNotifications = [
-      dummyThreadInboxNotificationData({ roomId, threadId: threads[0].id }),
+      dummyThreadInboxNotificationData({ roomId, threadId: threads[0]!.id }),
     ];
 
     server.use(
@@ -370,7 +370,7 @@ describe("useInboxNotifications - Suspense", () => {
     const roomId = nanoid();
     const threads = [dummyThreadData({ roomId })];
     const inboxNotifications = [
-      dummyThreadInboxNotificationData({ roomId, threadId: threads[0].id }),
+      dummyThreadInboxNotificationData({ roomId, threadId: threads[0]!.id }),
     ];
 
     server.use(
@@ -437,7 +437,7 @@ describe("useInboxNotifications: polling", () => {
     const roomId = nanoid();
     const threads = [dummyThreadData({ roomId })];
     const inboxNotifications = [
-      dummyThreadInboxNotificationData({ roomId, threadId: threads[0].id }),
+      dummyThreadInboxNotificationData({ roomId, threadId: threads[0]!.id }),
     ];
     let getInboxNotificationsReqCount = 0;
 
@@ -569,7 +569,7 @@ describe("useInboxNotificationsSuspense: error", () => {
     const roomId = nanoid();
     const threads = [dummyThreadData({ roomId })];
     const inboxNotifications = [
-      dummyThreadInboxNotificationData({ roomId, threadId: threads[0].id }),
+      dummyThreadInboxNotificationData({ roomId, threadId: threads[0]!.id }),
     ];
 
     let n = 0;

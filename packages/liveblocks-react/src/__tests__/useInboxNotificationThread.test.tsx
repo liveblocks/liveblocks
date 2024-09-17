@@ -36,7 +36,7 @@ describe("useInboxNotificationThread", () => {
     const threads = [dummyThreadData({ roomId })];
     const inboxNotification = dummyThreadInboxNotificationData({
       roomId,
-      threadId: threads[0].id,
+      threadId: threads[0]!.id,
     });
     const inboxNotifications = [inboxNotification];
 
@@ -106,7 +106,7 @@ describe("useInboxNotificationThread", () => {
     const threads = [dummyThreadData({ roomId })];
     const inboxNotification = dummyThreadInboxNotificationData({
       roomId,
-      threadId: threads[0].id,
+      threadId: threads[0]!.id,
     });
     const customInboxNotification = dummyCustomInboxNoficationData();
     const inboxNotifications = [inboxNotification, customInboxNotification];
@@ -183,7 +183,7 @@ describe("useInboxNotificationThread", () => {
           <LiveblocksProvider>{children}</LiveblocksProvider>
         ),
       })
-    ).toThrow(`Thread with ID "${threads[0].id}" not found`);
+    ).toThrow(`Thread with ID "${threads[0]!.id}" not found`);
 
     // Use the hook with a custom notification should throw
     expect(() =>

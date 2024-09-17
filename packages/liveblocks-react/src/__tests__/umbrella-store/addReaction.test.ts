@@ -18,11 +18,11 @@ describe("addReaction", () => {
 
     const updatedThread = applyAddReaction(thread, comment.id, reaction);
 
-    expect(updatedThread.comments[0].reactions).toHaveLength(1);
-    expect(updatedThread.comments[0].reactions[0].emoji).toEqual(
+    expect(updatedThread.comments[0]?.reactions).toHaveLength(1);
+    expect(updatedThread.comments[0]?.reactions[0]?.emoji).toEqual(
       reaction.emoji
     );
-    expect(updatedThread.comments[0].reactions[0].users[0].id).toEqual(
+    expect(updatedThread.comments[0]?.reactions[0]?.users[0]?.id).toEqual(
       reaction.userId
     );
     expect(updatedThread.updatedAt).toEqual(reaction.createdAt);
@@ -53,15 +53,15 @@ describe("addReaction", () => {
 
     const updatedThread = applyAddReaction(thread, comment.id, newReaction);
 
-    expect(updatedThread.comments[0].reactions).toHaveLength(2);
-    expect(updatedThread.comments[0].reactions[0].emoji).toEqual("👍");
-    expect(updatedThread.comments[0].reactions[0].users[0].id).toEqual(
+    expect(updatedThread.comments[0]?.reactions).toHaveLength(2);
+    expect(updatedThread.comments[0]?.reactions[0]?.emoji).toEqual("👍");
+    expect(updatedThread.comments[0]?.reactions[0]?.users[0]?.id).toEqual(
       "user_1"
     );
-    expect(updatedThread.comments[0].reactions[1].emoji).toEqual(
+    expect(updatedThread.comments[0]?.reactions[1]?.emoji).toEqual(
       newReaction.emoji
     );
-    expect(updatedThread.comments[0].reactions[1].users[0].id).toEqual(
+    expect(updatedThread.comments[0]?.reactions[1]?.users[0]?.id).toEqual(
       newReaction.userId
     );
     expect(updatedThread.updatedAt).toEqual(newReaction.createdAt);
@@ -90,7 +90,7 @@ describe("addReaction", () => {
 
     const updatedThread = applyAddReaction(thread, comment.id, reaction);
 
-    expect(updatedThread.comments[0].reactions[0].users).toHaveLength(1); // No additional user should be added
+    expect(updatedThread.comments[0]?.reactions[0]?.users).toHaveLength(1); // No additional user should be added
   });
 
   it("should add a new user to an existing reaction", () => {
@@ -115,8 +115,8 @@ describe("addReaction", () => {
     };
     const updatedThread = applyAddReaction(thread, comment.id, reaction);
 
-    expect(updatedThread.comments[0].reactions[0].users).toHaveLength(2);
-    expect(updatedThread.comments[0].reactions[0].users[1].id).toEqual(
+    expect(updatedThread.comments[0]?.reactions[0]?.users).toHaveLength(2);
+    expect(updatedThread.comments[0]?.reactions[0]?.users[1]?.id).toEqual(
       "user_2"
     );
   });
