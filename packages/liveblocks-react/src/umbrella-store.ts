@@ -168,6 +168,11 @@ export function makeNotificationSettingsQueryKey(roomId: string) {
   return `${roomId}:NOTIFICATION_SETTINGS`;
 }
 
+// TODO Stop exporting this helper!
+export function makeVersionsQueryKey(roomId: string) {
+  return `${roomId}-VERSIONS`;
+}
+
 type InternalState<M extends BaseMetadata> = Readonly<{
   queries: Record<string, QueryState>;
   optimisticUpdates: readonly OptimisticUpdate<M>[];
@@ -252,7 +257,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.getInboxNotifications = this.getInboxNotifications.bind(this);
     this.getInboxNotificationsAsync =
       this.getInboxNotificationsAsync.bind(this);
-    this.getVersions = this.getVersions.bind(this);
     this.subscribeThreads = this.subscribeThreads.bind(this);
     this.subscribeInboxNotifications =
       this.subscribeInboxNotifications.bind(this);
@@ -330,8 +334,25 @@ export class UmbrellaStore<M extends BaseMetadata> {
     };
   }
 
-  public getVersions(): UmbrellaStoreState<M> {
-    return this.get();
+  public getVersionsAsync(
+    roomId: string
+  ): AsyncResultWithDataField<HistoryVersion[], "versions"> {
+    const state = this.get();
+
+    const query = state.queries[makeVersionsQueryKey(roomId)];
+    if (query === undefined || query.isLoading) {
+      return QUERY_STATE_LOADING;
+    }
+
+    if (query.error !== undefined) {
+      return query;
+    }
+
+    // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
+    return {
+      isLoading: false,
+      versions: nn(state.versionsByRoomId[roomId]),
+    };
   }
 
   /**
