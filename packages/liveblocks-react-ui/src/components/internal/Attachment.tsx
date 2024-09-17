@@ -21,6 +21,8 @@ import { classNames } from "../../utils/class-names";
 import { formatFileSize } from "../../utils/format-file-size";
 import { Tooltip } from "./Tooltip";
 
+const MAX_DISPLAYED_MEDIA_SIZE = 60 * 1024 * 1024; // 60 MB
+
 interface AttachmentProps extends ComponentPropsWithoutRef<"div"> {
   attachment: CommentMixedAttachment;
   onDeleteClick?: MouseEventHandler<HTMLButtonElement>;
@@ -179,7 +181,11 @@ function AttachmentPreview({
   const isUploaded =
     attachment.type === "attachment" || attachment.status === "uploaded";
 
-  if (isUploaded && isInsideRoom) {
+  if (
+    isUploaded &&
+    isInsideRoom &&
+    attachment.size <= MAX_DISPLAYED_MEDIA_SIZE
+  ) {
     if (attachment.mimeType.startsWith("image/")) {
       return <AttachmentImagePreview attachment={attachment} />;
     }
@@ -422,8 +428,9 @@ export function separateMediaAttachments<T extends CommentMixedAttachment>(
 
   for (const attachment of attachments) {
     if (
-      attachment.mimeType.startsWith("image/") ||
-      attachment.mimeType.startsWith("video/")
+      (attachment.mimeType.startsWith("image/") ||
+        attachment.mimeType.startsWith("video/")) &&
+      attachment.size <= MAX_DISPLAYED_MEDIA_SIZE
     ) {
       mediaAttachments.push(attachment);
     } else {
