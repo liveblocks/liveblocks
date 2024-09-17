@@ -1,8 +1,8 @@
 import type {
   BaseUserMeta,
-  CommentBody,
   CommentBodyJson,
   CommentData,
+  CommentDataWithBody,
   DRI,
   DU,
   InboxNotificationData,
@@ -10,6 +10,7 @@ import type {
   ResolveUsersArgs,
 } from "@liveblocks/core";
 import {
+  filterCommentsWithBody,
   generateCommentUrl,
   getMentionedIdsFromCommentBody,
   transformCommentBody,
@@ -18,22 +19,14 @@ import {
 import type { Liveblocks } from "./client";
 import type { ThreadNotificationEvent } from "./webhooks";
 
-export type ThreadNotificationCommentData = Omit<
-  CommentData,
-  "body" | "deletedAt"
-> & {
-  body: CommentBody;
-  deletedAt?: never;
-};
-
 export type ThreadNotificationUnreadRepliesData = {
   type: "unreadReplies";
-  comments: ThreadNotificationCommentData[];
+  comments: CommentDataWithBody[];
 };
 
 export type ThreadNotificationUnreadMentionData = {
   type: "unreadMention";
-  comments: ThreadNotificationCommentData[];
+  comments: CommentDataWithBody[];
 };
 
 export type ThreadNotificationData =
@@ -49,16 +42,17 @@ export const getUnreadComments = ({
   comments: CommentData[];
   inboxNotification: InboxNotificationData;
   userId: string;
-}): ThreadNotificationCommentData[] => {
+}): CommentDataWithBody[] => {
+  const commentsWithBody = filterCommentsWithBody(comments);
   const readAt = inboxNotification.readAt;
-  return comments
+
+  return commentsWithBody
     .filter((c) => c.userId !== userId)
-    .filter((c) => c.body !== undefined && c.deletedAt === undefined)
     .filter((c) =>
       readAt
         ? c.createdAt > readAt && c.createdAt <= inboxNotification.notifiedAt
         : c.createdAt <= inboxNotification.notifiedAt
-    ) as ThreadNotificationCommentData[];
+    );
 };
 
 /** @internal */
@@ -66,9 +60,9 @@ export const getLastCommentWithMention = ({
   comments,
   mentionedUserId,
 }: {
-  comments: ThreadNotificationCommentData[];
+  comments: CommentDataWithBody[];
   mentionedUserId: string;
-}): ThreadNotificationCommentData | null => {
+}): CommentDataWithBody | null => {
   return (
     Array.from(comments)
       .reverse()
@@ -177,7 +171,7 @@ const resolveAuthorsInComments = async <U extends BaseUserMeta>({
   comments,
   resolveUsers,
 }: {
-  comments: ThreadNotificationCommentData[];
+  comments: CommentDataWithBody[];
   resolveUsers?: (
     args: ResolveUsersArgs
   ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;

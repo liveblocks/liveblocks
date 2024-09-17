@@ -18,7 +18,6 @@ export { Liveblocks, LiveblocksError } from "./client";
 export type {
   GetThreadNotificationUnreadCommentsDataOptions,
   ResolveRoomInfoArgs,
-  ThreadNotificationCommentData,
   ThreadNotificationData,
   ThreadNotificationUnreadMentionData,
   ThreadNotificationUnreadRepliesData,
@@ -75,6 +74,7 @@ export type {
   CommentBodyText,
   CommentBodyTextElementArgs,
   CommentData,
+  CommentDataWithBody,
   CommentUserReaction,
   IUserInfo,
   Json,

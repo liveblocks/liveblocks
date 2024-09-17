@@ -1,6 +1,7 @@
 import type {
   CommentBody,
   CommentData,
+  CommentDataWithBody,
   InboxNotificationThreadData,
   ResolveUsersArgs,
   ThreadData,
@@ -12,7 +13,6 @@ import { setupServer } from "msw/node";
 import type { RoomData } from "../client";
 import { Liveblocks } from "../client";
 import type {
-  ThreadNotificationCommentData,
   ThreadNotificationData,
   UnreadCommentsData,
 } from "../thread-notification-helpers";
@@ -206,7 +206,7 @@ const makeThreadNotificationComment = ({
   comment,
 }: {
   comment: CommentData;
-}): ThreadNotificationCommentData => {
+}): CommentDataWithBody => {
   const { body, ...rest } = comment;
   return {
     ...rest,
