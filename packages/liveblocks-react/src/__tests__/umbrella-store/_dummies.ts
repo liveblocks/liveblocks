@@ -1,5 +1,6 @@
 import type {
   BaseMetadata,
+  CommentAttachment,
   CommentData,
   ThreadDataWithDeleteInfo,
 } from "@liveblocks/core";
@@ -63,5 +64,18 @@ export function createComment(
     body,
     reactions,
     attachments,
+  };
+}
+
+export function createAttachment(
+  overrides?: Partial<CommentAttachment>
+): CommentAttachment {
+  return {
+    type: "attachment",
+    id: `at_${nanoid()}`,
+    name: "file.png",
+    mimeType: "image/png",
+    size: 100000,
+    ...overrides,
   };
 }
