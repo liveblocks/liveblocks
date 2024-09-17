@@ -139,26 +139,25 @@ export type ResolveRoomInfoArgs = {
   roomId: string;
 };
 
-export type GetThreadNotificationThreadNotificationResolvedOptions<
-  U extends BaseUserMeta = DU,
-> = {
-  /**
-   * Which format to transform the comment body to.
-   */
-  format?: "html" | "json";
-  /**
-   * A function that returns info from user IDs.
-   */
-  resolveUsers?: (
-    args: ResolveUsersArgs
-  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
-  /**
-   * A function that returns room info from room IDs.
-   */
-  resolveRoomInfo?: (
-    args: ResolveRoomInfoArgs
-  ) => OptionalPromise<DRI | undefined>;
-};
+export type GetThreadNotificationResolvedOptions<U extends BaseUserMeta = DU> =
+  {
+    /**
+     * Which format to transform the comment body to.
+     */
+    format?: "html" | "json";
+    /**
+     * A function that returns info from user IDs.
+     */
+    resolveUsers?: (
+      args: ResolveUsersArgs
+    ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+    /**
+     * A function that returns room info from room IDs.
+     */
+    resolveRoomInfo?: (
+      args: ResolveRoomInfoArgs
+    ) => OptionalPromise<DRI | undefined>;
+  };
 
 export type ResolvedCommentAuthorData = {
   id: string;
@@ -204,17 +203,17 @@ export type ResolvedCommentData = {
   commentUrl?: string;
 };
 
-export type UnreadRepliesData = {
+export type ResolvedUnreadRepliesData = {
   type: "unreadReplies";
   comments: ResolvedCommentData[];
 };
-export type UnreadMentionData = {
+export type ResolvedUnreadMentionData = {
   type: "unreadMention";
   comments: ResolvedCommentData[];
 };
 export type ThreadNotificationResolvedData = (
-  | UnreadRepliesData
-  | UnreadMentionData
+  | ResolvedUnreadRepliesData
+  | ResolvedUnreadMentionData
 ) & {
   roomInfo: DRI;
 };
@@ -248,7 +247,7 @@ export type ThreadNotificationResolvedData = (
 export async function getThreadNotificationResolvedData(params: {
   client: Liveblocks;
   event: ThreadNotificationEvent;
-  options?: GetThreadNotificationThreadNotificationResolvedOptions<BaseUserMeta>;
+  options?: GetThreadNotificationResolvedOptions<BaseUserMeta>;
 }): Promise<ThreadNotificationResolvedData> {
   const { client, event, options } = params;
   const { roomId } = event.data;
