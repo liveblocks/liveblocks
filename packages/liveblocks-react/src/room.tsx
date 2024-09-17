@@ -2191,6 +2191,57 @@ function useRoomNotificationSettings(): [
 }
 
 /**
+ * Returns the user's notification settings for the current room
+ * and a function to update them.
+ *
+ * @example
+ * const [{ settings }, updateSettings] = useRoomNotificationSettings();
+ */
+function useRoomNotificationSettingsSuspense(): [
+  RoomNotificationSettingsStateSuccess,
+  (settings: Partial<RoomNotificationSettings>) => void,
+] {
+  const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
+  const client = useClient();
+  const room = useRoom();
+  const queryKey = makeNotificationSettingsQueryKey(room.id);
+
+  const { store, getInboxNotificationSettings } = getExtrasForClient(client);
+  const query = store.getNotificationSettings().queries[queryKey];
+
+  if (query === undefined || query.isLoading) {
+    throw getInboxNotificationSettings(room, queryKey);
+  }
+
+  if (query.error) {
+    throw query.error;
+  }
+
+  const selector = React.useCallback(
+    (
+      state: GetNotificationSettingsType
+    ): RoomNotificationSettingsStateSuccess => {
+      return {
+        isLoading: false,
+        settings: selectNotificationSettings(room.id, state),
+      };
+    },
+    [room]
+  );
+
+  const settings = useSyncExternalStoreWithSelector(
+    store.subscribeNotificationSettings,
+    store.getNotificationSettings,
+    store.getNotificationSettings,
+    selector
+  );
+
+  return React.useMemo(() => {
+    return [settings, updateRoomNotificationSettings];
+  }, [settings, updateRoomNotificationSettings]);
+}
+
+/**
  * Returns the version data bianry for a given version
  *
  * @example
@@ -2543,57 +2594,6 @@ function useHistoryVersionsSuspense(): HistoryVersionsStateResolved {
   );
 
   return state;
-}
-
-/**
- * Returns the user's notification settings for the current room
- * and a function to update them.
- *
- * @example
- * const [{ settings }, updateSettings] = useRoomNotificationSettings();
- */
-function useRoomNotificationSettingsSuspense(): [
-  RoomNotificationSettingsStateSuccess,
-  (settings: Partial<RoomNotificationSettings>) => void,
-] {
-  const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
-  const client = useClient();
-  const room = useRoom();
-  const queryKey = makeNotificationSettingsQueryKey(room.id);
-
-  const { store, getInboxNotificationSettings } = getExtrasForClient(client);
-  const query = store.getNotificationSettings().queries[queryKey];
-
-  if (query === undefined || query.isLoading) {
-    throw getInboxNotificationSettings(room, queryKey);
-  }
-
-  if (query.error) {
-    throw query.error;
-  }
-
-  const selector = React.useCallback(
-    (
-      state: GetNotificationSettingsType
-    ): RoomNotificationSettingsStateSuccess => {
-      return {
-        isLoading: false,
-        settings: selectNotificationSettings(room.id, state),
-      };
-    },
-    [room]
-  );
-
-  const settings = useSyncExternalStoreWithSelector(
-    store.subscribeNotificationSettings,
-    store.getNotificationSettings,
-    store.getNotificationSettings,
-    selector
-  );
-
-  return React.useMemo(() => {
-    return [settings, updateRoomNotificationSettings];
-  }, [settings, updateRoomNotificationSettings]);
 }
 
 /**
