@@ -8,7 +8,7 @@ import { Avatars } from "@/components/Avatars";
 
 /**
  * IMPORTANT: LICENSE REQUIRED
- * To use tldraw commercially, you must first purchase a license
+ * To remove the watermark, you must first purchase a license
  * Learn more: https://tldraw.dev/community/license
  */
 
@@ -29,7 +29,12 @@ export function StorageTldraw() {
         components={{
           // Render a live avatar stack at the top-right
           StylePanel: () => (
-            <div style={{ display: "flex", marginTop: 4 }}>
+            <div
+              style={{
+                display: "flex-column",
+                marginTop: 4,
+              }}
+            >
               <Avatars />
               <DefaultStylePanel />
             </div>

@@ -13,7 +13,7 @@ import { setupServer } from "msw/node";
 import React, { Suspense } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 
-import { INBOX_NOTIFICATIONS_QUERY, POLLING_INTERVAL } from "../liveblocks";
+import { POLLING_INTERVAL } from "../liveblocks";
 import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import { mockGetInboxNotifications } from "./_restMocks";
@@ -268,13 +268,13 @@ describe("useInboxNotifications", () => {
 
     umbrellaStore.force_set((state) => ({
       ...state,
-      inboxNotifications: {
+      inboxNotificationsById: {
         // Explicitly set the order to be reversed to test that the hook sorts the notifications
         [oldInboxNotification.id]: oldInboxNotification,
         [newInboxNotification.id]: newInboxNotification,
       },
       queries: {
-        [INBOX_NOTIFICATIONS_QUERY]: { isLoading: false, data: undefined },
+        INBOX_NOTIFICATIONS: { isLoading: false, data: undefined },
       },
     }));
 

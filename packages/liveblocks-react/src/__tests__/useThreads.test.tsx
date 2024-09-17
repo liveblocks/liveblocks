@@ -1165,7 +1165,7 @@ describe("useThreads", () => {
 
     umbrellaStore.force_set((state) => ({
       ...state,
-      threads: {
+      rawThreadsById: {
         [thread1.id]: thread1,
         [thread2WithDeletedAt.id]: thread2WithDeletedAt,
       },

@@ -32,6 +32,9 @@ import type {
   ThreadData,
   ToImmutable,
 } from "@liveblocks/core";
+import type { PropsWithChildren } from "react";
+
+import type { CommentsError } from "./errors";
 
 export type UseStorageStatusOptions = {
   /**
@@ -85,10 +88,6 @@ export type UseThreadsOptions<M extends BaseMetadata> = {
    */
   scrollOnLoad?: boolean;
 };
-
-import type { PropsWithChildren } from "react";
-
-import type { CommentsError } from "./comments/errors";
 
 export type UserAsyncResult<T> = AsyncResultWithDataField<T, "user">;
 export type UserAsyncSuccess<T> = Resolve<
@@ -177,6 +176,7 @@ export type InboxNotificationsStateError = {
   error: Error;
 };
 
+// TODO Think about ways to remove these types as global exports
 export type InboxNotificationsState =
   | InboxNotificationsStateLoading
   | InboxNotificationsStateSuccess
@@ -200,6 +200,7 @@ export type UnreadInboxNotificationsCountStateError = {
   error: Error;
 };
 
+// TODO Think about ways to remove these types as global exports
 export type UnreadInboxNotificationsCountState =
   | UnreadInboxNotificationsCountStateLoading
   | UnreadInboxNotificationsCountStateSuccess

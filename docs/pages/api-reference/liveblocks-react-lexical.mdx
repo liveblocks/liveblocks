@@ -70,6 +70,13 @@ function Editor() {
 }
 ```
 
+<Banner title="Resolved threads">
+
+Annotations associated with resolved threads are hidden by default on the
+editor.
+
+</Banner>
+
 Learn more in our [get started guide](/docs/get-started/yjs-lexical-react).
 
 ### liveblocksConfig
@@ -202,7 +209,7 @@ function Toolbar() {
   return (
     <button
       onClick={() => {
-        editor.dispatchCommand(OPEN_FLOATING_COMPOSER_COMMAND);
+        editor.dispatchCommand(OPEN_FLOATING_COMPOSER_COMMAND, undefined);
       }}
     >
       💬 New comment
@@ -326,6 +333,13 @@ function Editor() {
 ```
 
 Should be nested inside [`LiveblocksPlugin`][].
+
+<Banner title="Resolved threads">
+
+The `AnchoredThreads` component automatically excludes resolved threads from
+display. Any resolved threads passed in the threads list will not be shown.
+
+</Banner>
 
 #### Recommended usage [#FloatingThreads-recommended-usage]
 
@@ -563,6 +577,13 @@ function Editor() {
 ```
 
 Should be nested inside [`LiveblocksPlugin`][].
+
+<Banner title="Resolved threads">
+
+The `FloatingThreads` component automatically excludes resolved threads from
+display. Any resolved threads passed in the threads list will not be shown.
+
+</Banner>
 
 #### Recommended usage [#AnchoredThreads-recommended-usage]
 

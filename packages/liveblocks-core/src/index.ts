@@ -112,6 +112,7 @@ export { stringify } from "./lib/stringify";
 export type { Brand, DistributiveOmit } from "./lib/utils";
 export {
   b64decode,
+  compactObject,
   isPlainObject,
   mapValues,
   memoizeOnSuccess,

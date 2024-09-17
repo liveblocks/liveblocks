@@ -9,7 +9,7 @@
   font-size: 14px;
 }
 
-.lb-root.lb-lexical-thread-mark {
+.lb-root.lb-lexical-thread-mark, .lb-lexical-mention {
   font-size: inherit;
 }
 

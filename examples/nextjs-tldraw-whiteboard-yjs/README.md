@@ -91,5 +91,5 @@ on CodeSandbox, create the `LIVEBLOCKS_SECRET_KEY` environment variable as a
 
 The `tldraw` library is provided under the
 [tldraw license](https://github.com/tldraw/tldraw/blob/main/LICENSE.md) which
-does not allow their use for commercial purposes. To purchase an alternative
-license for commercial use, contact [sales@tldraw.com](mailto:sales@tldraw.com).
+allows commercial and non-commercial use. To purchase a business license and
+remove the watermark, contact [sales@tldraw.com](mailto:sales@tldraw.com).
