@@ -952,9 +952,8 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
   }
 );
 
-// TODO: Convert to Composer.Form props?
-const MAX_ATTACHMENTS = 5;
-const MAX_ATTACHMENT_SIZE = 20 * 1024 * 1024; // 20 MB
+const MAX_ATTACHMENTS = 10;
+const MAX_ATTACHMENT_SIZE = 1024 * 1024 * 1024; // 1 GB
 
 /**
  * Surrounds the composer's content and handles submissions.
@@ -984,7 +983,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const [isEmpty, setEmpty] = useState(true);
     const [isSubmitting, setSubmitting] = useState(false);
     const [isFocused, setFocused] = useState(false);
-    // TODO: Convert to Composer.Form props?
+    // TODO: Convert to Composer.Form props: { maxAttachments: number; maxAttachmentSize: number; supportedAttachmentMimeTypes: string[]; }
     const maxAttachments = MAX_ATTACHMENTS;
     const maxAttachmentSize = MAX_ATTACHMENT_SIZE;
     const {
