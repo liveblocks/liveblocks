@@ -13,6 +13,7 @@ import { IssueLinks } from "@/components/IssueLinks";
 import { $convertToMarkdownString, TRANSFORMERS } from "@lexical/markdown";
 import { marked } from "marked";
 import sanitizeHtml from "sanitize-html";
+import Link from "next/link";
 
 export async function Issue({ issueId }: { issueId: string }) {
   const roomId = getRoomId(issueId);
@@ -49,10 +50,34 @@ export async function Issue({ issueId }: { issueId: string }) {
     }
   );
 
-  const [storage, contentHtml] = await Promise.all([
-    storagePromise,
-    contentHtmlPromise,
-  ]);
+  let error;
+  const results = await Promise.all([storagePromise, contentHtmlPromise]).catch(
+    (err) => (error = err)
+  );
+
+  if (
+    error ||
+    !Array.isArray(results) ||
+    Object.keys(results[0]).length === 0
+  ) {
+    console.log(error);
+    return (
+      <div className="max-w-[840px] mx-auto pt-20">
+        <h1 className="outline-none block w-full text-2xl font-bold bg-transparent my-6">
+          Issue not found
+        </h1>
+        <div>
+          This issue has been deleted. Go back to the{" "}
+          <Link className="font-bold underline" href="/">
+            issue list
+          </Link>
+          .
+        </div>
+      </div>
+    );
+  }
+
+  const [storage, contentHtml] = results;
 
   return (
     <div className="h-full flex flex-col">
