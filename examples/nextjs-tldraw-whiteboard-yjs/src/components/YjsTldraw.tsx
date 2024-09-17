@@ -5,6 +5,7 @@ import { Tldraw, DefaultStylePanel } from "tldraw";
 import { useSelf } from "@liveblocks/react/suspense";
 import { Avatars } from "@/components/Avatars";
 import { useYjsStore } from "@/components/useYjsStore";
+import { Badge } from "@/components/Badge";
 
 /**
  * IMPORTANT: LICENSE REQUIRED
@@ -37,9 +38,9 @@ export function YjsTldraw() {
             >
               <Avatars />
               <DefaultStylePanel />
+              <Badge />
             </div>
           ),
-          DebugPanel: null,
         }}
         autoFocus
       />
