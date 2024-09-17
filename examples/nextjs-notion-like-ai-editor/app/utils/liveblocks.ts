@@ -16,7 +16,7 @@ export async function getLatestRoom() {
   return rooms.length ? (rooms[0] as TypedRoomData) : null;
 }
 
-export async function createRoom(title?: string) {
+export async function createRoom(title: string = "Untitled document") {
   const pageId = nanoid();
 
   const room = (await liveblocks.createRoom(getRoomId(pageId), {
@@ -24,12 +24,10 @@ export async function createRoom(title?: string) {
     metadata: { pageId },
   })) as TypedRoomData;
 
-  if (title) {
-    await liveblocks.initializeStorageDocument(room.id, {
-      liveblocksType: "LiveObject",
-      data: { title },
-    });
-  }
+  await liveblocks.initializeStorageDocument(room.id, {
+    liveblocksType: "LiveObject",
+    data: { title },
+  });
 
   return room;
 }
