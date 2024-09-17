@@ -1031,8 +1031,21 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       [addAttachments, maxAttachments, numberOfAttachments, room]
     );
 
+    const createAttachmentsRef = useRef(createAttachments);
+
+    useEffect(() => {
+      createAttachmentsRef.current = createAttachments;
+    }, [createAttachments]);
+
+    const stableCreateAttachments = useCallback((files: File[]) => {
+      createAttachmentsRef.current(files);
+    }, []);
+
     const editor = useInitial(() =>
-      createComposerEditor({ createAttachments, pasteFilesAsAttachments })
+      createComposerEditor({
+        createAttachments: stableCreateAttachments,
+        pasteFilesAsAttachments,
+      })
     );
 
     const validate = useCallback(

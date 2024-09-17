@@ -373,9 +373,9 @@ function createComposerAttachmentsManager(
       });
   }
 
-  function addAttachments(attachments2: CommentMixedAttachment[]) {
+  function addAttachments(addedAttachments: CommentMixedAttachment[]) {
     // Ignore attachments that are already in the manager
-    const newAttachments = attachments2.filter(
+    const newAttachments = addedAttachments.filter(
       (attachment) => !attachments.has(attachment.id)
     );
 
