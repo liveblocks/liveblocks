@@ -14,6 +14,7 @@ import type {
   User,
 } from "@liveblocks/client";
 import type {
+  AsyncError,
   AsyncLoading,
   AsyncResult,
   AsyncSuccess,
@@ -132,10 +133,7 @@ export type CommentReactionOptions = {
 };
 
 export type ThreadsStateLoading = AsyncLoading<"threads">;
-export type ThreadsStateSuccess<M extends BaseMetadata> = AsyncSuccess<
-  ThreadData<M>[],
-  "threads"
->;
+export type ThreadsStateSuccess<M extends BaseMetadata> = AsyncSuccess<ThreadData<M>[], "threads">; // prettier-ignore
 
 // XXX Refactor this type away! We should NOT have threads & error state simultaneously!
 // XXX Re-express this as AsyncSuccess<ThreadData<M>[], 'threads'>
@@ -145,130 +143,57 @@ export type ThreadsStateResolved<M extends BaseMetadata> = {
   error?: Error;
 };
 
-export type ThreadsStateSuccess<M extends BaseMetadata> = {
-  isLoading: false;
-  threads: ThreadData<M>[];
-  error?: never;
-};
-
 export type ThreadsState<M extends BaseMetadata> =
   | ThreadsStateLoading
+  // XXX Refactor this member away! We should NOT have threads & error state simultaneously!
   | ThreadsStateResolved<M>;
 
-export type InboxNotificationsStateLoading = {
-  isLoading: true;
-  inboxNotifications?: never;
-  error?: never;
-};
+export type InboxNotificationsStateLoading = AsyncLoading<"inboxNotifications">;
+export type InboxNotificationsStateError = AsyncError<"inboxNotifications">;
+export type InboxNotificationsStateSuccess = AsyncSuccess<InboxNotificationData[], "inboxNotifications">; // prettier-ignore
+export type InboxNotificationsState = AsyncResult<InboxNotificationData[], "inboxNotifications">; // prettier-ignore
 
-export type InboxNotificationsStateSuccess = {
-  isLoading: false;
-  inboxNotifications: InboxNotificationData[];
-  error?: never;
-};
+export type UnreadInboxNotificationsCountStateLoading = AsyncLoading<"count">;
+export type UnreadInboxNotificationsCountStateError = AsyncError<"count">;
+export type UnreadInboxNotificationsCountStateSuccess = AsyncSuccess<number, "count">; // prettier-ignore
+export type UnreadInboxNotificationsCountState = AsyncResult<number, "count">;
 
-export type InboxNotificationsStateError = {
-  isLoading: false;
-  inboxNotifications?: never;
-  error: Error;
-};
+export type RoomNotificationSettingsStateLoading = AsyncLoading<"settings">;
+export type RoomNotificationSettingsStateError = AsyncError<"settings">;
+export type RoomNotificationSettingsStateSuccess = AsyncSuccess<RoomNotificationSettings, "settings">; // prettier-ignore
+export type RoomNotificationSettingsState = AsyncResult<RoomNotificationSettings, "settings">; // prettier-ignore
 
-// TODO Think about ways to remove these types as global exports
-export type InboxNotificationsState =
-  | InboxNotificationsStateLoading
-  | InboxNotificationsStateSuccess
-  | InboxNotificationsStateError;
+export type HistoryVersionDataStateLoading = AsyncLoading;
+export type HistoryVersionDataStateError = AsyncError;
 
-export type UnreadInboxNotificationsCountStateLoading = {
-  isLoading: true;
-  count?: never;
-  error?: never;
-};
-
-export type UnreadInboxNotificationsCountStateSuccess = {
-  isLoading: false;
-  count: number;
-  error?: never;
-};
-
-export type UnreadInboxNotificationsCountStateError = {
-  isLoading: false;
-  count?: never;
-  error: Error;
-};
-
-// TODO Think about ways to remove these types as global exports
-export type UnreadInboxNotificationsCountState =
-  | UnreadInboxNotificationsCountStateLoading
-  | UnreadInboxNotificationsCountStateSuccess
-  | UnreadInboxNotificationsCountStateError;
-
-export type RoomNotificationSettingsStateLoading = {
-  isLoading: true;
-  settings?: never;
-  error?: never;
-};
-
-export type RoomNotificationSettingsStateError = {
-  isLoading: false;
-  settings?: never;
-  error: Error;
-};
-
-export type RoomNotificationSettingsStateSuccess = {
-  isLoading: false;
-  settings: RoomNotificationSettings;
-  error?: never;
-};
-
-export type RoomNotificationSettingsState =
-  | RoomNotificationSettingsStateLoading
-  | RoomNotificationSettingsStateError
-  | RoomNotificationSettingsStateSuccess;
-
-export type HistoryVersionDataStateLoading = {
-  isLoading: true;
-  data?: never;
-  error?: never;
-};
-
+// XXX Refactor this type away! We should NOT have data & error state simultaneously!
+// XXX Re-express this as AsyncSuccess<Uint8Array>
 export type HistoryVersionDataStateResolved = {
   isLoading: false;
   data: Uint8Array;
   error?: Error;
 };
 
-export type HistoryVersionDataStateError = {
-  isLoading: false;
-  data?: never;
-  error: Error;
-};
-
 export type HistoryVersionDataState =
   | HistoryVersionDataStateLoading
+  // XXX Refactor this member away! We should NOT have threads & error state simultaneously!
   | HistoryVersionDataStateResolved
   | HistoryVersionDataStateError;
 
-export type HistoryVersionsStateLoading = {
-  isLoading: true;
-  versions?: never;
-  error?: never;
-};
+export type HistoryVersionsStateLoading = AsyncLoading<"versions">;
+export type HistoryVersionsStateError = AsyncError<"versions">;
 
+// XXX Refactor this type away! We should NOT have data & error state simultaneously!
+// XXX Re-express this as AsyncSuccess<HistoryVersion[], 'versions'>
 export type HistoryVersionsStateResolved = {
   isLoading: false;
   versions: HistoryVersion[];
   error?: Error;
 };
 
-export type HistoryVersionsStateError = {
-  isLoading: false;
-  versions?: never;
-  error: Error;
-};
-
 export type HistoryVersionsState =
   | HistoryVersionsStateLoading
+  // XXX Refactor this member away! We should NOT have threads & error state simultaneously!
   | HistoryVersionsStateResolved
   | HistoryVersionsStateError;
 
