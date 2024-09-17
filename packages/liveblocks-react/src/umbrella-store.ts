@@ -23,6 +23,7 @@ import {
   createStore,
   mapValues,
   nanoid,
+  nn,
 } from "@liveblocks/core";
 
 import { isMoreRecentlyUpdated } from "./lib/compare";
@@ -161,6 +162,11 @@ const QUERY_STATE_OK = Object.freeze({ isLoading: false, data: undefined });
 
 // TODO Stop exporting this constant!
 export const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
+
+// XXX Stop exporting this helper!
+export function makeNotificationSettingsQueryKey(roomId: string) {
+  return `${roomId}:NOTIFICATION_SETTINGS`;
+}
 
 type InternalState<M extends BaseMetadata> = Readonly<{
   queries: Record<string, QueryState>;
@@ -305,6 +311,27 @@ export class UmbrellaStore<M extends BaseMetadata> {
   public getNotificationSettings(): UmbrellaStoreState<M> {
     // TODO Return only the stable reference to the notificationSettings property
     return this.get();
+  }
+
+  public getNotificationSettingsAsync(
+    roomId: string
+  ): AsyncResultWithDataField<RoomNotificationSettings, "settings"> {
+    const state = this.get();
+
+    const query = state.queries[makeNotificationSettingsQueryKey(roomId)];
+
+    if (query === undefined || query.isLoading) {
+      return { isLoading: true };
+    }
+
+    if (query.error !== undefined) {
+      return { isLoading: false, error: query.error };
+    }
+
+    return {
+      isLoading: false,
+      settings: nn(state.notificationSettingsByRoomId[roomId]),
+    };
   }
 
   public getVersions(): UmbrellaStoreState<M> {
