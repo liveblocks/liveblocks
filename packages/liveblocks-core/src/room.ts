@@ -3263,19 +3263,19 @@ export function createRoom<
         partNumber: number;
       }[] = [];
 
-      try {
-        // Create a multi-part upload
-        const createMultiPartUpload = await fetchCommentsJson<{
-          uploadId: string;
-          key: string;
-        }>(
-          `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(attachment.name)}`,
-          {
-            method: "POST",
-            signal: abortSignal,
-          }
-        );
+      // Create a multi-part upload
+      const createMultiPartUpload = await fetchCommentsJson<{
+        uploadId: string;
+        key: string;
+      }>(
+        `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(attachment.name)}`,
+        {
+          method: "POST",
+          signal: abortSignal,
+        }
+      );
 
+      try {
         uploadId = createMultiPartUpload.uploadId;
 
         const parts = splitFileIntoParts(attachment.file);
