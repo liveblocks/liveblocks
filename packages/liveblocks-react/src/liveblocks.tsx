@@ -370,27 +370,25 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
    * component to mount starts the polling. The last component to unmount stops
    * the polling.
    */
-  function useEnableInboxNotificationsPolling() {
-    useEffect(() => {
-      // Increment
-      pollerSubscribers++;
-      poller.start(POLLING_INTERVAL);
+  function startPolling() {
+    // Increment
+    pollerSubscribers++;
+    poller.start(POLLING_INTERVAL);
 
-      return () => {
-        // Decrement
-        if (pollerSubscribers <= 0) {
-          console.warn(
-            `Internal unexpected behavior. Cannot decrease subscriber count for query "${INBOX_NOTIFICATIONS_QUERY}"`
-          );
-          return;
-        }
+    return () => {
+      // Decrement
+      if (pollerSubscribers <= 0) {
+        console.warn(
+          `Internal unexpected behavior. Cannot decrease subscriber count for query "${INBOX_NOTIFICATIONS_QUERY}"`
+        );
+        return;
+      }
 
-        pollerSubscribers--;
-        if (pollerSubscribers <= 0) {
-          poller.stop();
-        }
-      };
-    }, []);
+      pollerSubscribers--;
+      if (pollerSubscribers <= 0) {
+        poller.stop();
+      }
+    };
   }
 
   const userThreadsPoller = makePoller(refreshUserThreads);
@@ -521,7 +519,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
 
   return {
     store,
-    useEnableInboxNotificationsPolling,
+    startPolling,
     waitUntilInboxNotificationsLoaded,
     loadInboxNotifications,
     incrementUserThreadsQuerySubscribers,
@@ -605,7 +603,7 @@ function makeLiveblocksContextBundle<
 }
 
 function useInboxNotifications_withClient(client: OpaqueClient) {
-  const { loadInboxNotifications, store, useEnableInboxNotificationsPolling } =
+  const { loadInboxNotifications, store, startPolling } =
     getExtrasForClient(client);
 
   // Trigger initial loading of inbox notifications if it hasn't started
@@ -614,7 +612,8 @@ function useInboxNotifications_withClient(client: OpaqueClient) {
     loadInboxNotifications();
   }, [loadInboxNotifications]);
 
-  useEnableInboxNotificationsPolling();
+  useEffect(startPolling, []);
+
   return useSyncExternalStoreWithSelector(
     store.subscribeInboxNotifications,
     store.getInboxNotificationsAsync,
@@ -639,7 +638,7 @@ function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
 }
 
 function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
-  const { store, loadInboxNotifications, useEnableInboxNotificationsPolling } =
+  const { store, loadInboxNotifications, startPolling } =
     getExtrasForClient(client);
 
   // Trigger initial loading of inbox notifications if it hasn't started
@@ -648,7 +647,8 @@ function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
     loadInboxNotifications();
   }, [loadInboxNotifications]);
 
-  useEnableInboxNotificationsPolling();
+  useEffect(startPolling, []);
+
   return useSyncExternalStoreWithSelector(
     store.subscribeInboxNotifications,
     store.getInboxNotificationsAsync,
