@@ -3253,6 +3253,9 @@ export function createRoom<
           method: "PUT",
           body: attachment.file,
           signal: abortSignal,
+        },
+        {
+          fileSize: attachment.size,
         }
       );
     } else {
@@ -3272,6 +3275,9 @@ export function createRoom<
         {
           method: "POST",
           signal: abortSignal,
+        },
+        {
+          fileSize: attachment.size,
         }
       );
 
