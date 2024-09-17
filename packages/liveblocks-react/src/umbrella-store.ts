@@ -163,7 +163,7 @@ const QUERY_STATE_OK = Object.freeze({ isLoading: false, data: undefined });
 // TODO Stop exporting this constant!
 export const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
 
-// XXX Stop exporting this helper!
+// TODO Stop exporting this helper!
 export function makeNotificationSettingsQueryKey(roomId: string) {
   return `${roomId}:NOTIFICATION_SETTINGS`;
 }
@@ -252,7 +252,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.getInboxNotifications = this.getInboxNotifications.bind(this);
     this.getInboxNotificationsAsync =
       this.getInboxNotificationsAsync.bind(this);
-    this.getNotificationSettings = this.getNotificationSettings.bind(this);
     this.getVersions = this.getVersions.bind(this);
     this.subscribeThreads = this.subscribeThreads.bind(this);
     this.subscribeInboxNotifications =
@@ -288,6 +287,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this.get();
   }
 
+  // NOTE: This will read the async result, but WILL NOT start loading at the moment!
   public getInboxNotificationsAsync(): AsyncResultWithDataField<
     InboxNotificationData[],
     "inboxNotifications"
@@ -305,29 +305,25 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     const inboxNotifications = this.get().inboxNotifications;
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
-    return { inboxNotifications, isLoading: false };
+    return { isLoading: false, inboxNotifications };
   }
 
-  public getNotificationSettings(): UmbrellaStoreState<M> {
-    // TODO Return only the stable reference to the notificationSettings property
-    return this.get();
-  }
-
+  // NOTE: This will read the async result, but WILL NOT start loading at the moment!
   public getNotificationSettingsAsync(
     roomId: string
   ): AsyncResultWithDataField<RoomNotificationSettings, "settings"> {
     const state = this.get();
 
     const query = state.queries[makeNotificationSettingsQueryKey(roomId)];
-
     if (query === undefined || query.isLoading) {
-      return { isLoading: true };
+      return QUERY_STATE_LOADING;
     }
 
     if (query.error !== undefined) {
-      return { isLoading: false, error: query.error };
+      return query;
     }
 
+    // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
       settings: nn(state.notificationSettingsByRoomId[roomId]),
