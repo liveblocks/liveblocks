@@ -16,20 +16,20 @@ export type {
 } from "./client";
 export { Liveblocks, LiveblocksError } from "./client";
 export type {
-  GetThreadNotificationUnreadCommentsDataOptions,
+  GetThreadNotificationThreadNotificationResolvedOptions,
+  ResolvedCommentAuthorData,
+  ResolvedCommentData,
   ResolveRoomInfoArgs,
   ThreadNotificationData,
+  ThreadNotificationResolvedData,
   ThreadNotificationUnreadMentionData,
   ThreadNotificationUnreadRepliesData,
-  UnreadCommentAuthorData,
-  UnreadCommentData,
-  UnreadCommentsData,
   UnreadMentionData,
   UnreadRepliesData,
 } from "./thread-notification-helpers";
 export {
   getThreadNotificationData,
-  getThreadNotificationUnreadComments,
+  getThreadNotificationResolvedData,
 } from "./thread-notification-helpers";
 export type {
   CommentCreatedEvent,

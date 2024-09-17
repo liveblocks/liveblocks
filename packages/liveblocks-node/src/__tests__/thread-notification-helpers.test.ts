@@ -14,11 +14,11 @@ import type { RoomData } from "../client";
 import { Liveblocks } from "../client";
 import type {
   ThreadNotificationData,
-  UnreadCommentsData,
+  ThreadNotificationResolvedData,
 } from "../thread-notification-helpers";
 import {
   getThreadNotificationData,
-  getThreadNotificationUnreadComments,
+  getThreadNotificationResolvedData,
 } from "../thread-notification-helpers";
 import { getBaseUrl } from "../utils";
 import type { ThreadNotificationEvent } from "../webhooks";
@@ -438,7 +438,7 @@ describe("thread notification helpers", () => {
     });
   });
 
-  describe("get thread notification unread comments", () => {
+  describe("get thread notification resolved data", () => {
     describe("unread mention", () => {
       const threadId = generateThreadId();
       const comment = makeComment({
@@ -459,7 +459,7 @@ describe("thread notification helpers", () => {
         inboxNotificationId: inboxNotification.id,
       });
 
-      const expected1: UnreadCommentsData = {
+      const expected1: ThreadNotificationResolvedData = {
         type: "unreadMention",
         comments: [
           {
@@ -478,7 +478,7 @@ describe("thread notification helpers", () => {
         roomInfo: { name: ROOM_ID_TEST },
       };
 
-      const expected2: UnreadCommentsData = {
+      const expected2: ThreadNotificationResolvedData = {
         type: "unreadMention",
         comments: [
           {
@@ -497,7 +497,7 @@ describe("thread notification helpers", () => {
         roomInfo: RESOLVED_ROOM_INFO_TEST,
       };
 
-      const expected3: UnreadCommentsData = {
+      const expected3: ThreadNotificationResolvedData = {
         type: "unreadMention",
         comments: [
           {
@@ -530,7 +530,7 @@ describe("thread notification helpers", () => {
         roomInfo: { name: ROOM_ID_TEST },
       };
 
-      const expected4: UnreadCommentsData = {
+      const expected4: ThreadNotificationResolvedData = {
         type: "unreadMention",
         comments: [
           {
@@ -567,15 +567,15 @@ describe("thread notification helpers", () => {
         format: "html" | "json";
         withFormatOption: "yes" | "no";
         withResolversOption: "yes" | "no";
-        promise: () => Promise<UnreadCommentsData>;
-        expected: UnreadCommentsData;
+        promise: () => Promise<ThreadNotificationResolvedData>;
+        expected: ThreadNotificationResolvedData;
       }>([
         {
           format: "html",
           withFormatOption: "no",
           withResolversOption: "no",
           promise: () =>
-            getThreadNotificationUnreadComments({
+            getThreadNotificationResolvedData({
               client,
               event,
             }),
@@ -586,7 +586,7 @@ describe("thread notification helpers", () => {
           withFormatOption: "yes",
           withResolversOption: "no",
           promise: () =>
-            getThreadNotificationUnreadComments({
+            getThreadNotificationResolvedData({
               client,
               event,
               options: { format: "html" },
@@ -598,7 +598,7 @@ describe("thread notification helpers", () => {
           withFormatOption: "no",
           withResolversOption: "yes",
           promise: () =>
-            getThreadNotificationUnreadComments({
+            getThreadNotificationResolvedData({
               client,
               event,
               options: { resolveUsers, resolveRoomInfo },
@@ -610,7 +610,7 @@ describe("thread notification helpers", () => {
           withFormatOption: "yes",
           withResolversOption: "yes",
           promise: () =>
-            getThreadNotificationUnreadComments({
+            getThreadNotificationResolvedData({
               client,
               event,
               options: { format: "html", resolveUsers, resolveRoomInfo },
@@ -622,7 +622,7 @@ describe("thread notification helpers", () => {
           withFormatOption: "yes",
           withResolversOption: "no",
           promise: () =>
-            getThreadNotificationUnreadComments({
+            getThreadNotificationResolvedData({
               client,
               event,
               options: { format: "json" },
@@ -634,7 +634,7 @@ describe("thread notification helpers", () => {
           withFormatOption: "yes",
           withResolversOption: "yes",
           promise: () =>
-            getThreadNotificationUnreadComments({
+            getThreadNotificationResolvedData({
               client,
               event,
               options: { format: "json", resolveUsers, resolveRoomInfo },
@@ -692,7 +692,7 @@ describe("thread notification helpers", () => {
         inboxNotificationId: inboxNotification.id,
       });
 
-      const expected1: UnreadCommentsData = {
+      const expected1: ThreadNotificationResolvedData = {
         type: "unreadReplies",
         comments: [
           {
@@ -711,7 +711,7 @@ describe("thread notification helpers", () => {
         roomInfo: { name: ROOM_ID_TEST },
       };
 
-      const expected2: UnreadCommentsData = {
+      const expected2: ThreadNotificationResolvedData = {
         type: "unreadReplies",
         comments: [
           {
@@ -730,7 +730,7 @@ describe("thread notification helpers", () => {
         roomInfo: RESOLVED_ROOM_INFO_TEST,
       };
 
-      const expected3: UnreadCommentsData = {
+      const expected3: ThreadNotificationResolvedData = {
         type: "unreadReplies",
         comments: [
           {
@@ -760,7 +760,7 @@ describe("thread notification helpers", () => {
         roomInfo: { name: ROOM_ID_TEST },
       };
 
-      const expected4: UnreadCommentsData = {
+      const expected4: ThreadNotificationResolvedData = {
         type: "unreadReplies",
         comments: [
           {
@@ -794,15 +794,15 @@ describe("thread notification helpers", () => {
         format: "html" | "json";
         withFormatOption: "yes" | "no";
         withResolversOption: "yes" | "no";
-        promise: () => Promise<UnreadCommentsData>;
-        expected: UnreadCommentsData;
+        promise: () => Promise<ThreadNotificationResolvedData>;
+        expected: ThreadNotificationResolvedData;
       }>([
         {
           format: "html",
           withFormatOption: "no",
           withResolversOption: "no",
           promise: () =>
-            getThreadNotificationUnreadComments({
+            getThreadNotificationResolvedData({
               client,
               event,
             }),
@@ -813,7 +813,7 @@ describe("thread notification helpers", () => {
           withFormatOption: "yes",
           withResolversOption: "no",
           promise: () =>
-            getThreadNotificationUnreadComments({
+            getThreadNotificationResolvedData({
               client,
               event,
               options: { format: "html" },
@@ -825,7 +825,7 @@ describe("thread notification helpers", () => {
           withFormatOption: "no",
           withResolversOption: "yes",
           promise: () =>
-            getThreadNotificationUnreadComments({
+            getThreadNotificationResolvedData({
               client,
               event,
               options: { resolveUsers, resolveRoomInfo },
@@ -837,7 +837,7 @@ describe("thread notification helpers", () => {
           withFormatOption: "yes",
           withResolversOption: "yes",
           promise: () =>
-            getThreadNotificationUnreadComments({
+            getThreadNotificationResolvedData({
               client,
               event,
               options: { format: "html", resolveUsers, resolveRoomInfo },
@@ -849,7 +849,7 @@ describe("thread notification helpers", () => {
           withFormatOption: "yes",
           withResolversOption: "no",
           promise: () =>
-            getThreadNotificationUnreadComments({
+            getThreadNotificationResolvedData({
               client,
               event,
               options: { format: "json" },
@@ -861,7 +861,7 @@ describe("thread notification helpers", () => {
           withFormatOption: "yes",
           withResolversOption: "yes",
           promise: () =>
-            getThreadNotificationUnreadComments({
+            getThreadNotificationResolvedData({
               client,
               event,
               options: { format: "json", resolveUsers, resolveRoomInfo },

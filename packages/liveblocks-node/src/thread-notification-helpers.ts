@@ -139,7 +139,7 @@ export type ResolveRoomInfoArgs = {
   roomId: string;
 };
 
-export type GetThreadNotificationUnreadCommentsDataOptions<
+export type GetThreadNotificationThreadNotificationResolvedOptions<
   U extends BaseUserMeta = DU,
 > = {
   /**
@@ -160,7 +160,7 @@ export type GetThreadNotificationUnreadCommentsDataOptions<
   ) => OptionalPromise<DRI | undefined>;
 };
 
-export type UnreadCommentAuthorData = {
+export type ResolvedCommentAuthorData = {
   id: string;
   name: string;
   avatar?: string;
@@ -194,11 +194,11 @@ const resolveAuthorsInComments = async <U extends BaseUserMeta>({
   return resolvedAuthors;
 };
 
-export type UnreadCommentData = {
+export type ResolvedCommentData = {
   id: string;
   threadId: string;
   roomId: string;
-  author: UnreadCommentAuthorData;
+  author: ResolvedCommentAuthorData;
   createdAt: Date;
   body: string | CommentBodyJson;
   commentUrl?: string;
@@ -206,26 +206,30 @@ export type UnreadCommentData = {
 
 export type UnreadRepliesData = {
   type: "unreadReplies";
-  comments: UnreadCommentData[];
+  comments: ResolvedCommentData[];
 };
 export type UnreadMentionData = {
   type: "unreadMention";
-  comments: UnreadCommentData[];
+  comments: ResolvedCommentData[];
 };
-export type UnreadCommentsData = (UnreadRepliesData | UnreadMentionData) & {
+export type ThreadNotificationResolvedData = (
+  | UnreadRepliesData
+  | UnreadMentionData
+) & {
   roomInfo: DRI;
 };
 
 /**
  *
- * Get unread comments from a `ThreadNotificationEvent`
+ * Get thread notification resolved data helper.
+ *
  * It returns either an object containing a list of unread replies for a thread
  * or either an object containing a list of the last unread comment where the notification
  * receiver was mentioned in.
  *
  * @param params.client Liveblocks node client
  * @param params.event The thread notification event
- * @returns An unread comments object
+ * @returns A thread notification resolved data object
  *
  * @example Unread replies:
  * {
@@ -241,11 +245,11 @@ export type UnreadCommentsData = (UnreadRepliesData | UnreadMentionData) & {
  *  roomName: "acme"
  * }
  */
-export async function getThreadNotificationUnreadComments(params: {
+export async function getThreadNotificationResolvedData(params: {
   client: Liveblocks;
   event: ThreadNotificationEvent;
-  options?: GetThreadNotificationUnreadCommentsDataOptions<BaseUserMeta>;
-}): Promise<UnreadCommentsData> {
+  options?: GetThreadNotificationThreadNotificationResolvedOptions<BaseUserMeta>;
+}): Promise<ThreadNotificationResolvedData> {
   const { client, event, options } = params;
   const { roomId } = event.data;
 
@@ -264,13 +268,13 @@ export async function getThreadNotificationUnreadComments(params: {
   });
 
   const unreadComments = await Promise.all(
-    comments.map(async (comment): Promise<UnreadCommentData> => {
+    comments.map(async (comment): Promise<ResolvedCommentData> => {
       const body = await transformCommentBody(comment.body, {
         format: options?.format,
         resolveUsers: options?.resolveUsers,
       });
       const resolvedAuthor = resolvedAuthors.get(comment.userId);
-      const author: UnreadCommentAuthorData = {
+      const author: ResolvedCommentAuthorData = {
         id: comment.userId,
         name: resolvedAuthor?.name ?? comment.userId,
       };
