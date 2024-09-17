@@ -61,11 +61,8 @@ import { INBOX_NOTIFICATIONS_QUERY, UmbrellaStore } from "./umbrella-store";
 // NOTE: The reason we cannot inline them into the selectors is that the react-hooks/exchaustive-deps lint rule will think
 type GetInboxNotificationsType<M extends BaseMetadata = BaseMetadata> =
   ReturnType<UmbrellaStore<M>["getInboxNotifications"]>;
-export type GetThreadsType<M extends BaseMetadata = BaseMetadata> = ReturnType<
+type GetThreadsType<M extends BaseMetadata = BaseMetadata> = ReturnType<
   UmbrellaStore<M>["getThreads"]
->;
-export type GetNotificationSettingsType = ReturnType<
-  UmbrellaStore<BaseMetadata>["getNotificationSettings"]
 >;
 
 /**
