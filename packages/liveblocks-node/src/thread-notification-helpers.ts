@@ -199,9 +199,8 @@ export type ResolvedCommentData = {
   roomId: string;
   author: ResolvedCommentAuthorData;
   createdAt: Date;
-  body: string | CommentBodyJson;
   commentUrl?: string;
-};
+} & ({ body: string } | { body: CommentBodyJson });
 
 export type ResolvedUnreadRepliesData = {
   type: "unreadReplies";
@@ -285,14 +284,25 @@ export async function getThreadNotificationResolvedData(params: {
           })
         : undefined;
 
-      return {
+      const commentWithoutBody = {
         id: comment.id,
         threadId: comment.threadId,
         roomId: comment.roomId,
         createdAt: comment.createdAt,
         author,
-        body,
         commentUrl,
+      };
+
+      if (typeof body === "string") {
+        return {
+          ...commentWithoutBody,
+          body,
+        };
+      }
+
+      return {
+        ...commentWithoutBody,
+        body,
       };
     })
   );
