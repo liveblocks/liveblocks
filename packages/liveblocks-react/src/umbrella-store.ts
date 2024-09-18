@@ -1138,11 +1138,9 @@ function internalToExternalState<M extends BaseMetadata>(
         break;
       }
       case "delete-inbox-notification": {
-        const {
-          [optimisticUpdate.inboxNotificationId]: _,
-          ...inboxNotifications
-        } = computed.inboxNotificationsById;
-        computed.inboxNotificationsById = inboxNotifications;
+        delete computed.inboxNotificationsById[
+          optimisticUpdate.inboxNotificationId
+        ];
         break;
       }
       case "delete-all-inbox-notifications": {
