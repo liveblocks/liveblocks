@@ -1114,10 +1114,7 @@ function internalToExternalState<M extends BaseMetadata>(
         }
 
         computed.inboxNotificationsById[optimisticUpdate.inboxNotificationId] =
-          {
-            ...ibn,
-            readAt: optimisticUpdate.readAt,
-          };
+          { ...ibn, readAt: optimisticUpdate.readAt };
         break;
       }
       case "mark-all-inbox-notifications-as-read": {
