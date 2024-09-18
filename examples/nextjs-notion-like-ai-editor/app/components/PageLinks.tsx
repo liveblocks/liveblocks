@@ -117,10 +117,12 @@ function PageLink({
   return (
     <div
       data-active={active || undefined}
-      className="flex justify-between items-center hover:bg-gray-200/80 transition-colors rounded text-medium text-gray-700 hover:text-gray-900 pr-2 text-sm font-medium data-[active]:bg-gray-200/80 data-[active]:text-gray-900"
+      className="flex justify-between items-center hover:bg-gray-200/80 transition-colors rounded text-medium text-gray-700 hover:text-gray-900 pr-2 text-sm font-medium data-[active]:bg-gray-200/80 data-[active]:text-gray-900 min-h-8"
     >
       <Link href={room.info.url} className="py-1.5 px-3 flex-1 truncate">
-        {room.info.name}
+        {room.info.name || (
+          <div className="italic font-normal">Empty title</div>
+        )}
       </Link>
     </div>
   );
