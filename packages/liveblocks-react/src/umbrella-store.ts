@@ -1106,8 +1106,7 @@ function internalToExternalState<M extends BaseMetadata>(
       }
       case "mark-inbox-notification-as-read": {
         const ibn =
-          // XXX Should this not be _output_ instead of _state_?
-          state.inboxNotificationsById[optimisticUpdate.inboxNotificationId];
+          computed.inboxNotificationsById[optimisticUpdate.inboxNotificationId];
 
         // If the inbox notification doesn't exist in the cache, we do not apply the update
         if (ibn === undefined) {
