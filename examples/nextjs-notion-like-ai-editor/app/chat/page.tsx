@@ -143,9 +143,9 @@ function MessageLine({ message }: { message: Message }) {
             ) : null}
 
             {/*Render markdown message as HTML */}
-            <Markdown options={{ forceBlock: true }} className="px-4">
-              {content}
-            </Markdown>
+            <div className="px-4">
+              <Markdown options={{ forceBlock: true }}>{content}</Markdown>
+            </div>
           </div>
 
           <form onSubmit={handleSubmit}>
