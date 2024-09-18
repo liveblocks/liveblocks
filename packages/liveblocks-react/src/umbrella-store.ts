@@ -1167,11 +1167,17 @@ function internalToExternalState<M extends BaseMetadata>(
       (thread): thread is ThreadData<M> => !thread.deletedAt
     );
 
+  // TODO Maybe consider also removing these from the inboxNotificationsById registry?
   const cleanedNotifications =
     // Sort so that the most recent notifications are first
-    Object.values(computed.inboxNotificationsById).sort(
-      (a, b) => b.notifiedAt.getTime() - a.notifiedAt.getTime()
-    );
+    Object.values(computed.inboxNotificationsById)
+      .filter((ibn) =>
+        ibn.kind === "thread"
+          ? computed.threadsById[ibn.threadId] &&
+            computed.threadsById[ibn.threadId]?.deletedAt === undefined
+          : true
+      )
+      .sort((a, b) => b.notifiedAt.getTime() - a.notifiedAt.getTime());
 
   return {
     inboxNotifications: cleanedNotifications,

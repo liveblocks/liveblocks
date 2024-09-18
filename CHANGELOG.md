@@ -2,6 +2,8 @@
 
 ### `@liveblocks/react`
 
+- Fix a bug where notifications associated to deleted threads would not be
+  deleted.
 - Fix a bug where subsequent optimistic updates to the same inbox notification
   could sometimes not get applied correctly.
 
