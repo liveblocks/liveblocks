@@ -1401,13 +1401,13 @@ export function applyDeleteComment<M extends BaseMetadata>(
       : comment
   );
 
-  // If all comments have been deleted, we mark the thread as deleted
-  if (!updatedComments.some((comment) => comment.deletedAt === undefined)) {
+  // If all comments have been deleted (or there are no comments in the first
+  // place), we mark the thread as deleted.
+  if (updatedComments.every((comment) => comment.deletedAt !== undefined)) {
     return {
       ...thread,
       deletedAt,
       updatedAt: deletedAt,
-      comments: [],
     };
   }
 
