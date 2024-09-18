@@ -77,18 +77,6 @@ export default function Home() {
               </Link>
             </li>
           </ul>
-          <ul>
-            <li>
-              <Link href="/inbox-notifications?room=e2e-inbox-notif-del&user=12">
-                <a>Deletions (as user 12)</a>
-              </Link>
-            </li>
-            <li>
-              <Link href="/inbox-notifications?room=e2e-inbox-notif-del&user=7">
-                <a>Deletions (as user 7)</a>
-              </Link>
-            </li>
-          </ul>
         </li>
 
         <li>
