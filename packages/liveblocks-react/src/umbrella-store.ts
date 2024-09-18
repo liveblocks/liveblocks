@@ -914,19 +914,20 @@ function internalToExternalState<M extends BaseMetadata>(
   state: InternalState<M>
 ): UmbrellaStoreState<M> {
   const computed = {
-    threads: { ...state.rawThreadsById },
-    inboxNotifications: { ...state.inboxNotificationsById },
-    notificationSettings: { ...state.notificationSettingsByRoomId },
+    threadsById: { ...state.rawThreadsById },
+    inboxNotificationsById: { ...state.inboxNotificationsById },
+    notificationSettingsByRoomId: { ...state.notificationSettingsByRoomId },
   };
 
   for (const optimisticUpdate of state.optimisticUpdates) {
     switch (optimisticUpdate.type) {
       case "create-thread": {
-        computed.threads[optimisticUpdate.thread.id] = optimisticUpdate.thread;
+        computed.threadsById[optimisticUpdate.thread.id] =
+          optimisticUpdate.thread;
         break;
       }
       case "edit-thread-metadata": {
-        const thread = computed.threads[optimisticUpdate.threadId];
+        const thread = computed.threadsById[optimisticUpdate.threadId];
         // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
@@ -945,7 +946,7 @@ function internalToExternalState<M extends BaseMetadata>(
           break;
         }
 
-        computed.threads[thread.id] = {
+        computed.threadsById[thread.id] = {
           ...thread,
           updatedAt: optimisticUpdate.updatedAt,
           metadata: {
@@ -957,7 +958,7 @@ function internalToExternalState<M extends BaseMetadata>(
         break;
       }
       case "mark-thread-as-resolved": {
-        const thread = computed.threads[optimisticUpdate.threadId];
+        const thread = computed.threadsById[optimisticUpdate.threadId];
         // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
@@ -968,7 +969,7 @@ function internalToExternalState<M extends BaseMetadata>(
           break;
         }
 
-        computed.threads[thread.id] = {
+        computed.threadsById[thread.id] = {
           ...thread,
           resolved: true,
         };
@@ -976,7 +977,7 @@ function internalToExternalState<M extends BaseMetadata>(
         break;
       }
       case "mark-thread-as-unresolved": {
-        const thread = computed.threads[optimisticUpdate.threadId];
+        const thread = computed.threadsById[optimisticUpdate.threadId];
         // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
@@ -987,7 +988,7 @@ function internalToExternalState<M extends BaseMetadata>(
           break;
         }
 
-        computed.threads[thread.id] = {
+        computed.threadsById[thread.id] = {
           ...thread,
           resolved: false,
         };
@@ -995,19 +996,19 @@ function internalToExternalState<M extends BaseMetadata>(
         break;
       }
       case "create-comment": {
-        const thread = computed.threads[optimisticUpdate.comment.threadId];
+        const thread = computed.threadsById[optimisticUpdate.comment.threadId];
         // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
         }
 
-        computed.threads[thread.id] = applyUpsertComment(
+        computed.threadsById[thread.id] = applyUpsertComment(
           thread,
           optimisticUpdate.comment
         );
 
         const inboxNotification = Object.values(
-          computed.inboxNotifications
+          computed.inboxNotificationsById
         ).find(
           (notification) =>
             notification.kind === "thread" &&
@@ -1018,7 +1019,7 @@ function internalToExternalState<M extends BaseMetadata>(
           break;
         }
 
-        computed.inboxNotifications[inboxNotification.id] = {
+        computed.inboxNotificationsById[inboxNotification.id] = {
           ...inboxNotification,
           notifiedAt: optimisticUpdate.comment.createdAt,
           readAt: optimisticUpdate.comment.createdAt,
@@ -1027,13 +1028,13 @@ function internalToExternalState<M extends BaseMetadata>(
         break;
       }
       case "edit-comment": {
-        const thread = computed.threads[optimisticUpdate.comment.threadId];
+        const thread = computed.threadsById[optimisticUpdate.comment.threadId];
         // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
         }
 
-        computed.threads[thread.id] = applyUpsertComment(
+        computed.threadsById[thread.id] = applyUpsertComment(
           thread,
           optimisticUpdate.comment
         );
@@ -1041,13 +1042,13 @@ function internalToExternalState<M extends BaseMetadata>(
         break;
       }
       case "delete-comment": {
-        const thread = computed.threads[optimisticUpdate.threadId];
+        const thread = computed.threadsById[optimisticUpdate.threadId];
         // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
         }
 
-        computed.threads[thread.id] = applyDeleteComment(
+        computed.threadsById[thread.id] = applyDeleteComment(
           thread,
           optimisticUpdate.commentId,
           optimisticUpdate.deletedAt
@@ -1057,13 +1058,13 @@ function internalToExternalState<M extends BaseMetadata>(
       }
 
       case "delete-thread": {
-        const thread = computed.threads[optimisticUpdate.threadId];
+        const thread = computed.threadsById[optimisticUpdate.threadId];
         // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
         }
 
-        computed.threads[optimisticUpdate.threadId] = {
+        computed.threadsById[optimisticUpdate.threadId] = {
           ...thread,
           deletedAt: optimisticUpdate.deletedAt,
           updatedAt: optimisticUpdate.deletedAt,
@@ -1072,13 +1073,13 @@ function internalToExternalState<M extends BaseMetadata>(
         break;
       }
       case "add-reaction": {
-        const thread = computed.threads[optimisticUpdate.threadId];
+        const thread = computed.threadsById[optimisticUpdate.threadId];
         // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
         }
 
-        computed.threads[thread.id] = applyAddReaction(
+        computed.threadsById[thread.id] = applyAddReaction(
           thread,
           optimisticUpdate.commentId,
           optimisticUpdate.reaction
@@ -1087,13 +1088,13 @@ function internalToExternalState<M extends BaseMetadata>(
         break;
       }
       case "remove-reaction": {
-        const thread = computed.threads[optimisticUpdate.threadId];
+        const thread = computed.threadsById[optimisticUpdate.threadId];
         // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
         }
 
-        computed.threads[thread.id] = applyRemoveReaction(
+        computed.threadsById[thread.id] = applyRemoveReaction(
           thread,
           optimisticUpdate.commentId,
           optimisticUpdate.emoji,
@@ -1113,22 +1114,23 @@ function internalToExternalState<M extends BaseMetadata>(
           break;
         }
 
-        computed.inboxNotifications[optimisticUpdate.inboxNotificationId] = {
-          ...ibn,
-          readAt: optimisticUpdate.readAt,
-        };
+        computed.inboxNotificationsById[optimisticUpdate.inboxNotificationId] =
+          {
+            ...ibn,
+            readAt: optimisticUpdate.readAt,
+          };
         break;
       }
       case "mark-all-inbox-notifications-as-read": {
-        for (const id in computed.inboxNotifications) {
-          const ibn = computed.inboxNotifications[id];
+        for (const id in computed.inboxNotificationsById) {
+          const ibn = computed.inboxNotificationsById[id];
 
           // If the inbox notification doesn't exist in the cache, we do not apply the update
           if (ibn === undefined) {
             break;
           }
 
-          computed.inboxNotifications[id] = {
+          computed.inboxNotificationsById[id] = {
             ...ibn,
             readAt: optimisticUpdate.readAt,
           };
@@ -1139,24 +1141,25 @@ function internalToExternalState<M extends BaseMetadata>(
         const {
           [optimisticUpdate.inboxNotificationId]: _,
           ...inboxNotifications
-        } = computed.inboxNotifications;
-        computed.inboxNotifications = inboxNotifications;
+        } = computed.inboxNotificationsById;
+        computed.inboxNotificationsById = inboxNotifications;
         break;
       }
       case "delete-all-inbox-notifications": {
-        computed.inboxNotifications = {};
+        computed.inboxNotificationsById = {};
         break;
       }
 
       case "update-notification-settings": {
-        const settings = computed.notificationSettings[optimisticUpdate.roomId];
+        const settings =
+          computed.notificationSettingsByRoomId[optimisticUpdate.roomId];
 
         // If the inbox notification doesn't exist in the cache, we do not apply the update
         if (settings === undefined) {
           break;
         }
 
-        computed.notificationSettings[optimisticUpdate.roomId] = {
+        computed.notificationSettingsByRoomId[optimisticUpdate.roomId] = {
           ...settings,
           ...optimisticUpdate.settings,
         };
@@ -1166,23 +1169,23 @@ function internalToExternalState<M extends BaseMetadata>(
 
   const cleanedThreads =
     // Don't expose any soft-deleted threads
-    Object.values(computed.threads).filter(
+    Object.values(computed.threadsById).filter(
       (thread): thread is ThreadData<M> => !thread.deletedAt
     );
 
   const cleanedNotifications =
     // Sort so that the most recent notifications are first
-    Object.values(computed.inboxNotifications).sort(
+    Object.values(computed.inboxNotificationsById).sort(
       (a, b) => b.notifiedAt.getTime() - a.notifiedAt.getTime()
     );
 
   return {
     inboxNotifications: cleanedNotifications,
-    inboxNotificationsById: computed.inboxNotifications,
-    notificationSettingsByRoomId: computed.notificationSettings,
+    inboxNotificationsById: computed.inboxNotificationsById,
+    notificationSettingsByRoomId: computed.notificationSettingsByRoomId,
     queries: state.queries,
     threads: cleanedThreads,
-    threadsById: computed.threads,
+    threadsById: computed.threadsById,
     versionsByRoomId: state.versionsByRoomId,
   };
 }
