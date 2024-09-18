@@ -268,6 +268,10 @@ describe("useInboxNotifications", () => {
 
     umbrellaStore.force_set((state) => ({
       ...state,
+      rawThreadsById: {
+        [thread1.id]: thread1,
+        [thread2.id]: thread2,
+      },
       inboxNotificationsById: {
         // Explicitly set the order to be reversed to test that the hook sorts the notifications
         [oldInboxNotification.id]: oldInboxNotification,
