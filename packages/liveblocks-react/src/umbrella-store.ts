@@ -1163,9 +1163,13 @@ function internalToExternalState<M extends BaseMetadata>(
 
   const cleanedThreads =
     // Don't expose any soft-deleted threads
-    Object.values(computed.threadsById).filter(
-      (thread): thread is ThreadData<M> => !thread.deletedAt
-    );
+    Object.values(computed.threadsById)
+      .filter((thread): thread is ThreadData<M> => !thread.deletedAt)
+
+      .filter((thread) =>
+        // Only keep a thread if there is at least one non-deleted comment
+        thread.comments.some((c) => c.deletedAt === undefined)
+      );
 
   // TODO Maybe consider also removing these from the inboxNotificationsById registry?
   const cleanedNotifications =
