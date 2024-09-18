@@ -1,3 +1,10 @@
+## 2.7.2 (not released yet)
+
+### `@liveblocks/react`
+
+- Fix a bug where subsequent optimistic updates to the same inbox notification
+  could sometimes not get applied correctly.
+
 ## 2.7.1
 
 ### `@liveblocks/react-lexical`
