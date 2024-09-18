@@ -45,6 +45,8 @@ const initialConfig = liveblocksConfig({
   },
   theme: {
     text: {
+      bold: "lexical-bold",
+      italic: "lexical-italic",
       underline: "lexical-underline",
       strikethrough: "lexical-strikethrough",
     },

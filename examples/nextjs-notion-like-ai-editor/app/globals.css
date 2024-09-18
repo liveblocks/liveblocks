@@ -168,12 +168,24 @@ select {
   padding-right: 1.8rem;
 }
 
+.lexical-bold {
+  font-weight: bold;
+}
+
+.lexical-italic {
+  font-style: italic;
+}
+
 .lexical-underline {
   text-decoration: underline;
 }
 
 .lexical-strikethrough {
   text-decoration: line-through;
+}
+
+.lexical-underline.lexical-strikethrough {
+  text-decoration: underline line-through;
 }
 
 .lb-root {
