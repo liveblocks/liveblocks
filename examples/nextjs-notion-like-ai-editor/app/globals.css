@@ -193,7 +193,7 @@ select {
   --lb-elevation-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.1) 0px 4px 6px -4px;
 }
 
-.lb-thread .lb-composer {
+.lb-thread .lb-thread-composer {
   border-top: 1px solid rgba(228, 228, 231, 0.8);
 }
 
