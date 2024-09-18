@@ -1062,7 +1062,7 @@ function internalToExternalState<M extends BaseMetadata>(
         }
 
         output.threads[optimisticUpdate.threadId] = {
-          ...output.threads[optimisticUpdate.threadId],
+          ...thread,
           deletedAt: optimisticUpdate.deletedAt,
           updatedAt: optimisticUpdate.deletedAt,
           comments: [],
@@ -1102,16 +1102,32 @@ function internalToExternalState<M extends BaseMetadata>(
         break;
       }
       case "mark-inbox-notification-as-read": {
+        const ibn =
+          // XXX Should this not be _output_ instead of _state_?
+          state.inboxNotificationsById[optimisticUpdate.inboxNotificationId];
+
+        // If the inbox notification doesn't exist in the cache, we do not apply the update
+        if (ibn === undefined) {
+          break;
+        }
+
         output.inboxNotifications[optimisticUpdate.inboxNotificationId] = {
-          ...state.inboxNotificationsById[optimisticUpdate.inboxNotificationId],
+          ...ibn,
           readAt: optimisticUpdate.readAt,
         };
         break;
       }
       case "mark-all-inbox-notifications-as-read": {
         for (const id in output.inboxNotifications) {
+          const ibn = output.inboxNotifications[id];
+
+          // If the inbox notification doesn't exist in the cache, we do not apply the update
+          if (ibn === undefined) {
+            break;
+          }
+
           output.inboxNotifications[id] = {
-            ...output.inboxNotifications[id],
+            ...ibn,
             readAt: optimisticUpdate.readAt,
           };
         }
@@ -1129,9 +1145,17 @@ function internalToExternalState<M extends BaseMetadata>(
         output.inboxNotifications = {};
         break;
       }
+
       case "update-notification-settings": {
+        const settings = output.notificationSettings[optimisticUpdate.roomId];
+
+        // If the inbox notification doesn't exist in the cache, we do not apply the update
+        if (settings === undefined) {
+          break;
+        }
+
         output.notificationSettings[optimisticUpdate.roomId] = {
-          ...output.notificationSettings[optimisticUpdate.roomId],
+          ...settings,
           ...optimisticUpdate.settings,
         };
       }

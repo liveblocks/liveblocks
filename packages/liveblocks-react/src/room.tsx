@@ -1266,7 +1266,7 @@ function useOthersMapped<P extends JsonObject, U extends BaseUserMeta, T>(
         a.length === b.length &&
         a.every((atuple, index) => {
           // We know btuple always exist because we checked the array length on the previous line
-          const btuple = b[index];
+          const btuple = b[index]!;
           return atuple[0] === btuple[0] && eq(atuple[1], btuple[1]);
         })
       );

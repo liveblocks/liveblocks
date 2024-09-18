@@ -37,7 +37,7 @@ export async function autoRetry<T>(
   maxTries: number,
   backoff: number[]
 ): Promise<T> {
-  const fallbackBackoff = backoff.length > 0 ? backoff[backoff.length - 1] : 0;
+  const fallbackBackoff = backoff.length > 0 ? backoff[backoff.length - 1]! : 0;
 
   let attempt = 0;
 
