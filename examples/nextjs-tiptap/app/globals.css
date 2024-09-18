@@ -165,3 +165,47 @@ li::marker {
 .lb-comment-active-selection {
   background-color: rgba(58, 58, 255, 0.318);
 }
+
+.dropdown-menu {
+  background: #fff;
+  border: 1px solid #666;
+  border-radius: 0.7rem;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  overflow: auto;
+  padding: 0.4rem;
+  position: relative;
+
+  button {
+    align-items: center;
+    background-color: transparent;
+    display: flex;
+    gap: 0.25rem;
+    text-align: left;
+    width: 100%;
+
+    &:hover,
+    &:hover.is-selected {
+      background-color: #777;
+    }
+
+    &.is-selected {
+      background-color: #999;
+    }
+  }
+}
+
+.lb-mention {
+  background-color: rgba(128, 0, 128, 0.276);
+  border-radius: 0.4rem;
+  box-decoration-break: clone;
+  color: rgb(167, 0, 167);
+  padding: 0.1rem 0.3rem;
+}
+
+.lb-mention-selected {
+  color: rgb(68, 68, 255);
+  background-color: rgba(0, 0, 213, 0.241);
+}

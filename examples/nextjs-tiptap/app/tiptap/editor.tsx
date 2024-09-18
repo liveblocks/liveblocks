@@ -8,6 +8,7 @@ import { useLiveblocksExtension } from "./LiveblocksExtension";
 import StarterKit from "@tiptap/starter-kit";
 import { Toolbar } from "./Toolbar";
 import { ThreadList } from "./ThreadList";
+import { FloatingComposer } from "./FloatingComposer";
 
 
 export default function Editor() {
@@ -37,7 +38,7 @@ export default function Editor() {
         <div className="relative flex flex-1 flex-col gap-2">
           <Toolbar editor={editor} />
           <EditorContent editor={editor} />
-          {/*<FloatingComposer className="w-[350px]" />*/}
+          <FloatingComposer editor={editor} className="w-[350px]" />
         </div>
 
 

@@ -1,4 +1,4 @@
-import { useRoom } from "@liveblocks/react";
+import { useClient, useRoom } from "@liveblocks/react";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import { Extension, mergeAttributes, Mark } from "@tiptap/core";
 import Collaboration from "@tiptap/extension-collaboration";
@@ -7,6 +7,7 @@ import { Doc } from "yjs";
 import { Plugin, PluginKey, SelectionBookmark } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { ySyncPluginKey } from "y-prosemirror";
+import MentionPlugin from "./MentionPlugin";
 
 const providersMap = new Map<
   string,
@@ -19,7 +20,7 @@ type LiveblocksExtensionOptions = {
   field?: string;
 };
 
-const ACTIVE_SELECTOR_PLUGIN_KEY = new PluginKey(
+export const ACTIVE_SELECTOR_PLUGIN_KEY = new PluginKey(
   "lb-comment-active-selection-decorator"
 );
 
@@ -138,20 +139,26 @@ const LiveblocksCollab = Collaboration.extend({
 export const useLiveblocksExtension = ({
   field,
 }: LiveblocksExtensionOptions = {}): Extension => {
+  const client = useClient();
   const room = useRoom();
 
   return Extension.create({
     name: "liveblocksExtension",
+
     // @ts-ignore I have no idea why TS doesn't like this
     onSelectionUpdate({ transaction }) {
       // ignore changes made by yjs
-      if (transaction.getMeta(ySyncPluginKey)) {
+      if (
+        !this.storage.pendingCommentSelection ||
+        transaction.getMeta(ySyncPluginKey)
+      ) {
         return;
       }
       this.storage.pendingCommentSelection = null;
       console.log("selection updated");
     },
     onCreate() {
+      // TODO: add error if mention plugin is used
       const self = room.getSelf();
       if (self?.info) {
         this.editor.commands.updateUser({
@@ -163,7 +170,7 @@ export const useLiveblocksExtension = ({
         // TODO: maybe we need a deep compare here so other info can be provided
         const { name, color } = info;
         const { user } = this.storage.provider.awareness.getLocalState();
-        if (name != user.name || color != user.color) {
+        if (name != user?.name || color != user?.color) {
           this.editor.commands.updateUser({ name, color });
         }
       });
@@ -195,6 +202,7 @@ export const useLiveblocksExtension = ({
         CollaborationCursor.configure({
           provider: this.storage.provider, //todo change the ! to an assert
         }),
+        MentionPlugin,
       ];
     },
 
@@ -211,10 +219,21 @@ export const useLiveblocksExtension = ({
       };
     },
 
+    // TODO: move the pending comment selection to state, update the pending selection on `apply`
+    // so that remote changes don't cause the selection bookmark to be outdated
+    // reference remirror's annotation extension.
     addProseMirrorPlugins() {
       return [
         new Plugin({
           key: ACTIVE_SELECTOR_PLUGIN_KEY,
+          state: {
+            init() {
+              return {};
+            },
+            apply(tr, value) {
+              return {};
+            },
+          },
           props: {
             decorations: ({ doc }) => {
               const active = this.storage.pendingCommentSelection != null;

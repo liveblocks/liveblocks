@@ -1,12 +1,9 @@
-import { useCreateThread, useThreads } from "@liveblocks/react/suspense";
-import { Composer, Thread } from "@liveblocks/react-ui";
-import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { useThreads } from "@liveblocks/react/suspense";
+import { Thread } from "@liveblocks/react-ui";
+import { useCallback, useEffect, useState } from "react";
 import { Editor } from "@tiptap/react";
-import { ComposerSubmitComment } from "@liveblocks/react-ui";
 import { ThreadData } from "@liveblocks/client";
 import CommentIcon from "./icons/comment-icon";
-import { threadId } from "worker_threads";
-import { SelectionBookmark } from "@tiptap/pm/state";
 
 type Props = {
   editor: Editor;
@@ -26,11 +23,9 @@ export function getCommentHighlightContent(commentId: string) {
 
 export function ThreadList({ editor }: Props) {
   const { threads } = useThreads();
-  const showComposer = !!editor.storage.liveblocksExtension.pendingCommentSelection;
 
   return (
     <>
-      {showComposer ? <ThreadComposer editor={editor} /> : null}
       <aside aria-label="Comments" >
         {threads.length ? (
           threads
@@ -100,62 +95,6 @@ function CustomThread({ editor, thread }: Props & { thread: ThreadData }) {
         />
       </div>
     </div>
-  );
-}
-
-function ThreadComposer({ editor }: Props) {
-  const composer = useRef<HTMLFormElement>(null);
-  const createThread = useCreateThread();
-
-  // Submit a new thread and update the comment highlight to show a completed highlight
-  const handleComposerSubmit = useCallback(
-    ({ body }: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => {
-      event.preventDefault();
-
-      const thread = createThread({
-        body,
-      });
-      editor.commands.addComment(thread.id);
-
-    },
-    [editor, createThread]
-  );
-
-  // If clicking outside the composer, hide it and remove highlight
-  useEffect(() => {
-    if (!composer.current) {
-      return;
-    }
-
-    const element = composer.current;
-
-    function closeComposer(event: FocusEvent) {
-      // Don't close when new focus target a child of .lb-portal (e.g. emoji picker)
-      if (
-        event.relatedTarget instanceof HTMLElement &&
-        event.relatedTarget.closest(".lb-portal")
-      ) {
-        return;
-      }
-    }
-
-    element.addEventListener("focusout", closeComposer);
-
-    return () => {
-      element.removeEventListener("focusout", closeComposer);
-    };
-  }, [editor, composer]);
-
-  return (
-    <Composer
-      ref={composer}
-      onComposerSubmit={handleComposerSubmit}
-      onClick={(e) => {
-        // Don't send up a click event from emoji popout and close the composer
-        e.stopPropagation();
-      }}
-      autoFocus={true}
-    />
   );
 }
 
