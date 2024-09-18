@@ -98,7 +98,7 @@ function LexicalEditor() {
                       {/* The anchored threads in the sidebar, on desktop */}
                       <AnchoredThreads
                         threads={threads}
-                        className="w-[280px] hidden xl:block"
+                        className="w-[270px] hidden xl:block"
                       />
                     </div>
 
