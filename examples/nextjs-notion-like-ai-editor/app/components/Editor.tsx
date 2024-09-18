@@ -45,6 +45,8 @@ const initialConfig = liveblocksConfig({
   },
   theme: {
     text: {
+      bold: "lexical-bold",
+      italic: "lexical-italic",
       underline: "lexical-underline",
       strikethrough: "lexical-strikethrough",
     },
@@ -96,7 +98,7 @@ function LexicalEditor() {
                       {/* The anchored threads in the sidebar, on desktop */}
                       <AnchoredThreads
                         threads={threads}
-                        className="w-[280px] hidden xl:block"
+                        className="w-[270px] hidden xl:block"
                       />
                     </div>
 
