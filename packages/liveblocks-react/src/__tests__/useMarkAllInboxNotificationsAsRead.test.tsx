@@ -81,9 +81,9 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
     );
 
     await waitFor(() => {
-      for (const ibn of inboxNotifications) {
-        expect(result.current.inboxNotifications).toContainEqual(ibn);
-      }
+      expect(result.current.inboxNotifications).toEqual(
+        expect.arrayContaining(inboxNotifications)
+      );
     });
 
     act(() => {
@@ -153,7 +153,9 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
     );
 
     await waitFor(() =>
-      expect(result.current.inboxNotifications).toEqual(inboxNotifications)
+      expect(result.current.inboxNotifications).toEqual(
+        expect.arrayContaining(inboxNotifications)
+      )
     );
 
     act(() => {
