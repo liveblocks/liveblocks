@@ -33,12 +33,12 @@ describe("useDeleteAllInboxNotifications", () => {
     const inboxNotifications = [
       dummyThreadInboxNotificationData({
         roomId,
-        threadId: threads[0].id,
+        threadId: threads[0]!.id,
         readAt: null,
       }),
       dummyThreadInboxNotificationData({
         roomId,
-        threadId: threads[1].id,
+        threadId: threads?.[1]?.id,
         readAt: null,
       }),
     ];
@@ -105,12 +105,12 @@ describe("useDeleteAllInboxNotifications", () => {
     const inboxNotifications = [
       dummyThreadInboxNotificationData({
         roomId,
-        threadId: threads[0].id,
+        threadId: threads[0]!.id,
         readAt: null,
       }),
       dummyThreadInboxNotificationData({
         roomId,
-        threadId: threads[1].id,
+        threadId: threads?.[1]?.id,
         readAt: null,
       }),
     ];
@@ -178,13 +178,13 @@ describe("useDeleteAllInboxNotifications", () => {
     const inboxNotifications = [
       dummyThreadInboxNotificationData({
         roomId,
-        threadId: threads[0].id,
+        threadId: threads[0]!.id,
         readAt: null,
         notifiedAt: new Date(2024, 3, 6),
       }),
       dummyThreadInboxNotificationData({
         roomId,
-        threadId: threads[1].id,
+        threadId: threads?.[1]?.id,
         readAt: null,
         notifiedAt: new Date(2024, 3, 5),
       }),
@@ -288,7 +288,7 @@ describe("useDeleteAllInboxNotifications", () => {
         )
       ),
       mockDeleteAllInboxNotifications((_req, res, ctx) => res(ctx.status(204))),
-      mockDeleteThread({ threadId: threads[0].id }, async (_req, res, ctx) => {
+      mockDeleteThread({ threadId: threads[0]!.id }, async (_req, res, ctx) => {
         hasCalledDeleteThread = true;
         return res(ctx.status(204));
       })
