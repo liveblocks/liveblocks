@@ -45,8 +45,8 @@ import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
 import { objectToQuery } from "./lib/objectToQuery";
 import { asPos } from "./lib/position";
-import { QueryParams, url, URLSafeString } from "./lib/url";
-import { urljoin } from "./lib/url";
+import type { QueryParams, URLSafeString } from "./lib/url";
+import { url, urljoin } from "./lib/url";
 import {
   compact,
   deepClone,

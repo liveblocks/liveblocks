@@ -13,8 +13,8 @@ import {
 } from "./convert-plain-data";
 import { Batch } from "./lib/batch";
 import type { Store } from "./lib/create-store";
-import { url, urljoin } from "./lib/url";
 import type { QueryParams, URLSafeString } from "./lib/url";
+import { url, urljoin } from "./lib/url";
 import { raise } from "./lib/utils";
 import { TokenKind } from "./protocol/AuthToken";
 import type {
