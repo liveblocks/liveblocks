@@ -941,6 +941,13 @@ export type Room<
   ): Promise<CommentAttachment>;
 
   /**
+   * Tries to upload an attachment.
+   */
+  tryUploadAttachment(
+    attachmentId: CommentLocalAttachment["id"]
+  ): Promise<CommentAttachment>;
+
+  /**
    * Returns a presigned URL for an attachment by its ID.
    *
    * @example
@@ -1255,8 +1262,10 @@ const GET_ATTACHMENT_URLS_BATCH_DELAY = 50;
 const ATTACHMENT_PART_SIZE = 5 * 1024 * 1024; // 5 MB
 const ATTACHMENT_PART_BATCH_SIZE = 5;
 
+type UploadPart = { partNumber: number; part: Blob };
+
 function splitFileIntoParts(file: File) {
-  const parts: { partNumber: number; part: Blob }[] = [];
+  const parts: UploadPart[] = [];
 
   let start = 0;
 
@@ -3229,6 +3238,26 @@ export function createRoom<
     };
   }
 
+  const uploads = new Map<
+    CommentAttachment["id"],
+    | {
+        uploadType: "multipart";
+        uploadId: string | null;
+        attachment: CommentLocalAttachment;
+        localParts: UploadPart[];
+        uploadedParts: {
+          etag: string;
+          partNumber: number;
+        }[];
+        options: UploadAttachmentOptions;
+      }
+    | {
+        uploadType: "single";
+        attachment: CommentLocalAttachment;
+        options: UploadAttachmentOptions;
+      }
+  >();
+
   async function uploadAttachment(
     attachment: CommentLocalAttachment,
     options: UploadAttachmentOptions = {}
@@ -3244,56 +3273,98 @@ export function createRoom<
     if (abortSignal?.aborted) {
       throw abortError;
     }
+    setupFileUpload(attachment, options);
+    return tryUploadAttachment(attachment.id);
+  }
 
+  function setupFileUpload(
+    attachment: CommentLocalAttachment,
+    options: UploadAttachmentOptions
+  ) {
     if (attachment.size <= ATTACHMENT_PART_SIZE) {
-      // If the file is small enough, upload it in a single request
-      return fetchCommentsJson<CommentAttachment>(
-        `/attachments/${encodeURIComponent(attachment.id)}/upload/${encodeURIComponent(attachment.name)}`,
-        {
-          method: "PUT",
-          body: attachment.file,
-          signal: abortSignal,
-        },
-        {
-          fileSize: attachment.size,
-        }
-      );
+      uploads.set(attachment.id, { uploadType: "single", attachment, options });
     } else {
-      // Otherwise, upload it in multiple parts
-      let uploadId: string | undefined;
-      const uploadedParts: {
-        etag: string;
-        partNumber: number;
-      }[] = [];
+      uploads.set(attachment.id, {
+        uploadType: "multipart",
+        attachment,
+        uploadId: null,
+        localParts: splitFileIntoParts(attachment.file),
+        uploadedParts: [],
+        options,
+      });
+    }
+  }
 
-      // Create a multi-part upload
-      const createMultiPartUpload = await fetchCommentsJson<{
-        uploadId: string;
-        key: string;
-      }>(
-        `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(attachment.name)}`,
-        {
-          method: "POST",
-          signal: abortSignal,
-        },
-        {
-          fileSize: attachment.size,
+  async function tryUploadAttachment(
+    attachmentId: CommentAttachment["id"]
+  ): Promise<CommentAttachment> {
+    const upload = uploads.get(attachmentId);
+
+    if (!upload) {
+      throw new Error("This attachment is not set up for upload");
+    }
+
+    const {
+      attachment,
+      options: { signal: abortSignal },
+    } = upload;
+
+    switch (upload.uploadType) {
+      case "single": {
+        const res = await fetchCommentsJson<CommentAttachment>(
+          `/attachments/${encodeURIComponent(attachment.id)}/upload/${encodeURIComponent(attachment.name)}`,
+          {
+            method: "PUT",
+            body: attachment.file,
+            signal: abortSignal,
+          },
+          {
+            fileSize: attachment.size,
+          }
+        );
+        // Remove the upload from the map
+        uploads.delete(attachment.id);
+        return res;
+      }
+      case "multipart": {
+        // 2. Multi-part upload
+        const { uploadId, localParts } = upload;
+
+        if (!uploadId) {
+          // Create a multi-part upload
+          const createMultiPartUpload = await fetchCommentsJson<{
+            uploadId: string;
+            key: string;
+          }>(
+            `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(attachment.name)}`,
+            {
+              method: "POST",
+              signal: abortSignal,
+            },
+            {
+              fileSize: attachment.size,
+            }
+          );
+
+          // Update the upload with the uploadId
+          upload.uploadId = createMultiPartUpload.uploadId;
         }
-      );
 
-      try {
-        uploadId = createMultiPartUpload.uploadId;
+        const { uploadId: actualId } = uploads.get(attachment.id) as {
+          uploadType: "multipart";
+          uploadId: string;
+          attachment: CommentLocalAttachment;
+          localParts: UploadPart[];
+          uploadedParts: {
+            etag: string;
+            partNumber: number;
+          }[];
+        };
 
-        const parts = splitFileIntoParts(attachment.file);
+        // Upload the parts
+        const batches = chunk(localParts, ATTACHMENT_PART_BATCH_SIZE);
 
-        // Check if the upload was aborted
-        if (abortSignal?.aborted) {
-          throw abortError;
-        }
-
-        const batches = chunk(parts, ATTACHMENT_PART_BATCH_SIZE);
-
-        // Batches are uploaded one after the other
+        // Upload batches of parts
         for (const parts of batches) {
           const uploadedPartsPromises: Promise<{
             partNumber: number;
@@ -3306,7 +3377,7 @@ export function createRoom<
                 partNumber: number;
                 etag: string;
               }>(
-                `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(uploadId)}/${encodeURIComponent(partNumber)}`,
+                `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(actualId)}/${encodeURIComponent(partNumber)}`,
                 {
                   method: "PUT",
                   body: part,
@@ -3316,21 +3387,34 @@ export function createRoom<
             );
           }
 
-          // Parts are uploaded in parallel
-          uploadedParts.push(...(await Promise.all(uploadedPartsPromises)));
+          const result = await Promise.allSettled(uploadedPartsPromises);
+
+          let rejection: Error | null = null;
+
+          for (const r of result) {
+            if (r.status === "rejected") {
+              rejection = r.reason as Error;
+            } else {
+              const { partNumber, etag } = r.value;
+              upload.uploadedParts.push({ partNumber, etag });
+              const index = upload.localParts.findIndex(
+                (part) => part.partNumber === partNumber
+              );
+              upload.localParts.splice(index, 1);
+            }
+          }
+          if (rejection) {
+            throw rejection;
+          }
         }
 
-        // Check if the upload was aborted
-        if (abortSignal?.aborted) {
-          throw abortError;
-        }
-
-        const sortedUploadedParts = uploadedParts.sort(
+        // Complete the upload
+        const sortedUploadedParts = upload.uploadedParts.sort(
           (a, b) => a.partNumber - b.partNumber
         );
 
-        return fetchCommentsJson<CommentAttachment>(
-          `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(uploadId)}/complete`,
+        const res = await fetchCommentsJson<CommentAttachment>(
+          `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(actualId)}/complete`,
           {
             method: "POST",
             headers: {
@@ -3340,24 +3424,10 @@ export function createRoom<
             signal: abortSignal,
           }
         );
-      } catch (error) {
-        if (
-          uploadId &&
-          (error as Error)?.name &&
-          ((error as Error).name === "AbortError" ||
-            (error as Error).name === "TimeoutError")
-        ) {
-          // Abort the multi-part upload if it was created
-          await fetchCommentsApi(
-            `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(uploadId)}`,
-            undefined,
-            {
-              method: "DELETE",
-            }
-          );
-        }
 
-        throw error;
+        // Remove the upload from the map
+        uploads.delete(attachment.id);
+        return res;
       }
     }
   }
@@ -3608,6 +3678,7 @@ export function createRoom<
       removeReaction,
       prepareAttachment,
       uploadAttachment,
+      tryUploadAttachment,
       getAttachmentUrl,
 
       // Notifications

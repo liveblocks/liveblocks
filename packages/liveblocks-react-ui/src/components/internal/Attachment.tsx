@@ -26,6 +26,7 @@ const MAX_DISPLAYED_MEDIA_SIZE = 60 * 1024 * 1024; // 60 MB
 interface AttachmentProps extends ComponentPropsWithoutRef<"div"> {
   attachment: CommentMixedAttachment;
   onDeleteClick?: MouseEventHandler<HTMLButtonElement>;
+  onRetryClick?: MouseEventHandler<HTMLButtonElement>;
   preventFocusOnDelete?: boolean;
   overrides?: Partial<Overrides>;
 }
@@ -293,6 +294,7 @@ export function MediaAttachment({
   overrides,
   onClick,
   onDeleteClick,
+  onRetryClick,
   preventFocusOnDelete,
   className,
   onKeyDown,
@@ -326,7 +328,8 @@ export function MediaAttachment({
         {isUploading ? (
           <SpinnerIcon />
         ) : isError ? (
-          <WarningIcon />
+          // @ts-expect-error: TODO: testing, ignore for now
+          <WarningIcon onClick={onRetryClick} />
         ) : (
           <AttachmentPreview attachment={attachment} />
         )}
@@ -359,6 +362,7 @@ export function FileAttachment({
   overrides,
   onClick,
   onDeleteClick,
+  onRetryClick,
   preventFocusOnDelete,
   className,
   onKeyDown,
@@ -392,7 +396,8 @@ export function FileAttachment({
         {isUploading ? (
           <SpinnerIcon />
         ) : isError ? (
-          <WarningIcon />
+          // @ts-expect-error: TODO: testing, ignore for now
+          <WarningIcon onClick={onRetryClick} />
         ) : (
           <AttachmentPreview attachment={attachment} />
         )}

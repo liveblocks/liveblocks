@@ -76,6 +76,11 @@ export type ComposerContext = {
    * Remove an attachment by its ID.
    */
   removeAttachment: (attachmentId: string) => void;
+
+  /**
+   * Retry uploading an attachment by its ID.
+   */
+  retryUploadAttachment: (attachmentId: string) => void;
 };
 
 export type ComposerEditorContext = {

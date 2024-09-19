@@ -361,11 +361,15 @@ function ComposerFileAttachment({
   overrides,
   ...props
 }: ComposerFileAttachmentProps) {
-  const { removeAttachment } = useComposer();
+  const { removeAttachment, retryUploadAttachment } = useComposer();
 
   const handleDeleteClick = useCallback(() => {
     removeAttachment(attachment.id);
   }, [attachment.id, removeAttachment]);
+
+  const handleRetryClick = useCallback(() => {
+    retryUploadAttachment(attachment.id);
+  }, [attachment.id, retryUploadAttachment]);
 
   return (
     <FileAttachment
@@ -373,6 +377,7 @@ function ComposerFileAttachment({
       {...props}
       attachment={attachment}
       onDeleteClick={handleDeleteClick}
+      onRetryClick={handleRetryClick}
       preventFocusOnDelete
       overrides={overrides}
     />

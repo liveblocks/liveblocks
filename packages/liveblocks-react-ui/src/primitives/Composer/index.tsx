@@ -991,6 +991,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       isUploadingAttachments,
       addAttachments,
       removeAttachment,
+      retryUploadAttachment,
       clearAttachments,
     } = useComposerAttachmentsManager(defaultAttachments, {
       maxFileSize: maxAttachmentSize,
@@ -1231,6 +1232,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
               attachments,
               attachFiles,
               removeAttachment,
+              retryUploadAttachment,
             }}
           >
             <Component {...props} onSubmit={handleSubmit} ref={mergedRefs}>

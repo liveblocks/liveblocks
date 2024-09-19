@@ -421,6 +421,47 @@ function createComposerAttachmentsManager(
     }
   }
 
+  function retryUploadAttachment(attachmentId: CommentLocalAttachment["id"]) {
+    const attachment = attachments.get(attachmentId);
+
+    if (!attachment || attachment.type !== "localAttachment") {
+      return;
+    }
+
+    attachments.set(attachment.id, {
+      ...attachment,
+      status: "uploading",
+    });
+    notifySubscribers();
+
+    room
+      .tryUploadAttachment(attachmentId)
+      .then((attachment) => {
+        attachments.set(attachmentId, {
+          ...attachment,
+          status: "uploaded",
+        });
+        notifySubscribers();
+      })
+      .catch((error) => {
+        if (
+          error instanceof Error &&
+          error.name !== "AbortError" &&
+          error.name !== "TimeoutError"
+        ) {
+          attachments.set(attachmentId, {
+            ...attachment,
+            status: "error",
+            error:
+              error instanceof CommentsApiError && error.status === 413
+                ? new AttachmentTooLargeError("File is too large.")
+                : error,
+          });
+          notifySubscribers();
+        }
+      });
+  }
+
   function removeAttachment(attachmentId: string) {
     const abortController = abortControllers.get(attachmentId);
 
@@ -451,6 +492,7 @@ function createComposerAttachmentsManager(
 
   return {
     addAttachments,
+    retryUploadAttachment,
     removeAttachment,
     getSnapshot,
     subscribe: eventSource.subscribe,
@@ -515,6 +557,7 @@ export function useComposerAttachmentsManager(
     isUploadingAttachments,
     addAttachments: frozenAttachmentsManager.addAttachments,
     removeAttachment: frozenAttachmentsManager.removeAttachment,
+    retryUploadAttachment: frozenAttachmentsManager.retryUploadAttachment,
     clearAttachments: frozenAttachmentsManager.clear,
   };
 }
