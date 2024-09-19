@@ -1,6 +1,6 @@
 import { BaseMetadata } from "@liveblocks/client";
 import { DM } from "@liveblocks/core";
-import { useCreateThread } from "@liveblocks/react";
+import { selectedThreads, useCreateThread } from "@liveblocks/react";
 import { Composer, ComposerProps, ComposerSubmitComment } from "@liveblocks/react-ui";
 import { Editor } from "@tiptap/react";
 import React, { ComponentRef, FormEvent, forwardRef, useCallback, useEffect } from "react";
@@ -58,7 +58,10 @@ export const FloatingComposer = forwardRef<
       return;
     }
     const updateRect = () => {
-      const seclection = editor.storage.liveblocksExtension.pendingCommentSelection as TextSelection;
+      const seclection = editor.storage.liveblocksExtension.pendingCommentSelection as TextSelection | null;
+      if (!seclection) {
+        return;
+      }
       const coords = editor.view.coordsAtPos(Math.min(seclection.from, editor.state.doc.content.size - 1));
       if (coords) {
         setReference({

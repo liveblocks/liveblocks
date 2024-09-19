@@ -47,12 +47,12 @@ declare module "@tiptap/core" {
 }
 
 export type ThreadPluginState = {
-  threadToPos: Map<string, number>;
+  selectedThreadPos: number | null;
   selectedThreadId: string | null;
   decorations: DecorationSet;
 };
 
-const enum ThreadPluginActions {
+export const enum ThreadPluginActions {
   SET_SELECTED_THREAD_ID = "SET_SELECTED_THREAD_ID",
 }
 
@@ -91,13 +91,12 @@ const Comment = Mark.create({
           ) {
             return false;
           }
-          this.editor.state.selection = (
-            this.editor.storage.liveblocksExtension
-              .pendingCommentSelection as SelectionBookmark
-          ).resolve(this.editor.state.doc);
+          this.editor.state.selection = this.editor.storage.liveblocksExtension
+            .pendingCommentSelection as TextSelection;
           commands.setMark(this.type, { threadId: id });
           this.editor.storage.liveblocksExtension.pendingCommentSelection =
             null;
+
           return true;
         },
     };
@@ -117,19 +116,27 @@ const Comment = Mark.create({
    */
   addProseMirrorPlugins() {
     const updateState = (doc: Node, selectedThreadId: string | null) => {
-      const threadToPos = new Map<string, number>();
+      let selectedThreadPos: number | null = null;
       const decorations: Decoration[] = [];
       doc.descendants((node, pos) => {
         node.marks.forEach((mark) => {
           if (mark.type === this.type) {
             const thisThreadId = mark.attrs.threadId;
-            threadToPos.set(
-              thisThreadId,
-              Math.min(pos, threadToPos.get(thisThreadId) ?? Infinity)
-            );
             if (selectedThreadId === thisThreadId) {
+              const from = pos;
+              const to = from + node.nodeSize;
+
+              // We want the selected thread position to be at the end of the thread
+              // forgive the double ternary, but it just says "if it's not been set, set it, if it has, set it if it's bigger"
+              // we beed this because there can be multiple marks with the same thread ID
+              selectedThreadPos =
+                selectedThreadPos === null
+                  ? to
+                  : selectedThreadPos < to
+                    ? to
+                    : selectedThreadPos;
               decorations.push(
-                Decoration.inline(pos, pos + node.nodeSize, {
+                Decoration.inline(from, to, {
                   class: "lb-thread-editor-selected",
                 })
               );
@@ -140,7 +147,7 @@ const Comment = Mark.create({
       return {
         decorations: DecorationSet.create(doc, decorations),
         selectedThreadId,
-        threadToPos,
+        selectedThreadPos,
       };
     };
 
@@ -150,7 +157,7 @@ const Comment = Mark.create({
         state: {
           init() {
             return {
-              threadToPos: new Map(), // use view.coordsAtPos in UI
+              selectedThreadPos: null,
               selectedThreadId: null,
               decorations: DecorationSet.empty,
             } as ThreadPluginState;
@@ -332,6 +339,13 @@ export const useLiveblocksExtension = ({
           if (this.editor.state.selection.empty) {
             return false;
           }
+          // unselect any open threads
+          this.editor.view.dispatch(
+            this.editor.state.tr.setMeta(THREADS_PLUGIN_KEY, {
+              name: ThreadPluginActions.SET_SELECTED_THREAD_ID,
+              data: null,
+            })
+          );
           this.storage.pendingCommentSelection = new TextSelection(
             this.editor.state.selection.$anchor,
             this.editor.state.selection.$head

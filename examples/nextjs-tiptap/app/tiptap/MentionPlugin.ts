@@ -10,13 +10,9 @@ export const LiveblocksMentionPluginKey = new PluginKey("lb-plugin-mention");
 
 export default Node.create({
   name: "liveblocksMention",
-
   group: "inline",
-
   inline: true,
-
   selectable: true,
-
   atom: true,
 
   parseHTML() {

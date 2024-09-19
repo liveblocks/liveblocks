@@ -7,12 +7,14 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import { useLiveblocksExtension } from "./LiveblocksExtension";
 import StarterKit from "@tiptap/starter-kit";
 import { Toolbar } from "./Toolbar";
-import { ThreadList } from "./ThreadList";
 import { FloatingComposer } from "./FloatingComposer";
+import { FloatingThreads } from "./FloatingThreads";
+import { useThreads } from "@liveblocks/react";
 
 
 export default function Editor() {
   const liveblocks = useLiveblocksExtension();
+  const { threads } = useThreads();
 
   const editor = useEditor({
     editorProps: {
@@ -38,14 +40,16 @@ export default function Editor() {
         <div className="relative flex flex-1 flex-col gap-2">
           <Toolbar editor={editor} />
           <EditorContent editor={editor} />
+          {threads && <FloatingThreads threads={threads} editor={editor} />}
           <FloatingComposer editor={editor} className="w-[350px]" />
         </div>
 
 
         <div className="xl:[&:not(:has(.lb-lexical-anchored-threads))]:pr-[200px] [&:not(:has(.lb-lexical-anchored-threads))]:pr-[50px]">
-          {editor && <ThreadList editor={editor} />}
+          anchored threads go here
         </div>
       </div>
     </div>
   );
 }
+
