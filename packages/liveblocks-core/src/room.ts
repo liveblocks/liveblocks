@@ -3322,7 +3322,6 @@ export function createRoom<
             fileSize: attachment.size,
           }
         );
-        // Remove the upload from the map
         uploads.delete(attachment.id);
         return res;
       }
