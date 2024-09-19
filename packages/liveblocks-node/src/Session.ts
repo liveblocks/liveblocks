@@ -1,12 +1,13 @@
-import type { IUserInfo, Json, JsonObject } from "@liveblocks/core";
+import type {
+  IUserInfo,
+  Json,
+  JsonObject,
+  URLSafeString,
+} from "@liveblocks/core";
+import { url } from "@liveblocks/core";
 
 import type { AuthResponse } from "./client";
-import {
-  assertNonEmpty,
-  normalizeStatusCode,
-  url,
-  type URLSafeString,
-} from "./utils";
+import { assertNonEmpty, normalizeStatusCode } from "./utils";
 
 // As defined in the source of truth in ApiScope in
 // https://github.com/liveblocks/liveblocks-cloudflare/blob/main/src/security.ts
