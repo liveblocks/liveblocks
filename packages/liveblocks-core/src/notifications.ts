@@ -60,7 +60,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
   }>;
 } {
   async function fetchJson<T>(
-    endpoint: string,
+    endpoint: `/v2/c/${string}`,
     options?: RequestInit,
     params?: QueryParams
   ): Promise<T> {
@@ -76,7 +76,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
       currentUserIdStore.set(() => userId);
     }
 
-    const url = urljoin(baseUrl, `/v2/c${endpoint}`, params);
+    const url = urljoin(baseUrl, endpoint, params);
     const response = await fetcher(url.toString(), {
       ...options,
       headers: {
@@ -128,7 +128,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
       meta: {
         requestedAt: string;
       };
-    }>("/inbox-notifications", undefined, {});
+    }>("/v2/c/inbox-notifications", undefined, {});
 
     return {
       threads: json.threads.map(convertToThreadData),
@@ -148,7 +148,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
       meta: {
         requestedAt: string;
       };
-    }>("/inbox-notifications", undefined, {
+    }>("/v2/c/inbox-notifications", undefined, {
       since: options.since.toISOString(),
     });
 
@@ -170,13 +170,13 @@ export function createNotificationsApi<M extends BaseMetadata>({
   async function getUnreadInboxNotificationsCount() {
     const { count } = await fetchJson<{
       count: number;
-    }>("/inbox-notifications/count");
+    }>("/v2/c/inbox-notifications/count");
 
     return count;
   }
 
   async function markAllInboxNotificationsAsRead() {
-    await fetchJson("/inbox-notifications/read", {
+    await fetchJson("/v2/c/inbox-notifications/read", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -186,7 +186,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
   }
 
   async function markInboxNotificationsAsRead(inboxNotificationIds: string[]) {
-    await fetchJson("/inbox-notifications/read", {
+    await fetchJson("/v2/c/inbox-notifications/read", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -211,14 +211,14 @@ export function createNotificationsApi<M extends BaseMetadata>({
   }
 
   async function deleteAllInboxNotifications() {
-    await fetchJson("/inbox-notifications", {
+    await fetchJson("/v2/c/inbox-notifications", {
       method: "DELETE",
     });
   }
 
   async function deleteInboxNotification(inboxNotificationId: string) {
     await fetchJson(
-      `/inbox-notifications/${encodeURIComponent(inboxNotificationId)}`,
+      `/v2/c/inbox-notifications/${encodeURIComponent(inboxNotificationId)}`,
       {
         method: "DELETE",
       }
@@ -240,7 +240,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
       meta: {
         requestedAt: string;
       };
-    }>("/threads", undefined, {
+    }>("/v2/c/threads", undefined, {
       query,
     });
 
@@ -270,7 +270,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
       meta: {
         requestedAt: string;
       };
-    }>("/threads", undefined, {
+    }>("/v2/c/threads", undefined, {
       since: options.since.toISOString(),
       query,
     });
