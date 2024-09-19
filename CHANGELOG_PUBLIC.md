@@ -28,6 +28,8 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Contributors
 
+ctnicholas
+
 # Week 37 (2024-09-13)
 
 ## 2.7.0
