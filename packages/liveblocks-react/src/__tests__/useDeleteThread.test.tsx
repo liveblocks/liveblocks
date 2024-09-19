@@ -59,7 +59,7 @@ describe("useDeleteThread", () => {
           })
         );
       }),
-      mockDeleteThread({ threadId: threads[0].id }, async (_req, res, ctx) => {
+      mockDeleteThread({ threadId: threads[0]!.id }, async (_req, res, ctx) => {
         hasCalledDeleteThread = true;
         return res(ctx.status(204));
       })
@@ -86,7 +86,7 @@ describe("useDeleteThread", () => {
     await waitFor(() => expect(result.current.threads).toEqual(threads));
 
     act(() => {
-      result.current.deleteThread(threads[0].id);
+      result.current.deleteThread(threads[0]!.id);
     });
 
     await waitFor(() => expect(result.current.threads).toEqual([]));
@@ -150,7 +150,7 @@ describe("useDeleteThread", () => {
 
     act(() => {
       try {
-        result.current.deleteThread(threads[0].id);
+        result.current.deleteThread(threads[0]!.id);
       } catch (error) {
         errorMessage = (error as Error).message;
       }
@@ -183,7 +183,7 @@ describe("useDeleteThread", () => {
           })
         )
       ),
-      mockDeleteThread({ threadId: threads[0].id }, async (_req, res, ctx) => {
+      mockDeleteThread({ threadId: threads[0]!.id }, async (_req, res, ctx) => {
         return res(ctx.status(500));
       })
     );
@@ -209,7 +209,7 @@ describe("useDeleteThread", () => {
     await waitFor(() => expect(result.current.threads).toEqual(threads));
 
     act(() => {
-      result.current.deleteThread(threads[0].id);
+      result.current.deleteThread(threads[0]!.id);
     });
 
     expect(result.current.threads).toEqual([]);

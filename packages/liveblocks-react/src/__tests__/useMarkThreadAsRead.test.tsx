@@ -28,7 +28,7 @@ describe("useMarkThreadAsRead", () => {
     const inboxNotifications = [
       dummyThreadInboxNotificationData({
         roomId,
-        threadId: threads[0].id,
+        threadId: threads[0]!.id,
         readAt: null,
       }),
     ];
@@ -90,10 +90,10 @@ describe("useMarkThreadAsRead", () => {
 
     // Mark the first thread in our threads list as read
     act(() => {
-      result.current.markThreadAsRead(threads[0].id);
+      result.current.markThreadAsRead(threads[0]!.id);
     });
 
-    expect(result.current.inboxNotifications![0].readAt).not.toBe(null);
+    expect(result.current.inboxNotifications?.[0]?.readAt).not.toBe(null);
 
     unmount();
   });
@@ -104,7 +104,7 @@ describe("useMarkThreadAsRead", () => {
     const inboxNotifications = [
       dummyThreadInboxNotificationData({
         roomId,
-        threadId: threads[0].id,
+        threadId: threads[0]!.id,
         readAt: null,
       }),
     ];
@@ -166,15 +166,15 @@ describe("useMarkThreadAsRead", () => {
 
     // Mark the first thread in our threads list as read
     act(() => {
-      result.current.markThreadAsRead(threads[0].id);
+      result.current.markThreadAsRead(threads[0]!.id);
     });
 
     // We mark the notification as read optimitiscally
-    expect(result.current.inboxNotifications![0].readAt).not.toBe(null);
+    expect(result.current.inboxNotifications?.[0]?.readAt).not.toBe(null);
 
     await waitFor(() => {
       // The readAt field should have been updated in the inbox notification cache
-      expect(result.current.inboxNotifications![0].readAt).toEqual(null);
+      expect(result.current.inboxNotifications?.[0]?.readAt).toEqual(null);
     });
 
     unmount();

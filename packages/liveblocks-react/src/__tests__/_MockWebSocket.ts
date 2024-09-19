@@ -122,7 +122,7 @@ function remove<T>(array: T[], item: T) {
 export async function waitForSocketToBeConnected() {
   await waitFor(() => expect(MockWebSocket.instances.length).toBe(1));
 
-  const socket = MockWebSocket.instances[0];
+  const socket = MockWebSocket.instances[0]!;
   expect(socket.callbacks.open).toEqual([expect.any(Function)]); // Got open callback
   expect(socket.callbacks.message).toEqual([expect.any(Function)]); // Got ROOM_STATE message callback
 
@@ -173,7 +173,7 @@ export async function websocketSimulator() {
   }
 
   function simulateAbnormalClose() {
-    socket.callbacks.close[0]({
+    socket.callbacks.close[0]!({
       reason: "",
       wasClean: false,
       code: WebSocketErrorCodes.CLOSE_ABNORMAL,

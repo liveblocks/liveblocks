@@ -258,8 +258,8 @@ expectType<boolean>(lbctx.useIsInsideRoom());
 // The presence hooks
 expectType<P>(ctx.useSelf()!.presence);
 expectType<readonly User<P, U>[]>(ctx.useOthers());
-expectType<P>(ctx.useOthers()[0].presence);
-expectType<P>(ctx.useOthersMapped((u) => u.presence)[0][1]);
+expectType<P>(ctx.useOthers()[0]!.presence);
+expectType<P>(ctx.useOthersMapped((u) => u.presence)[0]![1]);
 expectType<readonly number[]>(ctx.useOthersConnectionIds());
 expectType<P>(ctx.useOther(123, (o) => o.presence));
 expectType<P>(ctx.useMyPresence()[0]);
@@ -267,8 +267,8 @@ expectType<P>(ctx.useMyPresence()[0]);
 // The presence hooks (suspense versions)
 expectType<P>(ctx.suspense.useSelf().presence);
 expectType<readonly User<P, U>[]>(ctx.suspense.useOthers());
-expectType<P>(ctx.suspense.useOthers()[0].presence);
-expectType<P>(ctx.suspense.useOthersMapped((u) => u.presence)[0][1]);
+expectType<P>(ctx.suspense.useOthers()[0]!.presence);
+expectType<P>(ctx.suspense.useOthersMapped((u) => u.presence)[0]![1]);
 expectType<readonly number[]>(ctx.suspense.useOthersConnectionIds());
 expectType<P>(ctx.suspense.useOther(123, (o) => o.presence));
 expectType<P>(ctx.suspense.useMyPresence()[0]);
@@ -395,11 +395,11 @@ ctx.useErrorListener((err) => {
       expectType<number>(mut.self.info.age);
       expectError(mut.self.info.nonexisting);
 
-      expectType<number>(mut.others[0].presence.cursor.x);
-      expectError(mut.others[0].presence.nonexisting);
-      expectType<string>(mut.others[0].info.name);
-      expectType<number>(mut.others[0].info.age);
-      expectError(mut.others[0].info.nonexisting);
+      expectType<number>(mut.others[0]!.presence.cursor.x);
+      expectError(mut.others[0]!.presence.nonexisting);
+      expectType<string>(mut.others[0]!.info.name);
+      expectType<number>(mut.others[0]!.info.age);
+      expectError(mut.others[0]!.info.nonexisting);
 
       expectType<string | undefined>(mut.storage.get("animals").get(0));
       expectType<number | undefined>(mut.storage.get("scores").get("one"));
@@ -423,11 +423,11 @@ ctx.useErrorListener((err) => {
       expectType<number>(mut.self.info.age);
       expectError(mut.self.info.nonexisting);
 
-      expectType<number>(mut.others[0].presence.cursor.x);
-      expectError(mut.others[0].presence.nonexisting);
-      expectType<string>(mut.others[0].info.name);
-      expectType<number>(mut.others[0].info.age);
-      expectError(mut.others[0].info.nonexisting);
+      expectType<number>(mut.others[0]!.presence.cursor.x);
+      expectError(mut.others[0]!.presence.nonexisting);
+      expectType<string>(mut.others[0]!.info.name);
+      expectType<number>(mut.others[0]!.info.age);
+      expectError(mut.others[0]!.info.nonexisting);
 
       expectType<string | undefined>(mut.storage.get("animals").get(0));
       expectType<number | undefined>(mut.storage.get("scores").get("one"));
@@ -549,9 +549,9 @@ ctx.useErrorListener((err) => {
     expectType<"thread">(thread1.type);
     expectType<string>(thread1.id);
     expectType<string>(thread1.roomId);
-    expectType<"comment">(thread1.comments[0].type);
-    expectType<string>(thread1.comments[0].id);
-    expectType<string>(thread1.comments[0].threadId);
+    expectType<"comment">(thread1.comments[0]!.type);
+    expectType<string>(thread1.comments[0]!.id);
+    expectType<string>(thread1.comments[0]!.threadId);
 
     expectType<string | number | boolean | undefined>(thread1.metadata.color);
 
@@ -593,9 +593,9 @@ ctx.useErrorListener((err) => {
     expectType<"thread">(thread.type);
     expectType<string>(thread.id);
     expectType<string>(thread.roomId);
-    expectType<"comment">(thread.comments[0].type);
-    expectType<string>(thread.comments[0].id);
-    expectType<string>(thread.comments[0].threadId);
+    expectType<"comment">(thread.comments[0]!.type);
+    expectType<string>(thread.comments[0]!.id);
+    expectType<string>(thread.comments[0]!.threadId);
 
     expectType<"red" | "blue">(thread.metadata.color);
   }
@@ -619,9 +619,9 @@ ctx.useErrorListener((err) => {
     expectType<"thread">(thread1.type);
     expectType<string>(thread1.id);
     expectType<string>(thread1.roomId);
-    expectType<"comment">(thread1.comments[0].type);
-    expectType<string>(thread1.comments[0].id);
-    expectType<string>(thread1.comments[0].threadId);
+    expectType<"comment">(thread1.comments[0]!.type);
+    expectType<string>(thread1.comments[0]!.id);
+    expectType<string>(thread1.comments[0]!.threadId);
 
     expectType<string | number | boolean | undefined>(thread1.metadata.color);
 
@@ -662,9 +662,9 @@ ctx.useErrorListener((err) => {
     expectType<"thread">(thread.type);
     expectType<string>(thread.id);
     expectType<string>(thread.roomId);
-    expectType<"comment">(thread.comments[0].type);
-    expectType<string>(thread.comments[0].id);
-    expectType<string>(thread.comments[0].threadId);
+    expectType<"comment">(thread.comments[0]!.type);
+    expectType<string>(thread.comments[0]!.id);
+    expectType<string>(thread.comments[0]!.threadId);
 
     expectType<"red" | "blue">(thread.metadata.color);
   }

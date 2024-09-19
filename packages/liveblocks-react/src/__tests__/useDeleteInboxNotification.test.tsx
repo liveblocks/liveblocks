@@ -307,7 +307,7 @@ describe("useDeleteInboxNotification", () => {
         { inboxNotificationId: notification1.id },
         (_req, res, ctx) => res(ctx.status(500))
       ),
-      mockDeleteThread({ threadId: threads[0].id }, async (_req, res, ctx) => {
+      mockDeleteThread({ threadId: threads[0]!.id }, async (_req, res, ctx) => {
         hasCalledDeleteThread = true;
         return res(ctx.status(204));
       })

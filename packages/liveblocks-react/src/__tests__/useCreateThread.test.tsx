@@ -100,11 +100,11 @@ describe("useCreateThread", () => {
       })
     );
 
-    expect(result.current.threads![0]).toEqual(thread);
+    expect(result.current.threads?.[0]).toEqual(thread);
 
     // We're using the createdDate overriden by the server to ensure the optimistic update have been properly deleted
     await waitFor(() =>
-      expect(result.current.threads![0].createdAt).toEqual(fakeCreatedAt)
+      expect(result.current.threads?.[0]?.createdAt).toEqual(fakeCreatedAt)
     );
 
     unmount();

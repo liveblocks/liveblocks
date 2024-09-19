@@ -136,7 +136,7 @@ export type StringifyCommentBodyOptions<U extends BaseUserMeta = DU> = {
 function isCommentBodyParagraph(
   element: CommentBodyElement
 ): element is CommentBodyParagraph {
-  return "type" in element && element.type === "mention";
+  return "type" in element && element.type === "paragraph";
 }
 
 function isCommentBodyText(
