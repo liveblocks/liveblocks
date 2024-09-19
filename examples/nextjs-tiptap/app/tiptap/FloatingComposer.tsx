@@ -3,9 +3,9 @@ import { DM } from "@liveblocks/core";
 import { useCreateThread } from "@liveblocks/react";
 import { Composer, ComposerProps, ComposerSubmitComment } from "@liveblocks/react-ui";
 import { Editor } from "@tiptap/react";
-import React, { ComponentRef, FormEvent, forwardRef, useCallback, useEffect, useRef } from "react";
-import { ACTIVE_SELECTOR_PLUGIN_KEY } from "./LiveblocksExtension";
+import React, { ComponentRef, FormEvent, forwardRef, useCallback, useEffect } from "react";
 import { autoUpdate, flip, hide, limitShift, offset, shift, size, useFloating } from "@floating-ui/react-dom";
+import { TextSelection } from "@tiptap/pm/state";
 
 
 export type FloatingComposerProps<M extends BaseMetadata = DM> = Omit<
@@ -25,7 +25,6 @@ export const FloatingComposer = forwardRef<
 >(function FloatingComposer(props, forwardedRef) {
   const createThread = useCreateThread();
   const { editor } = props;
-
 
   const showComposer = !!editor?.storage.liveblocksExtension.pendingCommentSelection;
 
@@ -59,12 +58,19 @@ export const FloatingComposer = forwardRef<
       return;
     }
     const updateRect = () => {
-      const currentDecorationNode = editor.view.dom.querySelector(
-        '.lb-comment-active-selection',
-      )
-      if (currentDecorationNode) {
+      const seclection = editor.storage.liveblocksExtension.pendingCommentSelection as TextSelection;
+      const coords = editor.view.coordsAtPos(Math.min(seclection.from, editor.state.doc.content.size - 1));
+      if (coords) {
         setReference({
-          getBoundingClientRect: () => currentDecorationNode.getBoundingClientRect(),
+          getBoundingClientRect: () => {
+            return {
+              ...coords,
+              x: coords.left,
+              y: coords.top,
+              width: coords.right - coords.left,
+              height: coords.bottom - coords.top,
+            }
+          },
         });
       }
     }

@@ -4,10 +4,16 @@ import { Extension, mergeAttributes, Mark } from "@tiptap/core";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
 import { Doc } from "yjs";
-import { Plugin, PluginKey, SelectionBookmark } from "@tiptap/pm/state";
+import {
+  Plugin,
+  PluginKey,
+  SelectionBookmark,
+  TextSelection,
+} from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { ySyncPluginKey } from "y-prosemirror";
 import MentionPlugin from "./MentionPlugin";
+import { Node } from "@tiptap/pm/model";
 
 const providersMap = new Map<
   string,
@@ -20,9 +26,10 @@ type LiveblocksExtensionOptions = {
   field?: string;
 };
 
-export const ACTIVE_SELECTOR_PLUGIN_KEY = new PluginKey(
-  "lb-comment-active-selection-decorator"
+export const ACTIVE_SELECTION_PLUGIN = new PluginKey(
+  "lb-active-selection-plugin"
 );
+export const THREADS_PLUGIN_KEY = new PluginKey("lb-threads-plugin");
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -39,24 +46,37 @@ declare module "@tiptap/core" {
   }
 }
 
+export type ThreadPluginState = {
+  threadToPos: Map<string, number>;
+  selectedThreadId: string | null;
+  decorations: DecorationSet;
+};
+
+const enum ThreadPluginActions {
+  SET_SELECTED_THREAD_ID = "SET_SELECTED_THREAD_ID",
+}
+
+/**
+ * Known issues: Overlapping marks are merged when reloading the doc. May be related:
+ * https://github.com/ueberdosis/tiptap/issues/4339
+ * https://github.com/yjs/y-prosemirror/issues/47
+ */
 const Comment = Mark.create({
-  name: "lb-comment",
-  addOptions() {
-    return {
-      HTMLAttributes: {},
-    };
-  },
+  name: "liveblocksComments",
+  excludes: "",
+  inclusive: false,
+  keepOnSplit: true,
   addAttributes() {
     // Return an object with attribute configuration
     return {
-      commentId: {
-        parseHTML: (element) => element.getAttribute("data-lb-comment-id"),
+      threadId: {
+        parseHTML: (element) => element.getAttribute("data-lb-thread-id"),
         renderHTML: (attributes) => {
           return {
-            "data-lb-comment-id": attributes.commentId,
+            "data-lb-thread-id": attributes.threadId,
           };
         },
-        default: "unset",
+        default: "",
       },
     };
   },
@@ -75,7 +95,7 @@ const Comment = Mark.create({
             this.editor.storage.liveblocksExtension
               .pendingCommentSelection as SelectionBookmark
           ).resolve(this.editor.state.doc);
-          commands.setMark(this.name, { commentId: id });
+          commands.setMark(this.type, { threadId: id });
           this.editor.storage.liveblocksExtension.pendingCommentSelection =
             null;
           return true;
@@ -84,17 +104,108 @@ const Comment = Mark.create({
   },
 
   renderHTML({ HTMLAttributes }: { HTMLAttributes: Record<string, any> }) {
-    const elem = document.createElement("span");
+    return [
+      "span",
+      mergeAttributes(HTMLAttributes, {
+        class: "lb-thread-editor",
+      }),
+    ];
+  },
 
-    Object.entries(
-      mergeAttributes(this.options.HTMLAttributes, HTMLAttributes)
-    ).forEach(([attr, val]) => elem.setAttribute(attr, val));
-    elem.classList.add("lb-comment");
-    elem.addEventListener("click", () => {
-      // elem.getAttribute("data-lb-comment-id")
-    });
+  /**
+   * This plugin tracks the (first) position of each thread mark in the doc and creates a decoration for the selected thread
+   */
+  addProseMirrorPlugins() {
+    const updateState = (doc: Node, selectedThreadId: string | null) => {
+      const threadToPos = new Map<string, number>();
+      const decorations: Decoration[] = [];
+      doc.descendants((node, pos) => {
+        node.marks.forEach((mark) => {
+          if (mark.type === this.type) {
+            const thisThreadId = mark.attrs.threadId;
+            threadToPos.set(
+              thisThreadId,
+              Math.min(pos, threadToPos.get(thisThreadId) ?? Infinity)
+            );
+            if (selectedThreadId === thisThreadId) {
+              decorations.push(
+                Decoration.inline(pos, pos + node.nodeSize, {
+                  class: "lb-thread-editor-selected",
+                })
+              );
+            }
+          }
+        });
+      });
+      return {
+        decorations: DecorationSet.create(doc, decorations),
+        selectedThreadId,
+        threadToPos,
+      };
+    };
 
-    return elem;
+    return [
+      new Plugin({
+        key: THREADS_PLUGIN_KEY,
+        state: {
+          init() {
+            return {
+              threadToPos: new Map(), // use view.coordsAtPos in UI
+              selectedThreadId: null,
+              decorations: DecorationSet.empty,
+            } as ThreadPluginState;
+          },
+          apply(tr, state) {
+            const action = tr.getMeta(THREADS_PLUGIN_KEY);
+            if (!tr.docChanged && !action) {
+              return state;
+            }
+
+            if (!action) {
+              // Doc changed, but no action, just update rects
+              return updateState(tr.doc, state.selectedThreadId);
+            }
+            // handle actions, possibly support more actions
+            if (
+              action.name === ThreadPluginActions.SET_SELECTED_THREAD_ID &&
+              state.selectedThreadId !== action.data
+            ) {
+              return updateState(tr.doc, action.data);
+            }
+
+            return state;
+          },
+        },
+        props: {
+          decorations: (state) => {
+            return THREADS_PLUGIN_KEY.getState(state).decorations;
+          },
+          handleClick: (view, pos, event) => {
+            if (event.button !== 0) {
+              return false;
+            }
+
+            const selectThread = (threadId: string | null) => {
+              view.dispatch(
+                view.state.tr.setMeta(THREADS_PLUGIN_KEY, {
+                  name: ThreadPluginActions.SET_SELECTED_THREAD_ID,
+                  data: threadId,
+                })
+              );
+            };
+
+            const node = view.state.doc.nodeAt(pos);
+            if (!node) {
+              selectThread(null);
+              return;
+            }
+            const threadId = node.marks.find((mark) => mark.type === this.type)
+              ?.attrs.threadId as string | undefined;
+            selectThread(threadId ?? null);
+          },
+        },
+      }),
+    ];
   },
 });
 
@@ -136,6 +247,8 @@ const LiveblocksCollab = Collaboration.extend({
 });
 
 // TODO: move options to `addOptions` of the extension itself
+// TODO: add option to disable mentions
+// TODO: add option to disable comments
 export const useLiveblocksExtension = ({
   field,
 }: LiveblocksExtensionOptions = {}): Extension => {
@@ -155,10 +268,17 @@ export const useLiveblocksExtension = ({
         return;
       }
       this.storage.pendingCommentSelection = null;
-      console.log("selection updated");
     },
     onCreate() {
-      // TODO: add error if mention plugin is used
+      if (
+        this.editor.extensionManager.extensions.find(
+          (e) => e.name.toLowerCase() === "mention"
+        )
+      ) {
+        console.warn(
+          "[Liveblocks] Liveblocks contains its own mention plugin, using another mention plugin may cause a conflict."
+        );
+      }
       const self = room.getSelf();
       if (self?.info) {
         this.editor.commands.updateUser({
@@ -212,40 +332,32 @@ export const useLiveblocksExtension = ({
           if (this.editor.state.selection.empty) {
             return false;
           }
-          this.storage.pendingCommentSelection =
-            this.editor.state.selection.getBookmark();
+          this.storage.pendingCommentSelection = new TextSelection(
+            this.editor.state.selection.$anchor,
+            this.editor.state.selection.$head
+          );
           return true;
         },
       };
     },
 
-    // TODO: move the pending comment selection to state, update the pending selection on `apply`
-    // so that remote changes don't cause the selection bookmark to be outdated
-    // reference remirror's annotation extension.
+    // TODO: this.storage.pendingCommentSelection needs to be a Yjs Relative Position that gets translated back to absolute position.
+    // Commit: eba949d32d6010a3d8b3f7967d73d4deb015b02a has code that can help with this.
     addProseMirrorPlugins() {
       return [
         new Plugin({
-          key: ACTIVE_SELECTOR_PLUGIN_KEY,
-          state: {
-            init() {
-              return {};
-            },
-            apply(tr, value) {
-              return {};
-            },
-          },
+          key: ACTIVE_SELECTION_PLUGIN,
           props: {
             decorations: ({ doc }) => {
               const active = this.storage.pendingCommentSelection != null;
               if (!active) {
                 return DecorationSet.create(doc, []);
               }
-              const { from, to } = (
-                this.storage.pendingCommentSelection as SelectionBookmark
-              ).resolve(doc);
+              const { from, to } = this.storage
+                .pendingCommentSelection as TextSelection;
               const decorations: Decoration[] = [
                 Decoration.inline(from, to, {
-                  class: "lb-comment-active-selection",
+                  class: "lb-editor-active-selection",
                 }),
               ];
               return DecorationSet.create(doc, decorations);

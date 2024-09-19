@@ -157,15 +157,6 @@ li::marker {
   padding: 2px 6px;
   pointer-events: none;
 }
-
-.lb-comment {
-  background-color: rgba(255, 255, 0, 0.218);
-}
-
-.lb-comment-active-selection {
-  background-color: rgba(58, 58, 255, 0.318);
-}
-
 .dropdown-menu {
   background: #fff;
   border: 1px solid #666;
@@ -208,4 +199,16 @@ li::marker {
 .lb-mention-selected {
   color: rgb(68, 68, 255);
   background-color: rgba(0, 0, 213, 0.241);
+}
+
+.lb-thread-editor {
+  background-color: rgba(255, 255, 0, 0.218);
+}
+
+.lb-thread-editor-selected {
+  text-decoration: underline;
+}
+
+.lb-editor-active-selection {
+  background-color: rgba(58, 58, 255, 0.318);
 }
