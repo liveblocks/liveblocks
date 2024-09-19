@@ -1,4 +1,4 @@
-## 2.7.2 (not released yet)
+## 2.7.2
 
 ### `@liveblocks/react`
 
