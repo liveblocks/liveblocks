@@ -24,7 +24,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Documentation
 
-- Rewritten Lexical Text Editor get started guide, adding [`AnchoredThreads`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#FloatingThreads) and [`FloatingThreads`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#FloatingThreads).
+- Rewritten Lexical Text Editor get started guide, adding [`AnchoredThreads`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#AnchoredThreads) and [`FloatingThreads`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#FloatingThreads).
 
 ## Contributors
 
