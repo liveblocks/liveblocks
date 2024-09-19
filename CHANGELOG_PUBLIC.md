@@ -15,6 +15,17 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 38 (2024-09-20)
 
+## Examples
+
+- New [Linear-like Issue Tracker example](https://liveblocks.io/examples/linear-like-issue-tracker/nextjs-linear-like-issue-tracker).
+- New [Tldraw Whiteboard Storage example](https://liveblocks.io/examples/tldraw-whiteboard/nextjs-tldraw-whiteboard-storage).
+- New [Tldraw Whiteboard Yjs example](https://liveblocks.io/examples/tldraw-whiteboard/nextjs-tldraw-whiteboard-yjs).
+- New [Notion-like AI Editor example](https://liveblocks.io/examples/notion-like-ai-editor/nextjs-notion-like-ai-editor).
+
+## Documentation
+
+- Rewritten Lexical Text Editor get started guide, adding [`AnchoredThreads`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#FloatingThreads) and [`FloatingThreads`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#FloatingThreads).
+
 ## Contributors
 
 # Week 37 (2024-09-13)
