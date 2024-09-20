@@ -54,6 +54,7 @@ export type CommentEmailData<U extends BaseUserMeta> = {
   threadId: string;
   roomId: string;
   author: U;
+  url?: string;
 };
 
 export type CommentEmailHTMLData<U extends BaseUserMeta> =
