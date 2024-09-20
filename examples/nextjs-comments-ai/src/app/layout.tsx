@@ -1,5 +1,6 @@
 import "@/styles/globals.css";
 import { Providers } from "./Providers";
+import { Suspense } from "react";
 
 export default function RootLayout({
   children,
@@ -28,7 +29,7 @@ export default function RootLayout({
       </head>
       <body>
         <Providers>
-          {children}
+          <Suspense>{children}</Suspense>
           {!HAS_OPENAI_KEY ? (
             <div className="no-key">
               <div>
