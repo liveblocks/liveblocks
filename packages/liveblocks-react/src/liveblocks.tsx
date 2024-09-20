@@ -1121,34 +1121,33 @@ function useUserThreads_experimental<M extends BaseMetadata>(
     return incrementUserThreadsQuerySubscribers(queryKey);
   }, [queryKey, incrementUserThreadsQuerySubscribers, getUserThreads, options]);
 
+  const getter = useCallback(
+    () => store.getUserThreadsAsync(queryKey),
+    [store, queryKey]
+  );
+
   const selector = useCallback(
-    (state: GetUserThreadsType<M>): ThreadsAsyncResult<M> => {
-      const query = state.queries[queryKey];
-
-      if (query === undefined || query.isLoading) {
-        return { isLoading: true };
+    (result: ReturnType<typeof getter>): ThreadsAsyncResult<M> => {
+      if (!result.fullState) {
+        return result; // Loading or error state
       }
 
-      if (query.error !== undefined) {
-        return query;
-      }
+      const threads = selectThreads(result.fullState, {
+        roomId: null, // Do _not_ filter by roomId
+        query: options.query,
+        orderBy: "last-update",
+      });
 
-      return {
-        threads: selectThreads(state, {
-          roomId: null, // Do _not_ filter by roomId
-          query: options.query,
-          orderBy: "last-update",
-        }),
-        isLoading: false,
-      };
+      // "Map" the success state, by selecting the threads and returning only those parts externally
+      return { isLoading: false, threads };
     },
     [queryKey, options]
   );
 
   return useSyncExternalStoreWithSelector(
     store.subscribeUserThreads,
-    store.getUserThreads,
-    store.getUserThreads,
+    getter,
+    getter,
     selector,
     shallow2 // NOTE: Using 2-level-deep shallow check here, because the result of selectThreads() is not stable!
   );

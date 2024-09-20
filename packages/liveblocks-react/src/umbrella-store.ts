@@ -316,10 +316,23 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this.get();
   }
 
-  // XXX Add soon, too
-  // public getUserThreadsAsync(): ThreadsAsyncResult<M> {
-  //   return this.get();
-  // }
+  public getUserThreadsAsync(
+    queryKey: string
+  ): AsyncResult<UmbrellaStoreState<M>, "fullState"> {
+    const internalState = this._store.get();
+
+    const query = internalState.queries[queryKey];
+    if (query === undefined || query.isLoading) {
+      return ASYNC_LOADING;
+    }
+
+    if (query.error) {
+      return query;
+    }
+
+    // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
+    return { isLoading: false, fullState: this.get() };
+  }
 
   public getInboxNotifications(): UmbrellaStoreState<M> {
     // TODO Now that we have getInboxNotificationsAsync, can we get rid of this method already?
