@@ -1,11 +1,31 @@
 "use client";
 
 import type { ComponentPropsWithoutRef } from "react";
-import React, { Children, forwardRef } from "react";
+import React, { Children, forwardRef, useRef } from "react";
 
 import { classNames } from "../utils/class-names";
+import { useVisibleCallback } from "../utils/use-visible";
 
-export type InboxNotificationListProps = ComponentPropsWithoutRef<"ol">;
+export interface InboxNotificationListProps
+  extends ComponentPropsWithoutRef<"ol"> {
+  onReachEnd?: () => void;
+}
+
+function ReachEndMarker({
+  enabled,
+  onReachEnd,
+}: {
+  enabled: boolean;
+  onReachEnd: () => void;
+}) {
+  const markerRef = useRef<HTMLDivElement>(null);
+
+  useVisibleCallback(markerRef, onReachEnd, {
+    enabled,
+  });
+
+  return <div ref={markerRef} style={{ height: 0 }} />;
+}
 
 /**
  * Displays inbox notifications as a list.
@@ -20,7 +40,7 @@ export type InboxNotificationListProps = ComponentPropsWithoutRef<"ol">;
 export const InboxNotificationList = forwardRef<
   HTMLOListElement,
   InboxNotificationListProps
->(({ children, className, ...props }, forwardedRef) => {
+>(({ onReachEnd, children, className, ...props }, forwardedRef) => {
   return (
     <ol
       className={classNames("lb-root lb-inbox-notification-list", className)}
@@ -32,6 +52,13 @@ export const InboxNotificationList = forwardRef<
           {child}
         </li>
       ))}
+      {/* Render an invisible marker at the end which is tied to an IntersectionObserver to be alerted when the end of the list has been reached */}
+      {onReachEnd && (
+        <ReachEndMarker
+          onReachEnd={onReachEnd}
+          enabled={Children.count(children) > 0}
+        />
+      )}
     </ol>
   );
 });
