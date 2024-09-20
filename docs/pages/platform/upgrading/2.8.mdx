@@ -1,0 +1,55 @@
+---
+meta:
+  title: "Upgrading to 2.8"
+  parentTitle: "Upgrading"
+  description: "Guide to upgrade to Liveblocks version 2.8"
+---
+
+We are introducing attachments to allow users to add files to their comments.
+
+## How to upgrade? [#how]
+
+You can upgrade to 2.8 by downloading the latest version of each Liveblocks
+package you’re using. The easiest way to do that is to run the following
+command:
+
+```bash
+npx create-liveblocks-app@latest --upgrade
+```
+
+## All changes are for Comments
+
+If you are not using Comments or are not using
+[the default Comments components](/docs/products/comments/default-components),
+there are no breaking changes for you! However, if you are, or intend to use
+them later, keep reading.
+
+### Attachments
+
+While technically not a breaking change, attachments are enabled by default in
+the default components. If you want to disable them, you can do so by setting
+the `showAttachments` prop to `false` on the relevant components you use
+([`Composer`](/docs/api-reference/liveblocks-react-ui#Composer),
+[`Comment`](/docs/api-reference/liveblocks-react-ui#Comment),
+[`Thread`](/docs/api-reference/liveblocks-react-ui#Thread), and
+[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification.Thread)).
+
+### Default `Composer` component structure
+
+The default [`Composer`](/docs/api-reference/liveblocks-react-ui#Composer)
+component’s structure has slightly changed, so if you customized its styles:
+make sure to check if and how the new structure affects your changes.
+
+```html
+<!-- ❌ 2.7 and earlier -->
+<form class="lb-root lb-composer lb-composer-form">
+  <!-- The editor and its controls -->
+</form>
+
+<!-- ✅ 2.8 -->
+<form class="lb-root lb-composer lb-composer-form">
+  <div class="lb-composer-editor-container">
+    <!-- The editor and its controls -->
+  </div>
+</form>
+```
