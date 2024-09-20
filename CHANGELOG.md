@@ -1,3 +1,29 @@
+## 2.8.0
+
+We are introducing attachments to allow users to add files to their comments,
+for more information about this change please read our
+[Upgrade Guide for 2.8](https://liveblocks.io/docs/platform/upgrading/2.8).
+
+### `@liveblocks/react-ui`
+
+- Add out-of-the-box support for attachments in the default components.
+- Add new primitives to support attachments in custom components:
+  - `Composer.AttachmentsDropArea`: Receives files via drag-and-drop
+  - `Composer.AttachFiles`: Opens a file picker
+  - `FileSize`: Displays a formatted file size
+- Add values and methods to `useComposer` to support attachments in custom
+  components.
+
+### `@liveblocks/react`
+
+- Add `useAttachmentUrl` hook to get presigned URLs for attachments.
+
+### `@liveblocks/client`
+
+- Add `prepareAttachment` and `uploadAttachment` methods to `Room` to create
+  attachments.
+- Add `getAttachmentUrl` method to `Room` to get presigned URLs for attachments.
+
 ## 2.7.1
 
 ### `@liveblocks/react-lexical`
