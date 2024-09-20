@@ -22,6 +22,7 @@ jobs:
             "@liveblocks/react-lexical",
             "@liveblocks/node-lexical",
             "@liveblocks/codemod",
+            "@liveblocks/emails",
           ]
 
     steps:
