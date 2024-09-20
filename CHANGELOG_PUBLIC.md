@@ -43,7 +43,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Contributors
 
-ctnicholas, nimeshnayaju, marcbouchenoire
+ctnicholas, nimeshnayaju, marcbouchenoire, nvie
 
 # Week 37 (2024-09-13)
 
