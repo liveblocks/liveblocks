@@ -36,8 +36,7 @@
   },
   "dependencies": {
     "@liveblocks/core": "2.7.2",
-    "@liveblocks/node": "2.7.2",
-    "@liveblocks/react": "2.7.2"
+    "@liveblocks/node": "2.7.2"
   },
   "peerDependencies": {
     "react": "^16.14.0 || ^17 || ^18"
