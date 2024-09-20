@@ -74,7 +74,7 @@ import type {
   EditThreadMetadataOptions,
   HistoryVersionDataState,
   HistoryVersionsState,
-  HistoryVersionsStateResolved,
+  HistoryVersionsStateSuccess,
   MutationContext,
   OmitFirstArg,
   RoomContextBundle,
@@ -2283,7 +2283,7 @@ function useHistoryVersions(): HistoryVersionsState {
  * @example
  * const { versions } = useHistoryVersions();
  */
-function useHistoryVersionsSuspense(): HistoryVersionsStateResolved {
+function useHistoryVersionsSuspense(): HistoryVersionsStateSuccess {
   const client = useClient();
   const room = useRoom();
 

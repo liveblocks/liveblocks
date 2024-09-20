@@ -14,7 +14,6 @@ import type {
   User,
 } from "@liveblocks/client";
 import type {
-  AsyncError,
   AsyncLoading,
   AsyncResult,
   AsyncSuccess,
@@ -167,20 +166,8 @@ export type HistoryVersionDataState = AsyncResult<Uint8Array>;
 
 export type HistoryVersionsStateLoading = AsyncLoading<"versions">;
 export type HistoryVersionsStateError = AsyncError<"versions">;
-
-// XXX Refactor this type away! We should NOT have data & error state simultaneously!
-// XXX Re-express this as AsyncSuccess<HistoryVersion[], 'versions'>
-export type HistoryVersionsStateResolved = {
-  isLoading: false;
-  versions: HistoryVersion[];
-  error?: Error;
-};
-
-export type HistoryVersionsState =
-  | HistoryVersionsStateLoading
-  // XXX Refactor this member away! We should NOT have threads & error state simultaneously!
-  | HistoryVersionsStateResolved
-  | HistoryVersionsStateError;
+export type HistoryVersionsStateSuccess = AsyncSuccess<HistoryVersion[], "versions">; // prettier-ignore
+export type HistoryVersionsState = AsyncResult<HistoryVersion[], "versions">;
 
 export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
   // prettier-ignore
@@ -1033,7 +1020,7 @@ export type RoomContextBundle<
              * @example
              * const { versions } = useHistoryVersions();
              */
-            useHistoryVersions(): HistoryVersionsStateResolved;
+            useHistoryVersions(): HistoryVersionsStateSuccess;
 
             // /**
             //  * Returns the data of a specific version of the current room's history.
