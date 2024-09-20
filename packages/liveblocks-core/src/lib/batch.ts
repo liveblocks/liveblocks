@@ -151,7 +151,7 @@ export class Batch<O, I> {
 }
 
 /**
- * Create a store based on a batch callback.
+ * Create a store around a Batch.
  * Each call will be cached and get its own state in addition to being batched.
  */
 export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {

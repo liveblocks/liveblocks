@@ -600,7 +600,6 @@ export const Composer = forwardRef(
           event.relatedTarget ?? document.activeElement
         );
 
-        // TODO: Handle "delete" buttons on attachments (hide them when the composer is collapsed)
         if (isOutside && isEmptyRef.current && !isEmojiPickerOpenRef.current) {
           onCollapsedChange?.(true);
         }

@@ -3362,9 +3362,6 @@ export function createRoom<
     }
   }
 
-  // TODO: Add room.events.attachmentUpload (or similar) to listen to upload progress? { attachmentId: string; progress: number; }
-  //       Error handling can done by handling `uploadAttachment` rejecting/throwing
-
   async function getAttachmentUrls(attachmentIds: string[]) {
     const { urls } = await fetchCommentsJson<{ urls: (string | null)[] }>(
       "/attachments/presigned-urls",

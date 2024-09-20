@@ -983,7 +983,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const [isEmpty, setEmpty] = useState(true);
     const [isSubmitting, setSubmitting] = useState(false);
     const [isFocused, setFocused] = useState(false);
-    // TODO: Convert to Composer.Form props: { maxAttachments: number; maxAttachmentSize: number; supportedAttachmentMimeTypes: string[]; }
+    // Later: Offer as Composer.Form props: { maxAttachments: number; maxAttachmentSize: number; supportedAttachmentMimeTypes: string[]; }
     const maxAttachments = MAX_ATTACHMENTS;
     const maxAttachmentSize = MAX_ATTACHMENT_SIZE;
     const {
