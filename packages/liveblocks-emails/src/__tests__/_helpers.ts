@@ -11,9 +11,13 @@ import type {
   ThreadData,
 } from "@liveblocks/core";
 import { nanoid } from "@liveblocks/core";
-import type { ThreadNotificationEvent } from "@liveblocks/node";
+import type { RoomData, ThreadNotificationEvent } from "@liveblocks/node";
+import { http, HttpResponse } from "msw";
+import { setupServer } from "msw/node";
 
 import type { CommentDataWithBody } from "../comment-with-body";
+
+export const SERVER_BASE_URL = "https://api.liveblocks.io";
 
 export const USERS_DB: IUserInfo[] = [
   {
@@ -34,6 +38,16 @@ export const USERS_DB: IUserInfo[] = [
   },
 ];
 export const ROOM_ID_TEST = "resend";
+export const ROOM_TEST: RoomData = {
+  type: "room",
+  id: ROOM_ID_TEST,
+  lastConnectionAt: new Date("2024-09-10T08:00:00.000Z"),
+  createdAt: new Date("2024-09-10T06:00:00.000Z"),
+  metadata: {},
+  defaultAccesses: ["room:write"],
+  groupsAccesses: {},
+  usersAccesses: {},
+};
 
 export const generateProjectId = (): string => "pr_" + nanoid();
 export const generateCommentId = (): string => "cm_" + nanoid();
@@ -217,3 +231,18 @@ const RESOLVED_ROOM_INFO_TEST: DRI = {
 export const resolveRoomInfo = (): OptionalPromise<DRI | undefined> => {
   return RESOLVED_ROOM_INFO_TEST;
 };
+
+export const server = setupServer(
+  http.get(`${SERVER_BASE_URL}/v2/rooms`, () =>
+    HttpResponse.json(
+      {
+        nextPage: "/v2/rooms?startingAfter=1",
+        data: [ROOM_TEST],
+      },
+      { status: 200 }
+    )
+  ),
+  http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId`, () =>
+    HttpResponse.json(ROOM_TEST, { status: 200 })
+  )
+);

@@ -2,9 +2,11 @@ import type {
   BaseUserMeta,
   CommentData,
   DRI,
+  // DU,
   InboxNotificationData,
 } from "@liveblocks/core";
 import { getMentionedIdsFromCommentBody } from "@liveblocks/core";
+import type { Liveblocks, ThreadNotificationEvent } from "@liveblocks/node";
 
 import type { CommentDataWithBody } from "./comment-with-body";
 import { filterCommentsWithBody } from "./comment-with-body";
@@ -32,7 +34,7 @@ export const getUnreadComments = ({
 };
 
 /** @internal */
-export const getLastCommentWithMention = ({
+export const getLastUnreadCommentWithMention = ({
   comments,
   mentionedUserId,
 }: {
@@ -91,3 +93,48 @@ export type ThreadNotificationEmailData<
   | ThreadNotificationEmailUnreadRepliesData<U, C>
   | ThreadNotificationEmailUnreadMentionsData<U, C>
 ) & { roomInfo: DRI };
+
+/** @internal */
+export const extractThreadNotificationData = async ({
+  client,
+  event,
+}: {
+  client: Liveblocks;
+  event: ThreadNotificationEvent;
+}): Promise<
+  | { type: "unreadMention"; comment: CommentDataWithBody }
+  | { type: "unreadReplies"; comments: CommentDataWithBody[] }
+> => {
+  const { threadId, roomId, userId, inboxNotificationId } = event.data;
+  const [thread, inboxNotification] = await Promise.all([
+    client.getThread({ roomId, threadId }),
+    client.getInboxNotification({ inboxNotificationId, userId }),
+  ]);
+
+  const comments = getUnreadComments({
+    comments: thread.comments,
+    inboxNotification,
+    userId,
+  });
+
+  const lastUnreadCommentWithMention = getLastUnreadCommentWithMention({
+    comments,
+    mentionedUserId: userId,
+  });
+  if (lastUnreadCommentWithMention !== null) {
+    return { type: "unreadMention", comment: lastUnreadCommentWithMention };
+  }
+
+  return {
+    type: "unreadReplies",
+    comments,
+  };
+};
+
+// export async function prepareThreadNotificationEmailHTMLData<
+//   U extends BaseUserMeta = DU,
+// >(): Promise<ThreadNotificationEmailData<U, CommentEmailHTMLData<U>>> {}
+
+// export async function prepareThreadNotificationEmailReactData<
+//   U extends BaseUserMeta = DU,
+// >(): Promise<ThreadNotificationEmailData<U, CommentEmailReactData<U>>> {}
