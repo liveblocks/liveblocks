@@ -160,8 +160,8 @@ type UpdateNotificationSettingsOptimisticUpdate = {
 type QueryAsyncResult = AsyncResult<undefined>;
 //                                  ^^^^^^^^^ We don't store the actual query result in this status
 
-const QUERY_STATE_LOADING = Object.freeze({ isLoading: true });
-const QUERY_STATE_OK = Object.freeze({ isLoading: false, data: undefined });
+const ASYNC_LOADING = Object.freeze({ isLoading: true });
+const ASYNC_OK = Object.freeze({ isLoading: false, data: undefined });
 
 // TODO Stop exporting this constant!
 export const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
@@ -318,7 +318,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     const query = internalState.queries[INBOX_NOTIFICATIONS_QUERY];
     if (query === undefined || query.isLoading) {
-      return QUERY_STATE_LOADING;
+      return ASYNC_LOADING;
     }
 
     if (query.error !== undefined) {
@@ -338,7 +338,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     const query = state.queries[makeNotificationSettingsQueryKey(roomId)];
     if (query === undefined || query.isLoading) {
-      return QUERY_STATE_LOADING;
+      return ASYNC_LOADING;
     }
 
     if (query.error !== undefined) {
@@ -359,7 +359,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     const query = state.queries[makeVersionsQueryKey(roomId)];
     if (query === undefined || query.isLoading) {
-      return QUERY_STATE_LOADING;
+      return ASYNC_LOADING;
     }
 
     if (query.error !== undefined) {
@@ -917,11 +917,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
   //
 
   public setQueryLoading(queryKey: string): void {
-    this.setQueryState(queryKey, QUERY_STATE_LOADING);
+    this.setQueryState(queryKey, ASYNC_LOADING);
   }
 
   private setQueryOK(queryKey: string): void {
-    this.setQueryState(queryKey, QUERY_STATE_OK);
+    this.setQueryState(queryKey, ASYNC_OK);
   }
 
   public setQueryError(queryKey: string, error: Error): void {
