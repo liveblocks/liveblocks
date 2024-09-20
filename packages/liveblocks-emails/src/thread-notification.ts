@@ -94,6 +94,10 @@ export type ThreadNotificationEmailData<
   | ThreadNotificationEmailUnreadMentionsData<U, C>
 ) & { roomInfo: DRI };
 
+export type ThreadNotificationData =
+  | { type: "unreadMention"; comment: CommentDataWithBody }
+  | { type: "unreadReplies"; comments: CommentDataWithBody[] };
+
 /** @internal */
 export const extractThreadNotificationData = async ({
   client,
@@ -101,10 +105,7 @@ export const extractThreadNotificationData = async ({
 }: {
   client: Liveblocks;
   event: ThreadNotificationEvent;
-}): Promise<
-  | { type: "unreadMention"; comment: CommentDataWithBody }
-  | { type: "unreadReplies"; comments: CommentDataWithBody[] }
-> => {
+}): Promise<ThreadNotificationData> => {
   const { threadId, roomId, userId, inboxNotificationId } = event.data;
   const [thread, inboxNotification] = await Promise.all([
     client.getThread({ roomId, threadId }),

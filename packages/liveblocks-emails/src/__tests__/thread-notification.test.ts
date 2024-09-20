@@ -1,6 +1,7 @@
 import { Liveblocks } from "@liveblocks/node";
 import { http, HttpResponse } from "msw";
 
+import type { ThreadNotificationData } from "../thread-notification";
 import {
   extractThreadNotificationData,
   getLastUnreadCommentWithMention,
@@ -141,10 +142,11 @@ describe("thread notification", () => {
       });
 
       const extracted = await extractThreadNotificationData({ client, event });
-      expect(extracted).toEqual({
+      const expected: ThreadNotificationData = {
         type: "unreadMention",
         comment: makeThreadNotificationComment({ comment }),
-      });
+      };
+      expect(extracted).toEqual(expected);
     });
 
     it("should extract unread replies comments from a thread notification", async () => {
@@ -195,13 +197,14 @@ describe("thread notification", () => {
         inboxNotificationId: inboxNotification.id,
       });
       const extracted = await extractThreadNotificationData({ client, event });
-      expect(extracted).toEqual({
+      const expected: ThreadNotificationData = {
         type: "unreadReplies",
         comments: [
           makeThreadNotificationComment({ comment: comment2 }),
           makeThreadNotificationComment({ comment: comment3 }),
         ],
-      });
+      };
+      expect(extracted).toEqual(expected);
     });
   });
 });
