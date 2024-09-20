@@ -10,7 +10,7 @@ import {
 } from "@liveblocks/react/suspense";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { Loading } from "./Loading";
-import { ComponentPropsWithoutRef, useEffect, useState } from "react";
+import { ComponentPropsWithoutRef, useEffect, useRef, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import clsx from "clsx";
 import { Link } from "./Link";
@@ -19,13 +19,36 @@ import { usePathname } from "next/navigation";
 function Inbox({ className, ...props }: ComponentPropsWithoutRef<"div">) {
   const { inboxNotifications } = useInboxNotifications();
 
+  // TODO: Use actual pagination implementation
+  const hasMore = true;
+  const [isFetching, setFetching] = useState(false);
+  const fetchTimeoutRef = useRef<number | null>(null);
+  const fetchMore = () => {
+    if (fetchTimeoutRef.current !== null) {
+      window.clearTimeout(fetchTimeoutRef.current);
+    }
+
+    console.log("Fetching more notifications");
+
+    setFetching(true);
+
+    fetchTimeoutRef.current = window.setTimeout(() => {
+      setFetching(false);
+    }, 2000);
+  };
+
   return inboxNotifications.length === 0 ? (
     <div className={clsx(className, "empty")}>
       There aren’t any notifications yet.
     </div>
   ) : (
     <div className={className} {...props}>
-      <InboxNotificationList className="inbox-list">
+      {/* Load more notifications when scrolling to the end of the list */}
+      <InboxNotificationList
+        className="inbox-list"
+        // Only load more notifications if there are more to fetch
+        onReachEnd={hasMore ? fetchMore : undefined}
+      >
         {inboxNotifications.map((inboxNotification) => {
           return (
             <InboxNotification
@@ -36,6 +59,7 @@ function Inbox({ className, ...props }: ComponentPropsWithoutRef<"div">) {
           );
         })}
       </InboxNotificationList>
+      {isFetching && <Loading />}
     </div>
   );
 }

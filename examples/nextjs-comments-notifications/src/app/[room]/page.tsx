@@ -25,6 +25,8 @@ function Example() {
       window.clearTimeout(fetchTimeoutRef.current);
     }
 
+    console.log("Fetching more threads");
+
     setFetching(true);
 
     fetchTimeoutRef.current = window.setTimeout(() => {

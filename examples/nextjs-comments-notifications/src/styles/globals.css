@@ -269,6 +269,11 @@ body {
   box-shadow: 0 0 0 1px rgb(0 0 0 / 8%);
 }
 
+.inbox-list .loading img {
+  width: 16px;
+  height: 16px;
+}
+
 .inbox-unread-count {
   position: absolute;
   top: 0;
