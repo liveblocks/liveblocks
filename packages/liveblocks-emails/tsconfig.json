@@ -1,0 +1,17 @@
+{
+  // Use the same settings for all packages
+  "extends": "../../shared/tsconfig.common.json",
+
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "es2020",
+    "lib": ["dom"],
+    "skipLibCheck": true,
+
+    // Transform JSX syntax from input *.tsx files into React.createElement()
+    // calls in the *.js build output.
+    // NOTE: We can change this to `react-jsx` once we stop supporting React 16.
+    "jsx": "react"
+  },
+  "include": ["src/**/*"]
+}
