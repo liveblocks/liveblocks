@@ -252,4 +252,26 @@ export type PrepareThreadNotificationEmailHTMLDataOptions<
 //   options?: PrepareThreadNotificationEmailHTMLDataOptions<BaseUserMeta>;
 // }): Promise<
 //   ThreadNotificationEmailData<BaseUserMeta, CommentEmailHTMLData<BaseUserMeta>>
-// > {}
+// > {
+//   const { client, event, options } = params;
+//   const rawData = await prepareThreadNotificationEmailRawData({
+//     client,
+//     event,
+//     options: { resolveRoomInfo: options?.resolveRoomInfo },
+//   });
+
+//   if (rawData.type === "unreadMention") {
+//     const { comment, roomInfo } = rawData;
+//     return {
+//       type: "unreadMention",
+//       roomInfo,
+//     };
+//   }
+
+//   const { comments, roomInfo } = rawData;
+
+//   return {
+//     type: "unreadReplies",
+//     roomInfo,
+//   };
+// }
