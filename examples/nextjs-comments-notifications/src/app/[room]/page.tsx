@@ -6,7 +6,7 @@ import { Composer, Thread } from "@liveblocks/react-ui";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useExampleRoomId } from "../../example.client";
-import { Suspense } from "react";
+import { Suspense, useRef, useState } from "react";
 
 /**
  * Displays a list of threads, along with a composer for creating
@@ -16,11 +16,37 @@ import { Suspense } from "react";
 function Example() {
   const { threads } = useThreads();
 
+  // TODO: Use actual pagination implementation
+  const hasMore = true;
+  const [isFetching, setFetching] = useState(false);
+  const fetchTimeoutRef = useRef<number | null>(null);
+  const fetchMore = () => {
+    if (fetchTimeoutRef.current !== null) {
+      window.clearTimeout(fetchTimeoutRef.current);
+    }
+
+    setFetching(true);
+
+    fetchTimeoutRef.current = window.setTimeout(() => {
+      setFetching(false);
+    }, 2000);
+  };
+
   return (
     <div className="threads">
       {threads.map((thread) => (
         <Thread key={thread.id} thread={thread} className="thread" />
       ))}
+      {/* A button to load more threads which is disabled while fetching new threads and hidden when there is nothing more to fetch */}
+      {hasMore && (
+        <button
+          onClick={fetchMore}
+          disabled={isFetching}
+          className="button primary"
+        >
+          {isFetching ? "…" : "Load more"}
+        </button>
+      )}
       <Composer className="composer" />
     </div>
   );
