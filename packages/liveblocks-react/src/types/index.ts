@@ -147,25 +147,17 @@ export type ThreadsState<M extends BaseMetadata> =
   // XXX Refactor this member away! We should NOT have threads & error state simultaneously!
   | ThreadsStateResolved<M>;
 
-export type InboxNotificationsStateLoading = AsyncLoading<"inboxNotifications">;
-export type InboxNotificationsStateError = AsyncError<"inboxNotifications">;
 export type InboxNotificationsStateSuccess = AsyncSuccess<InboxNotificationData[], "inboxNotifications">; // prettier-ignore
 export type InboxNotificationsState = AsyncResult<InboxNotificationData[], "inboxNotifications">; // prettier-ignore
 
-export type UnreadInboxNotificationsCountStateLoading = AsyncLoading<"count">;
-export type UnreadInboxNotificationsCountStateError = AsyncError<"count">;
 export type UnreadInboxNotificationsCountStateSuccess = AsyncSuccess<number, "count">; // prettier-ignore
 export type UnreadInboxNotificationsCountState = AsyncResult<number, "count">;
 
-export type RoomNotificationSettingsStateLoading = AsyncLoading<"settings">;
-export type RoomNotificationSettingsStateError = AsyncError<"settings">;
 export type RoomNotificationSettingsStateSuccess = AsyncSuccess<RoomNotificationSettings, "settings">; // prettier-ignore
 export type RoomNotificationSettingsState = AsyncResult<RoomNotificationSettings, "settings">; // prettier-ignore
 
 export type HistoryVersionDataState = AsyncResult<Uint8Array>;
 
-export type HistoryVersionsStateLoading = AsyncLoading<"versions">;
-export type HistoryVersionsStateError = AsyncError<"versions">;
 export type HistoryVersionsStateSuccess = AsyncSuccess<HistoryVersion[], "versions">; // prettier-ignore
 export type HistoryVersionsState = AsyncResult<HistoryVersion[], "versions">;
 
