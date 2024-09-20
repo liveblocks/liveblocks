@@ -62,8 +62,8 @@ import { INBOX_NOTIFICATIONS_QUERY, UmbrellaStore } from "./umbrella-store";
 // NOTE: The reason we cannot inline them into the selectors is that the react-hooks/exchaustive-deps lint rule will think
 type GetInboxNotificationsType<M extends BaseMetadata = BaseMetadata> =
   ReturnType<UmbrellaStore<M>["getInboxNotifications"]>;
-type GetThreadsType<M extends BaseMetadata = BaseMetadata> = ReturnType<
-  UmbrellaStore<M>["getThreads"]
+type GetUserThreadsType<M extends BaseMetadata = BaseMetadata> = ReturnType<
+  UmbrellaStore<M>["getUserThreads"]
 >;
 
 /**
@@ -1122,7 +1122,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
   }, [queryKey, incrementUserThreadsQuerySubscribers, getUserThreads, options]);
 
   const selector = useCallback(
-    (state: GetThreadsType<M>): ThreadsAsyncResult<M> => {
+    (state: GetUserThreadsType<M>): ThreadsAsyncResult<M> => {
       const query = state.queries[queryKey];
 
       if (query === undefined || query.isLoading) {
@@ -1146,9 +1146,9 @@ function useUserThreads_experimental<M extends BaseMetadata>(
   );
 
   return useSyncExternalStoreWithSelector(
-    store.subscribeThreads,
-    store.getThreads,
-    store.getThreads,
+    store.subscribeUserThreads,
+    store.getUserThreads,
+    store.getUserThreads,
     selector,
     shallow2 // NOTE: Using 2-level-deep shallow check here, because the result of selectThreads() is not stable!
   );
@@ -1190,7 +1190,7 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
     return incrementUserThreadsQuerySubscribers(queryKey);
   }, [client, queryKey]);
 
-  const query = store.getThreads().queries[queryKey];
+  const query = store.getUserThreads().queries[queryKey];
 
   if (query === undefined || query.isLoading) {
     throw getUserThreads(queryKey, options);
@@ -1201,7 +1201,7 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
   }
 
   const selector = useCallback(
-    (state: GetThreadsType<M>): ThreadsAsyncSuccess<M> => {
+    (state: GetUserThreadsType<M>): ThreadsAsyncSuccess<M> => {
       return {
         threads: selectThreads(state, {
           roomId: null, // Do _not_ filter by roomId
@@ -1215,9 +1215,9 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
   );
 
   return useSyncExternalStoreWithSelector(
-    store.subscribeThreads,
-    store.getThreads,
-    store.getThreads,
+    store.subscribeUserThreads,
+    store.getUserThreads,
+    store.getUserThreads,
     selector,
     shallow2 // NOTE: Using 2-level-deep shallow check here, because the result of selectThreads() is not stable!
   );

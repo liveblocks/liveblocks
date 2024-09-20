@@ -26,7 +26,10 @@ import {
 } from "@liveblocks/core";
 
 import { isMoreRecentlyUpdated } from "./lib/compare";
-import type { RoomNotificationSettingsAsyncResult } from "./types";
+import type {
+  RoomNotificationSettingsAsyncResult,
+  ThreadsAsyncResult,
+} from "./types";
 
 type OptimisticUpdate<M extends BaseMetadata> =
   | CreateThreadOptimisticUpdate<M>
@@ -254,10 +257,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // Auto-bind all of this class methods once here, so we can use stable
     // references to them (most important for use in useSyncExternalStore)
     this.getThreads = this.getThreads.bind(this);
+    this.getUserThreads = this.getUserThreads.bind(this);
     this.getInboxNotifications = this.getInboxNotifications.bind(this);
     this.getInboxNotificationsAsync =
       this.getInboxNotificationsAsync.bind(this);
     this.subscribeThreads = this.subscribeThreads.bind(this);
+    this.subscribeUserThreads = this.subscribeUserThreads.bind(this);
     this.subscribeInboxNotifications =
       this.subscribeInboxNotifications.bind(this);
     this.subscribeNotificationSettings =
@@ -283,6 +288,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   public getThreads(): UmbrellaStoreState<M> {
+    return this.get();
+  }
+
+  public getUserThreads(): UmbrellaStoreState<M> {
     return this.get();
   }
 
@@ -375,6 +384,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   public subscribeThreads(callback: () => void): () => void {
+    // TODO Make this actually only update when threads are invalidated
+    return this.subscribe(callback);
+  }
+
+  public subscribeUserThreads(callback: () => void): () => void {
     // TODO Make this actually only update when threads are invalidated
     return this.subscribe(callback);
   }
