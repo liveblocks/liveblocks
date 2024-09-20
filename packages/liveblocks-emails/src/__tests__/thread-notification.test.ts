@@ -306,32 +306,109 @@ describe("thread notification", () => {
       const expectedComment = makeCommentWithBody({ comment });
       const expected1: ThreadNotificationRawData = {
         type: "unreadMention",
-        comment: {
-          id: expectedComment.id,
-          userId: expectedComment.userId,
-          threadId: expectedComment.threadId,
-          roomId: expectedComment.roomId,
-          createdAt: expectedComment.createdAt,
-          url: undefined,
-          rawBody: expectedComment.body,
-        },
+        comment: makeCommentEmailRawData({
+          roomInfo: undefined,
+          comment: expectedComment,
+        }),
         roomInfo: {
           name: ROOM_ID_TEST,
         },
       };
       const expected2: ThreadNotificationRawData = {
         type: "unreadMention",
-        comment: {
-          id: expectedComment.id,
-          userId: expectedComment.userId,
-          threadId: expectedComment.threadId,
-          roomId: expectedComment.roomId,
-          createdAt: expectedComment.createdAt,
-          url: getResolvedCommentUrl(expectedComment.id),
-          rawBody: expectedComment.body,
-        },
+        comment: makeCommentEmailRawData({
+          roomInfo: RESOLVED_ROOM_INFO_TEST,
+          comment: expectedComment,
+        }),
         roomInfo: RESOLVED_ROOM_INFO_TEST,
       };
+      expect(preparedWithUnresolvedRoomInfo).toEqual(expected1);
+      expect(preparedWithResolvedRoomInfo).toEqual(expected2);
+    });
+
+    it("should prepare for unread replies comments", async () => {
+      const threadId = generateThreadId();
+      const comment1 = makeComment({
+        userId: "user-dracula",
+        threadId,
+        body: commentBody1,
+        createdAt: new Date("2024-09-10T08:10:00.000Z"),
+      });
+      const comment2 = makeComment({
+        userId: "user-mina",
+        threadId,
+        body: commentBody2,
+        createdAt: new Date("2024-09-10T08:14:00.000Z"),
+      });
+      const comment3 = makeComment({
+        userId: "user-carmilla",
+        threadId,
+        body: commentBody3,
+        createdAt: new Date("2024-09-10T08:16:00.000Z"),
+      });
+      const thread = makeThread({
+        threadId,
+        comments: [comment1, comment2, comment3],
+      });
+      const inboxNotification = makeThreadInboxNotification({
+        threadId,
+        notifiedAt: new Date("2024-09-10T08:20:00.000Z"),
+      });
+
+      server.use(
+        http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`, () =>
+          HttpResponse.json(thread, { status: 200 })
+        )
+      );
+
+      server.use(
+        http.get(
+          `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
+          () => HttpResponse.json(inboxNotification, { status: 200 })
+        )
+      );
+
+      const event = makeThreadNotificationEvent({
+        threadId,
+        userId: "user-dracula",
+        inboxNotificationId: inboxNotification.id,
+      });
+
+      const [preparedWithUnresolvedRoomInfo, preparedWithResolvedRoomInfo] =
+        await Promise.all([
+          prepareThreadNotificationEmailRawData({ client, event }),
+          prepareThreadNotificationEmailRawData({
+            client,
+            event,
+            options: { resolveRoomInfo },
+          }),
+        ]);
+      const expectedComments = [
+        makeCommentWithBody({ comment: comment2 }),
+        makeCommentWithBody({ comment: comment3 }),
+      ];
+
+      const expected1: ThreadNotificationRawData = {
+        type: "unreadReplies",
+        comments: expectedComments.map((c) =>
+          makeCommentEmailRawData({ roomInfo: undefined, comment: c })
+        ),
+        roomInfo: {
+          name: ROOM_ID_TEST,
+        },
+      };
+
+      const expected2: ThreadNotificationRawData = {
+        type: "unreadReplies",
+        comments: expectedComments.map((c) =>
+          makeCommentEmailRawData({
+            roomInfo: RESOLVED_ROOM_INFO_TEST,
+            comment: c,
+          })
+        ),
+        roomInfo: RESOLVED_ROOM_INFO_TEST,
+      };
+
       expect(preparedWithUnresolvedRoomInfo).toEqual(expected1);
       expect(preparedWithResolvedRoomInfo).toEqual(expected2);
     });
