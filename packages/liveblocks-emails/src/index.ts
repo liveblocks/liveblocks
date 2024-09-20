@@ -9,7 +9,7 @@ import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 /** @internal */
-export const getUnreadComments = ({
+const getUnreadComments = ({
   comments,
   inboxNotification,
   userId,
@@ -31,7 +31,7 @@ export const getUnreadComments = ({
 };
 
 /** @internal */
-export const getLastCommentWithMention = ({
+const getLastCommentWithMention = ({
   comments,
   mentionedUserId,
 }: {
