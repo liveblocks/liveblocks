@@ -15,6 +15,21 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 38 (2024-09-20)
 
+## 2.7.2
+
+### `@liveblocks/react`
+
+- Fix a bug where under some conditions threads could end up without comments.
+- Fix a bug where notifications associated to deleted threads would not be deleted.
+- Fix a bug where subsequent optimistic updates to the same inbox notification could sometimes not get applied correctly.
+
+## 2.7.1
+
+### `@liveblocks/react-lexical`
+
+- Fixed a bug where resolved threads remained visible in the editor and the
+  `AnchoredThreads` and `FloatingThreads` components.
+
 ## Examples
 
 - New [Linear-like Issue Tracker example](https://liveblocks.io/examples/linear-like-issue-tracker/nextjs-linear-like-issue-tracker).
@@ -28,7 +43,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Contributors
 
-ctnicholas
+ctnicholas, nimeshnayaju, marcbouchenoire
 
 # Week 37 (2024-09-13)
 
