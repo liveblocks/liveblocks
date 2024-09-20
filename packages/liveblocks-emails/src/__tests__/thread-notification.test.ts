@@ -1,11 +1,15 @@
 import { Liveblocks } from "@liveblocks/node";
 import { http, HttpResponse } from "msw";
 
-import type { ThreadNotificationData } from "../thread-notification";
+import type {
+  ThreadNotificationData,
+  ThreadNotificationRawData,
+} from "../thread-notification";
 import {
   extractThreadNotificationData,
   getLastUnreadCommentWithMention,
   getUnreadComments,
+  prepareThreadNotificationEmailRawData,
 } from "../thread-notification";
 import {
   buildCommentBodyWithMention,
@@ -13,11 +17,15 @@ import {
   commentBody2,
   commentBody3,
   generateThreadId,
+  getResolvedCommentUrl,
   makeComment,
   makeThread,
   makeThreadInboxNotification,
   makeThreadNotificationComment,
   makeThreadNotificationEvent,
+  RESOLVED_ROOM_INFO_TEST,
+  resolveRoomInfo,
+  ROOM_ID_TEST,
   server,
   SERVER_BASE_URL,
 } from "./_helpers";
@@ -29,7 +37,7 @@ describe("thread notification", () => {
 
   const client = new Liveblocks({ secret: "sk_xxx" });
 
-  describe("internals", () => {
+  describe("internals utils", () => {
     it("should get unread comments ", () => {
       const threadId = generateThreadId();
       const comment1 = makeComment({
@@ -205,6 +213,83 @@ describe("thread notification", () => {
         ],
       };
       expect(extracted).toEqual(expected);
+    });
+  });
+
+  describe("prepare thread notification email data", () => {
+    it("should prepare for last unread comment with mention", async () => {
+      const threadId = generateThreadId();
+      const comment = makeComment({
+        userId: "user-0",
+        threadId,
+        body: buildCommentBodyWithMention({ mentionedUserId: "user-1" }),
+        createdAt: new Date("2024-09-10T08:04:00.000Z"),
+      });
+      const thread = makeThread({ threadId, comments: [comment] });
+      const inboxNotification = makeThreadInboxNotification({
+        threadId,
+        notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
+      });
+
+      server.use(
+        http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`, () =>
+          HttpResponse.json(thread, { status: 200 })
+        )
+      );
+
+      server.use(
+        http.get(
+          `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
+          () => HttpResponse.json(inboxNotification, { status: 200 })
+        )
+      );
+
+      const event = makeThreadNotificationEvent({
+        threadId,
+        userId: "user-1",
+        inboxNotificationId: inboxNotification.id,
+      });
+
+      const [preparedWithUnresolvedRoomInfo, preparedWithResolvedRoomInfo] =
+        await Promise.all([
+          prepareThreadNotificationEmailRawData({ client, event }),
+          prepareThreadNotificationEmailRawData({
+            client,
+            event,
+            options: { resolveRoomInfo },
+          }),
+        ]);
+      const expectedComment = makeThreadNotificationComment({ comment });
+      const expected1: ThreadNotificationRawData = {
+        type: "unreadMention",
+        comment: {
+          id: expectedComment.id,
+          userId: expectedComment.userId,
+          threadId: expectedComment.threadId,
+          roomId: expectedComment.roomId,
+          createdAt: expectedComment.createdAt,
+          url: undefined,
+          rawBody: expectedComment.body,
+        },
+        roomInfo: {
+          name: ROOM_ID_TEST,
+        },
+      };
+      const expected2: ThreadNotificationRawData = {
+        type: "unreadMention",
+        comment: {
+          id: expectedComment.id,
+          userId: expectedComment.userId,
+          threadId: expectedComment.threadId,
+          roomId: expectedComment.roomId,
+          createdAt: expectedComment.createdAt,
+          url: getResolvedCommentUrl(expectedComment.id),
+          rawBody: expectedComment.body,
+        },
+        roomInfo: RESOLVED_ROOM_INFO_TEST,
+      };
+      expect(preparedWithUnresolvedRoomInfo).toEqual(expected1);
+      expect(preparedWithResolvedRoomInfo).toEqual(expected2);
     });
   });
 });

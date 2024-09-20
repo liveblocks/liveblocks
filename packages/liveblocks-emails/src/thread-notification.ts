@@ -1,11 +1,17 @@
 import type {
   BaseUserMeta,
+  CommentBody,
   CommentData,
   DRI,
-  // DU,
+  DU,
   InboxNotificationData,
+  OptionalPromise,
+  ResolveUsersArgs,
 } from "@liveblocks/core";
-import { getMentionedIdsFromCommentBody } from "@liveblocks/core";
+import {
+  generateCommentUrl,
+  getMentionedIdsFromCommentBody,
+} from "@liveblocks/core";
 import type { Liveblocks, ThreadNotificationEvent } from "@liveblocks/node";
 
 import type { CommentDataWithBody } from "./comment-with-body";
@@ -52,48 +58,6 @@ export const getLastUnreadCommentWithMention = ({
   );
 };
 
-export type CommentEmailData<U extends BaseUserMeta> = {
-  id: string;
-  threadId: string;
-  roomId: string;
-  author: U;
-  url?: string;
-};
-
-export type CommentEmailHTMLData<U extends BaseUserMeta> =
-  CommentEmailData<U> & {
-    htmlBody: string;
-  };
-
-export type CommentEmailReactData<U extends BaseUserMeta> =
-  CommentEmailData<U> & {
-    reactBody: JSX.Element;
-  };
-
-export type ThreadNotificationEmailUnreadRepliesData<
-  U extends BaseUserMeta,
-  C extends CommentEmailHTMLData<U> | CommentEmailReactData<U>,
-> = {
-  type: "unreadReplies";
-  comments: C[];
-};
-
-export type ThreadNotificationEmailUnreadMentionsData<
-  U extends BaseUserMeta,
-  C extends CommentEmailHTMLData<U> | CommentEmailReactData<U>,
-> = {
-  type: "unreadMention";
-  comment: C;
-};
-
-export type ThreadNotificationEmailData<
-  U extends BaseUserMeta,
-  C extends CommentEmailHTMLData<U> | CommentEmailReactData<U>,
-> = (
-  | ThreadNotificationEmailUnreadRepliesData<U, C>
-  | ThreadNotificationEmailUnreadMentionsData<U, C>
-) & { roomInfo: DRI };
-
 export type ThreadNotificationData =
   | { type: "unreadMention"; comment: CommentDataWithBody }
   | { type: "unreadReplies"; comments: CommentDataWithBody[] };
@@ -132,10 +96,140 @@ export const extractThreadNotificationData = async ({
   };
 };
 
-// export async function prepareThreadNotificationEmailHTMLData<
-//   U extends BaseUserMeta = DU,
-// >(): Promise<ThreadNotificationEmailData<U, CommentEmailHTMLData<U>>> {}
+export type CommentEmailBaseData<U extends BaseUserMeta = DU> = {
+  id: string;
+  threadId: string;
+  roomId: string;
+  author: U;
+  createdAt: Date;
+  url?: string;
+};
 
-// export async function prepareThreadNotificationEmailReactData<
-//   U extends BaseUserMeta = DU,
-// >(): Promise<ThreadNotificationEmailData<U, CommentEmailReactData<U>>> {}
+export type CommentEmailRawData = Omit<CommentEmailBaseData, "author"> & {
+  userId: string;
+  rawBody: CommentBody;
+};
+
+export type ResolveRoomInfoArgs = {
+  /**
+   * The ID of the room to resolve
+   */
+  roomId: string;
+};
+
+type PrepareThreadNotificationEmailRawDataOptions = {
+  /**
+   * A function that returns room info from room IDs.
+   */
+  resolveRoomInfo?: (
+    args: ResolveRoomInfoArgs
+  ) => OptionalPromise<DRI | undefined>;
+};
+
+export type ThreadNotificationRawData = (
+  | { type: "unreadMention"; comment: CommentEmailRawData }
+  | { type: "unreadReplies"; comments: CommentEmailRawData[] }
+) & { roomInfo: DRI };
+
+/** @internal */
+export const prepareThreadNotificationEmailRawData = async ({
+  client,
+  event,
+  options,
+}: {
+  client: Liveblocks;
+  event: ThreadNotificationEvent;
+  options?: PrepareThreadNotificationEmailRawDataOptions;
+}): Promise<ThreadNotificationRawData> => {
+  const { roomId } = event.data;
+
+  const roomInfo = options?.resolveRoomInfo
+    ? await options.resolveRoomInfo({ roomId })
+    : undefined;
+  const resolvedRoomInfo: DRI = {
+    ...roomInfo,
+    name: roomInfo?.name ?? roomId,
+  };
+
+  const extracted = await extractThreadNotificationData({ client, event });
+  if (extracted.type === "unreadMention") {
+    const { comment } = extracted;
+    const url = roomInfo?.url
+      ? generateCommentUrl({
+          roomUrl: roomInfo?.url,
+          commentId: comment.id,
+        })
+      : undefined;
+
+    return {
+      type: "unreadMention",
+      comment: {
+        id: comment.id,
+        userId: comment.userId,
+        threadId: comment.threadId,
+        roomId: comment.roomId,
+        createdAt: comment.createdAt,
+        url,
+        rawBody: comment.body,
+      },
+      roomInfo: resolvedRoomInfo,
+    };
+  }
+
+  return { type: "unreadReplies", comments: [], roomInfo: resolvedRoomInfo };
+};
+
+export type CommentEmailHTMLData<U extends BaseUserMeta> =
+  CommentEmailBaseData<U> & {
+    htmlBody: string;
+  };
+
+export type CommentEmailReactData<U extends BaseUserMeta> =
+  CommentEmailBaseData<U> & {
+    reactBody: JSX.Element;
+  };
+
+export type ThreadNotificationEmailUnreadRepliesData<
+  U extends BaseUserMeta,
+  C extends CommentEmailHTMLData<U> | CommentEmailReactData<U>,
+> = {
+  type: "unreadReplies";
+  comments: C[];
+};
+
+export type ThreadNotificationEmailUnreadMentionsData<
+  U extends BaseUserMeta,
+  C extends CommentEmailHTMLData<U> | CommentEmailReactData<U>,
+> = {
+  type: "unreadMention";
+  comment: C;
+};
+
+export type ThreadNotificationEmailData<
+  U extends BaseUserMeta,
+  C extends CommentEmailHTMLData<U> | CommentEmailReactData<U>,
+> = (
+  | ThreadNotificationEmailUnreadRepliesData<U, C>
+  | ThreadNotificationEmailUnreadMentionsData<U, C>
+) & { roomInfo: DRI };
+
+export type PrepareThreadNotificationEmailHTMLDataOptions<
+  U extends BaseUserMeta = DU,
+> = PrepareThreadNotificationEmailRawDataOptions & {
+  /**
+   * A function that returns info from user IDs.
+   */
+  resolveUsers?: (
+    args: ResolveUsersArgs
+  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+  // TEMP
+  commentBodyStyles: Record<string, string>;
+};
+
+// export async function prepareThreadNotificationEmailHTMLData(params: {
+//   client: Liveblocks;
+//   event: ThreadNotificationEvent;
+//   options?: PrepareThreadNotificationEmailHTMLDataOptions<BaseUserMeta>;
+// }): Promise<
+//   ThreadNotificationEmailData<BaseUserMeta, CommentEmailHTMLData<BaseUserMeta>>
+// > {}

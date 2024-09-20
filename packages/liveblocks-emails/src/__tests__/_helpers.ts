@@ -224,10 +224,12 @@ export const resolveUsers = <U extends BaseUserMeta = DU>({
   return users;
 };
 
-const RESOLVED_ROOM_INFO_TEST: DRI = {
+export const RESOLVED_ROOM_INFO_TEST: DRI = {
   name: `${ROOM_ID_TEST}-resolved`,
   url: "https://resend.com/",
 };
+export const getResolvedCommentUrl = (commentId: string): string =>
+  `https://resend.com/#${commentId}`;
 export const resolveRoomInfo = (): OptionalPromise<DRI | undefined> => {
   return RESOLVED_ROOM_INFO_TEST;
 };
