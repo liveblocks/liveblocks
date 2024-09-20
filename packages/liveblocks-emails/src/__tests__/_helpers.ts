@@ -8,6 +8,7 @@ import type {
   IUserInfo,
   OptionalPromise,
   ResolveUsersArgs,
+  ThreadData,
 } from "@liveblocks/core";
 import { nanoid } from "@liveblocks/core";
 import type { ThreadNotificationEvent } from "@liveblocks/node";
@@ -124,6 +125,22 @@ export const makeComment = ({
   ...(body !== undefined
     ? { body, deletedAt: undefined }
     : { body: undefined, deletedAt: new Date() }),
+});
+
+export const makeThread = ({
+  threadId,
+  comments = [],
+}: {
+  threadId: string;
+  comments?: CommentData[];
+}): ThreadData => ({
+  id: threadId,
+  type: "thread",
+  roomId: ROOM_ID_TEST,
+  metadata: {},
+  resolved: false,
+  createdAt: comments[0]?.createdAt ?? new Date(),
+  comments,
 });
 
 export const makeThreadInboxNotification = ({
