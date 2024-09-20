@@ -26,10 +26,7 @@ import {
 } from "@liveblocks/core";
 
 import { isMoreRecentlyUpdated } from "./lib/compare";
-import type {
-  RoomNotificationSettingsAsyncResult,
-  ThreadsAsyncResult,
-} from "./types";
+import type { RoomNotificationSettingsAsyncResult } from "./types";
 
 type OptimisticUpdate<M extends BaseMetadata> =
   | CreateThreadOptimisticUpdate<M>
@@ -291,8 +288,28 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this.get();
   }
 
-  public getThreadsAsync(): ThreadsAsyncResult<M> {
-    return this.get();
+  /**
+   * Returns the async result of the given queryKey. If the query is success,
+   * then it will return the entire store's state in the payload.
+   */
+  // TODO: This return type is a bit weird! Feels like we haven't found the
+  // right abstraction here yet.
+  public getThreadsAsync(
+    queryKey: string
+  ): AsyncResult<UmbrellaStoreState<M>, "fullState"> {
+    const internalState = this._store.get();
+
+    const query = internalState.queries[queryKey];
+    if (query === undefined || query.isLoading) {
+      return ASYNC_LOADING;
+    }
+
+    if (query.error) {
+      return query;
+    }
+
+    // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
+    return { isLoading: false, fullState: this.get() };
   }
 
   public getUserThreads(): UmbrellaStoreState<M> {

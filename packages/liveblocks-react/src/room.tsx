@@ -54,6 +54,7 @@ import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/w
 import { RoomContext, useIsInsideRoom, useRoomOrNull } from "./contexts";
 import { isString } from "./lib/guards";
 import { retryError } from "./lib/retry-error";
+import { shallow2 } from "./lib/shallow2";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
@@ -1444,38 +1445,35 @@ function useThreads<M extends BaseMetadata>(
     return incrementQuerySubscribers(queryKey);
   }, [room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const getter = React.useCallback(
+    () => store.getThreadsAsync(queryKey),
+    [store, queryKey]
+  );
+
   const selector = React.useCallback(
-    (state: UmbrellaStoreState<M>): ThreadsAsyncResult<M> => {
-      // TODO Don't make this the responsibility of the _selector_. It should be
-      // responsibility of the _getter_.
-      const query = state.queries[queryKey];
-      if (query === undefined || query.isLoading) {
-        return {
-          isLoading: true,
-        };
+    (result: ReturnType<typeof getter>): ThreadsAsyncResult<M> => {
+      if (!result.fullState) {
+        return result; // Loading or error state
       }
 
-      if (query.error) {
-        return query;
-      }
+      const threads = selectThreads(result.fullState, {
+        roomId: room.id,
+        query: options.query,
+        orderBy: "age",
+      });
 
-      return {
-        isLoading: false,
-        threads: selectThreads(state, {
-          roomId: room.id,
-          query: options.query,
-          orderBy: "age",
-        }),
-      };
+      // "Map" the success state, by selecting the threads and returning only those parts externally
+      return { isLoading: false, threads };
     },
-    [room, queryKey] // eslint-disable-line react-hooks/exhaustive-deps
+    [room.id, queryKey] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const state = useSyncExternalStoreWithSelector(
     store.subscribeThreads,
-    store.getThreads,
-    store.getThreads,
-    selector
+    getter,
+    getter,
+    selector,
+    shallow2
   );
 
   useScrollToCommentOnLoadEffect(scrollOnLoad, state);
