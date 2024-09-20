@@ -47,8 +47,8 @@ import type {
   RoomInfoAsyncSuccess,
   SharedContextBundle,
   ThreadsQuery,
-  ThreadsState,
-  ThreadsStateSuccess,
+  ThreadsAsyncResult,
+  ThreadsAsyncSuccess,
   UserAsyncResult,
   UserAsyncSuccess,
   UseUserThreadsOptions,
@@ -1103,7 +1103,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
       metadata: {},
     },
   }
-): ThreadsState<M> {
+): ThreadsAsyncResult<M> {
   const queryKey = React.useMemo(
     () => makeUserThreadsQueryKey(options.query),
     [options]
@@ -1120,7 +1120,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
   }, [queryKey, incrementUserThreadsQuerySubscribers, getUserThreads, options]);
 
   const selector = useCallback(
-    (state: GetThreadsType<M>): ThreadsState<M> => {
+    (state: GetThreadsType<M>): ThreadsAsyncResult<M> => {
       const query = state.queries[queryKey];
 
       if (query === undefined || query.isLoading) {
@@ -1173,7 +1173,7 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
       metadata: {},
     },
   }
-): ThreadsStateSuccess<M> {
+): ThreadsAsyncSuccess<M> {
   const queryKey = React.useMemo(
     () => makeUserThreadsQueryKey(options.query),
     [options]
@@ -1199,7 +1199,7 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
   }
 
   const selector = useCallback(
-    (state: GetThreadsType<M>): ThreadsStateSuccess<M> => {
+    (state: GetThreadsType<M>): ThreadsAsyncSuccess<M> => {
       return {
         threads: selectThreads(state, {
           roomId: null, // Do _not_ filter by roomId

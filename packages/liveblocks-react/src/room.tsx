@@ -72,18 +72,18 @@ import type {
   DeleteCommentOptions,
   EditCommentOptions,
   EditThreadMetadataOptions,
-  HistoryVersionDataState,
-  HistoryVersionsState,
-  HistoryVersionsStateSuccess,
+  HistoryVersionDataAsyncResult,
+  HistoryVersionsAsyncResult,
+  HistoryVersionsAsyncSuccess,
   MutationContext,
   OmitFirstArg,
   RoomContextBundle,
-  RoomNotificationSettingsState,
-  RoomNotificationSettingsStateSuccess,
+  RoomNotificationSettingsAsyncResult,
+  RoomNotificationSettingsAsyncSuccess,
   RoomProviderProps,
   StorageStatusSuccess,
-  ThreadsState,
-  ThreadsStateSuccess,
+  ThreadsAsyncResult,
+  ThreadsAsyncSuccess,
   ThreadSubscription,
   UseStorageStatusOptions,
   UseThreadsOptions,
@@ -1425,7 +1425,7 @@ function useThreads<M extends BaseMetadata>(
   options: UseThreadsOptions<M> = {
     query: { metadata: {} },
   }
-): ThreadsState<M> {
+): ThreadsAsyncResult<M> {
   const { scrollOnLoad = true } = options;
   const client = useClient();
   const room = useRoom();
@@ -1445,7 +1445,7 @@ function useThreads<M extends BaseMetadata>(
   }, [room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selector = React.useCallback(
-    (state: UmbrellaStoreState<M>): ThreadsState<M> => {
+    (state: UmbrellaStoreState<M>): ThreadsAsyncResult<M> => {
       // TODO Don't make this the responsibility of the _selector_. It should be
       // responsibility of the _getter_.
       const query = state.queries[queryKey];
@@ -2136,7 +2136,7 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
  * const [{ settings }, updateSettings] = useRoomNotificationSettings();
  */
 function useRoomNotificationSettings(): [
-  RoomNotificationSettingsState,
+  RoomNotificationSettingsAsyncResult,
   (settings: Partial<RoomNotificationSettings>) => void,
 ] {
   const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
@@ -2175,7 +2175,7 @@ function useRoomNotificationSettings(): [
  * const [{ settings }, updateSettings] = useRoomNotificationSettings();
  */
 function useRoomNotificationSettingsSuspense(): [
-  RoomNotificationSettingsStateSuccess,
+  RoomNotificationSettingsAsyncSuccess,
   (settings: Partial<RoomNotificationSettings>) => void,
 ] {
   const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
@@ -2215,8 +2215,10 @@ function useRoomNotificationSettingsSuspense(): [
  * @example
  * const {data} = useHistoryVersionData(versionId);
  */
-function useHistoryVersionData(versionId: string): HistoryVersionDataState {
-  const [state, setState] = React.useState<HistoryVersionDataState>({
+function useHistoryVersionData(
+  versionId: string
+): HistoryVersionDataAsyncResult {
+  const [state, setState] = React.useState<HistoryVersionDataAsyncResult>({
     isLoading: true,
   });
   const room = useRoom();
@@ -2254,7 +2256,7 @@ function useHistoryVersionData(versionId: string): HistoryVersionDataState {
  * @example
  * const { versions, error, isLoading } = useHistoryVersions();
  */
-function useHistoryVersions(): HistoryVersionsState {
+function useHistoryVersions(): HistoryVersionsAsyncResult {
   const client = useClient();
   const room = useRoom();
 
@@ -2286,7 +2288,7 @@ function useHistoryVersions(): HistoryVersionsState {
  * @example
  * const { versions } = useHistoryVersions();
  */
-function useHistoryVersionsSuspense(): HistoryVersionsStateSuccess {
+function useHistoryVersionsSuspense(): HistoryVersionsAsyncSuccess {
   const client = useClient();
   const room = useRoom();
 
@@ -2489,7 +2491,7 @@ function useThreadsSuspense<M extends BaseMetadata>(
   options: UseThreadsOptions<M> = {
     query: { metadata: {} },
   }
-): ThreadsStateSuccess<M> {
+): ThreadsAsyncSuccess<M> {
   const { scrollOnLoad = true } = options;
 
   const client = useClient();
@@ -2513,7 +2515,7 @@ function useThreadsSuspense<M extends BaseMetadata>(
   }
 
   const selector = React.useCallback(
-    (state: ReturnType<typeof store.getThreads>): ThreadsStateSuccess<M> => {
+    (state: ReturnType<typeof store.getThreads>): ThreadsAsyncSuccess<M> => {
       return {
         threads: selectThreads(state, {
           roomId: room.id,

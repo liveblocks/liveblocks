@@ -153,8 +153,8 @@ type UpdateNotificationSettingsOptimisticUpdate = {
   settings: Partial<RoomNotificationSettings>;
 };
 
-type QueryState = AsyncResult<undefined>;
-//                            ^^^^^^^^^ We don't store the actual query result in this status
+type QueryAsyncResult = AsyncResult<undefined>;
+//                                  ^^^^^^^^^ We don't store the actual query result in this status
 
 const QUERY_STATE_LOADING = Object.freeze({ isLoading: true });
 const QUERY_STATE_OK = Object.freeze({ isLoading: false, data: undefined });
@@ -173,7 +173,7 @@ export function makeVersionsQueryKey(roomId: string) {
 }
 
 type InternalState<M extends BaseMetadata> = Readonly<{
-  queries: Record<string, QueryState>;
+  queries: Record<string, QueryAsyncResult>;
   optimisticUpdates: readonly OptimisticUpdate<M>[];
 
   rawThreadsById: Record<string, ThreadDataWithDeleteInfo<M>>;
@@ -194,7 +194,7 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
    * e.g. 'room-abc-{}'               - loading
    */
   // TODO Query state should not be exposed publicly by the store!
-  queries: Record<string, QueryState>;
+  queries: Record<string, QueryAsyncResult>;
 
   /**
    * All threads in a sorted array, optimistic updates applied, without deleted
@@ -444,7 +444,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }));
   }
 
-  private setQueryState(queryKey: string, queryState: QueryState): void {
+  private setQueryState(queryKey: string, queryState: QueryAsyncResult): void {
     this._store.set((state) => ({
       ...state,
       queries: {

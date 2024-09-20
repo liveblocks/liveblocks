@@ -130,22 +130,22 @@ export type CommentReactionOptions = {
   emoji: string;
 };
 
-export type ThreadsStateSuccess<M extends BaseMetadata> = AsyncSuccess<ThreadData<M>[], "threads">; // prettier-ignore
-export type ThreadsState<M extends BaseMetadata> = AsyncResult<ThreadData<M>[], "threads">; // prettier-ignore
+export type ThreadsAsyncSuccess<M extends BaseMetadata> = AsyncSuccess<ThreadData<M>[], "threads">; // prettier-ignore
+export type ThreadsAsyncResult<M extends BaseMetadata> = AsyncResult<ThreadData<M>[], "threads">; // prettier-ignore
 
-export type InboxNotificationsStateSuccess = AsyncSuccess<InboxNotificationData[], "inboxNotifications">; // prettier-ignore
-export type InboxNotificationsState = AsyncResult<InboxNotificationData[], "inboxNotifications">; // prettier-ignore
+export type InboxNotificationsAsyncSuccess = AsyncSuccess<InboxNotificationData[], "inboxNotifications">; // prettier-ignore
+export type InboxNotificationsAsyncResult = AsyncResult<InboxNotificationData[], "inboxNotifications">; // prettier-ignore
 
-export type UnreadInboxNotificationsCountStateSuccess = AsyncSuccess<number, "count">; // prettier-ignore
-export type UnreadInboxNotificationsCountState = AsyncResult<number, "count">;
+export type UnreadInboxNotificationsCountAsyncSuccess = AsyncSuccess<number, "count">; // prettier-ignore
+export type UnreadInboxNotificationsCountAsyncResult = AsyncResult<number, "count">; // prettier-ignore
 
-export type RoomNotificationSettingsStateSuccess = AsyncSuccess<RoomNotificationSettings, "settings">; // prettier-ignore
-export type RoomNotificationSettingsState = AsyncResult<RoomNotificationSettings, "settings">; // prettier-ignore
+export type RoomNotificationSettingsAsyncSuccess = AsyncSuccess<RoomNotificationSettings, "settings">; // prettier-ignore
+export type RoomNotificationSettingsAsyncResult = AsyncResult<RoomNotificationSettings, "settings">; // prettier-ignore
 
-export type HistoryVersionDataState = AsyncResult<Uint8Array>;
+export type HistoryVersionDataAsyncResult = AsyncResult<Uint8Array>;
 
-export type HistoryVersionsStateSuccess = AsyncSuccess<HistoryVersion[], "versions">; // prettier-ignore
-export type HistoryVersionsState = AsyncResult<HistoryVersion[], "versions">;
+export type HistoryVersionsAsyncSuccess = AsyncSuccess<HistoryVersion[], "versions">; // prettier-ignore
+export type HistoryVersionsAsyncResult = AsyncResult<HistoryVersion[], "versions">; // prettier-ignore
 
 export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
   // prettier-ignore
@@ -885,7 +885,7 @@ export type RoomContextBundle<
        * @example
        * const { threads, error, isLoading } = useThreads();
        */
-      useThreads(options?: UseThreadsOptions<M>): ThreadsState<M>;
+      useThreads(options?: UseThreadsOptions<M>): ThreadsAsyncResult<M>;
 
       /**
        * Returns the user's notification settings for the current room
@@ -895,7 +895,7 @@ export type RoomContextBundle<
        * const [{ settings }, updateSettings] = useRoomNotificationSettings();
        */
       useRoomNotificationSettings(): [
-        RoomNotificationSettingsState,
+        RoomNotificationSettingsAsyncResult,
         (settings: Partial<RoomNotificationSettings>) => void,
       ];
 
@@ -905,7 +905,7 @@ export type RoomContextBundle<
        * @example
        * const { versions, error, isLoading } = useHistoryVersions();
        */
-      useHistoryVersions(): HistoryVersionsState;
+      useHistoryVersions(): HistoryVersionsAsyncResult;
 
       /**
        * (Private beta) Returns the data of a specific version of the current room.
@@ -913,7 +913,7 @@ export type RoomContextBundle<
        * @example
        * const { data, error, isLoading } = useHistoryVersionData(version.id);
        */
-      useHistoryVersionData(id: string): HistoryVersionDataState;
+      useHistoryVersionData(id: string): HistoryVersionDataAsyncResult;
 
       suspense: Resolve<
         RoomContextBundleCommon<P, S, U, E, M> &
@@ -990,7 +990,7 @@ export type RoomContextBundle<
              * @example
              * const { threads } = useThreads();
              */
-            useThreads(options?: UseThreadsOptions<M>): ThreadsStateSuccess<M>;
+            useThreads(options?: UseThreadsOptions<M>): ThreadsAsyncSuccess<M>;
 
             /**
              * (Private beta) Returns a history of versions of the current room.
@@ -998,7 +998,7 @@ export type RoomContextBundle<
              * @example
              * const { versions } = useHistoryVersions();
              */
-            useHistoryVersions(): HistoryVersionsStateSuccess;
+            useHistoryVersions(): HistoryVersionsAsyncSuccess;
 
             // /**
             //  * Returns the data of a specific version of the current room's history.
@@ -1016,7 +1016,7 @@ export type RoomContextBundle<
              * const [{ settings }, updateSettings] = useRoomNotificationSettings();
              */
             useRoomNotificationSettings(): [
-              RoomNotificationSettingsStateSuccess,
+              RoomNotificationSettingsAsyncSuccess,
               (settings: Partial<RoomNotificationSettings>) => void,
             ];
           }
@@ -1100,7 +1100,7 @@ export type LiveblocksContextBundle<
        * @example
        * const { inboxNotifications, error, isLoading } = useInboxNotifications();
        */
-      useInboxNotifications(): InboxNotificationsState;
+      useInboxNotifications(): InboxNotificationsAsyncResult;
 
       /**
        * Returns the number of unread inbox notifications for the current user.
@@ -1108,7 +1108,7 @@ export type LiveblocksContextBundle<
        * @example
        * const { count, error, isLoading } = useUnreadInboxNotificationsCount();
        */
-      useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountState;
+      useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountAsyncResult;
 
       /**
        * @experimental
@@ -1118,7 +1118,7 @@ export type LiveblocksContextBundle<
        */
       useUserThreads_experimental(
         options?: UseUserThreadsOptions<M>
-      ): ThreadsState<M>;
+      ): ThreadsAsyncResult<M>;
 
       suspense: Resolve<
         LiveblocksContextBundleCommon<M> &
@@ -1129,7 +1129,7 @@ export type LiveblocksContextBundle<
              * @example
              * const { inboxNotifications } = useInboxNotifications();
              */
-            useInboxNotifications(): InboxNotificationsStateSuccess;
+            useInboxNotifications(): InboxNotificationsAsyncSuccess;
 
             /**
              * Returns the number of unread inbox notifications for the current user.
@@ -1137,7 +1137,7 @@ export type LiveblocksContextBundle<
              * @example
              * const { count } = useUnreadInboxNotificationsCount();
              */
-            useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountStateSuccess;
+            useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountAsyncSuccess;
 
             /**
              * @experimental
@@ -1147,7 +1147,7 @@ export type LiveblocksContextBundle<
              */
             useUserThreads_experimental(
               options?: UseUserThreadsOptions<M>
-            ): ThreadsStateSuccess<M>;
+            ): ThreadsAsyncSuccess<M>;
           }
       >;
     }
