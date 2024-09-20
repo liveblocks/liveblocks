@@ -14,7 +14,6 @@ import type {
   User,
 } from "@liveblocks/client";
 import type {
-  AsyncLoading,
   AsyncResult,
   AsyncSuccess,
   BaseMetadata,
@@ -131,21 +130,8 @@ export type CommentReactionOptions = {
   emoji: string;
 };
 
-export type ThreadsStateLoading = AsyncLoading<"threads">;
 export type ThreadsStateSuccess<M extends BaseMetadata> = AsyncSuccess<ThreadData<M>[], "threads">; // prettier-ignore
-
-// XXX Refactor this type away! We should NOT have threads & error state simultaneously!
-// XXX Re-express this as AsyncSuccess<ThreadData<M>[], 'threads'>
-export type ThreadsStateResolved<M extends BaseMetadata> = {
-  isLoading: false;
-  threads: ThreadData<M>[];
-  error?: Error;
-};
-
-export type ThreadsState<M extends BaseMetadata> =
-  | ThreadsStateLoading
-  // XXX Refactor this member away! We should NOT have threads & error state simultaneously!
-  | ThreadsStateResolved<M>;
+export type ThreadsState<M extends BaseMetadata> = AsyncResult<ThreadData<M>[], "threads">; // prettier-ignore
 
 export type InboxNotificationsStateSuccess = AsyncSuccess<InboxNotificationData[], "inboxNotifications">; // prettier-ignore
 export type InboxNotificationsState = AsyncResult<InboxNotificationData[], "inboxNotifications">; // prettier-ignore

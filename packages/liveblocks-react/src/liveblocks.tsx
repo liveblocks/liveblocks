@@ -1124,17 +1124,11 @@ function useUserThreads_experimental<M extends BaseMetadata>(
       const query = state.queries[queryKey];
 
       if (query === undefined || query.isLoading) {
-        return {
-          isLoading: true,
-        };
+        return { isLoading: true };
       }
 
       if (query.error !== undefined) {
-        return {
-          threads: [],
-          error: query.error,
-          isLoading: false,
-        };
+        return query;
       }
 
       return {

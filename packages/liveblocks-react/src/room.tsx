@@ -1455,14 +1455,17 @@ function useThreads<M extends BaseMetadata>(
         };
       }
 
+      if (query.error) {
+        return query;
+      }
+
       return {
+        isLoading: false,
         threads: selectThreads(state, {
           roomId: room.id,
           query: options.query,
           orderBy: "age",
         }),
-        isLoading: false,
-        error: query.error,
       };
     },
     [room, queryKey] // eslint-disable-line react-hooks/exhaustive-deps

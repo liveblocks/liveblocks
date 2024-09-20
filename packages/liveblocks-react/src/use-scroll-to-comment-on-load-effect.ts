@@ -9,7 +9,7 @@ function handleScrollToCommentOnLoad(
 ) {
   if (shouldScrollOnLoad === false) return;
 
-  if (state.isLoading) return;
+  if (!state.threads) return;
 
   const isWindowDefined = typeof window !== "undefined";
   if (!isWindowDefined) return;
