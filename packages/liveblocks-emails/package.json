@@ -1,7 +1,7 @@
 {
   "name": "@liveblocks/emails",
   "version": "2.7.2",
-  "description": "TODO",
+  "description": "A set of functions and utilities to prepare data to send emails from notifications. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
   "type": "commonjs",
   "main": "./dist/index.js",
