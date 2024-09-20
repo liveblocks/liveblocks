@@ -255,13 +255,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // references to them (most important for use in useSyncExternalStore)
     this.getThreads = this.getThreads.bind(this);
     this.getUserThreads = this.getUserThreads.bind(this);
-    this.getInboxNotifications = this.getInboxNotifications.bind(this);
+    this.getThreadsAndInboxNotifications =
+      this.getThreadsAndInboxNotifications.bind(this);
     this.getInboxNotificationsAsync =
       this.getInboxNotificationsAsync.bind(this);
     this.subscribeThreads = this.subscribeThreads.bind(this);
     this.subscribeUserThreads = this.subscribeUserThreads.bind(this);
-    this.subscribeInboxNotifications =
-      this.subscribeInboxNotifications.bind(this);
+    this.subscribeThreadsOrInboxNotifications =
+      this.subscribeThreadsOrInboxNotifications.bind(this);
     this.subscribeNotificationSettings =
       this.subscribeNotificationSettings.bind(this);
     this.subscribeVersions = this.subscribeVersions.bind(this);
@@ -335,7 +336,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   public getInboxNotifications(): UmbrellaStoreState<M> {
-    // TODO Now that we have getInboxNotificationsAsync, can we get rid of this method already?
+    return this.get();
+  }
+
+  public getThreadsAndInboxNotifications(): UmbrellaStoreState<M> {
     return this.get();
   }
 
@@ -432,7 +436,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this.subscribe(callback);
   }
 
-  public subscribeInboxNotifications(callback: () => void): () => void {
+  public subscribeThreadsOrInboxNotifications(
+    callback: () => void
+  ): () => void {
     // TODO Make this actually only update when inbox notifications are invalidated
     return this.subscribe(callback);
   }

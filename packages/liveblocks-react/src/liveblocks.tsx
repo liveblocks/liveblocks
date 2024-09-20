@@ -58,14 +58,6 @@ import type {
 import type { UmbrellaStoreState } from "./umbrella-store";
 import { INBOX_NOTIFICATIONS_QUERY, UmbrellaStore } from "./umbrella-store";
 
-// NOTE: These helper types are only temporarily needed while we're refactoring things
-// NOTE: The reason we cannot inline them into the selectors is that the react-hooks/exchaustive-deps lint rule will think
-type GetInboxNotificationsType<M extends BaseMetadata = BaseMetadata> =
-  ReturnType<UmbrellaStore<M>["getInboxNotifications"]>;
-type GetUserThreadsType<M extends BaseMetadata = BaseMetadata> = ReturnType<
-  UmbrellaStore<M>["getUserThreads"]
->;
-
 /**
  * Raw access to the React context where the LiveblocksProvider stores the
  * current client. Exposed for advanced use cases only.
@@ -610,7 +602,7 @@ function useInboxNotifications_withClient(client: OpaqueClient) {
   useEffect(startPolling, [startPolling]);
 
   return useSyncExternalStoreWithSelector(
-    store.subscribeInboxNotifications,
+    store.subscribeThreadsOrInboxNotifications,
     store.getInboxNotificationsAsync,
     store.getInboxNotificationsAsync,
     identity,
@@ -642,7 +634,7 @@ function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
   useEffect(startPolling, [startPolling]);
 
   return useSyncExternalStoreWithSelector(
-    store.subscribeInboxNotifications,
+    store.subscribeThreadsOrInboxNotifications,
     store.getInboxNotificationsAsync,
     store.getInboxNotificationsAsync,
     selectorFor_useUnreadInboxNotificationsCount,
@@ -778,8 +770,10 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
 ): ThreadData<M> {
   const { store } = getExtrasForClient<M>(client);
 
+  const getter = store.getThreadsAndInboxNotifications;
+
   const selector = useCallback(
-    (state: GetInboxNotificationsType<M>) => {
+    (state: ReturnType<typeof getter>) => {
       const inboxNotification =
         state.inboxNotificationsById[inboxNotificationId] ??
         raise(`Inbox notification with ID "${inboxNotificationId}" not found`);
@@ -802,9 +796,9 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
   );
 
   return useSyncExternalStoreWithSelector(
-    store.subscribeInboxNotifications,
-    store.getInboxNotifications,
-    store.getInboxNotifications,
+    store.subscribeThreadsOrInboxNotifications, // Re-evaluate if we need to update any time the notification changes over time
+    getter,
+    getter,
     selector
   );
 }
@@ -1199,8 +1193,10 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
     throw query.error;
   }
 
+  const getter = store.getUserThreads;
+
   const selector = useCallback(
-    (state: GetUserThreadsType<M>): ThreadsAsyncSuccess<M> => {
+    (state: ReturnType<typeof getter>): ThreadsAsyncSuccess<M> => {
       return {
         threads: selectThreads(state, {
           roomId: null, // Do _not_ filter by roomId
@@ -1215,8 +1211,8 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
 
   return useSyncExternalStoreWithSelector(
     store.subscribeUserThreads,
-    store.getUserThreads,
-    store.getUserThreads,
+    getter,
+    getter,
     selector,
     shallow2 // NOTE: Using 2-level-deep shallow check here, because the result of selectThreads() is not stable!
   );
