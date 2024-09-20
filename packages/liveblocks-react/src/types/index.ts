@@ -14,7 +14,8 @@ import type {
   User,
 } from "@liveblocks/client";
 import type {
-  AsyncResultWithDataField,
+  AsyncResult,
+  AsyncSuccess,
   BaseMetadata,
   Client,
   CommentBody,
@@ -89,18 +90,11 @@ export type UseThreadsOptions<M extends BaseMetadata> = {
   scrollOnLoad?: boolean;
 };
 
-export type UserAsyncResult<T> = AsyncResultWithDataField<T, "user">;
-export type UserAsyncSuccess<T> = Resolve<
-  UserAsyncResult<T> & { readonly isLoading: false; readonly error?: undefined }
->;
+export type UserAsyncResult<T> = AsyncResult<T, "user">;
+export type UserAsyncSuccess<T> = AsyncSuccess<T, "user">;
 
-export type RoomInfoAsyncResult = AsyncResultWithDataField<DRI, "info">;
-export type RoomInfoAsyncSuccess = Resolve<
-  RoomInfoAsyncResult & {
-    readonly isLoading: false;
-    readonly error?: undefined;
-  }
->;
+export type RoomInfoAsyncResult = AsyncResult<DRI, "info">;
+export type RoomInfoAsyncSuccess = AsyncSuccess<DRI, "info">;
 
 // prettier-ignore
 export type CreateThreadOptions<M extends BaseMetadata> =

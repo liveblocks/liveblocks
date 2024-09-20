@@ -7,7 +7,6 @@ import type {
 } from "@liveblocks/client";
 import type {
   AsyncResult,
-  AsyncResultWithDataField,
   BaseRoomInfo,
   DM,
   DU,
@@ -121,11 +120,8 @@ function selectUnreadInboxNotificationsCount(
 }
 
 function selectorFor_useUnreadInboxNotificationsCount(
-  result: AsyncResultWithDataField<
-    InboxNotificationData[],
-    "inboxNotifications"
-  >
-): AsyncResultWithDataField<number, "count"> {
+  result: AsyncResult<InboxNotificationData[], "inboxNotifications">
+): AsyncResult<number, "count"> {
   if (!result.inboxNotifications) {
     // Can be loading or error states
     return result;

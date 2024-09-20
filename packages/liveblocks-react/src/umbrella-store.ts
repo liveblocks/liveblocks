@@ -1,6 +1,5 @@
 import type {
   AsyncResult,
-  AsyncResultWithDataField,
   BaseMetadata,
   CommentData,
   CommentReaction,
@@ -292,7 +291,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   // NOTE: This will read the async result, but WILL NOT start loading at the moment!
-  public getInboxNotificationsAsync(): AsyncResultWithDataField<
+  public getInboxNotificationsAsync(): AsyncResult<
     InboxNotificationData[],
     "inboxNotifications"
   > {
@@ -315,7 +314,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // NOTE: This will read the async result, but WILL NOT start loading at the moment!
   public getNotificationSettingsAsync(
     roomId: string
-  ): AsyncResultWithDataField<RoomNotificationSettings, "settings"> {
+  ): AsyncResult<RoomNotificationSettings, "settings"> {
     const state = this.get();
 
     const query = state.queries[makeNotificationSettingsQueryKey(roomId)];
@@ -336,7 +335,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   public getVersionsAsync(
     roomId: string
-  ): AsyncResultWithDataField<HistoryVersion[], "versions"> {
+  ): AsyncResult<HistoryVersion[], "versions"> {
     const state = this.get();
 
     const query = state.queries[makeVersionsQueryKey(roomId)];
