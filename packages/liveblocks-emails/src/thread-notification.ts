@@ -1,4 +1,9 @@
-import type { CommentData, InboxNotificationData } from "@liveblocks/core";
+import type {
+  BaseUserMeta,
+  CommentData,
+  DU,
+  InboxNotificationData,
+} from "@liveblocks/core";
 import { getMentionedIdsFromCommentBody } from "@liveblocks/core";
 
 import type { CommentDataWithBody } from "./comment-with-body";
@@ -43,4 +48,11 @@ export const getLastCommentWithMention = ({
         return mentionedUserIds.includes(mentionedUserId);
       }) ?? null
   );
+};
+
+export type CommentEmailData<U extends BaseUserMeta = DU> = {
+  id: string;
+  threadId: string;
+  roomId: string;
+  author: U;
 };
