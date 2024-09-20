@@ -291,9 +291,18 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this.get();
   }
 
+  public getThreadsAsync(): ThreadsAsyncResult<M> {
+    return this.get();
+  }
+
   public getUserThreads(): UmbrellaStoreState<M> {
     return this.get();
   }
+
+  // XXX Add soon, too
+  // public getUserThreadsAsync(): ThreadsAsyncResult<M> {
+  //   return this.get();
+  // }
 
   public getInboxNotifications(): UmbrellaStoreState<M> {
     // TODO Now that we have getInboxNotificationsAsync, can we get rid of this method already?
