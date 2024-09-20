@@ -70,7 +70,7 @@ export type CommentEmailReactData<U extends BaseUserMeta> =
 
 export type ThreadNotificationEmailUnreadRepliesData<
   U extends BaseUserMeta,
-  C = CommentEmailHTMLData<U> | CommentEmailReactData<U>,
+  C extends CommentEmailHTMLData<U> | CommentEmailReactData<U>,
 > = {
   type: "unreadReplies";
   comments: C[];
@@ -78,13 +78,16 @@ export type ThreadNotificationEmailUnreadRepliesData<
 
 export type ThreadNotificationEmailUnreadMentionsData<
   U extends BaseUserMeta,
-  C = CommentEmailHTMLData<U> | CommentEmailReactData<U>,
+  C extends CommentEmailHTMLData<U> | CommentEmailReactData<U>,
 > = {
   type: "unreadMention";
   comment: C;
 };
 
-export type ThreadNotificationEmailData<U extends BaseUserMeta> = (
-  | ThreadNotificationEmailUnreadRepliesData<U>
-  | ThreadNotificationEmailUnreadMentionsData<U>
+export type ThreadNotificationEmailData<
+  U extends BaseUserMeta,
+  C extends CommentEmailHTMLData<U> | CommentEmailReactData<U>,
+> = (
+  | ThreadNotificationEmailUnreadRepliesData<U, C>
+  | ThreadNotificationEmailUnreadMentionsData<U, C>
 ) & { roomInfo: DRI };
