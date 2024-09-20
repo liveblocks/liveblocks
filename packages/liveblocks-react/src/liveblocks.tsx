@@ -1135,7 +1135,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
       // "Map" the success state, by selecting the threads and returning only those parts externally
       return { isLoading: false, threads };
     },
-    [queryKey, options]
+    [options]
   );
 
   return useSyncExternalStoreWithSelector(
