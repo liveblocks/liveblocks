@@ -1,4 +1,5 @@
 import type {
+  BaseRoomInfo,
   BaseUserMeta,
   CommentBody,
   CommentData,
@@ -132,6 +133,32 @@ export type ThreadNotificationRawData = (
 ) & { roomInfo: DRI };
 
 /** @internal */
+export const makeCommentEmailRawData = ({
+  roomInfo,
+  comment,
+}: {
+  roomInfo: BaseRoomInfo | undefined;
+  comment: CommentDataWithBody;
+}): CommentEmailRawData => {
+  const url = roomInfo?.url
+    ? generateCommentUrl({
+        roomUrl: roomInfo?.url,
+        commentId: comment.id,
+      })
+    : undefined;
+
+  return {
+    id: comment.id,
+    userId: comment.userId,
+    threadId: comment.threadId,
+    roomId: comment.roomId,
+    createdAt: comment.createdAt,
+    url,
+    rawBody: comment.body,
+  };
+};
+
+/** @internal */
 export const prepareThreadNotificationEmailRawData = async ({
   client,
   event,
@@ -153,30 +180,23 @@ export const prepareThreadNotificationEmailRawData = async ({
 
   const extracted = await extractThreadNotificationData({ client, event });
   if (extracted.type === "unreadMention") {
-    const { comment } = extracted;
-    const url = roomInfo?.url
-      ? generateCommentUrl({
-          roomUrl: roomInfo?.url,
-          commentId: comment.id,
-        })
-      : undefined;
-
     return {
       type: "unreadMention",
-      comment: {
-        id: comment.id,
-        userId: comment.userId,
-        threadId: comment.threadId,
-        roomId: comment.roomId,
-        createdAt: comment.createdAt,
-        url,
-        rawBody: comment.body,
-      },
+      comment: makeCommentEmailRawData({
+        roomInfo,
+        comment: extracted.comment,
+      }),
       roomInfo: resolvedRoomInfo,
     };
   }
 
-  return { type: "unreadReplies", comments: [], roomInfo: resolvedRoomInfo };
+  return {
+    type: "unreadReplies",
+    comments: extracted.comments.map((comment) =>
+      makeCommentEmailRawData({ roomInfo, comment })
+    ),
+    roomInfo: resolvedRoomInfo,
+  };
 };
 
 export type CommentEmailHTMLData<U extends BaseUserMeta> =

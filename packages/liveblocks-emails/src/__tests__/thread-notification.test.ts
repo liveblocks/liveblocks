@@ -2,6 +2,7 @@ import { Liveblocks } from "@liveblocks/node";
 import { http, HttpResponse } from "msw";
 
 import type {
+  CommentEmailRawData,
   ThreadNotificationData,
   ThreadNotificationRawData,
 } from "../thread-notification";
@@ -9,6 +10,7 @@ import {
   extractThreadNotificationData,
   getLastUnreadCommentWithMention,
   getUnreadComments,
+  makeCommentEmailRawData,
   prepareThreadNotificationEmailRawData,
 } from "../thread-notification";
 import {
@@ -19,9 +21,9 @@ import {
   generateThreadId,
   getResolvedCommentUrl,
   makeComment,
+  makeCommentWithBody,
   makeThread,
   makeThreadInboxNotification,
-  makeThreadNotificationComment,
   makeThreadNotificationEvent,
   RESOLVED_ROOM_INFO_TEST,
   resolveRoomInfo,
@@ -152,7 +154,7 @@ describe("thread notification", () => {
       const extracted = await extractThreadNotificationData({ client, event });
       const expected: ThreadNotificationData = {
         type: "unreadMention",
-        comment: makeThreadNotificationComment({ comment }),
+        comment: makeCommentWithBody({ comment }),
       };
       expect(extracted).toEqual(expected);
     });
@@ -208,11 +210,53 @@ describe("thread notification", () => {
       const expected: ThreadNotificationData = {
         type: "unreadReplies",
         comments: [
-          makeThreadNotificationComment({ comment: comment2 }),
-          makeThreadNotificationComment({ comment: comment3 }),
+          makeCommentWithBody({ comment: comment2 }),
+          makeCommentWithBody({ comment: comment3 }),
         ],
       };
       expect(extracted).toEqual(expected);
+    });
+
+    it("should make a comment email raw data", () => {
+      const threadId = generateThreadId();
+      const comment = makeComment({
+        userId: "user-0",
+        threadId,
+        body: commentBody1,
+      });
+
+      const commentWithBody = makeCommentWithBody({ comment });
+      const commentEmailRawData1 = makeCommentEmailRawData({
+        roomInfo: undefined,
+        comment: commentWithBody,
+      });
+      const commentEmailRawData2 = makeCommentEmailRawData({
+        roomInfo: RESOLVED_ROOM_INFO_TEST,
+        comment: commentWithBody,
+      });
+
+      const expected1: CommentEmailRawData = {
+        id: commentWithBody.id,
+        userId: commentWithBody.userId,
+        threadId: commentWithBody.threadId,
+        roomId: commentWithBody.roomId,
+        createdAt: commentWithBody.createdAt,
+        url: undefined,
+        rawBody: commentWithBody.body,
+      };
+
+      const expected2: CommentEmailRawData = {
+        id: commentWithBody.id,
+        userId: commentWithBody.userId,
+        threadId: commentWithBody.threadId,
+        roomId: commentWithBody.roomId,
+        createdAt: commentWithBody.createdAt,
+        url: getResolvedCommentUrl(commentWithBody.id),
+        rawBody: commentWithBody.body,
+      };
+
+      expect(commentEmailRawData1).toEqual(expected1);
+      expect(commentEmailRawData2).toEqual(expected2);
     });
   });
 
@@ -259,7 +303,7 @@ describe("thread notification", () => {
             options: { resolveRoomInfo },
           }),
         ]);
-      const expectedComment = makeThreadNotificationComment({ comment });
+      const expectedComment = makeCommentWithBody({ comment });
       const expected1: ThreadNotificationRawData = {
         type: "unreadMention",
         comment: {

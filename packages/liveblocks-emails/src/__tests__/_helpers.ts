@@ -141,6 +141,19 @@ export const makeComment = ({
     : { body: undefined, deletedAt: new Date() }),
 });
 
+export const makeCommentWithBody = ({
+  comment,
+}: {
+  comment: CommentData;
+}): CommentDataWithBody => {
+  const { body, ...rest } = comment;
+  return {
+    ...rest,
+    body: body ?? commentBody1,
+    deletedAt: undefined,
+  };
+};
+
 export const makeThread = ({
   threadId,
   comments = [],
@@ -193,19 +206,6 @@ export const makeThreadNotificationEvent = ({
     createdAt: new Date().toISOString(),
   },
 });
-
-export const makeThreadNotificationComment = ({
-  comment,
-}: {
-  comment: CommentData;
-}): CommentDataWithBody => {
-  const { body, ...rest } = comment;
-  return {
-    ...rest,
-    body: body ?? commentBody1,
-    deletedAt: undefined,
-  };
-};
 
 export const resolveUsers = <U extends BaseUserMeta = DU>({
   userIds,
