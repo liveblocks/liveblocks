@@ -47,8 +47,9 @@ declare module "@tiptap/core" {
 }
 
 export type ThreadPluginState = {
-  selectedThreadPos: number | null;
+  threadPositions: Map<string, { from: number; to: number }>;
   selectedThreadId: string | null;
+  selectedThreadPos: number | null;
   decorations: DecorationSet;
 };
 
@@ -116,25 +117,28 @@ const Comment = Mark.create({
    */
   addProseMirrorPlugins() {
     const updateState = (doc: Node, selectedThreadId: string | null) => {
-      let selectedThreadPos: number | null = null;
+      const threadPositions = new Map<string, { from: number; to: number }>();
       const decorations: Decoration[] = [];
+      // find all thread marks and store their position + create decoration for selected thread
       doc.descendants((node, pos) => {
         node.marks.forEach((mark) => {
           if (mark.type === this.type) {
             const thisThreadId = mark.attrs.threadId;
-            if (selectedThreadId === thisThreadId) {
-              const from = pos;
-              const to = from + node.nodeSize;
+            const from = pos;
+            const to = from + node.nodeSize;
 
-              // We want the selected thread position to be at the end of the thread
-              // forgive the double ternary, but it just says "if it's not been set, set it, if it has, set it if it's bigger"
-              // we beed this because there can be multiple marks with the same thread ID
-              selectedThreadPos =
-                selectedThreadPos === null
-                  ? to
-                  : selectedThreadPos < to
-                    ? to
-                    : selectedThreadPos;
+            // FloatingThreads component uses "to" as the position, so always store the largest "to" found
+            // AnchoredThreads component uses "from" as the position, so always store the smallest "from" found
+            const currentPosition = threadPositions.get(thisThreadId) ?? {
+              from: Infinity,
+              to: 0,
+            };
+            threadPositions.set(thisThreadId, {
+              from: Math.min(from, currentPosition.from),
+              to: Math.max(to, currentPosition.to),
+            });
+
+            if (selectedThreadId === thisThreadId) {
               decorations.push(
                 Decoration.inline(from, to, {
                   class: "lb-thread-editor-selected",
@@ -147,7 +151,11 @@ const Comment = Mark.create({
       return {
         decorations: DecorationSet.create(doc, decorations),
         selectedThreadId,
-        selectedThreadPos,
+        threadPositions,
+        selectedThreadPos:
+          selectedThreadId !== null
+            ? threadPositions.get(selectedThreadId)?.to ?? null
+            : null,
       };
     };
 
@@ -157,8 +165,9 @@ const Comment = Mark.create({
         state: {
           init() {
             return {
-              selectedThreadPos: null,
+              threadPositions: new Map<string, { from: number; to: number }>(),
               selectedThreadId: null,
+              selectedThreadPos: null,
               decorations: DecorationSet.empty,
             } as ThreadPluginState;
           },
