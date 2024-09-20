@@ -1,6 +1,7 @@
 import type {
   BaseUserMeta,
   CommentData,
+  DRI,
   InboxNotificationData,
 } from "@liveblocks/core";
 import { getMentionedIdsFromCommentBody } from "@liveblocks/core";
@@ -66,3 +67,24 @@ export type CommentEmailReactData<U extends BaseUserMeta> =
   CommentEmailData<U> & {
     reactBody: JSX.Element;
   };
+
+export type ThreadNotificationEmailUnreadRepliesData<
+  U extends BaseUserMeta,
+  C = CommentEmailHTMLData<U> | CommentEmailReactData<U>,
+> = {
+  type: "unreadReplies";
+  comments: C[];
+};
+
+export type ThreadNotificationEmailUnreadMentionsData<
+  U extends BaseUserMeta,
+  C = CommentEmailHTMLData<U> | CommentEmailReactData<U>,
+> = {
+  type: "unreadMention";
+  comment: C;
+};
+
+export type ThreadNotificationEmailData<U extends BaseUserMeta> = (
+  | ThreadNotificationEmailUnreadRepliesData<U>
+  | ThreadNotificationEmailUnreadMentionsData<U>
+) & { roomInfo: DRI };
