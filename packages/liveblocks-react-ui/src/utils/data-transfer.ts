@@ -23,7 +23,7 @@ export function getFiles(dataTransfer: DataTransfer) {
   //
   // Example: Copying an image from a website
   if (!files.length) {
-    files = Array.from(dataTransfer.files);
+    files = Array.from(dataTransfer.files).filter((file) => file.type !== "");
   }
 
   return files;
