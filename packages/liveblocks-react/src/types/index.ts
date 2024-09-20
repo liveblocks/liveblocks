@@ -163,22 +163,7 @@ export type RoomNotificationSettingsStateError = AsyncError<"settings">;
 export type RoomNotificationSettingsStateSuccess = AsyncSuccess<RoomNotificationSettings, "settings">; // prettier-ignore
 export type RoomNotificationSettingsState = AsyncResult<RoomNotificationSettings, "settings">; // prettier-ignore
 
-export type HistoryVersionDataStateLoading = AsyncLoading;
-export type HistoryVersionDataStateError = AsyncError;
-
-// XXX Refactor this type away! We should NOT have data & error state simultaneously!
-// XXX Re-express this as AsyncSuccess<Uint8Array>
-export type HistoryVersionDataStateResolved = {
-  isLoading: false;
-  data: Uint8Array;
-  error?: Error;
-};
-
-export type HistoryVersionDataState =
-  | HistoryVersionDataStateLoading
-  // XXX Refactor this member away! We should NOT have threads & error state simultaneously!
-  | HistoryVersionDataStateResolved
-  | HistoryVersionDataStateError;
+export type HistoryVersionDataState = AsyncResult<Uint8Array>;
 
 export type HistoryVersionsStateLoading = AsyncLoading<"versions">;
 export type HistoryVersionsStateError = AsyncError<"versions">;
