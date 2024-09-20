@@ -14,6 +14,7 @@ import type {
   User,
 } from "@liveblocks/client";
 import type {
+  AsyncLoading,
   AsyncResult,
   AsyncSuccess,
   BaseMetadata,
@@ -130,12 +131,14 @@ export type CommentReactionOptions = {
   emoji: string;
 };
 
-export type ThreadsStateLoading = {
-  isLoading: true;
-  threads?: never;
-  error?: never;
-};
+export type ThreadsStateLoading = AsyncLoading<"threads">;
+export type ThreadsStateSuccess<M extends BaseMetadata> = AsyncSuccess<
+  ThreadData<M>[],
+  "threads"
+>;
 
+// XXX Refactor this type away! We should NOT have threads & error state simultaneously!
+// XXX Re-express this as AsyncSuccess<ThreadData<M>[], 'threads'>
 export type ThreadsStateResolved<M extends BaseMetadata> = {
   isLoading: false;
   threads: ThreadData<M>[];
