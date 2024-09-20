@@ -141,6 +141,11 @@ body {
   color: #555;
 }
 
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .button.square {
   padding: 0;
   width: 2rem;
@@ -152,15 +157,25 @@ body {
   color: #953939;
 }
 
-.button:hover,
-.button:focus-visible {
+.button.primary {
+  background: #000;
+  color: #fff;
+}
+
+.button:enabled:hover,
+.button:enabled:focus-visible {
   background: #e8e8e8;
   cursor: pointer;
 }
 
-.button.destructive:hover,
-.button.destructive:focus-visible{
+.button.destructive:enabled:hover,
+.button.destructive:enabled:focus-visible {
   background: #ffd6d6;
+}
+
+.button.primary:enabled:hover,
+.button.primary:enabled:focus-visible {
+  background: #333;
 }
 
 .loading,
