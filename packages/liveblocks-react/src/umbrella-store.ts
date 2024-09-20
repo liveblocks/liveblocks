@@ -26,6 +26,7 @@ import {
 } from "@liveblocks/core";
 
 import { isMoreRecentlyUpdated } from "./lib/compare";
+import type { RoomNotificationSettingsAsyncResult } from "./types";
 
 type OptimisticUpdate<M extends BaseMetadata> =
   | CreateThreadOptimisticUpdate<M>
@@ -314,7 +315,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // NOTE: This will read the async result, but WILL NOT start loading at the moment!
   public getNotificationSettingsAsync(
     roomId: string
-  ): AsyncResult<RoomNotificationSettings, "settings"> {
+  ): RoomNotificationSettingsAsyncResult {
     const state = this.get();
 
     const query = state.queries[makeNotificationSettingsQueryKey(roomId)];

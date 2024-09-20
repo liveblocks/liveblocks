@@ -42,13 +42,15 @@ import { shallow2 } from "./lib/shallow2";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { use } from "./lib/use-polyfill";
 import type {
+  InboxNotificationsAsyncResult,
   LiveblocksContextBundle,
   RoomInfoAsyncResult,
   RoomInfoAsyncSuccess,
   SharedContextBundle,
-  ThreadsQuery,
   ThreadsAsyncResult,
   ThreadsAsyncSuccess,
+  ThreadsQuery,
+  UnreadInboxNotificationsCountAsyncResult,
   UserAsyncResult,
   UserAsyncSuccess,
   UseUserThreadsOptions,
@@ -120,8 +122,8 @@ function selectUnreadInboxNotificationsCount(
 }
 
 function selectorFor_useUnreadInboxNotificationsCount(
-  result: AsyncResult<InboxNotificationData[], "inboxNotifications">
-): AsyncResult<number, "count"> {
+  result: InboxNotificationsAsyncResult
+): UnreadInboxNotificationsCountAsyncResult {
   if (!result.inboxNotifications) {
     // Can be loading or error states
     return result;
