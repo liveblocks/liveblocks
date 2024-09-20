@@ -243,7 +243,7 @@ export type PrepareThreadNotificationEmailHTMLDataOptions<
     args: ResolveUsersArgs
   ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
   // TEMP
-  commentBodyStyles: Record<string, string>;
+  commentBodyStyles?: Record<string, string>;
 };
 
 // export async function prepareThreadNotificationEmailHTMLData(params: {
