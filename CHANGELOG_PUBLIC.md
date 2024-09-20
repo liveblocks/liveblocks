@@ -42,8 +42,8 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 - Rewritten Lexical Text Editor get started guides for [Next.js](https://liveblocks.io/docs/get-started/nextjs-lexical) and [React](https://liveblocks.io/docs/get-started/react-lexical), adding [`AnchoredThreads`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#AnchoredThreads) and [`FloatingThreads`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#FloatingThreads).
 
 ## Dashboard
-- Fix a bug where room detail storage wasn't fetched correctly and not displayed in the room detail storage tab.
-- Fix a bug where room storage couldn't be deleted from the room detail storage tab.
+- Fix a bug where room storage data wasn't fetched correctly and not displayed in the room detail storage tab.
+- Fix a bug where room storage data couldn't be deleted from the room detail storage tab.
 
 ## Contributors
 
