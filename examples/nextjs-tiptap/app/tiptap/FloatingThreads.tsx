@@ -26,10 +26,10 @@ import React, {
 } from "react";
 import { createPortal } from "react-dom";
 import { Editor } from "@tiptap/react";
-import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
 import { classNames } from "./classnames";
 import { ThreadPluginActions, ThreadPluginState, THREADS_PLUGIN_KEY } from "./LiveblocksExtension";
+import { getRectFromCoords } from "./utils";
 
 type ThreadPanelComponents = {
   Thread: ComponentType<ThreadProps>;
@@ -84,13 +84,7 @@ export function FloatingThreads({
       selectedThreadId === thread.id
     );
     setActiveThreads({
-      rect: {
-        ...coords,
-        x: coords.left,
-        y: coords.top,
-        width: coords.right - coords.left,
-        height: coords.bottom - coords.top,
-      }, threads: active
+      rect: getRectFromCoords(coords), threads: active
     });
   }, [pluginState, threads]);
 

@@ -6,7 +6,7 @@ import { Editor } from "@tiptap/react";
 import React, { ComponentRef, FormEvent, forwardRef, useCallback, useEffect } from "react";
 import { autoUpdate, flip, hide, limitShift, offset, shift, size, useFloating } from "@floating-ui/react-dom";
 import { TextSelection } from "@tiptap/pm/state";
-
+import { getRectFromCoords } from "./utils";
 
 export type FloatingComposerProps<M extends BaseMetadata = DM> = Omit<
   ComposerProps<M>,
@@ -65,15 +65,7 @@ export const FloatingComposer = forwardRef<
       const coords = editor.view.coordsAtPos(Math.min(seclection.from, editor.state.doc.content.size - 1));
       if (coords) {
         setReference({
-          getBoundingClientRect: () => {
-            return {
-              ...coords,
-              x: coords.left,
-              y: coords.top,
-              width: coords.right - coords.left,
-              height: coords.bottom - coords.top,
-            }
-          },
+          getBoundingClientRect: () => getRectFromCoords(coords)
         });
       }
     }

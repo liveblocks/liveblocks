@@ -212,3 +212,52 @@ li::marker {
 .lb-editor-active-selection {
   background-color: rgba(58, 58, 255, 0.318);
 }
+
+/**
+ * anchored threads TODO: move into package
+ */
+
+.lb-lexical-anchored-threads {
+  --lb-lexical-anchored-threads-gap: 1.25rem;
+  --lb-lexical-anchored-threads-active-thread-offset: -0.75rem;
+}
+
+.lb-lexical-anchored-threads-thread-container {
+  transition-duration: calc(var(--lb-transition-duration) * 2);
+  transition-property: transform;
+}
+
+@media (prefers-reduced-motion) {
+  .lb-lexical-anchored-threads-thread-container {
+    transition-duration: 0s;
+  }
+}
+
+.lb-lexical-anchored-threads-thread {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--lb-radius);
+  background: var(--lb-dynamic-background);
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 4%),
+    0 2px 6px rgb(0 0 0 / 4%),
+    0 6px 20px rgb(0 0 0 / 6%);
+  transition-property: background, box-shadow;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    box-shadow: var(--lb-inset-shadow);
+    pointer-events: none;
+  }
+
+  &:where([data-state="active"]) {
+    box-shadow:
+      0 0 0 1px rgb(0 0 0 / 4%),
+      0 2px 6px rgb(0 0 0 / 8%),
+      0 8px 26px rgb(0 0 0 / 12%);
+  }
+}
