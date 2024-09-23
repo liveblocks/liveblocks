@@ -134,13 +134,8 @@ export function createBatchUsersResolver<U extends BaseUserMeta = DU>({
   const batchUsersResolver = new BatchUsersResolver(resolveUsers);
 
   const resolve = async (): Promise<void> => {
-    try {
-      warnIfNoResolveUsers();
-      await batchUsersResolver.resolve();
-    } catch (err) {
-      console.error("error while batch resolving users", err);
-      throw err;
-    }
+    warnIfNoResolveUsers();
+    await batchUsersResolver.resolve();
   };
 
   return {

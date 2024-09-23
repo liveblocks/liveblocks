@@ -285,6 +285,9 @@ export type ThreadNotificationEmailAsHTML = ThreadNotificationEmailData<
   CommentEmailAsHTMLData<BaseUserMeta>
 >;
 
+/**
+ * TODO add jsdoc
+ */
 export async function prepareThreadNotificationEmailAsHTML(params: {
   client: Liveblocks;
   event: ThreadNotificationEvent;
