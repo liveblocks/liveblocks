@@ -30,25 +30,16 @@ export { createClient, NotificationsApiError } from "./client";
 export type { CommentDataWithBody } from "./comments/comment";
 export { filterCommentsWithBody } from "./comments/comment";
 export type {
-  CommentBodyJson,
-  CommentBodyJsonBlockElement,
-  CommentBodyJsonInlineElement,
-  CommentBodyJsonLink,
-  CommentBodyJsonMention,
-  CommentBodyJsonParagraph,
-  CommentBodyJsonText,
   CommentBodyLinkElementArgs,
   CommentBodyMentionElementArgs,
   CommentBodyParagraphElementArgs,
   CommentBodyTextElementArgs,
   StringifyCommentBodyElements,
   StringifyCommentBodyOptions,
-  TransformCommentBodyOptions,
 } from "./comments/comment-body";
 export {
   getMentionedIdsFromCommentBody,
   stringifyCommentBody,
-  transformCommentBody,
 } from "./comments/comment-body";
 export { generateCommentUrl } from "./comments/comment-url";
 export type { BaseAuthResult, Delegates, LiveblocksError } from "./connection";
