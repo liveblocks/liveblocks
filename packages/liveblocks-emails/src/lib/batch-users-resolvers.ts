@@ -63,10 +63,11 @@ class BatchUsersResolver<U extends BaseUserMeta> {
   };
 
   async resolve(): Promise<void> {
+    // Note: set an array of unique user ids
     const userIds = Array.from(
       new Set(
         Array.from(this.resolveUsersPromises.values()).flatMap(
-          (entry) => entry.args.userIds
+          ({ args }) => args.userIds
         )
       )
     );
