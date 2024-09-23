@@ -63,7 +63,7 @@ export function Thread({ thread, className, ...props }: ThreadProps) {
           onPressedChange={handleResolvedChange}
           asChild
         >
-          <Button>
+          <Button variant={thread.resolved ? "secondary" : "primary"}>
             {thread.resolved ? "Mark as unresolved" : "Mark as resolved"}
           </Button>
         </Toggle.Root>
@@ -77,10 +77,11 @@ export function Thread({ thread, className, ...props }: ThreadProps) {
         className="border-t border-gray-200"
         placeholder="Reply to thread…"
         submit="Reply"
-        onComposerSubmit={({ body }) => {
+        onComposerSubmit={({ body, attachments }) => {
           createComment({
             threadId: thread.id,
             body,
+            attachments,
           });
         }}
       />
