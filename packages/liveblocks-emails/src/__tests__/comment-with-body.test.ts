@@ -1,4 +1,4 @@
-import { filterCommentsWithBody } from "../comment-with-body";
+import { filterCommentsWithBody } from "../lib/comment-with-body";
 import { commentBody1, generateThreadId, makeComment } from "./_helpers";
 
 describe("Comment with body", () => {
