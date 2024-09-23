@@ -429,13 +429,18 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     try {
       const result = await request;
 
-      store.updateThreadsAndNotifications(
-        result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
-        result.inboxNotifications,
-        [],
-        [],
-        queryKey
-      );
+      store.batch(() => {
+        // 1️⃣
+        store.updateThreadsAndNotifications(
+          result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
+          result.inboxNotifications,
+          [],
+          []
+        );
+
+        // 2️⃣
+        store.setQuery2OK(queryKey);
+      });
 
       const lastRequestedAt = lastRequestedAtByRoom.get(room.id);
 
