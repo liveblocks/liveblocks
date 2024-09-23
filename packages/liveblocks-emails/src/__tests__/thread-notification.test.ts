@@ -217,7 +217,7 @@ describe("thread notification", () => {
       expect(extracted).toEqual(expected);
     });
 
-    it("should make a comment email raw data", () => {
+    it("should make a comment email base data", () => {
       const threadId = generateThreadId();
       const comment = makeComment({
         userId: "user-0",
@@ -260,7 +260,7 @@ describe("thread notification", () => {
     });
   });
 
-  describe("prepare thread notification email data", () => {
+  describe("prepare thread notification email base data", () => {
     it("should prepare for last unread comment with mention", async () => {
       const threadId = generateThreadId();
       const comment = makeComment({
