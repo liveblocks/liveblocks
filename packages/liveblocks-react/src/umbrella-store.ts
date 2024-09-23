@@ -174,7 +174,14 @@ export function makeVersionsQueryKey(roomId: string) {
 }
 
 type InternalState<M extends BaseMetadata> = Readonly<{
-  queries: Record<string, QueryAsyncResult>;
+  // This is a temporary refactoring artifact from Vincent and Nimesh.
+  // Each query corresponds to a resource which should eventually have its own type.
+  // This is why we split it for now.
+  queries1: Record<string, QueryAsyncResult>; // Inbox notifications
+  queries2: Record<string, QueryAsyncResult>; // Threads
+  queries3: Record<string, QueryAsyncResult>; // Notification settings
+  queries4: Record<string, QueryAsyncResult>; // Versions
+
   optimisticUpdates: readonly OptimisticUpdate<M>[];
 
   rawThreadsById: Record<string, ThreadDataWithDeleteInfo<M>>;
@@ -195,7 +202,10 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
    * e.g. 'room-abc-{}'               - loading
    */
   // TODO Query state should not be exposed publicly by the store!
-  queries: Record<string, QueryAsyncResult>;
+  queries1: Record<string, QueryAsyncResult>; // Inbox notifications
+  queries2: Record<string, QueryAsyncResult>; // Threads
+  queries3: Record<string, QueryAsyncResult>; // Notification settings
+  queries4: Record<string, QueryAsyncResult>; // Versions
 
   /**
    * All threads in a sorted array, optimistic updates applied, without deleted
@@ -244,7 +254,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
   constructor() {
     this._store = createStore<InternalState<M>>({
       rawThreadsById: {},
-      queries: {},
+      // queries: {},
+      queries1: {},
+      queries2: {},
+      queries3: {},
+      queries4: {},
       optimisticUpdates: [],
       inboxNotificationsById: {},
       notificationSettingsByRoomId: {},
@@ -300,7 +314,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): AsyncResult<UmbrellaStoreState<M>, "fullState"> {
     const internalState = this._store.get();
 
-    const query = internalState.queries[queryKey];
+    const query = internalState.queries2[queryKey];
     if (query === undefined || query.isLoading) {
       return ASYNC_LOADING;
     }
@@ -322,7 +336,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): AsyncResult<UmbrellaStoreState<M>, "fullState"> {
     const internalState = this._store.get();
 
-    const query = internalState.queries[queryKey];
+    const query = internalState.queries2[queryKey];
     if (query === undefined || query.isLoading) {
       return ASYNC_LOADING;
     }
@@ -350,7 +364,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   > {
     const internalState = this._store.get();
 
-    const query = internalState.queries[INBOX_NOTIFICATIONS_QUERY];
+    const query = internalState.queries1[INBOX_NOTIFICATIONS_QUERY];
     if (query === undefined || query.isLoading) {
       return ASYNC_LOADING;
     }
@@ -370,7 +384,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): RoomNotificationSettingsAsyncResult {
     const state = this.get();
 
-    const query = state.queries[makeNotificationSettingsQueryKey(roomId)];
+    const query = state.queries3[makeNotificationSettingsQueryKey(roomId)];
     if (query === undefined || query.isLoading) {
       return ASYNC_LOADING;
     }
@@ -391,7 +405,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): AsyncResult<HistoryVersion[], "versions"> {
     const state = this.get();
 
-    const query = state.queries[makeVersionsQueryKey(roomId)];
+    const query = state.queries4[makeVersionsQueryKey(roomId)];
     if (query === undefined || query.isLoading) {
       return ASYNC_LOADING;
     }
@@ -504,11 +518,40 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }));
   }
 
-  private setQueryState(queryKey: string, queryState: QueryAsyncResult): void {
+  private setQuery1State(queryKey: string, queryState: QueryAsyncResult): void {
     this._store.set((state) => ({
       ...state,
-      queries: {
-        ...state.queries,
+      queries1: {
+        ...state.queries1,
+        [queryKey]: queryState,
+      },
+    }));
+  }
+
+  private setQuery2State(queryKey: string, queryState: QueryAsyncResult): void {
+    this._store.set((state) => ({
+      ...state,
+      queries2: {
+        ...state.queries2,
+        [queryKey]: queryState,
+      },
+    }));
+  }
+  private setQuery3State(queryKey: string, queryState: QueryAsyncResult): void {
+    this._store.set((state) => ({
+      ...state,
+      queries3: {
+        ...state.queries3,
+        [queryKey]: queryState,
+      },
+    }));
+  }
+
+  private setQuery4State(queryKey: string, queryState: QueryAsyncResult): void {
+    this._store.set((state) => ({
+      ...state,
+      queries4: {
+        ...state.queries4,
         [queryKey]: queryState,
       },
     }));
@@ -862,7 +905,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
     inboxNotifications: InboxNotificationData[],
     deletedThreads: ThreadDeleteInfo[],
     deletedInboxNotifications: InboxNotificationDeleteInfo[],
-    queryKey?: string
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    queryKey?: "INBOX_NOTIFICATIONS" | (string & {})
   ): void {
     // Batch 1️⃣ + 2️⃣ + 3️⃣
     this._store.batch(() => {
@@ -884,7 +928,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
       // 3️⃣
       if (queryKey !== undefined) {
-        this.setQueryOK(queryKey);
+        if (queryKey === "INBOX_NOTIFICATIONS") {
+          this.setQuery1OK(queryKey);
+        } else {
+          this.setQuery2OK(queryKey);
+        }
       }
     });
   }
@@ -912,7 +960,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): void {
     // Batch 1️⃣ + 2️⃣
     this._store.batch(() => {
-      this.setQueryOK(queryKey); // 1️⃣
+      this.setQuery3OK(queryKey); // 1️⃣
       this.setNotificationSettings(roomId, settings); // 2️⃣
     });
   }
@@ -928,7 +976,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
       // 2️⃣
       if (queryKey !== undefined) {
-        this.setQueryOK(queryKey);
+        this.setQuery4OK(queryKey);
       }
     });
   }
@@ -952,16 +1000,56 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // Query State APIs
   //
 
-  public setQueryLoading(queryKey: string): void {
-    this.setQueryState(queryKey, ASYNC_LOADING);
+  // Query 1
+  public setQuery1Loading(queryKey: string): void {
+    this.setQuery1State(queryKey, ASYNC_LOADING);
   }
 
-  private setQueryOK(queryKey: string): void {
-    this.setQueryState(queryKey, ASYNC_OK);
+  private setQuery1OK(queryKey: string): void {
+    this.setQuery1State(queryKey, ASYNC_OK);
   }
 
-  public setQueryError(queryKey: string, error: Error): void {
-    this.setQueryState(queryKey, { isLoading: false, error });
+  public setQuery1Error(queryKey: string, error: Error): void {
+    this.setQuery1State(queryKey, { isLoading: false, error });
+  }
+
+  // Query 2
+  public setQuery2Loading(queryKey: string): void {
+    this.setQuery2State(queryKey, ASYNC_LOADING);
+  }
+
+  private setQuery2OK(queryKey: string): void {
+    this.setQuery2State(queryKey, ASYNC_OK);
+  }
+
+  public setQuery2Error(queryKey: string, error: Error): void {
+    this.setQuery2State(queryKey, { isLoading: false, error });
+  }
+
+  // Query 3
+  public setQuery3Loading(queryKey: string): void {
+    this.setQuery3State(queryKey, ASYNC_LOADING);
+  }
+
+  private setQuery3OK(queryKey: string): void {
+    this.setQuery3State(queryKey, ASYNC_OK);
+  }
+
+  public setQuery3Error(queryKey: string, error: Error): void {
+    this.setQuery3State(queryKey, { isLoading: false, error });
+  }
+
+  // Query 4
+  public setQuery4Loading(queryKey: string): void {
+    this.setQuery4State(queryKey, ASYNC_LOADING);
+  }
+
+  private setQuery4OK(queryKey: string): void {
+    this.setQuery4State(queryKey, ASYNC_OK);
+  }
+
+  public setQuery4Error(queryKey: string, error: Error): void {
+    this.setQuery4State(queryKey, { isLoading: false, error });
   }
 }
 
@@ -1246,7 +1334,10 @@ function internalToExternalState<M extends BaseMetadata>(
     inboxNotifications: cleanedNotifications,
     inboxNotificationsById: computed.inboxNotificationsById,
     notificationSettingsByRoomId: computed.notificationSettingsByRoomId,
-    queries: state.queries,
+    queries1: state.queries1,
+    queries2: state.queries2,
+    queries3: state.queries3,
+    queries4: state.queries4,
     threads: cleanedThreads,
     threadsById: computed.threadsById,
     versionsByRoomId: state.versionsByRoomId,
