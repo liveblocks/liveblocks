@@ -34,6 +34,7 @@ import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
 import type { DE, DM, DP, DS, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
+import { autoRetry } from "./lib/autoRetry";
 import type { BatchStore } from "./lib/batch";
 import { Batch, createBatchStore } from "./lib/batch";
 import { chunk } from "./lib/chunk";
@@ -3247,15 +3248,27 @@ export function createRoom<
 
     if (attachment.size <= ATTACHMENT_PART_SIZE) {
       // If the file is small enough, upload it in a single request
-      return fetchCommentsJson<CommentAttachment>(
-        `/attachments/${encodeURIComponent(attachment.id)}/upload/${encodeURIComponent(attachment.name)}`,
-        {
-          method: "PUT",
-          body: attachment.file,
-          signal: abortSignal,
-        },
-        {
-          fileSize: attachment.size,
+      return autoRetry(
+        () =>
+          fetchCommentsJson<CommentAttachment>(
+            `/attachments/${encodeURIComponent(attachment.id)}/upload/${encodeURIComponent(attachment.name)}`,
+            {
+              method: "PUT",
+              body: attachment.file,
+              signal: abortSignal,
+            },
+            {
+              fileSize: attachment.size,
+            }
+          ),
+        5,
+        [5000, 10000, 15000, 20000],
+        () => {
+          if (abortSignal?.aborted) {
+            throw abortError;
+          }
+
+          return false;
         }
       );
     } else {
@@ -3267,17 +3280,29 @@ export function createRoom<
       }[] = [];
 
       // Create a multi-part upload
-      const createMultiPartUpload = await fetchCommentsJson<{
-        uploadId: string;
-        key: string;
-      }>(
-        `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(attachment.name)}`,
-        {
-          method: "POST",
-          signal: abortSignal,
-        },
-        {
-          fileSize: attachment.size,
+      const createMultiPartUpload = await autoRetry(
+        () =>
+          fetchCommentsJson<{
+            uploadId: string;
+            key: string;
+          }>(
+            `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(attachment.name)}`,
+            {
+              method: "POST",
+              signal: abortSignal,
+            },
+            {
+              fileSize: attachment.size,
+            }
+          ),
+        5,
+        [5000, 10000, 15000, 20000],
+        () => {
+          if (abortSignal?.aborted) {
+            throw abortError;
+          }
+
+          return false;
         }
       );
 
@@ -3302,15 +3327,27 @@ export function createRoom<
 
           for (const { part, partNumber } of parts) {
             uploadedPartsPromises.push(
-              fetchCommentsJson<{
-                partNumber: number;
-                etag: string;
-              }>(
-                `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(uploadId)}/${encodeURIComponent(partNumber)}`,
-                {
-                  method: "PUT",
-                  body: part,
-                  signal: abortSignal,
+              autoRetry(
+                () =>
+                  fetchCommentsJson<{
+                    partNumber: number;
+                    etag: string;
+                  }>(
+                    `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(createMultiPartUpload.uploadId)}/${encodeURIComponent(partNumber)}`,
+                    {
+                      method: "PUT",
+                      body: part,
+                      signal: abortSignal,
+                    }
+                  ),
+                5,
+                [5000, 10000, 15000, 20000],
+                () => {
+                  if (abortSignal?.aborted) {
+                    throw abortError;
+                  }
+
+                  return false;
                 }
               )
             );
@@ -3347,14 +3384,18 @@ export function createRoom<
           ((error as Error).name === "AbortError" ||
             (error as Error).name === "TimeoutError")
         ) {
-          // Abort the multi-part upload if it was created
-          await fetchCommentsApi(
-            `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(uploadId)}`,
-            undefined,
-            {
-              method: "DELETE",
-            }
-          );
+          try {
+            // Abort the multi-part upload if it was created
+            await fetchCommentsApi(
+              `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(uploadId)}`,
+              undefined,
+              {
+                method: "DELETE",
+              }
+            );
+          } catch (error) {
+            // Ignore the error, we are probably offline
+          }
         }
 
         throw error;
