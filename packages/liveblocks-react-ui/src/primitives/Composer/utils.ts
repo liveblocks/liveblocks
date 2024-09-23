@@ -421,6 +421,26 @@ function createComposerAttachmentsManager(
     }
   }
 
+  function retryUploadAttachment(attachmentId: string) {
+    const attachment = attachments.get(attachmentId);
+
+    if (
+      !attachment ||
+      attachment.type !== "localAttachment" ||
+      attachment.status !== "error"
+    ) {
+      return;
+    }
+
+    attachments.set(attachment.id, {
+      ...attachment,
+      status: "uploading",
+    });
+    notifySubscribers();
+
+    uploadAttachment(attachment);
+  }
+
   function removeAttachment(attachmentId: string) {
     const abortController = abortControllers.get(attachmentId);
 
@@ -451,6 +471,7 @@ function createComposerAttachmentsManager(
 
   return {
     addAttachments,
+    retryUploadAttachment,
     removeAttachment,
     getSnapshot,
     subscribe: eventSource.subscribe,
@@ -515,6 +536,7 @@ export function useComposerAttachmentsManager(
     isUploadingAttachments,
     addAttachments: frozenAttachmentsManager.addAttachments,
     removeAttachment: frozenAttachmentsManager.removeAttachment,
+    retryUploadAttachment: frozenAttachmentsManager.retryUploadAttachment,
     clearAttachments: frozenAttachmentsManager.clear,
   };
 }
