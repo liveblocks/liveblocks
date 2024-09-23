@@ -158,6 +158,7 @@ export function AnchoredThreads({
 
   const onThreadSelect = useCallback((id: string) => {
     if (!editor) return;
+    // TODO: should we refactor this into a plugin command?
     editor.view.dispatch(
       editor.state.tr.setMeta(THREADS_PLUGIN_KEY, {
         name: ThreadPluginActions.SET_SELECTED_THREAD_ID,
