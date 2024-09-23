@@ -202,7 +202,6 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
    * e.g. 'room-abc-{}'               - loading
    */
   // TODO Query state should not be exposed publicly by the store!
-  queries1: Record<string, QueryAsyncResult>; // Inbox notifications
   queries2: Record<string, QueryAsyncResult>; // Threads
   queries3: Record<string, QueryAsyncResult>; // Notification settings
   queries4: Record<string, QueryAsyncResult>; // Versions
@@ -1334,7 +1333,6 @@ function internalToExternalState<M extends BaseMetadata>(
     inboxNotifications: cleanedNotifications,
     inboxNotificationsById: computed.inboxNotificationsById,
     notificationSettingsByRoomId: computed.notificationSettingsByRoomId,
-    queries1: state.queries1,
     queries2: state.queries2,
     queries3: state.queries3,
     queries4: state.queries4,

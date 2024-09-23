@@ -4,7 +4,6 @@ const empty = {
   inboxNotifications: [],
   inboxNotificationsById: {},
   notificationSettingsByRoomId: {},
-  queries1: {},
   queries2: {},
   queries3: {},
   queries4: {},
