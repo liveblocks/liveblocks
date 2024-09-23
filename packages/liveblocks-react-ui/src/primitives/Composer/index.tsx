@@ -1304,6 +1304,7 @@ const ComposerAttachFiles = forwardRef<
 
   return (
     <Component
+      type="button"
       {...props}
       onClick={handleClick}
       ref={forwardedRef}
