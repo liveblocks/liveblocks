@@ -195,7 +195,7 @@ export const prepareThreadNotificationEmailRawData = async ({
   };
 };
 
-export type CommentEmailHTMLData<U extends BaseUserMeta> = Omit<
+export type CommentEmailAsHTMLData<U extends BaseUserMeta> = Omit<
   CommentEmailBaseData,
   "userId"
 > & {
@@ -203,7 +203,7 @@ export type CommentEmailHTMLData<U extends BaseUserMeta> = Omit<
   htmlBody: string;
 };
 
-export type CommentEmailReactData<U extends BaseUserMeta> = Omit<
+export type CommentEmailAsReactData<U extends BaseUserMeta> = Omit<
   CommentEmailBaseData,
   "userId"
 > & {
@@ -213,7 +213,7 @@ export type CommentEmailReactData<U extends BaseUserMeta> = Omit<
 
 export type ThreadNotificationEmailUnreadRepliesData<
   U extends BaseUserMeta,
-  C extends CommentEmailHTMLData<U> | CommentEmailReactData<U>,
+  C extends CommentEmailAsHTMLData<U> | CommentEmailAsReactData<U>,
 > = {
   type: "unreadReplies";
   comments: C[];
@@ -221,7 +221,7 @@ export type ThreadNotificationEmailUnreadRepliesData<
 
 export type ThreadNotificationEmailUnreadMentionsData<
   U extends BaseUserMeta,
-  C extends CommentEmailHTMLData<U> | CommentEmailReactData<U>,
+  C extends CommentEmailAsHTMLData<U> | CommentEmailAsReactData<U>,
 > = {
   type: "unreadMention";
   comment: C;
@@ -229,13 +229,13 @@ export type ThreadNotificationEmailUnreadMentionsData<
 
 export type ThreadNotificationEmailData<
   U extends BaseUserMeta,
-  C extends CommentEmailHTMLData<U> | CommentEmailReactData<U>,
+  C extends CommentEmailAsHTMLData<U> | CommentEmailAsReactData<U>,
 > = (
   | ThreadNotificationEmailUnreadRepliesData<U, C>
   | ThreadNotificationEmailUnreadMentionsData<U, C>
 ) & { roomInfo: DRI };
 
-export type PrepareThreadNotificationEmailHTMLDataOptions<
+export type PrepareThreadNotificationEmailAsHTMLDataOptions<
   U extends BaseUserMeta = DU,
 > = PrepareThreadNotificationEmailRawDataOptions & {
   /**
@@ -248,7 +248,7 @@ export type PrepareThreadNotificationEmailHTMLDataOptions<
   commentBodyStyles?: Record<string, string>;
 };
 
-// export async function prepareThreadNotificationEmailHTMLData(params: {
+// export async function prepareThreadNotificationEmailAsHTML(params: {
 //   client: Liveblocks;
 //   event: ThreadNotificationEvent;
 //   options?: PrepareThreadNotificationEmailHTMLDataOptions<BaseUserMeta>;
