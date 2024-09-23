@@ -1255,6 +1255,10 @@ function installBackgroundTabSpy(): [
 const GET_ATTACHMENT_URLS_BATCH_DELAY = 50;
 const ATTACHMENT_PART_SIZE = 5 * 1024 * 1024; // 5 MB
 const ATTACHMENT_PART_BATCH_SIZE = 5;
+const RETRY_ATTEMPTS = 10;
+const RETRY_DELAYS = [
+  2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000,
+];
 
 function splitFileIntoParts(file: File) {
   const parts: { partNumber: number; part: Blob }[] = [];
@@ -3246,6 +3250,18 @@ export function createRoom<
       throw abortError;
     }
 
+    const handleRetryError = (err: Error) => {
+      if (abortSignal?.aborted) {
+        throw abortError;
+      }
+
+      if (err instanceof CommentsApiError && err.status === 413) {
+        throw err;
+      }
+
+      return false;
+    };
+
     if (attachment.size <= ATTACHMENT_PART_SIZE) {
       // If the file is small enough, upload it in a single request
       return autoRetry(
@@ -3261,15 +3277,9 @@ export function createRoom<
               fileSize: attachment.size,
             }
           ),
-        10,
-        [2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000],
-        () => {
-          if (abortSignal?.aborted) {
-            throw abortError;
-          }
-
-          return false;
-        }
+        RETRY_ATTEMPTS,
+        RETRY_DELAYS,
+        handleRetryError
       );
     } else {
       // Otherwise, upload it in multiple parts
@@ -3295,15 +3305,9 @@ export function createRoom<
               fileSize: attachment.size,
             }
           ),
-        10,
-        [2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000],
-        () => {
-          if (abortSignal?.aborted) {
-            throw abortError;
-          }
-
-          return false;
-        }
+        RETRY_ATTEMPTS,
+        RETRY_DELAYS,
+        handleRetryError
       );
 
       try {
@@ -3340,15 +3344,9 @@ export function createRoom<
                       signal: abortSignal,
                     }
                   ),
-                10,
-                [2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000],
-                () => {
-                  if (abortSignal?.aborted) {
-                    throw abortError;
-                  }
-
-                  return false;
-                }
+                RETRY_ATTEMPTS,
+                RETRY_DELAYS,
+                handleRetryError
               )
             );
           }
