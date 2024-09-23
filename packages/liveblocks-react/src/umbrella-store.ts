@@ -157,8 +157,17 @@ type UpdateNotificationSettingsOptimisticUpdate = {
   settings: Partial<RoomNotificationSettings>;
 };
 
+type PaginationState = {
+  // XXX Settle on the final form here later! A cursor cannot "just" be
+  // XXX a single Date
+  cursor: Date;
+  isFetchingMore: boolean;
+  fetchMoreError?: Error;
+  hasFetchedAll: boolean;
+};
+
 type QueryAsyncResult = AsyncResult<undefined>;
-//                                  ^^^^^^^^^ We don't store the actual query result in this status
+type PaginatedAsyncResult = AsyncResult<PaginationState>;
 
 const ASYNC_LOADING = Object.freeze({ isLoading: true });
 const ASYNC_OK = Object.freeze({ isLoading: false, data: undefined });
@@ -177,7 +186,7 @@ type InternalState<M extends BaseMetadata> = Readonly<{
   // This is a temporary refactoring artifact from Vincent and Nimesh.
   // Each query corresponds to a resource which should eventually have its own type.
   // This is why we split it for now.
-  query1: QueryAsyncResult | undefined; // Inbox notifications
+  query1: PaginatedAsyncResult | undefined; // Inbox notifications
   queries2: Record<string, QueryAsyncResult>; // Threads
   queries3: Record<string, QueryAsyncResult>; // Notification settings
   queries4: Record<string, QueryAsyncResult>; // Versions
@@ -246,7 +255,6 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
 };
 
 const FETCHERT = () => {};
-const ERRORT = new Error("henk");
 
 export class UmbrellaStore<M extends BaseMetadata> {
   private _store: Store<InternalState<M>>;
@@ -364,7 +372,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // XXX Implement this for real!
     const fetchMore = FETCHERT;
     const isFetchingMore = false;
-    const fetchMoreError = ERRORT;
+    const fetchMoreError = undefined;
     const hasFetchedAll = false;
 
     const inboxNotifications = this.getFullState().inboxNotifications;
@@ -519,7 +527,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }));
   }
 
-  private setQuery1State(queryState: QueryAsyncResult): void {
+  private setQuery1State(queryState: PaginatedAsyncResult): void {
     this._store.set((state) => ({
       ...state,
       query1: queryState,
@@ -992,8 +1000,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.setQuery1State(ASYNC_LOADING);
   }
 
-  public setQuery1OK(): void {
-    this.setQuery1State(ASYNC_OK);
+  public setQuery1OK(pageState: PaginationState): void {
+    this.setQuery1State({ isLoading: false, data: pageState });
   }
 
   public setQuery1Error(error: Error): void {

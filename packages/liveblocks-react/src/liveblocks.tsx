@@ -326,6 +326,8 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     // If inbox notifications have not been fetched yet, we get all of them
     // Else, we fetch only what changed since the last request
 
+    const isFirstFetch = lastRequestedAt === undefined;
+
     const result = await client.getInboxNotifications({
       since: lastRequestedAt,
     });
@@ -340,15 +342,39 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
         result.threads.updated,
         result.inboxNotifications.updated,
 
-        // NOTE: Not sure if this `lastRequestedAt === undefined ? []` part is
-        // relevant here, but this is what used to be the implementation. Could
-        // we not just pass along any deleted threads if there are any?
-        lastRequestedAt === undefined ? [] : result.threads.deleted,
-        lastRequestedAt === undefined ? [] : result.inboxNotifications.deleted
+        // NOTE: Not sure if this `isFirstFetch ? []` part is relevant here,
+        // but this is what used to be the implementation. Could we not just
+        // pass along any deleted threads if there are any?
+        isFirstFetch ? [] : result.threads.deleted,
+        isFirstFetch ? [] : result.inboxNotifications.deleted
       );
 
-      // 2️⃣
-      store.setQuery1OK();
+      // 2️⃣ Mark the initial query as a success. This update only happens on the
+      // very first fetch. Beyond this point, the query state will always
+      // remain a success, even if subsequent polls (delta updates) or page
+      // fetches (for pagination) fail.
+      if (isFirstFetch) {
+        // XXX Pass the page size into the URL so we will know it matches the backend!
+        const PAGE_SIZE = 6; // Must match the backend
+
+        // Find the lowest date in the result, and store it to use as the next
+        // page's cursor
+        let cursor: Date = new Date();
+        for (const ibn of result.inboxNotifications.updated) {
+          // XXX The sort field (= notifiedAt) must match the backend! Put it in the URL!
+          // XXX This < (less than) should match the sort order in the backend! (Only works with DESC sorts!)
+          if (ibn.notifiedAt.getTime() < cursor.getTime()) {
+            cursor = ibn.notifiedAt;
+          }
+        }
+
+        store.setQuery1OK({
+          cursor,
+          hasFetchedAll: result.inboxNotifications.updated.length < PAGE_SIZE,
+          isFetchingMore: false,
+          fetchMoreError: undefined,
+        });
+      }
     });
   }
 
