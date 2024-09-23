@@ -3,15 +3,15 @@ import { http, HttpResponse } from "msw";
 
 import type {
   CommentEmailBaseData,
+  ThreadNotificationBaseData,
   ThreadNotificationData,
-  ThreadNotificationRawData,
 } from "../thread-notification";
 import {
   extractThreadNotificationData,
   getLastUnreadCommentWithMention,
   getUnreadComments,
   makeCommentEmailBaseData,
-  prepareThreadNotificationEmailRawData,
+  prepareThreadNotificationEmailBaseData,
 } from "../thread-notification";
 import {
   buildCommentBodyWithMention,
@@ -296,15 +296,15 @@ describe("thread notification", () => {
 
       const [preparedWithUnresolvedRoomInfo, preparedWithResolvedRoomInfo] =
         await Promise.all([
-          prepareThreadNotificationEmailRawData({ client, event }),
-          prepareThreadNotificationEmailRawData({
+          prepareThreadNotificationEmailBaseData({ client, event }),
+          prepareThreadNotificationEmailBaseData({
             client,
             event,
             options: { resolveRoomInfo },
           }),
         ]);
       const expectedComment = makeCommentWithBody({ comment });
-      const expected1: ThreadNotificationRawData = {
+      const expected1: ThreadNotificationBaseData = {
         type: "unreadMention",
         comment: makeCommentEmailBaseData({
           roomInfo: undefined,
@@ -314,7 +314,7 @@ describe("thread notification", () => {
           name: ROOM_ID_TEST,
         },
       };
-      const expected2: ThreadNotificationRawData = {
+      const expected2: ThreadNotificationBaseData = {
         type: "unreadMention",
         comment: makeCommentEmailBaseData({
           roomInfo: RESOLVED_ROOM_INFO_TEST,
@@ -376,8 +376,8 @@ describe("thread notification", () => {
 
       const [preparedWithUnresolvedRoomInfo, preparedWithResolvedRoomInfo] =
         await Promise.all([
-          prepareThreadNotificationEmailRawData({ client, event }),
-          prepareThreadNotificationEmailRawData({
+          prepareThreadNotificationEmailBaseData({ client, event }),
+          prepareThreadNotificationEmailBaseData({
             client,
             event,
             options: { resolveRoomInfo },
@@ -388,7 +388,7 @@ describe("thread notification", () => {
         makeCommentWithBody({ comment: comment3 }),
       ];
 
-      const expected1: ThreadNotificationRawData = {
+      const expected1: ThreadNotificationBaseData = {
         type: "unreadReplies",
         comments: expectedComments.map((c) =>
           makeCommentEmailBaseData({ roomInfo: undefined, comment: c })
@@ -398,7 +398,7 @@ describe("thread notification", () => {
         },
       };
 
-      const expected2: ThreadNotificationRawData = {
+      const expected2: ThreadNotificationBaseData = {
         type: "unreadReplies",
         comments: expectedComments.map((c) =>
           makeCommentEmailBaseData({

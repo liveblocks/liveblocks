@@ -123,7 +123,7 @@ type PrepareThreadNotificationEmailRawDataOptions = {
   ) => OptionalPromise<DRI | undefined>;
 };
 
-export type ThreadNotificationRawData = (
+export type ThreadNotificationBaseData = (
   | { type: "unreadMention"; comment: CommentEmailBaseData }
   | { type: "unreadReplies"; comments: CommentEmailBaseData[] }
 ) & { roomInfo: DRI };
@@ -155,7 +155,7 @@ export const makeCommentEmailBaseData = ({
 };
 
 /** @internal */
-export const prepareThreadNotificationEmailRawData = async ({
+export const prepareThreadNotificationEmailBaseData = async ({
   client,
   event,
   options,
@@ -163,7 +163,7 @@ export const prepareThreadNotificationEmailRawData = async ({
   client: Liveblocks;
   event: ThreadNotificationEvent;
   options?: PrepareThreadNotificationEmailRawDataOptions;
-}): Promise<ThreadNotificationRawData> => {
+}): Promise<ThreadNotificationBaseData> => {
   const { roomId } = event.data;
 
   const roomInfo = options?.resolveRoomInfo
@@ -251,29 +251,29 @@ export type PrepareThreadNotificationEmailAsHTMLDataOptions<
 // export async function prepareThreadNotificationEmailAsHTML(params: {
 //   client: Liveblocks;
 //   event: ThreadNotificationEvent;
-//   options?: PrepareThreadNotificationEmailHTMLDataOptions<BaseUserMeta>;
+//   options?: PrepareThreadNotificationEmailAsHTMLDataOptions<BaseUserMeta>;
 // }): Promise<
-//   ThreadNotificationEmailData<BaseUserMeta, CommentEmailHTMLData<BaseUserMeta>>
+//   ThreadNotificationEmailData<
+//     BaseUserMeta,
+//     CommentEmailAsHTMLData<BaseUserMeta>
+//   >
 // > {
 //   const { client, event, options } = params;
-//   const rawData = await prepareThreadNotificationEmailRawData({
+//   const data = await prepareThreadNotificationEmailBaseData({
 //     client,
 //     event,
 //     options: { resolveRoomInfo: options?.resolveRoomInfo },
 //   });
 
-//   if (rawData.type === "unreadMention") {
-//     const { comment, roomInfo } = rawData;
+//   if (data.type === "unreadMention") {
 //     return {
 //       type: "unreadMention",
-//       roomInfo,
+//       roomInfo: data.roomInfo,
 //     };
 //   }
 
-//   const { comments, roomInfo } = rawData;
-
 //   return {
 //     type: "unreadReplies",
-//     roomInfo,
+//     roomInfo: data.roomInfo,
 //   };
 // }
