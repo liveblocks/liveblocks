@@ -107,11 +107,11 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
   const roomId = room.id;
   const threads = useSyncExternalStoreWithSelector(
     store.subscribeThreads,
-    store.getThreads,
-    store.getThreads,
+    store.getFullState,
+    store.getFullState,
     useCallback(
       () =>
-        selectThreads(store.getThreads(), {
+        selectThreads(store.getFullState(), {
           roomId,
           orderBy: "age",
           query: {
@@ -220,7 +220,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       const selection = $getSelection();
 
       const threadIds = $getThreadIds(selection).filter((id) => {
-        return selectThreads(store.getThreads(), {
+        return selectThreads(store.getFullState(), {
           roomId,
           orderBy: "age",
           query: {
