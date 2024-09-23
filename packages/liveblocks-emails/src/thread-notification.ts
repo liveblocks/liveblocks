@@ -177,24 +177,26 @@ export const prepareThreadNotificationEmailBaseData = async ({
   };
 
   const data = await extractThreadNotificationData({ client, event });
-  if (data.type === "unreadMention") {
-    return {
-      type: "unreadMention",
-      comment: makeCommentEmailBaseData({
-        roomInfo,
-        comment: data.comment,
-      }),
-      roomInfo: resolvedRoomInfo,
-    };
+  switch (data.type) {
+    case "unreadMention":
+      return {
+        type: "unreadMention",
+        comment: makeCommentEmailBaseData({
+          roomInfo,
+          comment: data.comment,
+        }),
+        roomInfo: resolvedRoomInfo,
+      };
+    case "unreadReplies": {
+      return {
+        type: "unreadReplies",
+        comments: data.comments.map((comment) =>
+          makeCommentEmailBaseData({ roomInfo, comment })
+        ),
+        roomInfo: resolvedRoomInfo,
+      };
+    }
   }
-
-  return {
-    type: "unreadReplies",
-    comments: data.comments.map((comment) =>
-      makeCommentEmailBaseData({ roomInfo, comment })
-    ),
-    roomInfo: resolvedRoomInfo,
-  };
 };
 
 /** @internal */
@@ -300,75 +302,78 @@ export async function prepareThreadNotificationEmailAsHTML(params: {
     callerName: "prepareThreadNotificationEmailAsHTML",
   });
 
-  if (data.type === "unreadMention") {
-    const { comment } = data;
-    const authorsPromise = resolveAuthorsInComments({
-      comments: [comment],
-      resolveUsers: batchUsersResolve.registerResolveUsers,
-    });
-    const commentBodyPromise = stringifyCommentBody(comment.rawBody, {
-      resolveUsers: batchUsersResolve.registerResolveUsers,
-    });
+  switch (data.type) {
+    case "unreadMention": {
+      const { comment } = data;
+      const authorsPromise = resolveAuthorsInComments({
+        comments: [comment],
+        resolveUsers: batchUsersResolve.registerResolveUsers,
+      });
+      const commentBodyPromise = stringifyCommentBody(comment.rawBody, {
+        resolveUsers: batchUsersResolve.registerResolveUsers,
+      });
 
-    await batchUsersResolve.resolve();
+      await batchUsersResolve.resolve();
 
-    const [authors, commentBodyHTML] = await Promise.all([
-      authorsPromise,
-      commentBodyPromise,
-    ]);
-    const author = authors.get(comment.userId);
-
-    return {
-      type: "unreadMention",
-      comment: {
-        id: comment.id,
-        threadId: comment.threadId,
-        roomId: comment.roomId,
-        author: author
-          ? { id: comment.userId, info: author }
-          : { id: comment.userId, info: { name: comment.userId } },
-        createdAt: comment.createdAt,
-        url: comment.url,
-        htmlBody: commentBodyHTML,
-      },
-      roomInfo: data.roomInfo,
-    };
-  }
-
-  const baseComments = data.comments;
-  const authorsPromise = resolveAuthorsInComments({
-    comments: baseComments,
-    resolveUsers: batchUsersResolve.registerResolveUsers,
-  });
-  const commentBodiesPromises = baseComments.map((c) =>
-    stringifyCommentBody(c.rawBody, {
-      resolveUsers: batchUsersResolve.registerResolveUsers,
-    })
-  );
-
-  await batchUsersResolve.resolve();
-
-  const authors = await authorsPromise;
-  const commentBodies = await Promise.all(commentBodiesPromises);
-
-  return {
-    type: "unreadReplies",
-    comments: baseComments.map((comment, index) => {
+      const [authors, commentBodyHTML] = await Promise.all([
+        authorsPromise,
+        commentBodyPromise,
+      ]);
       const author = authors.get(comment.userId);
-      const commentBodyHTML = commentBodies[index];
 
       return {
-        id: comment.id,
-        threadId: comment.threadId,
-        roomId: comment.roomId,
-        author: author
-          ? { id: comment.userId, info: author }
-          : { id: comment.userId, info: { name: comment.userId } },
-        createdAt: comment.createdAt,
-        url: comment.url,
-        htmlBody: commentBodyHTML ?? "",
+        type: "unreadMention",
+        comment: {
+          id: comment.id,
+          threadId: comment.threadId,
+          roomId: comment.roomId,
+          author: author
+            ? { id: comment.userId, info: author }
+            : { id: comment.userId, info: { name: comment.userId } },
+          createdAt: comment.createdAt,
+          url: comment.url,
+          htmlBody: commentBodyHTML,
+        },
+        roomInfo: data.roomInfo,
       };
-    }),
-    roomInfo: data.roomInfo,
-  };
+    }
+    case "unreadReplies": {
+      const baseComments = data.comments;
+      const authorsPromise = resolveAuthorsInComments({
+        comments: baseComments,
+        resolveUsers: batchUsersResolve.registerResolveUsers,
+      });
+      const commentBodiesPromises = baseComments.map((c) =>
+        stringifyCommentBody(c.rawBody, {
+          resolveUsers: batchUsersResolve.registerResolveUsers,
+        })
+      );
+
+      await batchUsersResolve.resolve();
+
+      const authors = await authorsPromise;
+      const commentBodies = await Promise.all(commentBodiesPromises);
+
+      return {
+        type: "unreadReplies",
+        comments: baseComments.map((comment, index) => {
+          const author = authors.get(comment.userId);
+          const commentBodyHTML = commentBodies[index];
+
+          return {
+            id: comment.id,
+            threadId: comment.threadId,
+            roomId: comment.roomId,
+            author: author
+              ? { id: comment.userId, info: author }
+              : { id: comment.userId, info: { name: comment.userId } },
+            createdAt: comment.createdAt,
+            url: comment.url,
+            htmlBody: commentBodyHTML ?? "",
+          };
+        }),
+        roomInfo: data.roomInfo,
+      };
+    }
+  }
 }
