@@ -10,32 +10,20 @@ import {
 } from "@liveblocks/react/suspense";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { Loading } from "./Loading";
-import { ComponentPropsWithoutRef, useEffect, useRef, useState } from "react";
+import { ComponentPropsWithoutRef, useEffect, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import clsx from "clsx";
 import { Link } from "./Link";
 import { usePathname } from "next/navigation";
 
 function Inbox({ className, ...props }: ComponentPropsWithoutRef<"div">) {
-  const { inboxNotifications } = useInboxNotifications();
-
-  // TODO: Use actual pagination implementation
-  const hasMore = true;
-  const [isFetching, setFetching] = useState(false);
-  const fetchTimeoutRef = useRef<number | null>(null);
-  const fetchMore = () => {
-    if (fetchTimeoutRef.current !== null) {
-      window.clearTimeout(fetchTimeoutRef.current);
-    }
-
-    console.log("Fetching more notifications");
-
-    setFetching(true);
-
-    fetchTimeoutRef.current = window.setTimeout(() => {
-      setFetching(false);
-    }, 2000);
-  };
+  const {
+    inboxNotifications,
+    fetchMore,
+    isFetchingMore,
+    fetchMoreError,
+    hasFetchedAll,
+  } = useInboxNotifications();
 
   return inboxNotifications.length === 0 ? (
     <div className={clsx(className, "empty")}>
@@ -47,7 +35,7 @@ function Inbox({ className, ...props }: ComponentPropsWithoutRef<"div">) {
       <InboxNotificationList
         className="inbox-list"
         // Only load more notifications if there are more to fetch
-        onReachEnd={hasMore ? fetchMore : undefined}
+        onReachEnd={fetchMore}
       >
         {inboxNotifications.map((inboxNotification) => {
           return (
@@ -59,7 +47,15 @@ function Inbox({ className, ...props }: ComponentPropsWithoutRef<"div">) {
           );
         })}
       </InboxNotificationList>
-      {isFetching && <Loading />}
+      {fetchMoreError ? (
+        <div className="error">
+          😞 Failed to get more: {fetchMoreError.message}
+        </div>
+      ) : null}
+      {isFetchingMore && <Loading />}
+      {hasFetchedAll ? (
+        <div>😇 That’s it! There are no further notifications.</div>
+      ) : null}
     </div>
   );
 }
