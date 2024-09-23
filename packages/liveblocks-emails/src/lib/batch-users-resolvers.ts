@@ -26,7 +26,8 @@ type BatchUsersResolverCall<U extends BaseUserMeta> = {
  * Batch calls to `resolveUsers` to one and only call.
  * It will avoid any performances issues and invocation timeouts on our customers' webhook handlers.
  *
- * This call will stack calls in a map, resolve all users at once and then resolve pending promises at once.
+ * This batch call will stack pending promises referring to `resolveUsers` in a map, resolve all users given in args at once
+ * and then resolve pending promises all at once.
  */
 class BatchUsersResolver<U extends BaseUserMeta> {
   private resolveUsers: ResolveUserOptionalPromise<U> | undefined;
