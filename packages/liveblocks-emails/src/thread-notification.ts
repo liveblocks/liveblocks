@@ -174,13 +174,13 @@ export const prepareThreadNotificationEmailRawData = async ({
     name: roomInfo?.name ?? roomId,
   };
 
-  const extracted = await extractThreadNotificationData({ client, event });
-  if (extracted.type === "unreadMention") {
+  const data = await extractThreadNotificationData({ client, event });
+  if (data.type === "unreadMention") {
     return {
       type: "unreadMention",
       comment: makeCommentEmailBaseData({
         roomInfo,
-        comment: extracted.comment,
+        comment: data.comment,
       }),
       roomInfo: resolvedRoomInfo,
     };
@@ -188,7 +188,7 @@ export const prepareThreadNotificationEmailRawData = async ({
 
   return {
     type: "unreadReplies",
-    comments: extracted.comments.map((comment) =>
+    comments: data.comments.map((comment) =>
       makeCommentEmailBaseData({ roomInfo, comment })
     ),
     roomInfo: resolvedRoomInfo,
