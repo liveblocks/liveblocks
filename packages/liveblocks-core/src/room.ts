@@ -58,6 +58,7 @@ import {
   deepClone,
   memoizeOnSuccess,
   tryParseJson,
+  wait,
 } from "./lib/utils";
 import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
@@ -3281,6 +3282,9 @@ export function createRoom<
     attachment: CommentLocalAttachment,
     options: UploadAttachmentOptions
   ) {
+    if (uploads.has(attachment.id)) {
+      return;
+    }
     if (attachment.size <= ATTACHMENT_PART_SIZE) {
       uploads.set(attachment.id, { uploadType: "single", attachment, options });
     } else {
@@ -3372,16 +3376,32 @@ export function createRoom<
 
           for (const { part, partNumber } of parts) {
             uploadedPartsPromises.push(
-              fetchCommentsJson<{
-                partNumber: number;
-                etag: string;
-              }>(
-                `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(actualId)}/${encodeURIComponent(partNumber)}`,
-                {
-                  method: "PUT",
-                  body: part,
-                  signal: abortSignal,
-                }
+              autoRetry(
+                () => {
+                  const abortError = abortSignal
+                    ? new DOMException(
+                        `Upload of attachment ${attachment.id} was aborted.`,
+                        "AbortError"
+                      )
+                    : undefined;
+
+                  if (abortSignal?.aborted) {
+                    throw abortError;
+                  }
+                  return fetchCommentsJson<{
+                    partNumber: number;
+                    etag: string;
+                  }>(
+                    `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(actualId)}/${encodeURIComponent(partNumber)}`,
+                    {
+                      method: "PUT",
+                      body: part,
+                      signal: abortSignal,
+                    }
+                  );
+                },
+                5,
+                [1000, 2000, 4000, 10000]
               )
             );
           }
@@ -3392,6 +3412,7 @@ export function createRoom<
 
           for (const r of result) {
             if (r.status === "rejected") {
+              console.error("promise rejected result", r);
               rejection = r.reason as Error;
             } else {
               const { partNumber, etag } = r.value;
@@ -3403,6 +3424,7 @@ export function createRoom<
             }
           }
           if (rejection) {
+            console.error("REJECTION", rejection);
             throw rejection;
           }
         }
@@ -3886,4 +3908,32 @@ export function makeCreateSocketDelegateForRoom(
     url.searchParams.set("version", PKG_VERSION || "dev");
     return new ws(url.toString());
   };
+}
+
+export async function autoRetry<T>(
+  promiseFn: () => Promise<T>,
+  maxTries: number,
+  backoff: number[]
+): Promise<T> {
+  const fallbackBackoff = backoff.length > 0 ? backoff[backoff.length - 1] : 0;
+
+  let attempt = 0;
+
+  while (true) {
+    attempt++;
+
+    const promise = promiseFn();
+    try {
+      return await promise;
+    } catch (err) {
+      if (attempt >= maxTries) {
+        // Fail the entire promise right now
+        throw new Error(`Failed after ${maxTries} attempts: ${String(err)}`);
+      }
+    }
+
+    // Do another retry
+    const delay = backoff[attempt - 1] ?? fallbackBackoff;
+    await wait(delay);
+  }
 }
