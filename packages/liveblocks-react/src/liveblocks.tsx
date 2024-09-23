@@ -7,7 +7,6 @@ import type {
 } from "@liveblocks/client";
 import type {
   AsyncResult,
-  AsyncResultWithDataField,
   BaseRoomInfo,
   DM,
   DU,
@@ -43,27 +42,21 @@ import { shallow2 } from "./lib/shallow2";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { use } from "./lib/use-polyfill";
 import type {
+  InboxNotificationsAsyncResult,
   LiveblocksContextBundle,
   RoomInfoAsyncResult,
   RoomInfoAsyncSuccess,
   SharedContextBundle,
+  ThreadsAsyncResult,
+  ThreadsAsyncSuccess,
   ThreadsQuery,
-  ThreadsState,
-  ThreadsStateSuccess,
+  UnreadInboxNotificationsCountAsyncResult,
   UserAsyncResult,
   UserAsyncSuccess,
   UseUserThreadsOptions,
 } from "./types";
 import type { UmbrellaStoreState } from "./umbrella-store";
 import { INBOX_NOTIFICATIONS_QUERY, UmbrellaStore } from "./umbrella-store";
-
-// NOTE: These helper types are only temporarily needed while we're refactoring things
-// NOTE: The reason we cannot inline them into the selectors is that the react-hooks/exchaustive-deps lint rule will think
-type GetInboxNotificationsType<M extends BaseMetadata = BaseMetadata> =
-  ReturnType<UmbrellaStore<M>["getInboxNotifications"]>;
-type GetThreadsType<M extends BaseMetadata = BaseMetadata> = ReturnType<
-  UmbrellaStore<M>["getThreads"]
->;
 
 /**
  * Raw access to the React context where the LiveblocksProvider stores the
@@ -121,11 +114,8 @@ function selectUnreadInboxNotificationsCount(
 }
 
 function selectorFor_useUnreadInboxNotificationsCount(
-  result: AsyncResultWithDataField<
-    InboxNotificationData[],
-    "inboxNotifications"
-  >
-): AsyncResultWithDataField<number, "count"> {
+  result: InboxNotificationsAsyncResult
+): UnreadInboxNotificationsCountAsyncResult {
   if (!result.inboxNotifications) {
     // Can be loading or error states
     return result;
@@ -612,7 +602,7 @@ function useInboxNotifications_withClient(client: OpaqueClient) {
   useEffect(startPolling, [startPolling]);
 
   return useSyncExternalStoreWithSelector(
-    store.subscribeInboxNotifications,
+    store.subscribeThreadsOrInboxNotifications,
     store.getInboxNotificationsAsync,
     store.getInboxNotificationsAsync,
     identity,
@@ -644,7 +634,7 @@ function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
   useEffect(startPolling, [startPolling]);
 
   return useSyncExternalStoreWithSelector(
-    store.subscribeInboxNotifications,
+    store.subscribeThreadsOrInboxNotifications,
     store.getInboxNotificationsAsync,
     store.getInboxNotificationsAsync,
     selectorFor_useUnreadInboxNotificationsCount,
@@ -780,8 +770,10 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
 ): ThreadData<M> {
   const { store } = getExtrasForClient<M>(client);
 
+  const getter = store.getThreadsAndInboxNotifications;
+
   const selector = useCallback(
-    (state: GetInboxNotificationsType<M>) => {
+    (state: ReturnType<typeof getter>) => {
       const inboxNotification =
         state.inboxNotificationsById[inboxNotificationId] ??
         raise(`Inbox notification with ID "${inboxNotificationId}" not found`);
@@ -804,9 +796,9 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
   );
 
   return useSyncExternalStoreWithSelector(
-    store.subscribeInboxNotifications,
-    store.getInboxNotifications,
-    store.getInboxNotifications,
+    store.subscribeThreadsOrInboxNotifications, // Re-evaluate if we need to update any time the notification changes over time
+    getter,
+    getter,
     selector
   );
 }
@@ -1107,7 +1099,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
       metadata: {},
     },
   }
-): ThreadsState<M> {
+): ThreadsAsyncResult<M> {
   const queryKey = React.useMemo(
     () => makeUserThreadsQueryKey(options.query),
     [options]
@@ -1123,40 +1115,33 @@ function useUserThreads_experimental<M extends BaseMetadata>(
     return incrementUserThreadsQuerySubscribers(queryKey);
   }, [queryKey, incrementUserThreadsQuerySubscribers, getUserThreads, options]);
 
+  const getter = useCallback(
+    () => store.getUserThreadsAsync(queryKey),
+    [store, queryKey]
+  );
+
   const selector = useCallback(
-    (state: GetThreadsType<M>): ThreadsState<M> => {
-      const query = state.queries[queryKey];
-
-      if (query === undefined || query.isLoading) {
-        return {
-          isLoading: true,
-        };
+    (result: ReturnType<typeof getter>): ThreadsAsyncResult<M> => {
+      if (!result.fullState) {
+        return result; // Loading or error state
       }
 
-      if (query.error !== undefined) {
-        return {
-          threads: [],
-          error: query.error,
-          isLoading: false,
-        };
-      }
+      const threads = selectThreads(result.fullState, {
+        roomId: null, // Do _not_ filter by roomId
+        query: options.query,
+        orderBy: "last-update",
+      });
 
-      return {
-        threads: selectThreads(state, {
-          roomId: null, // Do _not_ filter by roomId
-          query: options.query,
-          orderBy: "last-update",
-        }),
-        isLoading: false,
-      };
+      // "Map" the success state, by selecting the threads and returning only those parts externally
+      return { isLoading: false, threads };
     },
-    [queryKey, options]
+    [options]
   );
 
   return useSyncExternalStoreWithSelector(
-    store.subscribeThreads,
-    store.getThreads,
-    store.getThreads,
+    store.subscribeUserThreads,
+    getter,
+    getter,
     selector,
     shallow2 // NOTE: Using 2-level-deep shallow check here, because the result of selectThreads() is not stable!
   );
@@ -1183,7 +1168,7 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
       metadata: {},
     },
   }
-): ThreadsStateSuccess<M> {
+): ThreadsAsyncSuccess<M> {
   const queryKey = React.useMemo(
     () => makeUserThreadsQueryKey(options.query),
     [options]
@@ -1198,7 +1183,7 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
     return incrementUserThreadsQuerySubscribers(queryKey);
   }, [client, queryKey]);
 
-  const query = store.getThreads().queries[queryKey];
+  const query = store.getUserThreads().queries[queryKey];
 
   if (query === undefined || query.isLoading) {
     throw getUserThreads(queryKey, options);
@@ -1208,8 +1193,10 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
     throw query.error;
   }
 
+  const getter = store.getUserThreads;
+
   const selector = useCallback(
-    (state: GetThreadsType<M>): ThreadsStateSuccess<M> => {
+    (state: ReturnType<typeof getter>): ThreadsAsyncSuccess<M> => {
       return {
         threads: selectThreads(state, {
           roomId: null, // Do _not_ filter by roomId
@@ -1223,9 +1210,9 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
   );
 
   return useSyncExternalStoreWithSelector(
-    store.subscribeThreads,
-    store.getThreads,
-    store.getThreads,
+    store.subscribeUserThreads,
+    getter,
+    getter,
     selector,
     shallow2 // NOTE: Using 2-level-deep shallow check here, because the result of selectThreads() is not stable!
   );

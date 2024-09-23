@@ -83,7 +83,12 @@ export {
 } from "./immutable";
 export { kInternal } from "./internal";
 export { assert, assertNever, nn } from "./lib/assert";
-export type { AsyncResult, AsyncResultWithDataField } from "./lib/AsyncResult";
+export type {
+  AsyncError,
+  AsyncLoading,
+  AsyncResult,
+  AsyncSuccess,
+} from "./lib/AsyncResult";
 export {
   createCommentId,
   createInboxNotificationId,

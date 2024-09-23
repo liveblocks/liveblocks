@@ -54,6 +54,7 @@ import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/w
 import { RoomContext, useIsInsideRoom, useRoomOrNull } from "./contexts";
 import { isString } from "./lib/guards";
 import { retryError } from "./lib/retry-error";
+import { shallow2 } from "./lib/shallow2";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
@@ -72,18 +73,18 @@ import type {
   DeleteCommentOptions,
   EditCommentOptions,
   EditThreadMetadataOptions,
-  HistoryVersionDataState,
-  HistoryVersionsState,
-  HistoryVersionsStateResolved,
+  HistoryVersionDataAsyncResult,
+  HistoryVersionsAsyncResult,
+  HistoryVersionsAsyncSuccess,
   MutationContext,
   OmitFirstArg,
   RoomContextBundle,
-  RoomNotificationSettingsState,
-  RoomNotificationSettingsStateSuccess,
+  RoomNotificationSettingsAsyncResult,
+  RoomNotificationSettingsAsyncSuccess,
   RoomProviderProps,
   StorageStatusSuccess,
-  ThreadsState,
-  ThreadsStateSuccess,
+  ThreadsAsyncResult,
+  ThreadsAsyncSuccess,
   ThreadSubscription,
   UseStorageStatusOptions,
   UseThreadsOptions,
@@ -1425,7 +1426,7 @@ function useThreads<M extends BaseMetadata>(
   options: UseThreadsOptions<M> = {
     query: { metadata: {} },
   }
-): ThreadsState<M> {
+): ThreadsAsyncResult<M> {
   const { scrollOnLoad = true } = options;
   const client = useClient();
   const room = useRoom();
@@ -1444,35 +1445,35 @@ function useThreads<M extends BaseMetadata>(
     return incrementQuerySubscribers(queryKey);
   }, [room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const getter = React.useCallback(
+    () => store.getThreadsAsync(queryKey),
+    [store, queryKey]
+  );
+
   const selector = React.useCallback(
-    (state: UmbrellaStoreState<M>): ThreadsState<M> => {
-      // TODO Don't make this the responsibility of the _selector_. It should be
-      // responsibility of the _getter_.
-      const query = state.queries[queryKey];
-      if (query === undefined || query.isLoading) {
-        return {
-          isLoading: true,
-        };
+    (result: ReturnType<typeof getter>): ThreadsAsyncResult<M> => {
+      if (!result.fullState) {
+        return result; // Loading or error state
       }
 
-      return {
-        threads: selectThreads(state, {
-          roomId: room.id,
-          query: options.query,
-          orderBy: "age",
-        }),
-        isLoading: false,
-        error: query.error,
-      };
+      const threads = selectThreads(result.fullState, {
+        roomId: room.id,
+        query: options.query,
+        orderBy: "age",
+      });
+
+      // "Map" the success state, by selecting the threads and returning only those parts externally
+      return { isLoading: false, threads };
     },
-    [room, queryKey] // eslint-disable-line react-hooks/exhaustive-deps
+    [room.id, queryKey] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const state = useSyncExternalStoreWithSelector(
     store.subscribeThreads,
-    store.getThreads,
-    store.getThreads,
-    selector
+    getter,
+    getter,
+    selector,
+    shallow2
   );
 
   useScrollToCommentOnLoadEffect(scrollOnLoad, state);
@@ -2133,7 +2134,7 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
  * const [{ settings }, updateSettings] = useRoomNotificationSettings();
  */
 function useRoomNotificationSettings(): [
-  RoomNotificationSettingsState,
+  RoomNotificationSettingsAsyncResult,
   (settings: Partial<RoomNotificationSettings>) => void,
 ] {
   const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
@@ -2172,7 +2173,7 @@ function useRoomNotificationSettings(): [
  * const [{ settings }, updateSettings] = useRoomNotificationSettings();
  */
 function useRoomNotificationSettingsSuspense(): [
-  RoomNotificationSettingsStateSuccess,
+  RoomNotificationSettingsAsyncSuccess,
   (settings: Partial<RoomNotificationSettings>) => void,
 ] {
   const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
@@ -2212,8 +2213,10 @@ function useRoomNotificationSettingsSuspense(): [
  * @example
  * const {data} = useHistoryVersionData(versionId);
  */
-function useHistoryVersionData(versionId: string): HistoryVersionDataState {
-  const [state, setState] = React.useState<HistoryVersionDataState>({
+function useHistoryVersionData(
+  versionId: string
+): HistoryVersionDataAsyncResult {
+  const [state, setState] = React.useState<HistoryVersionDataAsyncResult>({
     isLoading: true,
   });
   const room = useRoom();
@@ -2251,7 +2254,7 @@ function useHistoryVersionData(versionId: string): HistoryVersionDataState {
  * @example
  * const { versions, error, isLoading } = useHistoryVersions();
  */
-function useHistoryVersions(): HistoryVersionsState {
+function useHistoryVersions(): HistoryVersionsAsyncResult {
   const client = useClient();
   const room = useRoom();
 
@@ -2283,7 +2286,7 @@ function useHistoryVersions(): HistoryVersionsState {
  * @example
  * const { versions } = useHistoryVersions();
  */
-function useHistoryVersionsSuspense(): HistoryVersionsStateResolved {
+function useHistoryVersionsSuspense(): HistoryVersionsAsyncSuccess {
   const client = useClient();
   const room = useRoom();
 
@@ -2486,7 +2489,7 @@ function useThreadsSuspense<M extends BaseMetadata>(
   options: UseThreadsOptions<M> = {
     query: { metadata: {} },
   }
-): ThreadsStateSuccess<M> {
+): ThreadsAsyncSuccess<M> {
   const { scrollOnLoad = true } = options;
 
   const client = useClient();
@@ -2510,7 +2513,7 @@ function useThreadsSuspense<M extends BaseMetadata>(
   }
 
   const selector = React.useCallback(
-    (state: ReturnType<typeof store.getThreads>): ThreadsStateSuccess<M> => {
+    (state: ReturnType<typeof store.getThreads>): ThreadsAsyncSuccess<M> => {
       return {
         threads: selectThreads(state, {
           roomId: room.id,

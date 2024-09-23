@@ -913,7 +913,6 @@ describe("useThreads", () => {
 
     await waitFor(() =>
       expect(result.current).toEqual({
-        threads: [],
         isLoading: false,
         error: expect.any(Error),
       })
@@ -1476,7 +1475,6 @@ describe("useThreads: error", () => {
     await waitFor(() => expect(getThreadsReqCount).toBe(1));
 
     expect(result.current).toEqual({
-      threads: [],
       isLoading: false,
       error: expect.any(Error),
     });
@@ -1531,7 +1529,6 @@ describe("useThreads: error", () => {
     await waitFor(() => expect(getThreadsReqCount).toBe(1));
 
     expect(result.current).toEqual({
-      threads: [],
       isLoading: false,
       error: expect.any(Error),
     });
@@ -1599,7 +1596,6 @@ describe("useThreads: error", () => {
     await waitFor(() => expect(getThreadsReqCount).toBe(1));
 
     expect(result.current).toEqual({
-      threads: [],
       isLoading: false,
       error: expect.any(Error),
     });

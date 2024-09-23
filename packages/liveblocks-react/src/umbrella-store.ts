@@ -1,6 +1,5 @@
 import type {
   AsyncResult,
-  AsyncResultWithDataField,
   BaseMetadata,
   CommentData,
   CommentReaction,
@@ -27,6 +26,7 @@ import {
 } from "@liveblocks/core";
 
 import { isMoreRecentlyUpdated } from "./lib/compare";
+import type { RoomNotificationSettingsAsyncResult } from "./types";
 
 type OptimisticUpdate<M extends BaseMetadata> =
   | CreateThreadOptimisticUpdate<M>
@@ -154,11 +154,11 @@ type UpdateNotificationSettingsOptimisticUpdate = {
   settings: Partial<RoomNotificationSettings>;
 };
 
-type QueryState = AsyncResult<undefined>;
-//                            ^^^^^^^^^ We don't store the actual query result in this status
+type QueryAsyncResult = AsyncResult<undefined>;
+//                                  ^^^^^^^^^ We don't store the actual query result in this status
 
-const QUERY_STATE_LOADING = Object.freeze({ isLoading: true });
-const QUERY_STATE_OK = Object.freeze({ isLoading: false, data: undefined });
+const ASYNC_LOADING = Object.freeze({ isLoading: true });
+const ASYNC_OK = Object.freeze({ isLoading: false, data: undefined });
 
 // TODO Stop exporting this constant!
 export const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
@@ -174,7 +174,7 @@ export function makeVersionsQueryKey(roomId: string) {
 }
 
 type InternalState<M extends BaseMetadata> = Readonly<{
-  queries: Record<string, QueryState>;
+  queries: Record<string, QueryAsyncResult>;
   optimisticUpdates: readonly OptimisticUpdate<M>[];
 
   rawThreadsById: Record<string, ThreadDataWithDeleteInfo<M>>;
@@ -195,7 +195,7 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
    * e.g. 'room-abc-{}'               - loading
    */
   // TODO Query state should not be exposed publicly by the store!
-  queries: Record<string, QueryState>;
+  queries: Record<string, QueryAsyncResult>;
 
   /**
    * All threads in a sorted array, optimistic updates applied, without deleted
@@ -254,12 +254,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // Auto-bind all of this class methods once here, so we can use stable
     // references to them (most important for use in useSyncExternalStore)
     this.getThreads = this.getThreads.bind(this);
-    this.getInboxNotifications = this.getInboxNotifications.bind(this);
+    this.getUserThreads = this.getUserThreads.bind(this);
+    this.getThreadsAndInboxNotifications =
+      this.getThreadsAndInboxNotifications.bind(this);
     this.getInboxNotificationsAsync =
       this.getInboxNotificationsAsync.bind(this);
     this.subscribeThreads = this.subscribeThreads.bind(this);
-    this.subscribeInboxNotifications =
-      this.subscribeInboxNotifications.bind(this);
+    this.subscribeUserThreads = this.subscribeUserThreads.bind(this);
+    this.subscribeThreadsOrInboxNotifications =
+      this.subscribeThreadsOrInboxNotifications.bind(this);
     this.subscribeNotificationSettings =
       this.subscribeNotificationSettings.bind(this);
     this.subscribeVersions = this.subscribeVersions.bind(this);
@@ -286,13 +289,62 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this.get();
   }
 
+  /**
+   * Returns the async result of the given queryKey. If the query is success,
+   * then it will return the entire store's state in the payload.
+   */
+  // TODO: This return type is a bit weird! Feels like we haven't found the
+  // right abstraction here yet.
+  public getThreadsAsync(
+    queryKey: string
+  ): AsyncResult<UmbrellaStoreState<M>, "fullState"> {
+    const internalState = this._store.get();
+
+    const query = internalState.queries[queryKey];
+    if (query === undefined || query.isLoading) {
+      return ASYNC_LOADING;
+    }
+
+    if (query.error) {
+      return query;
+    }
+
+    // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
+    return { isLoading: false, fullState: this.get() };
+  }
+
+  public getUserThreads(): UmbrellaStoreState<M> {
+    return this.get();
+  }
+
+  public getUserThreadsAsync(
+    queryKey: string
+  ): AsyncResult<UmbrellaStoreState<M>, "fullState"> {
+    const internalState = this._store.get();
+
+    const query = internalState.queries[queryKey];
+    if (query === undefined || query.isLoading) {
+      return ASYNC_LOADING;
+    }
+
+    if (query.error) {
+      return query;
+    }
+
+    // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
+    return { isLoading: false, fullState: this.get() };
+  }
+
   public getInboxNotifications(): UmbrellaStoreState<M> {
-    // TODO Now that we have getInboxNotificationsAsync, can we get rid of this method already?
+    return this.get();
+  }
+
+  public getThreadsAndInboxNotifications(): UmbrellaStoreState<M> {
     return this.get();
   }
 
   // NOTE: This will read the async result, but WILL NOT start loading at the moment!
-  public getInboxNotificationsAsync(): AsyncResultWithDataField<
+  public getInboxNotificationsAsync(): AsyncResult<
     InboxNotificationData[],
     "inboxNotifications"
   > {
@@ -300,7 +352,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     const query = internalState.queries[INBOX_NOTIFICATIONS_QUERY];
     if (query === undefined || query.isLoading) {
-      return QUERY_STATE_LOADING;
+      return ASYNC_LOADING;
     }
 
     if (query.error !== undefined) {
@@ -315,12 +367,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // NOTE: This will read the async result, but WILL NOT start loading at the moment!
   public getNotificationSettingsAsync(
     roomId: string
-  ): AsyncResultWithDataField<RoomNotificationSettings, "settings"> {
+  ): RoomNotificationSettingsAsyncResult {
     const state = this.get();
 
     const query = state.queries[makeNotificationSettingsQueryKey(roomId)];
     if (query === undefined || query.isLoading) {
-      return QUERY_STATE_LOADING;
+      return ASYNC_LOADING;
     }
 
     if (query.error !== undefined) {
@@ -336,12 +388,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   public getVersionsAsync(
     roomId: string
-  ): AsyncResultWithDataField<HistoryVersion[], "versions"> {
+  ): AsyncResult<HistoryVersion[], "versions"> {
     const state = this.get();
 
     const query = state.queries[makeVersionsQueryKey(roomId)];
     if (query === undefined || query.isLoading) {
-      return QUERY_STATE_LOADING;
+      return ASYNC_LOADING;
     }
 
     if (query.error !== undefined) {
@@ -379,7 +431,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this.subscribe(callback);
   }
 
-  public subscribeInboxNotifications(callback: () => void): () => void {
+  public subscribeUserThreads(callback: () => void): () => void {
+    // TODO Make this actually only update when threads are invalidated
+    return this.subscribe(callback);
+  }
+
+  public subscribeThreadsOrInboxNotifications(
+    callback: () => void
+  ): () => void {
     // TODO Make this actually only update when inbox notifications are invalidated
     return this.subscribe(callback);
   }
@@ -445,7 +504,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }));
   }
 
-  private setQueryState(queryKey: string, queryState: QueryState): void {
+  private setQueryState(queryKey: string, queryState: QueryAsyncResult): void {
     this._store.set((state) => ({
       ...state,
       queries: {
@@ -894,11 +953,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
   //
 
   public setQueryLoading(queryKey: string): void {
-    this.setQueryState(queryKey, QUERY_STATE_LOADING);
+    this.setQueryState(queryKey, ASYNC_LOADING);
   }
 
   private setQueryOK(queryKey: string): void {
-    this.setQueryState(queryKey, QUERY_STATE_OK);
+    this.setQueryState(queryKey, ASYNC_OK);
   }
 
   public setQueryError(queryKey: string, error: Error): void {
