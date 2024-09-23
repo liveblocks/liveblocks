@@ -864,7 +864,7 @@ function RoomProviderInner<
       }
       const { thread, inboxNotification } = info;
 
-      const existingThread = store.getThreads().threadsById[message.threadId];
+      const existingThread = store.getFullState().threadsById[message.threadId];
 
       switch (message.type) {
         case ServerMsgCode.COMMENT_EDITED:
@@ -1578,7 +1578,7 @@ function useDeleteThread(): (threadId: string) => void {
     (threadId: string): void => {
       const { store, onMutationFailure } = getExtrasForClient(client);
 
-      const thread = store.getThreads().threadsById[threadId];
+      const thread = store.getFullState().threadsById[threadId];
 
       const userId = getCurrentUserId(room);
 
@@ -1729,7 +1729,7 @@ function useEditComment(): (options: EditCommentOptions) => void {
       const editedAt = new Date();
 
       const { store, onMutationFailure } = getExtrasForClient(client);
-      const thread = store.getThreads().threadsById[threadId];
+      const thread = store.getFullState().threadsById[threadId];
       if (thread === undefined) {
         console.warn(
           `Internal unexpected behavior. Cannot edit comment in thread "${threadId}" because the thread does not exist in the cache.`
@@ -1953,7 +1953,7 @@ function useMarkThreadAsRead() {
     (threadId: string) => {
       const { store, onMutationFailure } = getExtrasForClient(client);
       const inboxNotification = Object.values(
-        store.getInboxNotifications().inboxNotificationsById
+        store.getFullState().inboxNotificationsById
       ).find(
         (inboxNotification) =>
           inboxNotification.kind === "thread" &&
@@ -2126,8 +2126,8 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
 
   return useSyncExternalStoreWithSelector(
     store.subscribeThreads,
-    store.getThreads,
-    store.getThreads,
+    store.getFullState,
+    store.getFullState,
     selector
   );
 }
@@ -2508,7 +2508,7 @@ function useThreadsSuspense<M extends BaseMetadata>(
   const { store, getThreadsAndInboxNotifications } =
     getExtrasForClient<M>(client);
 
-  const query = store.getThreads().queries2[queryKey];
+  const query = store.getFullState().queries2[queryKey];
 
   if (query === undefined || query.isLoading) {
     throw getThreadsAndInboxNotifications(room, queryKey, options);
@@ -2519,7 +2519,7 @@ function useThreadsSuspense<M extends BaseMetadata>(
   }
 
   const selector = React.useCallback(
-    (state: ReturnType<typeof store.getThreads>): ThreadsAsyncSuccess<M> => {
+    (state: ReturnType<typeof store.getFullState>): ThreadsAsyncSuccess<M> => {
       return {
         threads: selectThreads(state, {
           roomId: room.id,
@@ -2539,8 +2539,8 @@ function useThreadsSuspense<M extends BaseMetadata>(
 
   const state = useSyncExternalStoreWithSelector(
     store.subscribeThreads,
-    store.getThreads,
-    store.getThreads,
+    store.getFullState,
+    store.getFullState,
     selector
   );
 

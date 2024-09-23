@@ -266,10 +266,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     // Auto-bind all of this class methods once here, so we can use stable
     // references to them (most important for use in useSyncExternalStore)
-    this.getThreads = this.getThreads.bind(this);
-    this.getUserThreads = this.getUserThreads.bind(this);
-    this.getThreadsAndInboxNotifications =
-      this.getThreadsAndInboxNotifications.bind(this);
+    this.getFullState = this.getFullState.bind(this);
     this.getInboxNotificationsAsync =
       this.getInboxNotificationsAsync.bind(this);
     this.subscribeThreads = this.subscribeThreads.bind(this);
@@ -302,7 +299,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this._store.batch(callback);
   }
 
-  public getThreads(): UmbrellaStoreState<M> {
+  public getFullState(): UmbrellaStoreState<M> {
     return this.get();
   }
 
@@ -327,11 +324,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }
 
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
-    return { isLoading: false, fullState: this.get() };
-  }
-
-  public getUserThreads(): UmbrellaStoreState<M> {
-    return this.get();
+    return { isLoading: false, fullState: this.getFullState() };
   }
 
   public getUserThreadsAsync(
@@ -349,15 +342,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }
 
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
-    return { isLoading: false, fullState: this.get() };
-  }
-
-  public getInboxNotifications(): UmbrellaStoreState<M> {
-    return this.get();
-  }
-
-  public getThreadsAndInboxNotifications(): UmbrellaStoreState<M> {
-    return this.get();
+    return { isLoading: false, fullState: this.getFullState() };
   }
 
   // NOTE: This will read the async result, but WILL NOT start loading at the moment!
@@ -376,7 +361,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return query;
     }
 
-    const inboxNotifications = this.get().inboxNotifications;
+    const inboxNotifications = this.getFullState().inboxNotifications;
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return { isLoading: false, inboxNotifications };
   }

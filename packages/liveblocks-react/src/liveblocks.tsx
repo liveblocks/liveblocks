@@ -791,7 +791,7 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
 ): ThreadData<M> {
   const { store } = getExtrasForClient<M>(client);
 
-  const getter = store.getThreadsAndInboxNotifications;
+  const getter = store.getFullState;
 
   const selector = useCallback(
     (state: ReturnType<typeof getter>) => {
@@ -1204,7 +1204,7 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
     return incrementUserThreadsQuerySubscribers(queryKey);
   }, [client, queryKey]);
 
-  const query = store.getUserThreads().queries2[queryKey];
+  const query = store.getFullState().queries2[queryKey];
 
   if (query === undefined || query.isLoading) {
     throw getUserThreads(queryKey, options);
@@ -1214,7 +1214,7 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
     throw query.error;
   }
 
-  const getter = store.getUserThreads;
+  const getter = store.getFullState;
 
   const selector = useCallback(
     (state: ReturnType<typeof getter>): ThreadsAsyncSuccess<M> => {
