@@ -3261,8 +3261,8 @@ export function createRoom<
               fileSize: attachment.size,
             }
           ),
-        5,
-        [5000, 10000, 15000, 20000],
+        10,
+        [2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000],
         () => {
           if (abortSignal?.aborted) {
             throw abortError;
@@ -3295,8 +3295,8 @@ export function createRoom<
               fileSize: attachment.size,
             }
           ),
-        5,
-        [5000, 10000, 15000, 20000],
+        10,
+        [2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000],
         () => {
           if (abortSignal?.aborted) {
             throw abortError;
@@ -3340,8 +3340,8 @@ export function createRoom<
                       signal: abortSignal,
                     }
                   ),
-                5,
-                [5000, 10000, 15000, 20000],
+                10,
+                [2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000],
                 () => {
                   if (abortSignal?.aborted) {
                     throw abortError;
