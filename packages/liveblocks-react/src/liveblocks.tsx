@@ -325,7 +325,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
    * delays. Will throw eventually only if all retries fail.
    */
   const waitUntilInboxNotificationsLoaded = memoizeOnSuccess(async () => {
-    store.setQueryLoading(INBOX_NOTIFICATIONS_QUERY);
+    store.setQuery1Loading(INBOX_NOTIFICATIONS_QUERY);
 
     try {
       await autoRetry(
@@ -335,7 +335,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
       );
     } catch (err) {
       // Store the error in the cache as a side-effect, for non-Suspense
-      store.setQueryError(INBOX_NOTIFICATIONS_QUERY, err as Error);
+      store.setQuery1Error(INBOX_NOTIFICATIONS_QUERY, err as Error);
 
       // Rethrow it for Suspense, where this promise must fail
       throw err;
@@ -463,7 +463,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     // Store the promise of the request for the query so that we do not make another request for the same query
     userThreadsRequestsByQuery.set(queryKey, request);
 
-    store.setQueryLoading(queryKey);
+    store.setQuery2Loading(queryKey);
 
     try {
       const result = await request;
@@ -501,7 +501,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
       }, retryCount);
 
       // Set the query state to the error state
-      store.setQueryError(queryKey, err as Error);
+      store.setQuery2Error(queryKey, err as Error);
     }
 
     return;
@@ -1183,7 +1183,7 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
     return incrementUserThreadsQuerySubscribers(queryKey);
   }, [client, queryKey]);
 
-  const query = store.getUserThreads().queries[queryKey];
+  const query = store.getUserThreads().queries2[queryKey];
 
   if (query === undefined || query.isLoading) {
     throw getUserThreads(queryKey, options);

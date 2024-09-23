@@ -381,7 +381,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     if (existingRequest !== undefined) return existingRequest;
     const request = room[kInternal].listTextVersions();
     requestsByQuery.set(queryKey, request);
-    store.setQueryLoading(queryKey);
+    store.setQuery4Loading(queryKey);
     try {
       const result = await request;
       const data = (await result.json()) as {
@@ -403,7 +403,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
           retryCount: retryCount + 1,
         });
       }, retryCount);
-      store.setQueryError(queryKey, err as Error);
+      store.setQuery4Error(queryKey, err as Error);
     }
     return;
   }
@@ -424,7 +424,8 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     // Store the promise of the request for the query so that we do not make another request for the same query
     requestsByQuery.set(queryKey, request);
 
-    store.setQueryLoading(queryKey);
+    store.setQuery2Loading(queryKey);
+
     try {
       const result = await request;
 
@@ -463,7 +464,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
       }, retryCount);
 
       // Set the query state to the error state
-      store.setQueryError(queryKey, err as Error);
+      store.setQuery2Error(queryKey, err as Error);
     }
     return;
   }
@@ -483,7 +484,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
 
       requestsByQuery.set(queryKey, request);
 
-      store.setQueryLoading(queryKey);
+      store.setQuery3Loading(queryKey);
 
       const settings = await request;
 
@@ -497,7 +498,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
         });
       }, retryCount);
 
-      store.setQueryError(queryKey, err as Error);
+      store.setQuery3Error(queryKey, err as Error);
     }
     return;
   }
@@ -2502,7 +2503,7 @@ function useThreadsSuspense<M extends BaseMetadata>(
   const { store, getThreadsAndInboxNotifications } =
     getExtrasForClient<M>(client);
 
-  const query = store.getThreads().queries[queryKey];
+  const query = store.getThreads().queries2[queryKey];
 
   if (query === undefined || query.isLoading) {
     throw getThreadsAndInboxNotifications(room, queryKey, options);
