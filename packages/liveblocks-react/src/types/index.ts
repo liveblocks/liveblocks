@@ -14,6 +14,8 @@ import type {
   User,
 } from "@liveblocks/client";
 import type {
+  AsyncError,
+  AsyncLoading,
   AsyncResult,
   AsyncSuccess,
   BaseMetadata,
@@ -136,11 +138,38 @@ export type CommentReactionOptions = {
   emoji: string;
 };
 
+// -----------------------------------------------------------------------
+
+type NoPaginationFields = {
+  hasFetchedAll?: never;
+  isFetchingMore?: never;
+  fetchMore?: never;
+  fetchMoreError?: never;
+};
+
+type PaginationFields = {
+  hasFetchedAll: boolean;
+  isFetchingMore: boolean;
+  fetchMore: () => void;
+  fetchMoreError?: Error;
+};
+
+export type PagedAsyncSuccess<T, F extends string> = Resolve<
+  AsyncSuccess<T, F> & PaginationFields
+>;
+
+export type PagedAsyncResult<T, F extends string> =
+  | Resolve<AsyncLoading<F> & NoPaginationFields>
+  | Resolve<AsyncError<F> & NoPaginationFields>
+  | PagedAsyncSuccess<T, F>;
+
+// -----------------------------------------------------------------------
+
 export type ThreadsAsyncSuccess<M extends BaseMetadata> = AsyncSuccess<ThreadData<M>[], "threads">; // prettier-ignore
 export type ThreadsAsyncResult<M extends BaseMetadata> = AsyncResult<ThreadData<M>[], "threads">; // prettier-ignore
 
-export type InboxNotificationsAsyncSuccess = AsyncSuccess<InboxNotificationData[], "inboxNotifications">; // prettier-ignore
-export type InboxNotificationsAsyncResult = AsyncResult<InboxNotificationData[], "inboxNotifications">; // prettier-ignore
+export type InboxNotificationsAsyncSuccess = PagedAsyncSuccess<InboxNotificationData[], "inboxNotifications">; // prettier-ignore
+export type InboxNotificationsAsyncResult = PagedAsyncResult<InboxNotificationData[], "inboxNotifications">; // prettier-ignore
 
 export type UnreadInboxNotificationsCountAsyncSuccess = AsyncSuccess<number, "count">; // prettier-ignore
 export type UnreadInboxNotificationsCountAsyncResult = AsyncResult<number, "count">; // prettier-ignore

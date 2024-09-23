@@ -26,7 +26,10 @@ import {
 } from "@liveblocks/core";
 
 import { isMoreRecentlyUpdated } from "./lib/compare";
-import type { RoomNotificationSettingsAsyncResult } from "./types";
+import type {
+  InboxNotificationsAsyncResult,
+  RoomNotificationSettingsAsyncResult,
+} from "./types";
 
 type OptimisticUpdate<M extends BaseMetadata> =
   | CreateThreadOptimisticUpdate<M>
@@ -242,6 +245,9 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
   versionsByRoomId: Record<string, HistoryVersion[]>;
 };
 
+const FETCHERT = () => {};
+const ERRORT = new Error("henk");
+
 export class UmbrellaStore<M extends BaseMetadata> {
   private _store: Store<InternalState<M>>;
   private _prevState: InternalState<M> | null = null;
@@ -343,10 +349,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   // NOTE: This will read the async result, but WILL NOT start loading at the moment!
-  public getInboxNotificationsAsync(): AsyncResult<
-    InboxNotificationData[],
-    "inboxNotifications"
-  > {
+  public getInboxNotificationsAsync(): InboxNotificationsAsyncResult {
     const internalState = this._store.get();
 
     const query = internalState.query1;
@@ -358,9 +361,22 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return query;
     }
 
+    // XXX Implement this for real!
+    const fetchMore = FETCHERT;
+    const isFetchingMore = false;
+    const fetchMoreError = ERRORT;
+    const hasFetchedAll = false;
+
     const inboxNotifications = this.getFullState().inboxNotifications;
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
-    return { isLoading: false, inboxNotifications };
+    return {
+      isLoading: false,
+      inboxNotifications,
+      fetchMore,
+      isFetchingMore,
+      fetchMoreError,
+      hasFetchedAll,
+    };
   }
 
   // NOTE: This will read the async result, but WILL NOT start loading at the moment!
