@@ -2,7 +2,7 @@ import { Liveblocks } from "@liveblocks/node";
 import { http, HttpResponse } from "msw";
 
 import type {
-  CommentEmailRawData,
+  CommentEmailBaseData,
   ThreadNotificationData,
   ThreadNotificationRawData,
 } from "../thread-notification";
@@ -10,7 +10,7 @@ import {
   extractThreadNotificationData,
   getLastUnreadCommentWithMention,
   getUnreadComments,
-  makeCommentEmailRawData,
+  makeCommentEmailBaseData,
   prepareThreadNotificationEmailRawData,
 } from "../thread-notification";
 import {
@@ -226,16 +226,16 @@ describe("thread notification", () => {
       });
 
       const commentWithBody = makeCommentWithBody({ comment });
-      const commentEmailRawData1 = makeCommentEmailRawData({
+      const commentEmailBaseData1 = makeCommentEmailBaseData({
         roomInfo: undefined,
         comment: commentWithBody,
       });
-      const commentEmailRawData2 = makeCommentEmailRawData({
+      const commentEmailBaseData2 = makeCommentEmailBaseData({
         roomInfo: RESOLVED_ROOM_INFO_TEST,
         comment: commentWithBody,
       });
 
-      const expected1: CommentEmailRawData = {
+      const expected1: CommentEmailBaseData = {
         id: commentWithBody.id,
         userId: commentWithBody.userId,
         threadId: commentWithBody.threadId,
@@ -245,7 +245,7 @@ describe("thread notification", () => {
         rawBody: commentWithBody.body,
       };
 
-      const expected2: CommentEmailRawData = {
+      const expected2: CommentEmailBaseData = {
         id: commentWithBody.id,
         userId: commentWithBody.userId,
         threadId: commentWithBody.threadId,
@@ -255,8 +255,8 @@ describe("thread notification", () => {
         rawBody: commentWithBody.body,
       };
 
-      expect(commentEmailRawData1).toEqual(expected1);
-      expect(commentEmailRawData2).toEqual(expected2);
+      expect(commentEmailBaseData1).toEqual(expected1);
+      expect(commentEmailBaseData2).toEqual(expected2);
     });
   });
 
@@ -306,7 +306,7 @@ describe("thread notification", () => {
       const expectedComment = makeCommentWithBody({ comment });
       const expected1: ThreadNotificationRawData = {
         type: "unreadMention",
-        comment: makeCommentEmailRawData({
+        comment: makeCommentEmailBaseData({
           roomInfo: undefined,
           comment: expectedComment,
         }),
@@ -316,7 +316,7 @@ describe("thread notification", () => {
       };
       const expected2: ThreadNotificationRawData = {
         type: "unreadMention",
-        comment: makeCommentEmailRawData({
+        comment: makeCommentEmailBaseData({
           roomInfo: RESOLVED_ROOM_INFO_TEST,
           comment: expectedComment,
         }),
@@ -391,7 +391,7 @@ describe("thread notification", () => {
       const expected1: ThreadNotificationRawData = {
         type: "unreadReplies",
         comments: expectedComments.map((c) =>
-          makeCommentEmailRawData({ roomInfo: undefined, comment: c })
+          makeCommentEmailBaseData({ roomInfo: undefined, comment: c })
         ),
         roomInfo: {
           name: ROOM_ID_TEST,
@@ -401,7 +401,7 @@ describe("thread notification", () => {
       const expected2: ThreadNotificationRawData = {
         type: "unreadReplies",
         comments: expectedComments.map((c) =>
-          makeCommentEmailRawData({
+          makeCommentEmailBaseData({
             roomInfo: RESOLVED_ROOM_INFO_TEST,
             comment: c,
           })

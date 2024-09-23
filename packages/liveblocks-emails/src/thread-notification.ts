@@ -97,17 +97,13 @@ export const extractThreadNotificationData = async ({
   };
 };
 
-export type CommentEmailBaseData<U extends BaseUserMeta = DU> = {
+export type CommentEmailBaseData = {
   id: string;
   threadId: string;
   roomId: string;
-  author: U;
+  userId: string;
   createdAt: Date;
   url?: string;
-};
-
-export type CommentEmailRawData = Omit<CommentEmailBaseData, "author"> & {
-  userId: string;
   rawBody: CommentBody;
 };
 
@@ -128,18 +124,18 @@ type PrepareThreadNotificationEmailRawDataOptions = {
 };
 
 export type ThreadNotificationRawData = (
-  | { type: "unreadMention"; comment: CommentEmailRawData }
-  | { type: "unreadReplies"; comments: CommentEmailRawData[] }
+  | { type: "unreadMention"; comment: CommentEmailBaseData }
+  | { type: "unreadReplies"; comments: CommentEmailBaseData[] }
 ) & { roomInfo: DRI };
 
 /** @internal */
-export const makeCommentEmailRawData = ({
+export const makeCommentEmailBaseData = ({
   roomInfo,
   comment,
 }: {
   roomInfo: BaseRoomInfo | undefined;
   comment: CommentDataWithBody;
-}): CommentEmailRawData => {
+}): CommentEmailBaseData => {
   const url = roomInfo?.url
     ? generateCommentUrl({
         roomUrl: roomInfo?.url,
@@ -182,7 +178,7 @@ export const prepareThreadNotificationEmailRawData = async ({
   if (extracted.type === "unreadMention") {
     return {
       type: "unreadMention",
-      comment: makeCommentEmailRawData({
+      comment: makeCommentEmailBaseData({
         roomInfo,
         comment: extracted.comment,
       }),
@@ -193,21 +189,27 @@ export const prepareThreadNotificationEmailRawData = async ({
   return {
     type: "unreadReplies",
     comments: extracted.comments.map((comment) =>
-      makeCommentEmailRawData({ roomInfo, comment })
+      makeCommentEmailBaseData({ roomInfo, comment })
     ),
     roomInfo: resolvedRoomInfo,
   };
 };
 
-export type CommentEmailHTMLData<U extends BaseUserMeta> =
-  CommentEmailBaseData<U> & {
-    htmlBody: string;
-  };
+export type CommentEmailHTMLData<U extends BaseUserMeta> = Omit<
+  CommentEmailBaseData,
+  "userId"
+> & {
+  author: U;
+  htmlBody: string;
+};
 
-export type CommentEmailReactData<U extends BaseUserMeta> =
-  CommentEmailBaseData<U> & {
-    reactBody: JSX.Element;
-  };
+export type CommentEmailReactData<U extends BaseUserMeta> = Omit<
+  CommentEmailBaseData,
+  "userId"
+> & {
+  author: U;
+  reactBody: JSX.Element;
+};
 
 export type ThreadNotificationEmailUnreadRepliesData<
   U extends BaseUserMeta,
