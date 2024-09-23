@@ -16,6 +16,7 @@ import type {
 } from "@liveblocks/core";
 import {
   assert,
+  autoRetry,
   createClient,
   kInternal,
   makePoller,
@@ -38,7 +39,7 @@ import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/w
 import { useIsInsideRoom } from "./contexts";
 import { byFirstCreated, byMostRecentlyUpdated } from "./lib/compare";
 import { makeThreadsFilter } from "./lib/querying";
-import { autoRetry, retryError } from "./lib/retry-error";
+import { retryError } from "./lib/retry-error";
 import { shallow2 } from "./lib/shallow2";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { use } from "./lib/use-polyfill";
