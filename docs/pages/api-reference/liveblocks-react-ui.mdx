@@ -683,7 +683,11 @@ occurs when the composer is submitted. You must create your own mutations within
   <PropertiesListItem name="defaultAttachments" type="CommentAttachment[]">
     The composer's initial attachments.
   </PropertiesListItem>
-  <PropertiesListItem name="pasteFilesAsAttachments" type="boolean">
+  <PropertiesListItem
+    name="pasteFilesAsAttachments"
+    type="boolean"
+    defaultValue="false"
+  >
     Whether to create attachments when pasting files into the editor.
   </PropertiesListItem>
   <PropertiesListItem
@@ -693,7 +697,7 @@ occurs when the composer is submitted. You must create your own mutations within
   >
     The event handler called when the form is submitted.
   </PropertiesListItem>
-  <PropertiesListItem name="disabled" type="boolean">
+  <PropertiesListItem name="disabled" type="boolean" defaultValue="false">
     Whether the composer is disabled.
   </PropertiesListItem>
   <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
@@ -1215,7 +1219,7 @@ Displays a formatted file size.
 
 Use with `attachment.size` to display a human-readable file size.
 
-```tsx highlight="8"
+```tsx
 import { CommentData, FileSize } from "@liveblocks/react-ui";
 
 function MyComment({ comment }: { comment: CommentData }) {
@@ -1226,7 +1230,9 @@ function MyComment({ comment }: { comment: CommentData }) {
       {comment.attachments.map((attachment) => (
         <div key={attachment.id}>
           {attachment.name}
+          // +++
           <FileSize size={attachment.size} />
+          // +++
         </div>
       ))}
     </div>
@@ -1352,17 +1358,21 @@ function MyComposer() {
   const createThread = useCreateThread();
 
   return (
-    <Composer.Form onComposerSubmit={({ body, attachments } => {
+    <Composer.Form onComposerSubmit={({ body, attachments }) => {
       const thread = createThread({
         body,
+        // +++
         attachments,
+        // +++
         metadata: {},
       });
-    })}>
+    }}>
       <Composer.Editor components={/* Your custom component parts */} />
+      // +++
       <MyComposerAttachments />
       <Composer.AttachFiles>Attach Files</Composer.AttachFiles>
       <Composer.Submit>Submit</Composer.Submit>
+      // +++
     </Composer.Form>
   );
 }
