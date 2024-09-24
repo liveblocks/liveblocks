@@ -58,7 +58,6 @@ export type {
   CommentBodyText,
   CommentBodyTextElementArgs,
   CommentData,
-  CommentDataWithBody,
   CommentUserReaction,
   IUserInfo,
   Json,

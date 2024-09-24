@@ -27,8 +27,6 @@ export type {
   ResolveUsersArgs,
 } from "./client";
 export { createClient, NotificationsApiError } from "./client";
-export type { CommentDataWithBody } from "./comments/comment";
-export { filterCommentsWithBody } from "./comments/comment";
 export type {
   CommentBodyLinkElementArgs,
   CommentBodyMentionElementArgs,
