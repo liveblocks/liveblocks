@@ -8,6 +8,7 @@ import type {
   HistoryVersion,
   InboxNotificationData,
   InboxNotificationDeleteInfo,
+  OpaqueClient,
   Patchable,
   Resolve,
   RoomNotificationSettings,
@@ -254,14 +255,14 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
   versionsByRoomId: Record<string, HistoryVersion[]>;
 };
 
-const FETCHERT = () => {};
-
 export class UmbrellaStore<M extends BaseMetadata> {
+  private _client?: OpaqueClient;
   private _store: Store<InternalState<M>>;
   private _prevState: InternalState<M> | null = null;
   private _stateCached: UmbrellaStoreState<M> | null = null;
 
-  constructor() {
+  constructor(client?: OpaqueClient) {
+    this._client = client;
     this._store = createStore<InternalState<M>>({
       rawThreadsById: {},
       // queries: {},
@@ -292,6 +293,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this._hasOptimisticUpdates = this._hasOptimisticUpdates.bind(this);
     this._subscribeOptimisticUpdates =
       this._subscribeOptimisticUpdates.bind(this);
+
+    this.fetchMoreInboxNotifications =
+      this.fetchMoreInboxNotifications.bind(this);
   }
 
   private get(): UmbrellaStoreState<M> {
@@ -356,6 +360,56 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return { isLoading: false, fullState: this.getFullState() };
   }
 
+  private fetchMoreInboxNotifications(): void {
+    const pageState = this._store.get().query1?.data;
+    if (!pageState || pageState.isFetchingMore || pageState.hasFetchedAll) {
+      // Not in the right state, make this a no-op
+      return;
+    }
+
+    const cursor = pageState.cursor;
+    this.setQuery1OK({
+      ...pageState,
+      isFetchingMore: true,
+    });
+
+    // XXX It's not sitting well that this code to figure out the next cursor is duplicated in two places now!
+    void nn(this._client, "To call fetchMore(), we need a client")
+      .getInboxNotifications({ cursor })
+      .then((data) => {
+        // XXX Pass the page size into the URL so we will know it matches the backend!
+        const PAGE_SIZE = 6; // Must match the backend
+
+        // Find the lowest date in the result, and store it to use as the next
+        // page's cursor
+        let cursor: Date = new Date();
+        for (const ibn of data.inboxNotifications.updated) {
+          // XXX The sort field (= notifiedAt) must match the backend! Put it in the URL!
+          // XXX This < (less than) should match the sort order in the backend! (Only works with DESC sorts!)
+          if (ibn.notifiedAt.getTime() < cursor.getTime()) {
+            cursor = ibn.notifiedAt;
+          }
+        }
+
+        const hasFetchedAll =
+          data.inboxNotifications.updated.length < PAGE_SIZE;
+
+        this.setQuery1OK({
+          ...pageState,
+          hasFetchedAll,
+          fetchMoreError: undefined,
+          isFetchingMore: false,
+        });
+      })
+      .catch((err) => {
+        this.setQuery1OK({
+          ...pageState,
+          fetchMoreError: err,
+          isFetchingMore: false,
+        });
+      });
+  }
+
   // NOTE: This will read the async result, but WILL NOT start loading at the moment!
   public getInboxNotificationsAsync(): InboxNotificationsAsyncResult {
     const internalState = this._store.get();
@@ -370,7 +424,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }
 
     // XXX Implement this for real!
-    const fetchMore = FETCHERT;
+    const fetchMore = this.fetchMoreInboxNotifications;
     const isFetchingMore = false;
     const fetchMoreError = undefined;
     const hasFetchedAll = false;

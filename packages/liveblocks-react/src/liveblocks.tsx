@@ -240,7 +240,7 @@ export function getUmbrellaStoreForClient<M extends BaseMetadata>(
 ): UmbrellaStore<M> {
   let store = _umbrellaStores.get(client);
   if (!store) {
-    store = new UmbrellaStore();
+    store = new UmbrellaStore(client);
     _umbrellaStores.set(client, store);
   }
   return store as unknown as UmbrellaStore<M>;
@@ -368,9 +368,12 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
           }
         }
 
+        const hasFetchedAll =
+          result.inboxNotifications.updated.length < PAGE_SIZE;
+
         store.setQuery1OK({
           cursor,
-          hasFetchedAll: result.inboxNotifications.updated.length < PAGE_SIZE,
+          hasFetchedAll,
           isFetchingMore: false,
           fetchMoreError: undefined,
         });
