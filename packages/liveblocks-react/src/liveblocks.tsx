@@ -56,7 +56,7 @@ import type {
   UseUserThreadsOptions,
 } from "./types";
 import type { UmbrellaStoreState } from "./umbrella-store";
-import { INBOX_NOTIFICATIONS_QUERY, UmbrellaStore } from "./umbrella-store";
+import { UmbrellaStore } from "./umbrella-store";
 
 /**
  * Raw access to the React context where the LiveblocksProvider stores the
@@ -279,13 +279,18 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     if (lastRequestedAt === undefined) {
       const result = await client.getInboxNotifications();
 
-      store.updateThreadsAndNotifications(
-        result.threads,
-        result.inboxNotifications,
-        [],
-        [],
-        INBOX_NOTIFICATIONS_QUERY
-      );
+      store.batch(() => {
+        // 1️⃣
+        store.updateThreadsAndNotifications(
+          result.threads,
+          result.inboxNotifications,
+          [],
+          []
+        );
+
+        // 2️⃣
+        store.setQuery1OK();
+      });
 
       lastRequestedAt = result.requestedAt;
     } else {
@@ -293,13 +298,18 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
         since: lastRequestedAt,
       });
 
-      store.updateThreadsAndNotifications(
-        result.threads.updated,
-        result.inboxNotifications.updated,
-        result.threads.deleted,
-        result.inboxNotifications.deleted,
-        INBOX_NOTIFICATIONS_QUERY
-      );
+      store.batch(() => {
+        // 1️⃣
+        store.updateThreadsAndNotifications(
+          result.threads.updated,
+          result.inboxNotifications.updated,
+          result.threads.deleted,
+          result.inboxNotifications.deleted
+        );
+
+        // 2️⃣
+        store.setQuery1OK();
+      });
 
       if (lastRequestedAt < result.requestedAt) {
         lastRequestedAt = result.requestedAt;
@@ -325,7 +335,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
    * delays. Will throw eventually only if all retries fail.
    */
   const waitUntilInboxNotificationsLoaded = memoizeOnSuccess(async () => {
-    store.setQuery1Loading(INBOX_NOTIFICATIONS_QUERY);
+    store.setQuery1Loading();
 
     try {
       await autoRetry(
@@ -335,7 +345,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
       );
     } catch (err) {
       // Store the error in the cache as a side-effect, for non-Suspense
-      store.setQuery1Error(INBOX_NOTIFICATIONS_QUERY, err as Error);
+      store.setQuery1Error(err as Error);
 
       // Rethrow it for Suspense, where this promise must fail
       throw err;
@@ -369,7 +379,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
       // Decrement
       if (pollerSubscribers <= 0) {
         console.warn(
-          `Internal unexpected behavior. Cannot decrease subscriber count for query "${INBOX_NOTIFICATIONS_QUERY}"`
+          "Unexpected internal error: cannot decrease subscriber count for inbox notifications."
         );
         return;
       }
@@ -397,13 +407,19 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
         since,
       });
       isFetchingUserThreadsUpdates = false;
-      store.updateThreadsAndNotifications(
-        updates.threads.updated,
-        [],
-        updates.threads.deleted,
-        [],
-        USER_THREADS_QUERY
-      );
+
+      store.batch(() => {
+        // 1️⃣
+        store.updateThreadsAndNotifications(
+          updates.threads.updated,
+          [],
+          updates.threads.deleted,
+          []
+        );
+
+        // 2️⃣
+        store.setQuery2OK(USER_THREADS_QUERY);
+      });
 
       userThreadslastRequestedAt = updates.requestedAt;
     } catch (err) {
@@ -468,13 +484,18 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     try {
       const result = await request;
 
-      store.updateThreadsAndNotifications(
-        result.threads,
-        result.inboxNotifications,
-        [],
-        [],
-        queryKey
-      );
+      store.batch(() => {
+        // 1️⃣
+        store.updateThreadsAndNotifications(
+          result.threads,
+          result.inboxNotifications,
+          [],
+          []
+        );
+
+        // 2️⃣
+        store.setQuery2OK(queryKey);
+      });
 
       /**
        * We set the `userThreadslastRequestedAt` value to the timestamp returned by the current request if:
@@ -770,7 +791,7 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
 ): ThreadData<M> {
   const { store } = getExtrasForClient<M>(client);
 
-  const getter = store.getThreadsAndInboxNotifications;
+  const getter = store.getFullState;
 
   const selector = useCallback(
     (state: ReturnType<typeof getter>) => {
@@ -1183,7 +1204,7 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
     return incrementUserThreadsQuerySubscribers(queryKey);
   }, [client, queryKey]);
 
-  const query = store.getUserThreads().queries2[queryKey];
+  const query = store.getFullState().queries2[queryKey];
 
   if (query === undefined || query.isLoading) {
     throw getUserThreads(queryKey, options);
@@ -1193,7 +1214,7 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
     throw query.error;
   }
 
-  const getter = store.getUserThreads;
+  const getter = store.getFullState;
 
   const selector = useCallback(
     (state: ReturnType<typeof getter>): ThreadsAsyncSuccess<M> => {

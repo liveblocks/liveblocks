@@ -160,9 +160,6 @@ type QueryAsyncResult = AsyncResult<undefined>;
 const ASYNC_LOADING = Object.freeze({ isLoading: true });
 const ASYNC_OK = Object.freeze({ isLoading: false, data: undefined });
 
-// TODO Stop exporting this constant!
-export const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
-
 // TODO Stop exporting this helper!
 export function makeNotificationSettingsQueryKey(roomId: string) {
   return `${roomId}:NOTIFICATION_SETTINGS`;
@@ -177,7 +174,7 @@ type InternalState<M extends BaseMetadata> = Readonly<{
   // This is a temporary refactoring artifact from Vincent and Nimesh.
   // Each query corresponds to a resource which should eventually have its own type.
   // This is why we split it for now.
-  queries1: Record<string, QueryAsyncResult>; // Inbox notifications
+  query1: QueryAsyncResult | undefined; // Inbox notifications
   queries2: Record<string, QueryAsyncResult>; // Threads
   queries3: Record<string, QueryAsyncResult>; // Notification settings
   queries4: Record<string, QueryAsyncResult>; // Versions
@@ -254,7 +251,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this._store = createStore<InternalState<M>>({
       rawThreadsById: {},
       // queries: {},
-      queries1: {},
+      query1: undefined,
       queries2: {},
       queries3: {},
       queries4: {},
@@ -266,10 +263,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     // Auto-bind all of this class methods once here, so we can use stable
     // references to them (most important for use in useSyncExternalStore)
-    this.getThreads = this.getThreads.bind(this);
-    this.getUserThreads = this.getUserThreads.bind(this);
-    this.getThreadsAndInboxNotifications =
-      this.getThreadsAndInboxNotifications.bind(this);
+    this.getFullState = this.getFullState.bind(this);
     this.getInboxNotificationsAsync =
       this.getInboxNotificationsAsync.bind(this);
     this.subscribeThreads = this.subscribeThreads.bind(this);
@@ -298,7 +292,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this._stateCached;
   }
 
-  public getThreads(): UmbrellaStoreState<M> {
+  public batch(callback: () => void): void {
+    return this._store.batch(callback);
+  }
+
+  public getFullState(): UmbrellaStoreState<M> {
     return this.get();
   }
 
@@ -323,11 +321,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }
 
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
-    return { isLoading: false, fullState: this.get() };
-  }
-
-  public getUserThreads(): UmbrellaStoreState<M> {
-    return this.get();
+    return { isLoading: false, fullState: this.getFullState() };
   }
 
   public getUserThreadsAsync(
@@ -345,15 +339,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }
 
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
-    return { isLoading: false, fullState: this.get() };
-  }
-
-  public getInboxNotifications(): UmbrellaStoreState<M> {
-    return this.get();
-  }
-
-  public getThreadsAndInboxNotifications(): UmbrellaStoreState<M> {
-    return this.get();
+    return { isLoading: false, fullState: this.getFullState() };
   }
 
   // NOTE: This will read the async result, but WILL NOT start loading at the moment!
@@ -363,7 +349,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   > {
     const internalState = this._store.get();
 
-    const query = internalState.queries1[INBOX_NOTIFICATIONS_QUERY];
+    const query = internalState.query1;
     if (query === undefined || query.isLoading) {
       return ASYNC_LOADING;
     }
@@ -372,7 +358,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return query;
     }
 
-    const inboxNotifications = this.get().inboxNotifications;
+    const inboxNotifications = this.getFullState().inboxNotifications;
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return { isLoading: false, inboxNotifications };
   }
@@ -517,13 +503,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }));
   }
 
-  private setQuery1State(queryKey: string, queryState: QueryAsyncResult): void {
+  private setQuery1State(queryState: QueryAsyncResult): void {
     this._store.set((state) => ({
       ...state,
-      queries1: {
-        ...state.queries1,
-        [queryKey]: queryState,
-      },
+      query1: queryState,
     }));
   }
 
@@ -903,11 +886,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
     threads: ThreadData<M>[],
     inboxNotifications: InboxNotificationData[],
     deletedThreads: ThreadDeleteInfo[],
-    deletedInboxNotifications: InboxNotificationDeleteInfo[],
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    queryKey?: "INBOX_NOTIFICATIONS" | (string & {})
+    deletedInboxNotifications: InboxNotificationDeleteInfo[]
   ): void {
-    // Batch 1️⃣ + 2️⃣ + 3️⃣
+    // Batch 1️⃣ + 2️⃣
     this._store.batch(() => {
       // 1️⃣
       this.updateThreadsCache((cache) =>
@@ -924,15 +905,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
           deletedNotifications: deletedInboxNotifications,
         })
       );
-
-      // 3️⃣
-      if (queryKey !== undefined) {
-        if (queryKey === "INBOX_NOTIFICATIONS") {
-          this.setQuery1OK(queryKey);
-        } else {
-          this.setQuery2OK(queryKey);
-        }
-      }
     });
   }
 
@@ -1000,16 +972,16 @@ export class UmbrellaStore<M extends BaseMetadata> {
   //
 
   // Query 1
-  public setQuery1Loading(queryKey: string): void {
-    this.setQuery1State(queryKey, ASYNC_LOADING);
+  public setQuery1Loading(): void {
+    this.setQuery1State(ASYNC_LOADING);
   }
 
-  private setQuery1OK(queryKey: string): void {
-    this.setQuery1State(queryKey, ASYNC_OK);
+  public setQuery1OK(): void {
+    this.setQuery1State(ASYNC_OK);
   }
 
-  public setQuery1Error(queryKey: string, error: Error): void {
-    this.setQuery1State(queryKey, { isLoading: false, error });
+  public setQuery1Error(error: Error): void {
+    this.setQuery1State({ isLoading: false, error });
   }
 
   // Query 2
@@ -1017,7 +989,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.setQuery2State(queryKey, ASYNC_LOADING);
   }
 
-  private setQuery2OK(queryKey: string): void {
+  public setQuery2OK(queryKey: string): void {
     this.setQuery2State(queryKey, ASYNC_OK);
   }
 
