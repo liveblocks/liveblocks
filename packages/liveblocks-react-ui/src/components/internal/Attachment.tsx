@@ -264,11 +264,15 @@ function useAttachmentContent(
 
   if (attachment.type === "localAttachment" && attachment.status === "error") {
     if (attachment.error instanceof AttachmentTooLargeError) {
-      description = $.ATTACHMENT_TOO_LARGE(
-        maxAttachmentSize
-          ? formatFileSize(maxAttachmentSize, $.locale)
-          : undefined
-      );
+      if (attachment.error.origin === "server") {
+        description = $.ATTACHMENT_TOO_LARGE();
+      } else {
+        description = $.ATTACHMENT_TOO_LARGE(
+          maxAttachmentSize
+            ? formatFileSize(maxAttachmentSize, $.locale)
+            : undefined
+        );
+      }
     } else {
       description = $.ATTACHMENT_ERROR(attachment.error);
     }
