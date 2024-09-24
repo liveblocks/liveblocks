@@ -97,13 +97,8 @@ export type UserAsyncSuccess<T> = AsyncSuccess<T, "user">;
 export type RoomInfoAsyncResult = AsyncResult<DRI, "info">;
 export type RoomInfoAsyncSuccess = AsyncSuccess<DRI, "info">;
 
-export type AttachmentUrlAsyncResult = AsyncResultWithDataField<string, "url">;
-export type AttachmentUrlAsyncSuccess = Resolve<
-  AttachmentUrlAsyncResult & {
-    readonly isLoading: false;
-    readonly error?: undefined;
-  }
->;
+export type AttachmentUrlAsyncResult = AsyncResult<string, "url">;
+export type AttachmentUrlAsyncSuccess = AsyncSuccess<string, "url">;
 
 // prettier-ignore
 export type CreateThreadOptions<M extends BaseMetadata> =

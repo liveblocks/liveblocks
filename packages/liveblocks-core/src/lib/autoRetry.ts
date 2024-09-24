@@ -12,12 +12,13 @@ import { wait } from "./utils";
  * @param promiseFn The promise factory to execute
  * @param maxTries The number of total tries (must be >=1)
  * @param backoff An array of timings to inject between each promise attempt
+ * @param throwError An optional function to not auto-retry on certain errors
  */
 export async function autoRetry<T>(
   promiseFn: () => Promise<T>,
   maxTries: number,
   backoff: number[],
-  exitCondition?: (error: any) => boolean
+  throwError?: (err: any) => boolean
 ): Promise<T> {
   const fallbackBackoff = backoff.length > 0 ? backoff[backoff.length - 1] : 0;
 
@@ -30,7 +31,7 @@ export async function autoRetry<T>(
     try {
       return await promise;
     } catch (err) {
-      if (exitCondition && exitCondition(err)) {
+      if (throwError?.(err)) {
         throw err;
       }
 
