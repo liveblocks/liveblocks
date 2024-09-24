@@ -1,10 +1,10 @@
 import { mergeAttributes, Node } from "@tiptap/core";
+import { PluginKey } from "@tiptap/pm/state";
 import { ReactNodeViewRenderer, ReactRenderer } from "@tiptap/react";
 import Suggestion from "@tiptap/suggestion";
 
-import { PluginKey } from "@tiptap/pm/state";
-import MentionsList from "./MentionsList";
 import Mention from "./Mention";
+import MentionsList from "./MentionsList";
 
 export const LIVEBLOCKS_MENTION_KEY = new PluginKey("lb-plugin-mention");
 

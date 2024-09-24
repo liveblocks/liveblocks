@@ -3,6 +3,7 @@ import {
   Thread as DefaultThread,
   type ThreadProps,
 } from "@liveblocks/react-ui";
+import type { Editor } from "@tiptap/react";
 import type { ComponentPropsWithoutRef, ComponentType } from "react";
 import React, {
   useCallback,
@@ -11,10 +12,10 @@ import React, {
   useRef,
   useState,
 } from "react";
-import type { Editor } from "@tiptap/react";
 
 import { classNames } from "../classnames";
-import { ThreadPluginState, THREADS_PLUGIN_KEY } from "./CommentsExtension";
+import type { ThreadPluginState } from "./CommentsExtension";
+import { THREADS_PLUGIN_KEY } from "./CommentsExtension";
 import { getRectFromCoords } from "./utils";
 
 const DEFAULT_GAP = 20;
@@ -60,12 +61,11 @@ export function AnchoredThreads({
   const [positions, setPositions] = useState<Map<string, number>>(new Map()); // A map of thread ids to their 'top' position in the document
 
   const pluginState = editor ? THREADS_PLUGIN_KEY.getState(editor.state) as ThreadPluginState : null;
-  if (!editor) return null;
 
   // TODO: lexical supoprts multiple threads being active, should probably do that here as well
   const handlePositionThreads = useCallback(() => {
     const container = containerRef.current;
-    if (container === null) return;
+    if (container === null || !editor) return;
 
     const activeIndex = orderedThreads.findIndex(({ thread }) =>
       thread.id === pluginState?.selectedThreadId
@@ -115,7 +115,7 @@ export function AnchoredThreads({
     }
 
     setPositions(newPositions);
-  }, [pluginState?.selectedThreadId, orderedThreads, elements]);
+  }, [editor, orderedThreads, pluginState?.selectedThreadId, elements]);
 
   useEffect(() => {
     if (!pluginState) return;
@@ -126,7 +126,7 @@ export function AnchoredThreads({
       return acc;
     }, [] as { thread: ThreadData, position: { from: number, to: number } }[]));
     handlePositionThreads();
-  }, [pluginState]);
+  }, [handlePositionThreads, pluginState, threads]);
 
 
   useLayoutEffect(() => {
@@ -159,6 +159,8 @@ export function AnchoredThreads({
     editor.commands.selectThread(id);
   }, [editor]);
 
+
+  if (!editor) return null;
 
   return (
     <div

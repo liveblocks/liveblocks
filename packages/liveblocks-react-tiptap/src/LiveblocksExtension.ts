@@ -1,11 +1,14 @@
+import { kInternal, TextEditorType } from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import { Extension } from "@tiptap/core";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
+import { useEffect } from "react";
 import { Doc } from "yjs";
-import { MentionExtension } from "./mentions/MentionExtension";
+
 import { CommentsExtension } from "./comments/CommentsExtension";
+import { MentionExtension } from "./mentions/MentionExtension";
 
 const providersMap = new Map<
   string,
@@ -62,7 +65,10 @@ export const useLiveblocksExtension = ({
   field,
 }: LiveblocksExtensionOptions = {}): Extension => {
   const room = useRoom();
-
+  useEffect(() => {
+    // Report that this is lexical and root is the rootKey
+    room[kInternal].reportTextEditor(TextEditorType.TipTap, "root");
+  }, [room]);
   return Extension.create({
     name: "liveblocksExtension",
 
@@ -87,9 +93,9 @@ export const useLiveblocksExtension = ({
         if (!info) {
           return;
         }
-        // TODO: maybe we need a deep compare here so other info can be provided
         const { name, color } = info;
         const { user } = this.storage.provider.awareness.getLocalState();
+        // TODO: maybe we need a deep compare here so other info can be provided
         if (name != user?.name || color != user?.color) {
           this.editor.commands.updateUser({ name, color });
         }

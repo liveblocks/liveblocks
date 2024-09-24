@@ -1,6 +1,8 @@
+import type {
+  ClientRectObject
+} from "@floating-ui/react-dom";
 import {
   autoUpdate,
-  ClientRectObject,
   flip,
   hide,
   limitShift,
@@ -14,6 +16,7 @@ import {
   Thread as DefaultThread,
   type ThreadProps,
 } from "@liveblocks/react-ui";
+import type { Editor } from "@tiptap/react";
 import React, {
   type ComponentType,
   type HTMLAttributes,
@@ -25,10 +28,10 @@ import React, {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import type { Editor } from "@tiptap/react";
 
 import { classNames } from "../classnames";
-import { ThreadPluginState, THREADS_PLUGIN_KEY } from "./CommentsExtension";
+import type { ThreadPluginState } from "./CommentsExtension";
+import { THREADS_PLUGIN_KEY } from "./CommentsExtension";
 import { getRectFromCoords } from "./utils";
 
 type ThreadPanelComponents = {
@@ -86,13 +89,13 @@ export function FloatingThreads({
     setActiveThreads({
       rect: getRectFromCoords(coords), threads: active
     });
-  }, [pluginState, threads]);
+  }, [editor, pluginState, threads]);
 
   const handleEscapeKeydown = useCallback((): boolean => {
     if (!editor || activeThreads === null) return false;
     editor.commands.selectThread(null);
     return true;
-  }, [activeThreads]);
+  }, [activeThreads, editor]);
 
   if (!activeThreads) return null;
 

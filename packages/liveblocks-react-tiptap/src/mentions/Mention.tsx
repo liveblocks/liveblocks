@@ -1,9 +1,9 @@
 import { useUser } from "@liveblocks/react";
 import { useOverrides } from "@liveblocks/react-ui";
 import { NodeViewWrapper } from "@tiptap/react";
-import { forwardRef } from "react";
+import React, { forwardRef } from "react";
+
 import { classNames } from "../classnames";
-import React from "react";
 
 export default forwardRef<HTMLSpanElement, { node: any, selected: boolean }>(
   function User(props, forwardedRef) {
@@ -12,7 +12,7 @@ export default forwardRef<HTMLSpanElement, { node: any, selected: boolean }>(
     const name =
       user === undefined || user === null ? $.USER_UNKNOWN : user.name;
 
-    const classnames = classNames('lb-mention', props.selected ? 'lb-mention-selected' : null);
+    const classnames = classNames("lb-mention", props.selected ? "lb-mention-selected" : null);
 
     return (
       <NodeViewWrapper className={classnames} as="span"

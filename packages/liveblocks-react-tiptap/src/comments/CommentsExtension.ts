@@ -1,10 +1,10 @@
+import { Extension, Mark, mergeAttributes } from "@tiptap/core";
+import type { Node } from "@tiptap/pm/model";
+import type { Transaction } from "@tiptap/pm/state";
 import { Plugin, PluginKey, TextSelection } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
-import { mergeAttributes, Mark, Extension } from "@tiptap/core";
-import type { Node } from "@tiptap/pm/model";
 import { ySyncPluginKey } from "y-prosemirror";
 
-export const THREADS_PLUGIN_KEY = new PluginKey("lb-threads-plugin");
 export const ACTIVE_SELECTION_PLUGIN = new PluginKey(
   "lb-active-selection-plugin"
 );
@@ -14,6 +14,15 @@ export type ThreadPluginState = {
   selectedThreadId: string | null;
   selectedThreadPos: number | null;
   decorations: DecorationSet;
+};
+
+export const THREADS_PLUGIN_KEY = new PluginKey<ThreadPluginState>(
+  "lb-threads-plugin"
+);
+
+type ThreadPluginAction = {
+  name: ThreadPluginActions;
+  data: string | null;
 };
 
 export const enum ThreadPluginActions {
@@ -28,9 +37,6 @@ declare module "@tiptap/core" {
        */
       addComment: (id: string) => ReturnType;
       selectThread: (id: string | null) => ReturnType;
-    };
-
-    liveblocks: {
       addPendingComment: () => ReturnType;
     };
   }
@@ -53,38 +59,11 @@ const Comment = Mark.create({
         parseHTML: (element) => element.getAttribute("data-lb-thread-id"),
         renderHTML: (attributes) => {
           return {
-            "data-lb-thread-id": attributes.threadId,
+            "data-lb-thread-id": (attributes as { threadId: string }).threadId,
           };
         },
         default: "",
       },
-    };
-  },
-
-  addCommands() {
-    return {
-      selectThread: (id: string | null) => () => {
-        this.editor.view.dispatch(
-          this.editor.state.tr.setMeta(THREADS_PLUGIN_KEY, {
-            name: ThreadPluginActions.SET_SELECTED_THREAD_ID,
-            data: id,
-          })
-        );
-        return true;
-      },
-      addComment:
-        (id: string) =>
-        ({ commands }) => {
-          if (!this.editor.storage.liveblocksComments.pendingCommentSelection) {
-            return false;
-          }
-          this.editor.state.selection = this.editor.storage.liveblocksComments
-            .pendingCommentSelection as TextSelection;
-          commands.setMark(this.type, { threadId: id });
-          this.editor.storage.liveblocksComments.pendingCommentSelection = null;
-
-          return true;
-        },
     };
   },
 
@@ -108,7 +87,12 @@ const Comment = Mark.create({
       doc.descendants((node, pos) => {
         node.marks.forEach((mark) => {
           if (mark.type === this.type) {
-            const thisThreadId = mark.attrs.threadId;
+            const thisThreadId = (
+              mark.attrs as { threadId: string | undefined }
+            ).threadId;
+            if (!thisThreadId) {
+              return;
+            }
             const from = pos;
             const to = from + node.nodeSize;
 
@@ -157,7 +141,7 @@ const Comment = Mark.create({
             } as ThreadPluginState;
           },
           apply(tr, state) {
-            const action = tr.getMeta(THREADS_PLUGIN_KEY);
+            const action = tr.getMeta(THREADS_PLUGIN_KEY) as ThreadPluginAction;
             if (!tr.docChanged && !action) {
               return state;
             }
@@ -179,7 +163,10 @@ const Comment = Mark.create({
         },
         props: {
           decorations: (state) => {
-            return THREADS_PLUGIN_KEY.getState(state).decorations;
+            return (
+              THREADS_PLUGIN_KEY.getState(state)?.decorations ??
+              DecorationSet.empty
+            );
           },
           handleClick: (view, pos, event) => {
             if (event.button !== 0) {
@@ -208,23 +195,14 @@ const Comment = Mark.create({
       }),
     ];
   },
-
-  //@ts-ignore - this is incorrectly typed upstream in Mark.ts of TipTap. This event does include transaction
-  // correct: https://github.com/ueberdosis/tiptap/blob/2ff327ced84df6865b4ef98947b667aa79992292/packages/core/src/types.ts#L60
-  // incorrect: https://github.com/ueberdosis/tiptap/blob/2ff327ced84df6865b4ef98947b667aa79992292/packages/core/src/Mark.ts#L330
-  onSelectionUpdate({ transaction }) {
-    // ignore changes made by yjs
-    if (
-      !this.storage.pendingCommentSelection ||
-      transaction.getMeta(ySyncPluginKey)
-    ) {
-      return;
-    }
-    this.storage.pendingCommentSelection = null;
-  },
 });
 
-export const CommentsExtension = Extension.create({
+export const CommentsExtension = Extension.create<
+  never,
+  {
+    pendingCommentSelection: TextSelection | null;
+  }
+>({
   name: "liveblocksComments",
   addExtensions() {
     return [Comment];
@@ -255,9 +233,46 @@ export const CommentsExtension = Extension.create({
         );
         return true;
       },
+      selectThread: (id: string | null) => () => {
+        this.editor.view.dispatch(
+          this.editor.state.tr.setMeta(THREADS_PLUGIN_KEY, {
+            name: ThreadPluginActions.SET_SELECTED_THREAD_ID,
+            data: id,
+          })
+        );
+        return true;
+      },
+      addComment:
+        (id: string) =>
+        ({ commands }) => {
+          if (!this.storage.pendingCommentSelection) {
+            return false;
+          }
+          this.editor.state.selection = this.storage.pendingCommentSelection;
+          commands.setMark(Comment.type, { threadId: id });
+          this.storage.pendingCommentSelection = null;
+
+          return true;
+        },
     };
   },
 
+  //@ts-expect-error - this is incorrectly typed upstream in Mark.ts of TipTap. This event does include transaction
+  // correct: https://github.com/ueberdosis/tiptap/blob/2ff327ced84df6865b4ef98947b667aa79992292/packages/core/src/types.ts#L60
+  // incorrect: https://github.com/ueberdosis/tiptap/blob/2ff327ced84df6865b4ef98947b667aa79992292/packages/core/src/Mark.ts#L330
+  onSelectionUpdate(
+    this: { storage: Storage }, // NOTE: there are more types here I didn't override, this gets removed after submitting PR to tiptap
+    { transaction }: { transaction: Transaction } // TODO: remove this after submitting PR to tiptap
+  ) {
+    // ignore changes made by yjs
+    if (
+      !this.storage.pendingCommentSelection ||
+      transaction.getMeta(ySyncPluginKey)
+    ) {
+      return;
+    }
+    this.storage.pendingCommentSelection = null;
+  },
   // TODO: this.storage.pendingCommentSelection needs to be a Yjs Relative Position that gets translated back to absolute position.
   // Commit: eba949d32d6010a3d8b3f7967d73d4deb015b02a has code that can help with this.
   addProseMirrorPlugins() {
@@ -266,7 +281,7 @@ export const CommentsExtension = Extension.create({
         key: ACTIVE_SELECTION_PLUGIN,
         props: {
           decorations: ({ doc }) => {
-            const active = this.storage.pendingCommentSelection != null;
+            const active = this.storage.pendingCommentSelection !== null;
             if (!active) {
               return DecorationSet.create(doc, []);
             }

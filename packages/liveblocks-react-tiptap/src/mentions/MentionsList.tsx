@@ -1,13 +1,12 @@
+import { autoUpdate, flip, hide, limitShift, offset, shift, size, useFloating } from "@floating-ui/react-dom";
+import { useUser } from "@liveblocks/react";
+import { useMentionSuggestions, useOverrides } from "@liveblocks/react-ui";
+import type { HTMLAttributes } from "react";
 import React, {
   forwardRef, useEffect, useImperativeHandle,
   useLayoutEffect,
   useState,
-} from 'react'
-
-import { useUser } from "@liveblocks/react";
-import { useMentionSuggestions, useOverrides } from "@liveblocks/react-ui";
-import type { HTMLAttributes } from "react";
-import { autoUpdate, flip, hide, limitShift, offset, shift, size, useFloating } from '@floating-ui/react-dom';
+} from "react"
 
 
 export interface UserProps
@@ -94,17 +93,17 @@ export default forwardRef((props: { query: string, command: (otps: { id: string 
 
   useImperativeHandle(ref, () => ({
     onKeyDown: ({ event }: { event: KeyboardEvent }) => {
-      if (event.key === 'ArrowUp') {
+      if (event.key === "ArrowUp") {
         upHandler()
         return true
       }
 
-      if (event.key === 'ArrowDown') {
+      if (event.key === "ArrowDown") {
         downHandler()
         return true
       }
 
-      if (event.key === 'Enter') {
+      if (event.key === "Enter") {
         enterHandler()
         return true
       }
@@ -125,13 +124,13 @@ export default forwardRef((props: { query: string, command: (otps: { id: string 
         left: 0,
         transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`,
         minWidth: "max-content",
-        display: props.hide ? 'none' : 'block'
+        display: props.hide ? "none" : "block"
       }}>
       {suggestions === undefined ? <div className="item">Loading...</div> :
 
         suggestions.map((item, index) => (
           <button
-            className={index === selectedIndex ? 'is-selected' : ''}
+            className={index === selectedIndex ? "is-selected" : ""}
             key={index}
             onClick={() => selectItem(index)}
           >

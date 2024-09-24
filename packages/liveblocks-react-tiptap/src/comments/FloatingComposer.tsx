@@ -1,11 +1,14 @@
+import { autoUpdate, flip, hide, limitShift, offset, shift, size, useFloating } from "@floating-ui/react-dom";
 import type { BaseMetadata } from "@liveblocks/client";
 import type { DM } from "@liveblocks/core";
 import { useCreateThread } from "@liveblocks/react";
-import { Composer, ComposerProps, ComposerSubmitComment } from "@liveblocks/react-ui";
-import type { Editor } from "@tiptap/react";
-import React, { ComponentRef, FormEvent, forwardRef, useCallback, useEffect } from "react";
-import { autoUpdate, flip, hide, limitShift, offset, shift, size, useFloating } from "@floating-ui/react-dom";
+import type { ComposerProps, ComposerSubmitComment } from "@liveblocks/react-ui";
+import { Composer } from "@liveblocks/react-ui";
 import type { TextSelection } from "@tiptap/pm/state";
+import type { Editor } from "@tiptap/react";
+import type { ComponentRef, FormEvent } from "react";
+import React, { forwardRef, useCallback, useEffect } from "react";
+
 import { getRectFromCoords } from "./utils";
 
 export type FloatingComposerProps<M extends BaseMetadata = DM> = Omit<
@@ -70,11 +73,11 @@ export const FloatingComposer = forwardRef<
       }
     }
     updateRect();
-    editor.on('update', updateRect);
+    editor.on("update", updateRect);
     return () => {
-      editor.off('update', updateRect);
+      editor.off("update", updateRect);
     }
-  }, [editor, showComposer]);
+  }, [editor, setReference, showComposer]);
 
 
   // Submit a new thread and update the comment highlight to show a completed highlight
