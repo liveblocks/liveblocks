@@ -32,6 +32,7 @@ import type {
 } from "./protocol/InboxNotifications";
 import { PKG_VERSION } from "./version";
 
+export const INBOX_NOTIFICATIONS_PAGE_SIZE = 6; // TODO Maybe bump to 50?
 const MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY = 50;
 
 export function createNotificationsApi<M extends BaseMetadata>({
@@ -143,6 +144,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
     }>(url`/v2/c/inbox-notifications`, undefined, {
       since: options?.since?.toISOString(),
       cursor: options?.cursor?.toISOString(),
+      limit: INBOX_NOTIFICATIONS_PAGE_SIZE,
     });
 
     return {

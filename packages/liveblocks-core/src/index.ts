@@ -130,6 +130,7 @@ export {
   wait,
   withTimeout,
 } from "./lib/utils";
+export { INBOX_NOTIFICATIONS_PAGE_SIZE } from "./notifications";
 export type { CustomAuthenticationResult } from "./protocol/Authentication";
 export type { BaseActivitiesData } from "./protocol/BaseActivitiesData";
 export type { BaseRoomInfo } from "./protocol/BaseRoomInfo";

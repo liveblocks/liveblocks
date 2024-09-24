@@ -21,6 +21,7 @@ import {
   compactObject,
   console,
   createStore,
+  INBOX_NOTIFICATIONS_PAGE_SIZE,
   mapValues,
   nanoid,
   nn,
@@ -377,9 +378,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     void nn(this._client, "To call fetchMore(), we need a client")
       .getInboxNotifications({ cursor })
       .then((data) => {
-        // XXX Pass the page size into the URL so we will know it matches the backend!
-        const PAGE_SIZE = 6; // Must match the backend
-
         // Find the lowest date in the result, and store it to use as the next
         // page's cursor
         let nextCursor = cursor;
@@ -394,7 +392,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
         const hasFetchedAll =
           data.inboxNotifications.updated.length +
             data.inboxNotifications.deleted.length <
-          PAGE_SIZE;
+          INBOX_NOTIFICATIONS_PAGE_SIZE;
 
         this.batch(() => {
           this.updateThreadsAndNotifications(
