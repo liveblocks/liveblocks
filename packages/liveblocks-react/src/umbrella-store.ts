@@ -196,8 +196,8 @@ type InternalState<M extends BaseMetadata> = Readonly<{
   optimisticUpdates: readonly OptimisticUpdate<M>[];
 
   rawThreadsById: Record<string, ThreadDataWithDeleteInfo<M>>;
-  inboxNotificationsById: Record<string, InboxNotificationData>;
-  notificationSettingsByRoomId: Record<string, RoomNotificationSettings>;
+  notificationsById: Record<string, InboxNotificationData>;
+  settingsByRoomId: Record<string, RoomNotificationSettings>;
   versionsByRoomId: Record<string, HistoryVersion[]>;
 }>;
 
@@ -233,13 +233,13 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
   /**
    * All inbox notifications in a sorted array, optimistic updates applied.
    */
-  inboxNotifications: InboxNotificationData[];
+  notifications: InboxNotificationData[];
 
   /**
    * Inbox notifications by ID.
    * e.g. `in_${string}`
    */
-  inboxNotificationsById: Record<string, InboxNotificationData>;
+  notificationsById: Record<string, InboxNotificationData>;
 
   /**
    * Notification settings by room ID.
@@ -248,7 +248,7 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
    *        'room-xyz': { threads: "none" },
    *      }
    */
-  notificationSettingsByRoomId: Record<string, RoomNotificationSettings>;
+  settingsByRoomId: Record<string, RoomNotificationSettings>;
   /**
    * Versions by roomId
    * e.g. { 'room-abc': {versions: "all versions"}}
@@ -272,8 +272,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
       queries3: {},
       queries4: {},
       optimisticUpdates: [],
-      inboxNotificationsById: {},
-      notificationSettingsByRoomId: {},
+      notificationsById: {},
+      settingsByRoomId: {},
       versionsByRoomId: {},
     });
 
@@ -437,7 +437,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      inboxNotifications: this.getFullState().inboxNotifications,
+      inboxNotifications: this.getFullState().notifications,
       fetchMore: this.fetchMoreInboxNotifications,
       isFetchingMore: pageState.isFetchingMore,
       fetchMoreError: pageState.fetchMoreError,
@@ -463,7 +463,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      settings: nn(state.notificationSettingsByRoomId[roomId]),
+      settings: nn(state.settingsByRoomId[roomId]),
     };
   }
 
@@ -555,9 +555,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
     ) => Readonly<Record<string, InboxNotificationData>>
   ): void {
     this._store.set((state) => {
-      const inboxNotifications = mapFn(state.inboxNotificationsById);
-      return inboxNotifications !== state.inboxNotificationsById
-        ? { ...state, inboxNotificationsById: inboxNotifications }
+      const inboxNotifications = mapFn(state.notificationsById);
+      return inboxNotifications !== state.notificationsById
+        ? { ...state, notificationsById: inboxNotifications }
         : state;
     });
   }
@@ -568,8 +568,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): void {
     this._store.set((state) => ({
       ...state,
-      notificationSettingsByRoomId: {
-        ...state.notificationSettingsByRoomId,
+      settingsByRoomId: {
+        ...state.settingsByRoomId,
         [roomId]: settings,
       },
     }));
@@ -1115,8 +1115,8 @@ function internalToExternalState<M extends BaseMetadata>(
 ): UmbrellaStoreState<M> {
   const computed = {
     threadsById: { ...state.rawThreadsById },
-    inboxNotificationsById: { ...state.inboxNotificationsById },
-    notificationSettingsByRoomId: { ...state.notificationSettingsByRoomId },
+    notificationsById: { ...state.notificationsById },
+    settingsByRoomId: { ...state.settingsByRoomId },
   };
 
   for (const optimisticUpdate of state.optimisticUpdates) {
@@ -1208,7 +1208,7 @@ function internalToExternalState<M extends BaseMetadata>(
         );
 
         const inboxNotification = Object.values(
-          computed.inboxNotificationsById
+          computed.notificationsById
         ).find(
           (notification) =>
             notification.kind === "thread" &&
@@ -1219,7 +1219,7 @@ function internalToExternalState<M extends BaseMetadata>(
           break;
         }
 
-        computed.inboxNotificationsById[inboxNotification.id] = {
+        computed.notificationsById[inboxNotification.id] = {
           ...inboxNotification,
           notifiedAt: optimisticUpdate.comment.createdAt,
           readAt: optimisticUpdate.comment.createdAt,
@@ -1306,27 +1306,29 @@ function internalToExternalState<M extends BaseMetadata>(
       }
       case "mark-inbox-notification-as-read": {
         const ibn =
-          computed.inboxNotificationsById[optimisticUpdate.inboxNotificationId];
+          computed.notificationsById[optimisticUpdate.inboxNotificationId];
 
         // If the inbox notification doesn't exist in the cache, we do not apply the update
         if (ibn === undefined) {
           break;
         }
 
-        computed.inboxNotificationsById[optimisticUpdate.inboxNotificationId] =
-          { ...ibn, readAt: optimisticUpdate.readAt };
+        computed.notificationsById[optimisticUpdate.inboxNotificationId] = {
+          ...ibn,
+          readAt: optimisticUpdate.readAt,
+        };
         break;
       }
       case "mark-all-inbox-notifications-as-read": {
-        for (const id in computed.inboxNotificationsById) {
-          const ibn = computed.inboxNotificationsById[id];
+        for (const id in computed.notificationsById) {
+          const ibn = computed.notificationsById[id];
 
           // If the inbox notification doesn't exist in the cache, we do not apply the update
           if (ibn === undefined) {
             break;
           }
 
-          computed.inboxNotificationsById[id] = {
+          computed.notificationsById[id] = {
             ...ibn,
             readAt: optimisticUpdate.readAt,
           };
@@ -1334,26 +1336,23 @@ function internalToExternalState<M extends BaseMetadata>(
         break;
       }
       case "delete-inbox-notification": {
-        delete computed.inboxNotificationsById[
-          optimisticUpdate.inboxNotificationId
-        ];
+        delete computed.notificationsById[optimisticUpdate.inboxNotificationId];
         break;
       }
       case "delete-all-inbox-notifications": {
-        computed.inboxNotificationsById = {};
+        computed.notificationsById = {};
         break;
       }
 
       case "update-notification-settings": {
-        const settings =
-          computed.notificationSettingsByRoomId[optimisticUpdate.roomId];
+        const settings = computed.settingsByRoomId[optimisticUpdate.roomId];
 
         // If the inbox notification doesn't exist in the cache, we do not apply the update
         if (settings === undefined) {
           break;
         }
 
-        computed.notificationSettingsByRoomId[optimisticUpdate.roomId] = {
+        computed.settingsByRoomId[optimisticUpdate.roomId] = {
           ...settings,
           ...optimisticUpdate.settings,
         };
@@ -1374,7 +1373,7 @@ function internalToExternalState<M extends BaseMetadata>(
   // TODO Maybe consider also removing these from the inboxNotificationsById registry?
   const cleanedNotifications =
     // Sort so that the most recent notifications are first
-    Object.values(computed.inboxNotificationsById)
+    Object.values(computed.notificationsById)
       .filter((ibn) =>
         ibn.kind === "thread"
           ? computed.threadsById[ibn.threadId] &&
@@ -1384,9 +1383,9 @@ function internalToExternalState<M extends BaseMetadata>(
       .sort((a, b) => b.notifiedAt.getTime() - a.notifiedAt.getTime());
 
   return {
-    inboxNotifications: cleanedNotifications,
-    inboxNotificationsById: computed.inboxNotificationsById,
-    notificationSettingsByRoomId: computed.notificationSettingsByRoomId,
+    notifications: cleanedNotifications,
+    notificationsById: computed.notificationsById,
+    settingsByRoomId: computed.settingsByRoomId,
     queries2: state.queries2,
     queries3: state.queries3,
     queries4: state.queries4,

@@ -280,7 +280,7 @@ describe("useInboxNotifications", () => {
         [thread1.id]: thread1,
         [thread2.id]: thread2,
       },
-      inboxNotificationsById: {
+      notificationsById: {
         // Explicitly set the order to be reversed to test that the hook sorts the notifications
         [oldInboxNotification.id]: oldInboxNotification,
         [newInboxNotification.id]: newInboxNotification,
