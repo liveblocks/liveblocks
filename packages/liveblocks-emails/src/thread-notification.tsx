@@ -241,7 +241,7 @@ type CommentEmailAsReactData<U extends BaseUserMeta> = Omit<
   "userId" | "rawBody"
 > & {
   author: U;
-  reactBody: JSX.Element;
+  reactBody: React.ReactNode;
 };
 
 type ThreadNotificationEmailUnreadRepliesData<

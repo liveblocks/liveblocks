@@ -37,7 +37,12 @@ export type {
 } from "./comments/comment-body";
 export {
   getMentionedIdsFromCommentBody,
+  isCommentBodyLink,
+  isCommentBodyMention,
+  isCommentBodyText,
+  resolveUsersInCommentBody,
   stringifyCommentBody,
+  toAbsoluteUrl,
 } from "./comments/comment-body";
 export { generateCommentUrl } from "./comments/comment-url";
 export type { BaseAuthResult, Delegates, LiveblocksError } from "./connection";
