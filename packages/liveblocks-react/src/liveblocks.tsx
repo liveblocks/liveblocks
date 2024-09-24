@@ -274,7 +274,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
    * Performs one network fetch, and updates the store and last requested at
    * date if successful. If unsuccessful, will throw.
    */
-  async function fetchInboxNotifications() {
+  async function fetchInitialInboxNotificationsOrDeltaUpdate() {
     // If inbox notifications have not been fetched yet, we get all of them
     // Else, we fetch only what changed since the last request
 
@@ -308,7 +308,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   const poller = makePoller(async () => {
     try {
       await waitUntilInboxNotificationsLoaded();
-      await fetchInboxNotifications();
+      await fetchInitialInboxNotificationsOrDeltaUpdate();
     } catch (err) {
       // When polling, we don't want to throw errors, ever
       console.warn(`Polling new inbox notifications failed: ${String(err)}`);
@@ -326,7 +326,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
 
     try {
       await autoRetry(
-        () => fetchInboxNotifications(),
+        () => fetchInitialInboxNotificationsOrDeltaUpdate(),
         5,
         [5000, 5000, 10000, 15000]
       );
