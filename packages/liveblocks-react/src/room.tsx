@@ -146,6 +146,7 @@ function useSyncExternalStore<Snapshot>(
 const STABLE_EMPTY_LIST = Object.freeze([]);
 
 export const POLLING_INTERVAL = 5 * 60 * 1000; // 5 minutes
+export const DISCONNECTED_POLLING_INTERVAL = 10 * 1000; // 1 minute
 
 // Don't try to inline this. This function is intended to be a stable
 // reference, to avoid a React.useCallback() wrapper.
@@ -294,11 +295,29 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     await Promise.allSettled(requests);
   }
 
-  function incrementQuerySubscribers(queryKey: string) {
+  function incrementQuerySubscribers(
+    queryKey: string,
+    room: OpaqueRoom // wil be needed for poller interval
+  ) {
     const subscribers = subscribersByQuery.get(queryKey) ?? 0;
     subscribersByQuery.set(queryKey, subscribers + 1);
 
-    poller.start(POLLING_INTERVAL);
+    console.warn(
+      "incrementQuerySubscribers",
+      "poller interval",
+      POLLING_INTERVAL
+    );
+
+    const status = room.getStatus();
+
+    // Setup polling based on connection status
+    // Or possibly based on autoConnect === false
+    if (status === "initial" || status === "disconnected") {
+      console.warn("Polling interval: ", DISCONNECTED_POLLING_INTERVAL);
+      poller.start(DISCONNECTED_POLLING_INTERVAL);
+    } else {
+      poller.start(POLLING_INTERVAL);
+    }
 
     // Decrement in the unsub function
     return () => {
@@ -456,8 +475,15 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
       ) {
         lastRequestedAtByRoom.set(room.id, result.requestedAt);
       }
-
-      poller.start(POLLING_INTERVAL);
+      // POLLING HERE
+      const status = room.getStatus();
+      console.warn("Connection status: ", status);
+      if (status === "initial" || status === "disconnected") {
+        console.warn("Polling interval: ", DISCONNECTED_POLLING_INTERVAL);
+        poller.start(DISCONNECTED_POLLING_INTERVAL);
+      } else {
+        poller.start(POLLING_INTERVAL);
+      }
     } catch (err) {
       requestsByQuery.delete(queryKey);
 
@@ -1443,12 +1469,13 @@ function useThreads<M extends BaseMetadata>(
     [room, options]
   );
 
+  // check how polling works here
   const { store, getThreadsAndInboxNotifications, incrementQuerySubscribers } =
     getExtrasForClient<M>(client);
 
   React.useEffect(() => {
     void getThreadsAndInboxNotifications(room, queryKey, options);
-    return incrementQuerySubscribers(queryKey);
+    return incrementQuerySubscribers(queryKey, room);
   }, [room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getter = React.useCallback(
@@ -2534,7 +2561,7 @@ function useThreadsSuspense<M extends BaseMetadata>(
 
   React.useEffect(() => {
     const { incrementQuerySubscribers } = getExtrasForClient(client);
-    return incrementQuerySubscribers(queryKey);
+    return incrementQuerySubscribers(queryKey, room);
   }, [client, queryKey]);
 
   const state = useSyncExternalStoreWithSelector(

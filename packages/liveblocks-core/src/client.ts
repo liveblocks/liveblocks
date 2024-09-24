@@ -544,6 +544,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     linkDevTools(roomId, newRoom);
 
     const shouldConnect = options.autoConnect ?? true;
+    // Using shouldConnect false to avoir ws connection for dashboard
     if (shouldConnect) {
       // we need to check here because nextjs would fail earlier with Node < 16
       if (typeof atob === "undefined") {
