@@ -116,7 +116,7 @@ export type ResolveRoomInfoArgs = {
   roomId: string;
 };
 
-type PrepareThreadNotificationEmailRawDataOptions = {
+type PrepareThreadNotificationEmailBaseDataOptions = {
   /**
    * A function that returns room info from room IDs.
    */
@@ -164,7 +164,7 @@ export const prepareThreadNotificationEmailBaseData = async ({
 }: {
   client: Liveblocks;
   event: ThreadNotificationEvent;
-  options?: PrepareThreadNotificationEmailRawDataOptions;
+  options?: PrepareThreadNotificationEmailBaseDataOptions;
 }): Promise<ThreadNotificationBaseData> => {
   const { roomId } = event.data;
 
@@ -227,7 +227,7 @@ const resolveAuthorsInfo = async <U extends BaseUserMeta>({
   return resolvedAuthors;
 };
 
-export type CommentEmailAsHTMLData<U extends BaseUserMeta> = Omit<
+type CommentEmailAsHTMLData<U extends BaseUserMeta> = Omit<
   CommentEmailBaseData,
   "userId" | "rawBody"
 > & {
@@ -235,7 +235,7 @@ export type CommentEmailAsHTMLData<U extends BaseUserMeta> = Omit<
   htmlBody: string;
 };
 
-export type CommentEmailAsReactData<U extends BaseUserMeta> = Omit<
+type CommentEmailAsReactData<U extends BaseUserMeta> = Omit<
   CommentEmailBaseData,
   "userId" | "rawBody"
 > & {
@@ -243,7 +243,7 @@ export type CommentEmailAsReactData<U extends BaseUserMeta> = Omit<
   reactBody: JSX.Element;
 };
 
-export type ThreadNotificationEmailUnreadRepliesData<
+type ThreadNotificationEmailUnreadRepliesData<
   U extends BaseUserMeta,
   C extends CommentEmailAsHTMLData<U> | CommentEmailAsReactData<U>,
 > = {
@@ -251,7 +251,7 @@ export type ThreadNotificationEmailUnreadRepliesData<
   comments: C[];
 };
 
-export type ThreadNotificationEmailUnreadMentionsData<
+type ThreadNotificationEmailUnreadMentionsData<
   U extends BaseUserMeta,
   C extends CommentEmailAsHTMLData<U> | CommentEmailAsReactData<U>,
 > = {
@@ -259,7 +259,7 @@ export type ThreadNotificationEmailUnreadMentionsData<
   comment: C;
 };
 
-export type ThreadNotificationEmailData<
+type ThreadNotificationEmailData<
   U extends BaseUserMeta,
   C extends CommentEmailAsHTMLData<U> | CommentEmailAsReactData<U>,
 > = (
@@ -269,7 +269,7 @@ export type ThreadNotificationEmailData<
 
 export type PrepareThreadNotificationEmailAsHTMLOptions<
   U extends BaseUserMeta = DU,
-> = PrepareThreadNotificationEmailRawDataOptions & {
+> = PrepareThreadNotificationEmailBaseDataOptions & {
   /**
    * A function that returns info from user IDs.
    */
