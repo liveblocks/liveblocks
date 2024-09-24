@@ -78,6 +78,10 @@ describe("useInboxNotificationThread", () => {
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications,
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: false,
+        fetchMoreError: undefined,
       })
     );
 
@@ -158,6 +162,10 @@ describe("useInboxNotificationThread", () => {
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications: expect.any(Array),
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: false,
+        fetchMoreError: undefined,
       })
     );
 
@@ -259,6 +267,10 @@ describe("useInboxNotificationThread", () => {
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications: expect.any(Array),
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: false,
+        fetchMoreError: undefined,
       })
     );
 
