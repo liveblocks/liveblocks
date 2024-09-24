@@ -5,7 +5,7 @@ import React, { forwardRef } from "react";
 
 import { classNames } from "../classnames";
 
-export default forwardRef<HTMLSpanElement, { node: any, selected: boolean }>(
+export const Mention = forwardRef<HTMLSpanElement, { node: any, selected: boolean }>(
   function User(props, forwardedRef) {
     const { user, isLoading } = useUser(props.node.attrs.id);
     const $ = useOverrides();

@@ -39,7 +39,7 @@ export const User = forwardRef<HTMLSpanElement, UserProps>(
 
 export const SUGGESTIONS_COLLISION_PADDING = 10;
 
-export default forwardRef((props: { query: string, command: (otps: { id: string }) => {}, clientRect: () => DOMRect, hide: boolean }, ref) => {
+export const MentionsList = forwardRef((props: { query: string, command: (otps: { id: string }) => {}, clientRect: () => DOMRect, hide: boolean }, ref) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const suggestions = useMentionSuggestions(props.query);
   const {
