@@ -126,7 +126,9 @@ export function AnchoredThreads({
       return acc;
     }, [] as { thread: ThreadData, position: { from: number, to: number } }[]));
     handlePositionThreads();
-  }, [handlePositionThreads, pluginState, threads]);
+    // disable exhaustive deps because we don't want an infinite loop
+    // eslint-disable-next-line react-hooks/exhaustive-deps 
+  }, [pluginState, threads]);
 
 
   useLayoutEffect(() => {

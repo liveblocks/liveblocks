@@ -249,7 +249,7 @@ export const CommentsExtension = Extension.create<
             return false;
           }
           this.editor.state.selection = this.storage.pendingCommentSelection;
-          commands.setMark(Comment.type, { threadId: id });
+          commands.setMark("liveblocksCommentMark", { threadId: id });
           this.storage.pendingCommentSelection = null;
 
           return true;

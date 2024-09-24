@@ -1,4 +1,4 @@
-import { kInternal, TextEditorType } from "@liveblocks/core";
+import type { IUserInfo } from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import { Extension } from "@tiptap/core";
@@ -67,9 +67,17 @@ export const useLiveblocksExtension = ({
   const room = useRoom();
   useEffect(() => {
     // Report that this is lexical and root is the rootKey
-    room[kInternal].reportTextEditor(TextEditorType.TipTap, "root");
+    // TODO: put this back in
+    // room[kInternal].reportTextEditor(TextEditorType.TipTap, "root");
   }, [room]);
-  return Extension.create({
+  return Extension.create<
+    never,
+    {
+      unsub: () => void;
+      doc: Doc;
+      provider: LiveblocksYjsProvider<any, any, any, any, any>;
+    }
+  >({
     name: "liveblocksExtension",
 
     onCreate() {
@@ -94,9 +102,11 @@ export const useLiveblocksExtension = ({
           return;
         }
         const { name, color } = info;
-        const { user } = this.storage.provider.awareness.getLocalState();
+        const { user } = this.storage.provider.awareness.getLocalState() as {
+          user: IUserInfo;
+        };
         // TODO: maybe we need a deep compare here so other info can be provided
-        if (name != user?.name || color != user?.color) {
+        if (name !== user?.name || color !== user?.color) {
           this.editor.commands.updateUser({ name, color });
         }
       });
@@ -108,11 +118,11 @@ export const useLiveblocksExtension = ({
       if (!providersMap.has(room.id)) {
         const doc = new Doc();
         docMap.set(room.id, doc);
-        providersMap.set(room.id, new LiveblocksYjsProvider(room as any, doc));
+        providersMap.set(room.id, new LiveblocksYjsProvider(room, doc));
       }
       return {
-        doc: docMap.get(room.id),
-        provider: providersMap.get(room.id),
+        doc: docMap.get(room.id)!,
+        provider: providersMap.get(room.id)!,
         unsub: () => {},
       };
     },

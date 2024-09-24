@@ -2,14 +2,11 @@
 
 import NotificationsPopover from "../notifications-popover";
 import { useEditor, EditorContent, Editor } from "@tiptap/react";
-import { useLiveblocksExtension } from "./LiveblocksExtension";
+import { useLiveblocksExtension, FloatingComposer, FloatingThreads, AnchoredThreads } from "@liveblocks/react-tiptap";
 import StarterKit from "@tiptap/starter-kit";
 import { Toolbar } from "./Toolbar";
-import { FloatingComposer } from "./FloatingComposer";
-import { FloatingThreads } from "./FloatingThreads";
 import { useThreads } from "@liveblocks/react";
 import { useIsMobile } from "./use-is-mobile";
-import { AnchoredThreads } from "./AnchoredThreads";
 
 export default function TiptapEditor() {
   const liveblocks = useLiveblocksExtension();
