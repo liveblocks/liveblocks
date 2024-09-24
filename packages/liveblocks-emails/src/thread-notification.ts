@@ -200,7 +200,7 @@ export const prepareThreadNotificationEmailBaseData = async ({
 };
 
 /** @internal */
-const resolveAuthorsInComments = async <U extends BaseUserMeta>({
+const resolveAuthorsInfo = async <U extends BaseUserMeta>({
   comments,
   resolveUsers,
 }: {
@@ -300,7 +300,7 @@ export async function prepareThreadNotificationEmailAsHTML(params: {
     options: { resolveRoomInfo: options?.resolveRoomInfo },
   });
 
-  const batchUsersResolve = createBatchUsersResolver<BaseUserMeta>({
+  const batchUsersResolver = createBatchUsersResolver<BaseUserMeta>({
     resolveUsers: options?.resolveUsers,
     callerName: "prepareThreadNotificationEmailAsHTML",
   });
@@ -308,21 +308,22 @@ export async function prepareThreadNotificationEmailAsHTML(params: {
   switch (data.type) {
     case "unreadMention": {
       const { comment } = data;
-      const authorsPromise = resolveAuthorsInComments({
+
+      const authorsInfoPromise = resolveAuthorsInfo({
         comments: [comment],
-        resolveUsers: batchUsersResolve.registerResolveUsers,
+        resolveUsers: batchUsersResolver.resolveUsers,
       });
       const commentBodyPromise = stringifyCommentBody(comment.rawBody, {
-        resolveUsers: batchUsersResolve.registerResolveUsers,
+        resolveUsers: batchUsersResolver.resolveUsers,
       });
 
-      await batchUsersResolve.resolve();
+      await batchUsersResolver.resolve();
 
-      const [authors, commentBodyHTML] = await Promise.all([
-        authorsPromise,
+      const [authorsInfo, commentBodyHTML] = await Promise.all([
+        authorsInfoPromise,
         commentBodyPromise,
       ]);
-      const author = authors.get(comment.userId);
+      const authorInfo = authorsInfo.get(comment.userId);
 
       return {
         type: "unreadMention",
@@ -330,8 +331,8 @@ export async function prepareThreadNotificationEmailAsHTML(params: {
           id: comment.id,
           threadId: comment.threadId,
           roomId: comment.roomId,
-          author: author
-            ? { id: comment.userId, info: author }
+          author: authorInfo
+            ? { id: comment.userId, info: authorInfo }
             : { id: comment.userId, info: { name: comment.userId } },
           createdAt: comment.createdAt,
           url: comment.url,
@@ -342,33 +343,34 @@ export async function prepareThreadNotificationEmailAsHTML(params: {
     }
     case "unreadReplies": {
       const baseComments = data.comments;
-      const authorsPromise = resolveAuthorsInComments({
+
+      const authorsInfoPromise = resolveAuthorsInfo({
         comments: baseComments,
-        resolveUsers: batchUsersResolve.registerResolveUsers,
+        resolveUsers: batchUsersResolver.resolveUsers,
       });
       const commentBodiesPromises = baseComments.map((c) =>
         stringifyCommentBody(c.rawBody, {
-          resolveUsers: batchUsersResolve.registerResolveUsers,
+          resolveUsers: batchUsersResolver.resolveUsers,
         })
       );
 
-      await batchUsersResolve.resolve();
+      await batchUsersResolver.resolve();
 
-      const authors = await authorsPromise;
+      const authorsInfo = await authorsInfoPromise;
       const commentBodies = await Promise.all(commentBodiesPromises);
 
       return {
         type: "unreadReplies",
         comments: baseComments.map((comment, index) => {
-          const author = authors.get(comment.userId);
+          const authorInfo = authorsInfo.get(comment.userId);
           const commentBodyHTML = commentBodies[index];
 
           return {
             id: comment.id,
             threadId: comment.threadId,
             roomId: comment.roomId,
-            author: author
-              ? { id: comment.userId, info: author }
+            author: authorInfo
+              ? { id: comment.userId, info: authorInfo }
               : { id: comment.userId, info: { name: comment.userId } },
             createdAt: comment.createdAt,
             url: comment.url,

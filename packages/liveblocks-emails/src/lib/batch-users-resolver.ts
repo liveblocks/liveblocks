@@ -1,26 +1,16 @@
-import {
-  type BaseUserMeta,
-  type DU,
-  type OptionalPromise,
-  type ResolveUsersArgs,
-  stringify,
+import type {
+  BaseUserMeta,
+  DU,
+  OptionalPromise,
+  ResolveUsersArgs,
 } from "@liveblocks/core";
+import { Promise_withResolvers } from "@liveblocks/core";
 
 import { createDevelopmentWarning } from "./warning";
-
-const getMapKey = (args: ResolveUsersArgs): string => stringify(args);
 
 type ResolveUserOptionalPromise<U extends BaseUserMeta> = (
   args: ResolveUsersArgs
 ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
-
-type BatchUsersResolverCall<U extends BaseUserMeta> = {
-  args: ResolveUsersArgs;
-  promise: OptionalPromise<(U["info"] | undefined)[] | undefined>;
-  resolve: (
-    value: OptionalPromise<(U["info"] | undefined)[] | undefined>
-  ) => void;
-};
 
 /**
  * Batch calls to `resolveUsers` to one and only call.
@@ -30,69 +20,76 @@ type BatchUsersResolverCall<U extends BaseUserMeta> = {
  * and then resolve pending promises all at once.
  */
 class BatchUsersResolver<U extends BaseUserMeta> {
-  private resolveUsers: ResolveUserOptionalPromise<U> | undefined;
-  private resolveUsersPromises: Map<string, BatchUsersResolverCall<U>>;
+  private isResolved: boolean;
+  private markAsResolved: () => void;
+  private resolvePromise: Promise<void>;
+
+  private primeResolveUsersFn: ResolveUserOptionalPromise<U> | undefined;
+  private usersById: Map<string, U["info"] | undefined>;
+
+  private warnAsAlreadyResolved: () => void;
 
   constructor(resolveUsers: ResolveUserOptionalPromise<U> | undefined) {
-    this.resolveUsers = resolveUsers;
-    this.resolveUsersPromises = new Map();
+    const { promise, resolve } = Promise_withResolvers<void>();
+
+    this.isResolved = false;
+    this.markAsResolved = resolve;
+    this.resolvePromise = promise;
+
+    this.primeResolveUsersFn = resolveUsers;
+    this.usersById = new Map();
+
+    this.warnAsAlreadyResolved = createDevelopmentWarning(
+      true,
+      "Batch users resolver promise already resolved. It can only resolve once."
+    );
   }
 
-  register = (
+  resolveUsers = async (
     args: ResolveUsersArgs
-  ): OptionalPromise<(U["info"] | undefined)[] | undefined> => {
-    const key = getMapKey(args);
-    const existingPromise = this.resolveUsersPromises.get(key);
-    if (existingPromise) {
-      return existingPromise.promise;
+  ): Promise<(U["info"] | undefined)[] | undefined> => {
+    if (this.isResolved) {
+      this.warnAsAlreadyResolved();
+      return undefined;
     }
 
-    let resolveFn: (
-      value: OptionalPromise<(U["info"] | undefined)[] | undefined>
-    ) => void = (): void => {};
+    // Note: register all user Ids
+    for (const userId of args.userIds) {
+      this.usersById.set(userId, undefined);
+    }
 
-    const promise = new Promise<(U["info"] | undefined)[] | undefined>(
-      (resolve) => {
-        resolveFn = resolve;
-      }
-    );
+    // Note: waiting until the batch promise is resolved
+    await this.resolvePromise;
 
-    this.resolveUsersPromises.set(key, { args, promise, resolve: resolveFn });
-
-    return promise;
+    // Note: once the batch promise is resolved
+    // we can return safely resolved users
+    return args.userIds.map((userId) => this.usersById.get(userId));
   };
 
   async resolve(): Promise<void> {
+    if (this.isResolved) {
+      this.warnAsAlreadyResolved();
+      return;
+    }
+
     // Note: set an array of unique user ids
-    const userIds = Array.from(
-      new Set(
-        Array.from(this.resolveUsersPromises.values()).flatMap(
-          ({ args }) => args.userIds
-        )
-      )
-    );
+    const userIds = Array.from(this.usersById.keys());
+    const users = await this.primeResolveUsersFn?.({ userIds });
 
-    const users = await this.resolveUsers?.({ userIds });
-
-    const usersMap = new Map<string, U["info"] | undefined>();
-    for (let i = 0; i < userIds.length; i++) {
-      const userId = userIds[i];
-      if (userId) {
-        usersMap.set(userId, users?.[i] ?? undefined);
-      }
+    for (const [index, userId] of userIds.entries()) {
+      const user = users?.[index];
+      this.usersById.set(userId, user);
     }
 
-    for (const { args, resolve } of this.resolveUsersPromises.values()) {
-      const resolvedUsers = args.userIds.map((userId) => usersMap.get(userId));
-      resolve(resolvedUsers);
-    }
+    this.isResolved = true;
+    this.markAsResolved();
   }
 }
 
 export type CreateBatchUsersResolverReturnType<U extends BaseUserMeta> = {
-  registerResolveUsers: (
+  resolveUsers: (
     args: ResolveUsersArgs
-  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+  ) => Promise<(U["info"] | undefined)[] | undefined>;
   resolve: () => Promise<void>;
 };
 
@@ -117,7 +114,7 @@ export function createBatchUsersResolver<U extends BaseUserMeta = DU>({
   };
 
   return {
+    resolveUsers: batchUsersResolver.resolveUsers,
     resolve,
-    registerResolveUsers: batchUsersResolver.register,
   } as const;
 }
