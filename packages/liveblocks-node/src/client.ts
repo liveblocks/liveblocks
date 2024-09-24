@@ -27,10 +27,12 @@ import type {
   Patchable,
   PlainLsonObject,
   QueryMetadata,
+  QueryParams,
   RoomNotificationSettings,
   ThreadData,
   ThreadDataPlain,
   ToImmutable,
+  URLSafeString,
 } from "@liveblocks/core";
 import {
   convertToCommentData,
@@ -38,6 +40,8 @@ import {
   convertToInboxNotificationData,
   convertToThreadData,
   objectToQuery,
+  url,
+  urljoin,
 } from "@liveblocks/core";
 
 import { Session } from "./Session";
@@ -47,10 +51,6 @@ import {
   fetchPolyfill,
   getBaseUrl,
   normalizeStatusCode,
-  type QueryParams,
-  url,
-  urljoin,
-  type URLSafeString,
 } from "./utils";
 
 type ToSimplifiedJson<S extends LsonObject> = LsonObject extends S

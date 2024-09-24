@@ -52,12 +52,13 @@ import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
 import { objectToQuery } from "./lib/objectToQuery";
 import { asPos } from "./lib/position";
-import type { QueryParams } from "./lib/url";
-import { urljoin } from "./lib/url";
+import type { QueryParams, URLSafeString } from "./lib/url";
+import { url, urljoin } from "./lib/url";
 import {
   compact,
   deepClone,
   memoizeOnSuccess,
+  raise,
   tryParseJson,
 } from "./lib/utils";
 import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
@@ -1590,17 +1591,16 @@ export function createRoom<
   };
 
   async function fetchClientApi(
-    roomId: string,
-    endpoint: string,
+    endpoint: URLSafeString,
     authValue: AuthValue,
     options?: RequestInit,
     params?: QueryParams
   ) {
-    const url = urljoin(
-      config.baseUrl,
-      `/v2/c/rooms/${encodeURIComponent(roomId)}${endpoint}`,
-      params
-    );
+    if (!endpoint.startsWith("/v2/c/rooms/")) {
+      raise("Expected a /v2/c/rooms/* endpoint");
+    }
+
+    const url = urljoin(config.baseUrl, endpoint, params);
     const fetcher = config.polyfills?.fetch || /* istanbul ignore next */ fetch;
     return await fetcher(url, {
       ...options,
@@ -1612,7 +1612,7 @@ export function createRoom<
   }
 
   async function streamFetch(authValue: AuthValue, roomId: string) {
-    return fetchClientApi(roomId, "/storage", authValue, {
+    return fetchClientApi(url`/v2/c/rooms/${roomId}/storage`, authValue, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -1628,13 +1628,19 @@ export function createRoom<
       throw new Error("Not authorized");
     }
 
-    return fetchClientApi(config.roomId, endpoint, managedSocket.authValue, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
+    return fetchClientApi(
+      endpoint === "/send-message"
+        ? url`/v2/c/rooms/${config.roomId}/send-message`
+        : url`/v2/c/rooms/${config.roomId}/text-metadata`,
+      managedSocket.authValue,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      }
+    );
   }
 
   async function createTextMention(userId: string, mentionId: string) {
@@ -1643,8 +1649,7 @@ export function createRoom<
     }
 
     return fetchClientApi(
-      config.roomId,
-      "/text-mentions",
+      url`/v2/c/rooms/${config.roomId}/text-mentions`,
       managedSocket.authValue,
       {
         method: "POST",
@@ -1665,8 +1670,7 @@ export function createRoom<
     }
 
     return fetchClientApi(
-      config.roomId,
-      `/text-mentions/${mentionId}`,
+      url`/v2/c/rooms/${config.roomId}/text-mentions/${mentionId}`,
       managedSocket.authValue,
       {
         method: "DELETE",
@@ -1676,30 +1680,21 @@ export function createRoom<
 
   async function reportTextEditor(type: "lexical", rootKey: string) {
     const authValue = await delegates.authenticate();
-    return fetchClientApi(config.roomId, "/text-metadata", authValue, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        type,
-        rootKey,
-      }),
-    });
+    return fetchClientApi(
+      url`/v2/c/rooms/${config.roomId}/text-metadata`,
+      authValue,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type, rootKey }),
+      }
+    );
   }
 
   async function listTextVersions() {
     const authValue = await delegates.authenticate();
-    return fetchClientApi(config.roomId, "/versions/", authValue, {
-      method: "GET",
-    });
-  }
-
-  async function getTextVersion(versionId: string) {
-    const authValue = await delegates.authenticate();
     return fetchClientApi(
-      config.roomId,
-      `/y-version/${encodeURIComponent(versionId)}`,
+      url`/v2/c/rooms/${config.roomId}/versions`,
       authValue,
       {
         method: "GET",
@@ -1707,11 +1702,22 @@ export function createRoom<
     );
   }
 
+  async function getTextVersion(versionId: string) {
+    const authValue = await delegates.authenticate();
+    return fetchClientApi(
+      url`/v2/c/rooms/${config.roomId}/y-version/${versionId}`,
+      authValue,
+      { method: "GET" }
+    );
+  }
+
   async function createTextVersion() {
     const authValue = await delegates.authenticate();
-    return fetchClientApi(config.roomId, "/version", authValue, {
-      method: "POST",
-    });
+    return fetchClientApi(
+      url`/v2/c/rooms/${config.roomId}/version`,
+      authValue,
+      { method: "POST" }
+    );
   }
 
   function sendMessages(messages: ClientMsg<P, E>[]) {
@@ -2845,18 +2851,17 @@ export function createRoom<
   };
 
   async function fetchCommentsApi(
-    endpoint: string,
+    endpoint: URLSafeString,
     params?: QueryParams,
     options?: RequestInit
   ): Promise<Response> {
     // TODO: Use the right scope
     const authValue = await delegates.authenticate();
-
-    return fetchClientApi(config.roomId, endpoint, authValue, options, params);
+    return fetchClientApi(endpoint, authValue, options, params);
   }
 
   async function fetchCommentsJson<T>(
-    endpoint: string,
+    endpoint: URLSafeString,
     options?: RequestInit,
     params?: QueryParams
   ): Promise<T> {
@@ -2895,7 +2900,7 @@ export function createRoom<
 
   async function getThreadsSince(options: { since: Date }) {
     const response = await fetchCommentsApi(
-      "/threads",
+      url`/v2/c/rooms/${config.roomId}/threads`,
       {
         since: options?.since?.toISOString(),
       },
@@ -2955,15 +2960,9 @@ export function createRoom<
     }
 
     const response = await fetchCommentsApi(
-      "/threads",
-      {
-        query,
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
+      url`/v2/c/rooms/${config.roomId}/threads`,
+      { query },
+      { headers: { "Content-Type": "application/json" } }
     );
 
     if (response.ok) {
@@ -2999,7 +2998,7 @@ export function createRoom<
 
   async function getThread(threadId: string) {
     const response = await fetchCommentsApi(
-      `/thread-with-notification/${threadId}`
+      url`/v2/c/rooms/${config.roomId}/thread-with-notification/${threadId}`
     );
 
     if (response.ok) {
@@ -3038,29 +3037,33 @@ export function createRoom<
     body: CommentBody;
     attachmentIds?: string[];
   }) {
-    const thread = await fetchCommentsJson<ThreadDataPlain<M>>("/threads", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        id: threadId,
-        comment: {
-          id: commentId,
-          body,
-          attachmentIds,
+    const thread = await fetchCommentsJson<ThreadDataPlain<M>>(
+      url`/v2/c/rooms/${config.roomId}/threads`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        metadata,
-      }),
-    });
+        body: JSON.stringify({
+          id: threadId,
+          comment: {
+            id: commentId,
+            body,
+            attachmentIds,
+          },
+          metadata,
+        }),
+      }
+    );
 
     return convertToThreadData(thread);
   }
 
   async function deleteThread(threadId: string) {
-    await fetchCommentsJson(`/threads/${encodeURIComponent(threadId)}`, {
-      method: "DELETE",
-    });
+    await fetchCommentsJson(
+      url`/v2/c/rooms/${config.roomId}/threads/${threadId}`,
+      { method: "DELETE" }
+    );
   }
 
   async function editThreadMetadata({
@@ -3072,7 +3075,7 @@ export function createRoom<
     threadId: string;
   }) {
     return await fetchCommentsJson<M>(
-      `/threads/${encodeURIComponent(threadId)}/metadata`,
+      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/metadata`,
       {
         method: "POST",
         headers: {
@@ -3085,19 +3088,15 @@ export function createRoom<
 
   async function markThreadAsResolved(threadId: string) {
     await fetchCommentsJson(
-      `/threads/${encodeURIComponent(threadId)}/mark-as-resolved`,
-      {
-        method: "POST",
-      }
+      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/mark-as-resolved`,
+      { method: "POST" }
     );
   }
 
   async function markThreadAsUnresolved(threadId: string) {
     await fetchCommentsJson(
-      `/threads/${encodeURIComponent(threadId)}/mark-as-unresolved`,
-      {
-        method: "POST",
-      }
+      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/mark-as-unresolved`,
+      { method: "POST" }
     );
   }
 
@@ -3113,7 +3112,7 @@ export function createRoom<
     attachmentIds?: string[];
   }) {
     const comment = await fetchCommentsJson<CommentDataPlain>(
-      `/threads/${encodeURIComponent(threadId)}/comments`,
+      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments`,
       {
         method: "POST",
         headers: {
@@ -3142,9 +3141,7 @@ export function createRoom<
     attachmentIds?: string[];
   }) {
     const comment = await fetchCommentsJson<CommentDataPlain>(
-      `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
-        commentId
-      )}`,
+      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}`,
       {
         method: "POST",
         headers: {
@@ -3169,12 +3166,8 @@ export function createRoom<
     commentId: string;
   }) {
     await fetchCommentsJson(
-      `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
-        commentId
-      )}`,
-      {
-        method: "DELETE",
-      }
+      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}`,
+      { method: "DELETE" }
     );
   }
 
@@ -3188,9 +3181,7 @@ export function createRoom<
     emoji: string;
   }) {
     const reaction = await fetchCommentsJson<CommentUserReactionPlain>(
-      `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
-        commentId
-      )}/reactions`,
+      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}/reactions`,
       {
         method: "POST",
         headers: {
@@ -3213,12 +3204,8 @@ export function createRoom<
     emoji: string;
   }) {
     await fetchCommentsJson<CommentData>(
-      `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
-        commentId
-      )}/reactions/${encodeURIComponent(emoji)}`,
-      {
-        method: "DELETE",
-      }
+      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}/reactions/${emoji}`,
+      { method: "DELETE" }
     );
   }
 
@@ -3267,7 +3254,7 @@ export function createRoom<
       return autoRetry(
         () =>
           fetchCommentsJson<CommentAttachment>(
-            `/attachments/${encodeURIComponent(attachment.id)}/upload/${encodeURIComponent(attachment.name)}`,
+            url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/upload/${encodeURIComponent(attachment.name)}`,
             {
               method: "PUT",
               body: attachment.file,
@@ -3296,7 +3283,7 @@ export function createRoom<
             uploadId: string;
             key: string;
           }>(
-            `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(attachment.name)}`,
+            url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/multipart/${encodeURIComponent(attachment.name)}`,
             {
               method: "POST",
               signal: abortSignal,
@@ -3337,7 +3324,7 @@ export function createRoom<
                     partNumber: number;
                     etag: string;
                   }>(
-                    `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(createMultiPartUpload.uploadId)}/${encodeURIComponent(partNumber)}`,
+                    url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/multipart/${createMultiPartUpload.uploadId}/${String(partNumber)}`,
                     {
                       method: "PUT",
                       body: part,
@@ -3365,7 +3352,7 @@ export function createRoom<
         );
 
         return fetchCommentsJson<CommentAttachment>(
-          `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(uploadId)}/complete`,
+          url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/multipart/${uploadId}/complete`,
           {
             method: "POST",
             headers: {
@@ -3385,7 +3372,7 @@ export function createRoom<
           try {
             // Abort the multi-part upload if it was created
             await fetchCommentsApi(
-              `/attachments/${encodeURIComponent(attachment.id)}/multipart/${encodeURIComponent(uploadId)}`,
+              url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/multipart/${uploadId}`,
               undefined,
               {
                 method: "DELETE",
@@ -3403,7 +3390,7 @@ export function createRoom<
 
   async function getAttachmentUrls(attachmentIds: string[]) {
     const { urls } = await fetchCommentsJson<{ urls: (string | null)[] }>(
-      "/attachments/presigned-urls",
+      url`/v2/c/rooms/${config.roomId}/attachments/presigned-urls`,
       {
         method: "POST",
         headers: {
@@ -3437,16 +3424,11 @@ export function createRoom<
   }
 
   async function fetchNotificationsJson<T>(
-    endpoint: string,
+    endpoint: URLSafeString,
     options?: RequestInit
   ): Promise<T> {
     const authValue = await delegates.authenticate();
-    const response = await fetchClientApi(
-      config.roomId,
-      endpoint,
-      authValue,
-      options
-    );
+    const response = await fetchClientApi(endpoint, authValue, options);
 
     if (!response.ok) {
       if (response.status >= 400 && response.status < 600) {
@@ -3484,7 +3466,7 @@ export function createRoom<
 
   function getNotificationSettings(): Promise<RoomNotificationSettings> {
     return fetchNotificationsJson<RoomNotificationSettings>(
-      "/notification-settings"
+      url`/v2/c/rooms/${config.roomId}/notification-settings`
     );
   }
 
@@ -3492,7 +3474,7 @@ export function createRoom<
     settings: Partial<RoomNotificationSettings>
   ): Promise<RoomNotificationSettings> {
     return fetchNotificationsJson<RoomNotificationSettings>(
-      "/notification-settings",
+      url`/v2/c/rooms/${config.roomId}/notification-settings`,
       {
         method: "POST",
         body: JSON.stringify(settings),
@@ -3504,19 +3486,22 @@ export function createRoom<
   }
 
   // This method (and the following batch handling) isn't the same as the one in
-  // src/notifications.ts, this one is room-based: /v2/c/rooms/:roomId/inbox-notifications/read.
+  // src/notifications.ts, this one is room-based: /v2/c/rooms/<roomId>/inbox-notifications/read.
   //
   // The reason for this is that unlike the room-based Comments ones, the Notifications endpoints
   // don't work with a public key. Since `markThreadAsRead` needs to mark the related inbox notifications
   // as read, this room-based method is necessary to keep all Comments features working with a public key.
   async function markInboxNotificationsAsRead(inboxNotificationIds: string[]) {
-    await fetchNotificationsJson("/inbox-notifications/read", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ inboxNotificationIds }),
-    });
+    await fetchNotificationsJson(
+      url`/v2/c/rooms/${config.roomId}/inbox-notifications/read`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ inboxNotificationIds }),
+      }
+    );
   }
 
   const batchedMarkInboxNotificationsAsRead = new Batch<string, string>(

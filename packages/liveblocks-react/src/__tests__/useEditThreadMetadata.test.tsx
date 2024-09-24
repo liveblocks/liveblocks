@@ -162,7 +162,7 @@ describe("useEditThreadMetadata", () => {
     );
 
     expect(result.current.threads).toBeDefined();
-    expect(result.current.threads![0].metadata).toEqual({
+    expect(result.current.threads?.[0]?.metadata).toEqual({
       pinned: null,
       color: "yellow",
     });
@@ -172,7 +172,7 @@ describe("useEditThreadMetadata", () => {
     await waitFor(() => expect(hasCalledEditThreadMetadata).toEqual(true));
 
     await waitFor(() => {
-      expect(result.current.threads![0].metadata).toEqual({
+      expect(result.current.threads?.[0]?.metadata).toEqual({
         color: "yellow",
       });
     });

@@ -1,10 +1,11 @@
 "use client";
 
 import "tldraw/tldraw.css";
-import { Tldraw, DefaultStylePanel } from "tldraw";
+import { Tldraw, DefaultStylePanel, DefaultStylePanelContent } from "tldraw";
 import { useStorageStore } from "./useStorageStore";
 import { useSelf } from "@liveblocks/react/suspense";
 import { Avatars } from "@/components/Avatars";
+import { Badge } from "@/components/Badge";
 
 /**
  * IMPORTANT: LICENSE REQUIRED
@@ -37,9 +38,9 @@ export function StorageTldraw() {
             >
               <Avatars />
               <DefaultStylePanel />
+              <Badge />
             </div>
           ),
-          DebugPanel: null,
         }}
         autoFocus
       />

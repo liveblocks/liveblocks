@@ -16,6 +16,7 @@ import { MailDeleteIcon } from "../icons/MailDeleteIcon";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 // Render a Radix UI dialog with notifications inside
 export function Notifications() {
@@ -41,6 +42,9 @@ export function Notifications() {
 
       <Dialog.Portal>
         <Dialog.Content className="bg-white shadow-xl border-r text-sm overflow-hidden w-[380px] z-20 fixed top-0 left-[240px] bottom-0">
+          <VisuallyHidden>
+            <Dialog.Title>Notifications</Dialog.Title>
+          </VisuallyHidden>
           <ClientSideSuspense fallback={<Loading />}>
             <Inbox />
           </ClientSideSuspense>

@@ -24,6 +24,16 @@ for more information about this change please read our
   attachments.
 - Add `getAttachmentUrl` method to `Room` to get presigned URLs for attachments.
 
+## 2.7.2
+
+### `@liveblocks/react`
+
+- Fix a bug where under some conditions threads could end up without comments.
+- Fix a bug where notifications associated to deleted threads would not be
+  deleted.
+- Fix a bug where subsequent optimistic updates to the same inbox notification
+  could sometimes not get applied correctly.
+
 ## 2.7.1
 
 ### `@liveblocks/react-lexical`
