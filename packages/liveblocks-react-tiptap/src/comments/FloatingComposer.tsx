@@ -26,7 +26,7 @@ export const FloatingComposer = forwardRef<
   const createThread = useCreateThread();
   const { editor } = props;
 
-  const showComposer = !!editor?.storage.liveblocksExtension.pendingCommentSelection;
+  const showComposer = !!editor?.storage.liveblocksComments.pendingCommentSelection;
 
   const {
     refs: { setReference, setFloating },
@@ -58,7 +58,7 @@ export const FloatingComposer = forwardRef<
       return;
     }
     const updateRect = () => {
-      const seclection = editor.storage.liveblocksExtension.pendingCommentSelection as TextSelection | null;
+      const seclection = editor.storage.liveblocksComments.pendingCommentSelection as TextSelection | null;
       if (!seclection) {
         return;
       }

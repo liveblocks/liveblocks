@@ -4,12 +4,7 @@ import { Extension, mergeAttributes, Mark } from "@tiptap/core";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
 import { Doc } from "yjs";
-import {
-  Plugin,
-  PluginKey,
-  SelectionBookmark,
-  TextSelection,
-} from "@tiptap/pm/state";
+import { Plugin, PluginKey, TextSelection } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { ySyncPluginKey } from "y-prosemirror";
 import MentionPlugin from "./MentionPlugin";

@@ -27,8 +27,8 @@ import React, {
 import { createPortal } from "react-dom";
 import type { Editor } from "@tiptap/react";
 
-import { classNames } from "./classnames";
-import { ThreadPluginActions, ThreadPluginState, THREADS_PLUGIN_KEY } from "./LiveblocksExtension";
+import { classNames } from "../classnames";
+import { ThreadPluginState, THREADS_PLUGIN_KEY } from "./CommentsExtension";
 import { getRectFromCoords } from "./utils";
 
 type ThreadPanelComponents = {
@@ -90,10 +90,7 @@ export function FloatingThreads({
 
   const handleEscapeKeydown = useCallback((): boolean => {
     if (!editor || activeThreads === null) return false;
-    editor.view.dispatch(editor.state.tr.setMeta(THREADS_PLUGIN_KEY, {
-      name: ThreadPluginActions.SET_SELECTED_THREAD_ID,
-      data: null,
-    }));
+    editor.commands.selectThread(null);
     return true;
   }, [activeThreads]);
 

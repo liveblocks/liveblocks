@@ -238,7 +238,7 @@ export type {
 export { WebsocketCloseCodes } from "./types/IWebSocket";
 export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 export type { OptionalPromise } from "./types/OptionalPromise";
-export type { OthersEvent } from "./types/Others";
+export type { OthersEvent, TextEditorType } from "./types/Others";
 export type { Patchable } from "./types/Patchable";
 export type {
   PlainLson,
