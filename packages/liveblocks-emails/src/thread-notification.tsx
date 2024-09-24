@@ -267,7 +267,7 @@ export type ThreadNotificationEmailData<
   | ThreadNotificationEmailUnreadMentionsData<U, C>
 ) & { roomInfo: DRI };
 
-export type PrepareThreadNotificationEmailAsHTMLDataOptions<
+export type PrepareThreadNotificationEmailAsHTMLOptions<
   U extends BaseUserMeta = DU,
 > = PrepareThreadNotificationEmailRawDataOptions & {
   /**
@@ -291,7 +291,7 @@ export type ThreadNotificationEmailAsHTML = ThreadNotificationEmailData<
 export async function prepareThreadNotificationEmailAsHTML(params: {
   client: Liveblocks;
   event: ThreadNotificationEvent;
-  options?: PrepareThreadNotificationEmailAsHTMLDataOptions<BaseUserMeta>;
+  options?: PrepareThreadNotificationEmailAsHTMLOptions<BaseUserMeta>;
 }): Promise<ThreadNotificationEmailAsHTML> {
   const { client, event, options } = params;
   const data = await prepareThreadNotificationEmailBaseData({
