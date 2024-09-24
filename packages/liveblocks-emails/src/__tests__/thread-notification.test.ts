@@ -20,6 +20,7 @@ import {
   commentBody1,
   commentBody2,
   commentBody3,
+  commentBody4,
   generateThreadId,
   getResolvedCommentUrl,
   makeComment,
@@ -498,6 +499,120 @@ describe("thread notification", () => {
         },
       ])(
         "should return unread mention as HTML with resolvers: $withResolvers",
+        async ({ promise, expected }) => {
+          server.use(
+            http.get(
+              `${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`,
+              () => HttpResponse.json(thread, { status: 200 })
+            )
+          );
+
+          server.use(
+            http.get(
+              `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
+              () => HttpResponse.json(inboxNotification, { status: 200 })
+            )
+          );
+
+          const emailDataAsHTML = await promise();
+          expect(emailDataAsHTML).toEqual(expected);
+        }
+      );
+    });
+
+    describe("unread replies w/o styles design tokens", () => {
+      const threadId = generateThreadId();
+      const comment1 = makeComment({
+        userId: "user-0",
+        threadId,
+        body: commentBody1,
+        createdAt: new Date("2024-09-10T08:10:00.000Z"),
+      });
+      const comment2 = makeComment({
+        userId: "user-1",
+        threadId,
+        body: commentBody4,
+        createdAt: new Date("2024-09-10T08:14:00.000Z"),
+      });
+      const thread = makeThread({
+        threadId,
+        comments: [comment1, comment2],
+      });
+      const inboxNotification = makeThreadInboxNotification({
+        threadId,
+        notifiedAt: new Date("2024-09-10T08:20:00.000Z"),
+      });
+      const event = makeThreadNotificationEvent({
+        threadId,
+        userId: "user-0",
+        inboxNotificationId: inboxNotification.id,
+      });
+
+      const expected1: ThreadNotificationEmailAsHTML = {
+        type: "unreadReplies",
+        comments: [
+          {
+            id: comment2.id,
+            threadId: thread.id,
+            roomId: ROOM_ID_TEST,
+            createdAt: comment2.createdAt,
+            author: {
+              id: comment2.userId,
+              info: {
+                name: comment2.userId,
+              },
+            },
+            htmlBody:
+              '<p>I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer">https://www.liveblocks.io</a></p>',
+            url: undefined,
+          },
+        ],
+        roomInfo: { name: ROOM_ID_TEST },
+      };
+
+      const expected2: ThreadNotificationEmailAsHTML = {
+        type: "unreadReplies",
+        comments: [
+          {
+            id: comment2.id,
+            threadId: thread.id,
+            roomId: ROOM_ID_TEST,
+            createdAt: comment2.createdAt,
+            author: {
+              id: comment2.userId,
+              info: { name: "Mislav Abha" },
+            },
+            htmlBody:
+              '<p>I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer">https://www.liveblocks.io</a></p>',
+            url: getResolvedCommentUrl(comment2.id),
+          },
+        ],
+        roomInfo: RESOLVED_ROOM_INFO_TEST,
+      };
+
+      it.each<{
+        withResolvers: boolean;
+        promise: () => Promise<ThreadNotificationEmailAsHTML>;
+        expected: ThreadNotificationEmailAsHTML;
+      }>([
+        {
+          withResolvers: false,
+          promise: () =>
+            prepareThreadNotificationEmailAsHTML({ client, event }),
+          expected: expected1,
+        },
+        {
+          withResolvers: true,
+          promise: () =>
+            prepareThreadNotificationEmailAsHTML({
+              client,
+              event,
+              options: { resolveUsers, resolveRoomInfo },
+            }),
+          expected: expected2,
+        },
+      ])(
+        "should return unread replies as HTML with resolvers: $withResolvers",
         async ({ promise, expected }) => {
           server.use(
             http.get(
