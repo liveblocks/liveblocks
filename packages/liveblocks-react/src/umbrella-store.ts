@@ -382,23 +382,33 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
         // Find the lowest date in the result, and store it to use as the next
         // page's cursor
-        let cursor: Date = new Date();
+        let nextCursor = cursor;
         for (const ibn of data.inboxNotifications.updated) {
           // XXX The sort field (= notifiedAt) must match the backend! Put it in the URL!
           // XXX This < (less than) should match the sort order in the backend! (Only works with DESC sorts!)
           if (ibn.notifiedAt.getTime() < cursor.getTime()) {
-            cursor = ibn.notifiedAt;
+            nextCursor = ibn.notifiedAt;
           }
         }
 
         const hasFetchedAll =
           data.inboxNotifications.updated.length < PAGE_SIZE;
 
-        this.setQuery1OK({
-          ...pageState,
-          hasFetchedAll,
-          fetchMoreError: undefined,
-          isFetchingMore: false,
+        this.batch(() => {
+          this.updateThreadsAndNotifications(
+            data.threads.updated as ThreadData<M>[], // XXX Remove this cast :(
+            data.inboxNotifications.updated,
+            [], // XXX Note 100% sure about these! Think about it! Should they be empty?
+            []
+          );
+
+          this.setQuery1OK({
+            ...pageState,
+            cursor: nextCursor,
+            hasFetchedAll,
+            fetchMoreError: undefined,
+            isFetchingMore: false,
+          });
         });
       })
       .catch((err) => {
@@ -423,21 +433,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return query;
     }
 
-    // XXX Implement this for real!
-    const fetchMore = this.fetchMoreInboxNotifications;
-    const isFetchingMore = false;
-    const fetchMoreError = undefined;
-    const hasFetchedAll = false;
-
-    const inboxNotifications = this.getFullState().inboxNotifications;
+    const pageState = query.data;
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      inboxNotifications,
-      fetchMore,
-      isFetchingMore,
-      fetchMoreError,
-      hasFetchedAll,
+      inboxNotifications: this.getFullState().inboxNotifications,
+      fetchMore: this.fetchMoreInboxNotifications,
+      isFetchingMore: pageState.isFetchingMore,
+      fetchMoreError: pageState.fetchMoreError,
+      hasFetchedAll: pageState.hasFetchedAll,
     };
   }
 
