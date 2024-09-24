@@ -217,7 +217,7 @@ export const resolveUsers = <U extends BaseUserMeta = DU>({
   for (const userId of userIds) {
     const user = USERS_DB.find((u) => u.id === userId);
     if (user) {
-      users.push(user);
+      users.push({ name: user.name });
     }
   }
 

@@ -5,12 +5,14 @@ import type {
   CommentEmailBaseData,
   ThreadNotificationBaseData,
   ThreadNotificationData,
+  ThreadNotificationEmailAsHTML,
 } from "../thread-notification";
 import {
   extractThreadNotificationData,
   getLastUnreadCommentWithMention,
   getUnreadComments,
   makeCommentEmailBaseData,
+  prepareThreadNotificationEmailAsHTML,
   prepareThreadNotificationEmailBaseData,
 } from "../thread-notification";
 import {
@@ -27,6 +29,7 @@ import {
   makeThreadNotificationEvent,
   RESOLVED_ROOM_INFO_TEST,
   resolveRoomInfo,
+  resolveUsers,
   ROOM_ID_TEST,
   server,
   SERVER_BASE_URL,
@@ -411,6 +414,109 @@ describe("thread notification", () => {
 
       expect(preparedWithUnresolvedRoomInfo).toEqual(expected1);
       expect(preparedWithResolvedRoomInfo).toEqual(expected2);
+    });
+  });
+
+  describe("prepare thead notification email as HTML", () => {
+    describe("unread mention w/o styles design tokens", () => {
+      const threadId = generateThreadId();
+      const comment = makeComment({
+        userId: "user-0",
+        threadId,
+        body: buildCommentBodyWithMention({ mentionedUserId: "user-1" }),
+        createdAt: new Date("2024-09-10T08:04:00.000Z"),
+      });
+      const thread = makeThread({ threadId, comments: [comment] });
+      const inboxNotification = makeThreadInboxNotification({
+        threadId,
+        notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
+      });
+      const event = makeThreadNotificationEvent({
+        threadId,
+        userId: "user-1",
+        inboxNotificationId: inboxNotification.id,
+      });
+
+      const expected1: ThreadNotificationEmailAsHTML = {
+        type: "unreadMention",
+        comment: {
+          id: comment.id,
+          threadId: thread.id,
+          roomId: ROOM_ID_TEST,
+          createdAt: comment.createdAt,
+          author: {
+            id: comment.userId,
+            info: {
+              name: comment.userId,
+            },
+          },
+          htmlBody: "<p>Hello <span data-mention>@user-1</span> !</p>",
+          url: undefined,
+        },
+        roomInfo: { name: ROOM_ID_TEST },
+      };
+
+      const expected2: ThreadNotificationEmailAsHTML = {
+        type: "unreadMention",
+        comment: {
+          id: comment.id,
+          threadId: thread.id,
+          roomId: ROOM_ID_TEST,
+          createdAt: comment.createdAt,
+          author: {
+            id: comment.userId,
+            info: {
+              name: "Charlie Layne",
+            },
+          },
+          htmlBody: "<p>Hello <span data-mention>@Mislav Abha</span> !</p>",
+          url: getResolvedCommentUrl(comment.id),
+        },
+        roomInfo: RESOLVED_ROOM_INFO_TEST,
+      };
+
+      it.each<{
+        withResolvers: boolean;
+        promise: () => Promise<ThreadNotificationEmailAsHTML>;
+        expected: ThreadNotificationEmailAsHTML;
+      }>([
+        {
+          withResolvers: false,
+          promise: () =>
+            prepareThreadNotificationEmailAsHTML({ client, event }),
+          expected: expected1,
+        },
+        {
+          withResolvers: true,
+          promise: () =>
+            prepareThreadNotificationEmailAsHTML({
+              client,
+              event,
+              options: { resolveUsers, resolveRoomInfo },
+            }),
+          expected: expected2,
+        },
+      ])(
+        "should return unread mention as HTML with resolvers: $withResolvers",
+        async ({ promise, expected }) => {
+          server.use(
+            http.get(
+              `${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`,
+              () => HttpResponse.json(thread, { status: 200 })
+            )
+          );
+
+          server.use(
+            http.get(
+              `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
+              () => HttpResponse.json(inboxNotification, { status: 200 })
+            )
+          );
+
+          const emailDataAsHTML = await promise();
+          expect(emailDataAsHTML).toEqual(expected);
+        }
+      );
     });
   });
 });

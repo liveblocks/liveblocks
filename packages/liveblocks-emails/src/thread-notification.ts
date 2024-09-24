@@ -314,6 +314,7 @@ export async function prepareThreadNotificationEmailAsHTML(params: {
         resolveUsers: batchUsersResolver.resolveUsers,
       });
       const commentBodyPromise = stringifyCommentBody(comment.rawBody, {
+        format: "html",
         resolveUsers: batchUsersResolver.resolveUsers,
       });
 
@@ -350,6 +351,7 @@ export async function prepareThreadNotificationEmailAsHTML(params: {
       });
       const commentBodiesPromises = baseComments.map((c) =>
         stringifyCommentBody(c.rawBody, {
+          format: "html",
           resolveUsers: batchUsersResolver.resolveUsers,
         })
       );

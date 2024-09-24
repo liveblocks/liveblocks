@@ -41,7 +41,7 @@ describe("batch users resolve", () => {
         for (const userId of userIds) {
           const user = USERS_DB.find((u) => u.id === userId);
           if (user) {
-            users.push(user);
+            users.push({ name: user.name });
           }
         }
 
@@ -90,9 +90,9 @@ describe("batch users resolve", () => {
 
     const resolvedUsers = await Promise.all(resolveUsersPromises);
     const expected = [
-      [{ id: "user-0", name: "Charlie Layne" }],
-      [{ id: "user-1", name: "Mislav Abha" }],
-      [{ id: "user-2", name: "Tatum Paolo" }],
+      [{ name: "Charlie Layne" }],
+      [{ name: "Mislav Abha" }],
+      [{ name: "Tatum Paolo" }],
     ];
 
     expect(resolvedUsers).toEqual(expected);
@@ -116,7 +116,7 @@ describe("batch users resolve", () => {
     const resolvedUser1 = await promise1;
     const resolvedUser2 = await promise2;
 
-    const expected = [{ id: "user-3", name: "Anjali Wanda" }];
+    const expected = [{ name: "Anjali Wanda" }];
     expect(resolvedUser1).toEqual(expected);
     expect(resolvedUser2).toEqual(expected);
   });
@@ -143,7 +143,7 @@ describe("batch users resolve", () => {
     expect(warnMock2).toHaveBeenCalledWith(
       "Batch users resolver promise already resolved. It can only resolve once."
     );
-    expect(resolvedUser1).toEqual([{ id: "user-0", name: "Charlie Layne" }]);
+    expect(resolvedUser1).toEqual([{ name: "Charlie Layne" }]);
     expect(resolvedUser2).toBeUndefined();
 
     warnMock2.mockRestore();
