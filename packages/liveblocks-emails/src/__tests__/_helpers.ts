@@ -15,7 +15,7 @@ import type { RoomData, ThreadNotificationEvent } from "@liveblocks/node";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 
-import type { CommentDataWithBody } from "../lib/comment-with-body";
+import type { CommentDataWithBody } from "../comment-with-body";
 
 export const SERVER_BASE_URL = "https://api.liveblocks.io";
 

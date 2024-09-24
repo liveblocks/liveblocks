@@ -16,9 +16,9 @@ import {
 } from "@liveblocks/core";
 import type { Liveblocks, ThreadNotificationEvent } from "@liveblocks/node";
 
+import type { CommentDataWithBody } from "./comment-with-body";
+import { filterCommentsWithBody } from "./comment-with-body";
 import { createBatchUsersResolver } from "./lib/batch-users-resolvers";
-import type { CommentDataWithBody } from "./lib/comment-with-body";
-import { filterCommentsWithBody } from "./lib/comment-with-body";
 
 /** @internal */
 export const getUnreadComments = ({
