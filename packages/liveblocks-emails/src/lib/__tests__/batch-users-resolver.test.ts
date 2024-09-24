@@ -62,13 +62,14 @@ describe("batch users resolve", () => {
 
     await batchUsersResolver.resolve();
 
-    const results = await Promise.all(registeredPromises);
-
-    expect(results).toEqual([
+    const resolvedUsers = await Promise.all(registeredPromises);
+    const expected = [
       [{ id: "user-0", name: "Charlie Layne" }],
       [{ id: "user-1", name: "Mislav Abha" }],
       [{ id: "user-2", name: "Tatum Paolo" }],
-    ]);
+    ];
+
+    expect(resolvedUsers).toEqual(expected);
     expect(resolveUsersMock).toHaveBeenCalledTimes(1);
     expect(resolveUsersMock).toHaveBeenCalledWith({ userIds });
   });
