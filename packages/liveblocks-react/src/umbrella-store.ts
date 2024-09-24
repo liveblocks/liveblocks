@@ -392,7 +392,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
         }
 
         const hasFetchedAll =
-          data.inboxNotifications.updated.length < PAGE_SIZE;
+          data.inboxNotifications.updated.length +
+            data.inboxNotifications.deleted.length <
+          PAGE_SIZE;
 
         this.batch(() => {
           this.updateThreadsAndNotifications(

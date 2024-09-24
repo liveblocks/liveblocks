@@ -369,7 +369,9 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
         }
 
         const hasFetchedAll =
-          result.inboxNotifications.updated.length < PAGE_SIZE;
+          result.inboxNotifications.updated.length +
+            result.inboxNotifications.deleted.length <
+          PAGE_SIZE;
 
         store.setQuery1OK({
           cursor,
