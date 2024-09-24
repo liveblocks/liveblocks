@@ -16,8 +16,6 @@ import { Editor } from "@tiptap/react";
 import { classNames } from "./classnames";
 import { ThreadPluginActions, ThreadPluginState, THREADS_PLUGIN_KEY } from "./LiveblocksExtension";
 import { getRectFromCoords } from "./utils";
-import plugin from "tailwindcss";
-import { A } from "@liveblocks/react/dist/suspense-i9xgTMdV";
 
 const DEFAULT_GAP = 20;
 const DEFAULT_ACTIVE_THREAD_OFFSET = -12;
