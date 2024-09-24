@@ -269,7 +269,7 @@ function getExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
 }
 
 function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
-  const store = getUmbrellaStoreForClient(client);
+  const store = getUmbrellaStoreForClient<M>(client);
 
   const DEFAULT_DEDUPING_INTERVAL = 2000; // 2 seconds
 
@@ -408,6 +408,48 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     return;
   }
 
+  const loadRoomThreads = (
+    room: Room<JsonObject, LsonObject, BaseUserMeta, Json, M>,
+    queryKey: string,
+    options: UseThreadsOptions<M>
+  ): Promise<ThreadData<M>[]> => {
+    const existingPromise = store.getLoadThreadsPromise(queryKey);
+    if (existingPromise !== undefined) return existingPromise;
+
+    const getThreadsAndInboxNotifications = async () => {
+      const result = await room.getThreads(options);
+
+      const lastRequestedAt = lastRequestedAtByRoom.get(room.id);
+
+      /**
+       * We set the `lastRequestedAt` value for the room to the timestamp returned by the current request if:
+       * 1. The `lastRequestedAt` value for the room has not been set
+       * OR
+       * 2. The `lastRequestedAt` value for the room is older than the timestamp returned by the current request
+       */
+      if (
+        lastRequestedAt === undefined ||
+        lastRequestedAt > result.requestedAt
+      ) {
+        lastRequestedAtByRoom.set(room.id, result.requestedAt);
+      }
+
+      poller.start(POLLING_INTERVAL);
+
+      return {
+        threads: result.threads,
+        inboxNotifications: result.inboxNotifications,
+      };
+    };
+
+    const loadThreadsPromise = store.setLoadThreadsPromise(
+      queryKey,
+      getThreadsAndInboxNotifications()
+    );
+
+    return loadThreadsPromise;
+  };
+
   async function getThreadsAndInboxNotifications(
     room: OpaqueRoom,
     queryKey: string,
@@ -536,6 +578,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     getInboxNotificationSettings,
     getRoomVersions,
     onMutationFailure,
+    loadRoomThreads,
   };
 }
 
@@ -1438,11 +1481,12 @@ function useThreads<M extends BaseMetadata>(
     [room, options]
   );
 
-  const { store, getThreadsAndInboxNotifications, incrementQuerySubscribers } =
+  const { store, loadRoomThreads, incrementQuerySubscribers } =
     getExtrasForClient<M>(client);
 
   React.useEffect(() => {
-    void getThreadsAndInboxNotifications(room, queryKey, options);
+    // void getThreadsAndInboxNotifications(room, queryKey, options);
+    void loadRoomThreads(room, queryKey, options);
     return incrementQuerySubscribers(queryKey);
   }, [room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -2500,37 +2544,32 @@ function useThreadsSuspense<M extends BaseMetadata>(
     [room, options]
   );
 
-  const { store, getThreadsAndInboxNotifications } =
-    getExtrasForClient<M>(client);
+  const { store, loadRoomThreads } = getExtrasForClient<M>(client);
 
-  const query = store.getThreads().queries2[queryKey];
+  const loadThreadsPromise = loadRoomThreads(room, queryKey, options);
 
-  if (query === undefined || query.isLoading) {
-    throw getThreadsAndInboxNotifications(room, queryKey, options);
-  }
-
-  if (query.error) {
-    throw query.error;
-  }
+  use(loadThreadsPromise);
 
   const selector = React.useCallback(
     (state: ReturnType<typeof store.getThreads>): ThreadsAsyncSuccess<M> => {
+      if (
+        !("status" in loadThreadsPromise) ||
+        loadThreadsPromise.status !== "fulfilled"
+      ) {
+        console.warn("Internal error: Unexpected promise status");
+      }
+
       return {
+        isLoading: false,
         threads: selectThreads(state, {
           roomId: room.id,
           query: options.query,
           orderBy: "age",
         }),
-        isLoading: false,
       };
     },
-    [room, queryKey] // eslint-disable-line react-hooks/exhaustive-deps
+    [loadThreadsPromise, store, room, queryKey] // eslint-disable-line react-hooks/exhaustive-deps
   );
-
-  React.useEffect(() => {
-    const { incrementQuerySubscribers } = getExtrasForClient(client);
-    return incrementQuerySubscribers(queryKey);
-  }, [client, queryKey]);
 
   const state = useSyncExternalStoreWithSelector(
     store.subscribeThreads,
@@ -2538,6 +2577,11 @@ function useThreadsSuspense<M extends BaseMetadata>(
     store.getThreads,
     selector
   );
+
+  React.useEffect(() => {
+    const { incrementQuerySubscribers } = getExtrasForClient(client);
+    return incrementQuerySubscribers(queryKey);
+  }, [client, queryKey]);
 
   useScrollToCommentOnLoadEffect(scrollOnLoad, state);
 
