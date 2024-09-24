@@ -94,6 +94,7 @@ export type {
 } from "./lib/AsyncResult";
 export { autoRetry, StopRetrying } from "./lib/autoRetry";
 export { chunk } from "./lib/chunk";
+export { Promise_withResolvers } from "./lib/controlledPromise";
 export {
   createCommentId,
   createInboxNotificationId,
