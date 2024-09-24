@@ -15,6 +15,7 @@ import {
   stringifyCommentBody,
 } from "@liveblocks/core";
 import type { Liveblocks, ThreadNotificationEvent } from "@liveblocks/node";
+import React from "react";
 
 import type { CommentDataWithBody } from "./comment-with-body";
 import { filterCommentsWithBody } from "./comment-with-body";
@@ -285,9 +286,7 @@ export type ThreadNotificationEmailAsHTML = ThreadNotificationEmailData<
   CommentEmailAsHTMLData<BaseUserMeta>
 >;
 
-/**
- * TODO add jsdoc
- */
+// TODO: add jsdoc
 export async function prepareThreadNotificationEmailAsHTML(params: {
   client: Liveblocks;
   event: ThreadNotificationEvent;
@@ -343,13 +342,13 @@ export async function prepareThreadNotificationEmailAsHTML(params: {
       };
     }
     case "unreadReplies": {
-      const baseComments = data.comments;
+      const { comments } = data;
 
       const authorsInfoPromise = resolveAuthorsInfo({
-        comments: baseComments,
+        comments,
         resolveUsers: batchUsersResolver.resolveUsers,
       });
-      const commentBodiesPromises = baseComments.map((c) =>
+      const commentBodiesPromises = comments.map((c) =>
         stringifyCommentBody(c.rawBody, {
           format: "html",
           resolveUsers: batchUsersResolver.resolveUsers,
@@ -363,7 +362,7 @@ export async function prepareThreadNotificationEmailAsHTML(params: {
 
       return {
         type: "unreadReplies",
-        comments: baseComments.map((comment, index) => {
+        comments: comments.map((comment, index) => {
           const authorInfo = authorsInfo.get(comment.userId);
           const commentBodyHTML = commentBodies[index];
 
@@ -377,6 +376,112 @@ export async function prepareThreadNotificationEmailAsHTML(params: {
             createdAt: comment.createdAt,
             url: comment.url,
             htmlBody: commentBodyHTML ?? "",
+          };
+        }),
+        roomInfo: data.roomInfo,
+      };
+    }
+  }
+}
+
+export type PrepareThreadNotificationEmailAsReactOptions<
+  U extends BaseUserMeta = DU,
+> = PrepareThreadNotificationEmailBaseDataOptions & {
+  /**
+   * A function that returns info from user IDs.
+   */
+  resolveUsers?: (
+    args: ResolveUsersArgs
+  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+  // TEMP
+  commentBodyElements?: Record<string, JSX.Element>;
+};
+
+export type ThreadNotificationEmailAsReact = ThreadNotificationEmailData<
+  BaseUserMeta,
+  CommentEmailAsReactData<BaseUserMeta>
+>;
+
+// TODO: add jsdoc
+export async function prepareThreadNotificationEmailAsReact(params: {
+  client: Liveblocks;
+  event: ThreadNotificationEvent;
+  options?: PrepareThreadNotificationEmailAsReactOptions<BaseUserMeta>;
+}): Promise<ThreadNotificationEmailAsReact> {
+  const { client, event, options } = params;
+  const data = await prepareThreadNotificationEmailBaseData({
+    client,
+    event,
+    options: { resolveRoomInfo: options?.resolveRoomInfo },
+  });
+
+  const batchUsersResolver = createBatchUsersResolver<BaseUserMeta>({
+    resolveUsers: options?.resolveUsers,
+    callerName: "prepareThreadNotificationEmailAsReact",
+  });
+
+  switch (data.type) {
+    case "unreadMention": {
+      const { comment } = data;
+
+      const authorsInfoPromise = resolveAuthorsInfo({
+        comments: [comment],
+        resolveUsers: batchUsersResolver.resolveUsers,
+      });
+
+      // TODO: resolve user and reactify
+
+      await batchUsersResolver.resolve();
+
+      const [authorsInfo] = await Promise.all([
+        authorsInfoPromise,
+        // TODO: resolve comment bodies promises
+      ]);
+      const authorInfo = authorsInfo.get(comment.userId);
+
+      return {
+        type: "unreadMention",
+        comment: {
+          id: comment.id,
+          threadId: comment.threadId,
+          roomId: comment.roomId,
+          author: authorInfo
+            ? { id: comment.userId, info: authorInfo }
+            : { id: comment.userId, info: { name: comment.userId } },
+          createdAt: comment.createdAt,
+          url: comment.url,
+          reactBody: <div />,
+        },
+        roomInfo: data.roomInfo,
+      };
+    }
+    case "unreadReplies": {
+      const { comments } = data;
+      const authorsInfoPromise = resolveAuthorsInfo({
+        comments,
+        resolveUsers: batchUsersResolver.resolveUsers,
+      });
+
+      // TODO: resolve user and reactify
+
+      const authorsInfo = await authorsInfoPromise;
+      // TODO: resolve comment bodies promises
+
+      return {
+        type: "unreadReplies",
+        comments: comments.map((comment, _index) => {
+          const authorInfo = authorsInfo.get(comment.userId);
+
+          return {
+            id: comment.id,
+            threadId: comment.threadId,
+            roomId: comment.roomId,
+            author: authorInfo
+              ? { id: comment.userId, info: authorInfo }
+              : { id: comment.userId, info: { name: comment.userId } },
+            createdAt: comment.createdAt,
+            url: comment.url,
+            reactBody: <div />,
           };
         }),
         roomInfo: data.roomInfo,
