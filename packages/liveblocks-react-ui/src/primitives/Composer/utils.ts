@@ -325,7 +325,13 @@ interface ComposerAttachmentsManagerOptions {
 }
 
 export class AttachmentTooLargeError extends Error {
+  origin: "client" | "server";
   name = "AttachmentTooLargeError";
+
+  constructor(message: string, origin: "client" | "server" = "client") {
+    super(message);
+    this.origin = origin;
+  }
 }
 
 function createComposerAttachmentsManager(
@@ -369,7 +375,7 @@ function createComposerAttachmentsManager(
             status: "error",
             error:
               error instanceof CommentsApiError && error.status === 413
-                ? new AttachmentTooLargeError("File is too large.")
+                ? new AttachmentTooLargeError("File is too large.", "server")
                 : error,
           });
           notifySubscribers();
@@ -393,7 +399,7 @@ function createComposerAttachmentsManager(
           attachments.set(attachment.id, {
             ...attachment,
             status: "error",
-            error: new AttachmentTooLargeError("File is too large."),
+            error: new AttachmentTooLargeError("File is too large.", "client"),
           });
 
           continue;
