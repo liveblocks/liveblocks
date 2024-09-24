@@ -268,6 +268,54 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   const store = getUmbrellaStoreForClient(client);
   // TODO                                ^ Bind to M type param here
 
+  //
+  // How pagination and delta updates work
+  // =====================================
+  //
+  // Suppose we call fetchInboxNotifications() for the first time. Then,
+  // eventually we'll see this timeline of notifications:
+  //
+  // <-- Newer                        Older -->
+  //       |---o---------o----------o---|
+  //
+  //       o = an inbox notification
+  //
+  // In this array, there are three entries, ordered from latest to oldest.
+  //
+  // Now if we call fetchInboxNotifications() again (which is what the
+  // periodic poller does), then the array may get updated with newer inbox
+  // notifications, meaning entries will appear at the head end of the array.
+  // This is a so called "delta update".
+  //
+  // <-- Newer                                 Older -->
+  //       |--o---o-|---o---------o----------o---|
+  //          delta
+  //
+  // Here, two new entries have appeared at the start.
+  //
+  // Another way to update this array is to use "pagination". Pagination will
+  // update this list at the _tail_ end.
+  //
+  // After calling fetchMore():
+  //
+  // <-- Newer                                                  Older -->
+  //       |--o---o-|---o---------o----------o---|--o--o-o-o-o-o--|
+  //                                                   page 2
+  //
+  // And calling fetchMore() another time:
+  //
+  // <-- Newer                                                                  Older -->
+  //       |--o---o-|---o---------o----------o---|--o--o-o-o-o-o--|--o-o---o---o--|
+  //                                                   page 2           page 3
+  //
+  // In terms of HTTP requests:
+  // - A delta update will perform a GET /v2/c/inbox-notifications?since=...
+  // - Pagination will perform a GET /v2/c/inbox-notifications?cursor=...
+  //
+
+  // Keeps track of when we successfully requested an inbox notifications
+  // update for the last time. Will be `undefined` as long as the first
+  // successful fetch hasn't happened yet.
   let lastRequestedAt: Date | undefined;
 
   /**
