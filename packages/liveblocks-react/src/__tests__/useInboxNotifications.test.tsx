@@ -78,7 +78,7 @@ describe("useInboxNotifications", () => {
         inboxNotifications,
         fetchMore: expect.any(Function),
         isFetchingMore: false,
-        hasFetchedAll: false,
+        hasFetchedAll: true,
         fetchMoreError: undefined,
       })
     );
@@ -128,7 +128,7 @@ describe("useInboxNotifications", () => {
         inboxNotifications,
         fetchMore: expect.any(Function),
         isFetchingMore: false,
-        hasFetchedAll: false,
+        hasFetchedAll: true,
         fetchMoreError: undefined,
       })
     );
@@ -306,7 +306,7 @@ describe("useInboxNotifications", () => {
         inboxNotifications: [newInboxNotification, oldInboxNotification],
         fetchMore: expect.any(Function),
         isFetchingMore: false,
-        hasFetchedAll: false,
+        hasFetchedAll: true,
         fetchMoreError: undefined,
       })
     );
@@ -430,7 +430,7 @@ describe("useInboxNotifications - Suspense", () => {
         inboxNotifications,
         fetchMore: expect.any(Function),
         isFetchingMore: false,
-        hasFetchedAll: false,
+        hasFetchedAll: true,
         fetchMoreError: undefined,
       })
     );

@@ -80,7 +80,7 @@ describe("useInboxNotificationThread", () => {
         inboxNotifications,
         fetchMore: expect.any(Function),
         isFetchingMore: false,
-        hasFetchedAll: false,
+        hasFetchedAll: true,
         fetchMoreError: undefined,
       })
     );
@@ -164,7 +164,7 @@ describe("useInboxNotificationThread", () => {
         inboxNotifications: expect.any(Array),
         fetchMore: expect.any(Function),
         isFetchingMore: false,
-        hasFetchedAll: false,
+        hasFetchedAll: true,
         fetchMoreError: undefined,
       })
     );
@@ -269,7 +269,7 @@ describe("useInboxNotificationThread", () => {
         inboxNotifications: expect.any(Array),
         fetchMore: expect.any(Function),
         isFetchingMore: false,
-        hasFetchedAll: false,
+        hasFetchedAll: true,
         fetchMoreError: undefined,
       })
     );
