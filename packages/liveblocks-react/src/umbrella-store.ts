@@ -26,6 +26,7 @@ import {
 } from "@liveblocks/core";
 
 import { isMoreRecentlyUpdated } from "./lib/compare";
+import { autoRetry } from "./lib/retry-error";
 import type { RoomNotificationSettingsAsyncResult } from "./types";
 
 type OptimisticUpdate<M extends BaseMetadata> =
@@ -182,6 +183,10 @@ type InternalState<M extends BaseMetadata> = Readonly<{
   queries3: Record<string, QueryAsyncResult>; // Notification settings
   queries4: Record<string, QueryAsyncResult>; // Versions
 
+  threads: {
+    loadThreadsPromises: Record<string, Promise<ThreadData<M>[]>>;
+  };
+
   optimisticUpdates: readonly OptimisticUpdate<M>[];
 
   rawThreadsById: Record<string, ThreadDataWithDeleteInfo<M>>;
@@ -258,6 +263,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
       queries2: {},
       queries3: {},
       queries4: {},
+      threads: {
+        loadThreadsPromises: {},
+      },
       optimisticUpdates: [],
       inboxNotificationsById: {},
       notificationSettingsByRoomId: {},
@@ -1023,6 +1031,57 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   public setQuery2Error(queryKey: string, error: Error): void {
     this.setQuery2State(queryKey, { isLoading: false, error });
+  }
+
+  public setLoadThreadsPromise(
+    queryKey: string,
+    getThreadsAndNotificationsPromise: Promise<{
+      threads: ThreadData<M>[];
+      inboxNotifications: InboxNotificationData[];
+    }>
+  ): Promise<ThreadData<M>[]> {
+    const loadThreadsPromise = autoRetry(
+      () => {
+        return getThreadsAndNotificationsPromise
+          .then((result) => {
+            window.console.log("DONE", result);
+            this.updateThreadsAndNotifications(
+              result.threads,
+              result.inboxNotifications,
+              [],
+              [],
+              queryKey
+            );
+            return result.threads;
+          })
+          .catch((err) => {
+            // Throw the error as we want `autoRetry` function to handle the error
+            throw err;
+          });
+      },
+      5,
+      [5000, 5000, 10000, 15000]
+    ).catch((err) => {
+      throw err;
+    });
+
+    this._store.set((state) => ({
+      ...state,
+      threads: {
+        loadThreadsPromises: {
+          ...state.threads.loadThreadsPromises,
+          [queryKey]: loadThreadsPromise,
+        },
+      },
+    }));
+
+    return loadThreadsPromise;
+  }
+
+  public getLoadThreadsPromise(
+    queryKey: string
+  ): Promise<ThreadData<M>[]> | undefined {
+    return this._store.get().threads.loadThreadsPromises[queryKey];
   }
 
   // Query 3
