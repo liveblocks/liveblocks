@@ -169,8 +169,9 @@ export type NotificationsApi<M extends BaseMetadata> = {
    * @example
    * const data = await client.getInboxNotifications();
    * const data = await client.getInboxNotifications({ since: result.requestedAt }});
+   * const data = await client.getInboxNotifications({ cursor }});  // XXX Explain this API better
    */
-  getInboxNotifications(options?: { since?: Date }): Promise<{
+  getInboxNotifications(options?: { since?: Date; cursor?: Date }): Promise<{
     inboxNotifications: {
       updated: InboxNotificationData[];
       deleted: InboxNotificationDeleteInfo[];

@@ -127,7 +127,11 @@ export function createNotificationsApi<M extends BaseMetadata>({
     return body;
   }
 
-  async function getInboxNotifications(options?: { since?: Date }) {
+  async function getInboxNotifications(options?: {
+    since?: Date;
+    // XXX Cursor will have to be more than a simple Date field: change it eventually
+    cursor?: Date;
+  }) {
     const json = await fetchJson<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
@@ -138,6 +142,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
       };
     }>(url`/v2/c/inbox-notifications`, undefined, {
       since: options?.since?.toISOString(),
+      cursor: options?.cursor?.toISOString(),
     });
 
     return {
