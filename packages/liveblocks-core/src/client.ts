@@ -164,31 +164,13 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
 
 export type NotificationsApi<M extends BaseMetadata> = {
   /**
-   * Gets the current user inbox notifications and their associated threads.
-   * It also returns the request date that can be used for subsequent polling.
-   *
-   * @example
-   * const {
-   *   inboxNotifications,
-   *   threads,
-   *   requestedAt
-   * } = await client.getInboxNotifications();
-   */
-  getInboxNotifications(): Promise<{
-    inboxNotifications: InboxNotificationData[];
-    threads: ThreadData<M>[];
-    requestedAt: Date;
-  }>;
-
-  /**
    * Gets the updated and deleted inbox notifications and their associated threads since the requested date.
    *
    * @example
-   * const result = await client.getInboxNotifications();
-   * // ... //
-   * await client.getInboxNotificationsSince({ since: result.requestedAt }});
+   * const data = await client.getInboxNotifications();
+   * const data = await client.getInboxNotifications({ since: result.requestedAt }});
    */
-  getInboxNotificationsSince(options: { since: Date }): Promise<{
+  getInboxNotifications(options?: { since?: Date }): Promise<{
     inboxNotifications: {
       updated: InboxNotificationData[];
       deleted: InboxNotificationDeleteInfo[];
@@ -590,7 +572,6 @@ export function createClient<U extends BaseUserMeta = DU>(
 
   const {
     getInboxNotifications,
-    getInboxNotificationsSince,
     getUnreadInboxNotificationsCount,
     markAllInboxNotificationsAsRead,
     markInboxNotificationAsRead,
@@ -651,7 +632,6 @@ export function createClient<U extends BaseUserMeta = DU>(
       logout,
 
       getInboxNotifications,
-      getInboxNotificationsSince,
       getUnreadInboxNotificationsCount,
       markAllInboxNotificationsAsRead,
       markInboxNotificationAsRead,

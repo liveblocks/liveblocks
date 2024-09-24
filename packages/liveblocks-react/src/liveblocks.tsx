@@ -277,44 +277,30 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   async function fetchInboxNotifications() {
     // If inbox notifications have not been fetched yet, we get all of them
     // Else, we fetch only what changed since the last request
-    if (lastRequestedAt === undefined) {
-      const result = await client.getInboxNotifications();
 
-      store.batch(() => {
-        // 1️⃣
-        store.updateThreadsAndNotifications(
-          result.threads,
-          result.inboxNotifications,
-          [],
-          []
-        );
+    const result = await client.getInboxNotifications({
+      since: lastRequestedAt,
+    });
 
-        // 2️⃣
-        store.setQuery1OK();
-      });
+    store.batch(() => {
+      // 1️⃣
+      store.updateThreadsAndNotifications(
+        result.threads.updated,
+        result.inboxNotifications.updated,
 
+        // NOTE: Not sure if this `lastRequestedAt === undefined ? []` part is
+        // relevant here, but this is what used to be the implementation. Could
+        // we not just pass along any deleted threads if there are any?
+        lastRequestedAt === undefined ? [] : result.threads.deleted,
+        lastRequestedAt === undefined ? [] : result.inboxNotifications.deleted
+      );
+
+      // 2️⃣
+      store.setQuery1OK();
+    });
+
+    if (lastRequestedAt === undefined || lastRequestedAt < result.requestedAt) {
       lastRequestedAt = result.requestedAt;
-    } else {
-      const result = await client.getInboxNotificationsSince({
-        since: lastRequestedAt,
-      });
-
-      store.batch(() => {
-        // 1️⃣
-        store.updateThreadsAndNotifications(
-          result.threads.updated,
-          result.inboxNotifications.updated,
-          result.threads.deleted,
-          result.inboxNotifications.deleted
-        );
-
-        // 2️⃣
-        store.setQuery1OK();
-      });
-
-      if (lastRequestedAt < result.requestedAt) {
-        lastRequestedAt = result.requestedAt;
-      }
     }
   }
 
