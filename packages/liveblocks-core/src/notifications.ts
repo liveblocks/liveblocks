@@ -128,9 +128,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
     return body;
   }
 
-  async function getInboxNotifications(options?: {
-    cursor?: string; // XXX Cursor can become a simple string value eventually, and the backend will return it
-  }) {
+  async function getInboxNotifications(options?: { cursor?: string }) {
     const json = await fetchJson<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
@@ -151,7 +149,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
 
     // XXX Ideally, the backend would "just" return the cursor as part of the
     // previous request (and `null` if it's the last page).
-    // XXX For now, we compute it manually
+    // XXX For now, we fake it here manually
     let cursor: string | null = null;
     for (const n of json.inboxNotifications) {
       if (cursor === null || n.notifiedAt < cursor) {
