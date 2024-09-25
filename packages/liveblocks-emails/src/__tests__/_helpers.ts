@@ -14,6 +14,7 @@ import { nanoid } from "@liveblocks/core";
 import type { RoomData, ThreadNotificationEvent } from "@liveblocks/node";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
+import ReactDOMServer from "react-dom/server";
 
 import type { CommentDataWithBody } from "../comment-with-body";
 
@@ -112,6 +113,47 @@ export const commentBody4: CommentBody = {
       children: [
         { text: "I agree 😍 it completes well this guide: " },
         { type: "link", url: "https://www.liveblocks.io" },
+      ],
+    },
+  ],
+};
+
+export const commentBody5: CommentBody = {
+  version: 1,
+  content: [
+    {
+      type: "paragraph",
+      children: [
+        { text: "Bold text", bold: true },
+        { text: " and " },
+        { text: "italic text", italic: true },
+      ],
+    },
+  ],
+};
+
+export const commentBody6: CommentBody = {
+  version: 1,
+  content: [
+    {
+      type: "paragraph",
+      children: [
+        { text: "Strikethrough text", strikethrough: true },
+        { text: " and " },
+        { text: "code text", code: true },
+      ],
+    },
+  ],
+};
+
+export const commentBody7: CommentBody = {
+  version: 1,
+  content: [
+    {
+      type: "paragraph",
+      children: [
+        { text: "Check out this " },
+        { type: "link", url: "https://www.liveblocks.io", text: "example" },
       ],
     },
   ],
@@ -248,3 +290,6 @@ export const server = setupServer(
     HttpResponse.json(ROOM_TEST, { status: 200 })
   )
 );
+
+export const renderToStaticMarkup = (reactNode: React.ReactNode): string =>
+  ReactDOMServer.renderToStaticMarkup(reactNode);

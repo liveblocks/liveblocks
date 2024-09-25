@@ -101,14 +101,15 @@ export type ConvertCommentBodyAsReactComponents<U extends BaseUserMeta = DU> = {
   ) => React.ReactNode;
 };
 
-const defaultBodyElements: ConvertCommentBodyAsReactComponents<BaseUserMeta> = {
+const baseComponents: ConvertCommentBodyAsReactComponents<BaseUserMeta> = {
   Slot: ({ children }) => <div>{children}</div>,
   Paragraph: ({ children }, index) => (
     <p key={`lb-comment-body-paragraph-${index}`}>{children}</p>
   ),
   Text: ({ element }) => {
-    // Note: <code><s><em><strong>text</strong></s></em></code>
-    let children = <>{element.text}</>;
+    // Note: construction following the schema 👇
+    // <code><s><em><strong>{element.text}</strong></s></em></code>
+    let children: React.ReactNode = element.text;
     if (!children) {
       return children;
     }
@@ -137,7 +138,7 @@ const defaultBodyElements: ConvertCommentBodyAsReactComponents<BaseUserMeta> = {
     </a>
   ),
   Mention: ({ element, user }) => (
-    <span data-mention="">@{user?.name ?? element.id}</span>
+    <span data-mention>@{user?.name ?? element.id}</span>
   ),
 };
 
@@ -160,10 +161,10 @@ export type ConvertCommentBodyAsReactOptions<U extends BaseUserMeta = DU> = {
  */
 export async function convertCommentBodyAsReact(
   body: CommentBody,
-  options: ConvertCommentBodyAsReactOptions<BaseUserMeta>
+  options?: ConvertCommentBodyAsReactOptions<BaseUserMeta>
 ): Promise<React.ReactNode> {
   const components = {
-    ...defaultBodyElements,
+    ...baseComponents,
     ...options?.components,
   };
   const resolvedUsers = await resolveUsersInCommentBody(
