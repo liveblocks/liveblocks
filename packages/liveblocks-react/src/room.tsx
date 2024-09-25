@@ -274,11 +274,8 @@ function getExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
 function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   const store = getUmbrellaStoreForClient(client);
 
-  const DEFAULT_DEDUPING_INTERVAL = 2000; // 2 seconds
-
   const lastRequestedAtByRoom = new Map<string, Date>(); // A map of room ids to the timestamp when the last request for threads updates was made
   const requestsByQuery = new Map<string, Promise<unknown>>(); // A map of query keys to the promise of the request for that query
-  const requestStatusByRoom = new Map<string, boolean>(); // A map of room ids to a boolean indicating whether a request to retrieve threads updates is in progress
   const subscribersByQuery = new Map<string, number>(); // A map of query keys to the number of subscribers for that query
 
   const poller = makePoller(refreshThreadsAndNotifications);
@@ -291,7 +288,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
       if (room === null) return;
 
       // Retrieve threads that have been updated/deleted since the last requestedAt value
-      requests.push(getThreadsUpdates(room.id));
+      requests.push(store.getThreadsUpdates(room.id));
     });
 
     await Promise.allSettled(requests);
@@ -325,54 +322,6 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
         poller.stop();
       }
     };
-  }
-
-  /**
-   * Retrieve threads that have been updated/deleted since the last time the room requested threads updates and update the local cache with the new data
-   * @param roomId The id of the room for which to retrieve threads updates
-   */
-  async function getThreadsUpdates(roomId: string) {
-    const room = client.getRoom(roomId) as Room<
-      never,
-      never,
-      never,
-      never,
-      M
-    > | null; // TODO: Figure out how to remove this casting
-    if (room === null) return;
-
-    const since = lastRequestedAtByRoom.get(room.id);
-    if (since === undefined) return;
-
-    const isFetchingThreadsUpdates = requestStatusByRoom.get(room.id) ?? false;
-    // If another request to retrieve threads updates for the room is in progress, we do not start a new one
-    if (isFetchingThreadsUpdates === true) return;
-
-    try {
-      // Set the isFetchingThreadsUpdates flag to true to prevent multiple requests to fetch threads updates for the room from being made at the same time
-      requestStatusByRoom.set(room.id, true);
-
-      const updates = await room.getThreadsSince({ since });
-
-      // Set the isFetchingThreadsUpdates flag to false after a certain interval to prevent multiple requests from being made at the same time
-      setTimeout(() => {
-        requestStatusByRoom.set(room.id, false);
-      }, DEFAULT_DEDUPING_INTERVAL);
-
-      store.updateThreadsAndNotifications(
-        updates.threads.updated,
-        updates.inboxNotifications.updated,
-        updates.threads.deleted,
-        updates.inboxNotifications.deleted
-      );
-
-      // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
-      lastRequestedAtByRoom.set(room.id, updates.requestedAt);
-    } catch (err) {
-      requestStatusByRoom.set(room.id, false);
-      // TODO: Implement error handling
-      return;
-    }
   }
 
   async function getRoomVersions(
@@ -411,6 +360,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     return;
   }
 
+  // XXX - Remove this method once `useThreads` (non-suspense) is updated to use the `loadThreadsAndNotifications` method
   async function getThreadsAndInboxNotifications(
     room: OpaqueRoom,
     queryKey: string,
@@ -539,7 +489,6 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     store,
     incrementQuerySubscribers,
     commentsErrorEventSource,
-    getThreadsUpdates,
     getThreadsAndInboxNotifications,
     getInboxNotificationSettings,
     getRoomVersions,
@@ -897,9 +846,9 @@ function RoomProviderInner<
   }, [client, room]);
 
   React.useEffect(() => {
-    const { getThreadsUpdates } = getExtrasForClient(client);
+    const store = getExtrasForClient(client).store;
     // Retrieve threads that have been updated/deleted since the last time the room requested threads updates
-    void getThreadsUpdates(room.id);
+    void store.getThreadsUpdates(room.id);
   }, [client, room.id]);
 
   /**
@@ -907,8 +856,8 @@ function RoomProviderInner<
    */
   React.useEffect(() => {
     function handleIsOnline() {
-      const { getThreadsUpdates } = getExtrasForClient(client);
-      void getThreadsUpdates(room.id);
+      const store = getExtrasForClient(client).store;
+      void store.getThreadsUpdates(room.id);
     }
 
     window.addEventListener("online", handleIsOnline);
