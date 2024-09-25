@@ -289,7 +289,30 @@ export type ThreadNotificationEmailAsHTML = ThreadNotificationEmailData<
   CommentEmailAsHTMLData<BaseUserMeta>
 >;
 
-// TODO: add jsdoc
+/**
+ * Prepare data from a `ThreadNotificationEvent` and convert comment bodies as an HTML safe string
+ *
+ * @param params.client The `Liveblocks` node client
+ * @param params.event The `ThreadNotificationEvent` received in the webhook handler
+ * @param params.options The options to provides to resolve users, resolve room info
+ * and customize bodies html elements styles with inline css.
+ *
+ * @example
+ * import { Liveblocks} from "@liveblocks/node"
+ * import { prepareThreadNotificationEmailAsHTML } from "@liveblocks/emails"
+ *
+ * const liveblocks = new Liveblocks({ secret: "sk_..." })
+ * const data = prepareThreadNotificationEmailAsHTML({
+ *  client: liveblocks,
+ *  event,
+ *  options: {
+ *    resolveUsers,
+ *    resolveRoomInfo,
+ *    commentBodyStyles,
+ *  }
+ * })
+ *
+ */
 export async function prepareThreadNotificationEmailAsHTML(params: {
   client: Liveblocks;
   event: ThreadNotificationEvent;
@@ -408,7 +431,29 @@ export type ThreadNotificationEmailAsReact = ThreadNotificationEmailData<
   CommentEmailAsReactData<BaseUserMeta>
 >;
 
-// TODO: add jsdoc
+/**
+ * Prepare data from a `ThreadNotificationEvent` and convert comment bodies as React nodes.
+ *
+ * @param params.client The `Liveblocks` node client
+ * @param params.event The `ThreadNotificationEvent` received in the webhook handler
+ * @param params.options The options to provides to resolve users, resolve room info and customize comment bodies React components.
+ *
+ * @example
+ * import { Liveblocks} from "@liveblocks/node"
+ * import { prepareThreadNotificationEmailAsReact } from "@liveblocks/emails"
+ *
+ * const liveblocks = new Liveblocks({ secret: "sk_..." })
+ * const data = prepareThreadNotificationEmailAsReact({
+ *  client: liveblocks,
+ *  event,
+ *  options: {
+ *    resolveUsers,
+ *    resolveRoomInfo,
+ *    commentBodyComponents,
+ *  }
+ * })
+ *
+ */
 export async function prepareThreadNotificationEmailAsReact(params: {
   client: Liveblocks;
   event: ThreadNotificationEvent;
