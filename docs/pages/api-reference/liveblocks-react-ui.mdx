@@ -1281,14 +1281,107 @@ function MyComment({ comment }: { comment: CommentData }) {
 
 Returns states and methods related to the composer. Can only be used within the
 [`Composer.Form`](#primitives-Composer.Form) primitive.
+[All values listed below](#useComposer-values).
 
 ```tsx
 import { useComposer } from "@liveblocks/react-ui/primitives";
 
-const { isEmpty, attachments, submit } = useComposer();
+const { isEmpty, attachments, submit /* ... */ } = useComposer();
 ```
 
-<PropertiesList title="Values">
+##### Custom composer behavior
+
+`useComposer` can be used in combination with
+[`Composer` primitives](#primitives-Composer) to create a custom composer, and
+control its behavior. For example, `createMention` allows you to create a button
+which focuses the editor, adds `@`, and opens the mention suggestions dropdown.
+
+```tsx
+import { Composer, useComposer } from "@liveblocks/react-ui/primitives";
+import { useCreateThread } from "@liveblocks/react/suspense";
+
+function MyComposer() {
+  const createThread = useCreateThread();
+  // +++
+  const { createMention } = useComposer();
+  // +++
+
+  return (
+    <Composer.Form
+      onComposerSubmit={({ body, attachments }) => {
+        const thread = createThread({
+          body,
+          attachments,
+          metadata: {},
+        });
+      }}
+    >
+      <Composer.Editor components={/* Your custom component parts */} />
+      // +++
+      <button onClick={createMention}>Add mention</button>
+      // +++
+    </Composer.Form>
+  );
+}
+```
+
+##### Handle attachments
+
+When using primitives,
+[`Composer.AttachFiles`](#primitives-Composer.AttachFiles) and
+[`Composer.AttachmentsDropArea`](#primitives-Composer.AttachmentsDropArea) add
+attachments to the composer, but they’re not rendered without `useComposer`. The
+`attachments` array can be used to render the current attachments, and
+`removeAttachment` allows you to remove them.
+
+```tsx
+import { Composer, useComposer } from "@liveblocks/react-ui/primitives";
+import { useCreateThread } from "@liveblocks/react/suspense";
+
+function MyComposer() {
+  const createThread = useCreateThread();
+
+  return (
+    <Composer.Form onComposerSubmit={({ body, attachments }) => {
+      const thread = createThread({
+        body,
+        attachments,
+        metadata: {},
+      });
+    }}>
+      <Composer.Editor components={/* Your custom component parts */} />
+      // +++
+      <MyComposerAttachments />
+      // +++
+      <Composer.AttachFiles>Attach Files</Composer.AttachFiles>
+      <Composer.Submit>Submit</Composer.Submit>
+    </Composer.Form>
+  );
+}
+
+function MyComposerAttachments() {
+  // +++
+  const { attachments, removeAttachment } = useComposer();
+  // +++
+
+  return (
+    <div>
+      // +++
+      {attachments.map((attachment) => (
+        <div key={attachment.id}>
+          {attachment.name} ({attachment.status})
+          <button onClick={() => removeAttachment(attachment.id)}>Remove</button>
+        </div>
+      )}
+      // +++
+    </div>
+  );
+}
+```
+
+##### Values [#useComposer-values]
+
+<PropertiesList>
   <PropertiesListItem name="isDisabled" type="boolean">
     Whether the composer is currently disabled.
   </PropertiesListItem>
@@ -1348,64 +1441,6 @@ const { isEmpty, attachments, submit } = useComposer();
     Remove an attachment by its ID.
   </PropertiesListItem>
 </PropertiesList>
-
-This hook can be used along the [`Composer` primitives](#primitives-Composer) to
-create a custom composer and control its behavior. (e.g. create an "Add mention"
-button with `createMention` which focuses the editor, adds an `@` and opens the
-mention suggestions dropdown)
-
-It can also be used to support attachments since they are managed internally by
-the composer itself. Adding primitives such as
-[`Composer.AttachFiles`](#primitives-Composer.AttachFiles) and
-[`Composer.AttachmentsDropArea`](#primitives-Composer.AttachmentsDropArea) will
-automatically work and add attachments to the composer but they won't be visible
-out-of-the-box. `useComposer` exposes an `attachments` array which represents
-the current state of the composer’s attachments, so it can be used to render
-them. After that the `removeAttachment` method can be used to allow removing
-attachments from the composer.
-
-```tsx highlight="14,17-19"
-import { Composer, useComposer } from "@liveblocks/react-ui/primitives";
-import { useCreateThread } from "@liveblocks/react/suspense";
-
-function MyComposer() {
-  const createThread = useCreateThread();
-
-  return (
-    <Composer.Form onComposerSubmit={({ body, attachments }) => {
-      const thread = createThread({
-        body,
-        // +++
-        attachments,
-        // +++
-        metadata: {},
-      });
-    }}>
-      <Composer.Editor components={/* Your custom component parts */} />
-      // +++
-      <MyComposerAttachments />
-      <Composer.AttachFiles>Attach Files</Composer.AttachFiles>
-      <Composer.Submit>Submit</Composer.Submit>
-      // +++
-    </Composer.Form>
-  );
-}
-
-function MyComposerAttachments() {
-  const { attachments, removeAttachment } = useComposer();
-
-  return (
-    <div>
-      {attachments.map((attachment) => (
-        <div key={attachment.id}>
-          {attachment.name} ({attachment.status})
-          <button onClick={() => removeAttachment(attachment.id)}>Remove</button>
-        </div>
-      )}
-    </div>
-  );
-}
-```
 
 #### Other hooks
 
