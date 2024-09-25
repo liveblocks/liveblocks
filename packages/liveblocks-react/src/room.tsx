@@ -2522,18 +2522,9 @@ function useThreadsSuspense<M extends BaseMetadata>(
     [room, options]
   );
 
-  const { store, getThreadsAndInboxNotifications } =
-    getExtrasForClient<M>(client);
+  const store = getExtrasForClient<M>(client).store;
 
-  const query = store.getFullState().queries2[queryKey];
-
-  if (query === undefined || query.isLoading) {
-    throw getThreadsAndInboxNotifications(room, queryKey, options);
-  }
-
-  if (query.error) {
-    throw query.error;
-  }
+  use(store.loadThreadsAndNotifications(room.id, options, queryKey));
 
   const selector = React.useCallback(
     (state: ReturnType<typeof store.getFullState>): ThreadsAsyncSuccess<M> => {
