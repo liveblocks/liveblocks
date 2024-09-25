@@ -815,10 +815,12 @@ export function createClient<U extends BaseUserMeta = DU>(
         getRoomIds() {
           return Array.from(roomsById.keys());
         },
+
+        // "All" threads (= "user" threads)
         getThreads,
         getThreadsSince,
 
-        // Room
+        // "Room" threads (= "normal" threads)
         getRoomThreads,
         getRoomThreadsSince,
       },
