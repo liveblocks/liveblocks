@@ -18,6 +18,7 @@ import type {
   AsyncSuccess,
   BaseMetadata,
   Client,
+  CommentAttachment,
   CommentBody,
   CommentData,
   DRI,
@@ -96,10 +97,13 @@ export type UserAsyncSuccess<T> = AsyncSuccess<T, "user">;
 export type RoomInfoAsyncResult = AsyncResult<DRI, "info">;
 export type RoomInfoAsyncSuccess = AsyncSuccess<DRI, "info">;
 
+export type AttachmentUrlAsyncResult = AsyncResult<string, "url">;
+export type AttachmentUrlAsyncSuccess = AsyncSuccess<string, "url">;
+
 // prettier-ignore
 export type CreateThreadOptions<M extends BaseMetadata> =
   Resolve<
-    { body: CommentBody }
+    { body: CommentBody, attachments?: CommentAttachment[]; }
     & PartialUnless<M, { metadata: M }>
   >;
 
@@ -111,12 +115,14 @@ export type EditThreadMetadataOptions<M extends BaseMetadata> = {
 export type CreateCommentOptions = {
   threadId: string;
   body: CommentBody;
+  attachments?: CommentAttachment[];
 };
 
 export type EditCommentOptions = {
   threadId: string;
   commentId: string;
   body: CommentBody;
+  attachments?: CommentAttachment[];
 };
 
 export type DeleteCommentOptions = {
@@ -900,6 +906,14 @@ export type RoomContextBundle<
       ];
 
       /**
+       * Returns a presigned URL for an attachment by its ID.
+       *
+       * @example
+       * const { url, error, isLoading } = useAttachmentUrl("at_xxx");
+       */
+      useAttachmentUrl(attachmentId: string): AttachmentUrlAsyncResult;
+
+      /**
        * (Private beta)  Returns a history of versions of the current room.
        *
        * @example
@@ -1019,6 +1033,14 @@ export type RoomContextBundle<
               RoomNotificationSettingsAsyncSuccess,
               (settings: Partial<RoomNotificationSettings>) => void,
             ];
+
+            /**
+             * Returns a presigned URL for an attachment by its ID.
+             *
+             * @example
+             * const { url } = useAttachmentUrl("at_xxx");
+             */
+            useAttachmentUrl(attachmentId: string): AttachmentUrlAsyncSuccess;
           }
       >;
     } & PrivateRoomContextApi

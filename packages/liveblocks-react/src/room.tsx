@@ -21,6 +21,7 @@ import type {
 } from "@liveblocks/client";
 import { shallow } from "@liveblocks/client";
 import type {
+  AsyncResult,
   CommentsEventServerMsg,
   DE,
   DM,
@@ -35,6 +36,7 @@ import type {
   ToImmutable,
 } from "@liveblocks/core";
 import {
+  assert,
   CommentsApiError,
   console,
   createCommentId,
@@ -67,6 +69,7 @@ import {
   useClientOrNull,
 } from "./liveblocks";
 import type {
+  AttachmentUrlAsyncResult,
   CommentReactionOptions,
   CreateCommentOptions,
   CreateThreadOptions,
@@ -631,6 +634,7 @@ function makeRoomContextBundle<
     useRemoveReaction,
     useMarkThreadAsRead,
     useThreadSubscription,
+    useAttachmentUrl,
 
     useHistoryVersions,
     useHistoryVersionData,
@@ -694,6 +698,7 @@ function makeRoomContextBundle<
       useRemoveReaction,
       useMarkThreadAsRead,
       useThreadSubscription,
+      useAttachmentUrl: useAttachmentUrlSuspense,
 
       // TODO: useHistoryVersionData: useHistoryVersionDataSuspense,
       useHistoryVersions: useHistoryVersionsSuspense,
@@ -1512,6 +1517,7 @@ function useCreateThread<M extends BaseMetadata>(): (
     (options: CreateThreadOptions<M>): ThreadData<M> => {
       const body = options.body;
       const metadata = options.metadata ?? ({} as M);
+      const attachments = options.attachments;
 
       const threadId = createThreadId();
       const commentId = createCommentId();
@@ -1526,6 +1532,7 @@ function useCreateThread<M extends BaseMetadata>(): (
         userId: getCurrentUserId(room),
         body,
         reactions: [],
+        attachments: attachments ?? [],
       };
       const newThread: ThreadData<M> = {
         id: threadId,
@@ -1545,25 +1552,29 @@ function useCreateThread<M extends BaseMetadata>(): (
         roomId: room.id,
       });
 
-      room.createThread({ threadId, commentId, body, metadata }).then(
-        (thread) => {
-          // Replace the optimistic update by the real thing
-          store.createThread(optimisticUpdateId, thread);
-        },
-        (err: Error) =>
-          onMutationFailure(
-            err,
-            optimisticUpdateId,
-            (err) =>
-              new CreateThreadError(err, {
-                roomId: room.id,
-                threadId,
-                commentId,
-                body,
-                metadata,
-              })
-          )
-      );
+      const attachmentIds = attachments?.map((attachment) => attachment.id);
+
+      room
+        .createThread({ threadId, commentId, body, metadata, attachmentIds })
+        .then(
+          (thread) => {
+            // Replace the optimistic update by the real thing
+            store.createThread(optimisticUpdateId, thread);
+          },
+          (err: Error) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (err) =>
+                new CreateThreadError(err, {
+                  roomId: room.id,
+                  threadId,
+                  commentId,
+                  body,
+                  metadata,
+                })
+            )
+        );
 
       return newThread;
     },
@@ -1668,7 +1679,7 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
   const client = useClient();
   const room = useRoom();
   return React.useCallback(
-    ({ threadId, body }: CreateCommentOptions): CommentData => {
+    ({ threadId, body, attachments }: CreateCommentOptions): CommentData => {
       const commentId = createCommentId();
       const createdAt = new Date();
 
@@ -1681,6 +1692,7 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
         userId: getCurrentUserId(room),
         body,
         reactions: [],
+        attachments: attachments ?? [],
       };
 
       const { store, onMutationFailure } = getExtrasForClient(client);
@@ -1689,7 +1701,9 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
         comment,
       });
 
-      room.createComment({ threadId, commentId, body }).then(
+      const attachmentIds = attachments?.map((attachment) => attachment.id);
+
+      room.createComment({ threadId, commentId, body, attachmentIds }).then(
         (newComment) => {
           // Replace the optimistic update by the real thing
           store.createComment(newComment, optimisticUpdateId);
@@ -1725,7 +1739,7 @@ function useEditComment(): (options: EditCommentOptions) => void {
   const client = useClient();
   const room = useRoom();
   return React.useCallback(
-    ({ threadId, commentId, body }: EditCommentOptions): void => {
+    ({ threadId, commentId, body, attachments }: EditCommentOptions): void => {
       const editedAt = new Date();
 
       const { store, onMutationFailure } = getExtrasForClient(client);
@@ -1754,10 +1768,13 @@ function useEditComment(): (options: EditCommentOptions) => void {
           ...comment,
           editedAt,
           body,
+          attachments: attachments ?? [],
         },
       });
 
-      room.editComment({ threadId, commentId, body }).then(
+      const attachmentIds = attachments?.map((attachment) => attachment.id);
+
+      room.editComment({ threadId, commentId, body, attachmentIds }).then(
         (editedComment) => {
           // Replace the optimistic update by the real thing
           store.editComment(threadId, optimisticUpdateId, editedComment);
@@ -2549,6 +2566,97 @@ function useThreadsSuspense<M extends BaseMetadata>(
   return state;
 }
 
+function selectorFor_useAttachmentUrl(
+  state: AsyncResult<string | undefined> | undefined
+): AttachmentUrlAsyncResult {
+  if (state === undefined || state?.isLoading) {
+    return state ?? { isLoading: true };
+  }
+
+  if (state.error) {
+    return state;
+  }
+
+  // For now `useAttachmentUrl` doesn't support a custom resolver so this case
+  // will never happen as `getAttachmentUrl` will either return a URL or throw.
+  // But we might decide to offer a custom resolver in the future to allow
+  // self-hosting attachments.
+  assert(state.data !== undefined, "Unexpected missing attachment URL");
+
+  return {
+    isLoading: false,
+    url: state.data,
+  };
+}
+
+/**
+ * Returns a presigned URL for an attachment by its ID.
+ *
+ * @example
+ * const { url, error, isLoading } = useAttachmentUrl("at_xxx");
+ */
+function useAttachmentUrl(attachmentId: string): AttachmentUrlAsyncResult {
+  const room = useRoom();
+  const { attachmentUrlsStore } = room[kInternal];
+
+  const getAttachmentUrlState = React.useCallback(
+    () => attachmentUrlsStore.getState(attachmentId),
+    [attachmentUrlsStore, attachmentId]
+  );
+
+  React.useEffect(() => {
+    // NOTE: .get() will trigger any actual fetches, whereas .getState() will not
+    void attachmentUrlsStore.get(attachmentId);
+  }, [attachmentUrlsStore, attachmentId]);
+
+  return useSyncExternalStoreWithSelector(
+    attachmentUrlsStore.subscribe,
+    getAttachmentUrlState,
+    getAttachmentUrlState,
+    selectorFor_useAttachmentUrl,
+    shallow
+  );
+}
+
+/**
+ * Returns a presigned URL for an attachment by its ID.
+ *
+ * @example
+ * const { url } = useAttachmentUrl("at_xxx");
+ */
+function useAttachmentUrlSuspense(attachmentId: string) {
+  const room = useRoom();
+  const { attachmentUrlsStore } = room[kInternal];
+
+  const getAttachmentUrlState = React.useCallback(
+    () => attachmentUrlsStore.getState(attachmentId),
+    [attachmentUrlsStore, attachmentId]
+  );
+  const attachmentUrlState = getAttachmentUrlState();
+
+  if (!attachmentUrlState || attachmentUrlState.isLoading) {
+    throw attachmentUrlsStore.get(attachmentId);
+  }
+
+  if (attachmentUrlState.error) {
+    throw attachmentUrlState.error;
+  }
+
+  const state = useSyncExternalStore(
+    attachmentUrlsStore.subscribe,
+    getAttachmentUrlState,
+    getAttachmentUrlState
+  );
+  assert(state !== undefined, "Unexpected missing state");
+  assert(!state.isLoading, "Unexpected loading state");
+  assert(!state.error, "Unexpected error state");
+  return {
+    isLoading: false,
+    url: state.data,
+    error: undefined,
+  } as const;
+}
+
 /**
  * @private
  *
@@ -3115,6 +3223,8 @@ export {
   RoomContext,
   _RoomProvider as RoomProvider,
   _useAddReaction as useAddReaction,
+  useAttachmentUrl,
+  useAttachmentUrlSuspense,
   useBatch,
   _useBroadcastEvent as useBroadcastEvent,
   useCanRedo,

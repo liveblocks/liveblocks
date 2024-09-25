@@ -1,4 +1,4 @@
-import type { CommentBody } from "@liveblocks/core";
+import type { CommentAttachment, CommentBody } from "@liveblocks/core";
 import type {
   ComponentPropsWithoutRef,
   ComponentType,
@@ -133,15 +133,42 @@ export interface ComposerFormProps extends ComponentPropsWithSlot<"form"> {
     comment: ComposerSubmitComment,
     event: FormEvent<HTMLFormElement>
   ) => Promise<void> | void;
+
+  /**
+   * Whether the composer is disabled.
+   */
+  disabled?: boolean;
+
+  /**
+   * The composer's initial attachments.
+   */
+  defaultAttachments?: CommentAttachment[];
+
+  /**
+   * Whether to create attachments when pasting files into the editor.
+   */
+  pasteFilesAsAttachments?: boolean;
 }
 
 export type ComposerSubmitProps = ComponentPropsWithSlot<"button">;
+
+export type ComposerAttachFilesProps = ComponentPropsWithSlot<"button">;
+
+export interface ComposerAttachmentsDropAreaProps
+  extends ComponentPropsWithSlot<"div"> {
+  disabled?: boolean;
+}
 
 export interface ComposerSubmitComment {
   /**
    * The submitted comment's body.
    */
   body: CommentBody;
+
+  /**
+   * The submitted comment's uploaded attachments.
+   */
+  attachments: CommentAttachment[];
 }
 
 export interface ComposerEditorElementProps extends RenderElementProps {

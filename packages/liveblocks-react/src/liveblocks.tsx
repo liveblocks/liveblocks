@@ -15,6 +15,7 @@ import type {
 } from "@liveblocks/core";
 import {
   assert,
+  autoRetry,
   createClient,
   kInternal,
   makePoller,
@@ -37,7 +38,7 @@ import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/w
 import { useIsInsideRoom } from "./contexts";
 import { byFirstCreated, byMostRecentlyUpdated } from "./lib/compare";
 import { makeThreadsFilter } from "./lib/querying";
-import { autoRetry, retryError } from "./lib/retry-error";
+import { retryError } from "./lib/retry-error";
 import { shallow2 } from "./lib/shallow2";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { use } from "./lib/use-polyfill";
@@ -169,7 +170,7 @@ function selectorFor_useRoomInfo(
   }
 
   // If this is a "success" state, but there still is no data, then it means
-  // the "resolving of this user" returned undefined. In that case, still treat
+  // the "resolving of this room info" returned undefined. In that case, still treat
   // this as an error state.
   if (!state.data) {
     return {

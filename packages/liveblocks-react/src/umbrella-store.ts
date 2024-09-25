@@ -1516,7 +1516,9 @@ export function applyDeleteComment<M extends BaseMetadata>(
       ? {
           ...comment,
           deletedAt,
+          // We optimistically remove the comment body and attachments when marking it as deleted
           body: undefined,
+          attachments: [],
         }
       : comment
   );

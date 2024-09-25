@@ -74,6 +74,7 @@ export {
   useStorageSuspense as useStorage,
   useStorageStatusSuspense as useStorageStatus,
   useThreadsSuspense as useThreads,
+  useAttachmentUrlSuspense as useAttachmentUrl,
   useHistoryVersionsSuspense as useHistoryVersions,
 } from "./room";
 export {

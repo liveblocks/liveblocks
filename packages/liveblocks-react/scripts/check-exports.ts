@@ -21,6 +21,7 @@ const ALLOW_DIFFERENT_JSDOCS = [
   "useThreads",
   "useUnreadInboxNotificationsCount",
   "useUser",
+  "useAttachmentUrl",
   "useHistoryVersions",
 ];
 

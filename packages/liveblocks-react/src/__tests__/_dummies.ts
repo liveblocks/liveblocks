@@ -68,6 +68,7 @@ export function dummyCommentData({
     roomId,
     createdAt: now,
     reactions: [],
+    attachments: [],
     ...overrides,
     ...conditionalProperties,
   };

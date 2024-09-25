@@ -1,5 +1,5 @@
 import { applyDeleteComment } from "../../umbrella-store";
-import { createComment, createThread } from "./_dummies";
+import { createAttachment, createComment, createThread } from "./_dummies";
 
 describe("deleteComment", () => {
   it("should mark a comment as deleted in a thread", () => {
@@ -10,7 +10,12 @@ describe("deleteComment", () => {
       roomId: comment.roomId,
       createdAt: new Date("2024-01-01"),
       updatedAt: new Date("2024-01-01"),
-      comments: [createComment(), comment],
+      comments: [
+        createComment({
+          attachments: [createAttachment()],
+        }),
+        comment,
+      ],
     });
 
     const deletedAt = new Date("2024-01-02");
@@ -25,6 +30,7 @@ describe("deleteComment", () => {
     if (updatedComment === undefined) return;
     expect(updatedComment.deletedAt).toEqual(deletedAt);
     expect(updatedComment.body).toBeUndefined();
+    expect(updatedComment.attachments.length).toEqual(0);
   });
 
   it("should not delete a comment from a deleted thread", () => {

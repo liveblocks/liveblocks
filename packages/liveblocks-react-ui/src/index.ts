@@ -42,3 +42,4 @@ export { useOverrides } from "./overrides";
 export type { ComposerSubmitComment } from "./primitives";
 export { Timestamp } from "./primitives/Timestamp";
 export { useMentionSuggestions } from "./shared";
+export type { CommentAttachmentArgs } from "./types";

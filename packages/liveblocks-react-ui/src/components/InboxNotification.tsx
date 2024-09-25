@@ -31,7 +31,7 @@ import { useComponents } from "../components";
 import { CheckIcon } from "../icons/Check";
 import { DeleteIcon } from "../icons/Delete";
 import { EllipsisIcon } from "../icons/Ellipsis";
-import { MissingIcon } from "../icons/Missing";
+import { WarningIcon } from "../icons/Warning";
 import type {
   CommentOverrides,
   GlobalOverrides,
@@ -117,6 +117,16 @@ export interface InboxNotificationThreadProps
    * Whether to show the room name in the title.
    */
   showRoomName?: boolean;
+
+  /**
+   * Whether to show reactions.
+   */
+  showReactions?: boolean;
+
+  /**
+   * Whether to show attachments.
+   */
+  showAttachments?: boolean;
 }
 
 export interface InboxNotificationTextMentionProps
@@ -405,6 +415,8 @@ const InboxNotificationThread = forwardRef<
       inboxNotification,
       href,
       showRoomName = true,
+      showReactions = true,
+      showAttachments = true,
       showActions = "hover",
       overrides,
       ...props
@@ -451,6 +463,8 @@ const InboxNotificationThread = forwardRef<
                   key={comment.id}
                   comment={comment}
                   showHeader={contents.comments.length > 1}
+                  showAttachments={showAttachments}
+                  showReactions={showReactions}
                   overrides={overrides}
                 />
               ))}
@@ -483,6 +497,9 @@ const InboxNotificationThread = forwardRef<
                 key={mentionComment.id}
                 comment={mentionComment}
                 showHeader={false}
+                showAttachments={showAttachments}
+                showReactions={showReactions}
+                overrides={overrides}
               />
             </div>
           );
@@ -504,7 +521,16 @@ const InboxNotificationThread = forwardRef<
             "Unexpected thread inbox notification type"
           );
       }
-    }, [$, currentUserId, inboxNotification, overrides, showRoomName, thread]);
+    }, [
+      $,
+      currentUserId,
+      inboxNotification,
+      overrides,
+      showRoomName,
+      showAttachments,
+      showReactions,
+      thread,
+    ]);
     // Add the thread ID and comment ID to the `href`.
     // And use URL from `resolveRoomsInfo` if `href` isn't set.
     const resolvedHref = useMemo(() => {
@@ -643,7 +669,7 @@ const InboxNotificationCustomMissing = forwardRef<
       }
       aside={
         <InboxNotificationIcon>
-          <MissingIcon />
+          <WarningIcon />
         </InboxNotificationIcon>
       }
       ref={forwardedRef}

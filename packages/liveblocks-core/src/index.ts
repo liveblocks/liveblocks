@@ -89,6 +89,8 @@ export type {
   AsyncResult,
   AsyncSuccess,
 } from "./lib/AsyncResult";
+export { autoRetry } from "./lib/autoRetry";
+export { chunk } from "./lib/chunk";
 export {
   createCommentId,
   createInboxNotificationId,
@@ -154,8 +156,11 @@ export type {
   CommentBodyText,
 } from "./protocol/Comments";
 export type {
+  CommentAttachment,
   CommentData,
   CommentDataPlain,
+  CommentLocalAttachment,
+  CommentMixedAttachment,
   CommentReaction,
 } from "./protocol/Comments";
 export type {
@@ -233,7 +238,7 @@ export type {
   RoomEventMessage,
   StorageStatus,
 } from "./room";
-export type { GetThreadsOptions } from "./room";
+export type { GetThreadsOptions, UploadAttachmentOptions } from "./room";
 export { CommentsApiError } from "./room";
 export type { Immutable } from "./types/Immutable";
 export type {
