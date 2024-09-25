@@ -106,7 +106,7 @@ const baseComponents: ConvertCommentBodyAsReactComponents<BaseUserMeta> = {
   Paragraph: ({ children }, index) => (
     <p key={`lb-comment-body-paragraph-${index}`}>{children}</p>
   ),
-  Text: ({ element }) => {
+  Text: ({ element }, index) => {
     // Note: construction following the schema 👇
     // <code><s><em><strong>{element.text}</strong></s></em></code>
     let children: React.ReactNode = element.text;
@@ -115,30 +115,41 @@ const baseComponents: ConvertCommentBodyAsReactComponents<BaseUserMeta> = {
     }
 
     if (element.bold) {
-      children = <strong>{children}</strong>;
+      children = (
+        <strong key={`lb-comment-body-text-strong-${index}`}>{children}</strong>
+      );
     }
 
     if (element.italic) {
-      children = <em>{children}</em>;
+      children = <em key={`lb-comment-body-text-em-${index}`}>{children}</em>;
     }
 
     if (element.strikethrough) {
-      children = <s>{children}</s>;
+      children = <s key={`lb-comment-body-text-s-${index}`}>{children}</s>;
     }
 
     if (element.code) {
-      children = <code>{children}</code>;
+      children = (
+        <code key={`lb-comment-body-text-code-${index}`}>{children}</code>
+      );
     }
 
     return children;
   },
-  Link: ({ element, href }) => (
-    <a href={href} target="_blank" rel="noopener noreferrer">
+  Link: ({ element, href }, index) => (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      key={`lb-comment-body-link-${index}`}
+    >
       {element.text ?? element.url}
     </a>
   ),
-  Mention: ({ element, user }) => (
-    <span data-mention>@{user?.name ?? element.id}</span>
+  Mention: ({ element, user }, index) => (
+    <span data-mention key={`lb-comment-body-mention-${index}`}>
+      @{user?.name ?? element.id}
+    </span>
   ),
 };
 
