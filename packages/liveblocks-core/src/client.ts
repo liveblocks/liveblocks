@@ -2,6 +2,12 @@ import type { AuthValue } from "./auth-manager";
 import { createAuthManager } from "./auth-manager";
 import { isIdle } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
+import {
+  convertToInboxNotificationData,
+  convertToInboxNotificationDeleteInfo,
+  convertToThreadData,
+  convertToThreadDeleteInfo,
+} from "./convert-plain-data";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import type { DE, DM, DP, DRI, DS, DU } from "./globals/augmentation";
@@ -13,18 +19,26 @@ import { createStore } from "./lib/create-store";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import type { NoInfr } from "./lib/NoInfer";
+import { objectToQuery } from "./lib/objectToQuery";
 import type { Resolve } from "./lib/Resolve";
+import type { QueryParams, URLSafeString } from "./lib/url";
+import { url, urljoin } from "./lib/url";
+import { raise } from "./lib/utils";
 import { createNotificationsApi } from "./notifications";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type {
   BaseMetadata,
   ThreadData,
+  ThreadDataPlain,
   ThreadDeleteInfo,
+  ThreadDeleteInfoPlain,
 } from "./protocol/Comments";
 import type {
   InboxNotificationData,
+  InboxNotificationDataPlain,
   InboxNotificationDeleteInfo,
+  InboxNotificationDeleteInfoPlain,
 } from "./protocol/InboxNotifications";
 import type {
   GetThreadsOptions,
@@ -157,6 +171,30 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
     threads: {
       updated: ThreadData<M>[];
       deleted: ThreadDeleteInfo[];
+    };
+    requestedAt: Date;
+  }>;
+
+  // Room
+  getRoomThreads(
+    roomId: string,
+    options?: GetThreadsOptions<M>
+  ): Promise<{
+    threads: ThreadData<M>[];
+    inboxNotifications: InboxNotificationData[];
+    requestedAt: Date;
+  }>;
+  getRoomThreadsSince(
+    roomId: string,
+    options: { since: Date }
+  ): Promise<{
+    threads: {
+      updated: ThreadData<M>[];
+      deleted: ThreadDeleteInfo[];
+    };
+    inboxNotifications: {
+      updated: InboxNotificationData[];
+      deleted: InboxNotificationDeleteInfo[];
     };
     requestedAt: Date;
   }>;
@@ -571,6 +609,9 @@ export function createClient<U extends BaseUserMeta = DU>(
 
   const currentUserIdStore = createStore<string | null>(null);
 
+  const fetcher =
+    clientOptions.polyfills?.fetch || /* istanbul ignore next */ fetch;
+
   const {
     getInboxNotifications,
     getUnreadInboxNotificationsCount,
@@ -582,10 +623,135 @@ export function createClient<U extends BaseUserMeta = DU>(
     getThreadsSince,
   } = createNotificationsApi({
     baseUrl,
-    fetcher: clientOptions.polyfills?.fetch || /* istanbul ignore next */ fetch,
+    fetcher,
     authManager,
     currentUserIdStore,
   });
+
+  async function fetchRoomApi(
+    roomId: string,
+    endpoint: URLSafeString,
+    params?: QueryParams,
+    options?: RequestInit
+  ) {
+    if (!endpoint.startsWith("/v2/c/rooms/")) {
+      raise("Expected a /v2/c/rooms/* endpoint");
+    }
+
+    // TODO: Use the right scope
+    const authValue = await authManager.getAuthValue({
+      requestedScope: "room:read",
+      roomId,
+    });
+
+    const url = urljoin(baseUrl, endpoint, params);
+    return await fetcher(url, {
+      ...options,
+      headers: {
+        ...options?.headers,
+        Authorization: `Bearer ${getAuthBearerHeaderFromAuthValue(authValue)}`,
+      },
+    });
+  }
+
+  async function getRoomThreads<M extends BaseMetadata>(
+    roomId: string,
+    options?: GetThreadsOptions<M>
+  ) {
+    let query: string | undefined;
+    if (options !== undefined && options.query !== undefined) {
+      query = objectToQuery(options.query);
+    }
+
+    const response = await fetchRoomApi(
+      roomId,
+      url`/v2/c/rooms/${roomId}/threads`,
+      { query },
+      { headers: { "Content-Type": "application/json" } }
+    );
+
+    if (response.ok) {
+      const json = await (response.json() as Promise<{
+        data: ThreadDataPlain<M>[];
+        inboxNotifications: InboxNotificationDataPlain[];
+        deletedThreads: ThreadDeleteInfoPlain[];
+        deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+        meta: {
+          requestedAt: string;
+        };
+      }>);
+
+      return {
+        threads: json.data.map(convertToThreadData),
+        inboxNotifications: json.inboxNotifications.map(
+          convertToInboxNotificationData
+        ),
+        requestedAt: new Date(json.meta.requestedAt),
+      };
+    } else if (response.status === 404) {
+      return {
+        threads: [],
+        inboxNotifications: [],
+        deletedThreads: [],
+        deletedInboxNotifications: [],
+        requestedAt: new Date(),
+      };
+    } else {
+      throw new Error("There was an error while getting threads.");
+    }
+  }
+
+  async function getRoomThreadsSince<M extends BaseMetadata>(
+    roomId: string,
+    options: { since: Date }
+  ) {
+    const response = await fetchRoomApi(
+      roomId,
+      url`/v2/c/rooms/${roomId}/threads`,
+      { since: options?.since?.toISOString() },
+      { headers: { "Content-Type": "application/json" } }
+    );
+
+    if (response.ok) {
+      const json = await (response.json() as Promise<{
+        data: ThreadDataPlain<M>[];
+        inboxNotifications: InboxNotificationDataPlain[];
+        deletedThreads: ThreadDeleteInfoPlain[];
+        deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+        meta: {
+          requestedAt: string;
+        };
+      }>);
+
+      return {
+        threads: {
+          updated: json.data.map(convertToThreadData),
+          deleted: json.deletedThreads.map(convertToThreadDeleteInfo),
+        },
+        inboxNotifications: {
+          updated: json.inboxNotifications.map(convertToInboxNotificationData),
+          deleted: json.deletedInboxNotifications.map(
+            convertToInboxNotificationDeleteInfo
+          ),
+        },
+        requestedAt: new Date(json.meta.requestedAt),
+      };
+    } else if (response.status === 404) {
+      return {
+        threads: {
+          updated: [],
+          deleted: [],
+        },
+        inboxNotifications: {
+          updated: [],
+          deleted: [],
+        },
+        requestedAt: new Date(),
+      };
+    } else {
+      throw new Error("There was an error while getting threads.");
+    }
+  }
 
   const resolveUsers = clientOptions.resolveUsers;
   const warnIfNoResolveUsers = createDevelopmentWarning(
@@ -651,6 +817,10 @@ export function createClient<U extends BaseUserMeta = DU>(
         },
         getThreads,
         getThreadsSince,
+
+        // Room
+        getRoomThreads,
+        getRoomThreadsSince,
       },
     },
     kInternal,

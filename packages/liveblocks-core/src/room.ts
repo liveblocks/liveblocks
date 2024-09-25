@@ -2899,6 +2899,7 @@ export function createRoom<
     return body;
   }
 
+  // XXX Use the `getRoomThreadsSince` method in the client
   async function getThreadsSince(options: { since: Date }) {
     const response = await fetchCommentsApi(
       url`/v2/c/rooms/${config.roomId}/threads`,
@@ -2953,6 +2954,7 @@ export function createRoom<
     }
   }
 
+  // XXX Use the `getRoomThreads` method in the client
   async function getThreads(options?: GetThreadsOptions<M>) {
     let query: string | undefined;
 
