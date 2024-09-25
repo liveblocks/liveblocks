@@ -184,6 +184,7 @@ export const makeComment = ({
   createdAt: createdAt ?? new Date(),
   editedAt: undefined,
   reactions: [],
+  attachments: [],
   ...(body !== undefined
     ? { body, deletedAt: undefined }
     : { body: undefined, deletedAt: new Date() }),
