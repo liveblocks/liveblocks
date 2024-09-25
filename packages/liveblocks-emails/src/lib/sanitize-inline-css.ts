@@ -50,7 +50,7 @@ const ALLOWED_PROPERTIES = [
   "white-space",
 ];
 
-const PROPERTIES_WITH_URL = [
+const PROPERTIES_WITH_POTENTIAL_URL = [
   "background-image",
   "background",
   "border-image-source",
@@ -61,19 +61,23 @@ const PROPERTIES_WITH_URL = [
 
 const DANGEROUS_CSS_VALUE_CHARACTERS = new RegExp(/[^a-zA-Z0-9\s#,.%()-]/, "g");
 
-const URL_MATCH = new RegExp(/url\((.*?)\)/, "i");
+const URL_MATCH = new RegExp(/url\(['"]?(.*?)['"]?\)/, "i");
 const URL_PATTERN = new RegExp(/^https?:\/\/[^\s/$.?#].[^\s]*$/, "i");
 
-const sanitizeURLValue = (value: string): string => {
+const sanitizeValue = (value: string): string =>
+  value.replace(DANGEROUS_CSS_VALUE_CHARACTERS, "");
+
+const sanitizeValueWithPotentialURL = (value: string): string => {
   const urlMatch = value.match(URL_MATCH);
   if (urlMatch && urlMatch[1]) {
     // NOTE: removing quotes
-    const url = urlMatch[1].replace(/['"]/g, "");
-    if (URL_PATTERN.test(url)) {
-      return `url('${url}')`;
+    const sanitizedUrl = urlMatch[1].replace(/['"]/g, "");
+    if (URL_PATTERN.test(sanitizedUrl)) {
+      return value.replace(urlMatch[0], `url('${sanitizedUrl}')`);
     }
+    return "";
   }
-  return "";
+  return sanitizeValue(value);
 };
 
 /**
@@ -85,22 +89,26 @@ export function sanitizeInlineCSS(inlineCSS: string): string {
 
   const cssDeclarations = cleanInlineCSS.split(";").filter(Boolean);
   const sanitizedCSSDeclarations = cssDeclarations.map((cssDeclaration) => {
-    const [prop, value] = cssDeclaration.split(":");
-    if (!prop || !value) {
+    const firstColonIndex = cssDeclaration.indexOf(":");
+    if (firstColonIndex === -1) {
       return "";
     }
 
-    const property = prop.trim();
+    const property = (cssDeclaration.slice(0, firstColonIndex) ?? "").trim();
+    const value = (cssDeclaration.slice(firstColonIndex + 1) ?? "").trim();
+
+    if (!property || !value) {
+      return "";
+    }
+
     if (ALLOWED_PROPERTIES.includes(property)) {
       let sanitizedCSSValue = "";
 
-      // NOTE: handling valid and secure URLS
-      if (PROPERTIES_WITH_URL.includes(property)) {
-        sanitizedCSSValue = sanitizeURLValue(value.trim());
+      // NOTE: handling valid and secure URLs if there are any
+      if (PROPERTIES_WITH_POTENTIAL_URL.includes(property)) {
+        sanitizedCSSValue = sanitizeValueWithPotentialURL(value);
       } else {
-        sanitizedCSSValue = value
-          .trim()
-          .replace(DANGEROUS_CSS_VALUE_CHARACTERS, "");
+        sanitizedCSSValue = sanitizeValue(value);
       }
 
       if (sanitizedCSSValue) {
@@ -111,8 +119,7 @@ export function sanitizeInlineCSS(inlineCSS: string): string {
     return "";
   });
 
-  const sanitizedInlineCSS =
-    sanitizedCSSDeclarations.filter(Boolean).join(";") + ";";
+  const sanitizedInlineCSS = sanitizedCSSDeclarations.filter(Boolean).join(";");
 
-  return sanitizedInlineCSS;
+  return sanitizedInlineCSS ? sanitizedInlineCSS + ";" : "";
 }
