@@ -22,7 +22,6 @@ import {
   compactObject,
   console,
   createStore,
-  INBOX_NOTIFICATIONS_PAGE_SIZE,
   kInternal,
   mapValues,
   nanoid,
@@ -164,12 +163,9 @@ type UpdateNotificationSettingsOptimisticUpdate = {
 };
 
 type PaginationState = {
-  // XXX Settle on the final form here later! A cursor cannot "just" be
-  // XXX a single Date
-  cursor: Date;
+  cursor: string | null; // If `null`, it's the last page
   isFetchingMore: boolean;
   fetchMoreError?: Error;
-  hasFetchedAll: boolean;
 };
 
 type QueryAsyncResult = AsyncResult<undefined>;
@@ -388,7 +384,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   private fetchMoreInboxNotifications(): void {
     const pageState = this._store.get().query1?.data;
-    if (!pageState || pageState.isFetchingMore || pageState.hasFetchedAll) {
+    if (!pageState || pageState.isFetchingMore || !pageState.cursor) {
       // Not in the right state, make this a no-op
       return;
     }
@@ -403,34 +399,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
     void nn(this._client, "To call fetchMore(), we need a client")
       .getInboxNotifications({ cursor })
       .then((data) => {
-        // Find the lowest date in the result, and store it to use as the next
-        // page's cursor
-        let nextCursor = cursor;
-        for (const ibn of data.inboxNotifications.updated) {
-          // XXX The sort field (= notifiedAt) must match the backend! Put it in the URL!
-          // XXX This < (less than) should match the sort order in the backend! (Only works with DESC sorts!)
-          if (ibn.notifiedAt.getTime() < cursor.getTime()) {
-            nextCursor = ibn.notifiedAt;
-          }
-        }
-
-        const hasFetchedAll =
-          data.inboxNotifications.updated.length +
-            data.inboxNotifications.deleted.length <
-          INBOX_NOTIFICATIONS_PAGE_SIZE;
-
         this.batch(() => {
           this.updateThreadsAndNotifications(
-            data.threads.updated as ThreadData<M>[], // XXX Remove this cast :(
-            data.inboxNotifications.updated,
-            [], // XXX Note 100% sure about these! Think about it! Should they be empty?
-            []
+            data.threads as ThreadData<M>[], // XXX Remove this cast :(
+            data.inboxNotifications
           );
 
           this.setQuery1OK({
             ...pageState,
-            cursor: nextCursor,
-            hasFetchedAll,
+            cursor: data.cursor, // Advance to the next cursor
             fetchMoreError: undefined,
             isFetchingMore: false,
           });
@@ -466,7 +443,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       fetchMore: this.fetchMoreInboxNotifications,
       isFetchingMore: pageState.isFetchingMore,
       fetchMoreError: pageState.fetchMoreError,
-      hasFetchedAll: pageState.hasFetchedAll,
+      hasFetchedAll: pageState.cursor === null,
     };
   }
 
@@ -991,9 +968,19 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   public updateThreadsAndNotifications(
     threads: ThreadData<M>[],
+    inboxNotifications: InboxNotificationData[]
+  ): void;
+  public updateThreadsAndNotifications(
+    threads: ThreadData<M>[],
     inboxNotifications: InboxNotificationData[],
     deletedThreads: ThreadDeleteInfo[],
     deletedInboxNotifications: InboxNotificationDeleteInfo[]
+  ): void;
+  public updateThreadsAndNotifications(
+    threads: ThreadData<M>[],
+    inboxNotifications: InboxNotificationData[],
+    deletedThreads: ThreadDeleteInfo[] = [],
+    deletedInboxNotifications: InboxNotificationDeleteInfo[] = []
   ): void {
     // Batch 1️⃣ + 2️⃣
     this._store.batch(() => {

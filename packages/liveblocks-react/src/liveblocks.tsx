@@ -17,7 +17,6 @@ import {
   assert,
   autoRetry,
   createClient,
-  INBOX_NOTIFICATIONS_PAGE_SIZE,
   kInternal,
   makePoller,
   memoizeOnSuccess,
@@ -320,72 +319,54 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   let lastRequestedAt: Date | undefined;
 
   /**
-   * Performs one network fetch, and updates the store and last requested at
-   * date if successful. If unsuccessful, will throw.
+   * Performs the first page fetch for inbox notifications.
    */
-  async function fetchInitialInboxNotificationsOrDeltaUpdate() {
-    // If inbox notifications have not been fetched yet, we get all of them
-    // Else, we fetch only what changed since the last request
+  async function fetchNotificationsPage() {
+    const result = await client.getInboxNotifications(/* no cursor yet */);
 
-    const isFirstFetch = lastRequestedAt === undefined;
+    lastRequestedAt = new Date();
 
-    const result = await client.getInboxNotifications({
-      since: lastRequestedAt,
+    store.batch(() => {
+      store.updateThreadsAndNotifications(
+        result.threads,
+        result.inboxNotifications
+      );
+
+      store.setQuery1OK({
+        cursor: result.cursor,
+        isFetchingMore: false,
+        fetchMoreError: undefined,
+      });
     });
+  }
+
+  /**
+   * Performs a delta update for inbox notifications.
+   */
+  async function fetchDeltaUpdate() {
+    if (lastRequestedAt === undefined) {
+      throw new Error("Expected there is at least one page");
+    }
+
+    const result = await client.getInboxNotificationsSince(lastRequestedAt);
 
     if (lastRequestedAt === undefined || lastRequestedAt < result.requestedAt) {
       lastRequestedAt = result.requestedAt;
     }
 
-    store.batch(() => {
-      // 1️⃣
-      store.updateThreadsAndNotifications(
-        result.threads.updated,
-        result.inboxNotifications.updated,
-
-        // NOTE: Not sure if this `isFirstFetch ? []` part is relevant here,
-        // but this is what used to be the implementation. Could we not just
-        // pass along any deleted threads if there are any?
-        isFirstFetch ? [] : result.threads.deleted,
-        isFirstFetch ? [] : result.inboxNotifications.deleted
-      );
-
-      // 2️⃣ Mark the initial query as a success. This update only happens on the
-      // very first fetch. Beyond this point, the query state will always
-      // remain a success, even if subsequent polls (delta updates) or page
-      // fetches (for pagination) fail.
-      if (isFirstFetch) {
-        // Find the lowest date in the result, and store it to use as the next
-        // page's cursor
-        let cursor: Date = new Date();
-        for (const ibn of result.inboxNotifications.updated) {
-          // XXX The sort field (= notifiedAt) must match the backend! Put it in the URL!
-          // XXX This < (less than) should match the sort order in the backend! (Only works with DESC sorts!)
-          if (ibn.notifiedAt.getTime() < cursor.getTime()) {
-            cursor = ibn.notifiedAt;
-          }
-        }
-
-        const hasFetchedAll =
-          result.inboxNotifications.updated.length +
-            result.inboxNotifications.deleted.length <
-          INBOX_NOTIFICATIONS_PAGE_SIZE;
-
-        store.setQuery1OK({
-          cursor,
-          hasFetchedAll,
-          isFetchingMore: false,
-          fetchMoreError: undefined,
-        });
-      }
-    });
+    store.updateThreadsAndNotifications(
+      result.threads.updated,
+      result.inboxNotifications.updated,
+      result.threads.deleted,
+      result.inboxNotifications.deleted
+    );
   }
 
   let pollerSubscribers = 0;
   const poller = makePoller(async () => {
     try {
       await waitUntilInboxNotificationsLoaded();
-      await fetchInitialInboxNotificationsOrDeltaUpdate();
+      await fetchDeltaUpdate();
     } catch (err) {
       // When polling, we don't want to throw errors, ever
       console.warn(`Polling new inbox notifications failed: ${String(err)}`);
@@ -403,7 +384,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
 
     try {
       await autoRetry(
-        () => fetchInitialInboxNotificationsOrDeltaUpdate(),
+        () => fetchNotificationsPage(),
         5,
         [5000, 5000, 10000, 15000]
       );

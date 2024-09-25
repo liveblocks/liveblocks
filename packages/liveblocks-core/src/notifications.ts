@@ -129,9 +129,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
   }
 
   async function getInboxNotifications(options?: {
-    since?: Date;
-    // XXX Cursor will have to be more than a simple Date field: change it eventually
-    cursor?: Date;
+    cursor?: string; // XXX Cursor can become a simple string value eventually, and the backend will return it
   }) {
     const json = await fetchJson<{
       threads: ThreadDataPlain<M>[];
@@ -142,21 +140,56 @@ export function createNotificationsApi<M extends BaseMetadata>({
         requestedAt: string;
       };
     }>(url`/v2/c/inbox-notifications`, undefined, {
-      since: options?.since?.toISOString(),
-      cursor: options?.cursor?.toISOString(),
+      cursor: options?.cursor,
       limit: INBOX_NOTIFICATIONS_PAGE_SIZE,
     });
 
+    // XXX Ideally, calling this version from the backend should not even
+    // compute or return deleted inbox notifications in the response. We're
+    // just discarding them. Returning deleted inbox notifications only makes
+    // sense in the "since" version of this API call.
+
+    // XXX Ideally, the backend would "just" return the cursor as part of the
+    // previous request (and `null` if it's the last page).
+    // XXX For now, we compute it manually
+    let cursor: string | null = null;
+    for (const n of json.inboxNotifications) {
+      if (cursor === null || n.notifiedAt < cursor) {
+        cursor = n.notifiedAt;
+      }
+    }
+
     return {
-      threads: {
-        updated: json.threads.map(convertToThreadData),
-        deleted: json.deletedThreads.map(convertToThreadDeleteInfo),
-      },
+      inboxNotifications: json.inboxNotifications.map(
+        convertToInboxNotificationData
+      ),
+      threads: json.threads.map(convertToThreadData),
+      cursor,
+    };
+  }
+
+  async function getInboxNotificationsSince(since: Date) {
+    const json = await fetchJson<{
+      threads: ThreadDataPlain<M>[];
+      inboxNotifications: InboxNotificationDataPlain[];
+      deletedThreads: ThreadDeleteInfoPlain[];
+      deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+      meta: {
+        requestedAt: string;
+      };
+    }>(url`/v2/c/inbox-notifications`, undefined, {
+      since: since.toISOString(),
+    });
+    return {
       inboxNotifications: {
         updated: json.inboxNotifications.map(convertToInboxNotificationData),
         deleted: json.deletedInboxNotifications.map(
           convertToInboxNotificationDeleteInfo
         ),
+      },
+      threads: {
+        updated: json.threads.map(convertToThreadData),
+        deleted: json.deletedThreads.map(convertToThreadDeleteInfo),
       },
       requestedAt: new Date(json.meta.requestedAt),
     };
@@ -284,6 +317,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
 
   return {
     getInboxNotifications,
+    getInboxNotificationsSince,
     getUnreadInboxNotificationsCount,
     markAllInboxNotificationsAsRead,
     markInboxNotificationAsRead,

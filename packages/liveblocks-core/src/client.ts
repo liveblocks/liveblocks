@@ -202,14 +202,48 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
 
 export type NotificationsApi<M extends BaseMetadata> = {
   /**
-   * Gets the updated and deleted inbox notifications and their associated threads since the requested date.
+   * Gets a page (or the initial page) for user inbox notifications and their
+   * associated threads.
+   *
+   * This function should NOT be used for delta updates, only for pagination
+   * (including the first page fetch). For delta updates (done during the
+   * periodic polling), use the `getInboxNotificationsSince` function.
    *
    * @example
-   * const data = await client.getInboxNotifications();
-   * const data = await client.getInboxNotifications({ since: result.requestedAt }});
-   * const data = await client.getInboxNotifications({ cursor }});  // XXX Explain this API better
+   * const {
+   *   inboxNotifications,
+   *   threads,
+   *   cursor,
+   * } = await client.getInboxNotifications();
+   * const data = await client.getInboxNotifications();  // Fetch initial page (of 20 inbox notifications)
+   * const data = await client.getInboxNotifications({ cursor });  // Fetch next page (= next 20 inbox notifications)
    */
-  getInboxNotifications(options?: { since?: Date; cursor?: Date }): Promise<{
+  getInboxNotifications(options?: { cursor?: string }): Promise<{
+    inboxNotifications: InboxNotificationData[];
+    threads: ThreadData<M>[];
+    cursor: string | null;
+  }>;
+
+  /**
+   * Fetches a "delta update" since the last time we updated.
+   *
+   * This function should NOT be used for pagination, for that, see the
+   * `getInboxNotifications` function.
+   *
+   * @example
+   * const {
+   *   inboxNotifications: {
+   *     updated,
+   *     deleted,
+   *   },
+   *   threads: {
+   *     updated,
+   *     deleted,
+   *    },
+   *   requestedAt,
+   * } = await client.getInboxNotificationsSince({ since: result.requestedAt }});
+   */
+  getInboxNotificationsSince(since: Date): Promise<{
     inboxNotifications: {
       updated: InboxNotificationData[];
       deleted: InboxNotificationDeleteInfo[];
@@ -614,6 +648,7 @@ export function createClient<U extends BaseUserMeta = DU>(
 
   const {
     getInboxNotifications,
+    getInboxNotificationsSince,
     getUnreadInboxNotificationsCount,
     markAllInboxNotificationsAsRead,
     markInboxNotificationAsRead,
@@ -799,6 +834,7 @@ export function createClient<U extends BaseUserMeta = DU>(
       logout,
 
       getInboxNotifications,
+      getInboxNotificationsSince,
       getUnreadInboxNotificationsCount,
       markAllInboxNotificationsAsRead,
       markInboxNotificationAsRead,
