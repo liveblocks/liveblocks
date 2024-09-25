@@ -276,7 +276,7 @@ const htmlEscapablesRegex = new RegExp(
   "g"
 );
 
-function htmlSafe(value: string) {
+export function htmlSafe(value: string): HtmlSafeString {
   return new HtmlSafeString([String(value)], []);
 }
 
@@ -337,10 +337,10 @@ export class HtmlSafeString {
  * Build an HTML string from a template literal where the values are escaped.
  * Nested calls are supported and won't be escaped.
  */
-function html(
+export function html(
   strings: TemplateStringsArray,
   ...values: (string | string[] | HtmlSafeString | HtmlSafeString[])[]
-) {
+): string {
   return new HtmlSafeString(strings, values) as unknown as string;
 }
 

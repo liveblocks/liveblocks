@@ -12,6 +12,7 @@ export type {
   CommentBodyLinkComponentArgs,
   CommentBodyMentionComponentArgs,
   ConvertCommentBodyAsReactComponents,
+  ConvertCommentBodyAsHTMLStyles,
 } from "./comment-body";
 
 export type {

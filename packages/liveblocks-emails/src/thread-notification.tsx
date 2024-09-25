@@ -12,13 +12,18 @@ import type {
 import {
   generateCommentUrl,
   getMentionedIdsFromCommentBody,
-  stringifyCommentBody,
 } from "@liveblocks/core";
 import type { Liveblocks, ThreadNotificationEvent } from "@liveblocks/node";
 import React from "react";
 
-import type { ConvertCommentBodyAsReactComponents } from "./comment-body";
-import { convertCommentBodyAsReact } from "./comment-body";
+import type {
+  ConvertCommentBodyAsHTMLStyles,
+  ConvertCommentBodyAsReactComponents,
+} from "./comment-body";
+import {
+  convertCommentBodyAsHTML,
+  convertCommentBodyAsReact,
+} from "./comment-body";
 import type { CommentDataWithBody } from "./comment-with-body";
 import { filterCommentsWithBody } from "./comment-with-body";
 import { createBatchUsersResolver } from "./lib/batch-users-resolver";
@@ -280,8 +285,11 @@ export type PrepareThreadNotificationEmailAsHTMLOptions<
   resolveUsers?: (
     args: ResolveUsersArgs
   ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
-  // TEMP
-  commentBodyStyles?: Record<string, string>;
+  /**
+   * The styles used to customize the html elements in the resulting HTML safe string.
+   * Each styles has priority over the base styles inherited.
+   */
+  commentBodyStyles?: Partial<ConvertCommentBodyAsHTMLStyles>;
 };
 
 export type ThreadNotificationEmailAsHTML = ThreadNotificationEmailData<
@@ -338,9 +346,9 @@ export async function prepareThreadNotificationEmailAsHTML(params: {
         comments: [comment],
         resolveUsers: batchUsersResolver.resolveUsers,
       });
-      const commentBodyPromise = stringifyCommentBody(comment.rawBody, {
-        format: "html",
+      const commentBodyPromise = convertCommentBodyAsHTML(comment.rawBody, {
         resolveUsers: batchUsersResolver.resolveUsers,
+        styles: options?.commentBodyStyles,
       });
 
       await batchUsersResolver.resolve();
@@ -375,9 +383,9 @@ export async function prepareThreadNotificationEmailAsHTML(params: {
         resolveUsers: batchUsersResolver.resolveUsers,
       });
       const commentBodiesPromises = comments.map((c) =>
-        stringifyCommentBody(c.rawBody, {
-          format: "html",
+        convertCommentBodyAsHTML(c.rawBody, {
           resolveUsers: batchUsersResolver.resolveUsers,
+          styles: options?.commentBodyStyles,
         })
       );
 

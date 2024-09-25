@@ -10,10 +10,13 @@ import type {
   ResolveUsersArgs,
 } from "@liveblocks/core";
 import {
+  html,
+  htmlSafe,
   isCommentBodyLink,
   isCommentBodyMention,
   isCommentBodyText,
   resolveUsersInCommentBody,
+  stringifyCommentBody,
   toAbsoluteUrl,
 } from "@liveblocks/core";
 import React from "react";
@@ -222,6 +225,89 @@ export async function convertCommentBodyAsReact(
         return null;
     }
   });
+  const reactBody = components.Slot({ children: blocks });
 
-  return components.Slot({ children: blocks });
+  return reactBody;
+}
+
+export type ConvertCommentBodyAsHTMLStyles = Record<string, string>; // → TEMP
+
+// const baseStyles: ConvertCommentBodyAsHTMLStyles = {};
+
+export type ConvertCommentBodyAsHTMLOptions<U extends BaseUserMeta = DU> = {
+  /**
+   * The styles used to customize the html elements in the resulting HTML safe string.
+   * Each styles has priority over the base styles inherited.
+   */
+  styles?: Partial<ConvertCommentBodyAsHTMLStyles>;
+  /**
+   * A function that returns user info from user IDs.
+   */
+  resolveUsers?: (
+    args: ResolveUsersArgs
+  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+};
+
+/**
+ * Convert a `CommentBody` into an HTML safe string
+ * with inline css styles
+ */
+export async function convertCommentBodyAsHTML(
+  body: CommentBody,
+  options?: ConvertCommentBodyAsHTMLOptions<BaseUserMeta>
+): Promise<string> {
+  // const styles = { ...baseStyles, ...options?.styles };
+  // TODO → Sanitize styles with `sanitizeInlineCSS`
+
+  const htmlBody = await stringifyCommentBody(body, {
+    format: "html",
+    resolveUsers: options?.resolveUsers,
+    elements: {
+      // NOTE: using prettier-ignore to preserve template strings
+      paragraph: ({ children }) =>
+        // prettier-ignore
+        children ? html`<p>${htmlSafe(children)}</p>` : children,
+      text: ({ element }) => {
+        // Note: construction following the schema 👇
+        // <code><s><em><strong>{element.text}</strong></s></em></code>
+        let children = element.text;
+
+        if (!children) {
+          return children;
+        }
+
+        if (element.bold) {
+          // prettier-ignore
+          children = html`<strong>${children}</strong>`;
+        }
+
+        if (element.italic) {
+          // prettier-ignore
+          children = html`<em>${children}</em>`;
+        }
+
+        if (element.strikethrough) {
+          // prettier-ignore
+          children = html`<s>${children}</s>`;
+        }
+
+        if (element.code) {
+          // prettier-ignore
+          children = html`<code>${children}</code>`;
+        }
+
+        return children;
+      },
+      link: ({ element, href }) => {
+        // prettier-ignore
+        return html`<a href="${href}" target="_blank" rel="noopener noreferrer">${element.text ?? element.url}</a>`;
+      },
+      mention: ({ element, user }) => {
+        // prettier-ignore
+        return html`<span data-mention>@${user?.name ?? element.id}</span>`;
+      },
+    },
+  });
+
+  return htmlBody;
 }

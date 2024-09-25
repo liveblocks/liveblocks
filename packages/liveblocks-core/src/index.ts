@@ -37,6 +37,8 @@ export type {
 } from "./comments/comment-body";
 export {
   getMentionedIdsFromCommentBody,
+  html,
+  htmlSafe,
   isCommentBodyLink,
   isCommentBodyMention,
   isCommentBodyText,
