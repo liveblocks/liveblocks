@@ -384,6 +384,10 @@ function createComposerAttachmentsManager(
   }
 
   function addAttachments(addedAttachments: CommentMixedAttachment[]) {
+    if (addedAttachments.length === 0) {
+      return;
+    }
+
     // Ignore attachments that are already in the manager
     const newAttachments = addedAttachments.filter(
       (attachment) => !attachments.has(attachment.id)
