@@ -1126,6 +1126,9 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       (event: ChangeEvent<HTMLInputElement>) => {
         if (event.target.files) {
           createAttachments(Array.from(event.target.files));
+
+          // Reset the input value to allow selecting the same file(s) again
+          event.target.value = "";
         }
       },
       [createAttachments]
