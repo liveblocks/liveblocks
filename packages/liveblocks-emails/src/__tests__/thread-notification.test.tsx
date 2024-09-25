@@ -1,11 +1,13 @@
 import { Liveblocks } from "@liveblocks/node";
 import { http, HttpResponse } from "msw";
+import React from "react";
 
 import type {
   CommentEmailBaseData,
   ThreadNotificationBaseData,
   ThreadNotificationData,
   ThreadNotificationEmailAsHTML,
+  ThreadNotificationEmailAsReact,
 } from "../thread-notification";
 import {
   extractThreadNotificationData,
@@ -13,10 +15,12 @@ import {
   getUnreadComments,
   makeCommentEmailBaseData,
   prepareThreadNotificationEmailAsHTML,
+  prepareThreadNotificationEmailAsReact,
   prepareThreadNotificationEmailBaseData,
 } from "../thread-notification";
 import {
   buildCommentBodyWithMention,
+  commentBodiesAsReactToStaticMarkup,
   commentBody1,
   commentBody2,
   commentBody3,
@@ -514,8 +518,8 @@ describe("thread notification", () => {
             )
           );
 
-          const emailDataAsHTML = await promise();
-          expect(emailDataAsHTML).toEqual(expected);
+          const threadNotificationEmailAsHTML = await promise();
+          expect(threadNotificationEmailAsHTML).toEqual(expected);
         }
       );
     });
@@ -628,8 +632,275 @@ describe("thread notification", () => {
             )
           );
 
-          const emailDataAsHTML = await promise();
-          expect(emailDataAsHTML).toEqual(expected);
+          const threadNotificationEmailAsHTML = await promise();
+          expect(threadNotificationEmailAsHTML).toEqual(expected);
+        }
+      );
+    });
+  });
+
+  describe("prepare thread notification email as React", () => {
+    describe("unread mention w/o custom components", () => {
+      const threadId = generateThreadId();
+      const comment = makeComment({
+        userId: "user-0",
+        threadId,
+        body: buildCommentBodyWithMention({ mentionedUserId: "user-1" }),
+        createdAt: new Date("2024-09-10T08:04:00.000Z"),
+      });
+      const thread = makeThread({ threadId, comments: [comment] });
+      const inboxNotification = makeThreadInboxNotification({
+        threadId,
+        notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
+      });
+      const event = makeThreadNotificationEvent({
+        threadId,
+        userId: "user-1",
+        inboxNotificationId: inboxNotification.id,
+      });
+
+      const expected1: ThreadNotificationEmailAsReact = {
+        type: "unreadMention",
+        comment: {
+          id: comment.id,
+          threadId: thread.id,
+          roomId: ROOM_ID_TEST,
+          createdAt: comment.createdAt,
+          author: {
+            id: comment.userId,
+            info: {
+              name: comment.userId,
+            },
+          },
+          reactBody: (
+            <div>
+              <p>
+                Hello <span data-mention>@user-1</span> !
+              </p>
+            </div>
+          ),
+          url: undefined,
+        },
+        roomInfo: { name: ROOM_ID_TEST },
+      };
+
+      const expected2: ThreadNotificationEmailAsReact = {
+        type: "unreadMention",
+        comment: {
+          id: comment.id,
+          threadId: thread.id,
+          roomId: ROOM_ID_TEST,
+          createdAt: comment.createdAt,
+          author: {
+            id: comment.userId,
+            info: {
+              name: "Charlie Layne",
+            },
+          },
+          reactBody: (
+            <div>
+              <p>
+                Hello <span data-mention>@Mislav Abha</span> !
+              </p>
+            </div>
+          ),
+          url: getResolvedCommentUrl(comment.id),
+        },
+        roomInfo: RESOLVED_ROOM_INFO_TEST,
+      };
+
+      it.each<{
+        withResolvers: boolean;
+        promise: () => Promise<ThreadNotificationEmailAsReact>;
+        expected: ThreadNotificationEmailAsReact;
+      }>([
+        {
+          withResolvers: false,
+          promise: () =>
+            prepareThreadNotificationEmailAsReact({ client, event }),
+          expected: expected1,
+        },
+        {
+          withResolvers: true,
+          promise: () =>
+            prepareThreadNotificationEmailAsReact({
+              client,
+              event,
+              options: { resolveUsers, resolveRoomInfo },
+            }),
+          expected: expected2,
+        },
+      ])(
+        "should return unread mention as React with resolvers: $withResolvers",
+        async ({ promise, expected }) => {
+          server.use(
+            http.get(
+              `${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`,
+              () => HttpResponse.json(thread, { status: 200 })
+            )
+          );
+
+          server.use(
+            http.get(
+              `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
+              () => HttpResponse.json(inboxNotification, { status: 200 })
+            )
+          );
+
+          const threadNotificationEmailAsReact = await promise();
+
+          const resultConverted = commentBodiesAsReactToStaticMarkup(
+            threadNotificationEmailAsReact
+          );
+          const expectedConverted =
+            commentBodiesAsReactToStaticMarkup(expected);
+
+          expect(resultConverted).toEqual(expectedConverted);
+        }
+      );
+    });
+
+    describe("unread replies w/o custom components", () => {
+      const threadId = generateThreadId();
+      const comment1 = makeComment({
+        userId: "user-0",
+        threadId,
+        body: commentBody1,
+        createdAt: new Date("2024-09-10T08:10:00.000Z"),
+      });
+      const comment2 = makeComment({
+        userId: "user-1",
+        threadId,
+        body: commentBody4,
+        createdAt: new Date("2024-09-10T08:14:00.000Z"),
+      });
+      const thread = makeThread({
+        threadId,
+        comments: [comment1, comment2],
+      });
+      const inboxNotification = makeThreadInboxNotification({
+        threadId,
+        notifiedAt: new Date("2024-09-10T08:20:00.000Z"),
+      });
+      const event = makeThreadNotificationEvent({
+        threadId,
+        userId: "user-0",
+        inboxNotificationId: inboxNotification.id,
+      });
+
+      const expected1: ThreadNotificationEmailAsReact = {
+        type: "unreadReplies",
+        comments: [
+          {
+            id: comment2.id,
+            threadId: thread.id,
+            roomId: ROOM_ID_TEST,
+            createdAt: comment2.createdAt,
+            author: {
+              id: comment2.userId,
+              info: {
+                name: comment2.userId,
+              },
+            },
+            reactBody: (
+              <div>
+                <p>
+                  I agree 😍 it completes well this guide:{" "}
+                  <a
+                    href="https://www.liveblocks.io"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    https://www.liveblocks.io
+                  </a>
+                </p>
+              </div>
+            ),
+            url: undefined,
+          },
+        ],
+        roomInfo: { name: ROOM_ID_TEST },
+      };
+
+      const expected2: ThreadNotificationEmailAsReact = {
+        type: "unreadReplies",
+        comments: [
+          {
+            id: comment2.id,
+            threadId: thread.id,
+            roomId: ROOM_ID_TEST,
+            createdAt: comment2.createdAt,
+            author: {
+              id: comment2.userId,
+              info: { name: "Mislav Abha" },
+            },
+            reactBody: (
+              <div>
+                <p>
+                  I agree 😍 it completes well this guide:{" "}
+                  <a
+                    href="https://www.liveblocks.io"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    https://www.liveblocks.io
+                  </a>
+                </p>
+              </div>
+            ),
+            url: getResolvedCommentUrl(comment2.id),
+          },
+        ],
+        roomInfo: RESOLVED_ROOM_INFO_TEST,
+      };
+
+      it.each<{
+        withResolvers: boolean;
+        promise: () => Promise<ThreadNotificationEmailAsReact>;
+        expected: ThreadNotificationEmailAsReact;
+      }>([
+        {
+          withResolvers: false,
+          promise: () =>
+            prepareThreadNotificationEmailAsReact({ client, event }),
+          expected: expected1,
+        },
+        {
+          withResolvers: true,
+          promise: () =>
+            prepareThreadNotificationEmailAsReact({
+              client,
+              event,
+              options: { resolveUsers, resolveRoomInfo },
+            }),
+          expected: expected2,
+        },
+      ])(
+        "should return unread mention as React with resolvers: $withResolvers",
+        async ({ promise, expected }) => {
+          server.use(
+            http.get(
+              `${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`,
+              () => HttpResponse.json(thread, { status: 200 })
+            )
+          );
+
+          server.use(
+            http.get(
+              `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
+              () => HttpResponse.json(inboxNotification, { status: 200 })
+            )
+          );
+
+          const threadNotificationEmailAsReact = await promise();
+
+          const resultConverted = commentBodiesAsReactToStaticMarkup(
+            threadNotificationEmailAsReact
+          );
+          const expectedConverted =
+            commentBodiesAsReactToStaticMarkup(expected);
+
+          expect(resultConverted).toEqual(expectedConverted);
         }
       );
     });

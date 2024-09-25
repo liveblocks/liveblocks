@@ -17,6 +17,11 @@ import { setupServer } from "msw/node";
 import ReactDOMServer from "react-dom/server";
 
 import type { CommentDataWithBody } from "../comment-with-body";
+import type {
+  CommentEmailBaseData,
+  ThreadNotificationEmailAsReact,
+  ThreadNotificationEmailData,
+} from "../thread-notification";
 
 export const SERVER_BASE_URL = "https://api.liveblocks.io";
 
@@ -293,3 +298,47 @@ export const server = setupServer(
 
 export const renderToStaticMarkup = (reactNode: React.ReactNode): string =>
   ReactDOMServer.renderToStaticMarkup(reactNode);
+
+// Note: Rendering React comments bodies as a string (e.g static markup)
+// to ease testing and avoid unnecessary operations.
+type CommentEmailAsStaticMarkupData<U extends BaseUserMeta> = Omit<
+  CommentEmailBaseData,
+  "userId" | "rawBody"
+> & {
+  author: U;
+  reactBody: string;
+};
+type ThreadNotificationEmailAsStaticMarkup = ThreadNotificationEmailData<
+  BaseUserMeta,
+  CommentEmailAsStaticMarkupData<BaseUserMeta>
+>;
+
+export const commentBodiesAsReactToStaticMarkup = (
+  threadNotificationEmailAsReact: ThreadNotificationEmailAsReact
+): ThreadNotificationEmailAsStaticMarkup | null => {
+  switch (threadNotificationEmailAsReact.type) {
+    case "unreadMention": {
+      const { comment, ...rest } = threadNotificationEmailAsReact;
+
+      return {
+        ...rest,
+        comment: {
+          ...comment,
+          reactBody: renderToStaticMarkup(comment.reactBody),
+        },
+      };
+    }
+    case "unreadReplies": {
+      const { comments, ...rest } = threadNotificationEmailAsReact;
+      return {
+        ...rest,
+        comments: comments.map((comment) => ({
+          ...comment,
+          reactBody: renderToStaticMarkup(comment.reactBody),
+        })),
+      };
+    }
+    default:
+      return null;
+  }
+};

@@ -155,8 +155,8 @@ const baseComponents: ConvertCommentBodyAsReactComponents<BaseUserMeta> = {
 
 export type ConvertCommentBodyAsReactOptions<U extends BaseUserMeta = DU> = {
   /**
-   * The elements used to customize the resulting string. Each element has
-   * priority over the defaults inherited from the `format` option.
+   * The components used to customize the resulting React nodes. Each components has
+   * priority over the base components inherited.
    */
   components?: Partial<ConvertCommentBodyAsReactComponents<U>>;
   /**

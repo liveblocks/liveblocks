@@ -17,6 +17,8 @@ import {
 import type { Liveblocks, ThreadNotificationEvent } from "@liveblocks/node";
 import React from "react";
 
+import type { ConvertCommentBodyAsReactComponents } from "./comment-body";
+import { convertCommentBodyAsReact } from "./comment-body";
 import type { CommentDataWithBody } from "./comment-with-body";
 import { filterCommentsWithBody } from "./comment-with-body";
 import { createBatchUsersResolver } from "./lib/batch-users-resolver";
@@ -260,7 +262,8 @@ type ThreadNotificationEmailUnreadMentionsData<
   comment: C;
 };
 
-type ThreadNotificationEmailData<
+// Note: export for testing helpers
+export type ThreadNotificationEmailData<
   U extends BaseUserMeta,
   C extends CommentEmailAsHTMLData<U> | CommentEmailAsReactData<U>,
 > = (
@@ -393,8 +396,11 @@ export type PrepareThreadNotificationEmailAsReactOptions<
   resolveUsers?: (
     args: ResolveUsersArgs
   ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
-  // TEMP
-  commentBodyElements?: Record<string, JSX.Element>;
+  /**
+   * The components used to customize the resulting React nodes. Each components has
+   * priority over the base components inherited.
+   */
+  commentBodyComponents?: Partial<ConvertCommentBodyAsReactComponents<U>>;
 };
 
 export type ThreadNotificationEmailAsReact = ThreadNotificationEmailData<
@@ -429,13 +435,16 @@ export async function prepareThreadNotificationEmailAsReact(params: {
         resolveUsers: batchUsersResolver.resolveUsers,
       });
 
-      // TODO: resolve user and reactify
+      const commentBodyPromise = convertCommentBodyAsReact(comment.rawBody, {
+        resolveUsers: batchUsersResolver.resolveUsers,
+        components: options?.commentBodyComponents,
+      });
 
       await batchUsersResolver.resolve();
 
-      const [authorsInfo] = await Promise.all([
+      const [authorsInfo, commentBodyReact] = await Promise.all([
         authorsInfoPromise,
-        // TODO: resolve comment bodies promises
+        commentBodyPromise,
       ]);
       const authorInfo = authorsInfo.get(comment.userId);
 
@@ -450,7 +459,7 @@ export async function prepareThreadNotificationEmailAsReact(params: {
             : { id: comment.userId, info: { name: comment.userId } },
           createdAt: comment.createdAt,
           url: comment.url,
-          reactBody: <div />,
+          reactBody: commentBodyReact,
         },
         roomInfo: data.roomInfo,
       };
@@ -462,15 +471,23 @@ export async function prepareThreadNotificationEmailAsReact(params: {
         resolveUsers: batchUsersResolver.resolveUsers,
       });
 
-      // TODO: resolve user and reactify
+      const commentBodiesPromises = comments.map((c) =>
+        convertCommentBodyAsReact(c.rawBody, {
+          resolveUsers: batchUsersResolver.resolveUsers,
+          components: options?.commentBodyComponents,
+        })
+      );
+
+      await batchUsersResolver.resolve();
 
       const authorsInfo = await authorsInfoPromise;
-      // TODO: resolve comment bodies promises
+      const commentBodies = await Promise.all(commentBodiesPromises);
 
       return {
         type: "unreadReplies",
-        comments: comments.map((comment, _index) => {
+        comments: comments.map((comment, index) => {
           const authorInfo = authorsInfo.get(comment.userId);
+          const commentBodyReact = commentBodies[index];
 
           return {
             id: comment.id,
@@ -481,7 +498,7 @@ export async function prepareThreadNotificationEmailAsReact(params: {
               : { id: comment.userId, info: { name: comment.userId } },
             createdAt: comment.createdAt,
             url: comment.url,
-            reactBody: <div />,
+            reactBody: commentBodyReact ?? <React.Fragment />,
           };
         }),
         roomInfo: data.roomInfo,
