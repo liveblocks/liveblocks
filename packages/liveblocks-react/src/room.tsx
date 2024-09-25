@@ -56,6 +56,7 @@ import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/w
 import { RoomContext, useIsInsideRoom, useRoomOrNull } from "./contexts";
 import { isString } from "./lib/guards";
 import { retryError } from "./lib/retry-error";
+import { shallow2 } from "./lib/shallow2";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
@@ -75,18 +76,18 @@ import type {
   DeleteCommentOptions,
   EditCommentOptions,
   EditThreadMetadataOptions,
-  HistoryVersionDataState,
-  HistoryVersionsState,
-  HistoryVersionsStateResolved,
+  HistoryVersionDataAsyncResult,
+  HistoryVersionsAsyncResult,
+  HistoryVersionsAsyncSuccess,
   MutationContext,
   OmitFirstArg,
   RoomContextBundle,
-  RoomNotificationSettingsState,
-  RoomNotificationSettingsStateSuccess,
+  RoomNotificationSettingsAsyncResult,
+  RoomNotificationSettingsAsyncSuccess,
   RoomProviderProps,
   StorageStatusSuccess,
-  ThreadsState,
-  ThreadsStateSuccess,
+  ThreadsAsyncResult,
+  ThreadsAsyncSuccess,
   ThreadSubscription,
   UseStorageStatusOptions,
   UseThreadsOptions,
@@ -107,7 +108,10 @@ import {
   UpdateNotificationSettingsError,
 } from "./types/errors";
 import type { UmbrellaStore, UmbrellaStoreState } from "./umbrella-store";
-import { makeNotificationSettingsQueryKey } from "./umbrella-store";
+import {
+  makeNotificationSettingsQueryKey,
+  makeVersionsQueryKey,
+} from "./umbrella-store";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
 
 const SMOOTH_DELAY = 1000;
@@ -375,12 +379,12 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     room: OpaqueRoom,
     { retryCount }: { retryCount: number } = { retryCount: 0 }
   ) {
-    const queryKey = getVersionsQueryKey(room.id);
+    const queryKey = makeVersionsQueryKey(room.id);
     const existingRequest = requestsByQuery.get(queryKey);
     if (existingRequest !== undefined) return existingRequest;
     const request = room[kInternal].listTextVersions();
     requestsByQuery.set(queryKey, request);
-    store.setQueryLoading(queryKey);
+    store.setQuery4Loading(queryKey);
     try {
       const result = await request;
       const data = (await result.json()) as {
@@ -402,7 +406,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
           retryCount: retryCount + 1,
         });
       }, retryCount);
-      store.setQueryError(queryKey, err as Error);
+      store.setQuery4Error(queryKey, err as Error);
     }
     return;
   }
@@ -423,17 +427,23 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     // Store the promise of the request for the query so that we do not make another request for the same query
     requestsByQuery.set(queryKey, request);
 
-    store.setQueryLoading(queryKey);
+    store.setQuery2Loading(queryKey);
+
     try {
       const result = await request;
 
-      store.updateThreadsAndNotifications(
-        result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
-        result.inboxNotifications,
-        [],
-        [],
-        queryKey
-      );
+      store.batch(() => {
+        // 1️⃣
+        store.updateThreadsAndNotifications(
+          result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
+          result.inboxNotifications,
+          [],
+          []
+        );
+
+        // 2️⃣
+        store.setQuery2OK(queryKey);
+      });
 
       const lastRequestedAt = lastRequestedAtByRoom.get(room.id);
 
@@ -462,7 +472,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
       }, retryCount);
 
       // Set the query state to the error state
-      store.setQueryError(queryKey, err as Error);
+      store.setQuery2Error(queryKey, err as Error);
     }
     return;
   }
@@ -482,7 +492,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
 
       requestsByQuery.set(queryKey, request);
 
-      store.setQueryLoading(queryKey);
+      store.setQuery3Loading(queryKey);
 
       const settings = await request;
 
@@ -496,7 +506,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
         });
       }, retryCount);
 
-      store.setQueryError(queryKey, err as Error);
+      store.setQuery3Error(queryKey, err as Error);
     }
     return;
   }
@@ -859,7 +869,7 @@ function RoomProviderInner<
       }
       const { thread, inboxNotification } = info;
 
-      const existingThread = store.getThreads().threadsById[message.threadId];
+      const existingThread = store.getFullState().threadsById[message.threadId];
 
       switch (message.type) {
         case ServerMsgCode.COMMENT_EDITED:
@@ -1268,7 +1278,7 @@ function useOthersMapped<P extends JsonObject, U extends BaseUserMeta, T>(
         a.length === b.length &&
         a.every((atuple, index) => {
           // We know btuple always exist because we checked the array length on the previous line
-          const btuple = b[index];
+          const btuple = b[index]!;
           return atuple[0] === btuple[0] && eq(atuple[1], btuple[1]);
         })
       );
@@ -1427,7 +1437,7 @@ function useThreads<M extends BaseMetadata>(
   options: UseThreadsOptions<M> = {
     query: { metadata: {} },
   }
-): ThreadsState<M> {
+): ThreadsAsyncResult<M> {
   const { scrollOnLoad = true } = options;
   const client = useClient();
   const room = useRoom();
@@ -1446,35 +1456,35 @@ function useThreads<M extends BaseMetadata>(
     return incrementQuerySubscribers(queryKey);
   }, [room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const getter = React.useCallback(
+    () => store.getThreadsAsync(queryKey),
+    [store, queryKey]
+  );
+
   const selector = React.useCallback(
-    (state: UmbrellaStoreState<M>): ThreadsState<M> => {
-      // TODO Don't make this the responsibility of the _selector_. It should be
-      // responsibility of the _getter_.
-      const query = state.queries[queryKey];
-      if (query === undefined || query.isLoading) {
-        return {
-          isLoading: true,
-        };
+    (result: ReturnType<typeof getter>): ThreadsAsyncResult<M> => {
+      if (!result.fullState) {
+        return result; // Loading or error state
       }
 
-      return {
-        threads: selectThreads(state, {
-          roomId: room.id,
-          query: options.query,
-          orderBy: "age",
-        }),
-        isLoading: false,
-        error: query.error,
-      };
+      const threads = selectThreads(result.fullState, {
+        roomId: room.id,
+        query: options.query,
+        orderBy: "age",
+      });
+
+      // "Map" the success state, by selecting the threads and returning only those parts externally
+      return { isLoading: false, threads };
     },
-    [room, queryKey] // eslint-disable-line react-hooks/exhaustive-deps
+    [room.id, queryKey] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const state = useSyncExternalStoreWithSelector(
     store.subscribeThreads,
-    store.getThreads,
-    store.getThreads,
-    selector
+    getter,
+    getter,
+    selector,
+    shallow2
   );
 
   useScrollToCommentOnLoadEffect(scrollOnLoad, state);
@@ -1579,7 +1589,7 @@ function useDeleteThread(): (threadId: string) => void {
     (threadId: string): void => {
       const { store, onMutationFailure } = getExtrasForClient(client);
 
-      const thread = store.getThreads().threadsById[threadId];
+      const thread = store.getFullState().threadsById[threadId];
 
       const userId = getCurrentUserId(room);
 
@@ -1733,7 +1743,7 @@ function useEditComment(): (options: EditCommentOptions) => void {
       const editedAt = new Date();
 
       const { store, onMutationFailure } = getExtrasForClient(client);
-      const thread = store.getThreads().threadsById[threadId];
+      const thread = store.getFullState().threadsById[threadId];
       if (thread === undefined) {
         console.warn(
           `Internal unexpected behavior. Cannot edit comment in thread "${threadId}" because the thread does not exist in the cache.`
@@ -1960,7 +1970,7 @@ function useMarkThreadAsRead() {
     (threadId: string) => {
       const { store, onMutationFailure } = getExtrasForClient(client);
       const inboxNotification = Object.values(
-        store.getInboxNotifications().inboxNotificationsById
+        store.getFullState().inboxNotificationsById
       ).find(
         (inboxNotification) =>
           inboxNotification.kind === "thread" &&
@@ -2133,8 +2143,8 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
 
   return useSyncExternalStoreWithSelector(
     store.subscribeThreads,
-    store.getThreads,
-    store.getThreads,
+    store.getFullState,
+    store.getFullState,
     selector
   );
 }
@@ -2147,7 +2157,7 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
  * const [{ settings }, updateSettings] = useRoomNotificationSettings();
  */
 function useRoomNotificationSettings(): [
-  RoomNotificationSettingsState,
+  RoomNotificationSettingsAsyncResult,
   (settings: Partial<RoomNotificationSettings>) => void,
 ] {
   const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
@@ -2186,7 +2196,7 @@ function useRoomNotificationSettings(): [
  * const [{ settings }, updateSettings] = useRoomNotificationSettings();
  */
 function useRoomNotificationSettingsSuspense(): [
-  RoomNotificationSettingsStateSuccess,
+  RoomNotificationSettingsAsyncSuccess,
   (settings: Partial<RoomNotificationSettings>) => void,
 ] {
   const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
@@ -2226,8 +2236,10 @@ function useRoomNotificationSettingsSuspense(): [
  * @example
  * const {data} = useHistoryVersionData(versionId);
  */
-function useHistoryVersionData(versionId: string): HistoryVersionDataState {
-  const [state, setState] = React.useState<HistoryVersionDataState>({
+function useHistoryVersionData(
+  versionId: string
+): HistoryVersionDataAsyncResult {
+  const [state, setState] = React.useState<HistoryVersionDataAsyncResult>({
     isLoading: true,
   });
   const room = useRoom();
@@ -2265,41 +2277,63 @@ function useHistoryVersionData(versionId: string): HistoryVersionDataState {
  * @example
  * const { versions, error, isLoading } = useHistoryVersions();
  */
-function useHistoryVersions(): HistoryVersionsState {
+function useHistoryVersions(): HistoryVersionsAsyncResult {
   const client = useClient();
   const room = useRoom();
-  const queryKey = getVersionsQueryKey(room.id);
 
   const { store, getRoomVersions } = getExtrasForClient(client);
+
+  const getter = React.useCallback(
+    () => store.getVersionsAsync(room.id),
+    [store, room.id]
+  );
 
   React.useEffect(() => {
     void getRoomVersions(room);
   }, [room]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const selector = React.useCallback(
-    (state: ReturnType<typeof store.getVersions>): HistoryVersionsState => {
-      const query = state.queries[queryKey];
-      if (query === undefined || query.isLoading) {
-        return {
-          isLoading: true,
-        };
-      }
+  const state = useSyncExternalStoreWithSelector(
+    store.subscribeVersions,
+    getter,
+    getter,
+    identity,
+    shallow
+  );
 
-      return {
-        versions: state.versionsByRoomId[room.id],
-        isLoading: false,
-        error: query.error,
-      };
-    },
-    [room, queryKey] // eslint-disable-line react-hooks/exhaustive-deps
+  return state;
+}
+
+/**
+ * (Private beta) Returns a history of versions of the current room.
+ *
+ * @example
+ * const { versions } = useHistoryVersions();
+ */
+function useHistoryVersionsSuspense(): HistoryVersionsAsyncSuccess {
+  const client = useClient();
+  const room = useRoom();
+
+  const { store } = getExtrasForClient(client);
+
+  const getter = React.useCallback(
+    () => store.getVersionsAsync(room.id),
+    [store, room.id]
   );
 
   const state = useSyncExternalStoreWithSelector(
     store.subscribeVersions,
-    store.getVersions,
-    store.getVersions,
-    selector
+    getter,
+    getter,
+    identity,
+    shallow
   );
+
+  if (state.isLoading) {
+    const { getRoomVersions } = getExtrasForClient(client);
+    throw getRoomVersions(room);
+  } else if (state.error) {
+    throw state.error;
+  }
 
   return state;
 }
@@ -2478,7 +2512,7 @@ function useThreadsSuspense<M extends BaseMetadata>(
   options: UseThreadsOptions<M> = {
     query: { metadata: {} },
   }
-): ThreadsStateSuccess<M> {
+): ThreadsAsyncSuccess<M> {
   const { scrollOnLoad = true } = options;
 
   const client = useClient();
@@ -2491,7 +2525,7 @@ function useThreadsSuspense<M extends BaseMetadata>(
   const { store, getThreadsAndInboxNotifications } =
     getExtrasForClient<M>(client);
 
-  const query = store.getThreads().queries[queryKey];
+  const query = store.getFullState().queries2[queryKey];
 
   if (query === undefined || query.isLoading) {
     throw getThreadsAndInboxNotifications(room, queryKey, options);
@@ -2502,7 +2536,7 @@ function useThreadsSuspense<M extends BaseMetadata>(
   }
 
   const selector = React.useCallback(
-    (state: ReturnType<typeof store.getThreads>): ThreadsStateSuccess<M> => {
+    (state: ReturnType<typeof store.getFullState>): ThreadsAsyncSuccess<M> => {
       return {
         threads: selectThreads(state, {
           roomId: room.id,
@@ -2522,8 +2556,8 @@ function useThreadsSuspense<M extends BaseMetadata>(
 
   const state = useSyncExternalStoreWithSelector(
     store.subscribeThreads,
-    store.getThreads,
-    store.getThreads,
+    store.getFullState,
+    store.getFullState,
     selector
   );
 
@@ -2624,49 +2658,6 @@ function useAttachmentUrlSuspense(attachmentId: string) {
 }
 
 /**
- * (Private beta) Returns a history of versions of the current room.
- *
- * @example
- * const { versions } = useHistoryVersions();
- */
-function useHistoryVersionsSuspense(): HistoryVersionsStateResolved {
-  const client = useClient();
-  const room = useRoom();
-  const queryKey = getVersionsQueryKey(room.id);
-
-  const { store, getRoomVersions } = getExtrasForClient(client);
-
-  const query = store.getVersions().queries[queryKey];
-
-  if (query === undefined || query.isLoading) {
-    throw getRoomVersions(room);
-  }
-
-  if (query.error) {
-    throw query.error;
-  }
-
-  const selector = React.useCallback(
-    (state: UmbrellaStoreState<BaseMetadata>): HistoryVersionsStateResolved => {
-      return {
-        versions: state.versionsByRoomId[room.id],
-        isLoading: false,
-      };
-    },
-    [room, queryKey] // eslint-disable-line react-hooks/exhaustive-deps
-  );
-
-  const state = useSyncExternalStoreWithSelector(
-    store.subscribeVersions,
-    store.getVersions,
-    store.getVersions,
-    selector
-  );
-
-  return state;
-}
-
-/**
  * @private
  *
  * This is an internal API, use `createRoomContext` instead.
@@ -2712,10 +2703,6 @@ export function generateQueryKey(
   options: UseThreadsOptions<BaseMetadata>["query"]
 ) {
   return `${roomId}-${stringify(options ?? {})}`;
-}
-
-export function getVersionsQueryKey(roomId: string) {
-  return `${roomId}-VERSIONS`;
 }
 
 type TypedBundle = RoomContextBundle<DP, DS, DU, DE, DM>;

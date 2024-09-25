@@ -304,11 +304,11 @@ function Component({ threadId, commentId }) {
 
   return (
     <Composer
-      onComposerSubmit={({ body }, event) => {
+      onComposerSubmit={({ body, attachments }, event) => {
         event.preventDefault();
 
         // Example mutations
-        editComment({ threadId, commentId, body });
+        editComment({ threadId, commentId, body, attachments });
         addReaction({ threadId, commentId, emoji: "✅" });
 
         // Other custom behavior
@@ -585,7 +585,7 @@ Combine with
 [`useCreateThread`](/docs/api-reference/liveblocks-react#useCreateThread) to
 render a composer that creates threads.
 
-```tsx highlight="13,21-25,29-38"
+```tsx
 import {
   Composer,
   CommentBodyLinkProps,
@@ -598,22 +598,28 @@ import { FormEvent } from "react";
 
 // Render a custom composer that creates a thread on submit
 function MyComposer() {
+  // +++
   const createThread = useCreateThread();
+  // +++
 
   function handleComposerSubmit(
-    { body }: ComposerSubmitComment,
+    { body, attachments }: ComposerSubmitComment,
     event: FormEvent<HTMLFormElement>
   ) {
     event.preventdefault();
 
     // Create a new thread
+    // +++
     const thread = createThread({
       body,
+      attachments,
       metadata: {},
     });
+    //+++
   }
 
   return (
+    // +++
     <Composer.Form onComposerSubmit={handleComposerSubmit}>
       <Composer.Editor
         components={{
@@ -624,6 +630,7 @@ function MyComposer() {
       />
       <Composer.Submit>Create thread</Composer.Submit>
     </Composer.Form>
+    // +++
   );
 }
 
@@ -676,14 +683,25 @@ occurs when the composer is submitted. You must create your own mutations within
 [editing comments](/docs/api-reference/liveblocks-react#useEditComment), etc.
 
 ```tsx
-<Composer.Form onComposerSubmit={({ body }) => {}}>{/* ... */}</Composer.Form>
+<Composer.Form
+  onComposerSubmit={({ body, attachments }) => {
+    // Mutate your comments
+    // ...
+  }}
+>
+  {/* ... */}
+</Composer.Form>
 ```
 
 <PropertiesList>
   <PropertiesListItem name="defaultAttachments" type="CommentAttachment[]">
     The composer's initial attachments.
   </PropertiesListItem>
-  <PropertiesListItem name="pasteFilesAsAttachments" type="boolean">
+  <PropertiesListItem
+    name="pasteFilesAsAttachments"
+    type="boolean"
+    defaultValue="false"
+  >
     Whether to create attachments when pasting files into the editor.
   </PropertiesListItem>
   <PropertiesListItem
@@ -693,7 +711,7 @@ occurs when the composer is submitted. You must create your own mutations within
   >
     The event handler called when the form is submitted.
   </PropertiesListItem>
-  <PropertiesListItem name="disabled" type="boolean">
+  <PropertiesListItem name="disabled" type="boolean" defaultValue="false">
     Whether the composer is disabled.
   </PropertiesListItem>
   <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
@@ -1215,7 +1233,7 @@ Displays a formatted file size.
 
 Use with `attachment.size` to display a human-readable file size.
 
-```tsx highlight="8"
+```tsx
 import { CommentData, FileSize } from "@liveblocks/react-ui";
 
 function MyComment({ comment }: { comment: CommentData }) {
@@ -1226,7 +1244,9 @@ function MyComment({ comment }: { comment: CommentData }) {
       {comment.attachments.map((attachment) => (
         <div key={attachment.id}>
           {attachment.name}
+          // +++
           <FileSize size={attachment.size} />
+          // +++
         </div>
       ))}
     </div>
@@ -1352,17 +1372,21 @@ function MyComposer() {
   const createThread = useCreateThread();
 
   return (
-    <Composer.Form onComposerSubmit={({ body, attachments } => {
+    <Composer.Form onComposerSubmit={({ body, attachments }) => {
       const thread = createThread({
         body,
+        // +++
         attachments,
+        // +++
         metadata: {},
       });
-    })}>
+    }}>
       <Composer.Editor components={/* Your custom component parts */} />
+      // +++
       <MyComposerAttachments />
       <Composer.AttachFiles>Attach Files</Composer.AttachFiles>
       <Composer.Submit>Submit</Composer.Submit>
+      // +++
     </Composer.Form>
   );
 }

@@ -325,7 +325,13 @@ interface ComposerAttachmentsManagerOptions {
 }
 
 export class AttachmentTooLargeError extends Error {
+  origin: "client" | "server";
   name = "AttachmentTooLargeError";
+
+  constructor(message: string, origin: "client" | "server" = "client") {
+    super(message);
+    this.origin = origin;
+  }
 }
 
 function createComposerAttachmentsManager(
@@ -369,7 +375,7 @@ function createComposerAttachmentsManager(
             status: "error",
             error:
               error instanceof CommentsApiError && error.status === 413
-                ? new AttachmentTooLargeError("File is too large.")
+                ? new AttachmentTooLargeError("File is too large.", "server")
                 : error,
           });
           notifySubscribers();
@@ -378,6 +384,10 @@ function createComposerAttachmentsManager(
   }
 
   function addAttachments(addedAttachments: CommentMixedAttachment[]) {
+    if (addedAttachments.length === 0) {
+      return;
+    }
+
     // Ignore attachments that are already in the manager
     const newAttachments = addedAttachments.filter(
       (attachment) => !attachments.has(attachment.id)
@@ -393,7 +403,7 @@ function createComposerAttachmentsManager(
           attachments.set(attachment.id, {
             ...attachment,
             status: "error",
-            error: new AttachmentTooLargeError("File is too large."),
+            error: new AttachmentTooLargeError("File is too large.", "client"),
           });
 
           continue;
@@ -440,13 +450,18 @@ function createComposerAttachmentsManager(
     return cachedSnapshot;
   }
 
+  // Clear all attachments and abort all ongoing uploads
   function clear() {
     abortControllers.forEach((controller) => controller.abort());
     abortControllers.clear();
-    eventSource.clear();
     attachments.clear();
 
     notifySubscribers();
+  }
+
+  function dispose() {
+    clear();
+    eventSource.clear();
   }
 
   return {
@@ -455,6 +470,7 @@ function createComposerAttachmentsManager(
     getSnapshot,
     subscribe: eventSource.subscribe,
     clear,
+    dispose,
   };
 }
 
@@ -477,10 +493,10 @@ export function useComposerAttachmentsManager(
     frozenAttachmentsManager.addAttachments(frozenDefaultAttachments);
   }, [frozenDefaultAttachments, frozenAttachmentsManager]);
 
-  // Clear attachments on unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      frozenAttachmentsManager.clear();
+      frozenAttachmentsManager.dispose();
     };
   }, [frozenAttachmentsManager]);
 

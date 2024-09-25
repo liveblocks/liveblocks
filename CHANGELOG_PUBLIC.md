@@ -13,6 +13,42 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
 
+# Week 38 (2024-09-20)
+
+## 2.7.2
+
+### `@liveblocks/react`
+
+- Fix a bug where under some conditions threads could end up without comments.
+- Fix a bug where notifications associated to deleted threads would not be deleted.
+- Fix a bug where subsequent optimistic updates to the same inbox notification could sometimes not get applied correctly.
+
+## 2.7.1
+
+### `@liveblocks/react-lexical`
+
+- Fixed a bug where resolved threads remained visible in the editor and the
+  `AnchoredThreads` and `FloatingThreads` components.
+
+## Examples
+
+- New [Linear-like Issue Tracker example](https://liveblocks.io/examples/linear-like-issue-tracker/nextjs-linear-like-issue-tracker).
+- New [Tldraw Whiteboard Storage example](https://liveblocks.io/examples/tldraw-whiteboard/nextjs-tldraw-whiteboard-storage).
+- New [Tldraw Whiteboard Yjs example](https://liveblocks.io/examples/tldraw-whiteboard/nextjs-tldraw-whiteboard-yjs).
+- New [Notion-like AI Editor example](https://liveblocks.io/examples/notion-like-ai-editor/nextjs-notion-like-ai-editor).
+
+## Documentation
+
+- Rewritten Lexical Text Editor get started guides for [Next.js](https://liveblocks.io/docs/get-started/nextjs-lexical) and [React](https://liveblocks.io/docs/get-started/react-lexical), adding [`AnchoredThreads`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#AnchoredThreads) and [`FloatingThreads`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#FloatingThreads).
+
+## Dashboard
+- Fix a bug where room storage data wasn't fetched correctly and not displayed in the room detail storage tab.
+- Fix a bug where room storage data couldn't be deleted from the room detail storage tab.
+
+## Contributors
+
+ctnicholas, nimeshnayaju, marcbouchenoire, nvie, sugardarius
+
 # Week 37 (2024-09-13)
 
 ## 2.7.0

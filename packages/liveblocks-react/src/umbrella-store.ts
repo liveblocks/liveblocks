@@ -1,6 +1,5 @@
 import type {
   AsyncResult,
-  AsyncResultWithDataField,
   BaseMetadata,
   CommentData,
   CommentReaction,
@@ -27,6 +26,7 @@ import {
 } from "@liveblocks/core";
 
 import { isMoreRecentlyUpdated } from "./lib/compare";
+import type { RoomNotificationSettingsAsyncResult } from "./types";
 
 type OptimisticUpdate<M extends BaseMetadata> =
   | CreateThreadOptimisticUpdate<M>
@@ -154,22 +154,31 @@ type UpdateNotificationSettingsOptimisticUpdate = {
   settings: Partial<RoomNotificationSettings>;
 };
 
-type QueryState = AsyncResult<undefined>;
-//                            ^^^^^^^^^ We don't store the actual query result in this status
+type QueryAsyncResult = AsyncResult<undefined>;
+//                                  ^^^^^^^^^ We don't store the actual query result in this status
 
-const QUERY_STATE_LOADING = Object.freeze({ isLoading: true });
-const QUERY_STATE_OK = Object.freeze({ isLoading: false, data: undefined });
-
-// TODO Stop exporting this constant!
-export const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
+const ASYNC_LOADING = Object.freeze({ isLoading: true });
+const ASYNC_OK = Object.freeze({ isLoading: false, data: undefined });
 
 // TODO Stop exporting this helper!
 export function makeNotificationSettingsQueryKey(roomId: string) {
   return `${roomId}:NOTIFICATION_SETTINGS`;
 }
 
+// TODO Stop exporting this helper!
+export function makeVersionsQueryKey(roomId: string) {
+  return `${roomId}-VERSIONS`;
+}
+
 type InternalState<M extends BaseMetadata> = Readonly<{
-  queries: Record<string, QueryState>;
+  // This is a temporary refactoring artifact from Vincent and Nimesh.
+  // Each query corresponds to a resource which should eventually have its own type.
+  // This is why we split it for now.
+  query1: QueryAsyncResult | undefined; // Inbox notifications
+  queries2: Record<string, QueryAsyncResult>; // Threads
+  queries3: Record<string, QueryAsyncResult>; // Notification settings
+  queries4: Record<string, QueryAsyncResult>; // Versions
+
   optimisticUpdates: readonly OptimisticUpdate<M>[];
 
   rawThreadsById: Record<string, ThreadDataWithDeleteInfo<M>>;
@@ -190,7 +199,9 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
    * e.g. 'room-abc-{}'               - loading
    */
   // TODO Query state should not be exposed publicly by the store!
-  queries: Record<string, QueryState>;
+  queries2: Record<string, QueryAsyncResult>; // Threads
+  queries3: Record<string, QueryAsyncResult>; // Notification settings
+  queries4: Record<string, QueryAsyncResult>; // Versions
 
   /**
    * All threads in a sorted array, optimistic updates applied, without deleted
@@ -239,7 +250,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
   constructor() {
     this._store = createStore<InternalState<M>>({
       rawThreadsById: {},
-      queries: {},
+      // queries: {},
+      query1: undefined,
+      queries2: {},
+      queries3: {},
+      queries4: {},
       optimisticUpdates: [],
       inboxNotificationsById: {},
       notificationSettingsByRoomId: {},
@@ -248,14 +263,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     // Auto-bind all of this class methods once here, so we can use stable
     // references to them (most important for use in useSyncExternalStore)
-    this.getThreads = this.getThreads.bind(this);
-    this.getInboxNotifications = this.getInboxNotifications.bind(this);
+    this.getFullState = this.getFullState.bind(this);
     this.getInboxNotificationsAsync =
       this.getInboxNotificationsAsync.bind(this);
-    this.getVersions = this.getVersions.bind(this);
     this.subscribeThreads = this.subscribeThreads.bind(this);
-    this.subscribeInboxNotifications =
-      this.subscribeInboxNotifications.bind(this);
+    this.subscribeUserThreads = this.subscribeUserThreads.bind(this);
+    this.subscribeThreadsOrInboxNotifications =
+      this.subscribeThreadsOrInboxNotifications.bind(this);
     this.subscribeNotificationSettings =
       this.subscribeNotificationSettings.bind(this);
     this.subscribeVersions = this.subscribeVersions.bind(this);
@@ -278,32 +292,73 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this._stateCached;
   }
 
-  public getThreads(): UmbrellaStoreState<M> {
+  public batch(callback: () => void): void {
+    return this._store.batch(callback);
+  }
+
+  public getFullState(): UmbrellaStoreState<M> {
     return this.get();
   }
 
-  public getInboxNotifications(): UmbrellaStoreState<M> {
-    // TODO Now that we have getInboxNotificationsAsync, can we get rid of this method already?
-    return this.get();
+  /**
+   * Returns the async result of the given queryKey. If the query is success,
+   * then it will return the entire store's state in the payload.
+   */
+  // TODO: This return type is a bit weird! Feels like we haven't found the
+  // right abstraction here yet.
+  public getThreadsAsync(
+    queryKey: string
+  ): AsyncResult<UmbrellaStoreState<M>, "fullState"> {
+    const internalState = this._store.get();
+
+    const query = internalState.queries2[queryKey];
+    if (query === undefined || query.isLoading) {
+      return ASYNC_LOADING;
+    }
+
+    if (query.error) {
+      return query;
+    }
+
+    // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
+    return { isLoading: false, fullState: this.getFullState() };
+  }
+
+  public getUserThreadsAsync(
+    queryKey: string
+  ): AsyncResult<UmbrellaStoreState<M>, "fullState"> {
+    const internalState = this._store.get();
+
+    const query = internalState.queries2[queryKey];
+    if (query === undefined || query.isLoading) {
+      return ASYNC_LOADING;
+    }
+
+    if (query.error) {
+      return query;
+    }
+
+    // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
+    return { isLoading: false, fullState: this.getFullState() };
   }
 
   // NOTE: This will read the async result, but WILL NOT start loading at the moment!
-  public getInboxNotificationsAsync(): AsyncResultWithDataField<
+  public getInboxNotificationsAsync(): AsyncResult<
     InboxNotificationData[],
     "inboxNotifications"
   > {
     const internalState = this._store.get();
 
-    const query = internalState.queries[INBOX_NOTIFICATIONS_QUERY];
+    const query = internalState.query1;
     if (query === undefined || query.isLoading) {
-      return QUERY_STATE_LOADING;
+      return ASYNC_LOADING;
     }
 
     if (query.error !== undefined) {
       return query;
     }
 
-    const inboxNotifications = this.get().inboxNotifications;
+    const inboxNotifications = this.getFullState().inboxNotifications;
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return { isLoading: false, inboxNotifications };
   }
@@ -311,12 +366,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // NOTE: This will read the async result, but WILL NOT start loading at the moment!
   public getNotificationSettingsAsync(
     roomId: string
-  ): AsyncResultWithDataField<RoomNotificationSettings, "settings"> {
+  ): RoomNotificationSettingsAsyncResult {
     const state = this.get();
 
-    const query = state.queries[makeNotificationSettingsQueryKey(roomId)];
+    const query = state.queries3[makeNotificationSettingsQueryKey(roomId)];
     if (query === undefined || query.isLoading) {
-      return QUERY_STATE_LOADING;
+      return ASYNC_LOADING;
     }
 
     if (query.error !== undefined) {
@@ -330,8 +385,25 @@ export class UmbrellaStore<M extends BaseMetadata> {
     };
   }
 
-  public getVersions(): UmbrellaStoreState<M> {
-    return this.get();
+  public getVersionsAsync(
+    roomId: string
+  ): AsyncResult<HistoryVersion[], "versions"> {
+    const state = this.get();
+
+    const query = state.queries4[makeVersionsQueryKey(roomId)];
+    if (query === undefined || query.isLoading) {
+      return ASYNC_LOADING;
+    }
+
+    if (query.error !== undefined) {
+      return query;
+    }
+
+    // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
+    return {
+      isLoading: false,
+      versions: nn(state.versionsByRoomId[roomId]),
+    };
   }
 
   /**
@@ -358,7 +430,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this.subscribe(callback);
   }
 
-  public subscribeInboxNotifications(callback: () => void): () => void {
+  public subscribeUserThreads(callback: () => void): () => void {
+    // TODO Make this actually only update when threads are invalidated
+    return this.subscribe(callback);
+  }
+
+  public subscribeThreadsOrInboxNotifications(
+    callback: () => void
+  ): () => void {
     // TODO Make this actually only update when inbox notifications are invalidated
     return this.subscribe(callback);
   }
@@ -424,11 +503,37 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }));
   }
 
-  private setQueryState(queryKey: string, queryState: QueryState): void {
+  private setQuery1State(queryState: QueryAsyncResult): void {
     this._store.set((state) => ({
       ...state,
-      queries: {
-        ...state.queries,
+      query1: queryState,
+    }));
+  }
+
+  private setQuery2State(queryKey: string, queryState: QueryAsyncResult): void {
+    this._store.set((state) => ({
+      ...state,
+      queries2: {
+        ...state.queries2,
+        [queryKey]: queryState,
+      },
+    }));
+  }
+  private setQuery3State(queryKey: string, queryState: QueryAsyncResult): void {
+    this._store.set((state) => ({
+      ...state,
+      queries3: {
+        ...state.queries3,
+        [queryKey]: queryState,
+      },
+    }));
+  }
+
+  private setQuery4State(queryKey: string, queryState: QueryAsyncResult): void {
+    this._store.set((state) => ({
+      ...state,
+      queries4: {
+        ...state.queries4,
         [queryKey]: queryState,
       },
     }));
@@ -781,10 +886,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
     threads: ThreadData<M>[],
     inboxNotifications: InboxNotificationData[],
     deletedThreads: ThreadDeleteInfo[],
-    deletedInboxNotifications: InboxNotificationDeleteInfo[],
-    queryKey?: string
+    deletedInboxNotifications: InboxNotificationDeleteInfo[]
   ): void {
-    // Batch 1️⃣ + 2️⃣ + 3️⃣
+    // Batch 1️⃣ + 2️⃣
     this._store.batch(() => {
       // 1️⃣
       this.updateThreadsCache((cache) =>
@@ -801,11 +905,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
           deletedNotifications: deletedInboxNotifications,
         })
       );
-
-      // 3️⃣
-      if (queryKey !== undefined) {
-        this.setQueryOK(queryKey);
-      }
     });
   }
 
@@ -832,7 +931,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): void {
     // Batch 1️⃣ + 2️⃣
     this._store.batch(() => {
-      this.setQueryOK(queryKey); // 1️⃣
+      this.setQuery3OK(queryKey); // 1️⃣
       this.setNotificationSettings(roomId, settings); // 2️⃣
     });
   }
@@ -848,7 +947,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
       // 2️⃣
       if (queryKey !== undefined) {
-        this.setQueryOK(queryKey);
+        this.setQuery4OK(queryKey);
       }
     });
   }
@@ -872,16 +971,56 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // Query State APIs
   //
 
-  public setQueryLoading(queryKey: string): void {
-    this.setQueryState(queryKey, QUERY_STATE_LOADING);
+  // Query 1
+  public setQuery1Loading(): void {
+    this.setQuery1State(ASYNC_LOADING);
   }
 
-  private setQueryOK(queryKey: string): void {
-    this.setQueryState(queryKey, QUERY_STATE_OK);
+  public setQuery1OK(): void {
+    this.setQuery1State(ASYNC_OK);
   }
 
-  public setQueryError(queryKey: string, error: Error): void {
-    this.setQueryState(queryKey, { isLoading: false, error });
+  public setQuery1Error(error: Error): void {
+    this.setQuery1State({ isLoading: false, error });
+  }
+
+  // Query 2
+  public setQuery2Loading(queryKey: string): void {
+    this.setQuery2State(queryKey, ASYNC_LOADING);
+  }
+
+  public setQuery2OK(queryKey: string): void {
+    this.setQuery2State(queryKey, ASYNC_OK);
+  }
+
+  public setQuery2Error(queryKey: string, error: Error): void {
+    this.setQuery2State(queryKey, { isLoading: false, error });
+  }
+
+  // Query 3
+  public setQuery3Loading(queryKey: string): void {
+    this.setQuery3State(queryKey, ASYNC_LOADING);
+  }
+
+  private setQuery3OK(queryKey: string): void {
+    this.setQuery3State(queryKey, ASYNC_OK);
+  }
+
+  public setQuery3Error(queryKey: string, error: Error): void {
+    this.setQuery3State(queryKey, { isLoading: false, error });
+  }
+
+  // Query 4
+  public setQuery4Loading(queryKey: string): void {
+    this.setQuery4State(queryKey, ASYNC_LOADING);
+  }
+
+  private setQuery4OK(queryKey: string): void {
+    this.setQuery4State(queryKey, ASYNC_OK);
+  }
+
+  public setQuery4Error(queryKey: string, error: Error): void {
+    this.setQuery4State(queryKey, { isLoading: false, error });
   }
 }
 
@@ -892,20 +1031,21 @@ export class UmbrellaStore<M extends BaseMetadata> {
 function internalToExternalState<M extends BaseMetadata>(
   state: InternalState<M>
 ): UmbrellaStoreState<M> {
-  const output = {
-    threads: { ...state.rawThreadsById },
-    inboxNotifications: { ...state.inboxNotificationsById },
-    notificationSettings: { ...state.notificationSettingsByRoomId },
+  const computed = {
+    threadsById: { ...state.rawThreadsById },
+    inboxNotificationsById: { ...state.inboxNotificationsById },
+    notificationSettingsByRoomId: { ...state.notificationSettingsByRoomId },
   };
 
   for (const optimisticUpdate of state.optimisticUpdates) {
     switch (optimisticUpdate.type) {
       case "create-thread": {
-        output.threads[optimisticUpdate.thread.id] = optimisticUpdate.thread;
+        computed.threadsById[optimisticUpdate.thread.id] =
+          optimisticUpdate.thread;
         break;
       }
       case "edit-thread-metadata": {
-        const thread = output.threads[optimisticUpdate.threadId];
+        const thread = computed.threadsById[optimisticUpdate.threadId];
         // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
@@ -924,7 +1064,7 @@ function internalToExternalState<M extends BaseMetadata>(
           break;
         }
 
-        output.threads[thread.id] = {
+        computed.threadsById[thread.id] = {
           ...thread,
           updatedAt: optimisticUpdate.updatedAt,
           metadata: {
@@ -936,7 +1076,7 @@ function internalToExternalState<M extends BaseMetadata>(
         break;
       }
       case "mark-thread-as-resolved": {
-        const thread = output.threads[optimisticUpdate.threadId];
+        const thread = computed.threadsById[optimisticUpdate.threadId];
         // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
@@ -947,7 +1087,7 @@ function internalToExternalState<M extends BaseMetadata>(
           break;
         }
 
-        output.threads[thread.id] = {
+        computed.threadsById[thread.id] = {
           ...thread,
           resolved: true,
         };
@@ -955,7 +1095,7 @@ function internalToExternalState<M extends BaseMetadata>(
         break;
       }
       case "mark-thread-as-unresolved": {
-        const thread = output.threads[optimisticUpdate.threadId];
+        const thread = computed.threadsById[optimisticUpdate.threadId];
         // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
@@ -966,7 +1106,7 @@ function internalToExternalState<M extends BaseMetadata>(
           break;
         }
 
-        output.threads[thread.id] = {
+        computed.threadsById[thread.id] = {
           ...thread,
           resolved: false,
         };
@@ -974,18 +1114,20 @@ function internalToExternalState<M extends BaseMetadata>(
         break;
       }
       case "create-comment": {
-        const thread = output.threads[optimisticUpdate.comment.threadId];
+        const thread = computed.threadsById[optimisticUpdate.comment.threadId];
         // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
         }
 
-        output.threads[thread.id] = applyUpsertComment(
+        computed.threadsById[thread.id] = applyUpsertComment(
           thread,
           optimisticUpdate.comment
         );
 
-        const inboxNotification = Object.values(output.inboxNotifications).find(
+        const inboxNotification = Object.values(
+          computed.inboxNotificationsById
+        ).find(
           (notification) =>
             notification.kind === "thread" &&
             notification.threadId === thread.id
@@ -995,7 +1137,7 @@ function internalToExternalState<M extends BaseMetadata>(
           break;
         }
 
-        output.inboxNotifications[inboxNotification.id] = {
+        computed.inboxNotificationsById[inboxNotification.id] = {
           ...inboxNotification,
           notifiedAt: optimisticUpdate.comment.createdAt,
           readAt: optimisticUpdate.comment.createdAt,
@@ -1004,13 +1146,13 @@ function internalToExternalState<M extends BaseMetadata>(
         break;
       }
       case "edit-comment": {
-        const thread = output.threads[optimisticUpdate.comment.threadId];
+        const thread = computed.threadsById[optimisticUpdate.comment.threadId];
         // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
         }
 
-        output.threads[thread.id] = applyUpsertComment(
+        computed.threadsById[thread.id] = applyUpsertComment(
           thread,
           optimisticUpdate.comment
         );
@@ -1018,13 +1160,13 @@ function internalToExternalState<M extends BaseMetadata>(
         break;
       }
       case "delete-comment": {
-        const thread = output.threads[optimisticUpdate.threadId];
+        const thread = computed.threadsById[optimisticUpdate.threadId];
         // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
         }
 
-        output.threads[thread.id] = applyDeleteComment(
+        computed.threadsById[thread.id] = applyDeleteComment(
           thread,
           optimisticUpdate.commentId,
           optimisticUpdate.deletedAt
@@ -1034,14 +1176,14 @@ function internalToExternalState<M extends BaseMetadata>(
       }
 
       case "delete-thread": {
-        const thread = output.threads[optimisticUpdate.threadId];
+        const thread = computed.threadsById[optimisticUpdate.threadId];
         // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
         }
 
-        output.threads[optimisticUpdate.threadId] = {
-          ...output.threads[optimisticUpdate.threadId],
+        computed.threadsById[optimisticUpdate.threadId] = {
+          ...thread,
           deletedAt: optimisticUpdate.deletedAt,
           updatedAt: optimisticUpdate.deletedAt,
           comments: [],
@@ -1049,13 +1191,13 @@ function internalToExternalState<M extends BaseMetadata>(
         break;
       }
       case "add-reaction": {
-        const thread = output.threads[optimisticUpdate.threadId];
+        const thread = computed.threadsById[optimisticUpdate.threadId];
         // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
         }
 
-        output.threads[thread.id] = applyAddReaction(
+        computed.threadsById[thread.id] = applyAddReaction(
           thread,
           optimisticUpdate.commentId,
           optimisticUpdate.reaction
@@ -1064,13 +1206,13 @@ function internalToExternalState<M extends BaseMetadata>(
         break;
       }
       case "remove-reaction": {
-        const thread = output.threads[optimisticUpdate.threadId];
+        const thread = computed.threadsById[optimisticUpdate.threadId];
         // If the thread doesn't exist in the cache, we do not apply the update
         if (thread === undefined) {
           break;
         }
 
-        output.threads[thread.id] = applyRemoveReaction(
+        computed.threadsById[thread.id] = applyRemoveReaction(
           thread,
           optimisticUpdate.commentId,
           optimisticUpdate.emoji,
@@ -1081,36 +1223,56 @@ function internalToExternalState<M extends BaseMetadata>(
         break;
       }
       case "mark-inbox-notification-as-read": {
-        output.inboxNotifications[optimisticUpdate.inboxNotificationId] = {
-          ...state.inboxNotificationsById[optimisticUpdate.inboxNotificationId],
-          readAt: optimisticUpdate.readAt,
-        };
+        const ibn =
+          computed.inboxNotificationsById[optimisticUpdate.inboxNotificationId];
+
+        // If the inbox notification doesn't exist in the cache, we do not apply the update
+        if (ibn === undefined) {
+          break;
+        }
+
+        computed.inboxNotificationsById[optimisticUpdate.inboxNotificationId] =
+          { ...ibn, readAt: optimisticUpdate.readAt };
         break;
       }
       case "mark-all-inbox-notifications-as-read": {
-        for (const id in output.inboxNotifications) {
-          output.inboxNotifications[id] = {
-            ...output.inboxNotifications[id],
+        for (const id in computed.inboxNotificationsById) {
+          const ibn = computed.inboxNotificationsById[id];
+
+          // If the inbox notification doesn't exist in the cache, we do not apply the update
+          if (ibn === undefined) {
+            break;
+          }
+
+          computed.inboxNotificationsById[id] = {
+            ...ibn,
             readAt: optimisticUpdate.readAt,
           };
         }
         break;
       }
       case "delete-inbox-notification": {
-        const {
-          [optimisticUpdate.inboxNotificationId]: _,
-          ...inboxNotifications
-        } = output.inboxNotifications;
-        output.inboxNotifications = inboxNotifications;
+        delete computed.inboxNotificationsById[
+          optimisticUpdate.inboxNotificationId
+        ];
         break;
       }
       case "delete-all-inbox-notifications": {
-        output.inboxNotifications = {};
+        computed.inboxNotificationsById = {};
         break;
       }
+
       case "update-notification-settings": {
-        output.notificationSettings[optimisticUpdate.roomId] = {
-          ...output.notificationSettings[optimisticUpdate.roomId],
+        const settings =
+          computed.notificationSettingsByRoomId[optimisticUpdate.roomId];
+
+        // If the inbox notification doesn't exist in the cache, we do not apply the update
+        if (settings === undefined) {
+          break;
+        }
+
+        computed.notificationSettingsByRoomId[optimisticUpdate.roomId] = {
+          ...settings,
           ...optimisticUpdate.settings,
         };
       }
@@ -1119,23 +1281,35 @@ function internalToExternalState<M extends BaseMetadata>(
 
   const cleanedThreads =
     // Don't expose any soft-deleted threads
-    Object.values(output.threads).filter(
-      (thread): thread is ThreadData<M> => !thread.deletedAt
-    );
+    Object.values(computed.threadsById)
+      .filter((thread): thread is ThreadData<M> => !thread.deletedAt)
 
+      .filter((thread) =>
+        // Only keep a thread if there is at least one non-deleted comment
+        thread.comments.some((c) => c.deletedAt === undefined)
+      );
+
+  // TODO Maybe consider also removing these from the inboxNotificationsById registry?
   const cleanedNotifications =
     // Sort so that the most recent notifications are first
-    Object.values(output.inboxNotifications).sort(
-      (a, b) => b.notifiedAt.getTime() - a.notifiedAt.getTime()
-    );
+    Object.values(computed.inboxNotificationsById)
+      .filter((ibn) =>
+        ibn.kind === "thread"
+          ? computed.threadsById[ibn.threadId] &&
+            computed.threadsById[ibn.threadId]?.deletedAt === undefined
+          : true
+      )
+      .sort((a, b) => b.notifiedAt.getTime() - a.notifiedAt.getTime());
 
   return {
     inboxNotifications: cleanedNotifications,
-    inboxNotificationsById: output.inboxNotifications,
-    notificationSettingsByRoomId: output.notificationSettings,
-    queries: state.queries,
+    inboxNotificationsById: computed.inboxNotificationsById,
+    notificationSettingsByRoomId: computed.notificationSettingsByRoomId,
+    queries2: state.queries2,
+    queries3: state.queries3,
+    queries4: state.queries4,
     threads: cleanedThreads,
-    threadsById: output.threads,
+    threadsById: computed.threadsById,
     versionsByRoomId: state.versionsByRoomId,
   };
 }
@@ -1349,13 +1523,13 @@ export function applyDeleteComment<M extends BaseMetadata>(
       : comment
   );
 
-  // If all comments have been deleted, we mark the thread as deleted
-  if (!updatedComments.some((comment) => comment.deletedAt === undefined)) {
+  // If all comments have been deleted (or there are no comments in the first
+  // place), we mark the thread as deleted.
+  if (updatedComments.every((comment) => comment.deletedAt !== undefined)) {
     return {
       ...thread,
       deletedAt,
       updatedAt: deletedAt,
-      comments: [],
     };
   }
 

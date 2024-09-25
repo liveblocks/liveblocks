@@ -2833,6 +2833,9 @@ Creates a local attachment from a file.
 const attachment = room.prepareAttachment({
   file: new File(["Hello, world!"], "hello.txt"),
 });
+
+// { "id": "at_1e6nNX...", "name": "hello.txt", "type": "attachment", ... }
+console.log(attachment);
 ```
 
 <PropertiesList title="Returns">
@@ -2895,6 +2898,9 @@ Returns a presigned URL for an attachment by its ID.
 
 ```ts
 const url = await room.getAttachmentUrl("at_xxx");
+
+// "https://..."
+console.log(url);
 ```
 
 <PropertiesList title="Returns">

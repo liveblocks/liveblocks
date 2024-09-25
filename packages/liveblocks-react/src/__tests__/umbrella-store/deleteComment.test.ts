@@ -94,7 +94,7 @@ describe("deleteComment", () => {
       new Date("2024-01-03")
     );
 
-    expect(updatedThread.comments[0].deletedAt).toEqual(comment.deletedAt); // Ensure the original deletion time is preserved
+    expect(updatedThread.comments[0]?.deletedAt).toEqual(comment.deletedAt); // Ensure the original deletion time is preserved
     expect(updatedThread.updatedAt).toEqual(thread.updatedAt); // The thread's updatedAt should not change
   });
 

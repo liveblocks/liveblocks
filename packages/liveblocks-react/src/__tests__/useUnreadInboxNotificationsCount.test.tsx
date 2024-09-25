@@ -31,7 +31,7 @@ describe("useUnreadInboxNotificationsCount", () => {
     const threads = [dummyThreadData({ roomId })];
     const inboxNotification = dummyThreadInboxNotificationData({
       roomId,
-      threadId: threads[0].id,
+      threadId: threads[0]!.id,
       readAt: null,
     });
     const inboxNotifications = [inboxNotification];
@@ -86,7 +86,7 @@ describe("useUnreadInboxNotificationsCount - Suspense", () => {
     const threads = [dummyThreadData({ roomId })];
     const inboxNotification = dummyThreadInboxNotificationData({
       roomId,
-      threadId: threads[0].id,
+      threadId: threads[0]!.id,
       readAt: null,
     });
     const inboxNotifications = [inboxNotification];

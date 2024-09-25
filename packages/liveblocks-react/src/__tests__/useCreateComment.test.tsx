@@ -98,11 +98,11 @@ describe("useCreateComment", () => {
       })
     );
 
-    expect(result.current.threads![0].comments[1]).toEqual(comment);
+    expect(result.current.threads?.[0]?.comments[1]).toEqual(comment);
 
     // We're using the createdDate overriden by the server to ensure the optimistic update have been properly deleted
     await waitFor(() =>
-      expect(result.current.threads![0].comments[1].createdAt).toEqual(
+      expect(result.current.threads?.[0]?.comments[1]?.createdAt).toEqual(
         fakeCreatedAt
       )
     );
@@ -261,7 +261,7 @@ describe("useCreateComment", () => {
       })
     );
 
-    expect(result.current.threads![0].comments[1]).toEqual(comment);
+    expect(result.current.threads?.[0]?.comments[1]).toEqual(comment);
 
     // Wait for optimistic update to be rolled back
     await waitFor(() =>

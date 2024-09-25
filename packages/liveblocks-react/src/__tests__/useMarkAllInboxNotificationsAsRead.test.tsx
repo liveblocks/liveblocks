@@ -27,12 +27,12 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
     const inboxNotifications = [
       dummyThreadInboxNotificationData({
         roomId,
-        threadId: threads[0].id,
+        threadId: threads[0]!.id,
         readAt: null,
       }),
       dummyThreadInboxNotificationData({
         roomId,
-        threadId: threads[1].id,
+        threadId: threads?.[1]?.id,
         readAt: null,
       }),
     ];
@@ -80,16 +80,18 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
       }
     );
 
-    await waitFor(() =>
-      expect(result.current.inboxNotifications).toEqual(inboxNotifications)
-    );
+    await waitFor(() => {
+      expect(result.current.inboxNotifications).toEqual(
+        expect.arrayContaining(inboxNotifications)
+      );
+    });
 
     act(() => {
       result.current.markAllInboxNotificationsAsRead();
     });
 
-    expect(result.current.inboxNotifications![0].readAt).not.toBe(null);
-    expect(result.current.inboxNotifications![1].readAt).not.toBe(null);
+    expect(result.current.inboxNotifications?.[0]?.readAt).not.toBe(null);
+    expect(result.current.inboxNotifications?.[1]?.readAt).not.toBe(null);
 
     unmount();
   });
@@ -100,13 +102,13 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
     const inboxNotifications = [
       dummyThreadInboxNotificationData({
         roomId,
-        threadId: threads[0].id,
+        threadId: threads[0]!.id,
         readAt: null,
         notifiedAt: new Date(2024, 3, 6),
       }),
       dummyThreadInboxNotificationData({
         roomId,
-        threadId: threads[1].id,
+        threadId: threads?.[1]?.id,
         readAt: null,
         notifiedAt: new Date(2024, 3, 5),
       }),
@@ -151,7 +153,9 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
     );
 
     await waitFor(() =>
-      expect(result.current.inboxNotifications).toEqual(inboxNotifications)
+      expect(result.current.inboxNotifications).toEqual(
+        expect.arrayContaining(inboxNotifications)
+      )
     );
 
     act(() => {
@@ -159,13 +163,13 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
     });
 
     // We mark the notifications as read optimitiscally
-    expect(result.current.inboxNotifications![0].readAt).not.toBe(null);
-    expect(result.current.inboxNotifications![1].readAt).not.toBe(null);
+    expect(result.current.inboxNotifications?.[0]?.readAt).not.toBe(null);
+    expect(result.current.inboxNotifications?.[1]?.readAt).not.toBe(null);
 
     await waitFor(() => {
       // The readAt field should have been updated in the inbox notifications cache
-      expect(result.current.inboxNotifications![0].readAt).toEqual(null);
-      expect(result.current.inboxNotifications![1].readAt).toEqual(null);
+      expect(result.current.inboxNotifications?.[0]?.readAt).toEqual(null);
+      expect(result.current.inboxNotifications?.[1]?.readAt).toEqual(null);
     });
 
     unmount();
