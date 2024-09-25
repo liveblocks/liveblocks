@@ -5,6 +5,7 @@ import type {
   CommentReaction,
   CommentUserReaction,
   DistributiveOmit,
+  GetThreadsOptions,
   HistoryVersion,
   InboxNotificationData,
   InboxNotificationDeleteInfo,
@@ -22,12 +23,15 @@ import {
   console,
   createStore,
   INBOX_NOTIFICATIONS_PAGE_SIZE,
+  kInternal,
   mapValues,
   nanoid,
   nn,
 } from "@liveblocks/core";
 
 import { isMoreRecentlyUpdated } from "./lib/compare";
+import { autoRetry } from "./lib/retry-error";
+import { generateQueryKey } from "./room";
 import type {
   InboxNotificationsAsyncResult,
   RoomNotificationSettingsAsyncResult,
@@ -193,6 +197,24 @@ type InternalState<M extends BaseMetadata> = Readonly<{
   queries3: Record<string, QueryAsyncResult>; // Notification settings
   queries4: Record<string, QueryAsyncResult>; // Versions
 
+  loadThreadsRequests: Record<
+    string,
+    | {
+        promise: Promise<ThreadData[]>;
+        status: "pending";
+      }
+    | {
+        promise: Promise<ThreadData[]>;
+        status: "fulfilled";
+        value: ThreadData[];
+      }
+    | {
+        promise: Promise<ThreadData[]>;
+        status: "rejected";
+        error: Error;
+      }
+  >;
+
   optimisticUpdates: readonly OptimisticUpdate<M>[];
 
   rawThreadsById: Record<string, ThreadDataWithDeleteInfo<M>>;
@@ -261,12 +283,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
   private _store: Store<InternalState<M>>;
   private _prevState: InternalState<M> | null = null;
   private _stateCached: UmbrellaStoreState<M> | null = null;
+  private _lastRequestedAtByRoom = new Map<string, Date>(); // A map of room ids to the timestamp when the last request for threads updates was made
 
   constructor(client?: OpaqueClient) {
     this._client = client;
     this._store = createStore<InternalState<M>>({
       rawThreadsById: {},
       // queries: {},
+      loadThreadsRequests: {},
       query1: undefined,
       queries2: {},
       queries3: {},
@@ -1103,6 +1127,137 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   public setQuery4Error(queryKey: string, error: Error): void {
     this.setQuery4State(queryKey, { isLoading: false, error });
+  }
+
+  public loadThreadsAndNotifications(
+    roomId: string,
+    options: GetThreadsOptions<BaseMetadata>,
+    queryKey: string
+  ): Promise<ThreadData[]> {
+    const internalStore = this._store.get();
+
+    const existingRequest = internalStore.loadThreadsRequests[queryKey];
+    if (existingRequest !== undefined) return existingRequest.promise;
+
+    const loadThreadsPromise = autoRetry(
+      async () => {
+        const result = await nn(
+          this._client,
+          "Client is required in order to load threads and notifications for the room"
+        )[kInternal].getRoomThreads(roomId, options);
+
+        this.updateThreadsAndNotifications(
+          result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
+          result.inboxNotifications,
+          [], // XXX Confirm if this should be an empty array or not
+          []
+        );
+
+        const lastRequestedAt = this._lastRequestedAtByRoom.get(roomId);
+
+        /**
+         * We set the `lastRequestedAt` value for the room to the timestamp returned by the current request if:
+         * 1. The `lastRequestedAt` value for the room has not been set
+         * OR
+         * 2. The `lastRequestedAt` value for the room is older than the timestamp returned by the current request
+         */
+        if (
+          lastRequestedAt === undefined ||
+          lastRequestedAt > result.requestedAt
+        ) {
+          this._lastRequestedAtByRoom.set(roomId, result.requestedAt);
+        }
+
+        return result.threads;
+      },
+      5,
+      [5000, 5000, 10000, 15000]
+    );
+
+    // Store the promise to load threads and set the status to 'pending'
+    this._store.set((state) => ({
+      ...state,
+      loadThreadsRequests: {
+        ...state.loadThreadsRequests,
+        [queryKey]: {
+          promise: loadThreadsPromise,
+          status: "pending",
+        },
+      },
+    }));
+
+    type UsablePromise<T> = Promise<T> &
+      (
+        | {
+            status: "pending";
+          }
+        | {
+            status: "rejected";
+            reason: Error;
+          }
+        | {
+            status: "fulfilled";
+            value: T;
+          }
+      );
+
+    (loadThreadsPromise as UsablePromise<ThreadData[]>).status = "pending";
+
+    loadThreadsPromise
+      .then((result) => {
+        (loadThreadsPromise as UsablePromise<ThreadData[]>).status =
+          "fulfilled";
+
+        this._store.set((state) => ({
+          ...state,
+          loadThreadsRequests: {
+            ...state.loadThreadsRequests,
+            [queryKey]: {
+              promise: loadThreadsPromise,
+              status: "fulfilled",
+              value: result,
+            },
+          },
+        }));
+      })
+      .catch((err: Error) => {
+        (loadThreadsPromise as UsablePromise<ThreadData[]>).status = "rejected";
+
+        this._store.set((state) => ({
+          ...state,
+          loadThreadsRequests: {
+            ...state.loadThreadsRequests,
+            [queryKey]: {
+              promise: loadThreadsPromise,
+              status: "rejected",
+              error: err,
+            },
+          },
+        }));
+
+        setTimeout(() => {
+          const { [queryKey]: _, ...remainingRequests } =
+            this._store.get().loadThreadsRequests;
+
+          this._store.set((state) => ({
+            ...state,
+            loadThreadsRequests: remainingRequests,
+          }));
+        });
+        throw err;
+      });
+
+    return loadThreadsPromise;
+  }
+
+  public getQueryStatus(
+    roomId: string,
+    options: GetThreadsOptions<BaseMetadata>
+  ): "pending" | "fulfilled" | "rejected" | null {
+    const queryKey = generateQueryKey(roomId, options.query);
+    const request = this._store.get().loadThreadsRequests[queryKey];
+    if (request === undefined) return null;
+    return request.status;
   }
 }
 
