@@ -25,9 +25,7 @@ describe("convert comment body as React", () => {
       const markupBody = renderToStaticMarkup(<>{reactBody}</>);
       const expected = renderToStaticMarkup(
         <div>
-          <p key="lb-comment-body-paragraph-0">
-            What do you think of this team? 🤔
-          </p>
+          <p>What do you think of this team? 🤔</p>
         </div>
       );
 
@@ -40,7 +38,7 @@ describe("convert comment body as React", () => {
       const markupBody = renderToStaticMarkup(<>{reactBody}</>);
       const expected = renderToStaticMarkup(
         <div>
-          <p key="lb-comment-body-paragraph-0">
+          <p>
             <strong>Bold text</strong> and <em>italic text</em>
           </p>
         </div>
@@ -55,7 +53,7 @@ describe("convert comment body as React", () => {
       const markupBody = renderToStaticMarkup(<>{reactBody}</>);
       const expected = renderToStaticMarkup(
         <div>
-          <p key="lb-comment-body-paragraph-0">
+          <p>
             <s>Strikethrough text</s> and <code>code text</code>
           </p>
         </div>
@@ -75,7 +73,7 @@ describe("convert comment body as React", () => {
 
       const expected1 = renderToStaticMarkup(
         <div>
-          <p key="lb-comment-body-paragraph-0">
+          <p>
             I agree 😍 it completes well this guide:{" "}
             <a
               href="https://www.liveblocks.io"
@@ -90,7 +88,7 @@ describe("convert comment body as React", () => {
 
       const expected2 = renderToStaticMarkup(
         <div>
-          <p key="lb-comment-body-paragraph-0">
+          <p>
             Check out this{" "}
             <a
               href="https://www.liveblocks.io"
@@ -115,7 +113,7 @@ describe("convert comment body as React", () => {
       const markupBody = renderToStaticMarkup(reactBody);
       const expected = renderToStaticMarkup(
         <div>
-          <p key="lb-comment-body-paragraph-0">
+          <p>
             Hello <span data-mention>@user-dracula</span> !
           </p>
         </div>
@@ -135,7 +133,7 @@ describe("convert comment body as React", () => {
       const markupBody = renderToStaticMarkup(reactBody);
       const expected = renderToStaticMarkup(
         <div>
-          <p key="lb-comment-body-paragraph-0">
+          <p>
             Hello <span data-mention>@Tatum Paolo</span> !
           </p>
         </div>
@@ -153,14 +151,20 @@ describe("convert comment body as React", () => {
     const Paragraph = (
       { children }: CommentBodyParagraphComponentArgs,
       index: number
-    ) => (
-      <p style={{ display: "flex" }} key={`rs-paragraph-${index}`}>
-        {children}
-      </p>
-    );
+    ) => {
+      console.log(`rs-paragraph-${index}`);
+      return (
+        <p style={{ display: "flex" }} key={`rs-paragraph-${index}`}>
+          {children}
+        </p>
+      );
+    };
 
-    const Mention = ({ element, user }: CommentBodyMentionComponentArgs) => (
-      <span>user#{user?.name ?? element.id}</span>
+    const Mention = (
+      { element, user }: CommentBodyMentionComponentArgs,
+      index: number
+    ) => (
+      <span key={`rs-mention-${index}`}>user#{user?.name ?? element.id}</span>
     );
 
     it("should converts with custom components", async () => {

@@ -102,7 +102,7 @@ export type ConvertCommentBodyAsReactComponents<U extends BaseUserMeta = DU> = {
 };
 
 const baseComponents: ConvertCommentBodyAsReactComponents<BaseUserMeta> = {
-  Slot: ({ children }) => <div>{children}</div>,
+  Slot: ({ children }) => <div key={"lb-comment-body-slot"}>{children}</div>,
   Paragraph: ({ children }, index) => (
     <p key={`lb-comment-body-paragraph-${index}`}>{children}</p>
   ),

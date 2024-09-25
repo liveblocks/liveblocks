@@ -717,8 +717,11 @@ describe("thread notification", () => {
         <main>{children}</main>
       );
 
-      const Mention = ({ element, user }: CommentBodyMentionComponentArgs) => (
-        <span>u#{user?.name ?? element.id}</span>
+      const Mention = (
+        { element, user }: CommentBodyMentionComponentArgs,
+        index: number
+      ) => (
+        <span key={`rs-mention-${index}`}>u#{user?.name ?? element.id}</span>
       );
 
       const { comment, thread, inboxNotification, event } =
@@ -961,8 +964,11 @@ describe("thread notification", () => {
         <main>{children}</main>
       );
 
-      const Link = ({ element, href }: CommentBodyLinkElementArgs) => (
-        <a href={href} data-link>
+      const Link = (
+        { element, href }: CommentBodyLinkElementArgs,
+        index: number
+      ) => (
+        <a key={`rs-link-${index}`} href={href} data-link>
           {element.text ?? element.url}
         </a>
       );
