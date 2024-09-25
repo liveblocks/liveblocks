@@ -1,7 +1,12 @@
+import type { CommentBodyLinkElementArgs } from "@liveblocks/node";
 import { Liveblocks } from "@liveblocks/node";
 import { http, HttpResponse } from "msw";
 import React from "react";
 
+import type {
+  CommentBodyMentionComponentArgs,
+  CommentBodySlotComponentsArgs,
+} from "../comment-body";
 import type {
   CommentEmailBaseData,
   ThreadNotificationBaseData,
@@ -760,6 +765,144 @@ describe("thread notification", () => {
       );
     });
 
+    describe("unread mention w/ custom components", () => {
+      const Slot = ({ children }: CommentBodySlotComponentsArgs) => (
+        <main>{children}</main>
+      );
+
+      const Mention = ({ element, user }: CommentBodyMentionComponentArgs) => (
+        <span>u#{user?.name ?? element.id}</span>
+      );
+
+      const threadId = generateThreadId();
+      const comment = makeComment({
+        userId: "user-0",
+        threadId,
+        body: buildCommentBodyWithMention({ mentionedUserId: "user-1" }),
+        createdAt: new Date("2024-09-10T08:04:00.000Z"),
+      });
+      const thread = makeThread({ threadId, comments: [comment] });
+      const inboxNotification = makeThreadInboxNotification({
+        threadId,
+        notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
+      });
+      const event = makeThreadNotificationEvent({
+        threadId,
+        userId: "user-1",
+        inboxNotificationId: inboxNotification.id,
+      });
+
+      const expected1: ThreadNotificationEmailAsReact = {
+        type: "unreadMention",
+        comment: {
+          id: comment.id,
+          threadId: thread.id,
+          roomId: ROOM_ID_TEST,
+          createdAt: comment.createdAt,
+          author: {
+            id: comment.userId,
+            info: {
+              name: comment.userId,
+            },
+          },
+          reactBody: (
+            <main>
+              <p>
+                Hello <span>u#user-1</span> !
+              </p>
+            </main>
+          ),
+          url: undefined,
+        },
+        roomInfo: { name: ROOM_ID_TEST },
+      };
+
+      const expected2: ThreadNotificationEmailAsReact = {
+        type: "unreadMention",
+        comment: {
+          id: comment.id,
+          threadId: thread.id,
+          roomId: ROOM_ID_TEST,
+          createdAt: comment.createdAt,
+          author: {
+            id: comment.userId,
+            info: {
+              name: "Charlie Layne",
+            },
+          },
+          reactBody: (
+            <main>
+              <p>
+                Hello <span>u#Mislav Abha</span> !
+              </p>
+            </main>
+          ),
+          url: getResolvedCommentUrl(comment.id),
+        },
+        roomInfo: RESOLVED_ROOM_INFO_TEST,
+      };
+
+      it.each<{
+        withResolvers: boolean;
+        promise: () => Promise<ThreadNotificationEmailAsReact>;
+        expected: ThreadNotificationEmailAsReact;
+      }>([
+        {
+          withResolvers: false,
+          promise: () =>
+            prepareThreadNotificationEmailAsReact({
+              client,
+              event,
+              options: {
+                commentBodyComponents: { Slot, Mention },
+              },
+            }),
+          expected: expected1,
+        },
+        {
+          withResolvers: true,
+          promise: () =>
+            prepareThreadNotificationEmailAsReact({
+              client,
+              event,
+              options: {
+                resolveUsers,
+                resolveRoomInfo,
+                commentBodyComponents: { Slot, Mention },
+              },
+            }),
+          expected: expected2,
+        },
+      ])(
+        "should return unread mention as React with resolvers: $withResolvers",
+        async ({ promise, expected }) => {
+          server.use(
+            http.get(
+              `${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`,
+              () => HttpResponse.json(thread, { status: 200 })
+            )
+          );
+
+          server.use(
+            http.get(
+              `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
+              () => HttpResponse.json(inboxNotification, { status: 200 })
+            )
+          );
+
+          const threadNotificationEmailAsReact = await promise();
+
+          const resultConverted = commentBodiesAsReactToStaticMarkup(
+            threadNotificationEmailAsReact
+          );
+          const expectedConverted =
+            commentBodiesAsReactToStaticMarkup(expected);
+
+          expect(resultConverted).toEqual(expectedConverted);
+        }
+      );
+    });
+
     describe("unread replies w/o custom components", () => {
       const threadId = generateThreadId();
       const comment1 = makeComment({
@@ -876,7 +1019,162 @@ describe("thread notification", () => {
           expected: expected2,
         },
       ])(
-        "should return unread mention as React with resolvers: $withResolvers",
+        "should return unread replies as React with resolvers: $withResolvers",
+        async ({ promise, expected }) => {
+          server.use(
+            http.get(
+              `${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`,
+              () => HttpResponse.json(thread, { status: 200 })
+            )
+          );
+
+          server.use(
+            http.get(
+              `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
+              () => HttpResponse.json(inboxNotification, { status: 200 })
+            )
+          );
+
+          const threadNotificationEmailAsReact = await promise();
+
+          const resultConverted = commentBodiesAsReactToStaticMarkup(
+            threadNotificationEmailAsReact
+          );
+          const expectedConverted =
+            commentBodiesAsReactToStaticMarkup(expected);
+
+          expect(resultConverted).toEqual(expectedConverted);
+        }
+      );
+    });
+
+    describe("unread replies w/ custom components", () => {
+      const Slot = ({ children }: CommentBodySlotComponentsArgs) => (
+        <main>{children}</main>
+      );
+
+      const Link = ({ element, href }: CommentBodyLinkElementArgs) => (
+        <a href={href} data-link>
+          {element.text ?? element.url}
+        </a>
+      );
+
+      const threadId = generateThreadId();
+      const comment1 = makeComment({
+        userId: "user-0",
+        threadId,
+        body: commentBody1,
+        createdAt: new Date("2024-09-10T08:10:00.000Z"),
+      });
+      const comment2 = makeComment({
+        userId: "user-1",
+        threadId,
+        body: commentBody4,
+        createdAt: new Date("2024-09-10T08:14:00.000Z"),
+      });
+      const thread = makeThread({
+        threadId,
+        comments: [comment1, comment2],
+      });
+      const inboxNotification = makeThreadInboxNotification({
+        threadId,
+        notifiedAt: new Date("2024-09-10T08:20:00.000Z"),
+      });
+      const event = makeThreadNotificationEvent({
+        threadId,
+        userId: "user-0",
+        inboxNotificationId: inboxNotification.id,
+      });
+
+      const expected1: ThreadNotificationEmailAsReact = {
+        type: "unreadReplies",
+        comments: [
+          {
+            id: comment2.id,
+            threadId: thread.id,
+            roomId: ROOM_ID_TEST,
+            createdAt: comment2.createdAt,
+            author: {
+              id: comment2.userId,
+              info: {
+                name: comment2.userId,
+              },
+            },
+            reactBody: (
+              <main>
+                <p>
+                  I agree 😍 it completes well this guide:{" "}
+                  <a href="https://www.liveblocks.io" data-link>
+                    https://www.liveblocks.io
+                  </a>
+                </p>
+              </main>
+            ),
+            url: undefined,
+          },
+        ],
+        roomInfo: { name: ROOM_ID_TEST },
+      };
+
+      const expected2: ThreadNotificationEmailAsReact = {
+        type: "unreadReplies",
+        comments: [
+          {
+            id: comment2.id,
+            threadId: thread.id,
+            roomId: ROOM_ID_TEST,
+            createdAt: comment2.createdAt,
+            author: {
+              id: comment2.userId,
+              info: { name: "Mislav Abha" },
+            },
+            reactBody: (
+              <main>
+                <p>
+                  I agree 😍 it completes well this guide:{" "}
+                  <a href="https://www.liveblocks.io" data-link>
+                    https://www.liveblocks.io
+                  </a>
+                </p>
+              </main>
+            ),
+            url: getResolvedCommentUrl(comment2.id),
+          },
+        ],
+        roomInfo: RESOLVED_ROOM_INFO_TEST,
+      };
+
+      it.each<{
+        withResolvers: boolean;
+        promise: () => Promise<ThreadNotificationEmailAsReact>;
+        expected: ThreadNotificationEmailAsReact;
+      }>([
+        {
+          withResolvers: false,
+          promise: () =>
+            prepareThreadNotificationEmailAsReact({
+              client,
+              event,
+              options: { commentBodyComponents: { Slot, Link } },
+            }),
+          expected: expected1,
+        },
+        {
+          withResolvers: true,
+          promise: () =>
+            prepareThreadNotificationEmailAsReact({
+              client,
+              event,
+              options: {
+                resolveUsers,
+                resolveRoomInfo,
+                commentBodyComponents: { Slot, Link },
+              },
+            }),
+          expected: expected2,
+        },
+      ])(
+        "should return unread replies as React with resolvers: $withResolvers",
         async ({ promise, expected }) => {
           server.use(
             http.get(
