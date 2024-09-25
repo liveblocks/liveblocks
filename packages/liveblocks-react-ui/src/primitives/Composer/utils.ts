@@ -450,13 +450,18 @@ function createComposerAttachmentsManager(
     return cachedSnapshot;
   }
 
+  // Clear all attachments and abort all ongoing uploads
   function clear() {
     abortControllers.forEach((controller) => controller.abort());
     abortControllers.clear();
-    eventSource.clear();
     attachments.clear();
 
     notifySubscribers();
+  }
+
+  function dispose() {
+    clear();
+    eventSource.clear();
   }
 
   return {
@@ -465,6 +470,7 @@ function createComposerAttachmentsManager(
     getSnapshot,
     subscribe: eventSource.subscribe,
     clear,
+    dispose,
   };
 }
 
@@ -487,10 +493,10 @@ export function useComposerAttachmentsManager(
     frozenAttachmentsManager.addAttachments(frozenDefaultAttachments);
   }, [frozenDefaultAttachments, frozenAttachmentsManager]);
 
-  // Clear attachments on unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      frozenAttachmentsManager.clear();
+      frozenAttachmentsManager.dispose();
     };
   }, [frozenAttachmentsManager]);
 
