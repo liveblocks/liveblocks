@@ -274,7 +274,6 @@ function getExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
 function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   const store = getUmbrellaStoreForClient(client);
 
-  const lastRequestedAtByRoom = new Map<string, Date>(); // A map of room ids to the timestamp when the last request for threads updates was made
   const requestsByQuery = new Map<string, Promise<unknown>>(); // A map of query keys to the promise of the request for that query
   const subscribersByQuery = new Map<string, number>(); // A map of query keys to the number of subscribers for that query
 
@@ -360,73 +359,6 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     return;
   }
 
-  // XXX - Remove this method once `useThreads` (non-suspense) is updated to use the `loadThreadsAndNotifications` method
-  async function getThreadsAndInboxNotifications(
-    room: OpaqueRoom,
-    queryKey: string,
-    options: UseThreadsOptions<M>,
-    { retryCount }: { retryCount: number } = { retryCount: 0 }
-  ) {
-    const existingRequest = requestsByQuery.get(queryKey);
-
-    // If a request was already made for the query, we do not make another request and return the existing promise of the request
-    if (existingRequest !== undefined) return existingRequest;
-
-    const request = room.getThreads(options);
-
-    // Store the promise of the request for the query so that we do not make another request for the same query
-    requestsByQuery.set(queryKey, request);
-
-    store.setQuery2Loading(queryKey);
-
-    try {
-      const result = await request;
-
-      store.batch(() => {
-        // 1️⃣
-        store.updateThreadsAndNotifications(
-          result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
-          result.inboxNotifications,
-          [],
-          []
-        );
-
-        // 2️⃣
-        store.setQuery2OK(queryKey);
-      });
-
-      const lastRequestedAt = lastRequestedAtByRoom.get(room.id);
-
-      /**
-       * We set the `lastRequestedAt` value for the room to the timestamp returned by the current request if:
-       * 1. The `lastRequestedAt` value for the room has not been set
-       * OR
-       * 2. The `lastRequestedAt` value for the room is older than the timestamp returned by the current request
-       */
-      if (
-        lastRequestedAt === undefined ||
-        lastRequestedAt > result.requestedAt
-      ) {
-        lastRequestedAtByRoom.set(room.id, result.requestedAt);
-      }
-
-      poller.start(POLLING_INTERVAL);
-    } catch (err) {
-      requestsByQuery.delete(queryKey);
-
-      // Retry the action using the exponential backoff algorithm
-      retryError(() => {
-        void getThreadsAndInboxNotifications(room, queryKey, options, {
-          retryCount: retryCount + 1,
-        });
-      }, retryCount);
-
-      // Set the query state to the error state
-      store.setQuery2Error(queryKey, err as Error);
-    }
-    return;
-  }
-
   async function getInboxNotificationSettings(
     room: OpaqueRoom,
     { retryCount }: { retryCount: number } = { retryCount: 0 }
@@ -489,7 +421,6 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     store,
     incrementQuerySubscribers,
     commentsErrorEventSource,
-    getThreadsAndInboxNotifications,
     getInboxNotificationSettings,
     getRoomVersions,
     onMutationFailure,
@@ -1397,13 +1328,15 @@ function useThreads<M extends BaseMetadata>(
     [room, options]
   );
 
-  const { store, getThreadsAndInboxNotifications, incrementQuerySubscribers } =
-    getExtrasForClient<M>(client);
+  const { store, incrementQuerySubscribers } = getExtrasForClient<M>(client);
 
   React.useEffect(() => {
-    void getThreadsAndInboxNotifications(room, queryKey, options);
+    void store.loadThreadsAndNotifications(room.id, options, queryKey);
+  }, [store, room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  React.useEffect(() => {
     return incrementQuerySubscribers(queryKey);
-  }, [room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [incrementQuerySubscribers, queryKey]);
 
   const getter = React.useCallback(
     () => store.getThreadsAsync(queryKey),
@@ -2471,7 +2404,7 @@ function useThreadsSuspense<M extends BaseMetadata>(
     [room, options]
   );
 
-  const store = getExtrasForClient<M>(client).store;
+  const { store, incrementQuerySubscribers } = getExtrasForClient<M>(client);
 
   use(store.loadThreadsAndNotifications(room.id, options, queryKey));
 
@@ -2490,9 +2423,8 @@ function useThreadsSuspense<M extends BaseMetadata>(
   );
 
   React.useEffect(() => {
-    const { incrementQuerySubscribers } = getExtrasForClient(client);
     return incrementQuerySubscribers(queryKey);
-  }, [client, queryKey]);
+  }, [incrementQuerySubscribers, queryKey]);
 
   const state = useSyncExternalStoreWithSelector(
     store.subscribeThreads,

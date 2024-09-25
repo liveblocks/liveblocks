@@ -30,7 +30,6 @@ import {
 
 import { isMoreRecentlyUpdated } from "./lib/compare";
 import { autoRetry } from "./lib/retry-error";
-import { generateQueryKey } from "./room";
 import type {
   InboxNotificationsAsyncResult,
   RoomNotificationSettingsAsyncResult,
@@ -351,13 +350,16 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): AsyncResult<UmbrellaStoreState<M>, "fullState"> {
     const internalState = this._store.get();
 
-    const query = internalState.queries2[queryKey];
-    if (query === undefined || query.isLoading) {
+    const request = internalState.loadThreadsRequests[queryKey];
+    if (request === undefined || request.status === "pending") {
       return ASYNC_LOADING;
     }
 
-    if (query.error) {
-      return query;
+    if (request.status === "rejected") {
+      return {
+        isLoading: false,
+        error: request.error,
+      };
     }
 
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
@@ -1124,9 +1126,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): Promise<ThreadData[]> {
     const internalStore = this._store.get();
 
+    // If a request was already made for the provided query key, we simply return the existing request.
+    // We do not want to override the existing request with a new request to load threads and notifications
     const existingRequest = internalStore.loadThreadsRequests[queryKey];
     if (existingRequest !== undefined) return existingRequest.promise;
 
+    // Wrap the request to load room threads (and notifications) in an auto-retry function so that if the request fails,
+    // we retry for at most 5 times with incremental backoff delays. If all retries fail, the auto-retry function throws an error
     const loadThreadsPromise = autoRetry(
       async () => {
         const result = await nn(
@@ -1162,18 +1168,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
       [5000, 5000, 10000, 15000]
     );
 
-    // Store the promise to load threads and set the status to 'pending'
-    this._store.set((state) => ({
-      ...state,
-      loadThreadsRequests: {
-        ...state.loadThreadsRequests,
-        [queryKey]: {
-          promise: loadThreadsPromise,
-          status: "pending",
-        },
-      },
-    }));
-
     type UsablePromise<T> = Promise<T> &
       (
         | {
@@ -1189,10 +1183,24 @@ export class UmbrellaStore<M extends BaseMetadata> {
           }
       );
 
+    // Mutate the `loadThreadsPromise` promise by setting the status field to 'pending' and add the promise along with the status on the store
+    // We do it here in addition to storing this field in the store so that the promise can be used in the `use` API polyfill
     (loadThreadsPromise as UsablePromise<ThreadData[]>).status = "pending";
+
+    this._store.set((state) => ({
+      ...state,
+      loadThreadsRequests: {
+        ...state.loadThreadsRequests,
+        [queryKey]: {
+          promise: loadThreadsPromise,
+          status: "pending",
+        },
+      },
+    }));
 
     loadThreadsPromise
       .then((result) => {
+        // Set the 'status' field of the `loadThreadsPromise` to 'fulfilled'.
         (loadThreadsPromise as UsablePromise<ThreadData[]>).status =
           "fulfilled";
 
@@ -1209,6 +1217,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
         }));
       })
       .catch((err: Error) => {
+        // Set the 'status' field of the `loadThreadsPromise` to 'rejected'
         (loadThreadsPromise as UsablePromise<ThreadData[]>).status = "rejected";
 
         this._store.set((state) => ({
@@ -1223,29 +1232,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
           },
         }));
 
-        setTimeout(() => {
-          const { [queryKey]: _, ...remainingRequests } =
-            this._store.get().loadThreadsRequests;
-
-          this._store.set((state) => ({
-            ...state,
-            loadThreadsRequests: remainingRequests,
-          }));
-        });
+        // XXX - For `useInboxNotifications`, we remove the memoized request from the store after 5 seconds but do not remove error from store. This may need more thought!
         throw err;
       });
 
     return loadThreadsPromise;
-  }
-
-  public getQueryStatus(
-    roomId: string,
-    options: GetThreadsOptions<BaseMetadata>
-  ): "pending" | "fulfilled" | "rejected" | null {
-    const queryKey = generateQueryKey(roomId, options.query);
-    const request = this._store.get().loadThreadsRequests[queryKey];
-    if (request === undefined) return null;
-    return request.status;
   }
 
   /**
