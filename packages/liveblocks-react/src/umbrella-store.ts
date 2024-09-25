@@ -284,6 +284,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   private _prevState: InternalState<M> | null = null;
   private _stateCached: UmbrellaStoreState<M> | null = null;
   private _lastRequestedAtByRoom = new Map<string, Date>(); // A map of room ids to the timestamp when the last request for threads updates was made
+  private _requestStatusByRoom = new Map<string, boolean>(); // A map of room ids to a boolean indicating whether a request to retrieve threads updates is in progress
 
   constructor(client?: OpaqueClient) {
     this._client = client;
@@ -1258,6 +1259,50 @@ export class UmbrellaStore<M extends BaseMetadata> {
     const request = this._store.get().loadThreadsRequests[queryKey];
     if (request === undefined) return null;
     return request.status;
+  }
+
+  /**
+   * Retrieve threads that have been updated/deleted since the last time the room requested threads updates and update the local cache with the new data
+   * @param roomId The id of the room for which to retrieve threads updates
+   */
+  public async getThreadsUpdates(roomId: string) {
+    const DEFAULT_DEDUPING_INTERVAL = 2000; // 2 seconds
+
+    const since = this._lastRequestedAtByRoom.get(roomId);
+    if (since === undefined) return;
+
+    const isFetchingThreadsUpdates =
+      this._requestStatusByRoom.get(roomId) ?? false;
+    // If another request to retrieve threads updates for the room is in progress, we do not start a new one
+    if (isFetchingThreadsUpdates === true) return;
+    try {
+      // Set the isFetchingThreadsUpdates flag to true to prevent multiple requests to fetch threads updates for the room from being made at the same time
+      this._requestStatusByRoom.set(roomId, true);
+
+      const updates = await nn(
+        this._client,
+        "Client is required in order to load threads and notifications for the room"
+      )[kInternal].getRoomThreadsSince(roomId, { since });
+
+      // Set the isFetchingThreadsUpdates flag to false after a certain interval to prevent multiple requests from being made at the same time
+      setTimeout(() => {
+        this._requestStatusByRoom.set(roomId, false);
+      }, DEFAULT_DEDUPING_INTERVAL);
+
+      this.updateThreadsAndNotifications(
+        updates.threads.updated as ThreadData<M>[], // TODO: Figure out how to remove this casting,
+        updates.inboxNotifications.updated,
+        updates.threads.deleted,
+        updates.inboxNotifications.deleted
+      );
+
+      // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
+      this._lastRequestedAtByRoom.set(roomId, updates.requestedAt);
+    } catch (err) {
+      this._requestStatusByRoom.set(roomId, false);
+      // TODO: Implement error handling
+      return;
+    }
   }
 }
 
