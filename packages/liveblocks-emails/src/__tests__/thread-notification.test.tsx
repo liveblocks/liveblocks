@@ -29,7 +29,6 @@ import {
   commentBody1,
   commentBody2,
   commentBody3,
-  commentBody4,
   generateThreadId,
   getResolvedCommentUrl,
   makeComment,
@@ -37,6 +36,8 @@ import {
   makeThread,
   makeThreadInboxNotification,
   makeThreadNotificationEvent,
+  makeUnreadMentionDataset,
+  makeUnreadRepliesDataset,
   RESOLVED_ROOM_INFO_TEST,
   resolveRoomInfo,
   resolveUsers,
@@ -429,23 +430,8 @@ describe("thread notification", () => {
 
   describe("prepare thead notification email as HTML", () => {
     describe("unread mention w/o styles design tokens", () => {
-      const threadId = generateThreadId();
-      const comment = makeComment({
-        userId: "user-0",
-        threadId,
-        body: buildCommentBodyWithMention({ mentionedUserId: "user-1" }),
-        createdAt: new Date("2024-09-10T08:04:00.000Z"),
-      });
-      const thread = makeThread({ threadId, comments: [comment] });
-      const inboxNotification = makeThreadInboxNotification({
-        threadId,
-        notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
-      });
-      const event = makeThreadNotificationEvent({
-        threadId,
-        userId: "user-1",
-        inboxNotificationId: inboxNotification.id,
-      });
+      const { comment, thread, inboxNotification, event } =
+        makeUnreadMentionDataset();
 
       const expected1: ThreadNotificationEmailAsHTML = {
         type: "unreadMention",
@@ -530,32 +516,8 @@ describe("thread notification", () => {
     });
 
     describe("unread replies w/o styles design tokens", () => {
-      const threadId = generateThreadId();
-      const comment1 = makeComment({
-        userId: "user-0",
-        threadId,
-        body: commentBody1,
-        createdAt: new Date("2024-09-10T08:10:00.000Z"),
-      });
-      const comment2 = makeComment({
-        userId: "user-1",
-        threadId,
-        body: commentBody4,
-        createdAt: new Date("2024-09-10T08:14:00.000Z"),
-      });
-      const thread = makeThread({
-        threadId,
-        comments: [comment1, comment2],
-      });
-      const inboxNotification = makeThreadInboxNotification({
-        threadId,
-        notifiedAt: new Date("2024-09-10T08:20:00.000Z"),
-      });
-      const event = makeThreadNotificationEvent({
-        threadId,
-        userId: "user-0",
-        inboxNotificationId: inboxNotification.id,
-      });
+      const { comment2, thread, inboxNotification, event } =
+        makeUnreadRepliesDataset();
 
       const expected1: ThreadNotificationEmailAsHTML = {
         type: "unreadReplies",
@@ -646,23 +608,8 @@ describe("thread notification", () => {
 
   describe("prepare thread notification email as React", () => {
     describe("unread mention w/o custom components", () => {
-      const threadId = generateThreadId();
-      const comment = makeComment({
-        userId: "user-0",
-        threadId,
-        body: buildCommentBodyWithMention({ mentionedUserId: "user-1" }),
-        createdAt: new Date("2024-09-10T08:04:00.000Z"),
-      });
-      const thread = makeThread({ threadId, comments: [comment] });
-      const inboxNotification = makeThreadInboxNotification({
-        threadId,
-        notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
-      });
-      const event = makeThreadNotificationEvent({
-        threadId,
-        userId: "user-1",
-        inboxNotificationId: inboxNotification.id,
-      });
+      const { comment, thread, inboxNotification, event } =
+        makeUnreadMentionDataset();
 
       const expected1: ThreadNotificationEmailAsReact = {
         type: "unreadMention",
@@ -774,23 +721,8 @@ describe("thread notification", () => {
         <span>u#{user?.name ?? element.id}</span>
       );
 
-      const threadId = generateThreadId();
-      const comment = makeComment({
-        userId: "user-0",
-        threadId,
-        body: buildCommentBodyWithMention({ mentionedUserId: "user-1" }),
-        createdAt: new Date("2024-09-10T08:04:00.000Z"),
-      });
-      const thread = makeThread({ threadId, comments: [comment] });
-      const inboxNotification = makeThreadInboxNotification({
-        threadId,
-        notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
-      });
-      const event = makeThreadNotificationEvent({
-        threadId,
-        userId: "user-1",
-        inboxNotificationId: inboxNotification.id,
-      });
+      const { comment, thread, inboxNotification, event } =
+        makeUnreadMentionDataset();
 
       const expected1: ThreadNotificationEmailAsReact = {
         type: "unreadMention",
@@ -904,32 +836,8 @@ describe("thread notification", () => {
     });
 
     describe("unread replies w/o custom components", () => {
-      const threadId = generateThreadId();
-      const comment1 = makeComment({
-        userId: "user-0",
-        threadId,
-        body: commentBody1,
-        createdAt: new Date("2024-09-10T08:10:00.000Z"),
-      });
-      const comment2 = makeComment({
-        userId: "user-1",
-        threadId,
-        body: commentBody4,
-        createdAt: new Date("2024-09-10T08:14:00.000Z"),
-      });
-      const thread = makeThread({
-        threadId,
-        comments: [comment1, comment2],
-      });
-      const inboxNotification = makeThreadInboxNotification({
-        threadId,
-        notifiedAt: new Date("2024-09-10T08:20:00.000Z"),
-      });
-      const event = makeThreadNotificationEvent({
-        threadId,
-        userId: "user-0",
-        inboxNotificationId: inboxNotification.id,
-      });
+      const { comment2, thread, inboxNotification, event } =
+        makeUnreadRepliesDataset();
 
       const expected1: ThreadNotificationEmailAsReact = {
         type: "unreadReplies",
@@ -1059,32 +967,8 @@ describe("thread notification", () => {
         </a>
       );
 
-      const threadId = generateThreadId();
-      const comment1 = makeComment({
-        userId: "user-0",
-        threadId,
-        body: commentBody1,
-        createdAt: new Date("2024-09-10T08:10:00.000Z"),
-      });
-      const comment2 = makeComment({
-        userId: "user-1",
-        threadId,
-        body: commentBody4,
-        createdAt: new Date("2024-09-10T08:14:00.000Z"),
-      });
-      const thread = makeThread({
-        threadId,
-        comments: [comment1, comment2],
-      });
-      const inboxNotification = makeThreadInboxNotification({
-        threadId,
-        notifiedAt: new Date("2024-09-10T08:20:00.000Z"),
-      });
-      const event = makeThreadNotificationEvent({
-        threadId,
-        userId: "user-0",
-        inboxNotificationId: inboxNotification.id,
-      });
+      const { comment2, thread, inboxNotification, event } =
+        makeUnreadRepliesDataset();
 
       const expected1: ThreadNotificationEmailAsReact = {
         type: "unreadReplies",

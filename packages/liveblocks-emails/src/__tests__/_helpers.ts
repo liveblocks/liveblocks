@@ -4,6 +4,7 @@ import type {
   CommentData,
   DRI,
   DU,
+  InboxNotificationData,
   InboxNotificationThreadData,
   IUserInfo,
   OptionalPromise,
@@ -295,6 +296,72 @@ export const server = setupServer(
     HttpResponse.json(ROOM_TEST, { status: 200 })
   )
 );
+
+export const makeUnreadMentionDataset = (): {
+  threadId: string;
+  comment: CommentData;
+  thread: ThreadData;
+  inboxNotification: InboxNotificationData;
+  event: ThreadNotificationEvent;
+} => {
+  const threadId = generateThreadId();
+  const comment = makeComment({
+    userId: "user-0",
+    threadId,
+    body: buildCommentBodyWithMention({ mentionedUserId: "user-1" }),
+    createdAt: new Date("2024-09-10T08:04:00.000Z"),
+  });
+  const thread = makeThread({ threadId, comments: [comment] });
+  const inboxNotification = makeThreadInboxNotification({
+    threadId,
+    notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
+  });
+  const event = makeThreadNotificationEvent({
+    threadId,
+    userId: "user-1",
+    inboxNotificationId: inboxNotification.id,
+  });
+
+  return { threadId, comment, thread, inboxNotification, event };
+};
+
+export const makeUnreadRepliesDataset = (): {
+  threadId: string;
+  comment1: CommentData;
+  comment2: CommentData;
+  thread: ThreadData;
+  inboxNotification: InboxNotificationData;
+  event: ThreadNotificationEvent;
+} => {
+  const threadId = generateThreadId();
+  const comment1 = makeComment({
+    userId: "user-0",
+    threadId,
+    body: commentBody1,
+    createdAt: new Date("2024-09-10T08:10:00.000Z"),
+  });
+  const comment2 = makeComment({
+    userId: "user-1",
+    threadId,
+    body: commentBody4,
+    createdAt: new Date("2024-09-10T08:14:00.000Z"),
+  });
+  const thread = makeThread({
+    threadId,
+    comments: [comment1, comment2],
+  });
+  const inboxNotification = makeThreadInboxNotification({
+    threadId,
+    notifiedAt: new Date("2024-09-10T08:20:00.000Z"),
+  });
+  const event = makeThreadNotificationEvent({
+    threadId,
+    userId: "user-0",
+    inboxNotificationId: inboxNotification.id,
+  });
+
+  return { threadId, comment1, comment2, thread, inboxNotification, event };
+};
 
 export const renderToStaticMarkup = (reactNode: React.ReactNode): string =>
   ReactDOMServer.renderToStaticMarkup(reactNode);
