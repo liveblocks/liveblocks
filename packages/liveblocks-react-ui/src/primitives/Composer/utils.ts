@@ -461,7 +461,9 @@ function createComposerAttachmentsManager(
 
   function dispose() {
     clear();
-    eventSource.clear();
+    // TODO Avoid having to rely on this API
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
+    (eventSource as any)._forceClear();
   }
 
   return {
