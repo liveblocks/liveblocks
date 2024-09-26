@@ -1,14 +1,7 @@
 {
   "openapi": "3.1.0",
-  "info": {
-    "title": "API v2",
-    "version": "2.0"
-  },
-  "servers": [
-    {
-      "url": "https://api.liveblocks.io/v2"
-    }
-  ],
+  "info": { "title": "API v2", "version": "2.0" },
+  "servers": [{ "url": "https://api.liveblocks.io/v2" }],
   "paths": {
     "/rooms": {
       "get": {
@@ -28,26 +21,19 @@
             "description": "A limit on the number of rooms to be returned. The limit can range between 1 and 100, and defaults to 20."
           },
           {
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "in": "query",
             "name": "startingAfter",
             "description": "A cursor used for pagination. Get the value from the `nextCursor` response of the previous page."
           },
           {
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "in": "query",
             "name": "query",
             "description": "Query to filter rooms. You can filter by `roomId` and `metadata`, for example, `metadata[\"roomType\"]:\"whiteboard\" AND roomId^\"liveblocks:engineering\"`. Learn more about [filtering rooms with query language](/docs/guides/how-to-filter-rooms-using-query-language)."
           },
           {
-            "schema": {
-              "type": "string",
-              "examples": ["userId=user1"]
-            },
+            "schema": { "type": "string", "examples": ["userId=user1"] },
             "in": "query",
             "name": "userId",
             "description": "A filter on users accesses."
@@ -67,9 +53,7 @@
             "description": "Success. Returns the list of rooms, the next page cursor, and the next page URL.",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GetRooms"
-                },
+                "schema": { "$ref": "#/components/schemas/GetRooms" },
                 "examples": {
                   "example": {
                     "value": {
@@ -86,12 +70,8 @@
                             "type": ["whiteboard"]
                           },
                           "defaultAccesses": ["room:write"],
-                          "groupsAccesses": {
-                            "product": ["room:write"]
-                          },
-                          "usersAccesses": {
-                            "vinod": ["room:write"]
-                          }
+                          "groupsAccesses": { "product": ["room:write"] },
+                          "usersAccesses": { "vinod": ["room:write"] }
                         }
                       ]
                     }
@@ -100,15 +80,9 @@
               }
             }
           },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "422": {
-            "$ref": "#/components/responses/422"
-          }
+          "401": { "$ref": "#/components/responses/401" },
+          "403": { "$ref": "#/components/responses/403" },
+          "422": { "$ref": "#/components/responses/422" }
         },
         "operationId": "get-rooms"
       },
@@ -122,9 +96,7 @@
             "description": "Success. Returns the created room.",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Room"
-                },
+                "schema": { "$ref": "#/components/schemas/Room" },
                 "examples": {
                   "example": {
                     "value": {
@@ -132,56 +104,34 @@
                       "id": "my-room-3ebc26e2bf96",
                       "lastConnectionAt": "2022-08-22T15:10:25.225Z",
                       "createdAt": "2022-08-22T15:10:25.225Z",
-                      "metadata": {
-                        "color": "blue"
-                      },
+                      "metadata": { "color": "blue" },
                       "defaultAccesses": ["room:write"],
-                      "groupsAccesses": {
-                        "product": ["room:write"]
-                      },
-                      "usersAccesses": {
-                        "alice": ["room:write"]
-                      }
+                      "groupsAccesses": { "product": ["room:write"] },
+                      "usersAccesses": { "alice": ["room:write"] }
                     }
                   }
                 }
               }
             }
           },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "409": {
-            "$ref": "#/components/responses/409"
-          },
-          "422": {
-            "$ref": "#/components/responses/422"
-          }
+          "401": { "$ref": "#/components/responses/401" },
+          "403": { "$ref": "#/components/responses/403" },
+          "409": { "$ref": "#/components/responses/409" },
+          "422": { "$ref": "#/components/responses/422" }
         },
         "operationId": "post-rooms",
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateRoom"
-              },
+              "schema": { "$ref": "#/components/schemas/CreateRoom" },
               "examples": {
                 "example": {
                   "value": {
                     "id": "my-room-3ebc26e2bf96",
                     "defaultAccesses": ["room:write"],
-                    "metadata": {
-                      "color": "blue"
-                    },
-                    "usersAccesses": {
-                      "alice": ["room:write"]
-                    },
-                    "groupsAccesses": {
-                      "product": ["room:write"]
-                    }
+                    "metadata": { "color": "blue" },
+                    "usersAccesses": { "alice": ["room:write"] },
+                    "groupsAccesses": { "product": ["room:write"] }
                   }
                 }
               }
@@ -197,9 +147,7 @@
         "operationId": "get-rooms-roomId",
         "parameters": [
           {
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "name": "roomId",
             "in": "path",
             "required": true,
@@ -211,9 +159,7 @@
             "description": "Success. Returns the room.",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Room"
-                },
+                "schema": { "$ref": "#/components/schemas/Room" },
                 "examples": {
                   "example": {
                     "value": {
@@ -227,9 +173,7 @@
                         "target": ["abc", "def"]
                       },
                       "defaultAccesses": ["room:write"],
-                      "groupsAccesses": {
-                        "marketing": ["room:write"]
-                      },
+                      "groupsAccesses": { "marketing": ["room:write"] },
                       "usersAccesses": {
                         "alice": ["room:write"],
                         "vinod": ["room:write"]
@@ -240,15 +184,9 @@
               }
             }
           },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404"
-          }
+          "401": { "$ref": "#/components/responses/401" },
+          "403": { "$ref": "#/components/responses/403" },
+          "404": { "$ref": "#/components/responses/404" }
         },
         "description": "This endpoint returns a room by its ID. Corresponds to [`liveblocks.getRoom`](/docs/api-reference/liveblocks-node#get-rooms-roomid)."
       },
@@ -257,9 +195,7 @@
         "tags": ["Room"],
         "parameters": [
           {
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "name": "roomId",
             "in": "path",
             "required": true,
@@ -271,9 +207,7 @@
             "description": "Success. Returns the updated room.",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Room"
-                },
+                "schema": { "$ref": "#/components/schemas/Room" },
                 "examples": {
                   "example": {
                     "value": {
@@ -287,9 +221,7 @@
                         "target": ["abc", "def"]
                       },
                       "defaultAccesses": ["room:write"],
-                      "groupsAccesses": {
-                        "marketing": ["room:write"]
-                      },
+                      "groupsAccesses": { "marketing": ["room:write"] },
                       "usersAccesses": {
                         "alice": ["room:write"],
                         "vinod": ["room:write"]
@@ -300,27 +232,17 @@
               }
             }
           },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404"
-          },
-          "422": {
-            "$ref": "#/components/responses/422"
-          }
+          "401": { "$ref": "#/components/responses/401" },
+          "403": { "$ref": "#/components/responses/403" },
+          "404": { "$ref": "#/components/responses/404" },
+          "422": { "$ref": "#/components/responses/422" }
         },
         "operationId": "post-rooms-roomId",
         "description": "This endpoint updates specific properties of a room. Corresponds to [`liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#post-rooms-roomid). \n\nIt’s not necessary to provide the entire room’s information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccessess`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.",
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateRoom"
-              },
+              "schema": { "$ref": "#/components/schemas/UpdateRoom" },
               "examples": {
                 "example": {
                   "value": {
@@ -329,27 +251,17 @@
                       "vinod": ["room:write"],
                       "alice": ["room:write"]
                     },
-                    "groupsAccesses": {
-                      "marketing": ["room:write"]
-                    },
-                    "metadata": {
-                      "color": "blue"
-                    }
+                    "groupsAccesses": { "marketing": ["room:write"] },
+                    "metadata": { "color": "blue" }
                   }
                 }
               }
             },
             "application/xml": {
-              "schema": {
-                "type": "object",
-                "properties": {}
-              }
+              "schema": { "type": "object", "properties": {} }
             },
             "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "properties": {}
-              }
+              "schema": { "type": "object", "properties": {} }
             }
           }
         }
@@ -358,27 +270,15 @@
         "summary": "Delete room",
         "tags": ["Room"],
         "responses": {
-          "204": {
-            "description": "Success. The room was deleted"
-          },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404"
-          },
-          "422": {
-            "$ref": "#/components/responses/422"
-          }
+          "204": { "description": "Success. The room was deleted" },
+          "401": { "$ref": "#/components/responses/401" },
+          "403": { "$ref": "#/components/responses/403" },
+          "404": { "$ref": "#/components/responses/404" },
+          "422": { "$ref": "#/components/responses/422" }
         },
         "parameters": [
           {
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "name": "roomId",
             "in": "path",
             "required": true,
@@ -395,9 +295,7 @@
         "tags": ["Room"],
         "parameters": [
           {
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "name": "roomId",
             "in": "path",
             "required": true,
@@ -409,9 +307,7 @@
             "description": "Success. Returns the updated room with the new ID.",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Room"
-                },
+                "schema": { "$ref": "#/components/schemas/Room" },
                 "examples": {
                   "example": {
                     "value": {
@@ -425,9 +321,7 @@
                         "target": ["abc", "def"]
                       },
                       "defaultAccesses": ["room:write"],
-                      "groupsAccesses": {
-                        "marketing": ["room:write"]
-                      },
+                      "groupsAccesses": { "marketing": ["room:write"] },
                       "usersAccesses": {
                         "alice": ["room:write"],
                         "vinod": ["room:write"]
@@ -438,18 +332,10 @@
               }
             }
           },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404"
-          },
-          "422": {
-            "$ref": "#/components/responses/422"
-          }
+          "401": { "$ref": "#/components/responses/401" },
+          "403": { "$ref": "#/components/responses/403" },
+          "404": { "$ref": "#/components/responses/404" },
+          "422": { "$ref": "#/components/responses/422" }
         },
         "operationId": "post-rooms-update-roomId",
         "description": "This endpoint permanently updates the room’s ID.",
@@ -457,24 +343,14 @@
           "content": {
             "application/json": {
               "examples": {
-                "example": {
-                  "value": {
-                    "newRoomId": "new-room-id"
-                  }
-                }
+                "example": { "value": { "newRoomId": "new-room-id" } }
               }
             },
             "application/xml": {
-              "schema": {
-                "type": "object",
-                "properties": {}
-              }
+              "schema": { "type": "object", "properties": {} }
             },
             "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "properties": {}
-              }
+              "schema": { "type": "object", "properties": {} }
             }
           }
         }
@@ -488,9 +364,7 @@
         "description": "This endpoint returns a list of users currently present in the requested room. Corresponds to [`liveblocks.getActiveUsers`](/docs/api-reference/liveblocks-node#get-rooms-roomid-active-users). \n\nFor optimal performance, we recommend calling this endpoint no more than once every 10 seconds. \nDuplicates can occur if a user is in the requested room with multiple browser tabs opened.",
         "parameters": [
           {
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "name": "roomId",
             "in": "path",
             "required": true,
@@ -528,15 +402,9 @@
               }
             }
           },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404"
-          }
+          "401": { "$ref": "#/components/responses/401" },
+          "403": { "$ref": "#/components/responses/403" },
+          "404": { "$ref": "#/components/responses/404" }
         }
       }
     },
@@ -547,9 +415,7 @@
         "tags": ["Room"],
         "parameters": [
           {
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "name": "roomId",
             "in": "path",
             "required": true,
@@ -561,18 +427,10 @@
           "204": {
             "description": "Success. An event was broadcast to the room."
           },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404"
-          },
-          "422": {
-            "$ref": "#/components/responses/422"
-          }
+          "401": { "$ref": "#/components/responses/401" },
+          "403": { "$ref": "#/components/responses/403" },
+          "404": { "$ref": "#/components/responses/404" },
+          "422": { "$ref": "#/components/responses/422" }
         },
         "requestBody": {
           "description": "Any valid JSON.",
@@ -580,12 +438,7 @@
             "schema": {},
             "application/json": {
               "examples": {
-                "example": {
-                  "value": {
-                    "type": "EMOJI",
-                    "emoji": "🔥"
-                  }
-                }
+                "example": { "value": { "type": "EMOJI", "emoji": "🔥" } }
               }
             }
           }
@@ -599,19 +452,14 @@
         "tags": ["Storage"],
         "parameters": [
           {
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "name": "roomId",
             "in": "path",
             "required": true,
             "description": "ID of the room"
           },
           {
-            "schema": {
-              "type": "string",
-              "enum": ["plain-lson", "json"]
-            },
+            "schema": { "type": "string", "enum": ["plain-lson", "json"] },
             "name": "format",
             "in": "query",
             "required": false,
@@ -626,12 +474,8 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "liveblocksType": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": ["string", "object"]
-                    }
+                    "liveblocksType": { "type": "string" },
+                    "data": { "type": ["string", "object"] }
                   }
                 },
                 "examples": {
@@ -641,9 +485,7 @@
                       "data": {
                         "aLiveObject": {
                           "liveblocksType": "LiveObject",
-                          "data": {
-                            "a": 1
-                          }
+                          "data": { "a": 1 }
                         },
                         "aLiveList": {
                           "liveblocksType": "LiveList",
@@ -651,10 +493,7 @@
                         },
                         "aLiveMap": {
                           "liveblocksType": "LiveMap",
-                          "data": {
-                            "a": 1,
-                            "b": 2
-                          }
+                          "data": { "a": 1, "b": 2 }
                         }
                       }
                     }
@@ -663,15 +502,9 @@
               }
             }
           },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404"
-          }
+          "401": { "$ref": "#/components/responses/401" },
+          "403": { "$ref": "#/components/responses/403" },
+          "404": { "$ref": "#/components/responses/404" }
         },
         "operationId": "get-rooms-roomId-storage"
       },
@@ -681,9 +514,7 @@
         "operationId": "post-rooms-roomId-storage",
         "parameters": [
           {
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "name": "roomId",
             "in": "path",
             "required": true,
@@ -698,12 +529,8 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "liveblocksType": {
-                      "type": "string"
-                    },
-                    "data": {
-                      "type": ["string", "object"]
-                    }
+                    "liveblocksType": { "type": "string" },
+                    "data": { "type": ["string", "object"] }
                   }
                 },
                 "examples": {
@@ -713,9 +540,7 @@
                       "data": {
                         "aLiveObject": {
                           "liveblocksType": "LiveObject",
-                          "data": {
-                            "a": 1
-                          }
+                          "data": { "a": 1 }
                         },
                         "aLiveList": {
                           "liveblocksType": "LiveList",
@@ -723,10 +548,7 @@
                         },
                         "aLiveMap": {
                           "liveblocksType": "LiveMap",
-                          "data": {
-                            "a": 1,
-                            "b": 2
-                          }
+                          "data": { "a": 1, "b": 2 }
                         }
                       }
                     }
@@ -735,15 +557,9 @@
               }
             }
           },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404"
-          }
+          "401": { "$ref": "#/components/responses/401" },
+          "403": { "$ref": "#/components/responses/403" },
+          "404": { "$ref": "#/components/responses/404" }
         },
         "description": "This endpoint initializes or reinitializes a room’s Storage. The room must already exist. Calling this endpoint will disconnect all users from the room if there are any, triggering a reconnect. Corresponds to [`liveblocks.initializeStorageDocument`](/docs/api-reference/liveblocks-node#post-rooms-roomId-storage).\n\nThe format of the request body is the same as what’s returned by the get Storage endpoint.\n\nFor each Liveblocks data structure that you want to create, you need a JSON element having two properties:\n- `\"liveblocksType\"` => `\"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n- `\"data\"` => contains the nested data structures (children) and data.\n\nThe root’s type can only be LiveObject.\n\nA utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.",
         "requestBody": {
@@ -752,12 +568,8 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "liveblocksType": {
-                    "type": "string"
-                  },
-                  "data": {
-                    "type": "object"
-                  }
+                  "liveblocksType": { "type": "string" },
+                  "data": { "type": "object" }
                 }
               },
               "examples": {
@@ -767,9 +579,7 @@
                     "data": {
                       "aLiveObject": {
                         "liveblocksType": "LiveObject",
-                        "data": {
-                          "a": 1
-                        }
+                        "data": { "a": 1 }
                       },
                       "aLiveList": {
                         "liveblocksType": "LiveList",
@@ -777,10 +587,7 @@
                       },
                       "aLiveMap": {
                         "liveblocksType": "LiveMap",
-                        "data": {
-                          "a": 1,
-                          "b": 2
-                        }
+                        "data": { "a": 1, "b": 2 }
                       }
                     }
                   }
@@ -796,9 +603,7 @@
         "operationId": "delete-rooms-roomId-storage",
         "parameters": [
           {
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "name": "roomId",
             "in": "path",
             "required": true,
@@ -806,18 +611,10 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Success. The room has no more Storage."
-          },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404"
-          }
+          "200": { "description": "Success. The room has no more Storage." },
+          "401": { "$ref": "#/components/responses/401" },
+          "403": { "$ref": "#/components/responses/403" },
+          "404": { "$ref": "#/components/responses/404" }
         },
         "description": "This endpoint deletes all of the room’s Storage data. Calling this endpoint will disconnect all users from the room if there are any. Corresponds to [`liveblocks.deleteStorageDocument`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-storage).\n"
       }
@@ -832,15 +629,11 @@
             "name": "roomId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the room"
           },
           {
-            "schema": {
-              "type": "boolean"
-            },
+            "schema": { "type": "boolean" },
             "name": "formatting",
             "in": "query",
             "allowEmptyValue": true,
@@ -848,9 +641,7 @@
             "description": "If present, YText will return formatting."
           },
           {
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "name": "key",
             "in": "query",
             "required": false,
@@ -872,28 +663,16 @@
             "description": "Success. Returns the room’s Yjs document as JSON.",
             "content": {
               "application/json": {
-                "schema": {
-                  "type": "object"
-                },
+                "schema": { "type": "object" },
                 "examples": {
-                  "example": {
-                    "value": {
-                      "someYText": "Contents of YText"
-                    }
-                  }
+                  "example": { "value": { "someYText": "Contents of YText" } }
                 }
               }
             }
           },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404"
-          }
+          "401": { "$ref": "#/components/responses/401" },
+          "403": { "$ref": "#/components/responses/403" },
+          "404": { "$ref": "#/components/responses/404" }
         },
         "operationId": "get-rooms-roomId-ydoc"
       },
@@ -902,9 +681,7 @@
         "tags": ["Yjs"],
         "parameters": [
           {
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "name": "roomId",
             "in": "path",
             "required": true,
@@ -914,42 +691,25 @@
             "name": "guid",
             "in": "query",
             "required": false,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the subdocument"
           }
         ],
         "responses": {
           "200": {
             "description": "Success. The given room’s Yjs doc has been updated.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "status": 200
-                }
-              }
-            }
+            "content": { "application/json": { "schema": { "status": 200 } } }
           },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404"
-          }
+          "401": { "$ref": "#/components/responses/401" },
+          "403": { "$ref": "#/components/responses/403" },
+          "404": { "$ref": "#/components/responses/404" }
         },
         "operationId": "put-rooms-roomId-ydoc",
         "description": "This endpoint is used to send a Yjs binary update to the room’s Yjs document. You can use this endpoint to initialize Yjs data for the room or to update the room’s Yjs document. To send an update to a subdocument instead of the main document, pass its `guid`. Corresponds to [`liveblocks.sendYjsBinaryUpdate`](/docs/api-reference/liveblocks-node#put-rooms-roomId-ydoc).\n\nThe update is typically obtained by calling `Y.encodeStateAsUpdate(doc)`. See the [Yjs documentation](https://docs.yjs.dev/api/document-updates) for more details. When manually making this HTTP call, set the HTTP header `Content-Type` to `application/octet-stream`, and send the binary update (a `Uint8Array`) in the body of the HTTP request. This endpoint does not accept JSON, unlike most other endpoints.",
         "requestBody": {
           "content": {
             "application/octet-stream": {
-              "schema": {
-                "format": "binary",
-                "type": "array"
-              }
+              "schema": { "format": "binary", "type": "array" }
             }
           }
         }
@@ -965,18 +725,14 @@
             "name": "roomId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the room"
           },
           {
             "name": "guid",
             "in": "query",
             "required": false,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the subdocument"
           }
         ],
@@ -984,22 +740,12 @@
           "200": {
             "description": "Success. Returns the room’s Yjs document encoded as a binary Yjs update.",
             "content": {
-              "application/octet-stream": {
-                "schema": {
-                  "type": "array"
-                }
-              }
+              "application/octet-stream": { "schema": { "type": "array" } }
             }
           },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404"
-          }
+          "401": { "$ref": "#/components/responses/401" },
+          "403": { "$ref": "#/components/responses/403" },
+          "404": { "$ref": "#/components/responses/404" }
         },
         "operationId": "get-rooms-roomId-ydoc-binary"
       }
@@ -1014,9 +760,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SchemaRequest"
-              },
+              "schema": { "$ref": "#/components/schemas/SchemaRequest" },
               "examples": {
                 "example": {
                   "value": {
@@ -1033,9 +777,7 @@
             "description": "Success. Creates the new schema and returns it as JSON.",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SchemaResponse"
-                },
+                "schema": { "$ref": "#/components/schemas/SchemaResponse" },
                 "examples": {
                   "example": {
                     "value": {
@@ -1051,12 +793,8 @@
               }
             }
           },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "422": {
-            "$ref": "#/components/responses/422-schema-validation"
-          }
+          "401": { "$ref": "#/components/responses/401" },
+          "422": { "$ref": "#/components/responses/422-schema-validation" }
         }
       }
     },
@@ -1067,9 +805,7 @@
         "tags": ["Schema validation"],
         "parameters": [
           {
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "name": "id",
             "in": "path",
             "required": true,
@@ -1082,9 +818,7 @@
             "description": "Success. Found the schema and returns it as JSON.",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SchemaResponse"
-                },
+                "schema": { "$ref": "#/components/schemas/SchemaResponse" },
                 "examples": {
                   "example": {
                     "value": {
@@ -1100,12 +834,8 @@
               }
             }
           },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "404": {
-            "$ref": "#/components/responses/404-schema-validation"
-          }
+          "401": { "$ref": "#/components/responses/401" },
+          "404": { "$ref": "#/components/responses/404-schema-validation" }
         }
       },
       "put": {
@@ -1114,9 +844,7 @@
         "tags": ["Schema validation"],
         "parameters": [
           {
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "name": "id",
             "in": "path",
             "required": true,
@@ -1127,9 +855,7 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateSchema"
-              },
+              "schema": { "$ref": "#/components/schemas/UpdateSchema" },
               "examples": {
                 "example": {
                   "value": {
@@ -1145,9 +871,7 @@
             "description": "Success. Updates the new schema and increments the version. The schema `body` is returned as JSON.",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SchemaResponse"
-                },
+                "schema": { "$ref": "#/components/schemas/SchemaResponse" },
                 "examples": {
                   "example": {
                     "value": {
@@ -1163,15 +887,9 @@
               }
             }
           },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403-schema-validation"
-          },
-          "422": {
-            "$ref": "#/components/responses/422-schema-validation"
-          }
+          "401": { "$ref": "#/components/responses/401" },
+          "403": { "$ref": "#/components/responses/403-schema-validation" },
+          "422": { "$ref": "#/components/responses/422-schema-validation" }
         }
       },
       "delete": {
@@ -1180,9 +898,7 @@
         "tags": ["Schema validation"],
         "parameters": [
           {
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "name": "id",
             "in": "path",
             "required": true,
@@ -1191,15 +907,9 @@
         ],
         "operationId": "delete-a-schema",
         "responses": {
-          "200": {
-            "description": "Success. Schema was delated"
-          },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403-schema-validation"
-          }
+          "200": { "description": "Success. Schema was delated" },
+          "401": { "$ref": "#/components/responses/401" },
+          "403": { "$ref": "#/components/responses/403-schema-validation" }
         }
       }
     },
@@ -1210,9 +920,7 @@
         "tags": ["Schema validation"],
         "parameters": [
           {
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "name": "roomId",
             "in": "path",
             "required": true,
@@ -1225,9 +933,7 @@
             "description": "Success. Found the schema attached to the room and returns it as JSON.",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SchemaResponse"
-                },
+                "schema": { "$ref": "#/components/schemas/SchemaResponse" },
                 "examples": {
                   "example": {
                     "value": {
@@ -1243,15 +949,9 @@
               }
             }
           },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403-schema-validation"
-          },
-          "404": {
-            "$ref": "#/components/responses/404-schema-validation"
-          }
+          "401": { "$ref": "#/components/responses/401" },
+          "403": { "$ref": "#/components/responses/403-schema-validation" },
+          "404": { "$ref": "#/components/responses/404-schema-validation" }
         }
       },
       "post": {
@@ -1260,9 +960,7 @@
         "tags": ["Schema validation"],
         "parameters": [
           {
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "name": "roomId",
             "in": "path",
             "required": true,
@@ -1273,15 +971,9 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AttachSchema"
-              },
+              "schema": { "$ref": "#/components/schemas/AttachSchema" },
               "examples": {
-                "example": {
-                  "value": {
-                    "schema": "my-schema@1"
-                  }
-                }
+                "example": { "value": { "schema": "my-schema@1" } }
               }
             }
           }
@@ -1291,28 +983,16 @@
             "description": "Success. Found the schema attached to the room. Returns the schema ID as JSON.",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AttachSchema"
-                },
+                "schema": { "$ref": "#/components/schemas/AttachSchema" },
                 "examples": {
-                  "example": {
-                    "value": {
-                      "schema": "my-schema@1"
-                    }
-                  }
+                  "example": { "value": { "schema": "my-schema@1" } }
                 }
               }
             }
           },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "404": {
-            "$ref": "#/components/responses/404-schema-validation"
-          },
-          "409": {
-            "$ref": "#/components/responses/409-schema-validation"
-          }
+          "401": { "$ref": "#/components/responses/401" },
+          "404": { "$ref": "#/components/responses/404-schema-validation" },
+          "409": { "$ref": "#/components/responses/409-schema-validation" }
         }
       },
       "delete": {
@@ -1321,9 +1001,7 @@
         "tags": ["Schema validation"],
         "parameters": [
           {
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "name": "roomId",
             "in": "path",
             "required": true,
@@ -1335,15 +1013,9 @@
           "200": {
             "description": "Success. Detached the schema from the room."
           },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "404": {
-            "$ref": "#/components/responses/404-schema-validation"
-          },
-          "409": {
-            "$ref": "#/components/responses/409-schema-validation"
-          }
+          "401": { "$ref": "#/components/responses/401" },
+          "404": { "$ref": "#/components/responses/404-schema-validation" },
+          "409": { "$ref": "#/components/responses/409-schema-validation" }
         }
       }
     },
@@ -1357,15 +1029,11 @@
             "name": "roomId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the room"
           },
           {
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "in": "query",
             "name": "query",
             "description": "Query to filter threads. You can filter by `metadata` and `resolved`, for example, `metadata[\"status\"]:\"open\" AND metadata[\"color\"]:\"red\" AND resolved:true`. Learn more about [filtering threads with query language](/docs/guides/how-to-filter-threads-using-query-language)."
@@ -1382,9 +1050,7 @@
                   "properties": {
                     "data": {
                       "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/Thread"
-                      }
+                      "items": { "$ref": "#/components/schemas/Thread" }
                     }
                   }
                 },
@@ -1420,15 +1086,9 @@
               }
             }
           },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404-thread"
-          }
+          "401": { "$ref": "#/components/responses/401" },
+          "403": { "$ref": "#/components/responses/403" },
+          "404": { "$ref": "#/components/responses/404-thread" }
         }
       },
       "post": {
@@ -1441,9 +1101,7 @@
             "name": "roomId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the room"
           }
         ],
@@ -1452,9 +1110,7 @@
             "description": "Success. Returns the created thread.",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Thread"
-                },
+                "schema": { "$ref": "#/components/schemas/Thread" },
                 "examples": {
                   "example": {
                     "value": {
@@ -1469,52 +1125,34 @@
                           "id": "comment-id",
                           "userId": "alice",
                           "createdAt": "2022-07-13T14:32:50.697Z",
-                          "body": {
-                            "version": 1,
-                            "content": []
-                          }
+                          "body": { "version": 1, "content": [] }
                         }
                       ],
                       "createdAt": "2022-07-13T14:32:50.697Z",
-                      "metadata": {
-                        "color": "blue"
-                      }
+                      "metadata": { "color": "blue" }
                     }
                   }
                 }
               }
             }
           },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "409": {
-            "$ref": "#/components/responses/409-thread"
-          }
+          "401": { "$ref": "#/components/responses/401" },
+          "403": { "$ref": "#/components/responses/403" },
+          "409": { "$ref": "#/components/responses/409-thread" }
         },
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateThread"
-              },
+              "schema": { "$ref": "#/components/schemas/CreateThread" },
               "examples": {
                 "example": {
                   "value": {
                     "comment": {
                       "userId": "alice",
                       "createdAt": "2022-07-13T14:32:50.697Z",
-                      "body": {
-                        "version": 1,
-                        "content": []
-                      }
+                      "body": { "version": 1, "content": [] }
                     },
-                    "metadata": {
-                      "color": "blue"
-                    }
+                    "metadata": { "color": "blue" }
                   }
                 }
               }
@@ -1534,18 +1172,14 @@
             "name": "roomId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the room"
           },
           {
             "name": "threadId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the thread"
           }
         ],
@@ -1554,9 +1188,7 @@
             "description": "Success. Returns requested thread.",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Thread"
-                },
+                "schema": { "$ref": "#/components/schemas/Thread" },
                 "examples": {
                   "Success": {
                     "value": {
@@ -1585,15 +1217,9 @@
               }
             }
           },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404-thread"
-          }
+          "401": { "$ref": "#/components/responses/401" },
+          "403": { "$ref": "#/components/responses/403" },
+          "404": { "$ref": "#/components/responses/404-thread" }
         }
       },
       "delete": {
@@ -1606,34 +1232,22 @@
             "name": "roomId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the room"
           },
           {
             "name": "threadId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the thread"
           }
         ],
         "responses": {
-          "204": {
-            "description": "Success. The thread has been deleted."
-          },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404-thread"
-          }
+          "204": { "description": "Success. The thread has been deleted." },
+          "401": { "$ref": "#/components/responses/401" },
+          "403": { "$ref": "#/components/responses/403" },
+          "404": { "$ref": "#/components/responses/404-thread" }
         }
       }
     },
@@ -1648,18 +1262,14 @@
             "name": "roomId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the room"
           },
           {
             "name": "threadId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the thread"
           }
         ],
@@ -1673,31 +1283,21 @@
                   "properties": {
                     "participantIds": {
                       "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
+                      "items": { "type": "string" }
                     }
                   }
                 },
                 "examples": {
                   "Success": {
-                    "value": {
-                      "participantIds": ["user-1", "user-2"]
-                    }
+                    "value": { "participantIds": ["user-1", "user-2"] }
                   }
                 }
               }
             }
           },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404-thread"
-          }
+          "401": { "$ref": "#/components/responses/401" },
+          "403": { "$ref": "#/components/responses/403" },
+          "404": { "$ref": "#/components/responses/404-thread" }
         }
       }
     },
@@ -1712,18 +1312,14 @@
             "name": "roomId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the room"
           },
           {
             "name": "threadId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the thread"
           }
         ],
@@ -1732,38 +1328,22 @@
             "description": "Success. Returns the updated metadata.",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ThreadMetadata"
-                },
-                "examples": {
-                  "Success": {
-                    "value": {
-                      "color": "yellow"
-                    }
-                  }
-                }
+                "schema": { "$ref": "#/components/schemas/ThreadMetadata" },
+                "examples": { "Success": { "value": { "color": "yellow" } } }
               }
             }
           },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404-thread"
-          }
+          "403": { "$ref": "#/components/responses/403" },
+          "404": { "$ref": "#/components/responses/404-thread" }
         },
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateThread"
-              },
+              "schema": { "$ref": "#/components/schemas/UpdateThread" },
               "examples": {
                 "example": {
                   "value": {
-                    "metadata": {
-                      "color": "yellow"
-                    },
+                    "metadata": { "color": "yellow" },
                     "userId": "alice",
                     "createdAt": "2023-07-13T14:32:50.697Z"
                   }
@@ -1785,18 +1365,14 @@
             "name": "roomId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the room"
           },
           {
             "name": "threadId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the thread"
           }
         ],
@@ -1805,18 +1381,12 @@
             "description": "Success. Returns the updated thread.",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Thread"
-                }
+                "schema": { "$ref": "#/components/schemas/Thread" }
               }
             }
           },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404-thread"
-          }
+          "403": { "$ref": "#/components/responses/403" },
+          "404": { "$ref": "#/components/responses/404-thread" }
         }
       }
     },
@@ -1831,18 +1401,14 @@
             "name": "roomId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the room"
           },
           {
             "name": "threadId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the thread"
           }
         ],
@@ -1851,18 +1417,12 @@
             "description": "Success. Returns the updated thread.",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Thread"
-                }
+                "schema": { "$ref": "#/components/schemas/Thread" }
               }
             }
           },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404-thread"
-          }
+          "403": { "$ref": "#/components/responses/403" },
+          "404": { "$ref": "#/components/responses/404-thread" }
         }
       }
     },
@@ -1877,18 +1437,14 @@
             "name": "roomId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the room"
           },
           {
             "name": "threadId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the thread"
           }
         ],
@@ -1897,9 +1453,7 @@
             "description": "Success. Returns the created comment.",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Comment"
-                },
+                "schema": { "$ref": "#/components/schemas/Comment" },
                 "examples": {
                   "example": {
                     "value": {
@@ -1909,44 +1463,28 @@
                       "id": "comment-id",
                       "userId": "alice",
                       "createdAt": "2022-07-13T14:32:50.697Z",
-                      "body": {
-                        "version": 1,
-                        "content": []
-                      }
+                      "body": { "version": 1, "content": [] }
                     }
                   }
                 }
               }
             }
           },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404-thread"
-          },
-          "409": {
-            "$ref": "#/components/responses/409-comment"
-          }
+          "401": { "$ref": "#/components/responses/401" },
+          "403": { "$ref": "#/components/responses/403" },
+          "404": { "$ref": "#/components/responses/404-thread" },
+          "409": { "$ref": "#/components/responses/409-comment" }
         },
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateComment"
-              },
+              "schema": { "$ref": "#/components/schemas/CreateComment" },
               "examples": {
                 "example": {
                   "value": {
                     "userId": "alice",
                     "createdAt": "2022-07-13T14:32:50.697Z",
-                    "body": {
-                      "version": 1,
-                      "content": []
-                    }
+                    "body": { "version": 1, "content": [] }
                   }
                 }
               }
@@ -1966,27 +1504,21 @@
             "name": "roomId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the room"
           },
           {
             "name": "threadId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the thread"
           },
           {
             "name": "commentId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the comment"
           }
         ],
@@ -1995,9 +1527,7 @@
             "description": "Success. Returns the requested comment.",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Comment"
-                },
+                "schema": { "$ref": "#/components/schemas/Comment" },
                 "examples": {
                   "Success": {
                     "value": {
@@ -2016,15 +1546,9 @@
               }
             }
           },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404-thread"
-          }
+          "401": { "$ref": "#/components/responses/401" },
+          "403": { "$ref": "#/components/responses/403" },
+          "404": { "$ref": "#/components/responses/404-thread" }
         }
       },
       "post": {
@@ -2037,27 +1561,21 @@
             "name": "roomId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the room"
           },
           {
             "name": "threadId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the thread"
           },
           {
             "name": "commentId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the comment"
           }
         ],
@@ -2066,9 +1584,7 @@
             "description": "Success. Returns the edited comment.",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UpdateComment"
-                },
+                "schema": { "$ref": "#/components/schemas/UpdateComment" },
                 "examples": {
                   "example": {
                     "value": {
@@ -2078,43 +1594,27 @@
                       "id": "comment-id",
                       "userId": "alice",
                       "createdAt": "2023-07-13T14:32:50.697Z",
-                      "body": {
-                        "version": 1,
-                        "content": []
-                      }
+                      "body": { "version": 1, "content": [] }
                     }
                   }
                 }
               }
             }
           },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404-thread"
-          },
-          "409": {
-            "$ref": "#/components/responses/409-comment"
-          }
+          "401": { "$ref": "#/components/responses/401" },
+          "403": { "$ref": "#/components/responses/403" },
+          "404": { "$ref": "#/components/responses/404-thread" },
+          "409": { "$ref": "#/components/responses/409-comment" }
         },
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateComment"
-              },
+              "schema": { "$ref": "#/components/schemas/CreateComment" },
               "examples": {
                 "example": {
                   "value": {
                     "editedAt": "2023-07-13T14:32:50.697Z",
-                    "body": {
-                      "version": 1,
-                      "content": []
-                    }
+                    "body": { "version": 1, "content": [] }
                   }
                 }
               }
@@ -2130,43 +1630,29 @@
             "name": "roomId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the room"
           },
           {
             "name": "threadId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the thread"
           },
           {
             "name": "commentId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the comment"
           }
         ],
         "responses": {
-          "204": {
-            "description": "Success. The comment was deleted"
-          },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404-comment"
-          }
+          "204": { "description": "Success. The comment was deleted" },
+          "401": { "$ref": "#/components/responses/401" },
+          "403": { "$ref": "#/components/responses/403" },
+          "404": { "$ref": "#/components/responses/404-comment" }
         },
         "operationId": "delete-rooms-roomId-threads-threadId-comments-commentId",
         "description": "This endpoint deletes a comment. A deleted comment is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.deleteComment`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId)."
@@ -2183,27 +1669,21 @@
             "name": "roomId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the room"
           },
           {
             "name": "threadId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the thread"
           },
           {
             "name": "commentId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the comment"
           }
         ],
@@ -2212,9 +1692,7 @@
             "description": "Success. Returns the created reaction.",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CommentReaction"
-                },
+                "schema": { "$ref": "#/components/schemas/CommentReaction" },
                 "examples": {
                   "example": {
                     "value": {
@@ -2227,25 +1705,15 @@
               }
             }
           },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404-comment"
-          },
-          "409": {
-            "$ref": "#/components/responses/409-comment-reaction"
-          }
+          "401": { "$ref": "#/components/responses/401" },
+          "403": { "$ref": "#/components/responses/403" },
+          "404": { "$ref": "#/components/responses/404-comment" },
+          "409": { "$ref": "#/components/responses/409-comment-reaction" }
         },
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AddCommentReaction"
-              },
+              "schema": { "$ref": "#/components/schemas/AddCommentReaction" },
               "examples": {
                 "example": {
                   "value": {
@@ -2271,43 +1739,29 @@
             "name": "roomId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the room"
           },
           {
             "name": "threadId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the thread"
           },
           {
             "name": "commentId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the comment"
           }
         ],
         "responses": {
-          "204": {
-            "description": "Success. The comment reaction was deleted"
-          },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404-comment-reaction"
-          }
+          "204": { "description": "Success. The comment reaction was deleted" },
+          "401": { "$ref": "#/components/responses/401" },
+          "403": { "$ref": "#/components/responses/403" },
+          "404": { "$ref": "#/components/responses/404-comment-reaction" }
         },
         "requestBody": {
           "content": {
@@ -2339,9 +1793,7 @@
             "description": "Success. Returns an access token that can be used to enter one or more rooms.",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TokenResponse"
-                },
+                "schema": { "$ref": "#/components/schemas/TokenResponse" },
                 "examples": {
                   "example": {
                     "value": {
@@ -2352,16 +1804,12 @@
               }
             }
           },
-          "403": {
-            "$ref": "#/components/responses/403"
-          }
+          "403": { "$ref": "#/components/responses/403" }
         },
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AuthorizeUserRequest"
-              },
+              "schema": { "$ref": "#/components/schemas/AuthorizeUserRequest" },
               "examples": {
                 "example": {
                   "value": {
@@ -2394,9 +1842,7 @@
             "description": "Success. Returns an ID token that can be used to enter one or more rooms.",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TokenResponse"
-                },
+                "schema": { "$ref": "#/components/schemas/TokenResponse" },
                 "examples": {
                   "example": {
                     "value": {
@@ -2407,16 +1853,12 @@
               }
             }
           },
-          "403": {
-            "$ref": "#/components/responses/403"
-          }
+          "403": { "$ref": "#/components/responses/403" }
         },
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/IdentifyUserRequest"
-              },
+              "schema": { "$ref": "#/components/schemas/IdentifyUserRequest" },
               "examples": {
                 "example": {
                   "value": {
@@ -2443,9 +1885,7 @@
         "tags": ["Deprecated"],
         "parameters": [
           {
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "name": "roomId",
             "in": "path",
             "required": true,
@@ -2458,9 +1898,7 @@
             "description": "Success. Returns an old-style single-room token.",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Authorization"
-                },
+                "schema": { "$ref": "#/components/schemas/Authorization" },
                 "examples": {
                   "example": {
                     "value": {
@@ -2471,34 +1909,21 @@
               }
             }
           },
-          "401": {
-            "$ref": "#/components/responses/401"
-          },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404"
-          },
-          "422": {
-            "$ref": "#/components/responses/422"
-          }
+          "401": { "$ref": "#/components/responses/401" },
+          "403": { "$ref": "#/components/responses/403" },
+          "404": { "$ref": "#/components/responses/404" },
+          "422": { "$ref": "#/components/responses/422" }
         },
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateAuthorization"
-              },
+              "schema": { "$ref": "#/components/schemas/CreateAuthorization" },
               "examples": {
                 "example": {
                   "value": {
                     "userId": "b2c1c290-f2c9-45de-a74e-6b7aa0690f59",
                     "groupIds": ["g1", "g2"],
-                    "userInfo": {
-                      "name": "bob",
-                      "colors": ["blue", "red"]
-                    }
+                    "userInfo": { "name": "bob", "colors": ["blue", "red"] }
                   }
                 }
               }
@@ -2515,9 +1940,7 @@
         "operationId": "post-public-authorize",
         "parameters": [
           {
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "name": "roomId",
             "in": "path",
             "required": true,
@@ -2529,9 +1952,7 @@
             "description": "Success. Returns the JWT token.",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Authorization"
-                },
+                "schema": { "$ref": "#/components/schemas/Authorization" },
                 "examples": {
                   "example": {
                     "value": {
@@ -2542,15 +1963,9 @@
               }
             }
           },
-          "403": {
-            "$ref": "#/components/responses/403"
-          },
-          "404": {
-            "$ref": "#/components/responses/404"
-          },
-          "422": {
-            "$ref": "#/components/responses/422"
-          }
+          "403": { "$ref": "#/components/responses/403" },
+          "404": { "$ref": "#/components/responses/404" },
+          "422": { "$ref": "#/components/responses/422" }
         },
         "description": "**Deprecated.** When you update Liveblocks to 1.2, you no longer need to get a JWT token when using a public key.\n\nThis endpoint works with the public key and can be used client side. That means you don’t need to implement a dedicated authorization endpoint server side. \nThe generated JWT token works only with public room (`defaultAccesses: [\"room:write\"]`).",
         "requestBody": {
@@ -2574,17 +1989,13 @@
     "/users/{userId}/inbox-notifications/{inboxNotificationId}": {
       "parameters": [
         {
-          "schema": {
-            "type": "string"
-          },
+          "schema": { "type": "string" },
           "name": "userId",
           "in": "path",
           "required": true
         },
         {
-          "schema": {
-            "type": "string"
-          },
+          "schema": { "type": "string" },
           "name": "inboxNotificationId",
           "in": "path",
           "required": true
@@ -2598,18 +2009,14 @@
             "name": "userId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the user"
           },
           {
             "name": "inboxNotificationId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the inbox notification"
           }
         ],
@@ -2633,15 +2040,9 @@
               }
             }
           },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          },
-          "404": {
-            "description": "Not Found"
-          }
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden" },
+          "404": { "description": "Not Found" }
         }
       },
       "delete": {
@@ -2652,45 +2053,31 @@
             "name": "userId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the user"
           },
           {
             "name": "inboxNotificationId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the inbox notification"
           }
         ],
         "operationId": "delete-users-userId-inboxNotifications-inboxNotificationId",
         "description": "This endpoint deletes a user’s inbox notification by its ID.",
         "responses": {
-          "204": {
-            "description": ""
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          },
-          "404": {
-            "description": "Not Found"
-          }
+          "204": { "description": "" },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden" },
+          "404": { "description": "Not Found" }
         }
       }
     },
     "/users/{userId}/inbox-notifications": {
       "parameters": [
         {
-          "schema": {
-            "type": "string"
-          },
+          "schema": { "type": "string" },
           "name": "userId",
           "in": "path",
           "required": true
@@ -2704,27 +2091,17 @@
             "name": "userId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the user"
           }
         ],
         "operationId": "delete-users-userId-inboxNotifications",
         "description": "This endpoint deletes all the user’s inbox notifications.",
         "responses": {
-          "204": {
-            "description": ""
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          },
-          "404": {
-            "description": "Not Found"
-          }
+          "204": { "description": "" },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden" },
+          "404": { "description": "Not Found" }
         }
       },
       "get": {
@@ -2735,15 +2112,11 @@
             "name": "userId",
             "in": "path",
             "required": true,
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "description": "ID of the user"
           },
           {
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "in": "query",
             "name": "query",
             "description": "Query to filter notifications. You can filter by `unread`, for example, `unread:true`."
@@ -2772,29 +2145,21 @@
               }
             }
           },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          }
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden" }
         }
       }
     },
     "/rooms/{roomId}/users/{userId}/notification-settings": {
       "parameters": [
         {
-          "schema": {
-            "type": "string"
-          },
+          "schema": { "type": "string" },
           "name": "roomId",
           "in": "path",
           "required": true
         },
         {
-          "schema": {
-            "type": "string"
-          },
+          "schema": { "type": "string" },
           "name": "userId",
           "in": "path",
           "required": true
@@ -2807,18 +2172,14 @@
         "description": "This endpoint returns a user’s notification settings for a specific room. Corresponds to [`liveblocks.getRoomNotificationSettings`](/docs/api-reference/liveblocks-node#get-rooms-roomId-users-userId-notification-settings).",
         "parameters": [
           {
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "name": "roomId",
             "in": "path",
             "required": true,
             "description": "ID of the room"
           },
           {
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "name": "userId",
             "in": "path",
             "required": true,
@@ -2836,15 +2197,9 @@
               }
             }
           },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          },
-          "404": {
-            "description": "Not Found"
-          }
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden" },
+          "404": { "description": "Not Found" }
         }
       },
       "post": {
@@ -2854,18 +2209,14 @@
         "description": "This endpoint updates a user’s notification settings for a specific room. Corresponds to [`liveblocks.updateRoomNotificationSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-notification-settings).",
         "parameters": [
           {
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "name": "roomId",
             "in": "path",
             "required": true,
             "description": "ID of the room"
           },
           {
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "name": "userId",
             "in": "path",
             "required": true,
@@ -2883,18 +2234,10 @@
               }
             }
           },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "422": {
-            "description": "Unprocessable Entity"
-          }
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden" },
+          "404": { "description": "Not Found" },
+          "422": { "description": "Unprocessable Entity" }
         },
         "requestBody": {
           "content": {
@@ -2913,18 +2256,14 @@
         "description": "This endpoint deletes a user’s notification settings for a specific room. Corresponds to [`liveblocks.deleteRoomNotificationSettings`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-users-userId-notification-settings).",
         "parameters": [
           {
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "name": "roomId",
             "in": "path",
             "required": true,
             "description": "ID of the room"
           },
           {
-            "schema": {
-              "type": "string"
-            },
+            "schema": { "type": "string" },
             "name": "userId",
             "in": "path",
             "required": true,
@@ -2932,18 +2271,10 @@
           }
         ],
         "responses": {
-          "204": {
-            "description": "No Content"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          },
-          "404": {
-            "description": "Not Found"
-          }
+          "204": { "description": "No Content" },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden" },
+          "404": { "description": "Not Found" }
         }
       }
     },
@@ -2955,21 +2286,11 @@
         "operationId": "post-inbox-notifications-trigger",
         "description": "This endpoint triggers an inbox notification. Corresponds to [`liveblocks.triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger).",
         "responses": {
-          "200": {
-            "description": "No Content"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          },
-          "404": {
-            "description": "Not Found"
-          },
-          "422": {
-            "description": "Unprocessable Entity"
-          }
+          "200": { "description": "No Content" },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden" },
+          "404": { "description": "Not Found" },
+          "422": { "description": "Unprocessable Entity" }
         },
         "requestBody": {
           "content": {
@@ -2989,38 +2310,21 @@
         "title": "Room",
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string",
-            "enum": ["room"]
-          },
-          "lastConnectionAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
+          "id": { "type": "string" },
+          "type": { "type": "string", "enum": ["room"] },
+          "lastConnectionAt": { "type": "string", "format": "date-time" },
+          "createdAt": { "type": "string", "format": "date-time" },
           "metadata": {
             "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            }
+            "additionalProperties": { "type": "string" }
           },
           "defaultAccesses": {
             "type": ["string", "array"],
             "uniqueItems": true,
             "items": {}
           },
-          "usersAccesses": {
-            "type": "object"
-          },
-          "groupsAccesses": {
-            "type": "object"
-          }
+          "usersAccesses": { "type": "object" },
+          "groupsAccesses": { "type": "object" }
         }
       },
       "UpdateRoom": {
@@ -3030,9 +2334,7 @@
         "properties": {
           "defaultAccesses": {
             "type": ["array", "null"],
-            "items": {
-              "type": "string"
-            }
+            "items": { "type": "string" }
           },
           "usersAccesses": {
             "type": ["object", "null"],
@@ -3052,24 +2354,11 @@
         "title": "CreateRoom",
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string"
-          },
-          "defaultAccesses": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "usersAccesses": {
-            "type": "object"
-          },
-          "groupsAccesses": {
-            "type": "object"
-          },
-          "metadata": {
-            "type": "object"
-          }
+          "id": { "type": "string" },
+          "defaultAccesses": { "type": "array", "items": { "type": "string" } },
+          "usersAccesses": { "type": "object" },
+          "groupsAccesses": { "type": "object" },
+          "metadata": { "type": "object" }
         },
         "required": ["id", "defaultAccesses"]
       },
@@ -3077,10 +2366,7 @@
         "title": "Error",
         "type": "object",
         "properties": {
-          "error": {
-            "type": "string",
-            "description": "Error code"
-          },
+          "error": { "type": "string", "description": "Error code" },
           "message": {
             "type": "string",
             "description": "Message explaining the error"
@@ -3098,38 +2384,24 @@
       "Authorization": {
         "title": "Authorization",
         "type": "object",
-        "properties": {
-          "token": {
-            "type": "string"
-          }
-        }
+        "properties": { "token": { "type": "string" } }
       },
       "TokenResponse": {
         "title": "An HTTP response body containing a token.",
         "type": "object",
-        "properties": {
-          "token": {
-            "type": "string"
-          }
-        }
+        "properties": { "token": { "type": "string" } }
       },
       "AuthorizeUserRequest": {
         "title": "AuthorizeUserRequest",
         "type": "object",
         "properties": {
-          "userId": {
-            "type": "string"
-          },
-          "userInfo": {
-            "type": "object"
-          },
+          "userId": { "type": "string" },
+          "userInfo": { "type": "object" },
           "permissions": {
             "type": "object",
             "additionalProperties": {
               "type": "array",
-              "items": {
-                "type": "string"
-              }
+              "items": { "type": "string" }
             }
           }
         }
@@ -3138,75 +2410,38 @@
         "title": "IdentifyUserRequest",
         "type": "object",
         "properties": {
-          "userId": {
-            "type": "string"
-          },
-          "groupIds": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "userInfo": {
-            "type": "object"
-          }
+          "userId": { "type": "string" },
+          "groupIds": { "type": "array", "items": { "type": "string" } },
+          "userInfo": { "type": "object" }
         }
       },
       "CreateAuthorization": {
         "title": "CreateAuthorization",
         "type": "object",
         "properties": {
-          "userId": {
-            "type": "string"
-          },
-          "userInfo": {
-            "type": "object"
-          },
-          "groupIds": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
+          "userId": { "type": "string" },
+          "userInfo": { "type": "object" },
+          "groupIds": { "type": "array", "items": { "type": "string" } }
         }
       },
       "GetRooms": {
         "title": "GetRooms",
         "type": "object",
         "properties": {
-          "nextPage": {
-            "type": "string"
-          },
+          "nextPage": { "type": "string" },
           "data": {
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
-                "id": {
-                  "type": "string"
-                },
-                "type": {
-                  "type": "string"
-                },
-                "lastConnectionAt": {
-                  "type": "string"
-                },
-                "createdAt": {
-                  "type": "string"
-                },
-                "metadata": {
-                  "type": "object"
-                },
-                "defaultAccesses": {
-                  "type": ["string", "array"],
-                  "items": {}
-                },
-                "usersAccesses": {
-                  "type": "object"
-                },
-                "groupsAccesses": {
-                  "type": "object"
-                }
+                "id": { "type": "string" },
+                "type": { "type": "string" },
+                "lastConnectionAt": { "type": "string" },
+                "createdAt": { "type": "string" },
+                "metadata": { "type": "object" },
+                "defaultAccesses": { "type": ["string", "array"], "items": {} },
+                "usersAccesses": { "type": "object" },
+                "groupsAccesses": { "type": "object" }
               }
             }
           }
@@ -3221,12 +2456,8 @@
             "items": {
               "type": "object",
               "properties": {
-                "type": {
-                  "type": "string"
-                },
-                "connectionId": {
-                  "type": "number"
-                }
+                "type": { "type": "string" },
+                "connectionId": { "type": "number" }
               }
             }
           }
@@ -3235,101 +2466,53 @@
       "PublicAuthorizeBodyRequest": {
         "title": "PublicAuthorizeBodyRequest",
         "type": "object",
-        "properties": {
-          "publicApiKey": {
-            "type": "string"
-          }
-        }
+        "properties": { "publicApiKey": { "type": "string" } }
       },
       "SchemaResponse": {
         "title": "Schema",
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "version": {
-            "type": "number"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "body": {
-            "type": "string"
-          }
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "version": { "type": "number" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "body": { "type": "string" }
         }
       },
       "SchemaRequest": {
         "title": "SchemaRequest",
         "type": "object",
         "properties": {
-          "name": {
-            "type": "string"
-          },
-          "body": {
-            "type": "string"
-          }
+          "name": { "type": "string" },
+          "body": { "type": "string" }
         }
       },
       "UpdateSchema": {
         "title": "UpdateSchema",
         "type": "object",
-        "properties": {
-          "body": {
-            "type": "string"
-          }
-        }
+        "properties": { "body": { "type": "string" } }
       },
       "AttachSchema": {
         "title": "AttachSchema",
         "type": "object",
-        "properties": {
-          "schema": {
-            "type": "string"
-          }
-        }
+        "properties": { "schema": { "type": "string" } }
       },
       "Thread": {
         "type": "object",
         "title": "Thread",
         "properties": {
-          "type": {
-            "const": "thread"
-          },
-          "id": {
-            "type": "string"
-          },
-          "roomId": {
-            "type": "string"
-          },
+          "type": { "const": "thread" },
+          "id": { "type": "string" },
+          "roomId": { "type": "string" },
           "comments": {
             "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Comment"
-            }
+            "items": { "$ref": "#/components/schemas/Comment" }
           },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "metadata": {
-            "type": "object"
-          },
-          "resolved": {
-            "type": "boolean"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
+          "createdAt": { "type": "string", "format": "date-time" },
+          "metadata": { "type": "object" },
+          "resolved": { "type": "boolean" },
+          "updatedAt": { "type": "string", "format": "date-time" }
         },
         "required": [
           "type",
@@ -3371,33 +2554,19 @@
           "comment": {
             "type": "object",
             "properties": {
-              "userId": {
-                "type": "string"
-              },
-              "createdAt": {
-                "type": "string",
-                "format": "date-time"
-              },
+              "userId": { "type": "string" },
+              "createdAt": { "type": "string", "format": "date-time" },
               "body": {
                 "type": "object",
                 "properties": {
-                  "version": {
-                    "type": "number"
-                  },
-                  "content": {
-                    "type": "array",
-                    "items": {
-                      "type": "object"
-                    }
-                  }
+                  "version": { "type": "number" },
+                  "content": { "type": "array", "items": { "type": "object" } }
                 }
               }
             },
             "required": ["userId", "body"]
           },
-          "metadata": {
-            "type": "object"
-          }
+          "metadata": { "type": "object" }
         },
         "required": ["comment"],
         "examples": [
@@ -3405,14 +2574,9 @@
             "comment": {
               "userId": "alice",
               "createdAt": "2022-07-13T14:32:50.697Z",
-              "body": {
-                "version": 1,
-                "content": []
-              }
+              "body": { "version": 1, "content": [] }
             },
-            "metadata": {
-              "color": "blue"
-            }
+            "metadata": { "color": "blue" }
           }
         ],
         "description": ""
@@ -3421,23 +2585,14 @@
         "title": "UpdateThread",
         "type": "object",
         "properties": {
-          "metadata": {
-            "type": "object"
-          },
-          "userId": {
-            "type": "string"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
+          "metadata": { "type": "object" },
+          "userId": { "type": "string" },
+          "updatedAt": { "type": "string", "format": "date-time" }
         },
         "required": ["metadata", "userId"],
         "examples": [
           {
-            "metadata": {
-              "color": "blue"
-            },
+            "metadata": { "color": "blue" },
             "userId": "alice",
             "createdAt": "2023-07-13T14:32:50.697Z"
           }
@@ -3447,16 +2602,9 @@
       "ThreadMetadata": {
         "type": "object",
         "title": "ThreadMetadata",
-        "properties": {
-          "type": "object"
-        },
+        "properties": { "type": "object" },
         "required": [],
-        "examples": [
-          {
-            "color": "blue",
-            "age": 25
-          }
-        ],
+        "examples": [{ "color": "blue", "age": 25 }],
         "description": ""
       },
       "Comment": {
@@ -3469,33 +2617,14 @@
             "default": "comment",
             "examples": ["comment"]
           },
-          "threadId": {
-            "type": "string"
-          },
-          "roomId": {
-            "type": "string"
-          },
-          "id": {
-            "type": "string"
-          },
-          "userId": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "editedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "deletedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "body": {
-            "type": "object"
-          }
+          "threadId": { "type": "string" },
+          "roomId": { "type": "string" },
+          "id": { "type": "string" },
+          "userId": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "editedAt": { "type": "string", "format": "date-time" },
+          "deletedAt": { "type": "string", "format": "date-time" },
+          "body": { "type": "object" }
         },
         "required": ["type", "threadId", "roomId", "id", "userId", "createdAt"],
         "examples": [
@@ -3516,25 +2645,13 @@
         "title": "CreateComment",
         "type": "object",
         "properties": {
-          "userId": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
+          "userId": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
           "body": {
             "type": "object",
             "properties": {
-              "version": {
-                "type": "number"
-              },
-              "content": {
-                "type": "array",
-                "items": {
-                  "type": "object"
-                }
-              }
+              "version": { "type": "number" },
+              "content": { "type": "array", "items": { "type": "object" } }
             }
           }
         },
@@ -3543,10 +2660,7 @@
           {
             "userId": "alice",
             "createdAt": "2022-07-13T14:32:50.697Z",
-            "body": {
-              "version": 1,
-              "content": []
-            }
+            "body": { "version": 1, "content": [] }
           }
         ],
         "description": ""
@@ -3555,22 +2669,12 @@
         "title": "UpdateComment",
         "type": "object",
         "properties": {
-          "editedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
+          "editedAt": { "type": "string", "format": "date-time" },
           "body": {
             "type": "object",
             "properties": {
-              "version": {
-                "type": "number"
-              },
-              "content": {
-                "type": "array",
-                "items": {
-                  "type": "object"
-                }
-              }
+              "version": { "type": "number" },
+              "content": { "type": "array", "items": { "type": "object" } }
             }
           }
         },
@@ -3578,10 +2682,7 @@
         "examples": [
           {
             "editedAt": "2022-07-13T14:32:50.697Z",
-            "body": {
-              "version": 1,
-              "content": []
-            }
+            "body": { "version": 1, "content": [] }
           }
         ],
         "description": ""
@@ -3590,16 +2691,9 @@
         "type": "object",
         "title": "CommentReaction",
         "properties": {
-          "userId": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "emoji": {
-            "type": "string"
-          }
+          "userId": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "emoji": { "type": "string" }
         },
         "required": ["userId", "emoji"],
         "examples": [
@@ -3614,16 +2708,9 @@
         "type": "object",
         "title": "AddCommentReaction",
         "properties": {
-          "userId": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "emoji": {
-            "type": "string"
-          }
+          "userId": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "emoji": { "type": "string" }
         },
         "required": ["userId", "emoji"],
         "examples": [
@@ -3638,16 +2725,9 @@
         "type": "object",
         "title": "RemoveCommentReaction",
         "properties": {
-          "userId": {
-            "type": "string"
-          },
-          "removedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "emoji": {
-            "type": "string"
-          }
+          "userId": { "type": "string" },
+          "removedAt": { "type": "string", "format": "date-time" },
+          "emoji": { "type": "string" }
         },
         "required": ["userId", "emoji"],
         "examples": [
@@ -3662,85 +2742,43 @@
         "title": "InboxNotificationThreadData",
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string"
-          },
-          "kind": {
-            "type": "string"
-          },
-          "threadId": {
-            "type": "string"
-          },
-          "roomId": {
-            "type": "string"
-          },
-          "readAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "notifiedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
+          "id": { "type": "string" },
+          "kind": { "type": "string" },
+          "threadId": { "type": "string" },
+          "roomId": { "type": "string" },
+          "readAt": { "type": "string", "format": "date-time" },
+          "notifiedAt": { "type": "string", "format": "date-time" }
         }
       },
       "InboxNotificationCustomData": {
         "title": "InboxNotificationCustomData",
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string"
-          },
-          "kind": {
-            "type": "string"
-          },
-          "subjectId": {
-            "type": "string"
-          },
-          "roomId": {
-            "type": "string"
-          },
-          "readAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "notifiedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "activityData": {
-            "type": "object"
-          }
+          "id": { "type": "string" },
+          "kind": { "type": "string" },
+          "subjectId": { "type": "string" },
+          "roomId": { "type": "string" },
+          "readAt": { "type": "string", "format": "date-time" },
+          "notifiedAt": { "type": "string", "format": "date-time" },
+          "activityData": { "type": "object" }
         }
       },
       "UserRoomNotificationSettings": {
         "title": "UserRoomNotificationSettings",
         "type": "object",
         "properties": {
-          "threads": {
-            "enum": ["all", "replies_and_mentions", "none"]
-          }
+          "threads": { "enum": ["all", "replies_and_mentions", "none"] }
         }
       },
       "TriggerInboxNotification": {
         "title": "TriggerInboxNotification",
         "type": "object",
         "properties": {
-          "userId": {
-            "type": "string"
-          },
-          "kind": {
-            "type": "string"
-          },
-          "subjectId": {
-            "type": "string"
-          },
-          "roomId": {
-            "type": "string"
-          },
-          "activityData": {
-            "type": "object"
-          }
+          "userId": { "type": "string" },
+          "kind": { "type": "string" },
+          "subjectId": { "type": "string" },
+          "roomId": { "type": "string" },
+          "activityData": { "type": "object" }
         },
         "required": ["userId", "kind", "subjectId", "activityData"],
         "examples": [
@@ -3748,9 +2786,7 @@
             "userId": "alice",
             "kind": "file-uploaded",
             "subjectId": "file123",
-            "activityData": {
-              "url": "url-to-file"
-            }
+            "activityData": { "url": "url-to-file" }
           }
         ]
       }
@@ -3767,9 +2803,7 @@
         "description": "Missing or wrong credentials.",
         "content": {
           "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            },
+            "schema": { "$ref": "#/components/schemas/Error" },
             "examples": {
               "WRONG_KEY_USED": {
                 "value": {
@@ -3795,9 +2829,7 @@
         "description": "Unauthorized access.",
         "content": {
           "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            },
+            "schema": { "$ref": "#/components/schemas/Error" },
             "examples": {
               "INVALID_SECRET_KEY": {
                 "value": {
@@ -3831,9 +2863,7 @@
         "description": "Room not found.",
         "content": {
           "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            },
+            "schema": { "$ref": "#/components/schemas/Error" },
             "examples": {
               "ROOM_NOT_FOUND": {
                 "value": {
@@ -3851,9 +2881,7 @@
         "description": "Room already exists.",
         "content": {
           "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            },
+            "schema": { "$ref": "#/components/schemas/Error" },
             "examples": {
               "ROOM_ALREADY_EXISTS": {
                 "value": {
@@ -3866,10 +2894,7 @@
             }
           },
           "application/xml": {
-            "schema": {
-              "type": "object",
-              "properties": {}
-            }
+            "schema": { "type": "object", "properties": {} }
           }
         }
       },
@@ -3877,9 +2902,7 @@
         "description": "Unprocessable entity.",
         "content": {
           "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            },
+            "schema": { "$ref": "#/components/schemas/Error" },
             "examples": {
               "UNPROCESSABLE_ENTITY": {
                 "value": {
@@ -3897,9 +2920,7 @@
         "description": "Unauthorized access.",
         "content": {
           "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            },
+            "schema": { "$ref": "#/components/schemas/Error" },
             "examples": {
               "SCHEMA_FROZEN": {
                 "value": {
@@ -3940,9 +2961,7 @@
         "description": "Schema not found.",
         "content": {
           "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            },
+            "schema": { "$ref": "#/components/schemas/Error" },
             "examples": {
               "SCHEMA_NOT_FOUND": {
                 "value": {
@@ -3960,9 +2979,7 @@
         "description": "Existing room data does not match this schema.",
         "content": {
           "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            },
+            "schema": { "$ref": "#/components/schemas/Error" },
             "examples": {
               "SCHEMA_NOT_COMPATIBLE": {
                 "value": {
@@ -3975,10 +2992,7 @@
             }
           },
           "application/xml": {
-            "schema": {
-              "type": "object",
-              "properties": {}
-            }
+            "schema": { "type": "object", "properties": {} }
           }
         }
       },
@@ -3986,9 +3000,7 @@
         "description": "Unprocessable entity.",
         "content": {
           "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            },
+            "schema": { "$ref": "#/components/schemas/Error" },
             "examples": {
               "UNPROCESSABLE_ENTITY": {
                 "value": {
@@ -4014,9 +3026,7 @@
         "description": "Thread already exists.",
         "content": {
           "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            },
+            "schema": { "$ref": "#/components/schemas/Error" },
             "examples": {
               "RESOURCE_ALREADY_EXISTS": {
                 "value": {
@@ -4027,10 +3037,7 @@
             }
           },
           "application/xml": {
-            "schema": {
-              "type": "object",
-              "properties": {}
-            }
+            "schema": { "type": "object", "properties": {} }
           }
         }
       },
@@ -4038,9 +3045,7 @@
         "description": "Thread not found.",
         "content": {
           "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            },
+            "schema": { "$ref": "#/components/schemas/Error" },
             "examples": {
               "RESOURCE_NOT_FOUND": {
                 "value": {
@@ -4051,10 +3056,7 @@
             }
           },
           "application/xml": {
-            "schema": {
-              "type": "object",
-              "properties": {}
-            }
+            "schema": { "type": "object", "properties": {} }
           }
         }
       },
@@ -4062,9 +3064,7 @@
         "description": "Comment already exists.",
         "content": {
           "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            },
+            "schema": { "$ref": "#/components/schemas/Error" },
             "examples": {
               "RESOURCE_ALREADY_EXISTS": {
                 "value": {
@@ -4075,10 +3075,7 @@
             }
           },
           "application/xml": {
-            "schema": {
-              "type": "object",
-              "properties": {}
-            }
+            "schema": { "type": "object", "properties": {} }
           }
         }
       },
@@ -4086,9 +3083,7 @@
         "description": "Comment not found.",
         "content": {
           "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            },
+            "schema": { "$ref": "#/components/schemas/Error" },
             "examples": {
               "RESOURCE_NOT_FOUND": {
                 "value": {
@@ -4099,10 +3094,7 @@
             }
           },
           "application/xml": {
-            "schema": {
-              "type": "object",
-              "properties": {}
-            }
+            "schema": { "type": "object", "properties": {} }
           }
         }
       },
@@ -4110,9 +3102,7 @@
         "description": "Reaction already exists.",
         "content": {
           "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            },
+            "schema": { "$ref": "#/components/schemas/Error" },
             "examples": {
               "RESOURCE_ALREADY_EXISTS": {
                 "value": {
@@ -4123,10 +3113,7 @@
             }
           },
           "application/xml": {
-            "schema": {
-              "type": "object",
-              "properties": {}
-            }
+            "schema": { "type": "object", "properties": {} }
           }
         }
       },
@@ -4134,9 +3121,7 @@
         "description": "Comment not found.",
         "content": {
           "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            },
+            "schema": { "$ref": "#/components/schemas/Error" },
             "examples": {
               "RESOURCE_NOT_FOUND": {
                 "value": {
@@ -4147,40 +3132,21 @@
             }
           },
           "application/xml": {
-            "schema": {
-              "type": "object",
-              "properties": {}
-            }
+            "schema": { "type": "object", "properties": {} }
           }
         }
       }
     }
   },
   "tags": [
-    {
-      "name": "Authentication"
-    },
-    {
-      "name": "Room"
-    },
-    {
-      "name": "Storage"
-    },
-    {
-      "name": "Yjs"
-    },
-    {
-      "name": "Schema validation"
-    },
-    {
-      "name": "Comments"
-    },
-    {
-      "name": "Notifications"
-    },
-    {
-      "name": "Deprecated"
-    }
+    { "name": "Authentication" },
+    { "name": "Room" },
+    { "name": "Storage" },
+    { "name": "Yjs" },
+    { "name": "Schema validation" },
+    { "name": "Comments" },
+    { "name": "Notifications" },
+    { "name": "Deprecated" }
   ],
   "x-internal": true
 }
