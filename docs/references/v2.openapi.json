@@ -140,20 +140,20 @@
       }
     },
     "/rooms/{roomId}": {
+      "parameters": [
+        {
+          "name": "roomId",
+          "required": true,
+          "description": "ID of the room",
+          "schema": { "type": "string" },
+          "in": "path"
+        }
+      ],
       "get": {
         "operationId": "get-rooms-roomId",
         "summary": "Get room",
         "description": "This endpoint returns a room by its ID. Corresponds to [`liveblocks.getRoom`](/docs/api-reference/liveblocks-node#get-rooms-roomid).",
         "tags": ["Room"],
-        "parameters": [
-          {
-            "schema": { "type": "string" },
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the room"
-          }
-        ],
         "responses": {
           "200": {
             "description": "Success. Returns the room.",
@@ -194,15 +194,6 @@
         "summary": "Update room",
         "description": "This endpoint updates specific properties of a room. Corresponds to [`liveblocks.updateRoom`](/docs/api-reference/liveblocks-node#post-rooms-roomid). \n\nIt’s not necessary to provide the entire room’s information. \nSetting a property to `null` means to delete this property. For example, if you want to remove access to a specific user without losing other users: \n``{\n    \"usersAccesses\": {\n        \"john\": null\n    }\n}``\n`defaultAccessess`, `metadata`, `usersAccesses`, `groupsAccesses` can be updated.\n\n- `defaultAccessess` could be `[]` or `[\"room:write\"]` (private or public). \n- `metadata` could be key/value as `string` or `string[]`. `metadata` supports maximum 50 entries. Key length has a limit of 40 characters maximum. Value length has a limit of 256 characters maximum. `metadata` is optional field.\n- `usersAccesses` could be `[]` or `[\"room:write\"]` for every records. `usersAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `usersAccesses` is optional field.\n- `groupsAccesses` could be `[]` or `[\"room:write\"]` for every records. `groupsAccesses` can contain 100 ids maximum. Id length has a limit of 256 characters. `groupsAccesses` is optional field.",
         "tags": ["Room"],
-        "parameters": [
-          {
-            "schema": { "type": "string" },
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the room"
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -270,15 +261,6 @@
         "summary": "Delete room",
         "description": "This endpoint deletes a room. A deleted room is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.deleteRoom`](/docs/api-reference/liveblocks-node#delete-rooms-roomid).",
         "tags": ["Room"],
-        "parameters": [
-          {
-            "schema": { "type": "string" },
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the room"
-          }
-        ],
         "responses": {
           "204": { "description": "Success. The room was deleted" },
           "401": { "$ref": "#/components/responses/401" },
@@ -289,20 +271,20 @@
       }
     },
     "/rooms/{roomId}/update-room-id": {
+      "parameters": [
+        {
+          "name": "roomId",
+          "required": true,
+          "description": "The new ID for the room",
+          "schema": { "type": "string" },
+          "in": "path"
+        }
+      ],
       "post": {
         "operationId": "post-rooms-update-roomId",
         "summary": "Update room ID",
         "description": "This endpoint permanently updates the room’s ID.",
         "tags": ["Room"],
-        "parameters": [
-          {
-            "schema": { "type": "string" },
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "description": "The new ID for the room"
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -356,20 +338,20 @@
       }
     },
     "/rooms/{roomId}/active_users": {
+      "parameters": [
+        {
+          "name": "roomId",
+          "required": true,
+          "description": "ID of the room",
+          "schema": { "type": "string" },
+          "in": "path"
+        }
+      ],
       "get": {
         "operationId": "get-rooms-roomId-active-users",
         "summary": "Get active users",
         "description": "This endpoint returns a list of users currently present in the requested room. Corresponds to [`liveblocks.getActiveUsers`](/docs/api-reference/liveblocks-node#get-rooms-roomid-active-users). \n\nFor optimal performance, we recommend calling this endpoint no more than once every 10 seconds. \nDuplicates can occur if a user is in the requested room with multiple browser tabs opened.",
         "tags": ["Room"],
-        "parameters": [
-          {
-            "schema": { "type": "string" },
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the room"
-          }
-        ],
         "responses": {
           "200": {
             "description": "Success. Returns the list of active users for the specified room.",
@@ -408,20 +390,20 @@
       }
     },
     "/rooms/{roomId}/broadcast_event": {
+      "parameters": [
+        {
+          "name": "roomId",
+          "required": true,
+          "description": "ID of the room",
+          "schema": { "type": "string" },
+          "in": "path"
+        }
+      ],
       "post": {
         "operationId": "post-broadcast-event",
         "summary": "Broadcast event to a room",
         "description": "This endpoint enables the broadcast of an event to a room without having to connect to it via the `client` from `@liveblocks/client`. It takes any valid JSON as a request body. The `connectionId` passed to event listeners is `-1` when using this API. Corresponds to [`liveblocks.broadcastEvent`](/docs/api-reference/liveblocks-node#post-broadcast-event).",
         "tags": ["Room"],
-        "parameters": [
-          {
-            "schema": { "type": "string" },
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the room"
-          }
-        ],
         "requestBody": {
           "description": "Any valid JSON.",
           "content": {
@@ -445,6 +427,15 @@
       }
     },
     "/rooms/{roomId}/storage": {
+      "parameters": [
+        {
+          "name": "roomId",
+          "required": true,
+          "description": "ID of the room",
+          "schema": { "type": "string" },
+          "in": "path"
+        }
+      ],
       "get": {
         "operationId": "get-rooms-roomId-storage",
         "summary": "Get Storage document",
@@ -452,18 +443,11 @@
         "tags": ["Storage"],
         "parameters": [
           {
-            "schema": { "type": "string" },
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the room"
-          },
-          {
-            "schema": { "type": "string", "enum": ["plain-lson", "json"] },
             "name": "format",
-            "in": "query",
             "required": false,
-            "description": "Use `?format=json` to output a simplified JSON representation of the Storage tree. In that format, each LiveObject and LiveMap will be formatted as a simple JSON object, and each LiveList will be formatted as a simple JSON array. This is a lossy format because information about the original data structures is not retained, but it may be easier to work with."
+            "description": "Use `?format=json` to output a simplified JSON representation of the Storage tree. In that format, each LiveObject and LiveMap will be formatted as a simple JSON object, and each LiveList will be formatted as a simple JSON array. This is a lossy format because information about the original data structures is not retained, but it may be easier to work with.",
+            "schema": { "type": "string", "enum": ["plain-lson", "json"] },
+            "in": "query"
           }
         ],
         "responses": {
@@ -512,15 +496,6 @@
         "summary": "Initialize Storage document",
         "description": "This endpoint initializes or reinitializes a room’s Storage. The room must already exist. Calling this endpoint will disconnect all users from the room if there are any, triggering a reconnect. Corresponds to [`liveblocks.initializeStorageDocument`](/docs/api-reference/liveblocks-node#post-rooms-roomId-storage).\n\nThe format of the request body is the same as what’s returned by the get Storage endpoint.\n\nFor each Liveblocks data structure that you want to create, you need a JSON element having two properties:\n- `\"liveblocksType\"` => `\"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n- `\"data\"` => contains the nested data structures (children) and data.\n\nThe root’s type can only be LiveObject.\n\nA utility function, `toPlainLson` is included in `@liveblocks/client` from `1.0.9` to help convert `LiveObject`, `LiveList`, and `LiveMap` to the structure expected by the endpoint.",
         "tags": ["Storage"],
-        "parameters": [
-          {
-            "schema": { "type": "string" },
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the room"
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -601,15 +576,6 @@
         "summary": "Delete Storage document",
         "description": "This endpoint deletes all of the room’s Storage data. Calling this endpoint will disconnect all users from the room if there are any. Corresponds to [`liveblocks.deleteStorageDocument`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-storage).\n",
         "tags": ["Storage"],
-        "parameters": [
-          {
-            "schema": { "type": "string" },
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the room"
-          }
-        ],
         "responses": {
           "200": { "description": "Success. The room has no more Storage." },
           "401": { "$ref": "#/components/responses/401" },
@@ -619,6 +585,15 @@
       }
     },
     "/rooms/{roomId}/ydoc": {
+      "parameters": [
+        {
+          "name": "roomId",
+          "required": true,
+          "description": "ID of the room",
+          "schema": { "type": "string" },
+          "in": "path"
+        }
+      ],
       "get": {
         "operationId": "get-rooms-roomId-ydoc",
         "summary": "Get Yjs document",
@@ -626,36 +601,29 @@
         "tags": ["Yjs"],
         "parameters": [
           {
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the room"
-          },
-          {
-            "schema": { "type": "boolean" },
             "name": "formatting",
-            "in": "query",
-            "allowEmptyValue": true,
             "required": false,
-            "description": "If present, YText will return formatting."
+            "description": "If present, YText will return formatting.",
+            "schema": { "type": "boolean" },
+            "in": "query",
+            "allowEmptyValue": true
           },
           {
-            "schema": { "type": "string" },
             "name": "key",
-            "in": "query",
             "required": false,
-            "description": "Returns only a single key’s value, e.g. `doc.get(key).toJSON()`."
+            "description": "Returns only a single key’s value, e.g. `doc.get(key).toJSON()`.",
+            "schema": { "type": "string" },
+            "in": "query"
           },
           {
+            "name": "type",
+            "required": false,
+            "description": "Used with key to override the inferred type, i.e. `\"ymap\"` will return `doc.get(key, Y.Map)`.",
             "schema": {
               "type": "string",
               "enum": ["ymap", "ytext", "yxmltext", "yxmlfragment", "yarray"]
             },
-            "name": "type",
-            "in": "query",
-            "required": false,
-            "description": "Used with key to override the inferred type, i.e. `\"ymap\"` will return `doc.get(key, Y.Map)`."
+            "in": "query"
           }
         ],
         "responses": {
@@ -682,18 +650,11 @@
         "tags": ["Yjs"],
         "parameters": [
           {
-            "schema": { "type": "string" },
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the room"
-          },
-          {
             "name": "guid",
-            "in": "query",
             "required": false,
+            "description": "ID of the subdocument",
             "schema": { "type": "string" },
-            "description": "ID of the subdocument"
+            "in": "query"
           }
         ],
         "requestBody": {
@@ -715,6 +676,15 @@
       }
     },
     "/rooms/{roomId}/ydoc-binary": {
+      "parameters": [
+        {
+          "name": "roomId",
+          "required": true,
+          "description": "ID of the room",
+          "schema": { "type": "string" },
+          "in": "path"
+        }
+      ],
       "get": {
         "operationId": "get-rooms-roomId-ydoc-binary",
         "summary": "Get Yjs document encoded as a binary Yjs update",
@@ -722,18 +692,11 @@
         "tags": ["Yjs"],
         "parameters": [
           {
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the room"
-          },
-          {
             "name": "guid",
-            "in": "query",
             "required": false,
+            "description": "ID of the subdocument",
             "schema": { "type": "string" },
-            "description": "ID of the subdocument"
+            "in": "query"
           }
         ],
         "responses": {
@@ -797,20 +760,20 @@
       }
     },
     "/schemas/{schemaId}": {
+      "parameters": [
+        {
+          "name": "schemaId",
+          "required": true,
+          "description": "ID of the schema",
+          "schema": { "type": "string" },
+          "in": "path"
+        }
+      ],
       "get": {
         "operationId": "get-create-new-schema",
         "summary": "Get schema",
         "description": "This endpoint retrieves a schema by its ID. The ID is a combination of the schema name and version. For example, `my-schema@1`. Corresponds to [`liveblocks.getSchema`](/docs/api-reference/liveblocks-node#get-create-new-schema).",
         "tags": ["Schema validation"],
-        "parameters": [
-          {
-            "schema": { "type": "string" },
-            "name": "schemaId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the schema"
-          }
-        ],
         "responses": {
           "200": {
             "description": "Success. Found the schema and returns it as JSON.",
@@ -841,15 +804,6 @@
         "summary": "Update schema",
         "description": "This endpoint updates the body for the schema. A schema can only be updated if it is not used by any room. Corresponds to [`liveblocks.updateSchema`](/docs/api-reference/liveblocks-node#put-update-new-schema).",
         "tags": ["Schema validation"],
-        "parameters": [
-          {
-            "schema": { "type": "string" },
-            "name": "schemaId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the schema"
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -895,15 +849,6 @@
         "summary": "Delete schema",
         "description": "This endpoint deletes a schema by its ID. The ID is a combination of the schema name and version. For example, `my-schema@1`. A schema can only be deleted if it is not attached to a room. Corresponds to [`liveblocks.deleteSchema`](/docs/api-reference/liveblocks-node#delete-a-schema).",
         "tags": ["Schema validation"],
-        "parameters": [
-          {
-            "schema": { "type": "string" },
-            "name": "schemaId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the schema"
-          }
-        ],
         "responses": {
           "200": { "description": "Success. Schema was delated" },
           "401": { "$ref": "#/components/responses/401" },
@@ -912,20 +857,20 @@
       }
     },
     "/rooms/{roomId}/schema": {
+      "parameters": [
+        {
+          "name": "roomId",
+          "required": true,
+          "description": "ID of the room",
+          "schema": { "type": "string" },
+          "in": "path"
+        }
+      ],
       "get": {
         "operationId": "get-new-schema",
         "summary": "Get schema by room ID",
         "description": "This endpoint retrieves the schema attached to a room.  Corresponds to [`liveblocks.getSchemaByRoomId`](/docs/api-reference/liveblocks-node#get-new-schema).",
         "tags": ["Schema validation"],
-        "parameters": [
-          {
-            "schema": { "type": "string" },
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the room"
-          }
-        ],
         "responses": {
           "200": {
             "description": "Success. Found the schema attached to the room and returns it as JSON.",
@@ -957,15 +902,6 @@
         "summary": "Attach schema to room",
         "description": "This endpoint attaches a schema to a room, and instantly enables runtime schema validation for the room. Corresponds to [`liveblocks.attachSchemaToRoom`](/docs/api-reference/liveblocks-node#post-attach-schema-to-room).\n\nIf the current contents of the room’s Storage do not match the schema, attaching will fail and the error message will give details on why the schema failed to attach.",
         "tags": ["Schema validation"],
-        "parameters": [
-          {
-            "schema": { "type": "string" },
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the room"
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -998,15 +934,6 @@
         "summary": "Detach schema from room",
         "description": "This endpoint detaches the schema from a room. Corresponds to [`liveblocks.detachSchemaFromRoom`](/docs/api-reference/liveblocks-node#delete-detach-schema-to-room).",
         "tags": ["Schema validation"],
-        "parameters": [
-          {
-            "schema": { "type": "string" },
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the room"
-          }
-        ],
         "responses": {
           "200": {
             "description": "Success. Detached the schema from the room."
@@ -1018,6 +945,15 @@
       }
     },
     "/rooms/{roomId}/threads": {
+      "parameters": [
+        {
+          "name": "roomId",
+          "required": true,
+          "description": "ID of the room",
+          "schema": { "type": "string" },
+          "in": "path"
+        }
+      ],
       "get": {
         "operationId": "get-rooms-roomId-threads",
         "summary": "Get room threads",
@@ -1025,17 +961,10 @@
         "tags": ["Comments"],
         "parameters": [
           {
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the room"
-          },
-          {
-            "schema": { "type": "string" },
-            "in": "query",
             "name": "query",
-            "description": "Query to filter threads. You can filter by `metadata` and `resolved`, for example, `metadata[\"status\"]:\"open\" AND metadata[\"color\"]:\"red\" AND resolved:true`. Learn more about [filtering threads with query language](/docs/guides/how-to-filter-threads-using-query-language)."
+            "description": "Query to filter threads. You can filter by `metadata` and `resolved`, for example, `metadata[\"status\"]:\"open\" AND metadata[\"color\"]:\"red\" AND resolved:true`. Learn more about [filtering threads with query language](/docs/guides/how-to-filter-threads-using-query-language).",
+            "schema": { "type": "string" },
+            "in": "query"
           }
         ],
         "responses": {
@@ -1094,15 +1023,6 @@
         "summary": "Create thread",
         "description": "This endpoint creates a new thread and the first comment in the thread. Corresponds to [`liveblocks.createThread`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads).\n\nA comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to construct a comment’s body, which can be submitted under `comment.body`.\n\n```json\n\"version\": 1,\n\"content\": [\n  {\n    \"type\": \"paragraph\",\n    \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]\n  }\n]\n```",
         "tags": ["Comments"],
-        "parameters": [
-          {
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the room"
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1160,27 +1080,27 @@
       }
     },
     "/rooms/{roomId}/threads/{threadId}": {
+      "parameters": [
+        {
+          "name": "roomId",
+          "required": true,
+          "description": "ID of the room",
+          "schema": { "type": "string" },
+          "in": "path"
+        },
+        {
+          "name": "threadId",
+          "required": true,
+          "description": "ID of the thread",
+          "schema": { "type": "string" },
+          "in": "path"
+        }
+      ],
       "get": {
         "operationId": "get-rooms-roomId-threads-threadId",
         "summary": "Get thread",
         "description": "This endpoint returns a thread by its ID. Corresponds to [`liveblocks.getThread`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId).",
         "tags": ["Comments"],
-        "parameters": [
-          {
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the room"
-          },
-          {
-            "name": "threadId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the thread"
-          }
-        ],
         "responses": {
           "200": {
             "description": "Success. Returns requested thread.",
@@ -1225,22 +1145,6 @@
         "summary": "Delete thread",
         "description": "This endpoint deletes a thread by its ID. Corresponds to [`liveblocks.deleteThread`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-threads-threadId).",
         "tags": ["Comments"],
-        "parameters": [
-          {
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the room"
-          },
-          {
-            "name": "threadId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the thread"
-          }
-        ],
         "responses": {
           "204": { "description": "Success. The thread has been deleted." },
           "401": { "$ref": "#/components/responses/401" },
@@ -1250,27 +1154,27 @@
       }
     },
     "/rooms/{roomId}/threads/{threadId}/participants": {
+      "parameters": [
+        {
+          "name": "roomId",
+          "required": true,
+          "description": "ID of the room",
+          "schema": { "type": "string" },
+          "in": "path"
+        },
+        {
+          "name": "threadId",
+          "required": true,
+          "description": "ID of the thread",
+          "schema": { "type": "string" },
+          "in": "path"
+        }
+      ],
       "get": {
         "operationId": "get-rooms-roomId-threads-threadId-participants",
         "summary": "Get thread participants",
         "description": "This endpoint returns the list of thread participants. It is a list of unique user IDs representing all the thread comment authors and mentioned users in comments. Corresponds to [`liveblocks.getThreadParticipants`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-participants).",
         "tags": ["Comments"],
-        "parameters": [
-          {
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the room"
-          },
-          {
-            "name": "threadId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the thread"
-          }
-        ],
         "responses": {
           "200": {
             "description": "Success. Returns the thread’s participants",
@@ -1300,27 +1204,27 @@
       }
     },
     "/rooms/{roomId}/threads/{threadId}/metadata": {
+      "parameters": [
+        {
+          "name": "roomId",
+          "required": true,
+          "description": "ID of the room",
+          "schema": { "type": "string" },
+          "in": "path"
+        },
+        {
+          "name": "threadId",
+          "required": true,
+          "description": "ID of the thread",
+          "schema": { "type": "string" },
+          "in": "path"
+        }
+      ],
       "post": {
         "operationId": "post-rooms-roomId-threads-threadId-metadata",
         "summary": "Edit thread metadata",
         "description": "This endpoint edits the metadata of a thread. The metadata is a JSON object that can be used to store any information you want about the thread, in `string`, `number`, or `boolean` form. Set a property to `null` to remove it. Corresponds to [`liveblocks.editThreadMetadata`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-metadata).",
         "tags": ["Comments"],
-        "parameters": [
-          {
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the room"
-          },
-          {
-            "name": "threadId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the thread"
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1353,27 +1257,27 @@
       }
     },
     "/rooms/{roomId}/threads/{threadId}/mark-as-resolved": {
+      "parameters": [
+        {
+          "name": "roomId",
+          "required": true,
+          "description": "ID of the room",
+          "schema": { "type": "string" },
+          "in": "path"
+        },
+        {
+          "name": "threadId",
+          "required": true,
+          "description": "ID of the thread",
+          "schema": { "type": "string" },
+          "in": "path"
+        }
+      ],
       "post": {
         "operationId": "post-rooms-roomId-threads-threadId-mark-as-resolved",
         "summary": "Mark thread as resolved",
         "description": "This endpoint marks a thread as resolved.",
         "tags": ["Comments"],
-        "parameters": [
-          {
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the room"
-          },
-          {
-            "name": "threadId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the thread"
-          }
-        ],
         "responses": {
           "200": {
             "description": "Success. Returns the updated thread.",
@@ -1389,27 +1293,27 @@
       }
     },
     "/rooms/{roomId}/threads/{threadId}/mark-as-unresolved": {
+      "parameters": [
+        {
+          "name": "roomId",
+          "required": true,
+          "description": "ID of the room",
+          "schema": { "type": "string" },
+          "in": "path"
+        },
+        {
+          "name": "threadId",
+          "required": true,
+          "description": "ID of the thread",
+          "schema": { "type": "string" },
+          "in": "path"
+        }
+      ],
       "post": {
         "operationId": "post-rooms-roomId-threads-threadId-mark-as-unresolved",
         "summary": "Mark thread as unresolved",
         "description": "This endpoint marks a thread as unresolved.",
         "tags": ["Comments"],
-        "parameters": [
-          {
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the room"
-          },
-          {
-            "name": "threadId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the thread"
-          }
-        ],
         "responses": {
           "200": {
             "description": "Success. Returns the updated thread.",
@@ -1425,27 +1329,27 @@
       }
     },
     "/rooms/{roomId}/threads/{threadId}/comments": {
+      "parameters": [
+        {
+          "name": "roomId",
+          "required": true,
+          "description": "ID of the room",
+          "schema": { "type": "string" },
+          "in": "path"
+        },
+        {
+          "name": "threadId",
+          "required": true,
+          "description": "ID of the thread",
+          "schema": { "type": "string" },
+          "in": "path"
+        }
+      ],
       "post": {
         "operationId": "post-rooms-roomId-threads-threadId-comments",
         "summary": "Create comment",
         "description": "This endpoint creates a new comment, adding it as a reply to a thread. Corresponds to [`liveblocks.createComment`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments).\n\nA comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to construct a comment’s body, which can be submitted under `body`.\n\n```json\n\"version\": 1,\n\"content\": [\n  {\n    \"type\": \"paragraph\",\n    \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]\n  }\n]\n",
         "tags": ["Comments"],
-        "parameters": [
-          {
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the room"
-          },
-          {
-            "name": "threadId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the thread"
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1492,34 +1396,34 @@
       }
     },
     "/rooms/{roomId}/threads/{threadId}/comments/{commentId}": {
+      "parameters": [
+        {
+          "name": "roomId",
+          "required": true,
+          "description": "ID of the room",
+          "schema": { "type": "string" },
+          "in": "path"
+        },
+        {
+          "name": "threadId",
+          "required": true,
+          "description": "ID of the thread",
+          "schema": { "type": "string" },
+          "in": "path"
+        },
+        {
+          "name": "commentId",
+          "required": true,
+          "description": "ID of the comment",
+          "schema": { "type": "string" },
+          "in": "path"
+        }
+      ],
       "get": {
         "operationId": "get-rooms-roomId-threads-threadId-comments-commentId",
         "summary": "Get comment",
         "description": "This endpoint returns a comment by its ID. Corresponds to [`liveblocks.getComment`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId-comments-commentId).",
         "tags": ["Comments"],
-        "parameters": [
-          {
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the room"
-          },
-          {
-            "name": "threadId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the thread"
-          },
-          {
-            "name": "commentId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the comment"
-          }
-        ],
         "responses": {
           "200": {
             "description": "Success. Returns the requested comment.",
@@ -1554,29 +1458,6 @@
         "summary": "Edit comment",
         "description": "This endpoint edits the specified comment. Corresponds to [`liveblocks.editComment`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId).\n\nA comment’s body is an array of paragraphs, each containing child nodes. Here’s an example of how to construct a comment’s body, which can be submitted under `body`.\n\n```json\n\"version\": 1,\n\"content\": [\n  {\n    \"type\": \"paragraph\",\n    \"children\": [{ \"text\": \"Hello \" }, { \"text\": \"world\", \"bold\": true }]\n  }\n]\n",
         "tags": ["Comments"],
-        "parameters": [
-          {
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the room"
-          },
-          {
-            "name": "threadId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the thread"
-          },
-          {
-            "name": "commentId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the comment"
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1625,29 +1506,6 @@
         "summary": "Delete comment",
         "description": "This endpoint deletes a comment. A deleted comment is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.deleteComment`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId).",
         "tags": ["Comments"],
-        "parameters": [
-          {
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the room"
-          },
-          {
-            "name": "threadId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the thread"
-          },
-          {
-            "name": "commentId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the comment"
-          }
-        ],
         "responses": {
           "204": { "description": "Success. The comment was deleted" },
           "401": { "$ref": "#/components/responses/401" },
@@ -1657,34 +1515,34 @@
       }
     },
     "/rooms/{roomId}/threads/{threadId}/comments/{commentId}/add-reaction": {
+      "parameters": [
+        {
+          "name": "roomId",
+          "required": true,
+          "description": "ID of the room",
+          "schema": { "type": "string" },
+          "in": "path"
+        },
+        {
+          "name": "threadId",
+          "required": true,
+          "description": "ID of the thread",
+          "schema": { "type": "string" },
+          "in": "path"
+        },
+        {
+          "name": "commentId",
+          "required": true,
+          "description": "ID of the comment",
+          "schema": { "type": "string" },
+          "in": "path"
+        }
+      ],
       "post": {
         "operationId": "post-rooms-roomId-threads-threadId-comments-commentId-add-reaction",
         "summary": "Add comment reaction",
         "description": "This endpoint adds a reaction to a comment. Corresponds to [`liveblocks.addCommentReaction`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction).",
         "tags": ["Comments"],
-        "parameters": [
-          {
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the room"
-          },
-          {
-            "name": "threadId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the thread"
-          },
-          {
-            "name": "commentId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the comment"
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1727,34 +1585,34 @@
       }
     },
     "/rooms/{roomId}/threads/{threadId}/comments/{commentId}/remove-reaction": {
+      "parameters": [
+        {
+          "name": "roomId",
+          "required": true,
+          "description": "ID of the room",
+          "schema": { "type": "string" },
+          "in": "path"
+        },
+        {
+          "name": "threadId",
+          "required": true,
+          "description": "ID of the thread",
+          "schema": { "type": "string" },
+          "in": "path"
+        },
+        {
+          "name": "commentId",
+          "required": true,
+          "description": "ID of the comment",
+          "schema": { "type": "string" },
+          "in": "path"
+        }
+      ],
       "post": {
         "operationId": "post-rooms-roomId-threads-threadId-comments-commentId-remove-reaction",
         "summary": "Remove comment reaction",
         "description": "This endpoint removes a comment reaction. A deleted comment reaction is no longer accessible from the API or the dashboard and it cannot be restored. Corresponds to [`liveblocks.removeCommentReaction`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-comments-commentId-add-reaction).",
         "tags": ["Comments"],
-        "parameters": [
-          {
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the room"
-          },
-          {
-            "name": "threadId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the thread"
-          },
-          {
-            "name": "commentId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the comment"
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1876,20 +1734,20 @@
       }
     },
     "/rooms/{roomId}/authorize": {
+      "parameters": [
+        {
+          "name": "roomId",
+          "required": true,
+          "description": "ID of the room",
+          "schema": { "type": "string" },
+          "in": "path"
+        }
+      ],
       "post": {
         "operationId": "post-authorize",
         "summary": "Get single-room token with secret key",
         "description": "**Deprecated.** Prefer using [access tokens](#post-authorize-user) or [ID tokens](#post-identify-user) instead. Read more in our [migration guide](/docs/platform/upgrading/1.2).\n\nThis endpoint lets your application server (your back end) obtain a token that one of its clients (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When making this request, you’ll have to use your secret key.\n\nYou can pass the property `userId` in the request’s body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. Setting the `userId` is optional if you want to use public rooms, but it is required to enter a private room (because permissions are assigned to specific user IDs). In case you want to use the group permission system, you can also declare which `groupIds` this user belongs to.\n\nThe property userId is used by Liveblocks to calculate your account’s Monthly Active Users. One unique userId corresponds to one MAU. If you don’t pass a userId, we will create for you a new anonymous userId on each connection, but your MAUs will be higher.\n\nAdditionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name.",
         "tags": ["Deprecated"],
-        "parameters": [
-          {
-            "schema": { "type": "string" },
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the room"
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -1931,20 +1789,20 @@
       }
     },
     "/rooms/{roomId}/public/authorize": {
+      "parameters": [
+        {
+          "name": "roomId",
+          "required": true,
+          "description": "ID of the room",
+          "schema": { "type": "string" },
+          "in": "path"
+        }
+      ],
       "post": {
         "operationId": "post-public-authorize",
         "summary": "Get single-room token with public key",
         "description": "**Deprecated.** When you update Liveblocks to 1.2, you no longer need to get a JWT token when using a public key.\n\nThis endpoint works with the public key and can be used client side. That means you don’t need to implement a dedicated authorization endpoint server side. \nThe generated JWT token works only with public room (`defaultAccesses: [\"room:write\"]`).",
         "tags": ["Deprecated"],
-        "parameters": [
-          {
-            "schema": { "type": "string" },
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the room"
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -2004,22 +1862,6 @@
         "summary": "Get inbox notification",
         "description": "This endpoint returns a user’s inbox notification by its ID. Corresponds to [`liveblocks.getInboxNotification`](/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications-inboxNotificationId).",
         "tags": ["Notifications"],
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the user"
-          },
-          {
-            "name": "inboxNotificationId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the inbox notification"
-          }
-        ],
         "responses": {
           "200": {
             "description": "",
@@ -2048,22 +1890,6 @@
         "summary": "Delete inbox notification",
         "description": "This endpoint deletes a user’s inbox notification by its ID.",
         "tags": ["Notifications"],
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the user"
-          },
-          {
-            "name": "inboxNotificationId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the inbox notification"
-          }
-        ],
         "responses": {
           "204": { "description": "" },
           "401": { "description": "Unauthorized" },
@@ -2088,17 +1914,10 @@
         "tags": ["Notifications"],
         "parameters": [
           {
-            "name": "userId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the user"
-          },
-          {
-            "schema": { "type": "string" },
-            "in": "query",
             "name": "query",
-            "description": "Query to filter notifications. You can filter by `unread`, for example, `unread:true`."
+            "description": "Query to filter notifications. You can filter by `unread`, for example, `unread:true`.",
+            "schema": { "type": "string" },
+            "in": "query"
           }
         ],
         "responses": {
@@ -2131,15 +1950,6 @@
         "summary": "Delete all inbox notifications",
         "description": "This endpoint deletes all the user’s inbox notifications.",
         "tags": ["Notifications"],
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "ID of the user"
-          }
-        ],
         "responses": {
           "204": { "description": "" },
           "401": { "description": "Unauthorized" },
@@ -2168,22 +1978,6 @@
         "summary": "Get room notification settings",
         "description": "This endpoint returns a user’s notification settings for a specific room. Corresponds to [`liveblocks.getRoomNotificationSettings`](/docs/api-reference/liveblocks-node#get-rooms-roomId-users-userId-notification-settings).",
         "tags": ["Notifications"],
-        "parameters": [
-          {
-            "schema": { "type": "string" },
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the room"
-          },
-          {
-            "schema": { "type": "string" },
-            "name": "userId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the user"
-          }
-        ],
         "responses": {
           "200": {
             "description": "",
@@ -2205,22 +1999,6 @@
         "summary": "Update room notification settings",
         "description": "This endpoint updates a user’s notification settings for a specific room. Corresponds to [`liveblocks.updateRoomNotificationSettings`](/docs/api-reference/liveblocks-node#post-rooms-roomId-users-userId-notification-settings).",
         "tags": ["Notifications"],
-        "parameters": [
-          {
-            "schema": { "type": "string" },
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the room"
-          },
-          {
-            "schema": { "type": "string" },
-            "name": "userId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the user"
-          }
-        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -2252,22 +2030,6 @@
         "summary": "Delete room notification settings",
         "description": "This endpoint deletes a user’s notification settings for a specific room. Corresponds to [`liveblocks.deleteRoomNotificationSettings`](/docs/api-reference/liveblocks-node#delete-rooms-roomId-users-userId-notification-settings).",
         "tags": ["Notifications"],
-        "parameters": [
-          {
-            "schema": { "type": "string" },
-            "name": "roomId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the room"
-          },
-          {
-            "schema": { "type": "string" },
-            "name": "userId",
-            "in": "path",
-            "required": true,
-            "description": "ID of the user"
-          }
-        ],
         "responses": {
           "204": { "description": "No Content" },
           "401": { "description": "Unauthorized" },
