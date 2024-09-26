@@ -798,7 +798,7 @@
         }
       }
     },
-    "/schemas/{id}": {
+    "/schemas/{schemaId}": {
       "get": {
         "summary": "Get schema",
         "description": "This endpoint retrieves a schema by its ID. The ID is a combination of the schema name and version. For example, `my-schema@1`. Corresponds to [`liveblocks.getSchema`](/docs/api-reference/liveblocks-node#get-create-new-schema).",
@@ -806,7 +806,7 @@
         "parameters": [
           {
             "schema": { "type": "string" },
-            "name": "id",
+            "name": "schemaId",
             "in": "path",
             "required": true,
             "description": "ID of the schema"
@@ -839,19 +839,19 @@
         }
       },
       "put": {
+        "operationId": "put-update-new-schema",
         "summary": "Update schema",
         "description": "This endpoint updates the body for the schema. A schema can only be updated if it is not used by any room. Corresponds to [`liveblocks.updateSchema`](/docs/api-reference/liveblocks-node#put-update-new-schema).",
         "tags": ["Schema validation"],
         "parameters": [
           {
             "schema": { "type": "string" },
-            "name": "id",
+            "name": "schemaId",
             "in": "path",
             "required": true,
             "description": "ID of the schema"
           }
         ],
-        "operationId": "put-update-new-schema",
         "requestBody": {
           "content": {
             "application/json": {
@@ -899,7 +899,7 @@
         "parameters": [
           {
             "schema": { "type": "string" },
-            "name": "id",
+            "name": "schemaId",
             "in": "path",
             "required": true,
             "description": "ID of the schema"
