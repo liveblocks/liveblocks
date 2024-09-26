@@ -46,6 +46,7 @@ function Example() {
       //   layers: EVENT_LAYERS,
       // }}
       className="canvas"
+      dpr={[1, 2]}
     >
       <Scene />
 
@@ -56,7 +57,7 @@ function Example() {
       <Environment preset="apartment" />
 
       <EffectComposer>
-        <N8AO aoRadius={0.5} intensity={1.5} />
+        <N8AO aoRadius={0.5} intensity={1.5} halfRes />
         <Bloom mipmapBlur />
         <ToneMapping />
       </EffectComposer>
