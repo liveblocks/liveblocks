@@ -9,18 +9,18 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^2.7.2",
-    "@liveblocks/node": "^2.7.2",
-    "@liveblocks/react": "^2.7.2",
-    "@liveblocks/react-ui": "^2.7.2",
-    "@react-three/drei": "^9.114.0",
-    "@react-three/fiber": "^8.17.8",
-    "@react-three/postprocessing": "^2.16.2",
+    "@liveblocks/client": "^2.8.0",
+    "@liveblocks/node": "^2.8.0",
+    "@liveblocks/react": "^2.8.0",
+    "@liveblocks/react-ui": "^2.8.0",
+    "@react-three/drei": "9.114.0",
+    "@react-three/fiber": "8.17.8",
+    "@react-three/postprocessing": "2.16.2",
     "next": "^14.2.13",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-error-boundary": "^4.0.13",
-    "three": "^0.168.0"
+    "three": "0.164.1"
   },
   "devDependencies": {
     "@types/node": "^22.7.0",

@@ -14,7 +14,7 @@ import {
   N8AO,
   ToneMapping,
 } from "@react-three/postprocessing";
-import { Armchair } from "../models/furniture/armchair";
+import { Armchair } from "../models/furniture/Armchair";
 import { CoffeeTable } from "../models/furniture/CoffeeTable";
 import { Lamp } from "../models/furniture/Lamp";
 import { Plant } from "../models/furniture/Plant";
@@ -51,14 +51,15 @@ function Example() {
 
       <CameraControls makeDefault />
 
-      <ambientLight intensity={0.5} castShadow />
+      <ambientLight intensity={0.5} />
+      <directionalLight position={[5, 5, 5]} intensity={1} castShadow />
       <Environment preset="apartment" />
 
-      {/* <EffectComposer>
-        <N8AO />
+      <EffectComposer>
+        <N8AO aoRadius={0.5} intensity={1.5} />
         <Bloom mipmapBlur />
         <ToneMapping />
-      </EffectComposer> */}
+      </EffectComposer>
 
       <Preload all />
     </Canvas>
