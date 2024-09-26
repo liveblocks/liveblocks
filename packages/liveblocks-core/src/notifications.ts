@@ -1,16 +1,14 @@
 import { type GetThreadsOptions, objectToQuery } from ".";
 import type { AuthManager } from "./auth-manager";
 import type { NotificationsApi } from "./client";
-import {
-  getAuthBearerHeaderFromAuthValue,
-  NotificationsApiError,
-} from "./client";
+import { NotificationsApiError } from "./client";
 import {
   convertToInboxNotificationData,
   convertToInboxNotificationDeleteInfo,
   convertToThreadData,
   convertToThreadDeleteInfo,
 } from "./convert-plain-data";
+import { getBearerTokenFromAuthValue } from "./http-client";
 import { Batch } from "./lib/batch";
 import type { Store } from "./lib/create-store";
 import type { QueryParams, URLSafeString } from "./lib/url";
@@ -89,7 +87,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
       ...options,
       headers: {
         ...options?.headers,
-        Authorization: `Bearer ${getAuthBearerHeaderFromAuthValue(authValue)}`,
+        Authorization: `Bearer ${getBearerTokenFromAuthValue(authValue)}`,
         "X-LB-Client": PKG_VERSION || "dev",
       },
     });

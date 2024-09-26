@@ -1,8 +1,5 @@
 import type { AuthManager, AuthValue } from "./auth-manager";
-import {
-  getAuthBearerHeaderFromAuthValue,
-  NotificationsApiError,
-} from "./client";
+import { NotificationsApiError } from "./client";
 import type {
   Delegates,
   LiveblocksError,
@@ -32,6 +29,7 @@ import { LiveObject } from "./crdts/LiveObject";
 import type { LiveNode, LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
 import type { DE, DM, DP, DS, DU } from "./globals/augmentation";
+import { getBearerTokenFromAuthValue } from "./http-client";
 import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
 import { autoRetry } from "./lib/autoRetry";
@@ -1393,7 +1391,7 @@ export function createRoom<
   function onStatusDidChange(newStatus: Status) {
     const authValue = managedSocket.authValue;
     if (authValue !== null) {
-      const tokenKey = getAuthBearerHeaderFromAuthValue(authValue);
+      const tokenKey = getBearerTokenFromAuthValue(authValue);
 
       if (tokenKey !== lastTokenKey) {
         lastTokenKey = tokenKey;
@@ -1606,7 +1604,7 @@ export function createRoom<
       ...options,
       headers: {
         ...options?.headers,
-        Authorization: `Bearer ${getAuthBearerHeaderFromAuthValue(authValue)}`,
+        Authorization: `Bearer ${getBearerTokenFromAuthValue(authValue)}`,
         "X-LB-Client": PKG_VERSION || "dev",
       },
     });

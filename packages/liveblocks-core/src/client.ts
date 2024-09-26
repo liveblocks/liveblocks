@@ -1,4 +1,3 @@
-import type { AuthValue } from "./auth-manager";
 import { createAuthManager } from "./auth-manager";
 import { isIdle } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
@@ -11,6 +10,7 @@ import {
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import type { DE, DM, DP, DRI, DS, DU } from "./globals/augmentation";
+import { getBearerTokenFromAuthValue } from "./http-client";
 import { kInternal } from "./internal";
 import type { BatchStore } from "./lib/batch";
 import { Batch, createBatchStore } from "./lib/batch";
@@ -437,14 +437,6 @@ function getBaseUrl(baseUrl?: string | undefined): string {
   }
 }
 
-export function getAuthBearerHeaderFromAuthValue(authValue: AuthValue): string {
-  if (authValue.type === "public") {
-    return authValue.publicApiKey;
-  } else {
-    return authValue.token.raw;
-  }
-}
-
 /**
  * Create a client that will be responsible to communicate with liveblocks servers.
  *
@@ -684,7 +676,7 @@ export function createClient<U extends BaseUserMeta = DU>(
       ...options,
       headers: {
         ...options?.headers,
-        Authorization: `Bearer ${getAuthBearerHeaderFromAuthValue(authValue)}`,
+        Authorization: `Bearer ${getBearerTokenFromAuthValue(authValue)}`,
       },
     });
   }
