@@ -638,17 +638,7 @@ export function createClient<U extends BaseUserMeta = DU>(
   const fetcher =
     clientOptions.polyfills?.fetch || /* istanbul ignore next */ fetch;
 
-  const {
-    getInboxNotifications,
-    getInboxNotificationsSince,
-    getUnreadInboxNotificationsCount,
-    markAllInboxNotificationsAsRead,
-    markInboxNotificationAsRead,
-    deleteAllInboxNotifications,
-    deleteInboxNotification,
-    getThreads,
-    getThreadsSince,
-  } = createNotificationsApi({
+  const httpClientLike = createNotificationsApi({
     baseUrl,
     fetcher,
     authManager,
@@ -666,6 +656,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     }
 
     // TODO: Use the right scope
+    // XXX Be careful when DRYing this up! This seems to be using a different auth token! We need to understand this more deeply before refactoring this!
     const authValue = await authManager.getAuthValue({
       requestedScope: "room:read",
       roomId,
@@ -825,14 +816,10 @@ export function createClient<U extends BaseUserMeta = DU>(
 
       logout,
 
-      getInboxNotifications,
-      getInboxNotificationsSince,
-      getUnreadInboxNotificationsCount,
-      markAllInboxNotificationsAsRead,
-      markInboxNotificationAsRead,
-      deleteAllInboxNotifications,
-      deleteInboxNotification,
-      getThreads,
+      // XXX Eventually, once this is actually using the HttpClient class,
+      // "just" expose a reference to it here, instead of spreading all of its
+      // methods
+      ...httpClientLike,
 
       // Internal
       [kInternal]: {
@@ -845,8 +832,8 @@ export function createClient<U extends BaseUserMeta = DU>(
         },
 
         // "All" threads (= "user" threads)
-        getThreads,
-        getThreadsSince,
+        getThreads: httpClientLike.getThreads,
+        getThreadsSince: httpClientLike.getThreadsSince,
 
         // "Room" threads (= "normal" threads)
         getRoomThreads,
