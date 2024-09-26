@@ -1,0 +1,32 @@
+{
+  "name": "@liveblocks-examples/nextjs-3d-builder-advanced",
+  "description": "This example shows how to build an advanced collaborative 3D builder with Liveblocks, Next.js, React Three Fiber, and Three.js.",
+  "license": "Apache-2.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@liveblocks/client": "^2.7.2",
+    "@liveblocks/node": "^2.7.2",
+    "@liveblocks/react": "^2.7.2",
+    "@liveblocks/react-ui": "^2.7.2",
+    "@react-three/drei": "^9.114.0",
+    "@react-three/fiber": "^8.17.8",
+    "@react-three/postprocessing": "^2.16.2",
+    "next": "^14.2.13",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-error-boundary": "^4.0.13",
+    "three": "^0.168.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.0",
+    "@types/react": "^18.3.9",
+    "@types/three": "^0.168.0",
+    "prettier": "^3.3.2",
+    "typescript": "^5.6.2"
+  }
+}
