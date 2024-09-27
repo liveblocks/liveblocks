@@ -1,6 +1,16 @@
 "use client";
 
-import { ElementRef, useCallback, useRef } from "react";
+import {
+  ComponentProps,
+  ElementRef,
+  PropsWithChildren,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { useSearchParams } from "next/navigation";
 import { Loading } from "../components/Loading";
 import {
   ClientSideSuspense,
@@ -11,25 +21,52 @@ import {
   useStorage,
 } from "@liveblocks/react/suspense";
 import { ErrorBoundary } from "react-error-boundary";
-import { Canvas, useFrame } from "@react-three/fiber";
+import {
+  Canvas,
+  RenderCallback,
+  ThreeEvent,
+  useFrame,
+} from "@react-three/fiber";
 import {
   CameraControls,
   Environment,
   Grid,
   PivotControls,
   Preload,
+  Sphere,
 } from "@react-three/drei";
 import CameraControlsImpl from "camera-controls";
 import { EffectComposer, N8AO } from "@react-three/postprocessing";
 import { Room } from "../models/furniture/Room";
 import { initialStorage, models } from "../../liveblocks.config";
-import { Matrix4 } from "three";
+import { Intersection, Matrix4, Matrix4Tuple } from "three";
+import { dampM } from "maath/easing";
+import { LiveObject } from "@liveblocks/client";
 
-interface StorageShapeProps {
+interface ShapeProps {
   shapeId: string;
 }
 
-function StorageShape({ shapeId }: StorageShapeProps) {
+function useStorageFrame(
+  callback: (
+    storage: LiveObject<Liveblocks["Storage"]>,
+    ...args: Parameters<RenderCallback>
+  ) => void
+) {
+  const room = useRoom();
+
+  useFrame((...args) => {
+    const storage = room.getStorageSnapshot();
+
+    if (!storage) {
+      return;
+    }
+
+    callback(storage, ...args);
+  });
+}
+
+function Shape({ shapeId }: ShapeProps) {
   const ref = useRef<ElementRef<"group">>(null);
   const isDragging = useRef(false);
   const room = useRoom();
@@ -64,24 +101,19 @@ function StorageShape({ shapeId }: StorageShapeProps) {
     isDragging.current = false;
   }, []);
 
-  useFrame(() => {
-    if (ref.current === null) return;
-
-    const storage = room.getStorageSnapshot();
-    if (storage === null) {
-      console.warn(`Storage could not be found for room ${room.id}`);
+  useStorageFrame((storage) => {
+    if (isDragging.current || !ref.current) {
       return;
     }
 
     const shape = storage.get("shapes").get(shapeId);
-    if (shape === undefined) {
-      console.warn(
-        `LiveObject could not be found for shape ${shapeId} in ${room.id}`
-      );
+
+    if (!shape) {
       return;
     }
 
     ref.current.matrix.fromArray(shape.get("matrix"));
+    // dampM(ref.current.matrix, shape.get("matrix"), 0.2, delta);
   });
 
   if (model === null) {
@@ -111,20 +143,57 @@ function StorageShape({ shapeId }: StorageShapeProps) {
   );
 }
 
+const scenePointerMoveEvents: ThreeEvent<PointerEvent>[] = [];
+
 function Scene() {
+  const cursorRef = useRef<ElementRef<typeof Sphere>>(null);
+
   const shapeIds = useStorage(
     (root) => Array.from(root.shapes.keys()),
     shallow
   );
 
-  return (
-    <>
-      <Room />
+  // Collect all pointer events related to the scene in the current frame
+  useFrame(() => {
+    if (scenePointerMoveEvents.length > 0) {
+      // Find the closest one to the camera
+      const closestPointerMove = scenePointerMoveEvents.reduce(
+        (closestPointerMove, intersection) => {
+          return intersection.distance < closestPointerMove.distance
+            ? intersection
+            : closestPointerMove;
+        }
+      );
 
-      {shapeIds.map((shapeId) => (
-        <StorageShape key={shapeId} shapeId={shapeId} />
-      ))}
-    </>
+      if (cursorRef.current) {
+        cursorRef.current.position.copy(closestPointerMove.point);
+      }
+
+      scenePointerMoveEvents.length = 0;
+    }
+  });
+
+  return (
+    <group>
+      <group
+        name="scene"
+        onPointerMove={(event) => {
+          scenePointerMoveEvents.push(event);
+        }}
+      >
+        <Room />
+
+        {shapeIds.map((shapeId) => (
+          <Shape key={shapeId} shapeId={shapeId} />
+        ))}
+      </group>
+
+      <group name="cursors">
+        <Sphere ref={cursorRef} scale={[0.2, 0.2, 0.2]}>
+          <meshBasicMaterial color="#ddd" />
+        </Sphere>
+      </group>
+    </group>
   );
 }
 
@@ -140,10 +209,6 @@ function Example() {
   return (
     <Canvas
       shadows
-      // events={createEventsManager}
-      // raycaster={{
-      //   layers: EVENT_LAYERS,
-      // }}
       className="canvas"
       dpr={[1, 2]}
       camera={{
@@ -175,8 +240,11 @@ function Example() {
         infiniteGrid
         sectionThickness={0}
         cellSize={1}
-        cellThickness={1.5}
+        cellThickness={1.25}
         cellColor="#666"
+        fadeDistance={100}
+        fadeStrength={10}
+        fadeFrom={0}
       />
 
       <EffectComposer enableNormalPass>
