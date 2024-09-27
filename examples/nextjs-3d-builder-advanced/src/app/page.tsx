@@ -19,11 +19,11 @@ import {
   Grid,
   PivotControls,
   Preload,
-  Sphere,
 } from "@react-three/drei";
 import CameraControlsImpl from "camera-controls";
 import { EffectComposer, N8AO } from "@react-three/postprocessing";
 import { Room } from "../models/furniture/Room";
+import { Cursor as CursorModel } from "../models/Cursor";
 import {
   initialPresence,
   initialStorage,
@@ -46,7 +46,7 @@ const temporaryMatrix = new Matrix4();
 const scenePointerMoveEvents: ThreeEvent<PointerEvent>[] = [];
 
 function Cursor({ connectionId }: CursorProps) {
-  const cursorRef = useRef<ElementRef<typeof Sphere>>(null);
+  const cursorRef = useRef<ElementRef<typeof CursorModel>>(null);
 
   useOtherFrame(connectionId, (other, _, delta) => {
     if (!cursorRef.current || !other.presence.position) {
@@ -62,9 +62,9 @@ function Cursor({ connectionId }: CursorProps) {
   });
 
   return (
-    <Sphere ref={cursorRef} scale={[0.15, 0.15, 0.15]}>
+    <CursorModel ref={cursorRef} scale={[0.15, 0.15, 0.15]}>
       <meshBasicMaterial color="#ddd" />
-    </Sphere>
+    </CursorModel>
   );
 }
 
