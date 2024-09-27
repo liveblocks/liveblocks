@@ -15,11 +15,6 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 39 (2024-09-27)
 
-- New blog post:
-  [Next.js Template Week recap](https://liveblocks.io/blog/nextjs-template-week-recap).
-- Bug fix on the pricing page MAU slider which didn't apply the MAU value set to
-  the price of the products.
-
 ## 2.8.0
 
 We are introducing attachments to allow users to add files to their comments,
@@ -45,6 +40,12 @@ for more information about this change please read our
 - Add `prepareAttachment` and `uploadAttachment` methods to `Room` to create
   attachments.
 - Add `getAttachmentUrl` method to `Room` to get presigned URLs for attachments.
+
+## Website
+
+- New blog post: [Next.js Template Week recap](https://liveblocks.io/blog/nextjs-template-week-recap).
+- Bug fix on the pricing page MAU slider which didn't apply the MAU value set to
+  the price of the products.
 
 ## Contributors
 
