@@ -150,15 +150,7 @@
       }
     },
     "/v2/rooms/{roomId}": {
-      "parameters": [
-        {
-          "name": "roomId",
-          "required": true,
-          "description": "ID of the room",
-          "schema": { "type": "string" },
-          "in": "path"
-        }
-      ],
+      "parameters": [{ "$ref": "#/components/parameters/roomId" }],
       "get": {
         "operationId": "get-rooms-roomId",
         "summary": "Get room",
@@ -281,15 +273,7 @@
       }
     },
     "/v2/rooms/{roomId}/update-room-id": {
-      "parameters": [
-        {
-          "name": "roomId",
-          "required": true,
-          "description": "The new ID for the room",
-          "schema": { "type": "string" },
-          "in": "path"
-        }
-      ],
+      "parameters": [{ "$ref": "#/components/parameters/roomId" }],
       "post": {
         "operationId": "post-rooms-update-roomId",
         "summary": "Update room ID",
@@ -348,15 +332,7 @@
       }
     },
     "/v2/rooms/{roomId}/active_users": {
-      "parameters": [
-        {
-          "name": "roomId",
-          "required": true,
-          "description": "ID of the room",
-          "schema": { "type": "string" },
-          "in": "path"
-        }
-      ],
+      "parameters": [{ "$ref": "#/components/parameters/roomId" }],
       "get": {
         "operationId": "get-rooms-roomId-active-users",
         "summary": "Get active users",
@@ -400,15 +376,7 @@
       }
     },
     "/v2/rooms/{roomId}/broadcast_event": {
-      "parameters": [
-        {
-          "name": "roomId",
-          "required": true,
-          "description": "ID of the room",
-          "schema": { "type": "string" },
-          "in": "path"
-        }
-      ],
+      "parameters": [{ "$ref": "#/components/parameters/roomId" }],
       "post": {
         "operationId": "post-broadcast-event",
         "summary": "Broadcast event to a room",
@@ -437,15 +405,7 @@
       }
     },
     "/v2/rooms/{roomId}/storage": {
-      "parameters": [
-        {
-          "name": "roomId",
-          "required": true,
-          "description": "ID of the room",
-          "schema": { "type": "string" },
-          "in": "path"
-        }
-      ],
+      "parameters": [{ "$ref": "#/components/parameters/roomId" }],
       "get": {
         "operationId": "get-rooms-roomId-storage",
         "summary": "Get Storage document",
@@ -595,15 +555,7 @@
       }
     },
     "/v2/rooms/{roomId}/ydoc": {
-      "parameters": [
-        {
-          "name": "roomId",
-          "required": true,
-          "description": "ID of the room",
-          "schema": { "type": "string" },
-          "in": "path"
-        }
-      ],
+      "parameters": [{ "$ref": "#/components/parameters/roomId" }],
       "get": {
         "operationId": "get-rooms-roomId-ydoc",
         "summary": "Get Yjs document",
@@ -686,15 +638,7 @@
       }
     },
     "/v2/rooms/{roomId}/ydoc-binary": {
-      "parameters": [
-        {
-          "name": "roomId",
-          "required": true,
-          "description": "ID of the room",
-          "schema": { "type": "string" },
-          "in": "path"
-        }
-      ],
+      "parameters": [{ "$ref": "#/components/parameters/roomId" }],
       "get": {
         "operationId": "get-rooms-roomId-ydoc-binary",
         "summary": "Get Yjs document encoded as a binary Yjs update",
@@ -770,15 +714,7 @@
       }
     },
     "/v2/schemas/{schemaId}": {
-      "parameters": [
-        {
-          "name": "schemaId",
-          "required": true,
-          "description": "ID of the schema",
-          "schema": { "type": "string" },
-          "in": "path"
-        }
-      ],
+      "parameters": [{ "$ref": "#/components/parameters/schemaId" }],
       "get": {
         "operationId": "get-create-new-schema",
         "summary": "Get schema",
@@ -867,15 +803,7 @@
       }
     },
     "/v2/rooms/{roomId}/schema": {
-      "parameters": [
-        {
-          "name": "roomId",
-          "required": true,
-          "description": "ID of the room",
-          "schema": { "type": "string" },
-          "in": "path"
-        }
-      ],
+      "parameters": [{ "$ref": "#/components/parameters/roomId" }],
       "get": {
         "operationId": "get-new-schema",
         "summary": "Get schema by room ID",
@@ -955,15 +883,7 @@
       }
     },
     "/v2/rooms/{roomId}/threads": {
-      "parameters": [
-        {
-          "name": "roomId",
-          "required": true,
-          "description": "ID of the room",
-          "schema": { "type": "string" },
-          "in": "path"
-        }
-      ],
+      "parameters": [{ "$ref": "#/components/parameters/roomId" }],
       "get": {
         "operationId": "get-rooms-roomId-threads",
         "summary": "Get room threads",
@@ -1091,20 +1011,8 @@
     },
     "/v2/rooms/{roomId}/threads/{threadId}": {
       "parameters": [
-        {
-          "name": "roomId",
-          "required": true,
-          "description": "ID of the room",
-          "schema": { "type": "string" },
-          "in": "path"
-        },
-        {
-          "name": "threadId",
-          "required": true,
-          "description": "ID of the thread",
-          "schema": { "type": "string" },
-          "in": "path"
-        }
+        { "$ref": "#/components/parameters/roomId" },
+        { "$ref": "#/components/parameters/threadId" }
       ],
       "get": {
         "operationId": "get-rooms-roomId-threads-threadId",
@@ -1165,20 +1073,8 @@
     },
     "/v2/rooms/{roomId}/threads/{threadId}/participants": {
       "parameters": [
-        {
-          "name": "roomId",
-          "required": true,
-          "description": "ID of the room",
-          "schema": { "type": "string" },
-          "in": "path"
-        },
-        {
-          "name": "threadId",
-          "required": true,
-          "description": "ID of the thread",
-          "schema": { "type": "string" },
-          "in": "path"
-        }
+        { "$ref": "#/components/parameters/roomId" },
+        { "$ref": "#/components/parameters/threadId" }
       ],
       "get": {
         "operationId": "get-rooms-roomId-threads-threadId-participants",
@@ -1215,20 +1111,8 @@
     },
     "/v2/rooms/{roomId}/threads/{threadId}/metadata": {
       "parameters": [
-        {
-          "name": "roomId",
-          "required": true,
-          "description": "ID of the room",
-          "schema": { "type": "string" },
-          "in": "path"
-        },
-        {
-          "name": "threadId",
-          "required": true,
-          "description": "ID of the thread",
-          "schema": { "type": "string" },
-          "in": "path"
-        }
+        { "$ref": "#/components/parameters/roomId" },
+        { "$ref": "#/components/parameters/threadId" }
       ],
       "post": {
         "operationId": "post-rooms-roomId-threads-threadId-metadata",
@@ -1268,20 +1152,8 @@
     },
     "/v2/rooms/{roomId}/threads/{threadId}/mark-as-resolved": {
       "parameters": [
-        {
-          "name": "roomId",
-          "required": true,
-          "description": "ID of the room",
-          "schema": { "type": "string" },
-          "in": "path"
-        },
-        {
-          "name": "threadId",
-          "required": true,
-          "description": "ID of the thread",
-          "schema": { "type": "string" },
-          "in": "path"
-        }
+        { "$ref": "#/components/parameters/roomId" },
+        { "$ref": "#/components/parameters/threadId" }
       ],
       "post": {
         "operationId": "post-rooms-roomId-threads-threadId-mark-as-resolved",
@@ -1304,20 +1176,8 @@
     },
     "/v2/rooms/{roomId}/threads/{threadId}/mark-as-unresolved": {
       "parameters": [
-        {
-          "name": "roomId",
-          "required": true,
-          "description": "ID of the room",
-          "schema": { "type": "string" },
-          "in": "path"
-        },
-        {
-          "name": "threadId",
-          "required": true,
-          "description": "ID of the thread",
-          "schema": { "type": "string" },
-          "in": "path"
-        }
+        { "$ref": "#/components/parameters/roomId" },
+        { "$ref": "#/components/parameters/threadId" }
       ],
       "post": {
         "operationId": "post-rooms-roomId-threads-threadId-mark-as-unresolved",
@@ -1340,20 +1200,8 @@
     },
     "/v2/rooms/{roomId}/threads/{threadId}/comments": {
       "parameters": [
-        {
-          "name": "roomId",
-          "required": true,
-          "description": "ID of the room",
-          "schema": { "type": "string" },
-          "in": "path"
-        },
-        {
-          "name": "threadId",
-          "required": true,
-          "description": "ID of the thread",
-          "schema": { "type": "string" },
-          "in": "path"
-        }
+        { "$ref": "#/components/parameters/roomId" },
+        { "$ref": "#/components/parameters/threadId" }
       ],
       "post": {
         "operationId": "post-rooms-roomId-threads-threadId-comments",
@@ -1407,27 +1255,9 @@
     },
     "/v2/rooms/{roomId}/threads/{threadId}/comments/{commentId}": {
       "parameters": [
-        {
-          "name": "roomId",
-          "required": true,
-          "description": "ID of the room",
-          "schema": { "type": "string" },
-          "in": "path"
-        },
-        {
-          "name": "threadId",
-          "required": true,
-          "description": "ID of the thread",
-          "schema": { "type": "string" },
-          "in": "path"
-        },
-        {
-          "name": "commentId",
-          "required": true,
-          "description": "ID of the comment",
-          "schema": { "type": "string" },
-          "in": "path"
-        }
+        { "$ref": "#/components/parameters/roomId" },
+        { "$ref": "#/components/parameters/threadId" },
+        { "$ref": "#/components/parameters/commentId" }
       ],
       "get": {
         "operationId": "get-rooms-roomId-threads-threadId-comments-commentId",
@@ -1526,27 +1356,9 @@
     },
     "/v2/rooms/{roomId}/threads/{threadId}/comments/{commentId}/add-reaction": {
       "parameters": [
-        {
-          "name": "roomId",
-          "required": true,
-          "description": "ID of the room",
-          "schema": { "type": "string" },
-          "in": "path"
-        },
-        {
-          "name": "threadId",
-          "required": true,
-          "description": "ID of the thread",
-          "schema": { "type": "string" },
-          "in": "path"
-        },
-        {
-          "name": "commentId",
-          "required": true,
-          "description": "ID of the comment",
-          "schema": { "type": "string" },
-          "in": "path"
-        }
+        { "$ref": "#/components/parameters/roomId" },
+        { "$ref": "#/components/parameters/threadId" },
+        { "$ref": "#/components/parameters/commentId" }
       ],
       "post": {
         "operationId": "post-rooms-roomId-threads-threadId-comments-commentId-add-reaction",
@@ -1596,27 +1408,9 @@
     },
     "/v2/rooms/{roomId}/threads/{threadId}/comments/{commentId}/remove-reaction": {
       "parameters": [
-        {
-          "name": "roomId",
-          "required": true,
-          "description": "ID of the room",
-          "schema": { "type": "string" },
-          "in": "path"
-        },
-        {
-          "name": "threadId",
-          "required": true,
-          "description": "ID of the thread",
-          "schema": { "type": "string" },
-          "in": "path"
-        },
-        {
-          "name": "commentId",
-          "required": true,
-          "description": "ID of the comment",
-          "schema": { "type": "string" },
-          "in": "path"
-        }
+        { "$ref": "#/components/parameters/roomId" },
+        { "$ref": "#/components/parameters/threadId" },
+        { "$ref": "#/components/parameters/commentId" }
       ],
       "post": {
         "operationId": "post-rooms-roomId-threads-threadId-comments-commentId-remove-reaction",
@@ -1744,15 +1538,7 @@
       }
     },
     "/v2/rooms/{roomId}/authorize": {
-      "parameters": [
-        {
-          "name": "roomId",
-          "required": true,
-          "description": "ID of the room",
-          "schema": { "type": "string" },
-          "in": "path"
-        }
-      ],
+      "parameters": [{ "$ref": "#/components/parameters/roomId" }],
       "post": {
         "operationId": "post-authorize",
         "summary": "Get single-room token with secret key",
@@ -1799,15 +1585,7 @@
       }
     },
     "/v2/rooms/{roomId}/public/authorize": {
-      "parameters": [
-        {
-          "name": "roomId",
-          "required": true,
-          "description": "ID of the room",
-          "schema": { "type": "string" },
-          "in": "path"
-        }
-      ],
+      "parameters": [{ "$ref": "#/components/parameters/roomId" }],
       "post": {
         "operationId": "post-public-authorize",
         "summary": "Get single-room token with public key",
@@ -1854,18 +1632,8 @@
     },
     "/v2/users/{userId}/inbox-notifications/{inboxNotificationId}": {
       "parameters": [
-        {
-          "schema": { "type": "string" },
-          "name": "userId",
-          "in": "path",
-          "required": true
-        },
-        {
-          "schema": { "type": "string" },
-          "name": "inboxNotificationId",
-          "in": "path",
-          "required": true
-        }
+        { "$ref": "#/components/parameters/userId" },
+        { "$ref": "#/components/parameters/inboxNotificationId" }
       ],
       "get": {
         "operationId": "get-users-userId-inboxNotifications-inboxNotificationId",
@@ -1909,14 +1677,7 @@
       }
     },
     "/v2/users/{userId}/inbox-notifications": {
-      "parameters": [
-        {
-          "schema": { "type": "string" },
-          "name": "userId",
-          "in": "path",
-          "required": true
-        }
-      ],
+      "parameters": [{ "$ref": "#/components/parameters/userId" }],
       "get": {
         "operationId": "get-users-userId-inboxNotifications",
         "summary": "Get all inbox notifications",
@@ -1970,18 +1731,8 @@
     },
     "/v2/rooms/{roomId}/users/{userId}/notification-settings": {
       "parameters": [
-        {
-          "schema": { "type": "string" },
-          "name": "roomId",
-          "in": "path",
-          "required": true
-        },
-        {
-          "schema": { "type": "string" },
-          "name": "userId",
-          "in": "path",
-          "required": true
-        }
+        { "$ref": "#/components/parameters/roomId" },
+        { "$ref": "#/components/parameters/userId" }
       ],
       "get": {
         "operationId": "get-rooms-roomId-users-userId-notification-settings",
@@ -2074,6 +1825,50 @@
     }
   },
   "components": {
+    "parameters": {
+      "commentId": {
+        "name": "commentId",
+        "required": true,
+        "description": "ID of the comment",
+        "schema": { "type": "string" },
+        "in": "path"
+      },
+      "inboxNotificationId": {
+        "name": "inboxNotificationId",
+        "required": true,
+        "description": "ID of the inbox notification",
+        "schema": { "type": "string" },
+        "in": "path"
+      },
+      "roomId": {
+        "name": "roomId",
+        "required": true,
+        "description": "ID of the room",
+        "schema": { "type": "string" },
+        "in": "path"
+      },
+      "schemaId": {
+        "name": "schemaId",
+        "required": true,
+        "description": "ID of the schema",
+        "schema": { "type": "string" },
+        "in": "path"
+      },
+      "threadId": {
+        "name": "threadId",
+        "required": true,
+        "description": "ID of the thread",
+        "schema": { "type": "string" },
+        "in": "path"
+      },
+      "userId": {
+        "name": "userId",
+        "required": true,
+        "description": "ID of the user",
+        "schema": { "type": "string" },
+        "in": "path"
+      }
+    },
     "schemas": {
       "Room": {
         "title": "Room",
