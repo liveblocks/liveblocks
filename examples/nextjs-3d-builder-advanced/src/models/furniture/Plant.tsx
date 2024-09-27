@@ -6,35 +6,27 @@ export function Plant(props: ComponentProps<"group">) {
   const { nodes, materials } = useGLTF("/furniture.glb") as FurnitureModels;
 
   return (
-    <group {...props} dispose={null} userData={{ name: "$plant" }}>
-      <group rotation={[Math.PI / 2, 0, 0]} userData={{ name: "plant" }}>
+    <group {...props} dispose={null}>
+      <group rotation={[Math.PI / 2, 0, 0]}>
         <mesh
           castShadow
           receiveShadow
           geometry={nodes.plant_1.geometry}
-          material={materials.wood}
+          material={materials.plantWood}
         />
         <mesh
           castShadow
           receiveShadow
           geometry={nodes.plant_2.geometry}
-          material={materials.woodDark}
+          material={materials.plantGround}
         />
         <mesh
           castShadow
           receiveShadow
           geometry={nodes.plant_3.geometry}
-          material={materials.plant}
+          material={materials.plantPlant}
         />
       </group>
-      <mesh
-        castShadow
-        receiveShadow
-        geometry={nodes.plantGround.geometry}
-        material={nodes.plantGround.material}
-        userData={{ name: "plantGround" }}
-        visible={false}
-      />
     </group>
   );
 }

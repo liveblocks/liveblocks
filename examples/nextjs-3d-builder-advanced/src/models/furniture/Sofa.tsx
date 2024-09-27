@@ -7,11 +7,7 @@ export function Sofa(props: ComponentProps<"group">) {
 
   return (
     <group {...props} dispose={null} userData={{ name: "$sofa" }}>
-      <group
-        position={[0, 0.392, 0]}
-        rotation={[Math.PI / 2, 0, 0]}
-        userData={{ name: "sofa" }}
-      >
+      <group position={[0, 0.392, 0]} rotation={[Math.PI / 2, 0, 0]}>
         <mesh
           castShadow
           receiveShadow
@@ -22,17 +18,9 @@ export function Sofa(props: ComponentProps<"group">) {
           castShadow
           receiveShadow
           geometry={nodes.sofa_2.geometry}
-          material={materials.wood}
+          material={materials.sofaWood}
         />
       </group>
-      <mesh
-        castShadow
-        receiveShadow
-        geometry={nodes.sofaGround.geometry}
-        material={nodes.sofaGround.material}
-        userData={{ name: "sofaGround" }}
-        visible={false}
-      />
       <mesh
         castShadow
         receiveShadow
@@ -40,7 +28,6 @@ export function Sofa(props: ComponentProps<"group">) {
         material={materials.sofaFabric}
         position={[-0.453, 0.71, 0.138]}
         rotation={[Math.PI / 2, 0, 0.114]}
-        userData={{ name: "sofaPillow" }}
       />
       <mesh
         castShadow
@@ -49,7 +36,6 @@ export function Sofa(props: ComponentProps<"group">) {
         material={materials.sofaFabric}
         position={[0.293, 0.71, 0.144]}
         rotation={[Math.PI / 2, 0, -0.049]}
-        userData={{ name: "sofaPillowLong" }}
       />
     </group>
   );

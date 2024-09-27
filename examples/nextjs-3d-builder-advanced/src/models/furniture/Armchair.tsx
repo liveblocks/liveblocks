@@ -6,12 +6,8 @@ export function Armchair(props: ComponentProps<"group">) {
   const { nodes, materials } = useGLTF("/furniture.glb") as FurnitureModels;
 
   return (
-    <group {...props} dispose={null} userData={{ name: "$armchair" }}>
-      <group
-        position={[0, 0.424, 0.033]}
-        rotation={[Math.PI / 2, 0, 0]}
-        userData={{ name: "armchair" }}
-      >
+    <group {...props} dispose={null}>
+      <group position={[0, 0.424, 0.033]} rotation={[Math.PI / 2, 0, 0]}>
         <mesh
           castShadow
           receiveShadow
@@ -22,17 +18,9 @@ export function Armchair(props: ComponentProps<"group">) {
           castShadow
           receiveShadow
           geometry={nodes.armchair_2.geometry}
-          material={materials.wood}
+          material={materials.armchairWood}
         />
       </group>
-      <mesh
-        castShadow
-        receiveShadow
-        geometry={nodes.armchairGround.geometry}
-        material={nodes.armchairGround.material}
-        userData={{ name: "armchairGround" }}
-        visible={false}
-      />
       <mesh
         castShadow
         receiveShadow
@@ -40,7 +28,6 @@ export function Armchair(props: ComponentProps<"group">) {
         material={materials.armchairFabric}
         position={[0.031, 0.71, 0.122]}
         rotation={[Math.PI / 2, 0, -0.126]}
-        userData={{ name: "armchairPillow" }}
       />
     </group>
   );

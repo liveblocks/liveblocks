@@ -6,17 +6,13 @@ export function Table(props: ComponentProps<"group">) {
   const { nodes, materials } = useGLTF("/furniture.glb") as FurnitureModels;
 
   return (
-    <group {...props} dispose={null} userData={{ name: "$table" }}>
-      <group
-        position={[0, 0.308, 0]}
-        rotation={[Math.PI / 2, 0, 0]}
-        userData={{ name: "table" }}
-      >
+    <group {...props} dispose={null}>
+      <group position={[0, 0.308, 0]} rotation={[Math.PI / 2, 0, 0]}>
         <mesh
           castShadow
           receiveShadow
           geometry={nodes.table_1.geometry}
-          material={materials.wood}
+          material={materials.tableWood}
         />
         <mesh
           castShadow
@@ -28,99 +24,83 @@ export function Table(props: ComponentProps<"group">) {
       <group
         position={[-0.385, 0.449, 0.75]}
         rotation={[Math.PI / 2, 0, 0.067]}
-        userData={{ name: "tableChair1" }}
       >
         <mesh
           castShadow
           receiveShadow
           geometry={nodes.tableChair1_1.geometry}
-          material={materials.wood}
+          material={materials.tableChairWood}
         />
         <mesh
           castShadow
           receiveShadow
           geometry={nodes.tableChair1_2.geometry}
-          material={materials.tableFabric}
+          material={materials.tableChairFabric}
         />
       </group>
       <group
         position={[0.385, 0.449, 0.75]}
         rotation={[Math.PI / 2, 0, -0.061]}
-        userData={{ name: "tableChair2" }}
       >
         <mesh
           castShadow
           receiveShadow
           geometry={nodes.tableChair2_1.geometry}
-          material={materials.wood}
+          material={materials.tableChairWood}
         />
         <mesh
           castShadow
           receiveShadow
           geometry={nodes.tableChair2_2.geometry}
-          material={materials.tableFabric}
+          material={materials.tableChairFabric}
         />
       </group>
       <group
         position={[-0.385, 0.449, -0.75]}
         rotation={[Math.PI / 2, 0, 3.04]}
-        userData={{ name: "tableChair3" }}
       >
         <mesh
           castShadow
           receiveShadow
           geometry={nodes.tableChair3_1.geometry}
-          material={materials.wood}
+          material={materials.tableChairWood}
         />
         <mesh
           castShadow
           receiveShadow
           geometry={nodes.tableChair3_2.geometry}
-          material={materials.tableFabric}
+          material={materials.tableChairFabric}
         />
       </group>
       <group
         position={[0.385, 0.449, -0.75]}
         rotation={[Math.PI / 2, 0, -2.934]}
-        userData={{ name: "tableChair4" }}
       >
         <mesh
           castShadow
           receiveShadow
           geometry={nodes.tableChair4_1.geometry}
-          material={materials.wood}
+          material={materials.tableChairWood}
         />
         <mesh
           castShadow
           receiveShadow
           geometry={nodes.tableChair4_2.geometry}
-          material={materials.tableFabric}
+          material={materials.tableChairFabric}
         />
       </group>
-      <mesh
-        castShadow
-        receiveShadow
-        geometry={nodes.tableGround.geometry}
-        material={nodes.tableGround.material}
-        userData={{ name: "tableGround" }}
-        visible={false}
-      />
-      <group
-        position={[0, 0.911, 0]}
-        rotation={[Math.PI / 2, 0, 0]}
-        userData={{ name: "tableLamp" }}
-      >
+      <group position={[0, 0.911, 0]} rotation={[Math.PI / 2, 0, 0]}>
         <mesh
           castShadow
           receiveShadow
           geometry={nodes.tableLamp_1.geometry}
-          material={materials.lamp}
+          material={materials.tableLamp}
         />
         <mesh
           castShadow
           receiveShadow
           geometry={nodes.tableLamp_2.geometry}
-          material={materials.metal}
+          material={materials.tableMetal}
         />
       </group>
     </group>

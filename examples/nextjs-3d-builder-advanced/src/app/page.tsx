@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { RoomProvider } from "@liveblocks/react/suspense";
 import { Loading } from "../components/Loading";
@@ -13,7 +13,9 @@ import {
   Grid,
   PivotControls,
   Preload,
+  Sphere,
 } from "@react-three/drei";
+import CameraControlsImpl from "camera-controls";
 import { EffectComposer, N8AO } from "@react-three/postprocessing";
 import { Armchair } from "../models/furniture/Armchair";
 import { CoffeeTable } from "../models/furniture/CoffeeTable";
@@ -111,6 +113,14 @@ function Scene() {
 }
 
 function Example() {
+  const cameraControlsCallbackRef = useCallback(
+    (cameraControls: CameraControlsImpl | null) => {
+      // Lift the camera up a bitr
+      cameraControls?.truck(0, -0.75);
+    },
+    []
+  );
+
   return (
     <Canvas
       shadows
@@ -133,27 +143,26 @@ function Example() {
         minAzimuthAngle={Math.PI * 0.5}
         maxAzimuthAngle={Math.PI}
         maxPolarAngle={Math.PI * 0.45}
-        polarAngle={Math.PI / 3}
+        polarAngle={Math.PI * 0.3}
         distance={50}
         minDistance={50}
         maxDistance={50}
         dollySpeed={0}
         truckSpeed={0}
+        ref={cameraControlsCallbackRef}
       />
 
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[10, 10, 5]} intensity={1} />
-      <directionalLight position={[-10, -10, -5]} intensity={0.5} />
+      <directionalLight position={[-12, 16, -8]} intensity={4} castShadow />
 
       <Environment preset="city" />
 
       <Grid
-        position={[-0.5, 0.06, 0]}
+        position={[-0.5, 0.01, 0]}
         args={[1, 1]}
         infiniteGrid
         sectionThickness={0}
         cellSize={1}
-        cellThickness={1}
+        cellThickness={1.5}
         cellColor="#666"
       />
 
