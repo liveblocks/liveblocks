@@ -25,19 +25,18 @@ import {
 import CameraControlsImpl from "camera-controls";
 import { EffectComposer, N8AO } from "@react-three/postprocessing";
 import { Room } from "../models/furniture/Room";
-import { initialStorage, models } from "../../liveblocks.config";
+import {
+  initialPresence,
+  initialStorage,
+  models,
+} from "../../liveblocks.config";
 import { Matrix4 } from "three";
-<<<<<<< HEAD
-import { LiveObject } from "@liveblocks/client";
-=======
-import { dampM } from "maath/easing";
 import { useStorageFrame } from "../hooks/useStorageFrame";
 import { useOtherFrame } from "../hooks/useOtherFrame";
 
 interface CursorProps {
   connectionId: number;
 }
->>>>>>> 8bc7fabeb (Extract hooks and add basic presence)
 
 interface ShapeProps {
   shapeId: string;
@@ -241,6 +240,7 @@ export default function Page() {
     <main>
       <RoomProvider
         id="liveblocks:examples:nextjs-3d-builder-advanced-3"
+        initialPresence={initialPresence}
         initialStorage={initialStorage}
       >
         <ErrorBoundary
