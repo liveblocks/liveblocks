@@ -6,7 +6,6 @@ import {
   ClientSideSuspense,
   shallow,
   useMutation,
-  useRoom,
   RoomProvider,
   useStorage,
   useOthersConnectionIds,
@@ -33,6 +32,7 @@ import {
 import { Matrix4 } from "three";
 import { useStorageFrame } from "../hooks/useStorageFrame";
 import { useOtherFrame } from "../hooks/useOtherFrame";
+import { dampM } from "maath/easing";
 
 interface CursorProps {
   connectionId: number;
@@ -79,7 +79,7 @@ function Shape({ shapeId }: ShapeProps) {
     shape.set("matrix", matrix.toArray());
   }, []);
 
-  useStorageFrame((storage) => {
+  useStorageFrame((storage, _rootState, delta) => {
     if (!ref.current) {
       return;
     }
@@ -90,7 +90,8 @@ function Shape({ shapeId }: ShapeProps) {
       return;
     }
 
-    ref.current.matrix.fromArray(shape.get("matrix"));
+    const matrix = new Matrix4().fromArray(shape.get("matrix"));
+    dampM(ref.current.matrix, matrix, 0.1, delta);
   });
 
   if (model === null) {
