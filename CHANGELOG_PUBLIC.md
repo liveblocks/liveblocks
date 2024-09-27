@@ -15,11 +15,12 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 39 (2024-09-27)
 
-New blog post: [Next.js Template Week recap](https://liveblocks.io/blog/nextjs-template-week-recap).
+- New blog post: [Next.js Template Week recap](https://liveblocks.io/blog/nextjs-template-week-recap).
+- Bug fix on the pricing page MAU slider which didn't apply the MAU value set to the price of the products.
 
 ## Contributors
 
-ctnicholas
+ctnicholas, stevenfabre
 
 # Week 38 (2024-09-20)
 
