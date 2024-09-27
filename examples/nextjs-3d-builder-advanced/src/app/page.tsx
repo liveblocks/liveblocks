@@ -29,10 +29,10 @@ import {
   initialStorage,
   models,
 } from "../../liveblocks.config";
-import { Matrix4 } from "three";
+import { Matrix4, Vector3 } from "three";
 import { useStorageFrame } from "../hooks/useStorageFrame";
 import { useOtherFrame } from "../hooks/useOtherFrame";
-import { dampM } from "maath/easing";
+import { dampM, damp3 } from "maath/easing";
 
 interface CursorProps {
   connectionId: number;
@@ -45,12 +45,17 @@ interface ShapeProps {
 function Cursor({ connectionId }: CursorProps) {
   const cursorRef = useRef<ElementRef<typeof Sphere>>(null);
 
-  useOtherFrame(connectionId, (other) => {
+  useOtherFrame(connectionId, (other, _, delta) => {
     if (!cursorRef.current || !other.presence.position) {
       return;
     }
 
-    cursorRef.current.position.copy(other.presence.position);
+    damp3(
+      cursorRef.current.position,
+      other.presence.position as Vector3,
+      0.1,
+      delta
+    );
   });
 
   return (
