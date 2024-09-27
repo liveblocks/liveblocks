@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": { "title": "API v2", "version": "2.0" },
-  "servers": [{ "url": "https://api.liveblocks.io/v2" }],
+  "servers": [{ "url": "https://api.liveblocks.io" }],
   "paths": {
-    "/rooms": {
+    "/v2/rooms": {
       "get": {
         "operationId": "get-rooms",
         "summary": "Get rooms",
@@ -139,7 +139,7 @@
         }
       }
     },
-    "/rooms/{roomId}": {
+    "/v2/rooms/{roomId}": {
       "parameters": [
         {
           "name": "roomId",
@@ -270,7 +270,7 @@
         }
       }
     },
-    "/rooms/{roomId}/update-room-id": {
+    "/v2/rooms/{roomId}/update-room-id": {
       "parameters": [
         {
           "name": "roomId",
@@ -337,7 +337,7 @@
         }
       }
     },
-    "/rooms/{roomId}/active_users": {
+    "/v2/rooms/{roomId}/active_users": {
       "parameters": [
         {
           "name": "roomId",
@@ -389,7 +389,7 @@
         }
       }
     },
-    "/rooms/{roomId}/broadcast_event": {
+    "/v2/rooms/{roomId}/broadcast_event": {
       "parameters": [
         {
           "name": "roomId",
@@ -426,7 +426,7 @@
         }
       }
     },
-    "/rooms/{roomId}/storage": {
+    "/v2/rooms/{roomId}/storage": {
       "parameters": [
         {
           "name": "roomId",
@@ -584,7 +584,7 @@
         }
       }
     },
-    "/rooms/{roomId}/ydoc": {
+    "/v2/rooms/{roomId}/ydoc": {
       "parameters": [
         {
           "name": "roomId",
@@ -675,7 +675,7 @@
         }
       }
     },
-    "/rooms/{roomId}/ydoc-binary": {
+    "/v2/rooms/{roomId}/ydoc-binary": {
       "parameters": [
         {
           "name": "roomId",
@@ -712,7 +712,7 @@
         }
       }
     },
-    "/schemas": {
+    "/v2/schemas": {
       "post": {
         "operationId": "post-create-new-schema",
         "summary": "Create schema",
@@ -759,7 +759,7 @@
         }
       }
     },
-    "/schemas/{schemaId}": {
+    "/v2/schemas/{schemaId}": {
       "parameters": [
         {
           "name": "schemaId",
@@ -856,7 +856,7 @@
         }
       }
     },
-    "/rooms/{roomId}/schema": {
+    "/v2/rooms/{roomId}/schema": {
       "parameters": [
         {
           "name": "roomId",
@@ -944,7 +944,7 @@
         }
       }
     },
-    "/rooms/{roomId}/threads": {
+    "/v2/rooms/{roomId}/threads": {
       "parameters": [
         {
           "name": "roomId",
@@ -1079,7 +1079,7 @@
         }
       }
     },
-    "/rooms/{roomId}/threads/{threadId}": {
+    "/v2/rooms/{roomId}/threads/{threadId}": {
       "parameters": [
         {
           "name": "roomId",
@@ -1153,7 +1153,7 @@
         }
       }
     },
-    "/rooms/{roomId}/threads/{threadId}/participants": {
+    "/v2/rooms/{roomId}/threads/{threadId}/participants": {
       "parameters": [
         {
           "name": "roomId",
@@ -1203,7 +1203,7 @@
         }
       }
     },
-    "/rooms/{roomId}/threads/{threadId}/metadata": {
+    "/v2/rooms/{roomId}/threads/{threadId}/metadata": {
       "parameters": [
         {
           "name": "roomId",
@@ -1256,7 +1256,7 @@
         }
       }
     },
-    "/rooms/{roomId}/threads/{threadId}/mark-as-resolved": {
+    "/v2/rooms/{roomId}/threads/{threadId}/mark-as-resolved": {
       "parameters": [
         {
           "name": "roomId",
@@ -1292,7 +1292,7 @@
         }
       }
     },
-    "/rooms/{roomId}/threads/{threadId}/mark-as-unresolved": {
+    "/v2/rooms/{roomId}/threads/{threadId}/mark-as-unresolved": {
       "parameters": [
         {
           "name": "roomId",
@@ -1328,7 +1328,7 @@
         }
       }
     },
-    "/rooms/{roomId}/threads/{threadId}/comments": {
+    "/v2/rooms/{roomId}/threads/{threadId}/comments": {
       "parameters": [
         {
           "name": "roomId",
@@ -1395,7 +1395,7 @@
         }
       }
     },
-    "/rooms/{roomId}/threads/{threadId}/comments/{commentId}": {
+    "/v2/rooms/{roomId}/threads/{threadId}/comments/{commentId}": {
       "parameters": [
         {
           "name": "roomId",
@@ -1514,7 +1514,7 @@
         }
       }
     },
-    "/rooms/{roomId}/threads/{threadId}/comments/{commentId}/add-reaction": {
+    "/v2/rooms/{roomId}/threads/{threadId}/comments/{commentId}/add-reaction": {
       "parameters": [
         {
           "name": "roomId",
@@ -1584,7 +1584,7 @@
         }
       }
     },
-    "/rooms/{roomId}/threads/{threadId}/comments/{commentId}/remove-reaction": {
+    "/v2/rooms/{roomId}/threads/{threadId}/comments/{commentId}/remove-reaction": {
       "parameters": [
         {
           "name": "roomId",
@@ -1639,7 +1639,7 @@
         }
       }
     },
-    "/authorize-user": {
+    "/v2/authorize-user": {
       "post": {
         "operationId": "post-authorize-user",
         "summary": "Get access token with secret key",
@@ -1688,7 +1688,7 @@
         }
       }
     },
-    "/identify-user": {
+    "/v2/identify-user": {
       "post": {
         "operationId": "post-identify-user",
         "summary": "Get ID token with secret key",
@@ -1733,7 +1733,7 @@
         }
       }
     },
-    "/rooms/{roomId}/authorize": {
+    "/v2/rooms/{roomId}/authorize": {
       "parameters": [
         {
           "name": "roomId",
@@ -1788,7 +1788,7 @@
         "x-badge": "Deprecated"
       }
     },
-    "/rooms/{roomId}/public/authorize": {
+    "/v2/rooms/{roomId}/public/authorize": {
       "parameters": [
         {
           "name": "roomId",
@@ -1842,7 +1842,7 @@
         "x-badge": "Deprecated"
       }
     },
-    "/users/{userId}/inbox-notifications/{inboxNotificationId}": {
+    "/v2/users/{userId}/inbox-notifications/{inboxNotificationId}": {
       "parameters": [
         {
           "schema": { "type": "string" },
@@ -1898,7 +1898,7 @@
         }
       }
     },
-    "/users/{userId}/inbox-notifications": {
+    "/v2/users/{userId}/inbox-notifications": {
       "parameters": [
         {
           "schema": { "type": "string" },
@@ -1958,7 +1958,7 @@
         }
       }
     },
-    "/rooms/{roomId}/users/{userId}/notification-settings": {
+    "/v2/rooms/{roomId}/users/{userId}/notification-settings": {
       "parameters": [
         {
           "schema": { "type": "string" },
@@ -2038,7 +2038,7 @@
         }
       }
     },
-    "/inbox-notifications/trigger": {
+    "/v2/inbox-notifications/trigger": {
       "post": {
         "operationId": "post-inbox-notifications-trigger",
         "summary": "Trigger inbox notification",
