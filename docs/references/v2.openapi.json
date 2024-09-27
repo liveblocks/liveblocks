@@ -2,6 +2,16 @@
   "openapi": "3.1.0",
   "info": { "title": "API v2", "version": "2.0" },
   "servers": [{ "url": "https://api.liveblocks.io" }],
+  "tags": [
+    { "name": "Authentication" },
+    { "name": "Room" },
+    { "name": "Storage" },
+    { "name": "Yjs" },
+    { "name": "Schema validation" },
+    { "name": "Comments" },
+    { "name": "Notifications" },
+    { "name": "Deprecated" }
+  ],
   "paths": {
     "/v2/rooms": {
       "get": {
@@ -2897,15 +2907,5 @@
       }
     }
   },
-  "tags": [
-    { "name": "Authentication" },
-    { "name": "Room" },
-    { "name": "Storage" },
-    { "name": "Yjs" },
-    { "name": "Schema validation" },
-    { "name": "Comments" },
-    { "name": "Notifications" },
-    { "name": "Deprecated" }
-  ],
   "x-internal": true
 }
