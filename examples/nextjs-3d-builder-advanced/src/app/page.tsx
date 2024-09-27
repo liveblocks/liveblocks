@@ -1,19 +1,17 @@
 "use client";
 
-import {
-  ElementRef,
-  PropsWithChildren,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-} from "react";
-import { useSearchParams } from "next/navigation";
-import { RoomProvider, useStorage } from "@liveblocks/react/suspense";
+import { ElementRef, useCallback, useRef } from "react";
 import { Loading } from "../components/Loading";
-import { ClientSideSuspense, shallow, useMutation } from "@liveblocks/react";
+import {
+  ClientSideSuspense,
+  shallow,
+  useMutation,
+  useRoom,
+  RoomProvider,
+  useStorage,
+} from "@liveblocks/react/suspense";
 import { ErrorBoundary } from "react-error-boundary";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import {
   CameraControls,
   Environment,
@@ -34,7 +32,13 @@ interface StorageShapeProps {
 function StorageShape({ shapeId }: StorageShapeProps) {
   const ref = useRef<ElementRef<"group">>(null);
   const isDragging = useRef(false);
-  const shape = useStorage((root) => root.shapes.get(shapeId), shallow);
+  const room = useRoom();
+
+  const model = useStorage((root) => {
+    const shape = root.shapes.get(shapeId);
+    if (shape === undefined) return null;
+    return shape.model;
+  });
 
   const setShapeMatrix = useMutation(({ storage }, matrix: Matrix4) => {
     const shape = storage.get("shapes").get(shapeId);
@@ -60,19 +64,31 @@ function StorageShape({ shapeId }: StorageShapeProps) {
     isDragging.current = false;
   }, []);
 
-  useEffect(() => {
-    if (!ref.current || !shape || isDragging.current) {
+  useFrame(() => {
+    if (ref.current === null) return;
+
+    const storage = room.getStorageSnapshot();
+    if (storage === null) {
+      console.warn(`Storage could not be found for room ${room.id}`);
       return;
     }
 
-    ref.current.matrix.fromArray(shape.matrix);
-  }, [shape]);
+    const shape = storage.get("shapes").get(shapeId);
+    if (shape === undefined) {
+      console.warn(
+        `LiveObject could not be found for shape ${shapeId} in ${room.id}`
+      );
+      return;
+    }
 
-  if (!shape) {
+    ref.current.matrix.fromArray(shape.get("matrix"));
+  });
+
+  if (model === null) {
     return null;
   }
 
-  const Model = models[shape.model].model;
+  const Model = models[model].model;
 
   console.log("Re-render", shapeId);
 
