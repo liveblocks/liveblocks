@@ -69,7 +69,6 @@ function useStorageFrame(
 function Shape({ shapeId }: ShapeProps) {
   const ref = useRef<ElementRef<"group">>(null);
   const isDragging = useRef(false);
-  const room = useRoom();
 
   const model = useStorage((root) => {
     const shape = root.shapes.get(shapeId);
@@ -91,10 +90,8 @@ function Shape({ shapeId }: ShapeProps) {
     isDragging.current = true;
   }, []);
 
-  const handleDrag = useCallback(() => {
-    if (ref.current) {
-      setShapeMatrix(ref.current.matrix);
-    }
+  const handleDrag = useCallback((matrix: Matrix4) => {
+    setShapeMatrix(matrix);
   }, []);
 
   const handleDragEnd = useCallback(() => {
@@ -102,7 +99,7 @@ function Shape({ shapeId }: ShapeProps) {
   }, []);
 
   useStorageFrame((storage) => {
-    if (isDragging.current || !ref.current) {
+    if (!ref.current) {
       return;
     }
 
@@ -122,8 +119,6 @@ function Shape({ shapeId }: ShapeProps) {
 
   const Model = models[model].model;
 
-  console.log("Re-render", shapeId);
-
   return (
     <PivotControls
       ref={ref}
@@ -137,6 +132,7 @@ function Shape({ shapeId }: ShapeProps) {
       onDragStart={handleDragStart}
       onDrag={handleDrag}
       onDragEnd={handleDragEnd}
+      autoTransform={false}
     >
       <Model />
     </PivotControls>
