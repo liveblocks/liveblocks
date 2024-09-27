@@ -1,16 +1,6 @@
 "use client";
 
-import {
-  ComponentProps,
-  ElementRef,
-  PropsWithChildren,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import { useSearchParams } from "next/navigation";
+import { ElementRef, useCallback, useRef } from "react";
 import { Loading } from "../components/Loading";
 import {
   ClientSideSuspense,
@@ -39,8 +29,7 @@ import CameraControlsImpl from "camera-controls";
 import { EffectComposer, N8AO } from "@react-three/postprocessing";
 import { Room } from "../models/furniture/Room";
 import { initialStorage, models } from "../../liveblocks.config";
-import { Intersection, Matrix4, Matrix4Tuple } from "three";
-import { dampM } from "maath/easing";
+import { Matrix4 } from "three";
 import { LiveObject } from "@liveblocks/client";
 
 interface ShapeProps {
@@ -68,7 +57,6 @@ function useStorageFrame(
 
 function Shape({ shapeId }: ShapeProps) {
   const ref = useRef<ElementRef<"group">>(null);
-  const isDragging = useRef(false);
 
   const model = useStorage((root) => {
     const shape = root.shapes.get(shapeId);
@@ -86,18 +74,6 @@ function Shape({ shapeId }: ShapeProps) {
     shape.set("matrix", matrix.toArray());
   }, []);
 
-  const handleDragStart = useCallback(() => {
-    isDragging.current = true;
-  }, []);
-
-  const handleDrag = useCallback((matrix: Matrix4) => {
-    setShapeMatrix(matrix);
-  }, []);
-
-  const handleDragEnd = useCallback(() => {
-    isDragging.current = false;
-  }, []);
-
   useStorageFrame((storage) => {
     if (!ref.current) {
       return;
@@ -110,7 +86,6 @@ function Shape({ shapeId }: ShapeProps) {
     }
 
     ref.current.matrix.fromArray(shape.get("matrix"));
-    // dampM(ref.current.matrix, shape.get("matrix"), 0.2, delta);
   });
 
   if (model === null) {
@@ -129,9 +104,7 @@ function Shape({ shapeId }: ShapeProps) {
       activeAxes={[true, false, true]}
       disableScaling
       annotations
-      onDragStart={handleDragStart}
-      onDrag={handleDrag}
-      onDragEnd={handleDragEnd}
+      onDrag={setShapeMatrix}
       autoTransform={false}
     >
       <Model />
