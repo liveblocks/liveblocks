@@ -140,8 +140,6 @@ function Example() {
       <CameraControls
         makeDefault
         azimuthAngle={Math.PI * 0.7}
-        minAzimuthAngle={Math.PI * 0.5}
-        maxAzimuthAngle={Math.PI}
         maxPolarAngle={Math.PI * 0.45}
         polarAngle={Math.PI * 0.3}
         distance={50}

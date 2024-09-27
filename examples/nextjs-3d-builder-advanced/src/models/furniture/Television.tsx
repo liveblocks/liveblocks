@@ -3,7 +3,7 @@ import { useGLTF, useVideoTexture } from "@react-three/drei";
 import { FurnitureModels } from "./types";
 
 export function Television(props: ComponentProps<"group">) {
-  const texture = useVideoTexture("/screen.mp4");
+  const texture = useVideoTexture("/screen-bbq.mp4");
   const { nodes, materials } = useGLTF("/furniture.glb") as FurnitureModels;
 
   return (
