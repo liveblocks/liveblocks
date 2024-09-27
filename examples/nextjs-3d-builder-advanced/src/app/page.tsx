@@ -42,6 +42,8 @@ interface ShapeProps {
   shapeId: string;
 }
 
+const temporaryMatrix = new Matrix4();
+
 function Cursor({ connectionId }: CursorProps) {
   const cursorRef = useRef<ElementRef<typeof Sphere>>(null);
 
@@ -95,7 +97,7 @@ function Shape({ shapeId }: ShapeProps) {
       return;
     }
 
-    const matrix = new Matrix4().fromArray(shape.get("matrix"));
+    const matrix = temporaryMatrix.fromArray(shape.get("matrix"));
     dampM(ref.current.matrix, matrix, 0.1, delta);
   });
 
