@@ -66,7 +66,7 @@
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/GetRooms" },
                 "examples": {
-                  "example": {
+                  "Example 1": {
                     "value": {
                       "nextCursor": "W1siaWQiLCJVRzhWYl82SHRUS0NzXzFvci1HZHQiXSxbImNyZWF0ZWRBdCIsMTY2MDAwMDk4ODEzN11d",
                       "nextPage": "/v2/rooms?startingAfter=W1siaWQiLCJVRzhWYl82SHRUS0NzXzFvci1HZHQiXSxbImNyZWF0ZWRBdCIsMTY2MDAwMDk4ODEzN11d",
@@ -106,7 +106,7 @@
             "application/json": {
               "schema": { "$ref": "#/components/schemas/CreateRoom" },
               "examples": {
-                "example": {
+                "Example 1": {
                   "value": {
                     "id": "my-room-3ebc26e2bf96",
                     "defaultAccesses": ["room:write"],
@@ -126,7 +126,7 @@
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/Room" },
                 "examples": {
-                  "example": {
+                  "Example 1": {
                     "value": {
                       "type": "room",
                       "id": "my-room-3ebc26e2bf96",
@@ -163,7 +163,7 @@
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/Room" },
                 "examples": {
-                  "example": {
+                  "Example 1": {
                     "value": {
                       "type": "room",
                       "id": "react-todo-list",
@@ -201,7 +201,7 @@
             "application/json": {
               "schema": { "$ref": "#/components/schemas/UpdateRoom" },
               "examples": {
-                "example": {
+                "Example 1": {
                   "value": {
                     "defaultAccesses": ["room:write"],
                     "usersAccesses": {
@@ -229,7 +229,7 @@
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/Room" },
                 "examples": {
-                  "example": {
+                  "Example 1": {
                     "value": {
                       "type": "room",
                       "id": "react-todo-list",
@@ -283,7 +283,7 @@
           "content": {
             "application/json": {
               "examples": {
-                "example": { "value": { "newRoomId": "new-room-id" } }
+                "Example 1": { "value": { "newRoomId": "new-room-id" } }
               }
             },
             "application/xml": {
@@ -301,7 +301,7 @@
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/Room" },
                 "examples": {
-                  "example": {
+                  "Example 1": {
                     "value": {
                       "type": "room",
                       "id": "react-todo-list",
@@ -347,7 +347,7 @@
                   "$ref": "#/components/schemas/ActiveUsersResponse"
                 },
                 "examples": {
-                  "example": {
+                  "Example 1": {
                     "value": {
                       "data": [
                         {
@@ -388,7 +388,7 @@
             "schema": {},
             "application/json": {
               "examples": {
-                "example": { "value": { "type": "EMOJI", "emoji": "🔥" } }
+                "Example 1": { "value": { "type": "EMOJI", "emoji": "🔥" } }
               }
             }
           }
@@ -433,7 +433,7 @@
                   }
                 },
                 "examples": {
-                  "example": {
+                  "Example 1": {
                     "value": {
                       "liveblocksType": "LiveObject",
                       "data": {
@@ -477,7 +477,7 @@
                 }
               },
               "examples": {
-                "example": {
+                "Example 1": {
                   "value": {
                     "liveblocksType": "LiveObject",
                     "data": {
@@ -513,7 +513,7 @@
                   }
                 },
                 "examples": {
-                  "example": {
+                  "Example 1": {
                     "value": {
                       "liveblocksType": "LiveObject",
                       "data": {
@@ -595,7 +595,7 @@
               "application/json": {
                 "schema": { "type": "object" },
                 "examples": {
-                  "example": { "value": { "someYText": "Contents of YText" } }
+                  "Example 1": { "value": { "someYText": "Contents of YText" } }
                 }
               }
             }
@@ -677,7 +677,7 @@
             "application/json": {
               "schema": { "$ref": "#/components/schemas/SchemaRequest" },
               "examples": {
-                "example": {
+                "Example 1": {
                   "value": {
                     "name": "my-schema",
                     "body": "type Logo {\nname: string\ntheme: string\n}\n\ntype Storage {\nlogo: LiveObject<Logo>\n"
@@ -694,7 +694,7 @@
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/SchemaResponse" },
                 "examples": {
-                  "example": {
+                  "Example 1": {
                     "value": {
                       "id": "my-schema@1",
                       "name": "my-schema",
@@ -727,7 +727,7 @@
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/SchemaResponse" },
                 "examples": {
-                  "example": {
+                  "Example 1": {
                     "value": {
                       "id": "my-schema@1",
                       "name": "my-schema",
@@ -755,7 +755,7 @@
             "application/json": {
               "schema": { "$ref": "#/components/schemas/UpdateSchema" },
               "examples": {
-                "example": {
+                "Example 1": {
                   "value": {
                     "body": "type Logo {\nname: string\ntheme: string\n}\n\ntype Storage {\nlogo: LiveObject<Logo>\n"
                   }
@@ -771,7 +771,7 @@
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/SchemaResponse" },
                 "examples": {
-                  "example": {
+                  "Example 1": {
                     "value": {
                       "id": "my-schema@2",
                       "name": "my-schema",
@@ -816,7 +816,7 @@
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/SchemaResponse" },
                 "examples": {
-                  "example": {
+                  "Example 1": {
                     "value": {
                       "id": "my-schema@1",
                       "name": "my-schema",
@@ -845,7 +845,7 @@
             "application/json": {
               "schema": { "$ref": "#/components/schemas/AttachSchema" },
               "examples": {
-                "example": { "value": { "schema": "my-schema@1" } }
+                "Example 1": { "value": { "schema": "my-schema@1" } }
               }
             }
           }
@@ -857,7 +857,7 @@
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/AttachSchema" },
                 "examples": {
-                  "example": { "value": { "schema": "my-schema@1" } }
+                  "Example 1": { "value": { "schema": "my-schema@1" } }
                 }
               }
             }
@@ -958,7 +958,7 @@
             "application/json": {
               "schema": { "$ref": "#/components/schemas/CreateThread" },
               "examples": {
-                "example": {
+                "Example 1": {
                   "value": {
                     "comment": {
                       "userId": "alice",
@@ -979,7 +979,7 @@
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/Thread" },
                 "examples": {
-                  "example": {
+                  "Example 1": {
                     "value": {
                       "type": "thread",
                       "id": "thread-id",
@@ -1124,7 +1124,7 @@
             "application/json": {
               "schema": { "$ref": "#/components/schemas/UpdateThread" },
               "examples": {
-                "example": {
+                "Example 1": {
                   "value": {
                     "metadata": { "color": "yellow" },
                     "userId": "alice",
@@ -1213,7 +1213,7 @@
             "application/json": {
               "schema": { "$ref": "#/components/schemas/CreateComment" },
               "examples": {
-                "example": {
+                "Example 1": {
                   "value": {
                     "userId": "alice",
                     "createdAt": "2022-07-13T14:32:50.697Z",
@@ -1231,7 +1231,7 @@
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/Comment" },
                 "examples": {
-                  "example": {
+                  "Example 1": {
                     "value": {
                       "type": "comment",
                       "threadId": "thread-id",
@@ -1303,7 +1303,7 @@
             "application/json": {
               "schema": { "$ref": "#/components/schemas/CreateComment" },
               "examples": {
-                "example": {
+                "Example 1": {
                   "value": {
                     "editedAt": "2023-07-13T14:32:50.697Z",
                     "body": { "version": 1, "content": [] }
@@ -1320,7 +1320,7 @@
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/UpdateComment" },
                 "examples": {
-                  "example": {
+                  "Example 1": {
                     "value": {
                       "type": "comment",
                       "threadId": "thread-id",
@@ -1370,7 +1370,7 @@
             "application/json": {
               "schema": { "$ref": "#/components/schemas/AddCommentReaction" },
               "examples": {
-                "example": {
+                "Example 1": {
                   "value": {
                     "emoji": "👨‍👩‍👧",
                     "createdAt": "2022-07-13T14:32:50.697Z",
@@ -1388,7 +1388,7 @@
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/CommentReaction" },
                 "examples": {
-                  "example": {
+                  "Example 1": {
                     "value": {
                       "emoji": "👨‍👩‍👧",
                       "createdAt": "2022-07-13T14:32:50.697Z",
@@ -1424,7 +1424,7 @@
                 "$ref": "#/components/schemas/RemoveCommentReaction"
               },
               "examples": {
-                "example": {
+                "Example 1": {
                   "value": {
                     "emoji": "👨‍👩‍👧",
                     "userId": "alice",
@@ -1454,7 +1454,7 @@
             "application/json": {
               "schema": { "$ref": "#/components/schemas/AuthorizeUserRequest" },
               "examples": {
-                "example": {
+                "Example 1": {
                   "value": {
                     "userId": "user-123",
                     "userInfo": {
@@ -1479,7 +1479,7 @@
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/TokenResponse" },
                 "examples": {
-                  "example": {
+                  "Example 1": {
                     "value": {
                       "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIi..."
                     }
@@ -1503,7 +1503,7 @@
             "application/json": {
               "schema": { "$ref": "#/components/schemas/IdentifyUserRequest" },
               "examples": {
-                "example": {
+                "Example 1": {
                   "value": {
                     "userId": "user-123",
                     "groupIds": ["marketing", "engineering"],
@@ -1524,7 +1524,7 @@
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/TokenResponse" },
                 "examples": {
-                  "example": {
+                  "Example 1": {
                     "value": {
                       "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIi..."
                     }
@@ -1549,7 +1549,7 @@
             "application/json": {
               "schema": { "$ref": "#/components/schemas/CreateAuthorization" },
               "examples": {
-                "example": {
+                "Example 1": {
                   "value": {
                     "userId": "b2c1c290-f2c9-45de-a74e-6b7aa0690f59",
                     "groupIds": ["g1", "g2"],
@@ -1567,7 +1567,7 @@
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/Authorization" },
                 "examples": {
-                  "example": {
+                  "Example 1": {
                     "value": {
                       "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
                     }
@@ -1598,7 +1598,7 @@
                 "$ref": "#/components/schemas/PublicAuthorizeBodyRequest"
               },
               "examples": {
-                "example": {
+                "Example 1": {
                   "value": {
                     "publicApiKey": "pk_test_lOMrmwejSWLaPYQc5_JuGHXXX"
                   }
@@ -1614,7 +1614,7 @@
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/Authorization" },
                 "examples": {
-                  "example": {
+                  "Example 1": {
                     "value": {
                       "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
                     }
