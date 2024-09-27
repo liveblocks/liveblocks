@@ -43,6 +43,7 @@ interface ShapeProps {
 }
 
 const temporaryMatrix = new Matrix4();
+const scenePointerMoveEvents: ThreeEvent<PointerEvent>[] = [];
 
 function Cursor({ connectionId }: CursorProps) {
   const cursorRef = useRef<ElementRef<typeof Sphere>>(null);
@@ -125,8 +126,6 @@ function Shape({ shapeId }: ShapeProps) {
   );
 }
 
-const scenePointerMoveEvents: ThreeEvent<PointerEvent>[] = [];
-
 function Scene() {
   const updateMyPresense = useUpdateMyPresence();
   const shapeIds = useStorage(
@@ -147,11 +146,9 @@ function Scene() {
         }
       );
 
-      // if (cursorRef.current) {
-      //   cursorRef.current.position.copy(closestPointerMove.point);
-      // }
       updateMyPresense({ position: closestPointerMove.point });
 
+      // Clear the events for the next frame
       scenePointerMoveEvents.length = 0;
     }
   });
