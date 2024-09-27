@@ -49,6 +49,7 @@ export function Television(props: ComponentProps<"group">) {
         geometry={nodes.televisionGround.geometry}
         material={nodes.televisionGround.material}
         userData={{ name: "televisionGround" }}
+        visible={false}
       />
       <group
         position={[0.77, 0.319, -0.1]}

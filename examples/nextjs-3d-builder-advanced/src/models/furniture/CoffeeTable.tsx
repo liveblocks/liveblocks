@@ -31,6 +31,7 @@ export function CoffeeTable(props: ComponentProps<"group">) {
         geometry={nodes.coffeeTableGround.geometry}
         material={nodes.coffeeTableGround.material}
         userData={{ name: "coffeeTableGround" }}
+        visible={false}
       />
       <group
         position={[0.2, 0.495, 0]}

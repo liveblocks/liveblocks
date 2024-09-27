@@ -7,13 +7,14 @@ import { Loading } from "../components/Loading";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
 import { Canvas } from "@react-three/fiber";
-import { CameraControls, Environment, Preload } from "@react-three/drei";
 import {
-  Bloom,
-  EffectComposer,
-  N8AO,
-  ToneMapping,
-} from "@react-three/postprocessing";
+  CameraControls,
+  Environment,
+  Grid,
+  PivotControls,
+  Preload,
+} from "@react-three/drei";
+import { EffectComposer, N8AO } from "@react-three/postprocessing";
 import { Armchair } from "../models/furniture/Armchair";
 import { CoffeeTable } from "../models/furniture/CoffeeTable";
 import { Lamp } from "../models/furniture/Lamp";
@@ -21,17 +22,90 @@ import { Plant } from "../models/furniture/Plant";
 import { Sofa } from "../models/furniture/Sofa";
 import { Table } from "../models/furniture/Table";
 import { Television } from "../models/furniture/Television";
+import { Room } from "../models/furniture/Room";
 
 function Scene() {
   return (
     <>
-      <Armchair position={[2.5, 0, -0.5]} />
-      <CoffeeTable position={[0, 0, 4.5]} />
-      <Lamp position={[2.5, 0, 2.5]} />
-      <Plant position={[2.5, 0, 4.5]} />
-      <Sofa position={[0, 0, 2.5]} />
-      <Table position={[0, 0, 0]} />
-      <Television position={[0, 0, 6.5]} />
+      <Room />
+
+      <PivotControls
+        scale={100}
+        fixed
+        rotation={[0, Math.PI / 2, 0]}
+        depthTest={false}
+        activeAxes={[true, false, true]}
+        disableScaling
+        annotations
+      >
+        <Armchair />
+      </PivotControls>
+      <PivotControls
+        scale={100}
+        fixed
+        rotation={[0, Math.PI / 2, 0]}
+        depthTest={false}
+        activeAxes={[true, false, true]}
+        disableScaling
+        annotations
+      >
+        <CoffeeTable />
+      </PivotControls>
+      <PivotControls
+        scale={100}
+        fixed
+        rotation={[0, Math.PI / 2, 0]}
+        depthTest={false}
+        activeAxes={[true, false, true]}
+        disableScaling
+        annotations
+      >
+        <Lamp />
+      </PivotControls>
+      <PivotControls
+        scale={100}
+        fixed
+        rotation={[0, Math.PI / 2, 0]}
+        depthTest={false}
+        activeAxes={[true, false, true]}
+        disableScaling
+        annotations
+      >
+        <Plant />
+      </PivotControls>
+      <PivotControls
+        scale={100}
+        fixed
+        rotation={[0, Math.PI / 2, 0]}
+        depthTest={false}
+        activeAxes={[true, false, true]}
+        disableScaling
+        annotations
+      >
+        <Sofa />
+      </PivotControls>
+      <PivotControls
+        scale={100}
+        fixed
+        rotation={[0, Math.PI / 2, 0]}
+        depthTest={false}
+        activeAxes={[true, false, true]}
+        disableScaling
+        annotations
+      >
+        <Table />
+      </PivotControls>
+      <PivotControls
+        scale={100}
+        fixed
+        rotation={[0, Math.PI / 2, 0]}
+        depthTest={false}
+        activeAxes={[true, false, true]}
+        disableScaling
+        annotations
+      >
+        <Television />
+      </PivotControls>
     </>
   );
 }
@@ -40,26 +114,51 @@ function Example() {
   return (
     <Canvas
       shadows
-      flat
       // events={createEventsManager}
       // raycaster={{
       //   layers: EVENT_LAYERS,
       // }}
       className="canvas"
       dpr={[1, 2]}
+      camera={{
+        fov: 10,
+        far: 200,
+      }}
     >
       <Scene />
 
-      <CameraControls makeDefault />
+      <CameraControls
+        makeDefault
+        azimuthAngle={Math.PI * 0.7}
+        minAzimuthAngle={Math.PI * 0.5}
+        maxAzimuthAngle={Math.PI}
+        maxPolarAngle={Math.PI * 0.45}
+        polarAngle={Math.PI / 3}
+        distance={50}
+        minDistance={50}
+        maxDistance={50}
+        dollySpeed={0}
+        truckSpeed={0}
+      />
 
       <ambientLight intensity={0.5} />
-      <directionalLight position={[5, 5, 5]} intensity={1} castShadow />
-      <Environment preset="apartment" />
+      <directionalLight position={[10, 10, 5]} intensity={1} />
+      <directionalLight position={[-10, -10, -5]} intensity={0.5} />
 
-      <EffectComposer>
-        <N8AO aoRadius={0.5} intensity={1.5} halfRes />
-        <Bloom mipmapBlur />
-        <ToneMapping />
+      <Environment preset="city" />
+
+      <Grid
+        position={[-0.5, 0.06, 0]}
+        args={[1, 1]}
+        infiniteGrid
+        sectionThickness={0}
+        cellSize={1}
+        cellThickness={1}
+        cellColor="#666"
+      />
+
+      <EffectComposer enableNormalPass>
+        <N8AO aoRadius={0.5} intensity={1.5} />
       </EffectComposer>
 
       <Preload all />

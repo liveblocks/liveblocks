@@ -31,6 +31,7 @@ export function Armchair(props: ComponentProps<"group">) {
         geometry={nodes.armchairGround.geometry}
         material={nodes.armchairGround.material}
         userData={{ name: "armchairGround" }}
+        visible={false}
       />
       <mesh
         castShadow

@@ -27,6 +27,7 @@ export function Lamp(props: ComponentProps<"group">) {
         geometry={nodes.lampGround.geometry}
         material={nodes.lampGround.material}
         userData={{ name: "lampGround" }}
+        visible={false}
       />
     </group>
   );

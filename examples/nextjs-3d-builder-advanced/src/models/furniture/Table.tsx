@@ -103,6 +103,7 @@ export function Table(props: ComponentProps<"group">) {
         geometry={nodes.tableGround.geometry}
         material={nodes.tableGround.material}
         userData={{ name: "tableGround" }}
+        visible={false}
       />
       <group
         position={[0, 0.911, 0]}

@@ -48,6 +48,24 @@ export type FurnitureModels = GLTF & {
     armchair_2: THREE.Mesh;
     armchairGround: THREE.Mesh;
     armchairPillow: THREE.Mesh;
+    roomDoor1_1: THREE.Mesh;
+    roomDoor1_2: THREE.Mesh;
+    roomDoor2_1: THREE.Mesh;
+    roomDoor2_2: THREE.Mesh;
+    roomFloor1: THREE.Mesh;
+    roomWall1_1: THREE.Mesh;
+    roomWall1_2: THREE.Mesh;
+    roomWall1_3: THREE.Mesh;
+    roomWall2_1: THREE.Mesh;
+    roomWall2_2: THREE.Mesh;
+    roomWall2_3: THREE.Mesh;
+    roomWall3_1: THREE.Mesh;
+    roomWall3_2: THREE.Mesh;
+    roomWall3_3: THREE.Mesh;
+    roomWallDown1_1: THREE.Mesh;
+    roomWallDown1_2: THREE.Mesh;
+    roomWallDown2_1: THREE.Mesh;
+    roomWallDown2_2: THREE.Mesh;
   };
   materials: {
     wood: THREE.MeshPhysicalMaterial;

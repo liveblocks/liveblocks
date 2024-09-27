@@ -31,6 +31,7 @@ export function Sofa(props: ComponentProps<"group">) {
         geometry={nodes.sofaGround.geometry}
         material={nodes.sofaGround.material}
         userData={{ name: "sofaGround" }}
+        visible={false}
       />
       <mesh
         castShadow

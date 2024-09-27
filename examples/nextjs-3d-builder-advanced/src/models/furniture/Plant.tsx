@@ -33,6 +33,7 @@ export function Plant(props: ComponentProps<"group">) {
         geometry={nodes.plantGround.geometry}
         material={nodes.plantGround.material}
         userData={{ name: "plantGround" }}
+        visible={false}
       />
     </group>
   );
