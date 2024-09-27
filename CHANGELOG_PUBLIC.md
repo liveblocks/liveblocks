@@ -15,7 +15,11 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 38 (2024-09-27)
 
+New blog post: [Next.js Template Week recap](https://liveblocks.io/blog/nextjs-template-week-recap).
+
 ## Contributors
+
+ctnicholas
 
 # Week 38 (2024-09-20)
 
