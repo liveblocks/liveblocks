@@ -10,6 +10,7 @@ import {
   useStorage,
   useOthersConnectionIds,
   useUpdateMyPresence,
+  useOther,
 } from "@liveblocks/react/suspense";
 import { ErrorBoundary } from "react-error-boundary";
 import { Canvas, ThreeEvent, useFrame } from "@react-three/fiber";
@@ -48,8 +49,11 @@ const scenePointerMoveEvents: ThreeEvent<PointerEvent>[] = [];
 
 function Cursor({ connectionId }: CursorProps) {
   const cursorRef = useRef<ElementRef<typeof CursorModel>>(null);
+
   const cursorPositionDebugRef = useRef<ElementRef<typeof Sphere>>(null);
   const cursorPointingToDebugRef = useRef<ElementRef<typeof Sphere>>(null);
+
+  const color = useOther(connectionId, (user) => user.info.color, shallow);
 
   useOtherFrame(connectionId, (other, _, delta) => {
     if (
@@ -90,9 +94,8 @@ function Cursor({ connectionId }: CursorProps) {
 
   return (
     <>
-      <CursorModel ref={cursorRef}>
-        <meshBasicMaterial color="#ddd" />
-      </CursorModel>
+      <CursorModel ref={cursorRef} color={color} />
+
       <Sphere
         scale={[0.05, 0.05, 0.05]}
         ref={cursorPositionDebugRef}

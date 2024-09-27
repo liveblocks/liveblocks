@@ -11,7 +11,10 @@ export type CursorModel = GLTF & {
 };
 
 export const Cursor = forwardRef(
-  (props: ComponentProps<"group">, ref: Ref<Group>) => {
+  (
+    { color, ...props }: ComponentProps<"group"> & { color: string },
+    ref: Ref<Group>
+  ) => {
     const { nodes } = useGLTF("/cursor.glb") as CursorModel;
 
     return (
@@ -20,10 +23,11 @@ export const Cursor = forwardRef(
           castShadow
           receiveShadow
           geometry={nodes.cursor.geometry}
-          material={nodes.cursor.material}
           rotation={[Math.PI / 3, Math.PI / 3, -Math.PI / 6]}
           scale={[0.15, 0.15, 0.15]}
-        />
+        >
+          <meshBasicMaterial color={color} />
+        </mesh>
       </group>
     );
   }
