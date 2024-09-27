@@ -21,6 +21,8 @@ export const Cursor = forwardRef(
           receiveShadow
           geometry={nodes.cursor.geometry}
           material={nodes.cursor.material}
+          rotation={[Math.PI / 3, Math.PI / 3, -Math.PI / 6]}
+          scale={[0.15, 0.15, 0.15]}
         />
       </group>
     );

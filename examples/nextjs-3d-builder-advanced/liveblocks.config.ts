@@ -43,7 +43,10 @@ declare global {
   interface Liveblocks {
     // Each user's Presence, for room.getPresence, room.subscribe("others"), etc.
     Presence: {
-      position: SimpleVector3 | null;
+      cursor: {
+        position: SimpleVector3;
+        pointingTo: SimpleVector3;
+      } | null;
     };
     // The Storage tree for the room, for useMutation, useStorage, etc.
     Storage: {
@@ -139,7 +142,7 @@ export const defaultMatrix4: SimpleMatrix4 = [
 ];
 
 export const initialPresence: Liveblocks["Presence"] = {
-  position: null,
+  cursor: null,
 };
 
 export const initialStorage: Liveblocks["Storage"] = {

@@ -19,6 +19,7 @@ import {
   Grid,
   PivotControls,
   Preload,
+  Sphere,
 } from "@react-three/drei";
 import CameraControlsImpl from "camera-controls";
 import { EffectComposer, N8AO } from "@react-three/postprocessing";
@@ -32,7 +33,7 @@ import {
 import { Matrix4, Vector3 } from "three";
 import { useStorageFrame } from "../hooks/useStorageFrame";
 import { useOtherFrame } from "../hooks/useOtherFrame";
-import { dampM, damp3 } from "maath/easing";
+import { dampM, damp3, dampLookAt } from "maath/easing";
 
 interface CursorProps {
   connectionId: number;
@@ -47,24 +48,68 @@ const scenePointerMoveEvents: ThreeEvent<PointerEvent>[] = [];
 
 function Cursor({ connectionId }: CursorProps) {
   const cursorRef = useRef<ElementRef<typeof CursorModel>>(null);
+  const cursorPositionDebugRef = useRef<ElementRef<typeof Sphere>>(null);
+  const cursorPointingToDebugRef = useRef<ElementRef<typeof Sphere>>(null);
 
   useOtherFrame(connectionId, (other, _, delta) => {
-    if (!cursorRef.current || !other.presence.position) {
+    if (
+      !cursorRef.current ||
+      !cursorPositionDebugRef.current ||
+      !cursorPointingToDebugRef.current ||
+      !other.presence.cursor
+    ) {
       return;
     }
 
     damp3(
       cursorRef.current.position,
-      other.presence.position as Vector3,
+      other.presence.cursor.position as Vector3,
+      0.1,
+      delta
+    );
+    dampLookAt(
+      cursorRef.current,
+      other.presence.cursor.pointingTo as Vector3,
+      0.1,
+      delta
+    );
+
+    damp3(
+      cursorPositionDebugRef.current.position,
+      other.presence.cursor.position as Vector3,
+      0.1,
+      delta
+    );
+    damp3(
+      cursorPointingToDebugRef.current.position,
+      other.presence.cursor.pointingTo as Vector3,
       0.1,
       delta
     );
   });
 
   return (
-    <CursorModel ref={cursorRef} scale={[0.15, 0.15, 0.15]}>
-      <meshBasicMaterial color="#ddd" />
-    </CursorModel>
+    <>
+      <CursorModel ref={cursorRef}>
+        <meshBasicMaterial color="#ddd" />
+      </CursorModel>
+      <Sphere
+        scale={[0.05, 0.05, 0.05]}
+        ref={cursorPositionDebugRef}
+        // TODO: Debug
+        visible={false}
+      >
+        <meshBasicMaterial color="red" />
+      </Sphere>
+      <Sphere
+        scale={[0.05, 0.05, 0.05]}
+        ref={cursorPointingToDebugRef}
+        // TODO: Debug
+        visible={false}
+      >
+        <meshBasicMaterial color="blue" />
+      </Sphere>
+    </>
   );
 }
 
@@ -146,7 +191,19 @@ function Scene() {
         }
       );
 
-      updateMyPresense({ position: closestPointerMove.point });
+      const offsetPoint = closestPointerMove.face?.normal
+        .clone()
+        .transformDirection(closestPointerMove.object.matrixWorld)
+        .normalize()
+        .multiplyScalar(0.1)
+        .add(closestPointerMove.point);
+
+      updateMyPresense({
+        cursor: {
+          position: offsetPoint ?? closestPointerMove.point,
+          pointingTo: closestPointerMove.point,
+        },
+      });
 
       // Clear the events for the next frame
       scenePointerMoveEvents.length = 0;
