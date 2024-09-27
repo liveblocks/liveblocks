@@ -9,14 +9,11 @@ import {
   useRoom,
   RoomProvider,
   useStorage,
+  useOthersConnectionIds,
+  useUpdateMyPresence,
 } from "@liveblocks/react/suspense";
 import { ErrorBoundary } from "react-error-boundary";
-import {
-  Canvas,
-  RenderCallback,
-  ThreeEvent,
-  useFrame,
-} from "@react-three/fiber";
+import { Canvas, ThreeEvent, useFrame } from "@react-three/fiber";
 import {
   CameraControls,
   Environment,
@@ -30,29 +27,38 @@ import { EffectComposer, N8AO } from "@react-three/postprocessing";
 import { Room } from "../models/furniture/Room";
 import { initialStorage, models } from "../../liveblocks.config";
 import { Matrix4 } from "three";
+<<<<<<< HEAD
 import { LiveObject } from "@liveblocks/client";
+=======
+import { dampM } from "maath/easing";
+import { useStorageFrame } from "../hooks/useStorageFrame";
+import { useOtherFrame } from "../hooks/useOtherFrame";
+
+interface CursorProps {
+  connectionId: number;
+}
+>>>>>>> 8bc7fabeb (Extract hooks and add basic presence)
 
 interface ShapeProps {
   shapeId: string;
 }
 
-function useStorageFrame(
-  callback: (
-    storage: LiveObject<Liveblocks["Storage"]>,
-    ...args: Parameters<RenderCallback>
-  ) => void
-) {
-  const room = useRoom();
+function Cursor({ connectionId }: CursorProps) {
+  const cursorRef = useRef<ElementRef<typeof Sphere>>(null);
 
-  useFrame((...args) => {
-    const storage = room.getStorageSnapshot();
-
-    if (!storage) {
+  useOtherFrame(connectionId, (other) => {
+    if (!cursorRef.current || !other.presence.position) {
       return;
     }
 
-    callback(storage, ...args);
+    cursorRef.current.position.copy(other.presence.position);
   });
+
+  return (
+    <Sphere ref={cursorRef} scale={[0.15, 0.15, 0.15]}>
+      <meshBasicMaterial color="#ddd" />
+    </Sphere>
+  );
 }
 
 function Shape({ shapeId }: ShapeProps) {
@@ -115,12 +121,12 @@ function Shape({ shapeId }: ShapeProps) {
 const scenePointerMoveEvents: ThreeEvent<PointerEvent>[] = [];
 
 function Scene() {
-  const cursorRef = useRef<ElementRef<typeof Sphere>>(null);
-
+  const updateMyPresense = useUpdateMyPresence();
   const shapeIds = useStorage(
     (root) => Array.from(root.shapes.keys()),
     shallow
   );
+  const connectionIds = useOthersConnectionIds();
 
   // Collect all pointer events related to the scene in the current frame
   useFrame(() => {
@@ -134,9 +140,10 @@ function Scene() {
         }
       );
 
-      if (cursorRef.current) {
-        cursorRef.current.position.copy(closestPointerMove.point);
-      }
+      // if (cursorRef.current) {
+      //   cursorRef.current.position.copy(closestPointerMove.point);
+      // }
+      updateMyPresense({ position: closestPointerMove.point });
 
       scenePointerMoveEvents.length = 0;
     }
@@ -158,9 +165,9 @@ function Scene() {
       </group>
 
       <group name="cursors">
-        <Sphere ref={cursorRef} scale={[0.2, 0.2, 0.2]}>
-          <meshBasicMaterial color="#ddd" />
-        </Sphere>
+        {connectionIds.map((connectionId) => (
+          <Cursor key={connectionId} connectionId={connectionId} />
+        ))}
       </group>
     </group>
   );

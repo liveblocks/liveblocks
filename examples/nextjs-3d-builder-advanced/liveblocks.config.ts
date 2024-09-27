@@ -7,18 +7,55 @@ import { Television } from "./src/models/furniture/Television";
 import { Lamp } from "./src/models/furniture/Lamp";
 import { Plant } from "./src/models/furniture/Plant";
 import { ComponentType } from "react";
-import { Matrix4Tuple, QuaternionLike, Vector3Like } from "three";
+import { QuaternionLike, Vector3Like } from "three";
+
+type SimpleVector3 = {
+  x: number;
+  y: number;
+  z: number;
+};
+
+type SimpleMatrix4 = [
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+];
 
 export type Shape = {
-  matrix: Matrix4Tuple;
+  matrix: SimpleMatrix4;
   model: keyof typeof models;
 };
 
 declare global {
   interface Liveblocks {
+    // Each user's Presence, for room.getPresence, room.subscribe("others"), etc.
+    Presence: {
+      position: SimpleVector3 | null;
+    };
     // The Storage tree for the room, for useMutation, useStorage, etc.
     Storage: {
       shapes: LiveMap<string, LiveObject<Shape>>;
+    };
+    // Custom user info set when authenticating with a secret key
+    UserMeta: {
+      id: string; // Accessible through `user.id`
+      info: {
+        name: string;
+        color: string;
+      }; // Accessible through `user.info`
     };
   }
 }
@@ -81,7 +118,7 @@ export const models = {
   },
 } satisfies Record<
   string,
-  { model: ComponentType; initialMatrix: Matrix4Tuple }
+  { model: ComponentType; initialMatrix: SimpleMatrix4 }
 >;
 
 export const defaultVector3: Vector3Like = {
@@ -97,9 +134,13 @@ export const defaultQuaternion: QuaternionLike = {
   z: 0,
 };
 
-export const defaultMatrix4: Matrix4Tuple = [
+export const defaultMatrix4: SimpleMatrix4 = [
   1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1,
 ];
+
+export const initialPresence: Liveblocks["Presence"] = {
+  position: null,
+};
 
 export const initialStorage: Liveblocks["Storage"] = {
   shapes: new LiveMap(
