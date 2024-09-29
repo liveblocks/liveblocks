@@ -275,7 +275,7 @@
     "/v2/rooms/{roomId}/update-room-id": {
       "parameters": [{ "$ref": "#/components/parameters/roomId" }],
       "post": {
-        "operationId": "post-rooms-update-roomId",
+        "operationId": "post-rooms-roomId-update-room-id",
         "summary": "Update room ID",
         "description": "This endpoint permanently updates the room’s ID.",
         "tags": ["Room"],
@@ -378,7 +378,7 @@
     "/v2/rooms/{roomId}/broadcast_event": {
       "parameters": [{ "$ref": "#/components/parameters/roomId" }],
       "post": {
-        "operationId": "post-broadcast-event",
+        "operationId": "post-rooms-roomId-broadcast-event",
         "summary": "Broadcast event to a room",
         "description": "This endpoint enables the broadcast of an event to a room without having to connect to it via the `client` from `@liveblocks/client`. It takes any valid JSON as a request body. The `connectionId` passed to event listeners is `-1` when using this API. Corresponds to [`liveblocks.broadcastEvent`](/docs/api-reference/liveblocks-node#post-broadcast-event).",
         "tags": ["Room"],
@@ -668,7 +668,7 @@
     },
     "/v2/schemas": {
       "post": {
-        "operationId": "post-create-new-schema",
+        "operationId": "post-schemas",
         "summary": "Create schema",
         "description": "This endpoint creates a new schema which can be referenced later to enforce a room’s Storage data structure. Corresponds to [`liveblocks.createSchema`](/docs/api-reference/liveblocks-node#post-create-new-schema). \n\nThe schema consists of a name (for referencing it), and a body, which specifies the exact allowed shape of data in the room. This body is a multi-line string written in the Liveblocks [schema syntax](/docs/platform/schema-validation/syntax).",
         "tags": ["Schema validation"],
@@ -716,7 +716,7 @@
     "/v2/schemas/{schemaId}": {
       "parameters": [{ "$ref": "#/components/parameters/schemaId" }],
       "get": {
-        "operationId": "get-create-new-schema",
+        "operationId": "get-schemas-schemaId",
         "summary": "Get schema",
         "description": "This endpoint retrieves a schema by its ID. The ID is a combination of the schema name and version. For example, `my-schema@1`. Corresponds to [`liveblocks.getSchema`](/docs/api-reference/liveblocks-node#get-create-new-schema).",
         "tags": ["Schema validation"],
@@ -746,7 +746,7 @@
         }
       },
       "put": {
-        "operationId": "put-update-new-schema",
+        "operationId": "put-schemas-schemaId",
         "summary": "Update schema",
         "description": "This endpoint updates the body for the schema. A schema can only be updated if it is not used by any room. Corresponds to [`liveblocks.updateSchema`](/docs/api-reference/liveblocks-node#put-update-new-schema).",
         "tags": ["Schema validation"],
@@ -791,7 +791,7 @@
         }
       },
       "delete": {
-        "operationId": "delete-a-schema",
+        "operationId": "delete-schemas-schemaId",
         "summary": "Delete schema",
         "description": "This endpoint deletes a schema by its ID. The ID is a combination of the schema name and version. For example, `my-schema@1`. A schema can only be deleted if it is not attached to a room. Corresponds to [`liveblocks.deleteSchema`](/docs/api-reference/liveblocks-node#delete-a-schema).",
         "tags": ["Schema validation"],
@@ -805,7 +805,7 @@
     "/v2/rooms/{roomId}/schema": {
       "parameters": [{ "$ref": "#/components/parameters/roomId" }],
       "get": {
-        "operationId": "get-new-schema",
+        "operationId": "get-rooms-roomId-schema",
         "summary": "Get schema by room ID",
         "description": "This endpoint retrieves the schema attached to a room.  Corresponds to [`liveblocks.getSchemaByRoomId`](/docs/api-reference/liveblocks-node#get-new-schema).",
         "tags": ["Schema validation"],
@@ -836,7 +836,7 @@
         }
       },
       "post": {
-        "operationId": "post-attach-schema-to-room",
+        "operationId": "post-rooms-roomId-schema",
         "summary": "Attach schema to room",
         "description": "This endpoint attaches a schema to a room, and instantly enables runtime schema validation for the room. Corresponds to [`liveblocks.attachSchemaToRoom`](/docs/api-reference/liveblocks-node#post-attach-schema-to-room).\n\nIf the current contents of the room’s Storage do not match the schema, attaching will fail and the error message will give details on why the schema failed to attach.",
         "tags": ["Schema validation"],
@@ -868,7 +868,7 @@
         }
       },
       "delete": {
-        "operationId": "delete-detach-schema-to-room",
+        "operationId": "delete-rooms-roomId-schema",
         "summary": "Detach schema from room",
         "description": "This endpoint detaches the schema from a room. Corresponds to [`liveblocks.detachSchemaFromRoom`](/docs/api-reference/liveblocks-node#delete-detach-schema-to-room).",
         "tags": ["Schema validation"],
@@ -1540,7 +1540,7 @@
     "/v2/rooms/{roomId}/authorize": {
       "parameters": [{ "$ref": "#/components/parameters/roomId" }],
       "post": {
-        "operationId": "post-authorize",
+        "operationId": "post-rooms-roomId-authorize",
         "summary": "Get single-room token with secret key",
         "description": "**Deprecated.** Prefer using [access tokens](#post-authorize-user) or [ID tokens](#post-identify-user) instead. Read more in our [migration guide](/docs/platform/upgrading/1.2).\n\nThis endpoint lets your application server (your back end) obtain a token that one of its clients (your frontend) can use to enter a Liveblocks room. You use this endpoint to implement your own application’s custom authentication endpoint. When making this request, you’ll have to use your secret key.\n\nYou can pass the property `userId` in the request’s body. This can be whatever internal identifier you use for your user accounts as long as it uniquely identifies an account. Setting the `userId` is optional if you want to use public rooms, but it is required to enter a private room (because permissions are assigned to specific user IDs). In case you want to use the group permission system, you can also declare which `groupIds` this user belongs to.\n\nThe property userId is used by Liveblocks to calculate your account’s Monthly Active Users. One unique userId corresponds to one MAU. If you don’t pass a userId, we will create for you a new anonymous userId on each connection, but your MAUs will be higher.\n\nAdditionally, you can set custom metadata to the token, which will be publicly accessible by other clients through the `user.info` property. This is useful for storing static data like avatar images or the user’s display name.",
         "tags": ["Deprecated"],
@@ -1587,7 +1587,7 @@
     "/v2/rooms/{roomId}/public/authorize": {
       "parameters": [{ "$ref": "#/components/parameters/roomId" }],
       "post": {
-        "operationId": "post-public-authorize",
+        "operationId": "post-rooms-roomId-public-authorize",
         "summary": "Get single-room token with public key",
         "description": "**Deprecated.** When you update Liveblocks to 1.2, you no longer need to get a JWT token when using a public key.\n\nThis endpoint works with the public key and can be used client side. That means you don’t need to implement a dedicated authorization endpoint server side. \nThe generated JWT token works only with public room (`defaultAccesses: [\"room:write\"]`).",
         "tags": ["Deprecated"],
@@ -1636,7 +1636,7 @@
         { "$ref": "#/components/parameters/inboxNotificationId" }
       ],
       "get": {
-        "operationId": "get-users-userId-inboxNotifications-inboxNotificationId",
+        "operationId": "get-users-userId-inbox-notifications-inboxNotificationId",
         "summary": "Get inbox notification",
         "description": "This endpoint returns a user’s inbox notification by its ID. Corresponds to [`liveblocks.getInboxNotification`](/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications-inboxNotificationId).",
         "tags": ["Notifications"],
@@ -1664,7 +1664,7 @@
         }
       },
       "delete": {
-        "operationId": "delete-users-userId-inboxNotifications-inboxNotificationId",
+        "operationId": "delete-users-userId-inbox-notifications-inboxNotificationId",
         "summary": "Delete inbox notification",
         "description": "This endpoint deletes a user’s inbox notification by its ID.",
         "tags": ["Notifications"],
@@ -1679,7 +1679,7 @@
     "/v2/users/{userId}/inbox-notifications": {
       "parameters": [{ "$ref": "#/components/parameters/userId" }],
       "get": {
-        "operationId": "get-users-userId-inboxNotifications",
+        "operationId": "get-users-userId-inbox-notifications",
         "summary": "Get all inbox notifications",
         "description": "This endpoint returns all the user’s inbox notifications. Corresponds to [`liveblocks.getInboxNotifications`](/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications).",
         "tags": ["Notifications"],
@@ -1717,7 +1717,7 @@
         }
       },
       "delete": {
-        "operationId": "delete-users-userId-inboxNotifications",
+        "operationId": "delete-users-userId-inbox-notifications",
         "summary": "Delete all inbox notifications",
         "description": "This endpoint deletes all the user’s inbox notifications.",
         "tags": ["Notifications"],
