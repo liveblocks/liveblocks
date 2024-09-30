@@ -173,7 +173,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
       meta: {
         requestedAt: string;
       };
-    }>(url`/v2/c/inbox-notifications`, undefined, {
+    }>(url`/v2/c/inbox-notifications/delta`, undefined, {
       since: since.toISOString(),
     });
     return {
