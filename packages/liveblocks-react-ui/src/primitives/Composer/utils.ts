@@ -459,20 +459,12 @@ function createComposerAttachmentsManager(
     notifySubscribers();
   }
 
-  function dispose() {
-    clear();
-    // TODO Avoid having to rely on this API
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-member-access
-    (eventSource as any)._forceClear();
-  }
-
   return {
     addAttachments,
     removeAttachment,
     getSnapshot,
     subscribe: eventSource.subscribe,
     clear,
-    dispose,
   };
 }
 
@@ -495,10 +487,10 @@ export function useComposerAttachmentsManager(
     frozenAttachmentsManager.addAttachments(frozenDefaultAttachments);
   }, [frozenDefaultAttachments, frozenAttachmentsManager]);
 
-  // Cleanup on unmount
+  // Clear on unmount
   useEffect(() => {
     return () => {
-      frozenAttachmentsManager.dispose();
+      frozenAttachmentsManager.clear();
     };
   }, [frozenAttachmentsManager]);
 
