@@ -536,7 +536,7 @@ describe("thread notification", () => {
               },
             },
             htmlBody:
-              '<p style="font-size:14px;">I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer">https://www.liveblocks.io</a></p>',
+              '<p style="font-size:14px;">I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;">https://www.liveblocks.io</a></p>',
             url: undefined,
           },
         ],
@@ -556,7 +556,7 @@ describe("thread notification", () => {
               info: { name: "Mislav Abha" },
             },
             htmlBody:
-              '<p style="font-size:14px;">I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer">https://www.liveblocks.io</a></p>',
+              '<p style="font-size:14px;">I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;">https://www.liveblocks.io</a></p>',
             url: getResolvedCommentUrl(comment2.id),
           },
         ],

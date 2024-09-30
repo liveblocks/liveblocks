@@ -241,7 +241,7 @@ type InlineCSSString = string;
 
 // → TEMP: to be completed
 export type ConvertCommentBodyAsHTMLStyles = Record<
-  "paragraph" | "mention",
+  "paragraph" | "mention" | "link",
   InlineCSSString
 >;
 
@@ -249,6 +249,7 @@ export type ConvertCommentBodyAsHTMLStyles = Record<
 const baseStyles: ConvertCommentBodyAsHTMLStyles = {
   paragraph: "font-size:14px;",
   mention: "color:blue;",
+  link: "text-decoration:underline;",
 };
 
 /** @internal */
@@ -265,6 +266,7 @@ const getCommentBodyAsHTMLStyles = (
   return {
     paragraph: getStyles("paragraph"),
     mention: getStyles("mention"),
+    link: getStyles("link"),
   };
 };
 
@@ -333,7 +335,7 @@ export async function convertCommentBodyAsHTML(
       },
       link: ({ element, href }) => {
         // prettier-ignore
-        return html`<a href="${href}" target="_blank" rel="noopener noreferrer">${element.text ?? element.url}</a>`;
+        return html`<a href="${href}" target="_blank" rel="noopener noreferrer" style="${styles.link}">${element.text ?? element.url}</a>`;
       },
       mention: ({ element, user }) => {
         // prettier-ignore

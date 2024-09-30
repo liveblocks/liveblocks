@@ -53,9 +53,9 @@ describe("convert comment body as HTML", () => {
       ]);
 
       const expected1 =
-        '<p style="font-size:14px;">I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer">https://www.liveblocks.io</a></p>';
+        '<p style="font-size:14px;">I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;">https://www.liveblocks.io</a></p>';
       const expected2 =
-        '<p style="font-size:14px;">Check out this <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer">example</a></p>';
+        '<p style="font-size:14px;">Check out this <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;">example</a></p>';
 
       expect(htmlBodyBody1).toEqual(expected1);
       expect(htmlBodyBody2).toEqual(expected2);
