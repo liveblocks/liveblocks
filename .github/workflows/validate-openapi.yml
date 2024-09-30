@@ -1,0 +1,16 @@
+name: Validate OpenAPI
+
+on: [pull_request]
+
+jobs:
+  validate-openapi:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Run Spectral
+      - uses: stoplightio/spectral-action@latest
+        with:
+          file_glob: "docs/references/v2.openapi.json"

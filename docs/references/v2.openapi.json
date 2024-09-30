@@ -1828,7 +1828,7 @@
     "parameters": {
       "commentId": {
         "name": "commentId",
-        "required": true,
+        "required": "true",
         "description": "ID of the comment",
         "schema": { "type": "string" },
         "in": "path"
