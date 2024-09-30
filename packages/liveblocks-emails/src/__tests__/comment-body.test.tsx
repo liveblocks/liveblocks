@@ -24,7 +24,8 @@ describe("convert comment body as HTML", () => {
   describe("w/o users resolver", () => {
     it("should converts simple text elements", async () => {
       const htmlBody = await convertCommentBodyAsHTML(commentBody1);
-      const expected = "<p>What do you think of this team? 🤔</p>";
+      const expected =
+        '<p style="font-size:14px;">What do you think of this team? 🤔</p>';
 
       expect(htmlBody).toEqual(expected);
     });
@@ -32,7 +33,7 @@ describe("convert comment body as HTML", () => {
     it("should converts with italic and bold", async () => {
       const htmlBody = await convertCommentBodyAsHTML(commentBody5);
       const expected =
-        "<p><strong>Bold text</strong> and <em>italic text</em></p>";
+        '<p style="font-size:14px;"><strong>Bold text</strong> and <em>italic text</em></p>';
 
       expect(htmlBody).toEqual(expected);
     });
@@ -40,7 +41,7 @@ describe("convert comment body as HTML", () => {
     it("should converts with code and strikethrough", async () => {
       const htmlBody = await convertCommentBodyAsHTML(commentBody6);
       const expected =
-        "<p><s>Strikethrough text</s> and <code>code text</code></p>";
+        '<p style="font-size:14px;"><s>Strikethrough text</s> and <code>code text</code></p>';
 
       expect(htmlBody).toEqual(expected);
     });
@@ -52,9 +53,9 @@ describe("convert comment body as HTML", () => {
       ]);
 
       const expected1 =
-        '<p>I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer">https://www.liveblocks.io</a></p>';
+        '<p style="font-size:14px;">I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer">https://www.liveblocks.io</a></p>';
       const expected2 =
-        '<p>Check out this <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer">example</a></p>';
+        '<p style="font-size:14px;">Check out this <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer">example</a></p>';
 
       expect(htmlBodyBody1).toEqual(expected1);
       expect(htmlBodyBody2).toEqual(expected2);
@@ -64,7 +65,8 @@ describe("convert comment body as HTML", () => {
       const htmlBody = await convertCommentBodyAsHTML(
         buildCommentBodyWithMention({ mentionedUserId: "user-dracula" })
       );
-      const expected = "<p>Hello <span data-mention>@user-dracula</span> !</p>";
+      const expected =
+        '<p style="font-size:14px;">Hello <span data-mention>@user-dracula</span> !</p>';
 
       expect(htmlBody).toEqual(expected);
     });
@@ -76,7 +78,8 @@ describe("convert comment body as HTML", () => {
         buildCommentBodyWithMention({ mentionedUserId: "user-2" }),
         { resolveUsers }
       );
-      const expected = "<p>Hello <span data-mention>@Tatum Paolo</span> !</p>";
+      const expected =
+        '<p style="font-size:14px;">Hello <span data-mention>@Tatum Paolo</span> !</p>';
 
       expect(htmlBody).toEqual(expected);
     });

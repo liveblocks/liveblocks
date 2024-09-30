@@ -446,7 +446,8 @@ describe("thread notification", () => {
               name: comment.userId,
             },
           },
-          htmlBody: "<p>Hello <span data-mention>@user-1</span> !</p>",
+          htmlBody:
+            '<p style="font-size:14px;">Hello <span data-mention>@user-1</span> !</p>',
           url: undefined,
         },
         roomInfo: { name: ROOM_ID_TEST },
@@ -465,7 +466,8 @@ describe("thread notification", () => {
               name: "Charlie Layne",
             },
           },
-          htmlBody: "<p>Hello <span data-mention>@Mislav Abha</span> !</p>",
+          htmlBody:
+            '<p style="font-size:14px;">Hello <span data-mention>@Mislav Abha</span> !</p>',
           url: getResolvedCommentUrl(comment.id),
         },
         roomInfo: RESOLVED_ROOM_INFO_TEST,
@@ -534,7 +536,7 @@ describe("thread notification", () => {
               },
             },
             htmlBody:
-              '<p>I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer">https://www.liveblocks.io</a></p>',
+              '<p style="font-size:14px;">I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer">https://www.liveblocks.io</a></p>',
             url: undefined,
           },
         ],
@@ -554,7 +556,7 @@ describe("thread notification", () => {
               info: { name: "Mislav Abha" },
             },
             htmlBody:
-              '<p>I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer">https://www.liveblocks.io</a></p>',
+              '<p style="font-size:14px;">I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer">https://www.liveblocks.io</a></p>',
             url: getResolvedCommentUrl(comment2.id),
           },
         ],

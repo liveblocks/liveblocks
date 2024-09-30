@@ -21,6 +21,8 @@ import {
 } from "@liveblocks/core";
 import React from "react";
 
+import { sanitizeInlineCSS } from "./lib/sanitize-inline-css";
+
 export type CommentBodySlotComponentsArgs = {
   /**
    * The blocks of the comment body
@@ -230,9 +232,31 @@ export async function convertCommentBodyAsReact(
   return reactBody;
 }
 
-export type ConvertCommentBodyAsHTMLStyles = Record<string, string>; // → TEMP
+/**
+ * Type alias for DX purposes.
+ * It indicates the string should represents an inline CSS instruction
+ * in an HTML code.
+ */
+type InlineCSSString = string;
 
-// const baseStyles: ConvertCommentBodyAsHTMLStyles = {};
+// → TEMP: to be completed
+export type ConvertCommentBodyAsHTMLStyles = {
+  paragraph: InlineCSSString;
+};
+
+// → TEMP: to be completed
+const baseStyles: ConvertCommentBodyAsHTMLStyles = {
+  paragraph: "font-size:14px;",
+};
+
+/** @internal */
+const getCommentBodyAsHTMLStyle = (
+  styles: Partial<ConvertCommentBodyAsHTMLStyles> = {}
+): ConvertCommentBodyAsHTMLStyles => ({
+  paragraph: styles.paragraph
+    ? sanitizeInlineCSS(styles.paragraph)
+    : baseStyles.paragraph,
+});
 
 export type ConvertCommentBodyAsHTMLOptions<U extends BaseUserMeta = DU> = {
   /**
@@ -256,8 +280,7 @@ export async function convertCommentBodyAsHTML(
   body: CommentBody,
   options?: ConvertCommentBodyAsHTMLOptions<BaseUserMeta>
 ): Promise<string> {
-  // const styles = { ...baseStyles, ...options?.styles };
-  // TODO → Sanitize styles with `sanitizeInlineCSS`
+  const styles = getCommentBodyAsHTMLStyle(options?.styles);
 
   const htmlBody = await stringifyCommentBody(body, {
     format: "html",
@@ -266,7 +289,7 @@ export async function convertCommentBodyAsHTML(
       // NOTE: using prettier-ignore to preserve template strings
       paragraph: ({ children }) =>
         // prettier-ignore
-        children ? html`<p>${htmlSafe(children)}</p>` : children,
+        children ? html`<p style="${styles.paragraph}">${htmlSafe(children)}</p>` : children,
       text: ({ element }) => {
         // Note: construction following the schema 👇
         // <code><s><em><strong>{element.text}</strong></s></em></code>
