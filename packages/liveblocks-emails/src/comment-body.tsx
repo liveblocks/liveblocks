@@ -241,23 +241,32 @@ type InlineCSSString = string;
 
 // → TEMP: to be completed
 export type ConvertCommentBodyAsHTMLStyles = Record<
-  "paragraph",
+  "paragraph" | "mention",
   InlineCSSString
 >;
 
 // → TEMP: to be completed
 const baseStyles: ConvertCommentBodyAsHTMLStyles = {
   paragraph: "font-size:14px;",
+  mention: "color:blue;",
 };
 
 /** @internal */
-const getCommentBodyAsHTMLStyle = (
+const getCommentBodyAsHTMLStyles = (
   styles: Partial<ConvertCommentBodyAsHTMLStyles> = {}
-): ConvertCommentBodyAsHTMLStyles => ({
-  paragraph: styles.paragraph
-    ? sanitizeInlineCSS(styles.paragraph)
-    : baseStyles.paragraph,
-});
+): ConvertCommentBodyAsHTMLStyles => {
+  const getStyles = (
+    stylesKey: keyof ConvertCommentBodyAsHTMLStyles
+  ): InlineCSSString =>
+    styles[stylesKey]
+      ? sanitizeInlineCSS(styles[stylesKey])
+      : baseStyles[stylesKey];
+
+  return {
+    paragraph: getStyles("paragraph"),
+    mention: getStyles("mention"),
+  };
+};
 
 export type ConvertCommentBodyAsHTMLOptions<U extends BaseUserMeta = DU> = {
   /**
@@ -281,7 +290,7 @@ export async function convertCommentBodyAsHTML(
   body: CommentBody,
   options?: ConvertCommentBodyAsHTMLOptions<BaseUserMeta>
 ): Promise<string> {
-  const styles = getCommentBodyAsHTMLStyle(options?.styles);
+  const styles = getCommentBodyAsHTMLStyles(options?.styles);
 
   const htmlBody = await stringifyCommentBody(body, {
     format: "html",
@@ -328,7 +337,7 @@ export async function convertCommentBodyAsHTML(
       },
       mention: ({ element, user }) => {
         // prettier-ignore
-        return html`<span data-mention>@${user?.name ?? element.id}</span>`;
+        return html`<span data-mention style="${styles.mention}">@${user?.name ?? element.id}</span>`;
       },
     },
   });

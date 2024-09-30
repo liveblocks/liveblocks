@@ -66,7 +66,7 @@ describe("convert comment body as HTML", () => {
         buildCommentBodyWithMention({ mentionedUserId: "user-dracula" })
       );
       const expected =
-        '<p style="font-size:14px;">Hello <span data-mention>@user-dracula</span> !</p>';
+        '<p style="font-size:14px;">Hello <span data-mention style="color:blue;">@user-dracula</span> !</p>';
 
       expect(htmlBody).toEqual(expected);
     });
@@ -79,7 +79,7 @@ describe("convert comment body as HTML", () => {
         { resolveUsers }
       );
       const expected =
-        '<p style="font-size:14px;">Hello <span data-mention>@Tatum Paolo</span> !</p>';
+        '<p style="font-size:14px;">Hello <span data-mention style="color:blue;">@Tatum Paolo</span> !</p>';
 
       expect(htmlBody).toEqual(expected);
     });

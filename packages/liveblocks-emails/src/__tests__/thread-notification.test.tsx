@@ -447,7 +447,7 @@ describe("thread notification", () => {
             },
           },
           htmlBody:
-            '<p style="font-size:14px;">Hello <span data-mention>@user-1</span> !</p>',
+            '<p style="font-size:14px;">Hello <span data-mention style="color:blue;">@user-1</span> !</p>',
           url: undefined,
         },
         roomInfo: { name: ROOM_ID_TEST },
@@ -467,7 +467,7 @@ describe("thread notification", () => {
             },
           },
           htmlBody:
-            '<p style="font-size:14px;">Hello <span data-mention>@Mislav Abha</span> !</p>',
+            '<p style="font-size:14px;">Hello <span data-mention style="color:blue;">@Mislav Abha</span> !</p>',
           url: getResolvedCommentUrl(comment.id),
         },
         roomInfo: RESOLVED_ROOM_INFO_TEST,
