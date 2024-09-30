@@ -130,37 +130,21 @@ export function createNotificationsApi<M extends BaseMetadata>({
     const json = await fetchJson<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
-      deletedThreads: ThreadDeleteInfoPlain[];
-      deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
       meta: {
         requestedAt: string;
+        nextCursor: string | null;
       };
     }>(url`/v2/c/inbox-notifications`, undefined, {
       cursor: options?.cursor,
       limit: INBOX_NOTIFICATIONS_PAGE_SIZE,
     });
 
-    // XXX Ideally, calling this version from the backend should not even
-    // compute or return deleted inbox notifications in the response. We're
-    // just discarding them. Returning deleted inbox notifications only makes
-    // sense in the "since" version of this API call.
-
-    // XXX Ideally, the backend would "just" return the cursor as part of the
-    // previous request (and `null` if it's the last page).
-    // XXX For now, we fake it here manually
-    let cursor: string | null = null;
-    for (const n of json.inboxNotifications) {
-      if (cursor === null || n.notifiedAt < cursor) {
-        cursor = n.notifiedAt;
-      }
-    }
-
     return {
       inboxNotifications: json.inboxNotifications.map(
         convertToInboxNotificationData
       ),
       threads: json.threads.map(convertToThreadData),
-      cursor,
+      cursor: json.meta.nextCursor,
     };
   }
 
