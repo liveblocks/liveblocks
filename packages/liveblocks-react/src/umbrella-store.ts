@@ -418,7 +418,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       .catch((err) => {
         this.setQuery1OK({
           ...pageState,
-          fetchMoreError: err,
+          fetchMoreError: err as Error,
           isFetchingMore: false,
         });
       });
