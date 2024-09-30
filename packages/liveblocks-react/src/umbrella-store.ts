@@ -19,6 +19,7 @@ import type {
   ThreadDeleteInfo,
 } from "@liveblocks/core";
 import {
+  autoRetry,
   compactObject,
   console,
   createStore,
@@ -29,7 +30,6 @@ import {
 } from "@liveblocks/core";
 
 import { isMoreRecentlyUpdated } from "./lib/compare";
-import { autoRetry } from "./lib/retry-error";
 import type {
   InboxNotificationsAsyncResult,
   RoomNotificationSettingsAsyncResult,
