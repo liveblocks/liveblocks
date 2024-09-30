@@ -125,6 +125,13 @@ about this change in our
     Whether to show deleted comments.
   </PropertiesListItem>
   <PropertiesListItem
+    name="onComposerSubmit"
+    type="function"
+    detailedType="(comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => Promise<void> | void"
+  >
+    The event handler called when the composer is submitted.
+  </PropertiesListItem>
+  <PropertiesListItem
     name="onResolvedChange"
     type="function"
     detailedType="(resolved: boolean) => void"
