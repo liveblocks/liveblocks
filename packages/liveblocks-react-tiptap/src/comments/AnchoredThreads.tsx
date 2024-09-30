@@ -77,7 +77,7 @@ export function AnchoredThreads({
 
     // Iterate over each thread and calculate its new position by taking into account the position of the previously positioned threads
     for (const { thread, position } of ascending) {
-      const coords = editor.view.coordsAtPos(position.from);
+      const coords = editor.view.coordsAtPos(Math.min(position.from, editor.view.state.doc.content.size - 1));
       const rect = getRectFromCoords(coords);
       let top = rect.top - container.getBoundingClientRect().top;
 
