@@ -459,18 +459,12 @@ function createComposerAttachmentsManager(
     notifySubscribers();
   }
 
-  function dispose() {
-    clear();
-    eventSource.clear();
-  }
-
   return {
     addAttachments,
     removeAttachment,
     getSnapshot,
     subscribe: eventSource.subscribe,
     clear,
-    dispose,
   };
 }
 
@@ -493,10 +487,10 @@ export function useComposerAttachmentsManager(
     frozenAttachmentsManager.addAttachments(frozenDefaultAttachments);
   }, [frozenDefaultAttachments, frozenAttachmentsManager]);
 
-  // Cleanup on unmount
+  // Clear on unmount
   useEffect(() => {
     return () => {
-      frozenAttachmentsManager.dispose();
+      frozenAttachmentsManager.clear();
     };
   }, [frozenAttachmentsManager]);
 
