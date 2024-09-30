@@ -259,7 +259,7 @@ const getCommentBodyAsHTMLStyles = (
     stylesKey: keyof ConvertCommentBodyAsHTMLStyles
   ): InlineCSSString =>
     styles[stylesKey]
-      ? sanitizeInlineCSS(styles[stylesKey])
+      ? sanitizeInlineCSS(styles[stylesKey]!)
       : baseStyles[stylesKey];
 
   return {
