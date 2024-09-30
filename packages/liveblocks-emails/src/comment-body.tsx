@@ -240,9 +240,10 @@ export async function convertCommentBodyAsReact(
 type InlineCSSString = string;
 
 // → TEMP: to be completed
-export type ConvertCommentBodyAsHTMLStyles = {
-  paragraph: InlineCSSString;
-};
+export type ConvertCommentBodyAsHTMLStyles = Record<
+  "paragraph",
+  InlineCSSString
+>;
 
 // → TEMP: to be completed
 const baseStyles: ConvertCommentBodyAsHTMLStyles = {
