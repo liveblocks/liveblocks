@@ -183,6 +183,42 @@ export function makeVersionsQueryKey(roomId: string) {
   return `${roomId}-VERSIONS`;
 }
 
+type UsablePromise<T> = Promise<T> &
+  (
+    | {
+        status: "pending";
+      }
+    | {
+        status: "rejected";
+        reason: Error;
+      }
+    | {
+        status: "fulfilled";
+        value: T;
+      }
+  );
+
+function createUsablePromise<T>(promise: Promise<T>): UsablePromise<T> {
+  if (!("status" in promise)) {
+    (promise as UsablePromise<T>).status = "pending";
+    promise.then(
+      (value) => {
+        (promise as UsablePromise<T>).status = "fulfilled";
+        (promise as Extract<UsablePromise<T>, { status: "fulfilled" }>).value =
+          value;
+      },
+      (err) => {
+        (promise as UsablePromise<T>).status = "rejected";
+        (promise as Extract<UsablePromise<T>, { status: "rejected" }>).reason =
+          err as Error;
+      }
+    );
+    return promise as UsablePromise<T>;
+  }
+
+  return promise as UsablePromise<T>;
+}
+
 type InternalState<M extends BaseMetadata> = Readonly<{
   // This is a temporary refactoring artifact from Vincent and Nimesh.
   // Each query corresponds to a resource which should eventually have its own type.
@@ -192,23 +228,7 @@ type InternalState<M extends BaseMetadata> = Readonly<{
   queries3: Record<string, QueryAsyncResult>; // Notification settings
   queries4: Record<string, QueryAsyncResult>; // Versions
 
-  loadThreadsRequests: Record<
-    string,
-    | {
-        promise: Promise<ThreadData[]>;
-        status: "pending";
-      }
-    | {
-        promise: Promise<ThreadData[]>;
-        status: "fulfilled";
-        value: ThreadData[];
-      }
-    | {
-        promise: Promise<ThreadData[]>;
-        status: "rejected";
-        error: Error;
-      }
-  >;
+  loadThreadsRequests: Record<string, UsablePromise<ThreadData<M>[]>>;
 
   optimisticUpdates: readonly OptimisticUpdate<M>[];
 
@@ -358,7 +378,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     if (request.status === "rejected") {
       return {
         isLoading: false,
-        error: request.error,
+        error: request.reason,
       };
     }
 
@@ -1123,120 +1143,102 @@ export class UmbrellaStore<M extends BaseMetadata> {
     roomId: string,
     options: GetThreadsOptions<BaseMetadata>,
     queryKey: string
+  ) {
+    void this.waitUntilThreadsLoaded(roomId, options, queryKey).catch(() => {
+      // Deliberately catch and ignore any errors here.
+      // TODO: This is so that the hook (useThreads) calling this method doesn't throw an error. This logic should likely stay locally inside the hook.
+    });
+  }
+
+  public waitUntilThreadsLoaded(
+    roomId: string,
+    options: GetThreadsOptions<BaseMetadata>,
+    queryKey: string
   ): Promise<ThreadData[]> {
     const internalStore = this._store.get();
 
     // If a request was already made for the provided query key, we simply return the existing request.
     // We do not want to override the existing request with a new request to load threads and notifications
     const existingRequest = internalStore.loadThreadsRequests[queryKey];
-    if (existingRequest !== undefined) return existingRequest.promise;
+    if (existingRequest !== undefined) return existingRequest;
 
-    // Wrap the request to load room threads (and notifications) in an auto-retry function so that if the request fails,
-    // we retry for at most 5 times with incremental backoff delays. If all retries fail, the auto-retry function throws an error
-    const loadThreadsPromise = autoRetry(
-      async () => {
-        const result = await nn(
-          this._client,
-          "Client is required in order to load threads and notifications for the room"
-        )[kInternal].getRoomThreads(roomId, options);
-
-        this.updateThreadsAndNotifications(
-          result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
-          result.inboxNotifications,
-          [], // XXX Confirm if this should be an empty array or not
-          []
-        );
-
-        const lastRequestedAt = this._lastRequestedAtByRoom.get(roomId);
-
-        /**
-         * We set the `lastRequestedAt` value for the room to the timestamp returned by the current request if:
-         * 1. The `lastRequestedAt` value for the room has not been set
-         * OR
-         * 2. The `lastRequestedAt` value for the room is older than the timestamp returned by the current request
-         */
-        if (
-          lastRequestedAt === undefined ||
-          lastRequestedAt > result.requestedAt
-        ) {
-          this._lastRequestedAtByRoom.set(roomId, result.requestedAt);
-        }
-
-        return result.threads;
-      },
-      5,
-      [5000, 5000, 10000, 15000]
-    );
-
-    type UsablePromise<T> = Promise<T> &
-      (
-        | {
-            status: "pending";
-          }
-        | {
-            status: "rejected";
-            reason: Error;
-          }
-        | {
-            status: "fulfilled";
-            value: T;
-          }
+    const fetchThreads = async (): Promise<ThreadData<M>[]> => {
+      const client = nn(
+        this._client,
+        "Client is required in order to load threads and notifications for the room"
       );
+      const room = client.getRoom(roomId);
+      if (room === null) {
+        throw new Error(`Room with id ${roomId} is not available on client`);
+      }
 
-    // Mutate the `loadThreadsPromise` promise by setting the status field to 'pending' and add the promise along with the status on the store
-    // We do it here in addition to storing this field in the store so that the promise can be used in the `use` API polyfill
-    (loadThreadsPromise as UsablePromise<ThreadData[]>).status = "pending";
+      // Wrap the request to load room threads (and notifications) in an auto-retry function so that if the request fails,
+      // we retry for at most 5 times with incremental backoff delays. If all retries fail, the auto-retry function throws an error
+      return await autoRetry(
+        async () => {
+          const result = await room.getThreads(options);
+
+          this.updateThreadsAndNotifications(
+            result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
+            result.inboxNotifications,
+            [],
+            []
+          );
+
+          const lastRequestedAt = this._lastRequestedAtByRoom.get(roomId);
+
+          /**
+           * We set the `lastRequestedAt` value for the room to the timestamp returned by the current request if:
+           * 1. The `lastRequestedAt` value for the room has not been set
+           * OR
+           * 2. The `lastRequestedAt` value for the room is older than the timestamp returned by the current request
+           */
+          if (
+            lastRequestedAt === undefined ||
+            lastRequestedAt > result.requestedAt
+          ) {
+            this._lastRequestedAtByRoom.set(roomId, result.requestedAt);
+          }
+
+          return result.threads as ThreadData<M>[];
+        },
+        5,
+        [5000, 5000, 10000, 15000]
+      );
+    };
+
+    const fetchThreadsPromise = createUsablePromise(fetchThreads());
 
     this._store.set((state) => ({
       ...state,
       loadThreadsRequests: {
         ...state.loadThreadsRequests,
-        [queryKey]: {
-          promise: loadThreadsPromise,
-          status: "pending",
-        },
+        [queryKey]: fetchThreadsPromise,
       },
     }));
 
-    loadThreadsPromise
-      .then((result) => {
-        // Set the 'status' field of the `loadThreadsPromise` to 'fulfilled'.
-        (loadThreadsPromise as UsablePromise<ThreadData[]>).status =
-          "fulfilled";
-
-        this._store.set((state) => ({
-          ...state,
-          loadThreadsRequests: {
-            ...state.loadThreadsRequests,
-            [queryKey]: {
-              promise: loadThreadsPromise,
-              status: "fulfilled",
-              value: result,
-            },
-          },
-        }));
+    fetchThreadsPromise
+      .then(() => {
+        // Manually mark the state as dirty and update the store so that any subscribers are notified
+        this._store.set((state) => ({ ...state }));
       })
-      .catch((err: Error) => {
-        // Set the 'status' field of the `loadThreadsPromise` to 'rejected'
-        (loadThreadsPromise as UsablePromise<ThreadData[]>).status = "rejected";
+      .catch(() => {
+        // Manually mark the state as dirty and update the store so that any subscribers are notified
+        this._store.set((state) => ({ ...state }));
 
-        this._store.set((state) => ({
-          ...state,
-          loadThreadsRequests: {
-            ...state.loadThreadsRequests,
-            [queryKey]: {
-              promise: loadThreadsPromise,
-              status: "rejected",
-              error: err,
-            },
-          },
-        }));
-
-        // XXX - For `useInboxNotifications`, we remove the memoized request from the store after 5 seconds but do not remove error from store. This may need more thought!
-        throw err;
+        // Wait for 5 seconds before removing the request from the cache
+        setTimeout(() => {
+          this._store.set((state) => {
+            const { [queryKey]: _, ...requests } = state.loadThreadsRequests;
+            return {
+              ...state,
+              loadThreadsRequests: requests,
+            };
+          });
+        }, 5000);
       });
 
-    return loadThreadsPromise;
+    return fetchThreadsPromise;
   }
 
   /**

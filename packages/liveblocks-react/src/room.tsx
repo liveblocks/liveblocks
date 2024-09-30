@@ -1331,7 +1331,7 @@ function useThreads<M extends BaseMetadata>(
   const { store, incrementQuerySubscribers } = getExtrasForClient<M>(client);
 
   React.useEffect(() => {
-    void store.loadThreadsAndNotifications(room.id, options, queryKey);
+    store.loadThreadsAndNotifications(room.id, options, queryKey);
   }, [store, room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   React.useEffect(() => {
@@ -2406,7 +2406,7 @@ function useThreadsSuspense<M extends BaseMetadata>(
 
   const { store, incrementQuerySubscribers } = getExtrasForClient<M>(client);
 
-  use(store.loadThreadsAndNotifications(room.id, options, queryKey));
+  use(store.waitUntilThreadsLoaded(room.id, options, queryKey));
 
   const selector = React.useCallback(
     (state: ReturnType<typeof store.getFullState>): ThreadsAsyncSuccess<M> => {
