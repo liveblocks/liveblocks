@@ -23,10 +23,10 @@ export const Cursor = forwardRef(
           castShadow
           receiveShadow
           geometry={nodes.cursor.geometry}
-          rotation={[Math.PI / 3, Math.PI / 3, -Math.PI / 6]}
+          rotation={[Math.PI / 2, Math.PI / 3, -Math.PI / 4]}
           scale={[0.15, 0.15, 0.15]}
         >
-          <meshBasicMaterial color={color} />
+          <meshPhysicalMaterial color={color} roughness={1} reflectivity={1} />
         </mesh>
       </group>
     );
