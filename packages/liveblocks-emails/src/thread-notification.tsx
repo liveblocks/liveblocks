@@ -87,18 +87,18 @@ export const extractThreadNotificationData = async ({
     client.getInboxNotification({ inboxNotificationId, userId }),
   ]);
 
-  const comments = getUnreadComments({
+  const unreadComments = getUnreadComments({
     comments: thread.comments,
     inboxNotification,
     userId,
   });
 
-  if (comments.length <= 0) {
+  if (unreadComments.length <= 0) {
     return null;
   }
 
   const lastUnreadCommentWithMention = getLastUnreadCommentWithMention({
-    comments,
+    comments: unreadComments,
     mentionedUserId: userId,
   });
   if (lastUnreadCommentWithMention !== null) {
@@ -107,7 +107,7 @@ export const extractThreadNotificationData = async ({
 
   return {
     type: "unreadReplies",
-    comments,
+    comments: unreadComments,
   };
 };
 
