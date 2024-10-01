@@ -18,9 +18,9 @@ export type {
 export type {
   ResolveRoomInfoArgs,
   PrepareThreadNotificationEmailAsHTMLOptions,
-  ThreadNotificationEmailAsHTML,
+  ThreadNotificationEmailDataAsHTML,
   PrepareThreadNotificationEmailAsReactOptions,
-  ThreadNotificationEmailAsReact,
+  ThreadNotificationEmailDataAsReact,
 } from "./thread-notification";
 export {
   prepareThreadNotificationEmailAsHTML,

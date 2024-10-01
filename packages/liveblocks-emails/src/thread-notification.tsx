@@ -292,7 +292,7 @@ export type PrepareThreadNotificationEmailAsHTMLOptions<
   commentBodyStyles?: Partial<ConvertCommentBodyAsHTMLStyles>;
 };
 
-export type ThreadNotificationEmailAsHTML = ThreadNotificationEmailData<
+export type ThreadNotificationEmailDataAsHTML = ThreadNotificationEmailData<
   BaseUserMeta,
   CommentEmailAsHTMLData<BaseUserMeta>
 >;
@@ -325,7 +325,7 @@ export async function prepareThreadNotificationEmailAsHTML(params: {
   client: Liveblocks;
   event: ThreadNotificationEvent;
   options?: PrepareThreadNotificationEmailAsHTMLOptions<BaseUserMeta>;
-}): Promise<ThreadNotificationEmailAsHTML> {
+}): Promise<ThreadNotificationEmailDataAsHTML> {
   const { client, event, options } = params;
   const data = await prepareThreadNotificationEmailBaseData({
     client,
@@ -434,7 +434,7 @@ export type PrepareThreadNotificationEmailAsReactOptions<
   commentBodyComponents?: Partial<ConvertCommentBodyAsReactComponents<U>>;
 };
 
-export type ThreadNotificationEmailAsReact = ThreadNotificationEmailData<
+export type ThreadNotificationEmailDataAsReact = ThreadNotificationEmailData<
   BaseUserMeta,
   CommentEmailAsReactData<BaseUserMeta>
 >;
@@ -466,7 +466,7 @@ export async function prepareThreadNotificationEmailAsReact(params: {
   client: Liveblocks;
   event: ThreadNotificationEvent;
   options?: PrepareThreadNotificationEmailAsReactOptions<BaseUserMeta>;
-}): Promise<ThreadNotificationEmailAsReact> {
+}): Promise<ThreadNotificationEmailDataAsReact> {
   const { client, event, options } = params;
   const data = await prepareThreadNotificationEmailBaseData({
     client,
