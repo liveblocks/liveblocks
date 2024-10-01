@@ -41,6 +41,7 @@ import { classNames } from "../utils/class-names";
 import { findLastIndex } from "../utils/find-last-index";
 import type { CommentProps } from "./Comment";
 import { Comment } from "./Comment";
+import type { ComposerProps } from "./Composer";
 import { Composer } from "./Composer";
 import { Button } from "./internal/Button";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";
@@ -124,6 +125,11 @@ export interface ThreadProps<M extends BaseMetadata = DM>
   onAttachmentClick?: CommentProps["onAttachmentClick"];
 
   /**
+   * The event handler called when the composer is submitted.
+   */
+  onComposerSubmit?: ComposerProps["onComposerSubmit"];
+
+  /**
    * Override the component's strings.
    */
   overrides?: Partial<
@@ -160,6 +166,7 @@ export const Thread = forwardRef(
       onAuthorClick,
       onMentionClick,
       onAttachmentClick,
+      onComposerSubmit,
       overrides,
       className,
       ...props
@@ -365,6 +372,7 @@ export const Thread = forwardRef(
               threadId={thread.id}
               defaultCollapsed={showComposer === "collapsed" ? true : undefined}
               showAttachments={showAttachments}
+              onComposerSubmit={onComposerSubmit}
               overrides={{
                 COMPOSER_PLACEHOLDER: $.THREAD_COMPOSER_PLACEHOLDER,
                 COMPOSER_SEND: $.THREAD_COMPOSER_SEND,

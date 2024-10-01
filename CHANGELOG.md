@@ -1,3 +1,10 @@
+## 2.8.1
+
+### `@liveblocks/react-ui`
+
+- Expose `onComposerSubmit` on `Thread` to react to the inner composer of a
+  thread.
+
 ## 2.8.0
 
 We are introducing attachments to allow users to add files to their comments,
