@@ -70,7 +70,7 @@ describe("batch users resolve", () => {
 
     expect(resolvedUsers).toEqual(expected);
     expect(warnMock1).toHaveBeenCalledWith(
-      'Set "resolveUsers" in test-suite-0 options to specify users info'
+      'Set "resolveUsers" option in "test-suite-0" to specify users info'
     );
 
     warnMock1.mockRestore();

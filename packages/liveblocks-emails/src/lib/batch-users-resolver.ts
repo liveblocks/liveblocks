@@ -104,7 +104,7 @@ export function createBatchUsersResolver<U extends BaseUserMeta = DU>({
 }): CreateBatchUsersResolverReturnType<U> {
   const warnIfNoResolveUsers = createDevelopmentWarning(
     () => !resolveUsers,
-    `Set "resolveUsers" in ${callerName} options to specify users info`
+    `Set "resolveUsers" option in "${callerName}" to specify users info`
   );
   const batchUsersResolver = new BatchUsersResolver(resolveUsers);
 
