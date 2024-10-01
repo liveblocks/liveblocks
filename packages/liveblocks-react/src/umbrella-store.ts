@@ -395,8 +395,6 @@ class PaginatedResource {
           isFetchingMore: false,
           fetchMoreError: undefined,
         };
-
-        return;
       })
     );
 
@@ -428,8 +426,6 @@ type InternalState<M extends BaseMetadata> = Readonly<{
   queries4: Record<string, QueryAsyncResult>; // Versions
 
   loadThreadsRequests: Record<string, UsablePromise<ThreadData<M>[]>>;
-
-  loadNotificationsRequest: UsablePromise<InboxNotificationData[]> | null;
 
   optimisticUpdates: readonly OptimisticUpdate<M>[];
 
@@ -532,7 +528,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this._store = createStore<InternalState<M>>({
       rawThreadsById: {},
       loadThreadsRequests: {},
-      loadNotificationsRequest: null,
       queries2: {},
       queries3: {},
       queries4: {},
