@@ -311,9 +311,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this._client = client;
     this._store = createStore<InternalState<M>>({
       rawThreadsById: {},
-      // queries: {},
       loadThreadsRequests: {},
       loadNotificationsRequest: null,
+      // XXX Remove query1 once we switched to the new UsablePromise for notifications
       query1: undefined,
       queries2: {},
       queries3: {},
@@ -395,6 +395,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   private fetchMoreInboxNotifications(): void {
+    // XXX Remove query1 once we switched to the new UsablePromise for notifications
     const pageState = this._store.get().query1?.data;
     if (!pageState || pageState.isFetchingMore || !pageState.cursor) {
       // Not in the right state, make this a no-op
@@ -438,6 +439,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   public getInboxNotificationsAsync(): InboxNotificationsAsyncResult {
     const internalState = this._store.get();
 
+    // XXX Remove query1 once we switched to the new UsablePromise for notifications
     const query = internalState.query1;
     if (query === undefined || query.isLoading) {
       return ASYNC_LOADING;
