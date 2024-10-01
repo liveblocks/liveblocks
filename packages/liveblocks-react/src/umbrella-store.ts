@@ -307,19 +307,40 @@ class PaginatedResource {
   }
 
   public fetchMore(): void {
-    throw new Error("IMPLEMENT ME");
+    const state = this._paginationState;
 
-    // Ensure we're in SUCCESS state
-    // Ensure that cursor is not NULL
+    // We do not proceed with fetching more if any of the following is true:
+    // 1) the pagination state has not be initialized
+    // 2) the cursor is null, i.e., there are no more pages to fetch
+    // 3) a request to fetch more is currently in progress
+    if (state === null || state.cursor === null || state.isFetchingMore) return;
 
-    // - Set _paginationState.isFetchingMore = true
-    // - Call the fetch with current cursor!
-    // - If failure:
-    //    _paginationState.isFetchingMore = false
-    //    _paginationState.fetchMoreError = error
-    // - If ok:
-    //    _paginationState.isFetchingMore = false
-    //    _paginationState.cursor = nextCursor   (= return value of fetcher)
+    // Set `isFetchingMore` to indicate that the request to fetch the next page is now in progress
+    // XXX - Create a private helper which does both 1) updates pagination state 2) notifies subscribers
+    this._paginationState = {
+      ...state,
+      isFetchingMore: true,
+    };
+    this._eventSource.notify();
+
+    this._fetchPage(state.cursor)
+      .then((cursor) => {
+        // Update the cursor with the next cursor and set `isFetchingMore` to false
+        this._paginationState = {
+          ...state,
+          cursor,
+          isFetchingMore: false,
+        };
+      })
+      .catch((err) => {
+        this._paginationState = {
+          ...state,
+          isFetchingMore: false,
+          fetchMoreError: err as Error,
+        };
+      })
+      // XXX - Create a private helper which does both 1) updates pagination state 2) notifies subscribers
+      .finally(() => this._eventSource.notify());
   }
 
   public get(): AsyncResult<{
