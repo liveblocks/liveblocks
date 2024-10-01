@@ -1,10 +1,6 @@
 import React from "react";
 
-import type {
-  CommentBodyMentionComponentArgs,
-  CommentBodyParagraphComponentArgs,
-  CommentBodySlotComponentsArgs,
-} from "../comment-body";
+import type { ConvertCommentBodyAsReactComponents } from "../comment-body";
 import {
   convertCommentBodyAsHTML,
   convertCommentBodyAsReact,
@@ -217,41 +213,29 @@ describe("convert comment body as React", () => {
   });
 
   describe("w/ custom components", () => {
-    const Slot = ({ children }: CommentBodySlotComponentsArgs) => (
-      <main>{children}</main>
-    );
-
-    const Paragraph = (
-      { children }: CommentBodyParagraphComponentArgs,
-      index: number
-    ) => {
-      return (
-        <p style={{ display: "flex" }} key={`rs-paragraph-${index}`}>
-          {children}
-        </p>
-      );
+    const components: Partial<ConvertCommentBodyAsReactComponents> = {
+      Slot: ({ children }) => <main>{children}</main>,
+      Paragraph: ({ children }) => (
+        <p style={{ display: "flex" }}>{children}</p>
+      ),
+      Mention: ({ element, user }) => (
+        <span>user#{user?.name ?? element.id}</span>
+      ),
     };
-
-    const Mention = (
-      { element, user }: CommentBodyMentionComponentArgs,
-      index: number
-    ) => (
-      <span key={`rs-mention-${index}`}>user#{user?.name ?? element.id}</span>
-    );
 
     it("should converts with custom components", async () => {
       const reactBody = await convertCommentBodyAsReact(
         buildCommentBodyWithMention({ mentionedUserId: "user-0" }),
         {
           resolveUsers,
-          components: { Slot, Paragraph, Mention },
+          components,
         }
       );
 
       const markupBody = renderToStaticMarkup(reactBody);
       const expected = renderToStaticMarkup(
         <main>
-          <p style={{ display: "flex" }} key="rs-paragraph-0">
+          <p style={{ display: "flex" }}>
             Hello <span>user#Charlie Layne</span> !
           </p>
         </main>

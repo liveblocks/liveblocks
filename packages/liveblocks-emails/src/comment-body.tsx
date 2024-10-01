@@ -3,7 +3,6 @@ import type {
   CommentBody,
   CommentBodyLink,
   CommentBodyMention,
-  CommentBodyParagraph,
   CommentBodyText,
   DU,
   OptionalPromise,
@@ -23,33 +22,34 @@ import React from "react";
 
 import { sanitizeInlineCSS } from "./lib/sanitize-inline-css";
 
-export type CommentBodySlotComponentsArgs = {
+export type CommentBodySlotComponentProps = {
   /**
    * The blocks of the comment body
    */
   children: React.ReactNode;
 };
 
-export type CommentBodyParagraphComponentArgs = {
-  /**
-   * The paragraph element.
-   */
-  element: CommentBodyParagraph;
-
+export type CommentBodyParagraphComponentProps = {
   /**
    * The text content of the paragraph.
    */
   children: React.ReactNode;
 };
 
-export type CommentBodyTextComponentArgs = {
+export type CommentBodyTextComponentProps = {
   /**
    * The text element.
    */
   element: CommentBodyText;
+
+  /**
+   * The text element sub key.
+   * To be applied for sub elements like `<strong />`, `<em />`, `<s />` or `<code />`
+   */
+  subKey: number | string;
 };
 
-export type CommentBodyLinkComponentArgs = {
+export type CommentBodyLinkComponentProps = {
   /**
    * The link element.
    */
@@ -61,7 +61,7 @@ export type CommentBodyLinkComponentArgs = {
   href: string;
 };
 
-export type CommentBodyMentionComponentArgs<U extends BaseUserMeta = DU> = {
+export type CommentBodyMentionComponentProps<U extends BaseUserMeta = DU> = {
   /**
    * The mention element.
    */
@@ -78,40 +78,32 @@ export type ConvertCommentBodyAsReactComponents<U extends BaseUserMeta = DU> = {
    *
    * The component used to act as a `Slot` to wrap comment body blocks
    */
-  Slot: (args: CommentBodySlotComponentsArgs) => React.ReactNode;
+  Slot: React.ComponentType<CommentBodySlotComponentProps>;
   /**
    * The component used to display paragraphs.
    */
-  Paragraph: (
-    args: CommentBodyParagraphComponentArgs,
-    index: number
-  ) => React.ReactNode;
+  Paragraph: React.ComponentType<CommentBodyParagraphComponentProps>;
 
   /**
    * The component used to display text elements.
    */
-  Text: (args: CommentBodyTextComponentArgs, index: number) => React.ReactNode;
+  Text: React.ComponentType<CommentBodyTextComponentProps>;
 
   /**
    * The component used to display links.
    */
-  Link: (args: CommentBodyLinkComponentArgs, index: number) => React.ReactNode;
+  Link: React.ComponentType<CommentBodyLinkComponentProps>;
 
   /**
    * The component used to display mentions.
    */
-  Mention: (
-    args: CommentBodyMentionComponentArgs<U>,
-    index: number
-  ) => React.ReactNode;
+  Mention: React.ComponentType<CommentBodyMentionComponentProps<U>>;
 };
 
 const baseComponents: ConvertCommentBodyAsReactComponents<BaseUserMeta> = {
-  Slot: ({ children }) => <div key={"lb-comment-body-slot"}>{children}</div>,
-  Paragraph: ({ children }, index) => (
-    <p key={`lb-comment-body-paragraph-${index}`}>{children}</p>
-  ),
-  Text: ({ element }, index) => {
+  Slot: ({ children }) => <div>{children}</div>,
+  Paragraph: ({ children }) => <p>{children}</p>,
+  Text: ({ element, subKey }) => {
     // Note: construction following the schema 👇
     // <code><s><em><strong>{element.text}</strong></s></em></code>
     let children: React.ReactNode = element.text;
@@ -121,40 +113,35 @@ const baseComponents: ConvertCommentBodyAsReactComponents<BaseUserMeta> = {
 
     if (element.bold) {
       children = (
-        <strong key={`lb-comment-body-text-strong-${index}`}>{children}</strong>
+        <strong key={`lb-comment-body-text-strong-${subKey}`}>
+          {children}
+        </strong>
       );
     }
 
     if (element.italic) {
-      children = <em key={`lb-comment-body-text-em-${index}`}>{children}</em>;
+      children = <em key={`lb-comment-body-text-em-${subKey}`}>{children}</em>;
     }
 
     if (element.strikethrough) {
-      children = <s key={`lb-comment-body-text-s-${index}`}>{children}</s>;
+      children = <s key={`lb-comment-body-text-s-${subKey}`}>{children}</s>;
     }
 
     if (element.code) {
       children = (
-        <code key={`lb-comment-body-text-code-${index}`}>{children}</code>
+        <code key={`lb-comment-body-text-code-${subKey}`}>{children}</code>
       );
     }
 
     return children;
   },
-  Link: ({ element, href }, index) => (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      key={`lb-comment-body-link-${index}`}
-    >
+  Link: ({ element, href }) => (
+    <a href={href} target="_blank" rel="noopener noreferrer">
       {element.text ?? element.url}
     </a>
   ),
-  Mention: ({ element, user }, index) => (
-    <span data-mention key={`lb-comment-body-mention-${index}`}>
-      @{user?.name ?? element.id}
-    </span>
+  Mention: ({ element, user }) => (
+    <span data-mention>@{user?.name ?? element.id}</span>
   ),
 };
 
@@ -179,7 +166,7 @@ export async function convertCommentBodyAsReact(
   body: CommentBody,
   options?: ConvertCommentBodyAsReactOptions<BaseUserMeta>
 ): Promise<React.ReactNode> {
-  const components = {
+  const Components = {
     ...baseComponents,
     ...options?.components,
   };
@@ -193,32 +180,38 @@ export async function convertCommentBodyAsReact(
       case "paragraph": {
         const children = block.children.map((inline, inlineIndex) => {
           if (isCommentBodyMention(inline)) {
-            return inline.id
-              ? components.Mention(
-                  { element: inline, user: resolvedUsers.get(inline.id) },
-                  inlineIndex
-                )
-              : null;
+            return inline.id ? (
+              <Components.Mention
+                key={`lb-comment-body-mention-${inlineIndex}`}
+                element={inline}
+                user={resolvedUsers.get(inline.id)}
+              />
+            ) : null;
           }
 
           if (isCommentBodyLink(inline)) {
-            return components.Link(
-              {
-                element: inline,
-                href: toAbsoluteUrl(inline.url) ?? inline.url,
-              },
-              inlineIndex
+            const href = toAbsoluteUrl(inline.url) ?? inline.url;
+            return (
+              <Components.Link
+                key={`lb-comment-body-link-${inlineIndex}`}
+                element={inline}
+                href={href}
+              />
             );
           }
 
           if (isCommentBodyText(inline)) {
-            return components.Text({ element: inline }, inlineIndex);
+            return <Components.Text element={inline} subKey={inlineIndex} />;
           }
 
           return null;
         });
 
-        return components.Paragraph({ element: block, children }, index);
+        return (
+          <Components.Paragraph key={`lb-comment-body-paragraph-${index}`}>
+            {children}
+          </Components.Paragraph>
+        );
       }
       default:
         console.warn(
@@ -227,9 +220,10 @@ export async function convertCommentBodyAsReact(
         return null;
     }
   });
-  const reactBody = components.Slot({ children: blocks });
 
-  return reactBody;
+  return (
+    <Components.Slot key={"lb-comment-body-slot"}>{blocks}</Components.Slot>
+  );
 }
 
 /**

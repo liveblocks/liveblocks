@@ -6,11 +6,11 @@ import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 export type {
-  CommentBodySlotComponentsArgs,
-  CommentBodyParagraphComponentArgs,
-  CommentBodyTextComponentArgs,
-  CommentBodyLinkComponentArgs,
-  CommentBodyMentionComponentArgs,
+  CommentBodySlotComponentProps,
+  CommentBodyParagraphComponentProps,
+  CommentBodyTextComponentProps,
+  CommentBodyLinkComponentProps,
+  CommentBodyMentionComponentProps,
   ConvertCommentBodyAsReactComponents,
   ConvertCommentBodyAsHTMLStyles,
 } from "./comment-body";

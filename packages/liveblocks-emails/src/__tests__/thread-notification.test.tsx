@@ -1,12 +1,8 @@
-import type { CommentBodyLinkElementArgs } from "@liveblocks/node";
 import { Liveblocks } from "@liveblocks/node";
 import { http, HttpResponse } from "msw";
 import React from "react";
 
-import type {
-  CommentBodyMentionComponentArgs,
-  CommentBodySlotComponentsArgs,
-} from "../comment-body";
+import type { ConvertCommentBodyAsReactComponents } from "../comment-body";
 import type {
   CommentEmailBaseData,
   ThreadNotificationBaseData,
@@ -606,6 +602,14 @@ describe("thread notification", () => {
         }
       );
     });
+
+    describe("unread mention w/ custom styles design tokens", () => {
+      it.todo("add tests when using custom styles");
+    });
+
+    describe("unread replies w/ custom styles design tokens", () => {
+      it.todo("add tests when using custom styles");
+    });
   });
 
   describe("prepare thread notification email as React", () => {
@@ -715,16 +719,12 @@ describe("thread notification", () => {
     });
 
     describe("unread mention w/ custom components", () => {
-      const Slot = ({ children }: CommentBodySlotComponentsArgs) => (
-        <main>{children}</main>
-      );
-
-      const Mention = (
-        { element, user }: CommentBodyMentionComponentArgs,
-        index: number
-      ) => (
-        <span key={`rs-mention-${index}`}>u#{user?.name ?? element.id}</span>
-      );
+      const components: Partial<ConvertCommentBodyAsReactComponents> = {
+        Slot: ({ children }) => <main>{children}</main>,
+        Mention: ({ element, user }) => (
+          <span>u#{user?.name ?? element.id}</span>
+        ),
+      };
 
       const { comment, thread, inboxNotification, event } =
         makeUnreadMentionDataset();
@@ -791,7 +791,7 @@ describe("thread notification", () => {
               client,
               event,
               options: {
-                commentBodyComponents: { Slot, Mention },
+                commentBodyComponents: components,
               },
             }),
           expected: expected1,
@@ -805,7 +805,7 @@ describe("thread notification", () => {
               options: {
                 resolveUsers,
                 resolveRoomInfo,
-                commentBodyComponents: { Slot, Mention },
+                commentBodyComponents: components,
               },
             }),
           expected: expected2,
@@ -962,18 +962,14 @@ describe("thread notification", () => {
     });
 
     describe("unread replies w/ custom components", () => {
-      const Slot = ({ children }: CommentBodySlotComponentsArgs) => (
-        <main>{children}</main>
-      );
-
-      const Link = (
-        { element, href }: CommentBodyLinkElementArgs,
-        index: number
-      ) => (
-        <a key={`rs-link-${index}`} href={href} data-link>
-          {element.text ?? element.url}
-        </a>
-      );
+      const components: Partial<ConvertCommentBodyAsReactComponents> = {
+        Slot: ({ children }) => <main>{children}</main>,
+        Link: ({ element, href }) => (
+          <a href={href} data-link>
+            {element.text ?? element.url}
+          </a>
+        ),
+      };
 
       const { comment2, thread, inboxNotification, event } =
         makeUnreadRepliesDataset();
@@ -1047,7 +1043,7 @@ describe("thread notification", () => {
             prepareThreadNotificationEmailAsReact({
               client,
               event,
-              options: { commentBodyComponents: { Slot, Link } },
+              options: { commentBodyComponents: components },
             }),
           expected: expected1,
         },
@@ -1060,7 +1056,7 @@ describe("thread notification", () => {
               options: {
                 resolveUsers,
                 resolveRoomInfo,
-                commentBodyComponents: { Slot, Link },
+                commentBodyComponents: components,
               },
             }),
           expected: expected2,
