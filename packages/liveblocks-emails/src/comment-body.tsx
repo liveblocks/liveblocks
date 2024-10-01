@@ -70,7 +70,7 @@ export type CommentBodyMentionComponentProps<U extends BaseUserMeta = DU> = {
 export type ConvertCommentBodyAsReactComponents<U extends BaseUserMeta = DU> = {
   /**
    *
-   * The component used to act as a `Slot` to wrap comment body blocks
+   * The component used to act as a `Slot` to wrap comment body blocks,
    */
   Slot: React.ComponentType<CommentBodySlotComponentProps>;
   /**
