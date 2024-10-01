@@ -201,23 +201,24 @@ type UsablePromise<T> = Promise<T> &
  * asynchronous status can be synchronously observed.
  */
 function usify<T>(promise: Promise<T>): UsablePromise<T> {
-  if (!("status" in promise)) {
-    (promise as UsablePromise<T>).status = "pending";
-    promise.then(
-      (value) => {
-        (promise as UsablePromise<T>).status = "fulfilled";
-        (promise as Extract<UsablePromise<T>, { status: "fulfilled" }>).value =
-          value;
-      },
-      (err) => {
-        (promise as UsablePromise<T>).status = "rejected";
-        (promise as Extract<UsablePromise<T>, { status: "rejected" }>).reason =
-          err as Error;
-      }
-    );
+  if ("status" in promise) {
+    // Already a usable promise
     return promise as UsablePromise<T>;
   }
 
+  (promise as UsablePromise<T>).status = "pending";
+  promise.then(
+    (value) => {
+      (promise as UsablePromise<T>).status = "fulfilled";
+      (promise as Extract<UsablePromise<T>, { status: "fulfilled" }>).value =
+        value;
+    },
+    (err) => {
+      (promise as UsablePromise<T>).status = "rejected";
+      (promise as Extract<UsablePromise<T>, { status: "rejected" }>).reason =
+        err as Error;
+    }
+  );
   return promise as UsablePromise<T>;
 }
 
