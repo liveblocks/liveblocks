@@ -5,6 +5,7 @@ import type {
   CommentReaction,
   CommentUserReaction,
   DistributiveOmit,
+  EventSource,
   GetThreadsOptions,
   HistoryVersion,
   InboxNotificationData,
@@ -24,6 +25,7 @@ import {
   console,
   createStore,
   kInternal,
+  makeEventSource,
   mapValues,
   nanoid,
   nn,
@@ -220,6 +222,105 @@ function usify<T>(promise: Promise<T>): UsablePromise<T> {
     }
   );
   return usable;
+}
+
+/**
+ * The PaginatedResource helper class is responsible for and abstracts away the
+ * following:
+ *
+ * - It receives a "page fetch" function of the following signature:
+ *     (cursor?: Cursor) => Promise<Cursor | null>
+ *
+ * - Note that there is no data in the returned value!!! Storing or handling
+ *   the data is NOT the responsibility of this helper class. This may be a bit
+ *   counter-intuitive at first. The provided page fetcher callback function
+ *   should store the data elsewhere, outside of the PaginatedResource state
+ *   machine, as a side-effect of this "page fetch" function, but it can always
+ *   assume the happy path. This class will deal with all the required
+ *   complexity for handling the non-happy path conditions.
+ *
+ * - This class exposes a "getter" that you can call synchronously to get the
+ *   current fetching/paginationo status for this resource. It will look like
+ *   the pagination hooks, except it will not contain any data. In other words,
+ *   it can return any of these shapes:
+ *
+ *   - { isLoading: true }
+ *   - {
+ *       isLoading: false,
+ *       error: new Error('error while fetching'),
+ *     }
+ *   - {
+ *       isLoading: false,
+ *       data: {
+ *         cursor: string | null;
+ *         isFetchingMore: boolean;
+ *         fetchMoreError?: Error;
+ *       }
+ *     }
+ *
+ * - When calling the getter multiple times, the return value is always
+ *   referentially equal to the previous call.
+ *
+ * - When in this error state, the error will remain in error state for
+ *   5 seconds. After those 5 seconds, the resource status gets reset, and the
+ *   next time the "getter" is accessed, the resource will re-initiate the
+ *   initial fetching process.
+ *
+ * - This class exposes an Observable that is notified whenever the state
+ *   changes. For now, this observable can be used to call a no-op update to
+ *   the Store (eg `.set(state => ({...state})`), to trigger a re-render for
+ *   all React components.
+ *
+ * - This class will also expose a function that can be exposed as the
+ *   `fetchMore` function which can be called externally.
+ *
+ * - This nicely bundles the internal state that should always be mutated
+ *   together to manage all the pagination state.
+ *
+ * - For InboxNotifications we will have one instance of this class.
+ *
+ * - For Threads we will have one for each query.
+ *
+ * ---------------------------------------------------------------------------
+ *
+ * NOT 100% SURE ABOUT THE FOLLOWING YET:
+ *
+ * - Maybe we could eventually also let this manage the "delta updates" and the
+ *   "last requested at" for this resource? Seems nice to add it here somehow.
+ *   Need to think about the exact implications though.
+ *
+ */
+
+// @ts-expect-error - unused yet
+class _PaginatedResource {
+  // @ts-expect-error - import Observable
+  public observable: Observable<void>;
+  private _eventSource: EventSource<void>;
+  // @ts-expect-error - unused yet
+  private _fetchPage: (cursor: string) => string | null;
+  // private _usable: UsablePromise<void>;
+
+  constructor(fetchPage: (cursor?: string) => string | null) {
+    this._fetchPage = fetchPage;
+    this._eventSource = makeEventSource<void>();
+    this.observable = this._eventSource.observable;
+    // ...
+    autobind(this);
+  }
+
+  //
+  // Open question:
+  // Should accessing the getter also initiate the first fetch? I think so!
+  //
+
+  // @ts-expect-error - implement this
+  public get(): PaginatedAsyncResult {
+    // ...
+  }
+
+  public fetchMore(): void {
+    // ...
+  }
 }
 
 type InternalState<M extends BaseMetadata> = Readonly<{
