@@ -30,6 +30,7 @@ import type {
   InboxNotificationDeleteInfo,
   InboxNotificationDeleteInfoPlain,
 } from "./protocol/InboxNotifications";
+import { PKG_VERSION } from "./version";
 
 const MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY = 50;
 
@@ -88,6 +89,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
       headers: {
         ...options?.headers,
         Authorization: `Bearer ${getAuthBearerHeaderFromAuthValue(authValue)}`,
+        "X-LB-Client": PKG_VERSION || "dev",
       },
     });
 
