@@ -600,7 +600,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
         if (
           reactionIndex >= 0 &&
           currentUserId &&
-          comment.reactions[reactionIndex].users.some(
+          comment.reactions[reactionIndex]?.users.some(
             (user) => user.id === currentUserId
           )
         ) {

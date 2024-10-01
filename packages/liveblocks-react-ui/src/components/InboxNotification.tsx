@@ -431,17 +431,21 @@ const InboxNotificationThread = forwardRef<
     //       it's not a big deal, the only scenario where it would be superfluous would be if the user provides their own
     //       `href` AND disables room names in the title via `showRoomName={false}`.
     const { info } = useRoomInfo(inboxNotification.roomId);
-    const { unread, date, aside, title, content, commentId } = useMemo(() => {
+    const contents = useMemo(() => {
       const contents = generateInboxNotificationThreadContents(
         inboxNotification,
         thread,
         currentUserId ?? ""
       );
 
+      if (contents.comments.length === 0 || contents.userIds.length === 0) {
+        return null;
+      }
+
       switch (contents.type) {
         case "comments": {
           const reversedUserIds = [...contents.userIds].reverse();
-          const firstUserId = reversedUserIds[0];
+          const firstUserId = reversedUserIds[0]!;
 
           const aside = <InboxNotificationAvatar userId={firstUserId} />;
           const title = $.INBOX_NOTIFICATION_THREAD_COMMENTS_LIST(
@@ -478,13 +482,13 @@ const InboxNotificationThread = forwardRef<
             title,
             content,
             threadId: thread.id,
-            commentId: contents.comments[contents.comments.length - 1].id,
+            commentId: contents.comments[contents.comments.length - 1]!.id,
           };
         }
 
         case "mention": {
-          const mentionUserId = contents.userIds[0];
-          const mentionComment = contents.comments[0];
+          const mentionUserId = contents.userIds[0]!;
+          const mentionComment = contents.comments[0]!;
 
           const aside = <InboxNotificationAvatar userId={mentionUserId} />;
           const title = $.INBOX_NOTIFICATION_THREAD_MENTION(
@@ -537,9 +541,15 @@ const InboxNotificationThread = forwardRef<
       const resolvedHref = href ?? info?.url;
 
       return resolvedHref
-        ? generateURL(resolvedHref, undefined, commentId)
+        ? generateURL(resolvedHref, undefined, contents?.commentId)
         : undefined;
-    }, [commentId, href, info?.url]);
+    }, [contents?.commentId, href, info?.url]);
+
+    if (!contents) {
+      return null;
+    }
+
+    const { aside, title, content, date, unread } = contents;
 
     return (
       <InboxNotificationLayout

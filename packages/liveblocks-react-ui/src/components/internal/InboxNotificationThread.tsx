@@ -132,8 +132,12 @@ function findLastCommentWithMentionedId(
   comments: CommentData[],
   mentionedId: string
 ) {
+  if (!comments.length) {
+    return;
+  }
+
   for (let i = comments.length - 1; i >= 0; i--) {
-    const comment = comments[i];
+    const comment = comments[i]!;
 
     if (comment.userId === mentionedId) {
       continue;
