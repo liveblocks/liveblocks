@@ -128,6 +128,44 @@ describe("thread notification", () => {
       expect(lastCommentWithMention2).toBe(null);
     });
 
+    it("should extract null (no last unread comment with a mention nor unread replies) from a thread notification", async () => {
+      const threadId = generateThreadId();
+      const comment = makeComment({
+        userId: "user-0",
+        threadId,
+        body: buildCommentBodyWithMention({ mentionedUserId: "user-1" }),
+        createdAt: new Date("2024-09-10T08:04:00.000Z"),
+      });
+      const thread = makeThread({ threadId, comments: [comment] });
+      const inboxNotification = makeThreadInboxNotification({
+        threadId,
+        notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
+        readAt: new Date("2024-09-10T08:12:00.000Z"),
+      });
+
+      server.use(
+        http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`, () =>
+          HttpResponse.json(thread, { status: 200 })
+        )
+      );
+
+      server.use(
+        http.get(
+          `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
+          () => HttpResponse.json(inboxNotification, { status: 200 })
+        )
+      );
+
+      const event = makeThreadNotificationEvent({
+        threadId,
+        userId: "user-1",
+        inboxNotificationId: inboxNotification.id,
+      });
+
+      const extracted = await extractThreadNotificationData({ client, event });
+      expect(extracted).toBeNull();
+    });
+
     it("should extract last unread comment with a mention from a thread notification", async () => {
       const threadId = generateThreadId();
       const comment = makeComment({
@@ -471,7 +509,7 @@ describe("thread notification", () => {
 
       it.each<{
         withResolvers: boolean;
-        promise: () => Promise<ThreadNotificationEmailDataAsHTML>;
+        promise: () => Promise<ThreadNotificationEmailDataAsHTML | null>;
         expected: ThreadNotificationEmailDataAsHTML;
       }>([
         {
@@ -561,7 +599,7 @@ describe("thread notification", () => {
 
       it.each<{
         withResolvers: boolean;
-        promise: () => Promise<ThreadNotificationEmailDataAsHTML>;
+        promise: () => Promise<ThreadNotificationEmailDataAsHTML | null>;
         expected: ThreadNotificationEmailDataAsHTML;
       }>([
         {
@@ -677,7 +715,7 @@ describe("thread notification", () => {
 
       it.each<{
         withResolvers: boolean;
-        promise: () => Promise<ThreadNotificationEmailDataAsReact>;
+        promise: () => Promise<ThreadNotificationEmailDataAsReact | null>;
         expected: ThreadNotificationEmailDataAsReact;
       }>([
         {
@@ -797,7 +835,7 @@ describe("thread notification", () => {
 
       it.each<{
         withResolvers: boolean;
-        promise: () => Promise<ThreadNotificationEmailDataAsReact>;
+        promise: () => Promise<ThreadNotificationEmailDataAsReact | null>;
         expected: ThreadNotificationEmailDataAsReact;
       }>([
         {
@@ -928,7 +966,7 @@ describe("thread notification", () => {
 
       it.each<{
         withResolvers: boolean;
-        promise: () => Promise<ThreadNotificationEmailDataAsReact>;
+        promise: () => Promise<ThreadNotificationEmailDataAsReact | null>;
         expected: ThreadNotificationEmailDataAsReact;
       }>([
         {
@@ -1050,7 +1088,7 @@ describe("thread notification", () => {
 
       it.each<{
         withResolvers: boolean;
-        promise: () => Promise<ThreadNotificationEmailDataAsReact>;
+        promise: () => Promise<ThreadNotificationEmailDataAsReact | null>;
         expected: ThreadNotificationEmailDataAsReact;
       }>([
         {

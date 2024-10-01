@@ -80,7 +80,7 @@ export const extractThreadNotificationData = async ({
 }: {
   client: Liveblocks;
   event: ThreadNotificationEvent;
-}): Promise<ThreadNotificationData> => {
+}): Promise<ThreadNotificationData | null> => {
   const { threadId, roomId, userId, inboxNotificationId } = event.data;
   const [thread, inboxNotification] = await Promise.all([
     client.getThread({ roomId, threadId }),
@@ -92,6 +92,10 @@ export const extractThreadNotificationData = async ({
     inboxNotification,
     userId,
   });
+
+  if (comments.length <= 0) {
+    return null;
+  }
 
   const lastUnreadCommentWithMention = getLastUnreadCommentWithMention({
     comments,
@@ -173,7 +177,7 @@ export const prepareThreadNotificationEmailBaseData = async ({
   client: Liveblocks;
   event: ThreadNotificationEvent;
   options?: PrepareThreadNotificationEmailBaseDataOptions;
-}): Promise<ThreadNotificationBaseData> => {
+}): Promise<ThreadNotificationBaseData | null> => {
   const { roomId } = event.data;
 
   const roomInfo = options?.resolveRoomInfo
@@ -185,6 +189,10 @@ export const prepareThreadNotificationEmailBaseData = async ({
   };
 
   const data = await extractThreadNotificationData({ client, event });
+  if (data === null) {
+    return null;
+  }
+
   switch (data.type) {
     case "unreadMention":
       return {
@@ -305,6 +313,8 @@ export type ThreadNotificationEmailDataAsHTML = ThreadNotificationEmailData<
  * @param params.options The options to provides to resolve users, resolve room info
  * and customize bodies html elements styles with inline css.
  *
+ * It returns `null` if there are no unread comments (mention or replies).
+ *
  * @example
  * import { Liveblocks} from "@liveblocks/node"
  * import { prepareThreadNotificationEmailAsHTML } from "@liveblocks/emails"
@@ -325,13 +335,17 @@ export async function prepareThreadNotificationEmailAsHTML(params: {
   client: Liveblocks;
   event: ThreadNotificationEvent;
   options?: PrepareThreadNotificationEmailAsHTMLOptions<BaseUserMeta>;
-}): Promise<ThreadNotificationEmailDataAsHTML> {
+}): Promise<ThreadNotificationEmailDataAsHTML | null> {
   const { client, event, options } = params;
   const data = await prepareThreadNotificationEmailBaseData({
     client,
     event,
     options: { resolveRoomInfo: options?.resolveRoomInfo },
   });
+
+  if (data === null) {
+    return null;
+  }
 
   const batchUsersResolver = createBatchUsersResolver<BaseUserMeta>({
     resolveUsers: options?.resolveUsers,
@@ -446,6 +460,8 @@ export type ThreadNotificationEmailDataAsReact = ThreadNotificationEmailData<
  * @param params.event The `ThreadNotificationEvent` received in the webhook handler
  * @param params.options The options to provides to resolve users, resolve room info and customize comment bodies React components.
  *
+ * It returns `null` if there are no unread comments (mention or replies).
+ *
  * @example
  * import { Liveblocks} from "@liveblocks/node"
  * import { prepareThreadNotificationEmailAsReact } from "@liveblocks/emails"
@@ -466,13 +482,17 @@ export async function prepareThreadNotificationEmailAsReact(params: {
   client: Liveblocks;
   event: ThreadNotificationEvent;
   options?: PrepareThreadNotificationEmailAsReactOptions<BaseUserMeta>;
-}): Promise<ThreadNotificationEmailDataAsReact> {
+}): Promise<ThreadNotificationEmailDataAsReact | null> {
   const { client, event, options } = params;
   const data = await prepareThreadNotificationEmailBaseData({
     client,
     event,
     options: { resolveRoomInfo: options?.resolveRoomInfo },
   });
+
+  if (data === null) {
+    return null;
+  }
 
   const batchUsersResolver = createBatchUsersResolver<BaseUserMeta>({
     resolveUsers: options?.resolveUsers,

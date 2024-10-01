@@ -53,19 +53,17 @@ export async function POST(request: Request) {
           },
         });
 
-        let html: string | null = null;
+        // If there are unread comments (last comment with mention or unread replies)
+        if (emailData !== null) {
+          let html = "";
 
-        // Handle unread replies case
-        if (
-          emailData.type === "unreadReplies" &&
-          emailData.comments.length > 0
-        ) {
-          html = await render(<UnreadRepliesEmail />, { pretty: true });
-        } else if (emailData.type === "unreadMention") {
-          html = await render(<UnreadMentionEmail />, { pretty: true });
-        }
+          // Handle unread replies case
+          if (emailData.type === "unreadReplies") {
+            html = await render(<UnreadRepliesEmail />, { pretty: true });
+          } else if (emailData.type === "unreadMention") {
+            html = await render(<UnreadMentionEmail />, { pretty: true });
+          }
 
-        if (html) {
           const { error } = await resend.emails.send({
             from: "Your App <yourapp@example.com>",
             to: event.data.userId, // In this example, user IDs are email addresses,

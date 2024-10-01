@@ -222,16 +222,18 @@ export const makeThread = ({
 export const makeThreadInboxNotification = ({
   threadId,
   notifiedAt,
+  readAt,
 }: {
   threadId: string;
   notifiedAt?: Date;
+  readAt?: Date;
 }): InboxNotificationThreadData => ({
   id: generateInboxNotificationId(),
   kind: "thread",
   threadId,
   roomId: ROOM_ID_TEST,
   notifiedAt: notifiedAt ?? new Date(),
-  readAt: null,
+  readAt: readAt ?? null,
 });
 
 export const makeThreadNotificationEvent = ({
@@ -382,8 +384,11 @@ type ThreadNotificationEmailAsStaticMarkup = ThreadNotificationEmailData<
 >;
 
 export const commentBodiesAsReactToStaticMarkup = (
-  threadNotificationEmailDataAsReact: ThreadNotificationEmailDataAsReact
+  threadNotificationEmailDataAsReact: ThreadNotificationEmailDataAsReact | null
 ): ThreadNotificationEmailAsStaticMarkup | null => {
+  if (threadNotificationEmailDataAsReact === null) {
+    return null;
+  }
   switch (threadNotificationEmailDataAsReact.type) {
     case "unreadMention": {
       const { comment, ...rest } = threadNotificationEmailDataAsReact;
