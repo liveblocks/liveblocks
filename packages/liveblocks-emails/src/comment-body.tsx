@@ -41,12 +41,6 @@ export type CommentBodyTextComponentProps = {
    * The text element.
    */
   element: CommentBodyText;
-
-  /**
-   * The text element sub key.
-   * To be applied for sub elements like `<strong />`, `<em />`, `<s />` or `<code />`
-   */
-  subKey: number | string;
 };
 
 export type CommentBodyLinkComponentProps = {
@@ -103,34 +97,28 @@ export type ConvertCommentBodyAsReactComponents<U extends BaseUserMeta = DU> = {
 const baseComponents: ConvertCommentBodyAsReactComponents<BaseUserMeta> = {
   Slot: ({ children }) => <div>{children}</div>,
   Paragraph: ({ children }) => <p>{children}</p>,
-  Text: ({ element, subKey }) => {
+  Text: ({ element }) => {
     // Note: construction following the schema 👇
     // <code><s><em><strong>{element.text}</strong></s></em></code>
     let children: React.ReactNode = element.text;
 
     if (element.bold) {
-      children = (
-        <strong key={`lb-comment-body-text-strong-${subKey}`}>
-          {children}
-        </strong>
-      );
+      children = <strong>{children}</strong>;
     }
 
     if (element.italic) {
-      children = <em key={`lb-comment-body-text-em-${subKey}`}>{children}</em>;
+      children = <em>{children}</em>;
     }
 
     if (element.strikethrough) {
-      children = <s key={`lb-comment-body-text-s-${subKey}`}>{children}</s>;
+      children = <s>{children}</s>;
     }
 
     if (element.code) {
-      children = (
-        <code key={`lb-comment-body-text-code-${subKey}`}>{children}</code>
-      );
+      children = <code>{children}</code>;
     }
 
-    return <span key={`lb-comment-body-text-${subKey}`}>{children}</span>;
+    return <span>{children}</span>;
   },
   Link: ({ element, href }) => (
     <a href={href} target="_blank" rel="noopener noreferrer">
@@ -198,7 +186,12 @@ export async function convertCommentBodyAsReact(
           }
 
           if (isCommentBodyText(inline)) {
-            return <Components.Text element={inline} subKey={inlineIndex} />;
+            return (
+              <Components.Text
+                key={`lb-comment-body-text-${inlineIndex}`}
+                element={inline}
+              />
+            );
           }
 
           return null;
