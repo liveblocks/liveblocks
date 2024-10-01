@@ -10,6 +10,7 @@ import type {
   HistoryVersion,
   InboxNotificationData,
   InboxNotificationDeleteInfo,
+  Observable,
   OpaqueClient,
   Patchable,
   Resolve,
@@ -290,36 +291,111 @@ function usify<T>(promise: Promise<T>): UsablePromise<T> {
  *   Need to think about the exact implications though.
  *
  */
-
-// @ts-expect-error - unused yet
-class _PaginatedResource {
-  // @ts-expect-error - import Observable
-  public observable: Observable<void>;
+class PaginatedResource {
+  public readonly observable: Observable<void>;
   private _eventSource: EventSource<void>;
-  // @ts-expect-error - unused yet
-  private _fetchPage: (cursor: string) => string | null;
-  // private _usable: UsablePromise<void>;
+  private _fetchPage: (cursor?: string) => Promise<string | null>;
+  private _paginationState: PaginationState | null; // Should be null while in loading or error state!
 
-  constructor(fetchPage: (cursor?: string) => string | null) {
+  constructor(fetchPage: (cursor?: string) => Promise<string | null>) {
+    this._paginationState = null;
     this._fetchPage = fetchPage;
     this._eventSource = makeEventSource<void>();
     this.observable = this._eventSource.observable;
-    // ...
+
     autobind(this);
   }
 
-  //
-  // Open question:
-  // Should accessing the getter also initiate the first fetch? I think so!
-  //
+  public fetchMore(): void {
+    throw new Error("IMPLEMENT ME");
 
-  // @ts-expect-error - implement this
-  public get(): PaginatedAsyncResult {
-    // ...
+    // Ensure we're in SUCCESS state
+    // Ensure that cursor is not NULL
+
+    // - Set _paginationState.isFetchingMore = true
+    // - Call the fetch with current cursor!
+    // - If failure:
+    //    _paginationState.isFetchingMore = false
+    //    _paginationState.fetchMoreError = error
+    // - If ok:
+    //    _paginationState.isFetchingMore = false
+    //    _paginationState.cursor = nextCursor   (= return value of fetcher)
   }
 
-  public fetchMore(): void {
-    // ...
+  public get(): AsyncResult<{
+    fetchMore: () => void;
+    fetchMoreError?: Error;
+    hasFetchedAll: boolean;
+    isFetchingMore: boolean;
+  }> {
+    const usable = this._cachedPromise;
+    if (usable === null || usable.status === "pending") {
+      return ASYNC_LOADING;
+    }
+
+    if (usable.status === "rejected") {
+      // XXX Make this a stable reference!
+      return { isLoading: false, error: usable.reason };
+    }
+
+    const state = this._paginationState!;
+    // XXX Make this a stable reference!
+    return {
+      isLoading: false,
+      data: {
+        fetchMore: this.fetchMore,
+        isFetchingMore: state.isFetchingMore,
+        fetchMoreError: state.fetchMoreError,
+        hasFetchedAll: state.cursor === null,
+      },
+    };
+  }
+
+  private _cachedPromise: UsablePromise<void> | null = null;
+
+  // XXX Change to void return type later WITHOUT actually making it a different promise at runtime!
+  public waitUntilLoaded(): UsablePromise<void> {
+    if (this._cachedPromise) {
+      return this._cachedPromise;
+    }
+
+    // Wrap the request to load room threads (and notifications) in an auto-retry function so that if the request fails,
+    // we retry for at most 5 times with incremental backoff delays. If all retries fail, the auto-retry function throws an error
+    const initialFetcher = autoRetry(
+      () => this._fetchPage(/* cursor = undefined */),
+      5,
+      [5000, 5000, 10000, 15000]
+    );
+
+    const promise = usify(
+      initialFetcher.then((cursor) => {
+        // Initial fetch completed
+        this._paginationState = {
+          cursor,
+          isFetchingMore: false,
+          fetchMoreError: undefined,
+        };
+
+        return undefined;
+      })
+    );
+
+    // XXX Maybe move this into the .then() above too?
+    promise.then(
+      () => this._eventSource.notify(),
+      () => {
+        this._eventSource.notify();
+
+        // Wait for 5 seconds before removing the request from the cache
+        setTimeout(() => {
+          this._cachedPromise = null;
+          this._eventSource.notify();
+        }, 5_000);
+      }
+    );
+
+    this._cachedPromise = promise;
+    return promise;
   }
 }
 
@@ -327,7 +403,7 @@ type InternalState<M extends BaseMetadata> = Readonly<{
   // This is a temporary refactoring artifact from Vincent and Nimesh.
   // Each query corresponds to a resource which should eventually have its own type.
   // This is why we split it for now.
-  query1: PaginatedAsyncResult | undefined; // Inbox notifications
+  query1: PaginatedResource; // Inbox notifications
   queries2: Record<string, QueryAsyncResult>; // Threads
   queries3: Record<string, QueryAsyncResult>; // Notification settings
   queries4: Record<string, QueryAsyncResult>; // Versions
@@ -409,13 +485,33 @@ export class UmbrellaStore<M extends BaseMetadata> {
   private _lastRequestedNotificationsAt: Date | null = null;
 
   constructor(client?: OpaqueClient) {
+    const inboxFetcher = async (cursor?: string) => {
+      const result = await client!.getInboxNotifications({ cursor });
+
+      this.updateThreadsAndNotifications(
+        result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
+        result.inboxNotifications
+      );
+
+      this._lastRequestedNotificationsAt = new Date();
+
+      const nextCursor = result.cursor; // XXX Rename this to `nextCursor`
+      return nextCursor;
+    };
+
     this._client = client;
+
+    const query1 = new PaginatedResource(inboxFetcher);
+    query1.observable.subscribe(() => {
+      this._store.set((store) => ({ ...store }));
+    });
+
     this._store = createStore<InternalState<M>>({
       rawThreadsById: {},
       loadThreadsRequests: {},
-      loadNotificationsRequest: null,
+      // loadNotificationsRequest: null,
       // XXX Remove query1 once we switched to the new UsablePromise for notifications
-      query1: undefined,
+      query1,
       queries2: {},
       queries3: {},
       queries4: {},
@@ -539,26 +635,16 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // NOTE: This will read the async result, but WILL NOT start loading at the moment!
   public getInboxNotificationsAsync(): InboxNotificationsAsyncResult {
     const internalState = this._store.get();
-
-    // XXX Remove query1 once we switched to the new UsablePromise for notifications
-    const query = internalState.query1;
-    if (query === undefined || query.isLoading) {
-      return ASYNC_LOADING;
+    const notificationState = internalState.query1.get();
+    if (notificationState.isLoading || notificationState.error) {
+      return notificationState;
     }
 
-    if (query.error !== undefined) {
-      return query;
-    }
-
-    const pageState = query.data;
+    const pageState = notificationState.data;
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
-      isLoading: false,
+      ...pageState,
       inboxNotifications: this.getFullState().notifications,
-      fetchMore: this.fetchMoreInboxNotifications,
-      isFetchingMore: pageState.isFetchingMore,
-      fetchMoreError: pageState.fetchMoreError,
-      hasFetchedAll: pageState.cursor === null,
     };
   }
 
@@ -1258,78 +1344,18 @@ export class UmbrellaStore<M extends BaseMetadata> {
     );
   }
 
+  // XXX This is React-specific, move it to the hook
   public loadNotifications() {
     void this.waitUntilNotificationsLoaded().catch(() => {
       // Deliberately catch and ignore any errors here
     });
   }
 
-  public waitUntilNotificationsLoaded(): UsablePromise<
-    InboxNotificationData[]
-  > {
-    const internalStore = this._store.get();
-
-    // If a request was already made for the provided query key, we simply return the existing request.
-    // We do not want to override the existing request with a new request to load threads and notifications
-    const existingRequest = internalStore.loadNotificationsRequest;
-    if (existingRequest !== null) return existingRequest;
-
-    const fetchNotificationsPage = async (): Promise<
-      InboxNotificationData[]
-    > => {
-      const client = nn(
-        this._client,
-        "Client is required in order to load notifications for the room"
-      );
-
-      // Wrap the request to load room threads (and notifications) in an auto-retry function so that if the request fails,
-      // we retry for at most 5 times with incremental backoff delays. If all retries fail, the auto-retry function throws an error
-      return await autoRetry(
-        async () => {
-          const result =
-            await client.getInboxNotifications(/* no cursor yet */);
-
-          this.updateThreadsAndNotifications(
-            result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
-            result.inboxNotifications
-          );
-
-          this._lastRequestedNotificationsAt = new Date();
-          return result.inboxNotifications;
-        },
-        5,
-        [5000, 5000, 10000, 15000]
-      );
-    };
-
-    const fetchNotificationsPagePromise = usify(fetchNotificationsPage());
-
-    this._store.set((state) => ({
-      ...state,
-      loadNotificationsRequest: fetchNotificationsPagePromise,
-    }));
-
-    fetchNotificationsPagePromise
-      .then(() => {
-        // Manually mark the state as dirty and update the store so that any subscribers are notified
-        this._store.set((state) => ({ ...state }));
-      })
-      .catch(() => {
-        // Manually mark the state as dirty and update the store so that any subscribers are notified
-        this._store.set((state) => ({ ...state }));
-
-        // Wait for 5 seconds before removing the request from the cache
-        setTimeout(() => {
-          this._store.set((state) => {
-            return {
-              ...state,
-              loadNotificationsRequest: null,
-            };
-          });
-        }, 5000);
-      });
-
-    return fetchNotificationsPagePromise;
+  public waitUntilNotificationsLoaded(): UsablePromise<void> {
+    // XXX Remove this force-cast here
+    return this._store
+      .get()
+      .query1.waitUntilLoaded() as unknown as UsablePromise<void>;
   }
 
   public loadThreads(
@@ -1356,6 +1382,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     if (existingRequest !== undefined) return existingRequest;
 
     const fetchThreads = async (): Promise<ThreadData<M>[]> => {
+      // XXX Make this throw a StopRetrying error instance!
       const client = nn(
         this._client,
         "Client is required in order to load threads and notifications for the room"
