@@ -306,7 +306,7 @@ export type ThreadNotificationEmailDataAsHTML = ThreadNotificationEmailData<
 >;
 
 /**
- * Prepare data from a `ThreadNotificationEvent` and convert comment bodies as an HTML safe string
+ * Prepares data from a `ThreadNotificationEvent` and convert comment bodies as an HTML safe string
  *
  * @param params.client The `Liveblocks` node client
  * @param params.event The `ThreadNotificationEvent` received in the webhook handler
@@ -320,7 +320,7 @@ export type ThreadNotificationEmailDataAsHTML = ThreadNotificationEmailData<
  * import { prepareThreadNotificationEmailAsHTML } from "@liveblocks/emails"
  *
  * const liveblocks = new Liveblocks({ secret: "sk_..." })
- * const data = prepareThreadNotificationEmailAsHTML({
+ * const emailData = prepareThreadNotificationEmailAsHTML({
  *  client: liveblocks,
  *  event,
  *  options: {
@@ -454,7 +454,7 @@ export type ThreadNotificationEmailDataAsReact = ThreadNotificationEmailData<
 >;
 
 /**
- * Prepare data from a `ThreadNotificationEvent` and convert comment bodies as React nodes.
+ * Prepares data from a `ThreadNotificationEvent` and convert comment bodies as React nodes.
  *
  * @param params.client The `Liveblocks` node client
  * @param params.event The `ThreadNotificationEvent` received in the webhook handler
@@ -467,7 +467,7 @@ export type ThreadNotificationEmailDataAsReact = ThreadNotificationEmailData<
  * import { prepareThreadNotificationEmailAsReact } from "@liveblocks/emails"
  *
  * const liveblocks = new Liveblocks({ secret: "sk_..." })
- * const data = prepareThreadNotificationEmailAsReact({
+ * const emailData = prepareThreadNotificationEmailAsReact({
  *  client: liveblocks,
  *  event,
  *  options: {
