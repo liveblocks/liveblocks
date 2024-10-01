@@ -184,21 +184,22 @@ export function makeVersionsQueryKey(roomId: string) {
   return `${roomId}-VERSIONS`;
 }
 
+/**
+ * Like Promise<T>, except it will have a synchronously readable `status`
+ * field, indicating the status of the promise.
+ * This is compatible with React's `use()` promises, hence the name.
+ */
 type UsablePromise<T> = Promise<T> &
   (
-    | {
-        status: "pending";
-      }
-    | {
-        status: "rejected";
-        reason: Error;
-      }
-    | {
-        status: "fulfilled";
-        value: T;
-      }
+    | { status: "pending" }
+    | { status: "rejected"; reason: Error }
+    | { status: "fulfilled"; value: T }
   );
 
+/**
+ * Given any Promise<T>, monkey-patches it to a UsablePromise<T>, whose
+ * asynchronous status can be synchronously observed.
+ */
 function createUsablePromise<T>(promise: Promise<T>): UsablePromise<T> {
   if (!("status" in promise)) {
     (promise as UsablePromise<T>).status = "pending";
