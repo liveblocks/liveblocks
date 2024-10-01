@@ -206,20 +206,20 @@ function usify<T>(promise: Promise<T>): UsablePromise<T> {
     return promise as UsablePromise<T>;
   }
 
-  (promise as UsablePromise<T>).status = "pending";
-  promise.then(
+  const usable: UsablePromise<T> = promise as UsablePromise<T>;
+  usable.status = "pending";
+  usable.then(
     (value) => {
-      (promise as UsablePromise<T>).status = "fulfilled";
-      (promise as Extract<UsablePromise<T>, { status: "fulfilled" }>).value =
-        value;
+      usable.status = "fulfilled";
+      (usable as UsablePromise<T> & { status: "fulfilled" }).value = value;
     },
     (err) => {
-      (promise as UsablePromise<T>).status = "rejected";
-      (promise as Extract<UsablePromise<T>, { status: "rejected" }>).reason =
+      usable.status = "rejected";
+      (usable as UsablePromise<T> & { status: "rejected" }).reason =
         err as Error;
     }
   );
-  return promise as UsablePromise<T>;
+  return usable;
 }
 
 type InternalState<M extends BaseMetadata> = Readonly<{
