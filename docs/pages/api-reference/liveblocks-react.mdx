@@ -2366,7 +2366,7 @@ some metadata.
 import { useCreateThread } from "@liveblocks/react/suspense";
 
 const createThread = useCreateThread();
-const thread = createThread({ body: {}, metadata: {} });
+const thread = createThread({ body: {}, attachments: [], metadata: {} });
 ```
 
 ### useDeleteThread [@badge=RoomProvider]
@@ -2440,7 +2440,11 @@ Returns a function that adds a comment to a thread.
 import { useCreateComment } from "@liveblocks/react/suspense";
 
 const createComment = useCreateComment();
-const comment = createComment({ threadId: "th_xxx", body: {} });
+const comment = createComment({
+  threadId: "th_xxx",
+  body: {},
+  attachments: [],
+});
 ```
 
 ### useEditComment[@badge=RoomProvider]
@@ -2455,6 +2459,7 @@ editComment({
   threadId: "th_xxx",
   commentId: "cm_xxx",
   body: {},
+  attachments: [],
 });
 ```
 
@@ -2491,6 +2496,19 @@ import { useRemoveReaction } from "@liveblocks/react/suspense";
 const removeReaction = useRemoveReaction();
 removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
 ```
+
+### useAttachmentUrl [@badge=RoomProvider]
+
+Returns a presigned URL for an attachment by its ID.
+
+```tsx
+import { useAttachmentUrl } from "@liveblocks/react/suspense";
+
+const { url, error, isLoading } = useAttachmentUrl("at_xxx");
+```
+
+👉 A [Suspense version][] of this hook is also available, which will never return
+a loading state and will throw when there’s an error.
 
 ## Notifications
 

@@ -1,4 +1,4 @@
-import { autoRetry } from "../retry-error";
+import { autoRetry } from "../autoRetry";
 
 function makeFailThreeTimes() {
   let call = 0;

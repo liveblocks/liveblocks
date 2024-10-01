@@ -11,6 +11,8 @@ export * as Composer from "./Composer";
 export type { ComposerContext } from "./Composer/contexts";
 export { useComposer } from "./Composer/contexts";
 export type {
+  ComposerAttachFilesProps,
+  ComposerAttachmentsDropAreaProps,
   ComposerEditorComponents,
   ComposerEditorLinkProps,
   ComposerEditorMentionProps,
@@ -24,6 +26,7 @@ export type {
   ComposerSuggestionsListItemProps,
   ComposerSuggestionsListProps,
 } from "./Composer/types";
+export { AttachmentTooLargeError } from "./Composer/utils";
 export * as EmojiPicker from "./EmojiPicker";
 export type {
   EmojiPickerContentCategoryHeaderProps,
@@ -38,5 +41,7 @@ export type {
   EmojiPickerRootProps,
   EmojiPickerSearchProps,
 } from "./EmojiPicker/types";
+export type { FileSizeProps } from "./FileSize";
+export { FileSize } from "./FileSize";
 export type { TimestampProps } from "./Timestamp";
 export { Timestamp } from "./Timestamp";

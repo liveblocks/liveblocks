@@ -1,3 +1,4 @@
+import { chunk } from "@liveblocks/core";
 import type {
   Emoji as EmojibaseEmoji,
   Locale as EmojibaseLocale,
@@ -6,7 +7,6 @@ import type {
 
 import { EMOJI_FONT_FAMILY } from "../../constants";
 import { capitalize } from "../../utils/capitalize";
-import { chunk } from "../../utils/chunk";
 import type {
   Emoji,
   EmojiCategory,

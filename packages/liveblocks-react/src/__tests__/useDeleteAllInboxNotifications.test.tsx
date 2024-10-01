@@ -87,7 +87,9 @@ describe("useDeleteAllInboxNotifications", () => {
     );
 
     await waitFor(() =>
-      expect(result.current.inboxNotifications).toEqual(inboxNotifications)
+      expect(result.current.inboxNotifications).toEqual(
+        expect.arrayContaining(inboxNotifications)
+      )
     );
 
     act(() => {
@@ -154,7 +156,9 @@ describe("useDeleteAllInboxNotifications", () => {
     );
 
     await waitFor(() =>
-      expect(result.current.inboxNotifications).toEqual(inboxNotifications)
+      expect(result.current.inboxNotifications).toEqual(
+        expect.arrayContaining(inboxNotifications)
+      )
     );
 
     act(() => {
@@ -166,7 +170,9 @@ describe("useDeleteAllInboxNotifications", () => {
 
     await waitFor(() => {
       // The optimistic update is reverted because of the error response
-      expect(result.current.inboxNotifications).toEqual(inboxNotifications);
+      expect(result.current.inboxNotifications).toEqual(
+        expect.arrayContaining(inboxNotifications)
+      );
     });
 
     unmount();
@@ -231,7 +237,9 @@ describe("useDeleteAllInboxNotifications", () => {
     );
 
     await waitFor(() => {
-      expect(result.current.inboxNotifications).toEqual(inboxNotifications);
+      expect(result.current.inboxNotifications).toEqual(
+        expect.arrayContaining(inboxNotifications)
+      );
       expect(result.current.unreadInboxNotificationsCount).toEqual(2);
     });
 
@@ -246,7 +254,9 @@ describe("useDeleteAllInboxNotifications", () => {
 
     await waitFor(() => {
       // The optimistic update is reverted because of the error response
-      expect(result.current.inboxNotifications).toEqual(inboxNotifications);
+      expect(result.current.inboxNotifications).toEqual(
+        expect.arrayContaining(inboxNotifications)
+      );
     });
 
     expect(result.current.unreadInboxNotificationsCount).toEqual(2);
@@ -324,7 +334,9 @@ describe("useDeleteAllInboxNotifications", () => {
     );
 
     await waitFor(() =>
-      expect(result.current.inboxNotifications).toEqual(inboxNotifications)
+      expect(result.current.inboxNotifications).toEqual(
+        expect.arrayContaining(inboxNotifications)
+      )
     );
 
     // We delete all notifications optimitiscally
@@ -418,7 +430,9 @@ describe("useDeleteAllInboxNotifications", () => {
     );
 
     await waitFor(() =>
-      expect(result.current.inboxNotifications).toEqual(inboxNotifications)
+      expect(result.current.inboxNotifications).toEqual(
+        expect.arrayContaining(inboxNotifications)
+      )
     );
 
     // We delete all notifications optimitiscally

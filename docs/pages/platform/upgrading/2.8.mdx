@@ -1,0 +1,125 @@
+---
+meta:
+  title: "Upgrading to 2.8"
+  parentTitle: "Upgrading"
+  description: "Guide to upgrade to Liveblocks version 2.8"
+---
+
+We are introducing attachments to allow users to add files to their comments.
+
+## How to upgrade? [#how]
+
+You can upgrade to 2.8 by downloading the latest version of each Liveblocks
+package you’re using. The easiest way to do that is to run the following
+command:
+
+```bash
+npx create-liveblocks-app@latest --upgrade
+```
+
+## All changes are for Comments
+
+If you are not using Comments or are not using
+[the default Comments components](/docs/products/comments/default-components),
+there are no breaking changes for you! However, if you are, or intend to use
+them later, keep reading.
+
+## Attachments
+
+Liveblocks 2.8 adds attachments to Comments, and while not a breaking change, it
+is mostly enabled by default in the default components. We recommend you either
+[enable attachments](#enable-attachments) or
+[disable attachments](#disable-attachments) when you upgrade.
+
+### Enable attachments [#enable-attachments]
+
+Attachments are enabled by default, but if you’re using
+[`useCreateThread`](/docs/api-reference/liveblocks-react#useCreateThread),
+[`useCreateComment`](/docs/api-reference/liveblocks-react#useCreateComment), or
+[`useEditComment`](/docs/api-reference/liveblocks-react#useEditComment), you can
+now pass these an attachments array.
+
+```tsx
+const createThread = useCreateThread();
+
+// ❌ Before - Liveblocks 2.7
+createThread({ body: {}, metadata: {} });
+
+// ✅ After - Liveblocks 2.8
+createThread({ body: {}, attachments: [], metadata: {} });
+```
+
+These hooks are most commonly used to enable
+[custom Composer behavior](/docs/api-reference/liveblocks-react-ui#Custom-behavior)
+with `onComposerSubmit`, which now provides the `attachments` array for you. You
+must pass this to your mutations for attachments to work correctly.
+
+```tsx
+const createThread = useCreateThread();
+
+// ❌ Before - Liveblocks 2.7
+<Composer
+  onComposerSubmit={({ body }, event) => {
+    event.preventDefault();
+    createThread({ body, metadata: {} });
+  }}
+/>
+
+// ✅ After - Liveblocks 2.8
+<Composer
+// +++
+  onComposerSubmit={({ body, attachments }, event) => {
+    // +++
+    event.preventDefault();
+    // +++
+    createThread({ body, attachments, metadata: {} });
+    // +++
+  }}
+/>
+```
+
+Remember that this applies to
+[`useCreateComment`](/docs/api-reference/liveblocks-react#useCreateComment) and
+[`useEditComment`](/docs/api-reference/liveblocks-react#useEditComment) too, not
+just [`useCreateThread`](/docs/api-reference/liveblocks-react#useCreateThread).
+No further changes are necessary to enable attachments in the default
+components.
+
+{/* TODO If you’re using primitives you must ... */}
+
+### Disable attachments [#disable-attachments]
+
+If you’d prefer to disable attachments, you can do so by setting the
+`showAttachments` prop to `false` on each of the following components:
+[`Composer`](/docs/api-reference/liveblocks-react-ui#Composer),
+[`Comment`](/docs/api-reference/liveblocks-react-ui#Comment),
+[`Thread`](/docs/api-reference/liveblocks-react-ui#Thread), and
+[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification.Thread).
+
+```tsx
+// Disable attachments
+<Composer showAttachments={false} ... />
+<Comment showAttachments={false} ... />
+<Thread showAttachments={false} ... />
+<InboxNotification showAttachments={false} ... />
+```
+
+## Default Composer component structure
+
+The default [`Composer`](/docs/api-reference/liveblocks-react-ui#Composer)
+component’s structure has slightly changed, so if you customized its styles:
+make sure to check if and how the new structure affects your changes.
+
+```html
+<!-- ❌ Before - Liveblocks 2.7 -->
+<form class="lb-root lb-composer lb-composer-form">
+  <!-- The editor and its controls -->
+</form>
+
+<!-- ✅ After - Liveblocks 2.8 -->
+<form class="lb-root lb-composer lb-composer-form">
+  <div class="lb-composer-editor-container">
+    <!-- The editor and its controls -->
+  </div>
+</form>
+```

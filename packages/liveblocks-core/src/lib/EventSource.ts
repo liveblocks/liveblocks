@@ -27,12 +27,6 @@ export type EventSource<T> = Observable<T> & {
    */
   notify(event: T): void;
   /**
-   * Clear all registered event listeners. None of the registered functions
-   * will ever get called again. Be careful when using this API, because the
-   * subscribers may not have any idea they won't be notified anymore.
-   */
-  clear(): void;
-  /**
    * Returns the number of active subscribers.
    */
   count(): number;
@@ -51,6 +45,17 @@ export type EventSource<T> = Observable<T> & {
    * in a readonly fashion. Safe to publicly expose.
    */
   observable: Observable<T>;
+  /**
+   * Clears all registered event listeners. None of the registered functions
+   * will ever get called again.
+   *
+   * WARNING!
+   * Be careful when using this API, because the subscribers may not have any
+   * idea they won't be notified anymore.
+   *
+   * @internal
+   */
+  _forceClear(): void;
 };
 
 export type EventEmitter<T> = (event: T) => void;
@@ -133,7 +138,7 @@ export function makeEventSource<T>(): EventSource<T> {
     _observers.forEach((callback) => callback(event));
   }
 
-  function clear() {
+  function _forceClear() {
     _onetimeObservers.clear();
     _observers.clear();
   }
@@ -147,7 +152,7 @@ export function makeEventSource<T>(): EventSource<T> {
     notify: notifyOrBuffer,
     subscribe,
     subscribeOnce,
-    clear,
+    _forceClear,
     count,
 
     waitUntil,

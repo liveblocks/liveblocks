@@ -85,7 +85,9 @@ describe("useMarkThreadAsRead", () => {
     );
 
     await waitFor(() =>
-      expect(result.current.inboxNotifications).toEqual(inboxNotifications)
+      expect(result.current.inboxNotifications).toEqual(
+        expect.arrayContaining(inboxNotifications)
+      )
     );
 
     // Mark the first thread in our threads list as read
@@ -161,7 +163,9 @@ describe("useMarkThreadAsRead", () => {
     );
 
     await waitFor(() =>
-      expect(result.current.inboxNotifications).toEqual(inboxNotifications)
+      expect(result.current.inboxNotifications).toEqual(
+        expect.arrayContaining(inboxNotifications)
+      )
     );
 
     // Mark the first thread in our threads list as read

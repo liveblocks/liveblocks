@@ -83,7 +83,14 @@ export {
 } from "./immutable";
 export { kInternal } from "./internal";
 export { assert, assertNever, nn } from "./lib/assert";
-export type { AsyncResult, AsyncResultWithDataField } from "./lib/AsyncResult";
+export type {
+  AsyncError,
+  AsyncLoading,
+  AsyncResult,
+  AsyncSuccess,
+} from "./lib/AsyncResult";
+export { autoRetry } from "./lib/autoRetry";
+export { chunk } from "./lib/chunk";
 export {
   createCommentId,
   createInboxNotificationId,
@@ -109,6 +116,8 @@ export { asPos, makePosition } from "./lib/position";
 export type { Resolve } from "./lib/Resolve";
 export { shallow } from "./lib/shallow";
 export { stringify } from "./lib/stringify";
+export type { QueryParams, URLSafeString } from "./lib/url";
+export { url, urljoin } from "./lib/url";
 export type { Brand, DistributiveOmit } from "./lib/utils";
 export {
   b64decode,
@@ -147,8 +156,11 @@ export type {
   CommentBodyText,
 } from "./protocol/Comments";
 export type {
+  CommentAttachment,
   CommentData,
   CommentDataPlain,
+  CommentLocalAttachment,
+  CommentMixedAttachment,
   CommentReaction,
 } from "./protocol/Comments";
 export type {
@@ -226,7 +238,7 @@ export type {
   RoomEventMessage,
   StorageStatus,
 } from "./room";
-export type { GetThreadsOptions } from "./room";
+export type { GetThreadsOptions, UploadAttachmentOptions } from "./room";
 export { CommentsApiError } from "./room";
 export type { Immutable } from "./types/Immutable";
 export type {

@@ -19,3 +19,9 @@ export const listFormat = memoize(
     return new Intl.ListFormat(...args);
   }
 );
+
+export const numberFormat = memoize(
+  (...args: ConstructorParameters<(typeof Intl)["NumberFormat"]>) => {
+    return new Intl.NumberFormat(...args);
+  }
+);

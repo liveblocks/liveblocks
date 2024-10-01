@@ -79,6 +79,7 @@ export {
   useStorage,
   useStorageStatus,
   useThreads,
+  useAttachmentUrl,
   useHistoryVersions,
 } from "./room";
 export {
