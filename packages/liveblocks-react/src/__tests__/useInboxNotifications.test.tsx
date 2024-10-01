@@ -16,7 +16,10 @@ import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 import { POLLING_INTERVAL } from "../liveblocks";
 import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
-import { mockGetInboxNotifications } from "./_restMocks";
+import {
+  mockGetInboxNotifications,
+  mockGetInboxNotificationsDelta,
+} from "./_restMocks";
 import { createContextsForTest } from "./_utils";
 
 const server = setupServer();
@@ -48,10 +51,9 @@ describe("useInboxNotifications", () => {
           ctx.json({
             threads,
             inboxNotifications,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -99,10 +101,9 @@ describe("useInboxNotifications", () => {
           ctx.json({
             threads,
             inboxNotifications,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -155,10 +156,9 @@ describe("useInboxNotifications", () => {
           ctx.json({
             threads,
             inboxNotifications,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -173,10 +173,9 @@ describe("useInboxNotifications", () => {
           ctx.json({
             threads,
             inboxNotifications,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -259,10 +258,9 @@ describe("useInboxNotifications", () => {
           ctx.json({
             threads: [],
             inboxNotifications: [],
-            deletedThreads: [],
-            deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -395,10 +393,9 @@ describe("useInboxNotifications - Suspense", () => {
           ctx.json({
             threads,
             inboxNotifications,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -459,11 +456,26 @@ describe("useInboxNotifications: polling", () => {
     const inboxNotifications = [
       dummyThreadInboxNotificationData({ roomId, threadId: threads[0]!.id }),
     ];
-    let getInboxNotificationsReqCount = 0;
+
+    let initialCount = 0;
+    let pollerCount = 0;
 
     server.use(
       mockGetInboxNotifications(async (_req, res, ctx) => {
-        getInboxNotificationsReqCount++;
+        initialCount++;
+        return res(
+          ctx.json({
+            threads,
+            inboxNotifications,
+            meta: {
+              requestedAt: new Date().toISOString(),
+              nextCursor: null,
+            },
+          })
+        );
+      }),
+      mockGetInboxNotificationsDelta(async (_req, res, ctx) => {
+        pollerCount++;
         return res(
           ctx.json({
             threads,
@@ -495,19 +507,25 @@ describe("useInboxNotifications: polling", () => {
       return null;
     };
 
+    expect(initialCount).toBe(0);
+    expect(pollerCount).toBe(0);
+
     const { unmount } = render(<Room />);
 
     // A new fetch request for the threads should have been made after the initial render
-    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(1));
+    await waitFor(() => expect(initialCount).toBe(1));
+    await waitFor(() => expect(pollerCount).toBe(0));
 
     // Wait for the first polling to occur after the initial render
     jest.advanceTimersByTime(POLLING_INTERVAL);
-    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(2));
+    expect(initialCount).toBe(1);
+    await waitFor(() => expect(pollerCount).toBe(1));
 
     // Advance time to simulate the polling interval
     jest.advanceTimersByTime(POLLING_INTERVAL);
     // Wait for the second polling to occur
-    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(3));
+    expect(initialCount).toBe(1);
+    await waitFor(() => expect(pollerCount).toBe(2));
 
     unmount();
   });
@@ -606,10 +624,9 @@ describe("useInboxNotificationsSuspense: error", () => {
           ctx.json({
             threads,
             inboxNotifications,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
