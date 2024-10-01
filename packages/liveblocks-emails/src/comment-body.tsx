@@ -107,9 +107,6 @@ const baseComponents: ConvertCommentBodyAsReactComponents<BaseUserMeta> = {
     // Note: construction following the schema 👇
     // <code><s><em><strong>{element.text}</strong></s></em></code>
     let children: React.ReactNode = element.text;
-    if (!children) {
-      return <span key={`lb-comment-body-text-${subKey}`}>{children}</span>;
-    }
 
     if (element.bold) {
       children = (
