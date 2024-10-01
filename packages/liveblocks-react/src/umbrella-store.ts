@@ -353,7 +353,6 @@ class PaginatedResource {
 
   private _cachedPromise: UsablePromise<void> | null = null;
 
-  // XXX Change to void return type later WITHOUT actually making it a different promise at runtime!
   public waitUntilLoaded(): UsablePromise<void> {
     if (this._cachedPromise) {
       return this._cachedPromise;
@@ -376,7 +375,7 @@ class PaginatedResource {
           fetchMoreError: undefined,
         };
 
-        return undefined;
+        return;
       })
     );
 
@@ -403,7 +402,6 @@ type InternalState<M extends BaseMetadata> = Readonly<{
   // This is a temporary refactoring artifact from Vincent and Nimesh.
   // Each query corresponds to a resource which should eventually have its own type.
   // This is why we split it for now.
-  query1: PaginatedResource; // Inbox notifications
   queries2: Record<string, QueryAsyncResult>; // Threads
   queries3: Record<string, QueryAsyncResult>; // Notification settings
   queries4: Record<string, QueryAsyncResult>; // Versions
@@ -482,7 +480,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
   private _stateCached: UmbrellaStoreState<M> | null = null;
   private _lastRequestedThreadsAtByRoom = new Map<string, Date>(); // A map of room ids to the timestamp when the last request for threads updates was made
   private _requestStatusByRoom = new Map<string, boolean>(); // A map of room ids to a boolean indicating whether a request to retrieve threads updates is in progress
-  private _lastRequestedNotificationsAt: Date | null = null;
+  private _lastRequestedNotificationsAt: Date | null = null; // Keeps track of when we successfully requested an inbox notifications update for the last time. Will be `null` as long as the first successful fetch hasn't happened yet.
+  private _notificationsPaginatedResource: PaginatedResource;
 
   constructor(client?: OpaqueClient) {
     const inboxFetcher = async (cursor?: string) => {
@@ -501,17 +500,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     this._client = client;
 
-    const query1 = new PaginatedResource(inboxFetcher);
-    query1.observable.subscribe(() => {
-      this._store.set((store) => ({ ...store }));
-    });
+    this._notificationsPaginatedResource = new PaginatedResource(inboxFetcher);
+    this._notificationsPaginatedResource.observable.subscribe(() =>
+      this._store.set((store) => ({ ...store }))
+    );
 
     this._store = createStore<InternalState<M>>({
       rawThreadsById: {},
       loadThreadsRequests: {},
-      // loadNotificationsRequest: null,
-      // XXX Remove query1 once we switched to the new UsablePromise for notifications
-      query1,
+      loadNotificationsRequest: null,
       queries2: {},
       queries3: {},
       queries4: {},
@@ -591,51 +588,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return { isLoading: false, fullState: this.getFullState() };
   }
 
-  private fetchMoreInboxNotifications(): void {
-    // XXX Remove query1 once we switched to the new UsablePromise for notifications
-    const pageState = this._store.get().query1?.data;
-    if (!pageState || pageState.isFetchingMore || !pageState.cursor) {
-      // Not in the right state, make this a no-op
-      return;
-    }
-
-    const cursor = pageState.cursor;
-    this.setQuery1OK({
-      ...pageState,
-      isFetchingMore: true,
-    });
-
-    // XXX It's not sitting well that this code to figure out the next cursor is duplicated in two places now!
-    void nn(this._client, "To call fetchMore(), we need a client")
-      .getInboxNotifications({ cursor })
-      .then((data) => {
-        this.batch(() => {
-          this.updateThreadsAndNotifications(
-            data.threads as ThreadData<M>[], // XXX Remove this cast :(
-            data.inboxNotifications
-          );
-
-          this.setQuery1OK({
-            ...pageState,
-            cursor: data.cursor, // Advance to the next cursor
-            fetchMoreError: undefined,
-            isFetchingMore: false,
-          });
-        });
-      })
-      .catch((err) => {
-        this.setQuery1OK({
-          ...pageState,
-          fetchMoreError: err as Error,
-          isFetchingMore: false,
-        });
-      });
-  }
-
   // NOTE: This will read the async result, but WILL NOT start loading at the moment!
   public getInboxNotificationsAsync(): InboxNotificationsAsyncResult {
-    const internalState = this._store.get();
-    const notificationState = internalState.query1.get();
+    const notificationState = this._notificationsPaginatedResource.get();
     if (notificationState.isLoading || notificationState.error) {
       return notificationState;
     }
@@ -643,6 +598,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     const pageState = notificationState.data;
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
+      isLoading: false,
       ...pageState,
       inboxNotifications: this.getFullState().notifications,
     };
@@ -1344,18 +1300,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
     );
   }
 
-  // XXX This is React-specific, move it to the hook
-  public loadNotifications() {
-    void this.waitUntilNotificationsLoaded().catch(() => {
-      // Deliberately catch and ignore any errors here
-    });
-  }
-
   public waitUntilNotificationsLoaded(): UsablePromise<void> {
-    // XXX Remove this force-cast here
-    return this._store
-      .get()
-      .query1.waitUntilLoaded() as unknown as UsablePromise<void>;
+    return this._notificationsPaginatedResource.waitUntilLoaded();
   }
 
   public loadThreads(

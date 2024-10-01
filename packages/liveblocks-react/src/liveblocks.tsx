@@ -15,11 +15,9 @@ import type {
 } from "@liveblocks/core";
 import {
   assert,
-  autoRetry,
   createClient,
   kInternal,
   makePoller,
-  memoizeOnSuccess,
   raise,
   shallow,
   stringify,
@@ -313,103 +311,16 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   // - Pagination will perform a GET /v2/c/inbox-notifications?cursor=...
   //
 
-  // Keeps track of when we successfully requested an inbox notifications
-  // update for the last time. Will be `undefined` as long as the first
-  // successful fetch hasn't happened yet.
-  let lastRequestedAt: Date | undefined;
-
-  /**
-   * Performs the first page fetch for inbox notifications.
-   */
-  async function fetchNotificationsPage() {
-    const result = await client.getInboxNotifications(/* no cursor yet */);
-
-    lastRequestedAt = new Date();
-
-    store.batch(() => {
-      store.updateThreadsAndNotifications(
-        result.threads,
-        result.inboxNotifications
-      );
-
-      store.setQuery1OK({
-        cursor: result.cursor,
-        isFetchingMore: false,
-        fetchMoreError: undefined,
-      });
-    });
-  }
-
-  /**
-   * Performs a delta update for inbox notifications.
-   * XXX - Replace this with `fetchNotificationsDeltaUpdate` from umbrella store after fixing the currently failing tests
-   */
-  async function fetchDeltaUpdate() {
-    if (lastRequestedAt === undefined) {
-      throw new Error("Expected there is at least one page");
-    }
-
-    const result = await client.getInboxNotificationsSince(lastRequestedAt);
-
-    if (lastRequestedAt === undefined || lastRequestedAt < result.requestedAt) {
-      lastRequestedAt = result.requestedAt;
-    }
-
-    store.updateThreadsAndNotifications(
-      result.threads.updated,
-      result.inboxNotifications.updated,
-      result.threads.deleted,
-      result.inboxNotifications.deleted
-    );
-  }
-
   let pollerSubscribers = 0;
   const poller = makePoller(async () => {
     try {
-      await waitUntilInboxNotificationsLoaded();
-      await fetchDeltaUpdate();
+      await store.waitUntilNotificationsLoaded();
+      await store.fetchNotificationsDeltaUpdate();
     } catch (err) {
       // When polling, we don't want to throw errors, ever
       console.warn(`Polling new inbox notifications failed: ${String(err)}`);
     }
   });
-
-  /**
-   * Will trigger an initial fetch of inbox notifications if this hasn't
-   * already happened. Will resolve once there is initial data. Will retry
-   * a few times automatically in case fetching fails, with incremental backoff
-   * delays. Will throw eventually only if all retries fail.
-   *
-   * XXX - Replace this with the `loadNotifications` method from umbrella store after fixing the currently failing tests
-   */
-  const waitUntilInboxNotificationsLoaded = memoizeOnSuccess(async () => {
-    store.setQuery1Loading();
-
-    try {
-      await autoRetry(
-        () => fetchNotificationsPage(),
-        5,
-        [5000, 5000, 10000, 15000]
-      );
-    } catch (err) {
-      // Store the error in the cache as a side-effect, for non-Suspense
-      store.setQuery1Error(err as Error);
-
-      // Rethrow it for Suspense, where this promise must fail
-      throw err;
-    }
-  });
-
-  /**
-   * Triggers an initial fetch of inbox notifications if this hasn't
-   * already happened.
-   * XXX - Replace this with the `loadNotifications` method from umbrella store after fixing the currently failing tests
-   */
-  function loadInboxNotifications(): void {
-    void waitUntilInboxNotificationsLoaded().catch(() => {
-      // Deliberately catch and ignore any errors here
-    });
-  }
 
   /**
    * Enables polling for inbox notifications when the component mounts. Stops
@@ -580,8 +491,6 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   return {
     store,
     startPolling,
-    waitUntilInboxNotificationsLoaded,
-    loadInboxNotifications,
     incrementUserThreadsQuerySubscribers,
     getUserThreads,
   };
@@ -663,12 +572,16 @@ function makeLiveblocksContextBundle<
 }
 
 function useInboxNotifications_withClient(client: OpaqueClient) {
-  const { loadInboxNotifications, store, startPolling } =
-    getExtrasForClient(client);
+  const { store, startPolling } = getExtrasForClient(client);
 
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
-  useEffect(loadInboxNotifications, [loadInboxNotifications]);
+  useEffect(() => {
+    store.waitUntilNotificationsLoaded().catch(() => {
+      // Deliberately catch and ignore any errors here
+    });
+  }, [store]);
+
   useEffect(startPolling, [startPolling]);
 
   return useSyncExternalStoreWithSelector(
@@ -681,10 +594,10 @@ function useInboxNotifications_withClient(client: OpaqueClient) {
 }
 
 function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
-  const { waitUntilInboxNotificationsLoaded } = getExtrasForClient(client);
+  const store = getExtrasForClient(client).store;
 
   // Suspend until there are at least some inbox notifications
-  use(waitUntilInboxNotificationsLoaded());
+  use(store.waitUntilNotificationsLoaded());
 
   // We're in a Suspense world here, and as such, the useInboxNotifications()
   // hook is expected to only return success results when we're here.
@@ -695,12 +608,16 @@ function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
 }
 
 function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
-  const { store, loadInboxNotifications, startPolling } =
-    getExtrasForClient(client);
+  const { store, startPolling } = getExtrasForClient(client);
 
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
-  useEffect(loadInboxNotifications, [loadInboxNotifications]);
+  useEffect(() => {
+    store.waitUntilNotificationsLoaded().catch(() => {
+      // Deliberately catch and ignore any errors here
+    });
+  }, [store]);
+
   useEffect(startPolling, [startPolling]);
 
   return useSyncExternalStoreWithSelector(
@@ -715,10 +632,10 @@ function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
 function useUnreadInboxNotificationsCountSuspense_withClient(
   client: OpaqueClient
 ) {
-  const { waitUntilInboxNotificationsLoaded } = getExtrasForClient(client);
+  const store = getExtrasForClient(client).store;
 
   // Suspend until there are at least some inbox notifications
-  use(waitUntilInboxNotificationsLoaded());
+  use(store.waitUntilNotificationsLoaded());
 
   const result = useUnreadInboxNotificationsCount_withClient(client);
   assert(!result.isLoading, "Did not expect loading");
