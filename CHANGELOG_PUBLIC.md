@@ -15,7 +15,16 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 40 (2024-10-04)
 
+## 2.8.1
+
+### `@liveblocks/react-ui`
+
+- Expose `onComposerSubmit` on `Thread` to react to the inner composer of a
+  thread.
+
 ## Contributors
+
+marcbouchenoire
 
 # Week 39 (2024-09-27)
 
