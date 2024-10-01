@@ -94,7 +94,9 @@ describe("convert comment body as React", () => {
       const markupBody = renderToStaticMarkup(<>{reactBody}</>);
       const expected = renderToStaticMarkup(
         <div>
-          <p>What do you think of this team? 🤔</p>
+          <p>
+            <span>What do you think of this team? 🤔</span>
+          </p>
         </div>
       );
 
@@ -108,7 +110,13 @@ describe("convert comment body as React", () => {
       const expected = renderToStaticMarkup(
         <div>
           <p>
-            <strong>Bold text</strong> and <em>italic text</em>
+            <span>
+              <strong>Bold text</strong>
+            </span>
+            <span> and </span>
+            <span>
+              <em>italic text</em>
+            </span>
           </p>
         </div>
       );
@@ -123,7 +131,13 @@ describe("convert comment body as React", () => {
       const expected = renderToStaticMarkup(
         <div>
           <p>
-            <s>Strikethrough text</s> and <code>code text</code>
+            <span>
+              <s>Strikethrough text</s>
+            </span>
+            <span> and </span>
+            <span>
+              <code>code text</code>
+            </span>
           </p>
         </div>
       );
@@ -143,7 +157,7 @@ describe("convert comment body as React", () => {
       const expected1 = renderToStaticMarkup(
         <div>
           <p>
-            I agree 😍 it completes well this guide:{" "}
+            <span>I agree 😍 it completes well this guide: </span>
             <a
               href="https://www.liveblocks.io"
               target="_blank"
@@ -158,7 +172,7 @@ describe("convert comment body as React", () => {
       const expected2 = renderToStaticMarkup(
         <div>
           <p>
-            Check out this{" "}
+            <span>Check out this </span>
             <a
               href="https://www.liveblocks.io"
               target="_blank"
@@ -183,7 +197,11 @@ describe("convert comment body as React", () => {
       const expected = renderToStaticMarkup(
         <div>
           <p>
-            Hello <span data-mention>@user-dracula</span> !
+            <span>Hello</span>
+            <span> </span>
+            <span data-mention>@user-dracula</span>
+            <span> </span>
+            <span>!</span>
           </p>
         </div>
       );
@@ -203,7 +221,11 @@ describe("convert comment body as React", () => {
       const expected = renderToStaticMarkup(
         <div>
           <p>
-            Hello <span data-mention>@Tatum Paolo</span> !
+            <span>Hello</span>
+            <span> </span>
+            <span data-mention>@Tatum Paolo</span>
+            <span> </span>
+            <span>!</span>
           </p>
         </div>
       );
@@ -236,7 +258,11 @@ describe("convert comment body as React", () => {
       const expected = renderToStaticMarkup(
         <main>
           <p style={{ display: "flex" }}>
-            Hello <span>user#Charlie Layne</span> !
+            <span>Hello</span>
+            <span> </span>
+            <span>user#Charlie Layne</span>
+            <span> </span>
+            <span>!</span>
           </p>
         </main>
       );

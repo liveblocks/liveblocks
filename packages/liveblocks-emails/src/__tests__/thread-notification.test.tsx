@@ -633,7 +633,11 @@ describe("thread notification", () => {
           reactBody: (
             <div>
               <p>
-                Hello <span data-mention>@user-1</span> !
+                <span>Hello</span>
+                <span> </span>
+                <span data-mention>@user-1</span>
+                <span> </span>
+                <span>!</span>
               </p>
             </div>
           ),
@@ -658,7 +662,11 @@ describe("thread notification", () => {
           reactBody: (
             <div>
               <p>
-                Hello <span data-mention>@Mislav Abha</span> !
+                <span>Hello</span>
+                <span> </span>
+                <span data-mention>@Mislav Abha</span>
+                <span> </span>
+                <span>!</span>
               </p>
             </div>
           ),
@@ -745,7 +753,11 @@ describe("thread notification", () => {
           reactBody: (
             <main>
               <p>
-                Hello <span>u#user-1</span> !
+                <span>Hello</span>
+                <span> </span>
+                <span>u#user-1</span>
+                <span> </span>
+                <span>!</span>
               </p>
             </main>
           ),
@@ -770,7 +782,11 @@ describe("thread notification", () => {
           reactBody: (
             <main>
               <p>
-                Hello <span>u#Mislav Abha</span> !
+                <span>Hello</span>
+                <span> </span>
+                <span>u#Mislav Abha</span>
+                <span> </span>
+                <span>!</span>
               </p>
             </main>
           ),
@@ -861,7 +877,7 @@ describe("thread notification", () => {
             reactBody: (
               <div>
                 <p>
-                  I agree 😍 it completes well this guide:{" "}
+                  <span>I agree 😍 it completes well this guide: </span>
                   <a
                     href="https://www.liveblocks.io"
                     target="_blank"
@@ -893,7 +909,7 @@ describe("thread notification", () => {
             reactBody: (
               <div>
                 <p>
-                  I agree 😍 it completes well this guide:{" "}
+                  <span>I agree 😍 it completes well this guide: </span>
                   <a
                     href="https://www.liveblocks.io"
                     target="_blank"
@@ -991,7 +1007,7 @@ describe("thread notification", () => {
             reactBody: (
               <main>
                 <p>
-                  I agree 😍 it completes well this guide:{" "}
+                  <span>I agree 😍 it completes well this guide: </span>
                   <a href="https://www.liveblocks.io" data-link>
                     https://www.liveblocks.io
                   </a>
@@ -1019,7 +1035,7 @@ describe("thread notification", () => {
             reactBody: (
               <main>
                 <p>
-                  I agree 😍 it completes well this guide:{" "}
+                  <span>I agree 😍 it completes well this guide: </span>
                   <a href="https://www.liveblocks.io" data-link>
                     https://www.liveblocks.io
                   </a>

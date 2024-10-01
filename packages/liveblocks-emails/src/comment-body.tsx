@@ -108,7 +108,7 @@ const baseComponents: ConvertCommentBodyAsReactComponents<BaseUserMeta> = {
     // <code><s><em><strong>{element.text}</strong></s></em></code>
     let children: React.ReactNode = element.text;
     if (!children) {
-      return children;
+      return <span key={`lb-comment-body-text-${subKey}`}>{children}</span>;
     }
 
     if (element.bold) {
@@ -133,7 +133,7 @@ const baseComponents: ConvertCommentBodyAsReactComponents<BaseUserMeta> = {
       );
     }
 
-    return children;
+    return <span key={`lb-comment-body-text-${subKey}`}>{children}</span>;
   },
   Link: ({ element, href }) => (
     <a href={href} target="_blank" rel="noopener noreferrer">
