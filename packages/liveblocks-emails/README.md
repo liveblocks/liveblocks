@@ -7,26 +7,28 @@
   </a>
 </p>
 
-# `@liveblocks/react`
+# `@liveblocks/emails`
 
 <p>
-  <a href="https://npmjs.org/package/@liveblocks/react">
-    <img src="https://img.shields.io/npm/v/@liveblocks/react?style=flat&label=npm&color=c33" alt="NPM" />
+  <a href="https://npmjs.org/package/@liveblocks/emails">
+    <img src="https://img.shields.io/npm/v/@liveblocks/emails?style=flat&label=npm&color=c33" alt="NPM" />
   </a>
-  <a href="https://bundlephobia.com/package/@liveblocks/react">
-    <img src="https://img.shields.io/bundlephobia/minzip/@liveblocks/react?style=flat&label=size&color=09f" alt="Size" />
+  <a href="https://bundlephobia.com/package/@liveblocks/emails">
+    <img src="https://img.shields.io/bundlephobia/minzip/@liveblocks/emails?style=flat&label=size&color=09f" alt="Size" />
   </a>
   <a href="https://github.com/liveblocks/liveblocks/blob/main/LICENSE">
     <img src="https://img.shields.io/github/license/liveblocks/liveblocks?style=flat&label=license&color=f80" alt="License" />
   </a>
 </p>
 
-`@liveblocks/emails` does ...
+`@liveblocks/emails` provides pre-built functions to prepare thread or text
+mention notifications data as [React](https://reactjs.org/) or as HTML to be
+consumed in an email template.
 
 ## Installation
 
 ```
-npm install @liveblocks/emails
+npm install @liveblocks/node @liveblocks/emails
 ```
 
 ## Documentation
