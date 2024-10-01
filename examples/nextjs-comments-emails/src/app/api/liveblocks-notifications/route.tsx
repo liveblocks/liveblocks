@@ -5,6 +5,7 @@ import {
   WebhookHandler,
   Liveblocks,
 } from "@liveblocks/node";
+import { Section, Text } from "@react-email/components";
 import { render } from "@react-email/render";
 import { getUsers } from "../../../database";
 import { UnreadRepliesEmail } from "../../../../emails/UnreadRepliesEmail";
@@ -50,6 +51,13 @@ export async function POST(request: Request) {
                 url: `http://example.com?roomId=${roomId}`,
               };
             },
+            commentBodyComponents: {
+              Slot: ({ children }) => <Section>{children}</Section>,
+              Paragraph: ({ children }) => <Text>{children}</Text>,
+              Mention: ({ element, user }) => (
+                <span>@{user?.name ?? element.id}</span>
+              ),
+            },
           },
         });
 
@@ -57,10 +65,12 @@ export async function POST(request: Request) {
         if (emailData !== null) {
           let html = "";
 
-          // Handle unread replies case
+          // Handle unread replies use case
           if (emailData.type === "unreadReplies") {
             html = await render(<UnreadRepliesEmail />, { pretty: true });
-          } else if (emailData.type === "unreadMention") {
+          }
+          // Handle last unread comment with mention use case
+          else if (emailData.type === "unreadMention") {
             html = await render(<UnreadMentionEmail />, { pretty: true });
           }
 
