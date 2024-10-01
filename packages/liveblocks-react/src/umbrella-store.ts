@@ -29,6 +29,7 @@ import {
   nn,
 } from "@liveblocks/core";
 
+import { autobind } from "./lib/autobind";
 import { isMoreRecentlyUpdated } from "./lib/compare";
 import type {
   InboxNotificationsAsyncResult,
@@ -321,26 +322,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
       versionsByRoomId: {},
     });
 
-    // Auto-bind all of this class methods once here, so we can use stable
+    // Auto-bind all of this class’ methods here, so we can use stable
     // references to them (most important for use in useSyncExternalStore)
-    this.getFullState = this.getFullState.bind(this);
-    this.getInboxNotificationsAsync =
-      this.getInboxNotificationsAsync.bind(this);
-    this.subscribeThreads = this.subscribeThreads.bind(this);
-    this.subscribeUserThreads = this.subscribeUserThreads.bind(this);
-    this.subscribeThreadsOrInboxNotifications =
-      this.subscribeThreadsOrInboxNotifications.bind(this);
-    this.subscribeNotificationSettings =
-      this.subscribeNotificationSettings.bind(this);
-    this.subscribeVersions = this.subscribeVersions.bind(this);
-
-    // APIs only used by the E2E tests at the moment
-    this._hasOptimisticUpdates = this._hasOptimisticUpdates.bind(this);
-    this._subscribeOptimisticUpdates =
-      this._subscribeOptimisticUpdates.bind(this);
-
-    this.fetchMoreInboxNotifications =
-      this.fetchMoreInboxNotifications.bind(this);
+    autobind(this);
   }
 
   private get(): UmbrellaStoreState<M> {
