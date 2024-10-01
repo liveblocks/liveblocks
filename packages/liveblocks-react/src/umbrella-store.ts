@@ -200,7 +200,7 @@ type UsablePromise<T> = Promise<T> &
  * Given any Promise<T>, monkey-patches it to a UsablePromise<T>, whose
  * asynchronous status can be synchronously observed.
  */
-function createUsablePromise<T>(promise: Promise<T>): UsablePromise<T> {
+function usify<T>(promise: Promise<T>): UsablePromise<T> {
   if (!("status" in promise)) {
     (promise as UsablePromise<T>).status = "pending";
     promise.then(
@@ -1198,9 +1198,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       );
     };
 
-    const fetchNotificationsPagePromise = createUsablePromise(
-      fetchNotificationsPage()
-    );
+    const fetchNotificationsPagePromise = usify(fetchNotificationsPage());
 
     this._store.set((state) => ({
       ...state,
@@ -1297,7 +1295,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       );
     };
 
-    const fetchThreadsPromise = createUsablePromise(fetchThreads());
+    const fetchThreadsPromise = usify(fetchThreads());
 
     this._store.set((state) => ({
       ...state,
