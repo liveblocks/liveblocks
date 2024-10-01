@@ -80,6 +80,7 @@ export async function POST(request: Request) {
             });
           }
         }
+        return new Response(null, { status: 200 });
       } catch (err) {
         console.error(err);
         return new Response("Something went wrong", { status: 400 });
