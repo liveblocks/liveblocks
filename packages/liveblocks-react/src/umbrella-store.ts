@@ -492,9 +492,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
         result.inboxNotifications
       );
 
-      this._lastRequestedNotificationsAt = new Date();
+      // We initialize the `_lastRequestedNotificationsAt` date using the server timestamp after we've loaded the first page of inbox notifications.
+      if (this._lastRequestedNotificationsAt === null) {
+        this._lastRequestedNotificationsAt = result.requestedAt;
+      }
 
-      const nextCursor = result.cursor; // XXX Rename this to `nextCursor`
+      const nextCursor = result.nextCursor;
       return nextCursor;
     };
 
@@ -1276,10 +1279,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   public async fetchNotificationsDeltaUpdate() {
     const lastRequestedAt = this._lastRequestedNotificationsAt;
-
-    if (lastRequestedAt === null) {
-      throw new Error("Expected there is at least one page");
-    }
+    if (lastRequestedAt === null) return;
 
     const client = nn(
       this._client,
@@ -1288,7 +1288,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     const result = await client.getInboxNotificationsSince(lastRequestedAt);
 
-    if (lastRequestedAt === undefined || lastRequestedAt < result.requestedAt) {
+    if (lastRequestedAt < result.requestedAt) {
       this._lastRequestedNotificationsAt = result.requestedAt;
     }
 

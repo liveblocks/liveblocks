@@ -213,15 +213,16 @@ export type NotificationsApi<M extends BaseMetadata> = {
    * const {
    *   inboxNotifications,
    *   threads,
-   *   cursor,
+   *   nextCursor,
    * } = await client.getInboxNotifications();
    * const data = await client.getInboxNotifications();  // Fetch initial page (of 20 inbox notifications)
-   * const data = await client.getInboxNotifications({ cursor });  // Fetch next page (= next 20 inbox notifications)
+   * const data = await client.getInboxNotifications({ cursor: nextCursor });  // Fetch next page (= next 20 inbox notifications)
    */
   getInboxNotifications(options?: { cursor?: string }): Promise<{
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<M>[];
-    cursor: string | null;
+    nextCursor: string | null;
+    requestedAt: Date;
   }>;
 
   /**

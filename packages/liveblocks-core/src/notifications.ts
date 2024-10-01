@@ -144,7 +144,9 @@ export function createNotificationsApi<M extends BaseMetadata>({
         convertToInboxNotificationData
       ),
       threads: json.threads.map(convertToThreadData),
-      cursor: json.meta.nextCursor,
+      // XXX - Think about keeping `nextCursor` and `requestedAt` in a meta property
+      nextCursor: json.meta.nextCursor,
+      requestedAt: json.meta.requestedAt,
     };
   }
 
