@@ -21,6 +21,8 @@ export type {
   ThreadNotificationEmailDataAsHTML,
   PrepareThreadNotificationEmailAsReactOptions,
   ThreadNotificationEmailDataAsReact,
+  CommentEmailAsHTMLData,
+  CommentEmailAsReactData,
 } from "./thread-notification";
 export {
   prepareThreadNotificationEmailAsHTML,

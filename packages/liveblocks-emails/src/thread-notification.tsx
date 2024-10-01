@@ -235,7 +235,7 @@ const resolveAuthorsInfo = async <U extends BaseUserMeta>({
   return resolvedAuthors;
 };
 
-type CommentEmailAsHTMLData<U extends BaseUserMeta> = Omit<
+export type CommentEmailAsHTMLData<U extends BaseUserMeta = DU> = Omit<
   CommentEmailBaseData,
   "userId" | "rawBody"
 > & {
@@ -243,7 +243,7 @@ type CommentEmailAsHTMLData<U extends BaseUserMeta> = Omit<
   htmlBody: string;
 };
 
-type CommentEmailAsReactData<U extends BaseUserMeta> = Omit<
+export type CommentEmailAsReactData<U extends BaseUserMeta = DU> = Omit<
   CommentEmailBaseData,
   "userId" | "rawBody"
 > & {
@@ -294,7 +294,7 @@ export type PrepareThreadNotificationEmailAsHTMLOptions<
 
 export type ThreadNotificationEmailDataAsHTML = ThreadNotificationEmailData<
   BaseUserMeta,
-  CommentEmailAsHTMLData<BaseUserMeta>
+  CommentEmailAsHTMLData
 >;
 
 /**
@@ -436,7 +436,7 @@ export type PrepareThreadNotificationEmailAsReactOptions<
 
 export type ThreadNotificationEmailDataAsReact = ThreadNotificationEmailData<
   BaseUserMeta,
-  CommentEmailAsReactData<BaseUserMeta>
+  CommentEmailAsReactData
 >;
 
 /**
