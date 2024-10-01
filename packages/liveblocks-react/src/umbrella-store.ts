@@ -230,6 +230,8 @@ type InternalState<M extends BaseMetadata> = Readonly<{
 
   loadThreadsRequests: Record<string, UsablePromise<ThreadData<M>[]>>;
 
+  loadNotificationsRequest: UsablePromise<InboxNotificationData[]> | null;
+
   optimisticUpdates: readonly OptimisticUpdate<M>[];
 
   rawThreadsById: Record<string, ThreadDataWithDeleteInfo<M>>;
@@ -298,8 +300,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
   private _store: Store<InternalState<M>>;
   private _prevState: InternalState<M> | null = null;
   private _stateCached: UmbrellaStoreState<M> | null = null;
-  private _lastRequestedAtByRoom = new Map<string, Date>(); // A map of room ids to the timestamp when the last request for threads updates was made
+  private _lastRequestedThreadsAtByRoom = new Map<string, Date>(); // A map of room ids to the timestamp when the last request for threads updates was made
   private _requestStatusByRoom = new Map<string, boolean>(); // A map of room ids to a boolean indicating whether a request to retrieve threads updates is in progress
+  private _lastRequestedNotificationsAt: Date | null = null;
 
   constructor(client?: OpaqueClient) {
     this._client = client;
@@ -307,6 +310,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       rawThreadsById: {},
       // queries: {},
       loadThreadsRequests: {},
+      loadNotificationsRequest: null,
       query1: undefined,
       queries2: {},
       queries3: {},
@@ -1139,7 +1143,109 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.setQuery4State(queryKey, { isLoading: false, error });
   }
 
-  public loadThreadsAndNotifications(
+  public async fetchNotificationsDeltaUpdate() {
+    const lastRequestedAt = this._lastRequestedNotificationsAt;
+
+    if (lastRequestedAt === null) {
+      throw new Error("Expected there is at least one page");
+    }
+
+    const client = nn(
+      this._client,
+      "Client is required in order to load notifications for the room"
+    );
+
+    const result = await client.getInboxNotificationsSince(lastRequestedAt);
+
+    if (lastRequestedAt === undefined || lastRequestedAt < result.requestedAt) {
+      this._lastRequestedNotificationsAt = result.requestedAt;
+    }
+
+    this.updateThreadsAndNotifications(
+      result.threads.updated as ThreadData<M>[],
+      result.inboxNotifications.updated,
+      result.threads.deleted,
+      result.inboxNotifications.deleted
+    );
+  }
+
+  public loadNotifications() {
+    void this.waitUntilNotificationsLoaded().catch(() => {
+      // Deliberately catch and ignore any errors here
+    });
+  }
+
+  public waitUntilNotificationsLoaded(): UsablePromise<
+    InboxNotificationData[]
+  > {
+    const internalStore = this._store.get();
+
+    // If a request was already made for the provided query key, we simply return the existing request.
+    // We do not want to override the existing request with a new request to load threads and notifications
+    const existingRequest = internalStore.loadNotificationsRequest;
+    if (existingRequest !== null) return existingRequest;
+
+    const fetchNotificationsPage = async (): Promise<
+      InboxNotificationData[]
+    > => {
+      const client = nn(
+        this._client,
+        "Client is required in order to load notifications for the room"
+      );
+
+      // Wrap the request to load room threads (and notifications) in an auto-retry function so that if the request fails,
+      // we retry for at most 5 times with incremental backoff delays. If all retries fail, the auto-retry function throws an error
+      return await autoRetry(
+        async () => {
+          const result =
+            await client.getInboxNotifications(/* no cursor yet */);
+
+          this.updateThreadsAndNotifications(
+            result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
+            result.inboxNotifications
+          );
+
+          this._lastRequestedNotificationsAt = new Date();
+          return result.inboxNotifications;
+        },
+        5,
+        [5000, 5000, 10000, 15000]
+      );
+    };
+
+    const fetchNotificationsPagePromise = createUsablePromise(
+      fetchNotificationsPage()
+    );
+
+    this._store.set((state) => ({
+      ...state,
+      loadNotificationsRequest: fetchNotificationsPagePromise,
+    }));
+
+    fetchNotificationsPagePromise
+      .then(() => {
+        // Manually mark the state as dirty and update the store so that any subscribers are notified
+        this._store.set((state) => ({ ...state }));
+      })
+      .catch(() => {
+        // Manually mark the state as dirty and update the store so that any subscribers are notified
+        this._store.set((state) => ({ ...state }));
+
+        // Wait for 5 seconds before removing the request from the cache
+        setTimeout(() => {
+          this._store.set((state) => {
+            return {
+              ...state,
+              loadNotificationsRequest: null,
+            };
+          });
+        }, 5000);
+      });
+
+    return fetchNotificationsPagePromise;
+  }
+
+  public loadThreads(
     roomId: string,
     options: GetThreadsOptions<BaseMetadata>,
     queryKey: string
@@ -1154,7 +1260,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     roomId: string,
     options: GetThreadsOptions<BaseMetadata>,
     queryKey: string
-  ): Promise<ThreadData[]> {
+  ): UsablePromise<ThreadData[]> {
     const internalStore = this._store.get();
 
     // If a request was already made for the provided query key, we simply return the existing request.
@@ -1180,12 +1286,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
           this.updateThreadsAndNotifications(
             result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
-            result.inboxNotifications,
-            [],
-            []
+            result.inboxNotifications
           );
 
-          const lastRequestedAt = this._lastRequestedAtByRoom.get(roomId);
+          const lastRequestedAt =
+            this._lastRequestedThreadsAtByRoom.get(roomId);
 
           /**
            * We set the `lastRequestedAt` value for the room to the timestamp returned by the current request if:
@@ -1197,7 +1302,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
             lastRequestedAt === undefined ||
             lastRequestedAt > result.requestedAt
           ) {
-            this._lastRequestedAtByRoom.set(roomId, result.requestedAt);
+            this._lastRequestedThreadsAtByRoom.set(roomId, result.requestedAt);
           }
 
           return result.threads as ThreadData<M>[];
@@ -1244,11 +1349,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
   /**
    * Retrieve threads that have been updated/deleted since the last time the room requested threads updates and update the local cache with the new data
    * @param roomId The id of the room for which to retrieve threads updates
+   * XXX - Match the name and implementation with the equivalent function for inbox notifications (currently named `fetchNotificationsDeltaUpdate`)
    */
   public async getThreadsUpdates(roomId: string) {
     const DEFAULT_DEDUPING_INTERVAL = 2000; // 2 seconds
 
-    const since = this._lastRequestedAtByRoom.get(roomId);
+    const since = this._lastRequestedThreadsAtByRoom.get(roomId);
     if (since === undefined) return;
 
     const isFetchingThreadsUpdates =
@@ -1277,7 +1383,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       );
 
       // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
-      this._lastRequestedAtByRoom.set(roomId, updates.requestedAt);
+      this._lastRequestedThreadsAtByRoom.set(roomId, updates.requestedAt);
     } catch (err) {
       this._requestStatusByRoom.set(roomId, false);
       // TODO: Implement error handling

@@ -342,6 +342,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
 
   /**
    * Performs a delta update for inbox notifications.
+   * XXX - Replace this with `fetchNotificationsDeltaUpdate` from umbrella store after fixing the currently failing tests
    */
   async function fetchDeltaUpdate() {
     if (lastRequestedAt === undefined) {
@@ -378,6 +379,8 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
    * already happened. Will resolve once there is initial data. Will retry
    * a few times automatically in case fetching fails, with incremental backoff
    * delays. Will throw eventually only if all retries fail.
+   *
+   * XXX - Replace this with the `loadNotifications` method from umbrella store after fixing the currently failing tests
    */
   const waitUntilInboxNotificationsLoaded = memoizeOnSuccess(async () => {
     store.setQuery1Loading();
@@ -400,6 +403,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   /**
    * Triggers an initial fetch of inbox notifications if this hasn't
    * already happened.
+   * XXX - Replace this with the `loadNotifications` method from umbrella store after fixing the currently failing tests
    */
   function loadInboxNotifications(): void {
     void waitUntilInboxNotificationsLoaded().catch(() => {

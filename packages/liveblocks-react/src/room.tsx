@@ -1331,7 +1331,7 @@ function useThreads<M extends BaseMetadata>(
   const { store, incrementQuerySubscribers } = getExtrasForClient<M>(client);
 
   React.useEffect(() => {
-    store.loadThreadsAndNotifications(room.id, options, queryKey);
+    store.loadThreads(room.id, options, queryKey);
   }, [store, room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   React.useEffect(() => {
