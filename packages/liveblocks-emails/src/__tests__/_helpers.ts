@@ -20,8 +20,8 @@ import ReactDOMServer from "react-dom/server";
 import type { CommentDataWithBody } from "../comment-with-body";
 import type {
   CommentEmailBaseData,
-  ThreadNotificationEmailAsReact,
   ThreadNotificationEmailData,
+  ThreadNotificationEmailDataAsReact,
 } from "../thread-notification";
 
 export const SERVER_BASE_URL = "https://api.liveblocks.io";
@@ -382,11 +382,11 @@ type ThreadNotificationEmailAsStaticMarkup = ThreadNotificationEmailData<
 >;
 
 export const commentBodiesAsReactToStaticMarkup = (
-  threadNotificationEmailAsReact: ThreadNotificationEmailAsReact
+  threadNotificationEmailDataAsReact: ThreadNotificationEmailDataAsReact
 ): ThreadNotificationEmailAsStaticMarkup | null => {
-  switch (threadNotificationEmailAsReact.type) {
+  switch (threadNotificationEmailDataAsReact.type) {
     case "unreadMention": {
-      const { comment, ...rest } = threadNotificationEmailAsReact;
+      const { comment, ...rest } = threadNotificationEmailDataAsReact;
 
       return {
         ...rest,
@@ -397,7 +397,7 @@ export const commentBodiesAsReactToStaticMarkup = (
       };
     }
     case "unreadReplies": {
-      const { comments, ...rest } = threadNotificationEmailAsReact;
+      const { comments, ...rest } = threadNotificationEmailDataAsReact;
       return {
         ...rest,
         comments: comments.map((comment) => ({

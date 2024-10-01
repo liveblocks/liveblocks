@@ -7,8 +7,8 @@ import type {
   CommentEmailBaseData,
   ThreadNotificationBaseData,
   ThreadNotificationData,
-  ThreadNotificationEmailAsHTML,
-  ThreadNotificationEmailAsReact,
+  ThreadNotificationEmailDataAsHTML,
+  ThreadNotificationEmailDataAsReact,
 } from "../thread-notification";
 import {
   extractThreadNotificationData,
@@ -429,7 +429,7 @@ describe("thread notification", () => {
       const { comment, thread, inboxNotification, event } =
         makeUnreadMentionDataset();
 
-      const expected1: ThreadNotificationEmailAsHTML = {
+      const expected1: ThreadNotificationEmailDataAsHTML = {
         type: "unreadMention",
         comment: {
           id: comment.id,
@@ -449,7 +449,7 @@ describe("thread notification", () => {
         roomInfo: { name: ROOM_ID_TEST },
       };
 
-      const expected2: ThreadNotificationEmailAsHTML = {
+      const expected2: ThreadNotificationEmailDataAsHTML = {
         type: "unreadMention",
         comment: {
           id: comment.id,
@@ -471,8 +471,8 @@ describe("thread notification", () => {
 
       it.each<{
         withResolvers: boolean;
-        promise: () => Promise<ThreadNotificationEmailAsHTML>;
-        expected: ThreadNotificationEmailAsHTML;
+        promise: () => Promise<ThreadNotificationEmailDataAsHTML>;
+        expected: ThreadNotificationEmailDataAsHTML;
       }>([
         {
           withResolvers: false,
@@ -517,7 +517,7 @@ describe("thread notification", () => {
       const { comment2, thread, inboxNotification, event } =
         makeUnreadRepliesDataset();
 
-      const expected1: ThreadNotificationEmailAsHTML = {
+      const expected1: ThreadNotificationEmailDataAsHTML = {
         type: "unreadReplies",
         comments: [
           {
@@ -539,7 +539,7 @@ describe("thread notification", () => {
         roomInfo: { name: ROOM_ID_TEST },
       };
 
-      const expected2: ThreadNotificationEmailAsHTML = {
+      const expected2: ThreadNotificationEmailDataAsHTML = {
         type: "unreadReplies",
         comments: [
           {
@@ -561,8 +561,8 @@ describe("thread notification", () => {
 
       it.each<{
         withResolvers: boolean;
-        promise: () => Promise<ThreadNotificationEmailAsHTML>;
-        expected: ThreadNotificationEmailAsHTML;
+        promise: () => Promise<ThreadNotificationEmailDataAsHTML>;
+        expected: ThreadNotificationEmailDataAsHTML;
       }>([
         {
           withResolvers: false,
@@ -617,7 +617,7 @@ describe("thread notification", () => {
       const { comment, thread, inboxNotification, event } =
         makeUnreadMentionDataset();
 
-      const expected1: ThreadNotificationEmailAsReact = {
+      const expected1: ThreadNotificationEmailDataAsReact = {
         type: "unreadMention",
         comment: {
           id: comment.id,
@@ -646,7 +646,7 @@ describe("thread notification", () => {
         roomInfo: { name: ROOM_ID_TEST },
       };
 
-      const expected2: ThreadNotificationEmailAsReact = {
+      const expected2: ThreadNotificationEmailDataAsReact = {
         type: "unreadMention",
         comment: {
           id: comment.id,
@@ -677,8 +677,8 @@ describe("thread notification", () => {
 
       it.each<{
         withResolvers: boolean;
-        promise: () => Promise<ThreadNotificationEmailAsReact>;
-        expected: ThreadNotificationEmailAsReact;
+        promise: () => Promise<ThreadNotificationEmailDataAsReact>;
+        expected: ThreadNotificationEmailDataAsReact;
       }>([
         {
           withResolvers: false,
@@ -737,7 +737,7 @@ describe("thread notification", () => {
       const { comment, thread, inboxNotification, event } =
         makeUnreadMentionDataset();
 
-      const expected1: ThreadNotificationEmailAsReact = {
+      const expected1: ThreadNotificationEmailDataAsReact = {
         type: "unreadMention",
         comment: {
           id: comment.id,
@@ -766,7 +766,7 @@ describe("thread notification", () => {
         roomInfo: { name: ROOM_ID_TEST },
       };
 
-      const expected2: ThreadNotificationEmailAsReact = {
+      const expected2: ThreadNotificationEmailDataAsReact = {
         type: "unreadMention",
         comment: {
           id: comment.id,
@@ -797,8 +797,8 @@ describe("thread notification", () => {
 
       it.each<{
         withResolvers: boolean;
-        promise: () => Promise<ThreadNotificationEmailAsReact>;
-        expected: ThreadNotificationEmailAsReact;
+        promise: () => Promise<ThreadNotificationEmailDataAsReact>;
+        expected: ThreadNotificationEmailDataAsReact;
       }>([
         {
           withResolvers: false,
@@ -860,7 +860,7 @@ describe("thread notification", () => {
       const { comment2, thread, inboxNotification, event } =
         makeUnreadRepliesDataset();
 
-      const expected1: ThreadNotificationEmailAsReact = {
+      const expected1: ThreadNotificationEmailDataAsReact = {
         type: "unreadReplies",
         comments: [
           {
@@ -894,7 +894,7 @@ describe("thread notification", () => {
         roomInfo: { name: ROOM_ID_TEST },
       };
 
-      const expected2: ThreadNotificationEmailAsReact = {
+      const expected2: ThreadNotificationEmailDataAsReact = {
         type: "unreadReplies",
         comments: [
           {
@@ -928,8 +928,8 @@ describe("thread notification", () => {
 
       it.each<{
         withResolvers: boolean;
-        promise: () => Promise<ThreadNotificationEmailAsReact>;
-        expected: ThreadNotificationEmailAsReact;
+        promise: () => Promise<ThreadNotificationEmailDataAsReact>;
+        expected: ThreadNotificationEmailDataAsReact;
       }>([
         {
           withResolvers: false,
@@ -990,7 +990,7 @@ describe("thread notification", () => {
       const { comment2, thread, inboxNotification, event } =
         makeUnreadRepliesDataset();
 
-      const expected1: ThreadNotificationEmailAsReact = {
+      const expected1: ThreadNotificationEmailDataAsReact = {
         type: "unreadReplies",
         comments: [
           {
@@ -1020,7 +1020,7 @@ describe("thread notification", () => {
         roomInfo: { name: ROOM_ID_TEST },
       };
 
-      const expected2: ThreadNotificationEmailAsReact = {
+      const expected2: ThreadNotificationEmailDataAsReact = {
         type: "unreadReplies",
         comments: [
           {
@@ -1050,8 +1050,8 @@ describe("thread notification", () => {
 
       it.each<{
         withResolvers: boolean;
-        promise: () => Promise<ThreadNotificationEmailAsReact>;
-        expected: ThreadNotificationEmailAsReact;
+        promise: () => Promise<ThreadNotificationEmailDataAsReact>;
+        expected: ThreadNotificationEmailDataAsReact;
       }>([
         {
           withResolvers: false,
