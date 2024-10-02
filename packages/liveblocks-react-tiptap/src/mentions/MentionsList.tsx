@@ -9,6 +9,8 @@ import React, {
   useState,
 } from "react"
 
+import { Avatar } from "./Avatar";
+
 
 export interface UserProps
   extends Omit<HTMLAttributes<HTMLSpanElement>, "children"> {
@@ -129,7 +131,7 @@ export const MentionsList = forwardRef<MentionsListHandle, MentionsListProps>((p
   }
 
   return (
-    <div className="dropdown-menu" ref={setFloating}
+    <div className="lb-root lb-portal lb-elevation lb-tiptap-suggestions lb-tiptap-mention-suggestions" ref={setFloating}
       style={{
         position: strategy,
         top: 0,
@@ -138,18 +140,27 @@ export const MentionsList = forwardRef<MentionsListHandle, MentionsListProps>((p
         minWidth: "max-content",
         display: props.hide ? "none" : "block"
       }}>
-      {suggestions === undefined ? <div className="item">Loading...</div> :
+      <div className="lb-tiptap-suggestions-list lb-tiptap-mention-suggestions-list">
+        {suggestions === undefined ? <div className="item">Loading...</div> :
 
-        suggestions.map((item, index) => (
-          <button
-            className={index === selectedIndex ? "is-selected" : ""}
-            key={index}
-            onClick={() => selectItem(index)}
-          >
-            <User userId={item} />
-          </button>
-        ))
-      }
+          suggestions.map((item, index) => (
+            <div className="lb-tiptap-suggestions-list-item lb-tiptap-mention-suggestion"
+              key={index}
+              role="option"
+              data-highlighted={index === selectedIndex || undefined}
+              onClick={() => selectItem(index)}>
+              <Avatar
+                userId={item}
+                className="lb-tiptap-mention-suggestion-avatar"
+              />
+              <User
+                userId={item}
+                className="lb-tiptap-mention-suggestion-user"
+              />
+            </div>
+          ))
+        }
+      </div>
     </div>
   )
 })

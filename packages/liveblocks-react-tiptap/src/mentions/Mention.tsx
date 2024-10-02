@@ -1,23 +1,21 @@
-import { useUser } from "@liveblocks/react";
-import { useOverrides } from "@liveblocks/react-ui";
+import type { Node } from "@tiptap/pm/model";
 import { NodeViewWrapper } from "@tiptap/react";
 import React, { forwardRef } from "react";
 
 import { classNames } from "../classnames";
+import { User } from "./MentionsList";
 
-export const Mention = forwardRef<HTMLSpanElement, { node: any, selected: boolean }>(
-  function User(props, forwardedRef) {
-    const { user, isLoading } = useUser(props.node.attrs.id);
-    const $ = useOverrides();
-    const name =
-      user === undefined || user === null ? $.USER_UNKNOWN : user.name;
+const MENTION_CHARACTER = "@";
 
-    const classnames = classNames("lb-mention", props.selected ? "lb-mention-selected" : null);
-
+export const Mention = forwardRef<HTMLSpanElement, { node: Node, selected: boolean }>(
+  (props, forwardedRef) => {
+    const id = (props.node.attrs as { id: string }).id;
+    const classnames = classNames("lb-root", "lb-tiptap-mention", props.selected ? "lb-mention-selected" : null);
     return (
       <NodeViewWrapper className={classnames} as="span"
         ref={forwardedRef}>
-        @{isLoading ? null : name}
+        {MENTION_CHARACTER}
+        <User userId={id} />
       </NodeViewWrapper>
     )
   }

@@ -106,11 +106,11 @@
   font-weight: 500;
 
   @include invisible-selection;
+}
 
-  &:where([data-selected]) {
-    background: var(--lb-accent);
-    color: var(--lb-accent-foreground);
-  }
+.lb-mention-selected {
+  background: var(--lb-accent);
+  color: var(--lb-accent-foreground);
 }
 
 /*************************************

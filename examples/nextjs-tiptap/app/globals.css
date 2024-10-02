@@ -1,6 +1,8 @@
 @import "@liveblocks/react-ui/styles.css";
 @import "@liveblocks/react-ui/styles/dark/media-query.css";
 
+@import "@liveblocks/react-tiptap/styles.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -186,19 +188,6 @@ li::marker {
       background-color: #999;
     }
   }
-}
-
-.lb-mention {
-  background-color: rgba(128, 0, 128, 0.276);
-  border-radius: 0.4rem;
-  box-decoration-break: clone;
-  color: rgb(167, 0, 167);
-  padding: 0.1rem 0.3rem;
-}
-
-.lb-mention-selected {
-  color: rgb(68, 68, 255);
-  background-color: rgba(0, 0, 213, 0.241);
 }
 
 .lb-thread-editor {
