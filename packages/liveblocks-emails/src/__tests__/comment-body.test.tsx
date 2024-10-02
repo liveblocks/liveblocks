@@ -21,7 +21,7 @@ import {
 
 describe("convert comment body as HTML", () => {
   describe("w/o users resolver", () => {
-    it("should converts simple text elements", async () => {
+    it("should convert simple text elements", async () => {
       const htmlBody = await convertCommentBodyAsHTML(commentBody1);
       const expected =
         '<p style="font-size:14px;">What do you think of this team? 🤔</p>';
@@ -29,7 +29,7 @@ describe("convert comment body as HTML", () => {
       expect(htmlBody).toEqual(expected);
     });
 
-    it("should converts with italic and bold", async () => {
+    it("should convert with italic and bold", async () => {
       const htmlBody = await convertCommentBodyAsHTML(commentBody5);
       const expected =
         '<p style="font-size:14px;"><strong style="font-weight:500;">Bold text</strong> and <em>italic text</em></p>';
@@ -37,7 +37,7 @@ describe("convert comment body as HTML", () => {
       expect(htmlBody).toEqual(expected);
     });
 
-    it("should converts with code and strikethrough", async () => {
+    it("should convert with code and strikethrough", async () => {
       const htmlBody = await convertCommentBodyAsHTML(commentBody6);
       const expected =
         '<p style="font-size:14px;"><s>Strikethrough text</s> and <code style="font-family:ui-monospace, Menlo, Monaco, &quot;Cascadia Mono&quot;, &quot;Segoe UI Mono&quot;, &quot;Roboto Mono&quot;, &quot;Oxygen Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Source Code Pro&quot;, &quot;Fira Mono&quot;, &quot;Droid Sans Mono&quot;, &quot;Consolas&quot;, &quot;Courier New&quot;, monospace;background-color:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.1);border-radius:4px;">code text</code></p>';
@@ -45,7 +45,7 @@ describe("convert comment body as HTML", () => {
       expect(htmlBody).toEqual(expected);
     });
 
-    it("should converts with link", async () => {
+    it("should convert with link", async () => {
       const [htmlBody1, htmlBody2] = await Promise.all([
         convertCommentBodyAsHTML(commentBody4),
         convertCommentBodyAsHTML(commentBody7),
@@ -60,7 +60,7 @@ describe("convert comment body as HTML", () => {
       expect(htmlBody2).toEqual(expected2);
     });
 
-    it("should converts with user mention", async () => {
+    it("should convert with user mention", async () => {
       const htmlBody = await convertCommentBodyAsHTML(
         buildCommentBodyWithMention({ mentionedUserId: "user-dracula" })
       );
@@ -72,7 +72,7 @@ describe("convert comment body as HTML", () => {
   });
 
   describe("w/ users resolved", () => {
-    it("should converts with a resolved user mention", async () => {
+    it("should convert with a resolved user mention", async () => {
       const htmlBody = await convertCommentBodyAsHTML(
         buildCommentBodyWithMention({ mentionedUserId: "user-2" }),
         { resolveUsers }
@@ -91,7 +91,7 @@ describe("convert comment body as HTML", () => {
       link: "text-underline-offset:4px;",
     };
 
-    it("should converts mentions", async () => {
+    it("should convert mentions", async () => {
       const htmlBody = await convertCommentBodyAsHTML(
         buildCommentBodyWithMention({ mentionedUserId: "user-dracula" }),
         { styles, resolveUsers }
@@ -102,7 +102,7 @@ describe("convert comment body as HTML", () => {
       expect(htmlBody).toEqual(expected);
     });
 
-    it("should converts links", async () => {
+    it("should convert links", async () => {
       const htmlBody = await convertCommentBodyAsHTML(commentBody4, { styles });
       const expected =
         '<p style="font-size:16px;">I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer" style="text-underline-offset:4px;">https://www.liveblocks.io</a></p>';
@@ -114,7 +114,7 @@ describe("convert comment body as HTML", () => {
 
 describe("convert comment body as React", () => {
   describe("w/o users resolver", () => {
-    it("should converts simple text elements", async () => {
+    it("should convert simple text elements", async () => {
       const reactBody = await convertCommentBodyAsReact(commentBody1);
 
       const markupBody = renderToStaticMarkup(<>{reactBody}</>);
@@ -129,7 +129,7 @@ describe("convert comment body as React", () => {
       expect(markupBody).toEqual(expected);
     });
 
-    it("should converts with italic and bold", async () => {
+    it("should convert with italic and bold", async () => {
       const reactBody = await convertCommentBodyAsReact(commentBody5);
 
       const markupBody = renderToStaticMarkup(<>{reactBody}</>);
@@ -150,7 +150,7 @@ describe("convert comment body as React", () => {
       expect(markupBody).toEqual(expected);
     });
 
-    it("should converts with code and strikethrough", async () => {
+    it("should convert with code and strikethrough", async () => {
       const reactBody = await convertCommentBodyAsReact(commentBody6);
 
       const markupBody = renderToStaticMarkup(<>{reactBody}</>);
@@ -171,7 +171,7 @@ describe("convert comment body as React", () => {
       expect(markupBody).toEqual(expected);
     });
 
-    it("should converts with link", async () => {
+    it("should convert with link", async () => {
       const [reactBody1, reactBody2] = await Promise.all([
         convertCommentBodyAsReact(commentBody4),
         convertCommentBodyAsReact(commentBody7),
@@ -214,7 +214,7 @@ describe("convert comment body as React", () => {
       expect(markupBody2).toEqual(expected2);
     });
 
-    it("should converts with user mention", async () => {
+    it("should convert with user mention", async () => {
       const reactBody = await convertCommentBodyAsReact(
         buildCommentBodyWithMention({ mentionedUserId: "user-dracula" })
       );
@@ -237,7 +237,7 @@ describe("convert comment body as React", () => {
   });
 
   describe("w/ users resolver", () => {
-    it("should converts with a resolved user mention", async () => {
+    it("should convert with a resolved user mention", async () => {
       const reactBody = await convertCommentBodyAsReact(
         buildCommentBodyWithMention({ mentionedUserId: "user-2" }),
         { resolveUsers }
@@ -269,9 +269,14 @@ describe("convert comment body as React", () => {
       Mention: ({ element, user }) => (
         <span>user#{user?.name ?? element.id}</span>
       ),
+      Link: ({ element, href }) => (
+        <a href={href} data-link>
+          {element.text ?? element.url}
+        </a>
+      ),
     };
 
-    it("should converts mentions", async () => {
+    it("should convert mentions", async () => {
       const reactBody = await convertCommentBodyAsReact(
         buildCommentBodyWithMention({ mentionedUserId: "user-0" }),
         {
@@ -289,6 +294,26 @@ describe("convert comment body as React", () => {
             <span>user#Charlie Layne</span>
             <span> </span>
             <span>!</span>
+          </p>
+        </main>
+      );
+
+      expect(markupBody).toEqual(expected);
+    });
+
+    it("should convert links", async () => {
+      const reactBody = await convertCommentBodyAsReact(commentBody4, {
+        components,
+      });
+
+      const markupBody = renderToStaticMarkup(reactBody);
+      const expected = renderToStaticMarkup(
+        <main>
+          <p style={{ display: "flex" }}>
+            <span>I agree 😍 it completes well this guide: </span>
+            <a href="https://www.liveblocks.io" data-link>
+              https://www.liveblocks.io
+            </a>
           </p>
         </main>
       );
