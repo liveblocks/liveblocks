@@ -223,12 +223,13 @@ export type ConvertCommentBodyAsHTMLStyles = {
    */
   paragraph: InlineCSSString;
   /**
-   * The default inline CSS styles used to display text elements.
+   * The default inline CSS styles used to display text `<strong />` elements.
    */
-  text: {
-    strong: InlineCSSString;
-    code: InlineCSSString;
-  };
+  strong: InlineCSSString;
+  /**
+   * The default inline CSS styles used to display text `<code />` elements.
+   */
+  code: InlineCSSString;
   /**
    * The default inline CSS styles used to display links.
    */
@@ -241,10 +242,8 @@ export type ConvertCommentBodyAsHTMLStyles = {
 
 const baseStyles: ConvertCommentBodyAsHTMLStyles = {
   paragraph: "font-size:14px;",
-  text: {
-    strong: "font-weight:500;",
-    code: 'font-family:ui-monospace, Menlo, Monaco, "Cascadia Mono", "Segoe UI Mono", "Roboto Mono", "Oxygen Mono", "Ubuntu Mono", "Source Code Pro", "Fira Mono", "Droid Sans Mono", "Consolas", "Courier New", monospace;background-color:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.1);border-radius:4px;',
-  },
+  strong: "font-weight:500;",
+  code: 'font-family:ui-monospace, Menlo, Monaco, "Cascadia Mono", "Segoe UI Mono", "Roboto Mono", "Oxygen Mono", "Ubuntu Mono", "Source Code Pro", "Fira Mono", "Droid Sans Mono", "Consolas", "Courier New", monospace;background-color:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.1);border-radius:4px;',
   mention: "color:blue;",
   link: "text-decoration:underline;",
 };
@@ -257,14 +256,10 @@ const getCommentBodyAsHTMLStyles = (
     paragraph: styles.paragraph
       ? sanitizeInlineCSS(styles.paragraph)
       : baseStyles.paragraph,
-    text: {
-      strong: styles.text?.strong
-        ? sanitizeInlineCSS(styles.text.strong)
-        : baseStyles.text.strong,
-      code: styles.text?.code
-        ? sanitizeInlineCSS(styles.text.code)
-        : baseStyles.text.code,
-    },
+    strong: styles.strong
+      ? sanitizeInlineCSS(styles.strong)
+      : baseStyles.strong,
+    code: styles.code ? sanitizeInlineCSS(styles.code) : baseStyles.code,
     mention: styles.mention
       ? sanitizeInlineCSS(styles.mention)
       : baseStyles.mention,
@@ -315,7 +310,7 @@ export async function convertCommentBodyAsHTML(
 
         if (element.bold) {
           // prettier-ignore
-          children = html`<strong style="${styles.text.strong}">${children}</strong>`;
+          children = html`<strong style="${styles.strong}">${children}</strong>`;
         }
 
         if (element.italic) {
@@ -330,7 +325,7 @@ export async function convertCommentBodyAsHTML(
 
         if (element.code) {
           // prettier-ignore
-          children = html`<code style="${styles.text.code}">${children}</code>`;
+          children = html`<code style="${styles.code}">${children}</code>`;
         }
 
         return children;

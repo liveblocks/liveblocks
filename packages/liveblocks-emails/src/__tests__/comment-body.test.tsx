@@ -1,6 +1,9 @@
 import React from "react";
 
-import type { ConvertCommentBodyAsReactComponents } from "../comment-body";
+import type {
+  ConvertCommentBodyAsHTMLStyles,
+  ConvertCommentBodyAsReactComponents,
+} from "../comment-body";
 import {
   convertCommentBodyAsHTML,
   convertCommentBodyAsReact,
@@ -43,7 +46,7 @@ describe("convert comment body as HTML", () => {
     });
 
     it("should converts with link", async () => {
-      const [htmlBodyBody1, htmlBodyBody2] = await Promise.all([
+      const [htmlBody1, htmlBody2] = await Promise.all([
         convertCommentBodyAsHTML(commentBody4),
         convertCommentBodyAsHTML(commentBody7),
       ]);
@@ -53,8 +56,8 @@ describe("convert comment body as HTML", () => {
       const expected2 =
         '<p style="font-size:14px;">Check out this <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer" style="text-decoration:underline;">example</a></p>';
 
-      expect(htmlBodyBody1).toEqual(expected1);
-      expect(htmlBodyBody2).toEqual(expected2);
+      expect(htmlBody1).toEqual(expected1);
+      expect(htmlBody2).toEqual(expected2);
     });
 
     it("should converts with user mention", async () => {
@@ -82,7 +85,30 @@ describe("convert comment body as HTML", () => {
   });
 
   describe("w/ custom styles", () => {
-    it.todo("add tests when using custom styles");
+    const styles: Partial<ConvertCommentBodyAsHTMLStyles> = {
+      paragraph: "font-size:16px;",
+      mention: "color:purple;",
+      link: "text-underline-offset:4px;",
+    };
+
+    it("should converts mentions", async () => {
+      const htmlBody = await convertCommentBodyAsHTML(
+        buildCommentBodyWithMention({ mentionedUserId: "user-dracula" }),
+        { styles, resolveUsers }
+      );
+      const expected =
+        '<p style="font-size:16px;">Hello <span data-mention style="color:purple;">@user-dracula</span> !</p>';
+
+      expect(htmlBody).toEqual(expected);
+    });
+
+    it("should converts links", async () => {
+      const htmlBody = await convertCommentBodyAsHTML(commentBody4, { styles });
+      const expected =
+        '<p style="font-size:16px;">I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer" style="text-underline-offset:4px;">https://www.liveblocks.io</a></p>';
+
+      expect(htmlBody).toEqual(expected);
+    });
   });
 });
 
@@ -245,7 +271,7 @@ describe("convert comment body as React", () => {
       ),
     };
 
-    it("should converts with custom components", async () => {
+    it("should converts mentions", async () => {
       const reactBody = await convertCommentBodyAsReact(
         buildCommentBodyWithMention({ mentionedUserId: "user-0" }),
         {
