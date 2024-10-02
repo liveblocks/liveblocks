@@ -1362,7 +1362,14 @@ function useThreads<M extends BaseMetadata>(
       });
 
       // "Map" the success state, by selecting the threads and returning only those parts externally
-      return { isLoading: false, threads };
+      return {
+        isLoading: false,
+        threads,
+        hasFetchedAll: result.hasFetchedAll,
+        isFetchingMore: result.isFetchingMore,
+        fetchMoreError: result.fetchMoreError,
+        fetchMore: result.fetchMore,
+      };
     },
     [room.id, queryKey] // eslint-disable-line react-hooks/exhaustive-deps
   );
@@ -2401,8 +2408,6 @@ function useThreadsSuspense<M extends BaseMetadata>(
     query: { metadata: {} },
   }
 ): ThreadsAsyncSuccess<M> {
-  const { scrollOnLoad = true } = options;
-
   const client = useClient();
   const room = useRoom();
   const queryKey = React.useMemo(
@@ -2410,38 +2415,14 @@ function useThreadsSuspense<M extends BaseMetadata>(
     [room, options]
   );
 
-  const { store, incrementQuerySubscribers } = getExtrasForClient<M>(client);
+  const { store } = getExtrasForClient<M>(client);
 
   use(store.waitUntilThreadsLoaded(room.id, options, queryKey));
 
-  const selector = React.useCallback(
-    (state: ReturnType<typeof store.getFullState>): ThreadsAsyncSuccess<M> => {
-      return {
-        threads: selectThreads(state, {
-          roomId: room.id,
-          query: options.query,
-          orderBy: "age",
-        }),
-        isLoading: false,
-      };
-    },
-    [room, queryKey] // eslint-disable-line react-hooks/exhaustive-deps
-  );
-
-  React.useEffect(() => {
-    return incrementQuerySubscribers(queryKey);
-  }, [incrementQuerySubscribers, queryKey]);
-
-  const state = useSyncExternalStoreWithSelector(
-    store.subscribeThreads,
-    store.getFullState,
-    store.getFullState,
-    selector
-  );
-
-  useScrollToCommentOnLoadEffect(scrollOnLoad, state);
-
-  return state;
+  const result = useThreads(options);
+  assert(!result.error, "Did not expect error");
+  assert(!result.isLoading, "Did not expect loading");
+  return result;
 }
 
 function selectorFor_useAttachmentUrl(

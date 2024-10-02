@@ -165,8 +165,11 @@ export type PagedAsyncResult<T, F extends string> =
 
 // -----------------------------------------------------------------------
 
-export type ThreadsAsyncSuccess<M extends BaseMetadata> = AsyncSuccess<ThreadData<M>[], "threads">; // prettier-ignore
-export type ThreadsAsyncResult<M extends BaseMetadata> = AsyncResult<ThreadData<M>[], "threads">; // prettier-ignore
+export type ThreadsAsyncSuccess<M extends BaseMetadata> = PagedAsyncSuccess<ThreadData<M>[], "threads">; // prettier-ignore
+export type ThreadsAsyncResult<M extends BaseMetadata> = PagedAsyncResult<ThreadData<M>[], "threads">; // prettier-ignore
+
+export type RENAME_LATER_UserThreadsAsyncSuccess<M extends BaseMetadata> = AsyncSuccess<ThreadData<M>[], "threads">; // prettier-ignore
+export type RENAME_LATER_UserThreadsAsyncResult<M extends BaseMetadata> = AsyncResult<ThreadData<M>[], "threads">; // prettier-ignore
 
 export type InboxNotificationsAsyncSuccess = PagedAsyncSuccess<InboxNotificationData[], "inboxNotifications">; // prettier-ignore
 export type InboxNotificationsAsyncResult = PagedAsyncResult<InboxNotificationData[], "inboxNotifications">; // prettier-ignore
@@ -1169,7 +1172,7 @@ export type LiveblocksContextBundle<
        */
       useUserThreads_experimental(
         options?: UseUserThreadsOptions<M>
-      ): ThreadsAsyncResult<M>;
+      ): RENAME_LATER_UserThreadsAsyncResult<M>;
 
       suspense: Resolve<
         LiveblocksContextBundleCommon<M> &
@@ -1198,7 +1201,7 @@ export type LiveblocksContextBundle<
              */
             useUserThreads_experimental(
               options?: UseUserThreadsOptions<M>
-            ): ThreadsAsyncSuccess<M>;
+            ): RENAME_LATER_UserThreadsAsyncSuccess<M>;
           }
       >;
     }

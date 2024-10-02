@@ -43,11 +43,11 @@ import { use } from "./lib/use-polyfill";
 import type {
   InboxNotificationsAsyncResult,
   LiveblocksContextBundle,
+  RENAME_LATER_UserThreadsAsyncResult,
+  RENAME_LATER_UserThreadsAsyncSuccess,
   RoomInfoAsyncResult,
   RoomInfoAsyncSuccess,
   SharedContextBundle,
-  ThreadsAsyncResult,
-  ThreadsAsyncSuccess,
   ThreadsQuery,
   UnreadInboxNotificationsCountAsyncResult,
   UserAsyncResult,
@@ -1086,7 +1086,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
       metadata: {},
     },
   }
-): ThreadsAsyncResult<M> {
+): RENAME_LATER_UserThreadsAsyncResult<M> {
   const queryKey = React.useMemo(
     () => makeUserThreadsQueryKey(options.query),
     [options]
@@ -1108,7 +1108,9 @@ function useUserThreads_experimental<M extends BaseMetadata>(
   );
 
   const selector = useCallback(
-    (result: ReturnType<typeof getter>): ThreadsAsyncResult<M> => {
+    (
+      result: ReturnType<typeof getter>
+    ): RENAME_LATER_UserThreadsAsyncResult<M> => {
       if (!result.fullState) {
         return result; // Loading or error state
       }
@@ -1155,7 +1157,7 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
       metadata: {},
     },
   }
-): ThreadsAsyncSuccess<M> {
+): RENAME_LATER_UserThreadsAsyncSuccess<M> {
   const queryKey = React.useMemo(
     () => makeUserThreadsQueryKey(options.query),
     [options]
@@ -1183,7 +1185,9 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
   const getter = store.getFullState;
 
   const selector = useCallback(
-    (state: ReturnType<typeof getter>): ThreadsAsyncSuccess<M> => {
+    (
+      state: ReturnType<typeof getter>
+    ): RENAME_LATER_UserThreadsAsyncSuccess<M> => {
       return {
         threads: selectThreads(state, {
           roomId: null, // Do _not_ filter by roomId

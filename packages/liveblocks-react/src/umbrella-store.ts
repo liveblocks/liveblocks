@@ -36,6 +36,7 @@ import { autobind } from "./lib/autobind";
 import { isMoreRecentlyUpdated } from "./lib/compare";
 import type {
   InboxNotificationsAsyncResult,
+  PagedAsyncResult,
   RoomNotificationSettingsAsyncResult,
 } from "./types";
 
@@ -372,7 +373,7 @@ export class PaginatedResource {
   }
 
   public get(): AsyncResult<{
-    fetchMore: () => Promise<void>;
+    fetchMore: () => void;
     fetchMoreError?: Error;
     hasFetchedAll: boolean;
     isFetchingMore: boolean;
@@ -392,7 +393,7 @@ export class PaginatedResource {
     return {
       isLoading: false,
       data: {
-        fetchMore: this.fetchMore,
+        fetchMore: this.fetchMore as () => void,
         isFetchingMore: state.isFetchingMore,
         fetchMoreError: state.fetchMoreError,
         hasFetchedAll: state.cursor === null,
@@ -609,7 +610,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // right abstraction here yet.
   public getThreadsAsync(
     queryKey: string
-  ): AsyncResult<UmbrellaStoreState<M>, "fullState"> {
+  ): PagedAsyncResult<UmbrellaStoreState<M>, "fullState"> {
     const paginatedResource = this._threads.get(queryKey);
     if (paginatedResource === undefined) {
       return ASYNC_LOADING;
@@ -620,12 +621,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return asyncResult;
     }
 
-    const paginationState = asyncResult.data;
+    const page = asyncResult.data;
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      ...paginationState,
       fullState: this.getFullState(),
+      hasFetchedAll: page.hasFetchedAll,
+      isFetchingMore: page.isFetchingMore,
+      fetchMoreError: page.fetchMoreError,
+      fetchMore: page.fetchMore,
     };
   }
 
@@ -654,12 +658,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return asyncResult;
     }
 
-    const paginationState = asyncResult.data;
+    const page = asyncResult.data;
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      ...paginationState,
       inboxNotifications: this.getFullState().notifications,
+      hasFetchedAll: page.hasFetchedAll,
+      isFetchingMore: page.isFetchingMore,
+      fetchMoreError: page.fetchMoreError,
+      fetchMore: page.fetchMore,
     };
   }
 
