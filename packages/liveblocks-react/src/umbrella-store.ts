@@ -171,6 +171,18 @@ type PaginationState = {
   fetchMoreError?: Error;
 };
 
+/**
+ * Valid combinations of field patches to the pagination state.
+ */
+type PaginationStatePatch =
+  | { isFetchingMore: true }
+  | {
+      isFetchingMore: false;
+      cursor: string | null;
+      fetchMoreError: undefined;
+    }
+  | { isFetchingMore: false; fetchMoreError: Error };
+
 type QueryAsyncResult = AsyncResult<undefined>;
 type PaginatedAsyncResult = AsyncResult<PaginationState>;
 
@@ -311,56 +323,51 @@ export class PaginatedResource {
     autobind(this);
   }
 
+  private patchPaginationState(patch: PaginationStatePatch): void {
+    const state = this._paginationState;
+    if (state === null) return;
+    this._paginationState = { ...state, ...patch };
+    this._eventSource.notify();
+  }
+
   private async _fetchMore(): Promise<void> {
     const state = this._paginationState;
-
-    // We do not proceed with fetching more if any of the following is true:
-    // 1) the pagination state has not be initialized
-    // 2) the cursor is null, i.e., there are no more pages to fetch
-    // 3) a request to fetch more is currently in progress
-    if (state === null || state.cursor === null) {
-      return noop;
+    if (!state?.cursor) {
+      throw new Error("_fetchMore should not get called while in this state");
     }
 
-    // Set `isFetchingMore` to indicate that the request to fetch the next page is now in progress
-    // XXX - Create a private helper which does both 1) updates pagination state 2) notifies subscribers
-    this._paginationState = {
-      ...state,
-      isFetchingMore: true,
-    };
-    this._eventSource.notify();
-
+    this.patchPaginationState({ isFetchingMore: true });
     try {
       const nextCursor = await this._fetchPage(state.cursor);
-
-      // Update the cursor with the next cursor and set `isFetchingMore` to false
-      // XXX - Create a private helper which does both 1) updates pagination state 2) notifies subscribers
-      this._paginationState = {
-        ...state,
+      this.patchPaginationState({
         cursor: nextCursor,
         fetchMoreError: undefined,
         isFetchingMore: false,
-      };
-      this._eventSource.notify();
+      });
     } catch (err) {
-      // XXX - Create a private helper which does both 1) updates pagination state 2) notifies subscribers
-      this._paginationState = {
-        ...state,
+      this.patchPaginationState({
         isFetchingMore: false,
         fetchMoreError: err as Error,
-      };
-      this._eventSource.notify();
+      });
     }
   }
 
   public fetchMore(): Promise<void> {
-    if (this._pendingFetchMore) {
-      return this._pendingFetchMore;
+    // We do not proceed with fetching more if any of the following is true:
+    // 1) the pagination state has not be initialized
+    // 2) the cursor is null, i.e., there are no more pages to fetch
+    // 3) a request to fetch more is currently in progress
+    const state = this._paginationState;
+    if (state?.cursor === null) {
+      return noop;
     }
 
-    this._pendingFetchMore = this._fetchMore().finally(() => {
-      this._pendingFetchMore = null;
-    });
+    // Case (3)
+    if (!this._pendingFetchMore) {
+      this._pendingFetchMore = this._fetchMore().finally(() => {
+        this._pendingFetchMore = null;
+      });
+    }
     return this._pendingFetchMore;
   }
 
