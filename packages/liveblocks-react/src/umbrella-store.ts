@@ -532,6 +532,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     this._notifications = new PaginatedResource(inboxFetcher);
     this._notifications.observable.subscribe(() =>
+      // Note that the store itself does not change, but it's only vehicle at
+      // the moment to trigger a re-render, so we'll do a no-op update here.
       this._store.set((store) => ({ ...store }))
     );
 
@@ -1386,6 +1388,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }
 
     paginatedResource.observable.subscribe(() =>
+      // Note that the store itself does not change, but it's only vehicle at
+      // the moment to trigger a re-render, so we'll do a no-op update here.
       this._store.set((store) => ({ ...store }))
     );
 
