@@ -287,10 +287,15 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
       if (room === null) return;
 
       // Retrieve threads that have been updated/deleted since the last requestedAt value
-      requests.push(store.getThreadsUpdates(room.id));
+      requests.push(store.fetchThreadsDeltaUpdate(room.id));
     });
 
-    await Promise.allSettled(requests);
+    try {
+      await Promise.allSettled(requests);
+    } catch (err) {
+      // When polling, we don't want to throw errors, ever
+      console.warn(`Polling new threads failed: ${String(err)}`);
+    }
   }
 
   function incrementQuerySubscribers(queryKey: string) {
@@ -779,7 +784,9 @@ function RoomProviderInner<
   React.useEffect(() => {
     const store = getExtrasForClient(client).store;
     // Retrieve threads that have been updated/deleted since the last time the room requested threads updates
-    void store.getThreadsUpdates(room.id);
+    void store.fetchThreadsDeltaUpdate(room.id).catch(() => {
+      // Deliberately catch and ignore any errors here
+    });
   }, [client, room.id]);
 
   /**
@@ -788,7 +795,9 @@ function RoomProviderInner<
   React.useEffect(() => {
     function handleIsOnline() {
       const store = getExtrasForClient(client).store;
-      void store.getThreadsUpdates(room.id);
+      void store.fetchThreadsDeltaUpdate(room.id).catch(() => {
+        // Deliberately catch and ignore any errors here
+      });
     }
 
     window.addEventListener("online", handleIsOnline);
@@ -1331,7 +1340,9 @@ function useThreads<M extends BaseMetadata>(
   const { store, incrementQuerySubscribers } = getExtrasForClient<M>(client);
 
   React.useEffect(() => {
-    store.loadThreads(room.id, options, queryKey);
+    store.waitUntilThreadsLoaded(room.id, options, queryKey).catch(() => {
+      // Deliberately catch and ignore any errors here
+    });
   }, [store, room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   React.useEffect(() => {

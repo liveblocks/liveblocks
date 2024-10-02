@@ -754,6 +754,7 @@ export type Room<
     threads: ThreadData<M>[];
     inboxNotifications: InboxNotificationData[];
     requestedAt: Date;
+    nextCursor: string | null;
   }>;
 
   /**
@@ -2897,7 +2898,6 @@ export function createRoom<
     return body;
   }
 
-  // XXX Use the `getRoomThreadsSince` method in the client
   async function getThreadsSince(options: { since: Date }) {
     const response = await fetchCommentsApi(
       url`/v2/c/rooms/${config.roomId}/threads`,
@@ -2952,7 +2952,6 @@ export function createRoom<
     }
   }
 
-  // XXX Use the `getRoomThreads` method in the client
   async function getThreads(options?: GetThreadsOptions<M>) {
     let query: string | undefined;
 
@@ -2974,6 +2973,7 @@ export function createRoom<
         deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
         meta: {
           requestedAt: string;
+          nextCursor: string | null;
         };
       }>);
 
@@ -2982,6 +2982,7 @@ export function createRoom<
         inboxNotifications: json.inboxNotifications.map(
           convertToInboxNotificationData
         ),
+        nextCursor: json.meta.nextCursor,
         requestedAt: new Date(json.meta.requestedAt),
       };
     } else if (response.status === 404) {
@@ -2990,6 +2991,7 @@ export function createRoom<
         inboxNotifications: [],
         deletedThreads: [],
         deletedInboxNotifications: [],
+        nextCursor: null,
         requestedAt: new Date(),
       };
     } else {

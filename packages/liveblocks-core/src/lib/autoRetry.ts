@@ -31,7 +31,8 @@ export async function autoRetry<T>(
     try {
       return await promise;
     } catch (err) {
-      if (throwError?.(err)) {
+      // TODO: Think more about this abstraction
+      if (throwError?.(err) || err instanceof StopRetrying) {
         throw err;
       }
 
@@ -44,5 +45,11 @@ export async function autoRetry<T>(
     // Do another retry
     const delay = backoff[attempt - 1] ?? fallbackBackoff;
     await wait(delay);
+  }
+}
+
+export class StopRetrying extends Error {
+  constructor(reason: string) {
+    super(reason);
   }
 }

@@ -1490,9 +1490,6 @@ describe("useThreads: error", () => {
 
     expect(result.current).toEqual({ isLoading: true });
 
-    // Unmount so polling doesn't interfere with the test
-    unmount();
-
     // The first retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry

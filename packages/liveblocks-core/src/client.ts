@@ -673,6 +673,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     });
   }
 
+  // XXX - Remove this method for now. We may move this to a `HTTPClient` abstraction in future
   async function getRoomThreads<M extends BaseMetadata>(
     roomId: string,
     options?: GetThreadsOptions<M>
@@ -720,6 +721,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     }
   }
 
+  // XXX - Remove this method for now. We may move this to a `HTTPClient` abstraction in future
   async function getRoomThreadsSince<M extends BaseMetadata>(
     roomId: string,
     options: { since: Date }

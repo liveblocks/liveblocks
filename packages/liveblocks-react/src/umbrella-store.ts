@@ -25,11 +25,11 @@ import {
   compactObject,
   console,
   createStore,
-  kInternal,
   makeEventSource,
   mapValues,
   nanoid,
   nn,
+  StopRetrying,
 } from "@liveblocks/core";
 
 import { autobind } from "./lib/autobind";
@@ -425,8 +425,6 @@ type InternalState<M extends BaseMetadata> = Readonly<{
   queries3: Record<string, QueryAsyncResult>; // Notification settings
   queries4: Record<string, QueryAsyncResult>; // Versions
 
-  loadThreadsRequests: Record<string, UsablePromise<ThreadData<M>[]>>;
-
   optimisticUpdates: readonly OptimisticUpdate<M>[];
 
   rawThreadsById: Record<string, ThreadDataWithDeleteInfo<M>>;
@@ -496,13 +494,23 @@ export class UmbrellaStore<M extends BaseMetadata> {
   private _prevState: InternalState<M> | null = null;
   private _stateCached: UmbrellaStoreState<M> | null = null;
   private _lastRequestedThreadsAtByRoom = new Map<string, Date>(); // A map of room ids to the timestamp when the last request for threads updates was made
-  private _requestStatusByRoom = new Map<string, boolean>(); // A map of room ids to a boolean indicating whether a request to retrieve threads updates is in progress
   private _lastRequestedNotificationsAt: Date | null = null; // Keeps track of when we successfully requested an inbox notifications update for the last time. Will be `null` as long as the first successful fetch hasn't happened yet.
   private _notificationsPaginatedResource: PaginatedResource;
 
+  private _threadsPaginatedResources: Map<string, PaginatedResource> =
+    new Map();
+
   constructor(client?: OpaqueClient) {
     const inboxFetcher = async (cursor?: string) => {
-      const result = await client!.getInboxNotifications({ cursor });
+      if (client === undefined) {
+        // TODO: Think about other ways to structure this. Throwing a StopRetrying only
+        // makes sense only if we can easily know if the fetcher is going to be wrapped inside the autoRetry function
+        throw new StopRetrying(
+          "Client is required in order to load threads for the room"
+        );
+      }
+
+      const result = await client.getInboxNotifications({ cursor });
 
       this.updateThreadsAndNotifications(
         result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
@@ -527,7 +535,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     this._store = createStore<InternalState<M>>({
       rawThreadsById: {},
-      loadThreadsRequests: {},
       queries2: {},
       queries3: {},
       queries4: {},
@@ -571,22 +578,23 @@ export class UmbrellaStore<M extends BaseMetadata> {
   public getThreadsAsync(
     queryKey: string
   ): AsyncResult<UmbrellaStoreState<M>, "fullState"> {
-    const internalState = this._store.get();
-
-    const request = internalState.loadThreadsRequests[queryKey];
-    if (request === undefined || request.status === "pending") {
+    const paginatedResource = this._threadsPaginatedResources.get(queryKey);
+    if (paginatedResource === undefined) {
       return ASYNC_LOADING;
     }
 
-    if (request.status === "rejected") {
-      return {
-        isLoading: false,
-        error: request.reason,
-      };
+    const state = paginatedResource.get();
+    if (state.isLoading || state.error) {
+      return state;
     }
 
+    const pageState = state.data;
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
-    return { isLoading: false, fullState: this.getFullState() };
+    return {
+      isLoading: false,
+      ...pageState,
+      fullState: this.getFullState(),
+    };
   }
 
   public getUserThreadsAsync(
@@ -1320,150 +1328,96 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this._notificationsPaginatedResource.waitUntilLoaded();
   }
 
-  public loadThreads(
-    roomId: string,
-    options: GetThreadsOptions<BaseMetadata>,
-    queryKey: string
-  ) {
-    void this.waitUntilThreadsLoaded(roomId, options, queryKey).catch(() => {
-      // Deliberately catch and ignore any errors here.
-      // TODO: This is so that the hook (useThreads) calling this method doesn't throw an error. This logic should likely stay locally inside the hook.
-    });
-  }
-
   public waitUntilThreadsLoaded(
     roomId: string,
     options: GetThreadsOptions<BaseMetadata>,
     queryKey: string
-  ): UsablePromise<ThreadData[]> {
-    const internalStore = this._store.get();
-
-    // If a request was already made for the provided query key, we simply return the existing request.
-    // We do not want to override the existing request with a new request to load threads and notifications
-    const existingRequest = internalStore.loadThreadsRequests[queryKey];
-    if (existingRequest !== undefined) return existingRequest;
-
-    const fetchThreads = async (): Promise<ThreadData<M>[]> => {
-      // XXX Make this throw a StopRetrying error instance!
-      const client = nn(
-        this._client,
-        "Client is required in order to load threads and notifications for the room"
-      );
-      const room = client.getRoom(roomId);
-      if (room === null) {
-        throw new Error(`Room with id ${roomId} is not available on client`);
-      }
-
-      // Wrap the request to load room threads (and notifications) in an auto-retry function so that if the request fails,
-      // we retry for at most 5 times with incremental backoff delays. If all retries fail, the auto-retry function throws an error
-      return await autoRetry(
-        async () => {
-          const result = await room.getThreads(options);
-
-          this.updateThreadsAndNotifications(
-            result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
-            result.inboxNotifications
+  ) {
+    const threadsFetcher =
+      async (/* cursor?: string - XXX Include this once `room.getThreads()` support passing cursor */) => {
+        if (this._client === undefined) {
+          // TODO: Think about other ways to structure this. Throwing a StopRetrying only
+          // makes sense only if we can easily know if the fetcher is going to be wrapped inside the autoRetry function
+          throw new StopRetrying(
+            "Client is required in order to load threads for the room"
           );
+        }
 
-          const lastRequestedAt =
-            this._lastRequestedThreadsAtByRoom.get(roomId);
+        const room = this._client.getRoom(roomId);
+        if (room === null) {
+          throw new StopRetrying(
+            `Room with id ${roomId} is not available on client`
+          );
+        }
 
-          /**
-           * We set the `lastRequestedAt` value for the room to the timestamp returned by the current request if:
-           * 1. The `lastRequestedAt` value for the room has not been set
-           * OR
-           * 2. The `lastRequestedAt` value for the room is older than the timestamp returned by the current request
-           */
-          if (
-            lastRequestedAt === undefined ||
-            lastRequestedAt > result.requestedAt
-          ) {
-            this._lastRequestedThreadsAtByRoom.set(roomId, result.requestedAt);
-          }
+        // XXX - `room.getThreads` currently doesn't accept `cursor` option but will do so in future after pagination support
+        const result = await room.getThreads(options);
+        this.updateThreadsAndNotifications(
+          result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
+          result.inboxNotifications
+        );
 
-          return result.threads as ThreadData<M>[];
-        },
-        5,
-        [5000, 5000, 10000, 15000]
-      );
-    };
+        const lastRequestedAt = this._lastRequestedThreadsAtByRoom.get(roomId);
 
-    const fetchThreadsPromise = usify(fetchThreads());
+        /**
+         * We set the `lastRequestedAt` value for the room to the timestamp returned by the current request if:
+         * 1. The `lastRequestedAt` value for the room has not been set
+         * OR
+         * 2. The `lastRequestedAt` value for the room is older than the timestamp returned by the current request
+         */
+        if (
+          lastRequestedAt === undefined ||
+          lastRequestedAt > result.requestedAt
+        ) {
+          this._lastRequestedThreadsAtByRoom.set(roomId, result.requestedAt);
+        }
 
-    this._store.set((state) => ({
-      ...state,
-      loadThreadsRequests: {
-        ...state.loadThreadsRequests,
-        [queryKey]: fetchThreadsPromise,
-      },
-    }));
+        // XXX - Replace this will result.nextCursor
+        return null;
+      };
 
-    fetchThreadsPromise
-      .then(() => {
-        // Manually mark the state as dirty and update the store so that any subscribers are notified
-        this._store.set((state) => ({ ...state }));
-      })
-      .catch(() => {
-        // Manually mark the state as dirty and update the store so that any subscribers are notified
-        this._store.set((state) => ({ ...state }));
+    let paginatedResource = this._threadsPaginatedResources.get(queryKey);
+    if (paginatedResource === undefined) {
+      paginatedResource = new PaginatedResource(threadsFetcher);
+    }
 
-        // Wait for 5 seconds before removing the request from the cache
-        setTimeout(() => {
-          this._store.set((state) => {
-            const { [queryKey]: _, ...requests } = state.loadThreadsRequests;
-            return {
-              ...state,
-              loadThreadsRequests: requests,
-            };
-          });
-        }, 5000);
-      });
+    paginatedResource.observable.subscribe(() =>
+      this._store.set((store) => ({ ...store }))
+    );
 
-    return fetchThreadsPromise;
+    this._threadsPaginatedResources.set(queryKey, paginatedResource);
+
+    return paginatedResource.waitUntilLoaded();
   }
 
-  /**
-   * Retrieve threads that have been updated/deleted since the last time the room requested threads updates and update the local cache with the new data
-   * @param roomId The id of the room for which to retrieve threads updates
-   * XXX - Match the name and implementation with the equivalent function for inbox notifications (currently named `fetchNotificationsDeltaUpdate`)
-   */
-  public async getThreadsUpdates(roomId: string) {
-    const DEFAULT_DEDUPING_INTERVAL = 2000; // 2 seconds
+  public async fetchThreadsDeltaUpdate(roomId: string) {
+    const lastRequestedAt = this._lastRequestedThreadsAtByRoom.get(roomId);
+    if (lastRequestedAt === undefined) return;
 
-    const since = this._lastRequestedThreadsAtByRoom.get(roomId);
-    if (since === undefined) return;
+    const client = nn(
+      this._client,
+      "Client is required in order to load notifications for the room"
+    );
 
-    const isFetchingThreadsUpdates =
-      this._requestStatusByRoom.get(roomId) ?? false;
-    // If another request to retrieve threads updates for the room is in progress, we do not start a new one
-    if (isFetchingThreadsUpdates === true) return;
-    try {
-      // Set the isFetchingThreadsUpdates flag to true to prevent multiple requests to fetch threads updates for the room from being made at the same time
-      this._requestStatusByRoom.set(roomId, true);
+    const room = nn(
+      client.getRoom(roomId),
+      `Room with id ${roomId} is not available on client`
+    );
 
-      const updates = await nn(
-        this._client,
-        "Client is required in order to load threads and notifications for the room"
-      )[kInternal].getRoomThreadsSince(roomId, { since });
+    const updates = await room.getThreadsSince({
+      since: lastRequestedAt,
+    });
 
-      // Set the isFetchingThreadsUpdates flag to false after a certain interval to prevent multiple requests from being made at the same time
-      setTimeout(() => {
-        this._requestStatusByRoom.set(roomId, false);
-      }, DEFAULT_DEDUPING_INTERVAL);
+    this.updateThreadsAndNotifications(
+      updates.threads.updated as ThreadData<M>[],
+      updates.inboxNotifications.updated,
+      updates.threads.deleted,
+      updates.inboxNotifications.deleted
+    );
 
-      this.updateThreadsAndNotifications(
-        updates.threads.updated as ThreadData<M>[], // TODO: Figure out how to remove this casting,
-        updates.inboxNotifications.updated,
-        updates.threads.deleted,
-        updates.inboxNotifications.deleted
-      );
-
+    if (lastRequestedAt < updates.requestedAt) {
       // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
       this._lastRequestedThreadsAtByRoom.set(roomId, updates.requestedAt);
-    } catch (err) {
-      this._requestStatusByRoom.set(roomId, false);
-      // TODO: Implement error handling
-      return;
     }
   }
 }
