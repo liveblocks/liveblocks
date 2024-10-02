@@ -1884,6 +1884,9 @@ describe("WebSocket events", () => {
       expect(result.current).toEqual({
         isLoading: false,
         threads: [initialThread],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
       })
     );
 
@@ -1960,6 +1963,9 @@ describe("useThreadsSuspense", () => {
       expect(result.current).toEqual({
         isLoading: false,
         threads,
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
       })
     );
 
@@ -2007,6 +2013,9 @@ describe("useThreadsSuspense", () => {
       expect(result.current).toEqual({
         isLoading: false,
         threads,
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
       })
     );
 
