@@ -225,6 +225,8 @@ function usify<T>(promise: Promise<T>): UsablePromise<T> {
   return usable;
 }
 
+const noop = Promise.resolve();
+
 /**
  * The PaginatedResource helper class is responsible for and abstracts away the
  * following:
@@ -290,30 +292,35 @@ function usify<T>(promise: Promise<T>): UsablePromise<T> {
  *   "last requested at" for this resource? Seems nice to add it here somehow.
  *   Need to think about the exact implications though.
  *
+ * @internal Only exported for unit tests.
  */
-class PaginatedResource {
+export class PaginatedResource {
   public readonly observable: Observable<void>;
   private _eventSource: EventSource<void>;
   private _fetchPage: (cursor?: string) => Promise<string | null>;
   private _paginationState: PaginationState | null; // Should be null while in loading or error state!
+  private _pendingFetchMore: Promise<void> | null;
 
   constructor(fetchPage: (cursor?: string) => Promise<string | null>) {
     this._paginationState = null;
     this._fetchPage = fetchPage;
     this._eventSource = makeEventSource<void>();
+    this._pendingFetchMore = null;
     this.observable = this._eventSource.observable;
 
     autobind(this);
   }
 
-  public fetchMore(): void {
+  private async _fetchMore(): Promise<void> {
     const state = this._paginationState;
 
     // We do not proceed with fetching more if any of the following is true:
     // 1) the pagination state has not be initialized
     // 2) the cursor is null, i.e., there are no more pages to fetch
     // 3) a request to fetch more is currently in progress
-    if (state === null || state.cursor === null || state.isFetchingMore) return;
+    if (state === null || state.cursor === null) {
+      return noop;
+    }
 
     // Set `isFetchingMore` to indicate that the request to fetch the next page is now in progress
     // XXX - Create a private helper which does both 1) updates pagination state 2) notifies subscribers
@@ -323,28 +330,42 @@ class PaginatedResource {
     };
     this._eventSource.notify();
 
-    this._fetchPage(state.cursor)
-      .then((cursor) => {
-        // Update the cursor with the next cursor and set `isFetchingMore` to false
-        this._paginationState = {
-          ...state,
-          cursor,
-          isFetchingMore: false,
-        };
-      })
-      .catch((err) => {
-        this._paginationState = {
-          ...state,
-          isFetchingMore: false,
-          fetchMoreError: err as Error,
-        };
-      })
+    try {
+      const nextCursor = await this._fetchPage(state.cursor);
+
+      // Update the cursor with the next cursor and set `isFetchingMore` to false
       // XXX - Create a private helper which does both 1) updates pagination state 2) notifies subscribers
-      .finally(() => this._eventSource.notify());
+      this._paginationState = {
+        ...state,
+        cursor: nextCursor,
+        fetchMoreError: undefined,
+        isFetchingMore: false,
+      };
+      this._eventSource.notify();
+    } catch (err) {
+      // XXX - Create a private helper which does both 1) updates pagination state 2) notifies subscribers
+      this._paginationState = {
+        ...state,
+        isFetchingMore: false,
+        fetchMoreError: err as Error,
+      };
+      this._eventSource.notify();
+    }
+  }
+
+  public fetchMore(): Promise<void> {
+    if (this._pendingFetchMore) {
+      return this._pendingFetchMore;
+    }
+
+    this._pendingFetchMore = this._fetchMore().finally(() => {
+      this._pendingFetchMore = null;
+    });
+    return this._pendingFetchMore;
   }
 
   public get(): AsyncResult<{
-    fetchMore: () => void;
+    fetchMore: () => Promise<void>;
     fetchMoreError?: Error;
     hasFetchedAll: boolean;
     isFetchingMore: boolean;
@@ -382,7 +403,7 @@ class PaginatedResource {
     // Wrap the request to load room threads (and notifications) in an auto-retry function so that if the request fails,
     // we retry for at most 5 times with incremental backoff delays. If all retries fail, the auto-retry function throws an error
     const initialFetcher = autoRetry(
-      () => this._fetchPage(/* cursor = undefined */),
+      () => this._fetchPage(/* cursor */ undefined),
       5,
       [5000, 5000, 10000, 15000]
     );
@@ -587,16 +608,16 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return ASYNC_LOADING;
     }
 
-    const state = paginatedResource.get();
-    if (state.isLoading || state.error) {
-      return state;
+    const asyncResult = paginatedResource.get();
+    if (asyncResult.isLoading || asyncResult.error) {
+      return asyncResult;
     }
 
-    const pageState = state.data;
+    const paginationState = asyncResult.data;
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      ...pageState,
+      ...paginationState,
       fullState: this.getFullState(),
     };
   }
@@ -621,16 +642,16 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   // NOTE: This will read the async result, but WILL NOT start loading at the moment!
   public getInboxNotificationsAsync(): InboxNotificationsAsyncResult {
-    const notificationState = this._notifications.get();
-    if (notificationState.isLoading || notificationState.error) {
-      return notificationState;
+    const asyncResult = this._notifications.get();
+    if (asyncResult.isLoading || asyncResult.error) {
+      return asyncResult;
     }
 
-    const pageState = notificationState.data;
+    const paginationState = asyncResult.data;
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      ...pageState,
+      ...paginationState,
       inboxNotifications: this.getFullState().notifications,
     };
   }
