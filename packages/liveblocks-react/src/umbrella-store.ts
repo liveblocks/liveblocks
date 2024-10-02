@@ -493,12 +493,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
   private _store: Store<InternalState<M>>;
   private _prevState: InternalState<M> | null = null;
   private _stateCached: UmbrellaStoreState<M> | null = null;
-  private _lastRequestedThreadsAtByRoom = new Map<string, Date>(); // A map of room ids to the timestamp when the last request for threads updates was made
-  private _lastRequestedNotificationsAt: Date | null = null; // Keeps track of when we successfully requested an inbox notifications update for the last time. Will be `null` as long as the first successful fetch hasn't happened yet.
-  private _notificationsPaginatedResource: PaginatedResource;
 
-  private _threadsPaginatedResources: Map<string, PaginatedResource> =
-    new Map();
+  // Notifications
+  private _lastRequestedNotificationsAt: Date | null = null; // Keeps track of when we successfully requested an inbox notifications update for the last time. Will be `null` as long as the first successful fetch hasn't happened yet.
+  private _notifications: PaginatedResource;
+
+  // Threads
+  private _lastRequestedThreadsAtByRoom = new Map<string, Date>(); // A map of room ids to the timestamp when the last request for threads updates was made
+  private _threads: Map<string, PaginatedResource> = new Map();
 
   constructor(client?: OpaqueClient) {
     const inboxFetcher = async (cursor?: string) => {
@@ -528,8 +530,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     this._client = client;
 
-    this._notificationsPaginatedResource = new PaginatedResource(inboxFetcher);
-    this._notificationsPaginatedResource.observable.subscribe(() =>
+    this._notifications = new PaginatedResource(inboxFetcher);
+    this._notifications.observable.subscribe(() =>
       this._store.set((store) => ({ ...store }))
     );
 
@@ -578,7 +580,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   public getThreadsAsync(
     queryKey: string
   ): AsyncResult<UmbrellaStoreState<M>, "fullState"> {
-    const paginatedResource = this._threadsPaginatedResources.get(queryKey);
+    const paginatedResource = this._threads.get(queryKey);
     if (paginatedResource === undefined) {
       return ASYNC_LOADING;
     }
@@ -617,7 +619,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   // NOTE: This will read the async result, but WILL NOT start loading at the moment!
   public getInboxNotificationsAsync(): InboxNotificationsAsyncResult {
-    const notificationState = this._notificationsPaginatedResource.get();
+    const notificationState = this._notifications.get();
     if (notificationState.isLoading || notificationState.error) {
       return notificationState;
     }
@@ -1327,7 +1329,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   public waitUntilNotificationsLoaded(): UsablePromise<void> {
-    return this._notificationsPaginatedResource.waitUntilLoaded();
+    return this._notifications.waitUntilLoaded();
   }
 
   public waitUntilThreadsLoaded(
@@ -1378,7 +1380,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
         return null;
       };
 
-    let paginatedResource = this._threadsPaginatedResources.get(queryKey);
+    let paginatedResource = this._threads.get(queryKey);
     if (paginatedResource === undefined) {
       paginatedResource = new PaginatedResource(threadsFetcher);
     }
@@ -1387,7 +1389,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this._store.set((store) => ({ ...store }))
     );
 
-    this._threadsPaginatedResources.set(queryKey, paginatedResource);
+    this._threads.set(queryKey, paginatedResource);
 
     return paginatedResource.waitUntilLoaded();
   }
