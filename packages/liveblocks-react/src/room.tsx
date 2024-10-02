@@ -290,12 +290,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
       requests.push(store.fetchThreadsDeltaUpdate(room.id));
     });
 
-    try {
-      await Promise.allSettled(requests);
-    } catch (err) {
-      // When polling, we don't want to throw errors, ever
-      console.warn(`Polling new threads failed: ${String(err)}`);
-    }
+    await Promise.allSettled(requests);
   }
 
   function incrementQuerySubscribers(queryKey: string) {
