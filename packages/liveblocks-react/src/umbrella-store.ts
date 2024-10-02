@@ -495,11 +495,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
   private _stateCached: UmbrellaStoreState<M> | null = null;
 
   // Notifications
-  private _lastRequestedNotificationsAt: Date | null = null; // Keeps track of when we successfully requested an inbox notifications update for the last time. Will be `null` as long as the first successful fetch hasn't happened yet.
+  private _notificationsLastRequestedAt: Date | null = null; // Keeps track of when we successfully requested an inbox notifications update for the last time. Will be `null` as long as the first successful fetch hasn't happened yet.
   private _notifications: PaginatedResource;
 
   // Threads
-  private _lastRequestedThreadsAtByRoom = new Map<string, Date>(); // A map of room ids to the timestamp when the last request for threads updates was made
+  private _threadsLastRequestedAtByRoom = new Map<string, Date>(); // A map of room ids to the timestamp when the last request for threads updates was made
   private _threads: Map<string, PaginatedResource> = new Map();
 
   constructor(client?: OpaqueClient) {
@@ -520,8 +520,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
       );
 
       // We initialize the `_lastRequestedNotificationsAt` date using the server timestamp after we've loaded the first page of inbox notifications.
-      if (this._lastRequestedNotificationsAt === null) {
-        this._lastRequestedNotificationsAt = result.requestedAt;
+      if (this._notificationsLastRequestedAt === null) {
+        this._notificationsLastRequestedAt = result.requestedAt;
       }
 
       const nextCursor = result.nextCursor;
@@ -1304,7 +1304,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   public async fetchNotificationsDeltaUpdate() {
-    const lastRequestedAt = this._lastRequestedNotificationsAt;
+    const lastRequestedAt = this._notificationsLastRequestedAt;
     if (lastRequestedAt === null) {
       throw new Error("Expected there is at least one page");
     }
@@ -1317,7 +1317,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     const result = await client.getInboxNotificationsSince(lastRequestedAt);
 
     if (lastRequestedAt < result.requestedAt) {
-      this._lastRequestedNotificationsAt = result.requestedAt;
+      this._notificationsLastRequestedAt = result.requestedAt;
     }
 
     this.updateThreadsAndNotifications(
@@ -1361,7 +1361,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
           result.inboxNotifications
         );
 
-        const lastRequestedAt = this._lastRequestedThreadsAtByRoom.get(roomId);
+        const lastRequestedAt = this._threadsLastRequestedAtByRoom.get(roomId);
 
         /**
          * We set the `lastRequestedAt` value for the room to the timestamp returned by the current request if:
@@ -1373,7 +1373,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
           lastRequestedAt === undefined ||
           lastRequestedAt > result.requestedAt
         ) {
-          this._lastRequestedThreadsAtByRoom.set(roomId, result.requestedAt);
+          this._threadsLastRequestedAtByRoom.set(roomId, result.requestedAt);
         }
 
         // XXX - Replace this will result.nextCursor
@@ -1395,7 +1395,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   public async fetchThreadsDeltaUpdate(roomId: string) {
-    const lastRequestedAt = this._lastRequestedThreadsAtByRoom.get(roomId);
+    const lastRequestedAt = this._threadsLastRequestedAtByRoom.get(roomId);
     if (lastRequestedAt === undefined) return;
 
     const client = nn(
@@ -1421,7 +1421,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     if (lastRequestedAt < updates.requestedAt) {
       // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
-      this._lastRequestedThreadsAtByRoom.set(roomId, updates.requestedAt);
+      this._threadsLastRequestedAtByRoom.set(roomId, updates.requestedAt);
     }
   }
 }
