@@ -32,8 +32,8 @@ function Example() {
         />
       ))}
       <Composer
-        onComposerSubmit={({ body }) => {
-          createThread({ body });
+        onComposerSubmit={({ body, attachments }) => {
+          createThread({ body, attachments });
         }}
         className="rounded-xl bg-white shadow-md"
       />

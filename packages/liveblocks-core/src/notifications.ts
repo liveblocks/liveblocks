@@ -13,7 +13,9 @@ import {
 } from "./convert-plain-data";
 import { Batch } from "./lib/batch";
 import type { Store } from "./lib/create-store";
-import { type QueryParams, urljoin } from "./lib/url";
+import type { QueryParams, URLSafeString } from "./lib/url";
+import { url, urljoin } from "./lib/url";
+import { raise } from "./lib/utils";
 import { TokenKind } from "./protocol/AuthToken";
 import type {
   BaseMetadata,
@@ -28,6 +30,7 @@ import type {
   InboxNotificationDeleteInfo,
   InboxNotificationDeleteInfoPlain,
 } from "./protocol/InboxNotifications";
+import { PKG_VERSION } from "./version";
 
 const MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY = 50;
 
@@ -60,10 +63,14 @@ export function createNotificationsApi<M extends BaseMetadata>({
   }>;
 } {
   async function fetchJson<T>(
-    endpoint: string,
+    endpoint: URLSafeString,
     options?: RequestInit,
     params?: QueryParams
   ): Promise<T> {
+    if (!endpoint.startsWith("/v2/c/")) {
+      raise("Expected a /v2/c/* endpoint");
+    }
+
     const authValue = await authManager.getAuthValue({
       requestedScope: "comments:read",
     });
@@ -76,12 +83,13 @@ export function createNotificationsApi<M extends BaseMetadata>({
       currentUserIdStore.set(() => userId);
     }
 
-    const url = urljoin(baseUrl, `/v2/c${endpoint}`, params);
+    const url = urljoin(baseUrl, endpoint, params);
     const response = await fetcher(url.toString(), {
       ...options,
       headers: {
         ...options?.headers,
         Authorization: `Bearer ${getAuthBearerHeaderFromAuthValue(authValue)}`,
+        "X-LB-Client": PKG_VERSION || "dev",
       },
     });
 
@@ -128,7 +136,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
       meta: {
         requestedAt: string;
       };
-    }>("/inbox-notifications", undefined, {});
+    }>(url`/v2/c/inbox-notifications`, undefined, {});
 
     return {
       threads: json.threads.map(convertToThreadData),
@@ -148,7 +156,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
       meta: {
         requestedAt: string;
       };
-    }>("/inbox-notifications", undefined, {
+    }>(url`/v2/c/inbox-notifications`, undefined, {
       since: options.since.toISOString(),
     });
 
@@ -170,13 +178,13 @@ export function createNotificationsApi<M extends BaseMetadata>({
   async function getUnreadInboxNotificationsCount() {
     const { count } = await fetchJson<{
       count: number;
-    }>("/inbox-notifications/count");
+    }>(url`/v2/c/inbox-notifications/count`);
 
     return count;
   }
 
   async function markAllInboxNotificationsAsRead() {
-    await fetchJson("/inbox-notifications/read", {
+    await fetchJson(url`/v2/c/inbox-notifications/read`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -186,7 +194,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
   }
 
   async function markInboxNotificationsAsRead(inboxNotificationIds: string[]) {
-    await fetchJson("/inbox-notifications/read", {
+    await fetchJson(url`/v2/c/inbox-notifications/read`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -211,18 +219,15 @@ export function createNotificationsApi<M extends BaseMetadata>({
   }
 
   async function deleteAllInboxNotifications() {
-    await fetchJson("/inbox-notifications", {
+    await fetchJson(url`/v2/c/inbox-notifications`, {
       method: "DELETE",
     });
   }
 
   async function deleteInboxNotification(inboxNotificationId: string) {
-    await fetchJson(
-      `/inbox-notifications/${encodeURIComponent(inboxNotificationId)}`,
-      {
-        method: "DELETE",
-      }
-    );
+    await fetchJson(url`/v2/c/inbox-notifications/${inboxNotificationId}`, {
+      method: "DELETE",
+    });
   }
 
   async function getThreads(options: GetThreadsOptions<M>) {
@@ -240,7 +245,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
       meta: {
         requestedAt: string;
       };
-    }>("/threads", undefined, {
+    }>(url`/v2/c/threads`, undefined, {
       query,
     });
 
@@ -270,7 +275,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
       meta: {
         requestedAt: string;
       };
-    }>("/threads", undefined, {
+    }>(url`/v2/c/threads`, undefined, {
       since: options.since.toISOString(),
       query,
     });

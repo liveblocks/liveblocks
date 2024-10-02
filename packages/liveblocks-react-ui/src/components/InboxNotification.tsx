@@ -31,7 +31,7 @@ import { useComponents } from "../components";
 import { CheckIcon } from "../icons/Check";
 import { DeleteIcon } from "../icons/Delete";
 import { EllipsisIcon } from "../icons/Ellipsis";
-import { MissingIcon } from "../icons/Missing";
+import { WarningIcon } from "../icons/Warning";
 import type {
   CommentOverrides,
   GlobalOverrides,
@@ -117,6 +117,16 @@ export interface InboxNotificationThreadProps
    * Whether to show the room name in the title.
    */
   showRoomName?: boolean;
+
+  /**
+   * Whether to show reactions.
+   */
+  showReactions?: boolean;
+
+  /**
+   * Whether to show attachments.
+   */
+  showAttachments?: boolean;
 }
 
 export interface InboxNotificationTextMentionProps
@@ -405,6 +415,8 @@ const InboxNotificationThread = forwardRef<
       inboxNotification,
       href,
       showRoomName = true,
+      showReactions = true,
+      showAttachments = true,
       showActions = "hover",
       overrides,
       ...props
@@ -419,17 +431,21 @@ const InboxNotificationThread = forwardRef<
     //       it's not a big deal, the only scenario where it would be superfluous would be if the user provides their own
     //       `href` AND disables room names in the title via `showRoomName={false}`.
     const { info } = useRoomInfo(inboxNotification.roomId);
-    const { unread, date, aside, title, content, commentId } = useMemo(() => {
+    const contents = useMemo(() => {
       const contents = generateInboxNotificationThreadContents(
         inboxNotification,
         thread,
         currentUserId ?? ""
       );
 
+      if (contents.comments.length === 0 || contents.userIds.length === 0) {
+        return null;
+      }
+
       switch (contents.type) {
         case "comments": {
           const reversedUserIds = [...contents.userIds].reverse();
-          const firstUserId = reversedUserIds[0];
+          const firstUserId = reversedUserIds[0]!;
 
           const aside = <InboxNotificationAvatar userId={firstUserId} />;
           const title = $.INBOX_NOTIFICATION_THREAD_COMMENTS_LIST(
@@ -451,6 +467,8 @@ const InboxNotificationThread = forwardRef<
                   key={comment.id}
                   comment={comment}
                   showHeader={contents.comments.length > 1}
+                  showAttachments={showAttachments}
+                  showReactions={showReactions}
                   overrides={overrides}
                 />
               ))}
@@ -464,13 +482,13 @@ const InboxNotificationThread = forwardRef<
             title,
             content,
             threadId: thread.id,
-            commentId: contents.comments[contents.comments.length - 1].id,
+            commentId: contents.comments[contents.comments.length - 1]!.id,
           };
         }
 
         case "mention": {
-          const mentionUserId = contents.userIds[0];
-          const mentionComment = contents.comments[0];
+          const mentionUserId = contents.userIds[0]!;
+          const mentionComment = contents.comments[0]!;
 
           const aside = <InboxNotificationAvatar userId={mentionUserId} />;
           const title = $.INBOX_NOTIFICATION_THREAD_MENTION(
@@ -483,6 +501,9 @@ const InboxNotificationThread = forwardRef<
                 key={mentionComment.id}
                 comment={mentionComment}
                 showHeader={false}
+                showAttachments={showAttachments}
+                showReactions={showReactions}
+                overrides={overrides}
               />
             </div>
           );
@@ -504,16 +525,31 @@ const InboxNotificationThread = forwardRef<
             "Unexpected thread inbox notification type"
           );
       }
-    }, [$, currentUserId, inboxNotification, overrides, showRoomName, thread]);
+    }, [
+      $,
+      currentUserId,
+      inboxNotification,
+      overrides,
+      showRoomName,
+      showAttachments,
+      showReactions,
+      thread,
+    ]);
     // Add the thread ID and comment ID to the `href`.
     // And use URL from `resolveRoomsInfo` if `href` isn't set.
     const resolvedHref = useMemo(() => {
       const resolvedHref = href ?? info?.url;
 
       return resolvedHref
-        ? generateURL(resolvedHref, undefined, commentId)
+        ? generateURL(resolvedHref, undefined, contents?.commentId)
         : undefined;
-    }, [commentId, href, info?.url]);
+    }, [contents?.commentId, href, info?.url]);
+
+    if (!contents) {
+      return null;
+    }
+
+    const { aside, title, content, date, unread } = contents;
 
     return (
       <InboxNotificationLayout
@@ -643,7 +679,7 @@ const InboxNotificationCustomMissing = forwardRef<
       }
       aside={
         <InboxNotificationIcon>
-          <MissingIcon />
+          <WarningIcon />
         </InboxNotificationIcon>
       }
       ref={forwardedRef}

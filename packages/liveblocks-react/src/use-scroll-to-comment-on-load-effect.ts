@@ -1,15 +1,15 @@
 import type { BaseMetadata } from "@liveblocks/client";
 import * as React from "react";
 
-import type { ThreadsState } from "./types";
+import type { ThreadsAsyncResult } from "./types";
 
 function handleScrollToCommentOnLoad(
   shouldScrollOnLoad: boolean,
-  state: ThreadsState<BaseMetadata>
+  state: ThreadsAsyncResult<BaseMetadata>
 ) {
   if (shouldScrollOnLoad === false) return;
 
-  if (state.isLoading) return;
+  if (!state.threads) return;
 
   const isWindowDefined = typeof window !== "undefined";
   if (!isWindowDefined) return;
@@ -41,7 +41,7 @@ function handleScrollToCommentOnLoad(
  */
 export function useScrollToCommentOnLoadEffect(
   shouldScrollOnLoad: boolean,
-  state: ThreadsState<BaseMetadata>
+  state: ThreadsAsyncResult<BaseMetadata>
 ) {
   React.useEffect(
     () => {

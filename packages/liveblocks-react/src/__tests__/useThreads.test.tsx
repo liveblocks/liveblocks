@@ -287,6 +287,212 @@ describe("useThreads", () => {
     unmount();
   });
 
+  test("should fetch threads for a given query (multiple criteria)", async () => {
+    const roomId = nanoid();
+    const redPinnedThread = dummyThreadData({
+      roomId,
+      metadata: { pinned: true, color: "red" },
+    });
+    const bluePinnedThread = dummyThreadData({
+      roomId,
+      metadata: { pinned: true, color: "blue" },
+    });
+    const redUnpinnedThread = dummyThreadData({
+      roomId,
+      metadata: { pinned: false, color: "red" },
+    });
+    const blueUnpinnedThread = dummyThreadData({
+      roomId,
+      metadata: { pinned: false, color: "blue" },
+    });
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            data: [
+              bluePinnedThread,
+              blueUnpinnedThread,
+              redPinnedThread,
+              redUnpinnedThread,
+            ], // removed any filtering so that we ensure the filtering is done properly on the client side, it shouldn't matter what the server returns
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest<{
+      pinned: boolean;
+      color: string;
+    }>();
+
+    const { result, unmount } = renderHook(
+      () =>
+        useThreads({
+          query: { metadata: { pinned: true, color: "red" } },
+        }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id={roomId}>{children}</RoomProvider>
+        ),
+      }
+    );
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [redPinnedThread],
+      })
+    );
+
+    unmount();
+
+    const { result: result2, unmount: unmount2 } = renderHook(
+      () =>
+        useThreads({
+          query: { metadata: { color: "red" } },
+        }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id={roomId}>{children}</RoomProvider>
+        ),
+      }
+    );
+
+    expect(result2.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result2.current).toEqual({
+        isLoading: false,
+        threads: [redPinnedThread, redUnpinnedThread],
+      })
+    );
+
+    unmount2();
+
+    const { result: result3, unmount: unmount3 } = renderHook(
+      () =>
+        useThreads({
+          query: { metadata: { color: "red", pinned: true } },
+        }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id={roomId}>{children}</RoomProvider>
+        ),
+      }
+    );
+
+    expect(result3.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result3.current).toEqual({
+        isLoading: false,
+        threads: [redPinnedThread],
+      })
+    );
+
+    unmount3();
+
+    const { result: result4, unmount: unmount4 } = renderHook(
+      () =>
+        useThreads({
+          query: { metadata: { color: "nonexisting", pinned: true } },
+        }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id={roomId}>{children}</RoomProvider>
+        ),
+      }
+    );
+
+    expect(result4.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result4.current).toEqual({
+        isLoading: false,
+        threads: [],
+      })
+    );
+
+    unmount4();
+
+    const { result: result5, unmount: unmount5 } = renderHook(
+      () =>
+        useThreads({
+          query: { metadata: { color: "nonexisting" } },
+        }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id={roomId}>{children}</RoomProvider>
+        ),
+      }
+    );
+
+    expect(result5.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result5.current).toEqual({
+        isLoading: false,
+        threads: [],
+      })
+    );
+
+    unmount5();
+
+    const { result: result6, unmount: unmount6 } = renderHook(
+      () => useThreads({ query: { metadata: { pinned: true } } }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id={roomId}>{children}</RoomProvider>
+        ),
+      }
+    );
+
+    expect(result6.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result6.current).toEqual({
+        isLoading: false,
+        threads: [bluePinnedThread, redPinnedThread],
+      })
+    );
+
+    unmount6();
+
+    const { result: result7, unmount: unmount7 } = renderHook(
+      () =>
+        useThreads({
+          query: { metadata: { color: { startsWith: "blu" }, pinned: true } },
+        }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id={roomId}>{children}</RoomProvider>
+        ),
+      }
+    );
+
+    expect(result7.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result7.current).toEqual({
+        isLoading: false,
+        threads: [bluePinnedThread],
+      })
+    );
+
+    unmount7();
+  });
+
   test("shoud fetch threads for a given query with a startsWith filter", async () => {
     const roomId = nanoid();
     const liveblocksEngineeringThread = dummyThreadData({
@@ -707,7 +913,6 @@ describe("useThreads", () => {
 
     await waitFor(() =>
       expect(result.current).toEqual({
-        threads: [],
         isLoading: false,
         error: expect.any(Error),
       })
@@ -959,7 +1164,7 @@ describe("useThreads", () => {
 
     umbrellaStore.force_set((state) => ({
       ...state,
-      threads: {
+      rawThreadsById: {
         [thread1.id]: thread1,
         [thread2WithDeletedAt.id]: thread2WithDeletedAt,
       },
@@ -1270,7 +1475,6 @@ describe("useThreads: error", () => {
     await waitFor(() => expect(getThreadsReqCount).toBe(1));
 
     expect(result.current).toEqual({
-      threads: [],
       isLoading: false,
       error: expect.any(Error),
     });
@@ -1325,7 +1529,6 @@ describe("useThreads: error", () => {
     await waitFor(() => expect(getThreadsReqCount).toBe(1));
 
     expect(result.current).toEqual({
-      threads: [],
       isLoading: false,
       error: expect.any(Error),
     });
@@ -1393,7 +1596,6 @@ describe("useThreads: error", () => {
     await waitFor(() => expect(getThreadsReqCount).toBe(1));
 
     expect(result.current).toEqual({
-      threads: [],
       isLoading: false,
       error: expect.any(Error),
     });
@@ -1583,7 +1785,7 @@ describe("WebSocket events", () => {
     sim.simulateIncomingMessage({
       type: ServerMsgCode.COMMENT_CREATED,
       threadId: newThread.id,
-      commentId: newThread.comments[0].id,
+      commentId: newThread.comments[0]!.id,
     });
 
     await waitFor(() =>
@@ -1642,7 +1844,7 @@ describe("WebSocket events", () => {
     sim.simulateIncomingMessage({
       type: ServerMsgCode.COMMENT_DELETED,
       threadId: newThread.id,
-      commentId: newThread.comments[0].id,
+      commentId: newThread.comments[0]!.id,
     });
 
     await waitFor(() =>

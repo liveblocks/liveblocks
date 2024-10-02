@@ -1,5 +1,5 @@
-import { deleteComment } from "../../umbrella-store";
-import { createComment, createThread } from "./_dummies";
+import { applyDeleteComment } from "../../umbrella-store";
+import { createAttachment, createComment, createThread } from "./_dummies";
 
 describe("deleteComment", () => {
   it("should mark a comment as deleted in a thread", () => {
@@ -10,12 +10,17 @@ describe("deleteComment", () => {
       roomId: comment.roomId,
       createdAt: new Date("2024-01-01"),
       updatedAt: new Date("2024-01-01"),
-      comments: [createComment(), comment],
+      comments: [
+        createComment({
+          attachments: [createAttachment()],
+        }),
+        comment,
+      ],
     });
 
     const deletedAt = new Date("2024-01-02");
 
-    const updatedThread = deleteComment(thread, comment.id, deletedAt);
+    const updatedThread = applyDeleteComment(thread, comment.id, deletedAt);
 
     expect(updatedThread.updatedAt).toEqual(deletedAt);
     const updatedComment = updatedThread.comments.find(
@@ -25,6 +30,7 @@ describe("deleteComment", () => {
     if (updatedComment === undefined) return;
     expect(updatedComment.deletedAt).toEqual(deletedAt);
     expect(updatedComment.body).toBeUndefined();
+    expect(updatedComment.attachments.length).toEqual(0);
   });
 
   it("should not delete a comment from a deleted thread", () => {
@@ -39,7 +45,7 @@ describe("deleteComment", () => {
       comments: [comment],
     });
 
-    const updatedThread = deleteComment(
+    const updatedThread = applyDeleteComment(
       thread,
       comment.id,
       new Date("2024-01-03")
@@ -57,7 +63,7 @@ describe("deleteComment", () => {
 
     expect(thread.comments.length).toBe(1);
 
-    const updatedThread = deleteComment(
+    const updatedThread = applyDeleteComment(
       thread,
       "comment_id",
       new Date("2024-01-02")
@@ -82,13 +88,13 @@ describe("deleteComment", () => {
       comments: [comment],
     });
 
-    const updatedThread = deleteComment(
+    const updatedThread = applyDeleteComment(
       thread,
       comment.id,
       new Date("2024-01-03")
     );
 
-    expect(updatedThread.comments[0].deletedAt).toEqual(comment.deletedAt); // Ensure the original deletion time is preserved
+    expect(updatedThread.comments[0]?.deletedAt).toEqual(comment.deletedAt); // Ensure the original deletion time is preserved
     expect(updatedThread.updatedAt).toEqual(thread.updatedAt); // The thread's updatedAt should not change
   });
 
@@ -107,7 +113,7 @@ describe("deleteComment", () => {
     });
 
     const deletedAt = new Date("2024-01-03");
-    const updatedThread = deleteComment(thread, comment.id, deletedAt);
+    const updatedThread = applyDeleteComment(thread, comment.id, deletedAt);
     expect(updatedThread.updatedAt).toEqual(deletedAt); // The thread's updatedAt should reflect the deletion time
   });
 });

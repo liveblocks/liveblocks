@@ -13,7 +13,7 @@ import { setupServer } from "msw/node";
 import React, { Suspense } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 
-import { INBOX_NOTIFICATIONS_QUERY, POLLING_INTERVAL } from "../liveblocks";
+import { POLLING_INTERVAL } from "../liveblocks";
 import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import { mockGetInboxNotifications } from "./_restMocks";
@@ -39,7 +39,7 @@ describe("useInboxNotifications", () => {
     const roomId = nanoid();
     const threads = [dummyThreadData({ roomId })];
     const inboxNotifications = [
-      dummyThreadInboxNotificationData({ roomId, threadId: threads[0].id }),
+      dummyThreadInboxNotificationData({ roomId, threadId: threads[0]!.id }),
     ];
 
     server.use(
@@ -86,7 +86,7 @@ describe("useInboxNotifications", () => {
     const roomId = nanoid();
     const threads = [dummyThreadData({ roomId })];
     const inboxNotifications = [
-      dummyThreadInboxNotificationData({ roomId, threadId: threads[0].id }),
+      dummyThreadInboxNotificationData({ roomId, threadId: threads[0]!.id }),
     ];
 
     server.use(
@@ -138,7 +138,7 @@ describe("useInboxNotifications", () => {
     const roomId = nanoid();
     const threads = [dummyThreadData({ roomId })];
     const inboxNotifications = [
-      dummyThreadInboxNotificationData({ roomId, threadId: threads[0].id }),
+      dummyThreadInboxNotificationData({ roomId, threadId: threads[0]!.id }),
     ];
 
     server.use(
@@ -268,13 +268,17 @@ describe("useInboxNotifications", () => {
 
     umbrellaStore.force_set((state) => ({
       ...state,
-      inboxNotifications: {
+      rawThreadsById: {
+        [thread1.id]: thread1,
+        [thread2.id]: thread2,
+      },
+      inboxNotificationsById: {
         // Explicitly set the order to be reversed to test that the hook sorts the notifications
         [oldInboxNotification.id]: oldInboxNotification,
         [newInboxNotification.id]: newInboxNotification,
       },
       queries: {
-        [INBOX_NOTIFICATIONS_QUERY]: { isLoading: false, data: undefined },
+        INBOX_NOTIFICATIONS: { isLoading: false, data: undefined },
       },
     }));
 
@@ -370,7 +374,7 @@ describe("useInboxNotifications - Suspense", () => {
     const roomId = nanoid();
     const threads = [dummyThreadData({ roomId })];
     const inboxNotifications = [
-      dummyThreadInboxNotificationData({ roomId, threadId: threads[0].id }),
+      dummyThreadInboxNotificationData({ roomId, threadId: threads[0]!.id }),
     ];
 
     server.use(
@@ -437,7 +441,7 @@ describe("useInboxNotifications: polling", () => {
     const roomId = nanoid();
     const threads = [dummyThreadData({ roomId })];
     const inboxNotifications = [
-      dummyThreadInboxNotificationData({ roomId, threadId: threads[0].id }),
+      dummyThreadInboxNotificationData({ roomId, threadId: threads[0]!.id }),
     ];
     let getInboxNotificationsReqCount = 0;
 
@@ -569,7 +573,7 @@ describe("useInboxNotificationsSuspense: error", () => {
     const roomId = nanoid();
     const threads = [dummyThreadData({ roomId })];
     const inboxNotifications = [
-      dummyThreadInboxNotificationData({ roomId, threadId: threads[0].id }),
+      dummyThreadInboxNotificationData({ roomId, threadId: threads[0]!.id }),
     ];
 
     let n = 0;

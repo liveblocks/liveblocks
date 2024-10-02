@@ -1,4 +1,4 @@
-import { upsertComment } from "../../umbrella-store";
+import { applyUpsertComment } from "../../umbrella-store";
 import { createComment, createThread } from "./_dummies";
 
 describe("upsertComment", () => {
@@ -14,7 +14,7 @@ describe("upsertComment", () => {
       createdAt: new Date("2024-01-03"),
     });
 
-    const updatedThread = upsertComment(thread, comment);
+    const updatedThread = applyUpsertComment(thread, comment);
     expect(updatedThread.comments).toContainEqual(comment);
     expect(updatedThread.updatedAt).toEqual(comment.createdAt);
   });
@@ -31,7 +31,7 @@ describe("upsertComment", () => {
       createdAt: new Date("2024-01-03"),
     });
 
-    const updatedThread = upsertComment(thread, comment);
+    const updatedThread = applyUpsertComment(thread, comment);
     expect(updatedThread.comments).toContainEqual(comment);
     expect(updatedThread.updatedAt).toEqual(comment.createdAt);
   });
@@ -56,7 +56,7 @@ describe("upsertComment", () => {
       editedAt: new Date("2024-01-02"),
     });
 
-    const updatedThread = upsertComment(thread, updatedComment);
+    const updatedThread = applyUpsertComment(thread, updatedComment);
     expect(updatedThread.comments).toContainEqual(updatedComment);
     expect(updatedThread.comments).not.toContainEqual(comment);
     expect(updatedThread.updatedAt).toEqual(updatedComment.editedAt);
@@ -85,7 +85,7 @@ describe("upsertComment", () => {
       editedAt: new Date("2024-01-02"),
     });
 
-    const updatedThread = upsertComment(thread, updatedComment);
+    const updatedThread = applyUpsertComment(thread, updatedComment);
     expect(updatedThread.comments).not.toContainEqual(updatedComment);
     expect(updatedThread.comments).toContainEqual(comment);
     expect(updatedThread.updatedAt).toBe(thread.updatedAt);
@@ -102,7 +102,7 @@ describe("upsertComment", () => {
       createdAt: new Date("2024-01-02"),
     });
 
-    const updatedThread = upsertComment(thread, comment);
+    const updatedThread = applyUpsertComment(thread, comment);
 
     expect(updatedThread.comments).toContainEqual(comment);
     expect(updatedThread.updatedAt).toEqual(thread.updatedAt);
@@ -129,7 +129,7 @@ describe("upsertComment", () => {
       editedAt: new Date("2024-01-02"),
     });
 
-    const updatedThread = upsertComment(thread, updatedComment);
+    const updatedThread = applyUpsertComment(thread, updatedComment);
     expect(updatedThread.comments).toContainEqual(updatedComment);
     expect(updatedThread.updatedAt).toEqual(thread.updatedAt);
   });
@@ -155,7 +155,7 @@ describe("upsertComment", () => {
       editedAt: new Date("2024-01-03"),
     });
 
-    const updatedThread = upsertComment(thread, updatedComment);
+    const updatedThread = applyUpsertComment(thread, updatedComment);
     expect(updatedThread.comments).not.toContainEqual(updatedComment);
   });
 
@@ -169,7 +169,7 @@ describe("upsertComment", () => {
       createdAt: new Date("2024-01-03"),
     });
 
-    const updatedThread = upsertComment(thread, comment);
+    const updatedThread = applyUpsertComment(thread, comment);
     expect(updatedThread.comments).not.toContainEqual(comment);
   });
 });

@@ -1,5 +1,4 @@
 @import "@liveblocks/react-ui/styles.css";
-@import "@liveblocks/react-ui/styles/dark/media-query.css";
 @import "@liveblocks/react-lexical/styles.css";
 @import "./cmdk.css";
 
@@ -34,30 +33,6 @@ html {
   --radius: 0.5rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 85.7% 97.3%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
-  }
-}
-
 ::selection {
   @apply bg-indigo-100/75;
 }
@@ -70,42 +45,42 @@ h1 {
   font-size: 2.2rem;
   font-weight: 700;
   line-height: 1.2;
-  margin: 0.8rem 0;
+  margin: 1.8rem 0 0.8rem;
 }
 
 h2 {
   font-size: 1.5rem;
   font-weight: 600;
   line-height: 1.2;
-  margin: 0.8rem 0;
+  margin: 1.8rem 0 0.8rem;
 }
 
 h3 {
   font-size: 1.25rem;
   font-weight: 600;
   line-height: 1.2;
-  margin: 0.8rem 0;
+  margin: 1.8rem 0 0.8rem;
 }
 
 h4 {
   font-size: 1rem;
   font-weight: 600;
   line-height: 1.2;
-  margin: 0.8rem 0;
+  margin: 1.8rem 0 0.8rem;
 }
 
 h5 {
   font-size: 0.875rem;
   font-weight: 600;
   line-height: 1.2;
-  margin: 0.8rem 0;
+  margin: 1.8rem 0 0.8rem;
 }
 
 h6 {
   font-size: 0.875rem;
   font-weight: 500;
   line-height: 1.2;
-  margin: 0.8rem 0;
+  margin: 1.8rem 0 0.8rem;
 }
 
 blockquote {
@@ -168,6 +143,14 @@ select {
   padding-right: 1.8rem;
 }
 
+.lexical-bold {
+  font-weight: bold;
+}
+
+.lexical-italic {
+  font-style: italic;
+}
+
 .lexical-underline {
   text-decoration: underline;
 }
@@ -176,12 +159,16 @@ select {
   text-decoration: line-through;
 }
 
+.lexical-underline.lexical-strikethrough {
+  text-decoration: underline line-through;
+}
+
 .lb-root {
   --lb-accent: #4f46e5;
   --lb-elevation-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.1) 0px 4px 6px -4px;
 }
 
-.lb-thread .lb-composer {
+.lb-thread .lb-thread-composer {
   border-top: 1px solid rgba(228, 228, 231, 0.8);
 }
 

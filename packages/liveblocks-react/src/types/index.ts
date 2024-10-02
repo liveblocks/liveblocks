@@ -14,9 +14,11 @@ import type {
   User,
 } from "@liveblocks/client";
 import type {
-  AsyncResultWithDataField,
+  AsyncResult,
+  AsyncSuccess,
   BaseMetadata,
   Client,
+  CommentAttachment,
   CommentBody,
   CommentData,
   DRI,
@@ -32,6 +34,9 @@ import type {
   ThreadData,
   ToImmutable,
 } from "@liveblocks/core";
+import type { PropsWithChildren } from "react";
+
+import type { CommentsError } from "./errors";
 
 export type UseStorageStatusOptions = {
   /**
@@ -86,27 +91,19 @@ export type UseThreadsOptions<M extends BaseMetadata> = {
   scrollOnLoad?: boolean;
 };
 
-import type { PropsWithChildren } from "react";
+export type UserAsyncResult<T> = AsyncResult<T, "user">;
+export type UserAsyncSuccess<T> = AsyncSuccess<T, "user">;
 
-import type { CommentsError } from "./comments/errors";
+export type RoomInfoAsyncResult = AsyncResult<DRI, "info">;
+export type RoomInfoAsyncSuccess = AsyncSuccess<DRI, "info">;
 
-export type UserAsyncResult<T> = AsyncResultWithDataField<T, "user">;
-export type UserAsyncSuccess<T> = Resolve<
-  UserAsyncResult<T> & { readonly isLoading: false; readonly error?: undefined }
->;
-
-export type RoomInfoAsyncResult = AsyncResultWithDataField<DRI, "info">;
-export type RoomInfoAsyncSuccess = Resolve<
-  RoomInfoAsyncResult & {
-    readonly isLoading: false;
-    readonly error?: undefined;
-  }
->;
+export type AttachmentUrlAsyncResult = AsyncResult<string, "url">;
+export type AttachmentUrlAsyncSuccess = AsyncSuccess<string, "url">;
 
 // prettier-ignore
 export type CreateThreadOptions<M extends BaseMetadata> =
   Resolve<
-    { body: CommentBody }
+    { body: CommentBody, attachments?: CommentAttachment[]; }
     & PartialUnless<M, { metadata: M }>
   >;
 
@@ -118,12 +115,14 @@ export type EditThreadMetadataOptions<M extends BaseMetadata> = {
 export type CreateCommentOptions = {
   threadId: string;
   body: CommentBody;
+  attachments?: CommentAttachment[];
 };
 
 export type EditCommentOptions = {
   threadId: string;
   commentId: string;
   body: CommentBody;
+  attachments?: CommentAttachment[];
 };
 
 export type DeleteCommentOptions = {
@@ -137,142 +136,22 @@ export type CommentReactionOptions = {
   emoji: string;
 };
 
-export type ThreadsStateLoading = {
-  isLoading: true;
-  threads?: never;
-  error?: never;
-};
+export type ThreadsAsyncSuccess<M extends BaseMetadata> = AsyncSuccess<ThreadData<M>[], "threads">; // prettier-ignore
+export type ThreadsAsyncResult<M extends BaseMetadata> = AsyncResult<ThreadData<M>[], "threads">; // prettier-ignore
 
-export type ThreadsStateResolved<M extends BaseMetadata> = {
-  isLoading: false;
-  threads: ThreadData<M>[];
-  error?: Error;
-};
+export type InboxNotificationsAsyncSuccess = AsyncSuccess<InboxNotificationData[], "inboxNotifications">; // prettier-ignore
+export type InboxNotificationsAsyncResult = AsyncResult<InboxNotificationData[], "inboxNotifications">; // prettier-ignore
 
-export type ThreadsStateSuccess<M extends BaseMetadata> = {
-  isLoading: false;
-  threads: ThreadData<M>[];
-  error?: never;
-};
+export type UnreadInboxNotificationsCountAsyncSuccess = AsyncSuccess<number, "count">; // prettier-ignore
+export type UnreadInboxNotificationsCountAsyncResult = AsyncResult<number, "count">; // prettier-ignore
 
-export type ThreadsState<M extends BaseMetadata> =
-  | ThreadsStateLoading
-  | ThreadsStateResolved<M>;
+export type RoomNotificationSettingsAsyncSuccess = AsyncSuccess<RoomNotificationSettings, "settings">; // prettier-ignore
+export type RoomNotificationSettingsAsyncResult = AsyncResult<RoomNotificationSettings, "settings">; // prettier-ignore
 
-export type InboxNotificationsStateLoading = {
-  isLoading: true;
-  inboxNotifications?: never;
-  error?: never;
-};
+export type HistoryVersionDataAsyncResult = AsyncResult<Uint8Array>;
 
-export type InboxNotificationsStateSuccess = {
-  isLoading: false;
-  inboxNotifications: InboxNotificationData[];
-  error?: never;
-};
-
-export type InboxNotificationsStateError = {
-  isLoading: false;
-  inboxNotifications?: never;
-  error: Error;
-};
-
-export type InboxNotificationsState =
-  | InboxNotificationsStateLoading
-  | InboxNotificationsStateSuccess
-  | InboxNotificationsStateError;
-
-export type UnreadInboxNotificationsCountStateLoading = {
-  isLoading: true;
-  count?: never;
-  error?: never;
-};
-
-export type UnreadInboxNotificationsCountStateSuccess = {
-  isLoading: false;
-  count: number;
-  error?: never;
-};
-
-export type UnreadInboxNotificationsCountStateError = {
-  isLoading: false;
-  count?: never;
-  error: Error;
-};
-
-export type UnreadInboxNotificationsCountState =
-  | UnreadInboxNotificationsCountStateLoading
-  | UnreadInboxNotificationsCountStateSuccess
-  | UnreadInboxNotificationsCountStateError;
-
-export type RoomNotificationSettingsStateLoading = {
-  isLoading: true;
-  settings?: never;
-  error?: never;
-};
-
-export type RoomNotificationSettingsStateError = {
-  isLoading: false;
-  settings?: never;
-  error: Error;
-};
-
-export type RoomNotificationSettingsStateSuccess = {
-  isLoading: false;
-  settings: RoomNotificationSettings;
-  error?: never;
-};
-
-export type RoomNotificationSettingsState =
-  | RoomNotificationSettingsStateLoading
-  | RoomNotificationSettingsStateError
-  | RoomNotificationSettingsStateSuccess;
-
-export type HistoryVersionDataStateLoading = {
-  isLoading: true;
-  data?: never;
-  error?: never;
-};
-
-export type HistoryVersionDataStateResolved = {
-  isLoading: false;
-  data: Uint8Array;
-  error?: Error;
-};
-
-export type HistoryVersionDataStateError = {
-  isLoading: false;
-  data?: never;
-  error: Error;
-};
-
-export type HistoryVersionDataState =
-  | HistoryVersionDataStateLoading
-  | HistoryVersionDataStateResolved
-  | HistoryVersionDataStateError;
-
-export type HistoryVersionsStateLoading = {
-  isLoading: true;
-  versions?: never;
-  error?: never;
-};
-
-export type HistoryVersionsStateResolved = {
-  isLoading: false;
-  versions: HistoryVersion[];
-  error?: Error;
-};
-
-export type HistoryVersionsStateError = {
-  isLoading: false;
-  versions?: never;
-  error: Error;
-};
-
-export type HistoryVersionsState =
-  | HistoryVersionsStateLoading
-  | HistoryVersionsStateResolved
-  | HistoryVersionsStateError;
+export type HistoryVersionsAsyncSuccess = AsyncSuccess<HistoryVersion[], "versions">; // prettier-ignore
+export type HistoryVersionsAsyncResult = AsyncResult<HistoryVersion[], "versions">; // prettier-ignore
 
 export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
   // prettier-ignore
@@ -1012,7 +891,7 @@ export type RoomContextBundle<
        * @example
        * const { threads, error, isLoading } = useThreads();
        */
-      useThreads(options?: UseThreadsOptions<M>): ThreadsState<M>;
+      useThreads(options?: UseThreadsOptions<M>): ThreadsAsyncResult<M>;
 
       /**
        * Returns the user's notification settings for the current room
@@ -1022,9 +901,17 @@ export type RoomContextBundle<
        * const [{ settings }, updateSettings] = useRoomNotificationSettings();
        */
       useRoomNotificationSettings(): [
-        RoomNotificationSettingsState,
+        RoomNotificationSettingsAsyncResult,
         (settings: Partial<RoomNotificationSettings>) => void,
       ];
+
+      /**
+       * Returns a presigned URL for an attachment by its ID.
+       *
+       * @example
+       * const { url, error, isLoading } = useAttachmentUrl("at_xxx");
+       */
+      useAttachmentUrl(attachmentId: string): AttachmentUrlAsyncResult;
 
       /**
        * (Private beta)  Returns a history of versions of the current room.
@@ -1032,7 +919,7 @@ export type RoomContextBundle<
        * @example
        * const { versions, error, isLoading } = useHistoryVersions();
        */
-      useHistoryVersions(): HistoryVersionsState;
+      useHistoryVersions(): HistoryVersionsAsyncResult;
 
       /**
        * (Private beta) Returns the data of a specific version of the current room.
@@ -1040,7 +927,7 @@ export type RoomContextBundle<
        * @example
        * const { data, error, isLoading } = useHistoryVersionData(version.id);
        */
-      useHistoryVersionData(id: string): HistoryVersionDataState;
+      useHistoryVersionData(id: string): HistoryVersionDataAsyncResult;
 
       suspense: Resolve<
         RoomContextBundleCommon<P, S, U, E, M> &
@@ -1117,7 +1004,7 @@ export type RoomContextBundle<
              * @example
              * const { threads } = useThreads();
              */
-            useThreads(options?: UseThreadsOptions<M>): ThreadsStateSuccess<M>;
+            useThreads(options?: UseThreadsOptions<M>): ThreadsAsyncSuccess<M>;
 
             /**
              * (Private beta) Returns a history of versions of the current room.
@@ -1125,7 +1012,7 @@ export type RoomContextBundle<
              * @example
              * const { versions } = useHistoryVersions();
              */
-            useHistoryVersions(): HistoryVersionsStateResolved;
+            useHistoryVersions(): HistoryVersionsAsyncSuccess;
 
             // /**
             //  * Returns the data of a specific version of the current room's history.
@@ -1143,9 +1030,17 @@ export type RoomContextBundle<
              * const [{ settings }, updateSettings] = useRoomNotificationSettings();
              */
             useRoomNotificationSettings(): [
-              RoomNotificationSettingsStateSuccess,
+              RoomNotificationSettingsAsyncSuccess,
               (settings: Partial<RoomNotificationSettings>) => void,
             ];
+
+            /**
+             * Returns a presigned URL for an attachment by its ID.
+             *
+             * @example
+             * const { url } = useAttachmentUrl("at_xxx");
+             */
+            useAttachmentUrl(attachmentId: string): AttachmentUrlAsyncSuccess;
           }
       >;
     } & PrivateRoomContextApi
@@ -1227,7 +1122,7 @@ export type LiveblocksContextBundle<
        * @example
        * const { inboxNotifications, error, isLoading } = useInboxNotifications();
        */
-      useInboxNotifications(): InboxNotificationsState;
+      useInboxNotifications(): InboxNotificationsAsyncResult;
 
       /**
        * Returns the number of unread inbox notifications for the current user.
@@ -1235,17 +1130,17 @@ export type LiveblocksContextBundle<
        * @example
        * const { count, error, isLoading } = useUnreadInboxNotificationsCount();
        */
-      useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountState;
+      useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountAsyncResult;
 
       /**
        * @experimental
        *
        * This hook is experimental and could be removed or changed at any time!
-       * Do not use unless explicitely recommended by the Liveblocks team.
+       * Do not use unless explicitly recommended by the Liveblocks team.
        */
       useUserThreads_experimental(
         options?: UseUserThreadsOptions<M>
-      ): ThreadsState<M>;
+      ): ThreadsAsyncResult<M>;
 
       suspense: Resolve<
         LiveblocksContextBundleCommon<M> &
@@ -1256,7 +1151,7 @@ export type LiveblocksContextBundle<
              * @example
              * const { inboxNotifications } = useInboxNotifications();
              */
-            useInboxNotifications(): InboxNotificationsStateSuccess;
+            useInboxNotifications(): InboxNotificationsAsyncSuccess;
 
             /**
              * Returns the number of unread inbox notifications for the current user.
@@ -1264,17 +1159,17 @@ export type LiveblocksContextBundle<
              * @example
              * const { count } = useUnreadInboxNotificationsCount();
              */
-            useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountStateSuccess;
+            useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountAsyncSuccess;
 
             /**
              * @experimental
              *
              * This hook is experimental and could be removed or changed at any time!
-             * Do not use unless explicitely recommended by the Liveblocks team.
+             * Do not use unless explicitly recommended by the Liveblocks team.
              */
             useUserThreads_experimental(
               options?: UseUserThreadsOptions<M>
-            ): ThreadsStateSuccess<M>;
+            ): ThreadsAsyncSuccess<M>;
           }
       >;
     }

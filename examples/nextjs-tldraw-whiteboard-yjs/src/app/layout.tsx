@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "../globals.css";
 import { Providers } from "./Providers";
-import { Badge } from "@/components/Badge";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Liveblocks",
@@ -36,8 +36,9 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <Providers>{children}</Providers>
-        <Badge />
+        <Suspense>
+          <Providers>{children}</Providers>
+        </Suspense>
       </body>
     </html>
   );

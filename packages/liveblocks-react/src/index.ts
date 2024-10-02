@@ -67,7 +67,6 @@ export {
 } from "./room";
 
 export { useCommentsErrorListener, CreateThreadError } from "./room";
-export { selectedThreads } from "./comments/lib/selected-threads";
 
 // Export the classic (non-Suspense) versions of our hooks
 // (This part differs from src/suspense.ts)
@@ -80,6 +79,7 @@ export {
   useStorage,
   useStorageStatus,
   useThreads,
+  useAttachmentUrl,
   useHistoryVersions,
 } from "./room";
 export {
@@ -91,4 +91,4 @@ export {
 } from "./liveblocks";
 
 // Private APIs (for use in react-lexical only)
-export { getUmbrellaStoreForClient } from "./liveblocks";
+export { getUmbrellaStoreForClient, selectThreads } from "./liveblocks";

@@ -4,7 +4,7 @@
 export type Store<T> = {
   get: () => Readonly<T>;
   set: (callback: (currentState: Readonly<T>) => Readonly<T>) => void;
-  subscribe: (callback: (state: Readonly<T>) => void) => () => void;
+  subscribe: (callback: () => void) => () => void;
   batch: (callback: () => void) => void;
 };
 
@@ -77,11 +77,8 @@ export function createStore<T>(initialState: T): Store<T> {
    *
    * @returns A function to unsubscribe
    */
-  function subscribe(callback: (state: T) => void): () => void {
+  function subscribe(callback: () => void): () => void {
     subscribers.add(callback);
-
-    callback(state);
-
     return () => {
       subscribers.delete(callback);
     };

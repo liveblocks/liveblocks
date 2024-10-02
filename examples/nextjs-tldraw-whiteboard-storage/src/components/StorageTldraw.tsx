@@ -1,14 +1,15 @@
 "use client";
 
 import "tldraw/tldraw.css";
-import { Tldraw, DefaultStylePanel } from "tldraw";
+import { Tldraw, DefaultStylePanel, DefaultStylePanelContent } from "tldraw";
 import { useStorageStore } from "./useStorageStore";
 import { useSelf } from "@liveblocks/react/suspense";
 import { Avatars } from "@/components/Avatars";
+import { Badge } from "@/components/Badge";
 
 /**
  * IMPORTANT: LICENSE REQUIRED
- * To use tldraw commercially, you must first purchase a license
+ * To remove the watermark, you must first purchase a license
  * Learn more: https://tldraw.dev/community/license
  */
 
@@ -29,12 +30,17 @@ export function StorageTldraw() {
         components={{
           // Render a live avatar stack at the top-right
           StylePanel: () => (
-            <div style={{ display: "flex", marginTop: 4 }}>
+            <div
+              style={{
+                display: "flex-column",
+                marginTop: 4,
+              }}
+            >
               <Avatars />
               <DefaultStylePanel />
+              <Badge />
             </div>
           ),
-          DebugPanel: null,
         }}
         autoFocus
       />

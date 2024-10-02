@@ -28,7 +28,7 @@ describe("useThreadSubscription", () => {
     const roomId = nanoid();
     const threads = [dummyThreadData({ roomId })];
     const inboxNotifications = [
-      dummyThreadInboxNotificationData({ roomId, threadId: threads[0].id }),
+      dummyThreadInboxNotificationData({ roomId, threadId: threads[0]!.id }),
     ];
 
     server.use(
@@ -54,7 +54,7 @@ describe("useThreadSubscription", () => {
     const { result, unmount } = renderHook(
       () => ({
         threads: useThreads(),
-        subscription: useThreadSubscription(threads[0].id),
+        subscription: useThreadSubscription(threads[0]!.id),
       }),
       {
         wrapper: ({ children }) => (
@@ -87,7 +87,7 @@ describe("useThreadSubscription", () => {
     const inboxNotifications = [
       dummyThreadInboxNotificationData({
         roomId,
-        threadId: threads[0].id,
+        threadId: threads[0]!.id,
         readAt: new Date(),
       }),
     ];
@@ -115,7 +115,7 @@ describe("useThreadSubscription", () => {
     const { result, unmount } = renderHook(
       () => ({
         threads: useThreads(),
-        subscription: useThreadSubscription(threads[0].id),
+        subscription: useThreadSubscription(threads[0]!.id),
       }),
       {
         wrapper: ({ children }) => (
@@ -136,7 +136,7 @@ describe("useThreadSubscription", () => {
 
     expect(result.current.subscription).toEqual({
       status: "subscribed",
-      unreadSince: inboxNotifications[0].readAt,
+      unreadSince: inboxNotifications[0]!.readAt,
     });
 
     unmount();
@@ -169,7 +169,7 @@ describe("useThreadSubscription", () => {
     const { result, unmount } = renderHook(
       () => ({
         threads: useThreads(),
-        subscription: useThreadSubscription(threads[0].id),
+        subscription: useThreadSubscription(threads[0]!.id),
       }),
       {
         wrapper: ({ children }) => (
@@ -199,7 +199,7 @@ describe("useThreadSubscription", () => {
     const inboxNotifications = [
       dummyThreadInboxNotificationData({
         roomId,
-        threadId: threads[0].id,
+        threadId: threads[0]!.id,
       }),
     ];
 
@@ -226,7 +226,7 @@ describe("useThreadSubscription", () => {
     const { result, unmount, rerender } = renderHook(
       () => ({
         threads: useThreads(),
-        subscription: useThreadSubscription(threads[0].id),
+        subscription: useThreadSubscription(threads[0]!.id),
       }),
       {
         wrapper: ({ children }) => (

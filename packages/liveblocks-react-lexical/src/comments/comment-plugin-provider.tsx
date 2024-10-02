@@ -8,7 +8,7 @@ import { shallow } from "@liveblocks/core";
 import {
   CreateThreadError,
   getUmbrellaStoreForClient,
-  selectedThreads,
+  selectThreads,
   useClient,
   useCommentsErrorListener,
   useRoom,
@@ -104,14 +104,21 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
 
   const store = getUmbrellaStoreForClient(client);
 
+  const roomId = room.id;
   const threads = useSyncExternalStoreWithSelector(
-    store.subscribe,
-    store.get,
-    store.get,
+    store.subscribeThreads,
+    store.getFullState,
+    store.getFullState,
     useCallback(
       () =>
-        selectedThreads(room.id, store.get(), {}).map((thread) => thread.id),
-      [room.id, store]
+        selectThreads(store.getFullState(), {
+          roomId,
+          orderBy: "age",
+          query: {
+            resolved: false,
+          },
+        }).map((thread) => thread.id),
+      [roomId, store]
     ),
     shallow
   );
@@ -213,14 +220,18 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       const selection = $getSelection();
 
       const threadIds = $getThreadIds(selection).filter((id) => {
-        return selectedThreads(room.id, store.get(), {}).some(
-          (thread) => thread.id === id
-        );
+        return selectThreads(store.getFullState(), {
+          roomId,
+          orderBy: "age",
+          query: {
+            resolved: false,
+          },
+        }).some((thread) => thread.id === id);
       });
       setActiveThreads(threadIds);
     }
 
-    const unsubscribeCache = store.subscribe(() => {
+    const unsubscribeCache = store.subscribeThreads(() => {
       editor.getEditorState().read($onStateRead);
     });
 
@@ -234,7 +245,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       unregisterUpdateListener();
       unsubscribeCache();
     };
-  }, [editor, client, room.id, store]);
+  }, [editor, client, roomId, store]);
 
   /**
    * When active threads change, we add a data-state attribute and set it to "active" for all HTML elements that are associated with the active threads.

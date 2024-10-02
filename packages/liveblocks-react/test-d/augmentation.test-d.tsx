@@ -334,17 +334,17 @@ declare global {
 // useOthers()
 {
   const others = classic.useOthers();
-  expectType<number>(others[13].presence.cursor.x);
-  expectType<number>(others[42].presence.cursor.y);
-  expectType<boolean>(others[0].canWrite);
+  expectType<number>(others[13]!.presence.cursor.x);
+  expectType<number>(others[42]!.presence.cursor.y);
+  expectType<boolean>(others[0]!.canWrite);
 }
 
 // useOthers() (suspense)
 {
   const others = suspense.useOthers();
-  expectType<number>(others[13].presence.cursor.x);
-  expectType<number>(others[42].presence.cursor.y);
-  expectType<boolean>(others[0].canWrite);
+  expectType<number>(others[13]!.presence.cursor.x);
+  expectType<number>(others[42]!.presence.cursor.y);
+  expectType<boolean>(others[0]!.canWrite);
 }
 
 // useOthers(selector)
@@ -399,11 +399,11 @@ declare global {
       expectType<number>(mut.self.info.age);
       expectError(mut.self.info.nonexisting);
 
-      expectType<number>(mut.others[0].presence.cursor.x);
-      expectError(mut.others[0].presence.nonexisting);
-      expectType<string>(mut.others[0].info.name);
-      expectType<number>(mut.others[0].info.age);
-      expectError(mut.others[0].info.nonexisting);
+      expectType<number>(mut.others[0]!.presence.cursor.x);
+      expectError(mut.others[0]!.presence.nonexisting);
+      expectType<string>(mut.others[0]!.info.name);
+      expectType<number>(mut.others[0]!.info.age);
+      expectError(mut.others[0]!.info.nonexisting);
 
       expectType<string | undefined>(mut.storage.get("animals").get(0));
       expectType<number | undefined>(mut.storage.get("scores").get("one"));
@@ -427,11 +427,11 @@ declare global {
       expectType<number>(mut.self.info.age);
       expectError(mut.self.info.nonexisting);
 
-      expectType<number>(mut.others[0].presence.cursor.x);
-      expectError(mut.others[0].presence.nonexisting);
-      expectType<string>(mut.others[0].info.name);
-      expectType<number>(mut.others[0].info.age);
-      expectError(mut.others[0].info.nonexisting);
+      expectType<number>(mut.others[0]!.presence.cursor.x);
+      expectError(mut.others[0]!.presence.nonexisting);
+      expectType<string>(mut.others[0]!.info.name);
+      expectType<number>(mut.others[0]!.info.age);
+      expectError(mut.others[0]!.info.nonexisting);
 
       expectType<string | undefined>(mut.storage.get("animals").get(0));
       expectType<number | undefined>(mut.storage.get("scores").get("one"));
@@ -545,9 +545,9 @@ declare global {
   expectType<"thread">(thread.type);
   expectType<string>(thread.id);
   expectType<string>(thread.roomId);
-  expectType<"comment">(thread.comments[0].type);
-  expectType<string>(thread.comments[0].id);
-  expectType<string>(thread.comments[0].threadId);
+  expectType<"comment">(thread.comments[0]!.type);
+  expectType<string>(thread.comments[0]!.id);
+  expectType<string>(thread.comments[0]!.threadId);
 
   expectType<"red" | "blue">(thread.metadata.color);
   expectError(thread.metadata.nonexisting);
@@ -579,9 +579,9 @@ declare global {
   expectType<"thread">(thread.type);
   expectType<string>(thread.id);
   expectType<string>(thread.roomId);
-  expectType<"comment">(thread.comments[0].type);
-  expectType<string>(thread.comments[0].id);
-  expectType<string>(thread.comments[0].threadId);
+  expectType<"comment">(thread.comments[0]!.type);
+  expectType<string>(thread.comments[0]!.id);
+  expectType<string>(thread.comments[0]!.threadId);
 
   expectType<"red" | "blue">(thread.metadata.color);
   expectError(thread.metadata.nonexisting);

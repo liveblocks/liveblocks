@@ -6,6 +6,7 @@ import {
   useUser,
   useMarkAllInboxNotificationsAsRead,
   useDeleteAllInboxNotifications,
+  useMarkInboxNotificationAsRead,
 } from "@liveblocks/react/suspense";
 import { InboxNotificationList } from "@liveblocks/react-ui";
 import { Comment } from "@liveblocks/react-ui/primitives";
@@ -135,6 +136,7 @@ function SmallInboxNotification({
   }, [thread]);
 
   const { user } = useUser(latestComment.userId);
+  const markAsRead = useMarkInboxNotificationAsRead();
 
   const { openInbox } = useInbox();
 
@@ -148,10 +150,19 @@ function SmallInboxNotification({
     return null;
   }
   return (
-    <NextLink href={`/issue/${info?.metadata.issueId}`} onClick={openInbox}>
+    <NextLink
+      href={`/issue/${info?.metadata.issueId}`}
+      onClick={() => {
+        openInbox();
+        markAsRead(inboxNotification.id);
+      }}
+    >
       <div
         className={classNames(
           "flex flex-row items-center px-3 py-2.5 gap-2 rounded",
+          {
+            "bg-blue-100/60": inboxNotification.readAt === null,
+          },
           {
             "bg-neutral-200/40":
               params.id && inboxNotification.roomId.endsWith(`${params.id}`),
@@ -164,8 +175,11 @@ function SmallInboxNotification({
           </div>
         </div>
         <div className="flex-grow w-full overflow-hidden">
-          <div className="font-medium text-neutral-700 truncate">
+          <div className="font-medium text-neutral-700 truncate flex justify-between items-center">
             {info.metadata.title}
+            {inboxNotification.readAt === null ? (
+              <div className="w-2 h-2 bg-indigo-500 rounded-full" />
+            ) : null}
           </div>
           <div className="text-xs text-neutral-400 w-full truncate flex items-center gap-[3px]">
             <span>{user.name}:</span>

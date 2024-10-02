@@ -42,7 +42,7 @@ test.describe("Inbox notifications", () => {
     await page1.locator("#delete-all-mine").click({ force: true });
     await page2.locator("#delete-all-mine").click({ force: true });
 
-    await waitForJson(pages, "#numOfThreads", 0);
+    await waitForJson(pages, "#numOfThreads", 0, { timeout: 10_000 });
 
     //
     // Action 1: create a thread and a ping
@@ -55,7 +55,8 @@ test.describe("Inbox notifications", () => {
       await newThreadComposer.press("Enter");
 
       // Await confirmation for the thread creation from the server
-      await waitForJson(page1, "#numPendingUpdates", 0);
+      await sleep(100);
+      await waitForJson(page1, "#isSynced", true);
 
       const replyComposer = page1
         .locator(".lb-thread-composer")

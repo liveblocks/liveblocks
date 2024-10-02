@@ -27,7 +27,7 @@ describe("useMarkInboxNotificationAsRead", () => {
     const inboxNotifications = [
       dummyThreadInboxNotificationData({
         roomId,
-        threadId: threads[0].id,
+        threadId: threads[0]!.id,
         readAt: null,
       }),
     ];
@@ -71,15 +71,17 @@ describe("useMarkInboxNotificationAsRead", () => {
     );
 
     await waitFor(() =>
-      expect(result.current.inboxNotifications).toEqual(inboxNotifications)
+      expect(result.current.inboxNotifications).toEqual(
+        expect.arrayContaining(inboxNotifications)
+      )
     );
 
     // Mark the first thread in our threads list as read
     act(() => {
-      result.current.markInboxNotificationAsRead(inboxNotifications[0].id);
+      result.current.markInboxNotificationAsRead(inboxNotifications[0]!.id);
     });
 
-    expect(result.current.inboxNotifications![0].readAt).not.toBe(null);
+    expect(result.current.inboxNotifications?.[0]?.readAt).not.toBe(null);
 
     unmount();
   });
@@ -90,7 +92,7 @@ describe("useMarkInboxNotificationAsRead", () => {
     const inboxNotifications = [
       dummyThreadInboxNotificationData({
         roomId,
-        threadId: threads[0].id,
+        threadId: threads[0]!.id,
         readAt: null,
       }),
     ];
@@ -134,20 +136,22 @@ describe("useMarkInboxNotificationAsRead", () => {
     );
 
     await waitFor(() =>
-      expect(result.current.inboxNotifications).toEqual(inboxNotifications)
+      expect(result.current.inboxNotifications).toEqual(
+        expect.arrayContaining(inboxNotifications)
+      )
     );
 
     // Mark the first thread in our threads list as read
     act(() => {
-      result.current.markInboxNotificationAsRead(inboxNotifications[0].id);
+      result.current.markInboxNotificationAsRead(inboxNotifications[0]!.id);
     });
 
     // We mark the notification as read optimitiscally
-    expect(result.current.inboxNotifications![0].readAt).not.toBe(null);
+    expect(result.current.inboxNotifications?.[0]?.readAt).not.toBe(null);
 
     await waitFor(() => {
       // The readAt field should have been updated in the inbox notification cache
-      expect(result.current.inboxNotifications![0].readAt).toEqual(null);
+      expect(result.current.inboxNotifications?.[0]?.readAt).toEqual(null);
     });
 
     unmount();

@@ -238,7 +238,10 @@ To implement version history in your application, you can use the
 `HistoryVersionPreview` components. Here's an example of how to set this up:
 
 ```tsx
-import { useHistoryVersions, HistoryVersionSummaryList } from "@liveblocks/react";
+import {
+  useHistoryVersions,
+  HistoryVersionSummaryList,
+} from "@liveblocks/react";
 import { HistoryVersionPreview } from "@liveblocks/react-lexical";
 
 function DocumentHistory() {
@@ -255,33 +258,32 @@ function DocumentHistory() {
 
   return (
     <>
-    <div>
-    {selectedVersion ? (
+      <div>
+        {selectedVersion ? (
           <HistoryVersionPreview
             version={selectedVersion}
             className="w-full h-full"
             onVersionRestore={onVersionRestore}
           />
         ) : (
-          <div>
-            No version selected
-          </div>
+          <div>No version selected</div>
         )}
-    <div>
-      <HistoryVersionSummaryList>
-        {versions?.map((version) => (
-          <HistoryVersionSummary
-            onClick={() => {
-              setSelectedVersionId(version.id);
-            }}
-            key={version.id}
-            version={version}
-            selected={version.id === selectedVersionId}
-          />
-        ))}
-      </HistoryVersionSummaryList>
+      </div>
 
-    </div>
+      <div>
+        <HistoryVersionSummaryList>
+          {versions?.map((version) => (
+            <HistoryVersionSummary
+              onClick={() => {
+                setSelectedVersionId(version.id);
+              }}
+              key={version.id}
+              version={version}
+              selected={version.id === selectedVersionId}
+            />
+          ))}
+        </HistoryVersionSummaryList>
+      </div>
     </>
   );
 }

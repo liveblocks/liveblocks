@@ -235,15 +235,15 @@ import { expectAssignable, expectError, expectType } from "tsd";
 // useOthers()
 {
   const others = classic.useOthers();
-  expectType<Json | undefined>(others[13].presence.cursor);
-  expectType<boolean>(others[0].canWrite);
+  expectType<Json | undefined>(others[13]!.presence.cursor);
+  expectType<boolean>(others[0]!.canWrite);
 }
 
 // useOthers() (suspense)
 {
   const others = suspense.useOthers();
-  expectType<Json | undefined>(others[13].presence.cursor);
-  expectType<boolean>(others[0].canWrite);
+  expectType<Json | undefined>(others[13]!.presence.cursor);
+  expectType<boolean>(others[0]!.canWrite);
 }
 
 // useOthers(selector)
@@ -298,11 +298,11 @@ import { expectAssignable, expectError, expectType } from "tsd";
       expectType<Json | undefined>(mut.self.info!.age);
       expectType<Json | undefined>(mut.self.info!.nonexisting);
 
-      expectType<Json | undefined>(mut.others[0].presence.cursor);
-      expectType<Json | undefined>(mut.others[0].presence.nonexisting);
-      expectType<string | undefined>(mut.others[0].info!.name);
-      expectType<Json | undefined>(mut.others[0].info!.age);
-      expectType<Json | undefined>(mut.others[0].info!.nonexisting);
+      expectType<Json | undefined>(mut.others[0]!.presence.cursor);
+      expectType<Json | undefined>(mut.others[0]!.presence.nonexisting);
+      expectType<string | undefined>(mut.others[0]!.info!.name);
+      expectType<Json | undefined>(mut.others[0]!.info!.age);
+      expectType<Json | undefined>(mut.others[0]!.info!.nonexisting);
 
       expectType<Lson | undefined>(mut.storage.get("animals"));
       expectType<Lson | undefined>(mut.storage.get("nonexisting"));
@@ -324,11 +324,11 @@ import { expectAssignable, expectError, expectType } from "tsd";
       expectType<Json | undefined>(mut.self.info!.age);
       expectType<Json | undefined>(mut.self.info!.nonexisting);
 
-      expectType<Json | undefined>(mut.others[0].presence.cursor);
-      expectType<Json | undefined>(mut.others[0].presence.nonexisting);
-      expectType<string | undefined>(mut.others[0].info!.name);
-      expectType<Json | undefined>(mut.others[0].info!.age);
-      expectType<Json | undefined>(mut.others[0].info!.nonexisting);
+      expectType<Json | undefined>(mut.others[0]!.presence.cursor);
+      expectType<Json | undefined>(mut.others[0]!.presence.nonexisting);
+      expectType<string | undefined>(mut.others[0]!.info!.name);
+      expectType<Json | undefined>(mut.others[0]!.info!.age);
+      expectType<Json | undefined>(mut.others[0]!.info!.nonexisting);
 
       expectType<Lson | undefined>(mut.storage.get("animals"));
       expectType<Lson | undefined>(mut.storage.get("nonexisting"));
@@ -423,9 +423,9 @@ import { expectAssignable, expectError, expectType } from "tsd";
   expectType<"thread">(thread1.type);
   expectType<string>(thread1.id);
   expectType<string>(thread1.roomId);
-  expectType<"comment">(thread1.comments[0].type);
-  expectType<string>(thread1.comments[0].id);
-  expectType<string>(thread1.comments[0].threadId);
+  expectType<"comment">(thread1.comments[0]!.type);
+  expectType<string>(thread1.comments[0]!.id);
+  expectType<string>(thread1.comments[0]!.threadId);
 
   expectType<string | number | boolean | undefined>(thread1.metadata.color);
 
@@ -459,9 +459,9 @@ import { expectAssignable, expectError, expectType } from "tsd";
   expectType<"thread">(thread1.type);
   expectType<string>(thread1.id);
   expectType<string>(thread1.roomId);
-  expectType<"comment">(thread1.comments[0].type);
-  expectType<string>(thread1.comments[0].id);
-  expectType<string>(thread1.comments[0].threadId);
+  expectType<"comment">(thread1.comments[0]!.type);
+  expectType<string>(thread1.comments[0]!.id);
+  expectType<string>(thread1.comments[0]!.threadId);
 
   expectType<string | number | boolean | undefined>(thread1.metadata.foo);
 

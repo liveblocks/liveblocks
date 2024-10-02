@@ -51,6 +51,7 @@ describe("client", () => {
     threadId: "thread1",
     userId: "user1",
     createdAt: new Date("2022-07-13T14:32:50.697Z"),
+    attachments: [],
     reactions: [
       {
         emoji: "🐐",

@@ -140,6 +140,7 @@ const comment: CommentData = {
   userId: "user",
   createdAt: new Date("2023-08-14T12:41:50.243Z"),
   reactions: [],
+  attachments: [],
   body: {
     version: 1,
     content: [
@@ -199,6 +200,7 @@ const editedComment: CommentData = {
   createdAt: new Date("2023-08-14T12:41:50.243Z"),
   editedAt: new Date("2023-08-14T12:41:50.243Z"),
   reactions: [],
+  attachments: [],
   body: {
     version: 1,
     content: [
@@ -221,6 +223,7 @@ const deletedComment: CommentData = {
   roomId: "room",
   userId: "user",
   reactions: [],
+  attachments: [],
   createdAt: new Date("2023-08-14T12:41:50.243Z"),
   editedAt: new Date("2023-08-14T12:41:50.243Z"),
   deletedAt: new Date("2023-08-14T12:41:50.243Z"),

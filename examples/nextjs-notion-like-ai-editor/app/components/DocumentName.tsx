@@ -16,19 +16,32 @@ import {
   KEY_ARROW_UP_COMMAND,
 } from "lexical";
 import TextareaAutosize from "react-textarea-autosize";
+import { usePageLinks } from "../hooks/usePageLinks";
 
 // Title is stored in Liveblocks Storage, part of Realtime APIs
 export function DocumentName() {
   const title = useStorage((root) => root.title);
   const [editor] = useLexicalComposerContext();
 
-  // Update title
+  const timeoutRef = useRef<NodeJS.Timeout>();
+  const { mutate } = usePageLinks();
+
+  // Update title and update page links 0.4s after final change
   const handleChange = useMutation(
     ({ storage }, e: ChangeEvent<HTMLTextAreaElement>) => {
       storage.set("title", e.target.value);
+
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => {
+        mutate();
+      }, 400);
     },
     []
   );
+
+  useEffect(() => {
+    return () => clearTimeout(timeoutRef.current);
+  }, []);
 
   // Go to editor when down arrow pressed
   const handleKeyDown = useCallback((e: KeyboardEvent<HTMLTextAreaElement>) => {

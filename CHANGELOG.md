@@ -1,8 +1,84 @@
-## 2.6.2 (not released yet)
+## 2.8.2
 
-### `@liveblocks/core`
+### `@liveblocks/client`
+
+- Send client version in HTTP request headers from the client, to ensure
+  backward compatible responses from the server
+
+## 2.8.1
+
+### `@liveblocks/react-ui`
+
+- Expose `onComposerSubmit` on `Thread` to react to the inner composer of a
+  thread.
+
+## 2.8.0
+
+We are introducing attachments to allow users to add files to their comments,
+for more information about this change please read our
+[Upgrade Guide for 2.8](https://liveblocks.io/docs/platform/upgrading/2.8).
+
+### `@liveblocks/react-ui`
+
+- Add out-of-the-box support for attachments in the default components.
+- Add new primitives to support attachments in custom components:
+  - `Composer.AttachmentsDropArea`: Receives files via drag-and-drop
+  - `Composer.AttachFiles`: Opens a file picker
+  - `FileSize`: Displays a formatted file size
+- Add values and methods to `useComposer` to support attachments in custom
+  components.
+
+### `@liveblocks/react`
+
+- Add `useAttachmentUrl` hook to get presigned URLs for attachments.
+
+### `@liveblocks/client`
+
+- Add `prepareAttachment` and `uploadAttachment` methods to `Room` to create
+  attachments.
+- Add `getAttachmentUrl` method to `Room` to get presigned URLs for attachments.
+
+## 2.7.2
+
+### `@liveblocks/react`
+
+- Fix a bug where under some conditions threads could end up without comments.
+- Fix a bug where notifications associated to deleted threads would not be
+  deleted.
+- Fix a bug where subsequent optimistic updates to the same inbox notification
+  could sometimes not get applied correctly.
+
+## 2.7.1
+
+### `@liveblocks/react-lexical`
+
+- Fixed a bug where resolved threads remained visible in the editor and the
+  `AnchoredThreads` and `FloatingThreads` components.
+
+## 2.7.0
+
+### `@liveblocks/client`
 
 - Refactor caching internals to prepare for upcoming features
+
+### `@liveblocks/react`
+
+- Add support for `query` argument to `useUserThreads_experimental`
+- Fix bug where some combinations of `query` criteria could over-select threads
+  in `useThreads`
+
+### Version History (private beta)
+
+This release adds some new hooks for Version History in text documents, which is
+now available in private beta. If you’re interested in joining the private beta,
+please [contact us](https://liveblocks.io/contact/sales).
+
+- Add `useHistoryVersion` hook to retrieve version history (in
+  `@liveblocks/react`)
+- Add `HistoryVersionSummaryList` and `HistoryVersionSummary` components to help
+  display version history (in `@liveblocks/react-ui`)
+- Add `HistoryVersionPreview` component to display and restore a version (in
+  `@liveblocks/react-lexical`)
 
 ## 2.6.1
 
@@ -391,7 +467,7 @@ For full upgrade instructions and codemods, see the
 ### `@liveblocks/node`
 
 - Fix "`process` is undefined" issue in Vite builds. This issue was already
-  fixed for `@liveblocks/core`, but not for `@liveblocks/node` yet.
+  fixed for `@liveblocks/client`, but not for `@liveblocks/node` yet.
 
 ### DevTools
 

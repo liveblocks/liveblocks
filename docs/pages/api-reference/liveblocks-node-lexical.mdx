@@ -134,7 +134,7 @@ const editorState = await withLexicalDocument(
 );
 ```
 
-#### doc.getEditor
+#### doc.getLexicalEditor
 
 Returns a headless Lexical editor.
 [@lexical/headless](https://lexical.dev/docs/packages/lexical-headless).
@@ -142,7 +142,7 @@ Returns a headless Lexical editor.
 ```ts
 const headlessEditor = await withLexicalDocument(
   { roomId: "my-room-id", client: liveblocks },
-  (doc) => doc.getEditor()
+  (doc) => doc.getLexicalEditor()
 );
 ```
 

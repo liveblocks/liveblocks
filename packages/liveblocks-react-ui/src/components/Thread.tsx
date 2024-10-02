@@ -41,6 +41,7 @@ import { classNames } from "../utils/class-names";
 import { findLastIndex } from "../utils/find-last-index";
 import type { CommentProps } from "./Comment";
 import { Comment } from "./Comment";
+import type { ComposerProps } from "./Composer";
 import { Composer } from "./Composer";
 import { Button } from "./internal/Button";
 import { Tooltip, TooltipProvider } from "./internal/Tooltip";
@@ -83,6 +84,11 @@ export interface ThreadProps<M extends BaseMetadata = DM>
   showDeletedComments?: CommentProps["showDeleted"];
 
   /**
+   * Whether to show attachments.
+   */
+  showAttachments?: boolean;
+
+  /**
    * The event handler called when changing the resolved status.
    */
   onResolvedChange?: (resolved: boolean) => void;
@@ -114,6 +120,16 @@ export interface ThreadProps<M extends BaseMetadata = DM>
   onMentionClick?: CommentProps["onMentionClick"];
 
   /**
+   * The event handler called when clicking on a comment's attachment.
+   */
+  onAttachmentClick?: CommentProps["onAttachmentClick"];
+
+  /**
+   * The event handler called when the composer is submitted.
+   */
+  onComposerSubmit?: ComposerProps["onComposerSubmit"];
+
+  /**
    * Override the component's strings.
    */
   overrides?: Partial<
@@ -142,12 +158,15 @@ export const Thread = forwardRef(
       showResolveAction = true,
       showReactions = true,
       showComposer = "collapsed",
+      showAttachments = true,
       onResolvedChange,
       onCommentEdit,
       onCommentDelete,
       onThreadDelete,
       onAuthorClick,
       onMentionClick,
+      onAttachmentClick,
+      onComposerSubmit,
       overrides,
       className,
       ...props
@@ -277,10 +296,12 @@ export const Thread = forwardRef(
                   showDeleted={showDeletedComments}
                   showActions={showActions}
                   showReactions={showReactions}
+                  showAttachments={showAttachments}
                   onCommentEdit={onCommentEdit}
                   onCommentDelete={handleCommentDelete}
                   onAuthorClick={onAuthorClick}
                   onMentionClick={onMentionClick}
+                  onAttachmentClick={onAttachmentClick}
                   autoMarkReadThreadId={
                     index === lastCommentIndex && isUnread
                       ? thread.id
@@ -350,6 +371,8 @@ export const Thread = forwardRef(
               className="lb-thread-composer"
               threadId={thread.id}
               defaultCollapsed={showComposer === "collapsed" ? true : undefined}
+              showAttachments={showAttachments}
+              onComposerSubmit={onComposerSubmit}
               overrides={{
                 COMPOSER_PLACEHOLDER: $.THREAD_COMPOSER_PLACEHOLDER,
                 COMPOSER_SEND: $.THREAD_COMPOSER_SEND,

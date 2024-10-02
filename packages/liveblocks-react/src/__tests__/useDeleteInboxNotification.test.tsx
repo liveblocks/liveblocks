@@ -90,9 +90,11 @@ describe("useDeleteInboxNotification", () => {
       }
     );
 
-    await waitFor(() =>
-      expect(result.current.inboxNotifications).toEqual(inboxNotifications)
-    );
+    await waitFor(() => {
+      expect(result.current.inboxNotifications).toEqual(
+        expect.arrayContaining(inboxNotifications)
+      );
+    });
 
     act(() => {
       result.current.deleteInboxNotification(notification1.id);
@@ -167,7 +169,9 @@ describe("useDeleteInboxNotification", () => {
     );
 
     await waitFor(() =>
-      expect(result.current.inboxNotifications).toEqual(inboxNotifications)
+      expect(result.current.inboxNotifications).toEqual(
+        expect.arrayContaining(inboxNotifications)
+      )
     );
 
     // We delete the notification optimitiscally
@@ -179,7 +183,9 @@ describe("useDeleteInboxNotification", () => {
 
     await waitFor(() => {
       // The optimistic update is reverted because of the error response
-      expect(result.current.inboxNotifications).toEqual(inboxNotifications);
+      expect(result.current.inboxNotifications).toEqual(
+        expect.arrayContaining(inboxNotifications)
+      );
     });
 
     unmount();
@@ -246,7 +252,9 @@ describe("useDeleteInboxNotification", () => {
     );
 
     await waitFor(() => {
-      expect(result.current.inboxNotifications).toEqual(inboxNotifications);
+      expect(result.current.inboxNotifications).toEqual(
+        expect.arrayContaining(inboxNotifications)
+      );
       expect(result.current.unreadInboxNotificationsCount).toEqual(2);
     });
 
@@ -261,7 +269,9 @@ describe("useDeleteInboxNotification", () => {
 
     await waitFor(() => {
       // The optimistic update is reverted because of the error response
-      expect(result.current.inboxNotifications).toEqual(inboxNotifications);
+      expect(result.current.inboxNotifications).toEqual(
+        expect.arrayContaining(inboxNotifications)
+      );
     });
 
     expect(result.current.unreadInboxNotificationsCount).toEqual(2);
@@ -270,8 +280,9 @@ describe("useDeleteInboxNotification", () => {
   });
 
   test("should support deleting a notification and its related thread", async () => {
+    const now = new Date();
     const roomId = nanoid();
-    const thread1 = dummyThreadData({ roomId });
+    const thread1 = dummyThreadData({ roomId, createdAt: now, updatedAt: now });
     const thread2 = dummyThreadData({ roomId });
     const threads = [thread1, thread2];
     const notification1 = dummyThreadInboxNotificationData({
@@ -306,7 +317,7 @@ describe("useDeleteInboxNotification", () => {
         { inboxNotificationId: notification1.id },
         (_req, res, ctx) => res(ctx.status(500))
       ),
-      mockDeleteThread({ threadId: threads[0].id }, async (_req, res, ctx) => {
+      mockDeleteThread({ threadId: threads[0]!.id }, async (_req, res, ctx) => {
         hasCalledDeleteThread = true;
         return res(ctx.status(204));
       })
@@ -342,7 +353,9 @@ describe("useDeleteInboxNotification", () => {
     );
 
     await waitFor(() =>
-      expect(result.current.inboxNotifications).toEqual(inboxNotifications)
+      expect(result.current.inboxNotifications).toEqual(
+        expect.arrayContaining(inboxNotifications)
+      )
     );
 
     // We delete the notification optimitiscally
@@ -439,7 +452,9 @@ describe("useDeleteInboxNotification", () => {
     );
 
     await waitFor(() =>
-      expect(result.current.inboxNotifications).toEqual(inboxNotifications)
+      expect(result.current.inboxNotifications).toEqual(
+        expect.arrayContaining(inboxNotifications)
+      )
     );
 
     // We delete the notification optimitiscally

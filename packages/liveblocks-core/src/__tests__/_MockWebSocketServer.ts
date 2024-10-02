@@ -156,7 +156,7 @@ export class MockWebSocketServer {
    * those behaviors.
    */
   public onConnection(callback: (conn: Connection) => void): void {
-    this.newConnectionCallbacks.clear();
+    this.newConnectionCallbacks._forceClear();
     this.newConnectionCallbacks.subscribe(callback);
   }
 

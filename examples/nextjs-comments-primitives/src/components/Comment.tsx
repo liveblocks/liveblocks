@@ -1,12 +1,15 @@
 import React, { ComponentProps, Suspense } from "react";
-import { CommentData } from "@liveblocks/client";
+import { CommentAttachment, CommentData } from "@liveblocks/client";
 import clsx from "clsx";
 import { Avatar } from "./Avatar";
 import { User } from "./User";
 import {
   Comment as CommentPrimitive,
+  FileSize,
   Timestamp,
 } from "@liveblocks/react-ui/primitives";
+import { useAttachmentUrl } from "@liveblocks/react";
+import { LinkButton } from "./Button";
 
 /**
  * Custom comment component.
@@ -14,6 +17,25 @@ import {
 
 interface CommentProps extends ComponentProps<"div"> {
   comment: CommentData;
+}
+
+interface OpenAttachmentButtonProps extends ComponentProps<"a"> {
+  attachment: CommentAttachment;
+}
+
+function OpenAttachmentButton({ attachment }: OpenAttachmentButtonProps) {
+  const { url } = useAttachmentUrl(attachment.id);
+
+  return (
+    <LinkButton
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      variant="secondary"
+    >
+      Open
+    </LinkButton>
+  );
 }
 
 export function Comment({ comment, className, ...props }: CommentProps) {
@@ -69,6 +91,22 @@ export function Comment({ comment, className, ...props }: CommentProps) {
           // }
         }}
       />
+      {comment.attachments.length > 0 ? (
+        <div className="mt-4 flex flex-col">
+          {comment.attachments.map((attachment) => (
+            <div key={attachment.id} className="flex items-center gap-4">
+              <div className="flex min-w-0 flex-1 items-center gap-1.5 text-sm">
+                <span className="truncate font-semibold">
+                  {attachment.name} (<FileSize size={attachment.size} />)
+                </span>
+              </div>
+              <Suspense>
+                <OpenAttachmentButton attachment={attachment} />
+              </Suspense>
+            </div>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -104,7 +104,10 @@ function ThreadComposer({ editor }: Props) {
 
   // Submit a new thread and update the comment highlight to show a completed highlight
   const handleComposerSubmit = useCallback(
-    ({ body }: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => {
+    (
+      { body, attachments }: ComposerSubmitComment,
+      event: FormEvent<HTMLFormElement>
+    ) => {
       event.preventDefault();
 
       const highlightId = editor?.storage.commentHighlight.currentHighlightId;
@@ -115,6 +118,7 @@ function ThreadComposer({ editor }: Props) {
       createThread({
         body,
         metadata: { highlightId },
+        attachments,
       });
 
       editor.commands.setCommentHighlight({
@@ -143,17 +147,7 @@ function ThreadComposer({ editor }: Props) {
       return;
     }
 
-    const element = composer.current;
-
-    function closeComposer(event: FocusEvent) {
-      // Don't close when new focus target a child of .lb-portal (e.g. emoji picker)
-      if (
-        event.relatedTarget instanceof HTMLElement &&
-        event.relatedTarget.closest(".lb-portal")
-      ) {
-        return;
-      }
-
+    function closeComposer() {
       removeCommentHighlight(
         editor,
         editor.storage.commentHighlight.currentHighlightId
@@ -162,10 +156,10 @@ function ThreadComposer({ editor }: Props) {
       editor.storage.commentHighlight.showComposer = false;
     }
 
-    element.addEventListener("focusout", closeComposer);
+    editor.on("focus", closeComposer);
 
     return () => {
-      element.removeEventListener("focusout", closeComposer);
+      editor.off("focus", closeComposer);
     };
   }, [editor, composer]);
 

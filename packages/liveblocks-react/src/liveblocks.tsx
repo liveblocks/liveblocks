@@ -2,18 +2,20 @@ import type {
   BaseMetadata,
   BaseUserMeta,
   Client,
+  ClientOptions,
   ThreadData,
 } from "@liveblocks/client";
 import type {
   AsyncResult,
   BaseRoomInfo,
-  ClientOptions,
   DM,
   DU,
+  InboxNotificationData,
   OpaqueClient,
 } from "@liveblocks/core";
 import {
   assert,
+  autoRetry,
   createClient,
   kInternal,
   makePoller,
@@ -33,21 +35,23 @@ import React, {
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
-import { selectedInboxNotifications } from "./comments/lib/selected-inbox-notifications";
-import { selectedUserThreads } from "./comments/lib/selected-threads";
-import { autoRetry, retryError } from "./lib/retry-error";
+import { useIsInsideRoom } from "./contexts";
+import { byFirstCreated, byMostRecentlyUpdated } from "./lib/compare";
+import { makeThreadsFilter } from "./lib/querying";
+import { retryError } from "./lib/retry-error";
+import { shallow2 } from "./lib/shallow2";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { use } from "./lib/use-polyfill";
-import { useIsInsideRoom } from "./room";
 import type {
-  InboxNotificationsState,
+  InboxNotificationsAsyncResult,
   LiveblocksContextBundle,
   RoomInfoAsyncResult,
   RoomInfoAsyncSuccess,
   SharedContextBundle,
-  ThreadsState,
-  ThreadsStateSuccess,
-  UnreadInboxNotificationsCountState,
+  ThreadsAsyncResult,
+  ThreadsAsyncSuccess,
+  ThreadsQuery,
+  UnreadInboxNotificationsCountAsyncResult,
   UserAsyncResult,
   UserAsyncSuccess,
   UseUserThreadsOptions,
@@ -73,6 +77,10 @@ function missingRoomInfoError(roomId: string) {
   );
 }
 
+function identity<T>(x: T): T {
+  return x;
+}
+
 const _umbrellaStores = new WeakMap<
   OpaqueClient,
   UmbrellaStore<BaseMetadata>
@@ -87,39 +95,14 @@ const _bundles = new WeakMap<
 >();
 
 export const POLLING_INTERVAL = 60 * 1000; // 1 minute
-export const INBOX_NOTIFICATIONS_QUERY = "INBOX_NOTIFICATIONS";
 export const USER_THREADS_QUERY = "USER_THREADS";
 
-function selectorFor_useInboxNotifications(
-  state: UmbrellaStoreState<BaseMetadata>
-): InboxNotificationsState {
-  const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
-
-  if (query === undefined || query.isLoading) {
-    return {
-      isLoading: true,
-    };
-  }
-
-  if (query.error !== undefined) {
-    return {
-      error: query.error,
-      isLoading: false,
-    };
-  }
-
-  return {
-    inboxNotifications: selectedInboxNotifications(state),
-    isLoading: false,
-  };
-}
-
 function selectUnreadInboxNotificationsCount(
-  state: UmbrellaStoreState<BaseMetadata>
+  inboxNotifications: readonly InboxNotificationData[]
 ) {
   let count = 0;
 
-  for (const notification of selectedInboxNotifications(state)) {
+  for (const notification of inboxNotifications) {
     if (
       notification.readAt === null ||
       notification.readAt < notification.notifiedAt
@@ -132,26 +115,17 @@ function selectUnreadInboxNotificationsCount(
 }
 
 function selectorFor_useUnreadInboxNotificationsCount(
-  state: UmbrellaStoreState<BaseMetadata>
-): UnreadInboxNotificationsCountState {
-  const query = state.queries[INBOX_NOTIFICATIONS_QUERY];
-
-  if (query === undefined || query.isLoading) {
-    return {
-      isLoading: true,
-    };
+  result: InboxNotificationsAsyncResult
+): UnreadInboxNotificationsCountAsyncResult {
+  if (!result.inboxNotifications) {
+    // Can be loading or error states
+    return result;
   }
 
-  if (query.error !== undefined) {
-    return {
-      error: query.error,
-      isLoading: false,
-    };
-  }
-
+  // OK state
   return {
     isLoading: false,
-    count: selectUnreadInboxNotificationsCount(state),
+    count: selectUnreadInboxNotificationsCount(result.inboxNotifications),
   };
 }
 
@@ -196,7 +170,7 @@ function selectorFor_useRoomInfo(
   }
 
   // If this is a "success" state, but there still is no data, then it means
-  // the "resolving of this user" returned undefined. In that case, still treat
+  // the "resolving of this room info" returned undefined. In that case, still treat
   // this as an error state.
   if (!state.data) {
     return {
@@ -209,6 +183,39 @@ function selectorFor_useRoomInfo(
     isLoading: false,
     info: state.data,
   };
+}
+
+/**
+ * @private Do not rely on this internal API.
+ */
+// TODO This helper should ideally not have to be exposed at the package level!
+// TODO It's currently used by react-lexical though.
+export function selectThreads<M extends BaseMetadata>(
+  state: UmbrellaStoreState<M>,
+  options: {
+    roomId: string | null;
+    query?: ThreadsQuery<M>;
+    orderBy:
+      | "age" // = default
+      | "last-update";
+  }
+): ThreadData<M>[] {
+  let threads = state.threads;
+
+  if (options.roomId !== null) {
+    threads = threads.filter((thread) => thread.roomId === options.roomId);
+  }
+
+  // Third filter pass: select only threads matching query filter
+  const query = options.query;
+  if (query) {
+    threads = threads.filter(makeThreadsFilter<M>(query));
+  }
+
+  // Sort threads by creation date (oldest first)
+  return threads.sort(
+    options.orderBy === "last-update" ? byMostRecentlyUpdated : byFirstCreated
+  );
 }
 
 function getOrCreateContextBundle<
@@ -273,13 +280,18 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     if (lastRequestedAt === undefined) {
       const result = await client.getInboxNotifications();
 
-      store.updateThreadsAndNotifications(
-        result.threads,
-        result.inboxNotifications,
-        [],
-        [],
-        INBOX_NOTIFICATIONS_QUERY
-      );
+      store.batch(() => {
+        // 1️⃣
+        store.updateThreadsAndNotifications(
+          result.threads,
+          result.inboxNotifications,
+          [],
+          []
+        );
+
+        // 2️⃣
+        store.setQuery1OK();
+      });
 
       lastRequestedAt = result.requestedAt;
     } else {
@@ -287,13 +299,18 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
         since: lastRequestedAt,
       });
 
-      store.updateThreadsAndNotifications(
-        result.threads.updated,
-        result.inboxNotifications.updated,
-        result.threads.deleted,
-        result.inboxNotifications.deleted,
-        INBOX_NOTIFICATIONS_QUERY
-      );
+      store.batch(() => {
+        // 1️⃣
+        store.updateThreadsAndNotifications(
+          result.threads.updated,
+          result.inboxNotifications.updated,
+          result.threads.deleted,
+          result.inboxNotifications.deleted
+        );
+
+        // 2️⃣
+        store.setQuery1OK();
+      });
 
       if (lastRequestedAt < result.requestedAt) {
         lastRequestedAt = result.requestedAt;
@@ -319,7 +336,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
    * delays. Will throw eventually only if all retries fail.
    */
   const waitUntilInboxNotificationsLoaded = memoizeOnSuccess(async () => {
-    store.setQueryLoading(INBOX_NOTIFICATIONS_QUERY);
+    store.setQuery1Loading();
 
     try {
       await autoRetry(
@@ -329,7 +346,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
       );
     } catch (err) {
       // Store the error in the cache as a side-effect, for non-Suspense
-      store.setQueryError(INBOX_NOTIFICATIONS_QUERY, err as Error);
+      store.setQuery1Error(err as Error);
 
       // Rethrow it for Suspense, where this promise must fail
       throw err;
@@ -354,27 +371,25 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
    * component to mount starts the polling. The last component to unmount stops
    * the polling.
    */
-  function useEnableInboxNotificationsPolling() {
-    useEffect(() => {
-      // Increment
-      pollerSubscribers++;
-      poller.start(POLLING_INTERVAL);
+  function startPolling() {
+    // Increment
+    pollerSubscribers++;
+    poller.start(POLLING_INTERVAL);
 
-      return () => {
-        // Decrement
-        if (pollerSubscribers <= 0) {
-          console.warn(
-            `Internal unexpected behavior. Cannot decrease subscriber count for query "${INBOX_NOTIFICATIONS_QUERY}"`
-          );
-          return;
-        }
+    return () => {
+      // Decrement
+      if (pollerSubscribers <= 0) {
+        console.warn(
+          "Unexpected internal error: cannot decrease subscriber count for inbox notifications."
+        );
+        return;
+      }
 
-        pollerSubscribers--;
-        if (pollerSubscribers <= 0) {
-          poller.stop();
-        }
-      };
-    }, []);
+      pollerSubscribers--;
+      if (pollerSubscribers <= 0) {
+        poller.stop();
+      }
+    };
   }
 
   const userThreadsPoller = makePoller(refreshUserThreads);
@@ -393,13 +408,19 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
         since,
       });
       isFetchingUserThreadsUpdates = false;
-      store.updateThreadsAndNotifications(
-        updates.threads.updated,
-        [],
-        updates.threads.deleted,
-        [],
-        USER_THREADS_QUERY
-      );
+
+      store.batch(() => {
+        // 1️⃣
+        store.updateThreadsAndNotifications(
+          updates.threads.updated,
+          [],
+          updates.threads.deleted,
+          []
+        );
+
+        // 2️⃣
+        store.setQuery2OK(USER_THREADS_QUERY);
+      });
 
       userThreadslastRequestedAt = updates.requestedAt;
     } catch (err) {
@@ -408,6 +429,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     }
   }
 
+  // TODO Hmm. All of this is stuff that should be managed by the cache. Now we have caches in different places.
   const userThreadsSubscribersByQuery = new Map<string, number>();
   const userThreadsRequestsByQuery = new Map<string, Promise<unknown>>();
 
@@ -458,18 +480,23 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     // Store the promise of the request for the query so that we do not make another request for the same query
     userThreadsRequestsByQuery.set(queryKey, request);
 
-    store.setQueryLoading(queryKey);
+    store.setQuery2Loading(queryKey);
 
     try {
       const result = await request;
 
-      store.updateThreadsAndNotifications(
-        result.threads,
-        result.inboxNotifications,
-        [],
-        [],
-        queryKey
-      );
+      store.batch(() => {
+        // 1️⃣
+        store.updateThreadsAndNotifications(
+          result.threads,
+          result.inboxNotifications,
+          [],
+          []
+        );
+
+        // 2️⃣
+        store.setQuery2OK(queryKey);
+      });
 
       /**
        * We set the `userThreadslastRequestedAt` value to the timestamp returned by the current request if:
@@ -496,7 +523,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
       }, retryCount);
 
       // Set the query state to the error state
-      store.setQueryError(queryKey, err as Error);
+      store.setQuery2Error(queryKey, err as Error);
     }
 
     return;
@@ -504,7 +531,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
 
   return {
     store,
-    useEnableInboxNotificationsPolling,
+    startPolling,
     waitUntilInboxNotificationsLoaded,
     loadInboxNotifications,
     incrementUserThreadsQuerySubscribers,
@@ -588,21 +615,19 @@ function makeLiveblocksContextBundle<
 }
 
 function useInboxNotifications_withClient(client: OpaqueClient) {
-  const { loadInboxNotifications, store, useEnableInboxNotificationsPolling } =
+  const { loadInboxNotifications, store, startPolling } =
     getExtrasForClient(client);
 
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
-  useEffect(() => {
-    loadInboxNotifications();
-  }, [loadInboxNotifications]);
+  useEffect(loadInboxNotifications, [loadInboxNotifications]);
+  useEffect(startPolling, [startPolling]);
 
-  useEnableInboxNotificationsPolling();
   return useSyncExternalStoreWithSelector(
-    store.subscribe,
-    store.get,
-    store.get,
-    selectorFor_useInboxNotifications,
+    store.subscribeThreadsOrInboxNotifications,
+    store.getInboxNotificationsAsync,
+    store.getInboxNotificationsAsync,
+    identity,
     shallow
   );
 }
@@ -622,20 +647,18 @@ function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
 }
 
 function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
-  const { store, loadInboxNotifications, useEnableInboxNotificationsPolling } =
+  const { store, loadInboxNotifications, startPolling } =
     getExtrasForClient(client);
 
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
-  useEffect(() => {
-    loadInboxNotifications();
-  }, [loadInboxNotifications]);
+  useEffect(loadInboxNotifications, [loadInboxNotifications]);
+  useEffect(startPolling, [startPolling]);
 
-  useEnableInboxNotificationsPolling();
   return useSyncExternalStoreWithSelector(
-    store.subscribe,
-    store.get,
-    store.get,
+    store.subscribeThreadsOrInboxNotifications,
+    store.getInboxNotificationsAsync,
+    store.getInboxNotificationsAsync,
     selectorFor_useUnreadInboxNotificationsCount,
     shallow
   );
@@ -769,10 +792,12 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
 ): ThreadData<M> {
   const { store } = getExtrasForClient<M>(client);
 
+  const getter = store.getFullState;
+
   const selector = useCallback(
-    (state: UmbrellaStoreState<M>) => {
+    (state: ReturnType<typeof getter>) => {
       const inboxNotification =
-        state.inboxNotifications[inboxNotificationId] ??
+        state.inboxNotificationsById[inboxNotificationId] ??
         raise(`Inbox notification with ID "${inboxNotificationId}" not found`);
 
       if (inboxNotification.kind !== "thread") {
@@ -782,7 +807,7 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
       }
 
       const thread =
-        state.threads[inboxNotification.threadId] ??
+        state.threadsById[inboxNotification.threadId] ??
         raise(
           `Thread with ID "${inboxNotification.threadId}" not found, this inbox notification might not be of kind "thread"`
         );
@@ -793,9 +818,9 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
   );
 
   return useSyncExternalStoreWithSelector(
-    store.subscribe,
-    store.get,
-    store.get,
+    store.subscribeThreadsOrInboxNotifications, // Re-evaluate if we need to update any time the notification changes over time
+    getter,
+    getter,
     selector
   );
 }
@@ -1078,7 +1103,17 @@ export function createLiveblocksContext<
  * @experimental
  *
  * This hook is experimental and could be removed or changed at any time!
- * Do not use unless explicitely recommended by the Liveblocks team.
+ * Do not use unless explicitly recommended by the Liveblocks team.
+ *
+ * WARNING:
+ * Please note that this hook currently returns all threads by most recently
+ * updated threads first. This is inconsistent with the default sort order of
+ * the useThreads() hook, which returns them in chronological order (by
+ * creation date). In the final version, we will make these hooks behave
+ * consistently, so expect that in the final version, you'll have to explicitly
+ * specify the sort order to be by most recently updated first somehow.
+ * The final API for that is still TBD.
+ *
  */
 function useUserThreads_experimental<M extends BaseMetadata>(
   options: UseUserThreadsOptions<M> = {
@@ -1086,7 +1121,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
       metadata: {},
     },
   }
-): ThreadsState<M> {
+): ThreadsAsyncResult<M> {
   const queryKey = React.useMemo(
     () => makeUserThreadsQueryKey(options.query),
     [options]
@@ -1102,38 +1137,35 @@ function useUserThreads_experimental<M extends BaseMetadata>(
     return incrementUserThreadsQuerySubscribers(queryKey);
   }, [queryKey, incrementUserThreadsQuerySubscribers, getUserThreads, options]);
 
+  const getter = useCallback(
+    () => store.getUserThreadsAsync(queryKey),
+    [store, queryKey]
+  );
+
   const selector = useCallback(
-    (state: UmbrellaStoreState<M>): ThreadsState<M> => {
-      const query = state.queries[queryKey];
-
-      if (query === undefined || query.isLoading) {
-        return {
-          isLoading: true,
-        };
+    (result: ReturnType<typeof getter>): ThreadsAsyncResult<M> => {
+      if (!result.fullState) {
+        return result; // Loading or error state
       }
 
-      if (query.error !== undefined) {
-        return {
-          threads: [],
-          error: query.error,
-          isLoading: false,
-        };
-      }
+      const threads = selectThreads(result.fullState, {
+        roomId: null, // Do _not_ filter by roomId
+        query: options.query,
+        orderBy: "last-update",
+      });
 
-      return {
-        threads: selectedUserThreads(state, options),
-        isLoading: false,
-      };
+      // "Map" the success state, by selecting the threads and returning only those parts externally
+      return { isLoading: false, threads };
     },
-    [queryKey, options]
+    [options]
   );
 
   return useSyncExternalStoreWithSelector(
-    store.subscribe,
-    store.get,
-    store.get,
+    store.subscribeUserThreads,
+    getter,
+    getter,
     selector,
-    shallow
+    shallow2 // NOTE: Using 2-level-deep shallow check here, because the result of selectThreads() is not stable!
   );
 }
 
@@ -1141,7 +1173,16 @@ function useUserThreads_experimental<M extends BaseMetadata>(
  * @experimental
  *
  * This hook is experimental and could be removed or changed at any time!
- * Do not use unless explicitely recommended by the Liveblocks team.
+ * Do not use unless explicitly recommended by the Liveblocks team.
+ *
+ * WARNING:
+ * Please note that this hook currently returns all threads by most recently
+ * updated threads first. This is inconsistent with the default sort order of
+ * the useThreads() hook, which returns them in chronological order (by
+ * creation date). In the final version, we will make these hooks behave
+ * consistently, so expect that in the final version, you'll have to explicitly
+ * specify the sort order to be by most recently updated first somehow.
+ * The final API for that is still TBD.
  */
 function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
   options: UseUserThreadsOptions<M> = {
@@ -1149,7 +1190,7 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
       metadata: {},
     },
   }
-): ThreadsStateSuccess<M> {
+): ThreadsAsyncSuccess<M> {
   const queryKey = React.useMemo(
     () => makeUserThreadsQueryKey(options.query),
     [options]
@@ -1164,7 +1205,7 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
     return incrementUserThreadsQuerySubscribers(queryKey);
   }, [client, queryKey]);
 
-  const query = store.get().queries[queryKey];
+  const query = store.getFullState().queries2[queryKey];
 
   if (query === undefined || query.isLoading) {
     throw getUserThreads(queryKey, options);
@@ -1174,10 +1215,16 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
     throw query.error;
   }
 
+  const getter = store.getFullState;
+
   const selector = useCallback(
-    (state: UmbrellaStoreState<M>): ThreadsStateSuccess<M> => {
+    (state: ReturnType<typeof getter>): ThreadsAsyncSuccess<M> => {
       return {
-        threads: selectedUserThreads(state, options),
+        threads: selectThreads(state, {
+          roomId: null, // Do _not_ filter by roomId
+          query: options.query,
+          orderBy: "last-update",
+        }),
         isLoading: false,
       };
     },
@@ -1185,11 +1232,11 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
   );
 
   return useSyncExternalStoreWithSelector(
-    store.subscribe,
-    store.get,
-    store.get,
+    store.subscribeUserThreads,
+    getter,
+    getter,
     selector,
-    shallow
+    shallow2 // NOTE: Using 2-level-deep shallow check here, because the result of selectThreads() is not stable!
   );
 }
 
@@ -1358,7 +1405,16 @@ const _useUserSuspense: TypedBundle["suspense"]["useUser"] = useUserSuspense;
  * @experimental
  *
  * This hook is experimental and could be removed or changed at any time!
- * Do not use unless explicitely recommended by the Liveblocks team.
+ * Do not use unless explicitly recommended by the Liveblocks team.
+ *
+ * WARNING:
+ * Please note that this hook currently returns all threads by most recently
+ * updated threads first. This is inconsistent with the default sort order of
+ * the useThreads() hook, which returns them in chronological order (by
+ * creation date). In the final version, we will make these hooks behave
+ * consistently, so expect that in the final version, you'll have to explicitly
+ * specify the sort order to be by most recently updated first somehow.
+ * The final API for that is still TBD.
  */
 const _useUserThreads_experimental: TypedBundle["useUserThreads_experimental"] =
   useUserThreads_experimental;
@@ -1367,7 +1423,16 @@ const _useUserThreads_experimental: TypedBundle["useUserThreads_experimental"] =
  * @experimental
  *
  * This hook is experimental and could be removed or changed at any time!
- * Do not use unless explicitely recommended by the Liveblocks team.
+ * Do not use unless explicitly recommended by the Liveblocks team.
+ *
+ * WARNING:
+ * Please note that this hook currently returns all threads by most recently
+ * updated threads first. This is inconsistent with the default sort order of
+ * the useThreads() hook, which returns them in chronological order (by
+ * creation date). In the final version, we will make these hooks behave
+ * consistently, so expect that in the final version, you'll have to explicitly
+ * specify the sort order to be by most recently updated first somehow.
+ * The final API for that is still TBD.
  */
 const _useUserThreadsSuspense_experimental: TypedBundle["suspense"]["useUserThreads_experimental"] =
   useUserThreadsSuspense_experimental;

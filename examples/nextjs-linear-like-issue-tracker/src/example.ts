@@ -22,7 +22,7 @@ export function authWithRandomUser(endpoint: string) {
 
 export async function getSession(request: Request) {
   const { userId } = await request.json();
-  const user = getUser(userId);
+  const user = userId ? getUser(userId) : getRandomUser();
 
   if (!user) {
     throw Error("User not found");
