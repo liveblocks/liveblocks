@@ -2,7 +2,10 @@ import { Liveblocks } from "@liveblocks/node";
 import { http, HttpResponse } from "msw";
 import React from "react";
 
-import type { ConvertCommentBodyAsReactComponents } from "../comment-body";
+import type {
+  ConvertCommentBodyAsHTMLStyles,
+  ConvertCommentBodyAsReactComponents,
+} from "../comment-body";
 import type {
   CommentEmailBaseData,
   ThreadNotificationBaseData,
@@ -549,6 +552,100 @@ describe("thread notification", () => {
       );
     });
 
+    describe("unread mention w/ custom styles design tokens", () => {
+      const styles: Partial<ConvertCommentBodyAsHTMLStyles> = {
+        paragraph: "font-size:16px;",
+        mention: "color:purple;",
+      };
+      const { comment, thread, inboxNotification, event } =
+        makeUnreadMentionDataset();
+
+      const expected1: ThreadNotificationEmailDataAsHTML = {
+        type: "unreadMention",
+        comment: {
+          id: comment.id,
+          threadId: thread.id,
+          roomId: ROOM_ID_TEST,
+          createdAt: comment.createdAt,
+          author: {
+            id: comment.userId,
+            info: {
+              name: comment.userId,
+            },
+          },
+          htmlBody:
+            '<p style="font-size:16px;">Hello <span data-mention style="color:purple;">@user-1</span> !</p>',
+          url: undefined,
+        },
+        roomInfo: { name: ROOM_ID_TEST },
+      };
+
+      const expected2: ThreadNotificationEmailDataAsHTML = {
+        type: "unreadMention",
+        comment: {
+          id: comment.id,
+          threadId: thread.id,
+          roomId: ROOM_ID_TEST,
+          createdAt: comment.createdAt,
+          author: {
+            id: comment.userId,
+            info: {
+              name: "Charlie Layne",
+            },
+          },
+          htmlBody:
+            '<p style="font-size:16px;">Hello <span data-mention style="color:purple;">@Mislav Abha</span> !</p>',
+          url: getResolvedCommentUrl(comment.id),
+        },
+        roomInfo: RESOLVED_ROOM_INFO_TEST,
+      };
+
+      it.each<{
+        withResolvers: boolean;
+        promise: () => Promise<ThreadNotificationEmailDataAsHTML | null>;
+        expected: ThreadNotificationEmailDataAsHTML;
+      }>([
+        {
+          withResolvers: false,
+          promise: () =>
+            prepareThreadNotificationEmailAsHTML(client, event, {
+              commentBodyStyles: styles,
+            }),
+          expected: expected1,
+        },
+        {
+          withResolvers: true,
+          promise: () =>
+            prepareThreadNotificationEmailAsHTML(client, event, {
+              resolveUsers,
+              resolveRoomInfo,
+              commentBodyStyles: styles,
+            }),
+          expected: expected2,
+        },
+      ])(
+        "should return unread mention as HTML with resolvers: $withResolvers",
+        async ({ promise, expected }) => {
+          server.use(
+            http.get(
+              `${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`,
+              () => HttpResponse.json(thread, { status: 200 })
+            )
+          );
+
+          server.use(
+            http.get(
+              `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
+              () => HttpResponse.json(inboxNotification, { status: 200 })
+            )
+          );
+
+          const threadNotificationEmailAsHTML = await promise();
+          expect(threadNotificationEmailAsHTML).toEqual(expected);
+        }
+      );
+    });
+
     describe("unread replies w/o styles design tokens", () => {
       const { comment2, thread, inboxNotification, event } =
         makeUnreadRepliesDataset();
@@ -637,12 +734,101 @@ describe("thread notification", () => {
       );
     });
 
-    describe("unread mention w/ custom styles design tokens", () => {
-      it.todo("add tests when using custom styles");
-    });
-
     describe("unread replies w/ custom styles design tokens", () => {
-      it.todo("add tests when using custom styles");
+      const styles: Partial<ConvertCommentBodyAsHTMLStyles> = {
+        paragraph: "font-size:16px;",
+        link: "text-underline-offset:4px;",
+      };
+
+      const { comment2, thread, inboxNotification, event } =
+        makeUnreadRepliesDataset();
+
+      const expected1: ThreadNotificationEmailDataAsHTML = {
+        type: "unreadReplies",
+        comments: [
+          {
+            id: comment2.id,
+            threadId: thread.id,
+            roomId: ROOM_ID_TEST,
+            createdAt: comment2.createdAt,
+            author: {
+              id: comment2.userId,
+              info: {
+                name: comment2.userId,
+              },
+            },
+            htmlBody:
+              '<p style="font-size:16px;">I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer" style="text-underline-offset:4px;">https://www.liveblocks.io</a></p>',
+            url: undefined,
+          },
+        ],
+        roomInfo: { name: ROOM_ID_TEST },
+      };
+
+      const expected2: ThreadNotificationEmailDataAsHTML = {
+        type: "unreadReplies",
+        comments: [
+          {
+            id: comment2.id,
+            threadId: thread.id,
+            roomId: ROOM_ID_TEST,
+            createdAt: comment2.createdAt,
+            author: {
+              id: comment2.userId,
+              info: { name: "Mislav Abha" },
+            },
+            htmlBody:
+              '<p style="font-size:16px;">I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer" style="text-underline-offset:4px;">https://www.liveblocks.io</a></p>',
+            url: getResolvedCommentUrl(comment2.id),
+          },
+        ],
+        roomInfo: RESOLVED_ROOM_INFO_TEST,
+      };
+
+      it.each<{
+        withResolvers: boolean;
+        promise: () => Promise<ThreadNotificationEmailDataAsHTML | null>;
+        expected: ThreadNotificationEmailDataAsHTML;
+      }>([
+        {
+          withResolvers: false,
+          promise: () =>
+            prepareThreadNotificationEmailAsHTML(client, event, {
+              commentBodyStyles: styles,
+            }),
+          expected: expected1,
+        },
+        {
+          withResolvers: true,
+          promise: () =>
+            prepareThreadNotificationEmailAsHTML(client, event, {
+              resolveUsers,
+              resolveRoomInfo,
+              commentBodyStyles: styles,
+            }),
+          expected: expected2,
+        },
+      ])(
+        "should return unread replies as HTML with resolvers: $withResolvers",
+        async ({ promise, expected }) => {
+          server.use(
+            http.get(
+              `${SERVER_BASE_URL}/v2/rooms/:roomId/threads/:threadId`,
+              () => HttpResponse.json(thread, { status: 200 })
+            )
+          );
+
+          server.use(
+            http.get(
+              `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
+              () => HttpResponse.json(inboxNotification, { status: 200 })
+            )
+          );
+
+          const threadNotificationEmailAsHTML = await promise();
+          expect(threadNotificationEmailAsHTML).toEqual(expected);
+        }
+      );
     });
   });
 
