@@ -9,7 +9,7 @@ import type { Editor } from "@tiptap/react";
 import type { ComponentRef, FormEvent } from "react";
 import React, { forwardRef, useCallback, useEffect } from "react";
 
-import { getRectFromCoords } from "./utils";
+import { getRectFromCoords } from "../utils";
 
 export type FloatingComposerProps<M extends BaseMetadata = DM> = Omit<
   ComposerProps<M>,

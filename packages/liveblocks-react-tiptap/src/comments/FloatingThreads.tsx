@@ -30,9 +30,9 @@ import React, {
 import { createPortal } from "react-dom";
 
 import { classNames } from "../classnames";
-import type { ThreadPluginState } from "./CommentsExtension";
-import { THREADS_PLUGIN_KEY } from "./CommentsExtension";
-import { getRectFromCoords } from "./utils";
+import type { ThreadPluginState } from "../types";
+import { THREADS_PLUGIN_KEY } from "../types";
+import { getRectFromCoords } from "../utils";
 
 type ThreadPanelComponents = {
   Thread: ComponentType<ThreadProps>;

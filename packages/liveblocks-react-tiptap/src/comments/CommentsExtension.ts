@@ -1,33 +1,22 @@
 import { Extension, Mark, mergeAttributes } from "@tiptap/core";
 import type { Node } from "@tiptap/pm/model";
 import type { Transaction } from "@tiptap/pm/state";
-import { Plugin, PluginKey, TextSelection } from "@tiptap/pm/state";
+import { Plugin, TextSelection } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { ySyncPluginKey } from "y-prosemirror";
 
-export const ACTIVE_SELECTION_PLUGIN = new PluginKey(
-  "lb-active-selection-plugin"
-);
-
-export type ThreadPluginState = {
-  threadPositions: Map<string, { from: number; to: number }>;
-  selectedThreadId: string | null;
-  selectedThreadPos: number | null;
-  decorations: DecorationSet;
-};
-
-export const THREADS_PLUGIN_KEY = new PluginKey<ThreadPluginState>(
-  "lb-threads-plugin"
-);
+import type { ThreadPluginState } from "../types";
+import {
+  ACTIVE_SELECTION_PLUGIN,
+  LIVEBLOCKS_COMMENT_MARK_TYPE,
+  ThreadPluginActions,
+  THREADS_PLUGIN_KEY,
+} from "../types";
 
 type ThreadPluginAction = {
   name: ThreadPluginActions;
   data: string | null;
 };
-
-export const enum ThreadPluginActions {
-  SET_SELECTED_THREAD_ID = "SET_SELECTED_THREAD_ID",
-}
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -48,7 +37,7 @@ declare module "@tiptap/core" {
  * https://github.com/yjs/y-prosemirror/issues/47
  */
 const Comment = Mark.create({
-  name: "liveblocksCommentMark",
+  name: LIVEBLOCKS_COMMENT_MARK_TYPE,
   excludes: "",
   inclusive: false,
   keepOnSplit: true,
@@ -249,7 +238,7 @@ export const CommentsExtension = Extension.create<
             return false;
           }
           this.editor.state.selection = this.storage.pendingCommentSelection;
-          commands.setMark("liveblocksCommentMark", { threadId: id });
+          commands.setMark(LIVEBLOCKS_COMMENT_MARK_TYPE, { threadId: id });
           this.storage.pendingCommentSelection = null;
 
           return true;

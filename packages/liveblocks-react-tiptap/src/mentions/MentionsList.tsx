@@ -1,4 +1,5 @@
 import { autoUpdate, flip, hide, limitShift, offset, shift, size, useFloating } from "@floating-ui/react-dom";
+import { createInboxNotificationId } from "@liveblocks/core";
 import { useUser } from "@liveblocks/react";
 import { useMentionSuggestions, useOverrides } from "@liveblocks/react-ui";
 import type { HTMLAttributes } from "react";
@@ -26,9 +27,10 @@ export const User = forwardRef<HTMLSpanElement, UserProps>(
 
     return (
       <span
+        className={className}
         data-loading={isLoading ? "" : undefined}
-        {...spanProps}
         ref={forwardedRef}
+        {...spanProps}
       >
         {isLoading ? null : name}
       </span>
@@ -39,7 +41,17 @@ export const User = forwardRef<HTMLSpanElement, UserProps>(
 
 export const SUGGESTIONS_COLLISION_PADDING = 10;
 
-export const MentionsList = forwardRef((props: { query: string, command: (otps: { id: string }) => {}, clientRect: () => DOMRect, hide: boolean }, ref) => {
+export type MentionsListProps = {
+  query: string,
+  command: (otps: { id: string, notificationId: string }) => void,
+  clientRect: () => DOMRect,
+  hide: boolean
+};
+export type MentionsListHandle = {
+  onKeyDown: ({ event }: { event: KeyboardEvent }) => boolean,
+};
+
+export const MentionsList = forwardRef<MentionsListHandle, MentionsListProps>((props, ref) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const suggestions = useMentionSuggestions(props.query);
   const {
@@ -73,7 +85,7 @@ export const MentionsList = forwardRef((props: { query: string, command: (otps: 
   const selectItem = (index: number) => {
     const item = (suggestions ?? [])[index];
     if (item) {
-      props.command({ id: item })
+      props.command({ id: item, notificationId: createInboxNotificationId() });
     }
   }
 

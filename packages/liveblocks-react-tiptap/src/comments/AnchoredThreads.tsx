@@ -14,9 +14,9 @@ import React, {
 } from "react";
 
 import { classNames } from "../classnames";
-import type { ThreadPluginState } from "./CommentsExtension";
-import { THREADS_PLUGIN_KEY } from "./CommentsExtension";
-import { getRectFromCoords } from "./utils";
+import type { ThreadPluginState } from "../types";
+import { THREADS_PLUGIN_KEY } from "../types";
+import { getRectFromCoords } from "../utils";
 
 const DEFAULT_GAP = 20;
 const DEFAULT_ACTIVE_THREAD_OFFSET = -12;

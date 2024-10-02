@@ -1,10 +1,11 @@
-import type { IUserInfo } from "@liveblocks/core";
+import { type IUserInfo, kInternal } from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
+import type { AnyExtension } from "@tiptap/core";
 import { Extension } from "@tiptap/core";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { Doc } from "yjs";
 
 import { CommentsExtension } from "./comments/CommentsExtension";
@@ -19,6 +20,8 @@ const docMap = new Map<string, Doc>();
 
 type LiveblocksExtensionOptions = {
   field?: string;
+  comments: boolean; // | CommentsConfiguration
+  mentions: boolean; // | MentionsConfiguration
 };
 
 const LiveblocksCollab = Collaboration.extend({
@@ -58,20 +61,36 @@ const LiveblocksCollab = Collaboration.extend({
   },
 });
 
-// TODO: move options to `addOptions` of the extension itself
-// TODO: add option to disable mentions
-// TODO: add option to disable comments
-export const useLiveblocksExtension = ({
-  field,
-}: LiveblocksExtensionOptions = {}): Extension => {
+export const useLiveblocksExtension = (): Extension => {
   const room = useRoom();
   useEffect(() => {
     // Report that this is lexical and root is the rootKey
     // TODO: put this back in
     // room[kInternal].reportTextEditor(TextEditorType.TipTap, "root");
   }, [room]);
+
+  const onCreateMention = useCallback(
+    (userId: string, notificationId: string) => {
+      try {
+        room[kInternal].createTextMention(userId, notificationId);
+      } catch (err) {
+        console.warn(err);
+      }
+    },
+    [room]
+  );
+  const onDeleteMention = useCallback(
+    (notificationId: string) => {
+      try {
+        room[kInternal].deleteTextMention(notificationId);
+      } catch (err) {
+        console.warn(err);
+      }
+    },
+    [room]
+  );
   return Extension.create<
-    never,
+    LiveblocksExtensionOptions,
     {
       unsub: () => void;
       doc: Doc;
@@ -82,12 +101,13 @@ export const useLiveblocksExtension = ({
 
     onCreate() {
       if (
+        this.options.mentions &&
         this.editor.extensionManager.extensions.find(
           (e) => e.name.toLowerCase() === "mention"
         )
       ) {
         console.warn(
-          "[Liveblocks] Liveblocks contains its own mention plugin, using another mention plugin may cause a conflict."
+          "[Liveblocks] Liveblocks own mention plugin is enabled, using another mention plugin may cause a conflict."
         );
       }
       const self = room.getSelf();
@@ -126,19 +146,38 @@ export const useLiveblocksExtension = ({
         unsub: () => {},
       };
     },
+
+    addOptions() {
+      return {
+        field: "default",
+        mentions: true,
+        comments: true,
+      };
+    },
     addExtensions() {
-      const options = field !== undefined ? { field } : {};
-      return [
+      const extensions: AnyExtension[] = [
         LiveblocksCollab.configure({
           document: this.storage.doc,
-          ...options,
+          field: this.options.field,
         }),
         CollaborationCursor.configure({
           provider: this.storage.provider, //todo change the ! to an assert
         }),
-        CommentsExtension,
-        MentionExtension,
       ];
+
+      if (this.options.comments) {
+        extensions.push(CommentsExtension);
+      }
+      if (this.options.mentions) {
+        extensions.push(
+          MentionExtension.configure({
+            onCreateMention,
+            onDeleteMention,
+          })
+        );
+      }
+
+      return extensions;
     },
   });
 };
