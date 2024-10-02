@@ -292,13 +292,14 @@ function getEmojiSessionMetadata(emojis: Emoji[]): EmojiSessionMetadata {
   }
 
   const descendingVersions = [...versions.keys()].sort((a, b) => b - a);
+  const highestVersion = descendingVersions[0] ?? 0;
 
   const canvasContext = document
     .createElement("canvas")
     .getContext("2d", { willReadFrequently: true });
 
   if (!canvasContext) {
-    return { emojiVersion: descendingVersions[0], countryFlags: true };
+    return { emojiVersion: highestVersion, countryFlags: true };
   }
 
   canvasContext.font = `${Math.floor(
@@ -326,7 +327,7 @@ function getEmojiSessionMetadata(emojis: Emoji[]): EmojiSessionMetadata {
   }
 
   return {
-    emojiVersion: descendingVersions[0],
+    emojiVersion: highestVersion,
     countryFlags: supportsCountryFlags,
   };
 }
