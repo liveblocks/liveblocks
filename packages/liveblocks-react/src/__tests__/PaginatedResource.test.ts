@@ -224,7 +224,7 @@ describe("PaginatedResource", () => {
     // expect(p.get() === p.get()).toEqual(true);
   });
 
-  test.only("Worst-case path, with completely broken fetcher, even the initial fetch will fail", async () => {
+  test("Worst-case path, with completely broken fetcher, even the initial fetch will fail", async () => {
     const brokenFetcher = makeBrokenFetcher();
     const p = new PaginatedResource(brokenFetcher);
     expect(p.get()).toEqual({ isLoading: true });
