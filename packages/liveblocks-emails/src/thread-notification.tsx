@@ -405,8 +405,10 @@ export async function prepareThreadNotificationEmailAsHTML(params: {
 
       await batchUsersResolver.resolve();
 
-      const authorsInfo = await authorsInfoPromise;
-      const commentBodies = await Promise.all(commentBodiesPromises);
+      const [authorsInfo, ...commentBodies] = await Promise.all([
+        authorsInfoPromise,
+        ...commentBodiesPromises,
+      ]);
 
       return {
         type: "unreadReplies",
@@ -553,8 +555,10 @@ export async function prepareThreadNotificationEmailAsReact(params: {
 
       await batchUsersResolver.resolve();
 
-      const authorsInfo = await authorsInfoPromise;
-      const commentBodies = await Promise.all(commentBodiesPromises);
+      const [authorsInfo, ...commentBodies] = await Promise.all([
+        authorsInfoPromise,
+        ...commentBodiesPromises,
+      ]);
 
       return {
         type: "unreadReplies",
