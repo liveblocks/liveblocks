@@ -1,3 +1,4 @@
+import type { TextSelection } from "@tiptap/pm/state";
 import { PluginKey } from "@tiptap/pm/state";
 import type { DecorationSet } from "@tiptap/pm/view";
 
@@ -18,6 +19,11 @@ export const THREADS_PLUGIN_KEY = new PluginKey<ThreadPluginState>(
 );
 
 export const LIVEBLOCKS_COMMENT_MARK_TYPE = "liveblocksCommentMark";
+
+export type CommentsExtensionStorage = {
+  pendingCommentSelection: TextSelection | null;
+};
+
 export const enum ThreadPluginActions {
   SET_SELECTED_THREAD_ID = "SET_SELECTED_THREAD_ID",
 }
@@ -28,3 +34,16 @@ export type ThreadPluginState = {
   selectedThreadPos: number | null;
   decorations: DecorationSet;
 };
+
+declare module "@tiptap/core" {
+  interface Commands<ReturnType> {
+    comments: {
+      /**
+       * Add a comment
+       */
+      addComment: (id: string) => ReturnType;
+      selectThread: (id: string | null) => ReturnType;
+      addPendingComment: () => ReturnType;
+    };
+  }
+}

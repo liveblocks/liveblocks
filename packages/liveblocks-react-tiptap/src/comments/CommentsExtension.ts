@@ -5,7 +5,7 @@ import { Plugin, TextSelection } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { ySyncPluginKey } from "y-prosemirror";
 
-import type { ThreadPluginState } from "../types";
+import type { CommentsExtensionStorage, ThreadPluginState } from "../types";
 import {
   ACTIVE_SELECTION_PLUGIN,
   LIVEBLOCKS_COMMENT_MARK_TYPE,
@@ -17,19 +17,6 @@ type ThreadPluginAction = {
   name: ThreadPluginActions;
   data: string | null;
 };
-
-declare module "@tiptap/core" {
-  interface Commands<ReturnType> {
-    comments: {
-      /**
-       * Add a comment
-       */
-      addComment: (id: string) => ReturnType;
-      selectThread: (id: string | null) => ReturnType;
-      addPendingComment: () => ReturnType;
-    };
-  }
-}
 
 /**
  * Known issues: Overlapping marks are merged when reloading the doc. May be related:
@@ -60,7 +47,7 @@ const Comment = Mark.create({
     return [
       "span",
       mergeAttributes(HTMLAttributes, {
-        class: "lb-thread-editor",
+        class: "lb-root lb-tiptap-thread-mark",
       }),
     ];
   },
@@ -99,7 +86,7 @@ const Comment = Mark.create({
             if (selectedThreadId === thisThreadId) {
               decorations.push(
                 Decoration.inline(from, to, {
-                  class: "lb-thread-editor-selected",
+                  class: "lb-root lb-tiptap-thread-mark-selected",
                 })
               );
             }
@@ -188,9 +175,7 @@ const Comment = Mark.create({
 
 export const CommentsExtension = Extension.create<
   never,
-  {
-    pendingCommentSelection: TextSelection | null;
-  }
+  CommentsExtensionStorage
 >({
   name: "liveblocksComments",
   addExtensions() {
@@ -278,7 +263,7 @@ export const CommentsExtension = Extension.create<
               .pendingCommentSelection as TextSelection;
             const decorations: Decoration[] = [
               Decoration.inline(from, to, {
-                class: "lb-editor-active-selection",
+                class: "lb-root lb-tiptap-active-selection",
               }),
             ];
             return DecorationSet.create(doc, decorations);

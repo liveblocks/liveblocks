@@ -4,11 +4,11 @@ import type { DM } from "@liveblocks/core";
 import { useCreateThread } from "@liveblocks/react";
 import type { ComposerProps, ComposerSubmitComment } from "@liveblocks/react-ui";
 import { Composer } from "@liveblocks/react-ui";
-import type { TextSelection } from "@tiptap/pm/state";
 import type { Editor } from "@tiptap/react";
 import type { ComponentRef, FormEvent } from "react";
 import React, { forwardRef, useCallback, useEffect } from "react";
 
+import type { CommentsExtensionStorage } from "../types";
 import { getRectFromCoords } from "../utils";
 
 export type FloatingComposerProps<M extends BaseMetadata = DM> = Omit<
@@ -29,7 +29,9 @@ export const FloatingComposer = forwardRef<
   const createThread = useCreateThread();
   const { editor } = props;
 
-  const showComposer = !!editor?.storage.liveblocksComments.pendingCommentSelection;
+  const storage = editor?.storage.liveblocksComments as CommentsExtensionStorage | undefined;
+
+  const showComposer = !!storage?.pendingCommentSelection;
 
   const {
     refs: { setReference, setFloating },
@@ -61,7 +63,10 @@ export const FloatingComposer = forwardRef<
       return;
     }
     const updateRect = () => {
-      const seclection = editor.storage.liveblocksComments.pendingCommentSelection as TextSelection | null;
+      if (!storage) {
+        return;
+      }
+      const seclection = storage.pendingCommentSelection;
       if (!seclection) {
         return;
       }
@@ -77,7 +82,8 @@ export const FloatingComposer = forwardRef<
     return () => {
       editor.off("update", updateRect);
     }
-  }, [editor, setReference, showComposer]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editor, setReference, showComposer]); // don't need storage explicitly here
 
 
   // Submit a new thread and update the comment highlight to show a completed highlight
@@ -101,9 +107,9 @@ export const FloatingComposer = forwardRef<
     return null;
   }
 
-
   return (
     <div
+      className="lb-root lb-portal lb-elevation lb-tiptap-floating lb-tiptap-floating-composer"
       ref={setFloating} style={{
         position: strategy,
         top: 0,

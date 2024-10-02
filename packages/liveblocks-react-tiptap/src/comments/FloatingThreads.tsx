@@ -111,7 +111,7 @@ export function FloatingThreads({
           thread={thread}
           Thread={Thread}
           onEscapeKeydown={handleEscapeKeydown}
-          className="lb-lexical-floating-threads-thread"
+          className="lb-tiptap-floating-threads-thread"
         />
       ))}
     </FloatingThreadPortal>
@@ -155,11 +155,11 @@ function FloatingThreadPortal({
         padding: FLOATING_THREAD_COLLISION_PADDING,
         apply({ availableWidth, availableHeight, elements }) {
           elements.floating.style.setProperty(
-            "--lb-lexical-floating-threads-available-width",
+            "--lb-tiptap-floating-threads-available-width",
             `${availableWidth}px`
           );
           elements.floating.style.setProperty(
-            "--lb-lexical-floating-threads-available-height",
+            "--lb-tiptap-floating-threads-available-height",
             `${availableHeight}px`
           );
         },
@@ -191,7 +191,7 @@ function FloatingThreadPortal({
         minWidth: "max-content",
       }}
       className={classNames(
-        "lb-root lb-portal lb-elevation lb-lexical-floating lb-lexical-floating-threads",
+        "lb-root lb-portal lb-elevation lb-tiptap-floating lb-tiptap-floating-threads",
         className
       )}
     >
