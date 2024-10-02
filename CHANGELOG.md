@@ -1,3 +1,10 @@
+## 2.8.2
+
+### `@liveblocks/client`
+
+- Send client version in HTTP request headers from the client, to ensure
+  backward compatible responses from the server
+
 ## 2.8.1
 
 ### `@liveblocks/react-ui`
@@ -460,7 +467,7 @@ For full upgrade instructions and codemods, see the
 ### `@liveblocks/node`
 
 - Fix "`process` is undefined" issue in Vite builds. This issue was already
-  fixed for `@liveblocks/core`, but not for `@liveblocks/node` yet.
+  fixed for `@liveblocks/client`, but not for `@liveblocks/node` yet.
 
 ### DevTools
 
