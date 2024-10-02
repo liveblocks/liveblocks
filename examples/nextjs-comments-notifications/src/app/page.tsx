@@ -1,7 +1,97 @@
+"use client";
+
+import {
+  ClientSideSuspense,
+  useUserThreads_experimental,
+} from "@liveblocks/react/suspense";
+import { Loading } from "../components/Loading";
+
 export default function Page() {
   return (
-    <div className="home">
-      <p>Select a room in the sidebar.</p>
+    <ClientSideSuspense fallback={<Loading />}>
+      <Threads />
+    </ClientSideSuspense>
+  );
+}
+
+function Threads() {
+  const { threads, fetchMore, isFetchingMore, fetchMoreError, hasFetchedAll } =
+    useUserThreads_experimental();
+
+  return (
+    <div className="threads">
+      <div>Count: {threads.length}</div>
+
+      {threads.map((thread) => (
+        <div
+          key={thread.id}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            border: "1px solid #000",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 12,
+              padding: 8,
+              borderBottom: "1px solid #000",
+            }}
+          >
+            Room: {thread.roomId}
+          </div>
+
+          {thread.comments.map((comment) => {
+            return (
+              <div
+                key={comment.id}
+                style={{
+                  padding: 8,
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 4,
+                    fontSize: 12,
+                    color: "#555",
+                  }}
+                >
+                  <span>{comment.userId}</span>
+                  <span>{comment.createdAt.toISOString()}</span>
+                </div>
+
+                <pre
+                  style={{
+                    fontSize: 10,
+                  }}
+                >
+                  {JSON.stringify(comment.body, undefined, 2)}
+                </pre>
+              </div>
+            );
+          })}
+        </div>
+      ))}
+
+      {fetchMoreError && (
+        <div>Failed to get more: ${fetchMoreError.message}</div>
+      )}
+
+      {/* A button to load more threads which is disabled while fetching new threads and hidden when there is nothing more to fetch */}
+      {!hasFetchedAll && (
+        <button
+          onClick={fetchMore}
+          disabled={isFetchingMore}
+          className="button primary"
+        >
+          {isFetchingMore ? "…" : "Load more"}
+        </button>
+      )}
+
+      {hasFetchedAll && <div>🎉</div>}
     </div>
   );
 }

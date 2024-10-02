@@ -27,15 +27,9 @@ export async function POST(request: NextRequest) {
     return new NextResponse("Invalid user", { status: 403 });
   }
 
-  // Create a session for the current user (access token auth), either with a provided user ID or a random one
-  const session = liveblocks.prepareSession(userId, {
+  // Authorize the user and return the result
+  const { status, body } = await liveblocks.identifyUser(user.id, {
     userInfo: user.info,
   });
-
-  // Use a naming pattern to allow access to rooms with a wildcard
-  session.allow(`liveblocks:examples:*`, session.FULL_ACCESS);
-
-  // Authorize the user and return the result
-  const { status, body } = await session.authorize();
   return new NextResponse(body, { status });
 }
