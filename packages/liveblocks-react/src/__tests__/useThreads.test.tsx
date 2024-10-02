@@ -115,6 +115,10 @@ describe("useThreads", () => {
       expect(result.current).toEqual({
         isLoading: false,
         threads,
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -157,6 +161,10 @@ describe("useThreads", () => {
       expect(result.current).toEqual({
         isLoading: false,
         threads,
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -280,6 +288,10 @@ describe("useThreads", () => {
       expect(result.current).toEqual({
         isLoading: false,
         threads: [pinnedThread],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -351,6 +363,10 @@ describe("useThreads", () => {
       expect(result.current).toEqual({
         isLoading: false,
         threads: [redPinnedThread],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -374,6 +390,10 @@ describe("useThreads", () => {
       expect(result2.current).toEqual({
         isLoading: false,
         threads: [redPinnedThread, redUnpinnedThread],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -397,6 +417,10 @@ describe("useThreads", () => {
       expect(result3.current).toEqual({
         isLoading: false,
         threads: [redPinnedThread],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -420,6 +444,10 @@ describe("useThreads", () => {
       expect(result4.current).toEqual({
         isLoading: false,
         threads: [],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -443,6 +471,10 @@ describe("useThreads", () => {
       expect(result5.current).toEqual({
         isLoading: false,
         threads: [],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -463,6 +495,10 @@ describe("useThreads", () => {
       expect(result6.current).toEqual({
         isLoading: false,
         threads: [bluePinnedThread, redPinnedThread],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -486,6 +522,10 @@ describe("useThreads", () => {
       expect(result7.current).toEqual({
         isLoading: false,
         threads: [bluePinnedThread],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -563,6 +603,10 @@ describe("useThreads", () => {
       expect(result.current).toEqual({
         isLoading: false,
         threads: [liveblocksEngineeringThread, liveblocksDesignThread],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -679,6 +723,10 @@ describe("useThreads", () => {
       expect(result.current).toEqual({
         isLoading: false,
         threads: [pinnedThread],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -690,6 +738,10 @@ describe("useThreads", () => {
       expect(result.current).toEqual({
         isLoading: false,
         threads: [unpinnedThread],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -699,6 +751,10 @@ describe("useThreads", () => {
     expect(result.current).toEqual({
       isLoading: false,
       threads: [pinnedThread],
+      fetchMore: expect.any(Function),
+      isFetchingMore: false,
+      hasFetchedAll: true,
+      fetchMoreError: undefined,
     });
 
     unmount();
@@ -772,6 +828,10 @@ describe("useThreads", () => {
       expect(room1Result.current).toEqual({
         isLoading: false,
         threads: room1Threads,
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -779,6 +839,10 @@ describe("useThreads", () => {
       expect(room2Result.current).toEqual({
         isLoading: false,
         threads: room2Threads,
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -858,6 +922,10 @@ describe("useThreads", () => {
       expect(result.current.state).toEqual({
         isLoading: false,
         threads: room1Threads,
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -871,6 +939,10 @@ describe("useThreads", () => {
       expect(result.current.state).toEqual({
         isLoading: false,
         threads: room2Threads,
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -882,6 +954,10 @@ describe("useThreads", () => {
       expect(result.current.state).toEqual({
         isLoading: false,
         threads: room1Threads,
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -981,6 +1057,10 @@ describe("useThreads", () => {
       expect(result.current.threads).toEqual({
         isLoading: false,
         threads: [oldThread, newThread],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -1058,6 +1138,10 @@ describe("useThreads", () => {
       expect(result.current.threads).toEqual({
         isLoading: false,
         threads: [oldThread, newThread],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -1135,6 +1219,10 @@ describe("useThreads", () => {
       expect(result.current.threads).toEqual({
         isLoading: false,
         threads: [oldThread, newThread],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -1201,6 +1289,10 @@ describe("useThreads", () => {
       expect(result.current).toEqual({
         isLoading: false,
         threads: [thread1], // thread2WithDeleteAt should not be returned
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -1267,6 +1359,10 @@ describe("useThreads", () => {
       expect(firstRenderResult.result.current).toEqual({
         isLoading: false,
         threads,
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -1286,6 +1382,10 @@ describe("useThreads", () => {
     expect(secondRenderResult.result.current).toEqual({
       isLoading: false,
       threads: originalThreads,
+      fetchMore: expect.any(Function),
+      isFetchingMore: false,
+      hasFetchedAll: true,
+      fetchMoreError: undefined,
     });
 
     // The updated threads should be displayed after the server responds with the updated threads (either due to a fetch request to get all threads or just the updated threads)
@@ -1293,6 +1393,10 @@ describe("useThreads", () => {
       expect(secondRenderResult.result.current).toEqual({
         isLoading: false,
         threads,
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       });
     });
 
@@ -1424,6 +1528,10 @@ describe("useThreads", () => {
       expect(result.current).toEqual({
         isLoading: false,
         threads,
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -1440,6 +1548,10 @@ describe("useThreads", () => {
       expect(result.current).toEqual({
         isLoading: false,
         threads,
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       });
     });
 
