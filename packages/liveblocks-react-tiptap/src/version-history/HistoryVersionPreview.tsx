@@ -31,7 +31,7 @@ export interface HistoryVersionPreviewProps
 }
 
 /**
- * Displays a specific version of the current Lexical document.
+ * Displays a specific version of the current TipTap document.
  *
  * @example
  * <HistoryVersionPreview version={version} />
@@ -66,7 +66,7 @@ export const HistoryVersionPreview = forwardRef<
     <div
       {...props}
       className={classNames(
-        "lb-root lb-history-version-preview lb-lexical-version-preview",
+        "lb-root lb-history-version-preview lb-tiptap-version-preview",
         className
       )}
       ref={forwardedRef}
@@ -80,7 +80,7 @@ export const HistoryVersionPreview = forwardRef<
           {$.HISTORY_VERSION_PREVIEW_ERROR(error)}
         </div>
       ) : (
-        <div className="lb-history-version-preview-content lb-lexical-editor-container lb-lexical-version-preview-editor-container">
+        <div className="lb-history-version-preview-content lb-tiptap-editor-container lb-tiptap-version-preview-editor-container">
 
           <EditorContent editor={previewEditor} />
         </div>

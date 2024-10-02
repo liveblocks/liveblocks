@@ -42,7 +42,7 @@ export default function TiptapEditor() {
         </div>
 
 
-        <div className="xl:[&:not(:has(.lb-lexical-anchored-threads))]:pr-[200px] [&:not(:has(.lb-lexical-anchored-threads))]:pr-[50px]">
+        <div className="xl:[&:not(:has(.lb-tiptap-anchored-threads))]:pr-[200px] [&:not(:has(.lb-tiptap-anchored-threads))]:pr-[50px]">
           <Threads editor={editor} />
         </div>
       </div>
