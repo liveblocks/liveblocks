@@ -84,7 +84,7 @@ const sanitizeValue = (value: string): string =>
 
 const sanitizeValueWithPotentialURL = (value: string): string => {
   const urlMatch = value.match(URL_MATCH);
-  if (urlMatch && urlMatch[1]) {
+  if (urlMatch && urlMatch[0] && urlMatch[1]) {
     // NOTE: removing quotes
     const sanitizedUrl = urlMatch[1].replace(/['"]/g, "");
     if (URL_PATTERN.test(sanitizedUrl)) {
