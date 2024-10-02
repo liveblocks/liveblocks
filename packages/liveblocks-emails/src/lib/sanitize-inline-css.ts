@@ -81,9 +81,16 @@ const sanitizeValueWithPotentialURL = (value: string): string => {
 };
 
 /**
+ * Type alias for DX purposes.
+ * It indicates the string should represents an inline CSS instruction
+ * in an HTML code.
+ */
+export type InlineCSSString = string;
+
+/**
  * Sanitize inline CSS and prevent any css injections
  */
-export function sanitizeInlineCSS(inlineCSS: string): string {
+export function sanitizeInlineCSS(inlineCSS: string): InlineCSSString {
   // NOTE: remove all unwanted and unnecessary white spaces
   const cleanInlineCSS = inlineCSS.replace(/\s*([:;])\s*/g, "$1").trim();
 

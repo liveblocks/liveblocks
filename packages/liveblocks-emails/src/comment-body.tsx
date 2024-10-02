@@ -20,6 +20,7 @@ import {
 } from "@liveblocks/core";
 import React from "react";
 
+import type { InlineCSSString } from "./lib/sanitize-inline-css";
 import { sanitizeInlineCSS } from "./lib/sanitize-inline-css";
 
 export type CommentBodySlotComponentProps = {
@@ -216,22 +217,34 @@ export async function convertCommentBodyAsReact(
   );
 }
 
-/**
- * Type alias for DX purposes.
- * It indicates the string should represents an inline CSS instruction
- * in an HTML code.
- */
-type InlineCSSString = string;
+export type ConvertCommentBodyAsHTMLStyles = {
+  /**
+   * The default inline CSS styles used to display paragraphs.
+   */
+  paragraph: InlineCSSString;
+  /**
+   * The default inline CSS styles used to display text elements.
+   */
+  text: {
+    strong: InlineCSSString;
+    code: InlineCSSString;
+  };
+  /**
+   * The default inline CSS styles used to display links.
+   */
+  mention: InlineCSSString;
+  /**
+   * The default inline CSS styles used to display mentions.
+   */
+  link: InlineCSSString;
+};
 
-// → TEMP: to be completed
-export type ConvertCommentBodyAsHTMLStyles = Record<
-  "paragraph" | "mention" | "link",
-  InlineCSSString
->;
-
-// → TEMP: to be completed
 const baseStyles: ConvertCommentBodyAsHTMLStyles = {
   paragraph: "font-size:14px;",
+  text: {
+    strong: "font-weight:500;",
+    code: 'font-family:ui-monospace, Menlo, Monaco, "Cascadia Mono", "Segoe UI Mono", "Roboto Mono", "Oxygen Mono", "Ubuntu Mono", "Source Code Pro", "Fira Mono", "Droid Sans Mono", "Consolas", "Courier New", monospace;background-color:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.1);border-radius:4px;',
+  },
   mention: "color:blue;",
   link: "text-decoration:underline;",
 };
@@ -240,17 +253,22 @@ const baseStyles: ConvertCommentBodyAsHTMLStyles = {
 const getCommentBodyAsHTMLStyles = (
   styles: Partial<ConvertCommentBodyAsHTMLStyles> = {}
 ): ConvertCommentBodyAsHTMLStyles => {
-  const getStyles = (
-    stylesKey: keyof ConvertCommentBodyAsHTMLStyles
-  ): InlineCSSString =>
-    styles[stylesKey]
-      ? sanitizeInlineCSS(styles[stylesKey]!)
-      : baseStyles[stylesKey];
-
   return {
-    paragraph: getStyles("paragraph"),
-    mention: getStyles("mention"),
-    link: getStyles("link"),
+    paragraph: styles.paragraph
+      ? sanitizeInlineCSS(styles.paragraph)
+      : baseStyles.paragraph,
+    text: {
+      strong: styles.text?.strong
+        ? sanitizeInlineCSS(styles.text.strong)
+        : baseStyles.text.strong,
+      code: styles.text?.code
+        ? sanitizeInlineCSS(styles.text.code)
+        : baseStyles.text.code,
+    },
+    mention: styles.mention
+      ? sanitizeInlineCSS(styles.mention)
+      : baseStyles.mention,
+    link: styles.link ? sanitizeInlineCSS(styles.link) : baseStyles.link,
   };
 };
 
@@ -297,7 +315,7 @@ export async function convertCommentBodyAsHTML(
 
         if (element.bold) {
           // prettier-ignore
-          children = html`<strong>${children}</strong>`;
+          children = html`<strong style="${styles.text.strong}">${children}</strong>`;
         }
 
         if (element.italic) {
@@ -312,7 +330,7 @@ export async function convertCommentBodyAsHTML(
 
         if (element.code) {
           // prettier-ignore
-          children = html`<code>${children}</code>`;
+          children = html`<code style="${styles.text.code}">${children}</code>`;
         }
 
         return children;

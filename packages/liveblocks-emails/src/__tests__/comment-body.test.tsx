@@ -29,7 +29,7 @@ describe("convert comment body as HTML", () => {
     it("should converts with italic and bold", async () => {
       const htmlBody = await convertCommentBodyAsHTML(commentBody5);
       const expected =
-        '<p style="font-size:14px;"><strong>Bold text</strong> and <em>italic text</em></p>';
+        '<p style="font-size:14px;"><strong style="font-weight:500;">Bold text</strong> and <em>italic text</em></p>';
 
       expect(htmlBody).toEqual(expected);
     });
@@ -37,7 +37,7 @@ describe("convert comment body as HTML", () => {
     it("should converts with code and strikethrough", async () => {
       const htmlBody = await convertCommentBodyAsHTML(commentBody6);
       const expected =
-        '<p style="font-size:14px;"><s>Strikethrough text</s> and <code>code text</code></p>';
+        '<p style="font-size:14px;"><s>Strikethrough text</s> and <code style="font-family:ui-monospace, Menlo, Monaco, &quot;Cascadia Mono&quot;, &quot;Segoe UI Mono&quot;, &quot;Roboto Mono&quot;, &quot;Oxygen Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Source Code Pro&quot;, &quot;Fira Mono&quot;, &quot;Droid Sans Mono&quot;, &quot;Consolas&quot;, &quot;Courier New&quot;, monospace;background-color:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.1);border-radius:4px;">code text</code></p>';
 
       expect(htmlBody).toEqual(expected);
     });
