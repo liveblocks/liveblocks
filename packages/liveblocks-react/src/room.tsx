@@ -287,7 +287,7 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
       if (room === null) return;
 
       // Retrieve threads that have been updated/deleted since the last requestedAt value
-      requests.push(store.fetchThreadsDeltaUpdate(room.id));
+      requests.push(store.fetchRoomThreadsDeltaUpdate(room.id));
     });
 
     await Promise.allSettled(requests);
@@ -779,7 +779,7 @@ function RoomProviderInner<
   React.useEffect(() => {
     const store = getExtrasForClient(client).store;
     // Retrieve threads that have been updated/deleted since the last time the room requested threads updates
-    void store.fetchThreadsDeltaUpdate(room.id).catch(() => {
+    void store.fetchRoomThreadsDeltaUpdate(room.id).catch(() => {
       // Deliberately catch and ignore any errors here
     });
   }, [client, room.id]);
@@ -790,7 +790,7 @@ function RoomProviderInner<
   React.useEffect(() => {
     function handleIsOnline() {
       const store = getExtrasForClient(client).store;
-      void store.fetchThreadsDeltaUpdate(room.id).catch(() => {
+      void store.fetchRoomThreadsDeltaUpdate(room.id).catch(() => {
         // Deliberately catch and ignore any errors here
       });
     }
@@ -1335,7 +1335,7 @@ function useThreads<M extends BaseMetadata>(
   const { store, incrementQuerySubscribers } = getExtrasForClient<M>(client);
 
   React.useEffect(() => {
-    store.waitUntilThreadsLoaded(room.id, options, queryKey).catch(() => {
+    store.waitUntilRoomThreadsLoaded(room.id, options, queryKey).catch(() => {
       // Deliberately catch and ignore any errors here
     });
   }, [store, room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -2417,7 +2417,7 @@ function useThreadsSuspense<M extends BaseMetadata>(
 
   const { store } = getExtrasForClient<M>(client);
 
-  use(store.waitUntilThreadsLoaded(room.id, options, queryKey));
+  use(store.waitUntilRoomThreadsLoaded(room.id, options, queryKey));
 
   const result = useThreads(options);
   assert(!result.error, "Did not expect error");

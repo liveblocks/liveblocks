@@ -141,12 +141,15 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
   readonly usersStore: BatchStore<U["info"] | undefined, string>;
   readonly roomsInfoStore: BatchStore<DRI | undefined, string>;
   readonly getRoomIds: () => string[];
-  readonly getThreads: (options: GetThreadsOptions<M>) => Promise<{
+  readonly getUserThreads_experimental: (
+    options: GetThreadsOptions<M>
+  ) => Promise<{
     threads: ThreadData<M>[];
     inboxNotifications: InboxNotificationData[];
+    nextCursor: string | null;
     requestedAt: Date;
   }>;
-  readonly getThreadsSince: (
+  readonly getUserThreadsSince_experimental: (
     options: { since: Date } & GetThreadsOptions<M>
   ) => Promise<{
     inboxNotifications: {
@@ -668,8 +671,9 @@ export function createClient<U extends BaseUserMeta = DU>(
         },
 
         // "All" threads (= "user" threads)
-        getThreads: httpClientLike.getThreads,
-        getThreadsSince: httpClientLike.getThreadsSince,
+        getUserThreads_experimental: httpClientLike.getUserThreads_experimental,
+        getUserThreadsSince_experimental:
+          httpClientLike.getUserThreadsSince_experimental,
       },
     },
     kInternal,

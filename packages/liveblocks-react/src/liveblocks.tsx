@@ -36,18 +36,17 @@ import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/w
 import { useIsInsideRoom } from "./contexts";
 import { byFirstCreated, byMostRecentlyUpdated } from "./lib/compare";
 import { makeThreadsFilter } from "./lib/querying";
-import { retryError } from "./lib/retry-error";
 import { shallow2 } from "./lib/shallow2";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { use } from "./lib/use-polyfill";
 import type {
   InboxNotificationsAsyncResult,
   LiveblocksContextBundle,
-  RENAME_LATER_UserThreadsAsyncResult,
-  RENAME_LATER_UserThreadsAsyncSuccess,
   RoomInfoAsyncResult,
   RoomInfoAsyncSuccess,
   SharedContextBundle,
+  ThreadsAsyncResult,
+  ThreadsAsyncSuccess,
   ThreadsQuery,
   UnreadInboxNotificationsCountAsyncResult,
   UserAsyncResult,
@@ -262,7 +261,7 @@ export function getExtrasForClient<M extends BaseMetadata>(
   };
 }
 
-function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
+function makeExtrasForClient(client: OpaqueClient) {
   const store = getUmbrellaStoreForClient(client);
   // TODO                                ^ Bind to M type param here
 
@@ -351,46 +350,17 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     };
   }
 
-  const userThreadsPoller = makePoller(refreshUserThreads);
-
-  let isFetchingUserThreadsUpdates = false;
-
-  async function refreshUserThreads() {
-    const since = userThreadslastRequestedAt;
-
-    if (since === undefined || isFetchingUserThreadsUpdates) {
-      return;
-    }
+  const userThreadsPoller = makePoller(async () => {
     try {
-      isFetchingUserThreadsUpdates = true;
-      const updates = await client[kInternal].getThreadsSince({
-        since,
-      });
-      isFetchingUserThreadsUpdates = false;
-
-      store.batch(() => {
-        // 1️⃣
-        store.updateThreadsAndNotifications(
-          updates.threads.updated,
-          [],
-          updates.threads.deleted,
-          []
-        );
-
-        // 2️⃣
-        store.setQuery2OK(USER_THREADS_QUERY);
-      });
-
-      userThreadslastRequestedAt = updates.requestedAt;
+      await store.fetchUserThreadsDeltaUpdate();
     } catch (err) {
-      isFetchingUserThreadsUpdates = false;
-      return;
+      // When polling, we don't want to throw errors, ever
+      console.warn(`Polling new user threads failed: ${String(err)}`);
     }
-  }
+  });
 
   // TODO Hmm. All of this is stuff that should be managed by the cache. Now we have caches in different places.
   const userThreadsSubscribersByQuery = new Map<string, number>();
-  const userThreadsRequestsByQuery = new Map<string, Promise<unknown>>();
 
   function incrementUserThreadsQuerySubscribers(queryKey: string) {
     const subscribers = userThreadsSubscribersByQuery.get(queryKey) ?? 0;
@@ -422,77 +392,10 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     };
   }
 
-  let userThreadslastRequestedAt: Date | undefined;
-
-  async function getUserThreads(
-    queryKey: string,
-    options: UseUserThreadsOptions<M>,
-    { retryCount }: { retryCount: number } = { retryCount: 0 }
-  ) {
-    const existingRequest = userThreadsRequestsByQuery.get(queryKey);
-
-    // If a request was already made for the query, we do not make another request and return the existing promise of the request
-    if (existingRequest !== undefined) return existingRequest;
-
-    const request = client[kInternal].getThreads(options);
-
-    // Store the promise of the request for the query so that we do not make another request for the same query
-    userThreadsRequestsByQuery.set(queryKey, request);
-
-    store.setQuery2Loading(queryKey);
-
-    try {
-      const result = await request;
-
-      store.batch(() => {
-        // 1️⃣
-        store.updateThreadsAndNotifications(
-          result.threads,
-          result.inboxNotifications,
-          [],
-          []
-        );
-
-        // 2️⃣
-        store.setQuery2OK(queryKey);
-      });
-
-      /**
-       * We set the `userThreadslastRequestedAt` value to the timestamp returned by the current request if:
-       * 1. The `userThreadslastRequestedAt` value has not been set
-       * OR
-       * 2. The `userThreadslastRequestedAt` value is older than the timestamp returned by the current request
-       */
-      if (
-        userThreadslastRequestedAt === undefined ||
-        userThreadslastRequestedAt < result.requestedAt
-      ) {
-        userThreadslastRequestedAt = result.requestedAt;
-      }
-
-      userThreadsPoller.start(POLLING_INTERVAL);
-    } catch (err) {
-      userThreadsRequestsByQuery.delete(queryKey);
-
-      // Retry the action using the exponential backoff algorithm
-      retryError(() => {
-        void getUserThreads(queryKey, options, {
-          retryCount: retryCount + 1,
-        });
-      }, retryCount);
-
-      // Set the query state to the error state
-      store.setQuery2Error(queryKey, err as Error);
-    }
-
-    return;
-  }
-
   return {
     store,
     startPolling,
     incrementUserThreadsQuerySubscribers,
-    getUserThreads,
   };
 }
 
@@ -1086,7 +989,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
       metadata: {},
     },
   }
-): RENAME_LATER_UserThreadsAsyncResult<M> {
+): ThreadsAsyncResult<M> {
   const queryKey = React.useMemo(
     () => makeUserThreadsQueryKey(options.query),
     [options]
@@ -1094,13 +997,18 @@ function useUserThreads_experimental<M extends BaseMetadata>(
 
   const client = useClient<M>();
 
-  const { store, incrementUserThreadsQuerySubscribers, getUserThreads } =
+  const { store, incrementUserThreadsQuerySubscribers } =
     getExtrasForClient<M>(client);
 
   useEffect(() => {
-    void getUserThreads(queryKey, options);
-    return incrementUserThreadsQuerySubscribers(queryKey);
-  }, [queryKey, incrementUserThreadsQuerySubscribers, getUserThreads, options]);
+    store.waitUntilUserThreadsLoaded(options, queryKey).catch(() => {
+      // Deliberately catch and ignore any errors here
+    });
+  }, [queryKey, store]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    incrementUserThreadsQuerySubscribers(queryKey);
+  }, [incrementUserThreadsQuerySubscribers, queryKey]);
 
   const getter = useCallback(
     () => store.getUserThreadsAsync(queryKey),
@@ -1108,9 +1016,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
   );
 
   const selector = useCallback(
-    (
-      result: ReturnType<typeof getter>
-    ): RENAME_LATER_UserThreadsAsyncResult<M> => {
+    (result: ReturnType<typeof getter>): ThreadsAsyncResult<M> => {
       if (!result.fullState) {
         return result; // Loading or error state
       }
@@ -1122,7 +1028,14 @@ function useUserThreads_experimental<M extends BaseMetadata>(
       });
 
       // "Map" the success state, by selecting the threads and returning only those parts externally
-      return { isLoading: false, threads };
+      return {
+        isLoading: false,
+        threads,
+        hasFetchedAll: result.hasFetchedAll,
+        isFetchingMore: result.isFetchingMore,
+        fetchMoreError: result.fetchMoreError,
+        fetchMore: result.fetchMore,
+      };
     },
     [options]
   );
@@ -1157,7 +1070,7 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
       metadata: {},
     },
   }
-): RENAME_LATER_UserThreadsAsyncSuccess<M> {
+): ThreadsAsyncSuccess<M> {
   const queryKey = React.useMemo(
     () => makeUserThreadsQueryKey(options.query),
     [options]
@@ -1165,48 +1078,14 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
 
   const client = useClient<M>();
 
-  const { store, getUserThreads } = getExtrasForClient<M>(client);
+  const store = getExtrasForClient<M>(client).store;
 
-  React.useEffect(() => {
-    const { incrementUserThreadsQuerySubscribers } = getExtrasForClient(client);
-    return incrementUserThreadsQuerySubscribers(queryKey);
-  }, [client, queryKey]);
+  use(store.waitUntilUserThreadsLoaded(options, queryKey));
 
-  const query = store.getFullState().queries2[queryKey];
-
-  if (query === undefined || query.isLoading) {
-    throw getUserThreads(queryKey, options);
-  }
-
-  if (query.error) {
-    throw query.error;
-  }
-
-  const getter = store.getFullState;
-
-  const selector = useCallback(
-    (
-      state: ReturnType<typeof getter>
-    ): RENAME_LATER_UserThreadsAsyncSuccess<M> => {
-      return {
-        threads: selectThreads(state, {
-          roomId: null, // Do _not_ filter by roomId
-          query: options.query,
-          orderBy: "last-update",
-        }),
-        isLoading: false,
-      };
-    },
-    [options]
-  );
-
-  return useSyncExternalStoreWithSelector(
-    store.subscribeUserThreads,
-    getter,
-    getter,
-    selector,
-    shallow2 // NOTE: Using 2-level-deep shallow check here, because the result of selectThreads() is not stable!
-  );
+  const result = useUserThreads_experimental(options);
+  assert(!result.error, "Did not expect error");
+  assert(!result.isLoading, "Did not expect loading");
+  return result;
 }
 
 /**

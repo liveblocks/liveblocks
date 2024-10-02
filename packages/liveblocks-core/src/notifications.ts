@@ -34,6 +34,8 @@ import { PKG_VERSION } from "./version";
 export const INBOX_NOTIFICATIONS_PAGE_SIZE = 6; // TODO Maybe bump to 50?
 const MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY = 50;
 
+const USER_THREADS_PAGE_SIZE = 2; // XXX TODO: Bump this to a reasonable number
+
 export function createNotificationsApi<M extends BaseMetadata>({
   baseUrl,
   authManager,
@@ -45,12 +47,13 @@ export function createNotificationsApi<M extends BaseMetadata>({
   currentUserIdStore: Store<string | null>;
   fetcher: (url: string, init?: RequestInit) => Promise<Response>;
 }): NotificationsApi<M> & {
-  getThreads(options?: GetThreadsOptions<M>): Promise<{
+  getUserThreads_experimental(options?: GetThreadsOptions<M>): Promise<{
     threads: ThreadData<M>[];
     inboxNotifications: InboxNotificationData[];
+    nextCursor: string | null;
     requestedAt: Date;
   }>;
-  getThreadsSince(options: GetThreadsSinceOptions): Promise<{
+  getUserThreadsSince_experimental(options: GetThreadsSinceOptions): Promise<{
     inboxNotifications: {
       updated: InboxNotificationData[];
       deleted: InboxNotificationDeleteInfo[];
@@ -233,7 +236,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
     });
   }
 
-  async function getThreads(options: GetThreadsOptions<M>) {
+  async function getUserThreads_experimental(options: GetThreadsOptions<M>) {
     let query: string | undefined;
 
     if (options?.query) {
@@ -252,6 +255,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
     }>(url`/v2/c/threads`, undefined, {
       cursor: options.cursor,
       query,
+      limit: USER_THREADS_PAGE_SIZE,
     });
 
     return {
@@ -259,11 +263,14 @@ export function createNotificationsApi<M extends BaseMetadata>({
       inboxNotifications: json.inboxNotifications.map(
         convertToInboxNotificationData
       ),
+      nextCursor: json.meta.nextCursor,
       requestedAt: new Date(json.meta.requestedAt),
     };
   }
 
-  async function getThreadsSince(options: GetThreadsSinceOptions) {
+  async function getUserThreadsSince_experimental(
+    options: GetThreadsSinceOptions
+  ) {
     const json = await fetchJson<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
@@ -299,7 +306,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
     markInboxNotificationAsRead,
     deleteAllInboxNotifications,
     deleteInboxNotification,
-    getThreads, // XXX Rename to getUserThreads_experimental?
-    getThreadsSince, // XXX Rename to getUserThreadsSince_experimental?
+    getUserThreads_experimental,
+    getUserThreadsSince_experimental,
   };
 }

@@ -24,6 +24,7 @@ import {
   compactObject,
   console,
   createStore,
+  kInternal,
   makeEventSource,
   mapValues,
   nanoid,
@@ -529,7 +530,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   // Threads
   private _threadsLastRequestedAtByRoom = new Map<string, Date>(); // A map of room ids to the timestamp when the last request for threads updates was made
-  private _threads: Map<string, PaginatedResource> = new Map();
+
+  private _roomThreads: Map<string, PaginatedResource> = new Map();
+
+  private _userThreadsLastRequestedAt: Date | null = null;
+  private _userThreads: Map<string, PaginatedResource> = new Map();
 
   constructor(client?: OpaqueClient) {
     const inboxFetcher = async (cursor?: string) => {
@@ -611,7 +616,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   public getThreadsAsync(
     queryKey: string
   ): PagedAsyncResult<UmbrellaStoreState<M>, "fullState"> {
-    const paginatedResource = this._threads.get(queryKey);
+    const paginatedResource = this._roomThreads.get(queryKey);
     if (paginatedResource === undefined) {
       return ASYNC_LOADING;
     }
@@ -635,20 +640,27 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   public getUserThreadsAsync(
     queryKey: string
-  ): AsyncResult<UmbrellaStoreState<M>, "fullState"> {
-    const internalState = this._store.get();
-
-    const query = internalState.queries2[queryKey];
-    if (query === undefined || query.isLoading) {
+  ): PagedAsyncResult<UmbrellaStoreState<M>, "fullState"> {
+    const paginatedResource = this._userThreads.get(queryKey);
+    if (paginatedResource === undefined) {
       return ASYNC_LOADING;
     }
 
-    if (query.error) {
-      return query;
+    const asyncResult = paginatedResource.get();
+    if (asyncResult.isLoading || asyncResult.error) {
+      return asyncResult;
     }
 
+    const page = asyncResult.data;
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
-    return { isLoading: false, fullState: this.getFullState() };
+    return {
+      isLoading: false,
+      fullState: this.getFullState(),
+      hasFetchedAll: page.hasFetchedAll,
+      isFetchingMore: page.isFetchingMore,
+      fetchMoreError: page.fetchMoreError,
+      fetchMore: page.fetchMore,
+    };
   }
 
   // NOTE: This will read the async result, but WILL NOT start loading at the moment!
@@ -1369,7 +1381,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this._notifications.waitUntilLoaded();
   }
 
-  public waitUntilThreadsLoaded(
+  public waitUntilRoomThreadsLoaded(
     roomId: string,
     options: { query?: ThreadsQuery<M> },
     queryKey: string // XXX Make queryKey internal implementation detail
@@ -1417,7 +1429,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return i++ < 3 ? `my-cursor-${i}` : null;
     };
 
-    let paginatedResource = this._threads.get(queryKey);
+    let paginatedResource = this._roomThreads.get(queryKey);
     if (paginatedResource === undefined) {
       paginatedResource = new PaginatedResource(threadsFetcher);
     }
@@ -1428,12 +1440,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this._store.set((store) => ({ ...store }))
     );
 
-    this._threads.set(queryKey, paginatedResource);
+    this._roomThreads.set(queryKey, paginatedResource);
 
     return paginatedResource.waitUntilLoaded();
   }
 
-  public async fetchThreadsDeltaUpdate(roomId: string) {
+  public async fetchRoomThreadsDeltaUpdate(roomId: string) {
     const lastRequestedAt = this._threadsLastRequestedAtByRoom.get(roomId);
     if (lastRequestedAt === undefined) return;
 
@@ -1462,6 +1474,79 @@ export class UmbrellaStore<M extends BaseMetadata> {
       // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
       this._threadsLastRequestedAtByRoom.set(roomId, updates.requestedAt);
     }
+  }
+
+  public waitUntilUserThreadsLoaded(
+    options: { query?: ThreadsQuery<M> },
+    queryKey: string // XXX Make queryKey internal implementation detail
+  ) {
+    const threadsFetcher = async (cursor?: string) => {
+      if (this._client === undefined) {
+        // TODO: Think about other ways to structure this. Throwing a StopRetrying only
+        // makes sense only if we can easily know if the fetcher is going to be wrapped inside the autoRetry function
+        throw new StopRetrying(
+          "Client is required in order to load threads for the room"
+        );
+      }
+
+      const result = await this._client[kInternal].getUserThreads_experimental({
+        ...options,
+        cursor,
+      });
+      this.updateThreadsAndNotifications(
+        result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
+        result.inboxNotifications
+      );
+
+      // We initialize the `_userThreadsLastRequestedAt` date using the server timestamp after we've loaded the first page of inbox notifications.
+      if (this._userThreadsLastRequestedAt === null) {
+        this._userThreadsLastRequestedAt = result.requestedAt;
+      }
+
+      return result.nextCursor;
+    };
+
+    let paginatedResource = this._userThreads.get(queryKey);
+    if (paginatedResource === undefined) {
+      paginatedResource = new PaginatedResource(threadsFetcher);
+    }
+
+    paginatedResource.observable.subscribe(() =>
+      // Note that the store itself does not change, but it's only vehicle at
+      // the moment to trigger a re-render, so we'll do a no-op update here.
+      this._store.set((store) => ({ ...store }))
+    );
+
+    this._userThreads.set(queryKey, paginatedResource);
+
+    return paginatedResource.waitUntilLoaded();
+  }
+
+  public async fetchUserThreadsDeltaUpdate() {
+    const lastRequestedAt = this._userThreadsLastRequestedAt;
+    if (lastRequestedAt === null) {
+      throw new Error("Expected there is at least one page");
+    }
+
+    const client = nn(
+      this._client,
+      "Client is required in order to load threads for the user"
+    );
+
+    const result = await client[kInternal].getUserThreadsSince_experimental({
+      since: lastRequestedAt,
+    });
+
+    if (lastRequestedAt < result.requestedAt) {
+      this._notificationsLastRequestedAt = result.requestedAt;
+    }
+
+    this.updateThreadsAndNotifications(
+      result.threads.updated as ThreadData<M>[],
+      result.inboxNotifications.updated, // XXX - The current implementation instead passes an empty array here 🤔. Verify why and change this if necessary
+      result.threads.deleted,
+      result.inboxNotifications.deleted // XXX - The current implementation instead passes an empty array here 🤔. Verify why and change this if necessary
+    );
   }
 }
 
