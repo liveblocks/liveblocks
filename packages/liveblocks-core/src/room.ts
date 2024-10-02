@@ -1607,6 +1607,7 @@ export function createRoom<
       headers: {
         ...options?.headers,
         Authorization: `Bearer ${getAuthBearerHeaderFromAuthValue(authValue)}`,
+        "X-LB-Client": PKG_VERSION || "dev",
       },
     });
   }
