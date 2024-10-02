@@ -28,6 +28,7 @@ import type {
   InboxNotificationDeleteInfo,
   InboxNotificationDeleteInfoPlain,
 } from "./protocol/InboxNotifications";
+import type { GetThreadsSinceOptions } from "./room";
 import { PKG_VERSION } from "./version";
 
 export const INBOX_NOTIFICATIONS_PAGE_SIZE = 6; // TODO Maybe bump to 50?
@@ -49,7 +50,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
     inboxNotifications: InboxNotificationData[];
     requestedAt: Date;
   }>;
-  getThreadsSince(options: { since: Date } & GetThreadsOptions<M>): Promise<{
+  getThreadsSince(options: GetThreadsSinceOptions): Promise<{
     inboxNotifications: {
       updated: InboxNotificationData[];
       deleted: InboxNotificationDeleteInfo[];
@@ -246,8 +247,10 @@ export function createNotificationsApi<M extends BaseMetadata>({
       deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
       meta: {
         requestedAt: string;
+        nextCursor: string | null;
       };
     }>(url`/v2/c/threads`, undefined, {
+      cursor: options.cursor,
       query,
     });
 
@@ -260,15 +263,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
     };
   }
 
-  async function getThreadsSince(
-    options: { since: Date } & GetThreadsOptions<M>
-  ) {
-    let query: string | undefined;
-
-    if (options?.query) {
-      query = objectToQuery(options.query);
-    }
-
+  async function getThreadsSince(options: GetThreadsSinceOptions) {
     const json = await fetchJson<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
@@ -279,7 +274,6 @@ export function createNotificationsApi<M extends BaseMetadata>({
       };
     }>(url`/v2/c/threads`, undefined, {
       since: options.since.toISOString(),
-      query,
     });
 
     return {
@@ -305,7 +299,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
     markInboxNotificationAsRead,
     deleteAllInboxNotifications,
     deleteInboxNotification,
-    getThreads,
-    getThreadsSince,
+    getThreads, // XXX Rename to getUserThreads_experimental?
+    getThreadsSince, // XXX Rename to getUserThreadsSince_experimental?
   };
 }

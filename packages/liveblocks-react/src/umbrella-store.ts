@@ -6,7 +6,6 @@ import type {
   CommentUserReaction,
   DistributiveOmit,
   EventSource,
-  GetThreadsOptions,
   HistoryVersion,
   InboxNotificationData,
   InboxNotificationDeleteInfo,
@@ -38,6 +37,7 @@ import type {
   InboxNotificationsAsyncResult,
   PagedAsyncResult,
   RoomNotificationSettingsAsyncResult,
+  ThreadsQuery,
 } from "./types";
 
 type OptimisticUpdate<M extends BaseMetadata> =
@@ -1371,51 +1371,51 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   public waitUntilThreadsLoaded(
     roomId: string,
-    options: GetThreadsOptions<BaseMetadata>,
-    queryKey: string
+    options: { query?: ThreadsQuery<M> },
+    queryKey: string // XXX Make queryKey internal implementation detail
   ) {
-    const threadsFetcher =
-      async (/* cursor?: string - XXX Include this once `room.getThreads()` support passing cursor */) => {
-        if (this._client === undefined) {
-          // TODO: Think about other ways to structure this. Throwing a StopRetrying only
-          // makes sense only if we can easily know if the fetcher is going to be wrapped inside the autoRetry function
-          throw new StopRetrying(
-            "Client is required in order to load threads for the room"
-          );
-        }
+    let i = 0;
 
-        const room = this._client.getRoom(roomId);
-        if (room === null) {
-          throw new StopRetrying(
-            `Room with id ${roomId} is not available on client`
-          );
-        }
-
-        // XXX - `room.getThreads` currently doesn't accept `cursor` option but will do so in future after pagination support
-        const result = await room.getThreads(options);
-        this.updateThreadsAndNotifications(
-          result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
-          result.inboxNotifications
+    const threadsFetcher = async (cursor?: string) => {
+      if (this._client === undefined) {
+        // TODO: Think about other ways to structure this. Throwing a StopRetrying only
+        // makes sense only if we can easily know if the fetcher is going to be wrapped inside the autoRetry function
+        throw new StopRetrying(
+          "Client is required in order to load threads for the room"
         );
+      }
 
-        const lastRequestedAt = this._threadsLastRequestedAtByRoom.get(roomId);
+      const room = this._client.getRoom(roomId);
+      if (room === null) {
+        throw new StopRetrying(
+          `Room with id ${roomId} is not available on client`
+        );
+      }
 
-        /**
-         * We set the `lastRequestedAt` value for the room to the timestamp returned by the current request if:
-         * 1. The `lastRequestedAt` value for the room has not been set
-         * OR
-         * 2. The `lastRequestedAt` value for the room is older than the timestamp returned by the current request
-         */
-        if (
-          lastRequestedAt === undefined ||
-          lastRequestedAt > result.requestedAt
-        ) {
-          this._threadsLastRequestedAtByRoom.set(roomId, result.requestedAt);
-        }
+      const result = await room.getThreads({ ...options, cursor });
+      this.updateThreadsAndNotifications(
+        result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
+        result.inboxNotifications
+      );
 
-        // XXX - Replace this will result.nextCursor
-        return null;
-      };
+      const lastRequestedAt = this._threadsLastRequestedAtByRoom.get(roomId);
+
+      /**
+       * We set the `lastRequestedAt` value for the room to the timestamp returned by the current request if:
+       * 1. The `lastRequestedAt` value for the room has not been set
+       * OR
+       * 2. The `lastRequestedAt` value for the room is older than the timestamp returned by the current request
+       */
+      if (
+        lastRequestedAt === undefined ||
+        lastRequestedAt > result.requestedAt
+      ) {
+        this._threadsLastRequestedAtByRoom.set(roomId, result.requestedAt);
+      }
+
+      // XXX FOR NOW A HACK: Replace this with `result.nextCursor`
+      return i++ < 3 ? `my-cursor-${i}` : null;
+    };
 
     let paginatedResource = this._threads.get(queryKey);
     if (paginatedResource === undefined) {

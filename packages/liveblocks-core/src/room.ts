@@ -472,10 +472,15 @@ type SubscribeFn<
 };
 
 export type GetThreadsOptions<M extends BaseMetadata> = {
+  cursor?: string;
   query?: {
     resolved?: boolean;
     metadata?: Partial<QueryMetadata<M>>;
   };
+};
+
+export type GetThreadsSinceOptions = {
+  since: Date;
 };
 
 export type UploadAttachmentOptions = {
@@ -765,7 +770,7 @@ export type Room<
    * // ... //
    * await room.getThreadsSince({ since: result.requestedAt });
    */
-  getThreadsSince(options: { since: Date }): Promise<{
+  getThreadsSince(options: GetThreadsSinceOptions): Promise<{
     threads: {
       updated: ThreadData<M>[];
       deleted: ThreadDeleteInfo[];
@@ -2898,12 +2903,10 @@ export function createRoom<
     return body;
   }
 
-  async function getThreadsSince(options: { since: Date }) {
+  async function getThreadsSince(options: GetThreadsSinceOptions) {
     const response = await fetchCommentsApi(
       url`/v2/c/rooms/${config.roomId}/threads`,
-      {
-        since: options?.since?.toISOString(),
-      },
+      { since: options?.since?.toISOString() },
       {
         headers: {
           "Content-Type": "application/json",
@@ -2961,7 +2964,10 @@ export function createRoom<
 
     const response = await fetchCommentsApi(
       url`/v2/c/rooms/${config.roomId}/threads`,
-      { query },
+      {
+        cursor: options?.cursor,
+        query,
+      },
       { headers: { "Content-Type": "application/json" } }
     );
 
