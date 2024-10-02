@@ -1303,7 +1303,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   public async fetchNotificationsDeltaUpdate() {
     const lastRequestedAt = this._lastRequestedNotificationsAt;
-    if (lastRequestedAt === null) return;
+    if (lastRequestedAt === null) {
+      throw new Error("Expected there is at least one page");
+    }
 
     const client = nn(
       this._client,
