@@ -25,11 +25,15 @@ function Inbox({ className, ...props }: ComponentPropsWithoutRef<"div">) {
     hasFetchedAll,
   } = useInboxNotifications();
 
-  return inboxNotifications.length === 0 ? (
-    <div className={clsx(className, "empty")}>
-      There aren’t any notifications yet.
-    </div>
-  ) : (
+  if (inboxNotifications.length === 0) {
+    return (
+      <div className={clsx(className, "empty")}>
+        There aren’t any notifications yet.
+      </div>
+    );
+  }
+
+  return (
     <div className={className} {...props}>
       {/* Load more notifications when scrolling to the end of the list */}
       <InboxNotificationList
@@ -47,15 +51,19 @@ function Inbox({ className, ...props }: ComponentPropsWithoutRef<"div">) {
           );
         })}
       </InboxNotificationList>
-      {fetchMoreError ? (
+
+      {fetchMoreError && (
         <div className="error">
           😞 Failed to get more: {fetchMoreError.message}
         </div>
-      ) : null}
+      )}
+
       {isFetchingMore && <Loading />}
-      {hasFetchedAll ? (
+
+      {/* XXX - Add styles to the divs */}
+      {hasFetchedAll && (
         <div>😇 That’s it! There are no further notifications.</div>
-      ) : null}
+      )}
     </div>
   );
 }

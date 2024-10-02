@@ -14,41 +14,32 @@ import { Suspense, useRef, useState } from "react";
  */
 
 function Example() {
-  const { threads } = useThreads();
-
-  // TODO: Use actual pagination implementation
-  const hasMore = true;
-  const [isFetching, setFetching] = useState(false);
-  const fetchTimeoutRef = useRef<number | null>(null);
-  const fetchMore = () => {
-    if (fetchTimeoutRef.current !== null) {
-      window.clearTimeout(fetchTimeoutRef.current);
-    }
-
-    console.log("Fetching more threads");
-
-    setFetching(true);
-
-    fetchTimeoutRef.current = window.setTimeout(() => {
-      setFetching(false);
-    }, 2000);
-  };
+  const { threads, fetchMore, isFetchingMore, fetchMoreError, hasFetchedAll } =
+    useThreads();
 
   return (
     <div className="threads">
       {threads.map((thread) => (
         <Thread key={thread.id} thread={thread} className="thread" />
       ))}
+
+      {fetchMoreError && (
+        <div>Failed to get more: ${fetchMoreError.message}</div>
+      )}
+
       {/* A button to load more threads which is disabled while fetching new threads and hidden when there is nothing more to fetch */}
-      {hasMore && (
+      {!hasFetchedAll && (
         <button
           onClick={fetchMore}
-          disabled={isFetching}
+          disabled={isFetchingMore}
           className="button primary"
         >
-          {isFetching ? "…" : "Load more"}
+          {isFetchingMore ? "…" : "Load more"}
         </button>
       )}
+
+      {hasFetchedAll && <div>🎉</div>}
+
       <Composer className="composer" />
     </div>
   );
