@@ -12,6 +12,7 @@ const ALLOWED_PROPERTIES = [
   "font-style",
   "text-align",
   "text-decoration",
+  "text-underline-offset",
   "line-height",
   "letter-spacing",
   "word-spacing",
@@ -48,6 +49,20 @@ const ALLOWED_PROPERTIES = [
   "opacity",
   "visibility",
   "white-space",
+  "box-shadow",
+  "text-transform",
+  "cursor",
+  "outline",
+  "outline-color",
+  "outline-style",
+  "outline-width",
+  "transition",
+  "transform",
+  "animation",
+  "clip-path",
+  "filter",
+  "backdrop-filter",
+  "mix-blend-mode",
 ];
 
 const PROPERTIES_WITH_POTENTIAL_URL = [
