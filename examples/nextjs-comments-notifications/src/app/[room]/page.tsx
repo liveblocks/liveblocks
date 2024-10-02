@@ -6,7 +6,7 @@ import { Composer, Thread } from "@liveblocks/react-ui";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useExampleRoomId } from "../../example.client";
-import { Suspense, useRef, useState } from "react";
+import { Suspense } from "react";
 
 /**
  * Displays a list of threads, along with a composer for creating
