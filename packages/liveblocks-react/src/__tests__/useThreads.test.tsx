@@ -1790,6 +1790,9 @@ describe("WebSocket events", () => {
       expect(result.current).toEqual({
         isLoading: false,
         threads: [],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
       })
     );
 
@@ -1803,6 +1806,9 @@ describe("WebSocket events", () => {
       expect(result.current).toEqual({
         isLoading: false,
         threads: [newThread],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
       })
     );
 
@@ -1848,6 +1854,9 @@ describe("WebSocket events", () => {
       expect(result.current).toEqual({
         isLoading: false,
         threads: [newThread],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
       })
     );
 
@@ -1862,6 +1871,9 @@ describe("WebSocket events", () => {
       expect(result.current).toEqual({
         isLoading: false,
         threads: [],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
       })
     );
 
@@ -1904,6 +1916,9 @@ describe("WebSocket events", () => {
       expect(result.current).toEqual({
         isLoading: false,
         threads: [newThread],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
       })
     );
 
@@ -1916,6 +1931,9 @@ describe("WebSocket events", () => {
       expect(result.current).toEqual({
         isLoading: false,
         threads: [],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
       })
     );
 
@@ -2018,6 +2036,9 @@ describe("WebSocket events", () => {
       expect(result.current).toEqual({
         isLoading: false,
         threads: [latestThread],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
       })
     );
 
