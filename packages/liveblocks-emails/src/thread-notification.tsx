@@ -172,7 +172,7 @@ export const makeCommentEmailBaseData = ({
 export const prepareThreadNotificationEmailBaseData = async ({
   client,
   event,
-  options,
+  options = {},
 }: {
   client: Liveblocks;
   event: ThreadNotificationEvent;
@@ -180,7 +180,7 @@ export const prepareThreadNotificationEmailBaseData = async ({
 }): Promise<ThreadNotificationBaseData | null> => {
   const { roomId } = event.data;
 
-  const roomInfo = options?.resolveRoomInfo
+  const roomInfo = options.resolveRoomInfo
     ? await options.resolveRoomInfo({ roomId })
     : undefined;
   const resolvedRoomInfo: DRI = {
@@ -306,41 +306,40 @@ export type ThreadNotificationEmailDataAsHTML = ThreadNotificationEmailData<
 >;
 
 /**
- * Prepares data from a `ThreadNotificationEvent` and convert comment bodies as an HTML safe string
+ * Prepares data from a `ThreadNotificationEvent` and convert comment bodies as an HTML safe string.
  *
- * @param params.client The `Liveblocks` node client
- * @param params.event The `ThreadNotificationEvent` received in the webhook handler
- * @param params.options The options to provides to resolve users, resolve room info
- * and customize bodies html elements styles with inline css.
+ * @param client The `Liveblocks` node client
+ * @param event The `ThreadNotificationEvent` received in the webhook handler
+ * @param options The optional options to provide to resolve users, resolve room info
+ * and customize comment bodies HTML elements styles with inline CSS.
  *
- * It returns `null` if there are no unread comments (mention or replies).
+ * It returns a `ThreadNotificationEmailDataAsHTML` or `null` if there are no unread comments (mention or replies).
  *
  * @example
  * import { Liveblocks} from "@liveblocks/node"
  * import { prepareThreadNotificationEmailAsHTML } from "@liveblocks/emails"
  *
  * const liveblocks = new Liveblocks({ secret: "sk_..." })
- * const emailData = prepareThreadNotificationEmailAsHTML({
- *  client: liveblocks,
+ * const emailData = prepareThreadNotificationEmailAsHTML(
+ *  liveblocks,
  *  event,
- *  options: {
+ *  {
  *    resolveUsers,
  *    resolveRoomInfo,
- *    commentBodyStyles,
+ *    commentBodyComponents,
  *  }
- * })
+ * )
  *
  */
-export async function prepareThreadNotificationEmailAsHTML(params: {
-  client: Liveblocks;
-  event: ThreadNotificationEvent;
-  options?: PrepareThreadNotificationEmailAsHTMLOptions<BaseUserMeta>;
-}): Promise<ThreadNotificationEmailDataAsHTML | null> {
-  const { client, event, options } = params;
+export async function prepareThreadNotificationEmailAsHTML(
+  client: Liveblocks,
+  event: ThreadNotificationEvent,
+  options: PrepareThreadNotificationEmailAsHTMLOptions<BaseUserMeta> = {}
+): Promise<ThreadNotificationEmailDataAsHTML | null> {
   const data = await prepareThreadNotificationEmailBaseData({
     client,
     event,
-    options: { resolveRoomInfo: options?.resolveRoomInfo },
+    options: { resolveRoomInfo: options.resolveRoomInfo },
   });
 
   if (data === null) {
@@ -348,7 +347,7 @@ export async function prepareThreadNotificationEmailAsHTML(params: {
   }
 
   const batchUsersResolver = createBatchUsersResolver<BaseUserMeta>({
-    resolveUsers: options?.resolveUsers,
+    resolveUsers: options.resolveUsers,
     callerName: "prepareThreadNotificationEmailAsHTML",
   });
 
@@ -362,7 +361,7 @@ export async function prepareThreadNotificationEmailAsHTML(params: {
       });
       const commentBodyPromise = convertCommentBodyAsHTML(comment.rawBody, {
         resolveUsers: batchUsersResolver.resolveUsers,
-        styles: options?.commentBodyStyles,
+        styles: options.commentBodyStyles,
       });
 
       await batchUsersResolver.resolve();
@@ -399,7 +398,7 @@ export async function prepareThreadNotificationEmailAsHTML(params: {
       const commentBodiesPromises = comments.map((c) =>
         convertCommentBodyAsHTML(c.rawBody, {
           resolveUsers: batchUsersResolver.resolveUsers,
-          styles: options?.commentBodyStyles,
+          styles: options.commentBodyStyles,
         })
       );
 
@@ -458,38 +457,37 @@ export type ThreadNotificationEmailDataAsReact = ThreadNotificationEmailData<
 /**
  * Prepares data from a `ThreadNotificationEvent` and convert comment bodies as React nodes.
  *
- * @param params.client The `Liveblocks` node client
- * @param params.event The `ThreadNotificationEvent` received in the webhook handler
- * @param params.options The options to provides to resolve users, resolve room info and customize comment bodies React components.
+ * @param client The `Liveblocks` node client
+ * @param event The `ThreadNotificationEvent` received in the webhook handler
+ * @param options The optional options to provide to resolve users, resolve room info and customize comment bodies React components.
  *
- * It returns `null` if there are no unread comments (mention or replies).
+ * It returns a `ThreadNotificationEmailDataAsReact` or `null` if there are no unread comments (mention or replies).
  *
  * @example
  * import { Liveblocks} from "@liveblocks/node"
  * import { prepareThreadNotificationEmailAsReact } from "@liveblocks/emails"
  *
  * const liveblocks = new Liveblocks({ secret: "sk_..." })
- * const emailData = prepareThreadNotificationEmailAsReact({
- *  client: liveblocks,
+ * const emailData = prepareThreadNotificationEmailAsReact(
+ *  liveblocks,
  *  event,
- *  options: {
+ *  {
  *    resolveUsers,
  *    resolveRoomInfo,
  *    commentBodyComponents,
  *  }
- * })
+ * )
  *
  */
-export async function prepareThreadNotificationEmailAsReact(params: {
-  client: Liveblocks;
-  event: ThreadNotificationEvent;
-  options?: PrepareThreadNotificationEmailAsReactOptions<BaseUserMeta>;
-}): Promise<ThreadNotificationEmailDataAsReact | null> {
-  const { client, event, options } = params;
+export async function prepareThreadNotificationEmailAsReact(
+  client: Liveblocks,
+  event: ThreadNotificationEvent,
+  options: PrepareThreadNotificationEmailAsReactOptions<BaseUserMeta> = {}
+): Promise<ThreadNotificationEmailDataAsReact | null> {
   const data = await prepareThreadNotificationEmailBaseData({
     client,
     event,
-    options: { resolveRoomInfo: options?.resolveRoomInfo },
+    options: { resolveRoomInfo: options.resolveRoomInfo },
   });
 
   if (data === null) {
@@ -497,7 +495,7 @@ export async function prepareThreadNotificationEmailAsReact(params: {
   }
 
   const batchUsersResolver = createBatchUsersResolver<BaseUserMeta>({
-    resolveUsers: options?.resolveUsers,
+    resolveUsers: options.resolveUsers,
     callerName: "prepareThreadNotificationEmailAsReact",
   });
 
@@ -512,7 +510,7 @@ export async function prepareThreadNotificationEmailAsReact(params: {
 
       const commentBodyPromise = convertCommentBodyAsReact(comment.rawBody, {
         resolveUsers: batchUsersResolver.resolveUsers,
-        components: options?.commentBodyComponents,
+        components: options.commentBodyComponents,
       });
 
       await batchUsersResolver.resolve();
@@ -549,7 +547,7 @@ export async function prepareThreadNotificationEmailAsReact(params: {
       const commentBodiesPromises = comments.map((c) =>
         convertCommentBodyAsReact(c.rawBody, {
           resolveUsers: batchUsersResolver.resolveUsers,
-          components: options?.commentBodyComponents,
+          components: options.commentBodyComponents,
         })
       );
 

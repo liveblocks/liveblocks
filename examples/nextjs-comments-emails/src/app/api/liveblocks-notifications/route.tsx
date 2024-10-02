@@ -37,10 +37,10 @@ export async function POST(request: Request) {
     // Check if the event is a Thread Notification event
     if (isThreadNotificationEvent(event)) {
       try {
-        const emailData = await prepareThreadNotificationEmailAsReact({
-          client: liveblocks,
+        const emailData = await prepareThreadNotificationEmailAsReact(
+          liveblocks,
           event,
-          options: {
+          {
             resolveUsers: async ({ userIds }) => {
               const users = await getUsers(userIds);
               return users.map((user) => user?.info || {});
@@ -58,8 +58,8 @@ export async function POST(request: Request) {
                 <span>@{user?.name ?? element.id}</span>
               ),
             },
-          },
-        });
+          }
+        );
 
         // If there are unread comments (last comment with mention or unread replies)
         if (emailData !== null) {

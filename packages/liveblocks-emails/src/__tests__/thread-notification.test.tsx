@@ -514,17 +514,15 @@ describe("thread notification", () => {
       }>([
         {
           withResolvers: false,
-          promise: () =>
-            prepareThreadNotificationEmailAsHTML({ client, event }),
+          promise: () => prepareThreadNotificationEmailAsHTML(client, event),
           expected: expected1,
         },
         {
           withResolvers: true,
           promise: () =>
-            prepareThreadNotificationEmailAsHTML({
-              client,
-              event,
-              options: { resolveUsers, resolveRoomInfo },
+            prepareThreadNotificationEmailAsHTML(client, event, {
+              resolveUsers,
+              resolveRoomInfo,
             }),
           expected: expected2,
         },
@@ -604,17 +602,15 @@ describe("thread notification", () => {
       }>([
         {
           withResolvers: false,
-          promise: () =>
-            prepareThreadNotificationEmailAsHTML({ client, event }),
+          promise: () => prepareThreadNotificationEmailAsHTML(client, event),
           expected: expected1,
         },
         {
           withResolvers: true,
           promise: () =>
-            prepareThreadNotificationEmailAsHTML({
-              client,
-              event,
-              options: { resolveUsers, resolveRoomInfo },
+            prepareThreadNotificationEmailAsHTML(client, event, {
+              resolveUsers,
+              resolveRoomInfo,
             }),
           expected: expected2,
         },
@@ -720,17 +716,15 @@ describe("thread notification", () => {
       }>([
         {
           withResolvers: false,
-          promise: () =>
-            prepareThreadNotificationEmailAsReact({ client, event }),
+          promise: () => prepareThreadNotificationEmailAsReact(client, event),
           expected: expected1,
         },
         {
           withResolvers: true,
           promise: () =>
-            prepareThreadNotificationEmailAsReact({
-              client,
-              event,
-              options: { resolveUsers, resolveRoomInfo },
+            prepareThreadNotificationEmailAsReact(client, event, {
+              resolveUsers,
+              resolveRoomInfo,
             }),
           expected: expected2,
         },
@@ -841,26 +835,18 @@ describe("thread notification", () => {
         {
           withResolvers: false,
           promise: () =>
-            prepareThreadNotificationEmailAsReact({
-              client,
-              event,
-              options: {
-                commentBodyComponents: components,
-              },
+            prepareThreadNotificationEmailAsReact(client, event, {
+              commentBodyComponents: components,
             }),
           expected: expected1,
         },
         {
           withResolvers: true,
           promise: () =>
-            prepareThreadNotificationEmailAsReact({
-              client,
-              event,
-              options: {
-                resolveUsers,
-                resolveRoomInfo,
-                commentBodyComponents: components,
-              },
+            prepareThreadNotificationEmailAsReact(client, event, {
+              resolveUsers,
+              resolveRoomInfo,
+              commentBodyComponents: components,
             }),
           expected: expected2,
         },
@@ -971,17 +957,15 @@ describe("thread notification", () => {
       }>([
         {
           withResolvers: false,
-          promise: () =>
-            prepareThreadNotificationEmailAsReact({ client, event }),
+          promise: () => prepareThreadNotificationEmailAsReact(client, event),
           expected: expected1,
         },
         {
           withResolvers: true,
           promise: () =>
-            prepareThreadNotificationEmailAsReact({
-              client,
-              event,
-              options: { resolveUsers, resolveRoomInfo },
+            prepareThreadNotificationEmailAsReact(client, event, {
+              resolveUsers,
+              resolveRoomInfo,
             }),
           expected: expected2,
         },
@@ -1094,24 +1078,18 @@ describe("thread notification", () => {
         {
           withResolvers: false,
           promise: () =>
-            prepareThreadNotificationEmailAsReact({
-              client,
-              event,
-              options: { commentBodyComponents: components },
+            prepareThreadNotificationEmailAsReact(client, event, {
+              commentBodyComponents: components,
             }),
           expected: expected1,
         },
         {
           withResolvers: true,
           promise: () =>
-            prepareThreadNotificationEmailAsReact({
-              client,
-              event,
-              options: {
-                resolveUsers,
-                resolveRoomInfo,
-                commentBodyComponents: components,
-              },
+            prepareThreadNotificationEmailAsReact(client, event, {
+              resolveUsers,
+              resolveRoomInfo,
+              commentBodyComponents: components,
             }),
           expected: expected2,
         },
