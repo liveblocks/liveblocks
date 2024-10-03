@@ -551,11 +551,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
   private _notificationsLastRequestedAt: Date | null = null; // Keeps track of when we successfully requested an inbox notifications update for the last time. Will be `null` as long as the first successful fetch hasn't happened yet.
   private _notifications: PaginatedResource;
 
-  // Threads XXX - Rename this to roomThreads
-  private _threadsLastRequestedAtByRoom = new Map<string, Date>(); // A map of room ids to the timestamp when the last request for threads updates was made
-
+  // Room Threads
+  private _roomThreadsLastRequestedAtByRoom = new Map<string, Date>();
   private _roomThreads: Map<string, PaginatedResource> = new Map();
 
+  // User Threads
   private _userThreadsLastRequestedAt: Date | null = null;
   private _userThreads: Map<string, PaginatedResource> = new Map();
 
@@ -1444,7 +1444,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
         result.inboxNotifications
       );
 
-      const lastRequestedAt = this._threadsLastRequestedAtByRoom.get(roomId);
+      const lastRequestedAt =
+        this._roomThreadsLastRequestedAtByRoom.get(roomId);
 
       /**
        * We set the `lastRequestedAt` value for the room to the timestamp returned by the current request if:
@@ -1456,7 +1457,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
         lastRequestedAt === undefined ||
         lastRequestedAt > result.requestedAt
       ) {
-        this._threadsLastRequestedAtByRoom.set(roomId, result.requestedAt);
+        this._roomThreadsLastRequestedAtByRoom.set(roomId, result.requestedAt);
       }
 
       return result.nextCursor;
@@ -1480,7 +1481,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   public async fetchRoomThreadsDeltaUpdate(roomId: string) {
-    const lastRequestedAt = this._threadsLastRequestedAtByRoom.get(roomId);
+    const lastRequestedAt = this._roomThreadsLastRequestedAtByRoom.get(roomId);
     if (lastRequestedAt === undefined) return;
 
     const client = nn(
@@ -1506,7 +1507,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     if (lastRequestedAt < updates.requestedAt) {
       // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
-      this._threadsLastRequestedAtByRoom.set(roomId, updates.requestedAt);
+      this._roomThreadsLastRequestedAtByRoom.set(roomId, updates.requestedAt);
     }
   }
 
