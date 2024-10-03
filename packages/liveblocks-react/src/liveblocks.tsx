@@ -350,6 +350,17 @@ function makeLiveblocksExtrasForClient(client: OpaqueClient) {
 
   const userThreadsPoller = makePoller(async () => {
     try {
+      //
+      // XXX Think about this! To remain symmetric with the solid inbox
+      // XXX notifications implementation, we should first call something like:
+      //       await store.waitUntilUserThreadsLoaded(query);
+      //                                              ^^^^^
+      // XXX                         However... which query should we use here?
+      //
+      // XXX Maybe this warrents an API like? 🤔
+      //       await store.waitUntilAnyUserThreadsLoaded();
+      //                            ~~~
+      //
       await store.fetchUserThreadsDeltaUpdate();
     } catch (err) {
       // When polling, we don't want to throw errors, ever
