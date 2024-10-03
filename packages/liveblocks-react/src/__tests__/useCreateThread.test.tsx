@@ -39,6 +39,7 @@ describe("useCreateThread", () => {
             inboxNotifications: [],
             meta: {
               requestedAt: new Date(),
+              nextCursor: null,
             },
           })
         );
@@ -135,6 +136,7 @@ describe("useCreateThread", () => {
             inboxNotifications: [],
             meta: {
               requestedAt: new Date(),
+              nextCursor: null,
             },
           })
         );
