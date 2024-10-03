@@ -21,8 +21,8 @@ await Promise.all(
     liveblocks.updateRoom(room, {
       defaultAccesses: [],
       usersAccesses: {
-        "user-0": ["room:write"],
-        "user-1": ["room:write"],
+        "user-0-pagination": ["room:write"],
+        "user-1-pagination": ["room:write"],
       },
     })
   )

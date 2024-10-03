@@ -30,7 +30,12 @@ const ROOMS: Liveblocks["RoomInfo"][] = [
 
 // Simulate getting a user from a database.
 export async function getUser(id: string) {
-  return USERS.find((user) => user.id === id || id.startsWith(user.id));
+  const user = USERS.find((user) => user.id === id || id.startsWith(user.id));
+  if (!user) return;
+  return {
+    ...user,
+    id, // Don't change the requested ID
+  };
 }
 
 // Simulate getting a list of users from a database.
