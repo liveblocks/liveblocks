@@ -670,6 +670,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       fetchMore: page.fetchMore,
     };
   }
+
   // XXXX - Find a better name for that doesn't associate to 'async'
   public getUserThreadsAsync(
     query: ThreadsQuery<M> | undefined

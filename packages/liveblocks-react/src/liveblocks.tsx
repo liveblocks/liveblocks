@@ -1015,7 +1015,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
     [store, options.query]
   );
 
-  // XXX Move this selector into the store
+  // XXX Move this selector into the store, make it symmetric with how it works for getRoomThreadsAsync
   const selector = useCallback(
     (result: ReturnType<typeof getter>): ThreadsAsyncResult<M> => {
       if (!result.fullState) {
