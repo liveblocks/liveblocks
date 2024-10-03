@@ -35,10 +35,12 @@ import {
 
 import { autobind } from "./lib/autobind";
 import { isMoreRecentlyUpdated } from "./lib/compare";
+import { selectThreads } from "./liveblocks";
 import type {
   InboxNotificationsAsyncResult,
   PagedAsyncResult,
   RoomNotificationSettingsAsyncResult,
+  ThreadsAsyncResult,
   ThreadsQuery,
 } from "./types";
 
@@ -630,15 +632,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   /**
-   * Returns the async result of the given queryKey. If the query is success,
-   * then it will return the entire store's state in the payload.
+   * Returns the async result of the given query and room id. If the query is success,
+   * then it will return the threads that match that provided query and room id.
    */
-  // TODO: This return type is a bit weird! Feels like we haven't found the
-  // right abstraction here yet.
   public getRoomThreadsAsync(
     roomId: string,
     query: ThreadsQuery<M> | undefined
-  ): PagedAsyncResult<UmbrellaStoreState<M>, "fullState"> {
+  ): ThreadsAsyncResult<M> {
     const queryKey = makeRoomThreadsQueryKey(roomId, query);
 
     const paginatedResource = this._roomThreads.get(queryKey);
@@ -651,11 +651,17 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return asyncResult;
     }
 
+    const threads = selectThreads(this.getFullState(), {
+      roomId,
+      query,
+      orderBy: "age",
+    });
+
     const page = asyncResult.data;
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      fullState: this.getFullState(),
+      threads,
       hasFetchedAll: page.hasFetchedAll,
       isFetchingMore: page.isFetchingMore,
       fetchMoreError: page.fetchMoreError,

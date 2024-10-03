@@ -63,7 +63,6 @@ import {
   createSharedContext,
   getUmbrellaStoreForClient,
   LiveblocksProviderWithClient,
-  selectThreads,
   useClient,
   useClientOrNull,
 } from "./liveblocks";
@@ -1339,37 +1338,11 @@ function useThreads<M extends BaseMetadata>(
     [store, room.id, options.query]
   );
 
-  // XXX Move this selector into the store
-  const selector = React.useCallback(
-    (result: ReturnType<typeof getter>): ThreadsAsyncResult<M> => {
-      if (!result.fullState) {
-        return result; // Loading or error state
-      }
-
-      const threads = selectThreads(result.fullState, {
-        roomId: room.id,
-        query: options.query,
-        orderBy: "age",
-      });
-
-      // "Map" the success state, by selecting the threads and returning only those parts externally
-      return {
-        isLoading: false,
-        threads,
-        hasFetchedAll: result.hasFetchedAll,
-        isFetchingMore: result.isFetchingMore,
-        fetchMoreError: result.fetchMoreError,
-        fetchMore: result.fetchMore,
-      };
-    },
-    [room.id, options.query] // eslint-disable-line react-hooks/exhaustive-deps
-  );
-
   const state = useSyncExternalStoreWithSelector(
     store.subscribeThreads,
     getter,
     getter,
-    selector,
+    identity,
     shallow2 // NOTE: Using 2-level-deep shallow check here, because the result of selectThreads() is not stable!
   );
 
