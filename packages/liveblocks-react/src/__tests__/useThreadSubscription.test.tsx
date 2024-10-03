@@ -41,6 +41,7 @@ describe("useThreadSubscription", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -106,6 +107,7 @@ describe("useThreadSubscription", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -164,6 +166,7 @@ describe("useThreadSubscription", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -225,6 +228,7 @@ describe("useThreadSubscription", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );

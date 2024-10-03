@@ -1295,6 +1295,7 @@ export class CommentsApiError extends Error {
 }
 
 const MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY = 50;
+const ROOM_THREADS_PAGE_SIZE = 2; // XXX TODO: Bump this to a reasonable number
 
 /**
  * @internal
@@ -2967,6 +2968,7 @@ export function createRoom<
       {
         cursor: options?.cursor,
         query,
+        limit: ROOM_THREADS_PAGE_SIZE,
       },
       { headers: { "Content-Type": "application/json" } }
     );

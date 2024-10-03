@@ -93,6 +93,7 @@ describe("useThreads", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -139,6 +140,7 @@ describe("useThreads", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -193,6 +195,7 @@ describe("useThreads", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -261,6 +264,7 @@ describe("useThreads", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -332,6 +336,7 @@ describe("useThreads", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -567,6 +572,7 @@ describe("useThreads", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -629,6 +635,7 @@ describe("useThreads", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -694,6 +701,7 @@ describe("useThreads", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -778,6 +786,7 @@ describe("useThreads", () => {
               deletedInboxNotifications: [],
               meta: {
                 requestedAt: new Date().toISOString(),
+                nextCursor: null,
               },
             })
           );
@@ -790,6 +799,7 @@ describe("useThreads", () => {
               deletedInboxNotifications: [],
               meta: {
                 requestedAt: new Date().toISOString(),
+                nextCursor: null,
               },
             })
           );
@@ -867,6 +877,7 @@ describe("useThreads", () => {
               deletedInboxNotifications: [],
               meta: {
                 requestedAt: new Date().toISOString(),
+                nextCursor: null,
               },
             })
           );
@@ -879,6 +890,7 @@ describe("useThreads", () => {
               deletedInboxNotifications: [],
               meta: {
                 requestedAt: new Date().toISOString(),
+                nextCursor: null,
               },
             })
           );
@@ -1030,6 +1042,7 @@ describe("useThreads", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -1092,6 +1105,7 @@ describe("useThreads", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -1175,6 +1189,7 @@ describe("useThreads", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -1249,6 +1264,7 @@ describe("useThreads", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -1323,6 +1339,7 @@ describe("useThreads", () => {
               deletedInboxNotifications: [],
               meta: {
                 requestedAt: new Date().toISOString(),
+                nextCursor: null,
               },
             })
           );
@@ -1336,6 +1353,7 @@ describe("useThreads", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -1419,6 +1437,7 @@ describe("useThreads", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -1492,6 +1511,7 @@ describe("useThreads", () => {
               deletedInboxNotifications: [],
               meta: {
                 requestedAt: new Date().toISOString(),
+                nextCursor: null,
               },
             })
           );
@@ -1505,6 +1525,7 @@ describe("useThreads", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -1760,6 +1781,7 @@ describe("WebSocket events", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -1829,6 +1851,7 @@ describe("WebSocket events", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -1894,6 +1917,7 @@ describe("WebSocket events", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -1971,6 +1995,7 @@ describe("WebSocket events", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -2069,6 +2094,7 @@ describe("useThreadsSuspense", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -2119,6 +2145,7 @@ describe("useThreadsSuspense", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -2250,6 +2277,127 @@ describe("useThreadsSuspense: error", () => {
     await waitFor(() => {
       expect(screen.getByText("Loading")).toBeInTheDocument();
     });
+
+    unmount();
+  });
+});
+
+describe.only("useThreads pagination", () => {
+  test.only("should set `hasFetchedAll` to false while cursor data is present", async () => {
+    const roomId = nanoid();
+
+    const threadsPageOne = [dummyThreadData({ roomId })];
+    const threadsPageTwo = [dummyThreadData({ roomId })];
+    const threadsPageThree = [dummyThreadData({ roomId })];
+
+    let isPageTwoRequested = false;
+    let isPageThreeRequested = false;
+
+    server.use(
+      mockGetThreads(async (req, res, ctx) => {
+        const url = new URL(req.url);
+        const cursor = url.searchParams.get("cursor");
+
+        // Request for Page 2
+        if (cursor === "cursor-1") {
+          isPageTwoRequested = true;
+          return res(
+            ctx.json({
+              data: threadsPageTwo,
+              inboxNotifications: [],
+              deletedThreads: [],
+              deletedInboxNotifications: [],
+              meta: {
+                requestedAt: new Date().toISOString(),
+                nextCursor: "cursor-2",
+              },
+            })
+          );
+        }
+        // Request for Page 3
+        else if (cursor === "cursor-2") {
+          isPageThreeRequested = true;
+          return res(
+            ctx.json({
+              data: threadsPageThree,
+              inboxNotifications: [],
+              deletedThreads: [],
+              deletedInboxNotifications: [],
+              meta: {
+                requestedAt: new Date().toISOString(),
+                nextCursor: null,
+              },
+            })
+          );
+        }
+        // Request for the first page
+        else {
+          return res(
+            ctx.json({
+              data: threadsPageOne,
+              inboxNotifications: [],
+              deletedThreads: [],
+              deletedInboxNotifications: [],
+              meta: {
+                requestedAt: new Date().toISOString(),
+                nextCursor: "cursor-1",
+              },
+            })
+          );
+        }
+      })
+    );
+
+    const {
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id={roomId}>{children}</RoomProvider>
+      ),
+    });
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [...threadsPageOne],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: false,
+        fetchMoreError: undefined,
+      })
+    );
+
+    const fetchMore = result.current.fetchMore!;
+
+    fetchMore();
+    await waitFor(() => expect(isPageTwoRequested).toBe(true));
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [...threadsPageOne, ...threadsPageTwo],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: false,
+        fetchMoreError: undefined,
+      })
+    );
+
+    fetchMore();
+    await waitFor(() => expect(isPageThreeRequested).toBe(true));
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [...threadsPageOne, ...threadsPageTwo, ...threadsPageThree],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
+      })
+    );
 
     unmount();
   });

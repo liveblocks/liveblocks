@@ -1345,7 +1345,7 @@ function useThreads<M extends BaseMetadata>(
   }, [incrementQuerySubscribers, queryKey]);
 
   const getter = React.useCallback(
-    () => store.getThreadsAsync(queryKey),
+    () => store.getRoomThreadsAsync(queryKey),
     [store, queryKey]
   );
 

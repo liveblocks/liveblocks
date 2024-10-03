@@ -613,7 +613,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
    */
   // TODO: This return type is a bit weird! Feels like we haven't found the
   // right abstraction here yet.
-  public getThreadsAsync(
+  public getRoomThreadsAsync(
     queryKey: string
   ): PagedAsyncResult<UmbrellaStoreState<M>, "fullState"> {
     const paginatedResource = this._roomThreads.get(queryKey);
@@ -1386,8 +1386,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     options: { query?: ThreadsQuery<M> },
     queryKey: string // XXX Make queryKey internal implementation detail
   ) {
-    let i = 0;
-
     const threadsFetcher = async (cursor?: string) => {
       if (this._client === undefined) {
         // TODO: Think about other ways to structure this. Throwing a StopRetrying only
@@ -1425,8 +1423,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
         this._threadsLastRequestedAtByRoom.set(roomId, result.requestedAt);
       }
 
-      // XXX FOR NOW A HACK: Replace this with `result.nextCursor`
-      return i++ < 3 ? `my-cursor-${i}` : null;
+      return result.nextCursor;
     };
 
     let paginatedResource = this._roomThreads.get(queryKey);
