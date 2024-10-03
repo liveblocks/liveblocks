@@ -77,7 +77,9 @@ function Threads() {
       ))}
 
       {fetchMoreError && (
-        <div>Failed to get more: ${fetchMoreError.message}</div>
+        <div className="error">
+          😞 Failed to get more: ${fetchMoreError.message}
+        </div>
       )}
 
       {/* A button to load more threads which is disabled while fetching new threads and hidden when there is nothing more to fetch */}
@@ -91,7 +93,9 @@ function Threads() {
         </button>
       )}
 
-      {hasFetchedAll && <div>🎉</div>}
+      {hasFetchedAll && (
+        <div className="complete">🎉 You're all caught up!</div>
+      )}
     </div>
   );
 }
