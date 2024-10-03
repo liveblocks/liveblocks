@@ -404,6 +404,12 @@ function makeLiveblocksExtrasForClient(client: OpaqueClient) {
 
   return {
     store,
+    /**
+     * Sub/unsub pair to start the process of watching for new incoming inbox
+     * notifications through a stream of delta updates. Call the unsub function
+     * returned to stop this subscription when unmounting. Currently
+     * implemented by a periodic poller.
+     */
     subscribeToNotificationsDeltaUpdates,
     incrementUserThreadsQuerySubscribers,
   };
