@@ -245,6 +245,17 @@ function makeDeltaPoller_RoomThreads(client: OpaqueClient) {
         const room = client.getRoom(roomId);
         if (room === null) return;
 
+        //
+        // XXX Think about this! To remain symmetric with the solid inbox
+        // XXX notifications implementation, we should first call something like:
+        //       await store.waitUntilRoomThreadsLoaded(query);
+        //                                              ^^^^^
+        // XXX                         However... which query should we use here?
+        //
+        // XXX Maybe this warrents an API like? 🤔
+        //       await store.waitUntilAnyRoomThreadsLoaded();
+        //                            ~~~
+        //
         return store.fetchRoomThreadsDeltaUpdate(room.id);
       })
     );
