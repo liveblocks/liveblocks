@@ -7,6 +7,7 @@ import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useExampleRoomId } from "../../example.client";
 import { Suspense } from "react";
+import { useRenderCount } from "../../hooks/useRenderCount";
 
 /**
  * Displays a list of threads, along with a composer for creating
@@ -14,11 +15,13 @@ import { Suspense } from "react";
  */
 
 function Example() {
+  const renderCount = useRenderCount();
   const { threads, fetchMore, isFetchingMore, fetchMoreError, hasFetchedAll } =
     useThreads();
 
   return (
     <div className="threads">
+      <h3>Render count: {renderCount}</h3>
       {threads.map((thread) => (
         <Thread key={thread.id} thread={thread} className="thread" />
       ))}

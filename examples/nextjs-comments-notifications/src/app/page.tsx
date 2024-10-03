@@ -5,6 +5,7 @@ import {
   useUserThreads_experimental,
 } from "@liveblocks/react/suspense";
 import { Loading } from "../components/Loading";
+import { useRenderCount } from "../hooks/useRenderCount";
 
 export default function Page() {
   return (
@@ -15,11 +16,13 @@ export default function Page() {
 }
 
 function Threads() {
+  const renderCount = useRenderCount();
   const { threads, fetchMore, isFetchingMore, fetchMoreError, hasFetchedAll } =
     useUserThreads_experimental();
 
   return (
     <div className="threads">
+      <h3>Render count: {renderCount}</h3>
       <div>Count: {threads.length}</div>
 
       {threads.map((thread) => (
