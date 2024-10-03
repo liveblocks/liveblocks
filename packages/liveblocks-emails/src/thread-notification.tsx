@@ -14,7 +14,7 @@ import {
   getMentionedIdsFromCommentBody,
 } from "@liveblocks/core";
 import type { Liveblocks, ThreadNotificationEvent } from "@liveblocks/node";
-import React from "react";
+import type React from "react";
 
 import type {
   ConvertCommentBodyAsHTMLStyles,
@@ -573,7 +573,7 @@ export async function prepareThreadNotificationEmailAsReact(
               : { id: comment.userId, info: { name: comment.userId } },
             createdAt: comment.createdAt,
             url: comment.url,
-            reactBody: commentBodyReact ?? <React.Fragment />,
+            reactBody: commentBodyReact ?? null,
           };
         }),
         roomInfo: data.roomInfo,
