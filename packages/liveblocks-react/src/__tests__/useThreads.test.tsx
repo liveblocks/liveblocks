@@ -2282,8 +2282,8 @@ describe("useThreadsSuspense: error", () => {
   });
 });
 
-describe.only("useThreads pagination", () => {
-  test.only("should set `hasFetchedAll` to false while cursor data is present", async () => {
+describe("useThreads pagination", () => {
+  test("should set `hasFetchedAll` to false while cursor data is present", async () => {
     const roomId = nanoid();
 
     const threadsPageOne = [dummyThreadData({ roomId })];
