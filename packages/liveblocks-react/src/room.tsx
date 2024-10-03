@@ -293,6 +293,9 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     await Promise.allSettled(requests);
   }
 
+  // XXX Abstract this in the same way we did it in the
+  // getLiveblocksExtrasForClient helper now for inbox notifications. Make this
+  // implementation symmetric!
   function incrementQuerySubscribers(queryKey: string) {
     const subscribers = subscribersByQuery.get(queryKey) ?? 0;
     subscribersByQuery.set(queryKey, subscribers + 1);

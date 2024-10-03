@@ -259,7 +259,7 @@ export function getLiveblocksExtrasForClient<M extends BaseMetadata>(
   };
 }
 
-function makeNotificationsDeltaPoller(store: UmbrellaStore<BaseMetadata>) {
+function makeDeltaPoller_Notifications(store: UmbrellaStore<BaseMetadata>) {
   let pollerSubscribers = 0;
   const poller = makePoller(async () => {
     try {
@@ -295,6 +295,61 @@ function makeNotificationsDeltaPoller(store: UmbrellaStore<BaseMetadata>) {
 
       pollerSubscribers--;
       if (pollerSubscribers <= 0) {
+        poller.stop();
+      }
+    };
+  };
+}
+
+function makeDeltaPoller_UserThreads(store: UmbrellaStore<BaseMetadata>) {
+  const poller = makePoller(async () => {
+    try {
+      //
+      // XXX Think about this! To remain symmetric with the solid inbox
+      // XXX notifications implementation, we should first call something like:
+      //       await store.waitUntilUserThreadsLoaded(query);
+      //                                              ^^^^^
+      // XXX                         However... which query should we use here?
+      //
+      // XXX Maybe this warrents an API like? 🤔
+      //       await store.waitUntilAnyUserThreadsLoaded();
+      //                            ~~~
+      //
+      await store.fetchUserThreadsDeltaUpdate();
+    } catch (err) {
+      // When polling, we don't want to throw errors, ever
+      console.warn(`Polling new user threads failed: ${String(err)}`);
+    }
+  });
+
+  // TODO Hmm. All of this is stuff that should be managed by the cache. Now we have caches in different places.
+  // Keep track of how many subscribers we've seen for every queryKey
+  const countsByQuery = new Map<string, number>();
+
+  // XXX Stop using a queryKey here!
+  return (queryKey: string) => {
+    countsByQuery.set(queryKey, (countsByQuery.get(queryKey) ?? 0) + 1);
+
+    poller.start(POLLING_INTERVAL);
+
+    // Decrement in the unsub function
+    return () => {
+      const count = countsByQuery.get(queryKey);
+      if (count === undefined || count <= 0) {
+        console.warn(
+          `Internal unexpected behavior. Cannot decrease subscriber count for query "${queryKey}"`
+        );
+        return;
+      }
+
+      countsByQuery.set(queryKey, count - 1);
+
+      let total = 0;
+      for (const subscribers of countsByQuery.values()) {
+        total += subscribers;
+      }
+
+      if (total <= 0) {
         poller.stop();
       }
     };
@@ -349,59 +404,6 @@ function makeLiveblocksExtrasForClient(client: OpaqueClient) {
   // - A delta update will perform a GET /v2/c/inbox-notifications?since=...
   // - Pagination will perform a GET /v2/c/inbox-notifications?cursor=...
   //
-  const userThreadsPoller = makePoller(async () => {
-    try {
-      //
-      // XXX Think about this! To remain symmetric with the solid inbox
-      // XXX notifications implementation, we should first call something like:
-      //       await store.waitUntilUserThreadsLoaded(query);
-      //                                              ^^^^^
-      // XXX                         However... which query should we use here?
-      //
-      // XXX Maybe this warrents an API like? 🤔
-      //       await store.waitUntilAnyUserThreadsLoaded();
-      //                            ~~~
-      //
-      await store.fetchUserThreadsDeltaUpdate();
-    } catch (err) {
-      // When polling, we don't want to throw errors, ever
-      console.warn(`Polling new user threads failed: ${String(err)}`);
-    }
-  });
-
-  // XXX Hmm. All of this is stuff that should be managed by the cache. Now we have caches in different places.
-  const userThreadsSubscribersByQuery = new Map<string, number>();
-
-  // XXX Stop using a queryKey here!
-  function incrementUserThreadsQuerySubscribers(queryKey: string) {
-    const subscribers = userThreadsSubscribersByQuery.get(queryKey) ?? 0;
-    userThreadsSubscribersByQuery.set(queryKey, subscribers + 1);
-
-    userThreadsPoller.start(POLLING_INTERVAL);
-
-    // Decrement in the unsub function
-    return () => {
-      const subscribers = userThreadsSubscribersByQuery.get(queryKey);
-
-      if (subscribers === undefined || subscribers <= 0) {
-        console.warn(
-          `Internal unexpected behavior. Cannot decrease subscriber count for query "${queryKey}"`
-        );
-        return;
-      }
-
-      userThreadsSubscribersByQuery.set(queryKey, subscribers - 1);
-
-      let totalSubscribers = 0;
-      for (const subscribers of userThreadsSubscribersByQuery.values()) {
-        totalSubscribers += subscribers;
-      }
-
-      if (totalSubscribers <= 0) {
-        userThreadsPoller.stop();
-      }
-    };
-  }
 
   return {
     store,
@@ -411,8 +413,14 @@ function makeLiveblocksExtrasForClient(client: OpaqueClient) {
      * returned to stop this subscription when unmounting. Currently
      * implemented by a periodic poller.
      */
-    subscribeToNotificationsDeltaUpdates: makeNotificationsDeltaPoller(store),
-    incrementUserThreadsQuerySubscribers,
+    subscribeToNotificationsDeltaUpdates: makeDeltaPoller_Notifications(store),
+    /**
+     * Sub/unsub pair to start the process of watching for new user threads
+     * through a stream of delta updates. Call the unsub function returned to
+     * stop this subscription when unmounting. Currently implemented by
+     * a periodic poller.
+     */
+    subscribeToUserThreadsDeltaUpdates: makeDeltaPoller_UserThreads(store),
   };
 }
 
@@ -1015,7 +1023,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
 ): ThreadsAsyncResult<M> {
   const client = useClient<M>();
 
-  const { store, incrementUserThreadsQuerySubscribers } =
+  const { store, subscribeToUserThreadsDeltaUpdates: subscribeToDeltaUpdates } =
     getLiveblocksExtrasForClient<M>(client);
 
   useEffect(() => {
@@ -1027,8 +1035,8 @@ function useUserThreads_experimental<M extends BaseMetadata>(
   const queryKey = makeUserThreadsQueryKey(options.query);
 
   useEffect(
-    () => incrementUserThreadsQuerySubscribers(queryKey),
-    [incrementUserThreadsQuerySubscribers, queryKey]
+    () => subscribeToDeltaUpdates(queryKey),
+    [subscribeToDeltaUpdates, queryKey]
   );
 
   const getter = useCallback(
