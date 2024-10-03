@@ -264,7 +264,14 @@ function makeDeltaPoller_RoomThreads(client: OpaqueClient) {
   // Keep track of how many subscribers we've seen for every queryKey
   const countsByQuery = new Map<string, number>();
 
-  // XXX Stop using a queryKey here!
+  //
+  // XXX DISCUSSION
+  // XXX ----------
+  // XXX I _think_ we can remove the queryKey as a param here entirely and
+  // XXX "just" keep a flat count, like we do for our inbox notifications
+  // XXX poller. It would make the internals a lot simpler.
+  // XXX The query key isn't really used anyway.
+  //
   return (queryKey: string) => {
     countsByQuery.set(queryKey, (countsByQuery.get(queryKey) ?? 0) + 1);
 
