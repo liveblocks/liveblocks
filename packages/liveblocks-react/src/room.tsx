@@ -1350,6 +1350,7 @@ function useThreads<M extends BaseMetadata>(
     [store, queryKey]
   );
 
+  // XXX Move this selector into the store
   const selector = React.useCallback(
     (result: ReturnType<typeof getter>): ThreadsAsyncResult<M> => {
       if (!result.fullState) {
@@ -1380,7 +1381,7 @@ function useThreads<M extends BaseMetadata>(
     getter,
     getter,
     selector,
-    shallow2
+    shallow2 // NOTE: Using 2-level-deep shallow check here, because the result of selectThreads() is not stable!
   );
 
   useScrollToCommentOnLoadEffect(scrollOnLoad, state);

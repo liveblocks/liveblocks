@@ -357,7 +357,7 @@ function makeExtrasForClient(client: OpaqueClient) {
     }
   });
 
-  // TODO Hmm. All of this is stuff that should be managed by the cache. Now we have caches in different places.
+  // XXX Hmm. All of this is stuff that should be managed by the cache. Now we have caches in different places.
   const userThreadsSubscribersByQuery = new Map<string, number>();
 
   // XXX Stop using a queryKey here!
@@ -1012,6 +1012,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
     [store, options.query]
   );
 
+  // XXX Move this selector into the store
   const selector = useCallback(
     (result: ReturnType<typeof getter>): ThreadsAsyncResult<M> => {
       if (!result.fullState) {
