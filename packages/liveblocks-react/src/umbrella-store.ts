@@ -1575,9 +1575,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     this.updateThreadsAndNotifications(
       result.threads.updated as ThreadData<M>[],
-      result.inboxNotifications.updated, // XXX - The current implementation instead passes an empty array here 🤔. Verify why and change this if necessary
+      result.inboxNotifications.updated,
       result.threads.deleted,
-      result.inboxNotifications.deleted // XXX - The current implementation instead passes an empty array here 🤔. Verify why and change this if necessary
+      result.inboxNotifications.deleted
     );
   }
 }
