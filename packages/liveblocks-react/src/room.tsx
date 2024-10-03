@@ -236,17 +236,18 @@ function makeDeltaPoller_RoomThreads(client: OpaqueClient) {
   const store = getUmbrellaStoreForClient(client);
 
   const poller = makePoller(async () => {
-    const requests: Promise<unknown>[] = [];
+    // Poll in every currently connected/open room
+    // Note that Promise.allSettled() will never throw, which is important for
+    // the poller!
+    const roomIds = client[kInternal].getRoomIds();
+    await Promise.allSettled(
+      roomIds.map((roomId) => {
+        const room = client.getRoom(roomId);
+        if (room === null) return;
 
-    client[kInternal].getRoomIds().map((roomId) => {
-      const room = client.getRoom(roomId);
-      if (room === null) return;
-
-      // Retrieve threads that have been updated/deleted since the last requestedAt value
-      requests.push(store.fetchRoomThreadsDeltaUpdate(room.id));
-    });
-
-    await Promise.allSettled(requests);
+        return store.fetchRoomThreadsDeltaUpdate(room.id);
+      })
+    );
   });
 
   // Keep track of how many subscribers we've seen for every queryKey
