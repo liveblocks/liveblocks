@@ -259,6 +259,48 @@ export function getLiveblocksExtrasForClient<M extends BaseMetadata>(
   };
 }
 
+function makeNotificationsDeltaPoller(store: UmbrellaStore<BaseMetadata>) {
+  let pollerSubscribers = 0;
+  const poller = makePoller(async () => {
+    try {
+      await store.waitUntilNotificationsLoaded();
+      await store.fetchNotificationsDeltaUpdate();
+    } catch (err) {
+      // When polling, we don't want to throw errors, ever
+      console.warn(`Polling new inbox notifications failed: ${String(err)}`);
+    }
+  });
+
+  /**
+   * Enables polling for inbox notifications when the component mounts. Stops
+   * polling on unmount.
+   *
+   * Safe to be called multiple times from different components. The first
+   * component to mount starts the polling. The last component to unmount stops
+   * the polling.
+   */
+  return () => {
+    // Increment
+    pollerSubscribers++;
+    poller.start(POLLING_INTERVAL);
+
+    return () => {
+      // Decrement
+      if (pollerSubscribers <= 0) {
+        console.warn(
+          "Unexpected internal error: cannot decrease subscriber count for inbox notifications."
+        );
+        return;
+      }
+
+      pollerSubscribers--;
+      if (pollerSubscribers <= 0) {
+        poller.stop();
+      }
+    };
+  };
+}
+
 function makeLiveblocksExtrasForClient(client: OpaqueClient) {
   const store = getUmbrellaStoreForClient(client);
   // TODO                                ^ Bind to M type param here
@@ -307,47 +349,6 @@ function makeLiveblocksExtrasForClient(client: OpaqueClient) {
   // - A delta update will perform a GET /v2/c/inbox-notifications?since=...
   // - Pagination will perform a GET /v2/c/inbox-notifications?cursor=...
   //
-
-  let pollerSubscribers = 0;
-  const poller = makePoller(async () => {
-    try {
-      await store.waitUntilNotificationsLoaded();
-      await store.fetchNotificationsDeltaUpdate();
-    } catch (err) {
-      // When polling, we don't want to throw errors, ever
-      console.warn(`Polling new inbox notifications failed: ${String(err)}`);
-    }
-  });
-
-  /**
-   * Enables polling for inbox notifications when the component mounts. Stops
-   * polling on unmount.
-   *
-   * Safe to be called multiple times from different components. The first
-   * component to mount starts the polling. The last component to unmount stops
-   * the polling.
-   */
-  function subscribeToNotificationsDeltaUpdates() {
-    // Increment
-    pollerSubscribers++;
-    poller.start(POLLING_INTERVAL);
-
-    return () => {
-      // Decrement
-      if (pollerSubscribers <= 0) {
-        console.warn(
-          "Unexpected internal error: cannot decrease subscriber count for inbox notifications."
-        );
-        return;
-      }
-
-      pollerSubscribers--;
-      if (pollerSubscribers <= 0) {
-        poller.stop();
-      }
-    };
-  }
-
   const userThreadsPoller = makePoller(async () => {
     try {
       //
@@ -410,7 +411,7 @@ function makeLiveblocksExtrasForClient(client: OpaqueClient) {
      * returned to stop this subscription when unmounting. Currently
      * implemented by a periodic poller.
      */
-    subscribeToNotificationsDeltaUpdates,
+    subscribeToNotificationsDeltaUpdates: makeNotificationsDeltaPoller(store),
     incrementUserThreadsQuerySubscribers,
   };
 }
