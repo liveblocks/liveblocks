@@ -327,7 +327,7 @@ function makeLiveblocksExtrasForClient(client: OpaqueClient) {
    * component to mount starts the polling. The last component to unmount stops
    * the polling.
    */
-  function startPolling() {
+  function subscribeToNotificationsDeltaUpdates() {
     // Increment
     pollerSubscribers++;
     poller.start(POLLING_INTERVAL);
@@ -404,7 +404,7 @@ function makeLiveblocksExtrasForClient(client: OpaqueClient) {
 
   return {
     store,
-    startPolling,
+    subscribeToNotificationsDeltaUpdates,
     incrementUserThreadsQuerySubscribers,
   };
 }
@@ -485,7 +485,10 @@ function makeLiveblocksContextBundle<
 }
 
 function useInboxNotifications_withClient(client: OpaqueClient) {
-  const { store, startPolling } = getLiveblocksExtrasForClient(client);
+  const {
+    store,
+    subscribeToNotificationsDeltaUpdates: subscribeToDeltaUpdates,
+  } = getLiveblocksExtrasForClient(client);
 
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
@@ -495,7 +498,7 @@ function useInboxNotifications_withClient(client: OpaqueClient) {
     });
   }, [store]);
 
-  useEffect(startPolling, [startPolling]);
+  useEffect(subscribeToDeltaUpdates, [subscribeToDeltaUpdates]);
 
   return useSyncExternalStoreWithSelector(
     store.subscribeThreadsOrInboxNotifications,
@@ -521,7 +524,10 @@ function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
 }
 
 function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
-  const { store, startPolling } = getLiveblocksExtrasForClient(client);
+  const {
+    store,
+    subscribeToNotificationsDeltaUpdates: subscribeToDeltaUpdates,
+  } = getLiveblocksExtrasForClient(client);
 
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
@@ -531,7 +537,7 @@ function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
     });
   }, [store]);
 
-  useEffect(startPolling, [startPolling]);
+  useEffect(subscribeToDeltaUpdates, [subscribeToDeltaUpdates]);
 
   return useSyncExternalStoreWithSelector(
     store.subscribeThreadsOrInboxNotifications,
