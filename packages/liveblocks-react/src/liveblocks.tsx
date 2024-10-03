@@ -521,12 +521,17 @@ function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
 
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
-  useEffect(() => {
-    // XXX - Also add a void before this promise. Verify that we need the catch or not
-    void store.waitUntilNotificationsLoaded().catch(() => {
-      // Deliberately catch and ignore any errors here
-    });
-  }, [store]);
+  useEffect(
+    () => {
+      // XXX - Verify that we need the catch or not
+      void store.waitUntilNotificationsLoaded().catch(() => {
+        // Deliberately catch and ignore any errors here
+      });
+    }
+    // NOTE: Deliberately *not* using a dependency array here! This is important!
+    // XXX - Document why no dependency is provided to this useEffect
+    // XXX - Explicitly test if this is indeed working as-expected by testing a non-Suspense example!
+  );
 
   useEffect(subscribeToDeltaUpdates, [subscribeToDeltaUpdates]);
 
@@ -1002,11 +1007,17 @@ function useUserThreads_experimental<M extends BaseMetadata>(
   const { store, subscribeToUserThreadsDeltaUpdates: subscribeToDeltaUpdates } =
     getLiveblocksExtrasForClient<M>(client);
 
-  useEffect(() => {
-    store.waitUntilUserThreadsLoaded(options.query).catch(() => {
-      // Deliberately catch and ignore any errors here
-    });
-  }, [store, options.query]);
+  useEffect(
+    () => {
+      // XXX - Verify that we need the catch or not
+      void store.waitUntilUserThreadsLoaded(options.query).catch(() => {
+        // Deliberately catch and ignore any errors here
+      });
+    }
+    // NOTE: Deliberately *not* using a dependency array here! This is important!
+    // XXX - Document why no dependency is provided to this useEffect
+    // XXX - Explicitly test if this is indeed working as-expected by testing a non-Suspense example!
+  );
 
   useEffect(subscribeToDeltaUpdates, [subscribeToDeltaUpdates]);
 

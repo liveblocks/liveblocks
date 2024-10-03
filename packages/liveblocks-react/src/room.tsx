@@ -1322,13 +1322,19 @@ function useThreads<M extends BaseMetadata>(
   const { store, subscribeToRoomThreadsDeltaUpdates: subscribeToDeltaUpdates } =
     getRoomExtrasForClient<M>(client);
 
-  // XXX - Document why no dependency is provided to this useEffect
-  React.useEffect(() => {
-    // XXX - Also add a void before this promise. Verify that we need the catch or not
-    void store.waitUntilRoomThreadsLoaded(room.id, options.query).catch(() => {
-      // Deliberately catch and ignore any errors here
-    });
-  }, [store, room.id, options.query]);
+  React.useEffect(
+    () => {
+      // XXX - Verify that we need the catch or not
+      void store
+        .waitUntilRoomThreadsLoaded(room.id, options.query)
+        .catch(() => {
+          // Deliberately catch and ignore any errors here
+        });
+    }
+    // NOTE: Deliberately *not* using a dependency array here! This is important!
+    // XXX - Document why no dependency is provided to this useEffect
+    // XXX - Explicitly test if this is indeed working as-expected by testing a non-Suspense example!
+  );
 
   React.useEffect(subscribeToDeltaUpdates, [subscribeToDeltaUpdates]);
 
