@@ -22,22 +22,22 @@ export function getBearerTokenFromAuthValue(authValue: AuthValue): string {
  * backend.
  */
 //
-// XXX This class should be used to replace all of the following:
-// XXX
-// XXX From src/client.ts:
-// XXX - fetchRoomApi              (!! Uses `room:read` + `roomId` permissions!)
-// XXX
-// XXX From src/notifications.ts:
-// XXX - fetchJson + createNotificationsApi
+// XXXX This class should be used to replace all of the following:
+// XXXX
+// XXXX From src/client.ts:
+// XXXX - fetchRoomApi              (!! Uses `room:read` + `roomId` permissions!)
+// XXXX
+// XXXX From src/notifications.ts:
+// XXXX - fetchJson + createNotificationsApi
 //                                 (!! Uses `comments:read` permissions!
 //                                   + Updates `currentUserIdStore` as a side effect!)
-// XXX
-// XXX From src/room.ts:
-// XXX - fetchClientApi            (!! Some cases use the current WebSocket's auth token (whatever it is)...
+// XXXX
+// XXXX From src/room.ts:
+// XXXX - fetchClientApi            (!! Some cases use the current WebSocket's auth token (whatever it is)...
 //                                  ...and some cases use `room:read` + `roomId` permissions!)
-// XXX - fetchCommentsApi          (!! Uses `room:read` + `roomId` permissions!)
-// XXX - fetchCommentsJson         (!! Uses `room:read` + `roomId` permissions!)
-// XXX - fetchNotificationsJson    (!! Uses `room:read` + `roomId` permissions!)
+// XXXX - fetchCommentsApi          (!! Uses `room:read` + `roomId` permissions!)
+// XXXX - fetchCommentsJson         (!! Uses `room:read` + `roomId` permissions!)
+// XXXX - fetchNotificationsJson    (!! Uses `room:read` + `roomId` permissions!)
 //
 export class HttpClient {
   private _baseUrl: string;
@@ -54,7 +54,7 @@ export class HttpClient {
     this._fetcher = fetchPolyfill;
   }
 
-  // XXX This method is yet unused. Start using it!
+  // XXXX This method is yet unused. Start using it!
   // @ts-expect-error
   private async fetch(
     endpoint: URLSafeString,

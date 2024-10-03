@@ -18,7 +18,6 @@ import React, { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
 import { POLLING_INTERVAL } from "../room";
-import { makeRoomThreadsQueryKey } from "../umbrella-store";
 import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
 import MockWebSocket, { websocketSimulator } from "./_MockWebSocket";
 import {
@@ -1283,12 +1282,6 @@ describe("useThreads", () => {
         [thread1.id]: thread1,
         [thread2WithDeletedAt.id]: thread2WithDeletedAt,
       },
-      queries: {
-        [makeRoomThreadsQueryKey(roomId, { metadata: {} })]: {
-          isLoading: false,
-          data: undefined,
-        },
-      },
     }));
 
     const { result, unmount } = renderHook(
@@ -1641,6 +1634,7 @@ describe("useThreads: error", () => {
     await jest.advanceTimersByTimeAsync(15_000);
     await waitFor(() => expect(getThreadsReqCount).toBe(5));
 
+    // XXX - Investivate why this test is passing!!!!!!
     // Won't try more than 5 attempts
     await jest.advanceTimersByTimeAsync(20_000);
     await waitFor(() => expect(getThreadsReqCount).toBe(5));

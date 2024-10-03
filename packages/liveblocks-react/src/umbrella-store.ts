@@ -200,27 +200,25 @@ const ASYNC_OK = Object.freeze({ isLoading: false, data: undefined });
  * generateQueryKey('room-abc', { xyz: 123, abc: "red" })
  * → 'room-abc-{"color":"red","xyz":123}'
  */
-// XXX Make this an implementation detail of the store
-export function makeRoomThreadsQueryKey(
+function makeRoomThreadsQueryKey(
   roomId: string,
   query: ThreadsQuery<BaseMetadata> | undefined
 ) {
   return `${roomId}-${stringify(query ?? {})}`;
 }
 
-// XXX Make this an implementation detail of the store
-export function makeUserThreadsQueryKey(
+function makeUserThreadsQueryKey(
   query: ThreadsQuery<BaseMetadata> | undefined
 ) {
   return `${USER_THREADS_QUERY}:${stringify(query ?? {})}`;
 }
 
-// XXX Make this an implementation detail of the store
+// XXXX Make this an implementation detail of the store
 export function makeNotificationSettingsQueryKey(roomId: string) {
   return `${roomId}:NOTIFICATION_SETTINGS`;
 }
 
-// XXX Make this an implementation detail of the store
+// XXXX Make this an implementation detail of the store
 export function makeVersionsQueryKey(roomId: string) {
   return `${roomId}-VERSIONS`;
 }
@@ -444,6 +442,7 @@ export class PaginatedResource {
     const promise = usify(
       initialFetcher.then((cursor) => {
         // Initial fetch completed
+        // XXX - Maybe use the patch method
         this._paginationState = {
           cursor,
           isFetchingMore: false,
@@ -634,7 +633,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
   /**
    * Returns the async result of the given query and room id. If the query is success,
    * then it will return the threads that match that provided query and room id.
+   *
    */
+  // XXXX Find a better name for that doesn't associate to 'async'
   public getRoomThreadsAsync(
     roomId: string,
     query: ThreadsQuery<M> | undefined
@@ -669,7 +670,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       fetchMore: page.fetchMore,
     };
   }
-
+  // XXXX - Find a better name for that doesn't associate to 'async'
   public getUserThreadsAsync(
     query: ThreadsQuery<M> | undefined
   ): PagedAsyncResult<UmbrellaStoreState<M>, "fullState"> {
@@ -698,6 +699,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   // NOTE: This will read the async result, but WILL NOT start loading at the moment!
+  // XXXX - Find a better name for that doesn't associate to 'async'
   public getInboxNotificationsAsync(): InboxNotificationsAsyncResult {
     const asyncResult = this._notifications.get();
     if (asyncResult.isLoading || asyncResult.error) {

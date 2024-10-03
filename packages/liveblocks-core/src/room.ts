@@ -1294,9 +1294,6 @@ export class CommentsApiError extends Error {
   }
 }
 
-const MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY = 50;
-const ROOM_THREADS_PAGE_SIZE = 2; // XXX TODO: Bump this to a reasonable number
-
 /**
  * @internal
  * Initializes a new Room, and returns its public API.
@@ -2963,12 +2960,14 @@ export function createRoom<
       query = objectToQuery(options.query);
     }
 
+    const PAGE_SIZE = 2; // XXX TODO: Bump this to a reasonable number
+
     const response = await fetchCommentsApi(
       url`/v2/c/rooms/${config.roomId}/threads`,
       {
         cursor: options?.cursor,
         query,
-        limit: ROOM_THREADS_PAGE_SIZE,
+        limit: PAGE_SIZE,
       },
       { headers: { "Content-Type": "application/json" } }
     );
@@ -3523,7 +3522,7 @@ export function createRoom<
 
       return inboxNotificationIds;
     },
-    { delay: MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY }
+    { delay: 50 }
   );
 
   async function markInboxNotificationAsRead(inboxNotificationId: string) {

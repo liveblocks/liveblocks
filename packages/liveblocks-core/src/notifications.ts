@@ -31,11 +31,6 @@ import type {
 import type { GetThreadsSinceOptions } from "./room";
 import { PKG_VERSION } from "./version";
 
-export const INBOX_NOTIFICATIONS_PAGE_SIZE = 6; // TODO Maybe bump to 50?
-const MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY = 50;
-
-const USER_THREADS_PAGE_SIZE = 2; // XXX TODO: Bump this to a reasonable number
-
 export function createNotificationsApi<M extends BaseMetadata>({
   baseUrl,
   authManager,
@@ -131,6 +126,8 @@ export function createNotificationsApi<M extends BaseMetadata>({
   }
 
   async function getInboxNotifications(options?: { cursor?: string }) {
+    const PAGE_SIZE = 6; // XXX TODO Maybe bump to 50?
+
     const json = await fetchJson<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
@@ -140,7 +137,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
       };
     }>(url`/v2/c/inbox-notifications`, undefined, {
       cursor: options?.cursor,
-      limit: INBOX_NOTIFICATIONS_PAGE_SIZE,
+      limit: PAGE_SIZE,
     });
 
     return {
@@ -148,7 +145,6 @@ export function createNotificationsApi<M extends BaseMetadata>({
         convertToInboxNotificationData
       ),
       threads: json.threads.map(convertToThreadData),
-      // XXX - Think about keeping `nextCursor` and `requestedAt` in a meta property
       nextCursor: json.meta.nextCursor,
       requestedAt: new Date(json.meta.requestedAt),
     };
@@ -217,7 +213,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
 
       return inboxNotificationIds;
     },
-    { delay: MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY }
+    { delay: 50 }
   );
 
   async function markInboxNotificationAsRead(inboxNotificationId: string) {
@@ -243,6 +239,8 @@ export function createNotificationsApi<M extends BaseMetadata>({
       query = objectToQuery(options.query);
     }
 
+    const PAGE_SIZE = 2; // XXX TODO: Bump this to a reasonable number
+
     const json = await fetchJson<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
@@ -255,7 +253,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
     }>(url`/v2/c/threads`, undefined, {
       cursor: options.cursor,
       query,
-      limit: USER_THREADS_PAGE_SIZE,
+      limit: PAGE_SIZE,
     });
 
     return {

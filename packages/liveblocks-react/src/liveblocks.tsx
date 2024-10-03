@@ -263,7 +263,6 @@ function makeDeltaPoller_Notifications(store: UmbrellaStore<BaseMetadata>) {
   let pollerSubscribers = 0;
   const poller = makePoller(async () => {
     try {
-      // XXX - Think about this...
       await store.waitUntilNotificationsLoaded();
       await store.fetchNotificationsDeltaUpdate();
     } catch (err) {
@@ -483,7 +482,8 @@ function useInboxNotifications_withClient(client: OpaqueClient) {
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
   useEffect(() => {
-    store.waitUntilNotificationsLoaded().catch(() => {
+    // XXX - Also add a void before this promise. Verify that we need the catch or not
+    void store.waitUntilNotificationsLoaded().catch(() => {
       // Deliberately catch and ignore any errors here
     });
   }, [store]);
@@ -522,7 +522,8 @@ function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
   useEffect(() => {
-    store.waitUntilNotificationsLoaded().catch(() => {
+    // XXX - Also add a void before this promise. Verify that we need the catch or not
+    void store.waitUntilNotificationsLoaded().catch(() => {
       // Deliberately catch and ignore any errors here
     });
   }, [store]);

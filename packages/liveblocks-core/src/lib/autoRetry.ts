@@ -44,6 +44,7 @@ export async function autoRetry<T>(
 
     // Do another retry
     const delay = backoff[attempt - 1] ?? fallbackBackoff;
+    // XXX - Add a console warn to notify the failure and delay before retrying
     await wait(delay);
   }
 }
