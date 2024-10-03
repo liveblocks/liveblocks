@@ -39,6 +39,24 @@ async function getEditorText(editor: Locator) {
   return text?.replace(/[\u200B-\u200F\uFEFF]/g, "");
 }
 
+async function pasteData(page: Page, data: string, format = "text/plain") {
+  await page.evaluate(
+    async ({ data, format }) => {
+      const item = new ClipboardItem({
+        [format]: new Blob([data], { type: format }),
+      });
+
+      await navigator.clipboard.write([item]);
+    },
+    {
+      data,
+      format,
+    }
+  );
+
+  await page.keyboard.press("ControlOrMeta+V");
+}
+
 function resetPage(page: Page) {
   return page.locator("#reset").click();
 }
@@ -137,7 +155,7 @@ test.describe("Composer", () => {
       await expect(editor).not.toBeFocused();
     });
 
-    // TODO: I couldn't get this to work, either with editor.press or with page.keyboard.press
+    // TODO: Selecting/keyboard shortcuts don't work
     test.skip("should format text via keyboard shortcuts", async () => {
       const { editor } = getComposer(page);
 
@@ -356,6 +374,59 @@ test.describe("Composer", () => {
       expect(await editor.locator("span > a").count()).toEqual(0);
     });
 
+    // TODO: Selecting/pasting doesn't work
+    test.skip("should create a link when selecting text and pasting a valid URL", async () => {
+      const { editor } = getComposer(page);
+
+      // Fill the editor with text
+      await editor.pressSequentially("Hello, world!");
+
+      // Select "Hello" and paste a URL
+      await selectText(editor.getByText("Hello"), "Hello");
+      await pasteData(page, "https://liveblocks.io");
+
+      // ➡️ The editor contains the link
+      expect(
+        await editor
+          .locator("span > a[href='https://liveblocks.io']")
+          .textContent()
+      ).toEqual("Hello");
+    });
+
+    // TODO: Selecting/pasting doesn't work
+    test.skip("should not create a link when selecting text and pasting an invalid URL (or any non-URL text)", async () => {
+      const { editor } = getComposer(page);
+
+      // Fill the editor with text
+      await editor.pressSequentially("Hello, world!");
+
+      // Select "Hello" and paste an invalid URL (or any non-URL text)
+      await selectText(editor.getByText("Hello"), "Hello");
+      await pasteData(page, "liveblocks");
+
+      // ➡️ The editor doesn't contain any link
+      expect(await editor.locator("span > a").count()).toEqual(0);
+    });
+
+    // TODO: Selecting/pasting doesn't work
+    test.skip("should not create a link when pasting a URL but the selection isn't only text", async () => {
+      const { editor } = getComposer(page);
+
+      // Fill the editor with two paragraphs and an existing link
+      await editor.pressSequentially("Hello,");
+      await editor.press("Shift+Enter");
+      await editor.pressSequentially("https://google.com!");
+
+      // Select everything and paste a URL
+      await editor.selectText();
+      await pasteData(page, "https://liveblocks.io");
+
+      // ➡️ The editor doesn't contain the pasted link
+      expect(
+        await editor.locator("span > a[href='https://liveblocks.io']").count()
+      ).toEqual(0);
+    });
+
     test("should insert mentions via the keyboard", async () => {
       const { editor } = getComposer(page);
 
@@ -445,6 +516,44 @@ test.describe("Composer", () => {
       // ➡️ The editor contains 🇫🇷
       expect((await editor.textContent())?.includes("🇫🇷")).toBeTruthy();
     });
+
+    // TODO: Selecting/copy-pasting doesn't work
+    test.skip("should remain the same after copy-pasting", async () => {
+      const { editor } = getComposer(page);
+
+      // Fill the editor with two paragraphs, formatted text, a link, and a mention
+      await editor.pressSequentially("Hey @");
+      await expect(
+        page.locator(".lb-composer-suggestions-list-item").first()
+      ).toBeVisible();
+      await editor.press("Enter");
+      await expect(
+        page.locator(".lb-composer-mention-suggestions-list")
+      ).not.toBeVisible();
+      await editor.pressSequentially(" https://liveblocks.io.");
+      await editor.press("Shift+Enter");
+      await editor.pressSequentially("    `code` ");
+
+      // Copy the editor content
+      await editor.selectText();
+      await page.keyboard.press("ControlOrMeta+C");
+
+      // Submit the copied content and reset the page
+      await editor.press("Enter");
+      const outputCopied = await getOutputJson(page);
+      await resetPage(page);
+
+      // Paste the copied content and submit it
+      await editor.focus();
+      await page.keyboard.press("ControlOrMeta+V");
+      await editor.press("Enter");
+      const outputPasted = await getOutputJson(page);
+
+      // ➡️ The copied and pasted content are the same
+      expect(outputCopied).toEqual(outputPasted);
+    });
+
+    // TODO: Pasting HTML tests
   });
 
   test.describe("autoFocus", () => {
