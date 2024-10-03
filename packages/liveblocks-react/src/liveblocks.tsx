@@ -263,6 +263,7 @@ function makeDeltaPoller_Notifications(store: UmbrellaStore<BaseMetadata>) {
   let pollerSubscribers = 0;
   const poller = makePoller(async () => {
     try {
+      // XXX - Think about this...
       await store.waitUntilNotificationsLoaded();
       await store.fetchNotificationsDeltaUpdate();
     } catch (err) {
@@ -281,11 +282,17 @@ function makeDeltaPoller_Notifications(store: UmbrellaStore<BaseMetadata>) {
    */
   return () => {
     pollerSubscribers++;
+
+    // XXXX - We should wait until the lastRequestedAt date is known using a promise and then
+    // in the `then` body, check again if the number of subscribers if more than 0, and only then
+    // if those conditions hold, start the poller
+    // promise.then(() => { if (subscribers > 0 ) initialPoller() else: do nothing })
     poller.start(POLLING_INTERVAL);
 
     return () => {
       pollerSubscribers--;
       if (pollerSubscribers <= 0) {
+        // XXXX - Also abort any outstanding promises with an AbortController
         poller.stop();
       }
     };
@@ -295,17 +302,6 @@ function makeDeltaPoller_Notifications(store: UmbrellaStore<BaseMetadata>) {
 function makeDeltaPoller_UserThreads(store: UmbrellaStore<BaseMetadata>) {
   const poller = makePoller(async () => {
     try {
-      //
-      // XXX Think about this! To remain symmetric with the solid inbox
-      // XXX notifications implementation, we should first call something like:
-      //       await store.waitUntilUserThreadsLoaded(query);
-      //                                              ^^^^^
-      // XXX                         However... which query should we use here?
-      //
-      // XXX Maybe this warrents an API like? 🤔
-      //       await store.waitUntilAnyUserThreadsLoaded();
-      //                            ~~~
-      //
       await store.fetchUserThreadsDeltaUpdate();
     } catch (err) {
       // When polling, we don't want to throw errors, ever
@@ -318,12 +314,17 @@ function makeDeltaPoller_UserThreads(store: UmbrellaStore<BaseMetadata>) {
 
   return () => {
     pollerSubscribers++;
+    // XXXX - We should wait until the lastRequestedAt date is known using a promise and then
+    // in the `then` body, check again if the number of subscribers if more than 0, and only then
+    // if those conditions hold, start the poller
+    // promise.then(() => { if (subscribers > 0 ) initialPoller() else: do nothing })
     poller.start(POLLING_INTERVAL);
 
     // Decrement in the unsub function
     return () => {
       pollerSubscribers--;
       if (pollerSubscribers <= 0) {
+        // XXXX - Also abort any outstanding promises with an AbortController
         poller.stop();
       }
     };

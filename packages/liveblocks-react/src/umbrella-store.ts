@@ -552,7 +552,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   private _notificationsLastRequestedAt: Date | null = null; // Keeps track of when we successfully requested an inbox notifications update for the last time. Will be `null` as long as the first successful fetch hasn't happened yet.
   private _notifications: PaginatedResource;
 
-  // Threads
+  // Threads XXX - Rename this to roomThreads
   private _threadsLastRequestedAtByRoom = new Map<string, Date>(); // A map of room ids to the timestamp when the last request for threads updates was made
 
   private _roomThreads: Map<string, PaginatedResource> = new Map();
@@ -651,6 +651,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return asyncResult;
     }
 
+    // XXX - Verify performance does not become an issue as `selectThread` is an expensive operation
     const threads = selectThreads(this.getFullState(), {
       roomId,
       query,
