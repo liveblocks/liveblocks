@@ -234,7 +234,7 @@ function handleApiError(err: CommentsApiError | NotificationsApiError): Error {
 
 const _extras = new WeakMap<
   OpaqueClient,
-  ReturnType<typeof makeExtrasForClient>
+  ReturnType<typeof makeRoomExtrasForClient>
 >();
 const _bundles = new WeakMap<
   OpaqueClient,
@@ -259,10 +259,10 @@ function getOrCreateRoomContextBundle<
 // TODO: Likely a better / more clear name for this helper will arise. I'll
 // rename this later. All of these are implementation details to support inbox
 // notifications on a per-client basis.
-function getExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
+function getRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   let extras = _extras.get(client);
   if (!extras) {
-    extras = makeExtrasForClient(client);
+    extras = makeRoomExtrasForClient(client);
     _extras.set(client, extras);
   }
 
@@ -271,7 +271,7 @@ function getExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   };
 }
 
-function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
+function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   const store = getUmbrellaStoreForClient(client);
 
   const requestsByQuery = new Map<string, Promise<unknown>>(); // A map of query keys to the promise of the request for that query
@@ -729,7 +729,7 @@ function RoomProviderInner<
   );
 
   React.useEffect(() => {
-    const { store } = getExtrasForClient(client);
+    const { store } = getRoomExtrasForClient(client);
 
     async function handleCommentEvent(message: CommentsEventServerMsg) {
       // If thread deleted event is received, we remove the thread from the local cache
@@ -777,7 +777,7 @@ function RoomProviderInner<
   }, [client, room]);
 
   React.useEffect(() => {
-    const store = getExtrasForClient(client).store;
+    const store = getRoomExtrasForClient(client).store;
     // Retrieve threads that have been updated/deleted since the last time the room requested threads updates
     void store.fetchRoomThreadsDeltaUpdate(room.id).catch(() => {
       // Deliberately catch and ignore any errors here
@@ -789,7 +789,7 @@ function RoomProviderInner<
    */
   React.useEffect(() => {
     function handleIsOnline() {
-      const store = getExtrasForClient(client).store;
+      const store = getRoomExtrasForClient(client).store;
       void store.fetchRoomThreadsDeltaUpdate(room.id).catch(() => {
         // Deliberately catch and ignore any errors here
       });
@@ -1326,7 +1326,8 @@ function useThreads<M extends BaseMetadata>(
   const client = useClient();
   const room = useRoom();
 
-  const { store, incrementQuerySubscribers } = getExtrasForClient<M>(client);
+  const { store, incrementQuerySubscribers } =
+    getRoomExtrasForClient<M>(client);
 
   React.useEffect(() => {
     store.waitUntilRoomThreadsLoaded(room.id, options.query).catch(() => {
@@ -1397,7 +1398,7 @@ function useCommentsErrorListener<M extends BaseMetadata>(
 ) {
   const client = useClient();
   const savedCallback = useLatest(callback);
-  const { commentsErrorEventSource } = getExtrasForClient<M>(client);
+  const { commentsErrorEventSource } = getRoomExtrasForClient<M>(client);
 
   React.useEffect(() => {
     return commentsErrorEventSource.subscribe(savedCallback.current);
@@ -1442,7 +1443,7 @@ function useCreateThread<M extends BaseMetadata>(): (
         resolved: false,
       };
 
-      const { store, onMutationFailure } = getExtrasForClient(client);
+      const { store, onMutationFailure } = getRoomExtrasForClient(client);
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "create-thread",
         thread: newThread,
@@ -1484,7 +1485,7 @@ function useDeleteThread(): (threadId: string) => void {
   const room = useRoom();
   return React.useCallback(
     (threadId: string): void => {
-      const { store, onMutationFailure } = getExtrasForClient(client);
+      const { store, onMutationFailure } = getRoomExtrasForClient(client);
 
       const thread = store.getFullState().threadsById[threadId];
 
@@ -1531,7 +1532,7 @@ function useEditThreadMetadata<M extends BaseMetadata>() {
       const metadata = options.metadata;
       const updatedAt = new Date();
 
-      const { store, onMutationFailure } = getExtrasForClient(client);
+      const { store, onMutationFailure } = getRoomExtrasForClient(client);
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "edit-thread-metadata",
         metadata,
@@ -1592,7 +1593,7 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
         attachments: attachments ?? [],
       };
 
-      const { store, onMutationFailure } = getExtrasForClient(client);
+      const { store, onMutationFailure } = getRoomExtrasForClient(client);
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "create-comment",
         comment,
@@ -1639,7 +1640,7 @@ function useEditComment(): (options: EditCommentOptions) => void {
     ({ threadId, commentId, body, attachments }: EditCommentOptions): void => {
       const editedAt = new Date();
 
-      const { store, onMutationFailure } = getExtrasForClient(client);
+      const { store, onMutationFailure } = getRoomExtrasForClient(client);
       const thread = store.getFullState().threadsById[threadId];
       if (thread === undefined) {
         console.warn(
@@ -1710,7 +1711,7 @@ function useDeleteComment() {
     ({ threadId, commentId }: DeleteCommentOptions): void => {
       const deletedAt = new Date();
 
-      const { store, onMutationFailure } = getExtrasForClient(client);
+      const { store, onMutationFailure } = getRoomExtrasForClient(client);
 
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "delete-comment",
@@ -1755,7 +1756,7 @@ function useAddReaction<M extends BaseMetadata>() {
       const createdAt = new Date();
       const userId = getCurrentUserId(room);
 
-      const { store, onMutationFailure } = getExtrasForClient<M>(client);
+      const { store, onMutationFailure } = getRoomExtrasForClient<M>(client);
 
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "add-reaction",
@@ -1813,7 +1814,7 @@ function useRemoveReaction() {
 
       const removedAt = new Date();
 
-      const { store, onMutationFailure } = getExtrasForClient(client);
+      const { store, onMutationFailure } = getRoomExtrasForClient(client);
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "remove-reaction",
         threadId,
@@ -1865,7 +1866,7 @@ function useMarkThreadAsRead() {
   const room = useRoom();
   return React.useCallback(
     (threadId: string) => {
-      const { store, onMutationFailure } = getExtrasForClient(client);
+      const { store, onMutationFailure } = getRoomExtrasForClient(client);
       const inboxNotification = Object.values(
         store.getFullState().notificationsById
       ).find(
@@ -1924,7 +1925,7 @@ function useMarkThreadAsResolved() {
     (threadId: string) => {
       const updatedAt = new Date();
 
-      const { store, onMutationFailure } = getExtrasForClient(client);
+      const { store, onMutationFailure } = getRoomExtrasForClient(client);
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "mark-thread-as-resolved",
         threadId,
@@ -1971,7 +1972,7 @@ function useMarkThreadAsUnresolved() {
     (threadId: string) => {
       const updatedAt = new Date();
 
-      const { store, onMutationFailure } = getExtrasForClient(client);
+      const { store, onMutationFailure } = getRoomExtrasForClient(client);
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "mark-thread-as-unresolved",
         threadId,
@@ -2012,7 +2013,7 @@ function useMarkThreadAsUnresolved() {
  */
 function useThreadSubscription(threadId: string): ThreadSubscription {
   const client = useClient();
-  const { store } = getExtrasForClient(client);
+  const { store } = getRoomExtrasForClient(client);
 
   const selector = React.useCallback(
     (state: UmbrellaStoreState<BaseMetadata>): ThreadSubscription => {
@@ -2060,7 +2061,7 @@ function useRoomNotificationSettings(): [
   const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
   const client = useClient();
   const room = useRoom();
-  const { store } = getExtrasForClient(client);
+  const { store } = getRoomExtrasForClient(client);
 
   const getter = React.useCallback(
     () => store.getNotificationSettingsAsync(room.id),
@@ -2068,7 +2069,7 @@ function useRoomNotificationSettings(): [
   );
 
   React.useEffect(() => {
-    const { getInboxNotificationSettings } = getExtrasForClient(client);
+    const { getInboxNotificationSettings } = getRoomExtrasForClient(client);
     void getInboxNotificationSettings(room);
   }, [client, room]);
 
@@ -2100,7 +2101,7 @@ function useRoomNotificationSettingsSuspense(): [
   const client = useClient();
   const room = useRoom();
 
-  const { store } = getExtrasForClient(client);
+  const { store } = getRoomExtrasForClient(client);
 
   const getter = React.useCallback(
     () => store.getNotificationSettingsAsync(room.id),
@@ -2116,7 +2117,7 @@ function useRoomNotificationSettingsSuspense(): [
   );
 
   if (settings.isLoading) {
-    const { getInboxNotificationSettings } = getExtrasForClient(client);
+    const { getInboxNotificationSettings } = getRoomExtrasForClient(client);
     throw getInboxNotificationSettings(room);
   } else if (settings.error) {
     throw settings.error;
@@ -2178,7 +2179,7 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
   const client = useClient();
   const room = useRoom();
 
-  const { store, getRoomVersions } = getExtrasForClient(client);
+  const { store, getRoomVersions } = getRoomExtrasForClient(client);
 
   const getter = React.useCallback(
     () => store.getVersionsAsync(room.id),
@@ -2210,7 +2211,7 @@ function useHistoryVersionsSuspense(): HistoryVersionsAsyncSuccess {
   const client = useClient();
   const room = useRoom();
 
-  const { store } = getExtrasForClient(client);
+  const { store } = getRoomExtrasForClient(client);
 
   const getter = React.useCallback(
     () => store.getVersionsAsync(room.id),
@@ -2226,7 +2227,7 @@ function useHistoryVersionsSuspense(): HistoryVersionsAsyncSuccess {
   );
 
   if (state.isLoading) {
-    const { getRoomVersions } = getExtrasForClient(client);
+    const { getRoomVersions } = getRoomExtrasForClient(client);
     throw getRoomVersions(room);
   } else if (state.error) {
     throw state.error;
@@ -2248,7 +2249,7 @@ function useUpdateRoomNotificationSettings() {
   const room = useRoom();
   return React.useCallback(
     (settings: Partial<RoomNotificationSettings>) => {
-      const { store, onMutationFailure } = getExtrasForClient(client);
+      const { store, onMutationFailure } = getRoomExtrasForClient(client);
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "update-notification-settings",
         roomId: room.id,
@@ -2413,7 +2414,7 @@ function useThreadsSuspense<M extends BaseMetadata>(
   const client = useClient();
   const room = useRoom();
 
-  const { store } = getExtrasForClient<M>(client);
+  const { store } = getRoomExtrasForClient<M>(client);
 
   use(store.waitUntilRoomThreadsLoaded(room.id, options.query));
 

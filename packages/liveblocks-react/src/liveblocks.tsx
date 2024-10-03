@@ -83,7 +83,7 @@ const _umbrellaStores = new WeakMap<
 >();
 const _extras = new WeakMap<
   OpaqueClient,
-  ReturnType<typeof makeExtrasForClient>
+  ReturnType<typeof makeLiveblocksExtrasForClient>
 >();
 const _bundles = new WeakMap<
   OpaqueClient,
@@ -245,12 +245,12 @@ export function getUmbrellaStoreForClient<M extends BaseMetadata>(
 // rename this later. All of these are implementation details to support inbox
 // notifications on a per-client basis.
 /** @internal Only exported for unit tests. */
-export function getExtrasForClient<M extends BaseMetadata>(
+export function getLiveblocksExtrasForClient<M extends BaseMetadata>(
   client: OpaqueClient
 ) {
   let extras = _extras.get(client);
   if (!extras) {
-    extras = makeExtrasForClient(client);
+    extras = makeLiveblocksExtrasForClient(client);
     _extras.set(client, extras);
   }
 
@@ -259,7 +259,7 @@ export function getExtrasForClient<M extends BaseMetadata>(
   };
 }
 
-function makeExtrasForClient(client: OpaqueClient) {
+function makeLiveblocksExtrasForClient(client: OpaqueClient) {
   const store = getUmbrellaStoreForClient(client);
   // TODO                                ^ Bind to M type param here
 
@@ -474,7 +474,7 @@ function makeLiveblocksContextBundle<
 }
 
 function useInboxNotifications_withClient(client: OpaqueClient) {
-  const { store, startPolling } = getExtrasForClient(client);
+  const { store, startPolling } = getLiveblocksExtrasForClient(client);
 
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
@@ -496,7 +496,7 @@ function useInboxNotifications_withClient(client: OpaqueClient) {
 }
 
 function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
-  const store = getExtrasForClient(client).store;
+  const store = getLiveblocksExtrasForClient(client).store;
 
   // Suspend until there are at least some inbox notifications
   use(store.waitUntilNotificationsLoaded());
@@ -510,7 +510,7 @@ function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
 }
 
 function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
-  const { store, startPolling } = getExtrasForClient(client);
+  const { store, startPolling } = getLiveblocksExtrasForClient(client);
 
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
@@ -534,7 +534,7 @@ function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
 function useUnreadInboxNotificationsCountSuspense_withClient(
   client: OpaqueClient
 ) {
-  const store = getExtrasForClient(client).store;
+  const store = getLiveblocksExtrasForClient(client).store;
 
   // Suspend until there are at least some inbox notifications
   use(store.waitUntilNotificationsLoaded());
@@ -548,7 +548,7 @@ function useUnreadInboxNotificationsCountSuspense_withClient(
 function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
   return useCallback(
     (inboxNotificationId: string) => {
-      const { store } = getExtrasForClient(client);
+      const { store } = getLiveblocksExtrasForClient(client);
 
       const readAt = new Date();
       const optimisticUpdateId = store.addOptimisticUpdate({
@@ -578,7 +578,7 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
 
 function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
   return useCallback(() => {
-    const { store } = getExtrasForClient(client);
+    const { store } = getLiveblocksExtrasForClient(client);
     const readAt = new Date();
     const optimisticUpdateId = store.addOptimisticUpdate({
       type: "mark-all-inbox-notifications-as-read",
@@ -604,7 +604,7 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
 function useDeleteInboxNotification_withClient(client: OpaqueClient) {
   return useCallback(
     (inboxNotificationId: string) => {
-      const { store } = getExtrasForClient(client);
+      const { store } = getLiveblocksExtrasForClient(client);
 
       const deletedAt = new Date();
       const optimisticUpdateId = store.addOptimisticUpdate({
@@ -633,7 +633,7 @@ function useDeleteInboxNotification_withClient(client: OpaqueClient) {
 
 function useDeleteAllInboxNotifications_withClient(client: OpaqueClient) {
   return useCallback(() => {
-    const { store } = getExtrasForClient(client);
+    const { store } = getLiveblocksExtrasForClient(client);
     const deletedAt = new Date();
     const optimisticUpdateId = store.addOptimisticUpdate({
       type: "delete-all-inbox-notifications",
@@ -657,7 +657,7 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
   client: OpaqueClient,
   inboxNotificationId: string
 ): ThreadData<M> {
-  const { store } = getExtrasForClient<M>(client);
+  const { store } = getLiveblocksExtrasForClient<M>(client);
 
   const getter = store.getFullState;
 
@@ -992,7 +992,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
   const client = useClient<M>();
 
   const { store, incrementUserThreadsQuerySubscribers } =
-    getExtrasForClient<M>(client);
+    getLiveblocksExtrasForClient<M>(client);
 
   useEffect(() => {
     store.waitUntilUserThreadsLoaded(options.query).catch(() => {
@@ -1071,7 +1071,7 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
 ): ThreadsAsyncSuccess<M> {
   const client = useClient<M>();
 
-  const store = getExtrasForClient<M>(client).store;
+  const { store } = getLiveblocksExtrasForClient<M>(client);
 
   use(store.waitUntilUserThreadsLoaded(options.query));
 
