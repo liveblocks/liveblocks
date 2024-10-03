@@ -87,7 +87,7 @@ test.describe("Composer", () => {
       await editor.fill("Hello, world!");
       await submitButton.click();
 
-      // ➡️ The composer was submitted
+      // ➡️ The editor was submitted
       expect(await getOutputJson(page)).not.toBeUndefined();
     });
 
@@ -98,7 +98,7 @@ test.describe("Composer", () => {
       await editor.fill("Hello, world!");
       await editor.press("Enter");
 
-      // ➡️ The composer was submitted
+      // ➡️ The editor was submitted
       expect(await getOutputJson(page)).not.toBeUndefined();
     });
 
@@ -126,7 +126,7 @@ test.describe("Composer", () => {
       await expect(submitButton).toBeDisabled();
 
       // Pressing Enter should not do anything, but we cannot assert that the
-      // composer wasn't submitted because nothing has changed from the initial state
+      // editor wasn't submitted because nothing has changed from the initial state
       await editor.press("Enter");
     });
 
@@ -144,14 +144,30 @@ test.describe("Composer", () => {
       // Pressing Enter should not do anything
       await editor.press("Enter");
 
-      // ➡️ The composer wasn't submitted and cleared
+      // ➡️ The editor wasn't submitted and cleared
       expect(await getEditorText(editor)).toEqual("    ");
     });
 
     test("should not be focused on mount if autoFocus is false", async () => {
       const { editor } = getComposer(page);
 
-      // ➡️ The composer is not focused
+      // ➡️ The editor is not focused
+      await expect(editor).not.toBeFocused();
+    });
+
+    test("should lose focus on escape", async () => {
+      const { editor } = getComposer(page);
+
+      // Focus the editor
+      await editor.focus();
+
+      // ➡️ The editor is focused
+      await expect(editor).toBeFocused();
+
+      // Press Escape to lose focus
+      await page.keyboard.press("Escape");
+
+      // ➡️ The editor is no longer focused
       await expect(editor).not.toBeFocused();
     });
 
@@ -570,7 +586,7 @@ test.describe("Composer", () => {
     test("should be focused on mount if autoFocus is true", async () => {
       const { editor } = getComposer(page);
 
-      // ➡️ The composer is focused
+      // ➡️ The editor is focused
       await expect(editor).toBeFocused();
     });
   });
@@ -623,7 +639,7 @@ test.describe("Composer", () => {
     test("should be initialized with defaultValue if set", async () => {
       const { editor } = getComposer(page);
 
-      // ➡️ The composer is initialized with the default value
+      // ➡️ The editor is initialized with the default value
       expect(await getEditorText(editor)).toEqual("Hello, world!");
     });
   });
