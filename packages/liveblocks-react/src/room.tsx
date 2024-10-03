@@ -1340,9 +1340,10 @@ function useThreads<M extends BaseMetadata>(
     [room, options]
   );
 
-  React.useEffect(() => {
-    return incrementQuerySubscribers(queryKey);
-  }, [incrementQuerySubscribers, queryKey]);
+  React.useEffect(
+    () => incrementQuerySubscribers(queryKey),
+    [incrementQuerySubscribers, queryKey]
+  );
 
   const getter = React.useCallback(
     () => store.getRoomThreadsAsync(queryKey),

@@ -1002,9 +1002,10 @@ function useUserThreads_experimental<M extends BaseMetadata>(
 
   const queryKey = makeUserThreadsQueryKey(options.query);
 
-  useEffect(() => {
-    incrementUserThreadsQuerySubscribers(queryKey);
-  }, [incrementUserThreadsQuerySubscribers, queryKey]);
+  useEffect(
+    () => incrementUserThreadsQuerySubscribers(queryKey),
+    [incrementUserThreadsQuerySubscribers, queryKey]
+  );
 
   const getter = useCallback(
     () => store.getUserThreadsAsync(options.query),
