@@ -655,9 +655,6 @@ export function createClient<U extends BaseUserMeta = DU>(
 
       logout,
 
-      // XXXX Eventually, once this is actually using the HttpClient class,
-      // "just" expose a reference to it here, instead of spreading all of its
-      // methods
       ...httpClientLike,
 
       // Internal
