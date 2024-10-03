@@ -109,7 +109,6 @@ import {
 import type { UmbrellaStore, UmbrellaStoreState } from "./umbrella-store";
 import {
   makeNotificationSettingsQueryKey,
-  makeRoomThreadsQueryKey,
   makeVersionsQueryKey,
 } from "./umbrella-store";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
@@ -261,40 +260,16 @@ function makeDeltaPoller_RoomThreads(client: OpaqueClient) {
     );
   });
 
-  // Keep track of how many subscribers we've seen for every queryKey
-  const countsByQuery = new Map<string, number>();
+  // Keep track of the number of subscribers to room threads
+  let pollerSubscribers = 0;
 
-  //
-  // XXX DISCUSSION
-  // XXX ----------
-  // XXX I _think_ we can remove the queryKey as a param here entirely and
-  // XXX "just" keep a flat count, like we do for our inbox notifications
-  // XXX poller. It would make the internals a lot simpler.
-  // XXX The query key isn't really used anyway.
-  //
-  return (queryKey: string) => {
-    countsByQuery.set(queryKey, (countsByQuery.get(queryKey) ?? 0) + 1);
-
+  return () => {
+    pollerSubscribers++;
     poller.start(POLLING_INTERVAL);
 
-    // Decrement in the unsub function
     return () => {
-      const count = countsByQuery.get(queryKey);
-      if (count === undefined || count <= 0) {
-        console.warn(
-          `Internal unexpected behavior. Cannot decrease subscriber count for query "${queryKey}"`
-        );
-        return;
-      }
-
-      countsByQuery.set(queryKey, count - 1);
-
-      let total = 0;
-      for (const subscribers of countsByQuery.values()) {
-        total += subscribers;
-      }
-
-      if (total <= 0) {
+      pollerSubscribers--;
+      if (pollerSubscribers <= 0) {
         poller.stop();
       }
     };
@@ -1357,20 +1332,11 @@ function useThreads<M extends BaseMetadata>(
     });
   }, [store, room.id, options.query]);
 
-  // e.g. 'room-abc-{"color":"red","xyz":123}'
-  const queryKey = React.useMemo(
-    () => makeRoomThreadsQueryKey(room.id, options.query),
-    [room, options]
-  );
-
-  React.useEffect(
-    () => subscribeToDeltaUpdates(queryKey),
-    [subscribeToDeltaUpdates, queryKey]
-  );
+  React.useEffect(subscribeToDeltaUpdates, [subscribeToDeltaUpdates]);
 
   const getter = React.useCallback(
-    () => store.getRoomThreadsAsync(queryKey),
-    [store, queryKey]
+    () => store.getRoomThreadsAsync(room.id, options.query),
+    [store, room.id, options.query]
   );
 
   // XXX Move this selector into the store
@@ -1396,7 +1362,7 @@ function useThreads<M extends BaseMetadata>(
         fetchMore: result.fetchMore,
       };
     },
-    [room.id, queryKey] // eslint-disable-line react-hooks/exhaustive-deps
+    [room.id, options.query] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const state = useSyncExternalStoreWithSelector(

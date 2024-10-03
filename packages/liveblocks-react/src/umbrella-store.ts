@@ -636,8 +636,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // TODO: This return type is a bit weird! Feels like we haven't found the
   // right abstraction here yet.
   public getRoomThreadsAsync(
-    queryKey: string
+    roomId: string,
+    query: ThreadsQuery<M> | undefined
   ): PagedAsyncResult<UmbrellaStoreState<M>, "fullState"> {
+    const queryKey = makeRoomThreadsQueryKey(roomId, query);
+
     const paginatedResource = this._roomThreads.get(queryKey);
     if (paginatedResource === undefined) {
       return ASYNC_LOADING;

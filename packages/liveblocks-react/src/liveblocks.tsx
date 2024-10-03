@@ -53,7 +53,7 @@ import type {
   UseUserThreadsOptions,
 } from "./types";
 import type { UmbrellaStoreState } from "./umbrella-store";
-import { makeUserThreadsQueryKey, UmbrellaStore } from "./umbrella-store";
+import { UmbrellaStore } from "./umbrella-store";
 
 /**
  * Raw access to the React context where the LiveblocksProvider stores the
@@ -280,19 +280,10 @@ function makeDeltaPoller_Notifications(store: UmbrellaStore<BaseMetadata>) {
    * the polling.
    */
   return () => {
-    // Increment
     pollerSubscribers++;
     poller.start(POLLING_INTERVAL);
 
     return () => {
-      // Decrement
-      if (pollerSubscribers <= 0) {
-        console.warn(
-          "Unexpected internal error: cannot decrease subscriber count for inbox notifications."
-        );
-        return;
-      }
-
       pollerSubscribers--;
       if (pollerSubscribers <= 0) {
         poller.stop();
@@ -322,40 +313,17 @@ function makeDeltaPoller_UserThreads(store: UmbrellaStore<BaseMetadata>) {
     }
   });
 
-  // Keep track of how many subscribers we've seen for every queryKey
-  const countsByQuery = new Map<string, number>();
+  // Keep track of the number of subscribers to user threads
+  let pollerSubscribers = 0;
 
-  //
-  // XXX DISCUSSION
-  // XXX ----------
-  // XXX I _think_ we can remove the queryKey as a param here entirely and
-  // XXX "just" keep a flat count, like we do for our inbox notifications
-  // XXX poller. It would make the internals a lot simpler.
-  // XXX The query key isn't really used anyway.
-  //
-  return (queryKey: string) => {
-    countsByQuery.set(queryKey, (countsByQuery.get(queryKey) ?? 0) + 1);
-
+  return () => {
+    pollerSubscribers++;
     poller.start(POLLING_INTERVAL);
 
     // Decrement in the unsub function
     return () => {
-      const count = countsByQuery.get(queryKey);
-      if (count === undefined || count <= 0) {
-        console.warn(
-          `Internal unexpected behavior. Cannot decrease subscriber count for query "${queryKey}"`
-        );
-        return;
-      }
-
-      countsByQuery.set(queryKey, count - 1);
-
-      let total = 0;
-      for (const subscribers of countsByQuery.values()) {
-        total += subscribers;
-      }
-
-      if (total <= 0) {
+      pollerSubscribers--;
+      if (pollerSubscribers <= 0) {
         poller.stop();
       }
     };
@@ -1038,12 +1006,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
     });
   }, [store, options.query]);
 
-  const queryKey = makeUserThreadsQueryKey(options.query);
-
-  useEffect(
-    () => subscribeToDeltaUpdates(queryKey),
-    [subscribeToDeltaUpdates, queryKey]
-  );
+  useEffect(subscribeToDeltaUpdates, [subscribeToDeltaUpdates]);
 
   const getter = useCallback(
     () => store.getUserThreadsAsync(options.query),
