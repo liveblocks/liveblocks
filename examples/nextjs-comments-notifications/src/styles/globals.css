@@ -181,7 +181,8 @@ body {
 .loading,
 .error,
 .empty,
-.home {
+.home,
+.complete {
   width: 100%;
   display: flex;
   place-content: center;
