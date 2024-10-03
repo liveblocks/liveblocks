@@ -232,6 +232,56 @@ function handleApiError(err: CommentsApiError | NotificationsApiError): Error {
   return new Error(message);
 }
 
+function makeDeltaPoller_RoomThreads(client: OpaqueClient) {
+  const store = getUmbrellaStoreForClient(client);
+
+  const poller = makePoller(async () => {
+    const requests: Promise<unknown>[] = [];
+
+    client[kInternal].getRoomIds().map((roomId) => {
+      const room = client.getRoom(roomId);
+      if (room === null) return;
+
+      // Retrieve threads that have been updated/deleted since the last requestedAt value
+      requests.push(store.fetchRoomThreadsDeltaUpdate(room.id));
+    });
+
+    await Promise.allSettled(requests);
+  });
+
+  // Keep track of how many subscribers we've seen for every queryKey
+  const countsByQuery = new Map<string, number>();
+
+  // XXX Stop using a queryKey here!
+  return (queryKey: string) => {
+    countsByQuery.set(queryKey, (countsByQuery.get(queryKey) ?? 0) + 1);
+
+    poller.start(POLLING_INTERVAL);
+
+    // Decrement in the unsub function
+    return () => {
+      const count = countsByQuery.get(queryKey);
+      if (count === undefined || count <= 0) {
+        console.warn(
+          `Internal unexpected behavior. Cannot decrease subscriber count for query "${queryKey}"`
+        );
+        return;
+      }
+
+      countsByQuery.set(queryKey, count - 1);
+
+      let total = 0;
+      for (const subscribers of countsByQuery.values()) {
+        total += subscribers;
+      }
+
+      if (total <= 0) {
+        poller.stop();
+      }
+    };
+  };
+}
+
 const _extras = new WeakMap<
   OpaqueClient,
   ReturnType<typeof makeRoomExtrasForClient>
@@ -275,56 +325,6 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   const store = getUmbrellaStoreForClient(client);
 
   const requestsByQuery = new Map<string, Promise<unknown>>(); // A map of query keys to the promise of the request for that query
-  const subscribersByQuery = new Map<string, number>(); // A map of query keys to the number of subscribers for that query
-
-  const poller = makePoller(refreshThreadsAndNotifications);
-
-  async function refreshThreadsAndNotifications() {
-    const requests: Promise<unknown>[] = [];
-
-    client[kInternal].getRoomIds().map((roomId) => {
-      const room = client.getRoom(roomId);
-      if (room === null) return;
-
-      // Retrieve threads that have been updated/deleted since the last requestedAt value
-      requests.push(store.fetchRoomThreadsDeltaUpdate(room.id));
-    });
-
-    await Promise.allSettled(requests);
-  }
-
-  // XXX Abstract this in the same way we did it in the
-  // getLiveblocksExtrasForClient helper now for inbox notifications. Make this
-  // implementation symmetric!
-  function incrementQuerySubscribers(queryKey: string) {
-    const subscribers = subscribersByQuery.get(queryKey) ?? 0;
-    subscribersByQuery.set(queryKey, subscribers + 1);
-
-    poller.start(POLLING_INTERVAL);
-
-    // Decrement in the unsub function
-    return () => {
-      const subscribers = subscribersByQuery.get(queryKey);
-
-      if (subscribers === undefined || subscribers <= 0) {
-        console.warn(
-          `Internal unexpected behavior. Cannot decrease subscriber count for query "${queryKey}"`
-        );
-        return;
-      }
-
-      subscribersByQuery.set(queryKey, subscribers - 1);
-
-      let totalSubscribers = 0;
-      for (const subscribers of subscribersByQuery.values()) {
-        totalSubscribers += subscribers;
-      }
-
-      if (totalSubscribers <= 0) {
-        poller.stop();
-      }
-    };
-  }
 
   async function getRoomVersions(
     room: OpaqueRoom,
@@ -422,7 +422,7 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
 
   return {
     store,
-    incrementQuerySubscribers,
+    subscribeToRoomThreadsDeltaUpdates: makeDeltaPoller_RoomThreads(client),
     commentsErrorEventSource,
     getInboxNotificationSettings,
     getRoomVersions,
@@ -1329,7 +1329,7 @@ function useThreads<M extends BaseMetadata>(
   const client = useClient();
   const room = useRoom();
 
-  const { store, incrementQuerySubscribers } =
+  const { store, subscribeToRoomThreadsDeltaUpdates: subscribeToDeltaUpdates } =
     getRoomExtrasForClient<M>(client);
 
   React.useEffect(() => {
@@ -1345,8 +1345,8 @@ function useThreads<M extends BaseMetadata>(
   );
 
   React.useEffect(
-    () => incrementQuerySubscribers(queryKey),
-    [incrementQuerySubscribers, queryKey]
+    () => subscribeToDeltaUpdates(queryKey),
+    [subscribeToDeltaUpdates, queryKey]
   );
 
   const getter = React.useCallback(
