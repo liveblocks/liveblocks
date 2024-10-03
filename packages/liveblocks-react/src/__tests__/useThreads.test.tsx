@@ -17,7 +17,8 @@ import type { ReactNode } from "react";
 import React, { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
-import { generateQueryKey, POLLING_INTERVAL } from "../room";
+import { POLLING_INTERVAL } from "../room";
+import { makeRoomThreadsQueryKey } from "../umbrella-store";
 import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
 import MockWebSocket, { websocketSimulator } from "./_MockWebSocket";
 import {
@@ -1283,7 +1284,7 @@ describe("useThreads", () => {
         [thread2WithDeletedAt.id]: thread2WithDeletedAt,
       },
       queries: {
-        [generateQueryKey(roomId, { metadata: {} })]: {
+        [makeRoomThreadsQueryKey(roomId, { metadata: {} })]: {
           isLoading: false,
           data: undefined,
         },

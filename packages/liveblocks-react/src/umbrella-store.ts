@@ -30,6 +30,7 @@ import {
   nanoid,
   nn,
   StopRetrying,
+  stringify,
 } from "@liveblocks/core";
 
 import { autobind } from "./lib/autobind";
@@ -188,15 +189,36 @@ type PaginationStatePatch =
 type QueryAsyncResult = AsyncResult<undefined>;
 type PaginatedAsyncResult = AsyncResult<PaginationState>;
 
+const USER_THREADS_QUERY = "USER_THREADS";
 const ASYNC_LOADING = Object.freeze({ isLoading: true });
 const ASYNC_OK = Object.freeze({ isLoading: false, data: undefined });
 
-// TODO Stop exporting this helper!
+/**
+ * Example:
+ * generateQueryKey('room-abc', { xyz: 123, abc: "red" })
+ * → 'room-abc-{"color":"red","xyz":123}'
+ */
+// XXX Make this an implementation detail of the store
+export function makeRoomThreadsQueryKey(
+  roomId: string,
+  query: ThreadsQuery<BaseMetadata> | undefined
+) {
+  return `${roomId}-${stringify(query ?? {})}`;
+}
+
+// XXX Make this an implementation detail of the store
+export function makeUserThreadsQueryKey(
+  query: ThreadsQuery<BaseMetadata> | undefined
+) {
+  return `${USER_THREADS_QUERY}:${stringify(query ?? {})}`;
+}
+
+// XXX Make this an implementation detail of the store
 export function makeNotificationSettingsQueryKey(roomId: string) {
   return `${roomId}:NOTIFICATION_SETTINGS`;
 }
 
-// TODO Stop exporting this helper!
+// XXX Make this an implementation detail of the store
 export function makeVersionsQueryKey(roomId: string) {
   return `${roomId}-VERSIONS`;
 }
@@ -639,8 +661,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   public getUserThreadsAsync(
-    queryKey: string
+    query: ThreadsQuery<M> | undefined
   ): PagedAsyncResult<UmbrellaStoreState<M>, "fullState"> {
+    const queryKey = makeUserThreadsQueryKey(query);
+
     const paginatedResource = this._userThreads.get(queryKey);
     if (paginatedResource === undefined) {
       return ASYNC_LOADING;
@@ -1383,8 +1407,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   public waitUntilRoomThreadsLoaded(
     roomId: string,
-    options: { query?: ThreadsQuery<M> },
-    queryKey: string // XXX Make queryKey internal implementation detail
+    query: ThreadsQuery<M> | undefined
   ) {
     const threadsFetcher = async (cursor?: string) => {
       if (this._client === undefined) {
@@ -1402,7 +1425,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
         );
       }
 
-      const result = await room.getThreads({ ...options, cursor });
+      const result = await room.getThreads({ cursor, query });
       this.updateThreadsAndNotifications(
         result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
         result.inboxNotifications
@@ -1426,6 +1449,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return result.nextCursor;
     };
 
+    const queryKey = makeRoomThreadsQueryKey(roomId, query);
     let paginatedResource = this._roomThreads.get(queryKey);
     if (paginatedResource === undefined) {
       paginatedResource = new PaginatedResource(threadsFetcher);
@@ -1473,10 +1497,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }
   }
 
-  public waitUntilUserThreadsLoaded(
-    options: { query?: ThreadsQuery<M> },
-    queryKey: string // XXX Make queryKey internal implementation detail
-  ) {
+  public waitUntilUserThreadsLoaded(query: ThreadsQuery<M> | undefined) {
+    const queryKey = `${USER_THREADS_QUERY}:${stringify(query)}`;
+
     const threadsFetcher = async (cursor?: string) => {
       if (this._client === undefined) {
         // TODO: Think about other ways to structure this. Throwing a StopRetrying only
@@ -1487,8 +1510,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
       }
 
       const result = await this._client[kInternal].getUserThreads_experimental({
-        ...options,
         cursor,
+        query,
       });
       this.updateThreadsAndNotifications(
         result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting

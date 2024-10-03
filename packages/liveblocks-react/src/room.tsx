@@ -48,7 +48,6 @@ import {
   makePoller,
   NotificationsApiError,
   ServerMsgCode,
-  stringify,
 } from "@liveblocks/core";
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
@@ -110,6 +109,7 @@ import {
 import type { UmbrellaStore, UmbrellaStoreState } from "./umbrella-store";
 import {
   makeNotificationSettingsQueryKey,
+  makeRoomThreadsQueryKey,
   makeVersionsQueryKey,
 } from "./umbrella-store";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
@@ -1326,19 +1326,19 @@ function useThreads<M extends BaseMetadata>(
   const client = useClient();
   const room = useRoom();
 
-  // e.g. 'room-abc-{"color":"red","xyz":123}'
-  const queryKey = React.useMemo(
-    () => generateQueryKey(room.id, options.query),
-    [room, options]
-  );
-
   const { store, incrementQuerySubscribers } = getExtrasForClient<M>(client);
 
   React.useEffect(() => {
-    store.waitUntilRoomThreadsLoaded(room.id, options, queryKey).catch(() => {
+    store.waitUntilRoomThreadsLoaded(room.id, options.query).catch(() => {
       // Deliberately catch and ignore any errors here
     });
-  }, [store, room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [store, room.id, options.query]);
+
+  // e.g. 'room-abc-{"color":"red","xyz":123}'
+  const queryKey = React.useMemo(
+    () => makeRoomThreadsQueryKey(room.id, options.query),
+    [room, options]
+  );
 
   React.useEffect(() => {
     return incrementQuerySubscribers(queryKey);
@@ -2410,14 +2410,10 @@ function useThreadsSuspense<M extends BaseMetadata>(
 ): ThreadsAsyncSuccess<M> {
   const client = useClient();
   const room = useRoom();
-  const queryKey = React.useMemo(
-    () => generateQueryKey(room.id, options.query),
-    [room, options]
-  );
 
   const { store } = getExtrasForClient<M>(client);
 
-  use(store.waitUntilRoomThreadsLoaded(room.id, options, queryKey));
+  use(store.waitUntilRoomThreadsLoaded(room.id, options.query));
 
   const result = useThreads(options);
   assert(!result.error, "Did not expect error");
@@ -2550,18 +2546,6 @@ export function createRoomContext<
   M extends BaseMetadata = DM,
 >(client: OpaqueClient): RoomContextBundle<P, S, U, E, M> {
   return getOrCreateRoomContextBundle<P, S, U, E, M>(client);
-}
-
-/**
- * Example:
- * generateQueryKey('room-abc', { xyz: 123, abc: "red" })
- * → 'room-abc-{"color":"red","xyz":123}'
- */
-export function generateQueryKey(
-  roomId: string,
-  options: UseThreadsOptions<BaseMetadata>["query"]
-) {
-  return `${roomId}-${stringify(options ?? {})}`;
 }
 
 type TypedBundle = RoomContextBundle<DP, DS, DU, DE, DM>;

@@ -20,7 +20,6 @@ import {
   makePoller,
   raise,
   shallow,
-  stringify,
 } from "@liveblocks/core";
 import type { PropsWithChildren } from "react";
 import React, {
@@ -54,7 +53,7 @@ import type {
   UseUserThreadsOptions,
 } from "./types";
 import type { UmbrellaStoreState } from "./umbrella-store";
-import { UmbrellaStore } from "./umbrella-store";
+import { makeUserThreadsQueryKey, UmbrellaStore } from "./umbrella-store";
 
 /**
  * Raw access to the React context where the LiveblocksProvider stores the
@@ -92,7 +91,6 @@ const _bundles = new WeakMap<
 >();
 
 export const POLLING_INTERVAL = 60 * 1000; // 1 minute
-export const USER_THREADS_QUERY = "USER_THREADS";
 
 function selectUnreadInboxNotificationsCount(
   inboxNotifications: readonly InboxNotificationData[]
@@ -362,6 +360,7 @@ function makeExtrasForClient(client: OpaqueClient) {
   // TODO Hmm. All of this is stuff that should be managed by the cache. Now we have caches in different places.
   const userThreadsSubscribersByQuery = new Map<string, number>();
 
+  // XXX Stop using a queryKey here!
   function incrementUserThreadsQuerySubscribers(queryKey: string) {
     const subscribers = userThreadsSubscribersByQuery.get(queryKey) ?? 0;
     userThreadsSubscribersByQuery.set(queryKey, subscribers + 1);
@@ -990,29 +989,26 @@ function useUserThreads_experimental<M extends BaseMetadata>(
     },
   }
 ): ThreadsAsyncResult<M> {
-  const queryKey = React.useMemo(
-    () => makeUserThreadsQueryKey(options.query),
-    [options]
-  );
-
   const client = useClient<M>();
 
   const { store, incrementUserThreadsQuerySubscribers } =
     getExtrasForClient<M>(client);
 
   useEffect(() => {
-    store.waitUntilUserThreadsLoaded(options, queryKey).catch(() => {
+    store.waitUntilUserThreadsLoaded(options.query).catch(() => {
       // Deliberately catch and ignore any errors here
     });
-  }, [queryKey, store]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [store, options.query]);
+
+  const queryKey = makeUserThreadsQueryKey(options.query);
 
   useEffect(() => {
     incrementUserThreadsQuerySubscribers(queryKey);
   }, [incrementUserThreadsQuerySubscribers, queryKey]);
 
   const getter = useCallback(
-    () => store.getUserThreadsAsync(queryKey),
-    [store, queryKey]
+    () => store.getUserThreadsAsync(options.query),
+    [store, options.query]
   );
 
   const selector = useCallback(
@@ -1071,16 +1067,11 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
     },
   }
 ): ThreadsAsyncSuccess<M> {
-  const queryKey = React.useMemo(
-    () => makeUserThreadsQueryKey(options.query),
-    [options]
-  );
-
   const client = useClient<M>();
 
   const store = getExtrasForClient<M>(client).store;
 
-  use(store.waitUntilUserThreadsLoaded(options, queryKey));
+  use(store.waitUntilUserThreadsLoaded(options.query));
 
   const result = useUserThreads_experimental(options);
   assert(!result.error, "Did not expect error");
@@ -1303,6 +1294,3 @@ export {
   _useUserThreads_experimental as useUserThreads_experimental,
   _useUserThreadsSuspense_experimental as useUserThreadsSuspense_experimental,
 };
-
-const makeUserThreadsQueryKey = (options: UseUserThreadsOptions<DM>["query"]) =>
-  `${USER_THREADS_QUERY}:${stringify(options)}`;
