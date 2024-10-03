@@ -191,7 +191,6 @@ type PaginationStatePatch =
 type QueryAsyncResult = AsyncResult<undefined>;
 type PaginatedAsyncResult = AsyncResult<PaginationState>;
 
-const USER_THREADS_QUERY = "USER_THREADS";
 const ASYNC_LOADING = Object.freeze({ isLoading: true });
 const ASYNC_OK = Object.freeze({ isLoading: false, data: undefined });
 
@@ -210,7 +209,7 @@ function makeRoomThreadsQueryKey(
 function makeUserThreadsQueryKey(
   query: ThreadsQuery<BaseMetadata> | undefined
 ) {
-  return `${USER_THREADS_QUERY}:${stringify(query ?? {})}`;
+  return `USER_THREADS:${stringify(query ?? {})}`;
 }
 
 // XXXX Make this an implementation detail of the store
@@ -1512,7 +1511,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   public waitUntilUserThreadsLoaded(query: ThreadsQuery<M> | undefined) {
-    const queryKey = `${USER_THREADS_QUERY}:${stringify(query)}`;
+    const queryKey = makeUserThreadsQueryKey(query);
 
     const threadsFetcher = async (cursor?: string) => {
       if (this._client === undefined) {
