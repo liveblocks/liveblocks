@@ -679,7 +679,9 @@ describe("useInboxNotifications: pagination", () => {
     const roomId = nanoid();
 
     const threadOne = dummyThreadData({ roomId });
+    await wait(2); // Ensure they aren't created in the same millisecond
     const threadTwo = dummyThreadData({ roomId });
+    await wait(2); // Ensure they aren't created in the same millisecond
     const threadThree = dummyThreadData({ roomId });
 
     const inboxNotificationsPageOne = [

@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 
-import { nanoid, ServerMsgCode } from "@liveblocks/core";
+import { nanoid, ServerMsgCode, wait } from "@liveblocks/core";
 import type { AST } from "@liveblocks/query-parser";
 import { QueryParser } from "@liveblocks/query-parser";
 import {
@@ -2292,7 +2292,9 @@ describe("useThreads: pagination", () => {
     const roomId = nanoid();
 
     const threadsPageOne = [dummyThreadData({ roomId })];
+    await wait(2); // Ensure they aren't created in the same millisecond
     const threadsPageTwo = [dummyThreadData({ roomId })];
+    await wait(2); // Ensure they aren't created in the same millisecond
     const threadsPageThree = [dummyThreadData({ roomId })];
 
     let isPageOneRequested = false;
