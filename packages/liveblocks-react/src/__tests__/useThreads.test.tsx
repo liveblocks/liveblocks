@@ -2291,11 +2291,15 @@ describe("useThreads: pagination", () => {
   test("should load the next page of data when `fetchMore` is called", async () => {
     const roomId = nanoid();
 
-    const threadsPageOne = [dummyThreadData({ roomId })];
-    await wait(2); // Ensure they aren't created in the same millisecond
-    const threadsPageTwo = [dummyThreadData({ roomId })];
-    await wait(2); // Ensure they aren't created in the same millisecond
-    const threadsPageThree = [dummyThreadData({ roomId })];
+    const threadsPageOne = [
+      dummyThreadData({ roomId, createdAt: new Date("2021-01-03T00:00:00Z") }),
+    ];
+    const threadsPageTwo = [
+      dummyThreadData({ roomId, createdAt: new Date("2021-01-02T00:00:00Z") }),
+    ];
+    const threadsPageThree = [
+      dummyThreadData({ roomId, createdAt: new Date("2021-01-01T00:00:00Z") }),
+    ];
 
     let isPageOneRequested = false;
     let isPageTwoRequested = false;
@@ -2417,8 +2421,12 @@ describe("useThreads: pagination", () => {
   test("should set `hasFetchedAll` to true when there are no more pages to fetch", async () => {
     const roomId = nanoid();
 
-    const threadsPageOne = [dummyThreadData({ roomId })];
-    const threadsPageTwo = [dummyThreadData({ roomId })];
+    const threadsPageOne = [
+      dummyThreadData({ roomId, createdAt: new Date("2021-01-02T00:00:00Z") }),
+    ];
+    const threadsPageTwo = [
+      dummyThreadData({ roomId, createdAt: new Date("2021-01-01T00:00:00Z") }),
+    ];
 
     let isPageTwoRequested = false;
     let getThreadsReqCount = 0;
