@@ -3,7 +3,6 @@ import { UmbrellaStore } from "../../umbrella-store";
 const empty = {
   notifications: [],
   notificationsById: {},
-  queries2: {},
   queries3: {},
   queries4: {},
   settingsByRoomId: {},
