@@ -5,11 +5,11 @@ import {
   WebhookHandler,
   Liveblocks,
 } from "@liveblocks/node";
-import { Section, Text } from "@react-email/components";
+import { Text } from "@react-email/components";
 import { render } from "@react-email/render";
 import { getUsers } from "../../../database";
-import { UnreadRepliesEmail } from "../../../../emails/UnreadRepliesEmail";
-import { UnreadMentionEmail } from "../../../../emails/UnreadMention";
+import UnreadRepliesEmail from "../../../../emails/UnreadRepliesEmail";
+import UnreadMentionEmail from "../../../../emails/UnreadMention";
 
 // Add your Resend API key from https://resend.com/api-keys
 const resend = new Resend(process.env.RESEND_API_KEY as string);
@@ -18,6 +18,7 @@ const resend = new Resend(process.env.RESEND_API_KEY as string);
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
 });
+
 // Add your webhook secret key from a project's webhooks dashboard
 const webhookHandler = new WebhookHandler(
   process.env.LIVEBLOCKS_WEBHOOK_SECRET_KEY as string
@@ -48,12 +49,13 @@ export async function POST(request: Request) {
             resolveRoomInfo: ({ roomId }) => {
               return {
                 name: roomId,
-                url: `http://example.com?roomId=${roomId}`,
+                url: `https://example.com?roomId=${roomId}`,
               };
             },
             commentBodyComponents: {
-              Slot: ({ children }) => <Section>{children}</Section>,
-              Paragraph: ({ children }) => <Text>{children}</Text>,
+              Paragraph: ({ children }) => (
+                <Text className="text-sm">{children}</Text>
+              ),
               Mention: ({ element, user }) => (
                 <span>@{user?.name ?? element.id}</span>
               ),
@@ -64,16 +66,39 @@ export async function POST(request: Request) {
         // If there are unread comments (last comment with mention or unread replies)
         if (emailData !== null) {
           let email = <></>;
+          let subject = "";
+
+          const company = {
+            name: "My App",
+            url: "https://example.com",
+          };
+
+          const roomInfo = {
+            name: emailData.roomInfo.name,
+            url: emailData.roomInfo.url,
+          };
 
           switch (emailData.type) {
             // Handle unread replies use case
             case "unreadReplies": {
-              email = <UnreadRepliesEmail />;
+              email = (
+                <UnreadRepliesEmail
+                  company={company}
+                  roomInfo={roomInfo}
+                  comments={emailData.comments}
+                />
+              );
+              subject = `You have ${emailData.comments.length} unread notifications.`;
               break;
             }
             // Handle last unread comment with mention use case
             case "unreadMention": {
-              email = <UnreadMentionEmail />;
+              email = (
+                <UnreadMentionEmail
+                // comment={emailData.comment}
+                />
+              );
+              subject = "You have one unread notification.";
               break;
             }
           }
@@ -83,7 +108,7 @@ export async function POST(request: Request) {
           const { error } = await resend.emails.send({
             from: "Your App <yourapp@example.com>",
             to: event.data.userId, // In this example, user IDs are email addresses,
-            subject: "Unread notifications",
+            subject,
             html,
           });
 
