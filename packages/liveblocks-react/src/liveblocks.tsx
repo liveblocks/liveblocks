@@ -90,7 +90,7 @@ const _bundles = new WeakMap<
   LiveblocksContextBundle<BaseUserMeta, BaseMetadata>
 >();
 
-export const POLLING_INTERVAL = 60 * 1000; // 1 minute
+export const POLLING_INTERVAL = 60 * 1000; // every minute
 
 function selectUnreadInboxNotificationsCount(
   inboxNotifications: readonly InboxNotificationData[]
@@ -268,7 +268,7 @@ function makeDeltaPoller_Notifications(store: UmbrellaStore<BaseMetadata>) {
       // When polling, we don't want to throw errors, ever
       console.warn(`Polling new inbox notifications failed: ${String(err)}`);
     }
-  });
+  }, POLLING_INTERVAL);
 
   // Keep track of the number of subscribers
   let pollerSubscribers = 0;
@@ -287,15 +287,12 @@ function makeDeltaPoller_Notifications(store: UmbrellaStore<BaseMetadata>) {
     // XXXX - We should wait until the lastRequestedAt date is known using a promise and then
     // in the `then` body, check again if the number of subscribers if more than 0, and only then
     // if those conditions hold, start the poller
-    // promise.then(() => { if (subscribers > 0 ) initialPoller() else: do nothing })
-    poller.start(POLLING_INTERVAL);
+    poller.enable(pollerSubscribers > 0);
 
     return () => {
       pollerSubscribers--;
-      if (pollerSubscribers <= 0) {
-        // XXXX - Also abort any outstanding promises with an AbortController
-        poller.stop();
-      }
+      // XXXX - Also abort any outstanding promises with an AbortController
+      poller.enable(pollerSubscribers > 0);
     };
   };
 }
@@ -308,7 +305,7 @@ function makeDeltaPoller_UserThreads(store: UmbrellaStore<BaseMetadata>) {
       // When polling, we don't want to throw errors, ever
       console.warn(`Polling new user threads failed: ${String(err)}`);
     }
-  });
+  }, POLLING_INTERVAL);
 
   // Keep track of the number of subscribers
   let pollerSubscribers = 0;
@@ -320,15 +317,13 @@ function makeDeltaPoller_UserThreads(store: UmbrellaStore<BaseMetadata>) {
     // in the `then` body, check again if the number of subscribers if more than 0, and only then
     // if those conditions hold, start the poller
     // promise.then(() => { if (subscribers > 0 ) initialPoller() else: do nothing })
-    poller.start(POLLING_INTERVAL);
+    poller.enable(pollerSubscribers > 0);
 
     // Decrement in the unsub function
     return () => {
       pollerSubscribers--;
-      if (pollerSubscribers <= 0) {
-        // XXXX - Also abort any outstanding promises with an AbortController
-        poller.stop();
-      }
+      // XXXX - Also abort any outstanding promises with an AbortController
+      poller.enable(pollerSubscribers > 0);
     };
   };
 }

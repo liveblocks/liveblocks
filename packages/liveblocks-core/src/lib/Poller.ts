@@ -1,6 +1,12 @@
 type Poller = {
-  start(interval: number): void;
-  restart(interval: number): void;
+  /**
+   * Starts or stops the poller, based on the given condition. When true,
+   * starts the poller if it hasn't been started already. When false, stops the
+   * poller if it hasn't been stopped already.
+   */
+  enable(condition: boolean): void;
+  start(): void;
+  restart(): void;
   pause(): void;
   resume(): void;
   stop(): void;
@@ -29,7 +35,10 @@ type Context =
       remainingInterval: number;
     };
 
-export function makePoller(callback: () => Promise<void> | void): Poller {
+export function makePoller(
+  callback: () => Promise<void> | void,
+  interval: number
+): Poller {
   let context: Context = {
     state: "stopped",
     timeoutHandle: null,
@@ -70,7 +79,15 @@ export function makePoller(callback: () => Promise<void> | void): Poller {
     };
   }
 
-  function start(interval: number) {
+  function enable(condition: boolean) {
+    if (condition) {
+      start();
+    } else {
+      stop();
+    }
+  }
+
+  function start() {
     if (context.state === "running") {
       return;
     }
@@ -78,9 +95,9 @@ export function makePoller(callback: () => Promise<void> | void): Poller {
     schedule(interval);
   }
 
-  function restart(interval: number) {
+  function restart() {
     stop();
-    start(interval);
+    start();
   }
 
   function pause() {
@@ -127,6 +144,7 @@ export function makePoller(callback: () => Promise<void> | void): Poller {
   }
 
   return {
+    enable,
     start,
     restart,
     pause,
