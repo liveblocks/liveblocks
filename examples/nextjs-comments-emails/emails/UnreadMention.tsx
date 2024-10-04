@@ -2,7 +2,7 @@ import { Body, Container, Head, Html, Preview } from "@react-email/components";
 
 // TODO: add preview props
 
-export default function UnreadMentionEmail() {
+export default function Email() {
   return (
     <Html>
       <Head />

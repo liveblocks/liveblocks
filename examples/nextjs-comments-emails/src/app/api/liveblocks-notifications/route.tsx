@@ -8,7 +8,7 @@ import {
 import { Text } from "@react-email/components";
 import { render } from "@react-email/render";
 import { getUsers } from "../../../database";
-import UnreadRepliesEmail from "../../../../emails/UnreadRepliesEmail";
+import UnreadRepliesEmail from "../../../../emails/UnreadReplies";
 import UnreadMentionEmail from "../../../../emails/UnreadMention";
 
 // Add your Resend API key from https://resend.com/api-keys
@@ -52,6 +52,8 @@ export async function POST(request: Request) {
                 url: `https://example.com?roomId=${roomId}`,
               };
             },
+            // And the magic to use `react-email` components happens here 🥳
+            // Or you can use your own components.
             commentBodyComponents: {
               Paragraph: ({ children }) => (
                 <Text className="text-sm">{children}</Text>

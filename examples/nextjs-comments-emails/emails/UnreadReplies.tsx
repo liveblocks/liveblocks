@@ -101,7 +101,7 @@ const getPreviewText = (
   return `${comments.length} new comments in ${roomName}`;
 };
 
-export default function UnreadRepliesEmail(props: EmailProps) {
+export default function Email(props: EmailProps) {
   const { company, roomInfo, comments } = getProps(props, previewProps);
   const previewText = getPreviewText(comments, roomInfo);
   return (
