@@ -5,86 +5,36 @@ type Poller = {
    * poller if it hasn't been stopped already.
    */
   enable(condition: boolean): void;
-  start(): void;
-  restart(): void;
-  pause(): void;
-  resume(): void;
-  stop(): void;
 };
 
 type Context =
-  | {
-      state: "stopped";
-      timeoutHandle: null;
-      interval: null;
-      lastScheduledAt: null;
-      remainingInterval: null;
-    }
+  | { state: "stopped" }
   | {
       state: "running";
       timeoutHandle: ReturnType<typeof setTimeout>;
-      interval: number;
       lastScheduledAt: number;
-      remainingInterval: null;
-    }
-  | {
-      state: "paused";
-      timeoutHandle: null;
-      interval: number;
-      lastScheduledAt: number;
-      remainingInterval: number;
     };
 
 export function makePoller(
   callback: () => Promise<void> | void,
   interval: number
 ): Poller {
-  let context: Context = {
-    state: "stopped",
-    timeoutHandle: null,
-    interval: null,
-    lastScheduledAt: null,
-    remainingInterval: null,
-  };
+  let context: Context = { state: "stopped" };
 
   function poll() {
     if (context.state === "running") {
-      schedule(context.interval);
+      schedule();
     }
 
     void callback();
   }
 
-  function schedule(interval: number) {
+  function schedule() {
     context = {
       state: "running",
-      interval: context.state !== "stopped" ? context.interval : interval,
       lastScheduledAt: performance.now(),
       timeoutHandle: setTimeout(poll, interval),
-      remainingInterval: null,
     };
-  }
-
-  function scheduleRemaining(remaining: number) {
-    if (context.state !== "paused") {
-      return;
-    }
-
-    context = {
-      state: "running",
-      interval: context.interval,
-      lastScheduledAt: context.lastScheduledAt,
-      timeoutHandle: setTimeout(poll, remaining),
-      remainingInterval: null,
-    };
-  }
-
-  function enable(condition: boolean) {
-    if (condition) {
-      start();
-    } else {
-      stop();
-    }
   }
 
   function start() {
@@ -92,37 +42,7 @@ export function makePoller(
       return;
     }
 
-    schedule(interval);
-  }
-
-  function restart() {
-    stop();
-    start();
-  }
-
-  function pause() {
-    if (context.state !== "running") {
-      return;
-    }
-
-    clearTimeout(context.timeoutHandle);
-
-    context = {
-      state: "paused",
-      interval: context.interval,
-      lastScheduledAt: context.lastScheduledAt,
-      timeoutHandle: null,
-      remainingInterval:
-        context.interval - (performance.now() - context.lastScheduledAt),
-    };
-  }
-
-  function resume() {
-    if (context.state !== "paused") {
-      return;
-    }
-
-    scheduleRemaining(context.remainingInterval);
+    schedule();
   }
 
   function stop() {
@@ -133,22 +53,18 @@ export function makePoller(
     if (context.timeoutHandle) {
       clearTimeout(context.timeoutHandle);
     }
+    context = { state: "stopped" };
+  }
 
-    context = {
-      state: "stopped",
-      interval: null,
-      lastScheduledAt: null,
-      timeoutHandle: null,
-      remainingInterval: null,
-    };
+  function enable(condition: boolean) {
+    if (condition) {
+      start();
+    } else {
+      stop();
+    }
   }
 
   return {
     enable,
-    start,
-    restart,
-    pause,
-    resume,
-    stop,
   };
 }
