@@ -1610,11 +1610,6 @@ describe("useThreads: error", () => {
 
     // A new fetch request for the threads should have been made after the initial render
     await waitFor(() => expect(getThreadsReqCount).toBe(1));
-
-    // An error will only be thrown after the initial load failed, which
-    // happens after 5 retries (>1 minute) at earliest.
-    await jest.advanceTimersByTimeAsync(1_000);
-
     expect(result.current).toEqual({ isLoading: true });
 
     // The first retry should be made after 5s
@@ -2293,13 +2288,14 @@ describe("useThreadsSuspense: error", () => {
 });
 
 describe("useThreads pagination", () => {
-  test("should set `hasFetchedAll` to false while cursor data is present", async () => {
+  test("should load the next page of data when `fetchMore` is called", async () => {
     const roomId = nanoid();
 
     const threadsPageOne = [dummyThreadData({ roomId })];
     const threadsPageTwo = [dummyThreadData({ roomId })];
     const threadsPageThree = [dummyThreadData({ roomId })];
 
+    let isPageOneRequested = false;
     let isPageTwoRequested = false;
     let isPageThreeRequested = false;
 
@@ -2330,6 +2326,113 @@ describe("useThreads pagination", () => {
           return res(
             ctx.json({
               data: threadsPageThree,
+              inboxNotifications: [],
+              deletedThreads: [],
+              deletedInboxNotifications: [],
+              meta: {
+                requestedAt: new Date().toISOString(),
+                nextCursor: null,
+              },
+            })
+          );
+        }
+        // Request for the first page
+        else {
+          isPageOneRequested = true;
+          return res(
+            ctx.json({
+              data: threadsPageOne,
+              inboxNotifications: [],
+              deletedThreads: [],
+              deletedInboxNotifications: [],
+              meta: {
+                requestedAt: new Date().toISOString(),
+                nextCursor: "cursor-1",
+              },
+            })
+          );
+        }
+      })
+    );
+
+    const {
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id={roomId}>{children}</RoomProvider>
+      ),
+    });
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    // Initial load (Page 1)
+    await waitFor(() => expect(isPageOneRequested).toBe(true));
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [...threadsPageOne],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: false,
+        fetchMoreError: undefined,
+      })
+    );
+
+    const fetchMore = result.current.fetchMore!;
+
+    // Fetch Page 2
+    fetchMore();
+    await waitFor(() => expect(isPageTwoRequested).toBe(true));
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [...threadsPageOne, ...threadsPageTwo],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: false,
+        fetchMoreError: undefined,
+      })
+    );
+
+    // Fetch Page 3
+    fetchMore();
+    await waitFor(() => expect(isPageThreeRequested).toBe(true));
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [...threadsPageOne, ...threadsPageTwo, ...threadsPageThree],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
+      })
+    );
+
+    unmount();
+  });
+  test("should set `hasFetchedAll` to true when there are no more pages to fetch", async () => {
+    const roomId = nanoid();
+
+    const threadsPageOne = [dummyThreadData({ roomId })];
+    const threadsPageTwo = [dummyThreadData({ roomId })];
+
+    let isPageTwoRequested = false;
+    let getThreadsReqCount = 0;
+
+    server.use(
+      mockGetThreads(async (req, res, ctx) => {
+        getThreadsReqCount++;
+        const url = new URL(req.url);
+        const cursor = url.searchParams.get("cursor");
+
+        // Request for Page 2
+        if (cursor === "cursor-1") {
+          isPageTwoRequested = true;
+          return res(
+            ctx.json({
+              data: threadsPageTwo,
               inboxNotifications: [],
               deletedThreads: [],
               deletedInboxNotifications: [],
@@ -2380,15 +2483,79 @@ describe("useThreads pagination", () => {
         fetchMoreError: undefined,
       })
     );
+    expect(getThreadsReqCount).toEqual(1);
 
     const fetchMore = result.current.fetchMore!;
 
     fetchMore();
     await waitFor(() => expect(isPageTwoRequested).toBe(true));
+    expect(getThreadsReqCount).toEqual(2);
     await waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         threads: [...threadsPageOne, ...threadsPageTwo],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
+      })
+    );
+
+    unmount();
+  });
+
+  test("should handle error while fetching more and set fetchMoreError", async () => {
+    const roomId = nanoid();
+
+    let isPageTwoRequested = false;
+
+    const threadsPageOne = [dummyThreadData({ roomId })];
+
+    server.use(
+      mockGetThreads(async (req, res, ctx) => {
+        const url = new URL(req.url);
+        const cursor = url.searchParams.get("cursor");
+
+        // Initial load (Page 1)
+        if (cursor === null) {
+          return res(
+            ctx.json({
+              data: threadsPageOne,
+              inboxNotifications: [],
+              deletedThreads: [],
+              deletedInboxNotifications: [],
+              meta: {
+                requestedAt: new Date().toISOString(),
+                nextCursor: "cursor-1",
+              },
+            })
+          );
+        }
+        // Page 2
+        else {
+          isPageTwoRequested = true;
+          return res(ctx.status(500));
+        }
+      })
+    );
+
+    const {
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id={roomId}>{children}</RoomProvider>
+      ),
+    });
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    // Initial load (Page 1)
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [...threadsPageOne],
         fetchMore: expect.any(Function),
         isFetchingMore: false,
         hasFetchedAll: false,
@@ -2396,16 +2563,20 @@ describe("useThreads pagination", () => {
       })
     );
 
+    const fetchMore = result.current.fetchMore!;
+
+    // Fetch Page 2 (which returns an error)
     fetchMore();
-    await waitFor(() => expect(isPageThreeRequested).toBe(true));
+
+    await waitFor(() => expect(isPageTwoRequested).toBe(true));
     await waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
-        threads: [...threadsPageOne, ...threadsPageTwo, ...threadsPageThree],
+        threads: threadsPageOne,
         fetchMore: expect.any(Function),
         isFetchingMore: false,
-        hasFetchedAll: true,
-        fetchMoreError: undefined,
+        hasFetchedAll: false,
+        fetchMoreError: expect.any(Error),
       })
     );
 
