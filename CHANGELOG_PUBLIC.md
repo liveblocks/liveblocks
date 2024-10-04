@@ -15,6 +15,13 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 40 (2024-10-04)
 
+## 2.8.2
+
+### `@liveblocks/client`
+
+- Send client version in HTTP request headers from the client, to ensure
+  backward compatible responses from the server
+
 ## 2.8.1
 
 ### `@liveblocks/react-ui`
@@ -32,7 +39,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
   
 ## Contributors
 
-marcbouchenoire, sugardarius, pierrelevaillant
+marcbouchenoire, sugardarius, pierrelevaillant, nvie
 
 # Week 39 (2024-09-27)
 
