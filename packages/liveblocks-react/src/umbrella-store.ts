@@ -407,12 +407,12 @@ export class PaginatedResource {
     }
 
     if (usable.status === "rejected") {
-      // XXX Make this a stable reference!
+      // XXXX Make this a stable reference!
       return { isLoading: false, error: usable.reason };
     }
 
     const state = this._paginationState!;
-    // XXX Make this a stable reference!
+    // XXXX Make this a stable reference!
     return {
       isLoading: false,
       data: {
@@ -649,7 +649,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return asyncResult;
     }
 
-    // XXX - Verify performance does not become an issue as `selectThread` is an expensive operation
+    // XXXX - Verify performance does not become an issue as `selectThread` is an expensive operation
     const threads = selectThreads(this.getFullState(), {
       roomId,
       query,

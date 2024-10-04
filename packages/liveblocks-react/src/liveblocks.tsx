@@ -484,7 +484,7 @@ function useInboxNotifications_withClient<T>(
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
   useEffect(() => {
-    // XXX - Verify that we need the catch or not
+    // XXXX - Verify that we need the catch or not
     void store.waitUntilNotificationsLoaded().catch(() => {
       // Deliberately catch and ignore any errors here
     });
@@ -988,7 +988,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
 
   useEffect(
     () => {
-      // XXX - Verify that we need the catch or not
+      // XXXX - Verify that we need the catch or not
       void store.waitUntilUserThreadsLoaded(options.query).catch(() => {
         // Deliberately catch and ignore any errors here
       });

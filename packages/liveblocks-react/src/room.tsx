@@ -1316,7 +1316,7 @@ function useThreads<M extends BaseMetadata>(
   }
 ): ThreadsAsyncResult<M> {
   const { scrollOnLoad = true } = options;
-  // XXX - query = stable(options.query);
+  // XXXX - query = stable(options.query);
 
   const client = useClient();
   const room = useRoom();
@@ -1326,7 +1326,7 @@ function useThreads<M extends BaseMetadata>(
 
   React.useEffect(
     () => {
-      // XXX - Verify that we need the catch or not
+      // XXXX - Verify that we need the catch or not
       void store
         .waitUntilRoomThreadsLoaded(room.id, options.query)
         .catch(() => {
