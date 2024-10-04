@@ -1,3 +1,4 @@
+import * as console from "./fancy-console";
 import { wait } from "./utils";
 
 /**
@@ -44,7 +45,10 @@ export async function autoRetry<T>(
 
     // Do another retry
     const delay = backoff[attempt - 1] ?? fallbackBackoff;
-    // XXX - Add a console warn to notify the failure and delay before retrying
+
+    console.warn(
+      `Attempt ${attempt} was unsuccessful. Retrying in ${delay} milliseconds.`
+    );
     await wait(delay);
   }
 }
