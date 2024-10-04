@@ -15,16 +15,6 @@ export function Sidebar({ rooms, className, ...props }: SidebarProps) {
   return (
     <aside className={clsx(className, "sidebar")} {...props}>
       <ul>
-        <li>
-          <Link
-            href="/"
-            className="sidebar-room"
-            data-active={pathname === "/" ? "" : undefined}
-          >
-            All
-          </Link>
-        </li>
-
         {rooms.map((room) => {
           const isActive = pathname === room.url;
 

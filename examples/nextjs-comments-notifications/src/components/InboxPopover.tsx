@@ -15,10 +15,8 @@ import { ErrorBoundary } from "react-error-boundary";
 import clsx from "clsx";
 import { Link } from "./Link";
 import { usePathname } from "next/navigation";
-import { useRenderCount } from "../hooks/useRenderCount";
 
 function Inbox({ className, ...props }: ComponentPropsWithoutRef<"div">) {
-  const renderCount = useRenderCount();
   const {
     inboxNotifications,
     fetchMore,
@@ -37,7 +35,6 @@ function Inbox({ className, ...props }: ComponentPropsWithoutRef<"div">) {
 
   return (
     <div className={className} {...props}>
-      <h3>Render count: {renderCount}</h3>
       {/* Load more notifications when scrolling to the end of the list */}
       <InboxNotificationList
         className="inbox-list"
