@@ -1634,10 +1634,25 @@ describe("useThreads: error", () => {
     await jest.advanceTimersByTimeAsync(15_000);
     await waitFor(() => expect(getThreadsReqCount).toBe(5));
 
-    // XXX - Investivate why this test is passing!!!!!!
-    // Won't try more than 5 attempts
-    await jest.advanceTimersByTimeAsync(20_000);
-    await waitFor(() => expect(getThreadsReqCount).toBe(5));
+    await waitFor(() => {
+      expect(result.current).toEqual({
+        isLoading: false,
+        error: expect.any(Error),
+      });
+    });
+
+    // Wait for 5 second for the error to clear
+    await jest.advanceTimersByTimeAsync(5_000);
+
+    // A new fetch request for the threads should have been made after the initial render
+    await waitFor(() => expect(getThreadsReqCount).toBe(6));
+    expect(result.current).toEqual({
+      isLoading: true,
+    });
+
+    // The first retry should be made after 5s
+    await jest.advanceTimersByTimeAsync(5_000);
+    await waitFor(() => expect(getThreadsReqCount).toBe(7));
 
     // and so on...
 
