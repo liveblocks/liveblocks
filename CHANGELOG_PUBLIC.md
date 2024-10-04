@@ -22,6 +22,14 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 - Expose `onComposerSubmit` on `Thread` to react to the inner composer of a
   thread.
 
+## Website
+
+- Refresh Pricing page design
+
+## Dashboard
+
+- Add attachment support to the comments view on the room detail page
+  
 ## Contributors
 
 marcbouchenoire
