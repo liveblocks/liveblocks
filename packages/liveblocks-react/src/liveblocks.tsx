@@ -273,14 +273,6 @@ function makeDeltaPoller_Notifications(store: UmbrellaStore<BaseMetadata>) {
   // Keep track of the number of subscribers
   let pollerSubscribers = 0;
 
-  /**
-   * Enables polling for inbox notifications when the component mounts. Stops
-   * polling on unmount.
-   *
-   * Safe to be called multiple times from different components. The first
-   * component to mount starts the polling. The last component to unmount stops
-   * the polling.
-   */
   return () => {
     pollerSubscribers++;
 
@@ -291,12 +283,16 @@ function makeDeltaPoller_Notifications(store: UmbrellaStore<BaseMetadata>) {
 
     return () => {
       pollerSubscribers--;
-      // XXXX - Also abort any outstanding promises with an AbortController
+
+      // XXXX - When stopping the poller, we should also ideally abort its
+      // poller function, maybe using an AbortController? This functionality
+      // should be automatic and handled by the Poller abstraction, not here!
       poller.enable(pollerSubscribers > 0);
     };
   };
 }
 
+// XXXX DRY up these makeDeltaPoller_* abstractions, now that the symmetry has become clear!
 function makeDeltaPoller_UserThreads(store: UmbrellaStore<BaseMetadata>) {
   const poller = makePoller(async () => {
     try {
@@ -319,15 +315,18 @@ function makeDeltaPoller_UserThreads(store: UmbrellaStore<BaseMetadata>) {
     // promise.then(() => { if (subscribers > 0 ) initialPoller() else: do nothing })
     poller.enable(pollerSubscribers > 0);
 
-    // Decrement in the unsub function
     return () => {
       pollerSubscribers--;
-      // XXXX - Also abort any outstanding promises with an AbortController
+
+      // XXXX - When stopping the poller, we should also ideally abort its
+      // poller function, maybe using an AbortController? This functionality
+      // should be automatic and handled by the Poller abstraction, not here!
       poller.enable(pollerSubscribers > 0);
     };
   };
 }
 
+// XXXX DRY up these makeDeltaPoller_* abstractions, now that the symmetry has become clear!
 function makeLiveblocksExtrasForClient(client: OpaqueClient) {
   const store = getUmbrellaStoreForClient(client);
   // TODO                                ^ Bind to M type param here

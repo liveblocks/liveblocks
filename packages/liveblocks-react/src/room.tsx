@@ -230,6 +230,7 @@ function handleApiError(err: CommentsApiError | NotificationsApiError): Error {
   return new Error(message);
 }
 
+// XXXX DRY up these makeDeltaPoller_* abstractions, now that the symmetry has become clear!
 function makeDeltaPoller_RoomThreads(client: OpaqueClient) {
   const store = getUmbrellaStoreForClient(client);
 
@@ -262,7 +263,10 @@ function makeDeltaPoller_RoomThreads(client: OpaqueClient) {
 
     return () => {
       pollerSubscribers--;
-      // XXXX - Also abort any outstanding promises with an AbortController
+
+      // XXXX - When stopping the poller, we should also ideally abort its
+      // poller function, maybe using an AbortController? This functionality
+      // should be automatic and handled by the Poller abstraction, not here!
       poller.enable(pollerSubscribers > 0);
     };
   };
