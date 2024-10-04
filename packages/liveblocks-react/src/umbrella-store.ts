@@ -189,9 +189,8 @@ type PaginationStatePatch =
   | { isFetchingMore: false; fetchMoreError: Error };
 
 type QueryAsyncResult = AsyncResult<undefined>;
-type PaginatedAsyncResult = AsyncResult<PaginationState>;
 
-const ASYNC_LOADING = Object.freeze({ isLoading: true });
+// XXXX - Remove ASYNC_OK
 const ASYNC_OK = Object.freeze({ isLoading: false, data: undefined });
 
 /**
@@ -261,6 +260,8 @@ function usify<T>(promise: Promise<T>): UsablePromise<T> {
 }
 
 const noop = Promise.resolve();
+
+const ASYNC_LOADING = Object.freeze({ isLoading: true });
 
 /**
  * The PaginatedResource helper class is responsible for and abstracts away the
@@ -473,7 +474,6 @@ type InternalState<M extends BaseMetadata> = Readonly<{
   // This is a temporary refactoring artifact from Vincent and Nimesh.
   // Each query corresponds to a resource which should eventually have its own type.
   // This is why we split it for now.
-  queries2: Record<string, QueryAsyncResult>; // Threads
   queries3: Record<string, QueryAsyncResult>; // Notification settings
   queries4: Record<string, QueryAsyncResult>; // Versions
 
@@ -497,7 +497,6 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
    * e.g. 'room-abc-{}'               - loading
    */
   // TODO Query state should not be exposed publicly by the store!
-  queries2: Record<string, QueryAsyncResult>; // Threads
   queries3: Record<string, QueryAsyncResult>; // Notification settings
   queries4: Record<string, QueryAsyncResult>; // Versions
 
@@ -595,7 +594,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     this._store = createStore<InternalState<M>>({
       rawThreadsById: {},
-      queries2: {},
       queries3: {},
       queries4: {},
       optimisticUpdates: [],
@@ -858,22 +856,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }));
   }
 
-  private setQuery1State(queryState: PaginatedAsyncResult): void {
-    this._store.set((state) => ({
-      ...state,
-      query1: queryState,
-    }));
-  }
-
-  private setQuery2State(queryKey: string, queryState: QueryAsyncResult): void {
-    this._store.set((state) => ({
-      ...state,
-      queries2: {
-        ...state.queries2,
-        [queryKey]: queryState,
-      },
-    }));
-  }
   private setQuery3State(queryKey: string, queryState: QueryAsyncResult): void {
     this._store.set((state) => ({
       ...state,
@@ -1330,36 +1312,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.updateOptimisticUpdatesCache((cache) =>
       cache.filter((ou) => ou.id !== optimisticUpdateId)
     );
-  }
-
-  //
-  // Query State APIs
-  //
-
-  // Query 1
-  public setQuery1Loading(): void {
-    this.setQuery1State(ASYNC_LOADING);
-  }
-
-  public setQuery1OK(pageState: PaginationState): void {
-    this.setQuery1State({ isLoading: false, data: pageState });
-  }
-
-  public setQuery1Error(error: Error): void {
-    this.setQuery1State({ isLoading: false, error });
-  }
-
-  // Query 2
-  public setQuery2Loading(queryKey: string): void {
-    this.setQuery2State(queryKey, ASYNC_LOADING);
-  }
-
-  public setQuery2OK(queryKey: string): void {
-    this.setQuery2State(queryKey, ASYNC_OK);
-  }
-
-  public setQuery2Error(queryKey: string, error: Error): void {
-    this.setQuery2State(queryKey, { isLoading: false, error });
   }
 
   // Query 3
@@ -1868,7 +1820,6 @@ function internalToExternalState<M extends BaseMetadata>(
     notifications: cleanedNotifications,
     notificationsById: computed.notificationsById,
     settingsByRoomId: computed.settingsByRoomId,
-    queries2: state.queries2,
     queries3: state.queries3,
     queries4: state.queries4,
     threads: cleanedThreads,
