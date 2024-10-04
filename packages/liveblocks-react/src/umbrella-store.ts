@@ -38,7 +38,6 @@ import { isMoreRecentlyUpdated } from "./lib/compare";
 import { selectThreads } from "./liveblocks";
 import type {
   InboxNotificationsAsyncResult,
-  PagedAsyncResult,
   RoomNotificationSettingsAsyncResult,
   ThreadsAsyncResult,
   ThreadsQuery,
@@ -671,7 +670,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // XXXX - Find a better name for that doesn't associate to 'async'
   public getUserThreadsAsync(
     query: ThreadsQuery<M> | undefined
-  ): PagedAsyncResult<UmbrellaStoreState<M>, "fullState"> {
+  ): ThreadsAsyncResult<M> {
     const queryKey = makeUserThreadsQueryKey(query);
 
     const paginatedResource = this._userThreads.get(queryKey);
@@ -684,11 +683,17 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return asyncResult;
     }
 
+    const threads = selectThreads(this.getFullState(), {
+      roomId: null, // Do _not_ filter by roomId
+      query,
+      orderBy: "last-update",
+    });
+
     const page = asyncResult.data;
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      fullState: this.getFullState(),
+      threads,
       hasFetchedAll: page.hasFetchedAll,
       isFetchingMore: page.isFetchingMore,
       fetchMoreError: page.fetchMoreError,

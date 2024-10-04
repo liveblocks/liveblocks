@@ -1020,37 +1020,11 @@ function useUserThreads_experimental<M extends BaseMetadata>(
     [store, options.query]
   );
 
-  // XXX Move this selector into the store, make it symmetric with how it works for getRoomThreadsAsync
-  const selector = useCallback(
-    (result: ReturnType<typeof getter>): ThreadsAsyncResult<M> => {
-      if (!result.fullState) {
-        return result; // Loading or error state
-      }
-
-      const threads = selectThreads(result.fullState, {
-        roomId: null, // Do _not_ filter by roomId
-        query: options.query,
-        orderBy: "last-update",
-      });
-
-      // "Map" the success state, by selecting the threads and returning only those parts externally
-      return {
-        isLoading: false,
-        threads,
-        hasFetchedAll: result.hasFetchedAll,
-        isFetchingMore: result.isFetchingMore,
-        fetchMoreError: result.fetchMoreError,
-        fetchMore: result.fetchMore,
-      };
-    },
-    [options]
-  );
-
   return useSyncExternalStoreWithSelector(
     store.subscribeUserThreads,
     getter,
     getter,
-    selector,
+    identity,
     shallow2 // NOTE: Using 2-level-deep shallow check here, because the result of selectThreads() is not stable!
   );
 }
