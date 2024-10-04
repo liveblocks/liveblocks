@@ -431,7 +431,8 @@ function makeLiveblocksContextBundle<
   const bundle: LiveblocksContextBundle<U, M> = {
     LiveblocksProvider,
 
-    useInboxNotifications: () => useInboxNotifications_withClient(client),
+    useInboxNotifications: () =>
+      useInboxNotifications_withClient(client, identity, shallow),
     useUnreadInboxNotificationsCount: () =>
       useUnreadInboxNotificationsCount_withClient(client),
 
@@ -470,7 +471,11 @@ function makeLiveblocksContextBundle<
   return bundle;
 }
 
-function useInboxNotifications_withClient(client: OpaqueClient) {
+function useInboxNotifications_withClient<T>(
+  client: OpaqueClient,
+  selector: (result: InboxNotificationsAsyncResult) => T,
+  isEqual: (a: T, b: T) => boolean
+): T {
   const {
     store,
     subscribeToNotificationsDeltaUpdates: subscribeToDeltaUpdates,
@@ -479,11 +484,11 @@ function useInboxNotifications_withClient(client: OpaqueClient) {
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
   useEffect(() => {
-    // XXX - Also add a void before this promise. Verify that we need the catch or not
+    // XXX - Verify that we need the catch or not
     void store.waitUntilNotificationsLoaded().catch(() => {
       // Deliberately catch and ignore any errors here
     });
-  }, [store]);
+  });
 
   useEffect(subscribeToDeltaUpdates, [subscribeToDeltaUpdates]);
 
@@ -491,8 +496,8 @@ function useInboxNotifications_withClient(client: OpaqueClient) {
     store.subscribeThreadsOrInboxNotifications,
     store.getInboxNotificationsAsync,
     store.getInboxNotificationsAsync,
-    identity,
-    shallow
+    selector,
+    isEqual
   );
 }
 
@@ -504,38 +509,15 @@ function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
 
   // We're in a Suspense world here, and as such, the useInboxNotifications()
   // hook is expected to only return success results when we're here.
-  const result = useInboxNotifications_withClient(client);
+  const result = useInboxNotifications_withClient(client, identity, shallow);
   assert(!result.error, "Did not expect error");
   assert(!result.isLoading, "Did not expect loading");
   return result;
 }
 
 function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
-  const {
-    store,
-    subscribeToNotificationsDeltaUpdates: subscribeToDeltaUpdates,
-  } = getLiveblocksExtrasForClient(client);
-
-  // Trigger initial loading of inbox notifications if it hasn't started
-  // already, but don't await its promise.
-  useEffect(
-    () => {
-      // XXX - Verify that we need the catch or not
-      void store.waitUntilNotificationsLoaded().catch(() => {
-        // Deliberately catch and ignore any errors here
-      });
-    }
-    // NOTE: Deliberately *not* using a dependency array here! This is important!
-    // XXX - Document why no dependency is provided to this useEffect
-    // XXX - Explicitly test if this is indeed working as-expected by testing a non-Suspense example!
-  );
-
-  useEffect(subscribeToDeltaUpdates, [subscribeToDeltaUpdates]);
-
-  return useSyncExternalStoreWithSelector(
-    store.subscribeThreadsOrInboxNotifications,
-    store.getInboxNotificationsAsync,
-    store.getInboxNotificationsAsync,
+  return useInboxNotifications_withClient(
+    client,
     selectorFor_useUnreadInboxNotificationsCount,
     shallow
   );
@@ -1099,7 +1081,7 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
  * const { inboxNotifications, error, isLoading } = useInboxNotifications();
  */
 function useInboxNotifications() {
-  return useInboxNotifications_withClient(useClient());
+  return useInboxNotifications_withClient(useClient(), identity, shallow);
 }
 
 /**
