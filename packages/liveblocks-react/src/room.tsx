@@ -248,7 +248,7 @@ function makeDeltaPoller_RoomThreads(client: OpaqueClient) {
     );
   });
 
-  // Keep track of the number of subscribers to room threads
+  // Keep track of the number of subscribers
   let pollerSubscribers = 0;
 
   return () => {

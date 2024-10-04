@@ -260,7 +260,6 @@ export function getLiveblocksExtrasForClient<M extends BaseMetadata>(
 }
 
 function makeDeltaPoller_Notifications(store: UmbrellaStore<BaseMetadata>) {
-  let pollerSubscribers = 0;
   const poller = makePoller(async () => {
     try {
       await store.waitUntilNotificationsLoaded();
@@ -270,6 +269,9 @@ function makeDeltaPoller_Notifications(store: UmbrellaStore<BaseMetadata>) {
       console.warn(`Polling new inbox notifications failed: ${String(err)}`);
     }
   });
+
+  // Keep track of the number of subscribers
+  let pollerSubscribers = 0;
 
   /**
    * Enables polling for inbox notifications when the component mounts. Stops
@@ -308,11 +310,12 @@ function makeDeltaPoller_UserThreads(store: UmbrellaStore<BaseMetadata>) {
     }
   });
 
-  // Keep track of the number of subscribers to user threads
+  // Keep track of the number of subscribers
   let pollerSubscribers = 0;
 
   return () => {
     pollerSubscribers++;
+
     // XXXX - We should wait until the lastRequestedAt date is known using a promise and then
     // in the `then` body, check again if the number of subscribers if more than 0, and only then
     // if those conditions hold, start the poller
