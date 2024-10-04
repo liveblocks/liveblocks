@@ -1333,9 +1333,15 @@ function useThreads<M extends BaseMetadata>(
           // Deliberately catch and ignore any errors here
         });
     }
-    // NOTE: Deliberately *not* using a dependency array here! This is important!
-    // XXX - Document why no dependency is provided to this useEffect
-    // XXX - Explicitly test if this is indeed working as-expected by testing a non-Suspense example!
+
+    // NOTE: Deliberately *not* using a dependency array here!
+    //
+    // It is important to call waitUntil on *every* render.
+    // This is harmless though, on most renders, except:
+    // 1. The very first render, in which case we'll want to trigger the initial page fetch.
+    // 2. All other subsequent renders now "just" return the same promise (a quick operation).
+    // 3. If ever the promise would fail, then after 5 seconds it would reset, and on the very
+    //    *next* render after that, a *new* fetch/promise will get created.
   );
 
   React.useEffect(subscribeToDeltaUpdates, [subscribeToDeltaUpdates]);
