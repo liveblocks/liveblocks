@@ -31,11 +31,15 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Website
 
-- Refresh Pricing page design
+- Refresh pricing page design
 
 ## Dashboard
 
 - Add attachments support to the comments view on the room detail page
+
+## Figma Kit
+
+- Add comments attachments to the [Liveblocks Collaboration Kit in Figma](https://www.figma.com/community/file/1387130796111847788/liveblocks-collaboration-kit)
   
 ## Contributors
 
