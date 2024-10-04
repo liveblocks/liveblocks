@@ -2287,7 +2287,7 @@ describe("useThreadsSuspense: error", () => {
   });
 });
 
-describe("useThreads pagination", () => {
+describe("useThreads: pagination", () => {
   test("should load the next page of data when `fetchMore` is called", async () => {
     const roomId = nanoid();
 
@@ -2331,7 +2331,7 @@ describe("useThreads pagination", () => {
               deletedInboxNotifications: [],
               meta: {
                 requestedAt: new Date().toISOString(),
-                nextCursor: null,
+                nextCursor: "cursor-3",
               },
             })
           );
@@ -2405,7 +2405,7 @@ describe("useThreads pagination", () => {
         threads: [...threadsPageOne, ...threadsPageTwo, ...threadsPageThree],
         fetchMore: expect.any(Function),
         isFetchingMore: false,
-        hasFetchedAll: true,
+        hasFetchedAll: false,
         fetchMoreError: undefined,
       })
     );
