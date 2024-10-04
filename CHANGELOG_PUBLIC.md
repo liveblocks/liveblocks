@@ -28,11 +28,11 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Dashboard
 
-- Add attachment support to the comments view on the room detail page
+- Add attachments support to the comments view on the room detail page
   
 ## Contributors
 
-marcbouchenoire
+marcbouchenoire, sugardarius, pierrelevaillant
 
 # Week 39 (2024-09-27)
 
