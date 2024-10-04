@@ -10,11 +10,13 @@ import {
 import type { CommentEmailAsReactData } from "@liveblocks/emails";
 import { EmailRoot } from "./_components/email-root";
 import { getProps } from "./_utils/getProps";
+import { CompanyRow } from "./_components/company-row";
 
 type RoomInfo = {
   name?: string;
   url?: string;
 };
+
 type EmailProps = {
   company: {
     name: string;
@@ -101,18 +103,7 @@ export default function Email(props: EmailProps) {
   const previewText = getPreviewText(comments, roomInfo);
   return (
     <EmailRoot preview={previewText}>
-      <Row>
-        <Column className="w-[32px]">
-          <div className="w-[24px] h-[24px] bg-black rounded-lg flex items-center justify-center">
-            <div className="w-[10px] h-[10px] rounded-full bg-white" />
-          </div>
-        </Column>
-        <Column>
-          <Heading as="h1" className="m-0">
-            {company.name}
-          </Heading>
-        </Column>
-      </Row>
+      <CompanyRow name={company.name} url={company.url} variant="header" />
       <Section className="my-12">
         <Text className="text-sm font-medium">{previewText}</Text>
         {comments.map((comment) => (
@@ -153,16 +144,7 @@ export default function Email(props: EmailProps) {
             </Row>
           </Section>
         ))}
-        <Row>
-          <Column className="w-[26px]">
-            <div className="w-[20px] h-[20px] bg-black rounded-md flex items-center justify-center">
-              <div className="w-[8px] h-[8px] rounded-full bg-white" />
-            </div>
-          </Column>
-          <Column>
-            <Text className="text-xs font-medium">{company.name}</Text>
-          </Column>
-        </Row>
+        <CompanyRow name={company.name} url={company.url} variant="footer" />
       </Section>
     </EmailRoot>
   );
