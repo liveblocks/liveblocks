@@ -68,6 +68,8 @@ export {
 
 export { useCommentsErrorListener, CreateThreadError } from "./room";
 
+export { invalidateResolver } from "./invalidate-resolver";
+
 // Export the classic (non-Suspense) versions of our hooks
 // (This part differs from src/suspense.ts)
 export {
@@ -90,5 +92,10 @@ export {
   useUser,
 } from "./liveblocks";
 
-// Private APIs (for use in react-lexical only)
+// Private APIs
+
+// Used in @liveblocks/react-lexical
 export { getUmbrellaStoreForClient, selectThreads } from "./liveblocks";
+
+// Used in @liveblocks/react-ui and @liveblocks/react-lexical
+export { useMentionSuggestions } from "./use-mention-suggestions";

@@ -836,24 +836,29 @@ function useUser_withClient<U extends BaseUserMeta>(
     [usersStore, userId]
   );
 
-  useEffect(() => {
-    // NOTE: .get() will trigger any actual fetches, whereas .getState() will not
-    void usersStore.get(userId);
-  }, [usersStore, userId]);
-
   const selector = useCallback(
     (state: ReturnType<typeof getUserState>) =>
       selectorFor_useUser(state, userId),
     [userId]
   );
 
-  return useSyncExternalStoreWithSelector(
+  const result = useSyncExternalStoreWithSelector(
     usersStore.subscribe,
     getUserState,
     getUserState,
     selector,
     shallow
   );
+
+  // Trigger a fetch if we don't have any data yet (whether initially or after an invalidation)
+  useEffect(() => {
+    if (!result.user && result.isLoading) {
+      // NOTE: .get() will trigger any actual fetches, whereas .getState() will not
+      void usersStore.get(userId);
+    }
+  }, [usersStore, userId, result]);
+
+  return result;
 }
 
 function useUserSuspense_withClient<U extends BaseUserMeta>(
@@ -913,17 +918,23 @@ function useRoomInfo_withClient(
     [roomId]
   );
 
-  useEffect(() => {
-    void roomsInfoStore.get(roomId);
-  }, [roomsInfoStore, roomId]);
-
-  return useSyncExternalStoreWithSelector(
+  const result = useSyncExternalStoreWithSelector(
     roomsInfoStore.subscribe,
     getRoomInfoState,
     getRoomInfoState,
     selector,
     shallow
   );
+
+  // Trigger a fetch if we don't have any data yet (whether initially or after an invalidation)
+  useEffect(() => {
+    if (!result.info && result.isLoading) {
+      // NOTE: .get() will trigger any actual fetches, whereas .getState() will not
+      void roomsInfoStore.get(roomId);
+    }
+  }, [roomsInfoStore, roomId, result]);
+
+  return result;
 }
 
 function useRoomInfoSuspense_withClient(client: OpaqueClient, roomId: string) {

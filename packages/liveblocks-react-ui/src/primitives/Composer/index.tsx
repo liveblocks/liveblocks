@@ -14,7 +14,7 @@ import {
   useFloating,
 } from "@floating-ui/react-dom";
 import type { CommentAttachment, CommentBody } from "@liveblocks/core";
-import { useRoom } from "@liveblocks/react";
+import { useMentionSuggestions, useRoom } from "@liveblocks/react";
 import { Slot, Slottable } from "@radix-ui/react-slot";
 import type {
   AriaAttributes,
@@ -62,7 +62,6 @@ import {
 
 import { useLiveblocksUIConfig } from "../../config";
 import { FLOATING_ELEMENT_COLLISION_PADDING } from "../../constants";
-import { useMentionSuggestions } from "../../shared";
 import { withAutoFormatting } from "../../slate/plugins/auto-formatting";
 import { withAutoLinks } from "../../slate/plugins/auto-links";
 import { withCustomLinks } from "../../slate/plugins/custom-links";

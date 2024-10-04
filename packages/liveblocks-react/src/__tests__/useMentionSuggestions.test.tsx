@@ -3,7 +3,7 @@ import { nanoid } from "@liveblocks/core";
 import { renderHook, waitFor } from "@testing-library/react";
 import React from "react";
 
-import { useMentionSuggestions } from "../shared";
+import { useMentionSuggestions } from "../use-mention-suggestions";
 import { createContextsForTest } from "./_utils";
 
 // eslint-disable-next-line @typescript-eslint/require-await
