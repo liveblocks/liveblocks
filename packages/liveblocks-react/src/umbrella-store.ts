@@ -1391,7 +1391,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
   public async fetchNotificationsDeltaUpdate() {
     const lastRequestedAt = this._notificationsLastRequestedAt;
     if (lastRequestedAt === null) {
-      throw new Error("Expected there is at least one page");
+      console.warn("Notifications polled before first page loaded"); // prettier-ignore
+      return;
     }
 
     const client = nn(
@@ -1481,7 +1482,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   public async fetchRoomThreadsDeltaUpdate(roomId: string) {
     const lastRequestedAt = this._roomThreadsLastRequestedAtByRoom.get(roomId);
-    if (lastRequestedAt === undefined) return;
+    if (lastRequestedAt === undefined) {
+      console.warn("Room threads polled before first page loaded"); // prettier-ignore
+      return;
+    }
 
     const client = nn(
       this._client,
@@ -1558,7 +1562,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
   public async fetchUserThreadsDeltaUpdate() {
     const lastRequestedAt = this._userThreadsLastRequestedAt;
     if (lastRequestedAt === null) {
-      throw new Error("Expected there is at least one page");
+      console.warn("User threads polled before first page loaded"); // prettier-ignore
+      return;
     }
 
     const client = nn(
