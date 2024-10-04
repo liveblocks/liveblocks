@@ -49,7 +49,7 @@ export async function POST(request: Request) {
             resolveRoomInfo: ({ roomId }) => {
               return {
                 name: roomId,
-                url: `https://example.com?roomId=${roomId}`,
+                url: `https://my-liveblocks-app.com?roomId=${roomId}`,
               };
             },
             // And the magic to use `react-email` components happens here 🥳
@@ -71,8 +71,8 @@ export async function POST(request: Request) {
           let subject = "";
 
           const company = {
-            name: "My App",
-            url: "https://example.com",
+            name: "My Liveblocks App",
+            url: "https://my-liveblocks-app.com",
           };
 
           const roomInfo = {
@@ -108,7 +108,7 @@ export async function POST(request: Request) {
           const html = await render(email, { pretty: true });
 
           const { error } = await resend.emails.send({
-            from: "Your App <yourapp@example.com>",
+            from: "My Liveblocks App <hello@my-liveblocks-app.com>",
             to: event.data.userId, // In this example, user IDs are email addresses,
             subject,
             html,

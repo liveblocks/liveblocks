@@ -11,6 +11,7 @@ import type { CommentEmailAsReactData } from "@liveblocks/emails";
 import { EmailRoot } from "./_components/email-root";
 import { getProps } from "./_utils/getProps";
 import { CompanyRow } from "./_components/company-row";
+import { Comment } from "./_components/comment";
 
 type RoomInfo = {
   name?: string;
@@ -29,11 +30,11 @@ type EmailProps = {
 const previewProps: EmailProps = {
   company: {
     name: "Acme Inc.",
-    url: "https://acme.inc",
+    url: "https://liveblocks.io/comments",
   },
   roomInfo: {
     name: "🏃🏻 2024 races",
-    url: "https://acme.inc?room_id=2024-races",
+    url: "https://liveblocks.io/comments?room_id=2024-races",
   },
   comments: [
     {
@@ -56,7 +57,7 @@ const previewProps: EmailProps = {
           </span>
         </Text>
       ),
-      url: "https://acme.inc?room_id=2024-races#cm_0",
+      url: "https://liveblocks.io?room_id=2024-races#cm_0",
       roomId: "2024-races",
     },
     {
@@ -79,7 +80,7 @@ const previewProps: EmailProps = {
           </span>
         </Text>
       ),
-      url: "https://acme.inc?room_id=2024-races#cm_1",
+      url: "https://liveblocks.io?room_id=2024-races#cm_1",
       roomId: "2024-races",
     },
   ],
@@ -101,48 +102,14 @@ const getPreviewText = (
 export default function Email(props: EmailProps) {
   const { company, roomInfo, comments } = getProps(props, previewProps);
   const previewText = getPreviewText(comments, roomInfo);
+
   return (
     <EmailRoot preview={previewText}>
       <CompanyRow name={company.name} url={company.url} variant="header" />
       <Section className="my-12">
         <Text className="text-sm font-medium">{previewText}</Text>
         {comments.map((comment) => (
-          <Section
-            key={comment.id}
-            className="my-4 rounded-md py-4 pl-4 pr-8"
-            // NOTE: `react-email` do not interpret correctly borders
-            // in `className` attribute w/ `tailwindcss`.
-            style={{ border: "solid 1px rgba(23, 23, 23, 0.10)" }}
-          >
-            <Row>
-              <Column className="w-[34px]">
-                <Img
-                  className="rounded-full bg-[hsla(0, 0%, 93%, 1)]"
-                  width={28}
-                  height={28}
-                  src={comment.author.info.avatar}
-                />
-              </Column>
-              <Column>
-                {comment.author.info.name}{" "}
-                <span className="text-[rgba(23, 23, 23, 0.6)] text-xs">
-                  {comment.createdAt.toLocaleDateString()}
-                </span>
-              </Column>
-            </Row>
-            <Row className="mt-1">
-              <Column className="w-[34px]" />
-              <Column>
-                {comment.reactBody}
-                <Button
-                  className="bg-[#171717] rounded-md px-4 h-[36px] text-white text-sm font-medium flex justify-center w-max flex-col"
-                  href={comment.url}
-                >
-                  View comment
-                </Button>
-              </Column>
-            </Row>
-          </Section>
+          <Comment key={comment.id} {...comment} />
         ))}
         <CompanyRow name={company.name} url={company.url} variant="footer" />
       </Section>

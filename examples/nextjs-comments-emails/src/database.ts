@@ -1,6 +1,6 @@
 const USER_INFO: Liveblocks["UserMeta"][] = [
   {
-    id: "charlie.layne@example.com",
+    id: "charlie.layne@my-liveblocks-app.com",
     info: {
       name: "Charlie Layne",
       color: "#D583F0",
@@ -8,7 +8,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    id: "mislav.abha@example.com",
+    id: "mislav.abha@my-liveblocks-app.com",
     info: {
       name: "Mislav Abha",
       color: "#F08385",
@@ -16,7 +16,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    id: "tatum-paolo@example.com",
+    id: "tatum-paolo@my-liveblocks-app.com",
     info: {
       name: "Tatum Paolo",
       color: "#F0D885",
@@ -24,7 +24,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    id: "anjali-wanda@example.com",
+    id: "anjali-wanda@my-liveblocks-app.com",
     info: {
       name: "Anjali Wanda",
       color: "#85EED6",
@@ -32,7 +32,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    id: "jody-hekla@example.com",
+    id: "jody-hekla@my-liveblocks-app.com",
     info: {
       name: "Jody Hekla",
       color: "#85BBF0",
@@ -40,7 +40,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    id: "emil-joyce@example.com",
+    id: "emil-joyce@my-liveblocks-app.com",
     info: {
       name: "Emil Joyce",
       color: "#8594F0",
@@ -48,7 +48,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    id: "jory-quispe@example.com",
+    id: "jory-quispe@my-liveblocks-app.com",
     info: {
       name: "Jory Quispe",
       color: "#85DBF0",
@@ -56,7 +56,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    id: "quinn-elton@example.com",
+    id: "quinn-elton@my-liveblocks-app.com",
     info: {
       name: "Quinn Elton",
       color: "#87EE85",
