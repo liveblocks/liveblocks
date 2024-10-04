@@ -4,7 +4,7 @@ import type { InboxNotificationData, ThreadData } from "@liveblocks/core";
 import { nanoid } from "@liveblocks/core";
 import type { AST } from "@liveblocks/query-parser";
 import { QueryParser } from "@liveblocks/query-parser";
-import { renderHook, waitFor } from "@testing-library/react";
+import { fireEvent, renderHook, screen, waitFor } from "@testing-library/react";
 import {
   type ResponseResolver,
   rest,
@@ -12,7 +12,8 @@ import {
   type RestRequest,
 } from "msw";
 import { setupServer } from "msw/node";
-import React from "react";
+import React, { Suspense } from "react";
+import { ErrorBoundary } from "react-error-boundary";
 
 import { dummyThreadData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
@@ -203,6 +204,304 @@ describe("useUserThreads", () => {
         fetchMoreError: undefined,
       })
     );
+
+    unmount();
+  });
+
+  test("should sort threads by most recently updated date before returning", async () => {
+    const roomId = nanoid();
+    const latestUpdatedThread = dummyThreadData({
+      roomId,
+      createdAt: new Date("2021-01-01T00:00:00Z"),
+      updatedAt: new Date("2021-01-03T00:00:00Z"),
+    });
+
+    const earliestUpdatedThread = dummyThreadData({
+      roomId,
+      createdAt: new Date("2020-12-31T00:00:00Z"), // Earlier creation date
+      updatedAt: new Date("2021-01-01T00:00:00Z"), // Earlier update date
+    });
+
+    server.use(
+      mockGetUserThreads((_req, res, ctx) => {
+        return res(
+          ctx.json({
+            threads: [latestUpdatedThread, earliestUpdatedThread],
+            inboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+              nextCursor: null,
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      liveblocks: { LiveblocksProvider, useUserThreads_experimental },
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(
+      () => useUserThreads_experimental(),
+      {
+        wrapper: ({ children }) => (
+          <LiveblocksProvider>{children}</LiveblocksProvider>
+        ),
+      }
+    );
+
+    expect(result.current).toEqual({
+      isLoading: true,
+    });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [latestUpdatedThread, earliestUpdatedThread],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
+      })
+    );
+
+    unmount();
+  });
+});
+
+describe("useThreads: error", () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.clearAllTimers();
+    jest.useRealTimers(); // Restores the real timers
+  });
+
+  test("should trigger error boundary if initial fetch throws an error", async () => {
+    let getThreadsReqCount = 0;
+
+    server.use(
+      mockGetUserThreads((_req, res, ctx) => {
+        getThreadsReqCount++;
+        return res(ctx.status(500));
+      })
+    );
+
+    const {
+      liveblocks: { LiveblocksProvider, useUserThreads_experimental },
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(
+      () => useUserThreads_experimental(),
+      {
+        wrapper: ({ children }) => (
+          <LiveblocksProvider>{children}</LiveblocksProvider>
+        ),
+      }
+    );
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    // Wait until all fetch attempts have been done
+    await jest.advanceTimersToNextTimerAsync(); // fetch attempt 1
+
+    // The first retry should be made after 5s
+    await jest.advanceTimersByTimeAsync(5_000);
+    // A new fetch request for the threads should have been made after the first retry
+    await waitFor(() => expect(getThreadsReqCount).toBe(2));
+
+    // The second retry should be made after 5s
+    await jest.advanceTimersByTimeAsync(5_000);
+    await waitFor(() => expect(getThreadsReqCount).toBe(3));
+
+    // The third retry should be made after 10s
+    await jest.advanceTimersByTimeAsync(10_000);
+    await waitFor(() => expect(getThreadsReqCount).toBe(4));
+
+    // The fourth retry should be made after 15s
+    await jest.advanceTimersByTimeAsync(15_000);
+    await waitFor(() => expect(getThreadsReqCount).toBe(5));
+
+    await waitFor(() => {
+      expect(result.current).toEqual({
+        isLoading: false,
+        error: expect.any(Error),
+      });
+    });
+
+    // Wait for 5 second for the error to clear
+    await jest.advanceTimersByTimeAsync(5_000);
+
+    // A new fetch request for the threads should have been made after the initial render
+    await waitFor(() => expect(getThreadsReqCount).toBe(6));
+    expect(result.current).toEqual({
+      isLoading: true,
+    });
+
+    // The first retry should be made after 5s
+    await jest.advanceTimersByTimeAsync(5_000);
+    await waitFor(() => expect(getThreadsReqCount).toBe(7));
+
+    // and so on...
+
+    unmount();
+  });
+});
+
+describe("useThreadsSuspense", () => {
+  beforeAll(() => {
+    jest.useFakeTimers();
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
+  });
+
+  test("should fetch user threads on render", async () => {
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+
+    server.use(
+      mockGetUserThreads(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            threads,
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+              nextCursor: null,
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      liveblocks: {
+        suspense: { LiveblocksProvider, useUserThreads_experimental },
+      },
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(
+      () => useUserThreads_experimental(),
+      {
+        wrapper: ({ children }) => (
+          <LiveblocksProvider>
+            <Suspense fallback={<div>Loading</div>}>{children}</Suspense>
+          </LiveblocksProvider>
+        ),
+      }
+    );
+
+    expect(result.current).toEqual(null);
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads,
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+      })
+    );
+
+    unmount();
+  });
+});
+
+describe("useUserThreadsSuspense: error", () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.clearAllTimers();
+    jest.useRealTimers(); // Restores the real timers
+  });
+
+  test("should trigger error boundary if initial fetch throws an error", async () => {
+    let getThreadsReqCount = 0;
+
+    server.use(
+      mockGetUserThreads((_req, res, ctx) => {
+        getThreadsReqCount++;
+        return res(ctx.status(500));
+      })
+    );
+
+    const {
+      liveblocks: {
+        suspense: { LiveblocksProvider, useUserThreads_experimental },
+      },
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(
+      () => useUserThreads_experimental(),
+      {
+        wrapper: ({ children }) => (
+          <LiveblocksProvider>
+            <ErrorBoundary
+              FallbackComponent={({ resetErrorBoundary }) => {
+                return (
+                  <>
+                    <div>There was an error while getting threads.</div>
+                    <button onClick={resetErrorBoundary}>Retry</button>
+                  </>
+                );
+              }}
+            >
+              <Suspense fallback={<div>Loading</div>}>{children}</Suspense>
+            </ErrorBoundary>
+          </LiveblocksProvider>
+        ),
+      }
+    );
+
+    expect(result.current).toEqual(null);
+
+    expect(screen.getByText("Loading")).toBeInTheDocument();
+
+    // Wait until all fetch attempts have been done
+    await jest.advanceTimersToNextTimerAsync(); // fetch attempt 1
+
+    // The first retry should be made after 5s
+    await jest.advanceTimersByTimeAsync(5_000);
+    // A new fetch request for the threads should have been made after the first retry
+    await waitFor(() => expect(getThreadsReqCount).toBe(2));
+
+    // The second retry should be made after 5s
+    await jest.advanceTimersByTimeAsync(5_000);
+    await waitFor(() => expect(getThreadsReqCount).toBe(3));
+
+    // The third retry should be made after 10s
+    await jest.advanceTimersByTimeAsync(10_000);
+    await waitFor(() => expect(getThreadsReqCount).toBe(4));
+
+    // The fourth retry should be made after 15s
+    await jest.advanceTimersByTimeAsync(15_000);
+    await waitFor(() => expect(getThreadsReqCount).toBe(5));
+
+    // Check if the error boundary's fallback is displayed
+    await waitFor(() => {
+      expect(
+        screen.getByText("There was an error while getting threads.")
+      ).toBeInTheDocument();
+    });
+
+    // Wait until the error boundary auto-clears
+    await jest.advanceTimersByTimeAsync(5_000);
+
+    // Simulate clicking the retry button
+    fireEvent.click(screen.getByText("Retry"));
+
+    // The error boundary's fallback should be cleared
+    await waitFor(() => {
+      expect(screen.getByText("Loading")).toBeInTheDocument();
+    });
 
     unmount();
   });

@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 
-import { nanoid, ServerMsgCode, wait } from "@liveblocks/core";
+import { nanoid, ServerMsgCode } from "@liveblocks/core";
 import type { AST } from "@liveblocks/query-parser";
 import { QueryParser } from "@liveblocks/query-parser";
 import {
@@ -2292,13 +2292,22 @@ describe("useThreads: pagination", () => {
     const roomId = nanoid();
 
     const threadsPageOne = [
-      dummyThreadData({ roomId, createdAt: new Date("2021-01-03T00:00:00Z") }),
+      dummyThreadData({
+        roomId,
+        createdAt: new Date("2021-01-01T00:00:00Z"),
+      }),
     ];
     const threadsPageTwo = [
-      dummyThreadData({ roomId, createdAt: new Date("2021-01-02T00:00:00Z") }),
+      dummyThreadData({
+        roomId,
+        createdAt: new Date("2021-01-02T00:00:00Z"),
+      }),
     ];
     const threadsPageThree = [
-      dummyThreadData({ roomId, createdAt: new Date("2021-01-01T00:00:00Z") }),
+      dummyThreadData({
+        roomId,
+        createdAt: new Date("2021-01-03T00:00:00Z"),
+      }),
     ];
 
     let isPageOneRequested = false;
@@ -2422,10 +2431,17 @@ describe("useThreads: pagination", () => {
     const roomId = nanoid();
 
     const threadsPageOne = [
-      dummyThreadData({ roomId, createdAt: new Date("2021-01-02T00:00:00Z") }),
+      dummyThreadData({
+        roomId,
+        createdAt: new Date("2021-01-01T00:00:00Z"),
+      }),
     ];
+
     const threadsPageTwo = [
-      dummyThreadData({ roomId, createdAt: new Date("2021-01-01T00:00:00Z") }),
+      dummyThreadData({
+        roomId,
+        createdAt: new Date("2021-01-02T00:00:00Z"),
+      }),
     ];
 
     let isPageTwoRequested = false;
