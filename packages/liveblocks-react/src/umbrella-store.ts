@@ -34,8 +34,12 @@ import {
 } from "@liveblocks/core";
 
 import { autobind } from "./lib/autobind";
-import { isMoreRecentlyUpdated } from "./lib/compare";
-import { selectThreads } from "./liveblocks";
+import {
+  byFirstCreated,
+  byMostRecentlyUpdated,
+  isMoreRecentlyUpdated,
+} from "./lib/compare";
+import { makeThreadsFilter } from "./lib/querying";
 import type {
   InboxNotificationsAsyncResult,
   RoomNotificationSettingsAsyncResult,
@@ -218,6 +222,39 @@ export function makeNotificationSettingsQueryKey(roomId: string) {
 // XXXX Make this an implementation detail of the store
 export function makeVersionsQueryKey(roomId: string) {
   return `${roomId}-VERSIONS`;
+}
+
+/**
+ * @private Do not rely on this internal API.
+ */
+// TODO This helper should ideally not have to be exposed at the package level!
+// TODO It's currently used by react-lexical though.
+export function selectThreads<M extends BaseMetadata>(
+  state: UmbrellaStoreState<M>,
+  options: {
+    roomId: string | null;
+    query?: ThreadsQuery<M>;
+    orderBy:
+      | "age" // = default
+      | "last-update";
+  }
+): ThreadData<M>[] {
+  let threads = state.threads;
+
+  if (options.roomId !== null) {
+    threads = threads.filter((thread) => thread.roomId === options.roomId);
+  }
+
+  // Third filter pass: select only threads matching query filter
+  const query = options.query;
+  if (query) {
+    threads = threads.filter(makeThreadsFilter<M>(query));
+  }
+
+  // Sort threads by creation date (oldest first)
+  return threads.sort(
+    options.orderBy === "last-update" ? byMostRecentlyUpdated : byFirstCreated
+  );
 }
 
 /**
