@@ -126,7 +126,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
   }
 
   async function getInboxNotifications(options?: { cursor?: string }) {
-    const PAGE_SIZE = 6; // XXX TODO Maybe bump to 50?
+    const PAGE_SIZE = 50;
 
     const json = await fetchJson<{
       threads: ThreadDataPlain<M>[];
@@ -239,7 +239,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
       query = objectToQuery(options.query);
     }
 
-    const PAGE_SIZE = 2; // XXX TODO: Bump this to a reasonable number
+    const PAGE_SIZE = 50;
 
     const json = await fetchJson<{
       threads: ThreadDataPlain<M>[];

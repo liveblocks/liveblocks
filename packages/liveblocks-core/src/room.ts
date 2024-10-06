@@ -2960,7 +2960,7 @@ export function createRoom<
       query = objectToQuery(options.query);
     }
 
-    const PAGE_SIZE = 2; // XXX TODO: Bump this to a reasonable number
+    const PAGE_SIZE = 50;
 
     const response = await fetchCommentsApi(
       url`/v2/c/rooms/${config.roomId}/threads`,
