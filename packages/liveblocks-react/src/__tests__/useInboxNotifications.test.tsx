@@ -678,11 +678,18 @@ describe("useInboxNotifications: pagination", () => {
   test("should load the next page of data when `fetchMore` is called", async () => {
     const roomId = nanoid();
 
-    const threadOne = dummyThreadData({ roomId });
-    await wait(2); // Ensure they aren't created in the same millisecond
-    const threadTwo = dummyThreadData({ roomId });
-    await wait(2); // Ensure they aren't created in the same millisecond
-    const threadThree = dummyThreadData({ roomId });
+    const threadOne = dummyThreadData({
+      roomId,
+      createdAt: new Date("2021-01-01T00:00:00Z"),
+    });
+    const threadTwo = dummyThreadData({
+      roomId,
+      createdAt: new Date("2021-01-02T00:00:00Z"),
+    });
+    const threadThree = dummyThreadData({
+      roomId,
+      createdAt: new Date("2021-01-03T00:00:00Z"),
+    });
 
     const inboxNotificationsPageOne = [
       dummyThreadInboxNotificationData({
@@ -830,8 +837,14 @@ describe("useInboxNotifications: pagination", () => {
   test("should set `hasFetchedAll` to true when there are no more pages to fetch", async () => {
     const roomId = nanoid();
 
-    const threadOne = dummyThreadData({ roomId });
-    const threadTwo = dummyThreadData({ roomId });
+    const threadOne = dummyThreadData({
+      roomId,
+      createdAt: new Date("2021-01-01T00:00:00Z"),
+    });
+    const threadTwo = dummyThreadData({
+      roomId,
+      createdAt: new Date("2021-01-02T00:00:00Z"),
+    });
 
     const inboxNotificationsPageOne = [
       dummyThreadInboxNotificationData({
