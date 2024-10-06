@@ -495,8 +495,11 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
    * e.g. 'room-abc-{"color":"red"}'  - ok
    * e.g. 'room-abc-{}'               - loading
    */
-  // TODO Query state should not be exposed publicly by the store!
+  // XXXX Query state should not be exposed publicly by the store!
+  // XXXX Find a better name
   queries3: Record<string, QueryAsyncResult>; // Notification settings
+  // XXXX Query state should not be exposed publicly by the store!
+  // XXXX Find a better name
   queries4: Record<string, QueryAsyncResult>; // Versions
 
   /**
