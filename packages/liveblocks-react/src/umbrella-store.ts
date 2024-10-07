@@ -393,7 +393,11 @@ export class PaginatedResource {
   private async _fetchMore(): Promise<void> {
     const state = this._paginationState;
     if (!state?.cursor) {
-      throw new Error("_fetchMore should not get called while in this state");
+      // Do nothing if we don't have a cursor to work with. It means:
+      // - We don't have a cursor yet (we haven't loaded the first page yet); or
+      // - We don't have a cursor any longer (we're already on the
+      // last page)
+      return;
     }
 
     this.patchPaginationState({ isFetchingMore: true });
