@@ -1,7 +1,10 @@
 import { CommentEmailAsReactData } from "@liveblocks/emails";
 import { Section, Row, Column, Img, Button } from "@react-email/components";
+import { cn } from "../_utils/cn";
 
-type CommentProps = CommentEmailAsReactData;
+type CommentProps = CommentEmailAsReactData & {
+  variant?: "onlyOne" | "several";
+};
 
 export function Comment({
   id,
@@ -9,6 +12,7 @@ export function Comment({
   createdAt,
   reactBody,
   url,
+  variant = "onlyOne",
 }: CommentProps) {
   const creationDate = createdAt
     .toLocaleString("en-US", {
@@ -49,7 +53,13 @@ export function Comment({
         <Column>
           {reactBody}
           <Button
-            className="bg-[#171717] rounded-md px-4 py-2.5 text-white text-sm font-medium w-max"
+            className={cn(
+              {
+                "bg-[#171717] text-white": variant === "onlyOne",
+                "bg-[#EEEEEE] text-[#171717]": variant === "several",
+              },
+              "rounded-md px-4 py-2.5 text-sm font-medium w-max"
+            )}
             href={url}
           >
             View comment

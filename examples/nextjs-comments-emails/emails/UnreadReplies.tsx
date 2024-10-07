@@ -121,7 +121,11 @@ export default function Email(props: EmailProps) {
           {headlineParts[2]}
         </Headline>
         {comments.map((comment) => (
-          <Comment key={comment.id} {...comment} />
+          <Comment
+            key={comment.id}
+            {...comment}
+            variant={comments.length > 1 ? "several" : "onlyOne"}
+          />
         ))}
         <CompanyRow name={company.name} url={company.url} variant="footer" />
       </Section>
