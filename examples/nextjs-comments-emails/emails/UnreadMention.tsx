@@ -1,22 +1,17 @@
-import { CommentEmailAsReactData } from "@liveblocks/emails";
 import { Section, Text } from "@react-email/components";
+import type { CommentEmailAsReactData } from "@liveblocks/emails";
+
 import { getProps } from "./_utils/getProps";
+import type { CompanyInfo, RoomInfo } from "./types";
+
 import { EmailRoot } from "./_components/email-root";
 import { CompanyRow } from "./_components/company-row";
-import { Comment } from "./_components/comment";
 import { Headline } from "./_components/headline";
-
-type RoomInfo = {
-  name?: string;
-  url?: string;
-};
+import { Comment } from "./_components/comment";
 
 type EmailProps = {
-  company: {
-    name: string;
-    url: string;
-  };
-  roomInfo: RoomInfo;
+  company: CompanyInfo;
+  room: RoomInfo;
   comment: CommentEmailAsReactData;
 };
 
@@ -25,7 +20,7 @@ const previewProps: EmailProps = {
     name: "Acme Inc.",
     url: "https://liveblocks.io/comments",
   },
-  roomInfo: {
+  room: {
     name: "🏃🏻 2024 races",
     url: "https://liveblocks.io/comments?room_id=2024-races",
   },
@@ -76,10 +71,10 @@ const getHeadlineParts = (
 };
 
 export default function Email(props: EmailProps) {
-  const { company, roomInfo, comment } = getProps(props, previewProps);
+  const { company, room, comment } = getProps(props, previewProps);
 
-  const previewText = getPreviewText(comment, roomInfo.name);
-  const headlineParts = getHeadlineParts(comment, roomInfo.name);
+  const previewText = getPreviewText(comment, room.name);
+  const headlineParts = getHeadlineParts(comment, room.name);
   return (
     <EmailRoot preview={previewText}>
       <CompanyRow name={company.name} url={company.url} variant="header" />

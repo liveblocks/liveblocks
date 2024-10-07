@@ -1,16 +1,18 @@
-import sendgridMail, { MailDataRequired } from "@sendgrid/mail";
+import sendgridMail from "@sendgrid/mail";
 import {
   prepareThreadNotificationEmailAsHTML,
-  ThreadNotificationEmailDataAsHTML,
+  type ThreadNotificationEmailDataAsHTML,
 } from "@liveblocks/emails";
 import {
   isThreadNotificationEvent,
   WebhookHandler,
   Liveblocks,
 } from "@liveblocks/node";
-import { getUsers } from "../../../database";
 
-// Set you Sendgrid API key
+import { getUsers } from "../../../database";
+import type { CompanyInfo, RoomInfo } from "../../../../emails/types";
+
+// Set your Sendgrid API key
 sendgridMail.setApiKey(process.env.SENDGRID_API_KEY as string);
 
 // Add your Liveblocks secret key from https://liveblocks.io/dashboard/apiKeys
@@ -28,22 +30,32 @@ type TemplateInfo = {
   dynamicTemplateData: { [key: string]: any };
   subject: string;
 };
-const getTemplate = (
-  emailData: ThreadNotificationEmailDataAsHTML
+const getTemplateInfo = (
+  emailData: ThreadNotificationEmailDataAsHTML,
+  room: RoomInfo,
+  company: CompanyInfo
 ): TemplateInfo => {
+  const baseDynamicTemplateData = { room, company };
+
   switch (emailData.type) {
     // Handle unread replies use case
     case "unreadReplies":
       return {
         templateId: "d-my-unread-replies-template-id",
-        dynamicTemplateData: { comments: emailData.comments },
+        dynamicTemplateData: {
+          ...baseDynamicTemplateData,
+          comments: emailData.comments,
+        },
         subject: `You have ${emailData.comments.length} unread notifications.`,
       };
     // Handle last unread comment with mention use case
     case "unreadMention":
       return {
         templateId: "d-my-unread-mention-template-id",
-        dynamicTemplateData: { comment: emailData.comment },
+        dynamicTemplateData: {
+          ...baseDynamicTemplateData,
+          comment: emailData.comment,
+        },
         subject: "You have one unread notification.",
       };
   }
@@ -67,7 +79,7 @@ export async function POST(request: Request) {
 
   // Check if the event is a Thread Notification event
   if (isThreadNotificationEvent(event)) {
-    let emailData: ThreadNotificationEmailDataAsHTML | null = null;
+    let emailData;
     try {
       emailData = await prepareThreadNotificationEmailAsHTML(
         liveblocks,
@@ -102,13 +114,16 @@ export async function POST(request: Request) {
         url: "https://my-liveblocks-app.com",
       };
 
-      const roomInfo = {
+      const room = {
         name: emailData.roomInfo.name,
         url: emailData.roomInfo.url,
       };
 
-      const { templateId, dynamicTemplateData, subject } =
-        getTemplate(emailData);
+      const { templateId, dynamicTemplateData, subject } = getTemplateInfo(
+        emailData,
+        room,
+        company
+      );
 
       try {
         await sendgridMail.send({
@@ -116,11 +131,7 @@ export async function POST(request: Request) {
           to: event.data.userId,
           templateId,
           subject,
-          dynamicTemplateData: {
-            company,
-            roomInfo,
-            ...dynamicTemplateData,
-          },
+          dynamicTemplateData,
         });
 
         return new Response(null, { status: 200 });
@@ -132,7 +143,7 @@ export async function POST(request: Request) {
       }
     }
 
-    return new Response("No email data to send", { status: 200 });
+    return new Response("No email to send", { status: 200 });
   }
 
   return new Response(

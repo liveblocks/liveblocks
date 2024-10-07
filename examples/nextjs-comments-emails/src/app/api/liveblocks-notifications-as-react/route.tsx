@@ -1,5 +1,8 @@
 import { Resend } from "resend";
-import { prepareThreadNotificationEmailAsReact } from "@liveblocks/emails";
+import {
+  prepareThreadNotificationEmailAsReact,
+  type ThreadNotificationEmailDataAsReact,
+} from "@liveblocks/emails";
 import {
   isThreadNotificationEvent,
   WebhookHandler,
@@ -7,7 +10,10 @@ import {
 } from "@liveblocks/node";
 import { Text } from "@react-email/components";
 import { render } from "@react-email/render";
+
 import { getUsers } from "../../../database";
+
+import type { CompanyInfo, RoomInfo } from "../../../../emails/types";
 import UnreadRepliesEmail from "../../../../emails/UnreadReplies";
 import UnreadMentionEmail from "../../../../emails/UnreadMention";
 
@@ -24,117 +30,137 @@ const webhookHandler = new WebhookHandler(
   process.env.LIVEBLOCKS_WEBHOOK_SECRET_KEY as string
 );
 
+type TemplateInfo = {
+  email: JSX.Element;
+  subject: string;
+};
+
+const getTemplateInfo = (
+  emailData: ThreadNotificationEmailDataAsReact,
+  room: RoomInfo,
+  company: CompanyInfo
+): TemplateInfo => {
+  switch (emailData.type) {
+    // Handle unread replies use case
+    case "unreadReplies":
+      return {
+        email: (
+          <UnreadRepliesEmail
+            company={company}
+            room={room}
+            comments={emailData.comments}
+          />
+        ),
+        subject: `You have ${emailData.comments.length} unread notifications.`,
+      };
+    case "unreadMention":
+      return {
+        email: (
+          <UnreadMentionEmail
+            company={company}
+            room={room}
+            comment={emailData.comment}
+          />
+        ),
+        subject: "You have one unread notification.",
+      };
+  }
+};
+
 export async function POST(request: Request) {
   const body = await request.json();
   const headers = request.headers;
 
+  let event;
+
   try {
     // Verify if this is a real webhook request
-    const event = webhookHandler.verifyRequest({
+    event = webhookHandler.verifyRequest({
       headers: headers,
       rawBody: JSON.stringify(body),
     });
-
-    // Check if the event is a Thread Notification event
-    if (isThreadNotificationEvent(event)) {
-      try {
-        const emailData = await prepareThreadNotificationEmailAsReact(
-          liveblocks,
-          event,
-          {
-            resolveUsers: async ({ userIds }) => {
-              const users = await getUsers(userIds);
-              return users.map((user) => user?.info || {});
-            },
-            resolveRoomInfo: ({ roomId }) => {
-              return {
-                name: roomId,
-                url: `https://my-liveblocks-app.com?roomId=${roomId}`,
-              };
-            },
-            // And the magic to use `react-email` components happens here 🥳
-            // Or you can use your own components if you're not using `react-email`.
-            commentBodyComponents: {
-              Paragraph: ({ children }) => (
-                <Text className="text-sm m-0 mb-4">{children}</Text>
-              ),
-              Mention: ({ element, user }) => (
-                <span className="text-[#1667FF] font-medium">
-                  @{user?.name ?? element.id}
-                </span>
-              ),
-            },
-          }
-        );
-
-        // If there are unread comments (last comment with mention or unread replies)
-        if (emailData !== null) {
-          let email = <></>;
-          let subject = "";
-
-          const company = {
-            name: "My Liveblocks App",
-            url: "https://my-liveblocks-app.com",
-          };
-
-          const roomInfo = {
-            name: emailData.roomInfo.name,
-            url: emailData.roomInfo.url,
-          };
-
-          switch (emailData.type) {
-            // Handle unread replies use case
-            case "unreadReplies": {
-              email = (
-                <UnreadRepliesEmail
-                  company={company}
-                  roomInfo={roomInfo}
-                  comments={emailData.comments}
-                />
-              );
-              subject = `You have ${emailData.comments.length} unread notifications.`;
-              break;
-            }
-            // Handle last unread comment with mention use case
-            case "unreadMention": {
-              email = (
-                <UnreadMentionEmail
-                  company={company}
-                  roomInfo={roomInfo}
-                  comment={emailData.comment}
-                />
-              );
-              subject = "You have one unread notification.";
-              break;
-            }
-          }
-
-          const html = await render(email, { pretty: true });
-
-          const { error } = await resend.emails.send({
-            from: "My Liveblocks App <hello@my-liveblocks-app.com>",
-            to: event.data.userId, // In this example, user IDs are email addresses,
-            subject,
-            html,
-          });
-
-          if (error) {
-            console.log(error);
-            return new Response(JSON.stringify(error), {
-              status: 500,
-            });
-          }
-        }
-        return new Response(null, { status: 200 });
-      } catch (err) {
-        console.error(err);
-        return new Response("Something went wrong", { status: 400 });
-      }
-    }
-
-    return new Response(null, { status: 200 });
   } catch (err) {
     console.error(err);
     return new Response("Couldn't verify hook call", { status: 400 });
   }
+
+  // Check if the event is a Thread Notification event
+  if (isThreadNotificationEvent(event)) {
+    let emailData;
+    try {
+      emailData = await prepareThreadNotificationEmailAsReact(
+        liveblocks,
+        event,
+        {
+          resolveUsers: async ({ userIds }) => {
+            const users = await getUsers(userIds);
+            return users.map((user) => user?.info || {});
+          },
+          resolveRoomInfo: ({ roomId }) => {
+            return {
+              name: roomId,
+              url: `https://my-liveblocks-app.com?roomId=${roomId}`,
+            };
+          },
+          // And the magic to use `react-email` components happens here 🥳
+          // Or you can use your own components if you're not using `react-email`.
+          commentBodyComponents: {
+            Paragraph: ({ children }) => (
+              <Text className="text-sm m-0 mb-4">{children}</Text>
+            ),
+            Mention: ({ element, user }) => (
+              <span className="text-[#1667FF] font-medium">
+                @{user?.name ?? element.id}
+              </span>
+            ),
+          },
+        }
+      );
+    } catch (err) {
+      console.error(err);
+      return new Response("Something went wrong", { status: 400 });
+    }
+
+    // If there are unread comments (last comment with mention or unread replies)
+    if (emailData !== null) {
+      const company = {
+        name: "My Liveblocks App",
+        url: "https://my-liveblocks-app.com",
+      };
+      const room = {
+        name: emailData.roomInfo.name,
+        url: emailData.roomInfo.url,
+      };
+
+      const { email, subject } = getTemplateInfo(emailData, room, company);
+
+      // Render your email's HTML
+      const html = await render(email, { pretty: true });
+
+      const { error } = await resend.emails.send({
+        from: "My Liveblocks App <hello@my-liveblocks-app.com>",
+        to: event.data.userId, // In this example, user IDs are email addresses,
+        subject,
+        html,
+      });
+
+      if (error) {
+        console.log(error);
+        return new Response(JSON.stringify(error), {
+          status: 500,
+        });
+      }
+
+      return new Response(null, { status: 200 });
+    }
+
+    return new Response("No email to send", { status: 200 });
+  }
+
+  return new Response(
+    "Event type is not a notification event on thread data kind",
+    {
+      status: 200,
+    }
+  );
 }
