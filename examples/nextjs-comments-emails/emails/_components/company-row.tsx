@@ -18,7 +18,9 @@ export function CompanyRow({
         })}
       >
         <Img
-          // TODO: update img name
+          // TODO: update img name by creating a new one
+          // for this specific example to work without to
+          // deploy this example.
           src="https://liveblocks.io/apple-touch-icon.png"
           alt="company logo"
           className={cn({
