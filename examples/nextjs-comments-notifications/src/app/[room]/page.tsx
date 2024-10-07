@@ -40,10 +40,6 @@ function Example() {
         </button>
       )}
 
-      {hasFetchedAll && (
-        <div className="complete">🎉 You're all caught up!</div>
-      )}
-
       <Composer className="composer" />
     </div>
   );

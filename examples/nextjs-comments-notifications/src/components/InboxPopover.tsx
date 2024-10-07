@@ -59,10 +59,6 @@ function Inbox({ className, ...props }: ComponentPropsWithoutRef<"div">) {
       )}
 
       {isFetchingMore && <Loading />}
-
-      {hasFetchedAll && (
-        <div className="complete">🎉 You're all caught up!</div>
-      )}
     </div>
   );
 }
