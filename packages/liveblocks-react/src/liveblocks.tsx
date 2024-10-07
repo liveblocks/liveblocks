@@ -451,7 +451,6 @@ function useInboxNotifications_withClient<T>(
     void store.waitUntilNotificationsLoaded().catch(() => {
       // Deliberately catch and ignore any errors here
     });
-
     // NOTE: Deliberately *not* using a dependency array here!
     //
     // It is important to call waitUntil on *every* render.
@@ -965,7 +964,6 @@ function useUserThreads_experimental<M extends BaseMetadata>(
         // Deliberately catch and ignore any errors here
       });
     }
-
     // NOTE: Deliberately *not* using a dependency array here!
     //
     // It is important to call waitUntil on *every* render.

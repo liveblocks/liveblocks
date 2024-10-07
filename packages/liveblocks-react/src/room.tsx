@@ -1333,7 +1333,6 @@ function useThreads<M extends BaseMetadata>(
           // Deliberately catch and ignore any errors here
         });
     }
-
     // NOTE: Deliberately *not* using a dependency array here!
     //
     // It is important to call waitUntil on *every* render.
