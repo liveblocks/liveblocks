@@ -4,8 +4,8 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const liveblocks = new Liveblocks({
-  // @ts-expect-error - dev
-  baseUrl: "https://dev.dev-liveblocks5948.workers.dev",
+  // ts-expect-error - dev
+  // baseUrl: "https://dev.dev-liveblocks5948.workers.dev",
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
 });
 
