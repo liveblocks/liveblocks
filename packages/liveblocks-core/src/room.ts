@@ -951,6 +951,29 @@ export type Room<
   getAttachmentUrl(attachmentId: string): Promise<string>;
 
   /**
+   * Downloads an attachment by its ID.
+   * The attachment is downloaded as a Blob.
+   * @example
+   * await room.downloadAttachment("at_xxx");
+   */
+  downloadAttachment(attachmentId: string): Promise<Blob>;
+
+  /**
+   * Get attachment download URL.
+   *
+   * @example
+   * const url = await room.getAttachmentDownloadUrl("at_xxx");
+   */
+  getAttachmentDownloadUrl(attachmentId: string): Promise<string>;
+
+  /**
+   * Get attachment presigned download URL.
+   * @example
+   * const url = await room.getAttachmentDownloadPresignedUrl("at_xxx");
+   */
+  getAttachmentDownloadPresignedUrl(attachmentId: string): Promise<string>;
+
+  /**
    * Gets the user's notification settings for the current room.
    *
    * @example
@@ -3404,6 +3427,37 @@ export function createRoom<
     return urls;
   }
 
+  async function downloadAttachment(attachmentId: string) {
+    const res = await fetchCommentsApi(
+      url`/v2/c/rooms/${config.roomId}/attachments/${attachmentId}/download`
+    );
+
+    if (!res.ok) {
+      throw new Error("There was an error while downloading the attachment");
+    }
+
+    return res.blob();
+  }
+
+  async function getAttachmentDownloadUrl(attachmentId: string) {
+    const res = await fetchCommentsJson<{ url: string }>(
+      url`/v2/c/rooms/${config.roomId}/attachments/${attachmentId}/download-url`,
+      {
+        method: "POST",
+      }
+    );
+
+    return res.url;
+  }
+
+  async function getAttachmentDownloadPresignedUrl(attachmentId: string) {
+    const res = await fetchCommentsJson<{ url: string }>(
+      url`/v2/c/rooms/${config.roomId}/attachments/${attachmentId}/presigned-download-url`
+    );
+
+    return res.url;
+  }
+
   const batchedGetAttachmentUrls = new Batch<string, string>(
     async (batchedAttachmentIds) => {
       const attachmentIds = batchedAttachmentIds.flat();
@@ -3628,6 +3682,9 @@ export function createRoom<
       deleteComment,
       addReaction,
       removeReaction,
+      downloadAttachment,
+      getAttachmentDownloadUrl,
+      getAttachmentDownloadPresignedUrl,
       prepareAttachment,
       uploadAttachment,
       getAttachmentUrl,

@@ -13,12 +13,14 @@
     "@liveblocks/node": "^2.8.2",
     "@liveblocks/react": "^2.8.2",
     "@liveblocks/react-ui": "^2.8.2",
+    "file-saver": "^2.0.5",
     "next": "^13.4.16",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-error-boundary": "^4.0.11"
   },
   "devDependencies": {
+    "@types/file-saver": "^2.0.7",
     "@types/node": "^20.4.2",
     "@types/react": "^18.3.3",
     "prettier": "^3.3.2",

@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { RoomProvider, useThreads } from "@liveblocks/react/suspense";
 import { Loading } from "../components/Loading";
 import { Composer, Thread } from "@liveblocks/react-ui";
-import { ClientSideSuspense } from "@liveblocks/react";
+import { ClientSideSuspense, useRoom } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
 
 /**
@@ -15,11 +15,36 @@ import { ErrorBoundary } from "react-error-boundary";
 
 function Example() {
   const { threads } = useThreads();
+  const room = useRoom();
 
   return (
     <main>
       {threads.map((thread) => (
-        <Thread key={thread.id} thread={thread} className="thread" />
+        <Thread
+          key={thread.id}
+          thread={thread}
+          className="thread"
+          onAttachmentClick={async (attachment, event) => {
+            event.preventDefault();
+            // console.log(attachment);
+            // const blob = await room.downloadAttachment(
+            //   attachment.attachment.id
+            // );
+            // download(URL.createObjectURL(blob), attachment.attachment.name);
+
+            // const url = await room.getAttachmentDownloadUrl(
+            //   attachment.attachment.id
+            // );
+            // console.log(url);
+            // window.open(url, "_blank");
+
+            const urlPresigned = await room.getAttachmentDownloadPresignedUrl(
+              attachment.attachment.id
+            );
+
+            console.log(urlPresigned);
+          }}
+        />
       ))}
       <Composer className="composer" />
     </main>
@@ -57,4 +82,15 @@ function useExampleRoomId(roomId: string) {
   }, [roomId, exampleId]);
 
   return exampleRoomId;
+}
+
+export function download(url: string, name: string) {
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  a.style.display = "none";
+
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }

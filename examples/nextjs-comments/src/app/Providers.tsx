@@ -6,6 +6,8 @@ import { PropsWithChildren } from "react";
 export function Providers({ children }: PropsWithChildren) {
   return (
     <LiveblocksProvider
+      // @ts-expect-error: baseUrl DEV
+      baseUrl="https://dev.dev-liveblocks5948.workers.dev/"
       authEndpoint="/api/liveblocks-auth"
       // Get users' info from their ID
       resolveUsers={async ({ userIds }) => {
