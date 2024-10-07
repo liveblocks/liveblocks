@@ -41,6 +41,7 @@ describe("useThreadSubscription", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -70,6 +71,10 @@ describe("useThreadSubscription", () => {
       expect(result.current.threads).toEqual({
         isLoading: false,
         threads,
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -102,6 +107,7 @@ describe("useThreadSubscription", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -131,6 +137,10 @@ describe("useThreadSubscription", () => {
       expect(result.current.threads).toEqual({
         isLoading: false,
         threads,
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -156,6 +166,7 @@ describe("useThreadSubscription", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -185,6 +196,10 @@ describe("useThreadSubscription", () => {
       expect(result.current.threads).toEqual({
         isLoading: false,
         threads,
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -213,6 +228,7 @@ describe("useThreadSubscription", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -242,6 +258,10 @@ describe("useThreadSubscription", () => {
       expect(result.current.threads).toEqual({
         isLoading: false,
         threads,
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 

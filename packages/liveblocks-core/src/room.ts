@@ -1,8 +1,5 @@
 import type { AuthManager, AuthValue } from "./auth-manager";
-import {
-  getAuthBearerHeaderFromAuthValue,
-  NotificationsApiError,
-} from "./client";
+import { NotificationsApiError } from "./client";
 import type {
   Delegates,
   LiveblocksError,
@@ -32,6 +29,7 @@ import { LiveObject } from "./crdts/LiveObject";
 import type { LiveNode, LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
 import type { DE, DM, DP, DS, DU } from "./globals/augmentation";
+import { getBearerTokenFromAuthValue } from "./http-client";
 import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
 import { autoRetry } from "./lib/autoRetry";
@@ -474,10 +472,15 @@ type SubscribeFn<
 };
 
 export type GetThreadsOptions<M extends BaseMetadata> = {
+  cursor?: string;
   query?: {
     resolved?: boolean;
     metadata?: Partial<QueryMetadata<M>>;
   };
+};
+
+export type GetThreadsSinceOptions = {
+  since: Date;
 };
 
 export type UploadAttachmentOptions = {
@@ -756,6 +759,7 @@ export type Room<
     threads: ThreadData<M>[];
     inboxNotifications: InboxNotificationData[];
     requestedAt: Date;
+    nextCursor: string | null;
   }>;
 
   /**
@@ -766,7 +770,7 @@ export type Room<
    * // ... //
    * await room.getThreadsSince({ since: result.requestedAt });
    */
-  getThreadsSince(options: { since: Date }): Promise<{
+  getThreadsSince(options: GetThreadsSinceOptions): Promise<{
     threads: {
       updated: ThreadData<M>[];
       deleted: ThreadDeleteInfo[];
@@ -1290,8 +1294,6 @@ export class CommentsApiError extends Error {
   }
 }
 
-const MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY = 50;
-
 /**
  * @internal
  * Initializes a new Room, and returns its public API.
@@ -1393,7 +1395,7 @@ export function createRoom<
   function onStatusDidChange(newStatus: Status) {
     const authValue = managedSocket.authValue;
     if (authValue !== null) {
-      const tokenKey = getAuthBearerHeaderFromAuthValue(authValue);
+      const tokenKey = getBearerTokenFromAuthValue(authValue);
 
       if (tokenKey !== lastTokenKey) {
         lastTokenKey = tokenKey;
@@ -1606,7 +1608,7 @@ export function createRoom<
       ...options,
       headers: {
         ...options?.headers,
-        Authorization: `Bearer ${getAuthBearerHeaderFromAuthValue(authValue)}`,
+        Authorization: `Bearer ${getBearerTokenFromAuthValue(authValue)}`,
         "X-LB-Client": PKG_VERSION || "dev",
       },
     });
@@ -2899,12 +2901,10 @@ export function createRoom<
     return body;
   }
 
-  async function getThreadsSince(options: { since: Date }) {
+  async function getThreadsSince(options: GetThreadsSinceOptions) {
     const response = await fetchCommentsApi(
       url`/v2/c/rooms/${config.roomId}/threads`,
-      {
-        since: options?.since?.toISOString(),
-      },
+      { since: options?.since?.toISOString() },
       {
         headers: {
           "Content-Type": "application/json",
@@ -2960,9 +2960,15 @@ export function createRoom<
       query = objectToQuery(options.query);
     }
 
+    const PAGE_SIZE = 50;
+
     const response = await fetchCommentsApi(
       url`/v2/c/rooms/${config.roomId}/threads`,
-      { query },
+      {
+        cursor: options?.cursor,
+        query,
+        limit: PAGE_SIZE,
+      },
       { headers: { "Content-Type": "application/json" } }
     );
 
@@ -2974,6 +2980,7 @@ export function createRoom<
         deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
         meta: {
           requestedAt: string;
+          nextCursor: string | null;
         };
       }>);
 
@@ -2982,6 +2989,7 @@ export function createRoom<
         inboxNotifications: json.inboxNotifications.map(
           convertToInboxNotificationData
         ),
+        nextCursor: json.meta.nextCursor,
         requestedAt: new Date(json.meta.requestedAt),
       };
     } else if (response.status === 404) {
@@ -2990,6 +2998,7 @@ export function createRoom<
         inboxNotifications: [],
         deletedThreads: [],
         deletedInboxNotifications: [],
+        nextCursor: null,
         requestedAt: new Date(),
       };
     } else {
@@ -3513,7 +3522,7 @@ export function createRoom<
 
       return inboxNotificationIds;
     },
-    { delay: MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY }
+    { delay: 50 }
   );
 
   async function markInboxNotificationAsRead(inboxNotificationId: string) {

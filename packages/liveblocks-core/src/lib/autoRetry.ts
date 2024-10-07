@@ -1,3 +1,4 @@
+import * as console from "./fancy-console";
 import { wait } from "./utils";
 
 /**
@@ -31,7 +32,8 @@ export async function autoRetry<T>(
     try {
       return await promise;
     } catch (err) {
-      if (throwError?.(err)) {
+      // TODO: Think more about this abstraction
+      if (throwError?.(err) || err instanceof StopRetrying) {
         throw err;
       }
 
@@ -43,6 +45,18 @@ export async function autoRetry<T>(
 
     // Do another retry
     const delay = backoff[attempt - 1] ?? fallbackBackoff;
+
+    console.warn(
+      `Attempt ${attempt} was unsuccessful. Retrying in ${delay} milliseconds.`
+    );
     await wait(delay);
+  }
+}
+
+// XXXX Either DRY this up with the equivalent class in @liveblocks/core, or
+// find a better solution for this!
+export class StopRetrying extends Error {
+  constructor(reason: string) {
+    super(reason);
   }
 }

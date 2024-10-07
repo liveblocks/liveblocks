@@ -89,7 +89,7 @@ export type {
   AsyncResult,
   AsyncSuccess,
 } from "./lib/AsyncResult";
-export { autoRetry } from "./lib/autoRetry";
+export { autoRetry, StopRetrying } from "./lib/autoRetry";
 export { chunk } from "./lib/chunk";
 export {
   createCommentId,
@@ -102,7 +102,11 @@ export {
   errorIf,
   throwUsageError,
 } from "./lib/deprecation";
-export type { EventSource, UnsubscribeCallback } from "./lib/EventSource";
+export type {
+  EventSource,
+  Observable,
+  UnsubscribeCallback,
+} from "./lib/EventSource";
 export { makeEventSource } from "./lib/EventSource";
 export * as console from "./lib/fancy-console";
 export { freeze } from "./lib/freeze";
