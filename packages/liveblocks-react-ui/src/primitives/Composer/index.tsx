@@ -24,6 +24,7 @@ import type {
   KeyboardEvent,
   MouseEvent,
   PointerEvent,
+  SyntheticEvent,
 } from "react";
 import React, {
   forwardRef,
@@ -1201,6 +1202,10 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       [editor, attachments, onComposerSubmit, onSubmit, onSubmitEnd]
     );
 
+    const stopPropagation = useCallback((event: SyntheticEvent) => {
+      event.stopPropagation();
+    }, []);
+
     return (
       <ComposerEditorContext.Provider
         value={{
@@ -1242,6 +1247,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
                 multiple
                 ref={fileInputRef}
                 onChange={handleAttachmentsInputChange}
+                onClick={stopPropagation}
                 tabIndex={-1}
                 style={{ display: "none" }}
               />
