@@ -8,6 +8,12 @@ import { useVisibleCallback } from "../utils/use-visible";
 
 export interface InboxNotificationListProps
   extends ComponentPropsWithoutRef<"ol"> {
+  /**
+   * This API is *EXPERIMENTAL* and likely not going to be the final API. Do
+   * not rely on it.
+   *
+   * @private
+   */
   onReachEnd?: () => void;
 }
 
