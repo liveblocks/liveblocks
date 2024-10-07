@@ -49,7 +49,7 @@ export function Comment({
         <Column>
           {reactBody}
           <Button
-            className="bg-[#171717] rounded-md px-4 h-[36px] text-white text-sm font-medium flex justify-center w-max flex-col"
+            className="bg-[#171717] rounded-md px-4 py-2.5 text-white text-sm font-medium w-max"
             href={url}
           >
             View comment
