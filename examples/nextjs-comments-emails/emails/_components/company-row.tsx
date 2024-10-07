@@ -1,4 +1,4 @@
-import { Row, Column, Heading, Text } from "@react-email/components";
+import { Row, Column, Heading, Text, Img } from "@react-email/components";
 import { cn } from "../_utils/cn";
 
 export function CompanyRow({
@@ -13,29 +13,21 @@ export function CompanyRow({
     <Row>
       <Column
         className={cn({
-          "w-[32px]": variant === "header",
+          "w-[40px]": variant === "header",
           "w-[26px]": variant === "footer",
         })}
       >
-        <div
-          className={cn(
-            {
-              "w-[24px] h-[24px] rounded-lg ": variant === "header",
-              "w-[20px] h-[20px] rounded-md": variant === "footer",
-            },
-            "bg-black flex items-center justify-center"
-          )}
-        >
-          <div
-            className={cn(
-              {
-                "w-[10px] h-[10px]": variant === "header",
-                "w-[8px] h-[8px]": variant === "footer",
-              },
-              "rounded-full bg-white"
-            )}
-          />
-        </div>
+        <Img
+          // TODO: update img name
+          src="https://liveblocks.io/apple-touch-icon.png"
+          alt="company logo"
+          className={cn({
+            "rounded-lg": variant === "header",
+            "rounded-md": variant === "footer",
+          })}
+          width={variant === "header" ? 32 : 20}
+          height={variant === "header" ? 32 : 20}
+        />
       </Column>
       <Column>
         {variant === "header" ? (
