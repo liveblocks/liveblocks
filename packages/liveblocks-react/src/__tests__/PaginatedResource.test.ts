@@ -33,6 +33,7 @@ function makeBrokenFetcher() {
     jest
       .fn<Promise<string | null>, [cursor?: string]>()
       // XXXX There is a bug that shows up when we remove the "async" below here! It's an edge case we'll need to handle!
+      // eslint-disable-next-line @typescript-eslint/require-await
       .mockImplementation(async () => {
         throw new Error("Crap");
       })
@@ -76,7 +77,10 @@ describe("PaginatedResource", () => {
 
     expect(fetcher).toHaveBeenNthCalledWith(1, /* cursor */ undefined);
 
-    const fetchMore = p.get().data!.fetchMore;
+    const fetchMore = p.get().data!.fetchMore as () => Promise<void>;
+    //                                                 ^^^^^^^
+    // NOTE: fetchMore really *is* a promise at runtime, but we don't
+    // expose it as such publicly.
 
     // Synchronously calling fetch more multiple times has no effect
     fetchMore();
@@ -160,7 +164,9 @@ describe("PaginatedResource", () => {
     );
 
     // The next fetch will fail
-    const fetchMore = p.get().data!.fetchMore;
+    const fetchMore = p.get().data!.fetchMore as () => Promise<void>;
+    //                                                 ^^^^^^^
+    // NOTE: fetchMore really *is* a promise at runtime, but we don't
 
     const f1$ = fetchMore(); // Will fail!
 
