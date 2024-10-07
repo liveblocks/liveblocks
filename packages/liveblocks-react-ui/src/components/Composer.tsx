@@ -187,6 +187,7 @@ interface ComposerEditorContainerProps
     | "overrides"
     | "actions"
     | "autoFocus"
+    | "disabled"
   > {
   isCollapsed: boolean | undefined;
   onEmptyChange: (isEmpty: boolean) => void;
@@ -424,6 +425,7 @@ function ComposerEditorContainer({
   overrides,
   actions,
   autoFocus,
+  disabled,
   hasResolveMentionSuggestions,
   onEmojiPickerOpenChange,
   onEmptyChange,
@@ -434,7 +436,7 @@ function ComposerEditorContainer({
   const $ = useOverrides(overrides);
 
   const [isDraggingOver, dropAreaProps] = useComposerAttachmentsDropArea({
-    disabled: hasMaxAttachments,
+    disabled: disabled || hasMaxAttachments,
   });
 
   useLayoutEffect(() => {
@@ -458,6 +460,7 @@ function ComposerEditorContainer({
         defaultValue={defaultValue}
         autoFocus={autoFocus}
         components={editorComponents}
+        disabled={disabled}
         dir={$.dir}
       />
       {showAttachments && <ComposerAttachments overrides={overrides} />}
@@ -467,15 +470,18 @@ function ComposerEditorContainer({
             {hasResolveMentionSuggestions && (
               <ComposerInsertMentionEditorAction
                 label={$.COMPOSER_INSERT_MENTION}
+                disabled={disabled}
               />
             )}
             <ComposerInsertEmojiEditorAction
               label={$.COMPOSER_INSERT_EMOJI}
               onPickerOpenChange={onEmojiPickerOpenChange}
+              disabled={disabled}
             />
             {showAttachments && (
               <ComposerAttachFilesEditorAction
                 label={$.COMPOSER_ATTACH_FILES}
+                disabled={disabled}
               />
             )}
           </div>
@@ -688,6 +694,7 @@ export const Composer = forwardRef(
             onEmojiPickerOpenChange={setEmojiPickerOpenRef}
             onEditorClick={handleEditorClick}
             autoFocus={autoFocus}
+            disabled={disabled}
           />
         </ComposerPrimitive.Form>
       </TooltipProvider>
