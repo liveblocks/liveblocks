@@ -15,7 +15,7 @@ export function EmailRoot({
   children: React.ReactNode;
 }) {
   return (
-    <Html>
+    <Html lang="en">
       <Head />
       <Preview>{preview}</Preview>
       <Tailwind>
