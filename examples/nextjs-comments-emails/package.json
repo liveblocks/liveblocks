@@ -15,7 +15,7 @@
     "@liveblocks/node": "^2.9.0",
     "@liveblocks/react": "^2.9.0",
     "@liveblocks/react-ui": "^2.9.0",
-    "@liveblocks/emails": "^2.8.2",
+    "@liveblocks/emails": "^2.9.0",
     "@react-email/components": "0.0.25",
     "@react-email/render": "1.0.1",
     "@sendgrid/mail": "8.1.3",
