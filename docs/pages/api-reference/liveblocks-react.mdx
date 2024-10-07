@@ -2403,7 +2403,7 @@ import { useThreads } from "@liveblocks/react";
 const { threads, error, fetchMore, fetchMoreError } = useThreads();
 
 // Handle error if the initial load failed.
-// This field is not returned on the Suspense hook as the error is thrown to nearest ErrorBoundary
+// The `error` is not returned by the Suspense hook as the error is thrown to nearest ErrorBoundary
 if (error) {
   return (
     <div>
