@@ -24,21 +24,21 @@ export function makePoller(
   function poll() {
     if (context.state === "running") {
       //
-      // XXXX Should we make this contingent on the callback's execution, i.e. do
-      // XXXX try { await callback() } finally { schedule() } instead, so that
-      // XXXX two polling functions will never "overlap"?
+      // XXX Should we make this contingent on the callback's execution, i.e. do
+      // XXX try { await callback() } finally { schedule() } instead, so that
+      // XXX two polling functions will never "overlap"?
       //
-      // XXXX See discussion here:
+      // XXX See discussion here:
       // https://github.com/liveblocks/liveblocks/pull/1962#discussion_r1787422911
       //
       schedule();
     }
 
     //
-    // XXXX Set a max timeout for the `callback()` (make `callback` take
+    // XXX Set a max timeout for the `callback()` (make `callback` take
     // a signal, and protect each call with AbortSignal.timeout)
     //
-    // XXXX See discussion here:
+    // XXX See discussion here:
     // https://github.com/liveblocks/liveblocks/pull/1962#discussion_r1787422911
     //
     void callback();

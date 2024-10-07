@@ -15,7 +15,7 @@ function makeUnreliableFetcher() {
   return (
     jest
       .fn<Promise<string | null>, [cursor?: string]>()
-      // XXXX There is a bug that shows up when we remove the "async" below here! It's an edge case we'll need to handle!
+      // XXX There is a bug that shows up when we remove the "async" below here! It's an edge case we'll need to handle!
       .mockImplementation(async (cursor?: string) => {
         if (++i % 2 === 0) {
           throw new Error("Crap");
@@ -32,7 +32,7 @@ function makeBrokenFetcher() {
   return (
     jest
       .fn<Promise<string | null>, [cursor?: string]>()
-      // XXXX There is a bug that shows up when we remove the "async" below here! It's an edge case we'll need to handle!
+      // XXX There is a bug that shows up when we remove the "async" below here! It's an edge case we'll need to handle!
       // eslint-disable-next-line @typescript-eslint/require-await
       .mockImplementation(async () => {
         throw new Error("Crap");
@@ -72,7 +72,7 @@ describe("PaginatedResource", () => {
       },
     });
 
-    // XXXX Should be the exact same object reference every time
+    // XXX Should be the exact same object reference every time
     // expect(p.get() === p.get()).toEqual(true);
 
     expect(fetcher).toHaveBeenNthCalledWith(1, /* cursor */ undefined);
@@ -100,7 +100,7 @@ describe("PaginatedResource", () => {
       },
     });
 
-    // XXXX Should be the exact same object reference every time
+    // XXX Should be the exact same object reference every time
     // expect(p.get() === p.get()).toEqual(true);
 
     await f$;
@@ -117,7 +117,7 @@ describe("PaginatedResource", () => {
       },
     });
 
-    // XXXX Should be the exact same object reference every time
+    // XXX Should be the exact same object reference every time
     // expect(p.get() === p.get()).toEqual(true);
 
     await fetchMore();
@@ -134,7 +134,7 @@ describe("PaginatedResource", () => {
       },
     });
 
-    // XXXX Should be the exact same object reference every time
+    // XXX Should be the exact same object reference every time
     // expect(p.get() === p.get()).toEqual(true);
   });
 
@@ -155,7 +155,7 @@ describe("PaginatedResource", () => {
       },
     });
 
-    // XXXX Should be the exact same object reference every time
+    // XXX Should be the exact same object reference every time
     // expect(p.get() === p.get()).toEqual(true);
 
     expect(unreliableFetcher).toHaveBeenNthCalledWith(
@@ -179,7 +179,7 @@ describe("PaginatedResource", () => {
       },
     });
 
-    // XXXX Should be the exact same object reference every time
+    // XXX Should be the exact same object reference every time
     // expect(p.get() === p.get()).toEqual(true);
 
     await f1$; // Should have failed!
@@ -196,7 +196,7 @@ describe("PaginatedResource", () => {
       },
     });
 
-    // XXXX Should be the exact same object reference every time
+    // XXX Should be the exact same object reference every time
     // expect(p.get() === p.get()).toEqual(true);
 
     // Fetch once more
@@ -226,7 +226,7 @@ describe("PaginatedResource", () => {
       },
     });
 
-    // XXXX Should be the exact same object reference every time
+    // XXX Should be the exact same object reference every time
     // expect(p.get() === p.get()).toEqual(true);
   });
 
@@ -265,7 +265,7 @@ describe("PaginatedResource", () => {
       // Awaiting the outer promise will eventually reject
       await expect(w$).rejects.toThrow("Failed after 5 attempts: Error: Crap");
 
-      // XXXX Should be the exact same object reference every time
+      // XXX Should be the exact same object reference every time
       // expect(p.get() === p.get()).toEqual(true);
     } finally {
       jest.useRealTimers();
