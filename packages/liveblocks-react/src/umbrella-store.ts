@@ -193,7 +193,7 @@ type PaginationStatePatch =
 
 type QueryAsyncResult = AsyncResult<undefined>;
 
-// XXXX - Remove ASYNC_OK
+// XXX - Remove ASYNC_OK
 const ASYNC_OK = Object.freeze({ isLoading: false, data: undefined });
 
 /**
@@ -214,12 +214,12 @@ function makeUserThreadsQueryKey(
   return `USER_THREADS:${stringify(query ?? {})}`;
 }
 
-// XXXX Make this an implementation detail of the store
+// XXX Make this an implementation detail of the store
 export function makeNotificationSettingsQueryKey(roomId: string) {
   return `${roomId}:NOTIFICATION_SETTINGS`;
 }
 
-// XXXX Make this an implementation detail of the store
+// XXX Make this an implementation detail of the store
 export function makeVersionsQueryKey(roomId: string) {
   return `${roomId}-VERSIONS`;
 }
@@ -447,12 +447,12 @@ export class PaginatedResource {
     }
 
     if (usable.status === "rejected") {
-      // XXXX Make this a stable reference!
+      // XXX Make this a stable reference!
       return { isLoading: false, error: usable.reason };
     }
 
     const state = this._paginationState!;
-    // XXXX Make this a stable reference!
+    // XXX Make this a stable reference!
     return {
       isLoading: false,
       data: {
@@ -482,7 +482,7 @@ export class PaginatedResource {
     const promise = usify(
       initialFetcher.then((cursor) => {
         // Initial fetch completed
-        // XXXX - Maybe use the patch method
+        // XXX - Maybe use the patch method
         this._paginationState = {
           cursor,
           isFetchingMore: false,
@@ -491,7 +491,7 @@ export class PaginatedResource {
       })
     );
 
-    // XXXX Maybe move this into the .then() above too?
+    // XXX Maybe move this into the .then() above too?
     promise.then(
       () => this._eventSource.notify(),
       () => {
@@ -536,11 +536,11 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
    * e.g. 'room-abc-{"color":"red"}'  - ok
    * e.g. 'room-abc-{}'               - loading
    */
-  // XXXX Query state should not be exposed publicly by the store!
-  // XXXX Find a better name
+  // XXX Query state should not be exposed publicly by the store!
+  // XXX Find a better name
   queries3: Record<string, QueryAsyncResult>; // Notification settings
-  // XXXX Query state should not be exposed publicly by the store!
-  // XXXX Find a better name
+  // XXX Query state should not be exposed publicly by the store!
+  // XXX Find a better name
   queries4: Record<string, QueryAsyncResult>; // Versions
 
   /**
@@ -675,7 +675,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * then it will return the threads that match that provided query and room id.
    *
    */
-  // XXXX Find a better name for that doesn't associate to 'async'
+  // XXX Find a better name for that doesn't associate to 'async'
   public getRoomThreadsAsync(
     roomId: string,
     query: ThreadsQuery<M> | undefined
@@ -692,7 +692,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return asyncResult;
     }
 
-    // XXXX - Verify performance does not become an issue as `selectThread` is an expensive operation
+    // XXX - Verify performance does not become an issue as `selectThread` is an expensive operation
     const threads = selectThreads(this.getFullState(), {
       roomId,
       query,
@@ -711,7 +711,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     };
   }
 
-  // XXXX - Find a better name for that doesn't associate to 'async'
+  // XXX - Find a better name for that doesn't associate to 'async'
   public getUserThreadsAsync(
     query: ThreadsQuery<M> | undefined
   ): ThreadsAsyncResult<M> {
@@ -746,7 +746,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   // NOTE: This will read the async result, but WILL NOT start loading at the moment!
-  // XXXX - Find a better name for that doesn't associate to 'async'
+  // XXX - Find a better name for that doesn't associate to 'async'
   public getInboxNotificationsAsync(): InboxNotificationsAsyncResult {
     const asyncResult = this._notifications.get();
     if (asyncResult.isLoading || asyncResult.error) {
@@ -1304,7 +1304,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * Updates existing notification setting for a room with a new value,
    * replacing the corresponding optimistic update.
    */
-  // XXXX Rename this helper method
+  // XXX Rename this helper method
   public updateRoomInboxNotificationSettings2(
     roomId: string,
     optimisticUpdateId: string,
@@ -1317,7 +1317,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     });
   }
 
-  // XXXX Rename this helper method
+  // XXX Rename this helper method
   public updateRoomInboxNotificationSettings(
     roomId: string,
     settings: RoomNotificationSettings,

@@ -8,7 +8,7 @@ import { isPlainObject, shallow } from "@liveblocks/core";
  *
  * NOTE: Works on objects only, not on arrays!
  */
-// XXXX Soon we won't need this shallow2 helper anymore, so let's aim to remove it!
+// XXX Soon we won't need this shallow2 helper anymore, so let's aim to remove it!
 export function shallow2(a: unknown, b: unknown): boolean {
   if (!isPlainObject(a) || !isPlainObject(b)) {
     return shallow(a, b);

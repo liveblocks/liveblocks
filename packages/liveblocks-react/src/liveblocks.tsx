@@ -239,7 +239,7 @@ function makeDeltaPoller_Notifications(store: UmbrellaStore<BaseMetadata>) {
   return () => {
     pollerSubscribers++;
 
-    // XXXX - We should wait until the lastRequestedAt date is known using a promise and then
+    // XXX - We should wait until the lastRequestedAt date is known using a promise and then
     // in the `then` body, check again if the number of subscribers if more than 0, and only then
     // if those conditions hold, start the poller
     poller.enable(pollerSubscribers > 0);
@@ -247,7 +247,7 @@ function makeDeltaPoller_Notifications(store: UmbrellaStore<BaseMetadata>) {
     return () => {
       pollerSubscribers--;
 
-      // XXXX - When stopping the poller, we should also ideally abort its
+      // XXX - When stopping the poller, we should also ideally abort its
       // poller function, maybe using an AbortController? This functionality
       // should be automatic and handled by the Poller abstraction, not here!
       poller.enable(pollerSubscribers > 0);
@@ -255,7 +255,7 @@ function makeDeltaPoller_Notifications(store: UmbrellaStore<BaseMetadata>) {
   };
 }
 
-// XXXX DRY up these makeDeltaPoller_* abstractions, now that the symmetry has become clear!
+// XXX DRY up these makeDeltaPoller_* abstractions, now that the symmetry has become clear!
 function makeDeltaPoller_UserThreads(store: UmbrellaStore<BaseMetadata>) {
   const poller = makePoller(async () => {
     try {
@@ -272,7 +272,7 @@ function makeDeltaPoller_UserThreads(store: UmbrellaStore<BaseMetadata>) {
   return () => {
     pollerSubscribers++;
 
-    // XXXX - We should wait until the lastRequestedAt date is known using a promise and then
+    // XXX - We should wait until the lastRequestedAt date is known using a promise and then
     // in the `then` body, check again if the number of subscribers if more than 0, and only then
     // if those conditions hold, start the poller
     // promise.then(() => { if (subscribers > 0 ) initialPoller() else: do nothing })
@@ -281,7 +281,7 @@ function makeDeltaPoller_UserThreads(store: UmbrellaStore<BaseMetadata>) {
     return () => {
       pollerSubscribers--;
 
-      // XXXX - When stopping the poller, we should also ideally abort its
+      // XXX - When stopping the poller, we should also ideally abort its
       // poller function, maybe using an AbortController? This functionality
       // should be automatic and handled by the Poller abstraction, not here!
       poller.enable(pollerSubscribers > 0);
@@ -289,7 +289,7 @@ function makeDeltaPoller_UserThreads(store: UmbrellaStore<BaseMetadata>) {
   };
 }
 
-// XXXX DRY up these makeDeltaPoller_* abstractions, now that the symmetry has become clear!
+// XXX DRY up these makeDeltaPoller_* abstractions, now that the symmetry has become clear!
 function makeLiveblocksExtrasForClient(client: OpaqueClient) {
   const store = getUmbrellaStoreForClient(client);
   // TODO                                ^ Bind to M type param here
@@ -447,7 +447,7 @@ function useInboxNotifications_withClient<T>(
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
   useEffect(() => {
-    // XXXX - Verify that we need the catch or not
+    // XXX - Verify that we need the catch or not
     void store.waitUntilNotificationsLoaded().catch(() => {
       // Deliberately catch and ignore any errors here
     });
@@ -959,7 +959,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
 
   useEffect(
     () => {
-      // XXXX - Verify that we need the catch or not
+      // XXX - Verify that we need the catch or not
       void store.waitUntilUserThreadsLoaded(options.query).catch(() => {
         // Deliberately catch and ignore any errors here
       });

@@ -53,7 +53,7 @@ export async function autoRetry<T>(
   }
 }
 
-// XXXX Either DRY this up with the equivalent class in @liveblocks/core, or
+// XXX Either DRY this up with the equivalent class in @liveblocks/core, or
 // find a better solution for this!
 export class StopRetrying extends Error {
   constructor(reason: string) {
