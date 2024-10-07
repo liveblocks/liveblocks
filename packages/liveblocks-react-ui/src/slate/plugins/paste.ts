@@ -123,13 +123,13 @@ function deserialize(node: Node): DeserializedNode {
   }
 
   if (ELEMENT_TAGS[node.nodeName]) {
-    const attrs = ELEMENT_TAGS[node.nodeName](node as HTMLElement);
+    const attrs = ELEMENT_TAGS[node.nodeName]!(node as HTMLElement);
 
     return jsx("element", attrs, children);
   }
 
   if (TEXT_TAGS[node.nodeName]) {
-    const attrs = TEXT_TAGS[node.nodeName](node as HTMLElement);
+    const attrs = TEXT_TAGS[node.nodeName]!(node as HTMLElement);
 
     return children.map((child) => jsx("text", attrs, child));
   }

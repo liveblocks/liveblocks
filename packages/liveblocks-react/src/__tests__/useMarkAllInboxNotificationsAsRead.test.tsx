@@ -44,10 +44,9 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
           ctx.json({
             inboxNotifications,
             threads,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         )
@@ -121,10 +120,9 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
           ctx.json({
             inboxNotifications,
             threads,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         )

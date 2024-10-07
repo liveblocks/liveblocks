@@ -39,6 +39,7 @@ describe("useCreateThread", () => {
             inboxNotifications: [],
             meta: {
               requestedAt: new Date(),
+              nextCursor: null,
             },
           })
         );
@@ -96,6 +97,10 @@ describe("useCreateThread", () => {
       expect(result.current.threadData).toEqual({
         isLoading: false,
         threads: [],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -131,6 +136,7 @@ describe("useCreateThread", () => {
             inboxNotifications: [],
             meta: {
               requestedAt: new Date(),
+              nextCursor: null,
             },
           })
         );
@@ -162,6 +168,10 @@ describe("useCreateThread", () => {
       expect(result.current.threadsData).toEqual({
         isLoading: false,
         threads: [],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 

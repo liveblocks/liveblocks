@@ -46,10 +46,9 @@ describe("useInboxNotificationThread", () => {
           ctx.json({
             threads,
             inboxNotifications,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -78,6 +77,10 @@ describe("useInboxNotificationThread", () => {
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications,
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -117,10 +120,9 @@ describe("useInboxNotificationThread", () => {
           ctx.json({
             threads: [], // NOTE! Not setting the thread ID, making it a broken reference from the inbox notification
             inboxNotifications,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -158,6 +160,10 @@ describe("useInboxNotificationThread", () => {
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications: expect.any(Array),
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -218,10 +224,9 @@ describe("useInboxNotificationThread", () => {
           ctx.json({
             threads,
             inboxNotifications,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -259,6 +264,10 @@ describe("useInboxNotificationThread", () => {
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications: expect.any(Array),
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 

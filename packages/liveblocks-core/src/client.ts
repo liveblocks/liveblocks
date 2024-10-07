@@ -1,4 +1,3 @@
-import type { AuthValue } from "./auth-manager";
 import { createAuthManager } from "./auth-manager";
 import { isIdle } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
@@ -142,12 +141,15 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
   readonly usersStore: BatchStore<U["info"] | undefined, string>;
   readonly roomsInfoStore: BatchStore<DRI | undefined, string>;
   readonly getRoomIds: () => string[];
-  readonly getThreads: (options: GetThreadsOptions<M>) => Promise<{
+  readonly getUserThreads_experimental: (
+    options: GetThreadsOptions<M>
+  ) => Promise<{
     threads: ThreadData<M>[];
     inboxNotifications: InboxNotificationData[];
+    nextCursor: string | null;
     requestedAt: Date;
   }>;
-  readonly getThreadsSince: (
+  readonly getUserThreadsSince_experimental: (
     options: { since: Date } & GetThreadsOptions<M>
   ) => Promise<{
     inboxNotifications: {
@@ -164,31 +166,49 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
 
 export type NotificationsApi<M extends BaseMetadata> = {
   /**
-   * Gets the current user inbox notifications and their associated threads.
-   * It also returns the request date that can be used for subsequent polling.
+   * Gets a page (or the initial page) for user inbox notifications and their
+   * associated threads.
+   *
+   * This function should NOT be used for delta updates, only for pagination
+   * (including the first page fetch). For delta updates (done during the
+   * periodic polling), use the `getInboxNotificationsSince` function.
    *
    * @example
    * const {
    *   inboxNotifications,
    *   threads,
-   *   requestedAt
+   *   nextCursor,
    * } = await client.getInboxNotifications();
+   * const data = await client.getInboxNotifications();  // Fetch initial page (of 20 inbox notifications)
+   * const data = await client.getInboxNotifications({ cursor: nextCursor });  // Fetch next page (= next 20 inbox notifications)
    */
-  getInboxNotifications(): Promise<{
+  getInboxNotifications(options?: { cursor?: string }): Promise<{
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<M>[];
+    nextCursor: string | null;
     requestedAt: Date;
   }>;
 
   /**
-   * Gets the updated and deleted inbox notifications and their associated threads since the requested date.
+   * Fetches a "delta update" since the last time we updated.
+   *
+   * This function should NOT be used for pagination, for that, see the
+   * `getInboxNotifications` function.
    *
    * @example
-   * const result = await client.getInboxNotifications();
-   * // ... //
-   * await client.getInboxNotificationsSince({ since: result.requestedAt }});
+   * const {
+   *   inboxNotifications: {
+   *     updated,
+   *     deleted,
+   *   },
+   *   threads: {
+   *     updated,
+   *     deleted,
+   *    },
+   *   requestedAt,
+   * } = await client.getInboxNotificationsSince({ since: result.requestedAt }});
    */
-  getInboxNotificationsSince(options: { since: Date }): Promise<{
+  getInboxNotificationsSince(since: Date): Promise<{
     inboxNotifications: {
       updated: InboxNotificationData[];
       deleted: InboxNotificationDeleteInfo[];
@@ -379,14 +399,6 @@ function getBaseUrl(baseUrl?: string | undefined): string {
     return baseUrl;
   } else {
     return DEFAULT_BASE_URL;
-  }
-}
-
-export function getAuthBearerHeaderFromAuthValue(authValue: AuthValue): string {
-  if (authValue.type === "public") {
-    return authValue.publicApiKey;
-  } else {
-    return authValue.token.raw;
   }
 }
 
@@ -588,19 +600,12 @@ export function createClient<U extends BaseUserMeta = DU>(
 
   const currentUserIdStore = createStore<string | null>(null);
 
-  const {
-    getInboxNotifications,
-    getInboxNotificationsSince,
-    getUnreadInboxNotificationsCount,
-    markAllInboxNotificationsAsRead,
-    markInboxNotificationAsRead,
-    deleteAllInboxNotifications,
-    deleteInboxNotification,
-    getThreads,
-    getThreadsSince,
-  } = createNotificationsApi({
+  const fetcher =
+    clientOptions.polyfills?.fetch || /* istanbul ignore next */ fetch;
+
+  const httpClientLike = createNotificationsApi({
     baseUrl,
-    fetcher: clientOptions.polyfills?.fetch || /* istanbul ignore next */ fetch,
+    fetcher,
     authManager,
     currentUserIdStore,
   });
@@ -650,14 +655,7 @@ export function createClient<U extends BaseUserMeta = DU>(
 
       logout,
 
-      getInboxNotifications,
-      getInboxNotificationsSince,
-      getUnreadInboxNotificationsCount,
-      markAllInboxNotificationsAsRead,
-      markInboxNotificationAsRead,
-      deleteAllInboxNotifications,
-      deleteInboxNotification,
-      getThreads,
+      ...httpClientLike,
 
       // Internal
       [kInternal]: {
@@ -668,8 +666,11 @@ export function createClient<U extends BaseUserMeta = DU>(
         getRoomIds() {
           return Array.from(roomsById.keys());
         },
-        getThreads,
-        getThreadsSince,
+
+        // "All" threads (= "user" threads)
+        getUserThreads_experimental: httpClientLike.getUserThreads_experimental,
+        getUserThreadsSince_experimental:
+          httpClientLike.getUserThreadsSince_experimental,
       },
     },
     kInternal,

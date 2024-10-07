@@ -1,12 +1,11 @@
 import { UmbrellaStore } from "../../umbrella-store";
 
 const empty = {
-  inboxNotifications: [],
-  inboxNotificationsById: {},
-  notificationSettingsByRoomId: {},
-  queries2: {},
+  notifications: [],
+  notificationsById: {},
   queries3: {},
   queries4: {},
+  settingsByRoomId: {},
   threads: [],
   threadsById: {},
   versionsByRoomId: {},
