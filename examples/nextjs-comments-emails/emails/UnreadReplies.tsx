@@ -1,17 +1,10 @@
-import {
-  Button,
-  Column,
-  Heading,
-  Img,
-  Row,
-  Section,
-  Text,
-} from "@react-email/components";
+import { Section, Text } from "@react-email/components";
 import type { CommentEmailAsReactData } from "@liveblocks/emails";
 import { EmailRoot } from "./_components/email-root";
 import { getProps } from "./_utils/getProps";
 import { CompanyRow } from "./_components/company-row";
 import { Comment } from "./_components/comment";
+import { Headline } from "./_components/headline";
 
 type RoomInfo = {
   name?: string;
@@ -50,7 +43,7 @@ const previewProps: EmailProps = {
         },
       },
       reactBody: (
-        <Text className="text-sm">
+        <Text className="text-sm m-0 mb-4">
           <span>
             Great work on the visual designs! Can we discuss the color scheme in
             our next meeting?
@@ -73,7 +66,7 @@ const previewProps: EmailProps = {
         },
       },
       reactBody: (
-        <Text className="text-sm">
+        <Text className="text-sm m-0 mb-4">
           <span>
             I think we could narrow down the demographics a bit more. Let's
             discuss in our next meeting.
@@ -88,26 +81,45 @@ const previewProps: EmailProps = {
 
 const getPreviewText = (
   comments: CommentEmailAsReactData[],
-  roomInfo: RoomInfo
+  roomName: RoomInfo["name"]
 ): string => {
-  const roomName = roomInfo.name ?? "unknown room";
+  const room = roomName ?? "unknown room";
   if (comments.length === 1) {
     const author = comments[0].author;
-    return `${author.info.name} left a comment in ${roomName}`;
+    return `${author.info.name} left a comment in ${room}`;
   }
 
-  return `${comments.length} new comments in ${roomName}`;
+  return `${comments.length} new comments in ${room}`;
+};
+
+const getHeadlineParts = (
+  comments: CommentEmailAsReactData[],
+  roomName?: RoomInfo["name"]
+): [string, string, string] => {
+  const room = roomName ?? "unknown room";
+  if (comments.length === 1) {
+    const author = comments[0].author;
+    return [author.info.name, "left a comment in", room];
+  }
+
+  return [`${comments.length} new comments`, "in", room];
 };
 
 export default function Email(props: EmailProps) {
   const { company, roomInfo, comments } = getProps(props, previewProps);
-  const previewText = getPreviewText(comments, roomInfo);
+
+  const previewText = getPreviewText(comments, roomInfo.name);
+  const headlineParts = getHeadlineParts(comments, roomInfo?.name);
 
   return (
     <EmailRoot preview={previewText}>
       <CompanyRow name={company.name} url={company.url} variant="header" />
       <Section className="my-12">
-        <Text className="text-sm font-medium">{previewText}</Text>
+        <Headline>
+          {headlineParts[0]}{" "}
+          <span className="font-normal">{headlineParts[1]}</span>{" "}
+          {headlineParts[2]}
+        </Headline>
         {comments.map((comment) => (
           <Comment key={comment.id} {...comment} />
         ))}

@@ -53,13 +53,15 @@ export async function POST(request: Request) {
               };
             },
             // And the magic to use `react-email` components happens here 🥳
-            // Or you can use your own components.
+            // Or you can use your own components if you're not using `react-email`.
             commentBodyComponents: {
               Paragraph: ({ children }) => (
-                <Text className="text-sm">{children}</Text>
+                <Text className="text-sm m-0 mb-4">{children}</Text>
               ),
               Mention: ({ element, user }) => (
-                <span>@{user?.name ?? element.id}</span>
+                <span className="color-[#1667FF]">
+                  @{user?.name ?? element.id}
+                </span>
               ),
             },
           }
