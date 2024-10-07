@@ -2427,6 +2427,7 @@ describe("useThreads: pagination", () => {
 
     unmount();
   });
+
   test("should set `hasFetchedAll` to true when there are no more pages to fetch", async () => {
     const roomId = nanoid();
 
