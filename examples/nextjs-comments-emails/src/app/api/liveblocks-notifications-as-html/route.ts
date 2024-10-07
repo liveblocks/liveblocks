@@ -25,7 +25,7 @@ const webhookHandler = new WebhookHandler(
 
 type TemplateInfo = {
   templateId: string;
-  dynamicTemplateData: MailDataRequired["dynamicTemplateData"];
+  dynamicTemplateData: { [key: string]: any };
   subject: string;
 };
 const getTemplate = (
@@ -53,78 +53,92 @@ export async function POST(request: Request) {
   const body = await request.json();
   const headers = request.headers;
 
+  let event;
   try {
     // Verify if this is a real webhook request
-    const event = webhookHandler.verifyRequest({
+    event = webhookHandler.verifyRequest({
       headers: headers,
       rawBody: JSON.stringify(body),
     });
-
-    if (isThreadNotificationEvent(event)) {
-      try {
-        const emailData = await prepareThreadNotificationEmailAsHTML(
-          liveblocks,
-          event,
-          {
-            resolveUsers: async ({ userIds }) => {
-              const users = await getUsers(userIds);
-              return users.map((user) => user?.info || {});
-            },
-            resolveRoomInfo: ({ roomId }) => {
-              return {
-                name: roomId,
-                url: `https://my-liveblocks-app.com?roomId=${roomId}`,
-              };
-            },
-            // Customize your HTML elements here 👇
-            commentBodyStyles: {
-              paragraph: "font-size:14px;margin:0",
-              mention: "color:#1667FF;font-weight:500;",
-            },
-          }
-        );
-
-        if (emailData !== null) {
-          const company = {
-            name: "My Liveblocks App",
-            url: "https://my-liveblocks-app.com",
-          };
-
-          const roomInfo = {
-            name: emailData.roomInfo.name,
-            url: emailData.roomInfo.url,
-          };
-
-          const { templateId, dynamicTemplateData, subject } =
-            getTemplate(emailData);
-
-          try {
-            await sendgridMail.send({
-              from: "My Liveblocks App <hello@my-liveblocks-app.com>",
-              to: event.data.userId,
-              templateId,
-              subject,
-              dynamicTemplateData: {
-                company,
-                roomInfo,
-                ...dynamicTemplateData,
-              },
-            });
-          } catch (err) {
-            console.log(err);
-            return new Response(JSON.stringify(err), {
-              status: 500,
-            });
-          }
-        }
-      } catch (err) {
-        console.error(err);
-        return new Response("Something went wrong", { status: 400 });
-      }
-    }
-    return new Response(null, { status: 200 });
   } catch (err) {
     console.error(err);
     return new Response("Couldn't verify hook call", { status: 400 });
   }
+
+  // Check if the event is a Thread Notification event
+  if (isThreadNotificationEvent(event)) {
+    let emailData: ThreadNotificationEmailDataAsHTML | null = null;
+    try {
+      emailData = await prepareThreadNotificationEmailAsHTML(
+        liveblocks,
+        event,
+        {
+          resolveUsers: async ({ userIds }) => {
+            const users = await getUsers(userIds);
+            return users.map((user) => user?.info || {});
+          },
+          resolveRoomInfo: ({ roomId }) => {
+            return {
+              name: roomId,
+              url: `https://my-liveblocks-app.com?roomId=${roomId}`,
+            };
+          },
+          // Customize your HTML elements here 👇
+          commentBodyStyles: {
+            paragraph: "font-size:14px;margin:0",
+            mention: "color:#1667FF;font-weight:500;",
+          },
+        }
+      );
+    } catch (err) {
+      console.error(err);
+      return new Response("Something went wrong", { status: 400 });
+    }
+
+    // If there are unread comments (last comment with mention or unread replies)
+    if (emailData !== null) {
+      const company = {
+        name: "My Liveblocks App",
+        url: "https://my-liveblocks-app.com",
+      };
+
+      const roomInfo = {
+        name: emailData.roomInfo.name,
+        url: emailData.roomInfo.url,
+      };
+
+      const { templateId, dynamicTemplateData, subject } =
+        getTemplate(emailData);
+
+      try {
+        await sendgridMail.send({
+          from: "My Liveblocks App <hello@my-liveblocks-app.com>",
+          to: event.data.userId,
+          templateId,
+          subject,
+          dynamicTemplateData: {
+            company,
+            roomInfo,
+            ...dynamicTemplateData,
+          },
+        });
+
+        return new Response(null, { status: 200 });
+      } catch (err) {
+        console.log(err);
+        return new Response(JSON.stringify(err), {
+          status: 500,
+        });
+      }
+    }
+
+    return new Response("No email data to send", { status: 200 });
+  }
+
+  return new Response(
+    "Event type is not a notification event on thread data kind",
+    {
+      status: 200,
+    }
+  );
 }
