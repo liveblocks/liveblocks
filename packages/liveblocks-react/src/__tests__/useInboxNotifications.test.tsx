@@ -834,22 +834,24 @@ describe("useInboxNotifications: pagination", () => {
 
     unmount();
   });
+
   test("should set `hasFetchedAll` to true when there are no more pages to fetch", async () => {
     const roomId = nanoid();
 
     const threadOne = dummyThreadData({
       roomId,
-      createdAt: new Date("2021-01-01T00:00:00Z"),
+      createdAt: new Date("2021-01-02T00:00:00Z"),
     });
     const threadTwo = dummyThreadData({
       roomId,
-      createdAt: new Date("2021-01-02T00:00:00Z"),
+      createdAt: new Date("2021-01-01T00:00:00Z"),
     });
 
     const inboxNotificationsPageOne = [
       dummyThreadInboxNotificationData({
         roomId,
         threadId: threadOne.id,
+        notifiedAt: new Date("2021-01-02T00:01:00Z"),
       }),
     ];
 
@@ -857,6 +859,7 @@ describe("useInboxNotifications: pagination", () => {
       dummyThreadInboxNotificationData({
         roomId,
         threadId: threadTwo.id,
+        notifiedAt: new Date("2021-01-01T00:01:00Z"),
       }),
     ];
 
