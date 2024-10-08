@@ -33,6 +33,7 @@ const config: PlaywrightTestConfig = {
   use: {
     headless: process.env.CI || process.env.HEADLESS ? true : false,
     viewport: { width: 640, height: 800 },
+    permissions: ["clipboard-write", "clipboard-read"],
     /* Maximum time each action such as `click()` can take. Defaults to 0 (no limit). */
     actionTimeout: 0,
     /* Base URL to use in actions like `await page.goto('/')`. */
