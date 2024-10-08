@@ -6,7 +6,7 @@ import type { Config } from "tailwindcss";
 
 // Export config specific to emails and define them to make them
 // usable in your code editor.
-export const emailColors: ResolvableTo<RecursiveKeyValuePair> = {
+export const emailColors: RecursiveKeyValuePair = {
   mention: "#1667FF",
 };
 
@@ -19,7 +19,7 @@ const config = {
   theme: {
     extend: {
       colors: {
-        ...emailColors,
+        email: { ...emailColors },
       },
     },
   },

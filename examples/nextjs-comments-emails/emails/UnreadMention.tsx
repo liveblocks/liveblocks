@@ -40,7 +40,7 @@ const previewProps: EmailProps = {
       <Text className="text-sm m-0 mb-4">
         <span>
           For the user research phase, we'll need{" "}
-          <span data-mention className="text-mention font-medium">
+          <span data-mention className="text-email-mention font-medium">
             @Quinn Elton
           </span>{" "}
           to lead the interviews and compile the findings. His expertise in
