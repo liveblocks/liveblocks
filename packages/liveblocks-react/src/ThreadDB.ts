@@ -73,6 +73,9 @@ export class ThreadDB<M extends BaseMetadata> {
     return this._byId.get(threadId);
   }
 
+  /**
+   * Returns the (non-deleted) thread for the given thread ID.
+   */
   public get(threadId: string): ThreadData<M> | undefined {
     const thread = this.getEvenIfDeleted(threadId);
     return thread?.deletedAt ? undefined : thread;
@@ -105,7 +108,7 @@ export class ThreadDB<M extends BaseMetadata> {
   public delete(threadId: string, deletedAt: Date): void {
     const existing = this._byId.get(threadId);
     if (existing && !existing.deletedAt) {
-      this.upsert({ ...existing, deletedAt });
+      this.upsert({ ...existing, deletedAt, updatedAt: deletedAt });
     }
   }
 
@@ -120,5 +123,9 @@ export class ThreadDB<M extends BaseMetadata> {
 
   private touch() {
     ++this._version;
+  }
+
+  public _toRecord(): Record<string, ThreadDataWithDeleteInfo<M>> {
+    return Object.fromEntries(this._byId.entries());
   }
 }
