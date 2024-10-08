@@ -83,6 +83,15 @@ export class ThreadDB<M extends BaseMetadata> {
     }
   }
 
+  public findMany(
+    // XXX Implement more query filters and caching here
+    query: { roomId: string },
+    direction: "asc" | "desc"
+  ): readonly ThreadData<M>[] {
+    const index = direction === "desc" ? this._desc : this._asc;
+    return Array.from(index.filter((t) => t.roomId === query.roomId));
+  }
+
   private touch() {
     ++this._version;
   }
