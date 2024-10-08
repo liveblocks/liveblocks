@@ -51,10 +51,9 @@ describe("useDeleteInboxNotification", () => {
           ctx.json({
             inboxNotifications,
             threads,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         )
@@ -129,10 +128,9 @@ describe("useDeleteInboxNotification", () => {
           ctx.json({
             inboxNotifications,
             threads,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         )
@@ -215,10 +213,9 @@ describe("useDeleteInboxNotification", () => {
           ctx.json({
             inboxNotifications,
             threads,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         )
@@ -305,10 +302,9 @@ describe("useDeleteInboxNotification", () => {
           ctx.json({
             inboxNotifications,
             threads,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         )
@@ -401,10 +397,9 @@ describe("useDeleteInboxNotification", () => {
           ctx.json({
             inboxNotifications,
             threads,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         )

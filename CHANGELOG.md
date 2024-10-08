@@ -1,3 +1,51 @@
+## 2.9.1 (Not released yet)
+
+### `@liveblocks/react-ui`
+
+- When `Composer` is disabled, its actions are now also disabled as expected.
+- Various event propagation improvements in `Composer`.
+
+## 2.9.0
+
+We are introducing pagination support to allow apps using threads and inbox
+notifications to be built in a more user-friendly way, where the initial load is
+faster and more data can be fetched incrementally as users interact with the
+app.
+
+### `@liveblocks/react`
+
+- Add pagination support to `useInboxNotifications()`
+
+  ```tsx
+  const {
+    inboxNotifications,
+    isLoading,
+    error,
+
+    // ✨ New in Liveblocks 2.9
+    fetchMore,
+    isFetchingMore,
+    hasFetchedAll,
+    fetchMoreError,
+  } = useInboxNotifications();
+  ```
+
+- Add pagination support to `useThreads()` and `useUserThreads_experimental()`
+
+  ```tsx
+  const {
+    threads,
+    isLoading,
+    error,
+
+    // ✨ New in Liveblocks 2.9
+    fetchMore,
+    isFetchingMore,
+    hasFetchedAll,
+    fetchMoreError,
+  } = useThreads({ query });
+  ```
+
 ## 2.8.2
 
 ### `@liveblocks/client`

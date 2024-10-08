@@ -15,14 +15,11 @@ import type {
 } from "@liveblocks/core";
 import {
   assert,
-  autoRetry,
   createClient,
   kInternal,
   makePoller,
-  memoizeOnSuccess,
   raise,
   shallow,
-  stringify,
 } from "@liveblocks/core";
 import type { PropsWithChildren } from "react";
 import React, {
@@ -36,9 +33,6 @@ import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import { useIsInsideRoom } from "./contexts";
-import { byFirstCreated, byMostRecentlyUpdated } from "./lib/compare";
-import { makeThreadsFilter } from "./lib/querying";
-import { retryError } from "./lib/retry-error";
 import { shallow2 } from "./lib/shallow2";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { use } from "./lib/use-polyfill";
@@ -50,13 +44,11 @@ import type {
   SharedContextBundle,
   ThreadsAsyncResult,
   ThreadsAsyncSuccess,
-  ThreadsQuery,
   UnreadInboxNotificationsCountAsyncResult,
   UserAsyncResult,
   UserAsyncSuccess,
   UseUserThreadsOptions,
 } from "./types";
-import type { UmbrellaStoreState } from "./umbrella-store";
 import { UmbrellaStore } from "./umbrella-store";
 
 /**
@@ -87,15 +79,14 @@ const _umbrellaStores = new WeakMap<
 >();
 const _extras = new WeakMap<
   OpaqueClient,
-  ReturnType<typeof makeExtrasForClient>
+  ReturnType<typeof makeLiveblocksExtrasForClient>
 >();
 const _bundles = new WeakMap<
   OpaqueClient,
   LiveblocksContextBundle<BaseUserMeta, BaseMetadata>
 >();
 
-export const POLLING_INTERVAL = 60 * 1000; // 1 minute
-export const USER_THREADS_QUERY = "USER_THREADS";
+export const POLLING_INTERVAL = 60 * 1000; // every minute
 
 function selectUnreadInboxNotificationsCount(
   inboxNotifications: readonly InboxNotificationData[]
@@ -185,39 +176,6 @@ function selectorFor_useRoomInfo(
   };
 }
 
-/**
- * @private Do not rely on this internal API.
- */
-// TODO This helper should ideally not have to be exposed at the package level!
-// TODO It's currently used by react-lexical though.
-export function selectThreads<M extends BaseMetadata>(
-  state: UmbrellaStoreState<M>,
-  options: {
-    roomId: string | null;
-    query?: ThreadsQuery<M>;
-    orderBy:
-      | "age" // = default
-      | "last-update";
-  }
-): ThreadData<M>[] {
-  let threads = state.threads;
-
-  if (options.roomId !== null) {
-    threads = threads.filter((thread) => thread.roomId === options.roomId);
-  }
-
-  // Third filter pass: select only threads matching query filter
-  const query = options.query;
-  if (query) {
-    threads = threads.filter(makeThreadsFilter<M>(query));
-  }
-
-  // Sort threads by creation date (oldest first)
-  return threads.sort(
-    options.orderBy === "last-update" ? byMostRecentlyUpdated : byFirstCreated
-  );
-}
-
 function getOrCreateContextBundle<
   U extends BaseUserMeta,
   M extends BaseMetadata,
@@ -240,7 +198,7 @@ export function getUmbrellaStoreForClient<M extends BaseMetadata>(
 ): UmbrellaStore<M> {
   let store = _umbrellaStores.get(client);
   if (!store) {
-    store = new UmbrellaStore();
+    store = new UmbrellaStore(client);
     _umbrellaStores.set(client, store);
   }
   return store as unknown as UmbrellaStore<M>;
@@ -250,12 +208,12 @@ export function getUmbrellaStoreForClient<M extends BaseMetadata>(
 // rename this later. All of these are implementation details to support inbox
 // notifications on a per-client basis.
 /** @internal Only exported for unit tests. */
-export function getExtrasForClient<M extends BaseMetadata>(
+export function getLiveblocksExtrasForClient<M extends BaseMetadata>(
   client: OpaqueClient
 ) {
   let extras = _extras.get(client);
   if (!extras) {
-    extras = makeExtrasForClient(client);
+    extras = makeLiveblocksExtrasForClient(client);
     _extras.set(client, extras);
   }
 
@@ -264,278 +222,139 @@ export function getExtrasForClient<M extends BaseMetadata>(
   };
 }
 
-function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
-  const store = getUmbrellaStoreForClient(client);
-  // TODO                                ^ Bind to M type param here
-
-  let lastRequestedAt: Date | undefined;
-
-  /**
-   * Performs one network fetch, and updates the store and last requested at
-   * date if successful. If unsuccessful, will throw.
-   */
-  async function fetchInboxNotifications() {
-    // If inbox notifications have not been fetched yet, we get all of them
-    // Else, we fetch only what changed since the last request
-    if (lastRequestedAt === undefined) {
-      const result = await client.getInboxNotifications();
-
-      store.batch(() => {
-        // 1️⃣
-        store.updateThreadsAndNotifications(
-          result.threads,
-          result.inboxNotifications,
-          [],
-          []
-        );
-
-        // 2️⃣
-        store.setQuery1OK();
-      });
-
-      lastRequestedAt = result.requestedAt;
-    } else {
-      const result = await client.getInboxNotificationsSince({
-        since: lastRequestedAt,
-      });
-
-      store.batch(() => {
-        // 1️⃣
-        store.updateThreadsAndNotifications(
-          result.threads.updated,
-          result.inboxNotifications.updated,
-          result.threads.deleted,
-          result.inboxNotifications.deleted
-        );
-
-        // 2️⃣
-        store.setQuery1OK();
-      });
-
-      if (lastRequestedAt < result.requestedAt) {
-        lastRequestedAt = result.requestedAt;
-      }
-    }
-  }
-
-  let pollerSubscribers = 0;
+function makeDeltaPoller_Notifications(store: UmbrellaStore<BaseMetadata>) {
   const poller = makePoller(async () => {
     try {
-      await waitUntilInboxNotificationsLoaded();
-      await fetchInboxNotifications();
+      await store.waitUntilNotificationsLoaded();
+      await store.fetchNotificationsDeltaUpdate();
     } catch (err) {
       // When polling, we don't want to throw errors, ever
       console.warn(`Polling new inbox notifications failed: ${String(err)}`);
     }
-  });
+  }, POLLING_INTERVAL);
 
-  /**
-   * Will trigger an initial fetch of inbox notifications if this hasn't
-   * already happened. Will resolve once there is initial data. Will retry
-   * a few times automatically in case fetching fails, with incremental backoff
-   * delays. Will throw eventually only if all retries fail.
-   */
-  const waitUntilInboxNotificationsLoaded = memoizeOnSuccess(async () => {
-    store.setQuery1Loading();
+  // Keep track of the number of subscribers
+  let pollerSubscribers = 0;
 
-    try {
-      await autoRetry(
-        () => fetchInboxNotifications(),
-        5,
-        [5000, 5000, 10000, 15000]
-      );
-    } catch (err) {
-      // Store the error in the cache as a side-effect, for non-Suspense
-      store.setQuery1Error(err as Error);
-
-      // Rethrow it for Suspense, where this promise must fail
-      throw err;
-    }
-  });
-
-  /**
-   * Triggers an initial fetch of inbox notifications if this hasn't
-   * already happened.
-   */
-  function loadInboxNotifications(): void {
-    void waitUntilInboxNotificationsLoaded().catch(() => {
-      // Deliberately catch and ignore any errors here
-    });
-  }
-
-  /**
-   * Enables polling for inbox notifications when the component mounts. Stops
-   * polling on unmount.
-   *
-   * Safe to be called multiple times from different components. The first
-   * component to mount starts the polling. The last component to unmount stops
-   * the polling.
-   */
-  function startPolling() {
-    // Increment
+  return () => {
     pollerSubscribers++;
-    poller.start(POLLING_INTERVAL);
+
+    // XXXX - We should wait until the lastRequestedAt date is known using a promise and then
+    // in the `then` body, check again if the number of subscribers if more than 0, and only then
+    // if those conditions hold, start the poller
+    poller.enable(pollerSubscribers > 0);
 
     return () => {
-      // Decrement
-      if (pollerSubscribers <= 0) {
-        console.warn(
-          "Unexpected internal error: cannot decrease subscriber count for inbox notifications."
-        );
-        return;
-      }
-
       pollerSubscribers--;
-      if (pollerSubscribers <= 0) {
-        poller.stop();
-      }
+
+      // XXXX - When stopping the poller, we should also ideally abort its
+      // poller function, maybe using an AbortController? This functionality
+      // should be automatic and handled by the Poller abstraction, not here!
+      poller.enable(pollerSubscribers > 0);
     };
-  }
+  };
+}
 
-  const userThreadsPoller = makePoller(refreshUserThreads);
-
-  let isFetchingUserThreadsUpdates = false;
-
-  async function refreshUserThreads() {
-    const since = userThreadslastRequestedAt;
-
-    if (since === undefined || isFetchingUserThreadsUpdates) {
-      return;
-    }
+// XXXX DRY up these makeDeltaPoller_* abstractions, now that the symmetry has become clear!
+function makeDeltaPoller_UserThreads(store: UmbrellaStore<BaseMetadata>) {
+  const poller = makePoller(async () => {
     try {
-      isFetchingUserThreadsUpdates = true;
-      const updates = await client[kInternal].getThreadsSince({
-        since,
-      });
-      isFetchingUserThreadsUpdates = false;
-
-      store.batch(() => {
-        // 1️⃣
-        store.updateThreadsAndNotifications(
-          updates.threads.updated,
-          [],
-          updates.threads.deleted,
-          []
-        );
-
-        // 2️⃣
-        store.setQuery2OK(USER_THREADS_QUERY);
-      });
-
-      userThreadslastRequestedAt = updates.requestedAt;
+      await store.fetchUserThreadsDeltaUpdate();
     } catch (err) {
-      isFetchingUserThreadsUpdates = false;
-      return;
+      // When polling, we don't want to throw errors, ever
+      console.warn(`Polling new user threads failed: ${String(err)}`);
     }
-  }
+  }, POLLING_INTERVAL);
 
-  // TODO Hmm. All of this is stuff that should be managed by the cache. Now we have caches in different places.
-  const userThreadsSubscribersByQuery = new Map<string, number>();
-  const userThreadsRequestsByQuery = new Map<string, Promise<unknown>>();
+  // Keep track of the number of subscribers
+  let pollerSubscribers = 0;
 
-  function incrementUserThreadsQuerySubscribers(queryKey: string) {
-    const subscribers = userThreadsSubscribersByQuery.get(queryKey) ?? 0;
-    userThreadsSubscribersByQuery.set(queryKey, subscribers + 1);
+  return () => {
+    pollerSubscribers++;
 
-    userThreadsPoller.start(POLLING_INTERVAL);
+    // XXXX - We should wait until the lastRequestedAt date is known using a promise and then
+    // in the `then` body, check again if the number of subscribers if more than 0, and only then
+    // if those conditions hold, start the poller
+    // promise.then(() => { if (subscribers > 0 ) initialPoller() else: do nothing })
+    poller.enable(pollerSubscribers > 0);
 
-    // Decrement in the unsub function
     return () => {
-      const subscribers = userThreadsSubscribersByQuery.get(queryKey);
+      pollerSubscribers--;
 
-      if (subscribers === undefined || subscribers <= 0) {
-        console.warn(
-          `Internal unexpected behavior. Cannot decrease subscriber count for query "${queryKey}"`
-        );
-        return;
-      }
-
-      userThreadsSubscribersByQuery.set(queryKey, subscribers - 1);
-
-      let totalSubscribers = 0;
-      for (const subscribers of userThreadsSubscribersByQuery.values()) {
-        totalSubscribers += subscribers;
-      }
-
-      if (totalSubscribers <= 0) {
-        userThreadsPoller.stop();
-      }
+      // XXXX - When stopping the poller, we should also ideally abort its
+      // poller function, maybe using an AbortController? This functionality
+      // should be automatic and handled by the Poller abstraction, not here!
+      poller.enable(pollerSubscribers > 0);
     };
-  }
+  };
+}
 
-  let userThreadslastRequestedAt: Date | undefined;
+// XXXX DRY up these makeDeltaPoller_* abstractions, now that the symmetry has become clear!
+function makeLiveblocksExtrasForClient(client: OpaqueClient) {
+  const store = getUmbrellaStoreForClient(client);
+  // TODO                                ^ Bind to M type param here
 
-  async function getUserThreads(
-    queryKey: string,
-    options: UseUserThreadsOptions<M>,
-    { retryCount }: { retryCount: number } = { retryCount: 0 }
-  ) {
-    const existingRequest = userThreadsRequestsByQuery.get(queryKey);
-
-    // If a request was already made for the query, we do not make another request and return the existing promise of the request
-    if (existingRequest !== undefined) return existingRequest;
-
-    const request = client[kInternal].getThreads(options);
-
-    // Store the promise of the request for the query so that we do not make another request for the same query
-    userThreadsRequestsByQuery.set(queryKey, request);
-
-    store.setQuery2Loading(queryKey);
-
-    try {
-      const result = await request;
-
-      store.batch(() => {
-        // 1️⃣
-        store.updateThreadsAndNotifications(
-          result.threads,
-          result.inboxNotifications,
-          [],
-          []
-        );
-
-        // 2️⃣
-        store.setQuery2OK(queryKey);
-      });
-
-      /**
-       * We set the `userThreadslastRequestedAt` value to the timestamp returned by the current request if:
-       * 1. The `userThreadslastRequestedAt` value has not been set
-       * OR
-       * 2. The `userThreadslastRequestedAt` value is older than the timestamp returned by the current request
-       */
-      if (
-        userThreadslastRequestedAt === undefined ||
-        userThreadslastRequestedAt < result.requestedAt
-      ) {
-        userThreadslastRequestedAt = result.requestedAt;
-      }
-
-      userThreadsPoller.start(POLLING_INTERVAL);
-    } catch (err) {
-      userThreadsRequestsByQuery.delete(queryKey);
-
-      // Retry the action using the exponential backoff algorithm
-      retryError(() => {
-        void getUserThreads(queryKey, options, {
-          retryCount: retryCount + 1,
-        });
-      }, retryCount);
-
-      // Set the query state to the error state
-      store.setQuery2Error(queryKey, err as Error);
-    }
-
-    return;
-  }
+  //
+  // How pagination and delta updates work
+  // =====================================
+  //
+  // Suppose we call fetchInboxNotifications() for the first time. Then,
+  // eventually we'll see this timeline of notifications:
+  //
+  // <-- Newer                        Older -->
+  //       |---o---------o----------o---|
+  //
+  //       o = an inbox notification
+  //
+  // In this array, there are three entries, ordered from latest to oldest.
+  //
+  // Now if we call fetchInboxNotifications() again (which is what the
+  // periodic poller does), then the array may get updated with newer inbox
+  // notifications, meaning entries will appear at the head end of the array.
+  // This is a so called "delta update".
+  //
+  // <-- Newer                                 Older -->
+  //       |--o---o-|---o---------o----------o---|
+  //          delta
+  //
+  // Here, two new entries have appeared at the start.
+  //
+  // Another way to update this array is to use "pagination". Pagination will
+  // update this list at the _tail_ end.
+  //
+  // After calling fetchMore():
+  //
+  // <-- Newer                                                  Older -->
+  //       |--o---o-|---o---------o----------o---|--o--o-o-o-o-o--|
+  //                                                   page 2
+  //
+  // And calling fetchMore() another time:
+  //
+  // <-- Newer                                                                  Older -->
+  //       |--o---o-|---o---------o----------o---|--o--o-o-o-o-o--|--o-o---o---o--|
+  //                                                   page 2           page 3
+  //
+  // In terms of HTTP requests:
+  // - A delta update will perform a GET /v2/c/inbox-notifications?since=...
+  // - Pagination will perform a GET /v2/c/inbox-notifications?cursor=...
+  //
 
   return {
     store,
-    startPolling,
-    waitUntilInboxNotificationsLoaded,
-    loadInboxNotifications,
-    incrementUserThreadsQuerySubscribers,
-    getUserThreads,
+    /**
+     * Sub/unsub pair to start the process of watching for new incoming inbox
+     * notifications through a stream of delta updates. Call the unsub function
+     * returned to stop this subscription when unmounting. Currently
+     * implemented by a periodic poller.
+     */
+    subscribeToNotificationsDeltaUpdates: makeDeltaPoller_Notifications(store),
+    /**
+     * Sub/unsub pair to start the process of watching for new user threads
+     * through a stream of delta updates. Call the unsub function returned to
+     * stop this subscription when unmounting. Currently implemented by
+     * a periodic poller.
+     */
+    subscribeToUserThreadsDeltaUpdates: makeDeltaPoller_UserThreads(store),
   };
 }
 
@@ -575,7 +394,8 @@ function makeLiveblocksContextBundle<
   const bundle: LiveblocksContextBundle<U, M> = {
     LiveblocksProvider,
 
-    useInboxNotifications: () => useInboxNotifications_withClient(client),
+    useInboxNotifications: () =>
+      useInboxNotifications_withClient(client, identity, shallow),
     useUnreadInboxNotificationsCount: () =>
       useUnreadInboxNotificationsCount_withClient(client),
 
@@ -614,51 +434,61 @@ function makeLiveblocksContextBundle<
   return bundle;
 }
 
-function useInboxNotifications_withClient(client: OpaqueClient) {
-  const { loadInboxNotifications, store, startPolling } =
-    getExtrasForClient(client);
+function useInboxNotifications_withClient<T>(
+  client: OpaqueClient,
+  selector: (result: InboxNotificationsAsyncResult) => T,
+  isEqual: (a: T, b: T) => boolean
+): T {
+  const {
+    store,
+    subscribeToNotificationsDeltaUpdates: subscribeToDeltaUpdates,
+  } = getLiveblocksExtrasForClient(client);
 
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
-  useEffect(loadInboxNotifications, [loadInboxNotifications]);
-  useEffect(startPolling, [startPolling]);
+  useEffect(() => {
+    // XXXX - Verify that we need the catch or not
+    void store.waitUntilNotificationsLoaded().catch(() => {
+      // Deliberately catch and ignore any errors here
+    });
+    // NOTE: Deliberately *not* using a dependency array here!
+    //
+    // It is important to call waitUntil on *every* render.
+    // This is harmless though, on most renders, except:
+    // 1. The very first render, in which case we'll want to trigger the initial page fetch.
+    // 2. All other subsequent renders now "just" return the same promise (a quick operation).
+    // 3. If ever the promise would fail, then after 5 seconds it would reset, and on the very
+    //    *next* render after that, a *new* fetch/promise will get created.
+  });
+
+  useEffect(subscribeToDeltaUpdates, [subscribeToDeltaUpdates]);
 
   return useSyncExternalStoreWithSelector(
     store.subscribeThreadsOrInboxNotifications,
     store.getInboxNotificationsAsync,
     store.getInboxNotificationsAsync,
-    identity,
-    shallow
+    selector,
+    isEqual
   );
 }
 
 function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
-  const { waitUntilInboxNotificationsLoaded } = getExtrasForClient(client);
+  const store = getLiveblocksExtrasForClient(client).store;
 
   // Suspend until there are at least some inbox notifications
-  use(waitUntilInboxNotificationsLoaded());
+  use(store.waitUntilNotificationsLoaded());
 
   // We're in a Suspense world here, and as such, the useInboxNotifications()
   // hook is expected to only return success results when we're here.
-  const result = useInboxNotifications_withClient(client);
+  const result = useInboxNotifications_withClient(client, identity, shallow);
   assert(!result.error, "Did not expect error");
   assert(!result.isLoading, "Did not expect loading");
   return result;
 }
 
 function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
-  const { store, loadInboxNotifications, startPolling } =
-    getExtrasForClient(client);
-
-  // Trigger initial loading of inbox notifications if it hasn't started
-  // already, but don't await its promise.
-  useEffect(loadInboxNotifications, [loadInboxNotifications]);
-  useEffect(startPolling, [startPolling]);
-
-  return useSyncExternalStoreWithSelector(
-    store.subscribeThreadsOrInboxNotifications,
-    store.getInboxNotificationsAsync,
-    store.getInboxNotificationsAsync,
+  return useInboxNotifications_withClient(
+    client,
     selectorFor_useUnreadInboxNotificationsCount,
     shallow
   );
@@ -667,10 +497,10 @@ function useUnreadInboxNotificationsCount_withClient(client: OpaqueClient) {
 function useUnreadInboxNotificationsCountSuspense_withClient(
   client: OpaqueClient
 ) {
-  const { waitUntilInboxNotificationsLoaded } = getExtrasForClient(client);
+  const store = getLiveblocksExtrasForClient(client).store;
 
   // Suspend until there are at least some inbox notifications
-  use(waitUntilInboxNotificationsLoaded());
+  use(store.waitUntilNotificationsLoaded());
 
   const result = useUnreadInboxNotificationsCount_withClient(client);
   assert(!result.isLoading, "Did not expect loading");
@@ -681,7 +511,7 @@ function useUnreadInboxNotificationsCountSuspense_withClient(
 function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
   return useCallback(
     (inboxNotificationId: string) => {
-      const { store } = getExtrasForClient(client);
+      const { store } = getLiveblocksExtrasForClient(client);
 
       const readAt = new Date();
       const optimisticUpdateId = store.addOptimisticUpdate({
@@ -711,7 +541,7 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
 
 function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
   return useCallback(() => {
-    const { store } = getExtrasForClient(client);
+    const { store } = getLiveblocksExtrasForClient(client);
     const readAt = new Date();
     const optimisticUpdateId = store.addOptimisticUpdate({
       type: "mark-all-inbox-notifications-as-read",
@@ -737,7 +567,7 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
 function useDeleteInboxNotification_withClient(client: OpaqueClient) {
   return useCallback(
     (inboxNotificationId: string) => {
-      const { store } = getExtrasForClient(client);
+      const { store } = getLiveblocksExtrasForClient(client);
 
       const deletedAt = new Date();
       const optimisticUpdateId = store.addOptimisticUpdate({
@@ -766,7 +596,7 @@ function useDeleteInboxNotification_withClient(client: OpaqueClient) {
 
 function useDeleteAllInboxNotifications_withClient(client: OpaqueClient) {
   return useCallback(() => {
-    const { store } = getExtrasForClient(client);
+    const { store } = getLiveblocksExtrasForClient(client);
     const deletedAt = new Date();
     const optimisticUpdateId = store.addOptimisticUpdate({
       type: "delete-all-inbox-notifications",
@@ -790,14 +620,14 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
   client: OpaqueClient,
   inboxNotificationId: string
 ): ThreadData<M> {
-  const { store } = getExtrasForClient<M>(client);
+  const { store } = getLiveblocksExtrasForClient<M>(client);
 
   const getter = store.getFullState;
 
   const selector = useCallback(
     (state: ReturnType<typeof getter>) => {
       const inboxNotification =
-        state.inboxNotificationsById[inboxNotificationId] ??
+        state.notificationsById[inboxNotificationId] ??
         raise(`Inbox notification with ID "${inboxNotificationId}" not found`);
 
       if (inboxNotification.kind !== "thread") {
@@ -1122,49 +952,40 @@ function useUserThreads_experimental<M extends BaseMetadata>(
     },
   }
 ): ThreadsAsyncResult<M> {
-  const queryKey = React.useMemo(
-    () => makeUserThreadsQueryKey(options.query),
-    [options]
-  );
-
   const client = useClient<M>();
 
-  const { store, incrementUserThreadsQuerySubscribers, getUserThreads } =
-    getExtrasForClient<M>(client);
+  const { store, subscribeToUserThreadsDeltaUpdates: subscribeToDeltaUpdates } =
+    getLiveblocksExtrasForClient<M>(client);
 
-  useEffect(() => {
-    void getUserThreads(queryKey, options);
-    return incrementUserThreadsQuerySubscribers(queryKey);
-  }, [queryKey, incrementUserThreadsQuerySubscribers, getUserThreads, options]);
-
-  const getter = useCallback(
-    () => store.getUserThreadsAsync(queryKey),
-    [store, queryKey]
+  useEffect(
+    () => {
+      // XXXX - Verify that we need the catch or not
+      void store.waitUntilUserThreadsLoaded(options.query).catch(() => {
+        // Deliberately catch and ignore any errors here
+      });
+    }
+    // NOTE: Deliberately *not* using a dependency array here!
+    //
+    // It is important to call waitUntil on *every* render.
+    // This is harmless though, on most renders, except:
+    // 1. The very first render, in which case we'll want to trigger the initial page fetch.
+    // 2. All other subsequent renders now "just" return the same promise (a quick operation).
+    // 3. If ever the promise would fail, then after 5 seconds it would reset, and on the very
+    //    *next* render after that, a *new* fetch/promise will get created.
   );
 
-  const selector = useCallback(
-    (result: ReturnType<typeof getter>): ThreadsAsyncResult<M> => {
-      if (!result.fullState) {
-        return result; // Loading or error state
-      }
+  useEffect(subscribeToDeltaUpdates, [subscribeToDeltaUpdates]);
 
-      const threads = selectThreads(result.fullState, {
-        roomId: null, // Do _not_ filter by roomId
-        query: options.query,
-        orderBy: "last-update",
-      });
-
-      // "Map" the success state, by selecting the threads and returning only those parts externally
-      return { isLoading: false, threads };
-    },
-    [options]
+  const getter = useCallback(
+    () => store.getUserThreadsAsync(options.query),
+    [store, options.query]
   );
 
   return useSyncExternalStoreWithSelector(
     store.subscribeUserThreads,
     getter,
     getter,
-    selector,
+    identity,
     shallow2 // NOTE: Using 2-level-deep shallow check here, because the result of selectThreads() is not stable!
   );
 }
@@ -1191,53 +1012,16 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
     },
   }
 ): ThreadsAsyncSuccess<M> {
-  const queryKey = React.useMemo(
-    () => makeUserThreadsQueryKey(options.query),
-    [options]
-  );
-
   const client = useClient<M>();
 
-  const { store, getUserThreads } = getExtrasForClient<M>(client);
+  const { store } = getLiveblocksExtrasForClient<M>(client);
 
-  React.useEffect(() => {
-    const { incrementUserThreadsQuerySubscribers } = getExtrasForClient(client);
-    return incrementUserThreadsQuerySubscribers(queryKey);
-  }, [client, queryKey]);
+  use(store.waitUntilUserThreadsLoaded(options.query));
 
-  const query = store.getFullState().queries2[queryKey];
-
-  if (query === undefined || query.isLoading) {
-    throw getUserThreads(queryKey, options);
-  }
-
-  if (query.error) {
-    throw query.error;
-  }
-
-  const getter = store.getFullState;
-
-  const selector = useCallback(
-    (state: ReturnType<typeof getter>): ThreadsAsyncSuccess<M> => {
-      return {
-        threads: selectThreads(state, {
-          roomId: null, // Do _not_ filter by roomId
-          query: options.query,
-          orderBy: "last-update",
-        }),
-        isLoading: false,
-      };
-    },
-    [options]
-  );
-
-  return useSyncExternalStoreWithSelector(
-    store.subscribeUserThreads,
-    getter,
-    getter,
-    selector,
-    shallow2 // NOTE: Using 2-level-deep shallow check here, because the result of selectThreads() is not stable!
-  );
+  const result = useUserThreads_experimental(options);
+  assert(!result.error, "Did not expect error");
+  assert(!result.isLoading, "Did not expect loading");
+  return result;
 }
 
 /**
@@ -1247,7 +1031,7 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
  * const { inboxNotifications, error, isLoading } = useInboxNotifications();
  */
 function useInboxNotifications() {
-  return useInboxNotifications_withClient(useClient());
+  return useInboxNotifications_withClient(useClient(), identity, shallow);
 }
 
 /**
@@ -1455,6 +1239,3 @@ export {
   _useUserThreads_experimental as useUserThreads_experimental,
   _useUserThreadsSuspense_experimental as useUserThreadsSuspense_experimental,
 };
-
-const makeUserThreadsQueryKey = (options: UseUserThreadsOptions<DM>["query"]) =>
-  `${USER_THREADS_QUERY}:${stringify(options)}`;

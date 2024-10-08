@@ -83,10 +83,10 @@ declare global {
         },
         $myErrorNotification: (props) => {
           expectType<string>(
-            props.inboxNotification.activities[0].data.message
+            props.inboxNotification.activities[0]!.data.message
           );
-          expectType<number>(props.inboxNotification.activities[0].data.code);
-          expectError(props.inboxNotification.activities[0].data.nonexisting);
+          expectType<number>(props.inboxNotification.activities[0]!.data.code);
+          expectError(props.inboxNotification.activities[0]!.data.nonexisting);
           expectError(props.inboxNotification.threadId);
           expectError(props.inboxNotification.mentionId);
 
@@ -121,7 +121,7 @@ declare global {
       expectType<
         | { message: string; code: number }
         | { duration: number; uploadId: string }
-      >(inboxNotification.activities[0].data);
+      >(inboxNotification.activities[0]!.data);
 
       return (
         <InboxNotification.Custom
@@ -138,9 +138,9 @@ declare global {
       inboxNotification,
       ...props
     }: InboxNotificationCustomKindProps<"$myErrorNotification">) {
-      expectType<string>(inboxNotification.activities[0].data.message);
-      expectType<number>(inboxNotification.activities[0].data.code);
-      expectError(inboxNotification.activities[0].data.nonexisting);
+      expectType<string>(inboxNotification.activities[0]!.data.message);
+      expectType<number>(inboxNotification.activities[0]!.data.code);
+      expectError(inboxNotification.activities[0]!.data.nonexisting);
 
       return (
         <InboxNotification.Custom
