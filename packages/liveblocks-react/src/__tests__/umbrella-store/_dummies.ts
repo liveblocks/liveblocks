@@ -9,18 +9,17 @@ import { nanoid } from "@liveblocks/core";
 export function createThread(
   overrides: Partial<ThreadDataWithDeleteInfo<BaseMetadata>> = {}
 ): ThreadDataWithDeleteInfo<BaseMetadata> {
-  const now = new Date();
   const {
     id = `th_${nanoid()}`,
     roomId = `room_${nanoid()}`,
-    createdAt = now,
-    updatedAt = now,
     deletedAt,
     comments = [],
     metadata = {},
     resolved = false,
   } = overrides;
 
+  const createdAt = overrides.createdAt ?? new Date();
+  const updatedAt = overrides.updatedAt ?? createdAt;
   return {
     type: "thread",
     id,
