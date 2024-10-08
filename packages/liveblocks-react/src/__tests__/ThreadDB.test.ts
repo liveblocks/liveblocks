@@ -109,6 +109,63 @@ describe("ThreadDB", () => {
     db.delete("th_klm", new Date());
 
     expect(db.findMany({ roomId: "room1" }, "asc")).toEqual([]);
+
     expect(db.findMany({ roomId: "room1" }, "desc")).toEqual([]);
+  });
+
+  test("cloning the db", () => {
+    const db1 = new ThreadDB();
+
+    const th1 = dummyThreadData({
+      id: "th_abc",
+      roomId: "room1",
+      createdAt: new Date("2024-10-08"),
+    });
+    const th2 = dummyThreadData({
+      id: "th_def",
+      roomId: "room1",
+      createdAt: new Date("2024-10-09"),
+    });
+    const th3 = dummyThreadData({
+      id: "th_klm",
+      roomId: "room1",
+      createdAt: new Date("2024-10-10"),
+    });
+    const th4 = dummyThreadData({
+      id: "th_pqr",
+      roomId: "room1",
+      createdAt: new Date("2024-10-11"),
+    });
+    const th5 = dummyThreadData({
+      id: "th_xyz",
+      roomId: "room1",
+      createdAt: new Date("2024-10-12"),
+    });
+
+    db1.upsert(th1);
+    db1.upsert(th2);
+    db1.upsert(th3);
+
+    expect(db1.findMany({ roomId: "room1" }, "asc")).toEqual([th1, th2, th3]);
+    expect(db1.findMany({ roomId: "room1" }, "desc")).toEqual([th3, th2, th1]);
+
+    const db2 = db1.clone();
+    db2.delete("th_def", new Date());
+    db2.delete("th_abc", new Date());
+
+    expect(db1.findMany({ roomId: "room1" }, "asc")).toEqual([th1, th2, th3]);
+    expect(db1.findMany({ roomId: "room1" }, "desc")).toEqual([th3, th2, th1]);
+
+    expect(db2.findMany({ roomId: "room1" }, "asc")).toEqual([th3]);
+    expect(db2.findMany({ roomId: "room1" }, "desc")).toEqual([th3]);
+
+    db2.upsert(th4);
+    db2.upsert(th5);
+
+    expect(db1.findMany({ roomId: "room1" }, "asc")).toEqual([th1, th2, th3]);
+    expect(db1.findMany({ roomId: "room1" }, "desc")).toEqual([th3, th2, th1]);
+
+    expect(db2.findMany({ roomId: "room1" }, "asc")).toEqual([th3, th4, th5]);
+    expect(db2.findMany({ roomId: "room1" }, "desc")).toEqual([th5, th4, th3]);
   });
 });

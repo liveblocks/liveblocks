@@ -128,6 +128,21 @@ describe("SortedList", () => {
     expect(Array.from(s.filter(() => false))).toEqual([]);
   });
 
+  test("cloning sorted lists", () => {
+    const s1 = SortedList.from([3, 6, 7, 1, 0, 1, 0, 99, -13, -1], asc);
+    s1.add(42);
+
+    const s2 = s1.clone();
+    s2.remove(0);
+    s2.remove(0);
+    s2.remove(1);
+    s2.remove(1);
+    s2.add(777777);
+
+    expect(Array.from(s1)).toEqual([-13, -1, 0, 0, 1, 1, 3, 6, 7, 42, 99]);
+    expect(Array.from(s2)).toEqual([-13, -1, 3, 6, 7, 42, 99, 777777]);
+  });
+
   test("SortedList.from() will sort the input and keep it sorted automatically (asc)", () => {
     expect(Array.from(SortedList.from([3, 1, 2], asc))).toEqual([1, 2, 3]);
     expect(Array.from(SortedList.from(["world", "hello"], asc))).toEqual([
