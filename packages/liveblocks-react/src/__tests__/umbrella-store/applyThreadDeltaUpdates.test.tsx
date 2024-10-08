@@ -1,36 +1,21 @@
-import type {
-  ThreadData,
-  ThreadDataWithDeleteInfo,
-  ThreadDeleteInfo,
-} from "@liveblocks/core";
+import type { ThreadData, ThreadDeleteInfo } from "@liveblocks/core";
 
 import { ThreadDB } from "../../ThreadDB";
 import { applyThreadDeltaUpdates } from "../../umbrella-store";
+import { dummyThreadData } from "../_dummies";
 
 describe("applyThreadDeltaUpdates", () => {
-  const now1 = new Date("2024-01-01");
-  const thread1: ThreadDataWithDeleteInfo = {
-    type: "thread" as const,
+  const thread1 = dummyThreadData({
     id: "th_1",
-    createdAt: now1,
-    updatedAt: now1,
+    createdAt: new Date("2024-01-01"),
     roomId: "room_1",
-    comments: [],
-    metadata: {},
-    resolved: false,
-  };
+  });
 
-  const now2 = new Date("2024-01-01");
-  const thread2: ThreadDataWithDeleteInfo = {
-    type: "thread" as const,
+  const thread2 = dummyThreadData({
     id: "th_2",
-    createdAt: now2,
-    updatedAt: now2,
+    createdAt: new Date("2024-01-01"),
     roomId: "room_1",
-    comments: [],
-    metadata: {},
-    resolved: false,
-  };
+  });
 
   const thread1DeleteInfo: ThreadDeleteInfo = {
     type: "deletedThread",
