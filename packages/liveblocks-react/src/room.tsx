@@ -5,7 +5,6 @@ import type {
   Client,
   CommentData,
   History,
-  HistoryVersion,
   Json,
   JsonObject,
   LiveObject,
@@ -105,10 +104,7 @@ import {
   UpdateNotificationSettingsError,
 } from "./types/errors";
 import type { UmbrellaStore, UmbrellaStoreState } from "./umbrella-store";
-import {
-  makeNotificationSettingsQueryKey,
-  makeVersionsQueryKey,
-} from "./umbrella-store";
+import { makeNotificationSettingsQueryKey } from "./umbrella-store";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
 
 const SMOOTH_DELAY = 1000;
@@ -315,42 +311,6 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
 
   const requestsByQuery = new Map<string, Promise<unknown>>(); // A map of query keys to the promise of the request for that query
 
-  async function getRoomVersions(
-    room: OpaqueRoom,
-    { retryCount }: { retryCount: number } = { retryCount: 0 }
-  ) {
-    const queryKey = makeVersionsQueryKey(room.id);
-    const existingRequest = requestsByQuery.get(queryKey);
-    if (existingRequest !== undefined) return existingRequest;
-    const request = room[kInternal].listTextVersions();
-    requestsByQuery.set(queryKey, request);
-    store.setQuery4Loading(queryKey);
-    try {
-      const result = await request;
-      const data = (await result.json()) as {
-        versions: HistoryVersion[];
-      };
-      const versions = data.versions.map(({ createdAt, ...version }) => {
-        return {
-          createdAt: new Date(createdAt),
-          ...version,
-        };
-      });
-      store.updateRoomVersions(room.id, versions, queryKey);
-      requestsByQuery.delete(queryKey);
-    } catch (err) {
-      requestsByQuery.delete(queryKey);
-      // Retry the action using the exponential backoff algorithm
-      retryError(() => {
-        void getRoomVersions(room, {
-          retryCount: retryCount + 1,
-        });
-      }, retryCount);
-      store.setQuery4Error(queryKey, err as Error);
-    }
-    return;
-  }
-
   async function getInboxNotificationSettings(
     room: OpaqueRoom,
     { retryCount }: { retryCount: number } = { retryCount: 0 }
@@ -418,7 +378,6 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     subscribeToRoomThreadsDeltaUpdates: makeDeltaPoller_RoomThreads(client),
     commentsErrorEventSource,
     getInboxNotificationSettings,
-    getRoomVersions,
     onMutationFailure,
   };
 }
@@ -2156,16 +2115,29 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
   const client = useClient();
   const room = useRoom();
 
-  const { store, getRoomVersions } = getRoomExtrasForClient(client);
+  const store = getRoomExtrasForClient(client).store;
 
   const getter = React.useCallback(
-    () => store.getVersionsAsync(room.id),
+    () => store.getRoomVersionsAsync(room.id),
     [store, room.id]
   );
 
-  React.useEffect(() => {
-    void getRoomVersions(room);
-  }, [room]); // eslint-disable-line react-hooks/exhaustive-deps
+  React.useEffect(
+    () => {
+      // XXX - Verify that we need the catch or not
+      void store.waitUntilRoomVersionsLoaded(room.id).catch(() => {
+        // Deliberately catch and ignore any errors here
+      });
+    }
+    // NOTE: Deliberately *not* using a dependency array here!
+    //
+    // It is important to call waitUntil on *every* render.
+    // This is harmless though, on most renders, except:
+    // 1. The very first render, in which case we'll want to trigger the initial page fetch.
+    // 2. All other subsequent renders now "just" return the same promise (a quick operation).
+    // 3. If ever the promise would fail, then after 5 seconds it would reset, and on the very
+    //    *next* render after that, a *new* fetch/promise will get created.
+  );
 
   const state = useSyncExternalStoreWithSelector(
     store.subscribe,
@@ -2187,30 +2159,14 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
 function useHistoryVersionsSuspense(): HistoryVersionsAsyncSuccess {
   const client = useClient();
   const room = useRoom();
+  const store = getRoomExtrasForClient(client).store;
 
-  const { store } = getRoomExtrasForClient(client);
+  use(store.waitUntilRoomVersionsLoaded(room.id));
 
-  const getter = React.useCallback(
-    () => store.getVersionsAsync(room.id),
-    [store, room.id]
-  );
-
-  const state = useSyncExternalStoreWithSelector(
-    store.subscribe,
-    getter,
-    getter,
-    identity,
-    shallow
-  );
-
-  if (state.isLoading) {
-    const { getRoomVersions } = getRoomExtrasForClient(client);
-    throw getRoomVersions(room);
-  } else if (state.error) {
-    throw state.error;
-  }
-
-  return state;
+  const result = useHistoryVersions();
+  assert(!result.error, "Did not expect error");
+  assert(!result.isLoading, "Did not expect loading");
+  return result;
 }
 
 /**
