@@ -2,7 +2,7 @@
 
 ### `@liveblocks/client`
 
-- Adjust type definition of `ThreadData`: `updatedAt` is always set
+- Fix type definition of `ThreadData`: `updatedAt` is always set
 
 ### `@liveblocks/react-ui`
 
