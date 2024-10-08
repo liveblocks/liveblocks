@@ -81,7 +81,7 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     console.error(err);
-    return new Response("Couldn't verify hook call", { status: 400 });
+    return new Response("Couldn't verify webhook call", { status: 400 });
   }
 
   // Check if the event is a Thread Notification event
