@@ -1990,7 +1990,7 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
 
   const selector = React.useCallback(
     (state: UmbrellaStoreState<BaseMetadata>): ThreadSubscription => {
-      const inboxNotification = state.notifications.find(
+      const inboxNotification = state.cleanedNotifications.find(
         (inboxNotification) =>
           inboxNotification.kind === "thread" &&
           inboxNotification.threadId === threadId
