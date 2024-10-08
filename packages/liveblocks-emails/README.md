@@ -21,9 +21,8 @@
   </a>
 </p>
 
-`@liveblocks/emails` provides pre-built functions to prepare thread or text
-mention notifications data as [React](https://reactjs.org/) or as HTML to be
-consumed in an email template.
+`@liveblocks/emails` provides a set of functions and utilities to make sending
+emails based on [Liveblocks](https://liveblocks.io) notification events easy.
 
 ## Installation
 

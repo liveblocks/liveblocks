@@ -1,7 +1,7 @@
 {
   "name": "@liveblocks/emails",
   "version": "2.9.0",
-  "description": "A set of functions and utilities to make sending emails based on Liveblocks events easy. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
+  "description": "A set of functions and utilities to make sending emails based on Liveblocks notification events easy. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
   "type": "commonjs",
   "main": "./dist/index.js",
