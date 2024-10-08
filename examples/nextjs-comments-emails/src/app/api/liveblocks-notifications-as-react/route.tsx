@@ -1,8 +1,5 @@
 import { Resend } from "resend";
-import {
-  prepareThreadNotificationEmailAsReact,
-  type ThreadNotificationEmailDataAsReact,
-} from "@liveblocks/emails";
+import { prepareThreadNotificationEmailAsReact } from "@liveblocks/emails";
 import {
   isThreadNotificationEvent,
   WebhookHandler,
@@ -13,7 +10,6 @@ import { render } from "@react-email/render";
 
 import { getUsers } from "../../../database";
 
-import type { CompanyInfo, RoomInfo } from "../../../../emails/types";
 import UnreadRepliesEmail from "../../../../emails/UnreadReplies";
 import UnreadMentionEmail from "../../../../emails/UnreadMention";
 
@@ -29,43 +25,6 @@ const liveblocks = new Liveblocks({
 const webhookHandler = new WebhookHandler(
   process.env.LIVEBLOCKS_WEBHOOK_SECRET_KEY as string
 );
-
-type TemplateInfo = {
-  email: JSX.Element;
-  subject: string;
-};
-
-const getTemplateInfo = (
-  emailData: ThreadNotificationEmailDataAsReact,
-  room: RoomInfo,
-  company: CompanyInfo
-): TemplateInfo => {
-  switch (emailData.type) {
-    // Handle unread replies use case
-    case "unreadReplies":
-      return {
-        email: (
-          <UnreadRepliesEmail
-            company={company}
-            room={room}
-            comments={emailData.comments}
-          />
-        ),
-        subject: `You have ${emailData.comments.length} unread notifications.`,
-      };
-    case "unreadMention":
-      return {
-        email: (
-          <UnreadMentionEmail
-            company={company}
-            room={room}
-            comment={emailData.comment}
-          />
-        ),
-        subject: "You have one unread notification.",
-      };
-  }
-};
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -134,7 +93,34 @@ export async function POST(request: Request) {
         url: emailData.roomInfo.url,
       };
 
-      const { email, subject } = getTemplateInfo(emailData, room, company);
+      let email, subject;
+
+      switch (emailData.type) {
+        // Handle unread replies use case
+        case "unreadReplies": {
+          email = (
+            <UnreadRepliesEmail
+              company={company}
+              room={room}
+              comments={emailData.comments}
+            />
+          );
+          subject = `You have ${emailData.comments.length} unread notifications.`;
+          break;
+        }
+        // Handle last unread comment with mention use case
+        case "unreadMention": {
+          email = (
+            <UnreadMentionEmail
+              company={company}
+              room={room}
+              comment={emailData.comment}
+            />
+          );
+          subject = "You have one unread notification.";
+          break;
+        }
+      }
 
       // Render your email's HTML
       const html = await render(email, { pretty: true });

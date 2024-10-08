@@ -1,8 +1,5 @@
 import sendgridMail from "@sendgrid/mail";
-import {
-  prepareThreadNotificationEmailAsHTML,
-  type ThreadNotificationEmailDataAsHTML,
-} from "@liveblocks/emails";
+import { prepareThreadNotificationEmailAsHTML } from "@liveblocks/emails";
 import {
   isThreadNotificationEvent,
   WebhookHandler,
@@ -10,7 +7,6 @@ import {
 } from "@liveblocks/node";
 
 import { getUsers } from "../../../database";
-import type { CompanyInfo, RoomInfo } from "../../../../emails/types";
 
 // Set your Sendgrid API key
 sendgridMail.setApiKey(process.env.SENDGRID_API_KEY as string);
@@ -24,42 +20,6 @@ const liveblocks = new Liveblocks({
 const webhookHandler = new WebhookHandler(
   process.env.LIVEBLOCKS_WEBHOOK_SECRET_KEY as string
 );
-
-type TemplateInfo = {
-  templateId: string;
-  dynamicTemplateData: { [key: string]: any };
-  subject: string;
-};
-const getTemplateInfo = (
-  emailData: ThreadNotificationEmailDataAsHTML,
-  room: RoomInfo,
-  company: CompanyInfo
-): TemplateInfo => {
-  const baseDynamicTemplateData = { room, company };
-
-  switch (emailData.type) {
-    // Handle unread replies use case
-    case "unreadReplies":
-      return {
-        templateId: "d-my-unread-replies-template-id",
-        dynamicTemplateData: {
-          ...baseDynamicTemplateData,
-          comments: emailData.comments,
-        },
-        subject: `You have ${emailData.comments.length} unread notifications.`,
-      };
-    // Handle last unread comment with mention use case
-    case "unreadMention":
-      return {
-        templateId: "d-my-unread-mention-template-id",
-        dynamicTemplateData: {
-          ...baseDynamicTemplateData,
-          comment: emailData.comment,
-        },
-        subject: "You have one unread notification.",
-      };
-  }
-};
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -109,21 +69,28 @@ export async function POST(request: Request) {
 
     // If there are unread comments (last comment with mention or unread replies)
     if (emailData !== null) {
-      const company = {
-        name: "My Liveblocks App",
-        url: "https://my-liveblocks-app.com",
-      };
+      let templateId, subject, templateData;
 
-      const room = {
-        name: emailData.roomInfo.name,
-        url: emailData.roomInfo.url,
-      };
-
-      const { templateId, dynamicTemplateData, subject } = getTemplateInfo(
-        emailData,
-        room,
-        company
-      );
+      switch (emailData.type) {
+        // Handle unread replies use case
+        case "unreadReplies": {
+          templateId = "d-my-unread-replies-template-id";
+          templateData = {
+            comments: emailData.comments,
+          };
+          subject = `You have ${emailData.comments.length} unread notifications.`;
+          break;
+        }
+        // Handle last unread comment with mention use case
+        case "unreadMention": {
+          templateId = "d-my-unread-mention-template-id";
+          templateData = {
+            comment: emailData.comment,
+          };
+          subject = "You have one unread notification.";
+          break;
+        }
+      }
 
       try {
         await sendgridMail.send({
@@ -131,7 +98,17 @@ export async function POST(request: Request) {
           to: event.data.userId,
           templateId,
           subject,
-          dynamicTemplateData,
+          dynamicTemplateData: {
+            company: {
+              name: "My Liveblocks App",
+              url: "https://my-liveblocks-app.com",
+            },
+            room: {
+              name: emailData.roomInfo.name,
+              url: emailData.roomInfo.url,
+            },
+            ...templateData,
+          },
         });
 
         return new Response(null, { status: 200 });
