@@ -40,6 +40,7 @@ import {
   isMoreRecentlyUpdated,
 } from "./lib/compare";
 import { makeThreadsFilter } from "./lib/querying";
+import type { ReadonlyThreadDB } from "./ThreadDB";
 import { ThreadDB } from "./ThreadDB";
 import type {
   InboxNotificationsAsyncResult,
@@ -547,6 +548,7 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
    * All threads in a sorted array, optimistic updates applied, without deleted
    * threads.
    */
+  // XXX XXX NEXT STEP IS TO REMOVE THIS FIELD IN FAVOR OF threadsDB
   cleanedThreads: ThreadData<M>[];
 
   /**
@@ -554,7 +556,10 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
    * applied. Deleted threads are still in this mapping, and will have
    * a deletedAt field if so.
    */
+  // XXX XXX NEXT STEP IS TO REMOVE THIS FIELD IN FAVOR OF threadsDB
   threadsById: Record<string, ThreadDataWithDeleteInfo<M>>;
+
+  threadsDB: ReadonlyThreadDB<M>;
 
   /**
    * All inbox notifications in a sorted array, optimistic updates applied.
@@ -1580,11 +1585,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
  */
 function internalToExternalState<M extends BaseMetadata>(
   state: InternalState<M>,
-  db: ThreadDB<M>
+  originalDb: ThreadDB<M>
 ): UmbrellaStoreState<M> {
+  const db = originalDb.clone();
+
   const computed = {
-    // XXX This _toRecord() call is ridiculous, but tmp necessary
-    threadsById: db._toRecord(),
     notificationsById: { ...state.notificationsById },
     settingsByRoomId: { ...state.settingsByRoomId },
   };
@@ -1592,87 +1597,52 @@ function internalToExternalState<M extends BaseMetadata>(
   for (const optimisticUpdate of state.optimisticUpdates) {
     switch (optimisticUpdate.type) {
       case "create-thread": {
-        computed.threadsById[optimisticUpdate.thread.id] =
-          optimisticUpdate.thread;
+        db.upsert(optimisticUpdate.thread);
         break;
       }
-      case "edit-thread-metadata": {
-        const thread = computed.threadsById[optimisticUpdate.threadId];
-        // If the thread doesn't exist in the cache, we do not apply the update
-        if (thread === undefined) {
-          break;
-        }
 
-        // If the thread has been deleted, we do not apply the update
-        if (thread.deletedAt !== undefined) {
-          break;
-        }
+      case "edit-thread-metadata": {
+        const thread = db.get(optimisticUpdate.threadId);
+        if (thread === undefined) break;
 
         // If the thread has been updated since the optimistic update, we do not apply the update
         if (thread.updatedAt > optimisticUpdate.updatedAt) {
           break;
         }
 
-        computed.threadsById[thread.id] = {
+        db.upsert({
           ...thread,
           updatedAt: optimisticUpdate.updatedAt,
           metadata: {
             ...thread.metadata,
             ...optimisticUpdate.metadata,
           },
-        };
-
+        });
         break;
       }
+
       case "mark-thread-as-resolved": {
-        const thread = computed.threadsById[optimisticUpdate.threadId];
-        // If the thread doesn't exist in the cache, we do not apply the update
-        if (thread === undefined) {
-          break;
-        }
+        const thread = db.get(optimisticUpdate.threadId);
+        if (thread === undefined) break;
 
-        // If the thread has been deleted, we do not apply the update
-        if (thread.deletedAt !== undefined) {
-          break;
-        }
-
-        computed.threadsById[thread.id] = {
-          ...thread,
-          resolved: true,
-        };
-
+        db.upsert({ ...thread, resolved: true });
         break;
       }
+
       case "mark-thread-as-unresolved": {
-        const thread = computed.threadsById[optimisticUpdate.threadId];
-        // If the thread doesn't exist in the cache, we do not apply the update
-        if (thread === undefined) {
-          break;
-        }
+        const thread = db.get(optimisticUpdate.threadId);
+        if (thread === undefined) break;
 
-        // If the thread has been deleted, we do not apply the update
-        if (thread.deletedAt !== undefined) {
-          break;
-        }
-
-        computed.threadsById[thread.id] = {
-          ...thread,
-          resolved: false,
-        };
-
+        db.upsert({ ...thread, resolved: false });
         break;
       }
-      case "create-comment": {
-        const thread = computed.threadsById[optimisticUpdate.comment.threadId];
-        // If the thread doesn't exist in the cache, we do not apply the update
-        if (thread === undefined) {
-          break;
-        }
 
-        computed.threadsById[thread.id] = applyUpsertComment(
-          thread,
-          optimisticUpdate.comment
-        );
+      case "create-comment": {
+        // XXX Should this really be getEvenIfDeleted? I don't think so!
+        const thread = db.getEvenIfDeleted(optimisticUpdate.comment.threadId);
+        if (thread === undefined) break;
+
+        db.upsert(applyUpsertComment(thread, optimisticUpdate.comment));
 
         const inboxNotification = Object.values(
           computed.notificationsById
@@ -1694,83 +1664,77 @@ function internalToExternalState<M extends BaseMetadata>(
 
         break;
       }
+
       case "edit-comment": {
-        const thread = computed.threadsById[optimisticUpdate.comment.threadId];
-        // If the thread doesn't exist in the cache, we do not apply the update
-        if (thread === undefined) {
-          break;
-        }
+        // XXX Should this really be getEvenIfDeleted? I don't think so!
+        const thread = db.getEvenIfDeleted(optimisticUpdate.comment.threadId);
+        if (thread === undefined) break;
 
-        computed.threadsById[thread.id] = applyUpsertComment(
-          thread,
-          optimisticUpdate.comment
-        );
-
+        db.upsert(applyUpsertComment(thread, optimisticUpdate.comment));
         break;
       }
+
       case "delete-comment": {
-        const thread = computed.threadsById[optimisticUpdate.threadId];
-        // If the thread doesn't exist in the cache, we do not apply the update
-        if (thread === undefined) {
-          break;
-        }
+        // XXX Should this really be getEvenIfDeleted? I don't think so!
+        const thread = db.getEvenIfDeleted(optimisticUpdate.threadId);
+        if (thread === undefined) break;
 
-        computed.threadsById[thread.id] = applyDeleteComment(
-          thread,
-          optimisticUpdate.commentId,
-          optimisticUpdate.deletedAt
+        db.upsert(
+          applyDeleteComment(
+            thread,
+            optimisticUpdate.commentId,
+            optimisticUpdate.deletedAt
+          )
         );
-
         break;
       }
 
       case "delete-thread": {
-        const thread = computed.threadsById[optimisticUpdate.threadId];
-        // If the thread doesn't exist in the cache, we do not apply the update
-        if (thread === undefined) {
-          break;
-        }
+        // XXX Should this really be getEvenIfDeleted? I don't think so!
+        const thread = db.getEvenIfDeleted(optimisticUpdate.threadId);
+        if (thread === undefined) break;
 
-        computed.threadsById[optimisticUpdate.threadId] = {
+        db.upsert({
           ...thread,
           deletedAt: optimisticUpdate.deletedAt,
           updatedAt: optimisticUpdate.deletedAt,
           comments: [],
-        };
+        });
         break;
       }
+
       case "add-reaction": {
-        const thread = computed.threadsById[optimisticUpdate.threadId];
-        // If the thread doesn't exist in the cache, we do not apply the update
-        if (thread === undefined) {
-          break;
-        }
+        // XXX Should this really be getEvenIfDeleted? I don't think so!
+        const thread = db.getEvenIfDeleted(optimisticUpdate.threadId);
+        if (thread === undefined) break;
 
-        computed.threadsById[thread.id] = applyAddReaction(
-          thread,
-          optimisticUpdate.commentId,
-          optimisticUpdate.reaction
+        db.upsert(
+          applyAddReaction(
+            thread,
+            optimisticUpdate.commentId,
+            optimisticUpdate.reaction
+          )
         );
-
         break;
       }
+
       case "remove-reaction": {
-        const thread = computed.threadsById[optimisticUpdate.threadId];
-        // If the thread doesn't exist in the cache, we do not apply the update
-        if (thread === undefined) {
-          break;
-        }
+        // XXX Should this really be getEvenIfDeleted? I don't think so!
+        const thread = db.getEvenIfDeleted(optimisticUpdate.threadId);
+        if (thread === undefined) break;
 
-        computed.threadsById[thread.id] = applyRemoveReaction(
-          thread,
-          optimisticUpdate.commentId,
-          optimisticUpdate.emoji,
-          optimisticUpdate.userId,
-          optimisticUpdate.removedAt
+        db.upsert(
+          applyRemoveReaction(
+            thread,
+            optimisticUpdate.commentId,
+            optimisticUpdate.emoji,
+            optimisticUpdate.userId,
+            optimisticUpdate.removedAt
+          )
         );
-
         break;
       }
+
       case "mark-inbox-notification-as-read": {
         const ibn =
           computed.notificationsById[optimisticUpdate.inboxNotificationId];
@@ -1827,25 +1791,12 @@ function internalToExternalState<M extends BaseMetadata>(
     }
   }
 
-  const cleanedThreads =
-    // Don't expose any soft-deleted threads
-    Object.values(computed.threadsById)
-      .filter((thread): thread is ThreadData<M> => !thread.deletedAt)
-
-      .filter((thread) =>
-        // Only keep a thread if there is at least one non-deleted comment
-        thread.comments.some((c) => c.deletedAt === undefined)
-      );
-
   // TODO Maybe consider also removing these from the inboxNotificationsById registry?
   const cleanedNotifications =
     // Sort so that the most recent notifications are first
     Object.values(computed.notificationsById)
       .filter((ibn) =>
-        ibn.kind === "thread"
-          ? computed.threadsById[ibn.threadId] &&
-            computed.threadsById[ibn.threadId]?.deletedAt === undefined
-          : true
+        ibn.kind === "thread" ? db.get(ibn.threadId) !== undefined : true
       )
       .sort((a, b) => b.notifiedAt.getTime() - a.notifiedAt.getTime());
 
@@ -1855,8 +1806,9 @@ function internalToExternalState<M extends BaseMetadata>(
     settingsByRoomId: computed.settingsByRoomId,
     queries3: state.queries3,
     queries4: state.queries4,
-    cleanedThreads,
-    threadsById: computed.threadsById,
+    cleanedThreads: Array.from(db.findMany({}, "asc")),
+    threadsById: db._toRecord(),
+    threadsDB: db,
     versionsByRoomId: state.versionsByRoomId,
   };
 }
