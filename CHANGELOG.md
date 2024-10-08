@@ -1,5 +1,9 @@
 ## 2.9.1 (Not released yet)
 
+### `@liveblocks/client`
+
+- Adjust type definition of `ThreadData`: `updatedAt` is always set
+
 ### `@liveblocks/react-ui`
 
 - When `Composer` is disabled, its actions are now also disabled as expected.
