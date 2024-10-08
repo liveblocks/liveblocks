@@ -1,4 +1,3 @@
-/* eslint-disable simple-import-sort/exports */
 import { detectDupes } from "@liveblocks/core";
 
 import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
@@ -6,23 +5,22 @@ import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 export type {
-  CommentBodySlotComponentProps,
-  CommentBodyParagraphComponentProps,
-  CommentBodyTextComponentProps,
   CommentBodyLinkComponentProps,
   CommentBodyMentionComponentProps,
-  ConvertCommentBodyAsReactComponents,
+  CommentBodyParagraphComponentProps,
+  CommentBodySlotComponentProps,
+  CommentBodyTextComponentProps,
   ConvertCommentBodyAsHTMLStyles,
+  ConvertCommentBodyAsReactComponents,
 } from "./comment-body";
-
 export type {
-  ResolveRoomInfoArgs,
-  PrepareThreadNotificationEmailAsHTMLOptions,
-  ThreadNotificationEmailDataAsHTML,
-  PrepareThreadNotificationEmailAsReactOptions,
-  ThreadNotificationEmailDataAsReact,
   CommentEmailAsHTMLData,
   CommentEmailAsReactData,
+  PrepareThreadNotificationEmailAsHTMLOptions,
+  PrepareThreadNotificationEmailAsReactOptions,
+  ResolveRoomInfoArgs,
+  ThreadNotificationEmailDataAsHTML,
+  ThreadNotificationEmailDataAsReact,
 } from "./thread-notification";
 export {
   prepareThreadNotificationEmailAsHTML,
