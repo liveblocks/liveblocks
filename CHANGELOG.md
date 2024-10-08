@@ -1,3 +1,10 @@
+## 2.9.1 (Not released yet)
+
+### `@liveblocks/react-ui`
+
+- When `Composer` is disabled, its actions are now also disabled as expected.
+- Various event propagation improvements in `Composer`.
+
 ## 2.9.0
 
 We are introducing pagination support to allow apps using threads and inbox
