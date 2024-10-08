@@ -25,6 +25,7 @@ export function isNewer(
  * Defines if a thread is more recently updated. Doesn't factor in the original
  * creation date for these threads.
  */
+// XXX Anywhere we use this helper, we should likely call .upsertIfMoreRecent() instead
 export function isMoreRecentlyUpdated(
   a: { createdAt: Date; updatedAt: Date },
   b: { createdAt: Date; updatedAt: Date }

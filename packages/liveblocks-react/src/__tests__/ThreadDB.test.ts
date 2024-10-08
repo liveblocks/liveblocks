@@ -87,6 +87,7 @@ describe("ThreadDB", () => {
     expect(db.getEvenIfDeleted("th_abc")).toEqual({
       ...th1,
       deletedAt: new Date("2024-10-01"),
+      updatedAt: new Date("2024-10-01"), // Updated at field will also change when deleting
       comments: [],
     });
 
@@ -103,6 +104,7 @@ describe("ThreadDB", () => {
     expect(db.getEvenIfDeleted("th_abc")).toEqual({
       ...th1,
       deletedAt: new Date("2024-10-01"), // Note that the deletedAt field did not get updated
+      updatedAt: new Date("2024-10-01"), // Updated at field will also change when deleting
       comments: [],
     });
 

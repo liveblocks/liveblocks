@@ -4,9 +4,10 @@ import type {
   ThreadDeleteInfo,
 } from "@liveblocks/core";
 
-import { applyThreadUpdates } from "../../umbrella-store";
+import { ThreadDB } from "../../ThreadDB";
+import { applyThreadDeltaUpdates } from "../../umbrella-store";
 
-describe("applyThreadUpdates", () => {
+describe("applyThreadDeltaUpdates", () => {
   const now1 = new Date("2024-01-01");
   const thread1: ThreadDataWithDeleteInfo = {
     type: "thread" as const,
@@ -46,15 +47,14 @@ describe("applyThreadUpdates", () => {
   };
 
   it("should add a new thread if it doesn't exist already", () => {
-    const result = applyThreadUpdates(
-      {},
-      {
-        newThreads: [thread1],
-        deletedThreads: [],
-      }
-    );
+    const db = new ThreadDB();
 
-    expect(result).toEqual({
+    applyThreadDeltaUpdates(db, {
+      newThreads: [thread1],
+      deletedThreads: [],
+    });
+
+    expect(db._toRecord()).toEqual({
       [thread1.id]: thread1,
     });
   });
@@ -67,9 +67,8 @@ describe("applyThreadUpdates", () => {
     };
 
     // Initial state with the original thread1
-    const existingThreads = {
-      [thread1.id]: thread1,
-    };
+    const db = new ThreadDB();
+    db.upsert(thread1);
 
     // Simulate updates with the newer version of thread1
     const updates = {
@@ -82,14 +81,13 @@ describe("applyThreadUpdates", () => {
       [thread1.id]: thread1Updated,
     };
 
-    const result = applyThreadUpdates(existingThreads, updates);
-    expect(result).toEqual(expectedOutput);
+    applyThreadDeltaUpdates(db, updates);
+    expect(db._toRecord()).toEqual(expectedOutput);
   });
 
   it("should mark a thread as deleted if there is deletion info associated with it", () => {
-    const existingThreads = {
-      [thread1.id]: thread1,
-    };
+    const db = new ThreadDB();
+    db.upsert(thread1);
 
     const updates = {
       newThreads: [],
@@ -105,14 +103,13 @@ describe("applyThreadUpdates", () => {
       },
     };
 
-    const result = applyThreadUpdates(existingThreads, updates);
-    expect(result).toEqual(expectedOutput);
+    applyThreadDeltaUpdates(db, updates);
+    expect(db._toRecord()).toEqual(expectedOutput);
   });
 
   it("should ignore deletion of a non-existing thread", () => {
-    const existingThreads = {
-      [thread1.id]: thread1, // Only thread1 exists
-    };
+    const db = new ThreadDB();
+    db.upsert(thread1); // Only thread1 exists
 
     const updates = {
       newThreads: [],
@@ -123,14 +120,14 @@ describe("applyThreadUpdates", () => {
       [thread1.id]: thread1, // Output should remain unchanged
     };
 
-    const result = applyThreadUpdates(existingThreads, updates);
-    expect(result).toEqual(expectedOutput);
+    applyThreadDeltaUpdates(db, updates);
+    expect(db._toRecord()).toEqual(expectedOutput);
   });
 
   it("should correctly handle a combination of add, update, and delete operations", () => {
-    const existingThreads = {
-      [thread1.id]: thread1, // Existing thread
-    };
+    const db = new ThreadDB();
+    db.upsert(thread1); // Existing thread
+
     const updates = {
       newThreads: [thread2], // Add thread2
       deletedThreads: [thread1DeleteInfo], // Delete thread1
@@ -146,15 +143,14 @@ describe("applyThreadUpdates", () => {
       [thread2.id]: thread2, // thread2 added
     };
 
-    const result = applyThreadUpdates(existingThreads, updates);
-    expect(result).toEqual(expectedOutput);
+    applyThreadDeltaUpdates(db, updates);
+    expect(db._toRecord()).toEqual(expectedOutput);
   });
 
   it("should return existing threads unchanged when no updates are provided", () => {
-    const existingThreads = {
-      [thread1.id]: thread1,
-      [thread2.id]: thread2,
-    };
+    const db = new ThreadDB();
+    db.upsert(thread1);
+    db.upsert(thread2);
 
     const updates = {
       newThreads: [],
@@ -166,7 +162,7 @@ describe("applyThreadUpdates", () => {
       [thread2.id]: thread2,
     };
 
-    const result = applyThreadUpdates(existingThreads, updates);
-    expect(result).toEqual(expectedOutput);
+    applyThreadDeltaUpdates(db, updates);
+    expect(db._toRecord()).toEqual(expectedOutput);
   });
 });
