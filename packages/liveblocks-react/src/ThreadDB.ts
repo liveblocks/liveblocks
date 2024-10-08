@@ -54,6 +54,15 @@ export class ThreadDB<M extends BaseMetadata> {
     this._version = 0;
   }
 
+  public clone(): ThreadDB<M> {
+    const newPool = new ThreadDB<M>();
+    newPool._byId = new Map(this._byId);
+    newPool._asc = this._asc.clone();
+    newPool._desc = this._desc.clone();
+    newPool._version = this._version;
+    return newPool;
+  }
+
   public get version() {
     return this._version;
   }

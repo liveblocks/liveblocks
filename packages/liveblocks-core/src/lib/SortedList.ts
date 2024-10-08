@@ -51,6 +51,13 @@ export class SortedList<T> {
   }
 
   /**
+   * Clones the sorted list to a new instance.
+   */
+  public clone(): SortedList<T> {
+    return new SortedList(this._data.slice(), this._lt);
+  }
+
+  /**
    * Adds a new item to the sorted list, such that it remains sorted.
    */
   add(value: T): void {
