@@ -38,7 +38,7 @@ const previewProps: EmailProps = {
         },
       },
       reactBody: (
-        <Text className="text-sm m-0 mb-4">
+        <Text className="text-sm m-0 mb-4 text-email-comment-foreground">
           <span>
             Great work on the visual designs! Can we discuss the color scheme in
             our next meeting?
@@ -61,7 +61,7 @@ const previewProps: EmailProps = {
         },
       },
       reactBody: (
-        <Text className="text-sm m-0 mb-4">
+        <Text className="text-sm m-0 mb-4 text-email-comment-foreground">
           <span>
             I think we could narrow down the demographics a bit more. Let's
             discuss in our next meeting.

@@ -106,7 +106,9 @@ export async function POST(request: Request) {
           // Or you can use your own components if you're not using `react-email`.
           commentBodyComponents: {
             Paragraph: ({ children }) => (
-              <Text className="text-sm m-0 mb-4">{children}</Text>
+              <Text className="text-sm text-email-comment-foreground m-0 mb-4">
+                {children}
+              </Text>
             ),
             Mention: ({ element, user }) => (
               <span className="text-email-mention font-medium">

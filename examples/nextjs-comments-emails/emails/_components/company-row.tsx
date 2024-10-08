@@ -33,11 +33,13 @@ export function CompanyRow({
       </Column>
       <Column>
         {variant === "header" ? (
-          <Heading as="h1" className="m-0">
+          <Heading as="h1" className="m-0 text-email-foreground">
             {name}
           </Heading>
         ) : (
-          <Text className="text-xs font-medium">{name}</Text>
+          <Text className="text-xs font-medium text-email-foreground">
+            {name}
+          </Text>
         )}
       </Column>
     </Row>

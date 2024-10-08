@@ -37,7 +37,7 @@ const previewProps: EmailProps = {
       },
     },
     reactBody: (
-      <Text className="text-sm m-0 mb-4">
+      <Text className="text-sm m-0 mb-4 text-email-comment-foreground">
         <span>
           For the user research phase, we'll need{" "}
           <span data-mention className="text-email-mention font-medium">

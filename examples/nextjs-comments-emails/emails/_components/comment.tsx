@@ -35,15 +35,15 @@ export function Comment({
       <Row>
         <Column className="w-[34px]">
           <Img
-            className="rounded-full bg-[hsla(0, 0%, 93%, 1)]"
+            className="rounded-full bg-email-comment-foreground"
             width={28}
             height={28}
             src={author.info.avatar}
           />
         </Column>
-        <Column>
+        <Column className="text-email-comment-foreground">
           {author.info.name}{" "}
-          <span className="text-[rgba(23, 23, 23, 0.6)] text-xs">
+          <span className="text-email-comment-foreground-subtle text-xs">
             {creationDate}
           </span>
         </Column>
@@ -55,8 +55,9 @@ export function Comment({
           <Button
             className={cn(
               {
-                "bg-[#171717] text-white": variant === "onlyOne",
-                "bg-[#EEEEEE] text-[#171717]": variant === "several",
+                "bg-email-comment-foreground text-white": variant === "onlyOne",
+                "bg-email-comment-background text-email-comment-foreground":
+                  variant === "several",
               },
               "rounded-md px-4 py-2.5 text-sm font-medium w-max"
             )}
