@@ -1281,8 +1281,6 @@ describe("useThreads", () => {
     const thread1 = dummyThreadData({ roomId });
     const thread2WithDeletedAt = dummyThreadData({
       roomId,
-
-      // @ts-expect-error: deletedAt isn't publicly typed on ThreadData
       deletedAt: new Date(),
     });
 
