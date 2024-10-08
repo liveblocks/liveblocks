@@ -109,7 +109,7 @@ export async function POST(request: Request) {
               <Text className="text-sm m-0 mb-4">{children}</Text>
             ),
             Mention: ({ element, user }) => (
-              <span className="text-[#1667FF] font-medium">
+              <span className="text-mention font-medium">
                 @{user?.name ?? element.id}
               </span>
             ),

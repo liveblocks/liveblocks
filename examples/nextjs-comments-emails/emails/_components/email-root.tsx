@@ -6,6 +6,7 @@ import {
   Preview,
   Tailwind,
 } from "@react-email/components";
+import { emailColors } from "../../tailwind.config";
 
 export function EmailRoot({
   preview,
@@ -18,7 +19,22 @@ export function EmailRoot({
     <Html lang="en">
       <Head />
       <Preview>{preview}</Preview>
-      <Tailwind>
+      {/**
+       * This component wraps emails with `TailwindCSS`.
+       * Import shared config here to make common tw classes usable at email's html generation
+       * and usable in your code editor.
+       */}
+      <Tailwind
+        config={{
+          theme: {
+            extend: {
+              colors: {
+                ...emailColors,
+              },
+            },
+          },
+        }}
+      >
         <Body className="bg-white my-auto mx-auto font-sans">
           <Container className="py-8">{children}</Container>
         </Body>
