@@ -602,8 +602,8 @@ test.describe("Composer", () => {
 
     test.afterAll(() => page.close());
 
-    test("should be disabled if disabled is true", async () => {
-      const { editor, submitButton } = getComposer(page);
+    test("should be disabled (and its actions) if disabled is true", async () => {
+      const { container, editor } = getComposer(page);
 
       // ➡️ The editor is disabled
       await expect(editor).toHaveAttribute("disabled");
@@ -616,12 +616,11 @@ test.describe("Composer", () => {
       expect(await getEditorText(editor)).toEqual("");
 
       // ➡️ All buttons should be disabled
-      await expect(submitButton).toBeDisabled();
+      const buttons = await container.locator("button").all();
 
-      // TODO: This isn't the case yet, but it should be
-      // TODO: Instead of checking buttons individually, we should check that ALL buttons in the container are disabled
-      // await expect(mentionButton).toBeDisabled();
-      // await expect(emojiButton).toBeDisabled();
+      for (const button of buttons) {
+        await expect(button).toBeDisabled();
+      }
     });
   });
 
