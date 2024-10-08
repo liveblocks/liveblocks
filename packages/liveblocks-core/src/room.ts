@@ -42,6 +42,7 @@ import {
   createCommentId,
   createThreadId,
 } from "./lib/createIds";
+import type { DateToString } from "./lib/DateToString";
 import { captureStackTrace } from "./lib/debug";
 import type { Callback, EventSource, Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
@@ -98,6 +99,7 @@ import type {
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
+import type { HistoryVersion } from "./protocol/VersionHistory";
 import type { ImmutableRef } from "./refs/ImmutableRef";
 import { OthersRef } from "./refs/OthersRef";
 import { PatchableRef } from "./refs/PatchableRef";
@@ -1014,7 +1016,9 @@ export type PrivateRoomApi = {
 
   createTextMention(userId: string, mentionId: string): Promise<Response>;
   deleteTextMention(mentionId: string): Promise<Response>;
-  listTextVersions(): Promise<Response>;
+  listTextVersions(): Promise<{
+    versions: HistoryVersion[];
+  }>;
   getTextVersion(versionId: string): Promise<Response>;
   createTextVersion(): Promise<Response>;
 
@@ -1696,13 +1700,36 @@ export function createRoom<
 
   async function listTextVersions() {
     const authValue = await delegates.authenticate();
-    return fetchClientApi(
+    const response = await fetchClientApi(
       url`/v2/c/rooms/${config.roomId}/versions`,
       authValue,
       {
         method: "GET",
       }
     );
+
+    if (response.ok) {
+      const json = await (response.json() as Promise<{
+        versions: DateToString<HistoryVersion>[];
+      }>);
+
+      const versions: HistoryVersion[] = json.versions.map(
+        ({ createdAt, ...version }) => {
+          return {
+            createdAt: new Date(createdAt),
+            ...version,
+          };
+        }
+      );
+
+      return {
+        versions,
+      };
+    } else {
+      throw new Error(
+        `There was an error while getting text versions for room ${config.roomId}`
+      );
+    }
   }
 
   async function getTextVersion(versionId: string) {
