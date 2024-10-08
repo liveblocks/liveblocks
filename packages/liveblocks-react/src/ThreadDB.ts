@@ -5,13 +5,25 @@ import type {
 } from "@liveblocks/core";
 import { SortedList } from "@liveblocks/core";
 
-function isThreadDeleted<M extends BaseMetadata>(
+function sanitizeThread<M extends BaseMetadata>(
   thread: ThreadDataWithDeleteInfo<M>
-): thread is ThreadDataWithDeleteInfo<M> & { deletedAt: Date } {
-  // XXX Maybe do the comments.some() check when _adding_ the thread to the
-  // pool, and setting the deletedAt field otherwise. This would avoid having
-  // to do this check on every read.
-  return !!thread.deletedAt || thread.comments.some((c) => !!c.deletedAt);
+): ThreadDataWithDeleteInfo<M> {
+  // First, if a thread has a deletedAt date, it should not have any comments
+  if (thread.deletedAt) {
+    // Thread is deleted, it should wipe all comments
+    if (thread.comments.length > 0) {
+      return { ...thread, comments: [] };
+    }
+  }
+
+  // Otherwise, if a thread is not deleted, it _should_ have at least one non-deleted comment
+  const hasComment = thread.comments.some((c) => !c.deletedAt);
+  if (!hasComment) {
+    // Delete it after all if it doesn't have at least one comment
+    return { ...thread, deletedAt: new Date(), comments: [] };
+  }
+
+  return thread;
 }
 
 /**
@@ -54,18 +66,16 @@ export class ThreadDB<M extends BaseMetadata> {
 
   public get(threadId: string): ThreadData<M> | undefined {
     const thread = this.getEvenIfDeleted(threadId);
-    if (thread && isThreadDeleted(thread)) {
-      return undefined;
-    }
-    return thread;
+    return thread?.deletedAt ? undefined : thread;
   }
 
-  // XXX Rename to upsert?
-  public add(thread: ThreadDataWithDeleteInfo<M>): void {
-    const key = thread.id;
-    this.removeById(key);
+  public upsert(thread: ThreadDataWithDeleteInfo<M>): void {
+    thread = sanitizeThread(thread);
 
-    if (!isThreadDeleted(thread)) {
+    const key = thread.id;
+    this._removeById(key);
+
+    if (!thread.deletedAt) {
       this._asc.add(thread);
       this._desc.add(thread);
     }
@@ -73,13 +83,20 @@ export class ThreadDB<M extends BaseMetadata> {
     this.touch();
   }
 
-  public removeById(threadId: string): void {
+  private _removeById(threadId: string): void {
     const toRemove = this._byId.get(threadId);
     if (toRemove !== undefined) {
       this._asc.remove(toRemove);
       this._desc.remove(toRemove);
       this._byId.delete(threadId);
       this.touch();
+    }
+  }
+
+  public delete(threadId: string, deletedAt: Date): void {
+    const existing = this._byId.get(threadId);
+    if (existing && !existing.deletedAt) {
+      this.upsert({ ...existing, deletedAt });
     }
   }
 
