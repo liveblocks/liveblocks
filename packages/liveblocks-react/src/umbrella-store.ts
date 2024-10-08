@@ -263,6 +263,72 @@ const noop = Promise.resolve();
 
 const ASYNC_LOADING = Object.freeze({ isLoading: true });
 
+class SingleResource {
+  public readonly observable: Observable<void>;
+  private _eventSource: EventSource<void>;
+  private _fetchPage: () => Promise<void>;
+  private _cachedPromise: UsablePromise<void> | null = null;
+
+  constructor(fetchPage: () => Promise<void>) {
+    this._fetchPage = fetchPage;
+    this._eventSource = makeEventSource<void>();
+    this.observable = this._eventSource.observable;
+
+    autobind(this);
+  }
+
+  public get(): AsyncResult<undefined> {
+    const usable = this._cachedPromise;
+    if (usable === null || usable.status === "pending") {
+      return ASYNC_LOADING;
+    }
+
+    if (usable.status === "rejected") {
+      // XXX Make this a stable reference!
+      return { isLoading: false, error: usable.reason };
+    }
+
+    // XXX Make this a stable reference!
+    return {
+      isLoading: false,
+      data: undefined,
+    };
+  }
+
+  public waitUntilLoaded(): UsablePromise<void> {
+    if (this._cachedPromise) {
+      return this._cachedPromise;
+    }
+
+    // Wrap the request to load room threads (and notifications) in an auto-retry function so that if the request fails,
+    // we retry for at most 5 times with incremental backoff delays. If all retries fail, the auto-retry function throws an error
+    const initialFetcher = autoRetry(
+      this._fetchPage,
+      5,
+      [5000, 5000, 10000, 15000]
+    );
+
+    const promise = usify(initialFetcher);
+
+    // XXX Maybe move this into the .then() above too?
+    promise.then(
+      () => this._eventSource.notify(),
+      () => {
+        this._eventSource.notify();
+
+        // Wait for 5 seconds before removing the request from the cache
+        setTimeout(() => {
+          this._cachedPromise = null;
+          this._eventSource.notify();
+        }, 5_000);
+      }
+    );
+
+    this._cachedPromise = promise;
+    return promise;
+  }
+}
+
 /**
  * The PaginatedResource helper class is responsible for and abstracts away the
  * following:
@@ -567,6 +633,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
   private _userThreadsLastRequestedAt: Date | null = null;
   private _userThreads: Map<string, PaginatedResource> = new Map();
 
+  private _roomVersions: Map<string, SingleResource> = new Map();
+
   constructor(client?: OpaqueClient) {
     this._client = client;
 
@@ -754,24 +822,25 @@ export class UmbrellaStore<M extends BaseMetadata> {
     };
   }
 
-  public getVersionsAsync(
+  public getRoomVersionsAsync(
     roomId: string
   ): AsyncResult<HistoryVersion[], "versions"> {
-    const state = this.get();
+    const queryKey = makeVersionsQueryKey(roomId);
 
-    const query = state.queries4[makeVersionsQueryKey(roomId)];
-    if (query === undefined || query.isLoading) {
+    const resource = this._roomVersions.get(queryKey);
+    if (resource === undefined) {
       return ASYNC_LOADING;
     }
 
-    if (query.error !== undefined) {
-      return query;
+    const asyncResult = resource.get();
+    if (asyncResult.isLoading || asyncResult.error) {
+      return asyncResult;
     }
 
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      versions: nn(state.versionsByRoomId[roomId]),
+      versions: this.get().versionsByRoomId[roomId] ?? [],
     };
   }
 
@@ -1486,6 +1555,52 @@ export class UmbrellaStore<M extends BaseMetadata> {
       result.threads.deleted,
       result.inboxNotifications.deleted
     );
+  }
+
+  public waitUntilRoomVersionsLoaded(roomId: string) {
+    const queryKey = makeVersionsQueryKey(roomId);
+    let resource = this._roomVersions.get(queryKey);
+    if (resource === undefined) {
+      const roomVersionsFetcher = async () => {
+        if (this._client === undefined) {
+          // TODO: Think about other ways to structure this. Throwing a StopRetrying only
+          // makes sense only if we can easily know if the fetcher is going to be wrapped inside the autoRetry function
+          throw new StopRetrying(
+            "Client is required in order to load threads for the room"
+          );
+        }
+
+        if (this._client === undefined) {
+          // TODO: Think about other ways to structure this. Throwing a StopRetrying only
+          // makes sense only if we can easily know if the fetcher is going to be wrapped inside the autoRetry function
+          throw new StopRetrying(
+            "Client is required in order to load threads for the room"
+          );
+        }
+
+        const room = this._client.getRoom(roomId);
+        if (room === null) {
+          throw new StopRetrying(
+            `Room with id ${roomId} is not available on client`
+          );
+        }
+
+        const result = await room[kInternal].listTextVersions();
+        this.setVersions(roomId, result.versions);
+      };
+
+      resource = new SingleResource(roomVersionsFetcher);
+    }
+
+    resource.observable.subscribe(() =>
+      // Note that the store itself does not change, but it's only vehicle at
+      // the moment to trigger a re-render, so we'll do a no-op update here.
+      this._store.set((store) => ({ ...store }))
+    );
+
+    this._roomVersions.set(queryKey, resource);
+
+    return resource.waitUntilLoaded();
   }
 }
 
