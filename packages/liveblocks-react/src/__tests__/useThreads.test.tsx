@@ -1321,8 +1321,7 @@ describe("useThreads", () => {
 
         if (since) {
           const updatedThreads = threads.filter((thread) => {
-            if (thread.updatedAt === undefined) return false;
-            return new Date(thread.updatedAt) >= new Date(since);
+            return thread.updatedAt >= new Date(since);
           });
 
           return res(
@@ -1493,8 +1492,7 @@ describe("useThreads", () => {
 
         if (since) {
           const updatedThreads = threads.filter((thread) => {
-            if (thread.updatedAt === undefined) return false;
-            return new Date(thread.updatedAt) >= new Date(since);
+            return thread.updatedAt >= new Date(since);
           });
 
           return res(
