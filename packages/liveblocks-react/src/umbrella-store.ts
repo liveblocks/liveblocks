@@ -239,7 +239,7 @@ export function selectThreads<M extends BaseMetadata>(
       | "last-update";
   }
 ): ThreadData<M>[] {
-  let threads = state.threads;
+  let threads = state.cleanedThreads;
 
   if (options.roomId !== null) {
     threads = threads.filter((thread) => thread.roomId === options.roomId);
@@ -613,7 +613,7 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
    * All threads in a sorted array, optimistic updates applied, without deleted
    * threads.
    */
-  threads: ThreadData<M>[];
+  cleanedThreads: ThreadData<M>[];
 
   /**
    * All threads in a map, keyed by thread ID, with all optimistic updates
@@ -625,7 +625,7 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
   /**
    * All inbox notifications in a sorted array, optimistic updates applied.
    */
-  notifications: InboxNotificationData[];
+  cleanedNotifications: InboxNotificationData[];
 
   /**
    * Inbox notifications by ID.
@@ -669,6 +669,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
   private _roomVersions: Map<string, SingleResource> = new Map();
 
   constructor(client?: OpaqueClient) {
+    this._client = client;
+
     const inboxFetcher = async (cursor?: string) => {
       if (client === undefined) {
         // TODO: Think about other ways to structure this. Throwing a StopRetrying only
@@ -693,9 +695,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
       const nextCursor = result.nextCursor;
       return nextCursor;
     };
-
-    this._client = client;
-
     this._notifications = new PaginatedResource(inboxFetcher);
     this._notifications.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
@@ -825,7 +824,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      inboxNotifications: this.getFullState().notifications,
+      inboxNotifications: this.getFullState().cleanedNotifications,
       hasFetchedAll: page.hasFetchedAll,
       isFetchingMore: page.isFetchingMore,
       fetchMoreError: page.fetchMoreError,
@@ -1983,12 +1982,12 @@ function internalToExternalState<M extends BaseMetadata>(
       .sort((a, b) => b.notifiedAt.getTime() - a.notifiedAt.getTime());
 
   return {
-    notifications: cleanedNotifications,
+    cleanedNotifications,
     notificationsById: computed.notificationsById,
     settingsByRoomId: computed.settingsByRoomId,
     queries3: state.queries3,
     queries4: state.queries4,
-    threads: cleanedThreads,
+    cleanedThreads,
     threadsById: computed.threadsById,
     versionsByRoomId: state.versionsByRoomId,
   };
