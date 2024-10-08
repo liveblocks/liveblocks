@@ -1083,11 +1083,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
           return cache;
         }
 
-        if (
-          !!updatedAt &&
-          !!existing.updatedAt &&
-          existing.updatedAt > updatedAt
-        ) {
+        if (!!updatedAt && existing.updatedAt > updatedAt) {
           return cache;
         }
 
@@ -1624,10 +1620,7 @@ function internalToExternalState<M extends BaseMetadata>(
         }
 
         // If the thread has been updated since the optimistic update, we do not apply the update
-        if (
-          thread.updatedAt !== undefined &&
-          thread.updatedAt > optimisticUpdate.updatedAt
-        ) {
+        if (thread.updatedAt > optimisticUpdate.updatedAt) {
           break;
         }
 
@@ -2005,7 +1998,7 @@ export function applyUpsertComment<M extends BaseMetadata>(
   // If the comment doesn't exist in the thread, add the comment
   if (existingComment === undefined) {
     const updatedAt = new Date(
-      Math.max(thread.updatedAt?.getTime() || 0, comment.createdAt.getTime())
+      Math.max(thread.updatedAt.getTime(), comment.createdAt.getTime())
     );
 
     const updatedThread = {
@@ -2039,7 +2032,7 @@ export function applyUpsertComment<M extends BaseMetadata>(
       ...thread,
       updatedAt: new Date(
         Math.max(
-          thread.updatedAt?.getTime() || 0,
+          thread.updatedAt.getTime(),
           comment.editedAt?.getTime() || comment.createdAt.getTime()
         )
       ),
@@ -2142,7 +2135,7 @@ export function applyAddReaction<M extends BaseMetadata>(
   return {
     ...thread,
     updatedAt: new Date(
-      Math.max(reaction.createdAt.getTime(), thread.updatedAt?.getTime() || 0)
+      Math.max(reaction.createdAt.getTime(), thread.updatedAt.getTime())
     ),
     comments: updatedComments,
   };
@@ -2196,7 +2189,7 @@ export function applyRemoveReaction<M extends BaseMetadata>(
   return {
     ...thread,
     updatedAt: new Date(
-      Math.max(removedAt.getTime(), thread.updatedAt?.getTime() || 0)
+      Math.max(removedAt.getTime(), thread.updatedAt.getTime())
     ),
     comments: updatedComments,
   };

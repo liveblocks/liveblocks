@@ -58,7 +58,7 @@ export function convertToCommentData(data: CommentDataPlain): CommentData {
 export function convertToThreadData<M extends BaseMetadata>(
   data: ThreadDataPlain<M>
 ): ThreadData<M> {
-  const updatedAt = data.updatedAt ? new Date(data.updatedAt) : undefined;
+  const updatedAt = new Date(data.updatedAt);
   const createdAt = new Date(data.createdAt);
 
   const comments = data.comments.map((comment) =>
