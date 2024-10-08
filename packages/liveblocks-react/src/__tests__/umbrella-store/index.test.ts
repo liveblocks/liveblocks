@@ -1,3 +1,4 @@
+import { ThreadDB } from "../../ThreadDB";
 import { UmbrellaStore } from "../../umbrella-store";
 
 const empty = {
@@ -8,6 +9,7 @@ const empty = {
   settingsByRoomId: {},
   cleanedThreads: [],
   threadsById: {},
+  threadsDB: expect.any(ThreadDB),
   versionsByRoomId: {},
 } as const;
 

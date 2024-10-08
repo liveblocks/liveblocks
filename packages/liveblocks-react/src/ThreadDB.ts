@@ -26,6 +26,11 @@ function sanitizeThread<M extends BaseMetadata>(
   return thread;
 }
 
+export type ReadonlyThreadDB<M extends BaseMetadata> = Omit<
+  ThreadDB<M>,
+  "upsert" | "delete"
+>;
+
 /**
  * Think of this class as a lightweight, in-memory, "database" for all Thread
  * instances. You can efficient .get() them by their thread ID, or efficiently
@@ -114,11 +119,15 @@ export class ThreadDB<M extends BaseMetadata> {
 
   public findMany(
     // XXX Implement more query filters and caching here
-    query: { roomId: string },
+    query: { roomId?: string },
     direction: "asc" | "desc"
   ): readonly ThreadData<M>[] {
     const index = direction === "desc" ? this._desc : this._asc;
-    return Array.from(index.filter((t) => t.roomId === query.roomId));
+    return Array.from(
+      index.filter((t) =>
+        query.roomId !== undefined ? t.roomId === query.roomId : true
+      )
+    );
   }
 
   private touch() {
