@@ -138,11 +138,4 @@ export class ThreadDB<M extends BaseMetadata> {
   private touch() {
     ++this._version;
   }
-
-  /** @internal */
-  // @ts-expect-error Used in unit tests still
-  // XXX Remove this method
-  private _toRecord(): Record<string, ThreadDataWithDeleteInfo<M>> {
-    return Object.fromEntries(this._byId.entries());
-  }
 }

@@ -39,10 +39,7 @@ describe("applyThreadDeltaUpdates", () => {
       deletedThreads: [],
     });
 
-    // @ts-expect-error Accessing internal field
-    expect(db._toRecord()).toEqual({
-      [thread1.id]: thread1,
-    });
+    expect(db.findMany(undefined, {}, "asc")).toEqual([thread1]);
   });
 
   it("should update an existing thread with a newer one", () => {
@@ -62,14 +59,10 @@ describe("applyThreadDeltaUpdates", () => {
       deletedThreads: [],
     };
 
-    // Expected output should reflect the updated properties of thread1Updated
-    const expectedOutput = {
-      [thread1.id]: thread1Updated,
-    };
-
     applyThreadDeltaUpdates(db, updates);
-    // @ts-expect-error Accessing internal field
-    expect(db._toRecord()).toEqual(expectedOutput);
+
+    // Expected output should reflect the updated properties of thread1Updated
+    expect(db.findMany(undefined, {}, "asc")).toEqual([thread1Updated]);
   });
 
   it("should mark a thread as deleted if there is deletion info associated with it", () => {
@@ -81,60 +74,55 @@ describe("applyThreadDeltaUpdates", () => {
       deletedThreads: [thread1DeleteInfo], // Mark thread1 as deleted
     };
 
-    const expectedOutput = {
-      [thread1.id]: {
-        ...thread1,
-        deletedAt: thread1DeleteInfo.deletedAt,
-        updatedAt: thread1DeleteInfo.deletedAt, // Assuming an updatedAt property for marking deletion time
-        comments: [], // Clear comments upon deletion
-      },
-    };
-
     applyThreadDeltaUpdates(db, updates);
-    // @ts-expect-error Accessing internal field
-    expect(db._toRecord()).toEqual(expectedOutput);
+
+    expect(db.findMany(undefined, {}, "asc")).toEqual([]);
+    expect(db.getEvenIfDeleted(thread1.id)).toEqual({
+      ...thread1,
+      deletedAt: thread1DeleteInfo.deletedAt,
+      updatedAt: thread1DeleteInfo.deletedAt, // Assuming an updatedAt property for marking deletion time
+      comments: [], // Clear comments upon deletion
+    });
   });
 
   it("should ignore deletion of a non-existing thread", () => {
     const db = new ThreadDB();
     db.upsert(thread1); // Only thread1 exists
 
+    expect(db.findMany(undefined, {}, "asc")).toEqual([thread1]);
+
     const updates = {
       newThreads: [],
       deletedThreads: [thread2DeleteInfo], // Attempt to delete non-existing thread2
     };
 
-    const expectedOutput = {
-      [thread1.id]: thread1, // Output should remain unchanged
-    };
-
     applyThreadDeltaUpdates(db, updates);
-    // @ts-expect-error Accessing internal field
-    expect(db._toRecord()).toEqual(expectedOutput);
+
+    // Output should remain unchanged
+    expect(db.findMany(undefined, {}, "asc")).toEqual([thread1]);
   });
 
   it("should correctly handle a combination of add, update, and delete operations", () => {
     const db = new ThreadDB();
     db.upsert(thread1); // Existing thread
 
+    expect(db.findMany(undefined, {}, "asc")).toEqual([thread1]);
+
     const updates = {
       newThreads: [thread2], // Add thread2
       deletedThreads: [thread1DeleteInfo], // Delete thread1
     };
 
-    const expectedOutput = {
-      [thread1.id]: {
-        ...thread1,
-        deletedAt: thread1DeleteInfo.deletedAt,
-        updatedAt: thread1DeleteInfo.deletedAt, // Assuming an updatedAt property for marking deletion time
-        comments: [], // Clear comments upon deletion
-      },
-      [thread2.id]: thread2, // thread2 added
-    };
-
     applyThreadDeltaUpdates(db, updates);
-    // @ts-expect-error Accessing internal field
-    expect(db._toRecord()).toEqual(expectedOutput);
+
+    // Thread2 was added, and thread 1 deleted
+    expect(db.findMany(undefined, {}, "asc")).toEqual([thread2]);
+    expect(db.getEvenIfDeleted(thread1.id)).toEqual({
+      ...thread1,
+      deletedAt: thread1DeleteInfo.deletedAt,
+      updatedAt: thread1DeleteInfo.deletedAt, // Assuming an updatedAt property for marking deletion time
+      comments: [], // Clear comments upon deletion
+    });
   });
 
   it("should return existing threads unchanged when no updates are provided", () => {
@@ -142,18 +130,19 @@ describe("applyThreadDeltaUpdates", () => {
     db.upsert(thread1);
     db.upsert(thread2);
 
+    expect(db.version).toEqual(2);
+    expect(db.findMany(undefined, {}, "asc")).toEqual([thread1, thread2]);
+
     const updates = {
       newThreads: [],
       deletedThreads: [],
     };
 
-    const expectedOutput = {
-      [thread1.id]: thread1,
-      [thread2.id]: thread2,
-    };
-
     applyThreadDeltaUpdates(db, updates);
-    // @ts-expect-error Accessing internal field
-    expect(db._toRecord()).toEqual(expectedOutput);
+
+    expect(db.findMany(undefined, {}, "asc")).toEqual([thread1, thread2]);
+
+    // Even the version did not change!
+    expect(db.version).toEqual(2);
   });
 });
