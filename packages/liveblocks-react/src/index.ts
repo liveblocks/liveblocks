@@ -68,8 +68,6 @@ export {
 
 export { useCommentsErrorListener, CreateThreadError } from "./room";
 
-export { invalidateResolver } from "./invalidate-resolver";
-
 // Export the classic (non-Suspense) versions of our hooks
 // (This part differs from src/suspense.ts)
 export {

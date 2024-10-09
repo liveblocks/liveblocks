@@ -1,4 +1,3 @@
-import type { OpaqueClient } from "@liveblocks/core";
 import { kInternal, stringify } from "@liveblocks/core";
 import React from "react";
 
@@ -6,17 +5,6 @@ import { useClient } from "./liveblocks";
 import { useRoom } from "./room";
 
 const MENTION_SUGGESTIONS_DEBOUNCE = 500;
-
-const _cachesByClient = new WeakMap<OpaqueClient, Map<string, string[]>>();
-
-function getMentionSuggestionsCacheForClient(client: OpaqueClient) {
-  let cache = _cachesByClient.get(client);
-  if (!cache) {
-    cache = new Map();
-    _cachesByClient.set(client, cache);
-  }
-  return cache;
-}
 
 /**
  * @private For internal use only. Do not rely on this hook.
@@ -33,6 +21,7 @@ export function useMentionSuggestions(search?: string) {
   const lastInvokedAt = React.useRef<number>();
 
   React.useEffect(() => {
+    const mentionSuggestionsCache = client[kInternal].mentionSuggestionsCache;
     const resolveMentionSuggestions =
       client[kInternal].resolveMentionSuggestions;
 
@@ -45,7 +34,6 @@ export function useMentionSuggestions(search?: string) {
     let debounceTimeout: number | undefined;
     let isCanceled = false;
 
-    const mentionSuggestionsCache = getMentionSuggestionsCacheForClient(client);
     const getMentionSuggestions = async () => {
       try {
         lastInvokedAt.current = performance.now();
@@ -92,12 +80,4 @@ export function useMentionSuggestions(search?: string) {
   }, [client, room.id, search]);
 
   return mentionSuggestions;
-}
-
-export function invalidateResolvedMentionSuggestions(client: OpaqueClient) {
-  const cache = _cachesByClient.get(client);
-
-  if (cache) {
-    cache.clear();
-  }
 }
