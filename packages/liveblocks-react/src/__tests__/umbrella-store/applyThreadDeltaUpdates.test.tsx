@@ -39,6 +39,7 @@ describe("applyThreadDeltaUpdates", () => {
       deletedThreads: [],
     });
 
+    // @ts-expect-error Accessing internal field
     expect(db._toRecord()).toEqual({
       [thread1.id]: thread1,
     });
@@ -67,6 +68,7 @@ describe("applyThreadDeltaUpdates", () => {
     };
 
     applyThreadDeltaUpdates(db, updates);
+    // @ts-expect-error Accessing internal field
     expect(db._toRecord()).toEqual(expectedOutput);
   });
 
@@ -89,6 +91,7 @@ describe("applyThreadDeltaUpdates", () => {
     };
 
     applyThreadDeltaUpdates(db, updates);
+    // @ts-expect-error Accessing internal field
     expect(db._toRecord()).toEqual(expectedOutput);
   });
 
@@ -106,6 +109,7 @@ describe("applyThreadDeltaUpdates", () => {
     };
 
     applyThreadDeltaUpdates(db, updates);
+    // @ts-expect-error Accessing internal field
     expect(db._toRecord()).toEqual(expectedOutput);
   });
 
@@ -129,6 +133,7 @@ describe("applyThreadDeltaUpdates", () => {
     };
 
     applyThreadDeltaUpdates(db, updates);
+    // @ts-expect-error Accessing internal field
     expect(db._toRecord()).toEqual(expectedOutput);
   });
 
@@ -148,6 +153,7 @@ describe("applyThreadDeltaUpdates", () => {
     };
 
     applyThreadDeltaUpdates(db, updates);
+    // @ts-expect-error Accessing internal field
     expect(db._toRecord()).toEqual(expectedOutput);
   });
 });
