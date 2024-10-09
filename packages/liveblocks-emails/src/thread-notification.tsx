@@ -474,7 +474,7 @@ export type ThreadNotificationEmailDataAsReact = ThreadNotificationEmailData<
  *  {
  *    resolveUsers,
  *    resolveRoomInfo,
- *    commentBodyComponents,
+ *    components,
  *  }
  * )
  *
