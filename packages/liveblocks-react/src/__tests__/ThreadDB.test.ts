@@ -115,6 +115,34 @@ describe("ThreadDB", () => {
     expect(db.findMany("room1", {}, "desc")).toEqual([]);
   });
 
+  test("upsert if newer", () => {
+    const db = new ThreadDB();
+
+    const v1 = dummyThreadData({
+      id: "th_abc",
+      roomId: "room1",
+      createdAt: new Date("2024-09-08"),
+    });
+    const v2 = { ...v1, updatedAt: new Date("2024-09-09") };
+    const v3 = { ...v2, updatedAt: new Date("2024-09-10") };
+
+    db.upsertIfNewer(v1);
+    expect(db.findMany("room1", {}, "asc")).toEqual([v1]);
+
+    db.upsertIfNewer(v3); // First update to the later version (v3)
+    expect(db.findMany("room1", {}, "asc")).toEqual([v3]);
+
+    expect(db.version).toEqual(2);
+
+    // Now that v3 is the latest, updating to v1 or v2 should no longer work
+    db.upsertIfNewer(v1);
+    db.upsertIfNewer(v2);
+
+    expect(db.version).toEqual(2); // Did not update!
+
+    expect(db.findMany("room1", {}, "asc")).toEqual([v3]);
+  });
+
   test("cloning the db", () => {
     const db1 = new ThreadDB();
 
