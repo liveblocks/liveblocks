@@ -533,14 +533,6 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
   // NIMESH - Find a better name
   queries4: Record<string, QueryAsyncResult>; // Versions
 
-  /**
-   * All threads in a map, keyed by thread ID, with all optimistic updates
-   * applied. Deleted threads are still in this mapping, and will have
-   * a deletedAt field if so.
-   */
-  // XXX XXX NEXT STEP IS TO REMOVE THIS FIELD IN FAVOR OF threadsDB
-  threadsById: Record<string, ThreadDataWithDeleteInfo<M>>;
-
   // XXX This should not get exposed via the "full state". Instead, we should
   // XXX expose it via a cached `.getThreadDB()`, and invalidate this cached
   // XXX value if either the threads change or a (thread) optimistic update is
@@ -1794,7 +1786,6 @@ function internalToExternalState<M extends BaseMetadata>(
     settingsByRoomId: computed.settingsByRoomId,
     queries3: state.queries3,
     queries4: state.queries4,
-    threadsById: db._toRecord(),
     threadsDB: db,
     versionsByRoomId: state.versionsByRoomId,
   };

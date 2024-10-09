@@ -7,7 +7,6 @@ const empty = {
   queries3: {},
   queries4: {},
   settingsByRoomId: {},
-  threadsById: {},
   threadsDB: expect.any(ThreadDB),
   versionsByRoomId: {},
 } as const;

@@ -742,7 +742,11 @@ function RoomProviderInner<
       }
       const { thread, inboxNotification } = info;
 
-      const existingThread = store.getFullState().threadsById[message.threadId];
+      const existingThread = store
+        .getFullState()
+        .threadsDB //
+        // XXX Should we use .get() here?
+        .getEvenIfDeleted(message.threadId);
 
       switch (message.type) {
         case ServerMsgCode.COMMENT_EDITED:
@@ -1460,7 +1464,11 @@ function useDeleteThread(): (threadId: string) => void {
     (threadId: string): void => {
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
 
-      const thread = store.getFullState().threadsById[threadId];
+      const thread = store
+        .getFullState()
+        .threadsDB //
+        // XXX Should we use .get() here?
+        .getEvenIfDeleted(threadId);
 
       const userId = getCurrentUserId(room);
 
@@ -1614,7 +1622,12 @@ function useEditComment(): (options: EditCommentOptions) => void {
       const editedAt = new Date();
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-      const thread = store.getFullState().threadsById[threadId];
+      const thread = store
+        .getFullState()
+        .threadsDB //
+        // XXX Should we use .get() here?
+        .getEvenIfDeleted(threadId);
+
       if (thread === undefined) {
         console.warn(
           `Internal unexpected behavior. Cannot edit comment in thread "${threadId}" because the thread does not exist in the cache.`
@@ -1996,7 +2009,9 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
           inboxNotification.threadId === threadId
       );
 
-      const thread = state.threadsById[threadId];
+      const thread = state.threadsDB
+        // XXX Should we use .get() here?
+        .getEvenIfDeleted(threadId);
 
       if (inboxNotification === undefined || thread === undefined) {
         return {
