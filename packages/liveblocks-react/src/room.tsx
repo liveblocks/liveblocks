@@ -146,7 +146,8 @@ function useSyncExternalStore<Snapshot>(
 
 const STABLE_EMPTY_LIST = Object.freeze([]);
 
-export const POLLING_INTERVAL = 5 * 60 * 1000; // every 5 minutes
+// XXX DEBUG
+export const POLLING_INTERVAL = 8 * 1000; // every 8 seconds
 
 // Don't try to inline this. This function is intended to be a stable
 // reference, to avoid a React.useCallback() wrapper.
