@@ -1565,9 +1565,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
  */
 function internalToExternalState<M extends BaseMetadata>(
   state: InternalState<M>,
-  originalDb: ThreadDB<M>
+  rawThreadsDB: ThreadDB<M>
 ): UmbrellaStoreState<M> {
-  const db = originalDb.clone();
+  const threadsDB = rawThreadsDB.clone();
 
   const computed = {
     notificationsById: { ...state.notificationsById },
@@ -1577,12 +1577,12 @@ function internalToExternalState<M extends BaseMetadata>(
   for (const optimisticUpdate of state.optimisticUpdates) {
     switch (optimisticUpdate.type) {
       case "create-thread": {
-        db.upsert(optimisticUpdate.thread);
+        threadsDB.upsert(optimisticUpdate.thread);
         break;
       }
 
       case "edit-thread-metadata": {
-        const thread = db.get(optimisticUpdate.threadId);
+        const thread = threadsDB.get(optimisticUpdate.threadId);
         if (thread === undefined) break;
 
         // If the thread has been updated since the optimistic update, we do not apply the update
@@ -1590,7 +1590,7 @@ function internalToExternalState<M extends BaseMetadata>(
           break;
         }
 
-        db.upsert({
+        threadsDB.upsert({
           ...thread,
           updatedAt: optimisticUpdate.updatedAt,
           metadata: {
@@ -1602,27 +1602,29 @@ function internalToExternalState<M extends BaseMetadata>(
       }
 
       case "mark-thread-as-resolved": {
-        const thread = db.get(optimisticUpdate.threadId);
+        const thread = threadsDB.get(optimisticUpdate.threadId);
         if (thread === undefined) break;
 
-        db.upsert({ ...thread, resolved: true });
+        threadsDB.upsert({ ...thread, resolved: true });
         break;
       }
 
       case "mark-thread-as-unresolved": {
-        const thread = db.get(optimisticUpdate.threadId);
+        const thread = threadsDB.get(optimisticUpdate.threadId);
         if (thread === undefined) break;
 
-        db.upsert({ ...thread, resolved: false });
+        threadsDB.upsert({ ...thread, resolved: false });
         break;
       }
 
       case "create-comment": {
         // XXX Should this really be getEvenIfDeleted? I don't think so!
-        const thread = db.getEvenIfDeleted(optimisticUpdate.comment.threadId);
+        const thread = threadsDB.getEvenIfDeleted(
+          optimisticUpdate.comment.threadId
+        );
         if (thread === undefined) break;
 
-        db.upsert(applyUpsertComment(thread, optimisticUpdate.comment));
+        threadsDB.upsert(applyUpsertComment(thread, optimisticUpdate.comment));
 
         const inboxNotification = Object.values(
           computed.notificationsById
@@ -1647,19 +1649,21 @@ function internalToExternalState<M extends BaseMetadata>(
 
       case "edit-comment": {
         // XXX Should this really be getEvenIfDeleted? I don't think so!
-        const thread = db.getEvenIfDeleted(optimisticUpdate.comment.threadId);
+        const thread = threadsDB.getEvenIfDeleted(
+          optimisticUpdate.comment.threadId
+        );
         if (thread === undefined) break;
 
-        db.upsert(applyUpsertComment(thread, optimisticUpdate.comment));
+        threadsDB.upsert(applyUpsertComment(thread, optimisticUpdate.comment));
         break;
       }
 
       case "delete-comment": {
         // XXX Should this really be getEvenIfDeleted? I don't think so!
-        const thread = db.getEvenIfDeleted(optimisticUpdate.threadId);
+        const thread = threadsDB.getEvenIfDeleted(optimisticUpdate.threadId);
         if (thread === undefined) break;
 
-        db.upsert(
+        threadsDB.upsert(
           applyDeleteComment(
             thread,
             optimisticUpdate.commentId,
@@ -1671,10 +1675,10 @@ function internalToExternalState<M extends BaseMetadata>(
 
       case "delete-thread": {
         // XXX Should this really be getEvenIfDeleted? I don't think so!
-        const thread = db.getEvenIfDeleted(optimisticUpdate.threadId);
+        const thread = threadsDB.getEvenIfDeleted(optimisticUpdate.threadId);
         if (thread === undefined) break;
 
-        db.upsert({
+        threadsDB.upsert({
           ...thread,
           deletedAt: optimisticUpdate.deletedAt,
           updatedAt: optimisticUpdate.deletedAt,
@@ -1685,10 +1689,10 @@ function internalToExternalState<M extends BaseMetadata>(
 
       case "add-reaction": {
         // XXX Should this really be getEvenIfDeleted? I don't think so!
-        const thread = db.getEvenIfDeleted(optimisticUpdate.threadId);
+        const thread = threadsDB.getEvenIfDeleted(optimisticUpdate.threadId);
         if (thread === undefined) break;
 
-        db.upsert(
+        threadsDB.upsert(
           applyAddReaction(
             thread,
             optimisticUpdate.commentId,
@@ -1700,10 +1704,10 @@ function internalToExternalState<M extends BaseMetadata>(
 
       case "remove-reaction": {
         // XXX Should this really be getEvenIfDeleted? I don't think so!
-        const thread = db.getEvenIfDeleted(optimisticUpdate.threadId);
+        const thread = threadsDB.getEvenIfDeleted(optimisticUpdate.threadId);
         if (thread === undefined) break;
 
-        db.upsert(
+        threadsDB.upsert(
           applyRemoveReaction(
             thread,
             optimisticUpdate.commentId,
@@ -1776,7 +1780,7 @@ function internalToExternalState<M extends BaseMetadata>(
     // Sort so that the most recent notifications are first
     Object.values(computed.notificationsById)
       .filter((ibn) =>
-        ibn.kind === "thread" ? db.get(ibn.threadId) !== undefined : true
+        ibn.kind === "thread" ? threadsDB.get(ibn.threadId) !== undefined : true
       )
       .sort((a, b) => b.notifiedAt.getTime() - a.notifiedAt.getTime());
 
@@ -1786,7 +1790,7 @@ function internalToExternalState<M extends BaseMetadata>(
     settingsByRoomId: computed.settingsByRoomId,
     queries3: state.queries3,
     queries4: state.queries4,
-    threadsDB: db,
+    threadsDB: threadsDB,
     versionsByRoomId: state.versionsByRoomId,
   };
 }
