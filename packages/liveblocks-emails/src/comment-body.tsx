@@ -20,8 +20,8 @@ import {
 } from "@liveblocks/core";
 import React from "react";
 
-import type { InlineCSSString } from "./lib/sanitize-inline-css";
-import { sanitizeInlineCSS } from "./lib/sanitize-inline-css";
+import type { CSSProperties } from "./lib/css-properties";
+import { toInlineCSSString } from "./lib/css-properties";
 
 export type CommentBodyContainerComponentProps = {
   /**
@@ -223,50 +223,45 @@ export type ConvertCommentBodyAsHTMLStyles = {
   /**
    * The default inline CSS styles used to display paragraphs.
    */
-  paragraph: InlineCSSString;
+  paragraph: CSSProperties;
   /**
    * The default inline CSS styles used to display text `<strong />` elements.
    */
-  strong: InlineCSSString;
+  strong: CSSProperties;
   /**
    * The default inline CSS styles used to display text `<code />` elements.
    */
-  code: InlineCSSString;
+  code: CSSProperties;
   /**
    * The default inline CSS styles used to display links.
    */
-  mention: InlineCSSString;
+  mention: CSSProperties;
   /**
    * The default inline CSS styles used to display mentions.
    */
-  link: InlineCSSString;
+  link: CSSProperties;
 };
 
 const baseStyles: ConvertCommentBodyAsHTMLStyles = {
-  paragraph: "font-size:14px;",
-  strong: "font-weight:500;",
-  code: 'font-family:ui-monospace, Menlo, Monaco, "Cascadia Mono", "Segoe UI Mono", "Roboto Mono", "Oxygen Mono", "Ubuntu Mono", "Source Code Pro", "Fira Mono", "Droid Sans Mono", "Consolas", "Courier New", monospace;background-color:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.1);border-radius:4px;',
-  mention: "color:blue;",
-  link: "text-decoration:underline;",
-};
-
-/** @internal */
-const getCommentBodyAsHTMLStyles = (
-  styles: Partial<ConvertCommentBodyAsHTMLStyles> = {}
-): ConvertCommentBodyAsHTMLStyles => {
-  return {
-    paragraph: styles.paragraph
-      ? sanitizeInlineCSS(styles.paragraph)
-      : baseStyles.paragraph,
-    strong: styles.strong
-      ? sanitizeInlineCSS(styles.strong)
-      : baseStyles.strong,
-    code: styles.code ? sanitizeInlineCSS(styles.code) : baseStyles.code,
-    mention: styles.mention
-      ? sanitizeInlineCSS(styles.mention)
-      : baseStyles.mention,
-    link: styles.link ? sanitizeInlineCSS(styles.link) : baseStyles.link,
-  };
+  paragraph: {
+    fontSize: "14px",
+  },
+  strong: {
+    fontWeight: 500,
+  },
+  code: {
+    fontFamily:
+      'ui-monospace, Menlo, Monaco, "Cascadia Mono", "Segoe UI Mono", "Roboto Mono", "Oxygen Mono", "Ubuntu Mono", "Source Code Pro", "Fira Mono", "Droid Sans Mono", "Consolas", "Courier New", monospace',
+    backgroundColor: "rgba(0,0,0,0.05)",
+    border: "solid 1px rgba(0,0,0,0.1)",
+    borderRadius: "4px",
+  },
+  mention: {
+    color: "blue",
+  },
+  link: {
+    textDecoration: "underline",
+  },
 };
 
 export type ConvertCommentBodyAsHTMLOptions<U extends BaseUserMeta = DU> = {
@@ -291,7 +286,7 @@ export async function convertCommentBodyAsHTML(
   body: CommentBody,
   options?: ConvertCommentBodyAsHTMLOptions<BaseUserMeta>
 ): Promise<string> {
-  const styles = getCommentBodyAsHTMLStyles(options?.styles);
+  const styles = { ...baseStyles, ...options?.styles };
 
   const htmlBody = await stringifyCommentBody(body, {
     format: "html",
@@ -300,7 +295,7 @@ export async function convertCommentBodyAsHTML(
       // NOTE: using prettier-ignore to preserve template strings
       paragraph: ({ children }) =>
         // prettier-ignore
-        children ? html`<p style="${styles.paragraph}">${htmlSafe(children)}</p>` : children,
+        children ? html`<p style="${toInlineCSSString(styles.paragraph)}">${htmlSafe(children)}</p>` : children,
       text: ({ element }) => {
         // Note: construction following the schema 👇
         // <code><s><em><strong>{element.text}</strong></s></em></code>
@@ -312,7 +307,7 @@ export async function convertCommentBodyAsHTML(
 
         if (element.bold) {
           // prettier-ignore
-          children = html`<strong style="${styles.strong}">${children}</strong>`;
+          children = html`<strong style="${toInlineCSSString(styles.strong)}">${children}</strong>`;
         }
 
         if (element.italic) {
@@ -327,18 +322,18 @@ export async function convertCommentBodyAsHTML(
 
         if (element.code) {
           // prettier-ignore
-          children = html`<code style="${styles.code}">${children}</code>`;
+          children = html`<code style="${toInlineCSSString(styles.code)}">${children}</code>`;
         }
 
         return children;
       },
       link: ({ element, href }) => {
         // prettier-ignore
-        return html`<a href="${href}" target="_blank" rel="noopener noreferrer" style="${styles.link}">${element.text ?? element.url}</a>`;
+        return html`<a href="${href}" target="_blank" rel="noopener noreferrer" style="${toInlineCSSString(styles.link)}">${element.text ?? element.url}</a>`;
       },
       mention: ({ element, user }) => {
         // prettier-ignore
-        return html`<span data-mention style="${styles.mention}">@${user?.name ?? element.id}</span>`;
+        return html`<span data-mention style="${toInlineCSSString(styles.mention)}">@${user?.name ?? element.id}</span>`;
       },
     },
   });

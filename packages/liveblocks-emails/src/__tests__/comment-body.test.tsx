@@ -40,7 +40,7 @@ describe("convert comment body as HTML", () => {
     it("should convert with code and strikethrough", async () => {
       const htmlBody = await convertCommentBodyAsHTML(commentBody6);
       const expected =
-        '<p style="font-size:14px;"><s>Strikethrough text</s> and <code style="font-family:ui-monospace, Menlo, Monaco, &quot;Cascadia Mono&quot;, &quot;Segoe UI Mono&quot;, &quot;Roboto Mono&quot;, &quot;Oxygen Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Source Code Pro&quot;, &quot;Fira Mono&quot;, &quot;Droid Sans Mono&quot;, &quot;Consolas&quot;, &quot;Courier New&quot;, monospace;background-color:rgba(0,0,0,0.05);border:1px solid rgba(0,0,0,0.1);border-radius:4px;">code text</code></p>';
+        '<p style="font-size:14px;"><s>Strikethrough text</s> and <code style="font-family:ui-monospace, Menlo, Monaco, &quot;Cascadia Mono&quot;, &quot;Segoe UI Mono&quot;, &quot;Roboto Mono&quot;, &quot;Oxygen Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Source Code Pro&quot;, &quot;Fira Mono&quot;, &quot;Droid Sans Mono&quot;, &quot;Consolas&quot;, &quot;Courier New&quot;, monospace;background-color:rgba(0,0,0,0.05);border:solid 1px rgba(0,0,0,0.1);border-radius:4px;">code text</code></p>';
 
       expect(htmlBody).toEqual(expected);
     });
@@ -86,9 +86,15 @@ describe("convert comment body as HTML", () => {
 
   describe("w/ custom styles", () => {
     const styles: Partial<ConvertCommentBodyAsHTMLStyles> = {
-      paragraph: "font-size:16px;",
-      mention: "color:purple;",
-      link: "text-underline-offset:4px;",
+      paragraph: {
+        fontSize: "16px",
+      },
+      mention: {
+        color: "purple",
+      },
+      link: {
+        textUnderlineOffset: "4px",
+      },
     };
 
     it("should convert mentions", async () => {

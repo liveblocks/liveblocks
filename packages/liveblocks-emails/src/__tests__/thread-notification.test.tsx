@@ -554,8 +554,12 @@ describe("thread notification", () => {
 
     describe("unread mention w/ custom styles design tokens", () => {
       const styles: Partial<ConvertCommentBodyAsHTMLStyles> = {
-        paragraph: "font-size:16px;",
-        mention: "color:purple;",
+        paragraph: {
+          fontSize: "16px",
+        },
+        mention: {
+          color: "purple",
+        },
       };
       const { comment, thread, inboxNotification, event } =
         makeUnreadMentionDataset();
@@ -736,8 +740,12 @@ describe("thread notification", () => {
 
     describe("unread replies w/ custom styles design tokens", () => {
       const styles: Partial<ConvertCommentBodyAsHTMLStyles> = {
-        paragraph: "font-size:16px;",
-        link: "text-underline-offset:4px;",
+        paragraph: {
+          fontSize: "16px",
+        },
+        link: {
+          textUnderlineOffset: "4px",
+        },
       };
 
       const { comment2, thread, inboxNotification, event } =

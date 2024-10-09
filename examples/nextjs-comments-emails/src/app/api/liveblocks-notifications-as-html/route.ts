@@ -57,8 +57,14 @@ export async function POST(request: Request) {
           },
           // Customize your HTML elements styles here 👇
           styles: {
-            paragraph: "font-size:14px;margin:0",
-            mention: "color:#1667FF;font-weight:500;",
+            paragraph: {
+              fontSize: "14px",
+              margin: 0,
+            },
+            mention: {
+              color: "#1667FF",
+              fontWeight: 500,
+            },
           },
         }
       );
