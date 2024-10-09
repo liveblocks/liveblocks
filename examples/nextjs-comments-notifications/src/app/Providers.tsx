@@ -7,6 +7,8 @@ import { authWithExampleId, setExampleId } from "../example";
 export function Providers({ children }: PropsWithChildren) {
   return (
     <LiveblocksProvider
+      // @ts-expect-error dev
+      baseUrl="https://dev.dev-liveblocks5948.workers.dev"
       authEndpoint={authWithExampleId("/api/liveblocks-auth")}
       // Get users' info from their ID
       resolveUsers={async ({ userIds }) => {
