@@ -1,8 +1,9 @@
-## 2.9.1 (Not released yet)
+## 2.9.1
 
 ### `@liveblocks/client`
 
 - Fix type definition of `ThreadData`: `updatedAt` is always set
+- Fix bug where the old API endpoint was still being used for delta updates
 
 ### `@liveblocks/react-ui`
 
