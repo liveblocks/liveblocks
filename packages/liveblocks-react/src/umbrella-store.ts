@@ -677,11 +677,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }
 
     // VINCENT - Verify performance does not become an issue as `selectThread` is an expensive operation
-    const threads = selectThreads(this.getFullState().threadsDB, {
-      roomId,
-      query,
-      orderBy: "age",
-    });
+    const threads = selectThreads(
+      // VINCENT - This is ugly
+      this.getFullState().threadsDB,
+      {
+        roomId,
+        query,
+        orderBy: "age",
+      }
+    );
 
     const page = asyncResult.data;
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
@@ -811,16 +815,19 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this.subscribe(callback);
   }
 
+  // VINCENT - Remove this helper
   public subscribeThreads(callback: () => void): () => void {
     // TODO Make this actually only update when threads are invalidated
     return this.subscribe(callback);
   }
 
+  // VINCENT - Remove this helper
   public subscribeUserThreads(callback: () => void): () => void {
     // TODO Make this actually only update when threads are invalidated
     return this.subscribe(callback);
   }
 
+  // VINCENT - Remove this helper
   public subscribeThreadsOrInboxNotifications(
     callback: () => void
   ): () => void {
@@ -828,11 +835,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this.subscribe(callback);
   }
 
+  // VINCENT - Remove this helper
   public subscribeNotificationSettings(callback: () => void): () => void {
     // TODO Make this actually only update when notification settings are invalidated
     return this.subscribe(callback);
   }
 
+  // VINCENT - Remove this helper
   public subscribeVersions(callback: () => void): () => void {
     // TODO Make this actually only update when versions are invalidated
     return this.subscribe(callback);
