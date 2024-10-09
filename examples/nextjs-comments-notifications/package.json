@@ -9,10 +9,10 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^2.9.0",
-    "@liveblocks/node": "^2.9.0",
-    "@liveblocks/react": "^2.9.0",
-    "@liveblocks/react-ui": "^2.9.0",
+    "@liveblocks/client": "file:../../packages/liveblocks-client",
+    "@liveblocks/node": "file:../../packages/liveblocks-node",
+    "@liveblocks/react": "file:../../packages/liveblocks-react",
+    "@liveblocks/react-ui": "file:../../packages/liveblocks-react-ui",
     "@radix-ui/react-popover": "^1.0.7",
     "clsx": "^2.1.0",
     "next": "^14.1.4",

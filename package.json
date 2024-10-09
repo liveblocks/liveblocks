@@ -7,7 +7,8 @@
     "packages/*",
     "tools/*",
     "schema-lang/*",
-    "e2e/next-sandbox"
+    "e2e/next-sandbox",
+    "examples/nextjs-comments-notifications"
   ],
   "scripts": {
     "build": "turbo run build",
