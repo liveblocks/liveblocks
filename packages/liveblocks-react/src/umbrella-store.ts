@@ -432,12 +432,10 @@ export class PaginatedResource {
     }
 
     if (usable.status === "rejected") {
-      // XXX Make this a stable reference!
       return { isLoading: false, error: usable.reason };
     }
 
     const state = this._paginationState!;
-    // XXX Make this a stable reference!
     return {
       isLoading: false,
       data: {
