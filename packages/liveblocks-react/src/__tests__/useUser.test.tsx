@@ -6,7 +6,7 @@ import { renderHook, screen, waitFor } from "@testing-library/react";
 import React, { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
-import { createContextsForTest } from "./_utils";
+import { act, createContextsForTest } from "./_utils";
 
 // eslint-disable-next-line @typescript-eslint/require-await
 async function defaultResolveUsers({ userIds }: ResolveUsersArgs) {
@@ -172,6 +172,65 @@ describe("useUser", () => {
     expect(resolveUsers).toHaveBeenNthCalledWith(1, { userIds: ["abc"] });
 
     expect(resolveUsers).toHaveBeenNthCalledWith(2, { userIds: ["123"] });
+
+    unmount();
+  });
+
+  test("should revalidate instantly if its cache is invalidated", async () => {
+    const roomId = nanoid();
+
+    const resolveUsers = jest.fn(({ userIds }: ResolveUsersArgs) =>
+      userIds.map((userId) => ({ name: userId }))
+    );
+    const {
+      client,
+      room: { RoomProvider, useUser },
+    } = createContextsForTest({
+      resolveUsers,
+    });
+
+    const { result, rerender, unmount } = renderHook(
+      ({ userId }: { userId: string }) => ({
+        user: useUser(userId),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id={roomId}>{children}</RoomProvider>
+        ),
+        initialProps: { userId: "abc" },
+      }
+    );
+
+    await waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
+
+    rerender({ userId: "123" });
+
+    await waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
+
+    rerender({ userId: "abc" });
+
+    expect(result.current.user).toEqual({
+      isLoading: false,
+      user: { name: "abc" },
+    });
+
+    // Invalidate all user IDs
+    act(() => client.resolvers.invalidateUsers());
+
+    await waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
+
+    expect(result.current.user).toEqual({
+      isLoading: false,
+      user: { name: "abc" },
+    });
+
+    expect(resolveUsers).toHaveBeenCalledTimes(3);
+
+    expect(resolveUsers).toHaveBeenNthCalledWith(1, { userIds: ["abc"] });
+
+    expect(resolveUsers).toHaveBeenNthCalledWith(2, { userIds: ["123"] });
+
+    expect(resolveUsers).toHaveBeenNthCalledWith(3, { userIds: ["abc"] });
 
     unmount();
   });
