@@ -52,11 +52,11 @@ describe("ThreadDB", () => {
     expect(db.getEvenIfDeleted("th_pqr")!.id).toEqual("th_pqr");
     expect(db.get("th_nonexisting")).toEqual(undefined);
 
-    expect(db.findMany({ roomId: "room0" }, "asc")).toEqual([]);
-    expect(db.findMany({ roomId: "room1" }, "asc")).toEqual([th1, th3]);
-    expect(db.findMany({ roomId: "room1" }, "desc")).toEqual([th3, th1]);
-    expect(db.findMany({ roomId: "room2" }, "asc")).toEqual([th2]);
-    expect(db.findMany({ roomId: "room3" }, "asc")).toEqual([
+    expect(db.findMany("room0", {}, "asc")).toEqual([]);
+    expect(db.findMany("room1", {}, "asc")).toEqual([th1, th3]);
+    expect(db.findMany("room1", {}, "desc")).toEqual([th3, th1]);
+    expect(db.findMany("room2", {}, "asc")).toEqual([th2]);
+    expect(db.findMany("room3", {}, "asc")).toEqual([
       /* th4 is explicitly deleted */
       /* th5 is also (implicitly) deleted */
     ]);
@@ -79,8 +79,8 @@ describe("ThreadDB", () => {
     db.upsert(th1);
     db.upsert(th2);
 
-    expect(db.findMany({ roomId: "room1" }, "asc")).toEqual([th1, th2]);
-    expect(db.findMany({ roomId: "room1" }, "desc")).toEqual([th2, th1]);
+    expect(db.findMany("room1", {}, "asc")).toEqual([th1, th2]);
+    expect(db.findMany("room1", {}, "desc")).toEqual([th2, th1]);
 
     db.delete("th_abc", new Date("2024-10-01"));
     expect(db.get("th_abc")).toEqual(undefined);
@@ -91,13 +91,13 @@ describe("ThreadDB", () => {
       comments: [],
     });
 
-    expect(db.findMany({ roomId: "room1" }, "asc")).toEqual([th2]);
-    expect(db.findMany({ roomId: "room1" }, "desc")).toEqual([th2]);
+    expect(db.findMany("room1", {}, "asc")).toEqual([th2]);
+    expect(db.findMany("room1", {}, "desc")).toEqual([th2]);
 
     db.delete("th_nonexisting", new Date());
 
-    expect(db.findMany({ roomId: "room1" }, "asc")).toEqual([th2]);
-    expect(db.findMany({ roomId: "room1" }, "desc")).toEqual([th2]);
+    expect(db.findMany("room1", {}, "asc")).toEqual([th2]);
+    expect(db.findMany("room1", {}, "desc")).toEqual([th2]);
 
     // Deleting th1 again has no effect
     db.delete("th_abc", new Date());
@@ -110,9 +110,9 @@ describe("ThreadDB", () => {
 
     db.delete("th_klm", new Date());
 
-    expect(db.findMany({ roomId: "room1" }, "asc")).toEqual([]);
+    expect(db.findMany("room1", {}, "asc")).toEqual([]);
 
-    expect(db.findMany({ roomId: "room1" }, "desc")).toEqual([]);
+    expect(db.findMany("room1", {}, "desc")).toEqual([]);
   });
 
   test("cloning the db", () => {
@@ -148,26 +148,26 @@ describe("ThreadDB", () => {
     db1.upsert(th2);
     db1.upsert(th3);
 
-    expect(db1.findMany({ roomId: "room1" }, "asc")).toEqual([th1, th2, th3]);
-    expect(db1.findMany({ roomId: "room1" }, "desc")).toEqual([th3, th2, th1]);
+    expect(db1.findMany("room1", {}, "asc")).toEqual([th1, th2, th3]);
+    expect(db1.findMany("room1", {}, "desc")).toEqual([th3, th2, th1]);
 
     const db2 = db1.clone();
     db2.delete("th_def", new Date());
     db2.delete("th_abc", new Date());
 
-    expect(db1.findMany({ roomId: "room1" }, "asc")).toEqual([th1, th2, th3]);
-    expect(db1.findMany({ roomId: "room1" }, "desc")).toEqual([th3, th2, th1]);
+    expect(db1.findMany("room1", {}, "asc")).toEqual([th1, th2, th3]);
+    expect(db1.findMany("room1", {}, "desc")).toEqual([th3, th2, th1]);
 
-    expect(db2.findMany({ roomId: "room1" }, "asc")).toEqual([th3]);
-    expect(db2.findMany({ roomId: "room1" }, "desc")).toEqual([th3]);
+    expect(db2.findMany("room1", {}, "asc")).toEqual([th3]);
+    expect(db2.findMany("room1", {}, "desc")).toEqual([th3]);
 
     db2.upsert(th4);
     db2.upsert(th5);
 
-    expect(db1.findMany({ roomId: "room1" }, "asc")).toEqual([th1, th2, th3]);
-    expect(db1.findMany({ roomId: "room1" }, "desc")).toEqual([th3, th2, th1]);
+    expect(db1.findMany("room1", {}, "asc")).toEqual([th1, th2, th3]);
+    expect(db1.findMany("room1", {}, "desc")).toEqual([th3, th2, th1]);
 
-    expect(db2.findMany({ roomId: "room1" }, "asc")).toEqual([th3, th4, th5]);
-    expect(db2.findMany({ roomId: "room1" }, "desc")).toEqual([th5, th4, th3]);
+    expect(db2.findMany("room1", {}, "asc")).toEqual([th3, th4, th5]);
+    expect(db2.findMany("room1", {}, "desc")).toEqual([th5, th4, th3]);
   });
 });

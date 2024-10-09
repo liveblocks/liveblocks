@@ -1806,7 +1806,7 @@ function internalToExternalState<M extends BaseMetadata>(
     settingsByRoomId: computed.settingsByRoomId,
     queries3: state.queries3,
     queries4: state.queries4,
-    cleanedThreads: Array.from(db.findMany({}, "asc")),
+    cleanedThreads: Array.from(db.findMany(undefined, {}, "asc")),
     threadsById: db._toRecord(),
     threadsDB: db,
     versionsByRoomId: state.versionsByRoomId,

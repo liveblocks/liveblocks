@@ -118,15 +118,18 @@ export class ThreadDB<M extends BaseMetadata> {
   }
 
   public findMany(
-    // XXX Implement more query filters and caching here
-    query: { roomId?: string },
+    // XXX Implement caching here
+    roomId: string | undefined,
+    _query: {
+      henk?: "implement me"; // XXX XXX Add query filters here!
+    },
     direction: "asc" | "desc"
   ): readonly ThreadData<M>[] {
     const index = direction === "desc" ? this._desc : this._asc;
     return Array.from(
-      index.filter((t) =>
-        query.roomId !== undefined ? t.roomId === query.roomId : true
-      )
+      index.filter((t) => {
+        return roomId !== undefined ? t.roomId === roomId : true;
+      })
     );
   }
 
