@@ -1402,7 +1402,7 @@ describe("useThreads", () => {
     } = createContextsForTest();
 
     // @ts-expect-error Accessing a private field here directly
-    const db = umbrellaStore._db;
+    const db = umbrellaStore._rawThreadsDB;
     db.upsert(thread1);
     db.upsert(thread2WithDeletedAt);
     umbrellaStore.force_set((state) => ({ ...state }));

@@ -575,11 +575,13 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
 
 export class UmbrellaStore<M extends BaseMetadata> {
   private _client?: OpaqueClient;
-  // XXX Rename this to _rawThreadDB (raw because no optimistic updates are applied yet)
-  private _db: ThreadDB<M>;
+
+  // Raw threads DB (without any optimistic updates applied)
+  private _rawThreadsDB: ThreadDB<M>;
+  private _prevVersion: number = -1;
+
   private _store: Store<InternalState<M>>;
   private _prevState: InternalState<M> | null = null;
-  private _prevVersion: number = -1;
   private _stateCached: UmbrellaStoreState<M> | null = null;
 
   // Notifications
@@ -628,7 +630,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this._store.set((store) => ({ ...store }))
     );
 
-    this._db = new ThreadDB();
+    this._rawThreadsDB = new ThreadDB();
     this._store = createStore<InternalState<M>>({
       queries3: {},
       queries4: {},
@@ -649,13 +651,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // until the next .set() call invalidates it.
     const rawState = this._store.get();
     if (
-      this._prevVersion !== this._db.version || // XXX Version check is only needed temporarily, until we can get rid of the Zustand-like update model
+      this._prevVersion !== this._rawThreadsDB.version || // XXX Version check is only needed temporarily, until we can get rid of the Zustand-like update model
       this._prevState !== rawState ||
       this._stateCached === null
     ) {
-      this._stateCached = internalToExternalState(rawState, this._db);
+      this._stateCached = internalToExternalState(rawState, this._rawThreadsDB);
       this._prevState = rawState;
-      this._prevVersion = this._db.version;
+      this._prevVersion = this._rawThreadsDB.version;
     }
     return this._stateCached;
   }
@@ -855,7 +857,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // Direct low-level cache mutations ------------------------------------------------- {{{
 
   private mutateThreadsDB(mutate: (db: ThreadDB<M>) => void): void {
-    const db = this._db;
+    const db = this._rawThreadsDB;
     const old = db.version;
     mutate(db);
 
@@ -1161,7 +1163,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this.removeOptimisticUpdate(optimisticUpdateId);
 
       // If the associated thread is not found, we cannot create a comment under it
-      const existingThread = this._db.get(newComment.threadId);
+      const existingThread = this._rawThreadsDB.get(newComment.threadId);
       if (!existingThread) {
         return;
       }
