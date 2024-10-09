@@ -489,6 +489,64 @@ describe("useUserSuspense", () => {
     unmount();
   });
 
+  test("should suspend with Suspense again if its cache is invalidated", async () => {
+    const roomId = nanoid();
+
+    const {
+      client,
+      room: {
+        RoomProvider,
+        suspense: { useUser },
+      },
+    } = createContextsForTest({
+      resolveUsers: defaultResolveUsers,
+    });
+
+    const { result, unmount } = renderHook(
+      () => ({
+        user: useUser("abc"),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id={roomId}>
+            <Suspense fallback={<div>Loading</div>}>
+              <div>Loaded</div>
+              {children}
+            </Suspense>
+          </RoomProvider>
+        ),
+      }
+    );
+
+    await waitFor(() => {
+      // Check if the Suspense fallback is displayed
+      expect(screen.getByText("Loading")).toBeInTheDocument();
+    });
+
+    await waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
+
+    await waitFor(() => {
+      // Check if the Suspense fallback is no longer displayed
+      expect(screen.getByText("Loaded")).toBeInTheDocument();
+    });
+
+    act(() => client.resolvers.invalidateUsers());
+
+    await waitFor(() => {
+      // Check if the Suspense fallback is displayed again
+      expect(screen.getByText("Loading")).toBeInTheDocument();
+    });
+
+    await waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
+
+    await waitFor(() => {
+      // Check if the Suspense fallback is no longer displayed again
+      expect(screen.getByText("Loaded")).toBeInTheDocument();
+    });
+
+    unmount();
+  });
+
   test("should trigger error boundaries with Suspense", async () => {
     const roomId = nanoid();
 
