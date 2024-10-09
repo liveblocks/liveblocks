@@ -42,6 +42,7 @@ describe("upsertComment", () => {
       id: comment.threadId,
       roomId: comment.roomId,
       comments: [comment],
+      createdAt: new Date("2023-12-31"),
     });
 
     const updatedComment = createComment({
@@ -59,7 +60,8 @@ describe("upsertComment", () => {
     const updatedThread = applyUpsertComment(thread, updatedComment);
     expect(updatedThread.comments).toContainEqual(updatedComment);
     expect(updatedThread.comments).not.toContainEqual(comment);
-    expect(updatedThread.updatedAt).toEqual(updatedComment.editedAt);
+    expect(updatedThread.createdAt).toEqual(new Date("2023-12-31"));
+    expect(updatedThread.updatedAt).toEqual(new Date("2024-01-02"));
   });
 
   it("should not update an existing comment if the new comment is older", () => {

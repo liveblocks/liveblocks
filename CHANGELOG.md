@@ -1,3 +1,14 @@
+## 2.9.1 (Not released yet)
+
+### `@liveblocks/client`
+
+- Fix type definition of `ThreadData`: `updatedAt` is always set
+
+### `@liveblocks/react-ui`
+
+- When `Composer` is disabled, its actions are now also disabled as expected.
+- Various event propagation improvements in `Composer`.
+
 ## 2.9.0
 
 We are introducing pagination support to allow apps using threads and inbox

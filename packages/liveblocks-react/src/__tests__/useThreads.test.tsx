@@ -1,5 +1,10 @@
 import "@testing-library/jest-dom";
 
+import type {
+  InboxNotificationData,
+  InboxNotificationDataPlain,
+  ThreadData,
+} from "@liveblocks/core";
 import { nanoid, ServerMsgCode } from "@liveblocks/core";
 import type { AST } from "@liveblocks/query-parser";
 import { QueryParser } from "@liveblocks/query-parser";
@@ -12,6 +17,12 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { addSeconds } from "date-fns";
+import {
+  type ResponseResolver,
+  rest,
+  type RestContext,
+  type RestRequest,
+} from "msw";
 import { setupServer } from "msw/node";
 import type { ReactNode } from "react";
 import React, { Suspense } from "react";
@@ -69,6 +80,27 @@ afterEach(() => {
 });
 
 afterAll(() => server.close());
+
+function mockGetThreadsSince(
+  resolver: ResponseResolver<
+    RestRequest<never, { roomId: string }>,
+    RestContext,
+    {
+      data: ThreadData<any>[];
+      inboxNotifications: InboxNotificationData[];
+      deletedThreads: ThreadData[];
+      deletedInboxNotifications: InboxNotificationDataPlain[];
+      meta: {
+        requestedAt: string;
+      };
+    }
+  >
+) {
+  return rest.get(
+    "https://api.liveblocks.io/v2/c/rooms/:roomId/threads/delta",
+    resolver
+  );
+}
 
 describe("useThreads", () => {
   beforeAll(() => {
@@ -1315,30 +1347,7 @@ describe("useThreads", () => {
     const originalThreads = [...threads];
 
     server.use(
-      mockGetThreads(async (req, res, ctx) => {
-        const url = new URL(req.url);
-        const since = url.searchParams.get("since");
-
-        if (since) {
-          const updatedThreads = threads.filter((thread) => {
-            if (thread.updatedAt === undefined) return false;
-            return new Date(thread.updatedAt) >= new Date(since);
-          });
-
-          return res(
-            ctx.json({
-              data: updatedThreads,
-              deletedThreads: [],
-              inboxNotifications: [],
-              deletedInboxNotifications: [],
-              meta: {
-                requestedAt: new Date().toISOString(),
-                nextCursor: null,
-              },
-            })
-          );
-        }
-
+      mockGetThreads(async (_req, res, ctx) => {
         return res(
           ctx.json({
             data: threads,
@@ -1351,6 +1360,30 @@ describe("useThreads", () => {
             },
           })
         );
+      }),
+      mockGetThreadsSince(async (req, res, ctx) => {
+        const url = new URL(req.url);
+        const since = url.searchParams.get("since");
+
+        if (since) {
+          const updatedThreads = threads.filter((thread) => {
+            return thread.updatedAt >= new Date(since);
+          });
+
+          return res(
+            ctx.json({
+              data: updatedThreads,
+              deletedThreads: [],
+              inboxNotifications: [],
+              deletedInboxNotifications: [],
+              meta: {
+                requestedAt: new Date().toISOString(),
+              },
+            })
+          );
+        }
+
+        return res(ctx.status(500));
       })
     );
 
@@ -1487,30 +1520,7 @@ describe("useThreads", () => {
     const threads = [dummyThreadData({ roomId }), dummyThreadData({ roomId })];
 
     server.use(
-      mockGetThreads(async (req, res, ctx) => {
-        const url = new URL(req.url);
-        const since = url.searchParams.get("since");
-
-        if (since) {
-          const updatedThreads = threads.filter((thread) => {
-            if (thread.updatedAt === undefined) return false;
-            return new Date(thread.updatedAt) >= new Date(since);
-          });
-
-          return res(
-            ctx.json({
-              data: updatedThreads,
-              deletedThreads: [],
-              inboxNotifications: [],
-              deletedInboxNotifications: [],
-              meta: {
-                requestedAt: new Date().toISOString(),
-                nextCursor: null,
-              },
-            })
-          );
-        }
-
+      mockGetThreads(async (_req, res, ctx) => {
         return res(
           ctx.json({
             data: threads,
@@ -1523,6 +1533,30 @@ describe("useThreads", () => {
             },
           })
         );
+      }),
+      mockGetThreadsSince(async (req, res, ctx) => {
+        const url = new URL(req.url);
+        const since = url.searchParams.get("since");
+
+        if (since) {
+          const updatedThreads = threads.filter((thread) => {
+            return thread.updatedAt >= new Date(since);
+          });
+
+          return res(
+            ctx.json({
+              data: updatedThreads,
+              deletedThreads: [],
+              inboxNotifications: [],
+              deletedInboxNotifications: [],
+              meta: {
+                requestedAt: new Date().toISOString(),
+              },
+            })
+          );
+        }
+
+        return res(ctx.status(500));
       })
     );
 
@@ -1671,6 +1705,21 @@ describe("useThreads: polling", () => {
 
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
+        getThreadsReqCount++;
+        return res(
+          ctx.json({
+            data: threads,
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: now,
+              nextCursor: null,
+            },
+          })
+        );
+      }),
+      mockGetThreadsSince(async (_req, res, ctx) => {
         getThreadsReqCount++;
         return res(
           ctx.json({
