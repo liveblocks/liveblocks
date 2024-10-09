@@ -1618,10 +1618,7 @@ function internalToExternalState<M extends BaseMetadata>(
       }
 
       case "create-comment": {
-        // XXX Should this really be getEvenIfDeleted? I don't think so!
-        const thread = threadsDB.getEvenIfDeleted(
-          optimisticUpdate.comment.threadId
-        );
+        const thread = threadsDB.get(optimisticUpdate.comment.threadId);
         if (thread === undefined) break;
 
         threadsDB.upsert(applyUpsertComment(thread, optimisticUpdate.comment));
@@ -1648,10 +1645,7 @@ function internalToExternalState<M extends BaseMetadata>(
       }
 
       case "edit-comment": {
-        // XXX Should this really be getEvenIfDeleted? I don't think so!
-        const thread = threadsDB.getEvenIfDeleted(
-          optimisticUpdate.comment.threadId
-        );
+        const thread = threadsDB.get(optimisticUpdate.comment.threadId);
         if (thread === undefined) break;
 
         threadsDB.upsert(applyUpsertComment(thread, optimisticUpdate.comment));
@@ -1659,8 +1653,7 @@ function internalToExternalState<M extends BaseMetadata>(
       }
 
       case "delete-comment": {
-        // XXX Should this really be getEvenIfDeleted? I don't think so!
-        const thread = threadsDB.getEvenIfDeleted(optimisticUpdate.threadId);
+        const thread = threadsDB.get(optimisticUpdate.threadId);
         if (thread === undefined) break;
 
         threadsDB.upsert(
@@ -1674,8 +1667,7 @@ function internalToExternalState<M extends BaseMetadata>(
       }
 
       case "delete-thread": {
-        // XXX Should this really be getEvenIfDeleted? I don't think so!
-        const thread = threadsDB.getEvenIfDeleted(optimisticUpdate.threadId);
+        const thread = threadsDB.get(optimisticUpdate.threadId);
         if (thread === undefined) break;
 
         threadsDB.upsert({
@@ -1688,8 +1680,7 @@ function internalToExternalState<M extends BaseMetadata>(
       }
 
       case "add-reaction": {
-        // XXX Should this really be getEvenIfDeleted? I don't think so!
-        const thread = threadsDB.getEvenIfDeleted(optimisticUpdate.threadId);
+        const thread = threadsDB.get(optimisticUpdate.threadId);
         if (thread === undefined) break;
 
         threadsDB.upsert(
@@ -1703,8 +1694,7 @@ function internalToExternalState<M extends BaseMetadata>(
       }
 
       case "remove-reaction": {
-        // XXX Should this really be getEvenIfDeleted? I don't think so!
-        const thread = threadsDB.getEvenIfDeleted(optimisticUpdate.threadId);
+        const thread = threadsDB.get(optimisticUpdate.threadId);
         if (thread === undefined) break;
 
         threadsDB.upsert(
@@ -1790,7 +1780,7 @@ function internalToExternalState<M extends BaseMetadata>(
     settingsByRoomId: computed.settingsByRoomId,
     queries3: state.queries3,
     queries4: state.queries4,
-    threadsDB: threadsDB,
+    threadsDB,
     versionsByRoomId: state.versionsByRoomId,
   };
 }
