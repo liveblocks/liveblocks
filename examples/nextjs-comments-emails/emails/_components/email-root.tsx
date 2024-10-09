@@ -6,7 +6,7 @@ import {
   Preview,
   Tailwind,
 } from "@react-email/components";
-import { emailColors } from "../../tailwind.config";
+import { emailColors } from "../_tailwind/colors";
 
 export function EmailRoot({
   preview,
