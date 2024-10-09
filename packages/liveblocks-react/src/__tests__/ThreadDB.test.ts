@@ -170,4 +170,132 @@ describe("ThreadDB", () => {
     expect(db2.findMany("room1", {}, "asc")).toEqual([th3, th4, th5]);
     expect(db2.findMany("room1", {}, "desc")).toEqual([th5, th4, th3]);
   });
+
+  test("query filtering", () => {
+    const db = new ThreadDB();
+
+    const th1 = dummyThreadData({
+      id: "th_111",
+      roomId: "room2",
+      createdAt: new Date("2024-10-08"),
+      resolved: true,
+      metadata: { color: "red", tag: "odd" },
+    });
+    const th2 = dummyThreadData({
+      id: "th_222",
+      roomId: "room1",
+      createdAt: new Date("2024-10-09"),
+      resolved: false,
+      metadata: { color: "red", tag: "even" },
+    });
+    const th3 = dummyThreadData({
+      id: "th_333",
+      roomId: "room2",
+      createdAt: new Date("2024-10-10"),
+      resolved: true,
+      metadata: { color: "blue", tag: "odd" },
+    });
+    const th4 = dummyThreadData({
+      id: "th_444",
+      roomId: "room2",
+      createdAt: new Date("2024-10-11"),
+      deletedAt: new Date(), // 👈 This one is deleted! ❌
+      resolved: false,
+      metadata: { color: "red", tag: "even" },
+    });
+    const th5 = dummyThreadData({
+      id: "th_555",
+      roomId: "room1",
+      createdAt: new Date("2024-10-12"),
+      resolved: true,
+      metadata: { color: "brown", tag: "odd" },
+    });
+
+    db.upsert(th1);
+    db.upsert(th2);
+    db.upsert(th3);
+    db.upsert(th4);
+    db.upsert(th5);
+
+    expect(db.findMany("room1", {}, "asc")).toEqual([th2, th5]);
+    expect(db.findMany("room1", {}, "desc")).toEqual([th5, th2]);
+    expect(db.findMany("room2", {}, "asc")).toEqual([th1, th3]);
+    expect(db.findMany("room2", {}, "desc")).toEqual([th3, th1]);
+    expect(db.findMany(undefined, {}, "asc")).toEqual([th1, th2, th3, th5]);
+    expect(db.findMany(undefined, {}, "desc")).toEqual([th5, th3, th2, th1]);
+
+    // Mismatching metadata returns nothing
+    expect(db.findMany("room1", { metadata: { a: 1 } }, "asc")).toEqual([]);
+    expect(db.findMany("room2", { metadata: { a: 1 } }, "asc")).toEqual([]);
+    expect(db.findMany(undefined, { metadata: { a: 1 } }, "asc")).toEqual([]);
+
+    // Unresolved checks
+    expect(db.findMany("room1", { resolved: false }, "asc")).toEqual([th2]);
+    expect(db.findMany("room2", { resolved: false }, "asc")).toEqual([]);
+    expect(db.findMany(undefined, { resolved: false }, "asc")).toEqual([th2]);
+
+    // Resolved checks
+    expect(db.findMany("room1", { resolved: true }, "asc")).toEqual([th5]);
+    expect(db.findMany("room2", { resolved: true }, "asc")).toEqual([th1, th3]);
+    expect(db.findMany(undefined, { resolved: true }, "asc")).toEqual([
+      th1,
+      th3,
+      th5,
+    ]);
+
+    // Metadata checks
+    {
+      const query = { metadata: { color: "red" } };
+      expect(db.findMany("room1", query, "asc")).toEqual([th2]);
+      expect(db.findMany("room2", query, "asc")).toEqual([th1]);
+      expect(db.findMany(undefined, query, "asc")).toEqual([th1, th2]);
+    }
+
+    // Metadata checks
+    {
+      const query = { metadata: { color: "blue" } };
+      expect(db.findMany("room1", query, "asc")).toEqual([]);
+      expect(db.findMany("room2", query, "asc")).toEqual([th3]);
+      expect(db.findMany(undefined, query, "asc")).toEqual([th3]);
+    }
+
+    {
+      const query = { metadata: { tag: "odd" } };
+      expect(db.findMany("room1", query, "asc")).toEqual([th5]);
+      expect(db.findMany("room2", query, "asc")).toEqual([th1, th3]);
+      expect(db.findMany(undefined, query, "asc")).toEqual([th1, th3, th5]);
+    }
+
+    // Startswith filtering
+    {
+      const query = { metadata: { color: { startsWith: "b" } } };
+      expect(db.findMany("room1", query, "asc")).toEqual([th5]);
+      expect(db.findMany("room2", query, "asc")).toEqual([th3]);
+      expect(db.findMany(undefined, query, "asc")).toEqual([th3, th5]);
+    }
+
+    // Combining metadata criteria
+    {
+      const query = { resolved: true, metadata: { color: "red" } };
+      expect(db.findMany("room1", query, "asc")).toEqual([]);
+      expect(db.findMany("room2", query, "asc")).toEqual([th1]);
+      expect(db.findMany(undefined, query, "asc")).toEqual([th1]);
+    }
+
+    // Combining metadata criteria
+    {
+      const query = { resolved: false, metadata: { color: "red" } };
+      expect(db.findMany("room1", query, "asc")).toEqual([th2]);
+      expect(db.findMany("room2", query, "asc")).toEqual([]);
+      expect(db.findMany(undefined, query, "asc")).toEqual([th2]);
+    }
+
+    // Combining metadata criteria
+    {
+      const query = { metadata: { color: "red", tag: "odd" } };
+      expect(db.findMany("room1", query, "asc")).toEqual([]);
+      expect(db.findMany("room2", query, "asc")).toEqual([th1]);
+      expect(db.findMany(undefined, query, "asc")).toEqual([th1]);
+    }
+  });
 });

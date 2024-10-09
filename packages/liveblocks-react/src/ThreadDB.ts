@@ -5,6 +5,9 @@ import type {
 } from "@liveblocks/core";
 import { SortedList } from "@liveblocks/core";
 
+import { makeThreadsFilter } from "./lib/querying";
+import type { ThreadsQuery } from "./types";
+
 function sanitizeThread<M extends BaseMetadata>(
   thread: ThreadDataWithDeleteInfo<M>
 ): ThreadDataWithDeleteInfo<M> {
@@ -38,18 +41,18 @@ export type ReadonlyThreadDB<M extends BaseMetadata> = Omit<
  */
 export class ThreadDB<M extends BaseMetadata> {
   private _byId: Map<string, ThreadDataWithDeleteInfo<M>>;
-  private _asc: SortedList<ThreadDataWithDeleteInfo<M>>;
-  private _desc: SortedList<ThreadDataWithDeleteInfo<M>>;
+  private _asc: SortedList<ThreadData<M>>;
+  private _desc: SortedList<ThreadData<M>>;
   private _version: number; // The version is auto-incremented on every mutation and can be used as a reliable indicator to tell if the contents of the thread pool has changed
 
   constructor() {
-    this._asc = SortedList.from<ThreadDataWithDeleteInfo<M>>([], (t1, t2) => {
+    this._asc = SortedList.from<ThreadData<M>>([], (t1, t2) => {
       const d1 = t1.createdAt;
       const d2 = t2.createdAt;
       return d1 < d2 ? true : d1 === d2 ? t1.id < t2.id : false;
     });
 
-    this._desc = SortedList.from<ThreadDataWithDeleteInfo<M>>([], (t1, t2) => {
+    this._desc = SortedList.from<ThreadData<M>>([], (t1, t2) => {
       const d2 = t2.updatedAt;
       const d1 = t1.updatedAt;
       return d2 < d1 ? true : d2 === d1 ? t2.id < t1.id : false;
@@ -120,17 +123,16 @@ export class ThreadDB<M extends BaseMetadata> {
   public findMany(
     // XXX Implement caching here
     roomId: string | undefined,
-    _query: {
-      henk?: "implement me"; // XXX XXX Add query filters here!
-    },
+    query: ThreadsQuery<M>,
     direction: "asc" | "desc"
-  ): readonly ThreadData<M>[] {
+  ): ThreadData<M>[] {
     const index = direction === "desc" ? this._desc : this._asc;
-    return Array.from(
-      index.filter((t) => {
-        return roomId !== undefined ? t.roomId === roomId : true;
-      })
-    );
+    const crit: ((thread: ThreadData<M>) => boolean)[] = [];
+    if (roomId !== undefined) {
+      crit.push((t) => t.roomId === roomId);
+    }
+    crit.push(makeThreadsFilter(query));
+    return Array.from(index.filter((t) => crit.every((pred) => pred(t))));
   }
 
   private touch() {
