@@ -35,9 +35,19 @@ export type ReadonlyThreadDB<M extends BaseMetadata> = Omit<
 >;
 
 /**
- * Think of this class as a lightweight, in-memory, "database" for all Thread
- * instances. You can efficient .get() them by their thread ID, or efficiently
- * iterate over all of them, ordered by either createdAt ASC or updatedAt DESC.
+ * This class implements a lightweight, in-memory, "database" for all Thread
+ * instances.
+ *
+ * It exposes the following methods:
+ *
+ * - upsert: To add new threads
+ * - delete: To mark existing threads as deleted
+ * - get: To get any non-deleted thread
+ * - getEvenIfDeleted: To get a thread which is possibly deleted
+ * - findMany: To filter an ordered list of non-deleted threads
+ * - clone: To clone the DB to mutate it further. This is used to mix in
+ *          optimistic updates without losing the original thread contents.
+ *
  */
 export class ThreadDB<M extends BaseMetadata> {
   private _byId: Map<string, ThreadDataWithDeleteInfo<M>>;
@@ -61,6 +71,10 @@ export class ThreadDB<M extends BaseMetadata> {
     this._byId = new Map();
     this._version = 0;
   }
+
+  //
+  // Public APIs
+  //
 
   public clone(): ThreadDB<M> {
     const newPool = new ThreadDB<M>();
@@ -103,16 +117,6 @@ export class ThreadDB<M extends BaseMetadata> {
     this.touch();
   }
 
-  private _removeById(threadId: string): void {
-    const toRemove = this._byId.get(threadId);
-    if (toRemove !== undefined) {
-      this._asc.remove(toRemove);
-      this._desc.remove(toRemove);
-      this._byId.delete(threadId);
-      this.touch();
-    }
-  }
-
   public delete(threadId: string, deletedAt: Date): void {
     const existing = this._byId.get(threadId);
     if (existing && !existing.deletedAt) {
@@ -133,6 +137,20 @@ export class ThreadDB<M extends BaseMetadata> {
     }
     crit.push(makeThreadsFilter(query));
     return Array.from(index.filter((t) => crit.every((pred) => pred(t))));
+  }
+
+  //
+  // Private APIs
+  //
+
+  private _removeById(threadId: string): void {
+    const toRemove = this._byId.get(threadId);
+    if (toRemove !== undefined) {
+      this._asc.remove(toRemove);
+      this._desc.remove(toRemove);
+      this._byId.delete(threadId);
+      this.touch();
+    }
   }
 
   private touch() {
