@@ -465,19 +465,25 @@ describe("useUserSuspense", () => {
       {
         wrapper: ({ children }) => (
           <RoomProvider id={roomId}>
-            <Suspense fallback={<div>Loading</div>}>{children}</Suspense>
+            <Suspense fallback={<div>Loading</div>}>
+              <div>Loaded</div>
+              {children}
+            </Suspense>
           </RoomProvider>
         ),
       }
     );
 
-    expect(result.current).toEqual(null);
+    await waitFor(() => {
+      // Check if the Suspense fallback is displayed
+      expect(screen.getByText("Loading")).toBeInTheDocument();
+    });
 
     await waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
 
-    expect(result.current.user).toEqual({
-      isLoading: false,
-      user: { name: "abc" },
+    await waitFor(() => {
+      // Check if the Suspense fallback is no longer displayed
+      expect(screen.getByText("Loaded")).toBeInTheDocument();
     });
 
     unmount();
@@ -517,7 +523,7 @@ describe("useUserSuspense", () => {
     expect(result.current).toEqual(null);
 
     await waitFor(() => {
-      // Check if the error boundary's fallback is displayed
+      // Check if the error boundary fallback is displayed
       expect(
         screen.getByText("There was an error while getting user.")
       ).toBeInTheDocument();

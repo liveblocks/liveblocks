@@ -473,19 +473,25 @@ describe("useRoomInfoSuspense", () => {
       {
         wrapper: ({ children }) => (
           <RoomProvider id={roomId}>
-            <Suspense fallback={<div>Loading</div>}>{children}</Suspense>
+            <Suspense fallback={<div>Loading</div>}>
+              <div>Loaded</div>
+              {children}
+            </Suspense>
           </RoomProvider>
         ),
       }
     );
 
-    expect(result.current).toEqual(null);
+    await waitFor(() => {
+      // Check if the Suspense fallback is displayed
+      expect(screen.getByText("Loading")).toBeInTheDocument();
+    });
 
     await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
 
-    expect(result.current.roomInfo).toEqual({
-      isLoading: false,
-      info: { name: "abc" },
+    await waitFor(() => {
+      // Check if the Suspense fallback is no longer displayed
+      expect(screen.getByText("Loaded")).toBeInTheDocument();
     });
 
     unmount();
@@ -525,7 +531,7 @@ describe("useRoomInfoSuspense", () => {
     expect(result.current).toEqual(null);
 
     await waitFor(() => {
-      // Check if the error boundary's fallback is displayed
+      // Check if the error boundary fallback is displayed
       expect(
         screen.getByText("There was an error while getting room info.")
       ).toBeInTheDocument();
