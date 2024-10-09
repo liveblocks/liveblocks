@@ -34,12 +34,6 @@ import {
 } from "@liveblocks/core";
 
 import { autobind } from "./lib/autobind";
-import {
-  // byFirstCreated,
-  // byMostRecentlyUpdated,
-  isMoreRecentlyUpdated,
-} from "./lib/compare";
-// import { makeThreadsFilter } from "./lib/querying";
 import type { ReadonlyThreadDB } from "./ThreadDB";
 import { ThreadDB } from "./ThreadDB";
 import type {
@@ -1222,15 +1216,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // Batch 1️⃣ + 2️⃣
     this._store.batch(() => {
       // 1️⃣
-      this.mutateThreadsDB((db) => {
-        const existingThread = db.get(thread.id);
-        if (
-          existingThread === undefined ||
-          isMoreRecentlyUpdated(thread, existingThread)
-        ) {
-          db.upsert(thread);
-        }
-      });
+      this.mutateThreadsDB((db) => db.upsertIfNewer(thread));
 
       // 2️⃣
       if (inboxNotification !== undefined) {
@@ -1793,14 +1779,7 @@ export function applyThreadDeltaUpdates<M extends BaseMetadata>(
   }
 ): void {
   // Add new threads or update existing threads if the existing thread is older than the new thread.
-  updates.newThreads.forEach((thread) => {
-    const existing = db.get(thread.id);
-
-    // Do not update if existing thread is more recent
-    if (existing && isMoreRecentlyUpdated(existing, thread)) return;
-
-    db.upsert(thread);
-  });
+  updates.newThreads.forEach((thread) => db.upsertIfNewer(thread));
 
   // Mark threads in the deletedThreads list as deleted
   updates.deletedThreads.forEach(({ id, deletedAt }) => {

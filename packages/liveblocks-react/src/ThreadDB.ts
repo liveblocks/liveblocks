@@ -40,7 +40,9 @@ export type ReadonlyThreadDB<M extends BaseMetadata> = Omit<
  *
  * It exposes the following methods:
  *
- * - upsert: To add new threads
+ * - upsert: To add/update a thread
+ * - upsertIfNewer: To add/update a thread. Only update an existing thread if
+ *                  its newer
  * - delete: To mark existing threads as deleted
  * - get: To get any non-deleted thread
  * - getEvenIfDeleted: To get a thread which is possibly deleted
@@ -115,6 +117,13 @@ export class ThreadDB<M extends BaseMetadata> {
     }
     this._byId.set(key, thread);
     this.touch();
+  }
+
+  public upsertIfNewer(thread: ThreadDataWithDeleteInfo<M>): void {
+    const existing = this.get(thread.id);
+    if (!existing || thread.updatedAt >= existing.updatedAt) {
+      this.upsert(thread);
+    }
   }
 
   public delete(threadId: string, deletedAt: Date): void {
