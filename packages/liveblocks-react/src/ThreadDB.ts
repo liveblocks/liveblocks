@@ -87,24 +87,25 @@ export class ThreadDB<M extends BaseMetadata> {
     return newPool;
   }
 
+  /** Gets the transaction count for this DB. Increments any time the DB is modified. */
   public get version() {
     return this._version;
   }
 
+  /** Returns an existing thread by ID. Will never return a deleted thread. */
+  public get(threadId: string): ThreadData<M> | undefined {
+    const thread = this.getEvenIfDeleted(threadId);
+    return thread?.deletedAt ? undefined : thread;
+  }
+
+  /** Returns the (possibly deleted) thread by ID. */
   public getEvenIfDeleted(
     threadId: string
   ): ThreadDataWithDeleteInfo<M> | undefined {
     return this._byId.get(threadId);
   }
 
-  /**
-   * Returns the (non-deleted) thread for the given thread ID.
-   */
-  public get(threadId: string): ThreadData<M> | undefined {
-    const thread = this.getEvenIfDeleted(threadId);
-    return thread?.deletedAt ? undefined : thread;
-  }
-
+  /** Adds or updates a thread in the DB. If the newly given thread is a deleted one, it will get deleted. */
   public upsert(thread: ThreadDataWithDeleteInfo<M>): void {
     thread = sanitizeThread(thread);
 
@@ -119,6 +120,7 @@ export class ThreadDB<M extends BaseMetadata> {
     this.touch();
   }
 
+  /** Like .upsert(), except it won't update if a thread by this ID already exists. */
   public upsertIfNewer(thread: ThreadDataWithDeleteInfo<M>): void {
     const existing = this.get(thread.id);
     if (!existing || thread.updatedAt >= existing.updatedAt) {
@@ -126,6 +128,10 @@ export class ThreadDB<M extends BaseMetadata> {
     }
   }
 
+  /**
+   * Marks a thread as deleted. It will no longer pop up in .findMany()
+   * queries, but it can still be accessed via `.getEvenIfDeleted()`.
+   */
   public delete(threadId: string, deletedAt: Date): void {
     const existing = this._byId.get(threadId);
     if (existing && !existing.deletedAt) {
@@ -133,6 +139,17 @@ export class ThreadDB<M extends BaseMetadata> {
     }
   }
 
+  /**
+   * Returns all threads matching a given roomId and query. If roomId is not
+   * specified, it will return all threads matching the query, across all
+   * rooms.
+   *
+   * Returns the results in the requested order. Please note:
+   *   'asc'  means by createdAt ASC
+   *   'desc' means by updatedAt DESC
+   *
+   * Will never return deleted threads in the result.
+   */
   public findMany(
     // XXX Implement caching here
     roomId: string | undefined,
