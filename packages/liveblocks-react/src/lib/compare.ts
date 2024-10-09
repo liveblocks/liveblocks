@@ -3,6 +3,7 @@
  * oldest to newest, based on their creation dates.
  * Orders by "createdAt ASC".
  */
+// XXX REMOVE THIS AGAIN
 export function byFirstCreated(
   a: { createdAt: Date },
   b: { createdAt: Date }
@@ -14,6 +15,7 @@ export function byFirstCreated(
  * Defines if a thread is newer (i.e. created more recently).
  * Doesn't factor in when the thread was last updated.
  */
+// XXX REMOVE THIS AGAIN
 export function isNewer(
   a: { createdAt: Date },
   b: { createdAt: Date }
@@ -26,6 +28,7 @@ export function isNewer(
  * creation date for these threads.
  */
 // XXX Anywhere we use this helper, we should likely call .upsertIfMoreRecent() instead
+// XXX REMOVE THIS AGAIN
 export function isMoreRecentlyUpdated(
   a: { createdAt: Date; updatedAt: Date },
   b: { createdAt: Date; updatedAt: Date }
@@ -41,6 +44,7 @@ export function isMoreRecentlyUpdated(
  * IMPORTANT!
  * This is *NOT* simply the inverse of compareThreads!
  */
+// XXX REMOVE THIS AGAIN
 export function byMostRecentlyUpdated(
   a: { updatedAt: Date },
   b: { updatedAt: Date }

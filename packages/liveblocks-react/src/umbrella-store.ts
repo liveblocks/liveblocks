@@ -35,11 +35,11 @@ import {
 
 import { autobind } from "./lib/autobind";
 import {
-  byFirstCreated,
-  byMostRecentlyUpdated,
+  // byFirstCreated,
+  // byMostRecentlyUpdated,
   isMoreRecentlyUpdated,
 } from "./lib/compare";
-import { makeThreadsFilter } from "./lib/querying";
+// import { makeThreadsFilter } from "./lib/querying";
 import type { ReadonlyThreadDB } from "./ThreadDB";
 import { ThreadDB } from "./ThreadDB";
 import type {
@@ -232,7 +232,7 @@ export function makeVersionsQueryKey(roomId: string) {
 // TODO This helper should ideally not have to be exposed at the package level!
 // TODO It's currently used by react-lexical though.
 export function selectThreads<M extends BaseMetadata>(
-  state: UmbrellaStoreState<M>,
+  db: ReadonlyThreadDB<M>,
   options: {
     roomId: string | null;
     query?: ThreadsQuery<M>;
@@ -241,21 +241,10 @@ export function selectThreads<M extends BaseMetadata>(
       | "last-update";
   }
 ): ThreadData<M>[] {
-  let threads = state.cleanedThreads;
-
-  if (options.roomId !== null) {
-    threads = threads.filter((thread) => thread.roomId === options.roomId);
-  }
-
-  // Third filter pass: select only threads matching query filter
-  const query = options.query;
-  if (query) {
-    threads = threads.filter(makeThreadsFilter<M>(query));
-  }
-
-  // Sort threads by creation date (oldest first)
-  return threads.sort(
-    options.orderBy === "last-update" ? byMostRecentlyUpdated : byFirstCreated
+  return db.findMany(
+    options.roomId ?? undefined,
+    options.query ?? {},
+    options.orderBy === "age" ? "asc" : "desc"
   );
 }
 
@@ -545,13 +534,6 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
   queries4: Record<string, QueryAsyncResult>; // Versions
 
   /**
-   * All threads in a sorted array, optimistic updates applied, without deleted
-   * threads.
-   */
-  // XXX XXX NEXT STEP IS TO REMOVE THIS FIELD IN FAVOR OF threadsDB
-  cleanedThreads: ThreadData<M>[];
-
-  /**
    * All threads in a map, keyed by thread ID, with all optimistic updates
    * applied. Deleted threads are still in this mapping, and will have
    * a deletedAt field if so.
@@ -559,6 +541,10 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
   // XXX XXX NEXT STEP IS TO REMOVE THIS FIELD IN FAVOR OF threadsDB
   threadsById: Record<string, ThreadDataWithDeleteInfo<M>>;
 
+  // XXX This should not get exposed via the "full state". Instead, we should
+  // XXX expose it via a cached `.getThreadDB()`, and invalidate this cached
+  // XXX value if either the threads change or a (thread) optimistic update is
+  // XXX changed.
   threadsDB: ReadonlyThreadDB<M>;
 
   /**
@@ -589,7 +575,7 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
 
 export class UmbrellaStore<M extends BaseMetadata> {
   private _client?: OpaqueClient;
-  // XXX Rename this to _threadDB
+  // XXX Rename this to _rawThreadDB (raw because no optimistic updates are applied yet)
   private _db: ThreadDB<M>;
   private _store: Store<InternalState<M>>;
   private _prevState: InternalState<M> | null = null;
@@ -705,7 +691,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }
 
     // VINCENT - Verify performance does not become an issue as `selectThread` is an expensive operation
-    const threads = selectThreads(this.getFullState(), {
+    const threads = selectThreads(this.getFullState().threadsDB, {
       roomId,
       query,
       orderBy: "age",
@@ -739,7 +725,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return asyncResult;
     }
 
-    const threads = selectThreads(this.getFullState(), {
+    const threads = selectThreads(this.getFullState().threadsDB, {
       roomId: null, // Do _not_ filter by roomId
       query,
       orderBy: "last-update",
@@ -1806,7 +1792,6 @@ function internalToExternalState<M extends BaseMetadata>(
     settingsByRoomId: computed.settingsByRoomId,
     queries3: state.queries3,
     queries4: state.queries4,
-    cleanedThreads: Array.from(db.findMany(undefined, {}, "asc")),
     threadsById: db._toRecord(),
     threadsDB: db,
     versionsByRoomId: state.versionsByRoomId,
