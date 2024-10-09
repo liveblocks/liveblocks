@@ -3,7 +3,7 @@
 ### `@liveblocks/client`
 
 - Fix type definition of `ThreadData`: `updatedAt` is always set
-- Fix bug where the old API endpoint was still being used for delta updates
+- Fix bug where client wasn't always using the newest delta update backend endpoint yet
 
 ### `@liveblocks/react-ui`
 
