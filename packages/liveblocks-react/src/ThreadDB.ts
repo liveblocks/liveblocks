@@ -109,14 +109,19 @@ export class ThreadDB<M extends BaseMetadata> {
   public upsert(thread: ThreadDataWithDeleteInfo<M>): void {
     thread = sanitizeThread(thread);
 
-    const key = thread.id;
-    this._removeById(key);
+    const id = thread.id;
+
+    const toRemove = this._byId.get(id);
+    if (toRemove !== undefined) {
+      this._asc.remove(toRemove);
+      this._desc.remove(toRemove);
+    }
 
     if (!thread.deletedAt) {
       this._asc.add(thread);
       this._desc.add(thread);
     }
-    this._byId.set(key, thread);
+    this._byId.set(id, thread);
     this.touch();
   }
 
@@ -168,16 +173,6 @@ export class ThreadDB<M extends BaseMetadata> {
   //
   // Private APIs
   //
-
-  private _removeById(threadId: string): void {
-    const toRemove = this._byId.get(threadId);
-    if (toRemove !== undefined) {
-      this._asc.remove(toRemove);
-      this._desc.remove(toRemove);
-      this._byId.delete(threadId);
-      this.touch();
-    }
-  }
 
   private touch() {
     ++this._version;
