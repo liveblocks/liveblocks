@@ -946,7 +946,7 @@ describe("thread notification", () => {
 
     describe("unread mention w/ custom components", () => {
       const components: Partial<ConvertCommentBodyAsReactComponents> = {
-        Slot: ({ children }) => <main>{children}</main>,
+        Container: ({ children }) => <main>{children}</main>,
         Mention: ({ element, user }) => (
           <span>u#{user?.name ?? element.id}</span>
         ),
@@ -1187,7 +1187,7 @@ describe("thread notification", () => {
 
     describe("unread replies w/ custom components", () => {
       const components: Partial<ConvertCommentBodyAsReactComponents> = {
-        Slot: ({ children }) => <main>{children}</main>,
+        Container: ({ children }) => <main>{children}</main>,
         Link: ({ element, href }) => (
           <a href={href} data-link>
             {element.text ?? element.url}

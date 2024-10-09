@@ -23,7 +23,7 @@ import React from "react";
 import type { InlineCSSString } from "./lib/sanitize-inline-css";
 import { sanitizeInlineCSS } from "./lib/sanitize-inline-css";
 
-export type CommentBodySlotComponentProps = {
+export type CommentBodyContainerComponentProps = {
   /**
    * The blocks of the comment body
    */
@@ -71,9 +71,9 @@ export type CommentBodyMentionComponentProps<U extends BaseUserMeta = DU> = {
 export type ConvertCommentBodyAsReactComponents<U extends BaseUserMeta = DU> = {
   /**
    *
-   * The component used to act as a `Slot` to wrap comment body blocks,
+   * The component used to act as a container to wrap comment body blocks,
    */
-  Slot: React.ComponentType<CommentBodySlotComponentProps>;
+  Container: React.ComponentType<CommentBodyContainerComponentProps>;
   /**
    * The component used to display paragraphs.
    */
@@ -96,7 +96,7 @@ export type ConvertCommentBodyAsReactComponents<U extends BaseUserMeta = DU> = {
 };
 
 const baseComponents: ConvertCommentBodyAsReactComponents<BaseUserMeta> = {
-  Slot: ({ children }) => <div>{children}</div>,
+  Container: ({ children }) => <div>{children}</div>,
   Paragraph: ({ children }) => <p>{children}</p>,
   Text: ({ element }) => {
     // Note: construction following the schema 👇
@@ -213,7 +213,9 @@ export async function convertCommentBodyAsReact(
   });
 
   return (
-    <Components.Slot key={"lb-comment-body-slot"}>{blocks}</Components.Slot>
+    <Components.Container key={"lb-comment-body-container"}>
+      {blocks}
+    </Components.Container>
   );
 }
 

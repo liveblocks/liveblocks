@@ -262,7 +262,7 @@ describe("convert comment body as React", () => {
 
   describe("w/ custom components", () => {
     const components: Partial<ConvertCommentBodyAsReactComponents> = {
-      Slot: ({ children }) => <main>{children}</main>,
+      Container: ({ children }) => <main>{children}</main>,
       Paragraph: ({ children }) => (
         <p style={{ display: "flex" }}>{children}</p>
       ),
