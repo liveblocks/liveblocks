@@ -273,9 +273,9 @@ describe("useInboxNotifications", () => {
     } = createContextsForTest();
 
     // @ts-expect-error Accessing a private field directly
-    umbrellaStore._db.upsert(thread1);
+    umbrellaStore._rawThreadsDB.upsert(thread1);
     // @ts-expect-error Accessing a private field directly
-    umbrellaStore._db.upsert(thread2);
+    umbrellaStore._rawThreadsDB.upsert(thread2);
     umbrellaStore.force_set((state) => ({
       ...state,
       notificationsById: {
