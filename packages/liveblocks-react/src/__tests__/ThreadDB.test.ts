@@ -143,6 +143,58 @@ describe("ThreadDB", () => {
     expect(db.findMany("room1", {}, "asc")).toEqual([v3]);
   });
 
+  test("upsert should never overwrite already-deleted threads", () => {
+    const db = new ThreadDB();
+
+    const v1 = dummyThreadData({
+      id: "th_abc",
+      roomId: "room1",
+      createdAt: new Date("2024-10-01"),
+    });
+
+    db.upsert(v1);
+    expect(db.findMany("room1", {}, "asc")).toEqual([v1]);
+    expect(db.version).toEqual(1);
+
+    // Now v1 is already deleted, these should no longer mutate the DB
+    const v2 = { ...v1, deletedAt: new Date() };
+    db.upsert(v2);
+    expect(db.findMany("room1", {}, "asc")).toEqual([]);
+    expect(db.version).toEqual(2);
+
+    // Now try to "put back" the old version - it should not work
+    db.upsert(v1);
+
+    // Did not do anything
+    expect(db.findMany("room1", {}, "asc")).toEqual([]);
+    expect(db.version).toEqual(2);
+  });
+
+  test("upsert if newer should never update deleted threads", () => {
+    const db = new ThreadDB();
+
+    const v1 = dummyThreadData({
+      id: "th_abc",
+      roomId: "room1",
+      createdAt: new Date("2024-09-08"),
+    });
+    const v2 = { ...v1, updatedAt: new Date("2024-09-09") };
+    const v3 = { ...v2, updatedAt: new Date("2024-09-10") };
+
+    db.upsertIfNewer({ ...v1, deletedAt: new Date() });
+    expect(db.findMany("room1", {}, "asc")).toEqual([]);
+
+    expect(db.version).toEqual(1);
+
+    // Now that v1 is already deleted, these should no longer mutate the DB
+    db.upsertIfNewer(v2);
+    db.upsertIfNewer(v3);
+
+    // Did not do anything
+    expect(db.findMany("room1", {}, "asc")).toEqual([]);
+    expect(db.version).toEqual(1);
+  });
+
   test("cloning the db", () => {
     const db1 = new ThreadDB();
 

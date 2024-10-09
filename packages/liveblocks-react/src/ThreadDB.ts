@@ -112,7 +112,10 @@ export class ThreadDB<M extends BaseMetadata> {
     const id = thread.id;
 
     const toRemove = this._byId.get(id);
-    if (toRemove !== undefined) {
+    if (toRemove) {
+      // Don't do anything if the existing thread is already deleted!
+      if (toRemove.deletedAt) return;
+
       this._asc.remove(toRemove);
       this._desc.remove(toRemove);
     }
@@ -126,6 +129,8 @@ export class ThreadDB<M extends BaseMetadata> {
   }
 
   /** Like .upsert(), except it won't update if a thread by this ID already exists. */
+  // XXX Consider renaming this to just .upsert(). I'm not sure if we really
+  // XXX need the raw .upsert(). Would be nice if this behavior was the default.
   public upsertIfNewer(thread: ThreadDataWithDeleteInfo<M>): void {
     const existing = this.get(thread.id);
     if (!existing || thread.updatedAt >= existing.updatedAt) {
