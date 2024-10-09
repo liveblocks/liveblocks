@@ -91,4 +91,5 @@ export {
 } from "./liveblocks";
 
 // Private APIs (for use in react-lexical only)
-export { getUmbrellaStoreForClient, selectThreads } from "./liveblocks";
+export { getUmbrellaStoreForClient } from "./liveblocks";
+export { selectThreads } from "./umbrella-store";

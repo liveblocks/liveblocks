@@ -677,6 +677,11 @@
   padding: var(--lb-spacing);
   outline: none;
 
+  &:where([data-disabled]) {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
   :where(.lb-composer-editor-container:has(.lb-composer-attachments)) & {
     padding-block-end: calc(0.25 * var(--lb-spacing));
   }
