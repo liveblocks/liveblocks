@@ -139,7 +139,10 @@ export class ThreadDB<M extends BaseMetadata> {
     ++this._version;
   }
 
-  public _toRecord(): Record<string, ThreadDataWithDeleteInfo<M>> {
+  /** @internal */
+  // @ts-expect-error Used in unit tests still
+  // XXX Remove this method
+  private _toRecord(): Record<string, ThreadDataWithDeleteInfo<M>> {
     return Object.fromEntries(this._byId.entries());
   }
 }
