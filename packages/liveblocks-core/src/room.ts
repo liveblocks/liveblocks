@@ -2903,7 +2903,7 @@ export function createRoom<
 
   async function getThreadsSince(options: GetThreadsSinceOptions) {
     const response = await fetchCommentsApi(
-      url`/v2/c/rooms/${config.roomId}/threads`,
+      url`/v2/c/rooms/${config.roomId}/threads/delta`,
       { since: options?.since?.toISOString() },
       {
         headers: {
