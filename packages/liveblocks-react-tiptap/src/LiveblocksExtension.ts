@@ -1,11 +1,11 @@
-import { type IUserInfo, kInternal } from "@liveblocks/core";
+import { type IUserInfo, kInternal, TextEditorType } from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import type { AnyExtension } from "@tiptap/core";
 import { Extension } from "@tiptap/core";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
-import { useCallback, useEffect } from "react";
+import { useCallback } from "react";
 import { Doc } from "yjs";
 
 import { CommentsExtension } from "./comments/CommentsExtension";
@@ -63,12 +63,13 @@ const LiveblocksCollab = Collaboration.extend({
 
 export const useLiveblocksExtension = (): Extension => {
   const room = useRoom();
-  useEffect(() => {
-    // Report that this is lexical and root is the rootKey
-    // TODO: put this back in
-    // room[kInternal].reportTextEditor(TextEditorType.TipTap, "root");
-  }, [room]);
 
+  const reportTextEditorType = useCallback(
+    (field: string) => {
+      room[kInternal].reportTextEditor(TextEditorType.TipTap, field);
+    },
+    [room]
+  );
   const onCreateMention = useCallback(
     (userId: string, notificationId: string) => {
       try {
@@ -130,6 +131,7 @@ export const useLiveblocksExtension = (): Extension => {
           this.editor.commands.updateUser({ name, color });
         }
       });
+      reportTextEditorType(this.options.field ?? "default");
     },
     onDestroy() {
       this.storage.unsub();
