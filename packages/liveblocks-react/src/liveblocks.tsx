@@ -637,8 +637,7 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
       }
 
       const thread =
-        // XXX Check with Marc. Should this be .getEvenIfDeleted? This is not what the return type is saying!
-        state.threadsDB.getEvenIfDeleted(inboxNotification.threadId) ??
+        state.threadsDB.get(inboxNotification.threadId) ??
         raise(
           `Thread with ID "${inboxNotification.threadId}" not found, this inbox notification might not be of kind "thread"`
         );
