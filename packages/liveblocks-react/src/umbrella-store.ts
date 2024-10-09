@@ -214,12 +214,12 @@ function makeUserThreadsQueryKey(
   return `USER_THREADS:${stringify(query ?? {})}`;
 }
 
-// XXX Make this an implementation detail of the store
+// NIMESH - Make this an implementation detail of the store
 export function makeNotificationSettingsQueryKey(roomId: string) {
   return `${roomId}:NOTIFICATION_SETTINGS`;
 }
 
-// XXX Make this an implementation detail of the store
+// NIMESH - Make this an implementation detail of the store
 export function makeVersionsQueryKey(roomId: string) {
   return `${roomId}-VERSIONS`;
 }
@@ -536,11 +536,11 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
    * e.g. 'room-abc-{"color":"red"}'  - ok
    * e.g. 'room-abc-{}'               - loading
    */
-  // XXX Query state should not be exposed publicly by the store!
-  // XXX Find a better name
+  // NIMESH - Query state should not be exposed publicly by the store!
+  // NIMESH - Find a better name
   queries3: Record<string, QueryAsyncResult>; // Notification settings
-  // XXX Query state should not be exposed publicly by the store!
-  // XXX Find a better name
+  // NIMESH - Query state should not be exposed publicly by the store!
+  // NIMESH - Find a better name
   queries4: Record<string, QueryAsyncResult>; // Versions
 
   /**
@@ -691,7 +691,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return asyncResult;
     }
 
-    // XXX - Verify performance does not become an issue as `selectThread` is an expensive operation
+    // VINCENT - Verify performance does not become an issue as `selectThread` is an expensive operation
     const threads = selectThreads(this.getFullState(), {
       roomId,
       query,

@@ -15,7 +15,7 @@ function makeUnreliableFetcher() {
   return (
     jest
       .fn<Promise<string | null>, [cursor?: string]>()
-      // XXX There is a bug that shows up when we remove the "async" below here! It's an edge case we'll need to handle!
+      // VINCENT - There is a bug that shows up when we remove the "async" below here! It's an edge case we'll need to handle!
       .mockImplementation(async (cursor?: string) => {
         if (++i % 2 === 0) {
           throw new Error("Crap");
@@ -32,7 +32,7 @@ function makeBrokenFetcher() {
   return (
     jest
       .fn<Promise<string | null>, [cursor?: string]>()
-      // XXX There is a bug that shows up when we remove the "async" below here! It's an edge case we'll need to handle!
+      // VINCENT - There is a bug that shows up when we remove the "async" below here! It's an edge case we'll need to handle!
       // eslint-disable-next-line @typescript-eslint/require-await
       .mockImplementation(async () => {
         throw new Error("Crap");
