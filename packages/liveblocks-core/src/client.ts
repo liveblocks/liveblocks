@@ -669,7 +669,7 @@ export function createClient<U extends BaseUserMeta = DU>(
   const roomsInfoStore = createBatchStore(batchedResolveRoomsInfo);
 
   function invalidateResolvedRoomsInfo(roomId?: string) {
-    usersStore.invalidate(roomId);
+    roomsInfoStore.invalidate(roomId);
   }
 
   const mentionSuggestionsCache = new Map<string, string[]>();
