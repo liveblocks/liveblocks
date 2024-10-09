@@ -1022,7 +1022,7 @@ describe("thread notification", () => {
           withResolvers: false,
           promise: () =>
             prepareThreadNotificationEmailAsReact(client, event, {
-              commentBodyComponents: components,
+              components,
             }),
           expected: expected1,
         },
@@ -1032,7 +1032,7 @@ describe("thread notification", () => {
             prepareThreadNotificationEmailAsReact(client, event, {
               resolveUsers,
               resolveRoomInfo,
-              commentBodyComponents: components,
+              components,
             }),
           expected: expected2,
         },
@@ -1265,7 +1265,7 @@ describe("thread notification", () => {
           withResolvers: false,
           promise: () =>
             prepareThreadNotificationEmailAsReact(client, event, {
-              commentBodyComponents: components,
+              components,
             }),
           expected: expected1,
         },
@@ -1275,7 +1275,7 @@ describe("thread notification", () => {
             prepareThreadNotificationEmailAsReact(client, event, {
               resolveUsers,
               resolveRoomInfo,
-              commentBodyComponents: components,
+              components,
             }),
           expected: expected2,
         },

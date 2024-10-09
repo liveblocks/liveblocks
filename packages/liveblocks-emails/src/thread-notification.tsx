@@ -443,10 +443,10 @@ export type PrepareThreadNotificationEmailAsReactOptions<
     args: ResolveUsersArgs
   ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
   /**
-   * The components used to customize the resulting React nodes. Each components has
-   * priority over the base components inherited.
+   * The components used to customize the resulting React nodes inside a comment body.
+   * Each components has priority over the base components inherited internally defined.
    */
-  commentBodyComponents?: Partial<ConvertCommentBodyAsReactComponents<U>>;
+  components?: Partial<ConvertCommentBodyAsReactComponents<U>>;
 };
 
 export type ThreadNotificationEmailDataAsReact = ThreadNotificationEmailData<
@@ -510,7 +510,7 @@ export async function prepareThreadNotificationEmailAsReact(
 
       const commentBodyPromise = convertCommentBodyAsReact(comment.rawBody, {
         resolveUsers: batchUsersResolver.resolveUsers,
-        components: options.commentBodyComponents,
+        components: options.components,
       });
 
       await batchUsersResolver.resolve();
@@ -547,7 +547,7 @@ export async function prepareThreadNotificationEmailAsReact(
       const commentBodiesPromises = comments.map((c) =>
         convertCommentBodyAsReact(c.rawBody, {
           resolveUsers: batchUsersResolver.resolveUsers,
-          components: options.commentBodyComponents,
+          components: options.components,
         })
       );
 

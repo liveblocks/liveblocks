@@ -62,8 +62,9 @@ export async function POST(request: Request) {
             };
           },
           // And the magic to use `react-email` components happens here 🥳
-          // Or you can use your own components if you're not using `react-email`.
-          commentBodyComponents: {
+          // Or you can use your own components if you're not using `react-email`
+          // to customize comments' bodies' components.
+          components: {
             Paragraph: ({ children }) => (
               <Text className="text-sm text-email-comment-foreground m-0 mb-4">
                 {children}
