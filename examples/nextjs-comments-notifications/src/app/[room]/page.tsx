@@ -6,16 +6,16 @@ import { Composer, Thread } from "@liveblocks/react-ui";
 import { ClientSideSuspense } from "@liveblocks/react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useExampleRoomId } from "../../example.client";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 
 /**
  * Displays a list of threads, along with a composer for creating
  * new threads.
  */
 
-function Example() {
+function Example({ resolved }: { resolved?: boolean }) {
   const { threads, fetchMore, isFetchingMore, fetchMoreError, hasFetchedAll } =
-    useThreads();
+    useThreads({ query: { resolved } });
 
   return (
     <div className="threads">
@@ -47,16 +47,33 @@ function Example() {
 
 function Room({ room }: { room: string }) {
   const roomId = useExampleRoomId(room);
-
+  const [resolved, setResolved] = useState<boolean | undefined>(false);
   return (
     <RoomProvider id={roomId}>
+      <div>
+        <button
+          disabled={resolved === undefined}
+          onClick={() => setResolved(undefined)}
+        >
+          All
+        </button>
+        <button disabled={resolved === true} onClick={() => setResolved(true)}>
+          Resolved
+        </button>
+        <button
+          disabled={resolved === false}
+          onClick={() => setResolved(false)}
+        >
+          Unresolved
+        </button>
+      </div>
       <ErrorBoundary
         fallback={
           <div className="error">There was an error while getting threads.</div>
         }
       >
         <ClientSideSuspense fallback={<Loading />}>
-          <Example />
+          <Example resolved={resolved} />
         </ClientSideSuspense>
       </ErrorBoundary>
     </RoomProvider>
