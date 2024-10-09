@@ -609,7 +609,7 @@ describe("thread notification", () => {
           withResolvers: false,
           promise: () =>
             prepareThreadNotificationEmailAsHTML(client, event, {
-              commentBodyStyles: styles,
+              styles,
             }),
           expected: expected1,
         },
@@ -619,7 +619,7 @@ describe("thread notification", () => {
             prepareThreadNotificationEmailAsHTML(client, event, {
               resolveUsers,
               resolveRoomInfo,
-              commentBodyStyles: styles,
+              styles,
             }),
           expected: expected2,
         },
@@ -794,7 +794,7 @@ describe("thread notification", () => {
           withResolvers: false,
           promise: () =>
             prepareThreadNotificationEmailAsHTML(client, event, {
-              commentBodyStyles: styles,
+              styles,
             }),
           expected: expected1,
         },
@@ -804,7 +804,7 @@ describe("thread notification", () => {
             prepareThreadNotificationEmailAsHTML(client, event, {
               resolveUsers,
               resolveRoomInfo,
-              commentBodyStyles: styles,
+              styles,
             }),
           expected: expected2,
         },

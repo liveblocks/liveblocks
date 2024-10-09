@@ -55,8 +55,8 @@ export async function POST(request: Request) {
               url: `https://my-liveblocks-app.com?roomId=${roomId}`,
             };
           },
-          // Customize your HTML elements here 👇
-          commentBodyStyles: {
+          // Customize your HTML elements styles here 👇
+          styles: {
             paragraph: "font-size:14px;margin:0",
             mention: "color:#1667FF;font-weight:500;",
           },

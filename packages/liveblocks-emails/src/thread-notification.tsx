@@ -294,10 +294,10 @@ export type PrepareThreadNotificationEmailAsHTMLOptions<
     args: ResolveUsersArgs
   ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
   /**
-   * The styles used to customize the html elements in the resulting HTML safe string.
+   * The styles used to customize the html elements in the resulting HTML safe string inside a comment body.
    * Each styles has priority over the base styles inherited.
    */
-  commentBodyStyles?: Partial<ConvertCommentBodyAsHTMLStyles>;
+  styles?: Partial<ConvertCommentBodyAsHTMLStyles>;
 };
 
 export type ThreadNotificationEmailDataAsHTML = ThreadNotificationEmailData<
@@ -326,7 +326,7 @@ export type ThreadNotificationEmailDataAsHTML = ThreadNotificationEmailData<
  *  {
  *    resolveUsers,
  *    resolveRoomInfo,
- *    commentBodyComponents,
+ *    styles,
  *  }
  * )
  *
@@ -361,7 +361,7 @@ export async function prepareThreadNotificationEmailAsHTML(
       });
       const commentBodyPromise = convertCommentBodyAsHTML(comment.rawBody, {
         resolveUsers: batchUsersResolver.resolveUsers,
-        styles: options.commentBodyStyles,
+        styles: options.styles,
       });
 
       await batchUsersResolver.resolve();
@@ -398,7 +398,7 @@ export async function prepareThreadNotificationEmailAsHTML(
       const commentBodiesPromises = comments.map((c) =>
         convertCommentBodyAsHTML(c.rawBody, {
           resolveUsers: batchUsersResolver.resolveUsers,
-          styles: options.commentBodyStyles,
+          styles: options.styles,
         })
       );
 
