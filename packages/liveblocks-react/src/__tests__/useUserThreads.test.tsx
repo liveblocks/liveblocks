@@ -1,7 +1,7 @@
 import "@testing-library/jest-dom";
 
 import type { InboxNotificationData, ThreadData } from "@liveblocks/core";
-import { nanoid, StopRetrying } from "@liveblocks/core";
+import { HttpError, nanoid } from "@liveblocks/core";
 import type { AST } from "@liveblocks/query-parser";
 import { QueryParser } from "@liveblocks/query-parser";
 import { fireEvent, renderHook, screen, waitFor } from "@testing-library/react";
@@ -375,7 +375,7 @@ describe("useThreads: error", () => {
     await waitFor(() => {
       expect(result.current).toEqual({
         isLoading: false,
-        error: expect.any(StopRetrying),
+        error: expect.any(HttpError),
       });
     });
 

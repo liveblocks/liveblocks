@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 
-import { nanoid, StopRetrying, wait } from "@liveblocks/core";
+import { HttpError, nanoid, wait } from "@liveblocks/core";
 import {
   act,
   fireEvent,
@@ -401,7 +401,7 @@ describe("useInboxNotifications: error", () => {
     await waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
-        error: expect.any(StopRetrying),
+        error: expect.any(HttpError),
       })
     );
 

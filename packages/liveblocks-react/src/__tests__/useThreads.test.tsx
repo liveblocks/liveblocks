@@ -5,7 +5,7 @@ import type {
   InboxNotificationDataPlain,
   ThreadData,
 } from "@liveblocks/core";
-import { nanoid, ServerMsgCode, StopRetrying } from "@liveblocks/core";
+import { HttpError, nanoid, ServerMsgCode } from "@liveblocks/core";
 import type { AST } from "@liveblocks/query-parser";
 import { QueryParser } from "@liveblocks/query-parser";
 import {
@@ -1804,7 +1804,7 @@ describe("useThreads: error", () => {
     await waitFor(() => {
       expect(result.current).toEqual({
         isLoading: false,
-        error: expect.any(StopRetrying),
+        error: expect.any(HttpError),
       });
     });
 
