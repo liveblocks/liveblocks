@@ -30,17 +30,15 @@ function matchesMetadata(
   const metadata = thread.metadata;
   return (
     q.metadata === undefined ||
-    Object.entries(q.metadata).every(
-      ([key, op]) =>
-        // Boolean logic: op? => value matches the operator
-        op === undefined || matchesOperator(metadata[key], op)
+    Object.entries(q.metadata).every(([key, op]) =>
+      matchesOperator(metadata[key], op)
     )
   );
 }
 
 function matchesOperator(
   value: BaseMetadata[string],
-  op: BaseMetadata[string] | { startsWith: string }
+  op: BaseMetadata[string] | { startsWith: string } | undefined
 ) {
   if (isStartsWith(op)) {
     return isString(value) && value.startsWith(op.startsWith);
