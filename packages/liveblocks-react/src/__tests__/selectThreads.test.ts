@@ -1,14 +1,16 @@
 import type { ThreadData } from "@liveblocks/core";
 
-import { selectThreads } from "../liveblocks";
-import { UmbrellaStore } from "../umbrella-store";
+import { selectThreads, UmbrellaStore } from "../umbrella-store";
 
 describe("selectThreads", () => {
   it("should only return resolved threads from a list of threads", () => {
+    const now1 = new Date("2024-01-01");
+    const now2 = new Date("2024-01-02");
     const thread1: ThreadData = {
       type: "thread" as const,
       id: "th_1",
-      createdAt: new Date("2024-01-01"),
+      createdAt: now1,
+      updatedAt: now1,
       roomId: "room_1",
       comments: [],
       metadata: {},
@@ -18,7 +20,8 @@ describe("selectThreads", () => {
     const thread2: ThreadData = {
       type: "thread" as const,
       id: "th_2",
-      createdAt: new Date("2024-01-02"),
+      createdAt: now2,
+      updatedAt: now2,
       roomId: "room_1",
       comments: [],
       metadata: {},

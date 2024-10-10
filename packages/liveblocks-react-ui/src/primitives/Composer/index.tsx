@@ -24,6 +24,7 @@ import type {
   KeyboardEvent,
   MouseEvent,
   PointerEvent,
+  SyntheticEvent,
 } from "react";
 import React, {
   forwardRef,
@@ -1103,26 +1104,42 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     }, [editor]);
 
     const createMention = useCallback(() => {
+      if (disabled) {
+        return;
+      }
+
       focus();
       insertMentionCharacter(editor);
-    }, [editor, focus]);
+    }, [disabled, editor, focus]);
 
     const insertText = useCallback(
       (text: string) => {
+        if (disabled) {
+          return;
+        }
+
         focus(false);
         insertSlateText(editor, text);
       },
-      [editor, focus]
+      [disabled, editor, focus]
     );
 
     const attachFiles = useCallback(() => {
+      if (disabled) {
+        return;
+      }
+
       if (fileInputRef.current) {
         fileInputRef.current.click();
       }
-    }, []);
+    }, [disabled]);
 
     const handleAttachmentsInputChange = useCallback(
       (event: ChangeEvent<HTMLInputElement>) => {
+        if (disabled) {
+          return;
+        }
+
         if (event.target.files) {
           createAttachments(Array.from(event.target.files));
 
@@ -1130,7 +1147,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
           event.target.value = "";
         }
       },
-      [createAttachments]
+      [createAttachments, disabled]
     );
 
     const onSubmitEnd = useCallback(() => {
@@ -1142,6 +1159,10 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 
     const handleSubmit = useCallback(
       (event: FormEvent<HTMLFormElement>) => {
+        if (disabled) {
+          return;
+        }
+
         // In some situations (e.g. pressing Enter while composing diacritics), it's possible
         // for the form to be submitted as empty even though we already checked whether the
         // editor was empty when handling the key press.
@@ -1197,8 +1218,12 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
           onSubmitEnd();
         }
       },
-      [editor, attachments, onComposerSubmit, onSubmit, onSubmitEnd]
+      [disabled, editor, attachments, onComposerSubmit, onSubmit, onSubmitEnd]
     );
+
+    const stopPropagation = useCallback((event: SyntheticEvent) => {
+      event.stopPropagation();
+    }, []);
 
     return (
       <ComposerEditorContext.Provider
@@ -1241,6 +1266,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
                 multiple
                 ref={fileInputRef}
                 onChange={handleAttachmentsInputChange}
+                onClick={stopPropagation}
                 tabIndex={-1}
                 style={{ display: "none" }}
               />

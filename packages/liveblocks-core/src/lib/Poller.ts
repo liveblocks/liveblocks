@@ -1,111 +1,63 @@
 type Poller = {
-  start(interval: number): void;
-  restart(interval: number): void;
-  pause(): void;
-  resume(): void;
-  stop(): void;
+  /**
+   * Starts or stops the poller, based on the given condition. When true,
+   * starts the poller if it hasn't been started already. When false, stops the
+   * poller if it hasn't been stopped already.
+   */
+  enable(condition: boolean): void;
 };
 
 type Context =
-  | {
-      state: "stopped";
-      timeoutHandle: null;
-      interval: null;
-      lastScheduledAt: null;
-      remainingInterval: null;
-    }
+  | { state: "stopped" }
   | {
       state: "running";
       timeoutHandle: ReturnType<typeof setTimeout>;
-      interval: number;
       lastScheduledAt: number;
-      remainingInterval: null;
-    }
-  | {
-      state: "paused";
-      timeoutHandle: null;
-      interval: number;
-      lastScheduledAt: number;
-      remainingInterval: number;
     };
 
-export function makePoller(callback: () => Promise<void> | void): Poller {
-  let context: Context = {
-    state: "stopped",
-    timeoutHandle: null,
-    interval: null,
-    lastScheduledAt: null,
-    remainingInterval: null,
-  };
+export function makePoller(
+  callback: () => Promise<void> | void,
+  interval: number
+): Poller {
+  let context: Context = { state: "stopped" };
 
   function poll() {
     if (context.state === "running") {
-      schedule(context.interval);
+      //
+      // XXXX Should we make this contingent on the callback's execution, i.e. do
+      // XXXX try { await callback() } finally { schedule() } instead, so that
+      // XXXX two polling functions will never "overlap"?
+      //
+      // XXXX See discussion here:
+      // https://github.com/liveblocks/liveblocks/pull/1962#discussion_r1787422911
+      //
+      schedule();
     }
 
+    //
+    // XXXX Set a max timeout for the `callback()` (make `callback` take
+    // a signal, and protect each call with AbortSignal.timeout)
+    //
+    // XXXX See discussion here:
+    // https://github.com/liveblocks/liveblocks/pull/1962#discussion_r1787422911
+    //
     void callback();
   }
 
-  function schedule(interval: number) {
+  function schedule() {
     context = {
       state: "running",
-      interval: context.state !== "stopped" ? context.interval : interval,
       lastScheduledAt: performance.now(),
       timeoutHandle: setTimeout(poll, interval),
-      remainingInterval: null,
     };
   }
 
-  function scheduleRemaining(remaining: number) {
-    if (context.state !== "paused") {
-      return;
-    }
-
-    context = {
-      state: "running",
-      interval: context.interval,
-      lastScheduledAt: context.lastScheduledAt,
-      timeoutHandle: setTimeout(poll, remaining),
-      remainingInterval: null,
-    };
-  }
-
-  function start(interval: number) {
+  function start() {
     if (context.state === "running") {
       return;
     }
 
-    schedule(interval);
-  }
-
-  function restart(interval: number) {
-    stop();
-    start(interval);
-  }
-
-  function pause() {
-    if (context.state !== "running") {
-      return;
-    }
-
-    clearTimeout(context.timeoutHandle);
-
-    context = {
-      state: "paused",
-      interval: context.interval,
-      lastScheduledAt: context.lastScheduledAt,
-      timeoutHandle: null,
-      remainingInterval:
-        context.interval - (performance.now() - context.lastScheduledAt),
-    };
-  }
-
-  function resume() {
-    if (context.state !== "paused") {
-      return;
-    }
-
-    scheduleRemaining(context.remainingInterval);
+    schedule();
   }
 
   function stop() {
@@ -116,21 +68,18 @@ export function makePoller(callback: () => Promise<void> | void): Poller {
     if (context.timeoutHandle) {
       clearTimeout(context.timeoutHandle);
     }
+    context = { state: "stopped" };
+  }
 
-    context = {
-      state: "stopped",
-      interval: null,
-      lastScheduledAt: null,
-      timeoutHandle: null,
-      remainingInterval: null,
-    };
+  function enable(condition: boolean) {
+    if (condition) {
+      start();
+    } else {
+      stop();
+    }
   }
 
   return {
-    start,
-    restart,
-    pause,
-    resume,
-    stop,
+    enable,
   };
 }

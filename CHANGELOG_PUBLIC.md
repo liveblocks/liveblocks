@@ -13,6 +13,38 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
 
+# Week 40 (2024-10-04)
+
+## 2.8.2
+
+### `@liveblocks/client`
+
+- Send client version in HTTP request headers from the client, to ensure
+  backward compatible responses from the server
+
+## 2.8.1
+
+### `@liveblocks/react-ui`
+
+- Expose `onComposerSubmit` on `Thread` to react to the inner composer of a
+  thread.
+
+## Website
+
+- Refresh pricing page design
+
+## Dashboard
+
+- Add attachments support to the comments view on the room detail page
+
+## Figma Kit
+
+- Add comments attachments to the [Liveblocks Collaboration Kit in Figma](https://www.figma.com/community/file/1387130796111847788/liveblocks-collaboration-kit)
+  
+## Contributors
+
+marcbouchenoire, sugardarius, pierrelevaillant, nvie
+
 # Week 39 (2024-09-27)
 
 ## 2.8.0

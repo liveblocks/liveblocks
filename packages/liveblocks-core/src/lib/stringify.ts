@@ -6,6 +6,10 @@ type OmitFirstTupleElement<T extends any[]> = T extends [any, ...infer R]
   ? R
   : never;
 
+/**
+ * Like JSON.stringify(), but returns the same value no matter how the keys in
+ * objects are ordered.
+ */
 export function stringify(
   object: Parameters<typeof JSON.stringify>[0],
   ...args: OmitFirstTupleElement<Parameters<typeof JSON.stringify>>

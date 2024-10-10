@@ -12,14 +12,14 @@ export function createThread(
   const {
     id = `th_${nanoid()}`,
     roomId = `room_${nanoid()}`,
-    createdAt = new Date(),
-    updatedAt,
     deletedAt,
     comments = [],
     metadata = {},
     resolved = false,
   } = overrides;
 
+  const createdAt = overrides.createdAt ?? new Date();
+  const updatedAt = overrides.updatedAt ?? createdAt;
   return {
     type: "thread",
     id,

@@ -1,5 +1,5 @@
 import type { Json } from "@liveblocks/client";
-import type { Page, TestInfo } from "@playwright/test";
+import type { Locator, Page, TestInfo } from "@playwright/test";
 import { chromium, expect } from "@playwright/test";
 import _ from "lodash";
 
@@ -287,4 +287,28 @@ export function pickNumberOfUndoRedo() {
   }
 
   return 0;
+}
+
+// Source: https://github.com/microsoft/playwright/issues/22873
+export async function selectText(
+  locator: Locator,
+  pattern: string | RegExp,
+  flags?: string
+): Promise<void> {
+  await locator.evaluate(
+    (element, { pattern, flags }) => {
+      const textNode = element.childNodes[0];
+      const match = textNode.textContent?.match(new RegExp(pattern, flags));
+      if (match) {
+        const range = document.createRange();
+
+        range.setStart(textNode, match.index!);
+        range.setEnd(textNode, match.index! + match[0].length);
+        const selection = document.getSelection();
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      }
+    },
+    { pattern, flags }
+  );
 }

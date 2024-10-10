@@ -16,7 +16,10 @@ import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 import { POLLING_INTERVAL } from "../liveblocks";
 import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
-import { mockGetInboxNotifications } from "./_restMocks";
+import {
+  mockGetInboxNotifications,
+  mockGetInboxNotificationsDelta,
+} from "./_restMocks";
 import { createContextsForTest } from "./_utils";
 
 const server = setupServer();
@@ -48,10 +51,9 @@ describe("useInboxNotifications", () => {
           ctx.json({
             threads,
             inboxNotifications,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -76,6 +78,10 @@ describe("useInboxNotifications", () => {
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications,
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -95,10 +101,9 @@ describe("useInboxNotifications", () => {
           ctx.json({
             threads,
             inboxNotifications,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -122,6 +127,10 @@ describe("useInboxNotifications", () => {
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications,
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -147,10 +156,9 @@ describe("useInboxNotifications", () => {
           ctx.json({
             threads,
             inboxNotifications,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -165,10 +173,9 @@ describe("useInboxNotifications", () => {
           ctx.json({
             threads,
             inboxNotifications,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -251,10 +258,9 @@ describe("useInboxNotifications", () => {
           ctx.json({
             threads: [],
             inboxNotifications: [],
-            deletedThreads: [],
-            deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -272,7 +278,7 @@ describe("useInboxNotifications", () => {
         [thread1.id]: thread1,
         [thread2.id]: thread2,
       },
-      inboxNotificationsById: {
+      notificationsById: {
         // Explicitly set the order to be reversed to test that the hook sorts the notifications
         [oldInboxNotification.id]: oldInboxNotification,
         [newInboxNotification.id]: newInboxNotification,
@@ -296,6 +302,10 @@ describe("useInboxNotifications", () => {
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications: [newInboxNotification, oldInboxNotification],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -383,10 +393,9 @@ describe("useInboxNotifications - Suspense", () => {
           ctx.json({
             threads,
             inboxNotifications,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -416,6 +425,10 @@ describe("useInboxNotifications - Suspense", () => {
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications,
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
       })
     );
 
@@ -443,11 +456,26 @@ describe("useInboxNotifications: polling", () => {
     const inboxNotifications = [
       dummyThreadInboxNotificationData({ roomId, threadId: threads[0]!.id }),
     ];
-    let getInboxNotificationsReqCount = 0;
+
+    let initialCount = 0;
+    let pollerCount = 0;
 
     server.use(
       mockGetInboxNotifications(async (_req, res, ctx) => {
-        getInboxNotificationsReqCount++;
+        initialCount++;
+        return res(
+          ctx.json({
+            threads,
+            inboxNotifications,
+            meta: {
+              requestedAt: new Date().toISOString(),
+              nextCursor: null,
+            },
+          })
+        );
+      }),
+      mockGetInboxNotificationsDelta(async (_req, res, ctx) => {
+        pollerCount++;
         return res(
           ctx.json({
             threads,
@@ -479,19 +507,25 @@ describe("useInboxNotifications: polling", () => {
       return null;
     };
 
+    expect(initialCount).toBe(0);
+    expect(pollerCount).toBe(0);
+
     const { unmount } = render(<Room />);
 
     // A new fetch request for the threads should have been made after the initial render
-    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(1));
+    await waitFor(() => expect(initialCount).toBe(1));
+    await waitFor(() => expect(pollerCount).toBe(0));
 
     // Wait for the first polling to occur after the initial render
     jest.advanceTimersByTime(POLLING_INTERVAL);
-    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(2));
+    expect(initialCount).toBe(1);
+    await waitFor(() => expect(pollerCount).toBe(1));
 
     // Advance time to simulate the polling interval
     jest.advanceTimersByTime(POLLING_INTERVAL);
     // Wait for the second polling to occur
-    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(3));
+    expect(initialCount).toBe(1);
+    await waitFor(() => expect(pollerCount).toBe(2));
 
     unmount();
   });
@@ -590,10 +624,9 @@ describe("useInboxNotificationsSuspense: error", () => {
           ctx.json({
             threads,
             inboxNotifications,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -636,6 +669,367 @@ describe("useInboxNotificationsSuspense: error", () => {
 
     // Check if the error boundary's fallback is displayed
     expect(screen.getByText("Done loading!")).toBeInTheDocument();
+
+    unmount();
+  });
+});
+
+describe("useInboxNotifications: pagination", () => {
+  test("should load the next page of data when `fetchMore` is called", async () => {
+    const roomId = nanoid();
+
+    const threadOne = dummyThreadData({
+      roomId,
+      createdAt: new Date("2021-01-01T00:00:00Z"),
+    });
+    const threadTwo = dummyThreadData({
+      roomId,
+      createdAt: new Date("2021-01-02T00:00:00Z"),
+    });
+    const threadThree = dummyThreadData({
+      roomId,
+      createdAt: new Date("2021-01-03T00:00:00Z"),
+    });
+
+    const inboxNotificationsPageOne = [
+      dummyThreadInboxNotificationData({
+        roomId,
+        threadId: threadOne.id,
+      }),
+    ];
+
+    const inboxNotificationsPageTwo = [
+      dummyThreadInboxNotificationData({
+        roomId,
+        threadId: threadTwo.id,
+      }),
+    ];
+
+    const inboxNotificationsPageThree = [
+      dummyThreadInboxNotificationData({
+        roomId,
+        threadId: threadThree.id,
+      }),
+    ];
+
+    let isPageOneRequested = false;
+    let isPageTwoRequested = false;
+    let isPageThreeRequested = false;
+
+    server.use(
+      mockGetInboxNotifications(async (req, res, ctx) => {
+        const url = new URL(req.url);
+        const cursor = url.searchParams.get("cursor");
+
+        // Request for Page 2
+        if (cursor === "cursor-1") {
+          isPageTwoRequested = true;
+          return res(
+            ctx.json({
+              threads: [threadTwo],
+              inboxNotifications: inboxNotificationsPageTwo,
+              meta: {
+                requestedAt: new Date().toISOString(),
+                nextCursor: "cursor-2",
+              },
+            })
+          );
+        }
+        // Request for Page 3
+        else if (cursor === "cursor-2") {
+          isPageThreeRequested = true;
+          return res(
+            ctx.json({
+              threads: [threadThree],
+              inboxNotifications: inboxNotificationsPageThree,
+              meta: {
+                requestedAt: new Date().toISOString(),
+                nextCursor: "cursor-3",
+              },
+            })
+          );
+        }
+        // Request for the first page
+        else {
+          isPageOneRequested = true;
+          return res(
+            ctx.json({
+              threads: [threadOne],
+              inboxNotifications: inboxNotificationsPageOne,
+              meta: {
+                requestedAt: new Date().toISOString(),
+                nextCursor: "cursor-1",
+              },
+            })
+          );
+        }
+      })
+    );
+
+    const {
+      liveblocks: { LiveblocksProvider, useInboxNotifications },
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(() => useInboxNotifications(), {
+      wrapper: ({ children }) => (
+        <LiveblocksProvider>{children}</LiveblocksProvider>
+      ),
+    });
+
+    expect(result.current).toEqual({
+      isLoading: true,
+    });
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    // Initial load (Page 1)
+    await waitFor(() => expect(isPageOneRequested).toBe(true));
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        inboxNotifications: [...inboxNotificationsPageOne],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: false,
+        fetchMoreError: undefined,
+      })
+    );
+
+    const fetchMore = result.current.fetchMore!;
+
+    // Fetch Page 2
+    fetchMore();
+    await waitFor(() => expect(isPageTwoRequested).toBe(true));
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        inboxNotifications: [
+          ...inboxNotificationsPageOne,
+          ...inboxNotificationsPageTwo,
+        ],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: false,
+        fetchMoreError: undefined,
+      })
+    );
+
+    // Fetch Page 3
+    fetchMore();
+    await waitFor(() => expect(isPageThreeRequested).toBe(true));
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        inboxNotifications: [
+          ...inboxNotificationsPageOne,
+          ...inboxNotificationsPageTwo,
+          ...inboxNotificationsPageThree,
+        ],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: false,
+        fetchMoreError: undefined,
+      })
+    );
+
+    unmount();
+  });
+
+  test("should set `hasFetchedAll` to true when there are no more pages to fetch", async () => {
+    const roomId = nanoid();
+
+    const threadOne = dummyThreadData({
+      roomId,
+      createdAt: new Date("2021-01-02T00:00:00Z"),
+    });
+    const threadTwo = dummyThreadData({
+      roomId,
+      createdAt: new Date("2021-01-01T00:00:00Z"),
+    });
+
+    const inboxNotificationsPageOne = [
+      dummyThreadInboxNotificationData({
+        roomId,
+        threadId: threadOne.id,
+        notifiedAt: new Date("2021-01-02T00:01:00Z"),
+      }),
+    ];
+
+    const inboxNotificationsPageTwo = [
+      dummyThreadInboxNotificationData({
+        roomId,
+        threadId: threadTwo.id,
+        notifiedAt: new Date("2021-01-01T00:01:00Z"),
+      }),
+    ];
+
+    let isPageTwoRequested = false;
+    let getNotificationsReqCount = 0;
+
+    server.use(
+      mockGetInboxNotifications(async (req, res, ctx) => {
+        getNotificationsReqCount++;
+        const url = new URL(req.url);
+        const cursor = url.searchParams.get("cursor");
+
+        // Request for Page 2 (final page)
+        if (cursor === "cursor-1") {
+          isPageTwoRequested = true;
+          return res(
+            ctx.json({
+              threads: [threadTwo],
+              inboxNotifications: inboxNotificationsPageTwo,
+              meta: {
+                requestedAt: new Date().toISOString(),
+                nextCursor: null,
+              },
+            })
+          );
+        }
+        // Request for the first page
+        else {
+          return res(
+            ctx.json({
+              threads: [threadOne],
+              inboxNotifications: inboxNotificationsPageOne,
+              meta: {
+                requestedAt: new Date().toISOString(),
+                nextCursor: "cursor-1",
+              },
+            })
+          );
+        }
+      })
+    );
+
+    const {
+      liveblocks: { LiveblocksProvider, useInboxNotifications },
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(() => useInboxNotifications(), {
+      wrapper: ({ children }) => (
+        <LiveblocksProvider>{children}</LiveblocksProvider>
+      ),
+    });
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    // Initial load (Page 1)
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        inboxNotifications: [...inboxNotificationsPageOne],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: false,
+        fetchMoreError: undefined,
+      })
+    );
+    expect(getNotificationsReqCount).toEqual(1);
+
+    const fetchMore = result.current.fetchMore!;
+
+    // Fetch Page 2 (final page)
+    fetchMore();
+    await waitFor(() => expect(isPageTwoRequested).toBe(true));
+    expect(getNotificationsReqCount).toEqual(2);
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        inboxNotifications: [
+          ...inboxNotificationsPageOne,
+          ...inboxNotificationsPageTwo,
+        ],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
+      })
+    );
+
+    unmount();
+  });
+
+  test("should handle error while fetching more and set fetchMoreError", async () => {
+    const roomId = nanoid();
+
+    const threadOne = dummyThreadData({ roomId });
+
+    let isPageTwoRequested = false;
+
+    const inboxNotificationsPageOne = [
+      dummyThreadInboxNotificationData({
+        roomId,
+        threadId: threadOne.id,
+      }),
+    ];
+
+    server.use(
+      mockGetInboxNotifications(async (req, res, ctx) => {
+        const url = new URL(req.url);
+        const cursor = url.searchParams.get("cursor");
+
+        // Initial load (Page 1)
+        if (cursor === null) {
+          return res(
+            ctx.json({
+              threads: [threadOne],
+              inboxNotifications: inboxNotificationsPageOne,
+              meta: {
+                requestedAt: new Date().toISOString(),
+                nextCursor: "cursor-1",
+              },
+            })
+          );
+        }
+        // Page 2
+        else {
+          isPageTwoRequested = true;
+          return res(ctx.status(500));
+        }
+      })
+    );
+
+    const {
+      liveblocks: { LiveblocksProvider, useInboxNotifications },
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(() => useInboxNotifications(), {
+      wrapper: ({ children }) => (
+        <LiveblocksProvider>{children}</LiveblocksProvider>
+      ),
+    });
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    // Initial load (Page 1)
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        inboxNotifications: [...inboxNotificationsPageOne],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: false,
+        fetchMoreError: undefined,
+      })
+    );
+
+    const fetchMore = result.current.fetchMore!;
+
+    // Fetch Page 2 (which returns an error)
+    fetchMore();
+
+    await waitFor(() => expect(isPageTwoRequested).toBe(true));
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        inboxNotifications: [...inboxNotificationsPageOne],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: false,
+        fetchMoreError: expect.any(Error),
+      })
+    );
 
     unmount();
   });

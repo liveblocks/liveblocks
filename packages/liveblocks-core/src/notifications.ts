@@ -1,16 +1,14 @@
 import { type GetThreadsOptions, objectToQuery } from ".";
 import type { AuthManager } from "./auth-manager";
 import type { NotificationsApi } from "./client";
-import {
-  getAuthBearerHeaderFromAuthValue,
-  NotificationsApiError,
-} from "./client";
+import { NotificationsApiError } from "./client";
 import {
   convertToInboxNotificationData,
   convertToInboxNotificationDeleteInfo,
   convertToThreadData,
   convertToThreadDeleteInfo,
 } from "./convert-plain-data";
+import { getBearerTokenFromAuthValue } from "./http-client";
 import { Batch } from "./lib/batch";
 import type { Store } from "./lib/create-store";
 import type { QueryParams, URLSafeString } from "./lib/url";
@@ -30,9 +28,8 @@ import type {
   InboxNotificationDeleteInfo,
   InboxNotificationDeleteInfoPlain,
 } from "./protocol/InboxNotifications";
+import type { GetThreadsSinceOptions } from "./room";
 import { PKG_VERSION } from "./version";
-
-const MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY = 50;
 
 export function createNotificationsApi<M extends BaseMetadata>({
   baseUrl,
@@ -45,12 +42,13 @@ export function createNotificationsApi<M extends BaseMetadata>({
   currentUserIdStore: Store<string | null>;
   fetcher: (url: string, init?: RequestInit) => Promise<Response>;
 }): NotificationsApi<M> & {
-  getThreads(options?: GetThreadsOptions<M>): Promise<{
+  getUserThreads_experimental(options?: GetThreadsOptions<M>): Promise<{
     threads: ThreadData<M>[];
     inboxNotifications: InboxNotificationData[];
+    nextCursor: string | null;
     requestedAt: Date;
   }>;
-  getThreadsSince(options: { since: Date } & GetThreadsOptions<M>): Promise<{
+  getUserThreadsSince_experimental(options: GetThreadsSinceOptions): Promise<{
     inboxNotifications: {
       updated: InboxNotificationData[];
       deleted: InboxNotificationDeleteInfo[];
@@ -88,7 +86,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
       ...options,
       headers: {
         ...options?.headers,
-        Authorization: `Bearer ${getAuthBearerHeaderFromAuthValue(authValue)}`,
+        Authorization: `Bearer ${getBearerTokenFromAuthValue(authValue)}`,
         "X-LB-Client": PKG_VERSION || "dev",
       },
     });
@@ -127,27 +125,32 @@ export function createNotificationsApi<M extends BaseMetadata>({
     return body;
   }
 
-  async function getInboxNotifications() {
+  async function getInboxNotifications(options?: { cursor?: string }) {
+    const PAGE_SIZE = 50;
+
     const json = await fetchJson<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
-      deletedThreads: ThreadDeleteInfoPlain[];
-      deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
       meta: {
         requestedAt: string;
+        nextCursor: string | null;
       };
-    }>(url`/v2/c/inbox-notifications`, undefined, {});
+    }>(url`/v2/c/inbox-notifications`, undefined, {
+      cursor: options?.cursor,
+      limit: PAGE_SIZE,
+    });
 
     return {
-      threads: json.threads.map(convertToThreadData),
       inboxNotifications: json.inboxNotifications.map(
         convertToInboxNotificationData
       ),
+      threads: json.threads.map(convertToThreadData),
+      nextCursor: json.meta.nextCursor,
       requestedAt: new Date(json.meta.requestedAt),
     };
   }
 
-  async function getInboxNotificationsSince(options: { since: Date }) {
+  async function getInboxNotificationsSince(since: Date) {
     const json = await fetchJson<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
@@ -156,20 +159,19 @@ export function createNotificationsApi<M extends BaseMetadata>({
       meta: {
         requestedAt: string;
       };
-    }>(url`/v2/c/inbox-notifications`, undefined, {
-      since: options.since.toISOString(),
+    }>(url`/v2/c/inbox-notifications/delta`, undefined, {
+      since: since.toISOString(),
     });
-
     return {
-      threads: {
-        updated: json.threads.map(convertToThreadData),
-        deleted: json.deletedThreads.map(convertToThreadDeleteInfo),
-      },
       inboxNotifications: {
         updated: json.inboxNotifications.map(convertToInboxNotificationData),
         deleted: json.deletedInboxNotifications.map(
           convertToInboxNotificationDeleteInfo
         ),
+      },
+      threads: {
+        updated: json.threads.map(convertToThreadData),
+        deleted: json.deletedThreads.map(convertToThreadDeleteInfo),
       },
       requestedAt: new Date(json.meta.requestedAt),
     };
@@ -211,7 +213,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
 
       return inboxNotificationIds;
     },
-    { delay: MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY }
+    { delay: 50 }
   );
 
   async function markInboxNotificationAsRead(inboxNotificationId: string) {
@@ -230,12 +232,14 @@ export function createNotificationsApi<M extends BaseMetadata>({
     });
   }
 
-  async function getThreads(options: GetThreadsOptions<M>) {
+  async function getUserThreads_experimental(options: GetThreadsOptions<M>) {
     let query: string | undefined;
 
     if (options?.query) {
       query = objectToQuery(options.query);
     }
+
+    const PAGE_SIZE = 50;
 
     const json = await fetchJson<{
       threads: ThreadDataPlain<M>[];
@@ -244,9 +248,12 @@ export function createNotificationsApi<M extends BaseMetadata>({
       deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
       meta: {
         requestedAt: string;
+        nextCursor: string | null;
       };
     }>(url`/v2/c/threads`, undefined, {
+      cursor: options.cursor,
       query,
+      limit: PAGE_SIZE,
     });
 
     return {
@@ -254,19 +261,14 @@ export function createNotificationsApi<M extends BaseMetadata>({
       inboxNotifications: json.inboxNotifications.map(
         convertToInboxNotificationData
       ),
+      nextCursor: json.meta.nextCursor,
       requestedAt: new Date(json.meta.requestedAt),
     };
   }
 
-  async function getThreadsSince(
-    options: { since: Date } & GetThreadsOptions<M>
+  async function getUserThreadsSince_experimental(
+    options: GetThreadsSinceOptions
   ) {
-    let query: string | undefined;
-
-    if (options?.query) {
-      query = objectToQuery(options.query);
-    }
-
     const json = await fetchJson<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
@@ -275,9 +277,8 @@ export function createNotificationsApi<M extends BaseMetadata>({
       meta: {
         requestedAt: string;
       };
-    }>(url`/v2/c/threads`, undefined, {
+    }>(url`/v2/c/threads/delta`, undefined, {
       since: options.since.toISOString(),
-      query,
     });
 
     return {
@@ -303,7 +304,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
     markInboxNotificationAsRead,
     deleteAllInboxNotifications,
     deleteInboxNotification,
-    getThreads,
-    getThreadsSince,
+    getUserThreads_experimental,
+    getUserThreadsSince_experimental,
   };
 }

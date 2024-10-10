@@ -155,7 +155,7 @@ export type ThreadData<M extends BaseMetadata = DM> = {
   id: string;
   roomId: string;
   createdAt: Date;
-  updatedAt?: Date;
+  updatedAt: Date;
   comments: CommentData[];
   metadata: M;
   resolved: boolean;

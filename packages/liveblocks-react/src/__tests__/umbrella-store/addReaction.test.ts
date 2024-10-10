@@ -8,6 +8,7 @@ describe("addReaction", () => {
       id: comment.threadId,
       roomId: comment.roomId,
       comments: [comment],
+      createdAt: new Date("2023-12-31"),
     });
 
     const reaction = {
@@ -28,6 +29,35 @@ describe("addReaction", () => {
     expect(updatedThread.updatedAt).toEqual(reaction.createdAt);
   });
 
+  it("should not update updatedAt if not newer", () => {
+    const now = new Date(); // updatedAt date is latest date
+    const comment = createComment({ createdAt: new Date("2024-01-01") });
+    const thread = createThread({
+      id: comment.threadId,
+      roomId: comment.roomId,
+      comments: [comment],
+      createdAt: new Date("2023-12-31"),
+      updatedAt: now,
+    });
+
+    const reaction = {
+      emoji: "👍",
+      createdAt: new Date("2024-01-02"),
+      userId: "user_1",
+    };
+
+    const updatedThread = applyAddReaction(thread, comment.id, reaction);
+
+    expect(updatedThread.comments[0]?.reactions).toHaveLength(1);
+    expect(updatedThread.comments[0]?.reactions[0]?.emoji).toEqual(
+      reaction.emoji
+    );
+    expect(updatedThread.comments[0]?.reactions[0]?.users[0]?.id).toEqual(
+      reaction.userId
+    );
+    expect(updatedThread.updatedAt).toEqual(now); // Not changed!
+  });
+
   it("should add a new reaction to a comment with existing reactions", () => {
     const comment = createComment({
       createdAt: new Date("2024-01-01"),
@@ -43,6 +73,7 @@ describe("addReaction", () => {
       id: comment.threadId,
       roomId: comment.roomId,
       comments: [comment],
+      createdAt: new Date("2023-12-31"),
     });
 
     const newReaction = {
