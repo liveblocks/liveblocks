@@ -1610,7 +1610,7 @@ export function createRoom<
     endpoint: "/send-message" | "/text-metadata",
     body: JsonObject
   ) {
-    return httpClient1.fetchResponse_forClientApi(
+    return httpClient1.fetch(
       endpoint === "/send-message"
         ? url`/v2/c/rooms/${config.roomId}/send-message`
         : url`/v2/c/rooms/${config.roomId}/text-metadata`,
@@ -1622,52 +1622,43 @@ export function createRoom<
   }
 
   async function createTextMention(userId: string, mentionId: string) {
-    return httpClient1.fetchResponse_forClientApi(
-      url`/v2/c/rooms/${config.roomId}/text-mentions`,
-      {
-        method: "POST",
-        body: JSON.stringify({
-          userId,
-          mentionId,
-        }),
-      }
-    );
+    return httpClient1.fetch(url`/v2/c/rooms/${config.roomId}/text-mentions`, {
+      method: "POST",
+      body: JSON.stringify({
+        userId,
+        mentionId,
+      }),
+    });
   }
 
   async function deleteTextMention(mentionId: string) {
-    return httpClient1.fetchResponse_forClientApi(
+    return httpClient1.fetch(
       url`/v2/c/rooms/${config.roomId}/text-mentions/${mentionId}`,
       { method: "DELETE" }
     );
   }
 
   async function reportTextEditor(type: "lexical", rootKey: string) {
-    return httpClient2.fetchResponse_forClientApi(
-      url`/v2/c/rooms/${config.roomId}/text-metadata`,
-      {
-        method: "POST",
-        body: JSON.stringify({ type, rootKey }),
-      }
-    );
+    return httpClient2.fetch(url`/v2/c/rooms/${config.roomId}/text-metadata`, {
+      method: "POST",
+      body: JSON.stringify({ type, rootKey }),
+    });
   }
 
   async function listTextVersions() {
-    return httpClient2.fetchResponse_forClientApi(
-      url`/v2/c/rooms/${config.roomId}/versions`
-    );
+    return httpClient2.fetch(url`/v2/c/rooms/${config.roomId}/versions`);
   }
 
   async function getTextVersion(versionId: string) {
-    return httpClient2.fetchResponse_forClientApi(
+    return httpClient2.fetch(
       url`/v2/c/rooms/${config.roomId}/y-version/${versionId}`
     );
   }
 
   async function createTextVersion() {
-    return httpClient2.fetchResponse_forClientApi(
-      url`/v2/c/rooms/${config.roomId}/version`,
-      { method: "POST" }
-    );
+    return httpClient2.fetch(url`/v2/c/rooms/${config.roomId}/version`, {
+      method: "POST",
+    });
   }
 
   function sendMessages(messages: ClientMsg<P, E>[]) {
@@ -2504,7 +2495,7 @@ export function createRoom<
   async function streamStorage() {
     // TODO: Handle potential race conditions where the room get disconnected while the request is pending
     if (!managedSocket.authValue) return;
-    const result = await httpClient1.fetchResponse_forClientApi(
+    const result = await httpClient1.fetch(
       url`/v2/c/rooms/${config.roomId}/storage`
     );
     const items = (await result.json()) as IdTuple<SerializedCrdt>[];

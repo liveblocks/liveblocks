@@ -264,22 +264,6 @@ export class HttpClient {
   // This will:
   // 1. Set Content-Type header
   // 2. Set Authorization header
-  // 3. Take a specific `authValue` to use in the Authorization header
-  // 4. ❗NOT throw if HTTP response is an error
-  // 5. ❗NOT Parse response body as JSON
-  public async fetchResponse_forClientApi(
-    endpoint: URLSafeString,
-    options?: RequestInit,
-    params?: QueryParams
-  ): Promise<Response> {
-    return this.fetch(endpoint, options, params);
-  }
-
-  // XXX Try to DRY up this method with the other fetch*_for* methods in here
-  //
-  // This will:
-  // 1. Set Content-Type header
-  // 2. Set Authorization header
   // 3. ❗Call the callback to obtain the `authValue` to use in the Authorization header
   // 4. ❗NOT throw if HTTP response is an error
   // 5. ❗NOT Parse response body as JSON
