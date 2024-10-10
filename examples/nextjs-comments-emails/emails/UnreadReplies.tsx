@@ -51,7 +51,7 @@ const previewProps: UnreadRepliesEmailProps = {
           </span>
         </Text>
       ),
-      url: "https://liveblocks.io?room_id=project-proposal-q4#cm_0",
+      url: "https://liveblocks.io/comments?room_id=project-proposal-q4#cm_0",
       roomId: "project-proposal-q4",
     },
     {
@@ -71,7 +71,7 @@ const previewProps: UnreadRepliesEmailProps = {
           <span>Looks good overall. Just a quick note on the timeline.</span>
         </Text>
       ),
-      url: "https://liveblocks.io?room_id=project-proposal-q4#cm_1",
+      url: "https://liveblocks.io/comments?room_id=project-proposal-q4#cm_1",
       roomId: "project-proposal-q4",
     },
   ],
