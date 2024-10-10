@@ -31,6 +31,10 @@ function matchesMetadata(
   return (
     q.metadata === undefined ||
     Object.entries(q.metadata).every(([key, op]) =>
+      // NOTE: `op` can be explicitly-`undefined` here, which ideally would not
+      // mean "filter for absence" like it does now, as this does not match the
+      // backend behavior at the moment. For an in-depth discussion, see
+      // https://liveblocks.slack.com/archives/C02PZL7QAAW/p1728546988505989
       matchesOperator(metadata[key], op)
     )
   );
@@ -38,6 +42,8 @@ function matchesMetadata(
 
 function matchesOperator(
   value: BaseMetadata[string],
+  // NOTE: Ideally, this should not take `undefined` as a possible `op` value
+  // here, see comment above.
   op: BaseMetadata[string] | { startsWith: string } | undefined
 ) {
   if (isStartsWith(op)) {
