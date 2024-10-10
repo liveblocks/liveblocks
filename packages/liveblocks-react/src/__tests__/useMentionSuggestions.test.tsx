@@ -3,8 +3,8 @@ import { nanoid } from "@liveblocks/core";
 import { renderHook, waitFor } from "@testing-library/react";
 import React from "react";
 
-import { useMentionSuggestions } from "../shared";
-import { createContextsForTest } from "./_utils";
+import { useMentionSuggestions } from "../use-mention-suggestions";
+import { act, createContextsForTest } from "./_utils";
 
 // eslint-disable-next-line @typescript-eslint/require-await
 async function defaultResolveMentionSuggestions({
@@ -177,6 +177,70 @@ describe("useMentionSuggestions", () => {
 
     expect(resolveMentionSuggestions).toHaveBeenNthCalledWith(2, {
       text: "123",
+      roomId,
+    });
+
+    unmount();
+  });
+
+  test("should invoke resolveMentionSuggestions again if its cache was invalidated", async () => {
+    const roomId = nanoid();
+
+    const resolveMentionSuggestions = jest.fn(
+      ({ text }: ResolveMentionSuggestionsArgs) => text.split("")
+    );
+    const {
+      client,
+      room: { RoomProvider },
+    } = createContextsForTest({
+      resolveMentionSuggestions,
+    });
+
+    const { result, rerender, unmount } = renderHook(
+      ({ text }: { text: string }) => ({
+        mentionSuggestions: useMentionSuggestions(text),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id={roomId}>{children}</RoomProvider>
+        ),
+        initialProps: { text: "abc" },
+      }
+    );
+
+    await waitFor(() =>
+      expect(result.current.mentionSuggestions).toEqual(["a", "b", "c"])
+    );
+
+    rerender({ text: "123" });
+
+    await waitFor(() =>
+      expect(result.current.mentionSuggestions).toEqual(["1", "2", "3"])
+    );
+
+    // Invalidate all mention suggestions
+    act(() => client.resolvers.invalidateMentionSuggestions());
+
+    rerender({ text: "abc" });
+
+    await waitFor(() =>
+      expect(result.current.mentionSuggestions).toEqual(["a", "b", "c"])
+    );
+
+    expect(resolveMentionSuggestions).toHaveBeenCalledTimes(3);
+
+    expect(resolveMentionSuggestions).toHaveBeenNthCalledWith(1, {
+      text: "abc",
+      roomId,
+    });
+
+    expect(resolveMentionSuggestions).toHaveBeenNthCalledWith(2, {
+      text: "123",
+      roomId,
+    });
+
+    expect(resolveMentionSuggestions).toHaveBeenNthCalledWith(3, {
+      text: "abc",
       roomId,
     });
 

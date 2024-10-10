@@ -137,6 +137,7 @@ export type EnterOptions<P extends JsonObject = DP, S extends LsonObject = DS> =
  */
 export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
   readonly currentUserIdStore: Store<string | null>;
+  readonly mentionSuggestionsCache: Map<string, string[]>;
   readonly resolveMentionSuggestions: ClientOptions<U>["resolveMentionSuggestions"];
   readonly usersStore: BatchStore<U["info"] | undefined, string>;
   readonly roomsInfoStore: BatchStore<DRI | undefined, string>;
@@ -313,6 +314,26 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
    * Call this whenever you log out a user in your application.
    */
   logout(): void;
+
+  /**
+   * Advanced APIs related to the resolvers.
+   */
+  resolvers: {
+    /**
+     * Invalidate one or all users that were previously cached by `resolveUsers`.
+     */
+    invalidateUsers(userId?: string): void;
+
+    /**
+     * Invalidate one or all rooms info that were previously cached by `resolveRoomsInfo`.
+     */
+    invalidateRoomsInfo(roomId?: string): void;
+
+    /**
+     * Invalidate all mention suggestions cached by `resolveMentionSuggestions`.
+     */
+    invalidateMentionSuggestions(): void;
+  };
 
   /**
    * @private
@@ -629,6 +650,10 @@ export function createClient<U extends BaseUserMeta = DU>(
   );
   const usersStore = createBatchStore(batchedResolveUsers);
 
+  function invalidateResolvedUsers(userId?: string) {
+    usersStore.invalidate(userId);
+  }
+
   const resolveRoomsInfo = clientOptions.resolveRoomsInfo;
   const warnIfNoResolveRoomsInfo = createDevelopmentWarning(
     () => !resolveRoomsInfo,
@@ -648,6 +673,16 @@ export function createClient<U extends BaseUserMeta = DU>(
   );
   const roomsInfoStore = createBatchStore(batchedResolveRoomsInfo);
 
+  function invalidateResolvedRoomsInfo(roomId?: string) {
+    roomsInfoStore.invalidate(roomId);
+  }
+
+  const mentionSuggestionsCache = new Map<string, string[]>();
+
+  function invalidateResolvedMentionSuggestions() {
+    mentionSuggestionsCache.clear();
+  }
+
   return Object.defineProperty(
     {
       enterRoom,
@@ -657,9 +692,17 @@ export function createClient<U extends BaseUserMeta = DU>(
 
       ...httpClientLike,
 
+      // Advanced resolvers APIs
+      resolvers: {
+        invalidateUsers: invalidateResolvedUsers,
+        invalidateRoomsInfo: invalidateResolvedRoomsInfo,
+        invalidateMentionSuggestions: invalidateResolvedMentionSuggestions,
+      },
+
       // Internal
       [kInternal]: {
         currentUserIdStore,
+        mentionSuggestionsCache,
         resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,
         usersStore,
         roomsInfoStore,
