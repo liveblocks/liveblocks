@@ -5,7 +5,7 @@ import { urljoin } from "./lib/url";
 import { raise } from "./lib/utils";
 import { PKG_VERSION } from "./version";
 
-export class CommentsApiError extends Error {
+export class HttpError extends Error {
   constructor(
     public message: string,
     public status: number,
@@ -15,15 +15,9 @@ export class CommentsApiError extends Error {
   }
 }
 
-export class NotificationsApiError extends Error {
-  constructor(
-    public message: string,
-    public status: number,
-    public details?: JsonObject
-  ) {
-    super(message);
-  }
-}
+// TODO Deprecate these error aliases
+export const CommentsApiError = HttpError;
+export const NotificationsApiError = HttpError;
 
 export function getBearerTokenFromAuthValue(authValue: AuthValue): string {
   if (authValue.type === "public") {
@@ -124,23 +118,13 @@ export class HttpClient {
     // XXX Maybe DRY up and transfer this error handling to HttpClient's fetch method too?
     if (!response.ok) {
       if (response.status >= 400 && response.status < 600) {
-        let error: NotificationsApiError;
-
+        let error: HttpError;
         try {
           const errorBody = (await response.json()) as { message: string };
-
-          error = new NotificationsApiError(
-            errorBody.message,
-            response.status,
-            errorBody
-          );
+          error = new HttpError(errorBody.message, response.status, errorBody);
         } catch {
-          error = new NotificationsApiError(
-            response.statusText,
-            response.status
-          );
+          error = new HttpError(response.statusText, response.status);
         }
-
         throw error;
       }
     }
@@ -175,20 +159,13 @@ export class HttpClient {
     // XXX Maybe DRY up and transfer this error handling to HttpClient's fetch method too?
     if (!response.ok) {
       if (response.status >= 400 && response.status < 600) {
-        let error: CommentsApiError;
-
+        let error: HttpError;
         try {
           const errorBody = (await response.json()) as { message: string };
-
-          error = new CommentsApiError(
-            errorBody.message,
-            response.status,
-            errorBody
-          );
+          error = new HttpError(errorBody.message, response.status, errorBody);
         } catch {
-          error = new CommentsApiError(response.statusText, response.status);
+          error = new HttpError(response.statusText, response.status);
         }
-
         throw error;
       }
     }
