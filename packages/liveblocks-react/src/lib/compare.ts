@@ -26,8 +26,8 @@ export function isNewer(
  * creation date for these threads.
  */
 export function isMoreRecentlyUpdated(
-  a: { createdAt: Date; updatedAt?: Date },
-  b: { createdAt: Date; updatedAt?: Date }
+  a: { createdAt: Date; updatedAt: Date },
+  b: { createdAt: Date; updatedAt: Date }
 ): boolean {
   return byMostRecentlyUpdated(a, b) < 0;
 }
@@ -41,11 +41,8 @@ export function isMoreRecentlyUpdated(
  * This is *NOT* simply the inverse of compareThreads!
  */
 export function byMostRecentlyUpdated(
-  a: { createdAt: Date; updatedAt?: Date },
-  b: { createdAt: Date; updatedAt?: Date }
+  a: { updatedAt: Date },
+  b: { updatedAt: Date }
 ): number {
-  return (
-    (b.updatedAt ?? b.createdAt).getTime() -
-    (a.updatedAt ?? a.createdAt).getTime()
-  );
+  return b.updatedAt.getTime() - a.updatedAt.getTime();
 }

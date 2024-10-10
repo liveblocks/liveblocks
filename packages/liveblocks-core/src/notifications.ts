@@ -277,7 +277,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
       meta: {
         requestedAt: string;
       };
-    }>(url`/v2/c/threads`, undefined, {
+    }>(url`/v2/c/threads/delta`, undefined, {
       since: options.since.toISOString(),
     });
 

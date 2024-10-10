@@ -7,20 +7,24 @@ import type {
 import { applyThreadUpdates } from "../../umbrella-store";
 
 describe("applyThreadUpdates", () => {
+  const now1 = new Date("2024-01-01");
   const thread1: ThreadDataWithDeleteInfo = {
     type: "thread" as const,
     id: "th_1",
-    createdAt: new Date("2024-01-01"),
+    createdAt: now1,
+    updatedAt: now1,
     roomId: "room_1",
     comments: [],
     metadata: {},
     resolved: false,
   };
 
+  const now2 = new Date("2024-01-01");
   const thread2: ThreadDataWithDeleteInfo = {
     type: "thread" as const,
     id: "th_2",
-    createdAt: new Date("2024-01-01"),
+    createdAt: now2,
+    updatedAt: now2,
     roomId: "room_1",
     comments: [],
     metadata: {},

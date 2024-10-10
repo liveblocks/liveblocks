@@ -9,8 +9,8 @@ import {
 
 // A bunch of dates
 const examples = [
-  { createdAt: new Date("1999-01-01") },
-  { createdAt: new Date("2024-01-01") },
+  { createdAt: new Date("1999-01-01"), updatedAt: new Date("1999-01-01") },
+  { createdAt: new Date("2024-01-01"), updatedAt: new Date("2024-01-01") },
   { createdAt: new Date("2010-01-01"), updatedAt: new Date("2024-05-05") },
   { createdAt: new Date("2024-01-02"), updatedAt: new Date("2024-03-03") },
   { createdAt: new Date("1999-01-02"), updatedAt: new Date("2000-01-06") },
@@ -19,10 +19,10 @@ const examples = [
 describe("simple comparison checks", () => {
   it("sorts correctly using byFirstCreated", () => {
     expect([...examples].sort(byFirstCreated)).toEqual([
-      { createdAt: new Date("1999-01-01") },
+      { createdAt: new Date("1999-01-01"), updatedAt: new Date("1999-01-01") },
       { createdAt: new Date("1999-01-02"), updatedAt: new Date("2000-01-06") },
       { createdAt: new Date("2010-01-01"), updatedAt: new Date("2024-05-05") },
-      { createdAt: new Date("2024-01-01") },
+      { createdAt: new Date("2024-01-01"), updatedAt: new Date("2024-01-01") },
       { createdAt: new Date("2024-01-02"), updatedAt: new Date("2024-03-03") },
     ]);
   });
@@ -31,9 +31,9 @@ describe("simple comparison checks", () => {
     expect([...examples].sort(byMostRecentlyUpdated)).toEqual([
       { createdAt: new Date("2010-01-01"), updatedAt: new Date("2024-05-05") },
       { createdAt: new Date("2024-01-02"), updatedAt: new Date("2024-03-03") },
-      { createdAt: new Date("2024-01-01") },
+      { createdAt: new Date("2024-01-01"), updatedAt: new Date("2024-01-01") },
       { createdAt: new Date("1999-01-02"), updatedAt: new Date("2000-01-06") },
-      { createdAt: new Date("1999-01-01") },
+      { createdAt: new Date("1999-01-01"), updatedAt: new Date("1999-01-01") },
     ]);
   });
 

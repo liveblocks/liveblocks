@@ -2930,7 +2930,7 @@ export function createRoom<
 
   async function getThreadsSince(options: GetThreadsSinceOptions) {
     const response = await fetchCommentsApi(
-      url`/v2/c/rooms/${config.roomId}/threads`,
+      url`/v2/c/rooms/${config.roomId}/threads/delta`,
       { since: options?.since?.toISOString() },
       {
         headers: {
@@ -2989,48 +2989,36 @@ export function createRoom<
 
     const PAGE_SIZE = 50;
 
-    const response = await fetchCommentsApi(
+    const result = await fetchCommentsJson<{
+      data: ThreadDataPlain<M>[];
+      inboxNotifications: InboxNotificationDataPlain[];
+      deletedThreads: ThreadDeleteInfoPlain[];
+      deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+      meta: {
+        requestedAt: string;
+        nextCursor: string | null;
+      };
+    }>(
       url`/v2/c/rooms/${config.roomId}/threads`,
+      {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      },
       {
         cursor: options?.cursor,
         query,
         limit: PAGE_SIZE,
-      },
-      { headers: { "Content-Type": "application/json" } }
+      }
     );
 
-    if (response.ok) {
-      const json = await (response.json() as Promise<{
-        data: ThreadDataPlain<M>[];
-        inboxNotifications: InboxNotificationDataPlain[];
-        deletedThreads: ThreadDeleteInfoPlain[];
-        deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
-        meta: {
-          requestedAt: string;
-          nextCursor: string | null;
-        };
-      }>);
-
-      return {
-        threads: json.data.map(convertToThreadData),
-        inboxNotifications: json.inboxNotifications.map(
-          convertToInboxNotificationData
-        ),
-        nextCursor: json.meta.nextCursor,
-        requestedAt: new Date(json.meta.requestedAt),
-      };
-    } else if (response.status === 404) {
-      return {
-        threads: [],
-        inboxNotifications: [],
-        deletedThreads: [],
-        deletedInboxNotifications: [],
-        nextCursor: null,
-        requestedAt: new Date(),
-      };
-    } else {
-      throw new Error("There was an error while getting threads.");
-    }
+    return {
+      threads: result.data.map(convertToThreadData),
+      inboxNotifications: result.inboxNotifications.map(
+        convertToInboxNotificationData
+      ),
+      nextCursor: result.meta.nextCursor,
+      requestedAt: new Date(result.meta.requestedAt),
+    };
   }
 
   async function getThread(threadId: string) {
