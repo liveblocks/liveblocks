@@ -1,28 +1,32 @@
+import React from "react";
 import { Section, Text } from "@react-email/components";
 import type { CommentEmailAsReactData } from "@liveblocks/emails";
 
-import type { CompanyInfo, RoomInfo } from "./types";
+import type { CompanyInfo, RoomInfo } from "./_lib/types";
 import { getProps } from "./_utils/getProps";
-
-import { EmailRoot } from "./_components/email-root";
-import { CompanyRow } from "./_components/company-row";
+import { Layout } from "./_components/layout";
+import { Header } from "./_components/header";
 import { Headline } from "./_components/headline";
 import { Comment } from "./_components/comment";
+import {
+  getUnreadRepliesHeadlineParts,
+  getUnreadRepliesPreviewText,
+} from "./_utils/comments";
 
-type EmailProps = {
+type UnreadRepliesEmailProps = {
   company: CompanyInfo;
   room: RoomInfo;
   comments: CommentEmailAsReactData[];
 };
 
-const previewProps: EmailProps = {
+const previewProps: UnreadRepliesEmailProps = {
   company: {
     name: "Acme Inc.",
     url: "https://liveblocks.io/comments",
   },
   room: {
-    name: "🏃🏻 2024 races",
-    url: "https://liveblocks.io/comments?room_id=2024-races",
+    name: "Project Proposal - Q4",
+    url: "https://liveblocks.io/comments?room_id=project-proposal-q4",
   },
   comments: [
     {
@@ -38,15 +42,17 @@ const previewProps: EmailProps = {
         },
       },
       reactBody: (
-        <Text className="text-sm m-0 mb-4 text-email-comment-foreground">
+        <Text className="text-sm m-0 text-black">
           <span>
-            Great work on the visual designs! Can we discuss the color scheme in
-            our next meeting?
+            I've reviewed this section and think we need a more detailed
+            breakdown of the budget. It might help if we add a few more figures
+            to illustrate the cost distribution over the next six months. Let me
+            know if you'd like me to draft a version for you.
           </span>
         </Text>
       ),
-      url: "https://liveblocks.io?room_id=2024-races#cm_0",
-      roomId: "2024-races",
+      url: "https://liveblocks.io?room_id=project-proposal-q4#cm_0",
+      roomId: "project-proposal-q4",
     },
     {
       id: "cm_1",
@@ -61,69 +67,40 @@ const previewProps: EmailProps = {
         },
       },
       reactBody: (
-        <Text className="text-sm m-0 mb-4 text-email-comment-foreground">
-          <span>
-            I think we could narrow down the demographics a bit more. Let's
-            discuss in our next meeting.
-          </span>
+        <Text className="text-sm text-black m-0">
+          <span>Looks good overall. Just a quick note on the timeline.</span>
         </Text>
       ),
-      url: "https://liveblocks.io?room_id=2024-races#cm_1",
-      roomId: "2024-races",
+      url: "https://liveblocks.io?room_id=project-proposal-q4#cm_1",
+      roomId: "project-proposal-q4",
     },
   ],
 };
 
-const getPreviewText = (
-  comments: CommentEmailAsReactData[],
-  roomName: RoomInfo["name"]
-): string => {
-  const room = roomName ?? "unknown room";
-  if (comments.length === 1) {
-    const author = comments[0].author;
-    return `${author.info.name} left a comment in ${room}`;
-  }
-
-  return `${comments.length} new comments in ${room}`;
-};
-
-const getHeadlineParts = (
-  comments: CommentEmailAsReactData[],
-  roomName?: RoomInfo["name"]
-): [string, string, string] => {
-  const room = roomName ?? "unknown room";
-  if (comments.length === 1) {
-    const author = comments[0].author;
-    return [author.info.name, "left a comment in", room];
-  }
-
-  return [`${comments.length} new comments`, "in", room];
-};
-
-export default function Email(props: EmailProps) {
+const UnreadRepliesEmail = (
+  props: UnreadRepliesEmailProps
+): React.ReactElement => {
   const { company, room, comments } = getProps(props, previewProps);
 
-  const previewText = getPreviewText(comments, room.name);
-  const headlineParts = getHeadlineParts(comments, room?.name);
+  const previewText = getUnreadRepliesPreviewText(comments, room.name);
+  const headlineParts = getUnreadRepliesHeadlineParts(comments, room.name);
 
   return (
-    <EmailRoot preview={previewText}>
-      <CompanyRow name={company.name} url={company.url} variant="header" />
-      <Section className="my-12">
-        <Headline>
-          {headlineParts[0]}{" "}
-          <span className="font-normal">{headlineParts[1]}</span>{" "}
-          {headlineParts[2]}
-        </Headline>
-        {comments.map((comment) => (
+    <Layout preview={previewText}>
+      <Header {...company} />
+      <Section>
+        <Headline className="mb-4" parts={headlineParts} />
+        {comments.map((comment, index) => (
           <Comment
             key={comment.id}
+            className={index > 0 ? "mt-3" : undefined}
             {...comment}
-            variant={comments.length > 1 ? "several" : "onlyOne"}
+            isHighlighted={comments.length === 1}
           />
         ))}
-        <CompanyRow name={company.name} url={company.url} variant="footer" />
       </Section>
-    </EmailRoot>
+    </Layout>
   );
-}
+};
+
+export default UnreadRepliesEmail;

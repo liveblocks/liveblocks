@@ -2,27 +2,31 @@ import { Section, Text } from "@react-email/components";
 import type { CommentEmailAsReactData } from "@liveblocks/emails";
 
 import { getProps } from "./_utils/getProps";
-import type { CompanyInfo, RoomInfo } from "./types";
+import type { CompanyInfo, RoomInfo } from "./_lib/types";
 
-import { EmailRoot } from "./_components/email-root";
-import { CompanyRow } from "./_components/company-row";
+import { Layout } from "./_components/layout";
+import { Header } from "./_components/header";
 import { Headline } from "./_components/headline";
 import { Comment } from "./_components/comment";
+import {
+  getUnreadMentionHeadlineParts,
+  getUnreadMentionPreviewText,
+} from "./_utils/comments";
 
-type EmailProps = {
+type UnreadMentionEmailProps = {
   company: CompanyInfo;
   room: RoomInfo;
   comment: CommentEmailAsReactData;
 };
 
-const previewProps: EmailProps = {
+const previewProps: UnreadMentionEmailProps = {
   company: {
     name: "Acme Inc.",
     url: "https://liveblocks.io/comments",
   },
   room: {
-    name: "🏃🏻 2024 races",
-    url: "https://liveblocks.io/comments?room_id=2024-races",
+    name: "User Research Strategy",
+    url: "https://liveblocks.io/comments?room_id=project-proposal-q4",
   },
   comment: {
     id: "cm_2",
@@ -37,10 +41,10 @@ const previewProps: EmailProps = {
       },
     },
     reactBody: (
-      <Text className="text-sm m-0 mb-4 text-email-comment-foreground">
+      <Text className="text-sm m-0 text-black">
         <span>
           For the user research phase, we'll need{" "}
-          <span data-mention className="text-email-mention font-medium">
+          <span data-mention className="text-accent font-medium">
             @Quinn Elton
           </span>{" "}
           to lead the interviews and compile the findings. His expertise in
@@ -48,45 +52,24 @@ const previewProps: EmailProps = {
         </span>
       </Text>
     ),
-    url: "https://liveblocks.io?room_id=2024-races#cm_2",
-    roomId: "2024-races",
+    url: "https://liveblocks.io?room_id=project-proposal-q4#cm_2",
+    roomId: "project-proposal-q4",
   },
 };
 
-const getPreviewText = (
-  comment: CommentEmailAsReactData,
-  roomName: RoomInfo["name"]
-): string => {
-  const author = comment.author;
-  return `${author.info.name} mentioned you in ${roomName ?? "unknown room"}`;
-};
-
-const getHeadlineParts = (
-  comment: CommentEmailAsReactData,
-  roomName: RoomInfo["name"]
-): [string, string, string] => {
-  const author = comment.author;
-
-  return [author.info.name, "mentioned you in", roomName ?? "unknown room"];
-};
-
-export default function Email(props: EmailProps) {
+export default function UnreadMentionEmail(props: UnreadMentionEmailProps) {
   const { company, room, comment } = getProps(props, previewProps);
 
-  const previewText = getPreviewText(comment, room.name);
-  const headlineParts = getHeadlineParts(comment, room.name);
+  const previewText = getUnreadMentionPreviewText(comment, room.name);
+  const headlineParts = getUnreadMentionHeadlineParts(comment, room.name);
+
   return (
-    <EmailRoot preview={previewText}>
-      <CompanyRow name={company.name} url={company.url} variant="header" />
-      <Section className="my-12">
-        <Headline>
-          {headlineParts[0]}{" "}
-          <span className="font-normal">{headlineParts[1]}</span>{" "}
-          {headlineParts[2]}
-        </Headline>
+    <Layout preview={previewText}>
+      <Header {...company} />
+      <Section>
+        <Headline className="mb-4" parts={headlineParts} />
         <Comment {...comment} />
-        <CompanyRow name={company.name} url={company.url} variant="footer" />
       </Section>
-    </EmailRoot>
+    </Layout>
   );
 }
