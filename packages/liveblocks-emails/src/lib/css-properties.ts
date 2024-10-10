@@ -10,7 +10,7 @@ export type CSSProperties = Properties;
 /**
  * Vendors
  */
-const VENDORS_PREFIXES = new RegExp(/^(Webkit|Moz|ms|O)([A-Z])/);
+const VENDORS_PREFIXES = new RegExp(/^(webkit|moz|ms|o)-/);
 
 /**
  * CSS properties which accept numbers but are not in units of "px".
@@ -67,15 +67,9 @@ const UNITLESS_PROPERTIES = [
   "msAnimationIterationCount",
   "msFlex",
   "msZoom",
-  "msFlexGrow",
-  "msFlexNegative",
-  "msFlexOrder",
   "msFlexPositive",
-  "msFlexShrink",
-  "msGridColumn",
-  "msGridColumnSpan",
-  "msGridRow",
-  "msGridRowSpan",
+  "msGridColumns",
+  "msGridRows",
   "WebkitAnimationIterationCount",
   "WebkitBoxFlex",
   "WebKitBoxFlexGroup",
@@ -96,24 +90,27 @@ export function toInlineCSSString(styles: CSSProperties): string {
   const entries = Object.entries(styles);
   const inline = entries
     .map(([key, value]): string | null => {
-      if (value === null || typeof value === "boolean" || value === "") {
+      // Return an empty string if `value` is not acceptable
+      if (
+        value === null ||
+        typeof value === "boolean" ||
+        value === "" ||
+        typeof value === "undefined"
+      ) {
         return "";
       }
 
-      // Convert css property to camelCase and manage
-      // vendors prefixes
-      const property = key
-        .replace(/([A-Z])/g, "-$1")
-        .toLowerCase()
-        .replace(
-          VENDORS_PREFIXES,
-          (_substring: string, prefix: string, letter: string) =>
-            `-${prefix.toLowerCase()}-${letter.toLowerCase()}`
-        );
+      // Convert remaining camelCase to kebab-case
+      let property = key.replace(/([A-Z])/g, "-$1").toLowerCase();
+
+      // Manage vendors prefixes
+      if (VENDORS_PREFIXES.test(property)) {
+        property = `-${property}`;
+      }
 
       // Add `px` if needed for properties which aren't unitless
       if (typeof value === "number" && !UNITLESS_PROPERTIES.includes(key)) {
-        return `${property}:${value}px`;
+        return `${property}:${value}px;`;
       }
 
       return `${property}:${String(value).trim()};`;
