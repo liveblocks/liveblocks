@@ -1,9 +1,19 @@
 import { Text } from "@react-email/components";
+import { cn } from "../_utils/cn";
+import type { HeadlineParts } from "../_utils/comments";
 
-export function Headline({ children }: { children: React.ReactNode }) {
+export function Headline({
+  parts,
+  className,
+}: {
+  parts: HeadlineParts;
+  className?: string;
+}) {
+  const [start, middle, end] = parts;
+
   return (
-    <Text className="text-sm text-email-headline font-medium m-0">
-      {children}
+    <Text className={cn("text-sm text-black font-medium m-0", className)}>
+      {start} <span className="font-normal">{middle}</span> {end}
     </Text>
   );
 }

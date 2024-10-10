@@ -6,9 +6,9 @@ import {
   Preview,
   Tailwind,
 } from "@react-email/components";
-import { emailColors } from "../_tailwind/colors";
+import { emailColors } from "../_styles/colors";
 
-export function EmailRoot({
+export function Layout({
   preview,
   children,
 }: {
@@ -35,7 +35,7 @@ export function EmailRoot({
           },
         }}
       >
-        <Body className="bg-white my-auto mx-auto font-sans">
+        <Body className="bg-white my-auto mx-auto font-sans antialiased px-5">
           <Container className="py-8">{children}</Container>
         </Body>
       </Tailwind>

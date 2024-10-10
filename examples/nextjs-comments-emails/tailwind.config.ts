@@ -1,5 +1,5 @@
 import type { Config } from "tailwindcss";
-import { emailColors } from "./emails/_tailwind/colors";
+import { emailColors } from "./emails/_styles/colors";
 
 const config = {
   content: [
@@ -10,7 +10,7 @@ const config = {
   theme: {
     extend: {
       colors: {
-        email: { ...emailColors },
+        ...emailColors,
       },
     },
   },

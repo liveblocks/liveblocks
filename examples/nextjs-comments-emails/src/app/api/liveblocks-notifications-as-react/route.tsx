@@ -66,12 +66,10 @@ export async function POST(request: Request) {
           // to customize comments' bodies' components.
           components: {
             Paragraph: ({ children }) => (
-              <Text className="text-sm text-email-comment-foreground m-0 mb-4">
-                {children}
-              </Text>
+              <Text className="text-sm text-black m-0 mb-4">{children}</Text>
             ),
             Mention: ({ element, user }) => (
-              <span className="text-email-mention font-medium">
+              <span className="text-accent font-medium">
                 @{user?.name ?? element.id}
               </span>
             ),
