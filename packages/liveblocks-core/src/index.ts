@@ -119,6 +119,7 @@ export { makePoller } from "./lib/Poller";
 export { asPos, makePosition } from "./lib/position";
 export type { Resolve } from "./lib/Resolve";
 export { shallow } from "./lib/shallow";
+export { SortedList } from "./lib/SortedList";
 export { stringify } from "./lib/stringify";
 export type { QueryParams, URLSafeString } from "./lib/url";
 export { url, urljoin } from "./lib/url";
