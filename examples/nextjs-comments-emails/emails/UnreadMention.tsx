@@ -44,7 +44,7 @@ const previewProps: UnreadMentionEmailProps = {
       <Text className="text-sm m-0 text-black">
         <span>
           For the user research phase, we'll need{" "}
-          <span data-mention className="text-accent font-medium">
+          <span data-mention className="text-email-accent font-medium">
             @Quinn Elton
           </span>{" "}
           to lead the interviews and compile the findings. His expertise in
