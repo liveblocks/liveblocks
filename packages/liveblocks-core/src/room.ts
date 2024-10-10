@@ -1603,7 +1603,9 @@ export function createRoom<
     }
 
     const url = urljoin(config.baseUrl, endpoint, params);
-    const fetcher = config.polyfills?.fetch || /* istanbul ignore next */ fetch;
+    const fetcher =
+      config.polyfills?.fetch ||
+      /* istanbul ignore next */ globalThis.fetch?.bind(globalThis);
     return await fetcher(url, {
       ...options,
       headers: {

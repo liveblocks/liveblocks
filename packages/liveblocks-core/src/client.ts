@@ -601,7 +601,8 @@ export function createClient<U extends BaseUserMeta = DU>(
   const currentUserIdStore = createStore<string | null>(null);
 
   const fetchPolyfill =
-    clientOptions.polyfills?.fetch || /* istanbul ignore next */ fetch;
+    clientOptions.polyfills?.fetch ||
+    /* istanbul ignore next */ globalThis.fetch?.bind(globalThis);
 
   const httpClientLike = createNotificationsApi({
     baseUrl,
