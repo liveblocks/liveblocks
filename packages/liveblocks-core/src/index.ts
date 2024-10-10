@@ -26,7 +26,7 @@ export type {
   ResolveRoomsInfoArgs,
   ResolveUsersArgs,
 } from "./client";
-export { createClient, NotificationsApiError } from "./client";
+export { createClient } from "./client";
 export type {
   CommentBodyLinkElementArgs,
   CommentBodyMentionElementArgs,
@@ -76,6 +76,7 @@ export type {
   DU,
   KDAD,
 } from "./globals/augmentation";
+export { HttpError } from "./http-client";
 export {
   legacy_patchImmutableObject,
   lsonToJson,
@@ -119,6 +120,7 @@ export { makePoller } from "./lib/Poller";
 export { asPos, makePosition } from "./lib/position";
 export type { Resolve } from "./lib/Resolve";
 export { shallow } from "./lib/shallow";
+export { SortedList } from "./lib/SortedList";
 export { stringify } from "./lib/stringify";
 export type { QueryParams, URLSafeString } from "./lib/url";
 export { url, urljoin } from "./lib/url";
@@ -243,7 +245,6 @@ export type {
   StorageStatus,
 } from "./room";
 export type { GetThreadsOptions, UploadAttachmentOptions } from "./room";
-export { CommentsApiError } from "./room";
 export type { Immutable } from "./types/Immutable";
 export type {
   IWebSocket,
@@ -299,3 +300,14 @@ export type { DevTools };
 // Store
 export type { Store } from "./lib/create-store";
 export { createStore } from "./lib/create-store";
+
+// Deprecated APIs
+
+/**
+ * @deprecated Use HttpError instead.
+ */
+export const CommentsApiError = HttpError;
+/**
+ * @deprecated Use HttpError instead.
+ */
+export const NotificationsApiError = HttpError;

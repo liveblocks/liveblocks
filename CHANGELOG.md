@@ -1,8 +1,11 @@
-## 2.9.1 (Not released yet)
+## 2.9.1
 
 ### `@liveblocks/client`
 
 - Fix type definition of `ThreadData`: `updatedAt` is always set
+- Fix bug where client wasn't always using the newest delta update backend
+  endpoint yet
+- Fix regression with metadata filtering on explicitly-`undefined` values
 
 ### `@liveblocks/react`
 
