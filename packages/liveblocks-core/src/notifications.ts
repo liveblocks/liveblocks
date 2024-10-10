@@ -66,6 +66,8 @@ export function createNotificationsApi<M extends BaseMetadata>({
       authValue.token.parsed.k === TokenKind.ACCESS_TOKEN
     ) {
       const userId = authValue.token.parsed.uid;
+
+      // NOTE: currentUserIdStore is updated here as a side-effect!
       currentUserIdStore.set(() => userId);
     }
 
