@@ -3295,14 +3295,11 @@ export function createRoom<
     return batchedGetAttachmentUrls.get(attachmentId);
   }
 
-  async function fetchNotificationsJson<T>(
+  async function fetchNotificationsJson<T extends JsonObject>(
     endpoint: URLSafeString,
     options?: RequestInit
   ): Promise<T> {
-    return await httpClient2.fetchJson_forNotifications_variant2<T>(
-      endpoint,
-      options
-    );
+    return await httpClient2.fetchJson_forNotifications<T>(endpoint, options);
   }
 
   function getNotificationSettings(): Promise<RoomNotificationSettings> {

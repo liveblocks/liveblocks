@@ -114,63 +114,12 @@ export class HttpClient {
   // 4. Parse response body as Json
   // 5. ...but silently return `{}` if that parsing fails
   // 6. Throw NotificationsApiError if response is an error
-  public async fetchJson_forNotifications_variant1<T extends JsonObject>(
+  public async fetchJson_forNotifications<T extends JsonObject>(
     endpoint: URLSafeString,
     options?: RequestInit,
     params?: QueryParams
   ): Promise<T> {
     const response = await this.fetch(endpoint, options, params);
-
-    // XXX Maybe DRY up and transfer this error handling to HttpClient's fetch method too?
-    if (!response.ok) {
-      if (response.status >= 400 && response.status < 600) {
-        let error: NotificationsApiError;
-
-        try {
-          const errorBody = (await response.json()) as { message: string };
-
-          error = new NotificationsApiError(
-            errorBody.message,
-            response.status,
-            errorBody
-          );
-        } catch {
-          error = new NotificationsApiError(
-            response.statusText,
-            response.status
-          );
-        }
-
-        throw error;
-      }
-    }
-
-    let body;
-    try {
-      body = (await response.json()) as T;
-    } catch {
-      // XXX This looks wrong 🤔 !
-      // XXX We should be throwing this error if something fails to parse.
-      body = {} as T;
-    }
-    return body;
-  }
-
-  // XXX Try to DRY up this method with the other fetchJson_for* methods in here
-  //
-  // This will:
-  // 1. Set Content-Type header
-  // 2. Set Authorization header
-  // 3. Call the callback to obtain the `authValue` to use in the Authorization header
-  // 4. Parse response body as Json
-  // 5. ...but silently return `{}` if that parsing fails
-  // 6. Throw a NotificationsApiError if response is an error
-  //
-  async fetchJson_forNotifications_variant2<T>(
-    endpoint: URLSafeString,
-    options?: RequestInit
-  ): Promise<T> {
-    const response = await this.fetch(endpoint, options);
 
     // XXX Maybe DRY up and transfer this error handling to HttpClient's fetch method too?
     if (!response.ok) {

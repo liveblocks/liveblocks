@@ -79,7 +79,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
   async function getInboxNotifications(options?: { cursor?: string }) {
     const PAGE_SIZE = 50;
 
-    const json = await httpClient.fetchJson_forNotifications_variant1<{
+    const json = await httpClient.fetchJson_forNotifications<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
       meta: {
@@ -102,7 +102,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
   }
 
   async function getInboxNotificationsSince(since: Date) {
-    const json = await httpClient.fetchJson_forNotifications_variant1<{
+    const json = await httpClient.fetchJson_forNotifications<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
       deletedThreads: ThreadDeleteInfoPlain[];
@@ -129,7 +129,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
   }
 
   async function getUnreadInboxNotificationsCount() {
-    const { count } = await httpClient.fetchJson_forNotifications_variant1<{
+    const { count } = await httpClient.fetchJson_forNotifications<{
       count: number;
     }>(url`/v2/c/inbox-notifications/count`);
 
@@ -137,7 +137,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
   }
 
   async function markAllInboxNotificationsAsRead() {
-    await httpClient.fetchJson_forNotifications_variant1(
+    await httpClient.fetchJson_forNotifications(
       url`/v2/c/inbox-notifications/read`,
       {
         method: "POST",
@@ -147,7 +147,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
   }
 
   async function markInboxNotificationsAsRead(inboxNotificationIds: string[]) {
-    await httpClient.fetchJson_forNotifications_variant1(
+    await httpClient.fetchJson_forNotifications(
       url`/v2/c/inbox-notifications/read`,
       {
         method: "POST",
@@ -172,7 +172,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
   }
 
   async function deleteAllInboxNotifications() {
-    await httpClient.fetchJson_forNotifications_variant1(
+    await httpClient.fetchJson_forNotifications(
       url`/v2/c/inbox-notifications`,
       {
         method: "DELETE",
@@ -181,7 +181,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
   }
 
   async function deleteInboxNotification(inboxNotificationId: string) {
-    await httpClient.fetchJson_forNotifications_variant1(
+    await httpClient.fetchJson_forNotifications(
       url`/v2/c/inbox-notifications/${inboxNotificationId}`,
       {
         method: "DELETE",
@@ -198,7 +198,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
 
     const PAGE_SIZE = 50;
 
-    const json = await httpClient.fetchJson_forNotifications_variant1<{
+    const json = await httpClient.fetchJson_forNotifications<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
       deletedThreads: ThreadDeleteInfoPlain[];
@@ -226,7 +226,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
   async function getUserThreadsSince_experimental(
     options: GetThreadsSinceOptions
   ) {
-    const json = await httpClient.fetchJson_forNotifications_variant1<{
+    const json = await httpClient.fetchJson_forNotifications<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
       deletedThreads: ThreadDeleteInfoPlain[];
