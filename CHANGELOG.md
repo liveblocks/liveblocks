@@ -1,3 +1,10 @@
+## 2.10.0 (Not published yet)
+
+### `@liveblocks/client`
+
+- Add new methods under `client.resolvers.*` to invalidate the cache of
+  `resolveUsers`, `resolveRoomsInfo`, and `resolveMentionSuggestions`.
+
 ## 2.9.1
 
 ### `@liveblocks/client`
