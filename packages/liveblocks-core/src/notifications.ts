@@ -35,12 +35,12 @@ export function createNotificationsApi<M extends BaseMetadata>({
   baseUrl,
   authManager,
   currentUserIdStore,
-  fetcher,
+  fetchPolyfill,
 }: {
   baseUrl: string;
   authManager: AuthManager;
   currentUserIdStore: Store<string | null>;
-  fetcher: (url: string, init?: RequestInit) => Promise<Response>;
+  fetchPolyfill: (url: string, init?: RequestInit) => Promise<Response>;
 }): NotificationsApi<M> & {
   getUserThreads_experimental(options?: GetThreadsOptions<M>): Promise<{
     threads: ThreadData<M>[];
@@ -82,7 +82,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
     }
 
     const url = urljoin(baseUrl, endpoint, params);
-    const response = await fetcher(url.toString(), {
+    const response = await fetchPolyfill(url.toString(), {
       ...options,
       headers: {
         ...options?.headers,

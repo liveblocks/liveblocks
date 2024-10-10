@@ -42,7 +42,7 @@ export function getBearerTokenFromAuthValue(authValue: AuthValue): string {
 export class HttpClient {
   private _baseUrl: string;
   private _getAuthToken: () => AuthValue;
-  private _fetcher: typeof fetch;
+  private _fetchPolyfill: typeof fetch;
 
   constructor(
     baseUrl: string,
@@ -51,7 +51,7 @@ export class HttpClient {
   ) {
     this._baseUrl = baseUrl;
     this._getAuthToken = getAuthToken;
-    this._fetcher = fetchPolyfill;
+    this._fetchPolyfill = fetchPolyfill;
   }
 
   // XXX This method is yet unused. Start using it!
@@ -66,7 +66,7 @@ export class HttpClient {
     }
 
     const url = urljoin(this._baseUrl, endpoint, params);
-    return await this._fetcher(url, {
+    return await this._fetchPolyfill(url, {
       ...options,
       headers: {
         // These headers are default, but can be overriden by custom headers
