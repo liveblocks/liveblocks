@@ -10,7 +10,7 @@ const config = {
   theme: {
     extend: {
       colors: {
-        ...emailColors,
+        email: { ...emailColors },
       },
     },
   },
