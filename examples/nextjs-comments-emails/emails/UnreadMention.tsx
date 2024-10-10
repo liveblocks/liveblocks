@@ -52,7 +52,7 @@ const previewProps: UnreadMentionEmailProps = {
         </span>
       </Text>
     ),
-    url: "https://liveblocks.io?room_id=project-proposal-q4#cm_2",
+    url: "https://liveblocks.io/comments?room_id=project-proposal-q4#cm_2",
     roomId: "project-proposal-q4",
   },
 };
