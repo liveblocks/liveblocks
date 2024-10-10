@@ -96,29 +96,27 @@ export function toInlineCSSString(styles: CSSProperties): string {
   const entries = Object.entries(styles);
   const inline = entries
     .map(([key, value]): string | null => {
-      if (value === null || typeof value === "boolean") {
+      if (value === null || typeof value === "boolean" || value === "") {
         return "";
       }
 
-      // Convert to camelCase
-      let property = key.replace(/([A-Z])/g, "-$1").toLowerCase();
-      // Handle vendors prefixes
-      property = property.replace(
-        VENDORS_PREFIXES,
-        (_substring: string, prefix: string, letter: string) =>
-          `-${prefix.toLowerCase()}-${letter.toLowerCase()}`
-      );
+      // Convert css property to camelCase and manage
+      // vendors prefixes
+      const property = key
+        .replace(/([A-Z])/g, "-$1")
+        .toLowerCase()
+        .replace(
+          VENDORS_PREFIXES,
+          (_substring: string, prefix: string, letter: string) =>
+            `-${prefix.toLowerCase()}-${letter.toLowerCase()}`
+        );
 
-      let propertyValue = value as string | number;
       // Add `px` if needed for properties which aren't unitless
-      if (
-        typeof propertyValue === "number" &&
-        !UNITLESS_PROPERTIES.includes(key)
-      ) {
-        propertyValue = propertyValue + "px";
+      if (typeof value === "number" && !UNITLESS_PROPERTIES.includes(key)) {
+        return `${property}:${value}px`;
       }
 
-      return `${property}:${propertyValue};`;
+      return `${property}:${String(value).trim()};`;
     })
     .filter(Boolean)
     .join("");
