@@ -76,7 +76,11 @@ export type {
   DU,
   KDAD,
 } from "./globals/augmentation";
-export { CommentsApiError, NotificationsApiError } from "./http-client";
+export {
+  CommentsApiError,
+  HttpError,
+  NotificationsApiError,
+} from "./http-client";
 export {
   legacy_patchImmutableObject,
   lsonToJson,
