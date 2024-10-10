@@ -221,11 +221,7 @@ export class HttpClient {
     options?: RequestInit,
     params?: QueryParams
   ): Promise<T> {
-    const response = await this.fetchResponse_forCommentsApi(
-      endpoint,
-      params,
-      options
-    );
+    const response = await this.fetch(endpoint, options, params);
 
     // XXX Maybe DRY up and transfer this error handling to HttpClient's fetch method too?
     if (!response.ok) {
@@ -257,22 +253,6 @@ export class HttpClient {
       body = {} as T;
     }
     return body;
-  }
-
-  // XXX Try to DRY up this method with the other fetch*_for* methods in here
-  //
-  // This will:
-  // 1. Set Content-Type header
-  // 2. Set Authorization header
-  // 3. ❗Call the callback to obtain the `authValue` to use in the Authorization header
-  // 4. ❗NOT throw if HTTP response is an error
-  // 5. ❗NOT Parse response body as JSON
-  async fetchResponse_forCommentsApi(
-    endpoint: URLSafeString,
-    params?: QueryParams,
-    options?: RequestInit
-  ): Promise<Response> {
-    return this.fetch(endpoint, options, params);
   }
 
   // ------------------------------------------------------------------

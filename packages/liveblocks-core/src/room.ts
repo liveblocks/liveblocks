@@ -2792,8 +2792,9 @@ export function createRoom<
   };
 
   async function getThreadsSince(options: GetThreadsSinceOptions) {
-    const response = await httpClient2.fetchResponse_forCommentsApi(
+    const response = await httpClient2.fetch(
       url`/v2/c/rooms/${config.roomId}/threads/delta`,
+      undefined,
       { since: options?.since?.toISOString() }
     );
 
@@ -2847,8 +2848,9 @@ export function createRoom<
 
     const PAGE_SIZE = 50;
 
-    const response = await httpClient2.fetchResponse_forCommentsApi(
+    const response = await httpClient2.fetch(
       url`/v2/c/rooms/${config.roomId}/threads`,
+      undefined,
       {
         cursor: options?.cursor,
         query,
@@ -2891,7 +2893,7 @@ export function createRoom<
   }
 
   async function getThread(threadId: string) {
-    const response = await httpClient2.fetchResponse_forCommentsApi(
+    const response = await httpClient2.fetch(
       url`/v2/c/rooms/${config.roomId}/thread-with-notification/${threadId}`
     );
 
@@ -3248,9 +3250,8 @@ export function createRoom<
         ) {
           try {
             // Abort the multi-part upload if it was created
-            await httpClient2.fetchResponse_forCommentsApi(
+            await httpClient2.fetch(
               url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/multipart/${uploadId}`,
-              undefined,
               { method: "DELETE" }
             );
           } catch (error) {
