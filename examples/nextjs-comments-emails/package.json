@@ -11,11 +11,11 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^2.9.1",
-    "@liveblocks/node": "^2.9.1",
-    "@liveblocks/react": "^2.9.1",
-    "@liveblocks/react-ui": "^2.9.1",
-    "@liveblocks/emails": "^2.9.1",
+    "@liveblocks/client": "file:../../packages/liveblocks-client",
+    "@liveblocks/node": "file:../../packages/liveblocks-node",
+    "@liveblocks/react": "file:../../packages/liveblocks-react",
+    "@liveblocks/react-ui": "file:../../packages/liveblocks-react-ui",
+    "@liveblocks/emails": "file:../../packages/liveblocks-emails",
     "@react-email/components": "0.0.25",
     "@react-email/render": "1.0.1",
     "@sendgrid/mail": "8.1.3",
