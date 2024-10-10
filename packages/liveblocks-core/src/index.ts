@@ -26,7 +26,7 @@ export type {
   ResolveRoomsInfoArgs,
   ResolveUsersArgs,
 } from "./client";
-export { createClient, NotificationsApiError } from "./client";
+export { createClient } from "./client";
 export type {
   CommentBodyLinkElementArgs,
   CommentBodyMentionElementArgs,
@@ -76,6 +76,7 @@ export type {
   DU,
   KDAD,
 } from "./globals/augmentation";
+export { CommentsApiError, NotificationsApiError } from "./http-client";
 export {
   legacy_patchImmutableObject,
   lsonToJson,
@@ -244,7 +245,6 @@ export type {
   StorageStatus,
 } from "./room";
 export type { GetThreadsOptions, UploadAttachmentOptions } from "./room";
-export { CommentsApiError } from "./room";
 export type { Immutable } from "./types/Immutable";
 export type {
   IWebSocket,

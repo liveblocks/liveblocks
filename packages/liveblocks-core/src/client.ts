@@ -684,16 +684,6 @@ export function createClient<U extends BaseUserMeta = DU>(
   );
 }
 
-export class NotificationsApiError extends Error {
-  constructor(
-    public message: string,
-    public status: number,
-    public details?: JsonObject
-  ) {
-    super(message);
-  }
-}
-
 function checkBounds(
   option: string,
   value: unknown,
