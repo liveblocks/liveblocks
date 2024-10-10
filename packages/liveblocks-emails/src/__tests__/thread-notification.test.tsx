@@ -3,14 +3,14 @@ import { http, HttpResponse } from "msw";
 import React from "react";
 
 import type {
-  ConvertCommentBodyAsHTMLStyles,
+  ConvertCommentBodyAsHtmlStyles,
   ConvertCommentBodyAsReactComponents,
 } from "../comment-body";
 import type {
   CommentEmailBaseData,
   ThreadNotificationBaseData,
   ThreadNotificationData,
-  ThreadNotificationEmailDataAsHTML,
+  ThreadNotificationEmailDataAsHtml,
   ThreadNotificationEmailDataAsReact,
 } from "../thread-notification";
 import {
@@ -18,7 +18,7 @@ import {
   getLastUnreadCommentWithMention,
   getUnreadComments,
   makeCommentEmailBaseData,
-  prepareThreadNotificationEmailAsHTML,
+  prepareThreadNotificationEmailAsHtml,
   prepareThreadNotificationEmailAsReact,
   prepareThreadNotificationEmailBaseData,
 } from "../thread-notification";
@@ -465,12 +465,12 @@ describe("thread notification", () => {
     });
   });
 
-  describe("prepare thead notification email as HTML", () => {
+  describe("prepare thead notification email as html", () => {
     describe("unread mention w/o styles design tokens", () => {
       const { comment, thread, inboxNotification, event } =
         makeUnreadMentionDataset();
 
-      const expected1: ThreadNotificationEmailDataAsHTML = {
+      const expected1: ThreadNotificationEmailDataAsHtml = {
         type: "unreadMention",
         comment: {
           id: comment.id,
@@ -490,7 +490,7 @@ describe("thread notification", () => {
         roomInfo: { name: ROOM_ID_TEST },
       };
 
-      const expected2: ThreadNotificationEmailDataAsHTML = {
+      const expected2: ThreadNotificationEmailDataAsHtml = {
         type: "unreadMention",
         comment: {
           id: comment.id,
@@ -512,25 +512,25 @@ describe("thread notification", () => {
 
       it.each<{
         withResolvers: boolean;
-        promise: () => Promise<ThreadNotificationEmailDataAsHTML | null>;
-        expected: ThreadNotificationEmailDataAsHTML;
+        promise: () => Promise<ThreadNotificationEmailDataAsHtml | null>;
+        expected: ThreadNotificationEmailDataAsHtml;
       }>([
         {
           withResolvers: false,
-          promise: () => prepareThreadNotificationEmailAsHTML(client, event),
+          promise: () => prepareThreadNotificationEmailAsHtml(client, event),
           expected: expected1,
         },
         {
           withResolvers: true,
           promise: () =>
-            prepareThreadNotificationEmailAsHTML(client, event, {
+            prepareThreadNotificationEmailAsHtml(client, event, {
               resolveUsers,
               resolveRoomInfo,
             }),
           expected: expected2,
         },
       ])(
-        "should return unread mention as HTML with resolvers: $withResolvers",
+        "should return unread mention as html with resolvers: $withResolvers",
         async ({ promise, expected }) => {
           server.use(
             http.get(
@@ -553,7 +553,7 @@ describe("thread notification", () => {
     });
 
     describe("unread mention w/ custom styles design tokens", () => {
-      const styles: Partial<ConvertCommentBodyAsHTMLStyles> = {
+      const styles: Partial<ConvertCommentBodyAsHtmlStyles> = {
         paragraph: {
           fontSize: "16px",
         },
@@ -564,7 +564,7 @@ describe("thread notification", () => {
       const { comment, thread, inboxNotification, event } =
         makeUnreadMentionDataset();
 
-      const expected1: ThreadNotificationEmailDataAsHTML = {
+      const expected1: ThreadNotificationEmailDataAsHtml = {
         type: "unreadMention",
         comment: {
           id: comment.id,
@@ -584,7 +584,7 @@ describe("thread notification", () => {
         roomInfo: { name: ROOM_ID_TEST },
       };
 
-      const expected2: ThreadNotificationEmailDataAsHTML = {
+      const expected2: ThreadNotificationEmailDataAsHtml = {
         type: "unreadMention",
         comment: {
           id: comment.id,
@@ -606,13 +606,13 @@ describe("thread notification", () => {
 
       it.each<{
         withResolvers: boolean;
-        promise: () => Promise<ThreadNotificationEmailDataAsHTML | null>;
-        expected: ThreadNotificationEmailDataAsHTML;
+        promise: () => Promise<ThreadNotificationEmailDataAsHtml | null>;
+        expected: ThreadNotificationEmailDataAsHtml;
       }>([
         {
           withResolvers: false,
           promise: () =>
-            prepareThreadNotificationEmailAsHTML(client, event, {
+            prepareThreadNotificationEmailAsHtml(client, event, {
               styles,
             }),
           expected: expected1,
@@ -620,7 +620,7 @@ describe("thread notification", () => {
         {
           withResolvers: true,
           promise: () =>
-            prepareThreadNotificationEmailAsHTML(client, event, {
+            prepareThreadNotificationEmailAsHtml(client, event, {
               resolveUsers,
               resolveRoomInfo,
               styles,
@@ -628,7 +628,7 @@ describe("thread notification", () => {
           expected: expected2,
         },
       ])(
-        "should return unread mention as HTML with resolvers: $withResolvers",
+        "should return unread mention as html with resolvers: $withResolvers",
         async ({ promise, expected }) => {
           server.use(
             http.get(
@@ -654,7 +654,7 @@ describe("thread notification", () => {
       const { comment2, thread, inboxNotification, event } =
         makeUnreadRepliesDataset();
 
-      const expected1: ThreadNotificationEmailDataAsHTML = {
+      const expected1: ThreadNotificationEmailDataAsHtml = {
         type: "unreadReplies",
         comments: [
           {
@@ -676,7 +676,7 @@ describe("thread notification", () => {
         roomInfo: { name: ROOM_ID_TEST },
       };
 
-      const expected2: ThreadNotificationEmailDataAsHTML = {
+      const expected2: ThreadNotificationEmailDataAsHtml = {
         type: "unreadReplies",
         comments: [
           {
@@ -698,25 +698,25 @@ describe("thread notification", () => {
 
       it.each<{
         withResolvers: boolean;
-        promise: () => Promise<ThreadNotificationEmailDataAsHTML | null>;
-        expected: ThreadNotificationEmailDataAsHTML;
+        promise: () => Promise<ThreadNotificationEmailDataAsHtml | null>;
+        expected: ThreadNotificationEmailDataAsHtml;
       }>([
         {
           withResolvers: false,
-          promise: () => prepareThreadNotificationEmailAsHTML(client, event),
+          promise: () => prepareThreadNotificationEmailAsHtml(client, event),
           expected: expected1,
         },
         {
           withResolvers: true,
           promise: () =>
-            prepareThreadNotificationEmailAsHTML(client, event, {
+            prepareThreadNotificationEmailAsHtml(client, event, {
               resolveUsers,
               resolveRoomInfo,
             }),
           expected: expected2,
         },
       ])(
-        "should return unread replies as HTML with resolvers: $withResolvers",
+        "should return unread replies as html with resolvers: $withResolvers",
         async ({ promise, expected }) => {
           server.use(
             http.get(
@@ -739,7 +739,7 @@ describe("thread notification", () => {
     });
 
     describe("unread replies w/ custom styles design tokens", () => {
-      const styles: Partial<ConvertCommentBodyAsHTMLStyles> = {
+      const styles: Partial<ConvertCommentBodyAsHtmlStyles> = {
         paragraph: {
           fontSize: "16px",
         },
@@ -751,7 +751,7 @@ describe("thread notification", () => {
       const { comment2, thread, inboxNotification, event } =
         makeUnreadRepliesDataset();
 
-      const expected1: ThreadNotificationEmailDataAsHTML = {
+      const expected1: ThreadNotificationEmailDataAsHtml = {
         type: "unreadReplies",
         comments: [
           {
@@ -773,7 +773,7 @@ describe("thread notification", () => {
         roomInfo: { name: ROOM_ID_TEST },
       };
 
-      const expected2: ThreadNotificationEmailDataAsHTML = {
+      const expected2: ThreadNotificationEmailDataAsHtml = {
         type: "unreadReplies",
         comments: [
           {
@@ -795,13 +795,13 @@ describe("thread notification", () => {
 
       it.each<{
         withResolvers: boolean;
-        promise: () => Promise<ThreadNotificationEmailDataAsHTML | null>;
-        expected: ThreadNotificationEmailDataAsHTML;
+        promise: () => Promise<ThreadNotificationEmailDataAsHtml | null>;
+        expected: ThreadNotificationEmailDataAsHtml;
       }>([
         {
           withResolvers: false,
           promise: () =>
-            prepareThreadNotificationEmailAsHTML(client, event, {
+            prepareThreadNotificationEmailAsHtml(client, event, {
               styles,
             }),
           expected: expected1,
@@ -809,7 +809,7 @@ describe("thread notification", () => {
         {
           withResolvers: true,
           promise: () =>
-            prepareThreadNotificationEmailAsHTML(client, event, {
+            prepareThreadNotificationEmailAsHtml(client, event, {
               resolveUsers,
               resolveRoomInfo,
               styles,
@@ -817,7 +817,7 @@ describe("thread notification", () => {
           expected: expected2,
         },
       ])(
-        "should return unread replies as HTML with resolvers: $withResolvers",
+        "should return unread replies as html with resolvers: $withResolvers",
         async ({ promise, expected }) => {
           server.use(
             http.get(

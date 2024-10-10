@@ -1,11 +1,11 @@
 import React from "react";
 
 import type {
-  ConvertCommentBodyAsHTMLStyles,
+  ConvertCommentBodyAsHtmlStyles,
   ConvertCommentBodyAsReactComponents,
 } from "../comment-body";
 import {
-  convertCommentBodyAsHTML,
+  convertCommentBodyAsHtml,
   convertCommentBodyAsReact,
 } from "../comment-body";
 import {
@@ -19,10 +19,10 @@ import {
   resolveUsers,
 } from "./_helpers";
 
-describe("convert comment body as HTML", () => {
+describe("convert comment body as html", () => {
   describe("w/o users resolver", () => {
     it("should convert simple text elements", async () => {
-      const htmlBody = await convertCommentBodyAsHTML(commentBody1);
+      const htmlBody = await convertCommentBodyAsHtml(commentBody1);
       const expected =
         '<p style="font-size:14px;">What do you think of this team? 🤔</p>';
 
@@ -30,7 +30,7 @@ describe("convert comment body as HTML", () => {
     });
 
     it("should convert with italic and bold", async () => {
-      const htmlBody = await convertCommentBodyAsHTML(commentBody5);
+      const htmlBody = await convertCommentBodyAsHtml(commentBody5);
       const expected =
         '<p style="font-size:14px;"><strong style="font-weight:500;">Bold text</strong> and <em>italic text</em></p>';
 
@@ -38,7 +38,7 @@ describe("convert comment body as HTML", () => {
     });
 
     it("should convert with code and strikethrough", async () => {
-      const htmlBody = await convertCommentBodyAsHTML(commentBody6);
+      const htmlBody = await convertCommentBodyAsHtml(commentBody6);
       const expected =
         '<p style="font-size:14px;"><s>Strikethrough text</s> and <code style="font-family:ui-monospace, Menlo, Monaco, &quot;Cascadia Mono&quot;, &quot;Segoe UI Mono&quot;, &quot;Roboto Mono&quot;, &quot;Oxygen Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Source Code Pro&quot;, &quot;Fira Mono&quot;, &quot;Droid Sans Mono&quot;, &quot;Consolas&quot;, &quot;Courier New&quot;, monospace;background-color:rgba(0,0,0,0.05);border:solid 1px rgba(0,0,0,0.1);border-radius:4px;">code text</code></p>';
 
@@ -47,8 +47,8 @@ describe("convert comment body as HTML", () => {
 
     it("should convert with link", async () => {
       const [htmlBody1, htmlBody2] = await Promise.all([
-        convertCommentBodyAsHTML(commentBody4),
-        convertCommentBodyAsHTML(commentBody7),
+        convertCommentBodyAsHtml(commentBody4),
+        convertCommentBodyAsHtml(commentBody7),
       ]);
 
       const expected1 =
@@ -61,7 +61,7 @@ describe("convert comment body as HTML", () => {
     });
 
     it("should convert with user mention", async () => {
-      const htmlBody = await convertCommentBodyAsHTML(
+      const htmlBody = await convertCommentBodyAsHtml(
         buildCommentBodyWithMention({ mentionedUserId: "user-dracula" })
       );
       const expected =
@@ -73,7 +73,7 @@ describe("convert comment body as HTML", () => {
 
   describe("w/ users resolved", () => {
     it("should convert with a resolved user mention", async () => {
-      const htmlBody = await convertCommentBodyAsHTML(
+      const htmlBody = await convertCommentBodyAsHtml(
         buildCommentBodyWithMention({ mentionedUserId: "user-2" }),
         { resolveUsers }
       );
@@ -85,7 +85,7 @@ describe("convert comment body as HTML", () => {
   });
 
   describe("w/ custom styles", () => {
-    const styles: Partial<ConvertCommentBodyAsHTMLStyles> = {
+    const styles: Partial<ConvertCommentBodyAsHtmlStyles> = {
       paragraph: {
         fontSize: "16px",
       },
@@ -98,7 +98,7 @@ describe("convert comment body as HTML", () => {
     };
 
     it("should convert mentions", async () => {
-      const htmlBody = await convertCommentBodyAsHTML(
+      const htmlBody = await convertCommentBodyAsHtml(
         buildCommentBodyWithMention({ mentionedUserId: "user-dracula" }),
         { styles, resolveUsers }
       );
@@ -109,7 +109,7 @@ describe("convert comment body as HTML", () => {
     });
 
     it("should convert links", async () => {
-      const htmlBody = await convertCommentBodyAsHTML(commentBody4, { styles });
+      const htmlBody = await convertCommentBodyAsHtml(commentBody4, { styles });
       const expected =
         '<p style="font-size:16px;">I agree 😍 it completes well this guide: <a href="https://www.liveblocks.io" target="_blank" rel="noopener noreferrer" style="text-underline-offset:4px;">https://www.liveblocks.io</a></p>';
 

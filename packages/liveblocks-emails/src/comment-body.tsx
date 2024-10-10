@@ -219,7 +219,7 @@ export async function convertCommentBodyAsReact(
   );
 }
 
-export type ConvertCommentBodyAsHTMLStyles = {
+export type ConvertCommentBodyAsHtmlStyles = {
   /**
    * The default inline CSS styles used to display paragraphs.
    */
@@ -242,7 +242,7 @@ export type ConvertCommentBodyAsHTMLStyles = {
   link: CSSProperties;
 };
 
-const baseStyles: ConvertCommentBodyAsHTMLStyles = {
+const baseStyles: ConvertCommentBodyAsHtmlStyles = {
   paragraph: {
     fontSize: "14px",
   },
@@ -264,12 +264,12 @@ const baseStyles: ConvertCommentBodyAsHTMLStyles = {
   },
 };
 
-export type ConvertCommentBodyAsHTMLOptions<U extends BaseUserMeta = DU> = {
+export type ConvertCommentBodyAsHtmlOptions<U extends BaseUserMeta = DU> = {
   /**
-   * The styles used to customize the html elements in the resulting HTML safe string.
+   * The styles used to customize the html elements in the resulting html safe string.
    * Each styles has priority over the base styles inherited.
    */
-  styles?: Partial<ConvertCommentBodyAsHTMLStyles>;
+  styles?: Partial<ConvertCommentBodyAsHtmlStyles>;
   /**
    * A function that returns user info from user IDs.
    */
@@ -279,12 +279,12 @@ export type ConvertCommentBodyAsHTMLOptions<U extends BaseUserMeta = DU> = {
 };
 
 /**
- * Convert a `CommentBody` into an HTML safe string
+ * Convert a `CommentBody` into an html safe string
  * with inline css styles
  */
-export async function convertCommentBodyAsHTML(
+export async function convertCommentBodyAsHtml(
   body: CommentBody,
-  options?: ConvertCommentBodyAsHTMLOptions<BaseUserMeta>
+  options?: ConvertCommentBodyAsHtmlOptions<BaseUserMeta>
 ): Promise<string> {
   const styles = { ...baseStyles, ...options?.styles };
 

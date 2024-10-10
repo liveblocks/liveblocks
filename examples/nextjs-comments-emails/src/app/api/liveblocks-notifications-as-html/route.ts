@@ -1,5 +1,5 @@
 import sendgridMail from "@sendgrid/mail";
-import { prepareThreadNotificationEmailAsHTML } from "@liveblocks/emails";
+import { prepareThreadNotificationEmailAsHtml } from "@liveblocks/emails";
 import {
   isThreadNotificationEvent,
   WebhookHandler,
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
   if (isThreadNotificationEvent(event)) {
     let emailData;
     try {
-      emailData = await prepareThreadNotificationEmailAsHTML(
+      emailData = await prepareThreadNotificationEmailAsHtml(
         liveblocks,
         event,
         {

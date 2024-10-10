@@ -10,19 +10,19 @@ export type {
   CommentBodyMentionComponentProps,
   CommentBodyParagraphComponentProps,
   CommentBodyTextComponentProps,
-  ConvertCommentBodyAsHTMLStyles,
+  ConvertCommentBodyAsHtmlStyles,
   ConvertCommentBodyAsReactComponents,
 } from "./comment-body";
 export type {
-  CommentEmailAsHTMLData,
+  CommentEmailAsHtmlData,
   CommentEmailAsReactData,
-  PrepareThreadNotificationEmailAsHTMLOptions,
+  PrepareThreadNotificationEmailAsHtmlOptions,
   PrepareThreadNotificationEmailAsReactOptions,
   ResolveRoomInfoArgs,
-  ThreadNotificationEmailDataAsHTML,
+  ThreadNotificationEmailDataAsHtml,
   ThreadNotificationEmailDataAsReact,
 } from "./thread-notification";
 export {
-  prepareThreadNotificationEmailAsHTML,
+  prepareThreadNotificationEmailAsHtml,
   prepareThreadNotificationEmailAsReact,
 } from "./thread-notification";
