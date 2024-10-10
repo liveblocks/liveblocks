@@ -66,9 +66,24 @@ export class HttpClient {
     this._authCallback = authCallback;
   }
 
+  // ------------------------------------------------------------------
+  // Public methods
+  // ------------------------------------------------------------------
+
   /**
    * Constructs and makes the HTTP request, but does not handle the response.
+   *
+   * This is what .fetch() does:    👈 This method!
+   *   1. Set Content-Type header
+   *   2. Set Authorization header
+   *   3. Call the callback to obtain the `authValue` to use in the Authorization header
+   *
+   * This is what .fetchJson() does ON TOP of that:
+   *   4. Parse response body as Json
+   *   5. ...but silently return `{}` if that parsing fails
+   *   6. Throw HttpError if response is an error
    */
+  // XXX Ultimately, might be nice to make this a private method?
   public async fetch(
     endpoint: URLSafeString,
     options?: RequestInit,
@@ -95,27 +110,27 @@ export class HttpClient {
     });
   }
 
-  // ------------------------------------------------------------------
-  // XXX Temporary methods
-  // ------------------------------------------------------------------
-
-  // XXX Try to DRY up this method with the other fetchJson_for* methods in here
-  //
-  // This will:
-  // 1. Set Content-Type header
-  // 2. Set Authorization header
-  // 3. Call the callback to obtain the `authValue` to use in the Authorization header
-  // 4. Parse response body as Json
-  // 5. ...but silently return `{}` if that parsing fails
-  // 6. Throw NotificationsApiError if response is an error
-  public async fetchJson_forNotifications<T extends JsonObject>(
+  /**
+   * Constructs, makes the HTTP request, and handles the response by parsing
+   * JSON and/or throwing an HttpError if it failed.
+   *
+   * This is what .fetch() does:
+   *   1. Set Content-Type header
+   *   2. Set Authorization header
+   *   3. Call the callback to obtain the `authValue` to use in the Authorization header
+   *
+   * This is what .fetchJson() does ON TOP of that:   👈 This method!
+   *   4. Parse response body as Json
+   *   5. ...but silently return `{}` if that parsing fails (🤔)
+   *   6. Throw HttpError if response is an error
+   */
+  public async fetchJson<T extends JsonObject>(
     endpoint: URLSafeString,
     options?: RequestInit,
     params?: QueryParams
   ): Promise<T> {
     const response = await this.fetch(endpoint, options, params);
 
-    // XXX Maybe DRY up and transfer this error handling to HttpClient's fetch method too?
     if (!response.ok) {
       if (response.status >= 400 && response.status < 600) {
         let error: HttpError;
@@ -139,49 +154,4 @@ export class HttpClient {
     }
     return body;
   }
-
-  // XXX Try to DRY up this method with the other fetchJson_for* methods in here
-  //
-  // This will:
-  // 1. Set Content-Type header
-  // 2. Set Authorization header
-  // 3. Call the callback to obtain the `authValue` to use in the Authorization header
-  // 4. Parse response body as Json
-  // 5. ...but silently return `{}` if that parsing fails
-  // 6. Throw CommentsApiError if response is an error
-  public async fetchJson_forComments<T extends JsonObject>(
-    endpoint: URLSafeString,
-    options?: RequestInit,
-    params?: QueryParams
-  ): Promise<T> {
-    const response = await this.fetch(endpoint, options, params);
-
-    // XXX Maybe DRY up and transfer this error handling to HttpClient's fetch method too?
-    if (!response.ok) {
-      if (response.status >= 400 && response.status < 600) {
-        let error: HttpError;
-        try {
-          const errorBody = (await response.json()) as { message: string };
-          error = new HttpError(errorBody.message, response.status, errorBody);
-        } catch {
-          error = new HttpError(response.statusText, response.status);
-        }
-        throw error;
-      }
-    }
-
-    let body;
-    try {
-      body = (await response.json()) as T;
-    } catch {
-      // XXX This looks wrong 🤔 !
-      // XXX We should be throwing this error if something fails to parse.
-      body = {} as T;
-    }
-    return body;
-  }
-
-  // ------------------------------------------------------------------
-  // Public methods
-  // ------------------------------------------------------------------
 }

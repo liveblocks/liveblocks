@@ -2933,7 +2933,7 @@ export function createRoom<
     body: CommentBody;
     attachmentIds?: string[];
   }) {
-    const thread = await httpClient2.fetchJson_forComments<ThreadDataPlain<M>>(
+    const thread = await httpClient2.fetchJson<ThreadDataPlain<M>>(
       url`/v2/c/rooms/${config.roomId}/threads`,
       {
         method: "POST",
@@ -2953,7 +2953,7 @@ export function createRoom<
   }
 
   async function deleteThread(threadId: string) {
-    await httpClient2.fetchJson_forComments(
+    await httpClient2.fetchJson(
       url`/v2/c/rooms/${config.roomId}/threads/${threadId}`,
       { method: "DELETE" }
     );
@@ -2967,7 +2967,7 @@ export function createRoom<
     metadata: Patchable<M>;
     threadId: string;
   }) {
-    return await httpClient2.fetchJson_forComments<M>(
+    return await httpClient2.fetchJson<M>(
       url`/v2/c/rooms/${config.roomId}/threads/${threadId}/metadata`,
       {
         method: "POST",
@@ -2977,14 +2977,14 @@ export function createRoom<
   }
 
   async function markThreadAsResolved(threadId: string) {
-    await httpClient2.fetchJson_forComments(
+    await httpClient2.fetchJson(
       url`/v2/c/rooms/${config.roomId}/threads/${threadId}/mark-as-resolved`,
       { method: "POST" }
     );
   }
 
   async function markThreadAsUnresolved(threadId: string) {
-    await httpClient2.fetchJson_forComments(
+    await httpClient2.fetchJson(
       url`/v2/c/rooms/${config.roomId}/threads/${threadId}/mark-as-unresolved`,
       { method: "POST" }
     );
@@ -3001,7 +3001,7 @@ export function createRoom<
     body: CommentBody;
     attachmentIds?: string[];
   }) {
-    const comment = await httpClient2.fetchJson_forComments<CommentDataPlain>(
+    const comment = await httpClient2.fetchJson<CommentDataPlain>(
       url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments`,
       {
         method: "POST",
@@ -3027,7 +3027,7 @@ export function createRoom<
     body: CommentBody;
     attachmentIds?: string[];
   }) {
-    const comment = await httpClient2.fetchJson_forComments<CommentDataPlain>(
+    const comment = await httpClient2.fetchJson<CommentDataPlain>(
       url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}`,
       {
         method: "POST",
@@ -3049,7 +3049,7 @@ export function createRoom<
     threadId: string;
     commentId: string;
   }) {
-    await httpClient2.fetchJson_forComments(
+    await httpClient2.fetchJson(
       url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}`,
       { method: "DELETE" }
     );
@@ -3064,14 +3064,13 @@ export function createRoom<
     commentId: string;
     emoji: string;
   }) {
-    const reaction =
-      await httpClient2.fetchJson_forComments<CommentUserReactionPlain>(
-        url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}/reactions`,
-        {
-          method: "POST",
-          body: JSON.stringify({ emoji }),
-        }
-      );
+    const reaction = await httpClient2.fetchJson<CommentUserReactionPlain>(
+      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}/reactions`,
+      {
+        method: "POST",
+        body: JSON.stringify({ emoji }),
+      }
+    );
 
     return convertToCommentUserReaction(reaction);
   }
@@ -3085,7 +3084,7 @@ export function createRoom<
     commentId: string;
     emoji: string;
   }) {
-    await httpClient2.fetchJson_forComments<CommentDataPlain>(
+    await httpClient2.fetchJson<CommentDataPlain>(
       url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}/reactions/${emoji}`,
       { method: "DELETE" }
     );
@@ -3135,7 +3134,7 @@ export function createRoom<
       // If the file is small enough, upload it in a single request
       return autoRetry(
         () =>
-          httpClient2.fetchJson_forComments<CommentAttachment>(
+          httpClient2.fetchJson<CommentAttachment>(
             url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/upload/${encodeURIComponent(attachment.name)}`,
             {
               method: "PUT",
@@ -3161,7 +3160,7 @@ export function createRoom<
       // Create a multi-part upload
       const createMultiPartUpload = await autoRetry(
         () =>
-          httpClient2.fetchJson_forComments<{
+          httpClient2.fetchJson<{
             uploadId: string;
             key: string;
           }>(
@@ -3202,7 +3201,7 @@ export function createRoom<
             uploadedPartsPromises.push(
               autoRetry(
                 () =>
-                  httpClient2.fetchJson_forComments<{
+                  httpClient2.fetchJson<{
                     partNumber: number;
                     etag: string;
                   }>(
@@ -3233,7 +3232,7 @@ export function createRoom<
           (a, b) => a.partNumber - b.partNumber
         );
 
-        return httpClient2.fetchJson_forComments<CommentAttachment>(
+        return httpClient2.fetchJson<CommentAttachment>(
           url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/multipart/${uploadId}/complete`,
           {
             method: "POST",
@@ -3265,7 +3264,7 @@ export function createRoom<
   }
 
   async function getAttachmentUrls(attachmentIds: string[]) {
-    const { urls } = await httpClient2.fetchJson_forComments<{
+    const { urls } = await httpClient2.fetchJson<{
       urls: (string | null)[];
     }>(url`/v2/c/rooms/${config.roomId}/attachments/presigned-urls`, {
       method: "POST",
@@ -3299,7 +3298,7 @@ export function createRoom<
     endpoint: URLSafeString,
     options?: RequestInit
   ): Promise<T> {
-    return await httpClient2.fetchJson_forNotifications<T>(endpoint, options);
+    return await httpClient2.fetchJson<T>(endpoint, options);
   }
 
   function getNotificationSettings(): Promise<RoomNotificationSettings> {
