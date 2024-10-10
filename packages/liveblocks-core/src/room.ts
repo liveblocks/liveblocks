@@ -3336,7 +3336,7 @@ export function createRoom<
     endpoint: URLSafeString,
     options?: RequestInit
   ): Promise<T> {
-    return await httpClient1.fetchJson_forNotifications_variant2<T>(
+    return await httpClient2.fetchJson_forNotifications_variant2<T>(
       endpoint,
       options
     );
