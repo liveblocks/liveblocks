@@ -59,6 +59,7 @@ import {
   compact,
   deepClone,
   memoizeOnSuccess,
+  raise,
   tryParseJson,
 } from "./lib/utils";
 import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
@@ -1589,40 +1590,30 @@ export function createRoom<
     /* istanbul ignore next */ globalThis.fetch?.bind(globalThis);
 
   //
-  // The difference between http client 1 and 2 only is that client 1 will not
-  // use an auth callback.
+  // There are effectively two "clients" making requests.
   //
-  // - httpClient1 will force you to always pass an explicit `authValue` in
-  //   each fetch call
-  // - httpClient2 won't need an explicit `authValue` for each fetch call.
-  //   Instead it will use the configured callback.
+  // When making calls with HTTP client 1, it will try to read the current
+  // token from the active WebSocket connection to the room.
   //
-  const httpClient1 = new HttpClient(config.baseUrl, fetchPolyfill);
+  // When making calls with HTTP client 2, it will always call
+  // `delegates.authenticate()` to obtain the auth header.
+  //
+  const httpClient1 = new HttpClient(config.baseUrl, fetchPolyfill, () =>
+    Promise.resolve(managedSocket.authValue ?? raise("Not authorized"))
+  );
   const httpClient2 = new HttpClient(config.baseUrl, fetchPolyfill, () =>
     // TODO: Use the right scope
     delegates.authenticate()
   );
 
-  async function streamFetch(authValue: AuthValue, roomId: string) {
-    return httpClient1.fetchResponse_forClientApi(
-      url`/v2/c/rooms/${roomId}/storage`,
-      authValue
-    );
-  }
-
   async function httpPostToRoom(
     endpoint: "/send-message" | "/text-metadata",
     body: JsonObject
   ) {
-    if (!managedSocket.authValue) {
-      throw new Error("Not authorized");
-    }
-
     return httpClient1.fetchResponse_forClientApi(
       endpoint === "/send-message"
         ? url`/v2/c/rooms/${config.roomId}/send-message`
         : url`/v2/c/rooms/${config.roomId}/text-metadata`,
-      managedSocket.authValue,
       {
         method: "POST",
         body: JSON.stringify(body),
@@ -1631,13 +1622,8 @@ export function createRoom<
   }
 
   async function createTextMention(userId: string, mentionId: string) {
-    if (!managedSocket.authValue) {
-      throw new Error("Not authorized");
-    }
-
     return httpClient1.fetchResponse_forClientApi(
       url`/v2/c/rooms/${config.roomId}/text-mentions`,
-      managedSocket.authValue,
       {
         method: "POST",
         body: JSON.stringify({
@@ -1649,24 +1635,15 @@ export function createRoom<
   }
 
   async function deleteTextMention(mentionId: string) {
-    if (!managedSocket.authValue) {
-      throw new Error("Not authorized");
-    }
-
     return httpClient1.fetchResponse_forClientApi(
       url`/v2/c/rooms/${config.roomId}/text-mentions/${mentionId}`,
-      managedSocket.authValue,
-      {
-        method: "DELETE",
-      }
+      { method: "DELETE" }
     );
   }
 
   async function reportTextEditor(type: "lexical", rootKey: string) {
-    const authValue = await delegates.authenticate();
-    return httpClient1.fetchResponse_forClientApi(
+    return httpClient2.fetchResponse_forClientApi(
       url`/v2/c/rooms/${config.roomId}/text-metadata`,
-      authValue,
       {
         method: "POST",
         body: JSON.stringify({ type, rootKey }),
@@ -1675,26 +1652,20 @@ export function createRoom<
   }
 
   async function listTextVersions() {
-    const authValue = await delegates.authenticate();
-    return httpClient1.fetchResponse_forClientApi(
-      url`/v2/c/rooms/${config.roomId}/versions`,
-      authValue
+    return httpClient2.fetchResponse_forClientApi(
+      url`/v2/c/rooms/${config.roomId}/versions`
     );
   }
 
   async function getTextVersion(versionId: string) {
-    const authValue = await delegates.authenticate();
-    return httpClient1.fetchResponse_forClientApi(
-      url`/v2/c/rooms/${config.roomId}/y-version/${versionId}`,
-      authValue
+    return httpClient2.fetchResponse_forClientApi(
+      url`/v2/c/rooms/${config.roomId}/y-version/${versionId}`
     );
   }
 
   async function createTextVersion() {
-    const authValue = await delegates.authenticate();
-    return httpClient1.fetchResponse_forClientApi(
+    return httpClient2.fetchResponse_forClientApi(
       url`/v2/c/rooms/${config.roomId}/version`,
-      authValue,
       { method: "POST" }
     );
   }
@@ -2531,11 +2502,11 @@ export function createRoom<
   }
 
   async function streamStorage() {
-    if (!managedSocket.authValue) {
-      return;
-    }
     // TODO: Handle potential race conditions where the room get disconnected while the request is pending
-    const result = await streamFetch(managedSocket.authValue, config.roomId);
+    if (!managedSocket.authValue) return;
+    const result = await httpClient1.fetchResponse_forClientApi(
+      url`/v2/c/rooms/${config.roomId}/storage`
+    );
     const items = (await result.json()) as IdTuple<SerializedCrdt>[];
     processInitialStorage({ type: ServerMsgCode.INITIAL_STORAGE_STATE, items });
   }

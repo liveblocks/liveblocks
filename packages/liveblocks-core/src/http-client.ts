@@ -59,13 +59,13 @@ export function getBearerTokenFromAuthValue(authValue: AuthValue): string {
 //
 export class HttpClient {
   private _baseUrl: string;
-  private _authCallback?: () => Promise<AuthValue>;
+  private _authCallback: () => Promise<AuthValue>;
   private _fetchPolyfill: typeof fetch;
 
   constructor(
     baseUrl: string,
     fetchPolyfill: typeof fetch,
-    authCallback?: () => Promise<AuthValue>
+    authCallback: () => Promise<AuthValue>
   ) {
     this._baseUrl = baseUrl;
     this._fetchPolyfill = fetchPolyfill;
@@ -78,24 +78,13 @@ export class HttpClient {
   public async fetch(
     endpoint: URLSafeString,
     options?: RequestInit,
-    params?: QueryParams,
-    authValue?: AuthValue
+    params?: QueryParams
   ): Promise<Response> {
     if (!endpoint.startsWith("/v2/c/")) {
       raise("This client can only be used to make /v2/c/* requests");
     }
 
     const url = urljoin(this._baseUrl, endpoint, params);
-
-    if (!authValue) {
-      if (!this._authCallback) {
-        raise(
-          "No auth value was provided, and no auth callback was set up for this HttpClient instance. Cannot make this request."
-        );
-      }
-      authValue = await this._authCallback();
-    }
-
     return await this._fetchPolyfill(url, {
       ...options,
       headers: {
@@ -106,7 +95,7 @@ export class HttpClient {
         ...options?.headers,
 
         // Cannot be overriden by custom headers
-        Authorization: `Bearer ${getBearerTokenFromAuthValue(authValue)}`,
+        Authorization: `Bearer ${getBearerTokenFromAuthValue(await this._authCallback())}`,
         "X-LB-Client": PKG_VERSION || "dev",
       },
     });
@@ -280,11 +269,10 @@ export class HttpClient {
   // 5. ❗NOT Parse response body as JSON
   public async fetchResponse_forClientApi(
     endpoint: URLSafeString,
-    authValue: AuthValue,
     options?: RequestInit,
     params?: QueryParams
   ): Promise<Response> {
-    return this.fetch(endpoint, options, params, authValue);
+    return this.fetch(endpoint, options, params);
   }
 
   // XXX Try to DRY up this method with the other fetch*_for* methods in here
