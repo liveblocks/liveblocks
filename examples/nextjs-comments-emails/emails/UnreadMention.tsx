@@ -68,7 +68,7 @@ export default function UnreadMentionEmail(props: UnreadMentionEmailProps) {
       <Header {...company} />
       <Section>
         <Headline className="mb-4" parts={headlineParts} />
-        <Comment {...comment} />
+        <Comment {...comment} isHighlighted />
       </Section>
     </Layout>
   );
