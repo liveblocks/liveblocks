@@ -209,15 +209,19 @@ export const makeThread = ({
 }: {
   threadId: string;
   comments?: CommentData[];
-}): ThreadData => ({
-  id: threadId,
-  type: "thread",
-  roomId: ROOM_ID_TEST,
-  metadata: {},
-  resolved: false,
-  createdAt: comments[0]?.createdAt ?? new Date(),
-  comments,
-});
+}): ThreadData => {
+  const at = comments[0]?.createdAt ?? new Date();
+  return {
+    id: threadId,
+    type: "thread",
+    roomId: ROOM_ID_TEST,
+    metadata: {},
+    resolved: false,
+    createdAt: at,
+    updatedAt: at,
+    comments,
+  };
+};
 
 export const makeThreadInboxNotification = ({
   threadId,
