@@ -32,21 +32,6 @@ export function getBearerTokenFromAuthValue(authValue: AuthValue): string {
  * Liveblocks Room instances internally to talk to our client-only REST API
  * backend.
  */
-//
-// XXX This class should be used to replace all of the following:
-// XXX
-// XXX From src/notifications.ts:
-// XXX - ✅ fetchJson + createNotificationsApi
-// XXX                             (!! Uses `comments:read` permissions!
-// XXX                               + Updates `currentUserIdStore` as a side effect!)
-// XXX
-// XXX From src/room.ts:
-// XXX - ✅ fetchClientApi         (!! Some cases use the current WebSocket's auth token (whatever it is)...
-// XXX                              ...and some cases use `room:read` + `roomId` permissions!)
-// XXX - ✅ fetchCommentsApi       (!! Uses `room:read` + `roomId` permissions!)
-// XXX - ✅ fetchCommentsJson      (!! Uses `room:read` + `roomId` permissions!)
-// XXX - ✅ fetchNotificationsJson (!! Uses `room:read` + `roomId` permissions!)
-//
 export class HttpClient {
   private _baseUrl: string;
   private _authCallback: () => Promise<AuthValue>;
@@ -79,7 +64,7 @@ export class HttpClient {
    *   5. ...but silently return `{}` if that parsing fails
    *   6. Throw HttpError if response is an error
    */
-  // XXX Ultimately, might be nice to make this a private method?
+  // XXX Ultimately, might be nice to make this a private method? It might be much nicer if this method would _always_ deal with the JSON parsing.
   public async fetch(
     endpoint: URLSafeString,
     options?: RequestInit,

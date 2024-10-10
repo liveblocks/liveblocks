@@ -604,7 +604,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     clientOptions.polyfills?.fetch ||
     /* istanbul ignore next */ globalThis.fetch?.bind(globalThis);
 
-  const httpClientLike = createNotificationsApi({
+  const notificationsAPI = createNotificationsApi({
     baseUrl,
     fetchPolyfill,
     authManager,
@@ -656,10 +656,7 @@ export function createClient<U extends BaseUserMeta = DU>(
 
       logout,
 
-      // XXX Eventually, once this is actually using the HttpClient class,
-      // "just" expose a reference to it here, instead of spreading all of its
-      // methods
-      ...httpClientLike,
+      ...notificationsAPI,
 
       // Internal
       [kInternal]: {
@@ -672,9 +669,10 @@ export function createClient<U extends BaseUserMeta = DU>(
         },
 
         // "All" threads (= "user" threads)
-        getUserThreads_experimental: httpClientLike.getUserThreads_experimental,
+        getUserThreads_experimental:
+          notificationsAPI.getUserThreads_experimental,
         getUserThreadsSince_experimental:
-          httpClientLike.getUserThreadsSince_experimental,
+          notificationsAPI.getUserThreadsSince_experimental,
       },
     },
     kInternal,
