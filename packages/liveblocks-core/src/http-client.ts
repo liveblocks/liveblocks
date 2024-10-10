@@ -15,10 +15,6 @@ export class HttpError extends Error {
   }
 }
 
-// TODO Deprecate these error aliases
-export const CommentsApiError = HttpError;
-export const NotificationsApiError = HttpError;
-
 export function getBearerTokenFromAuthValue(authValue: AuthValue): string {
   if (authValue.type === "public") {
     return authValue.publicApiKey;

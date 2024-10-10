@@ -76,11 +76,7 @@ export type {
   DU,
   KDAD,
 } from "./globals/augmentation";
-export {
-  CommentsApiError,
-  HttpError,
-  NotificationsApiError,
-} from "./http-client";
+export { HttpError } from "./http-client";
 export {
   legacy_patchImmutableObject,
   lsonToJson,
@@ -304,3 +300,14 @@ export type { DevTools };
 // Store
 export type { Store } from "./lib/create-store";
 export { createStore } from "./lib/create-store";
+
+// Deprecated APIs
+
+/**
+ * @deprecated Use HttpError instead.
+ */
+export const CommentsApiError = HttpError;
+/**
+ * @deprecated Use HttpError instead.
+ */
+export const NotificationsApiError = HttpError;
