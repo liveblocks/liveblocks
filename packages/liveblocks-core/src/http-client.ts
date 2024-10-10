@@ -45,10 +45,6 @@ export function getBearerTokenFromAuthValue(authValue: AuthValue): string {
 //
 // XXX This class should be used to replace all of the following:
 // XXX
-// XXX From src/client.ts:
-// XXX - fetchRoomApi              (!! Uses `room:read` + `roomId` permissions!)
-// XXX   🤔🤔🤔 Check with Nimesh - is this indeed now gone???
-// XXX
 // XXX From src/notifications.ts:
 // XXX - ✅ fetchJson + createNotificationsApi
 // XXX                             (!! Uses `comments:read` permissions!
