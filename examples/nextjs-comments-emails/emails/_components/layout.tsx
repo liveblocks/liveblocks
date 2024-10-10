@@ -21,7 +21,7 @@ export function Layout({
       <Preview>{preview}</Preview>
       {/**
        * This component wraps emails with `TailwindCSS`.
-       * Import shared config here to make common tw classes usable at email's html generation
+       * Import your shared config here to make common tw classes usable at email's html generation
        * and usable in your code editor.
        */}
       <Tailwind
