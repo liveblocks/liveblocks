@@ -3085,7 +3085,7 @@ export function createRoom<
     commentId: string;
     emoji: string;
   }) {
-    await httpClient2.fetchJson_forComments<CommentData>(
+    await httpClient2.fetchJson_forComments<CommentDataPlain>(
       url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}/reactions/${emoji}`,
       { method: "DELETE" }
     );

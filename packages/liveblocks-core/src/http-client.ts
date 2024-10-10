@@ -165,7 +165,7 @@ export class HttpClient {
   // 4. Parse response body as Json
   // 5. ...but silently return `{}` if that parsing fails
   // 6. Throw CommentsApiError if response is an error
-  public async fetchJson_forComments<T>(
+  public async fetchJson_forComments<T extends JsonObject>(
     endpoint: URLSafeString,
     options?: RequestInit,
     params?: QueryParams
