@@ -631,7 +631,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
         // If the error is a 403 Forbidden error, we do not want to keep retrying
         if (err instanceof NotificationsApiError && err.status === 403) {
           throw new StopRetrying(
-            "403 Forbidden: Stopping further retry attempts."
+            "403 Forbidden: Please check your permissions and try again."
           );
         }
 
@@ -1481,7 +1481,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
         // If the error is a 403 Forbidden error, we do not want to keep retrying
         if (err instanceof CommentsApiError && err.status === 403) {
           throw new StopRetrying(
-            "403 Forbidden: Stopping further retry attempts."
+            "403 Forbidden: Please check your permissions and try again."
           );
         }
         throw err;
@@ -1571,7 +1571,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       } catch (err) {
         if (err instanceof NotificationsApiError && err.status === 403) {
           throw new StopRetrying(
-            "403 Forbidden: Stopping further retry attempts."
+            "403 Forbidden: Please check your permissions and try again."
           );
         }
         throw err;

@@ -4,6 +4,11 @@
 
 - Fix type definition of `ThreadData`: `updatedAt` is always set
 
+### `@liveblocks/react`
+
+- Stop automatic retry attempts if a 403 Forbidden error is received while
+  loading inbox notifications, user threads, or room threads.
+
 ### `@liveblocks/react-ui`
 
 - When `Composer` is disabled, its actions are now also disabled as expected.
