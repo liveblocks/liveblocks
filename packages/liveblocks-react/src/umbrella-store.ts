@@ -21,6 +21,7 @@ import type {
 } from "@liveblocks/core";
 import {
   autoRetry,
+  CommentsApiError,
   compactObject,
   console,
   createStore,
@@ -30,6 +31,7 @@ import {
   mapValues,
   nanoid,
   nn,
+  NotificationsApiError,
   StopRetrying,
   stringify,
 } from "@liveblocks/core";
@@ -647,20 +649,32 @@ export class UmbrellaStore<M extends BaseMetadata> {
         );
       }
 
-      const result = await client.getInboxNotifications({ cursor });
+      try {
+        const result = await client.getInboxNotifications({ cursor });
 
-      this.updateThreadsAndNotifications(
-        result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
-        result.inboxNotifications
-      );
+        this.updateThreadsAndNotifications(
+          result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
+          result.inboxNotifications
+        );
 
-      // We initialize the `_lastRequestedNotificationsAt` date using the server timestamp after we've loaded the first page of inbox notifications.
-      if (this._notificationsLastRequestedAt === null) {
-        this._notificationsLastRequestedAt = result.requestedAt;
+        // We initialize the `_lastRequestedNotificationsAt` date using the server timestamp after we've loaded the first page of inbox notifications.
+        if (this._notificationsLastRequestedAt === null) {
+          this._notificationsLastRequestedAt = result.requestedAt;
+        }
+
+        const nextCursor = result.nextCursor;
+        return nextCursor;
+      } catch (err) {
+        // If the error is a 403 Forbidden error, we do not want to keep retrying
+        if (err instanceof NotificationsApiError && err.status === 403) {
+          throw new StopRetrying(
+            "403 Forbidden: Stopping further retry attempts."
+          );
+        }
+
+        // All other instance of errors, we simply throw
+        throw err;
       }
-
-      const nextCursor = result.nextCursor;
-      return nextCursor;
     };
     this._notifications = new PaginatedResource(inboxFetcher);
     this._notifications.observable.subscribe(() =>
@@ -1410,29 +1424,42 @@ export class UmbrellaStore<M extends BaseMetadata> {
         );
       }
 
-      const result = await room.getThreads({ cursor, query });
-      this.updateThreadsAndNotifications(
-        result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
-        result.inboxNotifications
-      );
+      try {
+        const result = await room.getThreads({ cursor, query });
+        this.updateThreadsAndNotifications(
+          result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
+          result.inboxNotifications
+        );
 
-      const lastRequestedAt =
-        this._roomThreadsLastRequestedAtByRoom.get(roomId);
+        const lastRequestedAt =
+          this._roomThreadsLastRequestedAtByRoom.get(roomId);
 
-      /**
-       * We set the `lastRequestedAt` value for the room to the timestamp returned by the current request if:
-       * 1. The `lastRequestedAt` value for the room has not been set
-       * OR
-       * 2. The `lastRequestedAt` value for the room is older than the timestamp returned by the current request
-       */
-      if (
-        lastRequestedAt === undefined ||
-        lastRequestedAt > result.requestedAt
-      ) {
-        this._roomThreadsLastRequestedAtByRoom.set(roomId, result.requestedAt);
+        /**
+         * We set the `lastRequestedAt` value for the room to the timestamp returned by the current request if:
+         * 1. The `lastRequestedAt` value for the room has not been set
+         * OR
+         * 2. The `lastRequestedAt` value for the room is older than the timestamp returned by the current request
+         */
+        if (
+          lastRequestedAt === undefined ||
+          lastRequestedAt > result.requestedAt
+        ) {
+          this._roomThreadsLastRequestedAtByRoom.set(
+            roomId,
+            result.requestedAt
+          );
+        }
+
+        return result.nextCursor;
+      } catch (err) {
+        // If the error is a 403 Forbidden error, we do not want to keep retrying
+        if (err instanceof CommentsApiError && err.status === 403) {
+          throw new StopRetrying(
+            "403 Forbidden: Stopping further retry attempts."
+          );
+        }
+        throw err;
       }
-
-      return result.nextCursor;
     };
 
     const queryKey = makeRoomThreadsQueryKey(roomId, query);
@@ -1497,21 +1524,32 @@ export class UmbrellaStore<M extends BaseMetadata> {
         );
       }
 
-      const result = await this._client[kInternal].getUserThreads_experimental({
-        cursor,
-        query,
-      });
-      this.updateThreadsAndNotifications(
-        result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
-        result.inboxNotifications
-      );
+      try {
+        const result = await this._client[
+          kInternal
+        ].getUserThreads_experimental({
+          cursor,
+          query,
+        });
+        this.updateThreadsAndNotifications(
+          result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
+          result.inboxNotifications
+        );
 
-      // We initialize the `_userThreadsLastRequestedAt` date using the server timestamp after we've loaded the first page of inbox notifications.
-      if (this._userThreadsLastRequestedAt === null) {
-        this._userThreadsLastRequestedAt = result.requestedAt;
+        // We initialize the `_userThreadsLastRequestedAt` date using the server timestamp after we've loaded the first page of inbox notifications.
+        if (this._userThreadsLastRequestedAt === null) {
+          this._userThreadsLastRequestedAt = result.requestedAt;
+        }
+
+        return result.nextCursor;
+      } catch (err) {
+        if (err instanceof NotificationsApiError && err.status === 403) {
+          throw new StopRetrying(
+            "403 Forbidden: Stopping further retry attempts."
+          );
+        }
+        throw err;
       }
-
-      return result.nextCursor;
     };
 
     let paginatedResource = this._userThreads.get(queryKey);
