@@ -221,28 +221,6 @@ export function makeVersionsQueryKey(roomId: string) {
 }
 
 /**
- * @private Do not rely on this internal API.
- */
-// TODO This helper should ideally not have to be exposed at the package level!
-// TODO It's currently used by react-lexical though.
-export function selectThreads<M extends BaseMetadata>(
-  db: ReadonlyThreadDB<M>,
-  options: {
-    roomId: string | null;
-    query?: ThreadsQuery<M>;
-    orderBy:
-      | "age" // = default
-      | "last-update";
-  }
-): ThreadData<M>[] {
-  return db.findMany(
-    options.roomId ?? undefined,
-    options.query ?? {},
-    options.orderBy === "age" ? "asc" : "desc"
-  );
-}
-
-/**
  * Like Promise<T>, except it will have a synchronously readable `status`
  * field, indicating the status of the promise.
  * This is compatible with React's `use()` promises, hence the name.
@@ -677,15 +655,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return asyncResult;
     }
 
-    // VINCENT - Verify performance does not become an issue as `selectThread` is an expensive operation
-    const threads = selectThreads(
-      // VINCENT - This is ugly
-      this.getFullState().threadsDB,
-      {
-        roomId,
-        query,
-        orderBy: "age",
-      }
+    const threads = this.getFullState().threadsDB.findMany(
+      roomId,
+      query ?? {},
+      "asc"
     );
 
     const page = asyncResult.data;
@@ -716,11 +689,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return asyncResult;
     }
 
-    const threads = selectThreads(this.getFullState().threadsDB, {
-      roomId: null, // Do _not_ filter by roomId
-      query,
-      orderBy: "last-update",
-    });
+    const threads = this.getFullState().threadsDB.findMany(
+      undefined, // Do _not_ filter by roomId
+      query ?? {},
+      "desc"
+    );
 
     const page = asyncResult.data;
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
