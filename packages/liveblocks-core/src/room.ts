@@ -29,9 +29,9 @@ import type { LiveNode, LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
 import type { DE, DM, DP, DS, DU } from "./globals/augmentation";
 import {
-  CommentsApiError,
   getBearerTokenFromAuthValue,
   HttpClient,
+  HttpError,
 } from "./http-client";
 import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
@@ -3123,7 +3123,7 @@ export function createRoom<
         throw abortError;
       }
 
-      if (err instanceof CommentsApiError && err.status === 413) {
+      if (err instanceof HttpError && err.status === 413) {
         throw err;
       }
 
