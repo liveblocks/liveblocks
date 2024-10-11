@@ -37,16 +37,15 @@ import type {
 } from "@liveblocks/core";
 import {
   assert,
-  CommentsApiError,
   console,
   createCommentId,
   createThreadId,
   deprecateIf,
   errorIf,
+  HttpError,
   kInternal,
   makeEventSource,
   makePoller,
-  NotificationsApiError,
   ServerMsgCode,
 } from "@liveblocks/core";
 import * as React from "react";
@@ -215,7 +214,7 @@ function getCurrentUserId(room: OpaqueRoom): string {
   }
 }
 
-function handleApiError(err: CommentsApiError | NotificationsApiError): Error {
+function handleApiError(err: HttpError): Error {
   const message = `Request failed with status ${err.status}: ${err.message}`;
 
   // Log details about FORBIDDEN errors
@@ -230,7 +229,7 @@ function handleApiError(err: CommentsApiError | NotificationsApiError): Error {
   return new Error(message);
 }
 
-// XXXX DRY up these makeDeltaPoller_* abstractions, now that the symmetry has become clear!
+// NIMESH - DRY up these makeDeltaPoller_* abstractions, now that the symmetry has become clear!
 function makeDeltaPoller_RoomThreads(client: OpaqueClient) {
   const store = getUmbrellaStoreForClient(client);
 
@@ -255,7 +254,7 @@ function makeDeltaPoller_RoomThreads(client: OpaqueClient) {
   return () => {
     pollerSubscribers++;
 
-    // XXXX - We should wait until the lastRequestedAt date is known using a promise and then
+    // NIMESH - We should wait until the lastRequestedAt date is known using a promise and then
     // in the `then` body, check again if the number of subscribers if more than 0, and only then
     // if those conditions hold, start the poller
     // promise.then(() => { if (subscribers > 0 ) initialPoller() else: do nothing })
@@ -264,7 +263,7 @@ function makeDeltaPoller_RoomThreads(client: OpaqueClient) {
     return () => {
       pollerSubscribers--;
 
-      // XXXX - When stopping the poller, we should also ideally abort its
+      // NIMESH - When stopping the poller, we should also ideally abort its
       // poller function, maybe using an AbortController? This functionality
       // should be automatic and handled by the Poller abstraction, not here!
       poller.enable(pollerSubscribers > 0);
@@ -371,7 +370,11 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
 
       const settings = await request;
 
-      store.updateRoomInboxNotificationSettings(room.id, settings, queryKey);
+      store.updateRoomNotificationSettings_fromQuery(
+        room.id,
+        settings,
+        queryKey
+      );
     } catch (err) {
       requestsByQuery.delete(queryKey);
 
@@ -395,13 +398,13 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   ) {
     store.removeOptimisticUpdate(optimisticUpdateId);
 
-    if (innerError instanceof CommentsApiError) {
+    if (innerError instanceof HttpError) {
       const error = handleApiError(innerError);
       commentsErrorEventSource.notify(createPublicError(error));
       return;
     }
 
-    if (innerError instanceof NotificationsApiError) {
+    if (innerError instanceof HttpError) {
       handleApiError(innerError);
       // TODO: Create public error and notify via notificationsErrorEventSource?
       return;
@@ -742,7 +745,9 @@ function RoomProviderInner<
       }
       const { thread, inboxNotification } = info;
 
-      const existingThread = store.getFullState().threadsById[message.threadId];
+      const existingThread = store
+        .getFullState()
+        .threadsDB.getEvenIfDeleted(message.threadId);
 
       switch (message.type) {
         case ServerMsgCode.COMMENT_EDITED:
@@ -1316,7 +1321,7 @@ function useThreads<M extends BaseMetadata>(
   }
 ): ThreadsAsyncResult<M> {
   const { scrollOnLoad = true } = options;
-  // XXXX - query = stable(options.query);
+  // XXX - query = stable(options.query);
 
   const client = useClient();
   const room = useRoom();
@@ -1326,7 +1331,7 @@ function useThreads<M extends BaseMetadata>(
 
   React.useEffect(
     () => {
-      // XXXX - Verify that we need the catch or not
+      // NIMESH - Verify that we need the catch or not
       void store
         .waitUntilRoomThreadsLoaded(room.id, options.query)
         .catch(() => {
@@ -1346,12 +1351,12 @@ function useThreads<M extends BaseMetadata>(
   React.useEffect(subscribeToDeltaUpdates, [subscribeToDeltaUpdates]);
 
   const getter = React.useCallback(
-    () => store.getRoomThreadsAsync(room.id, options.query),
+    () => store.getRoomThreadsLoadingState(room.id, options.query),
     [store, room.id, options.query]
   );
 
   const state = useSyncExternalStoreWithSelector(
-    store.subscribeThreads,
+    store.subscribe,
     getter,
     getter,
     identity,
@@ -1460,11 +1465,10 @@ function useDeleteThread(): (threadId: string) => void {
     (threadId: string): void => {
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
 
-      const thread = store.getFullState().threadsById[threadId];
-
       const userId = getCurrentUserId(room);
 
-      if (thread?.comments?.[0]?.userId !== userId) {
+      const existing = store.getFullState().threadsDB.get(threadId);
+      if (existing?.comments?.[0]?.userId !== userId) {
         throw new Error("Only the thread creator can delete the thread");
       }
 
@@ -1614,15 +1618,18 @@ function useEditComment(): (options: EditCommentOptions) => void {
       const editedAt = new Date();
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-      const thread = store.getFullState().threadsById[threadId];
-      if (thread === undefined) {
+      const existing = store
+        .getFullState()
+        .threadsDB.getEvenIfDeleted(threadId);
+
+      if (existing === undefined) {
         console.warn(
           `Internal unexpected behavior. Cannot edit comment in thread "${threadId}" because the thread does not exist in the cache.`
         );
         return;
       }
 
-      const comment = thread.comments.find(
+      const comment = existing.comments.find(
         (comment) => comment.id === commentId
       );
 
@@ -1990,30 +1997,27 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
 
   const selector = React.useCallback(
     (state: UmbrellaStoreState<BaseMetadata>): ThreadSubscription => {
-      const inboxNotification = state.notifications.find(
+      const notification = state.cleanedNotifications.find(
         (inboxNotification) =>
           inboxNotification.kind === "thread" &&
           inboxNotification.threadId === threadId
       );
 
-      const thread = state.threadsById[threadId];
-
-      if (inboxNotification === undefined || thread === undefined) {
-        return {
-          status: "not-subscribed",
-        };
+      const thread = state.threadsDB.get(threadId);
+      if (notification === undefined || thread === undefined) {
+        return { status: "not-subscribed" };
       }
 
       return {
         status: "subscribed",
-        unreadSince: inboxNotification.readAt,
+        unreadSince: notification.readAt,
       };
     },
     [threadId]
   );
 
   return useSyncExternalStoreWithSelector(
-    store.subscribeThreads,
+    store.subscribe,
     store.getFullState,
     store.getFullState,
     selector
@@ -2037,7 +2041,7 @@ function useRoomNotificationSettings(): [
   const { store } = getRoomExtrasForClient(client);
 
   const getter = React.useCallback(
-    () => store.getNotificationSettingsAsync(room.id),
+    () => store.getNotificationSettingsLoadingState(room.id),
     [store, room.id]
   );
 
@@ -2047,7 +2051,7 @@ function useRoomNotificationSettings(): [
   }, [client, room]);
 
   const settings = useSyncExternalStoreWithSelector(
-    store.subscribeNotificationSettings,
+    store.subscribe,
     getter,
     getter,
     identity,
@@ -2077,12 +2081,12 @@ function useRoomNotificationSettingsSuspense(): [
   const { store } = getRoomExtrasForClient(client);
 
   const getter = React.useCallback(
-    () => store.getNotificationSettingsAsync(room.id),
+    () => store.getNotificationSettingsLoadingState(room.id),
     [store, room.id]
   );
 
   const settings = useSyncExternalStoreWithSelector(
-    store.subscribeNotificationSettings,
+    store.subscribe,
     getter,
     getter,
     identity,
@@ -2155,7 +2159,7 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
   const { store, getRoomVersions } = getRoomExtrasForClient(client);
 
   const getter = React.useCallback(
-    () => store.getVersionsAsync(room.id),
+    () => store.getVersionsLoadingState(room.id),
     [store, room.id]
   );
 
@@ -2164,7 +2168,7 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
   }, [room]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const state = useSyncExternalStoreWithSelector(
-    store.subscribeVersions,
+    store.subscribe,
     getter,
     getter,
     identity,
@@ -2187,12 +2191,12 @@ function useHistoryVersionsSuspense(): HistoryVersionsAsyncSuccess {
   const { store } = getRoomExtrasForClient(client);
 
   const getter = React.useCallback(
-    () => store.getVersionsAsync(room.id),
+    () => store.getVersionsLoadingState(room.id),
     [store, room.id]
   );
 
   const state = useSyncExternalStoreWithSelector(
-    store.subscribeVersions,
+    store.subscribe,
     getter,
     getter,
     identity,
@@ -2232,7 +2236,7 @@ function useUpdateRoomNotificationSettings() {
       room.updateNotificationSettings(settings).then(
         (settings) => {
           // Replace the optimistic update by the real thing
-          store.updateRoomInboxNotificationSettings2(
+          store.updateRoomNotificationSettings_confirmOptimisticUpdate(
             room.id,
             optimisticUpdateId,
             settings
