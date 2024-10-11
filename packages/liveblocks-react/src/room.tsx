@@ -37,16 +37,15 @@ import type {
 } from "@liveblocks/core";
 import {
   assert,
-  CommentsApiError,
   console,
   createCommentId,
   createThreadId,
   deprecateIf,
   errorIf,
+  HttpError,
   kInternal,
   makeEventSource,
   makePoller,
-  NotificationsApiError,
   ServerMsgCode,
 } from "@liveblocks/core";
 import * as React from "react";
@@ -215,7 +214,7 @@ function getCurrentUserId(room: OpaqueRoom): string {
   }
 }
 
-function handleApiError(err: CommentsApiError | NotificationsApiError): Error {
+function handleApiError(err: HttpError): Error {
   const message = `Request failed with status ${err.status}: ${err.message}`;
 
   // Log details about FORBIDDEN errors
@@ -395,13 +394,13 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   ) {
     store.removeOptimisticUpdate(optimisticUpdateId);
 
-    if (innerError instanceof CommentsApiError) {
+    if (innerError instanceof HttpError) {
       const error = handleApiError(innerError);
       commentsErrorEventSource.notify(createPublicError(error));
       return;
     }
 
-    if (innerError instanceof NotificationsApiError) {
+    if (innerError instanceof HttpError) {
       handleApiError(innerError);
       // TODO: Create public error and notify via notificationsErrorEventSource?
       return;
