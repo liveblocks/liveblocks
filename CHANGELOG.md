@@ -1,3 +1,15 @@
+## 2.9.2 (not released yet)
+
+### `@liveblocks/client`
+
+- Internal refactorings and code cleanup to various parts of the client's inner
+  workings
+
+### `@liveblocks/react`
+
+- Stop automatic retry attempts if a 403 Forbidden error is received while
+  loading inbox notifications, user threads, or room threads.
+
 ## 2.9.1
 
 ### `@liveblocks/client`

@@ -24,6 +24,7 @@ import {
   compactObject,
   console,
   createStore,
+  HttpError,
   kInternal,
   makeEventSource,
   mapValues,
@@ -437,7 +438,14 @@ export class PaginatedResource {
     const initialFetcher = autoRetry(
       () => this._fetchPage(/* cursor */ undefined),
       5,
-      [5000, 5000, 10000, 15000]
+      [5000, 5000, 10000, 15000],
+      (err) => {
+        // We do not want to retry if a 4xx HTTP error is received
+        if (err instanceof HttpError && err.status >= 400 && err.status < 500) {
+          return true;
+        }
+        return false;
+      }
     );
 
     const promise = usify(

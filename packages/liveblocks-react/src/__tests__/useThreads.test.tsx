@@ -5,7 +5,7 @@ import type {
   InboxNotificationDataPlain,
   ThreadData,
 } from "@liveblocks/core";
-import { nanoid, ServerMsgCode } from "@liveblocks/core";
+import { HttpError, nanoid, ServerMsgCode } from "@liveblocks/core";
 import type { AST } from "@liveblocks/query-parser";
 import { QueryParser } from "@liveblocks/query-parser";
 import {
@@ -1775,6 +1775,38 @@ describe("useThreads: error", () => {
     await waitFor(() => expect(getThreadsReqCount).toBe(7));
 
     // and so on...
+
+    unmount();
+  });
+
+  test("should not retry if a 403 Forbidden response is received from server", async () => {
+    const roomId = nanoid();
+
+    server.use(
+      mockGetThreads((_req, res, ctx) => {
+        // Return a 403 status from the server for the initial fetch
+        return res(ctx.status(403));
+      })
+    );
+
+    const {
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id={roomId}>{children}</RoomProvider>
+      ),
+    });
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    await waitFor(() => {
+      expect(result.current).toEqual({
+        isLoading: false,
+        error: expect.any(HttpError),
+      });
+    });
 
     unmount();
   });
