@@ -777,48 +777,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this._store.get().optimisticUpdates.length > 0;
   }
 
-  private subscribe(callback: () => void): () => void {
+  public subscribe(callback: () => void): () => void {
     return this._store.subscribe(callback);
-  }
-
-  /**
-   * @private Only used by the E2E test suite.
-   */
-  public _subscribeOptimisticUpdates(callback: () => void): () => void {
-    // TODO Make this actually only update when optimistic updates are changed
-    return this.subscribe(callback);
-  }
-
-  // VINCENT - Remove this helper
-  public subscribeThreads(callback: () => void): () => void {
-    // TODO Make this actually only update when threads are invalidated
-    return this.subscribe(callback);
-  }
-
-  // VINCENT - Remove this helper
-  public subscribeUserThreads(callback: () => void): () => void {
-    // TODO Make this actually only update when threads are invalidated
-    return this.subscribe(callback);
-  }
-
-  // VINCENT - Remove this helper
-  public subscribeThreadsOrInboxNotifications(
-    callback: () => void
-  ): () => void {
-    // TODO Make this actually only update when inbox notifications are invalidated
-    return this.subscribe(callback);
-  }
-
-  // VINCENT - Remove this helper
-  public subscribeNotificationSettings(callback: () => void): () => void {
-    // TODO Make this actually only update when notification settings are invalidated
-    return this.subscribe(callback);
-  }
-
-  // VINCENT - Remove this helper
-  public subscribeVersions(callback: () => void): () => void {
-    // TODO Make this actually only update when versions are invalidated
-    return this.subscribe(callback);
   }
 
   // Direct low-level cache mutations ------------------------------------------------- {{{
