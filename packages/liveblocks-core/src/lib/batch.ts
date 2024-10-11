@@ -17,6 +17,13 @@ export type BatchStore<O, I> = Observable<void> & {
   get: (input: I) => Promise<void>;
   getState: (input: I) => AsyncResult<O> | undefined;
   invalidate: (inputs?: I[] | ((output: NonNullable<O>) => boolean)) => void;
+
+  /**
+   * @internal
+   *
+   * Only for testing.
+   */
+  _cacheKeys: () => string[];
 };
 
 interface Options {
@@ -245,10 +252,20 @@ export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
     return cache.get(cacheKey);
   }
 
+  /**
+   * @internal
+   *
+   * Only for testing.
+   */
+  function _cacheKeys() {
+    return [...cache.keys()];
+  }
+
   return {
     ...eventSource.observable,
     get,
     getState,
     invalidate,
+    _cacheKeys,
   };
 }
