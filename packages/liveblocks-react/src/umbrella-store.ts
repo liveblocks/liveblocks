@@ -728,6 +728,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   // NOTE: This will read the async result, but WILL NOT start loading at the moment!
+  // XXX Find a better name for that doesn't associate to 'async'
   public getNotificationSettingsAsync(
     roomId: string
   ): RoomNotificationSettingsAsyncResult {
@@ -749,6 +750,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     };
   }
 
+  // XXX Find a better name for that doesn't associate to 'async'
   public getVersionsAsync(
     roomId: string
   ): AsyncResult<HistoryVersion[], "versions"> {
