@@ -646,8 +646,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * then it will return the threads that match that provided query and room id.
    *
    */
-  // XXX Find a better name for that doesn't associate to 'async'
-  public getRoomThreadsAsync(
+  public getRoomThreadsLoadingState(
     roomId: string,
     query: ThreadsQuery<M> | undefined
   ): ThreadsAsyncResult<M> {
@@ -681,8 +680,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     };
   }
 
-  // XXX - Find a better name for that doesn't associate to 'async'
-  public getUserThreadsAsync(
+  public getUserThreadsLoadingState(
     query: ThreadsQuery<M> | undefined
   ): ThreadsAsyncResult<M> {
     const queryKey = makeUserThreadsQueryKey(query);
@@ -716,8 +714,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   // NOTE: This will read the async result, but WILL NOT start loading at the moment!
-  // XXX - Find a better name for that doesn't associate to 'async'
-  public getInboxNotificationsAsync(): InboxNotificationsAsyncResult {
+  public getInboxNotificationsLoadingState(): InboxNotificationsAsyncResult {
     const asyncResult = this._notifications.get();
     if (asyncResult.isLoading || asyncResult.error) {
       return asyncResult;
@@ -736,8 +733,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   // NOTE: This will read the async result, but WILL NOT start loading at the moment!
-  // XXX Find a better name for that doesn't associate to 'async'
-  public getNotificationSettingsAsync(
+  public getNotificationSettingsLoadingState(
     roomId: string
   ): RoomNotificationSettingsAsyncResult {
     const state = this.get();
@@ -758,8 +754,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     };
   }
 
-  // XXX Find a better name for that doesn't associate to 'async'
-  public getVersionsAsync(
+  public getVersionsLoadingState(
     roomId: string
   ): AsyncResult<HistoryVersion[], "versions"> {
     const state = this.get();

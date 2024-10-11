@@ -1347,7 +1347,7 @@ function useThreads<M extends BaseMetadata>(
   React.useEffect(subscribeToDeltaUpdates, [subscribeToDeltaUpdates]);
 
   const getter = React.useCallback(
-    () => store.getRoomThreadsAsync(room.id, options.query),
+    () => store.getRoomThreadsLoadingState(room.id, options.query),
     [store, room.id, options.query]
   );
 
@@ -2037,7 +2037,7 @@ function useRoomNotificationSettings(): [
   const { store } = getRoomExtrasForClient(client);
 
   const getter = React.useCallback(
-    () => store.getNotificationSettingsAsync(room.id),
+    () => store.getNotificationSettingsLoadingState(room.id),
     [store, room.id]
   );
 
@@ -2077,7 +2077,7 @@ function useRoomNotificationSettingsSuspense(): [
   const { store } = getRoomExtrasForClient(client);
 
   const getter = React.useCallback(
-    () => store.getNotificationSettingsAsync(room.id),
+    () => store.getNotificationSettingsLoadingState(room.id),
     [store, room.id]
   );
 
@@ -2155,7 +2155,7 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
   const { store, getRoomVersions } = getRoomExtrasForClient(client);
 
   const getter = React.useCallback(
-    () => store.getVersionsAsync(room.id),
+    () => store.getVersionsLoadingState(room.id),
     [store, room.id]
   );
 
@@ -2187,7 +2187,7 @@ function useHistoryVersionsSuspense(): HistoryVersionsAsyncSuccess {
   const { store } = getRoomExtrasForClient(client);
 
   const getter = React.useCallback(
-    () => store.getVersionsAsync(room.id),
+    () => store.getVersionsLoadingState(room.id),
     [store, room.id]
   );
 

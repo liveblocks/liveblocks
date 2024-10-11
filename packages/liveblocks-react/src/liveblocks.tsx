@@ -465,8 +465,8 @@ function useInboxNotifications_withClient<T>(
 
   return useSyncExternalStoreWithSelector(
     store.subscribe,
-    store.getInboxNotificationsAsync,
-    store.getInboxNotificationsAsync,
+    store.getInboxNotificationsLoadingState,
+    store.getInboxNotificationsLoadingState,
     selector,
     isEqual
   );
@@ -977,7 +977,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
   useEffect(subscribeToDeltaUpdates, [subscribeToDeltaUpdates]);
 
   const getter = useCallback(
-    () => store.getUserThreadsAsync(options.query),
+    () => store.getUserThreadsLoadingState(options.query),
     [store, options.query]
   );
 

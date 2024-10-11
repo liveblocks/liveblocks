@@ -21,9 +21,11 @@ describe("Umbrella Store", () => {
     expect(store.getFullState()).toEqual(empty);
 
     // Sync async-results getters
-    expect(store.getInboxNotificationsAsync()).toEqual(loading);
-    expect(store.getNotificationSettingsAsync("room-a")).toEqual(loading);
-    expect(store.getVersionsAsync("room-a")).toEqual(loading);
+    expect(store.getInboxNotificationsLoadingState()).toEqual(loading);
+    expect(store.getNotificationSettingsLoadingState("room-a")).toEqual(
+      loading
+    );
+    expect(store.getVersionsLoadingState("room-a")).toEqual(loading);
   });
 
   it("calling getters multiple times should always return a stable result", () => {
@@ -34,16 +36,16 @@ describe("Umbrella Store", () => {
 
     // Sync async-results getter
     // TODO Add check here for strict-equality of the OK-state, which currently isn't strictly-equal and the selectors/isEqual functions are still "working around" that
-    expect(store.getInboxNotificationsAsync()).toBe(
-      store.getInboxNotificationsAsync()
+    expect(store.getInboxNotificationsLoadingState()).toBe(
+      store.getInboxNotificationsLoadingState()
     );
     // TODO Add check here for strict-equality of the OK-state, which currently isn't strictly-equal and the selectors/isEqual functions are still "working around" that
-    expect(store.getNotificationSettingsAsync("room-a")).toBe(
-      store.getNotificationSettingsAsync("room-a")
+    expect(store.getNotificationSettingsLoadingState("room-a")).toBe(
+      store.getNotificationSettingsLoadingState("room-a")
     );
     // TODO Add check here for strict-equality of the OK-state, which currently isn't strictly-equal and the selectors/isEqual functions are still "working around" that
-    expect(store.getVersionsAsync("room-a")).toBe(
-      store.getVersionsAsync("room-a")
+    expect(store.getVersionsLoadingState("room-a")).toBe(
+      store.getVersionsLoadingState("room-a")
     );
   });
 });
