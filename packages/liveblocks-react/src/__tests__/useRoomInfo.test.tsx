@@ -6,7 +6,7 @@ import { renderHook, screen, waitFor } from "@testing-library/react";
 import React, { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
-import { createContextsForTest } from "./_utils";
+import { act, createContextsForTest } from "./_utils";
 
 // eslint-disable-next-line @typescript-eslint/require-await
 async function defaultResolveRoomsInfo({ roomIds }: ResolveRoomsInfoArgs) {
@@ -176,6 +176,65 @@ describe("useRoomInfo", () => {
     expect(resolveRoomsInfo).toHaveBeenNthCalledWith(1, { roomIds: ["abc"] });
 
     expect(resolveRoomsInfo).toHaveBeenNthCalledWith(2, { roomIds: ["123"] });
+
+    unmount();
+  });
+
+  test("should revalidate instantly if its cache is invalidated", async () => {
+    const roomId = nanoid();
+
+    const resolveRoomsInfo = jest.fn(({ roomIds }: ResolveRoomsInfoArgs) =>
+      roomIds.map((roomId) => ({ name: roomId }))
+    );
+    const {
+      client,
+      room: { RoomProvider, useRoomInfo },
+    } = createContextsForTest({
+      resolveRoomsInfo,
+    });
+
+    const { result, rerender, unmount } = renderHook(
+      ({ roomId }: { roomId: string }) => ({
+        roomInfo: useRoomInfo(roomId),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id={roomId}>{children}</RoomProvider>
+        ),
+        initialProps: { roomId: "abc" },
+      }
+    );
+
+    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+
+    rerender({ roomId: "123" });
+
+    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+
+    rerender({ roomId: "abc" });
+
+    expect(result.current.roomInfo).toEqual({
+      isLoading: false,
+      info: { name: "abc" },
+    });
+
+    // Invalidate all room IDs
+    act(() => client.resolvers.invalidateRoomsInfo());
+
+    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+
+    expect(result.current.roomInfo).toEqual({
+      isLoading: false,
+      info: { name: "abc" },
+    });
+
+    expect(resolveRoomsInfo).toHaveBeenCalledTimes(3);
+
+    expect(resolveRoomsInfo).toHaveBeenNthCalledWith(1, { roomIds: ["abc"] });
+
+    expect(resolveRoomsInfo).toHaveBeenNthCalledWith(2, { roomIds: ["123"] });
+
+    expect(resolveRoomsInfo).toHaveBeenNthCalledWith(3, { roomIds: ["abc"] });
 
     unmount();
   });
@@ -414,19 +473,83 @@ describe("useRoomInfoSuspense", () => {
       {
         wrapper: ({ children }) => (
           <RoomProvider id={roomId}>
-            <Suspense fallback={<div>Loading</div>}>{children}</Suspense>
+            <Suspense fallback={<div>Loading</div>}>
+              <div>Loaded</div>
+              {children}
+            </Suspense>
           </RoomProvider>
         ),
       }
     );
 
-    expect(result.current).toEqual(null);
+    await waitFor(() => {
+      // Check if the Suspense fallback is displayed
+      expect(screen.getByText("Loading")).toBeInTheDocument();
+    });
 
     await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
 
-    expect(result.current.roomInfo).toEqual({
-      isLoading: false,
-      info: { name: "abc" },
+    await waitFor(() => {
+      // Check if the Suspense fallback is no longer displayed
+      expect(screen.getByText("Loaded")).toBeInTheDocument();
+    });
+
+    unmount();
+  });
+
+  test("should suspend with Suspense again if its cache is invalidated", async () => {
+    const roomId = nanoid();
+
+    const {
+      client,
+      room: {
+        RoomProvider,
+        suspense: { useRoomInfo },
+      },
+    } = createContextsForTest({
+      resolveRoomsInfo: defaultResolveRoomsInfo,
+    });
+
+    const { result, unmount } = renderHook(
+      () => ({
+        roomInfo: useRoomInfo("abc"),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id={roomId}>
+            <Suspense fallback={<div>Loading</div>}>
+              <div>Loaded</div>
+              {children}
+            </Suspense>
+          </RoomProvider>
+        ),
+      }
+    );
+
+    await waitFor(() => {
+      // Check if the Suspense fallback is displayed
+      expect(screen.getByText("Loading")).toBeInTheDocument();
+    });
+
+    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+
+    await waitFor(() => {
+      // Check if the Suspense fallback is no longer displayed
+      expect(screen.getByText("Loaded")).toBeInTheDocument();
+    });
+
+    act(() => client.resolvers.invalidateRoomsInfo());
+
+    await waitFor(() => {
+      // Check if the Suspense fallback is displayed again
+      expect(screen.getByText("Loading")).toBeInTheDocument();
+    });
+
+    await waitFor(() => expect(result.current.roomInfo.isLoading).toBeFalsy());
+
+    await waitFor(() => {
+      // Check if the Suspense fallback is no longer displayed again
+      expect(screen.getByText("Loaded")).toBeInTheDocument();
     });
 
     unmount();
@@ -466,7 +589,7 @@ describe("useRoomInfoSuspense", () => {
     expect(result.current).toEqual(null);
 
     await waitFor(() => {
-      // Check if the error boundary's fallback is displayed
+      // Check if the error boundary fallback is displayed
       expect(
         screen.getByText("There was an error while getting room info.")
       ).toBeInTheDocument();

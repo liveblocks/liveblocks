@@ -6,7 +6,7 @@ import { renderHook, screen, waitFor } from "@testing-library/react";
 import React, { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
-import { createContextsForTest } from "./_utils";
+import { act, createContextsForTest } from "./_utils";
 
 // eslint-disable-next-line @typescript-eslint/require-await
 async function defaultResolveUsers({ userIds }: ResolveUsersArgs) {
@@ -172,6 +172,65 @@ describe("useUser", () => {
     expect(resolveUsers).toHaveBeenNthCalledWith(1, { userIds: ["abc"] });
 
     expect(resolveUsers).toHaveBeenNthCalledWith(2, { userIds: ["123"] });
+
+    unmount();
+  });
+
+  test("should revalidate instantly if its cache is invalidated", async () => {
+    const roomId = nanoid();
+
+    const resolveUsers = jest.fn(({ userIds }: ResolveUsersArgs) =>
+      userIds.map((userId) => ({ name: userId }))
+    );
+    const {
+      client,
+      room: { RoomProvider, useUser },
+    } = createContextsForTest({
+      resolveUsers,
+    });
+
+    const { result, rerender, unmount } = renderHook(
+      ({ userId }: { userId: string }) => ({
+        user: useUser(userId),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id={roomId}>{children}</RoomProvider>
+        ),
+        initialProps: { userId: "abc" },
+      }
+    );
+
+    await waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
+
+    rerender({ userId: "123" });
+
+    await waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
+
+    rerender({ userId: "abc" });
+
+    expect(result.current.user).toEqual({
+      isLoading: false,
+      user: { name: "abc" },
+    });
+
+    // Invalidate all user IDs
+    act(() => client.resolvers.invalidateUsers());
+
+    await waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
+
+    expect(result.current.user).toEqual({
+      isLoading: false,
+      user: { name: "abc" },
+    });
+
+    expect(resolveUsers).toHaveBeenCalledTimes(3);
+
+    expect(resolveUsers).toHaveBeenNthCalledWith(1, { userIds: ["abc"] });
+
+    expect(resolveUsers).toHaveBeenNthCalledWith(2, { userIds: ["123"] });
+
+    expect(resolveUsers).toHaveBeenNthCalledWith(3, { userIds: ["abc"] });
 
     unmount();
   });
@@ -406,19 +465,83 @@ describe("useUserSuspense", () => {
       {
         wrapper: ({ children }) => (
           <RoomProvider id={roomId}>
-            <Suspense fallback={<div>Loading</div>}>{children}</Suspense>
+            <Suspense fallback={<div>Loading</div>}>
+              <div>Loaded</div>
+              {children}
+            </Suspense>
           </RoomProvider>
         ),
       }
     );
 
-    expect(result.current).toEqual(null);
+    await waitFor(() => {
+      // Check if the Suspense fallback is displayed
+      expect(screen.getByText("Loading")).toBeInTheDocument();
+    });
 
     await waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
 
-    expect(result.current.user).toEqual({
-      isLoading: false,
-      user: { name: "abc" },
+    await waitFor(() => {
+      // Check if the Suspense fallback is no longer displayed
+      expect(screen.getByText("Loaded")).toBeInTheDocument();
+    });
+
+    unmount();
+  });
+
+  test("should suspend with Suspense again if its cache is invalidated", async () => {
+    const roomId = nanoid();
+
+    const {
+      client,
+      room: {
+        RoomProvider,
+        suspense: { useUser },
+      },
+    } = createContextsForTest({
+      resolveUsers: defaultResolveUsers,
+    });
+
+    const { result, unmount } = renderHook(
+      () => ({
+        user: useUser("abc"),
+      }),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id={roomId}>
+            <Suspense fallback={<div>Loading</div>}>
+              <div>Loaded</div>
+              {children}
+            </Suspense>
+          </RoomProvider>
+        ),
+      }
+    );
+
+    await waitFor(() => {
+      // Check if the Suspense fallback is displayed
+      expect(screen.getByText("Loading")).toBeInTheDocument();
+    });
+
+    await waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
+
+    await waitFor(() => {
+      // Check if the Suspense fallback is no longer displayed
+      expect(screen.getByText("Loaded")).toBeInTheDocument();
+    });
+
+    act(() => client.resolvers.invalidateUsers());
+
+    await waitFor(() => {
+      // Check if the Suspense fallback is displayed again
+      expect(screen.getByText("Loading")).toBeInTheDocument();
+    });
+
+    await waitFor(() => expect(result.current.user.isLoading).toBeFalsy());
+
+    await waitFor(() => {
+      // Check if the Suspense fallback is no longer displayed again
+      expect(screen.getByText("Loaded")).toBeInTheDocument();
     });
 
     unmount();
@@ -458,7 +581,7 @@ describe("useUserSuspense", () => {
     expect(result.current).toEqual(null);
 
     await waitFor(() => {
-      // Check if the error boundary's fallback is displayed
+      // Check if the error boundary fallback is displayed
       expect(
         screen.getByText("There was an error while getting user.")
       ).toBeInTheDocument();
