@@ -1,7 +1,7 @@
 import "@testing-library/jest-dom";
 
 import type { InboxNotificationData, ThreadData } from "@liveblocks/core";
-import { nanoid } from "@liveblocks/core";
+import { HttpError, nanoid } from "@liveblocks/core";
 import type { AST } from "@liveblocks/query-parser";
 import { QueryParser } from "@liveblocks/query-parser";
 import { fireEvent, renderHook, screen, waitFor } from "@testing-library/react";
@@ -345,6 +345,39 @@ describe("useThreads: error", () => {
     await waitFor(() => expect(getThreadsReqCount).toBe(7));
 
     // and so on...
+
+    unmount();
+  });
+
+  test("should not retry if a 403 Forbidden response is received from server", async () => {
+    server.use(
+      mockGetUserThreads((_req, res, ctx) => {
+        // Return a 403 status from the server for the initial fetch
+        return res(ctx.status(403));
+      })
+    );
+
+    const {
+      liveblocks: { LiveblocksProvider, useUserThreads_experimental },
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(
+      () => useUserThreads_experimental(),
+      {
+        wrapper: ({ children }) => (
+          <LiveblocksProvider>{children}</LiveblocksProvider>
+        ),
+      }
+    );
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    await waitFor(() => {
+      expect(result.current).toEqual({
+        isLoading: false,
+        error: expect.any(HttpError),
+      });
+    });
 
     unmount();
   });

@@ -2848,48 +2848,29 @@ export function createRoom<
 
     const PAGE_SIZE = 50;
 
-    const response = await httpClient2.fetch(
-      url`/v2/c/rooms/${config.roomId}/threads`,
-      undefined,
-      {
-        cursor: options?.cursor,
-        query,
-        limit: PAGE_SIZE,
-      }
-    );
-
-    if (response.ok) {
-      const json = await (response.json() as Promise<{
-        data: ThreadDataPlain<M>[];
-        inboxNotifications: InboxNotificationDataPlain[];
-        deletedThreads: ThreadDeleteInfoPlain[];
-        deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
-        meta: {
-          requestedAt: string;
-          nextCursor: string | null;
-        };
-      }>);
-
-      return {
-        threads: json.data.map(convertToThreadData),
-        inboxNotifications: json.inboxNotifications.map(
-          convertToInboxNotificationData
-        ),
-        nextCursor: json.meta.nextCursor,
-        requestedAt: new Date(json.meta.requestedAt),
+    const result = await httpClient2.fetchJson<{
+      data: ThreadDataPlain<M>[];
+      inboxNotifications: InboxNotificationDataPlain[];
+      deletedThreads: ThreadDeleteInfoPlain[];
+      deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+      meta: {
+        requestedAt: string;
+        nextCursor: string | null;
       };
-    } else if (response.status === 404) {
-      return {
-        threads: [],
-        inboxNotifications: [],
-        deletedThreads: [],
-        deletedInboxNotifications: [],
-        nextCursor: null,
-        requestedAt: new Date(),
-      };
-    } else {
-      throw new Error("There was an error while getting threads.");
-    }
+    }>(url`/v2/c/rooms/${config.roomId}/threads`, undefined, {
+      cursor: options?.cursor,
+      query,
+      limit: PAGE_SIZE,
+    });
+
+    return {
+      threads: result.data.map(convertToThreadData),
+      inboxNotifications: result.inboxNotifications.map(
+        convertToInboxNotificationData
+      ),
+      nextCursor: result.meta.nextCursor,
+      requestedAt: new Date(result.meta.requestedAt),
+    };
   }
 
   async function getThread(threadId: string) {
