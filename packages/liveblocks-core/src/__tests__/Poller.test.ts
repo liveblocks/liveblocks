@@ -97,7 +97,7 @@ describe("Poller", () => {
     expect(callback).toHaveBeenCalledTimes(1); // No more calls
   });
 
-  test("should poll immediately if stale (when called before first poll)", async () => {
+  test("should poll immediately if stale (when called before first poll, short stale time)", async () => {
     // 0s        2s              5s
     // |--------------------------|
     // Start     ^              Poll 1 (natural)
@@ -116,6 +116,49 @@ describe("Poller", () => {
 
     // Call pollNowIfStale with a maxStaleTimeMs of 1000 (so it should poll)
     poller.pollNowIfStale(1000);
+
+    expect(callback).toHaveBeenCalledTimes(1);
+
+    // 0s        2s                         7s
+    // |---------|--------------------------|
+    // Start     ^                       Poll 2 (natural)
+    //           |
+    //         Forced poll
+
+    // Advance to what originally was the time the 1st poll
+    await jest.advanceTimersByTimeAsync(3000); // Move from 2s -> 5s
+    expect(callback).toHaveBeenCalledTimes(1);
+
+    await jest.advanceTimersByTimeAsync(2000); // Move from 5s -> 7s
+    expect(callback).toHaveBeenCalledTimes(2);
+
+    await jest.advanceTimersByTimeAsync(3000); // Move from 7s -> 10s
+    expect(callback).toHaveBeenCalledTimes(2);
+
+    await jest.advanceTimersByTimeAsync(2000); // Move from 10s -> 12s
+    expect(callback).toHaveBeenCalledTimes(3);
+  });
+
+  test("should poll immediately if stale (when called before first poll, but with larger stale time)", async () => {
+    // 0s        2s              5s
+    // |--------------------------|
+    // Start     ^              Poll 1 (natural)
+    //           |
+    //      Force poll here
+
+    const callback = jest.fn();
+    const poller = makePoller(callback, 5000);
+
+    poller.enable(true); // Start polling
+    expect(callback).toHaveBeenCalledTimes(0);
+
+    // We're still before the first poll here
+    await jest.advanceTimersByTimeAsync(2000);
+    expect(callback).toHaveBeenCalledTimes(0);
+
+    // Call pollNowIfStale with a maxStaleTimeMs of 30000
+    // Since there is no initial data, it should immediately poll
+    poller.pollNowIfStale(30000);
 
     expect(callback).toHaveBeenCalledTimes(1);
 
