@@ -963,7 +963,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
     },
   }
 ): ThreadsAsyncResult<M> {
-  const client = useClient<M>();
+  const client = useClient();
 
   const { store, subscribeToUserThreadsDeltaUpdates: subscribeToDeltaUpdates } =
     getLiveblocksExtrasForClient<M>(client);
@@ -1023,7 +1023,7 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
     },
   }
 ): ThreadsAsyncSuccess<M> {
-  const client = useClient<M>();
+  const client = useClient();
 
   const { store } = getLiveblocksExtrasForClient<M>(client);
 

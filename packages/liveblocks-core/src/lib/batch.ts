@@ -16,7 +16,7 @@ export type BatchCallback<O, I> = (
 export type BatchStore<O, I> = Observable<void> & {
   get: (input: I) => Promise<void>;
   getState: (input: I) => AsyncResult<O> | undefined;
-  invalidate: (input?: I) => void;
+  invalidate: (inputs?: I[] | ((output: NonNullable<O>) => boolean)) => void;
 };
 
 interface Options {
@@ -171,15 +171,28 @@ export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
     eventSource.notify();
   }
 
-  function invalidate(input?: I): void {
-    if (input === undefined) {
-      // Clear the cache for all calls.
-      cache.clear();
+  function invalidate(
+    inputs?: I[] | ((output: NonNullable<O>) => boolean)
+  ): void {
+    if (Array.isArray(inputs)) {
+      // Invalidate the specific calls.
+      for (const input of inputs) {
+        cache.delete(getCacheKey(input));
+      }
+    } else if (typeof inputs === "function") {
+      // Invalidate the predicated calls.
+      for (const [cacheKey, state] of cache.entries()) {
+        if (
+          state.data !== undefined &&
+          state.data !== null &&
+          inputs(state.data as NonNullable<O>)
+        ) {
+          cache.delete(cacheKey);
+        }
+      }
     } else {
-      const cacheKey = getCacheKey(input);
-
-      // Clear the cache for this call.
-      cache.delete(cacheKey);
+      // Invalidate all calls.
+      cache.clear();
     }
 
     // Notify subscribers.
