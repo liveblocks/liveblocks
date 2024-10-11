@@ -293,7 +293,6 @@ export type EnsureJson<T> =
 // Support for DevTools
 import type * as DevToolsMsg from "./devtools/protocol";
 export type { DevToolsMsg };
-import { HttpError } from "./http-client";
 import type { Json } from "./lib/Json";
 import type * as DevTools from "./types/DevToolsTreeNode";
 export type { DevTools };
@@ -303,12 +302,8 @@ export type { Store } from "./lib/create-store";
 export { createStore } from "./lib/create-store";
 
 // Deprecated APIs
-
-/**
- * @deprecated Use HttpError instead.
- */
+import { HttpError } from "./http-client";
+/** @deprecated Use HttpError instead. */
 export const CommentsApiError = HttpError;
-/**
- * @deprecated Use HttpError instead.
- */
+/** @deprecated Use HttpError instead. */
 export const NotificationsApiError = HttpError;
