@@ -370,7 +370,11 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
 
       const settings = await request;
 
-      store.updateRoomInboxNotificationSettings(room.id, settings, queryKey);
+      store.updateRoomNotificationSettings_fromQuery(
+        room.id,
+        settings,
+        queryKey
+      );
     } catch (err) {
       requestsByQuery.delete(queryKey);
 
@@ -2232,7 +2236,7 @@ function useUpdateRoomNotificationSettings() {
       room.updateNotificationSettings(settings).then(
         (settings) => {
           // Replace the optimistic update by the real thing
-          store.updateRoomInboxNotificationSettings2(
+          store.updateRoomNotificationSettings_confirmOptimisticUpdate(
             room.id,
             optimisticUpdateId,
             settings

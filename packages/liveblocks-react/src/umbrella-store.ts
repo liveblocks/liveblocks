@@ -1211,8 +1211,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * Updates existing notification setting for a room with a new value,
    * replacing the corresponding optimistic update.
    */
-  // XXX Rename this helper method
-  public updateRoomInboxNotificationSettings2(
+  public updateRoomNotificationSettings_confirmOptimisticUpdate(
     roomId: string,
     optimisticUpdateId: string,
     settings: Readonly<RoomNotificationSettings>
@@ -1224,8 +1223,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     });
   }
 
-  // XXX Rename this helper method
-  public updateRoomInboxNotificationSettings(
+  public updateRoomNotificationSettings_fromQuery(
     roomId: string,
     settings: RoomNotificationSettings,
     queryKey: string
