@@ -464,7 +464,7 @@ function useInboxNotifications_withClient<T>(
   useEffect(subscribeToDeltaUpdates, [subscribeToDeltaUpdates]);
 
   return useSyncExternalStoreWithSelector(
-    store.subscribeThreadsOrInboxNotifications,
+    store.subscribe,
     store.getInboxNotificationsAsync,
     store.getInboxNotificationsAsync,
     selector,
@@ -648,7 +648,7 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
   );
 
   return useSyncExternalStoreWithSelector(
-    store.subscribeThreadsOrInboxNotifications, // Re-evaluate if we need to update any time the notification changes over time
+    store.subscribe, // Re-evaluate if we need to update any time the notification changes over time
     getter,
     getter,
     selector
@@ -982,7 +982,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
   );
 
   return useSyncExternalStoreWithSelector(
-    store.subscribeUserThreads,
+    store.subscribe,
     getter,
     getter,
     identity,

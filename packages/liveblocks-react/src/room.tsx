@@ -1352,7 +1352,7 @@ function useThreads<M extends BaseMetadata>(
   );
 
   const state = useSyncExternalStoreWithSelector(
-    store.subscribeThreads,
+    store.subscribe,
     getter,
     getter,
     identity,
@@ -2013,7 +2013,7 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
   );
 
   return useSyncExternalStoreWithSelector(
-    store.subscribeThreads,
+    store.subscribe,
     store.getFullState,
     store.getFullState,
     selector
@@ -2047,7 +2047,7 @@ function useRoomNotificationSettings(): [
   }, [client, room]);
 
   const settings = useSyncExternalStoreWithSelector(
-    store.subscribeNotificationSettings,
+    store.subscribe,
     getter,
     getter,
     identity,
@@ -2082,7 +2082,7 @@ function useRoomNotificationSettingsSuspense(): [
   );
 
   const settings = useSyncExternalStoreWithSelector(
-    store.subscribeNotificationSettings,
+    store.subscribe,
     getter,
     getter,
     identity,
@@ -2164,7 +2164,7 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
   }, [room]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const state = useSyncExternalStoreWithSelector(
-    store.subscribeVersions,
+    store.subscribe,
     getter,
     getter,
     identity,
@@ -2192,7 +2192,7 @@ function useHistoryVersionsSuspense(): HistoryVersionsAsyncSuccess {
   );
 
   const state = useSyncExternalStoreWithSelector(
-    store.subscribeVersions,
+    store.subscribe,
     getter,
     getter,
     identity,

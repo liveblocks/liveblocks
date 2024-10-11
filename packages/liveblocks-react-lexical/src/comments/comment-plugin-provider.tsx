@@ -105,7 +105,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
 
   const roomId = room.id;
   const threads = useSyncExternalStoreWithSelector(
-    store.subscribeThreads,
+    store.subscribe,
     store.getFullState,
     store.getFullState,
     useCallback(
@@ -224,7 +224,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       setActiveThreads(threadIds);
     }
 
-    const unsubscribeCache = store.subscribeThreads(() => {
+    const unsubscribeCache = store.subscribe(() => {
       editor.getEditorState().read($onStateRead);
     });
 
