@@ -101,9 +101,9 @@ export function makePoller(
       return;
     }
 
-    const lastPolledAt = context.lastPolledAt ?? 0;
+    const lastPolledAt = context.lastPolledAt;
 
-    if (performance.now() - lastPolledAt > maxStaleTimeMs) {
+    if (!lastPolledAt || performance.now() - lastPolledAt > maxStaleTimeMs) {
       // Cancel any scheduled poll
       if (context.timeoutHandle) {
         clearTimeout(context.timeoutHandle);
