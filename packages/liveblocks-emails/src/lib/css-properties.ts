@@ -101,7 +101,7 @@ export function toInlineCSSString(styles: CSSProperties): string {
         return "";
       }
 
-      // Convert remaining camelCase to kebab-case
+      // Convert key from camelCase to kebab-case
       let property = key.replace(/([A-Z])/g, "-$1").toLowerCase();
 
       // Manage vendors prefixes
