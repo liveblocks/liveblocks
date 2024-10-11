@@ -28,6 +28,7 @@ import {
   HttpError,
   kInternal,
   makeEventSource,
+  makePoller,
   mapValues,
   nanoid,
   nn,
@@ -636,6 +637,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
   private _userThreads: Map<string, PaginatedResource> = new Map();
 
   private _roomVersions: Map<string, SingleResource> = new Map();
+
+  private _notificationsSubscriber = 0;
+  private _notificationsPoller = makePoller(() => {
+    void this.fetchNotificationsDeltaUpdate().catch((err) => {
+      console.warn(`Polling new inbox notifications failed: ${String(err)}`);
+    });
+  }, 60_000); // Polling interval is set to 60 seconds
 
   constructor(client?: OpaqueClient) {
     this._client = client;
@@ -1639,6 +1647,24 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this._roomVersions.set(queryKey, resource);
 
     return resource.waitUntilLoaded();
+  }
+
+  public pollInboxNotifications() {
+    this._notificationsPoller.pollNowIfStale(30000);
+  }
+
+  public incrementNotificationsSubscriber() {
+    this._notificationsSubscriber++;
+
+    // If the number of subscribers to notifications is 1
+    void this.waitUntilNotificationsLoaded().then(() => {
+      this._notificationsPoller.enable(this._notificationsSubscriber > 0);
+    });
+  }
+
+  public decrementNotificationsSubscriber() {
+    this._notificationsSubscriber--;
+    this._notificationsPoller.enable(this._notificationsSubscriber > 0);
   }
 }
 

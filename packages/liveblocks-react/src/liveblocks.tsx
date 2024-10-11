@@ -222,40 +222,7 @@ export function getLiveblocksExtrasForClient<M extends BaseMetadata>(
   };
 }
 
-function makeDeltaPoller_Notifications(store: UmbrellaStore<BaseMetadata>) {
-  const poller = makePoller(async () => {
-    try {
-      await store.waitUntilNotificationsLoaded();
-      await store.fetchNotificationsDeltaUpdate();
-    } catch (err) {
-      // When polling, we don't want to throw errors, ever
-      console.warn(`Polling new inbox notifications failed: ${String(err)}`);
-    }
-  }, POLLING_INTERVAL);
-
-  // Keep track of the number of subscribers
-  let pollerSubscribers = 0;
-
-  return () => {
-    pollerSubscribers++;
-
-    // NIMESH - We should wait until the lastRequestedAt date is known using a promise and then
-    // in the `then` body, check again if the number of subscribers if more than 0, and only then
-    // if those conditions hold, start the poller
-    poller.enable(pollerSubscribers > 0);
-
-    return () => {
-      pollerSubscribers--;
-
-      // NIMESH - When stopping the poller, we should also ideally abort its
-      // poller function, maybe using an AbortController? This functionality
-      // should be automatic and handled by the Poller abstraction, not here!
-      poller.enable(pollerSubscribers > 0);
-    };
-  };
-}
-
-// NIMESH - DRY up these makeDeltaPoller_* abstractions, now that the symmetry has become clear!
+// XXX DRY up these makeDeltaPoller_* abstractions, now that the symmetry has become clear!
 function makeDeltaPoller_UserThreads(store: UmbrellaStore<BaseMetadata>) {
   const poller = makePoller(async () => {
     try {
@@ -341,13 +308,6 @@ function makeLiveblocksExtrasForClient(client: OpaqueClient) {
 
   return {
     store,
-    /**
-     * Sub/unsub pair to start the process of watching for new incoming inbox
-     * notifications through a stream of delta updates. Call the unsub function
-     * returned to stop this subscription when unmounting. Currently
-     * implemented by a periodic poller.
-     */
-    subscribeToNotificationsDeltaUpdates: makeDeltaPoller_Notifications(store),
     /**
      * Sub/unsub pair to start the process of watching for new user threads
      * through a stream of delta updates. Call the unsub function returned to
@@ -439,10 +399,7 @@ function useInboxNotifications_withClient<T>(
   selector: (result: InboxNotificationsAsyncResult) => T,
   isEqual: (a: T, b: T) => boolean
 ): T {
-  const {
-    store,
-    subscribeToNotificationsDeltaUpdates: subscribeToDeltaUpdates,
-  } = getLiveblocksExtrasForClient(client);
+  const { store } = getLiveblocksExtrasForClient(client);
 
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
@@ -461,7 +418,16 @@ function useInboxNotifications_withClient<T>(
     //    *next* render after that, a *new* fetch/promise will get created.
   });
 
-  useEffect(subscribeToDeltaUpdates, [subscribeToDeltaUpdates]);
+  useEffect(() => {
+    store.pollInboxNotifications();
+  }, [store]);
+
+  useEffect(() => {
+    store.incrementNotificationsSubscriber();
+    return () => {
+      store.decrementNotificationsSubscriber();
+    };
+  }, [store]);
 
   return useSyncExternalStoreWithSelector(
     store.subscribe,
@@ -858,6 +824,21 @@ export function LiveblocksProviderWithClient(
   }>
 ) {
   useEnsureNoLiveblocksProvider(props);
+
+  const { store } = getLiveblocksExtrasForClient(props.client);
+
+  useEffect(() => {
+    function handleVisiblilityChange() {
+      if (document.visibilityState === "hidden") return;
+      store.pollInboxNotifications();
+    }
+
+    document.addEventListener("visibilitychange", handleVisiblilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisiblilityChange);
+    };
+  }, [store]);
+
   return (
     <ClientContext.Provider value={props.client}>
       {props.children}
