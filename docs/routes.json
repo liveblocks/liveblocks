@@ -531,6 +531,10 @@
         "path": "/api-reference/liveblocks-node"
       },
       {
+        "title": "@liveblocks/emails",
+        "path": "/api-reference/liveblocks-emails"
+      },
+      {
         "title": "REST API",
         "href": "/api-reference/rest-api-endpoints"
       },
