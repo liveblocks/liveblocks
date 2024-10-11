@@ -5,6 +5,13 @@ type Poller = {
    * poller if it hasn't been stopped already.
    */
   enable(condition: boolean): void;
+
+  /**
+   * Polls immediately only if it has been more than `maxStaleTimeMs` milliseconds since
+   * the last poll and no poll is currently in progress. After polling, schedules
+   * the next poll at the regular interval.
+   */
+  pollNowIfStale(maxStaleTimeMs: number): void;
 };
 
 type Context =
@@ -13,6 +20,8 @@ type Context =
       state: "running";
       timeoutHandle: ReturnType<typeof setTimeout>;
       lastScheduledAt: number;
+      lastPolledAt: number | null;
+      pollPromise: Promise<void> | null;
     };
 
 export function makePoller(
@@ -23,25 +32,26 @@ export function makePoller(
 
   function poll() {
     if (context.state === "running") {
-      //
-      // XXX Should we make this contingent on the callback's execution, i.e. do
-      // XXX try { await callback() } finally { schedule() } instead, so that
-      // XXX two polling functions will never "overlap"?
+      // XXX Set a max timeout for the `callback()` (make `callback` take
+      // a signal, and protect each call with AbortSignal.timeout)
       //
       // XXX See discussion here:
       // https://github.com/liveblocks/liveblocks/pull/1962#discussion_r1787422911
-      //
-      schedule();
-    }
 
-    //
-    // XXX Set a max timeout for the `callback()` (make `callback` take
-    // a signal, and protect each call with AbortSignal.timeout)
-    //
-    // XXX See discussion here:
-    // https://github.com/liveblocks/liveblocks/pull/1962#discussion_r1787422911
-    //
-    void callback();
+      // If there's already a poll in progress, do not start a new one
+      if (context.pollPromise !== null) {
+        return;
+      }
+
+      context.pollPromise = Promise.resolve(callback());
+
+      void context.pollPromise.finally(() => {
+        if (context.state === "running") {
+          schedule();
+          context.lastPolledAt = performance.now();
+        }
+      });
+    }
   }
 
   function schedule() {
@@ -49,6 +59,8 @@ export function makePoller(
       state: "running",
       lastScheduledAt: performance.now(),
       timeoutHandle: setTimeout(poll, interval),
+      lastPolledAt: null,
+      pollPromise: null,
     };
   }
 
@@ -79,7 +91,31 @@ export function makePoller(
     }
   }
 
+  function pollNowIfStale(maxStaleTimeMs: number) {
+    if (context.state !== "running") {
+      return;
+    }
+
+    // If a poll is already in progress, do nothing
+    if (context.pollPromise !== null) {
+      return;
+    }
+
+    const lastPolledAt = context.lastPolledAt ?? 0;
+
+    if (performance.now() - lastPolledAt > maxStaleTimeMs) {
+      // Cancel any scheduled poll
+      if (context.timeoutHandle) {
+        clearTimeout(context.timeoutHandle);
+      }
+
+      // Start polling immediately
+      void poll();
+    }
+  }
+
   return {
     enable,
+    pollNowIfStale,
   };
 }
