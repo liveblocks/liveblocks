@@ -1,4 +1,3 @@
-import { CommentsApiError } from ".";
 import type { AuthManager, AuthValue } from "./auth-manager";
 import type {
   Delegates,
