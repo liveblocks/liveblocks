@@ -1,8 +1,5 @@
 import { makePoller } from "../lib/Poller";
 
-// Mock timers using Jest
-jest.useFakeTimers();
-
 describe("Poller", () => {
   beforeEach(() => {
     jest.useFakeTimers();
@@ -10,6 +7,7 @@ describe("Poller", () => {
 
   afterEach(() => {
     jest.clearAllTimers();
+    jest.useRealTimers();
   });
 
   test("should start the poller when condition is true", async () => {
