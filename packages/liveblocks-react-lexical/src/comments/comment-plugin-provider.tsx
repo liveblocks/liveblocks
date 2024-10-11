@@ -8,7 +8,6 @@ import { shallow } from "@liveblocks/core";
 import {
   CreateThreadError,
   getUmbrellaStoreForClient,
-  selectThreads,
   useClient,
   useCommentsErrorListener,
   useRoom,
@@ -111,13 +110,10 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     store.getFullState,
     useCallback(
       () =>
-        selectThreads(store.getFullState().threadsDB, {
-          roomId,
-          orderBy: "age",
-          query: {
-            resolved: false,
-          },
-        }).map((thread) => thread.id),
+        store
+          .getFullState()
+          .threadsDB.findMany(roomId, { resolved: false }, "asc")
+          .map((thread) => thread.id),
       [roomId, store]
     ),
     shallow
@@ -220,13 +216,10 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       const selection = $getSelection();
 
       const threadIds = $getThreadIds(selection).filter((id) => {
-        return selectThreads(store.getFullState().threadsDB, {
-          roomId,
-          orderBy: "age",
-          query: {
-            resolved: false,
-          },
-        }).some((thread) => thread.id === id);
+        return store
+          .getFullState()
+          .threadsDB.findMany(roomId, { resolved: false }, "asc")
+          .some((thread) => thread.id === id);
       });
       setActiveThreads(threadIds);
     }
