@@ -75,6 +75,7 @@ describe("client", () => {
       color: "blue",
     },
     createdAt: new Date("2022-07-13T14:32:50.697Z"),
+    updatedAt: new Date("2022-07-13T14:32:50.697Z"),
     comments: [comment],
     resolved: false,
   };

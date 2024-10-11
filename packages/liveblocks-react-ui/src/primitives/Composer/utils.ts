@@ -6,7 +6,7 @@ import {
   type CommentBodyMention,
   type CommentLocalAttachment,
   type CommentMixedAttachment,
-  CommentsApiError,
+  HttpError,
   makeEventSource,
   type OpaqueRoom,
 } from "@liveblocks/core";
@@ -374,7 +374,7 @@ function createComposerAttachmentsManager(
             ...attachment,
             status: "error",
             error:
-              error instanceof CommentsApiError && error.status === 413
+              error instanceof HttpError && error.status === 413
                 ? new AttachmentTooLargeError("File is too large.", "server")
                 : error,
           });
