@@ -190,7 +190,7 @@ type PaginationStatePatch =
 
 type QueryAsyncResult = AsyncResult<undefined>;
 
-// XXX - Remove ASYNC_OK
+// TODO Remove ASYNC_OK once we refactor the queries3 and queries4 abstractions
 const ASYNC_OK = Object.freeze({ isLoading: false, data: undefined });
 
 /**
