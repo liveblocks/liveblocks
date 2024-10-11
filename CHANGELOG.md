@@ -1,3 +1,15 @@
+## 2.9.2 (not released yet)
+
+### `@liveblocks/client`
+
+- Internal refactorings and code cleanup to various parts of the client's inner
+  workings
+
+### `@liveblocks/react`
+
+- Stop automatic retry attempts if a 403 Forbidden error is received while
+  loading inbox notifications, user threads, or room threads.
+
 ## 2.9.1
 
 ### `@liveblocks/client`
@@ -6,11 +18,6 @@
 - Fix bug where client wasn't always using the newest delta update backend
   endpoint yet
 - Fix regression with metadata filtering on explicitly-`undefined` values
-
-### `@liveblocks/react`
-
-- Stop automatic retry attempts if a 403 Forbidden error is received while
-  loading inbox notifications, user threads, or room threads.
 
 ### `@liveblocks/react-ui`
 
