@@ -17,11 +17,53 @@ library is only intented for use in your Node.js back end.
 
 ## Thread Notification [#thread-notification]
 
-`@liveblocks/emails` exposes two functions to prepare data from a
+`@liveblocks/emails` exposes two functions
+[`prepareThreadNotificationAsReact`](#prepare-thread-notification-as-react) and
+[`prepareThreadNotificationAsHtml`](#prepare-thread-notification-as-html) to
+prepare data from a
 [`ThreadNotificationEvent`](/docs/platform/webhooks#Thread-notification).
 
-Theses functions determines if the event is about the last unread mention in a
-thread or if it's about a set of unread replies in a thread.
+### Unread comments [#unread-comments]
+
+For thread notifications the two functions
+[`prepareThreadNotificationAsReact`](#prepare-thread-notification-as-react) and
+[`prepareThreadNotificationAsHtml`](#prepare-thread-notification-as-html) will
+determnine unread comments for a thread.
+
+It means theses functions will determnine if the user who should receive an
+email has been mentioned in an unread comment or this user has unread replies
+after he posted comment in a thread.
+
+If there are unread comments then the two functions will follow this path: if
+there is a last unread mention then they will return only one comment in
+returned object on the key `comment`. Otherwise they will return a list of
+comments in the returned object on the key `comments`.
+
+If there are no last unread mention or unread replies then theses functions
+return `null`.
+
+#### Unread replies [#unread-replies]
+
+The list of unread replies are computed based on thread notifcation event data.
+Based on those data
+[`prepareThreadNotificationAsReact`](#prepare-thread-notification-as-react) and
+[`prepareThreadNotificationAsHtml`](#prepare-thread-notification-as-html) will
+get a thread and and inbox notication with the
+[Liveblocks node client](d/ocs/api-reference/liveblocks-node#Liveblocks-client).
+
+Then the functions will return either all comments in the thread **created
+after** the `readAt`date of the notifucation **and created before or at the same
+date** of `notifiedAt` date of the notification. Or either it will return all
+comments in the thread **created before or at the same date** of `notifiedAt`
+date of the notification if the notification is not read by the user who has
+recieved the inbox noitification.
+
+#### Last unread mention [#last-unread-mention]
+
+The last unread mention is computed based on the list of the unread replies by
+checking if the user who recieved the inbox notification has been mentionned in
+one of those comments and will return the last one (newest created comment) or
+`null` if it's not the case.
 
 ### prepareThreadNotificationAsReact [#prepare-thread-notification-as-react]
 
