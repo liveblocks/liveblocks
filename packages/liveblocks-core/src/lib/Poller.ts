@@ -55,6 +55,7 @@ export function makePoller(
   }
 
   function schedule() {
+    // XXX clearTimeout(...) ?
     context = {
       state: "running",
       lastScheduledAt: performance.now(),
