@@ -14,6 +14,7 @@ const VENDORS_PREFIXES = new RegExp(/^(webkit|moz|ms|o)-/);
 
 /**
  * CSS properties which accept numbers but are not in units of "px".
+ * Based on: https://github.com/facebook/react/blob/bfe91fbecf183f85fc1c4f909e12a6833a247319/packages/react-dom-bindings/src/shared/isUnitlessNumber.js
  */
 const UNITLESS_PROPERTIES = [
   "animationIterationCount",
