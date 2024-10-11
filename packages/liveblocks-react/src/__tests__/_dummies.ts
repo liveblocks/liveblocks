@@ -4,6 +4,7 @@ import type {
   InboxNotificationCustomData,
   InboxNotificationThreadData,
   ThreadData,
+  ThreadDataWithDeleteInfo,
 } from "@liveblocks/core";
 import {
   createCommentId,
@@ -16,22 +17,25 @@ type AtLeast<T, K extends keyof T> = Partial<T> & Pick<T, K>;
 export function dummyThreadData({
   roomId,
   ...overrides
-}: AtLeast<ThreadData<BaseMetadata>, "roomId">): ThreadData<BaseMetadata> {
-  const now = new Date();
-  const threadId = createThreadId();
-
+}: AtLeast<
+  ThreadDataWithDeleteInfo<BaseMetadata>,
+  "roomId"
+>): ThreadData<BaseMetadata> {
+  const threadId = overrides.id ?? createThreadId();
+  const createdAt = overrides.createdAt ?? new Date();
+  const updatedAt = overrides.updatedAt ?? createdAt;
   return {
-    id: threadId,
     type: "thread",
+    id: threadId,
+    createdAt,
+    updatedAt,
     roomId,
-    createdAt: now,
     metadata: {},
-    updatedAt: now,
     comments: [
       dummyCommentData({
         roomId,
         threadId,
-        createdAt: now,
+        createdAt,
       }),
     ],
     resolved: false,

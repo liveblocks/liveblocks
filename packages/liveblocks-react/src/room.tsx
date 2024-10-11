@@ -36,16 +36,15 @@ import type {
 } from "@liveblocks/core";
 import {
   assert,
-  CommentsApiError,
   console,
   createCommentId,
   createThreadId,
   deprecateIf,
   errorIf,
+  HttpError,
   kInternal,
   makeEventSource,
   makePoller,
-  NotificationsApiError,
   ServerMsgCode,
 } from "@liveblocks/core";
 import * as React from "react";
@@ -211,7 +210,7 @@ function getCurrentUserId(room: OpaqueRoom): string {
   }
 }
 
-function handleApiError(err: CommentsApiError | NotificationsApiError): Error {
+function handleApiError(err: HttpError): Error {
   const message = `Request failed with status ${err.status}: ${err.message}`;
 
   // Log details about FORBIDDEN errors
@@ -226,7 +225,7 @@ function handleApiError(err: CommentsApiError | NotificationsApiError): Error {
   return new Error(message);
 }
 
-// XXX DRY up these makeDeltaPoller_* abstractions, now that the symmetry has become clear!
+// NIMESH - DRY up these makeDeltaPoller_* abstractions, now that the symmetry has become clear!
 function makeDeltaPoller_RoomThreads(client: OpaqueClient) {
   const store = getUmbrellaStoreForClient(client);
 
@@ -251,7 +250,7 @@ function makeDeltaPoller_RoomThreads(client: OpaqueClient) {
   return () => {
     pollerSubscribers++;
 
-    // XXX - We should wait until the lastRequestedAt date is known using a promise and then
+    // NIMESH - We should wait until the lastRequestedAt date is known using a promise and then
     // in the `then` body, check again if the number of subscribers if more than 0, and only then
     // if those conditions hold, start the poller
     // promise.then(() => { if (subscribers > 0 ) initialPoller() else: do nothing })
@@ -260,7 +259,7 @@ function makeDeltaPoller_RoomThreads(client: OpaqueClient) {
     return () => {
       pollerSubscribers--;
 
-      // XXX - When stopping the poller, we should also ideally abort its
+      // NIMESH - When stopping the poller, we should also ideally abort its
       // poller function, maybe using an AbortController? This functionality
       // should be automatic and handled by the Poller abstraction, not here!
       poller.enable(pollerSubscribers > 0);
@@ -355,13 +354,13 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   ) {
     store.removeOptimisticUpdate(optimisticUpdateId);
 
-    if (innerError instanceof CommentsApiError) {
+    if (innerError instanceof HttpError) {
       const error = handleApiError(innerError);
       commentsErrorEventSource.notify(createPublicError(error));
       return;
     }
 
-    if (innerError instanceof NotificationsApiError) {
+    if (innerError instanceof HttpError) {
       handleApiError(innerError);
       // TODO: Create public error and notify via notificationsErrorEventSource?
       return;
@@ -701,7 +700,11 @@ function RoomProviderInner<
       }
       const { thread, inboxNotification } = info;
 
-      const existingThread = store.getFullState().threadsById[message.threadId];
+      const existingThread = store
+        .getFullState()
+        .threadsDB //
+        // XXX Should we use .get() here?
+        .getEvenIfDeleted(message.threadId);
 
       switch (message.type) {
         case ServerMsgCode.COMMENT_EDITED:
@@ -1285,7 +1288,7 @@ function useThreads<M extends BaseMetadata>(
 
   React.useEffect(
     () => {
-      // XXX - Verify that we need the catch or not
+      // NIMESH - Verify that we need the catch or not
       void store
         .waitUntilRoomThreadsLoaded(room.id, options.query)
         .catch(() => {
@@ -1419,7 +1422,11 @@ function useDeleteThread(): (threadId: string) => void {
     (threadId: string): void => {
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
 
-      const thread = store.getFullState().threadsById[threadId];
+      const thread = store
+        .getFullState()
+        .threadsDB //
+        // XXX Should we use .get() here?
+        .getEvenIfDeleted(threadId);
 
       const userId = getCurrentUserId(room);
 
@@ -1573,7 +1580,12 @@ function useEditComment(): (options: EditCommentOptions) => void {
       const editedAt = new Date();
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-      const thread = store.getFullState().threadsById[threadId];
+      const thread = store
+        .getFullState()
+        .threadsDB //
+        // XXX Should we use .get() here?
+        .getEvenIfDeleted(threadId);
+
       if (thread === undefined) {
         console.warn(
           `Internal unexpected behavior. Cannot edit comment in thread "${threadId}" because the thread does not exist in the cache.`
@@ -1955,7 +1967,9 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
           inboxNotification.threadId === threadId
       );
 
-      const thread = state.threadsById[threadId];
+      const thread = state.threadsDB
+        // XXX Should we use .get() here?
+        .getEvenIfDeleted(threadId);
 
       if (inboxNotification === undefined || thread === undefined) {
         return {

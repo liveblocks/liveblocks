@@ -1376,8 +1376,6 @@ describe("useThreads", () => {
     const thread1 = dummyThreadData({ roomId });
     const thread2WithDeletedAt = dummyThreadData({
       roomId,
-
-      // @ts-expect-error: deletedAt isn't publicly typed on ThreadData
       deletedAt: new Date(),
     });
 
@@ -1403,13 +1401,11 @@ describe("useThreads", () => {
       umbrellaStore,
     } = createContextsForTest();
 
-    umbrellaStore.force_set((state) => ({
-      ...state,
-      rawThreadsById: {
-        [thread1.id]: thread1,
-        [thread2WithDeletedAt.id]: thread2WithDeletedAt,
-      },
-    }));
+    // @ts-expect-error Accessing a private field here directly
+    const db = umbrellaStore._rawThreadsDB;
+    db.upsert(thread1);
+    db.upsert(thread2WithDeletedAt);
+    umbrellaStore.force_set((state) => ({ ...state }));
 
     const { result, unmount } = renderHook(
       () => useThreads({ query: { metadata: {} } }),

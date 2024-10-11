@@ -32,7 +32,7 @@ describe("selectThreads", () => {
 
     store.updateThreadsAndNotifications([thread1, thread2], [], [], []);
 
-    const resolvedThreads = selectThreads(store.getFullState(), {
+    const resolvedThreads = selectThreads(store.getFullState().threadsDB, {
       roomId: "room_1",
       query: { resolved: true },
       orderBy: "age",
