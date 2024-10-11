@@ -600,12 +600,13 @@ export function createClient<U extends BaseUserMeta = DU>(
 
   const currentUserIdStore = createStore<string | null>(null);
 
-  const fetcher =
-    clientOptions.polyfills?.fetch || /* istanbul ignore next */ fetch;
+  const fetchPolyfill =
+    clientOptions.polyfills?.fetch ||
+    /* istanbul ignore next */ globalThis.fetch?.bind(globalThis);
 
-  const httpClientLike = createNotificationsApi({
+  const notificationsAPI = createNotificationsApi({
     baseUrl,
-    fetcher,
+    fetchPolyfill,
     authManager,
     currentUserIdStore,
   });
@@ -655,7 +656,7 @@ export function createClient<U extends BaseUserMeta = DU>(
 
       logout,
 
-      ...httpClientLike,
+      ...notificationsAPI,
 
       // Internal
       [kInternal]: {
@@ -668,9 +669,10 @@ export function createClient<U extends BaseUserMeta = DU>(
         },
 
         // "All" threads (= "user" threads)
-        getUserThreads_experimental: httpClientLike.getUserThreads_experimental,
+        getUserThreads_experimental:
+          notificationsAPI.getUserThreads_experimental,
         getUserThreadsSince_experimental:
-          httpClientLike.getUserThreadsSince_experimental,
+          notificationsAPI.getUserThreadsSince_experimental,
       },
     },
     kInternal,
@@ -678,16 +680,6 @@ export function createClient<U extends BaseUserMeta = DU>(
       enumerable: false,
     }
   );
-}
-
-export class NotificationsApiError extends Error {
-  constructor(
-    public message: string,
-    public status: number,
-    public details?: JsonObject
-  ) {
-    super(message);
-  }
 }
 
 function checkBounds(
