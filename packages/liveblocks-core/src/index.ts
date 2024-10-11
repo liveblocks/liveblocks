@@ -302,12 +302,8 @@ export type { Store } from "./lib/create-store";
 export { createStore } from "./lib/create-store";
 
 // Deprecated APIs
-
-/**
- * @deprecated Use HttpError instead.
- */
+import { HttpError } from "./http-client";
+/** @deprecated Use HttpError instead. */
 export const CommentsApiError = HttpError;
-/**
- * @deprecated Use HttpError instead.
- */
+/** @deprecated Use HttpError instead. */
 export const NotificationsApiError = HttpError;
