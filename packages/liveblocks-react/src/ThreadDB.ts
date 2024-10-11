@@ -129,8 +129,8 @@ export class ThreadDB<M extends BaseMetadata> {
   }
 
   /** Like .upsert(), except it won't update if a thread by this ID already exists. */
-  // XXX Consider renaming this to just .upsert(). I'm not sure if we really
-  // XXX need the raw .upsert(). Would be nice if this behavior was the default.
+  // TODO Consider renaming this to just .upsert(). I'm not sure if we really
+  // TODO need the raw .upsert(). Would be nice if this behavior was the default.
   public upsertIfNewer(thread: ThreadDataWithDeleteInfo<M>): void {
     const existing = this.get(thread.id);
     if (!existing || thread.updatedAt >= existing.updatedAt) {
