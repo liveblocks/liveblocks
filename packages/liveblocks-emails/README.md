@@ -22,7 +22,7 @@
 </p>
 
 `@liveblocks/emails` provides a set of functions and utilities to make sending
-emails based on [Liveblocks](https://liveblocks.io) notification events easy.
+emails based on [Liveblocks](https://liveblocks.io) notifications events easy.
 
 ## Installation
 

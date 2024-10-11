@@ -1,0 +1,74 @@
+---
+meta:
+  title: "@liveblocks/emails"
+  parentTitle: "API Reference"
+  description: "API Reference for the @liveblocks/emails package"
+alwaysShowAllNavigationLevels: false
+---
+
+`@liveblocks/emails` provides a set of functions to make sending emails based on
+[Liveblocks notifications](/docs/products/notifications) events easy. This
+library is only intented for use in your Node.js back end.
+
+<Banner title="Requirements">
+  `@liveblocks/emails` requires the package `@liveblocks/node` to be installed
+  and [React](https://react.dev/) as a peer dependency of your project.
+</Banner>
+
+## Thread Notification [#thread-notification]
+
+`@liveblocks/emails` exposes two functions to prepare data from a
+[`ThreadNotificationEvent`](/docs/platform/webhooks#Thread-notification).
+
+Theses functions determines if the event is about the last unread mention in a
+thread or if it's about a set of unread replies in a thread.
+
+### prepareThreadNotificationAsReact [#prepare-thread-notification-as-react]
+
+Prepares data from a
+[`ThreadNotificationEvent`](/docs/platform/webhooks#Thread-notification) and
+convert comment bodies as [React](https://react.dev/) nodes.
+
+It returns a `ThreadNotificationEmailDataAsReact` object or `null` if there are
+no unread comments.
+
+```tsx
+import { Liveblocks, isThreadNotificationEvent } from "@liveblocks/node";
+import { prepareThreadNotificationAsReact } from "@liveblocks/emails";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+if (isThreadNotificationEvent(webookEvent)) {
+  const emailData = await prepareThreadNotificationAsReact(
+    liveblocks,
+    webhookEvent
+  );
+}
+```
+
+### prepareThreadNotificationAsHtml [#prepare-thread-notification-as-html]
+
+Prepares data from a
+[`ThreadNotificationEvent`](/docs/platform/webhooks#Thread-notification) and
+convert comment bodies as an html safe string.
+
+It returns a `ThreadNotificationEmailDataAsHtml` or `null` if there are no
+unread comments.
+
+```tsx
+import { Liveblocks, isThreadNotificationEvent } from "@liveblocks/node";
+import { prepareThreadNotificationAsHtml } from "@liveblocks/emails";
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+if (isThreadNotificationEvent(webookEvent)) {
+  const emailData = await prepareThreadNotificationAsHtml(
+    liveblocks,
+    webhookEvent
+  );
+}
+```
