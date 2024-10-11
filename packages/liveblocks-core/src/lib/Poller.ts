@@ -14,7 +14,7 @@ type Poller = {
   pollNowIfStale(maxStaleTimeMs: number): void;
 };
 
-type Context =
+type State =
   | { state: "stopped" }
   | {
       state: "running";
@@ -24,14 +24,21 @@ type Context =
       pollPromise: Promise<void> | null;
     };
 
+type Context = {
+  isEnabled: boolean;
+};
+
 export function makePoller(
   callback: () => Promise<void> | void,
   interval: number
 ): Poller {
-  let context: Context = { state: "stopped" };
+  let state: State = { state: "stopped" };
+  const context: Context = {
+    isEnabled: false,
+  };
 
   function poll() {
-    if (context.state === "running") {
+    if (state.state === "running") {
       // XXX Set a max timeout for the `callback()` (make `callback` take
       // a signal, and protect each call with AbortSignal.timeout)
       //
@@ -39,16 +46,16 @@ export function makePoller(
       // https://github.com/liveblocks/liveblocks/pull/1962#discussion_r1787422911
 
       // If there's already a poll in progress, do not start a new one
-      if (context.pollPromise !== null) {
+      if (state.pollPromise !== null) {
         return;
       }
 
-      context.pollPromise = Promise.resolve(callback());
+      state.pollPromise = Promise.resolve(callback());
 
-      void context.pollPromise.finally(() => {
-        if (context.state === "running") {
+      void state.pollPromise.finally(() => {
+        if (state.state === "running") {
           schedule();
-          context.lastPolledAt = performance.now();
+          state.lastPolledAt = performance.now();
         }
       });
     }
@@ -56,7 +63,7 @@ export function makePoller(
 
   function schedule() {
     // XXX clearTimeout(...) ?
-    context = {
+    state = {
       state: "running",
       lastScheduledAt: performance.now(),
       timeoutHandle: setTimeout(poll, interval),
@@ -66,7 +73,7 @@ export function makePoller(
   }
 
   function start() {
-    if (context.state === "running") {
+    if (state.state === "running") {
       return;
     }
 
@@ -74,18 +81,23 @@ export function makePoller(
   }
 
   function stop() {
-    if (context.state === "stopped") {
+    if (state.state === "stopped") {
       return;
     }
 
-    if (context.timeoutHandle) {
-      clearTimeout(context.timeoutHandle);
+    if (state.timeoutHandle) {
+      clearTimeout(state.timeoutHandle);
     }
-    context = { state: "stopped" };
+    state = { state: "stopped" };
   }
 
   function enable(condition: boolean) {
-    if (condition) {
+    context.isEnabled = condition;
+    startOrStop();
+  }
+
+  function startOrStop() {
+    if (context.isEnabled) {
       start();
     } else {
       stop();
@@ -93,21 +105,21 @@ export function makePoller(
   }
 
   function pollNowIfStale(maxStaleTimeMs: number) {
-    if (context.state !== "running") {
+    if (state.state !== "running") {
       return;
     }
 
     // If a poll is already in progress, do nothing
-    if (context.pollPromise !== null) {
+    if (state.pollPromise !== null) {
       return;
     }
 
-    const lastPolledAt = context.lastPolledAt;
+    const lastPolledAt = state.lastPolledAt;
 
     if (!lastPolledAt || performance.now() - lastPolledAt > maxStaleTimeMs) {
       // Cancel any scheduled poll
-      if (context.timeoutHandle) {
-        clearTimeout(context.timeoutHandle);
+      if (state.timeoutHandle) {
+        clearTimeout(state.timeoutHandle);
       }
 
       // Start polling immediately
