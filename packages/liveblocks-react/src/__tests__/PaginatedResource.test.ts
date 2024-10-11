@@ -12,27 +12,23 @@ function makeFetcher() {
 
 function makeUnreliableFetcher() {
   let i = 0;
-  return (
-    jest
-      .fn<Promise<string | null>, [cursor?: string]>()
-      // VINCENT - There is a bug that shows up when we remove the "async" below here! It's an edge case we'll need to handle!
-      .mockImplementation(async (cursor?: string) => {
-        if (++i % 2 === 0) {
-          throw new Error("Crap");
-        }
+  return jest
+    .fn<Promise<string | null>, [cursor?: string]>()
+    .mockImplementation(async (cursor?: string) => {
+      if (++i % 2 === 0) {
+        throw new Error("Crap");
+      }
 
-        const nextCursor =
-          cursor === undefined ? "two" : cursor === "two" ? "three" : null;
-        return Promise.resolve(nextCursor);
-      })
-  );
+      const nextCursor =
+        cursor === undefined ? "two" : cursor === "two" ? "three" : null;
+      return Promise.resolve(nextCursor);
+    });
 }
 
 function makeBrokenFetcher() {
   return (
     jest
       .fn<Promise<string | null>, [cursor?: string]>()
-      // VINCENT - There is a bug that shows up when we remove the "async" below here! It's an edge case we'll need to handle!
       // eslint-disable-next-line @typescript-eslint/require-await
       .mockImplementation(async () => {
         throw new Error("Crap");
@@ -167,6 +163,7 @@ describe("PaginatedResource", () => {
     const fetchMore = p.get().data!.fetchMore as () => Promise<void>;
     //                                                 ^^^^^^^
     // NOTE: fetchMore really *is* a promise at runtime, but we don't
+    // expose it as such publicly.
 
     const f1$ = fetchMore(); // Will fail!
 

@@ -502,6 +502,7 @@ type InternalState<M extends BaseMetadata> = Readonly<{
 
   optimisticUpdates: readonly OptimisticUpdate<M>[];
 
+  // TODO: Ideally we would have a similar NotificationsDB, like we have ThreadDB
   notificationsById: Record<string, InboxNotificationData>;
   settingsByRoomId: Record<string, RoomNotificationSettings>;
   versionsByRoomId: Record<string, HistoryVersion[]>;

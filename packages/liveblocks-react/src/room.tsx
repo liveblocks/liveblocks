@@ -743,9 +743,7 @@ function RoomProviderInner<
 
       const existingThread = store
         .getFullState()
-        .threadsDB //
-        // XXX Should we use .get() here?
-        .getEvenIfDeleted(message.threadId);
+        .threadsDB.getEvenIfDeleted(message.threadId);
 
       switch (message.type) {
         case ServerMsgCode.COMMENT_EDITED:
@@ -1463,15 +1461,10 @@ function useDeleteThread(): (threadId: string) => void {
     (threadId: string): void => {
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
 
-      const thread = store
-        .getFullState()
-        .threadsDB //
-        // XXX Should we use .get() here?
-        .getEvenIfDeleted(threadId);
-
       const userId = getCurrentUserId(room);
 
-      if (thread?.comments?.[0]?.userId !== userId) {
+      const existing = store.getFullState().threadsDB.get(threadId);
+      if (existing?.comments?.[0]?.userId !== userId) {
         throw new Error("Only the thread creator can delete the thread");
       }
 
@@ -1621,20 +1614,18 @@ function useEditComment(): (options: EditCommentOptions) => void {
       const editedAt = new Date();
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-      const thread = store
+      const existing = store
         .getFullState()
-        .threadsDB //
-        // XXX Should we use .get() here?
-        .getEvenIfDeleted(threadId);
+        .threadsDB.getEvenIfDeleted(threadId);
 
-      if (thread === undefined) {
+      if (existing === undefined) {
         console.warn(
           `Internal unexpected behavior. Cannot edit comment in thread "${threadId}" because the thread does not exist in the cache.`
         );
         return;
       }
 
-      const comment = thread.comments.find(
+      const comment = existing.comments.find(
         (comment) => comment.id === commentId
       );
 
@@ -2002,25 +1993,20 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
 
   const selector = React.useCallback(
     (state: UmbrellaStoreState<BaseMetadata>): ThreadSubscription => {
-      const inboxNotification = state.cleanedNotifications.find(
+      const notification = state.cleanedNotifications.find(
         (inboxNotification) =>
           inboxNotification.kind === "thread" &&
           inboxNotification.threadId === threadId
       );
 
-      const thread = state.threadsDB
-        // XXX Should we use .get() here?
-        .getEvenIfDeleted(threadId);
-
-      if (inboxNotification === undefined || thread === undefined) {
-        return {
-          status: "not-subscribed",
-        };
+      const thread = state.threadsDB.get(threadId);
+      if (notification === undefined || thread === undefined) {
+        return { status: "not-subscribed" };
       }
 
       return {
         status: "subscribed",
-        unreadSince: inboxNotification.readAt,
+        unreadSince: notification.readAt,
       };
     },
     [threadId]
