@@ -94,6 +94,7 @@ export function makePoller(
   }
 
   const doc = typeof document !== "undefined" ? document : undefined;
+  const win = typeof window !== "undefined" ? window : undefined;
 
   function setVisibility(cond2: boolean) {
     context.cond2 = cond2;
@@ -106,8 +107,11 @@ export function makePoller(
   }
 
   doc?.addEventListener("visibilitychange", onVisibilityChange);
-  // Remove this event listener if the poller would get destroyed
+  win?.addEventListener("online", onVisibilityChange);
+
+  // XXX Remove this event listener if the poller would get destroyed?
   // doc?.removeEventListener("visibilitychange", onVisibilityChange);
+  // win?.removeEventListener("online", onVisibilityChange);
 
   fsm.start();
   return {
