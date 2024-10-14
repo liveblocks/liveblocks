@@ -97,6 +97,18 @@ describe("Poller", () => {
     expect(callback).toHaveBeenCalledTimes(1); // No more calls
   });
 
+  test("should not allow explicit poll when disabled", async () => {
+    const callback = jest.fn();
+    const poller = makePoller(callback, 1000);
+
+    poller.enable(false);
+    poller.pollNowIfStale();
+
+    // Fast-forward to 1s when the first poll is triggered
+    await jest.advanceTimersByTimeAsync(10000);
+    expect(callback).toHaveBeenCalledTimes(0); // Should not poll, since polling is disabled
+  });
+
   test("should poll immediately if stale (when called before first poll, short stale time)", async () => {
     // 0s        2s              5s
     // |--------------------------|

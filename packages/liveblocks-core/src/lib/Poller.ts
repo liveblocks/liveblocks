@@ -45,7 +45,7 @@ export function makePoller(
     .addState("@enabled")
     .addState("@polling");
 
-  fsm.addTransitions("@idle", { START: "@enabled", POLL: "@polling" });
+  fsm.addTransitions("@idle", { START: "@enabled" });
   fsm.addTransitions("@enabled", { STOP: "@idle", POLL: "@polling" });
   fsm.addTimedTransition("@enabled", interval, "@polling");
 
