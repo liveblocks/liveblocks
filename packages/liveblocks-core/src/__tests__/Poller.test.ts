@@ -117,7 +117,7 @@ describe("Poller", () => {
     //      Force poll here
 
     const callback = jest.fn();
-    const poller = makePoller(callback, 5000);
+    const poller = makePoller(callback, 5000, 1000);
 
     poller.enable(true); // Start polling
     expect(callback).toHaveBeenCalledTimes(0);
@@ -127,7 +127,7 @@ describe("Poller", () => {
     expect(callback).toHaveBeenCalledTimes(0);
 
     // Call pollNowIfStale with a maxStaleTimeMs of 1000 (so it should poll)
-    poller.pollNowIfStale(1000);
+    poller.pollNowIfStale();
 
     expect(callback).toHaveBeenCalledTimes(1);
 
@@ -159,7 +159,7 @@ describe("Poller", () => {
     //      Force poll here
 
     const callback = jest.fn();
-    const poller = makePoller(callback, 5000);
+    const poller = makePoller(callback, 5000, 30000);
 
     poller.enable(true); // Start polling
     expect(callback).toHaveBeenCalledTimes(0);
@@ -170,7 +170,7 @@ describe("Poller", () => {
 
     // Call pollNowIfStale with a maxStaleTimeMs of 30000
     // Since there is no initial data, it should immediately poll
-    poller.pollNowIfStale(30000);
+    poller.pollNowIfStale();
 
     expect(callback).toHaveBeenCalledTimes(1);
 
@@ -202,7 +202,7 @@ describe("Poller", () => {
     //                                Force poll here
 
     const callback = jest.fn();
-    const poller = makePoller(callback, 5000);
+    const poller = makePoller(callback, 5000, 1000);
 
     poller.enable(true); // Start polling
     expect(callback).toHaveBeenCalledTimes(0);
@@ -212,7 +212,7 @@ describe("Poller", () => {
     expect(callback).toHaveBeenCalledTimes(1); // Poll 1 has happened
 
     // Call pollNowIfStale with a maxStaleTimeMs of 1000 (so it should poll)
-    poller.pollNowIfStale(1000);
+    poller.pollNowIfStale();
 
     expect(callback).toHaveBeenCalledTimes(2);
 
@@ -242,7 +242,7 @@ describe("Poller", () => {
     const callback = jest.fn(async () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
     });
-    const poller = makePoller(callback, 5000);
+    const poller = makePoller(callback, 5000, 0);
 
     // Start the poller
     poller.enable(true);
@@ -252,7 +252,7 @@ describe("Poller", () => {
     expect(callback).toHaveBeenCalledTimes(1); // Only one call since the poll is still in progress
 
     // Fast-forward to 5.5s on the timeline (in the middle of Poll 1)
-    poller.pollNowIfStale(0);
+    poller.pollNowIfStale();
 
     expect(callback).toHaveBeenCalledTimes(1); // Still only one call
 
@@ -275,7 +275,7 @@ describe("Poller", () => {
     //                       (but it's not stale enough)
 
     const callback = jest.fn();
-    const poller = makePoller(callback, 5000);
+    const poller = makePoller(callback, 5000, 30000);
 
     // Start the poller
     poller.enable(true);
@@ -286,7 +286,7 @@ describe("Poller", () => {
 
     // Fast-forward from 5s -> 6s
     await jest.advanceTimersByTimeAsync(1000);
-    poller.pollNowIfStale(30000); // Data is allowed to be 30 seconds old, so not stale
+    poller.pollNowIfStale(); // Data is allowed to be 30 seconds old, so not stale
 
     // Fast-forward from 6s -> 10s
     await jest.advanceTimersByTimeAsync(4000);
