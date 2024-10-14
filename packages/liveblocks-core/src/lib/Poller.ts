@@ -9,6 +9,12 @@ type Poller = {
   enable(condition: boolean): void;
 
   /**
+   * Used in unit tests only.
+   * @internal
+   */
+  setVisibility(condition: boolean): void;
+
+  /**
    * Polls immediately only if it has been more than `maxStaleTimeMs` milliseconds since
    * the last poll and no poll is currently in progress. After polling, schedules
    * the next poll at the regular interval.
@@ -65,13 +71,17 @@ export function makePoller(
     () => (isPollingAllowed() ? "@enabled" : "@idle") // When error
   );
 
-  function enable(cond1: boolean) {
-    context.cond1 = cond1;
+  function startOrStop() {
     if (isPollingAllowed()) {
       fsm.send({ type: "START" });
     } else {
       fsm.send({ type: "STOP" });
     }
+  }
+
+  function enable(cond1: boolean) {
+    context.cond1 = cond1;
+    startOrStop();
   }
 
   function pollNowIfStale() {
@@ -83,9 +93,28 @@ export function makePoller(
     }
   }
 
+  const doc = typeof document !== "undefined" ? document : undefined;
+
+  function setVisibility(cond2: boolean) {
+    context.cond2 = cond2;
+    startOrStop();
+    pollNowIfStale(); // Won't do anything if in @idle
+  }
+
+  function onVisibilityChange() {
+    setVisibility(doc?.visibilityState !== "hidden");
+  }
+
+  doc?.addEventListener("visibilitychange", onVisibilityChange);
+  // Remove this event listener if the poller would get destroyed
+  // doc?.removeEventListener("visibilitychange", onVisibilityChange);
+
   fsm.start();
   return {
     enable,
     pollNowIfStale,
+
+    // Private API
+    setVisibility,
   };
 }

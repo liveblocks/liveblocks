@@ -37,6 +37,35 @@ describe("Poller", () => {
     expect(callback).toHaveBeenCalledTimes(0);
   });
 
+  test("should also stop the poller when visibility state is false", async () => {
+    const callback = jest.fn();
+    const poller = makePoller(callback, 1000); // 1000ms interval
+
+    poller.enable(true); // Start the poller
+    poller.setVisibility(false); // Stops the poller
+
+    // Fast-forward time to check if polling stops
+    await jest.advanceTimersByTimeAsync(3000);
+
+    // Expect the callback not to be called since the poller was stopped
+    expect(callback).toHaveBeenCalledTimes(0);
+  });
+
+  test("should trigger a poll as soon as visibility state is toggled", async () => {
+    const callback = jest.fn();
+    const poller = makePoller(callback, 1000); // 1000ms interval
+
+    poller.enable(true);
+    poller.setVisibility(false);
+    expect(callback).toHaveBeenCalledTimes(0);
+
+    poller.setVisibility(true); // Becoming visible should instantly trigger a poll
+    await jest.advanceTimersByTimeAsync(500);
+    expect(callback).toHaveBeenCalledTimes(1);
+
+    poller.enable(false);
+  });
+
   test("should prevent polling overlap with async callback", async () => {
     // 0s    1s        3s    4s        6s    7s        9s
     // |-----|xxxxxxxxx|-----|xxxxxxxxx|-----|xxxxxxxxx|
