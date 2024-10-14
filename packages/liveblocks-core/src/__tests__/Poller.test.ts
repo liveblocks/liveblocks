@@ -281,35 +281,35 @@ describe("Poller", () => {
     expect(callback).toHaveBeenCalledTimes(2); // Poll 2
   });
 
-  test.failing(
-    "should allow new polls when re-enabled, but not schedule extra polls after completion of an in-progress poll",
-    async () => {
-      // Mock async callback that takes 4s to resolve
-      const callback = jest.fn(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-      });
-      const poller = makePoller(callback, 1000);
+  test("should allow new polls when re-enabled, but not schedule extra polls after completion of an in-progress poll", async () => {
+    // Mock async callback that takes 4s to resolve
+    const callback = jest.fn(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    });
+    const poller = makePoller(callback, 1000);
 
-      // Start the poller
-      poller.enable(true);
+    // Start the poller
+    poller.enable(true);
 
-      // Fast-forward to 1s when the first poll is triggered
-      await jest.advanceTimersByTimeAsync(1000);
-      expect(callback).toHaveBeenCalledTimes(1); // Poll 1 (but the poll is still in progress)
+    // Fast-forward to 1s when the first poll is triggered
+    await jest.advanceTimersByTimeAsync(1000);
+    expect(callback).toHaveBeenCalledTimes(1); // Poll 1 starts
+    await jest.advanceTimersByTimeAsync(1000); // Poll 1 still in progress
 
-      // Disable and enable the poller
-      poller.enable(false);
-      poller.enable(true);
+    // Disable and enable while Poll 1 is still in progress
+    poller.enable(false);
+    poller.enable(true);
 
-      // Fast-forward 1s again when a new poll is triggered.
-      // By this point, We're 2 seconds into the timeline and Poll 1 is still in progress.
-      await jest.advanceTimersByTimeAsync(1000);
-      expect(callback).toHaveBeenCalledTimes(2); // New Poll (while Poll1 is still in progress)
+    await jest.advanceTimersByTimeAsync(1000); // Poll 1 finished
+    expect(callback).toHaveBeenCalledTimes(1);
 
-      // Fast-forward 2s
-      // By this point, Poll 1 is complete. When the poll finishes, it should not schedule a new poll but it currently does!
-      await jest.advanceTimersByTimeAsync(2000);
-      expect(callback).toHaveBeenCalledTimes(2);
-    }
-  );
+    await jest.advanceTimersByTimeAsync(1000); // Poll 2 starts
+    poller.enable(false);
+    await jest.advanceTimersByTimeAsync(2000); // Poll 2 finishes
+
+    expect(callback).toHaveBeenCalledTimes(2);
+
+    await jest.advanceTimersByTimeAsync(10000);
+    expect(callback).toHaveBeenCalledTimes(2); // No new polls are getting scheduled
+  });
 });
