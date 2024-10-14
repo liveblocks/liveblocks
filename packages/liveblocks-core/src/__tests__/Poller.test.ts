@@ -42,7 +42,7 @@ describe("Poller", () => {
     const poller = makePoller(callback, 1000); // 1000ms interval
 
     poller.enable(true); // Start the poller
-    poller.setVisibility(false); // Stops the poller
+    poller.setInForeground(false); // Stops the poller
 
     // Fast-forward time to check if polling stops
     await jest.advanceTimersByTimeAsync(3000);
@@ -56,10 +56,10 @@ describe("Poller", () => {
     const poller = makePoller(callback, 1000); // 1000ms interval
 
     poller.enable(true);
-    poller.setVisibility(false);
+    poller.setInForeground(false);
     expect(callback).toHaveBeenCalledTimes(0);
 
-    poller.setVisibility(true); // Becoming visible should instantly trigger a poll
+    poller.setInForeground(true); // Becoming visible should instantly trigger a poll
     await jest.advanceTimersByTimeAsync(500);
     expect(callback).toHaveBeenCalledTimes(1);
 

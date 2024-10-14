@@ -12,7 +12,7 @@ type Poller = {
    * Used in unit tests only.
    * @internal
    */
-  setVisibility(condition: boolean): void;
+  setInForeground(condition: boolean): void;
 
   /**
    * Polls immediately only if it has been more than `maxStaleTimeMs` milliseconds since
@@ -23,8 +23,8 @@ type Poller = {
 };
 
 type Context = {
-  cond1: boolean; // Whether user has .enabled() the poller
-  cond2: boolean; // Whether the visibility state is visible
+  enabled: boolean; // Whether user has .enable()'ed the poller
+  inForeground: boolean; // Whether the visibility state is visible
   lastSuccessfulPollAt: number | null;
 };
 
@@ -38,13 +38,13 @@ export function makePoller(
   maxStaleTimeMs: number = intervalMs
 ): Poller {
   const context: Context = {
-    cond1: false,
-    cond2: true,
+    enabled: false,
+    inForeground: true,
     lastSuccessfulPollAt: null,
   };
 
-  function isPollingAllowed() {
-    return context.cond1 && context.cond2;
+  function mayPoll() {
+    return context.enabled && context.inForeground;
   }
 
   const fsm = new FSM<object, Event, State>({})
@@ -67,20 +67,20 @@ export function makePoller(
       await callback();
       context.lastSuccessfulPollAt = performance.now();
     },
-    () => (isPollingAllowed() ? "@enabled" : "@idle"), // When OK
-    () => (isPollingAllowed() ? "@enabled" : "@idle") // When error
+    () => (mayPoll() ? "@enabled" : "@idle"), // When OK
+    () => (mayPoll() ? "@enabled" : "@idle") // When error
   );
 
   function startOrStop() {
-    if (isPollingAllowed()) {
+    if (mayPoll()) {
       fsm.send({ type: "START" });
     } else {
       fsm.send({ type: "STOP" });
     }
   }
 
-  function enable(cond1: boolean) {
-    context.cond1 = cond1;
+  function enable(condition: boolean) {
+    context.enabled = condition;
     startOrStop();
   }
 
@@ -96,14 +96,14 @@ export function makePoller(
   const doc = typeof document !== "undefined" ? document : undefined;
   const win = typeof window !== "undefined" ? window : undefined;
 
-  function setVisibility(cond2: boolean) {
-    context.cond2 = cond2;
+  function setInForeground(inForeground: boolean) {
+    context.inForeground = inForeground;
     startOrStop();
     pollNowIfStale(); // Won't do anything if in @idle
   }
 
   function onVisibilityChange() {
-    setVisibility(doc?.visibilityState !== "hidden");
+    setInForeground(doc?.visibilityState !== "hidden");
   }
 
   doc?.addEventListener("visibilitychange", onVisibilityChange);
@@ -119,6 +119,6 @@ export function makePoller(
     pollNowIfStale,
 
     // Private API
-    setVisibility,
+    setInForeground,
   };
 }
