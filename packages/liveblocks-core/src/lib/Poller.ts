@@ -1,3 +1,5 @@
+import { FSM } from "./fsm";
+
 type Poller = {
   /**
    * Starts or stops the poller, based on the given condition. When true,
@@ -14,119 +16,73 @@ type Poller = {
   pollNowIfStale(maxStaleTimeMs: number): void;
 };
 
-type State =
-  | { state: "stopped" }
-  | {
-      state: "running";
-      timeoutHandle: ReturnType<typeof setTimeout>;
-      lastScheduledAt: number;
-      lastPolledAt: number | null;
-      pollPromise: Promise<void> | null;
-    };
-
 type Context = {
-  isEnabled: boolean;
+  cond1: boolean;
+  cond2: boolean;
+  lastSuccessfulPollAt: number | null;
 };
+
+type State = "@idle" | "@enabled" | "@polling";
+
+type Event = { type: "START" } | { type: "STOP" } | { type: "POLL" };
 
 export function makePoller(
   callback: () => Promise<void> | void,
   interval: number
 ): Poller {
-  let state: State = { state: "stopped" };
   const context: Context = {
-    isEnabled: false,
+    cond1: false,
+    cond2: true,
+    lastSuccessfulPollAt: null,
   };
 
-  function poll() {
-    if (state.state === "running") {
+  function isPollingAllowed() {
+    return context.cond1 && context.cond2;
+  }
+
+  const fsm = new FSM<object, Event, State>({})
+    .addState("@idle")
+    .addState("@enabled")
+    .addState("@polling");
+
+  fsm.addTransitions("@idle", { START: "@enabled", POLL: "@polling" });
+  fsm.addTransitions("@enabled", { STOP: "@idle", POLL: "@polling" });
+  fsm.addTimedTransition("@enabled", interval, "@polling");
+
+  fsm.onEnterAsync(
+    "@polling",
+    async () => {
       // XXX Set a max timeout for the `callback()` (make `callback` take
       // a signal, and protect each call with AbortSignal.timeout)
       //
       // XXX See discussion here:
       // https://github.com/liveblocks/liveblocks/pull/1962#discussion_r1787422911
+      await callback();
+      context.lastSuccessfulPollAt = performance.now();
+    },
+    () => (isPollingAllowed() ? "@enabled" : "@idle"), // When OK
+    () => (isPollingAllowed() ? "@enabled" : "@idle") // When error
+  );
 
-      // If there's already a poll in progress, do not start a new one
-      if (state.pollPromise !== null) {
-        return;
-      }
-
-      state.pollPromise = Promise.resolve(callback());
-
-      void state.pollPromise.finally(() => {
-        if (state.state === "running") {
-          schedule();
-          state.lastPolledAt = performance.now();
-        }
-      });
-    }
-  }
-
-  function schedule() {
-    // XXX clearTimeout(...) ?
-    state = {
-      state: "running",
-      lastScheduledAt: performance.now(),
-      timeoutHandle: setTimeout(poll, interval),
-      lastPolledAt: null,
-      pollPromise: null,
-    };
-  }
-
-  function start() {
-    if (state.state === "running") {
-      return;
-    }
-
-    schedule();
-  }
-
-  function stop() {
-    if (state.state === "stopped") {
-      return;
-    }
-
-    if (state.timeoutHandle) {
-      clearTimeout(state.timeoutHandle);
-    }
-    state = { state: "stopped" };
-  }
-
-  function enable(condition: boolean) {
-    context.isEnabled = condition;
-    startOrStop();
-  }
-
-  function startOrStop() {
-    if (context.isEnabled) {
-      start();
+  function enable(cond1: boolean) {
+    context.cond1 = cond1;
+    if (isPollingAllowed()) {
+      fsm.send({ type: "START" });
     } else {
-      stop();
+      fsm.send({ type: "STOP" });
     }
   }
 
   function pollNowIfStale(maxStaleTimeMs: number) {
-    if (state.state !== "running") {
-      return;
-    }
-
-    // If a poll is already in progress, do nothing
-    if (state.pollPromise !== null) {
-      return;
-    }
-
-    const lastPolledAt = state.lastPolledAt;
-
-    if (!lastPolledAt || performance.now() - lastPolledAt > maxStaleTimeMs) {
-      // Cancel any scheduled poll
-      if (state.timeoutHandle) {
-        clearTimeout(state.timeoutHandle);
-      }
-
-      // Start polling immediately
-      void poll();
+    if (
+      !context.lastSuccessfulPollAt ||
+      performance.now() - context.lastSuccessfulPollAt > maxStaleTimeMs
+    ) {
+      fsm.send({ type: "POLL" });
     }
   }
 
+  fsm.start();
   return {
     enable,
     pollNowIfStale,
