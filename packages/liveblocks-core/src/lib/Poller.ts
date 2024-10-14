@@ -13,12 +13,12 @@ type Poller = {
    * the last poll and no poll is currently in progress. After polling, schedules
    * the next poll at the regular interval.
    */
-  pollNowIfStale(maxStaleTimeMs: number): void;
+  pollNowIfStale(): void;
 };
 
 type Context = {
-  cond1: boolean;
-  cond2: boolean;
+  cond1: boolean; // Whether user has .enabled() the poller
+  cond2: boolean; // Whether the visibility state is visible
   lastSuccessfulPollAt: number | null;
 };
 
@@ -28,7 +28,8 @@ type Event = { type: "START" } | { type: "STOP" } | { type: "POLL" };
 
 export function makePoller(
   callback: () => Promise<void> | void,
-  interval: number
+  intervalMs: number,
+  maxStaleTimeMs: number = intervalMs
 ): Poller {
   const context: Context = {
     cond1: false,
@@ -47,7 +48,7 @@ export function makePoller(
 
   fsm.addTransitions("@idle", { START: "@enabled" });
   fsm.addTransitions("@enabled", { STOP: "@idle", POLL: "@polling" });
-  fsm.addTimedTransition("@enabled", interval, "@polling");
+  fsm.addTimedTransition("@enabled", intervalMs, "@polling");
 
   fsm.onEnterAsync(
     "@polling",
@@ -73,7 +74,7 @@ export function makePoller(
     }
   }
 
-  function pollNowIfStale(maxStaleTimeMs: number) {
+  function pollNowIfStale() {
     if (
       !context.lastSuccessfulPollAt ||
       performance.now() - context.lastSuccessfulPollAt > maxStaleTimeMs
