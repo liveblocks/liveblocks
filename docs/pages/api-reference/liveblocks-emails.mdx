@@ -6,16 +6,19 @@ meta:
 alwaysShowAllNavigationLevels: false
 ---
 
-`@liveblocks/emails` provides a set of functions to make sending emails based on
-[Liveblocks notifications](/docs/products/notifications) events easy. This
-library is only intented for use in your Node.js back end.
+`@liveblocks/emails` provides a set of functions that simplifies sending emails
+with [Notifications](/docs/products/notifications) and the
+[webhooks](/docs/platform/webhooks). This library is only intended for use in
+your Node.js back end.
 
 <Banner title="Requirements">
-  `@liveblocks/emails` requires the package `@liveblocks/node` to be installed
-  and [React](https://react.dev/) as a peer dependency of your project.
+  `@liveblocks/emails` requires the
+  [`@liveblocks/node`](/docs/api-reference/liveblocks-node) package to be
+  installed and [`react`](https://react.dev/) as a peer dependency of your
+  project.
 </Banner>
 
-## Thread Notification [#thread-notification]
+## Thread notification emails [#thread-notification-emails]
 
 `@liveblocks/emails` exposes two functions
 [`prepareThreadNotificationAsReact`](#prepare-thread-notification-as-react) and
@@ -67,20 +70,214 @@ one of those comments and will return the last one (newest created comment) or
 
 ### prepareThreadNotificationAsReact [#prepare-thread-notification-as-react]
 
-Prepares data from a
-[`ThreadNotificationEvent`](/docs/platform/webhooks#Thread-notification) and
-convert comment bodies as [React](https://react.dev/) nodes.
-
-It returns a `ThreadNotificationEmailDataAsReact` object or `null` if there are
-no unread comments.
+Helps you create React emails that notify users about unread comments. It takes
+a webhook
+[thread notification webhook event](/docs/platform/webhooks#Thread-notification)
+and returns unread comment body(s) related to the notification as React nodes.
+It can return one of three formats, an `unreadMention` type containing one
+comment, an `unreadReplies` type returning multiple comments, or `null` if there
+are no unread mentions/replies.
 
 ```tsx
-import { Liveblocks, isThreadNotificationEvent } from "@liveblocks/node";
+import { prepareThreadNotificationAsReact } from "@liveblocks/emails";
+
+// Takes a Liveblocks Node.js client and a webhook event
+const emailData = await prepareThreadNotificationAsReact(liveblocks, event);
+
+if (emailData.type === "unreadMention") {
+  const email = (
+    <div>
+      <div>
+        @{emailData.comment.author.id} at {emailData.comment.createdAt}
+      </div>
+      <div>{emailData.comment.reactBody}</div>
+    </div>
+  );
+}
+
+if (emailData.type === "unreadReplies") {
+  const email = (
+    <div>
+      {emailData.comments.map((comment) => (
+        <div key={comment.id}>
+          <div>
+            @{comment.author.id} at {comment.createdAt}
+          </div>
+          <div>{comment.reactBody}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+It’s designed to be used in a webhook event, which requires a
+[`Liveblocks`](/docs/api-reference/liveblocks-node#Liveblocks-client) Node.js
+client, a
+[`WebhookHandler`](/docs/api-reference/liveblocks-node#WebhookHandler). Check
+for the correct webhook event using
+[`isThreadNotificationEvent`](/docs/api-reference/liveblocks-node#isThreadNotificationEvent)
+before running the function, such as in this Next.js route handler.
+
+```tsx file="route.tsx"
+import {
+  Liveblocks,
+  WebhookHandler,
+  isThreadNotificationEvent,
+} from "@liveblocks/node";
 import { prepareThreadNotificationAsReact } from "@liveblocks/emails";
 
 const liveblocks = new Liveblocks({
   secret: "{{SECRET_KEY}}",
 });
+
+const webhookHandler = new WebhookHandler(
+  process.env.LIVEBLOCKS_WEBHOOK_SECRET_KEY as string
+);
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify this is a valid webhook
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Couldn't verify webhook call", { status: 400 });
+  }
+
+  if (isThreadNotificationEvent(event)) {
+    // +++
+    const emailData = await prepareThreadNotificationAsReact(liveblocks, event);
+    // +++
+
+    // { type: "unreadMention", comment: { id: "cm_d93jd9...", reactBody: {}, ... } }
+    console.log(emailData);
+
+    const reactEmail = (
+      <div>
+        <div>
+          @{comment.author.id} at {comment.createdAt.toLocaleString()}
+        </div>
+        <div>{emailData.comment.reactBody}</div>
+      </div>
+    );
+  }
+
+  // ...
+}
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="value"
+    type="ThreadNotificationEmailDataAsReact | null"
+  >
+    Returns comment information, and a formatted React body, ready for use in emails. Returns `null` if there are no unread mentions or comments. The result has two formats depending on whether this notification is for a *single unread mention*, or for *multiple unread replies*:
+
+    ```js title="Unread mention" isCollapsable isCollapsed
+    {
+      type: "unreadMention",
+      roomId: "my-room-id",
+
+      // An unread mention has just one comment
+      comment: {
+        id: "cm_asfs8f...",
+        threadId: "th_sj30as..."
+        createdAt: Date <Fri Dec 15 2023 14:15:22 GMT+0000 (Greenwich Mean Time)>,
+
+        // The formatted comment, pass it to React `children`
+        reactBody: { /* ... */ },
+
+        author: {
+          id: "aurelien@example.com",
+          info: { /* Custom user info you have resolved */ },
+        },
+      },
+    }
+    ```
+
+    <div className="-mt-2">
+
+    ```js title="Unread replies" isCollapsable isCollapsed
+    {
+      type: "unreadReplies",
+      roomId: "my-room-id",
+
+      // Unread replies means multiple comments
+      comments: [
+        {
+          id: "cm_asfs8f...",
+          threadId: "th_sj30as..."
+          createdAt: Date <Fri Dec 15 2023 14:15:22 GMT+0000 (Greenwich Mean Time)>,
+
+          // The formatted comment, pass it to React `children`
+          reactBody: { /* ... */ },
+
+          author: {
+            id: "aurelien@example.com",
+            info: { /* Custom user info you have resolved */ },
+          },
+        },
+
+        // More comments
+        //...
+      ],
+    }
+    ```
+
+    </div>
+
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="client" type="Liveblocks" required>
+    A [`Liveblocks`](/docs/api-reference/liveblocks-node#Liveblocks-client)
+    Node.js client.
+  </PropertiesListItem>
+  <PropertiesListItem name="event" type="ThreadNotificationEvent" required>
+    An event from a
+    [`ThreadNotificationWebhook`](/docs/platform/webhooks#Thread-notification).
+  </PropertiesListItem>
+  <PropertiesListItem name="options" type="object">
+    A number of options to customize the format of the comments, adding user
+    info, room info, and styles.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="options.resolveUsers"
+    detailedType='async? (args: ResolveUsersArgs) => (UserMeta["info"] | undefined)[] | undefined'
+  >
+    A function that resolves user information in
+    [Comments](/docs/products/comments). Return an array of `UserMeta["info"]`
+    objects in the same order they arrived. Works similarly to the [resolver on
+    the
+    client](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="options.resolveRoomsInfo"
+    detailedType="async? (args: ResolveRoomsInfoArgs) => (RoomInfo | undefined)[] | undefined"
+  >
+    A function that resolves room information. Return an array of `RoomInfo`
+    objects in the same order they arrived. Works similarly to the [resolver on
+    the
+    client](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveRoomsInfo).
+  </PropertiesListItem>
+  <PropertiesListItem name="options.components" type="object">
+    Pass different React components to customize the elements in the comment
+    bodies. Five components can be passed to the object: `Container`,
+    `Paragraph`, `Text`, `Link`, `Mention`. Learn more.
+  </PropertiesListItem>
+</PropertiesList>
+
+```tsx
+import { Liveblocks, isThreadNotificationEvent } from "@liveblocks/node";
+import { prepareThreadNotificationAsReact } from "@liveblocks/emails";
 
 if (isThreadNotificationEvent(webookEvent)) {
   const emailData = await prepareThreadNotificationAsReact(
@@ -88,6 +285,19 @@ if (isThreadNotificationEvent(webookEvent)) {
     webhookEvent
   );
 }
+
+const body = (
+  <div>
+    {comments.map((comment, index) => (
+      <div key={comment.id}>
+        <div>
+          @{comment.author.id} at {comment.createdAt.toLocaleString()}
+        </div>
+        <div>{comment.reactBody}</div>
+      </div>
+    ))}
+  </div>
+);
 ```
 
 ### prepareThreadNotificationAsHtml [#prepare-thread-notification-as-html]
