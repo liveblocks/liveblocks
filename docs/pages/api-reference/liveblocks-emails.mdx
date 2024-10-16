@@ -91,33 +91,26 @@ already, and your file contains `liveblocks` and `event`.
 These functions help you format emails for notifying users about _unread
 comments_ in threads. They fetch each relevant comment, filtering out any that
 have already been read, and help you style each comment’s body with either
-[React]() or [HTML]().
+[React](#prepare-thread-notification-as-react) or
+[HTML](#prepare-thread-notification-as-html).
 
 [image]
 
 The function also help you distinguish between _unread mentions_ and _unread
-replies_,
+replies_.
 
 - A thread has _unread replies_ if a comment was created after the `readAt` date
   on the notification, and created before (or at the same time as) the
-  `notifiedAt` date. All
+  `notifiedAt` date. All unread replies are returned in an array.
 - A thread has an _unread mention_ if it has unread replies, and one reply
-  mentions the user. The comment with latest mention is returned.
+  mentions the user. A single comment with the latest mention is returned.
 
-The `type` property that lets you know which this notification is for.
+The `type` property that’s returned lets you know which this notification is
+for.
 
 ```js
 {
   type: "unreadReplies",
-  comments: [],
-  // ...
-}
-```
-
-```js
-{
-  type: "unreadMention",
-  comment: {},
   // ...
 }
 ```
@@ -135,7 +128,7 @@ are no unread mentions/replies.
 import { prepareThreadNotificationAsReact } from "@liveblocks/emails";
 import { isThreadNotificationEvent } from "@liveblocks/node";
 
-// Your Liveblocks client and webhook event setup (see "Setup" section)
+// Get `liveblocks` and `event` (see "Setup" section)
 // ...
 
 if (isThreadNotificationEvent(event)) {
