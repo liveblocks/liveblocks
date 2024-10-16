@@ -6,8 +6,8 @@ meta:
 alwaysShowAllNavigationLevels: false
 ---
 
-`@liveblocks/emails` provides a set of functions that simplifies sending emails
-with [Notifications](/docs/products/notifications) and the
+`@liveblocks/emails` provides a set of functions that simplifies sending styled
+emails with [Notifications](/docs/products/notifications) and
 [webhooks](/docs/platform/webhooks). This library is only intended for use in
 your Node.js back end.
 
@@ -18,114 +18,21 @@ your Node.js back end.
   project.
 </Banner>
 
-## Thread notification emails [#thread-notification-emails]
+## Setup
 
-`@liveblocks/emails` exposes two functions
-[`prepareThreadNotificationAsReact`](#prepare-thread-notification-as-react) and
-[`prepareThreadNotificationAsHtml`](#prepare-thread-notification-as-html) to
-prepare data from a
-[`ThreadNotificationEvent`](/docs/platform/webhooks#Thread-notification).
+This package exposes functions that enable easy creation of styled emails with
+React and HTML. Each method is designed to be used with our
+[webhooks](/docs/platform/webhooks) which means you must
+[set them up](/docs/guides/how-to-test-webhooks-on-localhost) first. Webhooks
+requires API endpoint in your application, and this is typically what they will
+look like.
 
-### Unread comments [#unread-comments]
-
-For thread notifications the two functions
-[`prepareThreadNotificationAsReact`](#prepare-thread-notification-as-react) and
-[`prepareThreadNotificationAsHtml`](#prepare-thread-notification-as-html) will
-determnine unread comments for a thread.
-
-It means theses functions will determnine if the user who should receive an
-email has been mentioned in an unread comment or this user has unread replies
-after he posted comment in a thread.
-
-If there are unread comments then the two functions will follow this path: if
-there is a last unread mention then they will return only one comment in
-returned object on the key `comment`. Otherwise they will return a list of
-comments in the returned object on the key `comments`.
-
-If there are no last unread mention or unread replies then theses functions
-return `null`.
-
-#### Unread replies [#unread-replies]
-
-The list of unread replies are computed based on thread notifcation event data.
-Based on those data
-[`prepareThreadNotificationAsReact`](#prepare-thread-notification-as-react) and
-[`prepareThreadNotificationAsHtml`](#prepare-thread-notification-as-html) will
-get a thread and and inbox notication with the
-[Liveblocks node client](d/ocs/api-reference/liveblocks-node#Liveblocks-client).
-
-Then the functions will return either all comments in the thread **created
-after** the `readAt`date of the notifucation **and created before or at the same
-date** of `notifiedAt` date of the notification. Or either it will return all
-comments in the thread **created before or at the same date** of `notifiedAt`
-date of the notification if the notification is not read by the user who has
-recieved the inbox noitification.
-
-#### Last unread mention [#last-unread-mention]
-
-The last unread mention is computed based on the list of the unread replies by
-checking if the user who recieved the inbox notification has been mentionned in
-one of those comments and will return the last one (newest created comment) or
-`null` if it's not the case.
-
-### prepareThreadNotificationAsReact [#prepare-thread-notification-as-react]
-
-Helps you create React emails that notify users about unread comments. It takes
-a webhook
-[thread notification webhook event](/docs/platform/webhooks#Thread-notification)
-and returns unread comment body(s) related to the notification as React nodes.
-It can return one of three formats, an `unreadMention` type containing one
-comment, an `unreadReplies` type returning multiple comments, or `null` if there
-are no unread mentions/replies.
-
-```tsx
-import { prepareThreadNotificationAsReact } from "@liveblocks/emails";
-
-// Takes a Liveblocks Node.js client and a webhook event
-const emailData = await prepareThreadNotificationAsReact(liveblocks, event);
-
-if (emailData.type === "unreadMention") {
-  const email = (
-    <div>
-      <div>
-        @{emailData.comment.author.id} at {emailData.comment.createdAt}
-      </div>
-      <div>{emailData.comment.reactBody}</div>
-    </div>
-  );
-}
-
-if (emailData.type === "unreadReplies") {
-  const email = (
-    <div>
-      {emailData.comments.map((comment) => (
-        <div key={comment.id}>
-          <div>
-            @{comment.author.id} at {comment.createdAt}
-          </div>
-          <div>{comment.reactBody}</div>
-        </div>
-      ))}
-    </div>
-  );
-}
-```
-
-It’s designed to be used in a webhook event, which requires a
-[`Liveblocks`](/docs/api-reference/liveblocks-node#Liveblocks-client) Node.js
-client, a
-[`WebhookHandler`](/docs/api-reference/liveblocks-node#WebhookHandler). Check
-for the correct webhook event using
-[`isThreadNotificationEvent`](/docs/api-reference/liveblocks-node#isThreadNotificationEvent)
-before running the function, such as in this Next.js route handler.
-
-```tsx file="route.tsx"
-import {
-  Liveblocks,
-  WebhookHandler,
-  isThreadNotificationEvent,
-} from "@liveblocks/node";
-import { prepareThreadNotificationAsReact } from "@liveblocks/emails";
+```tsx title="Next.js route handler for webhooks"
+import { isThreadNotificationEvent, WebhookHandler } from "@liveblocks/node";
+import { Liveblocks } from "@liveblocks/node";
+// +++
+import { prepareThreadNotificationEmailAsReact } from "@liveblocks/emails";
+// +++
 
 const liveblocks = new Liveblocks({
   secret: "{{SECRET_KEY}}",
@@ -139,7 +46,7 @@ export async function POST(request: Request) {
   const body = await request.json();
   const headers = request.headers;
 
-  // Verify this is a valid webhook
+  // Verify if this is a real webhook request
   let event;
   try {
     event = webhookHandler.verifyRequest({
@@ -148,28 +55,210 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     console.error(err);
-    return new Response("Couldn't verify webhook call", { status: 400 });
+    return new Response("Could not verify webhook call", { status: 400 });
   }
 
+  // +++
+  // Using `@liveblocks/emails` to create an email
   if (isThreadNotificationEvent(event)) {
-    // +++
     const emailData = await prepareThreadNotificationAsReact(liveblocks, event);
-    // +++
 
-    // { type: "unreadMention", comment: { id: "cm_d93jd9...", reactBody: {}, ... } }
-    console.log(emailData);
-
-    const reactEmail = (
-      <div>
+    if (emailData.type === "unreadMention") {
+      const email = (
         <div>
-          @{comment.author.id} at {comment.createdAt.toLocaleString()}
+          <div>
+            @{emailData.comment.author.id} at {emailData.comment.createdAt}
+          </div>
+          <div>{emailData.comment.reactBody}</div>
         </div>
-        <div>{emailData.comment.reactBody}</div>
-      </div>
-    );
+      );
+
+      // Send unread mention email
+      // ...
+    }
+  }
+  // +++
+
+  return new Response(null, { status: 200 });
+}
+```
+
+**We’ll only show the highlighted part below**, as it’s assumed you’ve set this
+already, and your file contains `liveblocks` and `event`.
+
+## Thread notification emails [#thread-notification-emails]
+
+These functions help you format emails for notifying users about _unread
+comments_ in threads. They fetch each relevant comment, filtering out any that
+have already been read, and help you style each comment’s body with either
+[React]() or [HTML]().
+
+[image]
+
+The function also help you distinguish between _unread mentions_ and _unread
+replies_,
+
+- A thread has _unread replies_ if a comment was created after the `readAt` date
+  on the notification, and created before (or at the same time as) the
+  `notifiedAt` date. All
+- A thread has an _unread mention_ if it has unread replies, and one reply
+  mentions the user. The comment with latest mention is returned.
+
+The `type` property that lets you know which this notification is for.
+
+```js
+{
+  type: "unreadReplies",
+  comments: [],
+  // ...
+}
+```
+
+```js
+{
+  type: "unreadMention",
+  comment: {},
+  // ...
+}
+```
+
+### prepareThreadNotificationAsReact [#prepare-thread-notification-as-react]
+
+Takes a webhook
+[thread notification webhook event](/docs/platform/webhooks#Thread-notification)
+and returns unread comment body(s) related to the notification, as React nodes.
+It can return one of three formats, an `unreadMention` type containing one
+comment, an `unreadReplies` type returning multiple comments, or `null` if there
+are no unread mentions/replies.
+
+```tsx
+import { prepareThreadNotificationAsReact } from "@liveblocks/emails";
+import { isThreadNotificationEvent } from "@liveblocks/node";
+
+// Your Liveblocks client and webhook event setup (see "Setup" section)
+// ...
+
+if (isThreadNotificationEvent(event)) {
+  // +++
+  const emailData = await prepareThreadNotificationAsReact(liveblocks, event);
+  // +++
+  let email;
+
+  switch (emailData.type) {
+    case "unreadMention": {
+      email = (
+        <div>
+          <div>
+            @{emailData.comment.author.id} at {emailData.comment.createdAt}
+          </div>
+          <div>{emailData.comment.reactBody}</div>
+        </div>
+      );
+      break;
+    }
+
+    case "unreadReplies": {
+      email = (
+        <div>
+          {emailData.comments.map((comment) => (
+            <div key={comment.id}>
+              <div>
+                @{comment.author.id} at {comment.createdAt}
+              </div>
+              <div>{comment.reactBody}</div>
+            </div>
+          ))}
+        </div>
+      );
+      break;
+    }
+  }
+}
+
+// Send your email
+// ...
+```
+
+It’s designed to be used in a webhook event, which requires a
+[`Liveblocks`](/docs/api-reference/liveblocks-node#Liveblocks-client) Node.js
+client, a
+[`WebhookHandler`](/docs/api-reference/liveblocks-node#WebhookHandler). Check
+for the correct webhook event using
+[`isThreadNotificationEvent`](/docs/api-reference/liveblocks-node#isThreadNotificationEvent)
+before running the function, such as in this Next.js route handler.
+
+```tsx title="Full Next.js route handler example" isCollapsed isCollapsable
+import { isThreadNotificationEvent, WebhookHandler } from "@liveblocks/node";
+import { Liveblocks } from "@liveblocks/node";
+// +++
+import { prepareThreadNotificationEmailAsReact } from "@liveblocks/emails";
+// +++
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+const webhookHandler = new WebhookHandler(
+  process.env.LIVEBLOCKS_WEBHOOK_SECRET_KEY as string
+);
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
   }
 
-  // ...
+  // +++
+  if (isThreadNotificationEvent(event)) {
+    const emailData = await prepareThreadNotificationAsReact(liveblocks, event);
+    let email;
+
+    switch (emailData.type) {
+      case "unreadMention": {
+        email = (
+          <div>
+            <div>
+              @{emailData.comment.author.id} at {emailData.comment.createdAt}
+            </div>
+            <div>{emailData.comment.reactBody}</div>
+          </div>
+        );
+        break;
+      }
+
+      case "unreadReplies": {
+        email = (
+          <div>
+            {emailData.comments.map((comment) => (
+              <div key={comment.id}>
+                <div>
+                  @{comment.author.id} at {comment.createdAt}
+                </div>
+                <div>{comment.reactBody}</div>
+              </div>
+            ))}
+          </div>
+        );
+        break;
+      }
+    }
+
+    // Send your email
+    // ...
+  }
+  // +++
+
+  return new Response(null, { status: 200 });
 }
 ```
 
