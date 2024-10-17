@@ -24,8 +24,8 @@ This package exposes functions that enable easy creation of styled emails with
 React and HTML. Each method is designed to be used with our
 [webhooks](/docs/platform/webhooks) which means you must
 [set them up](/docs/guides/how-to-test-webhooks-on-localhost) first. Webhooks
-requires API endpoint in your application, and this is typically what they will
-look like.
+require an API endpoint in your application, and this is typically what they
+will look like.
 
 ```tsx title="Next.js route handler for webhooks"
 import { isThreadNotificationEvent, WebhookHandler } from "@liveblocks/node";
@@ -61,7 +61,10 @@ export async function POST(request: Request) {
   // +++
   // Using `@liveblocks/emails` to create an email
   if (isThreadNotificationEvent(event)) {
-    const emailData = await prepareThreadNotificationAsReact(liveblocks, event);
+    const emailData = await prepareThreadNotificationEmailAsReact(
+      liveblocks,
+      event
+    );
 
     if (emailData.type === "unreadMention") {
       const email = (
@@ -91,8 +94,8 @@ already, and your file contains `liveblocks` and `event`.
 These functions help you create emails for notifying users about _unread
 comments_ in threads. They fetch each relevant comment, filtering out any that
 have already been read, and help you style each comment’s body with either
-[React](#prepare-thread-notification-as-react) or
-[HTML](#prepare-thread-notification-as-html).
+[React](#prepare-thread-notification-email-as-react) or
+[HTML](#prepare-thread-notification-email-as-html).
 
 <Figure>
   <Image
@@ -122,7 +125,7 @@ for.
 }
 ```
 
-### prepareThreadNotificationAsReact [#prepare-thread-notification-as-react]
+### prepareThreadNotificationEmailAsReact [#prepare-thread-notification-email-as-react]
 
 Takes a
 [thread notification webhook event](/docs/platform/webhooks#Thread-notification)
@@ -130,12 +133,12 @@ and returns unread comment body(s) related to the notification, as React nodes.
 It can return one of three formats, an `unreadMention` type containing one
 comment, an `unreadReplies` type returning multiple comments, or `null` if there
 are no unread mentions/replies. You can also
-[resolve user/room data](#prepare-thread-notification-as-react-resolving-data)
+[resolve user/room data](#prepare-thread-notification-email-as-react-resolving-data)
 and
-[customize the components](#prepare-thread-notification-as-react-customizing-components).
+[customize the components](#prepare-thread-notification-email-as-react-customizing-components).
 
 ```tsx
-import { prepareThreadNotificationAsReact } from "@liveblocks/emails";
+import { prepareThreadNotificationEmailAsReact } from "@liveblocks/emails";
 import { isThreadNotificationEvent } from "@liveblocks/node";
 
 // Get `liveblocks` and `event` (see "Setup" section)
@@ -143,7 +146,10 @@ import { isThreadNotificationEvent } from "@liveblocks/node";
 
 if (isThreadNotificationEvent(event)) {
   // +++
-  const emailData = await prepareThreadNotificationAsReact(liveblocks, event);
+  const emailData = await prepareThreadNotificationEmailAsReact(
+    liveblocks,
+    event
+  );
   // +++
   let email;
 
@@ -223,7 +229,10 @@ export async function POST(request: Request) {
 
   // +++
   if (isThreadNotificationEvent(event)) {
-    const emailData = await prepareThreadNotificationAsReact(liveblocks, event);
+    const emailData = await prepareThreadNotificationEmailAsReact(
+      liveblocks,
+      event
+    );
     let email;
 
     switch (emailData.type) {
@@ -350,7 +359,7 @@ export async function POST(request: Request) {
     objects in the same order they arrived. Works similarly to the [resolver on
     the
     client](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers).
-    [Learn more](#prepare-thread-notification-as-react-resolving-data).
+    [Learn more](#prepare-thread-notification-email-as-react-resolving-data).
   </PropertiesListItem>
   <PropertiesListItem
     name="options.resolveRoomsInfo"
@@ -360,13 +369,13 @@ export async function POST(request: Request) {
     objects in the same order they arrived. Works similarly to the [resolver on
     the
     client](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveRoomsInfo).
-    [Learn more](#prepare-thread-notification-as-react-resolving-data).
+    [Learn more](#prepare-thread-notification-email-as-react-resolving-data).
   </PropertiesListItem>
   <PropertiesListItem name="options.components" type="object">
     Pass different React components to customize the elements in the comment
     bodies. Five components can be passed to the object: `Container`,
     `Paragraph`, `Text`, `Link`, `Mention`. [Learn
-    more](#prepare-thread-notification-as-react-customizing-components).
+    more](#prepare-thread-notification-email-as-react-customizing-components).
   </PropertiesListItem>
   <PropertiesListItem
     name="options.components.Container"
@@ -400,7 +409,7 @@ export async function POST(request: Request) {
   </PropertiesListItem>
 </PropertiesList>
 
-#### Resolving data [#prepare-thread-notification-as-react-resolving-data]
+#### Resolving data [#prepare-thread-notification-email-as-react-resolving-data]
 
 Similarly to on the client, you can resolve
 [users](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers) and
@@ -409,7 +418,7 @@ making it easier to render your emails. For example, you can resolve a user’s 
 into their name, and show their name in the email.
 
 ```tsx
-const emailData = await prepareThreadNotificationAsReact(
+const emailData = await prepareThreadNotificationEmailAsReact(
   liveblocks,
   webhookEvent,
   {
@@ -442,14 +451,14 @@ console.log(emailData.comment.author.info);
 console.log(emailData.roomInfo);
 ```
 
-#### Customizing components [#prepare-thread-notification-as-react-customizing-components]
+#### Customizing components [#prepare-thread-notification-email-as-react-customizing-components]
 
 Each React component in the comment body can be replaced with a custom React
 component, should you choose to use different styles. Five components are
 available: `Container`, `Paragraph`, `Text`, `Link`, `Mention`.
 
 ```tsx
-const emailData = await prepareThreadNotificationAsReact(
+const emailData = await prepareThreadNotificationAsEmailReact(
   liveblocks,
   webhookEvent,
   {
@@ -481,7 +490,7 @@ console.log(emailData);
 console.log(emailData.comment.reactBody);
 ```
 
-### prepareThreadNotificationAsHtml [#prepare-thread-notification-as-html]
+### prepareThreadNotificationEmailAsHtml [#prepare-thread-notification-email-as-html]
 
 Takes a
 [thread notification webhook event](/docs/platform/webhooks#Thread-notification)
@@ -489,12 +498,12 @@ and returns unread comment body(s) related to the notification, as an HTML safe
 string. It can return one of three formats, an `unreadMention` type containing
 one comment, an `unreadReplies` type returning multiple comments, or `null` if
 there are no unread mentions/replies. You can also
-[resolve user/room data](#prepare-thread-notification-as-html-resolving-data)
+[resolve user/room data](#prepare-thread-notification-email-as-html-resolving-data)
 and
-[customize the styles](#prepare-thread-notification-as-html-styling-elements).
+[customize the styles](#prepare-thread-notification-email-as-html-styling-elements).
 
 ```ts
-import { prepareThreadNotificationAsHtml } from "@liveblocks/emails";
+import { prepareThreadNotificationEmailAsHtml } from "@liveblocks/emails";
 import { isThreadNotificationEvent } from "@liveblocks/node";
 
 // Get `liveblocks` and `event` (see "Setup" section)
@@ -502,7 +511,10 @@ import { isThreadNotificationEvent } from "@liveblocks/node";
 
 if (isThreadNotificationEvent(event)) {
   // +++
-  const emailData = await prepareThreadNotificationAsHtml(liveblocks, event);
+  const emailData = await prepareThreadNotificationEmailAsHtml(
+    liveblocks,
+    event
+  );
   // +++
   let email;
 
@@ -586,7 +598,10 @@ export async function POST(request: Request) {
 
   // +++
   if (isThreadNotificationEvent(event)) {
-    const emailData = await prepareThreadNotificationAsHtml(liveblocks, event);
+    const emailData = await prepareThreadNotificationEmailAsHtml(
+      liveblocks,
+      event
+    );
     let email;
 
     switch (emailData.type) {
@@ -717,7 +732,7 @@ export async function POST(request: Request) {
     objects in the same order they arrived. Works similarly to the [resolver on
     the
     client](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers).
-    [Learn more](#prepare-thread-notification-as-html-resolving-data).
+    [Learn more](#prepare-thread-notification-email-as-html-resolving-data).
   </PropertiesListItem>
   <PropertiesListItem
     name="options.resolveRoomsInfo"
@@ -727,13 +742,13 @@ export async function POST(request: Request) {
     objects in the same order they arrived. Works similarly to the [resolver on
     the
     client](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveRoomsInfo).
-    [Learn more](#prepare-thread-notification-as-html-resolving-data).
+    [Learn more](#prepare-thread-notification-email-as-html-resolving-data).
   </PropertiesListItem>
   <PropertiesListItem name="options.styles" type="object">
     Pass CSS properties to style the different HTML elements in the comment
     bodies. Five elements can be styled: `container`, `paragraph`, `text`,
     `link`, `mention`. [Learn
-    more](#prepare-thread-notification-as-html-styling-components).
+    more](#prepare-thread-notification-email-as-html-styling-components).
   </PropertiesListItem>
   <PropertiesListItem name="options.styles.container" type="CSSProperties">
     Inline styles to apply to the comment body container.
@@ -752,7 +767,7 @@ export async function POST(request: Request) {
   </PropertiesListItem>
 </PropertiesList>
 
-#### Resolving data [#prepare-thread-notification-as-html-resolving-data]
+#### Resolving data [#prepare-thread-notification-email-as-html-resolving-data]
 
 Similarly to on the client, you can resolve
 [users](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers) and
@@ -761,7 +776,7 @@ making it easier to render your emails. For example, you can resolve a user’s 
 into their name, and show their name in the email.
 
 ```tsx
-const emailData = await prepareThreadNotificationAsReact(
+const emailData = await prepareThreadNotificationEmailAsHtml(
   liveblocks,
   webhookEvent,
   {
@@ -776,7 +791,7 @@ const emailData = await prepareThreadNotificationAsReact(
     },
     resolveRoomInfo({ roomId }) {
       return {
-        name: roomId, // "mu-room-name"
+        name: roomId, // "my-room-name"
         url: `https://example.com/${roomId}`,
       };
     },
@@ -794,14 +809,14 @@ console.log(emailData.comment.author.info);
 console.log(emailData.roomInfo);
 ```
 
-#### Styling elements [#prepare-thread-notification-as-html-styling-elements]
+#### Styling elements [#prepare-thread-notification-email-as-html-styling-elements]
 
 Each element in the comment body can be styled with custom CSS properties,
 should you like to change the appearance. Five elements are available:
 `container`, `paragraph`, `text`, `link`, `mention`.
 
 ```tsx
-const emailData = await prepareThreadNotificationAsReact(
+const emailData = await prepareThreadNotificationEmailAsHtml(
   liveblocks,
   webhookEvent,
   {
