@@ -355,6 +355,36 @@ export async function POST(request: Request) {
     bodies. Five components can be passed to the object: `Container`,
     `Paragraph`, `Text`, `Link`, `Mention`. Learn more.
   </PropertiesListItem>
+  <PropertiesListItem
+    name="options.components.Container"
+    type="({ children: ReactNode }) => ReactNode"
+  >
+    The comment body container.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="options.components.Paragraph"
+    type="({ children: ReactNode }) => ReactNode"
+  >
+    The paragraph block.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="options.components.Text"
+    type="({ children: ReactNode }) => ReactNode"
+  >
+    The text element.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="options.components.Link"
+    detailedType="({ element: CommentBodyLink, href: string }) => ReactNode"
+  >
+    The link element.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="options.components.Text"
+    detailedType={`({ element: CommentBodyMention, user?: UserInfo["info"]" }) => ReactNode`}
+  >
+    The text element.
+  </PropertiesListItem>
 </PropertiesList>
 
 ```tsx
@@ -406,3 +436,120 @@ if (isThreadNotificationEvent(webookEvent)) {
   );
 }
 ```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="value"
+    type="ThreadNotificationEmailDataAsHtml | null"
+  >
+    Returns comment information, and a formatted HTML body, ready for use in emails. Returns `null` if there are no unread mentions or comments. The result has two formats depending on whether this notification is for a *single unread mention*, or for *multiple unread replies*:
+
+    ```js title="Unread mention" isCollapsable isCollapsed
+    {
+      type: "unreadMention",
+      roomId: "my-room-id",
+
+      // An unread mention has just one comment
+      comment: {
+        id: "cm_asfs8f...",
+        threadId: "th_sj30as..."
+        createdAt: Date <Fri Dec 15 2023 14:15:22 GMT+0000 (Greenwich Mean Time)>,
+
+        // The formatted comment, as an HTML string
+        htmlBody: "<div>...</div>",
+
+        author: {
+          id: "aurelien@example.com",
+          info: { /* Custom user info you have resolved */ },
+        },
+      },
+    }
+    ```
+
+    <div className="-mt-2">
+
+      ```js title="Unread replies" isCollapsable isCollapsed
+      {
+        type: "unreadReplies",
+        roomId: "my-room-id",
+
+        // Unread replies means multiple comments
+        comments: [
+          {
+            id: "cm_asfs8f...",
+            threadId: "th_sj30as..."
+            createdAt: Date <Fri Dec 15 2023 14:15:22 GMT+0000 (Greenwich Mean Time)>,
+
+            // The formatted comment, as an HTML string
+            htmlBody: "<div>...</div>",
+
+            author: {
+              id: "aurelien@example.com",
+              info: { /* Custom user info you have resolved */ },
+            },
+          },
+
+        // More comments
+        //...
+        ],
+      }
+      ```
+
+    </div>
+
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="client" type="Liveblocks" required>
+    A [`Liveblocks`](/docs/api-reference/liveblocks-node#Liveblocks-client)
+    Node.js client.
+  </PropertiesListItem>
+  <PropertiesListItem name="event" type="ThreadNotificationEvent" required>
+    An event from a
+    [`ThreadNotificationWebhook`](/docs/platform/webhooks#Thread-notification).
+  </PropertiesListItem>
+  <PropertiesListItem name="options" type="object">
+    A number of options to customize the format of the comments, adding user
+    info, room info, and styles.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="options.resolveUsers"
+    detailedType='async? (args: ResolveUsersArgs) => (UserMeta["info"] | undefined)[] | undefined'
+  >
+    A function that resolves user information in
+    [Comments](/docs/products/comments). Return an array of `UserMeta["info"]`
+    objects in the same order they arrived. Works similarly to the [resolver on
+    the
+    client](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="options.resolveRoomsInfo"
+    detailedType="async? (args: ResolveRoomsInfoArgs) => (RoomInfo | undefined)[] | undefined"
+  >
+    A function that resolves room information. Return an array of `RoomInfo`
+    objects in the same order they arrived. Works similarly to the [resolver on
+    the
+    client](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveRoomsInfo).
+  </PropertiesListItem>
+  <PropertiesListItem name="options.styles" type="object">
+    Pass CSS properties to style the different HTML elements in the comment
+    bodies. Five elements can be styled: `container`, `paragraph`, `text`,
+    `link`, `mention`. Learn more.
+  </PropertiesListItem>
+  <PropertiesListItem name="options.styles.container" type="CSSProperties">
+    Inline styles to apply to the comment body container.
+  </PropertiesListItem>
+  <PropertiesListItem name="options.styles.paragraph" type="CSSProperties">
+    Inline styles to apply to the paragraph block.
+  </PropertiesListItem>
+  <PropertiesListItem name="options.styles.text" type="CSSProperties">
+    Inline styles to apply to the text element.
+  </PropertiesListItem>
+  <PropertiesListItem name="options.styles.link" type="CSSProperties">
+    Inline styles to apply to the link element.
+  </PropertiesListItem>
+  <PropertiesListItem name="options.styles.text" type="CSSProperties">
+    Inline styles to apply to the text element.
+  </PropertiesListItem>
+</PropertiesList>
