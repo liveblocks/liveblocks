@@ -493,22 +493,6 @@ there are no unread mentions/replies. You can also
 and
 [customize the styles](#prepare-thread-notification-as-html-styling-elements).
 
-```tsx
-import { Liveblocks, isThreadNotificationEvent } from "@liveblocks/node";
-import { prepareThreadNotificationAsHtml } from "@liveblocks/emails";
-
-const liveblocks = new Liveblocks({
-  secret: "{{SECRET_KEY}}",
-});
-
-if (isThreadNotificationEvent(webookEvent)) {
-  const emailData = await prepareThreadNotificationAsHtml(
-    liveblocks,
-    webhookEvent
-  );
-}
-```
-
 ```ts
 import { prepareThreadNotificationAsHtml } from "@liveblocks/emails";
 import { isThreadNotificationEvent } from "@liveblocks/node";
@@ -559,6 +543,93 @@ if (isThreadNotificationEvent(event)) {
 
 // Send your email
 // ...
+```
+
+It’s designed to be used in a webhook event, which requires a
+[`Liveblocks`](/docs/api-reference/liveblocks-node#Liveblocks-client) Node.js
+client, a
+[`WebhookHandler`](/docs/api-reference/liveblocks-node#WebhookHandler). Check
+for the correct webhook event using
+[`isThreadNotificationEvent`](/docs/api-reference/liveblocks-node#isThreadNotificationEvent)
+before running the function, such as in this Next.js route handler.
+
+```tsx title="Full Next.js route handler example" isCollapsed isCollapsable
+import { isThreadNotificationEvent, WebhookHandler } from "@liveblocks/node";
+import { Liveblocks } from "@liveblocks/node";
+// +++
+import { prepareThreadNotificationEmailAsHtml } from "@liveblocks/emails";
+// +++
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+const webhookHandler = new WebhookHandler(
+  process.env.LIVEBLOCKS_WEBHOOK_SECRET_KEY as string
+);
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // +++
+  if (isThreadNotificationEvent(event)) {
+    const emailData = await prepareThreadNotificationAsHtml(liveblocks, event);
+    let email;
+
+    switch (emailData.type) {
+      case "unreadMention": {
+        email = `
+        <div>
+          <div>
+            @${emailData.comment.author.id} at ${emailData.comment.createdAt}
+          </div>
+          <div>${emailData.comment.htmlBody}</div>
+        </div>
+      `;
+        break;
+      }
+
+      case "unreadReplies": {
+        email = `
+        <div>
+          ${emailData.comments
+            .map(
+              (comment) => `
+                <div>
+                  <div>
+                    @${comment.author.id} at ${comment.createdAt}
+                  </div>
+                  <div>${comment.htmlBody}</div>
+                </div>
+              `
+            )
+            .join("")}
+        </div>
+      `;
+        break;
+      }
+    }
+
+    // Send your email
+    // ...
+  }
+  // +++
+
+  return new Response(null, { status: 200 });
+}
 ```
 
 <PropertiesList title="Returns">
