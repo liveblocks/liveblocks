@@ -13,6 +13,53 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
 
+# Week 42 (2024-10-18)
+
+## 2.9.0
+
+We are introducing pagination support to allow apps using threads and inbox
+notifications to be built in a more user-friendly way, where the initial load is
+faster and more data can be fetched incrementally as users interact with the
+app.
+
+### `@liveblocks/react`
+
+- Add pagination support to `useInboxNotifications()`
+
+  ```tsx
+  const {
+    inboxNotifications,
+    isLoading,
+    error,
+
+    // ✨ New in Liveblocks 2.9
+    fetchMore,
+    isFetchingMore,
+    hasFetchedAll,
+    fetchMoreError,
+  } = useInboxNotifications();
+  ```
+
+- Add pagination support to `useThreads()` and `useUserThreads_experimental()`
+
+  ```tsx
+  const {
+    threads,
+    isLoading,
+    error,
+
+    // ✨ New in Liveblocks 2.9
+    fetchMore,
+    isFetchingMore,
+    hasFetchedAll,
+    fetchMoreError,
+  } = useThreads({ query });
+  ```
+
+## Contributors
+
+nimeshnayaju, ofoucherot, marcbouchenoire, nvie
+
 # Week 40 (2024-10-04)
 
 ## 2.8.2
