@@ -13,7 +13,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
 
-# Week 41 (2024-10-11)
+# Week 42 (2024-17-11)
 
 ## 2.9.0
 
