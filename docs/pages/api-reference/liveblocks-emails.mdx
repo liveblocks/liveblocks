@@ -91,9 +91,9 @@ already, and your file contains `liveblocks` and `event`.
 
 ## Thread notification emails [#thread-notification-emails]
 
-These functions help you create emails for notifying users about _unread
-comments_ in threads. They fetch each relevant comment, filtering out any that
-have already been read, and help you style each comment’s body with either
+These functions help you create emails to notify users of _unread comments_ in
+threads. They fetch each relevant comment, filtering out any that have already
+been read, and help you style each comment’s body with either
 [React](#prepare-thread-notification-email-as-react) or
 [HTML](#prepare-thread-notification-email-as-html).
 
@@ -106,11 +106,11 @@ have already been read, and help you style each comment’s body with either
   />
 </Figure>
 
-The function also help you distinguish between _unread mentions_ and _unread
+The function also helps you distinguish between _unread mentions_ and _unread
 replies_.
 
 - A thread has _unread replies_ if a comment was created after the `readAt` date
-  on the notification, and created before (or at the same time as) the
+  on the notification, and created before or at the same time as the
   `notifiedAt` date. All unread replies are returned in an array.
 - A thread has an _unread mention_ if it has unread replies, and one reply
   mentions the user. A single comment with the latest mention is returned.
@@ -133,7 +133,7 @@ and returns unread comment body(s) related to the notification, as React nodes.
 It can return one of three formats, an `unreadMention` type containing one
 comment, an `unreadReplies` type returning multiple comments, or `null` if there
 are no unread mentions/replies. You can also
-[resolve user/room data](#prepare-thread-notification-email-as-react-resolving-data)
+[resolve user & room data](#prepare-thread-notification-email-as-react-resolving-data)
 and
 [customize the components](#prepare-thread-notification-email-as-react-customizing-components).
 
@@ -454,11 +454,11 @@ console.log(emailData.roomInfo);
 #### Customizing components [#prepare-thread-notification-email-as-react-customizing-components]
 
 Each React component in the comment body can be replaced with a custom React
-component, should you choose to use different styles. Five components are
-available: `Container`, `Paragraph`, `Text`, `Link`, `Mention`.
+component, if you wish to apply different styles. Five components are available:
+`Container`, `Paragraph`, `Text`, `Link`, `Mention`.
 
 ```tsx
-const emailData = await prepareThreadNotificationAsEmailReact(
+const emailData = await prepareThreadNotificationEmailAsReact(
   liveblocks,
   webhookEvent,
   {
@@ -494,11 +494,11 @@ console.log(emailData.comment.reactBody);
 
 Takes a
 [thread notification webhook event](/docs/platform/webhooks#Thread-notification)
-and returns unread comment body(s) related to the notification, as an HTML safe
+and returns unread comment body(s) related to the notification, as an HTML-safe
 string. It can return one of three formats, an `unreadMention` type containing
 one comment, an `unreadReplies` type returning multiple comments, or `null` if
 there are no unread mentions/replies. You can also
-[resolve user/room data](#prepare-thread-notification-email-as-html-resolving-data)
+[resolve user & room data](#prepare-thread-notification-email-as-html-resolving-data)
 and
 [customize the styles](#prepare-thread-notification-email-as-html-styling-elements).
 
@@ -811,8 +811,8 @@ console.log(emailData.roomInfo);
 
 #### Styling elements [#prepare-thread-notification-email-as-html-styling-elements]
 
-Each element in the comment body can be styled with custom CSS properties,
-should you like to change the appearance. Five elements are available:
+Each element in the comment body can be styled with custom CSS properties, if
+you would like to change the appearance. Five elements are available:
 `container`, `paragraph`, `text`, `link`, `mention`.
 
 ```tsx
