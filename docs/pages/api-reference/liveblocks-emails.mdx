@@ -88,7 +88,7 @@ already, and your file contains `liveblocks` and `event`.
 
 ## Thread notification emails [#thread-notification-emails]
 
-These functions help you format emails for notifying users about _unread
+These functions help you create emails for notifying users about _unread
 comments_ in threads. They fetch each relevant comment, filtering out any that
 have already been read, and help you style each comment’s body with either
 [React](#prepare-thread-notification-as-react) or
@@ -347,6 +347,7 @@ export async function POST(request: Request) {
     objects in the same order they arrived. Works similarly to the [resolver on
     the
     client](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers).
+    [Learn more](#prepare-thread-notification-as-react-resolving-data).
   </PropertiesListItem>
   <PropertiesListItem
     name="options.resolveRoomsInfo"
@@ -356,11 +357,13 @@ export async function POST(request: Request) {
     objects in the same order they arrived. Works similarly to the [resolver on
     the
     client](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveRoomsInfo).
+    [Learn more](#prepare-thread-notification-as-react-resolving-data).
   </PropertiesListItem>
   <PropertiesListItem name="options.components" type="object">
     Pass different React components to customize the elements in the comment
     bodies. Five components can be passed to the object: `Container`,
-    `Paragraph`, `Text`, `Link`, `Mention`. Learn more.
+    `Paragraph`, `Text`, `Link`, `Mention`. [Learn
+    more](#prepare-thread-notification-as-react-customizing-components).
   </PropertiesListItem>
   <PropertiesListItem
     name="options.components.Container"
@@ -387,36 +390,92 @@ export async function POST(request: Request) {
     The link element.
   </PropertiesListItem>
   <PropertiesListItem
-    name="options.components.Text"
+    name="options.components.Mention"
     detailedType={`({ element: CommentBodyMention, user?: UserInfo["info"]" }) => ReactNode`}
   >
-    The text element.
+    The mention element.
   </PropertiesListItem>
 </PropertiesList>
 
+#### Resolving data [#prepare-thread-notification-as-react-resolving-data]
+
+Similarly to on the client, you can resolve
+[users](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers) and
+[room info](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveRoomInfo),
+making it easier to render your emails. For example, you can resolve a user’s ID
+into their name, and show their name in the email.
+
 ```tsx
-import { Liveblocks, isThreadNotificationEvent } from "@liveblocks/node";
-import { prepareThreadNotificationAsReact } from "@liveblocks/emails";
+const emailData = await prepareThreadNotificationAsReact(
+  liveblocks,
+  webhookEvent,
+  {
+    // +++
+    resolveUsers: async ({ userIds }) => {
+      const usersData = await __getUsersFromDB__(userIds);
 
-if (isThreadNotificationEvent(webookEvent)) {
-  const emailData = await prepareThreadNotificationAsReact(
-    liveblocks,
-    webhookEvent
-  );
-}
-
-const body = (
-  <div>
-    {comments.map((comment, index) => (
-      <div key={comment.id}>
-        <div>
-          @{comment.author.id} at {comment.createdAt.toLocaleString()}
-        </div>
-        <div>{comment.reactBody}</div>
-      </div>
-    ))}
-  </div>
+      return usersData.map((userData) => ({
+        name: userData.name, // "Nimesh"
+        avatar: userData.avatar.src, // "https://..."
+      }));
+    },
+    resolveRoomInfo({ roomId }) {
+      return {
+        name: roomId, // "mu-room-name"
+        url: `https://example.com/${roomId}`,
+      };
+    },
+    // +++
+  }
 );
+
+// { type: "unreadMention", comment: { ... }, ... }
+console.log(emailData);
+
+// { name: "Nimesh", avatar: "https://..." }
+console.log(emailData.comment.author.info);
+
+// { name: "my-room-name", url: "https://example.com/my-room-name" }
+console.log(emailData.roomInfo);
+```
+
+#### Customizing components [#prepare-thread-notification-as-react-customizing-components]
+
+Each React component in the comment body can be replaced with a custom React
+component, should you choose to use different styles. Five components are
+available: `Container`, `Paragraph`, `Text`, `Link`, `Mention`.
+
+```tsx
+const emailData = await prepareThreadNotificationAsReact(
+  liveblocks,
+  webhookEvent,
+  {
+    // +++
+    components: {
+      Paragraph: ({ children }) => <p>{children}</p>,
+
+      // `react-email` components are supported
+      Text: ({ children }) => (
+        <Text className="text-sm text-black m-0 mb-4">{children}</Text>
+      ),
+
+      // `user` is the optional data returned from `resolveUsers`
+      Mention: ({ element, user }) => (
+        <span style={{ color: "red" }}>@{user?.name ?? element.id}</span>
+      ),
+
+      // If the link is rich-text render it, otherwise use the URL
+      Link: ({ element, href }) => <a href={href}>{element?.text ?? href}</a>,
+    },
+    // +++
+  }
+);
+
+// { type: "unreadMention", comment: { ... }, ... }
+console.log(emailData);
+
+// The components are now used in this React body
+console.log(emailData.comment.reactBody);
 ```
 
 ### prepareThreadNotificationAsHtml [#prepare-thread-notification-as-html]
@@ -556,7 +615,84 @@ if (isThreadNotificationEvent(webookEvent)) {
   <PropertiesListItem name="options.styles.link" type="CSSProperties">
     Inline styles to apply to the link element.
   </PropertiesListItem>
-  <PropertiesListItem name="options.styles.text" type="CSSProperties">
-    Inline styles to apply to the text element.
+  <PropertiesListItem name="options.styles.mention" type="CSSProperties">
+    Inline styles to apply to the mention element.
   </PropertiesListItem>
 </PropertiesList>
+
+#### Resolving data [#prepare-thread-notification-as-html-resolving-data]
+
+Similarly to on the client, you can resolve
+[users](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers) and
+[room info](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveRoomInfo),
+making it easier to render your emails. For example, you can resolve a user’s ID
+into their name, and show their name in the email.
+
+```tsx
+const emailData = await prepareThreadNotificationAsReact(
+  liveblocks,
+  webhookEvent,
+  {
+    // +++
+    resolveUsers: async ({ userIds }) => {
+      const usersData = await __getUsersFromDB__(userIds);
+
+      return usersData.map((userData) => ({
+        name: userData.name, // "Nimesh"
+        avatar: userData.avatar.src, // "https://..."
+      }));
+    },
+    resolveRoomInfo({ roomId }) {
+      return {
+        name: roomId, // "mu-room-name"
+        url: `https://example.com/${roomId}`,
+      };
+    },
+    // +++
+  }
+);
+
+// { type: "unreadMention", comment: { ... }, ... }
+console.log(emailData);
+
+// { name: "Nimesh", avatar: "https://..." }
+console.log(emailData.comment.author.info);
+
+// { name: "my-room-name", url: "https://example.com/my-room-name" }
+console.log(emailData.roomInfo);
+```
+
+#### Styling components [#prepare-thread-notification-as-html-styling-components]
+
+Each element in the comment body can be style with custom CSS properties, should
+you look to change the look of it. Five elements are available: `container`,
+`paragraph`, `text`, `link`, `mention`.
+
+```tsx
+const emailData = await prepareThreadNotificationAsReact(
+  liveblocks,
+  webhookEvent,
+  {
+    // +++
+    styles: {
+      paragraph: { margin: "12px 0" },
+
+      mention: {
+        fontWeight: "bold",
+        color: "red",
+      },
+
+      link: {
+        textDecoration: "underline",
+      },
+    },
+    // +++
+  }
+);
+
+// { type: "unreadMention", comment: { ... }, ... }
+console.log(emailData);
+
+// The elements in the comment body are now styled
+console.log(emailData.comment.htmlBody);
+```
