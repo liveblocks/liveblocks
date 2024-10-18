@@ -67,7 +67,7 @@ export function makePoller(
     maxStaleTimeMs?: number;
   }
 ): Poller {
-  const maxStaleTimeMs = options?.maxStaleTimeMs ?? intervalMs;
+  const maxStaleTimeMs = options?.maxStaleTimeMs ?? Number.POSITIVE_INFINITY;
   const context: Context = {
     enabled: false,
     inForeground: true,
