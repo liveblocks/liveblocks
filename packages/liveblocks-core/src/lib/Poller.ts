@@ -32,11 +32,42 @@ type State = "@idle" | "@enabled" | "@polling";
 
 type Event = { type: "START" } | { type: "STOP" } | { type: "POLL" };
 
+/**
+ * Makes a poller that will call `await callback()` at the desired interval (in
+ * millis).
+ *
+ * The poller has only two public APIs, both side effects:
+ * - .enable(condition: boolean): void
+ * - .pollNowIfStale(): void
+ *
+ * It has the following behaviors/guarantees:
+ * - Performing a "poll" literally means calling the provided callback (and
+ *   awaiting it)
+ * - It will only ever poll if .enable(true) was called.
+ * - It will not _immediately_ poll if .enable(true) is called. The first poll
+ *   can be expected no earlier than the specified interval.
+ * - If .enable(false) is called it stops the poller. This means that any next
+ *   poll will get unscheduled. If .enable(false) is called while a poll is
+ *   ongoing, it will finish that one first, but after that stop polling.
+ * - If .pollNowIfStale() is called, it will:
+ *   - Do nothing if the poller isn't enabled
+ *   - Do nothing if the poller is enabled, but the last time a poll happened
+ *     is less than the maxStaleTimeMs setting (defaults to infinity)
+ *   - Poll right now otherwise. If an existing poll was already scheduled,
+ *     think of it as if this future poll is "earlied" and just happening right
+ *     now instead
+ * - If in a browser context, and the active window loses focus, polling
+ *   implicitly stops too. Only if both the window is focused _and_ the poller
+ *   is enabled, it will perform an actual poll.
+ */
 export function makePoller(
   callback: () => Promise<void> | void,
   intervalMs: number,
-  maxStaleTimeMs: number = intervalMs
+  options?: {
+    maxStaleTimeMs?: number;
+  }
 ): Poller {
+  const maxStaleTimeMs = options?.maxStaleTimeMs ?? intervalMs;
   const context: Context = {
     enabled: false,
     inForeground: true,

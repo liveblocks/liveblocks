@@ -146,7 +146,7 @@ describe("Poller", () => {
     //      Force poll here
 
     const callback = jest.fn();
-    const poller = makePoller(callback, 5000, 1000);
+    const poller = makePoller(callback, 5000, { maxStaleTimeMs: 1000 });
 
     poller.enable(true); // Start polling
     expect(callback).toHaveBeenCalledTimes(0);
@@ -188,7 +188,7 @@ describe("Poller", () => {
     //      Force poll here
 
     const callback = jest.fn();
-    const poller = makePoller(callback, 5000, 30000);
+    const poller = makePoller(callback, 5000, { maxStaleTimeMs: 30000 });
 
     poller.enable(true); // Start polling
     expect(callback).toHaveBeenCalledTimes(0);
@@ -231,7 +231,7 @@ describe("Poller", () => {
     //                                Force poll here
 
     const callback = jest.fn();
-    const poller = makePoller(callback, 5000, 1000);
+    const poller = makePoller(callback, 5000, { maxStaleTimeMs: 1000 });
 
     poller.enable(true); // Start polling
     expect(callback).toHaveBeenCalledTimes(0);
@@ -271,7 +271,7 @@ describe("Poller", () => {
     const callback = jest.fn(async () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
     });
-    const poller = makePoller(callback, 5000, 0);
+    const poller = makePoller(callback, 5000, { maxStaleTimeMs: 0 });
 
     // Start the poller
     poller.enable(true);
@@ -304,7 +304,7 @@ describe("Poller", () => {
     //                       (but it's not stale enough)
 
     const callback = jest.fn();
-    const poller = makePoller(callback, 5000, 30000);
+    const poller = makePoller(callback, 5000, { maxStaleTimeMs: 30000 });
 
     // Start the poller
     poller.enable(true);
