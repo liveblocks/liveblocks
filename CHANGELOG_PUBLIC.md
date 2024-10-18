@@ -25,8 +25,8 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ### `@liveblocks/react-ui`
 
-- When `Composer` is disabled, its actions are now also disabled as expected.
-- Various event propagation improvements in `Composer`.
+- When [`Composer`](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Composer) is disabled, its actions are now also disabled as expected.
+- Various event propagation improvements in [`Composer`](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Composer).
 
 ## v2.9.0
 
@@ -37,7 +37,7 @@ app.
 
 ### `@liveblocks/react`
 
-- Add pagination support to `useInboxNotifications()`.
+- Add pagination support to [`useInboxNotifications`](https://liveblocks.io/docs/api-reference/liveblocks-react#useInboxNotifications).
 
   ```tsx
   const {
@@ -53,7 +53,7 @@ app.
   } = useInboxNotifications();
   ```
 
-- Add pagination support to `useThreads()` and `useUserThreads_experimental()`.
+- Add pagination support to [`useThreads`](https://liveblocks.io/docs/api-reference/liveblocks-react#useThreads) and `useUserThreads_experimental`.
 
   ```tsx
   const {
@@ -69,9 +69,12 @@ app.
   } = useThreads({ query });
   ```
 
+  ## Website
+- New [startups](https://liveblocks.io/startups) page highlighting discounts for startups and nonprofits.
+
 ## Contributors
 
-nimeshnayaju, ofoucherot, marcbouchenoire, nvie
+nimeshnayaju, ofoucherot, marcbouchenoire, nvie, pierrelevaillant, stevenfabre
 
 # Week 40 (2024-10-04)
 
