@@ -555,3 +555,35 @@ export type {
   WebhookRequest,
   YDocUpdatedEvent,
 };
+
+/**
+ * Type guard to check if a webhook event is a `ThreadNotificationEvent`
+ *
+ * The check is made against the event type and event data kind.
+ * You should use this guard to safely check the webhook event you received
+ * when you're expecting a `ThreadNotificationEvent`.
+ *
+ * @param event The webhook event received after calling `webhookHandler.verifyRequest()`.
+ * @returns A boolean type predicate.
+ */
+export function isThreadNotificationEvent(
+  event: WebhookEvent
+): event is ThreadNotificationEvent {
+  return event.type === "notification" && event.data.kind === "thread";
+}
+
+/**
+ * Type guard to check if a webhook event is a `TextMentionNotificationEvent`
+ *
+ * The check is made against the event type and event data kind.
+ * You should use this guard to safely check the webhook event you received
+ * when you're expecting a `TextMentionNotificationEvent`.
+ *
+ * @param event The webhook event received after calling `webhookHandler.verifyRequest()`.
+ * @returns A boolean type predicate.
+ */
+export function isTextMentionNotificationEvent(
+  event: WebhookEvent
+): event is TextMentionNotificationEvent {
+  return event.type === "notification" && event.data.kind === "textMention";
+}
