@@ -639,11 +639,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
   private _roomVersions: Map<string, SingleResource> = new Map();
 
   private _notificationsSubscriber = 0;
-  private _notificationsPoller = makePoller(() => {
-    void this.fetchNotificationsDeltaUpdate().catch((err) => {
-      console.warn(`Polling new inbox notifications failed: ${String(err)}`);
-    });
-  }, 60_000); // Polling interval is set to 60 seconds
+  private _notificationsPoller = makePoller(
+    () => {
+      void this.fetchNotificationsDeltaUpdate().catch((err) => {
+        console.warn(`Polling new inbox notifications failed: ${String(err)}`);
+      });
+    },
+    60_000, // Polling interval is every 60 seconds
+    { maxStaleTimeMs: 5 * 1000 } // ...or if window refocuses and data is less than 5 seconds old
+  );
 
   constructor(client?: OpaqueClient) {
     this._client = client;
@@ -1576,6 +1580,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return paginatedResource.waitUntilLoaded();
   }
 
+  // XXX Add `signal` here
   public async fetchUserThreadsDeltaUpdate() {
     const lastRequestedAt = this._userThreadsLastRequestedAt;
     if (lastRequestedAt === null) {
@@ -1587,6 +1592,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       "Client is required in order to load threads for the user"
     );
 
+    // XXX Add `signal` here
     const result = await client[kInternal].getUserThreadsSince_experimental({
       since: lastRequestedAt,
     });
@@ -1649,8 +1655,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return resource.waitUntilLoaded();
   }
 
+  // XXX This is not how we should expose this API
   public pollInboxNotifications() {
-    this._notificationsPoller.pollNowIfStale(30000);
+    this._notificationsPoller.pollNowIfStale();
   }
 
   public incrementNotificationsSubscriber() {

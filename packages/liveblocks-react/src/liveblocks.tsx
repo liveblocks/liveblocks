@@ -222,14 +222,19 @@ export function getLiveblocksExtrasForClient<M extends BaseMetadata>(
 
 // XXX DRY up these makeDeltaPoller_* abstractions, now that the symmetry has become clear!
 function makeDeltaPoller_UserThreads(store: UmbrellaStore<BaseMetadata>) {
-  const poller = makePoller(async () => {
-    try {
-      await store.fetchUserThreadsDeltaUpdate();
-    } catch (err) {
-      // When polling, we don't want to throw errors, ever
-      console.warn(`Polling new user threads failed: ${String(err)}`);
-    }
-  }, POLLING_INTERVAL);
+  const poller = makePoller(
+    async () => {
+      try {
+        // XXX Add `signal` here
+        await store.fetchUserThreadsDeltaUpdate();
+      } catch (err) {
+        // When polling, we don't want to throw errors, ever
+        console.warn(`Polling new user threads failed: ${String(err)}`);
+      }
+    },
+    60_000, // Polling interval is every 60 seconds
+    { maxStaleTimeMs: 5 * 1000 } // ...or if window refocuses and data is less than 5 seconds old
+  );
 
   // Keep track of the number of subscribers
   let pollerSubscribers = 0;
