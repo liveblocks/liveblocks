@@ -86,8 +86,6 @@ const _bundles = new WeakMap<
   LiveblocksContextBundle<BaseUserMeta, BaseMetadata>
 >();
 
-export const POLLING_INTERVAL = 60 * 1000; // every minute
-
 function selectUnreadInboxNotificationsCount(
   inboxNotifications: readonly InboxNotificationData[]
 ) {
