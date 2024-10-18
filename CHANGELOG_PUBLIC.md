@@ -69,7 +69,7 @@ app.
   } = useThreads({ query });
   ```
 
-  ## Website
+## Website
 - New [startups](https://liveblocks.io/startups) page highlighting discounts for startups and nonprofits.
 
 ## Contributors
