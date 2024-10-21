@@ -27,7 +27,9 @@ function Example() {
 }
 
 export default function Page() {
-  const roomId = useExampleRoomId("liveblocks:examples:nextjs-comments-emails");
+  const roomId = useExampleRoomId(
+    "liveblocks:examples:nextjs-comments-emails-resend"
+  );
 
   return (
     <RoomProvider id={roomId}>
