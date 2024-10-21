@@ -8,6 +8,14 @@ import {
 
 import { getUsers } from "../../../database";
 
+/**
+ * This webhook relies on SendGrid dynamic templates. Dynamic template allow you
+ * to design email templates in the SendGrid dashboard, before calling the SDK
+ * to send individual emails, passing custom parameters to each email.
+ *
+ * Learn more: https://www.twilio.com/docs/sendgrid/ui/sending-email/how-to-send-an-email-with-dynamic-templates
+ */
+
 // Set your Sendgrid API key
 sendgridMail.setApiKey(process.env.SENDGRID_API_KEY as string);
 
@@ -77,10 +85,12 @@ export async function POST(request: Request) {
     if (emailData !== null) {
       let templateId, subject, templateData;
 
+      // Create your email objects for SendGrid dynamic template, passing on
+      // any custom parameters
       switch (emailData.type) {
         // Handle unread replies use case
         case "unreadReplies": {
-          templateId = "d-my-unread-replies-template-id";
+          templateId = "d-my-unread-replies-template-id"; // Your dynamic template ID
           templateData = {
             comments: emailData.comments,
           };
@@ -89,7 +99,7 @@ export async function POST(request: Request) {
         }
         // Handle last unread comment with mention use case
         case "unreadMention": {
-          templateId = "d-my-unread-mention-template-id";
+          templateId = "d-my-unread-mention-template-id"; // Your dynamic template ID
           templateData = {
             comment: emailData.comment,
           };
@@ -98,6 +108,7 @@ export async function POST(request: Request) {
         }
       }
 
+      // Send your dynamic email
       try {
         await sendgridMail.send({
           from: "My Liveblocks App <hello@my-liveblocks-app.com>",
