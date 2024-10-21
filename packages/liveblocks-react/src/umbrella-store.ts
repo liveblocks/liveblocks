@@ -754,7 +754,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     };
   }
 
-  public getVersionsLoadingState(
+  public getVersionsAsync(
     roomId: string
   ): AsyncResult<HistoryVersion[], "versions"> {
     const state = this.get();

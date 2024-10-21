@@ -2159,7 +2159,7 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
   const { store, getRoomVersions } = getRoomExtrasForClient(client);
 
   const getter = React.useCallback(
-    () => store.getVersionsLoadingState(room.id),
+    () => store.getVersionsAsync(room.id),
     [store, room.id]
   );
 
@@ -2191,7 +2191,7 @@ function useHistoryVersionsSuspense(): HistoryVersionsAsyncSuccess {
   const { store } = getRoomExtrasForClient(client);
 
   const getter = React.useCallback(
-    () => store.getVersionsLoadingState(room.id),
+    () => store.getVersionsAsync(room.id),
     [store, room.id]
   );
 
