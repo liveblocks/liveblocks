@@ -263,7 +263,7 @@ const noop = Promise.resolve();
 
 const ASYNC_LOADING = Object.freeze({ isLoading: true });
 
-class SingleResource {
+class SinglePageResource {
   public readonly observable: Observable<void>;
   private _eventSource: EventSource<void>;
   private _fetchPage: () => Promise<void>;
@@ -626,7 +626,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   private _userThreadsLastRequestedAt: Date | null = null;
   private _userThreads: Map<string, PaginatedResource> = new Map();
 
-  private _roomVersions: Map<string, SingleResource> = new Map();
+  private _roomVersions: Map<string, SinglePageResource> = new Map();
 
   private _notificationsSubscriber = 0;
   private _notificationsPoller = makePoller(
@@ -1579,7 +1579,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
         this.setVersions(roomId, result.versions);
       };
 
-      resource = new SingleResource(roomVersionsFetcher);
+      resource = new SinglePageResource(roomVersionsFetcher);
     }
 
     resource.observable.subscribe(() =>
