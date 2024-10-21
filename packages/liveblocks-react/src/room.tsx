@@ -2118,7 +2118,7 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
   const store = getRoomExtrasForClient(client).store;
 
   const getter = React.useCallback(
-    () => store.getRoomVersionsAsync(room.id),
+    () => store.getVersionsLoadingState(room.id),
     [store, room.id]
   );
 
