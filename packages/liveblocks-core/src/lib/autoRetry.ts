@@ -27,13 +27,13 @@ const DONT_RETRY_4XX = (x: unknown) =>
  * @param promiseFn The promise factory to execute
  * @param maxTries The number of total tries (must be >=1)
  * @param backoff An array of timings to inject between each promise attempt
- * @param throwError An optional function to not auto-retry on certain errors
+ * @param shouldStopRetrying An optional function to not auto-retry on certain errors
  */
 export async function autoRetry<T>(
   promiseFn: () => Promise<T>,
   maxTries: number,
   backoff: number[],
-  throwError: (err: any) => boolean = DONT_RETRY_4XX
+  shouldStopRetrying: (err: any) => boolean = DONT_RETRY_4XX
 ): Promise<T> {
   const fallbackBackoff = backoff.length > 0 ? backoff[backoff.length - 1] : 0;
 
@@ -42,11 +42,10 @@ export async function autoRetry<T>(
   while (true) {
     attempt++;
 
-    const promise = promiseFn();
     try {
-      return await promise;
+      return await promiseFn();
     } catch (err) {
-      if (throwError(err)) {
+      if (shouldStopRetrying(err)) {
         throw err;
       }
 
