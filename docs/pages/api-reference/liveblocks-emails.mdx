@@ -109,19 +109,29 @@ been read, and help you style each comment’s body with either
 The function also helps you distinguish between _unread mentions_ and _unread
 replies_.
 
-- A thread has _unread replies_ if a comment was created after the `readAt` date
-  on the notification, and created before or at the same time as the
-  `notifiedAt` date. All unread replies are returned in an array.
-- A thread has an _unread mention_ if it has unread replies, and one reply
-  mentions the user. A single comment with the latest mention is returned.
-
-The `type` property that’s returned lets you know which this notification is
-for.
+A thread has _unread replies_ if a comment was created after the `readAt` date
+on the notification, and created before or at the same time as the `notifiedAt`
+date. All unread replies are returned in an array.
 
 ```js
 {
   type: "unreadReplies",
-  // ...
+  roomId: "my-room-id",
+  comments: [
+    {/* Comment data */},
+    // ...
+  ],
+}
+```
+
+A thread has an _unread mention_ if it has unread replies, and one of the
+replies mentions the user. A single comment with the latest mention is returned.
+
+```js
+{
+  type: "unreadMentions",
+  roomId: "my-room-id",
+  comment: {/* Comment data */},
 }
 ```
 
@@ -190,7 +200,7 @@ if (isThreadNotificationEvent(event)) {
 
 It’s designed to be used in a webhook event, which requires a
 [`Liveblocks`](/docs/api-reference/liveblocks-node#Liveblocks-client) Node.js
-client, a
+client and a
 [`WebhookHandler`](/docs/api-reference/liveblocks-node#WebhookHandler). Check
 for the correct webhook event using
 [`isThreadNotificationEvent`](/docs/api-reference/liveblocks-node#isThreadNotificationEvent)
@@ -279,7 +289,7 @@ export async function POST(request: Request) {
     name="value"
     type="ThreadNotificationEmailDataAsReact | null"
   >
-    Returns comment information, and a formatted React body, ready for use in emails. Returns `null` if there are no unread mentions or comments. The result has two formats depending on whether this notification is for a *single unread mention*, or for *multiple unread replies*:
+    Returns comment information, and a formatted React body, ready for use in emails. Returns `null` if there are no unread mentions or replies. The result has two formats depending on whether this notification is for a *single unread mention*, or for *multiple unread replies*:
 
     ```js title="Unread mention" isCollapsable isCollapsed
     {
@@ -343,8 +353,9 @@ export async function POST(request: Request) {
     Node.js client.
   </PropertiesListItem>
   <PropertiesListItem name="event" type="ThreadNotificationEvent" required>
-    An event from a
-    [`ThreadNotificationWebhook`](/docs/platform/webhooks#Thread-notification).
+    An object passed from a webhook event, specifically the
+    [`ThreadNotificationEvent`](/docs/platform/webhooks#Thread-notification).
+    [Learn more about setting this up](#Setup).
   </PropertiesListItem>
   <PropertiesListItem name="options" type="object">
     A number of options to customize the format of the comments, adding user
@@ -362,14 +373,14 @@ export async function POST(request: Request) {
     [Learn more](#prepare-thread-notification-email-as-react-resolving-data).
   </PropertiesListItem>
   <PropertiesListItem
-    name="options.resolveRoomsInfo"
-    detailedType="async? (args: ResolveRoomsInfoArgs) => (RoomInfo | undefined)[] | undefined"
+    name="options.resolveRoomInfo"
+    detailedType="async? (args: ResolveRoomInfoArgs) => RoomInfo | undefined"
   >
-    A function that resolves room information. Return an array of `RoomInfo`
-    objects in the same order they arrived. Works similarly to the [resolver on
-    the
-    client](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveRoomsInfo).
-    [Learn more](#prepare-thread-notification-email-as-react-resolving-data).
+    A function that resolves room information. Return a `RoomInfo` object, as
+    matching your types. Works similarly to the [resolver on the
+    client](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveRoomsInfo)
+    but for one room. [Learn
+    more](#prepare-thread-notification-email-as-react-resolving-data).
   </PropertiesListItem>
   <PropertiesListItem name="options.components" type="object">
     Pass different React components to customize the elements in the comment
@@ -716,8 +727,9 @@ export async function POST(request: Request) {
     Node.js client.
   </PropertiesListItem>
   <PropertiesListItem name="event" type="ThreadNotificationEvent" required>
-    An event from a
-    [`ThreadNotificationWebhook`](/docs/platform/webhooks#Thread-notification).
+    An object passed from a webhook event, specifically the
+    [`ThreadNotificationEvent`](/docs/platform/webhooks#Thread-notification).
+    [Learn more about setting this up](#Setup).
   </PropertiesListItem>
   <PropertiesListItem name="options" type="object">
     A number of options to customize the format of the comments, adding user
@@ -735,14 +747,14 @@ export async function POST(request: Request) {
     [Learn more](#prepare-thread-notification-email-as-html-resolving-data).
   </PropertiesListItem>
   <PropertiesListItem
-    name="options.resolveRoomsInfo"
-    detailedType="async? (args: ResolveRoomsInfoArgs) => (RoomInfo | undefined)[] | undefined"
+    name="options.resolveRoomInfo"
+    detailedType="async? (args: ResolveRoomInfoArgs) => RoomInfo | undefined"
   >
-    A function that resolves room information. Return an array of `RoomInfo`
-    objects in the same order they arrived. Works similarly to the [resolver on
-    the
-    client](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveRoomsInfo).
-    [Learn more](#prepare-thread-notification-email-as-html-resolving-data).
+    A function that resolves room information. Return a `RoomInfo` object, as
+    matching your types. Works similarly to the [resolver on the
+    client](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveRoomsInfo)
+    but for one room. [Learn
+    more](#prepare-thread-notification-email-as-html-resolving-data).
   </PropertiesListItem>
   <PropertiesListItem name="options.styles" type="object">
     Pass CSS properties to style the different HTML elements in the comment
