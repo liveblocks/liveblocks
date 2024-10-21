@@ -76,7 +76,6 @@ export type {
   DU,
   KDAD,
 } from "./globals/augmentation";
-export { HttpError } from "./http-client";
 export {
   legacy_patchImmutableObject,
   lsonToJson,
@@ -90,7 +89,7 @@ export type {
   AsyncResult,
   AsyncSuccess,
 } from "./lib/AsyncResult";
-export { autoRetry, StopRetrying } from "./lib/autoRetry";
+export { autoRetry, HttpError } from "./lib/autoRetry";
 export { chunk } from "./lib/chunk";
 export {
   createCommentId,
@@ -302,7 +301,7 @@ export type { Store } from "./lib/create-store";
 export { createStore } from "./lib/create-store";
 
 // Deprecated APIs
-import { HttpError } from "./http-client";
+import { HttpError } from "./lib/autoRetry";
 /** @deprecated Use HttpError instead. */
 export const CommentsApiError = HttpError;
 /** @deprecated Use HttpError instead. */

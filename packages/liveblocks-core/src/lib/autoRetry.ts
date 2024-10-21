@@ -1,5 +1,19 @@
 import * as console from "./fancy-console";
+import type { JsonObject } from "./Json";
 import { wait } from "./utils";
+
+export class HttpError extends Error {
+  constructor(
+    public message: string,
+    public status: number,
+    public details?: JsonObject
+  ) {
+    super(message);
+  }
+}
+
+const DONT_RETRY_4XX = (x: unknown) =>
+  x instanceof HttpError && x.status >= 400 && x.status < 500;
 
 /**
  * Wraps a promise factory. Will create promises until one succeeds. If
@@ -19,7 +33,7 @@ export async function autoRetry<T>(
   promiseFn: () => Promise<T>,
   maxTries: number,
   backoff: number[],
-  throwError?: (err: any) => boolean
+  throwError: (err: any) => boolean = DONT_RETRY_4XX
 ): Promise<T> {
   const fallbackBackoff = backoff.length > 0 ? backoff[backoff.length - 1] : 0;
 
@@ -32,8 +46,7 @@ export async function autoRetry<T>(
     try {
       return await promise;
     } catch (err) {
-      // TODO: Think more about this abstraction
-      if (throwError?.(err) || err instanceof StopRetrying) {
+      if (throwError(err)) {
         throw err;
       }
 
@@ -50,13 +63,5 @@ export async function autoRetry<T>(
       `Attempt ${attempt} was unsuccessful. Retrying in ${delay} milliseconds.`
     );
     await wait(delay);
-  }
-}
-
-// XXX Either DRY this up with the equivalent class in @liveblocks/core, or
-// find a better solution for this!
-export class StopRetrying extends Error {
-  constructor(reason: string) {
-    super(reason);
   }
 }

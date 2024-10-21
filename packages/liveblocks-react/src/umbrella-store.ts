@@ -21,7 +21,6 @@ import type {
 } from "@liveblocks/core";
 import {
   autoRetry,
-  CommentsApiError,
   compactObject,
   console,
   createStore,
@@ -32,8 +31,6 @@ import {
   mapValues,
   nanoid,
   nn,
-  NotificationsApiError,
-  StopRetrying,
   stringify,
 } from "@liveblocks/core";
 
@@ -507,14 +504,7 @@ export class PaginatedResource {
     const initialFetcher = autoRetry(
       () => this._fetchPage(/* cursor */ undefined),
       5,
-      [5000, 5000, 10000, 15000],
-      (err) => {
-        // We do not want to retry if a 4xx HTTP error is received
-        if (err instanceof HttpError && err.status >= 400 && err.status < 500) {
-          return true;
-        }
-        return false;
-      }
+      [5000, 5000, 10000, 15000]
     );
 
     const promise = usify(
@@ -654,39 +644,26 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     const inboxFetcher = async (cursor?: string) => {
       if (client === undefined) {
-        // TODO: Think about other ways to structure this. Throwing a StopRetrying only
-        // makes sense only if we can easily know if the fetcher is going to be wrapped inside the autoRetry function
-        throw new StopRetrying(
-          "Client is required in order to load threads for the room"
-        );
+        // TODO: Think about other ways to structure this. It's not _really_ an
+        // HttpError of course, but throwing an HttpError with a 4xx status
+        // code will stop retrying if this is called in an autoRetry wrapper.
+        throw new HttpError("Client required", 477);
       }
 
-      try {
-        const result = await client.getInboxNotifications({ cursor });
+      const result = await client.getInboxNotifications({ cursor });
 
-        this.updateThreadsAndNotifications(
-          result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
-          result.inboxNotifications
-        );
+      this.updateThreadsAndNotifications(
+        result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
+        result.inboxNotifications
+      );
 
-        // We initialize the `_lastRequestedNotificationsAt` date using the server timestamp after we've loaded the first page of inbox notifications.
-        if (this._notificationsLastRequestedAt === null) {
-          this._notificationsLastRequestedAt = result.requestedAt;
-        }
-
-        const nextCursor = result.nextCursor;
-        return nextCursor;
-      } catch (err) {
-        // If the error is a 403 Forbidden error, we do not want to keep retrying
-        if (err instanceof NotificationsApiError && err.status === 403) {
-          throw new StopRetrying(
-            "403 Forbidden: Stopping further retry attempts."
-          );
-        }
-
-        // All other instance of errors, we simply throw
-        throw err;
+      // We initialize the `_lastRequestedNotificationsAt` date using the server timestamp after we've loaded the first page of inbox notifications.
+      if (this._notificationsLastRequestedAt === null) {
+        this._notificationsLastRequestedAt = result.requestedAt;
       }
+
+      const nextCursor = result.nextCursor;
+      return nextCursor;
     };
     this._notifications = new PaginatedResource(inboxFetcher);
     this._notifications.observable.subscribe(() =>
@@ -1422,56 +1399,40 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ) {
     const threadsFetcher = async (cursor?: string) => {
       if (this._client === undefined) {
-        // TODO: Think about other ways to structure this. Throwing a StopRetrying only
-        // makes sense only if we can easily know if the fetcher is going to be wrapped inside the autoRetry function
-        throw new StopRetrying(
-          "Client is required in order to load threads for the room"
-        );
+        // TODO: Think about other ways to structure this. It's not _really_ an
+        // HttpError of course, but throwing an HttpError with a 4xx status
+        // code will stop retrying if this is called in an autoRetry wrapper.
+        throw new HttpError("Client required", 478);
       }
 
       const room = this._client.getRoom(roomId);
       if (room === null) {
-        throw new StopRetrying(
-          `Room with id ${roomId} is not available on client`
-        );
+        throw new HttpError(`Room '${roomId}' is not available on client`, 479);
       }
 
-      try {
-        const result = await room.getThreads({ cursor, query });
-        this.updateThreadsAndNotifications(
-          result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
-          result.inboxNotifications
-        );
+      const result = await room.getThreads({ cursor, query });
+      this.updateThreadsAndNotifications(
+        result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
+        result.inboxNotifications
+      );
 
-        const lastRequestedAt =
-          this._roomThreadsLastRequestedAtByRoom.get(roomId);
+      const lastRequestedAt =
+        this._roomThreadsLastRequestedAtByRoom.get(roomId);
 
-        /**
-         * We set the `lastRequestedAt` value for the room to the timestamp returned by the current request if:
-         * 1. The `lastRequestedAt` value for the room has not been set
-         * OR
-         * 2. The `lastRequestedAt` value for the room is older than the timestamp returned by the current request
-         */
-        if (
-          lastRequestedAt === undefined ||
-          lastRequestedAt > result.requestedAt
-        ) {
-          this._roomThreadsLastRequestedAtByRoom.set(
-            roomId,
-            result.requestedAt
-          );
-        }
-
-        return result.nextCursor;
-      } catch (err) {
-        // If the error is a 403 Forbidden error, we do not want to keep retrying
-        if (err instanceof CommentsApiError && err.status === 403) {
-          throw new StopRetrying(
-            "403 Forbidden: Stopping further retry attempts."
-          );
-        }
-        throw err;
+      /**
+       * We set the `lastRequestedAt` value for the room to the timestamp returned by the current request if:
+       * 1. The `lastRequestedAt` value for the room has not been set
+       * OR
+       * 2. The `lastRequestedAt` value for the room is older than the timestamp returned by the current request
+       */
+      if (
+        lastRequestedAt === undefined ||
+        lastRequestedAt > result.requestedAt
+      ) {
+        this._roomThreadsLastRequestedAtByRoom.set(roomId, result.requestedAt);
       }
+
+      return result.nextCursor;
     };
 
     const queryKey = makeRoomThreadsQueryKey(roomId, query);
@@ -1529,39 +1490,27 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     const threadsFetcher = async (cursor?: string) => {
       if (this._client === undefined) {
-        // TODO: Think about other ways to structure this. Throwing a StopRetrying only
-        // makes sense only if we can easily know if the fetcher is going to be wrapped inside the autoRetry function
-        throw new StopRetrying(
-          "Client is required in order to load threads for the room"
-        );
+        // TODO: Think about other ways to structure this. It's not _really_ an
+        // HttpError of course, but throwing an HttpError with a 4xx status
+        // code will stop retrying if this is called in an autoRetry wrapper.
+        throw new HttpError("Client required", 480);
       }
 
-      try {
-        const result = await this._client[
-          kInternal
-        ].getUserThreads_experimental({
-          cursor,
-          query,
-        });
-        this.updateThreadsAndNotifications(
-          result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
-          result.inboxNotifications
-        );
+      const result = await this._client[kInternal].getUserThreads_experimental({
+        cursor,
+        query,
+      });
+      this.updateThreadsAndNotifications(
+        result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
+        result.inboxNotifications
+      );
 
-        // We initialize the `_userThreadsLastRequestedAt` date using the server timestamp after we've loaded the first page of inbox notifications.
-        if (this._userThreadsLastRequestedAt === null) {
-          this._userThreadsLastRequestedAt = result.requestedAt;
-        }
-
-        return result.nextCursor;
-      } catch (err) {
-        if (err instanceof NotificationsApiError && err.status === 403) {
-          throw new StopRetrying(
-            "403 Forbidden: Stopping further retry attempts."
-          );
-        }
-        throw err;
+      // We initialize the `_userThreadsLastRequestedAt` date using the server timestamp after we've loaded the first page of inbox notifications.
+      if (this._userThreadsLastRequestedAt === null) {
+        this._userThreadsLastRequestedAt = result.requestedAt;
       }
+
+      return result.nextCursor;
     };
 
     let paginatedResource = this._userThreads.get(queryKey);
@@ -1615,26 +1564,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
     if (resource === undefined) {
       const roomVersionsFetcher = async () => {
         if (this._client === undefined) {
-          // TODO: Think about other ways to structure this. Throwing a StopRetrying only
-          // makes sense only if we can easily know if the fetcher is going to be wrapped inside the autoRetry function
-          throw new StopRetrying(
-            "Client is required in order to load threads for the room"
-          );
-        }
-
-        if (this._client === undefined) {
-          // TODO: Think about other ways to structure this. Throwing a StopRetrying only
-          // makes sense only if we can easily know if the fetcher is going to be wrapped inside the autoRetry function
-          throw new StopRetrying(
-            "Client is required in order to load threads for the room"
-          );
+          // TODO: Think about other ways to structure this. It's not _really_ an
+          // HttpError of course, but throwing an HttpError with a 4xx status
+          // code will stop retrying if this is called in an autoRetry wrapper.
+          throw new HttpError("Client required", 481);
         }
 
         const room = this._client.getRoom(roomId);
         if (room === null) {
-          throw new StopRetrying(
-            `Room with id ${roomId} is not available on client`
-          );
+          throw new HttpError(`Room '${roomId}' not available on client`, 482);
         }
 
         const result = await room[kInternal].listTextVersions();

@@ -1,19 +1,10 @@
 import type { AuthValue } from "./auth-manager";
+import { HttpError } from "./lib/autoRetry";
 import type { JsonObject } from "./lib/Json";
 import type { QueryParams, URLSafeString } from "./lib/url";
 import { urljoin } from "./lib/url";
 import { raise } from "./lib/utils";
 import { PKG_VERSION } from "./version";
-
-export class HttpError extends Error {
-  constructor(
-    public message: string,
-    public status: number,
-    public details?: JsonObject
-  ) {
-    super(message);
-  }
-}
 
 export function getBearerTokenFromAuthValue(authValue: AuthValue): string {
   if (authValue.type === "public") {
