@@ -16,10 +16,10 @@ component.
 
 <Figure>
   <Image
-    src="/assets/comments/email-notification.png"
-    alt="An email titled 'New notifications' showing two comments and a link to the thread"
-    width={1500}
-    height={1000}
+    src="/assets/emails/new-comments-email.png"
+    alt="An email showing 7 new comments, with comment bodies and links to each comment"
+    width={1567}
+    height={830}
   />
 </Figure>
 
@@ -40,20 +40,19 @@ comments, and more specifically, we’ll be looking at how to:
 - Trigger events based on unread comments using the
   [`NotificationEvent`](/docs/platform/webhooks#NotificationEvent) webhook
   event.
-- Fetch unread thread data using the
-  [`@liveblocks/node`](/docs/api-reference/liveblocks-node) package.
-- Build an email containing correctly
-  [formatted text](/docs/guides/how-to-send-email-notifications-when-comments-are-created#Generating-HTML-for-the-email).
+- Fetch unread comments and add styles to comment text using the
+  [`@liveblocks/emails`](/docs/api-reference/liveblocks-emails) package.
 - Send an email notification containing a list of unread comments in thread
   format with [Resend](https://resend.com/).
 
 <Banner title="Have a project ready">
 
 This guide assumes you already have a Liveblocks Comments project set up. If you
-haven’t already got one, you can
+don’t have one yet, you can
 [get started with Comments](/docs/get-started/comments), and come back after
-you’re set up. You could also use our [Next.js Starter Kit](/starter-kit) which
-has this set up already.
+you’re set up. You could also use our
+[basic Comments example](/examples/comments/nextjs-comments) which has this set
+up already.
 
 </Banner>
 
@@ -284,12 +283,13 @@ export async function POST(request: Request) {
 ## Check the event and notification permissions
 
 After verifying the request, we can then check we’re receiving the correct type
-of event, and check if the user should receive a notification. Liveblocks
-doesn’t have knowledge of your permissions system on the back end, so it’s your
-responsibility to check if this user should receive a notification.
+of event. There are different `notification` events, and in this case we’d like
+to check for [thread notification](/docs/platform/webhooks#Thread-notification),
+as we’re specifically listening for new comments. We can do this using
+[`ThreadNotificationEvent`](/docs/api-reference/liveblocks-node#isThreadNotificationEvent).
 
-```ts highlight="23-34"
-import { WebhookHandler } from "@liveblocks/node";
+```ts
+import { WebhookHandler, isThreadNotificationEvent } from "@liveblocks/node";
 
 // Add your webhook secret key from a project's webhooks dashboard
 const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
@@ -311,16 +311,241 @@ export async function POST(request: Request) {
     return new Response("Could not verify webhook call", { status: 400 });
   }
 
+  // +++
   // When an inbox notification has been created
-  if (event.type === "notification") {
-    const { roomId, threadId, inboxNotificationId, userId } = event.data;
-
+  if (isThreadNotificationEvent(event)) {
     // Check if user has access to room
-    if (!__hasRoomAccess__(userId, roomId)) {
+    if (!__hasRoomAccess__(event.userId, event.roomId)) {
       return new Response(null, { status: 200 });
     }
 
+    // The user to send the email to
+    const emailAddress = __getEmailAddressFromDB__(event.userId);
+
     // Send notifications
+    // ...
+  }
+  // +++
+
+  return new Response(null, { status: 200 });
+}
+```
+
+Note that we’re also checking if the user should receive a notification, and
+getting their email address—Liveblocks doesn’t have knowledge of your
+permissions system on the back end, so it’s your responsibility to check if this
+user should have access to the room.
+
+## Fetching data for emails
+
+[`@liveblocks/emails`](/docs/api-reference/liveblocks-emails) provides functions
+for fetching unread comments and styling emails, returning them as either React
+components or an HTML string. In this guide we’ll use the React function, but
+the HTML function works almost identically, so you can still follow along if
+you’d prefer HTML emails.
+
+<Figure>
+  <Image
+    src="/assets/emails/new-comments-email.png"
+    alt="An email showing 7 new comments, with comment bodies and links to each comment"
+    width={1567}
+    height={830}
+  />
+</Figure>
+
+First set up your
+[`Liveblocks`](/docs/api-reference/liveblocks-node#Liveblocks-client) Node.js
+client and wrap
+[`prepareThreadNotificationEmailAsReact`](/docs/api-reference/liveblocks-emails#prepare-thread-notification-email-as-react)
+in `try/catch`, getting the data for the email.
+
+<Banner>
+
+If you’d prefer your email content as an HTML string, use
+[`prepareThreadNotificationEmailAsHtml`](/docs/api-reference/liveblocks-emails#prepare-thread-notification-email-as-html).
+
+</Banner>
+
+```ts
+import {
+  // +++
+  Liveblocks,
+  // +++
+  WebhookHandler,
+  isThreadNotificationEvent,
+} from "@liveblocks/node";
+// +++
+import { prepareThreadNotificationEmailAsReact } from "@liveblocks/emails";
+// +++
+
+// Add your webhook secret key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+// +++
+// Add your secret key from a project's API keys dashboard
+const API_SECRET = "{{SECRET_KEY}}";
+const liveblocks = new Liveblocks({ secret: API_SECRET });
+// +++
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // When an inbox notification has been created
+  if (isThreadNotificationEvent(event)) {
+    // Check if user has access to room
+    if (!__hasRoomAccess__(event.userId, event.roomId)) {
+      return new Response(null, { status: 200 });
+    }
+
+    // The user to send the email to
+    const emailAddress = __getEmailAddressFromDB__(event.userId);
+
+    // +++
+    let emailData;
+
+    try {
+      emailData = await prepareThreadNotificationEmailAsReact(
+        liveblocks,
+        event
+      );
+    } catch (err) {
+      console.log(err);
+      return new Response("Could not fetch thread notification data", {
+        status: 500,
+      });
+    }
+
+    // All comments have already been read
+    if (!emailData) {
+      return new Response(null, { status: 200 });
+    }
+
+    // Create emails
+    // ...
+    // +++
+  }
+
+  return new Response(null, { status: 200 });
+}
+```
+
+## Create the emails
+
+Next, we need to create the emails with React.
+[`prepareThreadNotificationEmailAsReact`](/docs/api-reference/liveblocks-emails#prepare-thread-notification-email-as-react)
+helps you identify two different thread notification types, _unread replies_ in
+a thread, or an _unread mention_ in a comment. We can choose to create different
+emails for these cases.
+
+```tsx
+import {
+  Liveblocks,
+  WebhookHandler,
+  isThreadNotificationEvent,
+} from "@liveblocks/node";
+import { prepareThreadNotificationEmailAsReact } from "@liveblocks/emails";
+
+// Add your webhook secret key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+// Add your secret key from a project's API keys dashboard
+const API_SECRET = "{{SECRET_KEY}}";
+const liveblocks = new Liveblocks({ secret: API_SECRET });
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // When an inbox notification has been created
+  if (isThreadNotificationEvent(event)) {
+    // Check if user has access to room
+    if (!__hasRoomAccess__(event.userId, event.roomId)) {
+      return new Response(null, { status: 200 });
+    }
+
+    // The user to send the email to
+    const emailAddress = __getEmailAddressFromDB__(event.userId);
+
+    let emailData;
+
+    try {
+      emailData = await prepareThreadNotificationEmailAsReact(
+        liveblocks,
+        event
+      );
+    } catch (err) {
+      console.log(err);
+      return new Response("Could not fetch thread notification data", {
+        status: 500,
+      });
+    }
+
+    // All comments have already been read
+    if (!emailData) {
+      return new Response(null, { status: 200 });
+    }
+
+    // +++
+    let email;
+    switch (emailData.type) {
+      case "unreadMention": {
+        email = (
+          <div>
+            <div>
+              @{emailData.comment.author.id} at {emailData.comment.createdAt}
+            </div>
+            <div>{emailData.comment.reactBody}</div>
+          </div>
+        );
+        break;
+      }
+
+      case "unreadReplies": {
+        email = (
+          <div>
+            {emailData.comments.map((comment) => (
+              <div key={comment.id}>
+                <div>
+                  @{comment.author.id} at {comment.createdAt}
+                </div>
+                <div>{comment.reactBody}</div>
+              </div>
+            ))}
+          </div>
+        );
+        break;
+      }
+    }
+    // +++
+
+    // Send emails
     // ...
   }
 
@@ -328,401 +553,125 @@ export async function POST(request: Request) {
 }
 ```
 
-We now have the `roomId`, `threadId`, `inboxNotificationId`. and `userId` of the
-created notification, along with some
-[other information](/docs/platform/webhooks#NotificationEvent).
+## Resolving data
 
-## Get comment and thread data
+We’ve now fully created a basic React email, and it’s ready to send. However,
+we’re displaying each user’s ID, and not their names. We can go back to
+[`prepareThreadNotificationEmailAsReact`](/docs/api-reference/liveblocks-emails#prepare-thread-notification-email-as-react)
+and use resolver functions to transform an ID into a name, for example
+`steven@example.com` -> `Steven`. These functions work similarly to
+[resolvers on the client](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers).
 
-<Banner title="Threads vs comments">
-  Note that a thread is different to a comment—a thread is “top-level”, and each
-  thread contains a list of comments. When you create a thread with
-  [`useCreateThread`](/docs/api-reference/liveblocks-react#useCreateThread), you
-  also create the first comment in the thread.
+```tsx
+// ...
+
+emailData = await prepareThreadNotificationEmailAsReact(liveblocks, event, {
+  // +++
+  resolveUsers: async ({ userIds }) => {
+    const usersData = await __getUsersFromDB__(userIds);
+
+    return usersData.map((userData) => ({
+      name: userData.name, // "Steven"
+      avatar: userData.avatar.src, // "https://example.com/steven.jpg"
+    }));
+  },
+  resolveRoomInfo: async ({ roomId }) => {
+    const roomData = await __getRoomFromDB__(roomId);
+
+    return {
+      name: roomData.name, // "Untitled document"
+      url: roomData.url, //`https://example.com/my-room-id`
+    };
+  },
+  // +++
+});
+
+// ...
+```
+
+## Customizing comment components
+
+We can also edit
+[`prepareThreadNotificationEmailAsReact`](/docs/api-reference/liveblocks-emails#prepare-thread-notification-email-as-react)
+to allow for custom components in comment bodies, for example we can add margin
+around a paragraph, color mentions, and underline links.
+
+```tsx
+// ...
+
+emailData = await prepareThreadNotificationEmailAsReact(liveblocks, event, {
+  resolveUsers: async ({ userIds }) => {
+    const usersData = await __getUsersFromDB__(userIds);
+
+    return usersData.map((userData) => ({
+      name: userData.name, // "Steven"
+      avatar: userData.avatar.src, // "https://example.com/steven.jpg"
+    }));
+  },
+  resolveRoomInfo: async ({ roomId }) => {
+    const roomData = await __getRoomFromDB__(roomId);
+
+    return {
+      name: roomData.name, // "Untitled document"
+      url: roomData.url, //`https://example.com/my-room-id`
+    };
+  },
+  // +++
+  components: {
+    Paragraph: ({ children }) => <p style={{ margin: "12px 0" }}>{children}</p>,
+
+    // `user` is the optional data returned from `resolveUsers`
+    Mention: ({ element, user }) => (
+      <span style={{ color: "red" }}>@{user?.name ?? element.id}</span>
+    ),
+
+    // If the link is rich-text render it, otherwise use the URL
+    Link: ({ element, href }) => (
+      <a href={href} style={{ textDecoration: "underline" }}>
+        {element?.text ?? href}
+      </a>
+    ),
+  },
+  // +++
+});
+
+// ...
+```
+
+Any component can be passed here, including those used in
+[`react-email`](https://react.email/),
+[learn more](/docs/api-reference/liveblocks-emails#prepare-thread-notification-email-as-react-customizing-components).
+
+<Banner>
+
+If you’re using HTML instead of React, you can
+[apply custom CSS properties](/docs/api-reference/liveblocks-emails#prepare-thread-notification-email-as-html-styling-elements).
+
 </Banner>
-
-The next step is to use the
-[Liveblocks client](/docs/api-reference/liveblocks-node#Liveblocks-client) from
-`@liveblocks/node` to retrieve the inbox notification, and the corresponding
-thread’s data. To do this we’ll need to add our project’s secret key to the
-Liveblocks client, before awaiting the following functions:
-[`getInboxNotification`](/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications-inboxNotificationId)
-and [`getThread`](/docs/api-reference/liveblocks-node#get-thread).
-
-```ts highlight="1,7-9,36-48"
-import { Liveblocks, WebhookHandler } from "@liveblocks/node";
-
-// Add your webhook secret key from a project's webhooks dashboard
-const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
-const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
-
-// Add your secret key from a project's API keys dashboard
-const API_SECRET = "{{SECRET_KEY}}";
-const liveblocks = new Liveblocks({ secret: API_SECRET });
-
-export async function POST(request: Request) {
-  const body = await request.json();
-  const headers = request.headers;
-
-  // Verify if this is a real webhook request
-  let event;
-  try {
-    event = webhookHandler.verifyRequest({
-      headers: headers,
-      rawBody: JSON.stringify(body),
-    });
-  } catch (err) {
-    console.error(err);
-    return new Response("Could not verify webhook call", { status: 400 });
-  }
-
-  // When an inbox notification has been created
-  if (event.type === "notification") {
-    const { roomId, threadId, inboxNotificationId, userId } = event.data;
-
-    // Check if user has access to room
-    if (!__hasRoomAccess__(userId, roomId)) {
-      return new Response(null, { status: 200 });
-    }
-
-    try {
-      // Get thread and notification
-      const [thread, inboxNotification] = await Promise.all([
-        liveblocks.getThread({ roomId, threadId }),
-        liveblocks.getInboxNotification({ inboxNotificationId, userId }),
-      ]);
-
-      // Send notifications
-      // ...
-    } catch (err) {
-      console.log(err);
-      return new Response("Could not fetch notification data", { status: 500 });
-    }
-  }
-
-  return new Response(null, { status: 200 });
-}
-```
-
-## Get the unread comments
-
-The next step is to get each unread comment by comparing the `readAt` time in
-the inbox notification with the `createAt` time on each comment. We’re also
-filtering out each comment with no body, which represents a deleted comment.
-
-```ts highlight="43-52"
-import { Liveblocks, WebhookHandler } from "@liveblocks/node";
-
-// Add your webhook secret key from a project's webhooks dashboard
-const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
-const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
-
-// Add your secret key from a project's API keys dashboard
-const API_SECRET = "{{SECRET_KEY}}";
-const liveblocks = new Liveblocks({ secret: API_SECRET });
-
-export async function POST(request: Request) {
-  const body = await request.json();
-  const headers = request.headers;
-
-  // Verify if this is a real webhook request
-  let event;
-  try {
-    event = webhookHandler.verifyRequest({
-      headers: headers,
-      rawBody: JSON.stringify(body),
-    });
-  } catch (err) {
-    console.error(err);
-    return new Response("Could not verify webhook call", { status: 400 });
-  }
-
-  // When an inbox notification has been created
-  if (event.type === "notification") {
-    const { roomId, threadId, inboxNotificationId, userId } = event.data;
-
-    // Check if user has access to room
-    if (!__hasRoomAccess__(userId, roomId)) {
-      return new Response(null, { status: 200 });
-    }
-
-    try {
-      // Get thread and notification
-      const [thread, inboxNotification] = await Promise.all([
-        liveblocks.getThread({ roomId, threadId }),
-        liveblocks.getInboxNotification({ inboxNotificationId, userId }),
-      ]);
-
-      // Get unread comments (and filter out deleted comments)
-      const readAt = inboxNotification.readAt;
-      const unreadComments = thread.comments
-        .filter((comment) => (readAt ? comment.createdAt > readAt : true))
-        .filter((comment) => comment.body !== undefined);
-
-      // No unread comments, therefore notification needed
-      if (unreadComments.length === 0) {
-        return new Response(null, { status: 200 });
-      }
-
-      // Send notifications
-      // ...
-    } catch (err) {
-      console.log(err);
-      return new Response("Could not fetch notification data", { status: 500 });
-    }
-  }
-
-  return new Response(null, { status: 200 });
-}
-```
-
-If there are no unread notifications, then we’re choosing not to send an email.
-
-## Generating HTML for the email
-
-Now that we have the comment data, we have one more step before sending the
-notifications—formatting each comment’s text, found inside `comment.body`, and
-generating the HTML for our email.
-
-<Figure>
-  <Image
-    src="/assets/comments/email-notification.png"
-    alt="An email titled 'New notifications' showing two comments and a link to the thread"
-    width={1500}
-    height={1000}
-  />
-</Figure>
-
-By using
-[`await stringifyCommentBody`](/docs/api-reference/liveblocks-node#stringify-comment-body),
-we can convert each comment into plain HTML. In this code snippet, you can see
-we’re looping through each comment, and replacing `comment.body` with an HTML
-string.
-
-```ts highlight="4,58-76"
-import {
-  Liveblocks,
-  WebhookHandler,
-  stringifyCommentBody,
-} from "@liveblocks/node";
-
-// Add your webhook secret key from a project's webhooks dashboard
-const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
-const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
-
-// Add your secret key from a project's API keys dashboard
-const API_SECRET = "{{SECRET_KEY}}";
-const liveblocks = new Liveblocks({ secret: API_SECRET });
-
-export async function POST(request: Request) {
-  const body = await request.json();
-  const headers = request.headers;
-
-  // Verify if this is a real webhook request
-  let event;
-  try {
-    event = webhookHandler.verifyRequest({
-      headers: headers,
-      rawBody: JSON.stringify(body),
-    });
-  } catch (err) {
-    console.error(err);
-    return new Response("Could not verify webhook call", { status: 400 });
-  }
-
-  // When an inbox notification has been created
-  if (event.type === "notification") {
-    const { roomId, threadId, inboxNotificationId, userId } = event.data;
-
-    // Check if user has access to room
-    if (!__hasRoomAccess__(userId, roomId)) {
-      return new Response(null, { status: 200 });
-    }
-
-    try {
-      // Get thread and notification
-      const [thread, inboxNotification] = await Promise.all([
-        liveblocks.getThread({ roomId, threadId }),
-        liveblocks.getInboxNotification({ inboxNotificationId, userId }),
-      ]);
-
-      // Get unread comments (and filter out deleted comments)
-      const readAt = inboxNotification.readAt;
-      const unreadComments = thread.comments
-        .filter((comment) => (readAt ? comment.createdAt > readAt : true))
-        .filter((comment) => comment.body !== undefined);
-
-      // No unread comments, therefore notification needed
-      if (unreadComments.length === 0) {
-        return new Response(null, { status: 200 });
-      }
-
-      // Convert comments to plain HTML and return { body: "<p>...</p>", ...comment } format
-      const htmlComments = await Promise.all(
-        unreadComments.map((comment) => ({
-          body: stringifyCommentBody(comment.body, { format: "html" }),
-          ...comment,
-        }))
-      );
-
-      // Create final HTML for email
-      let html = `<h1>New notifications</h1>`;
-      for (const comment of htmlComments) {
-        html += `
-          <div>Comment by ${comment.userId} at ${comment.createdAt}</div>
-          ${comment.body}
-        `;
-      }
-      html += `
-        <a href="https://my-company.com/room/${roomId}">Go to thread</a>
-      `;
-
-      // Send notifications
-      // ...
-    } catch (err) {
-      console.log(err);
-      return new Response("Could not fetch notification data", { status: 500 });
-    }
-  }
-
-  return new Response(null, { status: 200 });
-}
-```
-
-This snippet outputs fairly simple formatting, for example it renders a user IDs
-(e.g. `@jory.quispe`) instead of a names (e.g. `@Jory Quispe`), but you can
-create more complex formatting easily by using more complex
-[`stringifyCommentBody`](/docs/api-reference/liveblocks-node#stringify-comment-body)
-options.
 
 ## Send notification emails
 
-Now that the HTML has been generated, we can send the notification emails.
-Earlier we retrieved `userId`, the ID of the user that’s receiving the
-notification. You can use this to get the user’s email address, before sending
-the email itself.
-
-<Banner title="userIds">
-  This is the same `userId` that you passed to
-  [`resolveUsers`](/docs/api-reference/liveblocks-client#resolveUsers) in your
-  `liveblocks.config.ts` file.
-</Banner>
-
-```ts highlight="78-87"
-import {
-  Liveblocks,
-  WebhookHandler,
-  stringifyCommentBody,
-} from "@liveblocks/node";
-
-// Add your webhook secret key from a project's webhooks dashboard
-const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
-const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
-
-// Add your secret key from a project's API keys dashboard
-const API_SECRET = "{{SECRET_KEY}}";
-const liveblocks = new Liveblocks({ secret: API_SECRET });
-
-export async function POST(request: Request) {
-  const body = await request.json();
-  const headers = request.headers;
-
-  // Verify if this is a real webhook request
-  let event;
-  try {
-    event = webhookHandler.verifyRequest({
-      headers: headers,
-      rawBody: JSON.stringify(body),
-    });
-  } catch (err) {
-    console.error(err);
-    return new Response("Could not verify webhook call", { status: 400 });
-  }
-
-  // When an inbox notification has been created
-  if (event.type === "notification") {
-    const { roomId, threadId, inboxNotificationId, userId } = event.data;
-
-    // Check if user has access to room
-    if (!__hasRoomAccess__(userId, roomId)) {
-      return new Response(null, { status: 200 });
-    }
-
-    try {
-      // Get thread and notification
-      const [thread, inboxNotification] = await Promise.all([
-        liveblocks.getThread({ roomId, threadId }),
-        liveblocks.getInboxNotification({ inboxNotificationId, userId }),
-      ]);
-
-      // Get unread comments (and filter out deleted comments)
-      const readAt = inboxNotification.readAt;
-      const unreadComments = thread.comments
-        .filter((comment) => (readAt ? comment.createdAt > readAt : true))
-        .filter((comment) => comment.body !== undefined);
-
-      // No unread comments, therefore notification needed
-      if (unreadComments.length === 0) {
-        return new Response(null, { status: 200 });
-      }
-
-      // Convert comments to plain HTML and return { body: "<p>...</p>", ...comment } format
-      const htmlComments = await Promise.all(
-        unreadComments.map((comment) => ({
-          body: stringifyCommentBody(comment.body, { format: "html" }),
-          ...comment,
-        }))
-      );
-
-      // Create final HTML for email
-      let html = `<h1>New notifications</h1>`;
-      for (const comment of htmlComments) {
-        html += `
-          <div>Comment by ${comment.userId} at ${comment.createdAt}</div>
-          ${comment.body}
-        `;
-      }
-      html += `
-        <a href="https://my-company.com/room/${roomId}">Go to thread</a>
-      `;
-
-      // Get the user's email address from your database
-      const emailAddress = await __getUsersEmail__(userId);
-
-      // Send email to the user's email address
-      // send({
-      //   from: "hello@my-company.com",
-      //   to: emailAddress,
-      //   title: "New comment",
-      //   html,
-      // });
-    } catch (err) {
-      console.log(err);
-      return new Response("Could not fetch notification data", { status: 500 });
-    }
-  }
-
-  return new Response(null, { status: 200 });
-}
-```
-
-## Sending emails with Resend
-
+Now that the React code has been generated, we can send the notification emails.
 [Resend](https://resend.com) is a great tool for easily sending emails, and in
-this code example, we’re using it to send the notifications to each user. Make
-sure to add your API key from the
-[Resend dashboard](https://resend.com/overview) before running the code.
+this code example, we’re using it to send notifications to each user. Make sure
+to add your API key from the [Resend dashboard](https://resend.com/overview)
+before running the code.
 
-```ts highlight="6,8-9,85-95" file="route.ts"
+```tsx
 import {
   Liveblocks,
   WebhookHandler,
-  stringifyCommentBody,
+  isThreadNotificationEvent,
 } from "@liveblocks/node";
+import { prepareThreadNotificationEmailAsReact } from "@liveblocks/emails";
+// +++
 import { Resend } from "resend";
+// +++
 
+// +++
 // Create Resend client (add your API key)
 const resend = new Resend("re_123456789");
+// +++
 
 // Add your webhook secret key from a project's webhooks dashboard
 const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
@@ -749,70 +698,113 @@ export async function POST(request: Request) {
   }
 
   // When an inbox notification has been created
-  if (event.type === "notification") {
-    const { roomId, threadId, inboxNotificationId, userId } = event.data;
-
+  if (isThreadNotificationEvent(event)) {
     // Check if user has access to room
-    if (!__hasRoomAccess__(userId, roomId)) {
+    if (!__hasRoomAccess__(event.userId, event.roomId)) {
       return new Response(null, { status: 200 });
     }
 
+    // The user to send the email to
+    const emailAddress = __getEmailAddressFromDB__(event.userId);
+
+    let emailData;
+
     try {
-      // Get thread and notification
-      const [thread, inboxNotification] = await Promise.all([
-        liveblocks.getThread({ roomId, threadId }),
-        liveblocks.getInboxNotification({ inboxNotificationId, userId }),
-      ]);
+      emailData = await prepareThreadNotificationEmailAsReact(
+        liveblocks,
+        event,
+        {
+          resolveUsers: async ({ userIds }) => {
+            const usersData = await __getUsersFromDB__(userIds);
 
-      // Get unread comments (and filter out deleted comments)
-      const readAt = inboxNotification.readAt;
-      const unreadComments = thread.comments
-        .filter((comment) => (readAt ? comment.createdAt > readAt : true))
-        .filter((comment) => comment.body !== undefined);
+            return usersData.map((userData) => ({
+              name: userData.name, // "Steven"
+              avatar: userData.avatar.src, // "https://example.com/steven.jpg"
+            }));
+          },
+          resolveRoomInfo: async ({ roomId }) => {
+            const roomData = await __getRoomFromDB__(roomId);
 
-      // No unread comments, therefore notification needed
-      if (unreadComments.length === 0) {
-        return new Response(null, { status: 200 });
-      }
+            return {
+              name: roomData.name, // "Untitled document"
+              url: roomData.url, //`https://example.com/my-room-id`
+            };
+          },
+          components: {
+            Paragraph: ({ children }) => (
+              <p style={{ margin: "12px 0" }}>{children}</p>
+            ),
 
-      // Convert comments to plain HTML and return { body: "<p>...</p>", ...comment } format
-      const htmlComments = await Promise.all(
-        unreadComments.map((comment) => ({
-          body: stringifyCommentBody(comment.body, { format: "html" }),
-          ...comment,
-        }))
+            // `user` is the optional data returned from `resolveUsers`
+            Mention: ({ element, user }) => (
+              <span style={{ color: "red" }}>@{user?.name ?? element.id}</span>
+            ),
+
+            // If the link is rich-text render it, otherwise use the URL
+            Link: ({ element, href }) => (
+              <a href={href} style={{ textDecoration: "underline" }}>
+                {element?.text ?? href}
+              </a>
+            ),
+          },
+        }
       );
-
-      // Create final HTML for email
-      let html = `<h1>New notifications</h1>`;
-      for (const comment of htmlComments) {
-        html += `
-          <div>Comment by ${comment.userId} at ${comment.createdAt}</div>
-          ${comment.body}
-        `;
-      }
-      html += `
-        <a href="https://my-company.com/room/${roomId}">Go to thread</a>
-      `;
-
-      // Get the user's email address from your database
-      const emailAddress = await __getUsersEmail__(userId);
-
-      // Send email to the users' email addresses
-      try {
-        const data = await resend.emails.send({
-          from: "My company <hello@my-company.com>",
-          to: emailAddress,
-          subject: "New comment",
-          html,
-        });
-      } catch (err) {
-        console.error(err);
-      }
     } catch (err) {
       console.log(err);
-      return new Response("Could not fetch notification data", { status: 500 });
+      return new Response("Could not fetch thread notification data", {
+        status: 500,
+      });
     }
+
+    // All comments have already been read
+    if (!emailData) {
+      return new Response(null, { status: 200 });
+    }
+
+    let email;
+    switch (emailData.type) {
+      case "unreadMention": {
+        email = (
+          <div>
+            <div>
+              @{emailData.comment.author.id} at {emailData.comment.createdAt}
+            </div>
+            <div>{emailData.comment.reactBody}</div>
+          </div>
+        );
+        break;
+      }
+
+      case "unreadReplies": {
+        email = (
+          <div>
+            {emailData.comments.map((comment) => (
+              <div key={comment.id}>
+                <div>
+                  @{comment.author.id} at {comment.createdAt}
+                </div>
+                <div>{comment.reactBody}</div>
+              </div>
+            ))}
+          </div>
+        );
+        break;
+      }
+    }
+
+    // +++
+    // Send email to the user's email address
+    try {
+      const data = await resend.emails.send({
+        from: "My company <hello@my-company.com>",
+        to: emailAddress,
+        subject: "New comment",
+        react: email,
+      });
+    } catch (err) {
+      console.error(err);
+    }
+    // +++
   }
 
   return new Response(null, { status: 200 });
@@ -826,8 +818,6 @@ created! In this guide we’ve learned:
 
 - How to use [webhooks](/docs/platform/webhooks) and the
   [`NotificationEvent`](/docs/platform/webhooks#NotificationEvent).
-- How to use the [`@liveblocks/node`](/docs/api-reference/liveblocks-node)
-  package to unread thread data.
-- How to shape a threads into HTML with
-  [`stringifyCommentBody`](/docs/api-reference/liveblocks-node#stringify-comment-body).
+- How to use the [`@liveblocks/emails`](/docs/api-reference/liveblocks-emails)
+  package to fetch and render unread thread data.
 - How to send email notifications with [Resend](https://resend.com).
