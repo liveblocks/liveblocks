@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 
-import { nanoid, wait } from "@liveblocks/core";
+import { HttpError, nanoid, wait } from "@liveblocks/core";
 import {
   act,
   fireEvent,
@@ -272,12 +272,12 @@ describe("useInboxNotifications", () => {
       umbrellaStore,
     } = createContextsForTest();
 
+    // @ts-expect-error Accessing a private field directly
+    umbrellaStore._rawThreadsDB.upsert(thread1);
+    // @ts-expect-error Accessing a private field directly
+    umbrellaStore._rawThreadsDB.upsert(thread2);
     umbrellaStore.force_set((state) => ({
       ...state,
-      rawThreadsById: {
-        [thread1.id]: thread1,
-        [thread2.id]: thread2,
-      },
       notificationsById: {
         // Explicitly set the order to be reversed to test that the hook sorts the notifications
         [oldInboxNotification.id]: oldInboxNotification,
@@ -376,6 +376,36 @@ describe("useInboxNotifications: error", () => {
     // Won't try more than 5 attempts
     await jest.advanceTimersByTimeAsync(20_000);
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(5));
+  });
+
+  test("should not retry if a 403 Forbidden response is received from server", async () => {
+    server.use(
+      mockGetInboxNotifications(async (_req, res, ctx) => {
+        // Return a 403 status from the server for the initial fetch
+        return res(ctx.status(403));
+      })
+    );
+
+    const {
+      liveblocks: { LiveblocksProvider, useInboxNotifications },
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(() => useInboxNotifications(), {
+      wrapper: ({ children }) => (
+        <LiveblocksProvider>{children}</LiveblocksProvider>
+      ),
+    });
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        error: expect.any(HttpError),
+      })
+    );
+
+    unmount();
   });
 });
 
