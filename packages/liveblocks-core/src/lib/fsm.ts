@@ -364,13 +364,22 @@ export class FSM<
     nameOrPattern: TState | Wildcard<TState>,
     promiseFn: (context: Readonly<TContext>, signal: AbortSignal) => Promise<T>,
     onOK: Target<TContext, AsyncOKEvent<T>, TState>,
-    onError: Target<TContext, AsyncErrorEvent, TState>
+    onError: Target<TContext, AsyncErrorEvent, TState>,
+    maxTimeout?: number
   ): this {
     return this.onEnter(nameOrPattern, () => {
       const abortController = new AbortController();
       const signal = abortController.signal;
 
       let done = false;
+
+      const timeoutId = maxTimeout
+        ? setTimeout(() => {
+            const reason = new Error("Timed out");
+            this.transition({ type: "ASYNC_ERROR", reason }, onError);
+          }, maxTimeout)
+        : undefined;
+
       void promiseFn(this.currentContext.current, signal).then(
         // On OK
         (data: T) => {
@@ -390,6 +399,7 @@ export class FSM<
       );
 
       return () => {
+        clearTimeout(timeoutId);
         if (!done) {
           abortController.abort();
         }
