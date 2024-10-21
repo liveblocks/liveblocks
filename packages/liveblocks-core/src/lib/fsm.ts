@@ -396,8 +396,6 @@ export class FSM<
       const abortController = new AbortController();
       const signal = abortController.signal;
 
-      let done = false;
-
       const timeoutId = maxTimeout
         ? setTimeout(() => {
             const reason = new Error("Timed out");
@@ -405,6 +403,7 @@ export class FSM<
           }, maxTimeout)
         : undefined;
 
+      let done = false;
       void promiseFn(this.currentContext.current, signal).then(
         // On OK
         (data: T) => {
