@@ -563,13 +563,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this._client = client;
 
     const inboxFetcher = async (cursor?: string) => {
-      if (client === undefined) {
-        // TODO: Think about other ways to structure this. It's not _really_ an
-        // HttpError of course, but throwing an HttpError with a 4xx status
-        // code will stop retrying if this is called in an autoRetry wrapper.
-        throw new HttpError("Client required", 477);
-      }
-
       const result = await client.getInboxNotifications({ cursor });
 
       this.updateThreadsAndNotifications(
