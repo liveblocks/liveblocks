@@ -243,9 +243,17 @@ function makeDeltaPoller_Notifications(store: UmbrellaStore<BaseMetadata>) {
     // in the `then` body, check again if the number of subscribers if more than 0, and only then
     // if those conditions hold, start the poller
     poller.enable(pollerSubscribers > 0);
-    void store.waitUntilNotificationsLoaded().then(() => {
-      poller.enable(pollerSubscribers > 0);
-    });
+    void store
+      .waitUntilNotificationsLoaded()
+      .then(() => {
+        poller.enable(pollerSubscribers > 0);
+      })
+      .catch((err) => {
+        // XXX - Think about a better message and if we need to handle this differently
+        console.warn(
+          `Unable to start poller due to failure loading first page of inbox notifications: ${String(err)}`
+        );
+      });
 
     return () => {
       pollerSubscribers--;
