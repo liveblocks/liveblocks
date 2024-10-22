@@ -28,7 +28,6 @@ import type { ReactNode } from "react";
 import React, { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
-import { POLLING_INTERVAL } from "../room";
 import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
 import MockWebSocket, { websocketSimulator } from "./_MockWebSocket";
 import {
@@ -37,6 +36,9 @@ import {
   mockGetThreads,
 } from "./_restMocks";
 import { createContextsForTest } from "./_utils";
+
+const SECONDS = 1000;
+const MINUTES = 60 * SECONDS;
 
 const server = setupServer();
 
@@ -1880,11 +1882,11 @@ describe("useThreads: polling", () => {
     await waitFor(() => expect(getThreadsReqCount).toBe(1));
 
     // Wait for the first polling to occur after the initial render
-    jest.advanceTimersByTime(POLLING_INTERVAL);
+    jest.advanceTimersByTime(5 * MINUTES);
     await waitFor(() => expect(getThreadsReqCount).toBe(2));
 
     // Advance time to simulate the polling interval
-    jest.advanceTimersByTime(POLLING_INTERVAL);
+    jest.advanceTimersByTime(5 * MINUTES);
     // Wait for the second polling to occur
     await waitFor(() => expect(getThreadsReqCount).toBe(3));
 
@@ -1932,10 +1934,10 @@ describe("useThreads: polling", () => {
 
     const { unmount } = render(<Room />);
 
-    jest.advanceTimersByTime(POLLING_INTERVAL);
+    jest.advanceTimersByTime(5 * MINUTES);
     await waitFor(() => expect(hasCalledGetThreads).toBe(false));
 
-    jest.advanceTimersByTime(POLLING_INTERVAL);
+    jest.advanceTimersByTime(5 * MINUTES);
     await waitFor(() => expect(hasCalledGetThreads).toBe(false));
 
     unmount();
