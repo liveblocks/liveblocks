@@ -90,11 +90,6 @@ export function makePoller(
   fsm.onEnterAsync(
     "@polling",
     async (_ctx, signal) => {
-      // XXX Set a max timeout for the `callback()` (make `callback` take
-      // a signal, and protect each call with AbortSignal.timeout)
-      //
-      // XXX See discussion here:
-      // https://github.com/liveblocks/liveblocks/pull/1962#discussion_r1787422911
       await callback(signal);
       context.lastSuccessfulPollAt = performance.now();
     },
