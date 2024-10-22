@@ -13,7 +13,6 @@ import { setupServer } from "msw/node";
 import React, { Suspense } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 
-import { POLLING_INTERVAL } from "../liveblocks";
 import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import {
@@ -547,12 +546,12 @@ describe("useInboxNotifications: polling", () => {
     await waitFor(() => expect(pollerCount).toBe(0));
 
     // Wait for the first polling to occur after the initial render
-    jest.advanceTimersByTime(POLLING_INTERVAL);
+    jest.advanceTimersByTime(60_000);
     expect(initialCount).toBe(1);
     await waitFor(() => expect(pollerCount).toBe(1));
 
     // Advance time to simulate the polling interval
-    jest.advanceTimersByTime(POLLING_INTERVAL);
+    jest.advanceTimersByTime(60_000);
     // Wait for the second polling to occur
     expect(initialCount).toBe(1);
     await waitFor(() => expect(pollerCount).toBe(2));
