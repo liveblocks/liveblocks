@@ -41,6 +41,7 @@ test.describe("Inbox notifications", () => {
     // Clear out any existing comments before starting the test
     await page1.locator("#delete-all-mine").click({ force: true });
     await page2.locator("#delete-all-mine").click({ force: true });
+    await waitForJson(pages, "#isSynced", true);
 
     await waitForJson(pages, "#numOfThreads", 0, { timeout: 10_000 });
 
@@ -55,7 +56,7 @@ test.describe("Inbox notifications", () => {
       await newThreadComposer.press("Enter");
 
       // Await confirmation for the thread creation from the server
-      await sleep(100);
+      await waitForJson(page1, "#isSynced", false);
       await waitForJson(page1, "#isSynced", true);
 
       const replyComposer = page1
@@ -69,6 +70,8 @@ test.describe("Inbox notifications", () => {
         .getByText("Marc B.")
         .click();
       await replyComposer.press("Enter");
+      await waitForJson(page1, "#isSynced", false);
+      await waitForJson(page1, "#isSynced", true);
 
       //
       // Assert 1: two comments + one notification should show up on the other side
@@ -100,6 +103,8 @@ test.describe("Inbox notifications", () => {
         .getByRole("textbox");
       await replyComposer.fill("Cool stuff");
       await replyComposer.press("Enter");
+      await waitForJson(page2, "#isSynced", false);
+      await waitForJson(page2, "#isSynced", true);
 
       //
       // Assert 1: Marc's reply will show up on the other side and also create a notification for Vincent
@@ -121,6 +126,6 @@ test.describe("Inbox notifications", () => {
     //
     await page1.locator("#delete-all-mine").click({ force: true });
     await page2.locator("#delete-all-mine").click({ force: true });
-    await sleep(250);
+    await waitForJson(pages, "#isSynced", true);
   });
 });
