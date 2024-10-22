@@ -208,7 +208,10 @@ export type NotificationsApi<M extends BaseMetadata> = {
    *   requestedAt,
    * } = await client.getInboxNotificationsSince({ since: result.requestedAt }});
    */
-  getInboxNotificationsSince(since: Date): Promise<{
+  getInboxNotificationsSince(
+    since: Date,
+    options?: { signal: AbortSignal }
+  ): Promise<{
     inboxNotifications: {
       updated: InboxNotificationData[];
       deleted: InboxNotificationDeleteInfo[];

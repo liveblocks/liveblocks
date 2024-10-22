@@ -101,7 +101,10 @@ export function createNotificationsApi<M extends BaseMetadata>({
     };
   }
 
-  async function getInboxNotificationsSince(since: Date) {
+  async function getInboxNotificationsSince(
+    since: Date,
+    options?: { signal?: AbortSignal }
+  ) {
     const json = await httpClient.fetchJson<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
@@ -110,9 +113,15 @@ export function createNotificationsApi<M extends BaseMetadata>({
       meta: {
         requestedAt: string;
       };
-    }>(url`/v2/c/inbox-notifications/delta`, undefined, {
-      since: since.toISOString(),
-    });
+    }>(
+      url`/v2/c/inbox-notifications/delta`,
+      {
+        signal: options?.signal,
+      },
+      {
+        since: since.toISOString(),
+      }
+    );
     return {
       inboxNotifications: {
         updated: json.inboxNotifications.map(convertToInboxNotificationData),

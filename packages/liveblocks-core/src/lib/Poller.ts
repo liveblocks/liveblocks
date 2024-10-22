@@ -61,7 +61,7 @@ type Event = { type: "START" } | { type: "STOP" } | { type: "POLL" };
  *   is enabled, it will perform an actual poll.
  */
 export function makePoller(
-  callback: () => Promise<void> | void,
+  callback: (signal: AbortSignal) => Promise<void> | void,
   intervalMs: number,
   options?: {
     maxStaleTimeMs?: number;
@@ -89,13 +89,13 @@ export function makePoller(
 
   fsm.onEnterAsync(
     "@polling",
-    async () => {
+    async (_ctx, signal) => {
       // XXX Set a max timeout for the `callback()` (make `callback` take
       // a signal, and protect each call with AbortSignal.timeout)
       //
       // XXX See discussion here:
       // https://github.com/liveblocks/liveblocks/pull/1962#discussion_r1787422911
-      await callback();
+      await callback(signal);
       context.lastSuccessfulPollAt = performance.now();
     },
     () => (mayPoll() ? "@enabled" : "@idle"), // When OK

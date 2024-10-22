@@ -224,8 +224,9 @@ export function getLiveblocksExtrasForClient<M extends BaseMetadata>(
 
 function makeDeltaPoller_Notifications(store: UmbrellaStore<BaseMetadata>) {
   const poller = makePoller(
-    () => {
-      void store.fetchNotificationsDeltaUpdate().catch((err) => {
+    (signal) => {
+      // XXX - Spend some time thinking about the usage of AbortSignal here
+      void store.fetchNotificationsDeltaUpdate({ signal }).catch((err) => {
         console.warn(`Polling new inbox notifications failed: ${String(err)}`);
       });
     },
