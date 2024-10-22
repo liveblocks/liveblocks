@@ -537,7 +537,7 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
 };
 
 export class UmbrellaStore<M extends BaseMetadata> {
-  private _client?: OpaqueClient;
+  private _client: OpaqueClient;
 
   // Raw threads DB (without any optimistic updates applied)
   private _rawThreadsDB: ThreadDB<M>;
@@ -559,7 +559,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   private _userThreadsLastRequestedAt: Date | null = null;
   private _userThreads: Map<string, PaginatedResource> = new Map();
 
-  constructor(client?: OpaqueClient) {
+  constructor(client: OpaqueClient) {
     this._client = client;
 
     const inboxFetcher = async (cursor?: string) => {
@@ -1293,14 +1293,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return;
     }
 
-    const client = nn(
-      this._client,
-      "Client is required in order to load notifications for the room"
+    const result = await this._client.getInboxNotificationsSince(
+      lastRequestedAt,
+      { signal }
     );
-
-    const result = await client.getInboxNotificationsSince(lastRequestedAt, {
-      signal,
-    });
 
     if (lastRequestedAt < result.requestedAt) {
       this._notificationsLastRequestedAt = result.requestedAt;
@@ -1323,13 +1319,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     query: ThreadsQuery<M> | undefined
   ) {
     const threadsFetcher = async (cursor?: string) => {
-      if (this._client === undefined) {
-        // TODO: Think about other ways to structure this. It's not _really_ an
-        // HttpError of course, but throwing an HttpError with a 4xx status
-        // code will stop retrying if this is called in an autoRetry wrapper.
-        throw new HttpError("Client required", 478);
-      }
-
       const room = this._client.getRoom(roomId);
       if (room === null) {
         throw new HttpError(`Room '${roomId}' is not available on client`, 479);
@@ -1383,13 +1372,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return;
     }
 
-    const client = nn(
-      this._client,
-      "Client is required in order to load notifications for the room"
-    );
-
     const room = nn(
-      client.getRoom(roomId),
+      this._client.getRoom(roomId),
       `Room with id ${roomId} is not available on client`
     );
 
@@ -1414,13 +1398,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     const queryKey = makeUserThreadsQueryKey(query);
 
     const threadsFetcher = async (cursor?: string) => {
-      if (this._client === undefined) {
-        // TODO: Think about other ways to structure this. It's not _really_ an
-        // HttpError of course, but throwing an HttpError with a 4xx status
-        // code will stop retrying if this is called in an autoRetry wrapper.
-        throw new HttpError("Client required", 478);
-      }
-
       const result = await this._client[kInternal].getUserThreads_experimental({
         cursor,
         query,
@@ -1460,12 +1437,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return;
     }
 
-    const client = nn(
-      this._client,
-      "Client is required in order to load threads for the user"
-    );
-
-    const result = await client[kInternal].getUserThreadsSince_experimental({
+    const result = await this._client[
+      kInternal
+    ].getUserThreadsSince_experimental({
       since: lastRequestedAt,
     });
 

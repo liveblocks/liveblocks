@@ -11,11 +11,13 @@ const empty = {
   versionsByRoomId: {},
 } as const;
 
+const NO_CLIENT = "not passing in a real client in this unit test" as any;
+
 const loading = { isLoading: true };
 
 describe("Umbrella Store", () => {
   it("getters returns the expected shapes", () => {
-    const store = new UmbrellaStore();
+    const store = new UmbrellaStore(NO_CLIENT);
 
     // Sync getters
     expect(store.getFullState()).toEqual(empty);
@@ -29,7 +31,7 @@ describe("Umbrella Store", () => {
   });
 
   it("calling getters multiple times should always return a stable result", () => {
-    const store = new UmbrellaStore();
+    const store = new UmbrellaStore(NO_CLIENT);
 
     // IMPORTANT! Strict equality expected!
     expect(store.getFullState()).toBe(store.getFullState());
