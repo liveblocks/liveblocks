@@ -104,16 +104,14 @@ export class HttpClient {
     const response = await this.fetch(endpoint, options, params);
 
     if (!response.ok) {
-      if (response.status >= 400 && response.status < 600) {
-        let error: HttpError;
-        try {
-          const errorBody = (await response.json()) as { message: string };
-          error = new HttpError(errorBody.message, response.status, errorBody);
-        } catch {
-          error = new HttpError(response.statusText, response.status);
-        }
-        throw error;
+      let error: HttpError;
+      try {
+        const errorBody = (await response.json()) as { message: string };
+        error = new HttpError(errorBody.message, response.status, errorBody);
+      } catch {
+        error = new HttpError(response.statusText, response.status);
       }
+      throw error;
     }
 
     let body;
