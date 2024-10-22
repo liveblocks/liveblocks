@@ -76,7 +76,6 @@ export type {
   DU,
   KDAD,
 } from "./globals/augmentation";
-export { HttpError } from "./http-client";
 export {
   legacy_patchImmutableObject,
   lsonToJson,
@@ -90,7 +89,7 @@ export type {
   AsyncResult,
   AsyncSuccess,
 } from "./lib/AsyncResult";
-export { autoRetry } from "./lib/autoRetry";
+export { autoRetry, HttpError } from "./lib/autoRetry";
 export { chunk } from "./lib/chunk";
 export {
   createCommentId,
@@ -293,6 +292,7 @@ export type EnsureJson<T> =
 // Support for DevTools
 import type * as DevToolsMsg from "./devtools/protocol";
 export type { DevToolsMsg };
+import { HttpError } from "./lib/autoRetry";
 import type { Json } from "./lib/Json";
 import type * as DevTools from "./types/DevToolsTreeNode";
 export type { DevTools };
@@ -302,7 +302,6 @@ export type { Store } from "./lib/create-store";
 export { createStore } from "./lib/create-store";
 
 // Deprecated APIs
-import { HttpError } from "./http-client";
 /** @deprecated Use HttpError instead. */
 export const CommentsApiError = HttpError;
 /** @deprecated Use HttpError instead. */

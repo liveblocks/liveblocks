@@ -1,6 +1,16 @@
-import { HttpError } from "../http-client";
 import * as console from "./fancy-console";
+import type { JsonObject } from "./Json";
 import { wait } from "./utils";
+
+export class HttpError extends Error {
+  constructor(
+    public message: string,
+    public status: number,
+    public details?: JsonObject
+  ) {
+    super(message);
+  }
+}
 
 const DONT_RETRY_4XX = (x: unknown) =>
   x instanceof HttpError && x.status >= 400 && x.status < 500;
