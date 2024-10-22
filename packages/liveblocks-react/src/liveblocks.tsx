@@ -267,7 +267,7 @@ function makeDeltaPoller_Notifications(store: UmbrellaStore<BaseMetadata>) {
   };
 }
 
-// NIMESH - DRY up these makeDeltaPoller_* abstractions, now that the symmetry has become clear!
+// XXX - DRY up these makeDeltaPoller_* abstractions, now that the symmetry has become clear!
 function makeDeltaPoller_UserThreads(store: UmbrellaStore<BaseMetadata>) {
   const poller = makePoller(async () => {
     try {
@@ -459,7 +459,7 @@ function useInboxNotifications_withClient<T>(
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
   useEffect(() => {
-    // NIMESH - Verify that we need the catch or not
+    // XXX - Verify that we need the catch or not
     void store.waitUntilNotificationsLoaded().catch(() => {
       // Deliberately catch and ignore any errors here
     });
@@ -971,7 +971,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
 
   useEffect(
     () => {
-      // NIMESH - Verify that we need the catch or not
+      // XXX - Verify that we need the catch or not
       void store.waitUntilUserThreadsLoaded(options.query).catch(() => {
         // Deliberately catch and ignore any errors here
       });

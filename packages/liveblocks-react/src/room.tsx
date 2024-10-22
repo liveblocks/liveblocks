@@ -229,7 +229,7 @@ function handleApiError(err: HttpError): Error {
   return new Error(message);
 }
 
-// NIMESH - DRY up these makeDeltaPoller_* abstractions, now that the symmetry has become clear!
+// XXX - DRY up these makeDeltaPoller_* abstractions, now that the symmetry has become clear!
 function makeDeltaPoller_RoomThreads(client: OpaqueClient) {
   const store = getUmbrellaStoreForClient(client);
 
@@ -254,7 +254,7 @@ function makeDeltaPoller_RoomThreads(client: OpaqueClient) {
   return () => {
     pollerSubscribers++;
 
-    // NIMESH - We should wait until the lastRequestedAt date is known using a promise and then
+    // XXX - We should wait until the lastRequestedAt date is known using a promise and then
     // in the `then` body, check again if the number of subscribers if more than 0, and only then
     // if those conditions hold, start the poller
     // promise.then(() => { if (subscribers > 0 ) initialPoller() else: do nothing })
@@ -263,7 +263,7 @@ function makeDeltaPoller_RoomThreads(client: OpaqueClient) {
     return () => {
       pollerSubscribers--;
 
-      // NIMESH - When stopping the poller, we should also ideally abort its
+      // XXX - When stopping the poller, we should also ideally abort its
       // poller function, maybe using an AbortController? This functionality
       // should be automatic and handled by the Poller abstraction, not here!
       poller.enable(pollerSubscribers > 0);
@@ -1331,7 +1331,7 @@ function useThreads<M extends BaseMetadata>(
 
   React.useEffect(
     () => {
-      // NIMESH - Verify that we need the catch or not
+      // XXX - Verify that we need the catch or not
       void store
         .waitUntilRoomThreadsLoaded(room.id, options.query)
         .catch(() => {
