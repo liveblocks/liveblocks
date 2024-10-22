@@ -1735,25 +1735,26 @@ describe("useThreads: error", () => {
 
     // A new fetch request for the threads should have been made after the initial render
     await waitFor(() => expect(getThreadsReqCount).toBe(1));
-    expect(result.current).toEqual({ isLoading: true });
 
     // The first retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
     await waitFor(() => expect(getThreadsReqCount).toBe(2));
+    expect(result.current).toEqual({ isLoading: true });
 
     // The second retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
     await waitFor(() => expect(getThreadsReqCount).toBe(3));
+    expect(result.current).toEqual({ isLoading: true });
 
     // The third retry should be made after 10s
     await jest.advanceTimersByTimeAsync(10_000);
     await waitFor(() => expect(getThreadsReqCount).toBe(4));
+    expect(result.current).toEqual({ isLoading: true });
 
     // The fourth retry should be made after 15s
     await jest.advanceTimersByTimeAsync(15_000);
     await waitFor(() => expect(getThreadsReqCount).toBe(5));
-
     await waitFor(() => {
       expect(result.current).toEqual({
         isLoading: false,
@@ -1763,16 +1764,14 @@ describe("useThreads: error", () => {
 
     // Wait for 5 second for the error to clear
     await jest.advanceTimersByTimeAsync(5_000);
-
+    expect(result.current).toEqual({ isLoading: true });
     // A new fetch request for the threads should have been made after the initial render
     await waitFor(() => expect(getThreadsReqCount).toBe(6));
-    expect(result.current).toEqual({
-      isLoading: true,
-    });
 
     // The first retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
     await waitFor(() => expect(getThreadsReqCount).toBe(7));
+    expect(result.current).toEqual({ isLoading: true });
 
     // and so on...
 

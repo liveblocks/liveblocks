@@ -341,39 +341,49 @@ describe("useInboxNotifications: error", () => {
       ),
     });
 
-    await jest.advanceTimersByTimeAsync(0);
-
     expect(result.current).toEqual({ isLoading: true });
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(1));
-
-    // Unmount so polling doesn't interfere with the test
-    unmount();
 
     // The first retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the inbox notifications should have been made after the first retry
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(2));
+    expect(result.current).toEqual({ isLoading: true });
 
     // The second retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(3));
+    expect(result.current).toEqual({ isLoading: true });
 
     // The third retry should be made after 10s
     await jest.advanceTimersByTimeAsync(10_000);
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(4));
     expect(result.current).toEqual({ isLoading: true });
 
-    // The fourth retry should be made after 10s
+    // The fourth retry should be made after 15s
     await jest.advanceTimersByTimeAsync(15_000);
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(5));
-    expect(result.current).toEqual({
-      isLoading: false,
-      error: expect.any(Error),
-    });
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        error: expect.any(Error),
+      })
+    );
 
-    // Won't try more than 5 attempts
-    await jest.advanceTimersByTimeAsync(20_000);
-    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(5));
+    // Wait for 5 second for the error to clear
+    await jest.advanceTimersByTimeAsync(5_000);
+    expect(result.current).toEqual({ isLoading: true });
+    // A new fetch request for the threads should have been made after the initial render
+    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(6));
+
+    // The first retry should be made after 5s
+    await jest.advanceTimersByTimeAsync(5_000);
+    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(7));
+    expect(result.current).toEqual({ isLoading: true });
+
+    // and so on...
+
+    unmount();
   });
 
   test("should not retry if a 403 Forbidden response is received from server", async () => {
