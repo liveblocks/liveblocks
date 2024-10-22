@@ -1,5 +1,8 @@
 const DEFAULT_BASE_URL = "https://api.liveblocks.io";
 
+// Valid alphabet for secret/public keys
+const VALID_KEY_CHARS_REGEX = /^[\w-]+$/;
+
 export function getBaseUrl(baseUrl?: string | undefined): string {
   if (
     typeof baseUrl === "string" &&
@@ -53,7 +56,7 @@ export function assertSecretKey(
     );
   }
 
-  if (!/^[\w-]+$/.test(value)) {
+  if (!VALID_KEY_CHARS_REGEX.test(value)) {
     throw new Error(
       `Invalid chars found in field '${field}'. Please check that you correctly copied the secret key from your Liveblocks dashboard at https://liveblocks.io/dashboard/apikeys.`
     );
