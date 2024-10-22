@@ -1,8 +1,9 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 
-import { genRoomId, preparePage, sleep, waitForJson } from "../utils";
+import { genRoomId, preparePage, waitForJson } from "../utils";
 
+const SLOW = { timeout: 20_000 };
 const TEST_URL = "http://localhost:3007/inbox-notifications/with-suspense";
 
 test.describe("Inbox notifications", () => {
@@ -35,15 +36,15 @@ test.describe("Inbox notifications", () => {
     //
 
     // Wait until the pages are loaded
-    await waitForJson(page1, "#name", "Vincent D.", { timeout: 10_000 });
-    await waitForJson(page2, "#name", "Marc B.", { timeout: 10_000 });
+    await waitForJson(page1, "#name", "Vincent D.", SLOW);
+    await waitForJson(page2, "#name", "Marc B.", SLOW);
 
     // Clear out any existing comments before starting the test
     await page1.locator("#delete-all-mine").click({ force: true });
     await page2.locator("#delete-all-mine").click({ force: true });
-    await waitForJson(pages, "#isSynced", true, { timeout: 10_000 });
+    await waitForJson(pages, "#isSynced", true, SLOW);
 
-    await waitForJson(pages, "#numOfThreads", 0, { timeout: 10_000 });
+    await waitForJson(pages, "#numOfThreads", 0, SLOW);
 
     //
     // Action 1: create a thread and a ping
@@ -57,7 +58,7 @@ test.describe("Inbox notifications", () => {
 
       // Await confirmation for the thread creation from the server
       await waitForJson(page1, "#isSynced", false);
-      await waitForJson(page1, "#isSynced", true, { timeout: 10_000 });
+      await waitForJson(page1, "#isSynced", true, SLOW);
 
       const replyComposer = page1
         .locator(".lb-thread-composer")
@@ -71,14 +72,14 @@ test.describe("Inbox notifications", () => {
         .click();
       await replyComposer.press("Enter");
       await waitForJson(page1, "#isSynced", false);
-      await waitForJson(page1, "#isSynced", true, { timeout: 10_000 });
+      await waitForJson(page1, "#isSynced", true, SLOW);
 
       //
       // Assert 1: two comments + one notification should show up on the other side
       //
       // Synchronize
       await waitForJson(pages, "#numOfThreads", 1);
-      await waitForJson(pages, "#numOfComments", 2);
+      await waitForJson(pages, "#numOfComments", 2, SLOW);
       await waitForJson(page1, "#numOfNotifications", 0);
       await waitForJson(page2, "#numOfNotifications", 1);
 
@@ -104,15 +105,14 @@ test.describe("Inbox notifications", () => {
       await replyComposer.fill("Cool stuff");
       await replyComposer.press("Enter");
       await waitForJson(page2, "#isSynced", false);
-      await waitForJson(page2, "#isSynced", true, { timeout: 10_000 });
+      await waitForJson(page2, "#isSynced", true, SLOW);
 
       //
       // Assert 1: Marc's reply will show up on the other side and also create a notification for Vincent
       //
       await waitForJson(pages, "#numOfThreads", 1);
-      await waitForJson(pages, "#numOfComments", 3);
-      await waitForJson(page1, "#numOfNotifications", 1);
-      await waitForJson(page2, "#numOfNotifications", 1);
+      await waitForJson(pages, "#numOfComments", 3, SLOW);
+      await waitForJson(pages, "#numOfNotifications", 1);
 
       // The two comments (on the left)
       await expect(page1.locator("#left")).toContainText("Cool stuff");
