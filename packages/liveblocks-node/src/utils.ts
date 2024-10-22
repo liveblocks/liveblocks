@@ -17,8 +17,19 @@ export async function fetchPolyfill(): Promise<typeof fetch> {
     : ((await import("node-fetch")).default as unknown as typeof fetch);
 }
 
-export function isNonEmpty(value: unknown): value is string {
-  return typeof value === "string" && value.length > 0;
+export function isString(value: unknown): value is string {
+  return typeof value === "string";
+}
+
+export function startsWith<P extends string>(
+  value: unknown,
+  prefix: P
+): value is `${P}${string}` {
+  return isString(value) && value.startsWith(prefix);
+}
+
+function isNonEmpty(value: unknown): value is string {
+  return isString(value) && value.length > 0;
 }
 
 export function assertNonEmpty(
@@ -36,9 +47,15 @@ export function assertSecretKey(
   value: unknown,
   field: string
 ): asserts value is string {
-  if (!isNonEmpty(value) || !value.startsWith("sk_")) {
+  if (!startsWith(value, "sk_")) {
     throw new Error(
       `Invalid value for field '${field}'. Secret keys must start with 'sk_'. Please provide the secret key from your Liveblocks dashboard at https://liveblocks.io/dashboard/apikeys.`
+    );
+  }
+
+  if (!/^[\w-]+$/.test(value)) {
+    throw new Error(
+      `Invalid chars found in field '${field}'. Please check that you correctly copied the secret key from your Liveblocks dashboard at https://liveblocks.io/dashboard/apikeys.`
     );
   }
 }
