@@ -341,14 +341,7 @@ describe("useInboxNotifications: error", () => {
       ),
     });
 
-    expect(result.current).toEqual({
-      isLoading: true,
-    });
-
-    // An error will only be thrown after the initial load failed, which
-    // happens after 5 retries (>1 minute) at earliest, so this is annoying
-    // to test here.
-    await jest.advanceTimersByTimeAsync(1_000);
+    await jest.advanceTimersByTimeAsync(0);
 
     expect(result.current).toEqual({ isLoading: true });
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(1));
