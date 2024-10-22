@@ -162,6 +162,9 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
     };
     requestedAt: Date;
   }>;
+
+  // Type-level helper
+  as<M2 extends BaseMetadata>(): Client<U, M2>;
 };
 
 export type NotificationsApi<M extends BaseMetadata> = {
@@ -282,10 +285,10 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
     P extends JsonObject = DP,
     S extends LsonObject = DS,
     E extends Json = DE,
-    M extends BaseMetadata = DM,
+    M2 extends BaseMetadata = M,
   >(
     roomId: string
-  ): Room<P, S, U, E, M> | null;
+  ): Room<P, S, U, E, M2> | null;
 
   /**
    * Enter a room.
@@ -297,7 +300,7 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
     P extends JsonObject = DP,
     S extends LsonObject = DS,
     E extends Json = DE,
-    M extends BaseMetadata = DM,
+    M2 extends BaseMetadata = M,
   >(
     roomId: string,
     ...args: OptionalTupleUnless<
@@ -305,7 +308,7 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
       [options: EnterOptions<NoInfr<P>, NoInfr<S>>]
     >
   ): {
-    room: Room<P, S, U, E, M>;
+    room: Room<P, S, U, E, M2>;
     leave: () => void;
   };
 
@@ -652,7 +655,7 @@ export function createClient<U extends BaseUserMeta = DU>(
   );
   const roomsInfoStore = createBatchStore(batchedResolveRoomsInfo);
 
-  return Object.defineProperty(
+  const client: Client<U> = Object.defineProperty(
     {
       enterRoom,
       getRoom,
@@ -676,6 +679,9 @@ export function createClient<U extends BaseUserMeta = DU>(
           notificationsAPI.getUserThreads_experimental,
         getUserThreadsSince_experimental:
           notificationsAPI.getUserThreadsSince_experimental,
+
+        // Type-level helper only, it's effectively only an identity-function at runtime
+        as: <M2 extends BaseMetadata>() => client as Client<U, M2>,
       },
     },
     kInternal,
@@ -683,6 +689,8 @@ export function createClient<U extends BaseUserMeta = DU>(
       enumerable: false,
     }
   );
+
+  return client;
 }
 
 function checkBounds(

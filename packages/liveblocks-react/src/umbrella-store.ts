@@ -1,6 +1,8 @@
 import type {
   AsyncResult,
   BaseMetadata,
+  BaseUserMeta,
+  Client,
   CommentData,
   CommentReaction,
   CommentUserReaction,
@@ -537,7 +539,7 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
 };
 
 export class UmbrellaStore<M extends BaseMetadata> {
-  private _client: OpaqueClient;
+  private _client: Client<BaseUserMeta, M>;
 
   // Raw threads DB (without any optimistic updates applied)
   private _rawThreadsDB: ThreadDB<M>;
@@ -560,13 +562,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
   private _userThreads: Map<string, PaginatedResource> = new Map();
 
   constructor(client: OpaqueClient) {
-    this._client = client;
+    this._client = client[kInternal].as<M>();
 
     const inboxFetcher = async (cursor?: string) => {
-      const result = await client.getInboxNotifications({ cursor });
+      const result = await this._client.getInboxNotifications({ cursor });
 
       this.updateThreadsAndNotifications(
-        result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
+        result.threads,
         result.inboxNotifications
       );
 
@@ -1296,7 +1298,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }
 
     this.updateThreadsAndNotifications(
-      result.threads.updated as ThreadData<M>[],
+      result.threads.updated,
       result.inboxNotifications.updated,
       result.threads.deleted,
       result.inboxNotifications.deleted
@@ -1319,7 +1321,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
       const result = await room.getThreads({ cursor, query });
       this.updateThreadsAndNotifications(
-        result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
+        result.threads,
         result.inboxNotifications
       );
 
@@ -1375,7 +1377,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     });
 
     this.updateThreadsAndNotifications(
-      updates.threads.updated as ThreadData<M>[],
+      updates.threads.updated,
       updates.inboxNotifications.updated,
       updates.threads.deleted,
       updates.inboxNotifications.deleted
@@ -1396,7 +1398,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
         query,
       });
       this.updateThreadsAndNotifications(
-        result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
+        result.threads,
         result.inboxNotifications
       );
 
@@ -1441,7 +1443,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }
 
     this.updateThreadsAndNotifications(
-      result.threads.updated as ThreadData<M>[],
+      result.threads.updated,
       result.inboxNotifications.updated,
       result.threads.deleted,
       result.inboxNotifications.deleted
