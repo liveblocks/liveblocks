@@ -19,13 +19,14 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 - Removed `Show deleted threads` checkbox from the room detail `Comments` tab to ensure consistent behavior across dashboard and APIs.
 
- ## Documentation
+## Documentation
 
- - Typo fixes.
+- Prevent truncated API keys being copied in code snippets.
+- Typo fixes.
 
 ## Contributors
 
-pierrelevaillant, sugardarius, kaf-lamed-beyt
+pierrelevaillant, sugardarius, kaf-lamed-beyt, ctnicholas
 
 # Week 42 (2024-10-18)
 
