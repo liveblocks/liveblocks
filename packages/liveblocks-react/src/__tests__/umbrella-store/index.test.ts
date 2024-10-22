@@ -1,3 +1,5 @@
+import { kInternal } from "@liveblocks/core";
+
 import { ThreadDB } from "../../ThreadDB";
 import { UmbrellaStore } from "../../umbrella-store";
 
@@ -11,7 +13,13 @@ const empty = {
   versionsByRoomId: {},
 } as const;
 
-const NO_CLIENT = "not passing in a real client in this unit test" as any;
+const NO_CLIENT = {
+  [kInternal]: {
+    as() {
+      return NO_CLIENT;
+    },
+  },
+} as any;
 
 const loading = { isLoading: true };
 
