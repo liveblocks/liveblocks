@@ -1,4 +1,4 @@
-## 2.9.2 (not yet released
+## 2.9.2
 
 ### `@liveblocks/node`
 
