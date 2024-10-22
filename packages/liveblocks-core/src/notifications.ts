@@ -115,12 +115,8 @@ export function createNotificationsApi<M extends BaseMetadata>({
       };
     }>(
       url`/v2/c/inbox-notifications/delta`,
-      {
-        signal: options?.signal,
-      },
-      {
-        since: since.toISOString(),
-      }
+      { signal: options?.signal },
+      { since: since.toISOString() }
     );
     return {
       inboxNotifications: {
