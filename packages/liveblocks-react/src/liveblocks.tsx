@@ -223,15 +223,15 @@ export function getLiveblocksExtrasForClient<M extends BaseMetadata>(
 }
 
 function makeDeltaPoller_Notifications(store: UmbrellaStore<BaseMetadata>) {
-  const poller = makePoller(async () => {
-    try {
-      await store.waitUntilNotificationsLoaded();
-      await store.fetchNotificationsDeltaUpdate();
-    } catch (err) {
-      // When polling, we don't want to throw errors, ever
-      console.warn(`Polling new inbox notifications failed: ${String(err)}`);
-    }
-  }, POLLING_INTERVAL);
+  const poller = makePoller(
+    () => {
+      void store.fetchNotificationsDeltaUpdate().catch((err) => {
+        console.warn(`Polling new inbox notifications failed: ${String(err)}`);
+      });
+    },
+    60_000, // Polling interval is every 60 seconds
+    { maxStaleTimeMs: 5 * 1000 } // ...or if window refocuses and data is less than 5 seconds old
+  );
 
   // Keep track of the number of subscribers
   let pollerSubscribers = 0;
@@ -239,15 +239,18 @@ function makeDeltaPoller_Notifications(store: UmbrellaStore<BaseMetadata>) {
   return () => {
     pollerSubscribers++;
 
-    // NIMESH - We should wait until the lastRequestedAt date is known using a promise and then
+    // XXX - We should wait until the lastRequestedAt date is known using a promise and then
     // in the `then` body, check again if the number of subscribers if more than 0, and only then
     // if those conditions hold, start the poller
     poller.enable(pollerSubscribers > 0);
+    void store.waitUntilNotificationsLoaded().then(() => {
+      poller.enable(pollerSubscribers > 0);
+    });
 
     return () => {
       pollerSubscribers--;
 
-      // NIMESH - When stopping the poller, we should also ideally abort its
+      // XXX - When stopping the poller, we should also ideally abort its
       // poller function, maybe using an AbortController? This functionality
       // should be automatic and handled by the Poller abstraction, not here!
       poller.enable(pollerSubscribers > 0);
@@ -272,7 +275,7 @@ function makeDeltaPoller_UserThreads(store: UmbrellaStore<BaseMetadata>) {
   return () => {
     pollerSubscribers++;
 
-    // NIMESH - We should wait until the lastRequestedAt date is known using a promise and then
+    // XXX - We should wait until the lastRequestedAt date is known using a promise and then
     // in the `then` body, check again if the number of subscribers if more than 0, and only then
     // if those conditions hold, start the poller
     // promise.then(() => { if (subscribers > 0 ) initialPoller() else: do nothing })
@@ -281,7 +284,7 @@ function makeDeltaPoller_UserThreads(store: UmbrellaStore<BaseMetadata>) {
     return () => {
       pollerSubscribers--;
 
-      // NIMESH - When stopping the poller, we should also ideally abort its
+      // XXX - When stopping the poller, we should also ideally abort its
       // poller function, maybe using an AbortController? This functionality
       // should be automatic and handled by the Poller abstraction, not here!
       poller.enable(pollerSubscribers > 0);
@@ -289,7 +292,7 @@ function makeDeltaPoller_UserThreads(store: UmbrellaStore<BaseMetadata>) {
   };
 }
 
-// NIMESH - DRY up these makeDeltaPoller_* abstractions, now that the symmetry has become clear!
+// XXX - DRY up these makeDeltaPoller_* abstractions, now that the symmetry has become clear!
 function makeLiveblocksExtrasForClient(client: OpaqueClient) {
   const store = getUmbrellaStoreForClient(client);
   // TODO                                ^ Bind to M type param here
