@@ -27,7 +27,7 @@ export function assertNonEmpty(
 ): asserts value is string {
   if (!isNonEmpty(value)) {
     throw new Error(
-      `Invalid value for field "${field}". Please provide a non-empty string. For more information: https://liveblocks.io/docs/api-reference/liveblocks-node#authorize`
+      `Invalid value for field '${field}'. Please provide a non-empty string. For more information: https://liveblocks.io/docs/api-reference/liveblocks-node#authorize`
     );
   }
 }
@@ -38,7 +38,7 @@ export function assertSecretKey(
 ): asserts value is string {
   if (!isNonEmpty(value) || !value.startsWith("sk_")) {
     throw new Error(
-      `Invalid value for field "${field}". Secret keys must start with "sk_". Please provide the secret key from your Liveblocks dashboard at https://liveblocks.io/dashboard/apikeys.`
+      `Invalid value for field '${field}'. Secret keys must start with 'sk_'. Please provide the secret key from your Liveblocks dashboard at https://liveblocks.io/dashboard/apikeys.`
     );
   }
 }
