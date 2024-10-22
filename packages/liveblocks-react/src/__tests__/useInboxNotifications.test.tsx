@@ -351,6 +351,7 @@ describe("useInboxNotifications: error", () => {
     await jest.advanceTimersByTimeAsync(1_000);
 
     expect(result.current).toEqual({ isLoading: true });
+    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(1));
 
     // Unmount so polling doesn't interfere with the test
     unmount();
@@ -367,10 +368,15 @@ describe("useInboxNotifications: error", () => {
     // The third retry should be made after 10s
     await jest.advanceTimersByTimeAsync(10_000);
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(4));
+    expect(result.current).toEqual({ isLoading: true });
 
     // The fourth retry should be made after 10s
     await jest.advanceTimersByTimeAsync(15_000);
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(5));
+    expect(result.current).toEqual({
+      isLoading: false,
+      error: expect.any(Error),
+    });
 
     // Won't try more than 5 attempts
     await jest.advanceTimersByTimeAsync(20_000);
