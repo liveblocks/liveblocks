@@ -34,6 +34,16 @@ describe("authorization (new API)", () => {
     );
   });
 
+  test("throws when an invalid secret key is provided", () => {
+    expect(() =>
+      makeSession({
+        secret: "sk_this…is…truncated",
+      })
+    ).toThrow(
+      "Invalid chars found in field 'secret'. Please check that you correctly copied the secret key from your Liveblocks dashboard at https://liveblocks.io/dashboard/apikeys."
+    );
+  });
+
   test("default set has no permissions", () => {
     expect(makeSession().hasPermissions()).toEqual(false);
   });
