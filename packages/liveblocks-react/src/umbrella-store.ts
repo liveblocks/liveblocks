@@ -30,7 +30,6 @@ import {
   mapValues,
   nanoid,
   nn,
-  StopRetrying,
   stringify,
 } from "@liveblocks/core";
 
@@ -438,14 +437,7 @@ export class PaginatedResource {
     const initialFetcher = autoRetry(
       () => this._fetchPage(/* cursor */ undefined),
       5,
-      [5000, 5000, 10000, 15000],
-      (err) => {
-        // We do not want to retry if a 4xx HTTP error is received
-        if (err instanceof HttpError && err.status >= 400 && err.status < 500) {
-          return true;
-        }
-        return false;
-      }
+      [5000, 5000, 10000, 15000]
     );
 
     const promise = usify(
@@ -572,11 +564,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     const inboxFetcher = async (cursor?: string) => {
       if (client === undefined) {
-        // TODO: Think about other ways to structure this. Throwing a StopRetrying only
-        // makes sense only if we can easily know if the fetcher is going to be wrapped inside the autoRetry function
-        throw new StopRetrying(
-          "Client is required in order to load threads for the room"
-        );
+        // TODO: Think about other ways to structure this. It's not _really_ an
+        // HttpError of course, but throwing an HttpError with a 4xx status
+        // code will stop retrying if this is called in an autoRetry wrapper.
+        throw new HttpError("Client required", 477);
       }
 
       const result = await client.getInboxNotifications({ cursor });
@@ -1327,18 +1318,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ) {
     const threadsFetcher = async (cursor?: string) => {
       if (this._client === undefined) {
-        // TODO: Think about other ways to structure this. Throwing a StopRetrying only
-        // makes sense only if we can easily know if the fetcher is going to be wrapped inside the autoRetry function
-        throw new StopRetrying(
-          "Client is required in order to load threads for the room"
-        );
+        // TODO: Think about other ways to structure this. It's not _really_ an
+        // HttpError of course, but throwing an HttpError with a 4xx status
+        // code will stop retrying if this is called in an autoRetry wrapper.
+        throw new HttpError("Client required", 478);
       }
 
       const room = this._client.getRoom(roomId);
       if (room === null) {
-        throw new StopRetrying(
-          `Room with id ${roomId} is not available on client`
-        );
+        throw new HttpError(`Room '${roomId}' is not available on client`, 479);
       }
 
       const result = await room.getThreads({ cursor, query });
@@ -1421,11 +1409,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     const threadsFetcher = async (cursor?: string) => {
       if (this._client === undefined) {
-        // TODO: Think about other ways to structure this. Throwing a StopRetrying only
-        // makes sense only if we can easily know if the fetcher is going to be wrapped inside the autoRetry function
-        throw new StopRetrying(
-          "Client is required in order to load threads for the room"
-        );
+        // TODO: Think about other ways to structure this. It's not _really_ an
+        // HttpError of course, but throwing an HttpError with a 4xx status
+        // code will stop retrying if this is called in an autoRetry wrapper.
+        throw new HttpError("Client required", 478);
       }
 
       const result = await this._client[kInternal].getUserThreads_experimental({

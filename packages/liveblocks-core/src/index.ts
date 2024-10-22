@@ -90,7 +90,7 @@ export type {
   AsyncResult,
   AsyncSuccess,
 } from "./lib/AsyncResult";
-export { autoRetry, StopRetrying } from "./lib/autoRetry";
+export { autoRetry } from "./lib/autoRetry";
 export { chunk } from "./lib/chunk";
 export {
   createCommentId,
