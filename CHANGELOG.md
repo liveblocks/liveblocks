@@ -1,3 +1,9 @@
+## 2.9.2 (not yet released
+
+### `@liveblocks/node`
+
+- Detect invalid chars in secret keys and throw a more helpful error message
+
 ## 2.9.1
 
 ### `@liveblocks/client`
