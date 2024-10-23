@@ -141,6 +141,15 @@ function deserialize(node: Node): DeserializedNode {
   if (TEXT_TAGS[node.nodeName]) {
     const attrs = TEXT_TAGS[node.nodeName]!(node as HTMLElement);
 
+    // If there is at least one non-text child, we skip this node
+    if (
+      children.some(
+        (child) => child && typeof child !== "string" && "type" in child
+      )
+    ) {
+      return jsx("fragment", {}, children);
+    }
+
     return children.map((child) => jsx("text", attrs, child));
   }
 
