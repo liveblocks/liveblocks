@@ -379,10 +379,12 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     if (!poller) {
       poller = makePoller(
         () =>
-          // Poll in every currently connected/open room
           // XXX Add signal here too?
           store.fetchRoomThreadsDeltaUpdate(roomId),
-        config.ROOM_THREADS_POLL_INTERVAL
+        config.ROOM_THREADS_POLL_INTERVAL,
+        {
+          maxStaleTimeMs: config.ROOM_THREADS_MAX_STALE_TIME,
+        }
       );
 
       pollersByRoomId.set(roomId, poller);

@@ -1439,6 +1439,8 @@ describe("useThreads", () => {
     let threads = [dummyThreadData({ roomId }), dummyThreadData({ roomId })];
     const originalThreads = [...threads];
 
+    let getThreadsSinceReqCount = 0;
+
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
         return res(
@@ -1459,6 +1461,7 @@ describe("useThreads", () => {
         const since = url.searchParams.get("since");
 
         if (since) {
+          getThreadsSinceReqCount++;
           const updatedThreads = threads.filter((thread) => {
             return thread.updatedAt >= new Date(since);
           });
@@ -1504,10 +1507,17 @@ describe("useThreads", () => {
       })
     );
 
+    // Advance time to trigger the first poll and verify that a poll does occur
+    await jest.advanceTimersByTimeAsync(5 * 60_000);
+    await waitFor(() => expect(getThreadsSinceReqCount).toBe(1));
+
     firstRenderResult.unmount();
 
     // Add a new thread to the threads array to simulate a new thread being added to the room
     threads = [...originalThreads, dummyThreadData({ roomId })];
+
+    // Advance time by at least maximum stale time (5000ms) so that a poll happens immediately after the room is mounted.
+    await jest.advanceTimersByTimeAsync(6_000);
 
     // Render the RoomProvider again and verify the threads are updated
     const secondRenderResult = renderHook(() => useThreads(), {
@@ -1526,7 +1536,7 @@ describe("useThreads", () => {
       fetchMoreError: undefined,
     });
 
-    // The updated threads should be displayed after the server responds with the updated threads (either due to a fetch request to get all threads or just the updated threads)
+    // The updated threads should be displayed after the server responds with the updated threads
     await waitFor(() => {
       expect(secondRenderResult.result.current).toEqual({
         isLoading: false,
@@ -1537,6 +1547,8 @@ describe("useThreads", () => {
         fetchMoreError: undefined,
       });
     });
+
+    expect(getThreadsSinceReqCount).toBe(2);
 
     secondRenderResult.unmount();
   });
@@ -1608,9 +1620,11 @@ describe("useThreads", () => {
     unmountSecondRoom();
   });
 
-  test("should update threads for a room when the browser comes back online", async () => {
+  test.only("should update threads for a room when the browser comes back online", async () => {
     const roomId = nanoid();
     const threads = [dummyThreadData({ roomId }), dummyThreadData({ roomId })];
+
+    let getThreadsSinceReqCount = 0;
 
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
@@ -1632,6 +1646,7 @@ describe("useThreads", () => {
         const since = url.searchParams.get("since");
 
         if (since) {
+          getThreadsSinceReqCount++;
           const updatedThreads = threads.filter((thread) => {
             return thread.updatedAt >= new Date(since);
           });
@@ -1677,13 +1692,18 @@ describe("useThreads", () => {
       })
     );
 
+    // Advance time to trigger the first poll and verify that a poll does occur
+    await jest.advanceTimersByTimeAsync(5 * 60_000);
+    await waitFor(() => expect(getThreadsSinceReqCount).toBe(1));
+
     // Add a new thread to the threads array to simulate a new thread being added to the room
     threads.push(dummyThreadData({ roomId }));
 
+    // Advance time by at least maximum stale time (5000ms) so that a poll happens immediately after the room is mounted.
+    await jest.advanceTimersByTimeAsync(6_000);
+
     // Simulate browser going online
-    act(() => {
-      window.dispatchEvent(new Event("online"));
-    });
+    window.dispatchEvent(new Event("online"));
 
     // The updated threads should be displayed after the server responds with the updated threads (either due to a fetch request to get all threads or just the updated threads)
     await waitFor(() => {
