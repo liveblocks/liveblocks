@@ -243,17 +243,16 @@ function makeDeltaPoller_Notifications(store: UmbrellaStore<BaseMetadata>) {
     // XXX - We should wait until the lastRequestedAt date is known using a promise and then
     // in the `then` body, check again if the number of subscribers if more than 0, and only then
     // if those conditions hold, start the poller
-    poller.enable(pollerSubscribers > 0);
     void store
       .waitUntilNotificationsLoaded()
-      .then(() => {
-        poller.enable(pollerSubscribers > 0);
-      })
       .catch((err) => {
-        // XXX - Think about a better message and if we need to handle this differently
+        // XXX - Think about a better message and if we need to handle this differently and add tests
         console.warn(
-          `Unable to start poller due to failure loading first page of inbox notifications: ${String(err)}`
+          `Unable to start inbox notifications poller: ${String(err)}`
         );
+      })
+      .finally(() => {
+        poller.enable(pollerSubscribers > 0);
       });
 
     return () => {
@@ -922,6 +921,16 @@ export function LiveblocksProvider<U extends BaseUserMeta = DU>(
   // to recreate a client instance after the first render.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const client = useMemo(() => createClient<U>(options), []);
+
+  // const store = getLiveblocksExtrasForClient(client);
+
+  // useEffect(() => {
+  //   poller.setup();
+  //   return () => {
+  //     poller.teardown();
+  //   };
+  // }, []);
+
   return (
     <LiveblocksProviderWithClient client={client}>
       {children}
