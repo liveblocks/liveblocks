@@ -5,6 +5,7 @@ import { FSM } from "./fsm";
 // XXX Optimization: Maybe remove `enabled` condition, and implement mayPoll in terms of `count` directly
 // XXX Optimization: Rename `subscribeToDeltaUpdates` and interact with the Poller directly?
 // XXX Centralize logging of falied polls in the poller itself: "Polling new inbox notifications failed"
+// XXX Think about the _initial_ poll that is now being triggered by the pollNowIfStale() call when a component mounts. Typically the initial data has not been loaded yet, so polling should not really happen yet either.
 
 export type Poller = {
   /**
