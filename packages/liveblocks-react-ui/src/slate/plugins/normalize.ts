@@ -17,6 +17,16 @@ export function withNormalize(editor: Editor) {
       }
     }
 
+    // Links cannot be nested or empty
+    if (
+      Element.isElement(node) &&
+      (node.type === "auto-link" || node.type === "custom-link")
+    ) {
+      if (node.children.length === 0 || node.children[0]?.text === "") {
+        Transforms.removeNodes(editor, { at: path });
+      }
+    }
+
     normalizeNode(entry);
   };
 
