@@ -74,8 +74,7 @@ const TEXT_TAGS = {
   I: (): ComposerBodyTextTag => ({ italic: true }),
   S: (): ComposerBodyTextTag => ({ strikethrough: true }),
   STRONG: (): ComposerBodyTextTag => ({ bold: true }),
-  // `B` is omitted because Google Docs uses `<b>` in weird ways
-  // B: (): ComposerBodyTextTag => ({ bold: true }),
+  B: (): ComposerBodyTextTag => ({ bold: true }),
 } as Record<string, (node: HTMLElement) => ComposerBodyTextTag>;
 
 function flattenListItems(node: HTMLElement): HTMLElement[] {
@@ -95,7 +94,7 @@ function flattenListItems(node: HTMLElement): HTMLElement[] {
 }
 
 function normalize(html: string) {
-  // WebKit browsers can add a trailing <br>
+  // WebKit browsers can add a trailing `<br>`
   html = html.replace(/<br class="?Apple-interchange-newline"?>/gi, "");
 
   return html;
@@ -124,7 +123,11 @@ function deserialize(node: Node): DeserializedNode {
     children = [{ text: "" }];
   }
 
-  if (node.nodeName === "BODY") {
+  if (
+    node.nodeName === "BODY" ||
+    // Google Docs can use `<b>` as a wrapper for the entire document
+    (node.nodeName === "B" && node.parentElement?.nodeName === "BODY")
+  ) {
     return jsx("fragment", {}, children);
   }
 
@@ -138,6 +141,24 @@ function deserialize(node: Node): DeserializedNode {
     const attrs = TEXT_TAGS[node.nodeName]!(node as HTMLElement);
 
     return children.map((child) => jsx("text", attrs, child));
+  }
+
+  // Guess inline marks based on styles
+  if (node.nodeName === "SPAN") {
+    const style = (node as HTMLElement).style;
+
+    if (
+      style.fontWeight === "bold" ||
+      style.fontWeight === "700" ||
+      style.fontWeight === "800" ||
+      style.fontWeight === "900"
+    ) {
+      children = children.map((child) => jsx("text", { bold: true }, child));
+    }
+
+    if (style.fontStyle === "italic") {
+      children = children.map((child) => jsx("text", { italic: true }, child));
+    }
   }
 
   return children as DeserializedNode;
