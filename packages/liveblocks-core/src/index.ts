@@ -115,6 +115,7 @@ export { isJsonArray, isJsonObject, isJsonScalar } from "./lib/Json";
 export { nanoid } from "./lib/nanoid";
 export type { NoInfr } from "./lib/NoInfer";
 export { objectToQuery } from "./lib/objectToQuery";
+export type { Poller } from "./lib/Poller";
 export { makePoller } from "./lib/Poller";
 export { asPos, makePosition } from "./lib/position";
 export type { Resolve } from "./lib/Resolve";

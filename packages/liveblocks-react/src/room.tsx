@@ -32,6 +32,7 @@ import type {
   LiveblocksError,
   OpaqueClient,
   OpaqueRoom,
+  Poller,
   RoomEventMessage,
   ToImmutable,
 } from "@liveblocks/core";
@@ -228,31 +229,6 @@ function handleApiError(err: HttpError): Error {
   return new Error(message);
 }
 
-// XXX - DRY up these makeDeltaPoller_* abstractions, now that the symmetry has become clear!
-function makeDeltaPoller_RoomThreads(client: OpaqueClient) {
-  const store = getUmbrellaStoreForClient(client);
-
-  const poller = makePoller(async () => {
-    // Poll in every currently connected/open room
-    // Note that Promise.allSettled() will never throw, which is important for
-    // the poller!
-    const roomIds = client[kInternal].getRoomIds();
-    await Promise.allSettled(
-      roomIds.map((roomId) => {
-        const room = client.getRoom(roomId);
-        if (room === null) return;
-
-        return store.fetchRoomThreadsDeltaUpdate(room.id);
-      })
-    );
-  }, config.ROOM_THREADS_POLL_INTERVAL);
-
-  return () => {
-    poller.inc();
-    return () => poller.dec();
-  };
-}
-
 const _extras = new WeakMap<
   OpaqueClient,
   ReturnType<typeof makeRoomExtrasForClient>
@@ -395,13 +371,43 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     throw innerError;
   }
 
+  const pollersByRoomId = new Map<string, Poller>();
+
+  // XXX - DRY up these makeDeltaPoller_* abstractions, now that the symmetry has become clear!
+  function getOrCreatePollerForRoomId(roomId: string) {
+    let poller = pollersByRoomId.get(roomId);
+    if (!poller) {
+      poller = makePoller(async () => {
+        // Poll in every currently connected/open room
+        // Note that Promise.allSettled() will never throw, which is important for
+        // the poller!
+        const roomIds = client[kInternal].getRoomIds();
+        await Promise.allSettled(
+          roomIds.map((roomId) => {
+            const room = client.getRoom(roomId);
+            if (room === null) return;
+
+            return store.fetchRoomThreadsDeltaUpdate(room.id);
+          })
+        );
+      }, config.ROOM_THREADS_POLL_INTERVAL);
+
+      pollersByRoomId.set(roomId, poller);
+    }
+
+    return () => {
+      poller!.inc();
+      return () => poller!.dec();
+    };
+  }
+
   return {
     store,
-    subscribeToRoomThreadsDeltaUpdates: makeDeltaPoller_RoomThreads(client),
     commentsErrorEventSource,
     getInboxNotificationSettings,
     getRoomVersions,
     onMutationFailure,
+    getOrCreatePollerForRoomId,
   };
 }
 
@@ -1308,8 +1314,10 @@ function useThreads<M extends BaseMetadata>(
   const client = useClient();
   const room = useRoom();
 
-  const { store, subscribeToRoomThreadsDeltaUpdates: subscribeToDeltaUpdates } =
+  const { store, getOrCreatePollerForRoomId } =
     getRoomExtrasForClient<M>(client);
+
+  const subscribeToDeltaUpdates = getOrCreatePollerForRoomId(room.id);
 
   React.useEffect(
     () => {
