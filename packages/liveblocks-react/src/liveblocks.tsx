@@ -237,6 +237,7 @@ function makeDeltaPoller_Notifications(store: UmbrellaStore<BaseMetadata>) {
 
   return () => {
     poller.inc();
+    poller.pollNowIfStale();
     return () => poller.dec();
   };
 }
@@ -245,6 +246,7 @@ function makeDeltaPoller_Notifications(store: UmbrellaStore<BaseMetadata>) {
 function makeDeltaPoller_UserThreads(store: UmbrellaStore<BaseMetadata>) {
   const poller = makePoller(async () => {
     try {
+      // XXX Add signal here too?
       await store.fetchUserThreadsDeltaUpdate();
     } catch (err) {
       // When polling, we don't want to throw errors, ever
@@ -254,6 +256,7 @@ function makeDeltaPoller_UserThreads(store: UmbrellaStore<BaseMetadata>) {
 
   return () => {
     poller.inc();
+    poller.pollNowIfStale();
     return () => poller.dec();
   };
 }

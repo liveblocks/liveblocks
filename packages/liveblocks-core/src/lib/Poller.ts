@@ -4,6 +4,7 @@ import { FSM } from "./fsm";
 // XXX Model the "becoming available of lastRequestedAt date" as another poller precondition?
 // XXX Optimization: Maybe remove `enabled` condition, and implement mayPoll in terms of `count` directly
 // XXX Optimization: Rename `subscribeToDeltaUpdates` and interact with the Poller directly?
+// XXX Centralize logging of falied polls in the poller itself: "Polling new inbox notifications failed"
 
 export type Poller = {
   /**
