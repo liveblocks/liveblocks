@@ -65,10 +65,13 @@ export function makePoller(
     maxStaleTimeMs?: number;
   }
 ): Poller {
+  const doc = typeof document !== "undefined" ? document : undefined;
+  const win = typeof window !== "undefined" ? window : undefined;
+
   const maxStaleTimeMs = options?.maxStaleTimeMs ?? Number.POSITIVE_INFINITY;
   const context: Context = {
     enabled: false,
-    inForeground: true,
+    inForeground: doc?.visibilityState !== "hidden",
     lastSuccessfulPollAt: null,
   };
 
@@ -121,9 +124,6 @@ export function makePoller(
       fsm.send({ type: "POLL" });
     }
   }
-
-  const doc = typeof document !== "undefined" ? document : undefined;
-  const win = typeof window !== "undefined" ? window : undefined;
 
   function setInForeground(inForeground: boolean) {
     context.inForeground = inForeground;
