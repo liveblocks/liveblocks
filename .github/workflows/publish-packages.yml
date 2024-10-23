@@ -112,6 +112,16 @@ jobs:
           GIT_TAG: ${{ inputs.tag }}
           GITHUB_URL: "https://github.com/liveblocks/liveblocks"
         run: |
+          echo "==> Pushing changes to GitHub"
+          if [ "$(git current-branch)" = "main" ]; then
+            if !git push origin main; then
+                echo "ERROR: Could not push this branch to GitHub!" >&2
+                echo "Please manually fix that now, before writing the release notes!" >&2
+                exit 2
+            else
+                echo "Done! Please finish it off by writing a nice changelog entry on GitHub."
+            fi
+          fi
           git tag "$GIT_TAG" -m "Release $GIT_TAG"
           git push origin "$GIT_TAG"
           BRANCH="$(git current-branch)"
