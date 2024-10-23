@@ -1,5 +1,13 @@
 import { FSM } from "./fsm";
 
+// TODO LIST:
+// XXX Implementing proper "pausing" (toggling poller quickly should not "reset" back to 10s)
+// XXX Remove enable()
+// XXX Add inc() + dec()
+// XXX Re-add poller.refresh()
+// XXX Remove calling of the poller function in the RoomProvider (when "online" and when "mounted")
+// XXX Structure it to have one poller instance per roomId
+
 type Poller = {
   /**
    * Starts or stops the poller, based on the given condition. When true,
