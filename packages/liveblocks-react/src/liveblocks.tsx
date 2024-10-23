@@ -32,6 +32,7 @@ import React, {
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
+import { config } from "./config";
 import { useIsInsideRoom } from "./contexts";
 import { shallow2 } from "./lib/shallow2";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
@@ -85,8 +86,6 @@ const _bundles = new WeakMap<
   OpaqueClient,
   LiveblocksContextBundle<BaseUserMeta, BaseMetadata>
 >();
-
-const POLLING_INTERVAL = 60 * 1000; // every minute
 
 function selectUnreadInboxNotificationsCount(
   inboxNotifications: readonly InboxNotificationData[]
@@ -230,8 +229,10 @@ function makeDeltaPoller_Notifications(store: UmbrellaStore<BaseMetadata>) {
         console.warn(`Polling new inbox notifications failed: ${String(err)}`);
       });
     },
-    60_000, // Polling interval is every 60 seconds
-    { maxStaleTimeMs: 5 * 1000 } // ...or if window refocuses and data is less than 5 seconds old
+    config.NOTIFICATIONS_POLL_INTERVAL,
+    // If window refocuses, a new poll will be triggered if data is older than
+    // max stale time
+    { maxStaleTimeMs: config.NOTIFICATIONS_MAX_STALE_TIME }
   );
 
   // Keep track of the number of subscribers
@@ -275,7 +276,7 @@ function makeDeltaPoller_UserThreads(store: UmbrellaStore<BaseMetadata>) {
       // When polling, we don't want to throw errors, ever
       console.warn(`Polling new user threads failed: ${String(err)}`);
     }
-  }, POLLING_INTERVAL);
+  }, config.USER_THREADS_POLL_INTERVAL);
 
   // Keep track of the number of subscribers
   let pollerSubscribers = 0;

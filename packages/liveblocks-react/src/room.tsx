@@ -51,6 +51,7 @@ import {
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
+import { config } from "./config";
 import { RoomContext, useIsInsideRoom, useRoomOrNull } from "./contexts";
 import { isString } from "./lib/guards";
 import { retryError } from "./lib/retry-error";
@@ -144,8 +145,6 @@ function useSyncExternalStore<Snapshot>(
 }
 
 const STABLE_EMPTY_LIST = Object.freeze([]);
-
-export const POLLING_INTERVAL = 5 * 60 * 1000; // every 5 minutes
 
 // Don't try to inline this. This function is intended to be a stable
 // reference, to avoid a React.useCallback() wrapper.
@@ -246,7 +245,7 @@ function makeDeltaPoller_RoomThreads(client: OpaqueClient) {
         return store.fetchRoomThreadsDeltaUpdate(room.id);
       })
     );
-  }, POLLING_INTERVAL);
+  }, config.ROOM_THREADS_POLL_INTERVAL);
 
   // Keep track of the number of subscribers
   let pollerSubscribers = 0;
