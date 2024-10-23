@@ -34,16 +34,3 @@ export type ThreadPluginState = {
   selectedThreadPos: number | null;
   decorations: DecorationSet;
 };
-
-declare module "@tiptap/core" {
-  interface Commands<ReturnType> {
-    comments: {
-      /**
-       * Add a comment
-       */
-      addComment: (id: string) => ReturnType;
-      selectThread: (id: string | null) => ReturnType;
-      addPendingComment: () => ReturnType;
-    };
-  }
-}

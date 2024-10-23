@@ -1,6 +1,4 @@
-import type {
-  ClientRectObject
-} from "@floating-ui/react-dom";
+
 import {
   autoUpdate,
   flip,
@@ -32,7 +30,6 @@ import { createPortal } from "react-dom";
 import { classNames } from "../classnames";
 import type { ThreadPluginState } from "../types";
 import { THREADS_PLUGIN_KEY } from "../types";
-import { getRectFromCoords } from "../utils";
 
 type ThreadPanelComponents = {
   Thread: ComponentType<ThreadProps>;
@@ -66,61 +63,57 @@ export function FloatingThreads({
   const Thread = components?.Thread ?? DefaultThread;
   const pluginState = editor ? THREADS_PLUGIN_KEY.getState(editor.state) as ThreadPluginState : null;
 
-  const [activeThreads, setActiveThreads] = useState<{
-    rect: ClientRectObject;
-    threads: ThreadData[];
-  } | null>(null);
+  const [activeThread, setActiveThread] = useState<ThreadData | null>(null);
 
 
   useEffect(() => {
     if (!editor || !pluginState) {
-      setActiveThreads(null);
+      setActiveThread(null);
       return;
     }
     const { selectedThreadId, selectedThreadPos } = pluginState;
     if (selectedThreadId === null || selectedThreadPos === null) {
-      setActiveThreads(null);
+      setActiveThread(null);
       return;
     }
-    const coords = editor.view.coordsAtPos(Math.min(selectedThreadPos, editor.state.doc.content.size - 1));
-    const active = (threads ?? []).filter((thread) =>
+    const active = (threads ?? []).find((thread) =>
       selectedThreadId === thread.id
     );
-    setActiveThreads({
-      rect: getRectFromCoords(coords), threads: active
-    });
+    setActiveThread(active ?? null);
   }, [editor, pluginState, threads]);
 
   const handleEscapeKeydown = useCallback((): boolean => {
-    if (!editor || activeThreads === null) return false;
+    if (!editor || activeThread === null) return false;
     editor.commands.selectThread(null);
     return true;
-  }, [activeThreads, editor]);
+  }, [activeThread, editor]);
 
-  if (!activeThreads) return null;
+  if (!activeThread || !editor) return null;
 
   return (
     <FloatingThreadPortal
-      rect={activeThreads.rect}
+      thread={activeThread}
+      editor={editor}
       container={document.body}
       {...props}
     >
-      {activeThreads.threads.map((thread) => (
+      {activeThread &&
         <ThreadWrapper
-          key={thread.id}
-          thread={thread}
+          key={activeThread.id}
+          thread={activeThread}
           Thread={Thread}
           onEscapeKeydown={handleEscapeKeydown}
           className="lb-tiptap-floating-threads-thread"
         />
-      ))}
+      }
     </FloatingThreadPortal>
   );
 }
 
 interface FloatingThreadPortalProps
   extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
-  rect: ClientRectObject;
+  thread: ThreadData;
+  editor: Editor;
   container: HTMLElement;
   children: ReactNode;
 }
@@ -129,7 +122,8 @@ export const FLOATING_THREAD_COLLISION_PADDING = 10;
 
 function FloatingThreadPortal({
   container,
-  rect,
+  editor,
+  thread,
   children,
   className,
   style,
@@ -172,11 +166,22 @@ function FloatingThreadPortal({
     },
   });
 
-  useLayoutEffect(() => {
-    setReference({
-      getBoundingClientRect: () => rect,
-    });
-  }, [setReference, rect]);
+  const updateRef = useCallback(() => {
+    const el = editor.view.dom.querySelector(`[data-lb-thread-id="${thread.id}"]`);
+    if (el) {
+      setReference(el);
+    }
+  }, [setReference, editor, thread.id]);
+
+  // Remote cursor updates and other edits can cause the ref to break
+  useEffect(() => {
+    editor.on("transaction", updateRef)
+    return () => {
+      editor.off("transaction", updateRef);
+    }
+  }, [editor, updateRef]);
+
+  useLayoutEffect(updateRef, [updateRef]);
 
   return createPortal(
     <div
