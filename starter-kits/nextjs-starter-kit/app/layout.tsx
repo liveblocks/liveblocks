@@ -5,9 +5,9 @@ import { auth } from "@/auth";
 import "../styles/normalize.css";
 import "@liveblocks/react-ui/styles.css";
 import "@liveblocks/react-ui/styles/dark/media-query.css";
+import "@liveblocks/react-tiptap/styles.css";
 import "../styles/globals.css";
 import "../styles/text-editor.css";
-import "../styles/text-editor-comments.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
