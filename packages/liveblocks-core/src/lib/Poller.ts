@@ -1,10 +1,8 @@
 import { FSM } from "./fsm";
 
 // TODO LIST:
-// XXX Implementing proper "pausing" (toggling poller quickly should not "reset" back to 10s)
 // XXX Remove enable()
 // XXX Add inc() + dec()
-// XXX Re-add poller.refresh()
 // XXX Remove calling of the poller function in the RoomProvider (when "online" and when "mounted")
 // XXX Structure it to have one poller instance per roomId
 
@@ -15,6 +13,13 @@ type Poller = {
    * poller if it hasn't been stopped already.
    */
   enable(condition: boolean): void;
+
+  /**
+   * Polls immediately only if it has been more than `maxStaleTimeMs` milliseconds since
+   * the last poll and no poll is currently in progress. After polling, schedules
+   * the next poll at the regular interval.
+   */
+  pollNowIfStale(): void;
 
   /**
    * Used in unit tests only.
@@ -128,11 +133,6 @@ export function makePoller(
     startOrStop();
   }
 
-  /**
-   * Polls immediately only if it has been more than `maxStaleTimeMs` milliseconds since
-   * the last poll and no poll is currently in progress. After polling, schedules
-   * the next poll at the regular interval.
-   */
   function pollNowIfStale() {
     if (
       !context.lastSuccessfulPollAt ||
@@ -162,6 +162,7 @@ export function makePoller(
   fsm.start();
   return {
     enable,
+    pollNowIfStale,
 
     // Internal API, used by unit tests only to simulate visibility events
     setInForeground,
