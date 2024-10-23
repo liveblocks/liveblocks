@@ -1,4 +1,4 @@
-import type { Descendant, Editor, Element, Node as SlateNode } from "slate";
+import type { Descendant, Editor, Node as SlateNode } from "slate";
 import { Transforms } from "slate";
 import { jsx } from "slate-hyperscript";
 
@@ -22,11 +22,10 @@ type ComposerBodyElementTag = OmitTextChildren<
 type ComposerBodyTextTag = OmitTextChildren<ComposerBodyText>;
 
 type DeserializedNode =
-  | string
   | null
-  | Element
+  | string
+  | Descendant
   | Descendant[]
-  | ComposerBodyText[]
   | DeserializedNode[];
 
 function areUrlsEqual(a: string, b: string) {
@@ -93,6 +92,13 @@ function flattenListItems(node: HTMLElement): HTMLElement[] {
   });
 
   return listItems;
+}
+
+function normalize(html: string) {
+  // WebKit browsers can add a trailing <br>
+  html = html.replace(/<br class="?Apple-interchange-newline"?>/gi, "");
+
+  return html;
 }
 
 function deserialize(node: Node): DeserializedNode {
@@ -163,7 +169,7 @@ export function withPaste(
 
     // Deserialize rich text from HTML when pasting
     if (data.types.includes("text/html")) {
-      const html = data.getData("text/html");
+      const html = normalize(data.getData("text/html"));
       const parsed = new DOMParser().parseFromString(html, "text/html");
       const fragment = deserialize(parsed.body);
 
