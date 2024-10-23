@@ -1118,13 +1118,14 @@ describe("legacy_patchImmutableObject", () => {
     const root = new LiveObject<{ list: typeof liveList }>();
     const liveList = new LiveList<LiveObject<{ a: number }>>([]);
     liveList.push(new LiveObject({ a: 1 }));
+    liveList.push(new LiveObject({ a: 2 }));
     root.set("list", liveList);
 
     const updates: StorageUpdate[] = [
       {
         type: "LiveList",
         node: root.get("list"),
-        updates: [{ index: 1, type: "delete" }],
+        updates: [{ index: 1, type: "delete", deletedItem: liveList.get(1)! }],
       },
     ];
 
@@ -1153,7 +1154,7 @@ describe("legacy_patchImmutableObject", () => {
       {
         type: "LiveList",
         node: root.get("list"),
-        updates: [{ index: 0, type: "delete" }],
+        updates: [{ index: 0, type: "delete", deletedItem: liveList.get(0)! }],
       },
     ];
 
@@ -1176,7 +1177,9 @@ describe("legacy_patchImmutableObject", () => {
     liveList.push(new LiveObject({ a: 1 }));
     liveList.push(new LiveObject({ a: 2 }));
     liveList.push(new LiveObject({ a: 3 }));
+    const x = liveList.get(0)!;
     liveList.delete(0);
+    const y = liveList.get(0)!;
     liveList.delete(0);
     root.set("list", liveList);
 
@@ -1185,8 +1188,8 @@ describe("legacy_patchImmutableObject", () => {
         type: "LiveList",
         node: root.get("list"),
         updates: [
-          { index: 0, type: "delete" },
-          { index: 0, type: "delete" },
+          { index: 0, type: "delete", deletedItem: x },
+          { index: 0, type: "delete", deletedItem: y },
         ],
       },
     ];
