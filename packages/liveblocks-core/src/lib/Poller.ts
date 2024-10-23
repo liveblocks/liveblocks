@@ -9,17 +9,17 @@ type Poller = {
   enable(condition: boolean): void;
 
   /**
-   * Used in unit tests only.
-   * @internal
-   */
-  setInForeground(condition: boolean): void;
-
-  /**
    * Polls immediately only if it has been more than `maxStaleTimeMs` milliseconds since
    * the last poll and no poll is currently in progress. After polling, schedules
    * the next poll at the regular interval.
    */
   pollNowIfStale(): void;
+
+  /**
+   * Used in unit tests only.
+   * @internal
+   */
+  setInForeground(condition: boolean): void;
 };
 
 type Context = {
@@ -28,9 +28,15 @@ type Context = {
   lastSuccessfulPollAt: number | null;
 };
 
-type State = "@idle" | "@enabled" | "@polling";
+type State =
+  | "@idle" //
+  | "@enabled" //
+  | "@polling";
 
-type Event = { type: "START" } | { type: "STOP" } | { type: "POLL" };
+type Event =
+  | { type: "START" } //
+  | { type: "STOP" } //
+  | { type: "POLL" };
 
 /**
  * Makes a poller that will call `await callback()` at the desired interval (in
