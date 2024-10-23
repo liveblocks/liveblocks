@@ -567,6 +567,176 @@ describe("useInboxNotifications: polling", () => {
 
     unmount();
   });
+
+  test("should restart polling after a component is remounted", async () => {
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+    const inboxNotifications = [
+      dummyThreadInboxNotificationData({ roomId, threadId: threads[0]!.id }),
+    ];
+
+    let hasCalledGetNotifications = false;
+    let pollerCount = 0;
+
+    server.use(
+      mockGetInboxNotifications(async (_req, res, ctx) => {
+        hasCalledGetNotifications = true;
+        return res(
+          ctx.json({
+            threads,
+            inboxNotifications,
+            meta: {
+              requestedAt: new Date().toISOString(),
+              nextCursor: null,
+            },
+          })
+        );
+      }),
+      mockGetInboxNotificationsDelta(async (_req, res, ctx) => {
+        pollerCount++;
+        return res(
+          ctx.json({
+            threads,
+            inboxNotifications,
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      liveblocks: { LiveblocksProvider, useInboxNotifications },
+    } = createContextsForTest();
+
+    const Client = () => {
+      return (
+        <LiveblocksProvider>
+          <InboxNotifications />
+        </LiveblocksProvider>
+      );
+    };
+
+    const InboxNotifications = () => {
+      useInboxNotifications();
+      return null;
+    };
+
+    expect(hasCalledGetNotifications).toBe(false);
+    expect(pollerCount).toBe(0);
+
+    const { unmount: unmountComp1 } = render(<Client />);
+
+    // A new fetch request for the threads should have been made after the initial render
+    await waitFor(() => expect(hasCalledGetNotifications).toBe(true));
+    expect(pollerCount).toBe(0);
+
+    // Wait for the first polling to occur after the initial render
+    await jest.advanceTimersByTimeAsync(60_000);
+    await waitFor(() => expect(pollerCount).toBe(1));
+
+    // Unmount Component 1 and verify that no new poll happens after the next interval
+    unmountComp1();
+
+    // Advance time to simulate the next poll
+    await jest.advanceTimersByTimeAsync(60_000);
+    expect(pollerCount).toBe(1);
+
+    // Mount Component 2 and verify that a new poll happens after the next interval
+    const { unmount: unmountComp2 } = render(<Client />);
+
+    // Advance time by the polling interval
+    await jest.advanceTimersByTimeAsync(60_000);
+    await waitFor(() => expect(pollerCount).toBe(2));
+
+    unmountComp2();
+  });
+
+  test("should poll immediately when document becomes visible if last poll was more than the set maximum stale time", async () => {
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+    const inboxNotifications = [
+      dummyThreadInboxNotificationData({ roomId, threadId: threads[0]!.id }),
+    ];
+
+    let hasCalledGetNotifications = false;
+    let pollerCount = 0;
+
+    server.use(
+      mockGetInboxNotifications(async (_req, res, ctx) => {
+        hasCalledGetNotifications = true;
+        return res(
+          ctx.json({
+            threads,
+            inboxNotifications,
+            meta: {
+              requestedAt: new Date().toISOString(),
+              nextCursor: null,
+            },
+          })
+        );
+      }),
+      mockGetInboxNotificationsDelta(async (_req, res, ctx) => {
+        console.log("DELTA");
+        pollerCount++;
+        return res(
+          ctx.json({
+            threads,
+            inboxNotifications,
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      liveblocks: { LiveblocksProvider, useInboxNotifications },
+    } = createContextsForTest();
+
+    const Client = () => {
+      return (
+        <LiveblocksProvider>
+          <InboxNotifications />
+        </LiveblocksProvider>
+      );
+    };
+
+    const InboxNotifications = () => {
+      useInboxNotifications();
+      return null;
+    };
+
+    expect(hasCalledGetNotifications).toBe(false);
+    expect(pollerCount).toBe(0);
+
+    const { unmount } = render(<Client />);
+
+    // A new fetch request for the threads should have been made after the initial render
+    await waitFor(() => expect(hasCalledGetNotifications).toBe(true));
+    expect(pollerCount).toBe(0);
+
+    // Wait for the first polling to occur after the initial render
+    await jest.advanceTimersByTimeAsync(60_000);
+    await waitFor(() => expect(pollerCount).toBe(1));
+
+    // Advance 10 seconds (more than the the currently set maximum stale time, 5000)
+    await jest.advanceTimersByTimeAsync(10_000);
+
+    // Dispatch a `visibilitychange` event and verify that when the document becomes
+    // visible a new poll happens since more than 5000 ms has passed since the last poll
+    document.dispatchEvent(new Event("visibilitychange"));
+
+    await waitFor(() => expect(pollerCount).toBe(2));
+
+    unmount();
+  });
 });
 
 describe("useInboxNotificationsSuspense: error", () => {
