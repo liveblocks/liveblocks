@@ -1,18 +1,22 @@
 import { FSM } from "./fsm";
 
 // TODO LIST:
-// XXX Remove enable()
-// XXX Add inc() + dec()
 // XXX Remove calling of the poller function in the RoomProvider (when "online" and when "mounted")
 // XXX Structure it to have one poller instance per roomId
+// XXX Model the "becoming available of lastRequestedAt date" as another poller precondition?
+// XXX Optimization: Maybe remove `enabled` condition, and implement mayPoll in terms of `count` directly
 
 type Poller = {
   /**
-   * Starts or stops the poller, based on the given condition. When true,
-   * starts the poller if it hasn't been started already. When false, stops the
-   * poller if it hasn't been stopped already.
+   * Increments the subscriber count for this poller. If it becomes > 0, the
+   * poller will be enabled.
    */
-  enable(condition: boolean): void;
+  inc(): void;
+  /**
+   * Decrements the subscriber count for this poller. If it becomes == 0, the
+   * poller will be disabled.
+   */
+  dec(): void;
 
   /**
    * Polls immediately only if it has been more than `maxStaleTimeMs` milliseconds since
@@ -32,6 +36,7 @@ type Context = {
   enabled: boolean; // Whether user has .enable()'ed the poller
   inForeground: boolean; // Whether the visibility state is visible
   lastSuccessfulPollAt: number | null;
+  count: number; // Subscriber count
 };
 
 type State =
@@ -87,6 +92,7 @@ export function makePoller(
     enabled: false,
     inForeground: doc?.visibilityState !== "hidden",
     lastSuccessfulPollAt: null,
+    count: 0,
   };
 
   function mayPoll() {
@@ -133,6 +139,19 @@ export function makePoller(
     startOrStop();
   }
 
+  function inc() {
+    context.count++;
+    enable(context.count > 0);
+  }
+
+  function dec() {
+    context.count--;
+    if (context.count < 0) {
+      context.count = 0;
+    }
+    enable(context.count > 0);
+  }
+
   function pollNowIfStale() {
     if (
       !context.lastSuccessfulPollAt ||
@@ -161,7 +180,8 @@ export function makePoller(
 
   fsm.start();
   return {
-    enable,
+    inc,
+    dec,
     pollNowIfStale,
 
     // Internal API, used by unit tests only to simulate visibility events

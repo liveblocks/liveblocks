@@ -14,7 +14,7 @@ describe("Poller", () => {
     const callback = jest.fn();
     const poller = makePoller(callback, 1000); // 1000ms interval
 
-    poller.enable(true);
+    poller.inc();
 
     // Fast-forward until all timers have been executed
     await jest.advanceTimersByTimeAsync(1000);
@@ -27,8 +27,8 @@ describe("Poller", () => {
     const callback = jest.fn();
     const poller = makePoller(callback, 1000); // 1000ms interval
 
-    poller.enable(true); // Start the poller
-    poller.enable(false); // Stop the poller
+    poller.inc(); // Start the poller
+    poller.dec(); // Stop the poller
 
     // Fast-forward time to check if polling stops
     await jest.advanceTimersByTimeAsync(3000);
@@ -41,7 +41,7 @@ describe("Poller", () => {
     const callback = jest.fn();
     const poller = makePoller(callback, 1000); // 1000ms interval
 
-    poller.enable(true); // Start the poller
+    poller.inc(); // Start the poller
     poller.setInForeground(false); // Stops the poller
 
     // Fast-forward time to check if polling stops
@@ -55,7 +55,7 @@ describe("Poller", () => {
     const callback = jest.fn();
     const poller = makePoller(callback, 1000); // 1000ms interval
 
-    poller.enable(true);
+    poller.inc();
     poller.setInForeground(false);
     expect(callback).toHaveBeenCalledTimes(0);
 
@@ -63,7 +63,7 @@ describe("Poller", () => {
     await jest.advanceTimersByTimeAsync(500);
     expect(callback).toHaveBeenCalledTimes(1);
 
-    poller.enable(false);
+    poller.dec();
   });
 
   test("should prevent polling overlap with async callback", async () => {
@@ -79,7 +79,7 @@ describe("Poller", () => {
 
     const poller = makePoller(callback, 1000); // 1000ms interval
 
-    poller.enable(true);
+    poller.inc();
 
     // Fast-forward time by 2000ms
     await jest.advanceTimersByTimeAsync(2000); // Move from 0s -> 2s on the timeline
@@ -99,8 +99,8 @@ describe("Poller", () => {
     const callback = jest.fn();
     const poller = makePoller(callback, 1000); // 1000ms interval
 
-    poller.enable(true); // Start the poller
-    poller.enable(true); // Attempt to start it again
+    poller.inc(); // Start the poller
+    poller.inc();
 
     // Fast-forward by 3000ms
     await jest.advanceTimersByTimeAsync(3000);
@@ -113,13 +113,13 @@ describe("Poller", () => {
     const callback = jest.fn();
     const poller = makePoller(callback, 1000); // 1000ms interval
 
-    poller.enable(true); // Start polling
+    poller.inc(); // Start polling
 
     // Fast-forward 1500ms (should call callback once after 1000ms)
     await jest.advanceTimersByTimeAsync(1500);
     expect(callback).toHaveBeenCalledTimes(1);
 
-    poller.enable(false); // Stop polling
+    poller.dec(); // Stop polling
 
     // Fast-forward another 1500ms (no more polling)
     await jest.advanceTimersByTimeAsync(1500);
@@ -130,21 +130,21 @@ describe("Poller", () => {
     const callback = jest.fn();
     const poller = makePoller(callback, 10_000); // 10s interval
 
-    poller.enable(true); // Start the poller
+    poller.inc(); // Start the poller
 
     // Forward 3s and stop the poller
     await jest.advanceTimersByTimeAsync(3000);
-    poller.enable(false);
+    poller.dec();
 
     // Forward 3s -> 6s and start + stop the poller
     await jest.advanceTimersByTimeAsync(3000);
-    poller.enable(true);
-    poller.enable(false);
+    poller.inc();
+    poller.dec();
     expect(callback).toHaveBeenCalledTimes(0);
 
     // Forward 6s -> 11s and start the poller
     await jest.advanceTimersByTimeAsync(5000);
-    poller.enable(true);
+    poller.inc();
     await jest.advanceTimersByTimeAsync(0);
 
     // A poll should now immediately happen (because it's been past 10 seconds
@@ -156,7 +156,7 @@ describe("Poller", () => {
     const callback = jest.fn();
     const poller = makePoller(callback, 1000);
 
-    poller.enable(false);
+    poller.dec();
     poller.setInForeground(true);
 
     // Fast-forward well beyond when the first poll is triggered
@@ -174,7 +174,7 @@ describe("Poller", () => {
     const callback = jest.fn();
     const poller = makePoller(callback, 5000, { maxStaleTimeMs: 1000 });
 
-    poller.enable(true); // Start polling
+    poller.inc(); // Start polling
     expect(callback).toHaveBeenCalledTimes(0);
 
     // We're still before the first poll here
@@ -216,7 +216,7 @@ describe("Poller", () => {
     const callback = jest.fn();
     const poller = makePoller(callback, 5000, { maxStaleTimeMs: 30000 });
 
-    poller.enable(true); // Start polling
+    poller.inc(); // Start polling
     expect(callback).toHaveBeenCalledTimes(0);
 
     // We're still before the first poll here
@@ -259,7 +259,7 @@ describe("Poller", () => {
     const callback = jest.fn();
     const poller = makePoller(callback, 5000, { maxStaleTimeMs: 1000 });
 
-    poller.enable(true); // Start polling
+    poller.inc(); // Start polling
     expect(callback).toHaveBeenCalledTimes(0);
 
     // Advance to beyond the 1st and 2nd poll
@@ -300,7 +300,7 @@ describe("Poller", () => {
     const poller = makePoller(callback, 5000, { maxStaleTimeMs: 0 });
 
     // Start the poller
-    poller.enable(true);
+    poller.inc();
 
     // Fast-forward to 5s on the timeline (to trigger Poll 1)
     await jest.advanceTimersByTimeAsync(5000);
@@ -333,7 +333,7 @@ describe("Poller", () => {
     const poller = makePoller(callback, 5000, { maxStaleTimeMs: 30000 });
 
     // Start the poller
-    poller.enable(true);
+    poller.inc();
 
     // Fast-forward to 5s
     await jest.advanceTimersByTimeAsync(5000);
@@ -358,7 +358,7 @@ describe("Poller", () => {
     const poller = makePoller(callback, 1000);
 
     // Start the poller
-    poller.enable(true);
+    poller.inc();
 
     // Fast-forward to 1s when the first poll is triggered
     await jest.advanceTimersByTimeAsync(1000);
@@ -366,14 +366,14 @@ describe("Poller", () => {
     await jest.advanceTimersByTimeAsync(1000); // Poll 1 still in progress
 
     // Disable and enable while Poll 1 is still in progress
-    poller.enable(false);
-    poller.enable(true);
+    poller.dec();
+    poller.inc();
 
     await jest.advanceTimersByTimeAsync(1000); // Poll 1 finished
     expect(callback).toHaveBeenCalledTimes(1);
 
     await jest.advanceTimersByTimeAsync(1000); // Poll 2 starts
-    poller.enable(false);
+    poller.dec();
     await jest.advanceTimersByTimeAsync(2000); // Poll 2 finishes
 
     expect(callback).toHaveBeenCalledTimes(2);

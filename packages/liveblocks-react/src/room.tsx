@@ -247,26 +247,9 @@ function makeDeltaPoller_RoomThreads(client: OpaqueClient) {
     );
   }, config.ROOM_THREADS_POLL_INTERVAL);
 
-  // Keep track of the number of subscribers
-  let pollerSubscribers = 0;
-
   return () => {
-    pollerSubscribers++;
-
-    // XXX - We should wait until the lastRequestedAt date is known using a promise and then
-    // in the `then` body, check again if the number of subscribers if more than 0, and only then
-    // if those conditions hold, start the poller
-    // promise.then(() => { if (subscribers > 0 ) initialPoller() else: do nothing })
-    poller.enable(pollerSubscribers > 0);
-
-    return () => {
-      pollerSubscribers--;
-
-      // XXX - When stopping the poller, we should also ideally abort its
-      // poller function, maybe using an AbortController? This functionality
-      // should be automatic and handled by the Poller abstraction, not here!
-      poller.enable(pollerSubscribers > 0);
-    };
+    poller.inc();
+    return () => poller.dec();
   };
 }
 
