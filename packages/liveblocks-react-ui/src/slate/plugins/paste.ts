@@ -201,29 +201,35 @@ export function withPaste(
     // Deserialize rich text from HTML when pasting
     if (data.types.includes("text/html")) {
       const html = data.getData("text/html");
-      const { body } = new DOMParser().parseFromString(html, "text/html");
 
-      // WebKit browsers can add a trailing `<br>`
-      body.querySelector("br.Apple-interchange-newline")?.remove();
+      try {
+        const { body } = new DOMParser().parseFromString(html, "text/html");
 
-      // Google Docs can use `<b>` as a wrapper for the entire document,
-      // it shouldn't be supported so we remove it
-      if (body.children.length === 1 && body.children[0]?.nodeName === "B") {
-        const wrapper = body.children[0] as HTMLElement;
+        // WebKit browsers can add a trailing `<br>`
+        body.querySelector("br.Apple-interchange-newline")?.remove();
 
-        while (wrapper.firstChild) {
-          body.insertBefore(wrapper.firstChild, wrapper);
+        // Google Docs can use `<b>` as a wrapper for the entire document,
+        // it shouldn't be supported so we remove it
+        if (body.children.length === 1 && body.children[0]?.nodeName === "B") {
+          const wrapper = body.children[0] as HTMLElement;
+
+          while (wrapper.firstChild) {
+            body.insertBefore(wrapper.firstChild, wrapper);
+          }
+
+          body.removeChild(wrapper);
         }
 
-        body.removeChild(wrapper);
-      }
+        const fragment = deserialize(body);
 
-      const fragment = deserialize(body);
+        if (fragment !== null && Array.isArray(fragment)) {
+          Transforms.insertFragment(editor, fragment as SlateNode[]);
 
-      if (fragment !== null && Array.isArray(fragment)) {
-        Transforms.insertFragment(editor, fragment as SlateNode[]);
-
-        return;
+          return;
+        }
+      } catch {
+        // Fallback to inserting the non-rich text if available
+        insertData(data);
       }
     }
 
