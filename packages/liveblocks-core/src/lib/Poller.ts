@@ -73,6 +73,7 @@ export function makePoller(
     maxStaleTimeMs?: number;
   }
 ): Poller {
+  const startTime = performance.now();
   const doc = typeof document !== "undefined" ? document : undefined;
   const win = typeof window !== "undefined" ? window : undefined;
 
@@ -94,7 +95,15 @@ export function makePoller(
 
   fsm.addTransitions("@idle", { START: "@enabled" });
   fsm.addTransitions("@enabled", { STOP: "@idle", POLL: "@polling" });
-  fsm.addTimedTransition("@enabled", intervalMs, "@polling");
+  fsm.addTimedTransition(
+    "@enabled",
+    () => {
+      const lastPoll = context.lastSuccessfulPollAt ?? startTime;
+      const nextPoll = lastPoll + intervalMs;
+      return Math.max(0, nextPoll - performance.now());
+    },
+    "@polling"
+  );
 
   fsm.onEnterAsync(
     "@polling",

@@ -126,6 +126,32 @@ describe("Poller", () => {
     expect(callback).toHaveBeenCalledTimes(1); // No more calls
   });
 
+  test("should keep the original polling schedule, even when disabled half-way", async () => {
+    const callback = jest.fn();
+    const poller = makePoller(callback, 10_000); // 10s interval
+
+    poller.enable(true); // Start the poller
+
+    // Forward 3s and stop the poller
+    await jest.advanceTimersByTimeAsync(3000);
+    poller.enable(false);
+
+    // Forward 3s -> 6s and start + stop the poller
+    await jest.advanceTimersByTimeAsync(3000);
+    poller.enable(true);
+    poller.enable(false);
+    expect(callback).toHaveBeenCalledTimes(0);
+
+    // Forward 6s -> 11s and start the poller
+    await jest.advanceTimersByTimeAsync(5000);
+    poller.enable(true);
+    await jest.advanceTimersByTimeAsync(0);
+
+    // A poll should now immediately happen (because it's been past 10 seconds
+    // mark since the poller was originally started)
+    expect(callback).toHaveBeenCalledTimes(1);
+  });
+
   test("should not allow explicit poll when disabled", async () => {
     const callback = jest.fn();
     const poller = makePoller(callback, 1000);

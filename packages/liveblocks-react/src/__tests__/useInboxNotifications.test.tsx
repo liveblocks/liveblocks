@@ -642,15 +642,16 @@ describe("useInboxNotifications: polling", () => {
     unmountComp1();
 
     // Advance time by a lot to ensure no next poll happens
-    await jest.advanceTimersByTimeAsync(600_000);
+    await jest.advanceTimersByTimeAsync(999_999); // Wait a loooooooooooooooong time
     expect(pollerCount).toBe(1);
 
-    // Mount Component 2 and verify that a new poll happens after the next interval
+    // Mount Component 2 and verify that a new poll happens immediately (because the last time we polled was 999999ms ago)
     const { unmount: unmountComp2 } = render(<Client />);
-
-    // Advance time by the polling interval
-    await jest.advanceTimersByTimeAsync(60_000);
     await waitFor(() => expect(pollerCount).toBe(2));
+
+    // And polling keeps happening every 60s too
+    await jest.advanceTimersByTimeAsync(60_000);
+    await waitFor(() => expect(pollerCount).toBe(3));
 
     unmountComp2();
   });
