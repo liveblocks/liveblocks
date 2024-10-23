@@ -6,10 +6,9 @@ import type { ComposerProps, ComposerSubmitComment } from "@liveblocks/react-ui"
 import { Composer } from "@liveblocks/react-ui";
 import type { Editor } from "@tiptap/react";
 import type { ComponentRef, FormEvent } from "react";
-import React, { forwardRef, useCallback, useEffect } from "react";
+import React, { forwardRef, useCallback, useEffect, useLayoutEffect } from "react";
 
 import type { CommentsExtensionStorage } from "../types";
-import { getRectFromCoords } from "../utils";
 
 export type FloatingComposerProps<M extends BaseMetadata = DM> = Omit<
   ComposerProps<M>,
@@ -58,32 +57,29 @@ export const FloatingComposer = forwardRef<
     },
   });
 
-  useEffect(() => {
+
+  const updateRef = useCallback(() => {
     if (!editor || !showComposer) {
       return;
     }
-    const updateRect = () => {
-      if (!storage) {
-        return;
-      }
-      const seclection = storage.pendingCommentSelection;
-      if (!seclection) {
-        return;
-      }
-      const coords = editor.view.coordsAtPos(Math.min(seclection.from, editor.state.doc.content.size - 1));
-      if (coords) {
-        setReference({
-          getBoundingClientRect: () => getRectFromCoords(coords)
-        });
-      }
+    const el = editor.view.dom.querySelector(".lb-tiptap-active-selection");
+    if (el) {
+      setReference(el);
     }
-    updateRect();
-    editor.on("update", updateRect);
+  }, [setReference, editor, showComposer]);
+
+  // Remote cursor updates and other edits can cause the ref to break
+  useEffect(() => {
+    if (!editor) {
+      return;
+    }
+    editor.on("transaction", updateRef)
     return () => {
-      editor.off("update", updateRect);
+      editor.off("transaction", updateRef);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editor, setReference, showComposer]); // don't need storage explicitly here
+  }, [editor, updateRef]);
+
+  useLayoutEffect(updateRef, [updateRef]);
 
 
   // Submit a new thread and update the comment highlight to show a completed highlight
