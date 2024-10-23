@@ -131,10 +131,10 @@ describe("Poller", () => {
     const poller = makePoller(callback, 1000);
 
     poller.enable(false);
-    poller.pollNowIfStale();
+    poller.setInForeground(true);
 
-    // Fast-forward to 1s when the first poll is triggered
-    await jest.advanceTimersByTimeAsync(10000);
+    // Fast-forward well beyond when the first poll is triggered
+    await jest.advanceTimersByTimeAsync(100_000);
     expect(callback).toHaveBeenCalledTimes(0); // Should not poll, since polling is disabled
   });
 
@@ -155,8 +155,8 @@ describe("Poller", () => {
     await jest.advanceTimersByTimeAsync(2000);
     expect(callback).toHaveBeenCalledTimes(0);
 
-    // Call pollNowIfStale with a maxStaleTimeMs of 1000 (so it should poll)
-    poller.pollNowIfStale();
+    // Bring to foreground to trigger a poll right now
+    poller.setInForeground(true);
 
     expect(callback).toHaveBeenCalledTimes(1);
 
@@ -197,9 +197,9 @@ describe("Poller", () => {
     await jest.advanceTimersByTimeAsync(2000);
     expect(callback).toHaveBeenCalledTimes(0);
 
-    // Call pollNowIfStale with a maxStaleTimeMs of 30000
+    // Bring to foreground to trigger a poll right now
     // Since there is no initial data, it should immediately poll
-    poller.pollNowIfStale();
+    poller.setInForeground(true);
 
     expect(callback).toHaveBeenCalledTimes(1);
 
@@ -240,8 +240,8 @@ describe("Poller", () => {
     await jest.advanceTimersByTimeAsync(7000);
     expect(callback).toHaveBeenCalledTimes(1); // Poll 1 has happened
 
-    // Call pollNowIfStale with a maxStaleTimeMs of 1000 (so it should poll)
-    poller.pollNowIfStale();
+    // Bring to foreground to trigger a poll right now
+    poller.setInForeground(true);
 
     expect(callback).toHaveBeenCalledTimes(2);
 
@@ -280,8 +280,8 @@ describe("Poller", () => {
     await jest.advanceTimersByTimeAsync(5000);
     expect(callback).toHaveBeenCalledTimes(1); // Only one call since the poll is still in progress
 
-    // Fast-forward to 5.5s on the timeline (in the middle of Poll 1)
-    poller.pollNowIfStale();
+    // Bring to foreground to trigger a poll right now
+    poller.setInForeground(true);
 
     expect(callback).toHaveBeenCalledTimes(1); // Still only one call
 
@@ -315,7 +315,9 @@ describe("Poller", () => {
 
     // Fast-forward from 5s -> 6s
     await jest.advanceTimersByTimeAsync(1000);
-    poller.pollNowIfStale(); // Data is allowed to be 30 seconds old, so not stale
+
+    // Bring to foreground
+    poller.setInForeground(true); // Data is allowed to be 30 seconds old, so not stale
 
     // Fast-forward from 6s -> 10s
     await jest.advanceTimersByTimeAsync(4000);

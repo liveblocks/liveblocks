@@ -9,13 +9,6 @@ type Poller = {
   enable(condition: boolean): void;
 
   /**
-   * Polls immediately only if it has been more than `maxStaleTimeMs` milliseconds since
-   * the last poll and no poll is currently in progress. After polling, schedules
-   * the next poll at the regular interval.
-   */
-  pollNowIfStale(): void;
-
-  /**
    * Used in unit tests only.
    * @internal
    */
@@ -44,7 +37,6 @@ type Event =
  *
  * The poller has only two public APIs, both side effects:
  * - .enable(condition: boolean): void
- * - .pollNowIfStale(): void
  *
  * It has the following behaviors/guarantees:
  * - Performing a "poll" literally means calling the provided callback (and
@@ -55,16 +47,16 @@ type Event =
  * - If .enable(false) is called it stops the poller. This means that any next
  *   poll will get unscheduled. If .enable(false) is called while a poll is
  *   ongoing, it will finish that one first, but after that stop polling.
- * - If .pollNowIfStale() is called, it will:
- *   - Do nothing if the poller isn't enabled
- *   - Do nothing if the poller is enabled, but the last time a poll happened
- *     is less than the maxStaleTimeMs setting (defaults to infinity)
- *   - Poll right now otherwise. If an existing poll was already scheduled,
- *     think of it as if this future poll is "earlied" and just happening right
- *     now instead
- * - If in a browser context, and the active window loses focus, polling
- *   implicitly stops too. Only if both the window is focused _and_ the poller
- *   is enabled, it will perform an actual poll.
+ * - If the document's visibility state changes to hidden (tab is moved to the
+ *   background), polling will stop until the document's made visible again
+ * - If the document becomes visible again, the poller will:
+ *   - Still do nothing if the poller isn't enabled
+ *   - Still do nothing if the poller is enabled, but the last time a poll
+ *     happened recently enough (= less than the maxStaleTimeMs, which defaults
+ *     to infinity)
+ *   - Trigger a poll right away otherwise. If an existing poll was already
+ *     scheduled, think of it as if this future poll is "earlied" and just
+ *     happening right now instead
  */
 export function makePoller(
   callback: (signal: AbortSignal) => Promise<void> | void,
@@ -116,6 +108,11 @@ export function makePoller(
     startOrStop();
   }
 
+  /**
+   * Polls immediately only if it has been more than `maxStaleTimeMs` milliseconds since
+   * the last poll and no poll is currently in progress. After polling, schedules
+   * the next poll at the regular interval.
+   */
   function pollNowIfStale() {
     if (
       !context.lastSuccessfulPollAt ||
@@ -148,9 +145,8 @@ export function makePoller(
   fsm.start();
   return {
     enable,
-    pollNowIfStale,
 
-    // Private API
+    // Internal API, used by unit tests only to simulate visibility events
     setInForeground,
   };
 }
