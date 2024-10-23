@@ -129,12 +129,3 @@ for pkgdir in "$@"; do
     echo "  - https://www.npmjs.com/package/$pkgname"
 done
 echo ""
-
-echo "==> Pushing changes to GitHub"
-if ! git push-current; then
-    err "WARNING: Could not push this branch to GitHub!"
-    err "Please manually fix that now, before writing the release notes!"
-    exit 2
-else
-    echo "Done! Please finish it off by writing a nice changelog entry on GitHub."
-fi
