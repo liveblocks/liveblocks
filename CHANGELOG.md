@@ -5,6 +5,12 @@
 - Add new methods under `client.resolvers.*` to invalidate the cache of
   `resolveUsers`, `resolveRoomsInfo`, and `resolveMentionSuggestions`.
 
+## 2.9.2
+
+### `@liveblocks/node`
+
+- Detect invalid chars in secret keys and throw a more helpful error message
+
 ## 2.9.1
 
 ### `@liveblocks/client`
