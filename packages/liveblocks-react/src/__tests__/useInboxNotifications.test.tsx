@@ -641,8 +641,8 @@ describe("useInboxNotifications: polling", () => {
     // Unmount Component 1 and verify that no new poll happens after the next interval
     unmountComp1();
 
-    // Advance time to simulate the next poll
-    await jest.advanceTimersByTimeAsync(60_000);
+    // Advance time by a lot to ensure no next poll happens
+    await jest.advanceTimersByTimeAsync(600_000);
     expect(pollerCount).toBe(1);
 
     // Mount Component 2 and verify that a new poll happens after the next interval
