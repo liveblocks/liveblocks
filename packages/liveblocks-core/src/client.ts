@@ -320,7 +320,7 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
    */
   resolvers: {
     /**
-     * Invalidate all or specific users that were previously cached by `resolveUsers`.
+     * Invalidate users that were previously cached by `resolveUsers`.
      *
      * @example
      * // Invalidate all users
@@ -329,17 +329,11 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
      * @example
      * // Invalidate specific users
      * client.resolvers.invalidateUsers(["user-1", "user-2"]);
-     *
-     * @example
-     * // Invalidate specific users using a predicate
-     * client.resolvers.invalidateUsers((user) => user.tags.includes("Engineering"));
      */
-    invalidateUsers(
-      userIds?: string[] | ((user: NonNullable<U["info"]>) => boolean)
-    ): void;
+    invalidateUsers(userIds?: string[]): void;
 
     /**
-     * Invalidate all or specific rooms info that were previously cached by `resolveRoomsInfo`.
+     * Invalidate rooms info that were previously cached by `resolveRoomsInfo`.
      *
      * @example
      * // Invalidate all rooms
@@ -348,14 +342,8 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
      * @example
      * // Invalidate specific rooms
      * client.resolvers.invalidateRoomsInfo(["room-1", "room-2"]);
-     *
-     * @example
-     * // Invalidate specific rooms using a predicate
-     * client.resolvers.invalidateRoomsInfo((roomInfo) => roomInfo.url.includes("engineering"));
      */
-    invalidateRoomsInfo(
-      roomIds?: string[] | ((info: NonNullable<DRI>) => boolean)
-    ): void;
+    invalidateRoomsInfo(roomIds?: string[]): void;
 
     /**
      * Invalidate all mention suggestions cached by `resolveMentionSuggestions`.
@@ -682,9 +670,7 @@ export function createClient<U extends BaseUserMeta = DU>(
   );
   const usersStore = createBatchStore(batchedResolveUsers);
 
-  function invalidateResolvedUsers(
-    userIds?: string[] | ((user: NonNullable<U["info"]>) => boolean)
-  ) {
+  function invalidateResolvedUsers(userIds?: string[]) {
     usersStore.invalidate(userIds);
   }
 
@@ -707,9 +693,7 @@ export function createClient<U extends BaseUserMeta = DU>(
   );
   const roomsInfoStore = createBatchStore(batchedResolveRoomsInfo);
 
-  function invalidateResolvedRoomsInfo(
-    roomIds?: string[] | ((info: NonNullable<DRI>) => boolean)
-  ) {
+  function invalidateResolvedRoomsInfo(roomIds?: string[]) {
     roomsInfoStore.invalidate(roomIds);
   }
 
