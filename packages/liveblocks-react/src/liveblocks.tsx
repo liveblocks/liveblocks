@@ -921,16 +921,6 @@ export function LiveblocksProvider<U extends BaseUserMeta = DU>(
   // to recreate a client instance after the first render.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const client = useMemo(() => createClient<U>(options), []);
-
-  // const store = getLiveblocksExtrasForClient(client);
-
-  // useEffect(() => {
-  //   poller.setup();
-  //   return () => {
-  //     poller.teardown();
-  //   };
-  // }, []);
-
   return (
     <LiveblocksProviderWithClient client={client}>
       {children}
