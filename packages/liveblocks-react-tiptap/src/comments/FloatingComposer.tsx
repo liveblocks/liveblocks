@@ -70,14 +70,14 @@ export const FloatingComposer = forwardRef<
 
   // Remote cursor updates and other edits can cause the ref to break
   useEffect(() => {
-    if (!editor) {
+    if (!editor || !showComposer) {
       return;
     }
     editor.on("transaction", updateRef)
     return () => {
       editor.off("transaction", updateRef);
     }
-  }, [editor, updateRef]);
+  }, [editor, updateRef, showComposer]);
 
   useLayoutEffect(updateRef, [updateRef]);
 
