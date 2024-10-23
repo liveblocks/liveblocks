@@ -763,31 +763,6 @@ function RoomProviderInner<
   }, [client, room]);
 
   React.useEffect(() => {
-    const store = getRoomExtrasForClient(client).store;
-    // Retrieve threads that have been updated/deleted since the last time the room requested threads updates
-    void store.fetchRoomThreadsDeltaUpdate(room.id).catch(() => {
-      // Deliberately catch and ignore any errors here
-    });
-  }, [client, room.id]);
-
-  /**
-   * Subscribe to the 'online' event to fetch threads/notifications updates when the browser goes back online.
-   */
-  React.useEffect(() => {
-    function handleIsOnline() {
-      const store = getRoomExtrasForClient(client).store;
-      void store.fetchRoomThreadsDeltaUpdate(room.id).catch(() => {
-        // Deliberately catch and ignore any errors here
-      });
-    }
-
-    window.addEventListener("online", handleIsOnline);
-    return () => {
-      window.removeEventListener("online", handleIsOnline);
-    };
-  }, [client, room.id]);
-
-  React.useEffect(() => {
     const pair = stableEnterRoom(roomId, frozenProps);
 
     setRoomLeavePair(pair);

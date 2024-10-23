@@ -1,7 +1,6 @@
 import { FSM } from "./fsm";
 
 // TODO LIST:
-// XXX Remove calling of the poller function in the RoomProvider (when "online" and when "mounted")
 // XXX Model the "becoming available of lastRequestedAt date" as another poller precondition?
 // XXX Optimization: Maybe remove `enabled` condition, and implement mayPoll in terms of `count` directly
 // XXX Optimization: Rename `subscribeToDeltaUpdates` and interact with the Poller directly?
