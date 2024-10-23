@@ -123,11 +123,7 @@ function deserialize(node: Node): DeserializedNode {
     children = [{ text: "" }];
   }
 
-  if (
-    node.nodeName === "BODY" ||
-    // Google Docs can use `<b>` as a wrapper for the entire document
-    (node.nodeName === "B" && node.parentElement?.nodeName === "BODY")
-  ) {
+  if (node.nodeName === "BODY") {
     return jsx("fragment", {}, children);
   }
 
@@ -192,7 +188,21 @@ export function withPaste(
     if (data.types.includes("text/html")) {
       const html = normalize(data.getData("text/html"));
       const parsed = new DOMParser().parseFromString(html, "text/html");
-      const fragment = deserialize(parsed.body);
+      const body = parsed.body;
+
+      // Google Docs can use `<b>` as a wrapper for the entire document,
+      // it shouldn't be supported so we remove it
+      if (body.children.length === 1 && body.children[0]?.nodeName === "B") {
+        const wrapper = body.children[0] as HTMLElement;
+
+        while (wrapper.firstChild) {
+          body.insertBefore(wrapper.firstChild, wrapper);
+        }
+
+        body.removeChild(wrapper);
+      }
+
+      const fragment = deserialize(body);
 
       if (fragment !== null && Array.isArray(fragment)) {
         Transforms.insertFragment(editor, fragment as SlateNode[]);
