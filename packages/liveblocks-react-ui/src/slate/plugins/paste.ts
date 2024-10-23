@@ -93,20 +93,14 @@ function flattenListItems(node: HTMLElement): HTMLElement[] {
   return listItems;
 }
 
-function normalize(html: string) {
-  // WebKit browsers can add a trailing `<br>`
-  html = html.replace(/<br class="?Apple-interchange-newline"?>/gi, "");
-
-  return html;
-}
-
 function deserialize(node: Node): DeserializedNode {
   if (node.nodeType === 3) {
     return node.textContent;
   } else if (node.nodeType !== 1) {
     return null;
   } else if (node.nodeName === "BR") {
-    return "\n";
+    // Insert a new paragraph
+    return jsx("element", createParagraphElement(), []);
   }
 
   const childNodes = Array.from(node.childNodes);
@@ -124,7 +118,18 @@ function deserialize(node: Node): DeserializedNode {
   }
 
   if (node.nodeName === "BODY") {
-    return jsx("fragment", {}, children);
+    // If the body contains only text nodes, we wrap it in a paragraph
+    if (children.every((child) => typeof child === "string")) {
+      children = [
+        { type: "paragraph", children: [{ text: children.join("") }] },
+      ];
+    }
+
+    return jsx(
+      "fragment",
+      {},
+      children.filter((child) => typeof child !== "string")
+    );
   }
 
   if (ELEMENT_TAGS[node.nodeName]) {
@@ -186,9 +191,11 @@ export function withPaste(
 
     // Deserialize rich text from HTML when pasting
     if (data.types.includes("text/html")) {
-      const html = normalize(data.getData("text/html"));
-      const parsed = new DOMParser().parseFromString(html, "text/html");
-      const body = parsed.body;
+      const html = data.getData("text/html");
+      const { body } = new DOMParser().parseFromString(html, "text/html");
+
+      // WebKit browsers can add a trailing `<br>`
+      body.querySelector("br.Apple-interchange-newline")?.remove();
 
       // Google Docs can use `<b>` as a wrapper for the entire document,
       // it shouldn't be supported so we remove it

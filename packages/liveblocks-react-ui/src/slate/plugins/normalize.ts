@@ -1,5 +1,5 @@
 import type { Editor } from "slate";
-import { Element as SlateElement, Node as SlateNode, Transforms } from "slate";
+import { Element, Node, Transforms } from "slate";
 
 export function withNormalize(editor: Editor) {
   const { normalizeNode } = editor;
@@ -8,9 +8,9 @@ export function withNormalize(editor: Editor) {
     const [node, path] = entry;
 
     // Paragraphs should only contain inline elements.
-    if (SlateElement.isElement(node) && node.type === "paragraph") {
-      for (const [child, childPath] of SlateNode.children(editor, path)) {
-        if (SlateElement.isElement(child) && !editor.isInline(child)) {
+    if (Element.isElement(node) && node.type === "paragraph") {
+      for (const [child, childPath] of Node.children(editor, path)) {
+        if (Element.isElement(child) && !editor.isInline(child)) {
           Transforms.unwrapNodes(editor, { at: childPath });
           return;
         }
