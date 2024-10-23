@@ -377,28 +377,18 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   function getOrCreatePollerForRoomId(roomId: string) {
     let poller = pollersByRoomId.get(roomId);
     if (!poller) {
-      poller = makePoller(async () => {
-        // Poll in every currently connected/open room
-        // Note that Promise.allSettled() will never throw, which is important for
-        // the poller!
-        const roomIds = client[kInternal].getRoomIds();
-        await Promise.allSettled(
-          roomIds.map((roomId) => {
-            const room = client.getRoom(roomId);
-            if (room === null) return;
-
-            return store.fetchRoomThreadsDeltaUpdate(room.id);
-          })
-        );
-      }, config.ROOM_THREADS_POLL_INTERVAL);
+      poller = makePoller(
+        () =>
+          // Poll in every currently connected/open room
+          // XXX Add signal here too?
+          store.fetchRoomThreadsDeltaUpdate(roomId),
+        config.ROOM_THREADS_POLL_INTERVAL
+      );
 
       pollersByRoomId.set(roomId, poller);
     }
 
-    return () => {
-      poller!.inc();
-      return () => poller!.dec();
-    };
+    return poller;
   }
 
   return {
@@ -1292,7 +1282,7 @@ function useThreads<M extends BaseMetadata>(
   const { store, getOrCreatePollerForRoomId } =
     getRoomExtrasForClient<M>(client);
 
-  const subscribeToDeltaUpdates = getOrCreatePollerForRoomId(room.id);
+  const poller = getOrCreatePollerForRoomId(room.id);
 
   React.useEffect(
     () => {
@@ -1313,7 +1303,11 @@ function useThreads<M extends BaseMetadata>(
     //    *next* render after that, a *new* fetch/promise will get created.
   );
 
-  React.useEffect(subscribeToDeltaUpdates, [subscribeToDeltaUpdates]);
+  React.useEffect(() => {
+    poller.inc();
+    poller.pollNowIfStale();
+    return () => poller.dec();
+  }, [poller]);
 
   const getter = React.useCallback(
     () => store.getRoomThreadsLoadingState(room.id, options.query),
