@@ -117,6 +117,7 @@ export const MentionExtension = Node.create<MentionExtensionOptions>({
   selectable: true,
   atom: true,
 
+  priority: 110,
   parseHTML() {
     return [
       {
