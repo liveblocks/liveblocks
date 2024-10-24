@@ -1,9 +1,5 @@
 import { FSM } from "./fsm";
 
-// TODO LIST:
-// XXX Model the "becoming available of lastRequestedAt date" as another poller precondition?
-// XXX Think about the _initial_ poll that is now being triggered by the pollNowIfStale() call when a component mounts. Typically the initial data has not been loaded yet, so polling should not really happen yet either.
-
 export type Poller = {
   /**
    * Increments the subscriber count for this poller. If it becomes > 0, the
@@ -32,7 +28,7 @@ export type Poller = {
 
 type Context = {
   inForeground: boolean; // Whether the visibility state is visible
-  lastSuccessfulPollAt: number | null;
+  lastSuccessfulPollAt: number; // The timestamp of the last successful poll (or when the poller was initialized)
   count: number; // Subscriber count
   backoff: number; // Backoff delay in ms
 };
@@ -93,7 +89,7 @@ export function makePoller(
   const maxStaleTimeMs = options?.maxStaleTimeMs ?? Number.POSITIVE_INFINITY;
   const context: Context = {
     inForeground: doc?.visibilityState !== "hidden",
-    lastSuccessfulPollAt: null,
+    lastSuccessfulPollAt: startTime,
     count: 0,
     backoff: 0,
   };
@@ -126,7 +122,7 @@ export function makePoller(
   fsm.addTimedTransition(
     "@enabled",
     () => {
-      const lastPoll = context.lastSuccessfulPollAt ?? startTime;
+      const lastPoll = context.lastSuccessfulPollAt;
       const nextPoll = lastPoll + intervalMs;
       return Math.max(0, nextPoll - performance.now()) + context.backoff;
     },
@@ -188,10 +184,7 @@ export function makePoller(
   }
 
   function pollNowIfStale() {
-    if (
-      !context.lastSuccessfulPollAt ||
-      performance.now() - context.lastSuccessfulPollAt > maxStaleTimeMs
-    ) {
+    if (performance.now() - context.lastSuccessfulPollAt > maxStaleTimeMs) {
       fsm.send({ type: "POLL" });
     }
   }

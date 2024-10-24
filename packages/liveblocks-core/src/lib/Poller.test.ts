@@ -51,16 +51,33 @@ describe("Poller", () => {
     expect(callback).toHaveBeenCalledTimes(0);
   });
 
-  test("should trigger a poll as soon as visibility state is toggled", async () => {
+  test("should trigger a poll as soon as visibility state is toggled before stale time", async () => {
     const callback = jest.fn();
-    const poller = makePoller(callback, 1000); // 1000ms interval
+    const poller = makePoller(callback, 1000, { maxStaleTimeMs: 500 }); // 1000ms interval
 
     poller.inc();
     poller.setInForeground(false);
     expect(callback).toHaveBeenCalledTimes(0);
 
+    await jest.advanceTimersByTimeAsync(400);
     poller.setInForeground(true); // Becoming visible should instantly trigger a poll
-    await jest.advanceTimersByTimeAsync(500);
+
+    expect(callback).toHaveBeenCalledTimes(0);
+
+    poller.dec();
+  });
+
+  test("should trigger a poll as soon as visibility state is toggled after stale time", async () => {
+    const callback = jest.fn();
+    const poller = makePoller(callback, 1000, { maxStaleTimeMs: 500 }); // 1000ms interval
+
+    poller.inc();
+    poller.setInForeground(false);
+    expect(callback).toHaveBeenCalledTimes(0);
+
+    await jest.advanceTimersByTimeAsync(600);
+    poller.setInForeground(true); // Becoming visible should instantly trigger a poll
+
     expect(callback).toHaveBeenCalledTimes(1);
 
     poller.dec();
@@ -214,13 +231,13 @@ describe("Poller", () => {
     //      Force poll here
 
     const callback = jest.fn();
-    const poller = makePoller(callback, 5000, { maxStaleTimeMs: 30000 });
+    const poller = makePoller(callback, 5000, { maxStaleTimeMs: 3000 });
 
     poller.inc(); // Start polling
     expect(callback).toHaveBeenCalledTimes(0);
 
     // We're still before the first poll here
-    await jest.advanceTimersByTimeAsync(2000);
+    await jest.advanceTimersByTimeAsync(4000);
     expect(callback).toHaveBeenCalledTimes(0);
 
     // Bring to foreground to trigger a poll right now
@@ -229,14 +246,14 @@ describe("Poller", () => {
 
     expect(callback).toHaveBeenCalledTimes(1);
 
-    // 0s        2s                         7s
-    // |---------|--------------------------|
-    // Start     ^                       Poll 2 (natural)
-    //           |
-    //         Forced poll
+    // 0s            4s      5s
+    // |--------------|------|
+    // Start          ^    Poll 2 (natural)
+    //                |
+    //             Forced poll
 
     // Advance to what originally was the time the 1st poll
-    await jest.advanceTimersByTimeAsync(3000); // Move from 2s -> 5s
+    await jest.advanceTimersByTimeAsync(1000); // Move from 4s -> 5s
     expect(callback).toHaveBeenCalledTimes(1);
 
     await jest.advanceTimersByTimeAsync(2000); // Move from 5s -> 7s
