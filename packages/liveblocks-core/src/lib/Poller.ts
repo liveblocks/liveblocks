@@ -12,7 +12,7 @@ export type Poller = {
    */
   inc(): void;
   /**
-   * Decrements the subscriber count for this poller. If it becomes == 0, the
+   * Decrements the subscriber count for this poller. If it becomes = 0, the
    * poller will be disabled.
    */
   dec(): void;
@@ -51,20 +51,23 @@ type Event =
  * Makes a poller that will call `await callback()` at the desired interval (in
  * millis).
  *
- * The poller has only two public APIs, both side effects:
- * - .enable(condition: boolean): void
+ * The poller has only three public APIs, all side effects:
+ * - .inc(): void
+ * - .dec(): void
+ * - .pollNowIfStale(): void
  *
  * It has the following behaviors/guarantees:
  * - Performing a "poll" literally means calling the provided callback (and
  *   awaiting it)
- * - It will only ever poll if .enable(true) was called.
- * - It will not _immediately_ poll if .enable(true) is called. The first poll
+ * - It will only ever start polling if .inc() was called (more often than .dec())
+ * - It will not _immediately_ poll if .inc() is called. The first poll
  *   can be expected no earlier than the specified interval.
- * - If .enable(false) is called it stops the poller. This means that any next
- *   poll will get unscheduled. If .enable(false) is called while a poll is
- *   ongoing, it will finish that one first, but after that stop polling.
+ * - If .dec() is called as many times as .inc(), it stops the poller. This
+ *   means that any next poll will get unscheduled. If .dev() is called while
+ *   a poll is ongoing, it will still finish that poll, but after that stop
+ *   further polling.
  * - If the document's visibility state changes to hidden (tab is moved to the
- *   background), polling will stop until the document's made visible again
+ *   background), polling will be paused until the document's made visible again
  * - If the document becomes visible again, the poller will:
  *   - Still do nothing if the poller isn't enabled
  *   - Still do nothing if the poller is enabled, but the last time a poll
