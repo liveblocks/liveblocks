@@ -22,3 +22,8 @@ export type OthersEvent<
     others: readonly User<P, U>[];
   }
 >;
+
+export enum TextEditorType {
+  Lexical = "lexical",
+  TipTap = "tiptap",
+}

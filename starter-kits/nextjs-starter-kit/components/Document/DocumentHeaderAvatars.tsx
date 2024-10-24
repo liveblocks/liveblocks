@@ -1,6 +1,6 @@
-import { useMemo } from "react";
 import { useOthers, useSelf } from "@liveblocks/react/suspense";
-import { AvatarStack } from "../../primitives/AvatarStack";
+import { useMemo } from "react";
+import { AvatarStack } from "@/primitives/AvatarStack";
 
 export function DocumentHeaderAvatars() {
   const self = useSelf();

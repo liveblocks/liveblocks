@@ -1,0 +1,250 @@
+@import "./utils";
+@import "./constants";
+
+/*************************************
+ *            Suggestions            *
+ *************************************/
+
+.lb-tiptap-suggestions-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/*************************************
+ *        Mention suggestions        *
+ *************************************/
+
+.lb-tiptap-mention-suggestions {
+  --lb-tiptap-mention-suggestion-avatar-size: 1.25rem;
+}
+
+.lb-tiptap-mention-suggestion {
+  padding: calc(0.375 * var(--lb-spacing)) calc(0.625 * var(--lb-spacing));
+}
+
+.lb-tiptap-mention-suggestion-avatar {
+  inline-size: var(--lb-tiptap-mention-suggestion-avatar-size);
+  margin-inline-start: calc(-0.125 * var(--lb-spacing));
+  margin-inline-end: calc(0.5 * var(--lb-spacing));
+  margin-block: calc(0.125 * var(--lb-spacing));
+  background: var(--lb-foreground-subtle);
+  color: var(--lb-foreground-moderate);
+}
+
+/*************************************
+ *          Elevation lists          *
+ *************************************/
+
+.lb-tiptap-suggestions {
+  padding: $lb-elevation-list-padding;
+  animation-duration: var(--lb-transition-duration);
+  animation-timing-function: var(--lb-transition-easing);
+  will-change: transform, opacity;
+}
+
+.lb-tiptap-suggestions-list-item {
+  display: flex;
+  align-items: center;
+  padding: calc(0.25 * var(--lb-spacing)) calc(0.5 * var(--lb-spacing));
+  border-radius: calc(var(--lb-radius) - 0.75 * $lb-elevation-list-padding);
+  color: var(--lb-foreground-secondary);
+  outline: none;
+  font-size: 0.875rem;
+  cursor: pointer;
+  user-select: none;
+  transition-property: background, color, opacity;
+  scroll-margin-block: $lb-elevation-list-padding;
+}
+
+:is(.lb-tiptap-suggestions-list-item) {
+  &:where([data-highlighted], [data-selected]) {
+    background: var(--lb-foreground-subtle);
+    transition-duration: calc(var(--lb-transition-duration) / 2);
+  }
+
+  &:where(:disabled, [data-disabled]) {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+/*************************************
+ *        Floating animations        *
+ *************************************/
+
+:is(.lb-tiptap-suggestions) {
+  &:where([data-side="top"]) {
+    animation-name: lb-animation-slide-up;
+  }
+
+  &:where([data-side="bottom"]) {
+    animation-name: lb-animation-slide-down;
+  }
+
+  &:where([data-state="closed"]) {
+    animation-name: lb-animation-disappear;
+  }
+}
+
+@media (prefers-reduced-motion) {
+  .lb-tiptap-suggestions:where(:not([data-state="closed"])) {
+    animation-name: lb-animation-appear;
+  }
+}
+
+/*************************************
+ *              Mention              *
+ *************************************/
+
+.lb-tiptap-mention {
+  padding: 0.1em 0.3em;
+  border-radius: calc(0.675 * var(--lb-radius));
+  background: var(--lb-accent-subtle);
+  color: var(--lb-accent);
+  box-decoration-break: clone;
+  font-weight: 500;
+
+  @include invisible-selection;
+}
+
+.lb-mention-selected {
+  background: var(--lb-accent);
+  color: var(--lb-accent-foreground);
+}
+
+/*************************************
+ *            Thread mark            *
+ *************************************/
+
+:where(.lb-tiptap-thread-mark:not([data-orphan="true"])) {
+  background: var(--lb-accent-subtle);
+  color: var(--lb-foreground);
+  outline: none;
+  font-weight: 500;
+  transition-property: color, text-decoration-color;
+  text-decoration-line: underline;
+  text-decoration-color: var(--lb-foreground-moderate);
+  text-underline-offset: 2px;
+}
+
+:where(
+    .lb-tiptap-thread-mark:not([data-orphan="true"])
+      .lb-tiptap-thread-mark-selected
+  ) {
+  color: var(--lb-accent);
+  text-decoration-line: underline;
+  text-decoration-color: var(--lb-accent-moderate);
+  text-underline-offset: 2px;
+}
+
+/*************************************
+ *          Anchored threads         *
+ *************************************/
+
+.lb-tiptap-anchored-threads {
+  --lb-tiptap-anchored-threads-gap: 1.25rem;
+  --lb-tiptap-anchored-threads-active-thread-offset: -0.75rem;
+}
+
+.lb-tiptap-anchored-threads-thread-container {
+  transition-duration: calc(var(--lb-transition-duration) * 2);
+  transition-property: transform;
+}
+
+@media (prefers-reduced-motion) {
+  .lb-tiptap-anchored-threads-thread-container {
+    transition-duration: 0s;
+  }
+}
+
+.lb-tiptap-anchored-threads-thread {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--lb-radius);
+  background: var(--lb-dynamic-background);
+  box-shadow: $lb-tiptap-anchored-threads-shadow;
+  transition-property: background, box-shadow;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    box-shadow: var(--lb-inset-shadow);
+    pointer-events: none;
+  }
+
+  &:where([data-state="active"]) {
+    box-shadow: $lb-tiptap-anchored-threads-active-shadow;
+  }
+}
+
+/*************************************
+ *        Floating components        *
+ *************************************/
+
+.lb-tiptap-floating {
+  --lb-tiptap-floating-size: 350px;
+}
+
+/*************************************
+ *         Floating threads          *
+ *************************************/
+
+.lb-tiptap-floating-threads-thread {
+  inline-size: var(--lb-tiptap-floating-size);
+
+  &:where(:not(:last-of-type)) {
+    border-block-end: 1px solid var(--lb-foreground-subtle);
+  }
+}
+
+/*************************************
+ *         Floating composer         *
+ *************************************/
+
+.lb-tiptap-floating-composer {
+  inline-size: var(--lb-tiptap-floating-size);
+}
+
+.lb-tiptap-active-selection {
+  background: var(--lb-selection, rgb(0 0 255 / 20%));
+  pointer-events: none;
+}
+
+/*************************************
+ *         Collab Cursors            *
+ *************************************/
+
+/* Give a remote user a caret */
+/* stylelint-disable-next-line selector-class-pattern */
+.collaboration-cursor__caret {
+  position: relative;
+  margin-inline-start: -1px;
+  margin-inline-end: -1px;
+  border-inline-start: 1px solid #0d0d0d;
+  border-inline-end: 1px solid #0d0d0d;
+  word-break: normal;
+  pointer-events: none;
+}
+
+/* Render the username above the caret */
+/* stylelint-disable-next-line selector-class-pattern */
+.collaboration-cursor__label {
+  position: absolute;
+  inset-inline-start: -1px;
+  inset-block-start: -1.4em;
+  padding: 2px 6px;
+  border-radius: 6px;
+  border-end-start-radius: 0;
+  color: #fff;
+  font-weight: 600;
+  font-style: normal;
+  font-size: 14px;
+  line-height: normal;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}

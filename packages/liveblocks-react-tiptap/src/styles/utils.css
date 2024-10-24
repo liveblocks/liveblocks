@@ -1,0 +1,6 @@
+@mixin invisible-selection {
+  &::selection,
+  *::selection {
+    background: transparent;
+  }
+}

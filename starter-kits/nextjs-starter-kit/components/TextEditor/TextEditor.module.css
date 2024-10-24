@@ -70,7 +70,7 @@
   }
 }
 
-.threadListContainer {
+.threads {
   position: absolute;
   top: 0;
   left: 100%;
@@ -78,8 +78,34 @@
   min-width: var(--comments-width);
 }
 
-.mobileThreadListContainer {
-  display: none;
+.noComments {
+  color: var(--color-text-lighter);
+  padding-top: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  user-select: none;
+  margin-left: var(--space-4);
+  font-size: var(--size-sm);
+}
+
+.noCommentsHeader {
+  color: var(--color-text-light);
+  font-weight: 600;
+  font-size: var(--size-lg);
+}
+
+.noCommentsButton {
+  float: left;
+  border: 1px solid var(--color-border-contrasted);
+  padding: var(--space-4);
+  margin-top: 3px;
+  margin-right: var(--space-6);
+  border-radius: var(--radius-sm);
+}
+
+.noCommentsButton svg {
+  opacity: 0.8;
 }
 
 @media (max-width: 1279px) {
@@ -88,15 +114,22 @@
     padding: 0 var(--space-8);
   }
 
-  .threadListContainer {
-    display: none;
+  .noComments {
+    background: var(--color-surface-elevated);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+    border-radius: var(--radius-sm);
+    padding: var(--space-8);
+    margin-left: 0;
   }
 
-  .mobileThreadListContainer {
-    display: block;
-    max-width: 100%;
-    width: var(--editor-max-width);
-    margin: var(--space-8) auto;
+  .noComments p {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .noCommentsButton {
+    margin-top: 0;
   }
 }
 

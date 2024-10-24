@@ -57,4 +57,6 @@ export const authConfig: NextAuthConfig = {
 
     // ...add more providers here
   ],
+
+  trustHost: true,
 };

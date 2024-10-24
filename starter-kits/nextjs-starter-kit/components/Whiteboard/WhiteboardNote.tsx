@@ -1,3 +1,4 @@
+import { useStorage } from "@liveblocks/react/suspense";
 import clsx from "clsx";
 import {
   ChangeEventHandler,
@@ -10,7 +11,6 @@ import {
   useRef,
 } from "react";
 import { CrossIcon } from "@/icons";
-import { useStorage } from "@liveblocks/react/suspense";
 import { Avatar } from "@/primitives/Avatar";
 import { Button } from "@/primitives/Button";
 import styles from "./WhiteboardNote.module.css";

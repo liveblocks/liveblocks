@@ -2,6 +2,12 @@
 module.exports = {
   reactStrictMode: true,
   images: {
-    domains: ["liveblocks.io"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "liveblocks.io",
+        pathname: "/**",
+      },
+    ],
   },
 };
