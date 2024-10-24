@@ -4,6 +4,9 @@
 
 - Add new methods under `client.resolvers.*` to invalidate the cache of
   `resolveUsers`, `resolveRoomsInfo`, and `resolveMentionSuggestions`.
+- In storage update notifications (using
+  `room.subscribe(root, ..., { isDeep: true })`), all LiveList deletion updates
+  will now also include the item that was deleted (#2008)
 
 ## 2.9.2
 
