@@ -7,9 +7,7 @@ import { ClientSideSuspense } from "@liveblocks/react";
 import { DocumentSpinner } from "@/primitives/Spinner";
 
 export function Room({ children }: { children: ReactNode }) {
-  const roomId = useExampleRoomId(
-    "liveblocks:examples:nextjs-yjs-tiptap-advanced"
-  );
+  const roomId = useExampleRoomId("liveblocks:examples:nextjs-tiptap-advanced");
 
   return (
     <RoomProvider
