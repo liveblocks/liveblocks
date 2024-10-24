@@ -347,6 +347,7 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     return;
   }
 
+  // Note: This error event source includes both comments and room notifications settings!!
   const commentsErrorEventSource = makeEventSource<CommentsError<M>>();
 
   function onMutationFailure(
