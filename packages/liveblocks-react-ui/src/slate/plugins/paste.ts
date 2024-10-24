@@ -118,8 +118,11 @@ function deserialize(node: Node): DeserializedNode {
   }
 
   if (node.nodeName === "BODY") {
-    // If the body contains only text nodes, we wrap it in a paragraph
-    if (children.every((child) => typeof child === "string")) {
+    // If the body only contains text nodes, we wrap it in a paragraph
+    if (
+      children.length > 0 &&
+      children.every((child) => typeof child === "string")
+    ) {
       children = [
         { type: "paragraph", children: [{ text: children.join("") }] },
       ];

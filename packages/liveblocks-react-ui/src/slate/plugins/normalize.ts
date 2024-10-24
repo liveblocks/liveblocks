@@ -22,7 +22,10 @@ export function withNormalize(editor: Editor) {
       Element.isElement(node) &&
       (node.type === "auto-link" || node.type === "custom-link")
     ) {
-      if (node.children.length === 0 || node.children[0]?.text === "") {
+      if (
+        node.children.length === 0 ||
+        (node.children.length === 1 && node.children[0]?.text === "")
+      ) {
         Transforms.removeNodes(editor, { at: path });
       }
     }
