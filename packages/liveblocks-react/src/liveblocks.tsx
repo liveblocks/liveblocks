@@ -682,10 +682,9 @@ function useUser_withClient<U extends BaseUserMeta>(
 
   // Trigger a fetch if we don't have any data yet (whether initially or after an invalidation)
   useEffect(() => {
-    if (!result.user && result.isLoading) {
-      // NOTE: .get() will trigger any actual fetches, whereas .getState() will not
-      void usersStore.get(userId);
-    }
+    // NOTE: .get() will trigger any actual fetches, whereas .getState() will not,
+    // and it won't trigger a fetch if we already have data
+    void usersStore.get(userId);
   }, [usersStore, userId, result]);
 
   return result;
@@ -758,10 +757,9 @@ function useRoomInfo_withClient(
 
   // Trigger a fetch if we don't have any data yet (whether initially or after an invalidation)
   useEffect(() => {
-    if (!result.info && result.isLoading) {
-      // NOTE: .get() will trigger any actual fetches, whereas .getState() will not
-      void roomsInfoStore.get(roomId);
-    }
+    // NOTE: .get() will trigger any actual fetches, whereas .getState() will not,
+    // and it won't trigger a fetch if we already have data
+    void roomsInfoStore.get(roomId);
   }, [roomsInfoStore, roomId, result]);
 
   return result;
