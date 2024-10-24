@@ -272,26 +272,28 @@ function makeLiveblocksExtrasForClient(client: OpaqueClient) {
   //
 
   const notificationsPoller = makePoller(
-    (signal) => {
-      void store.fetchNotificationsDeltaUpdate({ signal }).catch((err) => {
+    async (signal) => {
+      try {
+        return await store.fetchNotificationsDeltaUpdate({ signal });
+      } catch (err) {
         console.warn(`Polling new inbox notifications failed: ${String(err)}`);
         throw err;
-      });
+      }
     },
     config.NOTIFICATIONS_POLL_INTERVAL,
-    // If window refocuses, a new poll will be triggered if data is older than max stale time
     { maxStaleTimeMs: config.NOTIFICATIONS_MAX_STALE_TIME }
   );
 
   const userThreadsPoller = makePoller(
-    () => {
-      void store.fetchUserThreadsDeltaUpdate().catch((err) => {
+    async () => {
+      try {
+        return await store.fetchUserThreadsDeltaUpdate();
+      } catch (err) {
         console.warn(`Polling new user threads failed: ${String(err)}`);
         throw err;
-      });
+      }
     },
     config.USER_THREADS_POLL_INTERVAL,
-    // If window refocuses, a new poll will be triggered if data is older than max stale time
     { maxStaleTimeMs: config.USER_THREADS_MAX_STALE_TIME }
   );
 

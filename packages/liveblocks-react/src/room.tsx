@@ -378,13 +378,17 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     let poller = pollersByRoomId.get(roomId);
     if (!poller) {
       poller = makePoller(
-        () =>
-          // XXX Add signal here too?
-          store.fetchRoomThreadsDeltaUpdate(roomId),
+        // XXX Add signal here too?
+        async () => {
+          try {
+            return await store.fetchRoomThreadsDeltaUpdate(roomId);
+          } catch (err) {
+            console.warn(`Polling new threads for '${roomId}' failed: ${String(err)}`); // prettier-ignore
+            throw err;
+          }
+        },
         config.ROOM_THREADS_POLL_INTERVAL,
-        {
-          maxStaleTimeMs: config.ROOM_THREADS_MAX_STALE_TIME,
-        }
+        { maxStaleTimeMs: config.ROOM_THREADS_MAX_STALE_TIME }
       );
 
       pollersByRoomId.set(roomId, poller);
