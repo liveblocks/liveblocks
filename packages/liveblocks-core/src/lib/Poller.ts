@@ -133,7 +133,9 @@ export function makePoller(
     "@polling",
     async (_ctx, signal) => {
       await callback(signal);
-      context.lastSuccessfulPollAt = performance.now();
+      if (!signal.aborted) {
+        context.lastSuccessfulPollAt = performance.now();
+      }
     },
     () => (mayPoll() ? "@enabled" : "@idle"), // When OK
     () => (mayPoll() ? "@enabled" : "@idle") // When error
