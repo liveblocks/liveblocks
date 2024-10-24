@@ -1,4 +1,4 @@
-import type { Descendant, Editor, Element, Node as SlateNode } from "slate";
+import type { Descendant, Editor, Node as SlateNode } from "slate";
 import { Transforms } from "slate";
 import { jsx } from "slate-hyperscript";
 
@@ -22,11 +22,10 @@ type ComposerBodyElementTag = OmitTextChildren<
 type ComposerBodyTextTag = OmitTextChildren<ComposerBodyText>;
 
 type DeserializedNode =
-  | string
   | null
-  | Element
+  | string
+  | Descendant
   | Descendant[]
-  | ComposerBodyText[]
   | DeserializedNode[];
 
 function areUrlsEqual(a: string, b: string) {
@@ -75,8 +74,7 @@ const TEXT_TAGS = {
   I: (): ComposerBodyTextTag => ({ italic: true }),
   S: (): ComposerBodyTextTag => ({ strikethrough: true }),
   STRONG: (): ComposerBodyTextTag => ({ bold: true }),
-  // `B` is omitted because Google Docs uses `<b>` in weird ways
-  // B: (): ComposerBodyTextTag => ({ bold: true }),
+  B: (): ComposerBodyTextTag => ({ bold: true }),
 } as Record<string, (node: HTMLElement) => ComposerBodyTextTag>;
 
 function flattenListItems(node: HTMLElement): HTMLElement[] {
@@ -101,7 +99,8 @@ function deserialize(node: Node): DeserializedNode {
   } else if (node.nodeType !== 1) {
     return null;
   } else if (node.nodeName === "BR") {
-    return "\n";
+    // Insert a new paragraph
+    return jsx("element", createParagraphElement(), []);
   }
 
   const childNodes = Array.from(node.childNodes);
@@ -119,7 +118,21 @@ function deserialize(node: Node): DeserializedNode {
   }
 
   if (node.nodeName === "BODY") {
-    return jsx("fragment", {}, children);
+    // If the body only contains text nodes, we wrap it in a paragraph
+    if (
+      children.length > 0 &&
+      children.every((child) => typeof child === "string")
+    ) {
+      children = [
+        { type: "paragraph", children: [{ text: children.join("") }] },
+      ];
+    }
+
+    return jsx(
+      "fragment",
+      {},
+      children.filter((child) => typeof child !== "string")
+    );
   }
 
   if (ELEMENT_TAGS[node.nodeName]) {
@@ -131,7 +144,34 @@ function deserialize(node: Node): DeserializedNode {
   if (TEXT_TAGS[node.nodeName]) {
     const attrs = TEXT_TAGS[node.nodeName]!(node as HTMLElement);
 
+    // If there is at least one non-text child, we skip this node
+    if (
+      children.some(
+        (child) => child && typeof child !== "string" && "type" in child
+      )
+    ) {
+      return jsx("fragment", {}, children);
+    }
+
     return children.map((child) => jsx("text", attrs, child));
+  }
+
+  // Guess inline marks based on styles
+  if (node.nodeName === "SPAN") {
+    const style = (node as HTMLElement).style;
+
+    if (
+      style.fontWeight === "bold" ||
+      style.fontWeight === "700" ||
+      style.fontWeight === "800" ||
+      style.fontWeight === "900"
+    ) {
+      children = children.map((child) => jsx("text", { bold: true }, child));
+    }
+
+    if (style.fontStyle === "italic") {
+      children = children.map((child) => jsx("text", { italic: true }, child));
+    }
   }
 
   return children as DeserializedNode;
@@ -164,13 +204,35 @@ export function withPaste(
     // Deserialize rich text from HTML when pasting
     if (data.types.includes("text/html")) {
       const html = data.getData("text/html");
-      const parsed = new DOMParser().parseFromString(html, "text/html");
-      const fragment = deserialize(parsed.body);
 
-      if (fragment !== null && Array.isArray(fragment)) {
-        Transforms.insertFragment(editor, fragment as SlateNode[]);
+      try {
+        const { body } = new DOMParser().parseFromString(html, "text/html");
 
-        return;
+        // WebKit browsers can add a trailing `<br>`
+        body.querySelector("br.Apple-interchange-newline")?.remove();
+
+        // Google Docs can use `<b>` as a wrapper for the entire document,
+        // it shouldn't be supported so we remove it
+        if (body.children.length === 1 && body.children[0]?.nodeName === "B") {
+          const wrapper = body.children[0] as HTMLElement;
+
+          while (wrapper.firstChild) {
+            body.insertBefore(wrapper.firstChild, wrapper);
+          }
+
+          body.removeChild(wrapper);
+        }
+
+        const fragment = deserialize(body);
+
+        if (fragment !== null && Array.isArray(fragment)) {
+          Transforms.insertFragment(editor, fragment as SlateNode[]);
+
+          return;
+        }
+      } catch {
+        // Fallback to inserting the non-rich text if available
+        insertData(data);
       }
     }
 

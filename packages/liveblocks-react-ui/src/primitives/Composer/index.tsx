@@ -76,6 +76,7 @@ import {
   MENTION_CHARACTER,
   withMentions,
 } from "../../slate/plugins/mentions";
+import { withNormalize } from "../../slate/plugins/normalize";
 import { withPaste } from "../../slate/plugins/paste";
 import { getDOMRange } from "../../slate/utils/get-dom-range";
 import { isEmpty as isEditorEmpty } from "../../slate/utils/is-empty";
@@ -158,15 +159,17 @@ function createComposerEditor({
   createAttachments: (files: File[]) => void;
   pasteFilesAsAttachments?: boolean;
 }) {
-  return withMentions(
-    withCustomLinks(
-      withAutoLinks(
-        withAutoFormatting(
-          withEmptyClearFormatting(
-            withPaste(withHistory(withReact(createEditor())), {
-              createAttachments,
-              pasteFilesAsAttachments,
-            })
+  return withNormalize(
+    withMentions(
+      withCustomLinks(
+        withAutoLinks(
+          withAutoFormatting(
+            withEmptyClearFormatting(
+              withPaste(withHistory(withReact(createEditor())), {
+                createAttachments,
+                pasteFilesAsAttachments,
+              })
+            )
           )
         )
       )

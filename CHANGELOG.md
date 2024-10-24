@@ -8,6 +8,10 @@
   `room.subscribe(root, ..., { isDeep: true })`), all LiveList deletion updates
   will now also include the item that was deleted (#2008)
 
+### `@liveblocks/react-ui`
+
+- Improve and fix pasting rich text into the composer.
+
 ## 2.9.2
 
 ### `@liveblocks/node`
