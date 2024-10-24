@@ -1,6 +1,10 @@
+import { Suspense } from "react";
 import { Providers } from "./Providers";
 import "../styles/globals.css";
 import "../styles/text-editor.css";
+import "@liveblocks/react-ui/styles.css";
+import "@liveblocks/react-ui/styles/dark/attributes.css";
+import "@liveblocks/react-tiptap/styles.css";
 
 export const metadata = {
   title: "Liveblocks",
@@ -28,7 +32,9 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <Providers>{children}</Providers>
+        <Providers>
+          <Suspense>{children}</Suspense>
+        </Providers>
       </body>
     </html>
   );

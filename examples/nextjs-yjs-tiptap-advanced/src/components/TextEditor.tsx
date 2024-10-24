@@ -1,9 +1,11 @@
 "use client";
 
-import { ClientSideSuspense } from "@liveblocks/react";
-import { LiveblocksYjsProvider } from "@liveblocks/yjs";
-import Collaboration from "@tiptap/extension-collaboration";
-import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
+import { ClientSideSuspense, useThreads } from "@liveblocks/react/suspense";
+import {
+  FloatingComposer,
+  FloatingThreads,
+  useLiveblocksExtension,
+} from "@liveblocks/react-tiptap";
 import Highlight from "@tiptap/extension-highlight";
 import { Image } from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
@@ -15,9 +17,6 @@ import Youtube from "@tiptap/extension-youtube";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorView } from "prosemirror-view";
-import { useEffect, useState } from "react";
-import * as Y from "yjs";
-import { useRoom, useSelf } from "@liveblocks/react/suspense";
 import { DocumentSpinner } from "@/primitives/Spinner";
 import { CustomTaskItem } from "./CustomTaskItem";
 import { SelectionMenu } from "./SelectionMenu";
@@ -35,38 +34,7 @@ export function TextEditor() {
 
 // Collaborative text editor with simple rich text and live cursors
 export function Editor() {
-  const room = useRoom();
-  const [doc, setDoc] = useState<Y.Doc>();
-  const [provider, setProvider] = useState<any>();
-
-  // Set up Liveblocks Yjs provider
-  useEffect(() => {
-    const yDoc = new Y.Doc();
-    const yProvider = new LiveblocksYjsProvider(room, yDoc);
-    setDoc(yDoc);
-    setProvider(yProvider);
-
-    return () => {
-      yDoc?.destroy();
-      yProvider?.destroy();
-    };
-  }, [room]);
-
-  if (!doc || !provider) {
-    return null;
-  }
-
-  return <TiptapEditor doc={doc} provider={provider} />;
-}
-
-type EditorProps = {
-  doc: Y.Doc;
-  provider: any;
-};
-
-function TiptapEditor({ doc, provider }: EditorProps) {
-  // Get user info from Liveblocks authentication endpoint
-  const { name, color, picture } = useSelf((me) => me.info);
+  const liveblocks = useLiveblocksExtension();
 
   // Set up editor with plugins, and place user info into Yjs awareness and cursors
   const editor = useEditor({
@@ -77,6 +45,7 @@ function TiptapEditor({ doc, provider }: EditorProps) {
       },
     },
     extensions: [
+      liveblocks,
       StarterKit.configure({
         blockquote: {
           HTMLAttributes: {
@@ -159,21 +128,10 @@ function TiptapEditor({ doc, provider }: EditorProps) {
           class: "tiptap-youtube",
         },
       }),
-      // Register the document with Tiptap
-      Collaboration.configure({
-        document: doc,
-      }),
-      // Attach provider and user info
-      CollaborationCursor.configure({
-        provider: provider,
-        user: {
-          name,
-          color,
-          picture,
-        },
-      }),
     ],
   });
+
+  const { threads } = useThreads();
 
   return (
     <div className={styles.container}>
@@ -184,6 +142,8 @@ function TiptapEditor({ doc, provider }: EditorProps) {
       <div className={styles.editorPanel}>
         {editor && <SelectionMenu editor={editor} />}
         <EditorContent editor={editor} className={styles.editorContainer} />
+        <FloatingComposer editor={editor} style={{ width: 350 }} />
+        <FloatingThreads threads={threads} editor={editor} />
       </div>
     </div>
   );

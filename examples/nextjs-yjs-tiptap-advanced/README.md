@@ -23,8 +23,8 @@
 </p>
 
 This example shows how to build a collaborative text editor with
-[Liveblocks](https://liveblocks.io), [Yjs](https://docs.yjs.dev),
-[Tiptap](https://tiptap.dev), and [Next.js](https://nextjs.org/).
+[Liveblocks](https://liveblocks.io), [Tiptap](https://tiptap.dev), and
+[Next.js](https://nextjs.org/).
 
 As users edit the document, changes will be automatically persisted and
 synced—allowing for an editor that updates in realtime across clients. Users

@@ -6,8 +6,9 @@ import { ToolbarCommands } from "./ToolbarCommands";
 import { ToolbarHeadings } from "./ToolbarHeadings";
 import { ToolbarInline } from "./ToolbarInline";
 import { ToolbarMedia } from "./ToolbarMedia";
-import styles from "./Toolbar.module.css";
+import { ToolbarThread } from "./ToolbarThread";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import styles from "./Toolbar.module.css";
 
 type Props = {
   editor: Editor;
@@ -39,6 +40,9 @@ export function Toolbar({ editor }: Props) {
       </div>
       <div className={styles.toolbarSection}>
         <ToolbarMedia editor={editor} />
+      </div>
+      <div className={styles.toolbarSection}>
+        <ToolbarThread editor={editor} />
       </div>
     </div>
   );
