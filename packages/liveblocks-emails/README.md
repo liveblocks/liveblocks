@@ -32,11 +32,17 @@ npm install @liveblocks/node @liveblocks/emails
 
 ## Documentation
 
-...
+Read the
+[documentation](https://liveblocks.io/docs/api-reference/liveblocks-emails) for
+guides and API references.
 
 ## Examples
 
-...
+Explore our [collaborative examples](https://liveblocks.io/examples) to help you
+get started.
+
+> All examples are open-source and live in this repository, within
+> [`/examples`](../../examples).
 
 ## Releases
 
