@@ -13,17 +13,16 @@
     "@blocknote/core": "^0.14.1",
     "@blocknote/mantine": "^0.14.1",
     "@blocknote/react": "^0.14.1",
-    "@liveblocks/client": "^2.9.0",
-    "@liveblocks/node": "^2.9.0",
-    "@liveblocks/react": "^2.9.0",
-    "@liveblocks/yjs": "^2.9.0",
+    "@liveblocks/client": "2.8.3-tiptap2",
+    "@liveblocks/node": "2.8.3-tiptap2",
+    "@liveblocks/react": "2.8.3-tiptap2",
+    "@liveblocks/react-tiptap": "2.8.3-tiptap2",
     "@types/node": "20.3.1",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.2.5",
-    "next": "^14.1.0",
+    "next": "^14.2.16",
     "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "yjs": "^13.6.7"
+    "react-dom": "18.2.0"
   },
   "devDependencies": {
     "prettier": "^3.3.2",

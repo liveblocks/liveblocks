@@ -1,5 +1,4 @@
 import { Liveblocks } from "@liveblocks/node";
-import { NextRequest } from "next/server";
 
 /**
  * Authenticating your Liveblocks application
@@ -10,7 +9,7 @@ const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
 });
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   // Get the current user's unique id from your database
   const userId = Math.floor(Math.random() * 10000);
 
