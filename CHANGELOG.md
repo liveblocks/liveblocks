@@ -1,3 +1,11 @@
+## 2.10.0 (not published yet)
+
+### `@liveblocks/client`
+
+- In storage update notifications (using
+  `room.subscribe(root, ..., { isDeep: true })`), all LiveList deletion updates
+  will now also include the item that was deleted (#2008)
+
 ## 2.9.2
 
 ### `@liveblocks/node`

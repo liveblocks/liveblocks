@@ -32,6 +32,7 @@ export type JsonLiveListUpdateDelta<TItem extends Lson> =
   | {
       type: "delete";
       index: number;
+      deletedItem: ToJson<TItem>;
     }
   | {
       type: "set";
@@ -167,10 +168,14 @@ export function listUpdateSet<TItem extends Lson>(
   };
 }
 
-export function listUpdateDelete(index: number): JsonLiveListUpdateDelta<Lson> {
+export function listUpdateDelete(
+  index: number,
+  prev: Json
+): JsonLiveListUpdateDelta<Json> {
   return {
     type: "delete",
     index,
+    deletedItem: prev,
   };
 }
 
