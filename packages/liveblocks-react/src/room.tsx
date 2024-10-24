@@ -398,7 +398,7 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
 
   return {
     store,
-    commentsErrorEventSource,
+    commentsErrorEventSource: commentsErrorEventSource.observable,
     getInboxNotificationSettings,
     getRoomVersions,
     onMutationFailure,
