@@ -274,7 +274,7 @@ function makeLiveblocksExtrasForClient(client: OpaqueClient) {
   const notificationsPoller = makePoller(
     async (signal) => {
       try {
-        return await store.fetchNotificationsDeltaUpdate({ signal });
+        return await store.fetchNotificationsDeltaUpdate(signal);
       } catch (err) {
         console.warn(`Polling new inbox notifications failed: ${String(err)}`);
         throw err;

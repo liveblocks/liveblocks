@@ -1278,11 +1278,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.setQuery4State(queryKey, { isLoading: false, error });
   }
 
-  public async fetchNotificationsDeltaUpdate({
-    signal,
-  }: {
-    signal: AbortSignal;
-  }) {
+  public async fetchNotificationsDeltaUpdate(signal: AbortSignal) {
     const lastRequestedAt = this._notificationsLastRequestedAt;
     if (lastRequestedAt === null) {
       return;
