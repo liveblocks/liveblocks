@@ -13,6 +13,21 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
 
+# Week 43 (2024-10-25)
+
+## Dashboard
+
+- Removed `Show deleted threads` checkbox from the room detail `Comments` tab to ensure consistent behavior across dashboard and APIs.
+
+## Documentation
+
+- Prevent truncated API keys being copied in code snippets.
+- Typo fixes.
+
+## Contributors
+
+pierrelevaillant, sugardarius, kaf-lamed-beyt, ctnicholas
+
 # Week 42 (2024-10-18)
 
 ## v2.9.1
