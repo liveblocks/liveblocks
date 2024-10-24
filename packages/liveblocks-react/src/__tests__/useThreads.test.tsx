@@ -1620,7 +1620,7 @@ describe("useThreads", () => {
     unmountSecondRoom();
   });
 
-  test.only("should update threads for a room when the browser comes back online", async () => {
+  test("should update threads for a room when the browser comes back online", async () => {
     const roomId = nanoid();
     const threads = [dummyThreadData({ roomId }), dummyThreadData({ roomId })];
 
