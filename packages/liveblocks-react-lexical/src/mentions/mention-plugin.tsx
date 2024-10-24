@@ -11,7 +11,7 @@ import {
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { kInternal } from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
-import { useMentionSuggestions } from "@liveblocks/react-ui";
+import { useMentionSuggestions } from "@liveblocks/react/_private";
 import type { EditorState, NodeKey, NodeMutation, TextNode } from "lexical";
 import {
   $createRangeSelection,

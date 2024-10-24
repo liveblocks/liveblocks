@@ -6,13 +6,15 @@ import {
 } from "@lexical/utils";
 import { shallow } from "@liveblocks/core";
 import {
-  CreateThreadError,
-  getUmbrellaStoreForClient,
-  selectThreads,
   useClient,
   useCommentsErrorListener,
   useRoom,
 } from "@liveblocks/react";
+import {
+  CreateThreadError,
+  getUmbrellaStoreForClient,
+  selectThreads,
+} from "@liveblocks/react/_private";
 import type { BaseSelection, NodeKey, NodeMutation } from "lexical";
 import {
   $getNodeByKey,
