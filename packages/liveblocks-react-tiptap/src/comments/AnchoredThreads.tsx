@@ -131,18 +131,20 @@ export function AnchoredThreads({
   }, [pluginState, threads]);
 
 
-  useLayoutEffect(() => {
-    handlePositionThreads();
-  }, [handlePositionThreads]);
+  useLayoutEffect(handlePositionThreads, [handlePositionThreads]);
 
   useEffect(() => {
     const observer = new ResizeObserver(handlePositionThreads);
+    const container = containerRef.current;
+    if (container !== null) {
+      observer.observe(container);
+    }
     for (const element of elements.values()) {
       observer.observe(element);
     }
 
     return () => observer.disconnect();
-  }, [elements, handlePositionThreads]);
+  }, [elements, containerRef, handlePositionThreads]);
 
   const onItemAdd = useCallback((id: string, el: HTMLElement) => {
     setElements((prev) => new Map(prev).set(id, el));
