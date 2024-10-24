@@ -373,7 +373,6 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
 
   const pollersByRoomId = new Map<string, Poller>();
 
-  // XXX - DRY up these makeDeltaPoller_* abstractions, now that the symmetry has become clear!
   function getOrCreatePollerForRoomId(roomId: string) {
     let poller = pollersByRoomId.get(roomId);
     if (!poller) {
@@ -1291,12 +1290,9 @@ function useThreads<M extends BaseMetadata>(
 
   React.useEffect(
     () => {
-      // XXX - Verify that we need the catch or not
       void store
         .waitUntilRoomThreadsLoaded(room.id, options.query)
-        .catch(() => {
-          // Deliberately catch and ignore any errors here
-        });
+        .catch(() => {}); // Deliberately ignore any errors here
     }
     // NOTE: Deliberately *not* using a dependency array here!
     //
