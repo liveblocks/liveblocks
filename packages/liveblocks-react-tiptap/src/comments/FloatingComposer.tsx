@@ -7,6 +7,7 @@ import { Composer } from "@liveblocks/react-ui";
 import type { Editor } from "@tiptap/react";
 import type { ComponentRef, FormEvent } from "react";
 import React, { forwardRef, useCallback, useEffect, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
 
 import type { CommentsExtensionStorage } from "../types";
 
@@ -103,7 +104,7 @@ export const FloatingComposer = forwardRef<
     return null;
   }
 
-  return (
+  return createPortal(
     <div
       className="lb-root lb-portal lb-elevation lb-tiptap-floating lb-tiptap-floating-composer"
       ref={setFloating} style={{
@@ -123,6 +124,7 @@ export const FloatingComposer = forwardRef<
         }}
         autoFocus={true}
       />
-    </div>
+    </div>,
+    document.body
   );
 });
