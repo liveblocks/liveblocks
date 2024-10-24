@@ -135,8 +135,8 @@ export function AnchoredThreads({
 
   useEffect(() => {
     const observer = new ResizeObserver(handlePositionThreads);
-    const container = containerRef.current;
-    if (container !== null) {
+    const container = editor?.view.dom;
+    if (container) {
       observer.observe(container);
     }
     for (const element of elements.values()) {
@@ -144,7 +144,7 @@ export function AnchoredThreads({
     }
 
     return () => observer.disconnect();
-  }, [elements, containerRef, handlePositionThreads]);
+  }, [elements, editor, handlePositionThreads]);
 
   const onItemAdd = useCallback((id: string, el: HTMLElement) => {
     setElements((prev) => new Map(prev).set(id, el));
