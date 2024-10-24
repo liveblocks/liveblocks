@@ -1,4 +1,4 @@
-import { type GetThreadsOptions, objectToQuery } from ".";
+import { objectToQuery } from ".";
 import type { AuthManager } from "./auth-manager";
 import type { NotificationsApi } from "./client";
 import {
@@ -14,6 +14,7 @@ import { url } from "./lib/url";
 import { TokenKind } from "./protocol/AuthToken";
 import type {
   BaseMetadata,
+  QueryMetadata,
   ThreadData,
   ThreadDataPlain,
   ThreadDeleteInfo,
@@ -25,7 +26,18 @@ import type {
   InboxNotificationDeleteInfo,
   InboxNotificationDeleteInfoPlain,
 } from "./protocol/InboxNotifications";
-import type { GetThreadsSinceOptions } from "./room";
+
+export type GetUserThreadsOptions<M extends BaseMetadata> = {
+  cursor?: string;
+  query?: {
+    resolved?: boolean;
+    metadata?: Partial<QueryMetadata<M>>;
+  };
+};
+
+export type GetUserThreadsSinceOptions = {
+  since: Date;
+};
 
 export function createNotificationsApi<M extends BaseMetadata>({
   baseUrl,
@@ -38,13 +50,15 @@ export function createNotificationsApi<M extends BaseMetadata>({
   currentUserIdStore: Store<string | null>;
   fetchPolyfill: typeof fetch;
 }): NotificationsApi<M> & {
-  getUserThreads_experimental(options?: GetThreadsOptions<M>): Promise<{
+  getUserThreads_experimental(options?: GetUserThreadsOptions<M>): Promise<{
     threads: ThreadData<M>[];
     inboxNotifications: InboxNotificationData[];
     nextCursor: string | null;
     requestedAt: Date;
   }>;
-  getUserThreadsSince_experimental(options: GetThreadsSinceOptions): Promise<{
+  getUserThreadsSince_experimental(
+    options: GetUserThreadsSinceOptions
+  ): Promise<{
     inboxNotifications: {
       updated: InboxNotificationData[];
       deleted: InboxNotificationDeleteInfo[];
@@ -185,7 +199,9 @@ export function createNotificationsApi<M extends BaseMetadata>({
     );
   }
 
-  async function getUserThreads_experimental(options: GetThreadsOptions<M>) {
+  async function getUserThreads_experimental(
+    options: GetUserThreadsOptions<M>
+  ) {
     let query: string | undefined;
 
     if (options?.query) {
@@ -220,7 +236,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
   }
 
   async function getUserThreadsSince_experimental(
-    options: GetThreadsSinceOptions
+    options: GetUserThreadsSinceOptions
   ) {
     const json = await httpClient.fetchJson<{
       threads: ThreadDataPlain<M>[];

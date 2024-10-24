@@ -13,6 +13,10 @@ import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import type { NoInfr } from "./lib/NoInfer";
 import type { Resolve } from "./lib/Resolve";
+import type {
+  GetUserThreadsOptions,
+  GetUserThreadsSinceOptions,
+} from "./notifications";
 import { createNotificationsApi } from "./notifications";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
@@ -26,7 +30,6 @@ import type {
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
 import type {
-  GetThreadsOptions,
   OpaqueRoom,
   OptionalTupleUnless,
   PartialUnless,
@@ -142,7 +145,7 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
   readonly roomsInfoStore: BatchStore<DRI | undefined, string>;
   readonly getRoomIds: () => string[];
   readonly getUserThreads_experimental: (
-    options: GetThreadsOptions<M>
+    options: GetUserThreadsOptions<M>
   ) => Promise<{
     threads: ThreadData<M>[];
     inboxNotifications: InboxNotificationData[];
@@ -150,7 +153,7 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
     requestedAt: Date;
   }>;
   readonly getUserThreadsSince_experimental: (
-    options: { since: Date } & GetThreadsOptions<M>
+    options: GetUserThreadsSinceOptions
   ) => Promise<{
     inboxNotifications: {
       updated: InboxNotificationData[];
