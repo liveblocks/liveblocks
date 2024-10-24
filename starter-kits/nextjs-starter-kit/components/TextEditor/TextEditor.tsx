@@ -17,7 +17,7 @@ import TaskList from "@tiptap/extension-task-list";
 import { TextAlign } from "@tiptap/extension-text-align";
 import { Typography } from "@tiptap/extension-typography";
 import Youtube from "@tiptap/extension-youtube";
-import { EditorContent, Editor as TEditor, useEditor } from "@tiptap/react";
+import { Editor, EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorView } from "prosemirror-view";
 import { CommentIcon } from "@/icons";
@@ -32,16 +32,12 @@ import styles from "./TextEditor.module.css";
 export function TextEditor() {
   return (
     <ClientSideSuspense fallback={<DocumentSpinner />}>
-      <Editor />
+      <TiptapEditor />
     </ClientSideSuspense>
   );
 }
 
 // Collaborative text editor with simple rich text and live cursors
-export function Editor() {
-  return <TiptapEditor />;
-}
-
 function TiptapEditor() {
   const liveblocks = useLiveblocksExtension();
 
@@ -169,7 +165,7 @@ function TiptapEditor() {
   );
 }
 
-function Threads({ editor }: { editor: TEditor | null }) {
+function Threads({ editor }: { editor: Editor | null }) {
   const { threads } = useThreads();
   const isMobile = useIsMobile();
 

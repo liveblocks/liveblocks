@@ -14,7 +14,6 @@ export function ToolbarThread({ editor }: Props) {
   const wrapper = useRef<HTMLDivElement>(null);
 
   const handleClick = useCallback(async () => {
-    // @ts-ignore
     editor.chain().focus().addPendingComment().run();
   }, [editor]);
 
@@ -24,7 +23,7 @@ export function ToolbarThread({ editor }: Props) {
         variant="subtle"
         className={styles.toolbarButton}
         onClick={handleClick}
-        disabled={editor.isActive("commentHighlight")}
+        disabled={editor.isActive("lb-comment")}
         data-active={editor.isActive("lb-comment") ? "is-active" : undefined}
         aria-label="Add comment"
       >

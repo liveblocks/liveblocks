@@ -10,12 +10,12 @@
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@liveblocks/client": "2.8.3-tiptap1",
-    "@liveblocks/node": "2.8.3-tiptap1",
-    "@liveblocks/react": "2.8.3-tiptap1",
-    "@liveblocks/react-tiptap": "2.8.3-tiptap1",
-    "@liveblocks/react-ui": "2.8.3-tiptap1",
-    "@liveblocks/yjs": "2.8.3-tiptap1",
+    "@liveblocks/client": "2.8.3-tiptap2",
+    "@liveblocks/node": "2.8.3-tiptap2",
+    "@liveblocks/react": "2.8.3-tiptap2",
+    "@liveblocks/react-tiptap": "2.8.3-tiptap2",
+    "@liveblocks/react-ui": "2.8.3-tiptap2",
+    "@liveblocks/yjs": "2.8.3-tiptap2",
     "@radix-ui/react-dialog": "^1.0.2",
     "@radix-ui/react-popover": "^1.0.2",
     "@radix-ui/react-select": "^1.1.1",

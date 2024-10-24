@@ -1,8 +1,8 @@
 import "../styles/globals.css";
 import "../styles/text-editor.css";
-import "../styles/comment-styles.css";
 import "@liveblocks/react-ui/styles.css";
 import "@liveblocks/react-ui/styles/dark/attributes.css";
+import "@liveblocks/react-tiptap/styles.css";
 import { Providers } from "./Providers";
 
 export const metadata = {
