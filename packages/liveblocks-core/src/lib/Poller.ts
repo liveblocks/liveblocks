@@ -180,12 +180,11 @@ export function makePoller(
     setInForeground(doc?.visibilityState !== "hidden");
   }
 
+  // NOTE: Currently, poller instances are only ever created and never
+  // destroyed. If we add a destroy() method in the future, then we should also
+  // unregister these event handlers.
   doc?.addEventListener("visibilitychange", onVisibilityChange);
   win?.addEventListener("online", onVisibilityChange);
-
-  // XXX Remove this event listener if the poller would get destroyed?
-  // doc?.removeEventListener("visibilitychange", onVisibilityChange);
-  // win?.removeEventListener("online", onVisibilityChange);
 
   fsm.start();
   return {
