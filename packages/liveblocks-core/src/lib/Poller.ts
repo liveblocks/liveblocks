@@ -34,6 +34,7 @@ type Context = {
   inForeground: boolean; // Whether the visibility state is visible
   lastSuccessfulPollAt: number | null;
   count: number; // Subscriber count
+  backoff: number; // Backoff delay in ms
 };
 
 type State =
@@ -45,6 +46,8 @@ type Event =
   | { type: "START" } //
   | { type: "STOP" } //
   | { type: "POLL" };
+
+const BACKOFF_DELAYS = [1_000, 2_000, 4_000, 8_000, 10_000] as const;
 
 /**
  * Makes a poller that will call `await callback()` at the desired interval (in
@@ -92,6 +95,7 @@ export function makePoller(
     inForeground: doc?.visibilityState !== "hidden",
     lastSuccessfulPollAt: null,
     count: 0,
+    backoff: 0,
   };
 
   function mayPoll() {
@@ -124,7 +128,7 @@ export function makePoller(
     () => {
       const lastPoll = context.lastSuccessfulPollAt ?? startTime;
       const nextPoll = lastPoll + intervalMs;
-      return Math.max(0, nextPoll - performance.now());
+      return Math.max(0, nextPoll - performance.now()) + context.backoff;
     },
     "@polling"
   );
@@ -137,8 +141,29 @@ export function makePoller(
         context.lastSuccessfulPollAt = performance.now();
       }
     },
-    () => (mayPoll() ? "@enabled" : "@idle"), // When OK
-    () => (mayPoll() ? "@enabled" : "@idle") // When error
+    // When OK
+    () => {
+      return {
+        target: mayPoll() ? "@enabled" : "@idle",
+        effect: () => {
+          // Reset backoff delay to 0 if the callback was successful
+          context.backoff = 0;
+        },
+      };
+    },
+    // When error
+    () => {
+      return {
+        target: mayPoll() ? "@enabled" : "@idle",
+        effect: () => {
+          // Increase the backoff delay if an error occured
+          context.backoff =
+            BACKOFF_DELAYS.find((delay) => delay > context.backoff) ??
+            BACKOFF_DELAYS[BACKOFF_DELAYS.length - 1];
+        },
+      };
+    },
+    30_000 // Abort the poll if the callback takes more than 30 seconds to complete
   );
 
   function startOrStop() {

@@ -407,24 +407,43 @@ describe("Poller", () => {
     const callback = jest.fn(() => {
       throw new Error();
     });
-    const poller = makePoller(callback, 5000, { maxStaleTimeMs: 3000 });
-
-    // Spy on the `document.visibilityState` and mock it to return 'visible'
-    jest.spyOn(document, "visibilityState", "get").mockReturnValue("visible");
+    const poller = makePoller(callback, 2000);
 
     // Start the poller
     poller.inc();
 
-    // Fast-forward to 5s
-    await jest.advanceTimersByTimeAsync(5000);
+    // Fast-forward to 2s
+    await jest.advanceTimersByTimeAsync(2000);
     expect(callback).toHaveBeenCalledTimes(1); // Poll 1
 
-    // Advance by 1s and verify that a new poll did not occur
+    // Advance by 1s and verify that a new poll takes place
     await jest.advanceTimersByTimeAsync(1000);
-    expect(callback).toHaveBeenCalledTimes(1);
+    expect(callback).toHaveBeenCalledTimes(2);
+
+    // Advance by 2s and verify that a new poll takes place
+    await jest.advanceTimersByTimeAsync(2000);
+    expect(callback).toHaveBeenCalledTimes(3);
 
     // Advance by 4s and verify that a new poll takes place
     await jest.advanceTimersByTimeAsync(4000);
-    expect(callback).toHaveBeenCalledTimes(2);
+    expect(callback).toHaveBeenCalledTimes(4);
+
+    // Advance by 8s and verify that a new poll takes place
+    await jest.advanceTimersByTimeAsync(8000);
+    expect(callback).toHaveBeenCalledTimes(5);
+
+    // Advance by 10s and verify that a new poll takes place
+    await jest.advanceTimersByTimeAsync(10000);
+    expect(callback).toHaveBeenCalledTimes(6);
+
+    // Advance by 10s and verify that a new poll takes place
+    await jest.advanceTimersByTimeAsync(10000);
+    expect(callback).toHaveBeenCalledTimes(7);
+
+    // Advance by 10s and verify that a new poll takes place
+    await jest.advanceTimersByTimeAsync(10000);
+    expect(callback).toHaveBeenCalledTimes(8);
   });
+
+  // XXX - Test for poller callback error and then success
 });
