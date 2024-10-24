@@ -320,7 +320,7 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
    */
   resolvers: {
     /**
-     * Invalidate users that were previously cached by `resolveUsers`.
+     * Invalidate some or all users that were previously cached by `resolveUsers`.
      *
      * @example
      * // Invalidate all users
@@ -333,7 +333,7 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
     invalidateUsers(userIds?: string[]): void;
 
     /**
-     * Invalidate rooms info that were previously cached by `resolveRoomsInfo`.
+     * Invalidate some or all rooms info that were previously cached by `resolveRoomsInfo`.
      *
      * @example
      * // Invalidate all rooms

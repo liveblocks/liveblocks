@@ -4424,6 +4424,55 @@ list.toArray();
 // [ <LiveObject instance> ]  // ❗️
 ```
 
+## Resolvers
+
+### invalidateUsers
+
+`client.resolvers.invalidateUsers` can be used to invalidate some or all users
+that were previously cached by [`resolveUsers`](#createClientResolveUsers).
+
+It can be used when updating the current user’s avatar for example, to instantly
+refresh the user data everywhere without having to perform a page reload.
+
+```tsx
+// Invalidate all users
+client.resolvers.invalidateUsers();
+
+// Only invalidate "user-0" and "user-1"
+client.resolvers.invalidateUsers(["user-0", "user-1"]);
+```
+
+### invalidateRoomsInfo
+
+`client.resolvers.invalidateRoomsInfo` can be used to invalidate some or all
+rooms that were previously cached by
+[`resolveRoomsInfo`](#createClientResolveRoomsInfo).
+
+It can be used when updating a room’s name for example, to instantly refresh the
+room info everywhere without having to perform a page reload.
+
+```tsx
+// Invalidate all rooms
+client.resolvers.invalidateRoomsInfo();
+
+// Only invalidate "room-0" and "room-1"
+client.resolvers.invalidateRoomsInfo(["room-0", "room-1"]);
+```
+
+### invalidateMentionSuggestions
+
+`client.resolvers.invalidateRoomsInfo` can be used to invalidate all mention
+suggestions that were previously cached by
+[`resolveMentionSuggestions`](#createClientResolveMentionSuggestions).
+
+It can be used when updating a room’s list of users for example, to prevent
+creating out-of-date mentions without having to perform a page reload.
+
+```tsx
+// Invalidate all mention suggestions
+client.resolvers.invalidateMentionSuggestions();
+```
+
 ## Utilities
 
 ### getMentionedIdsFromCommentBody [#get-mentioned-ids-from-comment-body]
