@@ -27,6 +27,15 @@ import type {
   InboxNotificationDeleteInfoPlain,
 } from "./protocol/InboxNotifications";
 
+export type GetInboxNotificationsOptions = {
+  cursor?: string;
+};
+
+export type GetInboxNotificationsSinceOptions = {
+  since: Date;
+  signal: AbortSignal;
+};
+
 export type GetUserThreadsOptions<M extends BaseMetadata> = {
   cursor?: string;
   query?: {
@@ -37,6 +46,7 @@ export type GetUserThreadsOptions<M extends BaseMetadata> = {
 
 export type GetUserThreadsSinceOptions = {
   since: Date;
+  signal: AbortSignal;
 };
 
 export function createNotificationsApi<M extends BaseMetadata>({
@@ -90,7 +100,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
 
   const httpClient = new HttpClient(baseUrl, fetchPolyfill, getAuthValue);
 
-  async function getInboxNotifications(options?: { cursor?: string }) {
+  async function getInboxNotifications(options?: GetInboxNotificationsOptions) {
     const PAGE_SIZE = 50;
 
     const json = await httpClient.fetchJson<{
@@ -116,8 +126,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
   }
 
   async function getInboxNotificationsSince(
-    since: Date,
-    options?: { signal?: AbortSignal }
+    options: GetInboxNotificationsSinceOptions
   ) {
     const json = await httpClient.fetchJson<{
       threads: ThreadDataPlain<M>[];
@@ -130,7 +139,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
     }>(
       url`/v2/c/inbox-notifications/delta`,
       { signal: options?.signal },
-      { since: since.toISOString() }
+      { since: options.since.toISOString() }
     );
     return {
       inboxNotifications: {
@@ -246,9 +255,11 @@ export function createNotificationsApi<M extends BaseMetadata>({
       meta: {
         requestedAt: string;
       };
-    }>(url`/v2/c/threads/delta`, undefined, {
-      since: options.since.toISOString(),
-    });
+    }>(
+      url`/v2/c/threads/delta`,
+      { signal: options.signal },
+      { since: options.since.toISOString() }
+    );
 
     return {
       threads: {

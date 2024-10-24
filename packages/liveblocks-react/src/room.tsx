@@ -378,10 +378,9 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     let poller = pollersByRoomId.get(roomId);
     if (!poller) {
       poller = makePoller(
-        // XXX Add signal here too?
-        async () => {
+        async (signal) => {
           try {
-            return await store.fetchRoomThreadsDeltaUpdate(roomId);
+            return await store.fetchRoomThreadsDeltaUpdate(roomId, signal);
           } catch (err) {
             console.warn(`Polling new threads for '${roomId}' failed: ${String(err)}`); // prettier-ignore
             throw err;

@@ -480,6 +480,7 @@ export type GetThreadsOptions<M extends BaseMetadata> = {
 
 export type GetThreadsSinceOptions = {
   since: Date;
+  signal: AbortSignal;
 };
 
 export type UploadAttachmentOptions = {
@@ -2790,7 +2791,7 @@ export function createRoom<
   async function getThreadsSince(options: GetThreadsSinceOptions) {
     const response = await httpClient2.fetch(
       url`/v2/c/rooms/${config.roomId}/threads/delta`,
-      undefined,
+      { signal: options.signal },
       { since: options?.since?.toISOString() }
     );
 

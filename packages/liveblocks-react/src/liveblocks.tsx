@@ -285,9 +285,9 @@ function makeLiveblocksExtrasForClient(client: OpaqueClient) {
   );
 
   const userThreadsPoller = makePoller(
-    async () => {
+    async (signal) => {
       try {
-        return await store.fetchUserThreadsDeltaUpdate();
+        return await store.fetchUserThreadsDeltaUpdate(signal);
       } catch (err) {
         console.warn(`Polling new user threads failed: ${String(err)}`);
         throw err;

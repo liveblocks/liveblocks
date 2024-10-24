@@ -1284,10 +1284,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return;
     }
 
-    const result = await this._client.getInboxNotificationsSince(
-      lastRequestedAt,
-      { signal }
-    );
+    const result = await this._client.getInboxNotificationsSince({
+      since: lastRequestedAt,
+      signal,
+    });
 
     if (lastRequestedAt < result.requestedAt) {
       this._notificationsLastRequestedAt = result.requestedAt;
@@ -1357,7 +1357,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return paginatedResource.waitUntilLoaded();
   }
 
-  public async fetchRoomThreadsDeltaUpdate(roomId: string) {
+  public async fetchRoomThreadsDeltaUpdate(
+    roomId: string,
+    signal: AbortSignal
+  ) {
     const lastRequestedAt = this._roomThreadsLastRequestedAtByRoom.get(roomId);
     if (lastRequestedAt === undefined) {
       return;
@@ -1370,6 +1373,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     const updates = await room.getThreadsSince({
       since: lastRequestedAt,
+      signal,
     });
 
     this.updateThreadsAndNotifications(
@@ -1422,7 +1426,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return paginatedResource.waitUntilLoaded();
   }
 
-  public async fetchUserThreadsDeltaUpdate() {
+  public async fetchUserThreadsDeltaUpdate(signal: AbortSignal) {
     const lastRequestedAt = this._userThreadsLastRequestedAt;
     if (lastRequestedAt === null) {
       return;
@@ -1432,6 +1436,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       kInternal
     ].getUserThreadsSince_experimental({
       since: lastRequestedAt,
+      signal,
     });
 
     if (lastRequestedAt < result.requestedAt) {

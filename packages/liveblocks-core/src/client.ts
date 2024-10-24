@@ -14,6 +14,8 @@ import type { Json, JsonObject } from "./lib/Json";
 import type { NoInfr } from "./lib/NoInfer";
 import type { Resolve } from "./lib/Resolve";
 import type {
+  GetInboxNotificationsOptions,
+  GetInboxNotificationsSinceOptions,
   GetUserThreadsOptions,
   GetUserThreadsSinceOptions,
 } from "./notifications";
@@ -188,7 +190,7 @@ export type NotificationsApi<M extends BaseMetadata> = {
    * const data = await client.getInboxNotifications();  // Fetch initial page (of 20 inbox notifications)
    * const data = await client.getInboxNotifications({ cursor: nextCursor });  // Fetch next page (= next 20 inbox notifications)
    */
-  getInboxNotifications(options?: { cursor?: string }): Promise<{
+  getInboxNotifications(options?: GetInboxNotificationsOptions): Promise<{
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<M>[];
     nextCursor: string | null;
@@ -215,8 +217,7 @@ export type NotificationsApi<M extends BaseMetadata> = {
    * } = await client.getInboxNotificationsSince({ since: result.requestedAt }});
    */
   getInboxNotificationsSince(
-    since: Date,
-    options?: { signal: AbortSignal }
+    options: GetInboxNotificationsSinceOptions
   ): Promise<{
     inboxNotifications: {
       updated: InboxNotificationData[];
