@@ -99,6 +99,20 @@ export function makePoller(
     return context.count > 0 && context.inForeground;
   }
 
+  /**
+   *                                    +----------+
+   *        +-------------------------> |  @idle   |
+   *        |   else                    +----------+
+   *        |                             |      ^
+   *        |                     on STOP |      | on START
+   *        |                             v      |
+   *   +--------+   if mayPoll()        +----------+      on POLL             +----------+
+   *   | decide |---------------------> | @enabled | -----------------------> | @polling |
+   *   +--------+                       +----------+   after POLL_INTERVAL    +----------+
+   *        ^                                                                      |
+   *        |                                                                      |
+   *        +----------------------------------------------------------------------+
+   */
   const fsm = new FSM<object, Event, State>({})
     .addState("@idle")
     .addState("@enabled")
