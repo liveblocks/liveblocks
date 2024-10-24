@@ -117,7 +117,7 @@
  *            Thread mark            *
  *************************************/
 
-.lb-tiptap-thread-mark {
+:where(.lb-tiptap-thread-mark:not([data-orphan="true"])) {
   background: var(--lb-accent-subtle);
   color: var(--lb-foreground);
   outline: none;
@@ -128,7 +128,10 @@
   text-underline-offset: 2px;
 }
 
-.lb-tiptap-thread-mark-selected {
+:where(
+    .lb-tiptap-thread-mark:not([data-orphan="true"])
+      .lb-tiptap-thread-mark-selected
+  ) {
   color: var(--lb-accent);
   text-decoration-line: underline;
   text-decoration-color: var(--lb-accent-moderate);

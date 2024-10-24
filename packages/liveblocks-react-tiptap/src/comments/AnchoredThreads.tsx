@@ -120,7 +120,7 @@ export function AnchoredThreads({
   useEffect(() => {
     if (!pluginState) return;
     setOrderedThreads(Array.from(pluginState.threadPositions, ([threadId, position]) => ({ threadId, position })).reduce((acc, { threadId, position }) => {
-      const thread = threads.find((thread) => thread.id === threadId);
+      const thread = threads.find((thread) => thread.id === threadId && !thread.resolved);
       if (!thread) return acc;
       acc.push({ thread, position });
       return acc;

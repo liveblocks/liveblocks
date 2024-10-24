@@ -88,7 +88,7 @@ export function FloatingThreads({
     return true;
   }, [activeThread, editor]);
 
-  if (!activeThread || !editor) return null;
+  if (!activeThread || !editor || activeThread.resolved) return null;
 
   return (
     <FloatingThreadPortal

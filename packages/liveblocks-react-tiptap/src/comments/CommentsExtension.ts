@@ -31,6 +31,17 @@ const Comment = Mark.create({
   addAttributes() {
     // Return an object with attribute configuration
     return {
+      orphan: {
+        parseHTML: (element) => !!element.getAttribute("data-orphan"),
+        renderHTML: (attributes) => {
+          return (attributes as { orphan: boolean }).orphan
+            ? {
+                "data-orphan": "true",
+              }
+            : {};
+        },
+        default: false,
+      },
       threadId: {
         parseHTML: (element) => element.getAttribute("data-lb-thread-id"),
         renderHTML: (attributes) => {
@@ -163,8 +174,15 @@ const Comment = Mark.create({
               selectThread(null);
               return;
             }
-            const threadId = node.marks.find((mark) => mark.type === this.type)
-              ?.attrs.threadId as string | undefined;
+            const commentMark = node.marks.find(
+              (mark) => mark.type === this.type
+            );
+            // don't allow selecting orphaned threads
+            if (commentMark?.attrs.orphan) {
+              selectThread(null);
+              return;
+            }
+            const threadId = commentMark?.attrs.threadId as string | undefined;
             selectThread(threadId ?? null);
           },
         },
