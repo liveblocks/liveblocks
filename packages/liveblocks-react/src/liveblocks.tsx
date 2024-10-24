@@ -221,46 +221,6 @@ export function getLiveblocksExtrasForClient<M extends BaseMetadata>(
   };
 }
 
-function makeDeltaPoller_Notifications(store: UmbrellaStore<BaseMetadata>) {
-  const poller = makePoller(
-    (signal) => {
-      // XXX - Spend some time thinking about the usage of AbortSignal here
-      void store.fetchNotificationsDeltaUpdate({ signal }).catch((err) => {
-        console.warn(`Polling new inbox notifications failed: ${String(err)}`);
-      });
-    },
-    config.NOTIFICATIONS_POLL_INTERVAL,
-    // If window refocuses, a new poll will be triggered if data is older than
-    // max stale time
-    { maxStaleTimeMs: config.NOTIFICATIONS_MAX_STALE_TIME }
-  );
-
-  return () => {
-    poller.inc();
-    poller.pollNowIfStale();
-    return () => poller.dec();
-  };
-}
-
-// XXX - DRY up these makeDeltaPoller_* abstractions, now that the symmetry has become clear!
-function makeDeltaPoller_UserThreads(store: UmbrellaStore<BaseMetadata>) {
-  const poller = makePoller(async () => {
-    try {
-      // XXX Add signal here too?
-      await store.fetchUserThreadsDeltaUpdate();
-    } catch (err) {
-      // When polling, we don't want to throw errors, ever
-      console.warn(`Polling new user threads failed: ${String(err)}`);
-    }
-  }, config.USER_THREADS_POLL_INTERVAL);
-
-  return () => {
-    poller.inc();
-    poller.pollNowIfStale();
-    return () => poller.dec();
-  };
-}
-
 // XXX - DRY up these makeDeltaPoller_* abstractions, now that the symmetry has become clear!
 function makeLiveblocksExtrasForClient(client: OpaqueClient) {
   const store = getUmbrellaStoreForClient(client);
@@ -311,22 +271,34 @@ function makeLiveblocksExtrasForClient(client: OpaqueClient) {
   // - Pagination will perform a GET /v2/c/inbox-notifications?cursor=...
   //
 
+  const notificationsPoller = makePoller(
+    (signal) => {
+      void store.fetchNotificationsDeltaUpdate({ signal }).catch((err) => {
+        console.warn(`Polling new inbox notifications failed: ${String(err)}`);
+        throw err;
+      });
+    },
+    config.NOTIFICATIONS_POLL_INTERVAL,
+    // If window refocuses, a new poll will be triggered if data is older than max stale time
+    { maxStaleTimeMs: config.NOTIFICATIONS_MAX_STALE_TIME }
+  );
+
+  const userThreadsPoller = makePoller(
+    () => {
+      void store.fetchUserThreadsDeltaUpdate().catch((err) => {
+        console.warn(`Polling new user threads failed: ${String(err)}`);
+        throw err;
+      });
+    },
+    config.USER_THREADS_POLL_INTERVAL,
+    // If window refocuses, a new poll will be triggered if data is older than max stale time
+    { maxStaleTimeMs: config.USER_THREADS_MAX_STALE_TIME }
+  );
+
   return {
     store,
-    /**
-     * Sub/unsub pair to start the process of watching for new incoming inbox
-     * notifications through a stream of delta updates. Call the unsub function
-     * returned to stop this subscription when unmounting. Currently
-     * implemented by a periodic poller.
-     */
-    subscribeToNotificationsDeltaUpdates: makeDeltaPoller_Notifications(store),
-    /**
-     * Sub/unsub pair to start the process of watching for new user threads
-     * through a stream of delta updates. Call the unsub function returned to
-     * stop this subscription when unmounting. Currently implemented by
-     * a periodic poller.
-     */
-    subscribeToUserThreadsDeltaUpdates: makeDeltaPoller_UserThreads(store),
+    notificationsPoller,
+    userThreadsPoller,
   };
 }
 
@@ -411,10 +383,8 @@ function useInboxNotifications_withClient<T>(
   selector: (result: InboxNotificationsAsyncResult) => T,
   isEqual: (a: T, b: T) => boolean
 ): T {
-  const {
-    store,
-    subscribeToNotificationsDeltaUpdates: subscribeToDeltaUpdates,
-  } = getLiveblocksExtrasForClient(client);
+  const { store, notificationsPoller: poller } =
+    getLiveblocksExtrasForClient(client);
 
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
@@ -433,7 +403,13 @@ function useInboxNotifications_withClient<T>(
     //    *next* render after that, a *new* fetch/promise will get created.
   });
 
-  useEffect(subscribeToDeltaUpdates, [subscribeToDeltaUpdates]);
+  useEffect(() => {
+    poller.inc();
+    poller.pollNowIfStale();
+    return () => {
+      poller.dec();
+    };
+  }, [poller]);
 
   return useSyncExternalStoreWithSelector(
     store.subscribe,
@@ -926,7 +902,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
 ): ThreadsAsyncResult<M> {
   const client = useClient<M>();
 
-  const { store, subscribeToUserThreadsDeltaUpdates: subscribeToDeltaUpdates } =
+  const { store, userThreadsPoller: poller } =
     getLiveblocksExtrasForClient<M>(client);
 
   useEffect(
@@ -946,7 +922,13 @@ function useUserThreads_experimental<M extends BaseMetadata>(
     //    *next* render after that, a *new* fetch/promise will get created.
   );
 
-  useEffect(subscribeToDeltaUpdates, [subscribeToDeltaUpdates]);
+  useEffect(() => {
+    poller.inc();
+    poller.pollNowIfStale();
+    return () => {
+      poller.dec();
+    };
+  }, [poller]);
 
   const getter = useCallback(
     () => store.getUserThreadsLoadingState(options.query),

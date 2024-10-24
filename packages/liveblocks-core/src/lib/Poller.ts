@@ -2,7 +2,6 @@ import { FSM } from "./fsm";
 
 // TODO LIST:
 // XXX Model the "becoming available of lastRequestedAt date" as another poller precondition?
-// XXX Optimization: Rename `subscribeToDeltaUpdates` and interact with the Poller directly?
 // XXX Centralize logging of falied polls in the poller itself: "Polling new inbox notifications failed"
 // XXX Think about the _initial_ poll that is now being triggered by the pollNowIfStale() call when a component mounts. Typically the initial data has not been loaded yet, so polling should not really happen yet either.
 

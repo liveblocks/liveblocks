@@ -106,6 +106,19 @@ describe("useInboxNotifications", () => {
             },
           })
         );
+      }),
+      mockGetInboxNotificationsDelta(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            threads: [],
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
       })
     );
 
@@ -434,6 +447,19 @@ describe("useInboxNotifications - Suspense", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+            },
+          })
+        );
+      }),
+      mockGetInboxNotificationsDelta(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            threads: [],
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
             },
           })
         );
@@ -972,6 +998,19 @@ describe("useInboxNotifications: pagination", () => {
             })
           );
         }
+      }),
+      mockGetInboxNotificationsDelta(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            threads: [],
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
       })
     );
 
