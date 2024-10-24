@@ -1,3 +1,9 @@
+## 2.10.0 (not published yet)
+
+### `@liveblocks/react-ui`
+
+- Improve and fix pasting rich text into the composer.
+
 ## 2.9.2
 
 ### `@liveblocks/node`

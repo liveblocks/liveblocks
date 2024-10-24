@@ -7,7 +7,7 @@ export function withNormalize(editor: Editor) {
   editor.normalizeNode = (entry) => {
     const [node, path] = entry;
 
-    // Paragraphs should only contain inline elements.
+    // Paragraphs should only contain inline elements
     if (Element.isElement(node) && node.type === "paragraph") {
       for (const [child, childPath] of Node.children(editor, path)) {
         if (Element.isElement(child) && !editor.isInline(child)) {
