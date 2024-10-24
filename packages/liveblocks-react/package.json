@@ -28,11 +28,23 @@
         "module": "./dist/suspense.mjs",
         "default": "./dist/suspense.js"
       }
+    },
+    "./_private": {
+      "import": {
+        "types": "./dist/_private.d.mts",
+        "default": "./dist/_private.mjs"
+      },
+      "require": {
+        "types": "./dist/_private.d.ts",
+        "module": "./dist/_private.mjs",
+        "default": "./dist/_private.js"
+      }
     }
   },
   "files": [
     "dist/**",
     "suspense/**",
+    "_private/**",
     "README.md"
   ],
   "scripts": {
