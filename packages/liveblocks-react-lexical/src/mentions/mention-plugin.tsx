@@ -10,7 +10,8 @@ import {
 } from "@floating-ui/react-dom";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { kInternal } from "@liveblocks/core";
-import { useMentionSuggestions, useRoom } from "@liveblocks/react";
+import { useRoom } from "@liveblocks/react";
+import { useMentionSuggestions } from "@liveblocks/react/_private";
 import type { EditorState, NodeKey, NodeMutation, TextNode } from "lexical";
 import {
   $createRangeSelection,

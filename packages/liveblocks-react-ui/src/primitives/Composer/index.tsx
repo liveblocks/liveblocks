@@ -14,7 +14,8 @@ import {
   useFloating,
 } from "@floating-ui/react-dom";
 import type { CommentAttachment, CommentBody } from "@liveblocks/core";
-import { useMentionSuggestions, useRoom } from "@liveblocks/react";
+import { useRoom } from "@liveblocks/react";
+import { useMentionSuggestions } from "@liveblocks/react/_private";
 import { Slot, Slottable } from "@radix-ui/react-slot";
 import type {
   AriaAttributes,
