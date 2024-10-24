@@ -2101,6 +2101,55 @@ export function POST(request) {
 }
 ```
 
+### isThreadNotificationEvent [#isThreadNotificationEvent]
+
+Type guard to check if a received webhook event is a
+[`ThreadNotificationEvent`](/docs/platform/webhooks#Thread-notification) send
+from Comments. Particularly helpful when creating
+[thread notification emails](/docs/api-reference/liveblocks-emails#thread-notification-emails)
+with webhooks.
+
+```js
+import { isThreadNotificationEvent } from "@liveblocks/node";
+
+const event = webhookHandler.verifyRequest({
+  headers: req.headers,
+  rawBody: req.body,
+});
+
+// +++
+if (isThreadNotificationEvent(event)) {
+  // Handle `ThreadNotificationEvent`
+}
+// +++
+```
+
+The check is made against the event type and event data kind.
+
+### isTextMentionNotificationEvent [#isTextMentionNotificationEvent]
+
+Type guard to check if a received webhook event is a
+[`TextMentionNotificationEvent`](/docs/platform/webhooks#TextMention-notification)
+sent from Text Editor. Particularly helpful for identifying text mentions when
+sending email notifications.
+
+```js
+import { isTextMentionNotificationEvent } from "@liveblocks/node";
+
+const event = webhookHandler.verifyRequest({
+  headers: req.headers,
+  rawBody: req.body,
+});
+
+// +++
+if (isTextMentionNotificationEvent(event)) {
+  // Handle `TextMentionNotificationEvent`
+}
+// +++
+```
+
+The check is made against the event type and event data kind.
+
 ## Deprecated
 
 ### authorize [#authorize] [@badge=Deprecated]
