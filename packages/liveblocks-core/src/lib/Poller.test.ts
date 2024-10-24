@@ -382,6 +382,27 @@ describe("Poller", () => {
     expect(callback).toHaveBeenCalledTimes(2); // No new polls are getting scheduled
   });
 
+  test("should abort long running ongoing poll", async () => {
+    // Mock async callback that takes 2s to resolve
+    const callback = jest.fn(async (signal: AbortSignal) => {
+      await new Promise((resolve) => setTimeout(resolve, 40_000));
+      signal.throwIfAborted();
+    });
+    const poller = makePoller(callback, 5000);
+
+    // Start the poller
+    poller.inc();
+
+    // Fast-forward to 5s (polling interval)
+    await jest.advanceTimersByTimeAsync(5000);
+    expect(callback).toHaveBeenCalledTimes(1);
+
+    // Advance by 30s (which is longer than the time the poller callback takes to complete) and verify the signal was aborted
+    await jest.advanceTimersByTimeAsync(30_000);
+    const [signal] = callback.mock.calls[0];
+    expect(signal.aborted).toBe(true);
+  });
+
   test("should poll after specified interval in event of error", async () => {
     const callback = jest.fn(() => {
       throw new Error();
