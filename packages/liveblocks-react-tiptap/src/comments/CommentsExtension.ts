@@ -178,7 +178,7 @@ export const CommentsExtension = Extension.create<
   CommentsExtensionStorage
 >({
   name: "liveblocksComments",
-  priority: 105,
+  priority: 95,
   addExtensions() {
     return [Comment];
   },
