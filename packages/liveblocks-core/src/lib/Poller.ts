@@ -2,7 +2,6 @@ import { FSM } from "./fsm";
 
 // TODO LIST:
 // XXX Model the "becoming available of lastRequestedAt date" as another poller precondition?
-// XXX Optimization: Maybe remove `enabled` condition, and implement mayPoll in terms of `count` directly
 // XXX Optimization: Rename `subscribeToDeltaUpdates` and interact with the Poller directly?
 // XXX Centralize logging of falied polls in the poller itself: "Polling new inbox notifications failed"
 // XXX Think about the _initial_ poll that is now being triggered by the pollNowIfStale() call when a component mounts. Typically the initial data has not been loaded yet, so polling should not really happen yet either.
@@ -34,7 +33,6 @@ export type Poller = {
 };
 
 type Context = {
-  enabled: boolean; // Whether user has .enable()'ed the poller
   inForeground: boolean; // Whether the visibility state is visible
   lastSuccessfulPollAt: number | null;
   count: number; // Subscriber count
@@ -90,14 +88,13 @@ export function makePoller(
 
   const maxStaleTimeMs = options?.maxStaleTimeMs ?? Number.POSITIVE_INFINITY;
   const context: Context = {
-    enabled: false,
     inForeground: doc?.visibilityState !== "hidden",
     lastSuccessfulPollAt: null,
     count: 0,
   };
 
   function mayPoll() {
-    return context.enabled && context.inForeground;
+    return context.count > 0 && context.inForeground;
   }
 
   const fsm = new FSM<object, Event, State>({})
@@ -135,14 +132,9 @@ export function makePoller(
     }
   }
 
-  function enable(condition: boolean) {
-    context.enabled = condition;
-    startOrStop();
-  }
-
   function inc() {
     context.count++;
-    enable(context.count > 0);
+    startOrStop();
   }
 
   function dec() {
@@ -150,7 +142,7 @@ export function makePoller(
     if (context.count < 0) {
       context.count = 0;
     }
-    enable(context.count > 0);
+    startOrStop();
   }
 
   function pollNowIfStale() {
