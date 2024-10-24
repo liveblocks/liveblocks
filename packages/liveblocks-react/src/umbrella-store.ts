@@ -445,7 +445,6 @@ export class PaginatedResource {
     const promise = usify(
       initialFetcher.then((cursor) => {
         // Initial fetch completed
-        // XXX - Maybe use the patch method
         this._paginationState = {
           cursor,
           isFetchingMore: false,
@@ -454,7 +453,7 @@ export class PaginatedResource {
       })
     );
 
-    // XXX Maybe move this into the .then() above too?
+    // TODO for later: Maybe move this into the .then() above too?
     promise.then(
       () => this._eventSource.notify(),
       () => {
