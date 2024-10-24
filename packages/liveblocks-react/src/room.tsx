@@ -1290,9 +1290,7 @@ function useThreads<M extends BaseMetadata>(
 
   React.useEffect(
     () => {
-      void store
-        .waitUntilRoomThreadsLoaded(room.id, options.query)
-        .catch(() => {}); // Deliberately ignore any errors here
+      void store.waitUntilRoomThreadsLoaded(room.id, options.query);
     }
     // NOTE: Deliberately *not* using a dependency array here!
     //

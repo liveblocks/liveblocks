@@ -390,7 +390,7 @@ function useInboxNotifications_withClient<T>(
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
   useEffect(() => {
-    void store.waitUntilNotificationsLoaded().catch(() => {}); // Deliberately catch and ignore any errors here
+    void store.waitUntilNotificationsLoaded();
     // NOTE: Deliberately *not* using a dependency array here!
     //
     // It is important to call waitUntil on *every* render.
@@ -905,7 +905,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
 
   useEffect(
     () => {
-      void store.waitUntilUserThreadsLoaded(options.query).catch(() => {}); // Deliberately ignore any errors here
+      void store.waitUntilUserThreadsLoaded(options.query);
     }
     // NOTE: Deliberately *not* using a dependency array here!
     //
