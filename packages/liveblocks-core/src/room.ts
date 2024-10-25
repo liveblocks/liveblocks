@@ -1023,10 +1023,10 @@ export type PrivateRoomApi = {
   getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
 
   // For reporting editor metadata
-  reportTextEditor(editor: "lexical", rootKey: string): void;
+  reportTextEditor(editor: "lexical", rootKey: string): Promise<void>;
 
-  createTextMention(userId: string, mentionId: string): Promise<Response>;
-  deleteTextMention(mentionId: string): Promise<Response>;
+  createTextMention(userId: string, mentionId: string): Promise<void>;
+  deleteTextMention(mentionId: string): Promise<void>;
   listTextVersions(): Promise<{
     versions: HistoryVersion[];
     requestedAt: Date;
@@ -1037,7 +1037,7 @@ export type PrivateRoomApi = {
   }>;
 
   getTextVersion(versionId: string): Promise<Response>;
-  createTextVersion(): Promise<Response>;
+  createTextVersion(): Promise<void>;
 
   // NOTE: These are only used in our e2e test app!
   simulate: {
@@ -1616,6 +1616,8 @@ export function createRoom<
   // When making calls with HTTP client 2, it will always call
   // `delegates.authenticate()` to obtain the auth header.
   //
+  // TODO: Ideally we would consolidate these two.
+  //
   const httpClient1 = new HttpClient(config.baseUrl, fetchPolyfill, () =>
     Promise.resolve(managedSocket.authValue ?? raise("Not authorized"))
   );
@@ -1625,26 +1627,22 @@ export function createRoom<
   );
 
   async function createTextMention(userId: string, mentionId: string) {
-    return httpClient1.fetch(url`/v2/c/rooms/${config.roomId}/text-mentions`, {
-      method: "POST",
-      body: JSON.stringify({
-        userId,
-        mentionId,
-      }),
+    await httpClient1.rawPost(url`/v2/c/rooms/${config.roomId}/text-mentions`, {
+      userId,
+      mentionId,
     });
   }
 
   async function deleteTextMention(mentionId: string) {
-    return httpClient1.fetch(
-      url`/v2/c/rooms/${config.roomId}/text-mentions/${mentionId}`,
-      { method: "DELETE" }
+    await httpClient1.rawDelete(
+      url`/v2/c/rooms/${config.roomId}/text-mentions/${mentionId}`
     );
   }
 
   async function reportTextEditor(type: "lexical", rootKey: string) {
-    return httpClient2.fetch(url`/v2/c/rooms/${config.roomId}/text-metadata`, {
-      method: "POST",
-      body: JSON.stringify({ type, rootKey }),
+    await httpClient2.rawPost(url`/v2/c/rooms/${config.roomId}/text-metadata`, {
+      type,
+      rootKey,
     });
   }
 
@@ -1691,15 +1689,13 @@ export function createRoom<
   }
 
   async function getTextVersion(versionId: string) {
-    return httpClient2.fetch(
+    return httpClient2.rawGet(
       url`/v2/c/rooms/${config.roomId}/y-version/${versionId}`
     );
   }
 
   async function createTextVersion() {
-    return httpClient2.fetch(url`/v2/c/rooms/${config.roomId}/version`, {
-      method: "POST",
-    });
+    await httpClient2.rawPost(url`/v2/c/rooms/${config.roomId}/version`);
   }
 
   function sendMessages(messages: ClientMsg<P, E>[]) {
@@ -1711,9 +1707,9 @@ export function createRoom<
       const size = new TextEncoder().encode(serializedPayload).length;
       if (size > MAX_SOCKET_MESSAGE_SIZE) {
         void httpClient1
-          .fetch(url`/v2/c/rooms/${config.roomId}/send-message`, {
-            method: "POST",
-            body: JSON.stringify({ nonce, messages }),
+          .rawPost(url`/v2/c/rooms/${config.roomId}/send-message`, {
+            nonce,
+            messages,
           })
           .then((resp) => {
             if (!resp.ok && resp.status === 403) {
@@ -2539,7 +2535,7 @@ export function createRoom<
   async function streamStorage() {
     // TODO: Handle potential race conditions where the room get disconnected while the request is pending
     if (!managedSocket.authValue) return;
-    const result = await httpClient1.fetch(
+    const result = await httpClient1.rawGet(
       url`/v2/c/rooms/${config.roomId}/storage`
     );
     const items = (await result.json()) as IdTuple<SerializedCrdt>[];
@@ -2836,10 +2832,10 @@ export function createRoom<
   };
 
   async function getThreadsSince(options: GetThreadsSinceOptions) {
-    const response = await httpClient2.fetch(
+    const response = await httpClient2.rawGet(
       url`/v2/c/rooms/${config.roomId}/threads/delta`,
-      { signal: options.signal },
-      { since: options?.since?.toISOString() }
+      { since: options?.since?.toISOString() },
+      { signal: options.signal }
     );
 
     if (response.ok) {
@@ -2918,7 +2914,7 @@ export function createRoom<
   }
 
   async function getThread(threadId: string) {
-    const response = await httpClient2.fetch(
+    const response = await httpClient2.rawGet(
       url`/v2/c/rooms/${config.roomId}/thread-with-notification/${threadId}`
     );
 
@@ -3274,9 +3270,8 @@ export function createRoom<
         ) {
           try {
             // Abort the multi-part upload if it was created
-            await httpClient2.fetch(
-              url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/multipart/${uploadId}`,
-              { method: "DELETE" }
+            await httpClient2.rawDelete(
+              url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/multipart/${uploadId}`
             );
           } catch (error) {
             // Ignore the error, we are probably offline

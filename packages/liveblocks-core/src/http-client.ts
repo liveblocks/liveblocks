@@ -45,18 +45,17 @@ export class HttpClient {
   /**
    * Constructs and makes the HTTP request, but does not handle the response.
    *
-   * This is what .fetch() does:    👈 This method!
+   * This is what .rawFetch() does:    👈 This method!
    *   1. Set Content-Type header
    *   2. Set Authorization header
    *   3. Call the callback to obtain the `authValue` to use in the Authorization header
    *
-   * This is what .fetchJson() does ON TOP of that:
+   * This is what .fetch() does ON TOP of that:
    *   4. Parse response body as Json
    *   5. ...but silently return `{}` if that parsing fails
    *   6. Throw HttpError if response is an error
    */
-  // XXX Ultimately, might be nice to make this a private method? It might be much nicer if this method would _always_ deal with the JSON parsing.
-  public async fetch(
+  private async rawFetch(
     endpoint: URLSafeString,
     options?: RequestInit,
     params?: QueryParams
@@ -86,22 +85,23 @@ export class HttpClient {
    * Constructs, makes the HTTP request, and handles the response by parsing
    * JSON and/or throwing an HttpError if it failed.
    *
-   * This is what .fetch() does:
+   * This is what .rawFetch() does:
    *   1. Set Content-Type header
    *   2. Set Authorization header
    *   3. Call the callback to obtain the `authValue` to use in the Authorization header
    *
-   * This is what .fetchJson() does ON TOP of that:   👈 This method!
+   * This is what .fetch() does ON TOP of that:   👈 This method!
    *   4. Parse response body as Json
    *   5. ...but silently return `{}` if that parsing fails (🤔)
    *   6. Throw HttpError if response is an error
    */
-  public async fetchJson<T extends JsonObject>(
+  // XXX Rename to "fetch", make it private, and wrap it with similar .get(), .post(), .delete()
+  public async fetch<T extends JsonObject>(
     endpoint: URLSafeString,
     options?: RequestInit,
     params?: QueryParams
   ): Promise<T> {
-    const response = await this.fetch(endpoint, options, params);
+    const response = await this.rawFetch(endpoint, options, params);
 
     if (!response.ok) {
       let error: HttpError;
@@ -123,5 +123,39 @@ export class HttpClient {
       body = {} as T;
     }
     return body;
+  }
+
+  /**
+   * Makes a GET request and returns the raw response.
+   * Won't throw if the reponse is a non-2xx.
+   */
+  public async rawGet(
+    endpoint: URLSafeString,
+    params?: QueryParams,
+    options?: Omit<RequestInit, "body" | "method" | "headers">
+  ): Promise<Response> {
+    return await this.rawFetch(endpoint, options, params);
+  }
+
+  /**
+   * Makes a POST request and returns the raw response.
+   * Won't throw if the reponse is a non-2xx.
+   */
+  public async rawPost(
+    endpoint: URLSafeString,
+    body?: JsonObject
+  ): Promise<Response> {
+    return await this.rawFetch(endpoint, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  }
+
+  /**
+   * Makes a DELETE request and returns the raw response.
+   * Won't throw if the reponse is a non-2xx.
+   */
+  public async rawDelete(endpoint: URLSafeString): Promise<Response> {
+    return await this.rawFetch(endpoint, { method: "DELETE" });
   }
 }
