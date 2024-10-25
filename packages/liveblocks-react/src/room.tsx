@@ -2984,7 +2984,6 @@ const _useUpdateMyPresence: TypedBundle["useUpdateMyPresence"] =
   useUpdateMyPresence;
 
 export {
-  _useRoomNotificationSettings,
   CreateThreadError,
   RoomContext,
   _RoomProvider as RoomProvider,
