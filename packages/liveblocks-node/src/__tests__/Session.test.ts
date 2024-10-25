@@ -20,17 +20,27 @@ describe("authorization (new API)", () => {
         secret: 123,
       })
     ).toThrow(
-      'Invalid value for field "secret". Secret keys must start with "sk_". Please provide the secret key from your Liveblocks dashboard at https://liveblocks.io/dashboard/apikeys.'
+      "Invalid value for field 'secret'. Secret keys must start with 'sk_'. Please provide the secret key from your Liveblocks dashboard at https://liveblocks.io/dashboard/apikeys."
+    );
+  });
+
+  test("throws when an public key is provided instead of a secret key", () => {
+    expect(() =>
+      makeSession({
+        secret: "pk_thisisntsecret",
+      })
+    ).toThrow(
+      "Invalid value for field 'secret'. Secret keys must start with 'sk_'. Please provide the secret key from your Liveblocks dashboard at https://liveblocks.io/dashboard/apikeys."
     );
   });
 
   test("throws when an invalid secret key is provided", () => {
     expect(() =>
       makeSession({
-        secret: "pk_thisisntsecret",
+        secret: "sk_this…is…truncated",
       })
     ).toThrow(
-      'Invalid value for field "secret". Secret keys must start with "sk_". Please provide the secret key from your Liveblocks dashboard at https://liveblocks.io/dashboard/apikeys.'
+      "Invalid chars found in field 'secret'. Please check that you correctly copied the secret key from your Liveblocks dashboard at https://liveblocks.io/dashboard/apikeys."
     );
   });
 

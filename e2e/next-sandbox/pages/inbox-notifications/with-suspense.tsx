@@ -2,9 +2,9 @@ import {
   ClientSideSuspense,
   createLiveblocksContext,
   createRoomContext,
-  getUmbrellaStoreForClient,
   useClient,
 } from "@liveblocks/react";
+import { getUmbrellaStoreForClient } from "@liveblocks/react/_private";
 import {
   Composer,
   InboxNotification,
@@ -121,7 +121,7 @@ export default function Home() {
 }
 
 function useInboxNotificationsForThisPage() {
-  const { inboxNotifications: allInboxNotifications } = useInboxNotifications();
+  const { inboxNotifications } = useInboxNotifications();
 
   // Filter down inbox notifications to just the notifications from this room,
   // and only the ones that happened since the page was loaded. If we didn't
@@ -130,14 +130,12 @@ function useInboxNotificationsForThisPage() {
   const roomId = getRoomFromUrl();
   const [pageLoadTimestamp] = React.useState(() => Date.now());
 
-  const inboxNotifications = allInboxNotifications.filter(
+  return inboxNotifications.filter(
     (ibn) =>
       ibn.kind === "thread" &&
       ibn.roomId === roomId &&
       ibn.notifiedAt.getTime() > pageLoadTimestamp
   );
-
-  return inboxNotifications;
 }
 
 function TopPart() {

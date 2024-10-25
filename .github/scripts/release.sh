@@ -92,7 +92,7 @@ commit_to_git () {
         if [ "$PUSH_COMMIT" = "true" ]; then
             echo "==> Pushing changes to GitHub"
             if ! git push-current; then
-                echo "WARNING: Could not push this branch to GitHub!" >&2
+                echo "ERROR: Could not push this branch to GitHub!" >&2
                 echo "Please manually fix that now." >&2
                 exit 2
             else

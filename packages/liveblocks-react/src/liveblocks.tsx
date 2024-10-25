@@ -612,24 +612,28 @@ function useUser_withClient<U extends BaseUserMeta>(
     [usersStore, userId]
   );
 
-  useEffect(() => {
-    // NOTE: .get() will trigger any actual fetches, whereas .getState() will not
-    void usersStore.get(userId);
-  }, [usersStore, userId]);
-
   const selector = useCallback(
     (state: ReturnType<typeof getUserState>) =>
       selectorFor_useUser(state, userId),
     [userId]
   );
 
-  return useSyncExternalStoreWithSelector(
+  const result = useSyncExternalStoreWithSelector(
     usersStore.subscribe,
     getUserState,
     getUserState,
     selector,
     shallow
   );
+
+  // Trigger a fetch if we don't have any data yet (whether initially or after an invalidation)
+  useEffect(() => {
+    // NOTE: .get() will trigger any actual fetches, whereas .getState() will not,
+    // and it won't trigger a fetch if we already have data
+    void usersStore.get(userId);
+  }, [usersStore, userId, result]);
+
+  return result;
 }
 
 function useUserSuspense_withClient<U extends BaseUserMeta>(
@@ -689,17 +693,22 @@ function useRoomInfo_withClient(
     [roomId]
   );
 
-  useEffect(() => {
-    void roomsInfoStore.get(roomId);
-  }, [roomsInfoStore, roomId]);
-
-  return useSyncExternalStoreWithSelector(
+  const result = useSyncExternalStoreWithSelector(
     roomsInfoStore.subscribe,
     getRoomInfoState,
     getRoomInfoState,
     selector,
     shallow
   );
+
+  // Trigger a fetch if we don't have any data yet (whether initially or after an invalidation)
+  useEffect(() => {
+    // NOTE: .get() will trigger any actual fetches, whereas .getState() will not,
+    // and it won't trigger a fetch if we already have data
+    void roomsInfoStore.get(roomId);
+  }, [roomsInfoStore, roomId, result]);
+
+  return result;
 }
 
 function useRoomInfoSuspense_withClient(client: OpaqueClient, roomId: string) {
@@ -898,7 +907,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
     },
   }
 ): ThreadsAsyncResult<M> {
-  const client = useClient<M>();
+  const client = useClient();
 
   const { store, userThreadsPoller: poller } =
     getLiveblocksExtrasForClient<M>(client);
@@ -961,7 +970,7 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
     },
   }
 ): ThreadsAsyncSuccess<M> {
-  const client = useClient<M>();
+  const client = useClient();
 
   const { store } = getLiveblocksExtrasForClient<M>(client);
 
