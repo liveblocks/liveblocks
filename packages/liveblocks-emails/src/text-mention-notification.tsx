@@ -39,7 +39,16 @@ export const extractTextMentionNotificationData = async ({
     return null;
   }
 
-  // TODO get document json
-
-  return null;
+  switch (room.textEditor.type) {
+    case "lexical": {
+      return {
+        textEditorType: "lexical",
+      };
+    }
+    case "tiptap": {
+      return {
+        textEditorType: "tiptap",
+      };
+    }
+  }
 };
