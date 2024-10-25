@@ -332,10 +332,12 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     throw innerError;
   }
 
-  const pollersByRoomId = new Map<string, Poller>();
+  const threadsPollersByRoomId = new Map<string, Poller>();
 
-  function getOrCreatePollerForRoomId(roomId: string) {
-    let poller = pollersByRoomId.get(roomId);
+  const versionsPollersByRoomId = new Map<string, Poller>();
+
+  function getOrCreateThreadsPollerForRoomId(roomId: string) {
+    let poller = threadsPollersByRoomId.get(roomId);
     if (!poller) {
       poller = makePoller(
         async (signal) => {
@@ -350,7 +352,29 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
         { maxStaleTimeMs: config.ROOM_THREADS_MAX_STALE_TIME }
       );
 
-      pollersByRoomId.set(roomId, poller);
+      threadsPollersByRoomId.set(roomId, poller);
+    }
+
+    return poller;
+  }
+
+  function getOrCreateVersionsPollerForRoomId(roomId: string) {
+    let poller = versionsPollersByRoomId.get(roomId);
+    if (!poller) {
+      poller = makePoller(
+        async (signal) => {
+          try {
+            return await store.fetchRoomVersionsDeltaUpdate(roomId, signal);
+          } catch (err) {
+            console.warn(`Polling new history versions for '${roomId}' failed: ${String(err)}`); // prettier-ignore
+            throw err;
+          }
+        },
+        config.HISTORY_VERSIONS_POLL_INTERVAL,
+        { maxStaleTimeMs: config.HISTORY_VERSIONS_MAX_STALE_TIME }
+      );
+
+      versionsPollersByRoomId.set(roomId, poller);
     }
 
     return poller;
@@ -361,7 +385,8 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     commentsErrorEventSource: commentsErrorEventSource.observable,
     getInboxNotificationSettings,
     onMutationFailure,
-    getOrCreatePollerForRoomId,
+    getOrCreateThreadsPollerForRoomId,
+    getOrCreateVersionsPollerForRoomId,
   };
 }
 
@@ -1243,10 +1268,10 @@ function useThreads<M extends BaseMetadata>(
   const client = useClient();
   const room = useRoom();
 
-  const { store, getOrCreatePollerForRoomId } =
+  const { store, getOrCreateThreadsPollerForRoomId } =
     getRoomExtrasForClient<M>(client);
 
-  const poller = getOrCreatePollerForRoomId(room.id);
+  const poller = getOrCreateThreadsPollerForRoomId(room.id);
 
   React.useEffect(
     () => {
@@ -2074,7 +2099,16 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
   const client = useClient();
   const room = useRoom();
 
-  const store = getRoomExtrasForClient(client).store;
+  const { store, getOrCreateVersionsPollerForRoomId } =
+    getRoomExtrasForClient(client);
+
+  const poller = getOrCreateVersionsPollerForRoomId(room.id);
+
+  React.useEffect(() => {
+    poller.inc();
+    poller.pollNowIfStale();
+    return () => poller.dec();
+  }, [poller]);
 
   const getter = React.useCallback(
     () => store.getVersionsLoadingState(room.id),
@@ -2083,10 +2117,7 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
 
   React.useEffect(
     () => {
-      // XXX - Verify that we need the catch or not
-      void store.waitUntilRoomVersionsLoaded(room.id).catch(() => {
-        // Deliberately catch and ignore any errors here
-      });
+      void store.waitUntilRoomVersionsLoaded(room.id);
     }
     // NOTE: Deliberately *not* using a dependency array here!
     //
@@ -2103,7 +2134,7 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
     getter,
     getter,
     identity,
-    shallow
+    shallow2
   );
 
   return state;

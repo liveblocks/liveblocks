@@ -39,11 +39,32 @@ function mockListHistoryVersions(
     RestContext,
     {
       versions: HistoryVersion[];
+      meta: {
+        requestedAt: string;
+      };
     }
   >
 ) {
   return rest.get(
     "https://api.liveblocks.io/v2/c/rooms/:roomId/versions",
+    resolver
+  );
+}
+
+function mockGetHistoryVersionsSince(
+  resolver: ResponseResolver<
+    RestRequest<never, { roomId: string }>,
+    RestContext,
+    {
+      versions: HistoryVersion[];
+      meta: {
+        requestedAt: string;
+      };
+    }
+  >
+) {
+  return rest.get(
+    "https://api.liveblocks.io/v2/c/rooms/:roomId/versions/delta",
     resolver
   );
 }
@@ -78,6 +99,9 @@ describe("useHistoryVersions", () => {
         return res(
           ctx.json({
             versions,
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -128,6 +152,9 @@ describe("useHistoryVersions", () => {
         return res(
           ctx.json({
             versions,
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -141,8 +168,8 @@ describe("useHistoryVersions", () => {
     umbrellaStore.force_set((state) => ({
       ...state,
       versionsByRoomId: {
-        "room-1": [
-          {
+        "room-1": {
+          version_1: {
             type: "historyVersion",
             kind: "yjs",
             createdAt: new Date(),
@@ -153,7 +180,7 @@ describe("useHistoryVersions", () => {
               },
             ],
           },
-        ],
+        },
       },
     }));
 
@@ -287,6 +314,9 @@ describe("useHistoryVersions: suspense", () => {
         return res(
           ctx.json({
             versions,
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
           })
         );
       })
@@ -327,6 +357,7 @@ describe("useHistoryVersions: error", () => {
   afterEach(() => {
     jest.clearAllTimers();
     jest.useRealTimers(); // Restores the real timers
+    server.resetHandlers();
   });
 
   test("should trigger error boundary if initial fetch throws an error", async () => {
@@ -407,6 +438,110 @@ describe("useHistoryVersions: error", () => {
     await waitFor(() => {
       expect(screen.getByText("Loading")).toBeInTheDocument();
     });
+
+    unmount();
+  });
+});
+
+describe("useHistoryVersions: polling", () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.clearAllTimers();
+    server.resetHandlers();
+  });
+  test("should poll threads every x seconds", async () => {
+    const roomId = nanoid();
+    const versions: HistoryVersion[] = [
+      {
+        type: "historyVersion",
+        kind: "yjs",
+        createdAt: new Date(),
+        id: "version_1",
+        authors: [
+          {
+            id: "user-1",
+          },
+        ],
+      },
+    ];
+
+    let getHistoryVersionsSinceCount = 0;
+
+    server.use(
+      mockListHistoryVersions((_req, res, ctx) => {
+        return res(
+          ctx.json({
+            versions,
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
+      }),
+      mockGetHistoryVersionsSince((_req, res, ctx) => {
+        getHistoryVersionsSinceCount++;
+        return res(
+          ctx.json({
+            versions,
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      room: { RoomProvider, useHistoryVersions },
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(() => useHistoryVersions(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id={roomId}>{children}</RoomProvider>
+      ),
+    });
+
+    expect(result.current).toEqual({
+      isLoading: true,
+    });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        versions,
+      })
+    );
+
+    // A new fetch request for the history versions should have been made after the initial render but not for delta updates
+    expect(getHistoryVersionsSinceCount).toBe(0);
+
+    versions.push({
+      type: "historyVersion",
+      kind: "yjs",
+      createdAt: new Date(),
+      id: "version_2",
+      authors: [
+        {
+          id: "user-2",
+        },
+      ],
+    });
+
+    // Wait for the first polling to occur after the initial render
+    await jest.advanceTimersByTimeAsync(60_000);
+    await waitFor(() => expect(getHistoryVersionsSinceCount).toBe(1));
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        versions,
+      })
+    );
+    // expect(getHistoryVersionsCount).toBe(1);
 
     unmount();
   });

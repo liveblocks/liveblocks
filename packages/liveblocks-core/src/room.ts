@@ -489,6 +489,11 @@ export type UploadAttachmentOptions = {
   signal?: AbortSignal;
 };
 
+type ListTextVersionsSinceOptions = {
+  since: Date;
+  signal?: AbortSignal;
+};
+
 /**
  * @private Widest-possible Room type, matching _any_ Room instance. Note that
  * this type is different from `Room`-without-type-arguments. That represents
@@ -1018,7 +1023,13 @@ export type PrivateRoomApi = {
   deleteTextMention(mentionId: string): Promise<Response>;
   listTextVersions(): Promise<{
     versions: HistoryVersion[];
+    requestedAt: Date;
   }>;
+  listTextVersionsSince(options: ListTextVersionsSinceOptions): Promise<{
+    versions: HistoryVersion[];
+    requestedAt: Date;
+  }>;
+
   getTextVersion(versionId: string): Promise<Response>;
   createTextVersion(): Promise<Response>;
 
@@ -1647,31 +1658,45 @@ export function createRoom<
   }
 
   async function listTextVersions() {
-    const response = await httpClient2.fetch(
-      url`/v2/c/rooms/${config.roomId}/versions`
-    );
-    if (response.ok) {
-      const json = await (response.json() as Promise<{
-        versions: DateToString<HistoryVersion>[];
-      }>);
-
-      const versions: HistoryVersion[] = json.versions.map(
-        ({ createdAt, ...version }) => {
-          return {
-            createdAt: new Date(createdAt),
-            ...version,
-          };
-        }
-      );
-
-      return {
-        versions,
+    const result = await httpClient2.fetchJson<{
+      versions: DateToString<HistoryVersion>[];
+      meta: {
+        requestedAt: string;
       };
-    } else {
-      throw new Error(
-        `There was an error while getting text versions for room ${config.roomId}`
-      );
-    }
+    }>(url`/v2/c/rooms/${config.roomId}/versions`);
+
+    return {
+      versions: result.versions.map(({ createdAt, ...version }) => {
+        return {
+          createdAt: new Date(createdAt),
+          ...version,
+        };
+      }),
+      requestedAt: new Date(result.meta.requestedAt),
+    };
+  }
+
+  async function listTextVersionsSince(options: ListTextVersionsSinceOptions) {
+    const result = await httpClient2.fetchJson<{
+      versions: DateToString<HistoryVersion>[];
+      meta: {
+        requestedAt: string;
+      };
+    }>(
+      url`/v2/c/rooms/${config.roomId}/versions/delta`,
+      { signal: options.signal },
+      { since: options.since.toISOString() }
+    );
+
+    return {
+      versions: result.versions.map(({ createdAt, ...version }) => {
+        return {
+          createdAt: new Date(createdAt),
+          ...version,
+        };
+      }),
+      requestedAt: new Date(result.meta.requestedAt),
+    };
   }
 
   async function getTextVersion(versionId: string) {
@@ -3382,6 +3407,8 @@ export function createRoom<
         deleteTextMention,
         // list versions of the document
         listTextVersions,
+        // List versions of the document since the specified date
+        listTextVersionsSince,
         // get a specific version
         getTextVersion,
         // create a version

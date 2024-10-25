@@ -7,7 +7,6 @@ const empty = {
   cleanedNotifications: [],
   notificationsById: {},
   queries3: {},
-  queries4: {},
   settingsByRoomId: {},
   threadsDB: expect.any(ThreadDB),
   versionsByRoomId: {},
