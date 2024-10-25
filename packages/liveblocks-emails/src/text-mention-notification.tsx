@@ -22,7 +22,15 @@ export const extractTextMentionNotificationData = async ({
     client.getInboxNotification({ inboxNotificationId, userId }),
   ]);
 
-  // TODO: check if notification is read
+  // Aligned behaviors w/ `@liveblocks/react-ui`.
+  const isUnread =
+    inboxNotification.readAt === null ||
+    inboxNotification.notifiedAt > inboxNotification.readAt;
+
+  // Notification read so do nothing
+  if (!isUnread) {
+    return null;
+  }
 
   // TODO: check for editor type existence
 
