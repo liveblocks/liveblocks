@@ -1,6 +1,8 @@
 import type {
   AsyncResult,
   BaseMetadata,
+  BaseUserMeta,
+  Client,
   CommentData,
   CommentReaction,
   CommentUserReaction,
@@ -21,7 +23,6 @@ import type {
 } from "@liveblocks/core";
 import {
   autoRetry,
-  CommentsApiError,
   compactObject,
   console,
   createStore,
@@ -31,8 +32,6 @@ import {
   mapValues,
   nanoid,
   nn,
-  NotificationsApiError,
-  StopRetrying,
   stringify,
 } from "@liveblocks/core";
 
@@ -218,7 +217,6 @@ export function makeNotificationSettingsQueryKey(roomId: string) {
   return `${roomId}:NOTIFICATION_SETTINGS`;
 }
 
-// NIMESH - Make this an implementation detail of the store
 export function makeVersionsQueryKey(roomId: string) {
   return `${roomId}-VERSIONS`;
 }
@@ -264,72 +262,6 @@ function usify<T>(promise: Promise<T>): UsablePromise<T> {
 const noop = Promise.resolve();
 
 const ASYNC_LOADING = Object.freeze({ isLoading: true });
-
-class SingleResource {
-  public readonly observable: Observable<void>;
-  private _eventSource: EventSource<void>;
-  private _fetchPage: () => Promise<void>;
-  private _cachedPromise: UsablePromise<void> | null = null;
-
-  constructor(fetchPage: () => Promise<void>) {
-    this._fetchPage = fetchPage;
-    this._eventSource = makeEventSource<void>();
-    this.observable = this._eventSource.observable;
-
-    autobind(this);
-  }
-
-  public get(): AsyncResult<undefined> {
-    const usable = this._cachedPromise;
-    if (usable === null || usable.status === "pending") {
-      return ASYNC_LOADING;
-    }
-
-    if (usable.status === "rejected") {
-      // XXX Make this a stable reference!
-      return { isLoading: false, error: usable.reason };
-    }
-
-    // XXX Make this a stable reference!
-    return {
-      isLoading: false,
-      data: undefined,
-    };
-  }
-
-  public waitUntilLoaded(): UsablePromise<void> {
-    if (this._cachedPromise) {
-      return this._cachedPromise;
-    }
-
-    // Wrap the request to load room threads (and notifications) in an auto-retry function so that if the request fails,
-    // we retry for at most 5 times with incremental backoff delays. If all retries fail, the auto-retry function throws an error
-    const initialFetcher = autoRetry(
-      this._fetchPage,
-      5,
-      [5000, 5000, 10000, 15000]
-    );
-
-    const promise = usify(initialFetcher);
-
-    // XXX Maybe move this into the .then() above too?
-    promise.then(
-      () => this._eventSource.notify(),
-      () => {
-        this._eventSource.notify();
-
-        // Wait for 5 seconds before removing the request from the cache
-        setTimeout(() => {
-          this._cachedPromise = null;
-          this._eventSource.notify();
-        }, 5_000);
-      }
-    );
-
-    this._cachedPromise = promise;
-    return promise;
-  }
-}
 
 /**
  * The PaginatedResource helper class is responsible for and abstracts away the
@@ -506,20 +438,12 @@ export class PaginatedResource {
     const initialFetcher = autoRetry(
       () => this._fetchPage(/* cursor */ undefined),
       5,
-      [5000, 5000, 10000, 15000],
-      (err) => {
-        // We do not want to retry if a 4xx HTTP error is received
-        if (err instanceof HttpError && err.status >= 400 && err.status < 500) {
-          return true;
-        }
-        return false;
-      }
+      [5000, 5000, 10000, 15000]
     );
 
     const promise = usify(
       initialFetcher.then((cursor) => {
         // Initial fetch completed
-        // XXX - Maybe use the patch method
         this._paginationState = {
           cursor,
           isFetchingMore: false,
@@ -528,7 +452,72 @@ export class PaginatedResource {
       })
     );
 
-    // XXX Maybe move this into the .then() above too?
+    // TODO for later: Maybe move this into the .then() above too?
+    promise.then(
+      () => this._eventSource.notify(),
+      () => {
+        this._eventSource.notify();
+
+        // Wait for 5 seconds before removing the request from the cache
+        setTimeout(() => {
+          this._cachedPromise = null;
+          this._eventSource.notify();
+        }, 5_000);
+      }
+    );
+
+    this._cachedPromise = promise;
+    return promise;
+  }
+}
+
+export class SinglePageResource {
+  public readonly observable: Observable<void>;
+  private _eventSource: EventSource<void>;
+  private _fetchPage: () => Promise<void>;
+
+  constructor(fetchPage: () => Promise<void>) {
+    this._fetchPage = fetchPage;
+    this._eventSource = makeEventSource<void>();
+    this.observable = this._eventSource.observable;
+
+    autobind(this);
+  }
+
+  public get(): AsyncResult<undefined> {
+    const usable = this._cachedPromise;
+    if (usable === null || usable.status === "pending") {
+      return ASYNC_LOADING;
+    }
+
+    if (usable.status === "rejected") {
+      return { isLoading: false, error: usable.reason };
+    }
+
+    return {
+      isLoading: false,
+      data: undefined,
+    };
+  }
+
+  private _cachedPromise: UsablePromise<void> | null = null;
+
+  public waitUntilLoaded(): UsablePromise<void> {
+    if (this._cachedPromise) {
+      return this._cachedPromise;
+    }
+
+    // Wrap the request to load room threads (and notifications) in an auto-retry function so that if the request fails,
+    // we retry for at most 5 times with incremental backoff delays. If all retries fail, the auto-retry function throws an error
+    const initialFetcher = autoRetry(
+      () => this._fetchPage(),
+      5,
+      [5000, 5000, 10000, 15000]
+    );
+
+    const promise = usify(initialFetcher);
+
+    // TODO for later: Maybe move this into the .then() above too?
     promise.then(
       () => this._eventSource.notify(),
       () => {
@@ -559,7 +548,7 @@ type InternalState<M extends BaseMetadata> = Readonly<{
   // TODO: Ideally we would have a similar NotificationsDB, like we have ThreadDB
   notificationsById: Record<string, InboxNotificationData>;
   settingsByRoomId: Record<string, RoomNotificationSettings>;
-  versionsByRoomId: Record<string, HistoryVersion[]>;
+  versionsByRoomId: Record<string, Record<string, HistoryVersion>>;
 }>;
 
 /**
@@ -576,9 +565,6 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
   // NIMESH - Query state should not be exposed publicly by the store!
   // NIMESH - Find a better name
   queries3: Record<string, QueryAsyncResult>; // Notification settings
-  // NIMESH - Query state should not be exposed publicly by the store!
-  // NIMESH - Find a better name
-  queries4: Record<string, QueryAsyncResult>; // Versions
 
   // XXX This should not get exposed via the "full state". Instead, we should
   // XXX expose it via a cached `.getThreadDB()`, and invalidate this cached
@@ -609,11 +595,11 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
    * Versions by roomId
    * e.g. { 'room-abc': {versions: "all versions"}}
    */
-  versionsByRoomId: Record<string, HistoryVersion[]>;
+  versionsByRoomId: Record<string, Record<string, HistoryVersion>>;
 };
 
 export class UmbrellaStore<M extends BaseMetadata> {
-  private _client?: OpaqueClient;
+  private _client: Client<BaseUserMeta, M>;
 
   // Raw threads DB (without any optimistic updates applied)
   private _rawThreadsDB: ThreadDB<M>;
@@ -635,46 +621,28 @@ export class UmbrellaStore<M extends BaseMetadata> {
   private _userThreadsLastRequestedAt: Date | null = null;
   private _userThreads: Map<string, PaginatedResource> = new Map();
 
-  private _roomVersions: Map<string, SingleResource> = new Map();
+  // Room versions
+  private _roomVersions: Map<string, SinglePageResource> = new Map();
+  private _roomVersionsLastRequestedAtByRoom = new Map<string, Date>();
 
-  constructor(client?: OpaqueClient) {
-    this._client = client;
+  constructor(client: OpaqueClient) {
+    this._client = client[kInternal].as<M>();
 
     const inboxFetcher = async (cursor?: string) => {
-      if (client === undefined) {
-        // TODO: Think about other ways to structure this. Throwing a StopRetrying only
-        // makes sense only if we can easily know if the fetcher is going to be wrapped inside the autoRetry function
-        throw new StopRetrying(
-          "Client is required in order to load threads for the room"
-        );
+      const result = await this._client.getInboxNotifications({ cursor });
+
+      this.updateThreadsAndNotifications(
+        result.threads,
+        result.inboxNotifications
+      );
+
+      // We initialize the `_lastRequestedNotificationsAt` date using the server timestamp after we've loaded the first page of inbox notifications.
+      if (this._notificationsLastRequestedAt === null) {
+        this._notificationsLastRequestedAt = result.requestedAt;
       }
 
-      try {
-        const result = await client.getInboxNotifications({ cursor });
-
-        this.updateThreadsAndNotifications(
-          result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
-          result.inboxNotifications
-        );
-
-        // We initialize the `_lastRequestedNotificationsAt` date using the server timestamp after we've loaded the first page of inbox notifications.
-        if (this._notificationsLastRequestedAt === null) {
-          this._notificationsLastRequestedAt = result.requestedAt;
-        }
-
-        const nextCursor = result.nextCursor;
-        return nextCursor;
-      } catch (err) {
-        // If the error is a 403 Forbidden error, we do not want to keep retrying
-        if (err instanceof NotificationsApiError && err.status === 403) {
-          throw new StopRetrying(
-            "403 Forbidden: Stopping further retry attempts."
-          );
-        }
-
-        // All other instance of errors, we simply throw
-        throw err;
-      }
+      const nextCursor = result.nextCursor;
+      return nextCursor;
     };
     this._notifications = new PaginatedResource(inboxFetcher);
     this._notifications.observable.subscribe(() =>
@@ -854,7 +822,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      versions: this.get().versionsByRoomId[roomId] ?? [],
+      versions: Object.values(this.get().versionsByRoomId[roomId] ?? {}),
     };
   }
 
@@ -908,14 +876,24 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }));
   }
 
-  private setVersions(roomId: string, versions: HistoryVersion[]): void {
-    this._store.set((state) => ({
-      ...state,
-      versionsByRoomId: {
-        ...state.versionsByRoomId,
-        [roomId]: versions,
-      },
-    }));
+  private updateRoomVersions(roomId: string, versions: HistoryVersion[]): void {
+    this._store.set((state) => {
+      const versionsById = Object.fromEntries(
+        versions.map((version) => [version.id, version])
+      );
+
+      return {
+        ...state,
+        versionsByRoomId: {
+          ...state.versionsByRoomId,
+          [roomId]: {
+            // Merge with existing versions for the room, or start with an empty object
+            ...(state.versionsByRoomId[roomId] ?? {}),
+            ...versionsById,
+          },
+        },
+      };
+    });
   }
 
   private setQuery3State(queryKey: string, queryState: QueryAsyncResult): void {
@@ -1318,22 +1296,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     });
   }
 
-  public updateRoomVersions(
-    roomId: string,
-    versions: HistoryVersion[],
-    queryKey?: string
-  ): void {
-    // Batch 1️⃣ + 2️⃣
-    this._store.batch(() => {
-      this.setVersions(roomId, versions); // 1️⃣
-
-      // 2️⃣
-      if (queryKey !== undefined) {
-        this.setQuery4OK(queryKey);
-      }
-    });
-  }
-
   public addOptimisticUpdate(
     optimisticUpdate: DistributiveOmit<OptimisticUpdate<M>, "id">
   ): string {
@@ -1367,33 +1329,27 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.setQuery4State(queryKey, ASYNC_LOADING);
   }
 
-  private setQuery4OK(queryKey: string): void {
-    this.setQuery4State(queryKey, ASYNC_OK);
-  }
-
   public setQuery4Error(queryKey: string, error: Error): void {
     this.setQuery4State(queryKey, { isLoading: false, error });
   }
 
-  public async fetchNotificationsDeltaUpdate() {
+  public async fetchNotificationsDeltaUpdate(signal: AbortSignal) {
     const lastRequestedAt = this._notificationsLastRequestedAt;
     if (lastRequestedAt === null) {
       return;
     }
 
-    const client = nn(
-      this._client,
-      "Client is required in order to load notifications for the room"
-    );
-
-    const result = await client.getInboxNotificationsSince(lastRequestedAt);
+    const result = await this._client.getInboxNotificationsSince({
+      since: lastRequestedAt,
+      signal,
+    });
 
     if (lastRequestedAt < result.requestedAt) {
       this._notificationsLastRequestedAt = result.requestedAt;
     }
 
     this.updateThreadsAndNotifications(
-      result.threads.updated as ThreadData<M>[],
+      result.threads.updated,
       result.inboxNotifications.updated,
       result.threads.deleted,
       result.inboxNotifications.deleted
@@ -1409,57 +1365,34 @@ export class UmbrellaStore<M extends BaseMetadata> {
     query: ThreadsQuery<M> | undefined
   ) {
     const threadsFetcher = async (cursor?: string) => {
-      if (this._client === undefined) {
-        // TODO: Think about other ways to structure this. Throwing a StopRetrying only
-        // makes sense only if we can easily know if the fetcher is going to be wrapped inside the autoRetry function
-        throw new StopRetrying(
-          "Client is required in order to load threads for the room"
-        );
-      }
-
       const room = this._client.getRoom(roomId);
       if (room === null) {
-        throw new StopRetrying(
-          `Room with id ${roomId} is not available on client`
-        );
+        throw new HttpError(`Room '${roomId}' is not available on client`, 479);
       }
 
-      try {
-        const result = await room.getThreads({ cursor, query });
-        this.updateThreadsAndNotifications(
-          result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
-          result.inboxNotifications
-        );
+      const result = await room.getThreads({ cursor, query });
+      this.updateThreadsAndNotifications(
+        result.threads,
+        result.inboxNotifications
+      );
 
-        const lastRequestedAt =
-          this._roomThreadsLastRequestedAtByRoom.get(roomId);
+      const lastRequestedAt =
+        this._roomThreadsLastRequestedAtByRoom.get(roomId);
 
-        /**
-         * We set the `lastRequestedAt` value for the room to the timestamp returned by the current request if:
-         * 1. The `lastRequestedAt` value for the room has not been set
-         * OR
-         * 2. The `lastRequestedAt` value for the room is older than the timestamp returned by the current request
-         */
-        if (
-          lastRequestedAt === undefined ||
-          lastRequestedAt > result.requestedAt
-        ) {
-          this._roomThreadsLastRequestedAtByRoom.set(
-            roomId,
-            result.requestedAt
-          );
-        }
-
-        return result.nextCursor;
-      } catch (err) {
-        // If the error is a 403 Forbidden error, we do not want to keep retrying
-        if (err instanceof CommentsApiError && err.status === 403) {
-          throw new StopRetrying(
-            "403 Forbidden: Stopping further retry attempts."
-          );
-        }
-        throw err;
+      /**
+       * We set the `lastRequestedAt` value for the room to the timestamp returned by the current request if:
+       * 1. The `lastRequestedAt` value for the room has not been set
+       * OR
+       * 2. The `lastRequestedAt` value for the room is older than the timestamp returned by the current request
+       */
+      if (
+        lastRequestedAt === undefined ||
+        lastRequestedAt > result.requestedAt
+      ) {
+        this._roomThreadsLastRequestedAtByRoom.set(roomId, result.requestedAt);
       }
+
+      return result.nextCursor;
     };
 
     const queryKey = makeRoomThreadsQueryKey(roomId, query);
@@ -1479,28 +1412,27 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return paginatedResource.waitUntilLoaded();
   }
 
-  public async fetchRoomThreadsDeltaUpdate(roomId: string) {
+  public async fetchRoomThreadsDeltaUpdate(
+    roomId: string,
+    signal: AbortSignal
+  ) {
     const lastRequestedAt = this._roomThreadsLastRequestedAtByRoom.get(roomId);
     if (lastRequestedAt === undefined) {
       return;
     }
 
-    const client = nn(
-      this._client,
-      "Client is required in order to load notifications for the room"
-    );
-
     const room = nn(
-      client.getRoom(roomId),
+      this._client.getRoom(roomId),
       `Room with id ${roomId} is not available on client`
     );
 
     const updates = await room.getThreadsSince({
       since: lastRequestedAt,
+      signal,
     });
 
     this.updateThreadsAndNotifications(
-      updates.threads.updated as ThreadData<M>[],
+      updates.threads.updated,
       updates.inboxNotifications.updated,
       updates.threads.deleted,
       updates.inboxNotifications.deleted
@@ -1516,40 +1448,21 @@ export class UmbrellaStore<M extends BaseMetadata> {
     const queryKey = makeUserThreadsQueryKey(query);
 
     const threadsFetcher = async (cursor?: string) => {
-      if (this._client === undefined) {
-        // TODO: Think about other ways to structure this. Throwing a StopRetrying only
-        // makes sense only if we can easily know if the fetcher is going to be wrapped inside the autoRetry function
-        throw new StopRetrying(
-          "Client is required in order to load threads for the room"
-        );
+      const result = await this._client[kInternal].getUserThreads_experimental({
+        cursor,
+        query,
+      });
+      this.updateThreadsAndNotifications(
+        result.threads,
+        result.inboxNotifications
+      );
+
+      // We initialize the `_userThreadsLastRequestedAt` date using the server timestamp after we've loaded the first page of inbox notifications.
+      if (this._userThreadsLastRequestedAt === null) {
+        this._userThreadsLastRequestedAt = result.requestedAt;
       }
 
-      try {
-        const result = await this._client[
-          kInternal
-        ].getUserThreads_experimental({
-          cursor,
-          query,
-        });
-        this.updateThreadsAndNotifications(
-          result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
-          result.inboxNotifications
-        );
-
-        // We initialize the `_userThreadsLastRequestedAt` date using the server timestamp after we've loaded the first page of inbox notifications.
-        if (this._userThreadsLastRequestedAt === null) {
-          this._userThreadsLastRequestedAt = result.requestedAt;
-        }
-
-        return result.nextCursor;
-      } catch (err) {
-        if (err instanceof NotificationsApiError && err.status === 403) {
-          throw new StopRetrying(
-            "403 Forbidden: Stopping further retry attempts."
-          );
-        }
-        throw err;
-      }
+      return result.nextCursor;
     };
 
     let paginatedResource = this._userThreads.get(queryKey);
@@ -1568,19 +1481,17 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return paginatedResource.waitUntilLoaded();
   }
 
-  public async fetchUserThreadsDeltaUpdate() {
+  public async fetchUserThreadsDeltaUpdate(signal: AbortSignal) {
     const lastRequestedAt = this._userThreadsLastRequestedAt;
     if (lastRequestedAt === null) {
       return;
     }
 
-    const client = nn(
-      this._client,
-      "Client is required in order to load threads for the user"
-    );
-
-    const result = await client[kInternal].getUserThreadsSince_experimental({
+    const result = await this._client[
+      kInternal
+    ].getUserThreadsSince_experimental({
       since: lastRequestedAt,
+      signal,
     });
 
     if (lastRequestedAt < result.requestedAt) {
@@ -1588,7 +1499,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }
 
     this.updateThreadsAndNotifications(
-      result.threads.updated as ThreadData<M>[],
+      result.threads.updated,
       result.inboxNotifications.updated,
       result.threads.deleted,
       result.inboxNotifications.deleted
@@ -1598,36 +1509,35 @@ export class UmbrellaStore<M extends BaseMetadata> {
   public waitUntilRoomVersionsLoaded(roomId: string) {
     const queryKey = makeVersionsQueryKey(roomId);
     let resource = this._roomVersions.get(queryKey);
+    window.console.log("__resource", resource);
     if (resource === undefined) {
-      const roomVersionsFetcher = async () => {
-        if (this._client === undefined) {
-          // TODO: Think about other ways to structure this. Throwing a StopRetrying only
-          // makes sense only if we can easily know if the fetcher is going to be wrapped inside the autoRetry function
-          throw new StopRetrying(
-            "Client is required in order to load threads for the room"
-          );
-        }
-
-        if (this._client === undefined) {
-          // TODO: Think about other ways to structure this. Throwing a StopRetrying only
-          // makes sense only if we can easily know if the fetcher is going to be wrapped inside the autoRetry function
-          throw new StopRetrying(
-            "Client is required in order to load threads for the room"
-          );
-        }
-
+      const versionsFetcher = async () => {
         const room = this._client.getRoom(roomId);
         if (room === null) {
-          throw new StopRetrying(
-            `Room with id ${roomId} is not available on client`
+          throw new HttpError(
+            `Room '${roomId}' is not available on client`,
+            479
           );
         }
 
         const result = await room[kInternal].listTextVersions();
-        this.setVersions(roomId, result.versions);
+        this.updateRoomVersions(roomId, result.versions);
+
+        const lastRequestedAt =
+          this._roomVersionsLastRequestedAtByRoom.get(roomId);
+
+        if (
+          lastRequestedAt === undefined ||
+          lastRequestedAt > result.requestedAt
+        ) {
+          this._roomVersionsLastRequestedAtByRoom.set(
+            roomId,
+            result.requestedAt
+          );
+        }
       };
 
-      resource = new SingleResource(roomVersionsFetcher);
+      resource = new SinglePageResource(versionsFetcher);
     }
 
     resource.observable.subscribe(() =>
@@ -1639,6 +1549,33 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this._roomVersions.set(queryKey, resource);
 
     return resource.waitUntilLoaded();
+  }
+
+  public async fetchRoomVersionsDeltaUpdate(
+    roomId: string,
+    signal: AbortSignal
+  ) {
+    const lastRequestedAt = this._roomVersionsLastRequestedAtByRoom.get(roomId);
+    if (lastRequestedAt === undefined) {
+      return;
+    }
+
+    const room = nn(
+      this._client.getRoom(roomId),
+      `Room with id ${roomId} is not available on client`
+    );
+
+    const updates = await room[kInternal].listTextVersionsSince({
+      since: lastRequestedAt,
+      signal,
+    });
+
+    this.updateRoomVersions(roomId, updates.versions);
+
+    if (lastRequestedAt < updates.requestedAt) {
+      // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
+      this._roomVersionsLastRequestedAtByRoom.set(roomId, updates.requestedAt);
+    }
   }
 }
 
@@ -1862,7 +1799,6 @@ function internalToExternalState<M extends BaseMetadata>(
     notificationsById: computed.notificationsById,
     settingsByRoomId: computed.settingsByRoomId,
     queries3: state.queries3,
-    queries4: state.queries4,
     threadsDB,
     versionsByRoomId: state.versionsByRoomId,
   };

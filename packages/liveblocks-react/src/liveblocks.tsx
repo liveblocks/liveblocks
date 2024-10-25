@@ -32,6 +32,7 @@ import React, {
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
+import { config } from "./config";
 import { useIsInsideRoom } from "./contexts";
 import { shallow2 } from "./lib/shallow2";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
@@ -85,8 +86,6 @@ const _bundles = new WeakMap<
   OpaqueClient,
   LiveblocksContextBundle<BaseUserMeta, BaseMetadata>
 >();
-
-export const POLLING_INTERVAL = 60 * 1000; // every minute
 
 function selectUnreadInboxNotificationsCount(
   inboxNotifications: readonly InboxNotificationData[]
@@ -222,74 +221,6 @@ export function getLiveblocksExtrasForClient<M extends BaseMetadata>(
   };
 }
 
-function makeDeltaPoller_Notifications(store: UmbrellaStore<BaseMetadata>) {
-  const poller = makePoller(async () => {
-    try {
-      await store.waitUntilNotificationsLoaded();
-      await store.fetchNotificationsDeltaUpdate();
-    } catch (err) {
-      // When polling, we don't want to throw errors, ever
-      console.warn(`Polling new inbox notifications failed: ${String(err)}`);
-    }
-  }, POLLING_INTERVAL);
-
-  // Keep track of the number of subscribers
-  let pollerSubscribers = 0;
-
-  return () => {
-    pollerSubscribers++;
-
-    // NIMESH - We should wait until the lastRequestedAt date is known using a promise and then
-    // in the `then` body, check again if the number of subscribers if more than 0, and only then
-    // if those conditions hold, start the poller
-    poller.enable(pollerSubscribers > 0);
-
-    return () => {
-      pollerSubscribers--;
-
-      // NIMESH - When stopping the poller, we should also ideally abort its
-      // poller function, maybe using an AbortController? This functionality
-      // should be automatic and handled by the Poller abstraction, not here!
-      poller.enable(pollerSubscribers > 0);
-    };
-  };
-}
-
-// NIMESH - DRY up these makeDeltaPoller_* abstractions, now that the symmetry has become clear!
-function makeDeltaPoller_UserThreads(store: UmbrellaStore<BaseMetadata>) {
-  const poller = makePoller(async () => {
-    try {
-      await store.fetchUserThreadsDeltaUpdate();
-    } catch (err) {
-      // When polling, we don't want to throw errors, ever
-      console.warn(`Polling new user threads failed: ${String(err)}`);
-    }
-  }, POLLING_INTERVAL);
-
-  // Keep track of the number of subscribers
-  let pollerSubscribers = 0;
-
-  return () => {
-    pollerSubscribers++;
-
-    // NIMESH - We should wait until the lastRequestedAt date is known using a promise and then
-    // in the `then` body, check again if the number of subscribers if more than 0, and only then
-    // if those conditions hold, start the poller
-    // promise.then(() => { if (subscribers > 0 ) initialPoller() else: do nothing })
-    poller.enable(pollerSubscribers > 0);
-
-    return () => {
-      pollerSubscribers--;
-
-      // NIMESH - When stopping the poller, we should also ideally abort its
-      // poller function, maybe using an AbortController? This functionality
-      // should be automatic and handled by the Poller abstraction, not here!
-      poller.enable(pollerSubscribers > 0);
-    };
-  };
-}
-
-// NIMESH - DRY up these makeDeltaPoller_* abstractions, now that the symmetry has become clear!
 function makeLiveblocksExtrasForClient(client: OpaqueClient) {
   const store = getUmbrellaStoreForClient(client);
   // TODO                                ^ Bind to M type param here
@@ -339,22 +270,36 @@ function makeLiveblocksExtrasForClient(client: OpaqueClient) {
   // - Pagination will perform a GET /v2/c/inbox-notifications?cursor=...
   //
 
+  const notificationsPoller = makePoller(
+    async (signal) => {
+      try {
+        return await store.fetchNotificationsDeltaUpdate(signal);
+      } catch (err) {
+        console.warn(`Polling new inbox notifications failed: ${String(err)}`);
+        throw err;
+      }
+    },
+    config.NOTIFICATIONS_POLL_INTERVAL,
+    { maxStaleTimeMs: config.NOTIFICATIONS_MAX_STALE_TIME }
+  );
+
+  const userThreadsPoller = makePoller(
+    async (signal) => {
+      try {
+        return await store.fetchUserThreadsDeltaUpdate(signal);
+      } catch (err) {
+        console.warn(`Polling new user threads failed: ${String(err)}`);
+        throw err;
+      }
+    },
+    config.USER_THREADS_POLL_INTERVAL,
+    { maxStaleTimeMs: config.USER_THREADS_MAX_STALE_TIME }
+  );
+
   return {
     store,
-    /**
-     * Sub/unsub pair to start the process of watching for new incoming inbox
-     * notifications through a stream of delta updates. Call the unsub function
-     * returned to stop this subscription when unmounting. Currently
-     * implemented by a periodic poller.
-     */
-    subscribeToNotificationsDeltaUpdates: makeDeltaPoller_Notifications(store),
-    /**
-     * Sub/unsub pair to start the process of watching for new user threads
-     * through a stream of delta updates. Call the unsub function returned to
-     * stop this subscription when unmounting. Currently implemented by
-     * a periodic poller.
-     */
-    subscribeToUserThreadsDeltaUpdates: makeDeltaPoller_UserThreads(store),
+    notificationsPoller,
+    userThreadsPoller,
   };
 }
 
@@ -439,18 +384,13 @@ function useInboxNotifications_withClient<T>(
   selector: (result: InboxNotificationsAsyncResult) => T,
   isEqual: (a: T, b: T) => boolean
 ): T {
-  const {
-    store,
-    subscribeToNotificationsDeltaUpdates: subscribeToDeltaUpdates,
-  } = getLiveblocksExtrasForClient(client);
+  const { store, notificationsPoller: poller } =
+    getLiveblocksExtrasForClient(client);
 
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
   useEffect(() => {
-    // NIMESH - Verify that we need the catch or not
-    void store.waitUntilNotificationsLoaded().catch(() => {
-      // Deliberately catch and ignore any errors here
-    });
+    void store.waitUntilNotificationsLoaded();
     // NOTE: Deliberately *not* using a dependency array here!
     //
     // It is important to call waitUntil on *every* render.
@@ -461,7 +401,13 @@ function useInboxNotifications_withClient<T>(
     //    *next* render after that, a *new* fetch/promise will get created.
   });
 
-  useEffect(subscribeToDeltaUpdates, [subscribeToDeltaUpdates]);
+  useEffect(() => {
+    poller.inc();
+    poller.pollNowIfStale();
+    return () => {
+      poller.dec();
+    };
+  }, [poller]);
 
   return useSyncExternalStoreWithSelector(
     store.subscribe,
@@ -954,15 +900,12 @@ function useUserThreads_experimental<M extends BaseMetadata>(
 ): ThreadsAsyncResult<M> {
   const client = useClient<M>();
 
-  const { store, subscribeToUserThreadsDeltaUpdates: subscribeToDeltaUpdates } =
+  const { store, userThreadsPoller: poller } =
     getLiveblocksExtrasForClient<M>(client);
 
   useEffect(
     () => {
-      // NIMESH - Verify that we need the catch or not
-      void store.waitUntilUserThreadsLoaded(options.query).catch(() => {
-        // Deliberately catch and ignore any errors here
-      });
+      void store.waitUntilUserThreadsLoaded(options.query);
     }
     // NOTE: Deliberately *not* using a dependency array here!
     //
@@ -974,7 +917,13 @@ function useUserThreads_experimental<M extends BaseMetadata>(
     //    *next* render after that, a *new* fetch/promise will get created.
   );
 
-  useEffect(subscribeToDeltaUpdates, [subscribeToDeltaUpdates]);
+  useEffect(() => {
+    poller.inc();
+    poller.pollNowIfStale();
+    return () => {
+      poller.dec();
+    };
+  }, [poller]);
 
   const getter = useCallback(
     () => store.getUserThreadsLoadingState(options.query),

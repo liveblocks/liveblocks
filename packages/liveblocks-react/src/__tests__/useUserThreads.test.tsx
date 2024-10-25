@@ -1,6 +1,10 @@
 import "@testing-library/jest-dom";
 
-import type { InboxNotificationData, ThreadData } from "@liveblocks/core";
+import type {
+  InboxNotificationData,
+  ThreadData,
+  ThreadDataWithDeleteInfo,
+} from "@liveblocks/core";
 import { HttpError, nanoid } from "@liveblocks/core";
 import type { AST } from "@liveblocks/query-parser";
 import { QueryParser } from "@liveblocks/query-parser";
@@ -73,6 +77,24 @@ function mockGetUserThreads(
   >
 ) {
   return rest.get("https://api.liveblocks.io/v2/c/threads", resolver);
+}
+
+function mockGetUserThreadsDelta(
+  resolver: ResponseResolver<
+    RestRequest<never, { roomId: string }>,
+    RestContext,
+    {
+      threads: ThreadData[];
+      inboxNotifications: InboxNotificationData[];
+      deletedInboxNotifications: InboxNotificationData[];
+      deletedThreads: ThreadDataWithDeleteInfo[];
+      meta: {
+        requestedAt: string; // ISO date
+      };
+    }
+  >
+) {
+  return rest.get("https://api.liveblocks.io/v2/c/threads/delta", resolver);
 }
 
 describe("useUserThreads", () => {
@@ -463,6 +485,19 @@ describe("useUserThreadsSuspense: error", () => {
       mockGetUserThreads((_req, res, ctx) => {
         getThreadsReqCount++;
         return res(ctx.status(500));
+      }),
+      mockGetUserThreadsDelta((_req, res, ctx) => {
+        return res(
+          ctx.json({
+            threads: [],
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
       })
     );
 

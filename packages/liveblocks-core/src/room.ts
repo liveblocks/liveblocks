@@ -28,14 +28,10 @@ import { LiveObject } from "./crdts/LiveObject";
 import type { LiveNode, LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
 import type { DE, DM, DP, DS, DU } from "./globals/augmentation";
-import {
-  getBearerTokenFromAuthValue,
-  HttpClient,
-  HttpError,
-} from "./http-client";
+import { getBearerTokenFromAuthValue, HttpClient } from "./http-client";
 import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
-import { autoRetry } from "./lib/autoRetry";
+import { autoRetry, HttpError } from "./lib/autoRetry";
 import type { BatchStore } from "./lib/batch";
 import { Batch, createBatchStore } from "./lib/batch";
 import { chunk } from "./lib/chunk";
@@ -486,6 +482,7 @@ export type GetThreadsOptions<M extends BaseMetadata> = {
 
 export type GetThreadsSinceOptions = {
   since: Date;
+  signal: AbortSignal;
 };
 
 export type UploadAttachmentOptions = {
@@ -2822,7 +2819,7 @@ export function createRoom<
   async function getThreadsSince(options: GetThreadsSinceOptions) {
     const response = await httpClient2.fetch(
       url`/v2/c/rooms/${config.roomId}/threads/delta`,
-      undefined,
+      { signal: options.signal },
       { since: options?.since?.toISOString() }
     );
 

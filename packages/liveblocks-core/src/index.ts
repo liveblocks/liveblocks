@@ -76,7 +76,6 @@ export type {
   DU,
   KDAD,
 } from "./globals/augmentation";
-export { HttpError } from "./http-client";
 export {
   legacy_patchImmutableObject,
   lsonToJson,
@@ -90,7 +89,7 @@ export type {
   AsyncResult,
   AsyncSuccess,
 } from "./lib/AsyncResult";
-export { autoRetry, StopRetrying } from "./lib/autoRetry";
+export { autoRetry, HttpError } from "./lib/autoRetry";
 export { chunk } from "./lib/chunk";
 export {
   createCommentId,
@@ -116,6 +115,7 @@ export { isJsonArray, isJsonObject, isJsonScalar } from "./lib/Json";
 export { nanoid } from "./lib/nanoid";
 export type { NoInfr } from "./lib/NoInfer";
 export { objectToQuery } from "./lib/objectToQuery";
+export type { Poller } from "./lib/Poller";
 export { makePoller } from "./lib/Poller";
 export { asPos, makePosition } from "./lib/position";
 export type { Resolve } from "./lib/Resolve";
@@ -136,6 +136,7 @@ export {
   wait,
   withTimeout,
 } from "./lib/utils";
+export type { GetUserThreadsOptions } from "./notifications";
 export type { CustomAuthenticationResult } from "./protocol/Authentication";
 export type { BaseActivitiesData } from "./protocol/BaseActivitiesData";
 export type { BaseRoomInfo } from "./protocol/BaseRoomInfo";
@@ -293,6 +294,7 @@ export type EnsureJson<T> =
 // Support for DevTools
 import type * as DevToolsMsg from "./devtools/protocol";
 export type { DevToolsMsg };
+import { HttpError } from "./lib/autoRetry";
 import type { Json } from "./lib/Json";
 import type * as DevTools from "./types/DevToolsTreeNode";
 export type { DevTools };
@@ -302,7 +304,6 @@ export type { Store } from "./lib/create-store";
 export { createStore } from "./lib/create-store";
 
 // Deprecated APIs
-import { HttpError } from "./http-client";
 /** @deprecated Use HttpError instead. */
 export const CommentsApiError = HttpError;
 /** @deprecated Use HttpError instead. */
