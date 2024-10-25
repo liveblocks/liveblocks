@@ -1,0 +1,4 @@
+{
+  "main": "../dist/_private.js",
+  "types": "../dist/_private.d.ts"
+}

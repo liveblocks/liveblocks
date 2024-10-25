@@ -66,7 +66,7 @@ export {
   useHistoryVersionData,
 } from "./room";
 
-export { useCommentsErrorListener, CreateThreadError } from "./room";
+export { useCommentsErrorListener } from "./room";
 
 // Export the classic (non-Suspense) versions of our hooks
 // (This part differs from src/suspense.ts)
@@ -89,6 +89,3 @@ export {
   useUnreadInboxNotificationsCount,
   useUser,
 } from "./liveblocks";
-
-// Private APIs (for use in react-lexical only)
-export { getUmbrellaStoreForClient } from "./liveblocks";

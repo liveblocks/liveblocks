@@ -913,43 +913,37 @@ describe("useInboxNotifications: pagination", () => {
   test("should load the next page of data when `fetchMore` is called", async () => {
     const roomId = nanoid();
 
-    const threadOne = dummyThreadData({
-      roomId,
-      createdAt: new Date("2021-01-01T00:00:00Z"),
-    });
-    const threadTwo = dummyThreadData({
-      roomId,
-      createdAt: new Date("2021-01-02T00:00:00Z"),
-    });
-    const threadThree = dummyThreadData({
-      roomId,
-      createdAt: new Date("2021-01-03T00:00:00Z"),
-    });
+    const thread1 = dummyThreadData({ roomId, createdAt: new Date("2021-01-01") }); // prettier-ignore
+    const thread2 = dummyThreadData({ roomId, createdAt: new Date("2021-01-02") }); // prettier-ignore
+    const thread3 = dummyThreadData({ roomId, createdAt: new Date("2021-01-03") }); // prettier-ignore
 
-    const inboxNotificationsPageOne = [
+    const inboxNotificationsPage1 = [
       dummyThreadInboxNotificationData({
         roomId,
-        threadId: threadOne.id,
+        threadId: thread1.id,
+        notifiedAt: new Date("2021-01-03"),
       }),
     ];
 
-    const inboxNotificationsPageTwo = [
+    const inboxNotificationsPage2 = [
       dummyThreadInboxNotificationData({
         roomId,
-        threadId: threadTwo.id,
+        threadId: thread2.id,
+        notifiedAt: new Date("2021-01-02"),
       }),
     ];
 
-    const inboxNotificationsPageThree = [
+    const inboxNotificationsPage3 = [
       dummyThreadInboxNotificationData({
         roomId,
-        threadId: threadThree.id,
+        threadId: thread3.id,
+        notifiedAt: new Date("2021-01-01"),
       }),
     ];
 
-    let isPageOneRequested = false;
-    let isPageTwoRequested = false;
-    let isPageThreeRequested = false;
+    let isPage1Requested = false;
+    let isPage2Requested = false;
+    let isPage3Requested = false;
 
     server.use(
       mockGetInboxNotifications(async (req, res, ctx) => {
@@ -958,11 +952,11 @@ describe("useInboxNotifications: pagination", () => {
 
         // Request for Page 2
         if (cursor === "cursor-1") {
-          isPageTwoRequested = true;
+          isPage2Requested = true;
           return res(
             ctx.json({
-              threads: [threadTwo],
-              inboxNotifications: inboxNotificationsPageTwo,
+              threads: [thread2],
+              inboxNotifications: inboxNotificationsPage2,
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: "cursor-2",
@@ -972,11 +966,11 @@ describe("useInboxNotifications: pagination", () => {
         }
         // Request for Page 3
         else if (cursor === "cursor-2") {
-          isPageThreeRequested = true;
+          isPage3Requested = true;
           return res(
             ctx.json({
-              threads: [threadThree],
-              inboxNotifications: inboxNotificationsPageThree,
+              threads: [thread3],
+              inboxNotifications: inboxNotificationsPage3,
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: "cursor-3",
@@ -986,11 +980,11 @@ describe("useInboxNotifications: pagination", () => {
         }
         // Request for the first page
         else {
-          isPageOneRequested = true;
+          isPage1Requested = true;
           return res(
             ctx.json({
-              threads: [threadOne],
-              inboxNotifications: inboxNotificationsPageOne,
+              threads: [thread1],
+              inboxNotifications: inboxNotificationsPage1,
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: "cursor-1",
@@ -1031,11 +1025,11 @@ describe("useInboxNotifications: pagination", () => {
     expect(result.current).toEqual({ isLoading: true });
 
     // Initial load (Page 1)
-    await waitFor(() => expect(isPageOneRequested).toBe(true));
+    await waitFor(() => expect(isPage1Requested).toBe(true));
     await waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
-        inboxNotifications: [...inboxNotificationsPageOne],
+        inboxNotifications: [...inboxNotificationsPage1],
         fetchMore: expect.any(Function),
         isFetchingMore: false,
         hasFetchedAll: false,
@@ -1047,13 +1041,13 @@ describe("useInboxNotifications: pagination", () => {
 
     // Fetch Page 2
     fetchMore();
-    await waitFor(() => expect(isPageTwoRequested).toBe(true));
+    await waitFor(() => expect(isPage2Requested).toBe(true));
     await waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications: [
-          ...inboxNotificationsPageOne,
-          ...inboxNotificationsPageTwo,
+          ...inboxNotificationsPage1,
+          ...inboxNotificationsPage2,
         ],
         fetchMore: expect.any(Function),
         isFetchingMore: false,
@@ -1064,14 +1058,14 @@ describe("useInboxNotifications: pagination", () => {
 
     // Fetch Page 3
     fetchMore();
-    await waitFor(() => expect(isPageThreeRequested).toBe(true));
+    await waitFor(() => expect(isPage3Requested).toBe(true));
     await waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications: [
-          ...inboxNotificationsPageOne,
-          ...inboxNotificationsPageTwo,
-          ...inboxNotificationsPageThree,
+          ...inboxNotificationsPage1,
+          ...inboxNotificationsPage2,
+          ...inboxNotificationsPage3,
         ],
         fetchMore: expect.any(Function),
         isFetchingMore: false,
