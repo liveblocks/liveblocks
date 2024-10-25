@@ -224,11 +224,11 @@ describe("Poller", () => {
   });
 
   test("should poll immediately if stale (when called before first poll, but with larger stale time)", async () => {
-    // 0s        2s              5s
-    // |--------------------------|
-    // Start     ^              Poll 1 (natural)
-    //           |
-    //      Force poll here
+    // 0s              3s         5s
+    // |---------------|----------|
+    // Start           |        Poll 1 (natural)
+    //                 |
+    //             Turned stale
 
     const callback = jest.fn();
     const poller = makePoller(callback, 5000, { maxStaleTimeMs: 3000 });
@@ -241,14 +241,14 @@ describe("Poller", () => {
     expect(callback).toHaveBeenCalledTimes(0);
 
     // Bring to foreground to trigger a poll right now
-    // Since there is no initial data, it should immediately poll
+    // Since we're currently at 4s (= beyond the stale time of 3s), a poll should happen
     poller.setInForeground(true);
 
     expect(callback).toHaveBeenCalledTimes(1);
 
-    // 0s            4s      5s
-    // |--------------|------|
-    // Start          ^    Poll 2 (natural)
+    // 0s            4s                                 9s
+    // |--------------|---------------------------------|
+    // Start          ^                          Next natural poll
     //                |
     //             Forced poll
 
@@ -257,13 +257,13 @@ describe("Poller", () => {
     expect(callback).toHaveBeenCalledTimes(1);
 
     await jest.advanceTimersByTimeAsync(2000); // Move from 5s -> 7s
-    expect(callback).toHaveBeenCalledTimes(2);
+    expect(callback).toHaveBeenCalledTimes(1);
 
-    await jest.advanceTimersByTimeAsync(3000); // Move from 7s -> 10s
+    await jest.advanceTimersByTimeAsync(3000); // Move from 7s -> 10s (crosses the 9s mark, so polls)
     expect(callback).toHaveBeenCalledTimes(2);
 
     await jest.advanceTimersByTimeAsync(2000); // Move from 10s -> 12s
-    expect(callback).toHaveBeenCalledTimes(3);
+    expect(callback).toHaveBeenCalledTimes(2);
   });
 
   test("should poll immediately if stale (when called between two polls)", async () => {
