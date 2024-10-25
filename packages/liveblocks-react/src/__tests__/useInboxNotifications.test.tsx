@@ -707,7 +707,6 @@ describe("useInboxNotifications: polling", () => {
         );
       }),
       mockGetInboxNotificationsDelta(async (_req, res, ctx) => {
-        console.log("DELTA");
         pollerCount++;
         return res(
           ctx.json({

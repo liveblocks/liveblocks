@@ -495,7 +495,7 @@ type ListTextVersionsSinceOptions = {
 };
 
 type GetNotificationSettingsOptions = {
-  signal: AbortSignal;
+  signal?: AbortSignal;
 };
 
 /**

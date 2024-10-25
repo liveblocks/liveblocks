@@ -191,9 +191,6 @@ type PaginationStatePatch =
 
 type QueryAsyncResult = AsyncResult<undefined>;
 
-// TODO Remove ASYNC_OK once we refactor the queries3 and queries4 abstractions
-const ASYNC_OK = Object.freeze({ isLoading: false, data: undefined });
-
 /**
  * Example:
  * generateQueryKey('room-abc', { xyz: 123, abc: "red" })
@@ -212,12 +209,11 @@ function makeUserThreadsQueryKey(
   return `USER_THREADS:${stringify(query ?? {})}`;
 }
 
-// NIMESH - Make this an implementation detail of the store
-export function makeNotificationSettingsQueryKey(roomId: string) {
+function makeNotificationSettingsQueryKey(roomId: string) {
   return `${roomId}:NOTIFICATION_SETTINGS`;
 }
 
-export function makeVersionsQueryKey(roomId: string) {
+function makeVersionsQueryKey(roomId: string) {
   return `${roomId}-VERSIONS`;
 }
 
@@ -541,7 +537,6 @@ type InternalState<M extends BaseMetadata> = Readonly<{
   // Each query corresponds to a resource which should eventually have its own type.
   // This is why we split it for now.
   queries3: Record<string, QueryAsyncResult>; // Notification settings
-  queries4: Record<string, QueryAsyncResult>; // Versions
 
   optimisticUpdates: readonly OptimisticUpdate<M>[];
 
@@ -625,6 +620,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
   private _roomVersions: Map<string, SinglePageResource> = new Map();
   private _roomVersionsLastRequestedAtByRoom = new Map<string, Date>();
 
+  // Room notification settings
+  private _roomNotificationSettings: Map<string, SinglePageResource> =
+    new Map();
+
   constructor(client: OpaqueClient) {
     this._client = client[kInternal].as<M>();
 
@@ -654,7 +653,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this._rawThreadsDB = new ThreadDB();
     this._store = createStore<InternalState<M>>({
       queries3: {},
-      queries4: {},
       optimisticUpdates: [],
       notificationsById: {},
       settingsByRoomId: {},
@@ -786,25 +784,26 @@ export class UmbrellaStore<M extends BaseMetadata> {
   public getNotificationSettingsLoadingState(
     roomId: string
   ): RoomNotificationSettingsAsyncResult {
-    const state = this.get();
+    const queryKey = makeNotificationSettingsQueryKey(roomId);
 
-    const query = state.queries3[makeNotificationSettingsQueryKey(roomId)];
-    if (query === undefined || query.isLoading) {
+    const resource = this._roomNotificationSettings.get(queryKey);
+    if (resource === undefined) {
       return ASYNC_LOADING;
     }
 
-    if (query.error !== undefined) {
-      return query;
+    const asyncResult = resource.get();
+    if (asyncResult.isLoading || asyncResult.error) {
+      return asyncResult;
     }
 
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      settings: nn(state.settingsByRoomId[roomId]),
+      settings: nn(this.get().settingsByRoomId[roomId]),
     };
   }
 
-  public getVersionsLoadingState(
+  public getRoomVersionsLoadingState(
     roomId: string
   ): AsyncResult<HistoryVersion[], "versions"> {
     const queryKey = makeVersionsQueryKey(roomId);
@@ -894,26 +893,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
         },
       };
     });
-  }
-
-  private setQuery3State(queryKey: string, queryState: QueryAsyncResult): void {
-    this._store.set((state) => ({
-      ...state,
-      queries3: {
-        ...state.queries3,
-        [queryKey]: queryState,
-      },
-    }));
-  }
-
-  private setQuery4State(queryKey: string, queryState: QueryAsyncResult): void {
-    this._store.set((state) => ({
-      ...state,
-      queries4: {
-        ...state.queries4,
-        [queryKey]: queryState,
-      },
-    }));
   }
 
   private updateOptimisticUpdatesCache(
@@ -1284,18 +1263,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     });
   }
 
-  public updateRoomNotificationSettings_fromQuery(
-    roomId: string,
-    settings: RoomNotificationSettings,
-    queryKey: string
-  ): void {
-    // Batch 1️⃣ + 2️⃣
-    this._store.batch(() => {
-      this.setQuery3OK(queryKey); // 1️⃣
-      this.setNotificationSettings(roomId, settings); // 2️⃣
-    });
-  }
-
   public addOptimisticUpdate(
     optimisticUpdate: DistributiveOmit<OptimisticUpdate<M>, "id">
   ): string {
@@ -1309,28 +1276,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.updateOptimisticUpdatesCache((cache) =>
       cache.filter((ou) => ou.id !== optimisticUpdateId)
     );
-  }
-
-  // Query 3
-  public setQuery3Loading(queryKey: string): void {
-    this.setQuery3State(queryKey, ASYNC_LOADING);
-  }
-
-  private setQuery3OK(queryKey: string): void {
-    this.setQuery3State(queryKey, ASYNC_OK);
-  }
-
-  public setQuery3Error(queryKey: string, error: Error): void {
-    this.setQuery3State(queryKey, { isLoading: false, error });
-  }
-
-  // Query 4
-  public setQuery4Loading(queryKey: string): void {
-    this.setQuery4State(queryKey, ASYNC_LOADING);
-  }
-
-  public setQuery4Error(queryKey: string, error: Error): void {
-    this.setQuery4State(queryKey, { isLoading: false, error });
   }
 
   public async fetchNotificationsDeltaUpdate(signal: AbortSignal) {
@@ -1509,7 +1454,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
   public waitUntilRoomVersionsLoaded(roomId: string) {
     const queryKey = makeVersionsQueryKey(roomId);
     let resource = this._roomVersions.get(queryKey);
-    window.console.log("__resource", resource);
     if (resource === undefined) {
       const versionsFetcher = async () => {
         const room = this._client.getRoom(roomId);
@@ -1576,6 +1520,49 @@ export class UmbrellaStore<M extends BaseMetadata> {
       // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
       this._roomVersionsLastRequestedAtByRoom.set(roomId, updates.requestedAt);
     }
+  }
+
+  public waitUntilRoomNotificationSettingsLoaded(roomId: string) {
+    const queryKey = makeNotificationSettingsQueryKey(roomId);
+    let resource = this._roomNotificationSettings.get(queryKey);
+    if (resource === undefined) {
+      const notificationSettingsFetcher = async () => {
+        const room = this._client.getRoom(roomId);
+        if (room === null) {
+          throw new HttpError(
+            `Room '${roomId}' is not available on client`,
+            479
+          );
+        }
+
+        const result = await room.getNotificationSettings();
+        this.setNotificationSettings(roomId, result);
+      };
+
+      resource = new SinglePageResource(notificationSettingsFetcher);
+    }
+
+    resource.observable.subscribe(() =>
+      // Note that the store itself does not change, but it's only vehicle at
+      // the moment to trigger a re-render, so we'll do a no-op update here.
+      this._store.set((store) => ({ ...store }))
+    );
+
+    this._roomNotificationSettings.set(queryKey, resource);
+
+    return resource.waitUntilLoaded();
+  }
+
+  public async refreshRoomNotificationSettings(
+    roomId: string,
+    signal: AbortSignal
+  ) {
+    const room = nn(
+      this._client.getRoom(roomId),
+      `Room with id ${roomId} is not available on client`
+    );
+    const result = await room.getNotificationSettings({ signal });
+    this.setNotificationSettings(roomId, result);
   }
 }
 
