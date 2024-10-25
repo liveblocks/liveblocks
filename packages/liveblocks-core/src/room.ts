@@ -2832,51 +2832,33 @@ export function createRoom<
   };
 
   async function getThreadsSince(options: GetThreadsSinceOptions) {
-    const response = await httpClient2.rawGet(
+    const result = await httpClient2.get<{
+      data: ThreadDataPlain<M>[];
+      inboxNotifications: InboxNotificationDataPlain[];
+      deletedThreads: ThreadDeleteInfoPlain[];
+      deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+      meta: {
+        requestedAt: string;
+      };
+    }>(
       url`/v2/c/rooms/${config.roomId}/threads/delta`,
       { since: options?.since?.toISOString() },
       { signal: options.signal }
     );
 
-    if (response.ok) {
-      const json = await (response.json() as Promise<{
-        data: ThreadDataPlain<M>[];
-        inboxNotifications: InboxNotificationDataPlain[];
-        deletedThreads: ThreadDeleteInfoPlain[];
-        deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
-        meta: {
-          requestedAt: string;
-        };
-      }>);
-
-      return {
-        threads: {
-          updated: json.data.map(convertToThreadData),
-          deleted: json.deletedThreads.map(convertToThreadDeleteInfo),
-        },
-        inboxNotifications: {
-          updated: json.inboxNotifications.map(convertToInboxNotificationData),
-          deleted: json.deletedInboxNotifications.map(
-            convertToInboxNotificationDeleteInfo
-          ),
-        },
-        requestedAt: new Date(json.meta.requestedAt),
-      };
-    } else if (response.status === 404) {
-      return {
-        threads: {
-          updated: [],
-          deleted: [],
-        },
-        inboxNotifications: {
-          updated: [],
-          deleted: [],
-        },
-        requestedAt: new Date(),
-      };
-    } else {
-      throw new Error("There was an error while getting threads.");
-    }
+    return {
+      threads: {
+        updated: result.data.map(convertToThreadData),
+        deleted: result.deletedThreads.map(convertToThreadDeleteInfo),
+      },
+      inboxNotifications: {
+        updated: result.inboxNotifications.map(convertToInboxNotificationData),
+        deleted: result.deletedInboxNotifications.map(
+          convertToInboxNotificationDeleteInfo
+        ),
+      },
+      requestedAt: new Date(result.meta.requestedAt),
+    };
   }
 
   async function getThreads(options?: GetThreadsOptions<M>) {
