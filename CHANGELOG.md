@@ -1,16 +1,17 @@
-## 2.10.1 (not released yet)
+## 2.10.1
 
 ### `@liveblocks/client`
 
-- Internal refactorings and code cleanup to various parts of the client's inner
-  workings
+- Internal refactorings and code cleanup across various parts of the client's
+  inner workings
 
 ### `@liveblocks/react`
 
-- Stop automatic retry attempts if a 403 Forbidden error is received while
-  loading inbox notifications, user threads, or room threads.
-- Stop polling threads and notifications in background tabs.
-- Poll threads and inbox notifications when window is refocused.
+- Implement automatic retry for initial load of inbox notifications, user
+  threads, room threads, room versions, or room notification settings—except
+  when encountering a 4xx error.
+- Background tabs will no longer poll threads, notification, room versions or
+  room notification settings.
 
 ## 2.10.0
 
