@@ -1,4 +1,4 @@
-## 2.9.2 (not released yet)
+## 2.10.1 (not released yet)
 
 ### `@liveblocks/client`
 
@@ -9,6 +9,29 @@
 
 - Stop automatic retry attempts if a 403 Forbidden error is received while
   loading inbox notifications, user threads, or room threads.
+- Stop polling threads and notifications in background tabs.
+- Poll threads and inbox notifications when window is refocused.
+
+## 2.10.0
+
+### `@liveblocks/client`
+
+- Add new methods under `client.resolvers.*` to invalidate the cache of
+  `resolveUsers`, `resolveRoomsInfo`, and `resolveMentionSuggestions`.
+- In storage update notifications (using
+  `room.subscribe(root, ..., { isDeep: true })`), all LiveList deletion updates
+  will now also include the item that was deleted (#2008)
+
+### `@liveblocks/react-ui`
+
+- Improve and fix pasting rich text into the composer.
+- Improve mention suggestions click behavior.
+
+## 2.9.2
+
+### `@liveblocks/node`
+
+- Detect invalid chars in secret keys and throw a more helpful error message
 
 ## 2.9.1
 

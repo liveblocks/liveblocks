@@ -1,9 +1,9 @@
 import {
   createLiveblocksContext,
   createRoomContext,
-  getUmbrellaStoreForClient,
   useClient,
 } from "@liveblocks/react";
+import { getUmbrellaStoreForClient } from "@liveblocks/react/_private";
 import {
   Composer,
   InboxNotification,

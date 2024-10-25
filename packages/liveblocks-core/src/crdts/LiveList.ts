@@ -22,7 +22,7 @@ import type { ToImmutable } from "./utils";
 
 export type LiveListUpdateDelta =
   | { type: "insert"; index: number; item: Lson }
-  | { type: "delete"; index: number }
+  | { type: "delete"; index: number; deletedItem: Lson }
   | { type: "move"; index: number; previousIndex: number; item: Lson }
   | { type: "set"; index: number; item: Lson };
 
@@ -305,19 +305,18 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         this._implicitlyDeletedItems.add(
           this._items[indexOfItemWithSamePosition]
         );
-        this._items.splice(indexOfItemWithSamePosition, 1);
-        delta.push(deleteDelta(indexOfItemWithSamePosition));
+        const [prevNode] = this._items.splice(indexOfItemWithSamePosition, 1);
+        delta.push(deleteDelta(indexOfItemWithSamePosition, prevNode));
       }
 
-      const previousIndex = this._items.indexOf(existingItem);
+      const prevIndex = this._items.indexOf(existingItem);
 
       existingItem._setParentLink(this, op.parentKey);
       this._sortItems();
 
       const newIndex = this._items.indexOf(existingItem);
-
-      if (newIndex !== previousIndex) {
-        delta.push(moveDelta(previousIndex, newIndex, existingItem));
+      if (newIndex !== prevIndex) {
+        delta.push(moveDelta(prevIndex, newIndex, existingItem));
       }
 
       return {
@@ -625,13 +624,13 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         };
       }
 
-      this._items.splice(indexToDelete, 1);
+      const [previousNode] = this._items.splice(indexToDelete, 1);
       this.invalidate();
 
       child._detach();
 
       return {
-        modified: makeUpdate(this, [deleteDelta(indexToDelete)]),
+        modified: makeUpdate(this, [deleteDelta(indexToDelete, previousNode)]),
         reverse,
       };
     }
@@ -988,7 +987,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     const item = this._items[index];
     item._detach();
-    this._items.splice(index, 1);
+    const [prev] = this._items.splice(index, 1);
     this.invalidate();
 
     if (this._pool) {
@@ -997,7 +996,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
         storageUpdates.set(
           nn(this._id),
-          makeUpdate(this, [deleteDelta(index)])
+          makeUpdate(this, [deleteDelta(index, prev)])
         );
 
         this._pool.dispatch(
@@ -1038,7 +1037,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
           // Index is always 0 because updates are applied one after another
           // when applied on an immutable state
-          updateDelta.push(deleteDelta(0));
+          updateDelta.push(deleteDelta(0, item));
         }
       }
 
@@ -1330,10 +1329,15 @@ function setDelta(index: number, item: LiveNode): LiveListUpdateDelta {
   };
 }
 
-function deleteDelta(index: number): LiveListUpdateDelta {
+function deleteDelta(
+  index: number,
+  deletedNode: LiveNode
+): LiveListUpdateDelta {
   return {
-    index,
     type: "delete",
+    index,
+    deletedItem:
+      deletedNode instanceof LiveRegister ? deletedNode.data : deletedNode,
   };
 }
 
@@ -1351,10 +1355,10 @@ function moveDelta(
   item: LiveNode
 ): LiveListUpdateDelta {
   return {
-    index,
     type: "move",
-    previousIndex,
+    index,
     item: item instanceof LiveRegister ? item.data : item,
+    previousIndex,
   };
 }
 
