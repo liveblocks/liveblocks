@@ -2702,7 +2702,7 @@ const _useThreadsSuspense: TypedBundle["suspense"]["useThreads"] =
  * and a function to update them.
  *
  * @example
- * const [{ settings, error, isLoading }, updateSettings] = useRoomNotificationSettings();
+ * const [{ settings }, updateSettings] = useRoomNotificationSettings();
  */
 const _useRoomNotificationSettings: TypedBundle["useRoomNotificationSettings"] =
   useRoomNotificationSettings;
