@@ -19,6 +19,9 @@ export class CreateThreadError<M extends BaseMetadata> extends Error {
   }
 }
 
+/**
+ * @private Internal API, do not rely on it.
+ */
 export class DeleteThreadError extends Error {
   constructor(
     public cause: Error,
@@ -32,6 +35,9 @@ export class DeleteThreadError extends Error {
   }
 }
 
+/**
+ * @private Internal API, do not rely on it.
+ */
 export class EditThreadMetadataError<M extends BaseMetadata> extends Error {
   constructor(
     public cause: Error,
@@ -46,6 +52,9 @@ export class EditThreadMetadataError<M extends BaseMetadata> extends Error {
   }
 }
 
+/**
+ * @private Internal API, do not rely on it.
+ */
 export class MarkThreadAsResolvedError extends Error {
   constructor(
     public cause: Error,
@@ -59,6 +68,9 @@ export class MarkThreadAsResolvedError extends Error {
   }
 }
 
+/**
+ * @private Internal API, do not rely on it.
+ */
 export class MarkThreadAsUnresolvedError extends Error {
   constructor(
     public cause: Error,
@@ -72,6 +84,9 @@ export class MarkThreadAsUnresolvedError extends Error {
   }
 }
 
+/**
+ * @private Internal API, do not rely on it.
+ */
 export class CreateCommentError extends Error {
   constructor(
     public cause: Error,
@@ -87,6 +102,9 @@ export class CreateCommentError extends Error {
   }
 }
 
+/**
+ * @private Internal API, do not rely on it.
+ */
 export class EditCommentError extends Error {
   constructor(
     public cause: Error,
@@ -102,6 +120,9 @@ export class EditCommentError extends Error {
   }
 }
 
+/**
+ * @private Internal API, do not rely on it.
+ */
 export class DeleteCommentError extends Error {
   constructor(
     public cause: Error,
@@ -116,6 +137,9 @@ export class DeleteCommentError extends Error {
   }
 }
 
+/**
+ * @private Internal API, do not rely on it.
+ */
 export class AddReactionError extends Error {
   constructor(
     public cause: Error,
@@ -131,6 +155,9 @@ export class AddReactionError extends Error {
   }
 }
 
+/**
+ * @private Internal API, do not rely on it.
+ */
 export class RemoveReactionError extends Error {
   constructor(
     public cause: Error,
@@ -146,6 +173,9 @@ export class RemoveReactionError extends Error {
   }
 }
 
+/**
+ * @private Internal API, do not rely on it.
+ */
 export class MarkInboxNotificationAsReadError extends Error {
   constructor(
     public cause: Error,
@@ -158,6 +188,9 @@ export class MarkInboxNotificationAsReadError extends Error {
   }
 }
 
+/**
+ * @private Internal API, do not rely on it.
+ */
 export class UpdateNotificationSettingsError extends Error {
   constructor(
     public cause: Error,
@@ -170,6 +203,9 @@ export class UpdateNotificationSettingsError extends Error {
   }
 }
 
+/**
+ * @private Internal API, do not rely on it.
+ */
 export type CommentsError<M extends BaseMetadata> =
   | CreateThreadError<M>
   | EditThreadMetadataError<M>

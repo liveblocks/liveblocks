@@ -13,6 +13,12 @@ import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import type { NoInfr } from "./lib/NoInfer";
 import type { Resolve } from "./lib/Resolve";
+import type {
+  GetInboxNotificationsOptions,
+  GetInboxNotificationsSinceOptions,
+  GetUserThreadsOptions,
+  GetUserThreadsSinceOptions,
+} from "./notifications";
 import { createNotificationsApi } from "./notifications";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
@@ -26,7 +32,6 @@ import type {
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
 import type {
-  GetThreadsOptions,
   OpaqueRoom,
   OptionalTupleUnless,
   PartialUnless,
@@ -142,7 +147,7 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
   readonly roomsInfoStore: BatchStore<DRI | undefined, string>;
   readonly getRoomIds: () => string[];
   readonly getUserThreads_experimental: (
-    options: GetThreadsOptions<M>
+    options: GetUserThreadsOptions<M>
   ) => Promise<{
     threads: ThreadData<M>[];
     inboxNotifications: InboxNotificationData[];
@@ -150,7 +155,7 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
     requestedAt: Date;
   }>;
   readonly getUserThreadsSince_experimental: (
-    options: { since: Date } & GetThreadsOptions<M>
+    options: GetUserThreadsSinceOptions
   ) => Promise<{
     inboxNotifications: {
       updated: InboxNotificationData[];
@@ -162,6 +167,9 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
     };
     requestedAt: Date;
   }>;
+
+  // Type-level helper
+  as<M2 extends BaseMetadata>(): Client<U, M2>;
 };
 
 export type NotificationsApi<M extends BaseMetadata> = {
@@ -182,7 +190,7 @@ export type NotificationsApi<M extends BaseMetadata> = {
    * const data = await client.getInboxNotifications();  // Fetch initial page (of 20 inbox notifications)
    * const data = await client.getInboxNotifications({ cursor: nextCursor });  // Fetch next page (= next 20 inbox notifications)
    */
-  getInboxNotifications(options?: { cursor?: string }): Promise<{
+  getInboxNotifications(options?: GetInboxNotificationsOptions): Promise<{
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<M>[];
     nextCursor: string | null;
@@ -208,7 +216,9 @@ export type NotificationsApi<M extends BaseMetadata> = {
    *   requestedAt,
    * } = await client.getInboxNotificationsSince({ since: result.requestedAt }});
    */
-  getInboxNotificationsSince(since: Date): Promise<{
+  getInboxNotificationsSince(
+    options: GetInboxNotificationsSinceOptions
+  ): Promise<{
     inboxNotifications: {
       updated: InboxNotificationData[];
       deleted: InboxNotificationDeleteInfo[];
@@ -279,10 +289,10 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
     P extends JsonObject = DP,
     S extends LsonObject = DS,
     E extends Json = DE,
-    M extends BaseMetadata = DM,
+    M2 extends BaseMetadata = M,
   >(
     roomId: string
-  ): Room<P, S, U, E, M> | null;
+  ): Room<P, S, U, E, M2> | null;
 
   /**
    * Enter a room.
@@ -294,7 +304,7 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
     P extends JsonObject = DP,
     S extends LsonObject = DS,
     E extends Json = DE,
-    M extends BaseMetadata = DM,
+    M2 extends BaseMetadata = M,
   >(
     roomId: string,
     ...args: OptionalTupleUnless<
@@ -302,7 +312,7 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
       [options: EnterOptions<NoInfr<P>, NoInfr<S>>]
     >
   ): {
-    room: Room<P, S, U, E, M>;
+    room: Room<P, S, U, E, M2>;
     leave: () => void;
   };
 
@@ -649,7 +659,7 @@ export function createClient<U extends BaseUserMeta = DU>(
   );
   const roomsInfoStore = createBatchStore(batchedResolveRoomsInfo);
 
-  return Object.defineProperty(
+  const client: Client<U> = Object.defineProperty(
     {
       enterRoom,
       getRoom,
@@ -673,6 +683,9 @@ export function createClient<U extends BaseUserMeta = DU>(
           notificationsAPI.getUserThreads_experimental,
         getUserThreadsSince_experimental:
           notificationsAPI.getUserThreadsSince_experimental,
+
+        // Type-level helper only, it's effectively only an identity-function at runtime
+        as: <M2 extends BaseMetadata>() => client as Client<U, M2>,
       },
     },
     kInternal,
@@ -680,6 +693,8 @@ export function createClient<U extends BaseUserMeta = DU>(
       enumerable: false,
     }
   );
+
+  return client;
 }
 
 function checkBounds(

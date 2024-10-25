@@ -32,6 +32,7 @@ import type {
   LiveblocksError,
   OpaqueClient,
   OpaqueRoom,
+  Poller,
   RoomEventMessage,
   ToImmutable,
 } from "@liveblocks/core";
@@ -51,6 +52,7 @@ import {
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
+import { config } from "./config";
 import { RoomContext, useIsInsideRoom, useRoomOrNull } from "./contexts";
 import { isString } from "./lib/guards";
 import { retryError } from "./lib/retry-error";
@@ -145,8 +147,6 @@ function useSyncExternalStore<Snapshot>(
 
 const STABLE_EMPTY_LIST = Object.freeze([]);
 
-export const POLLING_INTERVAL = 5 * 60 * 1000; // every 5 minutes
-
 // Don't try to inline this. This function is intended to be a stable
 // reference, to avoid a React.useCallback() wrapper.
 function alwaysEmptyList() {
@@ -227,48 +227,6 @@ function handleApiError(err: HttpError): Error {
   }
 
   return new Error(message);
-}
-
-// NIMESH - DRY up these makeDeltaPoller_* abstractions, now that the symmetry has become clear!
-function makeDeltaPoller_RoomThreads(client: OpaqueClient) {
-  const store = getUmbrellaStoreForClient(client);
-
-  const poller = makePoller(async () => {
-    // Poll in every currently connected/open room
-    // Note that Promise.allSettled() will never throw, which is important for
-    // the poller!
-    const roomIds = client[kInternal].getRoomIds();
-    await Promise.allSettled(
-      roomIds.map((roomId) => {
-        const room = client.getRoom(roomId);
-        if (room === null) return;
-
-        return store.fetchRoomThreadsDeltaUpdate(room.id);
-      })
-    );
-  }, POLLING_INTERVAL);
-
-  // Keep track of the number of subscribers
-  let pollerSubscribers = 0;
-
-  return () => {
-    pollerSubscribers++;
-
-    // NIMESH - We should wait until the lastRequestedAt date is known using a promise and then
-    // in the `then` body, check again if the number of subscribers if more than 0, and only then
-    // if those conditions hold, start the poller
-    // promise.then(() => { if (subscribers > 0 ) initialPoller() else: do nothing })
-    poller.enable(pollerSubscribers > 0);
-
-    return () => {
-      pollerSubscribers--;
-
-      // NIMESH - When stopping the poller, we should also ideally abort its
-      // poller function, maybe using an AbortController? This functionality
-      // should be automatic and handled by the Poller abstraction, not here!
-      poller.enable(pollerSubscribers > 0);
-    };
-  };
 }
 
 const _extras = new WeakMap<
@@ -389,6 +347,7 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     return;
   }
 
+  // Note: This error event source includes both comments and room notifications settings!!
   const commentsErrorEventSource = makeEventSource<CommentsError<M>>();
 
   function onMutationFailure(
@@ -413,13 +372,37 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     throw innerError;
   }
 
+  const pollersByRoomId = new Map<string, Poller>();
+
+  function getOrCreatePollerForRoomId(roomId: string) {
+    let poller = pollersByRoomId.get(roomId);
+    if (!poller) {
+      poller = makePoller(
+        async (signal) => {
+          try {
+            return await store.fetchRoomThreadsDeltaUpdate(roomId, signal);
+          } catch (err) {
+            console.warn(`Polling new threads for '${roomId}' failed: ${String(err)}`); // prettier-ignore
+            throw err;
+          }
+        },
+        config.ROOM_THREADS_POLL_INTERVAL,
+        { maxStaleTimeMs: config.ROOM_THREADS_MAX_STALE_TIME }
+      );
+
+      pollersByRoomId.set(roomId, poller);
+    }
+
+    return poller;
+  }
+
   return {
     store,
-    subscribeToRoomThreadsDeltaUpdates: makeDeltaPoller_RoomThreads(client),
-    commentsErrorEventSource,
+    commentsErrorEventSource: commentsErrorEventSource.observable,
     getInboxNotificationSettings,
     getRoomVersions,
     onMutationFailure,
+    getOrCreatePollerForRoomId,
   };
 }
 
@@ -773,31 +756,6 @@ function RoomProviderInner<
       (message) => void handleCommentEvent(message)
     );
   }, [client, room]);
-
-  React.useEffect(() => {
-    const store = getRoomExtrasForClient(client).store;
-    // Retrieve threads that have been updated/deleted since the last time the room requested threads updates
-    void store.fetchRoomThreadsDeltaUpdate(room.id).catch(() => {
-      // Deliberately catch and ignore any errors here
-    });
-  }, [client, room.id]);
-
-  /**
-   * Subscribe to the 'online' event to fetch threads/notifications updates when the browser goes back online.
-   */
-  React.useEffect(() => {
-    function handleIsOnline() {
-      const store = getRoomExtrasForClient(client).store;
-      void store.fetchRoomThreadsDeltaUpdate(room.id).catch(() => {
-        // Deliberately catch and ignore any errors here
-      });
-    }
-
-    window.addEventListener("online", handleIsOnline);
-    return () => {
-      window.removeEventListener("online", handleIsOnline);
-    };
-  }, [client, room.id]);
 
   React.useEffect(() => {
     const pair = stableEnterRoom(roomId, frozenProps);
@@ -1326,17 +1284,14 @@ function useThreads<M extends BaseMetadata>(
   const client = useClient();
   const room = useRoom();
 
-  const { store, subscribeToRoomThreadsDeltaUpdates: subscribeToDeltaUpdates } =
+  const { store, getOrCreatePollerForRoomId } =
     getRoomExtrasForClient<M>(client);
+
+  const poller = getOrCreatePollerForRoomId(room.id);
 
   React.useEffect(
     () => {
-      // NIMESH - Verify that we need the catch or not
-      void store
-        .waitUntilRoomThreadsLoaded(room.id, options.query)
-        .catch(() => {
-          // Deliberately catch and ignore any errors here
-        });
+      void store.waitUntilRoomThreadsLoaded(room.id, options.query);
     }
     // NOTE: Deliberately *not* using a dependency array here!
     //
@@ -1348,7 +1303,11 @@ function useThreads<M extends BaseMetadata>(
     //    *next* render after that, a *new* fetch/promise will get created.
   );
 
-  React.useEffect(subscribeToDeltaUpdates, [subscribeToDeltaUpdates]);
+  React.useEffect(() => {
+    poller.inc();
+    poller.pollNowIfStale();
+    return () => poller.dec();
+  }, [poller]);
 
   const getter = React.useCallback(
     () => store.getRoomThreadsLoadingState(room.id, options.query),

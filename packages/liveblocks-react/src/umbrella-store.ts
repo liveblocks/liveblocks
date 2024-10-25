@@ -1,6 +1,8 @@
 import type {
   AsyncResult,
   BaseMetadata,
+  BaseUserMeta,
+  Client,
   CommentData,
   CommentReaction,
   CommentUserReaction,
@@ -30,7 +32,6 @@ import {
   mapValues,
   nanoid,
   nn,
-  StopRetrying,
   stringify,
 } from "@liveblocks/core";
 
@@ -438,20 +439,12 @@ export class PaginatedResource {
     const initialFetcher = autoRetry(
       () => this._fetchPage(/* cursor */ undefined),
       5,
-      [5000, 5000, 10000, 15000],
-      (err) => {
-        // We do not want to retry if a 4xx HTTP error is received
-        if (err instanceof HttpError && err.status >= 400 && err.status < 500) {
-          return true;
-        }
-        return false;
-      }
+      [5000, 5000, 10000, 15000]
     );
 
     const promise = usify(
       initialFetcher.then((cursor) => {
         // Initial fetch completed
-        // XXX - Maybe use the patch method
         this._paginationState = {
           cursor,
           isFetchingMore: false,
@@ -460,7 +453,7 @@ export class PaginatedResource {
       })
     );
 
-    // XXX Maybe move this into the .then() above too?
+    // TODO for later: Maybe move this into the .then() above too?
     promise.then(
       () => this._eventSource.notify(),
       () => {
@@ -545,7 +538,7 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
 };
 
 export class UmbrellaStore<M extends BaseMetadata> {
-  private _client?: OpaqueClient;
+  private _client: Client<BaseUserMeta, M>;
 
   // Raw threads DB (without any optimistic updates applied)
   private _rawThreadsDB: ThreadDB<M>;
@@ -567,22 +560,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
   private _userThreadsLastRequestedAt: Date | null = null;
   private _userThreads: Map<string, PaginatedResource> = new Map();
 
-  constructor(client?: OpaqueClient) {
-    this._client = client;
+  constructor(client: OpaqueClient) {
+    this._client = client[kInternal].as<M>();
 
     const inboxFetcher = async (cursor?: string) => {
-      if (client === undefined) {
-        // TODO: Think about other ways to structure this. Throwing a StopRetrying only
-        // makes sense only if we can easily know if the fetcher is going to be wrapped inside the autoRetry function
-        throw new StopRetrying(
-          "Client is required in order to load threads for the room"
-        );
-      }
-
-      const result = await client.getInboxNotifications({ cursor });
+      const result = await this._client.getInboxNotifications({ cursor });
 
       this.updateThreadsAndNotifications(
-        result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
+        result.threads,
         result.inboxNotifications
       );
 
@@ -1292,25 +1277,23 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.setQuery4State(queryKey, { isLoading: false, error });
   }
 
-  public async fetchNotificationsDeltaUpdate() {
+  public async fetchNotificationsDeltaUpdate(signal: AbortSignal) {
     const lastRequestedAt = this._notificationsLastRequestedAt;
     if (lastRequestedAt === null) {
       return;
     }
 
-    const client = nn(
-      this._client,
-      "Client is required in order to load notifications for the room"
-    );
-
-    const result = await client.getInboxNotificationsSince(lastRequestedAt);
+    const result = await this._client.getInboxNotificationsSince({
+      since: lastRequestedAt,
+      signal,
+    });
 
     if (lastRequestedAt < result.requestedAt) {
       this._notificationsLastRequestedAt = result.requestedAt;
     }
 
     this.updateThreadsAndNotifications(
-      result.threads.updated as ThreadData<M>[],
+      result.threads.updated,
       result.inboxNotifications.updated,
       result.threads.deleted,
       result.inboxNotifications.deleted
@@ -1326,24 +1309,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
     query: ThreadsQuery<M> | undefined
   ) {
     const threadsFetcher = async (cursor?: string) => {
-      if (this._client === undefined) {
-        // TODO: Think about other ways to structure this. Throwing a StopRetrying only
-        // makes sense only if we can easily know if the fetcher is going to be wrapped inside the autoRetry function
-        throw new StopRetrying(
-          "Client is required in order to load threads for the room"
-        );
-      }
-
       const room = this._client.getRoom(roomId);
       if (room === null) {
-        throw new StopRetrying(
-          `Room with id ${roomId} is not available on client`
-        );
+        throw new HttpError(`Room '${roomId}' is not available on client`, 479);
       }
 
       const result = await room.getThreads({ cursor, query });
       this.updateThreadsAndNotifications(
-        result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
+        result.threads,
         result.inboxNotifications
       );
 
@@ -1383,28 +1356,27 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return paginatedResource.waitUntilLoaded();
   }
 
-  public async fetchRoomThreadsDeltaUpdate(roomId: string) {
+  public async fetchRoomThreadsDeltaUpdate(
+    roomId: string,
+    signal: AbortSignal
+  ) {
     const lastRequestedAt = this._roomThreadsLastRequestedAtByRoom.get(roomId);
     if (lastRequestedAt === undefined) {
       return;
     }
 
-    const client = nn(
-      this._client,
-      "Client is required in order to load notifications for the room"
-    );
-
     const room = nn(
-      client.getRoom(roomId),
+      this._client.getRoom(roomId),
       `Room with id ${roomId} is not available on client`
     );
 
     const updates = await room.getThreadsSince({
       since: lastRequestedAt,
+      signal,
     });
 
     this.updateThreadsAndNotifications(
-      updates.threads.updated as ThreadData<M>[],
+      updates.threads.updated,
       updates.inboxNotifications.updated,
       updates.threads.deleted,
       updates.inboxNotifications.deleted
@@ -1420,20 +1392,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
     const queryKey = makeUserThreadsQueryKey(query);
 
     const threadsFetcher = async (cursor?: string) => {
-      if (this._client === undefined) {
-        // TODO: Think about other ways to structure this. Throwing a StopRetrying only
-        // makes sense only if we can easily know if the fetcher is going to be wrapped inside the autoRetry function
-        throw new StopRetrying(
-          "Client is required in order to load threads for the room"
-        );
-      }
-
       const result = await this._client[kInternal].getUserThreads_experimental({
         cursor,
         query,
       });
       this.updateThreadsAndNotifications(
-        result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
+        result.threads,
         result.inboxNotifications
       );
 
@@ -1461,19 +1425,17 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return paginatedResource.waitUntilLoaded();
   }
 
-  public async fetchUserThreadsDeltaUpdate() {
+  public async fetchUserThreadsDeltaUpdate(signal: AbortSignal) {
     const lastRequestedAt = this._userThreadsLastRequestedAt;
     if (lastRequestedAt === null) {
       return;
     }
 
-    const client = nn(
-      this._client,
-      "Client is required in order to load threads for the user"
-    );
-
-    const result = await client[kInternal].getUserThreadsSince_experimental({
+    const result = await this._client[
+      kInternal
+    ].getUserThreadsSince_experimental({
       since: lastRequestedAt,
+      signal,
     });
 
     if (lastRequestedAt < result.requestedAt) {
@@ -1481,7 +1443,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }
 
     this.updateThreadsAndNotifications(
-      result.threads.updated as ThreadData<M>[],
+      result.threads.updated,
       result.inboxNotifications.updated,
       result.threads.deleted,
       result.inboxNotifications.deleted
