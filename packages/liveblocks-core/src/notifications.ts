@@ -33,7 +33,7 @@ export type GetInboxNotificationsOptions = {
 
 export type GetInboxNotificationsSinceOptions = {
   since: Date;
-  signal?: AbortSignal;
+  signal: AbortSignal;
 };
 
 export type GetUserThreadsOptions<M extends BaseMetadata> = {
@@ -46,7 +46,7 @@ export type GetUserThreadsOptions<M extends BaseMetadata> = {
 
 export type GetUserThreadsSinceOptions = {
   since: Date;
-  signal?: AbortSignal;
+  signal: AbortSignal;
 };
 
 export function createNotificationsApi<M extends BaseMetadata>({
