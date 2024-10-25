@@ -2,7 +2,7 @@ import { autoUpdate, flip, hide, limitShift, offset, shift, size, useFloating } 
 import { createInboxNotificationId } from "@liveblocks/core";
 import { useUser } from "@liveblocks/react";
 import { useMentionSuggestions, useOverrides } from "@liveblocks/react-ui";
-import type { HTMLAttributes } from "react";
+import type { HTMLAttributes, MouseEvent } from "react";
 import React, {
   forwardRef, useEffect, useImperativeHandle,
   useLayoutEffect,
@@ -43,12 +43,13 @@ export const User = forwardRef<HTMLSpanElement, UserProps>(
 
 export const SUGGESTIONS_COLLISION_PADDING = 10;
 
-export type MentionsListProps = {
+export interface MentionsListProps extends HTMLAttributes<HTMLDivElement> {
   query: string,
   command: (otps: { id: string, notificationId: string }) => void,
   clientRect: () => DOMRect,
   hide: boolean
-};
+}
+
 export type MentionsListHandle = {
   onKeyDown: ({ event }: { event: KeyboardEvent }) => boolean,
 };
@@ -56,6 +57,7 @@ export type MentionsListHandle = {
 export const MentionsList = forwardRef<MentionsListHandle, MentionsListProps>((props, ref) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const suggestions = useMentionSuggestions(props.query);
+  const { onMouseEnter, onClick } = props;
   const {
     refs: { setReference, setFloating },
     strategy,
@@ -126,7 +128,21 @@ export const MentionsList = forwardRef<MentionsListHandle, MentionsListProps>((p
     },
   }))
 
-  if (suggestions !== undefined && suggestions.length === 0) {
+  const handleClick = (index: number) => (event: MouseEvent<HTMLDivElement>) => {
+    onClick?.(event);
+
+    if (event.isDefaultPrevented()) return;
+    selectItem(index)
+  }
+  const handleMouseEnter = (index: number) => (event: MouseEvent<HTMLDivElement>) => {
+    onMouseEnter?.(event);
+
+    if (event.isDefaultPrevented()) return;
+
+    setSelectedIndex(index);
+  }
+
+  if (suggestions === undefined || suggestions.length === 0) {
     return null
   }
 
@@ -141,24 +157,24 @@ export const MentionsList = forwardRef<MentionsListHandle, MentionsListProps>((p
         display: props.hide ? "none" : "block"
       }}>
       <div className="lb-tiptap-suggestions-list lb-tiptap-mention-suggestions-list">
-        {suggestions === undefined ? <div className="item">Loading...</div> :
+        {suggestions.map((item, index) => (
+          <div className="lb-tiptap-suggestions-list-item lb-tiptap-mention-suggestion"
+            key={index}
+            role="option"
+            data-highlighted={index === selectedIndex || undefined}
 
-          suggestions.map((item, index) => (
-            <div className="lb-tiptap-suggestions-list-item lb-tiptap-mention-suggestion"
-              key={index}
-              role="option"
-              data-highlighted={index === selectedIndex || undefined}
-              onClick={() => selectItem(index)}>
-              <Avatar
-                userId={item}
-                className="lb-tiptap-mention-suggestion-avatar"
-              />
-              <User
-                userId={item}
-                className="lb-tiptap-mention-suggestion-user"
-              />
-            </div>
-          ))
+            onMouseEnter={handleMouseEnter(index)}
+            onClick={handleClick(index)}>
+            <Avatar
+              userId={item}
+              className="lb-tiptap-mention-suggestion-avatar"
+            />
+            <User
+              userId={item}
+              className="lb-tiptap-mention-suggestion-user"
+            />
+          </div>
+        ))
         }
       </div>
     </div>
