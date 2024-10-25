@@ -15,7 +15,7 @@ export const extractTextMentionNotificationData = async ({
   client: Liveblocks;
   event: TextMentionNotificationEvent;
 }): Promise<TextMentionNotificationData | null> => {
-  const { mentionId, roomId, userId, inboxNotificationId } = event.data;
+  const { roomId, userId, inboxNotificationId } = event.data;
 
   const [room, inboxNotification] = await Promise.all([
     client.getRoom(roomId),
@@ -41,6 +41,9 @@ export const extractTextMentionNotificationData = async ({
 
   switch (room.textEditor.type) {
     case "lexical": {
+      const buffer = await client.getYjsDocumentAsBinaryUpdate(roomId);
+      const update = new Uint8Array(buffer);
+
       return {
         textEditorType: "lexical",
       };
