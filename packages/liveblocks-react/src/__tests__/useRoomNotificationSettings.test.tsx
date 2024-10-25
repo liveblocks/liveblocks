@@ -318,6 +318,98 @@ describe("useRoomNotificationSettings: error", () => {
 
     unmount();
   });
+
+  test("should poll room notification settings every x seconds", async () => {
+    const roomId = nanoid();
+
+    let getRoomNotificationsSettingsCount = 0;
+    server.use(
+      mockGetRoomNotificationSettings((_req, res, ctx) => {
+        getRoomNotificationsSettingsCount++;
+        if (getRoomNotificationsSettingsCount === 1) {
+          return res(
+            ctx.json({
+              threads: "all",
+            })
+          );
+        } else if (getRoomNotificationsSettingsCount === 2) {
+          return res(
+            ctx.json({
+              threads: "none",
+            })
+          );
+        } else {
+          return res(
+            ctx.json({
+              threads: "replies_and_mentions",
+            })
+          );
+        }
+      })
+    );
+
+    const {
+      room: { RoomProvider, useRoomNotificationSettings },
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(
+      () => useRoomNotificationSettings(),
+      {
+        wrapper: ({ children }) => (
+          <RoomProvider id={roomId}>{children}</RoomProvider>
+        ),
+      }
+    );
+
+    expect(result.current[0]).toEqual({ isLoading: true });
+
+    // Wait for the first attempt to fetch room notification settings
+    await waitFor(() =>
+      expect(result.current[0]).toEqual({
+        isLoading: false,
+        settings: {
+          threads: "all",
+        },
+      })
+    );
+    expect(getRoomNotificationsSettingsCount).toBe(1);
+
+    // Advance by 1 minute so that and verify that the first poll is triggered
+    jest.advanceTimersByTime(60_000);
+    await waitFor(() =>
+      expect(result.current[0]).toEqual({
+        isLoading: false,
+        settings: {
+          threads: "none",
+        },
+      })
+    );
+    expect(getRoomNotificationsSettingsCount).toBe(2);
+
+    // Advance by another 1 minute so that and verify that the second poll is triggered
+    jest.advanceTimersByTime(60_000);
+    await waitFor(() =>
+      expect(result.current[0]).toEqual({
+        isLoading: false,
+        settings: {
+          threads: "replies_and_mentions",
+        },
+      })
+    );
+    expect(getRoomNotificationsSettingsCount).toBe(3);
+
+    // Advance by another 1 minute so that and verify that the third poll is triggered
+    jest.advanceTimersByTime(60_000);
+    await waitFor(() => expect(getRoomNotificationsSettingsCount).toBe(3));
+    expect(result.current[0]).toEqual({
+      isLoading: false,
+      settings: {
+        threads: "replies_and_mentions",
+      },
+    });
+
+    unmount();
+  });
 });
 
 describe("useRoomNotificationSettings suspense", () => {
@@ -370,7 +462,7 @@ describe("useRoomNotificationSettings suspense", () => {
   });
 });
 
-describe.skip("useRoomNotificationSettingsSuspense: error", () => {
+describe("useRoomNotificationSettingsSuspense: error", () => {
   const roomId = nanoid();
 
   beforeEach(() => {
@@ -538,109 +630,6 @@ describe.skip("useRoomNotificationSettingsSuspense: error", () => {
     // The error boundary's fallback should be cleared
     await waitFor(() => {
       expect(screen.getByText("Loading")).toBeInTheDocument();
-    });
-
-    unmount();
-  });
-});
-
-describe("useRoomNotificationSettings: error", () => {
-  beforeEach(() => {
-    jest.useFakeTimers();
-  });
-
-  afterEach(() => {
-    jest.clearAllTimers();
-    jest.useRealTimers(); // Restores the real timers
-  });
-
-  test("should poll room notification settings every x seconds", async () => {
-    const roomId = nanoid();
-
-    let getRoomNotificationsSettingsCount = 0;
-    server.use(
-      mockGetRoomNotificationSettings((_req, res, ctx) => {
-        getRoomNotificationsSettingsCount++;
-        if (getRoomNotificationsSettingsCount === 1) {
-          return res(
-            ctx.json({
-              threads: "all",
-            })
-          );
-        } else if (getRoomNotificationsSettingsCount === 2) {
-          return res(
-            ctx.json({
-              threads: "none",
-            })
-          );
-        } else {
-          return res(
-            ctx.json({
-              threads: "replies_and_mentions",
-            })
-          );
-        }
-      })
-    );
-
-    const {
-      room: { RoomProvider, useRoomNotificationSettings },
-    } = createContextsForTest();
-
-    const { result, unmount } = renderHook(
-      () => useRoomNotificationSettings(),
-      {
-        wrapper: ({ children }) => (
-          <RoomProvider id={roomId}>{children}</RoomProvider>
-        ),
-      }
-    );
-
-    expect(result.current[0]).toEqual({ isLoading: true });
-
-    // Wait for the first attempt to fetch room notification settings
-    await waitFor(() =>
-      expect(result.current[0]).toEqual({
-        isLoading: false,
-        settings: {
-          threads: "all",
-        },
-      })
-    );
-    expect(getRoomNotificationsSettingsCount).toBe(1);
-
-    // Advance by 1 minute so that and verify that the first poll is triggered
-    jest.advanceTimersByTime(60_000);
-    await waitFor(() =>
-      expect(result.current[0]).toEqual({
-        isLoading: false,
-        settings: {
-          threads: "none",
-        },
-      })
-    );
-    expect(getRoomNotificationsSettingsCount).toBe(2);
-
-    // Advance by another 1 minute so that and verify that the second poll is triggered
-    jest.advanceTimersByTime(60_000);
-    await waitFor(() =>
-      expect(result.current[0]).toEqual({
-        isLoading: false,
-        settings: {
-          threads: "replies_and_mentions",
-        },
-      })
-    );
-    expect(getRoomNotificationsSettingsCount).toBe(3);
-
-    // Advance by another 1 minute so that and verify that the third poll is triggered
-    jest.advanceTimersByTime(60_000);
-    await waitFor(() => expect(getRoomNotificationsSettingsCount).toBe(3));
-    expect(result.current[0]).toEqual({
-      isLoading: false,
-      settings: {
-        threads: "replies_and_mentions",
-      },
     });
 
     unmount();
