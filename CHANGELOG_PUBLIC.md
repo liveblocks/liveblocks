@@ -19,11 +19,11 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ### `@liveblocks/client`
 
-- Add new methods under `client.resolvers.*` to invalidate the cache of
+- Add new [resolver methods](https://liveblocks.io/docs/api-reference/liveblocks-client#Resolvers) under `client.resolvers.*` to invalidate the cache of
   `resolveUsers`, `resolveRoomsInfo`, and `resolveMentionSuggestions`.
 - In storage update notifications (using
-  `room.subscribe(root, ..., { isDeep: true })`), all LiveList deletion updates
-  will now also include the item that was deleted (#2008)
+  [`room.subscribe(root, ..., { isDeep: true })`)](https://liveblocks.io/docs/api-reference/liveblocks-client#listening-for-nested-changes), all LiveList deletion updates
+  will now also include the item that was deleted (#2008).
 
 ### `@liveblocks/react-ui`
 
