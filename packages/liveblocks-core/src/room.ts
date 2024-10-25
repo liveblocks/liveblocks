@@ -41,6 +41,7 @@ import {
   createCommentId,
   createThreadId,
 } from "./lib/createIds";
+import type { DateToString } from "./lib/DateToString";
 import { captureStackTrace } from "./lib/debug";
 import type { Callback, EventSource, Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
@@ -97,6 +98,7 @@ import type {
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
+import type { HistoryVersion } from "./protocol/VersionHistory";
 import type { ImmutableRef } from "./refs/ImmutableRef";
 import { OthersRef } from "./refs/OthersRef";
 import { PatchableRef } from "./refs/PatchableRef";
@@ -484,6 +486,15 @@ export type GetThreadsSinceOptions = {
 };
 
 export type UploadAttachmentOptions = {
+  signal?: AbortSignal;
+};
+
+type ListTextVersionsSinceOptions = {
+  since: Date;
+  signal: AbortSignal;
+};
+
+type GetNotificationSettingsOptions = {
   signal?: AbortSignal;
 };
 
@@ -960,7 +971,9 @@ export type Room<
    * @example
    * const settings = await room.getNotificationSettings();
    */
-  getNotificationSettings(): Promise<RoomNotificationSettings>;
+  getNotificationSettings(
+    options?: GetNotificationSettingsOptions
+  ): Promise<RoomNotificationSettings>;
 
   /**
    * Updates the user's notification settings for the current room.
@@ -1014,7 +1027,15 @@ export type PrivateRoomApi = {
 
   createTextMention(userId: string, mentionId: string): Promise<Response>;
   deleteTextMention(mentionId: string): Promise<Response>;
-  listTextVersions(): Promise<Response>;
+  listTextVersions(): Promise<{
+    versions: HistoryVersion[];
+    requestedAt: Date;
+  }>;
+  listTextVersionsSince(options: ListTextVersionsSinceOptions): Promise<{
+    versions: HistoryVersion[];
+    requestedAt: Date;
+  }>;
+
   getTextVersion(versionId: string): Promise<Response>;
   createTextVersion(): Promise<Response>;
 
@@ -1643,7 +1664,45 @@ export function createRoom<
   }
 
   async function listTextVersions() {
-    return httpClient2.fetch(url`/v2/c/rooms/${config.roomId}/versions`);
+    const result = await httpClient2.fetchJson<{
+      versions: DateToString<HistoryVersion>[];
+      meta: {
+        requestedAt: string;
+      };
+    }>(url`/v2/c/rooms/${config.roomId}/versions`);
+
+    return {
+      versions: result.versions.map(({ createdAt, ...version }) => {
+        return {
+          createdAt: new Date(createdAt),
+          ...version,
+        };
+      }),
+      requestedAt: new Date(result.meta.requestedAt),
+    };
+  }
+
+  async function listTextVersionsSince(options: ListTextVersionsSinceOptions) {
+    const result = await httpClient2.fetchJson<{
+      versions: DateToString<HistoryVersion>[];
+      meta: {
+        requestedAt: string;
+      };
+    }>(
+      url`/v2/c/rooms/${config.roomId}/versions/delta`,
+      { signal: options.signal },
+      { since: options.since.toISOString() }
+    );
+
+    return {
+      versions: result.versions.map(({ createdAt, ...version }) => {
+        return {
+          createdAt: new Date(createdAt),
+          ...version,
+        };
+      }),
+      requestedAt: new Date(result.meta.requestedAt),
+    };
   }
 
   async function getTextVersion(versionId: string) {
@@ -3279,9 +3338,12 @@ export function createRoom<
     return await httpClient2.fetchJson<T>(endpoint, options);
   }
 
-  function getNotificationSettings(): Promise<RoomNotificationSettings> {
+  function getNotificationSettings(
+    options?: GetNotificationSettingsOptions
+  ): Promise<RoomNotificationSettings> {
     return fetchNotificationsJson<RoomNotificationSettings>(
-      url`/v2/c/rooms/${config.roomId}/notification-settings`
+      url`/v2/c/rooms/${config.roomId}/notification-settings`,
+      { signal: options?.signal }
     );
   }
 
@@ -3354,6 +3416,8 @@ export function createRoom<
         deleteTextMention,
         // list versions of the document
         listTextVersions,
+        // List versions of the document since the specified date
+        listTextVersionsSince,
         // get a specific version
         getTextVersion,
         // create a version
