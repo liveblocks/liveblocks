@@ -32,7 +32,12 @@ export const extractTextMentionNotificationData = async ({
     return null;
   }
 
-  // TODO: check for editor type existence
+  // Do nothing if the room as no text editor associated.
+  // We do not throw not to impact the final developer experience.
+  if (!room.textEditor) {
+    console.warn(`Room ${room.id} do not have any text editor associated`);
+    return null;
+  }
 
   // TODO get document json
 
