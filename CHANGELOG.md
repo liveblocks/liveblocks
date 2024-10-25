@@ -12,6 +12,7 @@
   when encountering a 4xx error.
 - Background tabs will no longer poll threads, notification, room versions or
   room notification settings.
+- Fix incorrect suspense export for `useRoomNotificationSettings` hook.
 
 ## 2.10.0
 

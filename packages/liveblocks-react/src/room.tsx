@@ -2697,6 +2697,12 @@ const _useThreads: TypedBundle["useThreads"] = useThreads;
 const _useThreadsSuspense: TypedBundle["suspense"]["useThreads"] =
   useThreadsSuspense;
 
+const _useRoomNotificationSettings: TypedBundle["useRoomNotificationSettings"] =
+  useRoomNotificationSettings;
+
+const _useRoomNotificationSettingsSuspense: TypedBundle["suspense"]["useRoomNotificationSettings"] =
+  useRoomNotificationSettingsSuspense;
+
 /**
  * (Private beta) Returns a history of versions of the current room.
  *
@@ -2978,6 +2984,7 @@ const _useUpdateMyPresence: TypedBundle["useUpdateMyPresence"] =
   useUpdateMyPresence;
 
 export {
+  _useRoomNotificationSettings,
   CreateThreadError,
   RoomContext,
   _RoomProvider as RoomProvider,
@@ -3021,7 +3028,8 @@ export {
   useRedo,
   useRemoveReaction,
   _useRoom as useRoom,
-  useRoomNotificationSettings,
+  _useRoomNotificationSettings as useRoomNotificationSettings,
+  _useRoomNotificationSettingsSuspense as useRoomNotificationSettingsSuspense,
   _useSelf as useSelf,
   _useSelfSuspense as useSelfSuspense,
   useStatus,
