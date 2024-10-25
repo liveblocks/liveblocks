@@ -10,6 +10,7 @@ export type {
   RoomAccesses,
   RoomData,
   RoomPermission,
+  RoomTextEditor,
   RoomUser,
   Schema,
   ThreadParticipants,
