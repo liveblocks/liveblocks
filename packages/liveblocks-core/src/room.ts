@@ -491,7 +491,7 @@ export type UploadAttachmentOptions = {
 
 type ListTextVersionsSinceOptions = {
   since: Date;
-  signal?: AbortSignal;
+  signal: AbortSignal;
 };
 
 /**
