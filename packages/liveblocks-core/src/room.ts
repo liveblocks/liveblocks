@@ -494,6 +494,10 @@ type ListTextVersionsSinceOptions = {
   signal?: AbortSignal;
 };
 
+type GetNotificationSettingsOptions = {
+  signal: AbortSignal;
+};
+
 /**
  * @private Widest-possible Room type, matching _any_ Room instance. Note that
  * this type is different from `Room`-without-type-arguments. That represents
@@ -967,7 +971,9 @@ export type Room<
    * @example
    * const settings = await room.getNotificationSettings();
    */
-  getNotificationSettings(): Promise<RoomNotificationSettings>;
+  getNotificationSettings(
+    options?: GetNotificationSettingsOptions
+  ): Promise<RoomNotificationSettings>;
 
   /**
    * Updates the user's notification settings for the current room.
@@ -3332,9 +3338,12 @@ export function createRoom<
     return await httpClient2.fetchJson<T>(endpoint, options);
   }
 
-  function getNotificationSettings(): Promise<RoomNotificationSettings> {
+  function getNotificationSettings(
+    options?: GetNotificationSettingsOptions
+  ): Promise<RoomNotificationSettings> {
     return fetchNotificationsJson<RoomNotificationSettings>(
-      url`/v2/c/rooms/${config.roomId}/notification-settings`
+      url`/v2/c/rooms/${config.roomId}/notification-settings`,
+      { signal: options?.signal }
     );
   }
 
