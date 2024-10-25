@@ -1023,10 +1023,10 @@ export type PrivateRoomApi = {
   getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
 
   // For reporting editor metadata
-  reportTextEditor(editor: "lexical", rootKey: string): void;
+  reportTextEditor(editor: "lexical", rootKey: string): Promise<void>;
 
-  createTextMention(userId: string, mentionId: string): Promise<Response>;
-  deleteTextMention(mentionId: string): Promise<Response>;
+  createTextMention(userId: string, mentionId: string): Promise<void>;
+  deleteTextMention(mentionId: string): Promise<void>;
   listTextVersions(): Promise<{
     versions: HistoryVersion[];
     requestedAt: Date;
@@ -1037,7 +1037,7 @@ export type PrivateRoomApi = {
   }>;
 
   getTextVersion(versionId: string): Promise<Response>;
-  createTextVersion(): Promise<Response>;
+  createTextVersion(): Promise<void>;
 
   // NOTE: These are only used in our e2e test app!
   simulate: {
@@ -1616,6 +1616,8 @@ export function createRoom<
   // When making calls with HTTP client 2, it will always call
   // `delegates.authenticate()` to obtain the auth header.
   //
+  // TODO: Ideally we would consolidate these two.
+  //
   const httpClient1 = new HttpClient(config.baseUrl, fetchPolyfill, () =>
     Promise.resolve(managedSocket.authValue ?? raise("Not authorized"))
   );
@@ -1624,47 +1626,28 @@ export function createRoom<
     delegates.authenticate()
   );
 
-  async function httpPostToRoom(
-    endpoint: "/send-message" | "/text-metadata",
-    body: JsonObject
-  ) {
-    return httpClient1.fetch(
-      endpoint === "/send-message"
-        ? url`/v2/c/rooms/${config.roomId}/send-message`
-        : url`/v2/c/rooms/${config.roomId}/text-metadata`,
-      {
-        method: "POST",
-        body: JSON.stringify(body),
-      }
-    );
-  }
-
   async function createTextMention(userId: string, mentionId: string) {
-    return httpClient1.fetch(url`/v2/c/rooms/${config.roomId}/text-mentions`, {
-      method: "POST",
-      body: JSON.stringify({
-        userId,
-        mentionId,
-      }),
+    await httpClient1.rawPost(url`/v2/c/rooms/${config.roomId}/text-mentions`, {
+      userId,
+      mentionId,
     });
   }
 
   async function deleteTextMention(mentionId: string) {
-    return httpClient1.fetch(
-      url`/v2/c/rooms/${config.roomId}/text-mentions/${mentionId}`,
-      { method: "DELETE" }
+    await httpClient1.rawDelete(
+      url`/v2/c/rooms/${config.roomId}/text-mentions/${mentionId}`
     );
   }
 
   async function reportTextEditor(type: "lexical", rootKey: string) {
-    return httpClient2.fetch(url`/v2/c/rooms/${config.roomId}/text-metadata`, {
-      method: "POST",
-      body: JSON.stringify({ type, rootKey }),
+    await httpClient2.rawPost(url`/v2/c/rooms/${config.roomId}/text-metadata`, {
+      type,
+      rootKey,
     });
   }
 
   async function listTextVersions() {
-    const result = await httpClient2.fetchJson<{
+    const result = await httpClient2.get<{
       versions: DateToString<HistoryVersion>[];
       meta: {
         requestedAt: string;
@@ -1683,15 +1666,15 @@ export function createRoom<
   }
 
   async function listTextVersionsSince(options: ListTextVersionsSinceOptions) {
-    const result = await httpClient2.fetchJson<{
+    const result = await httpClient2.get<{
       versions: DateToString<HistoryVersion>[];
       meta: {
         requestedAt: string;
       };
     }>(
       url`/v2/c/rooms/${config.roomId}/versions/delta`,
-      { signal: options.signal },
-      { since: options.since.toISOString() }
+      { since: options.since.toISOString() },
+      { signal: options.signal }
     );
 
     return {
@@ -1706,15 +1689,13 @@ export function createRoom<
   }
 
   async function getTextVersion(versionId: string) {
-    return httpClient2.fetch(
+    return httpClient2.rawGet(
       url`/v2/c/rooms/${config.roomId}/y-version/${versionId}`
     );
   }
 
   async function createTextVersion() {
-    return httpClient2.fetch(url`/v2/c/rooms/${config.roomId}/version`, {
-      method: "POST",
-    });
+    await httpClient2.rawPost(url`/v2/c/rooms/${config.roomId}/version`);
   }
 
   function sendMessages(messages: ClientMsg<P, E>[]) {
@@ -1725,13 +1706,16 @@ export function createRoom<
       // if this turns out to be expensive, we could just guess with a lower value.
       const size = new TextEncoder().encode(serializedPayload).length;
       if (size > MAX_SOCKET_MESSAGE_SIZE) {
-        void httpPostToRoom("/send-message", { nonce, messages }).then(
-          (resp) => {
+        void httpClient1
+          .rawPost(url`/v2/c/rooms/${config.roomId}/send-message`, {
+            nonce,
+            messages,
+          })
+          .then((resp) => {
             if (!resp.ok && resp.status === 403) {
               managedSocket.reconnect();
             }
-          }
-        );
+          });
         console.warn(
           "Message was too large for websockets and sent over HTTP instead"
         );
@@ -2551,7 +2535,7 @@ export function createRoom<
   async function streamStorage() {
     // TODO: Handle potential race conditions where the room get disconnected while the request is pending
     if (!managedSocket.authValue) return;
-    const result = await httpClient1.fetch(
+    const result = await httpClient1.rawGet(
       url`/v2/c/rooms/${config.roomId}/storage`
     );
     const items = (await result.json()) as IdTuple<SerializedCrdt>[];
@@ -2848,10 +2832,10 @@ export function createRoom<
   };
 
   async function getThreadsSince(options: GetThreadsSinceOptions) {
-    const response = await httpClient2.fetch(
+    const response = await httpClient2.rawGet(
       url`/v2/c/rooms/${config.roomId}/threads/delta`,
-      { signal: options.signal },
-      { since: options?.since?.toISOString() }
+      { since: options?.since?.toISOString() },
+      { signal: options.signal }
     );
 
     if (response.ok) {
@@ -2904,7 +2888,7 @@ export function createRoom<
 
     const PAGE_SIZE = 50;
 
-    const result = await httpClient2.fetchJson<{
+    const result = await httpClient2.get<{
       data: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
       deletedThreads: ThreadDeleteInfoPlain[];
@@ -2913,7 +2897,7 @@ export function createRoom<
         requestedAt: string;
         nextCursor: string | null;
       };
-    }>(url`/v2/c/rooms/${config.roomId}/threads`, undefined, {
+    }>(url`/v2/c/rooms/${config.roomId}/threads`, {
       cursor: options?.cursor,
       query,
       limit: PAGE_SIZE,
@@ -2930,7 +2914,7 @@ export function createRoom<
   }
 
   async function getThread(threadId: string) {
-    const response = await httpClient2.fetch(
+    const response = await httpClient2.rawGet(
       url`/v2/c/rooms/${config.roomId}/thread-with-notification/${threadId}`
     );
 
@@ -2970,19 +2954,16 @@ export function createRoom<
     body: CommentBody;
     attachmentIds?: string[];
   }) {
-    const thread = await httpClient2.fetchJson<ThreadDataPlain<M>>(
+    const thread = await httpClient2.post<ThreadDataPlain<M>>(
       url`/v2/c/rooms/${config.roomId}/threads`,
       {
-        method: "POST",
-        body: JSON.stringify({
-          id: threadId,
-          comment: {
-            id: commentId,
-            body,
-            attachmentIds,
-          },
-          metadata,
-        }),
+        id: threadId,
+        comment: {
+          id: commentId,
+          body,
+          attachmentIds,
+        },
+        metadata,
       }
     );
 
@@ -2990,9 +2971,8 @@ export function createRoom<
   }
 
   async function deleteThread(threadId: string) {
-    await httpClient2.fetchJson(
-      url`/v2/c/rooms/${config.roomId}/threads/${threadId}`,
-      { method: "DELETE" }
+    await httpClient2.delete(
+      url`/v2/c/rooms/${config.roomId}/threads/${threadId}`
     );
   }
 
@@ -3004,26 +2984,21 @@ export function createRoom<
     metadata: Patchable<M>;
     threadId: string;
   }) {
-    return await httpClient2.fetchJson<M>(
+    return await httpClient2.post<M>(
       url`/v2/c/rooms/${config.roomId}/threads/${threadId}/metadata`,
-      {
-        method: "POST",
-        body: JSON.stringify(metadata),
-      }
+      metadata
     );
   }
 
   async function markThreadAsResolved(threadId: string) {
-    await httpClient2.fetchJson(
-      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/mark-as-resolved`,
-      { method: "POST" }
+    await httpClient2.post(
+      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/mark-as-resolved`
     );
   }
 
   async function markThreadAsUnresolved(threadId: string) {
-    await httpClient2.fetchJson(
-      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/mark-as-unresolved`,
-      { method: "POST" }
+    await httpClient2.post(
+      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/mark-as-unresolved`
     );
   }
 
@@ -3038,15 +3013,12 @@ export function createRoom<
     body: CommentBody;
     attachmentIds?: string[];
   }) {
-    const comment = await httpClient2.fetchJson<CommentDataPlain>(
+    const comment = await httpClient2.post<CommentDataPlain>(
       url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments`,
       {
-        method: "POST",
-        body: JSON.stringify({
-          id: commentId,
-          body,
-          attachmentIds,
-        }),
+        id: commentId,
+        body,
+        attachmentIds,
       }
     );
 
@@ -3064,14 +3036,11 @@ export function createRoom<
     body: CommentBody;
     attachmentIds?: string[];
   }) {
-    const comment = await httpClient2.fetchJson<CommentDataPlain>(
+    const comment = await httpClient2.post<CommentDataPlain>(
       url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}`,
       {
-        method: "POST",
-        body: JSON.stringify({
-          body,
-          attachmentIds,
-        }),
+        body,
+        attachmentIds,
       }
     );
 
@@ -3086,9 +3055,8 @@ export function createRoom<
     threadId: string;
     commentId: string;
   }) {
-    await httpClient2.fetchJson(
-      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}`,
-      { method: "DELETE" }
+    await httpClient2.delete(
+      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}`
     );
   }
 
@@ -3101,12 +3069,9 @@ export function createRoom<
     commentId: string;
     emoji: string;
   }) {
-    const reaction = await httpClient2.fetchJson<CommentUserReactionPlain>(
+    const reaction = await httpClient2.post<CommentUserReactionPlain>(
       url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}/reactions`,
-      {
-        method: "POST",
-        body: JSON.stringify({ emoji }),
-      }
+      { emoji }
     );
 
     return convertToCommentUserReaction(reaction);
@@ -3121,9 +3086,8 @@ export function createRoom<
     commentId: string;
     emoji: string;
   }) {
-    await httpClient2.fetchJson<CommentDataPlain>(
-      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}/reactions/${emoji}`,
-      { method: "DELETE" }
+    await httpClient2.delete<CommentDataPlain>(
+      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}/reactions/${emoji}`
     );
   }
 
@@ -3171,16 +3135,11 @@ export function createRoom<
       // If the file is small enough, upload it in a single request
       return autoRetry(
         () =>
-          httpClient2.fetchJson<CommentAttachment>(
+          httpClient2.putBlob<CommentAttachment>(
             url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/upload/${encodeURIComponent(attachment.name)}`,
-            {
-              method: "PUT",
-              body: attachment.file,
-              signal: abortSignal,
-            },
-            {
-              fileSize: attachment.size,
-            }
+            attachment.file,
+            { fileSize: attachment.size },
+            { signal: abortSignal }
           ),
         RETRY_ATTEMPTS,
         RETRY_DELAYS,
@@ -3197,18 +3156,14 @@ export function createRoom<
       // Create a multi-part upload
       const createMultiPartUpload = await autoRetry(
         () =>
-          httpClient2.fetchJson<{
+          httpClient2.post<{
             uploadId: string;
             key: string;
           }>(
             url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/multipart/${encodeURIComponent(attachment.name)}`,
-            {
-              method: "POST",
-              signal: abortSignal,
-            },
-            {
-              fileSize: attachment.size,
-            }
+            undefined,
+            { signal: abortSignal },
+            { fileSize: attachment.size }
           ),
         RETRY_ATTEMPTS,
         RETRY_DELAYS,
@@ -3238,16 +3193,14 @@ export function createRoom<
             uploadedPartsPromises.push(
               autoRetry(
                 () =>
-                  httpClient2.fetchJson<{
+                  httpClient2.putBlob<{
                     partNumber: number;
                     etag: string;
                   }>(
                     url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/multipart/${createMultiPartUpload.uploadId}/${String(partNumber)}`,
-                    {
-                      method: "PUT",
-                      body: part,
-                      signal: abortSignal,
-                    }
+                    part,
+                    undefined,
+                    { signal: abortSignal }
                   ),
                 RETRY_ATTEMPTS,
                 RETRY_DELAYS,
@@ -3269,13 +3222,10 @@ export function createRoom<
           (a, b) => a.partNumber - b.partNumber
         );
 
-        return httpClient2.fetchJson<CommentAttachment>(
+        return httpClient2.post<CommentAttachment>(
           url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/multipart/${uploadId}/complete`,
-          {
-            method: "POST",
-            body: JSON.stringify({ parts: sortedUploadedParts }),
-            signal: abortSignal,
-          }
+          { parts: sortedUploadedParts },
+          { signal: abortSignal }
         );
       } catch (error) {
         if (
@@ -3286,9 +3236,8 @@ export function createRoom<
         ) {
           try {
             // Abort the multi-part upload if it was created
-            await httpClient2.fetch(
-              url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/multipart/${uploadId}`,
-              { method: "DELETE" }
+            await httpClient2.rawDelete(
+              url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/multipart/${uploadId}`
             );
           } catch (error) {
             // Ignore the error, we are probably offline
@@ -3301,11 +3250,10 @@ export function createRoom<
   }
 
   async function getAttachmentUrls(attachmentIds: string[]) {
-    const { urls } = await httpClient2.fetchJson<{
+    const { urls } = await httpClient2.post<{
       urls: (string | null)[];
     }>(url`/v2/c/rooms/${config.roomId}/attachments/presigned-urls`, {
-      method: "POST",
-      body: JSON.stringify({ attachmentIds }),
+      attachmentIds,
     });
 
     return urls;
@@ -3335,7 +3283,7 @@ export function createRoom<
     endpoint: URLSafeString,
     options?: RequestInit
   ): Promise<T> {
-    return await httpClient2.fetchJson<T>(endpoint, options);
+    return await httpClient2.get<T>(endpoint, undefined, options);
   }
 
   function getNotificationSettings(
