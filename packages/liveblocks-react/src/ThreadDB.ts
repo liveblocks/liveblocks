@@ -161,7 +161,7 @@ export class ThreadDB<M extends BaseMetadata> {
    * Will never return deleted threads in the result.
    */
   public findMany(
-    // XXX Implement caching here
+    // TODO: Implement caching here
     roomId: string | undefined,
     query: ThreadsQuery<M>,
     direction: "asc" | "desc"

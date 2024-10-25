@@ -189,8 +189,6 @@ type PaginationStatePatch =
     }
   | { isFetchingMore: false; fetchMoreError: Error };
 
-type QueryAsyncResult = AsyncResult<undefined>;
-
 /**
  * Example:
  * generateQueryKey('room-abc', { xyz: 123, abc: "red" })
@@ -533,11 +531,6 @@ export class SinglePageResource {
 }
 
 type InternalState<M extends BaseMetadata> = Readonly<{
-  // This is a temporary refactoring artifact from Vincent and Nimesh.
-  // Each query corresponds to a resource which should eventually have its own type.
-  // This is why we split it for now.
-  queries3: Record<string, QueryAsyncResult>; // Notification settings
-
   optimisticUpdates: readonly OptimisticUpdate<M>[];
 
   // TODO: Ideally we would have a similar NotificationsDB, like we have ThreadDB
@@ -557,14 +550,11 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
    * e.g. 'room-abc-{"color":"red"}'  - ok
    * e.g. 'room-abc-{}'               - loading
    */
-  // NIMESH - Query state should not be exposed publicly by the store!
-  // NIMESH - Find a better name
-  queries3: Record<string, QueryAsyncResult>; // Notification settings
 
-  // XXX This should not get exposed via the "full state". Instead, we should
-  // XXX expose it via a cached `.getThreadDB()`, and invalidate this cached
-  // XXX value if either the threads change or a (thread) optimistic update is
-  // XXX changed.
+  // TODO: This should not get exposed via the "full state". Instead, we should
+  // expose it via a cached `.getThreadDB()`, and invalidate this cached
+  // value if either the threads change or a (thread) optimistic update is
+  // changed.
   threadsDB: ReadonlyThreadDB<M>;
 
   /**
@@ -652,7 +642,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     this._rawThreadsDB = new ThreadDB();
     this._store = createStore<InternalState<M>>({
-      queries3: {},
       optimisticUpdates: [],
       notificationsById: {},
       settingsByRoomId: {},
@@ -670,7 +659,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // until the next .set() call invalidates it.
     const rawState = this._store.get();
     if (
-      this._prevVersion !== this._rawThreadsDB.version || // XXX Version check is only needed temporarily, until we can get rid of the Zustand-like update model
+      this._prevVersion !== this._rawThreadsDB.version || // Note: Version check is only needed temporarily, until we can get rid of the Zustand-like update model
       this._prevState !== rawState ||
       this._stateCached === null
     ) {
@@ -1785,7 +1774,6 @@ function internalToExternalState<M extends BaseMetadata>(
     cleanedNotifications,
     notificationsById: computed.notificationsById,
     settingsByRoomId: computed.settingsByRoomId,
-    queries3: state.queries3,
     threadsDB,
     versionsByRoomId: state.versionsByRoomId,
   };
@@ -1882,7 +1870,7 @@ export function applyUpsertComment<M extends BaseMetadata>(
 ): ThreadDataWithDeleteInfo<M> {
   // If the thread has been deleted, we do not apply the update
   if (thread.deletedAt !== undefined) {
-    // XXX Note: only the unit tests are passing in deleted threads here. In all
+    // Note: only the unit tests are passing in deleted threads here. In all
     // production code, this is never invoked for deleted threads.
     return thread;
   }

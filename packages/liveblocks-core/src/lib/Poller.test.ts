@@ -420,7 +420,7 @@ describe("Poller", () => {
     expect(signal.aborted).toBe(true);
   });
 
-  test("should poll after specified interval in event of error", async () => {
+  test("should poll with exponential backoff on error", async () => {
     const callback = jest.fn(() => {
       throw new Error();
     });
@@ -462,5 +462,57 @@ describe("Poller", () => {
     expect(callback).toHaveBeenCalledTimes(8);
   });
 
-  // XXX - Test for poller callback error and then success
+  test("should poll with exponential backoff on error and use normal interval once successful", async () => {
+    const callback = jest
+      .fn()
+      // First call - throw
+      .mockImplementationOnce(() => {
+        throw new Error("Error 1");
+      })
+      // Second call - throw
+      .mockImplementationOnce(() => {
+        throw new Error("Error 2");
+      })
+      // Third call - throw
+      .mockImplementationOnce(() => {
+        throw new Error("Error 3");
+      })
+      // Fourth and onward - success
+      .mockImplementation(() => "Success");
+
+    const poller = makePoller(callback, 2000);
+
+    // Start the poller
+    poller.inc();
+
+    // Fast-forward to 2s
+    await jest.advanceTimersByTimeAsync(2000);
+    expect(callback).toHaveBeenCalledTimes(1); // Poll 1
+
+    // Advance by 1s and verify that a new poll takes place
+    await jest.advanceTimersByTimeAsync(1000);
+    expect(callback).toHaveBeenCalledTimes(2);
+
+    // Advance by 2s and verify that a new poll takes place
+    await jest.advanceTimersByTimeAsync(2000);
+    expect(callback).toHaveBeenCalledTimes(3);
+
+    // Advance by 4s and verify that a new poll takes place
+    await jest.advanceTimersByTimeAsync(4000);
+    expect(callback).toHaveBeenCalledTimes(4);
+
+    // At this point, callback succeeds, so normal interval resumes
+    await jest.advanceTimersByTimeAsync(2000); // Normal interval after success
+    expect(callback).toHaveBeenCalledTimes(5);
+
+    // Advance again by the normal interval and verify callback is called
+    await jest.advanceTimersByTimeAsync(2000);
+    expect(callback).toHaveBeenCalledTimes(6);
+
+    // Confirm normal interval persists on further calls
+    await jest.advanceTimersByTimeAsync(2000);
+    expect(callback).toHaveBeenCalledTimes(7);
+
+    // and so on
+  });
 });

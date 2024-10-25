@@ -1245,7 +1245,7 @@ function useThreads<M extends BaseMetadata>(
   }
 ): ThreadsAsyncResult<M> {
   const { scrollOnLoad = true } = options;
-  // XXX - query = stable(options.query);
+  // TODO - query = stable(options.query);
 
   const client = useClient();
   const room = useRoom();

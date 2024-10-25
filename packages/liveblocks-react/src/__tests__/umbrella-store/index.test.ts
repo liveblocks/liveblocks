@@ -6,7 +6,6 @@ import { UmbrellaStore } from "../../umbrella-store";
 const empty = {
   cleanedNotifications: [],
   notificationsById: {},
-  queries3: {},
   settingsByRoomId: {},
   threadsDB: expect.any(ThreadDB),
   versionsByRoomId: {},
