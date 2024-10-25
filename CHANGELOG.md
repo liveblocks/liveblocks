@@ -1,4 +1,4 @@
-## 2.10.0 (Not published yet)
+## 2.10.0
 
 ### `@liveblocks/client`
 
@@ -11,6 +11,7 @@
 ### `@liveblocks/react-ui`
 
 - Improve and fix pasting rich text into the composer.
+- Improve mention suggestions click behavior.
 
 ## 2.9.2
 
