@@ -12,11 +12,74 @@ It also adds realtime cursors, document persistence on the cloud, comments, and
 mentions. Read our [get started guides](/docs/get-started/text-editor/tiptap) to
 learn more.
 
-...
+## Setup
 
-TODO
+To set up your collaborative Tiptap editor, you must add the
+[`useLiveblocksExtension`](#useLiveblocksExtension) to your editor.
 
-...
+### useLiveblocksExtension
+
+Liveblocks plugin for Tiptap that adds collaboration to your editor.
+`liveblocks` should be passed to Tiptap’s `useEditor` as an extension.
+
+```tsx
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+import { useEditor, EditorContent } from "@tiptap/react";
+
+function TextEditor() {
+  // +++
+  const liveblocks = useLiveblocksExtension();
+  const editor = useEditor({ extensions: [liveblocks] });
+  // +++
+
+  return (
+    <div>
+      <EditorContent editor={editor} />
+    </div>
+  );
+}
+```
+
+Liveblocks Tiptap components should be passed `editor` to enable them.
+
+```tsx
+import {
+  useLiveblocksExtension,
+  // +++
+  AnchoredThreads,
+  FloatingComposer,
+  FloatingThreads,
+  // +++
+} from "@liveblocks/react-tiptap";
+import { useEditor, EditorContent } from "@tiptap/react";
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension();
+  const editor = useEditor({ extensions: [liveblocks] });
+
+  return (
+    <div>
+      <EditorContent editor={editor} />
+      // +++
+      <AnchoredThreads editor={editor} />
+      <FloatingComposer editor={editor} />
+      <FloatingThreads editor={editor} />
+      // +++
+    </div>
+  );
+}
+```
+
+<Banner title="Resolved threads">
+
+Annotations associated with resolved threads are hidden by default on the
+editor.
+
+</Banner>
+
+Learn more in our [get started guide](/docs/get-started/yjs-lexical-react).
+
+--- OLD VERSION BELOW ---
 
 ## Setup
 
