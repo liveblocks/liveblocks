@@ -15,6 +15,21 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 43 (2024-10-25)
 
+## v2.10.0
+
+### `@liveblocks/client`
+
+- Add new methods under `client.resolvers.*` to invalidate the cache of
+  `resolveUsers`, `resolveRoomsInfo`, and `resolveMentionSuggestions`.
+- In storage update notifications (using
+  `room.subscribe(root, ..., { isDeep: true })`), all LiveList deletion updates
+  will now also include the item that was deleted (#2008)
+
+### `@liveblocks/react-ui`
+
+- Improve and fix pasting rich text into the composer.
+- Improve mention suggestions click behavior.
+
 ## Dashboard
 
 - Removed `Show deleted threads` checkbox from the room detail `Comments` tab to ensure consistent behavior across dashboard and APIs.
@@ -26,7 +41,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Contributors
 
-pierrelevaillant, sugardarius, kaf-lamed-beyt, ctnicholas
+pierrelevaillant, sugardarius, kaf-lamed-beyt, ctnicholas, marcbouchenoire, nvie
 
 # Week 42 (2024-10-18)
 
