@@ -95,8 +95,7 @@ export class HttpClient {
    *   5. ...but silently return `{}` if that parsing fails (🤔)
    *   6. Throw HttpError if response is an error
    */
-  // XXX Rename to "fetch", make it private, and wrap it with similar .get(), .post(), .delete()
-  public async fetch<T extends JsonObject>(
+  private async fetch<T extends JsonObject>(
     endpoint: URLSafeString,
     options?: RequestInit,
     params?: QueryParams
@@ -128,6 +127,7 @@ export class HttpClient {
   /**
    * Makes a GET request and returns the raw response.
    * Won't throw if the reponse is a non-2xx.
+   * @deprecated Ideally, use .get() instead.
    */
   public async rawGet(
     endpoint: URLSafeString,
@@ -140,6 +140,7 @@ export class HttpClient {
   /**
    * Makes a POST request and returns the raw response.
    * Won't throw if the reponse is a non-2xx.
+   * @deprecated Ideally, use .post() instead.
    */
   public async rawPost(
     endpoint: URLSafeString,
@@ -154,8 +155,76 @@ export class HttpClient {
   /**
    * Makes a DELETE request and returns the raw response.
    * Won't throw if the reponse is a non-2xx.
+   * @deprecated Ideally, use .delete() instead.
    */
   public async rawDelete(endpoint: URLSafeString): Promise<Response> {
     return await this.rawFetch(endpoint, { method: "DELETE" });
+  }
+
+  /**
+   * Makes a GET request, and return the JSON response.
+   * Will throw if the reponse is a non-2xx.
+   */
+  public async get<T extends JsonObject>(
+    endpoint: URLSafeString,
+    params?: QueryParams,
+    options?: Omit<RequestInit, "body" | "method" | "headers">
+  ): Promise<T> {
+    return await this.fetch<T>(endpoint, options, params);
+  }
+
+  /**
+   * Makes a POST request, and return the JSON response.
+   * Will throw if the reponse is a non-2xx.
+   */
+  public async post<T extends JsonObject>(
+    endpoint: URLSafeString,
+    body?: JsonObject,
+    options?: Omit<RequestInit, "body" | "method" | "headers">,
+    params?: QueryParams
+  ): Promise<T> {
+    return await this.fetch<T>(
+      endpoint,
+      {
+        ...options,
+        method: "POST",
+        body: JSON.stringify(body),
+      },
+      params
+    );
+  }
+
+  /**
+   * Makes a DELETE request, and return the JSON response.
+   * Will throw if the reponse is a non-2xx.
+   */
+  public async delete<T extends JsonObject>(
+    endpoint: URLSafeString
+  ): Promise<T> {
+    return await this.fetch<T>(endpoint, { method: "DELETE" });
+  }
+
+  /**
+   * Makes a PUT request for a Blob body, and return the JSON response.
+   * Will throw if the reponse is a non-2xx.
+   */
+  public async putBlob<T extends JsonObject>(
+    endpoint: URLSafeString,
+    blob?: Blob,
+    params?: QueryParams,
+    options?: Omit<RequestInit, "body" | "method" | "headers">
+  ): Promise<T> {
+    return await this.fetch<T>(
+      endpoint,
+      {
+        ...options,
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/octet-stream",
+        },
+        body: blob,
+      },
+      params
+    );
   }
 }

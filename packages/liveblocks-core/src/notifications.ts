@@ -103,14 +103,14 @@ export function createNotificationsApi<M extends BaseMetadata>({
   async function getInboxNotifications(options?: GetInboxNotificationsOptions) {
     const PAGE_SIZE = 50;
 
-    const json = await httpClient.fetchJson<{
+    const json = await httpClient.get<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
       meta: {
         requestedAt: string;
         nextCursor: string | null;
       };
-    }>(url`/v2/c/inbox-notifications`, undefined, {
+    }>(url`/v2/c/inbox-notifications`, {
       cursor: options?.cursor,
       limit: PAGE_SIZE,
     });
@@ -128,7 +128,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
   async function getInboxNotificationsSince(
     options: GetInboxNotificationsSinceOptions
   ) {
-    const json = await httpClient.fetchJson<{
+    const json = await httpClient.get<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
       deletedThreads: ThreadDeleteInfoPlain[];
@@ -138,8 +138,8 @@ export function createNotificationsApi<M extends BaseMetadata>({
       };
     }>(
       url`/v2/c/inbox-notifications/delta`,
-      { signal: options?.signal },
-      { since: options.since.toISOString() }
+      { since: options.since.toISOString() },
+      { signal: options?.signal }
     );
     return {
       inboxNotifications: {
@@ -157,24 +157,21 @@ export function createNotificationsApi<M extends BaseMetadata>({
   }
 
   async function getUnreadInboxNotificationsCount() {
-    const { count } = await httpClient.fetchJson<{
-      count: number;
-    }>(url`/v2/c/inbox-notifications/count`);
-
+    const { count } = await httpClient.get<{ count: number }>(
+      url`/v2/c/inbox-notifications/count`
+    );
     return count;
   }
 
   async function markAllInboxNotificationsAsRead() {
-    await httpClient.fetchJson(url`/v2/c/inbox-notifications/read`, {
-      method: "POST",
-      body: JSON.stringify({ inboxNotificationIds: "all" }),
+    await httpClient.post(url`/v2/c/inbox-notifications/read`, {
+      inboxNotificationIds: "all",
     });
   }
 
   async function markInboxNotificationsAsRead(inboxNotificationIds: string[]) {
-    await httpClient.fetchJson(url`/v2/c/inbox-notifications/read`, {
-      method: "POST",
-      body: JSON.stringify({ inboxNotificationIds }),
+    await httpClient.post(url`/v2/c/inbox-notifications/read`, {
+      inboxNotificationIds,
     });
   }
 
@@ -194,17 +191,12 @@ export function createNotificationsApi<M extends BaseMetadata>({
   }
 
   async function deleteAllInboxNotifications() {
-    await httpClient.fetchJson(url`/v2/c/inbox-notifications`, {
-      method: "DELETE",
-    });
+    await httpClient.delete(url`/v2/c/inbox-notifications`);
   }
 
   async function deleteInboxNotification(inboxNotificationId: string) {
-    await httpClient.fetchJson(
-      url`/v2/c/inbox-notifications/${inboxNotificationId}`,
-      {
-        method: "DELETE",
-      }
+    await httpClient.delete(
+      url`/v2/c/inbox-notifications/${inboxNotificationId}`
     );
   }
 
@@ -219,7 +211,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
 
     const PAGE_SIZE = 50;
 
-    const json = await httpClient.fetchJson<{
+    const json = await httpClient.get<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
       deletedThreads: ThreadDeleteInfoPlain[];
@@ -228,7 +220,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
         requestedAt: string;
         nextCursor: string | null;
       };
-    }>(url`/v2/c/threads`, undefined, {
+    }>(url`/v2/c/threads`, {
       cursor: options.cursor,
       query,
       limit: PAGE_SIZE,
@@ -247,7 +239,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
   async function getUserThreadsSince_experimental(
     options: GetUserThreadsSinceOptions
   ) {
-    const json = await httpClient.fetchJson<{
+    const json = await httpClient.get<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
       deletedThreads: ThreadDeleteInfoPlain[];
@@ -257,8 +249,8 @@ export function createNotificationsApi<M extends BaseMetadata>({
       };
     }>(
       url`/v2/c/threads/delta`,
-      { signal: options.signal },
-      { since: options.since.toISOString() }
+      { since: options.since.toISOString() },
+      { signal: options.signal }
     );
 
     return {
