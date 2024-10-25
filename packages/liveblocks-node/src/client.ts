@@ -118,7 +118,7 @@ type QueryRoomMetadata = Record<string, string>;
 
 export type RoomTextEditor = {
   type: "lexical" | "tiptap";
-  rootKey: string;
+  rootKey: string | string[];
 };
 
 export type RoomData = {
