@@ -1624,21 +1624,6 @@ export function createRoom<
     delegates.authenticate()
   );
 
-  async function httpPostToRoom(
-    endpoint: "/send-message" | "/text-metadata",
-    body: JsonObject
-  ) {
-    return httpClient1.fetch(
-      endpoint === "/send-message"
-        ? url`/v2/c/rooms/${config.roomId}/send-message`
-        : url`/v2/c/rooms/${config.roomId}/text-metadata`,
-      {
-        method: "POST",
-        body: JSON.stringify(body),
-      }
-    );
-  }
-
   async function createTextMention(userId: string, mentionId: string) {
     return httpClient1.fetch(url`/v2/c/rooms/${config.roomId}/text-mentions`, {
       method: "POST",
@@ -1725,13 +1710,16 @@ export function createRoom<
       // if this turns out to be expensive, we could just guess with a lower value.
       const size = new TextEncoder().encode(serializedPayload).length;
       if (size > MAX_SOCKET_MESSAGE_SIZE) {
-        void httpPostToRoom("/send-message", { nonce, messages }).then(
-          (resp) => {
+        void httpClient1
+          .fetch(url`/v2/c/rooms/${config.roomId}/send-message`, {
+            method: "POST",
+            body: JSON.stringify({ nonce, messages }),
+          })
+          .then((resp) => {
             if (!resp.ok && resp.status === 403) {
               managedSocket.reconnect();
             }
-          }
-        );
+          });
         console.warn(
           "Message was too large for websockets and sent over HTTP instead"
         );
