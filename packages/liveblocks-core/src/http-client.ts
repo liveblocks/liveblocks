@@ -117,8 +117,8 @@ export class HttpClient {
     try {
       body = (await response.json()) as T;
     } catch {
-      // XXX This looks wrong 🤔 !
-      // XXX We should be throwing this error if something fails to parse.
+      // TODO This looks wrong 🤔 !
+      // TODO Should we not be throwing this error if something fails to parse?
       body = {} as T;
     }
     return body;
