@@ -2697,9 +2697,23 @@ const _useThreads: TypedBundle["useThreads"] = useThreads;
 const _useThreadsSuspense: TypedBundle["suspense"]["useThreads"] =
   useThreadsSuspense;
 
+/**
+ * Returns the user's notification settings for the current room
+ * and a function to update them.
+ *
+ * @example
+ * const [{ settings, error, isLoading }, updateSettings] = useRoomNotificationSettings();
+ */
 const _useRoomNotificationSettings: TypedBundle["useRoomNotificationSettings"] =
   useRoomNotificationSettings;
 
+/**
+ * Returns the user's notification settings for the current room
+ * and a function to update them.
+ *
+ * @example
+ * const [{ settings }, updateSettings] = useRoomNotificationSettings();
+ */
 const _useRoomNotificationSettingsSuspense: TypedBundle["suspense"]["useRoomNotificationSettings"] =
   useRoomNotificationSettingsSuspense;
 
