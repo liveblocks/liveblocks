@@ -544,7 +544,15 @@ const ComposerSuggestionsListItem = forwardRef<
   ComposerSuggestionsListItemProps
 >(
   (
-    { value, children, onPointerMove, onPointerDown, asChild, ...props },
+    {
+      value,
+      children,
+      onPointerMove,
+      onPointerDown,
+      onClick,
+      asChild,
+      ...props
+    },
     forwardedRef
   ) => {
     const ref = useRef<HTMLLIElement>(null);
@@ -580,21 +588,26 @@ const ComposerSuggestionsListItem = forwardRef<
       (event: PointerEvent<HTMLLIElement>) => {
         onPointerDown?.(event);
 
-        if (!event.isDefaultPrevented()) {
-          const target = event.target as HTMLElement;
+        event.preventDefault();
+        event.stopPropagation();
+      },
+      [onPointerDown]
+    );
 
-          if (target.hasPointerCapture(event.pointerId)) {
-            target.releasePointerCapture(event.pointerId);
-          }
+    const handleClick = useCallback(
+      (event: MouseEvent<HTMLLIElement>) => {
+        onClick?.(event);
 
-          if (event.button === 0 && event.ctrlKey === false) {
-            onItemSelect(value);
+        const wasDefaultPrevented = event.isDefaultPrevented();
 
-            event.preventDefault();
-          }
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (!wasDefaultPrevented) {
+          onItemSelect(value);
         }
       },
-      [onItemSelect, onPointerDown, value]
+      [onClick, onItemSelect, value]
     );
 
     return (
@@ -605,6 +618,7 @@ const ComposerSuggestionsListItem = forwardRef<
         aria-selected={isSelected || undefined}
         onPointerMove={handlePointerMove}
         onPointerDown={handlePointerDown}
+        onClick={handleClick}
         {...props}
         ref={mergedRefs}
       >
