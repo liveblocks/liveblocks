@@ -482,7 +482,7 @@ export type GetThreadsOptions<M extends BaseMetadata> = {
 
 export type GetThreadsSinceOptions = {
   since: Date;
-  signal: AbortSignal;
+  signal?: AbortSignal;
 };
 
 export type UploadAttachmentOptions = {

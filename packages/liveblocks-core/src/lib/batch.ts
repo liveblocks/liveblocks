@@ -16,6 +16,14 @@ export type BatchCallback<O, I> = (
 export type BatchStore<O, I> = Observable<void> & {
   get: (input: I) => Promise<void>;
   getState: (input: I) => AsyncResult<O> | undefined;
+  invalidate: (inputs?: I[]) => void;
+
+  /**
+   * @internal
+   *
+   * Only for testing.
+   */
+  _cacheKeys: () => string[];
 };
 
 interface Options {
@@ -170,6 +178,21 @@ export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
     eventSource.notify();
   }
 
+  function invalidate(inputs?: I[]): void {
+    if (Array.isArray(inputs)) {
+      // Invalidate the specific calls.
+      for (const input of inputs) {
+        cache.delete(getCacheKey(input));
+      }
+    } else {
+      // Invalidate all calls.
+      cache.clear();
+    }
+
+    // Notify subscribers.
+    eventSource.notify();
+  }
+
   async function get(input: I): Promise<void> {
     const cacheKey = getCacheKey(input);
 
@@ -216,9 +239,20 @@ export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
     return cache.get(cacheKey);
   }
 
+  /**
+   * @internal
+   *
+   * Only for testing.
+   */
+  function _cacheKeys() {
+    return [...cache.keys()];
+  }
+
   return {
     ...eventSource.observable,
     get,
     getState,
+    invalidate,
+    _cacheKeys,
   };
 }
