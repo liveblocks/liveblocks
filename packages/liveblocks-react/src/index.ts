@@ -56,7 +56,6 @@ export {
   useRedo,
   useRemoveReaction,
   useRoom,
-  useRoomNotificationSettings,
   useStatus,
   useStorageRoot,
   useThreadSubscription,
@@ -81,6 +80,7 @@ export {
   useThreads,
   useAttachmentUrl,
   useHistoryVersions,
+  useRoomNotificationSettings,
 } from "./room";
 export {
   useInboxNotifications,

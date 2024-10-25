@@ -54,7 +54,6 @@ export {
   useRedo,
   useRemoveReaction,
   useRoom,
-  useRoomNotificationSettings,
   useStatus,
   useStorageRoot,
   useThreadSubscription,
@@ -76,6 +75,7 @@ export {
   useThreadsSuspense as useThreads,
   useAttachmentUrlSuspense as useAttachmentUrl,
   useHistoryVersionsSuspense as useHistoryVersions,
+  useRoomNotificationSettingsSuspense as useRoomNotificationSettings,
 } from "./room";
 export {
   useInboxNotificationsSuspense as useInboxNotifications,

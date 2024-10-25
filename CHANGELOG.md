@@ -1,3 +1,19 @@
+## 2.10.1
+
+### `@liveblocks/client`
+
+- Internal refactorings and code cleanup across various parts of the client's
+  inner workings
+
+### `@liveblocks/react`
+
+- Implement automatic retry for initial load of inbox notifications, user
+  threads, room threads, room versions, or room notification settings—except
+  when encountering a 4xx error.
+- Background tabs will no longer poll threads, notification, room versions or
+  room notification settings.
+- Fix incorrect suspense export for `useRoomNotificationSettings` hook.
+
 ## 2.10.0
 
 ### `@liveblocks/client`

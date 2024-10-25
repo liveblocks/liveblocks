@@ -1,6 +1,8 @@
 import type {
   AsyncResult,
   BaseMetadata,
+  BaseUserMeta,
+  Client,
   CommentData,
   CommentReaction,
   CommentUserReaction,
@@ -24,22 +26,18 @@ import {
   compactObject,
   console,
   createStore,
+  HttpError,
   kInternal,
   makeEventSource,
   mapValues,
   nanoid,
   nn,
-  StopRetrying,
   stringify,
 } from "@liveblocks/core";
 
 import { autobind } from "./lib/autobind";
-import {
-  byFirstCreated,
-  byMostRecentlyUpdated,
-  isMoreRecentlyUpdated,
-} from "./lib/compare";
-import { makeThreadsFilter } from "./lib/querying";
+import type { ReadonlyThreadDB } from "./ThreadDB";
+import { ThreadDB } from "./ThreadDB";
 import type {
   InboxNotificationsAsyncResult,
   RoomNotificationSettingsAsyncResult,
@@ -191,11 +189,6 @@ type PaginationStatePatch =
     }
   | { isFetchingMore: false; fetchMoreError: Error };
 
-type QueryAsyncResult = AsyncResult<undefined>;
-
-// XXXX - Remove ASYNC_OK
-const ASYNC_OK = Object.freeze({ isLoading: false, data: undefined });
-
 /**
  * Example:
  * generateQueryKey('room-abc', { xyz: 123, abc: "red" })
@@ -214,47 +207,12 @@ function makeUserThreadsQueryKey(
   return `USER_THREADS:${stringify(query ?? {})}`;
 }
 
-// XXXX Make this an implementation detail of the store
-export function makeNotificationSettingsQueryKey(roomId: string) {
+function makeNotificationSettingsQueryKey(roomId: string) {
   return `${roomId}:NOTIFICATION_SETTINGS`;
 }
 
-// XXXX Make this an implementation detail of the store
-export function makeVersionsQueryKey(roomId: string) {
+function makeVersionsQueryKey(roomId: string) {
   return `${roomId}-VERSIONS`;
-}
-
-/**
- * @private Do not rely on this internal API.
- */
-// TODO This helper should ideally not have to be exposed at the package level!
-// TODO It's currently used by react-lexical though.
-export function selectThreads<M extends BaseMetadata>(
-  state: UmbrellaStoreState<M>,
-  options: {
-    roomId: string | null;
-    query?: ThreadsQuery<M>;
-    orderBy:
-      | "age" // = default
-      | "last-update";
-  }
-): ThreadData<M>[] {
-  let threads = state.threads;
-
-  if (options.roomId !== null) {
-    threads = threads.filter((thread) => thread.roomId === options.roomId);
-  }
-
-  // Third filter pass: select only threads matching query filter
-  const query = options.query;
-  if (query) {
-    threads = threads.filter(makeThreadsFilter<M>(query));
-  }
-
-  // Sort threads by creation date (oldest first)
-  return threads.sort(
-    options.orderBy === "last-update" ? byMostRecentlyUpdated : byFirstCreated
-  );
 }
 
 /**
@@ -447,12 +405,10 @@ export class PaginatedResource {
     }
 
     if (usable.status === "rejected") {
-      // XXXX Make this a stable reference!
       return { isLoading: false, error: usable.reason };
     }
 
     const state = this._paginationState!;
-    // XXXX Make this a stable reference!
     return {
       isLoading: false,
       data: {
@@ -482,7 +438,6 @@ export class PaginatedResource {
     const promise = usify(
       initialFetcher.then((cursor) => {
         // Initial fetch completed
-        // XXXX - Maybe use the patch method
         this._paginationState = {
           cursor,
           isFetchingMore: false,
@@ -491,7 +446,72 @@ export class PaginatedResource {
       })
     );
 
-    // XXXX Maybe move this into the .then() above too?
+    // TODO for later: Maybe move this into the .then() above too?
+    promise.then(
+      () => this._eventSource.notify(),
+      () => {
+        this._eventSource.notify();
+
+        // Wait for 5 seconds before removing the request from the cache
+        setTimeout(() => {
+          this._cachedPromise = null;
+          this._eventSource.notify();
+        }, 5_000);
+      }
+    );
+
+    this._cachedPromise = promise;
+    return promise;
+  }
+}
+
+export class SinglePageResource {
+  public readonly observable: Observable<void>;
+  private _eventSource: EventSource<void>;
+  private _fetchPage: () => Promise<void>;
+
+  constructor(fetchPage: () => Promise<void>) {
+    this._fetchPage = fetchPage;
+    this._eventSource = makeEventSource<void>();
+    this.observable = this._eventSource.observable;
+
+    autobind(this);
+  }
+
+  public get(): AsyncResult<undefined> {
+    const usable = this._cachedPromise;
+    if (usable === null || usable.status === "pending") {
+      return ASYNC_LOADING;
+    }
+
+    if (usable.status === "rejected") {
+      return { isLoading: false, error: usable.reason };
+    }
+
+    return {
+      isLoading: false,
+      data: undefined,
+    };
+  }
+
+  private _cachedPromise: UsablePromise<void> | null = null;
+
+  public waitUntilLoaded(): UsablePromise<void> {
+    if (this._cachedPromise) {
+      return this._cachedPromise;
+    }
+
+    // Wrap the request to load room threads (and notifications) in an auto-retry function so that if the request fails,
+    // we retry for at most 5 times with incremental backoff delays. If all retries fail, the auto-retry function throws an error
+    const initialFetcher = autoRetry(
+      () => this._fetchPage(),
+      5,
+      [5000, 5000, 10000, 15000]
+    );
+
+    const promise = usify(initialFetcher);
+
+    // TODO for later: Maybe move this into the .then() above too?
     promise.then(
       () => this._eventSource.notify(),
       () => {
@@ -511,18 +531,12 @@ export class PaginatedResource {
 }
 
 type InternalState<M extends BaseMetadata> = Readonly<{
-  // This is a temporary refactoring artifact from Vincent and Nimesh.
-  // Each query corresponds to a resource which should eventually have its own type.
-  // This is why we split it for now.
-  queries3: Record<string, QueryAsyncResult>; // Notification settings
-  queries4: Record<string, QueryAsyncResult>; // Versions
-
   optimisticUpdates: readonly OptimisticUpdate<M>[];
 
-  rawThreadsById: Record<string, ThreadDataWithDeleteInfo<M>>;
+  // TODO: Ideally we would have a similar NotificationsDB, like we have ThreadDB
   notificationsById: Record<string, InboxNotificationData>;
   settingsByRoomId: Record<string, RoomNotificationSettings>;
-  versionsByRoomId: Record<string, HistoryVersion[]>;
+  versionsByRoomId: Record<string, Record<string, HistoryVersion>>;
 }>;
 
 /**
@@ -536,30 +550,17 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
    * e.g. 'room-abc-{"color":"red"}'  - ok
    * e.g. 'room-abc-{}'               - loading
    */
-  // XXXX Query state should not be exposed publicly by the store!
-  // XXXX Find a better name
-  queries3: Record<string, QueryAsyncResult>; // Notification settings
-  // XXXX Query state should not be exposed publicly by the store!
-  // XXXX Find a better name
-  queries4: Record<string, QueryAsyncResult>; // Versions
 
-  /**
-   * All threads in a sorted array, optimistic updates applied, without deleted
-   * threads.
-   */
-  threads: ThreadData<M>[];
-
-  /**
-   * All threads in a map, keyed by thread ID, with all optimistic updates
-   * applied. Deleted threads are still in this mapping, and will have
-   * a deletedAt field if so.
-   */
-  threadsById: Record<string, ThreadDataWithDeleteInfo<M>>;
+  // TODO: This should not get exposed via the "full state". Instead, we should
+  // expose it via a cached `.getThreadDB()`, and invalidate this cached
+  // value if either the threads change or a (thread) optimistic update is
+  // changed.
+  threadsDB: ReadonlyThreadDB<M>;
 
   /**
    * All inbox notifications in a sorted array, optimistic updates applied.
    */
-  notifications: InboxNotificationData[];
+  cleanedNotifications: InboxNotificationData[];
 
   /**
    * Inbox notifications by ID.
@@ -579,11 +580,16 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
    * Versions by roomId
    * e.g. { 'room-abc': {versions: "all versions"}}
    */
-  versionsByRoomId: Record<string, HistoryVersion[]>;
+  versionsByRoomId: Record<string, Record<string, HistoryVersion>>;
 };
 
 export class UmbrellaStore<M extends BaseMetadata> {
-  private _client?: OpaqueClient;
+  private _client: Client<BaseUserMeta, M>;
+
+  // Raw threads DB (without any optimistic updates applied)
+  private _rawThreadsDB: ThreadDB<M>;
+  private _prevVersion: number = -1;
+
   private _store: Store<InternalState<M>>;
   private _prevState: InternalState<M> | null = null;
   private _stateCached: UmbrellaStoreState<M> | null = null;
@@ -600,20 +606,22 @@ export class UmbrellaStore<M extends BaseMetadata> {
   private _userThreadsLastRequestedAt: Date | null = null;
   private _userThreads: Map<string, PaginatedResource> = new Map();
 
-  constructor(client?: OpaqueClient) {
-    const inboxFetcher = async (cursor?: string) => {
-      if (client === undefined) {
-        // TODO: Think about other ways to structure this. Throwing a StopRetrying only
-        // makes sense only if we can easily know if the fetcher is going to be wrapped inside the autoRetry function
-        throw new StopRetrying(
-          "Client is required in order to load threads for the room"
-        );
-      }
+  // Room versions
+  private _roomVersions: Map<string, SinglePageResource> = new Map();
+  private _roomVersionsLastRequestedAtByRoom = new Map<string, Date>();
 
-      const result = await client.getInboxNotifications({ cursor });
+  // Room notification settings
+  private _roomNotificationSettings: Map<string, SinglePageResource> =
+    new Map();
+
+  constructor(client: OpaqueClient) {
+    this._client = client[kInternal].as<M>();
+
+    const inboxFetcher = async (cursor?: string) => {
+      const result = await this._client.getInboxNotifications({ cursor });
 
       this.updateThreadsAndNotifications(
-        result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
+        result.threads,
         result.inboxNotifications
       );
 
@@ -625,9 +633,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
       const nextCursor = result.nextCursor;
       return nextCursor;
     };
-
-    this._client = client;
-
     this._notifications = new PaginatedResource(inboxFetcher);
     this._notifications.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
@@ -635,10 +640,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this._store.set((store) => ({ ...store }))
     );
 
+    this._rawThreadsDB = new ThreadDB();
     this._store = createStore<InternalState<M>>({
-      rawThreadsById: {},
-      queries3: {},
-      queries4: {},
       optimisticUpdates: [],
       notificationsById: {},
       settingsByRoomId: {},
@@ -655,9 +658,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // cached state (with optimistic updates applied) instead, and cache that
     // until the next .set() call invalidates it.
     const rawState = this._store.get();
-    if (this._prevState !== rawState || this._stateCached === null) {
+    if (
+      this._prevVersion !== this._rawThreadsDB.version || // Note: Version check is only needed temporarily, until we can get rid of the Zustand-like update model
+      this._prevState !== rawState ||
+      this._stateCached === null
+    ) {
+      this._stateCached = internalToExternalState(rawState, this._rawThreadsDB);
       this._prevState = rawState;
-      this._stateCached = internalToExternalState(rawState);
+      this._prevVersion = this._rawThreadsDB.version;
     }
     return this._stateCached;
   }
@@ -675,8 +683,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * then it will return the threads that match that provided query and room id.
    *
    */
-  // XXXX Find a better name for that doesn't associate to 'async'
-  public getRoomThreadsAsync(
+  public getRoomThreadsLoadingState(
     roomId: string,
     query: ThreadsQuery<M> | undefined
   ): ThreadsAsyncResult<M> {
@@ -692,12 +699,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return asyncResult;
     }
 
-    // XXXX - Verify performance does not become an issue as `selectThread` is an expensive operation
-    const threads = selectThreads(this.getFullState(), {
+    const threads = this.getFullState().threadsDB.findMany(
       roomId,
-      query,
-      orderBy: "age",
-    });
+      query ?? {},
+      "asc"
+    );
 
     const page = asyncResult.data;
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
@@ -711,8 +717,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     };
   }
 
-  // XXXX - Find a better name for that doesn't associate to 'async'
-  public getUserThreadsAsync(
+  public getUserThreadsLoadingState(
     query: ThreadsQuery<M> | undefined
   ): ThreadsAsyncResult<M> {
     const queryKey = makeUserThreadsQueryKey(query);
@@ -727,11 +732,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return asyncResult;
     }
 
-    const threads = selectThreads(this.getFullState(), {
-      roomId: null, // Do _not_ filter by roomId
-      query,
-      orderBy: "last-update",
-    });
+    const threads = this.getFullState().threadsDB.findMany(
+      undefined, // Do _not_ filter by roomId
+      query ?? {},
+      "desc"
+    );
 
     const page = asyncResult.data;
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
@@ -746,8 +751,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   // NOTE: This will read the async result, but WILL NOT start loading at the moment!
-  // XXXX - Find a better name for that doesn't associate to 'async'
-  public getInboxNotificationsAsync(): InboxNotificationsAsyncResult {
+  public getInboxNotificationsLoadingState(): InboxNotificationsAsyncResult {
     const asyncResult = this._notifications.get();
     if (asyncResult.isLoading || asyncResult.error) {
       return asyncResult;
@@ -757,7 +761,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      inboxNotifications: this.getFullState().notifications,
+      inboxNotifications: this.getFullState().cleanedNotifications,
       hasFetchedAll: page.hasFetchedAll,
       isFetchingMore: page.isFetchingMore,
       fetchMoreError: page.fetchMoreError,
@@ -766,45 +770,47 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   // NOTE: This will read the async result, but WILL NOT start loading at the moment!
-  public getNotificationSettingsAsync(
+  public getNotificationSettingsLoadingState(
     roomId: string
   ): RoomNotificationSettingsAsyncResult {
-    const state = this.get();
+    const queryKey = makeNotificationSettingsQueryKey(roomId);
 
-    const query = state.queries3[makeNotificationSettingsQueryKey(roomId)];
-    if (query === undefined || query.isLoading) {
+    const resource = this._roomNotificationSettings.get(queryKey);
+    if (resource === undefined) {
       return ASYNC_LOADING;
     }
 
-    if (query.error !== undefined) {
-      return query;
+    const asyncResult = resource.get();
+    if (asyncResult.isLoading || asyncResult.error) {
+      return asyncResult;
     }
 
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      settings: nn(state.settingsByRoomId[roomId]),
+      settings: nn(this.get().settingsByRoomId[roomId]),
     };
   }
 
-  public getVersionsAsync(
+  public getRoomVersionsLoadingState(
     roomId: string
   ): AsyncResult<HistoryVersion[], "versions"> {
-    const state = this.get();
+    const queryKey = makeVersionsQueryKey(roomId);
 
-    const query = state.queries4[makeVersionsQueryKey(roomId)];
-    if (query === undefined || query.isLoading) {
+    const resource = this._roomVersions.get(queryKey);
+    if (resource === undefined) {
       return ASYNC_LOADING;
     }
 
-    if (query.error !== undefined) {
-      return query;
+    const asyncResult = resource.get();
+    if (asyncResult.isLoading || asyncResult.error) {
+      return asyncResult;
     }
 
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      versions: nn(state.versionsByRoomId[roomId]),
+      versions: Object.values(this.get().versionsByRoomId[roomId] ?? {}),
     };
   }
 
@@ -815,58 +821,21 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this._store.get().optimisticUpdates.length > 0;
   }
 
-  private subscribe(callback: () => void): () => void {
+  public subscribe(callback: () => void): () => void {
     return this._store.subscribe(callback);
-  }
-
-  /**
-   * @private Only used by the E2E test suite.
-   */
-  public _subscribeOptimisticUpdates(callback: () => void): () => void {
-    // TODO Make this actually only update when optimistic updates are changed
-    return this.subscribe(callback);
-  }
-
-  public subscribeThreads(callback: () => void): () => void {
-    // TODO Make this actually only update when threads are invalidated
-    return this.subscribe(callback);
-  }
-
-  public subscribeUserThreads(callback: () => void): () => void {
-    // TODO Make this actually only update when threads are invalidated
-    return this.subscribe(callback);
-  }
-
-  public subscribeThreadsOrInboxNotifications(
-    callback: () => void
-  ): () => void {
-    // TODO Make this actually only update when inbox notifications are invalidated
-    return this.subscribe(callback);
-  }
-
-  public subscribeNotificationSettings(callback: () => void): () => void {
-    // TODO Make this actually only update when notification settings are invalidated
-    return this.subscribe(callback);
-  }
-
-  public subscribeVersions(callback: () => void): () => void {
-    // TODO Make this actually only update when versions are invalidated
-    return this.subscribe(callback);
   }
 
   // Direct low-level cache mutations ------------------------------------------------- {{{
 
-  private updateThreadsCache(
-    mapFn: (
-      cache: Readonly<Record<string, ThreadDataWithDeleteInfo<M>>>
-    ) => Readonly<Record<string, ThreadDataWithDeleteInfo<M>>>
-  ): void {
-    this._store.set((state) => {
-      const threads = mapFn(state.rawThreadsById);
-      return threads !== state.rawThreadsById
-        ? { ...state, rawThreadsById: threads }
-        : state;
-    });
+  private mutateThreadsDB(mutate: (db: ThreadDB<M>) => void): void {
+    const db = this._rawThreadsDB;
+    const old = db.version;
+    mutate(db);
+
+    // Trigger a re-render only if anything changed in the DB
+    if (old !== db.version) {
+      this._store.set((state) => ({ ...state }));
+    }
   }
 
   private updateInboxNotificationsCache(
@@ -895,34 +864,24 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }));
   }
 
-  private setVersions(roomId: string, versions: HistoryVersion[]): void {
-    this._store.set((state) => ({
-      ...state,
-      versionsByRoomId: {
-        ...state.versionsByRoomId,
-        [roomId]: versions,
-      },
-    }));
-  }
+  private updateRoomVersions(roomId: string, versions: HistoryVersion[]): void {
+    this._store.set((state) => {
+      const versionsById = Object.fromEntries(
+        versions.map((version) => [version.id, version])
+      );
 
-  private setQuery3State(queryKey: string, queryState: QueryAsyncResult): void {
-    this._store.set((state) => ({
-      ...state,
-      queries3: {
-        ...state.queries3,
-        [queryKey]: queryState,
-      },
-    }));
-  }
-
-  private setQuery4State(queryKey: string, queryState: QueryAsyncResult): void {
-    this._store.set((state) => ({
-      ...state,
-      queries4: {
-        ...state.queries4,
-        [queryKey]: queryState,
-      },
-    }));
+      return {
+        ...state,
+        versionsByRoomId: {
+          ...state.versionsByRoomId,
+          [roomId]: {
+            // Merge with existing versions for the room, or start with an empty object
+            ...(state.versionsByRoomId[roomId] ?? {}),
+            ...versionsById,
+          },
+        },
+      };
+    });
   }
 
   private updateOptimisticUpdatesCache(
@@ -1041,7 +1000,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // Batch 1️⃣ + 2️⃣
     this._store.batch(() => {
       this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣j
-      this.updateThreadsCache((cache) => ({ ...cache, [thread.id]: thread })); // 2️⃣
+      this.mutateThreadsDB((db) => db.upsert(thread)); // 2️⃣
     });
   }
 
@@ -1070,24 +1029,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
       }
 
       // 2️⃣
-      this.updateThreadsCache((cache) => {
-        const existing = cache[threadId];
+      this.mutateThreadsDB((db) => {
+        const existing = db.get(threadId);
+        if (!existing) return;
+        if (!!updatedAt && existing.updatedAt > updatedAt) return;
 
-        // If the thread doesn't exist in the cache, we do not update the metadata
-        if (!existing) {
-          return cache;
-        }
-
-        // If the thread has been deleted, we do not update the metadata
-        if (existing.deletedAt !== undefined) {
-          return cache;
-        }
-
-        if (!!updatedAt && existing.updatedAt > updatedAt) {
-          return cache;
-        }
-
-        return { ...cache, [threadId]: callback(existing) };
+        db.upsert(callback(existing));
       });
     });
   }
@@ -1177,17 +1124,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this.removeOptimisticUpdate(optimisticUpdateId);
 
       // If the associated thread is not found, we cannot create a comment under it
-      const existingThread =
-        this._store.get().rawThreadsById[newComment.threadId];
+      const existingThread = this._rawThreadsDB.get(newComment.threadId);
       if (!existingThread) {
         return;
       }
 
       // 2️⃣ Update the thread instance by adding a comment under it
-      this.updateThreadsCache((cache) => ({
-        ...cache,
-        [newComment.threadId]: applyUpsertComment(existingThread, newComment),
-      }));
+      this.mutateThreadsDB((db) =>
+        db.upsert(applyUpsertComment(existingThread, newComment))
+      );
 
       // 3️⃣ Update the associated inbox notification (if any)
       this.updateInboxNotificationsCache((cache) => {
@@ -1246,13 +1191,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // Batch 1️⃣ + 2️⃣
     this._store.batch(() => {
       // 1️⃣
-      this.updateThreadsCache((cache) => {
-        const existingThread = cache[thread.id];
-        return existingThread === undefined ||
-          isMoreRecentlyUpdated(thread, existingThread)
-          ? { ...cache, [thread.id]: thread }
-          : cache;
-      });
+      this.mutateThreadsDB((db) => db.upsertIfNewer(thread));
 
       // 2️⃣
       if (inboxNotification !== undefined) {
@@ -1283,11 +1222,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // Batch 1️⃣ + 2️⃣
     this._store.batch(() => {
       // 1️⃣
-      this.updateThreadsCache((cache) =>
-        applyThreadUpdates(cache, {
-          newThreads: threads,
-          deletedThreads,
-        })
+      this.mutateThreadsDB((db) =>
+        applyThreadDeltaUpdates(db, { newThreads: threads, deletedThreads })
       );
 
       // 2️⃣
@@ -1304,8 +1240,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * Updates existing notification setting for a room with a new value,
    * replacing the corresponding optimistic update.
    */
-  // XXXX Rename this helper method
-  public updateRoomInboxNotificationSettings2(
+  public updateRoomNotificationSettings_confirmOptimisticUpdate(
     roomId: string,
     optimisticUpdateId: string,
     settings: Readonly<RoomNotificationSettings>
@@ -1314,35 +1249,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this._store.batch(() => {
       this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
       this.setNotificationSettings(roomId, settings); // 2️⃣
-    });
-  }
-
-  // XXXX Rename this helper method
-  public updateRoomInboxNotificationSettings(
-    roomId: string,
-    settings: RoomNotificationSettings,
-    queryKey: string
-  ): void {
-    // Batch 1️⃣ + 2️⃣
-    this._store.batch(() => {
-      this.setQuery3OK(queryKey); // 1️⃣
-      this.setNotificationSettings(roomId, settings); // 2️⃣
-    });
-  }
-
-  public updateRoomVersions(
-    roomId: string,
-    versions: HistoryVersion[],
-    queryKey?: string
-  ): void {
-    // Batch 1️⃣ + 2️⃣
-    this._store.batch(() => {
-      this.setVersions(roomId, versions); // 1️⃣
-
-      // 2️⃣
-      if (queryKey !== undefined) {
-        this.setQuery4OK(queryKey);
-      }
     });
   }
 
@@ -1361,51 +1267,23 @@ export class UmbrellaStore<M extends BaseMetadata> {
     );
   }
 
-  // Query 3
-  public setQuery3Loading(queryKey: string): void {
-    this.setQuery3State(queryKey, ASYNC_LOADING);
-  }
-
-  private setQuery3OK(queryKey: string): void {
-    this.setQuery3State(queryKey, ASYNC_OK);
-  }
-
-  public setQuery3Error(queryKey: string, error: Error): void {
-    this.setQuery3State(queryKey, { isLoading: false, error });
-  }
-
-  // Query 4
-  public setQuery4Loading(queryKey: string): void {
-    this.setQuery4State(queryKey, ASYNC_LOADING);
-  }
-
-  private setQuery4OK(queryKey: string): void {
-    this.setQuery4State(queryKey, ASYNC_OK);
-  }
-
-  public setQuery4Error(queryKey: string, error: Error): void {
-    this.setQuery4State(queryKey, { isLoading: false, error });
-  }
-
-  public async fetchNotificationsDeltaUpdate() {
+  public async fetchNotificationsDeltaUpdate(signal: AbortSignal) {
     const lastRequestedAt = this._notificationsLastRequestedAt;
     if (lastRequestedAt === null) {
       return;
     }
 
-    const client = nn(
-      this._client,
-      "Client is required in order to load notifications for the room"
-    );
-
-    const result = await client.getInboxNotificationsSince(lastRequestedAt);
+    const result = await this._client.getInboxNotificationsSince({
+      since: lastRequestedAt,
+      signal,
+    });
 
     if (lastRequestedAt < result.requestedAt) {
       this._notificationsLastRequestedAt = result.requestedAt;
     }
 
     this.updateThreadsAndNotifications(
-      result.threads.updated as ThreadData<M>[],
+      result.threads.updated,
       result.inboxNotifications.updated,
       result.threads.deleted,
       result.inboxNotifications.deleted
@@ -1421,24 +1299,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
     query: ThreadsQuery<M> | undefined
   ) {
     const threadsFetcher = async (cursor?: string) => {
-      if (this._client === undefined) {
-        // TODO: Think about other ways to structure this. Throwing a StopRetrying only
-        // makes sense only if we can easily know if the fetcher is going to be wrapped inside the autoRetry function
-        throw new StopRetrying(
-          "Client is required in order to load threads for the room"
-        );
-      }
-
       const room = this._client.getRoom(roomId);
       if (room === null) {
-        throw new StopRetrying(
-          `Room with id ${roomId} is not available on client`
-        );
+        throw new HttpError(`Room '${roomId}' is not available on client`, 479);
       }
 
       const result = await room.getThreads({ cursor, query });
       this.updateThreadsAndNotifications(
-        result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
+        result.threads,
         result.inboxNotifications
       );
 
@@ -1478,28 +1346,27 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return paginatedResource.waitUntilLoaded();
   }
 
-  public async fetchRoomThreadsDeltaUpdate(roomId: string) {
+  public async fetchRoomThreadsDeltaUpdate(
+    roomId: string,
+    signal: AbortSignal
+  ) {
     const lastRequestedAt = this._roomThreadsLastRequestedAtByRoom.get(roomId);
     if (lastRequestedAt === undefined) {
       return;
     }
 
-    const client = nn(
-      this._client,
-      "Client is required in order to load notifications for the room"
-    );
-
     const room = nn(
-      client.getRoom(roomId),
+      this._client.getRoom(roomId),
       `Room with id ${roomId} is not available on client`
     );
 
     const updates = await room.getThreadsSince({
       since: lastRequestedAt,
+      signal,
     });
 
     this.updateThreadsAndNotifications(
-      updates.threads.updated as ThreadData<M>[],
+      updates.threads.updated,
       updates.inboxNotifications.updated,
       updates.threads.deleted,
       updates.inboxNotifications.deleted
@@ -1515,20 +1382,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
     const queryKey = makeUserThreadsQueryKey(query);
 
     const threadsFetcher = async (cursor?: string) => {
-      if (this._client === undefined) {
-        // TODO: Think about other ways to structure this. Throwing a StopRetrying only
-        // makes sense only if we can easily know if the fetcher is going to be wrapped inside the autoRetry function
-        throw new StopRetrying(
-          "Client is required in order to load threads for the room"
-        );
-      }
-
       const result = await this._client[kInternal].getUserThreads_experimental({
         cursor,
         query,
       });
       this.updateThreadsAndNotifications(
-        result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
+        result.threads,
         result.inboxNotifications
       );
 
@@ -1556,19 +1415,17 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return paginatedResource.waitUntilLoaded();
   }
 
-  public async fetchUserThreadsDeltaUpdate() {
+  public async fetchUserThreadsDeltaUpdate(signal: AbortSignal) {
     const lastRequestedAt = this._userThreadsLastRequestedAt;
     if (lastRequestedAt === null) {
       return;
     }
 
-    const client = nn(
-      this._client,
-      "Client is required in order to load threads for the user"
-    );
-
-    const result = await client[kInternal].getUserThreadsSince_experimental({
+    const result = await this._client[
+      kInternal
+    ].getUserThreadsSince_experimental({
       since: lastRequestedAt,
+      signal,
     });
 
     if (lastRequestedAt < result.requestedAt) {
@@ -1576,11 +1433,125 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }
 
     this.updateThreadsAndNotifications(
-      result.threads.updated as ThreadData<M>[],
+      result.threads.updated,
       result.inboxNotifications.updated,
       result.threads.deleted,
       result.inboxNotifications.deleted
     );
+  }
+
+  public waitUntilRoomVersionsLoaded(roomId: string) {
+    const queryKey = makeVersionsQueryKey(roomId);
+    let resource = this._roomVersions.get(queryKey);
+    if (resource === undefined) {
+      const versionsFetcher = async () => {
+        const room = this._client.getRoom(roomId);
+        if (room === null) {
+          throw new HttpError(
+            `Room '${roomId}' is not available on client`,
+            479
+          );
+        }
+
+        const result = await room[kInternal].listTextVersions();
+        this.updateRoomVersions(roomId, result.versions);
+
+        const lastRequestedAt =
+          this._roomVersionsLastRequestedAtByRoom.get(roomId);
+
+        if (
+          lastRequestedAt === undefined ||
+          lastRequestedAt > result.requestedAt
+        ) {
+          this._roomVersionsLastRequestedAtByRoom.set(
+            roomId,
+            result.requestedAt
+          );
+        }
+      };
+
+      resource = new SinglePageResource(versionsFetcher);
+    }
+
+    resource.observable.subscribe(() =>
+      // Note that the store itself does not change, but it's only vehicle at
+      // the moment to trigger a re-render, so we'll do a no-op update here.
+      this._store.set((store) => ({ ...store }))
+    );
+
+    this._roomVersions.set(queryKey, resource);
+
+    return resource.waitUntilLoaded();
+  }
+
+  public async fetchRoomVersionsDeltaUpdate(
+    roomId: string,
+    signal: AbortSignal
+  ) {
+    const lastRequestedAt = this._roomVersionsLastRequestedAtByRoom.get(roomId);
+    if (lastRequestedAt === undefined) {
+      return;
+    }
+
+    const room = nn(
+      this._client.getRoom(roomId),
+      `Room with id ${roomId} is not available on client`
+    );
+
+    const updates = await room[kInternal].listTextVersionsSince({
+      since: lastRequestedAt,
+      signal,
+    });
+
+    this.updateRoomVersions(roomId, updates.versions);
+
+    if (lastRequestedAt < updates.requestedAt) {
+      // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
+      this._roomVersionsLastRequestedAtByRoom.set(roomId, updates.requestedAt);
+    }
+  }
+
+  public waitUntilRoomNotificationSettingsLoaded(roomId: string) {
+    const queryKey = makeNotificationSettingsQueryKey(roomId);
+    let resource = this._roomNotificationSettings.get(queryKey);
+    if (resource === undefined) {
+      const notificationSettingsFetcher = async () => {
+        const room = this._client.getRoom(roomId);
+        if (room === null) {
+          throw new HttpError(
+            `Room '${roomId}' is not available on client`,
+            479
+          );
+        }
+
+        const result = await room.getNotificationSettings();
+        this.setNotificationSettings(roomId, result);
+      };
+
+      resource = new SinglePageResource(notificationSettingsFetcher);
+    }
+
+    resource.observable.subscribe(() =>
+      // Note that the store itself does not change, but it's only vehicle at
+      // the moment to trigger a re-render, so we'll do a no-op update here.
+      this._store.set((store) => ({ ...store }))
+    );
+
+    this._roomNotificationSettings.set(queryKey, resource);
+
+    return resource.waitUntilLoaded();
+  }
+
+  public async refreshRoomNotificationSettings(
+    roomId: string,
+    signal: AbortSignal
+  ) {
+    const room = nn(
+      this._client.getRoom(roomId),
+      `Room with id ${roomId} is not available on client`
+    );
+    const result = await room.getNotificationSettings({ signal });
+    this.setNotificationSettings(roomId, result);
   }
 }
 
@@ -1589,10 +1560,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
  * a stable way, removes internal fields that should not be exposed publicly.
  */
 function internalToExternalState<M extends BaseMetadata>(
-  state: InternalState<M>
+  state: InternalState<M>,
+  rawThreadsDB: ThreadDB<M>
 ): UmbrellaStoreState<M> {
+  const threadsDB = rawThreadsDB.clone();
+
   const computed = {
-    threadsById: { ...state.rawThreadsById },
     notificationsById: { ...state.notificationsById },
     settingsByRoomId: { ...state.settingsByRoomId },
   };
@@ -1600,87 +1573,51 @@ function internalToExternalState<M extends BaseMetadata>(
   for (const optimisticUpdate of state.optimisticUpdates) {
     switch (optimisticUpdate.type) {
       case "create-thread": {
-        computed.threadsById[optimisticUpdate.thread.id] =
-          optimisticUpdate.thread;
+        threadsDB.upsert(optimisticUpdate.thread);
         break;
       }
-      case "edit-thread-metadata": {
-        const thread = computed.threadsById[optimisticUpdate.threadId];
-        // If the thread doesn't exist in the cache, we do not apply the update
-        if (thread === undefined) {
-          break;
-        }
 
-        // If the thread has been deleted, we do not apply the update
-        if (thread.deletedAt !== undefined) {
-          break;
-        }
+      case "edit-thread-metadata": {
+        const thread = threadsDB.get(optimisticUpdate.threadId);
+        if (thread === undefined) break;
 
         // If the thread has been updated since the optimistic update, we do not apply the update
         if (thread.updatedAt > optimisticUpdate.updatedAt) {
           break;
         }
 
-        computed.threadsById[thread.id] = {
+        threadsDB.upsert({
           ...thread,
           updatedAt: optimisticUpdate.updatedAt,
           metadata: {
             ...thread.metadata,
             ...optimisticUpdate.metadata,
           },
-        };
-
+        });
         break;
       }
+
       case "mark-thread-as-resolved": {
-        const thread = computed.threadsById[optimisticUpdate.threadId];
-        // If the thread doesn't exist in the cache, we do not apply the update
-        if (thread === undefined) {
-          break;
-        }
+        const thread = threadsDB.get(optimisticUpdate.threadId);
+        if (thread === undefined) break;
 
-        // If the thread has been deleted, we do not apply the update
-        if (thread.deletedAt !== undefined) {
-          break;
-        }
-
-        computed.threadsById[thread.id] = {
-          ...thread,
-          resolved: true,
-        };
-
+        threadsDB.upsert({ ...thread, resolved: true });
         break;
       }
+
       case "mark-thread-as-unresolved": {
-        const thread = computed.threadsById[optimisticUpdate.threadId];
-        // If the thread doesn't exist in the cache, we do not apply the update
-        if (thread === undefined) {
-          break;
-        }
+        const thread = threadsDB.get(optimisticUpdate.threadId);
+        if (thread === undefined) break;
 
-        // If the thread has been deleted, we do not apply the update
-        if (thread.deletedAt !== undefined) {
-          break;
-        }
-
-        computed.threadsById[thread.id] = {
-          ...thread,
-          resolved: false,
-        };
-
+        threadsDB.upsert({ ...thread, resolved: false });
         break;
       }
-      case "create-comment": {
-        const thread = computed.threadsById[optimisticUpdate.comment.threadId];
-        // If the thread doesn't exist in the cache, we do not apply the update
-        if (thread === undefined) {
-          break;
-        }
 
-        computed.threadsById[thread.id] = applyUpsertComment(
-          thread,
-          optimisticUpdate.comment
-        );
+      case "create-comment": {
+        const thread = threadsDB.get(optimisticUpdate.comment.threadId);
+        if (thread === undefined) break;
+
+        threadsDB.upsert(applyUpsertComment(thread, optimisticUpdate.comment));
 
         const inboxNotification = Object.values(
           computed.notificationsById
@@ -1702,83 +1639,72 @@ function internalToExternalState<M extends BaseMetadata>(
 
         break;
       }
+
       case "edit-comment": {
-        const thread = computed.threadsById[optimisticUpdate.comment.threadId];
-        // If the thread doesn't exist in the cache, we do not apply the update
-        if (thread === undefined) {
-          break;
-        }
+        const thread = threadsDB.get(optimisticUpdate.comment.threadId);
+        if (thread === undefined) break;
 
-        computed.threadsById[thread.id] = applyUpsertComment(
-          thread,
-          optimisticUpdate.comment
-        );
-
+        threadsDB.upsert(applyUpsertComment(thread, optimisticUpdate.comment));
         break;
       }
+
       case "delete-comment": {
-        const thread = computed.threadsById[optimisticUpdate.threadId];
-        // If the thread doesn't exist in the cache, we do not apply the update
-        if (thread === undefined) {
-          break;
-        }
+        const thread = threadsDB.get(optimisticUpdate.threadId);
+        if (thread === undefined) break;
 
-        computed.threadsById[thread.id] = applyDeleteComment(
-          thread,
-          optimisticUpdate.commentId,
-          optimisticUpdate.deletedAt
+        threadsDB.upsert(
+          applyDeleteComment(
+            thread,
+            optimisticUpdate.commentId,
+            optimisticUpdate.deletedAt
+          )
         );
-
         break;
       }
 
       case "delete-thread": {
-        const thread = computed.threadsById[optimisticUpdate.threadId];
-        // If the thread doesn't exist in the cache, we do not apply the update
-        if (thread === undefined) {
-          break;
-        }
+        const thread = threadsDB.get(optimisticUpdate.threadId);
+        if (thread === undefined) break;
 
-        computed.threadsById[optimisticUpdate.threadId] = {
+        threadsDB.upsert({
           ...thread,
           deletedAt: optimisticUpdate.deletedAt,
           updatedAt: optimisticUpdate.deletedAt,
           comments: [],
-        };
+        });
         break;
       }
+
       case "add-reaction": {
-        const thread = computed.threadsById[optimisticUpdate.threadId];
-        // If the thread doesn't exist in the cache, we do not apply the update
-        if (thread === undefined) {
-          break;
-        }
+        const thread = threadsDB.get(optimisticUpdate.threadId);
+        if (thread === undefined) break;
 
-        computed.threadsById[thread.id] = applyAddReaction(
-          thread,
-          optimisticUpdate.commentId,
-          optimisticUpdate.reaction
+        threadsDB.upsert(
+          applyAddReaction(
+            thread,
+            optimisticUpdate.commentId,
+            optimisticUpdate.reaction
+          )
         );
-
         break;
       }
+
       case "remove-reaction": {
-        const thread = computed.threadsById[optimisticUpdate.threadId];
-        // If the thread doesn't exist in the cache, we do not apply the update
-        if (thread === undefined) {
-          break;
-        }
+        const thread = threadsDB.get(optimisticUpdate.threadId);
+        if (thread === undefined) break;
 
-        computed.threadsById[thread.id] = applyRemoveReaction(
-          thread,
-          optimisticUpdate.commentId,
-          optimisticUpdate.emoji,
-          optimisticUpdate.userId,
-          optimisticUpdate.removedAt
+        threadsDB.upsert(
+          applyRemoveReaction(
+            thread,
+            optimisticUpdate.commentId,
+            optimisticUpdate.emoji,
+            optimisticUpdate.userId,
+            optimisticUpdate.removedAt
+          )
         );
-
         break;
       }
+
       case "mark-inbox-notification-as-read": {
         const ibn =
           computed.notificationsById[optimisticUpdate.inboxNotificationId];
@@ -1835,74 +1761,41 @@ function internalToExternalState<M extends BaseMetadata>(
     }
   }
 
-  const cleanedThreads =
-    // Don't expose any soft-deleted threads
-    Object.values(computed.threadsById)
-      .filter((thread): thread is ThreadData<M> => !thread.deletedAt)
-
-      .filter((thread) =>
-        // Only keep a thread if there is at least one non-deleted comment
-        thread.comments.some((c) => c.deletedAt === undefined)
-      );
-
   // TODO Maybe consider also removing these from the inboxNotificationsById registry?
   const cleanedNotifications =
     // Sort so that the most recent notifications are first
     Object.values(computed.notificationsById)
       .filter((ibn) =>
-        ibn.kind === "thread"
-          ? computed.threadsById[ibn.threadId] &&
-            computed.threadsById[ibn.threadId]?.deletedAt === undefined
-          : true
+        ibn.kind === "thread" ? threadsDB.get(ibn.threadId) !== undefined : true
       )
       .sort((a, b) => b.notifiedAt.getTime() - a.notifiedAt.getTime());
 
   return {
-    notifications: cleanedNotifications,
+    cleanedNotifications,
     notificationsById: computed.notificationsById,
     settingsByRoomId: computed.settingsByRoomId,
-    queries3: state.queries3,
-    queries4: state.queries4,
-    threads: cleanedThreads,
-    threadsById: computed.threadsById,
+    threadsDB,
     versionsByRoomId: state.versionsByRoomId,
   };
 }
 
-export function applyThreadUpdates<M extends BaseMetadata>(
-  existingThreads: Record<string, ThreadDataWithDeleteInfo<M>>,
+export function applyThreadDeltaUpdates<M extends BaseMetadata>(
+  db: ThreadDB<M>,
   updates: {
     newThreads: ThreadData<M>[];
     deletedThreads: ThreadDeleteInfo[];
   }
-): Record<string, ThreadData<M>> {
-  const updatedThreads = { ...existingThreads };
-
+): void {
   // Add new threads or update existing threads if the existing thread is older than the new thread.
-  updates.newThreads.forEach((thread) => {
-    const existingThread = updatedThreads[thread.id];
-
-    // If a thread already exists but it's been already more recent, don't update it
-    if (existingThread) {
-      if (isMoreRecentlyUpdated(existingThread, thread)) {
-        return; // Do not update the existing thread
-      }
-    }
-
-    updatedThreads[thread.id] = thread;
-  });
+  updates.newThreads.forEach((thread) => db.upsertIfNewer(thread));
 
   // Mark threads in the deletedThreads list as deleted
   updates.deletedThreads.forEach(({ id, deletedAt }) => {
-    const existingThread = updatedThreads[id];
-    if (existingThread === undefined) return;
+    const existing = db.getEvenIfDeleted(id);
+    if (!existing) return;
 
-    existingThread.deletedAt = deletedAt;
-    existingThread.updatedAt = deletedAt;
-    existingThread.comments = [];
+    db.delete(id, deletedAt);
   });
-
-  return updatedThreads;
 }
 
 export function applyNotificationsUpdates(
@@ -1977,6 +1870,8 @@ export function applyUpsertComment<M extends BaseMetadata>(
 ): ThreadDataWithDeleteInfo<M> {
   // If the thread has been deleted, we do not apply the update
   if (thread.deletedAt !== undefined) {
+    // Note: only the unit tests are passing in deleted threads here. In all
+    // production code, this is never invoked for deleted threads.
     return thread;
   }
 
