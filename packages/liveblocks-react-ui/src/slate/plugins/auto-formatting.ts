@@ -5,18 +5,27 @@ import {
   Transforms as SlateTransforms,
 } from "slate";
 
+import type { ComposerBodyRootElement } from "../../types";
 import { getCharacterBefore } from "../utils/get-character";
 import { getMatchRange } from "../utils/get-match-range";
 import { isEmptyString } from "../utils/is-empty-string";
 import { isSelectionCollapsed } from "../utils/is-selection-collapsed";
 
+// Inline marks
 interface MarkFormatter {
   type: "mark";
   mark: keyof EditorMarks;
   character: string;
 }
 
-type Formatter = MarkFormatter;
+// Block elements
+interface BlockFormatter {
+  type: "block";
+  block: ComposerBodyRootElement["type"];
+  trigger: string;
+}
+
+type Formatter = MarkFormatter | BlockFormatter;
 
 const formatters: Formatter[] = [
   {
@@ -38,6 +47,16 @@ const formatters: Formatter[] = [
     type: "mark",
     mark: "code",
     character: "`",
+  },
+  {
+    type: "block",
+    block: "unordered-list",
+    trigger: "- ",
+  },
+  {
+    type: "block",
+    block: "ordered-list",
+    trigger: "1. ",
   },
 ];
 const markFormattingCharacters = formatters
@@ -104,6 +123,52 @@ function formatMark<T extends SlateEditor>(
   return true;
 }
 
+function formatBlock<T extends SlateEditor>(
+  editor: T,
+  text: string,
+  formatter: BlockFormatter
+): boolean {
+  if (text !== formatter.trigger[formatter.trigger.length - 1]) {
+    return false;
+  }
+
+  const { selection } = editor;
+
+  if (!selection || !isSelectionCollapsed(selection)) {
+    return false;
+  }
+
+  // Get the current block's text
+  const range = SlateEditor.range(
+    editor,
+    SlateEditor.start(editor, selection.anchor.path),
+    selection.anchor
+  );
+  const blockText = SlateEditor.string(editor, range) + text;
+
+  // Check if the block starts with the trigger
+  if (blockText !== formatter.trigger) {
+    return false;
+  }
+
+  // Delete the trigger characters
+  SlateTransforms.delete(editor, {
+    at: range,
+    distance: formatter.trigger.length,
+    unit: "character",
+  });
+
+  // Convert the current block to the appropriate block type
+  if (formatter.block.includes("list")) {
+    SlateTransforms.setNodes(editor, { type: "list-item" });
+    SlateTransforms.wrapNodes(editor, { type: formatter.block, children: [] });
+  } else {
+    SlateTransforms.setNodes(editor, { type: formatter.block });
+  }
+
+  return true;
+}
+
 export function withAutoFormatting<T extends SlateEditor>(editor: T): T {
   const { insertText } = editor;
 
@@ -117,6 +182,10 @@ export function withAutoFormatting<T extends SlateEditor>(editor: T): T {
     for (const formatter of formatters) {
       if (formatter.type === "mark") {
         if (formatMark(editor, text, formatter)) {
+          shouldInsertText = false;
+        }
+      } else if (formatter.type === "block") {
+        if (formatBlock(editor, text, formatter)) {
           shouldInsertText = false;
         }
       }
