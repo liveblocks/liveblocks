@@ -29,8 +29,16 @@ import { useEditor, EditorContent } from "@tiptap/react";
 function TextEditor() {
   // +++
   const liveblocks = useLiveblocksExtension();
-  const editor = useEditor({ extensions: [liveblocks] });
   // +++
+
+  const editor = useEditor({
+    extensions: [
+      // +++
+      liveblocks,
+      // +++
+      // ...
+    ],
+  });
 
   return (
     <div>
@@ -46,24 +54,26 @@ Liveblocks Tiptap components should be passed `editor` to enable them.
 import {
   useLiveblocksExtension,
   // +++
-  AnchoredThreads,
   FloatingComposer,
-  FloatingThreads,
   // +++
 } from "@liveblocks/react-tiptap";
 import { useEditor, EditorContent } from "@tiptap/react";
 
 function TextEditor() {
   const liveblocks = useLiveblocksExtension();
-  const editor = useEditor({ extensions: [liveblocks] });
+
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+  });
 
   return (
     <div>
       <EditorContent editor={editor} />
       // +++
-      <AnchoredThreads editor={editor} />
-      <FloatingComposer editor={editor} />
-      <FloatingThreads editor={editor} />
+      <FloatingComposer editor={editor} style={{ width: "350px" }} />
       // +++
     </div>
   );
@@ -77,143 +87,17 @@ editor.
 
 </Banner>
 
-Learn more in our [get started guide](/docs/get-started/yjs-lexical-react).
-
---- OLD VERSION BELOW ---
-
-## Setup
-
-To set up your collaborative Lexical editor, you must use
-[`LiveblocksPlugin`](#LiveblocksPlugin) and
-[`liveblocksConfig`](#liveblocksConfig).
-
-### LiveblocksPlugin
-
-Liveblocks plugin for Lexical that adds collaboration to your editor.
-
-```tsx highlight="2"
-<LexicalComposer initialConfig={initialConfig}>
-  <LiveblocksPlugin />
-</LexicalComposer>
-```
-
-{/* TODO: Image */}
-
-`LiveblocksPlugin` should always be nested inside [`LexicalComposer`][], and
-each [Lexical default component](#Default-components) you’re using should be
-placed inside the plugin.
-
-```tsx
-import { LexicalComposer } from "@lexical/react/LexicalComposer";
-import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
-import { ContentEditable } from "@lexical/react/LexicalContentEditable";
-import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
-// +++
-import { liveblocksConfig, LiveblocksPlugin } from "@liveblocks/react-lexical";
-// +++
-
-const initialConfig = liveblocksConfig({
-  namespace: "MyEditor",
-  theme: {},
-  nodes: [],
-  onError: (err) => console.error(err),
-});
-
-function Editor() {
-  return (
-    <LexicalComposer initialConfig={initialConfig}>
-      // +++
-      <LiveblocksPlugin>
-        <FloatingThreads />
-        <FloatingComposer />
-        <AnchoredThreads />
-      </LiveblocksPlugin>
-      // +++
-      <RichTextPlugin
-        contentEditable={<ContentEditable />}
-        placeholder={<div>Enter some text...</div>}
-        ErrorBoundary={LexicalErrorBoundary}
-      />
-    </LexicalComposer>
-  );
-}
-```
-
-<Banner title="Resolved threads">
-
-Annotations associated with resolved threads are hidden by default on the
-editor.
-
-</Banner>
-
-Learn more in our [get started guide](/docs/get-started/yjs-lexical-react).
-
-### liveblocksConfig
-
-Function that takes a Lexical editor config and modifies it to add the necessary
-`nodes` and `theme` to make [`LiveblocksPlugin`][] works correctly.
-
-```tsx
-import { liveblocksConfig } from "@liveblocks/react-lexical";
-
-const initialConfig = liveblocksConfig({
-  namespace: "MyEditor",
-  theme: {},
-  nodes: [],
-  onError: (err) => console.error(err),
-});
-```
-
-The config created by `liveblocksConfig` should be passed to `initialConfig` in
-[`LexicalComposer`][].
-
-```tsx highlight="7-12,16"
-import { LexicalComposer } from "@lexical/react/LexicalComposer";
-import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
-import { ContentEditable } from "@lexical/react/LexicalContentEditable";
-import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
-import { liveblocksConfig, LiveblocksPlugin } from "@liveblocks/react-lexical";
-
-const initialConfig = liveblocksConfig({
-  namespace: "MyEditor",
-  theme: {},
-  nodes: [],
-  onError: (err) => console.error(err),
-});
-
-function Editor() {
-  return (
-    <LexicalComposer initialConfig={initialConfig}>
-      <LiveblocksPlugin>
-        <FloatingThreads />
-        <FloatingComposer />
-        <AnchoredThreads />
-      </LiveblocksPlugin>
-      <RichTextPlugin
-        contentEditable={<ContentEditable />}
-        placeholder={<div>Enter some text...</div>}
-        ErrorBoundary={LexicalErrorBoundary}
-      />
-    </LexicalComposer>
-  );
-}
-```
-
-Note that `liveblocksConfig` sets `editorState` to `null` because
-`LiveblocksPlugin` is responsible for initializing it on the server.
+Learn more in our [get started guides](/docs/get-started/text-editor/tiptap).
 
 ## Default components
 
 ### FloatingComposer
 
-Displays a [`Composer`][] near the current lexical selection.
+Displays a [`Composer`][] near the current Tiptap selection, allowing you to
+create threads.
 
 ```tsx highlight="3"
-<LexicalComposer initialConfig={initialConfig}>
-  <LiveblocksPlugin>
-    <FloatingComposer />
-  </LiveblocksPlugin>
-</LexicalComposer>
+<FloatingComposer editor={editor} />
 ```
 
 <Figure>
@@ -226,60 +110,64 @@ Displays a [`Composer`][] near the current lexical selection.
 </Figure>
 
 Submitting a comment will attach an annotation thread at the current selection.
-Should be nested inside [`LiveblocksPlugin`][].
+Should be passed your Tiptap `editor`, and it’s recommended you set a width
+value. Display created threads with [`AnchoredThreads`][] or
+[`FloatingThreads`][].
 
-```tsx highlight="8,22"
-import { LexicalComposer } from "@lexical/react/LexicalComposer";
-import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
-import { ContentEditable } from "@lexical/react/LexicalContentEditable";
-import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+```tsx
 import {
-  liveblocksConfig,
-  LiveblocksPlugin,
+  useLiveblocksExtension,
+  // +++
   FloatingComposer,
-} from "@liveblocks/react-lexical";
+  // +++
+  FloatingThreads,
+} from "@liveblocks/react-tiptap";
+import { useEditor, EditorContent } from "@tiptap/react";
 
-const initialConfig = liveblocksConfig({
-  namespace: "MyEditor",
-  theme: {},
-  nodes: [],
-  onError: (err) => console.error(err),
-});
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension();
 
-function Editor() {
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+  });
+
   return (
-    <LexicalComposer initialConfig={initialConfig}>
-      <LiveblocksPlugin>
-        <FloatingComposer style={{ width: "350px" }} />
-      </LiveblocksPlugin>
-      <RichTextPlugin
-        contentEditable={<ContentEditable />}
-        placeholder={<div>Enter some text...</div>}
-        ErrorBoundary={LexicalErrorBoundary}
-      />
-    </LexicalComposer>
+    <div>
+      <EditorContent editor={editor} />
+      // +++
+      <FloatingComposer editor={editor} style={{ width: "350px" }} />
+      // +++
+      <FloatingThreads editor={editor} style={{ width: "350px" }} />
+    </div>
   );
 }
 ```
 
+Display created threads with [`AnchoredThreads`][] or [`FloatingThreads`][].
+
 #### Opening the composer
 
-To open the `FloatingComposer`, you need to dispatch the
-`OPEN_FLOATING_COMPOSER_COMMAND`
-[Lexical command](https://lexical.dev/docs/concepts/commands).
+To open the `FloatingComposer`, you need to call the `addPendingComment`
+[command](https://tiptap.dev/docs/editor/api/commands) added by Liveblocks. You
+can use `lb-comment` to check if the current selection is a comment.
 
-```tsx highlight="10"
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { OPEN_FLOATING_COMPOSER_COMMAND } from "@liveblocks/react-lexical";
+```tsx
+import { Editor } from "@tiptap/react";
 
-function Toolbar() {
-  const [editor] = useLexicalComposerContext();
-
+function Toolbar({ editor }: { editor: Editor }) {
   return (
     <button
       onClick={() => {
-        editor.dispatchCommand(OPEN_FLOATING_COMPOSER_COMMAND, undefined);
+        // +++
+        editor.chain().focus().addPendingComment().run();
+        // +++
       }}
+      // +++
+      data-active={editor.isActive("lb-comment")}
+      // +++
     >
       💬 New comment
     </button>
@@ -337,11 +225,7 @@ function Toolbar() {
 Displays floating [`Thread`][] components below text highlights in the editor.
 
 ```tsx highlight="3"
-<LexicalComposer initialConfig={initialConfig}>
-  <LiveblocksPlugin>
-    <FloatingThreads threads={threads} />
-  </LiveblocksPlugin>
-</LexicalComposer>
+<FloatingThreads editor={editor} threads={threads} />
 ```
 
 <Figure>
@@ -355,57 +239,55 @@ Displays floating [`Thread`][] components below text highlights in the editor.
 
 Takes a list of threads retrieved from [`useThreads`][] and renders them to the
 page. Each thread is opened by clicking on its corresponding text highlight.
+Should be passed your Tiptap `editor`, and it’s recommended you set a width
+value.
 
 ```tsx
-import { LexicalComposer } from "@lexical/react/LexicalComposer";
-import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
-import { ContentEditable } from "@lexical/react/LexicalContentEditable";
-import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+// +++
 import { useThreads } from "@liveblocks/react/suspense";
+// +++
 import {
-  liveblocksConfig,
-  LiveblocksPlugin,
+  useLiveblocksExtension,
   FloatingComposer,
   // +++
   FloatingThreads,
   // +++
-} from "@liveblocks/react-lexical";
+} from "@liveblocks/react-tiptap";
+import { useEditor, EditorContent } from "@tiptap/react";
 
-const initialConfig = liveblocksConfig({
-  namespace: "MyEditor",
-  theme: {},
-  nodes: [],
-  onError: (err) => console.error(err),
-});
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension();
 
-function Editor() {
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+  });
+
   // +++
   const { threads } = useThreads();
   // +++
 
   return (
-    <LexicalComposer initialConfig={initialConfig}>
-      <LiveblocksPlugin>
-        <FloatingComposer />
-        // +++
-        <FloatingThreads threads={threads} style={{ width: "350px" }} />
-        // +++
-      </LiveblocksPlugin>
-      <RichTextPlugin
-        contentEditable={<ContentEditable />}
-        placeholder={<div>Enter some text...</div>}
-        ErrorBoundary={LexicalErrorBoundary}
+    <div>
+      <EditorContent editor={editor} />
+      <FloatingComposer editor={editor} style={{ width: "350px" }} />
+      // +++
+      <FloatingThreads
+        editor={editor}
+        threads={threads}
+        style={{ width: "350px" }}
       />
-    </LexicalComposer>
+      // +++
+    </div>
   );
 }
 ```
 
-Should be nested inside [`LiveblocksPlugin`][].
-
 <Banner title="Resolved threads">
 
-The `AnchoredThreads` component automatically excludes resolved threads from
+The `FloatingThreads` component automatically excludes resolved threads from
 display. Any resolved threads passed in the threads list will not be shown.
 
 </Banner>
@@ -420,9 +302,10 @@ we can filter those out with a [`useThreads`][] option.
 
 ```tsx
 import { useThreads } from "@liveblocks/react/suspense";
-import { AnchoredThreads, FloatingThreads } from "@liveblocks/react-lexical";
+import { AnchoredThreads, FloatingThreads } from "@liveblocks/react-tiptap";
+import { Editor } from "@tiptap/react";
 
-function ThreadOverlay() {
+function ThreadOverlay({ editor }: { editor: Editor }) {
   const { threads } = useThreads({ query: { resolved: false } });
 
   return (
@@ -443,9 +326,10 @@ function ThreadOverlay() {
 ```tsx title="Alternatively use a media query hook" isCollapsed isCollapsable
 import { useSyncExternalStore } from "react";
 import { useThreads } from "@liveblocks/react/suspense";
-import { AnchoredThreads, FloatingThreads } from "@liveblocks/react-lexical";
+import { AnchoredThreads, FloatingThreads } from "@liveblocks/react-tiptap";
+import { Editor } from "@tiptap/react";
 
-function ThreadOverlay() {
+function ThreadOverlay({ editor }: { editor: Editor }) {
   const { threads } = useThreads({ query: { resolved: false } });
   // +++
   const isMobile = useIsMobile();
@@ -483,16 +367,15 @@ We can place this component inside [`ClientSideSuspense`][] to prevent it
 rendering until threads have loaded.
 
 ```tsx
-<LexicalComposer initialConfig={initialConfig}>
-  <LiveblocksPlugin>
-    <FloatingComposer />
-    // +++
-    <ClientSideSuspense fallback={null}>
-      <ThreadOverlay />
-    </ClientSideSuspense>
-    // +++
-  </LiveblocksPlugin>
-</LexicalComposer>
+<div>
+  <EditorContent editor={editor} />
+  <FloatingComposer editor={editor} style={{ width: "350px" }} />
+  // +++
+  <ClientSideSuspense fallback={null}>
+    <ThreadOverlay editor={editor} />
+  </ClientSideSuspense>
+  // +++
+</div>
 ```
 
 #### Customization [#FloatingThreads-customization]
@@ -502,7 +385,11 @@ The `FloatingThreads` component acts as a wrapper around each individual
 listeners, and more.
 
 ```tsx
-<FloatingThreads threads={threads} className="my-floating-thread" />
+<FloatingThreads
+  editor={editor}
+  threads={threads}
+  className="my-floating-thread"
+/>
 ```
 
 To apply styling to each [`Thread`][], you can pass a custom `Thread` property
@@ -513,6 +400,7 @@ thread’s width.
 import { Thread } from "@liveblocks/react-ui";
 
 <FloatingThreads
+  editor={editor}
   threads={threads}
   className="my-floating-thread"
   // +++
@@ -533,6 +421,7 @@ wrapper around `Thread`, up to a full custom `Thread` component built using our
 import { Comment } from "@liveblocks/react-ui/primitives";
 
 <FloatingThreads
+  editor={editor}
   threads={threads}
   className="my-floating-thread"
   components={{
@@ -579,11 +468,7 @@ import { Comment } from "@liveblocks/react-ui/primitives";
 Displays a list of [`Thread`][] components vertically alongside the editor.
 
 ```tsx highlight="3"
-<LexicalComposer initialConfig={initialConfig}>
-  <LiveblocksPlugin>
-    <AnchoredThreads threads={threads} />
-  </LiveblocksPlugin>
-</LexicalComposer>
+<AnchoredThreads editor={editor} threads={threads} />
 ```
 
 <Figure>
@@ -601,55 +486,51 @@ corresponding text highlight. If multiple highlights are in the same location,
 each thread is placed in order below the previous thread.
 
 ```tsx
-import { LexicalComposer } from "@lexical/react/LexicalComposer";
-import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
-import { ContentEditable } from "@lexical/react/LexicalContentEditable";
-import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+// +++
 import { useThreads } from "@liveblocks/react/suspense";
+// +++
 import {
-  liveblocksConfig,
-  LiveblocksPlugin,
+  useLiveblocksExtension,
   FloatingComposer,
   // +++
   AnchoredThreads,
   // +++
-} from "@liveblocks/react-lexical";
+} from "@liveblocks/react-tiptap";
+import { useEditor, EditorContent } from "@tiptap/react";
 
-const initialConfig = liveblocksConfig({
-  namespace: "MyEditor",
-  theme: {},
-  nodes: [],
-  onError: (err) => console.error(err),
-});
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension();
 
-function Editor() {
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+  });
+
   // +++
   const { threads } = useThreads();
   // +++
 
   return (
-    <LexicalComposer initialConfig={initialConfig}>
-      <LiveblocksPlugin>
-        <FloatingComposer />
-        // +++
-        <AnchoredThreads threads={threads} style={{ width: "350px" }} />
-        // +++
-      </LiveblocksPlugin>
-      <RichTextPlugin
-        contentEditable={<ContentEditable />}
-        placeholder={<div>Enter some text...</div>}
-        ErrorBoundary={LexicalErrorBoundary}
+    <div>
+      <EditorContent editor={editor} />
+      <FloatingComposer editor={editor} style={{ width: "350px" }} />
+      // +++
+      <AnchoredThreads
+        editor={editor}
+        threads={threads}
+        style={{ width: "350px" }}
       />
-    </LexicalComposer>
+      // +++
+    </div>
   );
 }
 ```
 
-Should be nested inside [`LiveblocksPlugin`][].
-
 <Banner title="Resolved threads">
 
-The `FloatingThreads` component automatically excludes resolved threads from
+The `AnchoredThreads` component automatically excludes resolved threads from
 display. Any resolved threads passed in the threads list will not be shown.
 
 </Banner>
@@ -664,9 +545,10 @@ we can filter those out with a [`useThreads`][] option.
 
 ```tsx
 import { useThreads } from "@liveblocks/react/suspense";
-import { AnchoredThreads, FloatingThreads } from "@liveblocks/react-lexical";
+import { AnchoredThreads, FloatingThreads } from "@liveblocks/react-tiptap";
+import { Editor } from "@tiptap/react";
 
-function ThreadOverlay() {
+function ThreadOverlay({ editor }: { editor: Editor }) {
   const { threads } = useThreads({ query: { resolved: false } });
 
   return (
@@ -687,9 +569,10 @@ function ThreadOverlay() {
 ```tsx title="Alternatively use a media query hook" isCollapsed isCollapsable
 import { useSyncExternalStore } from "react";
 import { useThreads } from "@liveblocks/react/suspense";
-import { AnchoredThreads, FloatingThreads } from "@liveblocks/react-lexical";
+import { AnchoredThreads, FloatingThreads } from "@liveblocks/react-tiptap";
+import { Editor } from "@tiptap/react";
 
-function ThreadOverlay() {
+function ThreadOverlay({ editor }: { editor: Editor }) {
   const { threads } = useThreads({ query: { resolved: false } });
   // +++
   const isMobile = useIsMobile();
@@ -727,16 +610,15 @@ We can place this component inside [`ClientSideSuspense`][] to prevent it
 rendering until threads have loaded.
 
 ```tsx
-<LexicalComposer initialConfig={initialConfig}>
-  <LiveblocksPlugin>
-    <FloatingComposer />
-    // +++
-    <ClientSideSuspense fallback={null}>
-      <ThreadOverlay />
-    </ClientSideSuspense>
-    // +++
-  </LiveblocksPlugin>
-</LexicalComposer>
+<div>
+  <EditorContent editor={editor} />
+  <FloatingComposer editor={editor} style={{ width: "350px" }} />
+  // +++
+  <ClientSideSuspense fallback={null}>
+    <ThreadOverlay editor={editor} />
+  </ClientSideSuspense>
+  // +++
+</div>
 ```
 
 #### Customization [#AnchoredThreads-customization]
@@ -748,6 +630,7 @@ classes, listeners, and more.
 
 ```tsx
 <AnchoredThreads
+  editor={editor}
   threads={threads}
   style={{ width: "350px" }}
   className="my-anchored-thread"
@@ -761,6 +644,7 @@ to `components` and modify this in any way.
 import { Thread } from "@liveblocks/react-ui";
 
 <AnchoredThreads
+  editor={editor}
   threads={threads}
   style={{ width: "350px" }}
   className="my-anchored-thread"
@@ -786,6 +670,7 @@ wrapper around `Thread`, up to a full custom `Thread` component built using our
 import { Comment } from "@liveblocks/react-ui/primitives";
 
 <AnchoredThreads
+  editor={editor}
   threads={threads}
   style={{ width: "350px" }}
   className="my-anchored-thread"
@@ -813,12 +698,12 @@ Using CSS variables you can modify the gap between threads, and the horizontal
 offset that’s added when a thread is selected.
 
 ```css
-.lb-lexical-anchored-threads {
+.lb-tiptap-anchored-threads {
   /* Minimum gap between threads */
-  --lb-lexical-anchored-threads-gap: 8px;
+  --lb-tiptap-anchored-threads-gap: 8px;
 
   /* How far the active thread is offset to the left */
-  --lb-lexical-anchored-threads-active-thread-offset: 12px;
+  --lb-tiptap-anchored-threads-active-thread-offset: 12px;
 }
 ```
 
@@ -862,7 +747,7 @@ render a list of versions, see
 #### Usage
 
 ```tsx
-import { HistoryVersionPreview } from "@liveblocks/react-lexical";
+import { HistoryVersionPreview } from "@liveblocks/react-tiptap";
 
 function VersionPreview({ selectedVersion, onVersionRestore }) {
   return (
@@ -951,7 +836,7 @@ learn how to do this under
 [`Thread`]: /docs/api-reference/liveblocks-react-ui#Thread
 [`Composer`]: /docs/api-reference/liveblocks-react-ui#Composer
 [`useThreads`]: /docs/api-reference/liveblocks-react#useThreads
-[`FloatingComposer`]: /docs/api-reference/liveblocks-react-ui#FloatingComposer
-[`FloatingThreads`]: /docs/api-reference/liveblocks-react-ui#FloatingThreads
-[`AnchoredThreads`]: /docs/api-reference/liveblocks-react-ui#AnchoredThreads
+[`FloatingComposer`]: #FloatingComposer
+[`FloatingThreads`]: #FloatingThreads
+[`AnchoredThreads`]: #AnchoredThreads
 [`ClientSideSuspense`]: /docs/api-reference/liveblocks-react#ClientSideSuspense
