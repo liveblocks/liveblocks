@@ -649,12 +649,12 @@ describe("finite state machine", () => {
         .addTransitions("waiting.two", { JUMP: "waiting.one" })
 
         // Automatic transitions (based on promise results)
-        .onEnterAsync("waiting.*", promiseFn, "good", "bad");
+        .onEnterAsync("waiting.*", promiseFn, "good", "bad", 30_000);
 
       return fsm;
     }
 
-    test("promise-based transitions (on success)", async () => {
+    test("promise-based transitions (on success, within timeout)", async () => {
       jest.useFakeTimers();
 
       const fsm = makeFSM(() => wait(2000));
@@ -665,19 +665,35 @@ describe("finite state machine", () => {
       expect(fsm.currentState).toEqual("waiting.one");
       await jest.runAllTimersAsync();
       expect(fsm.currentState).toEqual("good");
+
+      fsm.stop();
     });
 
-    test("promise-based transitions (on failure)", async () => {
+    test("promise-based transitions (on failure, within timeout)", async () => {
       jest.useFakeTimers();
 
       const fsm = makeFSM(() => failAfter(2000));
       fsm.start();
 
       expect(fsm.currentState).toEqual("waiting.one");
-      await jest.advanceTimersByTimeAsync(1000);
+      await jest.runAllTimersAsync();
+      expect(fsm.currentState).toEqual("bad");
+
+      fsm.stop();
+    });
+
+    test("promise-based transitions (on timeout)", async () => {
+      jest.useFakeTimers();
+
+      // One millisecond longer than the allowed timeout (30_000)
+      const fsm = makeFSM(() => wait(30_001));
+      fsm.start();
+
       expect(fsm.currentState).toEqual("waiting.one");
       await jest.runAllTimersAsync();
       expect(fsm.currentState).toEqual("bad");
+
+      fsm.stop();
     });
 
     test("promise-based transitions abort successfully (on success)", async () => {
@@ -764,6 +780,33 @@ describe("finite state machine", () => {
       expect(gotAborted).toEqual(true);
     });
 
+    test("promise-based transitions abort with signal handler (when timed out)", async () => {
+      jest.useFakeTimers();
+
+      let gotAborted = false;
+
+      const fsm = makeFSM(async (_, signal: AbortSignal) => {
+        function f() {
+          gotAborted = true;
+        }
+        signal.addEventListener("abort", f);
+        try {
+          await wait(60000);
+        } finally {
+          signal.removeEventListener("abort", f);
+        }
+      });
+
+      fsm.start();
+
+      expect(fsm.currentState).toEqual("waiting.one");
+      expect(gotAborted).toEqual(false);
+      await jest.runAllTimersAsync();
+      expect(gotAborted).toEqual(true); // Got aborted by timeout
+      expect(fsm.currentState).toEqual("bad");
+
+      fsm.stop();
+    });
     test("promise-based transitions abort with signal handler (when not aborted)", async () => {
       jest.useFakeTimers();
 

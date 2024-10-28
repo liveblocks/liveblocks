@@ -177,9 +177,9 @@ function useHasOptimisticUpdates() {
   // eslint-disable-next-line @typescript-eslint/unbound-method
   const getter = store._hasOptimisticUpdates;
   return React.useSyncExternalStore(
-    // The store._subscribeOptimisticUpdates subscriber is guaranteed to be bound, so it's fine
+    // The store.subscribe subscriber is guaranteed to be bound, so it's fine
     // eslint-disable-next-line @typescript-eslint/unbound-method
-    store._subscribeOptimisticUpdates,
+    store.subscribe,
     getter,
     getter
   );
