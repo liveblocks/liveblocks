@@ -202,7 +202,7 @@ export function createSerializedLexicalRootNode(
 
 /**
  * Convert a document as binaries to a
- * serializable lexical state
+ * serialized lexical state
  */
 export function getSerializedLexicalState({
   buffer,
