@@ -15,7 +15,13 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 44 (2024-11-01)
 
+## Documentation
+
+- Typo fixes.
+
 ## Contributors
+
+haydenbleasel
 
 # Week 43 (2024-10-25)
 
