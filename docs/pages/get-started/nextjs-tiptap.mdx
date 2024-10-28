@@ -1,20 +1,19 @@
 ---
 meta:
-  title: "Get started with Liveblocks, Yjs, Tiptap, and React"
+  title: "Get started with Liveblocks, Tiptap, and Next.js"
   parentTitle: "Get started"
-  description:
-    "Learn how to get started with Liveblocks, Yjs, Tiptap, and React."
+  description: "Learn how to get started with Liveblocks, Tiptap, and Next.js."
 ---
 
 Liveblocks is a realtime collaboration infrastructure for building performant
 collaborative experiences. Follow the following steps to start adding
 collaboration to your Next.js application using the APIs from the
-[`@liveblocks/react-lexical`](/docs/api-reference/liveblocks-react-lexicals)
+[`@liveblocks/react-lexical`](/docs/api-reference/liveblocks-react-tiptap)
 package.
 
 <Banner title="Public beta">
 
-Lexical support is currently in beta. If you have any questions or feedback,
+Tiptap support is currently in beta. If you have any questions or feedback,
 please join us on our [Discord server](https://liveblocks.io/discord). We’d love
 to hear from you.
 
@@ -24,13 +23,13 @@ to hear from you.
 
 <Steps>
   <Step>
-    <StepTitle>Install Liveblocks and Lexical</StepTitle>
+    <StepTitle>Install Liveblocks and Tiptap</StepTitle>
     <StepContent>
 
       Every Liveblocks package should use the same version.
 
       ```bash
-      npm install @liveblocks/client @liveblocks/react @liveblocks/react-ui @liveblocks/react-lexical lexical @lexical/react
+      npm install @liveblocks/client @liveblocks/react @liveblocks/react-ui @liveblocks/react-tiptap @tiptap/react @tiptap/starter-kit
       ```
 
     </StepContent>
@@ -126,20 +125,27 @@ to hear from you.
 
 
     ```tsx file="app/Editor.tsx"
+    "use client";
+
     import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
     import { useEditor, EditorContent } from "@tiptap/react";
     import StarterKit from "@tiptap/starter-kit";
+    import { Threads } from "./Threads";
+    import { Toolbar } from "./Toolbar";
 
-    function TextEditor() {
+    export function Editor() {
       const liveblocks = useLiveblocksExtension();
 
       const editor = useEditor({
         extensions: [liveblocks, StarterKit],
+        immediatelyRender: false,
       });
 
       return (
         <div>
+          <Toolbar editor={editor} />
           <EditorContent editor={editor} />
+          <Threads editor={editor} />
         </div>
       );
     }
@@ -157,8 +163,6 @@ to hear from you.
     for creating new threads, alongside [`AnchoredThreads`](/docs/api-reference/liveblocks-react-lexical#AnchoredThreads) and [`FloatingThreads`](/docs/api-reference/liveblocks-react-lexical#FloatingThreads) for displaying threads on desktop and mobile.
 
     ```tsx file="app/Threads.tsx"
-    "use client";
-
     import { useThreads } from "@liveblocks/react/suspense";
     import {
       AnchoredThreads,
@@ -167,7 +171,7 @@ to hear from you.
     } from "@liveblocks/react-tiptap";
     import { Editor } from "@tiptap/react";
 
-    export function Threads({ editor }: { editor: Editor }) {
+    export function Threads({ editor }: { editor: Editor | null }) {
       const { threads } = useThreads({ query: { resolved: false } });
 
       return (
@@ -198,21 +202,20 @@ to hear from you.
     with a button that opens the composer using [`addPendingComment`](/docs/api-reference/liveblocks-react-tiptap#Opening-the-composer).
 
     ```tsx file="app/Toolbar.tsx"
-    "use client";
-
-    import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
     import { Editor } from "@tiptap/react";
 
-    export function Toolbar({ editor }: { editor: Editor }) {
+    export function Toolbar({ editor }: { editor: Editor | null }) {
       return (
-        <button
-          onClick={() => {
-            editor.chain().focus().addPendingComment().run();
-          }}
-          data-active={editor.isActive("lb-comment")}
-        >
-          💬 New comment
-        </button>
+        <div className="toolbar">
+          <button
+            onClick={() => {
+              editor?.chain().focus().addPendingComment().run();
+            }}
+            data-active={editor?.isActive("lb-comment")}
+          >
+            💬 New comment
+          </button>
+        </div>
       );
     }
     ```
@@ -228,69 +231,58 @@ to hear from you.
     root layout of your app or directly into a CSS file with `@import`.
 
     ```css file="app/globals.css" isCollapsed isCollapsable
-      .editor {
-        position: relative;
-        display: flex;
-        width: 100%;
-        height: 100%;
-      }
+    .editor {
+      position: relative;
+      display: flex;
+      width: 100%;
+      height: 100%;
+    }
 
-      [data-lexical-editor] {
-        padding: 2px 12px;
-        outline: none;
-      }
+    .tiptap {
+      padding: 2px 12px;
+      outline: none;
+      width: 100%;
+    }
 
-      [data-lexical-editor] p {
-        margin: 0.8em 0;
-      }
+    .toolbar {
+      padding: 8px;
+      border-bottom: 1px solid #E6E6E7;
+    }
 
-      .toolbar {
-        padding: 8px;
-        border-bottom: 1px solid #E6E6E7;
-      }
+    .toolbar > button {
+      all: unset;
+      font-weight: 500;
+      padding: 8px;
+      border-radius: 6px;
+    }
 
-      .toolbar > button {
-        all: unset;
-        font-weight: 500;
-        padding: 8px;
-        border-radius: 6px;
-      }
+    .toolbar > button:hover {
+      background: #F4F4F5;
+    }
 
-      .toolbar > button:hover {
-        background: #F4F4F5;
-      }
+    /* For mobile */
+    .floating-threads {
+      display: none;
+    }
 
-      /* For mobile */
+    /* For desktop */
+    .anchored-threads {
+      display: block;
+      max-width: 300px;
+      width: 100%;
+      position: absolute;
+      right: 12px;
+    }
+
+    @media (max-width: 640px) {
       .floating-threads {
+        display: block;
+      }
+
+      .anchored-threads {
         display: none;
       }
-
-      /* For desktop */
-      .anchored-threads {
-        display: block;
-        max-width: 300px;
-        width: 100%;
-        position: absolute;
-        right: 4px;
-      }
-
-      @media (max-width: 640px) {
-        .floating-threads {
-          display: block;
-        }
-
-        .anchored-threads {
-          display: none;
-        }
-      }
-
-      .placeholder {
-        position: absolute;
-        left: 12px;
-        top: 16px;
-        pointer-events: none;
-        opacity: 0.5;
-      }
+    }
     ```
 
     ```tsx file="app/layout.tsx"
