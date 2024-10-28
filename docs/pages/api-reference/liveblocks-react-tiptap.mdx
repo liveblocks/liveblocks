@@ -146,7 +146,7 @@ can use `lb-comment` to check if the current selection is a comment.
 ```tsx
 import { Editor } from "@tiptap/react";
 
-function Toolbar({ editor }: { editor: Editor }) {
+function Toolbar({ editor }: { editor: Editor | null }) {
   return (
     <button
       onClick={() => {
@@ -294,7 +294,7 @@ import { useThreads } from "@liveblocks/react/suspense";
 import { AnchoredThreads, FloatingThreads } from "@liveblocks/react-tiptap";
 import { Editor } from "@tiptap/react";
 
-function ThreadOverlay({ editor }: { editor: Editor }) {
+function ThreadOverlay({ editor }: { editor: Editor | null }) {
   const { threads } = useThreads({ query: { resolved: false } });
 
   return (
@@ -318,7 +318,7 @@ import { useThreads } from "@liveblocks/react/suspense";
 import { AnchoredThreads, FloatingThreads } from "@liveblocks/react-tiptap";
 import { Editor } from "@tiptap/react";
 
-function ThreadOverlay({ editor }: { editor: Editor }) {
+function ThreadOverlay({ editor }: { editor: Editor | null }) {
   const { threads } = useThreads({ query: { resolved: false } });
   // +++
   const isMobile = useIsMobile();
@@ -537,7 +537,7 @@ import { useThreads } from "@liveblocks/react/suspense";
 import { AnchoredThreads, FloatingThreads } from "@liveblocks/react-tiptap";
 import { Editor } from "@tiptap/react";
 
-function ThreadOverlay({ editor }: { editor: Editor }) {
+function ThreadOverlay({ editor }: { editor: Editor | null }) {
   const { threads } = useThreads({ query: { resolved: false } });
 
   return (
@@ -561,7 +561,7 @@ import { useThreads } from "@liveblocks/react/suspense";
 import { AnchoredThreads, FloatingThreads } from "@liveblocks/react-tiptap";
 import { Editor } from "@tiptap/react";
 
-function ThreadOverlay({ editor }: { editor: Editor }) {
+function ThreadOverlay({ editor }: { editor: Editor | null }) {
   const { threads } = useThreads({ query: { resolved: false } });
   // +++
   const isMobile = useIsMobile();
