@@ -1,8 +1,15 @@
-import type { DRI, OptionalPromise } from "@liveblocks/core";
+import type {
+  BaseUserMeta,
+  DRI,
+  DU,
+  OptionalPromise,
+  ResolveUsersArgs,
+} from "@liveblocks/core";
 import type {
   Liveblocks,
   TextMentionNotificationEvent,
 } from "@liveblocks/node";
+import React from "react";
 
 import type { SerializedRootNode } from "./lexical-editor";
 import { getSerializedLexicalState } from "./lexical-editor";
@@ -85,10 +92,10 @@ type PrepareTextMentionNotificationEmailBaseDataOptions = {
   ) => OptionalPromise<DRI | undefined>;
 };
 
-export type TextMentionNotificationEmailBaseData = (
-  | { textEditorType: "lexical"; mention: MentionEmailBaseData }
-  | { textEditorType: "tiptap"; mention: MentionEmailBaseData }
-) & { roomInfo: DRI };
+export type TextMentionNotificationEmailBaseData = {
+  mention: MentionEmailBaseData;
+  roomInfo: DRI;
+};
 
 /** @internal */
 export const prepareTextMentionNotificationEmailBaseData = async ({
@@ -115,30 +122,89 @@ export const prepareTextMentionNotificationEmailBaseData = async ({
     return null;
   }
 
+  let rawTextContent;
+
   switch (data.textEditorType) {
     case "lexical": {
-      return {
-        textEditorType: "lexical",
-        mention: {
-          id: mentionId,
-          roomId,
-          // TODO: get raw text content for Lexical
-          rawTextContent: null,
-        },
-        roomInfo: resolvedRoomInfo,
-      };
+      // TODO: get raw text content for Lexical
+      rawTextContent = null;
+      break;
     }
     case "tiptap": {
-      return {
-        textEditorType: "tiptap",
-        mention: {
-          id: mentionId,
-          roomId,
-          // TODO: get raw text content for Tiptap
-          rawTextContent: null,
-        },
-        roomInfo: resolvedRoomInfo,
-      };
+      // TODO: get raw text content for Tiptap
+      rawTextContent = null;
+      break;
     }
   }
+
+  return {
+    mention: {
+      id: mentionId,
+      roomId,
+      rawTextContent,
+    },
+    roomInfo: resolvedRoomInfo,
+  };
 };
+
+export type MentionEmailAsReact<U extends BaseUserMeta = DU> = Omit<
+  MentionEmailBaseData,
+  "rawTextContent"
+> & {
+  author: U;
+  reactTextContent: React.ReactNode;
+};
+
+export type PrepareTextMentionNotificationEmailAsReactOptions<
+  U extends BaseUserMeta = DU,
+> = PrepareTextMentionNotificationEmailBaseDataOptions & {
+  /**
+   * A function that returns info from user IDs.
+   */
+  resolveUsers?: (
+    args: ResolveUsersArgs
+  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+
+  // TODO: add components
+};
+
+export type TextMentionNotificationEmailDataAsReact = {
+  mention: MentionEmailAsReact<BaseUserMeta>;
+  roomInfo: DRI;
+};
+
+/**
+ * Prepares data from a `TextMentionNotificationEvent` and convert content as React nodes.
+ */
+export async function prepareTextMentionNotificationEmailAsReact(
+  client: Liveblocks,
+  event: TextMentionNotificationEvent,
+  options: PrepareTextMentionNotificationEmailAsReactOptions<BaseUserMeta> = {}
+): Promise<TextMentionNotificationEmailDataAsReact | null> {
+  const data = await prepareTextMentionNotificationEmailBaseData({
+    client,
+    event,
+    options: {
+      resolveRoomInfo: options.resolveRoomInfo,
+    },
+  });
+
+  if (data === null) {
+    return null;
+  }
+
+  // TODO: resolve author (use batch resolver)
+  // TODO: resolved mention users (it can have multiple mentioned users in the text content)
+  // TODO convert mention text content into React nodes
+  const reactTextContent = <></>;
+
+  return {
+    mention: {
+      id: data.mention.id,
+      author: { id: "", info: {} },
+      roomId: data.mention.roomId,
+      reactTextContent,
+    },
+    roomInfo: data.roomInfo,
+  };
+}
