@@ -1,3 +1,4 @@
+import type { DRI, OptionalPromise } from "@liveblocks/core";
 import type {
   Liveblocks,
   TextMentionNotificationEvent,
@@ -5,6 +6,8 @@ import type {
 
 import type { SerializedRootNode } from "./lexical-editor";
 import { getSerializedLexicalState } from "./lexical-editor";
+// TODO: create a common shared type once thread notification are publicly released.
+import type { ResolveRoomInfoArgs } from "./thread-notification";
 
 type TextMentionNotificationData =
   | { textEditorType: "lexical"; state: SerializedRootNode }
@@ -61,6 +64,80 @@ export const extractTextMentionNotificationData = async ({
       // TODO: add logic to get tiptap state
       return {
         textEditorType: "tiptap",
+      };
+    }
+  }
+};
+
+export type MentionEmailBaseData = {
+  id: string;
+  roomId: string;
+  // TODO: defined specific common type here for Lexical and TipTap.
+  rawTextContent: unknown;
+};
+
+type PrepareTextMentionNotificationEmailBaseDataOptions = {
+  /**
+   * A function that returns room info from room IDs.
+   */
+  resolveRoomInfo?: (
+    args: ResolveRoomInfoArgs
+  ) => OptionalPromise<DRI | undefined>;
+};
+
+export type TextMentionNotificationEmailBaseData = (
+  | { textEditorType: "lexical"; mention: MentionEmailBaseData }
+  | { textEditorType: "tiptap"; mention: MentionEmailBaseData }
+) & { roomInfo: DRI };
+
+/** @internal */
+export const prepareTextMentionNotificationEmailBaseData = async ({
+  client,
+  event,
+  options = {},
+}: {
+  client: Liveblocks;
+  event: TextMentionNotificationEvent;
+  options?: PrepareTextMentionNotificationEmailBaseDataOptions;
+}): Promise<TextMentionNotificationEmailBaseData | null> => {
+  const { roomId, mentionId } = event.data;
+  const roomInfo = options.resolveRoomInfo
+    ? await options.resolveRoomInfo({ roomId })
+    : undefined;
+
+  const resolvedRoomInfo: DRI = {
+    ...roomInfo,
+    name: roomInfo?.name ?? roomId,
+  };
+
+  const data = await extractTextMentionNotificationData({ client, event });
+  if (data === null) {
+    return null;
+  }
+
+  switch (data.textEditorType) {
+    case "lexical": {
+      return {
+        textEditorType: "lexical",
+        mention: {
+          id: mentionId,
+          roomId,
+          // TODO: get raw text content for Lexical
+          rawTextContent: null,
+        },
+        roomInfo: resolvedRoomInfo,
+      };
+    }
+    case "tiptap": {
+      return {
+        textEditorType: "tiptap",
+        mention: {
+          id: mentionId,
+          roomId,
+          // TODO: get raw text content for Tiptap
+          rawTextContent: null,
+        },
+        roomInfo: resolvedRoomInfo,
       };
     }
   }
