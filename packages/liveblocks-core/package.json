@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/core",
-  "version": "2.9.2",
+  "version": "2.10.1-react19",
   "description": "Private internals for Liveblocks. DO NOT import directly from this package!",
   "type": "commonjs",
   "main": "./dist/index.js",
