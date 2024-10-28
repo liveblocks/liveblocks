@@ -137,7 +137,7 @@ type PrepareThreadNotificationEmailBaseDataOptions = {
   ) => OptionalPromise<DRI | undefined>;
 };
 
-export type ThreadNotificationBaseData = (
+export type ThreadNotificationEmailBaseData = (
   | { type: "unreadMention"; comment: CommentEmailBaseData }
   | { type: "unreadReplies"; comments: CommentEmailBaseData[] }
 ) & { roomInfo: DRI };
@@ -177,7 +177,7 @@ export const prepareThreadNotificationEmailBaseData = async ({
   client: Liveblocks;
   event: ThreadNotificationEvent;
   options?: PrepareThreadNotificationEmailBaseDataOptions;
-}): Promise<ThreadNotificationBaseData | null> => {
+}): Promise<ThreadNotificationEmailBaseData | null> => {
   const { roomId } = event.data;
 
   const roomInfo = options.resolveRoomInfo

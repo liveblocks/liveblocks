@@ -8,8 +8,8 @@ import type {
 } from "../comment-body";
 import type {
   CommentEmailBaseData,
-  ThreadNotificationBaseData,
   ThreadNotificationData,
+  ThreadNotificationEmailBaseData,
   ThreadNotificationEmailDataAsHtml,
   ThreadNotificationEmailDataAsReact,
 } from "../thread-notification";
@@ -355,7 +355,7 @@ describe("thread notification", () => {
           }),
         ]);
       const expectedComment = makeCommentWithBody({ comment });
-      const expected1: ThreadNotificationBaseData = {
+      const expected1: ThreadNotificationEmailBaseData = {
         type: "unreadMention",
         comment: makeCommentEmailBaseData({
           roomInfo: undefined,
@@ -365,7 +365,7 @@ describe("thread notification", () => {
           name: ROOM_ID_TEST,
         },
       };
-      const expected2: ThreadNotificationBaseData = {
+      const expected2: ThreadNotificationEmailBaseData = {
         type: "unreadMention",
         comment: makeCommentEmailBaseData({
           roomInfo: RESOLVED_ROOM_INFO_TEST,
@@ -439,7 +439,7 @@ describe("thread notification", () => {
         makeCommentWithBody({ comment: comment3 }),
       ];
 
-      const expected1: ThreadNotificationBaseData = {
+      const expected1: ThreadNotificationEmailBaseData = {
         type: "unreadReplies",
         comments: expectedComments.map((c) =>
           makeCommentEmailBaseData({ roomInfo: undefined, comment: c })
@@ -449,7 +449,7 @@ describe("thread notification", () => {
         },
       };
 
-      const expected2: ThreadNotificationBaseData = {
+      const expected2: ThreadNotificationEmailBaseData = {
         type: "unreadReplies",
         comments: expectedComments.map((c) =>
           makeCommentEmailBaseData({
