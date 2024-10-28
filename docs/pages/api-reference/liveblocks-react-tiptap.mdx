@@ -14,13 +14,9 @@ learn more.
 
 ## Setup
 
-To set up your collaborative Tiptap editor, you must add the
-[`useLiveblocksExtension`](#useLiveblocksExtension) to your editor.
-
-### useLiveblocksExtension
-
-Liveblocks plugin for Tiptap that adds collaboration to your editor.
-`liveblocks` should be passed to Tiptap’s `useEditor` as an extension.
+To set up your collaborative Tiptap editor, add
+[`useLiveblocksExtension`](#useLiveblocksExtension) to your editor, passing the
+return value `useEditor` extension array.
 
 ```tsx
 import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
@@ -79,13 +75,6 @@ function TextEditor() {
   );
 }
 ```
-
-<Banner title="Resolved threads">
-
-Annotations associated with resolved threads are hidden by default on the
-editor.
-
-</Banner>
 
 Learn more in our [get started guides](/docs/get-started/text-editor/tiptap).
 
@@ -779,38 +768,75 @@ the displayed version.
 
 ## Hooks
 
-### useEditorStatus
+### useLiveblocksExtension
 
-Returns the current editor status.
+Liveblocks plugin for Tiptap that adds collaboration to your editor.
+`liveblocks` should be passed to Tiptap’s `useEditor` as an extension.
 
-```ts
-import { useEditorStatus } from "@liveblocks/react-lexical";
+```tsx
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+import { useEditor, EditorContent } from "@tiptap/react";
 
-const status = useEditorStatus();
+function TextEditor() {
+  // +++
+  const liveblocks = useLiveblocksExtension();
+  // +++
+
+  const editor = useEditor({
+    extensions: [
+      // +++
+      liveblocks,
+      // +++
+      // ...
+    ],
+  });
+
+  return (
+    <div>
+      <EditorContent editor={editor} />
+    </div>
+  );
+}
 ```
 
-The possible value are:
+Liveblocks Tiptap components should be passed `editor` to enable them.
 
-- `not-loaded`: Initial editor state when entering the room.
-- `loading`: Once the editor state has been requested by `LiveblocksPlugin`.
-- `synchronizing`: Not working yet at runtime! Will be available in a future
-  release.
-- `synchronized`: The editor state is sync with Liveblocks servers.
+```tsx
+import {
+  useLiveblocksExtension,
+  // +++
+  FloatingComposer,
+  // +++
+} from "@liveblocks/react-tiptap";
+import { useEditor, EditorContent } from "@tiptap/react";
 
-### useIsThreadActive
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension();
 
-Accepts a thread id and returns whether the thread annotation for this thread is
-selected or not in the Lexical editor. This hook must be used in a component
-nested inside [`LiveblocksPlugin`][].
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+  });
 
-```ts
-import { useIsThreadActive } from "@liveblocks/react-lexical";
-
-const isActive = useIsThreadActive(thread.id);
+  return (
+    <div>
+      <EditorContent editor={editor} />
+      // +++
+      <FloatingComposer editor={editor} style={{ width: "350px" }} />
+      // +++
+    </div>
+  );
+}
 ```
 
-This hook can be useful to style threads based on whether their associated
-thread annotations are selected or not in the editor.
+<Banner title="Resolved threads">
+
+Annotations associated with resolved threads are hidden by default on the
+editor.
+
+</Banner>
 
 ## Stylesheets
 
