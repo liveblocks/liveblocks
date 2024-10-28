@@ -5,9 +5,12 @@ import type { ReactEditor, RenderElementProps } from "slate-react";
 import type {
   ComposerBodyAutoLink,
   ComposerBodyCustomLink,
+  ComposerBodyListItem,
   ComposerBodyMention,
+  ComposerBodyOrderedList,
   ComposerBodyParagraph,
   ComposerBodyText,
+  ComposerBodyUnorderedList,
 } from "./types";
 
 declare module "slate" {
@@ -15,6 +18,9 @@ declare module "slate" {
     Editor: BaseEditor & ReactEditor & HistoryEditor;
     Element:
       | ComposerBodyParagraph
+      | ComposerBodyOrderedList
+      | ComposerBodyUnorderedList
+      | ComposerBodyListItem
       | ComposerBodyMention
       | ComposerBodyAutoLink
       | ComposerBodyCustomLink;

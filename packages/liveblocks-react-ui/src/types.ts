@@ -13,7 +13,16 @@ export type SlotProp = {
 export type ComponentPropsWithSlot<TElement extends ElementType<any>> =
   ComponentPropsWithoutRef<TElement> & SlotProp;
 
-export type ComposerBodyBlockElement = ComposerBodyParagraph;
+export type ComposerBodyRootElement =
+  | ComposerBodyParagraph
+  | ComposerBodyOrderedList
+  | ComposerBodyUnorderedList;
+
+export type ComposerBodyBlockElement =
+  | ComposerBodyParagraph
+  | ComposerBodyOrderedList
+  | ComposerBodyUnorderedList
+  | ComposerBodyListItem;
 
 export type ComposerBodyInlineElement =
   | ComposerBodyText
@@ -24,6 +33,25 @@ export type ComposerBodyInlineElement =
 export type ComposerBodyParagraph = {
   type: "paragraph";
   children: ComposerBodyInlineElement[];
+};
+
+export type ComposerBodyOrderedList = {
+  type: "ordered-list";
+  children: ComposerBodyListItem[];
+};
+
+export type ComposerBodyUnorderedList = {
+  type: "unordered-list";
+  children: (
+    | ComposerBodyParagraph
+    | ComposerBodyOrderedList
+    | ComposerBodyUnorderedList
+  )[];
+};
+
+export type ComposerBodyListItem = {
+  type: "list-item";
+  children: ComposerBodyRootElement[];
 };
 
 export type ComposerBodyAutoLink = {
@@ -58,7 +86,7 @@ export type ComposerBodyEmptyText = {
   text: "";
 };
 
-export type ComposerBody = ComposerBodyBlockElement[];
+export type ComposerBody = ComposerBodyRootElement[];
 
 export interface CommentAttachmentArgs {
   /**

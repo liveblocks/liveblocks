@@ -20,6 +20,7 @@ import { Slot, Slottable } from "@radix-ui/react-slot";
 import type {
   AriaAttributes,
   ChangeEvent,
+  CSSProperties,
   FocusEvent,
   FormEvent,
   KeyboardEvent,
@@ -339,6 +340,10 @@ function ComposerEditorMentionSuggestionsWrapper({
   );
 }
 
+const blockElementStyles: CSSProperties = {
+  position: "relative",
+};
+
 function ComposerEditorElement({
   Mention,
   Link,
@@ -365,9 +370,27 @@ function ComposerEditorElement({
           >)}
         />
       );
+    case "ordered-list":
+      return (
+        <ol {...attributes} style={blockElementStyles}>
+          {children}
+        </ol>
+      );
+    case "unordered-list":
+      return (
+        <ul {...attributes} style={blockElementStyles}>
+          {children}
+        </ul>
+      );
+    case "list-item":
+      return (
+        <li {...attributes} style={blockElementStyles}>
+          {children}
+        </li>
+      );
     case "paragraph":
       return (
-        <p {...attributes} style={{ position: "relative" }}>
+        <p {...attributes} style={blockElementStyles}>
           {children}
         </p>
       );
