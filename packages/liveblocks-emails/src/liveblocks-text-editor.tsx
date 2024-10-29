@@ -125,7 +125,7 @@ const resolveUsersInLiveblocksTextEditorNodes = async <U extends BaseUserMeta>(
   return resolvedUsers;
 };
 
-export type ConvertLiveblocksTextEditorNodesAsReact<
+export type ConvertLiveblocksTextEditorNodesAsReactOptions<
   U extends BaseUserMeta = DU,
 > = {
   // TODO: add components
@@ -138,11 +138,11 @@ export type ConvertLiveblocksTextEditorNodesAsReact<
 };
 
 /**
- * Convert a set ofr Liveblocks Editor nodes into React elements
+ * Convert a set of Liveblocks Editor nodes into React elements
  */
 export async function convertLiveblocksTextEditorNodesAsReact(
   nodes: LiveblocksTextEditorNode[],
-  options?: ConvertLiveblocksTextEditorNodesAsReact<BaseUserMeta>
+  options?: ConvertLiveblocksTextEditorNodesAsReactOptions<BaseUserMeta>
 ): Promise<React.ReactNode> {
   const resolvedUsers = await resolveUsersInLiveblocksTextEditorNodes(
     nodes,
