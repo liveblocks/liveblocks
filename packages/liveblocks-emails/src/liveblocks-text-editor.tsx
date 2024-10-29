@@ -22,6 +22,10 @@ import { assertSerializedMentionNode } from "./lexical-editor";
 export type LiveblocksTextEditorTextNode = {
   type: "text";
   text: string;
+  bold: boolean;
+  italic: boolean;
+  strikethrough: boolean;
+  code: boolean;
 };
 export type LiveblocksTextEditorMentionNode = {
   type: "mention";
@@ -54,6 +58,10 @@ const transformLexicalMentionNodeWithContext = (
         textEditorNodes.push({
           type: "text",
           text: node.text,
+          bold: false,
+          italic: false,
+          strikethrough: false,
+          code: false,
         });
       } else if (
         node.group === "decorator" &&
