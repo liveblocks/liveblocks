@@ -1,7 +1,8 @@
 import { autoUpdate, flip, hide, limitShift, offset, shift, size, useFloating } from "@floating-ui/react-dom";
 import { createInboxNotificationId } from "@liveblocks/core";
 import { useUser } from "@liveblocks/react";
-import { useMentionSuggestions, useOverrides } from "@liveblocks/react-ui";
+import { useMentionSuggestions } from "@liveblocks/react/_private";
+import { useOverrides } from "@liveblocks/react-ui";
 import type { HTMLAttributes, MouseEvent } from "react";
 import React, {
   forwardRef, useEffect, useImperativeHandle,

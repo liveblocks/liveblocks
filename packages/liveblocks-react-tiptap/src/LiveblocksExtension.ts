@@ -1,12 +1,13 @@
 import { type IUserInfo, kInternal, TextEditorType } from "@liveblocks/core";
 import {
-  CreateThreadError,
-  getUmbrellaStoreForClient,
-  selectThreads,
   useClient,
   useCommentsErrorListener,
   useRoom,
 } from "@liveblocks/react";
+import {
+  CreateThreadError,
+  getUmbrellaStoreForClient,
+} from "@liveblocks/react/_private";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import type { AnyExtension } from "@tiptap/core";
 import { Extension, getMarkType } from "@tiptap/core";
@@ -161,15 +162,12 @@ export const useLiveblocksExtension = (): Extension => {
         );
         this.storage.unsubs.push(
           // Subscribe to threads so we can update comment marks if they become resolved/deleted
-          store.subscribeThreads(() => {
+          store.subscribe(() => {
             const threadMap = new Map(
-              selectThreads(store.getFullState(), {
-                roomId,
-                orderBy: "age",
-                query: {
-                  resolved: false,
-                },
-              }).map((thread) => [thread.id, true])
+              store
+                .getFullState()
+                .threadsDB.findMany(roomId, { resolved: false }, "asc")
+                .map((thread) => [thread.id, true])
             );
             function isComment(mark: PMMark): mark is PMMark & {
               attrs: { orphan: boolean; threadId: string };
