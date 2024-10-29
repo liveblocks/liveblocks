@@ -76,7 +76,7 @@ export const extractTextMentionNotificationData = async ({
         inboxNotificationId,
       });
 
-      // The mention node did not exists anymore
+      // The mention node did not exists so we do not have to send an email.
       if (mentionNodeWithContext === null) {
         return null;
       }
@@ -87,7 +87,7 @@ export const extractTextMentionNotificationData = async ({
       };
     }
     case "tiptap": {
-      // TODO: add logic to get tiptap state
+      // TODO: add logic to get tiptap state and mention node with context
       return {
         textEditorType: "tiptap",
       };

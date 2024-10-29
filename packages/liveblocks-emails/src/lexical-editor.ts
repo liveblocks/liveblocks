@@ -21,6 +21,15 @@ export interface SerializedDecoratorNode extends SerializedBaseLexicalNode {
   group: "decorator";
 }
 
+export interface SerializedMentionNode extends SerializedDecoratorNode {
+  type: "lb-mention";
+  attributes: {
+    __id: string;
+    __type: "lb-mention";
+    __userId: string;
+  };
+}
+
 export interface SerializedLineBreakNode extends SerializedBaseLexicalNode {
   group: "line-break";
 }
@@ -31,15 +40,17 @@ export type SerializedLexicalNode =
   | SerializedDecoratorNode
   | SerializedElementNode<SerializedLexicalNode>;
 
+export type SerializedRootNodeChildren = Array<
+  Readonly<
+    | SerializedElementNode<Readonly<SerializedLexicalNode>>
+    | SerializedDecoratorNode
+  >
+>;
+
 export interface SerializedRootNode
   extends Readonly<SerializedBaseLexicalNode> {
   readonly type: "root";
-  readonly children: Array<
-    Readonly<
-      | SerializedElementNode<Readonly<SerializedLexicalNode>>
-      | SerializedDecoratorNode
-    >
-  >;
+  readonly children: SerializedRootNodeChildren;
 }
 
 /**
@@ -222,16 +233,69 @@ export function getSerializedLexicalState({
   const state = createSerializedLexicalRootNode(root);
   return state;
 }
-export type LexicalMentionNodeWithContext = {
-  before:
-    | SerializedElementNode<Readonly<SerializedLexicalNode>>
-    | SerializedDecoratorNode;
-  after:
-    | SerializedElementNode<Readonly<SerializedLexicalNode>>
-    | SerializedDecoratorNode;
-  mention: SerializedDecoratorNode;
+
+/** @internal */
+const flattenLexicalTree = (
+  nodes: SerializedLexicalNode[]
+): SerializedLexicalNode[] => {
+  const flattenNodes: SerializedLexicalNode[] = [];
+  for (const node of nodes) {
+    if (["text", "line-break", "decorator"].includes(node.group)) {
+      flattenNodes.push(node);
+    } else if (node.group === "element") {
+      nodes.concat(flattenLexicalTree(node.children));
+    }
+  }
+
+  return flattenNodes;
 };
 
+const isString = (value: unknown): value is string => {
+  return typeof value === "string";
+};
+
+const assertMentionNodeType = (type: string): type is "lb-mention" => {
+  return type === "lb-mention";
+};
+
+const assertMentionNodeAttributeType = (
+  type: unknown
+): type is "lb-mention" => {
+  return isString(type) && type === "lb-mention";
+};
+
+const assertMentionNodeAttributeId = (
+  value: unknown
+): value is `in_${string}` => {
+  return isString(value) && value.startsWith("in_");
+};
+
+const assertSerializedMentionNode = (
+  node: SerializedDecoratorNode
+): node is SerializedMentionNode => {
+  const attributes = node.attributes;
+
+  return (
+    assertMentionNodeType(node.type) &&
+    assertMentionNodeAttributeType(attributes.__type) &&
+    assertMentionNodeAttributeId(attributes.__id) &&
+    isString(attributes.__userId)
+  );
+};
+
+/**
+ * Lexical Mention Node with context
+ */
+export type LexicalMentionNodeWithContext = {
+  before: SerializedLexicalNode[] | null;
+  after: SerializedLexicalNode[] | null;
+  mention: SerializedMentionNode;
+};
+
+/**
+ * Find a Lexical mention node and returns it with contextual
+ * surrounding text
+ */
 export function findLexicalMentionNodeWithContext({
   root,
   mentionedUserId,
@@ -241,6 +305,31 @@ export function findLexicalMentionNodeWithContext({
   mentionedUserId: string;
   inboxNotificationId: string;
 }): LexicalMentionNodeWithContext | null {
-  // TODO: add logic
-  return null;
+  const nodes = flattenLexicalTree(root.children);
+
+  // Find mention node
+  let mentionNodeIndex = -1;
+  let mentionNode: SerializedMentionNode | null = null;
+
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i]!;
+    if (node.group === "decorator" && assertSerializedMentionNode(node)) {
+      mentionNodeIndex = i;
+      mentionNode = node;
+    }
+  }
+
+  // No mention node found
+  if (mentionNode === null) {
+    return null;
+  }
+
+  // Collect nodes before and after
+  // TODO: apply surrounding text guesses
+
+  return {
+    before: null,
+    after: null,
+    mention: mentionNode,
+  };
 }
