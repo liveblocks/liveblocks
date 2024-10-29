@@ -6,6 +6,14 @@
  */
 
 import type {
+  BaseUserMeta,
+  DU,
+  OptionalPromise,
+  ResolveUsersArgs,
+} from "@liveblocks/core";
+import React from "react";
+
+import type {
   LexicalMentionNodeWithContext,
   SerializedLexicalNode,
 } from "./lexical-editor";
@@ -79,8 +87,68 @@ export function transformAsLiveblocksTextEditorNodes(
       );
     }
     case "tiptap": {
-      // TODO
+      // TODO add transformer for TipTap
       return [];
     }
   }
+}
+
+const resolveUsersInLiveblocksTextEditorNodes = async <U extends BaseUserMeta>(
+  nodes: LiveblocksTextEditorNode[],
+  resolveUsers?: (
+    args: ResolveUsersArgs
+  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>
+): Promise<Map<string, U["info"]>> => {
+  const resolvedUsers = new Map<string, U["info"]>();
+  if (!resolveUsers) {
+    return resolvedUsers;
+  }
+
+  const mentionedUserIds = new Set<string>();
+  for (const node of nodes) {
+    if (node.type === "mention") {
+      mentionedUserIds.add(node.userId);
+    }
+  }
+
+  const userIds = Array.from(mentionedUserIds);
+
+  const users = await resolveUsers({ userIds });
+  if (users) {
+    for (const [index, userId] of userIds.entries()) {
+      const user = users[index];
+      if (user) {
+        resolvedUsers.set(userId, user);
+      }
+    }
+  }
+  return resolvedUsers;
+};
+
+export type ConvertLiveblocksTextEditorNodesAsReact<
+  U extends BaseUserMeta = DU,
+> = {
+  // TODO: add components
+  /**
+   * A function that returns user info from user IDs.
+   */
+  resolveUsers?: (
+    args: ResolveUsersArgs
+  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+};
+
+/**
+ * Convert a set ofr Liveblocks Editor nodes into React elements
+ */
+export async function convertLiveblocksTextEditorNodesAsReact(
+  nodes: LiveblocksTextEditorNode[],
+  options?: ConvertLiveblocksTextEditorNodesAsReact<BaseUserMeta>
+): Promise<React.ReactNode> {
+  const resolvedUsers = await resolveUsersInLiveblocksTextEditorNodes(
+    nodes,
+    options?.resolveUsers
+  );
+
+  // TODO: build components
+  return <></>;
 }
