@@ -76,6 +76,7 @@ export const extractTextMentionNotificationData = async ({
         inboxNotificationId,
       });
 
+      // The mention node did not exists anymore
       if (mentionNodeWithContext === null) {
         return null;
       }
