@@ -293,8 +293,8 @@ export type LexicalMentionNodeWithContext = {
 };
 
 /**
- * Find a Lexical mention node and returns it with contextual
- * surrounding text
+ * Find a Lexical mention node
+ * and returns it with contextual surrounding text
  */
 export function findLexicalMentionNodeWithContext({
   root,
@@ -328,16 +328,51 @@ export function findLexicalMentionNodeWithContext({
     return null;
   }
 
-  const mention = nodes[mentionNodeIndex] as SerializedMentionNode;
-
   // Collect nodes before and after
+  const mentionNode = nodes[mentionNodeIndex] as SerializedMentionNode;
+
   // TODO: apply surrounding text guesses
+  // For now let's stay simple just stop at nearest line break or element
   const beforeNodes: SerializedLexicalNode[] = [];
   const afterNodes: SerializedLexicalNode[] = [];
 
+  // Nodes before mention node
+  for (let i = mentionNodeIndex - 1; i >= 0; i--) {
+    const node = nodes[i]!;
+
+    // Stop if nodes are line breaks or element
+    if (["line-break", "element"].includes(node.group)) {
+      break;
+    }
+
+    // Stop if decorator node isn't a mention
+    if (node.group === "decorator" && !assertMentionNodeType(node.type)) {
+      break;
+    }
+
+    beforeNodes.unshift(node);
+  }
+
+  // Node after mention node
+  for (let i = mentionNodeIndex + 1; i < nodes.length; i++) {
+    const node = nodes[i]!;
+
+    // Stop if nodes are line breaks or element
+    if (["line-break", "element"].includes(node.group)) {
+      break;
+    }
+
+    // Stop if decorator node isn't a mention
+    if (node.group === "decorator" && !assertMentionNodeType(node.type)) {
+      break;
+    }
+
+    afterNodes.push(node);
+  }
+
   return {
-    before: null,
-    after: null,
-    mention,
+    before: beforeNodes,
+    after: afterNodes,
+    mention: mentionNode,
   };
 }
