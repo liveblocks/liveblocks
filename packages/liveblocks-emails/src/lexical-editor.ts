@@ -270,7 +270,7 @@ const assertMentionNodeAttributeId = (
   return isString(value) && value.startsWith("in_");
 };
 
-const assertSerializedMentionNode = (
+export const assertSerializedMentionNode = (
   node: SerializedDecoratorNode
 ): node is SerializedMentionNode => {
   const attributes = node.attributes;
@@ -287,8 +287,8 @@ const assertSerializedMentionNode = (
  * Lexical Mention Node with context
  */
 export type LexicalMentionNodeWithContext = {
-  before: SerializedLexicalNode[] | null;
-  after: SerializedLexicalNode[] | null;
+  before: SerializedLexicalNode[];
+  after: SerializedLexicalNode[];
   mention: SerializedMentionNode;
 };
 

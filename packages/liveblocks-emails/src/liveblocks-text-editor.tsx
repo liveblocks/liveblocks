@@ -5,7 +5,11 @@
  * and then convert them more easily as React or as html.
  */
 
-import type { LexicalMentionNodeWithContext } from "./lexical-editor";
+import type {
+  LexicalMentionNodeWithContext,
+  SerializedLexicalNode,
+} from "./lexical-editor";
+import { assertSerializedMentionNode } from "./lexical-editor";
 
 export type LiveblocksTextEditorTextNode = {
   type: "text";
@@ -33,10 +37,36 @@ type TransformableMentionNodeWithContext =
 const transformLexicalMentionNodeWithContext = (
   mentionNodeWithContext: LexicalMentionNodeWithContext
 ): LiveblocksTextEditorNode[] => {
-  const nodes: LiveblocksTextEditorNode[] = [];
+  const textEditorNodes: LiveblocksTextEditorNode[] = [];
   const { before, after, mention } = mentionNodeWithContext;
 
-  return nodes;
+  const transform = (nodes: SerializedLexicalNode[]) => {
+    for (const node of nodes) {
+      if (node.group === "text") {
+        textEditorNodes.push({
+          type: "text",
+          text: node.text,
+        });
+      } else if (
+        node.group === "decorator" &&
+        assertSerializedMentionNode(node)
+      ) {
+        textEditorNodes.push({
+          type: "mention",
+          userId: node.attributes.__userId,
+        });
+      }
+    }
+  };
+
+  transform(before);
+  textEditorNodes.push({
+    type: "mention",
+    userId: mention.attributes.__userId,
+  });
+  transform(after);
+
+  return textEditorNodes;
 };
 
 export function transformAsLiveblocksTextEditorNodes(
