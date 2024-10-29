@@ -1,5 +1,4 @@
 import type { AuthManager, AuthValue } from "./auth-manager";
-import { NotificationsApiError } from "./client";
 import type {
   Delegates,
   LiveblocksError,
@@ -29,10 +28,10 @@ import { LiveObject } from "./crdts/LiveObject";
 import type { LiveNode, LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
 import type { DE, DM, DP, DS, DU } from "./globals/augmentation";
-import { getBearerTokenFromAuthValue } from "./http-client";
+import { getBearerTokenFromAuthValue, HttpClient } from "./http-client";
 import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
-import { autoRetry } from "./lib/autoRetry";
+import { autoRetry, HttpError } from "./lib/autoRetry";
 import type { BatchStore } from "./lib/batch";
 import { Batch, createBatchStore } from "./lib/batch";
 import { chunk } from "./lib/chunk";
@@ -42,6 +41,7 @@ import {
   createCommentId,
   createThreadId,
 } from "./lib/createIds";
+import type { DateToString } from "./lib/DateToString";
 import { captureStackTrace } from "./lib/debug";
 import type { Callback, EventSource, Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
@@ -50,8 +50,8 @@ import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
 import { objectToQuery } from "./lib/objectToQuery";
 import { asPos } from "./lib/position";
-import type { QueryParams, URLSafeString } from "./lib/url";
-import { url, urljoin } from "./lib/url";
+import type { URLSafeString } from "./lib/url";
+import { url } from "./lib/url";
 import {
   compact,
   deepClone,
@@ -98,6 +98,7 @@ import type {
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
+import type { HistoryVersion } from "./protocol/VersionHistory";
 import type { ImmutableRef } from "./refs/ImmutableRef";
 import { OthersRef } from "./refs/OthersRef";
 import { PatchableRef } from "./refs/PatchableRef";
@@ -485,9 +486,19 @@ export type GetThreadsOptions<M extends BaseMetadata> = {
 
 export type GetThreadsSinceOptions = {
   since: Date;
+  signal?: AbortSignal;
 };
 
 export type UploadAttachmentOptions = {
+  signal?: AbortSignal;
+};
+
+type ListTextVersionsSinceOptions = {
+  since: Date;
+  signal?: AbortSignal;
+};
+
+type GetNotificationSettingsOptions = {
   signal?: AbortSignal;
 };
 
@@ -964,7 +975,9 @@ export type Room<
    * @example
    * const settings = await room.getNotificationSettings();
    */
-  getNotificationSettings(): Promise<RoomNotificationSettings>;
+  getNotificationSettings(
+    options?: GetNotificationSettingsOptions
+  ): Promise<RoomNotificationSettings>;
 
   /**
    * Updates the user's notification settings for the current room.
@@ -1014,13 +1027,21 @@ export type PrivateRoomApi = {
   getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
 
   // For reporting editor metadata
-  reportTextEditor(editor: TextEditorType, rootKey: string): void;
+  reportTextEditor(editor: TextEditorType, rootKey: string): Promise<void>;
 
-  createTextMention(userId: string, mentionId: string): Promise<Response>;
-  deleteTextMention(mentionId: string): Promise<Response>;
-  listTextVersions(): Promise<Response>;
+  createTextMention(userId: string, mentionId: string): Promise<void>;
+  deleteTextMention(mentionId: string): Promise<void>;
+  listTextVersions(): Promise<{
+    versions: HistoryVersion[];
+    requestedAt: Date;
+  }>;
+  listTextVersionsSince(options: ListTextVersionsSinceOptions): Promise<{
+    versions: HistoryVersion[];
+    requestedAt: Date;
+  }>;
+
   getTextVersion(versionId: string): Promise<Response>;
-  createTextVersion(): Promise<Response>;
+  createTextVersion(): Promise<void>;
 
   // NOTE: These are only used in our e2e test app!
   simulate: {
@@ -1286,16 +1307,6 @@ function splitFileIntoParts(file: File) {
   }
 
   return parts;
-}
-
-export class CommentsApiError extends Error {
-  constructor(
-    public message: string,
-    public status: number,
-    public details?: JsonObject
-  ) {
-    super(message);
-  }
 }
 
 /**
@@ -1596,135 +1607,99 @@ export function createRoom<
     comments: makeEventSource<CommentsEventServerMsg>(),
   };
 
-  async function fetchClientApi(
-    endpoint: URLSafeString,
-    authValue: AuthValue,
-    options?: RequestInit,
-    params?: QueryParams
-  ) {
-    if (!endpoint.startsWith("/v2/c/rooms/")) {
-      raise("Expected a /v2/c/rooms/* endpoint");
-    }
+  const fetchPolyfill =
+    config.polyfills?.fetch ||
+    /* istanbul ignore next */ globalThis.fetch?.bind(globalThis);
 
-    const url = urljoin(config.baseUrl, endpoint, params);
-    const fetcher = config.polyfills?.fetch || /* istanbul ignore next */ fetch;
-    return await fetcher(url, {
-      ...options,
-      headers: {
-        ...options?.headers,
-        Authorization: `Bearer ${getBearerTokenFromAuthValue(authValue)}`,
-        "X-LB-Client": PKG_VERSION || "dev",
-      },
-    });
-  }
-
-  async function streamFetch(authValue: AuthValue, roomId: string) {
-    return fetchClientApi(url`/v2/c/rooms/${roomId}/storage`, authValue, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-  }
-
-  async function httpPostToRoom(
-    endpoint: "/send-message" | "/text-metadata",
-    body: JsonObject
-  ) {
-    if (!managedSocket.authValue) {
-      throw new Error("Not authorized");
-    }
-
-    return fetchClientApi(
-      endpoint === "/send-message"
-        ? url`/v2/c/rooms/${config.roomId}/send-message`
-        : url`/v2/c/rooms/${config.roomId}/text-metadata`,
-      managedSocket.authValue,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      }
-    );
-  }
+  //
+  // There are effectively two "clients" making requests.
+  //
+  // When making calls with HTTP client 1, it will try to read the current
+  // token from the active WebSocket connection to the room.
+  //
+  // When making calls with HTTP client 2, it will always call
+  // `delegates.authenticate()` to obtain the auth header.
+  //
+  // TODO: Ideally we would consolidate these two.
+  //
+  const httpClient1 = new HttpClient(config.baseUrl, fetchPolyfill, () =>
+    Promise.resolve(managedSocket.authValue ?? raise("Not authorized"))
+  );
+  const httpClient2 = new HttpClient(config.baseUrl, fetchPolyfill, () =>
+    // TODO: Use the right scope
+    delegates.authenticate()
+  );
 
   async function createTextMention(userId: string, mentionId: string) {
-    if (!managedSocket.authValue) {
-      throw new Error("Not authorized");
-    }
-
-    return fetchClientApi(
-      url`/v2/c/rooms/${config.roomId}/text-mentions`,
-      managedSocket.authValue,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId,
-          mentionId,
-        }),
-      }
-    );
+    await httpClient1.rawPost(url`/v2/c/rooms/${config.roomId}/text-mentions`, {
+      userId,
+      mentionId,
+    });
   }
 
   async function deleteTextMention(mentionId: string) {
-    if (!managedSocket.authValue) {
-      throw new Error("Not authorized");
-    }
-
-    return fetchClientApi(
-      url`/v2/c/rooms/${config.roomId}/text-mentions/${mentionId}`,
-      managedSocket.authValue,
-      {
-        method: "DELETE",
-      }
+    await httpClient1.rawDelete(
+      url`/v2/c/rooms/${config.roomId}/text-mentions/${mentionId}`
     );
   }
 
   async function reportTextEditor(type: TextEditorType, rootKey: string) {
-    const authValue = await delegates.authenticate();
-    return fetchClientApi(
-      url`/v2/c/rooms/${config.roomId}/text-metadata`,
-      authValue,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type, rootKey }),
-      }
-    );
+    await httpClient2.rawPost(url`/v2/c/rooms/${config.roomId}/text-metadata`, {
+      type,
+      rootKey,
+    });
   }
 
   async function listTextVersions() {
-    const authValue = await delegates.authenticate();
-    return fetchClientApi(
-      url`/v2/c/rooms/${config.roomId}/versions`,
-      authValue,
-      {
-        method: "GET",
-      }
+    const result = await httpClient2.get<{
+      versions: DateToString<HistoryVersion>[];
+      meta: {
+        requestedAt: string;
+      };
+    }>(url`/v2/c/rooms/${config.roomId}/versions`);
+
+    return {
+      versions: result.versions.map(({ createdAt, ...version }) => {
+        return {
+          createdAt: new Date(createdAt),
+          ...version,
+        };
+      }),
+      requestedAt: new Date(result.meta.requestedAt),
+    };
+  }
+
+  async function listTextVersionsSince(options: ListTextVersionsSinceOptions) {
+    const result = await httpClient2.get<{
+      versions: DateToString<HistoryVersion>[];
+      meta: {
+        requestedAt: string;
+      };
+    }>(
+      url`/v2/c/rooms/${config.roomId}/versions/delta`,
+      { since: options.since.toISOString() },
+      { signal: options.signal }
     );
+
+    return {
+      versions: result.versions.map(({ createdAt, ...version }) => {
+        return {
+          createdAt: new Date(createdAt),
+          ...version,
+        };
+      }),
+      requestedAt: new Date(result.meta.requestedAt),
+    };
   }
 
   async function getTextVersion(versionId: string) {
-    const authValue = await delegates.authenticate();
-    return fetchClientApi(
-      url`/v2/c/rooms/${config.roomId}/y-version/${versionId}`,
-      authValue,
-      { method: "GET" }
+    return httpClient2.rawGet(
+      url`/v2/c/rooms/${config.roomId}/y-version/${versionId}`
     );
   }
 
   async function createTextVersion() {
-    const authValue = await delegates.authenticate();
-    return fetchClientApi(
-      url`/v2/c/rooms/${config.roomId}/version`,
-      authValue,
-      { method: "POST" }
-    );
+    await httpClient2.rawPost(url`/v2/c/rooms/${config.roomId}/version`);
   }
 
   function sendMessages(messages: ClientMsg<P, E>[]) {
@@ -1735,13 +1710,16 @@ export function createRoom<
       // if this turns out to be expensive, we could just guess with a lower value.
       const size = new TextEncoder().encode(serializedPayload).length;
       if (size > MAX_SOCKET_MESSAGE_SIZE) {
-        void httpPostToRoom("/send-message", { nonce, messages }).then(
-          (resp) => {
+        void httpClient1
+          .rawPost(url`/v2/c/rooms/${config.roomId}/send-message`, {
+            nonce,
+            messages,
+          })
+          .then((resp) => {
             if (!resp.ok && resp.status === 403) {
               managedSocket.reconnect();
             }
-          }
-        );
+          });
         console.warn(
           "Message was too large for websockets and sent over HTTP instead"
         );
@@ -2559,11 +2537,11 @@ export function createRoom<
   }
 
   async function streamStorage() {
-    if (!managedSocket.authValue) {
-      return;
-    }
     // TODO: Handle potential race conditions where the room get disconnected while the request is pending
-    const result = await streamFetch(managedSocket.authValue, config.roomId);
+    if (!managedSocket.authValue) return;
+    const result = await httpClient1.rawGet(
+      url`/v2/c/rooms/${config.roomId}/storage`
+    );
     const items = (await result.json()) as IdTuple<SerializedCrdt>[];
     processInitialStorage({ type: ServerMsgCode.INITIAL_STORAGE_STATE, items });
   }
@@ -2857,104 +2835,34 @@ export function createRoom<
     comments: eventHub.comments.observable,
   };
 
-  async function fetchCommentsApi(
-    endpoint: URLSafeString,
-    params?: QueryParams,
-    options?: RequestInit
-  ): Promise<Response> {
-    // TODO: Use the right scope
-    const authValue = await delegates.authenticate();
-    return fetchClientApi(endpoint, authValue, options, params);
-  }
-
-  async function fetchCommentsJson<T>(
-    endpoint: URLSafeString,
-    options?: RequestInit,
-    params?: QueryParams
-  ): Promise<T> {
-    const response = await fetchCommentsApi(endpoint, params, options);
-
-    if (!response.ok) {
-      if (response.status >= 400 && response.status < 600) {
-        let error: CommentsApiError;
-
-        try {
-          const errorBody = (await response.json()) as { message: string };
-
-          error = new CommentsApiError(
-            errorBody.message,
-            response.status,
-            errorBody
-          );
-        } catch {
-          error = new CommentsApiError(response.statusText, response.status);
-        }
-
-        throw error;
-      }
-    }
-
-    let body;
-
-    try {
-      body = (await response.json()) as T;
-    } catch {
-      body = {} as T;
-    }
-
-    return body;
-  }
-
   async function getThreadsSince(options: GetThreadsSinceOptions) {
-    const response = await fetchCommentsApi(
+    const result = await httpClient2.get<{
+      data: ThreadDataPlain<M>[];
+      inboxNotifications: InboxNotificationDataPlain[];
+      deletedThreads: ThreadDeleteInfoPlain[];
+      deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+      meta: {
+        requestedAt: string;
+      };
+    }>(
       url`/v2/c/rooms/${config.roomId}/threads/delta`,
       { since: options?.since?.toISOString() },
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
+      { signal: options.signal }
     );
 
-    if (response.ok) {
-      const json = await (response.json() as Promise<{
-        data: ThreadDataPlain<M>[];
-        inboxNotifications: InboxNotificationDataPlain[];
-        deletedThreads: ThreadDeleteInfoPlain[];
-        deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
-        meta: {
-          requestedAt: string;
-        };
-      }>);
-
-      return {
-        threads: {
-          updated: json.data.map(convertToThreadData),
-          deleted: json.deletedThreads.map(convertToThreadDeleteInfo),
-        },
-        inboxNotifications: {
-          updated: json.inboxNotifications.map(convertToInboxNotificationData),
-          deleted: json.deletedInboxNotifications.map(
-            convertToInboxNotificationDeleteInfo
-          ),
-        },
-        requestedAt: new Date(json.meta.requestedAt),
-      };
-    } else if (response.status === 404) {
-      return {
-        threads: {
-          updated: [],
-          deleted: [],
-        },
-        inboxNotifications: {
-          updated: [],
-          deleted: [],
-        },
-        requestedAt: new Date(),
-      };
-    } else {
-      throw new Error("There was an error while getting threads.");
-    }
+    return {
+      threads: {
+        updated: result.data.map(convertToThreadData),
+        deleted: result.deletedThreads.map(convertToThreadDeleteInfo),
+      },
+      inboxNotifications: {
+        updated: result.inboxNotifications.map(convertToInboxNotificationData),
+        deleted: result.deletedInboxNotifications.map(
+          convertToInboxNotificationDeleteInfo
+        ),
+      },
+      requestedAt: new Date(result.meta.requestedAt),
+    };
   }
 
   async function getThreads(options?: GetThreadsOptions<M>) {
@@ -2966,52 +2874,33 @@ export function createRoom<
 
     const PAGE_SIZE = 50;
 
-    const response = await fetchCommentsApi(
-      url`/v2/c/rooms/${config.roomId}/threads`,
-      {
-        cursor: options?.cursor,
-        query,
-        limit: PAGE_SIZE,
-      },
-      { headers: { "Content-Type": "application/json" } }
-    );
-
-    if (response.ok) {
-      const json = await (response.json() as Promise<{
-        data: ThreadDataPlain<M>[];
-        inboxNotifications: InboxNotificationDataPlain[];
-        deletedThreads: ThreadDeleteInfoPlain[];
-        deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
-        meta: {
-          requestedAt: string;
-          nextCursor: string | null;
-        };
-      }>);
-
-      return {
-        threads: json.data.map(convertToThreadData),
-        inboxNotifications: json.inboxNotifications.map(
-          convertToInboxNotificationData
-        ),
-        nextCursor: json.meta.nextCursor,
-        requestedAt: new Date(json.meta.requestedAt),
+    const result = await httpClient2.get<{
+      data: ThreadDataPlain<M>[];
+      inboxNotifications: InboxNotificationDataPlain[];
+      deletedThreads: ThreadDeleteInfoPlain[];
+      deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+      meta: {
+        requestedAt: string;
+        nextCursor: string | null;
       };
-    } else if (response.status === 404) {
-      return {
-        threads: [],
-        inboxNotifications: [],
-        deletedThreads: [],
-        deletedInboxNotifications: [],
-        nextCursor: null,
-        requestedAt: new Date(),
-      };
-    } else {
-      throw new Error("There was an error while getting threads.");
-    }
+    }>(url`/v2/c/rooms/${config.roomId}/threads`, {
+      cursor: options?.cursor,
+      query,
+      limit: PAGE_SIZE,
+    });
+
+    return {
+      threads: result.data.map(convertToThreadData),
+      inboxNotifications: result.inboxNotifications.map(
+        convertToInboxNotificationData
+      ),
+      nextCursor: result.meta.nextCursor,
+      requestedAt: new Date(result.meta.requestedAt),
+    };
   }
 
   async function getThread(threadId: string) {
-    const response = await fetchCommentsApi(
+    const response = await httpClient2.rawGet(
       url`/v2/c/rooms/${config.roomId}/thread-with-notification/${threadId}`
     );
 
@@ -3051,22 +2940,16 @@ export function createRoom<
     body: CommentBody;
     attachmentIds?: string[];
   }) {
-    const thread = await fetchCommentsJson<ThreadDataPlain<M>>(
+    const thread = await httpClient2.post<ThreadDataPlain<M>>(
       url`/v2/c/rooms/${config.roomId}/threads`,
       {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+        id: threadId,
+        comment: {
+          id: commentId,
+          body,
+          attachmentIds,
         },
-        body: JSON.stringify({
-          id: threadId,
-          comment: {
-            id: commentId,
-            body,
-            attachmentIds,
-          },
-          metadata,
-        }),
+        metadata,
       }
     );
 
@@ -3074,9 +2957,8 @@ export function createRoom<
   }
 
   async function deleteThread(threadId: string) {
-    await fetchCommentsJson(
-      url`/v2/c/rooms/${config.roomId}/threads/${threadId}`,
-      { method: "DELETE" }
+    await httpClient2.delete(
+      url`/v2/c/rooms/${config.roomId}/threads/${threadId}`
     );
   }
 
@@ -3088,29 +2970,21 @@ export function createRoom<
     metadata: Patchable<M>;
     threadId: string;
   }) {
-    return await fetchCommentsJson<M>(
+    return await httpClient2.post<M>(
       url`/v2/c/rooms/${config.roomId}/threads/${threadId}/metadata`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(metadata),
-      }
+      metadata
     );
   }
 
   async function markThreadAsResolved(threadId: string) {
-    await fetchCommentsJson(
-      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/mark-as-resolved`,
-      { method: "POST" }
+    await httpClient2.post(
+      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/mark-as-resolved`
     );
   }
 
   async function markThreadAsUnresolved(threadId: string) {
-    await fetchCommentsJson(
-      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/mark-as-unresolved`,
-      { method: "POST" }
+    await httpClient2.post(
+      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/mark-as-unresolved`
     );
   }
 
@@ -3125,18 +2999,12 @@ export function createRoom<
     body: CommentBody;
     attachmentIds?: string[];
   }) {
-    const comment = await fetchCommentsJson<CommentDataPlain>(
+    const comment = await httpClient2.post<CommentDataPlain>(
       url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments`,
       {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id: commentId,
-          body,
-          attachmentIds,
-        }),
+        id: commentId,
+        body,
+        attachmentIds,
       }
     );
 
@@ -3154,17 +3022,11 @@ export function createRoom<
     body: CommentBody;
     attachmentIds?: string[];
   }) {
-    const comment = await fetchCommentsJson<CommentDataPlain>(
+    const comment = await httpClient2.post<CommentDataPlain>(
       url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}`,
       {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          body,
-          attachmentIds,
-        }),
+        body,
+        attachmentIds,
       }
     );
 
@@ -3179,9 +3041,8 @@ export function createRoom<
     threadId: string;
     commentId: string;
   }) {
-    await fetchCommentsJson(
-      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}`,
-      { method: "DELETE" }
+    await httpClient2.delete(
+      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}`
     );
   }
 
@@ -3194,15 +3055,9 @@ export function createRoom<
     commentId: string;
     emoji: string;
   }) {
-    const reaction = await fetchCommentsJson<CommentUserReactionPlain>(
+    const reaction = await httpClient2.post<CommentUserReactionPlain>(
       url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}/reactions`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ emoji }),
-      }
+      { emoji }
     );
 
     return convertToCommentUserReaction(reaction);
@@ -3217,9 +3072,8 @@ export function createRoom<
     commentId: string;
     emoji: string;
   }) {
-    await fetchCommentsJson<CommentData>(
-      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}/reactions/${emoji}`,
-      { method: "DELETE" }
+    await httpClient2.delete<CommentDataPlain>(
+      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}/reactions/${emoji}`
     );
   }
 
@@ -3256,7 +3110,7 @@ export function createRoom<
         throw abortError;
       }
 
-      if (err instanceof CommentsApiError && err.status === 413) {
+      if (err instanceof HttpError && err.status === 413) {
         throw err;
       }
 
@@ -3267,16 +3121,11 @@ export function createRoom<
       // If the file is small enough, upload it in a single request
       return autoRetry(
         () =>
-          fetchCommentsJson<CommentAttachment>(
+          httpClient2.putBlob<CommentAttachment>(
             url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/upload/${encodeURIComponent(attachment.name)}`,
-            {
-              method: "PUT",
-              body: attachment.file,
-              signal: abortSignal,
-            },
-            {
-              fileSize: attachment.size,
-            }
+            attachment.file,
+            { fileSize: attachment.size },
+            { signal: abortSignal }
           ),
         RETRY_ATTEMPTS,
         RETRY_DELAYS,
@@ -3293,18 +3142,14 @@ export function createRoom<
       // Create a multi-part upload
       const createMultiPartUpload = await autoRetry(
         () =>
-          fetchCommentsJson<{
+          httpClient2.post<{
             uploadId: string;
             key: string;
           }>(
             url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/multipart/${encodeURIComponent(attachment.name)}`,
-            {
-              method: "POST",
-              signal: abortSignal,
-            },
-            {
-              fileSize: attachment.size,
-            }
+            undefined,
+            { signal: abortSignal },
+            { fileSize: attachment.size }
           ),
         RETRY_ATTEMPTS,
         RETRY_DELAYS,
@@ -3334,16 +3179,14 @@ export function createRoom<
             uploadedPartsPromises.push(
               autoRetry(
                 () =>
-                  fetchCommentsJson<{
+                  httpClient2.putBlob<{
                     partNumber: number;
                     etag: string;
                   }>(
                     url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/multipart/${createMultiPartUpload.uploadId}/${String(partNumber)}`,
-                    {
-                      method: "PUT",
-                      body: part,
-                      signal: abortSignal,
-                    }
+                    part,
+                    undefined,
+                    { signal: abortSignal }
                   ),
                 RETRY_ATTEMPTS,
                 RETRY_DELAYS,
@@ -3365,16 +3208,10 @@ export function createRoom<
           (a, b) => a.partNumber - b.partNumber
         );
 
-        return fetchCommentsJson<CommentAttachment>(
+        return httpClient2.post<CommentAttachment>(
           url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/multipart/${uploadId}/complete`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ parts: sortedUploadedParts }),
-            signal: abortSignal,
-          }
+          { parts: sortedUploadedParts },
+          { signal: abortSignal }
         );
       } catch (error) {
         if (
@@ -3385,12 +3222,8 @@ export function createRoom<
         ) {
           try {
             // Abort the multi-part upload if it was created
-            await fetchCommentsApi(
-              url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/multipart/${uploadId}`,
-              undefined,
-              {
-                method: "DELETE",
-              }
+            await httpClient2.rawDelete(
+              url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/multipart/${uploadId}`
             );
           } catch (error) {
             // Ignore the error, we are probably offline
@@ -3403,16 +3236,11 @@ export function createRoom<
   }
 
   async function getAttachmentUrls(attachmentIds: string[]) {
-    const { urls } = await fetchCommentsJson<{ urls: (string | null)[] }>(
-      url`/v2/c/rooms/${config.roomId}/attachments/presigned-urls`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ attachmentIds }),
-      }
-    );
+    const { urls } = await httpClient2.post<{
+      urls: (string | null)[];
+    }>(url`/v2/c/rooms/${config.roomId}/attachments/presigned-urls`, {
+      attachmentIds,
+    });
 
     return urls;
   }
@@ -3437,50 +3265,19 @@ export function createRoom<
     return batchedGetAttachmentUrls.get(attachmentId);
   }
 
-  async function fetchNotificationsJson<T>(
+  async function fetchNotificationsJson<T extends JsonObject>(
     endpoint: URLSafeString,
     options?: RequestInit
   ): Promise<T> {
-    const authValue = await delegates.authenticate();
-    const response = await fetchClientApi(endpoint, authValue, options);
-
-    if (!response.ok) {
-      if (response.status >= 400 && response.status < 600) {
-        let error: NotificationsApiError;
-
-        try {
-          const errorBody = (await response.json()) as { message: string };
-
-          error = new NotificationsApiError(
-            errorBody.message,
-            response.status,
-            errorBody
-          );
-        } catch {
-          error = new NotificationsApiError(
-            response.statusText,
-            response.status
-          );
-        }
-
-        throw error;
-      }
-    }
-
-    let body;
-
-    try {
-      body = (await response.json()) as T;
-    } catch {
-      body = {} as T;
-    }
-
-    return body;
+    return await httpClient2.get<T>(endpoint, undefined, options);
   }
 
-  function getNotificationSettings(): Promise<RoomNotificationSettings> {
+  function getNotificationSettings(
+    options?: GetNotificationSettingsOptions
+  ): Promise<RoomNotificationSettings> {
     return fetchNotificationsJson<RoomNotificationSettings>(
-      url`/v2/c/rooms/${config.roomId}/notification-settings`
+      url`/v2/c/rooms/${config.roomId}/notification-settings`,
+      { signal: options?.signal }
     );
   }
 
@@ -3492,9 +3289,6 @@ export function createRoom<
       {
         method: "POST",
         body: JSON.stringify(settings),
-        headers: {
-          "Content-Type": "application/json",
-        },
       }
     );
   }
@@ -3510,9 +3304,6 @@ export function createRoom<
       url`/v2/c/rooms/${config.roomId}/inbox-notifications/read`,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({ inboxNotificationIds }),
       }
     );
@@ -3559,6 +3350,8 @@ export function createRoom<
         deleteTextMention,
         // list versions of the document
         listTextVersions,
+        // List versions of the document since the specified date
+        listTextVersionsSince,
         // get a specific version
         getTextVersion,
         // create a version

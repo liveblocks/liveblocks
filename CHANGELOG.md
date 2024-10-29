@@ -1,3 +1,40 @@
+## 2.10.1
+
+### `@liveblocks/client`
+
+- Internal refactorings and code cleanup across various parts of the client's
+  inner workings
+
+### `@liveblocks/react`
+
+- Implement automatic retry for initial load of inbox notifications, user
+  threads, room threads, room versions, or room notification settings—except
+  when encountering a 4xx error.
+- Background tabs will no longer poll threads, notification, room versions or
+  room notification settings.
+- Fix incorrect suspense export for `useRoomNotificationSettings` hook.
+
+## 2.10.0
+
+### `@liveblocks/client`
+
+- Add new methods under `client.resolvers.*` to invalidate the cache of
+  `resolveUsers`, `resolveRoomsInfo`, and `resolveMentionSuggestions`.
+- In storage update notifications (using
+  `room.subscribe(root, ..., { isDeep: true })`), all LiveList deletion updates
+  will now also include the item that was deleted (#2008)
+
+### `@liveblocks/react-ui`
+
+- Improve and fix pasting rich text into the composer.
+- Improve mention suggestions click behavior.
+
+## 2.9.2
+
+### `@liveblocks/node`
+
+- Detect invalid chars in secret keys and throw a more helpful error message
+
 ## 2.9.1
 
 ### `@liveblocks/client`

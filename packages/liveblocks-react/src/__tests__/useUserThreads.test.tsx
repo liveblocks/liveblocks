@@ -1,7 +1,11 @@
 import "@testing-library/jest-dom";
 
-import type { InboxNotificationData, ThreadData } from "@liveblocks/core";
-import { nanoid } from "@liveblocks/core";
+import type {
+  InboxNotificationData,
+  ThreadData,
+  ThreadDataWithDeleteInfo,
+} from "@liveblocks/core";
+import { HttpError, nanoid } from "@liveblocks/core";
 import type { AST } from "@liveblocks/query-parser";
 import { QueryParser } from "@liveblocks/query-parser";
 import { fireEvent, renderHook, screen, waitFor } from "@testing-library/react";
@@ -73,6 +77,24 @@ function mockGetUserThreads(
   >
 ) {
   return rest.get("https://api.liveblocks.io/v2/c/threads", resolver);
+}
+
+function mockGetUserThreadsDelta(
+  resolver: ResponseResolver<
+    RestRequest<never, { roomId: string }>,
+    RestContext,
+    {
+      threads: ThreadData[];
+      inboxNotifications: InboxNotificationData[];
+      deletedInboxNotifications: InboxNotificationData[];
+      deletedThreads: ThreadDataWithDeleteInfo[];
+      meta: {
+        requestedAt: string; // ISO date
+      };
+    }
+  >
+) {
+  return rest.get("https://api.liveblocks.io/v2/c/threads/delta", resolver);
 }
 
 describe("useUserThreads", () => {
@@ -348,6 +370,39 @@ describe("useThreads: error", () => {
 
     unmount();
   });
+
+  test("should not retry if a 403 Forbidden response is received from server", async () => {
+    server.use(
+      mockGetUserThreads((_req, res, ctx) => {
+        // Return a 403 status from the server for the initial fetch
+        return res(ctx.status(403));
+      })
+    );
+
+    const {
+      liveblocks: { LiveblocksProvider, useUserThreads_experimental },
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(
+      () => useUserThreads_experimental(),
+      {
+        wrapper: ({ children }) => (
+          <LiveblocksProvider>{children}</LiveblocksProvider>
+        ),
+      }
+    );
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    await waitFor(() => {
+      expect(result.current).toEqual({
+        isLoading: false,
+        error: expect.any(HttpError),
+      });
+    });
+
+    unmount();
+  });
 });
 
 describe("useThreadsSuspense", () => {
@@ -430,6 +485,19 @@ describe("useUserThreadsSuspense: error", () => {
       mockGetUserThreads((_req, res, ctx) => {
         getThreadsReqCount++;
         return res(ctx.status(500));
+      }),
+      mockGetUserThreadsDelta((_req, res, ctx) => {
+        return res(
+          ctx.json({
+            threads: [],
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
       })
     );
 

@@ -2,9 +2,9 @@ import {
   ClientSideSuspense,
   createLiveblocksContext,
   createRoomContext,
-  getUmbrellaStoreForClient,
   useClient,
 } from "@liveblocks/react";
+import { getUmbrellaStoreForClient } from "@liveblocks/react/_private";
 import {
   Composer,
   InboxNotification,
@@ -121,7 +121,7 @@ export default function Home() {
 }
 
 function useInboxNotificationsForThisPage() {
-  const { inboxNotifications: allInboxNotifications } = useInboxNotifications();
+  const { inboxNotifications } = useInboxNotifications();
 
   // Filter down inbox notifications to just the notifications from this room,
   // and only the ones that happened since the page was loaded. If we didn't
@@ -130,14 +130,12 @@ function useInboxNotificationsForThisPage() {
   const roomId = getRoomFromUrl();
   const [pageLoadTimestamp] = React.useState(() => Date.now());
 
-  const inboxNotifications = allInboxNotifications.filter(
+  return inboxNotifications.filter(
     (ibn) =>
       ibn.kind === "thread" &&
       ibn.roomId === roomId &&
       ibn.notifiedAt.getTime() > pageLoadTimestamp
   );
-
-  return inboxNotifications;
 }
 
 function TopPart() {
@@ -198,9 +196,9 @@ function useHasOptimisticUpdates() {
   // eslint-disable-next-line @typescript-eslint/unbound-method
   const getter = store._hasOptimisticUpdates;
   return React.useSyncExternalStore(
-    // The store._subscribeOptimisticUpdates subscriber is guaranteed to be bound, so it's fine
+    // The store.subscribe subscriber is guaranteed to be bound, so it's fine
     // eslint-disable-next-line @typescript-eslint/unbound-method
-    store._subscribeOptimisticUpdates,
+    store.subscribe,
     getter
   );
 }

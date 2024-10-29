@@ -6,13 +6,14 @@ import {
 } from "@lexical/utils";
 import { shallow } from "@liveblocks/core";
 import {
-  CreateThreadError,
-  getUmbrellaStoreForClient,
-  selectThreads,
   useClient,
   useCommentsErrorListener,
   useRoom,
 } from "@liveblocks/react";
+import {
+  CreateThreadError,
+  getUmbrellaStoreForClient,
+} from "@liveblocks/react/_private";
 import type { BaseSelection, NodeKey, NodeMutation } from "lexical";
 import {
   $getNodeByKey,
@@ -106,18 +107,15 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
 
   const roomId = room.id;
   const threads = useSyncExternalStoreWithSelector(
-    store.subscribeThreads,
+    store.subscribe,
     store.getFullState,
     store.getFullState,
     useCallback(
       () =>
-        selectThreads(store.getFullState(), {
-          roomId,
-          orderBy: "age",
-          query: {
-            resolved: false,
-          },
-        }).map((thread) => thread.id),
+        store
+          .getFullState()
+          .threadsDB.findMany(roomId, { resolved: false }, "asc")
+          .map((thread) => thread.id),
       [roomId, store]
     ),
     shallow
@@ -220,18 +218,15 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       const selection = $getSelection();
 
       const threadIds = $getThreadIds(selection).filter((id) => {
-        return selectThreads(store.getFullState(), {
-          roomId,
-          orderBy: "age",
-          query: {
-            resolved: false,
-          },
-        }).some((thread) => thread.id === id);
+        return store
+          .getFullState()
+          .threadsDB.findMany(roomId, { resolved: false }, "asc")
+          .some((thread) => thread.id === id);
       });
       setActiveThreads(threadIds);
     }
 
-    const unsubscribeCache = store.subscribeThreads(() => {
+    const unsubscribeCache = store.subscribe(() => {
       editor.getEditorState().read($onStateRead);
     });
 

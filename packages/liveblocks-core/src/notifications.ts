@@ -1,22 +1,20 @@
-import { type GetThreadsOptions, objectToQuery } from ".";
+import { objectToQuery } from ".";
 import type { AuthManager } from "./auth-manager";
 import type { NotificationsApi } from "./client";
-import { NotificationsApiError } from "./client";
 import {
   convertToInboxNotificationData,
   convertToInboxNotificationDeleteInfo,
   convertToThreadData,
   convertToThreadDeleteInfo,
 } from "./convert-plain-data";
-import { getBearerTokenFromAuthValue } from "./http-client";
+import { HttpClient } from "./http-client";
 import { Batch } from "./lib/batch";
 import type { Store } from "./lib/create-store";
-import type { QueryParams, URLSafeString } from "./lib/url";
-import { url, urljoin } from "./lib/url";
-import { raise } from "./lib/utils";
+import { url } from "./lib/url";
 import { TokenKind } from "./protocol/AuthToken";
 import type {
   BaseMetadata,
+  QueryMetadata,
   ThreadData,
   ThreadDataPlain,
   ThreadDeleteInfo,
@@ -28,27 +26,49 @@ import type {
   InboxNotificationDeleteInfo,
   InboxNotificationDeleteInfoPlain,
 } from "./protocol/InboxNotifications";
-import type { GetThreadsSinceOptions } from "./room";
-import { PKG_VERSION } from "./version";
+
+export type GetInboxNotificationsOptions = {
+  cursor?: string;
+};
+
+export type GetInboxNotificationsSinceOptions = {
+  since: Date;
+  signal?: AbortSignal;
+};
+
+export type GetUserThreadsOptions<M extends BaseMetadata> = {
+  cursor?: string;
+  query?: {
+    resolved?: boolean;
+    metadata?: Partial<QueryMetadata<M>>;
+  };
+};
+
+export type GetUserThreadsSinceOptions = {
+  since: Date;
+  signal?: AbortSignal;
+};
 
 export function createNotificationsApi<M extends BaseMetadata>({
   baseUrl,
   authManager,
   currentUserIdStore,
-  fetcher,
+  fetchPolyfill,
 }: {
   baseUrl: string;
   authManager: AuthManager;
   currentUserIdStore: Store<string | null>;
-  fetcher: (url: string, init?: RequestInit) => Promise<Response>;
+  fetchPolyfill: typeof fetch;
 }): NotificationsApi<M> & {
-  getUserThreads_experimental(options?: GetThreadsOptions<M>): Promise<{
+  getUserThreads_experimental(options?: GetUserThreadsOptions<M>): Promise<{
     threads: ThreadData<M>[];
     inboxNotifications: InboxNotificationData[];
     nextCursor: string | null;
     requestedAt: Date;
   }>;
-  getUserThreadsSince_experimental(options: GetThreadsSinceOptions): Promise<{
+  getUserThreadsSince_experimental(
+    options: GetUserThreadsSinceOptions
+  ): Promise<{
     inboxNotifications: {
       updated: InboxNotificationData[];
       deleted: InboxNotificationDeleteInfo[];
@@ -60,15 +80,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
     requestedAt: Date;
   }>;
 } {
-  async function fetchJson<T>(
-    endpoint: URLSafeString,
-    options?: RequestInit,
-    params?: QueryParams
-  ): Promise<T> {
-    if (!endpoint.startsWith("/v2/c/")) {
-      raise("Expected a /v2/c/* endpoint");
-    }
-
+  async function getAuthValue() {
     const authValue = await authManager.getAuthValue({
       requestedScope: "comments:read",
     });
@@ -78,64 +90,27 @@ export function createNotificationsApi<M extends BaseMetadata>({
       authValue.token.parsed.k === TokenKind.ACCESS_TOKEN
     ) {
       const userId = authValue.token.parsed.uid;
+
+      // NOTE: currentUserIdStore is updated here as a side-effect!
       currentUserIdStore.set(() => userId);
     }
 
-    const url = urljoin(baseUrl, endpoint, params);
-    const response = await fetcher(url.toString(), {
-      ...options,
-      headers: {
-        ...options?.headers,
-        Authorization: `Bearer ${getBearerTokenFromAuthValue(authValue)}`,
-        "X-LB-Client": PKG_VERSION || "dev",
-      },
-    });
-
-    if (!response.ok) {
-      if (response.status >= 400 && response.status < 600) {
-        let error: NotificationsApiError;
-
-        try {
-          const errorBody = (await response.json()) as { message: string };
-
-          error = new NotificationsApiError(
-            errorBody.message,
-            response.status,
-            errorBody
-          );
-        } catch {
-          error = new NotificationsApiError(
-            response.statusText,
-            response.status
-          );
-        }
-
-        throw error;
-      }
-    }
-
-    let body;
-
-    try {
-      body = (await response.json()) as T;
-    } catch {
-      body = {} as T;
-    }
-
-    return body;
+    return authValue;
   }
 
-  async function getInboxNotifications(options?: { cursor?: string }) {
+  const httpClient = new HttpClient(baseUrl, fetchPolyfill, getAuthValue);
+
+  async function getInboxNotifications(options?: GetInboxNotificationsOptions) {
     const PAGE_SIZE = 50;
 
-    const json = await fetchJson<{
+    const json = await httpClient.get<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
       meta: {
         requestedAt: string;
         nextCursor: string | null;
       };
-    }>(url`/v2/c/inbox-notifications`, undefined, {
+    }>(url`/v2/c/inbox-notifications`, {
       cursor: options?.cursor,
       limit: PAGE_SIZE,
     });
@@ -150,8 +125,10 @@ export function createNotificationsApi<M extends BaseMetadata>({
     };
   }
 
-  async function getInboxNotificationsSince(since: Date) {
-    const json = await fetchJson<{
+  async function getInboxNotificationsSince(
+    options: GetInboxNotificationsSinceOptions
+  ) {
+    const json = await httpClient.get<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
       deletedThreads: ThreadDeleteInfoPlain[];
@@ -159,9 +136,11 @@ export function createNotificationsApi<M extends BaseMetadata>({
       meta: {
         requestedAt: string;
       };
-    }>(url`/v2/c/inbox-notifications/delta`, undefined, {
-      since: since.toISOString(),
-    });
+    }>(
+      url`/v2/c/inbox-notifications/delta`,
+      { since: options.since.toISOString() },
+      { signal: options?.signal }
+    );
     return {
       inboxNotifications: {
         updated: json.inboxNotifications.map(convertToInboxNotificationData),
@@ -178,30 +157,21 @@ export function createNotificationsApi<M extends BaseMetadata>({
   }
 
   async function getUnreadInboxNotificationsCount() {
-    const { count } = await fetchJson<{
-      count: number;
-    }>(url`/v2/c/inbox-notifications/count`);
-
+    const { count } = await httpClient.get<{ count: number }>(
+      url`/v2/c/inbox-notifications/count`
+    );
     return count;
   }
 
   async function markAllInboxNotificationsAsRead() {
-    await fetchJson(url`/v2/c/inbox-notifications/read`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ inboxNotificationIds: "all" }),
+    await httpClient.post(url`/v2/c/inbox-notifications/read`, {
+      inboxNotificationIds: "all",
     });
   }
 
   async function markInboxNotificationsAsRead(inboxNotificationIds: string[]) {
-    await fetchJson(url`/v2/c/inbox-notifications/read`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ inboxNotificationIds }),
+    await httpClient.post(url`/v2/c/inbox-notifications/read`, {
+      inboxNotificationIds,
     });
   }
 
@@ -221,18 +191,18 @@ export function createNotificationsApi<M extends BaseMetadata>({
   }
 
   async function deleteAllInboxNotifications() {
-    await fetchJson(url`/v2/c/inbox-notifications`, {
-      method: "DELETE",
-    });
+    await httpClient.delete(url`/v2/c/inbox-notifications`);
   }
 
   async function deleteInboxNotification(inboxNotificationId: string) {
-    await fetchJson(url`/v2/c/inbox-notifications/${inboxNotificationId}`, {
-      method: "DELETE",
-    });
+    await httpClient.delete(
+      url`/v2/c/inbox-notifications/${inboxNotificationId}`
+    );
   }
 
-  async function getUserThreads_experimental(options: GetThreadsOptions<M>) {
+  async function getUserThreads_experimental(
+    options: GetUserThreadsOptions<M>
+  ) {
     let query: string | undefined;
 
     if (options?.query) {
@@ -241,7 +211,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
 
     const PAGE_SIZE = 50;
 
-    const json = await fetchJson<{
+    const json = await httpClient.get<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
       deletedThreads: ThreadDeleteInfoPlain[];
@@ -250,7 +220,7 @@ export function createNotificationsApi<M extends BaseMetadata>({
         requestedAt: string;
         nextCursor: string | null;
       };
-    }>(url`/v2/c/threads`, undefined, {
+    }>(url`/v2/c/threads`, {
       cursor: options.cursor,
       query,
       limit: PAGE_SIZE,
@@ -267,9 +237,9 @@ export function createNotificationsApi<M extends BaseMetadata>({
   }
 
   async function getUserThreadsSince_experimental(
-    options: GetThreadsSinceOptions
+    options: GetUserThreadsSinceOptions
   ) {
-    const json = await fetchJson<{
+    const json = await httpClient.get<{
       threads: ThreadDataPlain<M>[];
       inboxNotifications: InboxNotificationDataPlain[];
       deletedThreads: ThreadDeleteInfoPlain[];
@@ -277,9 +247,11 @@ export function createNotificationsApi<M extends BaseMetadata>({
       meta: {
         requestedAt: string;
       };
-    }>(url`/v2/c/threads/delta`, undefined, {
-      since: options.since.toISOString(),
-    });
+    }>(
+      url`/v2/c/threads/delta`,
+      { since: options.since.toISOString() },
+      { signal: options.signal }
+    );
 
     return {
       threads: {

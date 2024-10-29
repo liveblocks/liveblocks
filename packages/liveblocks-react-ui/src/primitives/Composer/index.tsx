@@ -15,6 +15,7 @@ import {
 } from "@floating-ui/react-dom";
 import type { CommentAttachment, CommentBody } from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
+import { useMentionSuggestions } from "@liveblocks/react/_private";
 import { Slot, Slottable } from "@radix-ui/react-slot";
 import type {
   AriaAttributes,
@@ -63,7 +64,6 @@ import {
 
 import { useLiveblocksUIConfig } from "../../config";
 import { FLOATING_ELEMENT_COLLISION_PADDING } from "../../constants";
-import { useMentionSuggestions } from "../../shared";
 import { withAutoFormatting } from "../../slate/plugins/auto-formatting";
 import { withAutoLinks } from "../../slate/plugins/auto-links";
 import { withCustomLinks } from "../../slate/plugins/custom-links";
@@ -76,6 +76,7 @@ import {
   MENTION_CHARACTER,
   withMentions,
 } from "../../slate/plugins/mentions";
+import { withNormalize } from "../../slate/plugins/normalize";
 import { withPaste } from "../../slate/plugins/paste";
 import { getDOMRange } from "../../slate/utils/get-dom-range";
 import { isEmpty as isEditorEmpty } from "../../slate/utils/is-empty";
@@ -158,15 +159,17 @@ function createComposerEditor({
   createAttachments: (files: File[]) => void;
   pasteFilesAsAttachments?: boolean;
 }) {
-  return withMentions(
-    withCustomLinks(
-      withAutoLinks(
-        withAutoFormatting(
-          withEmptyClearFormatting(
-            withPaste(withHistory(withReact(createEditor())), {
-              createAttachments,
-              pasteFilesAsAttachments,
-            })
+  return withNormalize(
+    withMentions(
+      withCustomLinks(
+        withAutoLinks(
+          withAutoFormatting(
+            withEmptyClearFormatting(
+              withPaste(withHistory(withReact(createEditor())), {
+                createAttachments,
+                pasteFilesAsAttachments,
+              })
+            )
           )
         )
       )
@@ -541,7 +544,15 @@ const ComposerSuggestionsListItem = forwardRef<
   ComposerSuggestionsListItemProps
 >(
   (
-    { value, children, onPointerMove, onPointerDown, asChild, ...props },
+    {
+      value,
+      children,
+      onPointerMove,
+      onPointerDown,
+      onClick,
+      asChild,
+      ...props
+    },
     forwardedRef
   ) => {
     const ref = useRef<HTMLLIElement>(null);
@@ -577,21 +588,26 @@ const ComposerSuggestionsListItem = forwardRef<
       (event: PointerEvent<HTMLLIElement>) => {
         onPointerDown?.(event);
 
-        if (!event.isDefaultPrevented()) {
-          const target = event.target as HTMLElement;
+        event.preventDefault();
+        event.stopPropagation();
+      },
+      [onPointerDown]
+    );
 
-          if (target.hasPointerCapture(event.pointerId)) {
-            target.releasePointerCapture(event.pointerId);
-          }
+    const handleClick = useCallback(
+      (event: MouseEvent<HTMLLIElement>) => {
+        onClick?.(event);
 
-          if (event.button === 0 && event.ctrlKey === false) {
-            onItemSelect(value);
+        const wasDefaultPrevented = event.isDefaultPrevented();
 
-            event.preventDefault();
-          }
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (!wasDefaultPrevented) {
+          onItemSelect(value);
         }
       },
-      [onItemSelect, onPointerDown, value]
+      [onClick, onItemSelect, value]
     );
 
     return (
@@ -602,6 +618,7 @@ const ComposerSuggestionsListItem = forwardRef<
         aria-selected={isSelected || undefined}
         onPointerMove={handlePointerMove}
         onPointerDown={handlePointerDown}
+        onClick={handleClick}
         {...props}
         ref={mergedRefs}
       >

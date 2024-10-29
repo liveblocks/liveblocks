@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 
-import { nanoid, wait } from "@liveblocks/core";
+import { HttpError, nanoid, wait } from "@liveblocks/core";
 import {
   act,
   fireEvent,
@@ -13,7 +13,6 @@ import { setupServer } from "msw/node";
 import React, { Suspense } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 
-import { POLLING_INTERVAL } from "../liveblocks";
 import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
 import {
@@ -104,6 +103,19 @@ describe("useInboxNotifications", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+            },
+          })
+        );
+      }),
+      mockGetInboxNotificationsDelta(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            threads: [],
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
             },
           })
         );
@@ -272,12 +284,12 @@ describe("useInboxNotifications", () => {
       umbrellaStore,
     } = createContextsForTest();
 
+    // @ts-expect-error Accessing a private field directly
+    umbrellaStore._rawThreadsDB.upsert(thread1);
+    // @ts-expect-error Accessing a private field directly
+    umbrellaStore._rawThreadsDB.upsert(thread2);
     umbrellaStore.force_set((state) => ({
       ...state,
-      rawThreadsById: {
-        [thread1.id]: thread1,
-        [thread2.id]: thread2,
-      },
       notificationsById: {
         // Explicitly set the order to be reversed to test that the hook sorts the notifications
         [oldInboxNotification.id]: oldInboxNotification,
@@ -342,40 +354,79 @@ describe("useInboxNotifications: error", () => {
       ),
     });
 
-    expect(result.current).toEqual({
-      isLoading: true,
-    });
-
-    // An error will only be thrown after the initial load failed, which
-    // happens after 5 retries (>1 minute) at earliest, so this is annoying
-    // to test here.
-    await jest.advanceTimersByTimeAsync(1_000);
-
     expect(result.current).toEqual({ isLoading: true });
-
-    // Unmount so polling doesn't interfere with the test
-    unmount();
+    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(1));
 
     // The first retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the inbox notifications should have been made after the first retry
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(2));
+    expect(result.current).toEqual({ isLoading: true });
 
     // The second retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(3));
+    expect(result.current).toEqual({ isLoading: true });
 
     // The third retry should be made after 10s
     await jest.advanceTimersByTimeAsync(10_000);
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(4));
+    expect(result.current).toEqual({ isLoading: true });
 
-    // The fourth retry should be made after 10s
+    // The fourth retry should be made after 15s
     await jest.advanceTimersByTimeAsync(15_000);
     await waitFor(() => expect(getInboxNotificationsReqCount).toBe(5));
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        error: expect.any(Error),
+      })
+    );
 
-    // Won't try more than 5 attempts
-    await jest.advanceTimersByTimeAsync(20_000);
-    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(5));
+    // Wait for 5 second for the error to clear
+    await jest.advanceTimersByTimeAsync(5_000);
+    expect(result.current).toEqual({ isLoading: true });
+    // A new fetch request for the threads should have been made after the initial render
+    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(6));
+
+    // The first retry should be made after 5s
+    await jest.advanceTimersByTimeAsync(5_000);
+    await waitFor(() => expect(getInboxNotificationsReqCount).toBe(7));
+    expect(result.current).toEqual({ isLoading: true });
+
+    // and so on...
+
+    unmount();
+  });
+
+  test("should not retry if a 403 Forbidden response is received from server", async () => {
+    server.use(
+      mockGetInboxNotifications(async (_req, res, ctx) => {
+        // Return a 403 status from the server for the initial fetch
+        return res(ctx.status(403));
+      })
+    );
+
+    const {
+      liveblocks: { LiveblocksProvider, useInboxNotifications },
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(() => useInboxNotifications(), {
+      wrapper: ({ children }) => (
+        <LiveblocksProvider>{children}</LiveblocksProvider>
+      ),
+    });
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        error: expect.any(HttpError),
+      })
+    );
+
+    unmount();
   });
 });
 
@@ -396,6 +447,19 @@ describe("useInboxNotifications - Suspense", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+            },
+          })
+        );
+      }),
+      mockGetInboxNotificationsDelta(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            threads: [],
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
             },
           })
         );
@@ -517,14 +581,184 @@ describe("useInboxNotifications: polling", () => {
     await waitFor(() => expect(pollerCount).toBe(0));
 
     // Wait for the first polling to occur after the initial render
-    jest.advanceTimersByTime(POLLING_INTERVAL);
+    jest.advanceTimersByTime(60_000);
     expect(initialCount).toBe(1);
     await waitFor(() => expect(pollerCount).toBe(1));
 
     // Advance time to simulate the polling interval
-    jest.advanceTimersByTime(POLLING_INTERVAL);
+    jest.advanceTimersByTime(60_000);
     // Wait for the second polling to occur
     expect(initialCount).toBe(1);
+    await waitFor(() => expect(pollerCount).toBe(2));
+
+    unmount();
+  });
+
+  test("should restart polling after a component is remounted", async () => {
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+    const inboxNotifications = [
+      dummyThreadInboxNotificationData({ roomId, threadId: threads[0]!.id }),
+    ];
+
+    let hasCalledGetNotifications = false;
+    let pollerCount = 0;
+
+    server.use(
+      mockGetInboxNotifications(async (_req, res, ctx) => {
+        hasCalledGetNotifications = true;
+        return res(
+          ctx.json({
+            threads,
+            inboxNotifications,
+            meta: {
+              requestedAt: new Date().toISOString(),
+              nextCursor: null,
+            },
+          })
+        );
+      }),
+      mockGetInboxNotificationsDelta(async (_req, res, ctx) => {
+        pollerCount++;
+        return res(
+          ctx.json({
+            threads,
+            inboxNotifications,
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      liveblocks: { LiveblocksProvider, useInboxNotifications },
+    } = createContextsForTest();
+
+    const Client = () => {
+      return (
+        <LiveblocksProvider>
+          <InboxNotifications />
+        </LiveblocksProvider>
+      );
+    };
+
+    const InboxNotifications = () => {
+      useInboxNotifications();
+      return null;
+    };
+
+    expect(hasCalledGetNotifications).toBe(false);
+    expect(pollerCount).toBe(0);
+
+    const { unmount: unmountComp1 } = render(<Client />);
+
+    // A new fetch request for the threads should have been made after the initial render
+    await waitFor(() => expect(hasCalledGetNotifications).toBe(true));
+    expect(pollerCount).toBe(0);
+
+    // Wait for the first polling to occur after the initial render
+    await jest.advanceTimersByTimeAsync(60_000);
+    await waitFor(() => expect(pollerCount).toBe(1));
+
+    // Unmount Component 1 and verify that no new poll happens after the next interval
+    unmountComp1();
+
+    // Advance time by a lot to ensure no next poll happens
+    await jest.advanceTimersByTimeAsync(999_999); // Wait a loooooooooooooooong time
+    expect(pollerCount).toBe(1);
+
+    // Mount Component 2 and verify that a new poll happens immediately (because the last time we polled was 999999ms ago)
+    const { unmount: unmountComp2 } = render(<Client />);
+    await waitFor(() => expect(pollerCount).toBe(2));
+
+    // And polling keeps happening every 60s too
+    await jest.advanceTimersByTimeAsync(60_000);
+    await waitFor(() => expect(pollerCount).toBe(3));
+
+    unmountComp2();
+  });
+
+  test("should poll immediately when document becomes visible if last poll was more than the set maximum stale time", async () => {
+    const roomId = nanoid();
+    const threads = [dummyThreadData({ roomId })];
+    const inboxNotifications = [
+      dummyThreadInboxNotificationData({ roomId, threadId: threads[0]!.id }),
+    ];
+
+    let hasCalledGetNotifications = false;
+    let pollerCount = 0;
+
+    server.use(
+      mockGetInboxNotifications(async (_req, res, ctx) => {
+        hasCalledGetNotifications = true;
+        return res(
+          ctx.json({
+            threads,
+            inboxNotifications,
+            meta: {
+              requestedAt: new Date().toISOString(),
+              nextCursor: null,
+            },
+          })
+        );
+      }),
+      mockGetInboxNotificationsDelta(async (_req, res, ctx) => {
+        pollerCount++;
+        return res(
+          ctx.json({
+            threads,
+            inboxNotifications,
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      liveblocks: { LiveblocksProvider, useInboxNotifications },
+    } = createContextsForTest();
+
+    const Client = () => {
+      return (
+        <LiveblocksProvider>
+          <InboxNotifications />
+        </LiveblocksProvider>
+      );
+    };
+
+    const InboxNotifications = () => {
+      useInboxNotifications();
+      return null;
+    };
+
+    expect(hasCalledGetNotifications).toBe(false);
+    expect(pollerCount).toBe(0);
+
+    const { unmount } = render(<Client />);
+
+    // A new fetch request for the threads should have been made after the initial render
+    await waitFor(() => expect(hasCalledGetNotifications).toBe(true));
+    expect(pollerCount).toBe(0);
+
+    // Wait for the first polling to occur after the initial render
+    await jest.advanceTimersByTimeAsync(60_000);
+    await waitFor(() => expect(pollerCount).toBe(1));
+
+    // Advance 10 seconds (more than the the currently set maximum stale time, 5000)
+    await jest.advanceTimersByTimeAsync(10_000);
+
+    // Dispatch a `visibilitychange` event and verify that when the document becomes
+    // visible a new poll happens since more than 5000 ms has passed since the last poll
+    document.dispatchEvent(new Event("visibilitychange"));
+
     await waitFor(() => expect(pollerCount).toBe(2));
 
     unmount();
@@ -678,43 +912,37 @@ describe("useInboxNotifications: pagination", () => {
   test("should load the next page of data when `fetchMore` is called", async () => {
     const roomId = nanoid();
 
-    const threadOne = dummyThreadData({
-      roomId,
-      createdAt: new Date("2021-01-01T00:00:00Z"),
-    });
-    const threadTwo = dummyThreadData({
-      roomId,
-      createdAt: new Date("2021-01-02T00:00:00Z"),
-    });
-    const threadThree = dummyThreadData({
-      roomId,
-      createdAt: new Date("2021-01-03T00:00:00Z"),
-    });
+    const thread1 = dummyThreadData({ roomId, createdAt: new Date("2021-01-01") }); // prettier-ignore
+    const thread2 = dummyThreadData({ roomId, createdAt: new Date("2021-01-02") }); // prettier-ignore
+    const thread3 = dummyThreadData({ roomId, createdAt: new Date("2021-01-03") }); // prettier-ignore
 
-    const inboxNotificationsPageOne = [
+    const inboxNotificationsPage1 = [
       dummyThreadInboxNotificationData({
         roomId,
-        threadId: threadOne.id,
+        threadId: thread1.id,
+        notifiedAt: new Date("2021-01-03"),
       }),
     ];
 
-    const inboxNotificationsPageTwo = [
+    const inboxNotificationsPage2 = [
       dummyThreadInboxNotificationData({
         roomId,
-        threadId: threadTwo.id,
+        threadId: thread2.id,
+        notifiedAt: new Date("2021-01-02"),
       }),
     ];
 
-    const inboxNotificationsPageThree = [
+    const inboxNotificationsPage3 = [
       dummyThreadInboxNotificationData({
         roomId,
-        threadId: threadThree.id,
+        threadId: thread3.id,
+        notifiedAt: new Date("2021-01-01"),
       }),
     ];
 
-    let isPageOneRequested = false;
-    let isPageTwoRequested = false;
-    let isPageThreeRequested = false;
+    let isPage1Requested = false;
+    let isPage2Requested = false;
+    let isPage3Requested = false;
 
     server.use(
       mockGetInboxNotifications(async (req, res, ctx) => {
@@ -723,11 +951,11 @@ describe("useInboxNotifications: pagination", () => {
 
         // Request for Page 2
         if (cursor === "cursor-1") {
-          isPageTwoRequested = true;
+          isPage2Requested = true;
           return res(
             ctx.json({
-              threads: [threadTwo],
-              inboxNotifications: inboxNotificationsPageTwo,
+              threads: [thread2],
+              inboxNotifications: inboxNotificationsPage2,
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: "cursor-2",
@@ -737,11 +965,11 @@ describe("useInboxNotifications: pagination", () => {
         }
         // Request for Page 3
         else if (cursor === "cursor-2") {
-          isPageThreeRequested = true;
+          isPage3Requested = true;
           return res(
             ctx.json({
-              threads: [threadThree],
-              inboxNotifications: inboxNotificationsPageThree,
+              threads: [thread3],
+              inboxNotifications: inboxNotificationsPage3,
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: "cursor-3",
@@ -751,11 +979,11 @@ describe("useInboxNotifications: pagination", () => {
         }
         // Request for the first page
         else {
-          isPageOneRequested = true;
+          isPage1Requested = true;
           return res(
             ctx.json({
-              threads: [threadOne],
-              inboxNotifications: inboxNotificationsPageOne,
+              threads: [thread1],
+              inboxNotifications: inboxNotificationsPage1,
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: "cursor-1",
@@ -763,6 +991,19 @@ describe("useInboxNotifications: pagination", () => {
             })
           );
         }
+      }),
+      mockGetInboxNotificationsDelta(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            threads: [],
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
       })
     );
 
@@ -783,11 +1024,11 @@ describe("useInboxNotifications: pagination", () => {
     expect(result.current).toEqual({ isLoading: true });
 
     // Initial load (Page 1)
-    await waitFor(() => expect(isPageOneRequested).toBe(true));
+    await waitFor(() => expect(isPage1Requested).toBe(true));
     await waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
-        inboxNotifications: [...inboxNotificationsPageOne],
+        inboxNotifications: [...inboxNotificationsPage1],
         fetchMore: expect.any(Function),
         isFetchingMore: false,
         hasFetchedAll: false,
@@ -799,13 +1040,13 @@ describe("useInboxNotifications: pagination", () => {
 
     // Fetch Page 2
     fetchMore();
-    await waitFor(() => expect(isPageTwoRequested).toBe(true));
+    await waitFor(() => expect(isPage2Requested).toBe(true));
     await waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications: [
-          ...inboxNotificationsPageOne,
-          ...inboxNotificationsPageTwo,
+          ...inboxNotificationsPage1,
+          ...inboxNotificationsPage2,
         ],
         fetchMore: expect.any(Function),
         isFetchingMore: false,
@@ -816,14 +1057,14 @@ describe("useInboxNotifications: pagination", () => {
 
     // Fetch Page 3
     fetchMore();
-    await waitFor(() => expect(isPageThreeRequested).toBe(true));
+    await waitFor(() => expect(isPage3Requested).toBe(true));
     await waitFor(() =>
       expect(result.current).toEqual({
         isLoading: false,
         inboxNotifications: [
-          ...inboxNotificationsPageOne,
-          ...inboxNotificationsPageTwo,
-          ...inboxNotificationsPageThree,
+          ...inboxNotificationsPage1,
+          ...inboxNotificationsPage2,
+          ...inboxNotificationsPage3,
         ],
         fetchMore: expect.any(Function),
         isFetchingMore: false,

@@ -139,7 +139,7 @@ describe("LiveList", () => {
 
         expectUpdates([
           [listUpdate(["a"], [listUpdateInsert(0, "a")])],
-          [listUpdate([], [listUpdateDelete(0)])],
+          [listUpdate([], [listUpdateDelete(0, "a")])],
           [listUpdate(["a"], [listUpdateInsert(0, "a")])],
         ]);
       });
@@ -278,7 +278,7 @@ describe("LiveList", () => {
 
         expectUpdates([
           [listUpdate(["A", "B", "C"], [listUpdateInsert(1, "B")])],
-          [listUpdate(["A", "C"], [listUpdateDelete(1)])],
+          [listUpdate(["A", "C"], [listUpdateDelete(1, "B")])],
           [listUpdate(["A", "B", "C"], [listUpdateInsert(1, "B")])],
         ]);
       });
@@ -348,9 +348,9 @@ describe("LiveList", () => {
         room.history.redo();
 
         expectUpdates([
-          [listUpdate([], [listUpdateDelete(0)])],
+          [listUpdate([], [listUpdateDelete(0, "A")])],
           [listUpdate(["A"], [listUpdateInsert(0, "A")])],
-          [listUpdate([], [listUpdateDelete(0)])],
+          [listUpdate([], [listUpdateDelete(0, "A")])],
         ]);
       });
     });
@@ -571,7 +571,12 @@ describe("LiveList", () => {
         room.history.redo();
 
         expectUpdates([
-          [listUpdate([], [listUpdateDelete(0), listUpdateDelete(0)])],
+          [
+            listUpdate(
+              [],
+              [listUpdateDelete(0, "A"), listUpdateDelete(0, "B")]
+            ),
+          ],
           [
             listUpdate(
               ["A", "B"],
@@ -579,7 +584,12 @@ describe("LiveList", () => {
             ),
           ],
           // Because redo reverse the operations, we delete items from the end
-          [listUpdate([], [listUpdateDelete(1), listUpdateDelete(0)])],
+          [
+            listUpdate(
+              [],
+              [listUpdateDelete(1, "B"), listUpdateDelete(0, "A")]
+            ),
+          ],
         ]);
       });
     });
@@ -1402,7 +1412,7 @@ describe("LiveList", () => {
         {
           type: "LiveList",
           node: listItems,
-          updates: [{ index: 1, type: "delete" }],
+          updates: [{ index: 1, type: "delete", deletedItem: "b" }],
         },
       ]);
 
@@ -1431,9 +1441,9 @@ describe("LiveList", () => {
 
       expect(applyResult).toEqual({
         modified: {
-          node: items,
           type: "LiveList",
-          updates: [{ index: 1, type: "delete" }],
+          node: items,
+          updates: [{ index: 1, type: "delete", deletedItem: secondItem }],
         },
         reverse: [
           {
