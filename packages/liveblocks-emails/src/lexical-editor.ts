@@ -309,7 +309,6 @@ export function findLexicalMentionNodeWithContext({
 
   // Find mention node
   let mentionNodeIndex = -1;
-  let mentionNode: SerializedMentionNode | null = null;
 
   for (let i = 0; i < nodes.length; i++) {
     const node = nodes[i]!;
@@ -320,22 +319,25 @@ export function findLexicalMentionNodeWithContext({
       node.attributes.__userId === mentionedUserId
     ) {
       mentionNodeIndex = i;
-      mentionNode = node;
       break;
     }
   }
 
   // No mention node found
-  if (mentionNode === null) {
+  if (mentionNodeIndex === -1) {
     return null;
   }
 
+  const mention = nodes[mentionNodeIndex] as SerializedMentionNode;
+
   // Collect nodes before and after
   // TODO: apply surrounding text guesses
+  const beforeNodes: SerializedLexicalNode[] = [];
+  const afterNodes: SerializedLexicalNode[] = [];
 
   return {
     before: null,
     after: null,
-    mention: mentionNode,
+    mention,
   };
 }
