@@ -125,10 +125,53 @@ const resolveUsersInLiveblocksTextEditorNodes = async <U extends BaseUserMeta>(
   return resolvedUsers;
 };
 
+export type LiveblocksTextEditorContainerComponentProps = {
+  /**
+   * The nodes of the text editor
+   */
+  children: React.ReactNode;
+};
+
+export type LiveblocksTextEditorMentionComponentProps<
+  U extends BaseUserMeta = DU,
+> = {
+  element: LiveblocksTextEditorMentionNode;
+  /**
+   * The mention's user info, if the `resolvedUsers` option was provided.
+   */
+  user?: U["info"];
+};
+
+export type ConvertLiveblocksTextEditorNodesAsReactComponents<
+  U extends BaseUserMeta = DU,
+> = {
+  /**
+   *
+   * The component used to act as a container to wrap text editor nodes,
+   */
+  Container: React.ComponentType<LiveblocksTextEditorContainerComponentProps>;
+  /**
+   * The component used to display mentions.
+   */
+  Mention: React.ComponentType<LiveblocksTextEditorMentionComponentProps<U>>;
+};
+
+const baseComponents: ConvertLiveblocksTextEditorNodesAsReactComponents<BaseUserMeta> =
+  {
+    Container: ({ children }) => <div>{children}</div>,
+    Mention: ({ element, user }) => (
+      <span data-mention>@{user?.name ?? element.userId}</span>
+    ),
+  };
+
 export type ConvertLiveblocksTextEditorNodesAsReactOptions<
   U extends BaseUserMeta = DU,
 > = {
-  // TODO: add components
+  /**
+   * The components used to customize the resulting React nodes. Each components has
+   * priority over the base components inherited.
+   */
+  components?: Partial<ConvertLiveblocksTextEditorNodesAsReactComponents<U>>;
   /**
    * A function that returns user info from user IDs.
    */
@@ -144,11 +187,34 @@ export async function convertLiveblocksTextEditorNodesAsReact(
   nodes: LiveblocksTextEditorNode[],
   options?: ConvertLiveblocksTextEditorNodesAsReactOptions<BaseUserMeta>
 ): Promise<React.ReactNode> {
+  const Components = {
+    ...baseComponents,
+    ...options?.components,
+  };
   const resolvedUsers = await resolveUsersInLiveblocksTextEditorNodes(
     nodes,
     options?.resolveUsers
   );
 
-  // TODO: build components
-  return <></>;
+  const children = nodes.map((node, index) => {
+    switch (node.type) {
+      case "mention":
+        return (
+          <Components.Mention
+            key={`lb-text-editor-mention-${index}-${node.userId}`}
+            element={node}
+            user={resolvedUsers.get(node.userId)}
+          />
+        );
+      case "text":
+        // TODO: add text logic with styling
+        return <>{node.text}</>;
+    }
+  });
+
+  return (
+    <Components.Container key="lb-text-editor-container">
+      {children}
+    </Components.Container>
+  );
 }
