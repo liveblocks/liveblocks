@@ -16,6 +16,10 @@ import {
   findLexicalMentionNodeWithContext,
   getSerializedLexicalState,
 } from "./lexical-editor";
+import {
+  type LiveblocksTextEditorNode,
+  transformAsLiveblocksTextNodes,
+} from "./liveblocks-text-editor";
 // TODO: create a common shared type once thread notification are publicly released.
 import type { ResolveRoomInfoArgs } from "./thread-notification";
 
@@ -98,8 +102,7 @@ export const extractTextMentionNotificationData = async ({
 export type MentionEmailBaseData = {
   id: string;
   roomId: string;
-  // TODO: defined specific common type here for Lexical and TipTap.
-  rawTextContent: unknown;
+  textEditorNodes: LiveblocksTextEditorNode[];
 };
 
 type PrepareTextMentionNotificationEmailBaseDataOptions = {
@@ -141,17 +144,18 @@ export const prepareTextMentionNotificationEmailBaseData = async ({
     return null;
   }
 
-  let rawTextContent;
+  let textEditorNodes: LiveblocksTextEditorNode[] = [];
 
   switch (data.textEditorType) {
     case "lexical": {
-      // TODO: get raw text content for Lexical
-      rawTextContent = null;
+      textEditorNodes = transformAsLiveblocksTextNodes({
+        textEditorType: "lexical",
+        mention: data.mentionNodeWithContext,
+      });
       break;
     }
     case "tiptap": {
-      // TODO: get raw text content for Tiptap
-      rawTextContent = null;
+      textEditorNodes = [];
       break;
     }
   }
@@ -160,7 +164,7 @@ export const prepareTextMentionNotificationEmailBaseData = async ({
     mention: {
       id: mentionId,
       roomId,
-      rawTextContent,
+      textEditorNodes,
     },
     roomInfo: resolvedRoomInfo,
   };
@@ -168,7 +172,7 @@ export const prepareTextMentionNotificationEmailBaseData = async ({
 
 export type MentionEmailAsReact<U extends BaseUserMeta = DU> = Omit<
   MentionEmailBaseData,
-  "rawTextContent"
+  "textEditorNodes"
 > & {
   author: U;
   reactTextContent: React.ReactNode;
