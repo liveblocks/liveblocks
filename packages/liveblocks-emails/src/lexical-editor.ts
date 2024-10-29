@@ -321,6 +321,7 @@ export function findLexicalMentionNodeWithContext({
     ) {
       mentionNodeIndex = i;
       mentionNode = node;
+      break;
     }
   }
 
