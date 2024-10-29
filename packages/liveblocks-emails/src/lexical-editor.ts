@@ -242,7 +242,9 @@ const flattenLexicalTree = (
   for (const node of nodes) {
     if (["text", "line-break", "decorator"].includes(node.group)) {
       flattenNodes.push(node);
-    } else if (node.group === "element") {
+    }
+    // TODO: add use case for thread marks
+    else if (node.group === "element") {
       nodes.concat(flattenLexicalTree(node.children));
     }
   }
