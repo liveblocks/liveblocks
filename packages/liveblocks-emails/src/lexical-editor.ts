@@ -313,7 +313,12 @@ export function findLexicalMentionNodeWithContext({
 
   for (let i = 0; i < nodes.length; i++) {
     const node = nodes[i]!;
-    if (node.group === "decorator" && assertSerializedMentionNode(node)) {
+    if (
+      node.group === "decorator" &&
+      assertSerializedMentionNode(node) &&
+      node.attributes.__id === inboxNotificationId &&
+      node.attributes.__userId === mentionedUserId
+    ) {
       mentionNodeIndex = i;
       mentionNode = node;
     }
