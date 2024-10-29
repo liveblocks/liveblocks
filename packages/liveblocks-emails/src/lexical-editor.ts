@@ -222,3 +222,25 @@ export function getSerializedLexicalState({
   const state = createSerializedLexicalRootNode(root);
   return state;
 }
+export type LexicalMentionNodeWithContext = {
+  before:
+    | SerializedElementNode<Readonly<SerializedLexicalNode>>
+    | SerializedDecoratorNode;
+  after:
+    | SerializedElementNode<Readonly<SerializedLexicalNode>>
+    | SerializedDecoratorNode;
+  mention: SerializedDecoratorNode;
+};
+
+export function findLexicalMentionNodeWithContext({
+  root,
+  mentionedUserId,
+  inboxNotificationId,
+}: {
+  root: SerializedRootNode;
+  mentionedUserId: string;
+  inboxNotificationId: string;
+}): LexicalMentionNodeWithContext | null {
+  // TODO: add logic
+  return null;
+}

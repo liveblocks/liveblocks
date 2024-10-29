@@ -11,14 +11,23 @@ import type {
 } from "@liveblocks/node";
 import React from "react";
 
-import type { SerializedRootNode } from "./lexical-editor";
-import { getSerializedLexicalState } from "./lexical-editor";
+import type { LexicalMentionNodeWithContext } from "./lexical-editor";
+import {
+  findLexicalMentionNodeWithContext,
+  getSerializedLexicalState,
+} from "./lexical-editor";
 // TODO: create a common shared type once thread notification are publicly released.
 import type { ResolveRoomInfoArgs } from "./thread-notification";
 
 type TextMentionNotificationData =
-  | { textEditorType: "lexical"; state: SerializedRootNode }
-  | { textEditorType: "tiptap" };
+  | {
+      textEditorType: "lexical";
+      mentionNodeWithContext: LexicalMentionNodeWithContext;
+    }
+  | {
+      textEditorType: "tiptap";
+      // TODO: add mention node with context for TipTap
+    };
 
 /** @internal */
 export const extractTextMentionNotificationData = async ({
@@ -61,10 +70,19 @@ export const extractTextMentionNotificationData = async ({
       const key = Array.isArray(editorKey) ? editorKey[0]! : editorKey;
 
       const state = getSerializedLexicalState({ buffer, key });
+      const mentionNodeWithContext = findLexicalMentionNodeWithContext({
+        root: state,
+        mentionedUserId: userId,
+        inboxNotificationId,
+      });
+
+      if (mentionNodeWithContext === null) {
+        return null;
+      }
 
       return {
         textEditorType: "lexical",
-        state,
+        mentionNodeWithContext,
       };
     }
     case "tiptap": {
