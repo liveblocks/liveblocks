@@ -18,7 +18,7 @@ import {
 } from "./lexical-editor";
 import {
   type LiveblocksTextEditorNode,
-  transformAsLiveblocksTextNodes,
+  transformAsLiveblocksTextEditorNodes,
 } from "./liveblocks-text-editor";
 // TODO: create a common shared type once thread notification are publicly released.
 import type { ResolveRoomInfoArgs } from "./thread-notification";
@@ -148,7 +148,7 @@ export const prepareTextMentionNotificationEmailBaseData = async ({
 
   switch (data.textEditorType) {
     case "lexical": {
-      textEditorNodes = transformAsLiveblocksTextNodes({
+      textEditorNodes = transformAsLiveblocksTextEditorNodes({
         textEditorType: "lexical",
         mention: data.mentionNodeWithContext,
       });

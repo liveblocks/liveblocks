@@ -20,7 +20,7 @@ export type LiveblocksTextEditorNode =
   | LiveblocksTextEditorTextNode
   | LiveblocksTextEditorMentionNode;
 
-type MentionNodeWithContext =
+type TransformableMentionNodeWithContext =
   | {
       textEditorType: "lexical";
       mention: LexicalMentionNodeWithContext;
@@ -30,13 +30,23 @@ type MentionNodeWithContext =
       // TODO: add mention node with context for TipTap
     };
 
-export function transformAsLiveblocksTextNodes(
-  mentionWithContext: MentionNodeWithContext
+const transformLexicalMentionNodeWithContext = (
+  mentionNodeWithContext: LexicalMentionNodeWithContext
+): LiveblocksTextEditorNode[] => {
+  const nodes: LiveblocksTextEditorNode[] = [];
+  const { before, after, mention } = mentionNodeWithContext;
+
+  return nodes;
+};
+
+export function transformAsLiveblocksTextEditorNodes(
+  transformableMention: TransformableMentionNodeWithContext
 ): LiveblocksTextEditorNode[] {
-  switch (mentionWithContext.textEditorType) {
+  switch (transformableMention.textEditorType) {
     case "lexical": {
-      // TODO
-      return [];
+      return transformLexicalMentionNodeWithContext(
+        transformableMention.mention
+      );
     }
     case "tiptap": {
       // TODO
