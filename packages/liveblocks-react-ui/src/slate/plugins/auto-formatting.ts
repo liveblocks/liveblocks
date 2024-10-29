@@ -60,7 +60,7 @@ const formatters: Formatter[] = [
   },
 ];
 const markFormattingCharacters = formatters
-  .filter((formatter) => formatter.type === "mark")
+  .filter((formatter): formatter is MarkFormatter => formatter.type === "mark")
   .map((formatter) => formatter.character);
 
 function formatMark<T extends SlateEditor>(
@@ -158,12 +158,13 @@ function formatBlock<T extends SlateEditor>(
     unit: "character",
   });
 
-  // Convert the current block to the appropriate block type
+  SlateTransforms.setNodes(editor, { type: "paragraph" });
+
+  SlateTransforms.wrapNodes(editor, { type: formatter.block, children: [] });
+
+  // List items have an additional wrapper
   if (formatter.block.includes("list")) {
-    SlateTransforms.setNodes(editor, { type: "list-item" });
-    SlateTransforms.wrapNodes(editor, { type: formatter.block, children: [] });
-  } else {
-    SlateTransforms.setNodes(editor, { type: formatter.block });
+    SlateTransforms.wrapNodes(editor, { type: "list-item", children: [] });
   }
 
   return true;

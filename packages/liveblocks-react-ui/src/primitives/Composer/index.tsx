@@ -69,6 +69,7 @@ import { withAutoFormatting } from "../../slate/plugins/auto-formatting";
 import { withAutoLinks } from "../../slate/plugins/auto-links";
 import { withCustomLinks } from "../../slate/plugins/custom-links";
 import { withEmptyClearFormatting } from "../../slate/plugins/empty-clear-formatting";
+import { isList, isListItem, withLists } from "../../slate/plugins/lists";
 import type { MentionDraft } from "../../slate/plugins/mentions";
 import {
   getMentionDraftAtSelection,
@@ -161,15 +162,17 @@ function createComposerEditor({
   pasteFilesAsAttachments?: boolean;
 }) {
   return withNormalize(
-    withMentions(
-      withCustomLinks(
-        withAutoLinks(
-          withAutoFormatting(
-            withEmptyClearFormatting(
-              withPaste(withHistory(withReact(createEditor())), {
-                createAttachments,
-                pasteFilesAsAttachments,
-              })
+    withLists(
+      withMentions(
+        withCustomLinks(
+          withAutoLinks(
+            withAutoFormatting(
+              withEmptyClearFormatting(
+                withPaste(withHistory(withReact(createEditor())), {
+                  createAttachments,
+                  pasteFilesAsAttachments,
+                })
+              )
             )
           )
         )
@@ -1110,11 +1113,25 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     }, [canSubmit]);
 
     const clear = useCallback(() => {
+      // Delete the content of the editor
       SlateTransforms.delete(editor, {
         at: {
           anchor: SlateEditor.start(editor, []),
           focus: SlateEditor.end(editor, []),
         },
+      });
+
+      // Default to a paragraph again
+      SlateTransforms.setNodes(editor, { type: "paragraph" });
+
+      // Unwrap lists/list items if needed
+      SlateTransforms.unwrapNodes(editor, {
+        match: isListItem,
+        split: true,
+      });
+      SlateTransforms.unwrapNodes(editor, {
+        match: isList,
+        split: true,
       });
     }, [editor]);
 
@@ -1223,6 +1240,8 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 
           return;
         }
+
+        console.log("editor.children", editor.children);
 
         const body = composerBodyToCommentBody(
           editor.children as ComposerBodyData

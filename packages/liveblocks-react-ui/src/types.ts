@@ -37,17 +37,17 @@ export type ComposerBodyParagraph = {
 
 export type ComposerBodyOrderedList = {
   type: "ordered-list";
-  children: ComposerBodyListItem[];
+  children: (ComposerBodyList | ComposerBodyListItem)[];
 };
 
 export type ComposerBodyUnorderedList = {
   type: "unordered-list";
-  children: (
-    | ComposerBodyParagraph
-    | ComposerBodyOrderedList
-    | ComposerBodyUnorderedList
-  )[];
+  children: (ComposerBodyList | ComposerBodyListItem)[];
 };
+
+export type ComposerBodyList =
+  | ComposerBodyOrderedList
+  | ComposerBodyUnorderedList;
 
 export type ComposerBodyListItem = {
   type: "list-item";
