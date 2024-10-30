@@ -17,11 +17,12 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Documentation
 
+- Improved clarity on Notifications being [project-based](http://liveblocks.io/docs/products/notifications/concepts#Project-based).
 - Typo fixes.
 
 ## Contributors
 
-haydenbleasel
+haydenbleasel, ctnicholas
 
 # Week 43 (2024-10-25)
 
