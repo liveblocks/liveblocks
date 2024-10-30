@@ -18,8 +18,6 @@ export default function Page() {
   return (
     <LiveblocksProvider
       authEndpoint="/api/liveblocks-auth"
-      // @ts-expect-error
-      baseUrl="https://dev.dev-liveblocks5948.workers.dev/"
       resolveUsers={async ({ userIds }) => {
         const searchParams = new URLSearchParams(
           userIds.map((userId) => ["userIds", userId])

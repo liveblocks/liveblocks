@@ -1,5 +1,5 @@
 /**
- * Liveblocks Text Editor Nodes
+ * Liveblocks Text Editor
  *
  * Expose common types to transform nodes from different editors like `Lexical` or `TipTap`
  * and then convert them more easily as React or as html.
@@ -16,17 +16,22 @@ import React from "react";
 import type {
   LexicalMentionNodeWithContext,
   SerializedLexicalNode,
+  SerializedTextNode,
 } from "./lexical-editor";
 import { assertSerializedMentionNode } from "./lexical-editor";
 
-export type LiveblocksTextEditorTextNode = {
-  type: "text";
-  text: string;
+type LiveblocksTextEditorTextFormat = {
   bold: boolean;
   italic: boolean;
   strikethrough: boolean;
   code: boolean;
 };
+
+export type LiveblocksTextEditorTextNode = {
+  type: "text";
+  text: string;
+} & LiveblocksTextEditorTextFormat;
+
 export type LiveblocksTextEditorMentionNode = {
   type: "mention";
   userId: string;
@@ -46,6 +51,67 @@ type TransformableMentionNodeWithContext =
       // TODO: add mention node with context for TipTap
     };
 
+const baseLiveblocksTextEditorTextFormat: LiveblocksTextEditorTextFormat = {
+  bold: false,
+  italic: false,
+  strikethrough: false,
+  code: false,
+};
+
+/**
+ * -------------------------------------------------------------------------------------------------
+ * Lexical use bitwise operators to represent text formatting:
+ * → https://github.com/facebook/lexical/blob/e423c6888dbf2dbd0b5ef68f781efadda20d34f3/packages/lexical/src/LexicalConstants.ts#L39
+ *
+ * It allows to combine multiple flags into one single integer such as:
+ * 00000001  (bold)
+ * 00000010  (italic)
+ * --------
+ * 0000011  (bold + italic)
+ *
+ * For now we're copying only the bitwise flags we need to provide a consistent DX with
+ * `ThreadNotificationEvent` comments:
+ *  - BOLD
+ *  - ITALIC
+ *  - STRIKETHROUGH
+ *  - CODE
+ *
+ * and `transformLexicalTextNodeFormatBitwiseInteger` transforms these flags
+ * into a object of booleans `LiveblocksTextEditorTextFormat`:
+ * ```ts
+ * {
+ *  bold: boolean;
+ *  italic: boolean;
+ *  strikethrough: boolean;
+ *  code: boolean;
+ * }
+ * ```
+ * -------------------------------------------------------------------------------------------------
+ */
+
+const IS_LEXICAL_BOLD = 1;
+const IS_LEXICAL_ITALIC = 1 << 1;
+const IS_LEXICAL_STRIKETHROUGH = 1 << 2;
+const IS_LEXICAL_CODE = 1 << 4;
+
+const transformLexicalTextNodeFormatBitwiseInteger = (
+  node: SerializedTextNode
+): LiveblocksTextEditorTextFormat => {
+  const attributes = node.attributes;
+
+  if ("__format" in attributes && typeof attributes.__format === "number") {
+    const format = attributes.__format;
+    return {
+      bold: (format & IS_LEXICAL_BOLD) !== 0,
+      italic: (format & IS_LEXICAL_ITALIC) !== 0,
+      strikethrough: (format & IS_LEXICAL_STRIKETHROUGH) !== 0,
+      code: (format & IS_LEXICAL_CODE) !== 0,
+    };
+  }
+
+  return baseLiveblocksTextEditorTextFormat;
+};
+
 const transformLexicalMentionNodeWithContext = (
   mentionNodeWithContext: LexicalMentionNodeWithContext
 ): LiveblocksTextEditorNode[] => {
@@ -55,13 +121,11 @@ const transformLexicalMentionNodeWithContext = (
   const transform = (nodes: SerializedLexicalNode[]) => {
     for (const node of nodes) {
       if (node.group === "text") {
+        const format = transformLexicalTextNodeFormatBitwiseInteger(node);
         textEditorNodes.push({
           type: "text",
           text: node.text,
-          bold: false,
-          italic: false,
-          strikethrough: false,
-          code: false,
+          ...format,
         });
       } else if (
         node.group === "decorator" &&
