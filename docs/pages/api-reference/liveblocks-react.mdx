@@ -2611,9 +2611,11 @@ import { useInboxNotifications } from "@liveblocks/react/suspense";
 const { inboxNotifications, error, isLoading } = useInboxNotifications();
 ```
 
-By default, the `useInboxNotifications` hook returns up to 50 notifications. To
-fetch more, the hook (along with [`useThreads`][]) provides additional fields
-for pagination.
+Inbox notifications are
+[project-based](/docs/products/notifications/concepts#Project-based), meaning
+notifications from outside the current room are received. By default, the
+`useInboxNotifications` hook returns up to 50 notifications. To fetch more, the
+hook (along with [`useThreads`][]) provides additional fields for pagination.
 
 ```tsx
 import { useInboxNotifications } from "@liveblocks/react";
