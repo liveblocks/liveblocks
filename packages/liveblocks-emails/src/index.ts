@@ -20,7 +20,7 @@ export type {
   LiveblocksTextEditorTextComponentProps,
 } from "./liveblocks-text-editor";
 export type {
-  MentionEmailAsReact,
+  MentionEmailAsReactData,
   PrepareTextMentionNotificationEmailAsReactOptions,
   TextMentionNotificationEmailDataAsReact,
 } from "./text-mention-notification";

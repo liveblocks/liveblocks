@@ -192,7 +192,7 @@ export const prepareTextMentionNotificationEmailBaseData = async ({
   };
 };
 
-export type MentionEmailAsReact<U extends BaseUserMeta = DU> = Omit<
+export type MentionEmailAsReactData<U extends BaseUserMeta = DU> = Omit<
   MentionEmailBaseData,
   "textEditorNodes"
 > & {
@@ -218,7 +218,7 @@ export type PrepareTextMentionNotificationEmailAsReactOptions<
 };
 
 export type TextMentionNotificationEmailDataAsReact = {
-  mention: MentionEmailAsReact<BaseUserMeta>;
+  mention: MentionEmailAsReactData<BaseUserMeta>;
   roomInfo: DRI;
 };
 
