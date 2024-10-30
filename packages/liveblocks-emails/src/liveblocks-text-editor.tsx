@@ -340,9 +340,9 @@ export async function convertLiveblocksTextEditorNodesAsReact(
 
 export type ConvertLiveblocksTextEditorNodesAsHtmlStyles = {
   /**
-   * The default inline CSS styles used to display the paragraph container element.
+   * The default inline CSS styles used to display container element.
    */
-  paragraph: CSSProperties;
+  container: CSSProperties;
   /**
    * The default inline CSS styles used to display text `<strong />` elements.
    */
@@ -358,7 +358,7 @@ export type ConvertLiveblocksTextEditorNodesAsHtmlStyles = {
 };
 
 export const baseStyles: ConvertLiveblocksTextEditorNodesAsHtmlStyles = {
-  paragraph: {
+  container: {
     fontSize: "14px",
   },
   strong: {
@@ -450,5 +450,5 @@ export async function convertLiveblocksTextEditorNodesAsHtml(
     .join("\n");
 
   // prettier-ignore
-  return html`<p style=${toInlineCSSString(styles.paragraph)}">${htmlSafe(children)}</p>`;
+  return html`<div style=${toInlineCSSString(styles.container)}">${htmlSafe(children)}</div>`;
 }
