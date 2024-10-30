@@ -6,6 +6,8 @@ import type { Dispatch, Ref, SetStateAction } from "react";
 import { createContext, useContext } from "react";
 import type { Editor as SlateEditor, Element as SlateElement } from "slate";
 
+import type { ComposerBodyMarks } from "../../types";
+
 export type ComposerContext = {
   /**
    * Whether the composer is currently disabled.
@@ -76,12 +78,23 @@ export type ComposerContext = {
    * Remove an attachment by its ID.
    */
   removeAttachment: (attachmentId: string) => void;
+
+  /**
+   * The currently active inline marks.
+   */
+  activeMarks: ComposerBodyMarks[];
+
+  /**
+   * Toggle an inline mark.
+   */
+  toggleMark: (mark: ComposerBodyMarks) => void;
 };
 
 export type ComposerEditorContext = {
   validate: (value: SlateElement[]) => void;
   editor: SlateEditor;
   setFocused: Dispatch<SetStateAction<boolean>>;
+  setActiveMarks: Dispatch<SetStateAction<ComposerBodyMarks[]>>;
 };
 
 export type ComposerAttachmentsContext = {

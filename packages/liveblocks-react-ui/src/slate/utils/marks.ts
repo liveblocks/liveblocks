@@ -1,22 +1,35 @@
+import type { EditorMarks, Text } from "slate";
 import { Editor as SlateEditor } from "slate";
 
 import type { ComposerBodyMarks } from "../../types";
 import { getCharacterAfter, getCharacterBefore } from "./get-character";
 import { isSelectionCollapsed } from "./is-selection-collapsed";
 
-export function isMarkActive(editor: SlateEditor, format: ComposerBodyMarks) {
+export function isMarkActive(editor: SlateEditor, mark: ComposerBodyMarks) {
   const marks = SlateEditor.marks(editor);
 
-  return marks ? marks[format] === true : false;
+  return marks ? marks[mark] === true : false;
 }
 
-export function toggleMark(editor: SlateEditor, format: ComposerBodyMarks) {
-  const isActive = isMarkActive(editor, format);
+export function getActiveMarks(editor: SlateEditor) {
+  const marks = SlateEditor.marks(editor);
+
+  return getMarks(marks);
+}
+
+export function getMarks(todo: Text | EditorMarks | null | undefined) {
+  return Object.keys(todo ?? {}).filter(
+    (key) => key !== "text"
+  ) as ComposerBodyMarks[];
+}
+
+export function toggleMark(editor: SlateEditor, mark: ComposerBodyMarks) {
+  const isActive = isMarkActive(editor, mark);
 
   if (isActive) {
-    SlateEditor.removeMark(editor, format);
+    SlateEditor.removeMark(editor, mark);
   } else {
-    SlateEditor.addMark(editor, format, true);
+    SlateEditor.addMark(editor, mark, true);
   }
 }
 
