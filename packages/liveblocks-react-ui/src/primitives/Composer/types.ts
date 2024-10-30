@@ -63,6 +63,8 @@ export type ComposerMentionProps = ComponentPropsWithSlot<"span">;
 
 export type ComposerLinkProps = ComponentPropsWithSlot<"a">;
 
+export type ComposerFloatingToolbarProps = ComponentPropsWithSlot<"div">;
+
 export type ComposerSuggestionsProps = ComponentPropsWithSlot<"div">;
 
 export type ComposerSuggestionsListProps = ComponentPropsWithSlot<"ul">;
@@ -186,7 +188,14 @@ export interface ComposerEditorMentionSuggestionsWrapperProps {
   setSelectedUserId: (userId: string) => void;
   MentionSuggestions: ComponentType<ComposerEditorMentionSuggestionsProps>;
   onItemSelect: (userId: string) => void;
-  position?: SuggestionsPosition;
+  position?: FloatingPosition;
+  inset?: number;
+}
+
+export interface ComposerEditorFloatingToolbarWrapperProps {
+  dir?: ComposerEditorProps["dir"];
+  id: string;
+  position?: FloatingPosition;
   inset?: number;
 }
 
@@ -202,4 +211,4 @@ export interface ComposerEditorLinkWrapperProps
   Link: ComponentType<ComposerEditorLinkProps>;
 }
 
-export type SuggestionsPosition = "top" | "bottom";
+export type FloatingPosition = "top" | "bottom";

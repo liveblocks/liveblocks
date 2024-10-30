@@ -95,6 +95,8 @@ export type ComposerEditorContext = {
   editor: SlateEditor;
   setFocused: Dispatch<SetStateAction<boolean>>;
   setActiveFormats: Dispatch<SetStateAction<ComposerBodyFormat[]>>;
+  hasSelectionRange: boolean;
+  setHasSelectionRange: Dispatch<SetStateAction<boolean>>;
 };
 
 export type ComposerAttachmentsContext = {
@@ -116,6 +118,13 @@ export type ComposerSuggestionsContext = {
   ref: Ref<HTMLDivElement>;
 };
 
+export type ComposerFloatingToolbarContext = {
+  dir?: Direction;
+  id: string;
+  placement: Placement;
+  ref: Ref<HTMLDivElement>;
+};
+
 export const ComposerContext = createContext<ComposerContext | null>(null);
 export const ComposerEditorContext =
   createContext<ComposerEditorContext | null>(null);
@@ -123,6 +132,8 @@ export const ComposerAttachmentsContext =
   createContext<ComposerAttachmentsContext | null>(null);
 export const ComposerSuggestionsContext =
   createContext<ComposerSuggestionsContext | null>(null);
+export const ComposerFloatingToolbarContext =
+  createContext<ComposerFloatingToolbarContext | null>(null);
 
 export function useComposerEditorContext() {
   const composerEditorContext = useContext(ComposerEditorContext);
@@ -153,6 +164,19 @@ export function useComposerSuggestionsContext(
 
   return nn(
     composerSuggestionsContext,
+    `${source} can’t be used outside of Composer.Editor.`
+  );
+}
+
+export function useComposerFloatingToolbarContext(
+  source = "useComposerFloatingToolbarContext"
+) {
+  const composerFloatingToolbarContext = useContext(
+    ComposerFloatingToolbarContext
+  );
+
+  return nn(
+    composerFloatingToolbarContext,
     `${source} can’t be used outside of Composer.Editor.`
   );
 }

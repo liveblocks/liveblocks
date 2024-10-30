@@ -37,7 +37,7 @@ import {
   isCommentBodyText,
 } from "../Comment/utils";
 import { useComposer, useComposerAttachmentsContext } from "./contexts";
-import type { SuggestionsPosition } from "./types";
+import type { FloatingPosition } from "./types";
 
 export function composerBodyMentionToCommentBodyMention(
   mention: ComposerBodyMention
@@ -177,7 +177,7 @@ export function commentBodyToComposerBody(body: CommentBody): ComposerBody {
 }
 
 export function getPlacementFromPosition(
-  position: SuggestionsPosition,
+  position: FloatingPosition,
   direction: Direction = "ltr"
 ): Placement {
   return `${position}-${direction === "rtl" ? "end" : "start"}`;

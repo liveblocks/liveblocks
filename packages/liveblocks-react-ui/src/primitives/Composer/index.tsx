@@ -58,6 +58,7 @@ import {
   ReactEditor,
   Slate,
   useSelected,
+  useSlateSelection,
   useSlateStatic,
   withReact,
 } from "slate-react";
@@ -80,6 +81,7 @@ import { withNormalize } from "../../slate/plugins/normalize";
 import { withPaste } from "../../slate/plugins/paste";
 import { getDOMRange } from "../../slate/utils/get-dom-range";
 import { isEmpty as isEditorEmpty } from "../../slate/utils/is-empty";
+import { isSelectionCollapsed } from "../../slate/utils/is-selection-collapsed";
 import {
   getActiveMarks,
   leaveMarkEdge,
@@ -106,10 +108,12 @@ import {
   ComposerAttachmentsContext,
   ComposerContext,
   ComposerEditorContext,
+  ComposerFloatingToolbarContext,
   ComposerSuggestionsContext,
   useComposer,
   useComposerAttachmentsContext,
   useComposerEditorContext,
+  useComposerFloatingToolbarContext,
   useComposerSuggestionsContext,
 } from "./contexts";
 import type {
@@ -117,10 +121,12 @@ import type {
   ComposerAttachmentsDropAreaProps,
   ComposerEditorComponents,
   ComposerEditorElementProps,
+  ComposerEditorFloatingToolbarWrapperProps,
   ComposerEditorLinkWrapperProps,
   ComposerEditorMentionSuggestionsWrapperProps,
   ComposerEditorMentionWrapperProps,
   ComposerEditorProps,
+  ComposerFloatingToolbarProps,
   ComposerFormProps,
   ComposerLinkProps,
   ComposerMentionProps,
@@ -128,7 +134,7 @@ import type {
   ComposerSuggestionsListItemProps,
   ComposerSuggestionsListProps,
   ComposerSuggestionsProps,
-  SuggestionsPosition,
+  FloatingPosition,
 } from "./types";
 import {
   commentBodyToComposerBody,
@@ -139,10 +145,13 @@ import {
   useComposerAttachmentsManager,
 } from "./utils";
 
-const MENTION_SUGGESTIONS_POSITION: SuggestionsPosition = "top";
+const MENTION_SUGGESTIONS_POSITION: FloatingPosition = "top";
+
+const FLOATING_TOOLBAR_POSITION: FloatingPosition = "top";
 
 const COMPOSER_MENTION_NAME = "ComposerMention";
 const COMPOSER_LINK_NAME = "ComposerLink";
+const COMPOSER_FLOATING_TOOLBAR_NAME = "ComposerFloatingToolbar";
 const COMPOSER_SUGGESTIONS_NAME = "ComposerSuggestions";
 const COMPOSER_SUGGESTIONS_LIST_NAME = "ComposerSuggestionsList";
 const COMPOSER_SUGGESTIONS_LIST_ITEM_NAME = "ComposerSuggestionsListItem";
@@ -272,6 +281,7 @@ function ComposerEditorMentionSuggestionsWrapper({
       },
     };
   }, [position, dir]);
+  const isOpen = Boolean(isFocused && mentionDraft?.range && userIds);
   const {
     refs: { setReference, setFloating },
     strategy,
@@ -279,7 +289,10 @@ function ComposerEditorMentionSuggestionsWrapper({
     placement,
     x,
     y,
-  } = useFloating(floatingOptions);
+  } = useFloating({
+    ...floatingOptions,
+    open: isOpen,
+  });
 
   // Copy `z-index` from content to wrapper.
   // Inspired by https://github.com/radix-ui/primitives/blob/main/packages/react/popper/src/Popper.tsx
@@ -306,7 +319,7 @@ function ComposerEditorMentionSuggestionsWrapper({
 
   return (
     <Persist>
-      {mentionDraft?.range && isFocused && userIds ? (
+      {isOpen ? (
         <ComposerSuggestionsContext.Provider
           value={{
             id,
@@ -334,7 +347,7 @@ function ComposerEditorMentionSuggestionsWrapper({
             }}
           >
             <MentionSuggestions
-              userIds={userIds}
+              userIds={userIds!}
               selectedUserId={selectedUserId}
             />
           </Portal>
@@ -343,6 +356,148 @@ function ComposerEditorMentionSuggestionsWrapper({
     </Persist>
   );
 }
+
+function ComposerEditorFloatingToolbarWrapper({
+  id,
+  position = FLOATING_TOOLBAR_POSITION,
+  dir,
+}: ComposerEditorFloatingToolbarWrapperProps) {
+  const selection = useSlateSelection();
+  const editor = useSlateStatic();
+  const { isFocused } = useComposer();
+  const { hasSelectionRange } = useComposerEditorContext();
+  const [content, setContent] = useState<HTMLDivElement | null>(null);
+  const [contentZIndex, setContentZIndex] = useState<string>();
+  const contentRef = useCallback(setContent, [setContent]);
+  const { portalContainer } = useLiveblocksUIConfig();
+  const floatingOptions: UseFloatingOptions = useMemo(() => {
+    const detectOverflowOptions: DetectOverflowOptions = {
+      padding: FLOATING_ELEMENT_COLLISION_PADDING,
+    };
+
+    return {
+      strategy: "fixed",
+      placement: getPlacementFromPosition(position, dir),
+      middleware: [
+        flip({ ...detectOverflowOptions, crossAxis: false }),
+        hide(detectOverflowOptions),
+        shift({
+          ...detectOverflowOptions,
+          limiter: limitShift(),
+        }),
+      ],
+      whileElementsMounted: (...args) => {
+        return autoUpdate(...args, {
+          animationFrame: true,
+        });
+      },
+    };
+  }, [position, dir]);
+  const isOpen = Boolean(isFocused && hasSelectionRange);
+  const {
+    refs: { setReference, setFloating },
+    strategy,
+    isPositioned,
+    placement,
+    x,
+    y,
+  } = useFloating({ ...floatingOptions, open: isOpen });
+
+  // Copy `z-index` from content to wrapper.
+  // Inspired by https://github.com/radix-ui/primitives/blob/main/packages/react/popper/src/Popper.tsx
+  useLayoutEffect(() => {
+    if (content) {
+      setContentZIndex(window.getComputedStyle(content).zIndex);
+    }
+  }, [content]);
+
+  useLayoutEffect(() => {
+    if (!selection || isSelectionCollapsed(selection)) {
+      return;
+    }
+
+    const domRange = getDOMRange(editor, selection);
+
+    if (domRange) {
+      setReference({
+        getBoundingClientRect: () => domRange.getBoundingClientRect(),
+        getClientRects: () => domRange.getClientRects(),
+      });
+    }
+  }, [setReference, editor, selection]);
+
+  return (
+    <Persist>
+      {isOpen ? (
+        <ComposerFloatingToolbarContext.Provider
+          value={{
+            id,
+            placement,
+            dir,
+            ref: contentRef,
+          }}
+        >
+          <Portal
+            ref={setFloating}
+            container={portalContainer}
+            style={{
+              position: strategy,
+              top: 0,
+              left: 0,
+              transform: isPositioned
+                ? `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`
+                : "translate3d(0, -200%, 0)",
+              minWidth: "max-content",
+              zIndex: contentZIndex,
+            }}
+          >
+            <ComposerFloatingToolbar>Hello world</ComposerFloatingToolbar>
+          </Portal>
+        </ComposerFloatingToolbarContext.Provider>
+      ) : null}
+    </Persist>
+  );
+}
+
+const ComposerFloatingToolbar = forwardRef<
+  HTMLDivElement,
+  ComposerFloatingToolbarProps
+>(({ children, style, asChild, ...props }, forwardedRef) => {
+  const [isPresent] = usePersist();
+  const ref = useRef<HTMLDivElement>(null);
+  const {
+    ref: contentRef,
+    placement,
+    dir,
+  } = useComposerFloatingToolbarContext(COMPOSER_FLOATING_TOOLBAR_NAME);
+  const mergedRefs = useRefs(forwardedRef, contentRef, ref);
+  const [side, align] = useMemo(
+    () => getSideAndAlignFromPlacement(placement),
+    [placement]
+  );
+  const Component = asChild ? Slot : "div";
+  useAnimationPersist(ref);
+
+  return (
+    <Component
+      dir={dir}
+      {...props}
+      data-state={isPresent ? "open" : "closed"}
+      data-side={side}
+      data-align={align}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        maxHeight: "var(--lb-composer-suggestions-available-height)",
+        overflowY: "auto",
+        ...style,
+      }}
+      ref={mergedRefs}
+    >
+      {children}
+    </Component>
+  );
+});
 
 function ComposerEditorElement({
   Mention,
@@ -681,8 +836,13 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     },
     forwardedRef
   ) => {
-    const { editor, validate, setFocused, setActiveFormats } =
-      useComposerEditorContext();
+    const {
+      editor,
+      validate,
+      setFocused,
+      setActiveFormats,
+      setHasSelectionRange,
+    } = useComposerEditorContext();
     const {
       submit,
       focus,
@@ -711,6 +871,10 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       setSelectedMentionSuggestionIndex,
     ] = useIndex(0, mentionSuggestions?.length ?? 0);
     const id = useId();
+    // const floatingToolbarId = useMemo(
+    //   () => `liveblocks-floating-toolbar-${id}`,
+    //   [id]
+    // );
     const suggestionsListId = useMemo(
       () => `liveblocks-suggestions-list-${id}`,
       [id]
@@ -735,8 +899,9 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
 
         setMentionDraft(getMentionDraftAtSelection(editor));
         setActiveFormats(getActiveMarks(editor));
+        setHasSelectionRange(!isSelectionCollapsed(editor.selection));
       },
-      [editor, validate, setActiveFormats]
+      [validate, editor, setActiveFormats, setHasSelectionRange]
     );
 
     const createMention = useCallback(
@@ -899,7 +1064,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       [setSelectedMentionSuggestionIndex, mentionSuggestions]
     );
 
-    const propsWhileSuggesting: AriaAttributes = useMemo(
+    const additionalProps: AriaAttributes = useMemo(
       () =>
         mentionDraft
           ? {
@@ -952,7 +1117,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
           aria-label="Composer editor"
           data-focused={isFocused || undefined}
           data-disabled={isDisabled || undefined}
-          {...propsWhileSuggesting}
+          {...additionalProps}
           {...props}
           readOnly={isDisabled}
           disabled={isDisabled}
@@ -973,6 +1138,10 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
           itemId={suggestionsListItemId}
           onItemSelect={createMention}
           MentionSuggestions={MentionSuggestions}
+        />
+        <ComposerEditorFloatingToolbarWrapper
+          dir={dir}
+          id={suggestionsListId}
         />
       </Slate>
     );
@@ -1036,6 +1205,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const [activeFormats, setActiveFormats] = useState<ComposerBodyFormat[]>(
       []
     );
+    const [hasSelectionRange, setHasSelectionRange] = useState(false);
     const ref = useRef<HTMLFormElement>(null);
     const mergedRefs = useRefs(forwardedRef, ref);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1271,6 +1441,8 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
           validate,
           setFocused,
           setActiveFormats,
+          hasSelectionRange,
+          setHasSelectionRange,
         }}
       >
         <ComposerAttachmentsContext.Provider
