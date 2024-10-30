@@ -84,10 +84,10 @@
     "@radix-ui/react-toggle": "^1.0.3",
     "@radix-ui/react-tooltip": "^1.0.7",
     "react-virtuoso": "^4.7.12",
-    "slate": "^0.102.0",
-    "slate-history": "^0.100.0",
+    "slate": "^0.110.2",
+    "slate-history": "^0.110.3",
     "slate-hyperscript": "^0.100.0",
-    "slate-react": "^0.102.0",
+    "slate-react": "^0.110.3",
     "use-sync-external-store": "^1.2.2"
   },
   "peerDependencies": {
