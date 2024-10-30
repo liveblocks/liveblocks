@@ -207,11 +207,21 @@ export type LiveblocksTextEditorContainerComponentProps = {
 export type LiveblocksTextEditorMentionComponentProps<
   U extends BaseUserMeta = DU,
 > = {
+  /**
+   * The mention element.
+   */
   element: LiveblocksTextEditorMentionNode;
   /**
    * The mention's user info, if the `resolvedUsers` option was provided.
    */
   user?: U["info"];
+};
+
+export type LiveblocksTextEditorTextComponentProps = {
+  /**
+   * The text element.
+   */
+  element: LiveblocksTextEditorTextNode;
 };
 
 export type ConvertLiveblocksTextEditorNodesAsReactComponents<
@@ -222,10 +232,16 @@ export type ConvertLiveblocksTextEditorNodesAsReactComponents<
    * The component used to act as a container to wrap text editor nodes,
    */
   Container: React.ComponentType<LiveblocksTextEditorContainerComponentProps>;
+
   /**
    * The component used to display mentions.
    */
   Mention: React.ComponentType<LiveblocksTextEditorMentionComponentProps<U>>;
+
+  /**
+   * The component used to display text nodes.
+   */
+  Text: React.ComponentType<LiveblocksTextEditorTextComponentProps>;
 };
 
 const baseComponents: ConvertLiveblocksTextEditorNodesAsReactComponents<BaseUserMeta> =
@@ -234,6 +250,29 @@ const baseComponents: ConvertLiveblocksTextEditorNodesAsReactComponents<BaseUser
     Mention: ({ element, user }) => (
       <span data-mention>@{user?.name ?? element.userId}</span>
     ),
+    Text: ({ element }) => {
+      // Note: construction following the schema 👇
+      // <code><s><em><strong>{element.text}</strong></s></em></code>
+      let children: React.ReactNode = element.text;
+
+      if (element.bold) {
+        children = <strong>{children}</strong>;
+      }
+
+      if (element.italic) {
+        children = <em>{children}</em>;
+      }
+
+      if (element.strikethrough) {
+        children = <s>{children}</s>;
+      }
+
+      if (element.code) {
+        children = <code>{children}</code>;
+      }
+
+      return <span>{children}</span>;
+    },
   };
 
 export type ConvertLiveblocksTextEditorNodesAsReactOptions<
@@ -279,8 +318,12 @@ export async function convertLiveblocksTextEditorNodesAsReact(
           />
         );
       case "text":
-        // TODO: add text logic with styling
-        return <>{node.text}</>;
+        return (
+          <Components.Text
+            key={`lb-text-editor-text-${index}`}
+            element={node}
+          />
+        );
     }
   });
 
