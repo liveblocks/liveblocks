@@ -18,10 +18,12 @@ import {
 } from "./lexical-editor";
 import { createBatchUsersResolver } from "./lib/batch-users-resolver";
 import type {
+  ConvertLiveblocksTextEditorNodesAsHtmlStyles,
   ConvertLiveblocksTextEditorNodesAsReactComponents,
   LiveblocksTextEditorNode,
 } from "./liveblocks-text-editor";
 import {
+  convertLiveblocksTextEditorNodesAsHtml,
   convertLiveblocksTextEditorNodesAsReact,
   transformAsLiveblocksTextEditorNodes,
 } from "./liveblocks-text-editor";
@@ -270,7 +272,7 @@ export async function prepareTextMentionNotificationEmailAsReact(
 
   // TODO: resolve author (use batch resolver)
 
-  const liveblocksTextEditorPromise = convertLiveblocksTextEditorNodesAsReact(
+  const contentPromise = convertLiveblocksTextEditorNodesAsReact(
     data.mention.textEditorNodes,
     {
       resolveUsers: batchUsersResolver.resolveUsers,
@@ -279,9 +281,10 @@ export async function prepareTextMentionNotificationEmailAsReact(
   );
 
   await batchUsersResolver.resolve();
+
   const [reactContent] = await Promise.all([
     // TODO: add author promise
-    liveblocksTextEditorPromise,
+    contentPromise,
   ]);
 
   return {
@@ -291,6 +294,112 @@ export async function prepareTextMentionNotificationEmailAsReact(
       author: { id: "", info: {} },
       roomId: data.mention.roomId,
       reactContent,
+      createdAt: data.mention.createdAt,
+    },
+    roomInfo: data.roomInfo,
+  };
+}
+
+export type MentionEmailAsHtmlData<U extends BaseUserMeta = DU> = Omit<
+  MentionEmailBaseData,
+  "textEditorNodes"
+> & {
+  author: U;
+  htmlContent: string;
+};
+
+export type PrepareTextMentionNotificationEmailAsHtmlOptions<
+  U extends BaseUserMeta = DU,
+> = PrepareTextMentionNotificationEmailBaseDataOptions & {
+  /**
+   * A function that returns info from user IDs.
+   */
+  resolveUsers?: (
+    args: ResolveUsersArgs
+  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+
+  /**
+   * The styles used to customize the html elements in the resulting html safe string.
+   * Each styles has priority over the base styles inherited.
+   */
+  styles?: Partial<ConvertLiveblocksTextEditorNodesAsHtmlStyles>;
+};
+
+export type TextMentionNotificationEmailDataAsHtml = {
+  mention: MentionEmailAsHtmlData<BaseUserMeta>;
+  roomInfo: DRI;
+};
+
+/**
+ * Prepares data from a `TextMentionNotificationEvent` and convert content  as an html safe string.
+ *
+ * @param client The `Liveblocks` node client
+ * @param event The `TextMentionNotificationEvent` received in the webhook handler
+ * @param options The optional options to provide to resolve users, resolve room info and customize comment bodies React components.
+ *
+ * It returns a `TextMentionNotificationEmailDataAsReact` or `null` if there are no existing text mention.
+ *
+ * @example
+ * import { Liveblocks} from "@liveblocks/node"
+ * import { prepareTextMentionNotificationEmailAsHtml } from "@liveblocks/emails"
+ *
+ * const liveblocks = new Liveblocks({ secret: "sk_..." })
+ * const emailData = prepareTextMentionNotificationEmailAsHtml(
+ *  liveblocks,
+ *  event,
+ *  {
+ *    resolveUsers,
+ *    resolveRoomInfo,
+ *    styles,
+ *  }
+ * )
+ */
+export async function prepareTextMentionNotificationEmailAsHtml(
+  client: Liveblocks,
+  event: TextMentionNotificationEvent,
+  options: PrepareTextMentionNotificationEmailAsHtmlOptions<BaseUserMeta> = {}
+): Promise<TextMentionNotificationEmailDataAsHtml | null> {
+  const data = await prepareTextMentionNotificationEmailBaseData({
+    client,
+    event,
+    options: {
+      resolveRoomInfo: options.resolveRoomInfo,
+    },
+  });
+
+  if (data === null) {
+    return null;
+  }
+
+  const batchUsersResolver = createBatchUsersResolver<BaseUserMeta>({
+    resolveUsers: options.resolveUsers,
+    callerName: "prepareTextMentionNotificationEmailAsHtml",
+  });
+
+  // TODO: resolve author (use batch resolver)
+
+  const contentPromise = convertLiveblocksTextEditorNodesAsHtml(
+    data.mention.textEditorNodes,
+    {
+      resolveUsers: batchUsersResolver.resolveUsers,
+      styles: options.styles,
+    }
+  );
+
+  await batchUsersResolver.resolve();
+
+  const [htmlContent] = await Promise.all([
+    // TODO: add author promise
+    contentPromise,
+  ]);
+
+  return {
+    mention: {
+      id: data.mention.id,
+      // TODO: replace with author from promise
+      author: { id: "", info: {} },
+      roomId: data.mention.roomId,
+      htmlContent,
       createdAt: data.mention.createdAt,
     },
     roomInfo: data.roomInfo,
