@@ -28,7 +28,7 @@ import {
 // TODO: create a common shared type once thread notification are publicly released.
 import type { ResolveRoomInfoArgs } from "./thread-notification";
 
-type TextMentionNotificationData =
+type TextMentionNotificationData = (
   | {
       textEditorType: "lexical";
       mentionNodeWithContext: LexicalMentionNodeWithContext;
@@ -36,7 +36,10 @@ type TextMentionNotificationData =
   | {
       textEditorType: "tiptap";
       // TODO: add mention node with context for TipTap
-    };
+    }
+) & {
+  createdAt: Date;
+};
 
 /** @internal */
 export const extractTextMentionNotificationData = async ({
@@ -76,6 +79,10 @@ export const extractTextMentionNotificationData = async ({
     return null;
   }
 
+  // For now use the `notifiedAt` inbox notification data
+  // to represent the creation date.
+  const createdAt = inboxNotification.notifiedAt;
+
   switch (room.textEditor.type) {
     case "lexical": {
       const buffer = await client.getYjsDocumentAsBinaryUpdate(roomId);
@@ -99,12 +106,14 @@ export const extractTextMentionNotificationData = async ({
       return {
         textEditorType: "lexical",
         mentionNodeWithContext,
+        createdAt,
       };
     }
     case "tiptap": {
       // TODO: add logic to get tiptap state and mention node with context
       return {
         textEditorType: "tiptap",
+        createdAt,
       };
     }
   }
@@ -114,6 +123,7 @@ export type MentionEmailBaseData = {
   id: string;
   roomId: string;
   textEditorNodes: LiveblocksTextEditorNode[];
+  createdAt: Date;
 };
 
 type PrepareTextMentionNotificationEmailBaseDataOptions = {
@@ -176,6 +186,7 @@ export const prepareTextMentionNotificationEmailBaseData = async ({
       id: mentionId,
       roomId,
       textEditorNodes,
+      createdAt: data.createdAt,
     },
     roomInfo: resolvedRoomInfo,
   };
@@ -280,6 +291,7 @@ export async function prepareTextMentionNotificationEmailAsReact(
       author: { id: "", info: {} },
       roomId: data.mention.roomId,
       reactContent,
+      createdAt: data.mention.createdAt,
     },
     roomInfo: data.roomInfo,
   };
