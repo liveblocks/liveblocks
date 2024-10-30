@@ -9,18 +9,22 @@ import type {
   Liveblocks,
   TextMentionNotificationEvent,
 } from "@liveblocks/node";
-import React from "react";
+import type React from "react";
 
 import type { LexicalMentionNodeWithContext } from "./lexical-editor";
 import {
   findLexicalMentionNodeWithContext,
   getSerializedLexicalState,
 } from "./lexical-editor";
+import { createBatchUsersResolver } from "./lib/batch-users-resolver";
 import type {
   ConvertLiveblocksTextEditorNodesAsReactComponents,
   LiveblocksTextEditorNode,
 } from "./liveblocks-text-editor";
-import { transformAsLiveblocksTextEditorNodes } from "./liveblocks-text-editor";
+import {
+  convertLiveblocksTextEditorNodesAsReact,
+  transformAsLiveblocksTextEditorNodes,
+} from "./liveblocks-text-editor";
 // TODO: create a common shared type once thread notification are publicly released.
 import type { ResolveRoomInfoArgs } from "./thread-notification";
 
@@ -242,10 +246,26 @@ export async function prepareTextMentionNotificationEmailAsReact(
     return null;
   }
 
+  const batchUsersResolver = createBatchUsersResolver<BaseUserMeta>({
+    resolveUsers: options.resolveUsers,
+    callerName: "prepareTextMentionNotificationEmailAsReact",
+  });
+
   // TODO: resolve author (use batch resolver)
-  // TODO: resolved mention users (it can have multiple mentioned users in the text content)
-  // TODO convert mention text content into React nodes
-  const reactTextContent = <></>;
+
+  const liveblocksTextEditorPromise = convertLiveblocksTextEditorNodesAsReact(
+    data.mention.textEditorNodes,
+    {
+      resolveUsers: batchUsersResolver.resolveUsers,
+      components: options.components,
+    }
+  );
+
+  await batchUsersResolver.resolve();
+  const [reactTextContent] = await Promise.all([
+    // TODO: add author promise
+    liveblocksTextEditorPromise,
+  ]);
 
   return {
     mention: {
