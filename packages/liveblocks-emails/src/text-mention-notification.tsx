@@ -16,10 +16,11 @@ import {
   findLexicalMentionNodeWithContext,
   getSerializedLexicalState,
 } from "./lexical-editor";
-import {
-  type LiveblocksTextEditorNode,
-  transformAsLiveblocksTextEditorNodes,
+import type {
+  ConvertLiveblocksTextEditorNodesAsReactComponents,
+  LiveblocksTextEditorNode,
 } from "./liveblocks-text-editor";
+import { transformAsLiveblocksTextEditorNodes } from "./liveblocks-text-editor";
 // TODO: create a common shared type once thread notification are publicly released.
 import type { ResolveRoomInfoArgs } from "./thread-notification";
 
@@ -188,7 +189,11 @@ export type PrepareTextMentionNotificationEmailAsReactOptions<
     args: ResolveUsersArgs
   ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
 
-  // TODO: add components
+  /**
+   * The components used to customize the resulting React nodes. Each components has
+   * priority over the base components inherited.
+   */
+  components?: Partial<ConvertLiveblocksTextEditorNodesAsReactComponents<U>>;
 };
 
 export type TextMentionNotificationEmailDataAsReact = {
@@ -198,6 +203,27 @@ export type TextMentionNotificationEmailDataAsReact = {
 
 /**
  * Prepares data from a `TextMentionNotificationEvent` and convert content as React nodes.
+ *
+ * @param client The `Liveblocks` node client
+ * @param event The `TextMentionNotificationEvent` received in the webhook handler
+ * @param options The optional options to provide to resolve users, resolve room info and customize comment bodies React components.
+ *
+ * It returns a `TextMentionNotificationEmailDataAsReact` or `null` if there are no existing text mention.
+ *
+ * @example
+ * import { Liveblocks} from "@liveblocks/node"
+ * import { prepareTextMentionNotificationEmailAsReact } from "@liveblocks/emails"
+ *
+ * const liveblocks = new Liveblocks({ secret: "sk_..." })
+ * const emailData = prepareTextMentionNotificationEmailAsReact(
+ *  liveblocks,
+ *  event,
+ *  {
+ *    resolveUsers,
+ *    resolveRoomInfo,
+ *    components,
+ *  }
+ * )
  */
 export async function prepareTextMentionNotificationEmailAsReact(
   client: Liveblocks,
