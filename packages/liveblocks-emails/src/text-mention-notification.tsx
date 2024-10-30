@@ -53,6 +53,12 @@ export const extractTextMentionNotificationData = async ({
     client.getInboxNotification({ inboxNotificationId, userId }),
   ]);
 
+  // Check for notification kind
+  if (inboxNotification.kind !== "textMention") {
+    console.warn('Inbox notification is not of kind "textMention"');
+    return null;
+  }
+
   // Aligned behaviors w/ `@liveblocks/react-ui`.
   const isUnread =
     inboxNotification.readAt === null ||
