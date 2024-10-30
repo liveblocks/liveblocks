@@ -180,7 +180,7 @@ export type MentionEmailAsReact<U extends BaseUserMeta = DU> = Omit<
   "textEditorNodes"
 > & {
   author: U;
-  reactTextContent: React.ReactNode;
+  reactContent: React.ReactNode;
 };
 
 export type PrepareTextMentionNotificationEmailAsReactOptions<
@@ -262,7 +262,7 @@ export async function prepareTextMentionNotificationEmailAsReact(
   );
 
   await batchUsersResolver.resolve();
-  const [reactTextContent] = await Promise.all([
+  const [reactContent] = await Promise.all([
     // TODO: add author promise
     liveblocksTextEditorPromise,
   ]);
@@ -270,9 +270,10 @@ export async function prepareTextMentionNotificationEmailAsReact(
   return {
     mention: {
       id: data.mention.id,
+      // TODO: replace with author from promise
       author: { id: "", info: {} },
       roomId: data.mention.roomId,
-      reactTextContent,
+      reactContent,
     },
     roomInfo: data.roomInfo,
   };
