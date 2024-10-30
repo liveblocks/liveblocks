@@ -83,13 +83,13 @@ import { isEmpty as isEditorEmpty } from "../../slate/utils/is-empty";
 import {
   getActiveMarks,
   leaveMarkEdge,
-  toggleMark as _toggleMark,
+  toggleMark,
 } from "../../slate/utils/marks";
 import type {
   ComposerBody as ComposerBodyData,
   ComposerBodyAutoLink,
   ComposerBodyCustomLink,
-  ComposerBodyMarks,
+  ComposerBodyFormat,
   ComposerBodyMention,
 } from "../../types";
 import { isKey } from "../../utils/is-key";
@@ -681,7 +681,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     },
     forwardedRef
   ) => {
-    const { editor, validate, setFocused, setActiveMarks } =
+    const { editor, validate, setFocused, setActiveFormats } =
       useComposerEditorContext();
     const {
       submit,
@@ -691,7 +691,6 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       canSubmit,
       isDisabled: isComposerDisabled,
       isFocused,
-      toggleMark,
     } = useComposer();
     const isDisabled = isComposerDisabled || disabled;
     const initialBody = useInitial(defaultValue ?? emptyCommentBody);
@@ -735,9 +734,9 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
         validate(value as SlateElement[]);
 
         setMentionDraft(getMentionDraftAtSelection(editor));
-        setActiveMarks(getActiveMarks(editor));
+        setActiveFormats(getActiveMarks(editor));
       },
-      [editor, validate, setActiveMarks]
+      [editor, validate, setActiveFormats]
     );
 
     const createMention = useCallback(
@@ -825,25 +824,25 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
           // Toggle bold on Command/Control + B
           if (isKey(event, "b", { mod: true })) {
             event.preventDefault();
-            toggleMark("bold");
+            toggleMark(editor, "bold");
           }
 
           // Toggle italic on Command/Control + I
           if (isKey(event, "i", { mod: true })) {
             event.preventDefault();
-            toggleMark("italic");
+            toggleMark(editor, "italic");
           }
 
           // Toggle strikethrough on Command/Control + Shift + S
           if (isKey(event, "s", { mod: true, shift: true })) {
             event.preventDefault();
-            toggleMark("strikethrough");
+            toggleMark(editor, "strikethrough");
           }
 
           // Toggle code on Command/Control + E
           if (isKey(event, "e", { mod: true })) {
             event.preventDefault();
-            toggleMark("code");
+            toggleMark(editor, "code");
           }
         }
       },
@@ -860,7 +859,6 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
         blur,
         canSubmit,
         submit,
-        toggleMark,
       ]
     );
 
@@ -1035,7 +1033,9 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const canSubmit = useMemo(() => {
       return !isEmpty && !isUploadingAttachments;
     }, [isEmpty, isUploadingAttachments]);
-    const [activeMarks, setActiveMarks] = useState<ComposerBodyMarks[]>([]);
+    const [activeFormats, setActiveFormats] = useState<ComposerBodyFormat[]>(
+      []
+    );
     const ref = useRef<HTMLFormElement>(null);
     const mergedRefs = useRefs(forwardedRef, ref);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1255,12 +1255,14 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       event.stopPropagation();
     }, []);
 
-    const toggleMark = useCallback(
-      (mark: ComposerBodyMarks) => {
-        _toggleMark(editor, mark);
+    const toggleFormat = useCallback(
+      (format: ComposerBodyFormat) => {
+        toggleMark(editor, format);
       },
       [editor]
     );
+
+    console.log(activeFormats);
 
     return (
       <ComposerEditorContext.Provider
@@ -1268,7 +1270,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
           editor,
           validate,
           setFocused,
-          setActiveMarks,
+          setActiveFormats,
         }}
       >
         <ComposerAttachmentsContext.Provider
@@ -1296,8 +1298,8 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
               attachments,
               attachFiles,
               removeAttachment,
-              toggleMark,
-              activeMarks,
+              toggleFormat,
+              activeFormats,
             }}
           >
             <Component {...props} onSubmit={handleSubmit} ref={mergedRefs}>

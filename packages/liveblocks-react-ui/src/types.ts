@@ -52,7 +52,7 @@ export type ComposerBodyText = {
   text: string;
 };
 
-export type ComposerBodyMarks = keyof Omit<ComposerBodyText, "text">;
+export type ComposerBodyFormat = keyof Omit<ComposerBodyText, "text">;
 
 export type ComposerBodyEmptyText = {
   text: "";
