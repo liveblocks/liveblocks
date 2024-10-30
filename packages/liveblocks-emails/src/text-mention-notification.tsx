@@ -41,6 +41,7 @@ type TextMentionNotificationData = (
     }
 ) & {
   createdAt: Date;
+  createdBy: string;
 };
 
 /** @internal */
@@ -84,6 +85,7 @@ export const extractTextMentionNotificationData = async ({
   // For now use the `notifiedAt` inbox notification data
   // to represent the creation date.
   const createdAt = inboxNotification.notifiedAt;
+  const createdBy = inboxNotification.createdBy;
 
   switch (room.textEditor.type) {
     case "lexical": {
@@ -109,6 +111,7 @@ export const extractTextMentionNotificationData = async ({
         textEditorType: "lexical",
         mentionNodeWithContext,
         createdAt,
+        createdBy,
       };
     }
     case "tiptap": {
@@ -116,6 +119,7 @@ export const extractTextMentionNotificationData = async ({
       return {
         textEditorType: "tiptap",
         createdAt,
+        createdBy,
       };
     }
   }
@@ -124,6 +128,7 @@ export const extractTextMentionNotificationData = async ({
 export type MentionEmailBaseData = {
   id: string;
   roomId: string;
+  authorId: string;
   textEditorNodes: LiveblocksTextEditorNode[];
   createdAt: Date;
 };
@@ -189,14 +194,33 @@ export const prepareTextMentionNotificationEmailBaseData = async ({
       roomId,
       textEditorNodes,
       createdAt: data.createdAt,
+      authorId: data.createdBy,
     },
     roomInfo: resolvedRoomInfo,
   };
 };
 
+/** @internal */
+const resolveAuthorInfo = async <U extends BaseUserMeta>({
+  authorId,
+  resolveUsers,
+}: {
+  authorId: string;
+  resolveUsers?: (
+    args: ResolveUsersArgs
+  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+}): Promise<U["info"] | undefined> => {
+  if (!resolveUsers) {
+    return undefined;
+  }
+
+  const authors = await resolveUsers({ userIds: [authorId] });
+  return authors?.[0];
+};
+
 export type MentionEmailAsReactData<U extends BaseUserMeta = DU> = Omit<
   MentionEmailBaseData,
-  "textEditorNodes"
+  "authorId" | "textEditorNodes"
 > & {
   author: U;
   reactContent: React.ReactNode;
@@ -264,16 +288,19 @@ export async function prepareTextMentionNotificationEmailAsReact(
   if (data === null) {
     return null;
   }
+  const { mention, roomInfo } = data;
 
   const batchUsersResolver = createBatchUsersResolver<BaseUserMeta>({
     resolveUsers: options.resolveUsers,
     callerName: "prepareTextMentionNotificationEmailAsReact",
   });
 
-  // TODO: resolve author (use batch resolver)
-
+  const authorInfoPromise = resolveAuthorInfo({
+    authorId: mention.authorId,
+    resolveUsers: batchUsersResolver.resolveUsers,
+  });
   const contentPromise = convertLiveblocksTextEditorNodesAsReact(
-    data.mention.textEditorNodes,
+    mention.textEditorNodes,
     {
       resolveUsers: batchUsersResolver.resolveUsers,
       components: options.components,
@@ -282,27 +309,28 @@ export async function prepareTextMentionNotificationEmailAsReact(
 
   await batchUsersResolver.resolve();
 
-  const [reactContent] = await Promise.all([
-    // TODO: add author promise
+  const [authorInfo, reactContent] = await Promise.all([
+    authorInfoPromise,
     contentPromise,
   ]);
 
   return {
     mention: {
-      id: data.mention.id,
-      // TODO: replace with author from promise
-      author: { id: "", info: {} },
-      roomId: data.mention.roomId,
+      id: mention.id,
+      author: authorInfo
+        ? { id: mention.authorId, info: authorInfo }
+        : { id: mention.authorId, info: { name: mention.authorId } },
+      roomId: mention.roomId,
       reactContent,
-      createdAt: data.mention.createdAt,
+      createdAt: mention.createdAt,
     },
-    roomInfo: data.roomInfo,
+    roomInfo,
   };
 }
 
 export type MentionEmailAsHtmlData<U extends BaseUserMeta = DU> = Omit<
   MentionEmailBaseData,
-  "textEditorNodes"
+  "authorId" | "textEditorNodes"
 > & {
   author: U;
   htmlContent: string;
@@ -370,16 +398,19 @@ export async function prepareTextMentionNotificationEmailAsHtml(
   if (data === null) {
     return null;
   }
+  const { mention, roomInfo } = data;
 
   const batchUsersResolver = createBatchUsersResolver<BaseUserMeta>({
     resolveUsers: options.resolveUsers,
     callerName: "prepareTextMentionNotificationEmailAsHtml",
   });
 
-  // TODO: resolve author (use batch resolver)
-
+  const authorInfoPromise = resolveAuthorInfo({
+    authorId: mention.authorId,
+    resolveUsers: batchUsersResolver.resolveUsers,
+  });
   const contentPromise = convertLiveblocksTextEditorNodesAsHtml(
-    data.mention.textEditorNodes,
+    mention.textEditorNodes,
     {
       resolveUsers: batchUsersResolver.resolveUsers,
       styles: options.styles,
@@ -388,20 +419,21 @@ export async function prepareTextMentionNotificationEmailAsHtml(
 
   await batchUsersResolver.resolve();
 
-  const [htmlContent] = await Promise.all([
-    // TODO: add author promise
+  const [authorInfo, htmlContent] = await Promise.all([
+    authorInfoPromise,
     contentPromise,
   ]);
 
   return {
     mention: {
-      id: data.mention.id,
-      // TODO: replace with author from promise
-      author: { id: "", info: {} },
-      roomId: data.mention.roomId,
+      id: mention.id,
+      author: authorInfo
+        ? { id: mention.authorId, info: authorInfo }
+        : { id: mention.authorId, info: { name: mention.authorId } },
+      roomId: mention.roomId,
       htmlContent,
-      createdAt: data.mention.createdAt,
+      createdAt: mention.createdAt,
     },
-    roomInfo: data.roomInfo,
+    roomInfo,
   };
 }
