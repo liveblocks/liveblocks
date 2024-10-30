@@ -85,6 +85,7 @@ export const extractTextMentionNotificationData = async ({
   // For now use the `notifiedAt` inbox notification data
   // to represent the creation date.
   const createdAt = inboxNotification.notifiedAt;
+  // In context of a text mention notification `createdBy` is a `userId`
   const createdBy = inboxNotification.createdBy;
 
   switch (room.textEditor.type) {
