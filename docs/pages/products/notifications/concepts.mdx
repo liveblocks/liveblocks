@@ -48,13 +48,25 @@ To build a notification tray, you can use a combination of
 [default components](/docs/products/notifications/default-components) and
 [hooks](/docs/products/notifications/hooks).
 
-### Project-level
+## Project-based
 
 Inbox notifications are
-[project-level](/docs/concepts/how-liveblocks-works#Project), which means that a
-user can receive notifications that were sent from other
-[rooms](/docs/concepts/how-liveblocks-works#Rooms). Project-level components
-require only
+[project-level](/docs/concepts/how-liveblocks-works#Projects), which means that
+a user can receive notifications that were sent from other
+[rooms](/docs/concepts/how-liveblocks-works#Rooms). This differs to other
+Liveblocks products which are room-based, and rely on users inhabiting the same
+space.
+
+<Figure>
+  <Image
+    src="/assets/notifications/notification-rooms.jpg"
+    alt="Thread"
+    width={1344}
+    height={896}
+  />
+</Figure>
+
+Project-level components require only
 [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider)
 in React, which is different to other room-based Liveblocks products which also
 require [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider).
