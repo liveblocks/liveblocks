@@ -5,11 +5,13 @@
  * and then convert them more easily as React or as html.
  */
 
-import type {
-  BaseUserMeta,
-  DU,
-  OptionalPromise,
-  ResolveUsersArgs,
+import {
+  type BaseUserMeta,
+  type DU,
+  html,
+  htmlSafe,
+  type OptionalPromise,
+  type ResolveUsersArgs,
 } from "@liveblocks/core";
 import React from "react";
 
@@ -19,6 +21,8 @@ import type {
   SerializedTextNode,
 } from "./lexical-editor";
 import { assertSerializedMentionNode } from "./lexical-editor";
+import type { CSSProperties } from "./lib/css-properties";
+import { toInlineCSSString } from "./lib/css-properties";
 
 type LiveblocksTextEditorTextFormat = {
   bold: boolean;
@@ -332,4 +336,119 @@ export async function convertLiveblocksTextEditorNodesAsReact(
       {children}
     </Components.Container>
   );
+}
+
+export type ConvertLiveblocksTextEditorNodesAsHtmlStyles = {
+  /**
+   * The default inline CSS styles used to display the paragraph container element.
+   */
+  paragraph: CSSProperties;
+  /**
+   * The default inline CSS styles used to display text `<strong />` elements.
+   */
+  strong: CSSProperties;
+  /**
+   * The default inline CSS styles used to display text `<code />` elements.
+   */
+  code: CSSProperties;
+  /**
+   * The default inline CSS styles used to display mentions.
+   */
+  mention: CSSProperties;
+};
+
+export const baseStyles: ConvertLiveblocksTextEditorNodesAsHtmlStyles = {
+  paragraph: {
+    fontSize: "14px",
+  },
+  strong: {
+    fontWeight: 500,
+  },
+  code: {
+    fontFamily:
+      'ui-monospace, Menlo, Monaco, "Cascadia Mono", "Segoe UI Mono", "Roboto Mono", "Oxygen Mono", "Ubuntu Mono", "Source Code Pro", "Fira Mono", "Droid Sans Mono", "Consolas", "Courier New", monospace',
+    backgroundColor: "rgba(0,0,0,0.05)",
+    border: "solid 1px rgba(0,0,0,0.1)",
+    borderRadius: "4px",
+  },
+  mention: {
+    color: "blue",
+  },
+};
+
+export type ConvertLiveblocksTextEditorNodesAsHtmlOptions<
+  U extends BaseUserMeta = DU,
+> = {
+  /**
+   * The styles used to customize the html elements in the resulting html safe string.
+   * Each styles has priority over the base styles inherited.
+   */
+  styles?: Partial<ConvertLiveblocksTextEditorNodesAsHtmlStyles>;
+  /**
+   * A function that returns user info from user IDs.
+   */
+  resolveUsers?: (
+    args: ResolveUsersArgs
+  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
+};
+
+/**
+ * Convert a set of Liveblocks Editor nodes into an html safe string
+ * with inline css styles
+ */
+export async function convertLiveblocksTextEditorNodesAsHtml(
+  nodes: LiveblocksTextEditorNode[],
+  options?: ConvertLiveblocksTextEditorNodesAsHtmlOptions<BaseUserMeta>
+): Promise<string> {
+  const styles = { ...baseStyles, ...options?.styles };
+  const resolvedUsers = await resolveUsersInLiveblocksTextEditorNodes(
+    nodes,
+    options?.resolveUsers
+  );
+
+  // NOTE: using prettier-ignore to preserve template strings
+  const children = nodes
+    .map((node) => {
+      switch (node.type) {
+        case "mention": {
+          const user = resolvedUsers.get(node.userId);
+          // prettier-ignore
+          return html`<span data-mention style="${toInlineCSSString(styles.mention)}">@${user?.name ?? node.userId}</span>`
+        }
+        case "text": {
+          // Note: construction following the schema 👇
+          // <code><s><em><strong>{node.text}</strong></s></em></code>
+          let children = node.text;
+          if (!children) {
+            return children;
+          }
+
+          if (node.bold) {
+            // prettier-ignore
+            children = html`<strong style="${toInlineCSSString(styles.strong)}">${children}</strong>`;
+          }
+
+          if (node.italic) {
+            // prettier-ignore
+            children = html`<em>${children}</em>`;
+          }
+
+          if (node.strikethrough) {
+            // prettier-ignore
+            children = html`<s>${children}</s>`;
+          }
+
+          if (node.code) {
+            // prettier-ignore
+            children = html`<code style="${toInlineCSSString(styles.code)}">${children}</code>`;
+          }
+
+          return children;
+        }
+      }
+    })
+    .join("\n");
+
+  // prettier-ignore
+  return html`<p style=${toInlineCSSString(styles.paragraph)}">${htmlSafe(children)}</p>`;
 }
