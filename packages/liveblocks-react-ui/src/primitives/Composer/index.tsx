@@ -8,6 +8,7 @@ import {
   autoUpdate,
   flip,
   hide,
+  inline,
   limitShift,
   shift,
   size,
@@ -377,8 +378,9 @@ function ComposerEditorFloatingToolbarWrapper({
 
     return {
       strategy: "fixed",
-      placement: getPlacementFromPosition(position, dir),
+      placement: getPlacementFromPosition(position, dir, true),
       middleware: [
+        inline(),
         flip({ ...detectOverflowOptions, crossAxis: false }),
         hide(detectOverflowOptions),
         shift({

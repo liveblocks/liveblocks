@@ -178,9 +178,12 @@ export function commentBodyToComposerBody(body: CommentBody): ComposerBody {
 
 export function getPlacementFromPosition(
   position: FloatingPosition,
-  direction: Direction = "ltr"
+  direction: Direction = "ltr",
+  center?: boolean
 ): Placement {
-  return `${position}-${direction === "rtl" ? "end" : "start"}`;
+  return center
+    ? position
+    : `${position}-${direction === "rtl" ? "end" : "start"}`;
 }
 
 export function getSideAndAlignFromPlacement(placement: Placement) {
