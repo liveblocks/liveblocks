@@ -41,7 +41,7 @@ type TextMentionNotificationData = (
     }
 ) & {
   createdAt: Date;
-  createdBy: string;
+  userId: string; // Author of the mention
 };
 
 /** @internal */
@@ -82,12 +82,12 @@ export const extractTextMentionNotificationData = async ({
     return null;
   }
 
-  // For now use the `notifiedAt` inbox notification data
+  // For now we use the `notifiedAt` inbox notification data
   // to represent the creation date as we have currently
   // a 1 - 1 notification <> activity
-  const createdAt = inboxNotification.notifiedAt;
+  const mentionCreatedAt = inboxNotification.notifiedAt;
   // In context of a text mention notification `createdBy` is a `userId`
-  const createdBy = inboxNotification.createdBy;
+  const mentionAuthorUserId = inboxNotification.createdBy;
 
   switch (room.textEditor.type) {
     case "lexical": {
@@ -112,16 +112,16 @@ export const extractTextMentionNotificationData = async ({
       return {
         textEditorType: "lexical",
         mentionNodeWithContext,
-        createdAt,
-        createdBy,
+        createdAt: mentionCreatedAt,
+        userId: mentionAuthorUserId,
       };
     }
     case "tiptap": {
       // TODO: add logic to get tiptap state and mention node with context
       return {
         textEditorType: "tiptap",
-        createdAt,
-        createdBy,
+        createdAt: mentionCreatedAt,
+        userId: mentionAuthorUserId,
       };
     }
   }
@@ -130,7 +130,7 @@ export const extractTextMentionNotificationData = async ({
 export type MentionEmailBaseData = {
   id: string;
   roomId: string;
-  authorId: string;
+  userId: string; // Author of the mention
   textEditorNodes: LiveblocksTextEditorNode[];
   createdAt: Date;
 };
@@ -196,7 +196,7 @@ export const prepareTextMentionNotificationEmailBaseData = async ({
       roomId,
       textEditorNodes,
       createdAt: data.createdAt,
-      authorId: data.createdBy,
+      userId: data.userId,
     },
     roomInfo: resolvedRoomInfo,
   };
@@ -204,10 +204,10 @@ export const prepareTextMentionNotificationEmailBaseData = async ({
 
 /** @internal */
 const resolveAuthorInfo = async <U extends BaseUserMeta>({
-  authorId,
+  userId,
   resolveUsers,
 }: {
-  authorId: string;
+  userId: string;
   resolveUsers?: (
     args: ResolveUsersArgs
   ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
@@ -216,13 +216,13 @@ const resolveAuthorInfo = async <U extends BaseUserMeta>({
     return undefined;
   }
 
-  const authors = await resolveUsers({ userIds: [authorId] });
+  const authors = await resolveUsers({ userIds: [userId] });
   return authors?.[0];
 };
 
 export type MentionEmailAsReactData<U extends BaseUserMeta = DU> = Omit<
   MentionEmailBaseData,
-  "authorId" | "textEditorNodes"
+  "userId" | "textEditorNodes"
 > & {
   author: U;
   reactContent: React.ReactNode;
@@ -298,7 +298,7 @@ export async function prepareTextMentionNotificationEmailAsReact(
   });
 
   const authorInfoPromise = resolveAuthorInfo({
-    authorId: mention.authorId,
+    userId: mention.userId,
     resolveUsers: batchUsersResolver.resolveUsers,
   });
   const contentPromise = convertLiveblocksTextEditorNodesAsReact(
@@ -320,8 +320,8 @@ export async function prepareTextMentionNotificationEmailAsReact(
     mention: {
       id: mention.id,
       author: authorInfo
-        ? { id: mention.authorId, info: authorInfo }
-        : { id: mention.authorId, info: { name: mention.authorId } },
+        ? { id: mention.userId, info: authorInfo }
+        : { id: mention.userId, info: { name: mention.userId } },
       roomId: mention.roomId,
       reactContent,
       createdAt: mention.createdAt,
@@ -332,7 +332,7 @@ export async function prepareTextMentionNotificationEmailAsReact(
 
 export type MentionEmailAsHtmlData<U extends BaseUserMeta = DU> = Omit<
   MentionEmailBaseData,
-  "authorId" | "textEditorNodes"
+  "userId" | "textEditorNodes"
 > & {
   author: U;
   htmlContent: string;
@@ -408,7 +408,7 @@ export async function prepareTextMentionNotificationEmailAsHtml(
   });
 
   const authorInfoPromise = resolveAuthorInfo({
-    authorId: mention.authorId,
+    userId: mention.userId,
     resolveUsers: batchUsersResolver.resolveUsers,
   });
   const contentPromise = convertLiveblocksTextEditorNodesAsHtml(
@@ -430,8 +430,8 @@ export async function prepareTextMentionNotificationEmailAsHtml(
     mention: {
       id: mention.id,
       author: authorInfo
-        ? { id: mention.authorId, info: authorInfo }
-        : { id: mention.authorId, info: { name: mention.authorId } },
+        ? { id: mention.userId, info: authorInfo }
+        : { id: mention.userId, info: { name: mention.userId } },
       roomId: mention.roomId,
       htmlContent,
       createdAt: mention.createdAt,
