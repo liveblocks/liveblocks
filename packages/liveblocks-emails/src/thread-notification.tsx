@@ -26,6 +26,7 @@ import {
 } from "./comment-body";
 import type { CommentDataWithBody } from "./comment-with-body";
 import { filterCommentsWithBody } from "./comment-with-body";
+import { resolveAuthorsInfo } from "./lib/authors-resolver";
 import { createBatchUsersResolver } from "./lib/batch-users-resolver";
 
 /** @internal */
@@ -215,34 +216,6 @@ export const prepareThreadNotificationEmailBaseData = async ({
   }
 };
 
-/** @internal */
-const resolveAuthorsInfo = async <U extends BaseUserMeta>({
-  comments,
-  resolveUsers,
-}: {
-  comments: CommentEmailBaseData[];
-  resolveUsers?: (
-    args: ResolveUsersArgs
-  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
-}): Promise<Map<string, U["info"]>> => {
-  const resolvedAuthors = new Map<string, U["info"]>();
-  if (!resolveUsers) {
-    return resolvedAuthors;
-  }
-
-  const userIds = comments.map((c) => c.userId);
-  const users = await resolveUsers({ userIds });
-
-  for (const [index, userId] of userIds.entries()) {
-    const user = users?.[index];
-    if (user) {
-      resolvedAuthors.set(userId, user);
-    }
-  }
-
-  return resolvedAuthors;
-};
-
 export type CommentEmailAsHtmlData<U extends BaseUserMeta = DU> = Omit<
   CommentEmailBaseData,
   "userId" | "rawBody"
@@ -356,7 +329,7 @@ export async function prepareThreadNotificationEmailAsHtml(
       const { comment } = data;
 
       const authorsInfoPromise = resolveAuthorsInfo({
-        comments: [comment],
+        userIds: [comment.userId],
         resolveUsers: batchUsersResolver.resolveUsers,
       });
       const commentBodyPromise = convertCommentBodyAsHtml(comment.rawBody, {
@@ -392,7 +365,7 @@ export async function prepareThreadNotificationEmailAsHtml(
       const { comments } = data;
 
       const authorsInfoPromise = resolveAuthorsInfo({
-        comments,
+        userIds: comments.map((c) => c.userId),
         resolveUsers: batchUsersResolver.resolveUsers,
       });
       const commentBodiesPromises = comments.map((c) =>
@@ -504,7 +477,7 @@ export async function prepareThreadNotificationEmailAsReact(
       const { comment } = data;
 
       const authorsInfoPromise = resolveAuthorsInfo({
-        comments: [comment],
+        userIds: [comment.userId],
         resolveUsers: batchUsersResolver.resolveUsers,
       });
 
@@ -540,7 +513,7 @@ export async function prepareThreadNotificationEmailAsReact(
     case "unreadReplies": {
       const { comments } = data;
       const authorsInfoPromise = resolveAuthorsInfo({
-        comments,
+        userIds: comments.map((c) => c.userId),
         resolveUsers: batchUsersResolver.resolveUsers,
       });
 

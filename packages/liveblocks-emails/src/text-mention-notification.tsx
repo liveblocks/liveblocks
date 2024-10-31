@@ -16,6 +16,7 @@ import {
   findLexicalMentionNodeWithContext,
   getSerializedLexicalState,
 } from "./lexical-editor";
+import { resolveAuthorsInfo } from "./lib/authors-resolver";
 import { createBatchUsersResolver } from "./lib/batch-users-resolver";
 import type {
   ConvertLiveblocksTextEditorNodesAsHtmlStyles,
@@ -202,24 +203,6 @@ export const prepareTextMentionNotificationEmailBaseData = async ({
   };
 };
 
-/** @internal */
-const resolveAuthorInfo = async <U extends BaseUserMeta>({
-  userId,
-  resolveUsers,
-}: {
-  userId: string;
-  resolveUsers?: (
-    args: ResolveUsersArgs
-  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
-}): Promise<U["info"] | undefined> => {
-  if (!resolveUsers) {
-    return undefined;
-  }
-
-  const users = await resolveUsers({ userIds: [userId] });
-  return users?.[0];
-};
-
 export type MentionEmailAsReactData<U extends BaseUserMeta = DU> = Omit<
   MentionEmailBaseData,
   "userId" | "textEditorNodes"
@@ -297,8 +280,8 @@ export async function prepareTextMentionNotificationEmailAsReact(
     callerName: "prepareTextMentionNotificationEmailAsReact",
   });
 
-  const authorInfoPromise = resolveAuthorInfo({
-    userId: mention.userId,
+  const authorsInfoPromise = resolveAuthorsInfo({
+    userIds: [mention.userId],
     resolveUsers: batchUsersResolver.resolveUsers,
   });
   const contentPromise = convertLiveblocksTextEditorNodesAsReact(
@@ -311,10 +294,12 @@ export async function prepareTextMentionNotificationEmailAsReact(
 
   await batchUsersResolver.resolve();
 
-  const [authorInfo, reactContent] = await Promise.all([
-    authorInfoPromise,
+  const [authorsInfo, reactContent] = await Promise.all([
+    authorsInfoPromise,
     contentPromise,
   ]);
+
+  const authorInfo = authorsInfo.get(mention.userId);
 
   return {
     mention: {
@@ -407,10 +392,11 @@ export async function prepareTextMentionNotificationEmailAsHtml(
     callerName: "prepareTextMentionNotificationEmailAsHtml",
   });
 
-  const authorInfoPromise = resolveAuthorInfo({
-    userId: mention.userId,
+  const authorsInfoPromise = resolveAuthorsInfo({
+    userIds: [mention.userId],
     resolveUsers: batchUsersResolver.resolveUsers,
   });
+
   const contentPromise = convertLiveblocksTextEditorNodesAsHtml(
     mention.textEditorNodes,
     {
@@ -421,10 +407,12 @@ export async function prepareTextMentionNotificationEmailAsHtml(
 
   await batchUsersResolver.resolve();
 
-  const [authorInfo, htmlContent] = await Promise.all([
-    authorInfoPromise,
+  const [authorsInfo, htmlContent] = await Promise.all([
+    authorsInfoPromise,
     contentPromise,
   ]);
+
+  const authorInfo = authorsInfo.get(mention.userId);
 
   return {
     mention: {
