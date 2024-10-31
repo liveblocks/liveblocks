@@ -18,6 +18,7 @@ import {
 } from "./lexical-editor";
 import { resolveAuthorsInfo } from "./lib/authors-resolver";
 import { createBatchUsersResolver } from "./lib/batch-users-resolver";
+import type { ResolveRoomInfoArgs } from "./lib/types";
 import type {
   ConvertLiveblocksTextEditorNodesAsHtmlStyles,
   ConvertLiveblocksTextEditorNodesAsReactComponents,
@@ -28,8 +29,6 @@ import {
   convertLiveblocksTextEditorNodesAsReact,
   transformAsLiveblocksTextEditorNodes,
 } from "./liveblocks-text-editor";
-// TODO: create a common shared type once thread notification are publicly released.
-import type { ResolveRoomInfoArgs } from "./thread-notification";
 
 type TextMentionNotificationData = (
   | {

@@ -13,6 +13,7 @@ export type {
   ConvertCommentBodyAsHtmlStyles,
   ConvertCommentBodyAsReactComponents,
 } from "./comment-body";
+export type { ResolveRoomInfoArgs } from "./lib/types";
 export type {
   ConvertLiveblocksTextEditorNodesAsReactComponents,
   LiveblocksTextEditorContainerComponentProps,
@@ -30,8 +31,6 @@ export type {
   CommentEmailAsReactData,
   PrepareThreadNotificationEmailAsHtmlOptions,
   PrepareThreadNotificationEmailAsReactOptions,
-  // TODO: create a common shared type once thread notification are publicly released.
-  ResolveRoomInfoArgs,
   ThreadNotificationEmailDataAsHtml,
   ThreadNotificationEmailDataAsReact,
 } from "./thread-notification";

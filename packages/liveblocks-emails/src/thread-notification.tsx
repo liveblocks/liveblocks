@@ -28,6 +28,7 @@ import type { CommentDataWithBody } from "./comment-with-body";
 import { filterCommentsWithBody } from "./comment-with-body";
 import { resolveAuthorsInfo } from "./lib/authors-resolver";
 import { createBatchUsersResolver } from "./lib/batch-users-resolver";
+import type { ResolveRoomInfoArgs } from "./lib/types";
 
 /** @internal */
 export const getUnreadComments = ({
@@ -120,13 +121,6 @@ export type CommentEmailBaseData = {
   createdAt: Date;
   url?: string;
   rawBody: CommentBody;
-};
-
-export type ResolveRoomInfoArgs = {
-  /**
-   * The ID of the room to resolve
-   */
-  roomId: string;
 };
 
 type PrepareThreadNotificationEmailBaseDataOptions = {
