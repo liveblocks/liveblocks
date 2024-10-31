@@ -16,7 +16,7 @@ import {
   findLexicalMentionNodeWithContext,
   getSerializedLexicalState,
 } from "./lexical-editor";
-import { resolveAuthorsInfo } from "./lib/authors-resolver";
+import { resolveAuthorsInfo, setAuthor } from "./lib/authors";
 import { createBatchUsersResolver } from "./lib/batch-users-resolver";
 import type { ResolveRoomInfoArgs } from "./lib/types";
 import type {
@@ -303,9 +303,7 @@ export async function prepareTextMentionNotificationEmailAsReact(
   return {
     mention: {
       id: mention.id,
-      author: authorInfo
-        ? { id: mention.userId, info: authorInfo }
-        : { id: mention.userId, info: { name: mention.userId } },
+      author: setAuthor(mention.userId, authorInfo),
       roomId: mention.roomId,
       reactContent,
       createdAt: mention.createdAt,
@@ -416,9 +414,7 @@ export async function prepareTextMentionNotificationEmailAsHtml(
   return {
     mention: {
       id: mention.id,
-      author: authorInfo
-        ? { id: mention.userId, info: authorInfo }
-        : { id: mention.userId, info: { name: mention.userId } },
+      author: setAuthor(mention.userId, authorInfo),
       roomId: mention.roomId,
       htmlContent,
       createdAt: mention.createdAt,

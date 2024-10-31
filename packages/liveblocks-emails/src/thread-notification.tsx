@@ -26,7 +26,7 @@ import {
 } from "./comment-body";
 import type { CommentDataWithBody } from "./comment-with-body";
 import { filterCommentsWithBody } from "./comment-with-body";
-import { resolveAuthorsInfo } from "./lib/authors-resolver";
+import { resolveAuthorsInfo, setAuthor } from "./lib/authors";
 import { createBatchUsersResolver } from "./lib/batch-users-resolver";
 import type { ResolveRoomInfoArgs } from "./lib/types";
 
@@ -345,9 +345,7 @@ export async function prepareThreadNotificationEmailAsHtml(
           id: comment.id,
           threadId: comment.threadId,
           roomId: comment.roomId,
-          author: authorInfo
-            ? { id: comment.userId, info: authorInfo }
-            : { id: comment.userId, info: { name: comment.userId } },
+          author: setAuthor(comment.userId, authorInfo),
           createdAt: comment.createdAt,
           url: comment.url,
           htmlBody: commentBodyHtml,
@@ -386,9 +384,7 @@ export async function prepareThreadNotificationEmailAsHtml(
             id: comment.id,
             threadId: comment.threadId,
             roomId: comment.roomId,
-            author: authorInfo
-              ? { id: comment.userId, info: authorInfo }
-              : { id: comment.userId, info: { name: comment.userId } },
+            author: setAuthor(comment.userId, authorInfo),
             createdAt: comment.createdAt,
             url: comment.url,
             htmlBody: commentBodyHtml ?? "",
@@ -494,9 +490,7 @@ export async function prepareThreadNotificationEmailAsReact(
           id: comment.id,
           threadId: comment.threadId,
           roomId: comment.roomId,
-          author: authorInfo
-            ? { id: comment.userId, info: authorInfo }
-            : { id: comment.userId, info: { name: comment.userId } },
+          author: setAuthor(comment.userId, authorInfo),
           createdAt: comment.createdAt,
           url: comment.url,
           reactBody: commentBodyReact,
@@ -535,9 +529,7 @@ export async function prepareThreadNotificationEmailAsReact(
             id: comment.id,
             threadId: comment.threadId,
             roomId: comment.roomId,
-            author: authorInfo
-              ? { id: comment.userId, info: authorInfo }
-              : { id: comment.userId, info: { name: comment.userId } },
+            author: setAuthor(comment.userId, authorInfo),
             createdAt: comment.createdAt,
             url: comment.url,
             reactBody: commentBodyReact ?? null,
