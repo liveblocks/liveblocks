@@ -83,7 +83,8 @@ export const extractTextMentionNotificationData = async ({
   }
 
   // For now use the `notifiedAt` inbox notification data
-  // to represent the creation date.
+  // to represent the creation date as we have currently
+  // a 1 - 1 notification <> activity
   const createdAt = inboxNotification.notifiedAt;
   // In context of a text mention notification `createdBy` is a `userId`
   const createdBy = inboxNotification.createdBy;
