@@ -1,0 +1,185 @@
+@import "@liveblocks/react-ui/styles.css";
+@import "@liveblocks/react-lexical/styles.css";
+@import "./cmdk.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  overflow: hidden;
+}
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 240 10% 3.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 3.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 3.9%;
+  --primary: 240 5.9% 10%;
+  --primary-foreground: 0 0% 98%;
+  --secondary: 240 4.8% 95.9%;
+  --secondary-foreground: 240 5.9% 10%;
+  --muted: 240 4.8% 95.9%;
+  --muted-foreground: 240 3.8% 46.1%;
+  --accent: 240 4.8% 95.9%;
+  --accent-foreground: 240 5.9% 10%;
+  --destructive: 0 72.22% 50.59%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 240 5.9% 90%;
+  --input: 240 5.9% 90%;
+  --ring: 240 5% 64.9%;
+  --radius: 0.5rem;
+}
+
+::selection {
+  @apply bg-indigo-100/75;
+}
+
+p {
+  margin: 0.8rem 0;
+}
+
+h1 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 1.8rem 0 0.8rem;
+}
+
+h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 1.8rem 0 0.8rem;
+}
+
+h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 1.8rem 0 0.8rem;
+}
+
+h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 1.8rem 0 0.8rem;
+}
+
+h5 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 1.8rem 0 0.8rem;
+}
+
+h6 {
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.2;
+  margin: 1.8rem 0 0.8rem;
+}
+
+blockquote {
+  box-sizing: border-box;
+  border-left: 3px solid rgb(90, 88, 99);
+  padding-left: 0.9rem;
+  margin: 0.8rem 0;
+}
+
+ul {
+  display: block;
+  list-style-type: disc;
+  margin-block-start: 1rem;
+  margin-block-end: 1rem;
+  margin-inline-start: 0;
+  margin-inline-end: 0;
+  padding-inline-start: 40px;
+  unicode-bidi: isolate;
+}
+
+ol {
+  display: block;
+  list-style-type: decimal;
+  margin-block-start: 1rem;
+  margin-block-end: 1rem;
+  margin-inline-start: 0;
+  margin-inline-end: 0;
+  padding-inline-start: 40px;
+  unicode-bidi: isolate;
+}
+
+li {
+  display: list-item;
+  text-align: -webkit-match-parent;
+  unicode-bidi: isolate;
+}
+
+li::marker {
+  unicode-bidi: isolate;
+  font-variant-numeric: tabular-nums;
+  text-transform: none;
+  text-indent: 0 !important;
+  text-align: start !important;
+  text-align-last: start !important;
+}
+
+code {
+  background: rgb(241, 241, 244);
+  padding: 1px;
+  font-size: 0.94em;
+  border-radius: 4px;
+}
+
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.3rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 1.8rem;
+}
+
+.lexical-bold {
+  font-weight: bold;
+}
+
+.lexical-italic {
+  font-style: italic;
+}
+
+.lexical-underline {
+  text-decoration: underline;
+}
+
+.lexical-strikethrough {
+  text-decoration: line-through;
+}
+
+.lexical-underline.lexical-strikethrough {
+  text-decoration: underline line-through;
+}
+
+.lb-root {
+  --lb-accent: #4f46e5;
+  --lb-elevation-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.1) 0px 4px 6px -4px;
+}
+
+.lb-thread .lb-thread-composer {
+  border-top: 1px solid rgba(228, 228, 231, 0.8);
+}
+
+.lb-composer, .lb-thread {
+  font-size: 14px;
+}
+
+.lb-thread-composer:after {
+  content: none;
+}
+
+.lb-portal {
+  z-index: 9999999;
+}

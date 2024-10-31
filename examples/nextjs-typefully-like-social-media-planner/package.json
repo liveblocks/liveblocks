@@ -1,0 +1,51 @@
+{
+  "name": "@liveblocks-examples/nextjs-notion-like-ai-editor",
+  "description": "This example shows how to build a collaborative text editor with an AI toolbar using Liveblocks, Lexical, Vercel AI SDK, and Next.js.",
+  "license": "Apache-2.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "^0.0.33",
+    "@floating-ui/react-dom": "^2.1.0",
+    "@lexical/list": "0.16.1",
+    "@lexical/markdown": "^0.16.1",
+    "@lexical/react": "0.16.1",
+    "@lexical/rich-text": "0.16.1",
+    "@lexical/selection": "0.16.1",
+    "@lexical/utils": "0.16.1",
+    "@liveblocks/client": "^2.9.0",
+    "@liveblocks/node": "^2.9.0",
+    "@liveblocks/node-lexical": "^2.9.0",
+    "@liveblocks/react": "^2.9.0",
+    "@liveblocks/react-lexical": "^2.9.0",
+    "@liveblocks/react-ui": "^2.9.0",
+    "@radix-ui/react-dialog": "^1.1.1",
+    "@radix-ui/react-popover": "^1.0.7",
+    "@types/node": "^18.11.18",
+    "@types/react": "^18.0.27",
+    "@types/react-dom": "^18.0.10",
+    "ai": "^3.3.31",
+    "cmdk": "^1.0.0",
+    "framer-motion": "^11.2.12",
+    "lexical": "0.16.1",
+    "markdown-to-jsx": "^7.5.0",
+    "nanoid": "^3.3.7",
+    "next": "^14.2.10",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-textarea-autosize": "^8.5.3",
+    "swr": "^2.2.5",
+    "typescript": "^5.2.2",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.4"
+  }
+}

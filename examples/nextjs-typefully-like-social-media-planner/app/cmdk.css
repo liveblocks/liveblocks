@@ -1,0 +1,27 @@
+/**
+ * Styles for the AI command panel
+ */
+
+[cmdk-root] {
+  outline: none;
+}
+
+[cmdk-group-heading] {
+  @apply text-xs font-medium text-gray-400 px-3.5 pt-2 pb-1 select-none;
+}
+
+[cmdk-group] {
+  @apply my-1;
+}
+
+[cmdk-item] {
+  @apply hover:bg-gray-100 rounded-[6px] px-2.5 py-1 m-1 cursor-pointer;
+}
+
+[cmdk-item][data-selected="true"] {
+  @apply bg-gray-200/75;
+}
+
+[cmdk-separator] {
+  @apply border-b border-gray-300 w-full my-0.5;
+}
