@@ -216,8 +216,8 @@ const resolveAuthorInfo = async <U extends BaseUserMeta>({
     return undefined;
   }
 
-  const authors = await resolveUsers({ userIds: [userId] });
-  return authors?.[0];
+  const users = await resolveUsers({ userIds: [userId] });
+  return users?.[0];
 };
 
 export type MentionEmailAsReactData<U extends BaseUserMeta = DU> = Omit<
