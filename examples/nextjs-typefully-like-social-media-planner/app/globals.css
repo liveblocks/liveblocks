@@ -1,6 +1,5 @@
 @import "@liveblocks/react-ui/styles.css";
-@import "@liveblocks/react-lexical/styles.css";
-@import "./cmdk.css";
+/*@import "@liveblocks/react-tiptap/styles.css";*/
 
 @tailwind base;
 @tailwind components;

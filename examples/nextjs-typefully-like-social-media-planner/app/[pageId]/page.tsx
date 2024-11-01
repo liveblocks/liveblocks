@@ -1,4 +1,4 @@
-import { Editor } from "../components/Editor";
+import { TweetPanel } from "../components/TweetPanel";
 import { Room } from "./Room";
 import { Avatars } from "../components/Avatars";
 
@@ -7,11 +7,9 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 export const revalidate = 0;
 
-export default async function Page({
-  params: { pageId },
-}: {
-  params: { pageId: string };
-}) {
+export default async function Page({ params }) {
+  const { pageId } = await params;
+
   return (
     <Room pageId={pageId}>
       {/* Sticky header */}
@@ -20,7 +18,7 @@ export default async function Page({
         <Avatars />
       </div>
 
-      <Editor />
+      <TweetPanel />
 
       <LiveblocksBadge />
     </Room>
