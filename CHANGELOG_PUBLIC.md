@@ -15,6 +15,11 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 44 (2024-11-01)
 
+## Dashboard
+
+- Icons indicating which rooms are public/private on room listing and detail pages.
+- New warning message if all your rooms are publicly accessible.
+
 ## Documentation
 
 - Improved clarity on Notifications being [project-based](http://liveblocks.io/docs/products/notifications/concepts#Project-based).
@@ -22,7 +27,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Contributors
 
-haydenbleasel, ctnicholas
+haydenbleasel, ctnicholas, pierrelevaillant
 
 # Week 43 (2024-10-25)
 
