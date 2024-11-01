@@ -52,7 +52,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Contributors
 
-haydenbleasel, ctnicholas, pierrelevaillant
+haydenbleasel, ctnicholas, pierrelevaillant, nvie, nimeshnayaju
 
 # Week 43 (2024-10-25)
 
