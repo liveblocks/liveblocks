@@ -15,6 +15,31 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 44 (2024-11-01)
 
+## v2.10.2
+
+### `@liveblocks/client`
+
+- Internal refactorings and code cleanup across various parts of the client's
+  inner workings.
+
+### `@liveblocks/react`
+
+- Implement automatic retry for initial load of inbox notifications, user
+  threads, room threads, room versions, or room notification settings—except
+  when encountering a 4xx error.
+- Background tabs will no longer poll threads, notification, room versions or
+  room notification settings.
+- Fix incorrect suspense export for `useRoomNotificationSettings` hook.
+- Support for React 19 and Next.js 15.
+
+### `@liveblocks/react-ui`
+
+- Support for React 19 and Next.js 15.
+
+### `@liveblocks/react-lexical`
+
+- Support for React 19 and Next.js 15.
+
 ## Dashboard
 
 - Icons indicating which rooms are public/private on room listing and detail pages.
