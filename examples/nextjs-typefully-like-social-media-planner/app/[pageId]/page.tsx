@@ -7,18 +7,22 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 export const revalidate = 0;
 
-export default async function Page({ params }) {
+export default async function Page({ params }: any) {
   const { pageId } = await params;
 
   return (
     <Room pageId={pageId}>
       {/* Sticky header */}
       <div className="sticky top-0 left-0 right-0 h-[60px] flex items-center justify-between px-4 z-20">
-        <div />
         <Avatars />
+        <div>
+          <button>Publish</button>
+        </div>
       </div>
 
-      <TweetPanel />
+      <div className="mx-auto w-full max-w-[600px] px-4">
+        <TweetPanel />
+      </div>
 
       <LiveblocksBadge />
     </Room>
