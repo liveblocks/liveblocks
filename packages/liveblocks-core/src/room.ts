@@ -6,14 +6,6 @@ import type {
   Status,
 } from "./connection";
 import { ManagedSocket, StopRetrying } from "./connection";
-import {
-  convertToCommentData,
-  convertToCommentUserReaction,
-  convertToInboxNotificationData,
-  convertToInboxNotificationDeleteInfo,
-  convertToThreadData,
-  convertToThreadDeleteInfo,
-} from "./convert-plain-data";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { OpSource } from "./crdts/AbstractCrdt";
 import {
@@ -28,30 +20,20 @@ import { LiveObject } from "./crdts/LiveObject";
 import type { LiveNode, LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
 import type { DE, DM, DP, DS, DU } from "./globals/augmentation";
-import { getBearerTokenFromAuthValue, HttpClient } from "./http-client";
+import { getBearerTokenFromAuthValue, type RoomHttpApi } from "./http-client";
 import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
-import { autoRetry, HttpError } from "./lib/autoRetry";
 import type { BatchStore } from "./lib/batch";
 import { Batch, createBatchStore } from "./lib/batch";
-import { chunk } from "./lib/chunk";
 import { Promise_withResolvers } from "./lib/controlledPromise";
-import {
-  createCommentAttachmentId,
-  createCommentId,
-  createThreadId,
-} from "./lib/createIds";
-import type { DateToString } from "./lib/DateToString";
+import { createCommentAttachmentId } from "./lib/createIds";
 import { captureStackTrace } from "./lib/debug";
 import type { Callback, EventSource, Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
-import { objectToQuery } from "./lib/objectToQuery";
 import { asPos } from "./lib/position";
-import type { URLSafeString } from "./lib/url";
-import { url } from "./lib/url";
 import {
   compact,
   deepClone,
@@ -68,21 +50,15 @@ import type {
   CommentAttachment,
   CommentBody,
   CommentData,
-  CommentDataPlain,
   CommentLocalAttachment,
   CommentUserReaction,
-  CommentUserReactionPlain,
   QueryMetadata,
   ThreadData,
-  ThreadDataPlain,
   ThreadDeleteInfo,
-  ThreadDeleteInfoPlain,
 } from "./protocol/Comments";
 import type {
   InboxNotificationData,
-  InboxNotificationDataPlain,
   InboxNotificationDeleteInfo,
-  InboxNotificationDeleteInfoPlain,
 } from "./protocol/InboxNotifications";
 import type { Op } from "./protocol/Op";
 import { isAckOp, OpCode } from "./protocol/Op";
@@ -1214,6 +1190,8 @@ export type RoomConfig = {
 
   polyfills?: Polyfills;
 
+  roomHttpClient: RoomHttpApi;
+
   /**
    * Only necessary when you’re using Liveblocks with React v17 or lower.
    *
@@ -1279,31 +1257,6 @@ function installBackgroundTabSpy(): [
 }
 
 const GET_ATTACHMENT_URLS_BATCH_DELAY = 50;
-const ATTACHMENT_PART_SIZE = 5 * 1024 * 1024; // 5 MB
-const ATTACHMENT_PART_BATCH_SIZE = 5;
-const RETRY_ATTEMPTS = 10;
-const RETRY_DELAYS = [
-  2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000,
-];
-
-function splitFileIntoParts(file: File) {
-  const parts: { partNumber: number; part: Blob }[] = [];
-
-  let start = 0;
-
-  while (start < file.size) {
-    const end = Math.min(start + ATTACHMENT_PART_SIZE, file.size);
-
-    parts.push({
-      partNumber: parts.length + 1,
-      part: file.slice(start, end),
-    });
-
-    start = end;
-  }
-
-  return parts;
-}
 
 /**
  * @internal
@@ -1321,6 +1274,8 @@ export function createRoom<
 ): Room<P, S, U, E, M> {
   const initialPresence = options.initialPresence; // ?? {};
   const initialStorage = options.initialStorage; // ?? {};
+
+  const httpClient = config.roomHttpClient;
 
   const [inBackgroundSince, uninstallBgTabSpy] = installBackgroundTabSpy();
 
@@ -1603,10 +1558,6 @@ export function createRoom<
     comments: makeEventSource<CommentsEventServerMsg>(),
   };
 
-  const fetchPolyfill =
-    config.polyfills?.fetch ||
-    /* istanbul ignore next */ globalThis.fetch?.bind(globalThis);
-
   //
   // There are effectively two "clients" making requests.
   //
@@ -1618,84 +1569,46 @@ export function createRoom<
   //
   // TODO: Ideally we would consolidate these two.
   //
-  const httpClient1 = new HttpClient(config.baseUrl, fetchPolyfill, () =>
-    Promise.resolve(managedSocket.authValue ?? raise("Not authorized"))
-  );
-  const httpClient2 = new HttpClient(config.baseUrl, fetchPolyfill, () =>
-    // TODO: Use the right scope
-    delegates.authenticate()
-  );
+
+  function getAuthValue() {
+    if (managedSocket.authValue === null) {
+      raise("Not authorized");
+    }
+    return Promise.resolve(managedSocket.authValue);
+  }
+
+  const roomId = config.roomId;
 
   async function createTextMention(userId: string, mentionId: string) {
-    await httpClient1.rawPost(url`/v2/c/rooms/${config.roomId}/text-mentions`, {
-      userId,
-      mentionId,
-    });
+    return httpClient.createTextMention({ roomId, userId, mentionId });
   }
 
   async function deleteTextMention(mentionId: string) {
-    await httpClient1.rawDelete(
-      url`/v2/c/rooms/${config.roomId}/text-mentions/${mentionId}`
-    );
+    return httpClient.deleteTextMention({ roomId, mentionId });
   }
 
   async function reportTextEditor(type: "lexical", rootKey: string) {
-    await httpClient2.rawPost(url`/v2/c/rooms/${config.roomId}/text-metadata`, {
-      type,
-      rootKey,
-    });
+    return httpClient.reportTextEditor({ roomId, type, rootKey });
   }
 
   async function listTextVersions() {
-    const result = await httpClient2.get<{
-      versions: DateToString<HistoryVersion>[];
-      meta: {
-        requestedAt: string;
-      };
-    }>(url`/v2/c/rooms/${config.roomId}/versions`);
-
-    return {
-      versions: result.versions.map(({ createdAt, ...version }) => {
-        return {
-          createdAt: new Date(createdAt),
-          ...version,
-        };
-      }),
-      requestedAt: new Date(result.meta.requestedAt),
-    };
+    return httpClient.listTextVersions({ roomId });
   }
 
   async function listTextVersionsSince(options: ListTextVersionsSinceOptions) {
-    const result = await httpClient2.get<{
-      versions: DateToString<HistoryVersion>[];
-      meta: {
-        requestedAt: string;
-      };
-    }>(
-      url`/v2/c/rooms/${config.roomId}/versions/delta`,
-      { since: options.since.toISOString() },
-      { signal: options.signal }
-    );
-
-    return {
-      versions: result.versions.map(({ createdAt, ...version }) => {
-        return {
-          createdAt: new Date(createdAt),
-          ...version,
-        };
-      }),
-      requestedAt: new Date(result.meta.requestedAt),
-    };
+    return httpClient.listTextVersionsSince({
+      roomId,
+      since: options.since,
+      signal: options.signal,
+    });
   }
 
   async function getTextVersion(versionId: string) {
-    return httpClient2.rawGet(
-      url`/v2/c/rooms/${config.roomId}/y-version/${versionId}`
-    );
+    return httpClient.getTextVersion({ roomId, versionId });
   }
 
   async function createTextVersion() {
-    await httpClient2.rawPost(url`/v2/c/rooms/${config.roomId}/version`);
+    return httpClient.createTextVersion({ roomId });
   }
 
   function sendMessages(messages: ClientMsg<P, E>[]) {
@@ -1706,11 +1619,8 @@ export function createRoom<
       // if this turns out to be expensive, we could just guess with a lower value.
       const size = new TextEncoder().encode(serializedPayload).length;
       if (size > MAX_SOCKET_MESSAGE_SIZE) {
-        void httpClient1
-          .rawPost(url`/v2/c/rooms/${config.roomId}/send-message`, {
-            nonce,
-            messages,
-          })
+        void httpClient
+          .sendMessages<P, E>({ roomId, nonce, messages, getAuthValue })
           .then((resp) => {
             if (!resp.ok && resp.status === 403) {
               managedSocket.reconnect();
@@ -2535,10 +2445,7 @@ export function createRoom<
   async function streamStorage() {
     // TODO: Handle potential race conditions where the room get disconnected while the request is pending
     if (!managedSocket.authValue) return;
-    const result = await httpClient1.rawGet(
-      url`/v2/c/rooms/${config.roomId}/storage`
-    );
-    const items = (await result.json()) as IdTuple<SerializedCrdt>[];
+    const items = await httpClient.streamStorage({ roomId, getAuthValue });
     processInitialStorage({ type: ServerMsgCode.INITIAL_STORAGE_STATE, items });
   }
 
@@ -2832,103 +2739,26 @@ export function createRoom<
   };
 
   async function getThreadsSince(options: GetThreadsSinceOptions) {
-    const result = await httpClient2.get<{
-      data: ThreadDataPlain<M>[];
-      inboxNotifications: InboxNotificationDataPlain[];
-      deletedThreads: ThreadDeleteInfoPlain[];
-      deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
-      meta: {
-        requestedAt: string;
-      };
-    }>(
-      url`/v2/c/rooms/${config.roomId}/threads/delta`,
-      { since: options?.since?.toISOString() },
-      { signal: options.signal }
-    );
-
-    return {
-      threads: {
-        updated: result.data.map(convertToThreadData),
-        deleted: result.deletedThreads.map(convertToThreadDeleteInfo),
-      },
-      inboxNotifications: {
-        updated: result.inboxNotifications.map(convertToInboxNotificationData),
-        deleted: result.deletedInboxNotifications.map(
-          convertToInboxNotificationDeleteInfo
-        ),
-      },
-      requestedAt: new Date(result.meta.requestedAt),
-    };
+    return httpClient.getThreadsSince<M>({
+      roomId,
+      since: options.since,
+      signal: options.signal,
+    });
   }
 
   async function getThreads(options?: GetThreadsOptions<M>) {
-    let query: string | undefined;
-
-    if (options?.query) {
-      query = objectToQuery(options.query);
-    }
-
-    const PAGE_SIZE = 50;
-
-    const result = await httpClient2.get<{
-      data: ThreadDataPlain<M>[];
-      inboxNotifications: InboxNotificationDataPlain[];
-      deletedThreads: ThreadDeleteInfoPlain[];
-      deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
-      meta: {
-        requestedAt: string;
-        nextCursor: string | null;
-      };
-    }>(url`/v2/c/rooms/${config.roomId}/threads`, {
+    return httpClient.getThreads<M>({
+      roomId,
+      query: options?.query,
       cursor: options?.cursor,
-      query,
-      limit: PAGE_SIZE,
     });
-
-    return {
-      threads: result.data.map(convertToThreadData),
-      inboxNotifications: result.inboxNotifications.map(
-        convertToInboxNotificationData
-      ),
-      nextCursor: result.meta.nextCursor,
-      requestedAt: new Date(result.meta.requestedAt),
-    };
   }
 
   async function getThread(threadId: string) {
-    const response = await httpClient2.rawGet(
-      url`/v2/c/rooms/${config.roomId}/thread-with-notification/${threadId}`
-    );
-
-    if (response.ok) {
-      const json = (await response.json()) as {
-        thread: ThreadDataPlain<M>;
-        inboxNotification?: InboxNotificationDataPlain;
-      };
-
-      return {
-        thread: convertToThreadData(json.thread),
-        inboxNotification: json.inboxNotification
-          ? convertToInboxNotificationData(json.inboxNotification)
-          : undefined,
-      };
-    } else if (response.status === 404) {
-      return {
-        thread: undefined,
-        inboxNotification: undefined,
-      };
-    } else {
-      throw new Error(`There was an error while getting thread ${threadId}.`);
-    }
+    return httpClient.getThread<M>({ roomId, threadId });
   }
 
-  async function createThread({
-    metadata,
-    body,
-    commentId = createCommentId(),
-    threadId = createThreadId(),
-    attachmentIds,
-  }: {
+  async function createThread(options: {
     roomId: string;
     threadId?: string;
     commentId?: string;
@@ -2936,97 +2766,72 @@ export function createRoom<
     body: CommentBody;
     attachmentIds?: string[];
   }) {
-    const thread = await httpClient2.post<ThreadDataPlain<M>>(
-      url`/v2/c/rooms/${config.roomId}/threads`,
-      {
-        id: threadId,
-        comment: {
-          id: commentId,
-          body,
-          attachmentIds,
-        },
-        metadata,
-      }
-    );
-
-    return convertToThreadData(thread);
+    return httpClient.createThread<M>({
+      roomId,
+      threadId: options.threadId,
+      commentId: options.commentId,
+      metadata: options.metadata,
+      body: options.body,
+      attachmentIds: options.attachmentIds,
+    });
   }
 
   async function deleteThread(threadId: string) {
-    await httpClient2.delete(
-      url`/v2/c/rooms/${config.roomId}/threads/${threadId}`
-    );
+    return httpClient.deleteThread({ roomId, threadId });
   }
 
   async function editThreadMetadata({
+    roomId,
     metadata,
     threadId,
   }: {
+    // XXX - This `roomId` argument should not be present here since we're already in the room context
     roomId: string;
     metadata: Patchable<M>;
     threadId: string;
   }) {
-    return await httpClient2.post<M>(
-      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/metadata`,
-      metadata
-    );
+    return httpClient.editThreadMetadata<M>({ roomId, threadId, metadata });
   }
 
   async function markThreadAsResolved(threadId: string) {
-    await httpClient2.post(
-      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/mark-as-resolved`
-    );
+    return httpClient.markThreadAsResolved({ roomId, threadId });
   }
 
   async function markThreadAsUnresolved(threadId: string) {
-    await httpClient2.post(
-      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/mark-as-unresolved`
-    );
+    return httpClient.markThreadAsUnresolved({
+      roomId,
+      threadId,
+    });
   }
 
-  async function createComment({
-    threadId,
-    commentId = createCommentId(),
-    body,
-    attachmentIds,
-  }: {
+  async function createComment(options: {
     threadId: string;
     commentId?: string;
     body: CommentBody;
     attachmentIds?: string[];
   }) {
-    const comment = await httpClient2.post<CommentDataPlain>(
-      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments`,
-      {
-        id: commentId,
-        body,
-        attachmentIds,
-      }
-    );
-
-    return convertToCommentData(comment);
+    return httpClient.createComment({
+      roomId,
+      threadId: options.threadId,
+      commentId: options.commentId,
+      body: options.body,
+      attachmentIds: options.attachmentIds,
+    });
   }
 
-  async function editComment({
-    threadId,
-    commentId,
-    body,
-    attachmentIds,
-  }: {
+  async function editComment(options: {
     threadId: string;
     commentId: string;
     body: CommentBody;
     attachmentIds?: string[];
   }) {
-    const comment = await httpClient2.post<CommentDataPlain>(
-      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}`,
-      {
-        body,
-        attachmentIds,
-      }
-    );
-
-    return convertToCommentData(comment);
+    return httpClient.editComment({
+      roomId,
+      threadId: options.threadId,
+      commentId: options.commentId,
+      body: options.body,
+      attachmentIds: options.attachmentIds,
+    });
   }
 
   async function deleteComment({
@@ -3037,9 +2842,7 @@ export function createRoom<
     threadId: string;
     commentId: string;
   }) {
-    await httpClient2.delete(
-      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}`
-    );
+    return httpClient.deleteComment({ roomId, threadId, commentId });
   }
 
   async function addReaction({
@@ -3051,12 +2854,7 @@ export function createRoom<
     commentId: string;
     emoji: string;
   }) {
-    const reaction = await httpClient2.post<CommentUserReactionPlain>(
-      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}/reactions`,
-      { emoji }
-    );
-
-    return convertToCommentUserReaction(reaction);
+    return httpClient.addReaction({ roomId, threadId, commentId, emoji });
   }
 
   async function removeReaction({
@@ -3068,9 +2866,12 @@ export function createRoom<
     commentId: string;
     emoji: string;
   }) {
-    await httpClient2.delete<CommentDataPlain>(
-      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}/reactions/${emoji}`
-    );
+    return await httpClient.removeReaction({
+      roomId,
+      threadId,
+      commentId,
+      emoji,
+    });
   }
 
   function prepareAttachment(file: File): CommentLocalAttachment {
@@ -3089,163 +2890,21 @@ export function createRoom<
     attachment: CommentLocalAttachment,
     options: UploadAttachmentOptions = {}
   ): Promise<CommentAttachment> {
-    const abortSignal = options.signal;
-    const abortError = abortSignal
-      ? new DOMException(
-          `Upload of attachment ${attachment.id} was aborted.`,
-          "AbortError"
-        )
-      : undefined;
-
-    if (abortSignal?.aborted) {
-      throw abortError;
-    }
-
-    const handleRetryError = (err: Error) => {
-      if (abortSignal?.aborted) {
-        throw abortError;
-      }
-
-      if (err instanceof HttpError && err.status === 413) {
-        throw err;
-      }
-
-      return false;
-    };
-
-    if (attachment.size <= ATTACHMENT_PART_SIZE) {
-      // If the file is small enough, upload it in a single request
-      return autoRetry(
-        () =>
-          httpClient2.putBlob<CommentAttachment>(
-            url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/upload/${encodeURIComponent(attachment.name)}`,
-            attachment.file,
-            { fileSize: attachment.size },
-            { signal: abortSignal }
-          ),
-        RETRY_ATTEMPTS,
-        RETRY_DELAYS,
-        handleRetryError
-      );
-    } else {
-      // Otherwise, upload it in multiple parts
-      let uploadId: string | undefined;
-      const uploadedParts: {
-        etag: string;
-        partNumber: number;
-      }[] = [];
-
-      // Create a multi-part upload
-      const createMultiPartUpload = await autoRetry(
-        () =>
-          httpClient2.post<{
-            uploadId: string;
-            key: string;
-          }>(
-            url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/multipart/${encodeURIComponent(attachment.name)}`,
-            undefined,
-            { signal: abortSignal },
-            { fileSize: attachment.size }
-          ),
-        RETRY_ATTEMPTS,
-        RETRY_DELAYS,
-        handleRetryError
-      );
-
-      try {
-        uploadId = createMultiPartUpload.uploadId;
-
-        const parts = splitFileIntoParts(attachment.file);
-
-        // Check if the upload was aborted
-        if (abortSignal?.aborted) {
-          throw abortError;
-        }
-
-        const batches = chunk(parts, ATTACHMENT_PART_BATCH_SIZE);
-
-        // Batches are uploaded one after the other
-        for (const parts of batches) {
-          const uploadedPartsPromises: Promise<{
-            partNumber: number;
-            etag: string;
-          }>[] = [];
-
-          for (const { part, partNumber } of parts) {
-            uploadedPartsPromises.push(
-              autoRetry(
-                () =>
-                  httpClient2.putBlob<{
-                    partNumber: number;
-                    etag: string;
-                  }>(
-                    url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/multipart/${createMultiPartUpload.uploadId}/${String(partNumber)}`,
-                    part,
-                    undefined,
-                    { signal: abortSignal }
-                  ),
-                RETRY_ATTEMPTS,
-                RETRY_DELAYS,
-                handleRetryError
-              )
-            );
-          }
-
-          // Parts are uploaded in parallel
-          uploadedParts.push(...(await Promise.all(uploadedPartsPromises)));
-        }
-
-        // Check if the upload was aborted
-        if (abortSignal?.aborted) {
-          throw abortError;
-        }
-
-        const sortedUploadedParts = uploadedParts.sort(
-          (a, b) => a.partNumber - b.partNumber
-        );
-
-        return httpClient2.post<CommentAttachment>(
-          url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/multipart/${uploadId}/complete`,
-          { parts: sortedUploadedParts },
-          { signal: abortSignal }
-        );
-      } catch (error) {
-        if (
-          uploadId &&
-          (error as Error)?.name &&
-          ((error as Error).name === "AbortError" ||
-            (error as Error).name === "TimeoutError")
-        ) {
-          try {
-            // Abort the multi-part upload if it was created
-            await httpClient2.rawDelete(
-              url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/multipart/${uploadId}`
-            );
-          } catch (error) {
-            // Ignore the error, we are probably offline
-          }
-        }
-
-        throw error;
-      }
-    }
-  }
-
-  async function getAttachmentUrls(attachmentIds: string[]) {
-    const { urls } = await httpClient2.post<{
-      urls: (string | null)[];
-    }>(url`/v2/c/rooms/${config.roomId}/attachments/presigned-urls`, {
-      attachmentIds,
+    return httpClient.uploadAttachment({
+      roomId,
+      attachment,
+      signal: options.signal,
     });
-
-    return urls;
   }
 
   const batchedGetAttachmentUrls = new Batch<string, string>(
     async (batchedAttachmentIds) => {
       const attachmentIds = batchedAttachmentIds.flat();
 
-      const attachmentUrls = await getAttachmentUrls(attachmentIds);
+      const attachmentUrls = await httpClient.getAttachmentUrls({
+        roomId,
+        attachmentIds,
+      });
 
       return attachmentUrls.map(
         (url) =>
@@ -3261,63 +2920,26 @@ export function createRoom<
     return batchedGetAttachmentUrls.get(attachmentId);
   }
 
-  async function fetchNotificationsJson<T extends JsonObject>(
-    endpoint: URLSafeString,
-    options?: RequestInit
-  ): Promise<T> {
-    return await httpClient2.get<T>(endpoint, undefined, options);
-  }
-
   function getNotificationSettings(
     options?: GetNotificationSettingsOptions
   ): Promise<RoomNotificationSettings> {
-    return fetchNotificationsJson<RoomNotificationSettings>(
-      url`/v2/c/rooms/${config.roomId}/notification-settings`,
-      { signal: options?.signal }
-    );
+    return httpClient.getNotificationSettings({
+      roomId,
+      signal: options?.signal,
+    });
   }
 
   function updateNotificationSettings(
     settings: Partial<RoomNotificationSettings>
   ): Promise<RoomNotificationSettings> {
-    return fetchNotificationsJson<RoomNotificationSettings>(
-      url`/v2/c/rooms/${config.roomId}/notification-settings`,
-      {
-        method: "POST",
-        body: JSON.stringify(settings),
-      }
-    );
+    return httpClient.updateNotificationSettings({ roomId, settings });
   }
-
-  // This method (and the following batch handling) isn't the same as the one in
-  // src/notifications.ts, this one is room-based: /v2/c/rooms/<roomId>/inbox-notifications/read.
-  //
-  // The reason for this is that unlike the room-based Comments ones, the Notifications endpoints
-  // don't work with a public key. Since `markThreadAsRead` needs to mark the related inbox notifications
-  // as read, this room-based method is necessary to keep all Comments features working with a public key.
-  async function markInboxNotificationsAsRead(inboxNotificationIds: string[]) {
-    await fetchNotificationsJson(
-      url`/v2/c/rooms/${config.roomId}/inbox-notifications/read`,
-      {
-        method: "POST",
-        body: JSON.stringify({ inboxNotificationIds }),
-      }
-    );
-  }
-
-  const batchedMarkInboxNotificationsAsRead = new Batch<string, string>(
-    async (batchedInboxNotificationIds) => {
-      const inboxNotificationIds = batchedInboxNotificationIds.flat();
-
-      await markInboxNotificationsAsRead(inboxNotificationIds);
-
-      return inboxNotificationIds;
-    },
-    { delay: 50 }
-  );
 
   async function markInboxNotificationAsRead(inboxNotificationId: string) {
-    await batchedMarkInboxNotificationsAsRead.get(inboxNotificationId);
+    await httpClient.markRoomInboxNotificationAsRead({
+      roomId,
+      inboxNotificationId,
+    });
   }
 
   return Object.defineProperty(
