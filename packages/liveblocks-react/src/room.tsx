@@ -1385,45 +1385,61 @@ function useCreateThread<M extends BaseMetadata>(): (
 
 function useDeleteThread(): (threadId: string) => void {
   const client = useClient();
-  const room = useRoom();
+
   return React.useCallback(
     (threadId: string): void => {
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
 
-      const userId = getCurrentUserId(room);
+      const userId = client[kInternal].currentUserIdStore.get();
+      // XXX - Should we display a console warning and return early if the user id could not be found?
+      if (userId === null) return;
 
+      // XXX - Should we call `threadsDB.get` vs `threadsDB.getEvenIfDeleted`?
       const existing = store.getFullState().threadsDB.get(threadId);
-      if (existing?.comments?.[0]?.userId !== userId) {
+      if (existing === undefined) {
+        console.warn(
+          `Internal unexpected behavior. Cannot delete thread "${threadId}" because the thread does not exist in cache.`
+        );
+        return;
+      }
+
+      if (existing.comments[0]?.userId !== userId) {
+        // XXX - Should we display a console warning instead of throwing here?
         throw new Error("Only the thread creator can delete the thread");
       }
 
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "delete-thread",
-        roomId: room.id,
+        roomId: existing.roomId,
         threadId,
         deletedAt: new Date(),
       });
 
-      room.deleteThread(threadId).then(
-        () => {
-          // Replace the optimistic update by the real thing
-          store.deleteThread(threadId, optimisticUpdateId);
-        },
-        (err: Error) =>
-          onMutationFailure(
-            err,
-            optimisticUpdateId,
-            (err) => new DeleteThreadError(err, { roomId: room.id, threadId })
-          )
-      );
+      client[kInternal].httpClient
+        .deleteThread({ roomId: existing.roomId, threadId })
+        .then(
+          () => {
+            // Replace the optimistic update by the real thing
+            store.deleteThread(threadId, optimisticUpdateId);
+          },
+          (err: Error) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (err) =>
+                new DeleteThreadError(err, {
+                  roomId: existing.roomId,
+                  threadId,
+                })
+            )
+        );
     },
-    [client, room]
+    [client]
   );
 }
 
 function useEditThreadMetadata<M extends BaseMetadata>() {
   const client = useClient();
-  const room = useRoom();
   return React.useCallback(
     (options: EditThreadMetadataOptions<M>): void => {
       if (!options.metadata) {
@@ -1435,6 +1451,18 @@ function useEditThreadMetadata<M extends BaseMetadata>() {
       const updatedAt = new Date();
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
+
+      // XXX - Should we call `threadsDB.get` vs `threadsDB.getEvenIfDeleted`?
+      const existing = store
+        .getFullState()
+        .threadsDB.getEvenIfDeleted(threadId);
+      if (existing === undefined) {
+        console.warn(
+          `Internal unexpected behavior. Cannot edit metadata of thread "${threadId}" because the thread does not exist in cache.`
+        );
+        return;
+      }
+
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "edit-thread-metadata",
         metadata,
@@ -1442,29 +1470,31 @@ function useEditThreadMetadata<M extends BaseMetadata>() {
         updatedAt,
       });
 
-      room.editThreadMetadata({ threadId, metadata }).then(
-        (metadata) =>
-          // Replace the optimistic update by the real thing
-          store.patchThread(
-            threadId,
-            optimisticUpdateId,
-            { metadata },
-            updatedAt
-          ),
-        (err: Error) =>
-          onMutationFailure(
-            err,
-            optimisticUpdateId,
-            (error) =>
-              new EditThreadMetadataError(error, {
-                roomId: room.id,
-                threadId,
-                metadata,
-              })
-          )
-      );
+      client[kInternal].httpClient
+        .editThreadMetadata({ roomId: existing.roomId, threadId, metadata })
+        .then(
+          (metadata) =>
+            // Replace the optimistic update by the real thing
+            store.patchThread(
+              threadId,
+              optimisticUpdateId,
+              { metadata },
+              updatedAt
+            ),
+          (err: Error) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (error) =>
+                new EditThreadMetadataError(error, {
+                  roomId: existing.roomId,
+                  threadId,
+                  metadata,
+                })
+            )
+        );
     },
-    [client, room]
+    [client]
   );
 }
 
@@ -1475,27 +1505,47 @@ function useEditThreadMetadata<M extends BaseMetadata>() {
  * const createComment = useCreateComment();
  * createComment({ threadId: "th_xxx", body: {} });
  */
-function useCreateComment(): (options: CreateCommentOptions) => CommentData {
+function useCreateComment(): (options: CreateCommentOptions) => void {
   const client = useClient();
-  const room = useRoom();
+
+  // XXX - `useCreateComment` previously returned `CommentData`, but the signature is
+  // XXX - now updated to return `void` instead because there could be a no-op path
+  // XXX - if the specified thread could not be found. This signature is also consistent
+  // XXX - with `useEditComment` hook. Note: This would be a breaking change!!!
   return React.useCallback(
-    ({ threadId, body, attachments }: CreateCommentOptions): CommentData => {
+    ({ threadId, body, attachments }: CreateCommentOptions): void => {
       const commentId = createCommentId();
       const createdAt = new Date();
+
+      const userId = client[kInternal].currentUserIdStore.get();
+      // XXX - Should we display a console warning and return early if the user id could not be found?
+      if (userId === null) return;
+
+      const { store, onMutationFailure } = getRoomExtrasForClient(client);
+
+      // XXX - Should we call `threadsDB.get` vs `threadsDB.getEvenIfDeleted`?
+      const existing = store
+        .getFullState()
+        .threadsDB.getEvenIfDeleted(threadId);
+      if (existing === undefined) {
+        console.warn(
+          `Internal unexpected behavior. Cannot create comment in thread "${threadId}" because the thread does not exist in cache.`
+        );
+        return;
+      }
 
       const comment: CommentData = {
         id: commentId,
         threadId,
-        roomId: room.id,
+        roomId: existing.roomId,
         type: "comment",
         createdAt,
-        userId: getCurrentUserId(room),
+        userId,
         body,
         reactions: [],
         attachments: attachments ?? [],
       };
 
-      const { store, onMutationFailure } = getRoomExtrasForClient(client);
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "create-comment",
         comment,
@@ -1503,28 +1553,34 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
 
       const attachmentIds = attachments?.map((attachment) => attachment.id);
 
-      room.createComment({ threadId, commentId, body, attachmentIds }).then(
-        (newComment) => {
-          // Replace the optimistic update by the real thing
-          store.createComment(newComment, optimisticUpdateId);
-        },
-        (err: Error) =>
-          onMutationFailure(
-            err,
-            optimisticUpdateId,
-            (err) =>
-              new CreateCommentError(err, {
-                roomId: room.id,
-                threadId,
-                commentId,
-                body,
-              })
-          )
-      );
-
-      return comment;
+      client[kInternal].httpClient
+        .createComment({
+          roomId: existing.roomId,
+          threadId,
+          commentId,
+          body,
+          attachmentIds,
+        })
+        .then(
+          (newComment) => {
+            // Replace the optimistic update by the real thing
+            store.createComment(newComment, optimisticUpdateId);
+          },
+          (err: Error) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (err) =>
+                new CreateCommentError(err, {
+                  roomId: existing.roomId,
+                  threadId,
+                  commentId,
+                  body,
+                })
+            )
+        );
     },
-    [client, room]
+    [client]
   );
 }
 
@@ -1537,12 +1593,13 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
  */
 function useEditComment(): (options: EditCommentOptions) => void {
   const client = useClient();
-  const room = useRoom();
   return React.useCallback(
     ({ threadId, commentId, body, attachments }: EditCommentOptions): void => {
       const editedAt = new Date();
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
+
+      // XXX - Should we call `threadsDB.get` vs `threadsDB.getEvenIfDeleted`?
       const existing = store
         .getFullState()
         .threadsDB.getEvenIfDeleted(threadId);
@@ -1577,26 +1634,34 @@ function useEditComment(): (options: EditCommentOptions) => void {
 
       const attachmentIds = attachments?.map((attachment) => attachment.id);
 
-      room.editComment({ threadId, commentId, body, attachmentIds }).then(
-        (editedComment) => {
-          // Replace the optimistic update by the real thing
-          store.editComment(threadId, optimisticUpdateId, editedComment);
-        },
-        (err: Error) =>
-          onMutationFailure(
-            err,
-            optimisticUpdateId,
-            (error) =>
-              new EditCommentError(error, {
-                roomId: room.id,
-                threadId,
-                commentId,
-                body,
-              })
-          )
-      );
+      client[kInternal].httpClient
+        .editComment({
+          roomId: existing.roomId,
+          threadId,
+          commentId,
+          body,
+          attachmentIds,
+        })
+        .then(
+          (editedComment) => {
+            // Replace the optimistic update by the real thing
+            store.editComment(threadId, optimisticUpdateId, editedComment);
+          },
+          (err: Error) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (error) =>
+                new EditCommentError(error, {
+                  roomId: existing.roomId,
+                  threadId,
+                  commentId,
+                  body,
+                })
+            )
+        );
     },
-    [client, room]
+    [client]
   );
 }
 
@@ -1610,7 +1675,6 @@ function useEditComment(): (options: EditCommentOptions) => void {
  */
 function useDeleteComment() {
   const client = useClient();
-  const room = useRoom();
 
   return React.useCallback(
     ({ threadId, commentId }: DeleteCommentOptions): void => {
@@ -1618,50 +1682,78 @@ function useDeleteComment() {
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
 
+      // XXX - Should we call `threadsDB.get` vs `threadsDB.getEvenIfDeleted`?
+      const existing = store
+        .getFullState()
+        .threadsDB.getEvenIfDeleted(threadId);
+
+      if (existing === undefined) {
+        console.warn(
+          `Internal unexpected behavior. Cannot delete comment in thread "${threadId}" because the thread does not exist in cache.`
+        );
+        return;
+      }
+
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "delete-comment",
         threadId,
         commentId,
         deletedAt,
-        roomId: room.id,
+        roomId: existing.roomId,
       });
 
-      room.deleteComment({ threadId, commentId }).then(
-        () => {
-          // Replace the optimistic update by the real thing
-          store.deleteComment(
-            threadId,
-            optimisticUpdateId,
-            commentId,
-            deletedAt
-          );
-        },
-        (err: Error) =>
-          onMutationFailure(
-            err,
-            optimisticUpdateId,
-            (error) =>
-              new DeleteCommentError(error, {
-                roomId: room.id,
-                threadId,
-                commentId,
-              })
-          )
-      );
+      client[kInternal].httpClient
+        .deleteComment({ roomId: existing.roomId, threadId, commentId })
+        .then(
+          () => {
+            // Replace the optimistic update by the real thing
+            store.deleteComment(
+              threadId,
+              optimisticUpdateId,
+              commentId,
+              deletedAt
+            );
+          },
+          (err: Error) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (error) =>
+                new DeleteCommentError(error, {
+                  roomId: existing.roomId,
+                  threadId,
+                  commentId,
+                })
+            )
+        );
     },
-    [client, room]
+    [client]
   );
 }
 
 function useAddReaction<M extends BaseMetadata>() {
   const client = useClient();
-  const room = useRoom();
   return React.useCallback(
     ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
       const createdAt = new Date();
-      const userId = getCurrentUserId(room);
+
+      const userId = client[kInternal].currentUserIdStore.get();
+      // XXX - Should we display a console warning and return early if the user id could not be found?
+      if (userId === null) return;
 
       const { store, onMutationFailure } = getRoomExtrasForClient<M>(client);
+
+      // XXX - Should we call `threadsDB.get` vs `threadsDB.getEvenIfDeleted`?
+      const existing = store
+        .getFullState()
+        .threadsDB.getEvenIfDeleted(threadId);
+
+      if (existing === undefined) {
+        console.warn(
+          `Internal unexpected behavior. Cannot add reaction to comment "${commentId}" in thread "${threadId}" because the thread does not exist in cache.`
+        );
+        return;
+      }
 
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "add-reaction",
@@ -1674,32 +1766,34 @@ function useAddReaction<M extends BaseMetadata>() {
         },
       });
 
-      room.addReaction({ threadId, commentId, emoji }).then(
-        (addedReaction) => {
-          // Replace the optimistic update by the real thing
-          store.addReaction(
-            threadId,
-            optimisticUpdateId,
-            commentId,
-            addedReaction,
-            createdAt
-          );
-        },
-        (err: Error) =>
-          onMutationFailure(
-            err,
-            optimisticUpdateId,
-            (error) =>
-              new AddReactionError(error, {
-                roomId: room.id,
-                threadId,
-                commentId,
-                emoji,
-              })
-          )
-      );
+      client[kInternal].httpClient
+        .addReaction({ roomId: existing.roomId, threadId, commentId, emoji })
+        .then(
+          (addedReaction) => {
+            // Replace the optimistic update by the real thing
+            store.addReaction(
+              threadId,
+              optimisticUpdateId,
+              commentId,
+              addedReaction,
+              createdAt
+            );
+          },
+          (err: Error) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (error) =>
+                new AddReactionError(error, {
+                  roomId: existing.roomId,
+                  threadId,
+                  commentId,
+                  emoji,
+                })
+            )
+        );
     },
-    [client, room]
+    [client]
   );
 }
 
@@ -1712,14 +1806,27 @@ function useAddReaction<M extends BaseMetadata>() {
  */
 function useRemoveReaction() {
   const client = useClient();
-  const room = useRoom();
   return React.useCallback(
     ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
-      const userId = getCurrentUserId(room);
+      const userId = client[kInternal].currentUserIdStore.get();
+      // XXX - Should we display a console warning and return early if the user id could not be found?
+      if (userId === null) return;
 
       const removedAt = new Date();
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
+
+      // XXX - Should we call `threadsDB.get` vs `threadsDB.getEvenIfDeleted`?
+      const existing = store
+        .getFullState()
+        .threadsDB.getEvenIfDeleted(threadId);
+      if (existing === undefined) {
+        console.warn(
+          `Internal unexpected behavior. Cannot remove reaction from comment "${commentId}" in thread "${threadId}" because the thread does not exist in cache.`
+        );
+        return;
+      }
+
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "remove-reaction",
         threadId,
@@ -1729,33 +1836,35 @@ function useRemoveReaction() {
         removedAt,
       });
 
-      room.removeReaction({ threadId, commentId, emoji }).then(
-        () => {
-          // Replace the optimistic update by the real thing
-          store.removeReaction(
-            threadId,
-            optimisticUpdateId,
-            commentId,
-            emoji,
-            userId,
-            removedAt
-          );
-        },
-        (err: Error) =>
-          onMutationFailure(
-            err,
-            optimisticUpdateId,
-            (error) =>
-              new RemoveReactionError(error, {
-                roomId: room.id,
-                threadId,
-                commentId,
-                emoji,
-              })
-          )
-      );
+      client[kInternal].httpClient
+        .removeReaction({ roomId: existing.roomId, threadId, commentId, emoji })
+        .then(
+          () => {
+            // Replace the optimistic update by the real thing
+            store.removeReaction(
+              threadId,
+              optimisticUpdateId,
+              commentId,
+              emoji,
+              userId,
+              removedAt
+            );
+          },
+          (err: Error) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (error) =>
+                new RemoveReactionError(error, {
+                  roomId: existing.roomId,
+                  threadId,
+                  commentId,
+                  emoji,
+                })
+            )
+        );
     },
-    [client, room]
+    [client]
   );
 }
 
@@ -1768,10 +1877,21 @@ function useRemoveReaction() {
  */
 function useMarkThreadAsRead() {
   const client = useClient();
-  const room = useRoom();
   return React.useCallback(
     (threadId: string) => {
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
+
+      // XXX - Should we call `threadsDB.get` vs `threadsDB.getEvenIfDeleted`?
+      const existing = store
+        .getFullState()
+        .threadsDB.getEvenIfDeleted(threadId);
+      if (existing === undefined) {
+        console.warn(
+          `Internal unexpected behavior. Cannot mark thread "${threadId}" as read because the thread does not exist in cache.`
+        );
+        return;
+      }
+
       const inboxNotification = Object.values(
         store.getFullState().notificationsById
       ).find(
@@ -1790,29 +1910,34 @@ function useMarkThreadAsRead() {
         readAt: now,
       });
 
-      room.markInboxNotificationAsRead(inboxNotification.id).then(
-        () => {
-          // Replace the optimistic update by the real thing
-          store.updateInboxNotification(
-            inboxNotification.id,
-            optimisticUpdateId,
-            (inboxNotification) => ({ ...inboxNotification, readAt: now })
-          );
-        },
-        (err: Error) => {
-          onMutationFailure(
-            err,
-            optimisticUpdateId,
-            (error) =>
-              new MarkInboxNotificationAsReadError(error, {
-                inboxNotificationId: inboxNotification.id,
-              })
-          );
-          return;
-        }
-      );
+      client[kInternal].httpClient
+        .markRoomInboxNotificationAsRead({
+          roomId: existing.roomId,
+          inboxNotificationId: inboxNotification.id,
+        })
+        .then(
+          () => {
+            // Replace the optimistic update by the real thing
+            store.updateInboxNotification(
+              inboxNotification.id,
+              optimisticUpdateId,
+              (inboxNotification) => ({ ...inboxNotification, readAt: now })
+            );
+          },
+          (err: Error) => {
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (error) =>
+                new MarkInboxNotificationAsReadError(error, {
+                  inboxNotificationId: inboxNotification.id,
+                })
+            );
+            return;
+          }
+        );
     },
-    [client, room]
+    [client]
   );
 }
 
@@ -1825,41 +1950,53 @@ function useMarkThreadAsRead() {
  */
 function useMarkThreadAsResolved() {
   const client = useClient();
-  const room = useRoom();
   return React.useCallback(
     (threadId: string) => {
       const updatedAt = new Date();
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
+      // XXX - Should we call `threadsDB.get` vs `threadsDB.getEvenIfDeleted`?
+      const existing = store
+        .getFullState()
+        .threadsDB.getEvenIfDeleted(threadId);
+      if (existing === undefined) {
+        console.warn(
+          `Internal unexpected behavior. Cannot mark thread "${threadId}" as resolved because the thread does not exist in cache.`
+        );
+        return;
+      }
+
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "mark-thread-as-resolved",
         threadId,
         updatedAt,
       });
 
-      room.markThreadAsResolved(threadId).then(
-        () => {
-          // Replace the optimistic update by the real thing
-          store.patchThread(
-            threadId,
-            optimisticUpdateId,
-            { resolved: true },
-            updatedAt
-          );
-        },
-        (err: Error) =>
-          onMutationFailure(
-            err,
-            optimisticUpdateId,
-            (error) =>
-              new MarkThreadAsResolvedError(error, {
-                roomId: room.id,
-                threadId,
-              })
-          )
-      );
+      client[kInternal].httpClient
+        .markThreadAsResolved({ roomId: existing.roomId, threadId })
+        .then(
+          () => {
+            // Replace the optimistic update by the real thing
+            store.patchThread(
+              threadId,
+              optimisticUpdateId,
+              { resolved: true },
+              updatedAt
+            );
+          },
+          (err: Error) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (error) =>
+                new MarkThreadAsResolvedError(error, {
+                  roomId: existing.roomId,
+                  threadId,
+                })
+            )
+        );
     },
-    [client, room]
+    [client]
   );
 }
 
@@ -1872,41 +2009,56 @@ function useMarkThreadAsResolved() {
  */
 function useMarkThreadAsUnresolved() {
   const client = useClient();
-  const room = useRoom();
   return React.useCallback(
     (threadId: string) => {
       const updatedAt = new Date();
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
+      // XXX - Should we call `threadsDB.get` vs `threadsDB.getEvenIfDeleted`?
+      const existing = store
+        .getFullState()
+        .threadsDB.getEvenIfDeleted(threadId);
+      if (existing === undefined) {
+        console.warn(
+          `Internal unexpected behavior. Cannot mark thread "${threadId}" as unresolved because the thread does not exist in cache.`
+        );
+        return;
+      }
+
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "mark-thread-as-unresolved",
         threadId,
         updatedAt,
       });
 
-      room.markThreadAsUnresolved(threadId).then(
-        () => {
-          // Replace the optimistic update by the real thing
-          store.patchThread(
-            threadId,
-            optimisticUpdateId,
-            { resolved: false },
-            updatedAt
-          );
-        },
-        (err: Error) =>
-          onMutationFailure(
-            err,
-            optimisticUpdateId,
-            (error) =>
-              new MarkThreadAsUnresolvedError(error, {
-                roomId: room.id,
-                threadId,
-              })
-          )
-      );
+      client[kInternal].httpClient
+        .markThreadAsUnresolved({
+          roomId: existing.roomId,
+          threadId,
+        })
+        .then(
+          () => {
+            // Replace the optimistic update by the real thing
+            store.patchThread(
+              threadId,
+              optimisticUpdateId,
+              { resolved: false },
+              updatedAt
+            );
+          },
+          (err: Error) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (error) =>
+                new MarkThreadAsUnresolvedError(error, {
+                  roomId: existing.roomId,
+                  threadId,
+                })
+            )
+        );
     },
-    [client, room]
+    [client]
   );
 }
 

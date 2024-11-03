@@ -22,7 +22,6 @@ import type {
   Client,
   CommentAttachment,
   CommentBody,
-  CommentData,
   DRI,
   HistoryVersion,
   InboxNotificationData,
@@ -753,7 +752,7 @@ type RoomContextBundleCommon<
    * const createComment = useCreateComment();
    * createComment({ threadId: "th_xxx", body: {} });
    */
-  useCreateComment(): (options: CreateCommentOptions) => CommentData;
+  useCreateComment(): (options: CreateCommentOptions) => void;
 
   /**
    * Returns a function that edits a comment's body.
