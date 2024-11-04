@@ -1,3 +1,9 @@
+## 2.11.0
+
+### `@liveblocks/react-ui`
+
+- Upgrade dependencies.
+
 ## 2.10.2
 
 ### `@liveblocks/client`
