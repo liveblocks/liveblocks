@@ -2870,29 +2870,42 @@ export function createRoom<
 
     const PAGE_SIZE = 50;
 
-    const result = await httpClient2.get<{
-      data: ThreadDataPlain<M>[];
-      inboxNotifications: InboxNotificationDataPlain[];
-      deletedThreads: ThreadDeleteInfoPlain[];
-      deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
-      meta: {
-        requestedAt: string;
-        nextCursor: string | null;
-      };
-    }>(url`/v2/c/rooms/${config.roomId}/threads`, {
-      cursor: options?.cursor,
-      query,
-      limit: PAGE_SIZE,
-    });
+    try {
+      const result = await httpClient2.get<{
+        data: ThreadDataPlain<M>[];
+        inboxNotifications: InboxNotificationDataPlain[];
+        deletedThreads: ThreadDeleteInfoPlain[];
+        deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+        meta: {
+          requestedAt: string;
+          nextCursor: string | null;
+        };
+      }>(url`/v2/c/rooms/${config.roomId}/threads`, {
+        cursor: options?.cursor,
+        query,
+        limit: PAGE_SIZE,
+      });
 
-    return {
-      threads: result.data.map(convertToThreadData),
-      inboxNotifications: result.inboxNotifications.map(
-        convertToInboxNotificationData
-      ),
-      nextCursor: result.meta.nextCursor,
-      requestedAt: new Date(result.meta.requestedAt),
-    };
+      return {
+        threads: result.data.map(convertToThreadData),
+        inboxNotifications: result.inboxNotifications.map(
+          convertToInboxNotificationData
+        ),
+        nextCursor: result.meta.nextCursor,
+        requestedAt: new Date(result.meta.requestedAt),
+      };
+    } catch (err) {
+      if (err instanceof HttpError && err.status === 404) {
+        return {
+          threads: [],
+          inboxNotifications: [],
+          nextCursor: null,
+          requestedAt: new Date(),
+        };
+      }
+
+      throw err;
+    }
   }
 
   async function getThread(threadId: string) {
