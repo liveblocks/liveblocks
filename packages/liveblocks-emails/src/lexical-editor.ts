@@ -242,14 +242,12 @@ export function getSerializedLexicalState({
 const flattenLexicalTree = (
   nodes: SerializedLexicalNode[]
 ): SerializedLexicalNode[] => {
-  const flattenNodes: SerializedLexicalNode[] = [];
+  let flattenNodes: SerializedLexicalNode[] = [];
   for (const node of nodes) {
     if (["text", "line-break", "decorator"].includes(node.group)) {
-      flattenNodes.push(node);
-    }
-    // TODO: add use case for thread marks
-    else if (node.group === "element") {
-      nodes.concat(flattenLexicalTree(node.children));
+      flattenNodes = [...flattenNodes, node];
+    } else if (node.group === "element") {
+      flattenNodes = [...flattenNodes, ...flattenLexicalTree(node.children)];
     }
   }
 
