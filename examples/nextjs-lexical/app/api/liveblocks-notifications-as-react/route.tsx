@@ -55,7 +55,7 @@ export async function POST(request: Request) {
             const users = new Map();
 
             for (const index of indices) {
-              users.set(`user-${index}`, USER_INFO);
+              users.set(`user-${index}`, USER_INFO[index]);
             }
 
             return userIds.map((userId) => users.get(userId)).filter(Boolean);
