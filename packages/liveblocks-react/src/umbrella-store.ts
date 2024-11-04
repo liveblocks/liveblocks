@@ -584,7 +584,7 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
 };
 
 export class UmbrellaStore<M extends BaseMetadata> {
-  private _client: Client<BaseUserMeta, M>;
+  private _client: Client<BaseUserMeta>;
 
   // Raw threads DB (without any optimistic updates applied)
   private _rawThreadsDB: ThreadDB<M>;
@@ -615,10 +615,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
     new Map();
 
   constructor(client: OpaqueClient) {
-    this._client = client[kInternal].as<M>();
+    this._client = client;
 
     const inboxFetcher = async (cursor?: string) => {
-      const result = await this._client.getInboxNotifications({ cursor });
+      const result = await this._client.getInboxNotifications<M>({ cursor });
 
       this.updateThreadsAndNotifications(
         result.threads,
@@ -1273,7 +1273,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return;
     }
 
-    const result = await this._client.getInboxNotificationsSince({
+    const result = await this._client.getInboxNotificationsSince<M>({
       since: lastRequestedAt,
       signal,
     });
@@ -1299,12 +1299,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
     query: ThreadsQuery<M> | undefined
   ) {
     const threadsFetcher = async (cursor?: string) => {
-      const room = this._client.getRoom(roomId);
-      if (room === null) {
-        throw new HttpError(`Room '${roomId}' is not available on client`, 479);
-      }
-
-      const result = await room.getThreads({ cursor, query });
+      const result = await this._client[kInternal].httpClient.getThreads<M>({
+        roomId,
+        cursor,
+        query,
+      });
       this.updateThreadsAndNotifications(
         result.threads,
         result.inboxNotifications
@@ -1355,15 +1354,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return;
     }
 
-    const room = nn(
-      this._client.getRoom(roomId),
-      `Room with id ${roomId} is not available on client`
+    const updates = await this._client[kInternal].httpClient.getThreadsSince<M>(
+      {
+        roomId,
+        since: lastRequestedAt,
+        signal,
+      }
     );
-
-    const updates = await room.getThreadsSince({
-      since: lastRequestedAt,
-      signal,
-    });
 
     this.updateThreadsAndNotifications(
       updates.threads.updated,
@@ -1382,7 +1379,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
     const queryKey = makeUserThreadsQueryKey(query);
 
     const threadsFetcher = async (cursor?: string) => {
-      const result = await this._client[kInternal].getUserThreads_experimental({
+      const result = await this._client[
+        kInternal
+      ].httpClient.getUserThreads_experimental<M>({
         cursor,
         query,
       });
@@ -1423,7 +1422,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     const result = await this._client[
       kInternal
-    ].getUserThreadsSince_experimental({
+    ].httpClient.getUserThreadsSince_experimental<M>({
       since: lastRequestedAt,
       signal,
     });
