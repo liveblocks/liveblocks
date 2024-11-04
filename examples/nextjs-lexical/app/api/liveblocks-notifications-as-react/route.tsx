@@ -79,9 +79,18 @@ export async function POST(request: Request) {
       return new Response("Something went wrong", { status: 400 });
     }
 
-    console.log("emailData", emailData);
     if (emailData !== null) {
-      // TODO complete example
+      const company = {
+        name: "My Liveblocks App",
+        url: "https://my-liveblocks-app.com",
+      };
+      const room = {
+        name: emailData.roomInfo.name,
+        url: emailData.roomInfo.url,
+      };
+
+      const subject = "You have one unread notification";
+
       return new Response(null, { status: 200 });
     }
 
