@@ -24,6 +24,8 @@
     "@liveblocks/react-ui": "^2.9.0",
     "@radix-ui/react-dialog": "^1.1.1",
     "@radix-ui/react-popover": "^1.0.7",
+    "@react-email/components": "0.0.26",
+    "@react-email/render": "1.0.2",
     "@types/node": "^18.11.18",
     "@types/react": "^18.0.27",
     "@types/react-dom": "^18.0.10",
@@ -31,6 +33,7 @@
     "next": "^14.2.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "resend": "^4.0.1-alpha.0",
     "typescript": "^5.2.2"
   },
   "devDependencies": {
