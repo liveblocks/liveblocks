@@ -210,6 +210,14 @@ export type MentionEmailAsReactData<U extends BaseUserMeta = DU> = Omit<
   reactContent: React.ReactNode;
 };
 
+export type MentionEmailAsHtmlData<U extends BaseUserMeta = DU> = Omit<
+  MentionEmailBaseData,
+  "userId" | "textEditorNodes"
+> & {
+  author: U;
+  htmlContent: string;
+};
+
 export type PrepareTextMentionNotificationEmailAsReactOptions<
   U extends BaseUserMeta = DU,
 > = PrepareTextMentionNotificationEmailBaseDataOptions & {
@@ -227,10 +235,16 @@ export type PrepareTextMentionNotificationEmailAsReactOptions<
   components?: Partial<ConvertLiveblocksTextEditorNodesAsReactComponents<U>>;
 };
 
-export type TextMentionNotificationEmailDataAsReact = {
-  mention: MentionEmailAsReactData<BaseUserMeta>;
+export type TextMentionNotificationEmailData<
+  U extends BaseUserMeta,
+  M extends MentionEmailAsReactData<U> | MentionEmailAsHtmlData<U>,
+> = {
+  mention: M;
   roomInfo: DRI;
 };
+
+export type TextMentionNotificationEmailDataAsReact =
+  TextMentionNotificationEmailData<BaseUserMeta, MentionEmailAsReactData>;
 
 /**
  * Prepares data from a `TextMentionNotificationEvent` and convert content as React nodes.
@@ -315,14 +329,6 @@ export async function prepareTextMentionNotificationEmailAsReact(
   };
 }
 
-export type MentionEmailAsHtmlData<U extends BaseUserMeta = DU> = Omit<
-  MentionEmailBaseData,
-  "userId" | "textEditorNodes"
-> & {
-  author: U;
-  htmlContent: string;
-};
-
 export type PrepareTextMentionNotificationEmailAsHtmlOptions<
   U extends BaseUserMeta = DU,
 > = PrepareTextMentionNotificationEmailBaseDataOptions & {
@@ -340,10 +346,8 @@ export type PrepareTextMentionNotificationEmailAsHtmlOptions<
   styles?: Partial<ConvertLiveblocksTextEditorNodesAsHtmlStyles>;
 };
 
-export type TextMentionNotificationEmailDataAsHtml = {
-  mention: MentionEmailAsHtmlData<BaseUserMeta>;
-  roomInfo: DRI;
-};
+export type TextMentionNotificationEmailDataAsHtml =
+  TextMentionNotificationEmailData<BaseUserMeta, MentionEmailAsHtmlData>;
 
 /**
  * Prepares data from a `TextMentionNotificationEvent` and convert content  as an html safe string.
