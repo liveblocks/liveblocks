@@ -399,7 +399,8 @@ function ComposerEditorFloatingToolbarWrapper({
     };
   }, [position, dir]);
   const [hasSelectionRange, setHasSelectionRange] = useState(false);
-  const isOpen = Boolean(isFocused && hasSelectionRange);
+  const [isPointerDown, setPointerDown] = useState(false);
+  const isOpen = Boolean(isFocused && !isPointerDown && hasSelectionRange);
   const {
     refs: { setReference, setFloating },
     strategy,
@@ -416,6 +417,23 @@ function ComposerEditorFloatingToolbarWrapper({
       setContentZIndex(window.getComputedStyle(content).zIndex);
     }
   }, [content]);
+
+  useLayoutEffect(() => {
+    if (!isFocused) {
+      return;
+    }
+
+    const handlePointerDown = () => setPointerDown(true);
+    const handlePointerUp = () => setPointerDown(false);
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("pointerup", handlePointerUp);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("pointerup", handlePointerUp);
+    };
+  }, [isFocused]);
 
   useLayoutEffect(() => {
     const unsubscribe = changeEventSource.subscribe(() => {
