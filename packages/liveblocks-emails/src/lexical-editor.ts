@@ -301,11 +301,11 @@ export type LexicalMentionNodeWithContext = {
 export function findLexicalMentionNodeWithContext({
   root,
   mentionedUserId,
-  inboxNotificationId,
+  mentionId,
 }: {
   root: SerializedRootNode;
   mentionedUserId: string;
-  inboxNotificationId: string;
+  mentionId: string;
 }): LexicalMentionNodeWithContext | null {
   const nodes = flattenLexicalTree(root.children);
 
@@ -317,7 +317,7 @@ export function findLexicalMentionNodeWithContext({
     if (
       node.group === "decorator" &&
       assertSerializedMentionNode(node) &&
-      node.attributes.__id === inboxNotificationId &&
+      node.attributes.__id === mentionId &&
       node.attributes.__userId === mentionedUserId
     ) {
       mentionNodeIndex = i;

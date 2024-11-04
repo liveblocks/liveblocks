@@ -101,7 +101,7 @@ export const extractTextMentionNotificationData = async ({
       const mentionNodeWithContext = findLexicalMentionNodeWithContext({
         root: state,
         mentionedUserId: userId,
-        inboxNotificationId,
+        mentionId: inboxNotification.mentionId,
       });
 
       // The mention node did not exists so we do not have to send an email.
