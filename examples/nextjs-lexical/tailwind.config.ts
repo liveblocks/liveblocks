@@ -1,8 +1,11 @@
-/** @type {import('tailwindcss').Config} */
-module.exports = {
+import type { Config } from "tailwindcss";
+import { emailColors } from "./emails/_styles/colors";
+
+const config = {
   content: [
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./emails/**/*.{ts,tsx}",
   ],
   theme: {
     extend: {
@@ -40,7 +43,10 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        email: { ...emailColors },
       },
     },
   },
-};
+} satisfies Config;
+
+export default config;
