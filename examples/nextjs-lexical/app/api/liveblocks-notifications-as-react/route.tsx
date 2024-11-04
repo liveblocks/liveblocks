@@ -4,6 +4,7 @@ import {
   WebhookHandler,
   Liveblocks,
 } from "@liveblocks/node";
+import { USER_INFO } from "../dummy-users";
 
 // Add your Liveblocks secret key from https://liveblocks.io/dashboard/apiKeys
 const liveblocks = new Liveblocks({
@@ -39,15 +40,32 @@ export async function POST(request: Request) {
     try {
       emailData = await prepareTextMentionNotificationEmailAsReact(
         liveblocks,
-        event
-        // TODO: add options
+        event,
+        {
+          resolveUsers: async ({ userIds }) => {
+            const indices = [...USER_INFO.keys()];
+            const users = new Map();
+
+            for (const index of indices) {
+              users.set(`user-${index}`, USER_INFO);
+            }
+
+            return userIds.map((userId) => users.get(userId)).filter(Boolean);
+          },
+          resolveRoomInfo: ({ roomId }) => {
+            return {
+              name: roomId,
+              url: `https://my-liveblocks-app.com?roomId=${roomId}`,
+            };
+          },
+        }
       );
-      console.log("emailData", emailData);
     } catch (err) {
       console.error(err);
       return new Response("Something went wrong", { status: 400 });
     }
 
+    console.log("emailData", emailData);
     if (emailData !== null) {
       // TODO complete example
       return new Response(null, { status: 200 });
