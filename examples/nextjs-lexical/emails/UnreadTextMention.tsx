@@ -8,6 +8,7 @@ import { Layout } from "./_components/layout";
 import { Header } from "./_components/header";
 import { Headline } from "./_components/headline";
 import { Mention } from "./_components/mention";
+import type { BaseUserMeta } from "@liveblocks/client";
 
 const UNKNOWN_ROOM = "Unknown room" as const;
 
