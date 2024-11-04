@@ -34,9 +34,24 @@ export async function POST(request: Request) {
 
   // Check if the event is Text Mention Notification event
   if (isTextMentionNotificationEvent(event)) {
-    console.log("event", event);
+    let emailData;
 
-    // TODO complete example
+    try {
+      emailData = await prepareTextMentionNotificationEmailAsReact(
+        liveblocks,
+        event
+        // TODO: add options
+      );
+      console.log("emailData", emailData);
+    } catch (err) {
+      console.error(err);
+      return new Response("Something went wrong", { status: 400 });
+    }
+
+    if (emailData !== null) {
+      // TODO complete example
+      return new Response(null, { status: 200 });
+    }
 
     return new Response("No email to send", { status: 200 });
   }
