@@ -111,7 +111,11 @@ import type {
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
 import type { NodeMap } from "./types/NodeMap";
-import type { InternalOthersEvent, OthersEvent } from "./types/Others";
+import type {
+  InternalOthersEvent,
+  OthersEvent,
+  TextEditorType,
+} from "./types/Others";
 import type { Patchable } from "./types/Patchable";
 import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 import type { User } from "./types/User";
@@ -1023,7 +1027,7 @@ export type PrivateRoomApi = {
   getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
 
   // For reporting editor metadata
-  reportTextEditor(editor: "lexical", rootKey: string): Promise<void>;
+  reportTextEditor(editor: TextEditorType, rootKey: string): Promise<void>;
 
   createTextMention(userId: string, mentionId: string): Promise<void>;
   deleteTextMention(mentionId: string): Promise<void>;
@@ -1639,7 +1643,7 @@ export function createRoom<
     );
   }
 
-  async function reportTextEditor(type: "lexical", rootKey: string) {
+  async function reportTextEditor(type: TextEditorType, rootKey: string) {
     await httpClient2.rawPost(url`/v2/c/rooms/${config.roomId}/text-metadata`, {
       type,
       rootKey,

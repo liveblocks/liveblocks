@@ -10,19 +10,17 @@
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@liveblocks/client": "^2.9.0",
-    "@liveblocks/node": "^2.9.0",
-    "@liveblocks/react": "^2.9.0",
-    "@liveblocks/react-ui": "^2.9.0",
-    "@liveblocks/yjs": "^2.9.0",
+    "@liveblocks/client": "2.8.3-tiptap2",
+    "@liveblocks/node": "2.8.3-tiptap2",
+    "@liveblocks/react": "2.8.3-tiptap2",
+    "@liveblocks/react-tiptap": "2.8.3-tiptap2",
+    "@liveblocks/react-ui": "2.8.3-tiptap2",
     "@radix-ui/react-dialog": "^1.0.2",
     "@radix-ui/react-popover": "^1.0.2",
     "@radix-ui/react-select": "^1.1.1",
     "@radix-ui/react-tabs": "^1.0.1",
     "@radix-ui/react-tooltip": "^1.0.2",
     "@tiptap/extension-character-count": "^2.2.4",
-    "@tiptap/extension-collaboration": "^2.2.4",
-    "@tiptap/extension-collaboration-cursor": "^2.2.4",
     "@tiptap/extension-highlight": "^2.2.4",
     "@tiptap/extension-image": "^2.2.4",
     "@tiptap/extension-link": "^2.2.4",
@@ -40,11 +38,10 @@
     "date-fns": "^3.3.1",
     "nanoid": "^4.0.0",
     "next": "^14.1.4",
-    "next-auth": "^5.0.0-beta.16",
+    "next-auth": "5.0.0-beta.16",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "swr": "^2.2.5",
-    "yjs": "^13.6.11"
+    "swr": "^2.2.5"
   },
   "devDependencies": {
     "@types/base-64": "^1.0.0",

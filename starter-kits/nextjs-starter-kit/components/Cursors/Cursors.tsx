@@ -1,5 +1,5 @@
-import { MutableRefObject, useEffect } from "react";
 import { useOthers, useUpdateMyPresence } from "@liveblocks/react/suspense";
+import { MutableRefObject, useEffect } from "react";
 import { Cursor } from "./Cursor";
 
 interface Props {
