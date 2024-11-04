@@ -1,6 +1,5 @@
 import type {
   BaseUserMeta,
-  IUserInfo,
   OptionalPromise,
   ResolveUsersArgs,
 } from "@liveblocks/core";
@@ -30,12 +29,3 @@ export const resolveAuthorsInfo = async <U extends BaseUserMeta>({
 
   return resolvedUsers;
 };
-
-/** @internal */
-export const setAuthor = (
-  userId: string,
-  userInfo: IUserInfo | undefined
-): BaseUserMeta => ({
-  id: userId,
-  info: userInfo ?? { name: userId },
-});
