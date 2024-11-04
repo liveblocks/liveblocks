@@ -33,7 +33,7 @@ describe("useMentionSuggestions", () => {
 
     const { result, unmount } = renderHook(
       () => ({
-        mentionSuggestions: useMentionSuggestions("abc"),
+        mentionSuggestions: useMentionSuggestions(roomId, "abc"),
       }),
       {
         wrapper: ({ children }) => (
@@ -64,7 +64,7 @@ describe("useMentionSuggestions", () => {
 
     const { result, rerender, unmount } = renderHook(
       ({ text }: { text: string }) => ({
-        mentionSuggestions: useMentionSuggestions(text),
+        mentionSuggestions: useMentionSuggestions(roomId, text),
       }),
       {
         wrapper: ({ children }) => (
@@ -105,7 +105,7 @@ describe("useMentionSuggestions", () => {
 
     const { result, unmount } = renderHook(
       ({ text }: { text: string }) => ({
-        mentionSuggestions: useMentionSuggestions(text),
+        mentionSuggestions: useMentionSuggestions(roomId, text),
       }),
       {
         wrapper: ({ children }) => (
@@ -141,7 +141,7 @@ describe("useMentionSuggestions", () => {
 
     const { result, rerender, unmount } = renderHook(
       ({ text }: { text: string }) => ({
-        mentionSuggestions: useMentionSuggestions(text),
+        mentionSuggestions: useMentionSuggestions(roomId, text),
       }),
       {
         wrapper: ({ children }) => (
@@ -198,7 +198,7 @@ describe("useMentionSuggestions", () => {
 
     const { result, rerender, unmount } = renderHook(
       ({ text }: { text: string }) => ({
-        mentionSuggestions: useMentionSuggestions(text),
+        mentionSuggestions: useMentionSuggestions(roomId, text),
       }),
       {
         wrapper: ({ children }) => (
@@ -261,7 +261,7 @@ describe("useMentionSuggestions", () => {
 
     const { result, rerender, unmount } = renderHook(
       ({ text }: { text: string }) => ({
-        mentionSuggestions: useMentionSuggestions(text),
+        mentionSuggestions: useMentionSuggestions(roomId, text),
       }),
       {
         wrapper: ({ children }) => (

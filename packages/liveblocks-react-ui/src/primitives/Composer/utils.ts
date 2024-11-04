@@ -1,20 +1,20 @@
 import type { Placement } from "@floating-ui/react-dom";
-import {
-  type CommentAttachment,
-  type CommentBody,
-  type CommentBodyLink,
-  type CommentBodyMention,
-  type CommentLocalAttachment,
-  type CommentMixedAttachment,
-  HttpError,
-  makeEventSource,
-  type OpaqueRoom,
+import type {
+  Client,
+  CommentAttachment,
+  CommentBody,
+  CommentBodyLink,
+  CommentBodyMention,
+  CommentLocalAttachment,
+  CommentMixedAttachment,
 } from "@liveblocks/core";
-import { useRoom } from "@liveblocks/react";
+import { HttpError, kInternal, makeEventSource } from "@liveblocks/core";
+import { useClient } from "@liveblocks/react";
 import type { DragEvent } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
+import { useRoomId } from "../../components/Composer";
 import { isComposerBodyAutoLink } from "../../slate/plugins/auto-links";
 import { isComposerBodyCustomLink } from "../../slate/plugins/custom-links";
 import { isComposerBodyMention } from "../../slate/plugins/mentions";
@@ -335,7 +335,8 @@ export class AttachmentTooLargeError extends Error {
 }
 
 function createComposerAttachmentsManager(
-  room: OpaqueRoom,
+  client: Client,
+  roomId: string,
   options: ComposerAttachmentsManagerOptions
 ) {
   const attachments: Map<string, CommentMixedAttachment> = new Map();
@@ -353,8 +354,10 @@ function createComposerAttachmentsManager(
     const abortController = new AbortController();
     abortControllers.set(attachment.id, abortController);
 
-    room
-      .uploadAttachment(attachment, {
+    client[kInternal].httpClient
+      .uploadAttachment({
+        roomId,
+        attachment,
         signal: abortController.signal,
       })
       .then(() => {
@@ -476,10 +479,11 @@ export function useComposerAttachmentsManager(
   defaultAttachments: CommentAttachment[],
   options: ComposerAttachmentsManagerOptions
 ) {
-  const room = useRoom();
+  const client = useClient();
+  const roomId = useRoomId();
   const frozenDefaultAttachments = useInitial(defaultAttachments);
   const frozenAttachmentsManager = useInitial(() =>
-    createComposerAttachmentsManager(room, options)
+    createComposerAttachmentsManager(client, roomId, options)
   );
 
   // Initialize default attachments on mount

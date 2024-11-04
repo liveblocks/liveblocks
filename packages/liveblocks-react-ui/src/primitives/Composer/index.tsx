@@ -13,8 +13,12 @@ import {
   size,
   useFloating,
 } from "@floating-ui/react-dom";
-import type { CommentAttachment, CommentBody } from "@liveblocks/core";
-import { useRoom } from "@liveblocks/react";
+import {
+  type CommentAttachment,
+  type CommentBody,
+  type CommentLocalAttachment,
+  createCommentAttachmentId,
+} from "@liveblocks/core";
 import { useMentionSuggestions } from "@liveblocks/react/_private";
 import { Slot, Slottable } from "@radix-ui/react-slot";
 import type {
@@ -62,6 +66,7 @@ import {
   withReact,
 } from "slate-react";
 
+import { useRoomId } from "../../components/Composer";
 import { useLiveblocksUIConfig } from "../../config";
 import { FLOATING_ELEMENT_COLLISION_PADDING } from "../../constants";
 import { withAutoFormatting } from "../../slate/plugins/auto-formatting";
@@ -696,7 +701,11 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     );
 
     const [mentionDraft, setMentionDraft] = useState<MentionDraft>();
-    const mentionSuggestions = useMentionSuggestions(mentionDraft?.text);
+    const roomId = useRoomId();
+    const mentionSuggestions = useMentionSuggestions(
+      roomId,
+      mentionDraft?.text
+    );
     const [
       selectedMentionSuggestionIndex,
       setPreviousSelectedMentionSuggestionIndex,
@@ -973,6 +982,18 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
 const MAX_ATTACHMENTS = 10;
 const MAX_ATTACHMENT_SIZE = 1024 * 1024 * 1024; // 1 GB
 
+function prepareAttachment(file: File): CommentLocalAttachment {
+  return {
+    type: "localAttachment",
+    status: "idle",
+    id: createCommentAttachmentId(),
+    name: file.name,
+    size: file.size,
+    mimeType: file.type,
+    file,
+  };
+}
+
 /**
  * Surrounds the composer's content and handles submissions.
  *
@@ -997,13 +1018,13 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     forwardedRef
   ) => {
     const Component = asChild ? Slot : "form";
-    const room = useRoom();
     const [isEmpty, setEmpty] = useState(true);
     const [isSubmitting, setSubmitting] = useState(false);
     const [isFocused, setFocused] = useState(false);
     // Later: Offer as Composer.Form props: { maxAttachments: number; maxAttachmentSize: number; supportedAttachmentMimeTypes: string[]; }
     const maxAttachments = MAX_ATTACHMENTS;
     const maxAttachmentSize = MAX_ATTACHMENT_SIZE;
+
     const {
       attachments,
       isUploadingAttachments,
@@ -1016,11 +1037,12 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const numberOfAttachments = attachments.length;
     const hasMaxAttachments = numberOfAttachments >= maxAttachments;
     const isDisabled = useMemo(() => {
-      const self = room.getSelf();
-      const canComment = self?.canComment ?? true;
-
-      return isSubmitting || disabled || !canComment;
-    }, [isSubmitting, disabled, room]);
+      // XXX - Discussion: Should we check for scopes here? Scopes are currently part of the room state message
+      // XXX - received after room websocket connection, but maybe we enable the composer submission for
+      // XXX - all users. The request will be rejected by the server, so any optimistic update created
+      // XXX - locally will be reverted!
+      return isSubmitting || disabled === true;
+    }, [isSubmitting, disabled]);
     const canSubmit = useMemo(() => {
       return !isEmpty && !isUploadingAttachments;
     }, [isEmpty, isUploadingAttachments]);
@@ -1041,11 +1063,11 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 
         files.splice(numberOfAcceptedFiles);
 
-        const attachments = files.map((file) => room.prepareAttachment(file));
+        const attachments = files.map((file) => prepareAttachment(file));
 
         addAttachments(attachments);
       },
-      [addAttachments, maxAttachments, numberOfAttachments, room]
+      [addAttachments, maxAttachments, numberOfAttachments]
     );
 
     const createAttachmentsRef = useRef(createAttachments);

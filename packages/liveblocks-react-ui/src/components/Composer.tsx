@@ -12,7 +12,9 @@ import {
   useCreateComment,
   useCreateThread,
   useEditComment,
+  useRoom,
 } from "@liveblocks/react";
+import { getUmbrellaStoreForClient } from "@liveblocks/react/_private";
 import type {
   ComponentPropsWithoutRef,
   FocusEvent,
@@ -23,7 +25,13 @@ import type {
   RefAttributes,
   SyntheticEvent,
 } from "react";
-import React, { forwardRef, useCallback, useRef } from "react";
+import React, {
+  createContext,
+  forwardRef,
+  useCallback,
+  useContext,
+  useRef,
+} from "react";
 
 import { AttachmentIcon } from "../icons/Attachment";
 import { EmojiIcon } from "../icons/Emoji";
@@ -536,7 +544,6 @@ export const Composer = forwardRef(
       metadata,
       defaultValue,
       defaultAttachments,
-      onComposerSubmit,
       collapsed: controlledCollapsed,
       defaultCollapsed,
       onCollapsedChange: controlledOnCollapsedChange,
@@ -554,9 +561,6 @@ export const Composer = forwardRef(
     forwardedRef: ForwardedRef<HTMLFormElement>
   ) => {
     const client = useClient();
-    const createThread = useCreateThread();
-    const createComment = useCreateComment();
-    const editComment = useEditComment();
     const hasResolveMentionSuggestions =
       client[kInternal].resolveMentionSuggestions !== undefined;
     const isEmptyRef = useRef(true);
@@ -624,57 +628,37 @@ export const Composer = forwardRef(
       [onCollapsedChange]
     );
 
-    const handleCommentSubmit = useCallback(
-      (comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => {
-        onComposerSubmit?.(comment, event);
+    function ComposerForm(props: ComposerFormProps) {
+      if (commentId === undefined && threadId === undefined) {
+        return (
+          <CreateThreadComposer
+            ref={forwardedRef}
+            metadata={metadata}
+            {...props}
+          />
+        );
+      }
 
-        if (event.isDefaultPrevented()) {
-          return;
-        }
-
-        if (commentId && threadId) {
-          editComment({
-            commentId,
-            threadId,
-            body: comment.body,
-            attachments: comment.attachments,
-          });
-        } else if (threadId) {
-          createComment({
-            threadId,
-            body: comment.body,
-            attachments: comment.attachments,
-          });
-        } else {
-          createThread({
-            body: comment.body,
-            metadata: metadata ?? {},
-            attachments: comment.attachments,
-          });
-        }
-      },
-      [
-        commentId,
-        createComment,
-        createThread,
-        editComment,
-        metadata,
-        onComposerSubmit,
-        threadId,
-      ]
-    );
+      return (
+        <CreateOrEditCommentComposer
+          ref={forwardedRef}
+          threadId={threadId}
+          commentId={commentId}
+          metadata={metadata}
+          {...props}
+        />
+      );
+    }
 
     return (
       <TooltipProvider>
-        <ComposerPrimitive.Form
-          onComposerSubmit={handleCommentSubmit}
+        <ComposerForm
           className={classNames(
             "lb-root lb-composer lb-composer-form",
             className
           )}
           dir={$.dir}
           {...props}
-          ref={forwardedRef}
           data-collapsed={isCollapsed ? "" : undefined}
           onFocus={handleFocus}
           onBlur={handleBlur}
@@ -696,10 +680,118 @@ export const Composer = forwardRef(
             autoFocus={autoFocus}
             disabled={disabled}
           />
-        </ComposerPrimitive.Form>
+        </ComposerForm>
       </TooltipProvider>
     );
   }
 ) as <M extends BaseMetadata = DM>(
   props: ComposerProps<M> & RefAttributes<HTMLFormElement>
 ) => JSX.Element;
+
+const RoomIdContext = createContext<string | null>(null);
+
+type CreateThreadComposerProps<M extends BaseMetadata = DM> =
+  ComposerFormProps & ComposerCreateThreadProps<M>;
+
+const CreateThreadComposer = forwardRef<
+  HTMLFormElement,
+  CreateThreadComposerProps
+>(({ onComposerSubmit, metadata, ...props }, forwardedRef) => {
+  const createThread = useCreateThread();
+  const room = useRoom();
+
+  const handleCommentSubmit = useCallback(
+    (comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => {
+      onComposerSubmit?.(comment, event);
+
+      if (event.isDefaultPrevented()) {
+        return;
+      }
+
+      createThread({
+        body: comment.body,
+        metadata: metadata ?? {},
+        attachments: comment.attachments,
+      });
+    },
+    [createThread, metadata, onComposerSubmit]
+  );
+
+  return (
+    <RoomIdContext.Provider value={room.id}>
+      <ComposerPrimitive.Form
+        ref={forwardedRef}
+        onComposerSubmit={handleCommentSubmit}
+        {...props}
+      />
+    </RoomIdContext.Provider>
+  );
+});
+
+type CreateOrEditCommentComposerProps = ComposerFormProps &
+  (ComposerCreateCommentProps | ComposerEditCommentProps);
+
+const CreateOrEditCommentComposer = forwardRef<
+  HTMLFormElement,
+  CreateOrEditCommentComposerProps
+>(({ onComposerSubmit, threadId, commentId, ...props }, forwardedRef) => {
+  const store = getUmbrellaStoreForClient(useClient());
+  // XXX - Should we call `threadsDB.get` vs `threadsDB.getEvenIfDeleted`?
+  const thread = store.getFullState().threadsDB.getEvenIfDeleted(threadId);
+  if (thread === undefined) {
+    // XXX - Is it safe to throw error here?
+    throw new Error(
+      `Cannot create or edit comment on thread ${threadId} because the thread does not exist in cache.`
+    );
+  }
+
+  const createComment = useCreateComment();
+  const editComment = useEditComment();
+
+  const handleCommentSubmit = useCallback(
+    (comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => {
+      onComposerSubmit?.(comment, event);
+
+      if (event.isDefaultPrevented()) {
+        return;
+      }
+
+      if (commentId && threadId) {
+        editComment({
+          commentId,
+          threadId,
+          body: comment.body,
+          attachments: comment.attachments,
+        });
+      } else if (threadId) {
+        createComment({
+          threadId,
+          body: comment.body,
+          attachments: comment.attachments,
+        });
+      }
+    },
+    [onComposerSubmit, threadId, commentId, createComment, editComment]
+  );
+
+  return (
+    <RoomIdContext.Provider value={thread.roomId}>
+      <ComposerPrimitive.Form
+        ref={forwardedRef}
+        onComposerSubmit={handleCommentSubmit}
+        {...props}
+      />
+    </RoomIdContext.Provider>
+  );
+});
+
+export function useRoomId() {
+  const roomId = useContext(RoomIdContext);
+  if (roomId === null) {
+    throw new Error(
+      "Internal error: useRoomId must be placed within the Composer component."
+    );
+  }
+
+  return roomId;
+}

@@ -92,6 +92,7 @@ export type {
 export { autoRetry, HttpError } from "./lib/autoRetry";
 export { chunk } from "./lib/chunk";
 export {
+  createCommentAttachmentId,
   createCommentId,
   createInboxNotificationId,
   createThreadId,
@@ -136,7 +137,6 @@ export {
   wait,
   withTimeout,
 } from "./lib/utils";
-export type { GetUserThreadsOptions } from "./notifications";
 export type { CustomAuthenticationResult } from "./protocol/Authentication";
 export type { BaseActivitiesData } from "./protocol/BaseActivitiesData";
 export type { BaseRoomInfo } from "./protocol/BaseRoomInfo";
