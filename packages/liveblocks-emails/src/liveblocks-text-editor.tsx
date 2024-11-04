@@ -47,11 +47,11 @@ export type LiveblocksTextEditorNode =
 
 type TransformableMentionNodeWithContext =
   | {
-      textEditorType: "lexical";
+      editor: "lexical";
       mention: LexicalMentionNodeWithContext;
     }
   | {
-      textEditorType: "tiptap";
+      editor: "tiptap";
       // TODO: add mention node with context for TipTap
     };
 
@@ -156,7 +156,7 @@ const transformLexicalMentionNodeWithContext = (
 export function transformAsLiveblocksTextEditorNodes(
   transformableMention: TransformableMentionNodeWithContext
 ): LiveblocksTextEditorNode[] {
-  switch (transformableMention.textEditorType) {
+  switch (transformableMention.editor) {
     case "lexical": {
       return transformLexicalMentionNodeWithContext(
         transformableMention.mention

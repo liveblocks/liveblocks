@@ -32,11 +32,11 @@ import {
 
 type TextMentionNotificationData = (
   | {
-      textEditorType: "lexical";
+      editor: "lexical";
       mentionNodeWithContext: LexicalMentionNodeWithContext;
     }
   | {
-      textEditorType: "tiptap";
+      editor: "tiptap";
       // TODO: add mention node with context for TipTap
     }
 ) & {
@@ -110,7 +110,7 @@ export const extractTextMentionNotificationData = async ({
       }
 
       return {
-        textEditorType: "lexical",
+        editor: "lexical",
         mentionNodeWithContext,
         createdAt: mentionCreatedAt,
         userId: mentionAuthorUserId,
@@ -119,7 +119,7 @@ export const extractTextMentionNotificationData = async ({
     case "tiptap": {
       // TODO: add logic to get tiptap state and mention node with context
       return {
-        textEditorType: "tiptap",
+        editor: "tiptap",
         createdAt: mentionCreatedAt,
         userId: mentionAuthorUserId,
       };
@@ -176,10 +176,10 @@ export const prepareTextMentionNotificationEmailBaseData = async ({
 
   let textEditorNodes: LiveblocksTextEditorNode[] = [];
 
-  switch (data.textEditorType) {
+  switch (data.editor) {
     case "lexical": {
       textEditorNodes = transformAsLiveblocksTextEditorNodes({
-        textEditorType: "lexical",
+        editor: "lexical",
         mention: data.mentionNodeWithContext,
       });
       break;
