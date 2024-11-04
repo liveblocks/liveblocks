@@ -78,7 +78,7 @@ export const extractTextMentionNotificationData = async ({
   // Do nothing if the room as no text editor associated.
   // We do not throw not to impact the final developer experience.
   if (!room.textEditor) {
-    console.warn(`Room ${room.id} do not have any text editor associated`);
+    console.warn(`Room "${room.id}" do not have any text editor associated`);
     return null;
   }
 
