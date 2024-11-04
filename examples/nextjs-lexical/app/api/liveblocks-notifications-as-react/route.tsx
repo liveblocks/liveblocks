@@ -4,6 +4,7 @@ import {
   WebhookHandler,
   Liveblocks,
 } from "@liveblocks/node";
+import { Text } from "@react-email/components";
 import { USER_INFO } from "../dummy-users";
 
 // Add your Liveblocks secret key from https://liveblocks.io/dashboard/apiKeys
@@ -57,6 +58,16 @@ export async function POST(request: Request) {
               name: roomId,
               url: `https://my-liveblocks-app.com?roomId=${roomId}`,
             };
+          },
+          components: {
+            Container: ({ children }) => (
+              <Text className="text-sm text-black m-0 mb-4">{children}</Text>
+            ),
+            Mention: ({ element, user }) => (
+              <span className="text-email-accent font-medium">
+                @{user?.name ?? element.userId}
+              </span>
+            ),
           },
         }
       );
