@@ -1,3 +1,10 @@
+## 2.11.1
+
+### `@liveblocks/react`
+
+- Fix regression with `useThreads` that caused the hook to return an error if
+  its associated room did not exist.
+
 ## 2.11.0
 
 ### `@liveblocks/react-ui`
