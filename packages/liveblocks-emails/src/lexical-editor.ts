@@ -231,6 +231,10 @@ export function getSerializedLexicalState({
 
   // Convert the Y.js document to a serializable Lexical state
   const state = createSerializedLexicalRootNode(root);
+
+  // Destroy the Y.js document after the conversion
+  document.destroy();
+
   return state;
 }
 
