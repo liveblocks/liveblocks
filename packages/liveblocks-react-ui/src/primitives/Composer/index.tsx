@@ -14,7 +14,12 @@ import {
   size,
   useFloating,
 } from "@floating-ui/react-dom";
-import type { CommentAttachment, CommentBody } from "@liveblocks/core";
+import {
+  type CommentAttachment,
+  type CommentBody,
+  type EventSource,
+  makeEventSource,
+} from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
 import { useMentionSuggestions } from "@liveblocks/react/_private";
 import { Slot, Slottable } from "@radix-ui/react-slot";
@@ -59,7 +64,6 @@ import {
   ReactEditor,
   Slate,
   useSelected,
-  useSlateSelection,
   useSlateStatic,
   withReact,
 } from "slate-react";
@@ -363,10 +367,9 @@ function ComposerEditorFloatingToolbarWrapper({
   position = FLOATING_TOOLBAR_POSITION,
   dir,
 }: ComposerEditorFloatingToolbarWrapperProps) {
-  const selection = useSlateSelection();
   const editor = useSlateStatic();
   const { isFocused } = useComposer();
-  const { hasSelectionRange } = useComposerEditorContext();
+  const { changeEventSource } = useComposerEditorContext();
   const [content, setContent] = useState<HTMLDivElement | null>(null);
   const [contentZIndex, setContentZIndex] = useState<string>();
   const contentRef = useCallback(setContent, [setContent]);
@@ -395,6 +398,7 @@ function ComposerEditorFloatingToolbarWrapper({
       },
     };
   }, [position, dir]);
+  const [hasSelectionRange, setHasSelectionRange] = useState(false);
   const isOpen = Boolean(isFocused && hasSelectionRange);
   const {
     refs: { setReference, setFloating },
@@ -414,19 +418,18 @@ function ComposerEditorFloatingToolbarWrapper({
   }, [content]);
 
   useLayoutEffect(() => {
-    if (!selection || isSelectionCollapsed(selection)) {
-      return;
-    }
+    const unsubscribe = changeEventSource.subscribe(() => {
+      if (!editor.selection || isSelectionCollapsed(editor.selection)) {
+        setHasSelectionRange(false);
+        setReference(null);
+      } else {
+        setHasSelectionRange(true);
+        setReference(getDOMRange(editor, editor.selection) ?? null);
+      }
+    });
 
-    const domRange = getDOMRange(editor, selection);
-
-    if (domRange) {
-      setReference({
-        getBoundingClientRect: () => domRange.getBoundingClientRect(),
-        getClientRects: () => domRange.getClientRects(),
-      });
-    }
-  }, [setReference, editor, selection]);
+    return unsubscribe;
+  }, [setReference, editor, changeEventSource]);
 
   return (
     <Persist>
@@ -838,13 +841,8 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     },
     forwardedRef
   ) => {
-    const {
-      editor,
-      validate,
-      setFocused,
-      setActiveFormats,
-      setHasSelectionRange,
-    } = useComposerEditorContext();
+    const { editor, validate, setFocused, changeEventSource } =
+      useComposerEditorContext();
     const {
       submit,
       focus,
@@ -900,10 +898,10 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
         validate(value as SlateElement[]);
 
         setMentionDraft(getMentionDraftAtSelection(editor));
-        setActiveFormats(getActiveMarks(editor));
-        setHasSelectionRange(!isSelectionCollapsed(editor.selection));
+
+        changeEventSource.notify();
       },
-      [validate, editor, setActiveFormats, setHasSelectionRange]
+      [validate, editor, changeEventSource]
     );
 
     const createMention = useCallback(
@@ -1207,7 +1205,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const [activeFormats, setActiveFormats] = useState<ComposerBodyFormat[]>(
       []
     );
-    const [hasSelectionRange, setHasSelectionRange] = useState(false);
+
     const ref = useRef<HTMLFormElement>(null);
     const mergedRefs = useRefs(forwardedRef, ref);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1248,6 +1246,9 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
         pasteFilesAsAttachments,
       })
     );
+    const editorChangeEventSource = useInitial(
+      makeEventSource
+    ) as EventSource<void>;
 
     const validate = useCallback(
       (value: SlateElement[]) => {
@@ -1434,6 +1435,14 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       [editor]
     );
 
+    useEffect(() => {
+      const unsubscribe = editorChangeEventSource.subscribe(() => {
+        setActiveFormats(getActiveMarks(editor));
+      });
+
+      return unsubscribe;
+    }, [editor, editorChangeEventSource]);
+
     console.log(activeFormats);
 
     return (
@@ -1442,9 +1451,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
           editor,
           validate,
           setFocused,
-          setActiveFormats,
-          hasSelectionRange,
-          setHasSelectionRange,
+          changeEventSource: editorChangeEventSource,
         }}
       >
         <ComposerAttachmentsContext.Provider

@@ -1,5 +1,5 @@
 import type { Placement } from "@floating-ui/react-dom";
-import type { CommentMixedAttachment } from "@liveblocks/core";
+import type { CommentMixedAttachment, EventSource } from "@liveblocks/core";
 import { nn } from "@liveblocks/core";
 import type { Direction } from "@radix-ui/react-dropdown-menu";
 import type { Dispatch, Ref, SetStateAction } from "react";
@@ -94,9 +94,7 @@ export type ComposerEditorContext = {
   validate: (value: SlateElement[]) => void;
   editor: SlateEditor;
   setFocused: Dispatch<SetStateAction<boolean>>;
-  setActiveFormats: Dispatch<SetStateAction<ComposerBodyFormat[]>>;
-  hasSelectionRange: boolean;
-  setHasSelectionRange: Dispatch<SetStateAction<boolean>>;
+  changeEventSource: EventSource<void>;
 };
 
 export type ComposerAttachmentsContext = {
