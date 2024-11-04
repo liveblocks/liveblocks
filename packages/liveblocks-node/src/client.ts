@@ -137,7 +137,7 @@ export type RoomData = {
   usersAccesses: RoomAccesses;
   groupsAccesses: RoomAccesses;
   metadata: RoomMetadata;
-  textEditor?: RoomTextEditor | null;
+  experimental_textEditor?: RoomTextEditor;
 };
 
 type RoomDataPlain = DateToString<RoomData>;

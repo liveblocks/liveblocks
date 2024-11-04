@@ -77,7 +77,7 @@ export const extractTextMentionNotificationData = async ({
 
   // Do nothing if the room as no text editor associated.
   // We do not throw not to impact the final developer experience.
-  if (!room.textEditor) {
+  if (!room.experimental_textEditor) {
     console.warn(`Room "${room.id}" do not have any text editor associated`);
     return null;
   }
@@ -89,11 +89,11 @@ export const extractTextMentionNotificationData = async ({
   // In context of a text mention notification `createdBy` is a `userId`
   const mentionAuthorUserId = inboxNotification.createdBy;
 
-  switch (room.textEditor.type) {
+  switch (room.experimental_textEditor.type) {
     case "lexical": {
       const buffer = await client.getYjsDocumentAsBinaryUpdate(roomId);
 
-      const editorKey = room.textEditor.rootKey;
+      const editorKey = room.experimental_textEditor.rootKey;
       // TODO: temporarily grab the first entrance, later we will handle multiple editors
       const key = Array.isArray(editorKey) ? editorKey[0]! : editorKey;
 
