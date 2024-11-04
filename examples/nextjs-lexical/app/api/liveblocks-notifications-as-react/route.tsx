@@ -59,6 +59,9 @@ export async function POST(request: Request) {
               url: `https://my-liveblocks-app.com?roomId=${roomId}`,
             };
           },
+          // And the magic to use `react-email` components happens here 🥳
+          // Or you can use your own components if you're not using `react-email`
+          // to customize mentions' components.
           components: {
             Container: ({ children }) => (
               <Text className="text-sm text-black m-0 mb-4">{children}</Text>
