@@ -29,6 +29,7 @@ import {
   convertLiveblocksTextEditorNodesAsReact,
   transformAsLiveblocksTextEditorNodes,
 } from "./liveblocks-text-editor";
+import { getSerializedTipTapState } from "./tiptap-editor";
 
 type TextMentionNotificationData = (
   | {
@@ -89,14 +90,13 @@ export const extractTextMentionNotificationData = async ({
   // In context of a text mention notification `createdBy` is a `userId`
   const mentionAuthorUserId = inboxNotification.createdBy;
 
+  const buffer = await client.getYjsDocumentAsBinaryUpdate(roomId);
+  const editorKey = room.experimental_textEditor.rootKey;
+  // TODO: temporarily grab the first entrance, later we will handle multiple editors
+  const key = Array.isArray(editorKey) ? editorKey[0]! : editorKey;
+
   switch (room.experimental_textEditor.type) {
     case "lexical": {
-      const buffer = await client.getYjsDocumentAsBinaryUpdate(roomId);
-
-      const editorKey = room.experimental_textEditor.rootKey;
-      // TODO: temporarily grab the first entrance, later we will handle multiple editors
-      const key = Array.isArray(editorKey) ? editorKey[0]! : editorKey;
-
       const state = getSerializedLexicalState({ buffer, key });
       const mentionNodeWithContext = findLexicalMentionNodeWithContext({
         root: state,
@@ -117,7 +117,8 @@ export const extractTextMentionNotificationData = async ({
       };
     }
     case "tiptap": {
-      // TODO: add logic to get tiptap state and mention node with context
+      const state = getSerializedTipTapState({ buffer, key });
+      // TODO: find mention node with context
       return {
         editor: "tiptap",
         createdAt: mentionCreatedAt,

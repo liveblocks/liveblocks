@@ -226,10 +226,10 @@ export function getSerializedLexicalState({
 
   // Construct a Y.js document from the binary update
   const document = new Y.Doc();
-  const root = document.get(key, Y.XmlText);
   Y.applyUpdate(document, update);
 
   // Convert the Y.js document to a serializable Lexical state
+  const root = document.get(key, Y.XmlText);
   const state = createSerializedLexicalRootNode(root);
 
   // Destroy the Y.js document after the conversion

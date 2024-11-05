@@ -37,6 +37,7 @@
   "dependencies": {
     "@liveblocks/core": "2.10.2",
     "@liveblocks/node": "2.10.2",
+    "y-prosemirror": "1.2.12",
     "yjs": "13.6.20"
   },
   "peerDependencies": {
