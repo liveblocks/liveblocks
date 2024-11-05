@@ -58,7 +58,23 @@
   },
   "homepage": "https://liveblocks.io",
   "keywords": [
+    "emails",
+    "node",
+    "react",
+    "comments",
+    "threads",
     "liveblocks",
-    "emails"
+    "real-time",
+    "toolkit",
+    "multiplayer",
+    "websockets",
+    "collaboration",
+    "collaborative",
+    "presence",
+    "crdts",
+    "synchronize",
+    "rooms",
+    "documents",
+    "conflict resolution"
   ]
 }
