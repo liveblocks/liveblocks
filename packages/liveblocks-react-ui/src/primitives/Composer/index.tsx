@@ -87,17 +87,14 @@ import { withPaste } from "../../slate/plugins/paste";
 import { getDOMRange } from "../../slate/utils/get-dom-range";
 import { isEmpty as isEditorEmpty } from "../../slate/utils/is-empty";
 import { isSelectionCollapsed } from "../../slate/utils/is-selection-collapsed";
-import {
-  getActiveMarks,
-  leaveMarkEdge,
-  toggleMark,
-} from "../../slate/utils/marks";
+import { getMarks, leaveMarkEdge, toggleMark } from "../../slate/utils/marks";
 import type {
   ComposerBody as ComposerBodyData,
   ComposerBodyAutoLink,
   ComposerBodyCustomLink,
-  ComposerBodyFormat,
   ComposerBodyMention,
+  ComposerBodyTextActiveFormats,
+  ComposerBodyTextFormat,
 } from "../../types";
 import { isKey } from "../../utils/is-key";
 import { Persist, useAnimationPersist, usePersist } from "../../utils/Persist";
@@ -474,7 +471,7 @@ function ComposerEditorFloatingToolbarWrapper({
               zIndex: contentZIndex,
             }}
           >
-            <ComposerFloatingToolbar>Hello world</ComposerFloatingToolbar>
+            <ComposerFloatingToolbar />
           </Portal>
         </ComposerFloatingToolbarContext.Provider>
       ) : null}
@@ -1220,9 +1217,8 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const canSubmit = useMemo(() => {
       return !isEmpty && !isUploadingAttachments;
     }, [isEmpty, isUploadingAttachments]);
-    const [activeFormats, setActiveFormats] = useState<ComposerBodyFormat[]>(
-      []
-    );
+    const [textFormats, setTextFormats] =
+      useState<ComposerBodyTextActiveFormats>(getMarks);
 
     const ref = useRef<HTMLFormElement>(null);
     const mergedRefs = useRefs(forwardedRef, ref);
@@ -1446,8 +1442,8 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       event.stopPropagation();
     }, []);
 
-    const toggleFormat = useCallback(
-      (format: ComposerBodyFormat) => {
+    const toggleTextFormat = useCallback(
+      (format: ComposerBodyTextFormat) => {
         toggleMark(editor, format);
       },
       [editor]
@@ -1455,13 +1451,11 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 
     useEffect(() => {
       const unsubscribe = editorChangeEventSource.subscribe(() => {
-        setActiveFormats(getActiveMarks(editor));
+        setTextFormats(getMarks(editor));
       });
 
       return unsubscribe;
     }, [editor, editorChangeEventSource]);
-
-    console.log(activeFormats);
 
     return (
       <ComposerEditorContext.Provider
@@ -1497,8 +1491,8 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
               attachments,
               attachFiles,
               removeAttachment,
-              toggleFormat,
-              activeFormats,
+              toggleTextFormat,
+              textFormats,
             }}
           >
             <Component {...props} onSubmit={handleSubmit} ref={mergedRefs}>

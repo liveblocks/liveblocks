@@ -4,20 +4,33 @@ import { Editor as SlateEditor } from "slate";
 import { getCharacterAfter, getCharacterBefore } from "./get-character";
 import { isSelectionCollapsed } from "./is-selection-collapsed";
 
+const defaultMarks: Required<EditorMarks> = {
+  bold: false,
+  italic: false,
+  strikethrough: false,
+  code: false,
+};
+
 export function isMarkActive(editor: SlateEditor, mark: keyof EditorMarks) {
   const marks = SlateEditor.marks(editor);
 
   return marks ? marks[mark] === true : false;
 }
 
-export function getActiveMarks(editor: SlateEditor) {
+export function getMarks(editor?: SlateEditor) {
+  if (!editor) {
+    return { ...defaultMarks };
+  }
+
   const marks = SlateEditor.marks(editor);
 
-  return getMarks(marks);
+  return { ...defaultMarks, ...marks };
 }
 
-export function getMarks(todo: Text | EditorMarks | null | undefined) {
-  return Object.keys(todo ?? {}).filter(
+export function filterActiveMarks(
+  value: Text | EditorMarks | null | undefined
+) {
+  return Object.keys(value ?? {}).filter(
     (key) => key !== "text"
   ) as (keyof EditorMarks)[];
 }

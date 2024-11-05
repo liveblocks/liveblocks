@@ -6,7 +6,10 @@ import type { Dispatch, Ref, SetStateAction } from "react";
 import { createContext, useContext } from "react";
 import type { Editor as SlateEditor, Element as SlateElement } from "slate";
 
-import type { ComposerBodyFormat } from "../../types";
+import type {
+  ComposerBodyTextActiveFormats,
+  ComposerBodyTextFormat,
+} from "../../types";
 
 export type ComposerContext = {
   /**
@@ -80,14 +83,14 @@ export type ComposerContext = {
   removeAttachment: (attachmentId: string) => void;
 
   /**
-   * The currently active inline formats.
+   * Which text formats are currently active and which aren't.
    */
-  activeFormats: ComposerBodyFormat[];
+  textFormats: ComposerBodyTextActiveFormats;
 
   /**
-   * Toggle an inline format.
+   * Toggle a specific text format.
    */
-  toggleFormat: (format: ComposerBodyFormat) => void;
+  toggleTextFormat: (format: ComposerBodyTextFormat) => void;
 };
 
 export type ComposerEditorContext = {

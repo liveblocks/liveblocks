@@ -3,7 +3,7 @@ import { Element, Node, Range, Transforms } from "slate";
 
 import type { ComposerBodyCustomLink } from "../../types";
 import { isPlainText, isText } from "../utils/is-text";
-import { getMarks } from "../utils/marks";
+import { filterActiveMarks } from "../utils/marks";
 import { selectionContainsInlines } from "../utils/selection-contains-inlines";
 
 function isUrl(string: string) {
@@ -31,7 +31,7 @@ export function withCustomLinks(editor: Editor): Editor {
       // Prevent rich text within custom links by removing all marks of inner text nodes
       if (isComposerBodyCustomLink(parentNode)) {
         if (!isPlainText(node)) {
-          const marks = getMarks(node);
+          const marks = filterActiveMarks(node);
 
           Transforms.unsetNodes(editor, marks, { at: path });
         }
