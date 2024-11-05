@@ -234,11 +234,11 @@ export function withPaste(
           return;
         }
       } catch {
-        // Fallback to inserting the non-rich text if available
-        insertData(data);
+        // Fallback to default `insertData` behavior
       }
     }
 
+    // Default `insertData` behavior
     insertData(data);
   };
 
