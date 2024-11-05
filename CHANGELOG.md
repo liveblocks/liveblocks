@@ -3,6 +3,7 @@
 ### `@liveblocks/react-ui`
 
 - Upgrade dependencies.
+- Fix minor appearance issues related to attachments.
 
 ## 2.10.2
 

@@ -28,6 +28,7 @@ interface AttachmentProps extends ComponentPropsWithoutRef<"div"> {
   onDeleteClick?: MouseEventHandler<HTMLButtonElement>;
   preventFocusOnDelete?: boolean;
   overrides?: Partial<Overrides>;
+  allowMediaPreview?: boolean;
 }
 
 const fileExtensionRegex = /^(.+?)(\.[^.]+)?$/;
@@ -174,14 +175,17 @@ function AttachmentVideoPreview({
 
 function AttachmentPreview({
   attachment,
+  allowMediaPreview = true,
 }: {
   attachment: CommentMixedAttachment;
+  allowMediaPreview?: boolean;
 }) {
   const isInsideRoom = useIsInsideRoom();
   const isUploaded =
     attachment.type === "attachment" || attachment.status === "uploaded";
 
   if (
+    allowMediaPreview &&
     isUploaded &&
     isInsideRoom &&
     attachment.size <= MAX_DISPLAYED_MEDIA_SIZE
@@ -298,6 +302,7 @@ export function MediaAttachment({
   onClick,
   onDeleteClick,
   preventFocusOnDelete,
+  allowMediaPreview = true,
   className,
   onKeyDown,
   ...props
@@ -332,7 +337,10 @@ export function MediaAttachment({
         ) : isError ? (
           <WarningIcon />
         ) : (
-          <AttachmentPreview attachment={attachment} />
+          <AttachmentPreview
+            attachment={attachment}
+            allowMediaPreview={allowMediaPreview}
+          />
         )}
       </div>
       <div className="lb-attachment-details">
@@ -364,6 +372,7 @@ export function FileAttachment({
   onClick,
   onDeleteClick,
   preventFocusOnDelete,
+  allowMediaPreview = true,
   className,
   onKeyDown,
   ...props
@@ -398,7 +407,10 @@ export function FileAttachment({
         ) : isError ? (
           <WarningIcon />
         ) : (
-          <AttachmentPreview attachment={attachment} />
+          <AttachmentPreview
+            attachment={attachment}
+            allowMediaPreview={allowMediaPreview}
+          />
         )}
       </div>
       <div className="lb-attachment-details">
