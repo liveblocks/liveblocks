@@ -15,7 +15,30 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 45 (2024-11-08)
 
+## 2.11.0
+
+### `@liveblocks/react-ui`
+
+- Upgrade dependencies.
+- Fix minor appearance issues related to attachments.
+- Fix pasting issues introduced in 2.10.0.
+
+### `@liveblocks/react`
+
+- Fix regression with `useThreads` that caused the hook to return an error if
+  its associated room did not exist.
+
+### `@liveblocks/react-tiptap`
+
+- Initial release.
+
+### `@liveblocks/emails`
+
+- Initial release.
+
 ## Contributors
+
+sugardarius, nimeshnayaju, marcbouchenoire, jrowny
 
 # Week 44 (2024-11-01)
 
