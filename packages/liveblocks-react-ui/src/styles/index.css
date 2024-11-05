@@ -600,6 +600,7 @@
   :where(p) {
     margin-block-start: 0.25em;
     margin-block-end: 0.25em;
+    line-height: 1.5;
 
     &:where(:first-of-type) {
       margin-block-start: 0;
