@@ -1,6 +1,8 @@
 import type { Json, JsonObject } from "@liveblocks/core";
 import * as Y from "yjs";
 
+import { assertMentionNodeAttributeId, isString } from "./lib/utils";
+
 export interface SerializedBaseLexicalNode {
   type: string;
   attributes: JsonObject;
@@ -254,10 +256,6 @@ const flattenLexicalTree = (
   return flattenNodes;
 };
 
-const isString = (value: unknown): value is string => {
-  return typeof value === "string";
-};
-
 const assertMentionNodeType = (type: string): type is "lb-mention" => {
   return type === "lb-mention";
 };
@@ -266,12 +264,6 @@ const assertMentionNodeAttributeType = (
   type: unknown
 ): type is "lb-mention" => {
   return isString(type) && type === "lb-mention";
-};
-
-const assertMentionNodeAttributeId = (
-  value: unknown
-): value is `in_${string}` => {
-  return isString(value) && value.startsWith("in_");
 };
 
 export const assertSerializedMentionNode = (

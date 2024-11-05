@@ -20,9 +20,17 @@ import type {
   SerializedLexicalNode,
   SerializedTextNode,
 } from "./lexical-editor";
-import { assertSerializedMentionNode } from "./lexical-editor";
+import { assertSerializedMentionNode as assertSerializedLexicalMentionNode } from "./lexical-editor";
 import type { CSSProperties } from "./lib/css-properties";
 import { toInlineCSSString } from "./lib/css-properties";
+import type {
+  SerializedTiptapMark,
+  SerializedTiptapMarkType,
+  SerializedTiptapNode,
+  SerializedTiptapTextNode,
+  TiptapMentionNodeWithContext,
+} from "./tiptap-editor";
+import { assertSerializedMentionNode as assertSerializedTiptapMentionNode } from "./tiptap-editor";
 
 type LiveblocksTextEditorTextFormat = {
   bold: boolean;
@@ -52,7 +60,7 @@ type TransformableMentionNodeWithContext =
     }
   | {
       editor: "tiptap";
-      // TODO: add mention node with context for TipTap
+      mention: TiptapMentionNodeWithContext;
     };
 
 const baseLiveblocksTextEditorTextFormat: LiveblocksTextEditorTextFormat = {
@@ -116,6 +124,11 @@ const transformLexicalTextNodeFormatBitwiseInteger = (
   return baseLiveblocksTextEditorTextFormat;
 };
 
+/**
+ *
+ * Transform Lexical serialized nodes
+ * as Liveblocks Text Editor nodes
+ */
 const transformLexicalMentionNodeWithContext = (
   mentionNodeWithContext: LexicalMentionNodeWithContext
 ): LiveblocksTextEditorNode[] => {
@@ -133,7 +146,7 @@ const transformLexicalMentionNodeWithContext = (
         });
       } else if (
         node.group === "decorator" &&
-        assertSerializedMentionNode(node)
+        assertSerializedLexicalMentionNode(node)
       ) {
         textEditorNodes.push({
           type: "mention",
@@ -153,6 +166,66 @@ const transformLexicalMentionNodeWithContext = (
   return textEditorNodes;
 };
 
+const hasTiptapSerializedTextNodeMark = (
+  marks: Array<SerializedTiptapMark>,
+  type: SerializedTiptapMarkType
+): boolean => marks.findIndex((mark) => mark.type === type) !== -1;
+
+const transformTiptapTextNodeFormatMarks = (
+  node: SerializedTiptapTextNode
+): LiveblocksTextEditorTextFormat => {
+  if (!node.marks) {
+    return baseLiveblocksTextEditorTextFormat;
+  }
+
+  const marks = node.marks;
+  return {
+    bold: hasTiptapSerializedTextNodeMark(marks, "bold"),
+    italic: hasTiptapSerializedTextNodeMark(marks, "italic"),
+    strikethrough: hasTiptapSerializedTextNodeMark(marks, "strike"),
+    code: hasTiptapSerializedTextNodeMark(marks, "code"),
+  };
+};
+
+/**
+ *
+ * Transform Tiptap serialized nodes
+ * as Liveblocks Text Editor nodes
+ */
+const transformTiptapMentionNodeWithContext = (
+  mentionNodeWithContext: TiptapMentionNodeWithContext
+): LiveblocksTextEditorNode[] => {
+  const textEditorNodes: LiveblocksTextEditorNode[] = [];
+  const { before, after, mention } = mentionNodeWithContext;
+
+  const transform = (nodes: SerializedTiptapNode[]) => {
+    for (const node of nodes) {
+      if (node.type === "text") {
+        const format = transformTiptapTextNodeFormatMarks(node);
+        textEditorNodes.push({
+          type: "text",
+          text: node.text,
+          ...format,
+        });
+      } else if (assertSerializedTiptapMentionNode(node)) {
+        textEditorNodes.push({
+          type: "mention",
+          userId: node.attrs.userId,
+        });
+      }
+    }
+  };
+
+  transform(before);
+  textEditorNodes.push({
+    type: "mention",
+    userId: mention.attrs.userId,
+  });
+  transform(after);
+
+  return textEditorNodes;
+};
+
 export function transformAsLiveblocksTextEditorNodes(
   transformableMention: TransformableMentionNodeWithContext
 ): LiveblocksTextEditorNode[] {
@@ -163,8 +236,9 @@ export function transformAsLiveblocksTextEditorNodes(
       );
     }
     case "tiptap": {
-      // TODO add transformer for TipTap
-      return [];
+      return transformTiptapMentionNodeWithContext(
+        transformableMention.mention
+      );
     }
   }
 }

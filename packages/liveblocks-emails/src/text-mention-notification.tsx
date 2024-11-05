@@ -201,7 +201,10 @@ export const prepareTextMentionNotificationEmailBaseData = async ({
       break;
     }
     case "tiptap": {
-      textEditorNodes = [];
+      textEditorNodes = transformAsLiveblocksTextEditorNodes({
+        editor: "tiptap",
+        mention: data.mentionNodeWithContext,
+      });
       break;
     }
   }
