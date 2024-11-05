@@ -1,7 +1,7 @@
 import type { Json, JsonObject } from "@liveblocks/core";
 import * as Y from "yjs";
 
-import { assertMentionNodeAttributeId, isString } from "./lib/utils";
+import { isMentionNodeAttributeId, isString } from "./lib/utils";
 
 export interface SerializedBaseLexicalNode {
   type: string;
@@ -256,25 +256,23 @@ const flattenLexicalTree = (
   return flattenNodes;
 };
 
-const assertMentionNodeType = (type: string): type is "lb-mention" => {
+const isMentionNodeType = (type: string): type is "lb-mention" => {
   return type === "lb-mention";
 };
 
-const assertMentionNodeAttributeType = (
-  type: unknown
-): type is "lb-mention" => {
+const isMentionNodeAttributeType = (type: unknown): type is "lb-mention" => {
   return isString(type) && type === "lb-mention";
 };
 
-export const assertSerializedMentionNode = (
+export const isSerializedMentionNode = (
   node: SerializedDecoratorNode
 ): node is SerializedMentionNode => {
   const attributes = node.attributes;
 
   return (
-    assertMentionNodeType(node.type) &&
-    assertMentionNodeAttributeType(attributes.__type) &&
-    assertMentionNodeAttributeId(attributes.__id) &&
+    isMentionNodeType(node.type) &&
+    isMentionNodeAttributeType(attributes.__type) &&
+    isMentionNodeAttributeId(attributes.__id) &&
     isString(attributes.__userId)
   );
 };
@@ -310,7 +308,7 @@ export function findLexicalMentionNodeWithContext({
     const node = nodes[i]!;
     if (
       node.group === "decorator" &&
-      assertSerializedMentionNode(node) &&
+      isSerializedMentionNode(node) &&
       node.attributes.__id === mentionId &&
       node.attributes.__userId === mentionedUserId
     ) {
@@ -342,7 +340,7 @@ export function findLexicalMentionNodeWithContext({
     }
 
     // Stop if decorator node isn't a mention
-    if (node.group === "decorator" && !assertMentionNodeType(node.type)) {
+    if (node.group === "decorator" && !isMentionNodeType(node.type)) {
       break;
     }
 
@@ -359,7 +357,7 @@ export function findLexicalMentionNodeWithContext({
     }
 
     // Stop if decorator node isn't a mention
-    if (node.group === "decorator" && !assertMentionNodeType(node.type)) {
+    if (node.group === "decorator" && !isMentionNodeType(node.type)) {
       break;
     }
 

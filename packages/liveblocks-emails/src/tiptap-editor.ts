@@ -1,7 +1,7 @@
 import { yXmlFragmentToProsemirrorJSON } from "y-prosemirror";
 import * as Y from "yjs";
 
-import { assertMentionNodeAttributeId } from "./lib/utils";
+import { isMentionNodeAttributeId } from "./lib/utils";
 
 export interface SerializedTiptapBaseNode {
   type: string;
@@ -117,28 +117,28 @@ export function getSerializedTiptapState({
   return state as SerializedTiptapRootNode;
 }
 
-const assertSerializedLineBreakNode = (
+const isSerializedLineBreakNode = (
   node: SerializedTiptapNode
 ): node is SerializedTiptapLineBreakNode => {
   return node.type === "paragraph" && typeof node.content === "undefined";
 };
 
-const assertSerializedTextNode = (
+const isSerializedTextNode = (
   node: SerializedTiptapNode
 ): node is SerializedTiptapTextNode => {
   return node.type === "text";
 };
 
-export const assertSerializedMentionNode = (
+export const isSerializedMentionNode = (
   node: SerializedTiptapNode
 ): node is SerializedTiptapMentionNode => {
   return (
     node.type === "liveblocksMention" &&
-    assertMentionNodeAttributeId(node.attrs.notificationId)
+    isMentionNodeAttributeId(node.attrs.notificationId)
   );
 };
 
-const isParagraphNode = (
+const isSerializedParagraphNode = (
   node: SerializedTiptapNode
 ): node is SerializedTiptapParagraphNode => {
   return node.type === "paragraph" && typeof node.content !== "undefined";
@@ -152,12 +152,12 @@ const flattenTiptapTree = (
 
   for (const node of nodes) {
     if (
-      assertSerializedLineBreakNode(node) ||
-      assertSerializedTextNode(node) ||
-      assertSerializedMentionNode(node)
+      isSerializedLineBreakNode(node) ||
+      isSerializedTextNode(node) ||
+      isSerializedMentionNode(node)
     ) {
       flattenNodes = [...flattenNodes, node];
-    } else if (isParagraphNode(node)) {
+    } else if (isSerializedParagraphNode(node)) {
       flattenNodes = [...flattenNodes, ...flattenTiptapTree(node.content)];
     }
   }
@@ -196,7 +196,7 @@ export function findTiptapMentionNodeWithContext({
     const node = nodes[i]!;
 
     if (
-      assertSerializedMentionNode(node) &&
+      isSerializedMentionNode(node) &&
       node.attrs.notificationId === mentionId &&
       node.attrs.userId === mentionedUserId
     ) {
@@ -223,7 +223,7 @@ export function findTiptapMentionNodeWithContext({
     const node = nodes[i]!;
 
     // Stop if nodes are line breaks or paragraph
-    if (assertSerializedLineBreakNode(node) || isParagraphNode(node)) {
+    if (isSerializedLineBreakNode(node) || isSerializedParagraphNode(node)) {
       break;
     }
 
@@ -235,7 +235,7 @@ export function findTiptapMentionNodeWithContext({
     const node = nodes[i]!;
 
     // Stop if nodes are line breaks or paragraph
-    if (assertSerializedLineBreakNode(node) || isParagraphNode(node)) {
+    if (isSerializedLineBreakNode(node) || isSerializedParagraphNode(node)) {
       break;
     }
 

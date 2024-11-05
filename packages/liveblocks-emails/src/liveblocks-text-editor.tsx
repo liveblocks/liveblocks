@@ -20,7 +20,7 @@ import type {
   SerializedLexicalNode,
   SerializedTextNode,
 } from "./lexical-editor";
-import { assertSerializedMentionNode as assertSerializedLexicalMentionNode } from "./lexical-editor";
+import { isSerializedMentionNode as isSerializedLexicalMentionNode } from "./lexical-editor";
 import type { CSSProperties } from "./lib/css-properties";
 import { toInlineCSSString } from "./lib/css-properties";
 import type {
@@ -30,7 +30,7 @@ import type {
   SerializedTiptapTextNode,
   TiptapMentionNodeWithContext,
 } from "./tiptap-editor";
-import { assertSerializedMentionNode as assertSerializedTiptapMentionNode } from "./tiptap-editor";
+import { isSerializedMentionNode as isSerializedTiptapMentionNode } from "./tiptap-editor";
 
 type LiveblocksTextEditorTextFormat = {
   bold: boolean;
@@ -146,7 +146,7 @@ const transformLexicalMentionNodeWithContext = (
         });
       } else if (
         node.group === "decorator" &&
-        assertSerializedLexicalMentionNode(node)
+        isSerializedLexicalMentionNode(node)
       ) {
         textEditorNodes.push({
           type: "mention",
@@ -207,7 +207,7 @@ const transformTiptapMentionNodeWithContext = (
           text: node.text,
           ...format,
         });
-      } else if (assertSerializedTiptapMentionNode(node)) {
+      } else if (isSerializedTiptapMentionNode(node)) {
         textEditorNodes.push({
           type: "mention",
           userId: node.attrs.userId,
