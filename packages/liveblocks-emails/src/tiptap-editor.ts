@@ -1,64 +1,64 @@
 import { yXmlFragmentToProsemirrorJSON } from "y-prosemirror";
 import * as Y from "yjs";
 
-export interface SerializedTipTapBaseNode {
+export interface SerializedTiptapBaseNode {
   type: string;
-  content?: Array<SerializedTipTapBaseNode>;
+  content?: Array<SerializedTiptapBaseNode>;
 }
 
-export interface SerializedTipTapParagraphBreakNode
-  extends SerializedTipTapBaseNode {
+export interface SerializedTiptapParagraphBreakNode
+  extends SerializedTiptapBaseNode {
   type: "paragraph";
-  content: Array<SerializedTipTapBaseNode>;
+  content: Array<SerializedTiptapBaseNode>;
 }
 
-export interface SerializedTipTapLineBreakNode
-  extends Omit<SerializedTipTapBaseNode, "content"> {
+export interface SerializedTiptapLineBreakNode
+  extends Omit<SerializedTiptapBaseNode, "content"> {
   type: "paragraph";
 }
 
-export interface SerializedTipTapBaseMark {
+export interface SerializedTiptapBaseMark {
   type: string;
   attrs: Record<string, string>;
 }
 
-export interface SerializedTipTapBoldMark extends SerializedTipTapBaseMark {
+export interface SerializedTiptapBoldMark extends SerializedTiptapBaseMark {
   type: "bold";
 }
 
-export interface SerializedTipTapItalicMark extends SerializedTipTapBaseMark {
+export interface SerializedTiptapItalicMark extends SerializedTiptapBaseMark {
   type: "italic";
 }
 
-export interface SerializedTipTapStrikethroughMark
-  extends SerializedTipTapBaseMark {
+export interface SerializedTiptapStrikethroughMark
+  extends SerializedTiptapBaseMark {
   type: "strike";
 }
 
-export interface SerializedTipTapStrikethroughMark
-  extends SerializedTipTapBaseMark {
+export interface SerializedTiptapStrikethroughMark
+  extends SerializedTiptapBaseMark {
   type: "strike";
 }
 
-export interface SerializedTipTapCommentMark extends SerializedTipTapBaseMark {
+export interface SerializedTiptapCommentMark extends SerializedTiptapBaseMark {
   type: "liveblocksCommentMark";
   attrs: {
     threadId: string;
   };
 }
 
-export type SerializedTipTapMark =
-  | SerializedTipTapBoldMark
-  | SerializedTipTapItalicMark
-  | SerializedTipTapStrikethroughMark;
+export type SerializedTiptapMark =
+  | SerializedTiptapBoldMark
+  | SerializedTiptapItalicMark
+  | SerializedTiptapStrikethroughMark;
 
-export interface SerializedTipTapTextNode extends SerializedTipTapBaseNode {
+export interface SerializedTiptapTextNode extends SerializedTiptapBaseNode {
   type: "text";
   text: string;
-  marks?: Array<SerializedTipTapMark>;
+  marks?: Array<SerializedTiptapMark>;
 }
 
-export interface SerializedTipTapMentionNode extends SerializedTipTapBaseNode {
+export interface SerializedTiptapMentionNode extends SerializedTiptapBaseNode {
   type: "liveblocksMention";
   attrs: {
     userId: string;
@@ -66,32 +66,32 @@ export interface SerializedTipTapMentionNode extends SerializedTipTapBaseNode {
   };
 }
 
-export type SerializedTipTapNode =
-  | SerializedTipTapParagraphBreakNode
-  | SerializedTipTapLineBreakNode
-  | SerializedTipTapMentionNode;
+export type SerializedTiptapNode =
+  | SerializedTiptapParagraphBreakNode
+  | SerializedTiptapLineBreakNode
+  | SerializedTiptapMentionNode;
 
-export type SerializedTipTapRootNodeContent = Array<
-  Readonly<SerializedTipTapNode>
+export type SerializedTiptapRootNodeContent = Array<
+  Readonly<SerializedTiptapNode>
 >;
 
-export interface SerializedTipTapRootNode
-  extends Readonly<SerializedTipTapBaseNode> {
+export interface SerializedTiptapRootNode
+  extends Readonly<SerializedTiptapBaseNode> {
   readonly type: "doc";
-  readonly content: SerializedTipTapRootNodeContent;
+  readonly content: SerializedTiptapRootNodeContent;
 }
 
 /**
  * Convert a document as binaries to
  * serialized tiptap state
  */
-export function getSerializedTipTapState({
+export function getSerializedTiptapState({
   buffer,
   key,
 }: {
   buffer: ArrayBuffer;
   key: string;
-}): SerializedTipTapRootNode {
+}): SerializedTiptapRootNode {
   const update = new Uint8Array(buffer);
   // Construct a Y.js document from the binary update
   const document = new Y.Doc();
@@ -106,5 +106,5 @@ export function getSerializedTipTapState({
 
   // Not ideal but pragmatic enough as the typing is based
   // on real data we provide
-  return state as SerializedTipTapRootNode;
+  return state as SerializedTiptapRootNode;
 }
