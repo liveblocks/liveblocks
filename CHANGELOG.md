@@ -5,6 +5,11 @@
 - Upgrade dependencies.
 - Fix minor appearance issues related to attachments.
 
+### `@liveblocks/react`
+
+- Fix regression with `useThreads` that caused the hook to return an error if
+  its associated room did not exist.
+
 ## 2.10.2
 
 ### `@liveblocks/client`
