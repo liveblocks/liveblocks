@@ -1,9 +1,15 @@
-## 2.10.1
+## 2.11.0
+
+### `@liveblocks/react-ui`
+
+- Upgrade dependencies.
+
+## 2.10.2
 
 ### `@liveblocks/client`
 
 - Internal refactorings and code cleanup across various parts of the client's
-  inner workings
+  inner workings.
 
 ### `@liveblocks/react`
 
@@ -13,6 +19,15 @@
 - Background tabs will no longer poll threads, notification, room versions or
   room notification settings.
 - Fix incorrect suspense export for `useRoomNotificationSettings` hook.
+- Support for React 19 and Next.js 15.
+
+### `@liveblocks/react-ui`
+
+- Support for React 19 and Next.js 15.
+
+### `@liveblocks/react-lexical`
+
+- Support for React 19 and Next.js 15.
 
 ## 2.10.0
 

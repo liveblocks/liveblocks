@@ -20,6 +20,7 @@ jobs:
             "@liveblocks/yjs",
             "@liveblocks/react-ui",
             "@liveblocks/react-lexical",
+            "@liveblocks/react-tiptap",
             "@liveblocks/node-lexical",
             "@liveblocks/codemod",
             "@liveblocks/emails",

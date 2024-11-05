@@ -100,13 +100,6 @@
   --color-text-lighter: rgb(var(--color-gray-500));
   --color-text-lightest: rgb(var(--color-gray-400));
 
-  --comment-highlight-composing: #ffff00;
-  --comment-highlight-composing-border: #ffff00;
-  --comment-highlight-complete: #ffffcd;
-  --comment-highlight-complete-border: #f4d037;
-  --comment-highlight-selected: #ffff00;
-  --comment-highlight-selected-border: #f4d037;
-
   color-scheme: light;
 }
 
@@ -127,13 +120,6 @@
   --color-text-light: rgb(var(--color-gray-300));
   --color-text-lighter: rgb(var(--color-gray-400));
   --color-text-lightest: rgb(var(--color-gray-500));
-
-  --comment-highlight-composing: #0079a2;
-  --comment-highlight-composing-border: #0079a2;
-  --comment-highlight-complete: #2d414b;
-  --comment-highlight-complete-border: #00748d;
-  --comment-highlight-selected: #0079a2;
-  --comment-highlight-selected-border: #009cd3;
 
   color-scheme: dark;
 }
@@ -160,4 +146,9 @@ html.grabbing {
 
 html.grabbing * {
   user-select: none;
+}
+
+.lb-root {
+  --lb-accent-foreground: var(--color-surface);
+  --lb-background: var(--color-surface-elevated);
 }
