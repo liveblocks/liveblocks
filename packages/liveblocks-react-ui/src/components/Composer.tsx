@@ -805,10 +805,9 @@ const CreateOrEditCommentComposer = forwardRef<
 export function useRoomId() {
   const roomId = useContext(RoomIdContext);
   if (roomId === null) {
-    // throw new Error(
-    //   "Internal error: useRoomId must be placed within the Composer component."
-    // );
-    return "123";
+    throw new Error(
+      "Internal error: useRoomId must be placed within the Composer component."
+    );
   }
 
   return roomId;
