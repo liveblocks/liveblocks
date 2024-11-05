@@ -201,8 +201,11 @@ export function withPaste(
       }
     }
 
-    // Deserialize rich text from HTML when pasting
-    if (data.types.includes("text/html")) {
+    // Deserialize rich text from HTML when pasting (unless there's also Slate data)
+    if (
+      data.types.includes("text/html") &&
+      !data.types.includes("application/x-slate-fragment")
+    ) {
       const html = data.getData("text/html");
 
       try {
