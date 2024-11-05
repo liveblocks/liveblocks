@@ -93,6 +93,13 @@ function flattenListItems(node: HTMLElement): HTMLElement[] {
   return listItems;
 }
 
+function jsxTextChildren(
+  children: DeserializedNode[],
+  attrs?: ComposerBodyTextTag
+) {
+  return children.map((child) => jsx("text", attrs, child));
+}
+
 function deserialize(node: Node): DeserializedNode {
   if (node.nodeType === 3) {
     return node.textContent;
@@ -153,12 +160,13 @@ function deserialize(node: Node): DeserializedNode {
       return jsx("fragment", {}, children);
     }
 
-    return children.map((child) => jsx("text", attrs, child));
+    return jsxTextChildren(children, attrs);
   }
 
   // Guess inline marks based on styles
   if (node.nodeName === "SPAN") {
     const style = (node as HTMLElement).style;
+    const attrs: ComposerBodyTextTag = {};
 
     if (
       style.fontWeight === "bold" ||
@@ -166,12 +174,18 @@ function deserialize(node: Node): DeserializedNode {
       style.fontWeight === "800" ||
       style.fontWeight === "900"
     ) {
-      children = children.map((child) => jsx("text", { bold: true }, child));
+      attrs.bold = true;
     }
 
     if (style.fontStyle === "italic") {
-      children = children.map((child) => jsx("text", { italic: true }, child));
+      attrs.italic = true;
     }
+
+    if (style.textDecoration === "line-through") {
+      attrs.strikethrough = true;
+    }
+
+    return jsxTextChildren(children, attrs);
   }
 
   return children as DeserializedNode;
