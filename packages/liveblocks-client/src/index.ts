@@ -11,6 +11,7 @@ export type {
   BroadcastOptions,
   Client,
   ClientOptions,
+  CommentAttachment,
   CommentBody,
   CommentBodyBlockElement,
   CommentBodyElement,
@@ -24,6 +25,8 @@ export type {
   CommentBodyText,
   CommentBodyTextElementArgs,
   CommentData,
+  CommentLocalAttachment,
+  CommentMixedAttachment,
   CommentReaction,
   EnsureJson,
   History,
@@ -55,6 +58,7 @@ export type {
   StringifyCommentBodyElements,
   StringifyCommentBodyOptions,
   ThreadData,
+  UploadAttachmentOptions,
   User,
 } from "@liveblocks/core";
 export {

@@ -1,6 +1,8 @@
 import {
   Composer as ComposerPrimitive,
   ComposerFormProps,
+  useComposer,
+  FileSize,
 } from "@liveblocks/react-ui/primitives";
 import clsx from "clsx";
 import React, { Suspense } from "react";
@@ -17,6 +19,47 @@ interface ComposerProps extends ComposerFormProps {
   submit?: string;
 }
 
+function ComposerAttachments() {
+  const { attachments, removeAttachment } = useComposer();
+
+  if (!attachments.length) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-col">
+      {attachments.map((attachment) => (
+        <div key={attachment.id} className="flex items-center gap-4">
+          <div className="flex min-w-0 flex-1 items-center gap-1.5 text-sm">
+            <span className="truncate font-semibold">
+              {attachment.name} (<FileSize size={attachment.size} />)
+            </span>
+            <span className="flex-none text-gray-500">
+              {attachment.type === "attachment" ||
+              attachment.status === "uploaded"
+                ? "Uploaded"
+                : attachment.status === "error"
+                  ? "Error"
+                  : attachment.status === "uploading"
+                    ? "Uploading…"
+                    : null}
+            </span>
+          </div>
+          <Button
+            className="self-end"
+            variant="destructive"
+            onClick={() => {
+              removeAttachment(attachment.id);
+            }}
+          >
+            Remove
+          </Button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function Composer({
   className,
   placeholder = "Write a comment…",
@@ -25,12 +68,12 @@ export function Composer({
 }: ComposerProps) {
   return (
     <ComposerPrimitive.Form
-      className={clsx(className, "flex gap-4 p-4")}
+      className={clsx(className, "flex flex-col gap-4 p-4")}
       {...props}
     >
       <ComposerPrimitive.Editor
         placeholder={placeholder}
-        className="prose prose-sm min-h-[theme(spacing.9)] flex-1 rounded-md px-3 py-1.5 outline outline-1 -outline-offset-1 outline-gray-200 ring-blue-300 ring-offset-2 focus-visible:ring-2 [&_[data-placeholder]]:opacity-50"
+        className="prose prose-sm min-h-[theme(spacing.9)] max-w-none flex-1 rounded-md px-3 py-1.5 outline outline-1 -outline-offset-1 outline-gray-200 ring-blue-300 ring-offset-2 focus-visible:ring-2 [&_[data-placeholder]]:opacity-50"
         components={{
           Mention: ({ userId }) => {
             return (
@@ -82,9 +125,15 @@ export function Composer({
           // },
         }}
       />
-      <ComposerPrimitive.Submit className="self-end" asChild>
-        <Button>{submit}</Button>
-      </ComposerPrimitive.Submit>
+      <ComposerAttachments />
+      <div className="flex gap-4 self-end">
+        <ComposerPrimitive.AttachFiles asChild>
+          <Button variant="secondary">Attach files</Button>
+        </ComposerPrimitive.AttachFiles>
+        <ComposerPrimitive.Submit asChild>
+          <Button>{submit}</Button>
+        </ComposerPrimitive.Submit>
+      </div>
     </ComposerPrimitive.Form>
   );
 }

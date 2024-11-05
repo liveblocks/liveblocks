@@ -209,6 +209,7 @@ const FloatingComposerImpl = forwardRef<
 
       const thread = createThread({
         body: comment.body,
+        attachments: comment.attachments,
         metadata: props.metadata ?? {},
       });
 

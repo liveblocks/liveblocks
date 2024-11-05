@@ -16,7 +16,8 @@ export function isEmpty(editor: SlateEditor, children: Descendant[]) {
       // Non-empty paragraph
       if (
         child.children.length > 1 ||
-        !(isText(child.children[0]) && isEmptyString(child.children[0].text))
+        (child.children[0] &&
+          !(isText(child.children[0]) && isEmptyString(child.children[0].text)))
       ) {
         return false;
       }

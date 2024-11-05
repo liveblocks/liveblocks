@@ -1,4 +1,3 @@
-import type { AuthValue } from "./auth-manager";
 import { createAuthManager } from "./auth-manager";
 import { isIdle } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
@@ -7,13 +6,19 @@ import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import type { DE, DM, DP, DRI, DS, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
 import type { BatchStore } from "./lib/batch";
-import { createBatchStore } from "./lib/batch";
+import { Batch, createBatchStore } from "./lib/batch";
 import type { Store } from "./lib/create-store";
 import { createStore } from "./lib/create-store";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import type { NoInfr } from "./lib/NoInfer";
 import type { Resolve } from "./lib/Resolve";
+import type {
+  GetInboxNotificationsOptions,
+  GetInboxNotificationsSinceOptions,
+  GetUserThreadsOptions,
+  GetUserThreadsSinceOptions,
+} from "./notifications";
 import { createNotificationsApi } from "./notifications";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
@@ -27,7 +32,6 @@ import type {
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
 import type {
-  GetThreadsOptions,
   OpaqueRoom,
   OptionalTupleUnless,
   PartialUnless,
@@ -138,17 +142,21 @@ export type EnterOptions<P extends JsonObject = DP, S extends LsonObject = DS> =
  */
 export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
   readonly currentUserIdStore: Store<string | null>;
+  readonly mentionSuggestionsCache: Map<string, string[]>;
   readonly resolveMentionSuggestions: ClientOptions<U>["resolveMentionSuggestions"];
   readonly usersStore: BatchStore<U["info"] | undefined, string>;
   readonly roomsInfoStore: BatchStore<DRI | undefined, string>;
   readonly getRoomIds: () => string[];
-  readonly getThreads: (options: GetThreadsOptions<M>) => Promise<{
+  readonly getUserThreads_experimental: (
+    options: GetUserThreadsOptions<M>
+  ) => Promise<{
     threads: ThreadData<M>[];
     inboxNotifications: InboxNotificationData[];
+    nextCursor: string | null;
     requestedAt: Date;
   }>;
-  readonly getThreadsSince: (
-    options: { since: Date } & GetThreadsOptions<M>
+  readonly getUserThreadsSince_experimental: (
+    options: GetUserThreadsSinceOptions
   ) => Promise<{
     inboxNotifications: {
       updated: InboxNotificationData[];
@@ -160,35 +168,58 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
     };
     requestedAt: Date;
   }>;
+
+  // Type-level helper
+  as<M2 extends BaseMetadata>(): Client<U, M2>;
 };
 
 export type NotificationsApi<M extends BaseMetadata> = {
   /**
-   * Gets the current user inbox notifications and their associated threads.
-   * It also returns the request date that can be used for subsequent polling.
+   * Gets a page (or the initial page) for user inbox notifications and their
+   * associated threads.
+   *
+   * This function should NOT be used for delta updates, only for pagination
+   * (including the first page fetch). For delta updates (done during the
+   * periodic polling), use the `getInboxNotificationsSince` function.
    *
    * @example
    * const {
    *   inboxNotifications,
    *   threads,
-   *   requestedAt
+   *   nextCursor,
    * } = await client.getInboxNotifications();
+   * const data = await client.getInboxNotifications();  // Fetch initial page (of 20 inbox notifications)
+   * const data = await client.getInboxNotifications({ cursor: nextCursor });  // Fetch next page (= next 20 inbox notifications)
    */
-  getInboxNotifications(): Promise<{
+  getInboxNotifications(options?: GetInboxNotificationsOptions): Promise<{
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<M>[];
+    nextCursor: string | null;
     requestedAt: Date;
   }>;
 
   /**
-   * Gets the updated and deleted inbox notifications and their associated threads since the requested date.
+   * Fetches a "delta update" since the last time we updated.
+   *
+   * This function should NOT be used for pagination, for that, see the
+   * `getInboxNotifications` function.
    *
    * @example
-   * const result = await client.getInboxNotifications();
-   * // ... //
-   * await client.getInboxNotificationsSince({ since: result.requestedAt }});
+   * const {
+   *   inboxNotifications: {
+   *     updated,
+   *     deleted,
+   *   },
+   *   threads: {
+   *     updated,
+   *     deleted,
+   *    },
+   *   requestedAt,
+   * } = await client.getInboxNotificationsSince({ since: result.requestedAt }});
    */
-  getInboxNotificationsSince(options: { since: Date }): Promise<{
+  getInboxNotificationsSince(
+    options: GetInboxNotificationsSinceOptions
+  ): Promise<{
     inboxNotifications: {
       updated: InboxNotificationData[];
       deleted: InboxNotificationDeleteInfo[];
@@ -259,10 +290,10 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
     P extends JsonObject = DP,
     S extends LsonObject = DS,
     E extends Json = DE,
-    M extends BaseMetadata = DM,
+    M2 extends BaseMetadata = M,
   >(
     roomId: string
-  ): Room<P, S, U, E, M> | null;
+  ): Room<P, S, U, E, M2> | null;
 
   /**
    * Enter a room.
@@ -274,7 +305,7 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
     P extends JsonObject = DP,
     S extends LsonObject = DS,
     E extends Json = DE,
-    M extends BaseMetadata = DM,
+    M2 extends BaseMetadata = M,
   >(
     roomId: string,
     ...args: OptionalTupleUnless<
@@ -282,7 +313,7 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
       [options: EnterOptions<NoInfr<P>, NoInfr<S>>]
     >
   ): {
-    room: Room<P, S, U, E, M>;
+    room: Room<P, S, U, E, M2>;
     leave: () => void;
   };
 
@@ -293,6 +324,46 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
    * Call this whenever you log out a user in your application.
    */
   logout(): void;
+
+  /**
+   * Advanced APIs related to the resolvers.
+   */
+  resolvers: {
+    /**
+     * Invalidate some or all users that were previously cached by `resolveUsers`.
+     *
+     * @example
+     * // Invalidate all users
+     * client.resolvers.invalidateUsers();
+     *
+     * @example
+     * // Invalidate specific users
+     * client.resolvers.invalidateUsers(["user-1", "user-2"]);
+     */
+    invalidateUsers(userIds?: string[]): void;
+
+    /**
+     * Invalidate some or all rooms info that were previously cached by `resolveRoomsInfo`.
+     *
+     * @example
+     * // Invalidate all rooms
+     * client.resolvers.invalidateRoomsInfo();
+     *
+     * @example
+     * // Invalidate specific rooms
+     * client.resolvers.invalidateRoomsInfo(["room-1", "room-2"]);
+     */
+    invalidateRoomsInfo(roomIds?: string[]): void;
+
+    /**
+     * Invalidate all mention suggestions cached by `resolveMentionSuggestions`.
+     *
+     * @example
+     * // Invalidate all mention suggestions
+     * client.resolvers.invalidateMentionSuggestions();
+     */
+    invalidateMentionSuggestions(): void;
+  };
 
   /**
    * @private
@@ -379,14 +450,6 @@ function getBaseUrl(baseUrl?: string | undefined): string {
     return baseUrl;
   } else {
     return DEFAULT_BASE_URL;
-  }
-}
-
-export function getAuthBearerHeaderFromAuthValue(authValue: AuthValue): string {
-  if (authValue.type === "public") {
-    return authValue.publicApiKey;
-  } else {
-    return authValue.token.raw;
   }
 }
 
@@ -588,19 +651,13 @@ export function createClient<U extends BaseUserMeta = DU>(
 
   const currentUserIdStore = createStore<string | null>(null);
 
-  const {
-    getInboxNotifications,
-    getInboxNotificationsSince,
-    getUnreadInboxNotificationsCount,
-    markAllInboxNotificationsAsRead,
-    markInboxNotificationAsRead,
-    deleteAllInboxNotifications,
-    deleteInboxNotification,
-    getThreads,
-    getThreadsSince,
-  } = createNotificationsApi({
+  const fetchPolyfill =
+    clientOptions.polyfills?.fetch ||
+    /* istanbul ignore next */ globalThis.fetch?.bind(globalThis);
+
+  const notificationsAPI = createNotificationsApi({
     baseUrl,
-    fetcher: clientOptions.polyfills?.fetch || /* istanbul ignore next */ fetch,
+    fetchPolyfill,
     authManager,
     currentUserIdStore,
   });
@@ -611,7 +668,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     "Set the resolveUsers option in createClient to specify user info."
   );
 
-  const usersStore = createBatchStore(
+  const batchedResolveUsers = new Batch(
     async (batchedUserIds: string[]) => {
       const userIds = batchedUserIds.flat();
       const users = await resolveUsers?.({ userIds });
@@ -622,6 +679,11 @@ export function createClient<U extends BaseUserMeta = DU>(
     },
     { delay: RESOLVE_USERS_BATCH_DELAY }
   );
+  const usersStore = createBatchStore(batchedResolveUsers);
+
+  function invalidateResolvedUsers(userIds?: string[]) {
+    usersStore.invalidate(userIds);
+  }
 
   const resolveRoomsInfo = clientOptions.resolveRoomsInfo;
   const warnIfNoResolveRoomsInfo = createDevelopmentWarning(
@@ -629,7 +691,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     "Set the resolveRoomsInfo option in createClient to specify room info."
   );
 
-  const roomsInfoStore = createBatchStore(
+  const batchedResolveRoomsInfo = new Batch(
     async (batchedRoomIds: string[]) => {
       const roomIds = batchedRoomIds.flat();
       const roomsInfo = await resolveRoomsInfo?.({ roomIds });
@@ -640,34 +702,53 @@ export function createClient<U extends BaseUserMeta = DU>(
     },
     { delay: RESOLVE_ROOMS_INFO_BATCH_DELAY }
   );
+  const roomsInfoStore = createBatchStore(batchedResolveRoomsInfo);
 
-  return Object.defineProperty(
+  function invalidateResolvedRoomsInfo(roomIds?: string[]) {
+    roomsInfoStore.invalidate(roomIds);
+  }
+
+  const mentionSuggestionsCache = new Map<string, string[]>();
+
+  function invalidateResolvedMentionSuggestions() {
+    mentionSuggestionsCache.clear();
+  }
+
+  const client: Client<U> = Object.defineProperty(
     {
       enterRoom,
       getRoom,
 
       logout,
 
-      getInboxNotifications,
-      getInboxNotificationsSince,
-      getUnreadInboxNotificationsCount,
-      markAllInboxNotificationsAsRead,
-      markInboxNotificationAsRead,
-      deleteAllInboxNotifications,
-      deleteInboxNotification,
-      getThreads,
+      ...notificationsAPI,
+
+      // Advanced resolvers APIs
+      resolvers: {
+        invalidateUsers: invalidateResolvedUsers,
+        invalidateRoomsInfo: invalidateResolvedRoomsInfo,
+        invalidateMentionSuggestions: invalidateResolvedMentionSuggestions,
+      },
 
       // Internal
       [kInternal]: {
         currentUserIdStore,
+        mentionSuggestionsCache,
         resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,
         usersStore,
         roomsInfoStore,
         getRoomIds() {
           return Array.from(roomsById.keys());
         },
-        getThreads,
-        getThreadsSince,
+
+        // "All" threads (= "user" threads)
+        getUserThreads_experimental:
+          notificationsAPI.getUserThreads_experimental,
+        getUserThreadsSince_experimental:
+          notificationsAPI.getUserThreadsSince_experimental,
+
+        // Type-level helper only, it's effectively only an identity-function at runtime
+        as: <M2 extends BaseMetadata>() => client as Client<U, M2>,
       },
     },
     kInternal,
@@ -675,16 +756,8 @@ export function createClient<U extends BaseUserMeta = DU>(
       enumerable: false,
     }
   );
-}
 
-export class NotificationsApiError extends Error {
-  constructor(
-    public message: string,
-    public status: number,
-    public details?: JsonObject
-  ) {
-    super(message);
-  }
+  return client;
 }
 
 function checkBounds(

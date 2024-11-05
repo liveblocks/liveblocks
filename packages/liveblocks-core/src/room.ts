@@ -1,8 +1,4 @@
 import type { AuthManager, AuthValue } from "./auth-manager";
-import {
-  getAuthBearerHeaderFromAuthValue,
-  NotificationsApiError,
-} from "./client";
 import type {
   Delegates,
   LiveblocksError,
@@ -32,11 +28,20 @@ import { LiveObject } from "./crdts/LiveObject";
 import type { LiveNode, LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
 import type { DE, DM, DP, DS, DU } from "./globals/augmentation";
+import { getBearerTokenFromAuthValue, HttpClient } from "./http-client";
 import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
-import { Batch } from "./lib/batch";
+import { autoRetry, HttpError } from "./lib/autoRetry";
+import type { BatchStore } from "./lib/batch";
+import { Batch, createBatchStore } from "./lib/batch";
+import { chunk } from "./lib/chunk";
 import { Promise_withResolvers } from "./lib/controlledPromise";
-import { createCommentId, createThreadId } from "./lib/createIds";
+import {
+  createCommentAttachmentId,
+  createCommentId,
+  createThreadId,
+} from "./lib/createIds";
+import type { DateToString } from "./lib/DateToString";
 import { captureStackTrace } from "./lib/debug";
 import type { Callback, EventSource, Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
@@ -45,12 +50,13 @@ import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
 import { objectToQuery } from "./lib/objectToQuery";
 import { asPos } from "./lib/position";
-import type { QueryParams } from "./lib/url";
-import { urljoin } from "./lib/url";
+import type { URLSafeString } from "./lib/url";
+import { url } from "./lib/url";
 import {
   compact,
   deepClone,
   memoizeOnSuccess,
+  raise,
   tryParseJson,
 } from "./lib/utils";
 import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
@@ -59,9 +65,11 @@ import type { ClientMsg, UpdateYDocClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
 import type {
   BaseMetadata,
+  CommentAttachment,
   CommentBody,
   CommentData,
   CommentDataPlain,
+  CommentLocalAttachment,
   CommentUserReaction,
   CommentUserReactionPlain,
   QueryMetadata,
@@ -90,6 +98,7 @@ import type {
   YDocUpdateServerMsg,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
+import type { HistoryVersion } from "./protocol/VersionHistory";
 import type { ImmutableRef } from "./refs/ImmutableRef";
 import { OthersRef } from "./refs/OthersRef";
 import { PatchableRef } from "./refs/PatchableRef";
@@ -102,7 +111,11 @@ import type {
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
 import type { NodeMap } from "./types/NodeMap";
-import type { InternalOthersEvent, OthersEvent } from "./types/Others";
+import type {
+  InternalOthersEvent,
+  OthersEvent,
+  TextEditorType,
+} from "./types/Others";
 import type { Patchable } from "./types/Patchable";
 import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 import type { User } from "./types/User";
@@ -464,10 +477,29 @@ type SubscribeFn<
 };
 
 export type GetThreadsOptions<M extends BaseMetadata> = {
+  cursor?: string;
   query?: {
     resolved?: boolean;
     metadata?: Partial<QueryMetadata<M>>;
   };
+};
+
+export type GetThreadsSinceOptions = {
+  since: Date;
+  signal?: AbortSignal;
+};
+
+export type UploadAttachmentOptions = {
+  signal?: AbortSignal;
+};
+
+type ListTextVersionsSinceOptions = {
+  since: Date;
+  signal?: AbortSignal;
+};
+
+type GetNotificationSettingsOptions = {
+  signal?: AbortSignal;
 };
 
 /**
@@ -742,6 +774,7 @@ export type Room<
     threads: ThreadData<M>[];
     inboxNotifications: InboxNotificationData[];
     requestedAt: Date;
+    nextCursor: string | null;
   }>;
 
   /**
@@ -752,7 +785,7 @@ export type Room<
    * // ... //
    * await room.getThreadsSince({ since: result.requestedAt });
    */
-  getThreadsSince(options: { since: Date }): Promise<{
+  getThreadsSince(options: GetThreadsSinceOptions): Promise<{
     threads: {
       updated: ThreadData<M>[];
       deleted: ThreadDeleteInfo[];
@@ -791,6 +824,7 @@ export type Room<
     commentId?: string;
     metadata: M | undefined;
     body: CommentBody;
+    attachmentIds?: string[];
   }): Promise<ThreadData<M>>;
 
   /**
@@ -845,6 +879,7 @@ export type Room<
     threadId: string;
     commentId?: string;
     body: CommentBody;
+    attachmentIds?: string[];
   }): Promise<CommentData>;
 
   /**
@@ -864,6 +899,7 @@ export type Room<
     threadId: string;
     commentId: string;
     body: CommentBody;
+    attachmentIds?: string[];
   }): Promise<CommentData>;
 
   /**
@@ -906,12 +942,42 @@ export type Room<
   }): Promise<void>;
 
   /**
+   * Creates a local attachment from a file.
+   *
+   * @example
+   * room.prepareAttachment(file);
+   */
+  prepareAttachment(file: File): CommentLocalAttachment;
+
+  /**
+   * Uploads a local attachment.
+   *
+   * @example
+   * const attachment = room.prepareAttachment(file);
+   * await room.uploadAttachment(attachment);
+   */
+  uploadAttachment(
+    attachment: CommentLocalAttachment,
+    options?: UploadAttachmentOptions
+  ): Promise<CommentAttachment>;
+
+  /**
+   * Returns a presigned URL for an attachment by its ID.
+   *
+   * @example
+   * await room.getAttachmentUrl("at_xxx");
+   */
+  getAttachmentUrl(attachmentId: string): Promise<string>;
+
+  /**
    * Gets the user's notification settings for the current room.
    *
    * @example
    * const settings = await room.getNotificationSettings();
    */
-  getNotificationSettings(): Promise<RoomNotificationSettings>;
+  getNotificationSettings(
+    options?: GetNotificationSettingsOptions
+  ): Promise<RoomNotificationSettings>;
 
   /**
    * Updates the user's notification settings for the current room.
@@ -961,19 +1027,29 @@ export type PrivateRoomApi = {
   getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
 
   // For reporting editor metadata
-  reportTextEditor(editor: "lexical", rootKey: string): void;
+  reportTextEditor(editor: TextEditorType, rootKey: string): Promise<void>;
 
-  createTextMention(userId: string, mentionId: string): Promise<Response>;
-  deleteTextMention(mentionId: string): Promise<Response>;
-  listTextVersions(): Promise<Response>;
+  createTextMention(userId: string, mentionId: string): Promise<void>;
+  deleteTextMention(mentionId: string): Promise<void>;
+  listTextVersions(): Promise<{
+    versions: HistoryVersion[];
+    requestedAt: Date;
+  }>;
+  listTextVersionsSince(options: ListTextVersionsSinceOptions): Promise<{
+    versions: HistoryVersion[];
+    requestedAt: Date;
+  }>;
+
   getTextVersion(versionId: string): Promise<Response>;
-  createTextVersion(): Promise<Response>;
+  createTextVersion(): Promise<void>;
 
   // NOTE: These are only used in our e2e test app!
   simulate: {
     explicitClose(event: IWebSocketCloseEvent): void;
     rawSend(data: string): void;
   };
+
+  attachmentUrlsStore: BatchStore<string, string>;
 };
 
 // The maximum message size on websockets is 1MB. We'll set the threshold
@@ -1206,17 +1282,32 @@ function installBackgroundTabSpy(): [
   return [inBackgroundSince, unsub];
 }
 
-export class CommentsApiError extends Error {
-  constructor(
-    public message: string,
-    public status: number,
-    public details?: JsonObject
-  ) {
-    super(message);
-  }
-}
+const GET_ATTACHMENT_URLS_BATCH_DELAY = 50;
+const ATTACHMENT_PART_SIZE = 5 * 1024 * 1024; // 5 MB
+const ATTACHMENT_PART_BATCH_SIZE = 5;
+const RETRY_ATTEMPTS = 10;
+const RETRY_DELAYS = [
+  2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000,
+];
 
-const MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY = 50;
+function splitFileIntoParts(file: File) {
+  const parts: { partNumber: number; part: Blob }[] = [];
+
+  let start = 0;
+
+  while (start < file.size) {
+    const end = Math.min(start + ATTACHMENT_PART_SIZE, file.size);
+
+    parts.push({
+      partNumber: parts.length + 1,
+      part: file.slice(start, end),
+    });
+
+    start = end;
+  }
+
+  return parts;
+}
 
 /**
  * @internal
@@ -1319,7 +1410,7 @@ export function createRoom<
   function onStatusDidChange(newStatus: Status) {
     const authValue = managedSocket.authValue;
     if (authValue !== null) {
-      const tokenKey = getAuthBearerHeaderFromAuthValue(authValue);
+      const tokenKey = getBearerTokenFromAuthValue(authValue);
 
       if (tokenKey !== lastTokenKey) {
         lastTokenKey = tokenKey;
@@ -1516,129 +1607,99 @@ export function createRoom<
     comments: makeEventSource<CommentsEventServerMsg>(),
   };
 
-  async function fetchClientApi(
-    roomId: string,
-    endpoint: string,
-    authValue: AuthValue,
-    options?: RequestInit,
-    params?: QueryParams
-  ) {
-    const url = urljoin(
-      config.baseUrl,
-      `/v2/c/rooms/${encodeURIComponent(roomId)}${endpoint}`,
-      params
-    );
-    const fetcher = config.polyfills?.fetch || /* istanbul ignore next */ fetch;
-    return await fetcher(url, {
-      ...options,
-      headers: {
-        ...options?.headers,
-        Authorization: `Bearer ${getAuthBearerHeaderFromAuthValue(authValue)}`,
-      },
-    });
-  }
+  const fetchPolyfill =
+    config.polyfills?.fetch ||
+    /* istanbul ignore next */ globalThis.fetch?.bind(globalThis);
 
-  async function streamFetch(authValue: AuthValue, roomId: string) {
-    return fetchClientApi(roomId, "/storage", authValue, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-  }
-
-  async function httpPostToRoom(
-    endpoint: "/send-message" | "/text-metadata",
-    body: JsonObject
-  ) {
-    if (!managedSocket.authValue) {
-      throw new Error("Not authorized");
-    }
-
-    return fetchClientApi(config.roomId, endpoint, managedSocket.authValue, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
-  }
+  //
+  // There are effectively two "clients" making requests.
+  //
+  // When making calls with HTTP client 1, it will try to read the current
+  // token from the active WebSocket connection to the room.
+  //
+  // When making calls with HTTP client 2, it will always call
+  // `delegates.authenticate()` to obtain the auth header.
+  //
+  // TODO: Ideally we would consolidate these two.
+  //
+  const httpClient1 = new HttpClient(config.baseUrl, fetchPolyfill, () =>
+    Promise.resolve(managedSocket.authValue ?? raise("Not authorized"))
+  );
+  const httpClient2 = new HttpClient(config.baseUrl, fetchPolyfill, () =>
+    // TODO: Use the right scope
+    delegates.authenticate()
+  );
 
   async function createTextMention(userId: string, mentionId: string) {
-    if (!managedSocket.authValue) {
-      throw new Error("Not authorized");
-    }
-
-    return fetchClientApi(
-      config.roomId,
-      "/text-mentions",
-      managedSocket.authValue,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId,
-          mentionId,
-        }),
-      }
-    );
+    await httpClient1.rawPost(url`/v2/c/rooms/${config.roomId}/text-mentions`, {
+      userId,
+      mentionId,
+    });
   }
 
   async function deleteTextMention(mentionId: string) {
-    if (!managedSocket.authValue) {
-      throw new Error("Not authorized");
-    }
-
-    return fetchClientApi(
-      config.roomId,
-      `/text-mentions/${mentionId}`,
-      managedSocket.authValue,
-      {
-        method: "DELETE",
-      }
+    await httpClient1.rawDelete(
+      url`/v2/c/rooms/${config.roomId}/text-mentions/${mentionId}`
     );
   }
 
-  async function reportTextEditor(type: "lexical", rootKey: string) {
-    const authValue = await delegates.authenticate();
-    return fetchClientApi(config.roomId, "/text-metadata", authValue, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        type,
-        rootKey,
-      }),
+  async function reportTextEditor(type: TextEditorType, rootKey: string) {
+    await httpClient2.rawPost(url`/v2/c/rooms/${config.roomId}/text-metadata`, {
+      type,
+      rootKey,
     });
   }
 
   async function listTextVersions() {
-    const authValue = await delegates.authenticate();
-    return fetchClientApi(config.roomId, "/versions/", authValue, {
-      method: "GET",
-    });
+    const result = await httpClient2.get<{
+      versions: DateToString<HistoryVersion>[];
+      meta: {
+        requestedAt: string;
+      };
+    }>(url`/v2/c/rooms/${config.roomId}/versions`);
+
+    return {
+      versions: result.versions.map(({ createdAt, ...version }) => {
+        return {
+          createdAt: new Date(createdAt),
+          ...version,
+        };
+      }),
+      requestedAt: new Date(result.meta.requestedAt),
+    };
+  }
+
+  async function listTextVersionsSince(options: ListTextVersionsSinceOptions) {
+    const result = await httpClient2.get<{
+      versions: DateToString<HistoryVersion>[];
+      meta: {
+        requestedAt: string;
+      };
+    }>(
+      url`/v2/c/rooms/${config.roomId}/versions/delta`,
+      { since: options.since.toISOString() },
+      { signal: options.signal }
+    );
+
+    return {
+      versions: result.versions.map(({ createdAt, ...version }) => {
+        return {
+          createdAt: new Date(createdAt),
+          ...version,
+        };
+      }),
+      requestedAt: new Date(result.meta.requestedAt),
+    };
   }
 
   async function getTextVersion(versionId: string) {
-    const authValue = await delegates.authenticate();
-    return fetchClientApi(
-      config.roomId,
-      `/y-version/${encodeURIComponent(versionId)}`,
-      authValue,
-      {
-        method: "GET",
-      }
+    return httpClient2.rawGet(
+      url`/v2/c/rooms/${config.roomId}/y-version/${versionId}`
     );
   }
 
   async function createTextVersion() {
-    const authValue = await delegates.authenticate();
-    return fetchClientApi(config.roomId, "/version", authValue, {
-      method: "POST",
-    });
+    await httpClient2.rawPost(url`/v2/c/rooms/${config.roomId}/version`);
   }
 
   function sendMessages(messages: ClientMsg<P, E>[]) {
@@ -1649,13 +1710,16 @@ export function createRoom<
       // if this turns out to be expensive, we could just guess with a lower value.
       const size = new TextEncoder().encode(serializedPayload).length;
       if (size > MAX_SOCKET_MESSAGE_SIZE) {
-        void httpPostToRoom("/send-message", { nonce, messages }).then(
-          (resp) => {
+        void httpClient1
+          .rawPost(url`/v2/c/rooms/${config.roomId}/send-message`, {
+            nonce,
+            messages,
+          })
+          .then((resp) => {
             if (!resp.ok && resp.status === 403) {
               managedSocket.reconnect();
             }
-          }
-        );
+          });
         console.warn(
           "Message was too large for websockets and sent over HTTP instead"
         );
@@ -2473,11 +2537,11 @@ export function createRoom<
   }
 
   async function streamStorage() {
-    if (!managedSocket.authValue) {
-      return;
-    }
     // TODO: Handle potential race conditions where the room get disconnected while the request is pending
-    const result = await streamFetch(managedSocket.authValue, config.roomId);
+    if (!managedSocket.authValue) return;
+    const result = await httpClient1.rawGet(
+      url`/v2/c/rooms/${config.roomId}/storage`
+    );
     const items = (await result.json()) as IdTuple<SerializedCrdt>[];
     processInitialStorage({ type: ServerMsgCode.INITIAL_STORAGE_STATE, items });
   }
@@ -2771,107 +2835,34 @@ export function createRoom<
     comments: eventHub.comments.observable,
   };
 
-  async function fetchCommentsApi(
-    endpoint: string,
-    params?: QueryParams,
-    options?: RequestInit
-  ): Promise<Response> {
-    // TODO: Use the right scope
-    const authValue = await delegates.authenticate();
-
-    return fetchClientApi(config.roomId, endpoint, authValue, options, params);
-  }
-
-  async function fetchCommentsJson<T>(
-    endpoint: string,
-    options?: RequestInit,
-    params?: QueryParams
-  ): Promise<T> {
-    const response = await fetchCommentsApi(endpoint, params, options);
-
-    if (!response.ok) {
-      if (response.status >= 400 && response.status < 600) {
-        let error: CommentsApiError;
-
-        try {
-          const errorBody = (await response.json()) as { message: string };
-
-          error = new CommentsApiError(
-            errorBody.message,
-            response.status,
-            errorBody
-          );
-        } catch {
-          error = new CommentsApiError(response.statusText, response.status);
-        }
-
-        throw error;
-      }
-    }
-
-    let body;
-
-    try {
-      body = (await response.json()) as T;
-    } catch {
-      body = {} as T;
-    }
-
-    return body;
-  }
-
-  async function getThreadsSince(options: { since: Date }) {
-    const response = await fetchCommentsApi(
-      "/threads",
-      {
-        since: options?.since?.toISOString(),
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
+  async function getThreadsSince(options: GetThreadsSinceOptions) {
+    const result = await httpClient2.get<{
+      data: ThreadDataPlain<M>[];
+      inboxNotifications: InboxNotificationDataPlain[];
+      deletedThreads: ThreadDeleteInfoPlain[];
+      deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+      meta: {
+        requestedAt: string;
+      };
+    }>(
+      url`/v2/c/rooms/${config.roomId}/threads/delta`,
+      { since: options?.since?.toISOString() },
+      { signal: options.signal }
     );
 
-    if (response.ok) {
-      const json = await (response.json() as Promise<{
-        data: ThreadDataPlain<M>[];
-        inboxNotifications: InboxNotificationDataPlain[];
-        deletedThreads: ThreadDeleteInfoPlain[];
-        deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
-        meta: {
-          requestedAt: string;
-        };
-      }>);
-
-      return {
-        threads: {
-          updated: json.data.map(convertToThreadData),
-          deleted: json.deletedThreads.map(convertToThreadDeleteInfo),
-        },
-        inboxNotifications: {
-          updated: json.inboxNotifications.map(convertToInboxNotificationData),
-          deleted: json.deletedInboxNotifications.map(
-            convertToInboxNotificationDeleteInfo
-          ),
-        },
-        requestedAt: new Date(json.meta.requestedAt),
-      };
-    } else if (response.status === 404) {
-      return {
-        threads: {
-          updated: [],
-          deleted: [],
-        },
-        inboxNotifications: {
-          updated: [],
-          deleted: [],
-        },
-        requestedAt: new Date(),
-      };
-    } else {
-      throw new Error("There was an error while getting threads.");
-    }
+    return {
+      threads: {
+        updated: result.data.map(convertToThreadData),
+        deleted: result.deletedThreads.map(convertToThreadDeleteInfo),
+      },
+      inboxNotifications: {
+        updated: result.inboxNotifications.map(convertToInboxNotificationData),
+        deleted: result.deletedInboxNotifications.map(
+          convertToInboxNotificationDeleteInfo
+        ),
+      },
+      requestedAt: new Date(result.meta.requestedAt),
+    };
   }
 
   async function getThreads(options?: GetThreadsOptions<M>) {
@@ -2881,52 +2872,36 @@ export function createRoom<
       query = objectToQuery(options.query);
     }
 
-    const response = await fetchCommentsApi(
-      "/threads",
-      {
-        query,
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    const PAGE_SIZE = 50;
 
-    if (response.ok) {
-      const json = await (response.json() as Promise<{
-        data: ThreadDataPlain<M>[];
-        inboxNotifications: InboxNotificationDataPlain[];
-        deletedThreads: ThreadDeleteInfoPlain[];
-        deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
-        meta: {
-          requestedAt: string;
-        };
-      }>);
+    const result = await httpClient2.get<{
+      data: ThreadDataPlain<M>[];
+      inboxNotifications: InboxNotificationDataPlain[];
+      deletedThreads: ThreadDeleteInfoPlain[];
+      deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+      meta: {
+        requestedAt: string;
+        nextCursor: string | null;
+      };
+    }>(url`/v2/c/rooms/${config.roomId}/threads`, {
+      cursor: options?.cursor,
+      query,
+      limit: PAGE_SIZE,
+    });
 
-      return {
-        threads: json.data.map(convertToThreadData),
-        inboxNotifications: json.inboxNotifications.map(
-          convertToInboxNotificationData
-        ),
-        requestedAt: new Date(json.meta.requestedAt),
-      };
-    } else if (response.status === 404) {
-      return {
-        threads: [],
-        inboxNotifications: [],
-        deletedThreads: [],
-        deletedInboxNotifications: [],
-        requestedAt: new Date(),
-      };
-    } else {
-      throw new Error("There was an error while getting threads.");
-    }
+    return {
+      threads: result.data.map(convertToThreadData),
+      inboxNotifications: result.inboxNotifications.map(
+        convertToInboxNotificationData
+      ),
+      nextCursor: result.meta.nextCursor,
+      requestedAt: new Date(result.meta.requestedAt),
+    };
   }
 
   async function getThread(threadId: string) {
-    const response = await fetchCommentsApi(
-      `/thread-with-notification/${threadId}`
+    const response = await httpClient2.rawGet(
+      url`/v2/c/rooms/${config.roomId}/thread-with-notification/${threadId}`
     );
 
     if (response.ok) {
@@ -2956,35 +2931,35 @@ export function createRoom<
     body,
     commentId = createCommentId(),
     threadId = createThreadId(),
+    attachmentIds,
   }: {
     roomId: string;
     threadId?: string;
     commentId?: string;
     metadata: M | undefined;
     body: CommentBody;
+    attachmentIds?: string[];
   }) {
-    const thread = await fetchCommentsJson<ThreadDataPlain<M>>("/threads", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    const thread = await httpClient2.post<ThreadDataPlain<M>>(
+      url`/v2/c/rooms/${config.roomId}/threads`,
+      {
         id: threadId,
         comment: {
           id: commentId,
           body,
+          attachmentIds,
         },
         metadata,
-      }),
-    });
+      }
+    );
 
     return convertToThreadData(thread);
   }
 
   async function deleteThread(threadId: string) {
-    await fetchCommentsJson(`/threads/${encodeURIComponent(threadId)}`, {
-      method: "DELETE",
-    });
+    await httpClient2.delete(
+      url`/v2/c/rooms/${config.roomId}/threads/${threadId}`
+    );
   }
 
   async function editThreadMetadata({
@@ -2995,33 +2970,21 @@ export function createRoom<
     metadata: Patchable<M>;
     threadId: string;
   }) {
-    return await fetchCommentsJson<M>(
-      `/threads/${encodeURIComponent(threadId)}/metadata`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(metadata),
-      }
+    return await httpClient2.post<M>(
+      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/metadata`,
+      metadata
     );
   }
 
   async function markThreadAsResolved(threadId: string) {
-    await fetchCommentsJson(
-      `/threads/${encodeURIComponent(threadId)}/mark-as-resolved`,
-      {
-        method: "POST",
-      }
+    await httpClient2.post(
+      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/mark-as-resolved`
     );
   }
 
   async function markThreadAsUnresolved(threadId: string) {
-    await fetchCommentsJson(
-      `/threads/${encodeURIComponent(threadId)}/mark-as-unresolved`,
-      {
-        method: "POST",
-      }
+    await httpClient2.post(
+      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/mark-as-unresolved`
     );
   }
 
@@ -3029,22 +2992,19 @@ export function createRoom<
     threadId,
     commentId = createCommentId(),
     body,
+    attachmentIds,
   }: {
     threadId: string;
     commentId?: string;
     body: CommentBody;
+    attachmentIds?: string[];
   }) {
-    const comment = await fetchCommentsJson<CommentDataPlain>(
-      `/threads/${encodeURIComponent(threadId)}/comments`,
+    const comment = await httpClient2.post<CommentDataPlain>(
+      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments`,
       {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id: commentId,
-          body,
-        }),
+        id: commentId,
+        body,
+        attachmentIds,
       }
     );
 
@@ -3055,23 +3015,18 @@ export function createRoom<
     threadId,
     commentId,
     body,
+    attachmentIds,
   }: {
     threadId: string;
     commentId: string;
     body: CommentBody;
+    attachmentIds?: string[];
   }) {
-    const comment = await fetchCommentsJson<CommentDataPlain>(
-      `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
-        commentId
-      )}`,
+    const comment = await httpClient2.post<CommentDataPlain>(
+      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}`,
       {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          body,
-        }),
+        body,
+        attachmentIds,
       }
     );
 
@@ -3086,13 +3041,8 @@ export function createRoom<
     threadId: string;
     commentId: string;
   }) {
-    await fetchCommentsJson(
-      `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
-        commentId
-      )}`,
-      {
-        method: "DELETE",
-      }
+    await httpClient2.delete(
+      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}`
     );
   }
 
@@ -3105,17 +3055,9 @@ export function createRoom<
     commentId: string;
     emoji: string;
   }) {
-    const reaction = await fetchCommentsJson<CommentUserReactionPlain>(
-      `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
-        commentId
-      )}/reactions`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ emoji }),
-      }
+    const reaction = await httpClient2.post<CommentUserReactionPlain>(
+      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}/reactions`,
+      { emoji }
     );
 
     return convertToCommentUserReaction(reaction);
@@ -3130,65 +3072,212 @@ export function createRoom<
     commentId: string;
     emoji: string;
   }) {
-    await fetchCommentsJson<CommentData>(
-      `/threads/${encodeURIComponent(threadId)}/comments/${encodeURIComponent(
-        commentId
-      )}/reactions/${encodeURIComponent(emoji)}`,
-      {
-        method: "DELETE",
-      }
+    await httpClient2.delete<CommentDataPlain>(
+      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}/reactions/${emoji}`
     );
   }
 
-  async function fetchNotificationsJson<T>(
-    endpoint: string,
-    options?: RequestInit
-  ): Promise<T> {
-    const authValue = await delegates.authenticate();
-    const response = await fetchClientApi(
-      config.roomId,
-      endpoint,
-      authValue,
-      options
-    );
+  function prepareAttachment(file: File): CommentLocalAttachment {
+    return {
+      type: "localAttachment",
+      status: "idle",
+      id: createCommentAttachmentId(),
+      name: file.name,
+      size: file.size,
+      mimeType: file.type,
+      file,
+    };
+  }
 
-    if (!response.ok) {
-      if (response.status >= 400 && response.status < 600) {
-        let error: NotificationsApiError;
+  async function uploadAttachment(
+    attachment: CommentLocalAttachment,
+    options: UploadAttachmentOptions = {}
+  ): Promise<CommentAttachment> {
+    const abortSignal = options.signal;
+    const abortError = abortSignal
+      ? new DOMException(
+          `Upload of attachment ${attachment.id} was aborted.`,
+          "AbortError"
+        )
+      : undefined;
 
-        try {
-          const errorBody = (await response.json()) as { message: string };
+    if (abortSignal?.aborted) {
+      throw abortError;
+    }
 
-          error = new NotificationsApiError(
-            errorBody.message,
-            response.status,
-            errorBody
-          );
-        } catch {
-          error = new NotificationsApiError(
-            response.statusText,
-            response.status
-          );
+    const handleRetryError = (err: Error) => {
+      if (abortSignal?.aborted) {
+        throw abortError;
+      }
+
+      if (err instanceof HttpError && err.status === 413) {
+        throw err;
+      }
+
+      return false;
+    };
+
+    if (attachment.size <= ATTACHMENT_PART_SIZE) {
+      // If the file is small enough, upload it in a single request
+      return autoRetry(
+        () =>
+          httpClient2.putBlob<CommentAttachment>(
+            url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/upload/${encodeURIComponent(attachment.name)}`,
+            attachment.file,
+            { fileSize: attachment.size },
+            { signal: abortSignal }
+          ),
+        RETRY_ATTEMPTS,
+        RETRY_DELAYS,
+        handleRetryError
+      );
+    } else {
+      // Otherwise, upload it in multiple parts
+      let uploadId: string | undefined;
+      const uploadedParts: {
+        etag: string;
+        partNumber: number;
+      }[] = [];
+
+      // Create a multi-part upload
+      const createMultiPartUpload = await autoRetry(
+        () =>
+          httpClient2.post<{
+            uploadId: string;
+            key: string;
+          }>(
+            url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/multipart/${encodeURIComponent(attachment.name)}`,
+            undefined,
+            { signal: abortSignal },
+            { fileSize: attachment.size }
+          ),
+        RETRY_ATTEMPTS,
+        RETRY_DELAYS,
+        handleRetryError
+      );
+
+      try {
+        uploadId = createMultiPartUpload.uploadId;
+
+        const parts = splitFileIntoParts(attachment.file);
+
+        // Check if the upload was aborted
+        if (abortSignal?.aborted) {
+          throw abortError;
+        }
+
+        const batches = chunk(parts, ATTACHMENT_PART_BATCH_SIZE);
+
+        // Batches are uploaded one after the other
+        for (const parts of batches) {
+          const uploadedPartsPromises: Promise<{
+            partNumber: number;
+            etag: string;
+          }>[] = [];
+
+          for (const { part, partNumber } of parts) {
+            uploadedPartsPromises.push(
+              autoRetry(
+                () =>
+                  httpClient2.putBlob<{
+                    partNumber: number;
+                    etag: string;
+                  }>(
+                    url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/multipart/${createMultiPartUpload.uploadId}/${String(partNumber)}`,
+                    part,
+                    undefined,
+                    { signal: abortSignal }
+                  ),
+                RETRY_ATTEMPTS,
+                RETRY_DELAYS,
+                handleRetryError
+              )
+            );
+          }
+
+          // Parts are uploaded in parallel
+          uploadedParts.push(...(await Promise.all(uploadedPartsPromises)));
+        }
+
+        // Check if the upload was aborted
+        if (abortSignal?.aborted) {
+          throw abortError;
+        }
+
+        const sortedUploadedParts = uploadedParts.sort(
+          (a, b) => a.partNumber - b.partNumber
+        );
+
+        return httpClient2.post<CommentAttachment>(
+          url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/multipart/${uploadId}/complete`,
+          { parts: sortedUploadedParts },
+          { signal: abortSignal }
+        );
+      } catch (error) {
+        if (
+          uploadId &&
+          (error as Error)?.name &&
+          ((error as Error).name === "AbortError" ||
+            (error as Error).name === "TimeoutError")
+        ) {
+          try {
+            // Abort the multi-part upload if it was created
+            await httpClient2.rawDelete(
+              url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/multipart/${uploadId}`
+            );
+          } catch (error) {
+            // Ignore the error, we are probably offline
+          }
         }
 
         throw error;
       }
     }
-
-    let body;
-
-    try {
-      body = (await response.json()) as T;
-    } catch {
-      body = {} as T;
-    }
-
-    return body;
   }
 
-  function getNotificationSettings(): Promise<RoomNotificationSettings> {
+  async function getAttachmentUrls(attachmentIds: string[]) {
+    const { urls } = await httpClient2.post<{
+      urls: (string | null)[];
+    }>(url`/v2/c/rooms/${config.roomId}/attachments/presigned-urls`, {
+      attachmentIds,
+    });
+
+    return urls;
+  }
+
+  const batchedGetAttachmentUrls = new Batch<string, string>(
+    async (batchedAttachmentIds) => {
+      const attachmentIds = batchedAttachmentIds.flat();
+
+      const attachmentUrls = await getAttachmentUrls(attachmentIds);
+
+      return attachmentUrls.map(
+        (url) =>
+          url ??
+          new Error("There was an error while getting this attachment's URL")
+      );
+    },
+    { delay: GET_ATTACHMENT_URLS_BATCH_DELAY }
+  );
+  const attachmentUrlsStore = createBatchStore(batchedGetAttachmentUrls);
+
+  function getAttachmentUrl(attachmentId: string) {
+    return batchedGetAttachmentUrls.get(attachmentId);
+  }
+
+  async function fetchNotificationsJson<T extends JsonObject>(
+    endpoint: URLSafeString,
+    options?: RequestInit
+  ): Promise<T> {
+    return await httpClient2.get<T>(endpoint, undefined, options);
+  }
+
+  function getNotificationSettings(
+    options?: GetNotificationSettingsOptions
+  ): Promise<RoomNotificationSettings> {
     return fetchNotificationsJson<RoomNotificationSettings>(
-      "/notification-settings"
+      url`/v2/c/rooms/${config.roomId}/notification-settings`,
+      { signal: options?.signal }
     );
   }
 
@@ -3196,31 +3285,28 @@ export function createRoom<
     settings: Partial<RoomNotificationSettings>
   ): Promise<RoomNotificationSettings> {
     return fetchNotificationsJson<RoomNotificationSettings>(
-      "/notification-settings",
+      url`/v2/c/rooms/${config.roomId}/notification-settings`,
       {
         method: "POST",
         body: JSON.stringify(settings),
-        headers: {
-          "Content-Type": "application/json",
-        },
       }
     );
   }
 
   // This method (and the following batch handling) isn't the same as the one in
-  // src/notifications.ts, this one is room-based: /v2/c/rooms/:roomId/inbox-notifications/read.
+  // src/notifications.ts, this one is room-based: /v2/c/rooms/<roomId>/inbox-notifications/read.
   //
   // The reason for this is that unlike the room-based Comments ones, the Notifications endpoints
   // don't work with a public key. Since `markThreadAsRead` needs to mark the related inbox notifications
   // as read, this room-based method is necessary to keep all Comments features working with a public key.
   async function markInboxNotificationsAsRead(inboxNotificationIds: string[]) {
-    await fetchNotificationsJson("/inbox-notifications/read", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ inboxNotificationIds }),
-    });
+    await fetchNotificationsJson(
+      url`/v2/c/rooms/${config.roomId}/inbox-notifications/read`,
+      {
+        method: "POST",
+        body: JSON.stringify({ inboxNotificationIds }),
+      }
+    );
   }
 
   const batchedMarkInboxNotificationsAsRead = new Batch<string, string>(
@@ -3231,7 +3317,7 @@ export function createRoom<
 
       return inboxNotificationIds;
     },
-    { delay: MARK_INBOX_NOTIFICATIONS_AS_READ_BATCH_DELAY }
+    { delay: 50 }
   );
 
   async function markInboxNotificationAsRead(inboxNotificationId: string) {
@@ -3264,6 +3350,8 @@ export function createRoom<
         deleteTextMention,
         // list versions of the document
         listTextVersions,
+        // List versions of the document since the specified date
+        listTextVersionsSince,
         // get a specific version
         getTextVersion,
         // create a version
@@ -3280,6 +3368,8 @@ export function createRoom<
           explicitClose: (event) => managedSocket._privateSendMachineEvent({ type: "EXPLICIT_SOCKET_CLOSE", event }),
           rawSend: (data) => managedSocket.send(data),
         },
+
+        attachmentUrlsStore,
       },
 
       id: config.roomId,
@@ -3344,6 +3434,9 @@ export function createRoom<
       deleteComment,
       addReaction,
       removeReaction,
+      prepareAttachment,
+      uploadAttachment,
+      getAttachmentUrl,
 
       // Notifications
       getNotificationSettings,

@@ -28,7 +28,7 @@ import {
           return <InboxNotification.TextMention {...props} />;
         },
         $myErrorNotification: (props) => {
-          expectType<ActivityData>(props.inboxNotification.activities[0].data);
+          expectType<ActivityData>(props.inboxNotification.activities[0]!.data);
           expectError(props.inboxNotification.threadId);
           expectError(props.inboxNotification.mentionId);
 
@@ -58,7 +58,7 @@ import {
       inboxNotification,
       ...props
     }: InboxNotificationCustomKindProps) {
-      expectType<ActivityData>(inboxNotification.activities[0].data);
+      expectType<ActivityData>(inboxNotification.activities[0]!.data);
 
       return (
         <InboxNotification.Custom
@@ -75,7 +75,7 @@ import {
       inboxNotification,
       ...props
     }: InboxNotificationCustomKindProps<"$myErrorNotification">) {
-      expectType<ActivityData>(inboxNotification.activities[0].data);
+      expectType<ActivityData>(inboxNotification.activities[0]!.data);
 
       return (
         <InboxNotification.Custom

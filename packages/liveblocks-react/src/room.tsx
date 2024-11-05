@@ -5,7 +5,6 @@ import type {
   Client,
   CommentData,
   History,
-  HistoryVersion,
   Json,
   JsonObject,
   LiveObject,
@@ -21,6 +20,7 @@ import type {
 } from "@liveblocks/client";
 import { shallow } from "@liveblocks/client";
 import type {
+  AsyncResult,
   CommentsEventServerMsg,
   DE,
   DM,
@@ -31,29 +31,30 @@ import type {
   LiveblocksError,
   OpaqueClient,
   OpaqueRoom,
+  Poller,
   RoomEventMessage,
   ToImmutable,
 } from "@liveblocks/core";
 import {
-  CommentsApiError,
+  assert,
   console,
   createCommentId,
   createThreadId,
   deprecateIf,
   errorIf,
+  HttpError,
   kInternal,
   makeEventSource,
   makePoller,
-  NotificationsApiError,
   ServerMsgCode,
-  stringify,
 } from "@liveblocks/core";
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
+import { config } from "./config";
 import { RoomContext, useIsInsideRoom, useRoomOrNull } from "./contexts";
 import { isString } from "./lib/guards";
-import { retryError } from "./lib/retry-error";
+import { shallow2 } from "./lib/shallow2";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
@@ -61,29 +62,29 @@ import {
   createSharedContext,
   getUmbrellaStoreForClient,
   LiveblocksProviderWithClient,
-  selectThreads,
   useClient,
   useClientOrNull,
 } from "./liveblocks";
 import type {
+  AttachmentUrlAsyncResult,
   CommentReactionOptions,
   CreateCommentOptions,
   CreateThreadOptions,
   DeleteCommentOptions,
   EditCommentOptions,
   EditThreadMetadataOptions,
-  HistoryVersionDataState,
-  HistoryVersionsState,
-  HistoryVersionsStateResolved,
+  HistoryVersionDataAsyncResult,
+  HistoryVersionsAsyncResult,
+  HistoryVersionsAsyncSuccess,
   MutationContext,
   OmitFirstArg,
   RoomContextBundle,
-  RoomNotificationSettingsState,
-  RoomNotificationSettingsStateSuccess,
+  RoomNotificationSettingsAsyncResult,
+  RoomNotificationSettingsAsyncSuccess,
   RoomProviderProps,
   StorageStatusSuccess,
-  ThreadsState,
-  ThreadsStateSuccess,
+  ThreadsAsyncResult,
+  ThreadsAsyncSuccess,
   ThreadSubscription,
   UseStorageStatusOptions,
   UseThreadsOptions,
@@ -104,10 +105,6 @@ import {
   UpdateNotificationSettingsError,
 } from "./types/errors";
 import type { UmbrellaStore, UmbrellaStoreState } from "./umbrella-store";
-import {
-  makeNotificationSettingsQueryKey,
-  makeVersionsQueryKey,
-} from "./umbrella-store";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
 
 const SMOOTH_DELAY = 1000;
@@ -143,8 +140,6 @@ function useSyncExternalStore<Snapshot>(
 }
 
 const STABLE_EMPTY_LIST = Object.freeze([]);
-
-export const POLLING_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
 // Don't try to inline this. This function is intended to be a stable
 // reference, to avoid a React.useCallback() wrapper.
@@ -213,7 +208,7 @@ function getCurrentUserId(room: OpaqueRoom): string {
   }
 }
 
-function handleApiError(err: CommentsApiError | NotificationsApiError): Error {
+function handleApiError(err: HttpError): Error {
   const message = `Request failed with status ${err.status}: ${err.message}`;
 
   // Log details about FORBIDDEN errors
@@ -230,7 +225,7 @@ function handleApiError(err: CommentsApiError | NotificationsApiError): Error {
 
 const _extras = new WeakMap<
   OpaqueClient,
-  ReturnType<typeof makeExtrasForClient>
+  ReturnType<typeof makeRoomExtrasForClient>
 >();
 const _bundles = new WeakMap<
   OpaqueClient,
@@ -255,10 +250,10 @@ function getOrCreateRoomContextBundle<
 // TODO: Likely a better / more clear name for this helper will arise. I'll
 // rename this later. All of these are implementation details to support inbox
 // notifications on a per-client basis.
-function getExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
+function getRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   let extras = _extras.get(client);
   if (!extras) {
-    extras = makeExtrasForClient(client);
+    extras = makeRoomExtrasForClient(client);
     _extras.set(client, extras);
   }
 
@@ -267,240 +262,10 @@ function getExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   };
 }
 
-function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
+function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   const store = getUmbrellaStoreForClient(client);
 
-  const DEFAULT_DEDUPING_INTERVAL = 2000; // 2 seconds
-
-  const lastRequestedAtByRoom = new Map<string, Date>(); // A map of room ids to the timestamp when the last request for threads updates was made
-  const requestsByQuery = new Map<string, Promise<unknown>>(); // A map of query keys to the promise of the request for that query
-  const requestStatusByRoom = new Map<string, boolean>(); // A map of room ids to a boolean indicating whether a request to retrieve threads updates is in progress
-  const subscribersByQuery = new Map<string, number>(); // A map of query keys to the number of subscribers for that query
-
-  const poller = makePoller(refreshThreadsAndNotifications);
-
-  async function refreshThreadsAndNotifications() {
-    const requests: Promise<unknown>[] = [];
-
-    client[kInternal].getRoomIds().map((roomId) => {
-      const room = client.getRoom(roomId);
-      if (room === null) return;
-
-      // Retrieve threads that have been updated/deleted since the last requestedAt value
-      requests.push(getThreadsUpdates(room.id));
-    });
-
-    await Promise.allSettled(requests);
-  }
-
-  function incrementQuerySubscribers(queryKey: string) {
-    const subscribers = subscribersByQuery.get(queryKey) ?? 0;
-    subscribersByQuery.set(queryKey, subscribers + 1);
-
-    poller.start(POLLING_INTERVAL);
-
-    // Decrement in the unsub function
-    return () => {
-      const subscribers = subscribersByQuery.get(queryKey);
-
-      if (subscribers === undefined || subscribers <= 0) {
-        console.warn(
-          `Internal unexpected behavior. Cannot decrease subscriber count for query "${queryKey}"`
-        );
-        return;
-      }
-
-      subscribersByQuery.set(queryKey, subscribers - 1);
-
-      let totalSubscribers = 0;
-      for (const subscribers of subscribersByQuery.values()) {
-        totalSubscribers += subscribers;
-      }
-
-      if (totalSubscribers <= 0) {
-        poller.stop();
-      }
-    };
-  }
-
-  /**
-   * Retrieve threads that have been updated/deleted since the last time the room requested threads updates and update the local cache with the new data
-   * @param roomId The id of the room for which to retrieve threads updates
-   */
-  async function getThreadsUpdates(roomId: string) {
-    const room = client.getRoom(roomId) as Room<
-      never,
-      never,
-      never,
-      never,
-      M
-    > | null; // TODO: Figure out how to remove this casting
-    if (room === null) return;
-
-    const since = lastRequestedAtByRoom.get(room.id);
-    if (since === undefined) return;
-
-    const isFetchingThreadsUpdates = requestStatusByRoom.get(room.id) ?? false;
-    // If another request to retrieve threads updates for the room is in progress, we do not start a new one
-    if (isFetchingThreadsUpdates === true) return;
-
-    try {
-      // Set the isFetchingThreadsUpdates flag to true to prevent multiple requests to fetch threads updates for the room from being made at the same time
-      requestStatusByRoom.set(room.id, true);
-
-      const updates = await room.getThreadsSince({ since });
-
-      // Set the isFetchingThreadsUpdates flag to false after a certain interval to prevent multiple requests from being made at the same time
-      setTimeout(() => {
-        requestStatusByRoom.set(room.id, false);
-      }, DEFAULT_DEDUPING_INTERVAL);
-
-      store.updateThreadsAndNotifications(
-        updates.threads.updated,
-        updates.inboxNotifications.updated,
-        updates.threads.deleted,
-        updates.inboxNotifications.deleted
-      );
-
-      // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
-      lastRequestedAtByRoom.set(room.id, updates.requestedAt);
-    } catch (err) {
-      requestStatusByRoom.set(room.id, false);
-      // TODO: Implement error handling
-      return;
-    }
-  }
-
-  async function getRoomVersions(
-    room: OpaqueRoom,
-    { retryCount }: { retryCount: number } = { retryCount: 0 }
-  ) {
-    const queryKey = makeVersionsQueryKey(room.id);
-    const existingRequest = requestsByQuery.get(queryKey);
-    if (existingRequest !== undefined) return existingRequest;
-    const request = room[kInternal].listTextVersions();
-    requestsByQuery.set(queryKey, request);
-    store.setQueryLoading(queryKey);
-    try {
-      const result = await request;
-      const data = (await result.json()) as {
-        versions: HistoryVersion[];
-      };
-      const versions = data.versions.map(({ createdAt, ...version }) => {
-        return {
-          createdAt: new Date(createdAt),
-          ...version,
-        };
-      });
-      store.updateRoomVersions(room.id, versions, queryKey);
-      requestsByQuery.delete(queryKey);
-    } catch (err) {
-      requestsByQuery.delete(queryKey);
-      // Retry the action using the exponential backoff algorithm
-      retryError(() => {
-        void getRoomVersions(room, {
-          retryCount: retryCount + 1,
-        });
-      }, retryCount);
-      store.setQueryError(queryKey, err as Error);
-    }
-    return;
-  }
-
-  async function getThreadsAndInboxNotifications(
-    room: OpaqueRoom,
-    queryKey: string,
-    options: UseThreadsOptions<M>,
-    { retryCount }: { retryCount: number } = { retryCount: 0 }
-  ) {
-    const existingRequest = requestsByQuery.get(queryKey);
-
-    // If a request was already made for the query, we do not make another request and return the existing promise of the request
-    if (existingRequest !== undefined) return existingRequest;
-
-    const request = room.getThreads(options);
-
-    // Store the promise of the request for the query so that we do not make another request for the same query
-    requestsByQuery.set(queryKey, request);
-
-    store.setQueryLoading(queryKey);
-    try {
-      const result = await request;
-
-      store.updateThreadsAndNotifications(
-        result.threads as ThreadData<M>[], // TODO: Figure out how to remove this casting
-        result.inboxNotifications,
-        [],
-        [],
-        queryKey
-      );
-
-      const lastRequestedAt = lastRequestedAtByRoom.get(room.id);
-
-      /**
-       * We set the `lastRequestedAt` value for the room to the timestamp returned by the current request if:
-       * 1. The `lastRequestedAt` value for the room has not been set
-       * OR
-       * 2. The `lastRequestedAt` value for the room is older than the timestamp returned by the current request
-       */
-      if (
-        lastRequestedAt === undefined ||
-        lastRequestedAt > result.requestedAt
-      ) {
-        lastRequestedAtByRoom.set(room.id, result.requestedAt);
-      }
-
-      poller.start(POLLING_INTERVAL);
-    } catch (err) {
-      requestsByQuery.delete(queryKey);
-
-      // Retry the action using the exponential backoff algorithm
-      retryError(() => {
-        void getThreadsAndInboxNotifications(room, queryKey, options, {
-          retryCount: retryCount + 1,
-        });
-      }, retryCount);
-
-      // Set the query state to the error state
-      store.setQueryError(queryKey, err as Error);
-    }
-    return;
-  }
-
-  async function getInboxNotificationSettings(
-    room: OpaqueRoom,
-    { retryCount }: { retryCount: number } = { retryCount: 0 }
-  ) {
-    const queryKey = makeNotificationSettingsQueryKey(room.id);
-    const existingRequest = requestsByQuery.get(queryKey);
-
-    // If a request was already made for the notifications query, we do not make another request and return the existing promise
-    if (existingRequest !== undefined) return existingRequest;
-
-    try {
-      const request = room.getNotificationSettings();
-
-      requestsByQuery.set(queryKey, request);
-
-      store.setQueryLoading(queryKey);
-
-      const settings = await request;
-
-      store.updateRoomInboxNotificationSettings(room.id, settings, queryKey);
-    } catch (err) {
-      requestsByQuery.delete(queryKey);
-
-      retryError(() => {
-        void getInboxNotificationSettings(room, {
-          retryCount: retryCount + 1,
-        });
-      }, retryCount);
-
-      store.setQueryError(queryKey, err as Error);
-    }
-    return;
-  }
-
+  // Note: This error event source includes both comments and room notifications settings!!
   const commentsErrorEventSource = makeEventSource<CommentsError<M>>();
 
   function onMutationFailure(
@@ -510,13 +275,13 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   ) {
     store.removeOptimisticUpdate(optimisticUpdateId);
 
-    if (innerError instanceof CommentsApiError) {
+    if (innerError instanceof HttpError) {
       const error = handleApiError(innerError);
       commentsErrorEventSource.notify(createPublicError(error));
       return;
     }
 
-    if (innerError instanceof NotificationsApiError) {
+    if (innerError instanceof HttpError) {
       handleApiError(innerError);
       // TODO: Create public error and notify via notificationsErrorEventSource?
       return;
@@ -525,15 +290,85 @@ function makeExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     throw innerError;
   }
 
+  const threadsPollersByRoomId = new Map<string, Poller>();
+
+  const versionsPollersByRoomId = new Map<string, Poller>();
+
+  const roomNotificationSettingsPollersByRoomId = new Map<string, Poller>();
+
+  function getOrCreateThreadsPollerForRoomId(roomId: string) {
+    let poller = threadsPollersByRoomId.get(roomId);
+    if (!poller) {
+      poller = makePoller(
+        async (signal) => {
+          try {
+            return await store.fetchRoomThreadsDeltaUpdate(roomId, signal);
+          } catch (err) {
+            console.warn(`Polling new threads for '${roomId}' failed: ${String(err)}`); // prettier-ignore
+            throw err;
+          }
+        },
+        config.ROOM_THREADS_POLL_INTERVAL,
+        { maxStaleTimeMs: config.ROOM_THREADS_MAX_STALE_TIME }
+      );
+
+      threadsPollersByRoomId.set(roomId, poller);
+    }
+
+    return poller;
+  }
+
+  function getOrCreateVersionsPollerForRoomId(roomId: string) {
+    let poller = versionsPollersByRoomId.get(roomId);
+    if (!poller) {
+      poller = makePoller(
+        async (signal) => {
+          try {
+            return await store.fetchRoomVersionsDeltaUpdate(roomId, signal);
+          } catch (err) {
+            console.warn(`Polling new history versions for '${roomId}' failed: ${String(err)}`); // prettier-ignore
+            throw err;
+          }
+        },
+        config.HISTORY_VERSIONS_POLL_INTERVAL,
+        { maxStaleTimeMs: config.HISTORY_VERSIONS_MAX_STALE_TIME }
+      );
+
+      versionsPollersByRoomId.set(roomId, poller);
+    }
+
+    return poller;
+  }
+
+  function getOrCreateNotificationsSettingsPollerForRoomId(roomId: string) {
+    let poller = roomNotificationSettingsPollersByRoomId.get(roomId);
+    if (!poller) {
+      poller = makePoller(
+        async (signal) => {
+          try {
+            return await store.refreshRoomNotificationSettings(roomId, signal);
+          } catch (err) {
+            console.warn(`Polling notification settings for '${roomId}' failed: ${String(err)}`); // prettier-ignore
+            throw err;
+          }
+        },
+        config.NOTIFICATION_SETTINGS_POLL_INTERVAL,
+        { maxStaleTimeMs: config.NOTIFICATION_SETTINGS_MAX_STALE_TIME }
+      );
+
+      roomNotificationSettingsPollersByRoomId.set(roomId, poller);
+    }
+
+    return poller;
+  }
+
   return {
     store,
-    incrementQuerySubscribers,
-    commentsErrorEventSource,
-    getThreadsUpdates,
-    getThreadsAndInboxNotifications,
-    getInboxNotificationSettings,
-    getRoomVersions,
+    commentsErrorEventSource: commentsErrorEventSource.observable,
     onMutationFailure,
+    getOrCreateThreadsPollerForRoomId,
+    getOrCreateVersionsPollerForRoomId,
+    getOrCreateNotificationsSettingsPollerForRoomId,
   };
 }
 
@@ -624,6 +459,7 @@ function makeRoomContextBundle<
     useRemoveReaction,
     useMarkThreadAsRead,
     useThreadSubscription,
+    useAttachmentUrl,
 
     useHistoryVersions,
     useHistoryVersionData,
@@ -687,6 +523,7 @@ function makeRoomContextBundle<
       useRemoveReaction,
       useMarkThreadAsRead,
       useThreadSubscription,
+      useAttachmentUrl: useAttachmentUrlSuspense,
 
       // TODO: useHistoryVersionData: useHistoryVersionDataSuspense,
       useHistoryVersions: useHistoryVersionsSuspense,
@@ -837,7 +674,7 @@ function RoomProviderInner<
   );
 
   React.useEffect(() => {
-    const { store } = getExtrasForClient(client);
+    const { store } = getRoomExtrasForClient(client);
 
     async function handleCommentEvent(message: CommentsEventServerMsg) {
       // If thread deleted event is received, we remove the thread from the local cache
@@ -857,7 +694,9 @@ function RoomProviderInner<
       }
       const { thread, inboxNotification } = info;
 
-      const existingThread = store.getThreads().threadsById[message.threadId];
+      const existingThread = store
+        .getFullState()
+        .threadsDB.getEvenIfDeleted(message.threadId);
 
       switch (message.type) {
         case ServerMsgCode.COMMENT_EDITED:
@@ -883,27 +722,6 @@ function RoomProviderInner<
       (message) => void handleCommentEvent(message)
     );
   }, [client, room]);
-
-  React.useEffect(() => {
-    const { getThreadsUpdates } = getExtrasForClient(client);
-    // Retrieve threads that have been updated/deleted since the last time the room requested threads updates
-    void getThreadsUpdates(room.id);
-  }, [client, room.id]);
-
-  /**
-   * Subscribe to the 'online' event to fetch threads/notifications updates when the browser goes back online.
-   */
-  React.useEffect(() => {
-    function handleIsOnline() {
-      const { getThreadsUpdates } = getExtrasForClient(client);
-      void getThreadsUpdates(room.id);
-    }
-
-    window.addEventListener("online", handleIsOnline);
-    return () => {
-      window.removeEventListener("online", handleIsOnline);
-    };
-  }, [client, room.id]);
 
   React.useEffect(() => {
     const pair = stableEnterRoom(roomId, frozenProps);
@@ -1425,54 +1243,49 @@ function useThreads<M extends BaseMetadata>(
   options: UseThreadsOptions<M> = {
     query: { metadata: {} },
   }
-): ThreadsState<M> {
+): ThreadsAsyncResult<M> {
   const { scrollOnLoad = true } = options;
+  // TODO - query = stable(options.query);
+
   const client = useClient();
   const room = useRoom();
 
-  // e.g. 'room-abc-{"color":"red","xyz":123}'
-  const queryKey = React.useMemo(
-    () => generateQueryKey(room.id, options.query),
-    [room, options]
+  const { store, getOrCreateThreadsPollerForRoomId } =
+    getRoomExtrasForClient<M>(client);
+
+  const poller = getOrCreateThreadsPollerForRoomId(room.id);
+
+  React.useEffect(
+    () => {
+      void store.waitUntilRoomThreadsLoaded(room.id, options.query);
+    }
+    // NOTE: Deliberately *not* using a dependency array here!
+    //
+    // It is important to call waitUntil on *every* render.
+    // This is harmless though, on most renders, except:
+    // 1. The very first render, in which case we'll want to trigger the initial page fetch.
+    // 2. All other subsequent renders now "just" return the same promise (a quick operation).
+    // 3. If ever the promise would fail, then after 5 seconds it would reset, and on the very
+    //    *next* render after that, a *new* fetch/promise will get created.
   );
 
-  const { store, getThreadsAndInboxNotifications, incrementQuerySubscribers } =
-    getExtrasForClient<M>(client);
-
   React.useEffect(() => {
-    void getThreadsAndInboxNotifications(room, queryKey, options);
-    return incrementQuerySubscribers(queryKey);
-  }, [room, queryKey]); // eslint-disable-line react-hooks/exhaustive-deps
+    poller.inc();
+    poller.pollNowIfStale();
+    return () => poller.dec();
+  }, [poller]);
 
-  const selector = React.useCallback(
-    (state: UmbrellaStoreState<M>): ThreadsState<M> => {
-      // TODO Don't make this the responsibility of the _selector_. It should be
-      // responsibility of the _getter_.
-      const query = state.queries[queryKey];
-      if (query === undefined || query.isLoading) {
-        return {
-          isLoading: true,
-        };
-      }
-
-      return {
-        threads: selectThreads(state, {
-          roomId: room.id,
-          query: options.query,
-          orderBy: "age",
-        }),
-        isLoading: false,
-        error: query.error,
-      };
-    },
-    [room, queryKey] // eslint-disable-line react-hooks/exhaustive-deps
+  const getter = React.useCallback(
+    () => store.getRoomThreadsLoadingState(room.id, options.query),
+    [store, room.id, options.query]
   );
 
   const state = useSyncExternalStoreWithSelector(
-    store.subscribeThreads,
-    store.getThreads,
-    store.getThreads,
-    selector
+    store.subscribe,
+    getter,
+    getter,
+    identity,
+    shallow2 // NOTE: Using 2-level-deep shallow check here, because the result of selectThreads() is not stable!
   );
 
   useScrollToCommentOnLoadEffect(scrollOnLoad, state);
@@ -1488,7 +1301,7 @@ function useCommentsErrorListener<M extends BaseMetadata>(
 ) {
   const client = useClient();
   const savedCallback = useLatest(callback);
-  const { commentsErrorEventSource } = getExtrasForClient<M>(client);
+  const { commentsErrorEventSource } = getRoomExtrasForClient<M>(client);
 
   React.useEffect(() => {
     return commentsErrorEventSource.subscribe(savedCallback.current);
@@ -1505,6 +1318,7 @@ function useCreateThread<M extends BaseMetadata>(): (
     (options: CreateThreadOptions<M>): ThreadData<M> => {
       const body = options.body;
       const metadata = options.metadata ?? ({} as M);
+      const attachments = options.attachments;
 
       const threadId = createThreadId();
       const commentId = createCommentId();
@@ -1519,6 +1333,7 @@ function useCreateThread<M extends BaseMetadata>(): (
         userId: getCurrentUserId(room),
         body,
         reactions: [],
+        attachments: attachments ?? [],
       };
       const newThread: ThreadData<M> = {
         id: threadId,
@@ -1531,32 +1346,36 @@ function useCreateThread<M extends BaseMetadata>(): (
         resolved: false,
       };
 
-      const { store, onMutationFailure } = getExtrasForClient(client);
+      const { store, onMutationFailure } = getRoomExtrasForClient(client);
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "create-thread",
         thread: newThread,
         roomId: room.id,
       });
 
-      room.createThread({ threadId, commentId, body, metadata }).then(
-        (thread) => {
-          // Replace the optimistic update by the real thing
-          store.createThread(optimisticUpdateId, thread);
-        },
-        (err: Error) =>
-          onMutationFailure(
-            err,
-            optimisticUpdateId,
-            (err) =>
-              new CreateThreadError(err, {
-                roomId: room.id,
-                threadId,
-                commentId,
-                body,
-                metadata,
-              })
-          )
-      );
+      const attachmentIds = attachments?.map((attachment) => attachment.id);
+
+      room
+        .createThread({ threadId, commentId, body, metadata, attachmentIds })
+        .then(
+          (thread) => {
+            // Replace the optimistic update by the real thing
+            store.createThread(optimisticUpdateId, thread);
+          },
+          (err: Error) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (err) =>
+                new CreateThreadError(err, {
+                  roomId: room.id,
+                  threadId,
+                  commentId,
+                  body,
+                  metadata,
+                })
+            )
+        );
 
       return newThread;
     },
@@ -1569,13 +1388,12 @@ function useDeleteThread(): (threadId: string) => void {
   const room = useRoom();
   return React.useCallback(
     (threadId: string): void => {
-      const { store, onMutationFailure } = getExtrasForClient(client);
-
-      const thread = store.getThreads().threadsById[threadId];
+      const { store, onMutationFailure } = getRoomExtrasForClient(client);
 
       const userId = getCurrentUserId(room);
 
-      if (thread?.comments?.[0]?.userId !== userId) {
+      const existing = store.getFullState().threadsDB.get(threadId);
+      if (existing?.comments?.[0]?.userId !== userId) {
         throw new Error("Only the thread creator can delete the thread");
       }
 
@@ -1616,7 +1434,7 @@ function useEditThreadMetadata<M extends BaseMetadata>() {
       const metadata = options.metadata;
       const updatedAt = new Date();
 
-      const { store, onMutationFailure } = getExtrasForClient(client);
+      const { store, onMutationFailure } = getRoomExtrasForClient(client);
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "edit-thread-metadata",
         metadata,
@@ -1661,7 +1479,7 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
   const client = useClient();
   const room = useRoom();
   return React.useCallback(
-    ({ threadId, body }: CreateCommentOptions): CommentData => {
+    ({ threadId, body, attachments }: CreateCommentOptions): CommentData => {
       const commentId = createCommentId();
       const createdAt = new Date();
 
@@ -1674,15 +1492,18 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
         userId: getCurrentUserId(room),
         body,
         reactions: [],
+        attachments: attachments ?? [],
       };
 
-      const { store, onMutationFailure } = getExtrasForClient(client);
+      const { store, onMutationFailure } = getRoomExtrasForClient(client);
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "create-comment",
         comment,
       });
 
-      room.createComment({ threadId, commentId, body }).then(
+      const attachmentIds = attachments?.map((attachment) => attachment.id);
+
+      room.createComment({ threadId, commentId, body, attachmentIds }).then(
         (newComment) => {
           // Replace the optimistic update by the real thing
           store.createComment(newComment, optimisticUpdateId);
@@ -1718,19 +1539,22 @@ function useEditComment(): (options: EditCommentOptions) => void {
   const client = useClient();
   const room = useRoom();
   return React.useCallback(
-    ({ threadId, commentId, body }: EditCommentOptions): void => {
+    ({ threadId, commentId, body, attachments }: EditCommentOptions): void => {
       const editedAt = new Date();
 
-      const { store, onMutationFailure } = getExtrasForClient(client);
-      const thread = store.getThreads().threadsById[threadId];
-      if (thread === undefined) {
+      const { store, onMutationFailure } = getRoomExtrasForClient(client);
+      const existing = store
+        .getFullState()
+        .threadsDB.getEvenIfDeleted(threadId);
+
+      if (existing === undefined) {
         console.warn(
           `Internal unexpected behavior. Cannot edit comment in thread "${threadId}" because the thread does not exist in the cache.`
         );
         return;
       }
 
-      const comment = thread.comments.find(
+      const comment = existing.comments.find(
         (comment) => comment.id === commentId
       );
 
@@ -1747,10 +1571,13 @@ function useEditComment(): (options: EditCommentOptions) => void {
           ...comment,
           editedAt,
           body,
+          attachments: attachments ?? [],
         },
       });
 
-      room.editComment({ threadId, commentId, body }).then(
+      const attachmentIds = attachments?.map((attachment) => attachment.id);
+
+      room.editComment({ threadId, commentId, body, attachmentIds }).then(
         (editedComment) => {
           // Replace the optimistic update by the real thing
           store.editComment(threadId, optimisticUpdateId, editedComment);
@@ -1789,7 +1616,7 @@ function useDeleteComment() {
     ({ threadId, commentId }: DeleteCommentOptions): void => {
       const deletedAt = new Date();
 
-      const { store, onMutationFailure } = getExtrasForClient(client);
+      const { store, onMutationFailure } = getRoomExtrasForClient(client);
 
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "delete-comment",
@@ -1834,7 +1661,7 @@ function useAddReaction<M extends BaseMetadata>() {
       const createdAt = new Date();
       const userId = getCurrentUserId(room);
 
-      const { store, onMutationFailure } = getExtrasForClient<M>(client);
+      const { store, onMutationFailure } = getRoomExtrasForClient<M>(client);
 
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "add-reaction",
@@ -1892,7 +1719,7 @@ function useRemoveReaction() {
 
       const removedAt = new Date();
 
-      const { store, onMutationFailure } = getExtrasForClient(client);
+      const { store, onMutationFailure } = getRoomExtrasForClient(client);
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "remove-reaction",
         threadId,
@@ -1944,9 +1771,9 @@ function useMarkThreadAsRead() {
   const room = useRoom();
   return React.useCallback(
     (threadId: string) => {
-      const { store, onMutationFailure } = getExtrasForClient(client);
+      const { store, onMutationFailure } = getRoomExtrasForClient(client);
       const inboxNotification = Object.values(
-        store.getInboxNotifications().inboxNotificationsById
+        store.getFullState().notificationsById
       ).find(
         (inboxNotification) =>
           inboxNotification.kind === "thread" &&
@@ -2003,7 +1830,7 @@ function useMarkThreadAsResolved() {
     (threadId: string) => {
       const updatedAt = new Date();
 
-      const { store, onMutationFailure } = getExtrasForClient(client);
+      const { store, onMutationFailure } = getRoomExtrasForClient(client);
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "mark-thread-as-resolved",
         threadId,
@@ -2050,7 +1877,7 @@ function useMarkThreadAsUnresolved() {
     (threadId: string) => {
       const updatedAt = new Date();
 
-      const { store, onMutationFailure } = getExtrasForClient(client);
+      const { store, onMutationFailure } = getRoomExtrasForClient(client);
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "mark-thread-as-unresolved",
         threadId,
@@ -2091,36 +1918,33 @@ function useMarkThreadAsUnresolved() {
  */
 function useThreadSubscription(threadId: string): ThreadSubscription {
   const client = useClient();
-  const { store } = getExtrasForClient(client);
+  const { store } = getRoomExtrasForClient(client);
 
   const selector = React.useCallback(
     (state: UmbrellaStoreState<BaseMetadata>): ThreadSubscription => {
-      const inboxNotification = state.inboxNotifications.find(
+      const notification = state.cleanedNotifications.find(
         (inboxNotification) =>
           inboxNotification.kind === "thread" &&
           inboxNotification.threadId === threadId
       );
 
-      const thread = state.threadsById[threadId];
-
-      if (inboxNotification === undefined || thread === undefined) {
-        return {
-          status: "not-subscribed",
-        };
+      const thread = state.threadsDB.get(threadId);
+      if (notification === undefined || thread === undefined) {
+        return { status: "not-subscribed" };
       }
 
       return {
         status: "subscribed",
-        unreadSince: inboxNotification.readAt,
+        unreadSince: notification.readAt,
       };
     },
     [threadId]
   );
 
   return useSyncExternalStoreWithSelector(
-    store.subscribeThreads,
-    store.getThreads,
-    store.getThreads,
+    store.subscribe,
+    store.getFullState,
+    store.getFullState,
     selector
   );
 }
@@ -2133,30 +1957,50 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
  * const [{ settings }, updateSettings] = useRoomNotificationSettings();
  */
 function useRoomNotificationSettings(): [
-  RoomNotificationSettingsState,
+  RoomNotificationSettingsAsyncResult,
   (settings: Partial<RoomNotificationSettings>) => void,
 ] {
   const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
   const client = useClient();
   const room = useRoom();
-  const { store } = getExtrasForClient(client);
+  const { store, getOrCreateNotificationsSettingsPollerForRoomId } =
+    getRoomExtrasForClient(client);
 
-  const getter = React.useCallback(
-    () => store.getNotificationSettingsAsync(room.id),
-    [store, room.id]
+  const poller = getOrCreateNotificationsSettingsPollerForRoomId(room.id);
+
+  React.useEffect(
+    () => {
+      void store.waitUntilRoomNotificationSettingsLoaded(room.id);
+    }
+    // NOTE: Deliberately *not* using a dependency array here!
+    //
+    // It is important to call waitUntil on *every* render.
+    // This is harmless though, on most renders, except:
+    // 1. The very first render, in which case we'll want to trigger the initial page fetch.
+    // 2. All other subsequent renders now "just" return the same promise (a quick operation).
+    // 3. If ever the promise would fail, then after 5 seconds it would reset, and on the very
+    //    *next* render after that, a *new* fetch/promise will get created.
   );
 
   React.useEffect(() => {
-    const { getInboxNotificationSettings } = getExtrasForClient(client);
-    void getInboxNotificationSettings(room);
-  }, [client, room]);
+    poller.inc();
+    poller.pollNowIfStale();
+    return () => {
+      poller.dec();
+    };
+  }, [poller]);
+
+  const getter = React.useCallback(
+    () => store.getNotificationSettingsLoadingState(room.id),
+    [store, room.id]
+  );
 
   const settings = useSyncExternalStoreWithSelector(
-    store.subscribeNotificationSettings,
+    store.subscribe,
     getter,
     getter,
     identity,
-    shallow
+    shallow2
   );
 
   return React.useMemo(() => {
@@ -2172,34 +2016,22 @@ function useRoomNotificationSettings(): [
  * const [{ settings }, updateSettings] = useRoomNotificationSettings();
  */
 function useRoomNotificationSettingsSuspense(): [
-  RoomNotificationSettingsStateSuccess,
+  RoomNotificationSettingsAsyncSuccess,
   (settings: Partial<RoomNotificationSettings>) => void,
 ] {
-  const updateRoomNotificationSettings = useUpdateRoomNotificationSettings();
   const client = useClient();
+  const store = getRoomExtrasForClient(client).store;
   const room = useRoom();
 
-  const { store } = getExtrasForClient(client);
+  // Suspend until there are at least some inbox notifications
+  use(store.waitUntilRoomNotificationSettingsLoaded(room.id));
 
-  const getter = React.useCallback(
-    () => store.getNotificationSettingsAsync(room.id),
-    [store, room.id]
-  );
-
-  const settings = useSyncExternalStoreWithSelector(
-    store.subscribeNotificationSettings,
-    getter,
-    getter,
-    identity,
-    shallow
-  );
-
-  if (settings.isLoading) {
-    const { getInboxNotificationSettings } = getExtrasForClient(client);
-    throw getInboxNotificationSettings(room);
-  } else if (settings.error) {
-    throw settings.error;
-  }
+  // We're in a Suspense world here, and as such, the useRoomNotificationSettings()
+  // hook is expected to only return success results when we're here.
+  const [settings, updateRoomNotificationSettings] =
+    useRoomNotificationSettings();
+  assert(!settings.error, "Did not expect error");
+  assert(!settings.isLoading, "Did not expect loading");
 
   return React.useMemo(() => {
     return [settings, updateRoomNotificationSettings];
@@ -2212,8 +2044,10 @@ function useRoomNotificationSettingsSuspense(): [
  * @example
  * const {data} = useHistoryVersionData(versionId);
  */
-function useHistoryVersionData(versionId: string): HistoryVersionDataState {
-  const [state, setState] = React.useState<HistoryVersionDataState>({
+function useHistoryVersionData(
+  versionId: string
+): HistoryVersionDataAsyncResult {
+  const [state, setState] = React.useState<HistoryVersionDataAsyncResult>({
     isLoading: true,
   });
   const room = useRoom();
@@ -2251,27 +2085,46 @@ function useHistoryVersionData(versionId: string): HistoryVersionDataState {
  * @example
  * const { versions, error, isLoading } = useHistoryVersions();
  */
-function useHistoryVersions(): HistoryVersionsState {
+function useHistoryVersions(): HistoryVersionsAsyncResult {
   const client = useClient();
   const room = useRoom();
 
-  const { store, getRoomVersions } = getExtrasForClient(client);
+  const { store, getOrCreateVersionsPollerForRoomId } =
+    getRoomExtrasForClient(client);
+
+  const poller = getOrCreateVersionsPollerForRoomId(room.id);
+
+  React.useEffect(() => {
+    poller.inc();
+    poller.pollNowIfStale();
+    return () => poller.dec();
+  }, [poller]);
 
   const getter = React.useCallback(
-    () => store.getVersionsAsync(room.id),
+    () => store.getRoomVersionsLoadingState(room.id),
     [store, room.id]
   );
 
-  React.useEffect(() => {
-    void getRoomVersions(room);
-  }, [room]); // eslint-disable-line react-hooks/exhaustive-deps
+  React.useEffect(
+    () => {
+      void store.waitUntilRoomVersionsLoaded(room.id);
+    }
+    // NOTE: Deliberately *not* using a dependency array here!
+    //
+    // It is important to call waitUntil on *every* render.
+    // This is harmless though, on most renders, except:
+    // 1. The very first render, in which case we'll want to trigger the initial page fetch.
+    // 2. All other subsequent renders now "just" return the same promise (a quick operation).
+    // 3. If ever the promise would fail, then after 5 seconds it would reset, and on the very
+    //    *next* render after that, a *new* fetch/promise will get created.
+  );
 
   const state = useSyncExternalStoreWithSelector(
-    store.subscribeVersions,
+    store.subscribe,
     getter,
     getter,
     identity,
-    shallow
+    shallow2
   );
 
   return state;
@@ -2283,33 +2136,17 @@ function useHistoryVersions(): HistoryVersionsState {
  * @example
  * const { versions } = useHistoryVersions();
  */
-function useHistoryVersionsSuspense(): HistoryVersionsStateResolved {
+function useHistoryVersionsSuspense(): HistoryVersionsAsyncSuccess {
   const client = useClient();
   const room = useRoom();
+  const store = getRoomExtrasForClient(client).store;
 
-  const { store } = getExtrasForClient(client);
+  use(store.waitUntilRoomVersionsLoaded(room.id));
 
-  const getter = React.useCallback(
-    () => store.getVersionsAsync(room.id),
-    [store, room.id]
-  );
-
-  const state = useSyncExternalStoreWithSelector(
-    store.subscribeVersions,
-    getter,
-    getter,
-    identity,
-    shallow
-  );
-
-  if (state.isLoading) {
-    const { getRoomVersions } = getExtrasForClient(client);
-    throw getRoomVersions(room);
-  } else if (state.error) {
-    throw state.error;
-  }
-
-  return state;
+  const result = useHistoryVersions();
+  assert(!result.error, "Did not expect error");
+  assert(!result.isLoading, "Did not expect loading");
+  return result;
 }
 
 /**
@@ -2325,7 +2162,7 @@ function useUpdateRoomNotificationSettings() {
   const room = useRoom();
   return React.useCallback(
     (settings: Partial<RoomNotificationSettings>) => {
-      const { store, onMutationFailure } = getExtrasForClient(client);
+      const { store, onMutationFailure } = getRoomExtrasForClient(client);
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "update-notification-settings",
         roomId: room.id,
@@ -2335,7 +2172,7 @@ function useUpdateRoomNotificationSettings() {
       room.updateNotificationSettings(settings).then(
         (settings) => {
           // Replace the optimistic update by the real thing
-          store.updateRoomInboxNotificationSettings2(
+          store.updateRoomNotificationSettings_confirmOptimisticUpdate(
             room.id,
             optimisticUpdateId,
             settings
@@ -2486,58 +2323,109 @@ function useThreadsSuspense<M extends BaseMetadata>(
   options: UseThreadsOptions<M> = {
     query: { metadata: {} },
   }
-): ThreadsStateSuccess<M> {
-  const { scrollOnLoad = true } = options;
-
+): ThreadsAsyncSuccess<M> {
   const client = useClient();
   const room = useRoom();
-  const queryKey = React.useMemo(
-    () => generateQueryKey(room.id, options.query),
-    [room, options]
-  );
 
-  const { store, getThreadsAndInboxNotifications } =
-    getExtrasForClient<M>(client);
+  const { store } = getRoomExtrasForClient<M>(client);
 
-  const query = store.getThreads().queries[queryKey];
+  use(store.waitUntilRoomThreadsLoaded(room.id, options.query));
 
-  if (query === undefined || query.isLoading) {
-    throw getThreadsAndInboxNotifications(room, queryKey, options);
+  const result = useThreads(options);
+  assert(!result.error, "Did not expect error");
+  assert(!result.isLoading, "Did not expect loading");
+  return result;
+}
+
+function selectorFor_useAttachmentUrl(
+  state: AsyncResult<string | undefined> | undefined
+): AttachmentUrlAsyncResult {
+  if (state === undefined || state?.isLoading) {
+    return state ?? { isLoading: true };
   }
 
-  if (query.error) {
-    throw query.error;
+  if (state.error) {
+    return state;
   }
 
-  const selector = React.useCallback(
-    (state: ReturnType<typeof store.getThreads>): ThreadsStateSuccess<M> => {
-      return {
-        threads: selectThreads(state, {
-          roomId: room.id,
-          query: options.query,
-          orderBy: "age",
-        }),
-        isLoading: false,
-      };
-    },
-    [room, queryKey] // eslint-disable-line react-hooks/exhaustive-deps
+  // For now `useAttachmentUrl` doesn't support a custom resolver so this case
+  // will never happen as `getAttachmentUrl` will either return a URL or throw.
+  // But we might decide to offer a custom resolver in the future to allow
+  // self-hosting attachments.
+  assert(state.data !== undefined, "Unexpected missing attachment URL");
+
+  return {
+    isLoading: false,
+    url: state.data,
+  };
+}
+
+/**
+ * Returns a presigned URL for an attachment by its ID.
+ *
+ * @example
+ * const { url, error, isLoading } = useAttachmentUrl("at_xxx");
+ */
+function useAttachmentUrl(attachmentId: string): AttachmentUrlAsyncResult {
+  const room = useRoom();
+  const { attachmentUrlsStore } = room[kInternal];
+
+  const getAttachmentUrlState = React.useCallback(
+    () => attachmentUrlsStore.getState(attachmentId),
+    [attachmentUrlsStore, attachmentId]
   );
 
   React.useEffect(() => {
-    const { incrementQuerySubscribers } = getExtrasForClient(client);
-    return incrementQuerySubscribers(queryKey);
-  }, [client, queryKey]);
+    // NOTE: .get() will trigger any actual fetches, whereas .getState() will not
+    void attachmentUrlsStore.get(attachmentId);
+  }, [attachmentUrlsStore, attachmentId]);
 
-  const state = useSyncExternalStoreWithSelector(
-    store.subscribeThreads,
-    store.getThreads,
-    store.getThreads,
-    selector
+  return useSyncExternalStoreWithSelector(
+    attachmentUrlsStore.subscribe,
+    getAttachmentUrlState,
+    getAttachmentUrlState,
+    selectorFor_useAttachmentUrl,
+    shallow
   );
+}
 
-  useScrollToCommentOnLoadEffect(scrollOnLoad, state);
+/**
+ * Returns a presigned URL for an attachment by its ID.
+ *
+ * @example
+ * const { url } = useAttachmentUrl("at_xxx");
+ */
+function useAttachmentUrlSuspense(attachmentId: string) {
+  const room = useRoom();
+  const { attachmentUrlsStore } = room[kInternal];
 
-  return state;
+  const getAttachmentUrlState = React.useCallback(
+    () => attachmentUrlsStore.getState(attachmentId),
+    [attachmentUrlsStore, attachmentId]
+  );
+  const attachmentUrlState = getAttachmentUrlState();
+
+  if (!attachmentUrlState || attachmentUrlState.isLoading) {
+    throw attachmentUrlsStore.get(attachmentId);
+  }
+
+  if (attachmentUrlState.error) {
+    throw attachmentUrlState.error;
+  }
+
+  const state = useSyncExternalStore(
+    attachmentUrlsStore.subscribe,
+    getAttachmentUrlState,
+    getAttachmentUrlState
+  );
+  assert(state !== undefined, "Unexpected missing state");
+  assert(!state.isLoading, "Unexpected loading state");
+  assert(!state.error, "Unexpected error state");
+  return {
+    isLoading: false,
+    url: state.data,
+    error: undefined,
+  } as const;
 }
 
 /**
@@ -2574,18 +2462,6 @@ export function createRoomContext<
   M extends BaseMetadata = DM,
 >(client: OpaqueClient): RoomContextBundle<P, S, U, E, M> {
   return getOrCreateRoomContextBundle<P, S, U, E, M>(client);
-}
-
-/**
- * Example:
- * generateQueryKey('room-abc', { xyz: 123, abc: "red" })
- * → 'room-abc-{"color":"red","xyz":123}'
- */
-export function generateQueryKey(
-  roomId: string,
-  options: UseThreadsOptions<BaseMetadata>["query"]
-) {
-  return `${roomId}-${stringify(options ?? {})}`;
 }
 
 type TypedBundle = RoomContextBundle<DP, DS, DU, DE, DM>;
@@ -2820,6 +2696,26 @@ const _useThreads: TypedBundle["useThreads"] = useThreads;
  */
 const _useThreadsSuspense: TypedBundle["suspense"]["useThreads"] =
   useThreadsSuspense;
+
+/**
+ * Returns the user's notification settings for the current room
+ * and a function to update them.
+ *
+ * @example
+ * const [{ settings }, updateSettings] = useRoomNotificationSettings();
+ */
+const _useRoomNotificationSettings: TypedBundle["useRoomNotificationSettings"] =
+  useRoomNotificationSettings;
+
+/**
+ * Returns the user's notification settings for the current room
+ * and a function to update them.
+ *
+ * @example
+ * const [{ settings }, updateSettings] = useRoomNotificationSettings();
+ */
+const _useRoomNotificationSettingsSuspense: TypedBundle["suspense"]["useRoomNotificationSettings"] =
+  useRoomNotificationSettingsSuspense;
 
 /**
  * (Private beta) Returns a history of versions of the current room.
@@ -3106,6 +3002,8 @@ export {
   RoomContext,
   _RoomProvider as RoomProvider,
   _useAddReaction as useAddReaction,
+  useAttachmentUrl,
+  useAttachmentUrlSuspense,
   useBatch,
   _useBroadcastEvent as useBroadcastEvent,
   useCanRedo,
@@ -3143,7 +3041,8 @@ export {
   useRedo,
   useRemoveReaction,
   _useRoom as useRoom,
-  useRoomNotificationSettings,
+  _useRoomNotificationSettings as useRoomNotificationSettings,
+  _useRoomNotificationSettingsSuspense as useRoomNotificationSettingsSuspense,
   _useSelf as useSelf,
   _useSelfSuspense as useSelfSuspense,
   useStatus,

@@ -14,6 +14,63 @@ export type CommentReaction = {
   }[];
 };
 
+export type CommentAttachment = {
+  type: "attachment";
+  id: string;
+  name: string;
+  size: number;
+  mimeType: string;
+};
+
+export type CommentLocalAttachmentIdle = {
+  type: "localAttachment";
+  status: "idle";
+  id: string;
+  name: string;
+  size: number;
+  mimeType: string;
+  file: File;
+};
+
+export type CommentLocalAttachmentUploading = {
+  type: "localAttachment";
+  status: "uploading";
+  id: string;
+  name: string;
+  size: number;
+  mimeType: string;
+  file: File;
+};
+
+export type CommentLocalAttachmentUploaded = {
+  type: "localAttachment";
+  status: "uploaded";
+  id: string;
+  name: string;
+  size: number;
+  mimeType: string;
+  file: File;
+};
+
+export type CommentLocalAttachmentError = {
+  type: "localAttachment";
+  status: "error";
+  id: string;
+  name: string;
+  size: number;
+  mimeType: string;
+  file: File;
+  error: Error;
+};
+
+export type CommentLocalAttachment =
+  | CommentLocalAttachmentIdle
+  | CommentLocalAttachmentUploading
+  | CommentLocalAttachmentUploaded
+  | CommentLocalAttachmentError;
+
+export type CommentMixedAttachment = CommentAttachment | CommentLocalAttachment;
+
 /**
  * Represents a comment.
  */
@@ -26,6 +83,7 @@ export type CommentData = {
   createdAt: Date;
   editedAt?: Date;
   reactions: CommentReaction[];
+  attachments: CommentAttachment[];
 } & (
   | { body: CommentBody; deletedAt?: never }
   | { body?: never; deletedAt: Date }
@@ -97,7 +155,7 @@ export type ThreadData<M extends BaseMetadata = DM> = {
   id: string;
   roomId: string;
   createdAt: Date;
-  updatedAt?: Date;
+  updatedAt: Date;
   comments: CommentData[];
   metadata: M;
   resolved: boolean;

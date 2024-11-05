@@ -1,3 +1,4 @@
+import type { MutableRefObject } from "react";
 import { useEffect, useRef } from "react";
 
 /**
@@ -8,7 +9,7 @@ import { useEffect, useRef } from "react";
  * to a callback function so the callback can be registered but still can
  * access the latest value at a later point in time.
  */
-export function useLatest<T>(value: T): { readonly current: T } {
+export function useLatest<T>(value: T): MutableRefObject<T> {
   const ref = useRef(value);
   useEffect(() => {
     ref.current = value;

@@ -42,14 +42,24 @@ export default function Home() {
           </ul>
         </li>
         <li>
-          <Link href="/comments?room=e2e-comments">
-            <a>Comments</a>
-          </Link>
-        </li>
-        <li>
-          <Link href="/comments/with-suspense?room=e2e-comments-with-suspense">
-            <a>Comments (with Suspense)</a>
-          </Link>
+          <div>Comments</div>
+          <ul>
+            <li>
+              <Link href="/comments?room=e2e-comments">
+                <a>Comments</a>
+              </Link>
+            </li>
+            <li>
+              <Link href="/comments/with-suspense?room=e2e-comments-with-suspense">
+                <a>Comments (with Suspense)</a>
+              </Link>
+            </li>
+            <li>
+              <Link href="/comments/composer?room=e2e-comments-composer">
+                <a>Composer</a>
+              </Link>
+            </li>
+          </ul>
         </li>
         <li>
           <div>Inbox Notifications</div>

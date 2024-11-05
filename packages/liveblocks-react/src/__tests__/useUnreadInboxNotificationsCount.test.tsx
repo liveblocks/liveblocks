@@ -7,7 +7,10 @@ import React, { Suspense } from "react";
 
 import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
 import MockWebSocket from "./_MockWebSocket";
-import { mockGetInboxNotifications } from "./_restMocks";
+import {
+  mockGetInboxNotifications,
+  mockGetInboxNotificationsDelta,
+} from "./_restMocks";
 import { createContextsForTest } from "./_utils";
 
 const server = setupServer();
@@ -42,10 +45,9 @@ describe("useUnreadInboxNotificationsCount", () => {
           ctx.json({
             threads,
             inboxNotifications,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
             },
           })
         );
@@ -97,6 +99,18 @@ describe("useUnreadInboxNotificationsCount - Suspense", () => {
           ctx.json({
             threads,
             inboxNotifications,
+            meta: {
+              requestedAt: new Date().toISOString(),
+              nextCursor: null,
+            },
+          })
+        );
+      }),
+      mockGetInboxNotificationsDelta(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            threads: [],
+            inboxNotifications: [],
             deletedThreads: [],
             deletedInboxNotifications: [],
             meta: {

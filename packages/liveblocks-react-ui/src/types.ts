@@ -1,3 +1,4 @@
+import type { CommentAttachment } from "@liveblocks/core";
 import type { ComponentPropsWithoutRef, ElementType } from "react";
 
 export type Direction = "ltr" | "rtl";
@@ -58,3 +59,15 @@ export type ComposerBodyEmptyText = {
 };
 
 export type ComposerBody = ComposerBodyBlockElement[];
+
+export interface CommentAttachmentArgs {
+  /**
+   * The attachment.
+   */
+  attachment: CommentAttachment;
+
+  /**
+   * A presigned URL for the attachment.
+   */
+  url: string;
+}

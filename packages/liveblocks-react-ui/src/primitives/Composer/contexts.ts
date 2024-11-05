@@ -1,11 +1,22 @@
 import type { Placement } from "@floating-ui/react-dom";
+import type { CommentMixedAttachment } from "@liveblocks/core";
 import { nn } from "@liveblocks/core";
-import type { Direction } from "@radix-ui/react-dropdown-menu";
+import type { DropdownMenuProps } from "@radix-ui/react-dropdown-menu";
 import type { Dispatch, Ref, SetStateAction } from "react";
 import { createContext, useContext } from "react";
 import type { Editor as SlateEditor, Element as SlateElement } from "slate";
 
 export type ComposerContext = {
+  /**
+   * Whether the composer is currently disabled.
+   */
+  isDisabled: boolean;
+
+  /**
+   * Whether the composer can currently be submitted.
+   */
+  canSubmit: boolean;
+
   /**
    * Whether the editor is currently focused.
    */
@@ -22,7 +33,7 @@ export type ComposerContext = {
   submit: () => void;
 
   /**
-   * Clear the editor programmatically.
+   * Clear the composer programmatically.
    */
   clear: () => void;
 
@@ -50,6 +61,21 @@ export type ComposerContext = {
    * Insert text at the current selection.
    */
   insertText: (text: string) => void;
+
+  /**
+   * Open a file picker programmatically to create attachments.
+   */
+  attachFiles: () => void;
+
+  /**
+   * The composer's current attachments.
+   */
+  attachments: CommentMixedAttachment[];
+
+  /**
+   * Remove an attachment by its ID.
+   */
+  removeAttachment: (attachmentId: string) => void;
 };
 
 export type ComposerEditorContext = {
@@ -58,8 +84,16 @@ export type ComposerEditorContext = {
   setFocused: Dispatch<SetStateAction<boolean>>;
 };
 
+export type ComposerAttachmentsContext = {
+  hasMaxAttachments: boolean;
+  createAttachments: (files: File[]) => void;
+  isUploadingAttachments: boolean;
+  maxAttachments: number;
+  maxAttachmentSize: number;
+};
+
 export type ComposerSuggestionsContext = {
-  dir?: Direction;
+  dir?: DropdownMenuProps["dir"];
   id: string;
   itemId: (value?: string) => string | undefined;
   placement: Placement;
@@ -72,6 +106,8 @@ export type ComposerSuggestionsContext = {
 export const ComposerContext = createContext<ComposerContext | null>(null);
 export const ComposerEditorContext =
   createContext<ComposerEditorContext | null>(null);
+export const ComposerAttachmentsContext =
+  createContext<ComposerAttachmentsContext | null>(null);
 export const ComposerSuggestionsContext =
   createContext<ComposerSuggestionsContext | null>(null);
 
@@ -84,10 +120,17 @@ export function useComposerEditorContext() {
   );
 }
 
-export function useComposer(): ComposerContext {
-  const composerContext = useContext(ComposerContext);
+export function useComposerAttachmentsContextOrNull() {
+  return useContext(ComposerAttachmentsContext);
+}
 
-  return nn(composerContext, "Composer.Form is missing from the React tree.");
+export function useComposerAttachmentsContext() {
+  const composerAttachmentsContext = useComposerAttachmentsContextOrNull();
+
+  return nn(
+    composerAttachmentsContext,
+    "Composer.Form is missing from the React tree."
+  );
 }
 
 export function useComposerSuggestionsContext(
@@ -99,4 +142,10 @@ export function useComposerSuggestionsContext(
     composerSuggestionsContext,
     `${source} can’t be used outside of Composer.Editor.`
   );
+}
+
+export function useComposer(): ComposerContext {
+  const composerContext = useContext(ComposerContext);
+
+  return nn(composerContext, "Composer.Form is missing from the React tree.");
 }

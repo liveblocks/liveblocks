@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks-examples/nextjs-comments-tiptap",
-  "description": "This example shows how to add comments to a collaborative text editor with Liveblocks, Yjs, Tiptap, and Next.js.",
+  "description": "This example shows how to add comments to a collaborative text editor with Liveblocks, Tiptap, and Next.js.",
   "license": "Apache-2.0",
   "private": true,
   "scripts": {
@@ -10,16 +10,14 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@liveblocks/client": "^2.7.2",
-    "@liveblocks/node": "^2.7.2",
-    "@liveblocks/react": "^2.7.2",
-    "@liveblocks/react-ui": "^2.7.2",
-    "@liveblocks/yjs": "^2.7.2",
+    "@liveblocks/client": "2.8.3-tiptap2",
+    "@liveblocks/node": "2.8.3-tiptap2",
+    "@liveblocks/react": "2.8.3-tiptap2",
+    "@liveblocks/react-tiptap": "2.8.3-tiptap2",
+    "@liveblocks/react-ui": "2.8.3-tiptap2",
     "@radix-ui/react-select": "^1.1.1",
     "@radix-ui/react-tabs": "^1.0.1",
     "@radix-ui/react-tooltip": "^1.0.2",
-    "@tiptap/extension-collaboration": "^2.0.4",
-    "@tiptap/extension-collaboration-cursor": "^2.0.4",
     "@tiptap/extension-highlight": "^2.0.4",
     "@tiptap/extension-image": "^2.0.4",
     "@tiptap/extension-link": "^2.0.4",
@@ -39,8 +37,7 @@
     "next": "^13.4.12",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "react-error-boundary": "^4.0.11",
-    "yjs": "^13.6.7"
+    "react-error-boundary": "^4.0.11"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",

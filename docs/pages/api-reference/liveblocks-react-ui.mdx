@@ -100,6 +100,9 @@ about this change in our
   <PropertiesListItem name="showReactions" type="boolean" defaultValue="true">
     Whether to show reactions.
   </PropertiesListItem>
+  <PropertiesListItem name="showAttachments" type="boolean" defaultValue="true">
+    Whether to show attachments.
+  </PropertiesListItem>
   <PropertiesListItem
     name="showResolveAction"
     type="boolean"
@@ -120,6 +123,13 @@ about this change in our
     defaultValue="false"
   >
     Whether to show deleted comments.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onComposerSubmit"
+    type="function"
+    detailedType="(comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => Promise<void> | void"
+  >
+    The event handler called when the composer is submitted.
   </PropertiesListItem>
   <PropertiesListItem
     name="onResolvedChange"
@@ -163,6 +173,13 @@ about this change in our
     detailedType="(userId: string, event: MouseEvent<HTMLElement>) => void"
   >
     The event handler called when clicking on a mention.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onAttachmentClick"
+    type="function"
+    detailedType="(args: CommentAttachmentArgs, event: MouseEvent<HTMLElement>) => void"
+  >
+    The event handler called when clicking on a comment's attachment.
   </PropertiesListItem>
   <PropertiesListItem
     name="overrides"
@@ -294,11 +311,11 @@ function Component({ threadId, commentId }) {
 
   return (
     <Composer
-      onComposerSubmit={({ body }, event) => {
+      onComposerSubmit={({ body, attachments }, event) => {
         event.preventDefault();
 
         // Example mutations
-        editComment({ threadId, commentId, body });
+        editComment({ threadId, commentId, body, attachments });
         addReaction({ threadId, commentId, emoji: "✅" });
 
         // Other custom behavior
@@ -490,6 +507,13 @@ function Component() {
     The event handler called when clicking on a mention.
   </PropertiesListItem>
   <PropertiesListItem
+    name="onAttachmentClick"
+    type="function"
+    detailedType="(args: CommentAttachmentArgs, event: MouseEvent<HTMLElement>) => void"
+  >
+    The event handler called when clicking on a comment's attachment.
+  </PropertiesListItem>
+  <PropertiesListItem
     name="overrides"
     type="Partial<GlobalOverrides & CommentOverrides & ComposerOverrides>"
   >
@@ -545,6 +569,7 @@ Used to render a composer for creating, or editing, threads and comments.
 
 ```tsx
 <Composer.Form>
+  <Composer.AttachmentsDropArea />
   <Composer.Editor
     components={{
       Mention: () => <Composer.Mention />,
@@ -558,6 +583,7 @@ Used to render a composer for creating, or editing, threads and comments.
       Link: () => <Composer.Link />,
     }}
   />
+  <Composer.AttachFiles />
   <Composer.Submit />
 </Composer.Form>
 ```
@@ -566,7 +592,7 @@ Combine with
 [`useCreateThread`](/docs/api-reference/liveblocks-react#useCreateThread) to
 render a composer that creates threads.
 
-```tsx highlight="13,21-25,29-38"
+```tsx
 import {
   Composer,
   CommentBodyLinkProps,
@@ -579,22 +605,28 @@ import { FormEvent } from "react";
 
 // Render a custom composer that creates a thread on submit
 function MyComposer() {
+  // +++
   const createThread = useCreateThread();
+  // +++
 
   function handleComposerSubmit(
-    { body }: ComposerSubmitComment,
+    { body, attachments }: ComposerSubmitComment,
     event: FormEvent<HTMLFormElement>
   ) {
     event.preventdefault();
 
     // Create a new thread
+    // +++
     const thread = createThread({
       body,
+      attachments,
       metadata: {},
     });
+    //+++
   }
 
   return (
+    // +++
     <Composer.Form onComposerSubmit={handleComposerSubmit}>
       <Composer.Editor
         components={{
@@ -605,6 +637,7 @@ function MyComposer() {
       />
       <Composer.Submit>Create thread</Composer.Submit>
     </Composer.Form>
+    // +++
   );
 }
 
@@ -657,16 +690,36 @@ occurs when the composer is submitted. You must create your own mutations within
 [editing comments](/docs/api-reference/liveblocks-react#useEditComment), etc.
 
 ```tsx
-<Composer.Form onComposerSubmit={({ body }) => {}}>{/* ... */}</Composer.Form>
+<Composer.Form
+  onComposerSubmit={({ body, attachments }) => {
+    // Mutate your comments
+    // ...
+  }}
+>
+  {/* ... */}
+</Composer.Form>
 ```
 
 <PropertiesList>
+  <PropertiesListItem name="defaultAttachments" type="CommentAttachment[]">
+    The composer's initial attachments.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="pasteFilesAsAttachments"
+    type="boolean"
+    defaultValue="false"
+  >
+    Whether to create attachments when pasting files into the editor.
+  </PropertiesListItem>
   <PropertiesListItem
     name="onComposerSubmit"
     type="function"
     detailedType="(comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => Promise<void> | void"
   >
     The event handler called when the form is submitted.
+  </PropertiesListItem>
+  <PropertiesListItem name="disabled" type="boolean" defaultValue="false">
+    Whether the composer is disabled.
   </PropertiesListItem>
   <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
     Replace the rendered element by the one passed as a child.
@@ -921,6 +974,34 @@ A button to submit the composer.
   </PropertiesListItem>
 </PropertiesList>
 
+##### Composer.AttachFiles [#primitives-Composer.AttachFiles]
+
+A button which opens a file picker to create attachments.
+
+```tsx
+<Composer.AttachFiles>Attach files</Composer.AttachFiles>
+```
+
+<PropertiesList>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropertiesListItem>
+</PropertiesList>
+
+##### Composer.AttachmentsDropArea [#primitives-Composer.AttachmentsDropArea]
+
+A drop area which accepts files to create attachments.
+
+```tsx
+<Composer.AttachmentsDropArea>Drop files here</Composer.AttachmentsDropArea>
+```
+
+<PropertiesList>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropertiesListItem>
+</PropertiesList>
+
 #### Comment [#primitives-Comment]
 
 Used to render a single comment.
@@ -1149,45 +1230,224 @@ function MyComments({ thread }: { thread: ThreadData }) {
   </PropertiesListItem>
 </PropertiesList>
 
+#### FileSize [#primitives-FileSize]
+
+Displays a formatted file size.
+
+```tsx
+<FileSize size={100000} />
+```
+
+Use with `attachment.size` to display a human-readable file size.
+
+```tsx
+import { CommentData, FileSize } from "@liveblocks/react-ui";
+
+function MyComment({ comment }: { comment: CommentData }) {
+  return (
+    <div>
+      {/* ... */}
+
+      {comment.attachments.map((attachment) => (
+        <div key={attachment.id}>
+          {attachment.name}
+          // +++
+          <FileSize size={attachment.size} />
+          // +++
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+<PropertiesList>
+  <PropertiesListItem name="size" type="number" required>
+    The file size to display.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="children"
+    type="function"
+    detailedType="(size: number) => ReactNode"
+  >
+    A function to format the displayed file size. Defaults to a human-readable
+    file size formatting function.
+  </PropertiesListItem>
+  <PropertiesListItem name="locale" type="string">
+    The locale used when formatting the file size. Defaults to the browser’s
+    locale.
+  </PropertiesListItem>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropertiesListItem>
+</PropertiesList>
+
 ### Hooks
 
 #### useComposer
 
 Returns states and methods related to the composer. Can only be used within the
 [`Composer.Form`](#primitives-Composer.Form) primitive.
+[All values listed below](#useComposer-values).
 
 ```tsx
 import { useComposer } from "@liveblocks/react-ui/primitives";
 
-const { isEmpty, submit } = useComposer();
+const { isEmpty, attachments, submit /* ... */ } = useComposer();
 ```
 
-This hook has a number of uses, for example constructing a custom button that
-submits threads, and disabling it when the composer input is empty.
+##### Custom composer behavior
 
-```tsx highlight="14,17-19"
+`useComposer` can be used in combination with
+[`Composer` primitives](#primitives-Composer) to create a custom composer, and
+control its behavior. For example, `createMention` allows you to create a button
+which focuses the editor, adds `@`, and opens the mention suggestions dropdown.
+
+```tsx
 import { Composer, useComposer } from "@liveblocks/react-ui/primitives";
+import { useCreateThread } from "@liveblocks/react/suspense";
 
 function MyComposer() {
+  const createThread = useCreateThread();
+  // +++
+  const { createMention } = useComposer();
+  // +++
+
   return (
-    <Composer.Form onComposerSubmit={/* handle submit */}>
+    <Composer.Form
+      onComposerSubmit={({ body, attachments }) => {
+        const thread = createThread({
+          body,
+          attachments,
+          metadata: {},
+        });
+      }}
+    >
       <Composer.Editor components={/* Your custom component parts */} />
-      <MyComposerButton />
+      // +++
+      <button onClick={createMention}>Add mention</button>
+      // +++
+    </Composer.Form>
+  );
+}
+```
+
+##### Handle attachments
+
+When using primitives,
+[`Composer.AttachFiles`](#primitives-Composer.AttachFiles) and
+[`Composer.AttachmentsDropArea`](#primitives-Composer.AttachmentsDropArea) add
+attachments to the composer, but they’re not rendered without `useComposer`. The
+`attachments` array can be used to render the current attachments, and
+`removeAttachment` allows you to remove them.
+
+```tsx
+import { Composer, useComposer } from "@liveblocks/react-ui/primitives";
+import { useCreateThread } from "@liveblocks/react/suspense";
+
+function MyComposer() {
+  const createThread = useCreateThread();
+
+  return (
+    <Composer.Form onComposerSubmit={({ body, attachments }) => {
+      const thread = createThread({
+        body,
+        attachments,
+        metadata: {},
+      });
+    }}>
+      <Composer.Editor components={/* Your custom component parts */} />
+      // +++
+      <MyComposerAttachments />
+      // +++
+      <Composer.AttachFiles>Attach Files</Composer.AttachFiles>
+      <Composer.Submit>Submit</Composer.Submit>
     </Composer.Form>
   );
 }
 
-// Button that submits the form, and is disabled when the input is empty
-function MyComposerButton() {
-  const { isEmpty, submit } = useComposer();
+function MyComposerAttachments() {
+  // +++
+  const { attachments, removeAttachment } = useComposer();
+  // +++
 
   return (
-    <button onClick={submit} disabled={isEmpty}>
-      Create thread
-    </button>
+    <div>
+      // +++
+      {attachments.map((attachment) => (
+        <div key={attachment.id}>
+          {attachment.name} ({attachment.status})
+          <button onClick={() => removeAttachment(attachment.id)}>Remove</button>
+        </div>
+      )}
+      // +++
+    </div>
   );
 }
 ```
+
+##### Values [#useComposer-values]
+
+<PropertiesList>
+  <PropertiesListItem name="isDisabled" type="boolean">
+    Whether the composer is currently disabled.
+  </PropertiesListItem>
+  <PropertiesListItem name="isFocused" type="boolean">
+    Whether the editor is currently focused.
+  </PropertiesListItem>
+  <PropertiesListItem name="isEmpty" type="boolean">
+    Whether the editor is currently empty.
+  </PropertiesListItem>
+  <PropertiesListItem name="canSubmit" type="boolean">
+    Whether the composer can currently be submitted.
+  </PropertiesListItem>
+  <PropertiesListItem name="submit" type="function" detailedType="() => void">
+    Submit the editor programmatically.
+  </PropertiesListItem>
+  <PropertiesListItem name="clear" type="function" detailedType="() => void">
+    Clear the editor programmatically.
+  </PropertiesListItem>
+  <PropertiesListItem name="select" type="function" detailedType="() => void">
+    Select the editor programmatically.
+  </PropertiesListItem>
+  <PropertiesListItem name="focus" type="function" detailedType="() => void">
+    Focus the editor programmatically.
+  </PropertiesListItem>
+  <PropertiesListItem name="blur" type="function" detailedType="() => void">
+    Blur the editor programmatically.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="createMention"
+    type="function"
+    detailedType="() => void"
+  >
+    Start creating a mention at the current selection.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="insertText"
+    type="function"
+    detailedType="(text: string) => void"
+  >
+    Insert text at the current selection.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="attachFiles"
+    type="function"
+    detailedType="() => void"
+  >
+    Open a file picker programmatically to create attachments.
+  </PropertiesListItem>
+  <PropertiesListItem name="attachments" type="ComposerAttachment[]">
+    The composer’s current attachments.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="removeAttachment"
+    type="function"
+    detailedType="(attachmentId: string) => void"
+  >
+    Remove an attachment by its ID.
+  </PropertiesListItem>
+</PropertiesList>
 
 #### Other hooks
 
@@ -1197,16 +1457,19 @@ on the
 [React API reference page](/docs/api-reference/liveblocks-react#Comments).
 
 - [`useThreads`](/docs/api-reference/liveblocks-react#useThreads)
+- [`useThreadSubscription`](/docs/api-reference/liveblocks-react#useThreadSubscription)
 - [`useCreateThread`](/docs/api-reference/liveblocks-react#useCreateThread)
 - [`useDeleteThread`](/docs/api-reference/liveblocks-react#useDeleteThread)
 - [`useEditThreadMetadata`](/docs/api-reference/liveblocks-react#useEditThreadMetadata)
 - [`useMarkThreadAsResolved`](/docs/api-reference/liveblocks-react#useMarkThreadAsResolved)
 - [`useMarkThreadAsUnresolved`](/docs/api-reference/liveblocks-react#useMarkThreadAsUnresolved)
+- [`useMarkThreadAsRead`](/docs/api-reference/liveblocks-react#useMarkThreadAsRead)
 - [`useCreateComment`](/docs/api-reference/liveblocks-react#useCreateComment)
 - [`useEditComment`](/docs/api-reference/liveblocks-react#useEditComment)
 - [`useDeleteComment`](/docs/api-reference/liveblocks-react#useDeleteComment)
 - [`useAddReaction`](/docs/api-reference/liveblocks-react#useAddReaction)
 - [`useRemoveReaction`](/docs/api-reference/liveblocks-react#useRemoveReaction)
+- [`useAttachmentUrl`](/docs/api-reference/liveblocks-react#useAttachmentUrl)
 
 ## Notifications
 
@@ -1458,8 +1721,14 @@ Displays a thread inbox notification.
   <PropertiesListItem name="showActions" type='boolean | "hover"'>
     How to show or hide the actions.
   </PropertiesListItem>
-  <PropertiesListItem name="showRoomName" type="boolean">
+  <PropertiesListItem name="showRoomName" type="boolean" defaultValue="true">
     Whether to show the room name in the title.
+  </PropertiesListItem>
+  <PropertiesListItem name="showReactions" type="boolean" defaultValue="true">
+    Whether to show reactions.
+  </PropertiesListItem>
+  <PropertiesListItem name="showAttachments" type="boolean" defaultValue="true">
+    Whether to show attachments.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -1546,6 +1815,11 @@ element.
   </PropertiesListItem>
 </PropertiesList>
 
+### Hooks [#Notification-hooks]
+
+All hooks for Notifications are in
+[`@liveblocks/react`](/docs/api-reference/liveblocks-react#Notifications).
+
 ## Version History
 
 <Banner title="Private beta">
@@ -1559,7 +1833,7 @@ hear from you.
 When enabled, version history will automatically create versions of your
 [Lexical](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical) or
 [Yjs](/docs/api-reference/liveblocks-yjs) document and allow you to restore to
-specific verions. These components aid in displaying a list of those versions.
+specific versions. These components aid in displaying a list of those versions.
 
 ### Default components
 
@@ -1650,6 +1924,11 @@ Set configuration options for all `@liveblocks/react-ui` components, such as
     The container to render the portal into.
   </PropertiesListItem>
 </PropertiesList>
+
+### Hooks [#Version-History-hooks]
+
+All hooks for Version History are in
+[`@liveblocks/react`](/docs/api-reference/liveblocks-react#Version-History).
 
 ## Styling and customization
 

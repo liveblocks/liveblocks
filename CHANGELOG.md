@@ -1,3 +1,151 @@
+## 2.11.0
+
+### `@liveblocks/react-ui`
+
+- Upgrade dependencies.
+- Fix minor appearance issues related to attachments.
+
+## 2.10.2
+
+### `@liveblocks/client`
+
+- Internal refactorings and code cleanup across various parts of the client's
+  inner workings.
+
+### `@liveblocks/react`
+
+- Implement automatic retry for initial load of inbox notifications, user
+  threads, room threads, room versions, or room notification settings—except
+  when encountering a 4xx error.
+- Background tabs will no longer poll threads, notification, room versions or
+  room notification settings.
+- Fix incorrect suspense export for `useRoomNotificationSettings` hook.
+- Support for React 19 and Next.js 15.
+
+### `@liveblocks/react-ui`
+
+- Support for React 19 and Next.js 15.
+
+### `@liveblocks/react-lexical`
+
+- Support for React 19 and Next.js 15.
+
+## 2.10.0
+
+### `@liveblocks/client`
+
+- Add new methods under `client.resolvers.*` to invalidate the cache of
+  `resolveUsers`, `resolveRoomsInfo`, and `resolveMentionSuggestions`.
+- In storage update notifications (using
+  `room.subscribe(root, ..., { isDeep: true })`), all LiveList deletion updates
+  will now also include the item that was deleted (#2008)
+
+### `@liveblocks/react-ui`
+
+- Improve and fix pasting rich text into the composer.
+- Improve mention suggestions click behavior.
+
+## 2.9.2
+
+### `@liveblocks/node`
+
+- Detect invalid chars in secret keys and throw a more helpful error message
+
+## 2.9.1
+
+### `@liveblocks/client`
+
+- Fix type definition of `ThreadData`: `updatedAt` is always set
+- Fix bug where client wasn't always using the newest delta update backend
+  endpoint yet
+- Fix regression with metadata filtering on explicitly-`undefined` values
+
+### `@liveblocks/react-ui`
+
+- When `Composer` is disabled, its actions are now also disabled as expected.
+- Various event propagation improvements in `Composer`.
+
+## 2.9.0
+
+We are introducing pagination support to allow apps using threads and inbox
+notifications to be built in a more user-friendly way, where the initial load is
+faster and more data can be fetched incrementally as users interact with the
+app.
+
+### `@liveblocks/react`
+
+- Add pagination support to `useInboxNotifications()`
+
+  ```tsx
+  const {
+    inboxNotifications,
+    isLoading,
+    error,
+
+    // ✨ New in Liveblocks 2.9
+    fetchMore,
+    isFetchingMore,
+    hasFetchedAll,
+    fetchMoreError,
+  } = useInboxNotifications();
+  ```
+
+- Add pagination support to `useThreads()` and `useUserThreads_experimental()`
+
+  ```tsx
+  const {
+    threads,
+    isLoading,
+    error,
+
+    // ✨ New in Liveblocks 2.9
+    fetchMore,
+    isFetchingMore,
+    hasFetchedAll,
+    fetchMoreError,
+  } = useThreads({ query });
+  ```
+
+## 2.8.2
+
+### `@liveblocks/client`
+
+- Send client version in HTTP request headers from the client, to ensure
+  backward compatible responses from the server
+
+## 2.8.1
+
+### `@liveblocks/react-ui`
+
+- Expose `onComposerSubmit` on `Thread` to react to the inner composer of a
+  thread.
+
+## 2.8.0
+
+We are introducing attachments to allow users to add files to their comments,
+for more information about this change please read our
+[Upgrade Guide for 2.8](https://liveblocks.io/docs/platform/upgrading/2.8).
+
+### `@liveblocks/react-ui`
+
+- Add out-of-the-box support for attachments in the default components.
+- Add new primitives to support attachments in custom components:
+  - `Composer.AttachmentsDropArea`: Receives files via drag-and-drop
+  - `Composer.AttachFiles`: Opens a file picker
+  - `FileSize`: Displays a formatted file size
+- Add values and methods to `useComposer` to support attachments in custom
+  components.
+
+### `@liveblocks/react`
+
+- Add `useAttachmentUrl` hook to get presigned URLs for attachments.
+
+### `@liveblocks/client`
+
+- Add `prepareAttachment` and `uploadAttachment` methods to `Room` to create
+  attachments.
+- Add `getAttachmentUrl` method to `Room` to get presigned URLs for attachments.
+
 ## 2.7.2
 
 ### `@liveblocks/react`
@@ -427,7 +575,7 @@ For full upgrade instructions and codemods, see the
 ### `@liveblocks/node`
 
 - Fix "`process` is undefined" issue in Vite builds. This issue was already
-  fixed for `@liveblocks/core`, but not for `@liveblocks/node` yet.
+  fixed for `@liveblocks/client`, but not for `@liveblocks/node` yet.
 
 ### DevTools
 

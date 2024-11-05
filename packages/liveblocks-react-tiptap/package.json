@@ -1,0 +1,115 @@
+{
+  "name": "@liveblocks/react-tiptap",
+  "version": "2.10.2",
+  "description": "A tiptap react plugin to enable collaboration, comments, live cursors, and more.",
+  "license": "Apache-2.0",
+  "type": "commonjs",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "module": "./dist/index.mjs",
+        "default": "./dist/index.js"
+      }
+    },
+    "./styles.css": {
+      "types": "./styles.css.d.ts",
+      "default": "./styles.css"
+    }
+  },
+  "files": [
+    "dist/**",
+    "**/*.css",
+    "**/*.css.d.ts",
+    "**/*.css.map",
+    "README.md"
+  ],
+  "scripts": {
+    "dev": "rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript --watch",
+    "build": "rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
+    "format": "eslint --fix src/; stylelint --fix src/styles/; prettier --write src/",
+    "lint": "eslint src/; stylelint src/styles/",
+    "lint:package": "publint --strict && attw --pack",
+    "start": "npm run dev",
+    "test": "jest --silent --verbose --color=always",
+    "test:watch": "jest --silent --verbose --color=always --watch"
+  },
+  "dependencies": {
+    "@floating-ui/react-dom": "^2.1.2",
+    "@liveblocks/client": "2.10.2",
+    "@liveblocks/core": "2.10.2",
+    "@liveblocks/react": "2.10.2",
+    "@liveblocks/react-ui": "2.10.2",
+    "@liveblocks/yjs": "2.10.2",
+    "@tiptap/core": "^2.7.2",
+    "@tiptap/react": "^2.7.2",
+    "@tiptap/suggestion": "^2.7.2",
+    "use-sync-external-store": "^1.2.2",
+    "y-prosemirror": "^1.2.12",
+    "yjs": "^13.6.18"
+  },
+  "peerDependencies": {
+    "@tiptap/extension-collaboration": "^2.7.2",
+    "@tiptap/extension-collaboration-cursor": "^2.7.2",
+    "@tiptap/pm": "^2.7.2",
+    "@tiptap/react": "^2.7.2",
+    "@tiptap/suggestion": "^2.7.2",
+    "react": "^16.14.0 || ^17 || ^18",
+    "react-dom": "^16.14.0 || ^17 || ^18"
+  },
+  "devDependencies": {
+    "@liveblocks/eslint-config": "*",
+    "@liveblocks/jest-config": "*",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-replace": "^5.0.5",
+    "@rollup/plugin-typescript": "^11.1.2",
+    "@testing-library/jest-dom": "^5.16.5",
+    "@types/use-sync-external-store": "^0.0.6",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "msw": "^0.27.1",
+    "rollup": "^3.28.0",
+    "rollup-plugin-dts": "^5.3.1",
+    "rollup-plugin-esbuild": "^5.0.0",
+    "rollup-plugin-preserve-directives": "^0.2.0",
+    "stylelint": "^15.10.2",
+    "stylelint-config-standard": "^34.0.0",
+    "stylelint-order": "^6.0.3",
+    "stylelint-plugin-logical-css": "^0.13.2"
+  },
+  "sideEffects": false,
+  "bugs": {
+    "url": "https://github.com/liveblocks/liveblocks/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/liveblocks/liveblocks.git",
+    "directory": "packages/liveblocks-react-tiptap"
+  },
+  "homepage": "https://liveblocks.io",
+  "keywords": [
+    "tiptap",
+    "react",
+    "comments",
+    "threads",
+    "liveblocks",
+    "real-time",
+    "toolkit",
+    "multiplayer",
+    "websockets",
+    "collaboration",
+    "collaborative",
+    "presence",
+    "crdts",
+    "synchronize",
+    "rooms",
+    "documents",
+    "conflict resolution"
+  ]
+}

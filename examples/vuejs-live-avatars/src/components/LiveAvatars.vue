@@ -17,6 +17,7 @@ const unsubscribeMyPresence = room.subscribe("my-presence", (newPresence) => {
 });
 
 const unsubscribeOthers = room.subscribe("others", (newOthers) => {
+  // @ts-ignore
   others.value = newOthers;
 });
 

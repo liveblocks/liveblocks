@@ -37,6 +37,10 @@ describe("useCreateThread", () => {
           ctx.json({
             data: [],
             inboxNotifications: [],
+            meta: {
+              requestedAt: new Date(),
+              nextCursor: null,
+            },
           })
         );
       }),
@@ -77,7 +81,7 @@ describe("useCreateThread", () => {
 
     const { result, unmount } = renderHook(
       () => ({
-        threads: useThreads().threads,
+        threadData: useThreads(),
         createThread: useCreateThread(),
       }),
       {
@@ -87,9 +91,18 @@ describe("useCreateThread", () => {
       }
     );
 
-    expect(result.current.threads).toBeUndefined();
+    expect(result.current.threadData).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.threads).toEqual([]));
+    await waitFor(() =>
+      expect(result.current.threadData).toEqual({
+        isLoading: false,
+        threads: [],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
+      })
+    );
 
     const thread = await act(() =>
       result.current.createThread({
@@ -100,11 +113,13 @@ describe("useCreateThread", () => {
       })
     );
 
-    expect(result.current.threads?.[0]).toEqual(thread);
+    expect(result.current.threadData.threads?.[0]).toEqual(thread);
 
     // We're using the createdDate overriden by the server to ensure the optimistic update have been properly deleted
     await waitFor(() =>
-      expect(result.current.threads?.[0]?.createdAt).toEqual(fakeCreatedAt)
+      expect(result.current.threadData.threads?.[0]?.createdAt).toEqual(
+        fakeCreatedAt
+      )
     );
 
     unmount();
@@ -119,6 +134,10 @@ describe("useCreateThread", () => {
           ctx.json({
             data: [],
             inboxNotifications: [],
+            meta: {
+              requestedAt: new Date(),
+              nextCursor: null,
+            },
           })
         );
       }),
@@ -133,7 +152,7 @@ describe("useCreateThread", () => {
 
     const { result, unmount } = renderHook(
       () => ({
-        threads: useThreads().threads,
+        threadsData: useThreads(),
         createThread: useCreateThread(),
       }),
       {
@@ -143,9 +162,18 @@ describe("useCreateThread", () => {
       }
     );
 
-    expect(result.current.threads).toBeUndefined();
+    expect(result.current.threadsData).toEqual({ isLoading: true });
 
-    await waitFor(() => expect(result.current.threads).toEqual([]));
+    await waitFor(() =>
+      expect(result.current.threadsData).toEqual({
+        isLoading: false,
+        threads: [],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
+      })
+    );
 
     const thread = await act(() =>
       result.current.createThread({
@@ -156,10 +184,10 @@ describe("useCreateThread", () => {
       })
     );
 
-    expect(result.current.threads).toEqual([thread]);
+    expect(result.current.threadsData.threads).toEqual([thread]);
 
     // Wait for optimistic update to be rolled back
-    await waitFor(() => expect(result.current.threads).toEqual([]));
+    await waitFor(() => expect(result.current.threadsData.threads).toEqual([]));
 
     unmount();
   });

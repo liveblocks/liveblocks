@@ -4,6 +4,7 @@ import type {
   InboxNotificationData,
   RoomNotificationSettings,
   ThreadData,
+  ThreadDataWithDeleteInfo,
 } from "@liveblocks/core";
 import type { ResponseResolver, RestContext, RestRequest } from "msw";
 import { rest } from "msw";
@@ -132,13 +133,38 @@ export function mockGetInboxNotifications(
     RestRequest<never, never>,
     RestContext,
     {
-      threads: ThreadData<any>[];
+      threads: ThreadData[];
       inboxNotifications: InboxNotificationData[];
+      meta: {
+        requestedAt: string; // ISO date
+        nextCursor: string | null;
+      };
     }
   >
 ) {
   return rest.get(
     "https://api.liveblocks.io/v2/c/inbox-notifications",
+    resolver
+  );
+}
+
+export function mockGetInboxNotificationsDelta(
+  resolver: ResponseResolver<
+    RestRequest<never, never>,
+    RestContext,
+    {
+      threads: ThreadData[];
+      inboxNotifications: InboxNotificationData[];
+      deletedInboxNotifications: InboxNotificationData[];
+      deletedThreads: ThreadDataWithDeleteInfo[];
+      meta: {
+        requestedAt: string; // ISO date
+      };
+    }
+  >
+) {
+  return rest.get(
+    "https://api.liveblocks.io/v2/c/inbox-notifications/delta",
     resolver
   );
 }

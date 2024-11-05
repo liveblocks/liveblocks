@@ -319,7 +319,7 @@ async () => {
     expectType<string>(thread.id);
     expectType<string>(thread.roomId);
     expectType<Date>(thread.createdAt);
-    expectType<Date | undefined>(thread.updatedAt);
+    expectType<Date>(thread.updatedAt);
     expectType<"red" | "blue">(thread.metadata.color);
     expectError(thread.metadata.nonexisting);
     expectType<CommentData[]>(thread.comments);
@@ -335,7 +335,7 @@ async () => {
     expectType<string>(thread.id);
     expectType<string>(thread.roomId);
     expectType<Date>(thread.createdAt);
-    expectType<Date | undefined>(thread.updatedAt);
+    expectType<Date>(thread.updatedAt);
     expectType<"red" | "blue">(thread.metadata.color);
     expectError(thread.metadata.nonexisting);
     expectType<CommentData[]>(thread.comments);
@@ -372,7 +372,7 @@ async () => {
     expectType<string>(thread.roomId);
     expectType<boolean>(thread.resolved);
     expectType<Date>(thread.createdAt);
-    expectType<Date | undefined>(thread.updatedAt);
+    expectType<Date>(thread.updatedAt);
     expectType<CommentData[]>(thread.comments);
   }
 
@@ -390,7 +390,7 @@ async () => {
     expectType<string>(thread.roomId);
     expectType<boolean>(thread.resolved);
     expectType<Date>(thread.createdAt);
-    expectType<Date | undefined>(thread.updatedAt);
+    expectType<Date>(thread.updatedAt);
     expectType<CommentData[]>(thread.comments);
   }
 };

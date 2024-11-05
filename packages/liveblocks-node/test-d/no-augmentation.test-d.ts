@@ -252,7 +252,7 @@ async () => {
     expectType<string>(thread.id);
     expectType<string>(thread.roomId);
     expectType<Date>(thread.createdAt);
-    expectType<Date | undefined>(thread.updatedAt);
+    expectType<Date>(thread.updatedAt);
     expectType<string | number | boolean | undefined>(thread.metadata.foo);
     expectType<string | number | boolean | undefined>(
       thread.metadata.nonexisting
@@ -270,7 +270,7 @@ async () => {
     expectType<string>(thread.id);
     expectType<string>(thread.roomId);
     expectType<Date>(thread.createdAt);
-    expectType<Date | undefined>(thread.updatedAt);
+    expectType<Date>(thread.updatedAt);
     expectType<string | number | boolean | undefined>(thread.metadata.foo);
     expectType<string | number | boolean | undefined>(
       thread.metadata.nonexisting
@@ -308,7 +308,7 @@ async () => {
     expectType<string>(thread.roomId);
     expectType<boolean>(thread.resolved);
     expectType<Date>(thread.createdAt);
-    expectType<Date | undefined>(thread.updatedAt);
+    expectType<Date>(thread.updatedAt);
     expectType<CommentData[]>(thread.comments);
   }
   // .markThreadAsUnresolved()
@@ -325,7 +325,7 @@ async () => {
     expectType<string>(thread.roomId);
     expectType<boolean>(thread.resolved);
     expectType<Date>(thread.createdAt);
-    expectType<Date | undefined>(thread.updatedAt);
+    expectType<Date>(thread.updatedAt);
     expectType<CommentData[]>(thread.comments);
   }
 };

@@ -132,7 +132,9 @@ function isSeparator(char: string): boolean {
  * @returns Whether the text content ends with a separator or not
  */
 function endsWithSeparator(textContent: string): boolean {
-  return isSeparator(textContent[textContent.length - 1]);
+  const lastCharacter = textContent[textContent.length - 1];
+
+  return lastCharacter !== undefined ? isSeparator(lastCharacter) : false;
 }
 
 /**
@@ -141,7 +143,9 @@ function endsWithSeparator(textContent: string): boolean {
  * @returns Whether the text content starts with a separator or not
  */
 function startsWithSeparator(textContent: string): boolean {
-  return isSeparator(textContent[0]);
+  const firstCharacter = textContent[0];
+
+  return firstCharacter !== undefined ? isSeparator(firstCharacter) : false;
 }
 
 /**
@@ -231,13 +235,17 @@ function isContentAroundValid(
   const [node, path] = entry;
   const text = node.text;
 
+  const contentBefore = text[start - 1];
   const contentBeforeIsValid =
-    start > 0
-      ? isSeparator(text[start - 1])
+    start > 0 && contentBefore
+      ? isSeparator(contentBefore)
       : isPreviousNodeValid(editor, path);
 
+  const contentAfter = text[end];
   const contentAfterIsValid =
-    end < text.length ? isSeparator(text[end]) : isNextNodeValid(editor, path);
+    end < text.length && contentAfter
+      ? isSeparator(contentAfter)
+      : isNextNodeValid(editor, path);
 
   return contentBeforeIsValid && contentAfterIsValid;
 }
@@ -258,9 +266,10 @@ const handleLinkEdit = (
   // Attempt to match the text content (of the Link node) against the URL regex
   const text = Node.string(node);
   const match = URL_REGEX.exec(text);
+  const matchContent = match?.[0];
 
   // Step 2: Ensure that the text content of the Link node matches the URL regex and is identical to the match
-  if (!match || match[0] !== text) {
+  if (!match || matchContent !== text) {
     Transforms.unwrapNodes(editor, { at: path });
     return;
   }
@@ -325,7 +334,7 @@ const handleLinkEdit = (
 
   // Step 6: Ensure that the url attribute of the Link node is identical to its text content
   if (node.url !== text) {
-    Transforms.setNodes(editor, { url: match[0] }, { at: path });
+    Transforms.setNodes(editor, { url: matchContent }, { at: path });
     return;
   }
 };
@@ -335,10 +344,14 @@ const handleLinkCreate = (editor: Editor, entry: NodeEntry<Text>) => {
 
   // Step 1: Ensure that the text content of the node matches the URL regex
   const match = URL_REGEX.exec(node.text);
-  if (!match) return;
+  const matchContent = match?.[0];
+
+  if (!match || matchContent === undefined) {
+    return;
+  }
 
   const start = match.index;
-  const end = start + match[0].length;
+  const end = start + matchContent.length;
 
   // Step 2: Ensure that the content around the node is valid
   if (!isContentAroundValid(editor, entry, start, end)) return;
@@ -347,7 +360,7 @@ const handleLinkCreate = (editor: Editor, entry: NodeEntry<Text>) => {
     editor,
     {
       type: "auto-link",
-      url: match[0],
+      url: matchContent,
       children: [],
     },
     {

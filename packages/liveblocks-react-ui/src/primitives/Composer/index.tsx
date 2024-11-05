@@ -13,15 +13,19 @@ import {
   size,
   useFloating,
 } from "@floating-ui/react-dom";
-import type { CommentBody } from "@liveblocks/core";
-import { useSelf } from "@liveblocks/react";
-import { Slot } from "@radix-ui/react-slot";
+import type { CommentAttachment, CommentBody } from "@liveblocks/core";
+import { useRoom } from "@liveblocks/react";
+import { useMentionSuggestions } from "@liveblocks/react/_private";
+import { Slot, Slottable } from "@radix-ui/react-slot";
 import type {
   AriaAttributes,
+  ChangeEvent,
   FocusEvent,
   FormEvent,
   KeyboardEvent,
+  MouseEvent,
   PointerEvent,
+  SyntheticEvent,
 } from "react";
 import React, {
   forwardRef,
@@ -60,7 +64,6 @@ import {
 
 import { useLiveblocksUIConfig } from "../../config";
 import { FLOATING_ELEMENT_COLLISION_PADDING } from "../../constants";
-import { useMentionSuggestions } from "../../shared";
 import { withAutoFormatting } from "../../slate/plugins/auto-formatting";
 import { withAutoLinks } from "../../slate/plugins/auto-links";
 import { withCustomLinks } from "../../slate/plugins/custom-links";
@@ -73,7 +76,8 @@ import {
   MENTION_CHARACTER,
   withMentions,
 } from "../../slate/plugins/mentions";
-import { withPasteHtml } from "../../slate/plugins/paste-html";
+import { withNormalize } from "../../slate/plugins/normalize";
+import { withPaste } from "../../slate/plugins/paste";
 import { getDOMRange } from "../../slate/utils/get-dom-range";
 import { isEmpty as isEditorEmpty } from "../../slate/utils/is-empty";
 import { leaveMarkEdge, toggleMark } from "../../slate/utils/marks";
@@ -94,14 +98,18 @@ import { useLayoutEffect } from "../../utils/use-layout-effect";
 import { useRefs } from "../../utils/use-refs";
 import { toAbsoluteUrl } from "../Comment/utils";
 import {
+  ComposerAttachmentsContext,
   ComposerContext,
   ComposerEditorContext,
   ComposerSuggestionsContext,
   useComposer,
+  useComposerAttachmentsContext,
   useComposerEditorContext,
   useComposerSuggestionsContext,
 } from "./contexts";
 import type {
+  ComposerAttachFilesProps,
+  ComposerAttachmentsDropAreaProps,
   ComposerEditorComponents,
   ComposerEditorElementProps,
   ComposerEditorLinkWrapperProps,
@@ -122,6 +130,8 @@ import {
   composerBodyToCommentBody,
   getPlacementFromPosition,
   getSideAndAlignFromPlacement,
+  useComposerAttachmentsDropArea,
+  useComposerAttachmentsManager,
 } from "./utils";
 
 const MENTION_SUGGESTIONS_POSITION: SuggestionsPosition = "top";
@@ -133,6 +143,8 @@ const COMPOSER_SUGGESTIONS_LIST_NAME = "ComposerSuggestionsList";
 const COMPOSER_SUGGESTIONS_LIST_ITEM_NAME = "ComposerSuggestionsListItem";
 const COMPOSER_SUBMIT_NAME = "ComposerSubmit";
 const COMPOSER_EDITOR_NAME = "ComposerEditor";
+const COMPOSER_ATTACH_FILES_NAME = "ComposerAttachFiles";
+const COMPOSER_ATTACHMENTS_DROP_AREA_NAME = "ComposerAttachmentsDropArea";
 const COMPOSER_FORM_NAME = "ComposerForm";
 
 const emptyCommentBody: CommentBody = {
@@ -140,13 +152,24 @@ const emptyCommentBody: CommentBody = {
   content: [{ type: "paragraph", children: [{ text: "" }] }],
 };
 
-function createComposerEditor() {
-  return withMentions(
-    withCustomLinks(
-      withAutoLinks(
-        withAutoFormatting(
-          withEmptyClearFormatting(
-            withPasteHtml(withHistory(withReact(createEditor())))
+function createComposerEditor({
+  createAttachments,
+  pasteFilesAsAttachments,
+}: {
+  createAttachments: (files: File[]) => void;
+  pasteFilesAsAttachments?: boolean;
+}) {
+  return withNormalize(
+    withMentions(
+      withCustomLinks(
+        withAutoLinks(
+          withAutoFormatting(
+            withEmptyClearFormatting(
+              withPaste(withHistory(withReact(createEditor())), {
+                createAttachments,
+                pasteFilesAsAttachments,
+              })
+            )
           )
         )
       )
@@ -521,7 +544,15 @@ const ComposerSuggestionsListItem = forwardRef<
   ComposerSuggestionsListItemProps
 >(
   (
-    { value, children, onPointerMove, onPointerDown, asChild, ...props },
+    {
+      value,
+      children,
+      onPointerMove,
+      onPointerDown,
+      onClick,
+      asChild,
+      ...props
+    },
     forwardedRef
   ) => {
     const ref = useRef<HTMLLIElement>(null);
@@ -557,21 +588,26 @@ const ComposerSuggestionsListItem = forwardRef<
       (event: PointerEvent<HTMLLIElement>) => {
         onPointerDown?.(event);
 
-        if (!event.isDefaultPrevented()) {
-          const target = event.target as HTMLElement;
+        event.preventDefault();
+        event.stopPropagation();
+      },
+      [onPointerDown]
+    );
 
-          if (target.hasPointerCapture(event.pointerId)) {
-            target.releasePointerCapture(event.pointerId);
-          }
+    const handleClick = useCallback(
+      (event: MouseEvent<HTMLLIElement>) => {
+        onClick?.(event);
 
-          if (event.button === 0 && event.ctrlKey === false) {
-            onItemSelect(value);
+        const wasDefaultPrevented = event.isDefaultPrevented();
 
-            event.preventDefault();
-          }
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (!wasDefaultPrevented) {
+          onItemSelect(value);
         }
       },
-      [onItemSelect, onPointerDown, value]
+      [onClick, onItemSelect, value]
     );
 
     return (
@@ -582,6 +618,7 @@ const ComposerSuggestionsListItem = forwardRef<
         aria-selected={isSelected || undefined}
         onPointerMove={handlePointerMove}
         onPointerDown={handlePointerDown}
+        onClick={handleClick}
         {...props}
         ref={mergedRefs}
       >
@@ -639,13 +676,16 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     },
     forwardedRef
   ) => {
-    const self = useSelf();
-    const isDisabled = useMemo(
-      () => disabled || (self ? !self.canComment : false),
-      [disabled, self?.canComment] // eslint-disable-line react-hooks/exhaustive-deps
-    );
     const { editor, validate, setFocused } = useComposerEditorContext();
-    const { submit, focus, select, isEmpty, isFocused } = useComposer();
+    const {
+      submit,
+      focus,
+      select,
+      canSubmit,
+      isDisabled: isComposerDisabled,
+      isFocused,
+    } = useComposer();
+    const isDisabled = isComposerDisabled || disabled;
     const initialBody = useInitial(defaultValue ?? emptyCommentBody);
     const initialEditorValue = useMemo(() => {
       return commentBodyToComposerBody(initialBody);
@@ -758,9 +798,13 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
           }
 
           // Submit the editor on Enter
-          if (isKey(event, "Enter", { shift: false }) && !isEmpty) {
+          if (isKey(event, "Enter", { shift: false })) {
+            // Even if submitting is not possible, don't do anything else on Enter. (e.g. creating a new line)
             event.preventDefault();
-            submit();
+
+            if (canSubmit) {
+              submit();
+            }
           }
 
           // Create a new line on Shift + Enter
@@ -797,7 +841,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       [
         createMention,
         editor,
-        isEmpty,
+        canSubmit,
         mentionDraft,
         mentionSuggestions,
         selectedMentionSuggestionIndex,
@@ -926,6 +970,9 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
   }
 );
 
+const MAX_ATTACHMENTS = 10;
+const MAX_ATTACHMENT_SIZE = 1024 * 1024 * 1024; // 1 GB
+
 /**
  * Surrounds the composer's content and handles submissions.
  *
@@ -937,15 +984,86 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
  */
 const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
   (
-    { children, onSubmit, onComposerSubmit, asChild, ...props },
+    {
+      children,
+      onSubmit,
+      onComposerSubmit,
+      defaultAttachments = [],
+      pasteFilesAsAttachments,
+      disabled,
+      asChild,
+      ...props
+    },
     forwardedRef
   ) => {
     const Component = asChild ? Slot : "form";
-    const editor = useInitial(createComposerEditor);
+    const room = useRoom();
     const [isEmpty, setEmpty] = useState(true);
+    const [isSubmitting, setSubmitting] = useState(false);
     const [isFocused, setFocused] = useState(false);
+    // Later: Offer as Composer.Form props: { maxAttachments: number; maxAttachmentSize: number; supportedAttachmentMimeTypes: string[]; }
+    const maxAttachments = MAX_ATTACHMENTS;
+    const maxAttachmentSize = MAX_ATTACHMENT_SIZE;
+    const {
+      attachments,
+      isUploadingAttachments,
+      addAttachments,
+      removeAttachment,
+      clearAttachments,
+    } = useComposerAttachmentsManager(defaultAttachments, {
+      maxFileSize: maxAttachmentSize,
+    });
+    const numberOfAttachments = attachments.length;
+    const hasMaxAttachments = numberOfAttachments >= maxAttachments;
+    const isDisabled = useMemo(() => {
+      const self = room.getSelf();
+      const canComment = self?.canComment ?? true;
+
+      return isSubmitting || disabled || !canComment;
+    }, [isSubmitting, disabled, room]);
+    const canSubmit = useMemo(() => {
+      return !isEmpty && !isUploadingAttachments;
+    }, [isEmpty, isUploadingAttachments]);
     const ref = useRef<HTMLFormElement>(null);
     const mergedRefs = useRefs(forwardedRef, ref);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const createAttachments = useCallback(
+      (files: File[]) => {
+        if (!files.length) {
+          return;
+        }
+
+        const numberOfAcceptedFiles = Math.max(
+          0,
+          maxAttachments - numberOfAttachments
+        );
+
+        files.splice(numberOfAcceptedFiles);
+
+        const attachments = files.map((file) => room.prepareAttachment(file));
+
+        addAttachments(attachments);
+      },
+      [addAttachments, maxAttachments, numberOfAttachments, room]
+    );
+
+    const createAttachmentsRef = useRef(createAttachments);
+
+    useEffect(() => {
+      createAttachmentsRef.current = createAttachments;
+    }, [createAttachments]);
+
+    const stableCreateAttachments = useCallback((files: File[]) => {
+      createAttachmentsRef.current(files);
+    }, []);
+
+    const editor = useInitial(() =>
+      createComposerEditor({
+        createAttachments: stableCreateAttachments,
+        pasteFilesAsAttachments,
+      })
+    );
 
     const validate = useCallback(
       (value: SlateElement[]) => {
@@ -955,6 +1073,10 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     );
 
     const submit = useCallback(() => {
+      if (!canSubmit) {
+        return;
+      }
+
       // We need to wait for the next frame in some cases like when composing diacritics,
       // we want any native handling to be done first while still being handled on `keydown`.
       requestAnimationFrame(() => {
@@ -962,7 +1084,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
           requestSubmit(ref.current);
         }
       });
-    }, []);
+    }, [canSubmit]);
 
     const clear = useCallback(() => {
       SlateTransforms.delete(editor, {
@@ -999,26 +1121,66 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       ReactEditor.blur(editor);
     }, [editor]);
 
-    const onSubmitEnd = useCallback(() => {
-      clear();
-      blur();
-    }, [blur, clear]);
-
     const createMention = useCallback(() => {
+      if (disabled) {
+        return;
+      }
+
       focus();
       insertMentionCharacter(editor);
-    }, [editor, focus]);
+    }, [disabled, editor, focus]);
 
     const insertText = useCallback(
       (text: string) => {
+        if (disabled) {
+          return;
+        }
+
         focus(false);
         insertSlateText(editor, text);
       },
-      [editor, focus]
+      [disabled, editor, focus]
     );
+
+    const attachFiles = useCallback(() => {
+      if (disabled) {
+        return;
+      }
+
+      if (fileInputRef.current) {
+        fileInputRef.current.click();
+      }
+    }, [disabled]);
+
+    const handleAttachmentsInputChange = useCallback(
+      (event: ChangeEvent<HTMLInputElement>) => {
+        if (disabled) {
+          return;
+        }
+
+        if (event.target.files) {
+          createAttachments(Array.from(event.target.files));
+
+          // Reset the input value to allow selecting the same file(s) again
+          event.target.value = "";
+        }
+      },
+      [createAttachments, disabled]
+    );
+
+    const onSubmitEnd = useCallback(() => {
+      clear();
+      blur();
+      clearAttachments();
+      setSubmitting(false);
+    }, [blur, clear, clearAttachments]);
 
     const handleSubmit = useCallback(
       (event: FormEvent<HTMLFormElement>) => {
+        if (disabled) {
+          return;
+        }
+
         // In some situations (e.g. pressing Enter while composing diacritics), it's possible
         // for the form to be submitted as empty even though we already checked whether the
         // editor was empty when handling the key press.
@@ -1042,20 +1204,44 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
         const body = composerBodyToCommentBody(
           editor.children as ComposerBodyData
         );
-        const comment = { body };
+        // Only non-local attachments are included to be submitted.
+        const commentAttachments: CommentAttachment[] = attachments
+          .filter(
+            (attachment) =>
+              attachment.type === "attachment" ||
+              (attachment.type === "localAttachment" &&
+                attachment.status === "uploaded")
+          )
+          .map((attachment) => {
+            return {
+              id: attachment.id,
+              type: "attachment",
+              mimeType: attachment.mimeType,
+              size: attachment.size,
+              name: attachment.name,
+            };
+          });
 
-        const promise = onComposerSubmit(comment, event);
+        const promise = onComposerSubmit(
+          { body, attachments: commentAttachments },
+          event
+        );
 
         event.preventDefault();
 
         if (promise) {
+          setSubmitting(true);
           promise.then(onSubmitEnd);
         } else {
           onSubmitEnd();
         }
       },
-      [editor, onComposerSubmit, onSubmit, onSubmitEnd]
+      [disabled, editor, attachments, onComposerSubmit, onSubmit, onSubmitEnd]
     );
+
+    const stopPropagation = useCallback((event: SyntheticEvent) => {
+      event.stopPropagation();
+    }, []);
 
     return (
       <ComposerEditorContext.Provider
@@ -1065,23 +1251,47 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
           setFocused,
         }}
       >
-        <ComposerContext.Provider
+        <ComposerAttachmentsContext.Provider
           value={{
-            isFocused,
-            isEmpty,
-            submit,
-            clear,
-            select,
-            focus,
-            blur,
-            createMention,
-            insertText,
+            createAttachments,
+            isUploadingAttachments,
+            hasMaxAttachments,
+            maxAttachments,
+            maxAttachmentSize,
           }}
         >
-          <Component {...props} onSubmit={handleSubmit} ref={mergedRefs}>
-            {children}
-          </Component>
-        </ComposerContext.Provider>
+          <ComposerContext.Provider
+            value={{
+              isDisabled,
+              isFocused,
+              isEmpty,
+              canSubmit,
+              submit,
+              clear,
+              select,
+              focus,
+              blur,
+              createMention,
+              insertText,
+              attachments,
+              attachFiles,
+              removeAttachment,
+            }}
+          >
+            <Component {...props} onSubmit={handleSubmit} ref={mergedRefs}>
+              <input
+                type="file"
+                multiple
+                ref={fileInputRef}
+                onChange={handleAttachmentsInputChange}
+                onClick={stopPropagation}
+                tabIndex={-1}
+                style={{ display: "none" }}
+              />
+              <Slottable>{children}</Slottable>
+            </Component>
+          </ComposerContext.Provider>
+        </ComposerAttachmentsContext.Provider>
       </ComposerEditorContext.Provider>
     );
   }
@@ -1096,12 +1306,8 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 const ComposerSubmit = forwardRef<HTMLButtonElement, ComposerSubmitProps>(
   ({ children, disabled, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "button";
-    const { isEmpty } = useComposer();
-    const self = useSelf();
-    const isDisabled = useMemo(
-      () => disabled || isEmpty || (self ? !self.canComment : false),
-      [disabled, isEmpty, self?.canComment] // eslint-disable-line react-hooks/exhaustive-deps
-    );
+    const { canSubmit, isDisabled: isComposerDisabled } = useComposer();
+    const isDisabled = isComposerDisabled || disabled || !canSubmit;
 
     return (
       <Component
@@ -1116,7 +1322,94 @@ const ComposerSubmit = forwardRef<HTMLButtonElement, ComposerSubmitProps>(
   }
 );
 
+/**
+ * A button which opens a file picker to create attachments.
+ *
+ * @example
+ * <Composer.AttachFiles>Attach files</Composer.AttachFiles>
+ */
+const ComposerAttachFiles = forwardRef<
+  HTMLButtonElement,
+  ComposerAttachFilesProps
+>(({ children, onClick, disabled, asChild, ...props }, forwardedRef) => {
+  const Component = asChild ? Slot : "button";
+  const { hasMaxAttachments } = useComposerAttachmentsContext();
+  const { isDisabled: isComposerDisabled, attachFiles } = useComposer();
+  const isDisabled = isComposerDisabled || hasMaxAttachments || disabled;
+
+  const handleClick = useCallback(
+    (event: MouseEvent<HTMLButtonElement>) => {
+      onClick?.(event);
+
+      if (!event.isDefaultPrevented()) {
+        attachFiles();
+      }
+    },
+    [attachFiles, onClick]
+  );
+
+  return (
+    <Component
+      type="button"
+      {...props}
+      onClick={handleClick}
+      ref={forwardedRef}
+      disabled={isDisabled}
+    >
+      {children}
+    </Component>
+  );
+});
+
+/**
+ * A drop area which accepts files to create attachments.
+ *
+ * @example
+ * <Composer.AttachmentsDropArea>
+ *   Drop files here
+ * </Composer.AttachmentsDropArea>
+ */
+const ComposerAttachmentsDropArea = forwardRef<
+  HTMLDivElement,
+  ComposerAttachmentsDropAreaProps
+>(
+  (
+    {
+      onDragEnter,
+      onDragLeave,
+      onDragOver,
+      onDrop,
+      disabled,
+      asChild,
+      ...props
+    },
+    forwardedRef
+  ) => {
+    const Component = asChild ? Slot : "div";
+    const { isDisabled: isComposerDisabled } = useComposer();
+    const isDisabled = isComposerDisabled || disabled;
+    const [, dropAreaProps] = useComposerAttachmentsDropArea({
+      onDragEnter,
+      onDragLeave,
+      onDragOver,
+      onDrop,
+      disabled: isDisabled,
+    });
+
+    return (
+      <Component
+        {...dropAreaProps}
+        data-disabled={isDisabled ? "" : undefined}
+        {...props}
+        ref={forwardedRef}
+      />
+    );
+  }
+);
+
 if (process.env.NODE_ENV !== "production") {
+  ComposerAttachFiles.displayName = COMPOSER_ATTACH_FILES_NAME;
+  ComposerAttachmentsDropArea.displayName = COMPOSER_ATTACHMENTS_DROP_AREA_NAME;
   ComposerEditor.displayName = COMPOSER_EDITOR_NAME;
   ComposerForm.displayName = COMPOSER_FORM_NAME;
   ComposerMention.displayName = COMPOSER_MENTION_NAME;
@@ -1129,6 +1422,8 @@ if (process.env.NODE_ENV !== "production") {
 
 // NOTE: Every export from this file will be available publicly as Composer.*
 export {
+  ComposerAttachFiles as AttachFiles,
+  ComposerAttachmentsDropArea as AttachmentsDropArea,
   ComposerEditor as Editor,
   ComposerForm as Form,
   ComposerLink as Link,

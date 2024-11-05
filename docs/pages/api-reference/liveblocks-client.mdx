@@ -2265,10 +2265,10 @@ console.log(inboxNotifications);
 </PropertiesList>
 
 <PropertiesList title="Options">
-  <PropertiesListItem name="resolved" type="boolean" optional>
+  <PropertiesListItem name="resolved" type="boolean">
     Only return `resolved` or `unresolved` threads. [Learn more](#filtering-resolved-status).
   </PropertiesListItem>
-  <PropertiesListItem name="metadata" type="Partial<ThreadMetadata>" optional>
+  <PropertiesListItem name="metadata" type="Partial<ThreadMetadata>">
     Only return threads containing the custom metadata. Metadata is set yourself when creating a thread, for example `{ priority: "HIGH" }`. [Learn more](#filtering-metadata).
   </PropertiesListItem>
 </PropertiesList>
@@ -2384,7 +2384,7 @@ console.log(inboxNotifications);
 </PropertiesList>
 
 <PropertiesList title="Options">
-  <PropertiesListItem name="since" type="Date">
+  <PropertiesListItem name="since" type="Date" required>
     Only return threads that have been updated or deleted after this date.
   </PropertiesListItem>
 </PropertiesList>
@@ -2420,7 +2420,7 @@ const { thread, inboxNotification } = await room.getThread(newThread.id);
 </PropertiesList>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="value" type="string">
+  <PropertiesListItem name="value" type="string" required>
     The ID of the thread you want to retrieve.
   </PropertiesListItem>
 </PropertiesList>
@@ -2447,9 +2447,12 @@ const thread = await room.createThread({
 </PropertiesList>
 
 <PropertiesList title="Options">
-  <PropertiesListItem name="body" type="CommentBody">
+  <PropertiesListItem name="body" type="CommentBody" required>
     The content of the comment, see [creating thread
     content](#creating-thread-content).
+  </PropertiesListItem>
+  <PropertiesListItem name="attachmentIds" type="string">
+    The IDs of the comment’s attachments.
   </PropertiesListItem>
   <PropertiesListItem name="metadata" type="ThreadMetadata">
     Custom metadata to be attached to the thread, see [defining thread
@@ -2542,7 +2545,7 @@ await room.deleteThread("th_xxx");
 <PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="threadId" type="string">
+  <PropertiesListItem name="threadId" type="string" required>
     The ID of the thread to delete.
   </PropertiesListItem>
 </PropertiesList>
@@ -2570,10 +2573,10 @@ await room.editThreadMetadata({
 </PropertiesList>
 
 <PropertiesList title="Options">
-  <PropertiesListItem name="threadId" type="string">
+  <PropertiesListItem name="threadId" type="string" required>
     The ID of the thread.
   </PropertiesListItem>
-  <PropertiesListItem name="metadata" type="Patchable<ThreadMetadata>">
+  <PropertiesListItem name="metadata" type="Patchable<ThreadMetadata>" required>
     An object containing the metadata properties to update. Metadata can be a
     `string`, `number`, or `boolean`. To delete an existing metadata property,
     set its value to `null`.
@@ -2591,7 +2594,7 @@ await room.markThreadAsResolved("th_xxx");
 <PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="threadId" type="string">
+  <PropertiesListItem name="threadId" type="string" required>
     The ID of the thread to resolve.
   </PropertiesListItem>
 </PropertiesList>
@@ -2607,7 +2610,7 @@ await room.markThreadAsUnresolved("th_xxx");
 <PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="threadId" type="string">
+  <PropertiesListItem name="threadId" type="string" required>
     The ID of the thread to resolve.
   </PropertiesListItem>
 </PropertiesList>
@@ -2633,10 +2636,13 @@ const comment = await room.createComment({
 </PropertiesList>
 
 <PropertiesList title="Options">
-  <PropertiesListItem name="threadId" type="string">
+  <PropertiesListItem name="threadId" type="string" required>
     The ID of the thread that the comment will be added to.
   </PropertiesListItem>
-  <PropertiesListItem name="body" type="CommentBody">
+  <PropertiesListItem name="attachmentIds" type="string">
+    The IDs of the comment’s attachments.
+  </PropertiesListItem>
+  <PropertiesListItem name="body" type="CommentBody" required>
     The content of the comment, see [creating comment
     content](#creating-comment-content).
   </PropertiesListItem>
@@ -2703,7 +2709,8 @@ const body: CommentBody = {
 
 ### Room.editComment
 
-Edits a comment, replacing its existing comment body. Learn more about
+Edits a comment, replacing its existing comment body and optionally updating its
+attachments. Learn more about
 [creating comment content](#creating-comment-content).
 
 ```ts
@@ -2724,13 +2731,16 @@ const comment = await room.editComment({
 </PropertiesList>
 
 <PropertiesList title="Options">
-  <PropertiesListItem name="threadId" type="string">
+  <PropertiesListItem name="threadId" type="string" required>
     The ID of the thread containing the comment.
   </PropertiesListItem>
-  <PropertiesListItem name="threadId" type="string">
+  <PropertiesListItem name="threadId" type="string" required>
     The ID of the comment that’s being edited.
   </PropertiesListItem>
-  <PropertiesListItem name="body" type="CommentBody">
+  <PropertiesListItem name="attachmentIds" type="string">
+    The IDs of the comment’s attachments.
+  </PropertiesListItem>
+  <PropertiesListItem name="body" type="CommentBody" required>
     The content of the comment, see [creating comment
     content](#creating-comment-content).
   </PropertiesListItem>
@@ -2751,10 +2761,10 @@ await room.deleteComment({
 <PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
 
 <PropertiesList title="Options">
-  <PropertiesListItem name="threadId" type="string">
+  <PropertiesListItem name="threadId" type="string" required>
     The ID of the thread containing the comment.
   </PropertiesListItem>
-  <PropertiesListItem name="threadId" type="string">
+  <PropertiesListItem name="threadId" type="string" required>
     The ID of the comment that’s being edited.
   </PropertiesListItem>
 </PropertiesList>
@@ -2778,13 +2788,13 @@ const reaction = await room.addReaction({
 </PropertiesList>
 
 <PropertiesList title="Options">
-  <PropertiesListItem name="threadId" type="string">
+  <PropertiesListItem name="threadId" type="string" required>
     The ID of the thread containing the comment.
   </PropertiesListItem>
-  <PropertiesListItem name="threadId" type="string">
+  <PropertiesListItem name="threadId" type="string" required>
     The ID of the comment to add a reaction to.
   </PropertiesListItem>
-  <PropertiesListItem name="emoji" type="string">
+  <PropertiesListItem name="emoji" type="string" required>
     The emoji reaction to add.
   </PropertiesListItem>
 </PropertiesList>
@@ -2804,14 +2814,104 @@ await room.removeReaction({
 <PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
 
 <PropertiesList title="Options">
-  <PropertiesListItem name="threadId" type="string">
+  <PropertiesListItem name="threadId" type="string" required>
     The ID of the thread containing the comment.
   </PropertiesListItem>
-  <PropertiesListItem name="threadId" type="string">
+  <PropertiesListItem name="threadId" type="string" required>
     The ID of the comment to remove a reaction from.
   </PropertiesListItem>
-  <PropertiesListItem name="emoji" type="string">
+  <PropertiesListItem name="emoji" type="string" required>
     The emoji reaction to remove.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Room.prepareAttachment
+
+Creates a local attachment from a file.
+
+```ts
+const attachment = room.prepareAttachment({
+  file: new File(["Hello, world!"], "hello.txt"),
+});
+
+// { "id": "at_1e6nNX...", "name": "hello.txt", "type": "attachment", ... }
+console.log(attachment);
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="value" type="CommentLocalAttachment">
+    The local attachment that has been created.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="file" type="File" required>
+    The file to create the attachment from.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Room.uploadAttachment
+
+Uploads a local attachment.
+
+```ts
+const attachment = room.prepareAttachment(file);
+await room.uploadAttachment(attachment);
+```
+
+Optionally, an
+[`AbortSignal`](https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal)
+can be passed to cancel the upload.
+
+```ts
+const attachment = room.prepareAttachment(file);
+
+// Cancel the upload after 5 seconds
+room.uploadAttachment(attachment, { signal: AbortSignal.timeout(5000) });
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="value" type="CommentAttachment">
+    The attachment that has been uploaded.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="attachment" type="CommentLocalAttachment" required>
+    The file to create the attachment from.
+  </PropertiesListItem>
+  <PropertiesListItem name="options" type="UploadAttachmentOptions">
+    A set of options.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Options">
+  <PropertiesListItem name="signal" type="AbortSignal">
+    Only the inbox notifications updated or deleted after this date will be
+    returned.
+  </PropertiesListItem>
+</PropertiesList>
+
+### Room.getAttachmentUrl
+
+Returns a presigned URL for an attachment by its ID.
+
+```ts
+const url = await room.getAttachmentUrl("at_xxx");
+
+// "https://..."
+console.log(url);
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="value" type="string">
+    A presigned URL for the attachment.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="attachmentId" type="string" required>
+    The ID of the attachment to get the URL for.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -2887,7 +2987,7 @@ console.log(threads);
 </PropertiesList>
 
 <PropertiesList title="Options">
-  <PropertiesListItem name="since" type="Date">
+  <PropertiesListItem name="since" type="Date" required>
     Only the inbox notifications updated or deleted after this date will be
     returned.
   </PropertiesListItem>
@@ -2932,7 +3032,7 @@ await client.markAllInboxNotificationsAsRead("in_xxx");
 <PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="inboxNotificationId" type="string">
+  <PropertiesListItem name="inboxNotificationId" type="string" required>
     The ID of the inbox notification to be marked as read.
   </PropertiesListItem>
 </PropertiesList>
@@ -2960,7 +3060,7 @@ await client.deleteInboxNotification("in_xxx");
 <PropertiesListEmpty title="Returns">_Nothing_</PropertiesListEmpty>
 
 <PropertiesList title="Arguments">
-  <PropertiesListItem name="inboxNotificationId" type="string">
+  <PropertiesListItem name="inboxNotificationId" type="string" required>
     The ID of the inbox notification to be deleted.
   </PropertiesListItem>
 </PropertiesList>
@@ -4322,6 +4422,55 @@ const list = new LiveList([
 ]);
 list.toArray();
 // [ <LiveObject instance> ]  // ❗️
+```
+
+## Resolvers
+
+### invalidateUsers
+
+`client.resolvers.invalidateUsers` can be used to invalidate some or all users
+that were previously cached by [`resolveUsers`](#createClientResolveUsers).
+
+It can be used when updating the current user’s avatar for example, to instantly
+refresh the user data everywhere without having to perform a page reload.
+
+```tsx
+// Invalidate all users
+client.resolvers.invalidateUsers();
+
+// Only invalidate "user-0" and "user-1"
+client.resolvers.invalidateUsers(["user-0", "user-1"]);
+```
+
+### invalidateRoomsInfo
+
+`client.resolvers.invalidateRoomsInfo` can be used to invalidate some or all
+rooms that were previously cached by
+[`resolveRoomsInfo`](#createClientResolveRoomsInfo).
+
+It can be used when updating a room’s name for example, to instantly refresh the
+room info everywhere without having to perform a page reload.
+
+```tsx
+// Invalidate all rooms
+client.resolvers.invalidateRoomsInfo();
+
+// Only invalidate "room-0" and "room-1"
+client.resolvers.invalidateRoomsInfo(["room-0", "room-1"]);
+```
+
+### invalidateMentionSuggestions
+
+`client.resolvers.invalidateRoomsInfo` can be used to invalidate all mention
+suggestions that were previously cached by
+[`resolveMentionSuggestions`](#createClientResolveMentionSuggestions).
+
+It can be used when updating a room’s list of users for example, to prevent
+creating out-of-date mentions without having to perform a page reload.
+
+```tsx
+// Invalidate all mention suggestions
+client.resolvers.invalidateMentionSuggestions();
 ```
 
 ## Utilities

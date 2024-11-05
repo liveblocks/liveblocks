@@ -1,5 +1,6 @@
 import type {
   BaseMetadata,
+  CommentAttachment,
   CommentData,
   ThreadDataWithDeleteInfo,
 } from "@liveblocks/core";
@@ -11,14 +12,14 @@ export function createThread(
   const {
     id = `th_${nanoid()}`,
     roomId = `room_${nanoid()}`,
-    createdAt = new Date(),
-    updatedAt,
     deletedAt,
     comments = [],
     metadata = {},
     resolved = false,
   } = overrides;
 
+  const createdAt = overrides.createdAt ?? new Date();
+  const updatedAt = overrides.updatedAt ?? createdAt;
   return {
     type: "thread",
     id,
@@ -49,6 +50,7 @@ export function createComment(
       content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
     },
     reactions = [],
+    attachments = [],
   } = overrides;
 
   return {
@@ -61,5 +63,19 @@ export function createComment(
     editedAt,
     body,
     reactions,
+    attachments,
+  };
+}
+
+export function createAttachment(
+  overrides?: Partial<CommentAttachment>
+): CommentAttachment {
+  return {
+    type: "attachment",
+    id: `at_${nanoid()}`,
+    name: "file.png",
+    mimeType: "image/png",
+    size: 100000,
+    ...overrides,
   };
 }

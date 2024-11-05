@@ -203,13 +203,12 @@ application.
 
 ### LiveblocksProvider
 
-Sets up a client for connecting to Liveblocks, and is the recommended way to
-create to do this for React apps. You must define either `authEndpoint` or
-`publicApiKey`. Resolver functions should be placed inside here, and a number of
-other options are available, which correspond with those passed to
-[`createClient`][]. Unlike [`RoomProvider`][], `LiveblocksProvider` doesn’t call
-Liveblocks servers when mounted, and it should be placed higher in your app’s
-component tree.
+Sets up a client for connecting to Liveblocks, and is the recommended way to do
+this for React apps. You must define either `authEndpoint` or `publicApiKey`.
+Resolver functions should be placed inside here, and a number of other options
+are available, which correspond with those passed to [`createClient`][]. Unlike
+[`RoomProvider`][], `LiveblocksProvider` doesn’t call Liveblocks servers when
+mounted, and it should be placed higher in your app’s component tree.
 
 ```tsx
 import { LiveblocksProvider } from "@liveblocks/react/suspense";
@@ -2344,8 +2343,98 @@ the URL’s hash is set to a comment ID (e.g.
 `https://example.com/my-room#cm_xxx`), the page will scroll to that comment once
 the threads are loaded.
 
+By default, the `useThreads` hook returns up to 50 threads. To fetch more, the
+hook (along with [`useInboxNotifications`][]) provides additional fields for
+pagination.
+
+```tsx
+import { useThreads } from "@liveblocks/react";
+
+const {
+  isLoading,
+  error,
+  threads,
+
+  +++
+  // Available in Liveblocks 2.9
+  fetchMore,
+  isFetchingMore,
+  hasFetchedAll,
+  fetchMoreError,
+  +++
+} = useThreads({ query });
+```
+
+The `hasFetchedAll` field indicates whether all available threads have been
+fetched since the initial load. To load more threads, you can call the
+`fetchMore` function. This function is safe to call even if no more threads are
+available or a fetch is already in progress—it simply won't do anything in that
+case. Therefore, you don't need to check `hasFetchedAll` or `isFetchingMore`
+before calling `fetchMore`.
+
+The following example demonstrates how to use the `fetchMore` function to
+implement a "Load More" button, which fetches additional threads when clicked.
+The button is disabled while fetching is in progress.
+
+```tsx
+<div>
+  {threads.map((thread) => (
+    <Thread key={thread.id} />
+  ))}
+
+  {hasFetchedAll ? (
+    <div>🎉 You're all caught up!</div>
+  ) : (
+    <button disabled={isFetchingMore} onClick={fetchMore}>
+      Load more
+    </button>
+  )}
+</div>
+```
+
+Error handling is another important aspect to consider when using the
+`useThreads` hook. The `error` and `fetchMoreError` fields provide information
+about any errors that occurred during the initial fetch or subsequent fetch
+operations, respectively. You can use these fields to display appropriate error
+messages to the user and implement retry mechanisms if needed.
+
+The following example shows how to display error messages for both initial
+loading errors and errors that occur when fetching more threads.
+
+```tsx
+import { useThreads } from "@liveblocks/react";
+
+const { threads, error, fetchMore, fetchMoreError } = useThreads();
+
+// Handle error if the initial load failed.
+// The `error` field is not returned by the Suspense hook as the error is thrown to nearest ErrorBoundary
+if (error) {
+  return (
+    <div>
+      <p>Error loading threads: {error.message}</p>
+    </div>
+  );
+}
+
+return (
+  <div>
+    {threads.map((thread) => (
+      <Thread key={thread.id}>...</Thread>
+    ))}
+
+    {fetchMoreError && (
+      <div>
+        <p>Error loading more threads: {fetchMoreError.message}</p>
+        <button onClick={fetchMore}>Retry</button>
+      </div>
+    )}
+  </div>
+);
+```
+
 👉 A [Suspense version][] of this hook is also available, which will never return
-a loading state and will throw when there’s an error.
+a loading state and will throw error to the nearest ErrorBoundary if initial load
+failed.
 
 ### useThreadSubscription [@badge=RoomProvider]
 
@@ -2366,7 +2455,7 @@ some metadata.
 import { useCreateThread } from "@liveblocks/react/suspense";
 
 const createThread = useCreateThread();
-const thread = createThread({ body: {}, metadata: {} });
+const thread = createThread({ body: {}, attachments: [], metadata: {} });
 ```
 
 ### useDeleteThread [@badge=RoomProvider]
@@ -2440,7 +2529,11 @@ Returns a function that adds a comment to a thread.
 import { useCreateComment } from "@liveblocks/react/suspense";
 
 const createComment = useCreateComment();
-const comment = createComment({ threadId: "th_xxx", body: {} });
+const comment = createComment({
+  threadId: "th_xxx",
+  body: {},
+  attachments: [],
+});
 ```
 
 ### useEditComment[@badge=RoomProvider]
@@ -2455,6 +2548,7 @@ editComment({
   threadId: "th_xxx",
   commentId: "cm_xxx",
   body: {},
+  attachments: [],
 });
 ```
 
@@ -2492,6 +2586,19 @@ const removeReaction = useRemoveReaction();
 removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" });
 ```
 
+### useAttachmentUrl [@badge=RoomProvider]
+
+Returns a presigned URL for an attachment by its ID.
+
+```tsx
+import { useAttachmentUrl } from "@liveblocks/react/suspense";
+
+const { url, error, isLoading } = useAttachmentUrl("at_xxx");
+```
+
+👉 A [Suspense version][] of this hook is also available, which will never return
+a loading state and will throw when there’s an error.
+
 ## Notifications
 
 ### useInboxNotifications [@badge=LiveblocksProvider]
@@ -2504,8 +2611,101 @@ import { useInboxNotifications } from "@liveblocks/react/suspense";
 const { inboxNotifications, error, isLoading } = useInboxNotifications();
 ```
 
+Inbox notifications are
+[project-based](/docs/products/notifications/concepts#Project-based), meaning
+notifications from outside the current room are received. By default, the
+`useInboxNotifications` hook returns up to 50 notifications. To fetch more, the
+hook (along with [`useThreads`][]) provides additional fields for pagination.
+
+```tsx
+import { useInboxNotifications } from "@liveblocks/react";
+
+const {
+  inboxNotifications,
+  isLoading,
+  error,
+
+  +++
+  // Available in Liveblocks 2.9
+  fetchMore,
+  isFetchingMore,
+  hasFetchedAll,
+  fetchMoreError,
+  +++
+} = useInboxNotifications();
+```
+
+The `hasFetchedAll` field indicates whether all available inbox notifications
+have been fetched since the initial load. To load more inbox notifications, you
+can call the `fetchMore` function. This function is safe to call even if no more
+inbox notifications are available or a fetch is already in progress—it simply
+won't do anything in that case. Therefore, you don't need to check
+`hasFetchedAll` or `isFetchingMore` before calling `fetchMore`.
+
+The following example demonstrates how to use the `fetchMore` function to
+implement a "Load More" button, which fetches additional inbox notifications
+when clicked. The button is disabled while fetching is in progress.
+
+```tsx
+<div>
+  {inboxNotifications.map((notification) => (
+    <InboxNotification key={notification.id}>...</InboxNotification>
+  ))}
+
+  {hasFetchedAll ? (
+    <div>🎉 You're all caught up!</div>
+  ) : (
+    <button disabled={isFetchingMore} onClick={fetchMore}>
+      Load more
+    </button>
+  )}
+</div>
+```
+
+Error handling is another important aspect to consider when using the
+`useInboxNotifications` hook. The `error` and `fetchMoreError` fields provide
+information about any errors that occurred during the initial fetch or
+subsequent fetch operations, respectively. You can use these fields to display
+appropriate error messages to the user and implement retry mechanisms if needed.
+
+The following example shows how to display error messages for both initial
+loading errors and errors that occur when fetching more inbox notifications.
+
+```tsx
+import { useInboxNotifications } from "@liveblocks/react";
+
+const { inboxNotifications, error, fetchMore, fetchMoreError } =
+  useInboxNotifications();
+
+// Handle error if the initial load failed.
+// The `error` field is not returned by the Suspense hook as the error is thrown to nearest ErrorBoundary
+if (error) {
+  return (
+    <div>
+      <p>Error loading inbox notifications: {error.message}</p>
+    </div>
+  );
+}
+
+return (
+  <div>
+    {inboxNotifications.map((notification) => (
+      <InboxNotification key={notification.id}>...</InboxNotification>
+    ))}
+
+    {fetchMoreError && (
+      <div>
+        <p>Error loading more inbox notifications: {fetchMoreError.message}</p>
+        <button onClick={fetchMore}>Retry</button>
+      </div>
+    )}
+  </div>
+);
+```
+
 👉 A [Suspense version][] of this hook is also available, which will never return
-a loading state and will throw when there’s an error.
+a loading state and will throw error to the nearest ErrorBoundary if initial load
+failed.
 
 ### useUnreadInboxNotificationsCount [@badge=LiveblocksProvider]
 
@@ -3106,6 +3306,8 @@ And the following timeline:
 [`clientsidesuspense`]: /docs/api-reference/liveblocks-react#ClientSideSuspsnse
 [`usebroadcastevent`]: /docs/api-reference/liveblocks-react#useBroadcastEvent
 [`usethreads`]: /docs/api-reference/liveblocks-react#useThreads
+[`useinboxnotifications`]:
+  /docs/api-reference/liveblocks-react#useInboxNotifications
 [`room`]: /docs/api-reference/liveblocks-client#Room
 [`shallow`]: /docs/api-reference/liveblocks-react#shallow
 [`resolveusers`]: /docs/api-reference/liveblocks-client#resolveUsers

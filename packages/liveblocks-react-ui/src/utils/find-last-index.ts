@@ -5,7 +5,9 @@ export function findLastIndex<T>(
   let index = array.length - 1;
 
   while (index >= 0) {
-    if (predicate(array[index])) {
+    const element = array[index];
+
+    if (element && predicate(element)) {
       return index;
     }
 

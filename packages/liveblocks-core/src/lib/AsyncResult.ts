@@ -2,29 +2,33 @@ type RenameDataField<T, TFieldName extends string> = T extends any
   ? { [K in keyof T as K extends "data" ? TFieldName : K]: T[K] }
   : never;
 
-export type AsyncResult<T> =
-  // loading
-  | {
-      readonly isLoading: true;
-      readonly data?: never;
-      readonly error?: never;
-    }
+export type AsyncLoading<F extends string = "data"> = RenameDataField<
+  {
+    readonly isLoading: true;
+    readonly data?: never;
+    readonly error?: never;
+  },
+  F
+>;
 
-  // success
-  | {
-      readonly isLoading: false;
-      readonly data: T;
-      readonly error?: never;
-    }
+export type AsyncSuccess<T, F extends string = "data"> = RenameDataField<
+  {
+    readonly isLoading: false;
+    readonly data: T;
+    readonly error?: never;
+  },
+  F
+>;
+export type AsyncError<F extends string = "data"> = RenameDataField<
+  {
+    readonly isLoading: false;
+    readonly data?: never;
+    readonly error: Error;
+  },
+  F
+>;
 
-  // error
-  | {
-      readonly isLoading: false;
-      readonly data?: never;
-      readonly error: Error;
-    };
-
-export type AsyncResultWithDataField<
-  T,
-  TDataField extends string,
-> = RenameDataField<AsyncResult<T>, TDataField>;
+export type AsyncResult<T, F extends string = "data"> =
+  | AsyncLoading<F>
+  | AsyncSuccess<T, F>
+  | AsyncError<F>;

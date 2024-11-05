@@ -11,10 +11,10 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^2.7.2",
-    "@liveblocks/node": "^2.7.2",
-    "@liveblocks/react": "^2.7.2",
-    "@liveblocks/react-ui": "^2.7.2",
+    "@liveblocks/client": "^2.9.0",
+    "@liveblocks/node": "^2.9.0",
+    "@liveblocks/react": "^2.9.0",
+    "@liveblocks/react-ui": "^2.9.0",
     "@react-email/components": "0.0.14",
     "next": "^13.4.3",
     "react": "^18.2.0",

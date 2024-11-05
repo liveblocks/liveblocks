@@ -148,6 +148,10 @@ function EmojiPickerRoot({
         case "right": {
           const currentRow = data.rows[selectedRowIndex];
 
+          if (!currentRow) {
+            return;
+          }
+
           if (selectedColumnIndex === currentRow.length - 1) {
             const nextRowIndex = selectedRowIndex + 1;
             const nextRow = data.rows[nextRowIndex];
@@ -603,14 +607,27 @@ const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
               }}
               groupCounts={data.categoriesRowCounts}
               groupContent={(groupIndex) => {
-                return (
-                  <CategoryHeader category={data.categories[groupIndex]} />
-                );
+                const category = data.categories[groupIndex];
+
+                if (!category) {
+                  return null;
+                }
+
+                return <CategoryHeader category={category} />;
               }}
               itemContent={(rowIndex, groupIndex) => {
+                const categoryRow = data.rows[rowIndex];
                 const categoryRowIndex =
-                  data.categoriesRowIndices[groupIndex].indexOf(rowIndex);
+                  data.categoriesRowIndices[groupIndex]?.indexOf(rowIndex);
                 const categoryRowsCount = data.categoriesRowCounts[groupIndex];
+
+                if (
+                  categoryRow === undefined ||
+                  categoryRowIndex === undefined ||
+                  categoryRowsCount === undefined
+                ) {
+                  return null;
+                }
 
                 return (
                   <Row
@@ -620,7 +637,7 @@ const EmojiPickerContent = forwardRef<HTMLDivElement, EmojiPickerContentProps>(
                       categoryRowsCount,
                     }}
                   >
-                    {data.rows[rowIndex].map((emoji, columnIndex) => {
+                    {categoryRow.map((emoji, columnIndex) => {
                       const isSelected =
                         interaction !== "none" &&
                         selectedColumnIndex === columnIndex &&

@@ -26,7 +26,7 @@ export type {
   ResolveRoomsInfoArgs,
   ResolveUsersArgs,
 } from "./client";
-export { createClient, NotificationsApiError } from "./client";
+export { createClient } from "./client";
 export type {
   CommentBodyLinkElementArgs,
   CommentBodyMentionElementArgs,
@@ -83,7 +83,14 @@ export {
 } from "./immutable";
 export { kInternal } from "./internal";
 export { assert, assertNever, nn } from "./lib/assert";
-export type { AsyncResult, AsyncResultWithDataField } from "./lib/AsyncResult";
+export type {
+  AsyncError,
+  AsyncLoading,
+  AsyncResult,
+  AsyncSuccess,
+} from "./lib/AsyncResult";
+export { autoRetry, HttpError } from "./lib/autoRetry";
+export { chunk } from "./lib/chunk";
 export {
   createCommentId,
   createInboxNotificationId,
@@ -95,7 +102,11 @@ export {
   errorIf,
   throwUsageError,
 } from "./lib/deprecation";
-export type { EventSource, UnsubscribeCallback } from "./lib/EventSource";
+export type {
+  EventSource,
+  Observable,
+  UnsubscribeCallback,
+} from "./lib/EventSource";
 export { makeEventSource } from "./lib/EventSource";
 export * as console from "./lib/fancy-console";
 export { freeze } from "./lib/freeze";
@@ -104,11 +115,15 @@ export { isJsonArray, isJsonObject, isJsonScalar } from "./lib/Json";
 export { nanoid } from "./lib/nanoid";
 export type { NoInfr } from "./lib/NoInfer";
 export { objectToQuery } from "./lib/objectToQuery";
+export type { Poller } from "./lib/Poller";
 export { makePoller } from "./lib/Poller";
 export { asPos, makePosition } from "./lib/position";
 export type { Resolve } from "./lib/Resolve";
 export { shallow } from "./lib/shallow";
+export { SortedList } from "./lib/SortedList";
 export { stringify } from "./lib/stringify";
+export type { QueryParams, URLSafeString } from "./lib/url";
+export { url, urljoin } from "./lib/url";
 export type { Brand, DistributiveOmit } from "./lib/utils";
 export {
   b64decode,
@@ -121,6 +136,7 @@ export {
   wait,
   withTimeout,
 } from "./lib/utils";
+export type { GetUserThreadsOptions } from "./notifications";
 export type { CustomAuthenticationResult } from "./protocol/Authentication";
 export type { BaseActivitiesData } from "./protocol/BaseActivitiesData";
 export type { BaseRoomInfo } from "./protocol/BaseRoomInfo";
@@ -147,8 +163,11 @@ export type {
   CommentBodyText,
 } from "./protocol/Comments";
 export type {
+  CommentAttachment,
   CommentData,
   CommentDataPlain,
+  CommentLocalAttachment,
+  CommentMixedAttachment,
   CommentReaction,
 } from "./protocol/Comments";
 export type {
@@ -226,8 +245,7 @@ export type {
   RoomEventMessage,
   StorageStatus,
 } from "./room";
-export type { GetThreadsOptions } from "./room";
-export { CommentsApiError } from "./room";
+export type { GetThreadsOptions, UploadAttachmentOptions } from "./room";
 export type { Immutable } from "./types/Immutable";
 export type {
   IWebSocket,
@@ -240,6 +258,7 @@ export { WebsocketCloseCodes } from "./types/IWebSocket";
 export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 export type { OptionalPromise } from "./types/OptionalPromise";
 export type { OthersEvent } from "./types/Others";
+export { TextEditorType } from "./types/Others";
 export type { Patchable } from "./types/Patchable";
 export type {
   PlainLson,
@@ -276,6 +295,7 @@ export type EnsureJson<T> =
 // Support for DevTools
 import type * as DevToolsMsg from "./devtools/protocol";
 export type { DevToolsMsg };
+import { HttpError } from "./lib/autoRetry";
 import type { Json } from "./lib/Json";
 import type * as DevTools from "./types/DevToolsTreeNode";
 export type { DevTools };
@@ -283,3 +303,9 @@ export type { DevTools };
 // Store
 export type { Store } from "./lib/create-store";
 export { createStore } from "./lib/create-store";
+
+// Deprecated APIs
+/** @deprecated Use HttpError instead. */
+export const CommentsApiError = HttpError;
+/** @deprecated Use HttpError instead. */
+export const NotificationsApiError = HttpError;
