@@ -6,15 +6,10 @@ export interface SerializedTiptapBaseNode {
   content?: Array<SerializedTiptapBaseNode>;
 }
 
-export interface SerializedTiptapParagraphBreakNode
+export interface SerializedTiptapLineBreakNode
   extends SerializedTiptapBaseNode {
   type: "paragraph";
-  content: Array<SerializedTiptapBaseNode>;
-}
-
-export interface SerializedTiptapLineBreakNode
-  extends Omit<SerializedTiptapBaseNode, "content"> {
-  type: "paragraph";
+  content: undefined;
 }
 
 export interface SerializedTiptapBaseMark {
@@ -56,6 +51,7 @@ export interface SerializedTiptapTextNode extends SerializedTiptapBaseNode {
   type: "text";
   text: string;
   marks?: Array<SerializedTiptapMark>;
+  content: undefined;
 }
 
 export interface SerializedTiptapMentionNode extends SerializedTiptapBaseNode {
@@ -66,10 +62,17 @@ export interface SerializedTiptapMentionNode extends SerializedTiptapBaseNode {
   };
 }
 
+export interface SerializedTiptapParagraphNode
+  extends SerializedTiptapBaseNode {
+  type: "paragraph";
+  content: Array<SerializedTiptapNode>;
+}
+
 export type SerializedTiptapNode =
-  | SerializedTiptapParagraphBreakNode
+  | SerializedTiptapParagraphNode
   | SerializedTiptapLineBreakNode
-  | SerializedTiptapMentionNode;
+  | SerializedTiptapMentionNode
+  | SerializedTiptapTextNode;
 
 export type SerializedTiptapRootNodeContent = Array<
   Readonly<SerializedTiptapNode>
@@ -108,3 +111,44 @@ export function getSerializedTiptapState({
   // on real data we provide
   return state as SerializedTiptapRootNode;
 }
+
+const isLineBreakNode = (
+  node: SerializedTiptapNode
+): node is SerializedTiptapLineBreakNode => {
+  return node.type === "paragraph" && typeof node.content === "undefined";
+};
+
+const isTextNode = (
+  node: SerializedTiptapNode
+): node is SerializedTiptapTextNode => {
+  return node.type === "text";
+};
+
+const isMentionNode = (
+  node: SerializedTiptapNode
+): node is SerializedTiptapMentionNode => {
+  return node.type === "liveblocksMention";
+};
+
+const isParagraphNode = (
+  node: SerializedTiptapNode
+): node is SerializedTiptapParagraphNode => {
+  return node.type === "paragraph" && typeof node.content !== "undefined";
+};
+
+/** @internal */
+const flattenTiptapTree = (
+  nodes: SerializedTiptapNode[]
+): SerializedTiptapNode[] => {
+  let flattenNodes: SerializedTiptapNode[] = [];
+
+  for (const node of nodes) {
+    if (isLineBreakNode(node) || isTextNode(node) || isMentionNode(node)) {
+      flattenNodes = [...flattenNodes, node];
+    } else if (isParagraphNode(node)) {
+      flattenNodes = [...flattenNodes, ...flattenTiptapTree(node.content)];
+    }
+  }
+
+  return flattenNodes;
+};
