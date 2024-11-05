@@ -40,17 +40,17 @@ export type SerializedLexicalNode =
   | SerializedDecoratorNode
   | SerializedElementNode<SerializedLexicalNode>;
 
-export type SerializedRootNodeChildren = Array<
+export type SerializedLexicalRootNodeChildren = Array<
   Readonly<
     | SerializedElementNode<Readonly<SerializedLexicalNode>>
     | SerializedDecoratorNode
   >
 >;
 
-export interface SerializedRootNode
+export interface SerializedLexicalRootNode
   extends Readonly<SerializedBaseLexicalNode> {
   readonly type: "root";
-  readonly children: SerializedRootNodeChildren;
+  readonly children: SerializedLexicalRootNodeChildren;
 }
 
 /**
@@ -169,7 +169,7 @@ function createSerializedLexicalElementNode(
  */
 export function createSerializedLexicalRootNode(
   root: Y.XmlText
-): SerializedRootNode {
+): SerializedLexicalRootNode {
   try {
     const children: Array<
       SerializedElementNode<SerializedLexicalNode> | SerializedDecoratorNode
@@ -221,7 +221,7 @@ export function getSerializedLexicalState({
 }: {
   buffer: ArrayBuffer;
   key: string;
-}): SerializedRootNode {
+}): SerializedLexicalRootNode {
   const update = new Uint8Array(buffer);
 
   // Construct a Y.js document from the binary update
@@ -305,7 +305,7 @@ export function findLexicalMentionNodeWithContext({
   mentionedUserId,
   mentionId,
 }: {
-  root: SerializedRootNode;
+  root: SerializedLexicalRootNode;
   mentionedUserId: string;
   mentionId: string;
 }): LexicalMentionNodeWithContext | null {
