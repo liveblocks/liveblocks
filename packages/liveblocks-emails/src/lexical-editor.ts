@@ -357,7 +357,7 @@ export function findLexicalMentionNodeWithContext({
     beforeNodes.unshift(node);
   }
 
-  // Node after mention node
+  // Nodes after mention node
   for (let i = mentionNodeIndex + 1; i < nodes.length; i++) {
     const node = nodes[i]!;
 

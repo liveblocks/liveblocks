@@ -29,7 +29,11 @@ import {
   convertLiveblocksTextEditorNodesAsReact,
   transformAsLiveblocksTextEditorNodes,
 } from "./liveblocks-text-editor";
-import { getSerializedTipTapState } from "./tiptap-editor";
+import type { TiptapMentionNodeWithContext } from "./tiptap-editor";
+import {
+  findTiptapMentionNodeWithContext,
+  getSerializedTiptapState,
+} from "./tiptap-editor";
 
 type TextMentionNotificationData = (
   | {
@@ -38,7 +42,7 @@ type TextMentionNotificationData = (
     }
   | {
       editor: "tiptap";
-      // TODO: add mention node with context for TipTap
+      mentionNodeWithContext: TiptapMentionNodeWithContext;
     }
 ) & {
   createdAt: Date;
@@ -117,10 +121,21 @@ export const extractTextMentionNotificationData = async ({
       };
     }
     case "tiptap": {
-      const state = getSerializedTipTapState({ buffer, key });
-      // TODO: find mention node with context
+      const state = getSerializedTiptapState({ buffer, key });
+      const mentionNodeWithContext = findTiptapMentionNodeWithContext({
+        root: state,
+        mentionedUserId: userId,
+        mentionId: inboxNotification.mentionId,
+      });
+
+      // The mention node did not exists so we do not have to send an email.
+      if (mentionNodeWithContext === null) {
+        return null;
+      }
+
       return {
         editor: "tiptap",
+        mentionNodeWithContext,
         createdAt: mentionCreatedAt,
         userId: mentionAuthorUserId,
       };

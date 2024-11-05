@@ -152,3 +152,87 @@ const flattenTiptapTree = (
 
   return flattenNodes;
 };
+
+/**
+ * Tiptap Mention Node with context
+ */
+export type TiptapMentionNodeWithContext = {
+  before: SerializedTiptapNode[];
+  after: SerializedTiptapNode[];
+  mention: SerializedTiptapMentionNode;
+};
+
+/**
+ * Find a Tiptap mention
+ * and returns it with contextual surrounding text
+ */
+export function findTiptapMentionNodeWithContext({
+  root,
+  mentionedUserId,
+  mentionId,
+}: {
+  root: SerializedTiptapRootNode;
+  mentionedUserId: string;
+  mentionId: string;
+}): TiptapMentionNodeWithContext | null {
+  const nodes = flattenTiptapTree(root.content);
+
+  // Find mention node
+  let mentionNodeIndex = -1;
+
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i]!;
+
+    if (
+      isMentionNode(node) &&
+      node.attrs.notificationId === mentionId &&
+      node.attrs.userId === mentionedUserId
+    ) {
+      mentionNodeIndex = i;
+      break;
+    }
+  }
+
+  // No mention node found
+  if (mentionNodeIndex === -1) {
+    return null;
+  }
+
+  // Collect nodes before and after
+  const mentionNode = nodes[mentionNodeIndex] as SerializedTiptapMentionNode;
+
+  // TODO: apply surrounding text guesses
+  // For now let's stay simple just stop at nearest line break or paragraph
+  const beforeNodes: SerializedTiptapNode[] = [];
+  const afterNodes: SerializedTiptapNode[] = [];
+
+  // Nodes before mention node
+  for (let i = mentionNodeIndex - 1; i >= 0; i--) {
+    const node = nodes[i]!;
+
+    // Stop if nodes are line breaks or paragraph
+    if (isLineBreakNode(node) || isParagraphNode(node)) {
+      break;
+    }
+
+    beforeNodes.unshift(node);
+  }
+
+  // Nodes after mention node
+  for (let i = mentionNodeIndex + 1; i < nodes.length; i++) {
+    const node = nodes[i]!;
+
+    // Stop if nodes are line breaks or paragraph
+    if (isLineBreakNode(node) || isParagraphNode(node)) {
+      break;
+    }
+
+    afterNodes.push(node);
+  }
+
+  return {
+    before: beforeNodes,
+    after: afterNodes,
+    mention: mentionNode,
+  };
+}
