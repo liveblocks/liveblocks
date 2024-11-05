@@ -4,6 +4,7 @@
 
 - Upgrade dependencies.
 - Fix minor appearance issues related to attachments.
+- Fix pasting issues introduced in 2.10.0.
 
 ## 2.10.2
 
