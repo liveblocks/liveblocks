@@ -132,7 +132,7 @@ jobs:
           echo Triggering deployment for nextjs-yjs-tiptap
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_y3mEp1yQYraCLNghy7NcFcj5CPuS/JKf0W69EpG; echo
 
-          echo Triggering deployment for nextjs-yjs-tiptap-advanced
+          echo Triggering deployment for nextjs-tiptap-advanced
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_pCx1U7T80v9b2YS1JURFTFwOBjTe/PlnhiDwwts; echo
 
           echo Triggering deployment for nuxtjs-live-avatars
