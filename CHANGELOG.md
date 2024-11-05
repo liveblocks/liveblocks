@@ -10,6 +10,14 @@
 - Fix regression with `useThreads` that caused the hook to return an error if
   its associated room did not exist.
 
+### `@liveblocks/react-tiptap`
+
+- Initial release.
+
+### `@liveblocks/emails`
+
+- Initial release.
+
 ## 2.10.2
 
 ### `@liveblocks/client`
