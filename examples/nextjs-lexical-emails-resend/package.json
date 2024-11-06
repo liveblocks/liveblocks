@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks-examples/nextjs-lexical",
-  "description": "This example shows how to send text mention notification emails with Liveblocks, React Email, Resend, and Next.js.",
+  "description": "This example shows how to send text mention notification emails with Lexical, Liveblocks, React Email, Resend, and Next.js.",
   "license": "Apache-2.0",
   "private": true,
   "scripts": {
