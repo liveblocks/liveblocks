@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import { emailColors } from "./emails/_styles/colors";
 
 const config = {
   content: [
@@ -42,6 +43,7 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        email: { ...emailColors },
       },
     },
   },
