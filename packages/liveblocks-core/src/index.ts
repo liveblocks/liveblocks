@@ -26,7 +26,7 @@ export type {
   ResolveRoomsInfoArgs,
   ResolveUsersArgs,
 } from "./client";
-export { createClient, NotificationsApiError } from "./client";
+export { createClient } from "./client";
 export type {
   CommentBodyLinkElementArgs,
   CommentBodyMentionElementArgs,
@@ -37,8 +37,16 @@ export type {
 } from "./comments/comment-body";
 export {
   getMentionedIdsFromCommentBody,
+  html,
+  htmlSafe,
+  isCommentBodyLink,
+  isCommentBodyMention,
+  isCommentBodyText,
+  resolveUsersInCommentBody,
   stringifyCommentBody,
+  toAbsoluteUrl,
 } from "./comments/comment-body";
+export { generateCommentUrl } from "./comments/comment-url";
 export type { BaseAuthResult, Delegates, LiveblocksError } from "./connection";
 export type { LostConnectionEvent, Status } from "./connection";
 export {
@@ -89,8 +97,9 @@ export type {
   AsyncResult,
   AsyncSuccess,
 } from "./lib/AsyncResult";
-export { autoRetry, StopRetrying } from "./lib/autoRetry";
+export { autoRetry, HttpError } from "./lib/autoRetry";
 export { chunk } from "./lib/chunk";
+export { Promise_withResolvers } from "./lib/controlledPromise";
 export {
   createCommentId,
   createInboxNotificationId,
@@ -115,10 +124,12 @@ export { isJsonArray, isJsonObject, isJsonScalar } from "./lib/Json";
 export { nanoid } from "./lib/nanoid";
 export type { NoInfr } from "./lib/NoInfer";
 export { objectToQuery } from "./lib/objectToQuery";
+export type { Poller } from "./lib/Poller";
 export { makePoller } from "./lib/Poller";
 export { asPos, makePosition } from "./lib/position";
 export type { Resolve } from "./lib/Resolve";
 export { shallow } from "./lib/shallow";
+export { SortedList } from "./lib/SortedList";
 export { stringify } from "./lib/stringify";
 export type { QueryParams, URLSafeString } from "./lib/url";
 export { url, urljoin } from "./lib/url";
@@ -134,6 +145,7 @@ export {
   wait,
   withTimeout,
 } from "./lib/utils";
+export type { GetUserThreadsOptions } from "./notifications";
 export type { CustomAuthenticationResult } from "./protocol/Authentication";
 export type { BaseActivitiesData } from "./protocol/BaseActivitiesData";
 export type { BaseRoomInfo } from "./protocol/BaseRoomInfo";
@@ -243,7 +255,6 @@ export type {
   StorageStatus,
 } from "./room";
 export type { GetThreadsOptions, UploadAttachmentOptions } from "./room";
-export { CommentsApiError } from "./room";
 export type { Immutable } from "./types/Immutable";
 export type {
   IWebSocket,
@@ -256,6 +267,7 @@ export { WebsocketCloseCodes } from "./types/IWebSocket";
 export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 export type { OptionalPromise } from "./types/OptionalPromise";
 export type { OthersEvent } from "./types/Others";
+export { TextEditorType } from "./types/Others";
 export type { Patchable } from "./types/Patchable";
 export type {
   PlainLson,
@@ -292,6 +304,7 @@ export type EnsureJson<T> =
 // Support for DevTools
 import type * as DevToolsMsg from "./devtools/protocol";
 export type { DevToolsMsg };
+import { HttpError } from "./lib/autoRetry";
 import type { Json } from "./lib/Json";
 import type * as DevTools from "./types/DevToolsTreeNode";
 export type { DevTools };
@@ -299,3 +312,9 @@ export type { DevTools };
 // Store
 export type { Store } from "./lib/create-store";
 export { createStore } from "./lib/create-store";
+
+// Deprecated APIs
+/** @deprecated Use HttpError instead. */
+export const CommentsApiError = HttpError;
+/** @deprecated Use HttpError instead. */
+export const NotificationsApiError = HttpError;

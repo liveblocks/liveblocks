@@ -83,7 +83,8 @@ jobs:
           "packages/liveblocks-react" "packages/liveblocks-redux"
           "packages/liveblocks-zustand" "packages/liveblocks-yjs"
           "packages/liveblocks-react-ui" "packages/liveblocks-react-lexical"
-          "packages/liveblocks-node-lexical"
+          "packages/liveblocks-node-lexical" "packages/liveblocks-react-tiptap"
+          "packages/liveblocks-emails"
 
       - name: Build all packages
         run: |
@@ -103,6 +104,7 @@ jobs:
           "packages/liveblocks-redux" "packages/liveblocks-zustand"
           "packages/liveblocks-yjs" "packages/liveblocks-react-lexical"
           "packages/liveblocks-node-lexical" "packages/liveblocks-react-ui"
+          "packages/liveblocks-react-tiptap" "packages/liveblocks-emails"
 
       - name:
           Creating release tag, don't forget to fill the changelog if necessary!
@@ -113,7 +115,7 @@ jobs:
         run: |
           echo "==> Pushing changes to GitHub"
           if [ "$(git current-branch)" = "main" ]; then
-            if !git push origin main; then
+            if ! git push origin main; then
                 echo "ERROR: Could not push this branch to GitHub!" >&2
                 echo "Please manually fix that now, before writing the release notes!" >&2
                 exit 2

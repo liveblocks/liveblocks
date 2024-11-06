@@ -5,7 +5,7 @@ import type {
   InboxNotificationDataPlain,
   ThreadData,
 } from "@liveblocks/core";
-import { nanoid, ServerMsgCode } from "@liveblocks/core";
+import { HttpError, nanoid, ServerMsgCode } from "@liveblocks/core";
 import type { AST } from "@liveblocks/query-parser";
 import { QueryParser } from "@liveblocks/query-parser";
 import {
@@ -28,7 +28,6 @@ import type { ReactNode } from "react";
 import React, { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
-import { POLLING_INTERVAL } from "../room";
 import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
 import MockWebSocket, { websocketSimulator } from "./_MockWebSocket";
 import {
@@ -37,6 +36,9 @@ import {
   mockGetThreads,
 } from "./_restMocks";
 import { createContextsForTest } from "./_utils";
+
+const SECONDS = 1000;
+const MINUTES = 60 * SECONDS;
 
 const server = setupServer();
 
@@ -1376,8 +1378,6 @@ describe("useThreads", () => {
     const thread1 = dummyThreadData({ roomId });
     const thread2WithDeletedAt = dummyThreadData({
       roomId,
-
-      // @ts-expect-error: deletedAt isn't publicly typed on ThreadData
       deletedAt: new Date(),
     });
 
@@ -1403,13 +1403,11 @@ describe("useThreads", () => {
       umbrellaStore,
     } = createContextsForTest();
 
-    umbrellaStore.force_set((state) => ({
-      ...state,
-      rawThreadsById: {
-        [thread1.id]: thread1,
-        [thread2WithDeletedAt.id]: thread2WithDeletedAt,
-      },
-    }));
+    // @ts-expect-error Accessing a private field here directly
+    const db = umbrellaStore._rawThreadsDB;
+    db.upsert(thread1);
+    db.upsert(thread2WithDeletedAt);
+    umbrellaStore.force_set((state) => ({ ...state }));
 
     const { result, unmount } = renderHook(
       () => useThreads({ query: { metadata: {} } }),
@@ -1441,6 +1439,8 @@ describe("useThreads", () => {
     let threads = [dummyThreadData({ roomId }), dummyThreadData({ roomId })];
     const originalThreads = [...threads];
 
+    let getThreadsSinceReqCount = 0;
+
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
         return res(
@@ -1461,6 +1461,7 @@ describe("useThreads", () => {
         const since = url.searchParams.get("since");
 
         if (since) {
+          getThreadsSinceReqCount++;
           const updatedThreads = threads.filter((thread) => {
             return thread.updatedAt >= new Date(since);
           });
@@ -1506,10 +1507,17 @@ describe("useThreads", () => {
       })
     );
 
+    // Advance time to trigger the first poll and verify that a poll does occur
+    await jest.advanceTimersByTimeAsync(5 * 60_000);
+    await waitFor(() => expect(getThreadsSinceReqCount).toBe(1));
+
     firstRenderResult.unmount();
 
     // Add a new thread to the threads array to simulate a new thread being added to the room
     threads = [...originalThreads, dummyThreadData({ roomId })];
+
+    // Advance time by at least maximum stale time (5000ms) so that a poll happens immediately after the room is mounted.
+    await jest.advanceTimersByTimeAsync(6_000);
 
     // Render the RoomProvider again and verify the threads are updated
     const secondRenderResult = renderHook(() => useThreads(), {
@@ -1528,7 +1536,7 @@ describe("useThreads", () => {
       fetchMoreError: undefined,
     });
 
-    // The updated threads should be displayed after the server responds with the updated threads (either due to a fetch request to get all threads or just the updated threads)
+    // The updated threads should be displayed after the server responds with the updated threads
     await waitFor(() => {
       expect(secondRenderResult.result.current).toEqual({
         isLoading: false,
@@ -1539,6 +1547,8 @@ describe("useThreads", () => {
         fetchMoreError: undefined,
       });
     });
+
+    expect(getThreadsSinceReqCount).toBe(2);
 
     secondRenderResult.unmount();
   });
@@ -1614,6 +1624,8 @@ describe("useThreads", () => {
     const roomId = nanoid();
     const threads = [dummyThreadData({ roomId }), dummyThreadData({ roomId })];
 
+    let getThreadsSinceReqCount = 0;
+
     server.use(
       mockGetThreads(async (_req, res, ctx) => {
         return res(
@@ -1634,6 +1646,7 @@ describe("useThreads", () => {
         const since = url.searchParams.get("since");
 
         if (since) {
+          getThreadsSinceReqCount++;
           const updatedThreads = threads.filter((thread) => {
             return thread.updatedAt >= new Date(since);
           });
@@ -1679,13 +1692,18 @@ describe("useThreads", () => {
       })
     );
 
+    // Advance time to trigger the first poll and verify that a poll does occur
+    await jest.advanceTimersByTimeAsync(5 * 60_000);
+    await waitFor(() => expect(getThreadsSinceReqCount).toBe(1));
+
     // Add a new thread to the threads array to simulate a new thread being added to the room
     threads.push(dummyThreadData({ roomId }));
 
+    // Advance time by at least maximum stale time (5000ms) so that a poll happens immediately after the room is mounted.
+    await jest.advanceTimersByTimeAsync(6_000);
+
     // Simulate browser going online
-    act(() => {
-      window.dispatchEvent(new Event("online"));
-    });
+    window.dispatchEvent(new Event("online"));
 
     // The updated threads should be displayed after the server responds with the updated threads (either due to a fetch request to get all threads or just the updated threads)
     await waitFor(() => {
@@ -1698,6 +1716,81 @@ describe("useThreads", () => {
         fetchMoreError: undefined,
       });
     });
+
+    unmount();
+  });
+
+  test("should handle 404 responses from backend endpoint and correctly poll after 404 response", async () => {
+    const roomId = nanoid();
+
+    let getThreadsReqCount = 0;
+    let getThreadsSinceReqCount = 0;
+
+    const threads = [dummyThreadData({ roomId })];
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        // Return a 404 to simulate the room not found
+        getThreadsReqCount++;
+        return res(ctx.status(404));
+      }),
+      mockGetThreadsSince(async (_req, res, ctx) => {
+        // Let's say the room was created after the initial fetch but before the poll,
+        // so, new threads are available in the room
+        getThreadsSinceReqCount++;
+        return res(
+          ctx.json({
+            data: threads,
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id={roomId}>{children}</RoomProvider>
+      ),
+    });
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
+      })
+    );
+
+    expect(getThreadsReqCount).toBe(1);
+    expect(getThreadsSinceReqCount).toBe(0);
+
+    // Wait for the first polling to occur after the initial render
+    jest.advanceTimersByTime(5 * MINUTES);
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads,
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
+      })
+    );
+    expect(getThreadsSinceReqCount).toBe(1);
 
     unmount();
   });
@@ -1739,25 +1832,26 @@ describe("useThreads: error", () => {
 
     // A new fetch request for the threads should have been made after the initial render
     await waitFor(() => expect(getThreadsReqCount).toBe(1));
-    expect(result.current).toEqual({ isLoading: true });
 
     // The first retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
     await waitFor(() => expect(getThreadsReqCount).toBe(2));
+    expect(result.current).toEqual({ isLoading: true });
 
     // The second retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
     await waitFor(() => expect(getThreadsReqCount).toBe(3));
+    expect(result.current).toEqual({ isLoading: true });
 
     // The third retry should be made after 10s
     await jest.advanceTimersByTimeAsync(10_000);
     await waitFor(() => expect(getThreadsReqCount).toBe(4));
+    expect(result.current).toEqual({ isLoading: true });
 
     // The fourth retry should be made after 15s
     await jest.advanceTimersByTimeAsync(15_000);
     await waitFor(() => expect(getThreadsReqCount).toBe(5));
-
     await waitFor(() => {
       expect(result.current).toEqual({
         isLoading: false,
@@ -1767,18 +1861,48 @@ describe("useThreads: error", () => {
 
     // Wait for 5 second for the error to clear
     await jest.advanceTimersByTimeAsync(5_000);
-
+    expect(result.current).toEqual({ isLoading: true });
     // A new fetch request for the threads should have been made after the initial render
     await waitFor(() => expect(getThreadsReqCount).toBe(6));
-    expect(result.current).toEqual({
-      isLoading: true,
-    });
 
     // The first retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
     await waitFor(() => expect(getThreadsReqCount).toBe(7));
+    expect(result.current).toEqual({ isLoading: true });
 
     // and so on...
+
+    unmount();
+  });
+
+  test("should not retry if a 403 Forbidden response is received from server", async () => {
+    const roomId = nanoid();
+
+    server.use(
+      mockGetThreads((_req, res, ctx) => {
+        // Return a 403 status from the server for the initial fetch
+        return res(ctx.status(403));
+      })
+    );
+
+    const {
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id={roomId}>{children}</RoomProvider>
+      ),
+    });
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    await waitFor(() => {
+      expect(result.current).toEqual({
+        isLoading: false,
+        error: expect.any(HttpError),
+      });
+    });
 
     unmount();
   });
@@ -1853,11 +1977,11 @@ describe("useThreads: polling", () => {
     await waitFor(() => expect(getThreadsReqCount).toBe(1));
 
     // Wait for the first polling to occur after the initial render
-    jest.advanceTimersByTime(POLLING_INTERVAL);
+    jest.advanceTimersByTime(5 * MINUTES);
     await waitFor(() => expect(getThreadsReqCount).toBe(2));
 
     // Advance time to simulate the polling interval
-    jest.advanceTimersByTime(POLLING_INTERVAL);
+    jest.advanceTimersByTime(5 * MINUTES);
     // Wait for the second polling to occur
     await waitFor(() => expect(getThreadsReqCount).toBe(3));
 
@@ -1905,10 +2029,10 @@ describe("useThreads: polling", () => {
 
     const { unmount } = render(<Room />);
 
-    jest.advanceTimersByTime(POLLING_INTERVAL);
+    jest.advanceTimersByTime(5 * MINUTES);
     await waitFor(() => expect(hasCalledGetThreads).toBe(false));
 
-    jest.advanceTimersByTime(POLLING_INTERVAL);
+    jest.advanceTimersByTime(5 * MINUTES);
     await waitFor(() => expect(hasCalledGetThreads).toBe(false));
 
     unmount();

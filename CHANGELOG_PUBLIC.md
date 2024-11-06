@@ -13,6 +13,77 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
 
+# Week 44 (2024-11-01)
+
+## v2.10.2
+
+### `@liveblocks/client`
+
+- Internal refactorings and code cleanup across various parts of the client's
+  inner workings.
+
+### `@liveblocks/react`
+
+- Implement automatic retry for initial load of inbox notifications, user
+  threads, room threads, room versions, or room notification settings—except
+  when encountering a 4xx error.
+- Background tabs will no longer poll threads, notification, room versions or
+  room notification settings.
+- Fix incorrect suspense export for `useRoomNotificationSettings` hook.
+- Support for React 19 and Next.js 15.
+
+### `@liveblocks/react-ui`
+
+- Support for React 19 and Next.js 15.
+
+### `@liveblocks/react-lexical`
+
+- Support for React 19 and Next.js 15.
+
+## Dashboard
+
+- Icons indicating which rooms are public/private on room listing and detail pages.
+- New warning message if all your rooms are publicly accessible.
+
+## Documentation
+
+- Improved clarity on Notifications being [project-based](http://liveblocks.io/docs/products/notifications/concepts#Project-based).
+- Typo fixes.
+
+## Contributors
+
+haydenbleasel, ctnicholas, pierrelevaillant, nvie, nimeshnayaju
+
+# Week 43 (2024-10-25)
+
+## v2.10.0
+
+### `@liveblocks/client`
+
+- Add new [resolver methods](https://liveblocks.io/docs/api-reference/liveblocks-client#Resolvers) under `client.resolvers.*` to invalidate the cache of
+  `resolveUsers`, `resolveRoomsInfo`, and `resolveMentionSuggestions`.
+- When subscribing to Storage update events using
+  [`room.subscribe(root, ..., { isDeep: true })`](https://liveblocks.io/docs/api-reference/liveblocks-client#listening-for-nested-changes), all LiveList deletion updates
+  will now also include the item that was deleted.
+
+### `@liveblocks/react-ui`
+
+- Improve and fix pasting rich text into the composer.
+- Improve mention suggestions click behavior.
+
+## Dashboard
+
+- Removed `Show deleted threads` checkbox from the room detail `Comments` tab to ensure consistent behavior across dashboard and APIs.
+
+## Documentation
+
+- Prevent truncated API keys being copied in code snippets.
+- Typo fixes.
+
+## Contributors
+
+pierrelevaillant, sugardarius, kaf-lamed-beyt, ctnicholas, marcbouchenoire, nvie
+
 # Week 42 (2024-10-18)
 
 ## v2.9.1

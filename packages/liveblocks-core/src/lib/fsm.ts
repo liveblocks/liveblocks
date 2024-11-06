@@ -360,15 +360,48 @@ export class FSM<
     return this;
   }
 
+  /**
+   * Defines a promise-based state. When the state is entered, the promise is
+   * created. When the promise resolves, the machine will transition to the
+   * provided `onOK` target state. When the promise rejects, the machine will
+   * transition to the `onError` target state.
+   *
+   * Optionally, a `maxTimeout` can be set. If the timeout happens before the
+   * promise is settled, then the machine will also transition to the `onError`
+   * target state.
+   *
+   * @param stateOrPattern  The state name, or state group pattern name.
+   * @param promiseFn       The callback to be invoked when the state is entered.
+   * @param onOK            The state to transition to when the promise resolves.
+   * @param onError         The state to transition to when the promise
+   *                        rejects, or when the timeout happens before the
+   *                        promise has been settled.
+   * @param maxTimeout      Optional timeout in milliseconds.
+   *
+   * When the promise callback function is invoked, it's provided with an
+   * AbortSignal (2nd argument).
+   * If a state transition happens while the promise is pending (for example,
+   * an event, or a timeout happens), then an abort signal will be used to
+   * indicate this. Implementers can use this abort signal to terminate the
+   * in-flight promise, or ignore its results, etc.
+   */
   public onEnterAsync<T>(
     nameOrPattern: TState | Wildcard<TState>,
     promiseFn: (context: Readonly<TContext>, signal: AbortSignal) => Promise<T>,
     onOK: Target<TContext, AsyncOKEvent<T>, TState>,
-    onError: Target<TContext, AsyncErrorEvent, TState>
+    onError: Target<TContext, AsyncErrorEvent, TState>,
+    maxTimeout?: number
   ): this {
     return this.onEnter(nameOrPattern, () => {
       const abortController = new AbortController();
       const signal = abortController.signal;
+
+      const timeoutId = maxTimeout
+        ? setTimeout(() => {
+            const reason = new Error("Timed out");
+            this.transition({ type: "ASYNC_ERROR", reason }, onError);
+          }, maxTimeout)
+        : undefined;
 
       let done = false;
       void promiseFn(this.currentContext.current, signal).then(
@@ -390,6 +423,7 @@ export class FSM<
       );
 
       return () => {
+        clearTimeout(timeoutId);
         if (!done) {
           abortController.abort();
         }
@@ -485,11 +519,11 @@ export class FSM<
    * Like `.addTransition()`, but takes an (anonymous) transition whenever the
    * timer fires.
    *
-   * @param stateOrPattern The state name, or state group pattern name.
-   * @param after          Number of milliseconds after which to take the
-   *                       transition. If in the mean time, another transition
-   *                       is taken, the timer will get cancelled.
-   * @param target     The target state to go to.
+   * @param stateOrPattern  The state name, or state group pattern name.
+   * @param after           Number of milliseconds after which to take the
+   *                        transition. If in the mean time, another transition
+   *                        is taken, the timer will get cancelled.
+   * @param target          The target state to go to.
    */
   public addTimedTransition(
     stateOrPattern: TState | Wildcard<TState>,

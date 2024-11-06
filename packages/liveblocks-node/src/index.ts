@@ -39,7 +39,11 @@ export type {
   WebhookRequest,
   YDocUpdatedEvent,
 } from "./webhooks";
-export { WebhookHandler } from "./webhooks";
+export {
+  isTextMentionNotificationEvent,
+  isThreadNotificationEvent,
+  WebhookHandler,
+} from "./webhooks";
 export type {
   CommentBody,
   CommentBodyBlockElement,

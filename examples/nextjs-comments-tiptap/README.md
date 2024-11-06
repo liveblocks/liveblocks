@@ -23,8 +23,8 @@
 </p>
 
 This example shows how to add comments to a collaborative text editor with
-[Liveblocks](https://liveblocks.io), [Yjs](https://docs.yjs.dev),
-[Tiptap](https://tiptap.dev), and [Next.js](https://nextjs.org/).
+[Liveblocks](https://liveblocks.io), [Tiptap](https://tiptap.dev), and
+[Next.js](https://nextjs.org/).
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/comments-text-editor.png" width="536" alt="Text Editor Comments" />
 

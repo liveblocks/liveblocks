@@ -1,23 +1,24 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { ClientSideSuspense } from "@liveblocks/react";
-import { LiveblocksYjsProvider } from "@liveblocks/yjs";
-import Collaboration from "@tiptap/extension-collaboration";
-import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
-import { EditorContent, useEditor } from "@tiptap/react";
+import {
+  AnchoredThreads,
+  FloatingComposer,
+  FloatingThreads,
+  useLiveblocksExtension,
+} from "@liveblocks/react-tiptap";
+import { Placeholder } from "@tiptap/extension-placeholder";
+import { EditorContent, useEditor, Editor as TEditor } from "@tiptap/react";
 import StarterKit, { StarterKitOptions } from "@tiptap/starter-kit";
 import { EditorView } from "prosemirror-view";
-import { useEffect, useState } from "react";
-import * as Y from "yjs";
 import { Avatars } from "@/components/Avatars";
 import { SelectionMenu } from "@/components/SelectionMenu";
 import { DocumentSpinner } from "@/components/Spinner";
-import { ThreadList } from "@/components/ThreadList";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { useRoom, useSelf } from "@liveblocks/react/suspense";
-import { LiveblocksCommentsHighlight } from "@/comment-highlight";
+import { useThreads } from "@liveblocks/react/suspense";
+import { CommentIcon } from "@/icons";
 import styles from "./TextEditor.module.css";
-import { Placeholder } from "@tiptap/extension-placeholder";
 
 export function TextEditor() {
   return (
@@ -29,38 +30,7 @@ export function TextEditor() {
 
 // Collaborative text editor with simple rich text and live cursors
 export function Editor() {
-  const room = useRoom();
-  const [doc, setDoc] = useState<Y.Doc>();
-  const [provider, setProvider] = useState<any>();
-
-  // Set up Liveblocks Yjs provider
-  useEffect(() => {
-    const yDoc = new Y.Doc();
-    const yProvider = new LiveblocksYjsProvider(room, yDoc);
-    setDoc(yDoc);
-    setProvider(yProvider);
-
-    return () => {
-      yDoc?.destroy();
-      yProvider?.destroy();
-    };
-  }, [room]);
-
-  if (!doc || !provider) {
-    return null;
-  }
-
-  return <TiptapEditor doc={doc} provider={provider} />;
-}
-
-type EditorProps = {
-  doc: Y.Doc;
-  provider: any;
-};
-
-function TiptapEditor({ doc, provider }: EditorProps) {
-  // Get user info from Liveblocks authentication endpoint
-  const { name, color, avatar: picture } = useSelf((me) => me.info);
+  const liveblocks = useLiveblocksExtension();
 
   // Set up editor with plugins, and place user info into Yjs awareness and cursors
   const editor = useEditor({
@@ -71,29 +41,11 @@ function TiptapEditor({ doc, provider }: EditorProps) {
       },
     },
     extensions: [
-      // Custom Liveblocks comments extension
-      LiveblocksCommentsHighlight.configure({
-        HTMLAttributes: {
-          class: "comment-highlight",
-        },
-      }),
+      liveblocks,
       StarterKit.configure({
         // The Collaboration extension comes with its own history handling
         history: false,
         ...starterKitOptions,
-      }),
-      // Register the document with Tiptap
-      Collaboration.configure({
-        document: doc,
-      }),
-      // Attach provider and user info
-      CollaborationCursor.configure({
-        provider: provider,
-        user: {
-          name,
-          color,
-          picture,
-        },
       }),
       Placeholder.configure({
         placeholder: "Start writing…",
@@ -113,15 +65,10 @@ function TiptapEditor({ doc, provider }: EditorProps) {
         <div className={styles.editorContainerOffset}>
           <div className={styles.editorContainer}>
             <EditorContent editor={editor} />
-            <div className={styles.threadListContainer} data-threads="desktop">
-              {editor ? <ThreadList editor={editor} /> : null}
+            <FloatingComposer editor={editor} style={{ width: 350 }} />
+            <div className={styles.threads}>
+              <Threads editor={editor} />
             </div>
-          </div>
-          <div
-            className={styles.mobileThreadListContainer}
-            data-threads="mobile"
-          >
-            {editor ? <ThreadList editor={editor} /> : null}
           </div>
         </div>
       </div>
@@ -174,6 +121,51 @@ const starterKitOptions: Partial<StarterKitOptions> = {
     },
   },
 };
+
+function Threads({ editor }: { editor: TEditor | null }) {
+  const { threads } = useThreads();
+  const isMobile = useIsMobile();
+
+  if (!threads || !editor) {
+    return null;
+  }
+
+  if (!isMobile && threads.length === 0) {
+    return (
+      <div className={styles.noComments}>
+        <div className={styles.noCommentsHeader}>No comments yet</div>
+        <p>
+          <span className={styles.noCommentsButton}>
+            <CommentIcon />
+          </span>
+          Create a comment by selecting text and pressing the comment button.
+        </p>
+      </div>
+    );
+  }
+
+  return isMobile ? (
+    <FloatingThreads threads={threads} editor={editor} />
+  ) : (
+    <AnchoredThreads threads={threads} editor={editor} style={{ width: 350 }} />
+  );
+}
+
+function useIsMobile() {
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+}
+
+function subscribe(callback: () => void) {
+  const query = window.matchMedia("(max-width: 1279px)");
+
+  query.addEventListener("change", callback);
+  return () => query.removeEventListener("change", callback);
+}
+
+function getSnapshot() {
+  const query = window.matchMedia("(max-width: 1279px)");
+  return query.matches;
+}
 
 // Prevents a matchesNode error on hot reloading
 EditorView.prototype.updateState = function updateState(state) {
