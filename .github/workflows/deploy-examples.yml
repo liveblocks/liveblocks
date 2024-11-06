@@ -92,6 +92,9 @@ jobs:
 
           echo Triggering deployment for nextjs-spreadsheet-advanced
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_ZJK9PEfgkfsqKRVjxFzwQgAVsdsF/gKp8sJ1f1c; echo
+          
+          echo Triggering deployment for nextjs-tiptap
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_LhH3Ag7MdSKWGicQRRIZRHMCacrm/cCpeyZEfFF; echo
 
           echo Triggering deployment for nextjs-tldraw-storage
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_mKM14iPdQfC3jH6jQhCKtBoasxQY/0AfEGfHLws; echo
