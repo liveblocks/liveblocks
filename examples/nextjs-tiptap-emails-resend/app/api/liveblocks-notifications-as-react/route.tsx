@@ -71,7 +71,7 @@ export async function POST(request: Request) {
           // to customize mentions' components.
           components: {
             Container: ({ children }) => (
-              <Text className="text-sm text-black m-0 mb-4">{children}</Text>
+              <Text className="text-sm text-black m-0">{children}</Text>
             ),
             Mention: ({ element, user }) => (
               <span className="text-email-accent font-medium">

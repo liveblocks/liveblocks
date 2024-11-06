@@ -211,7 +211,7 @@ const transformTiptapMentionNodeWithContext = (
       } else if (isSerializedTiptapMentionNode(node)) {
         textEditorNodes.push({
           type: "mention",
-          userId: node.attrs.userId,
+          userId: node.attrs.id,
         });
       }
     }
@@ -220,7 +220,7 @@ const transformTiptapMentionNodeWithContext = (
   transform(before);
   textEditorNodes.push({
     type: "mention",
-    userId: mention.attrs.userId,
+    userId: mention.attrs.id,
   });
   transform(after);
 

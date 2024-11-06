@@ -62,7 +62,7 @@ export interface SerializedTiptapTextNode extends SerializedTiptapBaseNode {
 export interface SerializedTiptapMentionNode extends SerializedTiptapBaseNode {
   type: "liveblocksMention";
   attrs: {
-    userId: string;
+    id: string;
     notificationId: string;
   };
 }
@@ -198,7 +198,7 @@ export function findTiptapMentionNodeWithContext({
     if (
       isSerializedMentionNode(node) &&
       node.attrs.notificationId === mentionId &&
-      node.attrs.userId === mentionedUserId
+      node.attrs.id === mentionedUserId
     ) {
       mentionNodeIndex = i;
       break;
