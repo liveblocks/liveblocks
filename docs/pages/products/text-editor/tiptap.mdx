@@ -1,16 +1,21 @@
 ---
 meta:
-  title: "Lexical"
+  title: "Tiptap"
   parentTitle: "Text Editor"
-  description: "Learn about using Lexical text editor"
+  description: "Learn about using Tiptap text editor"
 ---
 
-A quick overview of the Text Editor packages for Lexical.
+A quick overview of the Text Editor packages for Tiptap.
+
+<Banner title="Package still in beta">
+  Our Tiptap package is currently in beta and has not been publicly released
+  yet.
+</Banner>
 
 ## Concepts
 
-Liveblocks Lexical allows you add collaboration to any
-[Lexical](https://lexical.dev/) text editor, along with a number of related
+Liveblocks Tiptap allows you add collaboration to any
+[Tiptap](https://tiptap.dev/) text editor, along with a number of related
 features. Each [collaborative room](/docs/concepts/how-liveblocks-works#Rooms)
 in your application can store one document each, and these documents are
 persisted on the cloud, visible on [your dashboard](/dashboard), and are
@@ -101,30 +106,26 @@ reply, use emoji reactions, mention others, and more.
 </Figure>
 
 Add a floating Comments composer to your text editor using
-[`FloatingComposer`](/docs/api-reference/liveblocks-react-lexical#FloatingComposer).
+[`FloatingComposer`](/docs/api-reference/liveblocks-react-tiptap#FloatingComposer).
 
-```tsx highlight="3"
-<LexicalComposer initialConfig={initialConfig}>
-  <LiveblocksPlugin>
-    <FloatingComposer />
-  </LiveblocksPlugin>
-</LexicalComposer>
+```tsx
+<FloatingComposer editor={editor} />
 ```
 
 You can then create a button that
-[opens the new annotation composer](/docs/api-reference/liveblocks-react-lexical#Opening-the-FloatingComposer)
-for the current selection with `OPEN_FLOATING_COMPOSER_COMMAND`.
+[opens the new annotation composer](/docs/api-reference/liveblocks-react-tiptap#Opening-the-composer)
+for the current selection with `addPendingComment`.
 
 ```tsx
-<button onClick={() => editor.dispatchCommand(OPEN_FLOATING_COMPOSER_COMMAND)}>
+<button onClick={() => editor.chain().focus().addPendingComment().run()}>
   💬 New comment
 </button>
 ```
 
 Add [`useThreads`](/docs/products/comments/hooks#threads-hook) alongside
-[`FloatingThreads`](/docs/api-reference/liveblocks-react-lexical#FloatingThreads)
+[`FloatingThreads`](/docs/api-reference/liveblocks-react-tiptap#FloatingThreads)
 and
-[`Anchoredthreads`](/docs/api-reference/liveblocks-react-lexical#AnchoredThreads)
+[`Anchoredthreads`](/docs/api-reference/liveblocks-react-tiptap#AnchoredThreads)
 to render your comments to the page.
 
 ```tsx
@@ -133,8 +134,8 @@ export function Threads({ editor }) {
 
   return (
     <>
-      <AnchoredThreads threads={threads} />
-      <FloatingThreads threads={threads} />
+      <AnchoredThreads editor={editor} threads={threads} />
+      <FloatingThreads editor={editor} threads={threads} />
     </>
   );
 }
@@ -187,39 +188,7 @@ Inline mentions also trigger
 webhook events. Learn more about
 [sending email notifications](/docs/products/notifications/email-notifications).
 
-## AI agents and editing on the server
-
-Fetch and modify your text editor’s content from the server, enabling features
-such as AI agents. Easily make changes that update in real-time for every
-connected user.
-
-<Figure>
-  <Image
-    src="/assets/text-editor/ai.png"
-    alt="AI suggestions"
-    width={1312}
-    height={874}
-  />
-</Figure>
-
-Use
-[`withLexicalDocument`](/docs/api-reference/liveblocks-node-lexical#withLexicalDocument)
-to get your editor’s content and make modifications live.
-
-```tsx
-await withLexicalDocument(
-  { roomId: "my-room-id", client: liveblocks },
-  async (doc) => {
-    // Get editor content
-    const textContent = doc.getTextContent();
-
-    await doc.update(async () => {
-      // Make real-time updates
-      // ...
-    });
-  }
-);
-```
+{/* TODO: Mention Node.js package + AI agents when it's complete */}
 
 ## Version History
 
@@ -231,8 +200,8 @@ hear from you.
 
 </Banner>
 
-Liveblocks Lexical automatically creates versions of your document as changes
-are made. These versions can be easily displayed to users using a few simple
+Liveblocks Tiptap automatically creates versions of your document as changes are
+made. These versions can be easily displayed to users using a few simple
 components. This allows for a comprehensive version history feature in your
 collaborative text editor.
 
@@ -245,7 +214,7 @@ import {
   useHistoryVersions,
   HistoryVersionSummaryList,
 } from "@liveblocks/react";
-import { HistoryVersionPreview } from "@liveblocks/react-lexical";
+import { HistoryVersionPreview } from "@liveblocks/react-tiptap";
 
 function DocumentHistory() {
   const [selectedVersionId, setSelectedVersionId] = useState<string>();
@@ -298,21 +267,17 @@ In this example, `useHistoryVersions` fetches the version history,
 provides users with an interface to browse through the document's history and
 restore different versions.
 
-## Lexical API Reference
+## Tiptap API Reference
 
 <ListGrid columns={2}>
   <DocsCard
     type="technology"
-    title="Lexical React"
-    href="/docs/api-reference/liveblocks-react-lexical"
-    description="@liveblocks/react-lexical"
+    title="Tiptap React"
+    href="/docs/api-reference/liveblocks-react-tiptap"
+    description="@liveblocks/react-tiptap"
     visual={<DocsReactIcon />}
   />
-  <DocsCard
-    type="technology"
-    title="Lexical Node"
-    href="/docs/api-reference/liveblocks-node-lexical"
-    description="@liveblocks/node-lexical"
-    visual={<DocsApiIcon />}
-  />
+
+{/* TODO: <DocsCard type="technology" title="Lexical Node" href="/docs/api-reference/liveblocks-node-lexical" description="@liveblocks/node-lexical" visual={<DocsApiIcon />} /> */}
+
 </ListGrid>
