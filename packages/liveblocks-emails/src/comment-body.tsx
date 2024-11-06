@@ -20,6 +20,7 @@ import {
 } from "@liveblocks/core";
 import React from "react";
 
+import { MENTION_CHARACTER } from "./lib/constants";
 import type { CSSProperties } from "./lib/css-properties";
 import { toInlineCSSString } from "./lib/css-properties";
 
@@ -127,7 +128,10 @@ const baseComponents: ConvertCommentBodyAsReactComponents<BaseUserMeta> = {
     </a>
   ),
   Mention: ({ element, user }) => (
-    <span data-mention>@{user?.name ?? element.id}</span>
+    <span data-mention>
+      {MENTION_CHARACTER}
+      {user?.name ?? element.id}
+    </span>
   ),
 };
 
@@ -333,7 +337,7 @@ export async function convertCommentBodyAsHtml(
       },
       mention: ({ element, user }) => {
         // prettier-ignore
-        return html`<span data-mention style="${toInlineCSSString(styles.mention)}">@${user?.name ?? element.id}</span>`;
+        return html`<span data-mention style="${toInlineCSSString(styles.mention)}">${MENTION_CHARACTER}${user?.name ?? element.id}</span>`;
       },
     },
   });

@@ -21,6 +21,7 @@ import type {
   SerializedTextNode,
 } from "./lexical-editor";
 import { isSerializedMentionNode as isSerializedLexicalMentionNode } from "./lexical-editor";
+import { MENTION_CHARACTER } from "./lib/constants";
 import type { CSSProperties } from "./lib/css-properties";
 import { toInlineCSSString } from "./lib/css-properties";
 import type {
@@ -326,7 +327,10 @@ const baseComponents: ConvertLiveblocksTextEditorNodesAsReactComponents<BaseUser
   {
     Container: ({ children }) => <div>{children}</div>,
     Mention: ({ element, user }) => (
-      <span data-mention>@{user?.name ?? element.userId}</span>
+      <span data-mention>
+        {MENTION_CHARACTER}
+        {user?.name ?? element.userId}
+      </span>
     ),
     Text: ({ element }) => {
       // Note: construction following the schema 👇
@@ -487,7 +491,7 @@ export async function convertLiveblocksTextEditorNodesAsHtml(
         case "mention": {
           const user = resolvedUsers.get(node.userId);
           // prettier-ignore
-          return html`<span data-mention style="${toInlineCSSString(styles.mention)}">@${user?.name ?? node.userId}</span>`
+          return html`<span data-mention style="${toInlineCSSString(styles.mention)}">${MENTION_CHARACTER}${user?.name ?? node.userId}</span>`
         }
         case "text": {
           // Note: construction following the schema 👇
