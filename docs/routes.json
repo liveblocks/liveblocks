@@ -531,6 +531,10 @@
         "path": "/api-reference/liveblocks-node"
       },
       {
+        "title": "@liveblocks/emails",
+        "path": "/api-reference/liveblocks-emails"
+      },
+      {
         "title": "REST API",
         "href": "/api-reference/rest-api-endpoints"
       },
@@ -617,7 +621,8 @@
           { "title": "Upgrading to 1.10", "path": "/platform/upgrading/1.10" },
           { "title": "Upgrading to 2.0", "path": "/platform/upgrading/2.0" },
           { "title": "Upgrading to 2.2", "path": "/platform/upgrading/2.2" },
-          { "title": "Upgrading to 2.8", "path": "/platform/upgrading/2.8" }
+          { "title": "Upgrading to 2.8", "path": "/platform/upgrading/2.8" },
+          { "title": "Upgrading to 2.9", "path": "/platform/upgrading/2.9" }
         ]
       },
       {

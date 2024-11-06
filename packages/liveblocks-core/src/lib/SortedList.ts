@@ -16,15 +16,20 @@ function bisectRight<T>(arr: readonly T[], x: T, lt: (a: T, b: T) => boolean) {
 }
 
 /**
- * A datastructure to keep elements in ascending order, defined by a key
- * function, i.e.
+ * A datastructure to keep elements in ascending order, as defined by the "less
+ * than" function you provide. The elements will be ordered according to
+ * whatever you define as the "less than" for this element type, so that every
+ * element is less than its successor in the list.
  *
- * const sorted = SortedList.from([{ id: 1 }, { id: 4 }, { id: 4 }, { id: 9 }], x => x.id)
+ * const sorted = SortedList.from(
+ *   [{ id: 4 }, { id: 1 }, { id: 9 }, { id: 4 }],
+ *   (a, b) => a.id < b.id)
+ * )
  * sorted.add({ id: 5 })
- * sorted.remove({ id: 4 })
+ * sorted.remove({ id: 4 })  // Assuming it's the same obj ref!
  *
  * Array.from(sorted)
- * [{ id: 1 }, { id: 4 }, { id: 4 }, { id: 5 }, { id: 9 }])
+ * [{ id: 1 }, { id: 4 }, { id: 5 }, { id: 9 }])
  */
 export class SortedList<T> {
   private _data: T[];

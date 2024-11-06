@@ -78,49 +78,89 @@ const event = {
 
 ### Your endpoint
 
-In your endpoint, you can use this `event` object with functions such as
-[`liveblocks.getThread`](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads-threadId)
-and
-[`liveblocks.getInboxNotification`](/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications-inboxNotificationId),
-which will return the thread and inbox notification for the event.
+In your endpoint, you can use this `event` object to get information on unread
+mentions and replies, and start rendering emails with
+[HTML](/docs/api-reference/liveblocks-emails#prepare-thread-notification-email-as-html)
+or
+[React](/docs/api-reference/liveblocks-emails#prepare-thread-notification-email-as-react).
 
-```ts
-// Data from the `notification` event
-const { roomId, threadId, inboxNotificationId, userId } = event.data;
-
-// Get the thread with the unread comments inside
-const thread = await liveblocks.getThread({ roomId, threadId });
-
-// { type: "thread", id: "th_d75sF3...", ... }
-console.log(thread);
-
-// Get the inbox notification, which details when the user last read the thread
-const inboxNotification = await liveblocks.getInboxNotification({
-  inboxNotificationId,
-  userId,
-});
-
-// { kind: "thread", readAt: Date<2024-07-13T14:32:50.697Z>, ... }
-console.log(inboxNotification);
-```
-
-Once you have the thread, and the inbox notification, you can use
-[`stringifyCommentBody`](/docs/api-reference/liveblocks-node#stringify-comment-body)
-to transform unread comments into an email-compatible format.
-
-```ts
-// Get all unread comments
-const unreadComments = thread.comments.filter((comment) =>
-  inboxNotification.readAt ? comment.createdAt > inboxNotification.readAt : true
+```tsx
+// Get email data as React JSX
+const emailData = await prepareThreadNotificationEmailAsReact(
+  liveblocks,
+  event
 );
 
-// Transform the oldest unread comment into HTML
-const commentHtml = await stringifyCommentBody(unreadComments[0].body, {
-  format: "html",
-});
+let email;
+switch (emailData.type) {
+  // The user has an unread mention
+  case "unreadMention": {
+    email = (
+      // +++
+      <div>
+        <div>
+          @{emailData.comment.author.id} at {emailData.comment.createdAt}
+        </div>
+        <div>{emailData.comment.reactBody}</div>
+      </div>
+      // +++
+    );
+    break;
+  }
 
-// "<p>Hello world!</p>"
-console.log(commentHtml);
+  // The user has multiple unread replies
+  case "unreadReplies": {
+    email = (
+      // +++
+      <div>
+        {emailData.comments.map((comment) => (
+          <div key={comment.id}>
+            <div>
+              @{comment.author.id} at {comment.createdAt}
+            </div>
+            <div>{comment.reactBody}</div>
+          </div>
+        ))}
+      </div>
+      // +++
+    );
+  }
+}
+```
+
+You can customize this further, resolving user and room IDs into data, allowing
+you to render names instead of IDs. You can also add custom React components to
+the comment bodies, helpful for custom stying.
+
+```tsx
+// Get email data as React JSX
+const emailData = await prepareThreadNotificationEmailAsReact(
+  liveblocks,
+  event,
+  {
+    // +++
+    resolveUsers: async ({ userIds }) => {
+      const usersData = await __getUsersFromDB__(userIds);
+
+      return usersData.map((userData) => ({
+        name: userData.name,
+        avatar: userData.avatar.src,
+      }));
+    },
+    // +++
+    // ...
+    components: {
+      // `user` is the optional data returned from `resolveUsers`
+      // +++
+      Mention: ({ element, user }) => (
+        <span style={{ color: "red" }}>@{user.name}</span>
+      ),
+      // +++
+
+      // ...
+    },
+  }
+);
 ```
 
 You can then send an email containing the comment to the owner of `userId`
@@ -134,7 +174,7 @@ __sendEmail__({
   from: "hello@my-company.com",
   to: emailAddress,
   title: "Unread comment",
-  html: `
+  react: `
     <h1>Unread comment</h1>
     ${commentHtml}
   `,
@@ -142,21 +182,27 @@ __sendEmail__({
 ```
 
 Here’s an example with every step linked together, along with the code necessary
-to verify a webhook request is valid.
+to verify a webhook request is valid, and using [Resend](https://resend.com) to
+send an email.
 
 ```ts title="Full example" isCollapsable isCollapsed
 import {
   Liveblocks,
   WebhookHandler,
-  stringifyCommentBody,
+  isThreadNotificationEvent,
 } from "@liveblocks/node";
+import { prepareThreadNotificationEmailAsReact } from "@liveblocks/emails";
+import { Resend } from "resend";
+
+// Create Resend client (add your API key)
+const resend = new Resend("re_123456789");
 
 // Add your webhook secret key from a project's webhooks dashboard
-const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET";
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
 const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
 
 // Add your secret key from a project's API keys dashboard
-const API_SECRET = "{{SECRET_KEY}}";
+const API_SECRET = "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx";
 const liveblocks = new Liveblocks({ secret: API_SECRET });
 
 export async function POST(request: Request) {
@@ -175,45 +221,112 @@ export async function POST(request: Request) {
     return new Response("Could not verify webhook call", { status: 400 });
   }
 
-  // When a thread has been created
-  if (event.type === "threadCreated") {
-    const { roomId, threadId, inboxNotificationId, userId } = event.data;
+  // When an inbox notification has been created
+  if (isThreadNotificationEvent(event)) {
+    // Check if user has access to room
+    if (!__hasRoomAccess__(event.userId, event.roomId)) {
+      return new Response(null, { status: 200 });
+    }
 
-    // Get the thread with the unread comments inside
-    const thread = await liveblocks.getThread({
-      roomId,
-      threadId,
-    });
+    // The user to send the email to
+    const emailAddress = __getEmailAddressFromDB__(event.userId);
 
-    // Get the inbox notification, which details when the user last read the thread
-    const inboxNotification = await liveblocks.getInboxNotification({
-      inboxNotificationId,
-      userId,
-    });
+    let emailData;
 
-    // Get all unread comments
-    const unreadComments = thread.comments.filter((comment) =>
-      inboxNotification.readAt
-        ? comment.createdAt > inboxNotification.readAt
-        : true
-    );
+    try {
+      emailData = await prepareThreadNotificationEmailAsReact(
+        liveblocks,
+        event,
+        {
+          resolveUsers: async ({ userIds }) => {
+            const usersData = await __getUsersFromDB__(userIds);
 
-    // Transform the oldest unread comment into HTML
-    const commentHtml = await stringifyCommentBody(unreadComments[0].body, {
-      format: "html",
-    });
+            return usersData.map((userData) => ({
+              name: userData.name, // "Steven"
+              avatar: userData.avatar.src, // "https://example.com/steven.jpg"
+            }));
+          },
+          resolveRoomInfo: async ({ roomId }) => {
+            const roomData = await __getRoomFromDB__(roomId);
 
-    // Send email to the user that received the inbox notification
-    const emailAddress = __getUserEmail__(userId);
-    __sendEmail__({
-      from: "hello@my-company.com",
-      to: emailAddress,
-      title: "New comment",
-      html: `
-        <h1>New comment</h1>
-        ${commentHtml}
-      `,
-    });
+            return {
+              name: roomData.name, // "Untitled document"
+              url: roomData.url, //`https://example.com/my-room-id`
+            };
+          },
+          components: {
+            Paragraph: ({ children }) => (
+              <p style={{ margin: "12px 0" }}>{children}</p>
+            ),
+
+            // `user` is the optional data returned from `resolveUsers`
+            Mention: ({ element, user }) => (
+              <span style={{ color: "red" }}>@{user?.name ?? element.id}</span>
+            ),
+
+            // If the link is rich-text render it, otherwise use the URL
+            Link: ({ element, href }) => (
+              <a href={href} style={{ textDecoration: "underline" }}>
+                {element?.text ?? href}
+              </a>
+            ),
+          },
+        }
+      );
+    } catch (err) {
+      console.log(err);
+      return new Response("Could not fetch thread notification data", {
+        status: 500,
+      });
+    }
+
+    // All comments have already been read
+    if (!emailData) {
+      return new Response(null, { status: 200 });
+    }
+
+    let email;
+    switch (emailData.type) {
+      case "unreadMention": {
+        email = (
+          <div>
+            <div>
+              @{emailData.comment.author.id} at {emailData.comment.createdAt}
+            </div>
+            <div>{emailData.comment.reactBody}</div>
+          </div>
+        );
+        break;
+      }
+
+      case "unreadReplies": {
+        email = (
+          <div>
+            {emailData.comments.map((comment) => (
+              <div key={comment.id}>
+                <div>
+                  @{comment.author.id} at {comment.createdAt}
+                </div>
+                <div>{comment.reactBody}</div>
+              </div>
+            ))}
+          </div>
+        );
+        break;
+      }
+    }
+
+    // Send email to the user's email address
+    try {
+      const data = await resend.emails.send({
+        from: "My company <hello@my-company.com>",
+        to: emailAddress,
+        subject: "New comment",
+        react: email,
+      });
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   return new Response(null, { status: 200 });

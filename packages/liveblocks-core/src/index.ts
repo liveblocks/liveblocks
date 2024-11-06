@@ -37,8 +37,16 @@ export type {
 } from "./comments/comment-body";
 export {
   getMentionedIdsFromCommentBody,
+  html,
+  htmlSafe,
+  isCommentBodyLink,
+  isCommentBodyMention,
+  isCommentBodyText,
+  resolveUsersInCommentBody,
   stringifyCommentBody,
+  toAbsoluteUrl,
 } from "./comments/comment-body";
+export { generateCommentUrl } from "./comments/comment-url";
 export type { BaseAuthResult, Delegates, LiveblocksError } from "./connection";
 export type { LostConnectionEvent, Status } from "./connection";
 export {
@@ -91,6 +99,7 @@ export type {
 } from "./lib/AsyncResult";
 export { autoRetry, HttpError } from "./lib/autoRetry";
 export { chunk } from "./lib/chunk";
+export { Promise_withResolvers } from "./lib/controlledPromise";
 export {
   createCommentId,
   createInboxNotificationId,
