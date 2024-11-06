@@ -213,7 +213,7 @@ export function findTiptapMentionNodeWithContext({
   // Collect nodes before and after
   const mentionNode = nodes[mentionNodeIndex] as SerializedTiptapMentionNode;
 
-  // TODO: apply surrounding text guesses
+  // Apply surrounding text guesses
   // For now let's stay simple just stop at nearest line break or paragraph
   const beforeNodes: SerializedTiptapNode[] = [];
   const afterNodes: SerializedTiptapNode[] = [];

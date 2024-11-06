@@ -325,7 +325,7 @@ export function findLexicalMentionNodeWithContext({
   // Collect nodes before and after
   const mentionNode = nodes[mentionNodeIndex] as SerializedMentionNode;
 
-  // TODO: apply surrounding text guesses
+  // Apply surrounding text guesses
   // For now let's stay simple just stop at nearest line break or element
   const beforeNodes: SerializedLexicalNode[] = [];
   const afterNodes: SerializedLexicalNode[] = [];
