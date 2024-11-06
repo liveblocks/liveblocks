@@ -1719,6 +1719,81 @@ describe("useThreads", () => {
 
     unmount();
   });
+
+  test("should handle 404 responses from backend endpoint and correctly poll after 404 response", async () => {
+    const roomId = nanoid();
+
+    let getThreadsReqCount = 0;
+    let getThreadsSinceReqCount = 0;
+
+    const threads = [dummyThreadData({ roomId })];
+
+    server.use(
+      mockGetThreads(async (_req, res, ctx) => {
+        // Return a 404 to simulate the room not found
+        getThreadsReqCount++;
+        return res(ctx.status(404));
+      }),
+      mockGetThreadsSince(async (_req, res, ctx) => {
+        // Let's say the room was created after the initial fetch but before the poll,
+        // so, new threads are available in the room
+        getThreadsSinceReqCount++;
+        return res(
+          ctx.json({
+            data: threads,
+            inboxNotifications: [],
+            deletedThreads: [],
+            deletedInboxNotifications: [],
+            meta: {
+              requestedAt: new Date().toISOString(),
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      room: { RoomProvider, useThreads },
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(() => useThreads(), {
+      wrapper: ({ children }) => (
+        <RoomProvider id={roomId}>{children}</RoomProvider>
+      ),
+    });
+
+    expect(result.current).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads: [],
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
+      })
+    );
+
+    expect(getThreadsReqCount).toBe(1);
+    expect(getThreadsSinceReqCount).toBe(0);
+
+    // Wait for the first polling to occur after the initial render
+    jest.advanceTimersByTime(5 * MINUTES);
+    await waitFor(() =>
+      expect(result.current).toEqual({
+        isLoading: false,
+        threads,
+        fetchMore: expect.any(Function),
+        isFetchingMore: false,
+        hasFetchedAll: true,
+        fetchMoreError: undefined,
+      })
+    );
+    expect(getThreadsSinceReqCount).toBe(1);
+
+    unmount();
+  });
 });
 
 describe("useThreads: error", () => {

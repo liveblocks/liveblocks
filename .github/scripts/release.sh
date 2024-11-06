@@ -114,6 +114,19 @@ done
 
 # Update package-lock.json with newly bumped versions
 npm install --no-audit
+
+# HACK/WORKAROUND:
+# For some reason we don't yet understand, the above npm install commands can
+# sometimes add these "nested" Liveblocks packages. These package folders don't
+# actually exist on disk, and are wrong. The mystery is why they end up in this
+# lockfile.
+# Here, we work around it by loop over each of them and manually removing them
+# from the lockfile.
+for key in $(jq -r '.packages|keys[]' package-lock.json | grep -Ee 'liveblocks-.*/node_modules/@liveblocks'); do
+  jq "del(.packages[\"$key\"])" package-lock.json | sponge package-lock.json
+done
+
+# One final cleanup pass
 npm ci --no-audit
 npm install --no-audit
 

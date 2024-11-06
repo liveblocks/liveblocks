@@ -4,6 +4,20 @@
 
 - Upgrade dependencies.
 - Fix minor appearance issues related to attachments.
+- Fix pasting issues introduced in 2.10.0.
+
+### `@liveblocks/react`
+
+- Fix regression with `useThreads` that caused the hook to return an error if
+  its associated room did not exist.
+
+### `@liveblocks/react-tiptap`
+
+- Initial release.
+
+### `@liveblocks/emails`
+
+- Initial release.
 
 ## 2.10.2
 
