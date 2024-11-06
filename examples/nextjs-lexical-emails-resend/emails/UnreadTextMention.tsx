@@ -39,7 +39,7 @@ const previewProps: UnreadTextMentionProps = {
       },
     },
     reactContent: (
-      <Text className="text-sm text-black m-0 mb-4">
+      <Text className="text-sm text-black m-0">
         <span>
           For the user research phase, we'll need{" "}
           <span data-mention className="text-email-accent font-medium">
