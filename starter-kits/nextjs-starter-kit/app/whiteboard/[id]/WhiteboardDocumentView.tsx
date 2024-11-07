@@ -1,6 +1,5 @@
 "use client";
 
-import { LiveMap } from "@liveblocks/client";
 import { RoomProvider } from "@liveblocks/react/suspense";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -9,6 +8,10 @@ import { Whiteboard } from "@/components/Whiteboard";
 import { DocumentLayout } from "@/layouts/Document";
 import { ErrorLayout } from "@/layouts/Error";
 import { InitialDocumentProvider } from "@/lib/hooks";
+import {
+  createInitialPresence,
+  createInitialStorage,
+} from "@/liveblocks.config";
 import { Document, ErrorData } from "@/types";
 
 type Props = {
@@ -41,8 +44,8 @@ export function WhiteboardDocumentView({
   return (
     <RoomProvider
       id={id as string}
-      initialPresence={{ cursor: null }}
-      initialStorage={{ notes: new LiveMap() }}
+      initialPresence={createInitialPresence()}
+      initialStorage={createInitialStorage()}
     >
       <InitialDocumentProvider initialDocument={initialDocument}>
         <DocumentLayout

@@ -68,14 +68,13 @@ export function DocumentCreatePopover({
             Whiteboard
           </Button>
           <Button
-            disabled
             icon={<PlusIcon />}
             onClick={() => {
-              createNewDocument("Untitled", "spreadsheet");
+              createNewDocument("Untitled", "canvas");
             }}
             variant="subtle"
           >
-            Spreadsheet
+            Canvas
           </Button>
         </div>
       }

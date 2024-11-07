@@ -3,8 +3,8 @@
 import { RoomProvider } from "@liveblocks/react/suspense";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Canvas } from "@/components/Canvas";
 import { DocumentHeader, DocumentHeaderSkeleton } from "@/components/Document";
-import { TextEditor } from "@/components/TextEditor";
 import { DocumentLayout } from "@/layouts/Document";
 import { ErrorLayout } from "@/layouts/Error";
 import { InitialDocumentProvider } from "@/lib/hooks";
@@ -19,7 +19,7 @@ type Props = {
   initialError: ErrorData | null;
 };
 
-export function TextDocumentView({ initialDocument, initialError }: Props) {
+export function CanvasDocumentView({ initialDocument, initialError }: Props) {
   const { id, error: queryError } = useParams<{ id: string; error: string }>();
   const [error, setError] = useState<ErrorData | null>(initialError);
 
@@ -48,7 +48,7 @@ export function TextDocumentView({ initialDocument, initialError }: Props) {
         <DocumentLayout
           header={<DocumentHeader documentId={initialDocument.id} />}
         >
-          <TextEditor />
+          <Canvas />
         </DocumentLayout>
       </InitialDocumentProvider>
     </RoomProvider>
