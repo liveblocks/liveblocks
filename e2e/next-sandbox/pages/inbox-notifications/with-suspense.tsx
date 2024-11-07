@@ -2,9 +2,8 @@ import {
   ClientSideSuspense,
   createLiveblocksContext,
   createRoomContext,
-  useClient,
+  useSyncStatus,
 } from "@liveblocks/react";
-import { getUmbrellaStoreForClient } from "@liveblocks/react/_private";
 import {
   Composer,
   InboxNotification,
@@ -142,7 +141,7 @@ function TopPart() {
   const me = useSelf();
   const { threads } = useThreads();
   const inboxNotifications = useInboxNotificationsForThisPage();
-  const isSynced = !useHasOptimisticUpdates();
+  const isSynced = useSyncStatus({ smooth: true }) === "synchronized";
 
   const deleteComment = useDeleteComment();
 
@@ -186,20 +185,6 @@ function TopPart() {
         </tbody>
       </table>
     </>
-  );
-}
-
-function useHasOptimisticUpdates() {
-  const client = useClient();
-  const store = getUmbrellaStoreForClient(client);
-  // The store._hasOptimisticUpdates getter is guaranteed to be bound, so it's fine
-  // eslint-disable-next-line @typescript-eslint/unbound-method
-  const getter = store._hasOptimisticUpdates;
-  return React.useSyncExternalStore(
-    // The store.subscribe subscriber is guaranteed to be bound, so it's fine
-    // eslint-disable-next-line @typescript-eslint/unbound-method
-    store.subscribe,
-    getter
   );
 }
 
