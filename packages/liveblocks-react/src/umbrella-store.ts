@@ -16,7 +16,6 @@ import type {
   Patchable,
   Resolve,
   RoomNotificationSettings,
-  StorageStatus,
   Store,
   ThreadData,
   ThreadDataWithDeleteInfo,
@@ -586,6 +585,7 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
 
 export class UmbrellaStore<M extends BaseMetadata> {
   private _client: Client<BaseUserMeta, M>;
+  private _markPendingUpdates: (pending: boolean) => void;
 
   // Raw threads DB (without any optimistic updates applied)
   private _rawThreadsDB: ThreadDB<M>;
@@ -617,6 +617,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   constructor(client: OpaqueClient) {
     this._client = client[kInternal].as<M>();
+    [this._markPendingUpdates /* , teardown */] =
+      this._client[kInternal].newSyncStatusSource();
 
     const inboxFetcher = async (cursor?: string) => {
       const result = await this._client.getInboxNotifications({ cursor });
@@ -815,30 +817,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     };
   }
 
-  /**
-   * @private Only used by the E2E test suite.
-   */
-  public _getSyncStatus(): StorageStatus {
-    if (this._store.get().optimisticUpdates.length > 0) {
-      return "synchronizing";
-    }
-
-    const rawState = this._store.get();
-    if (
-      this._rawThreadsDB.version === 0 &&
-      Object.keys(rawState.notificationsById).length === 0 &&
-      Object.keys(rawState.settingsByRoomId).length === 0 &&
-      Object.keys(rawState.versionsByRoomId).length === 0
-    ) {
-      // We currently don't have any state that indicates "loading" reliably
-      // here, so let's assume that if there is no data at all, it's unused.
-      // This may be good enough for now.
-      return "not-loaded";
-    } else {
-      return "synchronized";
-    }
-  }
-
   public subscribe(callback: () => void): () => void {
     return this._store.subscribe(callback);
   }
@@ -907,10 +885,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
       cache: readonly OptimisticUpdate<M>[]
     ) => readonly OptimisticUpdate<M>[]
   ): void {
-    this._store.set((state) => ({
-      ...state,
-      optimisticUpdates: mapFn(state.optimisticUpdates),
-    }));
+    this._store.set((state) => {
+      const optimisticUpdates = mapFn(state.optimisticUpdates);
+      this._markPendingUpdates(optimisticUpdates.length > 0);
+      return { ...state, optimisticUpdates };
+    });
   }
 
   // ---------------------------------------------------------------------------------- }}}
