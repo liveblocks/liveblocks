@@ -16,6 +16,7 @@ import type {
   Patchable,
   Resolve,
   RoomNotificationSettings,
+  StorageStatus,
   Store,
   ThreadData,
   ThreadDataWithDeleteInfo,
@@ -817,8 +818,25 @@ export class UmbrellaStore<M extends BaseMetadata> {
   /**
    * @private Only used by the E2E test suite.
    */
-  public _hasOptimisticUpdates(): boolean {
-    return this._store.get().optimisticUpdates.length > 0;
+  public _getSyncStatus(): StorageStatus {
+    if (this._store.get().optimisticUpdates.length > 0) {
+      return "synchronizing";
+    }
+
+    const rawState = this._store.get();
+    if (
+      this._rawThreadsDB.version === 0 &&
+      Object.keys(rawState.notificationsById).length === 0 &&
+      Object.keys(rawState.settingsByRoomId).length === 0 &&
+      Object.keys(rawState.versionsByRoomId).length === 0
+    ) {
+      // We currently don't have any state that indicates "loading" reliably
+      // here, so let's assume that if there is no data at all, it's unused.
+      // This may be good enough for now.
+      return "not-loaded";
+    } else {
+      return "synchronized";
+    }
   }
 
   public subscribe(callback: () => void): () => void {

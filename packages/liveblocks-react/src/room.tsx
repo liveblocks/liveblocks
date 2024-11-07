@@ -107,8 +107,6 @@ import {
 import type { UmbrellaStore, UmbrellaStoreState } from "./umbrella-store";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
 
-const SMOOTH_DELAY = 1000;
-
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
 
@@ -816,7 +814,7 @@ function useStorageStatusSmooth(): StorageStatus {
         newStatus === "synchronized"
       ) {
         // Delay delivery of the "synchronized" event
-        timeoutId = setTimeout(() => setStatus(newStatus), SMOOTH_DELAY);
+        timeoutId = setTimeout(() => setStatus(newStatus), config.SMOOTH_DELAY);
       } else {
         clearTimeout(timeoutId);
         setStatus(newStatus);

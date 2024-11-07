@@ -368,9 +368,9 @@ describe("useDeleteInboxNotification", () => {
 
     expect(result.current.inboxNotifications).toEqual([notification2]);
 
-    // TODO: We should wait for the `deleteThread` call to be finished but we don't have APIs for that yet
-    //       We should expose a way to know (and be updated about) if there are still pending optimistic updates
-    //       Until then, we'll just wait for the mock to be called
+    // XXX We should wait for the `deleteThread` call to be finished but we don't have APIs for that yet
+    // XXX We should expose a way to know (and be updated about) if there are still pending optimistic updates
+    // XXX Until then, we'll just wait for the mock to be called
     await waitFor(() => expect(hasCalledDeleteThread).toEqual(true));
 
     unmount();
@@ -469,9 +469,9 @@ describe("useDeleteInboxNotification", () => {
 
     expect(result.current.inboxNotifications).toEqual([]);
 
-    // TODO: We should wait for the `deleteComment` call to be finished but we don't have APIs for that yet
-    //       We should expose a way to know (and be updated about) if there are still pending optimistic updates
-    //       Until then, we'll just wait for the mock to be called
+    // XXX We should wait for the `deleteComment` call to be finished but we don't have APIs for that yet
+    // XXX We should expose a way to know (and be updated about) if there are still pending optimistic updates
+    // XXX Until then, we'll just wait for the mock to be called
     await waitFor(() => expect(hasCalledDeleteComment).toEqual(true));
 
     unmount();

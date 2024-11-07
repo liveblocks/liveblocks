@@ -18,14 +18,15 @@ export { shallow } from "@liveblocks/client";
 // Export all the top-level hooks
 export {
   ClientContext,
-  LiveblocksProvider,
   createLiveblocksContext,
+  LiveblocksProvider,
   useClient,
+  useDeleteAllInboxNotifications,
+  useDeleteInboxNotification,
   useInboxNotificationThread,
   useMarkAllInboxNotificationsAsRead,
   useMarkInboxNotificationAsRead,
-  useDeleteAllInboxNotifications,
-  useDeleteInboxNotification,
+  useSyncStatus,
 } from "./liveblocks";
 export {
   createRoomContext,
