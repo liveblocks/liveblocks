@@ -37,10 +37,10 @@ import type {
   OpaqueRoom,
   OptionalTupleUnless,
   PartialUnless,
-  SyncStatusSourceTuple,
   Polyfills,
   Room,
   RoomDelegates,
+  SyncStatusSourceTuple,
 } from "./room";
 import {
   createRoom,
@@ -729,40 +729,42 @@ export function createClient<U extends BaseUserMeta = DU>(
     mentionSuggestionsCache.clear();
   }
 
-  const pendingSources: ValueRef<boolean>[] = [];
+  // ----------------------------------------------------------------
+
+  const syncStatusSources: ValueRef<boolean>[] = [];
   const syncStatusRef = new ValueRef<SyncStatus>("synchronized");
 
   function getSyncStatus(): SyncStatus {
     return syncStatusRef.current;
   }
 
-  // XXX Find a better name!
-  function __update__() {
-    syncStatusRef.set(
-      pendingSources.some((src) => src.current)
-        ? "synchronizing"
-        : "synchronized"
-    );
-  }
-
   function newSyncStatusSource(): SyncStatusSourceTuple {
     const source = new ValueRef(false);
-    pendingSources.push(source);
-    const unsub = source.didInvalidate.subscribe(__update__);
-    return [
-      // Setter
-      (condition) => source.set(condition),
+    syncStatusSources.push(source);
+    const unsub = source.didInvalidate.subscribe(() =>
+      syncStatusRef.set(
+        syncStatusSources.some((src) => src.current)
+          ? "synchronizing"
+          : "synchronized"
+      )
+    );
 
-      // Destroy function
-      () => {
-        unsub();
-        const index = pendingSources.findIndex((item) => item === source);
-        if (index > -1) {
-          pendingSources.splice(index, 1);
-        }
-      },
-    ];
+    function setter(condition: boolean) {
+      source.set(condition);
+    }
+
+    function teardown() {
+      unsub();
+      const index = syncStatusSources.findIndex((item) => item === source);
+      if (index > -1) {
+        syncStatusSources.splice(index, 1);
+      }
+    }
+
+    return [setter, teardown];
   }
+
+  // ----------------------------------------------------------------
 
   const client: Client<U> = Object.defineProperty(
     {
