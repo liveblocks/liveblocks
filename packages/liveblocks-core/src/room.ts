@@ -2783,7 +2783,7 @@ export function createRoom<
 
   // Register a global source of pending changes for Storage™, so that the
   // useSyncStatus() hook will be able to report this to end users
-  const [setStoragePending, unregisterPendingSource] =
+  const [markStoragePending, unregisterStoragePending] =
     config.newSyncStatusSource();
 
   function getStorageStatus(): StorageStatus {
@@ -2810,7 +2810,7 @@ export function createRoom<
       _lastStorageStatus = storageStatus;
       eventHub.storageStatus.notify(storageStatus);
     }
-    setStoragePending(storageStatus === "synchronizing");
+    markStoragePending(storageStatus === "synchronizing");
   }
 
   function isPresenceReady() {
@@ -3368,6 +3368,14 @@ export function createRoom<
     await batchedMarkInboxNotificationsAsRead.get(inboxNotificationId);
   }
 
+  // Register a global source of pending changes for Storage™, so that the
+  // useSyncStatus() hook will be able to report this to end users
+  const [markYjsPending, unregisterYjsPending] = config.newSyncStatusSource();
+
+  function yjsStatusDidChange(status: YjsSyncStatus) {
+    return markYjsPending(status === "synchronizing");
+  }
+
   return Object.defineProperty(
     {
       [kInternal]: {
@@ -3379,8 +3387,12 @@ export function createRoom<
           return context.yjsProvider;
         },
 
-        setYjsProvider(provider: YjsProvider | undefined) {
-          context.yjsProvider = provider;
+        setYjsProvider(newProvider: IYjsProvider | undefined) {
+          // Deregister status change listener for the old Yjs provider
+          // Register status change listener for the new Yjs provider
+          context.yjsProvider?.off("status", yjsStatusDidChange);
+          context.yjsProvider = newProvider;
+          newProvider?.on("status", yjsStatusDidChange);
           context.yjsProviderDidChange.notify();
         },
 
@@ -3423,7 +3435,9 @@ export function createRoom<
       reconnect: () => managedSocket.reconnect(),
       disconnect: () => managedSocket.disconnect(),
       destroy: () => {
-        unregisterPendingSource();
+        unregisterStoragePending();
+        context.yjsProvider?.off("status", yjsStatusDidChange);
+        unregisterYjsPending();
         uninstallBgTabSpy();
         managedSocket.destroy();
       },
