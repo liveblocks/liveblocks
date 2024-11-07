@@ -21,11 +21,17 @@ export type {
   LiveblocksTextEditorTextComponentProps,
 } from "./liveblocks-text-editor";
 export type {
+  MentionEmailAsHtmlData,
   MentionEmailAsReactData,
+  PrepareTextMentionNotificationEmailAsHtmlOptions,
   PrepareTextMentionNotificationEmailAsReactOptions,
+  TextMentionNotificationEmailDataAsHtml,
   TextMentionNotificationEmailDataAsReact,
 } from "./text-mention-notification";
-export { prepareTextMentionNotificationEmailAsReact } from "./text-mention-notification";
+export {
+  prepareTextMentionNotificationEmailAsHtml,
+  prepareTextMentionNotificationEmailAsReact,
+} from "./text-mention-notification";
 export type {
   CommentEmailAsHtmlData,
   CommentEmailAsReactData,
