@@ -117,7 +117,8 @@ function TopPart() {
   const me = useSelf();
   const { threads } = useThreads();
   const inboxNotifications = useInboxNotificationsForThisPage();
-  const isSynced = useSyncStatus({ smooth: true }) === "synchronized";
+  const syncStatus = useSyncStatus({ smooth: true });
+  const isSynced = syncStatus === "synchronized";
 
   const deleteComment = useDeleteComment();
 
@@ -162,6 +163,7 @@ function TopPart() {
                 ?.length
             }
           />
+          <Row id="syncStatus" name="Sync status" value={syncStatus} />
           <Row id="isSynced" name="Is synchronized?" value={isSynced} />
         </tbody>
       </table>
