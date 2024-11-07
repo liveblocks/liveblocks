@@ -314,7 +314,7 @@ function ThreadWrapper({
     });
   }
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = divRef.current;
     if (el === null) return;
 
