@@ -115,6 +115,9 @@ function makeRoomConfig(mockedDelegates: RoomDelegates) {
     },
     baseUrl: DEFAULT_BASE_URL,
     enableDebugLogging: false,
+
+    // Not used in unit tests (yet)
+    newSyncStatusSource: () => [() => {}, () => {}] as const,
   };
 }
 

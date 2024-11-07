@@ -9,6 +9,7 @@ import type { BatchStore } from "./lib/batch";
 import { Batch, createBatchStore } from "./lib/batch";
 import type { Store } from "./lib/create-store";
 import { createStore } from "./lib/create-store";
+import type { Observable } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import type { NoInfr } from "./lib/NoInfer";
@@ -31,10 +32,12 @@ import type {
   InboxNotificationData,
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
+import { ValueRef } from "./refs/ValueRef";
 import type {
   OpaqueRoom,
   OptionalTupleUnless,
   PartialUnless,
+  SyncStatusSourceTuple,
   Polyfills,
   Room,
   RoomDelegates,
@@ -133,6 +136,12 @@ export type EnterOptions<P extends JsonObject = DP, S extends LsonObject = DS> =
   >
 >;
 
+export type SyncStatus =
+  /* Liveblocks is in the process of writing changes */
+  | "synchronizing"
+  /* Liveblocks has persisted all pending changes */
+  | "synchronized";
+
 /**
  * @private
  *
@@ -171,6 +180,11 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
 
   // Type-level helper
   as<M2 extends BaseMetadata>(): Client<U, M2>;
+
+  // Tracking pending changes globally
+  getSyncStatus(): SyncStatus;
+  syncStatusDidChange: Observable<void>;
+  newSyncStatusSource(): SyncStatusSourceTuple;
 };
 
 export type NotificationsApi<M extends BaseMetadata> = {
@@ -594,6 +608,7 @@ export function createClient<U extends BaseUserMeta = DU>(
         baseUrl,
         unstable_fallbackToHTTP: !!clientOptions.unstable_fallbackToHTTP,
         unstable_streamData: !!clientOptions.unstable_streamData,
+        newSyncStatusSource,
       }
     );
 
@@ -714,6 +729,41 @@ export function createClient<U extends BaseUserMeta = DU>(
     mentionSuggestionsCache.clear();
   }
 
+  const pendingSources: ValueRef<boolean>[] = [];
+  const syncStatusRef = new ValueRef<SyncStatus>("synchronized");
+
+  function getSyncStatus(): SyncStatus {
+    return syncStatusRef.current;
+  }
+
+  // XXX Find a better name!
+  function __update__() {
+    syncStatusRef.set(
+      pendingSources.some((src) => src.current)
+        ? "synchronizing"
+        : "synchronized"
+    );
+  }
+
+  function newSyncStatusSource(): SyncStatusSourceTuple {
+    const source = new ValueRef(false);
+    pendingSources.push(source);
+    const unsub = source.didInvalidate.subscribe(__update__);
+    return [
+      // Setter
+      (condition) => source.set(condition),
+
+      // Destroy function
+      () => {
+        unsub();
+        const index = pendingSources.findIndex((item) => item === source);
+        if (index > -1) {
+          pendingSources.splice(index, 1);
+        }
+      },
+    ];
+  }
+
   const client: Client<U> = Object.defineProperty(
     {
       enterRoom,
@@ -749,6 +799,10 @@ export function createClient<U extends BaseUserMeta = DU>(
 
         // Type-level helper only, it's effectively only an identity-function at runtime
         as: <M2 extends BaseMetadata>() => client as Client<U, M2>,
+
+        newSyncStatusSource,
+        getSyncStatus, // Getter
+        syncStatusDidChange: syncStatusRef.didInvalidate, // Subscriber
       },
     },
     kInternal,

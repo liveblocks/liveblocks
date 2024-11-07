@@ -25,6 +25,7 @@ export type {
   ResolveMentionSuggestionsArgs,
   ResolveRoomsInfoArgs,
   ResolveUsersArgs,
+  SyncStatus,
 } from "./client";
 export { createClient } from "./client";
 export type {

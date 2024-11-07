@@ -12,6 +12,7 @@ import type {
   DU,
   InboxNotificationData,
   OpaqueClient,
+  SyncStatus,
 } from "@liveblocks/core";
 import {
   assert,
@@ -1179,6 +1180,25 @@ const _useUserThreads_experimental: TypedBundle["useUserThreads_experimental"] =
 const _useUserThreadsSuspense_experimental: TypedBundle["suspense"]["useUserThreads_experimental"] =
   useUserThreadsSuspense_experimental;
 
+function useSyncStatus_withClient(client: OpaqueClient): SyncStatus {
+  return useSyncExternalStore(
+    client[kInternal].syncStatusDidChange.subscribe,
+    client[kInternal].getSyncStatus,
+    client[kInternal].getSyncStatus
+  );
+}
+
+/**
+ * Returns the global Liveblocks sync status.
+ *
+ * @example
+ * const { info } = useSyncStatus();
+ */
+// XXX DOCUMENT THIS PROPERLY
+function useSyncStatus(): SyncStatus {
+  return useSyncStatus_withClient(useClient());
+}
+
 // eslint-disable-next-line simple-import-sort/exports
 export {
   _useInboxNotificationThread as useInboxNotificationThread,
@@ -1192,6 +1212,7 @@ export {
   useDeleteInboxNotification,
   useRoomInfo,
   useRoomInfoSuspense,
+  useSyncStatus,
   useUnreadInboxNotificationsCount,
   useUnreadInboxNotificationsCountSuspense,
   _useUserThreads_experimental as useUserThreads_experimental,

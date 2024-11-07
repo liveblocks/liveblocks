@@ -70,6 +70,9 @@ const defaultRoomConfig: RoomConfig = {
     },
     createSocket: mockedCreateSocketDelegate,
   },
+
+  // Not used in unit tests (yet)
+  newSyncStatusSource: () => [() => {}, () => {}] as const,
 };
 
 function makeRoomConfig(

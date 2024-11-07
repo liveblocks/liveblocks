@@ -165,6 +165,12 @@ export type RoomEventMessage<
   event: E;
 };
 
+export type SyncStatus =
+  /* Liveblocks is in the process of writing changes */
+  | "synchronizing"
+  /* Liveblocks has persisted all pending changes */
+  | "synchronized";
+
 export type StorageStatus =
   /* The storage is not loaded and has not been requested. */
   | "not-loaded"
@@ -1002,6 +1008,11 @@ type Provider = {
   off(event: "sync" | "status", listener: (synced: boolean) => void): void;
 };
 
+export type SyncStatusSourceTuple = readonly [
+  setPending: (condition: boolean) => void,
+  teardown: () => void,
+];
+
 /**
  * @private
  *
@@ -1230,6 +1241,11 @@ export type RoomConfig = {
 
   baseUrl: string;
   enableDebugLogging?: boolean;
+
+  // We would not have to pass this complicated factory/callback functions to
+  // the createRoom() function if we would simply pass the Client instance to
+  // the Room instance, so it can directly call this back on the Client.
+  newSyncStatusSource: () => SyncStatusSourceTuple;
 };
 
 function userToTreeNode(
@@ -2756,6 +2772,11 @@ export function createRoom<
     }
   }
 
+  // Register a global source of pending changes for Storage™, so that the
+  // useSyncStatus() hook will be able to report this to end users
+  const [setStoragePending, unregisterPendingSource] =
+    config.newSyncStatusSource();
+
   function getStorageStatus(): StorageStatus {
     if (context.root === undefined) {
       return _getStorage$ === null ? "not-loaded" : "loading";
@@ -2780,6 +2801,7 @@ export function createRoom<
       _lastStorageStatus = storageStatus;
       eventHub.storageStatus.notify(storageStatus);
     }
+    setStoragePending(storageStatus === "synchronizing");
   }
 
   function isPresenceReady() {
@@ -3392,6 +3414,7 @@ export function createRoom<
       reconnect: () => managedSocket.reconnect(),
       disconnect: () => managedSocket.disconnect(),
       destroy: () => {
+        unregisterPendingSource();
         uninstallBgTabSpy();
         managedSocket.destroy();
       },
