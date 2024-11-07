@@ -56,6 +56,7 @@ export function useStorageStore({
       const { root } = await room.getStorage();
       const liveRecords = root.get("records");
 
+      // Check if user has write access
       const canWrite = room.getSelf()?.canWrite || false;
 
       // Initialize tldraw with records from Storage
