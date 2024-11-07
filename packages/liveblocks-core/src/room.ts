@@ -1001,12 +1001,22 @@ export type Room<
   markInboxNotificationAsRead(notificationId: string): Promise<void>;
 };
 
-type YjsProvider = {
+export type YjsSyncStatus = "loading" | "synchronizing" | "synchronized";
+
+/**
+ * Interface that @liveblocks/yjs must respect.
+ * This interface type is declare in @liveblocks/core, so we don't have to
+ * depend on `yjs`. It's only used to determine the API contract between
+ * @liveblocks/core and @liveblocks/yjs.
+ */
+export interface IYjsProvider {
   synced: boolean;
-  getStatus: () => "loading" | "synchronizing" | "synchronized";
-  on(event: "sync" | "status", listener: (synced: boolean) => void): void;
-  off(event: "sync" | "status", listener: (synced: boolean) => void): void;
-};
+  getStatus: () => YjsSyncStatus;
+  on(event: "sync", listener: (synced: boolean) => void): void;
+  on(event: "status", listener: (status: YjsSyncStatus) => void): void;
+  off(event: "sync", listener: (synced: boolean) => void): void;
+  off(event: "status", listener: (status: YjsSyncStatus) => void): void;
+}
 
 export type SyncStatusSourceTuple = readonly [
   setPending: (condition: boolean) => void,
@@ -1028,8 +1038,8 @@ export type PrivateRoomApi = {
   nodeCount: number;
 
   // Get/set the associated Yjs provider on this room
-  getYjsProvider(): YjsProvider | undefined;
-  setYjsProvider(provider: YjsProvider | undefined): void;
+  getYjsProvider(): IYjsProvider | undefined;
+  setYjsProvider(provider: IYjsProvider | undefined): void;
   yjsProviderDidChange: Observable<void>;
 
   // For DevTools support (Liveblocks browser extension)
@@ -1134,7 +1144,7 @@ type RoomState<
   idFactory: IdFactory | null;
   initialStorage: S;
 
-  yjsProvider: YjsProvider | undefined;
+  yjsProvider: IYjsProvider | undefined;
   readonly yjsProviderDidChange: EventSource<void>;
 
   clock: number;
