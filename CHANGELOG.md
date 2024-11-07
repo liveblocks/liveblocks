@@ -1,3 +1,12 @@
+## 2.12.0
+
+### `@liveblocks/react`
+
+- Add new hook `useSyncStatus` that can be used to tell whether Liveblocks is
+  synchronizing local changes to the server.
+- Deprecate the `useStorageStatus` hook in favor of the new `useSyncStatus`,
+  which is most likely the one you're interested in when building UIs.
+
 ## 2.11.0
 
 ### `@liveblocks/react-ui`
