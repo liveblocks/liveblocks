@@ -63,8 +63,8 @@ export class LiveblocksYjsProvider<
       fetchDoc: this.fetchDoc,
     });
 
-    // TODO: Display a warning if a provider is already attached to the room
-    room[kInternal].setProvider(this);
+    // TODO: Display a warning if a YjsProvider is already attached to the room
+    room[kInternal].setYjsProvider(this);
 
     // if we have a connectionId already during construction, use that
     this.awareness = new Awareness(this.rootDoc, this.room);

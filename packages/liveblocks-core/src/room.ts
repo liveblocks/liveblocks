@@ -1001,7 +1001,7 @@ export type Room<
   markInboxNotificationAsRead(notificationId: string): Promise<void>;
 };
 
-type Provider = {
+type YjsProvider = {
   synced: boolean;
   getStatus: () => "loading" | "synchronizing" | "synchronized";
   on(event: "sync" | "status", listener: (synced: boolean) => void): void;
@@ -1027,11 +1027,10 @@ export type PrivateRoomApi = {
   undoStack: readonly (readonly Readonly<HistoryOp<JsonObject>>[])[];
   nodeCount: number;
 
-  // For usage in Y.js provider
-  getProvider(): Provider | undefined;
-  setProvider(provider: Provider | undefined): void;
-
-  onProviderUpdate: Observable<void>;
+  // Get/set the associated Yjs provider on this room
+  getYjsProvider(): YjsProvider | undefined;
+  setYjsProvider(provider: YjsProvider | undefined): void;
+  yjsProviderDidChange: Observable<void>;
 
   // For DevTools support (Liveblocks browser extension)
   getSelf_forDevTools(): DevTools.UserTreeNode | null;
@@ -1135,8 +1134,8 @@ type RoomState<
   idFactory: IdFactory | null;
   initialStorage: S;
 
-  provider: Provider | undefined;
-  readonly onProviderUpdate: EventSource<void>;
+  yjsProvider: YjsProvider | undefined;
+  readonly yjsProviderDidChange: EventSource<void>;
 
   clock: number;
   opClock: number;
@@ -1395,9 +1394,9 @@ export function createRoom<
     initialStorage,
     idFactory: null,
 
-    // Y.js
-    provider: undefined,
-    onProviderUpdate: makeEventSource(),
+    // The Yjs provider associated to this room
+    yjsProvider: undefined,
+    yjsProviderDidChange: makeEventSource(),
 
     // Storage
     clock: 0,
@@ -3366,16 +3365,16 @@ export function createRoom<
         get undoStack() { return deepClone(context.undoStack) }, // prettier-ignore
         get nodeCount() { return context.nodes.size }, // prettier-ignore
 
-        getProvider() {
-          return context.provider;
+        getYjsProvider() {
+          return context.yjsProvider;
         },
 
-        setProvider(provider: Provider | undefined) {
-          context.provider = provider;
-          context.onProviderUpdate.notify();
+        setYjsProvider(provider: YjsProvider | undefined) {
+          context.yjsProvider = provider;
+          context.yjsProviderDidChange.notify();
         },
 
-        onProviderUpdate: context.onProviderUpdate.observable,
+        yjsProviderDidChange: context.yjsProviderDidChange.observable,
 
         // send metadata when using a text editor
         reportTextEditor,

@@ -40,18 +40,18 @@ export type EditorStatus =
   /* The editor state is sync with Liveblocks servers */
   | "synchronized";
 
-function useProvider() {
+function useYjsProvider() {
   const room = useRoom();
 
   const subscribe = useCallback(
     (onStoreChange: () => void) => {
-      return room[kInternal].onProviderUpdate.subscribe(onStoreChange);
+      return room[kInternal].yjsProviderDidChange.subscribe(onStoreChange);
     },
     [room]
   );
 
   const getSnapshot = useCallback(() => {
-    return room[kInternal].getProvider();
+    return room[kInternal].getYjsProvider();
   }, [room]);
 
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
@@ -66,11 +66,11 @@ function useProvider() {
  * - `synchronized`:  The editor state is sync with Liveblocks servers.
  */
 export function useEditorStatus(): EditorStatus {
-  const provider = useProvider();
+  const provider = useYjsProvider();
 
   const subscribe = useCallback(
     (onStoreChange: () => void) => {
-      if (provider === undefined) return () => { };
+      if (provider === undefined) return () => {};
       provider.on("status", onStoreChange);
       return () => {
         provider.off("status", onStoreChange);
