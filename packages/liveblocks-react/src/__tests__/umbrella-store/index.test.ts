@@ -11,11 +11,19 @@ const empty = {
   versionsByRoomId: {},
 } as const;
 
+function makeSyncSource() {
+  return {
+    setPending: () => {},
+    destroy: () => {},
+  };
+}
+
 const NO_CLIENT = {
   [kInternal]: {
     as() {
       return NO_CLIENT;
     },
+    createSyncSource: makeSyncSource,
   },
 } as any;
 

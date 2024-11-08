@@ -38,6 +38,7 @@ import {
   createSerializedObject,
   createSerializedRegister,
   FIRST_POSITION,
+  makeSyncSource,
   prepareDisconnectedStorageUpdateTest,
   prepareIsolatedStorageTest,
   prepareRoomWithStorage_loadWithDelay,
@@ -72,7 +73,7 @@ const defaultRoomConfig: RoomConfig = {
   },
 
   // Not used in unit tests (yet)
-  newSyncStatusSource: () => [() => {}, () => {}] as const,
+  createSyncSource: makeSyncSource,
 };
 
 function makeRoomConfig(

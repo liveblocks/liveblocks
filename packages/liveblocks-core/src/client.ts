@@ -40,7 +40,7 @@ import type {
   Polyfills,
   Room,
   RoomDelegates,
-  SyncStatusSourceTuple,
+  SyncSource,
 } from "./room";
 import {
   createRoom,
@@ -182,7 +182,7 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
   as<M2 extends BaseMetadata>(): Client<U, M2>;
 
   // Tracking pending changes globally
-  newSyncStatusSource(): SyncStatusSourceTuple;
+  createSyncSource(): SyncSource;
 };
 
 export type NotificationsApi<M extends BaseMetadata> = {
@@ -633,7 +633,7 @@ export function createClient<U extends BaseUserMeta = DU>(
         baseUrl,
         unstable_fallbackToHTTP: !!clientOptions.unstable_fallbackToHTTP,
         unstable_streamData: !!clientOptions.unstable_streamData,
-        newSyncStatusSource,
+        createSyncSource,
       }
     );
 
@@ -763,7 +763,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     return syncStatusRef.current;
   }
 
-  function newSyncStatusSource(): SyncStatusSourceTuple {
+  function createSyncSource(): SyncSource {
     const source = new ValueRef(false);
     syncStatusSources.push(source);
     const unsub = source.didInvalidate.subscribe(() =>
@@ -774,11 +774,11 @@ export function createClient<U extends BaseUserMeta = DU>(
       )
     );
 
-    function setter(condition: boolean) {
+    function setPending(condition: boolean) {
       source.set(condition);
     }
 
-    function teardown() {
+    function destroy() {
       unsub();
       const index = syncStatusSources.findIndex((item) => item === source);
       if (index > -1) {
@@ -786,7 +786,7 @@ export function createClient<U extends BaseUserMeta = DU>(
       }
     }
 
-    return [setter, teardown];
+    return { setPending, destroy };
   }
 
   // ----------------------------------------------------------------
@@ -832,7 +832,7 @@ export function createClient<U extends BaseUserMeta = DU>(
         // Type-level helper only, it's effectively only an identity-function at runtime
         as: <M2 extends BaseMetadata>() => client as Client<U, M2>,
 
-        newSyncStatusSource,
+        createSyncSource,
       },
     },
     kInternal,

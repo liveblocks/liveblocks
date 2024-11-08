@@ -17,6 +17,7 @@ import type {
   Resolve,
   RoomNotificationSettings,
   Store,
+  SyncSource,
   ThreadData,
   ThreadDataWithDeleteInfo,
   ThreadDeleteInfo,
@@ -585,7 +586,7 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
 
 export class UmbrellaStore<M extends BaseMetadata> {
   private _client: Client<BaseUserMeta, M>;
-  private _markPendingUpdates: (pending: boolean) => void;
+  private _syncSource: SyncSource;
 
   // Raw threads DB (without any optimistic updates applied)
   private _rawThreadsDB: ThreadDB<M>;
@@ -617,8 +618,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   constructor(client: OpaqueClient) {
     this._client = client[kInternal].as<M>();
-    [this._markPendingUpdates /* , teardown */] =
-      this._client[kInternal].newSyncStatusSource();
+    this._syncSource = this._client[kInternal].createSyncSource();
 
     const inboxFetcher = async (cursor?: string) => {
       const result = await this._client.getInboxNotifications({ cursor });
@@ -887,7 +887,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): void {
     this._store.set((state) => {
       const optimisticUpdates = mapFn(state.optimisticUpdates);
-      this._markPendingUpdates(optimisticUpdates.length > 0);
+      this._syncSource.setPending(optimisticUpdates.length > 0);
       return { ...state, optimisticUpdates };
     });
   }

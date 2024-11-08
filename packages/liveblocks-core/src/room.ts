@@ -1018,10 +1018,16 @@ export interface IYjsProvider {
   off(event: "status", listener: (status: YjsSyncStatus) => void): void;
 }
 
-export type SyncStatusSourceTuple = readonly [
-  setPending: (condition: boolean) => void,
-  teardown: () => void,
-];
+/**
+ * A "Sync Source" can be a Storage document, a Yjs document, Comments,
+ * Notifications, etc.
+ * The Client keeps a registry of all active sync sources, and will use it to
+ * determine the global "sync status" for Liveblocks.
+ */
+export interface SyncSource {
+  setPending(condition: boolean): void;
+  destroy(): void;
+}
 
 /**
  * @private
@@ -1254,7 +1260,7 @@ export type RoomConfig = {
   // We would not have to pass this complicated factory/callback functions to
   // the createRoom() function if we would simply pass the Client instance to
   // the Room instance, so it can directly call this back on the Client.
-  newSyncStatusSource: () => SyncStatusSourceTuple;
+  createSyncSource: () => SyncSource;
 };
 
 function userToTreeNode(
@@ -2783,8 +2789,7 @@ export function createRoom<
 
   // Register a global source of pending changes for Storage™, so that the
   // useSyncStatus() hook will be able to report this to end users
-  const [markStoragePending, unregisterStoragePending] =
-    config.newSyncStatusSource();
+  const syncSourceForStorage = config.createSyncSource();
 
   function getStorageStatus(): StorageStatus {
     if (context.root === undefined) {
@@ -2810,7 +2815,7 @@ export function createRoom<
       _lastStorageStatus = storageStatus;
       eventHub.storageStatus.notify(storageStatus);
     }
-    markStoragePending(storageStatus === "synchronizing");
+    syncSourceForStorage.setPending(storageStatus === "synchronizing");
   }
 
   function isPresenceReady() {
@@ -3370,10 +3375,10 @@ export function createRoom<
 
   // Register a global source of pending changes for Storage™, so that the
   // useSyncStatus() hook will be able to report this to end users
-  const [markYjsPending, unregisterYjsPending] = config.newSyncStatusSource();
+  const syncSourceForYjs = config.createSyncSource();
 
   function yjsStatusDidChange(status: YjsSyncStatus) {
-    return markYjsPending(status === "synchronizing");
+    return syncSourceForYjs.setPending(status === "synchronizing");
   }
 
   return Object.defineProperty(
@@ -3435,9 +3440,9 @@ export function createRoom<
       reconnect: () => managedSocket.reconnect(),
       disconnect: () => managedSocket.disconnect(),
       destroy: () => {
-        unregisterStoragePending();
+        syncSourceForStorage.destroy();
         context.yjsProvider?.off("status", yjsStatusDidChange);
-        unregisterYjsPending();
+        syncSourceForYjs.destroy();
         uninstallBgTabSpy();
         managedSocket.destroy();
       },

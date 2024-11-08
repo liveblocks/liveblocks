@@ -254,6 +254,7 @@ export type {
   Room,
   RoomEventMessage,
   StorageStatus,
+  SyncSource,
 } from "./room";
 export type { GetThreadsOptions, UploadAttachmentOptions } from "./room";
 export type { Immutable } from "./types/Immutable";
