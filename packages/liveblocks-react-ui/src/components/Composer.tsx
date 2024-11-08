@@ -21,6 +21,8 @@ import type {
   FormEvent,
   ForwardedRef,
   MouseEvent,
+  PointerEvent,
+  PropsWithChildren,
   ReactNode,
   RefAttributes,
   SyntheticEvent,
@@ -363,19 +365,37 @@ function TextFormatToggle({
     return $.COMPOSER_TOGGLE_TEXT_FORMAT(format);
   }, [$, format]);
 
-  const handlePressedChange = useCallback(() => {
-    toggleTextFormat(format);
-  }, [format, toggleTextFormat]);
+  const handlePointerDown = useCallback(
+    (event: PointerEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+    },
+    []
+  );
+
+  const handleClick = useCallback(
+    (event: MouseEvent<HTMLButtonElement>) => {
+      const wasDefaultPrevented = event.isDefaultPrevented();
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (!wasDefaultPrevented) {
+        toggleTextFormat(format);
+      }
+    },
+    [format, toggleTextFormat]
+  );
 
   return (
     <ShortcutTooltip content={label} shortcut={shortcut}>
-      <TogglePrimitive.Root
-        asChild
-        pressed={textFormats[format]}
-        onPressedChange={handlePressedChange}
-        {...props}
-      >
-        <Button aria-label={label} active={textFormats[format]}>
+      <TogglePrimitive.Root asChild pressed={textFormats[format]} {...props}>
+        <Button
+          aria-label={label}
+          active={textFormats[format]}
+          onPointerDown={handlePointerDown}
+          onClick={handleClick}
+        >
           {children}
         </Button>
       </TogglePrimitive.Root>
@@ -384,7 +404,7 @@ function TextFormatToggle({
 }
 
 type TextFormatToggles = {
-  [K in ComposerBodyTextFormat]: ComponentType<any>;
+  [K in ComposerBodyTextFormat]: ComponentType<PropsWithChildren>;
 };
 
 const textFormatToggles: TextFormatToggles = {
@@ -444,9 +464,7 @@ const textFormatToggles: TextFormatToggles = {
 };
 
 const textFormatTogglesList = Object.entries(textFormatToggles).map(
-  ([format, Toggle]) => (
-    <Toggle key={format} format={format as ComposerBodyTextFormat} />
-  )
+  ([format, Toggle]) => <Toggle key={format} />
 );
 
 function ComposerFloatingToolbar() {

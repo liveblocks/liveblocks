@@ -69,7 +69,10 @@ import {
 } from "slate-react";
 
 import { useLiveblocksUIConfig } from "../../config";
-import { FLOATING_ELEMENT_COLLISION_PADDING } from "../../constants";
+import {
+  FLOATING_ELEMENT_COLLISION_PADDING,
+  FLOATING_ELEMENT_SIDE_OFFSET,
+} from "../../constants";
 import { withAutoFormatting } from "../../slate/plugins/auto-formatting";
 import { withAutoLinks } from "../../slate/plugins/auto-links";
 import { withCustomLinks } from "../../slate/plugins/custom-links";
@@ -381,7 +384,7 @@ function ComposerEditorFloatingToolbarWrapper({
       strategy: "fixed",
       placement: getPlacementFromPosition(position, dir, true),
       middleware: [
-        inline(),
+        inline({ padding: FLOATING_ELEMENT_SIDE_OFFSET }),
         flip({ ...detectOverflowOptions, crossAxis: false }),
         hide(detectOverflowOptions),
         shift({
@@ -435,12 +438,20 @@ function ComposerEditorFloatingToolbarWrapper({
 
   useLayoutEffect(() => {
     const unsubscribe = changeEventSource.subscribe(() => {
-      if (!editor.selection || isSelectionCollapsed(editor.selection)) {
+      const domSelection = window.getSelection();
+
+      if (
+        !editor.selection ||
+        isSelectionCollapsed(editor.selection) ||
+        !domSelection
+      ) {
         setHasSelectionRange(false);
         setReference(null);
       } else {
         setHasSelectionRange(true);
-        setReference(getDOMRange(editor, editor.selection) ?? null);
+
+        const domRange = domSelection.getRangeAt(0);
+        setReference(domRange);
       }
     });
 
