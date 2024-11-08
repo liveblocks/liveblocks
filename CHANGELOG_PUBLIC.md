@@ -40,7 +40,8 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 - [`@liveblocks/react-tiptap`](https://liveblocks.io/docs/api-reference/liveblocks-emails) API reference.
 - New [Tiptap overview page](https://liveblocks.io/docs/products/text-editor/tiptap).
-- Restructured getting started, with new guides for Tiptap on [Next.js](https://liveblocks.io/docs/get-started/nextjs-tiptap) and [React](https://liveblocks.io/docs/get-started/react-tiptap).
+- Restructured getting started guides.
+- Added new guides for using `@liveblocks/react-tiptap` on [Next.js](https://liveblocks.io/docs/get-started/nextjs-tiptap) and [React](https://liveblocks.io/docs/get-started/react-tiptap).
 - [`@liveblocks/emails`](https://liveblocks.io/docs/api-reference/liveblocks-emails) API reference.
 - Updated guide on [sending emails when comments are created](https://liveblocks.io/docs/guides/how-to-send-email-notifications-of-unread-comments).
 - Updated [email notifications overview](https://liveblocks.io/docs/products/comments/email-notifications).
