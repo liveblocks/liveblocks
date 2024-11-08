@@ -163,8 +163,16 @@ function TopPart() {
                 ?.length
             }
           />
-          <Row id="syncStatus" name="Sync status" value={syncStatus} />
-          <Row id="isSynced" name="Is synchronized?" value={isSynced} />
+          <Row
+            id="smoothSyncStatus"
+            name="Sync status (smooth)"
+            value={syncStatus}
+          />
+          <Row
+            id="isSynced"
+            name="Is synchronized? (smooth)"
+            value={isSynced}
+          />
         </tbody>
       </table>
     </>

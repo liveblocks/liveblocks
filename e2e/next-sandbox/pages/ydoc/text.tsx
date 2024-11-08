@@ -28,7 +28,7 @@ function Sandbox() {
   const renderCount = useRenderCount();
   const room = useRoom();
   const [text, setText] = useState<string>("");
-  const syncStatus = useSyncStatus({ smooth: true });
+  const smoothSyncStatus = useSyncStatus({ smooth: true });
   const [synced, setSynced] = useState(false);
   const doc = useMemo(() => new Y.Doc(), []);
   useEffect(() => {
@@ -91,7 +91,11 @@ function Sandbox() {
           <Row id="renderCount" name="Render count" value={renderCount} />
           <Row id="text" name="YDoc Text" value={text} />
           <Row id="sync" name="Synced" value={synced} />
-          <Row id="syncStatus" name="Sync status" value={syncStatus} />
+          <Row
+            id="smoothSyncStatus"
+            name="Sync status (smooth)"
+            value={smoothSyncStatus}
+          />
         </tbody>
       </table>
     </div>

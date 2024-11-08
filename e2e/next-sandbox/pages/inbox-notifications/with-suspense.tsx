@@ -141,8 +141,8 @@ function TopPart() {
   const me = useSelf();
   const { threads } = useThreads();
   const inboxNotifications = useInboxNotificationsForThisPage();
-  const syncStatus = useSyncStatus({ smooth: true });
-  const isSynced = syncStatus === "synchronized";
+  const smoothSyncStatus = useSyncStatus({ smooth: true });
+  const isSynced = smoothSyncStatus === "synchronized";
 
   const deleteComment = useDeleteComment();
 
@@ -182,7 +182,11 @@ function TopPart() {
             name="Number of Notifications"
             value={inboxNotifications?.length}
           />
-          <Row id="syncStatus" name="Sync status" value={syncStatus} />
+          <Row
+            id="smoothSyncStatus"
+            name="Sync status (smooth)"
+            value={smoothSyncStatus}
+          />
           <Row id="isSynced" name="Is synchronized?" value={isSynced} />
         </tbody>
       </table>
