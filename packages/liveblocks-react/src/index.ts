@@ -26,6 +26,7 @@ export {
   useInboxNotificationThread,
   useMarkAllInboxNotificationsAsRead,
   useMarkInboxNotificationAsRead,
+  usePreventUnsavedChanges,
   useSyncStatus,
   useSyncStatusListener,
 } from "./liveblocks";

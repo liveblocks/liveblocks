@@ -1,6 +1,7 @@
 import {
   createLiveblocksContext,
   createRoomContext,
+  usePreventUnsavedChanges,
   useSyncStatus,
 } from "@liveblocks/react";
 import {
@@ -119,6 +120,7 @@ function TopPart() {
   const inboxNotifications = useInboxNotificationsForThisPage();
   const syncStatus = useSyncStatus({ smooth: true });
   const isSynced = syncStatus === "synchronized";
+  usePreventUnsavedChanges();
 
   const deleteComment = useDeleteComment();
 

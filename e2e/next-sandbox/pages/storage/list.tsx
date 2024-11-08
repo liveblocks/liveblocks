@@ -27,6 +27,7 @@ const {
   useStorage,
   useSyncStatus,
   useUndo,
+  usePreventUnsavedChanges,
 } = createRoomContext<never, { items: LiveList<string> }>(client);
 
 export default function Home() {
@@ -55,6 +56,8 @@ function Sandbox() {
   const status = useStatus();
   const syncStatus = useSyncStatus();
   const smoothSyncStatus = useSyncStatus({ smooth: true });
+
+  usePreventUnsavedChanges();
 
   const push = useMutation(
     ({ storage }, value: string) => {

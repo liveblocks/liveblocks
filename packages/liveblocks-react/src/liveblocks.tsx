@@ -774,6 +774,8 @@ export function createSharedContext<U extends BaseUserMeta>(
       useIsInsideRoom,
       useSyncStatus,
       useSyncStatusListener,
+      usePreventUnsavedChanges: () =>
+        usePreventUnsavedChanges_withClient(client),
     },
     suspense: {
       useClient,
@@ -783,6 +785,8 @@ export function createSharedContext<U extends BaseUserMeta>(
       useIsInsideRoom,
       useSyncStatus,
       useSyncStatusListener,
+      usePreventUnsavedChanges: () =>
+        usePreventUnsavedChanges_withClient(client),
     },
   };
 }
@@ -1281,11 +1285,39 @@ function useSyncStatusListener_withClient(
 }
 
 /**
- * XXXXX
+ * XXX Document me
  */
-// XXX Document me!
 function useSyncStatusListener(callback: (status: SyncStatus) => void): void {
   return useSyncStatusListener_withClient(useClient(), callback);
+}
+
+function usePreventUnsavedChanges_withClient(client: OpaqueClient) {
+  const maybePreventClose = useCallback(
+    (e: BeforeUnloadEvent) => {
+      if (client.getSyncStatus() === "synchronizing") {
+        e.preventDefault();
+      }
+    },
+    [client]
+  );
+
+  React.useEffect(() => {
+    window.addEventListener("beforeunload", maybePreventClose);
+    return () => {
+      window.removeEventListener("beforeunload", maybePreventClose);
+    };
+  }, [maybePreventClose]);
+}
+
+/**
+ * XXX Document me
+ */
+// XXX Discuss if we want to ship this hook as a built-in. The DX is pretty great, especially compared to having to build this yourself with useSyncStatusListener.
+// XXX Discuss if we want to expose this *instead* of useSyncStatusListener, or *in addition* to it.
+// XXX Discuss if maybe we want to make this the default behavior for _any_ Liveblocks client. Maybe as a config option, instead of using a hook? I.e. createClient({ preventUnsavedChanged: true }) ?
+// XXX If so, we should also copy this into the factories!
+function usePreventUnsavedChanges() {
+  return usePreventUnsavedChanges_withClient(useClient());
 }
 
 // eslint-disable-next-line simple-import-sort/exports
@@ -1301,6 +1333,7 @@ export {
   useDeleteInboxNotification,
   useRoomInfo,
   useRoomInfoSuspense,
+  usePreventUnsavedChanges,
   useSyncStatus,
   useSyncStatusListener,
   useUnreadInboxNotificationsCount,

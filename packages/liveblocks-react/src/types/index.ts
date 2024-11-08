@@ -335,6 +335,11 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      */
     // XXX Document me!
     useSyncStatusListener(callback: (status: SyncStatus) => void): void;
+
+    /**
+     */
+    // XXX Document me!
+    usePreventUnsavedChanges(): void;
   };
 
   suspense: {
@@ -383,6 +388,11 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      */
     // XXX Document me!
     useSyncStatusListener(callback: (status: SyncStatus) => void): void;
+
+    /**
+     */
+    // XXX Document me!
+    usePreventUnsavedChanges(): void;
   };
 };
 
