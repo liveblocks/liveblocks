@@ -2936,11 +2936,21 @@ export function createRoom<
       };
     } catch (err) {
       if (err instanceof HttpError && err.status === 404) {
+        // If the room does (not) yet exist, the response will be a 404 error
+        // response which we'll interpret as an empty list of threads.
         return {
           threads: [],
           inboxNotifications: [],
           nextCursor: null,
-          requestedAt: new Date(),
+          //
+          // HACK
+          // requestedAt needs to be a *server* timestamp here. However, on
+          // this 404 error response, there is no such timestamp. So out of
+          // pure necessity we'll fall back to a local timestamp instead (and
+          // allow for a possible 6 hour clock difference between client and
+          // server).
+          //
+          requestedAt: new Date(Date.now() - 6 * 60 * 60 * 1000),
         };
       }
 

@@ -16,6 +16,13 @@
 - Deprecate the `useStorageStatus` hook in favor of the new `useSyncStatus`,
   which is most likely the one you're interested in when building UIs.
 
+## 2.11.1 (Yet to be published)
+
+### `@liveblocks/react-lexical`
+
+- Fix an issue with `AnchoredThreads` component not working correctly on certain
+  React versions.
+
 ## 2.11.0
 
 ### `@liveblocks/react-ui`
