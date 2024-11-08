@@ -36,9 +36,26 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 - Initial release.
 
+## Documentation
+
+- [`@liveblocks/react-tiptap`](https://liveblocks.io/docs/api-reference/liveblocks-emails) API reference.
+- New [Tiptap overview page](https://liveblocks.io/docs/products/text-editor/tiptap).
+- Restructured getting started, with new guides for Tiptap on [Next.js](https://liveblocks.io/docs/get-started/nextjs-tiptap) and [React](https://liveblocks.io/docs/get-started/react-tiptap).
+- [`@liveblocks/emails`](https://liveblocks.io/docs/api-reference/liveblocks-emails) API reference.
+- Updated guide on [sending emails when comments are created](https://liveblocks.io/docs/guides/how-to-send-email-notifications-of-unread-comments).
+- Updated [email notifications overview](https://liveblocks.io/docs/products/comments/email-notifications).
+
+## Examples
+
+- New [Next.js Comments + Resend example](https://liveblocks.io/examples/comments-emails/nextjs-comments-emails-resend).
+- New [Next.js Comments + SendGrid example](https://liveblocks.io/examples/comments-emails/nextjs-comments-emails-sendgrid).
+- Updated [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit) to use `@liveblocks/react-tiptap`.
+- Updated [Next.js advanced Tiptap text editor example](https://liveblocks.io/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced) to use `@liveblocks/react-tiptap`.
+- Updated [Next.js Tiptap text editor example](https://liveblocks.io/examples/collaborative-text-editor/nextjs-tiptap) to use `@liveblocks/react-tiptap`.
+
 ## Contributors
 
-sugardarius, nimeshnayaju, marcbouchenoire, jrowny
+sugardarius, nimeshnayaju, marcbouchenoire, jrowny, ctnicholas
 
 # Week 44 (2024-11-01)
 
