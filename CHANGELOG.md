@@ -5,6 +5,11 @@
 - Fix an issue with `AnchoredThreads` component not working correctly on certain
   React versions.
 
+### `@liveblocks/react-tiptap`
+
+- Fix an issue with `AnchoredThreads` component not working correctly on certain
+  React versions.
+
 ## 2.11.0
 
 ### `@liveblocks/react-ui`
