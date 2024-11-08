@@ -1,4 +1,3 @@
-// XXX UPDATE THIS FILE!
 import React from "react";
 React; // To silence tsd warning
 
@@ -819,4 +818,16 @@ import { expectAssignable, expectError, expectType } from "tsd";
   expectType<false>(isLoading);
   expectType<number>(count);
   expectType<undefined>(error);
+}
+
+// ---------------------------------------------------------
+
+// The useSyncStatus() hook
+{
+  const status = classic.useSyncStatus();
+  expectType<"synchronizing" | "synchronized">(status);
+}
+{
+  const status = suspense.useSyncStatus();
+  expectType<"synchronizing" | "synchronized">(status);
 }
