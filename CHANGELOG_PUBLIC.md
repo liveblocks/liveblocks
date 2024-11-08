@@ -13,6 +13,10 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
 
+# Week 46 (2024-11-15)
+
+## Contributors
+
 # Week 45 (2024-11-08)
 
 ## v2.11.0
