@@ -19,6 +19,9 @@
   <a href="https://github.com/liveblocks/liveblocks/blob/main/LICENSE">
     <img src="https://img.shields.io/github/license/liveblocks/liveblocks?style=flat&label=license&logo=github&color=f80&logoColor=fff" alt="License" />
   </a>
+  <a href="https://gurubase.io/g/liveblocks">
+    <img src="https://img.shields.io/badge/Gurubase-Ask%20Liveblocks%20Guru-006BFF" alt="Gurubase" />
+  </a>
 </p>
 
 **[Liveblocks](https://liveblocks.io) is the platform for adding collaborative
