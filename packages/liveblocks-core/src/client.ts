@@ -182,9 +182,16 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
   as<M2 extends BaseMetadata>(): Client<U, M2>;
 
   // Tracking pending changes globally
-  getSyncStatus(): SyncStatus;
-  syncStatusDidChange: Observable<void>;
   newSyncStatusSource(): SyncStatusSourceTuple;
+
+  // These are currently internal APIs, used to implement the `useSyncStatus`
+  // and `useSyncStatusListener` React hooks, but we will consider exposing
+  // them as public/stable APIs if there is a need to use these outside of
+  // React.
+  getSyncStatus(): SyncStatus;
+  events: {
+    syncStatusDidChange: Observable<void>;
+  };
 };
 
 export type NotificationsApi<M extends BaseMetadata> = {
