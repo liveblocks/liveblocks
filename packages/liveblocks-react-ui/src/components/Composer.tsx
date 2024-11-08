@@ -13,8 +13,10 @@ import {
   useCreateThread,
   useEditComment,
 } from "@liveblocks/react";
+import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
   ComponentPropsWithoutRef,
+  ComponentType,
   FocusEvent,
   FormEvent,
   ForwardedRef,
@@ -23,7 +25,7 @@ import type {
   RefAttributes,
   SyntheticEvent,
 } from "react";
-import React, { forwardRef, useCallback, useRef } from "react";
+import React, { forwardRef, useCallback, useMemo, useRef } from "react";
 
 import { AttachmentIcon } from "../icons/Attachment";
 import { BoldIcon } from "../icons/Bold";
@@ -51,6 +53,7 @@ import type {
 } from "../primitives/Composer/types";
 import { useComposerAttachmentsDropArea } from "../primitives/Composer/utils";
 import { MENTION_CHARACTER } from "../slate/plugins/mentions";
+import type { ComposerBodyTextFormat } from "../types";
 import { classNames } from "../utils/class-names";
 import { useControllableState } from "../utils/use-controllable-state";
 import { useLayoutEffect } from "../utils/use-layout-effect";
@@ -75,6 +78,11 @@ interface EditorActionProps extends ComponentPropsWithoutRef<"button"> {
 
 interface EmojiEditorActionProps extends EditorActionProps {
   onPickerOpenChange?: EmojiPickerProps["onOpenChange"];
+}
+
+interface TextFormatToggleProps extends TogglePrimitive.ToggleProps {
+  format: ComposerBodyTextFormat;
+  shortcut?: ReactNode;
 }
 
 type ComposerCreateThreadProps<M extends BaseMetadata> = {
@@ -343,70 +351,108 @@ function ComposerMentionSuggestions({
   ) : null;
 }
 
+function TextFormatToggle({
+  format,
+  shortcut,
+  children,
+  ...props
+}: TextFormatToggleProps) {
+  const { textFormats, toggleTextFormat } = useComposer();
+  const $ = useOverrides();
+  const label = useMemo(() => {
+    return $.COMPOSER_TOGGLE_TEXT_FORMAT(format);
+  }, [$, format]);
+
+  const handlePressedChange = useCallback(() => {
+    toggleTextFormat(format);
+  }, [format, toggleTextFormat]);
+
+  return (
+    <ShortcutTooltip content={label} shortcut={shortcut}>
+      <TogglePrimitive.Root
+        asChild
+        pressed={textFormats[format]}
+        onPressedChange={handlePressedChange}
+        {...props}
+      >
+        <Button aria-label={label} active={textFormats[format]}>
+          {children}
+        </Button>
+      </TogglePrimitive.Root>
+    </ShortcutTooltip>
+  );
+}
+
+type TextFormatToggles = {
+  [K in ComposerBodyTextFormat]: ComponentType<any>;
+};
+
+const textFormatToggles: TextFormatToggles = {
+  bold: () => (
+    <TextFormatToggle
+      format="bold"
+      shortcut={
+        <>
+          <ShortcutTooltipKey name="mod" />
+          <span>B</span>
+        </>
+      }
+    >
+      <BoldIcon />
+    </TextFormatToggle>
+  ),
+  italic: () => (
+    <TextFormatToggle
+      format="italic"
+      shortcut={
+        <>
+          <ShortcutTooltipKey name="mod" />
+          <span>I</span>
+        </>
+      }
+    >
+      <ItalicIcon />
+    </TextFormatToggle>
+  ),
+  strikethrough: () => (
+    <TextFormatToggle
+      format="strikethrough"
+      shortcut={
+        <>
+          <ShortcutTooltipKey name="mod" />
+          <ShortcutTooltipKey name="shift" />
+          <span>S</span>
+        </>
+      }
+    >
+      <StrikethroughIcon />
+    </TextFormatToggle>
+  ),
+  code: () => (
+    <TextFormatToggle
+      format="code"
+      shortcut={
+        <>
+          <ShortcutTooltipKey name="mod" />
+          <span>E</span>
+        </>
+      }
+    >
+      <CodeIcon />
+    </TextFormatToggle>
+  ),
+};
+
+const textFormatTogglesList = Object.entries(textFormatToggles).map(
+  ([format, Toggle]) => (
+    <Toggle key={format} format={format as ComposerBodyTextFormat} />
+  )
+);
+
 function ComposerFloatingToolbar() {
   return (
     <ComposerPrimitive.FloatingToolbar className="lb-root lb-portal lb-elevation lb-composer-floating-toolbar">
-      <ShortcutTooltip
-        content="Bold"
-        shortcut={
-          <>
-            <ShortcutTooltipKey name="mod" />
-            <span>B</span>
-          </>
-        }
-      >
-        <ComposerPrimitive.Submit asChild>
-          <Button aria-label="Bold">
-            <BoldIcon />
-          </Button>
-        </ComposerPrimitive.Submit>
-      </ShortcutTooltip>
-      <ShortcutTooltip
-        content="Italic"
-        shortcut={
-          <>
-            <ShortcutTooltipKey name="mod" />
-            <span>I</span>
-          </>
-        }
-      >
-        <ComposerPrimitive.Submit asChild>
-          <Button aria-label="Italic">
-            <ItalicIcon />
-          </Button>
-        </ComposerPrimitive.Submit>
-      </ShortcutTooltip>
-      <ShortcutTooltip
-        content="Strikethrough"
-        shortcut={
-          <>
-            <ShortcutTooltipKey name="mod" />
-            <ShortcutTooltipKey name="shift" />
-            <span>S</span>
-          </>
-        }
-      >
-        <ComposerPrimitive.Submit asChild>
-          <Button aria-label="Strikethrough">
-            <StrikethroughIcon />
-          </Button>
-        </ComposerPrimitive.Submit>
-      </ShortcutTooltip>
-      <ShortcutTooltip
-        content="Inline code"
-        shortcut={
-          <>
-            <ShortcutTooltipKey name="mod" />
-            <span>E</span>
-          </>
-        }
-      >
-        <ComposerPrimitive.Submit asChild>
-          <Button aria-label="Inline code">
-            <CodeIcon />
-          </Button>
-        </ComposerPrimitive.Submit>
-      </ShortcutTooltip>
+      {textFormatTogglesList}
     </ComposerPrimitive.FloatingToolbar>
   );
 }

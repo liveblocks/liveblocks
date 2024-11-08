@@ -366,7 +366,7 @@ function ComposerEditorFloatingToolbarWrapper({
   FloatingToolbar,
 }: ComposerEditorFloatingToolbarWrapperProps) {
   const editor = useSlateStatic();
-  const { isFocused } = useComposer();
+  const { isFocused, textFormats } = useComposer();
   const { changeEventSource } = useComposerEditorContext();
   const [content, setContent] = useState<HTMLDivElement | null>(null);
   const [contentZIndex, setContentZIndex] = useState<string>();
@@ -472,7 +472,7 @@ function ComposerEditorFloatingToolbarWrapper({
               zIndex: contentZIndex,
             }}
           >
-            <FloatingToolbar />
+            <FloatingToolbar textFormats={textFormats} />
           </Portal>
         </ComposerFloatingToolbarContext.Provider>
       ) : null}

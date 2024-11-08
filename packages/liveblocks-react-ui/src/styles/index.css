@@ -254,6 +254,16 @@
       padding-inline: calc(0.7 * var(--lb-spacing));
     }
   }
+
+  &:where([data-active]) {
+    &:where([data-variant="default"]) {
+      color: var(--lb-accent);
+    }
+
+    :where(.lb-icon *) {
+      stroke-width: calc(1.25 * var(--lb-icon-weight));
+    }
+  }
 }
 
 .lb-button-icon {
