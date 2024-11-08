@@ -363,6 +363,7 @@ function ComposerEditorFloatingToolbarWrapper({
   id,
   position = FLOATING_TOOLBAR_POSITION,
   dir,
+  FloatingToolbar,
 }: ComposerEditorFloatingToolbarWrapperProps) {
   const editor = useSlateStatic();
   const { isFocused } = useComposer();
@@ -471,7 +472,7 @@ function ComposerEditorFloatingToolbarWrapper({
               zIndex: contentZIndex,
             }}
           >
-            <ComposerFloatingToolbar />
+            <FloatingToolbar />
           </Portal>
         </ComposerFloatingToolbarContext.Provider>
       ) : null}
@@ -507,9 +508,6 @@ const ComposerFloatingToolbar = forwardRef<
       data-align={align}
       style={{
         display: "flex",
-        flexDirection: "column",
-        maxHeight: "var(--lb-composer-suggestions-available-height)",
-        overflowY: "auto",
         ...style,
       }}
       ref={mergedRefs}
@@ -833,6 +831,20 @@ const defaultEditorComponents: ComposerEditorComponents = {
       </ComposerSuggestions>
     ) : null;
   },
+  FloatingToolbar: () => {
+    const { textFormats } = useComposer();
+
+    console.log(textFormats);
+
+    return (
+      <ComposerFloatingToolbar>
+        <button>bold</button>
+        <button>italic</button>
+        <button>strikethrough</button>
+        <button>code</button>
+      </ComposerFloatingToolbar>
+    );
+  },
 };
 
 /**
@@ -872,7 +884,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     const initialEditorValue = useMemo(() => {
       return commentBodyToComposerBody(initialBody);
     }, [initialBody]);
-    const { Link, Mention, MentionSuggestions } = useMemo(
+    const { Link, Mention, MentionSuggestions, FloatingToolbar } = useMemo(
       () => ({ ...defaultEditorComponents, ...components }),
       [components]
     );
@@ -1105,7 +1117,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     }, [editor]);
 
     // Manually focus the editor when `autoFocus` is true
-    useEffect(() => {
+    useLayoutEffect(() => {
       if (autoFocus) {
         focus();
       }
@@ -1113,7 +1125,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
 
     // Manually add a selection in the editor if the selection
     // is still empty after being focused
-    useEffect(() => {
+    useLayoutEffect(() => {
       if (isFocused && editor.selection === null) {
         select();
       }
@@ -1157,6 +1169,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
         <ComposerEditorFloatingToolbarWrapper
           dir={dir}
           id={suggestionsListId}
+          FloatingToolbar={FloatingToolbar}
         />
       </Slate>
     );
@@ -1624,10 +1637,16 @@ const ComposerAttachmentsDropArea = forwardRef<
   }
 );
 
+// <Composer.TextFormatToggle format="bold" />
+// function ComposerTextFormatToggle() {}
+
+// FloatingToolbar: <Composer.FloatingToolbar><Composer.TextFormatToggle format="bold" />...</Composer.FloatingToolbar>
+
 if (process.env.NODE_ENV !== "production") {
   ComposerAttachFiles.displayName = COMPOSER_ATTACH_FILES_NAME;
   ComposerAttachmentsDropArea.displayName = COMPOSER_ATTACHMENTS_DROP_AREA_NAME;
   ComposerEditor.displayName = COMPOSER_EDITOR_NAME;
+  ComposerFloatingToolbar.displayName = COMPOSER_FLOATING_TOOLBAR_NAME;
   ComposerForm.displayName = COMPOSER_FORM_NAME;
   ComposerMention.displayName = COMPOSER_MENTION_NAME;
   ComposerLink.displayName = COMPOSER_LINK_NAME;
@@ -1642,6 +1661,7 @@ export {
   ComposerAttachFiles as AttachFiles,
   ComposerAttachmentsDropArea as AttachmentsDropArea,
   ComposerEditor as Editor,
+  ComposerFloatingToolbar as FloatingToolbar,
   ComposerForm as Form,
   ComposerLink as Link,
   ComposerMention as Mention,

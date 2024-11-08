@@ -26,9 +26,13 @@ import type {
 import React, { forwardRef, useCallback, useRef } from "react";
 
 import { AttachmentIcon } from "../icons/Attachment";
+import { BoldIcon } from "../icons/Bold";
+import { CodeIcon } from "../icons/Code";
 import { EmojiIcon } from "../icons/Emoji";
+import { ItalicIcon } from "../icons/Italic";
 import { MentionIcon } from "../icons/Mention";
 import { SendIcon } from "../icons/Send";
+import { StrikethroughIcon } from "../icons/Strikethrough";
 import type { ComposerOverrides, GlobalOverrides } from "../overrides";
 import { useOverrides } from "../overrides";
 import * as ComposerPrimitive from "../primitives/Composer";
@@ -225,7 +229,7 @@ function ComposerInsertMentionEditorAction({
     <Tooltip content={tooltipLabel ?? label}>
       <Button
         className={classNames("lb-composer-editor-action", className)}
-        onMouseDown={preventDefault}
+        onPointerDown={preventDefault}
         onClick={handleClick}
         aria-label={label}
         {...props}
@@ -259,7 +263,7 @@ function ComposerInsertEmojiEditorAction({
         <EmojiPickerTrigger asChild>
           <Button
             className={classNames("lb-composer-editor-action", className)}
-            onMouseDown={preventDefault}
+            onPointerDown={preventDefault}
             onClick={stopPropagation}
             aria-label={label}
             {...props}
@@ -291,7 +295,7 @@ function ComposerAttachFilesEditorAction({
       <ComposerPrimitive.AttachFiles asChild>
         <Button
           className={classNames("lb-composer-editor-action", className)}
-          onMouseDown={preventDefault}
+          onPointerDown={preventDefault}
           onClick={stopPropagation}
           aria-label={label}
           {...props}
@@ -337,6 +341,74 @@ function ComposerMentionSuggestions({
       </ComposerPrimitive.SuggestionsList>
     </ComposerPrimitive.Suggestions>
   ) : null;
+}
+
+function ComposerFloatingToolbar() {
+  return (
+    <ComposerPrimitive.FloatingToolbar className="lb-root lb-portal lb-elevation lb-composer-floating-toolbar">
+      <ShortcutTooltip
+        content="Bold"
+        shortcut={
+          <>
+            <ShortcutTooltipKey name="mod" />
+            <span>B</span>
+          </>
+        }
+      >
+        <ComposerPrimitive.Submit asChild>
+          <Button aria-label="Bold">
+            <BoldIcon />
+          </Button>
+        </ComposerPrimitive.Submit>
+      </ShortcutTooltip>
+      <ShortcutTooltip
+        content="Italic"
+        shortcut={
+          <>
+            <ShortcutTooltipKey name="mod" />
+            <span>I</span>
+          </>
+        }
+      >
+        <ComposerPrimitive.Submit asChild>
+          <Button aria-label="Italic">
+            <ItalicIcon />
+          </Button>
+        </ComposerPrimitive.Submit>
+      </ShortcutTooltip>
+      <ShortcutTooltip
+        content="Strikethrough"
+        shortcut={
+          <>
+            <ShortcutTooltipKey name="mod" />
+            <ShortcutTooltipKey name="shift" />
+            <span>S</span>
+          </>
+        }
+      >
+        <ComposerPrimitive.Submit asChild>
+          <Button aria-label="Strikethrough">
+            <StrikethroughIcon />
+          </Button>
+        </ComposerPrimitive.Submit>
+      </ShortcutTooltip>
+      <ShortcutTooltip
+        content="Inline code"
+        shortcut={
+          <>
+            <ShortcutTooltipKey name="mod" />
+            <span>E</span>
+          </>
+        }
+      >
+        <ComposerPrimitive.Submit asChild>
+          <Button aria-label="Inline code">
+            <CodeIcon />
+          </Button>
+        </ComposerPrimitive.Submit>
+      </ShortcutTooltip>
+    </ComposerPrimitive.FloatingToolbar>
+  );
 }
 
 function ComposerLink({ href, children }: ComposerEditorLinkProps) {
@@ -414,6 +486,7 @@ function ComposerAttachments({
 const editorComponents: ComposerEditorComponents = {
   Mention: ComposerMention,
   MentionSuggestions: ComposerMentionSuggestions,
+  FloatingToolbar: ComposerFloatingToolbar,
   Link: ComposerLink,
 };
 
@@ -495,7 +568,7 @@ function ComposerEditorContainer({
                 >
                   <ComposerPrimitive.Submit asChild>
                     <Button
-                      onMouseDown={preventDefault}
+                      onPointerDown={preventDefault}
                       onClick={stopPropagation}
                       className="lb-composer-action"
                       variant="primary"

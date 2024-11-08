@@ -16,6 +16,7 @@ import type {
   ComposerBodyAutoLink,
   ComposerBodyCustomLink,
   ComposerBodyMention,
+  ComposerBodyTextActiveFormats,
   Direction,
 } from "../../types";
 
@@ -59,6 +60,13 @@ export type ComposerEditorMentionSuggestionsProps = {
   selectedUserId?: string;
 };
 
+export type ComposerEditorFloatingToolbarProps = {
+  /**
+   * Which text formats are currently active and which aren't.
+   */
+  textFormats: ComposerBodyTextActiveFormats;
+};
+
 export type ComposerMentionProps = ComponentPropsWithSlot<"span">;
 
 export type ComposerLinkProps = ComponentPropsWithSlot<"a">;
@@ -92,6 +100,11 @@ export interface ComposerEditorComponents {
    * The component used to display links.
    */
   Link: ComponentType<ComposerEditorLinkProps>;
+
+  /**
+   * The component used to display the floating toolbar.
+   */
+  FloatingToolbar: ComponentType<ComposerEditorFloatingToolbarProps>;
 }
 
 export interface ComposerEditorProps
@@ -197,6 +210,7 @@ export interface ComposerEditorFloatingToolbarWrapperProps {
   id: string;
   position?: FloatingPosition;
   inset?: number;
+  FloatingToolbar: ComponentType<ComposerEditorFloatingToolbarProps>;
 }
 
 export interface ComposerEditorMentionWrapperProps
