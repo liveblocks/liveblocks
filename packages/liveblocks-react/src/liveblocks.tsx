@@ -1285,7 +1285,10 @@ function useSyncStatusListener_withClient(
 }
 
 /**
- * XXX Document me
+ * Get informed when the Liveblocks client is (done) synching local changes
+ * with the server.
+ *
+ * Warning: Be aware that this callback might get called very often!
  */
 function useSyncStatusListener(callback: (status: SyncStatus) => void): void {
   return useSyncStatusListener_withClient(useClient(), callback);
@@ -1310,12 +1313,9 @@ function usePreventUnsavedChanges_withClient(client: OpaqueClient) {
 }
 
 /**
- * XXX Document me
+ * Prevents the browser tab from being closed if there are any unsaved
+ * Liveblocks changes.
  */
-// XXX Discuss if we want to ship this hook as a built-in. The DX is pretty great, especially compared to having to build this yourself with useSyncStatusListener.
-// XXX Discuss if we want to expose this *instead* of useSyncStatusListener, or *in addition* to it.
-// XXX Discuss if maybe we want to make this the default behavior for _any_ Liveblocks client. Maybe as a config option, instead of using a hook? I.e. createClient({ preventUnsavedChanged: true }) ?
-// XXX If so, we should also copy this into the factories!
 function usePreventUnsavedChanges() {
   return usePreventUnsavedChanges_withClient(useClient());
 }

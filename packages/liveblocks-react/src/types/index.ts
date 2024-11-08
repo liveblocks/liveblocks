@@ -332,13 +332,17 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
     useSyncStatus(options?: UseSyncStatusOptions): SyncStatus;
 
     /**
+     * Get informed when the Liveblocks client is (done) synching local changes
+     * with the server.
+     *
+     * Warning: Be aware that this callback might get called very often!
      */
-    // XXX Document me!
     useSyncStatusListener(callback: (status: SyncStatus) => void): void;
 
     /**
+     * Prevents the browser tab from being closed if there are any unsaved
+     * Liveblocks changes.
      */
-    // XXX Document me!
     usePreventUnsavedChanges(): void;
   };
 
@@ -385,13 +389,17 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
     useSyncStatus(options?: UseSyncStatusOptions): SyncStatus;
 
     /**
+     * Get informed when the Liveblocks client is (done) synching local changes
+     * with the server.
+     *
+     * Warning: Be aware that this callback might get called very often!
      */
-    // XXX Document me!
     useSyncStatusListener(callback: (status: SyncStatus) => void): void;
 
     /**
+     * Prevents the browser tab from being closed if there are any unsaved
+     * Liveblocks changes.
      */
-    // XXX Document me!
     usePreventUnsavedChanges(): void;
   };
 };
