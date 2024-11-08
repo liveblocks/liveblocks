@@ -1209,20 +1209,20 @@ function useSyncStatus_withClient(
 
 function useSyncStatusImmediate_withClient(client: OpaqueClient): SyncStatus {
   return useSyncExternalStore(
-    client[kInternal].syncStatusDidChange.subscribe,
-    client[kInternal].getSyncStatus,
-    client[kInternal].getSyncStatus
+    client.events.syncStatus.subscribe,
+    client.getSyncStatus,
+    client.getSyncStatus
   );
 }
 
 function useSyncStatusSmooth_withClient(client: OpaqueClient): SyncStatus {
-  const getter = client[kInternal].getSyncStatus;
+  const getter = client.getSyncStatus;
   const [status, setStatus] = React.useState(getter);
   const oldStatus = useLatest(getter());
 
   React.useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>;
-    const unsub = client[kInternal].syncStatusDidChange.subscribe(() => {
+    const unsub = client.events.syncStatus.subscribe(() => {
       const newStatus = getter();
       if (
         oldStatus.current === "synchronizing" &&

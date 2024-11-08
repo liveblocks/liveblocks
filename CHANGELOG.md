@@ -1,5 +1,10 @@
 ## 2.12.0
 
+### `@liveblocks/client`
+
+- Add new API `client.getSyncStatus()` which will reflect the (combined) sync
+  status for any Liveblocks product
+
 ### `@liveblocks/react`
 
 - Add new hook `useSyncStatus` that can be used to tell whether Liveblocks is

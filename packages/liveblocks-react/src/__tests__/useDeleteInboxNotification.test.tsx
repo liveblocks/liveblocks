@@ -1,4 +1,4 @@
-import { kInternal, nanoid } from "@liveblocks/core";
+import { nanoid } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
 import React from "react";
@@ -368,11 +368,9 @@ describe("useDeleteInboxNotification", () => {
     expect(result.current.inboxNotifications).toEqual([notification2]);
 
     await waitFor(() =>
-      expect(client[kInternal].getSyncStatus()).toEqual("synchronizing")
+      expect(client.getSyncStatus()).toEqual("synchronizing")
     );
-    await waitFor(() =>
-      expect(client[kInternal].getSyncStatus()).toEqual("synchronized")
-    );
+    await waitFor(() => expect(client.getSyncStatus()).toEqual("synchronized"));
 
     unmount();
   });
@@ -470,11 +468,9 @@ describe("useDeleteInboxNotification", () => {
     expect(result.current.inboxNotifications).toEqual([]);
 
     await waitFor(() =>
-      expect(client[kInternal].getSyncStatus()).toEqual("synchronizing")
+      expect(client.getSyncStatus()).toEqual("synchronizing")
     );
-    await waitFor(() =>
-      expect(client[kInternal].getSyncStatus()).toEqual("synchronized")
-    );
+    await waitFor(() => expect(client.getSyncStatus()).toEqual("synchronized"));
 
     unmount();
   });

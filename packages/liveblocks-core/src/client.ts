@@ -183,15 +183,6 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
 
   // Tracking pending changes globally
   newSyncStatusSource(): SyncStatusSourceTuple;
-
-  // These are currently internal APIs, used to implement the `useSyncStatus`
-  // and `useSyncStatusListener` React hooks, but we will consider exposing
-  // them as public/stable APIs if there is a need to use these outside of
-  // React.
-  getSyncStatus(): SyncStatus;
-  events: {
-    syncStatusDidChange: Observable<void>;
-  };
 };
 
 export type NotificationsApi<M extends BaseMetadata> = {
@@ -395,6 +386,33 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
    */
   // TODO Make this a getter, so we can provide M
   readonly [kInternal]: PrivateClientApi<U, M>;
+
+  /**
+   * Returns the current global sync status of the Liveblocks client. If any
+   * part of Liveblocks has any local pending changes that haven't been
+   * confirmed by or persisted by the server yet, this will be "synchronizing",
+   * otherwise "synchronized".
+   *
+   * This is a combined status for all of the below parts of Liveblocks:
+   * - Storage (realtime APIs)
+   * - Text Editors
+   * - Comments
+   * - Notifications
+   *
+   * @example
+   * const status = client.getSyncStatus();  // "synchronizing" | "synchronized"
+   */
+  getSyncStatus(): SyncStatus;
+
+  /**
+   * All possible client events, subscribable from a single place.
+   *
+   * @private These event sources are private for now, but will become public
+   * once they're stable.
+   */
+  readonly events: {
+    readonly syncStatus: Observable<void>;
+  };
 } & NotificationsApi<M>;
 
 export type AuthEndpoint =
@@ -789,6 +807,11 @@ export function createClient<U extends BaseUserMeta = DU>(
         invalidateMentionSuggestions: invalidateResolvedMentionSuggestions,
       },
 
+      getSyncStatus,
+      events: {
+        syncStatus: syncStatusRef.didInvalidate,
+      },
+
       // Internal
       [kInternal]: {
         currentUserIdStore,
@@ -810,8 +833,6 @@ export function createClient<U extends BaseUserMeta = DU>(
         as: <M2 extends BaseMetadata>() => client as Client<U, M2>,
 
         newSyncStatusSource,
-        getSyncStatus, // Getter
-        syncStatusDidChange: syncStatusRef.didInvalidate, // Subscriber
       },
     },
     kInternal,
