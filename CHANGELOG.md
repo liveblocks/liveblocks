@@ -1,4 +1,4 @@
-## 2.12.0
+## 2.12.0 (not yet released)
 
 ### `@liveblocks/client`
 
@@ -9,6 +9,10 @@
 
 - Add new hook `useSyncStatus` that can be used to tell whether Liveblocks is
   synchronizing local changes to the server.
+- Add new hook `useSyncStatusListener` which can be used to listen to sync
+  status events.
+- Add new hook `usePreventUnsavedChanged` which can be used to prevent a browser
+  tab from being closed while changes are still being saved
 - Deprecate the `useStorageStatus` hook in favor of the new `useSyncStatus`,
   which is most likely the one you're interested in when building UIs.
 
