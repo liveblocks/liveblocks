@@ -15,7 +15,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 45 (2024-11-08)
 
-## 2.11.0
+## v2.11.0
 
 ### `@liveblocks/react-ui`
 
