@@ -26,6 +26,7 @@ export {
   useDeleteAllInboxNotifications,
   useDeleteInboxNotification,
   useSyncStatus,
+  useSyncStatusListener,
 } from "./liveblocks";
 export {
   RoomContext,

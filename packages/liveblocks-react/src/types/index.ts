@@ -330,6 +330,11 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * const syncStatus = useSyncStatus({ smooth: true });
      */
     useSyncStatus(options?: UseSyncStatusOptions): SyncStatus;
+
+    /**
+     */
+    // XXX Document me!
+    useSyncStatusListener(callback: (status: SyncStatus) => void): void;
   };
 
   suspense: {
@@ -373,6 +378,11 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * const syncStatus = useSyncStatus({ smooth: true });
      */
     useSyncStatus(options?: UseSyncStatusOptions): SyncStatus;
+
+    /**
+     */
+    // XXX Document me!
+    useSyncStatusListener(callback: (status: SyncStatus) => void): void;
   };
 };
 

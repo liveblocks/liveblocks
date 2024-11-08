@@ -27,6 +27,7 @@ export {
   useMarkAllInboxNotificationsAsRead,
   useMarkInboxNotificationAsRead,
   useSyncStatus,
+  useSyncStatusListener,
 } from "./liveblocks";
 export {
   createRoomContext,

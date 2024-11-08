@@ -942,3 +942,15 @@ declare global {
   const status = suspense.useSyncStatus();
   expectType<"synchronizing" | "synchronized">(status);
 }
+
+// ---------------------------------------------------------
+
+// The useSyncStatusListener() hook
+{
+  classic.useSyncStatusListener((status) => {
+    expectType<"synchronizing" | "synchronized">(status);
+  });
+  suspense.useSyncStatusListener((status) => {
+    expectType<"synchronizing" | "synchronized">(status);
+  });
+}
