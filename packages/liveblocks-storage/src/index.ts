@@ -1,5 +1,5 @@
 import type { Json } from "~/Json.js";
-import { StoreStub } from "./StoreStub.js";
+import { LayeredCache } from "./LayeredCache.js";
 import type { ChangeReturnType, OmitFirstArg } from "./types.js";
 
 // All deltas are authoritative and _must_ always get applied!
@@ -10,7 +10,7 @@ type Delta = [rem: string[], add: [key: string, value: Json][]]; // Eventually, 
 export type Store = Map<string, Json>;
 
 export type Mutations = Record<string, Mutation>;
-export type Mutation = (store: StoreStub, ...args: readonly any[]) => void;
+export type Mutation = (store: LayeredCache, ...args: readonly any[]) => void;
 
 type BoundMutations<M extends Record<string, Mutation>> = {
   [K in keyof M]: ChangeReturnType<OmitFirstArg<M[K]>, Delta>;
@@ -20,7 +20,7 @@ type BoundMutations<M extends Record<string, Mutation>> = {
 
 export class Base<M extends Mutations> {
   // XXX Make private field
-  stub: StoreStub;
+  stub: LayeredCache;
 
   // XXX Make private field
   mutations: M;
@@ -29,7 +29,7 @@ export class Base<M extends Mutations> {
   mutate: BoundMutations<M>;
 
   constructor(mutations: M) {
-    this.stub = new StoreStub();
+    this.stub = new LayeredCache();
 
     this.mutations = mutations;
 

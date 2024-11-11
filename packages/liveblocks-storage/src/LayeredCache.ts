@@ -5,7 +5,7 @@ const TOMBSTONE = Symbol();
 
 type TombStone = typeof TOMBSTONE;
 
-export class StoreStub {
+export class LayeredCache {
   _root: Map<string, Json>;
   _layers: Map<string, Json | TombStone>[];
 

@@ -1,16 +1,16 @@
 import { describe, expect, test } from "vitest";
-import { StoreStub } from "~/StoreStub.js";
+import { LayeredCache } from "~/LayeredCache.js";
 import { fmt, size } from "./utils.js";
 
-describe("StoreStub basics", () => {
+describe("LayeredCache basics", () => {
   test("empty", () => {
-    const stub = new StoreStub();
+    const stub = new LayeredCache();
     expect(size(stub)).toEqual(0);
     expect(fmt(stub)).toEqual({});
   });
 
   test("setting keys", () => {
-    const stub = new StoreStub();
+    const stub = new LayeredCache();
     stub.set("a", 1);
     stub.set("b", "hi");
     stub.set("c", null);
@@ -23,7 +23,7 @@ describe("StoreStub basics", () => {
   });
 
   test("setting to undefined is the same as removing a key", () => {
-    const stub = new StoreStub();
+    const stub = new LayeredCache();
     stub.set("a", 1);
     stub.set("b", "hi");
     // @ts-expect-error `undefined` isn't JSON
@@ -39,7 +39,7 @@ describe("StoreStub basics", () => {
   });
 
   test("has", () => {
-    const stub = new StoreStub();
+    const stub = new LayeredCache();
     expect(stub.has("k")).toEqual(false);
 
     stub.set("k", "v");
@@ -58,7 +58,7 @@ describe("StoreStub basics", () => {
   });
 
   test("get", () => {
-    const stub = new StoreStub();
+    const stub = new LayeredCache();
     expect(stub.get("k")).toBe(undefined);
 
     stub.set("k", "v");
@@ -76,7 +76,7 @@ describe("StoreStub basics", () => {
   });
 
   test("has (after snapshot)", () => {
-    const stub = new StoreStub();
+    const stub = new LayeredCache();
     stub.snapshot();
     expect(stub.has("k")).toEqual(false);
 
@@ -96,7 +96,7 @@ describe("StoreStub basics", () => {
   });
 
   test("get (after snapshot)", () => {
-    const stub = new StoreStub();
+    const stub = new LayeredCache();
     stub.snapshot();
     expect(stub.get("fuuu")).toBe(undefined);
 
@@ -115,7 +115,7 @@ describe("StoreStub basics", () => {
   });
 
   test("get", () => {
-    const stub = new StoreStub();
+    const stub = new LayeredCache();
     stub.set("k", "a");
     stub.set("k", "v");
     stub.set("abc", 123);
@@ -135,7 +135,7 @@ describe("StoreStub basics", () => {
   });
 
   test("it supports iteration", () => {
-    const stub = new StoreStub();
+    const stub = new LayeredCache();
     stub.set("a", "a");
     stub.set("b", "b");
     stub.set("c", "c");
@@ -149,17 +149,17 @@ describe("StoreStub basics", () => {
 
 describe("snapshotting & rolling back", () => {
   test("committing before snapshotting fails", () => {
-    const stub = new StoreStub();
+    const stub = new LayeredCache();
     expect(() => stub.commit()).toThrow("No snapshot to commit");
   });
 
   test("rolling back before snapshotting fails", () => {
-    const stub = new StoreStub();
+    const stub = new LayeredCache();
     expect(() => stub.rollback()).toThrow("No snapshot to roll back");
   });
 
-  test("adding new keys", () => {
-    const stub = new StoreStub();
+  test("adding new keys in a snapshot are committed atomically", () => {
+    const stub = new LayeredCache();
     stub.set("a", 1);
 
     stub.snapshot();
@@ -173,8 +173,26 @@ describe("snapshotting & rolling back", () => {
     expect(fmt(stub)).toEqual({ a: 1, b: 2, c: 3 });
   });
 
-  test("transactions: rolling back to last snapshot", () => {
-    const stub = new StoreStub();
+  test("adding new keys in a snapshot are committed atomically", () => {
+    const stub = new LayeredCache();
+    stub.set("a", 1);
+
+    stub.snapshot();
+    expect(fmt(stub)).toEqual({ a: 1 });
+    stub.delete("a");
+    stub.delete("a");
+    stub.delete("a");
+    stub.delete("a");
+    expect(fmt(stub)).toEqual({});
+    stub.set("a", 42);
+    expect(fmt(stub)).toEqual({ a: 42 });
+    stub.commit();
+
+    expect(fmt(stub)).toEqual({ a: 42 });
+  });
+
+  test("rolling back to last snapshot", () => {
+    const stub = new LayeredCache();
     stub.set("a", 1);
     stub.set("b", 2);
     expect(fmt(stub)).toEqual({ a: 1, b: 2 });
@@ -186,15 +204,43 @@ describe("snapshotting & rolling back", () => {
     stub.delete("b");
     stub.delete("z");
     expect(fmt(stub)).toEqual({ a: 42, c: 3, d: 4 });
+
+    stub.rollback();
+    expect(fmt(stub)).toEqual({ a: 1, b: 2 });
+  });
+
+  test("nesting snapshots", () => {
+    const stub = new LayeredCache();
+    stub.set("a", 1);
+
+    stub.snapshot();
+    stub.delete("a");
+    stub.set("b", 2);
+    expect(fmt(stub)).toEqual({ b: 2 });
+
+    stub.snapshot();
+    stub.set("b", 3);
+    stub.set("z", 42);
+    stub.commit();
+    expect(fmt(stub)).toEqual({ b: 3, z: 42 });
+
+    stub.snapshot();
+    stub.snapshot();
+    expect(fmt(stub)).toEqual({ b: 3, z: 42 });
+    stub.rollback();
+    stub.rollback();
+    expect(fmt(stub)).toEqual({ b: 3, z: 42 });
+
+    stub.set("b", 555);
     stub.rollback();
 
-    expect(fmt(stub)).toEqual({ a: 1, b: 2 });
+    expect(fmt(stub)).toEqual({ a: 1 });
   });
 });
 
 describe("convenience accessors", () => {
   test("getNumber", () => {
-    const stub = new StoreStub();
+    const stub = new LayeredCache();
     stub.set("abc", 123);
     stub.set("foo", "bar");
 
