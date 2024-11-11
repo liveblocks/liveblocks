@@ -1,10 +1,10 @@
 import type { Json } from "~/Json.js";
 import { chain } from "./itertools.js";
-import type { OmitFirstArg } from "./types.js";
+import type { ChangeReturnType, OmitFirstArg } from "./types.js";
 
 // All deltas are authoritative and _must_ always get applied!
 type Op = [name: string, args: Json[]];
-type Delta = [add: [key: string, value: Json][], rem: string[]]; // Eventually, we'll need to compress this
+type Delta = [rem: string[], add: [key: string, value: Json][]]; // Eventually, we'll need to compress this
 
 /** @internal */
 export type Store = Map<string, Json>;
@@ -119,13 +119,15 @@ export type Mutations = Record<string, Mutation>;
 export type Mutation = (store: StoreStub, ...args: readonly any[]) => void;
 
 type BoundMutations<M extends Record<string, Mutation>> = {
-  [K in keyof M]: OmitFirstArg<M[K]>;
+  [K in keyof M]: ChangeReturnType<OmitFirstArg<M[K]>, StoreStub>;
 };
 
 // ----------------------------------------------------------------------------
 
 export class Base<M extends Mutations> {
   stub: StoreStub;
+
+  // XXX Expose `mutate` on clients only! Make it return a delta instead of a transaction/stub!
   mutate: BoundMutations<M>;
 
   constructor(mutations: M) {
@@ -139,6 +141,7 @@ export class Base<M extends Mutations> {
         try {
           mutFn(txn, ...args);
           txn.commit();
+          return txn;
         } catch (e) {
           // Discard the transaction
           throw e;
@@ -157,9 +160,9 @@ export class Client<M extends Mutations> extends Base<M> {
    */
   applyDelta(delta: Delta): void {
     const stub = this.stub;
-    const [toAdd, toDelete] = delta;
-    toAdd.forEach(([k, v]) => stub.set(k, v));
+    const [toDelete, toAdd] = delta;
     toDelete.forEach((k) => stub.delete(k));
+    toAdd.forEach(([k, v]) => stub.set(k, v));
   }
 }
 
@@ -174,9 +177,30 @@ export class Server<M extends Mutations> extends Base<M> {
    */
   applyOp(op: Op): Delta {
     const [name, args] = op;
-    this.mutate[name]?.(...args);
+    const mutationFn = this.mutate[name];
+    if (!mutationFn) {
+      throw new Error("Implement edge case");
+    }
 
-    const delta: Delta = [[["foo", "bar"]], []];
+    let txn;
+    try {
+      txn = mutationFn(...args);
+    } catch {
+      throw new Error("Implement edge case");
+    }
+
+    const updated: [string, Json][] = [];
+    const deleted: string[] = [];
+
+    for (const [key, value] of txn.localChanges()) {
+      if (value === TOMBSTONE) {
+        deleted.push(key);
+      } else {
+        updated.push([key, value]);
+      }
+    }
+
+    const delta: Delta = [deleted, updated];
     return delta;
   }
 }

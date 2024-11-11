@@ -5,6 +5,10 @@ export function put(stub: StoreStub, key: string, value: Json) {
   stub.set(key, value);
 }
 
+export function putRandom(stub: StoreStub, key: string) {
+  stub.set(key, Math.floor(Math.random() * Number.MAX_SAFE_INTEGER));
+}
+
 export function putAndFail(stub: StoreStub, key: string, value: Json) {
   put(stub, key, value);
   throw new Error("b0rked");
