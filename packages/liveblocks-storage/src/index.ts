@@ -125,13 +125,19 @@ type BoundMutations<M extends Record<string, Mutation>> = {
 // ----------------------------------------------------------------------------
 
 export class Base<M extends Mutations> {
+  // XXX Make private field
   stub: StoreStub;
+
+  // XXX Make private field
+  mutations: M;
 
   // XXX Expose `mutate` on clients only! Make it return a delta instead of a transaction/stub!
   mutate: BoundMutations<M>;
 
   constructor(mutations: M) {
     this.stub = new StoreStub();
+
+    this.mutations = mutations;
 
     // Bind all given mutation functions to this instance
     this.mutate = {} as BoundMutations<M>;
