@@ -116,15 +116,8 @@ export type RoomAccesses = Record<
 export type RoomMetadata = Record<string, string | string[]>;
 type QueryRoomMetadata = Record<string, string>;
 
-const RoomTextEditorType = {
-  Lexical: "lexical",
-  TipTap: "tiptap",
-} as const;
-type RoomTextEditorType =
-  (typeof RoomTextEditorType)[keyof typeof RoomTextEditorType];
-
 export type RoomTextEditor = {
-  type: RoomTextEditorType;
+  type: "lexical" | "tiptap";
   rootKey: string[];
 };
 
