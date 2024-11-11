@@ -75,6 +75,36 @@ describe("LayeredCache basics", () => {
     expect(stub.get("k")).toBe(undefined);
   });
 
+  test("keys", () => {
+    const stub = new LayeredCache();
+    stub.set("a", 1);
+    stub.delete("a");
+    stub.set("a", 42);
+    stub.set("b", 2);
+    expect(Array.from(stub.keys())).toEqual(["a", "b"]);
+  });
+
+  test("values", () => {
+    const stub = new LayeredCache();
+    stub.set("a", 1);
+    stub.delete("a");
+    stub.set("a", 42);
+    stub.set("b", 2);
+    expect(Array.from(stub.values())).toEqual([42, 2]);
+  });
+
+  test("entries", () => {
+    const stub = new LayeredCache();
+    stub.set("a", 1);
+    stub.delete("a");
+    stub.set("a", 42);
+    stub.set("b", 2);
+    expect(Array.from(stub.entries())).toEqual([
+      ["a", 42],
+      ["b", 2],
+    ]);
+  });
+
   test("has (after snapshot)", () => {
     const stub = new LayeredCache();
     stub.snapshot();
@@ -112,6 +142,39 @@ describe("LayeredCache basics", () => {
     // @ts-expect-error - undefined isn't JSON
     stub.set("k", undefined);
     expect(stub.get("k")).toBe(undefined);
+  });
+
+  test("keys (after snapshot)", () => {
+    const stub = new LayeredCache();
+    stub.snapshot();
+    stub.set("a", 1);
+    stub.delete("a");
+    stub.set("a", 42);
+    stub.set("b", 2);
+    expect(Array.from(stub.keys())).toEqual(["a", "b"]);
+  });
+
+  test("values (after snapshot)", () => {
+    const stub = new LayeredCache();
+    stub.snapshot();
+    stub.set("a", 1);
+    stub.delete("a");
+    stub.set("a", 42);
+    stub.set("b", 2);
+    expect(Array.from(stub.values())).toEqual([42, 2]);
+  });
+
+  test("entries (after snapshot)", () => {
+    const stub = new LayeredCache();
+    stub.snapshot();
+    stub.set("a", 1);
+    stub.delete("a");
+    stub.set("a", 42);
+    stub.set("b", 2);
+    expect(Array.from(stub.entries())).toEqual([
+      ["a", 42],
+      ["b", 2],
+    ]);
   });
 
   test("get", () => {
@@ -173,6 +236,26 @@ describe("snapshotting & rolling back", () => {
     expect(fmt(stub)).toEqual({ a: 1, b: 2, c: 3 });
   });
 
+  test("deleting keys happens atomically", () => {
+    const stub = new LayeredCache();
+    stub.set("a", 1);
+    stub.set("b", 2);
+
+    stub.snapshot();
+    stub.delete("a");
+    stub.delete("b");
+    expect(fmt(stub)).toEqual({});
+    stub.rollback();
+    expect(fmt(stub)).toEqual({ a: 1, b: 2 });
+
+    stub.snapshot();
+    stub.delete("a");
+    stub.delete("b");
+    expect(fmt(stub)).toEqual({});
+    stub.commit();
+    expect(fmt(stub)).toEqual({});
+  });
+
   test("adding new keys in a snapshot are committed atomically", () => {
     const stub = new LayeredCache();
     stub.set("a", 1);
@@ -207,6 +290,46 @@ describe("snapshotting & rolling back", () => {
 
     stub.rollback();
     expect(fmt(stub)).toEqual({ a: 1, b: 2 });
+  });
+
+  test("diffing without", () => {
+    const stub = new LayeredCache();
+    expect(Array.from(stub.diff())).toEqual([]);
+  });
+
+  test("diffing since last snapshot", () => {
+    const stub = new LayeredCache();
+    stub.set("a", 1);
+
+    stub.snapshot();
+    stub.set("b", 2);
+    stub.set("c", 3);
+    stub.delete("c");
+    stub.delete("d");
+    stub.set("b", 4);
+
+    expect(Array.from(stub.diff())).toEqual([
+      ["b", 4],
+      ["c", undefined],
+      ["d", undefined],
+    ]);
+
+    stub.snapshot();
+    expect(Array.from(stub.diff())).toEqual([]);
+    stub.delete("x");
+    stub.set("b", 42);
+    expect(Array.from(stub.diff())).toEqual([
+      ["x", undefined],
+      ["b", 42],
+    ]);
+    stub.commit();
+
+    expect(Array.from(stub.diff())).toEqual([
+      ["b", 42],
+      ["c", undefined],
+      ["d", undefined],
+      ["x", undefined],
+    ]);
   });
 
   test("nesting snapshots", () => {
