@@ -38,7 +38,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Documentation
 
-- [`@liveblocks/react-tiptap`](https://liveblocks.io/docs/api-reference/liveblocks-emails) API reference.
+- [`@liveblocks/react-tiptap`](https://liveblocks.io/docs/api-reference/liveblocks-react-tiptap) API reference.
 - New [Tiptap overview page](https://liveblocks.io/docs/products/text-editor/tiptap).
 - Restructured getting started, adding new guides for using `@liveblocks/react-tiptap` on [Next.js](https://liveblocks.io/docs/get-started/nextjs-tiptap) and [React](https://liveblocks.io/docs/get-started/react-tiptap).
 - [`@liveblocks/emails`](https://liveblocks.io/docs/api-reference/liveblocks-emails) API reference.
