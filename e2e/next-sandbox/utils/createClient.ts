@@ -21,7 +21,10 @@ export function createLiveblocksClientOptions<U extends BaseUserMeta>(
   return {
     ...options,
 
-    authEndpoint: options?.authEndpoint ?? DEFAULT_AUTH_ENDPOINT,
+    authEndpoint:
+      options?.authEndpoint || !options?.publicApiKey
+        ? DEFAULT_AUTH_ENDPOINT
+        : undefined,
     throttle: options?.throttle ?? DEFAULT_THROTTLE,
 
     // @ts-expect-error - Hidden settings
