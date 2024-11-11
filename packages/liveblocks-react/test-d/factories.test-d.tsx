@@ -1071,21 +1071,3 @@ ctx.useErrorListener((err) => {
   const status = ctx.suspense.useSyncStatus();
   expectType<"synchronizing" | "synchronized">(status);
 }
-
-// ---------------------------------------------------------
-
-// The useSyncStatusListener() hook
-{
-  lbctx.useSyncStatusListener((status) => {
-    expectType<"synchronizing" | "synchronized">(status);
-  });
-  lbctx.suspense.useSyncStatusListener((status) => {
-    expectType<"synchronizing" | "synchronized">(status);
-  });
-  ctx.useSyncStatusListener((status) => {
-    expectType<"synchronizing" | "synchronized">(status);
-  });
-  ctx.suspense.useSyncStatusListener((status) => {
-    expectType<"synchronizing" | "synchronized">(status);
-  });
-}

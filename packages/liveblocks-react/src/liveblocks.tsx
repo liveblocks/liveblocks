@@ -762,10 +762,6 @@ export function createSharedContext<U extends BaseUserMeta>(
     return useSyncStatus_withClient(client, options);
   }
 
-  function useSyncStatusListener(callback: (status: SyncStatus) => void) {
-    return useSyncStatusListener_withClient(client, callback);
-  }
-
   return {
     classic: {
       useClient,
@@ -773,7 +769,6 @@ export function createSharedContext<U extends BaseUserMeta>(
       useRoomInfo: (roomId: string) => useRoomInfo_withClient(client, roomId),
       useIsInsideRoom,
       useSyncStatus,
-      useSyncStatusListener,
       usePreventUnsavedChanges: () =>
         usePreventUnsavedChanges_withClient(client),
     },
@@ -784,7 +779,6 @@ export function createSharedContext<U extends BaseUserMeta>(
         useRoomInfoSuspense_withClient(client, roomId),
       useIsInsideRoom,
       useSyncStatus,
-      useSyncStatusListener,
       usePreventUnsavedChanges: () =>
         usePreventUnsavedChanges_withClient(client),
     },
@@ -1270,30 +1264,6 @@ function useSyncStatus(options?: UseSyncStatusOptions): SyncStatus {
   return useSyncStatus_withClient(useClient(), options);
 }
 
-function useSyncStatusListener_withClient(
-  client: OpaqueClient,
-  callback: (status: SyncStatus) => void
-): void {
-  const savedCallback = useLatest(callback);
-  React.useEffect(
-    () =>
-      client.events.syncStatus.subscribe(() =>
-        savedCallback.current(client.getSyncStatus())
-      ),
-    [client, savedCallback]
-  );
-}
-
-/**
- * Get informed when the Liveblocks client is (done) synching local changes
- * with the server.
- *
- * Warning: Be aware that this callback might get called very often!
- */
-function useSyncStatusListener(callback: (status: SyncStatus) => void): void {
-  return useSyncStatusListener_withClient(useClient(), callback);
-}
-
 function usePreventUnsavedChanges_withClient(client: OpaqueClient) {
   const maybePreventClose = useCallback(
     (e: BeforeUnloadEvent) => {
@@ -1335,7 +1305,6 @@ export {
   useRoomInfoSuspense,
   usePreventUnsavedChanges,
   useSyncStatus,
-  useSyncStatusListener,
   useUnreadInboxNotificationsCount,
   useUnreadInboxNotificationsCountSuspense,
   _useUserThreads_experimental as useUserThreads_experimental,

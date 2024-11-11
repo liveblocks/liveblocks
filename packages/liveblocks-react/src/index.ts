@@ -28,7 +28,6 @@ export {
   useMarkInboxNotificationAsRead,
   usePreventUnsavedChanges,
   useSyncStatus,
-  useSyncStatusListener,
 } from "./liveblocks";
 export {
   createRoomContext,

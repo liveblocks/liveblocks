@@ -27,7 +27,6 @@ export {
   useDeleteInboxNotification,
   usePreventUnsavedChanges,
   useSyncStatus,
-  useSyncStatusListener,
 } from "./liveblocks";
 export {
   RoomContext,
