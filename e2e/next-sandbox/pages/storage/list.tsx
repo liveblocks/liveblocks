@@ -14,7 +14,10 @@ import {
 import Button from "../../utils/Button";
 import { createLiveblocksClient } from "../../utils/createClient";
 
-const client = createLiveblocksClient({ preventUnsavedChanges: true });
+const client = createLiveblocksClient({
+  preventUnsavedChanges: true,
+  authEndpoint: "/api/auth/access-token",
+});
 
 const {
   RoomProvider,
