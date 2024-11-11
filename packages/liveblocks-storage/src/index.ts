@@ -1,5 +1,5 @@
 import type { Json } from "~/Json.js";
-import { chain } from "./itertools.js";
+import { chain, nanoid } from "./utils.js";
 import type { ChangeReturnType, OmitFirstArg } from "./types.js";
 
 // All deltas are authoritative and _must_ always get applied!
