@@ -6,7 +6,7 @@ export function put(stub: LayeredCache, key: string, value: Json) {
 }
 
 export function putRandom(stub: LayeredCache, key: string) {
-  stub.set(key, Math.floor(Math.random() * Number.MAX_SAFE_INTEGER));
+  stub.set(key, Math.floor(Math.random() * 1_000_000));
 }
 
 export function putAndFail(stub: LayeredCache, key: string, value: Json) {
