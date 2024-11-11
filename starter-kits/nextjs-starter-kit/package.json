@@ -41,7 +41,8 @@
     "next-auth": "5.0.0-beta.16",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "swr": "^2.2.5"
+    "swr": "^2.2.5",
+    "tldraw": "^3.4.1"
   },
   "devDependencies": {
     "@types/base-64": "^1.0.0",

@@ -230,15 +230,17 @@ function ThreadWrapper({
   isActive,
   ...props
 }: ThreadWrapperProps) {
+  const divRef = useRef<HTMLDivElement>(null);
 
-  const handleRef = useCallback(
-    (el: HTMLDivElement) => {
-      onItemAdd(thread.id, el);
-      return () => onItemRemove(thread.id);
-    },
-    [thread.id, onItemAdd, onItemRemove]
-  );
+  useLayoutEffect(() => {
+    const el = divRef.current;
+    if (el === null) return;
 
+    onItemAdd(thread.id, el);
+    return () => {
+      onItemRemove(thread.id);
+    };
+  }, [onItemAdd, onItemRemove, thread.id]);
 
   function handleThreadClick() {
     onThreadClick(thread.id);
@@ -246,7 +248,7 @@ function ThreadWrapper({
 
   return (
     <div
-      ref={handleRef}
+      ref={divRef}
       className={classNames(
         "lb-tiptap-anchored-threads-thread-container",
         className
