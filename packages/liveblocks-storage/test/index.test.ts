@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { Client, Server } from "~/index.js";
+import { opId } from "~/utils.js";
 import { fmt } from "./utils.js";
 import * as mutations from "./_mutations.js";
 
@@ -64,7 +65,7 @@ describe("Client", () => {
     expect(fmt(server)).toEqual({});
 
     // Simulate client A op reaching server first
-    const delta1 = server.applyOp(["put", ["a", 1]]);
+    const delta1 = server.applyOp([opId(), "put", ["a", 1]]);
 
     // Apply the delta on both clients
     client1.applyDelta(delta1);
@@ -78,15 +79,15 @@ describe("Client", () => {
     const client2 = new Client(mutations);
     const server = new Server(mutations);
 
-    client1.mutate.put("a", 1);
-    client2.mutate.put("a", 2);
+    const op1 = client1.mutate.put("a", 1);
+    const op2 = client2.mutate.put("a", 2);
 
     expect(fmt(client1)).toEqual({ a: 1 });
     expect(fmt(client2)).toEqual({ a: 2 });
     expect(fmt(server)).toEqual({});
 
     // Simulate client A op reaching server first
-    const delta1 = server.applyOp(["put", ["a", 1]]);
+    const delta1 = server.applyOp([op1, "put", ["a", 1]]);
 
     // Apply the delta on both clients
     client1.applyDelta(delta1);
@@ -97,7 +98,7 @@ describe("Client", () => {
     expect(fmt(server)).toEqual({ a: 1 });
 
     // Simulate client B op reaching server next
-    const delta2 = server.applyOp(["put", ["a", 2]]);
+    const delta2 = server.applyOp([op2, "put", ["a", 2]]);
 
     // Apply the delta on both clients
     client1.applyDelta(delta2);

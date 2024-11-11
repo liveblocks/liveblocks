@@ -1,3 +1,5 @@
+import type { OpId } from "./types.js";
+
 export function* chain<T>(
   ...iterables: (Iterable<T> | undefined)[]
 ): IterableIterator<T> {
@@ -10,7 +12,7 @@ export function* chain<T>(
 
 // Inlined version of 3.3.7 of nanoid.js
 // https://www.npmjs.com/package/nanoid/v/3.3.7?activeTab=code
-export const nanoid = (t = 21): string =>
+const nanoid = (t = 21): string =>
   crypto
     .getRandomValues(new Uint8Array(t))
     .reduce(
@@ -25,3 +27,5 @@ export const nanoid = (t = 21): string =>
                 : "-"),
       ""
     );
+
+export const opId = () => nanoid(7) as OpId;
