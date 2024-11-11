@@ -14,7 +14,7 @@ import {
 import Button from "../../utils/Button";
 import { createLiveblocksClient } from "../../utils/createClient";
 
-const client = createLiveblocksClient();
+const client = createLiveblocksClient({ preventUnsavedChanges: true });
 
 const {
   suspense: {
@@ -27,7 +27,6 @@ const {
     useStorage,
     useUndo,
     useSyncStatus,
-    usePreventUnsavedChanges,
   },
 } = createRoomContext<never, { items: LiveList<string> }>(client);
 
@@ -59,8 +58,6 @@ function Sandbox() {
 
   const syncStatus = useSyncStatus();
   const smoothSyncStatus = useSyncStatus({ smooth: true });
-
-  usePreventUnsavedChanges();
 
   const push = useMutation(
     ({ storage }, value: string) => {

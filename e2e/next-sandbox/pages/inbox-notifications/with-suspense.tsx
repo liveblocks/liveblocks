@@ -2,7 +2,6 @@ import {
   ClientSideSuspense,
   createLiveblocksContext,
   createRoomContext,
-  usePreventUnsavedChanges,
   useSyncStatus,
 } from "@liveblocks/react";
 import {
@@ -21,6 +20,8 @@ import { createLiveblocksClient } from "../../utils/createClient";
 import { FAKE_USERS } from "../api/_utils";
 
 const client = createLiveblocksClient({
+  preventUnsavedChanges: true,
+
   authEndpoint: async (_roomId) => {
     const userId = getUserFromUrl();
     const resp = await fetch(
@@ -144,7 +145,6 @@ function TopPart() {
   const inboxNotifications = useInboxNotificationsForThisPage();
   const smoothSyncStatus = useSyncStatus({ smooth: true });
   const isSynced = smoothSyncStatus === "synchronized";
-  usePreventUnsavedChanges();
 
   const deleteComment = useDeleteComment();
 

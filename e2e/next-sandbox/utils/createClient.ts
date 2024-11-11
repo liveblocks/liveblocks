@@ -2,10 +2,7 @@ import type { BaseUserMeta, Client, ClientOptions } from "@liveblocks/client";
 import { createClient as realCreateClient } from "@liveblocks/client";
 import { nn } from "@liveblocks/core";
 
-const DEFAULT_E2E_OPTIONS = {
-  authEndpoint: "/api/auth/access-token",
-};
-
+export const DEFAULT_AUTH_ENDPOINT = "/api/auth/access-token";
 export const DEFAULT_THROTTLE = 16;
 
 /**
@@ -13,17 +10,19 @@ export const DEFAULT_THROTTLE = 16;
  * a faster-than-normal throttle.
  */
 export function createLiveblocksClient<U extends BaseUserMeta>(
-  options: ClientOptions<U> = DEFAULT_E2E_OPTIONS
+  options?: Partial<ClientOptions<U>>
 ): Client<U> {
   return realCreateClient(createLiveblocksClientOptions(options));
 }
 
 export function createLiveblocksClientOptions<U extends BaseUserMeta>(
-  options: ClientOptions<U> = DEFAULT_E2E_OPTIONS
+  options?: Partial<ClientOptions<U>>
 ): ClientOptions<U> {
-  options.throttle ??= DEFAULT_THROTTLE;
   return {
     ...options,
+
+    authEndpoint: options?.authEndpoint ?? DEFAULT_AUTH_ENDPOINT,
+    throttle: options?.throttle ?? DEFAULT_THROTTLE,
 
     // @ts-expect-error - Hidden settings
     enableDebugLogging: true,
