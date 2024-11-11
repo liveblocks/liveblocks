@@ -1,10 +1,11 @@
 import type { Json } from "~/Json.js";
 import { LayeredCache } from "./LayeredCache.js";
-import type { ChangeReturnType, OmitFirstArg } from "./types.js";
+import type { OpId, ChangeReturnType, OmitFirstArg } from "./types.js";
+import { opId } from "./utils.js";
 
 // All deltas are authoritative and _must_ always get applied!
-type Op = [name: string, args: Json[]];
-type Delta = [rem: string[], add: [key: string, value: Json][]]; // Eventually, we'll need to compress this
+type Op = [id: OpId, name: string, args: Json[]];
+type Delta = [id: OpId, rem: string[], add: [key: string, value: Json][]]; // Eventually, we'll need to compress this
 
 /** @internal */
 export type Store = Map<string, Json>;
@@ -13,14 +14,14 @@ export type Mutations = Record<string, Mutation>;
 export type Mutation = (store: LayeredCache, ...args: readonly any[]) => void;
 
 type BoundMutations<M extends Record<string, Mutation>> = {
-  [K in keyof M]: ChangeReturnType<OmitFirstArg<M[K]>, Delta>;
+  [K in keyof M]: ChangeReturnType<OmitFirstArg<M[K]>, OpId>;
 };
 
 // ----------------------------------------------------------------------------
 
 export class Base<M extends Mutations> {
-  // XXX Make private field
   stub: LayeredCache;
+  pendingOps: Op[];
 
   // XXX Make private field
   mutations: M;
@@ -30,36 +31,92 @@ export class Base<M extends Mutations> {
 
   constructor(mutations: M) {
     this.stub = new LayeredCache();
+    this.stub.snapshot();
+
+    this.pendingOps = [];
 
     this.mutations = mutations;
 
     // Bind all given mutation functions to this instance
     this.mutate = {} as BoundMutations<M>;
-    for (const [name, mutFn] of Object.entries(mutations)) {
-      this.mutate[name as keyof M] = ((...args: Json[]) => {
-        this.stub.snapshot();
-        try {
-          mutFn(this.stub, ...args);
-
-          const deleted: string[] = [];
-          const updated: [key: string, value: Json][] = [];
-          for (const [key, value] of this.stub.diff()) {
-            if (value === undefined) {
-              deleted.push(key);
-            } else {
-              updated.push([key, value]);
-            }
-          }
-
-          this.stub.commit();
-
-          const delta: Delta = [deleted, updated];
-          return delta;
-        } catch (e) {
-          this.stub.rollback();
-          throw e;
-        }
+    for (const name of Object.keys(mutations)) {
+      this.mutate[name as keyof M] = ((...args: Json[]): OpId => {
+        const op: Op = [opId(), name, args];
+        this.pendingOps.push(op);
+        const delta = this._applyOp(op);
+        return delta[0];
       }) as any;
+    }
+  }
+
+  /**
+   * Authoritative delta from the server. Must be applied and local pending Ops
+   * rebased on top of this.
+   */
+  applyDelta(delta: Delta): void {
+    const stub = this.stub;
+
+    // Roll back to snapshot
+    stub.rollback();
+
+    const [opId, toDelete, toAdd] = delta;
+
+    // Force-apply delta
+    toDelete.forEach((k) => stub.delete(k));
+    toAdd.forEach(([k, v]) => stub.set(k, v));
+
+    // Acknowledge the incoming opId by removing it from the pending ops list.
+    // If this opId is not found, it's from another client.
+    {
+      const index = this.pendingOps.findIndex(([id]) => id === opId);
+      if (index >= 0) {
+        this.pendingOps.splice(index, 1);
+      }
+    }
+
+    // Start a new snapshot
+    stub.snapshot();
+
+    // Apply all local pending ops
+    for (const pendingOp of this.pendingOps) {
+      this._applyOp(pendingOp);
+    }
+  }
+
+  /**
+   * Tries to apply the mutation described by the incoming Op, typically
+   * received from a Client. The Server will try to apply it, and if
+   * successful, will return an authoritative delta, which should be sent to
+   * every client.
+   */
+  _applyOp(op: Op): Delta {
+    const [id, name, args] = op;
+    const mutationFn = this.mutations[name];
+    if (!mutationFn) {
+      throw new Error(`Mutation not found: '${name}'`);
+    }
+
+    this.stub.snapshot();
+    try {
+      mutationFn(this.stub, ...args);
+
+      const deleted: string[] = [];
+      const updated: [key: string, value: Json][] = [];
+      for (const [key, value] of this.stub.diff()) {
+        if (value === undefined) {
+          deleted.push(key);
+        } else {
+          updated.push([key, value]);
+        }
+      }
+
+      this.stub.commit();
+
+      const delta: Delta = [id, deleted, updated];
+      return delta;
+    } catch (e) {
+      this.stub.rollback();
+      throw e;
     }
   }
 }
@@ -67,38 +124,15 @@ export class Base<M extends Mutations> {
 // ----------------------------------------------------------------------------
 
 export class Client<M extends Mutations> extends Base<M> {
-  /**
-   * Authoritative delta from the server. Must be applied and local pending Ops
-   * rebased on top of this.
-   */
-  applyDelta(delta: Delta): void {
-    const stub = this.stub;
-    const [toDelete, toAdd] = delta;
-    toDelete.forEach((k) => stub.delete(k));
-    toAdd.forEach(([k, v]) => stub.set(k, v));
+  applyOp(op: Op): void {
+    super._applyOp(op);
   }
 }
 
 // ----------------------------------------------------------------------------
 
 export class Server<M extends Mutations> extends Base<M> {
-  /**
-   * Tries to apply the mutation described by the incoming Op, typically
-   * received from a Client. The Server will try to apply it, and if
-   * successful, will return an authoritative delta, which should be sent to
-   * every client.
-   */
   applyOp(op: Op): Delta {
-    const [name, args] = op;
-    const mutationFn = this.mutate[name];
-    if (!mutationFn) {
-      throw new Error("Implement edge case");
-    }
-
-    try {
-      return mutationFn(...args);
-    } catch {
-      throw new Error("Implement edge case");
-    }
+    return super._applyOp(op);
   }
 }
