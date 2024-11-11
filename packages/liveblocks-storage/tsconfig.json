@@ -4,6 +4,7 @@
 
   "compilerOptions": {
     "moduleResolution": "nodenext",
+    "target": "esnext",
     "paths": {
       "~": ["./src"],
       "~/*": ["./src/*"]

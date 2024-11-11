@@ -3,14 +3,21 @@ import { Client, Server, StoreStub } from "~/index.js";
 import type { Json } from "~/Json.js";
 import * as mutations from "./_mutations.js";
 
-function fmt(base: Client<any> | Server<any>): Record<string, Json> {
-  return Object.fromEntries(base.stub.entries());
+function fmt(
+  base: Client<any> | Server<any> | StoreStub
+): Record<string, Json> {
+  const stub = "stub" in base ? base.stub : base;
+  return Object.fromEntries(stub.entries());
+}
+
+function size(base: StoreStub): number {
+  return Array.from(base.keys()).length;
 }
 
 describe("StoreStub", () => {
   test("empty", () => {
     const stub = new StoreStub();
-    expect(stub.size).toEqual(0);
+    expect(size(stub)).toEqual(0);
   });
 
   test("it's basically a Map", () => {
@@ -23,7 +30,8 @@ describe("StoreStub", () => {
     stub.delete("def");
     stub.delete("bla");
 
-    expect(stub.size).toEqual(3);
+    expect(size(stub)).toEqual(3);
+    expect(fmt(stub)).toEqual({ k: "v", abc: 123, foo: null });
     expect(stub.get("k")).toEqual("v");
     expect(stub.get("abc")).toEqual(123);
     expect(stub.get("foo")).toEqual(null);
@@ -37,12 +45,36 @@ describe("StoreStub", () => {
     stub.set("abc", 123);
     stub.set("foo", "bar");
 
-    expect(stub.size).toEqual(2);
+    expect(size(stub)).toEqual(2);
     expect(stub.get("foo")).toEqual("bar");
     expect(stub.get("abc")).toEqual(123);
 
     expect(stub.getNumber("abc")).toEqual(123);
     expect(stub.getNumber("foo")).toEqual(undefined);
+  });
+
+  test("transactions", () => {
+    const stub = new StoreStub();
+    stub.set("abc", 1);
+    stub.set("xyz", 2);
+    stub.delete("foo");
+    expect(size(stub)).toEqual(2);
+    expect(fmt(stub)).toEqual({ abc: 1, xyz: 2 });
+
+    const txn = stub.startTransaction();
+    txn.delete("xyz");
+    txn.delete("foo");
+    txn.set("pqr", 3);
+
+    expect(size(stub)).toEqual(2);
+    expect(size(txn)).toEqual(2);
+
+    // Original stub is unaffected
+    expect(fmt(stub)).toEqual({ abc: 1, xyz: 2 });
+    expect(fmt(txn)).toEqual({ abc: 1, pqr: 3 });
+    txn.commit();
+
+    expect(fmt(stub)).toEqual({ abc: 1, pqr: 3 });
   });
 });
 
