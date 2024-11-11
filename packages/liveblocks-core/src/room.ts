@@ -1025,7 +1025,7 @@ export interface IYjsProvider {
  * determine the global "sync status" for Liveblocks.
  */
 export interface SyncSource {
-  setPending(condition: boolean): void;
+  setPending(isPending: boolean): void;
   destroy(): void;
 }
 

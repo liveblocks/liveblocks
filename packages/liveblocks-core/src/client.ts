@@ -781,8 +781,8 @@ export function createClient<U extends BaseUserMeta = DU>(
       )
     );
 
-    function setPending(condition: boolean) {
-      source.set(condition);
+    function setPending(isPending: boolean) {
+      source.set(isPending);
     }
 
     function destroy() {
