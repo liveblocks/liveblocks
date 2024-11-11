@@ -1,5 +1,5 @@
 import type { Json } from "~/Json.js";
-import { StoreStub, TOMBSTONE } from "./StoreStub.js";
+import { StoreStub } from "./StoreStub.js";
 import type { ChangeReturnType, OmitFirstArg } from "./types.js";
 
 // All deltas are authoritative and _must_ always get applied!
@@ -13,7 +13,7 @@ export type Mutations = Record<string, Mutation>;
 export type Mutation = (store: StoreStub, ...args: readonly any[]) => void;
 
 type BoundMutations<M extends Record<string, Mutation>> = {
-  [K in keyof M]: ChangeReturnType<OmitFirstArg<M[K]>, StoreStub>;
+  [K in keyof M]: ChangeReturnType<OmitFirstArg<M[K]>, Delta>;
 };
 
 // ----------------------------------------------------------------------------
@@ -37,13 +37,26 @@ export class Base<M extends Mutations> {
     this.mutate = {} as BoundMutations<M>;
     for (const [name, mutFn] of Object.entries(mutations)) {
       this.mutate[name as keyof M] = ((...args: Json[]) => {
-        const txn = this.stub.startTransaction();
+        this.stub.snapshot();
         try {
-          mutFn(txn, ...args);
-          txn.commit();
-          return txn;
+          mutFn(this.stub, ...args);
+
+          const deleted: string[] = [];
+          const updated: [key: string, value: Json][] = [];
+          for (const [key, value] of this.stub.diff()) {
+            if (value === undefined) {
+              deleted.push(key);
+            } else {
+              updated.push([key, value]);
+            }
+          }
+
+          this.stub.commit();
+
+          const delta: Delta = [deleted, updated];
+          return delta;
         } catch (e) {
-          // Discard the transaction
+          this.stub.rollback();
           throw e;
         }
       }) as any;
@@ -82,25 +95,10 @@ export class Server<M extends Mutations> extends Base<M> {
       throw new Error("Implement edge case");
     }
 
-    let txn;
     try {
-      txn = mutationFn(...args);
+      return mutationFn(...args);
     } catch {
       throw new Error("Implement edge case");
     }
-
-    const updated: [string, Json][] = [];
-    const deleted: string[] = [];
-
-    for (const [key, value] of txn.localChanges()) {
-      if (value === TOMBSTONE) {
-        deleted.push(key);
-      } else {
-        updated.push([key, value]);
-      }
-    }
-
-    const delta: Delta = [deleted, updated];
-    return delta;
   }
 }

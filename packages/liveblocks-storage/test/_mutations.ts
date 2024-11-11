@@ -1,4 +1,4 @@
-import type { StoreStub } from "~/index.js";
+import type { StoreStub } from "~/StoreStub.js";
 import type { Json } from "~/Json.js";
 
 export function put(stub: StoreStub, key: string, value: Json) {
