@@ -15,7 +15,13 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 46 (2024-11-15)
 
+## Examples
+
+- Added new canvas document type to [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit), powered by [tldraw](https://tldraw.dev/).
+
 ## Contributors
+
+ctnicholas
 
 # Week 45 (2024-11-08)
 
