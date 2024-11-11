@@ -50,6 +50,7 @@
     "@liveblocks/jest-config": "*",
     "@liveblocks/query-parser": "^0.0.4",
     "@types/ws": "^8.5.10",
+    "@vitest/coverage-v8": "^2.1.4",
     "dotenv": "^16.4.5",
     "eslint-plugin-rulesdir": "^0.2.2",
     "msw": "^0.47.4",
