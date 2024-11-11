@@ -769,8 +769,6 @@ export function createSharedContext<U extends BaseUserMeta>(
       useRoomInfo: (roomId: string) => useRoomInfo_withClient(client, roomId),
       useIsInsideRoom,
       useSyncStatus,
-      usePreventUnsavedChanges: () =>
-        usePreventUnsavedChanges_withClient(client),
     },
     suspense: {
       useClient,
@@ -779,8 +777,6 @@ export function createSharedContext<U extends BaseUserMeta>(
         useRoomInfoSuspense_withClient(client, roomId),
       useIsInsideRoom,
       useSyncStatus,
-      usePreventUnsavedChanges: () =>
-        usePreventUnsavedChanges_withClient(client),
     },
   };
 }
@@ -857,6 +853,7 @@ export function LiveblocksProvider<U extends BaseUserMeta = DU>(
     polyfills: useInitial(o.polyfills),
     unstable_fallbackToHTTP: useInitial(o.unstable_fallbackToHTTP),
     unstable_streamData: useInitial(o.unstable_streamData),
+    preventUnsavedChanges: useInitial(o.preventUnsavedChanges),
 
     authEndpoint: useInitialUnlessFunction(o.authEndpoint),
     resolveMentionSuggestions: useInitialUnlessFunction(
@@ -1264,32 +1261,6 @@ function useSyncStatus(options?: UseSyncStatusOptions): SyncStatus {
   return useSyncStatus_withClient(useClient(), options);
 }
 
-function usePreventUnsavedChanges_withClient(client: OpaqueClient) {
-  const maybePreventClose = useCallback(
-    (e: BeforeUnloadEvent) => {
-      if (client.getSyncStatus() === "synchronizing") {
-        e.preventDefault();
-      }
-    },
-    [client]
-  );
-
-  React.useEffect(() => {
-    window.addEventListener("beforeunload", maybePreventClose);
-    return () => {
-      window.removeEventListener("beforeunload", maybePreventClose);
-    };
-  }, [maybePreventClose]);
-}
-
-/**
- * Prevents the browser tab from being closed if there are any unsaved
- * Liveblocks changes.
- */
-function usePreventUnsavedChanges() {
-  return usePreventUnsavedChanges_withClient(useClient());
-}
-
 // eslint-disable-next-line simple-import-sort/exports
 export {
   _useInboxNotificationThread as useInboxNotificationThread,
@@ -1303,7 +1274,6 @@ export {
   useDeleteInboxNotification,
   useRoomInfo,
   useRoomInfoSuspense,
-  usePreventUnsavedChanges,
   useSyncStatus,
   useUnreadInboxNotificationsCount,
   useUnreadInboxNotificationsCountSuspense,

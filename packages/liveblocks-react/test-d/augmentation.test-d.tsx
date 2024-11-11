@@ -71,6 +71,8 @@ declare global {
     authEndpoint="/api/auth"
     resolveUsers={async () => [{ name: "Vincent", age: 42 }]}
   />;
+
+  <LiveblocksProvider authEndpoint="/api/auth" preventUnsavedChanges />;
 }
 
 // LiveblocksProvider (suspense)
@@ -99,6 +101,8 @@ declare global {
     authEndpoint="/api/auth"
     resolveUsers={async () => [{ name: "Vincent", age: 42 }]}
   />;
+
+  <LiveblocksProvider authEndpoint="/api/auth" preventUnsavedChanges />;
 }
 
 // RoomProvider

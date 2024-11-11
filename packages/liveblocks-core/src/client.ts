@@ -453,6 +453,13 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
   ) => OptionalPromise<(DRI | undefined)[] | undefined>;
 
   /**
+   * Prevent the current browser tab from being closed if there are any locally
+   * pending Liveblocks changes that haven't been submitted to or confirmed by
+   * the server yet.
+   */
+  preventUnsavedChanges?: boolean;
+
+  /**
    * @internal To point the client to a different Liveblocks server. Only
    * useful for Liveblocks developers. Not for end users.
    */
@@ -790,6 +797,26 @@ export function createClient<U extends BaseUserMeta = DU>(
   }
 
   // ----------------------------------------------------------------
+
+  // Set up event handler that will prevent the browser tab from being closed
+  // if there are locally pending changes to any part of Liveblocks (Storage,
+  // text editors, Threads, Notifications, etc)
+  {
+    const maybePreventClose = (e: BeforeUnloadEvent) => {
+      if (
+        clientOptions.preventUnsavedChanges &&
+        client.getSyncStatus() === "synchronizing"
+      ) {
+        e.preventDefault();
+      }
+    };
+
+    // A Liveblocks client is currently never destroyed.
+    // TODO Call win.removeEventListener("beforeunload", maybePreventClose)
+    // once we have a client.destroy() method
+    const win = typeof window !== "undefined" ? window : undefined;
+    win?.addEventListener("beforeunload", maybePreventClose);
+  }
 
   const client: Client<U> = Object.defineProperty(
     {

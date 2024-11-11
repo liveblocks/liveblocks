@@ -330,12 +330,6 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * const syncStatus = useSyncStatus({ smooth: true });
      */
     useSyncStatus(options?: UseSyncStatusOptions): SyncStatus;
-
-    /**
-     * Prevents the browser tab from being closed if there are any unsaved
-     * Liveblocks changes.
-     */
-    usePreventUnsavedChanges(): void;
   };
 
   suspense: {
@@ -379,12 +373,6 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * const syncStatus = useSyncStatus({ smooth: true });
      */
     useSyncStatus(options?: UseSyncStatusOptions): SyncStatus;
-
-    /**
-     * Prevents the browser tab from being closed if there are any unsaved
-     * Liveblocks changes.
-     */
-    usePreventUnsavedChanges(): void;
   };
 };
 

@@ -36,6 +36,8 @@ import { expectAssignable, expectError, expectType } from "tsd";
     authEndpoint="/api/auth"
     resolveUsers={async () => [{ name: "Vincent", age: 42 }]}
   />;
+
+  <LiveblocksProvider authEndpoint="/api/auth" preventUnsavedChanges />;
 }
 
 // LiveblocksProvider (suspense)
@@ -62,6 +64,8 @@ import { expectAssignable, expectError, expectType } from "tsd";
     authEndpoint="/api/auth"
     resolveUsers={async () => [{ name: "Vincent", age: 42 }]}
   />;
+
+  <LiveblocksProvider authEndpoint="/api/auth" preventUnsavedChanges />;
 }
 
 // RoomProvider
