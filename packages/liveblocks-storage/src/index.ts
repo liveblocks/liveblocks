@@ -1,11 +1,13 @@
 import type { Json } from "~/Json.js";
 import { LayeredCache } from "./LayeredCache.js";
-import type { OpId, ChangeReturnType, OmitFirstArg } from "./types.js";
+import type {
+  ChangeReturnType,
+  Delta,
+  OmitFirstArg,
+  Op,
+  OpId,
+} from "./types.js";
 import { opId } from "./utils.js";
-
-// All deltas are authoritative and _must_ always get applied!
-type Op = [id: OpId, name: string, args: Json[]];
-type Delta = [id: OpId, rem: string[], add: [key: string, value: Json][]]; // Eventually, we'll need to compress this
 
 /** @internal */
 export type Store = Map<string, Json>;
@@ -99,20 +101,8 @@ export class Base<M extends Mutations> {
     this.stub.snapshot();
     try {
       mutationFn(this.stub, ...args);
-
-      const deleted: string[] = [];
-      const updated: [key: string, value: Json][] = [];
-      for (const [key, value] of this.stub.diff()) {
-        if (value === undefined) {
-          deleted.push(key);
-        } else {
-          updated.push([key, value]);
-        }
-      }
-
+      const delta = this.stub.delta(id);
       this.stub.commit();
-
-      const delta: Delta = [id, deleted, updated];
       return delta;
     } catch (e) {
       this.stub.rollback();

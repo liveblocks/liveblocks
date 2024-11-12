@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { LayeredCache } from "~/LayeredCache.js";
+import { opId } from "~/utils.js";
 import { fmt, size } from "./utils.js";
 
 describe("LayeredCache basics", () => {
@@ -292,12 +293,16 @@ describe("snapshotting & rolling back", () => {
     expect(fmt(stub)).toEqual({ a: 1, b: 2 });
   });
 
-  test("diffing without", () => {
+  test("delta without snapshot will always be empty", () => {
     const stub = new LayeredCache();
-    expect(Array.from(stub.diff())).toEqual([]);
+    stub.set("a", 1);
+    const id = opId();
+    expect(Array.from(stub.delta(id))).toEqual([id, [], []]);
   });
 
-  test("diffing since last snapshot", () => {
+  test("delta from last snapshot", () => {
+    const id = opId();
+
     const stub = new LayeredCache();
     stub.set("a", 1);
 
@@ -308,27 +313,19 @@ describe("snapshotting & rolling back", () => {
     stub.delete("d");
     stub.set("b", 4);
 
-    expect(Array.from(stub.diff())).toEqual([
-      ["b", 4],
-      ["c", undefined],
-      ["d", undefined],
-    ]);
+    expect(Array.from(stub.delta(id))).toEqual([id, ["c", "d"], [["b", 4]]]);
 
     stub.snapshot();
-    expect(Array.from(stub.diff())).toEqual([]);
+    expect(Array.from(stub.delta(id))).toEqual([id, [], []]);
     stub.delete("x");
     stub.set("b", 42);
-    expect(Array.from(stub.diff())).toEqual([
-      ["x", undefined],
-      ["b", 42],
-    ]);
+    expect(Array.from(stub.delta(id))).toEqual([id, ["x"], [["b", 42]]]);
     stub.commit();
 
-    expect(Array.from(stub.diff())).toEqual([
-      ["b", 42],
-      ["c", undefined],
-      ["d", undefined],
-      ["x", undefined],
+    expect(Array.from(stub.delta(id))).toEqual([
+      id,
+      ["c", "d", "x"],
+      [["b", 42]],
     ]);
   });
 
