@@ -35,6 +35,12 @@ import {
   getSerializedTiptapState,
 } from "./tiptap-editor";
 
+/** @internal hidden types */
+type RoomTextEditor = {
+  type: "lexical" | "tiptap";
+  rootKey: string[];
+};
+
 type TextMentionNotificationData = (
   | {
       editor: "lexical";
@@ -82,7 +88,9 @@ export const extractTextMentionNotificationData = async ({
 
   // Do nothing if the room as no text editor associated.
   // We do not throw not to impact the final developer experience.
-  if (!room.experimental_textEditor) {
+  // @ts-expect-error - Hidden property
+  const textEditor = room.experimental_textEditor as RoomTextEditor | undefined;
+  if (!textEditor) {
     console.warn(`Room "${room.id}" do not have any text editor associated`);
     return null;
   }
@@ -95,11 +103,11 @@ export const extractTextMentionNotificationData = async ({
   const mentionAuthorUserId = inboxNotification.createdBy;
 
   const buffer = await client.getYjsDocumentAsBinaryUpdate(roomId);
-  const editorKey = room.experimental_textEditor.rootKey;
+  const editorKey = textEditor.rootKey;
   // TODO: temporarily grab the first entrance, later we will handle multiple editors
   const key = Array.isArray(editorKey) ? editorKey[0]! : editorKey;
 
-  switch (room.experimental_textEditor.type) {
+  switch (textEditor.type) {
     case "lexical": {
       const state = getSerializedLexicalState({ buffer, key });
       const mentionNodeWithContext = findLexicalMentionNodeWithContext({

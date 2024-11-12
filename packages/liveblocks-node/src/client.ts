@@ -116,11 +116,6 @@ export type RoomAccesses = Record<
 export type RoomMetadata = Record<string, string | string[]>;
 type QueryRoomMetadata = Record<string, string>;
 
-export type RoomTextEditor = {
-  type: "lexical" | "tiptap";
-  rootKey: string[];
-};
-
 export type RoomData = {
   type: "room";
   id: string;
@@ -130,7 +125,6 @@ export type RoomData = {
   usersAccesses: RoomAccesses;
   groupsAccesses: RoomAccesses;
   metadata: RoomMetadata;
-  experimental_textEditor?: RoomTextEditor;
 };
 
 type RoomDataPlain = DateToString<RoomData>;
