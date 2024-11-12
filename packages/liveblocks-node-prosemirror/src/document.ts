@@ -79,22 +79,18 @@ const getLiveblocksDocumentState = async (
  * @returns
  */
 const createDocumentFromContent = (content: object, schema: Schema) => {
-  if (typeof content === "object") {
-    try {
-      return schema.nodeFromJSON(content);
-    } catch (error) {
-      console.warn(
-        "[warn]: Invalid content.",
-        "Passed value:",
-        content,
-        "Error:",
-        error
-      );
-      return false;
-    }
+  try {
+    return schema.nodeFromJSON(content);
+  } catch (error) {
+    console.warn(
+      "[warn]: Invalid content.",
+      "Passed value:",
+      content,
+      "Error:",
+      error
+    );
+    return false;
   }
-
-  return false;
 };
 
 /**
