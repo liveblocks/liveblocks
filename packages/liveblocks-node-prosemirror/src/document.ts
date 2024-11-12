@@ -1,8 +1,7 @@
 import type { Liveblocks } from "@liveblocks/node";
 import type { TextSerializer } from "@tiptap/core";
 import { getSchema, getText } from "@tiptap/core";
-import type { Node, ParseOptions, Schema } from "@tiptap/pm/model";
-import { DOMParser } from "@tiptap/pm/model";
+import type { Node, Schema } from "@tiptap/pm/model";
 import type { Transaction } from "@tiptap/pm/state";
 import { EditorState } from "@tiptap/pm/state";
 import StarterKit from "@tiptap/starter-kit";
@@ -19,7 +18,6 @@ export type LiveblocksProsemirrorOptions = {
   schema?: Schema;
   client: Liveblocks;
   field?: string;
-  parseOptions?: ParseOptions;
 };
 
 export type LiveblocksDocumentApi = {
@@ -80,19 +78,7 @@ const getLiveblocksDocumentState = async (
  * @param parseOptions
  * @returns
  */
-const createDocumentFromContent = (
-  content: null | object | string,
-  schema: Schema,
-  parseOptions: ParseOptions = {}
-) => {
-  const emptyState = () => {
-    const element = document.createElement("div");
-    element.innerHTML = "";
-    return DOMParser.fromSchema(schema).parse(element, parseOptions);
-  };
-  if (content === null) {
-    return emptyState();
-  }
+const createDocumentFromContent = (content: object, schema: Schema) => {
   if (typeof content === "object") {
     try {
       return schema.nodeFromJSON(content);
@@ -104,13 +90,8 @@ const createDocumentFromContent = (
         "Error:",
         error
       );
-      return emptyState();
+      return false;
     }
-  }
-  if (typeof content === "string") {
-    const element = document.createElement("div");
-    element.innerHTML = content.trim();
-    return DOMParser.fromSchema(schema).parse(element, parseOptions);
   }
 
   return false;
@@ -143,13 +124,7 @@ const createDocumentFromContent = (
  *
  */
 export async function withProsemirrorDocument<T>(
-  {
-    roomId,
-    schema: maybeSchema,
-    client,
-    field,
-    parseOptions,
-  }: LiveblocksProsemirrorOptions,
+  { roomId, schema: maybeSchema, client, field }: LiveblocksProsemirrorOptions,
   callback: (api: LiveblocksDocumentApi) => Promise<T> | T
 ): Promise<T> {
   const schema = maybeSchema ?? DEFAULT_SCHEMA;
@@ -188,20 +163,37 @@ export async function withProsemirrorDocument<T>(
       await client.sendYjsBinaryUpdate(roomId, diffUpdate);
       await this.refresh();
     },
+
+    /**
+     * allows you to set content similar to TipTap's setcontent. Only accepts nulls, objects or strings.
+     * Unlike TipTap, strings won't be parsed with DOMParser
+     * */
     async setContent(content: null | object | string) {
-      const node = createDocumentFromContent(content, schema, parseOptions);
-      console.log("NODE ", node);
+      if (typeof content === "string") {
+        return this.update((doc, tr) => {
+          tr.delete(0, doc.content.size);
+          tr.insertText(content);
+          return tr;
+        });
+      }
+      if (content === null) {
+        return this.clearContent();
+      }
+      const node = createDocumentFromContent(content, schema);
       if (!node) {
         throw "Invalid content";
       }
-      await this.update((doc, tr) => {
+      return this.update((doc, tr) => {
         tr.delete(0, doc.content.size);
         tr.insert(0, node);
         return tr;
       });
     },
     async clearContent() {
-      await this.setContent(null);
+      await this.update((doc, tr) => {
+        tr.delete(0, doc.content.size);
+        return tr;
+      });
     },
 
     /**
