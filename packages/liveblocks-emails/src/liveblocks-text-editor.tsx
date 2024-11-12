@@ -50,19 +50,22 @@ export type LiveblocksTextEditorMentionNode = {
   userId: string;
 };
 
+/**
+ * -------------------------------------------------------------------------------------------------
+ * `LiveblocksTextEditorNode` is common structure to represents text editor nodes coming from
+ * like `Lexical`, `TipTap` or so.
+ *
+ * This (simple) structure is made to be scalable and to accommodate with other text editors we could potentially
+ * want to support in the future.
+ *
+ * It allows to manipulate nodes more easily and converts them with ease either as React nodes or as an html safe string.
+ * From a DX standpoint it provides to developers the same structure to use when using custom React components or inline css
+ * to represents a text mention with its surrounding text.
+ * -------------------------------------------------------------------------------------------------
+ */
 export type LiveblocksTextEditorNode =
   | LiveblocksTextEditorTextNode
   | LiveblocksTextEditorMentionNode;
-
-type TransformableMentionNodeWithContext =
-  | {
-      editor: "lexical";
-      mention: LexicalMentionNodeWithContext;
-    }
-  | {
-      editor: "tiptap";
-      mention: TiptapMentionNodeWithContext;
-    };
 
 const baseLiveblocksTextEditorTextFormat: LiveblocksTextEditorTextFormat = {
   bold: false,
@@ -107,6 +110,7 @@ const IS_LEXICAL_ITALIC = 1 << 1;
 const IS_LEXICAL_STRIKETHROUGH = 1 << 2;
 const IS_LEXICAL_CODE = 1 << 4;
 
+/** @internal */
 const transformLexicalTextNodeFormatBitwiseInteger = (
   node: SerializedTextNode
 ): LiveblocksTextEditorTextFormat => {
@@ -126,6 +130,7 @@ const transformLexicalTextNodeFormatBitwiseInteger = (
 };
 
 /**
+ * @internal
  *
  * Transform Lexical serialized nodes
  * as Liveblocks Text Editor nodes
@@ -167,11 +172,13 @@ const transformLexicalMentionNodeWithContext = (
   return textEditorNodes;
 };
 
+/** @internal */
 const hasTiptapSerializedTextNodeMark = (
   marks: Array<SerializedTiptapMark>,
   type: SerializedTiptapMarkType
 ): boolean => marks.findIndex((mark) => mark.type === type) !== -1;
 
+/** @internal */
 const transformTiptapTextNodeFormatMarks = (
   node: SerializedTiptapTextNode
 ): LiveblocksTextEditorTextFormat => {
@@ -189,6 +196,8 @@ const transformTiptapTextNodeFormatMarks = (
 };
 
 /**
+ *
+ * @internal
  *
  * Transform Tiptap serialized nodes
  * as Liveblocks Text Editor nodes
@@ -227,6 +236,23 @@ const transformTiptapMentionNodeWithContext = (
   return textEditorNodes;
 };
 
+type TransformableMentionNodeWithContext =
+  | {
+      editor: "lexical";
+      mention: LexicalMentionNodeWithContext;
+    }
+  | {
+      editor: "tiptap";
+      mention: TiptapMentionNodeWithContext;
+    };
+
+/**
+ * @internal
+ *
+ * Transforms either Lexical or TipTap nodes into a common structure
+ * of Liveblocks Text Editor nodes to ease conversion into
+ * React Nodes or html safe strings
+ */
 export function transformAsLiveblocksTextEditorNodes(
   transformableMention: TransformableMentionNodeWithContext
 ): LiveblocksTextEditorNode[] {
@@ -244,6 +270,10 @@ export function transformAsLiveblocksTextEditorNodes(
   }
 }
 
+/**
+ * @internal
+ * Resolves mentioned users in Liveblocks Text Editor node
+ */
 const resolveUsersInLiveblocksTextEditorNodes = async <U extends BaseUserMeta>(
   nodes: LiveblocksTextEditorNode[],
   resolveUsers?: (
@@ -374,6 +404,8 @@ export type ConvertLiveblocksTextEditorNodesAsReactOptions<
 };
 
 /**
+ * @internal
+ *
  * Convert a set of Liveblocks Editor nodes into React elements
  */
 export async function convertLiveblocksTextEditorNodesAsReact(
@@ -471,6 +503,8 @@ export type ConvertLiveblocksTextEditorNodesAsHtmlOptions<
 };
 
 /**
+ * @internal
+ *
  * Convert a set of Liveblocks Editor nodes into an html safe string
  * with inline css styles
  */
