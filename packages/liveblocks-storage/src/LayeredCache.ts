@@ -1,4 +1,5 @@
 import type { Json } from "~/Json.js";
+import type { Delta, OpId } from "./types.js";
 import { chain } from "./utils.js";
 
 const TOMBSTONE = Symbol();
@@ -6,12 +7,12 @@ const TOMBSTONE = Symbol();
 type TombStone = typeof TOMBSTONE;
 
 export class LayeredCache {
-  _root: Map<string, Json>;
-  _layers: Map<string, Json | TombStone>[];
+  #root: Map<string, Json>;
+  #layers: Map<string, Json | TombStone>[];
 
   constructor() {
-    this._root = new Map();
-    this._layers = [];
+    this.#root = new Map();
+    this.#layers = [];
   }
 
   // ----------------------------------------------------
@@ -28,16 +29,16 @@ export class LayeredCache {
   // ----------------------------------------------------
 
   has(key: string): boolean {
-    for (const layer of this._layers) {
+    for (const layer of this.#layers) {
       const value = layer.get(key);
       if (value === undefined) continue;
       return value !== TOMBSTONE;
     }
-    return this._root.has(key);
+    return this.#root.has(key);
   }
 
   get(key: string): Json | undefined {
-    for (const layer of this._layers) {
+    for (const layer of this.#layers) {
       const value = layer.get(key);
       if (value === undefined) continue;
       if (value === TOMBSTONE) {
@@ -46,7 +47,7 @@ export class LayeredCache {
         return value;
       }
     }
-    return this._root.get(key);
+    return this.#root.get(key);
   }
 
   set(key: string, value: Json): void {
@@ -54,22 +55,22 @@ export class LayeredCache {
       return this.delete(key);
     }
 
-    const layer = this._layers[0] ?? this._root;
+    const layer = this.#layers[0] ?? this.#root;
     layer.set(key, value);
   }
 
   delete(key: string): void {
-    const layer = this._layers[0];
+    const layer = this.#layers[0];
     if (layer) {
       layer.set(key, TOMBSTONE);
     } else {
-      this._root.delete(key);
+      this.#root.delete(key);
     }
   }
 
   *keys(): IterableIterator<string> {
-    if (this._layers.length === 0) {
-      yield* this._root.keys();
+    if (this.#layers.length === 0) {
+      yield* this.#root.keys();
     } else {
       for (const [key] of this.entries()) {
         yield key;
@@ -78,8 +79,8 @@ export class LayeredCache {
   }
 
   *values(): IterableIterator<Json> {
-    if (this._layers.length === 0) {
-      yield* this._root.values();
+    if (this.#layers.length === 0) {
+      yield* this.#root.values();
     } else {
       for (const [, value] of this.entries()) {
         yield value;
@@ -88,11 +89,11 @@ export class LayeredCache {
   }
 
   *entries(): IterableIterator<[key: string, value: Json]> {
-    if (this._layers.length === 0) {
-      yield* this._root.entries();
+    if (this.#layers.length === 0) {
+      yield* this.#root.entries();
     } else {
       const keys = new Set(
-        chain(this._root.keys(), ...this._layers.map((layer) => layer.keys()))
+        chain(this.#root.keys(), ...this.#layers.map((layer) => layer.keys()))
       );
       for (const key of keys) {
         const value = this.get(key);
@@ -112,14 +113,11 @@ export class LayeredCache {
   // ----------------------------------------------------
 
   snapshot(): void {
-    this._layers.unshift(new Map());
+    this.#layers.unshift(new Map());
   }
 
-  /**
-   * Iterators over all the keys since the last snapshot.
-   */
-  *diff(): IterableIterator<[key: string, value: Json | undefined]> {
-    const layer = this._layers[0];
+  *#iterDelta(): IterableIterator<[key: string, value: Json | undefined]> {
+    const layer = this.#layers[0];
     if (!layer) return;
 
     for (const [key, value] of layer) {
@@ -131,8 +129,26 @@ export class LayeredCache {
     }
   }
 
+  /**
+   * Computes a Delta since the last snapshot.
+   */
+  delta(opId: OpId): Delta {
+    const deleted: string[] = [];
+
+    const updated: [key: string, value: Json][] = [];
+    for (const [key, value] of this.#iterDelta()) {
+      if (value === undefined) {
+        deleted.push(key);
+      } else {
+        updated.push([key, value]);
+      }
+    }
+
+    return [opId, deleted, updated];
+  }
+
   commit(): void {
-    const layer = this._layers.shift();
+    const layer = this.#layers.shift();
     if (!layer) {
       throw new Error("No snapshot to commit");
     }
@@ -147,7 +163,7 @@ export class LayeredCache {
   }
 
   rollback(): void {
-    const layer = this._layers.shift();
+    const layer = this.#layers.shift();
     if (!layer) {
       throw new Error("No snapshot to roll back");
     }
