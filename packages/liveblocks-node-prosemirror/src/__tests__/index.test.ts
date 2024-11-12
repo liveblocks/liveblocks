@@ -32,7 +32,7 @@ const client = new Liveblocks({
 beforeAll(() => server.listen());
 afterAll(() => server.close());
 
-describe("withLiveblocksDocument", () => {
+describe("withProsemirrorDocument", () => {
   test("should return an empty document to start", async () => {
     const text = await withProsemirrorDocument<string>(
       {
@@ -63,7 +63,7 @@ describe("withLiveblocksDocument", () => {
     expect(text).toEqual("hello");
   });
 
-  test("should set the doc and return text and JSON", async () => {
+  test("should set the doc and return JSON", async () => {
     const exampleDoc = {
       type: "doc",
       content: [
@@ -94,7 +94,7 @@ describe("withLiveblocksDocument", () => {
     );
   });
 
-  test("should set the doc and return  Markdown", async () => {
+  test("should set the doc and return Markdown", async () => {
     const exampleDoc = {
       type: "doc",
       content: [
