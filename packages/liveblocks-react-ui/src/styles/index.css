@@ -257,7 +257,7 @@
 
   &:where([data-active]) {
     &:where([data-variant="default"]) {
-      color: var(--lb-accent);
+      color: var(--lb-foreground-secondary);
     }
 
     :where(.lb-icon *) {
