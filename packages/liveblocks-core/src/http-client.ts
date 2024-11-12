@@ -402,7 +402,6 @@ export function createHttpClient({
 }: {
   baseUrl: string;
   authManager: AuthManager;
-  currentUserIdStore: Store<string | null>;
   fetchPolyfill: typeof fetch;
 }): ClientHttpApi {
   async function getAuthValueForRoom(roomId: string) {
@@ -1087,21 +1086,7 @@ export function createHttpClient({
    * Inbox notifications (User-level)
    * -----------------------------------------------------------------------------------------------*/
   async function getAuthValueForUser() {
-    const authValue = await authManager.getAuthValue({
-      requestedScope: "comments:read",
-    });
-
-    if (
-      authValue.type === "secret" &&
-      authValue.token.parsed.k === TokenKind.ACCESS_TOKEN
-    ) {
-      const userId = authValue.token.parsed.uid;
-
-      // NOTE: currentUserIdStore is updated here as a side-effect!
-      currentUserIdStore.set(() => userId);
-    }
-
-    return authValue;
+    return await authManager.getAuthValue({ requestedScope: "comments:read" });
   }
 
   async function getInboxNotifications<M extends BaseMetadata>(options?: {

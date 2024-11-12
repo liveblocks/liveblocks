@@ -10,10 +10,12 @@ function useCurrentUserIdFromRoom() {
 
 function useCurrentUserIdFromClient_withClient(client: OpaqueClient) {
   const currentUserIdStore = client[kInternal].currentUserIdStore;
-  return useSyncExternalStore(
-    currentUserIdStore.subscribe,
-    currentUserIdStore.get,
-    currentUserIdStore.get
+  return (
+    useSyncExternalStore(
+      currentUserIdStore.subscribe,
+      currentUserIdStore.get,
+      currentUserIdStore.get
+    ) ?? null
   );
 }
 

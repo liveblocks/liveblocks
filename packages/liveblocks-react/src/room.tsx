@@ -1392,7 +1392,7 @@ function useDeleteThread(): (threadId: string) => void {
 
       const userId = client[kInternal].currentUserIdStore.get();
       // XXX - Should we display a console warning and return early if the user id could not be found?
-      if (userId === null) return;
+      if (userId === undefined) return;
 
       // XXX - Should we call `threadsDB.get` vs `threadsDB.getEvenIfDeleted`?
       const existing = store.getFullState().threadsDB.get(threadId);
@@ -1519,7 +1519,7 @@ function useCreateComment(): (options: CreateCommentOptions) => void {
 
       const userId = client[kInternal].currentUserIdStore.get();
       // XXX - Should we display a console warning and return early if the user id could not be found?
-      if (userId === null) return;
+      if (userId === undefined) return;
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
 
@@ -1739,7 +1739,7 @@ function useAddReaction<M extends BaseMetadata>() {
 
       const userId = client[kInternal].currentUserIdStore.get();
       // XXX - Should we display a console warning and return early if the user id could not be found?
-      if (userId === null) return;
+      if (userId === undefined) return;
 
       const { store, onMutationFailure } = getRoomExtrasForClient<M>(client);
 
@@ -1810,7 +1810,7 @@ function useRemoveReaction() {
     ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
       const userId = client[kInternal].currentUserIdStore.get();
       // XXX - Should we display a console warning and return early if the user id could not be found?
-      if (userId === null) return;
+      if (userId === undefined) return;
 
       const removedAt = new Date();
 

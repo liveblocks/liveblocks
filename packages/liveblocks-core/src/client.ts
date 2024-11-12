@@ -16,6 +16,7 @@ import type { Json, JsonObject } from "./lib/Json";
 import type { NoInfr } from "./lib/NoInfer";
 import type { Resolve } from "./lib/Resolve";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
+import { TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type {
   BaseMetadata,
@@ -136,7 +137,7 @@ export type EnterOptions<P extends JsonObject = DP, S extends LsonObject = DS> =
  * will probably happen if you do.
  */
 export type PrivateClientApi<U extends BaseUserMeta> = {
-  readonly currentUserIdStore: Store<string | null>;
+  readonly currentUserIdStore: Store<string | undefined>;
   readonly mentionSuggestionsCache: Map<string, string[]>;
   readonly resolveMentionSuggestions: ClientOptions<U>["resolveMentionSuggestions"];
   readonly usersStore: BatchStore<U["info"] | undefined, string>;
@@ -466,18 +467,20 @@ export function createClient<U extends BaseUserMeta = DU>(
   );
   const baseUrl = getBaseUrl(clientOptions.baseUrl);
 
-  const authManager = createAuthManager(options);
+  const currentUserIdStore = createStore<string | undefined>(undefined);
+
+  const authManager = createAuthManager(options, (token) => {
+    const userId = token.k === TokenKind.SECRET_LEGACY ? token.id : token.uid;
+    currentUserIdStore.set(() => userId);
+  });
 
   const fetchPolyfill =
     clientOptions.polyfills?.fetch ||
     /* istanbul ignore next */ globalThis.fetch?.bind(globalThis);
 
-  const currentUserIdStore = createStore<string | null>(null);
-
   const httpClient = createHttpClient({
     baseUrl,
     fetchPolyfill,
-    currentUserIdStore,
     authManager,
   });
 
@@ -627,6 +630,9 @@ export function createClient<U extends BaseUserMeta = DU>(
 
   function logout() {
     authManager.reset();
+
+    // Reset the current user id store when the client is logged out
+    currentUserIdStore.set(() => undefined);
 
     // Reconnect all rooms that aren't idle, if any. This ensures that those
     // rooms will get reauthorized now that the auth cache is reset. If that
