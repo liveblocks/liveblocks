@@ -208,12 +208,13 @@ function ComposerEditorMentionWrapper({
   children,
   element,
 }: ComposerEditorMentionWrapperProps) {
+  const { isFocused } = useComposer();
   const isSelected = useSelected();
 
   return (
     <span {...attributes}>
       {element.id ? (
-        <Mention userId={element.id} isSelected={isSelected} />
+        <Mention userId={element.id} isSelected={isFocused && isSelected} />
       ) : null}
       {children}
     </span>
@@ -449,12 +450,11 @@ function ComposerEditorFloatingToolbarWrapper({
     const unsubscribe = changeEventSource.subscribe(() => {
       const domSelection = window.getSelection();
 
-      // Show the toolbar if selection is a range and not empty
+      // Show the toolbar if there's a selection range
       if (
         !editor.selection ||
         isSelectionCollapsed(editor.selection) ||
-        !domSelection ||
-        SlateEditor.string(editor, editor.selection).trim() === ""
+        !domSelection
       ) {
         setHasFloatingToolbarRange(false);
         setReference(null);
@@ -630,11 +630,12 @@ function ComposerEditorPlaceholder({
 const ComposerMention = forwardRef<HTMLSpanElement, ComposerMentionProps>(
   ({ children, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "span";
+    const { isFocused } = useComposer();
     const isSelected = useSelected();
 
     return (
       <Component
-        data-selected={isSelected || undefined}
+        data-selected={(isFocused && isSelected) || undefined}
         {...props}
         ref={forwardedRef}
       >
@@ -1014,13 +1015,15 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
             setMentionDraft(undefined);
             setSelectedMentionSuggestionIndex(0);
           }
-        } else if (hasFloatingToolbarRange) {
-          // Close the floating toolbar on Escape
-          if (isKey(event, "Escape")) {
-            event.preventDefault();
-            setHasFloatingToolbarRange(false);
-          }
         } else {
+          if (hasFloatingToolbarRange) {
+            // Close the floating toolbar on Escape
+            if (isKey(event, "Escape")) {
+              event.preventDefault();
+              setHasFloatingToolbarRange(false);
+            }
+          }
+
           // Blur the editor on Escape
           if (isKey(event, "Escape")) {
             event.preventDefault();
@@ -1350,10 +1353,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     }, [editor]);
 
     const select = useCallback(() => {
-      SlateTransforms.select(editor, {
-        anchor: SlateEditor.end(editor, []),
-        focus: SlateEditor.end(editor, []),
-      });
+      SlateTransforms.select(editor, SlateEditor.end(editor, []));
     }, [editor]);
 
     const focus = useCallback(
