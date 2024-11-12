@@ -1,6 +1,6 @@
 import type { Json } from "~/Json.js";
 import type { Delta, OpId } from "./types.js";
-import { chain } from "./utils.js";
+import { chain, raise } from "./utils.js";
 
 const TOMBSTONE = Symbol();
 
@@ -157,11 +157,7 @@ export class LayeredCache {
   }
 
   commit(): void {
-    const layer = this.#layers.shift();
-    if (!layer) {
-      throw new Error("No snapshot to commit");
-    }
-
+    const layer = this.#layers.shift() ?? raise("No snapshot to commit");
     for (const [key, value] of layer) {
       if (value === TOMBSTONE) {
         this.delete(key);
@@ -172,9 +168,6 @@ export class LayeredCache {
   }
 
   rollback(): void {
-    const layer = this.#layers.shift();
-    if (!layer) {
-      throw new Error("No snapshot to roll back");
-    }
+    this.#layers.shift() ?? raise("No snapshot to roll back");
   }
 }

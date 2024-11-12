@@ -8,7 +8,7 @@ import type {
   Op,
   OpId,
 } from "./types.js";
-import { opId } from "./utils.js";
+import { opId, raise } from "./utils.js";
 
 /** @internal */
 export type Store = Map<string, Json>;
@@ -42,8 +42,9 @@ export class Base<M extends Mutations> {
   }
 
   /**
-   * Authoritative delta from the server. Must be applied and local pending Ops
-   * rebased on top of this.
+   * Authoritative delta from the server. When such delta is received, all
+   * locally pending Ops that have not yet been acknowledged will be "replayed"
+   * on top of the new state.
    */
   applyDelta(delta: Delta): void {
     const stub = this.#cache;
@@ -51,11 +52,14 @@ export class Base<M extends Mutations> {
     // Roll back to snapshot
     stub.rollback();
 
-    const [opId, toDelete, toAdd] = delta;
-
-    // Force-apply delta
-    toDelete.forEach((k) => stub.delete(k));
-    toAdd.forEach(([k, v]) => stub.set(k, v));
+    // Apply authoritative delta
+    const [opId, deletions, updates] = delta;
+    for (const key of deletions) {
+      stub.delete(key);
+    }
+    for (const [key, value] of updates) {
+      stub.set(key, value);
+    }
 
     // Acknowledge the incoming opId by removing it from the pending ops list.
     // If this opId is not found, it's from another client.
@@ -69,21 +73,24 @@ export class Base<M extends Mutations> {
   }
 
   /**
-   * Tries to apply the mutation described by the incoming Op, typically
-   * received from a Client. The Server will try to apply it, and if
-   * successful, will return an authoritative delta, which should be sent to
-   * every client.
+   * Executes the given Op on the local cache, and return the Delta.
+   *
+   * On the Server, this is the method called when an incoming Op is processed.
+   * The returned value will get fanned out to all connected clients.
+   *
+   * On the Client, this is called whenever a local mutation is done, or when
+   * a local mutation is replayed after an authoritative delta from the Server.
    */
   applyOp(op: Op): Delta {
     const [id, name, args] = op;
-    const mutationFn = this.#mutations[name];
-    if (!mutationFn) {
-      throw new Error(`Mutation not found: '${name}'`);
-    }
+    const mutationFn =
+      this.#mutations[name] ?? raise(`Mutation not found: '${name}'`);
 
     this.#cache.snapshot();
     try {
       mutationFn(this.#cache, ...args);
+      // XXX Computing the full Delta is overhead that's not needed by the client.
+      // XXX Probably better to avoid computing it on the Client for performance reasons.
       const delta = this.#cache.delta(id);
       this.#cache.commit();
       return delta;
@@ -93,11 +100,11 @@ export class Base<M extends Mutations> {
     }
   }
 
-  ack(_opId: OpId): void {
+  protected ack(_opId: OpId): void {
     // Ack is a no-op in the base class
   }
 
-  applyPendingOps(): void {
+  protected applyPendingOps(): void {
     // Applying pending ops is a no-op in the base class
   }
 }
@@ -117,22 +124,23 @@ export class Client<M extends Mutations> extends Base<M> {
     this.mutate = {} as BoundMutations<M>;
     for (const name of Object.keys(mutations)) {
       this.mutate[name as keyof M] = ((...args: Json[]): OpId => {
-        const op: Op = [opId(), name, args];
+        const id = opId();
+        const op: Op = [id, name, args];
         this.#pendingOps.push(op);
-        const delta = this.applyOp(op);
-        return delta[0];
+        this.applyOp(op);
+        return id;
       }) as any;
     }
   }
 
-  ack(opId: OpId): void {
+  protected ack(opId: OpId): void {
     const index = this.#pendingOps.findIndex(([id]) => id === opId);
     if (index >= 0) {
       this.#pendingOps.splice(index, 1);
     }
   }
 
-  applyPendingOps(): void {
+  protected applyPendingOps(): void {
     for (const pendingOp of this.#pendingOps) {
       this.applyOp(pendingOp);
     }
