@@ -1,5 +1,9 @@
 import { useThreads } from "@liveblocks/react/suspense";
-import { AnchoredThreads, FloatingThreads } from "@liveblocks/react-tiptap";
+import {
+  AnchoredThreads,
+  FloatingComposer,
+  FloatingThreads,
+} from "@liveblocks/react-tiptap";
 import { useEditor } from "novel";
 
 export function Threads() {
@@ -12,6 +16,7 @@ export function Threads() {
 
   return (
     <>
+      <FloatingComposer editor={editor} className="w-[350px]" />
       <FloatingThreads
         threads={threads}
         editor={editor}

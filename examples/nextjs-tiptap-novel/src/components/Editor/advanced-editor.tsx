@@ -1,18 +1,14 @@
 "use client";
-import { defaultEditorContent } from "@/lib/content";
 import {
   EditorCommand,
   EditorCommandEmpty,
   EditorCommandItem,
   EditorCommandList,
   EditorContent,
-  type EditorInstance,
   EditorRoot,
-  type JSONContent,
 } from "novel";
 import { ImageResizer, handleCommandNavigation } from "novel/extensions";
-import { useEffect, useState } from "react";
-import { useDebouncedCallback } from "use-debounce";
+import { useState } from "react";
 import { defaultExtensions } from "./extensions";
 import { ColorSelector } from "./selectors/color-selector";
 import { LinkSelector } from "./selectors/link-selector";
@@ -26,7 +22,8 @@ import { uploadFn } from "./image-upload";
 import { TextButtons } from "./selectors/text-buttons";
 import { slashCommand, suggestionItems } from "./slash-command";
 import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
-import { Threads } from "./liveblocks/threads";
+import { Threads } from "./threads";
+import { AddCommentSelector } from "./selectors/add-comment-selector";
 
 export const AdvancedEditor = () => {
   const liveblocks = useLiveblocksExtension();
@@ -76,7 +73,9 @@ export const AdvancedEditor = () => {
           }
           slotAfter={<ImageResizer />}
         >
-          <Threads />
+          <div className="absolute left-full ml-4">
+            <Threads />
+          </div>
           <EditorCommand className="z-50 h-auto max-h-[330px] overflow-y-auto rounded-md border border-muted bg-background px-1 py-2 shadow-md transition-all">
             <EditorCommandEmpty className="px-2 text-muted-foreground">
               No results
@@ -107,7 +106,6 @@ export const AdvancedEditor = () => {
             <Separator orientation="vertical" />
             <NodeSelector open={openNode} onOpenChange={setOpenNode} />
             <Separator orientation="vertical" />
-
             <LinkSelector open={openLink} onOpenChange={setOpenLink} />
             <Separator orientation="vertical" />
             <MathSelector />
@@ -115,6 +113,8 @@ export const AdvancedEditor = () => {
             <TextButtons />
             <Separator orientation="vertical" />
             <ColorSelector open={openColor} onOpenChange={setOpenColor} />
+            <Separator orientation="vertical" />
+            <AddCommentSelector />
           </GenerativeMenuSwitch>
         </EditorContent>
       </EditorRoot>
