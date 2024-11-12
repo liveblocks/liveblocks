@@ -5,8 +5,7 @@ import type { LayeredCache } from "~/LayeredCache.js";
 export function fmt(
   base: Client<any> | Server<any> | LayeredCache
 ): Record<string, Json> {
-  const cache = "cache" in base ? base.cache : base;
-  return Object.fromEntries(cache.entries());
+  return "asObject" in base ? base.asObject() : Object.fromEntries(base);
 }
 
 export function size(cache: LayeredCache): number {

@@ -7,7 +7,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
-      exclude: ["bin/", "*.cjs", "test/", "test-d/"],
+      include: ["src/**"],
 
       // Require 100% test coverage
       // lines: 100,

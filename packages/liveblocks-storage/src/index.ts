@@ -23,29 +23,27 @@ type BoundMutations<M extends Record<string, Mutation>> = {
 // ----------------------------------------------------------------------------
 
 export class Base<M extends Mutations> {
-  cache: LayeredCache;
-  pendingOps: Op[];
+  #cache: LayeredCache;
+  #pendingOps: Op[];
+  #mutations: M;
 
-  // XXX Make private field
-  mutations: M;
-
-  // XXX Expose `mutate` on clients only! Make it return a delta instead of a transaction/stub!
+  // XXX Expose `mutate` on clients only!
+  // (Currently hard because it would make pendingOps a protected field.)
   mutate: BoundMutations<M>;
 
   constructor(mutations: M) {
-    this.cache = new LayeredCache();
-    this.cache.snapshot();
+    this.#mutations = mutations;
 
-    this.pendingOps = [];
-
-    this.mutations = mutations;
+    this.#cache = new LayeredCache();
+    this.#cache.snapshot();
+    this.#pendingOps = [];
 
     // Bind all given mutation functions to this instance
     this.mutate = {} as BoundMutations<M>;
     for (const name of Object.keys(mutations)) {
       this.mutate[name as keyof M] = ((...args: Json[]): OpId => {
         const op: Op = [opId(), name, args];
-        this.pendingOps.push(op);
+        this.#pendingOps.push(op);
         const delta = this._applyOp(op);
         return delta[0];
       }) as any;
@@ -53,11 +51,19 @@ export class Base<M extends Mutations> {
   }
 
   /**
+   * Used by unit tests only to observe the cache contents.
+   * @internal
+   */
+  asObject() {
+    return Object.fromEntries(this.#cache);
+  }
+
+  /**
    * Authoritative delta from the server. Must be applied and local pending Ops
    * rebased on top of this.
    */
   applyDelta(delta: Delta): void {
-    const stub = this.cache;
+    const stub = this.#cache;
 
     // Roll back to snapshot
     stub.rollback();
@@ -71,9 +77,9 @@ export class Base<M extends Mutations> {
     // Acknowledge the incoming opId by removing it from the pending ops list.
     // If this opId is not found, it's from another client.
     {
-      const index = this.pendingOps.findIndex(([id]) => id === opId);
+      const index = this.#pendingOps.findIndex(([id]) => id === opId);
       if (index >= 0) {
-        this.pendingOps.splice(index, 1);
+        this.#pendingOps.splice(index, 1);
       }
     }
 
@@ -81,7 +87,7 @@ export class Base<M extends Mutations> {
     stub.snapshot();
 
     // Apply all local pending ops
-    for (const pendingOp of this.pendingOps) {
+    for (const pendingOp of this.#pendingOps) {
       this._applyOp(pendingOp);
     }
   }
@@ -94,19 +100,19 @@ export class Base<M extends Mutations> {
    */
   _applyOp(op: Op): Delta {
     const [id, name, args] = op;
-    const mutationFn = this.mutations[name];
+    const mutationFn = this.#mutations[name];
     if (!mutationFn) {
       throw new Error(`Mutation not found: '${name}'`);
     }
 
-    this.cache.snapshot();
+    this.#cache.snapshot();
     try {
-      mutationFn(this.cache, ...args);
-      const delta = this.cache.delta(id);
-      this.cache.commit();
+      mutationFn(this.#cache, ...args);
+      const delta = this.#cache.delta(id);
+      this.#cache.commit();
       return delta;
     } catch (e) {
-      this.cache.rollback();
+      this.#cache.rollback();
       throw e;
     }
   }
