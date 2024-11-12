@@ -47,18 +47,18 @@ export class Base<M extends Mutations> {
    * on top of the new state.
    */
   applyDelta(delta: Delta): void {
-    const stub = this.#cache;
+    const cache = this.#cache;
 
     // Roll back to snapshot
-    stub.rollback();
+    cache.rollback();
 
     // Apply authoritative delta
     const [opId, deletions, updates] = delta;
     for (const key of deletions) {
-      stub.delete(key);
+      cache.delete(key);
     }
     for (const [key, value] of updates) {
-      stub.set(key, value);
+      cache.set(key, value);
     }
 
     // Acknowledge the incoming opId by removing it from the pending ops list.
@@ -66,7 +66,7 @@ export class Base<M extends Mutations> {
     this.ack(opId);
 
     // Start a new snapshot
-    stub.snapshot();
+    cache.snapshot();
 
     // Apply all local pending ops
     this.applyPendingOps();
