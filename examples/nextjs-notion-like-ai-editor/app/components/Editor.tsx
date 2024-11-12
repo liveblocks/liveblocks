@@ -20,8 +20,7 @@ import {
   LiveblocksPlugin,
   useEditorStatus,
 } from "@liveblocks/react-lexical";
-import { useThreads } from "@liveblocks/react/suspense";
-import { ClientSideSuspense } from "@liveblocks/react";
+import { ClientSideSuspense, useThreads } from "@liveblocks/react";
 import DraggableBlockPlugin from "../plugins/DraggableBlockPlugin";
 import { PreserveSelectionPlugin } from "../plugins/PreserveSelectionPlugin";
 import { DocumentName } from "./DocumentName";
@@ -54,14 +53,6 @@ const initialConfig = liveblocksConfig({
 });
 
 export function Editor() {
-  return (
-    <ClientSideSuspense fallback={<Skeleton />}>
-      <LexicalEditor />
-    </ClientSideSuspense>
-  );
-}
-
-function LexicalEditor() {
   const status = useEditorStatus();
   const { threads } = useThreads();
 
@@ -87,27 +78,40 @@ function LexicalEditor() {
               <FloatingComposer className="w-[350px]" />
 
               {/* The floating threads that appear on mobile */}
-              <FloatingThreads threads={threads} className="block xl:hidden" />
+              {threads ? (
+                <FloatingThreads
+                  threads={threads}
+                  className="block xl:hidden"
+                />
+              ) : null}
 
-              {status === "not-loaded" || status === "loading" ? (
-                <Skeleton />
-              ) : (
-                <div className="xl:mr-[200px]">
-                  <div className="relative max-w-[740px] w-full mx-auto pb-[400px] p-8">
-                    <div className="absolute left-full -ml-8">
-                      {/* The anchored threads in the sidebar, on desktop */}
+              <div className="xl:mr-[200px]">
+                <div className="relative max-w-[740px] w-full mx-auto pb-[400px] p-8">
+                  <div className="absolute left-full -ml-8">
+                    {/* The anchored threads in the sidebar, on desktop */}
+                    {threads ? (
                       <AnchoredThreads
                         threads={threads}
                         className="w-[270px] hidden xl:block"
                       />
-                    </div>
+                    ) : null}
+                  </div>
 
-                    <header className="mt-20 mb-0">
-                      <h1 className="mb-0">
+                  <header className="mt-20 mb-0">
+                    <h1 className="mb-0">
+                      <ClientSideSuspense
+                        fallback={
+                          <div className="m-8 bg-gray-200/40 animate-pulse h-11 rounded-lg w-[400px] max-w-full" />
+                        }
+                      >
                         <DocumentName />
-                      </h1>
-                    </header>
+                      </ClientSideSuspense>
+                    </h1>
+                  </header>
 
+                  {status === "not-loaded" || status === "loading" ? (
+                    <div className="mx-8 mt-4 bg-gray-200/40 animate-pulse w-full h-32 rounded-lg" />
+                  ) : (
                     <section className="relative">
                       {/* The editor */}
                       <RichTextPlugin
@@ -132,9 +136,9 @@ function LexicalEditor() {
                       {/* Text modification and AI toolbar */}
                       <FloatingToolbar />
                     </section>
-                  </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </div>
           <PreserveSelectionPlugin />
@@ -142,19 +146,5 @@ function LexicalEditor() {
         </LiveblocksPlugin>
       </div>
     </LexicalComposer>
-  );
-}
-
-function Skeleton() {
-  return (
-    <div className=" xl:mr-[200px]">
-      <div className="relative max-w-[740px] w-full mx-auto p-8">
-        <div className="h-[60px]" />
-        <div className="mx-8 mt-4">
-          <div className="bg-gray-200/40 animate-pulse h-11 rounded-lg w-[400px] max-w-full" />
-          <div className="bg-gray-200/40 animate-pulse w-full h-32 rounded-lg mt-8"></div>
-        </div>
-      </div>
-    </div>
   );
 }
