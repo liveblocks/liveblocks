@@ -8,9 +8,9 @@ import {
   convertToThreadDeleteInfo,
 } from "./convert-plain-data";
 import { autoRetry, HttpError } from "./lib/autoRetry";
-import { Batch } from "./lib/batch";
+import type { BatchStore } from "./lib/batch";
+import { Batch, createBatchStore } from "./lib/batch";
 import { chunk } from "./lib/chunk";
-import type { Store } from "./lib/create-store";
 import { createCommentId, createThreadId } from "./lib/createIds";
 import type { DateToString } from "./lib/DateToString";
 import type { Json, JsonObject } from "./lib/Json";
@@ -18,7 +18,7 @@ import { objectToQuery } from "./lib/objectToQuery";
 import type { QueryParams, URLSafeString } from "./lib/url";
 import { url, urljoin } from "./lib/url";
 import { raise } from "./lib/utils";
-import { TokenKind } from "./protocol/AuthToken";
+import type { Permission } from "./protocol/AuthToken";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import type {
   BaseMetadata,
@@ -60,6 +60,7 @@ export interface RoomHttpApi {
     inboxNotifications: InboxNotificationData[];
     requestedAt: Date;
     nextCursor: string | null;
+    roomAccess: Permission[];
   }>;
 
   getThreadsSince<M extends BaseMetadata>(options: {
@@ -76,6 +77,7 @@ export interface RoomHttpApi {
       deleted: InboxNotificationDeleteInfo[];
     };
     requestedAt: Date;
+    roomAccess: Permission[];
   }>;
 
   createThread<M extends BaseMetadata>({
@@ -375,6 +377,9 @@ export interface ClientHttpApi extends RoomHttpApi, NotificationHttpApi {
     inboxNotifications: InboxNotificationData[];
     nextCursor: string | null;
     requestedAt: Date;
+    roomAccesses: {
+      [id: string]: Permission[];
+    };
   }>;
 
   getUserThreadsSince_experimental<M extends BaseMetadata>(options: {
@@ -390,13 +395,15 @@ export interface ClientHttpApi extends RoomHttpApi, NotificationHttpApi {
       deleted: ThreadDeleteInfo[];
     };
     requestedAt: Date;
+    roomAccesses: {
+      [id: string]: Permission[];
+    };
   }>;
 }
 
 export function createHttpClient({
   baseUrl,
   authManager,
-  currentUserIdStore,
   fetchPolyfill,
 }: {
   baseUrl: string;
@@ -430,11 +437,14 @@ export function createHttpClient({
       deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
       meta: {
         requestedAt: string;
+        roomAccess: Permission[];
       };
     }>(
       url`/v2/c/rooms/${options.roomId}/threads/delta`,
       () => getAuthValueForRoom(options.roomId),
-      { since: options.since.toISOString() },
+      {
+        since: options.since.toISOString(),
+      },
       { signal: options.signal }
     );
 
@@ -450,6 +460,7 @@ export function createHttpClient({
         ),
       },
       requestedAt: new Date(result.meta.requestedAt),
+      roomAccess: result.meta.roomAccess,
     };
   }
 
@@ -477,6 +488,7 @@ export function createHttpClient({
       meta: {
         requestedAt: string;
         nextCursor: string | null;
+        roomAccess: Permission[];
       };
     }>(
       url`/v2/c/rooms/${options.roomId}/threads`,
@@ -495,6 +507,7 @@ export function createHttpClient({
       ),
       nextCursor: result.meta.nextCursor,
       requestedAt: new Date(result.meta.requestedAt),
+      roomAccess: result.meta.roomAccess,
     };
   }
 
@@ -678,23 +691,6 @@ export function createHttpClient({
   /* -------------------------------------------------------------------------------------------------
    * Attachments (Room level)
    * -----------------------------------------------------------------------------------------------*/
-  async function getAttachmentUrls(options: {
-    roomId: string;
-    attachmentIds: string[];
-  }) {
-    const { urls } = await httpClient.post<{
-      urls: (string | null)[];
-    }>(
-      url`/v2/c/rooms/${options.roomId}/attachments/presigned-urls`,
-      () => getAuthValueForRoom(options.roomId),
-      {
-        attachmentIds: options.attachmentIds,
-      }
-    );
-
-    return urls;
-  }
-
   async function uploadAttachment(options: {
     roomId: string;
     attachment: CommentLocalAttachment;
@@ -1280,6 +1276,9 @@ export function createHttpClient({
       meta: {
         requestedAt: string;
         nextCursor: string | null;
+        roomAccesses: {
+          [id: string]: Permission[];
+        };
       };
     }>(url`/v2/c/threads`, getAuthValueForUser, {
       cursor: options?.cursor,
@@ -1294,6 +1293,7 @@ export function createHttpClient({
       ),
       nextCursor: json.meta.nextCursor,
       requestedAt: new Date(json.meta.requestedAt),
+      roomAccesses: json.meta.roomAccesses,
     };
   }
 
@@ -1307,6 +1307,9 @@ export function createHttpClient({
       deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
       meta: {
         requestedAt: string;
+        roomAccesses: {
+          [id: string]: Permission[];
+        };
       };
     }>(
       url`/v2/c/threads/delta`,
@@ -1327,6 +1330,7 @@ export function createHttpClient({
         ),
       },
       requestedAt: new Date(json.meta.requestedAt),
+      roomAccesses: json.meta.roomAccesses,
     };
   }
 
