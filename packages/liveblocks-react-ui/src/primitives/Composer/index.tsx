@@ -993,6 +993,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       onComposerSubmit,
       defaultAttachments = [],
       pasteFilesAsAttachments,
+      preventUnsavedChanges = true,
       disabled,
       asChild,
       ...props
@@ -1034,8 +1035,10 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 
     // Mark the composer as a pending update when it isn't empty
     useEffect(() => {
-      syncSource.setPending(!isEmpty);
-    }, [syncSource, isEmpty]);
+      if (preventUnsavedChanges) {
+        syncSource.setPending(!isEmpty);
+      }
+    }, [syncSource, isEmpty, preventUnsavedChanges]);
 
     useEffect(
       () => {

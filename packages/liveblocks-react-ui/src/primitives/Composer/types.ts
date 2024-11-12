@@ -148,6 +148,12 @@ export interface ComposerFormProps extends ComponentPropsWithSlot<"form"> {
    * Whether to create attachments when pasting files into the editor.
    */
   pasteFilesAsAttachments?: boolean;
+
+  /**
+   * Whether to make the `preventUnsavedChanges` client option take
+   * into account this composer when it's not empty.
+   */
+  preventUnsavedChanges?: boolean;
 }
 
 export type ComposerSubmitProps = ComponentPropsWithSlot<"button">;
