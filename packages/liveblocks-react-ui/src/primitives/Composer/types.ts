@@ -151,7 +151,7 @@ export interface ComposerFormProps extends ComponentPropsWithSlot<"form"> {
 
   /**
    * Whether to make the `preventUnsavedChanges` client option take
-   * into account this composer when it's not empty.
+   * into account this composer. (i.e. when it's not empty or when attachments are uploading)
    */
   preventUnsavedChanges?: boolean;
 }
