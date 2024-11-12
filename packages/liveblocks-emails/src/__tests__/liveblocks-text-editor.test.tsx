@@ -69,6 +69,29 @@ const content3: LiveblocksTextEditorNode[] = [
   },
 ];
 
+const content4: LiveblocksTextEditorNode[] = [
+  {
+    type: "text",
+    text: "Hello ",
+    bold: false,
+    italic: false,
+    strikethrough: false,
+    code: false,
+  },
+  {
+    type: "mention",
+    userId: "user-dracula",
+  },
+  {
+    type: "text",
+    text: " !",
+    bold: false,
+    italic: false,
+    strikethrough: false,
+    code: false,
+  },
+];
+
 describe("liveblocks text editor", () => {
   describe("converts content as React", () => {
     describe("w/o users resolved", () => {
@@ -117,6 +140,21 @@ describe("liveblocks text editor", () => {
             <span>
               <s>strikethrough text</s>
             </span>
+          </div>
+        );
+
+        expect(markupContent).toEqual(expected);
+      });
+
+      it("should convert with a user mention", async () => {
+        const reactContent = await convertTextEditorNodesAsReact(content4);
+        const markupContent = renderToStaticMarkup(<>{reactContent}</>);
+
+        const expected = renderToStaticMarkup(
+          <div>
+            <span>Hello </span>
+            <span data-mention>@user-dracula</span>
+            <span> !</span>
           </div>
         );
 
