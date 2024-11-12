@@ -52,30 +52,21 @@ export function Editor({
   contentFallback: ReactNode;
   storageFallback: any;
 }) {
-  return (
-    <ClientSideSuspense
-      fallback={
-        <div className="select-none cursor-wait editor-styles">
-          <div className="block w-full text-2xl font-bold my-6">
-            {storageFallback.meta.title}
-          </div>
-          {contentFallback}
-        </div>
-      }
-    >
-      <LexicalEditor contentFallback={contentFallback} />
-    </ClientSideSuspense>
-  );
-}
-
-function LexicalEditor({ contentFallback }: { contentFallback: ReactNode }) {
   const status = useEditorStatus();
 
   return (
     <LexicalComposer initialConfig={initialConfig}>
       <div className="">
         <div className="my-6">
-          <EditorTitle />
+          <ClientSideSuspense
+            fallback={
+              <div className="block w-full text-2xl font-bold my-6">
+                {storageFallback?.meta?.title ?? "Untitled document"}
+              </div>
+            }
+          >
+            <EditorTitle />
+          </ClientSideSuspense>
         </div>
         <div className="relative">
           <LiveblocksPlugin>
