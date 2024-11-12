@@ -120,7 +120,7 @@ export type ComposerSuggestionsContext = {
 };
 
 export type ComposerFloatingToolbarContext = {
-  dir?: Direction;
+  dir?: DropdownMenuProps["dir"];
   id: string;
   placement: Placement;
   ref: Ref<HTMLDivElement>;
