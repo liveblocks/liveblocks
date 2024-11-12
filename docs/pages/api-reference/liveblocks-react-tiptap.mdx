@@ -1,0 +1,876 @@
+---
+meta:
+  title: "@liveblocks/react-tiptap"
+  parentTitle: "API Reference"
+  description: "API Reference for the @liveblocks/react-tiptap package"
+alwaysShowAllNavigationLevels: false
+---
+
+`@liveblocks/react-tiptap` provides you with a [React](https://react.dev/)
+plugin that adds collaboration to any [Tiptap](https://tiptap.dev/) text editor.
+It also adds realtime cursors, document persistence on the cloud, comments, and
+mentions. Read our [get started guides](/docs/get-started/text-editor/tiptap) to
+learn more.
+
+<Banner type="warning" title="Package still in beta">
+  This package is currently in beta and has not been publicly released yet.
+</Banner>
+
+## Setup
+
+To set up your collaborative Tiptap editor, add
+[`useLiveblocksExtension`](#useLiveblocksExtension) to your editor, passing the
+return value `useEditor` extension array.
+
+```tsx
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+import { useEditor, EditorContent } from "@tiptap/react";
+
+function TextEditor() {
+  // +++
+  const liveblocks = useLiveblocksExtension();
+  // +++
+
+  const editor = useEditor({
+    extensions: [
+      // +++
+      liveblocks,
+      // +++
+      // ...
+    ],
+  });
+
+  return (
+    <div>
+      <EditorContent editor={editor} />
+    </div>
+  );
+}
+```
+
+Liveblocks Tiptap components should be passed `editor` to enable them.
+
+```tsx
+import {
+  useLiveblocksExtension,
+  // +++
+  FloatingComposer,
+  // +++
+} from "@liveblocks/react-tiptap";
+import { useEditor, EditorContent } from "@tiptap/react";
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension();
+
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+  });
+
+  return (
+    <div>
+      <EditorContent editor={editor} />
+      // +++
+      <FloatingComposer editor={editor} style={{ width: "350px" }} />
+      // +++
+    </div>
+  );
+}
+```
+
+Learn more in our [get started guides](/docs/get-started/text-editor/tiptap).
+
+## Default components
+
+### FloatingComposer
+
+Displays a [`Composer`][] near the current Tiptap selection, allowing you to
+create threads.
+
+```tsx highlight="3"
+<FloatingComposer editor={editor} />
+```
+
+<Figure>
+  <Image
+    src="/assets/text-editor/floating-composer.jpg"
+    alt="FloatingComposer"
+    width={960}
+    height={558}
+  />
+</Figure>
+
+Submitting a comment will attach an annotation thread at the current selection.
+Should be passed your Tiptap `editor`, and it’s recommended you set a width
+value. Display created threads with [`AnchoredThreads`][] or
+[`FloatingThreads`][].
+
+```tsx
+import {
+  useLiveblocksExtension,
+  // +++
+  FloatingComposer,
+  // +++
+  FloatingThreads,
+} from "@liveblocks/react-tiptap";
+import { useEditor, EditorContent } from "@tiptap/react";
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension();
+
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+  });
+
+  return (
+    <div>
+      <EditorContent editor={editor} />
+      // +++
+      <FloatingComposer editor={editor} style={{ width: "350px" }} />
+      // +++
+      <FloatingThreads editor={editor} style={{ width: "350px" }} />
+    </div>
+  );
+}
+```
+
+Display created threads with [`AnchoredThreads`][] or [`FloatingThreads`][].
+
+#### Opening the composer
+
+To open the `FloatingComposer`, you need to call the `addPendingComment`
+[command](https://tiptap.dev/docs/editor/api/commands) added by Liveblocks. You
+can use `lb-comment` to check if the current selection is a comment.
+
+```tsx
+import { Editor } from "@tiptap/react";
+
+function Toolbar({ editor }: { editor: Editor | null }) {
+  if (!editor) {
+    return null;
+  }
+
+  return (
+    <button
+      onClick={() => {
+        // +++
+        editor.chain().focus().addPendingComment().run();
+        // +++
+      }}
+      // +++
+      data-active={editor.isActive("lb-comment")}
+      // +++
+    >
+      💬 New comment
+    </button>
+  );
+}
+```
+
+#### Props [#FloatingComposer-props]
+
+<PropertiesList>
+  <PropertiesListItem name="metadata" type="ThreadMetadata">
+    The metadata of the thread to create.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onComposerSubmit"
+    type="function"
+    detailedType="(comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => Promise<void> | void"
+  >
+    The event handler called when the composer is submitted.
+  </PropertiesListItem>
+  <PropertiesListItem name="defaultValue" type="CommentBody">
+    The composer’s initial value.
+  </PropertiesListItem>
+  <PropertiesListItem name="collapsed" type="boolean">
+    Whether the composer is collapsed. Setting a value will make the composer
+    controlled.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onCollapsedChange"
+    type="function"
+    detailedType="(collapsed: boolean) => void"
+  >
+    The event handler called when the collapsed state of the composer changes.
+  </PropertiesListItem>
+  <PropertiesListItem name="defaultCollapsed" type="boolean">
+    Whether the composer is initially collapsed. Setting a value will make the
+    composer uncontrolled.
+  </PropertiesListItem>
+  <PropertiesListItem name="disabled" type="boolean">
+    Whether the composer is disabled.
+  </PropertiesListItem>
+  <PropertiesListItem name="autoFocus" type="boolean">
+    Whether to focus the composer on mount.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="overrides"
+    type="Partial<GlobalOverrides & ComposerOverrides>"
+  >
+    Override the component’s strings.
+  </PropertiesListItem>
+</PropertiesList>
+
+### FloatingThreads
+
+Displays floating [`Thread`][] components below text highlights in the editor.
+
+```tsx highlight="3"
+<FloatingThreads editor={editor} threads={threads} />
+```
+
+<Figure>
+  <Image
+    src="/assets/text-editor/floating-threads.jpg"
+    alt="FloatingThreads"
+    width={960}
+    height={558}
+  />
+</Figure>
+
+Takes a list of threads retrieved from [`useThreads`][] and renders them to the
+page. Each thread is opened by clicking on its corresponding text highlight.
+Should be passed your Tiptap `editor`, and it’s recommended you set a width
+value.
+
+```tsx
+// +++
+import { useThreads } from "@liveblocks/react/suspense";
+// +++
+import {
+  useLiveblocksExtension,
+  FloatingComposer,
+  // +++
+  FloatingThreads,
+  // +++
+} from "@liveblocks/react-tiptap";
+import { useEditor, EditorContent } from "@tiptap/react";
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension();
+
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+  });
+
+  // +++
+  const { threads } = useThreads();
+  // +++
+
+  return (
+    <div>
+      <EditorContent editor={editor} />
+      <FloatingComposer editor={editor} style={{ width: "350px" }} />
+      // +++
+      <FloatingThreads
+        editor={editor}
+        threads={threads}
+        style={{ width: "350px" }}
+      />
+      // +++
+    </div>
+  );
+}
+```
+
+<Banner title="Resolved threads">
+
+The `FloatingThreads` component automatically excludes resolved threads from
+display. Any resolved threads passed in the threads list will not be shown.
+
+</Banner>
+
+#### Recommended usage [#FloatingThreads-recommended-usage]
+
+[`FloatingThreads`][] and [`AnchoredThreads`][] have been designed to work
+together to provide the optimal experience on mobile and desktop. We generally
+recommend using both components, hiding one on smaller screens, as we are below
+with Tailwind classes. Most apps also don’t need to display resolved threads, so
+we can filter those out with a [`useThreads`][] option.
+
+```tsx
+import { useThreads } from "@liveblocks/react/suspense";
+import { AnchoredThreads, FloatingThreads } from "@liveblocks/react-tiptap";
+import { Editor } from "@tiptap/react";
+
+function ThreadOverlay({ editor }: { editor: Editor | null }) {
+  const { threads } = useThreads({ query: { resolved: false } });
+
+  return (
+    <>
+      <FloatingThreads
+        threads={threads}
+        className="w-[350px] block md:hidden"
+      />
+      <AnchoredThreads
+        threads={threads}
+        className="w-[350px] hidden sm:block"
+      />
+    </>
+  );
+}
+```
+
+```tsx title="Alternatively use a media query hook" isCollapsed isCollapsable
+import { useSyncExternalStore } from "react";
+import { useThreads } from "@liveblocks/react/suspense";
+import { AnchoredThreads, FloatingThreads } from "@liveblocks/react-tiptap";
+import { Editor } from "@tiptap/react";
+
+function ThreadOverlay({ editor }: { editor: Editor | null }) {
+  const { threads } = useThreads({ query: { resolved: false } });
+  // +++
+  const isMobile = useIsMobile();
+  // +++
+
+  // +++
+  if (isMobile) {
+    return <FloatingThreads threads={threads} style={{ width: "350px" }} />;
+  }
+  // +++
+
+  // +++
+  return <AnchoredThreads threads={threads} style={{ width: "350px" }} />;
+  //+++
+}
+
+export function useIsMobile() {
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+}
+
+function subscribe(callback: () => void) {
+  const query = window.matchMedia("(max-width: 1024px)");
+
+  query.addEventListener("change", callback);
+  return () => query.removeEventListener("change", callback);
+}
+
+function getSnapshot() {
+  const query = window.matchMedia("(max-width: 1024px)");
+  return query.matches;
+}
+```
+
+We can place this component inside [`ClientSideSuspense`][] to prevent it
+rendering until threads have loaded.
+
+```tsx
+<div>
+  <EditorContent editor={editor} />
+  <FloatingComposer editor={editor} style={{ width: "350px" }} />
+  // +++
+  <ClientSideSuspense fallback={null}>
+    <ThreadOverlay editor={editor} />
+  </ClientSideSuspense>
+  // +++
+</div>
+```
+
+#### Customization [#FloatingThreads-customization]
+
+The `FloatingThreads` component acts as a wrapper around each individual
+[`Thread`][]. You can treat the component like you would a `div`, using classes,
+listeners, and more.
+
+```tsx
+<FloatingThreads
+  editor={editor}
+  threads={threads}
+  className="my-floating-thread"
+/>
+```
+
+To apply styling to each [`Thread`][], you can pass a custom `Thread` property
+to `components` and modify this in any way. This is the best way to modify a
+thread’s width.
+
+```tsx
+import { Thread } from "@liveblocks/react-ui";
+
+<FloatingThreads
+  editor={editor}
+  threads={threads}
+  className="my-floating-thread"
+  // +++
+  components={{
+    Thread: (props) => (
+      <Thread {...props} className="border shadow" style={{ width: "300px" }} />
+    ),
+  }}
+  // +++
+/>;
+```
+
+You can return any custom `ReactNode` here, including anything from a simple
+wrapper around `Thread`, up to a full custom `Thread` component built using our
+[Comment primitives](/docs/api-reference/liveblocks-react-ui#primitives-Comment).
+
+```tsx
+import { Comment } from "@liveblocks/react-ui/primitives";
+
+<FloatingThreads
+  editor={editor}
+  threads={threads}
+  className="my-floating-thread"
+  components={{
+    Thread: (props) => (
+      // +++
+      <div>
+        {props.thread.comments.map((comment) => (
+          <Comment.Body
+            key={comment.id}
+            body={comment.body}
+            components={/* ... */}
+          />
+        ))}
+      </div>
+      // +++
+    ),
+  }}
+/>;
+```
+
+#### Props [#FloatingThreads-props]
+
+<PropertiesList>
+  <PropertiesListItem name="threads" type="ThreadData[]" required>
+    The threads to display.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="components"
+    type="Partial<AnchoredThreadsComponents>"
+  >
+    Override the component’s components.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="components.Thread"
+    type="(props: ThreadProps) => ReactNode"
+  >
+    Override the [`Thread`](/docs/api-reference/liveblocks-react-ui#Thread)
+    component.
+  </PropertiesListItem>
+</PropertiesList>
+
+### AnchoredThreads
+
+Displays a list of [`Thread`][] components vertically alongside the editor.
+
+```tsx highlight="3"
+<AnchoredThreads editor={editor} threads={threads} />
+```
+
+<Figure>
+  <Image
+    src="/assets/text-editor/anchored-threads.jpg"
+    alt="AnchoredThreads"
+    width={960}
+    height={558}
+  />
+</Figure>
+
+Takes a list of threads retrieved from [`useThreads`][] and renders them to the
+page. Each thread is displayed at the same vertical coordinates as its
+corresponding text highlight. If multiple highlights are in the same location,
+each thread is placed in order below the previous thread.
+
+```tsx
+// +++
+import { useThreads } from "@liveblocks/react/suspense";
+// +++
+import {
+  useLiveblocksExtension,
+  FloatingComposer,
+  // +++
+  AnchoredThreads,
+  // +++
+} from "@liveblocks/react-tiptap";
+import { useEditor, EditorContent } from "@tiptap/react";
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension();
+
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+  });
+
+  // +++
+  const { threads } = useThreads();
+  // +++
+
+  return (
+    <div>
+      <EditorContent editor={editor} />
+      <FloatingComposer editor={editor} style={{ width: "350px" }} />
+      // +++
+      <AnchoredThreads
+        editor={editor}
+        threads={threads}
+        style={{ width: "350px" }}
+      />
+      // +++
+    </div>
+  );
+}
+```
+
+<Banner title="Resolved threads">
+
+The `AnchoredThreads` component automatically excludes resolved threads from
+display. Any resolved threads passed in the threads list will not be shown.
+
+</Banner>
+
+#### Recommended usage [#AnchoredThreads-recommended-usage]
+
+[`FloatingThreads`][] and [`AnchoredThreads`][] have been designed to work
+together to provide the optimal experience on mobile and desktop. We generally
+recommend using both components, hiding one on smaller screens, as we are below
+with Tailwind classes. Most apps also don’t need to display resolved threads, so
+we can filter those out with a [`useThreads`][] option.
+
+```tsx
+import { useThreads } from "@liveblocks/react/suspense";
+import { AnchoredThreads, FloatingThreads } from "@liveblocks/react-tiptap";
+import { Editor } from "@tiptap/react";
+
+function ThreadOverlay({ editor }: { editor: Editor | null }) {
+  const { threads } = useThreads({ query: { resolved: false } });
+
+  return (
+    <>
+      <FloatingThreads
+        threads={threads}
+        className="w-[350px] block md:hidden"
+      />
+      <AnchoredThreads
+        threads={threads}
+        className="w-[350px] hidden sm:block"
+      />
+    </>
+  );
+}
+```
+
+```tsx title="Alternatively use a media query hook" isCollapsed isCollapsable
+import { useSyncExternalStore } from "react";
+import { useThreads } from "@liveblocks/react/suspense";
+import { AnchoredThreads, FloatingThreads } from "@liveblocks/react-tiptap";
+import { Editor } from "@tiptap/react";
+
+function ThreadOverlay({ editor }: { editor: Editor | null }) {
+  const { threads } = useThreads({ query: { resolved: false } });
+  // +++
+  const isMobile = useIsMobile();
+  // +++
+
+  // +++
+  if (isMobile) {
+    return <FloatingThreads threads={threads} style={{ width: "350px" }} />;
+  }
+  // +++
+
+  // +++
+  return <AnchoredThreads threads={threads} style={{ width: "350px" }} />;
+  //+++
+}
+
+export function useIsMobile() {
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+}
+
+function subscribe(callback: () => void) {
+  const query = window.matchMedia("(max-width: 1024px)");
+
+  query.addEventListener("change", callback);
+  return () => query.removeEventListener("change", callback);
+}
+
+function getSnapshot() {
+  const query = window.matchMedia("(max-width: 1024px)");
+  return query.matches;
+}
+```
+
+We can place this component inside [`ClientSideSuspense`][] to prevent it
+rendering until threads have loaded.
+
+```tsx
+<div>
+  <EditorContent editor={editor} />
+  <FloatingComposer editor={editor} style={{ width: "350px" }} />
+  // +++
+  <ClientSideSuspense fallback={null}>
+    <ThreadOverlay editor={editor} />
+  </ClientSideSuspense>
+  // +++
+</div>
+```
+
+#### Customization [#AnchoredThreads-customization]
+
+The `AnchoredThreads` component acts as a wrapper around each [`Thread`][]. It
+has no width, so setting this is required, and each thread will take on the
+width of the wrapper. You can treat the component like you would a `div`, using
+classes, listeners, and more.
+
+```tsx
+<AnchoredThreads
+  editor={editor}
+  threads={threads}
+  style={{ width: "350px" }}
+  className="my-anchored-thread"
+/>
+```
+
+To apply styling to each [`Thread`][], you can pass a custom `Thread` property
+to `components` and modify this in any way.
+
+```tsx
+import { Thread } from "@liveblocks/react-ui";
+
+<AnchoredThreads
+  editor={editor}
+  threads={threads}
+  style={{ width: "350px" }}
+  className="my-anchored-thread"
+  // +++
+  components={{
+    Thread: (props) => (
+      <Thread
+        {...props}
+        className="border shadow"
+        style={{ background: "white" }}
+      />
+    ),
+  }}
+  // +++
+/>;
+```
+
+You can return any custom `ReactNode` here, including anything from a simple
+wrapper around `Thread`, up to a full custom `Thread` component built using our
+[Comment primitives](/docs/api-reference/liveblocks-react-ui#primitives-Comment).
+
+```tsx
+import { Comment } from "@liveblocks/react-ui/primitives";
+
+<AnchoredThreads
+  editor={editor}
+  threads={threads}
+  style={{ width: "350px" }}
+  className="my-anchored-thread"
+  components={{
+    Thread: (props) => (
+      // +++
+      <div>
+        {props.thread.comments.map((comment) => (
+          <Comment.Body
+            key={comment.id}
+            body={comment.body}
+            components={/* ... */}
+          />
+        ))}
+      </div>
+      // +++
+    ),
+  }}
+/>;
+```
+
+##### Modifying thread floating positions
+
+Using CSS variables you can modify the gap between threads, and the horizontal
+offset that’s added when a thread is selected.
+
+```css
+.lb-tiptap-anchored-threads {
+  /* Minimum gap between threads */
+  --lb-tiptap-anchored-threads-gap: 8px;
+
+  /* How far the active thread is offset to the left */
+  --lb-tiptap-anchored-threads-active-thread-offset: 12px;
+}
+```
+
+#### Props [#AnchoredThreads-props]
+
+<PropertiesList>
+  <PropertiesListItem name="threads" type="ThreadData[]" required>
+    The threads to display.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="components"
+    type="Partial<AnchoredThreadsComponents>"
+  >
+    Override the component’s components.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="components.Thread"
+    type="(props: ThreadProps) => ReactNode"
+  >
+    Override the [`Thread`](/docs/api-reference/liveblocks-react-ui#Thread)
+    component.
+  </PropertiesListItem>
+</PropertiesList>
+
+### HistoryVersionPreview
+
+<Banner title="Private beta">
+
+Version history is currently in private beta. If you would like access to the
+beta, please [contact us](https://liveblocks.io/contact/sales). We’d love to
+hear from you.
+
+</Banner>
+
+The `HistoryVersionPreview` component allows you to display a preview of a
+specific version of your Lexical editor's content. It also contains a button and
+logic for restoring. It must be used inside the `<LiveblocksPlugin>` context. To
+render a list of versions, see
+[`VersionHistory`](/docs/api-reference/liveblocks-react-ui#Version-History).
+
+#### Usage
+
+```tsx
+import { HistoryVersionPreview } from "@liveblocks/react-tiptap";
+
+function VersionPreview({ selectedVersion, onVersionRestore }) {
+  return (
+    <HistoryVersionPreview
+      version={selectedVersion}
+      onVersionRestore={onVersionRestore}
+    />
+  );
+}
+```
+
+#### Props
+
+<PropertiesList>
+  <PropertiesListItem name="version" type="HistoryVersion" required>
+    The version of the editor content to preview.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onVersionRestore"
+    type="(version: HistoryVersion) => void"
+  >
+    Callback function called when the user chooses to restore this version.
+  </PropertiesListItem>
+</PropertiesList>
+
+The `HistoryVersionPreview` component renders a read-only view of the specified
+version of the editor content. It also provides a button for users to restore
+the displayed version.
+
+## Hooks
+
+### useLiveblocksExtension
+
+Liveblocks plugin for Tiptap that adds collaboration to your editor.
+`liveblocks` should be passed to Tiptap’s `useEditor` as an extension.
+
+```tsx
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+import { useEditor, EditorContent } from "@tiptap/react";
+
+function TextEditor() {
+  // +++
+  const liveblocks = useLiveblocksExtension();
+  // +++
+
+  const editor = useEditor({
+    extensions: [
+      // +++
+      liveblocks,
+      // +++
+      // ...
+    ],
+  });
+
+  return (
+    <div>
+      <EditorContent editor={editor} />
+    </div>
+  );
+}
+```
+
+Liveblocks Tiptap components should be passed `editor` to enable them.
+
+```tsx
+import {
+  useLiveblocksExtension,
+  // +++
+  FloatingComposer,
+  // +++
+} from "@liveblocks/react-tiptap";
+import { useEditor, EditorContent } from "@tiptap/react";
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension();
+
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+  });
+
+  return (
+    <div>
+      <EditorContent editor={editor} />
+      // +++
+      <FloatingComposer editor={editor} style={{ width: "350px" }} />
+      // +++
+    </div>
+  );
+}
+```
+
+<Banner title="Resolved threads">
+
+Annotations associated with resolved threads are hidden by default on the
+editor.
+
+</Banner>
+
+## Stylesheets
+
+React Tiptap comes with default styles, and these can be imported into the root
+of your app or directly into a CSS file with `@import`. Note that you must also
+install and import a stylesheet from
+[`@liveblocks/react-ui`](/docs/api-reference/liveblocks-react-ui) to use these
+styles.
+
+```tsx
+import "@liveblocks/react-ui/styles.css";
+import "@liveblocks/react-tiptap/styles.css";
+```
+
+### Customizing your styles
+
+Adding dark mode and customizing your styles is part of `@liveblocks/react-ui`,
+learn how to do this under
+[styling and customization](/docs/api-reference/liveblocks-react-ui#Styling-and-customization).
+
+[`LiveblocksPlugin`]: #LiveblocksPlugin
+[`LexicalComposer`]: https://lexical.dev/docs/react/plugins
+[`Thread`]: /docs/api-reference/liveblocks-react-ui#Thread
+[`Composer`]: /docs/api-reference/liveblocks-react-ui#Composer
+[`useThreads`]: /docs/api-reference/liveblocks-react#useThreads
+[`FloatingComposer`]: #FloatingComposer
+[`FloatingThreads`]: #FloatingThreads
+[`AnchoredThreads`]: #AnchoredThreads
+[`ClientSideSuspense`]: /docs/api-reference/liveblocks-react#ClientSideSuspense

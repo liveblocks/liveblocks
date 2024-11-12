@@ -1,7 +1,7 @@
 import type { Placement } from "@floating-ui/react-dom";
 import type { CommentMixedAttachment, EventSource } from "@liveblocks/core";
 import { nn } from "@liveblocks/core";
-import type { Direction } from "@radix-ui/react-dropdown-menu";
+import type { DropdownMenuProps } from "@radix-ui/react-dropdown-menu";
 import type { Dispatch, Ref, SetStateAction } from "react";
 import { createContext, useContext } from "react";
 import type { Editor as SlateEditor, Element as SlateElement } from "slate";
@@ -109,7 +109,7 @@ export type ComposerAttachmentsContext = {
 };
 
 export type ComposerSuggestionsContext = {
-  dir?: Direction;
+  dir?: DropdownMenuProps["dir"];
   id: string;
   itemId: (value?: string) => string | undefined;
   placement: Placement;

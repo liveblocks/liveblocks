@@ -5,24 +5,21 @@ interface Props extends Omit<ComponentProps<"svg">, "type"> {
   type?: DocumentType;
 }
 
-function SpreadsheetDocumentIcon(props: ComponentProps<"svg">) {
+function CanvasDocumentIcon(props: ComponentProps<"svg">) {
   return (
     <svg
-      fill="none"
-      height="20"
-      width="20"
-      viewBox="0 0 24 24"
       xmlns="http://www.w3.org/2000/svg"
+      width={19}
+      height={19}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
       {...props}
     >
-      <path
-        d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2"
-        vectorEffect="non-scaling-stroke"
-      />
+      <path d="M21.174 6.812a1 1 0 00-3.986-3.987L3.842 16.174a2 2 0 00-.5.83l-1.321 4.352a.5.5 0 00.623.622l4.353-1.32a2 2 0 00.83-.497zM15 5l4 4" />
     </svg>
   );
 }
@@ -83,8 +80,8 @@ export function DocumentIcon({ type, ...props }: Props) {
   switch (type) {
     case "text":
       return <TextDocumentIcon {...props} />;
-    case "spreadsheet":
-      return <SpreadsheetDocumentIcon {...props} />;
+    case "canvas":
+      return <CanvasDocumentIcon {...props} />;
     case "whiteboard":
       return <WhiteboardDocumentIcon {...props} />;
     default:

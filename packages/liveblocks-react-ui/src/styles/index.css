@@ -1244,7 +1244,6 @@
 
   &::after {
     content: "";
-    z-index: 1;
     border-radius: inherit;
     box-shadow: var(--lb-highlight-shadow);
     pointer-events: none;

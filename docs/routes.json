@@ -42,6 +42,16 @@
             "hidden": true
           },
           {
+            "title": "Tiptap",
+            "path": "/get-started/react-tiptap",
+            "hidden": true
+          },
+          {
+            "title": "Tiptap",
+            "path": "/get-started/nextjs-tiptap",
+            "hidden": true
+          },
+          {
             "title": "Lexical",
             "path": "/get-started/react-lexical",
             "hidden": true
@@ -152,11 +162,6 @@
             "hidden": true
           },
           {
-            "title": "Yjs Tiptap React",
-            "path": "/get-started/yjs-tiptap-react",
-            "hidden": true
-          },
-          {
             "title": "Yjs Tiptap Svelte",
             "path": "/get-started/yjs-tiptap-svelte",
             "hidden": true
@@ -199,6 +204,11 @@
           {
             "title": "Text editor / Tiptap",
             "href": "/get-started/text-editor/tiptap",
+            "hidden": true
+          },
+          {
+            "title": "Text editor / Tiptap Custom",
+            "href": "/get-started/text-editor/tiptap-custom",
             "hidden": true
           },
           {
@@ -394,6 +404,10 @@
         "path": "/products/text-editor",
         "routes": [
           {
+            "title": "Tiptap",
+            "path": "/products/text-editor/tiptap"
+          },
+          {
             "title": "Lexical",
             "path": "/products/text-editor/lexical"
           }
@@ -507,6 +521,10 @@
         "path": "/api-reference/liveblocks-react-ui"
       },
       {
+        "title": "@liveblocks/react-tiptap",
+        "path": "/api-reference/liveblocks-react-tiptap"
+      },
+      {
         "title": "@liveblocks/react-lexical",
         "path": "/api-reference/liveblocks-react-lexical"
       },
@@ -529,6 +547,10 @@
       {
         "title": "@liveblocks/node",
         "path": "/api-reference/liveblocks-node"
+      },
+      {
+        "title": "@liveblocks/emails",
+        "path": "/api-reference/liveblocks-emails"
       },
       {
         "title": "REST API",
@@ -617,7 +639,8 @@
           { "title": "Upgrading to 1.10", "path": "/platform/upgrading/1.10" },
           { "title": "Upgrading to 2.0", "path": "/platform/upgrading/2.0" },
           { "title": "Upgrading to 2.2", "path": "/platform/upgrading/2.2" },
-          { "title": "Upgrading to 2.8", "path": "/platform/upgrading/2.8" }
+          { "title": "Upgrading to 2.8", "path": "/platform/upgrading/2.8" },
+          { "title": "Upgrading to 2.9", "path": "/platform/upgrading/2.9" }
         ]
       },
       {

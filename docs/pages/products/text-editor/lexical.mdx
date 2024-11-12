@@ -121,25 +121,28 @@ for the current selection with `OPEN_FLOATING_COMPOSER_COMMAND`.
 </button>
 ```
 
-Add [`useThreads`](/docs/products/comments/hooks#threads-hook) to render your
-comments to the page.
+Add [`useThreads`](/docs/products/comments/hooks#threads-hook) alongside
+[`FloatingThreads`](/docs/api-reference/liveblocks-react-lexical#FloatingThreads)
+and
+[`Anchoredthreads`](/docs/api-reference/liveblocks-react-lexical#AnchoredThreads)
+to render your comments to the page.
 
 ```tsx
-import { useThreads } from "@liveblocks/react/suspense";
-import { Thread } from "@liveblocks/react-ui";
-
-function Component() {
+export function Threads({ editor }) {
   const { threads } = useThreads();
 
   return (
     <>
-      {threads.map((thread) => (
-        <Thread key={thread.id} thread={thread} />
-      ))}
+      <AnchoredThreads threads={threads} />
+      <FloatingThreads threads={threads} />
     </>
   );
 }
 ```
+
+`FloatingThreads` displays floating threads below text highlights in the editor,
+ideal for mobile, whereas `AnchoredThreads` displays threads vertically
+alongside the editor which is great on desktop.
 
 ## Notifications
 
