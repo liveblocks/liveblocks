@@ -1335,15 +1335,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this._notifications.waitUntilLoaded();
   }
 
-  /**
-   *
-   * Match this for InboxNotifications?
-   */
   public waitUntilRoomThreadsLoaded(
     roomId: string,
     query: ThreadsQuery<M> | undefined
   ) {
-    // gets the threads for the room
     const threadsFetcher = async (cursor?: string) => {
       const room = this._client.getRoom(roomId);
       if (room === null) {
@@ -1351,13 +1346,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
       }
 
       const result = await room.getThreads({ cursor, query });
-      // updates threads & notifications (should do same for inboxNotifications)
       this.updateThreadsAndNotifications(
         result.threads,
         result.inboxNotifications
       );
 
-      // Gets the last requested at date for the room
       const lastRequestedAt =
         this._roomThreadsLastRequestedAtByRoom.get(roomId);
 
@@ -1368,9 +1361,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
        * 2. The `lastRequestedAt` value for the room is older than the timestamp returned by the current request
        */
       if (
-        // first time fetching threads for the room
         lastRequestedAt === undefined ||
-        // we have a new lastRequestedAt and we update to the new one
         lastRequestedAt > result.requestedAt
       ) {
         this._roomThreadsLastRequestedAtByRoom.set(roomId, result.requestedAt);
