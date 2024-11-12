@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/primitives/Button";
 import { MoonIcon, SunIcon } from "@/icons";
-import styles from "./Toolbar.module.css";
+import styles from "./ThemeToggle.module.css";
 
 export function ThemeToggle() {
   const [theme, setTheme] = useState<"light" | "dark">("light");

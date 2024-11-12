@@ -2,10 +2,10 @@
 
 import { ClientSideSuspense } from "@liveblocks/react/suspense";
 import { DocumentSpinner } from "@/primitives/Spinner";
-import styles from "./TextEditor.module.css";
 import { Avatars } from "@/components/Avatars";
 import { AdvancedEditor } from "@/components/Editor/advanced-editor";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import styles from "./TextEditor.module.css";
 
 export function TextEditor() {
   return (

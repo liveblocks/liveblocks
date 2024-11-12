@@ -1,0 +1,8 @@
+.toolbarButton {
+  padding: var(--space-4);
+}
+
+.toolbarButton svg {
+  height: 20px;
+  width: 20px;
+}
