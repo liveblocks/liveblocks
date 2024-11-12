@@ -14,7 +14,7 @@ import type { DragEvent } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
-import { useRoomId } from "../../components/Composer";
+import { useComposerRoomId } from "../../components/Composer";
 import { isComposerBodyAutoLink } from "../../slate/plugins/auto-links";
 import { isComposerBodyCustomLink } from "../../slate/plugins/custom-links";
 import { isComposerBodyMention } from "../../slate/plugins/mentions";
@@ -480,7 +480,7 @@ export function useComposerAttachmentsManager(
   options: ComposerAttachmentsManagerOptions
 ) {
   const client = useClient();
-  const roomId = useRoomId();
+  const roomId = useComposerRoomId();
   const frozenDefaultAttachments = useInitial(defaultAttachments);
   const frozenAttachmentsManager = useInitial(() =>
     createComposerAttachmentsManager(client, roomId, options)

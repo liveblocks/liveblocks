@@ -18,8 +18,12 @@ import {
   type CommentBody,
   type CommentLocalAttachment,
   createCommentAttachmentId,
+  Permission,
 } from "@liveblocks/core";
-import { useMentionSuggestions } from "@liveblocks/react/_private";
+import {
+  useMentionSuggestions,
+  useRoomPermissions,
+} from "@liveblocks/react/_private";
 import { Slot, Slottable } from "@radix-ui/react-slot";
 import type {
   AriaAttributes,
@@ -66,7 +70,7 @@ import {
   withReact,
 } from "slate-react";
 
-import { useRoomId } from "../../components/Composer";
+import { useComposerRoomId } from "../../components/Composer";
 import { useLiveblocksUIConfig } from "../../config";
 import { FLOATING_ELEMENT_COLLISION_PADDING } from "../../constants";
 import { withAutoFormatting } from "../../slate/plugins/auto-formatting";
@@ -701,7 +705,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     );
 
     const [mentionDraft, setMentionDraft] = useState<MentionDraft>();
-    const roomId = useRoomId();
+    const roomId = useComposerRoomId();
     const mentionSuggestions = useMentionSuggestions(
       roomId,
       mentionDraft?.text
@@ -1036,13 +1040,15 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     });
     const numberOfAttachments = attachments.length;
     const hasMaxAttachments = numberOfAttachments >= maxAttachments;
+
+    const permissions = useRoomPermissions(useComposerRoomId());
+    const canComment =
+      permissions.includes(Permission.CommentsWrite) ||
+      permissions.includes(Permission.Write);
+
     const isDisabled = useMemo(() => {
-      // XXX - Discussion: Should we check for scopes here? Scopes are currently part of the room state message
-      // XXX - received after room websocket connection, but maybe we enable the composer submission for
-      // XXX - all users. The request will be rejected by the server, so any optimistic update created
-      // XXX - locally will be reverted!
-      return isSubmitting || disabled === true;
-    }, [isSubmitting, disabled]);
+      return isSubmitting || disabled || !canComment;
+    }, [isSubmitting, disabled, canComment]);
     const canSubmit = useMemo(() => {
       return !isEmpty && !isUploadingAttachments;
     }, [isEmpty, isUploadingAttachments]);

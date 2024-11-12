@@ -14,6 +14,7 @@ import type {
   Observable,
   OpaqueClient,
   Patchable,
+  Permission,
   Resolve,
   RoomNotificationSettings,
   Store,
@@ -532,6 +533,7 @@ export class SinglePageResource {
 
 type InternalState<M extends BaseMetadata> = Readonly<{
   optimisticUpdates: readonly OptimisticUpdate<M>[];
+  roomAccesses: Record<string, Permission[]>;
 
   // TODO: Ideally we would have a similar NotificationsDB, like we have ThreadDB
   notificationsById: Record<string, InboxNotificationData>;
@@ -643,6 +645,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this._rawThreadsDB = new ThreadDB();
     this._store = createStore<InternalState<M>>({
       optimisticUpdates: [],
+      roomAccesses: {},
       notificationsById: {},
       settingsByRoomId: {},
       versionsByRoomId: {},
@@ -823,6 +826,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   public subscribe(callback: () => void): () => void {
     return this._store.subscribe(callback);
+  }
+
+  public _getPermissions(roomId: string): Permission[] | undefined {
+    return this._store.get().roomAccesses[roomId];
   }
 
   // Direct low-level cache mutations ------------------------------------------------- {{{
@@ -1309,6 +1316,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
         result.inboxNotifications
       );
 
+      this._store.set((state) => ({
+        ...state,
+        roomAccesses: {
+          ...state.roomAccesses,
+          [roomId]: result.roomAccess,
+        },
+      }));
+
       const lastRequestedAt =
         this._roomThreadsLastRequestedAtByRoom.get(roomId);
 
@@ -1369,6 +1384,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
       updates.inboxNotifications.deleted
     );
 
+    this._store.set((state) => ({
+      ...state,
+      roomAccesses: {
+        ...state.roomAccesses,
+        [roomId]: updates.roomAccess,
+      },
+    }));
+
     if (lastRequestedAt < updates.requestedAt) {
       // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
       this._roomThreadsLastRequestedAtByRoom.set(roomId, updates.requestedAt);
@@ -1389,6 +1412,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
         result.threads,
         result.inboxNotifications
       );
+
+      this._store.set((state) => ({
+        ...state,
+        roomAccesses: {
+          ...state.roomAccesses,
+          ...result.roomAccesses,
+        },
+      }));
 
       // We initialize the `_userThreadsLastRequestedAt` date using the server timestamp after we've loaded the first page of inbox notifications.
       if (this._userThreadsLastRequestedAt === null) {
@@ -1437,6 +1468,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
       result.threads.deleted,
       result.inboxNotifications.deleted
     );
+
+    this._store.set((state) => ({
+      ...state,
+      roomAccesses: {
+        ...state.roomAccesses,
+        ...result.roomAccesses,
+      },
+    }));
   }
 
   public waitUntilRoomVersionsLoaded(roomId: string) {

@@ -2612,6 +2612,22 @@ function useAttachmentUrlSuspense(attachmentId: string) {
 
 /**
  * @private
+ */
+function useRoomPermissions(roomId: string) {
+  const client = useClient();
+  const store = getRoomExtrasForClient(client).store;
+
+  return (
+    useSyncExternalStore(
+      store.subscribe,
+      React.useCallback(() => store._getPermissions(roomId), [store, roomId]),
+      React.useCallback(() => store._getPermissions(roomId), [store, roomId])
+    ) ?? []
+  );
+}
+
+/**
+ * @private
  *
  * This is an internal API, use `createRoomContext` instead.
  */
@@ -3223,8 +3239,10 @@ export {
   useRedo,
   useRemoveReaction,
   _useRoom as useRoom,
+  useRoomAttachmentUrl,
   _useRoomNotificationSettings as useRoomNotificationSettings,
   _useRoomNotificationSettingsSuspense as useRoomNotificationSettingsSuspense,
+  useRoomPermissions,
   _useSelf as useSelf,
   _useSelfSuspense as useSelfSuspense,
   useStatus,
