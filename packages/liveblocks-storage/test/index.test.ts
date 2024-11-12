@@ -68,9 +68,22 @@ describe("Client", () => {
   });
 
   test("basic end to end test with randomization in mutation", () => {
-    const client1 = new Client(mutations);
-    const client2 = new Client(mutations);
-    const server = new Server(mutations);
+    function connect(client: Client, server: Server) {
+      //client.
+    }
+
+    function twoClientSetup() {
+      const client1 = new Client(mutations);
+      const client2 = new Client(mutations);
+      const server = new Server(mutations);
+
+      const pipe1 = connect(client1, server);
+      const pipe2 = connect(client2, server);
+
+      return { client1, client2, server, pause: () => {}, unpause: () => {} };
+    }
+
+    const { client1, client2, server, pause, unpause } = twoClientSetup();
 
     const op1 = client1.mutate.put("a", 1);
     const op2 = client2.mutate.putRandom("b");

@@ -112,8 +112,11 @@ export class Base<M extends Mutations> {
 // ----------------------------------------------------------------------------
 
 export class Client<M extends Mutations> extends Base<M> {
+  // #eventSource: EventSource<Op>;
   #pendingOps: Op[];
+
   mutate: BoundMutations<M>;
+  // onEmitOp: Observable<Op>;
 
   constructor(mutations: M) {
     super(mutations);
@@ -128,9 +131,12 @@ export class Client<M extends Mutations> extends Base<M> {
         const op: Op = [id, name, args];
         this.#pendingOps.push(op);
         this.applyOp(op);
+        // this.#eventSource.notify(op);
         return id;
       }) as any;
     }
+
+    // this.onEmitOp = this.#eventSource.observable;
   }
 
   protected ack(opId: OpId): void {
