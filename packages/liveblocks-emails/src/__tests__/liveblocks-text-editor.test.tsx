@@ -4,7 +4,10 @@ import type {
   ConvertTextEditorNodesAsReactComponents,
   LiveblocksTextEditorNode,
 } from "../liveblocks-text-editor";
-import { convertTextEditorNodesAsReact } from "../liveblocks-text-editor";
+import {
+  convertTextEditorNodesAsHtml,
+  convertTextEditorNodesAsReact,
+} from "../liveblocks-text-editor";
 import { renderToStaticMarkup, resolveUsers } from "./_helpers";
 
 const content1: LiveblocksTextEditorNode[] = [
@@ -218,6 +221,18 @@ describe("liveblocks text editor", () => {
         );
 
         expect(markupContent).toEqual(expected);
+      });
+    });
+  });
+
+  describe("converts content as html", () => {
+    describe("w/o users resolver", () => {
+      it("should convert simple text elements", async () => {
+        const htmlContent = await convertTextEditorNodesAsHtml(content1);
+        const expected =
+          '<div style="font-size:14px;">I think it\'s really neat mate 👌</div>';
+
+        expect(htmlContent).toEqual(expected);
       });
     });
   });

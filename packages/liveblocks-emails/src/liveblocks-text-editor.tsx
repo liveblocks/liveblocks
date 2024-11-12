@@ -553,8 +553,11 @@ export async function convertTextEditorNodesAsHtml(
         }
       }
     })
-    .join("\n");
+    .join("");
 
-  // prettier-ignore
-  return html`<div style=${toInlineCSSString(styles.container)}">${htmlSafe(children)}</div>`;
+  const content = [
+    // prettier-ignore
+    html`<div style="${toInlineCSSString(styles.container)}">${htmlSafe(children)}</div>`,
+  ];
+  return content.join("\n"); // Note: to represent a good string
 }
