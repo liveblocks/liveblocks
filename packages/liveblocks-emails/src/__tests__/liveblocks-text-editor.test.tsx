@@ -2,7 +2,7 @@ import React from "react";
 
 import type { LiveblocksTextEditorNode } from "../liveblocks-text-editor";
 import { convertTextEditorNodesAsReact } from "../liveblocks-text-editor";
-import { renderToStaticMarkup } from "./_helpers";
+import { renderToStaticMarkup, resolveUsers } from "./_helpers";
 
 const content1: LiveblocksTextEditorNode[] = [
   {
@@ -69,7 +69,11 @@ const content3: LiveblocksTextEditorNode[] = [
   },
 ];
 
-const content4: LiveblocksTextEditorNode[] = [
+const buildContentWithMention = ({
+  mentionedUserId,
+}: {
+  mentionedUserId: string;
+}): LiveblocksTextEditorNode[] => [
   {
     type: "text",
     text: "Hello ",
@@ -80,7 +84,7 @@ const content4: LiveblocksTextEditorNode[] = [
   },
   {
     type: "mention",
-    userId: "user-dracula",
+    userId: mentionedUserId,
   },
   {
     type: "text",
@@ -94,7 +98,7 @@ const content4: LiveblocksTextEditorNode[] = [
 
 describe("liveblocks text editor", () => {
   describe("converts content as React", () => {
-    describe("w/o users resolved", () => {
+    describe("w/o users resolver", () => {
       it("should convert simple texts elements", async () => {
         const reactContent = await convertTextEditorNodesAsReact(content1);
         const markupContent = renderToStaticMarkup(<>{reactContent}</>);
@@ -147,13 +151,36 @@ describe("liveblocks text editor", () => {
       });
 
       it("should convert with a user mention", async () => {
-        const reactContent = await convertTextEditorNodesAsReact(content4);
+        const reactContent = await convertTextEditorNodesAsReact(
+          buildContentWithMention({ mentionedUserId: "user-dracula" })
+        );
         const markupContent = renderToStaticMarkup(<>{reactContent}</>);
 
         const expected = renderToStaticMarkup(
           <div>
             <span>Hello </span>
             <span data-mention>@user-dracula</span>
+            <span> !</span>
+          </div>
+        );
+
+        expect(markupContent).toEqual(expected);
+      });
+    });
+
+    describe("w/ users resolver", () => {
+      it("should convert with a resolved user mention", async () => {
+        const reactContent = await convertTextEditorNodesAsReact(
+          buildContentWithMention({ mentionedUserId: "user-2" }),
+          { resolveUsers }
+        );
+
+        const markupContent = renderToStaticMarkup(<>{reactContent}</>);
+
+        const expected = renderToStaticMarkup(
+          <div>
+            <span>Hello </span>
+            <span data-mention>@Tatum Paolo</span>
             <span> !</span>
           </div>
         );
