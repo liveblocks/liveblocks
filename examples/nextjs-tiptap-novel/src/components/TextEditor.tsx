@@ -17,10 +17,12 @@ export function TextEditor() {
         </ClientSideSuspense>
       </div>
       <div className={styles.editorPanel}>
-        <div className={styles.editorContainer}>
-          <ClientSideSuspense fallback={<DocumentSpinner />}>
-            <AdvancedEditor />
-          </ClientSideSuspense>
+        <div className={styles.editorContainerOffset}>
+          <div className={styles.editorContainer}>
+            <ClientSideSuspense fallback={<DocumentSpinner />}>
+              <AdvancedEditor />
+            </ClientSideSuspense>
+          </div>
         </div>
       </div>
     </div>

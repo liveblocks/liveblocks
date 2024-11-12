@@ -7,6 +7,8 @@
   right: 0;
   bottom: 0;
   left: 0;
+  --editor-width: 800px;
+  --comments-width: 310px;
 }
 
 .editorHeader {
@@ -42,12 +44,25 @@
 
 .editorContainer {
   position: relative;
-  min-height: 100%;
+  min-height: 1100px;
   width: 100%;
-  max-width: 800px;
+  max-width: var(--editor-width);
   margin: var(--space-8) auto;
   border: 1px solid var(--color-border);
   background: var(--color-surface-elevated);
+}
+
+.editorContainerOffset {
+  margin-left: calc(0px - var(--comments-width));
+  min-height: 0;
+  height: auto
+}
+
+@media (max-width: 1279px) {
+  .editorContainerOffset {
+    margin-left: 0;
+    padding: 0 var(--space-8);
+  }
 }
 
 .placeholder {
