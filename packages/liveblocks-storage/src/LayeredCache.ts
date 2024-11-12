@@ -6,6 +6,15 @@ const TOMBSTONE = Symbol();
 
 type TombStone = typeof TOMBSTONE;
 
+/**
+ * A stub is the public interface to mutate or read from the cache during
+ * a mutation.
+ */
+export type Stub = Pick<
+  LayeredCache,
+  "has" | "get" | "getNumber" | "set" | "delete" | "keys" | "values" | "entries"
+>;
+
 export class LayeredCache {
   #root: Map<string, Json>;
   #layers: Map<string, Json | TombStone>[];
