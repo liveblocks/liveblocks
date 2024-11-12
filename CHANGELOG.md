@@ -3,7 +3,8 @@
 ### `@liveblocks/client`
 
 - Add new API `client.getSyncStatus()` which will reflect the (combined) sync
-  status for any Liveblocks product.
+  status for any part of Liveblocks (Storage, text editors, threads, etc).
+- Expose `ToImmutable<T>` helper type.
 
 ### `@liveblocks/react`
 
