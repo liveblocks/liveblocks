@@ -2542,6 +2542,36 @@ function useAttachmentUrl(attachmentId: string): AttachmentUrlAsyncResult {
 }
 
 /**
+ * @private
+ */
+function useRoomAttachmentUrl(
+  attachmentId: string,
+  roomId: string
+): AttachmentUrlAsyncResult {
+  const client = useClient();
+  const store =
+    client[kInternal].httpClient.getOrCreateAttachmentUrlsStore(roomId);
+
+  const getAttachmentUrlState = React.useCallback(
+    () => store.getState(attachmentId),
+    [store, attachmentId]
+  );
+
+  React.useEffect(() => {
+    // NOTE: .get() will trigger any actual fetches, whereas .getState() will not
+    void store.get(attachmentId);
+  }, [store, attachmentId]);
+
+  return useSyncExternalStoreWithSelector(
+    store.subscribe,
+    getAttachmentUrlState,
+    getAttachmentUrlState,
+    selectorFor_useAttachmentUrl,
+    shallow
+  );
+}
+
+/**
  * Returns a presigned URL for an attachment by its ID.
  *
  * @example

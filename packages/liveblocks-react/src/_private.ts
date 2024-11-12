@@ -5,4 +5,5 @@ export { getUmbrellaStoreForClient } from "./liveblocks";
 export { CreateThreadError } from "./room";
 
 // Used in @liveblocks/react-ui and @liveblocks/react-lexical
+export { useRoomAttachmentUrl } from "./room";
 export { useMentionSuggestions } from "./use-mention-suggestions";

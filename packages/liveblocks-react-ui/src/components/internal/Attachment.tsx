@@ -1,7 +1,8 @@
 "use client";
 
 import type { CommentMixedAttachment } from "@liveblocks/core";
-import { useAttachmentUrl, useIsInsideRoom } from "@liveblocks/react";
+import { useIsInsideRoom } from "@liveblocks/react";
+import { useRoomAttachmentUrl } from "@liveblocks/react/_private";
 import type {
   ComponentPropsWithoutRef,
   KeyboardEvent,
@@ -27,6 +28,7 @@ interface AttachmentProps extends ComponentPropsWithoutRef<"div"> {
   attachment: CommentMixedAttachment;
   onDeleteClick?: MouseEventHandler<HTMLButtonElement>;
   preventFocusOnDelete?: boolean;
+  roomId: string;
   overrides?: Partial<Overrides>;
 }
 
@@ -120,10 +122,12 @@ const AttachmentFileIcon = memo(({ mimeType }: { mimeType: string }) => {
 
 function AttachmentImagePreview({
   attachment,
+  roomId,
 }: {
   attachment: CommentMixedAttachment;
+  roomId: string;
 }) {
-  const { url } = useAttachmentUrl(attachment.id);
+  const { url } = useRoomAttachmentUrl(attachment.id, roomId);
   const [isLoaded, setLoaded] = useState(false);
 
   const handleLoad = useCallback(() => {
@@ -147,10 +151,12 @@ function AttachmentImagePreview({
 
 function AttachmentVideoPreview({
   attachment,
+  roomId,
 }: {
   attachment: CommentMixedAttachment;
+  roomId: string;
 }) {
-  const { url } = useAttachmentUrl(attachment.id);
+  const { url } = useRoomAttachmentUrl(attachment.id, roomId);
   const [isLoaded, setLoaded] = useState(false);
 
   const handleLoad = useCallback(() => {
@@ -174,8 +180,10 @@ function AttachmentVideoPreview({
 
 function AttachmentPreview({
   attachment,
+  roomId,
 }: {
   attachment: CommentMixedAttachment;
+  roomId: string;
 }) {
   const isInsideRoom = useIsInsideRoom();
   const isUploaded =
@@ -187,11 +195,11 @@ function AttachmentPreview({
     attachment.size <= MAX_DISPLAYED_MEDIA_SIZE
   ) {
     if (attachment.mimeType.startsWith("image/")) {
-      return <AttachmentImagePreview attachment={attachment} />;
+      return <AttachmentImagePreview attachment={attachment} roomId={roomId} />;
     }
 
     if (attachment.mimeType.startsWith("video/")) {
-      return <AttachmentVideoPreview attachment={attachment} />;
+      return <AttachmentVideoPreview attachment={attachment} roomId={roomId} />;
     }
   }
 
@@ -298,6 +306,7 @@ export function MediaAttachment({
   onClick,
   onDeleteClick,
   preventFocusOnDelete,
+  roomId,
   className,
   onKeyDown,
   ...props
@@ -332,7 +341,7 @@ export function MediaAttachment({
         ) : isError ? (
           <WarningIcon />
         ) : (
-          <AttachmentPreview attachment={attachment} />
+          <AttachmentPreview attachment={attachment} roomId={roomId} />
         )}
       </div>
       <div className="lb-attachment-details">
@@ -364,6 +373,7 @@ export function FileAttachment({
   onClick,
   onDeleteClick,
   preventFocusOnDelete,
+  roomId,
   className,
   onKeyDown,
   ...props
@@ -398,7 +408,7 @@ export function FileAttachment({
         ) : isError ? (
           <WarningIcon />
         ) : (
-          <AttachmentPreview attachment={attachment} />
+          <AttachmentPreview attachment={attachment} roomId={roomId} />
         )}
       </div>
       <div className="lb-attachment-details">

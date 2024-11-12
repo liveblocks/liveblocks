@@ -8,12 +8,12 @@ import type {
 import {
   RoomContext,
   useAddReaction,
-  useAttachmentUrl,
   useDeleteComment,
   useEditComment,
   useMarkThreadAsRead,
   useRemoveReaction,
 } from "@liveblocks/react";
+import { useRoomAttachmentUrl } from "@liveblocks/react/_private";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
   ComponentProps,
@@ -373,11 +373,14 @@ function openAttachment({ attachment, url }: CommentAttachmentArgs) {
 function CommentMediaAttachment({
   attachment,
   onAttachmentClick,
+  roomId,
   className,
   overrides,
   ...props
-}: CommentAttachmentProps) {
-  const { url } = useAttachmentUrl(attachment.id);
+}: CommentAttachmentProps & {
+  roomId: string;
+}) {
+  const { url } = useRoomAttachmentUrl(attachment.id, roomId);
 
   const handleClick = useCallback(
     (event: MouseEvent<HTMLElement>) => {
@@ -405,6 +408,7 @@ function CommentMediaAttachment({
       attachment={attachment}
       overrides={overrides}
       onClick={url ? handleClick : undefined}
+      roomId={roomId}
     />
   );
 }
@@ -412,11 +416,14 @@ function CommentMediaAttachment({
 function CommentFileAttachment({
   attachment,
   onAttachmentClick,
+  roomId,
   className,
   overrides,
   ...props
-}: CommentAttachmentProps) {
-  const { url } = useAttachmentUrl(attachment.id);
+}: CommentAttachmentProps & {
+  roomId: string;
+}) {
+  const { url } = useRoomAttachmentUrl(attachment.id, roomId);
 
   const handleClick = useCallback(
     (event: MouseEvent<HTMLElement>) => {
@@ -444,6 +451,7 @@ function CommentFileAttachment({
       attachment={attachment}
       overrides={overrides}
       onClick={url ? handleClick : undefined}
+      roomId={roomId}
     />
   );
 }
@@ -836,6 +844,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                             attachment={attachment}
                             overrides={overrides}
                             onAttachmentClick={onAttachmentClick}
+                            roomId={comment.roomId}
                           />
                         ))}
                       </div>
@@ -848,6 +857,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                             attachment={attachment}
                             overrides={overrides}
                             onAttachmentClick={onAttachmentClick}
+                            roomId={comment.roomId}
                           />
                         ))}
                       </div>
