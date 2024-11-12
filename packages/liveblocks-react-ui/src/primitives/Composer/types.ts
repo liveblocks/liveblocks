@@ -104,7 +104,7 @@ export interface ComposerEditorComponents {
   /**
    * The component used to display the floating toolbar.
    */
-  FloatingToolbar: ComponentType<ComposerEditorFloatingToolbarProps>;
+  FloatingToolbar?: ComponentType<ComposerEditorFloatingToolbarProps>;
 }
 
 export interface ComposerEditorProps

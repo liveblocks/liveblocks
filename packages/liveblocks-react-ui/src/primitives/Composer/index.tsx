@@ -494,7 +494,7 @@ function ComposerEditorFloatingToolbarWrapper({
 const ComposerFloatingToolbar = forwardRef<
   HTMLDivElement,
   ComposerFloatingToolbarProps
->(({ children, style, asChild, ...props }, forwardedRef) => {
+>(({ children, onPointerDown, asChild, ...props }, forwardedRef) => {
   const [isPresent] = usePersist();
   const ref = useRef<HTMLDivElement>(null);
   const {
@@ -510,17 +510,24 @@ const ComposerFloatingToolbar = forwardRef<
   const Component = asChild ? Slot : "div";
   useAnimationPersist(ref);
 
+  const handlePointerDown = useCallback(
+    (event: PointerEvent<HTMLDivElement>) => {
+      onPointerDown?.(event);
+
+      event.preventDefault();
+      event.stopPropagation();
+    },
+    [onPointerDown]
+  );
+
   return (
     <Component
       dir={dir}
       {...props}
+      onPointerDown={handlePointerDown}
       data-state={isPresent ? "open" : "closed"}
       data-side={side}
       data-align={align}
-      style={{
-        display: "flex",
-        ...style,
-      }}
       ref={mergedRefs}
     >
       {children}
@@ -841,20 +848,6 @@ const defaultEditorComponents: ComposerEditorComponents = {
         </ComposerSuggestionsList>
       </ComposerSuggestions>
     ) : null;
-  },
-  FloatingToolbar: () => {
-    const { textFormats } = useComposer();
-
-    console.log(textFormats);
-
-    return (
-      <ComposerFloatingToolbar>
-        <button>bold</button>
-        <button>italic</button>
-        <button>strikethrough</button>
-        <button>code</button>
-      </ComposerFloatingToolbar>
-    );
   },
 };
 
@@ -1177,11 +1170,13 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
           onItemSelect={createMention}
           MentionSuggestions={MentionSuggestions}
         />
-        <ComposerEditorFloatingToolbarWrapper
-          dir={dir}
-          id={suggestionsListId}
-          FloatingToolbar={FloatingToolbar}
-        />
+        {FloatingToolbar && (
+          <ComposerEditorFloatingToolbarWrapper
+            dir={dir}
+            id={suggestionsListId}
+            FloatingToolbar={FloatingToolbar}
+          />
+        )}
       </Slate>
     );
   }
