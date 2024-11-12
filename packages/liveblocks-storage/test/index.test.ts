@@ -1,7 +1,5 @@
 import { describe, expect, test } from "vitest";
 import { Client, Server } from "~/index.js";
-import { opId } from "~/utils.js";
-import { fmt } from "./utils.js";
 import * as mutations from "./_mutations.js";
 
 describe("Client", () => {
@@ -12,14 +10,13 @@ describe("Client", () => {
     client.mutate.put("c", 3);
     client.mutate.inc("c");
 
-    expect(Array.from(client.cache.keys())).toEqual(["a", "b", "c"]);
-    expect(fmt(client)).toEqual({ a: 1, b: 2, c: 4 });
+    expect(client.asObject()).toEqual({ a: 1, b: 2, c: 4 });
   });
 
   test("mutations can fail", () => {
     const client = new Client(mutations);
     expect(() => client.mutate.dec("a")).toThrow("Cannot decrement beyond 0");
-    expect(fmt(client)).toEqual({});
+    expect(client.asObject()).toEqual({});
   });
 
   test("all mutations should be atomic", () => {
@@ -31,47 +28,7 @@ describe("Client", () => {
       client.mutate.putAndFail("a", 42);
     } catch {}
     client.mutate.dupe("a", "c");
-    expect(fmt(client)).toEqual({ a: 1, b: 3, c: 1 });
-  });
-
-  test.skip("basic random test (re-executing pending mutation should lead to new random key every time!)", () => {
-    const client1 = new Client(mutations);
-    const server = new Server(mutations);
-
-    // Client A:
-    // - Main cache: {}
-    // - Pending cache: { "a": 0.1223232 }
-    // - Pending ops: [ ["putRandom", "a"] ]
-
-    // Server:
-    // - Cache: { "b": 1 }
-
-    // Client A:
-    // - Main cache: {}
-    // - Pending cache: { "a": 0.1223232 }
-    // - Pending ops: [ ["putRandom", "a"] ]
-
-    // Server:
-    // - Cache: { "a": 0.12897239 }
-
-    // Client A:
-    // - Main cache: { "a": 0.12897239 }
-    // - Pending cache: { }
-    // - Pending ops: [ ]
-
-    client1.mutate.putRandom("a");
-
-    expect(fmt(client1)).toEqual({ a: 1 });
-    expect(fmt(server)).toEqual({});
-
-    // Simulate client A op reaching server first
-    const delta1 = server.applyOp([opId(), "put", ["a", 1]]);
-
-    // Apply the delta on both clients
-    client1.applyDelta(delta1);
-
-    expect(fmt(client1)).toEqual({ a: 1 });
-    expect(fmt(server)).toEqual({ a: 1 });
+    expect(client.asObject()).toEqual({ a: 1, b: 3, c: 1 });
   });
 
   test("most basic end to end test", () => {
@@ -82,9 +39,9 @@ describe("Client", () => {
     const op1 = client1.mutate.put("a", 1);
     const op2 = client2.mutate.put("a", 2);
 
-    expect(fmt(client1)).toEqual({ a: 1 });
-    expect(fmt(client2)).toEqual({ a: 2 });
-    expect(fmt(server)).toEqual({});
+    expect(client1.asObject()).toEqual({ a: 1 });
+    expect(client2.asObject()).toEqual({ a: 2 });
+    expect(server.asObject()).toEqual({});
 
     // Simulate client A op reaching server first
     const delta1 = server.applyOp([op1, "put", ["a", 1]]);
@@ -93,9 +50,9 @@ describe("Client", () => {
     client1.applyDelta(delta1);
     client2.applyDelta(delta1);
 
-    expect(fmt(client1)).toEqual({ a: 1 });
-    expect(fmt(client2)).toEqual({ a: 2 });
-    expect(fmt(server)).toEqual({ a: 1 });
+    expect(client1.asObject()).toEqual({ a: 1 });
+    expect(client2.asObject()).toEqual({ a: 2 });
+    expect(server.asObject()).toEqual({ a: 1 });
 
     // Simulate client B op reaching server next
     const delta2 = server.applyOp([op2, "put", ["a", 2]]);
@@ -104,9 +61,9 @@ describe("Client", () => {
     client1.applyDelta(delta2);
     client2.applyDelta(delta2);
 
-    expect(fmt(client1)).toEqual({ a: 2 });
-    expect(fmt(client2)).toEqual({ a: 2 });
-    expect(fmt(server)).toEqual({ a: 2 });
+    expect(client1.asObject()).toEqual({ a: 2 });
+    expect(client2.asObject()).toEqual({ a: 2 });
+    expect(server.asObject()).toEqual({ a: 2 });
   });
 
   test("basic end to end test with randomization in mutation", () => {
@@ -117,11 +74,11 @@ describe("Client", () => {
     const op1 = client1.mutate.put("a", 1);
     const op2 = client2.mutate.putRandom("b");
 
-    const b1 = client2.cache.get("b"); // First random number (from first optimistic update)
+    const b1 = client2.asObject()["b"]; // First random number (from first optimistic update)
 
-    expect(fmt(client1)).toEqual({ a: 1 });
-    expect(fmt(client2)).toEqual({ b: b1 });
-    expect(fmt(server)).toEqual({});
+    expect(client1.asObject()).toEqual({ a: 1 });
+    expect(client2.asObject()).toEqual({ b: b1 });
+    expect(server.asObject()).toEqual({});
 
     // Simulate client A op reaching server first
     const delta1 = server.applyOp([op1, "put", ["a", 1]]);
@@ -130,11 +87,11 @@ describe("Client", () => {
     client1.applyDelta(delta1);
     client2.applyDelta(delta1);
 
-    const b2 = client2.cache.get("b"); // Second random number (after applying first op)
+    const b2 = client2.asObject()["b"]; // Second random number (after applying first op)
 
-    expect(fmt(client1)).toEqual({ a: 1 });
-    expect(fmt(client2)).toEqual({ a: 1, b: b2 });
-    expect(fmt(server)).toEqual({ a: 1 });
+    expect(client1.asObject()).toEqual({ a: 1 });
+    expect(client2.asObject()).toEqual({ a: 1, b: b2 });
+    expect(server.asObject()).toEqual({ a: 1 });
 
     // Simulate client B op reaching server next
     const delta2 = server.applyOp([op2, "putRandom", ["b"]]);
@@ -143,11 +100,11 @@ describe("Client", () => {
     client1.applyDelta(delta2);
     client2.applyDelta(delta2);
 
-    const b3 = client2.cache.get("b"); // Third random number (authoritative from server)
+    const b3 = client2.asObject()["b"]; // Third random number (authoritative from server)
 
-    expect(fmt(client1)).toEqual({ a: 1, b: b3 });
-    expect(fmt(client2)).toEqual({ a: 1, b: b3 });
-    expect(fmt(server)).toEqual({ a: 1, b: b3 });
+    expect(client1.asObject()).toEqual({ a: 1, b: b3 });
+    expect(client2.asObject()).toEqual({ a: 1, b: b3 });
+    expect(server.asObject()).toEqual({ a: 1, b: b3 });
 
     // The random numbers are (most likely) not equal
     // There is a tiny change this test does not pass
@@ -164,8 +121,7 @@ describe("Server", () => {
     server.mutate.put("c", 3);
     server.mutate.inc("c");
 
-    expect(Array.from(server.cache.keys())).toEqual(["a", "b", "c"]);
-    expect(fmt(server)).toEqual({
+    expect(server.asObject()).toEqual({
       a: 1,
       b: 2,
       c: 4,
