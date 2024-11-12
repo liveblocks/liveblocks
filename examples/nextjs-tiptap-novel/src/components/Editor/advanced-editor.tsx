@@ -38,6 +38,7 @@ export const AdvancedEditor = () => {
   return (
     <div className="relative w-full max-w-screen-lg">
       <div className="flex absolute right-5 top-5 z-10 mb-5 gap-2">
+        {/* TODO useSyncStatus */}
         {/*<div className="rounded-lg bg-accent px-2 py-1 text-sm text-muted-foreground">*/}
         {/*  {saveStatus}*/}
         {/*</div>*/}
@@ -84,7 +85,13 @@ export const AdvancedEditor = () => {
               {suggestionItems.map((item) => (
                 <EditorCommandItem
                   value={item.title}
-                  onCommand={(val) => item.command(val)}
+                  onCommand={(val) => {
+                    if (!item?.command) {
+                      return;
+                    }
+
+                    item.command(val);
+                  }}
                   className="flex w-full items-center space-x-2 rounded-md px-2 py-1 text-left text-sm hover:bg-accent aria-selected:bg-accent"
                   key={item.title}
                 >

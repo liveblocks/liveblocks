@@ -16,9 +16,7 @@ export function Room({ children }: { children: ReactNode }) {
         cursor: null,
       }}
     >
-      <ClientSideSuspense fallback={<DocumentSpinner />}>
-        {children}
-      </ClientSideSuspense>
+      {children}
     </RoomProvider>
   );
 }

@@ -9,22 +9,18 @@ import styles from "./TextEditor.module.css";
 
 export function TextEditor() {
   return (
-    <ClientSideSuspense fallback={<DocumentSpinner />}>
-      <Editor />
-    </ClientSideSuspense>
-  );
-}
-
-export function Editor() {
-  return (
     <div className={styles.container}>
       <div className={styles.editorHeader}>
         <ThemeToggle />
-        <Avatars />
+        <ClientSideSuspense fallback={null}>
+          <Avatars />
+        </ClientSideSuspense>
       </div>
       <div className={styles.editorPanel}>
         <div className={styles.editorContainer}>
-          <AdvancedEditor />
+          <ClientSideSuspense fallback={<DocumentSpinner />}>
+            <AdvancedEditor />
+          </ClientSideSuspense>
         </div>
       </div>
     </div>
