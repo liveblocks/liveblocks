@@ -3,18 +3,17 @@
 ### `@liveblocks/client`
 
 - Add new API `client.getSyncStatus()` which will reflect the (combined) sync
-  status for any Liveblocks product
+  status for any Liveblocks product.
 
 ### `@liveblocks/react`
 
 - Add new hook `useSyncStatus` that can be used to tell whether Liveblocks is
   synchronizing local changes to the server.
-- Add new hook `useSyncStatusListener` which can be used to listen to sync
-  status events.
-- Add new hook `usePreventUnsavedChanged` which can be used to prevent a browser
-  tab from being closed while changes are still being saved
-- Deprecate the `useStorageStatus` hook in favor of the new `useSyncStatus`,
-  which is most likely the one you're interested in when building UIs.
+- Add new client config option `preventUnsavedChanges` which can be used to
+  prevent a browser tab from being closed while local changes are still being
+  saved.
+- Deprecated APIs:
+  - `useStorageStatus` is now deprecated in favor of `useSyncStatus`.
 
 ## 2.11.1 (Yet to be published)
 
