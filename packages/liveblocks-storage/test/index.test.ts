@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { Client, Server } from "~/index.js";
+import { opId } from "~/utils.js";
 import * as mutations from "./_mutations.js";
 
 describe("Client", () => {
@@ -114,17 +115,27 @@ describe("Client", () => {
 });
 
 describe("Server", () => {
-  test("can be mutated locally", () => {
+  test("can be mutated locally (but only through Ops)", () => {
     const server = new Server(mutations);
-    server.mutate.put("a", 1);
-    server.mutate.put("b", 2);
-    server.mutate.put("c", 3);
-    server.mutate.inc("c");
+    server.applyOp([opId(), "put", ["a", 1]]);
+    server.applyOp([opId(), "put", ["b", 2]]);
+    server.applyOp([opId(), "put", ["c", 3]]);
+    const delta = server.applyOp([opId(), "inc", ["c"]]);
 
-    expect(server.asObject()).toEqual({
-      a: 1,
-      b: 2,
-      c: 4,
-    });
+    expect(server.asObject()).toEqual({ a: 1, b: 2, c: 4 });
+    expect(delta).toEqual([expect.any(String), [], [["c", 4]]]);
+  });
+
+  test.skip("server should validate incoming ops before executing them", () => {
+    const server = new Server(mutations);
+    server.applyOp([
+      opId(),
+      "put",
+      [], // not enough params
+    ]);
+    server.applyOp([opId(), "inc", ["a", 999]]); // too many params (inc only has one arg)
+    server.applyOp([opId(), "inc", [999]]); // key not passed as a string
+
+    expect(server.asObject()).toEqual({});
   });
 });
