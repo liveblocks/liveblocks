@@ -76,6 +76,8 @@ import type {
   HistoryVersionDataAsyncResult,
   HistoryVersionsAsyncResult,
   HistoryVersionsAsyncSuccess,
+  InboxNotificationsAsyncResult,
+  InboxNotificationsAsyncSuccess,
   MutationContext,
   OmitFirstArg,
   RoomContextBundle,
@@ -294,6 +296,7 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
 
   const versionsPollersByRoomId = new Map<string, Poller>();
 
+  const roomInboxNotificationsPollersByRoomId = new Map<string, Poller>();
   const roomNotificationSettingsPollersByRoomId = new Map<string, Poller>();
 
   function getOrCreateThreadsPollerForRoomId(roomId: string) {
@@ -313,6 +316,31 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
       );
 
       threadsPollersByRoomId.set(roomId, poller);
+    }
+
+    return poller;
+  }
+
+  function getOrCreateInboxNotificationsPollerForRoomId(roomId: string) {
+    let poller = roomInboxNotificationsPollersByRoomId.get(roomId);
+    if (!poller) {
+      poller = makePoller(
+        async (signal) => {
+          try {
+            return await store.fetchRoomInboxNotificationsDeltaUpdate(
+              roomId,
+              signal
+            );
+          } catch (err) {
+            console.warn(`Polling new inbox notifications for '${roomId}' failed: ${String(err)}`); // prettier-ignore
+            throw err;
+          }
+        },
+        config.ROOM_NOTIFICATIONS_POLL_INTERVAL,
+        { maxStaleTimeMs: config.ROOM_NOTIFICATIONS_MAX_STALE_TIME }
+      );
+
+      roomInboxNotificationsPollersByRoomId.set(roomId, poller);
     }
 
     return poller;
@@ -368,6 +396,7 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     onMutationFailure,
     getOrCreateThreadsPollerForRoomId,
     getOrCreateVersionsPollerForRoomId,
+    getOrCreateInboxNotificationsPollerForRoomId,
     getOrCreateNotificationsSettingsPollerForRoomId,
   };
 }
@@ -464,6 +493,7 @@ function makeRoomContextBundle<
     useHistoryVersions,
     useHistoryVersionData,
 
+    useRoomInboxNotifications,
     useRoomNotificationSettings,
     useUpdateRoomNotificationSettings,
 
@@ -528,6 +558,7 @@ function makeRoomContextBundle<
       // TODO: useHistoryVersionData: useHistoryVersionDataSuspense,
       useHistoryVersions: useHistoryVersionsSuspense,
 
+      useRoomInboxNotifications: useRoomInboxNotificationsSuspense,
       useRoomNotificationSettings: useRoomNotificationSettingsSuspense,
       useUpdateRoomNotificationSettings,
 
@@ -760,6 +791,7 @@ function useRoom<
   if (room === null) {
     throw new Error("RoomProvider is missing from the React tree.");
   }
+
   return room;
 }
 
@@ -1247,9 +1279,13 @@ function useThreads<M extends BaseMetadata>(
   const { scrollOnLoad = true } = options;
   // TODO - query = stable(options.query);
 
+  // Gets liveblocks client
   const client = useClient();
+  // Gets the room
   const room = useRoom();
 
+  // Gets store where we store the threads
+  // Gets the poller for the threads
   const { store, getOrCreateThreadsPollerForRoomId } =
     getRoomExtrasForClient<M>(client);
 
@@ -1289,6 +1325,42 @@ function useThreads<M extends BaseMetadata>(
   );
 
   useScrollToCommentOnLoadEffect(scrollOnLoad, state);
+
+  return state;
+}
+
+function useRoomInboxNotifications<
+  M extends BaseMetadata,
+>(): InboxNotificationsAsyncResult {
+  const client = useClient();
+  const room = useRoom();
+  const { store, getOrCreateInboxNotificationsPollerForRoomId } =
+    getRoomExtrasForClient<M>(client);
+
+  const poller = getOrCreateInboxNotificationsPollerForRoomId(room.id);
+
+  React.useEffect(() => {
+    void store.waitUntilRoomInboxNotificationsLoaded(room.id);
+  }, [store, room.id]);
+
+  React.useEffect(() => {
+    poller.inc();
+    poller.pollNowIfStale();
+    return () => poller.dec();
+  }, [poller]);
+
+  const getter = React.useCallback(
+    () => store.getRoomInboxNotificationsLoadingState(room.id),
+    [store, room.id]
+  );
+
+  const state = useSyncExternalStoreWithSelector(
+    store.subscribe,
+    getter,
+    getter,
+    identity,
+    shallow2 // NOTE: Using 2-level-deep shallow check here, because the result of selectThreads() is not stable!
+  );
 
   return state;
 }
@@ -2337,6 +2409,20 @@ function useThreadsSuspense<M extends BaseMetadata>(
   return result;
 }
 
+function useRoomInboxNotificationsSuspense(): InboxNotificationsAsyncSuccess {
+  const client = useClient();
+  const room = useRoom();
+
+  const { store } = getRoomExtrasForClient(client);
+
+  use(store.waitUntilRoomInboxNotificationsLoaded(room.id));
+
+  const result = useRoomInboxNotifications();
+  assert(!result.error, "Did not expect error");
+  assert(!result.isLoading, "Did not expect loading");
+  return result;
+}
+
 function selectorFor_useAttachmentUrl(
   state: AsyncResult<string | undefined> | undefined
 ): AttachmentUrlAsyncResult {
@@ -2698,6 +2784,24 @@ const _useThreadsSuspense: TypedBundle["suspense"]["useThreads"] =
   useThreadsSuspense;
 
 /**
+ * Returns the inbox notifications for the current room.
+ *
+ * @example
+ * const { inboxNotifications, error, isLoading } = useRoomInboxNotifications();
+ */
+const _useRoomInboxNotifications: TypedBundle["useRoomInboxNotifications"] =
+  useRoomInboxNotifications;
+
+/**
+ * Returns the inbox notifications for the current room.
+ *
+ * @example
+ * const { inboxNotifications } = useRoomInboxNotifications();
+ */
+const _useRoomInboxNotificationsSuspense: TypedBundle["suspense"]["useRoomInboxNotifications"] =
+  useRoomInboxNotificationsSuspense;
+
+/**
  * Returns the user's notification settings for the current room
  * and a function to update them.
  *
@@ -3041,6 +3145,8 @@ export {
   useRedo,
   useRemoveReaction,
   _useRoom as useRoom,
+  _useRoomInboxNotifications as useRoomInboxNotifications,
+  _useRoomInboxNotificationsSuspense as useRoomInboxNotificationsSuspense,
   _useRoomNotificationSettings as useRoomNotificationSettings,
   _useRoomNotificationSettingsSuspense as useRoomNotificationSettingsSuspense,
   _useSelf as useSelf,

@@ -979,7 +979,7 @@ export type Room<
    * @example
    * const { threads, inboxNotifications, requestedAt } = await room.getInboxNotifications();
    */
-  getInboxNotifications(): Promise<{
+  getInboxNotifications(options?: GetInboxNotificationsOptions): Promise<{
     threads: ThreadData<M>[];
     inboxNotifications: InboxNotificationData[];
     requestedAt: Date;
