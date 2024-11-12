@@ -875,6 +875,8 @@ export type RoomContextBundle<
        * Returns the current storage status for the Room, and triggers
        * a re-render whenever it changes. Can be used to render a "Saving..."
        * indicator.
+       *
+       * @deprecated Prefer useSyncStatus()
        */
       useStorageStatus(options?: UseStorageStatusOptions): StorageStatus;
 
@@ -992,6 +994,8 @@ export type RoomContextBundle<
              * Returns the current storage status for the Room, and triggers
              * a re-render whenever it changes. Can be used to render a "Saving..."
              * indicator.
+             *
+             * @deprecated Prefer useSyncStatus()
              */
             useStorageStatus(
               options?: UseStorageStatusOptions
