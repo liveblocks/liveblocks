@@ -31,6 +31,8 @@ import {
   EditorContent,
   EditorRoot,
 } from "novel";
+import { AdvancedEditor } from "@/components/Editor/advanced-editor";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function TextEditor() {
   return (
@@ -41,56 +43,23 @@ export function TextEditor() {
 }
 
 export function Editor() {
-  const liveblocks = useLiveblocksExtension();
-
-  const { threads } = useThreads();
-
   return (
     <div className={styles.container}>
       <div className={styles.editorHeader}>
         {/*{editor && <Toolbar editor={editor} />}*/}
+        <ThemeToggle />
         <Avatars />
       </div>
       <div className={styles.editorPanel}>
         {/*{editor && <SelectionMenu editor={editor} />}*/}
-        <EditorRoot>
-          <EditorContent
-            extensions={[StarterKit, liveblocks]}
-            className={styles.editorContainer}
-          >
-            <EditorCommand>
-              <EditorCommandItem>hey</EditorCommandItem>
-              <EditorCommandItem />
-              <EditorCommandItem />
-            </EditorCommand>
-            <EditorBubble>
-              <EditorBubbleItem />
-              <EditorBubbleItem />
-              <EditorBubbleItem />
-            </EditorBubble>
-          </EditorContent>
-        </EditorRoot>
+        <div className={styles.editorContainer}>
+          <AdvancedEditor />
+        </div>
+
         {/*<FloatingComposer editor={editor} style={{ width: 350 }} />*/}
         {/*<FloatingThreads threads={threads} editor={editor} />*/}
       </div>
     </div>
-  );
-
-  return (
-    <EditorRoot>
-      <EditorContent extensions={[StarterKit, liveblocks]}>
-        <EditorCommand>
-          <EditorCommandItem />
-          <EditorCommandItem />
-          <EditorCommandItem />
-        </EditorCommand>
-        <EditorBubble>
-          <EditorBubbleItem />
-          <EditorBubbleItem />
-          <EditorBubbleItem />
-        </EditorBubble>
-      </EditorContent>
-    </EditorRoot>
   );
 }
 
