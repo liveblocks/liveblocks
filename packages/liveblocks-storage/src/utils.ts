@@ -1,5 +1,9 @@
 import type { OpId } from "./types.js";
 
+export function raise(message: string): never {
+  throw new Error(message);
+}
+
 export function* chain<T>(
   ...iterables: (Iterable<T> | undefined)[]
 ): IterableIterator<T> {
