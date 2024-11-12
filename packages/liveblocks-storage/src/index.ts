@@ -1,4 +1,5 @@
 import type { Json } from "~/Json.js";
+import type { Stub } from "./LayeredCache.js";
 import { LayeredCache } from "./LayeredCache.js";
 import type {
   ChangeReturnType,
@@ -13,7 +14,7 @@ import { opId } from "./utils.js";
 export type Store = Map<string, Json>;
 
 export type Mutations = Record<string, Mutation>;
-export type Mutation = (store: LayeredCache, ...args: readonly any[]) => void;
+export type Mutation = (stub: Stub, ...args: readonly any[]) => void;
 
 type BoundMutations<M extends Record<string, Mutation>> = {
   [K in keyof M]: ChangeReturnType<OmitFirstArg<M[K]>, OpId>;
@@ -22,7 +23,7 @@ type BoundMutations<M extends Record<string, Mutation>> = {
 // ----------------------------------------------------------------------------
 
 export class Base<M extends Mutations> {
-  stub: LayeredCache;
+  cache: LayeredCache;
   pendingOps: Op[];
 
   // XXX Make private field
@@ -32,8 +33,8 @@ export class Base<M extends Mutations> {
   mutate: BoundMutations<M>;
 
   constructor(mutations: M) {
-    this.stub = new LayeredCache();
-    this.stub.snapshot();
+    this.cache = new LayeredCache();
+    this.cache.snapshot();
 
     this.pendingOps = [];
 
@@ -56,7 +57,7 @@ export class Base<M extends Mutations> {
    * rebased on top of this.
    */
   applyDelta(delta: Delta): void {
-    const stub = this.stub;
+    const stub = this.cache;
 
     // Roll back to snapshot
     stub.rollback();
@@ -98,14 +99,14 @@ export class Base<M extends Mutations> {
       throw new Error(`Mutation not found: '${name}'`);
     }
 
-    this.stub.snapshot();
+    this.cache.snapshot();
     try {
-      mutationFn(this.stub, ...args);
-      const delta = this.stub.delta(id);
-      this.stub.commit();
+      mutationFn(this.cache, ...args);
+      const delta = this.cache.delta(id);
+      this.cache.commit();
       return delta;
     } catch (e) {
-      this.stub.rollback();
+      this.cache.rollback();
       throw e;
     }
   }

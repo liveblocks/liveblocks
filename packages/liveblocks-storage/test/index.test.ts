@@ -12,7 +12,7 @@ describe("Client", () => {
     client.mutate.put("c", 3);
     client.mutate.inc("c");
 
-    expect(Array.from(client.stub.keys())).toEqual(["a", "b", "c"]);
+    expect(Array.from(client.cache.keys())).toEqual(["a", "b", "c"]);
     expect(fmt(client)).toEqual({ a: 1, b: 2, c: 4 });
   });
 
@@ -117,7 +117,7 @@ describe("Client", () => {
     const op1 = client1.mutate.put("a", 1);
     const op2 = client2.mutate.putRandom("b");
 
-    const b1 = client2.stub.get("b"); // First random number (from first optimistic update)
+    const b1 = client2.cache.get("b"); // First random number (from first optimistic update)
 
     expect(fmt(client1)).toEqual({ a: 1 });
     expect(fmt(client2)).toEqual({ b: b1 });
@@ -130,7 +130,7 @@ describe("Client", () => {
     client1.applyDelta(delta1);
     client2.applyDelta(delta1);
 
-    const b2 = client2.stub.get("b"); // Second random number (after applying first op)
+    const b2 = client2.cache.get("b"); // Second random number (after applying first op)
 
     expect(fmt(client1)).toEqual({ a: 1 });
     expect(fmt(client2)).toEqual({ a: 1, b: b2 });
@@ -143,7 +143,7 @@ describe("Client", () => {
     client1.applyDelta(delta2);
     client2.applyDelta(delta2);
 
-    const b3 = client2.stub.get("b"); // Third random number (authoritative from server)
+    const b3 = client2.cache.get("b"); // Third random number (authoritative from server)
 
     expect(fmt(client1)).toEqual({ a: 1, b: b3 });
     expect(fmt(client2)).toEqual({ a: 1, b: b3 });
@@ -164,7 +164,7 @@ describe("Server", () => {
     server.mutate.put("c", 3);
     server.mutate.inc("c");
 
-    expect(Array.from(server.stub.keys())).toEqual(["a", "b", "c"]);
+    expect(Array.from(server.cache.keys())).toEqual(["a", "b", "c"]);
     expect(fmt(server)).toEqual({
       a: 1,
       b: 2,
