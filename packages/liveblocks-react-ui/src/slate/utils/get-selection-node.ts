@@ -55,6 +55,7 @@ export function getSelectionBlock(editor: Editor) {
 
   // If the node itself is a block element, return it
   const [node] = Editor.node(editor, selection);
+
   if (Element.isElement(node) && editor.isBlock(node)) {
     return node;
   }

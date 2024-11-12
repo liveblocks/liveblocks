@@ -371,6 +371,8 @@ function ComposerEditorFloatingToolbarWrapper({
   position = FLOATING_TOOLBAR_POSITION,
   dir,
   FloatingToolbar,
+  hasFloatingToolbarRange,
+  setHasFloatingToolbarRange,
 }: ComposerEditorFloatingToolbarWrapperProps) {
   const editor = useSlateStatic();
   const { isFocused, textFormats } = useComposer();
@@ -403,9 +405,10 @@ function ComposerEditorFloatingToolbarWrapper({
       },
     };
   }, [position, dir]);
-  const [hasSelectionRange, setHasSelectionRange] = useState(false);
   const [isPointerDown, setPointerDown] = useState(false);
-  const isOpen = Boolean(isFocused && !isPointerDown && hasSelectionRange);
+  const isOpen = Boolean(
+    isFocused && !isPointerDown && hasFloatingToolbarRange
+  );
   const {
     refs: { setReference, setFloating },
     strategy,
@@ -451,10 +454,10 @@ function ComposerEditorFloatingToolbarWrapper({
         !domSelection ||
         SlateEditor.string(editor, editor.selection).trim() === ""
       ) {
-        setHasSelectionRange(false);
+        setHasFloatingToolbarRange(false);
         setReference(null);
       } else {
-        setHasSelectionRange(true);
+        setHasFloatingToolbarRange(true);
 
         const domRange = domSelection.getRangeAt(0);
         setReference(domRange);
@@ -462,7 +465,7 @@ function ComposerEditorFloatingToolbarWrapper({
     });
 
     return unsubscribe;
-  }, [setReference, editor, changeEventSource]);
+  }, [setReference, editor, changeEventSource, setHasFloatingToolbarRange]);
 
   return (
     <Persist>
@@ -504,6 +507,7 @@ const ComposerFloatingToolbar = forwardRef<
   const [isPresent] = usePersist();
   const ref = useRef<HTMLDivElement>(null);
   const {
+    id,
     ref: contentRef,
     placement,
     dir,
@@ -529,6 +533,9 @@ const ComposerFloatingToolbar = forwardRef<
   return (
     <Component
       dir={dir}
+      role="toolbar"
+      id={id}
+      aria-label="Floating toolbar"
       {...props}
       onPointerDown={handlePointerDown}
       data-state={isPresent ? "open" : "closed"}
@@ -899,6 +906,8 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       [components]
     );
 
+    const [hasFloatingToolbarRange, setHasFloatingToolbarRange] =
+      useState(false);
     const [mentionDraft, setMentionDraft] = useState<MentionDraft>();
     const mentionSuggestions = useMentionSuggestions(mentionDraft?.text);
     const [
@@ -908,10 +917,10 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       setSelectedMentionSuggestionIndex,
     ] = useIndex(0, mentionSuggestions?.length ?? 0);
     const id = useId();
-    // const floatingToolbarId = useMemo(
-    //   () => `liveblocks-floating-toolbar-${id}`,
-    //   [id]
-    // );
+    const floatingToolbarId = useMemo(
+      () => `liveblocks-floating-toolbar-${id}`,
+      [id]
+    );
     const suggestionsListId = useMemo(
       () => `liveblocks-suggestions-list-${id}`,
       [id]
@@ -921,6 +930,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
         userId ? `liveblocks-suggestions-list-item-${id}-${userId}` : undefined,
       [id]
     );
+
     const renderElement = useCallback(
       (props: RenderElementProps) => {
         return (
@@ -973,6 +983,8 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
           leaveMarkEdge(editor, "end");
         }
 
+        // TODO: Allow closing the floating toolbar with Escape
+
         if (mentionDraft && mentionSuggestions?.length) {
           // Select the next mention suggestion on ArrowDown
           if (isKey(event, "ArrowDown")) {
@@ -999,6 +1011,12 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
             event.preventDefault();
             setMentionDraft(undefined);
             setSelectedMentionSuggestionIndex(0);
+          }
+        } else if (hasFloatingToolbarRange) {
+          // Close the floating toolbar on Escape
+          if (isKey(event, "Escape")) {
+            event.preventDefault();
+            setHasFloatingToolbarRange(false);
           }
         } else {
           // Blur the editor on Escape
@@ -1052,6 +1070,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
         onKeyDown,
         mentionDraft,
         mentionSuggestions,
+        hasFloatingToolbarRange,
         editor,
         setNextSelectedMentionSuggestionIndex,
         setPreviousSelectedMentionSuggestionIndex,
@@ -1113,12 +1132,19 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
                 selectedMentionSuggestionUserId
               ),
             }
-          : {},
+          : hasFloatingToolbarRange
+            ? {
+                "aria-haspopup": true,
+                "aria-controls": floatingToolbarId,
+              }
+            : {},
       [
         mentionDraft,
         suggestionsListId,
         suggestionsListItemId,
         selectedMentionSuggestionUserId,
+        hasFloatingToolbarRange,
+        floatingToolbarId,
       ]
     );
 
@@ -1179,7 +1205,9 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
         {FloatingToolbar && (
           <ComposerEditorFloatingToolbarWrapper
             dir={dir}
-            id={suggestionsListId}
+            id={floatingToolbarId}
+            hasFloatingToolbarRange={hasFloatingToolbarRange}
+            setHasFloatingToolbarRange={setHasFloatingToolbarRange}
             FloatingToolbar={FloatingToolbar}
           />
         )}

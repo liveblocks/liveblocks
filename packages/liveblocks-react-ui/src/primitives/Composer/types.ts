@@ -2,8 +2,10 @@ import type { CommentAttachment, CommentBody } from "@liveblocks/core";
 import type {
   ComponentPropsWithoutRef,
   ComponentType,
+  Dispatch,
   FormEvent,
   ReactNode,
+  SetStateAction,
 } from "react";
 import type {
   RenderElementProps,
@@ -210,6 +212,8 @@ export interface ComposerEditorFloatingToolbarWrapperProps {
   id: string;
   position?: FloatingPosition;
   inset?: number;
+  hasFloatingToolbarRange: boolean;
+  setHasFloatingToolbarRange: Dispatch<SetStateAction<boolean>>;
   FloatingToolbar: ComponentType<ComposerEditorFloatingToolbarProps>;
 }
 
