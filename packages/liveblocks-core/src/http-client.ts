@@ -224,13 +224,10 @@ export interface RoomHttpApi {
   }): Promise<RoomNotificationSettings>;
 
   // Attachments
-  getAttachmentUrls({
-    roomId,
-    attachmentIds,
-  }: {
+  getAttachmentUrl(options: {
     roomId: string;
-    attachmentIds: string[];
-  }): Promise<(string | null)[]>;
+    attachmentId: string;
+  }): Promise<string>;
 
   uploadAttachment({
     roomId,
@@ -241,6 +238,8 @@ export interface RoomHttpApi {
     attachment: CommentLocalAttachment;
     signal?: AbortSignal;
   }): Promise<CommentAttachment>;
+
+  getOrCreateAttachmentUrlsStore(roomId: string): BatchStore<string, string>;
 
   // Text editor
   createTextMention({
@@ -876,6 +875,56 @@ export function createHttpClient({
     }
   }
 
+  // XXX - Batch store for a room will remain in memory even when a room is removed from client.
+  const getAttachmentUrlsBatchStoreByRoom: Map<
+    string,
+    BatchStore<string, string>
+  > = new Map();
+
+  // XXX - This is not a HTTP method, so it feels incorrect to expose this but one of the hooks relies on this store
+  function getOrCreateAttachmentUrlsStore(
+    roomId: string
+  ): BatchStore<string, string> {
+    let store = getAttachmentUrlsBatchStoreByRoom.get(roomId);
+    if (store === undefined) {
+      const batch = new Batch<string, string>(
+        async (batchedAttachmentIds) => {
+          const attachmentIds = batchedAttachmentIds.flat();
+          const { urls } = await httpClient.post<{
+            urls: (string | null)[];
+          }>(
+            url`/v2/c/rooms/${roomId}/attachments/presigned-urls`,
+            () => getAuthValueForRoom(roomId),
+            {
+              attachmentIds,
+            }
+          );
+
+          return urls.map(
+            (url) =>
+              url ??
+              new Error(
+                "There was an error while getting this attachment's URL"
+              )
+          );
+        },
+        {
+          delay: 50,
+        }
+      );
+
+      store = createBatchStore(batch);
+
+      getAttachmentUrlsBatchStoreByRoom.set(roomId, store);
+    }
+    return store;
+  }
+
+  function getAttachmentUrl(options: { roomId: string; attachmentId: string }) {
+    const batch = getOrCreateAttachmentUrlsStore(options.roomId).getBatch();
+    return batch.get(options.attachmentId);
+  }
+
   /* -------------------------------------------------------------------------------------------------
    * Notifications (Room level)
    * -----------------------------------------------------------------------------------------------*/
@@ -910,7 +959,9 @@ export function createHttpClient({
     string,
     Batch<string, string>
   > = new Map();
-  function getOrCreateMarkInboxNotificationsAsReadBatch(roomId: string) {
+  function getOrCreateMarkInboxNotificationsAsReadBatch(
+    roomId: string
+  ): Batch<string, string> {
     let batch = markInboxNotificationsAsReadBatchByRoom.get(roomId);
     if (batch === undefined) {
       batch = new Batch<string, string>(
@@ -1307,8 +1358,9 @@ export function createHttpClient({
     listTextVersions,
     listTextVersionsSince,
     // Room attachments
-    getAttachmentUrls,
+    getAttachmentUrl,
     uploadAttachment,
+    getOrCreateAttachmentUrlsStore,
     // Room storage
     streamStorage,
     sendMessages,

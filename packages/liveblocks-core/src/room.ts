@@ -24,7 +24,6 @@ import { getBearerTokenFromAuthValue, type RoomHttpApi } from "./http-client";
 import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
 import type { BatchStore } from "./lib/batch";
-import { Batch, createBatchStore } from "./lib/batch";
 import { Promise_withResolvers } from "./lib/controlledPromise";
 import { createCommentAttachmentId } from "./lib/createIds";
 import { captureStackTrace } from "./lib/debug";
@@ -1255,8 +1254,6 @@ function installBackgroundTabSpy(): [
 
   return [inBackgroundSince, unsub];
 }
-
-const GET_ATTACHMENT_URLS_BATCH_DELAY = 50;
 
 /**
  * @internal
@@ -2897,27 +2894,8 @@ export function createRoom<
     });
   }
 
-  const batchedGetAttachmentUrls = new Batch<string, string>(
-    async (batchedAttachmentIds) => {
-      const attachmentIds = batchedAttachmentIds.flat();
-
-      const attachmentUrls = await httpClient.getAttachmentUrls({
-        roomId,
-        attachmentIds,
-      });
-
-      return attachmentUrls.map(
-        (url) =>
-          url ??
-          new Error("There was an error while getting this attachment's URL")
-      );
-    },
-    { delay: GET_ATTACHMENT_URLS_BATCH_DELAY }
-  );
-  const attachmentUrlsStore = createBatchStore(batchedGetAttachmentUrls);
-
   function getAttachmentUrl(attachmentId: string) {
-    return batchedGetAttachmentUrls.get(attachmentId);
+    return httpClient.getAttachmentUrl({ roomId, attachmentId });
   }
 
   function getNotificationSettings(
@@ -2987,7 +2965,7 @@ export function createRoom<
           rawSend: (data) => managedSocket.send(data),
         },
 
-        attachmentUrlsStore,
+        attachmentUrlsStore: httpClient.getOrCreateAttachmentUrlsStore(roomId),
       },
 
       id: config.roomId,
