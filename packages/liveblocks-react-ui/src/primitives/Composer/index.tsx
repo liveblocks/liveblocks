@@ -440,10 +440,12 @@ function ComposerEditorFloatingToolbarWrapper({
     const unsubscribe = changeEventSource.subscribe(() => {
       const domSelection = window.getSelection();
 
+      // Show the toolbar if selection is a range and not empty
       if (
         !editor.selection ||
         isSelectionCollapsed(editor.selection) ||
-        !domSelection
+        !domSelection ||
+        SlateEditor.string(editor, editor.selection).trim() === ""
       ) {
         setHasSelectionRange(false);
         setReference(null);
