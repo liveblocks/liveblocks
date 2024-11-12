@@ -88,6 +88,10 @@ import {
 import { withNormalize } from "../../slate/plugins/normalize";
 import { withPaste } from "../../slate/plugins/paste";
 import { getDOMRange } from "../../slate/utils/get-dom-range";
+import {
+  getSelectionBlock,
+  getSelectionInline,
+} from "../../slate/utils/get-selection-node";
 import { isEmpty as isEditorEmpty } from "../../slate/utils/is-empty";
 import { isSelectionCollapsed } from "../../slate/utils/is-selection-collapsed";
 import { getMarks, leaveMarkEdge, toggleMark } from "../../slate/utils/marks";
@@ -1473,6 +1477,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     useEffect(() => {
       const unsubscribe = editorChangeEventSource.subscribe(() => {
         setTextFormats(getMarks(editor));
+        console.log(getSelectionInline(editor), getSelectionBlock(editor));
       });
 
       return unsubscribe;
