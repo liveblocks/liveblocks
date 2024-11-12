@@ -1,6 +1,9 @@
 import React from "react";
 
-import type { LiveblocksTextEditorNode } from "../liveblocks-text-editor";
+import type {
+  ConvertTextEditorNodesAsReactComponents,
+  LiveblocksTextEditorNode,
+} from "../liveblocks-text-editor";
 import { convertTextEditorNodesAsReact } from "../liveblocks-text-editor";
 import { renderToStaticMarkup, resolveUsers } from "./_helpers";
 
@@ -174,7 +177,6 @@ describe("liveblocks text editor", () => {
           buildContentWithMention({ mentionedUserId: "user-2" }),
           { resolveUsers }
         );
-
         const markupContent = renderToStaticMarkup(<>{reactContent}</>);
 
         const expected = renderToStaticMarkup(
@@ -183,6 +185,36 @@ describe("liveblocks text editor", () => {
             <span data-mention>@Tatum Paolo</span>
             <span> !</span>
           </div>
+        );
+
+        expect(markupContent).toEqual(expected);
+      });
+    });
+
+    describe("w/ custom components", () => {
+      const components: Partial<ConvertTextEditorNodesAsReactComponents> = {
+        Container: ({ children }) => <main>{children}</main>,
+        Mention: ({ element, user }) => (
+          <span>user#{user?.name ?? element.userId}</span>
+        ),
+      };
+
+      it("should convert mentions", async () => {
+        const reactContent = await convertTextEditorNodesAsReact(
+          buildContentWithMention({ mentionedUserId: "user-0" }),
+          {
+            resolveUsers,
+            components,
+          }
+        );
+        const markupContent = renderToStaticMarkup(<>{reactContent}</>);
+
+        const expected = renderToStaticMarkup(
+          <main>
+            <span>Hello </span>
+            <span>user#Charlie Layne</span>
+            <span> !</span>
+          </main>
         );
 
         expect(markupContent).toEqual(expected);
