@@ -20,6 +20,7 @@ import { ReactNode } from "react";
 import { LinkNode } from "@lexical/link";
 import { CodeNode } from "@lexical/code";
 import { HorizontalRuleNode } from "@lexical/react/LexicalHorizontalRuleNode";
+import { ImmutableStorage } from "@/liveblocks.config";
 
 // Wrap your Lexical config with `liveblocksConfig`
 const initialConfig = liveblocksConfig({
@@ -50,7 +51,7 @@ export function Editor({
   storageFallback,
 }: {
   contentFallback: ReactNode;
-  storageFallback: any;
+  storageFallback: ImmutableStorage;
 }) {
   const status = useEditorStatus();
 

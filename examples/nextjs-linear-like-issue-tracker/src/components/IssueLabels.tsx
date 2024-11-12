@@ -8,8 +8,13 @@ import {
 import { LABELS } from "@/config";
 import { Select } from "@/components/Select";
 import { PlusIcon } from "@/icons/PlusIcon";
+import { ImmutableStorage } from "@/liveblocks.config";
 
-export function IssueLabels({ storageFallback }: any) {
+export function IssueLabels({
+  storageFallback,
+}: {
+  storageFallback: ImmutableStorage;
+}) {
   return (
     <ClientSideSuspense
       fallback={

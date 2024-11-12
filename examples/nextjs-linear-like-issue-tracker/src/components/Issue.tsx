@@ -51,9 +51,14 @@ export async function Issue({ issueId }: { issueId: string }) {
   );
 
   let error;
-  const results = await Promise.all([storagePromise, contentHtmlPromise]).catch(
-    (err) => (error = err)
-  );
+  let results;
+
+  try {
+    results = await Promise.all([storagePromise, contentHtmlPromise]);
+  } catch (err) {
+    console.log(err);
+    error = err;
+  }
 
   if (
     error ||
@@ -82,7 +87,7 @@ export async function Issue({ issueId }: { issueId: string }) {
   return (
     <div className="h-full flex flex-col">
       <header className="flex justify-between border-b h-10 px-4 items-center">
-        <div className="text-sm font-medium text-neutral-700"></div>
+        <div className="text-sm font-medium text-neutral-700" />
         <Presence />
       </header>
       <div className="flex-grow relative">
