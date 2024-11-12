@@ -98,7 +98,9 @@ import { getMarks, leaveMarkEdge, toggleMark } from "../../slate/utils/marks";
 import type {
   ComposerBody as ComposerBodyData,
   ComposerBodyAutoLink,
+  ComposerBodyBlockElement,
   ComposerBodyCustomLink,
+  ComposerBodyInlineNonTextElement,
   ComposerBodyMention,
   ComposerBodyTextActiveFormats,
   ComposerBodyTextFormat,
@@ -1502,10 +1504,16 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       [editor]
     );
 
+    const [activeBlock, setActiveBlock] =
+      useState<ComposerBodyBlockElement | null>(null);
+    const [activeInline, setActiveInline] =
+      useState<ComposerBodyInlineNonTextElement | null>(null);
+
     useEffect(() => {
       const unsubscribe = editorChangeEventSource.subscribe(() => {
         setTextFormats(getMarks(editor));
-        console.log(getSelectionInline(editor), getSelectionBlock(editor));
+        setActiveBlock(getSelectionBlock(editor) ?? null);
+        setActiveInline(getSelectionInline(editor) ?? null);
       });
 
       return unsubscribe;
@@ -1518,6 +1526,8 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
           validate,
           setFocused,
           changeEventSource: editorChangeEventSource,
+          block: activeBlock,
+          inline: activeInline,
         }}
       >
         <ComposerAttachmentsContext.Provider

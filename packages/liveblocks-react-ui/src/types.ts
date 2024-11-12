@@ -21,6 +21,11 @@ export type ComposerBodyInlineElement =
   | ComposerBodyAutoLink
   | ComposerBodyCustomLink;
 
+export type ComposerBodyInlineNonTextElement = Exclude<
+  ComposerBodyInlineElement,
+  ComposerBodyText
+>;
+
 export type ComposerBodyParagraph = {
   type: "paragraph";
   children: ComposerBodyInlineElement[];

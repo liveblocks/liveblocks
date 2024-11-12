@@ -1,6 +1,13 @@
 import { Editor, Element } from "slate";
 
-export function getSelectionInline(editor: Editor) {
+import type {
+  ComposerBodyBlockElement,
+  ComposerBodyInlineNonTextElement,
+} from "../../types";
+
+export function getSelectionInline(
+  editor: Editor
+): ComposerBodyInlineNonTextElement | undefined {
   const { selection } = editor;
 
   if (!selection) {
@@ -12,7 +19,7 @@ export function getSelectionInline(editor: Editor) {
 
   // If the node itself is an inline element, return it
   if (Element.isElement(node) && editor.isInline(node)) {
-    return node;
+    return node as ComposerBodyInlineNonTextElement;
   }
 
   // Otherwise, check if we're inside an inline node
@@ -26,13 +33,15 @@ export function getSelectionInline(editor: Editor) {
 
   // If there are multiple inlines in the current selection, bail out
   if (inlineEntries.length > 1) {
-    return undefined;
+    return;
   }
 
-  return inlineEntries[0]?.[0];
+  return inlineEntries[0]?.[0] as ComposerBodyInlineNonTextElement | undefined;
 }
 
-export function getSelectionBlock(editor: Editor) {
+export function getSelectionBlock(
+  editor: Editor
+): ComposerBodyBlockElement | undefined {
   const { selection } = editor;
 
   if (!selection) {
@@ -50,14 +59,14 @@ export function getSelectionBlock(editor: Editor) {
 
   // If the selection spans across multiple blocks, return undefined
   if (blockEntries.length > 1) {
-    return undefined;
+    return;
   }
 
   // If the node itself is a block element, return it
   const [node] = Editor.node(editor, selection);
 
   if (Element.isElement(node) && editor.isBlock(node)) {
-    return node;
+    return node as ComposerBodyBlockElement;
   }
 
   // Otherwise, check if we're inside a block node
@@ -67,5 +76,5 @@ export function getSelectionBlock(editor: Editor) {
     mode: "lowest",
   });
 
-  return blockEntry?.[0];
+  return blockEntry?.[0] as ComposerBodyBlockElement | undefined;
 }

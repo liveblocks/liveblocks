@@ -43,6 +43,7 @@ import * as ComposerPrimitive from "../primitives/Composer";
 import {
   useComposer,
   useComposerAttachmentsContext,
+  useComposerEditorContext,
 } from "../primitives/Composer/contexts";
 import type {
   ComposerEditorComponents,
@@ -468,9 +469,12 @@ const textFormatTogglesList = Object.entries(textFormatToggles).map(
 );
 
 function ComposerFloatingToolbar() {
+  const { block, inline } = useComposerEditorContext();
   return (
     <ComposerPrimitive.FloatingToolbar className="lb-root lb-portal lb-elevation lb-composer-floating-toolbar">
+      {block?.type}
       {textFormatTogglesList}
+      {inline?.type}
     </ComposerPrimitive.FloatingToolbar>
   );
 }
