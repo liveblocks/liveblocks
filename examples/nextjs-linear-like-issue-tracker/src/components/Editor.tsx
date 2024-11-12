@@ -62,7 +62,7 @@ export function Editor({
           <ClientSideSuspense
             fallback={
               <div className="block w-full text-2xl font-bold my-6">
-                {storageFallback?.meta?.title ?? "Untitled document"}
+                {storageFallback.meta.title}
               </div>
             }
           >
