@@ -20,13 +20,13 @@ import { resolveAuthorsInfo } from "./lib/authors";
 import { createBatchUsersResolver } from "./lib/batch-users-resolver";
 import type { ResolveRoomInfoArgs } from "./lib/types";
 import type {
-  ConvertLiveblocksTextEditorNodesAsHtmlStyles,
-  ConvertLiveblocksTextEditorNodesAsReactComponents,
+  ConvertTextEditorNodesAsHtmlStyles,
+  ConvertTextEditorNodesAsReactComponents,
   LiveblocksTextEditorNode,
 } from "./liveblocks-text-editor";
 import {
-  convertLiveblocksTextEditorNodesAsHtml,
-  convertLiveblocksTextEditorNodesAsReact,
+  convertTextEditorNodesAsHtml,
+  convertTextEditorNodesAsReact,
   transformAsLiveblocksTextEditorNodes,
 } from "./liveblocks-text-editor";
 import type { TiptapMentionNodeWithContext } from "./tiptap-editor";
@@ -251,7 +251,7 @@ export type PrepareTextMentionNotificationEmailAsReactOptions<
    * The components used to customize the resulting React nodes. Each components has
    * priority over the base components inherited.
    */
-  components?: Partial<ConvertLiveblocksTextEditorNodesAsReactComponents<U>>;
+  components?: Partial<ConvertTextEditorNodesAsReactComponents<U>>;
 };
 
 export type TextMentionNotificationEmailData<
@@ -316,7 +316,7 @@ export async function prepareTextMentionNotificationEmailAsReact(
     userIds: [mention.userId],
     resolveUsers: batchUsersResolver.resolveUsers,
   });
-  const contentPromise = convertLiveblocksTextEditorNodesAsReact(
+  const contentPromise = convertTextEditorNodesAsReact(
     mention.textEditorNodes,
     {
       resolveUsers: batchUsersResolver.resolveUsers,
@@ -362,7 +362,7 @@ export type PrepareTextMentionNotificationEmailAsHtmlOptions<
    * The styles used to customize the html elements in the resulting html safe string.
    * Each styles has priority over the base styles inherited.
    */
-  styles?: Partial<ConvertLiveblocksTextEditorNodesAsHtmlStyles>;
+  styles?: Partial<ConvertTextEditorNodesAsHtmlStyles>;
 };
 
 export type TextMentionNotificationEmailDataAsHtml =
@@ -420,13 +420,10 @@ export async function prepareTextMentionNotificationEmailAsHtml(
     resolveUsers: batchUsersResolver.resolveUsers,
   });
 
-  const contentPromise = convertLiveblocksTextEditorNodesAsHtml(
-    mention.textEditorNodes,
-    {
-      resolveUsers: batchUsersResolver.resolveUsers,
-      styles: options.styles,
-    }
-  );
+  const contentPromise = convertTextEditorNodesAsHtml(mention.textEditorNodes, {
+    resolveUsers: batchUsersResolver.resolveUsers,
+    styles: options.styles,
+  });
 
   await batchUsersResolver.resolve();
 

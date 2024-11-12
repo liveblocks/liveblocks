@@ -306,16 +306,14 @@ const resolveUsersInLiveblocksTextEditorNodes = async <U extends BaseUserMeta>(
   return resolvedUsers;
 };
 
-export type LiveblocksTextEditorContainerComponentProps = {
+export type TextEditorContainerComponentProps = {
   /**
    * The nodes of the text editor
    */
   children: React.ReactNode;
 };
 
-export type LiveblocksTextEditorMentionComponentProps<
-  U extends BaseUserMeta = DU,
-> = {
+export type TextEditorMentionComponentProps<U extends BaseUserMeta = DU> = {
   /**
    * The mention element.
    */
@@ -326,91 +324,89 @@ export type LiveblocksTextEditorMentionComponentProps<
   user?: U["info"];
 };
 
-export type LiveblocksTextEditorTextComponentProps = {
+export type TextEditorTextComponentProps = {
   /**
    * The text element.
    */
   element: LiveblocksTextEditorTextNode;
 };
 
-export type ConvertLiveblocksTextEditorNodesAsReactComponents<
+export type ConvertTextEditorNodesAsReactComponents<
   U extends BaseUserMeta = DU,
 > = {
   /**
    *
    * The component used to act as a container to wrap text editor nodes,
    */
-  Container: React.ComponentType<LiveblocksTextEditorContainerComponentProps>;
+  Container: React.ComponentType<TextEditorContainerComponentProps>;
 
   /**
    * The component used to display mentions.
    */
-  Mention: React.ComponentType<LiveblocksTextEditorMentionComponentProps<U>>;
+  Mention: React.ComponentType<TextEditorMentionComponentProps<U>>;
 
   /**
    * The component used to display text nodes.
    */
-  Text: React.ComponentType<LiveblocksTextEditorTextComponentProps>;
+  Text: React.ComponentType<TextEditorTextComponentProps>;
 };
 
-const baseComponents: ConvertLiveblocksTextEditorNodesAsReactComponents<BaseUserMeta> =
+const baseComponents: ConvertTextEditorNodesAsReactComponents<BaseUserMeta> = {
+  Container: ({ children }) => <div>{children}</div>,
+  Mention: ({ element, user }) => (
+    <span data-mention>
+      {MENTION_CHARACTER}
+      {user?.name ?? element.userId}
+    </span>
+  ),
+  Text: ({ element }) => {
+    // Note: construction following the schema 👇
+    // <code><s><em><strong>{element.text}</strong></s></em></code>
+    let children: React.ReactNode = element.text;
+
+    if (element.bold) {
+      children = <strong>{children}</strong>;
+    }
+
+    if (element.italic) {
+      children = <em>{children}</em>;
+    }
+
+    if (element.strikethrough) {
+      children = <s>{children}</s>;
+    }
+
+    if (element.code) {
+      children = <code>{children}</code>;
+    }
+
+    return <span>{children}</span>;
+  },
+};
+
+export type ConvertTextEditorNodesAsReactOptions<U extends BaseUserMeta = DU> =
   {
-    Container: ({ children }) => <div>{children}</div>,
-    Mention: ({ element, user }) => (
-      <span data-mention>
-        {MENTION_CHARACTER}
-        {user?.name ?? element.userId}
-      </span>
-    ),
-    Text: ({ element }) => {
-      // Note: construction following the schema 👇
-      // <code><s><em><strong>{element.text}</strong></s></em></code>
-      let children: React.ReactNode = element.text;
-
-      if (element.bold) {
-        children = <strong>{children}</strong>;
-      }
-
-      if (element.italic) {
-        children = <em>{children}</em>;
-      }
-
-      if (element.strikethrough) {
-        children = <s>{children}</s>;
-      }
-
-      if (element.code) {
-        children = <code>{children}</code>;
-      }
-
-      return <span>{children}</span>;
-    },
+    /**
+     * The components used to customize the resulting React nodes. Each components has
+     * priority over the base components inherited.
+     */
+    components?: Partial<ConvertTextEditorNodesAsReactComponents<U>>;
+    /**
+     * A function that returns user info from user IDs.
+     */
+    resolveUsers?: (
+      args: ResolveUsersArgs
+    ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
   };
-
-export type ConvertLiveblocksTextEditorNodesAsReactOptions<
-  U extends BaseUserMeta = DU,
-> = {
-  /**
-   * The components used to customize the resulting React nodes. Each components has
-   * priority over the base components inherited.
-   */
-  components?: Partial<ConvertLiveblocksTextEditorNodesAsReactComponents<U>>;
-  /**
-   * A function that returns user info from user IDs.
-   */
-  resolveUsers?: (
-    args: ResolveUsersArgs
-  ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
-};
 
 /**
  * @internal
  *
  * Convert a set of Liveblocks Editor nodes into React elements
  */
-export async function convertLiveblocksTextEditorNodesAsReact(
+export async function convertTextEditorNodesAsReact(
   nodes: LiveblocksTextEditorNode[],
-  options?: ConvertLiveblocksTextEditorNodesAsReactOptions<BaseUserMeta>
+  options?: ConvertTextEditorNodesAsReactOptions<BaseUserMeta>
 ): Promise<React.ReactNode> {
   const Components = {
     ...baseComponents,
@@ -448,7 +444,7 @@ export async function convertLiveblocksTextEditorNodesAsReact(
   );
 }
 
-export type ConvertLiveblocksTextEditorNodesAsHtmlStyles = {
+export type ConvertTextEditorNodesAsHtmlStyles = {
   /**
    * The default inline CSS styles used to display container element.
    */
@@ -467,7 +463,7 @@ export type ConvertLiveblocksTextEditorNodesAsHtmlStyles = {
   mention: CSSProperties;
 };
 
-export const baseStyles: ConvertLiveblocksTextEditorNodesAsHtmlStyles = {
+export const baseStyles: ConvertTextEditorNodesAsHtmlStyles = {
   container: {
     fontSize: "14px",
   },
@@ -486,14 +482,12 @@ export const baseStyles: ConvertLiveblocksTextEditorNodesAsHtmlStyles = {
   },
 };
 
-export type ConvertLiveblocksTextEditorNodesAsHtmlOptions<
-  U extends BaseUserMeta = DU,
-> = {
+export type ConvertTextEditorNodesAsHtmlOptions<U extends BaseUserMeta = DU> = {
   /**
    * The styles used to customize the html elements in the resulting html safe string.
    * Each styles has priority over the base styles inherited.
    */
-  styles?: Partial<ConvertLiveblocksTextEditorNodesAsHtmlStyles>;
+  styles?: Partial<ConvertTextEditorNodesAsHtmlStyles>;
   /**
    * A function that returns user info from user IDs.
    */
@@ -508,9 +502,9 @@ export type ConvertLiveblocksTextEditorNodesAsHtmlOptions<
  * Convert a set of Liveblocks Editor nodes into an html safe string
  * with inline css styles
  */
-export async function convertLiveblocksTextEditorNodesAsHtml(
+export async function convertTextEditorNodesAsHtml(
   nodes: LiveblocksTextEditorNode[],
-  options?: ConvertLiveblocksTextEditorNodesAsHtmlOptions<BaseUserMeta>
+  options?: ConvertTextEditorNodesAsHtmlOptions<BaseUserMeta>
 ): Promise<string> {
   const styles = { ...baseStyles, ...options?.styles };
   const resolvedUsers = await resolveUsersInLiveblocksTextEditorNodes(

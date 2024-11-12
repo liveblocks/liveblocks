@@ -15,10 +15,11 @@ export type {
 } from "./comment-body";
 export type { ResolveRoomInfoArgs } from "./lib/types";
 export type {
-  ConvertLiveblocksTextEditorNodesAsReactComponents,
-  LiveblocksTextEditorContainerComponentProps,
-  LiveblocksTextEditorMentionComponentProps,
-  LiveblocksTextEditorTextComponentProps,
+  ConvertTextEditorNodesAsHtmlStyles,
+  ConvertTextEditorNodesAsReactComponents,
+  TextEditorContainerComponentProps,
+  TextEditorMentionComponentProps,
+  TextEditorTextComponentProps,
 } from "./liveblocks-text-editor";
 export type {
   MentionEmailAsHtmlData,
