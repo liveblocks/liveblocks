@@ -1035,11 +1035,13 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 
     // Mark the composer as a pending update when it isn't empty
     // or when attachments are being uploaded
+    const isPending = !preventUnsavedChanges
+      ? false
+      : !isEmpty || isUploadingAttachments;
+
     useEffect(() => {
-      if (preventUnsavedChanges) {
-        syncSource.setPending(!isEmpty || isUploadingAttachments);
-      }
-    }, [syncSource, isEmpty, preventUnsavedChanges, isUploadingAttachments]);
+      syncSource.setPending(isPending);
+    }, [syncSource, isPending]);
 
     const createAttachments = useCallback(
       (files: File[]) => {
