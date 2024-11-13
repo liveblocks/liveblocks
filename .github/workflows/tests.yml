@@ -22,6 +22,7 @@ jobs:
             "@liveblocks/react-lexical",
             "@liveblocks/react-tiptap",
             "@liveblocks/node-lexical",
+            "@liveblocks/node-prosemirror",
             "@liveblocks/codemod",
             "@liveblocks/emails",
           ]
