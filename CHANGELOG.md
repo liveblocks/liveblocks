@@ -16,6 +16,14 @@
 - Deprecated APIs:
   - `useStorageStatus` is now deprecated in favor of `useSyncStatus`.
 
+### `@liveblocks/react-lexical`
+
+- Add new hook `useIsEditorReady` which can be used to show a skeleton UI before
+  the editor has received the initial text from the server.
+- Deprecated APIs:
+  - `useEditorStatus` is now deprecated in favor of `useIsEditorReady` or
+    `useSyncStatus`.
+
 ## 2.11.1 (Yet to be published)
 
 ### `@liveblocks/react-lexical`
