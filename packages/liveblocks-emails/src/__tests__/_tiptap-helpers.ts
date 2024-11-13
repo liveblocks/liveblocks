@@ -1,4 +1,7 @@
-import type { SerializedTiptapRootNode } from "../tiptap-editor";
+import type {
+  SerializedTiptapRootNode,
+  TiptapMentionNodeWithContext,
+} from "../tiptap-editor";
 
 /**
  * A simple `Uint8Array` representing a tiptap document
@@ -31,6 +34,10 @@ export const docUpdate = new Uint8Array([
 
 export const docUpdateBuffer = docUpdate.buffer as ArrayBuffer;
 
+export const MENTIONED_USER_ID = "user-0";
+export const MENTION_ID = "in_8QpppsmEJhJzWQ8Q3B7BP";
+
+// Without line breaks
 export const docStateRoot: SerializedTiptapRootNode = {
   type: "doc",
   content: [
@@ -62,8 +69,8 @@ export const docStateRoot: SerializedTiptapRootNode = {
         {
           type: "liveblocksMention",
           attrs: {
-            id: "user-0",
-            notificationId: "in_8QpppsmEJhJzWQ8Q3B7BP",
+            id: MENTIONED_USER_ID,
+            notificationId: MENTION_ID,
           },
         },
         {
@@ -73,4 +80,99 @@ export const docStateRoot: SerializedTiptapRootNode = {
       ],
     },
   ],
+};
+
+// with line breaks
+export const docStateRoot2: SerializedTiptapRootNode = {
+  type: "doc",
+  content: [
+    { type: "paragraph" },
+    {
+      type: "paragraph",
+      content: [
+        {
+          type: "text",
+          text: "Hey this a tip tap ",
+        },
+        {
+          type: "text",
+          text: "example",
+          marks: [
+            {
+              type: "bold",
+              attrs: {},
+            },
+            {
+              type: "italic",
+              attrs: {},
+            },
+          ],
+        },
+        {
+          type: "text",
+          text: " hiha! ",
+        },
+        {
+          type: "liveblocksMention",
+          attrs: {
+            id: MENTIONED_USER_ID,
+            notificationId: MENTION_ID,
+          },
+        },
+        {
+          type: "text",
+          text: " fun right?",
+        },
+      ],
+    },
+    { type: "paragraph" },
+  ],
+};
+
+export const createTipTapMentionNodeWithContext = ({
+  mentionedUserId,
+  mentionId,
+}: {
+  mentionedUserId: string;
+  mentionId: string;
+}): TiptapMentionNodeWithContext => {
+  return {
+    before: [
+      {
+        type: "text",
+        text: "Hey this a tip tap ",
+      },
+      {
+        type: "text",
+        text: "example",
+        marks: [
+          {
+            type: "bold",
+            attrs: {},
+          },
+          {
+            type: "italic",
+            attrs: {},
+          },
+        ],
+      },
+      {
+        type: "text",
+        text: " hiha! ",
+      },
+    ],
+    mention: {
+      type: "liveblocksMention",
+      attrs: {
+        id: mentionedUserId,
+        notificationId: mentionId,
+      },
+    },
+    after: [
+      {
+        type: "text",
+        text: " fun right?",
+      },
+    ],
+  };
 };

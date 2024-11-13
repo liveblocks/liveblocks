@@ -8,12 +8,6 @@ export interface SerializedTiptapBaseNode {
   content?: Array<SerializedTiptapBaseNode>;
 }
 
-export interface SerializedTiptapLineBreakNode
-  extends SerializedTiptapBaseNode {
-  type: "paragraph";
-  content: undefined;
-}
-
 export interface SerializedTiptapBaseMark {
   type: string;
   attrs: Record<string, string>;
@@ -64,6 +58,12 @@ export interface SerializedTiptapMentionNode extends SerializedTiptapBaseNode {
     id: string;
     notificationId: string;
   };
+}
+
+export interface SerializedTiptapLineBreakNode
+  extends SerializedTiptapBaseNode {
+  type: "paragraph";
+  content?: undefined;
 }
 
 export interface SerializedTiptapParagraphNode
