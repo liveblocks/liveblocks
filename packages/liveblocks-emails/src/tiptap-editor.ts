@@ -56,7 +56,6 @@ export interface SerializedTiptapTextNode extends SerializedTiptapBaseNode {
   type: "text";
   text: string;
   marks?: Array<SerializedTiptapMark>;
-  content: undefined;
 }
 
 export interface SerializedTiptapMentionNode extends SerializedTiptapBaseNode {
