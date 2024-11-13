@@ -83,16 +83,16 @@ export async function Issue({ issueId }: { issueId: string }) {
   return (
     <div className="h-full flex flex-col">
       <header className="flex justify-between border-b h-10 px-4 items-center">
-        <div className="text-sm font-medium text-neutral-700"></div>
+        <div />
         <Presence />
       </header>
       <div className="flex-grow relative">
         <div className="absolute inset-0 flex flex-row">
-          <div className="flex-grow h-full overflow-y-scroll">
-            <div className="max-w-[840px] mx-auto py-6 relative">
-              <div className="absolute top-3 right-3">
-                <Status />
-              </div>
+          <div className="flex-grow h-full overflow-y-scroll relative">
+            <div className="absolute top-3 right-3">
+              <Status />
+            </div>
+            <div className="max-w-[840px] mx-auto py-6">
               <div className="px-12">
                 <Editor
                   storageFallback={storage}
