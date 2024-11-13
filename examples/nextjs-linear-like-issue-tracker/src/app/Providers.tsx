@@ -10,6 +10,7 @@ export function Providers({ children }: PropsWithChildren) {
   return (
     <InboxProvider>
       <LiveblocksProvider
+        preventUnsavedChanges={true}
         authEndpoint={authWithRandomUser("/api/liveblocks-auth")}
         // Get users' info from their ID
         resolveUsers={async ({ userIds }) => {
