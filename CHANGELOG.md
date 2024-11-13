@@ -20,17 +20,22 @@
 
 - Add new hook `useIsEditorReady` which can be used to show a skeleton UI before
   the editor has received the initial text from the server.
-- Fix an issue with `AnchoredThreads` component not working correctly on certain
-  React versions.
 - Deprecated APIs:
   - `useEditorStatus` is now deprecated in favor of `useIsEditorReady` or
     `useSyncStatus`.
+
+## 2.11.1
+
+### `@liveblocks/react-lexical`
+
+- Fix an issue with `AnchoredThreads` component not working correctly on certain
+  React versions.
 
 ### `@liveblocks/react-tiptap`
 
 - Fix an issue with `AnchoredThreads` component not working correctly on certain
   React versions.
-- Fixes an issue where React components don’t update when
+- Fix an issue where React components don’t update when
   `shouldRerenderOnTransaction: false` is set.
 
 ### `@liveblocks/yjs`
