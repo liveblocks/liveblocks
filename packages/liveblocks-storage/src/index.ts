@@ -46,30 +46,37 @@ export class Base<M extends Mutations> {
    * locally pending Ops that have not yet been acknowledged will be "replayed"
    * on top of the new state.
    */
-  applyDelta(delta: Delta): void {
+  applyDeltas(deltas: readonly Delta[]): void {
     const cache = this.#cache;
 
     // Roll back to snapshot
     cache.rollback();
 
-    // Apply authoritative delta
-    const [opId, deletions, updates] = delta;
-    for (const key of deletions) {
-      cache.delete(key);
-    }
-    for (const [key, value] of updates) {
-      cache.set(key, value);
-    }
+    for (const delta of deltas) {
+      // Apply authoritative delta
+      const [opId, deletions, updates] = delta;
+      for (const key of deletions) {
+        cache.delete(key);
+      }
+      for (const [key, value] of updates) {
+        cache.set(key, value);
+      }
 
-    // Acknowledge the incoming opId by removing it from the pending ops list.
-    // If this opId is not found, it's from another client.
-    this.ack(opId);
+      // Acknowledge the incoming opId by removing it from the pending ops list.
+      // If this opId is not found, it's from another client.
+      this.ack(opId);
+    }
 
     // Start a new snapshot
     cache.snapshot();
 
     // Apply all local pending ops
     this.applyPendingOps();
+  }
+
+  // For convenience in unit tests
+  applyDelta(delta: Delta): void {
+    this.applyDeltas([delta]);
   }
 
   /**
