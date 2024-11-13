@@ -143,8 +143,8 @@ const isSerializedParagraphNode = (
   return node.type === "paragraph" && typeof node.content !== "undefined";
 };
 
-/** @internal */
-const flattenTiptapTree = (
+/** @internal - export for testing only */
+export const flattenTiptapTree = (
   nodes: SerializedTiptapNode[]
 ): SerializedTiptapNode[] => {
   let flattenNodes: SerializedTiptapNode[] = [];

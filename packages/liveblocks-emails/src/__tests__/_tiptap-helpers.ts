@@ -1,3 +1,5 @@
+import type { SerializedTiptapRootNode } from "../tiptap-editor";
+
 /**
  * A simple `Uint8Array` representing a tiptap document
  *
@@ -28,3 +30,47 @@ export const docUpdate = new Uint8Array([
 ]);
 
 export const docUpdateBuffer = docUpdate.buffer as ArrayBuffer;
+
+export const docStateRoot: SerializedTiptapRootNode = {
+  type: "doc",
+  content: [
+    {
+      type: "paragraph",
+      content: [
+        {
+          type: "text",
+          text: "Hey this a tip tap ",
+        },
+        {
+          type: "text",
+          text: "example",
+          marks: [
+            {
+              type: "bold",
+              attrs: {},
+            },
+            {
+              type: "italic",
+              attrs: {},
+            },
+          ],
+        },
+        {
+          type: "text",
+          text: " hiha! ",
+        },
+        {
+          type: "liveblocksMention",
+          attrs: {
+            id: "user-0",
+            notificationId: "in_8QpppsmEJhJzWQ8Q3B7BP",
+          },
+        },
+        {
+          type: "text",
+          text: " fun right?",
+        },
+      ],
+    },
+  ],
+};
