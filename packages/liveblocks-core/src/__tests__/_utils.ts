@@ -102,7 +102,7 @@ export const FIFTH_POSITION = makePosition(FOURTH_POSITION);
 
 export function makeSyncSource(): SyncSource {
   return {
-    setPending: () => {},
+    setSyncStatus: () => {},
     destroy: () => {},
   };
 }

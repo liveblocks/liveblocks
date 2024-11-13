@@ -143,6 +143,15 @@ export type SyncStatus =
   | "synchronized";
 
 /**
+ * "synchronizing"     - Liveblocks is in the process of writing changes
+ * "synchronized"      - Liveblocks has persisted all pending changes
+ * "has-local-changes" - There is local pending state inputted by the user, but
+ *                       we're not yet "synchronizing" it until a user
+ *                       interaction, like the draft text in a comment box.
+ */
+export type InternalSyncStatus = SyncStatus | "has-local-changes";
+
+/**
  * @private
  *
  * Private methods and variables used in the core internals, but as a user
@@ -763,29 +772,32 @@ export function createClient<U extends BaseUserMeta = DU>(
 
   // ----------------------------------------------------------------
 
-  const syncStatusSources: ValueRef<boolean>[] = [];
-  const syncStatusRef = new ValueRef<SyncStatus>("synchronized");
+  const syncStatusSources: ValueRef<InternalSyncStatus>[] = [];
+  const syncStatusRef = new ValueRef<InternalSyncStatus>("synchronized");
 
   function getSyncStatus(): SyncStatus {
-    return syncStatusRef.current;
+    const status = syncStatusRef.current;
+    return status === "synchronizing" ? status : "synchronized";
   }
 
   function recompute() {
     syncStatusRef.set(
-      syncStatusSources.some((src) => src.current)
+      syncStatusSources.some((src) => src.current === "synchronizing")
         ? "synchronizing"
-        : "synchronized"
+        : syncStatusSources.some((src) => src.current === "has-local-changes")
+          ? "has-local-changes"
+          : "synchronized"
     );
   }
 
   function createSyncSource(): SyncSource {
-    const source = new ValueRef(false);
+    const source = new ValueRef<InternalSyncStatus>("synchronized");
     syncStatusSources.push(source);
 
     const unsub = source.didInvalidate.subscribe(() => recompute());
 
-    function setPending(isPending: boolean) {
-      source.set(isPending);
+    function setSyncStatus(status: InternalSyncStatus) {
+      source.set(status);
     }
 
     function destroy() {
@@ -793,7 +805,7 @@ export function createClient<U extends BaseUserMeta = DU>(
       const index = syncStatusSources.findIndex((item) => item === source);
       if (index > -1) {
         const [ref] = syncStatusSources.splice(index, 1);
-        const wasStillPending = ref.current;
+        const wasStillPending = ref.current !== "synchronized";
         if (wasStillPending) {
           // We only have to recompute if it was still pending. Otherwise it
           // could not have an effect on the global state anyway.
@@ -802,7 +814,7 @@ export function createClient<U extends BaseUserMeta = DU>(
       }
     }
 
-    return { setPending, destroy };
+    return { setSyncStatus, destroy };
   }
 
   // ----------------------------------------------------------------
@@ -814,7 +826,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     const maybePreventClose = (e: BeforeUnloadEvent) => {
       if (
         clientOptions.preventUnsavedChanges &&
-        client.getSyncStatus() === "synchronizing"
+        syncStatusRef.current !== "synchronized"
       ) {
         e.preventDefault();
       }
