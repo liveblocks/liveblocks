@@ -32,7 +32,7 @@ type LiveblocksExtensionOptions = {
   field?: string;
   comments: boolean; // | CommentsConfiguration
   mentions: boolean; // | MentionsConfiguration
-  offlineSupport_experimental: boolean; // Experimental offlien support
+  offlineSupport_experimental: boolean; // Experimental offline support
 };
 
 const LiveblocksCollab = Collaboration.extend({
