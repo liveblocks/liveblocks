@@ -1,6 +1,7 @@
 import React from "react";
 
 import type {
+  ConvertTextEditorNodesAsHtmlStyles,
   ConvertTextEditorNodesAsReactComponents,
   LiveblocksTextEditorNode,
 } from "../liveblocks-text-editor";
@@ -231,6 +232,72 @@ describe("liveblocks text editor", () => {
         const htmlContent = await convertTextEditorNodesAsHtml(content1);
         const expected =
           '<div style="font-size:14px;">I think it\'s really neat mate 👌</div>';
+
+        expect(htmlContent).toEqual(expected);
+      });
+
+      it("should convert with bold and italic", async () => {
+        const htmlContent = await convertTextEditorNodesAsHtml(content2);
+        const expected =
+          '<div style="font-size:14px;"><strong style="font-weight:500;">Bold text</strong> and <em>italic text</em></div>';
+
+        expect(htmlContent).toEqual(expected);
+      });
+
+      it("should convert with with code and strikethrough", async () => {
+        const htmlContent = await convertTextEditorNodesAsHtml(content3);
+        const expected =
+          '<div style="font-size:14px;"><code style="font-family:ui-monospace, Menlo, Monaco, &quot;Cascadia Mono&quot;, &quot;Segoe UI Mono&quot;, &quot;Roboto Mono&quot;, &quot;Oxygen Mono&quot;, &quot;Ubuntu Mono&quot;, &quot;Source Code Pro&quot;, &quot;Fira Mono&quot;, &quot;Droid Sans Mono&quot;, &quot;Consolas&quot;, &quot;Courier New&quot;, monospace;background-color:rgba(0,0,0,0.05);border:solid 1px rgba(0,0,0,0.1);border-radius:4px;">Code text</code> and <s>strikethrough text</s></div>';
+
+        expect(htmlContent).toEqual(expected);
+      });
+
+      it("should convert with a user mention", async () => {
+        const htmlContent = await convertTextEditorNodesAsHtml(
+          buildContentWithMention({ mentionedUserId: "user-dracula" })
+        );
+        const expected =
+          '<div style="font-size:14px;">Hello <span data-mention style="color:blue;">@user-dracula</span> !</div>';
+
+        expect(htmlContent).toEqual(expected);
+      });
+    });
+
+    describe("w/ users resolver", () => {
+      it("should convert with a resolved user mention", async () => {
+        const htmlContent = await convertTextEditorNodesAsHtml(
+          buildContentWithMention({ mentionedUserId: "user-2" }),
+          { resolveUsers }
+        );
+
+        const expected =
+          '<div style="font-size:14px;">Hello <span data-mention style="color:blue;">@Tatum Paolo</span> !</div>';
+
+        expect(htmlContent).toEqual(expected);
+      });
+    });
+
+    describe("w/ custom styles", () => {
+      const styles: Partial<ConvertTextEditorNodesAsHtmlStyles> = {
+        container: {
+          fontSize: "16px",
+        },
+        mention: {
+          color: "purple",
+        },
+      };
+
+      it("should convert mentions", async () => {
+        const htmlContent = await convertTextEditorNodesAsHtml(
+          buildContentWithMention({ mentionedUserId: "user-0" }),
+          {
+            resolveUsers,
+            styles,
+          }
+        );
+
+        const expected =
+          '<div style="font-size:16px;">Hello <span data-mention style="color:purple;">@Charlie Layne</span> !</div>';
 
         expect(htmlContent).toEqual(expected);
       });
