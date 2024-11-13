@@ -10,6 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@floating-ui/react-dom": "^2.1.0",
     "@lexical/react": "^0.16.1",
     "@liveblocks/client": "^2.11.0",
     "@liveblocks/node": "^2.11.0",

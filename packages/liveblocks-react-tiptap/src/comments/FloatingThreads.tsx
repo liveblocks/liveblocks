@@ -14,7 +14,7 @@ import {
   Thread as DefaultThread,
   type ThreadProps,
 } from "@liveblocks/react-ui";
-import type { Editor } from "@tiptap/react";
+import { type Editor, useEditorState } from "@tiptap/react";
 import React, {
   type ComponentType,
   type HTMLAttributes,
@@ -28,7 +28,6 @@ import React, {
 import { createPortal } from "react-dom";
 
 import { classNames } from "../classnames";
-import type { ThreadPluginState } from "../types";
 import { THREADS_PLUGIN_KEY } from "../types";
 
 type ThreadPanelComponents = {
@@ -61,7 +60,22 @@ export function FloatingThreads({
 }: FloatingThreadsProps) {
 
   const Thread = components?.Thread ?? DefaultThread;
-  const pluginState = editor ? THREADS_PLUGIN_KEY.getState(editor.state) as ThreadPluginState : null;
+
+  const { pluginState } = useEditorState({
+    editor,
+    selector: (ctx) => {
+      if (!ctx?.editor?.state) return { pluginState: undefined };
+      const state = THREADS_PLUGIN_KEY.getState(ctx.editor.state);
+      return {
+        pluginState: state,
+      };
+    },
+    equalityFn: (prev, next) => {
+      if (!prev || !next) return false;
+      return prev.pluginState?.selectedThreadPos === next.pluginState?.selectedThreadPos &&
+        prev.pluginState?.selectedThreadId === next.pluginState?.selectedThreadId;
+    },
+  }) ?? { pluginState: undefined };
 
   const [activeThread, setActiveThread] = useState<ThreadData | null>(null);
 

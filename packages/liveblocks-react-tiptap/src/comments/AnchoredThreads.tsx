@@ -3,7 +3,7 @@ import {
   Thread as DefaultThread,
   type ThreadProps,
 } from "@liveblocks/react-ui";
-import type { Editor } from "@tiptap/react";
+import { type Editor, useEditorState } from "@tiptap/react";
 import type { ComponentPropsWithoutRef, ComponentType } from "react";
 import React, {
   useCallback,
@@ -14,7 +14,6 @@ import React, {
 } from "react";
 
 import { classNames } from "../classnames";
-import type { ThreadPluginState } from "../types";
 import { THREADS_PLUGIN_KEY } from "../types";
 import { getRectFromCoords } from "../utils";
 
@@ -60,7 +59,21 @@ export function AnchoredThreads({
   const [elements, setElements] = useState<Map<string, HTMLElement>>(new Map());
   const [positions, setPositions] = useState<Map<string, number>>(new Map()); // A map of thread ids to their 'top' position in the document
 
-  const pluginState = editor ? THREADS_PLUGIN_KEY.getState(editor.state) as ThreadPluginState : null;
+  const { pluginState } = useEditorState({
+    editor,
+    selector: (ctx) => {
+      if (!ctx?.editor?.state) return { pluginState: undefined };
+      const state = THREADS_PLUGIN_KEY.getState(ctx.editor.state);
+      return {
+        pluginState: state,
+      };
+    },
+    equalityFn: (prev, next) => {
+      if (!prev || !next) return false;
+      return prev.pluginState?.selectedThreadId === next.pluginState?.selectedThreadId &&
+        prev.pluginState?.threadPositions === next.pluginState?.threadPositions; // new map is made each time threadPos updates so shallow equality is fine
+    },
+  }) ?? { pluginState: undefined };
 
   // TODO: lexical supoprts multiple threads being active, should probably do that here as well
   const handlePositionThreads = useCallback(() => {
