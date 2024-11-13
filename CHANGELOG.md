@@ -1,4 +1,4 @@
-## 2.11.1 (Yet to be published)
+## 2.11.1
 
 ### `@liveblocks/react-lexical`
 
