@@ -69,7 +69,7 @@
   --transition-linear: 0.15s linear;
   --header-height: 60px;
   --z-above: 100;
-  --z-overlay: 200;
+  --z-overlay: 300;
   --z-badge: 1000;
   --opacity-hover: 0.8;
   --opacity-disabled: 0.5;

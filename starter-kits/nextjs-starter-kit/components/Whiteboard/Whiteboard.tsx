@@ -43,13 +43,18 @@ export function Whiteboard() {
 
   return (
     <ClientSideSuspense fallback={<DocumentSpinner />}>
-      <Canvas currentUser={session?.user.info ?? null} />
+      <LiveblocksWhiteboard currentUser={session?.user.info ?? null} />
     </ClientSideSuspense>
   );
 }
 
 // The main Liveblocks code, handling all events and note modifications
-function Canvas({ currentUser, className, style, ...props }: Props) {
+function LiveblocksWhiteboard({
+  currentUser,
+  className,
+  style,
+  ...props
+}: Props) {
   // An array of every note id
   const noteIds: string[] = useStorage(
     (root) => Array.from(root.notes.keys()),
