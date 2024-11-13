@@ -145,10 +145,10 @@ const client = createClient({
   </PropertiesListItem>
   <PropertiesListItem
     name="resolveUsers"
-    detailedType='async? (args: ResolveUsersArgs) => (TUserMeta["info"] | undefined)[] | undefined'
+    detailedType='async? (args: ResolveUsersArgs) => (UserMeta["info"] | undefined)[] | undefined'
   >
     A function that resolves user information in
-    [Comments](/docs/products/comments). Return an array of `TUserMeta["info"]`
+    [Comments](/docs/products/comments). Return an array of `UserMeta["info"]`
     objects in the same order they arrived. [Learn
     more](#createClientResolveUsers).
   </PropertiesListItem>
@@ -613,7 +613,7 @@ Note that it’s possible to [add types to your room](#typing-your-data).
 <PropertiesList title="Returns">
   <PropertiesListItem
     name="room"
-    type="Room<TPresence, TStorage, TUserMeta, TRoomEvent>"
+    type="Room<Presence, Storage, UserMeta, RoomEvent>"
   >
     A [Room](#Room), used for building your Liveblocks application. Learn more
     about [typing your room](#typing-your-data).
@@ -722,7 +722,7 @@ It’s unlikely you’ll need this API if you’re using the newer
 <PropertiesList title="Returns">
   <PropertiesListItem
     name="room"
-    type="Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null"
+    type="Room<Presence, Storage, UserMeta, RoomEvent> | null"
   >
     A [Room](#Room), used for building your Liveblocks application. Returns
     `null` if the room has not yet been joined by the current client. Learn more
@@ -862,7 +862,7 @@ for (const other of others) {
 ```
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="others" type="User<TPresence, TUserMeta>[]">
+  <PropertiesListItem name="others" type="User<Presence, UserMeta>[]">
     An array holding each connected user’s [`User`](#user-type) object. `User`
     contains the current user’s Presence value, along with other information.
     Presence is set with [`updatePresence`](#Room.updatePresence). Returns an
@@ -987,7 +987,7 @@ const { connectionId, presence, id, info, canWrite, canComment } =
 ```
 
 <PropertiesList title="Returns">
-  <PropertiesListItem name="user" type="User<TPresence, TUserMeta> | null">
+  <PropertiesListItem name="user" type="User<Presence, UserMeta> | null">
     Returns the current [`User`](#user-type). Returns `null` if the client is
     not yet connected to the room.
   </PropertiesListItem>
@@ -1303,7 +1303,7 @@ const unsubscribe = room.subscribe("event", ({ event, user, connectionId }) => {
   </PropertiesListItem>
   <PropertiesListItem
     name="callback"
-    detailedType="(event: RoomEventMessage<TPresence, TUserMeta, TRoomEvent>) => void"
+    detailedType="(event: RoomEventMessage<Presence, UserMeta, RoomEvent>) => void"
     required
   >
     Function that’s called when another user sends an event. Receives the event,
@@ -1453,7 +1453,7 @@ const unsubscribe = room.subscribe("others", (others, event) => {
   </PropertiesListItem>
   <PropertiesListItem
     name="callback"
-    type="(others: User<TPresence, TUserMeta>[], event: OthersEvent) => void"
+    type="(others: User<Presence, UserMeta>[], event: OthersEvent) => void"
     required
   >
     Function that’s called when another user’s Presence has updated, for example
@@ -4853,11 +4853,11 @@ const user = room.getSelf();
     The connection ID of the User. It is unique and increments with every new
     connection.
   </PropertiesListItem>
-  <PropertiesListItem name="id" type={`TUserMeta["id"]`}>
+  <PropertiesListItem name="id" type={`UserMeta["id"]`}>
     The ID of the User that has been set in the authentication endpoint. Useful
     to get additional information about the connected user.
   </PropertiesListItem>
-  <PropertiesListItem name="info" type={`TUserMeta["info"]`}>
+  <PropertiesListItem name="info" type={`UserMeta["info"]`}>
     Additional user information that has been set in the authentication
     endpoint.
   </PropertiesListItem>

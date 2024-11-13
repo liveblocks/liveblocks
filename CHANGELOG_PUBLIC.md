@@ -13,6 +13,91 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
 
+# Week 45 (2024-11-08)
+
+## v2.11.0
+
+### `@liveblocks/react-ui`
+
+- Upgrade dependencies.
+- Fix minor appearance issues related to attachments.
+- Fix pasting issues introduced in 2.10.0.
+
+### `@liveblocks/react`
+
+- Fix regression with `useThreads` that caused the hook to return an error if
+  its associated room did not exist.
+
+### `@liveblocks/react-tiptap`
+
+- Initial release.
+
+### `@liveblocks/emails`
+
+- Initial release.
+
+## Documentation
+
+- [`@liveblocks/react-tiptap`](https://liveblocks.io/docs/api-reference/liveblocks-react-tiptap) API reference.
+- New [Tiptap overview page](https://liveblocks.io/docs/products/text-editor/tiptap).
+- Restructured getting started, adding new guides for using `@liveblocks/react-tiptap` on [Next.js](https://liveblocks.io/docs/get-started/nextjs-tiptap) and [React](https://liveblocks.io/docs/get-started/react-tiptap).
+- [`@liveblocks/emails`](https://liveblocks.io/docs/api-reference/liveblocks-emails) API reference.
+- Updated guide on [sending emails when comments are created](https://liveblocks.io/docs/guides/how-to-send-email-notifications-of-unread-comments).
+- Updated [email notifications overview](https://liveblocks.io/docs/products/comments/email-notifications).
+
+## Examples
+
+- New [Next.js Comments + Resend example](https://liveblocks.io/examples/comments-emails/nextjs-comments-emails-resend).
+- New [Next.js Comments + SendGrid example](https://liveblocks.io/examples/comments-emails/nextjs-comments-emails-sendgrid).
+- Updated [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit) to use `@liveblocks/react-tiptap`.
+- Updated [Next.js advanced Tiptap text editor example](https://liveblocks.io/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced) to use `@liveblocks/react-tiptap`.
+- Updated [Next.js Tiptap text editor example](https://liveblocks.io/examples/collaborative-text-editor/nextjs-tiptap) to use `@liveblocks/react-tiptap`.
+
+## Contributors
+
+sugardarius, nimeshnayaju, marcbouchenoire, jrowny, ctnicholas
+
+# Week 44 (2024-11-01)
+
+## v2.10.2
+
+### `@liveblocks/client`
+
+- Internal refactorings and code cleanup across various parts of the client's
+  inner workings.
+
+### `@liveblocks/react`
+
+- Implement automatic retry for initial load of inbox notifications, user
+  threads, room threads, room versions, or room notification settings—except
+  when encountering a 4xx error.
+- Background tabs will no longer poll threads, notification, room versions or
+  room notification settings.
+- Fix incorrect suspense export for `useRoomNotificationSettings` hook.
+- Support for React 19 and Next.js 15.
+
+### `@liveblocks/react-ui`
+
+- Support for React 19 and Next.js 15.
+
+### `@liveblocks/react-lexical`
+
+- Support for React 19 and Next.js 15.
+
+## Dashboard
+
+- Icons indicating which rooms are public/private on room listing and detail pages.
+- New warning message if all your rooms are publicly accessible.
+
+## Documentation
+
+- Improved clarity on Notifications being [project-based](http://liveblocks.io/docs/products/notifications/concepts#Project-based).
+- Typo fixes.
+
+## Contributors
+
+haydenbleasel, ctnicholas, pierrelevaillant, nvie, nimeshnayaju
+
 # Week 43 (2024-10-25)
 
 ## v2.10.0

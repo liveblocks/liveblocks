@@ -1,9 +1,42 @@
-## 2.10.1
+## 2.11.1 (Yet to be published)
+
+### `@liveblocks/react-lexical`
+
+- Fix an issue with `AnchoredThreads` component not working correctly on certain
+  React versions.
+
+### `@liveblocks/react-tiptap`
+
+- Fix an issue with `AnchoredThreads` component not working correctly on certain
+  React versions.
+
+## 2.11.0
+
+### `@liveblocks/react-ui`
+
+- Upgrade dependencies.
+- Fix minor appearance issues related to attachments.
+- Fix pasting issues introduced in 2.10.0.
+
+### `@liveblocks/react`
+
+- Fix regression with `useThreads` that caused the hook to return an error if
+  its associated room did not exist.
+
+### `@liveblocks/react-tiptap`
+
+- Initial release.
+
+### `@liveblocks/emails`
+
+- Initial release.
+
+## 2.10.2
 
 ### `@liveblocks/client`
 
 - Internal refactorings and code cleanup across various parts of the client's
-  inner workings
+  inner workings.
 
 ### `@liveblocks/react`
 
@@ -13,6 +46,15 @@
 - Background tabs will no longer poll threads, notification, room versions or
   room notification settings.
 - Fix incorrect suspense export for `useRoomNotificationSettings` hook.
+- Support for React 19 and Next.js 15.
+
+### `@liveblocks/react-ui`
+
+- Support for React 19 and Next.js 15.
+
+### `@liveblocks/react-lexical`
+
+- Support for React 19 and Next.js 15.
 
 ## 2.10.0
 

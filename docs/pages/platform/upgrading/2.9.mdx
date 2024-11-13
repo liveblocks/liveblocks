@@ -1,0 +1,175 @@
+---
+meta:
+  title: "Upgrading to 2.9"
+  parentTitle: "Upgrading"
+  description: "Guide to upgrade to Liveblocks version 2.9"
+---
+
+We are introducing pagination to Comments and Notifications as default. You need
+to upgrade your app to handle this.
+
+## How to upgrade? [#how]
+
+You can upgrade to 2.9 by downloading the latest version of each Liveblocks
+package you’re using. The easiest way to do that is to run the following
+command:
+
+```bash
+npx create-liveblocks-app@latest --upgrade
+```
+
+## All changes are for Comments & Notifications
+
+If you’re not using
+[`useThreads`](/docs/api-reference/liveblocks-react#useThreads) or
+[`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications)
+there are no breaking changes for you! However, if you are using them, keep
+reading.
+
+## Pagination
+
+[`useThreads`](/docs/api-reference/liveblocks-react#useThreads) and
+[`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications)
+now only fetch the **latest 50 threads/notifications**, and you must use
+paginate to retrieve more. Previously, these two functions would fetch every
+single thread/notification, but this is no longer possible.
+
+<Banner type="warning">
+  If your rooms have fewer than 50 threads, and your users fewer than 50
+  notifications, there will be no visible difference when upgrading. Pagination
+  is only used after 50.
+</Banner>
+
+### Threads
+
+Here’s a before and after example with
+[`useThreads`](/docs/api-reference/liveblocks-react#useThreads), adding
+pagination.
+
+```tsx title="Before"
+import { useThreads } from "@liveblocks/react/suspense";
+
+function Threads() {
+  const { threads } = useThreads();
+
+  return (
+    <div>
+      {threads.map((thread) => (
+        <Thread key={thread.id} thread={thread} />
+      ))}
+    </div>
+  );
+}
+```
+
+```tsx title="After"
+import { useThreads } from "@liveblocks/react/suspense";
+
+function Threads() {
+  const {
+    threads,
+    // +++
+    fetchMore,
+    isFetchingMore,
+    hasFetchedAll,
+    fetchMoreError,
+    // +++
+  } = useThreads();
+
+  // +++
+  const loadMore = fetchMoreError ? (
+    <>
+      <p>Error loading more threads: {fetchMoreError.message}</p>
+      <button onClick={fetchMore} disabled={isFetchingMore}>
+        Retry
+      </button>
+    </>
+  ) : (
+    <button onClick={fetchMore} disabled={isFetchingMore}>
+      Load more
+    </button>
+  );
+  // +++
+
+  return (
+    <div>
+      {threads.map((thread) => (
+        <Thread key={thread.id} thread={thread} />
+      ))}
+      // +++
+      {hasFetchedAll ? <div>🎉 You're all caught up!</div> : loadMore}
+      // +++
+    </div>
+  );
+}
+```
+
+### Notifications
+
+Here’s a before and after example with
+[`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications),
+adding pagination.
+
+```tsx title="Before"
+import { useInboxNotifications } from "@liveblocks/react/suspense";
+
+function Notifications() {
+  const { inboxNotifications } = useInboxNotifications();
+
+  return (
+    <div>
+      {inboxNotifications.map((notification) => (
+        <InboxNotification key={notification.id} inboxNotification={no†ification} />
+      ))}
+    </div>
+  );
+}
+```
+
+```tsx title="After"
+import { useInboxNotifications } from "@liveblocks/react/suspense";
+
+function Notifications() {
+  const {
+    inboxNotifications,
+    // +++
+    fetchMore,
+    isFetchingMore,
+    hasFetchedAll,
+    fetchMoreError,
+    // +++
+  } = useInboxNotifications();
+
+  // +++
+  const loadMore = fetchMoreError ? (
+    <>
+      <p>Error loading more notifications: {fetchMoreError.message}</p>
+      <button onClick={fetchMore} disabled={isFetchingMore}>
+        Retry
+      </button>
+    </>
+  ) : (
+    <button onClick={fetchMore} disabled={isFetchingMore}>
+      Load more
+    </button>
+  );
+  // +++
+
+  return (
+    <div>
+      {inboxNotifications.map((notification) => (
+        <InboxNotification key={notification.id} inboxNotification={no†ification} />
+      ))}
+      // +++
+      {hasFetchedAll ? <div>🎉 You're all caught up!</div> : loadMore}
+      // +++
+    </div>
+  );
+}
+```
+
+### Learn more
+
+Learn more about pagination under
+[`useThreads`](/docs/api-reference/liveblocks-react#useThreads) and
+[`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications).

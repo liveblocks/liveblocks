@@ -1,0 +1,45 @@
+{
+  "name": "@liveblocks-examples/nextjs-tiptap",
+  "description": "This example shows how to build a collaborative text editor with Liveblocks, TipTap, and Next.js.",
+  "license": "Apache-2.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@floating-ui/react-dom": "^2.1.2",
+    "@liveblocks/client": "^2.11.0",
+    "@liveblocks/core": "^2.11.0",
+    "@liveblocks/node": "^2.11.0",
+    "@liveblocks/react": "^2.11.0",
+    "@liveblocks/react-tiptap": "^2.11.0",
+    "@liveblocks/react-ui": "^2.11.0",
+    "@liveblocks/yjs": "^2.11.0",
+    "@radix-ui/react-dialog": "^1.1.2",
+    "@radix-ui/react-popover": "^1.0.7",
+    "@tiptap/extension-collaboration": "^2.6.6",
+    "@tiptap/extension-collaboration-cursor": "^2.6.6",
+    "@tiptap/extension-mention": "^2.7.1",
+    "@tiptap/pm": "^2.6.6",
+    "@tiptap/react": "^2.6.6",
+    "@tiptap/starter-kit": "^2.6.6",
+    "@tiptap/suggestion": "^2.7.1",
+    "@types/node": "^18.11.18",
+    "@types/react": "^18.0.27",
+    "@types/react-dom": "^18.0.10",
+    "next": "^14.2.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "tippy.js": "^6.3.7",
+    "typescript": "^5.2.2",
+    "yjs": "^13.6.19"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.4"
+  }
+}

@@ -111,7 +111,11 @@ import type {
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
 import type { NodeMap } from "./types/NodeMap";
-import type { InternalOthersEvent, OthersEvent } from "./types/Others";
+import type {
+  InternalOthersEvent,
+  OthersEvent,
+  TextEditorType,
+} from "./types/Others";
 import type { Patchable } from "./types/Patchable";
 import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 import type { User } from "./types/User";
@@ -1023,7 +1027,7 @@ export type PrivateRoomApi = {
   getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
 
   // For reporting editor metadata
-  reportTextEditor(editor: "lexical", rootKey: string): Promise<void>;
+  reportTextEditor(editor: TextEditorType, rootKey: string): Promise<void>;
 
   createTextMention(userId: string, mentionId: string): Promise<void>;
   deleteTextMention(mentionId: string): Promise<void>;
@@ -1639,7 +1643,7 @@ export function createRoom<
     );
   }
 
-  async function reportTextEditor(type: "lexical", rootKey: string) {
+  async function reportTextEditor(type: TextEditorType, rootKey: string) {
     await httpClient2.rawPost(url`/v2/c/rooms/${config.roomId}/text-metadata`, {
       type,
       rootKey,
@@ -2870,29 +2874,52 @@ export function createRoom<
 
     const PAGE_SIZE = 50;
 
-    const result = await httpClient2.get<{
-      data: ThreadDataPlain<M>[];
-      inboxNotifications: InboxNotificationDataPlain[];
-      deletedThreads: ThreadDeleteInfoPlain[];
-      deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
-      meta: {
-        requestedAt: string;
-        nextCursor: string | null;
-      };
-    }>(url`/v2/c/rooms/${config.roomId}/threads`, {
-      cursor: options?.cursor,
-      query,
-      limit: PAGE_SIZE,
-    });
+    try {
+      const result = await httpClient2.get<{
+        data: ThreadDataPlain<M>[];
+        inboxNotifications: InboxNotificationDataPlain[];
+        deletedThreads: ThreadDeleteInfoPlain[];
+        deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+        meta: {
+          requestedAt: string;
+          nextCursor: string | null;
+        };
+      }>(url`/v2/c/rooms/${config.roomId}/threads`, {
+        cursor: options?.cursor,
+        query,
+        limit: PAGE_SIZE,
+      });
 
-    return {
-      threads: result.data.map(convertToThreadData),
-      inboxNotifications: result.inboxNotifications.map(
-        convertToInboxNotificationData
-      ),
-      nextCursor: result.meta.nextCursor,
-      requestedAt: new Date(result.meta.requestedAt),
-    };
+      return {
+        threads: result.data.map(convertToThreadData),
+        inboxNotifications: result.inboxNotifications.map(
+          convertToInboxNotificationData
+        ),
+        nextCursor: result.meta.nextCursor,
+        requestedAt: new Date(result.meta.requestedAt),
+      };
+    } catch (err) {
+      if (err instanceof HttpError && err.status === 404) {
+        // If the room does (not) yet exist, the response will be a 404 error
+        // response which we'll interpret as an empty list of threads.
+        return {
+          threads: [],
+          inboxNotifications: [],
+          nextCursor: null,
+          //
+          // HACK
+          // requestedAt needs to be a *server* timestamp here. However, on
+          // this 404 error response, there is no such timestamp. So out of
+          // pure necessity we'll fall back to a local timestamp instead (and
+          // allow for a possible 6 hour clock difference between client and
+          // server).
+          //
+          requestedAt: new Date(Date.now() - 6 * 60 * 60 * 1000),
+        };
+      }
+
+      throw err;
+    }
   }
 
   async function getThread(threadId: string) {
