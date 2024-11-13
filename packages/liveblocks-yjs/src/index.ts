@@ -20,7 +20,7 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 type ProviderOptions = {
   autoloadSubdocs?: boolean;
-  offlineSupport?: boolean;
+  offlineSupport_experimental?: boolean;
 };
 
 enum SyncStatus {
@@ -125,7 +125,7 @@ export class LiveblocksYjsProvider<
       })
     );
 
-    if (options.offlineSupport) {
+    if (options.offlineSupport_experimental) {
       this.indexeddbProvider = new IndexeddbPersistence(room.id, this.rootDoc);
       const onIndexedDbSync = () => {
         this.rootDocHandler.synced = true;
