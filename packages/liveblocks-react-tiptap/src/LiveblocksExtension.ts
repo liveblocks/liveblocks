@@ -32,6 +32,7 @@ type LiveblocksExtensionOptions = {
   field?: string;
   comments: boolean; // | CommentsConfiguration
   mentions: boolean; // | MentionsConfiguration
+  offlineSupport_experimental: boolean; // Experimental offlien support
 };
 
 const LiveblocksCollab = Collaboration.extend({
@@ -214,7 +215,13 @@ export const useLiveblocksExtension = (): Extension => {
       if (!providersMap.has(room.id)) {
         const doc = new Doc();
         docMap.set(room.id, doc);
-        providersMap.set(room.id, new LiveblocksYjsProvider(room, doc));
+        providersMap.set(
+          room.id,
+          new LiveblocksYjsProvider(room, doc, {
+            offlineSupport_experimental:
+              this.options.offlineSupport_experimental,
+          })
+        );
       }
       return {
         doc: docMap.get(room.id)!,
@@ -228,6 +235,7 @@ export const useLiveblocksExtension = (): Extension => {
         field: "default",
         mentions: true,
         comments: true,
+        offlineSupport_experimental: false,
       };
     },
     addExtensions() {
