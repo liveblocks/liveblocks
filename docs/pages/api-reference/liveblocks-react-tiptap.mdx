@@ -145,7 +145,7 @@ Display created threads with [`AnchoredThreads`][] or [`FloatingThreads`][].
 
 To open the `FloatingComposer`, you need to call the `addPendingComment`
 [command](https://tiptap.dev/docs/editor/api/commands) added by Liveblocks. You
-can use `lb-comment` to check if the current selection is a comment.
+can use `liveblocksCommentMark` to check if the current selection is a comment.
 
 ```tsx
 import { Editor } from "@tiptap/react";
@@ -163,7 +163,7 @@ function Toolbar({ editor }: { editor: Editor | null }) {
         // +++
       }}
       // +++
-      data-active={editor.isActive("lb-comment")}
+      data-active={editor.isActive("liveblocksCommentMark")}
       // +++
     >
       💬 New comment
@@ -308,10 +308,12 @@ function ThreadOverlay({ editor }: { editor: Editor | null }) {
   return (
     <>
       <FloatingThreads
+        editor={editor}
         threads={threads}
         className="w-[350px] block md:hidden"
       />
       <AnchoredThreads
+        editor={editor}
         threads={threads}
         className="w-[350px] hidden sm:block"
       />
@@ -334,12 +336,24 @@ function ThreadOverlay({ editor }: { editor: Editor | null }) {
 
   // +++
   if (isMobile) {
-    return <FloatingThreads threads={threads} style={{ width: "350px" }} />;
+    return (
+      <FloatingThreads
+        editor={editor}
+        threads={threads}
+        style={{ width: "350px" }}
+      />
+    );
   }
   // +++
 
   // +++
-  return <AnchoredThreads threads={threads} style={{ width: "350px" }} />;
+  return (
+    <AnchoredThreads
+      editor={editor}
+      threads={threads}
+      style={{ width: "350px" }}
+    />
+  );
   //+++
 }
 
@@ -551,10 +565,12 @@ function ThreadOverlay({ editor }: { editor: Editor | null }) {
   return (
     <>
       <FloatingThreads
+        editor={editor}
         threads={threads}
         className="w-[350px] block md:hidden"
       />
       <AnchoredThreads
+        editor={editor}
         threads={threads}
         className="w-[350px] hidden sm:block"
       />
@@ -577,12 +593,24 @@ function ThreadOverlay({ editor }: { editor: Editor | null }) {
 
   // +++
   if (isMobile) {
-    return <FloatingThreads threads={threads} style={{ width: "350px" }} />;
+    return (
+      <FloatingThreads
+        editor={editor}
+        threads={threads}
+        style={{ width: "350px" }}
+      />
+    );
   }
   // +++
 
   // +++
-  return <AnchoredThreads threads={threads} style={{ width: "350px" }} />;
+  return (
+    <AnchoredThreads
+      editor={editor}
+      threads={threads}
+      style={{ width: "350px" }}
+    />
+  );
   //+++
 }
 
@@ -736,7 +764,7 @@ hear from you.
 </Banner>
 
 The `HistoryVersionPreview` component allows you to display a preview of a
-specific version of your Lexical editor's content. It also contains a button and
+specific version of your Tiptap editor's content. It also contains a button and
 logic for restoring. It must be used inside the `<LiveblocksPlugin>` context. To
 render a list of versions, see
 [`VersionHistory`](/docs/api-reference/liveblocks-react-ui#Version-History).
@@ -866,7 +894,6 @@ learn how to do this under
 [styling and customization](/docs/api-reference/liveblocks-react-ui#Styling-and-customization).
 
 [`LiveblocksPlugin`]: #LiveblocksPlugin
-[`LexicalComposer`]: https://lexical.dev/docs/react/plugins
 [`Thread`]: /docs/api-reference/liveblocks-react-ui#Thread
 [`Composer`]: /docs/api-reference/liveblocks-react-ui#Composer
 [`useThreads`]: /docs/api-reference/liveblocks-react#useThreads

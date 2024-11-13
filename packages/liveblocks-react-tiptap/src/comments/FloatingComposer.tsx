@@ -4,7 +4,7 @@ import type { DM } from "@liveblocks/core";
 import { useCreateThread } from "@liveblocks/react";
 import type { ComposerProps, ComposerSubmitComment } from "@liveblocks/react-ui";
 import { Composer } from "@liveblocks/react-ui";
-import type { Editor } from "@tiptap/react";
+import { type Editor, useEditorState } from "@tiptap/react";
 import type { ComponentRef, FormEvent } from "react";
 import React, { forwardRef, useCallback, useEffect, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
@@ -28,10 +28,16 @@ export const FloatingComposer = forwardRef<
 >(function FloatingComposer(props, forwardedRef) {
   const createThread = useCreateThread();
   const { editor } = props;
-
-  const storage = editor?.storage.liveblocksComments as CommentsExtensionStorage | undefined;
-
-  const showComposer = !!storage?.pendingCommentSelection;
+  const { showComposer } = useEditorState({
+    editor,
+    selector: (ctx) => ({
+      showComposer: !!(ctx.editor?.storage.liveblocksComments as CommentsExtensionStorage | undefined)?.pendingCommentSelection,
+    }),
+    equalityFn: (prev, next) => {
+      if (!next) return false;
+      return prev.showComposer === next.showComposer;
+    },
+  }) ?? { showComposer: false };
 
   const {
     refs: { setReference, setFloating },

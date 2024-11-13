@@ -1,3 +1,21 @@
+## 2.11.1 (Yet to be published)
+
+### `@liveblocks/react-lexical`
+
+- Fix an issue with `AnchoredThreads` component not working correctly on certain
+  React versions.
+
+### `@liveblocks/react-tiptap`
+
+- Fix an issue with `AnchoredThreads` component not working correctly on certain
+  React versions.
+- Fixes an issue where react comonents don't update when
+  shouldRerenderOnTransaction: false is set
+
+### `@liveblocks/yjs`
+
+- Adds experimental offline support for `LiveblocksYjsProvider`.
+
 ## 2.11.0
 
 ### `@liveblocks/react-ui`
