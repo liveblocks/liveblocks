@@ -133,7 +133,13 @@ package.
       const liveblocks = useLiveblocksExtension();
 
       const editor = useEditor({
-        extensions: [liveblocks, StarterKit],
+        extensions: [
+          liveblocks,
+          StarterKit.configure({
+            // The Liveblocks extension comes with its own history handling
+            history: false,
+          }),
+        ],
       });
 
       return (
