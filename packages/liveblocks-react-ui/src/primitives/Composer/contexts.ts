@@ -7,8 +7,6 @@ import { createContext, useContext } from "react";
 import type { Editor as SlateEditor, Element as SlateElement } from "slate";
 
 import type {
-  ComposerBodyBlockElement,
-  ComposerBodyInlineNonTextElement,
   ComposerBodyTextActiveFormats,
   ComposerBodyTextFormat,
 } from "../../types";
@@ -100,8 +98,8 @@ export type ComposerEditorContext = {
   editor: SlateEditor;
   setFocused: Dispatch<SetStateAction<boolean>>;
   changeEventSource: EventSource<void>;
-  block: ComposerBodyBlockElement | null;
-  inline: ComposerBodyInlineNonTextElement | null;
+  // block: ComposerBodyBlockElement | null;
+  // inline: ComposerBodyInlineNonTextElement | null;
 };
 
 export type ComposerAttachmentsContext = {

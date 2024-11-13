@@ -88,19 +88,13 @@ import {
 import { withNormalize } from "../../slate/plugins/normalize";
 import { withPaste } from "../../slate/plugins/paste";
 import { getDOMRange } from "../../slate/utils/get-dom-range";
-import {
-  getSelectionBlock,
-  getSelectionInline,
-} from "../../slate/utils/get-selection-node";
 import { isEmpty as isEditorEmpty } from "../../slate/utils/is-empty";
 import { isSelectionCollapsed } from "../../slate/utils/is-selection-collapsed";
 import { getMarks, leaveMarkEdge, toggleMark } from "../../slate/utils/marks";
 import type {
   ComposerBody as ComposerBodyData,
   ComposerBodyAutoLink,
-  ComposerBodyBlockElement,
   ComposerBodyCustomLink,
-  ComposerBodyInlineNonTextElement,
   ComposerBodyMention,
   ComposerBodyTextActiveFormats,
   ComposerBodyTextFormat,
@@ -316,16 +310,15 @@ function ComposerEditorMentionSuggestionsWrapper({
 
   useLayoutEffect(() => {
     if (!mentionDraft) {
+      setReference(null);
+
       return;
     }
 
     const domRange = getDOMRange(editor, mentionDraft.range);
 
     if (domRange) {
-      setReference({
-        getBoundingClientRect: () => domRange.getBoundingClientRect(),
-        getClientRects: () => domRange.getClientRects(),
-      });
+      setReference(domRange ?? null);
     }
   }, [setReference, editor, mentionDraft]);
 
@@ -1504,16 +1497,16 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       [editor]
     );
 
-    const [activeBlock, setActiveBlock] =
-      useState<ComposerBodyBlockElement | null>(null);
-    const [activeInline, setActiveInline] =
-      useState<ComposerBodyInlineNonTextElement | null>(null);
+    // const [activeBlock, setActiveBlock] =
+    //   useState<ComposerBodyBlockElement | null>(null);
+    // const [activeInline, setActiveInline] =
+    //   useState<ComposerBodyInlineNonTextElement | null>(null);
 
     useEffect(() => {
       const unsubscribe = editorChangeEventSource.subscribe(() => {
         setTextFormats(getMarks(editor));
-        setActiveBlock(getSelectionBlock(editor) ?? null);
-        setActiveInline(getSelectionInline(editor) ?? null);
+        // setActiveBlock(getSelectionBlock(editor) ?? null);
+        // setActiveInline(getSelectionInline(editor) ?? null);
       });
 
       return unsubscribe;
@@ -1526,8 +1519,6 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
           validate,
           setFocused,
           changeEventSource: editorChangeEventSource,
-          block: activeBlock,
-          inline: activeInline,
         }}
       >
         <ComposerAttachmentsContext.Provider
