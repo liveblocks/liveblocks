@@ -1037,7 +1037,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     // or when attachments are being uploaded
     const isPending = !preventUnsavedChanges
       ? false
-      : !isEmpty || isUploadingAttachments;
+      : !isEmpty || isUploadingAttachments || attachments.length > 0;
 
     useEffect(() => {
       syncSource?.setPending(isPending);
