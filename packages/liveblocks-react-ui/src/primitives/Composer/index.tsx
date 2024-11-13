@@ -1040,7 +1040,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       : !isEmpty || isUploadingAttachments;
 
     useEffect(() => {
-      syncSource.setPending(isPending);
+      syncSource?.setPending(isPending);
     }, [syncSource, isPending]);
 
     const createAttachments = useCallback(
