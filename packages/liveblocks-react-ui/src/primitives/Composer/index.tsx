@@ -1041,15 +1041,6 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       }
     }, [syncSource, isEmpty, preventUnsavedChanges, isUploadingAttachments]);
 
-    useEffect(
-      () => {
-        return () => {
-          syncSource.destroy();
-        };
-      },
-      [] // eslint-disable-line react-hooks/exhaustive-deps
-    );
-
     const createAttachments = useCallback(
       (files: File[]) => {
         if (!files.length) {
