@@ -770,16 +770,19 @@ export function createClient<U extends BaseUserMeta = DU>(
     return syncStatusRef.current;
   }
 
+  function recompute() {
+    syncStatusRef.set(
+      syncStatusSources.some((src) => src.current)
+        ? "synchronizing"
+        : "synchronized"
+    );
+  }
+
   function createSyncSource(): SyncSource {
     const source = new ValueRef(false);
     syncStatusSources.push(source);
-    const unsub = source.didInvalidate.subscribe(() =>
-      syncStatusRef.set(
-        syncStatusSources.some((src) => src.current)
-          ? "synchronizing"
-          : "synchronized"
-      )
-    );
+
+    const unsub = source.didInvalidate.subscribe(() => recompute());
 
     function setPending(isPending: boolean) {
       source.set(isPending);
@@ -789,7 +792,13 @@ export function createClient<U extends BaseUserMeta = DU>(
       unsub();
       const index = syncStatusSources.findIndex((item) => item === source);
       if (index > -1) {
-        syncStatusSources.splice(index, 1);
+        const [ref] = syncStatusSources.splice(index, 1);
+        const wasStillPending = ref.current;
+        if (wasStillPending) {
+          // We only have to recompute if it was still pending. Otherwise it
+          // could not have an effect on the global state anyway.
+          recompute();
+        }
       }
     }
 

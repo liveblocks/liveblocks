@@ -15,7 +15,10 @@ import {
 } from "@floating-ui/react-dom";
 import type { CommentAttachment, CommentBody } from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
-import { useMentionSuggestions } from "@liveblocks/react/_private";
+import {
+  useMentionSuggestions,
+  useSyncSource,
+} from "@liveblocks/react/_private";
 import { Slot, Slottable } from "@radix-ui/react-slot";
 import type {
   AriaAttributes,
@@ -990,6 +993,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       onComposerSubmit,
       defaultAttachments = [],
       pasteFilesAsAttachments,
+      preventUnsavedChanges = true,
       disabled,
       asChild,
       ...props
@@ -1027,6 +1031,17 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const ref = useRef<HTMLFormElement>(null);
     const mergedRefs = useRefs(forwardedRef, ref);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const syncSource = useSyncSource();
+
+    // Mark the composer as a pending update when it isn't empty
+    // or when attachments are being uploaded
+    const isPending = !preventUnsavedChanges
+      ? false
+      : !isEmpty || isUploadingAttachments || attachments.length > 0;
+
+    useEffect(() => {
+      syncSource?.setPending(isPending);
+    }, [syncSource, isPending]);
 
     const createAttachments = useCallback(
       (files: File[]) => {
