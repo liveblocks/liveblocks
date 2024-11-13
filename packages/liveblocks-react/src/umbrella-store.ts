@@ -887,7 +887,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): void {
     this._store.set((state) => {
       const optimisticUpdates = mapFn(state.optimisticUpdates);
-      this._syncSource.setPending(optimisticUpdates.length > 0);
+      this._syncSource.setSyncStatus(
+        optimisticUpdates.length > 0 ? "synchronizing" : "synchronized"
+      );
       return { ...state, optimisticUpdates };
     });
   }

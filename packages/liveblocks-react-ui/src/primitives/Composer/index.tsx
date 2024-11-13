@@ -1033,14 +1033,16 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const fileInputRef = useRef<HTMLInputElement>(null);
     const syncSource = useSyncSource();
 
-    // Mark the composer as a pending update when it isn't empty
-    // or when attachments are being uploaded
+    // Mark the composer as a pending update when it has unsubmitted (draft)
+    // text or attachments
     const isPending = !preventUnsavedChanges
       ? false
       : !isEmpty || isUploadingAttachments || attachments.length > 0;
 
     useEffect(() => {
-      syncSource?.setPending(isPending);
+      syncSource?.setSyncStatus(
+        isPending ? "has-local-changes" : "synchronized"
+      );
     }, [syncSource, isPending]);
 
     const createAttachments = useCallback(

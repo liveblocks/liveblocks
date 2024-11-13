@@ -1,4 +1,5 @@
 import type { AuthManager, AuthValue } from "./auth-manager";
+import type { InternalSyncStatus } from "./client";
 import type {
   Delegates,
   LiveblocksError,
@@ -1025,7 +1026,7 @@ export interface IYjsProvider {
  * determine the global "sync status" for Liveblocks.
  */
 export interface SyncSource {
-  setPending(isPending: boolean): void;
+  setSyncStatus(status: InternalSyncStatus): void;
   destroy(): void;
 }
 
@@ -2815,7 +2816,9 @@ export function createRoom<
       _lastStorageStatus = storageStatus;
       eventHub.storageStatus.notify(storageStatus);
     }
-    syncSourceForStorage.setPending(storageStatus === "synchronizing");
+    syncSourceForStorage.setSyncStatus(
+      storageStatus === "synchronizing" ? "synchronizing" : "synchronized"
+    );
   }
 
   function isPresenceReady() {
@@ -3388,7 +3391,9 @@ export function createRoom<
   const syncSourceForYjs = config.createSyncSource();
 
   function yjsStatusDidChange(status: YjsSyncStatus) {
-    return syncSourceForYjs.setPending(status === "synchronizing");
+    return syncSourceForYjs.setSyncStatus(
+      status === "synchronizing" ? "synchronizing" : "synchronized"
+    );
   }
 
   return Object.defineProperty(
