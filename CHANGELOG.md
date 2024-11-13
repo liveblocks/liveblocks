@@ -9,8 +9,8 @@
 
 - Fix an issue with `AnchoredThreads` component not working correctly on certain
   React versions.
-- Fixes an issue where react comonents don't update when
-  shouldRerenderOnTransaction: false is set
+- Fixes an issue where React components don’t update when
+  `shouldRerenderOnTransaction`: false is set
 
 ### `@liveblocks/yjs`
 
