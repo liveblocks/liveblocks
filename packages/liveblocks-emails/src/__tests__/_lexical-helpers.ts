@@ -147,7 +147,7 @@ export const docStateRoot2: SerializedLexicalRootNode = {
           group: "text",
           attributes: {
             __type: "text",
-            __format: 0,
+            __format: 1,
             __style: "",
             __mode: 0,
             __detail: 0,
@@ -208,7 +208,7 @@ export const createLexicalMentionNodeWithContext = ({
         group: "text",
         attributes: {
           __type: "text",
-          __format: 0,
+          __format: 1,
           __style: "",
           __mode: 0,
           __detail: 0,

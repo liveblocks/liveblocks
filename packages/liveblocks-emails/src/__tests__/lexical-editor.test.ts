@@ -46,7 +46,7 @@ describe("Lexical editor", () => {
           group: "text",
           attributes: {
             __type: "text",
-            __format: 0,
+            __format: 1,
             __style: "",
             __mode: 0,
             __detail: 0,
@@ -108,7 +108,7 @@ describe("Lexical editor", () => {
                 group: "text",
                 attributes: {
                   __type: "text",
-                  __format: 0,
+                  __format: 1,
                   __style: "",
                   __mode: 0,
                   __detail: 0,
