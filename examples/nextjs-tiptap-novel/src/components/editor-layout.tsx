@@ -1,12 +1,12 @@
 "use client";
 
 import { ClientSideSuspense } from "@liveblocks/react/suspense";
-import { DocumentSpinner } from "@/components/Spinner";
-import { Avatars } from "@/components/Avatars";
-import { AdvancedEditor } from "@/components/Editor/advanced-editor";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { DocumentSpinner } from "@/components/spinner";
+import { Avatars } from "@/components/avatars";
+import { AdvancedEditor } from "@/components/editor/advanced-editor";
+import { ThemeToggle } from "@/components/theme-toggle";
 
-export function TextEditor() {
+export function EditorLayout() {
   return (
     <div className="flex flex-col bg-border/30 absolute inset-0">
       <div className="top-0 left-0 right-0 flex flex-none justify-between items-start bg-background border-b border-border p-1.5 z-10">

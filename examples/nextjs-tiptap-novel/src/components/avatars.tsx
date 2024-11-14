@@ -1,3 +1,5 @@
+"use client";
+
 import { useOthers, useSelf } from "@liveblocks/react/suspense";
 
 export function Avatars() {

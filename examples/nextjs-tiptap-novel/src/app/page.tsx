@@ -1,11 +1,11 @@
 import { Room } from "@/app/Room";
-import { TextEditor } from "@/components/TextEditor";
+import { EditorLayout } from "@/components/editor-layout";
 
 export default function Home() {
   return (
     <main>
       <Room>
-        <TextEditor />
+        <EditorLayout />
       </Room>
     </main>
   );

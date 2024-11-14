@@ -1,4 +1,5 @@
 "use client";
+
 import {
   EditorCommand,
   EditorCommandEmpty,
@@ -57,7 +58,7 @@ export const AdvancedEditor = () => {
       <EditorRoot>
         <EditorContent
           extensions={extensions}
-          className="p-24 relative min-h-[500px] w-full sm:mb-[calc(20vh)]"
+          className="p-24 relative min-h-[500px] w-full"
           editorProps={{
             handleDOMEvents: {
               keydown: (_view, event) => handleCommandNavigation(event),
