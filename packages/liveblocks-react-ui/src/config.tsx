@@ -22,10 +22,24 @@ type LiveblocksUIConfigProps = PropsWithChildren<{
    * The container to render the portal into.
    */
   portalContainer?: HTMLElement;
+
+  /**
+   * When `preventUnsavedChanges` is set on your Liveblocks client (or set on
+   * <LiveblocksProvider>), then closing a browser tab will be prevented when
+   * there are unsaved changes.
+   *
+   * By default, that will include draft texts or attachments that are (being)
+   * uploaded via comments/threads composers, but not submitted yet.
+   *
+   * If you want to prevent unsaved changes with Liveblocks, but not for
+   * composers, you can opt-out by setting this option to `false`.
+   */
+  preventUnsavedComposerChanges?: boolean;
 }>;
 
 interface LiveblocksUIConfigContext {
   portalContainer?: HTMLElement;
+  preventUnsavedComposerChanges?: boolean;
 }
 
 const LiveblocksUIConfigContext = createContext<LiveblocksUIConfigContext>({});
@@ -46,11 +60,12 @@ export function LiveblocksUIConfig({
   overrides,
   components,
   portalContainer,
+  preventUnsavedComposerChanges = true,
   children,
 }: LiveblocksUIConfigProps) {
   const liveblocksUIConfig = useMemo(
-    () => ({ portalContainer }),
-    [portalContainer]
+    () => ({ portalContainer, preventUnsavedComposerChanges }),
+    [portalContainer, preventUnsavedComposerChanges]
   );
 
   return (
