@@ -1,5 +1,3 @@
-import { Ratelimit } from "@upstash/ratelimit";
-import { kv } from "@vercel/kv";
 import { OpenAIStream, StreamingTextResponse } from "ai";
 import OpenAI from "openai";
 import type { ChatCompletionMessageParam } from "openai/resources/index.mjs";
@@ -15,6 +13,7 @@ export async function POST(req: Request): Promise<Response> {
     apiKey: process.env.OPENAI_API_KEY,
     baseURL: process.env.OPENAI_BASE_URL || "https://api.openai.com/v1",
   });
+
   // Check if the OPENAI_API_KEY is set, if not return 400
   if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === "") {
     return new Response(
@@ -24,26 +23,6 @@ export async function POST(req: Request): Promise<Response> {
       }
     );
   }
-  // if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
-  //   const ip = req.headers.get("x-forwarded-for");
-  //   const ratelimit = new Ratelimit({
-  //     redis: kv,
-  //     limiter: Ratelimit.slidingWindow(50, "1 d"),
-  //   });
-  //
-  //   const { success, limit, reset, remaining } = await ratelimit.limit(`novel_ratelimit_${ip}`);
-  //
-  //   if (!success) {
-  //     return new Response("You have reached your request limit for the day.", {
-  //       status: 429,
-  //       headers: {
-  //         "X-RateLimit-Limit": limit.toString(),
-  //         "X-RateLimit-Remaining": remaining.toString(),
-  //         "X-RateLimit-Reset": reset.toString(),
-  //       },
-  //     });
-  //   }
-  // }
 
   const { prompt, option, command } = await req.json();
   const messages = match(option)
@@ -127,7 +106,7 @@ export async function POST(req: Request): Promise<Response> {
     .run() as ChatCompletionMessageParam[];
 
   const response = await openai.chat.completions.create({
-    model: "gpt-3.5-turbo",
+    model: "gpt-4o-mini",
     stream: true,
     messages,
     temperature: 0.7,
