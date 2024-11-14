@@ -50,6 +50,7 @@ import {
   createEditor,
   Editor as SlateEditor,
   insertText as insertSlateText,
+  Range as SlateRange,
   Transforms as SlateTransforms,
 } from "slate";
 import { withHistory } from "slate-history";
@@ -69,10 +70,7 @@ import {
 } from "slate-react";
 
 import { useLiveblocksUIConfig } from "../../config";
-import {
-  FLOATING_ELEMENT_COLLISION_PADDING,
-  FLOATING_ELEMENT_SIDE_OFFSET,
-} from "../../constants";
+import { FLOATING_ELEMENT_COLLISION_PADDING } from "../../constants";
 import { withAutoFormatting } from "../../slate/plugins/auto-formatting";
 import { withAutoLinks } from "../../slate/plugins/auto-links";
 import { withCustomLinks } from "../../slate/plugins/custom-links";
@@ -89,7 +87,6 @@ import { withNormalize } from "../../slate/plugins/normalize";
 import { withPaste } from "../../slate/plugins/paste";
 import { getDOMRange } from "../../slate/utils/get-dom-range";
 import { isEmpty as isEditorEmpty } from "../../slate/utils/is-empty";
-import { isSelectionCollapsed } from "../../slate/utils/is-selection-collapsed";
 import { getMarks, leaveMarkEdge, toggleMark } from "../../slate/utils/marks";
 import type {
   ComposerBody as ComposerBodyData,
@@ -316,10 +313,7 @@ function ComposerEditorMentionSuggestionsWrapper({
     }
 
     const domRange = getDOMRange(editor, mentionDraft.range);
-
-    if (domRange) {
-      setReference(domRange ?? null);
-    }
+    setReference(domRange ?? null);
   }, [setReference, editor, mentionDraft]);
 
   return (
@@ -386,7 +380,7 @@ function ComposerEditorFloatingToolbarWrapper({
       strategy: "fixed",
       placement: getPlacementFromPosition(position, dir, true),
       middleware: [
-        inline({ padding: FLOATING_ELEMENT_SIDE_OFFSET }),
+        inline(detectOverflowOptions),
         flip({ ...detectOverflowOptions, crossAxis: false }),
         hide(detectOverflowOptions),
         shift({
@@ -441,22 +435,28 @@ function ComposerEditorFloatingToolbarWrapper({
 
   useLayoutEffect(() => {
     const unsubscribe = changeEventSource.subscribe(() => {
-      const domSelection = window.getSelection();
+      // Detach from previous selection range (if any) to avoid sudden jumps
+      setReference(null);
 
-      // Show the toolbar if there's a selection range
-      if (
-        !editor.selection ||
-        isSelectionCollapsed(editor.selection) ||
-        !domSelection
-      ) {
-        setHasFloatingToolbarRange(false);
-        setReference(null);
-      } else {
-        setHasFloatingToolbarRange(true);
+      // Then, wait for the next render to ensure the selection is updated
+      requestAnimationFrame(() => {
+        const domSelection = window.getSelection();
 
-        const domRange = domSelection.getRangeAt(0);
-        setReference(domRange);
-      }
+        // Finally, show the toolbar if there's a selection range
+        if (
+          !editor.selection ||
+          SlateRange.isCollapsed(editor.selection) ||
+          !domSelection
+        ) {
+          setHasFloatingToolbarRange(false);
+          setReference(null);
+        } else {
+          setHasFloatingToolbarRange(true);
+
+          const domRange = domSelection.getRangeAt(0);
+          setReference(domRange);
+        }
+      });
     });
 
     return unsubscribe;
@@ -978,8 +978,6 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
         if (isKey(event, "ArrowRight")) {
           leaveMarkEdge(editor, "end");
         }
-
-        // TODO: Allow closing the floating toolbar with Escape
 
         if (mentionDraft && mentionSuggestions?.length) {
           // Select the next mention suggestion on ArrowDown

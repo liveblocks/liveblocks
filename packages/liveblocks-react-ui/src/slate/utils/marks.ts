@@ -1,8 +1,7 @@
 import type { EditorMarks, Text } from "slate";
-import { Editor as SlateEditor } from "slate";
+import { Editor as SlateEditor, Range as SlateRange } from "slate";
 
 import { getCharacterAfter, getCharacterBefore } from "./get-character";
-import { isSelectionCollapsed } from "./is-selection-collapsed";
 
 const defaultMarks: Required<EditorMarks> = {
   bold: false,
@@ -56,7 +55,7 @@ export function removeMarks(editor: SlateEditor) {
 }
 
 export function leaveMarkEdge(editor: SlateEditor, edge: "start" | "end") {
-  if (isSelectionCollapsed(editor.selection)) {
+  if (editor.selection && SlateRange.isCollapsed(editor.selection)) {
     const marks = Object.keys(SlateEditor.marks(editor) ?? {});
 
     if (marks.length > 0) {
