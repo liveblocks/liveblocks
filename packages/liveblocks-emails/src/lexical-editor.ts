@@ -8,22 +8,25 @@ export interface SerializedBaseLexicalNode {
   attributes: JsonObject;
 }
 
-export interface SerializedTextNode extends SerializedBaseLexicalNode {
+export interface SerializedLexicalTextNode extends SerializedBaseLexicalNode {
   text: string;
   group: "text";
 }
 
-export interface SerializedElementNode<T extends SerializedBaseLexicalNode>
-  extends SerializedBaseLexicalNode {
+export interface SerializedLexicalElementNode<
+  T extends SerializedBaseLexicalNode,
+> extends SerializedBaseLexicalNode {
   children: Array<T>;
   group: "element";
 }
 
-export interface SerializedDecoratorNode extends SerializedBaseLexicalNode {
+export interface SerializedLexicalDecoratorNode
+  extends SerializedBaseLexicalNode {
   group: "decorator";
 }
 
-export interface SerializedMentionNode extends SerializedDecoratorNode {
+export interface SerializedLexicalMentionNode
+  extends SerializedLexicalDecoratorNode {
   type: "lb-mention";
   attributes: {
     __id: string;
@@ -32,21 +35,22 @@ export interface SerializedMentionNode extends SerializedDecoratorNode {
   };
 }
 
-export interface SerializedLineBreakNode extends SerializedBaseLexicalNode {
+export interface SerializedLexicalLineBreakNode
+  extends SerializedBaseLexicalNode {
   group: "line-break";
 }
 
 export type SerializedLexicalNode =
-  | SerializedTextNode
-  | SerializedLineBreakNode
-  | SerializedDecoratorNode
-  | SerializedElementNode<SerializedLexicalNode>;
+  | SerializedLexicalTextNode
+  | SerializedLexicalLineBreakNode
+  | SerializedLexicalDecoratorNode
+  | SerializedLexicalElementNode<SerializedLexicalNode>;
 
 export type SerializedLexicalRootNodeChildren = Array<
   Readonly<
-    | SerializedElementNode<Readonly<SerializedLexicalNode>>
-    | SerializedDecoratorNode
-    | SerializedLineBreakNode
+    | SerializedLexicalElementNode<Readonly<SerializedLexicalNode>>
+    | SerializedLexicalDecoratorNode
+    | SerializedLexicalLineBreakNode
   >
 >;
 
@@ -62,7 +66,7 @@ export interface SerializedLexicalRootNode
  */
 function createSerializedLexicalMapNode(
   item: Y.Map<Json>
-): SerializedTextNode | SerializedLineBreakNode {
+): SerializedLexicalTextNode | SerializedLexicalLineBreakNode {
   const type = item.get("__type");
   if (typeof type !== "string") {
     throw new Error(
@@ -94,7 +98,7 @@ function createSerializedLexicalMapNode(
  */
 function createSerializedLexicalDecoratorNode(
   item: Y.XmlElement
-): SerializedDecoratorNode {
+): SerializedLexicalDecoratorNode {
   const type = item.getAttribute("__type");
   if (typeof type !== "string") {
     throw new Error(
@@ -116,7 +120,7 @@ function createSerializedLexicalDecoratorNode(
  */
 function createSerializedLexicalElementNode(
   item: Y.XmlText
-): SerializedElementNode<SerializedLexicalNode> {
+): SerializedLexicalElementNode<SerializedLexicalNode> {
   // Note: disabling eslint rule as `getAttribute` returns `any` by default on `Y.XmlText` items.
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const type = item.getAttribute("__type");
@@ -175,7 +179,8 @@ export function createSerializedLexicalRootNode(
 ): SerializedLexicalRootNode {
   try {
     const children: Array<
-      SerializedElementNode<SerializedLexicalNode> | SerializedDecoratorNode
+      | SerializedLexicalElementNode<SerializedLexicalNode>
+      | SerializedLexicalDecoratorNode
     > = [];
     let start = root._start;
     while (start !== null && start !== undefined) {
@@ -266,8 +271,8 @@ const isMentionNodeAttributeType = (type: unknown): type is "lb-mention" => {
 };
 
 export const isSerializedMentionNode = (
-  node: SerializedDecoratorNode
-): node is SerializedMentionNode => {
+  node: SerializedLexicalDecoratorNode
+): node is SerializedLexicalMentionNode => {
   const attributes = node.attributes;
 
   return (
@@ -284,7 +289,7 @@ export const isSerializedMentionNode = (
 export type LexicalMentionNodeWithContext = {
   before: SerializedLexicalNode[];
   after: SerializedLexicalNode[];
-  mention: SerializedMentionNode;
+  mention: SerializedLexicalMentionNode;
 };
 
 /**
@@ -324,7 +329,7 @@ export function findLexicalMentionNodeWithContext({
   }
 
   // Collect nodes before and after
-  const mentionNode = nodes[mentionNodeIndex] as SerializedMentionNode;
+  const mentionNode = nodes[mentionNodeIndex] as SerializedLexicalMentionNode;
 
   // Apply surrounding text guesses
   // For now let's stay simple just stop at nearest line break or element

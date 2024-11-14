@@ -18,7 +18,7 @@ import React from "react";
 import type {
   LexicalMentionNodeWithContext,
   SerializedLexicalNode,
-  SerializedTextNode,
+  SerializedLexicalTextNode,
 } from "./lexical-editor";
 import { isSerializedMentionNode as isSerializedLexicalMentionNode } from "./lexical-editor";
 import { MENTION_CHARACTER } from "./lib/constants";
@@ -112,7 +112,7 @@ const IS_LEXICAL_CODE = 1 << 4;
 
 /** @internal */
 const transformLexicalTextNodeFormatBitwiseInteger = (
-  node: SerializedTextNode
+  node: SerializedLexicalTextNode
 ): LiveblocksTextEditorTextFormat => {
   const attributes = node.attributes;
 
