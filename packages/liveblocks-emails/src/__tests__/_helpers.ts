@@ -12,7 +12,11 @@ import type {
   ThreadData,
 } from "@liveblocks/core";
 import { nanoid } from "@liveblocks/core";
-import type { RoomData, ThreadNotificationEvent } from "@liveblocks/node";
+import type {
+  RoomData,
+  TextMentionNotificationEvent,
+  ThreadNotificationEvent,
+} from "@liveblocks/node";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import ReactDOMServer from "react-dom/server";
@@ -419,3 +423,38 @@ export const commentBodiesAsReactToStaticMarkup = (
       return null;
   }
 };
+
+export const makeRoomWithTextEditor = ({
+  editor = "lexical",
+}: {
+  editor?: "lexical" | "tiptap";
+} = {}): RoomData => ({
+  ...ROOM_TEST,
+  // @ts-expect-error - Hidden property
+  experimental_textEditor: {
+    type: editor,
+    rootKey: editor === "lexical" ? ["root"] : ["default"],
+  },
+});
+
+export const makeTextMentionNotificationEvent = ({
+  userId,
+  mentionId,
+  inboxNotificationId,
+}: {
+  userId: string;
+  mentionId: string;
+  inboxNotificationId: string;
+}): TextMentionNotificationEvent => ({
+  type: "notification",
+  data: {
+    kind: "textMention",
+    channel: "email",
+    projectId: generateProjectId(),
+    roomId: ROOM_ID_TEST,
+    userId,
+    mentionId,
+    createdAt: new Date().toISOString(),
+    inboxNotificationId,
+  },
+});
