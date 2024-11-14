@@ -1,13 +1,13 @@
 import { describe, expect, test } from "vitest";
 
-import { Client, Server } from "~/index.js";
+import { ClientStore, ServerStore } from "~/index.js";
 import { opId } from "~/utils.js";
 
 import * as mutations from "./mutations.config.js";
 
-describe("Client", () => {
+describe("ClientStore", () => {
   test("can be mutated locally", () => {
-    const client = new Client(mutations);
+    const client = new ClientStore(mutations);
     client.mutate.put("a", 1);
     client.mutate.put("b", 2);
     client.mutate.put("c", 3);
@@ -17,13 +17,13 @@ describe("Client", () => {
   });
 
   test("mutations can fail", () => {
-    const client = new Client(mutations);
+    const client = new ClientStore(mutations);
     expect(() => client.mutate.dec("a")).toThrow("Cannot decrement beyond 0");
     expect(client.asObject()).toEqual({});
   });
 
   test("all mutations should be atomic", () => {
-    const client = new Client(mutations);
+    const client = new ClientStore(mutations);
     client.mutate.put("a", 1);
     client.mutate.put("b", 3);
     try {
@@ -35,9 +35,9 @@ describe("Client", () => {
   });
 
   test("most basic end to end test", () => {
-    const client1 = new Client(mutations);
-    const client2 = new Client(mutations);
-    const server = new Server(mutations);
+    const client1 = new ClientStore(mutations);
+    const client2 = new ClientStore(mutations);
+    const server = new ServerStore(mutations);
 
     const op1 = client1.mutate.put("a", 1);
     const op2 = client2.mutate.put("a", 2);
@@ -70,14 +70,14 @@ describe("Client", () => {
   });
 
   test("basic end to end test with randomization in mutation", () => {
-    function connect(client: Client, server: Server) {
+    function connect(client: ClientStore, server: ServerStore) {
       //client.
     }
 
     function twoClientSetup() {
-      const client1 = new Client(mutations);
-      const client2 = new Client(mutations);
-      const server = new Server(mutations);
+      const client1 = new ClientStore(mutations);
+      const client2 = new ClientStore(mutations);
+      const server = new ServerStore(mutations);
 
       const pipe1 = connect(client1, server);
       const pipe2 = connect(client2, server);
@@ -131,7 +131,7 @@ describe("Client", () => {
 
 describe("Server", () => {
   test("can be mutated locally (but only through Ops)", () => {
-    const server = new Server(mutations);
+    const server = new ServerStore(mutations);
     server.applyOp([opId(), "put", ["a", 1]]);
     server.applyOp([opId(), "put", ["b", 2]]);
     server.applyOp([opId(), "put", ["c", 3]]);
@@ -142,7 +142,7 @@ describe("Server", () => {
   });
 
   test.skip("server should validate incoming ops before executing them", () => {
-    const server = new Server(mutations);
+    const server = new ServerStore(mutations);
     server.applyOp([
       opId(),
       "put",

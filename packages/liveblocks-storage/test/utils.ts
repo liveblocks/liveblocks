@@ -1,9 +1,9 @@
-import type { Client, Server } from "~/index.js";
+import type { ClientStore, ServerStore } from "~/index.js";
 import type { Json } from "~/Json.js";
 import type { LayeredCache } from "~/LayeredCache.js";
 
 export function fmt(
-  base: Client<any> | Server<any> | LayeredCache
+  base: ClientStore<any> | ServerStore<any> | LayeredCache
 ): Record<string, Json> {
   return "asObject" in base ? base.asObject() : Object.fromEntries(base);
 }

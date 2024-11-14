@@ -22,7 +22,7 @@ type BoundMutations<M extends Record<string, Mutation>> = {
 
 // ----------------------------------------------------------------------------
 
-export class Base<M extends Mutations> {
+abstract class BaseStore<M extends Mutations> {
   #cache: LayeredCache;
   #mutations: M;
 
@@ -118,7 +118,7 @@ export class Base<M extends Mutations> {
 
 // ----------------------------------------------------------------------------
 
-export class Client<M extends Mutations> extends Base<M> {
+export class ClientStore<M extends Mutations> extends BaseStore<M> {
   // #eventSource: EventSource<Op>;
   #pendingOps: Op[];
 
@@ -162,4 +162,4 @@ export class Client<M extends Mutations> extends Base<M> {
 
 // ----------------------------------------------------------------------------
 
-export class Server<M extends Mutations> extends Base<M> {}
+export class ServerStore<M extends Mutations> extends BaseStore<M> {}
