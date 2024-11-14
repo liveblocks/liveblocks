@@ -769,7 +769,8 @@ function CreateOrEditCommentRoomIdProvider({
   children: ReactNode;
 }) {
   const store = getUmbrellaStoreForClient(useClient());
-  const thread = store.getFullState().threadsDB.get(threadId);
+  const thread = store.getFullState().threadsDB.getEvenIfDeleted(threadId);
+
   if (thread === undefined) {
     if (commentId === undefined) {
       throw new Error(

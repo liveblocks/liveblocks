@@ -1670,7 +1670,7 @@ function useDeleteComment() {
 
       if (existing === undefined) {
         throw new Error(
-          `Internal unexpected behavior. Cannot delete comment in thread "${threadId}" because the thread does not exist in cache.`
+          `Cannot delete comment in thread "${threadId}" because the thread does not exist in cache.`
         );
       }
 
