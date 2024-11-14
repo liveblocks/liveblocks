@@ -18,17 +18,21 @@ local changes are not yet synchronized. To opt-in to this protection, enable
 
 ### `@liveblocks/client`
 
-- Add new API `client.getSyncStatus()` method.
-- Add new client config option `preventUnsavedChanges`.
+- Add new API
+  [`client.getSyncStatus()`](https://liveblocks.io/docs/api-reference/liveblocks-client#Client.getSyncStatus)
+  method.
+- Add new
+  [client config option](https://liveblocks.io/docs/api-reference/liveblocks-client#createClient):
+  `preventUnsavedChanges`.
 - Expose `ToImmutable<T>` helper type.
 
 ### `@liveblocks/react`
 
-- Add new hook `useSyncStatus` that can be used to tell whether Liveblocks is
-  synchronizing local changes to the server. Useful to display a "Saving..."
-  spinner in your application, when used with `useSyncStatus({ smooth: true })`.
-- Add new client config option `preventUnsavedChanges`, for example:
-  `createClient({ preventUnsavedChanges: true })`.
+- Add new hook
+  [`useSyncStatus`](https://liveblocks.io/docs/api-reference/liveblocks-react#useSyncStatus)
+  that can be used to tell whether Liveblocks is synchronizing local changes to
+  the server. Useful to display a "Saving..." spinner in your application, when
+  used with `useSyncStatus({ smooth: true })`.
 - Deprecated APIs:
   - `useStorageStatus` is now deprecated in favor of `useSyncStatus`.
 
