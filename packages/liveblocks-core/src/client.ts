@@ -860,15 +860,8 @@ export function createClient<U extends BaseUserMeta = DU>(
         getRoomIds() {
           return Array.from(roomsById.keys());
         },
-
-        // "All" threads (= "user" threads)
-        getUserThreads_experimental:
-          notificationsAPI.getUserThreads_experimental,
-        getUserThreadsSince_experimental:
-          notificationsAPI.getUserThreadsSince_experimental,
-
-        // Type-level helper only, it's effectively only an identity-function at runtime
-        as: <M2 extends BaseMetadata>() => client,
+        httpClient,
+        createSyncSource,
       },
     },
     kInternal,

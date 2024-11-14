@@ -619,7 +619,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     new Map();
 
   constructor(client: OpaqueClient) {
-    this._client = client[kInternal].as<M>();
+    this._client = client;
     this._syncSource = this._client[kInternal].createSyncSource();
 
     const inboxFetcher = async (cursor?: string) => {
