@@ -1,4 +1,4 @@
-## 2.12.0 (not yet released)
+## 2.12.0
 
 This release adds support for tracking synchronization status of pending local
 changes for any part of Liveblocks. Whether you use Storage, Text Editors,
