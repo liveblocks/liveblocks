@@ -41,7 +41,7 @@ type RoomTextEditor = {
   rootKey: string[];
 };
 
-type TextMentionNotificationData = (
+export type TextMentionNotificationData = (
   | {
       editor: "lexical";
       mentionNodeWithContext: LexicalMentionNodeWithContext;

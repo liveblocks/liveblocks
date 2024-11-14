@@ -5,6 +5,7 @@ import type {
   DRI,
   DU,
   InboxNotificationData,
+  InboxNotificationTextMentionData,
   InboxNotificationThreadData,
   IUserInfo,
   OptionalPromise,
@@ -457,4 +458,24 @@ export const makeTextMentionNotificationEvent = ({
     createdAt: new Date().toISOString(),
     inboxNotificationId,
   },
+});
+
+export const makeTextMentionInboxNotification = ({
+  mentionId,
+  createdBy,
+  notifiedAt,
+  readAt,
+}: {
+  mentionId: string;
+  createdBy: string;
+  notifiedAt?: Date;
+  readAt?: Date;
+}): InboxNotificationTextMentionData => ({
+  id: generateInboxNotificationId(),
+  kind: "textMention",
+  roomId: ROOM_ID_TEST,
+  mentionId,
+  createdBy,
+  notifiedAt: notifiedAt ?? new Date(),
+  readAt: readAt ?? null,
 });
