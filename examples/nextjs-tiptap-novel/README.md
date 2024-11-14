@@ -7,13 +7,13 @@
   </a>
 </p>
 
-# Advanced Collaborative Rich Text Editor (Tiptap)
+# Advanced Collaborative Rich Text Editor (Novel)
 
 <p>
-  <a href="https://liveblocks.io/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced/preview">
+  <a href="https://liveblocks.io/examples/collaborative-text-editor-advanced/nextjs-tiptap-novel/preview">
     <img src="https://img.shields.io/badge/live%20preview-message?style=flat&logo=data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTE2Ljg0OSA0Ljc1SDBsNC44NDggNS4wNzV2Ny4wMDhsMTItMTIuMDgzWk03LjE1IDE5LjI1SDI0bC00Ljg0OS01LjA3NVY3LjE2N2wtMTIgMTIuMDgzWiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==&color=333" alt="Live Preview" />
   </a>
-  <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-tiptap">
+  <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-tiptap-novel">
     <img src="https://img.shields.io/badge/open%20in%20codesandbox-message?style=flat&logo=codesandbox&color=333&logoColor=fff" alt="Open in CodeSandbox" />
   </a>
   <img src="https://img.shields.io/badge/react-message?style=flat&logo=react&color=0bd&logoColor=fff" alt="React" />
@@ -22,9 +22,9 @@
   <img src="https://img.shields.io/badge/tiptap-message?style=flat&color=07f" alt="Tiptap" />
 </p>
 
-This example shows how to build a collaborative text editor with
-[Liveblocks](https://liveblocks.io), [Tiptap](https://tiptap.dev), and
-[Next.js](https://nextjs.org/).
+This example shows how to build a collaborative AI text editor with
+[Liveblocks](https://liveblocks.io), [Novel](https://novel.sh),
+[Tiptap](https://tiptap.dev), and [Next.js](https://nextjs.org/).
 
 As users edit the document, changes will be automatically persisted and
 synced—allowing for an editor that updates in realtime across clients. Users
@@ -37,7 +37,7 @@ will also be able to see each other’s cursors in the document.
 Run the following command to try this example locally:
 
 ```bash
-npx create-liveblocks-app@latest --example nextjs-tiptap-advanced --api-key
+npx create-liveblocks-app@latest --example nextjs-tiptap-novel --api-key
 ```
 
 This will download the example and ask permission to open your browser, enabling
@@ -72,7 +72,7 @@ To both deploy on [Vercel](https://vercel.com), and run the example locally, use
 the following command:
 
 ```bash
-npx create-liveblocks-app@latest --example nextjs-tiptap-advanced --vercel
+npx create-liveblocks-app@latest --example nextjs-tiptap-novel --vercel
 ```
 
 This will download the example and ask permission to open your browser, enabling
@@ -87,7 +87,7 @@ you to deploy to Vercel.
 <p></p>
 
 After forking
-[this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-tiptap-advanced)
+[this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-tiptap-novel)
 on CodeSandbox, create the `LIVEBLOCKS_SECRET_KEY` environment variable as a
 [secret](https://codesandbox.io/docs/secrets).
 

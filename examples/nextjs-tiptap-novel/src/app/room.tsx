@@ -5,18 +5,9 @@ import { RoomProvider } from "@liveblocks/react/suspense";
 import { useSearchParams } from "next/navigation";
 
 export function Room({ children }: { children: ReactNode }) {
-  const roomId = useExampleRoomId("liveblocks:examples:nextjs-tiptap-advanced");
+  const roomId = useExampleRoomId("liveblocks:examples:nextjs-tiptap-novel");
 
-  return (
-    <RoomProvider
-      id={roomId}
-      initialPresence={{
-        cursor: null,
-      }}
-    >
-      {children}
-    </RoomProvider>
-  );
+  return <RoomProvider id={roomId}>{children}</RoomProvider>;
 }
 
 /**

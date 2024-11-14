@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { Providers } from "./Providers";
+import { Providers } from "./providers";
 import "@liveblocks/react-ui/styles.css";
 import "@liveblocks/react-ui/styles/dark/attributes.css";
 import "@liveblocks/react-tiptap/styles.css";
