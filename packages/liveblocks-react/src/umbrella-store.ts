@@ -533,7 +533,7 @@ export class SinglePageResource {
 
 type InternalState<M extends BaseMetadata> = Readonly<{
   optimisticUpdates: readonly OptimisticUpdate<M>[];
-  permissionsByRoom: Record<string, Permission[]>;
+  permissionsByRoom: Record<string, Set<Permission>>;
 
   // TODO: Ideally we would have a similar NotificationsDB, like we have ThreadDB
   notificationsById: Record<string, InboxNotificationData>;
@@ -828,7 +828,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this._store.subscribe(callback);
   }
 
-  public _getPermissions(roomId: string): Permission[] | undefined {
+  public _getPermissions(roomId: string): Set<Permission> | undefined {
     return this._store.get().permissionsByRoom[roomId];
   }
 
@@ -1301,6 +1301,26 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this._notifications.waitUntilLoaded();
   }
 
+  private updateRoomPermissions(permissions: Record<string, Permission[]>) {
+    const permissionsByRoom = this._store.get().permissionsByRoom;
+
+    Object.entries(permissions).forEach(([roomId, permissions]) => {
+      // Get the existing set of permissions for the room and only ever add permission to this set
+      const existingPermissions = permissionsByRoom[roomId];
+
+      if (existingPermissions === undefined) {
+        permissionsByRoom[roomId] = new Set(permissions);
+      } else {
+        permissions.forEach(existingPermissions.add);
+      }
+    });
+
+    this._store.set((state) => ({
+      ...state,
+      permissionsByRoom,
+    }));
+  }
+
   public waitUntilRoomThreadsLoaded(
     roomId: string,
     query: ThreadsQuery<M> | undefined
@@ -1316,14 +1336,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
         result.inboxNotifications
       );
 
-      const permissions = result.permissionHints[roomId] ?? [];
-      this._store.set((state) => ({
-        ...state,
-        permissionsByRoom: {
-          ...state.permissionsByRoom,
-          [roomId]: permissions,
-        },
-      }));
+      this.updateRoomPermissions(result.permissionHints);
 
       const lastRequestedAt =
         this._roomThreadsLastRequestedAtByRoom.get(roomId);
@@ -1385,14 +1398,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       updates.inboxNotifications.deleted
     );
 
-    const permissions = updates.permissionHints[roomId] ?? [];
-    this._store.set((state) => ({
-      ...state,
-      permissionsByRoom: {
-        ...state.permissionsByRoom,
-        [roomId]: permissions,
-      },
-    }));
+    this.updateRoomPermissions(updates.permissionHints);
 
     if (lastRequestedAt < updates.requestedAt) {
       // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
@@ -1415,13 +1421,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
         result.inboxNotifications
       );
 
-      this._store.set((state) => ({
-        ...state,
-        permissionsByRoom: {
-          ...state.permissionsByRoom,
-          ...result.permissionHints,
-        },
-      }));
+      this.updateRoomPermissions(result.permissionHints);
 
       // We initialize the `_userThreadsLastRequestedAt` date using the server timestamp after we've loaded the first page of inbox notifications.
       if (this._userThreadsLastRequestedAt === null) {
@@ -1471,13 +1471,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       result.inboxNotifications.deleted
     );
 
-    this._store.set((state) => ({
-      ...state,
-      permissionsByRoom: {
-        ...state.permissionsByRoom,
-        ...result.permissionHints,
-      },
-    }));
+    this.updateRoomPermissions(result.permissionHints);
   }
 
   public waitUntilRoomVersionsLoaded(roomId: string) {

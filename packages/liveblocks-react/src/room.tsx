@@ -2566,7 +2566,7 @@ function useRoomPermissions(roomId: string) {
       store.subscribe,
       React.useCallback(() => store._getPermissions(roomId), [store, roomId]),
       React.useCallback(() => store._getPermissions(roomId), [store, roomId])
-    ) ?? []
+    ) ?? new Set()
   );
 }
 

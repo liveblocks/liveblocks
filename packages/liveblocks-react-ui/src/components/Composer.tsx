@@ -600,8 +600,8 @@ const ComposerImpl = forwardRef(
     const $ = useOverrides(overrides);
     const permissions = useRoomPermissions(useComposerRoomId());
     const canComment =
-      permissions.includes(Permission.CommentsWrite) ||
-      permissions.includes(Permission.Write);
+      permissions.has(Permission.CommentsWrite) ||
+      permissions.has(Permission.Write);
 
     const onCommentSubmit = useContext(ComposerSubmitCallback);
     if (onCommentSubmit === null) {
