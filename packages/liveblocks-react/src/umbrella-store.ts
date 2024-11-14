@@ -1301,19 +1301,16 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   private updateRoomPermissions(permissions: Record<string, Permission[]>) {
-    const permissionsByRoom = this._store.get().permissionsByRoom;
+    const permissionsByRoom = { ...this._store.get().permissionsByRoom };
 
-    Object.entries(permissions).forEach(([roomId, permissions]) => {
+    Object.entries(permissions).forEach(([roomId, newPermissions]) => {
       // Get the existing set of permissions for the room and only ever add permission to this set
-      const existingPermissions = permissionsByRoom[roomId];
-
-      if (existingPermissions === undefined) {
-        permissionsByRoom[roomId] = new Set(permissions);
-      } else {
-        permissions.forEach((permission) =>
-          existingPermissions.add(permission)
-        );
-      }
+      const existingPermissions = permissionsByRoom[roomId] ?? new Set();
+      // Add the new permissions to the set of existing permissions
+      newPermissions.forEach((permission) =>
+        existingPermissions.add(permission)
+      );
+      permissionsByRoom[roomId] = existingPermissions;
     });
 
     this._store.set((state) => ({
