@@ -29,6 +29,7 @@ import type {
 } from "react";
 import React, { forwardRef, useCallback, useMemo, useRef } from "react";
 
+import { FLOATING_ELEMENT_SIDE_OFFSET } from "../constants";
 import { AttachmentIcon } from "../icons/Attachment";
 import { BoldIcon } from "../icons/Bold";
 import { CodeIcon } from "../icons/Code";
@@ -388,7 +389,11 @@ function TextFormatToggle({
   );
 
   return (
-    <ShortcutTooltip content={label} shortcut={shortcut}>
+    <ShortcutTooltip
+      content={label}
+      shortcut={shortcut}
+      sideOffset={FLOATING_ELEMENT_SIDE_OFFSET + 2}
+    >
       <TogglePrimitive.Root asChild pressed={textFormats[format]} {...props}>
         <Button
           aria-label={label}

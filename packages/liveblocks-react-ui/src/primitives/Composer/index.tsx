@@ -10,6 +10,7 @@ import {
   hide,
   inline,
   limitShift,
+  offset,
   shift,
   size,
   useFloating,
@@ -70,7 +71,10 @@ import {
 } from "slate-react";
 
 import { useLiveblocksUIConfig } from "../../config";
-import { FLOATING_ELEMENT_COLLISION_PADDING } from "../../constants";
+import {
+  FLOATING_ELEMENT_COLLISION_PADDING,
+  FLOATING_ELEMENT_SIDE_OFFSET,
+} from "../../constants";
 import { withAutoFormatting } from "../../slate/plugins/auto-formatting";
 import { withAutoLinks } from "../../slate/plugins/auto-links";
 import { withCustomLinks } from "../../slate/plugins/custom-links";
@@ -381,6 +385,7 @@ function ComposerEditorFloatingToolbarWrapper({
       placement: getPlacementFromPosition(position, dir, true),
       middleware: [
         inline(detectOverflowOptions),
+        offset({ mainAxis: FLOATING_ELEMENT_SIDE_OFFSET }),
         flip({ ...detectOverflowOptions, crossAxis: false }),
         hide(detectOverflowOptions),
         shift({
@@ -446,7 +451,8 @@ function ComposerEditorFloatingToolbarWrapper({
         if (
           !editor.selection ||
           SlateRange.isCollapsed(editor.selection) ||
-          !domSelection
+          !domSelection ||
+          !domSelection.rangeCount
         ) {
           setHasFloatingToolbarRange(false);
           setReference(null);
