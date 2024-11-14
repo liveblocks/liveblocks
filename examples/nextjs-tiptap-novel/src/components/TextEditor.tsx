@@ -1,24 +1,23 @@
 "use client";
 
 import { ClientSideSuspense } from "@liveblocks/react/suspense";
-import { DocumentSpinner } from "@/primitives/Spinner";
+import { DocumentSpinner } from "@/components/Spinner";
 import { Avatars } from "@/components/Avatars";
 import { AdvancedEditor } from "@/components/Editor/advanced-editor";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import styles from "./TextEditor.module.css";
 
 export function TextEditor() {
   return (
-    <div className={styles.container}>
-      <div className={styles.editorHeader}>
+    <div className="flex flex-col bg-border/30 absolute inset-0">
+      <div className="top-0 left-0 right-0 flex flex-none justify-between items-start bg-background border-b border-border p-1.5 z-10">
         <ThemeToggle />
         <ClientSideSuspense fallback={null}>
           <Avatars />
         </ClientSideSuspense>
       </div>
-      <div className={styles.editorPanel}>
-        <div className={styles.editorContainerOffset}>
-          <div className={styles.editorContainer}>
+      <div className="flex-1 overflow-y-scroll">
+        <div className="min-h-0 h-auto xl:ml-[-350px] ml-0 xl:px-4">
+          <div className="relative min-h-[1100px] w-full max-w-[800px] my-4 mx-auto border border-border bg-background">
             <ClientSideSuspense fallback={<DocumentSpinner />}>
               <AdvancedEditor />
             </ClientSideSuspense>
@@ -28,11 +27,3 @@ export function TextEditor() {
     </div>
   );
 }
-
-// Prevents a matchesNode error on hot reloading
-// EditorView.prototype.updateState = function updateState(state) {
-//   // @ts-ignore
-//   if (!this.docView) return;
-//   // @ts-ignore
-//   this.updateStateInner(state, this.state.plugins != state.plugins);
-// };

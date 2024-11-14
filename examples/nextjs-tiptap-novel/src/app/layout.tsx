@@ -1,11 +1,11 @@
 import { Suspense } from "react";
 import { Providers } from "./Providers";
-import "../styles/globals.css";
-import "../styles/text-editor.css";
-import "../styles/prosemirror.css";
 import "@liveblocks/react-ui/styles.css";
 import "@liveblocks/react-ui/styles/dark/attributes.css";
 import "@liveblocks/react-tiptap/styles.css";
+import "../styles/globals.css";
+import "../styles/text-editor.css";
+import "../styles/prosemirror.css";
 
 export const metadata = {
   title: "Liveblocks",
