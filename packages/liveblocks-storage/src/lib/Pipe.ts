@@ -21,8 +21,8 @@ export type Pipe<T> = {
   setAuto(): void; // The default mode
   setManual(): void;
 
-  // Control pipe by delivering all buffered messages to the pipe
-  flush(n?: number): Promise<void>;
+  // Control pipe by delivering all buffered messages in the pipe
+  flush(): Promise<void>;
 };
 
 export function makePipe<T>(): Pipe<T> {
@@ -57,6 +57,10 @@ export function makePipe<T>(): Pipe<T> {
     while ((data = buffer.shift()) !== undefined) {
       // Add artificial delay between each loop?
       await delay();
+
+      if (output.count() === 0) {
+        raise("Can't send to broken pipe");
+      }
       try {
         output.notify(data);
       } catch {
@@ -68,9 +72,8 @@ export function makePipe<T>(): Pipe<T> {
     pendingFlush$ = null;
   }
 
-  async function flush() {
-    pendingFlush$ ??= flushNow();
-    await pendingFlush$;
+  function flush() {
+    return (pendingFlush$ ??= flushNow());
   }
 
   function setAuto() {

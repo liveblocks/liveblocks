@@ -1,5 +1,5 @@
 import { describe, expect, onTestFinished, test, vi } from "vitest";
-import { makePipe } from "./lib/Pipe.js";
+import { makePipe } from "~/lib/Pipe.js";
 
 /**
  * Sets up a pipe test:
