@@ -1,7 +1,9 @@
 import { describe, expect, test } from "vitest";
+
 import { Client, Server } from "~/index.js";
 import { opId } from "~/utils.js";
-import * as mutations from "./_mutations.js";
+
+import * as mutations from "./mutations.config.js";
 
 describe("Client", () => {
   test("can be mutated locally", () => {
