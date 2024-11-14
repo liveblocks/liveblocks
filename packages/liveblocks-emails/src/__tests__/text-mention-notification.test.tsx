@@ -1,12 +1,15 @@
 import { Liveblocks } from "@liveblocks/node";
 import { http, HttpResponse } from "msw";
 
+import type { ConvertTextEditorNodesAsHtmlStyles } from "../liveblocks-text-editor";
 import type {
   TextMentionNotificationData,
   TextMentionNotificationEmailBaseData,
+  TextMentionNotificationEmailDataAsHtml,
 } from "../text-mention-notification";
 import {
   extractTextMentionNotificationData,
+  prepareTextMentionNotificationEmailAsHtml,
   prepareTextMentionNotificationEmailBaseData,
 } from "../text-mention-notification";
 import {
@@ -18,6 +21,7 @@ import {
   makeThreadInboxNotification,
   RESOLVED_ROOM_INFO_TEST,
   resolveRoomInfo,
+  resolveUsers,
   ROOM_ID_TEST,
   ROOM_TEST,
   server,
@@ -320,5 +324,101 @@ describe("text mention notification", () => {
       expect(preparedWithUnresolvedRoomInfo).toEqual(expected1);
       expect(preparedWithResolvedRoomInfo).toEqual(expected2);
     });
+  });
+
+  describe("prepare text mention notification email as html", () => {
+    const inboxNotification = makeTextMentionInboxNotification({
+      mentionId: MENTION_ID_TIPTAP,
+      createdBy: "user-1",
+      notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
+    });
+
+    const room = makeRoomWithTextEditor({ editor: "tiptap" });
+
+    const event = makeTextMentionNotificationEvent({
+      userId: MENTIONED_USER_ID_TIPTAP,
+      mentionId: MENTION_ID_TIPTAP,
+      inboxNotificationId: inboxNotification.id,
+    });
+
+    const styles: Partial<ConvertTextEditorNodesAsHtmlStyles> = {
+      container: {
+        fontSize: "16px",
+      },
+    };
+
+    const expected1: TextMentionNotificationEmailDataAsHtml = {
+      mention: {
+        id: MENTION_ID_TIPTAP,
+        roomId: room.id,
+        author: { id: "user-1", info: { name: "user-1" } },
+        createdAt: inboxNotification.notifiedAt,
+        htmlContent:
+          '<div style="font-size:16px;">Hey this a tip tap <em><strong style="font-weight:500;">example</strong></em> hiha! <span data-mention style="color:blue;">@user-0</span> fun right?</div>',
+      },
+      roomInfo: {
+        name: ROOM_ID_TEST,
+      },
+    };
+
+    const expected2: TextMentionNotificationEmailDataAsHtml = {
+      mention: {
+        id: MENTION_ID_TIPTAP,
+        roomId: room.id,
+        author: { id: "user-1", info: { name: "Mislav Abha" } },
+        createdAt: inboxNotification.notifiedAt,
+        htmlContent:
+          '<div style="font-size:16px;">Hey this a tip tap <em><strong style="font-weight:500;">example</strong></em> hiha! <span data-mention style="color:blue;">@Charlie Layne</span> fun right?</div>',
+      },
+      roomInfo: RESOLVED_ROOM_INFO_TEST,
+    };
+
+    it.each<{
+      withResolvers: boolean;
+      promise: () => Promise<TextMentionNotificationEmailDataAsHtml | null>;
+      expected: TextMentionNotificationEmailDataAsHtml;
+    }>([
+      {
+        withResolvers: false,
+        promise: () =>
+          prepareTextMentionNotificationEmailAsHtml(client, event, { styles }),
+        expected: expected1,
+      },
+      {
+        withResolvers: true,
+        promise: () =>
+          prepareTextMentionNotificationEmailAsHtml(client, event, {
+            styles,
+            resolveUsers,
+            resolveRoomInfo,
+          }),
+        expected: expected2,
+      },
+    ])(
+      "should return text mention as html with resolvers: $withResolvers",
+      async ({ promise, expected }) => {
+        server.use(
+          http.get(
+            `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
+            () => HttpResponse.json(inboxNotification, { status: 200 })
+          )
+        );
+
+        server.use(
+          http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId`, () =>
+            HttpResponse.json(room, { status: 200 })
+          )
+        );
+
+        server.use(
+          http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId/ydoc-binary`, () =>
+            HttpResponse.arrayBuffer(docUpdateBufferTiptap)
+          )
+        );
+
+        const textMentionNotificationEmailAsHtml = await promise();
+        expect(textMentionNotificationEmailAsHtml).toEqual(expected);
+      }
+    );
   });
 });
