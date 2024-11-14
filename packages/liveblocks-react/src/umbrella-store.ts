@@ -207,6 +207,10 @@ function makeUserThreadsQueryKey(
   return `USER_THREADS:${stringify(query ?? {})}`;
 }
 
+function makeRoomInboxNotificationsQueryKey(roomId: string) {
+  return `${roomId}:INBOX_NOTIFICATIONS`;
+}
+
 function makeNotificationSettingsQueryKey(roomId: string) {
   return `${roomId}:NOTIFICATION_SETTINGS`;
 }
@@ -598,6 +602,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
   private _notificationsLastRequestedAt: Date | null = null; // Keeps track of when we successfully requested an inbox notifications update for the last time. Will be `null` as long as the first successful fetch hasn't happened yet.
   private _notifications: PaginatedResource;
 
+  // Room Notifications
+  private _roomNotificationsLastRequestedAtByRoom = new Map<string, Date>();
+  private _roomNotifications: Map<string, PaginatedResource> = new Map();
+
   // Room Threads
   private _roomThreadsLastRequestedAtByRoom = new Map<string, Date>();
   private _roomThreads: Map<string, PaginatedResource> = new Map();
@@ -710,6 +718,39 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return {
       isLoading: false,
       threads,
+      hasFetchedAll: page.hasFetchedAll,
+      isFetchingMore: page.isFetchingMore,
+      fetchMoreError: page.fetchMoreError,
+      fetchMore: page.fetchMore,
+    };
+  }
+
+  /**
+   *
+   */
+  public getRoomInboxNotificationsLoadingState(
+    roomId: string
+  ): InboxNotificationsAsyncResult {
+    const queryKey = makeRoomInboxNotificationsQueryKey(roomId);
+
+    const resource = this._roomNotifications.get(queryKey);
+    if (resource === undefined) {
+      return ASYNC_LOADING;
+    }
+
+    const asyncResult = resource.get();
+    if (asyncResult.isLoading || asyncResult.error) {
+      return asyncResult;
+    }
+
+    const page = asyncResult.data;
+    // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
+    return {
+      isLoading: false,
+      // FIXME: The filtering part doesn't look right, should I created a notificationsDB like threadsDB?
+      inboxNotifications: this.getFullState().cleanedNotifications.filter(
+        (n) => n.roomId === roomId
+      ),
       hasFetchedAll: page.hasFetchedAll,
       isFetchingMore: page.isFetchingMore,
       fetchMoreError: page.fetchMoreError,
@@ -1375,6 +1416,91 @@ export class UmbrellaStore<M extends BaseMetadata> {
     if (lastRequestedAt < updates.requestedAt) {
       // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
       this._roomThreadsLastRequestedAtByRoom.set(roomId, updates.requestedAt);
+    }
+  }
+
+  public async waitUntilRoomInboxNotificationsLoaded(roomId: string) {
+    const inboxNotificationsFetcher = async (cursor?: string) => {
+      const room = this._client.getRoom(roomId);
+      if (room === null) {
+        throw new HttpError(`Room '${roomId}' is not available on client`, 479);
+      }
+
+      const result = await room.getInboxNotifications({ cursor });
+
+      this.updateThreadsAndNotifications(
+        result.threads,
+        result.inboxNotifications
+      );
+
+      const lastRequestedAt =
+        this._roomNotificationsLastRequestedAtByRoom.get(roomId);
+
+      if (
+        lastRequestedAt === undefined ||
+        lastRequestedAt > result.requestedAt
+      ) {
+        this._roomNotificationsLastRequestedAtByRoom.set(
+          roomId,
+          result.requestedAt
+        );
+      }
+
+      return result.nextCursor;
+    };
+
+    const queryKey = makeRoomInboxNotificationsQueryKey(roomId);
+
+    let paginatedResource = this._roomNotifications.get(queryKey);
+    if (paginatedResource === undefined) {
+      paginatedResource = new PaginatedResource(inboxNotificationsFetcher);
+    }
+
+    paginatedResource.observable.subscribe(() =>
+      // Note that the store itself does not change, but it's only vehicle at
+      // the moment to trigger a re-render, so we'll do a no-op update here.
+      this._store.set((store) => ({ ...store }))
+    );
+
+    this._roomNotifications.set(queryKey, paginatedResource);
+
+    return paginatedResource.waitUntilLoaded();
+  }
+
+  public async fetchRoomInboxNotificationsDeltaUpdate(
+    roomId: string,
+    signal: AbortSignal
+  ) {
+    const lastRequestedAt =
+      this._roomNotificationsLastRequestedAtByRoom.get(roomId);
+
+    if (lastRequestedAt === undefined) {
+      return;
+    }
+
+    const room = nn(
+      this._client.getRoom(roomId),
+      `Room with id ${roomId} is not available on client`
+    );
+
+    const updates = await room.getInboxNotificationsSince({
+      since: lastRequestedAt,
+      signal,
+    });
+
+    this.updateThreadsAndNotifications(
+      updates.threads.updated,
+      updates.inboxNotifications.updated,
+      updates.threads.deleted,
+      updates.inboxNotifications.deleted
+    );
+
+    if (lastRequestedAt < updates.requestedAt) {
+      // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
+      this._roomNotificationsLastRequestedAtByRoom.set(
+        roomId,
+        updates.requestedAt
+      );
     }
   }
 

@@ -59,6 +59,10 @@ import {
   raise,
   tryParseJson,
 } from "./lib/utils";
+import type {
+  GetInboxNotificationsOptions,
+  GetInboxNotificationsSinceOptions,
+} from "./notifications";
 import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 import type { ClientMsg, UpdateYDocClientMsg } from "./protocol/ClientMsg";
@@ -968,6 +972,52 @@ export type Room<
    * await room.getAttachmentUrl("at_xxx");
    */
   getAttachmentUrl(attachmentId: string): Promise<string>;
+
+  /**
+   * Gets the inbox notifications for the current user.
+   *
+   * @example
+   * const { threads, inboxNotifications, requestedAt } = await room.getInboxNotifications();
+   */
+  getInboxNotifications(options?: GetInboxNotificationsOptions): Promise<{
+    threads: ThreadData<M>[];
+    inboxNotifications: InboxNotificationData[];
+    requestedAt: Date;
+    nextCursor: string | null;
+  }>;
+
+  /**
+   * Gets the updated and deleted inbox notifications since the requested date.
+   * @example
+   * const result = await room.getInboxNotificationsSince({ since: result.requestedAt });
+   * // ... //
+   *
+   * @example
+   * const result = await room.getInboxNotifications();
+   * // ... //
+   * await room.getInboxNotificationsSince({ since: result.requestedAt });
+   */
+  getInboxNotificationsSince(
+    options: GetInboxNotificationsSinceOptions
+  ): Promise<{
+    threads: {
+      updated: ThreadData<M>[];
+      deleted: ThreadDeleteInfo[];
+    };
+    inboxNotifications: {
+      updated: InboxNotificationData[];
+      deleted: InboxNotificationDeleteInfo[];
+    };
+    requestedAt: Date;
+  }>;
+
+  /**
+   * Gets the unread count of the inbox notifications for the current user.
+   *
+   * @example
+   * const count = await room.getUnreadInboxNotificationsCount();
+   */
+  getUnreadInboxNotificationsCount(): Promise<number>;
 
   /**
    * Gets the user's notification settings for the current room.
@@ -3295,6 +3345,70 @@ export function createRoom<
     return await httpClient2.get<T>(endpoint, undefined, options);
   }
 
+  async function getInboxNotifications(options?: GetInboxNotificationsOptions) {
+    const PAGE_SIZE = 50;
+
+    const json = await httpClient2.get<{
+      threads: ThreadDataPlain<M>[];
+      inboxNotifications: InboxNotificationDataPlain[];
+      meta: {
+        requestedAt: string;
+        nextCursor: string | null;
+      };
+    }>(url`/v2/c/rooms/${config.roomId}/inbox-notifications`, {
+      cursor: options?.cursor,
+      limit: PAGE_SIZE,
+    });
+
+    return {
+      inboxNotifications: json.inboxNotifications.map(
+        convertToInboxNotificationData
+      ),
+      threads: json.threads.map(convertToThreadData),
+      nextCursor: json.meta.nextCursor,
+      requestedAt: new Date(json.meta.requestedAt),
+    };
+  }
+
+  async function getInboxNotificationsSince(
+    options: GetInboxNotificationsSinceOptions
+  ) {
+    const json = await httpClient2.get<{
+      threads: ThreadDataPlain<M>[];
+      inboxNotifications: InboxNotificationDataPlain[];
+      deletedThreads: ThreadDeleteInfoPlain[];
+      deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+      meta: {
+        requestedAt: string;
+      };
+    }>(
+      url`/v2/c/rooms/${config.roomId}/inbox-notifications/delta`,
+      { since: options.since.toISOString() },
+      { signal: options.signal }
+    );
+
+    return {
+      inboxNotifications: {
+        updated: json.inboxNotifications.map(convertToInboxNotificationData),
+        deleted: json.deletedInboxNotifications.map(
+          convertToInboxNotificationDeleteInfo
+        ),
+      },
+      threads: {
+        updated: json.threads.map(convertToThreadData),
+        deleted: json.deletedThreads.map(convertToThreadDeleteInfo),
+      },
+      requestedAt: new Date(json.meta.requestedAt),
+    };
+  }
+
+  async function getUnreadInboxNotificationsCount() {
+    const { count } = await httpClient2.get<{ count: number }>(
+      url`/v2/c/rooms/${config.roomId}/inbox-notifications/count`
+    );
+    return count;
+  }
+
   function getNotificationSettings(
     options?: GetNotificationSettingsOptions
   ): Promise<RoomNotificationSettings> {
@@ -3462,6 +3576,9 @@ export function createRoom<
       getAttachmentUrl,
 
       // Notifications
+      getInboxNotifications,
+      getInboxNotificationsSince,
+      getUnreadInboxNotificationsCount,
       getNotificationSettings,
       updateNotificationSettings,
       markInboxNotificationAsRead,

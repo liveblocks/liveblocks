@@ -923,6 +923,14 @@ export type RoomContextBundle<
       useThreads(options?: UseThreadsOptions<M>): ThreadsAsyncResult<M>;
 
       /**
+       * Returns the inbox notifications for the current room.
+       *
+       * @example
+       * const { inboxNotifications, error, isLoading } = useRoomInboxNotifications();
+       */
+      useRoomInboxNotifications(): InboxNotificationsAsyncResult;
+
+      /**
        * Returns the user's notification settings for the current room
        * and a function to update them.
        *
@@ -1034,6 +1042,14 @@ export type RoomContextBundle<
              * const { threads } = useThreads();
              */
             useThreads(options?: UseThreadsOptions<M>): ThreadsAsyncSuccess<M>;
+
+            /**
+             * Returns the inbox notifications for the current room.
+             *
+             * @example
+             * const { inboxNotifications } = useRoomInboxNotifications();
+             */
+            useRoomInboxNotifications(): InboxNotificationsAsyncSuccess;
 
             /**
              * (Private beta) Returns a history of versions of the current room.
