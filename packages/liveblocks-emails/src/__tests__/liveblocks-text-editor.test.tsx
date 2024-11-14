@@ -15,6 +15,7 @@ import {
   renderToStaticMarkup,
   resolveUsers,
 } from "./_helpers";
+import { createLexicalMentionNodeWithContext } from "./_lexical-helpers";
 import { createTipTapMentionNodeWithContext } from "./_tiptap-helpers";
 
 const content1: LiveblocksTextEditorNode[] = [
@@ -111,10 +112,52 @@ const buildContentWithMention = ({
 
 describe("liveblocks text editor", () => {
   describe("transform serialized nodes into Liveblocks Text Editor nodes", () => {
+    it("should transform lexical nodes", () => {
+      const mentionId = generateInboxNotificationId();
+      const userId = "user-mina";
+
+      const mentionNodeWithContext = createLexicalMentionNodeWithContext({
+        mentionedUserId: userId,
+        mentionId,
+      });
+
+      const nodes = transformAsLiveblocksTextEditorNodes({
+        editor: "lexical",
+        mention: mentionNodeWithContext,
+      });
+
+      const expected: LiveblocksTextEditorNode[] = [
+        {
+          type: "text",
+          text: "Some things to add ",
+          bold: true,
+          italic: false,
+          strikethrough: false,
+          code: false,
+        },
+        {
+          type: "mention",
+          userId,
+        },
+        {
+          type: "text",
+          text: "?",
+          bold: false,
+          italic: false,
+          strikethrough: false,
+          code: false,
+        },
+      ];
+
+      expect(nodes).toEqual(expected);
+    });
+
     it("should transform tiptap nodes", () => {
       const mentionId = generateInboxNotificationId();
+      const userId = "user-dracula";
+
       const mentionNodeWithContext = createTipTapMentionNodeWithContext({
-        mentionedUserId: "user-dracula",
+        mentionedUserId: userId,
         mentionId,
       });
 
@@ -150,7 +193,7 @@ describe("liveblocks text editor", () => {
         },
         {
           type: "mention",
-          userId: "user-dracula",
+          userId,
         },
         {
           type: "text",
@@ -165,6 +208,7 @@ describe("liveblocks text editor", () => {
       expect(nodes).toEqual(expected);
     });
   });
+
   describe("converts content as React", () => {
     describe("w/o users resolver", () => {
       it("should convert simple texts elements", async () => {
