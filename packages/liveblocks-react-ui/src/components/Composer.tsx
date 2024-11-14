@@ -25,6 +25,7 @@ import type {
 } from "react";
 import React, { forwardRef, useCallback, useRef } from "react";
 
+import { useLiveblocksUIConfig } from "../config";
 import { AttachmentIcon } from "../icons/Attachment";
 import { EmojiIcon } from "../icons/Emoji";
 import { MentionIcon } from "../icons/Mention";
@@ -557,6 +558,7 @@ export const Composer = forwardRef(
     const createThread = useCreateThread();
     const createComment = useCreateComment();
     const editComment = useEditComment();
+    const { preventUnsavedComposerChanges } = useLiveblocksUIConfig();
     const hasResolveMentionSuggestions =
       client[kInternal].resolveMentionSuggestions !== undefined;
     const isEmptyRef = useRef(true);
@@ -681,6 +683,7 @@ export const Composer = forwardRef(
           disabled={disabled}
           defaultAttachments={defaultAttachments}
           pasteFilesAsAttachments={showAttachments}
+          preventUnsavedChanges={preventUnsavedComposerChanges}
         >
           <ComposerEditorContainer
             defaultValue={defaultValue}
