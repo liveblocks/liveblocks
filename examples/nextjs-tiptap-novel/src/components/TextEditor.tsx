@@ -16,7 +16,7 @@ export function TextEditor() {
         </ClientSideSuspense>
       </div>
       <div className="flex-1 overflow-y-scroll">
-        <div className="min-h-0 h-auto xl:ml-[-350px] ml-0 xl:px-4">
+        <div className="min-h-0 h-auto xl:ml-[-350px] ml-0 px-4">
           <div className="relative min-h-[1100px] w-full max-w-[800px] my-4 mx-auto border border-border bg-background">
             <ClientSideSuspense fallback={<DocumentSpinner />}>
               <AdvancedEditor />

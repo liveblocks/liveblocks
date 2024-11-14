@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Button } from "@/components/Button";
 import { MoonIcon, SunIcon } from "@/icons";
 
 export function ThemeToggle() {
@@ -11,9 +10,8 @@ export function ThemeToggle() {
   }
 
   return (
-    <Button
-      className="!p-2"
-      variant="subtle"
+    <button
+      className="p-2 rounded-lg text-muted-foreground outline-none transition-colors hover:bg-border/50 focus:bg-border/50"
       onClick={changeTheme}
       aria-label="Switch Theme"
     >
@@ -22,6 +20,6 @@ export function ThemeToggle() {
       ) : (
         <MoonIcon style={{ width: 18, height: 18 }} />
       )}
-    </Button>
+    </button>
   );
 }
