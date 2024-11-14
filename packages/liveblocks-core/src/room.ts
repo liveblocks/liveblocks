@@ -40,6 +40,7 @@ import {
   raise,
   tryParseJson,
 } from "./lib/utils";
+import type { Permission } from "./protocol/AuthToken";
 import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 import type { ClientMsg, UpdateYDocClientMsg } from "./protocol/ClientMsg";
@@ -750,6 +751,7 @@ export type Room<
     inboxNotifications: InboxNotificationData[];
     requestedAt: Date;
     nextCursor: string | null;
+    permissionHints: Record<string, Permission[]>;
   }>;
 
   /**
@@ -770,6 +772,7 @@ export type Room<
       deleted: InboxNotificationDeleteInfo[];
     };
     requestedAt: Date;
+    permissionHints: Record<string, Permission[]>;
   }>;
 
   /**
@@ -1588,11 +1591,8 @@ export function createRoom<
     return httpClient.deleteTextMention({ roomId, mentionId });
   }
 
-  async function reportTextEditor(type: "lexical", rootKey: string) {
-    await httpClient2.rawPost(url`/v2/c/rooms/${config.roomId}/text-metadata`, {
-      type,
-      rootKey,
-    });
+  async function reportTextEditor(type: TextEditorType, rootKey: string) {
+    await httpClient.reportTextEditor({ roomId, type, rootKey });
   }
 
   async function listTextVersions() {

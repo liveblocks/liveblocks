@@ -2486,7 +2486,7 @@ function useAttachmentUrl(attachmentId: string): AttachmentUrlAsyncResult {
 }
 
 /**
- * @private
+ * @private For internal use only. Do not rely on this hook. Use `useAttachmentUrl` instead.
  */
 function useRoomAttachmentUrl(
   attachmentId: string,
@@ -2555,7 +2555,7 @@ function useAttachmentUrlSuspense(attachmentId: string) {
 }
 
 /**
- * @private
+ * @private For internal use only. Do not rely on this hook.
  */
 function useRoomPermissions(roomId: string) {
   const client = useClient();

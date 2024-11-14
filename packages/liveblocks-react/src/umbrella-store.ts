@@ -533,7 +533,7 @@ export class SinglePageResource {
 
 type InternalState<M extends BaseMetadata> = Readonly<{
   optimisticUpdates: readonly OptimisticUpdate<M>[];
-  roomAccesses: Record<string, Permission[]>;
+  permissionsByRoom: Record<string, Permission[]>;
 
   // TODO: Ideally we would have a similar NotificationsDB, like we have ThreadDB
   notificationsById: Record<string, InboxNotificationData>;
@@ -645,7 +645,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this._rawThreadsDB = new ThreadDB();
     this._store = createStore<InternalState<M>>({
       optimisticUpdates: [],
-      roomAccesses: {},
+      permissionsByRoom: {},
       notificationsById: {},
       settingsByRoomId: {},
       versionsByRoomId: {},
@@ -829,7 +829,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   public _getPermissions(roomId: string): Permission[] | undefined {
-    return this._store.get().roomAccesses[roomId];
+    return this._store.get().permissionsByRoom[roomId];
   }
 
   // Direct low-level cache mutations ------------------------------------------------- {{{
@@ -1316,11 +1316,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
         result.inboxNotifications
       );
 
+      const permissions = result.permissionHints[roomId] ?? [];
       this._store.set((state) => ({
         ...state,
-        roomAccesses: {
-          ...state.roomAccesses,
-          [roomId]: result.roomAccess,
+        permissionsByRoom: {
+          ...state.permissionsByRoom,
+          [roomId]: permissions,
         },
       }));
 
@@ -1384,11 +1385,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
       updates.inboxNotifications.deleted
     );
 
+    const permissions = updates.permissionHints[roomId] ?? [];
     this._store.set((state) => ({
       ...state,
-      roomAccesses: {
-        ...state.roomAccesses,
-        [roomId]: updates.roomAccess,
+      permissionsByRoom: {
+        ...state.permissionsByRoom,
+        [roomId]: permissions,
       },
     }));
 
@@ -1415,9 +1417,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
       this._store.set((state) => ({
         ...state,
-        roomAccesses: {
-          ...state.roomAccesses,
-          ...result.roomAccesses,
+        permissionsByRoom: {
+          ...state.permissionsByRoom,
+          ...result.permissionHints,
         },
       }));
 
@@ -1471,9 +1473,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     this._store.set((state) => ({
       ...state,
-      roomAccesses: {
-        ...state.roomAccesses,
-        ...result.roomAccesses,
+      permissionsByRoom: {
+        ...state.permissionsByRoom,
+        ...result.permissionHints,
       },
     }));
   }

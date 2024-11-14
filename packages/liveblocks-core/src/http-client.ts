@@ -61,7 +61,7 @@ export interface RoomHttpApi {
     inboxNotifications: InboxNotificationData[];
     requestedAt: Date;
     nextCursor: string | null;
-    roomAccess: Permission[];
+    permissionHints: Record<string, Permission[]>;
   }>;
 
   getThreadsSince<M extends BaseMetadata>(options: {
@@ -78,7 +78,7 @@ export interface RoomHttpApi {
       deleted: InboxNotificationDeleteInfo[];
     };
     requestedAt: Date;
-    roomAccess: Permission[];
+    permissionHints: Record<string, Permission[]>;
   }>;
 
   createThread<M extends BaseMetadata>({
@@ -279,7 +279,7 @@ export interface RoomHttpApi {
     rootKey,
   }: {
     roomId: string;
-    type: "lexical";
+    type: TextEditorType;
     rootKey: string;
   }): Promise<void>;
 
@@ -378,9 +378,7 @@ export interface ClientHttpApi extends RoomHttpApi, NotificationHttpApi {
     inboxNotifications: InboxNotificationData[];
     nextCursor: string | null;
     requestedAt: Date;
-    roomAccesses: {
-      [id: string]: Permission[];
-    };
+    permissionHints: Record<string, Permission[]>;
   }>;
 
   getUserThreadsSince_experimental<M extends BaseMetadata>(options: {
@@ -396,9 +394,7 @@ export interface ClientHttpApi extends RoomHttpApi, NotificationHttpApi {
       deleted: ThreadDeleteInfo[];
     };
     requestedAt: Date;
-    roomAccesses: {
-      [id: string]: Permission[];
-    };
+    permissionHints: Record<string, Permission[]>;
   }>;
 }
 
@@ -438,7 +434,7 @@ export function createHttpClient({
       deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
       meta: {
         requestedAt: string;
-        roomAccess: Permission[];
+        permissionHints: Record<string, Permission[]>;
       };
     }>(
       url`/v2/c/rooms/${options.roomId}/threads/delta`,
@@ -461,7 +457,7 @@ export function createHttpClient({
         ),
       },
       requestedAt: new Date(result.meta.requestedAt),
-      roomAccess: result.meta.roomAccess,
+      permissionHints: result.meta.permissionHints,
     };
   }
 
@@ -490,7 +486,7 @@ export function createHttpClient({
         meta: {
           requestedAt: string;
           nextCursor: string | null;
-          roomAccess: Permission[];
+          permissionHints: Record<string, Permission[]>;
         };
       }>(
         url`/v2/c/rooms/${options.roomId}/threads`,
@@ -509,7 +505,7 @@ export function createHttpClient({
         ),
         nextCursor: result.meta.nextCursor,
         requestedAt: new Date(result.meta.requestedAt),
-        roomAccess: result.meta.roomAccess,
+        permissionHints: result.meta.permissionHints,
       };
     } catch (err) {
       if (err instanceof HttpError && err.status === 404) {
@@ -528,6 +524,7 @@ export function createHttpClient({
           // server).
           //
           requestedAt: new Date(Date.now() - 6 * 60 * 60 * 1000),
+          permissionHints: {},
         };
       }
 
@@ -1296,9 +1293,7 @@ export function createHttpClient({
       meta: {
         requestedAt: string;
         nextCursor: string | null;
-        roomAccesses: {
-          [id: string]: Permission[];
-        };
+        permissionHints: Record<string, Permission[]>;
       };
     }>(url`/v2/c/threads`, getAuthValueForUser, {
       cursor: options?.cursor,
@@ -1313,7 +1308,7 @@ export function createHttpClient({
       ),
       nextCursor: json.meta.nextCursor,
       requestedAt: new Date(json.meta.requestedAt),
-      roomAccesses: json.meta.roomAccesses,
+      permissionHints: json.meta.permissionHints,
     };
   }
 
@@ -1327,9 +1322,7 @@ export function createHttpClient({
       deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
       meta: {
         requestedAt: string;
-        roomAccesses: {
-          [id: string]: Permission[];
-        };
+        permissionHints: Record<string, Permission[]>;
       };
     }>(
       url`/v2/c/threads/delta`,
@@ -1350,7 +1343,7 @@ export function createHttpClient({
         ),
       },
       requestedAt: new Date(json.meta.requestedAt),
-      roomAccesses: json.meta.roomAccesses,
+      permissionHints: json.meta.permissionHints,
     };
   }
 
