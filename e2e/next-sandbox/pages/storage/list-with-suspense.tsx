@@ -14,7 +14,10 @@ import {
 import Button from "../../utils/Button";
 import { createLiveblocksClient } from "../../utils/createClient";
 
-const client = createLiveblocksClient();
+const client = createLiveblocksClient({
+  preventUnsavedChanges: true,
+  authEndpoint: "/api/auth/access-token",
+});
 
 const {
   suspense: {
@@ -26,6 +29,7 @@ const {
     useSelf,
     useStorage,
     useUndo,
+    useSyncStatus,
   },
 } = createRoomContext<never, { items: LiveList<string> }>(client);
 
@@ -54,6 +58,9 @@ function Sandbox() {
   const canRedo = useCanRedo();
   const items = useStorage((root) => root.items);
   const me = useSelf();
+
+  const syncStatus = useSyncStatus();
+  const smoothSyncStatus = useSyncStatus({ smooth: true });
 
   const push = useMutation(
     ({ storage }, value: string) => {
@@ -187,6 +194,16 @@ function Sandbox() {
       <table style={styles.dataTable}>
         <tbody>
           <Row id="renderCount" name="Render count" value={renderCount} />
+          <Row
+            id="syncStatus"
+            name="Sync status (immediate)"
+            value={syncStatus}
+          />
+          <Row
+            id="smoothSyncStatus"
+            name="Sync status (smooth)"
+            value={smoothSyncStatus}
+          />
           <Row id="numItems" name="List size" value={items.length} />
           <Row id="items" name="Serialized" value={items} />
         </tbody>

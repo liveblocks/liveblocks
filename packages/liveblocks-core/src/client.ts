@@ -11,6 +11,7 @@ import type { BatchStore } from "./lib/batch";
 import { Batch, createBatchStore } from "./lib/batch";
 import type { Store } from "./lib/create-store";
 import { createStore } from "./lib/create-store";
+import type { Observable } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import type { NoInfr } from "./lib/NoInfer";
@@ -27,6 +28,7 @@ import type {
   InboxNotificationData,
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
+import { ValueRef } from "./refs/ValueRef";
 import type {
   OpaqueRoom,
   OptionalTupleUnless,
@@ -34,6 +36,7 @@ import type {
   Polyfills,
   Room,
   RoomDelegates,
+  SyncSource,
 } from "./room";
 import {
   createRoom,
@@ -129,6 +132,21 @@ export type EnterOptions<P extends JsonObject = DP, S extends LsonObject = DS> =
   >
 >;
 
+export type SyncStatus =
+  /* Liveblocks is in the process of writing changes */
+  | "synchronizing"
+  /* Liveblocks has persisted all pending changes */
+  | "synchronized";
+
+/**
+ * "synchronizing"     - Liveblocks is in the process of writing changes
+ * "synchronized"      - Liveblocks has persisted all pending changes
+ * "has-local-changes" - There is local pending state inputted by the user, but
+ *                       we're not yet "synchronizing" it until a user
+ *                       interaction, like the draft text in a comment box.
+ */
+export type InternalSyncStatus = SyncStatus | "has-local-changes";
+
 /**
  * @private
  *
@@ -144,6 +162,8 @@ export type PrivateClientApi<U extends BaseUserMeta> = {
   readonly roomsInfoStore: BatchStore<DRI | undefined, string>;
   readonly getRoomIds: () => string[];
   readonly httpClient: ClientHttpApi;
+  // Tracking pending changes globally
+  createSyncSource(): SyncSource;
 };
 
 export type NotificationsApi = {
@@ -350,6 +370,33 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
    */
   // TODO Make this a getter, so we can provide M
   readonly [kInternal]: PrivateClientApi<U>;
+
+  /**
+   * Returns the current global sync status of the Liveblocks client. If any
+   * part of Liveblocks has any local pending changes that haven't been
+   * confirmed by or persisted by the server yet, this will be "synchronizing",
+   * otherwise "synchronized".
+   *
+   * This is a combined status for all of the below parts of Liveblocks:
+   * - Storage (realtime APIs)
+   * - Text Editors
+   * - Comments
+   * - Notifications
+   *
+   * @example
+   * const status = client.getSyncStatus();  // "synchronizing" | "synchronized"
+   */
+  getSyncStatus(): SyncStatus;
+
+  /**
+   * All possible client events, subscribable from a single place.
+   *
+   * @private These event sources are private for now, but will become public
+   * once they're stable.
+   */
+  readonly events: {
+    readonly syncStatus: Observable<void>;
+  };
 } & NotificationsApi;
 
 export type AuthEndpoint =
@@ -388,6 +435,13 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
   resolveRoomsInfo?: (
     args: ResolveRoomsInfoArgs
   ) => OptionalPromise<(DRI | undefined)[] | undefined>;
+
+  /**
+   * Prevent the current browser tab from being closed if there are any locally
+   * pending Liveblocks changes that haven't been submitted to or confirmed by
+   * the server yet.
+   */
+  preventUnsavedChanges?: boolean;
 
   /**
    * @internal To point the client to a different Liveblocks server. Only
@@ -586,6 +640,7 @@ export function createClient<U extends BaseUserMeta = DU>(
         unstable_fallbackToHTTP: !!clientOptions.unstable_fallbackToHTTP,
         unstable_streamData: !!clientOptions.unstable_streamData,
         roomHttpClient: httpClient,
+        createSyncSource,
       }
     );
 
@@ -696,6 +751,75 @@ export function createClient<U extends BaseUserMeta = DU>(
     mentionSuggestionsCache.clear();
   }
 
+  // ----------------------------------------------------------------
+
+  const syncStatusSources: ValueRef<InternalSyncStatus>[] = [];
+  const syncStatusRef = new ValueRef<InternalSyncStatus>("synchronized");
+
+  function getSyncStatus(): SyncStatus {
+    const status = syncStatusRef.current;
+    return status === "synchronizing" ? status : "synchronized";
+  }
+
+  function recompute() {
+    syncStatusRef.set(
+      syncStatusSources.some((src) => src.current === "synchronizing")
+        ? "synchronizing"
+        : syncStatusSources.some((src) => src.current === "has-local-changes")
+          ? "has-local-changes"
+          : "synchronized"
+    );
+  }
+
+  function createSyncSource(): SyncSource {
+    const source = new ValueRef<InternalSyncStatus>("synchronized");
+    syncStatusSources.push(source);
+
+    const unsub = source.didInvalidate.subscribe(() => recompute());
+
+    function setSyncStatus(status: InternalSyncStatus) {
+      source.set(status);
+    }
+
+    function destroy() {
+      unsub();
+      const index = syncStatusSources.findIndex((item) => item === source);
+      if (index > -1) {
+        const [ref] = syncStatusSources.splice(index, 1);
+        const wasStillPending = ref.current !== "synchronized";
+        if (wasStillPending) {
+          // We only have to recompute if it was still pending. Otherwise it
+          // could not have an effect on the global state anyway.
+          recompute();
+        }
+      }
+    }
+
+    return { setSyncStatus, destroy };
+  }
+
+  // ----------------------------------------------------------------
+
+  // Set up event handler that will prevent the browser tab from being closed
+  // if there are locally pending changes to any part of Liveblocks (Storage,
+  // text editors, Threads, Notifications, etc)
+  {
+    const maybePreventClose = (e: BeforeUnloadEvent) => {
+      if (
+        clientOptions.preventUnsavedChanges &&
+        syncStatusRef.current !== "synchronized"
+      ) {
+        e.preventDefault();
+      }
+    };
+
+    // A Liveblocks client is currently never destroyed.
+    // TODO Call win.removeEventListener("beforeunload", maybePreventClose)
+    // once we have a client.destroy() method
+    const win = typeof window !== "undefined" ? window : undefined;
+    win?.addEventListener("beforeunload", maybePreventClose);
+  }
+
   const client: Client<U> = Object.defineProperty(
     {
       enterRoom,
@@ -721,6 +845,11 @@ export function createClient<U extends BaseUserMeta = DU>(
         invalidateMentionSuggestions: invalidateResolvedMentionSuggestions,
       },
 
+      getSyncStatus,
+      events: {
+        syncStatus: syncStatusRef.didInvalidate,
+      },
+
       // Internal
       [kInternal]: {
         currentUserIdStore,
@@ -732,7 +861,14 @@ export function createClient<U extends BaseUserMeta = DU>(
           return Array.from(roomsById.keys());
         },
 
-        httpClient,
+        // "All" threads (= "user" threads)
+        getUserThreads_experimental:
+          notificationsAPI.getUserThreads_experimental,
+        getUserThreadsSince_experimental:
+          notificationsAPI.getUserThreadsSince_experimental,
+
+        // Type-level helper only, it's effectively only an identity-function at runtime
+        as: <M2 extends BaseMetadata>() => client,
       },
     },
     kInternal,

@@ -19,7 +19,10 @@ import {
   type CommentLocalAttachment,
   createCommentAttachmentId,
 } from "@liveblocks/core";
-import { useMentionSuggestions } from "@liveblocks/react/_private";
+import {
+  useMentionSuggestions,
+  useSyncSource,
+} from "@liveblocks/react/_private";
 import { Slot, Slottable } from "@radix-ui/react-slot";
 import type {
   AriaAttributes,
@@ -1011,6 +1014,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       onComposerSubmit,
       defaultAttachments = [],
       pasteFilesAsAttachments,
+      preventUnsavedChanges = true,
       disabled,
       asChild,
       ...props
@@ -1046,6 +1050,19 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const ref = useRef<HTMLFormElement>(null);
     const mergedRefs = useRefs(forwardedRef, ref);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const syncSource = useSyncSource();
+
+    // Mark the composer as a pending update when it has unsubmitted (draft)
+    // text or attachments
+    const isPending = !preventUnsavedChanges
+      ? false
+      : !isEmpty || isUploadingAttachments || attachments.length > 0;
+
+    useEffect(() => {
+      syncSource?.setSyncStatus(
+        isPending ? "has-local-changes" : "synchronized"
+      );
+    }, [syncSource, isPending]);
 
     const createAttachments = useCallback(
       (files: File[]) => {

@@ -32,6 +32,7 @@ import type {
   Resolve,
   RoomEventMessage,
   StorageStatus,
+  SyncStatus,
   ThreadData,
   ToImmutable,
 } from "@liveblocks/core";
@@ -39,7 +40,7 @@ import type { PropsWithChildren } from "react";
 
 import type { CommentsError } from "./errors";
 
-export type UseStorageStatusOptions = {
+export type UseSyncStatusOptions = {
   /**
    * When setting smooth, the hook will not update immediately as status
    * changes. This is because in typical applications, these states can change
@@ -48,6 +49,8 @@ export type UseStorageStatusOptions = {
    */
   smooth?: boolean;
 };
+
+export type UseStorageStatusOptions = UseSyncStatusOptions;
 
 export type StorageStatusSuccess = Exclude<
   StorageStatus,
@@ -314,6 +317,18 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * const isInsideRoom = useIsInsideRoom();
      */
     useIsInsideRoom(): boolean;
+
+    /**
+     * Returns the current Liveblocks sync status, and triggers a re-render
+     * whenever it changes. Can be used to render a "Saving..." indicator, or for
+     * preventing that a browser tab can be closed until all changes have been
+     * synchronized with the server.
+     *
+     * @example
+     * const syncStatus = useSyncStatus();  // "synchronizing" | "synchronized"
+     * const syncStatus = useSyncStatus({ smooth: true });
+     */
+    useSyncStatus(options?: UseSyncStatusOptions): SyncStatus;
   };
 
   suspense: {
@@ -345,6 +360,18 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * const isInsideRoom = useIsInsideRoom();
      */
     useIsInsideRoom(): boolean;
+
+    /**
+     * Returns the current Liveblocks sync status, and triggers a re-render
+     * whenever it changes. Can be used to render a "Saving..." indicator, or for
+     * preventing that a browser tab can be closed until all changes have been
+     * synchronized with the server.
+     *
+     * @example
+     * const syncStatus = useSyncStatus();  // "synchronizing" | "synchronized"
+     * const syncStatus = useSyncStatus({ smooth: true });
+     */
+    useSyncStatus(options?: UseSyncStatusOptions): SyncStatus;
   };
 };
 
@@ -847,6 +874,8 @@ export type RoomContextBundle<
        * Returns the current storage status for the Room, and triggers
        * a re-render whenever it changes. Can be used to render a "Saving..."
        * indicator.
+       *
+       * @deprecated Prefer useSyncStatus()
        */
       useStorageStatus(options?: UseStorageStatusOptions): StorageStatus;
 
@@ -964,6 +993,8 @@ export type RoomContextBundle<
              * Returns the current storage status for the Room, and triggers
              * a re-render whenever it changes. Can be used to render a "Saving..."
              * indicator.
+             *
+             * @deprecated Prefer useSyncStatus()
              */
             useStorageStatus(
               options?: UseStorageStatusOptions
@@ -1136,6 +1167,18 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
    * const thread = useInboxNotificationThread("in_xxx");
    */
   useInboxNotificationThread(inboxNotificationId: string): ThreadData<M>;
+
+  /**
+   * Returns the current Liveblocks sync status, and triggers a re-render
+   * whenever it changes. Can be used to render a "Saving..." indicator, or for
+   * preventing that a browser tab can be closed until all changes have been
+   * synchronized with the server.
+   *
+   * @example
+   * const syncStatus = useSyncStatus();  // "synchronizing" | "synchronized"
+   * const syncStatus = useSyncStatus({ smooth: true });
+   */
+  useSyncStatus(options?: UseSyncStatusOptions): SyncStatus;
 };
 
 export type LiveblocksContextBundle<

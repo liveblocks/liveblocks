@@ -14,7 +14,10 @@ import {
 import Button from "../../utils/Button";
 import { createLiveblocksClient } from "../../utils/createClient";
 
-const client = createLiveblocksClient();
+const client = createLiveblocksClient({
+  preventUnsavedChanges: true,
+  authEndpoint: "/api/auth/access-token",
+});
 
 const {
   RoomProvider,
@@ -25,7 +28,7 @@ const {
   useSelf,
   useStatus,
   useStorage,
-  useStorageStatus,
+  useSyncStatus,
   useUndo,
 } = createRoomContext<never, { items: LiveList<string> }>(client);
 
@@ -53,8 +56,8 @@ function Sandbox() {
   const items = useStorage((root) => root.items);
   const me = useSelf();
   const status = useStatus();
-  const storageStatus = useStorageStatus();
-  const smoothStorageStatus = useStorageStatus({ smooth: true });
+  const syncStatus = useSyncStatus();
+  const smoothSyncStatus = useSyncStatus({ smooth: true });
 
   const push = useMutation(
     ({ storage }, value: string) => {
@@ -194,14 +197,14 @@ function Sandbox() {
           <Row id="renderCount" name="Render count" value={renderCount} />
           <Row id="socketStatus" name="WebSocket status" value={status} />
           <Row
-            id="storageStatus"
-            name="Storage status (immediate)"
-            value={storageStatus}
+            id="syncStatus"
+            name="Sync status (immediate)"
+            value={syncStatus}
           />
           <Row
-            id="smoothStorageStatus"
-            name="Storage status (smooth)"
-            value={smoothStorageStatus}
+            id="smoothSyncStatus"
+            name="Sync status (smooth)"
+            value={smoothSyncStatus}
           />
           <Row id="numItems" name="List size" value={items.length} />
           <Row id="items" name="Serialized" value={items} />
