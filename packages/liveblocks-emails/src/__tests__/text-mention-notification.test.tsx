@@ -1,8 +1,14 @@
 import { Liveblocks } from "@liveblocks/node";
 import { http, HttpResponse } from "msw";
 
-import type { TextMentionNotificationData } from "../text-mention-notification";
-import { extractTextMentionNotificationData } from "../text-mention-notification";
+import type {
+  TextMentionNotificationData,
+  TextMentionNotificationEmailBaseData,
+} from "../text-mention-notification";
+import {
+  extractTextMentionNotificationData,
+  prepareTextMentionNotificationEmailBaseData,
+} from "../text-mention-notification";
 import {
   generateInboxNotificationId,
   generateThreadId,
@@ -10,6 +16,9 @@ import {
   makeTextMentionInboxNotification,
   makeTextMentionNotificationEvent,
   makeThreadInboxNotification,
+  RESOLVED_ROOM_INFO_TEST,
+  resolveRoomInfo,
+  ROOM_ID_TEST,
   ROOM_TEST,
   server,
   SERVER_BASE_URL,
@@ -199,6 +208,117 @@ describe("text mention notification", () => {
       };
 
       expect(extracted).toEqual(expected);
+    });
+  });
+
+  describe("prepare text mention notification email base data", () => {
+    it("should extract mention and nodes and prepare base email data", async () => {
+      const inboxNotification = makeTextMentionInboxNotification({
+        mentionId: MENTION_ID_TIPTAP,
+        createdBy: "user-nimesh",
+        notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
+      });
+
+      const room = makeRoomWithTextEditor({ editor: "tiptap" });
+
+      server.use(
+        http.get(
+          `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
+          () => HttpResponse.json(inboxNotification, { status: 200 })
+        )
+      );
+
+      server.use(
+        http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId`, () =>
+          HttpResponse.json(room, { status: 200 })
+        )
+      );
+
+      server.use(
+        http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId/ydoc-binary`, () =>
+          HttpResponse.arrayBuffer(docUpdateBufferTiptap)
+        )
+      );
+
+      const event = makeTextMentionNotificationEvent({
+        userId: MENTIONED_USER_ID_TIPTAP,
+        mentionId: MENTION_ID_TIPTAP,
+        inboxNotificationId: inboxNotification.id,
+      });
+
+      const [preparedWithUnresolvedRoomInfo, preparedWithResolvedRoomInfo] =
+        await Promise.all([
+          prepareTextMentionNotificationEmailBaseData({
+            client,
+            event,
+          }),
+          prepareTextMentionNotificationEmailBaseData({
+            client,
+            event,
+            options: { resolveRoomInfo },
+          }),
+        ]);
+
+      const base: Omit<TextMentionNotificationEmailBaseData, "roomInfo"> = {
+        mention: {
+          id: MENTION_ID_TIPTAP,
+          roomId: room.id,
+          userId: inboxNotification.createdBy,
+          textEditorNodes: [
+            {
+              type: "text",
+              text: "Hey this a tip tap ",
+              bold: false,
+              italic: false,
+              strikethrough: false,
+              code: false,
+            },
+            {
+              type: "text",
+              text: "example",
+              bold: true,
+              italic: true,
+              strikethrough: false,
+              code: false,
+            },
+            {
+              type: "text",
+              text: " hiha! ",
+              bold: false,
+              italic: false,
+              strikethrough: false,
+              code: false,
+            },
+            {
+              type: "mention",
+              userId: MENTIONED_USER_ID_TIPTAP,
+            },
+            {
+              type: "text",
+              text: " fun right?",
+              bold: false,
+              italic: false,
+              strikethrough: false,
+              code: false,
+            },
+          ],
+          createdAt: inboxNotification.notifiedAt,
+        },
+      };
+
+      const expected1: TextMentionNotificationEmailBaseData = {
+        ...base,
+        roomInfo: {
+          name: ROOM_ID_TEST,
+        },
+      };
+      const expected2: TextMentionNotificationEmailBaseData = {
+        ...base,
+        roomInfo: RESOLVED_ROOM_INFO_TEST,
+      };
+
+      expect(preparedWithUnresolvedRoomInfo).toEqual(expected1);
+      expect(preparedWithResolvedRoomInfo).toEqual(expected2);
     });
   });
 });
