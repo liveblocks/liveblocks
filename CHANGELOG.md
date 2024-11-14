@@ -36,6 +36,11 @@ local changes are not yet synchronized. To opt-in to this protection, enable
 - Deprecated APIs:
   - `useStorageStatus` is now deprecated in favor of `useSyncStatus`.
 
+### `@liveblocks/react-ui`
+
+- Take composers into account when the new `preventUnsavedChanges` option is
+  set.
+
 ### `@liveblocks/react-lexical`
 
 - Add new hook `useIsEditorReady` which can be used to show a skeleton UI before
