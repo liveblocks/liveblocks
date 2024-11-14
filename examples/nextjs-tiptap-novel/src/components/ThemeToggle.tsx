@@ -7,9 +7,8 @@ export function ThemeToggle() {
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
   function changeTheme() {
-    const newTheme = theme === "light" ? "dark" : "light";
-    document.documentElement.setAttribute("data-theme", newTheme);
-    setTheme(newTheme);
+    const isDark = document.documentElement.classList.toggle("dark");
+    setTheme(isDark ? "dark" : "light");
   }
 
   return (

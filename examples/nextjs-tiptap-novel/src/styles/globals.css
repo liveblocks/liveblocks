@@ -199,7 +199,7 @@
 }
 
 /* Dark theme */
-[data-theme="dark"] {
+.dark {
   --color-red: 248 113 113;
   --color-green: 162 230 53;
   --color-accent: rgb(var(--color-white));
