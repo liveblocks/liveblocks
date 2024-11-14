@@ -38,6 +38,7 @@ import {
   createSerializedObject,
   createSerializedRegister,
   FIRST_POSITION,
+  makeSyncSource,
   prepareDisconnectedStorageUpdateTest,
   prepareIsolatedStorageTest,
   prepareRoomWithStorage_loadWithDelay,
@@ -70,6 +71,9 @@ const defaultRoomConfig: RoomConfig = {
     },
     createSocket: mockedCreateSocketDelegate,
   },
+
+  // Not used in unit tests (yet)
+  createSyncSource: makeSyncSource,
 };
 
 function makeRoomConfig(

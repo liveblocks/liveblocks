@@ -712,6 +712,21 @@ occurs when the composer is submitted. You must create your own mutations within
     Whether to create attachments when pasting files into the editor.
   </PropertiesListItem>
   <PropertiesListItem
+    name="preventUnsavedChanges"
+    type="boolean"
+    defaultValue="true"
+  >
+    When `preventUnsavedChanges` is set on your [Liveblocks
+    client](/docs/api-reference/liveblocks-client#prevent-users-losing-unsaved-changes)
+    on
+    [`LiveblocksProvider`](/docs/api-reference/liveblocks-react#prevent-users-losing-unsaved-changes),
+    then closing a browser tab will be prevented when there are unsaved changes.
+    By default, that will include draft text or attachments that are being
+    uploaded via this composer, but not submitted yet. If you want to prevent
+    unsaved changes with Liveblocks, but not for this composer, you can opt-out
+    this composer instance by setting this prop to `false`.
+  </PropertiesListItem>
+  <PropertiesListItem
     name="onComposerSubmit"
     type="function"
     detailedType="(comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => Promise<void> | void"
@@ -1922,6 +1937,18 @@ Set configuration options for all `@liveblocks/react-ui` components, such as
     defaultValue="document.body"
   >
     The container to render the portal into.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="preventUnsavedComposerChanges"
+    type="boolean"
+    defaultValue="true"
+  >
+    When `preventUnsavedChanges` is set on your Liveblocks client (or set on
+    `LiveblocksProvider`), then closing a browser tab will be prevented when
+    there are unsaved changes. By default, that will include draft texts or
+    attachments that are (being) uploaded via comments/threads composers, but
+    not submitted yet. If you want to prevent unsaved changes with Liveblocks,
+    but not for composers, you can opt-out by setting this option to `false`.
   </PropertiesListItem>
 </PropertiesList>
 

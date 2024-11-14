@@ -36,6 +36,8 @@ import { expectAssignable, expectError, expectType } from "tsd";
     authEndpoint="/api/auth"
     resolveUsers={async () => [{ name: "Vincent", age: 42 }]}
   />;
+
+  <LiveblocksProvider authEndpoint="/api/auth" preventUnsavedChanges />;
 }
 
 // LiveblocksProvider (suspense)
@@ -62,6 +64,8 @@ import { expectAssignable, expectError, expectType } from "tsd";
     authEndpoint="/api/auth"
     resolveUsers={async () => [{ name: "Vincent", age: 42 }]}
   />;
+
+  <LiveblocksProvider authEndpoint="/api/auth" preventUnsavedChanges />;
 }
 
 // RoomProvider
@@ -818,4 +822,16 @@ import { expectAssignable, expectError, expectType } from "tsd";
   expectType<false>(isLoading);
   expectType<number>(count);
   expectType<undefined>(error);
+}
+
+// ---------------------------------------------------------
+
+// The useSyncStatus() hook
+{
+  const status = classic.useSyncStatus();
+  expectType<"synchronizing" | "synchronized">(status);
+}
+{
+  const status = suspense.useSyncStatus();
+  expectType<"synchronizing" | "synchronized">(status);
 }

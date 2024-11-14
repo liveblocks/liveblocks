@@ -1,4 +1,4 @@
-import { createRoomContext } from "@liveblocks/react";
+import { createRoomContext, useSyncStatus } from "@liveblocks/react";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import React, { useEffect, useMemo, useState } from "react";
 import * as Y from "yjs";
@@ -28,6 +28,7 @@ function Sandbox() {
   const renderCount = useRenderCount();
   const room = useRoom();
   const [text, setText] = useState<string>("");
+  const smoothSyncStatus = useSyncStatus({ smooth: true });
   const [synced, setSynced] = useState(false);
   const doc = useMemo(() => new Y.Doc(), []);
   useEffect(() => {
@@ -90,6 +91,11 @@ function Sandbox() {
           <Row id="renderCount" name="Render count" value={renderCount} />
           <Row id="text" name="YDoc Text" value={text} />
           <Row id="sync" name="Synced" value={synced} />
+          <Row
+            id="smoothSyncStatus"
+            name="Sync status (smooth)"
+            value={smoothSyncStatus}
+          />
         </tbody>
       </table>
     </div>

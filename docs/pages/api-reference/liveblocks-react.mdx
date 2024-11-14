@@ -253,6 +253,9 @@ function App() {
       // Throttle time (ms) between WebSocket updates
       throttle={100}
       // ---
+      // Prevent browser tab from closing while local changes aren’t synchronized yet
+      preventUnsavedChanges={false}
+      // ---
       // Throw lost-connection event after 5 seconds offline
       lostConnectionTimeout={5000}
       // ---
@@ -328,6 +331,15 @@ function App() {
     The throttle time between WebSocket messages in milliseconds, a number
     between `16` and `1000` is allowed. Using `16` means your app will update 60
     times per second. [Learn more](#LiveblocksProviderThrottle).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="preventUnsavedChanges"
+    type="boolean"
+    defaultValue="false"
+  >
+    When set, navigating away from the current page is prevented while
+    Liveblocks is still synchronizing local changes. [Learn
+    more](#prevent-users-losing-unsaved-changes).
   </PropertiesListItem>
   <PropertiesListItem
     name="lostConnectionTimeout"
@@ -543,6 +555,42 @@ throttle:  16, // 60 FPS
 throttle:  32, // 30 FPS
 throttle: 200, //  5 FPS
 ```
+
+#### Prevent users losing unsaved changes [#prevent-users-losing-unsaved-changes]
+
+Liveblocks usually synchronizes milliseconds after a local change, but if a user
+immediately closes their tab, or if they have a slow connection, it may take
+longer for changes to synchronize. Enabling `preventUnsavedChanges` will stop
+tabs with unsaved changes closing, by opening a dialog that warns users. In
+usual circumstances, it will very rarely trigger.
+
+```tsx
+function Page() {
+  return (
+    <LiveblocksProvider
+      // highlight-next-line
+      preventUnsavedChanges
+
+      // Other options
+      // ...
+    >
+      ...
+    </LiveblocksProvider>
+  );
+}
+```
+
+More specifically, this option triggers when:
+
+- There are unsaved changes after calling any hooks or methods, in all of our
+  products.
+- There are unsaved changes in a [Text Editor](/docs/products/text-editor).
+- There’s an unsubmitted comment in the
+  [Composer](/docs/api-reference/liveblocks-react-ui#Composer).
+- The user has made changes and is currently offline.
+
+Internally, this option uses the
+[beforeunload event](https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeunload_event).
 
 #### Lost connection timeout [#LiveblocksProviderLostConnectionTimeout]
 
@@ -1333,6 +1381,14 @@ The possible value are: `initial`, `connecting`, `connected`, `reconnecting`, or
 
 ### useStorageStatus [@badge=RoomProvider]
 
+<Banner title={<>Deprecated</>}>
+
+Deprecated. Starting with 2.12.0, we recommend using [`useSyncStatus`][] instead
+for tracking sync status, because it will reflect sync status of all parts of
+Liveblocks, not just Storage.
+
+</Banner>
+
 Returns the current storage status of the room, and will re-render your
 component whenever it changes. A `{ smooth: true }` option is also available,
 which prevents quick changes between states, making it ideal for
@@ -1342,7 +1398,9 @@ which prevents quick changes between states, making it ideal for
 import { useStorageStatus } from "@liveblocks/react";
 
 const storageStatus = useStorageStatus();
+
 // "not-loaded" | "loading" | "synchronizing" | "synchronized"
+console.log(storageStatus);
 ```
 
 👉 A [Suspense version][] of this hook is also available.
@@ -1351,6 +1409,35 @@ const storageStatus = useStorageStatus();
 import { useStorageStatus } from "@liveblocks/react/suspense";
 
 const storageStatus = useStorageStatus();
+
+// "synchronizing" | "synchronized"
+console.log(storageStatus);
+```
+
+### useSyncStatus [@badge=Both]
+
+Returns the current synchronization status of Liveblocks, and will re-render
+your component whenever it changes. This includes any part of Liveblocks that
+may be synchronizing local changes to the server, including (any room’s)
+Storage, text editors, threads, or notifications.
+
+A `{ smooth: true }` option is also available, which prevents quick changes
+between states, making it ideal for
+[rendering a synchronization badge in your app](#display-synchronization-badge).
+
+```ts
+import { useSyncStatus } from "@liveblocks/react";
+
+const syncStatus = useSyncStatus();
+// "not-loaded" | "loading" | "synchronizing" | "synchronized"
+```
+
+👉 A [Suspense version][] of this hook is also available.
+
+```ts
+import { useSyncStatus } from "@liveblocks/react/suspense";
+
+const syncStatus = useSyncStatus();
 // "synchronizing" | "synchronized"
 ```
 
@@ -1358,55 +1445,54 @@ const storageStatus = useStorageStatus();
 
 Passing `{ smooth: true }` prevents the status changing from `"synchronizing"`
 to `"synchronized"` until 1 second has passed after the final change. This means
-it’s ideal for rendering a Storage status badge, as it won’t flicker in a
-distracting manner when changes are made in quick succession.
+it’s ideal for rendering a synchronization status badge, as it won’t flicker in
+a distracting manner when changes are made in quick succession.
 
 ```tsx
-import { useStorageStatus } from "@liveblocks/react/suspense";
+import { useSyncStatus } from "@liveblocks/react/suspense";
 
 function StorageStatusBadge() {
-  const storageStatus = useStorageStatus({ smooth: true });
+  const syncStatus = useSyncStatus({ smooth: true });
 
+  return <div>{syncStatus === "synchronized" ? "✅ Saved" : "🔄 Saving"}</div>;
+}
+```
+
+#### Prevent users losing unsaved changes [#use-sync-status-prevent-users-losing-unsaved-changes]
+
+Liveblocks usually synchronizes milliseconds after a local change, but if a user
+immediately closes their tab, or if they have a slow connection, it may take
+longer for changes to synchronize. Enabling `preventUnsavedChanges` will stop
+tabs with unsaved changes closing, by opening a dialog that warns users. In
+usual circumstances, it will very rarely trigger.
+
+```tsx
+function Page() {
   return (
-    <div>{storageStatus === "synchronized" ? "✅ Saved" : "🔄 Saving"}</div>
+    <LiveblocksProvider
+      // highlight-next-line
+      preventUnsavedChanges
+
+      // Other options
+      // ...
+    >
+      ...
+    </LiveblocksProvider>
   );
 }
 ```
 
-#### Prevent users losing unsaved changes [#prevent-users-losing-unsaved-changes]
+More specifically, this option triggers when:
 
-Storage usually synchronizes milliseconds after a change, but in some
-circumstances, such as a user with a poor connection, it may take longer before
-they receive a response from our servers. It can be helpful to check if Storage
-changes have been synchronized, and prevent users from leaving the page if they
-haven’t.
+- There are unsaved changes after calling any hooks or methods, in all of our
+  products.
+- There are unsaved changes in a [Text Editor](/docs/products/text-editor).
+- There’s an unsubmitted comment in the
+  [Composer](/docs/api-reference/liveblocks-react-ui#Composer).
+- The user has made changes and is currently offline.
 
-It’s possible to implement this with `useStorageStatus`, however with
-[`useRoom`](/docs/api-reference/liveblocks-react#useRoom) you can create a
-version that renders much less frequently, so we recommend using this instead.
-
-```tsx
-import { useRoom } from "@liveblocks/react/suspense";
-
-function usePreventUnsavedChanges() {
-  const room = useRoom();
-
-  useEffect(() => {
-    function beforeUnload(e: BeforeUnloadEvent) {
-      if (room.getStorageStatus() === "synchronized") {
-        return;
-      }
-      e.preventDefault();
-    }
-
-    window.addEventListener("beforeunload", beforeUnload);
-
-    return () => {
-      window.removeEventListener("beforeunload", beforeUnload);
-    };
-  }, [room]);
-}
-```
+Internally, this option uses the
+[beforeunload event](https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeunload_event).
 
 ### useOthersListener [@badge=RoomProvider]
 
@@ -3308,6 +3394,7 @@ And the following timeline:
 [`usethreads`]: /docs/api-reference/liveblocks-react#useThreads
 [`useinboxnotifications`]:
   /docs/api-reference/liveblocks-react#useInboxNotifications
+[`usesyncstatus`]: /docs/api-reference/liveblocks-react#useSyncStatus
 [`room`]: /docs/api-reference/liveblocks-client#Room
 [`shallow`]: /docs/api-reference/liveblocks-react#shallow
 [`resolveusers`]: /docs/api-reference/liveblocks-client#resolveUsers

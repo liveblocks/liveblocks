@@ -1,4 +1,5 @@
 import type { AuthManager, AuthValue } from "./auth-manager";
+import type { InternalSyncStatus } from "./client";
 import type {
   Delegates,
   LiveblocksError,
@@ -164,6 +165,12 @@ export type RoomEventMessage<
   user: User<P, U> | null;
   event: E;
 };
+
+export type SyncStatus =
+  /* Liveblocks is in the process of writing changes */
+  | "synchronizing"
+  /* Liveblocks has persisted all pending changes */
+  | "synchronized";
 
 export type StorageStatus =
   /* The storage is not loaded and has not been requested. */
@@ -995,12 +1002,33 @@ export type Room<
   markInboxNotificationAsRead(notificationId: string): Promise<void>;
 };
 
-type Provider = {
+export type YjsSyncStatus = "loading" | "synchronizing" | "synchronized";
+
+/**
+ * Interface that @liveblocks/yjs must respect.
+ * This interface type is declare in @liveblocks/core, so we don't have to
+ * depend on `yjs`. It's only used to determine the API contract between
+ * @liveblocks/core and @liveblocks/yjs.
+ */
+export interface IYjsProvider {
   synced: boolean;
-  getStatus: () => "loading" | "synchronizing" | "synchronized";
-  on(event: "sync" | "status", listener: (synced: boolean) => void): void;
-  off(event: "sync" | "status", listener: (synced: boolean) => void): void;
-};
+  getStatus: () => YjsSyncStatus;
+  on(event: "sync", listener: (synced: boolean) => void): void;
+  on(event: "status", listener: (status: YjsSyncStatus) => void): void;
+  off(event: "sync", listener: (synced: boolean) => void): void;
+  off(event: "status", listener: (status: YjsSyncStatus) => void): void;
+}
+
+/**
+ * A "Sync Source" can be a Storage document, a Yjs document, Comments,
+ * Notifications, etc.
+ * The Client keeps a registry of all active sync sources, and will use it to
+ * determine the global "sync status" for Liveblocks.
+ */
+export interface SyncSource {
+  setSyncStatus(status: InternalSyncStatus): void;
+  destroy(): void;
+}
 
 /**
  * @private
@@ -1016,11 +1044,10 @@ export type PrivateRoomApi = {
   undoStack: readonly (readonly Readonly<HistoryOp<JsonObject>>[])[];
   nodeCount: number;
 
-  // For usage in Y.js provider
-  getProvider(): Provider | undefined;
-  setProvider(provider: Provider | undefined): void;
-
-  onProviderUpdate: Observable<void>;
+  // Get/set the associated Yjs provider on this room
+  getYjsProvider(): IYjsProvider | undefined;
+  setYjsProvider(provider: IYjsProvider | undefined): void;
+  yjsProviderDidChange: Observable<void>;
 
   // For DevTools support (Liveblocks browser extension)
   getSelf_forDevTools(): DevTools.UserTreeNode | null;
@@ -1124,8 +1151,8 @@ type RoomState<
   idFactory: IdFactory | null;
   initialStorage: S;
 
-  provider: Provider | undefined;
-  readonly onProviderUpdate: EventSource<void>;
+  yjsProvider: IYjsProvider | undefined;
+  readonly yjsProviderDidChange: EventSource<void>;
 
   clock: number;
   opClock: number;
@@ -1230,6 +1257,11 @@ export type RoomConfig = {
 
   baseUrl: string;
   enableDebugLogging?: boolean;
+
+  // We would not have to pass this complicated factory/callback functions to
+  // the createRoom() function if we would simply pass the Client instance to
+  // the Room instance, so it can directly call this back on the Client.
+  createSyncSource: () => SyncSource;
 };
 
 function userToTreeNode(
@@ -1379,9 +1411,9 @@ export function createRoom<
     initialStorage,
     idFactory: null,
 
-    // Y.js
-    provider: undefined,
-    onProviderUpdate: makeEventSource(),
+    // The Yjs provider associated to this room
+    yjsProvider: undefined,
+    yjsProviderDidChange: makeEventSource(),
 
     // Storage
     clock: 0,
@@ -2756,6 +2788,10 @@ export function createRoom<
     }
   }
 
+  // Register a global source of pending changes for Storage™, so that the
+  // useSyncStatus() hook will be able to report this to end users
+  const syncSourceForStorage = config.createSyncSource();
+
   function getStorageStatus(): StorageStatus {
     if (context.root === undefined) {
       return _getStorage$ === null ? "not-loaded" : "loading";
@@ -2780,6 +2816,9 @@ export function createRoom<
       _lastStorageStatus = storageStatus;
       eventHub.storageStatus.notify(storageStatus);
     }
+    syncSourceForStorage.setSyncStatus(
+      storageStatus === "synchronizing" ? "synchronizing" : "synchronized"
+    );
   }
 
   function isPresenceReady() {
@@ -3347,6 +3386,16 @@ export function createRoom<
     await batchedMarkInboxNotificationsAsRead.get(inboxNotificationId);
   }
 
+  // Register a global source of pending changes for Storage™, so that the
+  // useSyncStatus() hook will be able to report this to end users
+  const syncSourceForYjs = config.createSyncSource();
+
+  function yjsStatusDidChange(status: YjsSyncStatus) {
+    return syncSourceForYjs.setSyncStatus(
+      status === "synchronizing" ? "synchronizing" : "synchronized"
+    );
+  }
+
   return Object.defineProperty(
     {
       [kInternal]: {
@@ -3354,16 +3403,20 @@ export function createRoom<
         get undoStack() { return deepClone(context.undoStack) }, // prettier-ignore
         get nodeCount() { return context.nodes.size }, // prettier-ignore
 
-        getProvider() {
-          return context.provider;
+        getYjsProvider() {
+          return context.yjsProvider;
         },
 
-        setProvider(provider: Provider | undefined) {
-          context.provider = provider;
-          context.onProviderUpdate.notify();
+        setYjsProvider(newProvider: IYjsProvider | undefined) {
+          // Deregister status change listener for the old Yjs provider
+          // Register status change listener for the new Yjs provider
+          context.yjsProvider?.off("status", yjsStatusDidChange);
+          context.yjsProvider = newProvider;
+          newProvider?.on("status", yjsStatusDidChange);
+          context.yjsProviderDidChange.notify();
         },
 
-        onProviderUpdate: context.onProviderUpdate.observable,
+        yjsProviderDidChange: context.yjsProviderDidChange.observable,
 
         // send metadata when using a text editor
         reportTextEditor,
@@ -3402,6 +3455,9 @@ export function createRoom<
       reconnect: () => managedSocket.reconnect(),
       disconnect: () => managedSocket.disconnect(),
       destroy: () => {
+        syncSourceForStorage.destroy();
+        context.yjsProvider?.off("status", yjsStatusDidChange);
+        syncSourceForYjs.destroy();
         uninstallBgTabSpy();
         managedSocket.destroy();
       },
