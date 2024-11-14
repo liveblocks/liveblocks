@@ -75,7 +75,7 @@ export function useMentionSuggestions(roomId: string, search?: string) {
       isCanceled = true;
       window.clearTimeout(debounceTimeout);
     };
-  }, [client, search]);
+  }, [client, search, roomId]);
 
   return mentionSuggestions;
 }
