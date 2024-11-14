@@ -2778,11 +2778,9 @@ export function createRoom<
   }
 
   async function editThreadMetadata({
-    roomId,
     metadata,
     threadId,
   }: {
-    // XXX - This `roomId` argument should not be present here since we're already in the room context
     roomId: string;
     metadata: Patchable<M>;
     threadId: string;

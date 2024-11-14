@@ -570,6 +570,9 @@ export const Composer = forwardRef(
 const ComposerImpl = forwardRef(
   <M extends BaseMetadata = DM>(
     {
+      threadId: _threadId,
+      commentId: _commentId,
+      metadata: _metadata,
       defaultValue,
       defaultAttachments,
       onComposerSubmit,
@@ -696,7 +699,7 @@ const ComposerImpl = forwardRef(
           data-collapsed={isCollapsed ? "" : undefined}
           onFocus={handleFocus}
           onBlur={handleBlur}
-          disabled={disabled}
+          disabled={disabled || !canComment}
           defaultAttachments={defaultAttachments}
           pasteFilesAsAttachments={showAttachments}
         >
@@ -763,10 +766,8 @@ function CreateOrEditCommentRoomIdProvider({
   children: ReactNode;
 }) {
   const store = getUmbrellaStoreForClient(useClient());
-  // XXX - Should we call `threadsDB.get` vs `threadsDB.getEvenIfDeleted`?
   const thread = store.getFullState().threadsDB.get(threadId);
   if (thread === undefined) {
-    // XXX - Is it safe to throw error here?
     if (commentId === undefined) {
       throw new Error(
         `Cannot create a comment on thread ${threadId} because the thread does not exist in cache.`

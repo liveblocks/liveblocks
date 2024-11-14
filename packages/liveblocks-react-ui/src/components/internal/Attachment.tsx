@@ -1,7 +1,6 @@
 "use client";
 
 import type { CommentMixedAttachment } from "@liveblocks/core";
-import { useIsInsideRoom } from "@liveblocks/react";
 import { useRoomAttachmentUrl } from "@liveblocks/react/_private";
 import type {
   ComponentPropsWithoutRef,
@@ -185,15 +184,10 @@ function AttachmentPreview({
   attachment: CommentMixedAttachment;
   roomId: string;
 }) {
-  const isInsideRoom = useIsInsideRoom();
   const isUploaded =
     attachment.type === "attachment" || attachment.status === "uploaded";
 
-  if (
-    isUploaded &&
-    isInsideRoom &&
-    attachment.size <= MAX_DISPLAYED_MEDIA_SIZE
-  ) {
+  if (isUploaded && attachment.size <= MAX_DISPLAYED_MEDIA_SIZE) {
     if (attachment.mimeType.startsWith("image/")) {
       return <AttachmentImagePreview attachment={attachment} roomId={roomId} />;
     }

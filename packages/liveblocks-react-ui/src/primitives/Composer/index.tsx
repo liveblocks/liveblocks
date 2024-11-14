@@ -18,12 +18,8 @@ import {
   type CommentBody,
   type CommentLocalAttachment,
   createCommentAttachmentId,
-  Permission,
 } from "@liveblocks/core";
-import {
-  useMentionSuggestions,
-  useRoomPermissions,
-} from "@liveblocks/react/_private";
+import { useMentionSuggestions } from "@liveblocks/react/_private";
 import { Slot, Slottable } from "@radix-ui/react-slot";
 import type {
   AriaAttributes,
@@ -1041,14 +1037,9 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const numberOfAttachments = attachments.length;
     const hasMaxAttachments = numberOfAttachments >= maxAttachments;
 
-    const permissions = useRoomPermissions(useComposerRoomId());
-    const canComment =
-      permissions.includes(Permission.CommentsWrite) ||
-      permissions.includes(Permission.Write);
-
     const isDisabled = useMemo(() => {
-      return isSubmitting || disabled || !canComment;
-    }, [isSubmitting, disabled, canComment]);
+      return isSubmitting || disabled === true;
+    }, [isSubmitting, disabled]);
     const canSubmit = useMemo(() => {
       return !isEmpty && !isUploadingAttachments;
     }, [isEmpty, isUploadingAttachments]);

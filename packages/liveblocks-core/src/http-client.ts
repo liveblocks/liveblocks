@@ -871,13 +871,11 @@ export function createHttpClient({
     }
   }
 
-  // XXX - Batch store for a room will remain in memory even when a room is removed from client.
   const getAttachmentUrlsBatchStoreByRoom: Map<
     string,
     BatchStore<string, string>
   > = new Map();
 
-  // XXX - This is not a HTTP method, so it feels incorrect to expose this but one of the hooks relies on this store
   function getOrCreateAttachmentUrlsStore(
     roomId: string
   ): BatchStore<string, string> {
@@ -949,8 +947,6 @@ export function createHttpClient({
     );
   }
 
-  // XXX - Batch for a room will remain in memory even when a room is removed from client.
-  // XXX - Ensure this does not cause issues when the room is remounted, etc.
   const markInboxNotificationsAsReadBatchByRoom: Map<
     string,
     Batch<string, string>
