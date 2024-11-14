@@ -17,6 +17,7 @@ import type {
   Resolve,
   RoomNotificationSettings,
   Store,
+  SyncSource,
   ThreadData,
   ThreadDataWithDeleteInfo,
   ThreadDeleteInfo,
@@ -585,6 +586,7 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
 
 export class UmbrellaStore<M extends BaseMetadata> {
   private _client: Client<BaseUserMeta, M>;
+  private _syncSource: SyncSource;
 
   // Raw threads DB (without any optimistic updates applied)
   private _rawThreadsDB: ThreadDB<M>;
@@ -616,6 +618,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   constructor(client: OpaqueClient) {
     this._client = client[kInternal].as<M>();
+    this._syncSource = this._client[kInternal].createSyncSource();
 
     const inboxFetcher = async (cursor?: string) => {
       const result = await this._client.getInboxNotifications({ cursor });
@@ -814,13 +817,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     };
   }
 
-  /**
-   * @private Only used by the E2E test suite.
-   */
-  public _hasOptimisticUpdates(): boolean {
-    return this._store.get().optimisticUpdates.length > 0;
-  }
-
   public subscribe(callback: () => void): () => void {
     return this._store.subscribe(callback);
   }
@@ -889,10 +885,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
       cache: readonly OptimisticUpdate<M>[]
     ) => readonly OptimisticUpdate<M>[]
   ): void {
-    this._store.set((state) => ({
-      ...state,
-      optimisticUpdates: mapFn(state.optimisticUpdates),
-    }));
+    this._store.set((state) => {
+      const optimisticUpdates = mapFn(state.optimisticUpdates);
+      this._syncSource.setSyncStatus(
+        optimisticUpdates.length > 0 ? "synchronizing" : "synchronized"
+      );
+      return { ...state, optimisticUpdates };
+    });
   }
 
   // ---------------------------------------------------------------------------------- }}}

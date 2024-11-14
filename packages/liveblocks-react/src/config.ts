@@ -3,6 +3,8 @@ const MINUTES = 60 * SECONDS;
 
 // Poller config
 export const config = {
+  SMOOTH_DELAY: 1 * SECONDS,
+
   NOTIFICATIONS_POLL_INTERVAL: 1 * MINUTES,
   NOTIFICATIONS_MAX_STALE_TIME: 5 * SECONDS,
 
