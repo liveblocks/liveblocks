@@ -30,7 +30,6 @@ import type {
   EnterOptions,
   LiveblocksError,
   OpaqueClient,
-  OpaqueRoom,
   Poller,
   RoomEventMessage,
   ToImmutable,
@@ -199,13 +198,12 @@ function makeMutationContext<
   };
 }
 
-function getCurrentUserId(room: OpaqueRoom): string {
-  const self = room.getSelf();
-  if (self === null || self.id === undefined) {
+function getCurrentUserId(client: Client): string {
+  const userId = client[kInternal].currentUserIdStore.get();
+  if (userId === undefined) {
     return "anonymous";
-  } else {
-    return self.id;
   }
+  return userId;
 }
 
 function handleApiError(err: HttpError): Error {
@@ -1330,7 +1328,7 @@ function useCreateThread<M extends BaseMetadata>(): (
         roomId: room.id,
         createdAt,
         type: "comment",
-        userId: getCurrentUserId(room),
+        userId: getCurrentUserId(client),
         body,
         reactions: [],
         attachments: attachments ?? [],
@@ -1389,22 +1387,17 @@ function useDeleteThread(): (threadId: string) => void {
   return React.useCallback(
     (threadId: string): void => {
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-
-      const userId = client[kInternal].currentUserIdStore.get();
-      // XXX - Should we display a console warning and return early if the user id could not be found?
-      if (userId === undefined) return;
-
-      // XXX - Should we call `threadsDB.get` vs `threadsDB.getEvenIfDeleted`?
-      const existing = store.getFullState().threadsDB.get(threadId);
+      const userId = getCurrentUserId(client);
+      const existing = store
+        .getFullState()
+        .threadsDB.getEvenIfDeleted(threadId);
       if (existing === undefined) {
-        console.warn(
-          `Internal unexpected behavior. Cannot delete thread "${threadId}" because the thread does not exist in cache.`
+        throw new Error(
+          `Cannot delete thread "${threadId}" because the thread does not exist in cache.`
         );
-        return;
       }
 
       if (existing.comments[0]?.userId !== userId) {
-        // XXX - Should we display a console warning instead of throwing here?
         throw new Error("Only the thread creator can delete the thread");
       }
 
@@ -1452,15 +1445,13 @@ function useEditThreadMetadata<M extends BaseMetadata>() {
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
 
-      // XXX - Should we call `threadsDB.get` vs `threadsDB.getEvenIfDeleted`?
       const existing = store
         .getFullState()
         .threadsDB.getEvenIfDeleted(threadId);
       if (existing === undefined) {
-        console.warn(
-          `Internal unexpected behavior. Cannot edit metadata of thread "${threadId}" because the thread does not exist in cache.`
+        throw new Error(
+          `Cannot edit metadata of thread "${threadId}" because the thread does not exist in cache.`
         );
-        return;
       }
 
       const optimisticUpdateId = store.addOptimisticUpdate({
@@ -1505,33 +1496,25 @@ function useEditThreadMetadata<M extends BaseMetadata>() {
  * const createComment = useCreateComment();
  * createComment({ threadId: "th_xxx", body: {} });
  */
-function useCreateComment(): (options: CreateCommentOptions) => void {
+function useCreateComment(): (options: CreateCommentOptions) => CommentData {
   const client = useClient();
 
-  // XXX - `useCreateComment` previously returned `CommentData`, but the signature is
-  // XXX - now updated to return `void` instead because there could be a no-op path
-  // XXX - if the specified thread could not be found. This signature is also consistent
-  // XXX - with `useEditComment` hook. Note: This would be a breaking change!!!
   return React.useCallback(
-    ({ threadId, body, attachments }: CreateCommentOptions): void => {
+    ({ threadId, body, attachments }: CreateCommentOptions): CommentData => {
       const commentId = createCommentId();
       const createdAt = new Date();
 
-      const userId = client[kInternal].currentUserIdStore.get();
-      // XXX - Should we display a console warning and return early if the user id could not be found?
-      if (userId === undefined) return;
+      const userId = getCurrentUserId(client);
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
 
-      // XXX - Should we call `threadsDB.get` vs `threadsDB.getEvenIfDeleted`?
       const existing = store
         .getFullState()
         .threadsDB.getEvenIfDeleted(threadId);
       if (existing === undefined) {
-        console.warn(
-          `Internal unexpected behavior. Cannot create comment in thread "${threadId}" because the thread does not exist in cache.`
+        throw new Error(
+          `Cannot create comment in thread "${threadId}" because the thread does not exist in cache.`
         );
-        return;
       }
 
       const comment: CommentData = {
@@ -1579,6 +1562,8 @@ function useCreateComment(): (options: CreateCommentOptions) => void {
                 })
             )
         );
+
+      return comment;
     },
     [client]
   );
@@ -1599,16 +1584,14 @@ function useEditComment(): (options: EditCommentOptions) => void {
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
 
-      // XXX - Should we call `threadsDB.get` vs `threadsDB.getEvenIfDeleted`?
       const existing = store
         .getFullState()
         .threadsDB.getEvenIfDeleted(threadId);
 
       if (existing === undefined) {
-        console.warn(
-          `Internal unexpected behavior. Cannot edit comment in thread "${threadId}" because the thread does not exist in the cache.`
+        throw new Error(
+          `Cannot edit comment in thread "${threadId}" because the thread does not exist in the cache.`
         );
-        return;
       }
 
       const comment = existing.comments.find(
@@ -1616,10 +1599,9 @@ function useEditComment(): (options: EditCommentOptions) => void {
       );
 
       if (comment === undefined || comment.deletedAt !== undefined) {
-        console.warn(
-          `Internal unexpected behavior. Cannot edit comment "${commentId}" in thread "${threadId}" because the comment does not exist in the cache.`
+        throw new Error(
+          `Cannot edit comment "${commentId}" in thread "${threadId}" because the comment does not exist in the cache.`
         );
-        return;
       }
 
       const optimisticUpdateId = store.addOptimisticUpdate({
@@ -1682,16 +1664,14 @@ function useDeleteComment() {
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
 
-      // XXX - Should we call `threadsDB.get` vs `threadsDB.getEvenIfDeleted`?
       const existing = store
         .getFullState()
         .threadsDB.getEvenIfDeleted(threadId);
 
       if (existing === undefined) {
-        console.warn(
+        throw new Error(
           `Internal unexpected behavior. Cannot delete comment in thread "${threadId}" because the thread does not exist in cache.`
         );
-        return;
       }
 
       const optimisticUpdateId = store.addOptimisticUpdate({
@@ -1736,23 +1716,17 @@ function useAddReaction<M extends BaseMetadata>() {
   return React.useCallback(
     ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
       const createdAt = new Date();
-
-      const userId = client[kInternal].currentUserIdStore.get();
-      // XXX - Should we display a console warning and return early if the user id could not be found?
-      if (userId === undefined) return;
-
+      const userId = getCurrentUserId(client);
       const { store, onMutationFailure } = getRoomExtrasForClient<M>(client);
 
-      // XXX - Should we call `threadsDB.get` vs `threadsDB.getEvenIfDeleted`?
       const existing = store
         .getFullState()
         .threadsDB.getEvenIfDeleted(threadId);
 
       if (existing === undefined) {
-        console.warn(
-          `Internal unexpected behavior. Cannot add reaction to comment "${commentId}" in thread "${threadId}" because the thread does not exist in cache.`
+        throw new Error(
+          `Cannot add reaction to comment "${commentId}" in thread "${threadId}" because the thread does not exist in cache.`
         );
-        return;
       }
 
       const optimisticUpdateId = store.addOptimisticUpdate({
@@ -1808,23 +1782,17 @@ function useRemoveReaction() {
   const client = useClient();
   return React.useCallback(
     ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
-      const userId = client[kInternal].currentUserIdStore.get();
-      // XXX - Should we display a console warning and return early if the user id could not be found?
-      if (userId === undefined) return;
-
+      const userId = getCurrentUserId(client);
       const removedAt = new Date();
-
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
 
-      // XXX - Should we call `threadsDB.get` vs `threadsDB.getEvenIfDeleted`?
       const existing = store
         .getFullState()
         .threadsDB.getEvenIfDeleted(threadId);
       if (existing === undefined) {
-        console.warn(
-          `Internal unexpected behavior. Cannot remove reaction from comment "${commentId}" in thread "${threadId}" because the thread does not exist in cache.`
+        throw new Error(
+          `Cannot remove reaction from comment "${commentId}" in thread "${threadId}" because the thread does not exist in cache.`
         );
-        return;
       }
 
       const optimisticUpdateId = store.addOptimisticUpdate({
@@ -1881,15 +1849,13 @@ function useMarkThreadAsRead() {
     (threadId: string) => {
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
 
-      // XXX - Should we call `threadsDB.get` vs `threadsDB.getEvenIfDeleted`?
       const existing = store
         .getFullState()
         .threadsDB.getEvenIfDeleted(threadId);
       if (existing === undefined) {
-        console.warn(
-          `Internal unexpected behavior. Cannot mark thread "${threadId}" as read because the thread does not exist in cache.`
+        throw new Error(
+          `Cannot mark thread "${threadId}" as read because the thread does not exist in cache.`
         );
-        return;
       }
 
       const inboxNotification = Object.values(
@@ -1955,15 +1921,13 @@ function useMarkThreadAsResolved() {
       const updatedAt = new Date();
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-      // XXX - Should we call `threadsDB.get` vs `threadsDB.getEvenIfDeleted`?
       const existing = store
         .getFullState()
         .threadsDB.getEvenIfDeleted(threadId);
       if (existing === undefined) {
-        console.warn(
-          `Internal unexpected behavior. Cannot mark thread "${threadId}" as resolved because the thread does not exist in cache.`
+        throw new Error(
+          `Cannot mark thread "${threadId}" as resolved because the thread does not exist in cache.`
         );
-        return;
       }
 
       const optimisticUpdateId = store.addOptimisticUpdate({
@@ -2014,15 +1978,13 @@ function useMarkThreadAsUnresolved() {
       const updatedAt = new Date();
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-      // XXX - Should we call `threadsDB.get` vs `threadsDB.getEvenIfDeleted`?
       const existing = store
         .getFullState()
         .threadsDB.getEvenIfDeleted(threadId);
       if (existing === undefined) {
-        console.warn(
-          `Internal unexpected behavior. Cannot mark thread "${threadId}" as unresolved because the thread does not exist in cache.`
+        throw new Error(
+          `Cannot mark thread "${threadId}" as unresolved because the thread does not exist in cache.`
         );
-        return;
       }
 
       const optimisticUpdateId = store.addOptimisticUpdate({
