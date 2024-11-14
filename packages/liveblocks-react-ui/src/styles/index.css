@@ -809,6 +809,7 @@
 .lb-composer-floating-toolbar {
   display: flex;
   padding: $lb-elevation-list-padding;
+  user-select: none;
 }
 
 /*************************************
