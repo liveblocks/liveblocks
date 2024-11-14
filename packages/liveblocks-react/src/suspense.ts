@@ -75,6 +75,7 @@ export {
   useThreadsSuspense as useThreads,
   useAttachmentUrlSuspense as useAttachmentUrl,
   useHistoryVersionsSuspense as useHistoryVersions,
+  useRoomInboxNotificationsSuspense as useRoomInboxNotifications,
   useRoomNotificationSettingsSuspense as useRoomNotificationSettings,
 } from "./room";
 export {

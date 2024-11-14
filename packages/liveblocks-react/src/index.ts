@@ -81,6 +81,7 @@ export {
   useAttachmentUrl,
   useHistoryVersions,
   useRoomNotificationSettings,
+  useRoomInboxNotifications,
 } from "./room";
 export {
   useInboxNotifications,
