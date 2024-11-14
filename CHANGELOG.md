@@ -1,18 +1,34 @@
 ## 2.12.0 (not yet released)
 
+This release adds support for tracking synchronization status of pending local
+changes for any part of Liveblocks. Whether you use Storage, Text Editors,
+Threads, or Notifications.
+
+If the client’s sync status is `synchronized`, it means all local pending
+changes have been persisted by our servers. If there are pending local changes
+in any part of Liveblocks you’re using, then the client’s sync status will be
+`synchronizing`.
+
+Also, we’re introducing a way to prevent browser tabs from being closed while
+local changes are not yet synchronized. To opt-in to this protection, enable
+`preventUnsavedChanges` option on the client:
+
+- In React: `<LiveblocksProvider preventUnsavedChanges />`
+- Otherwise: `createClient({ preventUnsavedChanges: true })`
+
 ### `@liveblocks/client`
 
-- Add new API `client.getSyncStatus()` which will reflect the (combined) sync
-  status for any part of Liveblocks (Storage, text editors, threads, etc).
+- Add new API `client.getSyncStatus()` method.
+- Add new client config option `preventUnsavedChanges`.
 - Expose `ToImmutable<T>` helper type.
 
 ### `@liveblocks/react`
 
 - Add new hook `useSyncStatus` that can be used to tell whether Liveblocks is
-  synchronizing local changes to the server.
-- Add new client config option `preventUnsavedChanges` which can be used to
-  prevent a browser tab from being closed while local changes are still being
-  saved.
+  synchronizing local changes to the server. Useful to display a "Saving..."
+  spinner in your application, when used with `useSyncStatus({ smooth: true })`.
+- Add new client config option `preventUnsavedChanges`, for example:
+  `createClient({ preventUnsavedChanges: true })`.
 - Deprecated APIs:
   - `useStorageStatus` is now deprecated in favor of `useSyncStatus`.
 
@@ -21,8 +37,8 @@
 - Add new hook `useIsEditorReady` which can be used to show a skeleton UI before
   the editor has received the initial text from the server.
 - Deprecated APIs:
-  - `useEditorStatus` is now deprecated in favor of `useIsEditorReady` or
-    `useSyncStatus`.
+  - `useEditorStatus` is now deprecated in favor of `useIsEditorReady` (or
+    `useSyncStatus`).
 
 ## 2.11.1
 
