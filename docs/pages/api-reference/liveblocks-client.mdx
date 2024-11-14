@@ -138,7 +138,8 @@ const client = createClient({
     defaultValue="false"
   >
     When set, navigating away from the current page is prevented while
-    Liveblocks is still synchronizing local changes. Available since 2.12.0.
+    Liveblocks is still synchronizing local changes. [Learn
+    more](#prevent-users-losing-unsaved-changes).
   </PropertiesListItem>
   <PropertiesListItem
     name="lostConnectionTimeout"
@@ -324,6 +325,37 @@ throttle:  16, // 60 FPS
 throttle:  32, // 30 FPS
 throttle: 200, //  5 FPS
 ```
+
+### Prevent users losing unsaved changes [#prevent-users-losing-unsaved-changes]
+
+Liveblocks usually synchronizes milliseconds after a local change, but if a user
+immediately closes their tab, or if they have a slow connection, it may take
+longer for changes to synchronize. Enabling `preventUnsavedChanges` will stop
+tabs with unsaved changes closing, by opening a dialog that warns users. In
+usual circumstances, it will very rarely trigger.
+
+```tsx
+import { createClient } from "@liveblocks/client";
+
+const client = createClient({
+  preventUnsavedChanges: true,
+
+  // Other options
+  // ...
+});
+```
+
+More specifically, this option triggers when:
+
+- There are unsaved changes after calling any hooks or methods, in all of our
+  products.
+- There are unsaved changes in a [Text Editor](/docs/products/text-editor).
+- There’s an unsubmitted comment in the
+  [Composer](/docs/api-reference/liveblocks-react-ui#Composer).
+- The user has made changes and is currently offline.
+
+Internally, this option uses the
+[beforeunload event](https://developer.mozilla.org/en-US/docs/Web/API/Window/beforeunload_event).
 
 ### Lost connection timeout [#createClientLostConnectionTimeout]
 
