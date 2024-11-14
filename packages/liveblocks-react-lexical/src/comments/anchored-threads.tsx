@@ -294,6 +294,7 @@ function ThreadWrapper({
 }: ThreadWrapperProps) {
   const [editor] = useLexicalComposerContext();
   const nodes = useThreadToNodes();
+  const divRef = useRef<HTMLDivElement>(null);
 
   const activeThreads = useActiveThreads();
 
@@ -313,17 +314,19 @@ function ThreadWrapper({
     });
   }
 
-  const handleRef = useCallback(
-    (el: HTMLDivElement) => {
-      onItemAdd(thread.id, el);
-      return () => onItemRemove(thread.id);
-    },
-    [thread.id, onItemAdd, onItemRemove]
-  );
+  useLayoutEffect(() => {
+    const el = divRef.current;
+    if (el === null) return;
+
+    onItemAdd(thread.id, el);
+    return () => {
+      onItemRemove(thread.id);
+    };
+  }, [thread.id, onItemAdd, onItemRemove]);
 
   return (
     <div
-      ref={handleRef}
+      ref={divRef}
       className={classNames(
         "lb-lexical-anchored-threads-thread-container",
         className

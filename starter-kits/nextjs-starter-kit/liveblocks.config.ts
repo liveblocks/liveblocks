@@ -15,11 +15,13 @@ declare global {
   interface Liveblocks {
     // Each user's Presence, for useMyPresence, useOthers, etc.
     Presence: {
-      cursor: { x: number; y: number } | null;
+      cursor: { x: number; y: number } | null; // Whiteboard
+      presence: any; // Canvas
     };
     // The Storage tree for the room, for useMutation, useStorage, etc.
     Storage: {
-      notes: Notes;
+      notes: Notes; // Whiteboard
+      records: LiveMap<string, any>; // Canvas
     };
     // Custom user info set when authenticating with a secret key
     UserMeta: {
@@ -40,4 +42,18 @@ declare global {
       };
     };
   }
+}
+
+export function createInitialPresence(): Liveblocks["Presence"] {
+  return {
+    cursor: null, // Whiteboard
+    presence: undefined, // Canvas
+  };
+}
+
+export function createInitialStorage(): Liveblocks["Storage"] {
+  return {
+    notes: new LiveMap(), // Whiteboard
+    records: new LiveMap(), // Canvas
+  };
 }

@@ -1,3 +1,42 @@
+## 2.11.1
+
+### `@liveblocks/react-lexical`
+
+- Fix an issue with `AnchoredThreads` component not working correctly on certain
+  React versions.
+
+### `@liveblocks/react-tiptap`
+
+- Fix an issue with `AnchoredThreads` component not working correctly on certain
+  React versions.
+- Fixes an issue where react comonents don't update when
+  shouldRerenderOnTransaction: false is set
+
+### `@liveblocks/yjs`
+
+- Adds experimental offline support for `LiveblocksYjsProvider`.
+
+## 2.11.0
+
+### `@liveblocks/react-ui`
+
+- Upgrade dependencies.
+- Fix minor appearance issues related to attachments.
+- Fix pasting issues introduced in 2.10.0.
+
+### `@liveblocks/react`
+
+- Fix regression with `useThreads` that caused the hook to return an error if
+  its associated room did not exist.
+
+### `@liveblocks/react-tiptap`
+
+- Initial release.
+
+### `@liveblocks/emails`
+
+- Initial release.
+
 ## 2.10.2
 
 ### `@liveblocks/client`

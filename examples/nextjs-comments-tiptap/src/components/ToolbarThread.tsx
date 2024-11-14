@@ -15,14 +15,7 @@ export function ToolbarThread({ editor }: Props) {
   const wrapper = useRef<HTMLDivElement>(null);
 
   const handleClick = useCallback(async () => {
-    editor
-      .chain()
-      .focus()
-      .setCommentHighlight({
-        highlightId: nanoid(),
-        state: "composing",
-      })
-      .run();
+    editor.chain().focus().addPendingComment().run();
   }, [editor]);
 
   return (
@@ -31,10 +24,8 @@ export function ToolbarThread({ editor }: Props) {
         variant="subtle"
         className={styles.toolbarButton}
         onClick={handleClick}
-        disabled={editor.isActive("commentHighlight")}
-        data-active={
-          editor.isActive("commentHighlight") ? "is-active" : undefined
-        }
+        disabled={editor.isActive("lb-comment")}
+        data-active={editor.isActive("lb-comment") ? "is-active" : undefined}
         aria-label="Add comment"
       >
         <CommentIcon />

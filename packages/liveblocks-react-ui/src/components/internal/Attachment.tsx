@@ -29,6 +29,7 @@ interface AttachmentProps extends ComponentPropsWithoutRef<"div"> {
   preventFocusOnDelete?: boolean;
   roomId: string;
   overrides?: Partial<Overrides>;
+  allowMediaPreview?: boolean;
 }
 
 const fileExtensionRegex = /^(.+?)(\.[^.]+)?$/;
@@ -179,15 +180,21 @@ function AttachmentVideoPreview({
 
 function AttachmentPreview({
   attachment,
+  allowMediaPreview = true,
   roomId,
 }: {
   attachment: CommentMixedAttachment;
   roomId: string;
+  allowMediaPreview?: boolean;
 }) {
   const isUploaded =
     attachment.type === "attachment" || attachment.status === "uploaded";
 
-  if (isUploaded && attachment.size <= MAX_DISPLAYED_MEDIA_SIZE) {
+  if (
+    allowMediaPreview &&
+    isUploaded &&
+    attachment.size <= MAX_DISPLAYED_MEDIA_SIZE
+  ) {
     if (attachment.mimeType.startsWith("image/")) {
       return <AttachmentImagePreview attachment={attachment} roomId={roomId} />;
     }
@@ -300,6 +307,7 @@ export function MediaAttachment({
   onClick,
   onDeleteClick,
   preventFocusOnDelete,
+  allowMediaPreview = true,
   roomId,
   className,
   onKeyDown,
@@ -335,7 +343,11 @@ export function MediaAttachment({
         ) : isError ? (
           <WarningIcon />
         ) : (
-          <AttachmentPreview attachment={attachment} roomId={roomId} />
+          <AttachmentPreview
+            attachment={attachment}
+            allowMediaPreview={allowMediaPreview}
+            roomId={roomId}
+          />
         )}
       </div>
       <div className="lb-attachment-details">
@@ -367,6 +379,7 @@ export function FileAttachment({
   onClick,
   onDeleteClick,
   preventFocusOnDelete,
+  allowMediaPreview = true,
   roomId,
   className,
   onKeyDown,
@@ -402,7 +415,11 @@ export function FileAttachment({
         ) : isError ? (
           <WarningIcon />
         ) : (
-          <AttachmentPreview attachment={attachment} roomId={roomId} />
+          <AttachmentPreview
+            attachment={attachment}
+            allowMediaPreview={allowMediaPreview}
+            roomId={roomId}
+          />
         )}
       </div>
       <div className="lb-attachment-details">

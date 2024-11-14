@@ -40,6 +40,8 @@ export function Providers({
 
           return data;
         }}
+        // Update at 60FPS (every 16ms)
+        throttle={16}
         // Resolve user IDs into name/avatar/etc for Comments/Notifications
         resolveUsers={async ({ userIds }) => {
           const users = await getUsers({ userIds });

@@ -43,6 +43,7 @@ import type {
 } from "./protocol/InboxNotifications";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type { HistoryVersion } from "./protocol/VersionHistory";
+import type { TextEditorType } from "./types/Others";
 import type { Patchable } from "./types/Patchable";
 import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 import { PKG_VERSION } from "./version";
@@ -480,35 +481,58 @@ export function createHttpClient({
 
     const PAGE_SIZE = 50;
 
-    const result = await httpClient.get<{
-      data: ThreadDataPlain<M>[];
-      inboxNotifications: InboxNotificationDataPlain[];
-      deletedThreads: ThreadDeleteInfoPlain[];
-      deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
-      meta: {
-        requestedAt: string;
-        nextCursor: string | null;
-        roomAccess: Permission[];
-      };
-    }>(
-      url`/v2/c/rooms/${options.roomId}/threads`,
-      () => getAuthValueForRoom(options.roomId),
-      {
-        cursor: options.cursor,
-        query,
-        limit: PAGE_SIZE,
-      }
-    );
+    try {
+      const result = await httpClient.get<{
+        data: ThreadDataPlain<M>[];
+        inboxNotifications: InboxNotificationDataPlain[];
+        deletedThreads: ThreadDeleteInfoPlain[];
+        deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
+        meta: {
+          requestedAt: string;
+          nextCursor: string | null;
+          roomAccess: Permission[];
+        };
+      }>(
+        url`/v2/c/rooms/${options.roomId}/threads`,
+        () => getAuthValueForRoom(options.roomId),
+        {
+          cursor: options.cursor,
+          query,
+          limit: PAGE_SIZE,
+        }
+      );
 
-    return {
-      threads: result.data.map(convertToThreadData),
-      inboxNotifications: result.inboxNotifications.map(
-        convertToInboxNotificationData
-      ),
-      nextCursor: result.meta.nextCursor,
-      requestedAt: new Date(result.meta.requestedAt),
-      roomAccess: result.meta.roomAccess,
-    };
+      return {
+        threads: result.data.map(convertToThreadData),
+        inboxNotifications: result.inboxNotifications.map(
+          convertToInboxNotificationData
+        ),
+        nextCursor: result.meta.nextCursor,
+        requestedAt: new Date(result.meta.requestedAt),
+        roomAccess: result.meta.roomAccess,
+      };
+    } catch (err) {
+      if (err instanceof HttpError && err.status === 404) {
+        // If the room does (not) yet exist, the response will be a 404 error
+        // response which we'll interpret as an empty list of threads.
+        return {
+          threads: [],
+          inboxNotifications: [],
+          nextCursor: null,
+          //
+          // HACK
+          // requestedAt needs to be a *server* timestamp here. However, on
+          // this 404 error response, there is no such timestamp. So out of
+          // pure necessity we'll fall back to a local timestamp instead (and
+          // allow for a possible 6 hour clock difference between client and
+          // server).
+          //
+          requestedAt: new Date(Date.now() - 6 * 60 * 60 * 1000),
+        };
+      }
+
+      throw err;
+    }
   }
 
   async function createThread<M extends BaseMetadata>(options: {
@@ -1036,7 +1060,7 @@ export function createHttpClient({
 
   async function reportTextEditor(options: {
     roomId: string;
-    type: "lexical";
+    type: TextEditorType;
     rootKey: string;
   }) {
     await httpClient.rawPost(

@@ -133,13 +133,13 @@ export type StringifyCommentBodyOptions<U extends BaseUserMeta = DU> = {
   ) => OptionalPromise<(U["info"] | undefined)[] | undefined>;
 };
 
-function isCommentBodyParagraph(
+export function isCommentBodyParagraph(
   element: CommentBodyElement
 ): element is CommentBodyParagraph {
   return "type" in element && element.type === "paragraph";
 }
 
-function isCommentBodyText(
+export function isCommentBodyText(
   element: CommentBodyElement
 ): element is CommentBodyText {
   return (
@@ -149,13 +149,13 @@ function isCommentBodyText(
   );
 }
 
-function isCommentBodyMention(
+export function isCommentBodyMention(
   element: CommentBodyElement
 ): element is CommentBodyMention {
   return "type" in element && element.type === "mention";
 }
 
-function isCommentBodyLink(
+export function isCommentBodyLink(
   element: CommentBodyElement
 ): element is CommentBodyLink {
   return "type" in element && element.type === "link";
@@ -233,12 +233,12 @@ export function getMentionedIdsFromCommentBody(body: CommentBody): string[] {
   return Array.from(mentionedIds);
 }
 
-async function resolveUsersInCommentBody<U extends BaseUserMeta>(
+export async function resolveUsersInCommentBody<U extends BaseUserMeta>(
   body: CommentBody,
   resolveUsers?: (
     args: ResolveUsersArgs
   ) => OptionalPromise<(U["info"] | undefined)[] | undefined>
-) {
+): Promise<Map<string, U["info"]>> {
   const resolvedUsers = new Map<string, U["info"]>();
 
   if (!resolveUsers) {
@@ -276,7 +276,7 @@ const htmlEscapablesRegex = new RegExp(
   "g"
 );
 
-function htmlSafe(value: string) {
+export function htmlSafe(value: string): HtmlSafeString {
   return new HtmlSafeString([String(value)], []);
 }
 
@@ -337,10 +337,10 @@ export class HtmlSafeString {
  * Build an HTML string from a template literal where the values are escaped.
  * Nested calls are supported and won't be escaped.
  */
-function html(
+export function html(
   strings: TemplateStringsArray,
   ...values: (string | string[] | HtmlSafeString | HtmlSafeString[])[]
-) {
+): string {
   return new HtmlSafeString(strings, values) as unknown as string;
 }
 
@@ -443,7 +443,7 @@ function markdown(
  * @param url The URL to convert to an absolute URL (relative or absolute).
  * @returns The absolute URL or undefined if the URL is invalid.
  */
-function toAbsoluteUrl(url: string): string | undefined {
+export function toAbsoluteUrl(url: string): string | undefined {
   // Check if the URL already contains a scheme
   if (url.startsWith("http://") || url.startsWith("https://")) {
     return url;

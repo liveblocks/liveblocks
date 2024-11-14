@@ -463,6 +463,7 @@ export function CommentNonInteractiveFileAttachment({
   return (
     <FileAttachment
       className={classNames("lb-comment-attachment", className)}
+      allowMediaPreview={false}
       {...props}
     />
   );
