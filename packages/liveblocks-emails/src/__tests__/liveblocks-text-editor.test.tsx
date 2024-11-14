@@ -8,8 +8,14 @@ import type {
 import {
   convertTextEditorNodesAsHtml,
   convertTextEditorNodesAsReact,
+  transformAsLiveblocksTextEditorNodes,
 } from "../liveblocks-text-editor";
-import { renderToStaticMarkup, resolveUsers } from "./_helpers";
+import {
+  generateInboxNotificationId,
+  renderToStaticMarkup,
+  resolveUsers,
+} from "./_helpers";
+import { createTipTapMentionNodeWithContext } from "./_tiptap-helpers";
 
 const content1: LiveblocksTextEditorNode[] = [
   {
@@ -104,6 +110,61 @@ const buildContentWithMention = ({
 ];
 
 describe("liveblocks text editor", () => {
+  describe("transform serialized nodes into Liveblocks Text Editor nodes", () => {
+    it("should transform tiptap nodes", () => {
+      const mentionId = generateInboxNotificationId();
+      const mentionNodeWithContext = createTipTapMentionNodeWithContext({
+        mentionedUserId: "user-dracula",
+        mentionId,
+      });
+
+      const nodes = transformAsLiveblocksTextEditorNodes({
+        editor: "tiptap",
+        mention: mentionNodeWithContext,
+      });
+
+      const expected: LiveblocksTextEditorNode[] = [
+        {
+          type: "text",
+          text: "Hey this a tip tap ",
+          bold: false,
+          italic: false,
+          strikethrough: false,
+          code: false,
+        },
+        {
+          type: "text",
+          text: "example",
+          bold: true,
+          italic: true,
+          strikethrough: false,
+          code: false,
+        },
+        {
+          type: "text",
+          text: " hiha! ",
+          bold: false,
+          italic: false,
+          strikethrough: false,
+          code: false,
+        },
+        {
+          type: "mention",
+          userId: "user-dracula",
+        },
+        {
+          type: "text",
+          text: " fun right?",
+          bold: false,
+          italic: false,
+          strikethrough: false,
+          code: false,
+        },
+      ];
+
+      expect(nodes).toEqual(expected);
+    });
+  });
   describe("converts content as React", () => {
     describe("w/o users resolver", () => {
       it("should convert simple texts elements", async () => {
