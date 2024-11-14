@@ -253,6 +253,9 @@ function App() {
       // Throttle time (ms) between WebSocket updates
       throttle={100}
       // ---
+      // Prevent browser tab from closing while local changes aren’t synchronized yet
+      preventUnsavedChanges={false}
+      // ---
       // Throw lost-connection event after 5 seconds offline
       lostConnectionTimeout={5000}
       // ---
