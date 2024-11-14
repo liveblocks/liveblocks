@@ -24,6 +24,7 @@ import { slashCommand, suggestionItems } from "./slash-command";
 import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
 import { Threads } from "./threads";
 import { AddCommentSelector } from "./selectors/add-comment-selector";
+import { useSyncStatus } from "@liveblocks/react/suspense";
 
 export const AdvancedEditor = () => {
   const liveblocks = useLiveblocksExtension();
@@ -35,13 +36,14 @@ export const AdvancedEditor = () => {
   const [openLink, setOpenLink] = useState(false);
   const [openAI, setOpenAI] = useState(false);
 
+  const syncStatus = useSyncStatus({ smooth: true });
+
   return (
     <div className="relative w-full max-w-screen-lg">
       <div className="flex absolute right-5 top-5 z-10 mb-5 gap-2">
-        {/* TODO `useSyncStatus` after 2.12 released */}
-        {/*<div className="rounded-lg bg-accent px-2 py-1 text-sm text-muted-foreground">*/}
-        {/*  {saveStatus}*/}
-        {/*</div>*/}
+        <div className="rounded-lg bg-accent px-2 py-1 text-sm text-muted-foreground">
+          {syncStatus === "synchronizing" ? "Unsaved" : "Saved"}
+        </div>
         <div
           className={
             charsCount

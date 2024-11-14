@@ -1,6 +1,6 @@
 {
-  "name": "@liveblocks-examples/nextjs-tiptap-advanced",
-  "description": "This example shows how to build a collaborative text editor with Liveblocks, Tiptap, and Next.js.",
+  "name": "@liveblocks-examples/nextjs-tiptap-novel",
+  "description": "This example shows how to build a collaborative text editor with Liveblocks, Tiptap, Novel, and Next.js.",
   "license": "Apache-2.0",
   "private": true,
   "scripts": {
@@ -10,11 +10,11 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@liveblocks/client": "^2.11.0",
-    "@liveblocks/node": "^2.11.0",
-    "@liveblocks/react": "^2.11.0",
-    "@liveblocks/react-tiptap": "^2.11.0",
-    "@liveblocks/react-ui": "^2.11.0",
+    "@liveblocks/client": "^2.12.0",
+    "@liveblocks/node": "^2.12.0",
+    "@liveblocks/react": "^2.12.0",
+    "@liveblocks/react-tiptap": "^2.12.0",
+    "@liveblocks/react-ui": "^2.12.0",
     "@nanostores/react": "github:ai/react",
     "@radix-ui/react-dialog": "^1.1.2",
     "@radix-ui/react-popover": "^1.0.2",
