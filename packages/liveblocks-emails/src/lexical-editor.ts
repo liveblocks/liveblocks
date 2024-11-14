@@ -241,8 +241,8 @@ export function getSerializedLexicalState({
   return state;
 }
 
-/** @internal */
-const flattenLexicalTree = (
+/** @internal - export for testing only */
+export const flattenLexicalTree = (
   nodes: SerializedLexicalNode[]
 ): SerializedLexicalNode[] => {
   let flattenNodes: SerializedLexicalNode[] = [];
