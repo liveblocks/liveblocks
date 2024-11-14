@@ -1310,7 +1310,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
       if (existingPermissions === undefined) {
         permissionsByRoom[roomId] = new Set(permissions);
       } else {
-        permissions.forEach(existingPermissions.add);
+        permissions.forEach((permission) =>
+          existingPermissions.add(permission)
+        );
       }
     });
 

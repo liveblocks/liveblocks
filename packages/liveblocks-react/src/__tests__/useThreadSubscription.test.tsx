@@ -1,4 +1,4 @@
-import { nanoid } from "@liveblocks/core";
+import { nanoid, Permission } from "@liveblocks/core";
 import { renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
 import React from "react";
@@ -37,11 +37,12 @@ describe("useThreadSubscription", () => {
           ctx.json({
             data: threads,
             inboxNotifications,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -103,11 +104,12 @@ describe("useThreadSubscription", () => {
           ctx.json({
             data: threads,
             inboxNotifications,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -162,11 +164,12 @@ describe("useThreadSubscription", () => {
           ctx.json({
             data: threads,
             inboxNotifications: [],
-            deletedThreads: [],
-            deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -224,11 +227,12 @@ describe("useThreadSubscription", () => {
           ctx.json({
             data: threads,
             inboxNotifications,
-            deletedThreads: [],
-            deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );

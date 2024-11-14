@@ -2,6 +2,7 @@ import type {
   BaseMetadata,
   CommentData,
   InboxNotificationData,
+  Permission,
   RoomNotificationSettings,
   ThreadData,
   ThreadDataWithDeleteInfo,
@@ -16,6 +17,11 @@ export function mockGetThreads(
     {
       data: ThreadData<any>[];
       inboxNotifications: InboxNotificationData[];
+      meta: {
+        nextCursor: string | null;
+        requestedAt: string;
+        permissionHints: Record<string, Permission[]>;
+      };
     }
   >
 ) {

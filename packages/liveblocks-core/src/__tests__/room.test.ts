@@ -1,4 +1,4 @@
-import type { AuthValue } from "../auth-manager";
+import { type AuthValue, createAuthManager } from "../auth-manager";
 import { StopRetrying } from "../connection";
 import { DEFAULT_BASE_URL } from "../constants";
 import { LiveList } from "../crdts/LiveList";
@@ -6,6 +6,7 @@ import { LiveMap } from "../crdts/LiveMap";
 import { LiveObject } from "../crdts/LiveObject";
 import type { LsonObject } from "../crdts/Lson";
 import type { StorageUpdate } from "../crdts/StorageUpdates";
+import { createHttpClient } from "../http-client";
 import { legacy_patchImmutableObject, lsonToJson } from "../immutable";
 import { kInternal } from "../internal";
 import { nn } from "../lib/assert";
@@ -71,7 +72,13 @@ const defaultRoomConfig: RoomConfig = {
     },
     createSocket: mockedCreateSocketDelegate,
   },
-
+  roomHttpClient: createHttpClient({
+    baseUrl: DEFAULT_BASE_URL,
+    fetchPolyfill: globalThis.fetch?.bind(globalThis),
+    authManager: createAuthManager({
+      authEndpoint: "/api/auth",
+    }),
+  }),
   // Not used in unit tests (yet)
   createSyncSource: makeSyncSource,
 };
