@@ -46,6 +46,7 @@ export type SerializedLexicalRootNodeChildren = Array<
   Readonly<
     | SerializedElementNode<Readonly<SerializedLexicalNode>>
     | SerializedDecoratorNode
+    | SerializedLineBreakNode
   >
 >;
 

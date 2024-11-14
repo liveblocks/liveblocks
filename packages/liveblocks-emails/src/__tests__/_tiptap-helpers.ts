@@ -82,7 +82,7 @@ export const docStateRoot: SerializedTiptapRootNode = {
   ],
 };
 
-// with line breaks
+// With line breaks
 export const docStateRoot2: SerializedTiptapRootNode = {
   type: "doc",
   content: [
