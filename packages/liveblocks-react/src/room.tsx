@@ -2520,25 +2520,7 @@ function selectorFor_useAttachmentUrl(
  */
 function useAttachmentUrl(attachmentId: string): AttachmentUrlAsyncResult {
   const room = useRoom();
-  const { attachmentUrlsStore } = room[kInternal];
-
-  const getAttachmentUrlState = React.useCallback(
-    () => attachmentUrlsStore.getState(attachmentId),
-    [attachmentUrlsStore, attachmentId]
-  );
-
-  React.useEffect(() => {
-    // NOTE: .get() will trigger any actual fetches, whereas .getState() will not
-    void attachmentUrlsStore.get(attachmentId);
-  }, [attachmentUrlsStore, attachmentId]);
-
-  return useSyncExternalStoreWithSelector(
-    attachmentUrlsStore.subscribe,
-    getAttachmentUrlState,
-    getAttachmentUrlState,
-    selectorFor_useAttachmentUrl,
-    shallow
-  );
+  return useRoomAttachmentUrl(attachmentId, room.id);
 }
 
 /**
