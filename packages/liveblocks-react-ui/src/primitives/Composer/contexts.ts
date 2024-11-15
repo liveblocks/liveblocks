@@ -82,6 +82,7 @@ export type ComposerEditorContext = {
   validate: (value: SlateElement[]) => void;
   editor: SlateEditor;
   setFocused: Dispatch<SetStateAction<boolean>>;
+  roomId: string;
 };
 
 export type ComposerAttachmentsContext = {
@@ -110,8 +111,6 @@ export const ComposerAttachmentsContext =
   createContext<ComposerAttachmentsContext | null>(null);
 export const ComposerSuggestionsContext =
   createContext<ComposerSuggestionsContext | null>(null);
-
-export const ComposerFormRoomIdContext = createContext<string | null>(null);
 
 export function useComposerEditorContext() {
   const composerEditorContext = useContext(ComposerEditorContext);
@@ -150,13 +149,4 @@ export function useComposer(): ComposerContext {
   const composerContext = useContext(ComposerContext);
 
   return nn(composerContext, "Composer.Form is missing from the React tree.");
-}
-
-export function useComposerFormRoomId(): string {
-  const composerRoomIdContext = useContext(ComposerFormRoomIdContext);
-
-  return nn(
-    composerRoomIdContext,
-    "Composer.Form is missing from the React tree."
-  );
 }

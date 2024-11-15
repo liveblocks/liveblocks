@@ -162,6 +162,11 @@ export interface ComposerFormProps extends ComponentPropsWithSlot<"form"> {
    * `false`.
    */
   preventUnsavedChanges?: boolean;
+
+  /**
+   * @internal
+   */
+  roomId?: string;
 }
 
 export type ComposerSubmitProps = ComponentPropsWithSlot<"button">;

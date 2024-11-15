@@ -19,7 +19,6 @@ import type {
   SyntheticEvent,
 } from "react";
 import React, {
-  createContext,
   forwardRef,
   Fragment,
   useCallback,
@@ -137,8 +136,6 @@ export interface ThreadProps<M extends BaseMetadata = DM>
     GlobalOverrides & ThreadOverrides & CommentOverrides & ComposerOverrides
   >;
 }
-
-export const ThreadDataContext = createContext<ThreadData | null>(null);
 
 /**
  * Displays a thread of comments, with a composer to reply
@@ -271,122 +268,119 @@ export const Thread = forwardRef(
 
     return (
       <TooltipProvider>
-        <ThreadDataContext.Provider value={thread}>
-          <div
-            className={classNames(
-              "lb-root lb-thread",
-              showActions === "hover" && "lb-thread:show-actions-hover",
-              className
-            )}
-            data-resolved={thread.resolved ? "" : undefined}
-            data-unread={unreadIndex !== undefined ? "" : undefined}
-            dir={$.dir}
-            {...props}
-            ref={forwardedRef}
-          >
-            <div className="lb-thread-comments">
-              {thread.comments.map((comment, index) => {
-                const isFirstComment = index === firstCommentIndex;
-                const isUnread =
-                  unreadIndex !== undefined && index >= unreadIndex;
+        <div
+          className={classNames(
+            "lb-root lb-thread",
+            showActions === "hover" && "lb-thread:show-actions-hover",
+            className
+          )}
+          data-resolved={thread.resolved ? "" : undefined}
+          data-unread={unreadIndex !== undefined ? "" : undefined}
+          dir={$.dir}
+          {...props}
+          ref={forwardedRef}
+        >
+          <div className="lb-thread-comments">
+            {thread.comments.map((comment, index) => {
+              const isFirstComment = index === firstCommentIndex;
+              const isUnread =
+                unreadIndex !== undefined && index >= unreadIndex;
 
-                const children = (
-                  <Comment
-                    key={comment.id}
-                    className="lb-thread-comment"
-                    data-unread={isUnread ? "" : undefined}
-                    comment={comment}
-                    indentContent={indentCommentContent}
-                    showDeleted={showDeletedComments}
-                    showActions={showActions}
-                    showReactions={showReactions}
-                    showAttachments={showAttachments}
-                    onCommentEdit={onCommentEdit}
-                    onCommentDelete={handleCommentDelete}
-                    onAuthorClick={onAuthorClick}
-                    onMentionClick={onMentionClick}
-                    onAttachmentClick={onAttachmentClick}
-                    autoMarkReadThreadId={
-                      index === lastCommentIndex && isUnread
-                        ? thread.id
-                        : undefined
-                    }
-                    additionalActionsClassName={
-                      isFirstComment ? "lb-thread-actions" : undefined
-                    }
-                    additionalActions={
-                      isFirstComment && showResolveAction ? (
-                        <Tooltip
-                          content={
-                            thread.resolved
-                              ? $.THREAD_UNRESOLVE
-                              : $.THREAD_RESOLVE
-                          }
+              const children = (
+                <Comment
+                  key={comment.id}
+                  className="lb-thread-comment"
+                  data-unread={isUnread ? "" : undefined}
+                  comment={comment}
+                  indentContent={indentCommentContent}
+                  showDeleted={showDeletedComments}
+                  showActions={showActions}
+                  showReactions={showReactions}
+                  showAttachments={showAttachments}
+                  onCommentEdit={onCommentEdit}
+                  onCommentDelete={handleCommentDelete}
+                  onAuthorClick={onAuthorClick}
+                  onMentionClick={onMentionClick}
+                  onAttachmentClick={onAttachmentClick}
+                  autoMarkReadThreadId={
+                    index === lastCommentIndex && isUnread
+                      ? thread.id
+                      : undefined
+                  }
+                  additionalActionsClassName={
+                    isFirstComment ? "lb-thread-actions" : undefined
+                  }
+                  additionalActions={
+                    isFirstComment && showResolveAction ? (
+                      <Tooltip
+                        content={
+                          thread.resolved
+                            ? $.THREAD_UNRESOLVE
+                            : $.THREAD_RESOLVE
+                        }
+                      >
+                        <TogglePrimitive.Root
+                          pressed={thread.resolved}
+                          onPressedChange={handleResolvedChange}
+                          asChild
                         >
-                          <TogglePrimitive.Root
-                            pressed={thread.resolved}
-                            onPressedChange={handleResolvedChange}
-                            asChild
+                          <Button
+                            className="lb-comment-action"
+                            onClick={stopPropagation}
+                            aria-label={
+                              thread.resolved
+                                ? $.THREAD_UNRESOLVE
+                                : $.THREAD_RESOLVE
+                            }
                           >
-                            <Button
-                              className="lb-comment-action"
-                              onClick={stopPropagation}
-                              aria-label={
-                                thread.resolved
-                                  ? $.THREAD_UNRESOLVE
-                                  : $.THREAD_RESOLVE
-                              }
-                            >
-                              {thread.resolved ? (
-                                <ResolvedIcon className="lb-button-icon" />
-                              ) : (
-                                <ResolveIcon className="lb-button-icon" />
-                              )}
-                            </Button>
-                          </TogglePrimitive.Root>
-                        </Tooltip>
-                      ) : null
-                    }
-                  />
-                );
+                            {thread.resolved ? (
+                              <ResolvedIcon className="lb-button-icon" />
+                            ) : (
+                              <ResolveIcon className="lb-button-icon" />
+                            )}
+                          </Button>
+                        </TogglePrimitive.Root>
+                      </Tooltip>
+                    ) : null
+                  }
+                />
+              );
 
-                return index === newIndicatorIndex &&
-                  newIndicatorIndex !== firstCommentIndex &&
-                  newIndicatorIndex <= lastCommentIndex ? (
-                  <Fragment key={comment.id}>
-                    <div
-                      className="lb-thread-new-indicator"
-                      aria-label={$.THREAD_NEW_INDICATOR_DESCRIPTION}
-                    >
-                      <span className="lb-thread-new-indicator-label">
-                        <ArrowDownIcon className="lb-thread-new-indicator-label-icon" />
-                        {$.THREAD_NEW_INDICATOR}
-                      </span>
-                    </div>
-                    {children}
-                  </Fragment>
-                ) : (
-                  children
-                );
-              })}
-            </div>
-            {showComposer && (
-              <Composer
-                className="lb-thread-composer"
-                threadId={thread.id}
-                defaultCollapsed={
-                  showComposer === "collapsed" ? true : undefined
-                }
-                showAttachments={showAttachments}
-                onComposerSubmit={onComposerSubmit}
-                overrides={{
-                  COMPOSER_PLACEHOLDER: $.THREAD_COMPOSER_PLACEHOLDER,
-                  COMPOSER_SEND: $.THREAD_COMPOSER_SEND,
-                }}
-              />
-            )}
+              return index === newIndicatorIndex &&
+                newIndicatorIndex !== firstCommentIndex &&
+                newIndicatorIndex <= lastCommentIndex ? (
+                <Fragment key={comment.id}>
+                  <div
+                    className="lb-thread-new-indicator"
+                    aria-label={$.THREAD_NEW_INDICATOR_DESCRIPTION}
+                  >
+                    <span className="lb-thread-new-indicator-label">
+                      <ArrowDownIcon className="lb-thread-new-indicator-label-icon" />
+                      {$.THREAD_NEW_INDICATOR}
+                    </span>
+                  </div>
+                  {children}
+                </Fragment>
+              ) : (
+                children
+              );
+            })}
           </div>
-        </ThreadDataContext.Provider>
+          {showComposer && (
+            <Composer
+              className="lb-thread-composer"
+              threadId={thread.id}
+              defaultCollapsed={showComposer === "collapsed" ? true : undefined}
+              showAttachments={showAttachments}
+              onComposerSubmit={onComposerSubmit}
+              overrides={{
+                COMPOSER_PLACEHOLDER: $.THREAD_COMPOSER_PLACEHOLDER,
+                COMPOSER_SEND: $.THREAD_COMPOSER_SEND,
+              }}
+              roomId={thread.roomId}
+            />
+          )}
+        </div>
       </TooltipProvider>
     );
   }

@@ -25,13 +25,7 @@ import type {
   RefAttributes,
   SyntheticEvent,
 } from "react";
-import React, {
-  createContext,
-  forwardRef,
-  useCallback,
-  useContext,
-  useRef,
-} from "react";
+import React, { createContext, forwardRef, useCallback, useRef } from "react";
 
 import { useLiveblocksUIConfig } from "../config";
 import { AttachmentIcon } from "../icons/Attachment";
@@ -44,7 +38,7 @@ import * as ComposerPrimitive from "../primitives/Composer";
 import {
   useComposer,
   useComposerAttachmentsContext,
-  useComposerFormRoomId,
+  useComposerEditorContext,
 } from "../primitives/Composer/contexts";
 import type {
   ComposerEditorComponents,
@@ -60,7 +54,6 @@ import { MENTION_CHARACTER } from "../slate/plugins/mentions";
 import { classNames } from "../utils/class-names";
 import { useControllableState } from "../utils/use-controllable-state";
 import { useLayoutEffect } from "../utils/use-layout-effect";
-import { CommentDataContext } from "./Comment";
 import { FileAttachment } from "./internal/Attachment";
 import { Attribution } from "./internal/Attribution";
 import { Avatar } from "./internal/Avatar";
@@ -74,7 +67,6 @@ import {
   TooltipProvider,
 } from "./internal/Tooltip";
 import { User } from "./internal/User";
-import { ThreadDataContext } from "./Thread";
 
 interface EditorActionProps extends ComponentPropsWithoutRef<"button"> {
   label: string;
@@ -188,6 +180,11 @@ export type ComposerProps<M extends BaseMetadata = DM> = Omit<
      * @internal
      */
     showAttribution?: boolean;
+
+    /**
+     * @internal
+     */
+    roomId?: string;
   };
 
 interface ComposerEditorContainerProps
@@ -375,7 +372,7 @@ function ComposerFileAttachment({
   ...props
 }: ComposerFileAttachmentProps) {
   const { removeAttachment } = useComposer();
-  const roomId = useComposerFormRoomId();
+  const { roomId } = useComposerEditorContext();
 
   const handleDeleteClick = useCallback(() => {
     removeAttachment(attachment.id);
@@ -565,54 +562,20 @@ export const Composer = forwardRef(
       disabled,
       showAttachments = true,
       showAttribution,
+      roomId: _roomId,
       ...props
     }: ComposerProps<M>,
     forwardedRef: ForwardedRef<HTMLFormElement>
   ) => {
     const client = useClient();
-    const thread = useContext(ThreadDataContext);
-    const comment = useContext(CommentDataContext);
     const room = useRoomOrNull();
 
-    function getRoomId(): string {
-      // Both threadId and commentId are provided (editing a comment)
-      if (threadId !== undefined && commentId !== undefined) {
-        if (comment && comment.id === commentId) {
-          return comment.roomId;
-        } else if (thread && thread.id === threadId) {
-          return thread.roomId;
-        } else if (room) {
-          return room.id;
-        } else {
-          throw new Error(
-            "Composer is provided both threadId and commentId but is not a descendant of Comment, Thread, or RoomProvider component"
-          );
-        }
-      }
-      // Only threadId is provided (replying to a thread)
-      else if (threadId !== undefined) {
-        if (thread && thread.id === threadId) {
-          return thread.roomId;
-        } else if (room) {
-          return room.id;
-        } else {
-          throw new Error(
-            "Composer is provided a threadId but is not a descendant of Thread or RoomProvider component"
-          );
-        }
-      }
-      // Default to room context (creating a new thread)
-      else if (room) {
-        return room.id;
-      }
-
-      // No valid context found
+    const roomId = _roomId !== undefined ? _roomId : room?.id;
+    if (roomId === undefined) {
       throw new Error(
         "Composer must be a descendant of RoomProvider component"
       );
     }
-
-    const roomId = getRoomId();
 
     const createThread = useCreateRoomThread(roomId);
     const createComment = useCreateRoomComment(roomId);
@@ -731,42 +694,41 @@ export const Composer = forwardRef(
     );
 
     return (
-      <ComposerRoomIdContext.Provider value={roomId}>
-        <TooltipProvider>
-          <ComposerPrimitive.Form
-            onComposerSubmit={handleCommentSubmit}
-            className={classNames(
-              "lb-root lb-composer lb-composer-form",
-              className
-            )}
-            dir={$.dir}
-            {...props}
-            ref={forwardedRef}
-            data-collapsed={isCollapsed ? "" : undefined}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
-            disabled={disabled || !canComment}
-            defaultAttachments={defaultAttachments}
-            pasteFilesAsAttachments={showAttachments}
-            preventUnsavedChanges={preventUnsavedComposerChanges}
-          >
-            <ComposerEditorContainer
-              defaultValue={defaultValue}
-              actions={actions}
-              overrides={overrides}
-              isCollapsed={isCollapsed}
-              showAttachments={showAttachments}
-              showAttribution={showAttribution}
-              hasResolveMentionSuggestions={hasResolveMentionSuggestions}
-              onEmptyChange={setEmptyRef}
-              onEmojiPickerOpenChange={setEmojiPickerOpenRef}
-              onEditorClick={handleEditorClick}
-              autoFocus={autoFocus}
-              disabled={disabled}
-            />
-          </ComposerPrimitive.Form>
-        </TooltipProvider>
-      </ComposerRoomIdContext.Provider>
+      <TooltipProvider>
+        <ComposerPrimitive.Form
+          onComposerSubmit={handleCommentSubmit}
+          className={classNames(
+            "lb-root lb-composer lb-composer-form",
+            className
+          )}
+          dir={$.dir}
+          {...props}
+          ref={forwardedRef}
+          data-collapsed={isCollapsed ? "" : undefined}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          disabled={disabled || !canComment}
+          defaultAttachments={defaultAttachments}
+          pasteFilesAsAttachments={showAttachments}
+          preventUnsavedChanges={preventUnsavedComposerChanges}
+          roomId={roomId}
+        >
+          <ComposerEditorContainer
+            defaultValue={defaultValue}
+            actions={actions}
+            overrides={overrides}
+            isCollapsed={isCollapsed}
+            showAttachments={showAttachments}
+            showAttribution={showAttribution}
+            hasResolveMentionSuggestions={hasResolveMentionSuggestions}
+            onEmptyChange={setEmptyRef}
+            onEmojiPickerOpenChange={setEmojiPickerOpenRef}
+            onEditorClick={handleEditorClick}
+            autoFocus={autoFocus}
+            disabled={disabled}
+          />
+        </ComposerPrimitive.Form>
+      </TooltipProvider>
     );
   }
 ) as <M extends BaseMetadata = DM>(
