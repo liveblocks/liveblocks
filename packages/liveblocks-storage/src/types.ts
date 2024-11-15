@@ -3,6 +3,7 @@ import type { Json } from "./lib/Json.js";
 declare const brand: unique symbol;
 export type Brand<T, TBrand extends string> = T & { [brand]: TBrand };
 
+// XXX OpId should really be a Lamport timestamp, ie a [actor, clock] tuple
 export type OpId = Brand<string, "OpId">;
 export type Op = readonly [id: OpId, name: string, args: readonly Json[]];
 export type Delta = readonly [
