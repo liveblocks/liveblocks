@@ -1051,3 +1051,23 @@ ctx.useErrorListener((err) => {
   expectType<number>(count);
   expectType<undefined>(error);
 }
+
+// ---------------------------------------------------------
+
+// The useSyncStatus() hook
+{
+  const status = lbctx.useSyncStatus();
+  expectType<"synchronizing" | "synchronized">(status);
+}
+{
+  const status = lbctx.suspense.useSyncStatus();
+  expectType<"synchronizing" | "synchronized">(status);
+}
+{
+  const status = ctx.useSyncStatus();
+  expectType<"synchronizing" | "synchronized">(status);
+}
+{
+  const status = ctx.suspense.useSyncStatus();
+  expectType<"synchronizing" | "synchronized">(status);
+}

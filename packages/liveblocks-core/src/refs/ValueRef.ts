@@ -16,8 +16,10 @@ export class ValueRef<T> extends ImmutableRef<T> {
   }
 
   set(newValue: T): void {
-    this._value = freeze(newValue);
-    this.invalidate();
+    if (this._value !== newValue) {
+      this._value = freeze(newValue);
+      this.invalidate();
+    }
   }
 }
 

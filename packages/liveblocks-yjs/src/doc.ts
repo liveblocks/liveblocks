@@ -1,5 +1,6 @@
 import { Base64 } from "js-base64";
 import { Observable } from "lib0/observable";
+import { IndexeddbPersistence } from "y-indexeddb";
 import * as Y from "yjs";
 
 export default class yDocHandler extends Observable<unknown> {
@@ -89,8 +90,13 @@ export default class yDocHandler extends Observable<unknown> {
     }
   }
 
-  private updateHandler = (update: Uint8Array, origin: string) => {
-    if (origin !== "backend") {
+  private updateHandler = (
+    update: Uint8Array,
+    origin: string | IndexeddbPersistence
+  ) => {
+    // don't send updates from indexedb, those will get handled by sync
+    const isFromLocal = origin instanceof IndexeddbPersistence;
+    if (origin !== "backend" && !isFromLocal) {
       this.updateRoomDoc(update);
     }
   };

@@ -6,3 +6,4 @@ export { CreateThreadError } from "./room";
 
 // Used in @liveblocks/react-ui and @liveblocks/react-lexical
 export { useMentionSuggestions } from "./use-mention-suggestions";
+export { useSyncSource } from "./use-sync-source";
