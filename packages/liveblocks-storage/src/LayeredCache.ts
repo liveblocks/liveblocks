@@ -1,4 +1,5 @@
 import type { Json } from "~/lib/Json.js";
+
 import type { Delta, OpId } from "./types.js";
 import { chain, raise } from "./utils.js";
 

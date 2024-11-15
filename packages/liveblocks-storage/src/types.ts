@@ -13,12 +13,12 @@ export type Delta = readonly [
 ]; // Eventually, we'll need to compress this
 
 export type OmitFirstArg<F> = F extends (
-  first: any,
+  first: unknown,
   ...args: infer A
 ) => infer R
   ? (...args: A) => R
   : never;
 
-export type ChangeReturnType<F, T> = F extends (...args: infer A) => any
+export type ChangeReturnType<F, T> = F extends (...args: infer A) => unknown
   ? (...args: A) => T
   : never;
