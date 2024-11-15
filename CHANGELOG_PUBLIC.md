@@ -17,9 +17,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## v2.12.0
 
-This release adds support for tracking synchronization status of pending local changes for any part of Liveblocks. Whether you use Storage, Text Editors, Threads, or Notifications.
-
-If the client’s sync status is `synchronized`, it means all local pending changes have been persisted by our servers. If there are pending local changes in any part of Liveblocks you’re using, then the client’s sync status will be `synchronizing`.
+This release adds support for tracking synchronization status of pending local changes for any part of Liveblocks. Whether you use Storage, Text Editors, Threads, or Notifications. If the client’s sync status is `synchronized`, it means all local pending changes have been persisted by our servers. If there are pending local changes in any part of Liveblocks you’re using, then the client’s sync status will be `synchronizing`.
 
 Also, we’re introducing a way to prevent browser tabs from being closed while local changes are not yet synchronized. To opt-in to this protection, enable `preventUnsavedChanges` option on the client:
 
@@ -29,12 +27,13 @@ Also, we’re introducing a way to prevent browser tabs from being closed while 
 ### `@liveblocks/client`
 
 - Add new API [`client.getSyncStatus()`](https://liveblocks.io/docs/api-reference/liveblocks-client#Client.getSyncStatus) method.
-- Add new [client config option](https://liveblocks.io/docs/api-reference/liveblocks-client#createClient): `preventUnsavedChanges`.
+- Add new client config option: [`preventUnsavedChanges`](https://liveblocks.io/docs/api-reference/liveblocks-client#prevent-users-losing-unsaved-changes).
 - Expose `ToImmutable<T>` helper type.
 
 ### `@liveblocks/react`
 
 - Add new hook [`useSyncStatus`](https://liveblocks.io/docs/api-reference/liveblocks-react#useSyncStatus) that can be used to tell whether Liveblocks is synchronizing local changes to the server. Useful to display a "Saving..." spinner in your application, when used with `useSyncStatus({ smooth: true })`.
+- Add new `LiveblocksProvider` prop: [`preventUnsavedChanges`](https://liveblocks.io/docs/api-reference/liveblocks-react#prevent-users-losing-unsaved-changes).
 - Deprecated APIs:
   - `useStorageStatus` is now deprecated in favor of `useSyncStatus`.
 
@@ -54,7 +53,7 @@ Also, we’re introducing a way to prevent browser tabs from being closed while 
 
 ## Dashboard
 
-- Redirect users to a specific error page on authentication failure
+- Redirect users to a specific error page on authentication failure.
 
 ## Contributors
 
