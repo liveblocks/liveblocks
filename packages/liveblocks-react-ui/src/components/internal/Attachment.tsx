@@ -184,8 +184,8 @@ function AttachmentPreview({
   roomId,
 }: {
   attachment: CommentMixedAttachment;
-  roomId: string;
   allowMediaPreview?: boolean;
+  roomId: string;
 }) {
   const isUploaded =
     attachment.type === "attachment" || attachment.status === "uploaded";

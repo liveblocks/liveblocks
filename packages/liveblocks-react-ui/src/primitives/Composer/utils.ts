@@ -14,7 +14,6 @@ import type { DragEvent } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
-import { useComposerRoomId } from "../../components/Composer";
 import { isComposerBodyAutoLink } from "../../slate/plugins/auto-links";
 import { isComposerBodyCustomLink } from "../../slate/plugins/custom-links";
 import { isComposerBodyMention } from "../../slate/plugins/mentions";
@@ -322,6 +321,7 @@ export function useComposerAttachmentsDropArea<
 
 interface ComposerAttachmentsManagerOptions {
   maxFileSize: number;
+  roomId: string;
 }
 
 export class AttachmentTooLargeError extends Error {
@@ -480,10 +480,9 @@ export function useComposerAttachmentsManager(
   options: ComposerAttachmentsManagerOptions
 ) {
   const client = useClient();
-  const roomId = useComposerRoomId();
   const frozenDefaultAttachments = useInitial(defaultAttachments);
   const frozenAttachmentsManager = useInitial(() =>
-    createComposerAttachmentsManager(client, roomId, options)
+    createComposerAttachmentsManager(client, options.roomId, options)
   );
 
   // Initialize default attachments on mount

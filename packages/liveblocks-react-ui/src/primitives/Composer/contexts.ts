@@ -111,6 +111,8 @@ export const ComposerAttachmentsContext =
 export const ComposerSuggestionsContext =
   createContext<ComposerSuggestionsContext | null>(null);
 
+export const ComposerFormRoomIdContext = createContext<string | null>(null);
+
 export function useComposerEditorContext() {
   const composerEditorContext = useContext(ComposerEditorContext);
 
@@ -148,4 +150,13 @@ export function useComposer(): ComposerContext {
   const composerContext = useContext(ComposerContext);
 
   return nn(composerContext, "Composer.Form is missing from the React tree.");
+}
+
+export function useComposerFormRoomId(): string {
+  const composerRoomIdContext = useContext(ComposerFormRoomIdContext);
+
+  return nn(
+    composerRoomIdContext,
+    "Composer.Form is missing from the React tree."
+  );
 }

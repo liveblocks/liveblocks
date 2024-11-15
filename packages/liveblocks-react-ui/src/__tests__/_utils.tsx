@@ -1,10 +1,4 @@
-import type {
-  BaseMetadata,
-  ClientOptions,
-  CommentData,
-  JsonObject,
-  ThreadData,
-} from "@liveblocks/core";
+import type { BaseMetadata, ClientOptions, JsonObject } from "@liveblocks/core";
 import { createClient } from "@liveblocks/core";
 import { createLiveblocksContext, createRoomContext } from "@liveblocks/react";
 import type { RenderHookResult, RenderOptions } from "@testing-library/react";
@@ -12,122 +6,13 @@ import { render, renderHook } from "@testing-library/react";
 import type { ReactElement } from "react";
 import * as React from "react";
 
-import { RoomProvider, store } from "./_liveblocks.config";
-
-export const comment: CommentData = {
-  type: "comment",
-  id: "cm_1",
-  threadId: "th_1",
-  roomId: "room",
-  userId: "user",
-  createdAt: new Date("2023-08-14T12:41:50.243Z"),
-  reactions: [],
-  attachments: [],
-  body: {
-    version: 1,
-    content: [
-      {
-        type: "paragraph",
-        children: [
-          {
-            text: "hello ",
-          },
-          {
-            text: "hello",
-            italic: true,
-          },
-          {
-            text: " ",
-          },
-          {
-            text: "hello",
-            bold: true,
-          },
-          {
-            text: " ",
-          },
-          {
-            text: "hello",
-            code: true,
-          },
-          {
-            text: " ",
-          },
-          {
-            text: "hello",
-            strikethrough: true,
-          },
-          {
-            text: " ",
-          },
-          {
-            type: "mention",
-            id: "user-0",
-          },
-          {
-            text: "",
-          },
-        ],
-      },
-    ],
-  },
-};
-
-const editedComment: CommentData = {
-  type: "comment",
-  id: "cm_2",
-  threadId: "th_1",
-  roomId: "room",
-  userId: "user",
-  createdAt: new Date("2023-08-14T12:41:50.243Z"),
-  editedAt: new Date("2023-08-14T12:41:50.243Z"),
-  reactions: [],
-  attachments: [],
-  body: {
-    version: 1,
-    content: [
-      {
-        type: "paragraph",
-        children: [
-          {
-            text: "hello",
-          },
-        ],
-      },
-    ],
-  },
-};
-
-const deletedComment: CommentData = {
-  type: "comment",
-  id: "cm_3",
-  threadId: "th_1",
-  roomId: "room",
-  userId: "user",
-  reactions: [],
-  attachments: [],
-  createdAt: new Date("2023-08-14T12:41:50.243Z"),
-  editedAt: new Date("2023-08-14T12:41:50.243Z"),
-  deletedAt: new Date("2023-08-14T12:41:50.243Z"),
-};
-
-export const thread: ThreadData = {
-  type: "thread",
-  id: "th_1",
-  roomId: "room",
-  createdAt: new Date("2023-08-14T12:41:50.243Z"),
-  updatedAt: new Date("2023-08-14T12:41:50.243Z"),
-  comments: [comment, editedComment, deletedComment],
-  metadata: {},
-  resolved: false,
-};
+import { RoomProvider } from "./_liveblocks.config";
 
 /**
  * Testing context for all tests. Sets up a default RoomProvider to wrap all
  * tests with.
  */
 export function AllTheProviders(props: { children: React.ReactNode }) {
-  store.updateThreadAndNotification(thread);
   return (
     <RoomProvider id="room" initialPresence={() => ({})}>
       {props.children}

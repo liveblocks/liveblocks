@@ -21,6 +21,7 @@ import {
 } from "@liveblocks/core";
 import {
   useMentionSuggestions,
+  useRoomOrNull,
   useSyncSource,
 } from "@liveblocks/react/_private";
 import { Slot, Slottable } from "@radix-ui/react-slot";
@@ -37,6 +38,7 @@ import type {
 import React, {
   forwardRef,
   useCallback,
+  useContext,
   useEffect,
   useImperativeHandle,
   useMemo,
@@ -69,7 +71,9 @@ import {
   withReact,
 } from "slate-react";
 
-import { useComposerRoomId } from "../../components/Composer";
+import { CommentDataContext } from "../../components/Comment";
+import { ComposerRoomIdContext } from "../../components/Composer";
+import { ThreadDataContext } from "../../components/Thread";
 import { useLiveblocksUIConfig } from "../../config";
 import { FLOATING_ELEMENT_COLLISION_PADDING } from "../../constants";
 import { withAutoFormatting } from "../../slate/plugins/auto-formatting";
@@ -109,10 +113,12 @@ import {
   ComposerAttachmentsContext,
   ComposerContext,
   ComposerEditorContext,
+  ComposerFormRoomIdContext,
   ComposerSuggestionsContext,
   useComposer,
   useComposerAttachmentsContext,
   useComposerEditorContext,
+  useComposerFormRoomId,
   useComposerSuggestionsContext,
 } from "./contexts";
 import type {
@@ -704,7 +710,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     );
 
     const [mentionDraft, setMentionDraft] = useState<MentionDraft>();
-    const roomId = useComposerRoomId();
+    const roomId = useComposerFormRoomId();
     const mentionSuggestions = useMentionSuggestions(
       roomId,
       mentionDraft?.text
@@ -1025,6 +1031,38 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const [isEmpty, setEmpty] = useState(true);
     const [isSubmitting, setSubmitting] = useState(false);
     const [isFocused, setFocused] = useState(false);
+
+    const composerRoomId = useContext(ComposerRoomIdContext);
+    const thread = useContext(ThreadDataContext);
+    const comment = useContext(CommentDataContext);
+    const room = useRoomOrNull();
+
+    function getRoomId() {
+      // If the Compser.Form is within a Composer context, we simply return the same room id
+      if (composerRoomId) {
+        return composerRoomId;
+      }
+      // If Composer.Form is within a Comment context (editing a comment)
+      else if (comment) {
+        return comment.roomId;
+      }
+      // If Composer.Form is within a Thread context (replying to a thread)
+      else if (thread) {
+        return thread.roomId;
+      }
+      // If Composer.Form is within a Room context (creating a new thread)
+      else if (room) {
+        return room.id;
+      }
+
+      // If none of the contexts are available, throw an error
+      throw new Error(
+        "Composer.Form must be a descendant of RoomProvider, Thread, or Comment component."
+      );
+    }
+
+    const roomId = getRoomId();
+
     // Later: Offer as Composer.Form props: { maxAttachments: number; maxAttachmentSize: number; supportedAttachmentMimeTypes: string[]; }
     const maxAttachments = MAX_ATTACHMENTS;
     const maxAttachmentSize = MAX_ATTACHMENT_SIZE;
@@ -1037,6 +1075,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       clearAttachments,
     } = useComposerAttachmentsManager(defaultAttachments, {
       maxFileSize: maxAttachmentSize,
+      roomId,
     });
     const numberOfAttachments = attachments.length;
     const hasMaxAttachments = numberOfAttachments >= maxAttachments;
@@ -1280,55 +1319,57 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     }, []);
 
     return (
-      <ComposerEditorContext.Provider
-        value={{
-          editor,
-          validate,
-          setFocused,
-        }}
-      >
-        <ComposerAttachmentsContext.Provider
+      <ComposerFormRoomIdContext.Provider value={roomId}>
+        <ComposerEditorContext.Provider
           value={{
-            createAttachments,
-            isUploadingAttachments,
-            hasMaxAttachments,
-            maxAttachments,
-            maxAttachmentSize,
+            editor,
+            validate,
+            setFocused,
           }}
         >
-          <ComposerContext.Provider
+          <ComposerAttachmentsContext.Provider
             value={{
-              isDisabled,
-              isFocused,
-              isEmpty,
-              canSubmit,
-              submit,
-              clear,
-              select,
-              focus,
-              blur,
-              createMention,
-              insertText,
-              attachments,
-              attachFiles,
-              removeAttachment,
+              createAttachments,
+              isUploadingAttachments,
+              hasMaxAttachments,
+              maxAttachments,
+              maxAttachmentSize,
             }}
           >
-            <Component {...props} onSubmit={handleSubmit} ref={mergedRefs}>
-              <input
-                type="file"
-                multiple
-                ref={fileInputRef}
-                onChange={handleAttachmentsInputChange}
-                onClick={stopPropagation}
-                tabIndex={-1}
-                style={{ display: "none" }}
-              />
-              <Slottable>{children}</Slottable>
-            </Component>
-          </ComposerContext.Provider>
-        </ComposerAttachmentsContext.Provider>
-      </ComposerEditorContext.Provider>
+            <ComposerContext.Provider
+              value={{
+                isDisabled,
+                isFocused,
+                isEmpty,
+                canSubmit,
+                submit,
+                clear,
+                select,
+                focus,
+                blur,
+                createMention,
+                insertText,
+                attachments,
+                attachFiles,
+                removeAttachment,
+              }}
+            >
+              <Component {...props} onSubmit={handleSubmit} ref={mergedRefs}>
+                <input
+                  type="file"
+                  multiple
+                  ref={fileInputRef}
+                  onChange={handleAttachmentsInputChange}
+                  onClick={stopPropagation}
+                  tabIndex={-1}
+                  style={{ display: "none" }}
+                />
+                <Slottable>{children}</Slottable>
+              </Component>
+            </ComposerContext.Provider>
+          </ComposerAttachmentsContext.Provider>
+        </ComposerEditorContext.Provider>
+      </ComposerFormRoomIdContext.Provider>
     );
   }
 );
