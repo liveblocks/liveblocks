@@ -1,15 +1,21 @@
 import { Liveblocks } from "@liveblocks/node";
 import { http, HttpResponse } from "msw";
+import React from "react";
 
-import type { ConvertTextEditorNodesAsHtmlStyles } from "../liveblocks-text-editor";
+import type {
+  ConvertTextEditorNodesAsHtmlStyles,
+  ConvertTextEditorNodesAsReactComponents,
+} from "../liveblocks-text-editor";
 import type {
   TextMentionNotificationData,
   TextMentionNotificationEmailBaseData,
   TextMentionNotificationEmailDataAsHtml,
+  TextMentionNotificationEmailDataAsReact,
 } from "../text-mention-notification";
 import {
   extractTextMentionNotificationData,
   prepareTextMentionNotificationEmailAsHtml,
+  prepareTextMentionNotificationEmailAsReact,
   prepareTextMentionNotificationEmailBaseData,
 } from "../text-mention-notification";
 import {
@@ -26,6 +32,7 @@ import {
   ROOM_TEST,
   server,
   SERVER_BASE_URL,
+  textMentionContentAsReactToStaticMarkup,
 } from "./_helpers";
 import {
   createTipTapMentionNodeWithContext,
@@ -418,6 +425,96 @@ describe("text mention notification", () => {
 
         const textMentionNotificationEmailAsHtml = await promise();
         expect(textMentionNotificationEmailAsHtml).toEqual(expected);
+      }
+    );
+  });
+
+  describe("prepare text mention notification email as React", () => {
+    const inboxNotification = makeTextMentionInboxNotification({
+      mentionId: MENTION_ID_TIPTAP,
+      createdBy: "user-1",
+      notifiedAt: new Date("2024-09-10T08:10:00.000Z"),
+    });
+
+    const room = makeRoomWithTextEditor({ editor: "tiptap" });
+
+    const event = makeTextMentionNotificationEvent({
+      userId: MENTIONED_USER_ID_TIPTAP,
+      mentionId: MENTION_ID_TIPTAP,
+      inboxNotificationId: inboxNotification.id,
+    });
+
+    const components: Partial<ConvertTextEditorNodesAsReactComponents> = {
+      Container: ({ children }) => <main>{children}</main>,
+    };
+
+    const expected1: TextMentionNotificationEmailDataAsReact = {
+      mention: {
+        id: MENTION_ID_TIPTAP,
+        roomId: room.id,
+        author: { id: "user-1", info: { name: "user-1" } },
+        createdAt: inboxNotification.notifiedAt,
+        reactContent: (
+          <main>
+            <span>Hey this a tip tap </span>
+            <span>
+              <em>
+                <strong>example</strong>
+              </em>
+            </span>
+            <span> hiha! </span>
+            <span data-mention>@user-0</span>
+            <span> fun right?</span>
+          </main>
+        ),
+      },
+      roomInfo: {
+        name: ROOM_ID_TEST,
+      },
+    };
+
+    it.each<{
+      withResolvers: boolean;
+      promise: () => Promise<TextMentionNotificationEmailDataAsReact | null>;
+      expected: TextMentionNotificationEmailDataAsReact;
+    }>([
+      {
+        withResolvers: false,
+        promise: () =>
+          prepareTextMentionNotificationEmailAsReact(client, event, {
+            components,
+          }),
+        expected: expected1,
+      },
+    ])(
+      "should return text mention as React with resolvers: $withResolvers",
+      async ({ promise, expected }) => {
+        server.use(
+          http.get(
+            `${SERVER_BASE_URL}/v2/users/:userId/inbox-notifications/:notificationId`,
+            () => HttpResponse.json(inboxNotification, { status: 200 })
+          )
+        );
+
+        server.use(
+          http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId`, () =>
+            HttpResponse.json(room, { status: 200 })
+          )
+        );
+
+        server.use(
+          http.get(`${SERVER_BASE_URL}/v2/rooms/:roomId/ydoc-binary`, () =>
+            HttpResponse.arrayBuffer(docUpdateBufferTiptap)
+          )
+        );
+
+        const emailData = await promise();
+
+        const emailDataWithStringContent =
+          textMentionContentAsReactToStaticMarkup(emailData);
+        const expectedWithStringContent =
+          textMentionContentAsReactToStaticMarkup(expected);
+        expect(emailDataWithStringContent).toEqual(expectedWithStringContent);
       }
     );
   });

@@ -24,6 +24,11 @@ import ReactDOMServer from "react-dom/server";
 
 import type { CommentDataWithBody } from "../comment-with-body";
 import type {
+  MentionEmailBaseData,
+  TextMentionNotificationEmailData,
+  TextMentionNotificationEmailDataAsReact,
+} from "../text-mention-notification";
+import type {
   CommentEmailBaseData,
   ThreadNotificationEmailData,
   ThreadNotificationEmailDataAsReact,
@@ -479,3 +484,38 @@ export const makeTextMentionInboxNotification = ({
   notifiedAt: notifiedAt ?? new Date(),
   readAt: readAt ?? null,
 });
+
+// Note: Rendering React contents as a string (e.g static markup)
+// to ease testing and avoid unnecessary operations.
+type MentionEmailAsStaticMarkupData<U extends BaseUserMeta> = Omit<
+  MentionEmailBaseData,
+  "userId" | "textEditorNodes"
+> & {
+  author: U;
+  reactContent: string;
+};
+
+type TextMentionNotificationEmailDataAsStaticMarkup =
+  TextMentionNotificationEmailData<
+    BaseUserMeta,
+    MentionEmailAsStaticMarkupData<BaseUserMeta>
+  >;
+
+export const textMentionContentAsReactToStaticMarkup = (
+  emailData: TextMentionNotificationEmailDataAsReact | null
+): TextMentionNotificationEmailDataAsStaticMarkup | null => {
+  if (emailData === null) {
+    return null;
+  }
+
+  const { mention, ...rest } = emailData;
+  const { reactContent, ...restMention } = mention;
+
+  return {
+    mention: {
+      ...restMention,
+      reactContent: renderToStaticMarkup(reactContent),
+    },
+    ...rest,
+  };
+};
