@@ -3,6 +3,7 @@
   "extends": "../../shared/tsconfig.common.json",
 
   "compilerOptions": {
+    "skipLibCheck": true,
     "moduleResolution": "nodenext",
     "target": "esnext",
     "paths": {
