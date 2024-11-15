@@ -1,0 +1,756 @@
+---
+meta:
+  title: "How to send email notifications when text mentions are created"
+  description:
+    "Learn how to automatically send email notifications when a text mention or
+    is created with Liveblocks Text Editor."
+---
+
+Liveblocks allows you to embed a text editing experience with
+[Text Editor](/docs/products/text-editor). Using our webhooks and REST API, it’s
+possible get unread text mention to send an email to users when they’re
+mentioned in a document. Notifications can also be displayed in your app using
+[`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications)
+and the
+[`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
+component.
+
+<Banner title="Supported text editors">
+
+In this guide we'll use only
+[Lexical](/docs/api-reference/liveblocks-react-lexical) text editor. The one of
+the two we support officialy at Liveblocks along with
+[Tiptap](/docs/api-reference/liveblocks-react-tiptap).
+
+</Banner>
+
+## What we’re building
+
+In this guide we’ll be learning how to send text mentions notifications, and
+more specifically, we’ll be looking at how to:
+
+- Trigger events based on unread comments using the
+  [`NotificationEvent`](/docs/platform/webhooks#NotificationEvent) webhook
+  event.
+- Fetch unread text mention and add styles to the surrounding text using the
+  [`@liveblocks/emails`](/docs/api-reference/liveblocks-emails) package.
+- Send an email notification containing the mention and its surrounding text
+  with [Resend](https://resend.com/).
+
+<Banner title="Have a project ready">
+
+This guide assumes you already have a Liveblocks Text Editor project set up. If
+you don’t have one yet, you can
+[get started with Lexical](docs/get-started/nextjs-lexical), and come back after
+you’re set up. You could also use our
+[basic LExical example](/examples/collaborative-text-editor/nextjs-lexical)
+which has this set up already.
+
+</Banner>
+
+## What are inbox notifications?
+
+Email notifications are built around the concept of inbox notifications, which
+are different from “normal” notifications in the sense that they can group
+multiple activities together and evolve over time. This makes more sense when
+sending email notifications because it helps to avoid flooding your users with
+too many emails.
+
+Learn more about Notifications for Lexical Text Editor in the
+[overview page](/docs/products/text-editor/lexical#Notifications).
+
+## Using webhooks
+
+Liveblocks provides a number of [webhooks](/docs/platform/webhooks) that can
+send requests to your API endpoint when certain events occurs. One webhook we
+provide is the [`NotificationEvent`](/docs/platform/webhooks#NotificationEvent)
+webhook, which is triggered for each mentioned users in a document, 30 minutes
+after activity has occurred, and this can be used to send emails to your users.
+
+The information it returns allows you to retrieve a text mention that have not
+yet been read by the user. Let’s take a look at how to set this up.
+
+## Create an endpoint in your project
+
+When a webhook event is triggered, it can send a POST request to the back end in
+your project. In this guide, we’ll be using a Next.js route handler (API
+endpoint) as an example, but other frameworks work similarly.
+
+In order to use webhooks, we’ll need to retrieve the `headers` and `body` from
+the request. Here’s the basic endpoint we’ll be starting from:
+
+```ts
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Handle webhooks and notifications
+  // ...
+
+  return new Response(null, { status: 200 });
+}
+```
+
+Create this endpoint in your project, and make it available on `localhost` at
+the following URL:
+
+```
+/api/liveblocks-notifications
+```
+
+Make a note of this endpoint URL, as you’ll be using it later.
+
+### Testing webhooks locally
+
+Running webhooks locally can be difficult, but one way to do this is to use a
+tool such as [`localtunnel`](https://www.npmjs.com/package/localtunnel) or
+[`ngrok`](https://www.npmjs.com/package/ngrok) which allow you to temporarily
+put your localhost server online.
+
+If your project is running on `localhost:3000`, you can run the following
+command to generate a temporary URL that’s available while your localhost server
+is running:
+
+```bash
+npx localtunnel --port 3000
+```
+
+`localtunnel` generates a base URL that can be placed into the Liveblocks
+webhooks dashboard for quick testing. To use this, take the full address of your
+webhook endpoint, and replace the domain in your `localhost` address with the
+generated URL.
+
+```shell
+# Take your local URL
+http://localhost:3000/api/liveblocks-notifications
+
+# Replace localhost with the generated domain, then copy it
+https://my-localtunnel-url.loca.lt/api/liveblocks-notifications
+```
+
+You now have a URL that can be used in the webhooks dashboard.
+
+## Set up webhooks on the Liveblocks dashboard
+
+To use webhooks, you need to pass your endpoint URL to the webhooks dashboard
+inside your Liveblocks project, and tell the webhook to trigger when a comment
+has been created.
+
+<Steps>
+  <Step>
+    <StepTitle>Select your project</StepTitle>
+    <StepContent>
+      From the [Liveblocks dashboard](/dashboard), navigate to the project you’d
+      like to use with webhooks, or create a new project.
+      <Figure>
+        <Image
+          src="/assets/tutorials/webhooks/liveblocks-create-project.png"
+          alt="Create a Liveblocks project"
+          width={712}
+          height={445}
+        />
+      </Figure>
+    </StepContent>
+  </Step>
+
+<Step>
+  <StepTitle>Go to the webhooks dashboard</StepTitle>
+  <StepContent>
+    Click on the **“Webhooks”** tab on the menu at the left.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-click-webhooks.png"
+        alt="Click webhooks"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+<Step>
+  <StepTitle>Create an endpoint</StepTitle>
+  <StepContent>
+    Click the **“Create endpoint…”** button on the webhooks dashboard to start
+    setting up your webhook.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-add-endpoint.png"
+        alt="Click add endpoint"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+<Step>
+  <StepTitle>Add your endpoint URL</StepTitle>
+  <StepContent>
+    Enter the URL of the endpoint. In a production app this will be the real
+    endpoint, but for now enter your `localtunnel` URL from earlier.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-add-endpoint-url.png"
+        alt="Add endpoint URL"
+        width={712}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+<Step>
+  <StepTitle>Get your webhook secret key</StepTitle>
+  <StepContent>
+    Click **“Create endpoint”** at the bottom, then find your **“Webhook secret
+    key”** on the next page, and copy it.
+    <Figure>
+      <Image
+        src="/assets/tutorials/webhooks/liveblocks-get-secret-key.png"
+        alt="Copy your webhook secret key"
+        width={710}
+        height={445}
+      />
+    </Figure>
+  </StepContent>
+</Step>
+
+  <Step lastStep>
+    <StepTitle>Webhooks dashboard is set up!</StepTitle>
+
+    <StepContent>
+      Note that you can filter specifically for `notification` events, but we’re
+      ignoring this for now so we can test more easily. Let’s go back to the
+      code.
+    </StepContent>
+
+  </Step>
+</Steps>
+
+## Verify the webhook request
+
+The [`@liveblocks/node`](/docs/api-reference/liveblocks-node) package provides
+you with a function that verifies whether the current request is a real webhook
+request from Liveblocks. You can set this up by setting up a
+[`WebhookHandler`](/docs/api-reference/liveblocks-node#WebhookHandler) and
+running [`verifyRequest`](/docs/api-reference/liveblocks-node#verifyRequest).
+
+Make sure to add your “Webhook secret key” from the Liveblocks dashboard—in a
+real project we’d recommend using an environment variable for this.
+
+```ts highlight="1,3-5,11-21"
+import { WebhookHandler } from "@liveblocks/node";
+
+// Add your webhook secret key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // Send notifications
+  // ...
+
+  return new Response(null, { status: 200 });
+}
+```
+
+## Check the event and notification permissions
+
+After verifying the request, we can then check we’re receiving the correct type
+of event. There are different `notification` events, and in this case we’d like
+to check for
+[text mention notification](/docs/platform/webhooks#TextMention-notification),
+as we’re specifically listening for new text mentions. We can do this using
+[`isTextMentionNotificationEvent`](/docs/api-reference/liveblocks-node#isTextMentionNotificationEvent).
+
+```ts
+import {
+  WebhookHandler,
+  isTextMentionNotificationEvent,
+} from "@liveblocks/node";
+
+// Add your webhook secret key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // +++
+  // When an inbox notification has been created
+  if (isTextMentionNotificationEvent(event)) {
+    // Check if user has access to room
+    if (!__hasRoomAccess__(event.userId, event.roomId)) {
+      return new Response(null, { status: 200 });
+    }
+
+    // The user to send the email to
+    const emailAddress = __getEmailAddressFromDB__(event.userId);
+
+    // Send notifications
+    // ...
+  }
+  // +++
+
+  return new Response(null, { status: 200 });
+}
+```
+
+Note that we’re also checking if the user should receive a notification, and
+getting their email address—Liveblocks doesn’t have knowledge of your
+permissions system on the back end, so it’s your responsibility to check if this
+user should have access to the room.
+
+## Fetching data for emails
+
+[`@liveblocks/emails`](/docs/api-reference/liveblocks-emails) provides functions
+for fetching unread text mentions and styling emails, returning them as either
+React components or an HTML string. In this guide we’ll use the React function,
+but the HTML function works almost identically, so you can still follow along if
+you’d prefer HTML emails.
+
+First set up your
+[`Liveblocks`](/docs/api-reference/liveblocks-node#Liveblocks-client) Node.js
+client and wrap
+[`prepareTextMentionNotificationEmailAsReact`](/docs/api-reference/liveblocks-emails#prepare-text-mention-notification-email-as-react)
+in `try/catch`, getting the data for the email.
+
+<Banner>
+
+If you’d prefer your email content as an HTML string, use
+[`prepareTextMentionNotificationEmailAsHtml`](/docs/api-reference/liveblocks-emails#prepare-text-mention-notification-email-as-html).
+
+</Banner>
+
+```ts
+import {
+  // +++
+  Liveblocks,
+  // +++
+  WebhookHandler,
+  isTextMentionNotificationEvent,
+} from "@liveblocks/node";
+
+// +++
+import { prepareTextMentionNotificationEmailAsReact } from "@liveblocks/emails";
+// +++
+
+// Add your webhook secret key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+// +++
+// Add your secret key from a project's API keys dashboard
+const API_SECRET = "{{SECRET_KEY}}";
+const liveblocks = new Liveblocks({ secret: API_SECRET });
+// +++
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // When an inbox notification has been created
+  if (isTextMentionNotificationEvent(event)) {
+    // Check if user has access to room
+    if (!__hasRoomAccess__(event.userId, event.roomId)) {
+      return new Response(null, { status: 200 });
+    }
+
+    // The user to send the email to
+    const emailAddress = __getEmailAddressFromDB__(event.userId);
+
+    // +++
+    let emailData;
+
+    try {
+      emailData = await prepareTextMentionNotificationEmailAsReact(
+        liveblocks,
+        event
+      );
+    } catch (err) {
+      console.log(err);
+      return new Response("Could not fetch text mention notification data", {
+        status: 500,
+      });
+    }
+
+    // The text mention has already been read
+    if (!emailData) {
+      return new Response(null, { status: 200 });
+    }
+
+    // Create email
+    // ...
+    // +++
+  }
+
+  return new Response(null, { status: 200 });
+}
+```
+
+## Create the emails
+
+Next, we need to create the emails with React.
+
+```tsx
+import {
+  Liveblocks,
+  WebhookHandler,
+  isTextMentionNotificationEvent,
+} from "@liveblocks/node";
+import { prepareTextMentionNotificationEmailAsReact } from "@liveblocks/emails";
+
+// Add your webhook secret key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+// Add your secret key from a project's API keys dashboard
+const API_SECRET = "{{SECRET_KEY}}";
+const liveblocks = new Liveblocks({ secret: API_SECRET });
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // When an inbox notification has been created
+  if (isTextMentionNotificationEvent(event)) {
+    // Check if user has access to room
+    if (!__hasRoomAccess__(event.userId, event.roomId)) {
+      return new Response(null, { status: 200 });
+    }
+
+    // The user to send the email to
+    const emailAddress = __getEmailAddressFromDB__(event.userId);
+
+    let emailData;
+
+    try {
+      emailData = await prepareTextMentionNotificationEmailAsReact(
+        liveblocks,
+        event
+      );
+    } catch (err) {
+      console.log(err);
+      return new Response("Could not fetch text mention notification data", {
+        status: 500,
+      });
+    }
+
+    // The text mention has already been read
+    if (!emailData) {
+      return new Response(null, { status: 200 });
+    }
+
+    // +++
+    const email = (
+      <div>
+        <div>
+          @{emailData.mention.author.id} at {emailData.mention.createdAt}
+        </div>
+        <div>{emailData.mention.reactContent}</div>
+      </div>
+    );
+    // +++
+
+    // Send emails
+    // ...
+  }
+
+  return new Response(null, { status: 200 });
+}
+```
+
+## Resolving data
+
+We’ve now fully created a basic React email, and it’s ready to send. However,
+we’re displaying each user’s ID, and not their names. We can go back to
+[`prepareTextMentionNotificationEmailAsReact`](/docs/api-reference/liveblocks-emails#prepare-text-mention-notification-email-as-react)
+and use resolver functions to transform an ID into a name, for example
+`chris@example.com` -> `Chris`. These functions work similarly to
+[resolvers on the client](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers).
+
+```tsx
+// ...
+
+emailData = await prepareTextMentionNotificationEmailAsReact(
+  liveblocks,
+  event,
+  {
+    // +++
+    resolveUsers: async ({ userIds }) => {
+      const usersData = await __getUsersFromDB__(userIds);
+
+      return usersData.map((userData) => ({
+        name: userData.name, // "Chris"
+        avatar: userData.avatar.src, // "https://example.com/chris.jpg"
+      }));
+    },
+    resolveRoomInfo: async ({ roomId }) => {
+      const roomData = await __getRoomFromDB__(roomId);
+
+      return {
+        name: roomData.name, // "Untitled document"
+        url: roomData.url, //`https://example.com/my-room-id`
+      };
+    },
+    // +++
+  }
+);
+
+// ...
+```
+
+## Customizing text mention and surrounding text components
+
+We can also edit
+[`prepareTextMentionNotificationEmailAsReact`](/docs/api-reference/liveblocks-emails#prepare-text-mention-notification-email-as-react)
+to allow for custom components for the text mention and its surrounding text,
+for example we can customize the container, color mentions and so.
+
+```tsx
+// ...
+
+emailData = await prepareTextMentionNotificationEmailAsReact(
+  liveblocks,
+  event,
+  {
+    resolveUsers: async ({ userIds }) => {
+      const usersData = await __getUsersFromDB__(userIds);
+
+      return usersData.map((userData) => ({
+        name: userData.name, // "Chris"
+        avatar: userData.avatar.src, // "https://example.com/chris.jpg"
+      }));
+    },
+    resolveRoomInfo: async ({ roomId }) => {
+      const roomData = await __getRoomFromDB__(roomId);
+
+      return {
+        name: roomData.name, // "Untitled document"
+        url: roomData.url, //`https://example.com/my-room-id`
+      };
+    },
+    // +++
+    components: {
+      Container: ({ children }) => (
+        <main style={{ margin: "12px 0" }}>{children}</main>
+      ),
+
+      // `user` is the optional data returned from `resolveUsers`
+      Mention: ({ element, user }) => (
+        <span style={{ color: "red" }}>@{user?.name ?? element.id}</span>
+      ),
+    },
+    // +++
+  }
+);
+
+// ...
+```
+
+Any component can be passed here, including those used in
+[`react-email`](https://react.email/),
+[learn more](/docs/api-reference/liveblocks-emails#prepare-text-mention-notification-email-as-react-customizing-components).
+
+<Banner>
+
+If you’re using HTML instead of React, you can
+[apply custom CSS properties](/docs/api-reference/liveblocks-emails#prepare-text-mention-notification-email-as-html-styling-elements).
+
+</Banner>
+
+## Send notification emails
+
+Now that the React code has been generated, we can send the notification emails.
+[Resend](https://resend.com) is a great tool for easily sending emails, and in
+this code example, we’re using it to send notifications to each user. Make sure
+to add your API key from the [Resend dashboard](https://resend.com/overview)
+before running the code.
+
+```tsx
+import {
+  Liveblocks,
+  WebhookHandler,
+  isTextMentionNotificationEvent,
+} from "@liveblocks/node";
+import { prepareTextMentionNotificationEmailAsReact } from "@liveblocks/emails";
+// +++
+import { Resend } from "resend";
+// +++
+
+// +++
+// Create Resend client (add your API key)
+const resend = new Resend("re_123456789");
+// +++
+
+// Add your webhook secret key from a project's webhooks dashboard
+const WEBHOOK_SECRET = "YOUR_WEBHOOK_SECRET_KEY";
+const webhookHandler = new WebhookHandler(WEBHOOK_SECRET);
+
+// Add your secret key from a project's API keys dashboard
+const API_SECRET = "{{SECRET_KEY}}";
+const liveblocks = new Liveblocks({ secret: API_SECRET });
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // When an inbox notification has been created
+  if (isTextMentionNotificationEvent(event)) {
+    // Check if user has access to room
+    if (!__hasRoomAccess__(event.userId, event.roomId)) {
+      return new Response(null, { status: 200 });
+    }
+
+    // The user to send the email to
+    const emailAddress = __getEmailAddressFromDB__(event.userId);
+
+    let emailData;
+
+    try {
+      emailData = await prepareTextMentionNotificationEmailAsReact(
+        liveblocks,
+        event,
+        {
+          resolveUsers: async ({ userIds }) => {
+            const usersData = await __getUsersFromDB__(userIds);
+
+            return usersData.map((userData) => ({
+              name: userData.name, // "Chris"
+              avatar: userData.avatar.src, // "https://example.com/chris.jpg"
+            }));
+          },
+          resolveRoomInfo: async ({ roomId }) => {
+            const roomData = await __getRoomFromDB__(roomId);
+
+            return {
+              name: roomData.name, // "Untitled document"
+              url: roomData.url, //`https://example.com/my-room-id`
+            };
+          },
+          components: {
+            Container: ({ children }) => (
+              <main style={{ margin: "12px 0" }}>{children}</main>
+            ),
+
+            // `user` is the optional data returned from `resolveUsers`
+            Mention: ({ element, user }) => (
+              <span style={{ color: "red" }}>@{user?.name ?? element.id}</span>
+            ),
+          },
+        }
+      );
+    } catch (err) {
+      console.log(err);
+      return new Response("Could not fetch text mention notification data", {
+        status: 500,
+      });
+    }
+
+    // The text mention has already been read
+    if (!emailData) {
+      return new Response(null, { status: 200 });
+    }
+
+    const email = (
+      <div>
+        <div>
+          @{emailData.mention.author.id} at {emailData.mention.createdAt}
+        </div>
+        <div>{emailData.mention.reactContent}</div>
+      </div>
+    );
+
+    // +++
+    // Send email to the user's email address
+    try {
+      const data = await resend.emails.send({
+        from: "My company <hello@my-company.com>",
+        to: emailAddress,
+        subject: "New text mention",
+        react: email,
+      });
+    } catch (err) {
+      console.error(err);
+    }
+    // +++
+  }
+
+  return new Response(null, { status: 200 });
+}
+```
+
+## Recap
+
+Great, we’re successfully sending email notifications after new text mentions
+are created! In this guide we’ve learned:
+
+- How to use [webhooks](/docs/platform/webhooks) and the
+  [`NotificationEvent`](/docs/platform/webhooks#NotificationEvent).
+- How to use the [`@liveblocks/emails`](/docs/api-reference/liveblocks-emails)
+  package to fetch and render unread text mention data.
+- How to send email notifications with [Resend](https://resend.com).
