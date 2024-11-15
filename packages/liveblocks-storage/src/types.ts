@@ -3,7 +3,7 @@ import type { Observable } from "./lib/EventSource.js";
 import type { Json } from "./lib/Json.js";
 import type { Brand } from "./ts-toolkit.js";
 
-export type Socket<In, Out> = {
+export type Socket<Out, In> = {
   send: (data: Out) => void;
   recv: Observable<In>;
 };
