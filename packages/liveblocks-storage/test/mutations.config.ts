@@ -1,5 +1,5 @@
 import type { Stub } from "~/LayeredCache.js";
-import type { Json } from "~/Json.js";
+import type { Json } from "~/lib/Json.js";
 
 export function put(stub: Stub, key: string, value: Json) {
   stub.set(key, value);

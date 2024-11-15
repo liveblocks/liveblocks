@@ -1,5 +1,5 @@
 import type { ClientStore, ServerStore } from "~/index.js";
-import type { Json } from "~/Json.js";
+import type { Json } from "~/lib/Json.js";
 import type { LayeredCache } from "~/LayeredCache.js";
 
 export function fmt(

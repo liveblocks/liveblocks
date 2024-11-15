@@ -1,4 +1,4 @@
-import type { Json } from "./Json.js";
+import type { Json } from "./lib/Json.js";
 
 declare const brand: unique symbol;
 export type Brand<T, TBrand extends string> = T & { [brand]: TBrand };
