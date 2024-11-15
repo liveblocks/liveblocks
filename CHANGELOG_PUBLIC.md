@@ -43,13 +43,15 @@ Also, we’re introducing a way to prevent browser tabs from being closed while 
 
 ### `@liveblocks/react-lexical`
 
-- Add new hook `useIsEditorReady` which can be used to show a skeleton UI before the editor has received the initial text from the server.
+- Add new hook [`useIsEditorReady`](http://liveblocks.io/docs/api-reference/liveblocks-react-lexical#useIsEditorReady) which can be used to show a skeleton UI before the editor has received the initial text from the server.
 - Deprecated APIs:
   - `useEditorStatus` is now deprecated in favor of `useIsEditorReady` (or `useSyncStatus`).
 
 ## Examples
 
 - Added new canvas document type to [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit), powered by [tldraw](https://tldraw.dev/).
+- Added loading `useStatusSync` loading spinners to [Linear-like Issue Tracker](https://liveblocks.io/examples/linear-like-issue-tracker/nextjs-linear-like-issue-tracker) and [Notion-like AI editor](https://liveblocks.io/examples/notion-like-ai-editor/nextjs-notion-like-ai-editor).
+- Added `useIsEditorReady` to Lexical examples.
 
 ## Dashboard
 
