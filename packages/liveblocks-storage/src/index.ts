@@ -9,9 +9,6 @@ import type {
 } from "./types.js";
 import { opId, raise } from "./utils.js";
 
-/** @internal */
-export type Store = Map<string, Json>;
-
 export type Mutations = Record<string, Mutation>;
 export type Mutation = (stub: LayeredCache, ...args: readonly any[]) => void;
 
@@ -21,7 +18,7 @@ type BoundMutations<M extends Record<string, Mutation>> = {
 
 // ----------------------------------------------------------------------------
 
-abstract class BaseStore<M extends Mutations> {
+abstract class Store<M extends Mutations> {
   #cache: LayeredCache;
   #mutations: M;
 
@@ -117,7 +114,7 @@ abstract class BaseStore<M extends Mutations> {
 
 // ----------------------------------------------------------------------------
 
-export class ClientStore<M extends Mutations> extends BaseStore<M> {
+export class ClientStore<M extends Mutations> extends Store<M> {
   // #eventSource: EventSource<Op>;
   #pendingOps: Op[];
 
@@ -161,4 +158,4 @@ export class ClientStore<M extends Mutations> extends BaseStore<M> {
 
 // ----------------------------------------------------------------------------
 
-export class ServerStore<M extends Mutations> extends BaseStore<M> {}
+export class ServerStore<M extends Mutations> extends Store<M> {}
