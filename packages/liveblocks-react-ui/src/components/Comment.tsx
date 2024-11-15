@@ -655,8 +655,8 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     }
 
     return (
-      <TooltipProvider>
-        <CommentDataContext.Provider value={comment}>
+      <CommentDataContext.Provider value={comment}>
+        <TooltipProvider>
           {autoMarkReadThreadId && (
             <AutoMarkReadThreadIdHandler
               commentRef={ref}
@@ -904,8 +904,8 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
               )}
             </div>
           </div>
-        </CommentDataContext.Provider>
-      </TooltipProvider>
+        </TooltipProvider>
+      </CommentDataContext.Provider>
     );
   }
 );
