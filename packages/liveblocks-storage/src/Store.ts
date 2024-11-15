@@ -1,28 +1,14 @@
 import type { Json } from "~/lib/Json.js";
 
 import { LayeredCache } from "./LayeredCache.js";
-import type {
-  ChangeReturnType,
-  Delta,
-  OmitFirstArg,
-  Op,
-  OpId,
-} from "./types.js";
+import type { ChangeReturnType, OmitFirstArg } from "./ts-toolkit.js";
+import type { Delta, Mutation, Mutations, Op, OpId } from "./types.js";
 import { opId, raise } from "./utils.js";
 
-export type Mutations = Record<string, Mutation>;
-export type Mutation = (
-  stub: LayeredCache,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ...args: readonly any[]
-) => void;
-
+// XXX This is a type that should only be in the Client
 type BoundMutations<M extends Record<string, Mutation>> = {
   [K in keyof M]: ChangeReturnType<OmitFirstArg<M[K]>, OpId>;
 };
-
-export type ClientMsg = Op;
-export type ServerMsg = Delta;
 
 // ----------------------------------------------------------------------------
 
