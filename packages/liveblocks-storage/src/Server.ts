@@ -1,30 +1,45 @@
 import type { Callback } from "./lib/EventSource.js";
-import type { Pipe } from "./lib/Pipe.js";
-import type { ClientMsg, Mutations, ServerMsg, ServerStore } from "./Store.js";
-import type { Op } from "./types.js";
+import type { Json } from "./lib/Json.js";
+import { Store } from "./Store.js";
+import type {
+  ClientMsg,
+  Delta,
+  Mutations,
+  Op,
+  ServerMsg,
+  Socket,
+} from "./types.js";
 import { nanoid } from "./utils.js";
 
 export type Session = {
   actor: number;
   sessionKey: string;
-  pipe: Pipe<ServerMsg>; // think socket (or whatever channel)
+
+  // A socket is abstract. Concretely it could be a WebSocket, HTTP, or
+  // whatever other thinkable channel
+  socket: Socket<ServerMsg, ClientMsg>;
 };
 
 export class Server<M extends Mutations> {
   #nextActor = 1;
   #sessions: Set<Session>;
-  #store: ServerStore<M>;
+  #store: Store<M>;
 
-  constructor(store: ServerStore<M>) {
+  constructor(mutations: M) {
     this.#sessions = new Set();
-    this.#store = store;
+    this.#store = new Store(mutations);
   }
 
-  connect(clientPipe: Pipe<ServerMsg>): Callback<void> {
+  // XXX This method should be removed from the Server!!!!!!!!!!!!!!!!!!!
+  applyOp(op: Op): Delta {
+    return this.#store.applyOp(op);
+  }
+
+  connect(clientSocket: Socket<ServerMsg, ClientMsg>): Callback<void> {
     const newSession = {
       actor: this.#nextActor++,
       sessionKey: nanoid(8),
-      pipe: clientPipe,
+      socket: clientSocket,
     };
 
     // Set up pipes
@@ -40,13 +55,18 @@ export class Server<M extends Mutations> {
     };
   }
 
+  // XXX Inline this inside the connect() closure
+  // XXX Rename recvClientMsg?
   handle(message: ClientMsg): void {
     const op: Op = message;
     const delta = this.#store.applyOp(op);
 
     // Fan-out delta to all connected clients
     for (const session of this.#sessions) {
-      session.pipe.send(delta);
+      session.socket.send(delta);
     }
   }
+
+  // For convenience in unit tests only --------------------------------
+  asObject(): Record<string, Json> { return this.#store.asObject(); } // prettier-ignore
 }
