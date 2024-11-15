@@ -10,13 +10,9 @@ export function Status() {
   return (
     <div className="flex items-center text-gray-500 font-semibold gap-1.5 text-xs">
       {status === "synchronizing" ? (
-        <>
-          <SpinnerIcon className="w-5 h-5 opacity-70 animate-spin" />
-        </>
+        <SpinnerIcon className="w-5 h-5 opacity-70 animate-spin" />
       ) : (
-        <>
-          <CompleteIcon className="w-5 h-5 opacity-70 p-[1px]" />
-        </>
+        <CompleteIcon className="w-5 h-5 opacity-70 p-[1px]" />
       )}
     </div>
   );
