@@ -2,8 +2,6 @@ import type { EventSource, Observable } from "~/lib/EventSource.js";
 import { makeEventSource } from "~/lib/EventSource.js";
 import { raise } from "~/utils.js";
 
-import type { Json } from "./Json.js";
-
 /**
  * Abstracts the network and provides control over how messages will be
  * delivered between client and server on a per-test basis.
@@ -27,9 +25,7 @@ export type Pipe<T> = {
   flush(): Promise<void>;
 };
 
-export type DualPipe<T, V> = [Pipe<T>, Pipe<V>];
-
-export function makePipe<T extends Json>(): Pipe<T> {
+export function makePipe<T>(): Pipe<T> {
   let mode: "auto" | "manual" = "auto";
 
   const buffer: string[] = [];
