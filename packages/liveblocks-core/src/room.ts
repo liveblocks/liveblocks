@@ -1210,7 +1210,7 @@ export type OptionalTupleUnless<C, T extends any[]> =
 export type RoomDelegates = Omit<Delegates<AuthValue>, "canZombie">;
 
 /** @internal */
-export type RoomConfig = {
+export type RoomConfig<M extends BaseMetadata> = {
   delegates: RoomDelegates;
 
   roomId: string;
@@ -1223,7 +1223,7 @@ export type RoomConfig = {
 
   polyfills?: Polyfills;
 
-  roomHttpClient: RoomHttpApi;
+  roomHttpClient: RoomHttpApi<M>;
 
   /**
    * Only necessary when you’re using Liveblocks with React v17 or lower.
@@ -1306,7 +1306,7 @@ export function createRoom<
   M extends BaseMetadata,
 >(
   options: { initialPresence: P; initialStorage: S },
-  config: RoomConfig
+  config: RoomConfig<M>
 ): Room<P, S, U, E, M> {
   const initialPresence = options.initialPresence; // ?? {};
   const initialStorage = options.initialStorage; // ?? {};
@@ -2782,7 +2782,7 @@ export function createRoom<
   };
 
   async function getThreadsSince(options: GetThreadsSinceOptions) {
-    return httpClient.getThreadsSince<M>({
+    return httpClient.getThreadsSince({
       roomId,
       since: options.since,
       signal: options.signal,
@@ -2790,7 +2790,7 @@ export function createRoom<
   }
 
   async function getThreads(options?: GetThreadsOptions<M>) {
-    return httpClient.getThreads<M>({
+    return httpClient.getThreads({
       roomId,
       query: options?.query,
       cursor: options?.cursor,
@@ -2798,7 +2798,7 @@ export function createRoom<
   }
 
   async function getThread(threadId: string) {
-    return httpClient.getThread<M>({ roomId, threadId });
+    return httpClient.getThread({ roomId, threadId });
   }
 
   async function createThread(options: {
@@ -2809,7 +2809,7 @@ export function createRoom<
     body: CommentBody;
     attachmentIds?: string[];
   }) {
-    return httpClient.createThread<M>({
+    return httpClient.createThread({
       roomId,
       threadId: options.threadId,
       commentId: options.commentId,
@@ -2831,7 +2831,7 @@ export function createRoom<
     metadata: Patchable<M>;
     threadId: string;
   }) {
-    return httpClient.editThreadMetadata<M>({ roomId, threadId, metadata });
+    return httpClient.editThreadMetadata({ roomId, threadId, metadata });
   }
 
   async function markThreadAsResolved(threadId: string) {

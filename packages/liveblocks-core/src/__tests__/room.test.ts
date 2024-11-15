@@ -6,7 +6,7 @@ import { LiveMap } from "../crdts/LiveMap";
 import { LiveObject } from "../crdts/LiveObject";
 import type { LsonObject } from "../crdts/Lson";
 import type { StorageUpdate } from "../crdts/StorageUpdates";
-import { createHttpClient } from "../http-client";
+import { createLiveblocksApiClient } from "../http-client";
 import { legacy_patchImmutableObject, lsonToJson } from "../immutable";
 import { kInternal } from "../internal";
 import { nn } from "../lib/assert";
@@ -72,7 +72,7 @@ const defaultRoomConfig: RoomConfig = {
     },
     createSocket: mockedCreateSocketDelegate,
   },
-  roomHttpClient: createHttpClient({
+  roomHttpClient: createLiveblocksApiClient({
     baseUrl: DEFAULT_BASE_URL,
     fetchPolyfill: globalThis.fetch?.bind(globalThis),
     authManager: createAuthManager({

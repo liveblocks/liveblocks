@@ -619,11 +619,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
     new Map();
 
   constructor(client: OpaqueClient) {
-    this._client = client;
+    this._client = client[kInternal].as<M>();
     this._syncSource = this._client[kInternal].createSyncSource();
 
     const inboxFetcher = async (cursor?: string) => {
-      const result = await this._client.getInboxNotifications<M>({ cursor });
+      const result = await this._client.getInboxNotifications({ cursor });
 
       this.updateThreadsAndNotifications(
         result.threads,
@@ -1279,7 +1279,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return;
     }
 
-    const result = await this._client.getInboxNotificationsSince<M>({
+    const result = await this._client.getInboxNotificationsSince({
       since: lastRequestedAt,
       signal,
     });
@@ -1324,7 +1324,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     query: ThreadsQuery<M> | undefined
   ) {
     const threadsFetcher = async (cursor?: string) => {
-      const result = await this._client[kInternal].httpClient.getThreads<M>({
+      const result = await this._client[kInternal].httpClient.getThreads({
         roomId,
         cursor,
         query,
@@ -1381,13 +1381,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return;
     }
 
-    const updates = await this._client[kInternal].httpClient.getThreadsSince<M>(
-      {
-        roomId,
-        since: lastRequestedAt,
-        signal,
-      }
-    );
+    const updates = await this._client[kInternal].httpClient.getThreadsSince({
+      roomId,
+      since: lastRequestedAt,
+      signal,
+    });
 
     this.updateThreadsAndNotifications(
       updates.threads.updated,
@@ -1410,7 +1408,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     const threadsFetcher = async (cursor?: string) => {
       const result = await this._client[
         kInternal
-      ].httpClient.getUserThreads_experimental<M>({
+      ].httpClient.getUserThreads_experimental({
         cursor,
         query,
       });
@@ -1453,7 +1451,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     const result = await this._client[
       kInternal
-    ].httpClient.getUserThreadsSince_experimental<M>({
+    ].httpClient.getUserThreadsSince_experimental({
       since: lastRequestedAt,
       signal,
     });

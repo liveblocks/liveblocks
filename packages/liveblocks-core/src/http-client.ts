@@ -48,8 +48,8 @@ import type { Patchable } from "./types/Patchable";
 import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
 import { PKG_VERSION } from "./version";
 
-export interface RoomHttpApi {
-  getThreads<M extends BaseMetadata>(options: {
+export interface RoomHttpApi<M extends BaseMetadata> {
+  getThreads(options: {
     roomId: string;
     cursor?: string;
     query?: {
@@ -64,7 +64,7 @@ export interface RoomHttpApi {
     permissionHints: Record<string, Permission[]>;
   }>;
 
-  getThreadsSince<M extends BaseMetadata>(options: {
+  getThreadsSince(options: {
     roomId: string;
     since: Date;
     signal?: AbortSignal;
@@ -81,7 +81,7 @@ export interface RoomHttpApi {
     permissionHints: Record<string, Permission[]>;
   }>;
 
-  createThread<M extends BaseMetadata>({
+  createThread({
     roomId,
     metadata,
     body,
@@ -97,10 +97,7 @@ export interface RoomHttpApi {
     attachmentIds?: string[];
   }): Promise<ThreadData<M>>;
 
-  getThread<M extends BaseMetadata>(options: {
-    roomId: string;
-    threadId: string;
-  }): Promise<{
+  getThread(options: { roomId: string; threadId: string }): Promise<{
     thread?: ThreadData<M>;
     inboxNotification?: InboxNotificationData;
   }>;
@@ -113,7 +110,7 @@ export interface RoomHttpApi {
     threadId: string;
   }): Promise<void>;
 
-  editThreadMetadata<M extends BaseMetadata>({
+  editThreadMetadata({
     roomId,
     metadata,
     threadId,
@@ -330,17 +327,15 @@ export interface RoomHttpApi {
   }): Promise<Response>;
 }
 
-export interface NotificationHttpApi {
-  getInboxNotifications<M extends BaseMetadata>(options?: {
-    cursor?: string;
-  }): Promise<{
+export interface NotificationHttpApi<M extends BaseMetadata> {
+  getInboxNotifications(options?: { cursor?: string }): Promise<{
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<M>[];
     nextCursor: string | null;
     requestedAt: Date;
   }>;
 
-  getInboxNotificationsSince<M extends BaseMetadata>(options: {
+  getInboxNotificationsSince(options: {
     since: Date;
     signal?: AbortSignal;
   }): Promise<{
@@ -366,8 +361,10 @@ export interface NotificationHttpApi {
   deleteInboxNotification(inboxNotificationId: string): Promise<void>;
 }
 
-export interface ClientHttpApi extends RoomHttpApi, NotificationHttpApi {
-  getUserThreads_experimental<M extends BaseMetadata>(options?: {
+export interface ClientHttpApi<M extends BaseMetadata>
+  extends RoomHttpApi<M>,
+    NotificationHttpApi<M> {
+  getUserThreads_experimental(options?: {
     cursor?: string;
     query?: {
       resolved?: boolean;
@@ -381,7 +378,7 @@ export interface ClientHttpApi extends RoomHttpApi, NotificationHttpApi {
     permissionHints: Record<string, Permission[]>;
   }>;
 
-  getUserThreadsSince_experimental<M extends BaseMetadata>(options: {
+  getUserThreadsSince_experimental(options: {
     since: Date;
     signal?: AbortSignal;
   }): Promise<{
@@ -398,7 +395,7 @@ export interface ClientHttpApi extends RoomHttpApi, NotificationHttpApi {
   }>;
 }
 
-export function createHttpClient({
+export function createLiveblocksApiClient<M extends BaseMetadata>({
   baseUrl,
   authManager,
   fetchPolyfill,
@@ -406,7 +403,7 @@ export function createHttpClient({
   baseUrl: string;
   authManager: AuthManager;
   fetchPolyfill: typeof fetch;
-}): ClientHttpApi {
+}): ClientHttpApi<M> {
   async function getAuthValueForRoom(roomId: string) {
     // TODO: Use the right scope
     const authValue = await authManager.getAuthValue({
@@ -422,7 +419,7 @@ export function createHttpClient({
   /* -------------------------------------------------------------------------------------------------
    * Threads (Room level)
    * -----------------------------------------------------------------------------------------------*/
-  async function getThreadsSince<M extends BaseMetadata>(options: {
+  async function getThreadsSince(options: {
     roomId: string;
     since: Date;
     signal?: AbortSignal;
@@ -461,7 +458,7 @@ export function createHttpClient({
     };
   }
 
-  async function getThreads<M extends BaseMetadata>(options: {
+  async function getThreads(options: {
     roomId: string;
     cursor?: string;
     query?: {
@@ -532,7 +529,7 @@ export function createHttpClient({
     }
   }
 
-  async function createThread<M extends BaseMetadata>(options: {
+  async function createThread(options: {
     roomId: string;
     threadId?: string;
     commentId?: string;
@@ -567,10 +564,7 @@ export function createHttpClient({
     );
   }
 
-  async function getThread<M extends BaseMetadata>(options: {
-    roomId: string;
-    threadId: string;
-  }) {
+  async function getThread(options: { roomId: string; threadId: string }) {
     const response = await httpClient.rawGet(
       url`/v2/c/rooms/${options.roomId}/thread-with-notification/${options.threadId}`,
       () => getAuthValueForRoom(options.roomId)
@@ -600,7 +594,7 @@ export function createHttpClient({
     }
   }
 
-  async function editThreadMetadata<M extends BaseMetadata>(options: {
+  async function editThreadMetadata(options: {
     roomId: string;
     metadata: Patchable<M>;
     threadId: string;
@@ -1153,9 +1147,7 @@ export function createHttpClient({
     return await authManager.getAuthValue({ requestedScope: "comments:read" });
   }
 
-  async function getInboxNotifications<M extends BaseMetadata>(options?: {
-    cursor?: string;
-  }) {
+  async function getInboxNotifications(options?: { cursor?: string }) {
     const PAGE_SIZE = 50;
 
     const json = await httpClient.get<{
@@ -1180,7 +1172,7 @@ export function createHttpClient({
     };
   }
 
-  async function getInboxNotificationsSince<M extends BaseMetadata>(options: {
+  async function getInboxNotificationsSince(options: {
     since: Date;
     signal?: AbortSignal;
   }) {
@@ -1270,7 +1262,7 @@ export function createHttpClient({
     );
   }
 
-  async function getUserThreads_experimental<M extends BaseMetadata>(options?: {
+  async function getUserThreads_experimental(options?: {
     cursor?: string;
     query?: {
       resolved?: boolean;

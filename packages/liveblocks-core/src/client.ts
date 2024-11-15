@@ -5,7 +5,7 @@ import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import type { DE, DM, DP, DRI, DS, DU } from "./globals/augmentation";
 import type { ClientHttpApi } from "./http-client";
-import { createHttpClient } from "./http-client";
+import { createLiveblocksApiClient } from "./http-client";
 import { kInternal } from "./internal";
 import type { BatchStore } from "./lib/batch";
 import { Batch, createBatchStore } from "./lib/batch";
@@ -154,19 +154,21 @@ export type InternalSyncStatus = SyncStatus | "has-local-changes";
  * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
  * will probably happen if you do.
  */
-export type PrivateClientApi<U extends BaseUserMeta> = {
+export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
   readonly currentUserIdStore: Store<string | undefined>;
   readonly mentionSuggestionsCache: Map<string, string[]>;
   readonly resolveMentionSuggestions: ClientOptions<U>["resolveMentionSuggestions"];
   readonly usersStore: BatchStore<U["info"] | undefined, string>;
   readonly roomsInfoStore: BatchStore<DRI | undefined, string>;
   readonly getRoomIds: () => string[];
-  readonly httpClient: ClientHttpApi;
+  readonly httpClient: ClientHttpApi<M>;
+  // Type-level helper
+  as<M2 extends BaseMetadata>(): Client<U, M2>;
   // Tracking pending changes globally
   createSyncSource(): SyncSource;
 };
 
-export type NotificationsApi = {
+export type NotificationsApi<M extends BaseMetadata> = {
   /**
    * Gets a page (or the initial page) for user inbox notifications and their
    * associated threads.
@@ -184,9 +186,7 @@ export type NotificationsApi = {
    * const data = await client.getInboxNotifications();  // Fetch initial page (of 20 inbox notifications)
    * const data = await client.getInboxNotifications({ cursor: nextCursor });  // Fetch next page (= next 20 inbox notifications)
    */
-  getInboxNotifications<M extends BaseMetadata>(options?: {
-    cursor?: string;
-  }): Promise<{
+  getInboxNotifications(options?: { cursor?: string }): Promise<{
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<M>[];
     nextCursor: string | null;
@@ -212,7 +212,7 @@ export type NotificationsApi = {
    *   requestedAt,
    * } = await client.getInboxNotificationsSince({ since: result.requestedAt }});
    */
-  getInboxNotificationsSince<M extends BaseMetadata>(options: {
+  getInboxNotificationsSince(options: {
     since: Date;
     signal?: AbortSignal;
   }): Promise<{
@@ -369,7 +369,7 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
    * will probably happen if you do.
    */
   // TODO Make this a getter, so we can provide M
-  readonly [kInternal]: PrivateClientApi<U>;
+  readonly [kInternal]: PrivateClientApi<U, M>;
 
   /**
    * Returns the current global sync status of the Liveblocks client. If any
@@ -397,7 +397,7 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
   readonly events: {
     readonly syncStatus: Observable<void>;
   };
-} & NotificationsApi;
+} & NotificationsApi<M>;
 
 export type AuthEndpoint =
   | string
@@ -532,7 +532,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     clientOptions.polyfills?.fetch ||
     /* istanbul ignore next */ globalThis.fetch?.bind(globalThis);
 
-  const httpClient = createHttpClient({
+  const httpClient = createLiveblocksApiClient({
     baseUrl,
     fetchPolyfill,
     authManager,
@@ -639,7 +639,7 @@ export function createClient<U extends BaseUserMeta = DU>(
         baseUrl,
         unstable_fallbackToHTTP: !!clientOptions.unstable_fallbackToHTTP,
         unstable_streamData: !!clientOptions.unstable_streamData,
-        roomHttpClient: httpClient,
+        roomHttpClient: httpClient as ClientHttpApi<M>,
         createSyncSource,
       }
     );
@@ -861,6 +861,8 @@ export function createClient<U extends BaseUserMeta = DU>(
           return Array.from(roomsById.keys());
         },
         httpClient,
+        // Type-level helper only, it's effectively only an identity-function at runtime
+        as: <M2 extends BaseMetadata>() => client as Client<U, M2>,
         createSyncSource,
       },
     },

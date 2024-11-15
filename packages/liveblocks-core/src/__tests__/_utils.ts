@@ -3,7 +3,7 @@ import { DEFAULT_BASE_URL } from "../constants";
 import type { LiveObject } from "../crdts/LiveObject";
 import type { LsonObject } from "../crdts/Lson";
 import type { ToImmutable } from "../crdts/utils";
-import { createHttpClient } from "../http-client";
+import { createLiveblocksApiClient } from "../http-client";
 import { kInternal } from "../internal";
 import type { Json, JsonObject } from "../lib/Json";
 import { makePosition } from "../lib/position";
@@ -119,7 +119,7 @@ function makeRoomConfig(mockedDelegates: RoomDelegates): RoomConfig {
     },
     baseUrl: DEFAULT_BASE_URL,
     enableDebugLogging: false,
-    roomHttpClient: createHttpClient({
+    roomHttpClient: createLiveblocksApiClient({
       baseUrl: DEFAULT_BASE_URL,
       fetchPolyfill: globalThis.fetch?.bind(globalThis),
       authManager: createAuthManager({
