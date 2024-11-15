@@ -35,34 +35,38 @@ export class Server<M extends Mutations> {
     return this.#store.applyOp(op, true);
   }
 
-  connect(clientSocket: Socket<ServerMsg, ClientMsg>): Callback<void> {
+  connect(socket: Socket<ServerMsg, ClientMsg>): Callback<void> {
     const newSession = {
       actor: this.#nextActor++,
       sessionKey: nanoid(8),
-      socket: clientSocket,
+      socket,
     };
 
-    // Set up pipes
+    // Start listening to incoming ClientMsg messages on this socket
+    const disconnect = socket.recv.subscribe((msg) =>
+      this.#handleClientMsg(newSession, msg)
+    );
 
     this.#sessions.add(newSession);
 
     return () => {
-      // XXX Return disconnect function
-
       // Tear down pipes
-
+      disconnect();
       this.#sessions.delete(newSession);
     };
   }
 
-  // XXX Inline this inside the connect() closure
+  // XXX Inline this inside the connect() closure?
   // XXX Rename recvClientMsg?
-  handle(message: ClientMsg): void {
+  #handleClientMsg(_curr: Session, message: ClientMsg): void {
+    console.log("[server] IN", message);
+
     const op: Op = message;
     const delta = this.#store.applyOp(op, true);
 
     // Fan-out delta to all connected clients
     for (const session of this.#sessions) {
+      console.log("[server] OUT", delta);
       session.socket.send(delta);
     }
   }
