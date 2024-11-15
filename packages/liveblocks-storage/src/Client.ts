@@ -100,7 +100,7 @@ export class Client<M extends Mutations> {
 
   #handleServerMsg(msg: ServerMsg): void {
     console.log(`[client ${this.#_debugClientId}] IN`, msg);
-    this.applyDelta(msg);
+    this.applyDeltas([msg]);
   }
 
   applyDeltas(deltas: readonly Delta[]): void {
@@ -120,6 +120,5 @@ export class Client<M extends Mutations> {
   }
 
   // For convenience in unit tests only --------------------------------
-  applyDelta(delta: Delta): void { return this.applyDeltas([delta]); } // prettier-ignore
   asObject(): Record<string, Json> { return this.#store.asObject(); } // prettier-ignore
 }
