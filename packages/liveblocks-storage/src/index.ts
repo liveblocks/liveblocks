@@ -1,4 +1,4 @@
-import type { Json } from "~/Json.js";
+import type { Json } from "~/lib/Json.js";
 import type { Stub } from "./LayeredCache.js";
 import { LayeredCache } from "./LayeredCache.js";
 import type {
