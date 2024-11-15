@@ -1,7 +1,6 @@
 import type { Json } from "~/lib/Json.js";
+
 import { LayeredCache } from "./LayeredCache.js";
-import type { Callback } from "./lib/EventSource.js";
-import type { Pipe } from "./lib/Pipe.js";
 import type {
   ChangeReturnType,
   Delta,
@@ -9,21 +8,26 @@ import type {
   Op,
   OpId,
 } from "./types.js";
-import { nanoid, opId, raise } from "./utils.js";
+import { opId, raise } from "./utils.js";
 
 export type Mutations = Record<string, Mutation>;
-export type Mutation = (stub: LayeredCache, ...args: readonly any[]) => void;
+export type Mutation = (
+  stub: LayeredCache,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ...args: readonly any[]
+) => void;
 
 type BoundMutations<M extends Record<string, Mutation>> = {
   [K in keyof M]: ChangeReturnType<OmitFirstArg<M[K]>, OpId>;
 };
 
-type ClientMsg = Op;
-type ServerMsg = Delta;
+export type ClientMsg = Op;
+export type ServerMsg = Delta;
 
 // ----------------------------------------------------------------------------
 
 abstract class Store<M extends Mutations> {
+  // XXX Possibly combine LayeredCache and merge it with Store?
   #cache: LayeredCache;
   #mutations: M;
 
@@ -117,8 +121,7 @@ abstract class Store<M extends Mutations> {
   }
 }
 
-// ----------------------------------------------------------------------------
-
+// XXX This should be removed and just become "Store"
 export class ClientStore<M extends Mutations> extends Store<M> {
   // readonly events = {
   //   deltas: makeEventSource(),
@@ -138,6 +141,8 @@ export class ClientStore<M extends Mutations> extends Store<M> {
     // Bind all given mutation functions to this instance
     this.mutate = {} as BoundMutations<M>;
     for (const name of Object.keys(mutations)) {
+      /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+      /* eslint-disable @typescript-eslint/no-explicit-any */
       this.mutate[name as keyof M] = ((...args: Json[]): OpId => {
         const id = opId();
         const op: Op = [id, name, args];
@@ -146,6 +151,8 @@ export class ClientStore<M extends Mutations> extends Store<M> {
         // this.#eventSource.notify(op);
         return id;
       }) as any;
+      /* eslint-enable @typescript-eslint/no-explicit-any */
+      /* eslint-enable @typescript-eslint/no-unsafe-assignment */
     }
 
     // this.onEmitOp = this.#eventSource.observable;
@@ -165,55 +172,5 @@ export class ClientStore<M extends Mutations> extends Store<M> {
   }
 }
 
-// ----------------------------------------------------------------------------
-
+// XXX This should be removed and just become "Store"
 export class ServerStore<M extends Mutations> extends Store<M> {}
-
-// ----------------------------------------------------------------------------
-
-type Session = {
-  actor: number;
-  sessionKey: string;
-  pipe: Pipe<ServerMsg>; // think socket (or whatever channel)
-};
-
-export class Server<M extends Mutations> {
-  #nextActor = 1;
-  #sessions: Set<Session>;
-  #store: ServerStore<M>;
-
-  constructor(store: ServerStore<M>) {
-    this.#sessions = new Set();
-    this.#store = store;
-  }
-
-  connect(clientPipe: Pipe<ServerMsg>): Callback<void> {
-    const newSession = {
-      actor: this.#nextActor++,
-      sessionKey: nanoid(8),
-      pipe: clientPipe,
-    };
-
-    // Set up pipes
-
-    this.#sessions.add(newSession);
-
-    return () => {
-      // XXX Return disconnect function
-
-      // Tear down pipes
-
-      this.#sessions.delete(newSession);
-    };
-  }
-
-  handle(message: ClientMsg): void {
-    const op: Op = message;
-    const delta = this.#store.applyOp(op);
-
-    // Fan-out delta to all connected clients
-    for (const session of this.#sessions) {
-      session.pipe.send(delta);
-    }
-  }
-}

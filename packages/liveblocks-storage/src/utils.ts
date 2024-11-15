@@ -32,4 +32,6 @@ export const nanoid = (t = 21): string =>
       ""
     );
 
-export const opId = () => nanoid(7) as OpId;
+export function opId(): OpId {
+  return nanoid(7) as OpId;
+}
