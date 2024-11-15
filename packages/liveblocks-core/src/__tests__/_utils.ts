@@ -108,7 +108,9 @@ export function makeSyncSource(): SyncSource {
   };
 }
 
-function makeRoomConfig(mockedDelegates: RoomDelegates): RoomConfig {
+function makeRoomConfig<M extends BaseMetadata>(
+  mockedDelegates: RoomDelegates
+): RoomConfig<M> {
   return {
     delegates: mockedDelegates,
     roomId: "room-id",

@@ -60,35 +60,37 @@ const mockedCreateSocketDelegate = (_authValue: AuthValue) => {
   return new WebSocket("");
 };
 
-const defaultRoomConfig: RoomConfig = {
-  enableDebugLogging: false,
-  roomId: "room-id",
-  throttleDelay: THROTTLE_DELAY,
-  lostConnectionTimeout: 99999,
-  baseUrl: DEFAULT_BASE_URL,
-  delegates: {
-    authenticate: () => {
-      return Promise.resolve({ publicApiKey: "pk_123", type: "public" });
-    },
-    createSocket: mockedCreateSocketDelegate,
-  },
-  roomHttpClient: createLiveblocksApiClient({
-    baseUrl: DEFAULT_BASE_URL,
-    fetchPolyfill: globalThis.fetch?.bind(globalThis),
-    authManager: createAuthManager({
-      authEndpoint: "/api/auth",
-    }),
-  }),
-  // Not used in unit tests (yet)
-  createSyncSource: makeSyncSource,
-};
-
-function makeRoomConfig(
-  mockedDelegates: RoomDelegates,
-  defaults?: Partial<RoomConfig>
-) {
+function createDefaultRoomConfig<M extends BaseMetadata>(): RoomConfig<M> {
   return {
-    ...defaultRoomConfig,
+    enableDebugLogging: false,
+    roomId: "room-id",
+    throttleDelay: THROTTLE_DELAY,
+    lostConnectionTimeout: 99999,
+    baseUrl: DEFAULT_BASE_URL,
+    delegates: {
+      authenticate: () => {
+        return Promise.resolve({ publicApiKey: "pk_123", type: "public" });
+      },
+      createSocket: mockedCreateSocketDelegate,
+    },
+    roomHttpClient: createLiveblocksApiClient({
+      baseUrl: DEFAULT_BASE_URL,
+      fetchPolyfill: globalThis.fetch?.bind(globalThis),
+      authManager: createAuthManager({
+        authEndpoint: "/api/auth",
+      }),
+    }),
+    // Not used in unit tests (yet)
+    createSyncSource: makeSyncSource,
+  };
+}
+
+function makeRoomConfig<M extends BaseMetadata>(
+  mockedDelegates: RoomDelegates,
+  defaults?: Partial<RoomConfig<M>>
+): RoomConfig<M> {
+  return {
+    ...createDefaultRoomConfig<M>(),
     ...defaults,
     delegates: mockedDelegates,
   };
@@ -109,7 +111,7 @@ function createTestableRoom<
   initialPresence: P,
   authBehavior = AUTH_SUCCESS,
   socketBehavior = SOCKET_AUTOCONNECT_AND_ROOM_STATE(),
-  config?: Partial<RoomConfig>,
+  config?: Partial<RoomConfig<M>>,
   initialStorage?: S
 ) {
   const { wss, delegates } = defineBehavior(authBehavior, socketBehavior);
