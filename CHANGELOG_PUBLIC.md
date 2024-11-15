@@ -52,9 +52,13 @@ Also, we’re introducing a way to prevent browser tabs from being closed while 
 
 - Added new canvas document type to [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit), powered by [tldraw](https://tldraw.dev/).
 
+## Dashboard
+
+- Redirect users to a specific error page on authentication failure
+
 ## Contributors
 
-ctnicholas, nvie, marcbouchenoire, nimeshnayaju
+ctnicholas, nvie, marcbouchenoire, nimeshnayaju, sugardarius
 
 # Week 45 (2024-11-08)
 
