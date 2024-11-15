@@ -1,4 +1,4 @@
-import { LiveList, LiveObject, ToImmutable } from "@liveblocks/core";
+import { LiveList, LiveObject, ToImmutable } from "@liveblocks/client";
 import { Metadata, PriorityState, ProgressState } from "@/config";
 
 declare global {
