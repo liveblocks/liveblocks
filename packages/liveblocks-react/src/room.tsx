@@ -1309,8 +1309,16 @@ function useCommentsErrorListener<M extends BaseMetadata>(
 function useCreateThread<M extends BaseMetadata>(): (
   options: CreateThreadOptions<M>
 ) => ThreadData<M> {
+  return useCreateRoomThread(useRoom().id);
+}
+
+/**
+ * @private
+ */
+function useCreateRoomThread<M extends BaseMetadata>(
+  roomId: string
+): (options: CreateThreadOptions<M>) => ThreadData<M> {
   const client = useClient();
-  const room = useRoom();
 
   return React.useCallback(
     (options: CreateThreadOptions<M>): ThreadData<M> => {
@@ -1325,7 +1333,7 @@ function useCreateThread<M extends BaseMetadata>(): (
       const newComment: CommentData = {
         id: commentId,
         threadId,
-        roomId: room.id,
+        roomId,
         createdAt,
         type: "comment",
         userId: getCurrentUserId(client),
@@ -1338,7 +1346,7 @@ function useCreateThread<M extends BaseMetadata>(): (
         type: "thread",
         createdAt,
         updatedAt: createdAt,
-        roomId: room.id,
+        roomId,
         metadata,
         comments: [newComment],
         resolved: false,
@@ -1348,13 +1356,20 @@ function useCreateThread<M extends BaseMetadata>(): (
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "create-thread",
         thread: newThread,
-        roomId: room.id,
+        roomId,
       });
 
       const attachmentIds = attachments?.map((attachment) => attachment.id);
 
-      room
-        .createThread({ threadId, commentId, body, metadata, attachmentIds })
+      client[kInternal].httpClient
+        .createThread({
+          roomId,
+          threadId,
+          commentId,
+          body,
+          metadata,
+          attachmentIds,
+        })
         .then(
           (thread) => {
             // Replace the optimistic update by the real thing
@@ -1366,7 +1381,7 @@ function useCreateThread<M extends BaseMetadata>(): (
               optimisticUpdateId,
               (err) =>
                 new CreateThreadError(err, {
-                  roomId: room.id,
+                  roomId,
                   threadId,
                   commentId,
                   body,
@@ -1377,61 +1392,56 @@ function useCreateThread<M extends BaseMetadata>(): (
 
       return newThread;
     },
-    [client, room]
+    [client, roomId]
   );
 }
 
 function useDeleteThread(): (threadId: string) => void {
-  const client = useClient();
+  return useDeleteRoomThread(useRoom().id);
+}
 
+function useDeleteRoomThread(roomId: string): (threadId: string) => void {
+  const client = useClient();
   return React.useCallback(
     (threadId: string): void => {
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-      const userId = getCurrentUserId(client);
-      const existing = store
-        .getFullState()
-        .threadsDB.getEvenIfDeleted(threadId);
-      if (existing === undefined) {
-        throw new Error(
-          `Cannot delete thread "${threadId}" because the thread does not exist in cache.`
-        );
-      }
 
-      if (existing.comments[0]?.userId !== userId) {
+      const userId = getCurrentUserId(client);
+
+      const existing = store.getFullState().threadsDB.get(threadId);
+      if (existing?.comments?.[0]?.userId !== userId) {
         throw new Error("Only the thread creator can delete the thread");
       }
 
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "delete-thread",
-        roomId: existing.roomId,
+        roomId,
         threadId,
         deletedAt: new Date(),
       });
 
-      client[kInternal].httpClient
-        .deleteThread({ roomId: existing.roomId, threadId })
-        .then(
-          () => {
-            // Replace the optimistic update by the real thing
-            store.deleteThread(threadId, optimisticUpdateId);
-          },
-          (err: Error) =>
-            onMutationFailure(
-              err,
-              optimisticUpdateId,
-              (err) =>
-                new DeleteThreadError(err, {
-                  roomId: existing.roomId,
-                  threadId,
-                })
-            )
-        );
+      client[kInternal].httpClient.deleteThread({ roomId, threadId }).then(
+        () => {
+          // Replace the optimistic update by the real thing
+          store.deleteThread(threadId, optimisticUpdateId);
+        },
+        (err: Error) =>
+          onMutationFailure(
+            err,
+            optimisticUpdateId,
+            (err) => new DeleteThreadError(err, { roomId, threadId })
+          )
+      );
     },
-    [client]
+    [client, roomId]
   );
 }
 
 function useEditThreadMetadata<M extends BaseMetadata>() {
+  return useEditRoomThreadMetadata<M>(useRoom().id);
+}
+
+function useEditRoomThreadMetadata<M extends BaseMetadata>(roomId: string) {
   const client = useClient();
   return React.useCallback(
     (options: EditThreadMetadataOptions<M>): void => {
@@ -1444,16 +1454,6 @@ function useEditThreadMetadata<M extends BaseMetadata>() {
       const updatedAt = new Date();
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-
-      const existing = store
-        .getFullState()
-        .threadsDB.getEvenIfDeleted(threadId);
-      if (existing === undefined) {
-        throw new Error(
-          `Cannot edit metadata of thread "${threadId}" because the thread does not exist in cache.`
-        );
-      }
-
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "edit-thread-metadata",
         metadata,
@@ -1462,7 +1462,7 @@ function useEditThreadMetadata<M extends BaseMetadata>() {
       });
 
       client[kInternal].httpClient
-        .editThreadMetadata({ roomId: existing.roomId, threadId, metadata })
+        .editThreadMetadata({ roomId, threadId, metadata })
         .then(
           (metadata) =>
             // Replace the optimistic update by the real thing
@@ -1478,14 +1478,14 @@ function useEditThreadMetadata<M extends BaseMetadata>() {
               optimisticUpdateId,
               (error) =>
                 new EditThreadMetadataError(error, {
-                  roomId: existing.roomId,
+                  roomId,
                   threadId,
                   metadata,
                 })
             )
         );
     },
-    [client]
+    [client, roomId]
   );
 }
 
@@ -1497,38 +1497,34 @@ function useEditThreadMetadata<M extends BaseMetadata>() {
  * createComment({ threadId: "th_xxx", body: {} });
  */
 function useCreateComment(): (options: CreateCommentOptions) => CommentData {
-  const client = useClient();
+  return useCreateRoomComment(useRoom().id);
+}
 
+/**
+ * @private
+ */
+function useCreateRoomComment(
+  roomId: string
+): (options: CreateCommentOptions) => CommentData {
+  const client = useClient();
   return React.useCallback(
     ({ threadId, body, attachments }: CreateCommentOptions): CommentData => {
       const commentId = createCommentId();
       const createdAt = new Date();
 
-      const userId = getCurrentUserId(client);
-
-      const { store, onMutationFailure } = getRoomExtrasForClient(client);
-
-      const existing = store
-        .getFullState()
-        .threadsDB.getEvenIfDeleted(threadId);
-      if (existing === undefined) {
-        throw new Error(
-          `Cannot create comment in thread "${threadId}" because the thread does not exist in cache.`
-        );
-      }
-
       const comment: CommentData = {
         id: commentId,
         threadId,
-        roomId: existing.roomId,
+        roomId,
         type: "comment",
         createdAt,
-        userId,
+        userId: getCurrentUserId(client),
         body,
         reactions: [],
         attachments: attachments ?? [],
       };
 
+      const { store, onMutationFailure } = getRoomExtrasForClient(client);
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "create-comment",
         comment,
@@ -1537,13 +1533,7 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
       const attachmentIds = attachments?.map((attachment) => attachment.id);
 
       client[kInternal].httpClient
-        .createComment({
-          roomId: existing.roomId,
-          threadId,
-          commentId,
-          body,
-          attachmentIds,
-        })
+        .createComment({ roomId, threadId, commentId, body, attachmentIds })
         .then(
           (newComment) => {
             // Replace the optimistic update by the real thing
@@ -1555,7 +1545,7 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
               optimisticUpdateId,
               (err) =>
                 new CreateCommentError(err, {
-                  roomId: existing.roomId,
+                  roomId,
                   threadId,
                   commentId,
                   body,
@@ -1565,7 +1555,7 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
 
       return comment;
     },
-    [client]
+    [client, roomId]
   );
 }
 
@@ -1577,21 +1567,30 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
  * editComment({ threadId: "th_xxx", commentId: "cm_xxx", body: {} })
  */
 function useEditComment(): (options: EditCommentOptions) => void {
+  return useEditRoomComment(useRoom().id);
+}
+
+/**
+ * @private
+ */
+function useEditRoomComment(
+  roomId: string
+): (options: EditCommentOptions) => void {
   const client = useClient();
   return React.useCallback(
     ({ threadId, commentId, body, attachments }: EditCommentOptions): void => {
       const editedAt = new Date();
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-
       const existing = store
         .getFullState()
         .threadsDB.getEvenIfDeleted(threadId);
 
       if (existing === undefined) {
-        throw new Error(
-          `Cannot edit comment in thread "${threadId}" because the thread does not exist in the cache.`
+        console.warn(
+          `Internal unexpected behavior. Cannot edit comment in thread "${threadId}" because the thread does not exist in the cache.`
         );
+        return;
       }
 
       const comment = existing.comments.find(
@@ -1599,9 +1598,10 @@ function useEditComment(): (options: EditCommentOptions) => void {
       );
 
       if (comment === undefined || comment.deletedAt !== undefined) {
-        throw new Error(
-          `Cannot edit comment "${commentId}" in thread "${threadId}" because the comment does not exist in the cache.`
+        console.warn(
+          `Internal unexpected behavior. Cannot edit comment "${commentId}" in thread "${threadId}" because the comment does not exist in the cache.`
         );
+        return;
       }
 
       const optimisticUpdateId = store.addOptimisticUpdate({
@@ -1617,13 +1617,7 @@ function useEditComment(): (options: EditCommentOptions) => void {
       const attachmentIds = attachments?.map((attachment) => attachment.id);
 
       client[kInternal].httpClient
-        .editComment({
-          roomId: existing.roomId,
-          threadId,
-          commentId,
-          body,
-          attachmentIds,
-        })
+        .editComment({ roomId, threadId, commentId, body, attachmentIds })
         .then(
           (editedComment) => {
             // Replace the optimistic update by the real thing
@@ -1635,7 +1629,7 @@ function useEditComment(): (options: EditCommentOptions) => void {
               optimisticUpdateId,
               (error) =>
                 new EditCommentError(error, {
-                  roomId: existing.roomId,
+                  roomId,
                   threadId,
                   commentId,
                   body,
@@ -1643,7 +1637,7 @@ function useEditComment(): (options: EditCommentOptions) => void {
             )
         );
     },
-    [client]
+    [client, roomId]
   );
 }
 
@@ -1656,6 +1650,13 @@ function useEditComment(): (options: EditCommentOptions) => void {
  * deleteComment({ threadId: "th_xxx", commentId: "cm_xxx" })
  */
 function useDeleteComment() {
+  return useDeleteRoomComment(useRoom().id);
+}
+
+/**
+ * @private
+ */
+function useDeleteRoomComment(roomId: string) {
   const client = useClient();
 
   return React.useCallback(
@@ -1664,26 +1665,16 @@ function useDeleteComment() {
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
 
-      const existing = store
-        .getFullState()
-        .threadsDB.getEvenIfDeleted(threadId);
-
-      if (existing === undefined) {
-        throw new Error(
-          `Cannot delete comment in thread "${threadId}" because the thread does not exist in cache.`
-        );
-      }
-
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "delete-comment",
         threadId,
         commentId,
         deletedAt,
-        roomId: existing.roomId,
+        roomId,
       });
 
       client[kInternal].httpClient
-        .deleteComment({ roomId: existing.roomId, threadId, commentId })
+        .deleteComment({ roomId, threadId, commentId })
         .then(
           () => {
             // Replace the optimistic update by the real thing
@@ -1700,34 +1691,32 @@ function useDeleteComment() {
               optimisticUpdateId,
               (error) =>
                 new DeleteCommentError(error, {
-                  roomId: existing.roomId,
+                  roomId,
                   threadId,
                   commentId,
                 })
             )
         );
     },
-    [client]
+    [client, roomId]
   );
 }
 
 function useAddReaction<M extends BaseMetadata>() {
+  return useAddRoomCommentReaction<M>(useRoom().id);
+}
+
+/**
+ * @private
+ */
+function useAddRoomCommentReaction<M extends BaseMetadata>(roomId: string) {
   const client = useClient();
   return React.useCallback(
     ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
       const createdAt = new Date();
       const userId = getCurrentUserId(client);
+
       const { store, onMutationFailure } = getRoomExtrasForClient<M>(client);
-
-      const existing = store
-        .getFullState()
-        .threadsDB.getEvenIfDeleted(threadId);
-
-      if (existing === undefined) {
-        throw new Error(
-          `Cannot add reaction to comment "${commentId}" in thread "${threadId}" because the thread does not exist in cache.`
-        );
-      }
 
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "add-reaction",
@@ -1741,7 +1730,7 @@ function useAddReaction<M extends BaseMetadata>() {
       });
 
       client[kInternal].httpClient
-        .addReaction({ roomId: existing.roomId, threadId, commentId, emoji })
+        .addReaction({ roomId, threadId, commentId, emoji })
         .then(
           (addedReaction) => {
             // Replace the optimistic update by the real thing
@@ -1759,7 +1748,7 @@ function useAddReaction<M extends BaseMetadata>() {
               optimisticUpdateId,
               (error) =>
                 new AddReactionError(error, {
-                  roomId: existing.roomId,
+                  roomId,
                   threadId,
                   commentId,
                   emoji,
@@ -1767,7 +1756,7 @@ function useAddReaction<M extends BaseMetadata>() {
             )
         );
     },
-    [client]
+    [client, roomId]
   );
 }
 
@@ -1779,22 +1768,21 @@ function useAddReaction<M extends BaseMetadata>() {
  * removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" })
  */
 function useRemoveReaction() {
+  return useRemoveRoomCommentReaction(useRoom().id);
+}
+
+/**
+ * @private
+ */
+function useRemoveRoomCommentReaction(roomId: string) {
   const client = useClient();
   return React.useCallback(
     ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
       const userId = getCurrentUserId(client);
+
       const removedAt = new Date();
+
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-
-      const existing = store
-        .getFullState()
-        .threadsDB.getEvenIfDeleted(threadId);
-      if (existing === undefined) {
-        throw new Error(
-          `Cannot remove reaction from comment "${commentId}" in thread "${threadId}" because the thread does not exist in cache.`
-        );
-      }
-
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "remove-reaction",
         threadId,
@@ -1805,7 +1793,7 @@ function useRemoveReaction() {
       });
 
       client[kInternal].httpClient
-        .removeReaction({ roomId: existing.roomId, threadId, commentId, emoji })
+        .removeReaction({ roomId, threadId, commentId, emoji })
         .then(
           () => {
             // Replace the optimistic update by the real thing
@@ -1824,7 +1812,7 @@ function useRemoveReaction() {
               optimisticUpdateId,
               (error) =>
                 new RemoveReactionError(error, {
-                  roomId: existing.roomId,
+                  roomId,
                   threadId,
                   commentId,
                   emoji,
@@ -1832,10 +1820,9 @@ function useRemoveReaction() {
             )
         );
     },
-    [client]
+    [client, roomId]
   );
 }
-
 /**
  * Returns a function that marks a thread as read.
  *
@@ -1844,20 +1831,17 @@ function useRemoveReaction() {
  * markThreadAsRead("th_xxx");
  */
 function useMarkThreadAsRead() {
+  return useMarkRoomThreadAsRead(useRoom().id);
+}
+
+/**
+ * @private
+ */
+function useMarkRoomThreadAsRead(roomId: string) {
   const client = useClient();
   return React.useCallback(
     (threadId: string) => {
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-
-      const existing = store
-        .getFullState()
-        .threadsDB.getEvenIfDeleted(threadId);
-      if (existing === undefined) {
-        throw new Error(
-          `Cannot mark thread "${threadId}" as read because the thread does not exist in cache.`
-        );
-      }
-
       const inboxNotification = Object.values(
         store.getFullState().notificationsById
       ).find(
@@ -1878,7 +1862,7 @@ function useMarkThreadAsRead() {
 
       client[kInternal].httpClient
         .markRoomInboxNotificationAsRead({
-          roomId: existing.roomId,
+          roomId,
           inboxNotificationId: inboxNotification.id,
         })
         .then(
@@ -1903,7 +1887,7 @@ function useMarkThreadAsRead() {
           }
         );
     },
-    [client]
+    [client, roomId]
   );
 }
 
@@ -1915,21 +1899,19 @@ function useMarkThreadAsRead() {
  * markThreadAsResolved("th_xxx");
  */
 function useMarkThreadAsResolved() {
+  return useMarkRoomThreadAsResolved(useRoom().id);
+}
+
+/**
+ * @private
+ */
+function useMarkRoomThreadAsResolved(roomId: string) {
   const client = useClient();
   return React.useCallback(
     (threadId: string) => {
       const updatedAt = new Date();
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-      const existing = store
-        .getFullState()
-        .threadsDB.getEvenIfDeleted(threadId);
-      if (existing === undefined) {
-        throw new Error(
-          `Cannot mark thread "${threadId}" as resolved because the thread does not exist in cache.`
-        );
-      }
-
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "mark-thread-as-resolved",
         threadId,
@@ -1937,7 +1919,7 @@ function useMarkThreadAsResolved() {
       });
 
       client[kInternal].httpClient
-        .markThreadAsResolved({ roomId: existing.roomId, threadId })
+        .markThreadAsResolved({ roomId, threadId })
         .then(
           () => {
             // Replace the optimistic update by the real thing
@@ -1954,13 +1936,13 @@ function useMarkThreadAsResolved() {
               optimisticUpdateId,
               (error) =>
                 new MarkThreadAsResolvedError(error, {
-                  roomId: existing.roomId,
+                  roomId,
                   threadId,
                 })
             )
         );
     },
-    [client]
+    [client, roomId]
   );
 }
 
@@ -1972,21 +1954,19 @@ function useMarkThreadAsResolved() {
  * markThreadAsUnresolved("th_xxx");
  */
 function useMarkThreadAsUnresolved() {
+  return useMarkRoomThreadAsUnresolved(useRoom().id);
+}
+
+/**
+ * @private
+ */
+function useMarkRoomThreadAsUnresolved(roomId: string) {
   const client = useClient();
   return React.useCallback(
     (threadId: string) => {
       const updatedAt = new Date();
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-      const existing = store
-        .getFullState()
-        .threadsDB.getEvenIfDeleted(threadId);
-      if (existing === undefined) {
-        throw new Error(
-          `Cannot mark thread "${threadId}" as unresolved because the thread does not exist in cache.`
-        );
-      }
-
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "mark-thread-as-unresolved",
         threadId,
@@ -1994,10 +1974,7 @@ function useMarkThreadAsUnresolved() {
       });
 
       client[kInternal].httpClient
-        .markThreadAsUnresolved({
-          roomId: existing.roomId,
-          threadId,
-        })
+        .markThreadAsUnresolved({ roomId, threadId })
         .then(
           () => {
             // Replace the optimistic update by the real thing
@@ -2014,13 +1991,13 @@ function useMarkThreadAsUnresolved() {
               optimisticUpdateId,
               (error) =>
                 new MarkThreadAsUnresolvedError(error, {
-                  roomId: existing.roomId,
+                  roomId,
                   threadId,
                 })
             )
         );
     },
-    [client]
+    [client, roomId]
   );
 }
 
@@ -3146,6 +3123,7 @@ export {
   RoomContext,
   _RoomProvider as RoomProvider,
   _useAddReaction as useAddReaction,
+  useAddRoomCommentReaction,
   useAttachmentUrl,
   useAttachmentUrlSuspense,
   useBatch,
@@ -3155,10 +3133,16 @@ export {
   // TODO: Move to `liveblocks-react-lexical`
   useCommentsErrorListener,
   useCreateComment,
+  useCreateRoomComment,
+  useCreateRoomThread,
   _useCreateThread as useCreateThread,
   useDeleteComment,
+  useDeleteRoomComment,
+  useDeleteRoomThread,
   _useDeleteThread as useDeleteThread,
   useEditComment,
+  useEditRoomComment,
+  useEditRoomThreadMetadata,
   _useEditThreadMetadata as useEditThreadMetadata,
   useErrorListener,
   _useEventListener as useEventListener,
@@ -3168,6 +3152,9 @@ export {
   _useHistoryVersionsSuspense as useHistoryVersionsSuspense,
   _useIsInsideRoom as useIsInsideRoom,
   useLostConnectionListener,
+  useMarkRoomThreadAsRead,
+  useMarkRoomThreadAsResolved,
+  useMarkRoomThreadAsUnresolved,
   useMarkThreadAsRead,
   useMarkThreadAsResolved,
   useMarkThreadAsUnresolved,
@@ -3184,6 +3171,7 @@ export {
   _useOtherSuspense as useOtherSuspense,
   useRedo,
   useRemoveReaction,
+  useRemoveRoomCommentReaction,
   _useRoom as useRoom,
   useRoomAttachmentUrl,
   _useRoomNotificationSettings as useRoomNotificationSettings,
