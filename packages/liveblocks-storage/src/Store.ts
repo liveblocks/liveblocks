@@ -60,7 +60,9 @@ export class Store<M extends Mutations> {
    * a local mutation is replayed after an authoritative delta from the Server.
    */
   // XXX Rename to runMutator?
-  applyOp(op: Op): Delta {
+  applyOp(op: Op, returnDelta: true): Delta;
+  applyOp(op: Op, returnDelta: false): undefined;
+  applyOp(op: Op, returnDelta: boolean): Delta | undefined {
     const [id, name, args] = op;
     const mutationFn =
       this.#mutations[name] ?? raise(`Mutation not found: '${name}'`);
@@ -70,7 +72,7 @@ export class Store<M extends Mutations> {
       mutationFn(this.#cache, ...args);
       // XXX Computing the full Delta is overhead that's not needed by the client.
       // XXX Probably better to avoid computing it on the Client for performance reasons.
-      const delta = this.#cache.delta(id);
+      const delta = returnDelta ? this.#cache.delta(id) : undefined;
       this.#cache.commit();
       return delta;
     } catch (e) {

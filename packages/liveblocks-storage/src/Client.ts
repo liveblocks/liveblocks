@@ -38,7 +38,7 @@ export class Client<M extends Mutations> {
         const id = opId();
         const op: Op = [id, name, args];
         this.#pendingOps.set(id, op);
-        this.#store.applyOp(op);
+        this.#store.applyOp(op, false);
         // this.#eventSource.notify(op);
         return id;
       }) as any;
@@ -59,7 +59,7 @@ export class Client<M extends Mutations> {
 
     // Apply all local pending ops
     for (const pendingOp of this.#pendingOps.values()) {
-      this.#store.applyOp(pendingOp);
+      this.#store.applyOp(pendingOp, false);
     }
   }
 
