@@ -2,6 +2,8 @@ import type { EventSource, Observable } from "~/lib/EventSource.js";
 import { makeEventSource } from "~/lib/EventSource.js";
 import { raise } from "~/utils.js";
 
+import type { Json } from "./Json.js";
+
 /**
  * Abstracts the network and provides control over how messages will be
  * delivered between client and server on a per-test basis.
@@ -27,10 +29,10 @@ export type Pipe<T> = {
 
 export type DualPipe<T, V> = [Pipe<T>, Pipe<V>];
 
-export function makePipe<T>(): Pipe<T> {
+export function makePipe<T extends Json>(): Pipe<T> {
   let mode: "auto" | "manual" = "auto";
 
-  const buffer: T[] = [];
+  const buffer: string[] = [];
   const output: EventSource<T> = makeEventSource<T>();
 
   // Please note that `.send()` is a synchronous API. This can be deceiving,
@@ -38,7 +40,7 @@ export function makePipe<T>(): Pipe<T> {
   // That's why it's important to close every test with an
   // `await pipe.flush()`, and await all those promises!
   function send(input: T) {
-    buffer.push(input); // XXX Serialize to JSON string to ensure we're never sending any in-memory values!
+    buffer.push(JSON.stringify(input));
 
     if (mode === "auto" && !pendingFlush$) {
       void flush();
@@ -55,7 +57,7 @@ export function makePipe<T>(): Pipe<T> {
   async function flushNow() {
     if (pendingFlush$) raise("Internal corruption");
 
-    let data: T | undefined;
+    let data: string | undefined;
     while ((data = buffer.shift()) !== undefined) {
       // Add artificial delay between each loop?
       await delay();
@@ -64,7 +66,7 @@ export function makePipe<T>(): Pipe<T> {
         raise("Can't send to broken pipe");
       }
       try {
-        output.notify(data);
+        output.notify(JSON.parse(data) as T);
       } catch {
         // Ignore
       }
