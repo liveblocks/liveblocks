@@ -18,7 +18,7 @@ import {
   FloatingThreads,
   liveblocksConfig,
   LiveblocksPlugin,
-  useEditorStatus,
+  useIsEditorReady,
 } from "@liveblocks/react-lexical";
 import { ClientSideSuspense, useThreads } from "@liveblocks/react";
 import DraggableBlockPlugin from "../plugins/DraggableBlockPlugin";
@@ -53,7 +53,7 @@ const initialConfig = liveblocksConfig({
 });
 
 export function Editor() {
-  const status = useEditorStatus();
+  const ready = useIsEditorReady();
   const { threads } = useThreads();
 
   // Used by the drag handle
@@ -109,7 +109,7 @@ export function Editor() {
                     </h1>
                   </header>
 
-                  {status === "not-loaded" || status === "loading" ? (
+                  {!ready ? (
                     <div className="mx-8 mt-4 bg-gray-200/40 animate-pulse w-full h-32 rounded-lg" />
                   ) : (
                     <section className="relative">

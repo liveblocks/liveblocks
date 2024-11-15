@@ -9,7 +9,7 @@ import {
   FloatingThreads,
   liveblocksConfig,
   LiveblocksPlugin,
-  useEditorStatus,
+  useIsEditorReady,
 } from "@liveblocks/react-lexical";
 import { EditorTitle } from "@/components/EditorTitle";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
@@ -53,7 +53,7 @@ export function Editor({
   contentFallback: ReactNode;
   storageFallback: ImmutableStorage;
 }) {
-  const status = useEditorStatus();
+  const ready = useIsEditorReady();
 
   return (
     <LexicalComposer initialConfig={initialConfig}>
@@ -71,7 +71,7 @@ export function Editor({
         </div>
         <div className="relative">
           <LiveblocksPlugin>
-            {status === "not-loaded" || status === "loading" ? (
+            {!ready ? (
               <div className="select-none cursor-wait editor-styles">
                 {contentFallback}
               </div>
