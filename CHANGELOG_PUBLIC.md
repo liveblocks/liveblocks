@@ -13,6 +13,54 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
 
+# Week 46 (2024-11-15)
+
+## v2.12.0
+
+This release adds support for tracking synchronization status of pending local changes for any part of Liveblocks. Whether you use Storage, Text Editors, Threads, or Notifications. If the client’s sync status is `synchronized`, it means all local pending changes have been persisted by our servers. If there are pending local changes in any part of Liveblocks you’re using, then the client’s sync status will be `synchronizing`.
+
+Also, we’re introducing a way to prevent browser tabs from being closed while local changes are not yet synchronized. To opt-in to this protection, enable `preventUnsavedChanges` option on the client:
+
+- In React: `<LiveblocksProvider preventUnsavedChanges />`
+- Otherwise: `createClient({ preventUnsavedChanges: true })`
+
+### `@liveblocks/client`
+
+- Add new API [`client.getSyncStatus()`](https://liveblocks.io/docs/api-reference/liveblocks-client#Client.getSyncStatus) method.
+- Add new client config option: [`preventUnsavedChanges`](https://liveblocks.io/docs/api-reference/liveblocks-client#prevent-users-losing-unsaved-changes).
+- Expose `ToImmutable<T>` helper type.
+
+### `@liveblocks/react`
+
+- Add new hook [`useSyncStatus`](https://liveblocks.io/docs/api-reference/liveblocks-react#useSyncStatus) that can be used to tell whether Liveblocks is synchronizing local changes to the server. Useful to display a "Saving..." spinner in your application, when used with `useSyncStatus({ smooth: true })`.
+- Add new `LiveblocksProvider` prop: [`preventUnsavedChanges`](https://liveblocks.io/docs/api-reference/liveblocks-react#prevent-users-losing-unsaved-changes).
+- Deprecated APIs:
+  - `useStorageStatus` is now deprecated in favor of `useSyncStatus`.
+
+### `@liveblocks/react-ui`
+
+- Take composers into account when the new `preventUnsavedChanges` option is set.
+
+### `@liveblocks/react-lexical`
+
+- Add new hook [`useIsEditorReady`](http://liveblocks.io/docs/api-reference/liveblocks-react-lexical#useIsEditorReady) which can be used to show a skeleton UI before the editor has received the initial text from the server.
+- Deprecated APIs:
+  - `useEditorStatus` is now deprecated in favor of `useIsEditorReady` (or `useSyncStatus`).
+
+## Examples
+
+- Added new canvas document type to [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit), powered by [tldraw](https://tldraw.dev/).
+- Added loading `useStatusSync` loading spinners to [Linear-like Issue Tracker](https://liveblocks.io/examples/linear-like-issue-tracker/nextjs-linear-like-issue-tracker) and [Notion-like AI editor](https://liveblocks.io/examples/notion-like-ai-editor/nextjs-notion-like-ai-editor).
+- Added `useIsEditorReady` to Lexical examples.
+
+## Dashboard
+
+- Redirect users to a specific error page on authentication failure.
+
+## Contributors
+
+ctnicholas, nvie, marcbouchenoire, nimeshnayaju, sugardarius
+
 # Week 45 (2024-11-08)
 
 ## v2.11.0

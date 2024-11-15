@@ -14,6 +14,7 @@ import { $convertToMarkdownString, TRANSFORMERS } from "@lexical/markdown";
 import { marked } from "marked";
 import sanitizeHtml from "sanitize-html";
 import Link from "next/link";
+import { Status } from "./Status";
 
 export async function Issue({ issueId }: { issueId: string }) {
   const roomId = getRoomId(issueId);
@@ -51,9 +52,14 @@ export async function Issue({ issueId }: { issueId: string }) {
   );
 
   let error;
-  const results = await Promise.all([storagePromise, contentHtmlPromise]).catch(
-    (err) => (error = err)
-  );
+  let results;
+
+  try {
+    results = await Promise.all([storagePromise, contentHtmlPromise]);
+  } catch (err) {
+    console.log(err);
+    error = err;
+  }
 
   if (
     error ||
@@ -82,13 +88,13 @@ export async function Issue({ issueId }: { issueId: string }) {
   return (
     <div className="h-full flex flex-col">
       <header className="flex justify-between border-b h-10 px-4 items-center">
-        <div className="text-sm font-medium text-neutral-700"></div>
+        <Status />
         <Presence />
       </header>
       <div className="flex-grow relative">
         <div className="absolute inset-0 flex flex-row">
           <div className="flex-grow h-full overflow-y-scroll">
-            <div className="max-w-[840px] mx-auto py-6">
+            <div className="max-w-[840px] mx-auto py-6 relative">
               <div className="px-12">
                 <Editor
                   storageFallback={storage}

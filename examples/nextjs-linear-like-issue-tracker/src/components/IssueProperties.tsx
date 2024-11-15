@@ -8,8 +8,13 @@ import {
 import { PRIORITY_STATES, PROGRESS_STATES } from "@/config";
 import { getUsers } from "@/database";
 import { Select } from "@/components/Select";
+import { ImmutableStorage } from "@/liveblocks.config";
 
-export function IssueProperties({ storageFallback }: any) {
+export function IssueProperties({
+  storageFallback,
+}: {
+  storageFallback: ImmutableStorage;
+}) {
   return (
     <ClientSideSuspense
       fallback={

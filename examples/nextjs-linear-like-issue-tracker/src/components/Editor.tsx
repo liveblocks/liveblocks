@@ -9,7 +9,7 @@ import {
   FloatingThreads,
   liveblocksConfig,
   LiveblocksPlugin,
-  useEditorStatus,
+  useIsEditorReady,
 } from "@liveblocks/react-lexical";
 import { EditorTitle } from "@/components/EditorTitle";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
@@ -20,6 +20,7 @@ import { ReactNode } from "react";
 import { LinkNode } from "@lexical/link";
 import { CodeNode } from "@lexical/code";
 import { HorizontalRuleNode } from "@lexical/react/LexicalHorizontalRuleNode";
+import { ImmutableStorage } from "@/liveblocks.config";
 
 // Wrap your Lexical config with `liveblocksConfig`
 const initialConfig = liveblocksConfig({
@@ -50,36 +51,27 @@ export function Editor({
   storageFallback,
 }: {
   contentFallback: ReactNode;
-  storageFallback: any;
+  storageFallback: ImmutableStorage;
 }) {
-  return (
-    <ClientSideSuspense
-      fallback={
-        <div className="select-none cursor-wait editor-styles">
-          <div className="block w-full text-2xl font-bold my-6">
-            {storageFallback.meta.title}
-          </div>
-          {contentFallback}
-        </div>
-      }
-    >
-      <LexicalEditor contentFallback={contentFallback} />
-    </ClientSideSuspense>
-  );
-}
-
-function LexicalEditor({ contentFallback }: { contentFallback: ReactNode }) {
-  const status = useEditorStatus();
+  const ready = useIsEditorReady();
 
   return (
     <LexicalComposer initialConfig={initialConfig}>
       <div className="">
         <div className="my-6">
-          <EditorTitle />
+          <ClientSideSuspense
+            fallback={
+              <div className="block w-full text-2xl font-bold my-6">
+                {storageFallback.meta.title}
+              </div>
+            }
+          >
+            <EditorTitle />
+          </ClientSideSuspense>
         </div>
         <div className="relative">
           <LiveblocksPlugin>
-            {status === "not-loaded" || status === "loading" ? (
+            {!ready ? (
               <div className="select-none cursor-wait editor-styles">
                 {contentFallback}
               </div>

@@ -828,9 +828,70 @@ the displayed version.
 
 ## Hooks
 
+### useIsEditorReady
+
+Used to check if the editor content has been loaded or not, helpful for
+displaying a loading skeleton.
+
+```ts
+import { useIsEditorReady } from "@liveblocks/react-lexical";
+
+const status = useIsEditorReady();
+```
+
+Here’s how it can be used in the context of your editor.
+
+```tsx
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+import {
+  liveblocksConfig,
+  LiveblocksPlugin,
+  // +++
+  useIsEditorReady,
+  // +++
+} from "@liveblocks/react-lexical";
+
+const initialConfig = liveblocksConfig({
+  namespace: "MyEditor",
+  theme: {},
+  nodes: [],
+  onError: (err) => console.error(err),
+});
+
+function Editor() {
+  // +++
+  const ready = useIsEditorReady();
+  // +++
+
+  return (
+    <LexicalComposer initialConfig={initialConfig}>
+      <LiveblocksPlugin>
+        <FloatingThreads />
+        <FloatingComposer />
+        <AnchoredThreads />
+      </LiveblocksPlugin>
+      // +++
+      {!ready ? (
+        <div>Loading...</div>
+      ) : (
+        <RichTextPlugin
+          contentEditable={<ContentEditable />}
+          placeholder={<div>Enter some text...</div>}
+          ErrorBoundary={LexicalErrorBoundary}
+        />
+      )}
+      // +++
+    </LexicalComposer>
+  );
+}
+```
+
 ### useEditorStatus
 
-<Banner title={<>Deprecated</>}>
+<Banner title="Deprecated">
 
 Deprecated. Starting with 2.12.0, we recommend using [`useSyncStatus`][] instead
 for tracking sync status, because it will reflect sync status of all parts of
@@ -897,3 +958,4 @@ learn how to do this under
 [`FloatingThreads`]: #FloatingThreads
 [`AnchoredThreads`]: #AnchoredThreads
 [`ClientSideSuspense`]: /docs/api-reference/liveblocks-react#ClientSideSuspense
+[`useSyncStatus`]: /docs/api-reference/liveblocks-react#useSyncStatus
