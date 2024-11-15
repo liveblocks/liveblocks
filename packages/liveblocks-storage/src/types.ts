@@ -1,24 +1,26 @@
+import type { LayeredCache } from "./LayeredCache.js";
 import type { Json } from "./lib/Json.js";
-
-declare const brand: unique symbol;
-export type Brand<T, TBrand extends string> = T & { [brand]: TBrand };
+import type { Brand } from "./ts-toolkit.js";
 
 // XXX OpId should really be a Lamport timestamp, ie a [actor, clock] tuple
 export type OpId = Brand<string, "OpId">;
+
 export type Op = readonly [id: OpId, name: string, args: readonly Json[]];
+
 export type Delta = readonly [
   id: OpId,
   rem: readonly string[],
   add: readonly [key: string, value: Json][],
 ]; // Eventually, we'll need to compress this
 
-export type OmitFirstArg<F> = F extends (
-  first: unknown,
-  ...args: infer A
-) => infer R
-  ? (...args: A) => R
-  : never;
+export type ClientMsg = Op;
 
-export type ChangeReturnType<F, T> = F extends (...args: infer A) => unknown
-  ? (...args: A) => T
-  : never;
+export type ServerMsg = Delta;
+
+export type Mutation = (
+  stub: LayeredCache,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ...args: readonly any[]
+) => void;
+
+export type Mutations = Record<string, Mutation>;
