@@ -1,5 +1,4 @@
 import type { Json } from "~/lib/Json.js";
-import type { Stub } from "./LayeredCache.js";
 import { LayeredCache } from "./LayeredCache.js";
 import type {
   ChangeReturnType,
@@ -14,7 +13,7 @@ import { opId, raise } from "./utils.js";
 export type Store = Map<string, Json>;
 
 export type Mutations = Record<string, Mutation>;
-export type Mutation = (stub: Stub, ...args: readonly any[]) => void;
+export type Mutation = (stub: LayeredCache, ...args: readonly any[]) => void;
 
 type BoundMutations<M extends Record<string, Mutation>> = {
   [K in keyof M]: ChangeReturnType<OmitFirstArg<M[K]>, OpId>;
