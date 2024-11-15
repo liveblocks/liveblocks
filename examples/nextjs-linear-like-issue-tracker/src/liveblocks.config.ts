@@ -1,4 +1,4 @@
-import { LiveList, LiveObject } from "@liveblocks/core";
+import { LiveList, LiveObject, ToImmutable } from "@liveblocks/client";
 import { Metadata, PriorityState, ProgressState } from "@/config";
 
 declare global {
@@ -30,3 +30,5 @@ declare global {
     };
   }
 }
+
+export type ImmutableStorage = ToImmutable<Liveblocks["Storage"]>;

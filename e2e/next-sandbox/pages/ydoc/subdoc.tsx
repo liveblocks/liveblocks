@@ -1,5 +1,5 @@
 import type { BaseUserMeta } from "@liveblocks/core";
-import { createRoomContext } from "@liveblocks/react";
+import { createRoomContext, useSyncStatus } from "@liveblocks/react";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import * as Y from "yjs";
@@ -31,6 +31,7 @@ function Sandbox() {
   const [subdocContent, setSubdocContent] = useState<Record<string, string>>(
     {}
   );
+  const syncStatus = useSyncStatus({ smooth: true });
   const [synced, setSynced] = useState(false);
   const [provider, setProvider] =
     useState<LiveblocksYjsProvider<never, never, BaseUserMeta, never, never>>();
@@ -117,6 +118,7 @@ function Sandbox() {
             value={JSON.stringify(subdocContent)}
           />
           <Row id="sync" name="Root Doc Synced" value={synced} />
+          <Row id="syncStatus" name="Sync status" value={syncStatus} />
         </tbody>
       </table>
     </div>

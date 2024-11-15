@@ -30,7 +30,7 @@ import type {
 import { CrdtType } from "../protocol/SerializedCrdt";
 import type { ServerMsg } from "../protocol/ServerMsg";
 import { ServerMsgCode } from "../protocol/ServerMsg";
-import type { Room, RoomDelegates } from "../room";
+import type { Room, RoomDelegates, SyncSource } from "../room";
 import { createRoom } from "../room";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
 import {
@@ -100,6 +100,13 @@ export const THIRD_POSITION = makePosition(SECOND_POSITION);
 export const FOURTH_POSITION = makePosition(THIRD_POSITION);
 export const FIFTH_POSITION = makePosition(FOURTH_POSITION);
 
+export function makeSyncSource(): SyncSource {
+  return {
+    setSyncStatus: () => {},
+    destroy: () => {},
+  };
+}
+
 function makeRoomConfig(mockedDelegates: RoomDelegates) {
   return {
     delegates: mockedDelegates,
@@ -115,6 +122,9 @@ function makeRoomConfig(mockedDelegates: RoomDelegates) {
     },
     baseUrl: DEFAULT_BASE_URL,
     enableDebugLogging: false,
+
+    // Not used in unit tests (yet)
+    createSyncSource: makeSyncSource,
   };
 }
 
