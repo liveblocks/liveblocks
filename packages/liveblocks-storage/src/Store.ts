@@ -1,18 +1,10 @@
 import type { Json } from "~/lib/Json.js";
 
 import { LayeredCache } from "./LayeredCache.js";
-import type { ChangeReturnType, OmitFirstArg } from "./ts-toolkit.js";
-import type { Delta, Mutation, Mutations, Op, OpId } from "./types.js";
-import { opId, raise } from "./utils.js";
+import type { Delta, Mutations, Op } from "./types.js";
+import { raise } from "./utils.js";
 
-// XXX This is a type that should only be in the Client
-type BoundMutations<M extends Record<string, Mutation>> = {
-  [K in keyof M]: ChangeReturnType<OmitFirstArg<M[K]>, OpId>;
-};
-
-// ----------------------------------------------------------------------------
-
-abstract class Store<M extends Mutations> {
+export class Store<M extends Mutations> {
   // XXX Possibly combine LayeredCache and merge it with Store?
   #cache: LayeredCache;
   #mutations: M;
@@ -28,7 +20,7 @@ abstract class Store<M extends Mutations> {
    * Used by unit tests only to observe the cache contents.
    * @internal
    */
-  asObject() {
+  asObject(): Record<string, Json> {
     return Object.fromEntries(this.#cache);
   }
 
@@ -52,22 +44,10 @@ abstract class Store<M extends Mutations> {
       for (const [key, value] of updates) {
         cache.set(key, value);
       }
-
-      // Acknowledge the incoming opId by removing it from the pending ops list.
-      // If this opId is not found, it's from another client.
-      this.ack(opId);
     }
 
     // Start a new snapshot
     cache.snapshot();
-
-    // Apply all local pending ops
-    this.applyPendingOps();
-  }
-
-  // For convenience in unit tests
-  applyDelta(delta: Delta): void {
-    this.applyDeltas([delta]);
   }
 
   /**
@@ -79,6 +59,7 @@ abstract class Store<M extends Mutations> {
    * On the Client, this is called whenever a local mutation is done, or when
    * a local mutation is replayed after an authoritative delta from the Server.
    */
+  // XXX Rename to runMutator?
   applyOp(op: Op): Delta {
     const [id, name, args] = op;
     const mutationFn =
@@ -97,66 +78,4 @@ abstract class Store<M extends Mutations> {
       throw e;
     }
   }
-
-  protected ack(_opId: OpId): void {
-    // Ack is a no-op in the base class
-  }
-
-  protected applyPendingOps(): void {
-    // Applying pending ops is a no-op in the base class
-  }
 }
-
-// XXX This should be removed and just become "Store"
-export class ClientStore<M extends Mutations> extends Store<M> {
-  // readonly events = {
-  //   deltas: makeEventSource(),
-  // };
-
-  // #eventSource: EventSource<Op>;
-  #pendingOps: Op[];
-
-  mutate: BoundMutations<M>;
-  // onEmitOp: Observable<Op>;
-
-  constructor(mutations: M) {
-    super(mutations);
-
-    this.#pendingOps = [];
-
-    // Bind all given mutation functions to this instance
-    this.mutate = {} as BoundMutations<M>;
-    for (const name of Object.keys(mutations)) {
-      /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-      /* eslint-disable @typescript-eslint/no-explicit-any */
-      this.mutate[name as keyof M] = ((...args: Json[]): OpId => {
-        const id = opId();
-        const op: Op = [id, name, args];
-        this.#pendingOps.push(op);
-        this.applyOp(op);
-        // this.#eventSource.notify(op);
-        return id;
-      }) as any;
-      /* eslint-enable @typescript-eslint/no-explicit-any */
-      /* eslint-enable @typescript-eslint/no-unsafe-assignment */
-    }
-
-    // this.onEmitOp = this.#eventSource.observable;
-  }
-
-  protected ack(opId: OpId): void {
-    const index = this.#pendingOps.findIndex(([id]) => id === opId);
-    if (index >= 0) {
-      this.#pendingOps.splice(index, 1);
-    }
-  }
-
-  protected applyPendingOps(): void {
-    for (const pendingOp of this.#pendingOps) {
-      this.applyOp(pendingOp);
-    }
-  }
-}
-
-// XXX This should be removed and just become "Store"
-export class ServerStore<M extends Mutations> extends Store<M> {}

@@ -1,6 +1,12 @@
 import type { LayeredCache } from "./LayeredCache.js";
+import type { Observable } from "./lib/EventSource.js";
 import type { Json } from "./lib/Json.js";
 import type { Brand } from "./ts-toolkit.js";
+
+export type Socket<In, Out> = {
+  send: (data: Out) => void;
+  recv: Observable<In>;
+};
 
 // XXX OpId should really be a Lamport timestamp, ie a [actor, clock] tuple
 export type OpId = Brand<string, "OpId">;

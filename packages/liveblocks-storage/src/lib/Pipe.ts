@@ -25,6 +25,8 @@ export type Pipe<T> = {
   flush(): Promise<void>;
 };
 
+export type DualPipe<T, V> = [Pipe<T>, Pipe<V>];
+
 export function makePipe<T>(): Pipe<T> {
   let mode: "auto" | "manual" = "auto";
 
@@ -36,7 +38,7 @@ export function makePipe<T>(): Pipe<T> {
   // That's why it's important to close every test with an
   // `await pipe.flush()`, and await all those promises!
   function send(input: T) {
-    buffer.push(input);
+    buffer.push(input); // XXX Serialize to JSON string to ensure we're never sending any in-memory values!
 
     if (mode === "auto" && !pendingFlush$) {
       void flush();
