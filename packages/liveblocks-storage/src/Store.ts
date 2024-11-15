@@ -5,7 +5,7 @@ import type { Delta, Mutations, Op } from "./types.js";
 import { raise } from "./utils.js";
 
 export class Store<M extends Mutations> {
-  // XXX Possibly combine LayeredCache and merge it with Store?
+  // TODO Possibly combine LayeredCache and merge it with Store?
   #cache: LayeredCache;
   #mutations: M;
 
@@ -37,7 +37,7 @@ export class Store<M extends Mutations> {
 
     for (const delta of deltas) {
       // Apply authoritative delta
-      const [opId, deletions, updates] = delta;
+      const [, deletions, updates] = delta;
       for (const key of deletions) {
         cache.delete(key);
       }
