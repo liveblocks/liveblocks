@@ -32,7 +32,7 @@ export class Server<M extends Mutations> {
 
   // XXX This method should be removed from the Server!!!!!!!!!!!!!!!!!!!
   applyOp(op: Op): Delta {
-    return this.#store.applyOp(op);
+    return this.#store.applyOp(op, true);
   }
 
   connect(clientSocket: Socket<ServerMsg, ClientMsg>): Callback<void> {
@@ -59,7 +59,7 @@ export class Server<M extends Mutations> {
   // XXX Rename recvClientMsg?
   handle(message: ClientMsg): void {
     const op: Op = message;
-    const delta = this.#store.applyOp(op);
+    const delta = this.#store.applyOp(op, true);
 
     // Fan-out delta to all connected clients
     for (const session of this.#sessions) {
