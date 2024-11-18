@@ -1,3 +1,9 @@
+## 2.12.1 (Not published yet)
+
+### `@liveblocks/react-ui`
+
+- Prevent unsupported attachment previews from loading infinitely.
+
 ## 2.12.0
 
 This release adds support for tracking synchronization status of pending local

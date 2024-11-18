@@ -121,8 +121,10 @@ const AttachmentFileIcon = memo(({ mimeType }: { mimeType: string }) => {
 
 function AttachmentImagePreview({
   attachment,
+  markPreviewAsUnsupported,
 }: {
   attachment: CommentMixedAttachment;
+  markPreviewAsUnsupported: () => void;
 }) {
   const { url } = useAttachmentUrl(attachment.id);
   const [isLoaded, setLoaded] = useState(false);
@@ -139,7 +141,12 @@ function AttachmentImagePreview({
           className="lb-attachment-preview-media"
           data-hidden={!isLoaded ? "" : undefined}
         >
-          <img src={url} loading="lazy" onLoad={handleLoad} />
+          <img
+            src={url}
+            loading="lazy"
+            onLoad={handleLoad}
+            onError={markPreviewAsUnsupported}
+          />
         </div>
       ) : null}
     </>
@@ -148,8 +155,10 @@ function AttachmentImagePreview({
 
 function AttachmentVideoPreview({
   attachment,
+  markPreviewAsUnsupported,
 }: {
   attachment: CommentMixedAttachment;
+  markPreviewAsUnsupported: () => void;
 }) {
   const { url } = useAttachmentUrl(attachment.id);
   const [isLoaded, setLoaded] = useState(false);
@@ -166,7 +175,11 @@ function AttachmentVideoPreview({
           className="lb-attachment-preview-media"
           data-hidden={!isLoaded ? "" : undefined}
         >
-          <video src={url} onLoadedData={handleLoad} />
+          <video
+            src={url}
+            onLoadedData={handleLoad}
+            onError={markPreviewAsUnsupported}
+          />
         </div>
       ) : null}
     </>
@@ -180,22 +193,38 @@ function AttachmentPreview({
   attachment: CommentMixedAttachment;
   allowMediaPreview?: boolean;
 }) {
+  const [isUnsupportedPreview, setUnsupportedPreview] = useState(false);
   const isInsideRoom = useIsInsideRoom();
   const isUploaded =
     attachment.type === "attachment" || attachment.status === "uploaded";
 
+  function markPreviewAsUnsupported() {
+    setUnsupportedPreview(true);
+  }
+
   if (
+    !isUnsupportedPreview &&
     allowMediaPreview &&
     isUploaded &&
     isInsideRoom &&
     attachment.size <= MAX_DISPLAYED_MEDIA_SIZE
   ) {
     if (attachment.mimeType.startsWith("image/")) {
-      return <AttachmentImagePreview attachment={attachment} />;
+      return (
+        <AttachmentImagePreview
+          attachment={attachment}
+          markPreviewAsUnsupported={markPreviewAsUnsupported}
+        />
+      );
     }
 
     if (attachment.mimeType.startsWith("video/")) {
-      return <AttachmentVideoPreview attachment={attachment} />;
+      return (
+        <AttachmentVideoPreview
+          attachment={attachment}
+          markPreviewAsUnsupported={markPreviewAsUnsupported}
+        />
+      );
     }
   }
 
