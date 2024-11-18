@@ -59,6 +59,11 @@ export class Client<M extends Mutations> {
     readonly onLocalMutation: Observable<void>;
   };
 
+  debug(): void {
+    this.#_log = (...args) =>
+      console.log(`[client ${this.#_debugClientId}]`, ...args);
+  }
+
   constructor(mutations: M) {
     this.#store = new Store(mutations);
     this.#pendingOps = new Map();
@@ -70,10 +75,6 @@ export class Client<M extends Mutations> {
     this.events = {
       onLocalMutation: this.#events.onLocalMutation.observable,
     };
-
-    this.#_log = DEBUG
-      ? (...args) => console.log(`[client ${this.#_debugClientId}]`, ...args)
-      : undefined;
 
     this.mutate = {} as BoundMutations<M>;
     for (const name of Object.keys(mutations)) {
@@ -96,6 +97,8 @@ export class Client<M extends Mutations> {
       }) as any;
       /* eslint-enable @typescript-eslint/no-explicit-any */
       /* eslint-enable @typescript-eslint/no-unsafe-assignment */
+
+      if (DEBUG) this.debug();
     }
   }
 
@@ -124,9 +127,13 @@ export class Client<M extends Mutations> {
     // First, let's immediately remove acknowledged pending local Ops
     // Acknowledge the incoming opId by removing it from the pending ops list.
     // If this opId is not found, it's from another client.
+    this.#_log?.("deltas =", deltas);
+    this.#_log?.("(before) pendingOps size =", this.#pendingOps.size);
     for (const [opId] of deltas) {
+      this.#_log?.(`looping over ${opId}`);
       this.#pendingOps.delete(opId);
     }
+    this.#_log?.("(after) pendingOps size =", this.#pendingOps.size);
 
     this.#store.applyDeltas(deltas);
 
