@@ -32,6 +32,7 @@ export const nanoid = (t = 21): string =>
       ""
     );
 
+// XXX This should become a Lamport timestamp eventually!
 export function opId(): OpId {
   return nanoid(7) as OpId;
 }

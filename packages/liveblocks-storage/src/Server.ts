@@ -32,9 +32,11 @@ export class Server {
     this.#sessions = new Set();
     this.#store = new Store(mutations);
 
-    this.#_log = DEBUG
-      ? (...args) => console.log("[server]", ...args)
-      : undefined;
+    if (DEBUG) this.debug();
+  }
+
+  debug(): void {
+    this.#_log = (...args) => console.log("[server]", ...args);
   }
 
   // XXX This method should be removed from the Server!!!!!!!!!!!!!!!!!!!
@@ -68,12 +70,29 @@ export class Server {
     this.#_log?.(`IN (from ${curr.actor})`, message);
 
     const op: Op = message;
-    const delta = this.#store.applyOp(op, true);
+    const result = this.#tryApplyOp(op);
 
-    // Fan-out delta to all connected clients
-    for (const session of this.#sessions) {
-      this.#_log?.("OUT", delta);
-      session.socket.send(delta);
+    if (result.ok) {
+      // Fan-out delta to all connected clients
+      for (const session of this.#sessions) {
+        this.#_log?.(`OUT (to ${session.actor})`, result.delta);
+        session.socket.send(result.delta);
+      }
+    } else {
+      // Send error/ack back to origin
+      const ack: Delta = [op[0], [], []];
+      this.#_log?.(`OUT (to ${curr.actor})`, ack);
+      curr.socket.send(ack);
+    }
+  }
+
+  #tryApplyOp(
+    op: Op
+  ): { ok: true; delta: Delta } | { ok: false; error: string } {
+    try {
+      return { ok: true, delta: this.#store.applyOp(op, true) };
+    } catch (e) {
+      return { ok: false, error: (e as Error).message || String(e) };
     }
   }
 
