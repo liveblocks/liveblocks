@@ -3,17 +3,21 @@
 import { onTestFinished } from "vitest";
 
 import { Client, Server } from "~/index.js";
-import type { LayeredCache } from "~/LayeredCache.js";
+import { LayeredCache } from "~/LayeredCache.js";
 import type { Json } from "~/lib/Json.js";
 import { makePipe } from "~/lib/Pipe.js";
 import type { ClientMsg, Mutations, ServerMsg, Socket } from "~/types.js";
 
 export function fmt(
   /* eslint-disable @typescript-eslint/no-explicit-any */
-  base: Client<any> | Server<any> | LayeredCache
+  value: Client<any> | Server<any> | LayeredCache
   /* eslint-enable @typescript-eslint/no-explicit-any */
 ): Record<string, Json> {
-  return "toObj" in base ? base.toObj() : Object.fromEntries(base);
+  if (value instanceof LayeredCache) {
+    return Object.fromEntries(value);
+  } else {
+    return value.data;
+  }
 }
 
 export function size(cache: LayeredCache): number {
