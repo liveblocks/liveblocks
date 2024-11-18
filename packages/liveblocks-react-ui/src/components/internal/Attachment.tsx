@@ -121,10 +121,10 @@ const AttachmentFileIcon = memo(({ mimeType }: { mimeType: string }) => {
 
 function AttachmentImagePreview({
   attachment,
-  markAsPreviewError,
+  markPreviewAsUnsupported,
 }: {
   attachment: CommentMixedAttachment;
-  markAsPreviewError: () => void;
+  markPreviewAsUnsupported: () => void;
 }) {
   const { url } = useAttachmentUrl(attachment.id);
   const [isLoaded, setLoaded] = useState(false);
@@ -145,7 +145,7 @@ function AttachmentImagePreview({
             src={url}
             loading="lazy"
             onLoad={handleLoad}
-            onError={markAsPreviewError}
+            onError={markPreviewAsUnsupported}
           />
         </div>
       ) : null}
@@ -155,10 +155,10 @@ function AttachmentImagePreview({
 
 function AttachmentVideoPreview({
   attachment,
-  markAsPreviewError,
+  markPreviewAsUnsupported,
 }: {
   attachment: CommentMixedAttachment;
-  markAsPreviewError: () => void;
+  markPreviewAsUnsupported: () => void;
 }) {
   const { url } = useAttachmentUrl(attachment.id);
   const [isLoaded, setLoaded] = useState(false);
@@ -178,7 +178,7 @@ function AttachmentVideoPreview({
           <video
             src={url}
             onLoadedData={handleLoad}
-            onError={markAsPreviewError}
+            onError={markPreviewAsUnsupported}
           />
         </div>
       ) : null}
@@ -189,17 +189,21 @@ function AttachmentVideoPreview({
 function AttachmentPreview({
   attachment,
   allowMediaPreview = true,
-  markAsPreviewError,
 }: {
   attachment: CommentMixedAttachment;
-  markAsPreviewError: () => void;
   allowMediaPreview?: boolean;
 }) {
+  const [isUnsupportedPreview, setUnsupportedPreview] = useState(false);
   const isInsideRoom = useIsInsideRoom();
   const isUploaded =
     attachment.type === "attachment" || attachment.status === "uploaded";
 
+  const markPreviewAsUnsupported = useCallback(() => {
+    setUnsupportedPreview(true);
+  }, []);
+
   if (
+    !isUnsupportedPreview &&
     allowMediaPreview &&
     isUploaded &&
     isInsideRoom &&
@@ -209,7 +213,7 @@ function AttachmentPreview({
       return (
         <AttachmentImagePreview
           attachment={attachment}
-          markAsPreviewError={markAsPreviewError}
+          markPreviewAsUnsupported={markPreviewAsUnsupported}
         />
       );
     }
@@ -218,7 +222,7 @@ function AttachmentPreview({
       return (
         <AttachmentVideoPreview
           attachment={attachment}
-          markAsPreviewError={markAsPreviewError}
+          markPreviewAsUnsupported={markPreviewAsUnsupported}
         />
       );
     }
@@ -332,18 +336,8 @@ export function MediaAttachment({
   onKeyDown,
   ...props
 }: AttachmentProps) {
-  const {
-    isUploading,
-    isError: isUploadError,
-    description,
-    deleteLabel,
-  } = useAttachmentContent(attachment, overrides);
-  const [isPreviewError, setIsPreviewError] = useState(false);
-  const isError = isUploadError || isPreviewError;
-
-  const markAsPreviewError = useCallback(() => {
-    setIsPreviewError(true);
-  }, []);
+  const { isUploading, isError, description, deleteLabel } =
+    useAttachmentContent(attachment, overrides);
 
   const handleDeletePointerDown = useCallback(
     (event: PointerEvent<HTMLButtonElement>) => {
@@ -375,7 +369,6 @@ export function MediaAttachment({
           <AttachmentPreview
             attachment={attachment}
             allowMediaPreview={allowMediaPreview}
-            markAsPreviewError={markAsPreviewError}
           />
         )}
       </div>
@@ -412,18 +405,8 @@ export function FileAttachment({
   onKeyDown,
   ...props
 }: AttachmentProps) {
-  const {
-    isUploading,
-    isError: isUploadError,
-    description,
-    deleteLabel,
-  } = useAttachmentContent(attachment, overrides);
-  const [isPreviewError, setIsPreviewError] = useState(false);
-  const isError = isUploadError || isPreviewError;
-
-  const markAsPreviewError = useCallback(() => {
-    setIsPreviewError(true);
-  }, []);
+  const { isUploading, isError, description, deleteLabel } =
+    useAttachmentContent(attachment, overrides);
 
   const handleDeletePointerDown = useCallback(
     (event: PointerEvent<HTMLButtonElement>) => {
@@ -452,10 +435,7 @@ export function FileAttachment({
         ) : isError ? (
           <WarningIcon />
         ) : (
-          <AttachmentPreview
-            attachment={attachment}
-            markAsPreviewError={markAsPreviewError}
-          />
+          <AttachmentPreview attachment={attachment} />
         )}
       </div>
       <div className="lb-attachment-details">
