@@ -763,14 +763,14 @@ export async function POST(request: Request) {
   <PropertiesListItem name="options.styles" type="object">
     [Learn more](#prepare-thread-notification-email-as-html-styling-components).
   </PropertiesListItem>
-  <PropertiesListItem name="options.styles.container" type="CSSProperties">
-    Inline styles to apply to the comment body container.
-  </PropertiesListItem>
   <PropertiesListItem name="options.styles.paragraph" type="CSSProperties">
     Inline styles to apply to the paragraph block.
   </PropertiesListItem>
-  <PropertiesListItem name="options.styles.text" type="CSSProperties">
-    Inline styles to apply to the text element.
+  <PropertiesListItem name="options.styles.code" type="CSSProperties">
+    Inline styles to apply to the code element.
+  </PropertiesListItem>
+  <PropertiesListItem name="options.styles.strong" type="CSSProperties">
+    Inline styles to apply to the strong element.
   </PropertiesListItem>
   <PropertiesListItem name="options.styles.link" type="CSSProperties">
     Inline styles to apply to the link element.
@@ -826,7 +826,7 @@ console.log(emailData.roomInfo);
 
 Each element in the comment body can be styled with custom CSS properties, if
 you would like to change the appearance. Five elements are available:
-`container`, `paragraph`, `text`, `link`, `mention`.
+`paragraph`, `stront`, `code`, `link`, `mention`.
 
 ```tsx
 const emailData = await prepareThreadNotificationEmailAsHtml(
@@ -1328,7 +1328,7 @@ export async function POST(request: Request) {
   </PropertiesListItem>
   <PropertiesListItem name="options.styles" type="object">
     Pass CSS properties to style the different HTML elements in the mention
-    content . Four elements can be styled: `container`, `strong`, `code`, and,
+    content. Four elements can be styled: `container`, `strong`, `code`, and,
     `mention`. [Learn
     more](#prepare-text-mention-notification-email-as-react-styling-elements).
   </PropertiesListItem>
