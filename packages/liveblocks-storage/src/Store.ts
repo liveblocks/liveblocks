@@ -20,7 +20,7 @@ export class Store<M extends Mutations> {
    * Used by unit tests only to observe the cache contents.
    * @internal
    */
-  asObject(): Record<string, Json> {
+  toObj(): Record<string, Json> {
     return Object.fromEntries(this.#cache);
   }
 

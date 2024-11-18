@@ -72,5 +72,5 @@ export class Server<M extends Mutations> {
   }
 
   // For convenience in unit tests only --------------------------------
-  asObject(): Record<string, Json> { return this.#store.asObject(); } // prettier-ignore
+  toObj(): Record<string, Json> { return this.#store.toObj(); } // prettier-ignore
 }

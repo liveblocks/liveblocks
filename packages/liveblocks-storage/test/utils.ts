@@ -13,7 +13,7 @@ export function fmt(
   base: Client<any> | Server<any> | LayeredCache
   /* eslint-enable @typescript-eslint/no-explicit-any */
 ): Record<string, Json> {
-  return "asObject" in base ? base.asObject() : Object.fromEntries(base);
+  return "toObj" in base ? base.toObj() : Object.fromEntries(base);
 }
 
 export function size(cache: LayeredCache): number {
