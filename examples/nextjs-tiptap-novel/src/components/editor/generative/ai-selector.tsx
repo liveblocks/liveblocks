@@ -1,6 +1,6 @@
 "use client";
 
-import { Command, CommandInput } from "@/components/Editor/ui/command";
+import { Command, CommandInput } from "@/components/editor/ui/command";
 
 import { useCompletion } from "ai/react";
 import { ArrowUp } from "lucide-react";

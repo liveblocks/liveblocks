@@ -5,8 +5,8 @@ import type { DialogProps } from "@radix-ui/react-dialog";
 import { Command as CommandPrimitive } from "cmdk";
 
 import { cn } from "@/lib/utils";
-import { Dialog, DialogContent } from "@/components/Editor/ui/dialog";
-import Magic from "@/components/Editor/ui/icons/magic";
+import { Dialog, DialogContent } from "@/components/editor/ui/dialog";
+import Magic from "@/components/editor/ui/icons/magic";
 
 const Command = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive>,
