@@ -5,7 +5,7 @@ import type { Delta, Mutations, Op } from "./types.js";
 import { raise } from "./utils.js";
 
 function* iterPairs(
-  items: (string | Json)[]
+  items: readonly (string | Json)[]
 ): IterableIterator<[key: string, value: Json]> {
   for (let i = 0; i < items.length; i += 2) {
     const key = items[i]!;

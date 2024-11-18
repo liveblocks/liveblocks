@@ -9,6 +9,12 @@ export function del(root: LayeredCache, key: string): void {
   root.delete(key);
 }
 
+export function clear(root: LayeredCache): void {
+  for (const key of root.keys()) {
+    root.delete(key);
+  }
+}
+
 export function putRandom(root: LayeredCache, key: string): void {
   root.set(key, Math.floor(Math.random() * 1_000_000));
 }
