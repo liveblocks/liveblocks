@@ -1,3 +1,4 @@
+import { getBearerTokenFromAuthValue, type RoomHttpApi } from "./api-client";
 import type { AuthManager, AuthValue } from "./auth-manager";
 import type { InternalSyncStatus } from "./client";
 import type {
@@ -21,7 +22,6 @@ import { LiveObject } from "./crdts/LiveObject";
 import type { LiveNode, LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
 import type { DE, DM, DP, DS, DU } from "./globals/augmentation";
-import { getBearerTokenFromAuthValue, type RoomHttpApi } from "./http-client";
 import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
 import type { BatchStore } from "./lib/batch";
@@ -1606,13 +1606,6 @@ export function createRoom<
   // TODO: Ideally we would consolidate these two.
   //
 
-  function getAuthValue() {
-    if (managedSocket.authValue === null) {
-      raise("Not authorized");
-    }
-    return Promise.resolve(managedSocket.authValue);
-  }
-
   const roomId = config.roomId;
 
   async function createTextMention(userId: string, mentionId: string) {
@@ -1656,7 +1649,7 @@ export function createRoom<
       const size = new TextEncoder().encode(serializedPayload).length;
       if (size > MAX_SOCKET_MESSAGE_SIZE) {
         void httpClient
-          .sendMessages<P, E>({ roomId, nonce, messages, getAuthValue })
+          .sendMessages<P, E>({ roomId, nonce, messages })
           .then((resp) => {
             if (!resp.ok && resp.status === 403) {
               managedSocket.reconnect();
@@ -2481,7 +2474,7 @@ export function createRoom<
   async function streamStorage() {
     // TODO: Handle potential race conditions where the room get disconnected while the request is pending
     if (!managedSocket.authValue) return;
-    const items = await httpClient.streamStorage({ roomId, getAuthValue });
+    const items = await httpClient.streamStorage({ roomId });
     processInitialStorage({ type: ServerMsgCode.INITIAL_STORAGE_STATE, items });
   }
 

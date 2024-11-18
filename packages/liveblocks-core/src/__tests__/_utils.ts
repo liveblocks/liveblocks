@@ -1,9 +1,9 @@
+import { createApiClient } from "../api-client";
 import { createAuthManager } from "../auth-manager";
 import { DEFAULT_BASE_URL } from "../constants";
 import type { LiveObject } from "../crdts/LiveObject";
 import type { LsonObject } from "../crdts/Lson";
 import type { ToImmutable } from "../crdts/utils";
-import { createLiveblocksApiClient } from "../http-client";
 import { kInternal } from "../internal";
 import type { Json, JsonObject } from "../lib/Json";
 import { makePosition } from "../lib/position";
@@ -121,7 +121,7 @@ function makeRoomConfig<M extends BaseMetadata>(
     },
     baseUrl: DEFAULT_BASE_URL,
     enableDebugLogging: false,
-    roomHttpClient: createLiveblocksApiClient({
+    roomHttpClient: createApiClient({
       baseUrl: DEFAULT_BASE_URL,
       fetchPolyfill: globalThis.fetch?.bind(globalThis),
       authManager: createAuthManager({

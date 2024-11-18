@@ -1,11 +1,11 @@
+import type { LiveblocksHttpApi } from "./api-client";
+import { createApiClient } from "./api-client";
 import { createAuthManager } from "./auth-manager";
 import { isIdle } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
 import type { LsonObject } from "./crdts/Lson";
 import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import type { DE, DM, DP, DRI, DS, DU } from "./globals/augmentation";
-import type { ClientHttpApi } from "./http-client";
-import { createLiveblocksApiClient } from "./http-client";
 import { kInternal } from "./internal";
 import type { BatchStore } from "./lib/batch";
 import { Batch, createBatchStore } from "./lib/batch";
@@ -161,7 +161,7 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
   readonly usersStore: BatchStore<U["info"] | undefined, string>;
   readonly roomsInfoStore: BatchStore<DRI | undefined, string>;
   readonly getRoomIds: () => string[];
-  readonly httpClient: ClientHttpApi<M>;
+  readonly httpClient: LiveblocksHttpApi<M>;
   // Type-level helper
   as<M2 extends BaseMetadata>(): Client<U, M2>;
   // Tracking pending changes globally
@@ -532,7 +532,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     clientOptions.polyfills?.fetch ||
     /* istanbul ignore next */ globalThis.fetch?.bind(globalThis);
 
-  const httpClient = createLiveblocksApiClient({
+  const httpClient = createApiClient({
     baseUrl,
     fetchPolyfill,
     authManager,
@@ -639,7 +639,7 @@ export function createClient<U extends BaseUserMeta = DU>(
         baseUrl,
         unstable_fallbackToHTTP: !!clientOptions.unstable_fallbackToHTTP,
         unstable_streamData: !!clientOptions.unstable_streamData,
-        roomHttpClient: httpClient as ClientHttpApi<M>,
+        roomHttpClient: httpClient as LiveblocksHttpApi<M>,
         createSyncSource,
       }
     );

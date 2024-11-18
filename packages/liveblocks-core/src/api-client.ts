@@ -316,12 +316,10 @@ export interface RoomHttpApi<M extends BaseMetadata> {
 
   streamStorage(options: {
     roomId: string;
-    getAuthValue: () => Promise<AuthValue>;
   }): Promise<IdTuple<SerializedCrdt>[]>;
 
   sendMessages<P extends JsonObject, E extends Json>(options: {
     roomId: string;
-    getAuthValue: () => Promise<AuthValue>;
     nonce: string | undefined;
     messages: ClientMsg<P, E>[];
   }): Promise<Response>;
@@ -361,7 +359,7 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
   deleteInboxNotification(inboxNotificationId: string): Promise<void>;
 }
 
-export interface ClientHttpApi<M extends BaseMetadata>
+export interface LiveblocksHttpApi<M extends BaseMetadata>
   extends RoomHttpApi<M>,
     NotificationHttpApi<M> {
   getUserThreads_experimental(options?: {
@@ -395,7 +393,7 @@ export interface ClientHttpApi<M extends BaseMetadata>
   }>;
 }
 
-export function createLiveblocksApiClient<M extends BaseMetadata>({
+export function createApiClient<M extends BaseMetadata>({
   baseUrl,
   authManager,
   fetchPolyfill,
@@ -403,17 +401,7 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
   baseUrl: string;
   authManager: AuthManager;
   fetchPolyfill: typeof fetch;
-}): ClientHttpApi<M> {
-  async function getAuthValueForRoom(roomId: string) {
-    // TODO: Use the right scope
-    const authValue = await authManager.getAuthValue({
-      requestedScope: "comments:read",
-      roomId,
-    });
-
-    return authValue;
-  }
-
+}): LiveblocksHttpApi<M> {
   const httpClient = new HttpClient(baseUrl, fetchPolyfill);
 
   /* -------------------------------------------------------------------------------------------------
@@ -435,7 +423,10 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
       };
     }>(
       url`/v2/c/rooms/${options.roomId}/threads/delta`,
-      () => getAuthValueForRoom(options.roomId),
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      }),
       {
         since: options.since.toISOString(),
       },
@@ -487,7 +478,10 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
         };
       }>(
         url`/v2/c/rooms/${options.roomId}/threads`,
-        () => getAuthValueForRoom(options.roomId),
+        await authManager.getAuthValue({
+          requestedScope: "comments:read",
+          roomId: options.roomId,
+        }),
         {
           cursor: options.cursor,
           query,
@@ -542,7 +536,10 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
 
     const thread = await httpClient.post<ThreadDataPlain<M>>(
       url`/v2/c/rooms/${options.roomId}/threads`,
-      () => getAuthValueForRoom(options.roomId),
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      }),
       {
         id: threadId,
         comment: {
@@ -560,14 +557,20 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
   async function deleteThread(options: { roomId: string; threadId: string }) {
     await httpClient.delete(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}`,
-      () => getAuthValueForRoom(options.roomId)
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      })
     );
   }
 
   async function getThread(options: { roomId: string; threadId: string }) {
     const response = await httpClient.rawGet(
       url`/v2/c/rooms/${options.roomId}/thread-with-notification/${options.threadId}`,
-      () => getAuthValueForRoom(options.roomId)
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      })
     );
 
     if (response.ok) {
@@ -601,7 +604,10 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
   }) {
     return await httpClient.post<M>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/metadata`,
-      () => getAuthValueForRoom(options.roomId),
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      }),
       options.metadata
     );
   }
@@ -616,7 +622,10 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
     const commentId = options.commentId ?? createCommentId();
     const comment = await httpClient.post<CommentDataPlain>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments`,
-      () => getAuthValueForRoom(options.roomId),
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      }),
       {
         id: commentId,
         body: options.body,
@@ -635,7 +644,10 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
   }) {
     const comment = await httpClient.post<CommentDataPlain>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}`,
-      () => getAuthValueForRoom(options.roomId),
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      }),
       {
         body: options.body,
         attachmentIds: options.attachmentIds,
@@ -652,7 +664,10 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
   }) {
     await httpClient.delete(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}`,
-      () => getAuthValueForRoom(options.roomId)
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      })
     );
   }
 
@@ -664,7 +679,10 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
   }) {
     const reaction = await httpClient.post<CommentUserReactionPlain>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}/reactions`,
-      () => getAuthValueForRoom(options.roomId),
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      }),
       { emoji: options.emoji }
     );
 
@@ -679,7 +697,10 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
   }) {
     await httpClient.delete<CommentDataPlain>(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/comments/${options.commentId}/reactions/${options.emoji}`,
-      () => getAuthValueForRoom(options.roomId)
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      })
     );
   }
 
@@ -689,7 +710,10 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
   }) {
     await httpClient.post(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/mark-as-resolved`,
-      () => getAuthValueForRoom(options.roomId)
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      })
     );
   }
 
@@ -699,7 +723,10 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
   }) {
     await httpClient.post(
       url`/v2/c/rooms/${options.roomId}/threads/${options.threadId}/mark-as-unresolved`,
-      () => getAuthValueForRoom(options.roomId)
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      })
     );
   }
 
@@ -766,10 +793,13 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
     if (attachment.size <= ATTACHMENT_PART_SIZE) {
       // If the file is small enough, upload it in a single request
       return autoRetry(
-        () =>
+        async () =>
           httpClient.putBlob<CommentAttachment>(
             url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/upload/${encodeURIComponent(attachment.name)}`,
-            () => getAuthValueForRoom(roomId),
+            await authManager.getAuthValue({
+              requestedScope: "comments:read",
+              roomId,
+            }),
             attachment.file,
             { fileSize: attachment.size },
             { signal: abortSignal }
@@ -788,13 +818,16 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
 
       // Create a multi-part upload
       const createMultiPartUpload = await autoRetry(
-        () =>
+        async () =>
           httpClient.post<{
             uploadId: string;
             key: string;
           }>(
             url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/multipart/${encodeURIComponent(attachment.name)}`,
-            () => getAuthValueForRoom(roomId),
+            await authManager.getAuthValue({
+              requestedScope: "comments:read",
+              roomId,
+            }),
             undefined,
             { signal: abortSignal },
             { fileSize: attachment.size }
@@ -826,13 +859,16 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
           for (const { part, partNumber } of parts) {
             uploadedPartsPromises.push(
               autoRetry(
-                () =>
+                async () =>
                   httpClient.putBlob<{
                     partNumber: number;
                     etag: string;
                   }>(
                     url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/multipart/${createMultiPartUpload.uploadId}/${String(partNumber)}`,
-                    () => getAuthValueForRoom(roomId),
+                    await authManager.getAuthValue({
+                      requestedScope: "comments:read",
+                      roomId,
+                    }),
                     part,
                     undefined,
                     { signal: abortSignal }
@@ -859,7 +895,10 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
 
         return httpClient.post<CommentAttachment>(
           url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/multipart/${uploadId}/complete`,
-          () => getAuthValueForRoom(roomId),
+          await authManager.getAuthValue({
+            requestedScope: "comments:read",
+            roomId,
+          }),
           { parts: sortedUploadedParts },
           { signal: abortSignal }
         );
@@ -874,7 +913,10 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
             // Abort the multi-part upload if it was created
             await httpClient.rawDelete(
               url`/v2/c/rooms/${roomId}/attachments/${attachment.id}/multipart/${uploadId}`,
-              () => getAuthValueForRoom(roomId)
+              await authManager.getAuthValue({
+                requestedScope: "comments:read",
+                roomId,
+              })
             );
           } catch (error) {
             // Ignore the error, we are probably offline
@@ -903,7 +945,10 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
             urls: (string | null)[];
           }>(
             url`/v2/c/rooms/${roomId}/attachments/presigned-urls`,
-            () => getAuthValueForRoom(roomId),
+            await authManager.getAuthValue({
+              requestedScope: "comments:read",
+              roomId,
+            }),
             {
               attachmentIds,
             }
@@ -937,13 +982,16 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
   /* -------------------------------------------------------------------------------------------------
    * Notifications (Room level)
    * -----------------------------------------------------------------------------------------------*/
-  function getNotificationSettings(options: {
+  async function getNotificationSettings(options: {
     roomId: string;
     signal?: AbortSignal;
   }): Promise<RoomNotificationSettings> {
     return httpClient.get<RoomNotificationSettings>(
       url`/v2/c/rooms/${options.roomId}/notification-settings`,
-      () => getAuthValueForRoom(options.roomId),
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      }),
       undefined,
       {
         signal: options.signal,
@@ -951,13 +999,16 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
     );
   }
 
-  function updateNotificationSettings(options: {
+  async function updateNotificationSettings(options: {
     roomId: string;
     settings: Partial<RoomNotificationSettings>;
   }): Promise<RoomNotificationSettings> {
     return httpClient.post<RoomNotificationSettings>(
       url`/v2/c/rooms/${options.roomId}/notification-settings`,
-      () => getAuthValueForRoom(options.roomId),
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      }),
       options.settings
     );
   }
@@ -982,7 +1033,10 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
           // as read, this room-based method is necessary to keep all Comments features working with a public key.
           await httpClient.post(
             url`/v2/c/rooms/${roomId}/inbox-notifications/read`,
-            () => getAuthValueForRoom(roomId),
+            await authManager.getAuthValue({
+              requestedScope: "comments:read",
+              roomId,
+            }),
             { inboxNotificationIds }
           );
           return inboxNotificationIds;
@@ -1015,7 +1069,10 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
   }) {
     await httpClient.rawPost(
       url`/v2/c/rooms/${options.roomId}/text-mentions`,
-      () => getAuthValueForRoom(options.roomId),
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      }),
       {
         userId: options.userId,
         mentionId: options.mentionId,
@@ -1029,7 +1086,10 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
   }) {
     await httpClient.rawDelete(
       url`/v2/c/rooms/${options.roomId}/text-mentions/${options.mentionId}`,
-      () => getAuthValueForRoom(options.roomId)
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      })
     );
   }
 
@@ -1039,13 +1099,20 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
   }) {
     return httpClient.rawGet(
       url`/v2/c/rooms/${options.roomId}/y-version/${options.versionId}`,
-      () => getAuthValueForRoom(options.roomId)
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      })
     );
   }
 
   async function createTextVersion(options: { roomId: string }) {
-    await httpClient.rawPost(url`/v2/c/rooms/${options.roomId}/version`, () =>
-      getAuthValueForRoom(options.roomId)
+    await httpClient.rawPost(
+      url`/v2/c/rooms/${options.roomId}/version`,
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      })
     );
   }
 
@@ -1056,7 +1123,10 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
   }) {
     await httpClient.rawPost(
       url`/v2/c/rooms/${options.roomId}/text-metadata`,
-      () => getAuthValueForRoom(options.roomId),
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      }),
       {
         type: options.type,
         rootKey: options.rootKey,
@@ -1070,8 +1140,12 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
       meta: {
         requestedAt: string;
       };
-    }>(url`/v2/c/rooms/${options.roomId}/versions`, () =>
-      getAuthValueForRoom(options.roomId)
+    }>(
+      url`/v2/c/rooms/${options.roomId}/versions`,
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      })
     );
 
     return {
@@ -1097,7 +1171,10 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
       };
     }>(
       url`/v2/c/rooms/${options.roomId}/versions/delta`,
-      () => getAuthValueForRoom(options.roomId),
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      }),
       { since: options.since.toISOString() },
       { signal: options.signal }
     );
@@ -1113,26 +1190,28 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
     };
   }
 
-  async function streamStorage(options: {
-    roomId: string;
-    getAuthValue: () => Promise<AuthValue>;
-  }) {
+  async function streamStorage(options: { roomId: string }) {
     const result = await httpClient.rawGet(
       url`/v2/c/rooms/${options.roomId}/storage`,
-      options.getAuthValue
+      await authManager.getAuthValue({
+        requestedScope: "room:read",
+        roomId: options.roomId,
+      })
     );
     return (await result.json()) as IdTuple<SerializedCrdt>[];
   }
 
   async function sendMessages<P extends JsonObject, E extends Json>(options: {
     roomId: string;
-    getAuthValue: () => Promise<AuthValue>;
     nonce: string | undefined;
     messages: ClientMsg<P, E>[];
   }) {
     return httpClient.rawPost(
       url`/v2/c/rooms/${options.roomId}/send-message`,
-      options.getAuthValue,
+      await authManager.getAuthValue({
+        requestedScope: "room:read",
+        roomId: options.roomId,
+      }),
       {
         nonce: options.nonce,
         messages: options.messages,
@@ -1143,10 +1222,6 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
   /* -------------------------------------------------------------------------------------------------
    * Inbox notifications (User-level)
    * -----------------------------------------------------------------------------------------------*/
-  async function getAuthValueForUser() {
-    return await authManager.getAuthValue({ requestedScope: "comments:read" });
-  }
-
   async function getInboxNotifications(options?: { cursor?: string }) {
     const PAGE_SIZE = 50;
 
@@ -1157,10 +1232,14 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
         requestedAt: string;
         nextCursor: string | null;
       };
-    }>(url`/v2/c/inbox-notifications`, getAuthValueForUser, {
-      cursor: options?.cursor,
-      limit: PAGE_SIZE,
-    });
+    }>(
+      url`/v2/c/inbox-notifications`,
+      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      {
+        cursor: options?.cursor,
+        limit: PAGE_SIZE,
+      }
+    );
 
     return {
       inboxNotifications: json.inboxNotifications.map(
@@ -1186,7 +1265,7 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
       };
     }>(
       url`/v2/c/inbox-notifications/delta`,
-      getAuthValueForUser,
+      await authManager.getAuthValue({ requestedScope: "comments:read" }),
       { since: options.since.toISOString() },
       { signal: options.signal }
     );
@@ -1208,7 +1287,7 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
   async function getUnreadInboxNotificationsCount() {
     const { count } = await httpClient.get<{ count: number }>(
       url`/v2/c/inbox-notifications/count`,
-      getAuthValueForUser
+      await authManager.getAuthValue({ requestedScope: "comments:read" })
     );
     return count;
   }
@@ -1216,7 +1295,7 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
   async function markAllInboxNotificationsAsRead() {
     await httpClient.post(
       url`/v2/c/inbox-notifications/read`,
-      getAuthValueForUser,
+      await authManager.getAuthValue({ requestedScope: "comments:read" }),
       {
         inboxNotificationIds: "all",
       }
@@ -1226,7 +1305,7 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
   async function markInboxNotificationsAsRead(inboxNotificationIds: string[]) {
     await httpClient.post(
       url`/v2/c/inbox-notifications/read`,
-      getAuthValueForUser,
+      await authManager.getAuthValue({ requestedScope: "comments:read" }),
       {
         inboxNotificationIds,
       }
@@ -1251,14 +1330,14 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
   async function deleteAllInboxNotifications() {
     await httpClient.delete(
       url`/v2/c/inbox-notifications`,
-      getAuthValueForUser
+      await authManager.getAuthValue({ requestedScope: "comments:read" })
     );
   }
 
   async function deleteInboxNotification(inboxNotificationId: string) {
     await httpClient.delete(
       url`/v2/c/inbox-notifications/${inboxNotificationId}`,
-      getAuthValueForUser
+      await authManager.getAuthValue({ requestedScope: "comments:read" })
     );
   }
 
@@ -1287,11 +1366,15 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
         nextCursor: string | null;
         permissionHints: Record<string, Permission[]>;
       };
-    }>(url`/v2/c/threads`, getAuthValueForUser, {
-      cursor: options?.cursor,
-      query,
-      limit: PAGE_SIZE,
-    });
+    }>(
+      url`/v2/c/threads`,
+      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      {
+        cursor: options?.cursor,
+        query,
+        limit: PAGE_SIZE,
+      }
+    );
 
     return {
       threads: json.threads.map(convertToThreadData),
@@ -1318,7 +1401,7 @@ export function createLiveblocksApiClient<M extends BaseMetadata>({
       };
     }>(
       url`/v2/c/threads/delta`,
-      getAuthValueForUser,
+      await authManager.getAuthValue({ requestedScope: "comments:read" }),
       { since: options.since.toISOString() },
       { signal: options.signal }
     );
@@ -1432,7 +1515,7 @@ class HttpClient {
    */
   private async rawFetch(
     endpoint: URLSafeString,
-    authCallback: () => Promise<AuthValue>,
+    authValue: AuthValue,
     options?: RequestInit,
     params?: QueryParams
   ): Promise<Response> {
@@ -1451,7 +1534,7 @@ class HttpClient {
         ...options?.headers,
 
         // Cannot be overriden by custom headers
-        Authorization: `Bearer ${getBearerTokenFromAuthValue(await authCallback())}`,
+        Authorization: `Bearer ${getBearerTokenFromAuthValue(authValue)}`,
         "X-LB-Client": PKG_VERSION || "dev",
       },
     });
@@ -1473,16 +1556,11 @@ class HttpClient {
    */
   private async fetch<T extends JsonObject>(
     endpoint: URLSafeString,
-    authCallback: () => Promise<AuthValue>,
+    authValue: AuthValue,
     options?: RequestInit,
     params?: QueryParams
   ): Promise<T> {
-    const response = await this.rawFetch(
-      endpoint,
-      authCallback,
-      options,
-      params
-    );
+    const response = await this.rawFetch(endpoint, authValue, options, params);
 
     if (!response.ok) {
       let error: HttpError;
@@ -1513,11 +1591,11 @@ class HttpClient {
    */
   public async rawGet(
     endpoint: URLSafeString,
-    authCallback: () => Promise<AuthValue>,
+    authValue: AuthValue,
     params?: QueryParams,
     options?: Omit<RequestInit, "body" | "method" | "headers">
   ): Promise<Response> {
-    return await this.rawFetch(endpoint, authCallback, options, params);
+    return await this.rawFetch(endpoint, authValue, options, params);
   }
 
   /**
@@ -1527,10 +1605,10 @@ class HttpClient {
    */
   public async rawPost(
     endpoint: URLSafeString,
-    authCallback: () => Promise<AuthValue>,
+    authValue: AuthValue,
     body?: JsonObject
   ): Promise<Response> {
-    return await this.rawFetch(endpoint, authCallback, {
+    return await this.rawFetch(endpoint, authValue, {
       method: "POST",
       body: JSON.stringify(body),
     });
@@ -1543,9 +1621,9 @@ class HttpClient {
    */
   public async rawDelete(
     endpoint: URLSafeString,
-    authCallback: () => Promise<AuthValue>
+    authValue: AuthValue
   ): Promise<Response> {
-    return await this.rawFetch(endpoint, authCallback, { method: "DELETE" });
+    return await this.rawFetch(endpoint, authValue, { method: "DELETE" });
   }
 
   /**
@@ -1554,11 +1632,11 @@ class HttpClient {
    */
   public async get<T extends JsonObject>(
     endpoint: URLSafeString,
-    authCallback: () => Promise<AuthValue>,
+    authValue: AuthValue,
     params?: QueryParams,
     options?: Omit<RequestInit, "body" | "method" | "headers">
   ): Promise<T> {
-    return await this.fetch<T>(endpoint, authCallback, options, params);
+    return await this.fetch<T>(endpoint, authValue, options, params);
   }
 
   /**
@@ -1567,14 +1645,14 @@ class HttpClient {
    */
   public async post<T extends JsonObject>(
     endpoint: URLSafeString,
-    authCallback: () => Promise<AuthValue>,
+    authValue: AuthValue,
     body?: JsonObject,
     options?: Omit<RequestInit, "body" | "method" | "headers">,
     params?: QueryParams
   ): Promise<T> {
     return await this.fetch<T>(
       endpoint,
-      authCallback,
+      authValue,
       {
         ...options,
         method: "POST",
@@ -1590,9 +1668,9 @@ class HttpClient {
    */
   public async delete<T extends JsonObject>(
     endpoint: URLSafeString,
-    authCallback: () => Promise<AuthValue>
+    authValue: AuthValue
   ): Promise<T> {
-    return await this.fetch<T>(endpoint, authCallback, { method: "DELETE" });
+    return await this.fetch<T>(endpoint, authValue, { method: "DELETE" });
   }
 
   /**
@@ -1601,14 +1679,14 @@ class HttpClient {
    */
   public async putBlob<T extends JsonObject>(
     endpoint: URLSafeString,
-    authCallback: () => Promise<AuthValue>,
+    authValue: AuthValue,
     blob?: Blob,
     params?: QueryParams,
     options?: Omit<RequestInit, "body" | "method" | "headers">
   ): Promise<T> {
     return await this.fetch<T>(
       endpoint,
-      authCallback,
+      authValue,
       {
         ...options,
         method: "PUT",
