@@ -5,6 +5,10 @@ export function put(stub: LayeredCache, key: string, value: Json): void {
   stub.set(key, value);
 }
 
+export function del(stub: LayeredCache, key: string): void {
+  stub.delete(key);
+}
+
 export function putRandom(stub: LayeredCache, key: string): void {
   stub.set(key, Math.floor(Math.random() * 1_000_000));
 }
