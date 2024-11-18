@@ -18,6 +18,10 @@ export function putAndFail(root: LayeredCache, key: string, value: Json): void {
   throw new Error("b0rked");
 }
 
+export function fail(): void {
+  throw new Error("I will always fail");
+}
+
 export function dupe(root: LayeredCache, src: string, target: string): void {
   const value = root.get(src);
   if (value === undefined) {
@@ -29,6 +33,15 @@ export function dupe(root: LayeredCache, src: string, target: string): void {
 export function inc(root: LayeredCache, key: string): void {
   const count = root.getNumber(key) ?? 0;
   root.set(key, count + 1);
+}
+
+export function putAndInc(
+  root: LayeredCache,
+  key: string,
+  value: number
+): void {
+  root.set(key, value);
+  root.set(key, (root.get(key) as number) + 1);
 }
 
 export function dec(root: LayeredCache, key: string): void {

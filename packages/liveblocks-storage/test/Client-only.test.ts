@@ -1,8 +1,8 @@
-import { expect, test } from "vitest";
+import { expect, onTestFinished, test, vi } from "vitest";
 
 import { Client } from "~/Client.js";
 
-import { put, del } from "./mutations.config.js";
+import { del, fail, put, putAndFail, putAndInc } from "./mutations.config.js";
 
 test("set string", () => {
   const client = new Client({ put });
@@ -247,7 +247,7 @@ test("del", () => {
 //     mutations: {
 //       set,
 //     },
-//     serverMutations: { set: raiseAfterSet },
+//     serverMutations: { set: putAndFail },
 //   });
 //
 //   clientA.disconnect();
@@ -292,4 +292,116 @@ test("del", () => {
 //   clientA.reconnect();
 //
 //   assertStorage({ items: ["A", "B"] });
+// });
+
+test("get value during transaction should come from transaction cache", () => {
+  const client = new Client({ putAndInc });
+
+  client.mutate.putAndInc("A", 0);
+  expect(client.data).toEqual({ A: 1 });
+});
+
+test("client mutation failure should rollback transaction", () => {
+  const fn = vi.fn();
+
+  const client = new Client({ putAndFail });
+  const unsub = client.events.onLocalMutation.subscribe(fn);
+  onTestFinished(unsub);
+
+  try {
+    // XXX This differs from Guillaume's implementation, see
+    // https://liveblocks.slack.com/archives/D03656FN1SL/p1731920545843919
+    client.mutate.putAndFail("A", "A");
+  } catch {
+    // Ignore
+  }
+  expect(client.data).toEqual({});
+  expect(fn).not.toHaveBeenCalled();
+});
+
+test("error in client mutation should be caught", () => {
+  const fn = vi.fn();
+
+  const client = new Client({ fail });
+  const unsub = client.events.onLocalMutation.subscribe(fn);
+  onTestFinished(unsub);
+
+  try {
+    // XXX This differs from Guillaume's implementation, see
+    // https://liveblocks.slack.com/archives/D03656FN1SL/p1731920545843919
+    client.mutate.fail();
+  } catch {
+    // Ignore
+  }
+
+  expect(client.data).toStrictEqual({});
+  expect(fn).not.toHaveBeenCalled();
+});
+
+// test("nested LiveObject", () => {
+//   const client = new ClientStorage({
+//     mutations: {
+//       setLiveObject,
+//     },
+//     storage: {},
+//     actor: 0,
+//     onLocalMutation: () => {},
+//   });
+//
+//   client.mutate.setLiveObject("child", "foo", "bar");
+//
+//   expect(client.toImmutable()).toStrictEqual({
+//     child: {
+//       foo: "bar",
+//     },
+//   });
+// });
+
+// // Testing internals until we implement LiveStructure reference recycling
+// test("mutation failure should clear nodes created during transaction", () => {
+//   const client = new Client({
+//     mutations: {
+//       raiseAfterSetLiveObject,
+//     },
+//     storage: {},
+//     actor: 0,
+//     onLocalMutation: () => {},
+//   });
+//
+//   client.mutate.raiseAfterSetLiveObject("child", "foo", "bar");
+//
+//   expect(client.toImmutable()).toStrictEqual({});
+//
+//   client.__internals.getTransactionNodesCount();
+// });
+
+// test.skip("set on root update", () => {
+//   const updates: StorageUpdate[][] = [];
+//
+//   const client = new ClientStorage({
+//     mutations: {
+//       set,
+//     },
+//     storage: {},
+//     actor: 0,
+//     onLocalMutation: () => {},
+//     onStorageChange: (storageUpdate) => updates.push(storageUpdate),
+//   });
+//
+//   client.mutate.set("A", 1);
+//
+//   expect(client.toImmutable()).toStrictEqual({ A: 1 });
+//   expect(updates).toEqual([
+//     [
+//       {
+//         type: "LiveObject",
+//         node: client.root,
+//         updates: {
+//           A: {
+//             type: "update",
+//           },
+//         },
+//       },
+//     ],
+//   ]);
 // });
