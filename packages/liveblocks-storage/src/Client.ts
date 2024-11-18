@@ -1,4 +1,5 @@
-import type { Callback } from "./lib/EventSource.js";
+import type { Callback, EventSource, Observable } from "./lib/EventSource.js";
+import { makeEventSource } from "./lib/EventSource.js";
 import type { Json } from "./lib/Json.js";
 import { Store } from "./Store.js";
 import type { ChangeReturnType, OmitFirstArg } from "./ts-toolkit.js";
@@ -48,16 +49,25 @@ export class Client<M extends Mutations> {
 
   #socket: Socket<ClientMsg, ServerMsg> | null = null;
 
-  // #eventSource: EventSource<Op>;
-  // readonly events = {
-  //   deltas: makeEventSource(),
-  // };
+  #events: {
+    readonly onLocalMutation: EventSource<void>;
+  };
+  readonly events: {
+    readonly onLocalMutation: Observable<void>;
+  };
 
   constructor(mutations: M) {
     this.#store = new Store(mutations);
     this.#pendingOps = new Map();
 
     // Bind all given mutation functions to this instance
+    this.#events = {
+      onLocalMutation: makeEventSource<void>(),
+    };
+    this.events = {
+      onLocalMutation: this.#events.onLocalMutation.observable,
+    };
+
     this.mutate = {} as BoundMutations<M>;
     for (const name of Object.keys(mutations)) {
       /* eslint-disable @typescript-eslint/no-unsafe-assignment */
