@@ -124,7 +124,9 @@ export function multiClientServerSetup<M extends Mutations>(
   }
 
   /**
-   * Syncs data over the wire. The following calls are possible:
+   * Deliver all queued up messages in a specific pipe (aka flush that pipe),
+   * and wait for all those messages to be delivered/handled. Pipes are
+   * unidirectional. The following calls are possible:
    *
    * - await sync(client1)          Flushes all queued messages from client 1 to the server.
    * - await sync(server, client1)  Flushes all queued messages from the server to client 1.

@@ -56,8 +56,7 @@ export class Server<M extends Mutations> {
     };
   }
 
-  // XXX Inline this inside the connect() closure?
-  // XXX Rename recvClientMsg?
+  // TODO We could inline this inside the connect() closure above
   #handleClientMsg(_curr: Session, message: ClientMsg): void {
     console.log("[server] IN", message);
 
