@@ -4,12 +4,12 @@ import { LayeredCache } from "./LayeredCache.js";
 import type { Delta, Mutations, Op } from "./types.js";
 import { raise } from "./utils.js";
 
-export class Store<M extends Mutations> {
+export class Store {
   // TODO Possibly combine LayeredCache and merge it with Store?
   #cache: LayeredCache;
-  #mutations: M;
+  #mutations: Mutations;
 
-  constructor(mutations: M) {
+  constructor(mutations: Mutations) {
     this.#mutations = mutations;
 
     this.#cache = new LayeredCache();

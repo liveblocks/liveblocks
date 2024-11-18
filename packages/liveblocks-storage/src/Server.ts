@@ -20,12 +20,12 @@ export type Session = {
   socket: Socket<ServerMsg, ClientMsg>;
 };
 
-export class Server<M extends Mutations> {
+export class Server {
   #nextActor = 1;
   #sessions: Set<Session>;
-  #store: Store<M>;
+  #store: Store;
 
-  constructor(mutations: M) {
+  constructor(mutations: Mutations) {
     this.#sessions = new Set();
     this.#store = new Store(mutations);
   }

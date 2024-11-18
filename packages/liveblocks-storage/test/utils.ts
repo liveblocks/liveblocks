@@ -10,7 +10,7 @@ import type { ClientMsg, Mutations, ServerMsg, Socket } from "~/types.js";
 
 export function fmt(
   /* eslint-disable @typescript-eslint/no-explicit-any */
-  value: Client<any> | Server<any> | LayeredCache
+  value: Client<any> | Server | LayeredCache
   /* eslint-enable @typescript-eslint/no-explicit-any */
 ): Record<string, Json> {
   if (value instanceof LayeredCache) {
@@ -24,7 +24,11 @@ export function size(cache: LayeredCache): number {
   return Array.from(cache.keys()).length;
 }
 
-function connectClientAndServer(client: Client<any>, server: Server<any>) {
+function connectClientAndServer(
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  client: Client<any>,
+  server: Server
+) {
   // Build two two-way sockets, interconnect them, and hand the client and
   // the server one end each.
   const c2sPipe = makePipe<ClientMsg>();
@@ -62,11 +66,17 @@ function connectClientAndServer(client: Client<any>, server: Server<any>) {
     disconnect2();
   }
 
-  // Ensures all messages between client and server get exchanged, and waits
-  // until that has happened
-  async function sync() {
-    await syncClient();
-    await syncServer();
+  /**
+   * Ensures all messages between client and server get exchanged, and waits
+   * until that has happened.
+   */
+  async function sync(src?: Client<any> | Server) {
+    if (!src || src === client) {
+      await syncClient();
+    }
+    if (!src || src === server) {
+      await syncServer();
+    }
   }
 
   onTestFinished(() => disconnect());
@@ -83,9 +93,12 @@ function connectClientAndServer(client: Client<any>, server: Server<any>) {
  * This is a SYMMETRIC test, because the client and the server use the same
  * mutators implementation.
  */
-export function clientServerSetup<M extends Mutations>(mutations: M) {
+export function clientServerSetup<M extends Mutations>(
+  mutations: M,
+  serverMutations?: Mutations
+) {
   const client = new Client(mutations);
-  const server = new Server(mutations);
+  const server = new Server(serverMutations ?? mutations);
 
   const { sync, disconnect } = connectClientAndServer(client, server);
 
@@ -136,9 +149,9 @@ export function multiClientServerSetup<M extends Mutations>(
    */
   async function sync(): Promise<void>; // (1)
   async function sync(src: Client<M>): Promise<void>; // (2)
-  async function sync(src: Server<M>): Promise<void>; // (3)
-  async function sync(src: Server<M>, tgt: Client<M>): Promise<void>; // (4)
-  async function sync(src?: Client<M> | Server<M>, tgt?: Client<M>) {
+  async function sync(src: Server): Promise<void>; // (3)
+  async function sync(src: Server, tgt: Client<M>): Promise<void>; // (4)
+  async function sync(src?: Client<M> | Server, tgt?: Client<M>) {
     // (1)
     if (!src && !tgt) {
       for (const ctl of clients) {
