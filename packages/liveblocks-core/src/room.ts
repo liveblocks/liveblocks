@@ -954,6 +954,14 @@ export type Room<
   getAttachmentUrl(attachmentId: string): Promise<string>;
 
   /**
+   * Gets the unread count of inbox notifications for the current user and room.
+   *
+   * @example
+   * const count = await room.getUnreadInboxNotificationsCount();
+   */
+  getUnreadInboxNotificationsCount(): Promise<number>;
+
+  /**
    * Gets the user's notification settings for the current room.
    *
    * @example
@@ -2922,6 +2930,10 @@ export function createRoom<
     return httpClient.getAttachmentUrl({ roomId, attachmentId });
   }
 
+  function getUnreadInboxNotificationsCount() {
+    return httpClient.getRoomUnreadInboxNotificationsCount({ roomId });
+  }
+
   function getNotificationSettings(
     options?: GetNotificationSettingsOptions
   ): Promise<RoomNotificationSettings> {
@@ -3076,6 +3088,7 @@ export function createRoom<
       getAttachmentUrl,
 
       // Notifications
+      getUnreadInboxNotificationsCount,
       getNotificationSettings,
       updateNotificationSettings,
       markInboxNotificationAsRead,

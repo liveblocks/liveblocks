@@ -207,6 +207,12 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     inboxNotificationId: string;
   }): Promise<string>;
 
+  getRoomUnreadInboxNotificationsCount({
+    roomId,
+  }: {
+    roomId: string;
+  }): Promise<number>;
+
   getNotificationSettings({
     roomId,
     signal,
@@ -982,6 +988,19 @@ export function createApiClient<M extends BaseMetadata>({
   /* -------------------------------------------------------------------------------------------------
    * Notifications (Room level)
    * -----------------------------------------------------------------------------------------------*/
+  async function getRoomUnreadInboxNotificationsCount(options: {
+    roomId: string;
+  }) {
+    const { count } = await httpClient.get<{ count: number }>(
+      url`/v2/c/rooms/${options.roomId}/inbox-notifications/count`,
+      await authManager.getAuthValue({
+        requestedScope: "comments:read",
+        roomId: options.roomId,
+      })
+    );
+    return count;
+  }
+
   async function getNotificationSettings(options: {
     roomId: string;
     signal?: AbortSignal;
@@ -1440,6 +1459,7 @@ export function createApiClient<M extends BaseMetadata>({
     // Room notifications
     markRoomInboxNotificationAsRead,
     updateNotificationSettings,
+    getRoomUnreadInboxNotificationsCount,
     getNotificationSettings,
     // Room text editor
     createTextMention,
