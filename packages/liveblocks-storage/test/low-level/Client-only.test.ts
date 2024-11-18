@@ -2,7 +2,7 @@ import { expect, onTestFinished, test, vi } from "vitest";
 
 import { Client } from "~/Client.js";
 
-import { del, fail, put, putAndFail, putAndInc } from "./mutations.config.js";
+import { del, fail, put, putAndFail, putAndInc } from "../mutations.config.js";
 
 test("set string", () => {
   const client = new Client({ put });

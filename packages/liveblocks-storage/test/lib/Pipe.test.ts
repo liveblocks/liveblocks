@@ -106,9 +106,7 @@ describe("Pipe (a testing utility, how meta)", () => {
     const { pipe, callback } = makePipeTest();
     pipe.setManual();
 
-    // @ts-expect-error - deliberately not valid JSON
     pipe.send(new Date("2024-01-01"));
-    // @ts-expect-error - deliberately not valid JSON
     pipe.send(new Error("I am an error"));
 
     expect(callback).not.toHaveBeenCalled();

@@ -38,7 +38,7 @@ export class Client<M extends Mutations> {
 
   // #currentSession: Session; ??
   // #actor?: number;
-  #store: Store<M>;
+  #store: Store;
   mutate: BoundMutations<M>;
 
   // The pending ops list is a sequence of mutations that need to happen.

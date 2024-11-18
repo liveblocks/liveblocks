@@ -3,7 +3,7 @@ import { expect, test } from "vitest";
 import { Server } from "~/Server.js";
 import { opId } from "~/utils.js";
 
-import { putAndFail, putAndInc } from "./mutations.config.js";
+import { putAndFail, putAndInc } from "../mutations.config.js";
 
 test("reading value set during transaction should come from transaction cache", () => {
   const server = new Server({ putAndInc });
