@@ -16,8 +16,7 @@ export type Op = readonly [id: OpId, name: string, args: readonly Json[]];
 export type Delta = readonly [
   id: OpId,
   rem: readonly string[],
-  // XXX Turn into kv stream (make it one array where keys/values alternate)
-  add: readonly [key: string, value: Json][],
+  add: readonly (string | Json)[],
 ]; // Eventually, we'll need to compress this
 
 export type ClientMsg = Op;

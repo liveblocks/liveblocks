@@ -136,12 +136,15 @@ export class LayeredCache {
   delta(opId: OpId): Delta {
     const deleted: string[] = [];
 
-    const updated: [key: string, value: Json][] = [];
+    // For efficient packing, we'll codify all k,v pairs in a single array
+    // [key1, value1, key2, value2, key3, value3, ...]
+    const updated: (string | Json)[] = [];
     for (const [key, value] of this.#iterDelta()) {
       if (value === undefined) {
         deleted.push(key);
       } else {
-        updated.push([key, value]);
+        updated.push(key);
+        updated.push(value);
       }
     }
 

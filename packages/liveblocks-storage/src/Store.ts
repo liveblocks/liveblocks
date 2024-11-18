@@ -4,6 +4,16 @@ import { LayeredCache } from "./LayeredCache.js";
 import type { Delta, Mutations, Op } from "./types.js";
 import { raise } from "./utils.js";
 
+function* iterPairs(
+  items: (string | Json)[]
+): IterableIterator<[key: string, value: Json]> {
+  for (let i = 0; i < items.length; i += 2) {
+    const key = items[i]!;
+    const value = items[i + 1]!;
+    yield [key as string, value];
+  }
+}
+
 export class Store {
   // TODO Possibly combine LayeredCache and merge it with Store?
   #cache: LayeredCache;
@@ -41,7 +51,7 @@ export class Store {
       for (const key of deletions) {
         cache.delete(key);
       }
-      for (const [key, value] of updates) {
+      for (const [key, value] of iterPairs(updates)) {
         cache.set(key, value);
       }
     }
