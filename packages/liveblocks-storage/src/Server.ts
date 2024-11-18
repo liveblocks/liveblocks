@@ -39,6 +39,7 @@ export class Server {
     this.#_log = (...args) => console.log("[server]", ...args);
   }
 
+  /** @internal Only used by unit tests */
   // XXX This method should be removed from the Server!!!!!!!!!!!!!!!!!!!
   applyOp(op: Op): Delta {
     return this.#store.applyOp(op, true);
