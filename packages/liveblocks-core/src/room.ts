@@ -38,7 +38,6 @@ import {
   compact,
   deepClone,
   memoizeOnSuccess,
-  raise,
   tryParseJson,
 } from "./lib/utils";
 import type { Permission } from "./protocol/AuthToken";
