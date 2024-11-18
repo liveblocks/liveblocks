@@ -97,8 +97,15 @@ export function clientServerSetup<M extends Mutations>(
   return { client, server, sync, disconnect };
 }
 
-export function twoClientSetup<M extends Mutations>(mutations: M) {
-  const { server, clients, sync } = multiClientServerSetup(2, mutations);
+export function twoClientSetup<M extends Mutations>(
+  mutations: M,
+  serverMutations?: Mutations
+) {
+  const { server, clients, sync } = multiClientServerSetup(
+    2,
+    mutations,
+    serverMutations ?? mutations
+  );
   const client1 = clients[0]!.client;
   const client2 = clients[1]!.client;
   return { client1, client2, server, sync };
@@ -112,9 +119,10 @@ type ClientControl<M extends Mutations> = {
 
 export function multiClientServerSetup<M extends Mutations>(
   numClients: number,
-  mutations: M
+  mutations: M,
+  serverMutations?: Mutations
 ) {
-  const server = new Server(mutations);
+  const server = new Server(serverMutations ?? mutations);
 
   const clients: ClientControl<M>[] = [];
 
