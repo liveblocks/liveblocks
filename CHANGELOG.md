@@ -1,7 +1,8 @@
-## 2.12.1
+## 2.12.1 (Not published yet)
 
 ### `@liveblocks/react-ui`
 
+- Prevent unsupported attachment previews from loading infinitely.
 - Refactored `Thread` and `Comment` component to be used outside of the
   `RoomProvider` component.
 

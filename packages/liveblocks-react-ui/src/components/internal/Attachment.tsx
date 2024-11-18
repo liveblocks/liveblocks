@@ -122,9 +122,11 @@ const AttachmentFileIcon = memo(({ mimeType }: { mimeType: string }) => {
 
 function AttachmentImagePreview({
   attachment,
+  markPreviewAsUnsupported,
   roomId,
 }: {
   attachment: CommentMixedAttachment;
+  markPreviewAsUnsupported: () => void;
   roomId: string;
 }) {
   const { url } = useRoomAttachmentUrl(attachment.id, roomId);
@@ -142,7 +144,12 @@ function AttachmentImagePreview({
           className="lb-attachment-preview-media"
           data-hidden={!isLoaded ? "" : undefined}
         >
-          <img src={url} loading="lazy" onLoad={handleLoad} />
+          <img
+            src={url}
+            loading="lazy"
+            onLoad={handleLoad}
+            onError={markPreviewAsUnsupported}
+          />
         </div>
       ) : null}
     </>
@@ -151,9 +158,11 @@ function AttachmentImagePreview({
 
 function AttachmentVideoPreview({
   attachment,
+  markPreviewAsUnsupported,
   roomId,
 }: {
   attachment: CommentMixedAttachment;
+  markPreviewAsUnsupported: () => void;
   roomId: string;
 }) {
   const { url } = useRoomAttachmentUrl(attachment.id, roomId);
@@ -171,7 +180,11 @@ function AttachmentVideoPreview({
           className="lb-attachment-preview-media"
           data-hidden={!isLoaded ? "" : undefined}
         >
-          <video src={url} onLoadedData={handleLoad} />
+          <video
+            src={url}
+            onLoadedData={handleLoad}
+            onError={markPreviewAsUnsupported}
+          />
         </div>
       ) : null}
     </>
@@ -187,20 +200,38 @@ function AttachmentPreview({
   allowMediaPreview?: boolean;
   roomId: string;
 }) {
+  const [isUnsupportedPreview, setUnsupportedPreview] = useState(false);
   const isUploaded =
     attachment.type === "attachment" || attachment.status === "uploaded";
 
+  function markPreviewAsUnsupported() {
+    setUnsupportedPreview(true);
+  }
+
   if (
+    !isUnsupportedPreview &&
     allowMediaPreview &&
     isUploaded &&
     attachment.size <= MAX_DISPLAYED_MEDIA_SIZE
   ) {
     if (attachment.mimeType.startsWith("image/")) {
-      return <AttachmentImagePreview attachment={attachment} roomId={roomId} />;
+      return (
+        <AttachmentImagePreview
+          attachment={attachment}
+          markPreviewAsUnsupported={markPreviewAsUnsupported}
+          roomId={roomId}
+        />
+      );
     }
 
     if (attachment.mimeType.startsWith("video/")) {
-      return <AttachmentVideoPreview attachment={attachment} roomId={roomId} />;
+      return (
+        <AttachmentVideoPreview
+          attachment={attachment}
+          markPreviewAsUnsupported={markPreviewAsUnsupported}
+          roomId={roomId}
+        />
+      );
     }
   }
 

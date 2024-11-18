@@ -11,7 +11,7 @@ import {
   AnchoredThreads,
   liveblocksConfig,
   LiveblocksPlugin,
-  useEditorStatus,
+  useIsEditorReady,
   FloatingThreads,
 } from "@liveblocks/react-lexical";
 import FloatingToolbar from "./floating-toolbar";
@@ -32,13 +32,13 @@ const initialConfig = liveblocksConfig({
 });
 
 export default function Editor() {
-  const status = useEditorStatus();
+  const ready = useIsEditorReady();
 
   return (
     <div className="relative min-h-screen flex flex-col">
       <LexicalComposer initialConfig={initialConfig}>
         <LiveblocksPlugin>
-          {status === "not-loaded" || status === "loading" ? (
+          {!ready ? (
             <Loading />
           ) : (
             <>
