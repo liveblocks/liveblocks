@@ -20,14 +20,21 @@ export type Session = {
   readonly socket: Socket<ServerMsg, ClientMsg>;
 };
 
+const DEBUG = false;
+
 export class Server {
   #nextActor = 1;
   #sessions: Set<Session>;
   #store: Store;
+  #_log?: (...args: unknown[]) => void;
 
   constructor(mutations: Mutations) {
     this.#sessions = new Set();
     this.#store = new Store(mutations);
+
+    this.#_log = DEBUG
+      ? (...args) => console.log("[server]", ...args)
+      : undefined;
   }
 
   // XXX This method should be removed from the Server!!!!!!!!!!!!!!!!!!!
@@ -58,14 +65,14 @@ export class Server {
 
   // TODO We could inline this inside the connect() closure above
   #handleClientMsg(curr: Session, message: ClientMsg): void {
-    console.log(`[server] IN (from ${curr.actor})`, message);
+    this.#_log?.(`IN (from ${curr.actor})`, message);
 
     const op: Op = message;
     const delta = this.#store.applyOp(op, true);
 
     // Fan-out delta to all connected clients
     for (const session of this.#sessions) {
-      console.log("[server] OUT", delta);
+      this.#_log?.("OUT", delta);
       session.socket.send(delta);
     }
   }

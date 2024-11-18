@@ -33,8 +33,11 @@ function getClientId() {
   return curr;
 }
 
+const DEBUG = false;
+
 export class Client<M extends Mutations> {
   #_debugClientId = getClientId();
+  #_log?: (...args: unknown[]) => void;
 
   // #currentSession: Session; ??
   // #actor?: number;
@@ -68,6 +71,10 @@ export class Client<M extends Mutations> {
       onLocalMutation: this.#events.onLocalMutation.observable,
     };
 
+    this.#_log = DEBUG
+      ? (...args) => console.log(`[client ${this.#_debugClientId}]`, ...args)
+      : undefined;
+
     this.mutate = {} as BoundMutations<M>;
     for (const name of Object.keys(mutations)) {
       /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -82,7 +89,7 @@ export class Client<M extends Mutations> {
         // we'll have to maybe throttle these, and also we should never send
         // these out after we've gotten disconnected. Details for now, though!
         const msg = op;
-        console.log(`[client ${this.#_debugClientId}] OUT`, msg);
+        this.#_log?.("OUT", msg);
         this.#socket?.send(msg);
 
         return id;
@@ -109,7 +116,7 @@ export class Client<M extends Mutations> {
   }
 
   #handleServerMsg(msg: ServerMsg): void {
-    console.log(`[client ${this.#_debugClientId}] IN`, msg);
+    this.#_log?.("IN", msg);
     this.applyDeltas([msg]);
   }
 
