@@ -12,12 +12,12 @@ import type {
 import { nanoid } from "./utils.js";
 
 export type Session = {
-  actor: number;
-  sessionKey: string;
+  readonly actor: number;
+  readonly sessionKey: string;
 
   // A socket is abstract. Concretely it could be a WebSocket, HTTP, or
   // whatever other thinkable channel
-  socket: Socket<ServerMsg, ClientMsg>;
+  readonly socket: Socket<ServerMsg, ClientMsg>;
 };
 
 export class Server {
@@ -57,8 +57,8 @@ export class Server {
   }
 
   // TODO We could inline this inside the connect() closure above
-  #handleClientMsg(_curr: Session, message: ClientMsg): void {
-    console.log("[server] IN", message);
+  #handleClientMsg(curr: Session, message: ClientMsg): void {
+    console.log(`[server] IN (from ${curr.actor})`, message);
 
     const op: Op = message;
     const delta = this.#store.applyOp(op, true);

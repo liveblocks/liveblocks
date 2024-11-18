@@ -51,17 +51,9 @@ function connectClientAndServer(
   const disconnect1 = server.connect(serverSocket);
   const disconnect2 = client.connect(clientSocket);
 
-  async function syncClient() {
-    await c2sPipe.flush();
-  }
-
-  async function syncServer() {
-    await s2cPipe.flush();
-  }
-
   async function disconnect() {
-    await syncClient();
-    await syncServer();
+    await sync(client); // First send all messages from the client to the server
+    await sync(server); // Then receive all messages from the server
     disconnect1();
     disconnect2();
   }
@@ -70,18 +62,18 @@ function connectClientAndServer(
    * Ensures all messages between client and server get exchanged, and waits
    * until that has happened.
    */
-  async function sync(src?: Client<any> | Server) {
-    if (!src || src === client) {
-      await syncClient();
+  async function sync(side: Client<any> | Server) {
+    if (side === client) {
+      await c2sPipe.flush();
     }
-    if (!src || src === server) {
-      await syncServer();
+    if (side === server) {
+      await s2cPipe.flush();
     }
   }
 
   onTestFinished(() => disconnect());
 
-  return { syncClient, syncServer, sync, disconnect };
+  return { sync, disconnect };
 }
 
 /**
@@ -114,8 +106,7 @@ export function twoClientSetup<M extends Mutations>(mutations: M) {
 
 type ClientControl<M extends Mutations> = {
   client: Client<M>;
-  syncServer(): Promise<void>;
-  syncClient(): Promise<void>;
+  sync(side: Client<M> | Server): Promise<void>;
   disconnect(): Promise<void>;
 };
 
@@ -129,11 +120,8 @@ export function multiClientServerSetup<M extends Mutations>(
 
   for (let i = 1; i <= numClients; i++) {
     const client = new Client(mutations);
-    const { syncServer, syncClient, disconnect } = connectClientAndServer(
-      client,
-      server
-    );
-    clients.push({ client, syncServer, syncClient, disconnect });
+    const { sync, disconnect } = connectClientAndServer(client, server);
+    clients.push({ client, sync, disconnect });
   }
 
   /**
@@ -154,9 +142,14 @@ export function multiClientServerSetup<M extends Mutations>(
   async function sync(src?: Client<M> | Server, tgt?: Client<M>) {
     // (1)
     if (!src && !tgt) {
+      // First take in all client's messages in the server, one by one (client
+      // A's messages all arrive first, then client B's messages, etc etc)
       for (const ctl of clients) {
-        await ctl.syncClient();
-        await ctl.syncServer();
+        await ctl.sync(ctl.client);
+      }
+      // Then, let the server emit all messages
+      for (const ctl of clients) {
+        await ctl.sync(server);
       }
       return;
     }
@@ -166,7 +159,7 @@ export function multiClientServerSetup<M extends Mutations>(
     if (src && tgt) {
       for (const ctl of clients) {
         if (tgt === ctl.client) {
-          await ctl.syncServer();
+          await ctl.sync(server);
         }
       }
       return;
@@ -175,9 +168,9 @@ export function multiClientServerSetup<M extends Mutations>(
     // (2) or (3)
     for (const ctl of clients) {
       if (src === server) {
-        await ctl.syncServer();
+        await ctl.sync(server);
       } else if (src === ctl.client) {
-        await ctl.syncClient();
+        await ctl.sync(ctl.client);
       }
     }
   }

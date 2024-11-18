@@ -15,7 +15,8 @@ describe("Single Client/Server sync test", () => {
     expect(client.data).toEqual({ a: 1 });
     expect(server.data).toEqual({});
 
-    await sync();
+    await sync(client);
+    await sync(server);
 
     expect(client.data).toEqual({ a: 1 });
     expect(server.data).toEqual({ a: 1 });
