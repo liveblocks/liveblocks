@@ -26,6 +26,7 @@ import type {
   SyntheticEvent,
 } from "react";
 import React, { createContext, forwardRef, useCallback, useRef } from "react";
+import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
 import { useLiveblocksUIConfig } from "../config";
 import { AttachmentIcon } from "../icons/Attachment";
@@ -595,10 +596,26 @@ export const Composer = forwardRef(
       defaultCollapsed
     );
 
+    const canCommentFallback = useSyncExternalStore(
+      useCallback(
+        (callback) => {
+          if (room === null) return () => {};
+          return room.events.self.subscribeOnce(callback);
+        },
+        [room]
+      ),
+      useCallback(() => {
+        return room?.getSelf()?.canComment ?? true;
+      }, [room]),
+      useCallback(() => true, [])
+    );
+
     const permissions = useRoomPermissions(roomId);
     const canComment =
-      permissions.has(Permission.CommentsWrite) ||
-      permissions.has(Permission.Write);
+      permissions.size > 0
+        ? permissions.has(Permission.CommentsWrite) ||
+          permissions.has(Permission.Write)
+        : canCommentFallback;
 
     const setEmptyRef = useCallback((isEmpty: boolean) => {
       isEmptyRef.current = isEmpty;
