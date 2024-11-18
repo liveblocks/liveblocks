@@ -1,6 +1,8 @@
 import { describe, expect, test } from "vitest";
+
 import { LayeredCache } from "~/LayeredCache.js";
 import { opId } from "~/utils.js";
+
 import { fmt, size } from "./utils.js";
 
 describe("LayeredCache basics", () => {
