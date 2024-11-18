@@ -85,7 +85,7 @@ function connectClientAndServer(
  * This is a SYMMETRIC test, because the client and the server use the same
  * mutators implementation.
  */
-export function clientServerSetup<M extends Mutations>(
+export function oneClientSetup<M extends Mutations>(
   mutations: M,
   serverMutations?: Mutations
 ) {
@@ -97,11 +97,11 @@ export function clientServerSetup<M extends Mutations>(
   return { client, server, sync, disconnect };
 }
 
-export function twoClientSetup<M extends Mutations>(
+export function twoClientsSetup<M extends Mutations>(
   mutations: M,
   serverMutations?: Mutations
 ) {
-  const { server, clients, sync } = multiClientServerSetup(
+  const { server, clients, sync } = manyClientsSetup(
     2,
     mutations,
     serverMutations ?? mutations
@@ -117,7 +117,7 @@ type ClientControl<M extends Mutations> = {
   disconnect(): Promise<void>;
 };
 
-export function multiClientServerSetup<M extends Mutations>(
+export function manyClientsSetup<M extends Mutations>(
   numClients: number,
   mutations: M,
   serverMutations?: Mutations

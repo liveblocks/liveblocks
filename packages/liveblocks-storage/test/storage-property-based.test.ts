@@ -12,7 +12,7 @@ import * as fc from "fast-check";
 import { expect, test } from "vitest";
 
 import { del, inc, put } from "./mutations.config.js";
-import { multiClientServerSetup } from "./utils.js";
+import { manyClientsSetup } from "./utils.js";
 
 const key = () =>
   // fc.string()
@@ -53,7 +53,7 @@ test("no matter what happens, storage always synchronizes to be the same", () =>
       fc.array(randomMutation()),
 
       async (sequence) => {
-        const { server, clients, sync } = multiClientServerSetup(3, {
+        const { server, clients, sync } = manyClientsSetup(3, {
           put,
           inc,
           del,
