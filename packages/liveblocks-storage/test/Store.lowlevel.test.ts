@@ -11,7 +11,7 @@ describe("Store tests (relatively low-level)", () => {
     expect(() => store.applyOp([opId(), "non-existing", []])).toThrow(
       "Mutation not found: 'non-existing'"
     );
-    expect(store.toObj()).toEqual({});
+    expect(store.toObject()).toEqual({});
   });
 
   test("can be mutated locally", () => {
@@ -21,7 +21,7 @@ describe("Store tests (relatively low-level)", () => {
     store.applyOp([opId(), "put", ["c", 3]]);
     store.applyOp([opId(), "inc", ["c"]]);
 
-    expect(store.toObj()).toEqual({ a: 1, b: 2, c: 4 });
+    expect(store.toObject()).toEqual({ a: 1, b: 2, c: 4 });
   });
 
   test("mutations can fail", () => {
@@ -29,7 +29,7 @@ describe("Store tests (relatively low-level)", () => {
     expect(() => store.applyOp([opId(), "dec", ["a"]])).toThrow(
       "Cannot decrement beyond 0"
     );
-    expect(store.toObj()).toEqual({});
+    expect(store.toObject()).toEqual({});
   });
 
   test("all mutators should be executed atomically", () => {
@@ -43,6 +43,6 @@ describe("Store tests (relatively low-level)", () => {
       // Ignore
     }
     store.applyOp([opId(), "dupe", ["a", "c"]]);
-    expect(store.toObj()).toEqual({ a: 1, b: 3, c: 1 });
+    expect(store.toObject()).toEqual({ a: 1, b: 3, c: 1 });
   });
 });
