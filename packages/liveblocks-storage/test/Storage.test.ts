@@ -4,7 +4,7 @@ import * as mutations from "./mutations.config.js";
 import { clientServerSetup, twoClientSetup } from "./utils.js";
 
 describe("Single Client/Server sync test", () => {
-  test("most basic end to end test", async () => {
+  test("basic client and server sync", async () => {
     const { client, server, sync } = clientServerSetup(mutations);
 
     expect(client.data).toEqual({});
@@ -23,7 +23,7 @@ describe("Single Client/Server sync test", () => {
 });
 
 describe("Multi-client storage synchronization tests", () => {
-  test("most basic end to end test", async () => {
+  test("basic sync", async () => {
     const { client1, client2, server, sync } = twoClientSetup(mutations);
 
     expect(client1.data).toEqual({});
