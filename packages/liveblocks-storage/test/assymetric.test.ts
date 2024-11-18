@@ -6,10 +6,10 @@
 import { expect, test } from "vitest";
 
 import { fail, inc, put, putAndInc } from "./mutations.config.js";
-import { clientServerSetup, twoClientSetup } from "./utils.js";
+import { oneClientSetup, twoClientsSetup } from "./utils.js";
 
 test("assymmetric mutators (different behavior will sync)", async () => {
-  const { client, server, sync } = clientServerSetup(
+  const { client, server, sync } = oneClientSetup(
     { assymetricPut: put }, // Client will only set
     { assymetricPut: putAndInc } // Server implementation will also increment
   );
@@ -34,7 +34,7 @@ test("assymmetric mutators (different behavior will sync)", async () => {
 });
 
 test("assymmetric mutators (rollback)", async () => {
-  const { client, server, sync } = clientServerSetup(
+  const { client, server, sync } = oneClientSetup(
     { put, assymmetricInc: inc }, // Client will not fail
     { put, assymmetricInc: fail } // Inc fails on the server
   );
@@ -70,7 +70,7 @@ test("assymmetric mutators (rollback)", async () => {
 });
 
 test("assymmetric mutators (rollback) (2 clients)", async () => {
-  const { client1, client2, server, sync } = twoClientSetup(
+  const { client1, client2, server, sync } = twoClientsSetup(
     { put, assymmetricInc: inc }, // Client will not fail
     { put, assymmetricInc: fail } // Inc fails on the server
   );
