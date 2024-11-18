@@ -33,7 +33,7 @@ test("assymmetric mutators (different behavior will sync)", async () => {
   expect(server.data).toEqual({ a: 2 });
 });
 
-test.fails("assymmetric mutators (rollback)", async () => {
+test("assymmetric mutators (rollback)", async () => {
   const { client, server, sync } = clientServerSetup(
     { put, assymmetricInc: inc }, // Client will not fail
     { put, assymmetricInc: fail } // Inc fails on the server
@@ -65,6 +65,6 @@ test.fails("assymmetric mutators (rollback)", async () => {
   await sync(server);
 
   // Server will fail, and thus revert the mutation
-  expect(client.data).toEqual({ a: 2, b: 1 }); // ❌❌❌ FAILURE HERE
+  expect(client.data).toEqual({ a: 2, b: 1 });
   expect(server.data).toEqual({ a: 2, b: 1 });
 });
