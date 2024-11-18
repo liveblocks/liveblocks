@@ -3,7 +3,7 @@ import { expect, test } from "vitest";
 import { Store } from "~/Store.js";
 import { opId } from "~/utils.js";
 
-import * as mutations from "./mutations.config.js";
+import * as mutations from "../mutations.config.js";
 
 test("can be mutated locally", () => {
   const store = new Store(mutations);
