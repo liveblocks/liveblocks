@@ -198,9 +198,9 @@ function AttachmentPreview({
   const isUploaded =
     attachment.type === "attachment" || attachment.status === "uploaded";
 
-  const markPreviewAsUnsupported = useCallback(() => {
+  function markPreviewAsUnsupported() {
     setUnsupportedPreview(true);
-  }, []);
+  }
 
   if (
     !isUnsupportedPreview &&
