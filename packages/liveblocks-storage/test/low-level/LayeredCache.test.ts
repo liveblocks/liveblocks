@@ -311,20 +311,25 @@ test("delta from last snapshot", () => {
   cache.delete("c");
   cache.delete("d");
   cache.set("b", 4);
+  cache.set("y", 5);
 
-  expect(Array.from(cache.delta(id))).toEqual([id, ["c", "d"], [["b", 4]]]);
+  expect(Array.from(cache.delta(id))).toEqual([
+    id,
+    ["c", "d"],
+    ["b", 4, "y", 5],
+  ]);
 
   cache.snapshot();
   expect(Array.from(cache.delta(id))).toEqual([id, [], []]);
   cache.delete("x");
   cache.set("b", 42);
-  expect(Array.from(cache.delta(id))).toEqual([id, ["x"], [["b", 42]]]);
+  expect(Array.from(cache.delta(id))).toEqual([id, ["x"], ["b", 42]]);
   cache.commit();
 
   expect(Array.from(cache.delta(id))).toEqual([
     id,
     ["c", "d", "x"],
-    [["b", 42]],
+    ["b", 42, "y", 5],
   ]);
 });
 
