@@ -13,10 +13,15 @@ import {
   size,
   useFloating,
 } from "@floating-ui/react-dom";
-import type { CommentAttachment, CommentBody } from "@liveblocks/core";
-import { useRoom } from "@liveblocks/react";
+import {
+  type CommentAttachment,
+  type CommentBody,
+  type CommentLocalAttachment,
+  createCommentAttachmentId,
+} from "@liveblocks/core";
 import {
   useMentionSuggestions,
+  useRoomOrNull,
   useSyncSource,
 } from "@liveblocks/react/_private";
 import { Slot, Slottable } from "@radix-ui/react-slot";
@@ -679,7 +684,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     },
     forwardedRef
   ) => {
-    const { editor, validate, setFocused } = useComposerEditorContext();
+    const { editor, validate, setFocused, roomId } = useComposerEditorContext();
     const {
       submit,
       focus,
@@ -699,7 +704,10 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     );
 
     const [mentionDraft, setMentionDraft] = useState<MentionDraft>();
-    const mentionSuggestions = useMentionSuggestions(mentionDraft?.text);
+    const mentionSuggestions = useMentionSuggestions(
+      roomId,
+      mentionDraft?.text
+    );
     const [
       selectedMentionSuggestionIndex,
       setPreviousSelectedMentionSuggestionIndex,
@@ -976,6 +984,18 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
 const MAX_ATTACHMENTS = 10;
 const MAX_ATTACHMENT_SIZE = 1024 * 1024 * 1024; // 1 GB
 
+function prepareAttachment(file: File): CommentLocalAttachment {
+  return {
+    type: "localAttachment",
+    status: "idle",
+    id: createCommentAttachmentId(),
+    name: file.name,
+    size: file.size,
+    mimeType: file.type,
+    file,
+  };
+}
+
 /**
  * Surrounds the composer's content and handles submissions.
  *
@@ -996,18 +1016,26 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       preventUnsavedChanges = true,
       disabled,
       asChild,
+      roomId: _roomId,
       ...props
     },
     forwardedRef
   ) => {
     const Component = asChild ? Slot : "form";
-    const room = useRoom();
     const [isEmpty, setEmpty] = useState(true);
     const [isSubmitting, setSubmitting] = useState(false);
     const [isFocused, setFocused] = useState(false);
+    const room = useRoomOrNull();
+
+    const roomId = _roomId !== undefined ? _roomId : room?.id;
+    if (roomId === undefined) {
+      throw new Error("Composer.Form must be a descendant of RoomProvider.");
+    }
+
     // Later: Offer as Composer.Form props: { maxAttachments: number; maxAttachmentSize: number; supportedAttachmentMimeTypes: string[]; }
     const maxAttachments = MAX_ATTACHMENTS;
     const maxAttachmentSize = MAX_ATTACHMENT_SIZE;
+
     const {
       attachments,
       isUploadingAttachments,
@@ -1016,15 +1044,14 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       clearAttachments,
     } = useComposerAttachmentsManager(defaultAttachments, {
       maxFileSize: maxAttachmentSize,
+      roomId,
     });
     const numberOfAttachments = attachments.length;
     const hasMaxAttachments = numberOfAttachments >= maxAttachments;
-    const isDisabled = useMemo(() => {
-      const self = room.getSelf();
-      const canComment = self?.canComment ?? true;
 
-      return isSubmitting || disabled || !canComment;
-    }, [isSubmitting, disabled, room]);
+    const isDisabled = useMemo(() => {
+      return isSubmitting || disabled === true;
+    }, [isSubmitting, disabled]);
     const canSubmit = useMemo(() => {
       return !isEmpty && !isUploadingAttachments;
     }, [isEmpty, isUploadingAttachments]);
@@ -1058,11 +1085,11 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
 
         files.splice(numberOfAcceptedFiles);
 
-        const attachments = files.map((file) => room.prepareAttachment(file));
+        const attachments = files.map((file) => prepareAttachment(file));
 
         addAttachments(attachments);
       },
-      [addAttachments, maxAttachments, numberOfAttachments, room]
+      [addAttachments, maxAttachments, numberOfAttachments]
     );
 
     const createAttachmentsRef = useRef(createAttachments);
@@ -1266,6 +1293,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
           editor,
           validate,
           setFocused,
+          roomId,
         }}
       >
         <ComposerAttachmentsContext.Provider

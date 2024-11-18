@@ -17,7 +17,7 @@ import * as React from "react";
  */
 export const RoomContext = React.createContext<OpaqueRoom | null>(null);
 
-/** @internal */
+/** @private */
 export function useRoomOrNull<
   P extends JsonObject,
   S extends LsonObject,

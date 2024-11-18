@@ -1,7 +1,7 @@
 "use client";
 
 import type { CommentMixedAttachment } from "@liveblocks/core";
-import { useAttachmentUrl, useIsInsideRoom } from "@liveblocks/react";
+import { useRoomAttachmentUrl } from "@liveblocks/react/_private";
 import type {
   ComponentPropsWithoutRef,
   KeyboardEvent,
@@ -27,6 +27,7 @@ interface AttachmentProps extends ComponentPropsWithoutRef<"div"> {
   attachment: CommentMixedAttachment;
   onDeleteClick?: MouseEventHandler<HTMLButtonElement>;
   preventFocusOnDelete?: boolean;
+  roomId: string;
   overrides?: Partial<Overrides>;
   allowMediaPreview?: boolean;
 }
@@ -122,11 +123,13 @@ const AttachmentFileIcon = memo(({ mimeType }: { mimeType: string }) => {
 function AttachmentImagePreview({
   attachment,
   markPreviewAsUnsupported,
+  roomId,
 }: {
   attachment: CommentMixedAttachment;
   markPreviewAsUnsupported: () => void;
+  roomId: string;
 }) {
-  const { url } = useAttachmentUrl(attachment.id);
+  const { url } = useRoomAttachmentUrl(attachment.id, roomId);
   const [isLoaded, setLoaded] = useState(false);
 
   const handleLoad = useCallback(() => {
@@ -156,11 +159,13 @@ function AttachmentImagePreview({
 function AttachmentVideoPreview({
   attachment,
   markPreviewAsUnsupported,
+  roomId,
 }: {
   attachment: CommentMixedAttachment;
   markPreviewAsUnsupported: () => void;
+  roomId: string;
 }) {
-  const { url } = useAttachmentUrl(attachment.id);
+  const { url } = useRoomAttachmentUrl(attachment.id, roomId);
   const [isLoaded, setLoaded] = useState(false);
 
   const handleLoad = useCallback(() => {
@@ -189,12 +194,13 @@ function AttachmentVideoPreview({
 function AttachmentPreview({
   attachment,
   allowMediaPreview = true,
+  roomId,
 }: {
   attachment: CommentMixedAttachment;
   allowMediaPreview?: boolean;
+  roomId: string;
 }) {
   const [isUnsupportedPreview, setUnsupportedPreview] = useState(false);
-  const isInsideRoom = useIsInsideRoom();
   const isUploaded =
     attachment.type === "attachment" || attachment.status === "uploaded";
 
@@ -206,7 +212,6 @@ function AttachmentPreview({
     !isUnsupportedPreview &&
     allowMediaPreview &&
     isUploaded &&
-    isInsideRoom &&
     attachment.size <= MAX_DISPLAYED_MEDIA_SIZE
   ) {
     if (attachment.mimeType.startsWith("image/")) {
@@ -214,6 +219,7 @@ function AttachmentPreview({
         <AttachmentImagePreview
           attachment={attachment}
           markPreviewAsUnsupported={markPreviewAsUnsupported}
+          roomId={roomId}
         />
       );
     }
@@ -223,6 +229,7 @@ function AttachmentPreview({
         <AttachmentVideoPreview
           attachment={attachment}
           markPreviewAsUnsupported={markPreviewAsUnsupported}
+          roomId={roomId}
         />
       );
     }
@@ -332,6 +339,7 @@ export function MediaAttachment({
   onDeleteClick,
   preventFocusOnDelete,
   allowMediaPreview = true,
+  roomId,
   className,
   onKeyDown,
   ...props
@@ -369,6 +377,7 @@ export function MediaAttachment({
           <AttachmentPreview
             attachment={attachment}
             allowMediaPreview={allowMediaPreview}
+            roomId={roomId}
           />
         )}
       </div>
@@ -402,6 +411,7 @@ export function FileAttachment({
   onDeleteClick,
   preventFocusOnDelete,
   allowMediaPreview = true,
+  roomId,
   className,
   onKeyDown,
   ...props
@@ -439,6 +449,7 @@ export function FileAttachment({
           <AttachmentPreview
             attachment={attachment}
             allowMediaPreview={allowMediaPreview}
+            roomId={roomId}
           />
         )}
       </div>

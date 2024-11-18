@@ -5,7 +5,7 @@ import type {
   InboxNotificationDataPlain,
   ThreadData,
 } from "@liveblocks/core";
-import { HttpError, nanoid, ServerMsgCode } from "@liveblocks/core";
+import { HttpError, nanoid, Permission, ServerMsgCode } from "@liveblocks/core";
 import type { AST } from "@liveblocks/query-parser";
 import { QueryParser } from "@liveblocks/query-parser";
 import {
@@ -94,6 +94,7 @@ function mockGetThreadsSince(
       deletedInboxNotifications: InboxNotificationDataPlain[];
       meta: {
         requestedAt: string;
+        permissionHints: Record<string, Permission[]>;
       };
     }
   >
@@ -128,6 +129,9 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -175,6 +179,9 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -230,6 +237,9 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -299,6 +309,9 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -376,6 +389,9 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -702,6 +718,9 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -765,6 +784,9 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -831,6 +853,9 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -916,6 +941,9 @@ describe("useThreads", () => {
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: null,
+                permissionHints: {
+                  [roomId]: [Permission.Write],
+                },
               },
             })
           );
@@ -929,6 +957,9 @@ describe("useThreads", () => {
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: null,
+                permissionHints: {
+                  [roomId]: [Permission.Write],
+                },
               },
             })
           );
@@ -997,7 +1028,8 @@ describe("useThreads", () => {
 
     server.use(
       mockGetThreads((req, res, ctx) => {
-        if (req.params.roomId === room1Id) {
+        const roomId = req.params.roomId;
+        if (roomId === room1Id) {
           return res(
             ctx.json({
               data: room1Threads,
@@ -1007,10 +1039,13 @@ describe("useThreads", () => {
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: null,
+                permissionHints: {
+                  [roomId]: [Permission.Write],
+                },
               },
             })
           );
-        } else if (req.params.roomId === room2Id) {
+        } else if (roomId === room2Id) {
           return res(
             ctx.json({
               data: room2Threads,
@@ -1020,6 +1055,9 @@ describe("useThreads", () => {
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: null,
+                permissionHints: {
+                  [roomId]: [Permission.Write],
+                },
               },
             })
           );
@@ -1172,6 +1210,9 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -1235,6 +1276,9 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -1319,6 +1363,9 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -1392,6 +1439,9 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -1452,6 +1502,9 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -1474,6 +1527,9 @@ describe("useThreads", () => {
               deletedInboxNotifications: [],
               meta: {
                 requestedAt: new Date().toISOString(),
+                permissionHints: {
+                  [roomId]: [Permission.Write],
+                },
               },
             })
           );
@@ -1570,6 +1626,9 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -1637,6 +1696,9 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -1659,6 +1721,9 @@ describe("useThreads", () => {
               deletedInboxNotifications: [],
               meta: {
                 requestedAt: new Date().toISOString(),
+                permissionHints: {
+                  [roomId]: [Permission.Write],
+                },
               },
             })
           );
@@ -1746,6 +1811,9 @@ describe("useThreads", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -1934,6 +2002,9 @@ describe("useThreads: polling", () => {
             meta: {
               requestedAt: now,
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -1948,6 +2019,9 @@ describe("useThreads: polling", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: now,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -2005,6 +2079,10 @@ describe("useThreads: polling", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: now,
+              nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -2055,6 +2133,9 @@ describe("WebSocket events", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -2125,6 +2206,9 @@ describe("WebSocket events", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -2191,6 +2275,9 @@ describe("WebSocket events", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -2269,6 +2356,9 @@ describe("WebSocket events", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -2368,6 +2458,9 @@ describe("useThreadsSuspense", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -2419,6 +2512,9 @@ describe("useThreadsSuspense", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -2599,6 +2695,9 @@ describe("useThreads: pagination", () => {
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: "cursor-2",
+                permissionHints: {
+                  [roomId]: [Permission.Write],
+                },
               },
             })
           );
@@ -2615,6 +2714,9 @@ describe("useThreads: pagination", () => {
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: "cursor-3",
+                permissionHints: {
+                  [roomId]: [Permission.Write],
+                },
               },
             })
           );
@@ -2631,6 +2733,9 @@ describe("useThreads: pagination", () => {
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: "cursor-1",
+                permissionHints: {
+                  [roomId]: [Permission.Write],
+                },
               },
             })
           );
@@ -2734,6 +2839,9 @@ describe("useThreads: pagination", () => {
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: null,
+                permissionHints: {
+                  [roomId]: [Permission.Write],
+                },
               },
             })
           );
@@ -2749,6 +2857,9 @@ describe("useThreads: pagination", () => {
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: "cursor-1",
+                permissionHints: {
+                  [roomId]: [Permission.Write],
+                },
               },
             })
           );
@@ -2822,6 +2933,9 @@ describe("useThreads: pagination", () => {
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: "cursor-1",
+                permissionHints: {
+                  [roomId]: [Permission.Write],
+                },
               },
             })
           );

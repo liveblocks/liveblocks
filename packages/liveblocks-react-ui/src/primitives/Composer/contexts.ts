@@ -82,6 +82,7 @@ export type ComposerEditorContext = {
   validate: (value: SlateElement[]) => void;
   editor: SlateEditor;
   setFocused: Dispatch<SetStateAction<boolean>>;
+  roomId: string;
 };
 
 export type ComposerAttachmentsContext = {

@@ -6,14 +6,13 @@ import type {
   CommentReaction as CommentReactionData,
 } from "@liveblocks/core";
 import {
-  RoomContext,
-  useAddReaction,
-  useAttachmentUrl,
-  useDeleteComment,
-  useEditComment,
-  useMarkThreadAsRead,
-  useRemoveReaction,
-} from "@liveblocks/react";
+  useAddRoomCommentReaction,
+  useDeleteRoomComment,
+  useEditRoomComment,
+  useMarkRoomThreadAsRead,
+  useRemoveRoomCommentReaction,
+  useRoomAttachmentUrl,
+} from "@liveblocks/react/_private";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
   ComponentProps,
@@ -27,7 +26,6 @@ import type {
 import React, {
   forwardRef,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -259,8 +257,8 @@ export const CommentReaction = forwardRef<
   HTMLButtonElement,
   CommentReactionProps
 >(({ comment, reaction, overrides, disabled, ...props }, forwardedRef) => {
-  const addReaction = useAddReaction();
-  const removeReaction = useRemoveReaction();
+  const addReaction = useAddRoomCommentReaction(comment.roomId);
+  const removeReaction = useRemoveRoomCommentReaction(comment.roomId);
   const currentId = useCurrentUserId();
   const isActive = useMemo(() => {
     return reaction.users.some((users) => users.id === currentId);
@@ -373,11 +371,14 @@ function openAttachment({ attachment, url }: CommentAttachmentArgs) {
 function CommentMediaAttachment({
   attachment,
   onAttachmentClick,
+  roomId,
   className,
   overrides,
   ...props
-}: CommentAttachmentProps) {
-  const { url } = useAttachmentUrl(attachment.id);
+}: CommentAttachmentProps & {
+  roomId: string;
+}) {
+  const { url } = useRoomAttachmentUrl(attachment.id, roomId);
 
   const handleClick = useCallback(
     (event: MouseEvent<HTMLElement>) => {
@@ -405,6 +406,7 @@ function CommentMediaAttachment({
       attachment={attachment}
       overrides={overrides}
       onClick={url ? handleClick : undefined}
+      roomId={roomId}
     />
   );
 }
@@ -412,11 +414,14 @@ function CommentMediaAttachment({
 function CommentFileAttachment({
   attachment,
   onAttachmentClick,
+  roomId,
   className,
   overrides,
   ...props
-}: CommentAttachmentProps) {
-  const { url } = useAttachmentUrl(attachment.id);
+}: CommentAttachmentProps & {
+  roomId: string;
+}) {
+  const { url } = useRoomAttachmentUrl(attachment.id, roomId);
 
   const handleClick = useCallback(
     (event: MouseEvent<HTMLElement>) => {
@@ -444,6 +449,7 @@ function CommentFileAttachment({
       attachment={attachment}
       overrides={overrides}
       onClick={url ? handleClick : undefined}
+      roomId={roomId}
     />
   );
 }
@@ -467,12 +473,14 @@ export function CommentNonInteractiveFileAttachment({
 // and focus hooks "conditionally" by conditionally rendering this component.
 function AutoMarkReadThreadIdHandler({
   threadId,
+  roomId,
   commentRef,
 }: {
   threadId: string;
+  roomId: string;
   commentRef: RefObject<HTMLElement>;
 }) {
-  const markThreadAsRead = useMarkThreadAsRead();
+  const markThreadAsRead = useMarkRoomThreadAsRead(roomId);
   const isWindowFocused = useWindowFocus();
 
   useVisibleCallback(
@@ -522,14 +530,13 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
     },
     forwardedRef
   ) => {
-    const isInRoom = Boolean(useContext(RoomContext));
     const ref = useRef<HTMLDivElement>(null);
     const mergedRefs = useRefs(forwardedRef, ref);
     const currentUserId = useCurrentUserId();
-    const deleteComment = useDeleteComment();
-    const editComment = useEditComment();
-    const addReaction = useAddReaction();
-    const removeReaction = useRemoveReaction();
+    const deleteComment = useDeleteRoomComment(comment.roomId);
+    const editComment = useEditRoomComment(comment.roomId);
+    const addReaction = useAddRoomCommentReaction(comment.roomId);
+    const removeReaction = useRemoveRoomCommentReaction(comment.roomId);
     const $ = useOverrides(overrides);
     const [isEditing, setEditing] = useState(false);
     const [isTarget, setTarget] = useState(false);
@@ -646,10 +653,11 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
 
     return (
       <TooltipProvider>
-        {isInRoom && autoMarkReadThreadId && (
+        {autoMarkReadThreadId && (
           <AutoMarkReadThreadIdHandler
             commentRef={ref}
             threadId={autoMarkReadThreadId}
+            roomId={comment.roomId}
           />
         )}
         <div
@@ -810,6 +818,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                 overrides={{
                   COMPOSER_PLACEHOLDER: $.COMMENT_EDIT_COMPOSER_PLACEHOLDER,
                 }}
+                roomId={comment.roomId}
               />
             ) : comment.body ? (
               <>
@@ -837,6 +846,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                             attachment={attachment}
                             overrides={overrides}
                             onAttachmentClick={onAttachmentClick}
+                            roomId={comment.roomId}
                           />
                         ))}
                       </div>
@@ -849,6 +859,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                             attachment={attachment}
                             overrides={overrides}
                             onAttachmentClick={onAttachmentClick}
+                            roomId={comment.roomId}
                           />
                         ))}
                       </div>

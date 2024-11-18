@@ -1,5 +1,5 @@
 import type { CommentBody, ThreadData } from "@liveblocks/core";
-import { nanoid } from "@liveblocks/core";
+import { nanoid, Permission } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { addMinutes } from "date-fns";
 import type { ResponseComposition, RestContext, RestRequest } from "msw";
@@ -38,8 +38,11 @@ describe("useCreateThread", () => {
             data: [],
             inboxNotifications: [],
             meta: {
-              requestedAt: new Date(),
+              requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -135,8 +138,11 @@ describe("useCreateThread", () => {
             data: [],
             inboxNotifications: [],
             meta: {
-              requestedAt: new Date(),
+              requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );

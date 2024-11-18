@@ -158,13 +158,12 @@ function $getRangeAtMatch(match: RegExpExecArray): globalThis.Range | null {
 
 export function MentionPlugin() {
   const [editor] = useLexicalComposerContext();
+  const room = useRoom();
 
   const [match, setMatch] = useState<RegExpExecArray | null>(null); // Represents the current match of the mention regex. A `null` value means there is no match.
   const matchingString = match?.[3];
 
-  const suggestions = useMentionSuggestions(matchingString);
-
-  const room = useRoom();
+  const suggestions = useMentionSuggestions(room.id, matchingString);
 
   useEffect(() => {
     function $handleMutation(

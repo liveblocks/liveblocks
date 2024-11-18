@@ -1,4 +1,4 @@
-import { nanoid } from "@liveblocks/core";
+import { nanoid, Permission } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { setupServer } from "msw/node";
 import React from "react";
@@ -39,6 +39,10 @@ describe("useEditThreadMetadata", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -112,6 +116,10 @@ describe("useEditThreadMetadata", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
