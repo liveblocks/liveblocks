@@ -76,6 +76,7 @@ export const AdvancedEditor = () => {
             setCharsCount(editor.storage.characterCount.words())
           }
           slotAfter={<ImageResizer />}
+          immediatelyRender={false}
         >
           <div className="absolute left-full ml-4">
             <Threads />
