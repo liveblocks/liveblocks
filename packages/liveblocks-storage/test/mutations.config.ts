@@ -1,40 +1,40 @@
 import type { LayeredCache } from "~/LayeredCache.js";
 import type { Json } from "~/lib/Json.js";
 
-export function put(stub: LayeredCache, key: string, value: Json): void {
-  stub.set(key, value);
+export function put(root: LayeredCache, key: string, value: Json): void {
+  root.set(key, value);
 }
 
-export function del(stub: LayeredCache, key: string): void {
-  stub.delete(key);
+export function del(root: LayeredCache, key: string): void {
+  root.delete(key);
 }
 
-export function putRandom(stub: LayeredCache, key: string): void {
-  stub.set(key, Math.floor(Math.random() * 1_000_000));
+export function putRandom(root: LayeredCache, key: string): void {
+  root.set(key, Math.floor(Math.random() * 1_000_000));
 }
 
-export function putAndFail(stub: LayeredCache, key: string, value: Json): void {
-  put(stub, key, value);
+export function putAndFail(root: LayeredCache, key: string, value: Json): void {
+  put(root, key, value);
   throw new Error("b0rked");
 }
 
-export function dupe(stub: LayeredCache, src: string, target: string): void {
-  const value = stub.get(src);
+export function dupe(root: LayeredCache, src: string, target: string): void {
+  const value = root.get(src);
   if (value === undefined) {
     throw new Error(`No such key '${src}'`);
   }
-  stub.set(target, value);
+  root.set(target, value);
 }
 
-export function inc(stub: LayeredCache, key: string): void {
-  const count = stub.getNumber(key) ?? 0;
-  stub.set(key, count + 1);
+export function inc(root: LayeredCache, key: string): void {
+  const count = root.getNumber(key) ?? 0;
+  root.set(key, count + 1);
 }
 
-export function dec(stub: LayeredCache, key: string): void {
-  const count = stub.getNumber(key) ?? 0;
+export function dec(root: LayeredCache, key: string): void {
+  const count = root.getNumber(key) ?? 0;
   if (count <= 0) {
     throw new Error("Cannot decrement beyond 0");
   }
-  stub.set(key, count - 1);
+  root.set(key, count - 1);
 }
