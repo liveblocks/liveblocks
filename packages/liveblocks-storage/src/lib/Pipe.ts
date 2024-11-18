@@ -38,7 +38,7 @@ export function makePipe<T>(): Pipe<T> {
   function send(input: T) {
     buffer.push(JSON.stringify(input));
 
-    if (mode === "auto" && !pendingFlush$) {
+    if (mode === "auto") {
       void flush();
     }
   }
@@ -67,13 +67,16 @@ export function makePipe<T>(): Pipe<T> {
         // Ignore
       }
     }
-
-    // Clear the pending
-    pendingFlush$ = null;
   }
 
   function flush() {
-    return (pendingFlush$ ??= flushNow());
+    if (!pendingFlush$) {
+      pendingFlush$ = flushNow().finally(() => {
+        // Clear the pending flush eventually, so a new flush can happen
+        pendingFlush$ = null;
+      });
+    }
+    return pendingFlush$;
   }
 
   function setAuto() {
