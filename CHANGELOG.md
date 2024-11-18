@@ -1,3 +1,10 @@
+## 2.12.1
+
+### `@liveblocks/react-ui`
+
+- Refactored `Thread` and `Comment` component to be used outside of the
+  `RoomProvider` component.
+
 ## 2.12.0
 
 This release adds support for tracking synchronization status of pending local
