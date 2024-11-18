@@ -1593,18 +1593,6 @@ export function createRoom<
     comments: makeEventSource<CommentsEventServerMsg>(),
   };
 
-  //
-  // There are effectively two "clients" making requests.
-  //
-  // When making calls with HTTP client 1, it will try to read the current
-  // token from the active WebSocket connection to the room.
-  //
-  // When making calls with HTTP client 2, it will always call
-  // `delegates.authenticate()` to obtain the auth header.
-  //
-  // TODO: Ideally we would consolidate these two.
-  //
-
   const roomId = config.roomId;
 
   async function createTextMention(userId: string, mentionId: string) {
