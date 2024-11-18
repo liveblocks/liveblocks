@@ -401,6 +401,7 @@ export function FileAttachment({
   onClick,
   onDeleteClick,
   preventFocusOnDelete,
+  allowMediaPreview = true,
   className,
   onKeyDown,
   ...props
@@ -435,7 +436,10 @@ export function FileAttachment({
         ) : isError ? (
           <WarningIcon />
         ) : (
-          <AttachmentPreview attachment={attachment} />
+          <AttachmentPreview
+            attachment={attachment}
+            allowMediaPreview={allowMediaPreview}
+          />
         )}
       </div>
       <div className="lb-attachment-details">
