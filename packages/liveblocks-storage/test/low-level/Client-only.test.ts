@@ -2,7 +2,16 @@ import { expect, onTestFinished, test, vi } from "vitest";
 
 import { Client } from "~/Client.js";
 
-import { del, fail, put, putAndFail, putAndInc } from "../mutations.config.js";
+import {
+  clear,
+  del,
+  dupe,
+  fail,
+  put,
+  putAndFail,
+  putAndInc,
+} from "../mutations.config.js";
+import { twoClientsSetup } from "../utils.js";
 
 test("set string", () => {
   const client = new Client({ put });
@@ -301,11 +310,11 @@ test("get value during transaction should come from transaction cache", () => {
   expect(client.data).toEqual({ A: 1 });
 });
 
-test("client mutation failure should rollback transaction", () => {
+test("when client mutation errors it should rollback transaction", () => {
   const fn = vi.fn();
 
   const client = new Client({ putAndFail });
-  const unsub = client.events.onLocalMutation.subscribe(fn);
+  const unsub = client.events.onChange.subscribe(fn);
   onTestFinished(unsub);
 
   try {
@@ -319,11 +328,11 @@ test("client mutation failure should rollback transaction", () => {
   expect(fn).not.toHaveBeenCalled();
 });
 
-test("error in client mutation should be caught", () => {
+test("errors in client mutations should be thrown, not caught", () => {
   const fn = vi.fn();
 
   const client = new Client({ fail });
-  const unsub = client.events.onLocalMutation.subscribe(fn);
+  const unsub = client.events.onChange.subscribe(fn);
   onTestFinished(unsub);
 
   try {
@@ -336,6 +345,76 @@ test("error in client mutation should be caught", () => {
 
   expect(client.data).toStrictEqual({});
   expect(fn).not.toHaveBeenCalled();
+});
+
+test("errors thrown by deferred client mutations (ie after rebase) should not be thrown but emitted as error events", async () => {
+  const errorCallback = vi.fn();
+
+  const { client1, client2, sync } = twoClientsSetup({ put, dupe, del });
+  const unsub = client1.events.onMutationError.subscribe(errorCallback);
+  onTestFinished(unsub);
+
+  // Initial state setup
+  client1.mutate.put("a", 1);
+  await sync();
+
+  // Create a conflict:
+  // - Client 2 will remove the 'a' key first
+  // - Client 1 will try to dupe the 'a' key. This will work locally (so it
+  //   won't throw initially), but once client 1 will receive the changes from
+  //   client 2, it will throw locally because it can no longer rebase the
+  //   'dupe' mutation locally.
+  client2.mutate.del("a");
+  await sync(client2);
+
+  client1.mutate.dupe("a", "b");
+  await sync(client1);
+
+  expect(client1.data).toEqual({ a: 1, b: 1 });
+  expect(client2.data).toEqual({});
+
+  await sync();
+
+  // Assert that an error is thrown as an event
+  expect(errorCallback).toHaveBeenCalledWith(
+    expect.objectContaining({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      message: expect.stringMatching("No such key 'a'"),
+    })
+  );
+
+  // Assert that there was a "did change" event here.
+  // From the client's local perspective, both keys "a" and "b" got removed.
+
+  // And that the data itself was rolled back
+  expect(client1.data).toEqual({});
+  expect(client2.data).toEqual({});
+});
+
+test("onChange notifications", async () => {
+  const fn = vi.fn();
+
+  const { client1, client2, sync } = twoClientsSetup({ put, dupe, clear });
+  const unsub = client1.events.onChange.subscribe(fn);
+  onTestFinished(unsub);
+
+  // Initial state setup
+  client2.mutate.put("a", 42);
+  await sync();
+
+  // XXX fn() should have been called with Delta: [[], ['a', 42]] (remote)
+
+  client1.mutate.dupe("a", "b");
+  client2.mutate.clear();
+
+  // XXX fn() should have been called with Delta: [[], ['b', 42]] (local)
+
+  await sync();
+
+  // XXX fn() should have been called with Delta: [['a', 'b'], []] (remote)
+
+  expect(client1.data).toEqual({});
+  expect(client2.data).toEqual({});
 });
 
 // test("nested LiveObject", () => {

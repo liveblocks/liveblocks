@@ -53,10 +53,13 @@ export class Client<M extends Mutations> {
   #socket: Socket<ClientMsg, ServerMsg> | null = null;
 
   #events: {
-    readonly onLocalMutation: EventSource<void>;
+    readonly onMutationError: EventSource<Error>;
+    readonly onChange: EventSource<void>;
   };
   readonly events: {
-    readonly onLocalMutation: Observable<void>;
+    readonly onMutationError: Observable<Error>;
+    // XXX onChange event should have Delta + local/remote as payload
+    readonly onChange: Observable<void>;
   };
 
   debug(): void {
@@ -70,10 +73,12 @@ export class Client<M extends Mutations> {
 
     // Bind all given mutation functions to this instance
     this.#events = {
-      onLocalMutation: makeEventSource<void>(),
+      onMutationError: makeEventSource<Error>(),
+      onChange: makeEventSource<void>(),
     };
     this.events = {
-      onLocalMutation: this.#events.onLocalMutation.observable,
+      onMutationError: this.#events.onMutationError.observable,
+      onChange: this.#events.onChange.observable,
     };
 
     this.mutate = {} as BoundMutations<M>;
@@ -139,7 +144,11 @@ export class Client<M extends Mutations> {
 
     // Apply all local pending ops
     for (const pendingOp of this.#pendingOps.values()) {
-      this.#store.applyOp(pendingOp, false);
+      try {
+        this.#store.applyOp(pendingOp, false);
+      } catch (err) {
+        this.#events.onMutationError.notify(err as Error);
+      }
     }
   }
 
