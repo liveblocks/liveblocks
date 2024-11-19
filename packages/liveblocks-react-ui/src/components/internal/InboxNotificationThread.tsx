@@ -108,6 +108,7 @@ export function InboxNotificationComment({
                       key={attachment.id}
                       attachment={attachment}
                       overrides={overrides}
+                      roomId={comment.roomId}
                     />
                   ))}
                 </div>

@@ -1,5 +1,5 @@
 import type { CommentBody } from "@liveblocks/core";
-import { nanoid } from "@liveblocks/core";
+import { nanoid, Permission } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { addMinutes } from "date-fns";
 import { setupServer } from "msw/node";
@@ -45,6 +45,10 @@ describe("useCreateComment", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -129,6 +133,10 @@ describe("useCreateComment", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -188,8 +196,7 @@ describe("useCreateComment", () => {
           version: 1,
           content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
         },
-      })
-    );
+    }));
 
     expect(result.current.subscription).toEqual({
       status: "subscribed",
@@ -218,6 +225,10 @@ describe("useCreateComment", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );

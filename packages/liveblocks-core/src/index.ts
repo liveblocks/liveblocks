@@ -102,6 +102,7 @@ export { autoRetry, HttpError } from "./lib/autoRetry";
 export { chunk } from "./lib/chunk";
 export { Promise_withResolvers } from "./lib/controlledPromise";
 export {
+  createCommentAttachmentId,
   createCommentId,
   createInboxNotificationId,
   createThreadId,
@@ -146,8 +147,8 @@ export {
   wait,
   withTimeout,
 } from "./lib/utils";
-export type { GetUserThreadsOptions } from "./notifications";
 export type { CustomAuthenticationResult } from "./protocol/Authentication";
+export { Permission } from "./protocol/AuthToken";
 export type { BaseActivitiesData } from "./protocol/BaseActivitiesData";
 export type { BaseRoomInfo } from "./protocol/BaseRoomInfo";
 export type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";

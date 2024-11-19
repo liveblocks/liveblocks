@@ -20,6 +20,11 @@ export type BatchStore<O, I> = Observable<void> & {
 
   /**
    * @internal
+   */
+  getBatch: () => Batch<O, I>;
+
+  /**
+   * @internal
    *
    * Only for testing.
    */
@@ -248,11 +253,16 @@ export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
     return [...cache.keys()];
   }
 
+  function getBatch() {
+    return batch;
+  }
+
   return {
     ...eventSource.observable,
     get,
     getState,
     invalidate,
+    getBatch,
     _cacheKeys,
   };
 }
