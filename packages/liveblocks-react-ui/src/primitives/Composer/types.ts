@@ -205,6 +205,7 @@ export interface ComposerEditorMentionSuggestionsWrapperProps {
   id: string;
   itemId: (userId?: string) => string | undefined;
   mentionDraft?: MentionDraft;
+  setMentionDraft: Dispatch<SetStateAction<MentionDraft | undefined>>;
   userIds?: string[];
   selectedUserId?: string;
   setSelectedUserId: (userId: string) => void;

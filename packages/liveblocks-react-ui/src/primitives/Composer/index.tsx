@@ -19,10 +19,14 @@ import {
   type CommentAttachment,
   type CommentBody,
   type EventSource,
+  kInternal,
   makeEventSource,
 } from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
-import { useMentionSuggestions } from "@liveblocks/react/_private";
+import {
+  useClientOrNull,
+  useMentionSuggestions,
+} from "@liveblocks/react/_private";
 import { Slot, Slottable } from "@radix-ui/react-slot";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
@@ -244,6 +248,7 @@ function ComposerEditorMentionSuggestionsWrapper({
   selectedUserId,
   setSelectedUserId,
   mentionDraft,
+  setMentionDraft,
   onItemSelect,
   position = MENTION_SUGGESTIONS_POSITION,
   dir,
@@ -251,6 +256,7 @@ function ComposerEditorMentionSuggestionsWrapper({
 }: ComposerEditorMentionSuggestionsWrapperProps) {
   const editor = useSlateStatic();
   const { isFocused } = useComposer();
+  const { editorChangeEventSource } = useComposerEditorContext();
   const [content, setContent] = useState<HTMLDivElement | null>(null);
   const [contentZIndex, setContentZIndex] = useState<string>();
   const contentRef = useCallback(setContent, [setContent]);
@@ -311,6 +317,14 @@ function ComposerEditorMentionSuggestionsWrapper({
       setContentZIndex(window.getComputedStyle(content).zIndex);
     }
   }, [content]);
+
+  useLayoutEffect(() => {
+    const unsubscribe = editorChangeEventSource.subscribe(() => {
+      setMentionDraft(getMentionDraftAtSelection(editor));
+    });
+
+    return unsubscribe;
+  }, [editor, editorChangeEventSource, setMentionDraft]);
 
   useLayoutEffect(() => {
     if (!mentionDraft) {
@@ -905,6 +919,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     },
     forwardedRef
   ) => {
+    const client = useClientOrNull();
     const { editor, validate, setFocused, editorChangeEventSource } =
       useComposerEditorContext();
     const {
@@ -928,6 +943,11 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
 
     const [hasFloatingToolbarRange, setHasFloatingToolbarRange] =
       useState(false);
+    // If used with LiveblocksProvider but without resolveMentionSuggestions,
+    // we can skip the mention suggestions logic entirely
+    const hasResolveMentionSuggestions = client
+      ? client[kInternal].resolveMentionSuggestions !== undefined
+      : true;
     const [mentionDraft, setMentionDraft] = useState<MentionDraft>();
     const mentionSuggestions = useMentionSuggestions(mentionDraft?.text);
     const [
@@ -963,12 +983,9 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     const handleChange = useCallback(
       (value: SlateDescendant[]) => {
         validate(value as SlateElement[]);
-
-        setMentionDraft(getMentionDraftAtSelection(editor));
-
         editorChangeEventSource.notify();
       },
-      [validate, editor, editorChangeEventSource]
+      [validate, editorChangeEventSource]
     );
 
     const createMention = useCallback(
@@ -1211,17 +1228,20 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
           renderLeaf={ComposerEditorLeaf}
           renderPlaceholder={ComposerEditorPlaceholder}
         />
-        <ComposerEditorMentionSuggestionsWrapper
-          dir={dir}
-          mentionDraft={mentionDraft}
-          selectedUserId={selectedMentionSuggestionUserId}
-          setSelectedUserId={setSelectedMentionSuggestionUserId}
-          userIds={mentionSuggestions}
-          id={suggestionsListId}
-          itemId={suggestionsListItemId}
-          onItemSelect={createMention}
-          MentionSuggestions={MentionSuggestions}
-        />
+        {hasResolveMentionSuggestions && (
+          <ComposerEditorMentionSuggestionsWrapper
+            dir={dir}
+            mentionDraft={mentionDraft}
+            setMentionDraft={setMentionDraft}
+            selectedUserId={selectedMentionSuggestionUserId}
+            setSelectedUserId={setSelectedMentionSuggestionUserId}
+            userIds={mentionSuggestions}
+            id={suggestionsListId}
+            itemId={suggestionsListItemId}
+            onItemSelect={createMention}
+            MentionSuggestions={MentionSuggestions}
+          />
+        )}
         {FloatingToolbar && (
           <ComposerEditorFloatingToolbarWrapper
             dir={dir}
