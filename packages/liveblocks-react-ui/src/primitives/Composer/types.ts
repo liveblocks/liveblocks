@@ -19,6 +19,7 @@ import type {
   ComposerBodyCustomLink,
   ComposerBodyMention,
   ComposerBodyTextActiveFormats,
+  ComposerBodyTextFormat,
   Direction,
 } from "../../types";
 
@@ -170,6 +171,12 @@ export interface ComposerFormProps extends ComponentPropsWithSlot<"form"> {
 export type ComposerSubmitProps = ComponentPropsWithSlot<"button">;
 
 export type ComposerAttachFilesProps = ComponentPropsWithSlot<"button">;
+
+export interface ComposerTextFormatToggleProps
+  extends ComponentPropsWithSlot<"button"> {
+  format: ComposerBodyTextFormat;
+  onFormatChange?: (format: ComposerBodyTextFormat) => void;
+}
 
 export interface ComposerAttachmentsDropAreaProps
   extends ComponentPropsWithSlot<"div"> {

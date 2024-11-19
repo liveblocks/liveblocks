@@ -24,6 +24,7 @@ import {
 import { useRoom } from "@liveblocks/react";
 import { useMentionSuggestions } from "@liveblocks/react/_private";
 import { Slot, Slottable } from "@radix-ui/react-slot";
+import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
   AriaAttributes,
   ChangeEvent,
@@ -140,6 +141,7 @@ import type {
   ComposerSuggestionsListItemProps,
   ComposerSuggestionsListProps,
   ComposerSuggestionsProps,
+  ComposerTextFormatToggleProps,
   FloatingPosition,
 } from "./types";
 import {
@@ -165,6 +167,7 @@ const COMPOSER_SUBMIT_NAME = "ComposerSubmit";
 const COMPOSER_EDITOR_NAME = "ComposerEditor";
 const COMPOSER_ATTACH_FILES_NAME = "ComposerAttachFiles";
 const COMPOSER_ATTACHMENTS_DROP_AREA_NAME = "ComposerAttachmentsDropArea";
+const COMPOSER_TEXT_FORMAT_TOGGLE_NAME = "ComposerTextFormatToggle";
 const COMPOSER_FORM_NAME = "ComposerForm";
 
 const emptyCommentBody: CommentBody = {
@@ -501,6 +504,9 @@ function ComposerEditorFloatingToolbarWrapper({
   );
 }
 
+/**
+ * TODO
+ */
 const ComposerFloatingToolbar = forwardRef<
   HTMLDivElement,
   ComposerFloatingToolbarProps
@@ -1683,10 +1689,46 @@ const ComposerAttachmentsDropArea = forwardRef<
   }
 );
 
-// <Composer.TextFormatToggle format="bold" />
-// function ComposerTextFormatToggle() {}
+/**
+ * TODO
+ */
+const ComposerTextFormatToggle = forwardRef<
+  HTMLButtonElement,
+  ComposerTextFormatToggleProps
+>(
+  (
+    { children, format, onFormatChange, onClick, asChild, ...props },
+    forwardedRef
+  ) => {
+    const Component = asChild ? Slot : "button";
+    const { textFormats, toggleTextFormat } = useComposer();
 
-// FloatingToolbar: <Composer.FloatingToolbar><Composer.TextFormatToggle format="bold" />...</Composer.FloatingToolbar>
+    const handleClick = useCallback(
+      (event: MouseEvent<HTMLButtonElement>) => {
+        onClick?.(event);
+
+        if (!event.isDefaultPrevented()) {
+          toggleTextFormat(format);
+          onFormatChange?.(format);
+        }
+      },
+      [format, onClick, onFormatChange, toggleTextFormat]
+    );
+
+    return (
+      <TogglePrimitive.Root
+        asChild
+        pressed={textFormats[format]}
+        onClick={handleClick}
+        {...props}
+      >
+        <Component {...props} ref={forwardedRef}>
+          {children}
+        </Component>
+      </TogglePrimitive.Root>
+    );
+  }
+);
 
 if (process.env.NODE_ENV !== "production") {
   ComposerAttachFiles.displayName = COMPOSER_ATTACH_FILES_NAME;
@@ -1700,6 +1742,7 @@ if (process.env.NODE_ENV !== "production") {
   ComposerSuggestions.displayName = COMPOSER_SUGGESTIONS_NAME;
   ComposerSuggestionsList.displayName = COMPOSER_SUGGESTIONS_LIST_NAME;
   ComposerSuggestionsListItem.displayName = COMPOSER_SUGGESTIONS_LIST_ITEM_NAME;
+  ComposerTextFormatToggle.displayName = COMPOSER_TEXT_FORMAT_TOGGLE_NAME;
 }
 
 // NOTE: Every export from this file will be available publicly as Composer.*
@@ -1715,4 +1758,5 @@ export {
   ComposerSuggestions as Suggestions,
   ComposerSuggestionsList as SuggestionsList,
   ComposerSuggestionsListItem as SuggestionsListItem,
+  ComposerTextFormatToggle as TextFormatToggle,
 };
