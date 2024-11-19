@@ -81,19 +81,6 @@ const LiveblocksCollab = Collaboration.extend({
   },
 });
 
-export type EditorStatus =
-  /* The editor state is not loaded and has not been requested. */
-  | "not-loaded"
-  /* The editor state is loading from Liveblocks servers */
-  | "loading"
-  /**
-   * Not working yet! Will be available in a future release.
-   * Some editor state modifications has not been acknowledged yet by the server
-   */
-  | "synchronizing"
-  /* The editor state is sync with Liveblocks servers */
-  | "synchronized";
-
 function useYjsProvider() {
   const room = useRoom();
 
