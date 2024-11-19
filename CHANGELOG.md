@@ -1,3 +1,9 @@
+## 2.12.2 (Not published yet)
+
+### `@liveblocks/zustand`
+
+- Add support for Zustand v5
+
 ## 2.12.1
 
 ### `@liveblocks/react-ui`

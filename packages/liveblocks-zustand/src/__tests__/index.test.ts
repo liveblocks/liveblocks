@@ -16,7 +16,7 @@ import { ClientMsgCode, OpCode, ServerMsgCode } from "@liveblocks/core";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
 import type { StateCreator } from "zustand";
-import create from "zustand";
+import { create } from "zustand";
 
 import type { Mapping, WithLiveblocks } from "..";
 import { liveblocks as liveblocksMiddleware } from "..";
