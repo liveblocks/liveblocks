@@ -53,7 +53,7 @@ test("no matter what happens, storage always synchronizes to be the same", () =>
       fc.array(randomMutation()),
 
       async (sequence) => {
-        const { server, clients, sync } = manyClientsSetup(3, {
+        const { server, clients, sync } = await manyClientsSetup(3, {
           put,
           inc,
           del,
