@@ -1,6 +1,6 @@
 import { autoUpdate, flip, hide, limitShift, offset, shift, size, useFloating } from "@floating-ui/react-dom";
 import { createInboxNotificationId } from "@liveblocks/core";
-import { useUser } from "@liveblocks/react";
+import { useRoom, useUser } from "@liveblocks/react";
 import { useMentionSuggestions } from "@liveblocks/react/_private";
 import { useOverrides } from "@liveblocks/react-ui";
 import type { HTMLAttributes, MouseEvent } from "react";
@@ -57,7 +57,8 @@ export type MentionsListHandle = {
 
 export const MentionsList = forwardRef<MentionsListHandle, MentionsListProps>((props, ref) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const suggestions = useMentionSuggestions(props.query);
+  const room = useRoom();
+  const suggestions = useMentionSuggestions(room.id, props.query);
   const { onMouseEnter, onClick } = props;
   const {
     refs: { setReference, setFloating },

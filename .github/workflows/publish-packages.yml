@@ -84,7 +84,7 @@ jobs:
           "packages/liveblocks-zustand" "packages/liveblocks-yjs"
           "packages/liveblocks-react-ui" "packages/liveblocks-react-lexical"
           "packages/liveblocks-node-lexical" "packages/liveblocks-react-tiptap"
-          "packages/liveblocks-emails"
+          "packages/liveblocks-emails" "packages/liveblocks-node-prosemirror"
 
       - name: Build all packages
         run: |
@@ -105,6 +105,7 @@ jobs:
           "packages/liveblocks-yjs" "packages/liveblocks-react-lexical"
           "packages/liveblocks-node-lexical" "packages/liveblocks-react-ui"
           "packages/liveblocks-react-tiptap" "packages/liveblocks-emails"
+          "packages/liveblocks-node-prosemirror"
 
       - name:
           Creating release tag, don't forget to fill the changelog if necessary!

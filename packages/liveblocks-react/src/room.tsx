@@ -30,7 +30,6 @@ import type {
   EnterOptions,
   LiveblocksError,
   OpaqueClient,
-  OpaqueRoom,
   Poller,
   RoomEventMessage,
   ToImmutable,
@@ -106,8 +105,6 @@ import {
 } from "./types/errors";
 import type { UmbrellaStore, UmbrellaStoreState } from "./umbrella-store";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
-
-const SMOOTH_DELAY = 1000;
 
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
@@ -199,13 +196,12 @@ function makeMutationContext<
   };
 }
 
-function getCurrentUserId(room: OpaqueRoom): string {
-  const self = room.getSelf();
-  if (self === null || self.id === undefined) {
+function getCurrentUserId(client: Client): string {
+  const userId = client[kInternal].currentUserIdStore.get();
+  if (userId === undefined) {
     return "anonymous";
-  } else {
-    return self.id;
   }
+  return userId;
 }
 
 function handleApiError(err: HttpError): Error {
@@ -779,6 +775,8 @@ function useStatus(): Status {
  * Returns the current storage status for the Room, and triggers
  * a re-render whenever it changes. Can be used to render a "Saving..."
  * indicator.
+ *
+ * @deprecated Prefer useSyncStatus()
  */
 function useStorageStatus(options?: UseStorageStatusOptions): StorageStatus {
   // Normally the Rules of Hooks™ dictate that you should not call hooks
@@ -816,7 +814,7 @@ function useStorageStatusSmooth(): StorageStatus {
         newStatus === "synchronized"
       ) {
         // Delay delivery of the "synchronized" event
-        timeoutId = setTimeout(() => setStatus(newStatus), SMOOTH_DELAY);
+        timeoutId = setTimeout(() => setStatus(newStatus), config.SMOOTH_DELAY);
       } else {
         clearTimeout(timeoutId);
         setStatus(newStatus);
@@ -1311,8 +1309,16 @@ function useCommentsErrorListener<M extends BaseMetadata>(
 function useCreateThread<M extends BaseMetadata>(): (
   options: CreateThreadOptions<M>
 ) => ThreadData<M> {
+  return useCreateRoomThread(useRoom().id);
+}
+
+/**
+ * @private
+ */
+function useCreateRoomThread<M extends BaseMetadata>(
+  roomId: string
+): (options: CreateThreadOptions<M>) => ThreadData<M> {
   const client = useClient();
-  const room = useRoom();
 
   return React.useCallback(
     (options: CreateThreadOptions<M>): ThreadData<M> => {
@@ -1327,10 +1333,10 @@ function useCreateThread<M extends BaseMetadata>(): (
       const newComment: CommentData = {
         id: commentId,
         threadId,
-        roomId: room.id,
+        roomId,
         createdAt,
         type: "comment",
-        userId: getCurrentUserId(room),
+        userId: getCurrentUserId(client),
         body,
         reactions: [],
         attachments: attachments ?? [],
@@ -1340,7 +1346,7 @@ function useCreateThread<M extends BaseMetadata>(): (
         type: "thread",
         createdAt,
         updatedAt: createdAt,
-        roomId: room.id,
+        roomId,
         metadata,
         comments: [newComment],
         resolved: false,
@@ -1350,13 +1356,20 @@ function useCreateThread<M extends BaseMetadata>(): (
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "create-thread",
         thread: newThread,
-        roomId: room.id,
+        roomId,
       });
 
       const attachmentIds = attachments?.map((attachment) => attachment.id);
 
-      room
-        .createThread({ threadId, commentId, body, metadata, attachmentIds })
+      client[kInternal].httpClient
+        .createThread({
+          roomId,
+          threadId,
+          commentId,
+          body,
+          metadata,
+          attachmentIds,
+        })
         .then(
           (thread) => {
             // Replace the optimistic update by the real thing
@@ -1368,7 +1381,7 @@ function useCreateThread<M extends BaseMetadata>(): (
               optimisticUpdateId,
               (err) =>
                 new CreateThreadError(err, {
-                  roomId: room.id,
+                  roomId,
                   threadId,
                   commentId,
                   body,
@@ -1379,18 +1392,21 @@ function useCreateThread<M extends BaseMetadata>(): (
 
       return newThread;
     },
-    [client, room]
+    [client, roomId]
   );
 }
 
 function useDeleteThread(): (threadId: string) => void {
+  return useDeleteRoomThread(useRoom().id);
+}
+
+function useDeleteRoomThread(roomId: string): (threadId: string) => void {
   const client = useClient();
-  const room = useRoom();
   return React.useCallback(
     (threadId: string): void => {
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
 
-      const userId = getCurrentUserId(room);
+      const userId = getCurrentUserId(client);
 
       const existing = store.getFullState().threadsDB.get(threadId);
       if (existing?.comments?.[0]?.userId !== userId) {
@@ -1399,12 +1415,12 @@ function useDeleteThread(): (threadId: string) => void {
 
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "delete-thread",
-        roomId: room.id,
+        roomId,
         threadId,
         deletedAt: new Date(),
       });
 
-      room.deleteThread(threadId).then(
+      client[kInternal].httpClient.deleteThread({ roomId, threadId }).then(
         () => {
           // Replace the optimistic update by the real thing
           store.deleteThread(threadId, optimisticUpdateId);
@@ -1413,17 +1429,20 @@ function useDeleteThread(): (threadId: string) => void {
           onMutationFailure(
             err,
             optimisticUpdateId,
-            (err) => new DeleteThreadError(err, { roomId: room.id, threadId })
+            (err) => new DeleteThreadError(err, { roomId, threadId })
           )
       );
     },
-    [client, room]
+    [client, roomId]
   );
 }
 
 function useEditThreadMetadata<M extends BaseMetadata>() {
+  return useEditRoomThreadMetadata<M>(useRoom().id);
+}
+
+function useEditRoomThreadMetadata<M extends BaseMetadata>(roomId: string) {
   const client = useClient();
-  const room = useRoom();
   return React.useCallback(
     (options: EditThreadMetadataOptions<M>): void => {
       if (!options.metadata) {
@@ -1442,29 +1461,31 @@ function useEditThreadMetadata<M extends BaseMetadata>() {
         updatedAt,
       });
 
-      room.editThreadMetadata({ threadId, metadata }).then(
-        (metadata) =>
-          // Replace the optimistic update by the real thing
-          store.patchThread(
-            threadId,
-            optimisticUpdateId,
-            { metadata },
-            updatedAt
-          ),
-        (err: Error) =>
-          onMutationFailure(
-            err,
-            optimisticUpdateId,
-            (error) =>
-              new EditThreadMetadataError(error, {
-                roomId: room.id,
-                threadId,
-                metadata,
-              })
-          )
-      );
+      client[kInternal].httpClient
+        .editThreadMetadata({ roomId, threadId, metadata })
+        .then(
+          (metadata) =>
+            // Replace the optimistic update by the real thing
+            store.patchThread(
+              threadId,
+              optimisticUpdateId,
+              { metadata },
+              updatedAt
+            ),
+          (err: Error) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (error) =>
+                new EditThreadMetadataError(error, {
+                  roomId,
+                  threadId,
+                  metadata,
+                })
+            )
+        );
     },
-    [client, room]
+    [client, roomId]
   );
 }
 
@@ -1476,8 +1497,16 @@ function useEditThreadMetadata<M extends BaseMetadata>() {
  * createComment({ threadId: "th_xxx", body: {} });
  */
 function useCreateComment(): (options: CreateCommentOptions) => CommentData {
+  return useCreateRoomComment(useRoom().id);
+}
+
+/**
+ * @private
+ */
+function useCreateRoomComment(
+  roomId: string
+): (options: CreateCommentOptions) => CommentData {
   const client = useClient();
-  const room = useRoom();
   return React.useCallback(
     ({ threadId, body, attachments }: CreateCommentOptions): CommentData => {
       const commentId = createCommentId();
@@ -1486,10 +1515,10 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
       const comment: CommentData = {
         id: commentId,
         threadId,
-        roomId: room.id,
+        roomId,
         type: "comment",
         createdAt,
-        userId: getCurrentUserId(room),
+        userId: getCurrentUserId(client),
         body,
         reactions: [],
         attachments: attachments ?? [],
@@ -1503,28 +1532,30 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
 
       const attachmentIds = attachments?.map((attachment) => attachment.id);
 
-      room.createComment({ threadId, commentId, body, attachmentIds }).then(
-        (newComment) => {
-          // Replace the optimistic update by the real thing
-          store.createComment(newComment, optimisticUpdateId);
-        },
-        (err: Error) =>
-          onMutationFailure(
-            err,
-            optimisticUpdateId,
-            (err) =>
-              new CreateCommentError(err, {
-                roomId: room.id,
-                threadId,
-                commentId,
-                body,
-              })
-          )
-      );
+      client[kInternal].httpClient
+        .createComment({ roomId, threadId, commentId, body, attachmentIds })
+        .then(
+          (newComment) => {
+            // Replace the optimistic update by the real thing
+            store.createComment(newComment, optimisticUpdateId);
+          },
+          (err: Error) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (err) =>
+                new CreateCommentError(err, {
+                  roomId,
+                  threadId,
+                  commentId,
+                  body,
+                })
+            )
+        );
 
       return comment;
     },
-    [client, room]
+    [client, roomId]
   );
 }
 
@@ -1536,8 +1567,16 @@ function useCreateComment(): (options: CreateCommentOptions) => CommentData {
  * editComment({ threadId: "th_xxx", commentId: "cm_xxx", body: {} })
  */
 function useEditComment(): (options: EditCommentOptions) => void {
+  return useEditRoomComment(useRoom().id);
+}
+
+/**
+ * @private
+ */
+function useEditRoomComment(
+  roomId: string
+): (options: EditCommentOptions) => void {
   const client = useClient();
-  const room = useRoom();
   return React.useCallback(
     ({ threadId, commentId, body, attachments }: EditCommentOptions): void => {
       const editedAt = new Date();
@@ -1577,26 +1616,28 @@ function useEditComment(): (options: EditCommentOptions) => void {
 
       const attachmentIds = attachments?.map((attachment) => attachment.id);
 
-      room.editComment({ threadId, commentId, body, attachmentIds }).then(
-        (editedComment) => {
-          // Replace the optimistic update by the real thing
-          store.editComment(threadId, optimisticUpdateId, editedComment);
-        },
-        (err: Error) =>
-          onMutationFailure(
-            err,
-            optimisticUpdateId,
-            (error) =>
-              new EditCommentError(error, {
-                roomId: room.id,
-                threadId,
-                commentId,
-                body,
-              })
-          )
-      );
+      client[kInternal].httpClient
+        .editComment({ roomId, threadId, commentId, body, attachmentIds })
+        .then(
+          (editedComment) => {
+            // Replace the optimistic update by the real thing
+            store.editComment(threadId, optimisticUpdateId, editedComment);
+          },
+          (err: Error) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (error) =>
+                new EditCommentError(error, {
+                  roomId,
+                  threadId,
+                  commentId,
+                  body,
+                })
+            )
+        );
     },
-    [client, room]
+    [client, roomId]
   );
 }
 
@@ -1609,8 +1650,14 @@ function useEditComment(): (options: EditCommentOptions) => void {
  * deleteComment({ threadId: "th_xxx", commentId: "cm_xxx" })
  */
 function useDeleteComment() {
+  return useDeleteRoomComment(useRoom().id);
+}
+
+/**
+ * @private
+ */
+function useDeleteRoomComment(roomId: string) {
   const client = useClient();
-  const room = useRoom();
 
   return React.useCallback(
     ({ threadId, commentId }: DeleteCommentOptions): void => {
@@ -1623,43 +1670,51 @@ function useDeleteComment() {
         threadId,
         commentId,
         deletedAt,
-        roomId: room.id,
+        roomId,
       });
 
-      room.deleteComment({ threadId, commentId }).then(
-        () => {
-          // Replace the optimistic update by the real thing
-          store.deleteComment(
-            threadId,
-            optimisticUpdateId,
-            commentId,
-            deletedAt
-          );
-        },
-        (err: Error) =>
-          onMutationFailure(
-            err,
-            optimisticUpdateId,
-            (error) =>
-              new DeleteCommentError(error, {
-                roomId: room.id,
-                threadId,
-                commentId,
-              })
-          )
-      );
+      client[kInternal].httpClient
+        .deleteComment({ roomId, threadId, commentId })
+        .then(
+          () => {
+            // Replace the optimistic update by the real thing
+            store.deleteComment(
+              threadId,
+              optimisticUpdateId,
+              commentId,
+              deletedAt
+            );
+          },
+          (err: Error) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (error) =>
+                new DeleteCommentError(error, {
+                  roomId,
+                  threadId,
+                  commentId,
+                })
+            )
+        );
     },
-    [client, room]
+    [client, roomId]
   );
 }
 
 function useAddReaction<M extends BaseMetadata>() {
+  return useAddRoomCommentReaction<M>(useRoom().id);
+}
+
+/**
+ * @private
+ */
+function useAddRoomCommentReaction<M extends BaseMetadata>(roomId: string) {
   const client = useClient();
-  const room = useRoom();
   return React.useCallback(
     ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
       const createdAt = new Date();
-      const userId = getCurrentUserId(room);
+      const userId = getCurrentUserId(client);
 
       const { store, onMutationFailure } = getRoomExtrasForClient<M>(client);
 
@@ -1674,32 +1729,34 @@ function useAddReaction<M extends BaseMetadata>() {
         },
       });
 
-      room.addReaction({ threadId, commentId, emoji }).then(
-        (addedReaction) => {
-          // Replace the optimistic update by the real thing
-          store.addReaction(
-            threadId,
-            optimisticUpdateId,
-            commentId,
-            addedReaction,
-            createdAt
-          );
-        },
-        (err: Error) =>
-          onMutationFailure(
-            err,
-            optimisticUpdateId,
-            (error) =>
-              new AddReactionError(error, {
-                roomId: room.id,
-                threadId,
-                commentId,
-                emoji,
-              })
-          )
-      );
+      client[kInternal].httpClient
+        .addReaction({ roomId, threadId, commentId, emoji })
+        .then(
+          (addedReaction) => {
+            // Replace the optimistic update by the real thing
+            store.addReaction(
+              threadId,
+              optimisticUpdateId,
+              commentId,
+              addedReaction,
+              createdAt
+            );
+          },
+          (err: Error) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (error) =>
+                new AddReactionError(error, {
+                  roomId,
+                  threadId,
+                  commentId,
+                  emoji,
+                })
+            )
+        );
     },
-    [client, room]
+    [client, roomId]
   );
 }
 
@@ -1711,11 +1768,17 @@ function useAddReaction<M extends BaseMetadata>() {
  * removeReaction({ threadId: "th_xxx", commentId: "cm_xxx", emoji: "👍" })
  */
 function useRemoveReaction() {
+  return useRemoveRoomCommentReaction(useRoom().id);
+}
+
+/**
+ * @private
+ */
+function useRemoveRoomCommentReaction(roomId: string) {
   const client = useClient();
-  const room = useRoom();
   return React.useCallback(
     ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
-      const userId = getCurrentUserId(room);
+      const userId = getCurrentUserId(client);
 
       const removedAt = new Date();
 
@@ -1729,36 +1792,37 @@ function useRemoveReaction() {
         removedAt,
       });
 
-      room.removeReaction({ threadId, commentId, emoji }).then(
-        () => {
-          // Replace the optimistic update by the real thing
-          store.removeReaction(
-            threadId,
-            optimisticUpdateId,
-            commentId,
-            emoji,
-            userId,
-            removedAt
-          );
-        },
-        (err: Error) =>
-          onMutationFailure(
-            err,
-            optimisticUpdateId,
-            (error) =>
-              new RemoveReactionError(error, {
-                roomId: room.id,
-                threadId,
-                commentId,
-                emoji,
-              })
-          )
-      );
+      client[kInternal].httpClient
+        .removeReaction({ roomId, threadId, commentId, emoji })
+        .then(
+          () => {
+            // Replace the optimistic update by the real thing
+            store.removeReaction(
+              threadId,
+              optimisticUpdateId,
+              commentId,
+              emoji,
+              userId,
+              removedAt
+            );
+          },
+          (err: Error) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (error) =>
+                new RemoveReactionError(error, {
+                  roomId,
+                  threadId,
+                  commentId,
+                  emoji,
+                })
+            )
+        );
     },
-    [client, room]
+    [client, roomId]
   );
 }
-
 /**
  * Returns a function that marks a thread as read.
  *
@@ -1767,8 +1831,14 @@ function useRemoveReaction() {
  * markThreadAsRead("th_xxx");
  */
 function useMarkThreadAsRead() {
+  return useMarkRoomThreadAsRead(useRoom().id);
+}
+
+/**
+ * @private
+ */
+function useMarkRoomThreadAsRead(roomId: string) {
   const client = useClient();
-  const room = useRoom();
   return React.useCallback(
     (threadId: string) => {
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
@@ -1790,29 +1860,34 @@ function useMarkThreadAsRead() {
         readAt: now,
       });
 
-      room.markInboxNotificationAsRead(inboxNotification.id).then(
-        () => {
-          // Replace the optimistic update by the real thing
-          store.updateInboxNotification(
-            inboxNotification.id,
-            optimisticUpdateId,
-            (inboxNotification) => ({ ...inboxNotification, readAt: now })
-          );
-        },
-        (err: Error) => {
-          onMutationFailure(
-            err,
-            optimisticUpdateId,
-            (error) =>
-              new MarkInboxNotificationAsReadError(error, {
-                inboxNotificationId: inboxNotification.id,
-              })
-          );
-          return;
-        }
-      );
+      client[kInternal].httpClient
+        .markRoomInboxNotificationAsRead({
+          roomId,
+          inboxNotificationId: inboxNotification.id,
+        })
+        .then(
+          () => {
+            // Replace the optimistic update by the real thing
+            store.updateInboxNotification(
+              inboxNotification.id,
+              optimisticUpdateId,
+              (inboxNotification) => ({ ...inboxNotification, readAt: now })
+            );
+          },
+          (err: Error) => {
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (error) =>
+                new MarkInboxNotificationAsReadError(error, {
+                  inboxNotificationId: inboxNotification.id,
+                })
+            );
+            return;
+          }
+        );
     },
-    [client, room]
+    [client, roomId]
   );
 }
 
@@ -1824,8 +1899,14 @@ function useMarkThreadAsRead() {
  * markThreadAsResolved("th_xxx");
  */
 function useMarkThreadAsResolved() {
+  return useMarkRoomThreadAsResolved(useRoom().id);
+}
+
+/**
+ * @private
+ */
+function useMarkRoomThreadAsResolved(roomId: string) {
   const client = useClient();
-  const room = useRoom();
   return React.useCallback(
     (threadId: string) => {
       const updatedAt = new Date();
@@ -1837,29 +1918,31 @@ function useMarkThreadAsResolved() {
         updatedAt,
       });
 
-      room.markThreadAsResolved(threadId).then(
-        () => {
-          // Replace the optimistic update by the real thing
-          store.patchThread(
-            threadId,
-            optimisticUpdateId,
-            { resolved: true },
-            updatedAt
-          );
-        },
-        (err: Error) =>
-          onMutationFailure(
-            err,
-            optimisticUpdateId,
-            (error) =>
-              new MarkThreadAsResolvedError(error, {
-                roomId: room.id,
-                threadId,
-              })
-          )
-      );
+      client[kInternal].httpClient
+        .markThreadAsResolved({ roomId, threadId })
+        .then(
+          () => {
+            // Replace the optimistic update by the real thing
+            store.patchThread(
+              threadId,
+              optimisticUpdateId,
+              { resolved: true },
+              updatedAt
+            );
+          },
+          (err: Error) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (error) =>
+                new MarkThreadAsResolvedError(error, {
+                  roomId,
+                  threadId,
+                })
+            )
+        );
     },
-    [client, room]
+    [client, roomId]
   );
 }
 
@@ -1871,8 +1954,14 @@ function useMarkThreadAsResolved() {
  * markThreadAsUnresolved("th_xxx");
  */
 function useMarkThreadAsUnresolved() {
+  return useMarkRoomThreadAsUnresolved(useRoom().id);
+}
+
+/**
+ * @private
+ */
+function useMarkRoomThreadAsUnresolved(roomId: string) {
   const client = useClient();
-  const room = useRoom();
   return React.useCallback(
     (threadId: string) => {
       const updatedAt = new Date();
@@ -1884,29 +1973,31 @@ function useMarkThreadAsUnresolved() {
         updatedAt,
       });
 
-      room.markThreadAsUnresolved(threadId).then(
-        () => {
-          // Replace the optimistic update by the real thing
-          store.patchThread(
-            threadId,
-            optimisticUpdateId,
-            { resolved: false },
-            updatedAt
-          );
-        },
-        (err: Error) =>
-          onMutationFailure(
-            err,
-            optimisticUpdateId,
-            (error) =>
-              new MarkThreadAsUnresolvedError(error, {
-                roomId: room.id,
-                threadId,
-              })
-          )
-      );
+      client[kInternal].httpClient
+        .markThreadAsUnresolved({ roomId, threadId })
+        .then(
+          () => {
+            // Replace the optimistic update by the real thing
+            store.patchThread(
+              threadId,
+              optimisticUpdateId,
+              { resolved: false },
+              updatedAt
+            );
+          },
+          (err: Error) =>
+            onMutationFailure(
+              err,
+              optimisticUpdateId,
+              (error) =>
+                new MarkThreadAsUnresolvedError(error, {
+                  roomId,
+                  threadId,
+                })
+            )
+        );
     },
-    [client, room]
+    [client, roomId]
   );
 }
 
@@ -2311,6 +2402,8 @@ function useStorageSuspense<S extends LsonObject, T>(
  * Returns the current storage status for the Room, and triggers
  * a re-render whenever it changes. Can be used to render a "Saving..."
  * indicator.
+ *
+ * @deprecated Prefer useSyncStatus()
  */
 function useStorageStatusSuspense(
   options?: UseStorageStatusOptions
@@ -2368,20 +2461,32 @@ function selectorFor_useAttachmentUrl(
  */
 function useAttachmentUrl(attachmentId: string): AttachmentUrlAsyncResult {
   const room = useRoom();
-  const { attachmentUrlsStore } = room[kInternal];
+  return useRoomAttachmentUrl(attachmentId, room.id);
+}
+
+/**
+ * @private For internal use only. Do not rely on this hook. Use `useAttachmentUrl` instead.
+ */
+function useRoomAttachmentUrl(
+  attachmentId: string,
+  roomId: string
+): AttachmentUrlAsyncResult {
+  const client = useClient();
+  const store =
+    client[kInternal].httpClient.getOrCreateAttachmentUrlsStore(roomId);
 
   const getAttachmentUrlState = React.useCallback(
-    () => attachmentUrlsStore.getState(attachmentId),
-    [attachmentUrlsStore, attachmentId]
+    () => store.getState(attachmentId),
+    [store, attachmentId]
   );
 
   React.useEffect(() => {
     // NOTE: .get() will trigger any actual fetches, whereas .getState() will not
-    void attachmentUrlsStore.get(attachmentId);
-  }, [attachmentUrlsStore, attachmentId]);
+    void store.get(attachmentId);
+  }, [store, attachmentId]);
 
   return useSyncExternalStoreWithSelector(
-    attachmentUrlsStore.subscribe,
+    store.subscribe,
     getAttachmentUrlState,
     getAttachmentUrlState,
     selectorFor_useAttachmentUrl,
@@ -2426,6 +2531,22 @@ function useAttachmentUrlSuspense(attachmentId: string) {
     url: state.data,
     error: undefined,
   } as const;
+}
+
+/**
+ * @private For internal use only. Do not rely on this hook.
+ */
+function useRoomPermissions(roomId: string) {
+  const client = useClient();
+  const store = getRoomExtrasForClient(client).store;
+
+  return (
+    useSyncExternalStore(
+      store.subscribe,
+      React.useCallback(() => store._getPermissions(roomId), [store, roomId]),
+      React.useCallback(() => store._getPermissions(roomId), [store, roomId])
+    ) ?? new Set()
+  );
 }
 
 /**
@@ -3002,6 +3123,7 @@ export {
   RoomContext,
   _RoomProvider as RoomProvider,
   _useAddReaction as useAddReaction,
+  useAddRoomCommentReaction,
   useAttachmentUrl,
   useAttachmentUrlSuspense,
   useBatch,
@@ -3011,10 +3133,16 @@ export {
   // TODO: Move to `liveblocks-react-lexical`
   useCommentsErrorListener,
   useCreateComment,
+  useCreateRoomComment,
+  useCreateRoomThread,
   _useCreateThread as useCreateThread,
   useDeleteComment,
+  useDeleteRoomComment,
+  useDeleteRoomThread,
   _useDeleteThread as useDeleteThread,
   useEditComment,
+  useEditRoomComment,
+  useEditRoomThreadMetadata,
   _useEditThreadMetadata as useEditThreadMetadata,
   useErrorListener,
   _useEventListener as useEventListener,
@@ -3024,6 +3152,9 @@ export {
   _useHistoryVersionsSuspense as useHistoryVersionsSuspense,
   _useIsInsideRoom as useIsInsideRoom,
   useLostConnectionListener,
+  useMarkRoomThreadAsRead,
+  useMarkRoomThreadAsResolved,
+  useMarkRoomThreadAsUnresolved,
   useMarkThreadAsRead,
   useMarkThreadAsResolved,
   useMarkThreadAsUnresolved,
@@ -3040,9 +3171,12 @@ export {
   _useOtherSuspense as useOtherSuspense,
   useRedo,
   useRemoveReaction,
+  useRemoveRoomCommentReaction,
   _useRoom as useRoom,
+  useRoomAttachmentUrl,
   _useRoomNotificationSettings as useRoomNotificationSettings,
   _useRoomNotificationSettingsSuspense as useRoomNotificationSettingsSuspense,
+  useRoomPermissions,
   _useSelf as useSelf,
   _useSelfSuspense as useSelfSuspense,
   useStatus,

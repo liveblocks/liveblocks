@@ -5,7 +5,7 @@ import type {
   Authentication,
   CustomAuthenticationResult,
 } from "./protocol/Authentication";
-import type { ParsedAuthToken } from "./protocol/AuthToken";
+import type { AuthToken, ParsedAuthToken } from "./protocol/AuthToken";
 import { parseAuthToken, Permission, TokenKind } from "./protocol/AuthToken";
 import type { Polyfills } from "./room";
 
@@ -35,7 +35,8 @@ export type AuthenticationOptions = {
 );
 
 export function createAuthManager(
-  authOptions: AuthenticationOptions
+  authOptions: AuthenticationOptions,
+  onAuthenticate?: (token: AuthToken) => void
 ): AuthManager {
   const authentication = prepareAuthentication(authOptions);
 
@@ -155,6 +156,7 @@ export function createAuthManager(
         );
       }
 
+      onAuthenticate?.(parsed.parsed);
       return parsed;
     }
 
@@ -163,6 +165,8 @@ export function createAuthManager(
       if (response && typeof response === "object") {
         if (typeof response.token === "string") {
           const parsed = parseAuthToken(response.token);
+
+          onAuthenticate?.(parsed.parsed);
           return parsed;
         } else if (typeof response.error === "string") {
           const reason = `Authentication failed: ${

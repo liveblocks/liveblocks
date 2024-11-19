@@ -14,9 +14,11 @@ import type {
   Observable,
   OpaqueClient,
   Patchable,
+  Permission,
   Resolve,
   RoomNotificationSettings,
   Store,
+  SyncSource,
   ThreadData,
   ThreadDataWithDeleteInfo,
   ThreadDeleteInfo,
@@ -532,6 +534,7 @@ export class SinglePageResource {
 
 type InternalState<M extends BaseMetadata> = Readonly<{
   optimisticUpdates: readonly OptimisticUpdate<M>[];
+  permissionsByRoom: Record<string, Set<Permission>>;
 
   // TODO: Ideally we would have a similar NotificationsDB, like we have ThreadDB
   notificationsById: Record<string, InboxNotificationData>;
@@ -585,6 +588,7 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
 
 export class UmbrellaStore<M extends BaseMetadata> {
   private _client: Client<BaseUserMeta, M>;
+  private _syncSource: SyncSource;
 
   // Raw threads DB (without any optimistic updates applied)
   private _rawThreadsDB: ThreadDB<M>;
@@ -616,6 +620,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   constructor(client: OpaqueClient) {
     this._client = client[kInternal].as<M>();
+    this._syncSource = this._client[kInternal].createSyncSource();
 
     const inboxFetcher = async (cursor?: string) => {
       const result = await this._client.getInboxNotifications({ cursor });
@@ -643,6 +648,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this._rawThreadsDB = new ThreadDB();
     this._store = createStore<InternalState<M>>({
       optimisticUpdates: [],
+      permissionsByRoom: {},
       notificationsById: {},
       settingsByRoomId: {},
       versionsByRoomId: {},
@@ -814,15 +820,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
     };
   }
 
-  /**
-   * @private Only used by the E2E test suite.
-   */
-  public _hasOptimisticUpdates(): boolean {
-    return this._store.get().optimisticUpdates.length > 0;
-  }
-
   public subscribe(callback: () => void): () => void {
     return this._store.subscribe(callback);
+  }
+
+  public _getPermissions(roomId: string): Set<Permission> | undefined {
+    return this._store.get().permissionsByRoom[roomId];
   }
 
   // Direct low-level cache mutations ------------------------------------------------- {{{
@@ -889,10 +892,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
       cache: readonly OptimisticUpdate<M>[]
     ) => readonly OptimisticUpdate<M>[]
   ): void {
-    this._store.set((state) => ({
-      ...state,
-      optimisticUpdates: mapFn(state.optimisticUpdates),
-    }));
+    this._store.set((state) => {
+      const optimisticUpdates = mapFn(state.optimisticUpdates);
+      this._syncSource.setSyncStatus(
+        optimisticUpdates.length > 0 ? "synchronizing" : "synchronized"
+      );
+      return { ...state, optimisticUpdates };
+    });
   }
 
   // ---------------------------------------------------------------------------------- }}}
@@ -1294,21 +1300,41 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this._notifications.waitUntilLoaded();
   }
 
+  private updateRoomPermissions(permissions: Record<string, Permission[]>) {
+    const permissionsByRoom = { ...this._store.get().permissionsByRoom };
+
+    Object.entries(permissions).forEach(([roomId, newPermissions]) => {
+      // Get the existing set of permissions for the room and only ever add permission to this set
+      const existingPermissions = permissionsByRoom[roomId] ?? new Set();
+      // Add the new permissions to the set of existing permissions
+      newPermissions.forEach((permission) =>
+        existingPermissions.add(permission)
+      );
+      permissionsByRoom[roomId] = existingPermissions;
+    });
+
+    this._store.set((state) => ({
+      ...state,
+      permissionsByRoom,
+    }));
+  }
+
   public waitUntilRoomThreadsLoaded(
     roomId: string,
     query: ThreadsQuery<M> | undefined
   ) {
     const threadsFetcher = async (cursor?: string) => {
-      const room = this._client.getRoom(roomId);
-      if (room === null) {
-        throw new HttpError(`Room '${roomId}' is not available on client`, 479);
-      }
-
-      const result = await room.getThreads({ cursor, query });
+      const result = await this._client[kInternal].httpClient.getThreads({
+        roomId,
+        cursor,
+        query,
+      });
       this.updateThreadsAndNotifications(
         result.threads,
         result.inboxNotifications
       );
+
+      this.updateRoomPermissions(result.permissionHints);
 
       const lastRequestedAt =
         this._roomThreadsLastRequestedAtByRoom.get(roomId);
@@ -1355,12 +1381,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return;
     }
 
-    const room = nn(
-      this._client.getRoom(roomId),
-      `Room with id ${roomId} is not available on client`
-    );
-
-    const updates = await room.getThreadsSince({
+    const updates = await this._client[kInternal].httpClient.getThreadsSince({
+      roomId,
       since: lastRequestedAt,
       signal,
     });
@@ -1372,6 +1394,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
       updates.inboxNotifications.deleted
     );
 
+    this.updateRoomPermissions(updates.permissionHints);
+
     if (lastRequestedAt < updates.requestedAt) {
       // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
       this._roomThreadsLastRequestedAtByRoom.set(roomId, updates.requestedAt);
@@ -1382,7 +1406,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
     const queryKey = makeUserThreadsQueryKey(query);
 
     const threadsFetcher = async (cursor?: string) => {
-      const result = await this._client[kInternal].getUserThreads_experimental({
+      const result = await this._client[
+        kInternal
+      ].httpClient.getUserThreads_experimental({
         cursor,
         query,
       });
@@ -1390,6 +1416,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
         result.threads,
         result.inboxNotifications
       );
+
+      this.updateRoomPermissions(result.permissionHints);
 
       // We initialize the `_userThreadsLastRequestedAt` date using the server timestamp after we've loaded the first page of inbox notifications.
       if (this._userThreadsLastRequestedAt === null) {
@@ -1423,7 +1451,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     const result = await this._client[
       kInternal
-    ].getUserThreadsSince_experimental({
+    ].httpClient.getUserThreadsSince_experimental({
       since: lastRequestedAt,
       signal,
     });
@@ -1438,6 +1466,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
       result.threads.deleted,
       result.inboxNotifications.deleted
     );
+
+    this.updateRoomPermissions(result.permissionHints);
   }
 
   public waitUntilRoomVersionsLoaded(roomId: string) {

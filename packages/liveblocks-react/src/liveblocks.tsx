@@ -12,6 +12,7 @@ import type {
   DU,
   InboxNotificationData,
   OpaqueClient,
+  SyncStatus,
 } from "@liveblocks/core";
 import {
   assert,
@@ -36,6 +37,7 @@ import { config } from "./config";
 import { useIsInsideRoom } from "./contexts";
 import { shallow2 } from "./lib/shallow2";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
+import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
 import type {
   InboxNotificationsAsyncResult,
@@ -48,6 +50,7 @@ import type {
   UnreadInboxNotificationsCountAsyncResult,
   UserAsyncResult,
   UserAsyncSuccess,
+  UseSyncStatusOptions,
   UseUserThreadsOptions,
 } from "./types";
 import { UmbrellaStore } from "./umbrella-store";
@@ -754,12 +757,18 @@ export function createSharedContext<U extends BaseUserMeta>(
   client: Client<U>
 ): SharedContextBundle<U> {
   const useClient = () => client;
+
+  function useSyncStatus(options?: UseSyncStatusOptions) {
+    return useSyncStatus_withClient(client, options);
+  }
+
   return {
     classic: {
       useClient,
       useUser: (userId: string) => useUser_withClient(client, userId),
       useRoomInfo: (roomId: string) => useRoomInfo_withClient(client, roomId),
       useIsInsideRoom,
+      useSyncStatus,
     },
     suspense: {
       useClient,
@@ -767,6 +776,7 @@ export function createSharedContext<U extends BaseUserMeta>(
       useRoomInfo: (roomId: string) =>
         useRoomInfoSuspense_withClient(client, roomId),
       useIsInsideRoom,
+      useSyncStatus,
     },
   };
 }
@@ -843,6 +853,7 @@ export function LiveblocksProvider<U extends BaseUserMeta = DU>(
     polyfills: useInitial(o.polyfills),
     unstable_fallbackToHTTP: useInitial(o.unstable_fallbackToHTTP),
     unstable_streamData: useInitial(o.unstable_streamData),
+    preventUnsavedChanges: useInitial(o.preventUnsavedChanges),
 
     authEndpoint: useInitialUnlessFunction(o.authEndpoint),
     resolveMentionSuggestions: useInitialUnlessFunction(
@@ -1179,6 +1190,77 @@ const _useUserThreads_experimental: TypedBundle["useUserThreads_experimental"] =
 const _useUserThreadsSuspense_experimental: TypedBundle["suspense"]["useUserThreads_experimental"] =
   useUserThreadsSuspense_experimental;
 
+function useSyncStatus_withClient(
+  client: OpaqueClient,
+  options?: UseSyncStatusOptions
+): SyncStatus {
+  // Normally the Rules of Hooks™ dictate that you should not call hooks
+  // conditionally. In this case, we're good here, because the same code path
+  // will always be taken on every subsequent render here, because we've frozen
+  // the value.
+  /* eslint-disable react-hooks/rules-of-hooks */
+  const smooth = useInitial(options?.smooth ?? false);
+  if (smooth) {
+    return useSyncStatusSmooth_withClient(client);
+  } else {
+    return useSyncStatusImmediate_withClient(client);
+  }
+  /* eslint-enable react-hooks/rules-of-hooks */
+}
+
+function useSyncStatusImmediate_withClient(client: OpaqueClient): SyncStatus {
+  return useSyncExternalStore(
+    client.events.syncStatus.subscribe,
+    client.getSyncStatus,
+    client.getSyncStatus
+  );
+}
+
+function useSyncStatusSmooth_withClient(client: OpaqueClient): SyncStatus {
+  const getter = client.getSyncStatus;
+  const [status, setStatus] = React.useState(getter);
+  const oldStatus = useLatest(getter());
+
+  React.useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const unsub = client.events.syncStatus.subscribe(() => {
+      const newStatus = getter();
+      if (
+        oldStatus.current === "synchronizing" &&
+        newStatus === "synchronized"
+      ) {
+        // Delay delivery of the "synchronized" event
+        timeoutId = setTimeout(() => setStatus(newStatus), config.SMOOTH_DELAY);
+      } else {
+        clearTimeout(timeoutId);
+        setStatus(newStatus);
+      }
+    });
+
+    // Clean up
+    return () => {
+      clearTimeout(timeoutId);
+      unsub();
+    };
+  }, [client, getter, oldStatus]);
+
+  return status;
+}
+
+/**
+ * Returns the current Liveblocks sync status, and triggers a re-render
+ * whenever it changes. Can be used to render a "Saving..." indicator, or for
+ * preventing that a browser tab can be closed until all changes have been
+ * synchronized with the server.
+ *
+ * @example
+ * const syncStatus = useSyncStatus();  // "synchronizing" | "synchronized"
+ * const syncStatus = useSyncStatus({ smooth: true });
+ */
+function useSyncStatus(options?: UseSyncStatusOptions): SyncStatus {
+  return useSyncStatus_withClient(useClient(), options);
+}
+
 // eslint-disable-next-line simple-import-sort/exports
 export {
   _useInboxNotificationThread as useInboxNotificationThread,
@@ -1192,6 +1274,7 @@ export {
   useDeleteInboxNotification,
   useRoomInfo,
   useRoomInfoSuspense,
+  useSyncStatus,
   useUnreadInboxNotificationsCount,
   useUnreadInboxNotificationsCountSuspense,
   _useUserThreads_experimental as useUserThreads_experimental,

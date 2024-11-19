@@ -1,3 +1,5 @@
+import { createApiClient } from "../api-client";
+import { createAuthManager } from "../auth-manager";
 import { DEFAULT_BASE_URL } from "../constants";
 import type { LiveObject } from "../crdts/LiveObject";
 import type { LsonObject } from "../crdts/Lson";
@@ -6,7 +8,6 @@ import { kInternal } from "../internal";
 import type { Json, JsonObject } from "../lib/Json";
 import { makePosition } from "../lib/position";
 import { deepClone } from "../lib/utils";
-import type { Authentication } from "../protocol/Authentication";
 import type {
   AccessToken,
   IDToken,
@@ -30,7 +31,7 @@ import type {
 import { CrdtType } from "../protocol/SerializedCrdt";
 import type { ServerMsg } from "../protocol/ServerMsg";
 import { ServerMsgCode } from "../protocol/ServerMsg";
-import type { Room, RoomDelegates } from "../room";
+import type { Room, RoomConfig, RoomDelegates, SyncSource } from "../room";
 import { createRoom } from "../room";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
 import {
@@ -100,21 +101,35 @@ export const THIRD_POSITION = makePosition(SECOND_POSITION);
 export const FOURTH_POSITION = makePosition(THIRD_POSITION);
 export const FIFTH_POSITION = makePosition(FOURTH_POSITION);
 
-function makeRoomConfig(mockedDelegates: RoomDelegates) {
+export function makeSyncSource(): SyncSource {
+  return {
+    setSyncStatus: () => {},
+    destroy: () => {},
+  };
+}
+
+function makeRoomConfig<M extends BaseMetadata>(
+  mockedDelegates: RoomDelegates
+): RoomConfig<M> {
   return {
     delegates: mockedDelegates,
     roomId: "room-id",
     throttleDelay: -1, // No throttle for standard storage test
     lostConnectionTimeout: 99999, // Don't trigger connection loss events in tests
-    authentication: {
-      type: "private",
-      url: "/api/auth",
-    } as Authentication,
     polyfills: {
       WebSocket: MockWebSocket,
     },
     baseUrl: DEFAULT_BASE_URL,
     enableDebugLogging: false,
+    roomHttpClient: createApiClient({
+      baseUrl: DEFAULT_BASE_URL,
+      fetchPolyfill: globalThis.fetch?.bind(globalThis),
+      authManager: createAuthManager({
+        authEndpoint: "/api/auth",
+      }),
+    }),
+    // Not used in unit tests (yet)
+    createSyncSource: makeSyncSource,
   };
 }
 

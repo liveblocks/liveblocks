@@ -40,18 +40,18 @@ export type EditorStatus =
   /* The editor state is sync with Liveblocks servers */
   | "synchronized";
 
-function useProvider() {
+function useYjsProvider() {
   const room = useRoom();
 
   const subscribe = useCallback(
     (onStoreChange: () => void) => {
-      return room[kInternal].onProviderUpdate.subscribe(onStoreChange);
+      return room[kInternal].yjsProviderDidChange.subscribe(onStoreChange);
     },
     [room]
   );
 
   const getSnapshot = useCallback(() => {
-    return room[kInternal].getProvider();
+    return room[kInternal].getYjsProvider();
   }, [room]);
 
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
@@ -64,13 +64,15 @@ function useProvider() {
  * - `loading`: Once the editor state has been requested by LiveblocksPlugin.
  * - `synchronizing`: Not working yet! Will be available in a future release.
  * - `synchronized`:  The editor state is sync with Liveblocks servers.
+ *
+ * @deprecated Prefer `useIsEditorReady` or `useSyncStatus` (from @liveblocks/react)
  */
 export function useEditorStatus(): EditorStatus {
-  const provider = useProvider();
+  const provider = useYjsProvider();
 
   const subscribe = useCallback(
     (onStoreChange: () => void) => {
-      if (provider === undefined) return () => { };
+      if (provider === undefined) return () => {};
       provider.on("status", onStoreChange);
       return () => {
         provider.off("status", onStoreChange);
@@ -85,6 +87,32 @@ export function useEditorStatus(): EditorStatus {
     }
     return provider.getStatus();
   }, [provider]);
+
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+}
+
+/**
+ * Returns whether the editor has loaded the initial text contents from the
+ * server and is ready to be used.
+ */
+export function useIsEditorReady(): boolean {
+  const yjsProvider = useYjsProvider();
+
+  const getSnapshot = useCallback(() => {
+    const status = yjsProvider?.getStatus();
+    return status === "synchronizing" || status === "synchronized";
+  }, [yjsProvider]);
+
+  const subscribe = useCallback(
+    (callback: () => void) => {
+      if (yjsProvider === undefined) return () => {};
+      yjsProvider.on("status", callback);
+      return () => {
+        yjsProvider.off("status", callback);
+      };
+    },
+    [yjsProvider]
+  );
 
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }

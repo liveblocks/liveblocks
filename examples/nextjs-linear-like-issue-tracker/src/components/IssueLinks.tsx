@@ -12,8 +12,13 @@ import { getPreviewData, LinkPreviewMetadata } from "@/actions/preview";
 import { DeleteIcon } from "@/icons/DeleteIcon";
 import { PlusIcon } from "@/icons/PlusIcon";
 import { SubmitIcon } from "@/icons/SubmitIcon";
+import { ImmutableStorage } from "@/liveblocks.config";
 
-export function IssueLinks({ storageFallback }: any) {
+export function IssueLinks({
+  storageFallback,
+}: {
+  storageFallback: ImmutableStorage;
+}) {
   return (
     <ClientSideSuspense
       fallback={

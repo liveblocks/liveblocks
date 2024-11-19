@@ -25,6 +25,7 @@ export type {
   ResolveMentionSuggestionsArgs,
   ResolveRoomsInfoArgs,
   ResolveUsersArgs,
+  SyncStatus,
 } from "./client";
 export { createClient } from "./client";
 export type {
@@ -101,6 +102,7 @@ export { autoRetry, HttpError } from "./lib/autoRetry";
 export { chunk } from "./lib/chunk";
 export { Promise_withResolvers } from "./lib/controlledPromise";
 export {
+  createCommentAttachmentId,
   createCommentId,
   createInboxNotificationId,
   createThreadId,
@@ -145,8 +147,8 @@ export {
   wait,
   withTimeout,
 } from "./lib/utils";
-export type { GetUserThreadsOptions } from "./notifications";
 export type { CustomAuthenticationResult } from "./protocol/Authentication";
+export { Permission } from "./protocol/AuthToken";
 export type { BaseActivitiesData } from "./protocol/BaseActivitiesData";
 export type { BaseRoomInfo } from "./protocol/BaseRoomInfo";
 export type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
@@ -243,7 +245,7 @@ export type {
 } from "./protocol/ServerMsg";
 export { ServerMsgCode } from "./protocol/ServerMsg";
 export type { HistoryVersion } from "./protocol/VersionHistory";
-export type { PrivateRoomApi } from "./room";
+export type { IYjsProvider, PrivateRoomApi, YjsSyncStatus } from "./room";
 export type {
   BroadcastOptions,
   History,
@@ -253,6 +255,7 @@ export type {
   Room,
   RoomEventMessage,
   StorageStatus,
+  SyncSource,
 } from "./room";
 export type { GetThreadsOptions, UploadAttachmentOptions } from "./room";
 export type { Immutable } from "./types/Immutable";

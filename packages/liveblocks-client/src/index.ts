@@ -58,6 +58,7 @@ export type {
   StringifyCommentBodyElements,
   StringifyCommentBodyOptions,
   ThreadData,
+  ToImmutable,
   UploadAttachmentOptions,
   User,
 } from "@liveblocks/core";

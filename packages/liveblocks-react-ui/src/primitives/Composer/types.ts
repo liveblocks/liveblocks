@@ -166,6 +166,25 @@ export interface ComposerFormProps extends ComponentPropsWithSlot<"form"> {
    * Whether to create attachments when pasting files into the editor.
    */
   pasteFilesAsAttachments?: boolean;
+
+  /**
+   * When `preventUnsavedChanges` is set on your Liveblocks client (or set on
+   * <LiveblocksProvider>), then closing a browser tab will be prevented when
+   * there are unsaved changes.
+   *
+   * By default, that will include draft texts or attachments that are (being)
+   * uploaded via this composer, but not submitted yet.
+   *
+   * If you want to prevent unsaved changes with Liveblocks, but not for this
+   * composer, you can opt-out this composer instance by setting this prop to
+   * `false`.
+   */
+  preventUnsavedChanges?: boolean;
+
+  /**
+   * @internal
+   */
+  roomId?: string;
 }
 
 export type ComposerSubmitProps = ComponentPropsWithSlot<"button">;

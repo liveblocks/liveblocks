@@ -98,6 +98,7 @@ export type ComposerEditorContext = {
   editor: SlateEditor;
   setFocused: Dispatch<SetStateAction<boolean>>;
   editorChangeEventSource: EventSource<void>;
+  roomId: string;
 };
 
 export type ComposerAttachmentsContext = {

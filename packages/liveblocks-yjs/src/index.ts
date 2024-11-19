@@ -5,10 +5,20 @@ import type {
   LsonObject,
   Room,
 } from "@liveblocks/client";
-import type { BaseMetadata, DE, DM, DP, DS, DU } from "@liveblocks/core";
+import type {
+  BaseMetadata,
+  DE,
+  DM,
+  DP,
+  DS,
+  DU,
+  IYjsProvider,
+  YjsSyncStatus,
+} from "@liveblocks/core";
 import { ClientMsgCode, detectDupes, kInternal } from "@liveblocks/core";
 import { Base64 } from "js-base64";
 import { Observable } from "lib0/observable";
+import { IndexeddbPersistence } from "y-indexeddb";
 import * as Y from "yjs";
 
 import { Awareness } from "./awareness";
@@ -19,24 +29,23 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
 type ProviderOptions = {
   autoloadSubdocs?: boolean;
+  offlineSupport_experimental?: boolean;
 };
 
-enum SyncStatus {
-  Loading = "loading",
-  Synchronizing = "synchronizing",
-  Synchronized = "synchronized",
-}
-
 export class LiveblocksYjsProvider<
-  P extends JsonObject = DP,
-  S extends LsonObject = DS,
-  U extends BaseUserMeta = DU,
-  E extends Json = DE,
-  M extends BaseMetadata = DM,
-> extends Observable<unknown> {
+    P extends JsonObject = DP,
+    S extends LsonObject = DS,
+    U extends BaseUserMeta = DU,
+    E extends Json = DE,
+    M extends BaseMetadata = DM,
+  >
+  extends Observable<unknown>
+  implements IYjsProvider
+{
   private room: Room<P, S, U, E, M>;
   private rootDoc: Y.Doc;
   private options: ProviderOptions;
+  private indexeddbProvider: IndexeddbPersistence | null = null;
 
   private unsubscribers: Array<() => void> = [];
 
@@ -63,8 +72,8 @@ export class LiveblocksYjsProvider<
       fetchDoc: this.fetchDoc,
     });
 
-    // TODO: Display a warning if a provider is already attached to the room
-    room[kInternal].setProvider(this);
+    // TODO: Display a warning if a YjsProvider is already attached to the room
+    room[kInternal].setYjsProvider(this);
 
     // if we have a connectionId already during construction, use that
     this.awareness = new Awareness(this.rootDoc, this.room);
@@ -121,6 +130,18 @@ export class LiveblocksYjsProvider<
         this.emit("status", [this.getStatus()]);
       })
     );
+
+    if (options.offlineSupport_experimental) {
+      this.indexeddbProvider = new IndexeddbPersistence(room.id, this.rootDoc);
+      const onIndexedDbSync = () => {
+        this.rootDocHandler.synced = true;
+      };
+      this.indexeddbProvider.on("synced", onIndexedDbSync);
+
+      this.unsubscribers.push(() => {
+        this.indexeddbProvider?.off("synced", onIndexedDbSync);
+      });
+    }
 
     // different consumers listen to sync and synced
     this.rootDocHandler.on("synced", () => {
@@ -220,13 +241,11 @@ export class LiveblocksYjsProvider<
     return this.rootDocHandler.synced;
   }
 
-  public getStatus(): SyncStatus {
+  public getStatus(): YjsSyncStatus {
     if (!this.synced) {
-      return SyncStatus.Loading;
+      return "loading";
     }
-    return this.pending.length === 0
-      ? SyncStatus.Synchronized
-      : SyncStatus.Synchronizing;
+    return this.pending.length === 0 ? "synchronized" : "synchronizing";
   }
 
   destroy(): void {
@@ -239,6 +258,11 @@ export class LiveblocksYjsProvider<
     }
     this.subdocHandlers.clear();
     super.destroy();
+  }
+
+  async clearOfflineData(): Promise<void> {
+    if (!this.indexeddbProvider) return;
+    return this.indexeddbProvider.clearData();
   }
 
   // Some provider implementations expect to be able to call connect/disconnect, implement as noop
