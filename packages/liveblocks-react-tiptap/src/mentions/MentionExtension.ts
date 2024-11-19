@@ -119,7 +119,6 @@ export const MentionExtension = Extension.create<MentionExtensionOptions>({
   },
 
   addProseMirrorPlugins() {
-    debugger;
     return [
       Suggestion({
         editor: this.editor,
@@ -168,7 +167,6 @@ export const MentionExtension = Extension.create<MentionExtensionOptions>({
           let component: ReactRenderer<MentionsListHandle, MentionsListProps>;
           return {
             onStart: (props) => {
-              debugger;
               component = new ReactRenderer<
                 MentionsListHandle,
                 MentionsListProps
@@ -189,7 +187,6 @@ export const MentionExtension = Extension.create<MentionExtensionOptions>({
             },
 
             onKeyDown(props) {
-              debugger;
               if (props.event.key === "Escape") {
                 component.updateProps({
                   ...props,
@@ -197,7 +194,6 @@ export const MentionExtension = Extension.create<MentionExtensionOptions>({
                 });
                 return true;
               }
-              debugger;
               return component.ref?.onKeyDown(props) ?? false;
             },
 
