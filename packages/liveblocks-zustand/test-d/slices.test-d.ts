@@ -1,5 +1,5 @@
 import type { StateCreator } from "zustand";
-import create from "zustand";
+import { create } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 import { createClient } from "@liveblocks/client";
 import { liveblocks as liveblocksMiddleware } from "@liveblocks/zustand";
