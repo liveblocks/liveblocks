@@ -20,9 +20,14 @@ export type Delta = readonly [
   add: readonly (string | Json)[], // Alternated kv pairs, e.g. [key1,value1,key2,value2,etc...]
 ]; // Eventually, we'll need to compress this
 
-export type ClientMsg = Op;
+// NOTE Look into making serialization/deserialization more lightweight.
+// ProtoBuf / thrift / BSON maybe later?
 
-export type ServerMsg = Delta;
+export type OpClientMsg = { type: "OpClientMsg"; op: Op };
+export type ClientMsg = OpClientMsg;
+
+export type DeltaServerMsg = { type: "DeltaServerMsg"; delta: Delta };
+export type ServerMsg = DeltaServerMsg;
 
 export type Mutation = (
   root: LayeredCache,
