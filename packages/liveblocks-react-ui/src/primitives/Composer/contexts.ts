@@ -97,9 +97,7 @@ export type ComposerEditorContext = {
   validate: (value: SlateElement[]) => void;
   editor: SlateEditor;
   setFocused: Dispatch<SetStateAction<boolean>>;
-  changeEventSource: EventSource<void>;
-  // block: ComposerBodyBlockElement | null;
-  // inline: ComposerBodyInlineNonTextElement | null;
+  editorChangeEventSource: EventSource<void>;
 };
 
 export type ComposerAttachmentsContext = {

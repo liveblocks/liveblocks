@@ -1,3 +1,4 @@
+export type { ComposerBodyTextFormat } from "../types";
 export * as Comment from "./Comment";
 export type {
   CommentBodyComponents,
@@ -14,10 +15,12 @@ export type {
   ComposerAttachFilesProps,
   ComposerAttachmentsDropAreaProps,
   ComposerEditorComponents,
+  ComposerEditorFloatingToolbarProps,
   ComposerEditorLinkProps,
   ComposerEditorMentionProps,
   ComposerEditorMentionSuggestionsProps,
   ComposerEditorProps,
+  ComposerFloatingToolbarProps,
   ComposerFormProps,
   ComposerLinkProps,
   ComposerMentionProps,
@@ -25,6 +28,7 @@ export type {
   ComposerSubmitProps,
   ComposerSuggestionsListItemProps,
   ComposerSuggestionsListProps,
+  ComposerTextFormatToggleProps,
 } from "./Composer/types";
 export { AttachmentTooLargeError } from "./Composer/utils";
 export * as EmojiPicker from "./EmojiPicker";

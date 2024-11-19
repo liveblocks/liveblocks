@@ -373,7 +373,7 @@ function ComposerEditorFloatingToolbarWrapper({
 }: ComposerEditorFloatingToolbarWrapperProps) {
   const editor = useSlateStatic();
   const { isFocused, textFormats } = useComposer();
-  const { changeEventSource } = useComposerEditorContext();
+  const { editorChangeEventSource } = useComposerEditorContext();
   const [content, setContent] = useState<HTMLDivElement | null>(null);
   const [contentZIndex, setContentZIndex] = useState<string>();
   const contentRef = useCallback(setContent, [setContent]);
@@ -442,7 +442,7 @@ function ComposerEditorFloatingToolbarWrapper({
   }, [isFocused]);
 
   useLayoutEffect(() => {
-    const unsubscribe = changeEventSource.subscribe(() => {
+    const unsubscribe = editorChangeEventSource.subscribe(() => {
       // Detach from previous selection range (if any) to avoid sudden jumps
       setReference(null);
 
@@ -469,7 +469,12 @@ function ComposerEditorFloatingToolbarWrapper({
     });
 
     return unsubscribe;
-  }, [setReference, editor, changeEventSource, setHasFloatingToolbarRange]);
+  }, [
+    setReference,
+    editor,
+    editorChangeEventSource,
+    setHasFloatingToolbarRange,
+  ]);
 
   return (
     <Persist>
@@ -505,7 +510,14 @@ function ComposerEditorFloatingToolbarWrapper({
 }
 
 /**
- * TODO
+ * Displays a floating toolbar attached to the selection within `Composer.Editor`.
+ *
+ * @example
+ * <Composer.FloatingToolbar>
+ *   <Composer.TextFormatToggle format="bold">Bold</Composer.TextFormatToggle>
+ *   <Composer.TextFormatToggle format="italic">Italic</Composer.TextFormatToggle>
+ *   <Composer.TextFormatToggle format="strikethrough">Strikethrough</Composer.TextFormatToggle>
+ * </Composer.FloatingToolbar>
  */
 const ComposerFloatingToolbar = forwardRef<
   HTMLDivElement,
@@ -893,7 +905,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     },
     forwardedRef
   ) => {
-    const { editor, validate, setFocused, changeEventSource } =
+    const { editor, validate, setFocused, editorChangeEventSource } =
       useComposerEditorContext();
     const {
       submit,
@@ -954,9 +966,9 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
 
         setMentionDraft(getMentionDraftAtSelection(editor));
 
-        changeEventSource.notify();
+        editorChangeEventSource.notify();
       },
-      [validate, editor, changeEventSource]
+      [validate, editor, editorChangeEventSource]
     );
 
     const createMention = useCallback(
@@ -1507,16 +1519,9 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       [editor]
     );
 
-    // const [activeBlock, setActiveBlock] =
-    //   useState<ComposerBodyBlockElement | null>(null);
-    // const [activeInline, setActiveInline] =
-    //   useState<ComposerBodyInlineNonTextElement | null>(null);
-
     useEffect(() => {
       const unsubscribe = editorChangeEventSource.subscribe(() => {
         setTextFormats(getMarks(editor));
-        // setActiveBlock(getSelectionBlock(editor) ?? null);
-        // setActiveInline(getSelectionInline(editor) ?? null);
       });
 
       return unsubscribe;
@@ -1528,7 +1533,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
           editor,
           validate,
           setFocused,
-          changeEventSource: editorChangeEventSource,
+          editorChangeEventSource,
         }}
       >
         <ComposerAttachmentsContext.Provider
@@ -1690,7 +1695,12 @@ const ComposerAttachmentsDropArea = forwardRef<
 );
 
 /**
- * TODO
+ * A toggle button which toggles a specific text format.
+ *
+ * @example
+ * <Composer.TextFormatToggle format="bold">
+ *   Bold
+ * </Composer.TextFormatToggle>
  */
 const ComposerTextFormatToggle = forwardRef<
   HTMLButtonElement,
