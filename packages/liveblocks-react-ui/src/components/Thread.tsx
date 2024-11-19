@@ -6,11 +6,11 @@ import type {
   DM,
   ThreadData,
 } from "@liveblocks/core";
+import { useThreadSubscription } from "@liveblocks/react";
 import {
-  useMarkThreadAsResolved,
-  useMarkThreadAsUnresolved,
-  useThreadSubscription,
-} from "@liveblocks/react";
+  useMarkRoomThreadAsResolved,
+  useMarkRoomThreadAsUnresolved,
+} from "@liveblocks/react/_private";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
   ComponentPropsWithoutRef,
@@ -173,8 +173,8 @@ export const Thread = forwardRef(
     }: ThreadProps<M>,
     forwardedRef: ForwardedRef<HTMLDivElement>
   ) => {
-    const markThreadAsResolved = useMarkThreadAsResolved();
-    const markThreadAsUnresolved = useMarkThreadAsUnresolved();
+    const markThreadAsResolved = useMarkRoomThreadAsResolved(thread.roomId);
+    const markThreadAsUnresolved = useMarkRoomThreadAsUnresolved(thread.roomId);
     const $ = useOverrides(overrides);
     const firstCommentIndex = useMemo(() => {
       return showDeletedComments
@@ -377,6 +377,7 @@ export const Thread = forwardRef(
                 COMPOSER_PLACEHOLDER: $.THREAD_COMPOSER_PLACEHOLDER,
                 COMPOSER_SEND: $.THREAD_COMPOSER_SEND,
               }}
+              roomId={thread.roomId}
             />
           )}
         </div>

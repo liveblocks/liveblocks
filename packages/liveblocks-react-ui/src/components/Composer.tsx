@@ -6,13 +6,15 @@ import type {
   CommentMixedAttachment,
   DM,
 } from "@liveblocks/core";
-import { kInternal } from "@liveblocks/core";
+import { kInternal, Permission } from "@liveblocks/core";
+import { useClient } from "@liveblocks/react";
 import {
-  useClient,
-  useCreateComment,
-  useCreateThread,
-  useEditComment,
-} from "@liveblocks/react";
+  useCreateRoomComment,
+  useCreateRoomThread,
+  useEditRoomComment,
+  useRoomOrNull,
+  useRoomPermissions,
+} from "@liveblocks/react/_private";
 import type {
   ComponentPropsWithoutRef,
   FocusEvent,
@@ -23,7 +25,8 @@ import type {
   RefAttributes,
   SyntheticEvent,
 } from "react";
-import React, { forwardRef, useCallback, useRef } from "react";
+import React, { createContext, forwardRef, useCallback, useRef } from "react";
+import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
 import { useLiveblocksUIConfig } from "../config";
 import { AttachmentIcon } from "../icons/Attachment";
@@ -36,6 +39,7 @@ import * as ComposerPrimitive from "../primitives/Composer";
 import {
   useComposer,
   useComposerAttachmentsContext,
+  useComposerEditorContext,
 } from "../primitives/Composer/contexts";
 import type {
   ComposerEditorComponents,
@@ -177,6 +181,11 @@ export type ComposerProps<M extends BaseMetadata = DM> = Omit<
      * @internal
      */
     showAttribution?: boolean;
+
+    /**
+     * @internal
+     */
+    roomId?: string;
   };
 
 interface ComposerEditorContainerProps
@@ -364,6 +373,7 @@ function ComposerFileAttachment({
   ...props
 }: ComposerFileAttachmentProps) {
   const { removeAttachment } = useComposer();
+  const { roomId } = useComposerEditorContext();
 
   const handleDeleteClick = useCallback(() => {
     removeAttachment(attachment.id);
@@ -377,6 +387,7 @@ function ComposerFileAttachment({
       onDeleteClick={handleDeleteClick}
       preventFocusOnDelete
       overrides={overrides}
+      roomId={roomId}
     />
   );
 }
@@ -523,6 +534,8 @@ function ComposerEditorContainer({
   );
 }
 
+export const ComposerRoomIdContext = createContext<string | null>(null);
+
 /**
  * Displays a composer to create comments.
  *
@@ -550,14 +563,24 @@ export const Composer = forwardRef(
       disabled,
       showAttachments = true,
       showAttribution,
+      roomId: _roomId,
       ...props
     }: ComposerProps<M>,
     forwardedRef: ForwardedRef<HTMLFormElement>
   ) => {
     const client = useClient();
-    const createThread = useCreateThread();
-    const createComment = useCreateComment();
-    const editComment = useEditComment();
+    const room = useRoomOrNull();
+
+    const roomId = _roomId !== undefined ? _roomId : room?.id;
+    if (roomId === undefined) {
+      throw new Error(
+        "Composer must be a descendant of RoomProvider component"
+      );
+    }
+
+    const createThread = useCreateRoomThread(roomId);
+    const createComment = useCreateRoomComment(roomId);
+    const editComment = useEditRoomComment(roomId);
     const { preventUnsavedComposerChanges } = useLiveblocksUIConfig();
     const hasResolveMentionSuggestions =
       client[kInternal].resolveMentionSuggestions !== undefined;
@@ -572,6 +595,27 @@ export const Composer = forwardRef(
       controlledOnCollapsedChange,
       defaultCollapsed
     );
+
+    const canCommentFallback = useSyncExternalStore(
+      useCallback(
+        (callback) => {
+          if (room === null) return () => {};
+          return room.events.self.subscribeOnce(callback);
+        },
+        [room]
+      ),
+      useCallback(() => {
+        return room?.getSelf()?.canComment ?? true;
+      }, [room]),
+      useCallback(() => true, [])
+    );
+
+    const permissions = useRoomPermissions(roomId);
+    const canComment =
+      permissions.size > 0
+        ? permissions.has(Permission.CommentsWrite) ||
+          permissions.has(Permission.Write)
+        : canCommentFallback;
 
     const setEmptyRef = useCallback((isEmpty: boolean) => {
       isEmptyRef.current = isEmpty;
@@ -589,11 +633,11 @@ export const Composer = forwardRef(
           return;
         }
 
-        if (isEmptyRef.current) {
+        if (isEmptyRef.current && canComment) {
           onCollapsedChange?.(false);
         }
       },
-      [onCollapsedChange, onFocus]
+      [onCollapsedChange, onFocus, canComment]
     );
 
     const handleBlur = useCallback(
@@ -619,11 +663,11 @@ export const Composer = forwardRef(
       (event: MouseEvent<HTMLDivElement>) => {
         event.stopPropagation();
 
-        if (isEmptyRef.current) {
+        if (isEmptyRef.current && canComment) {
           onCollapsedChange?.(false);
         }
       },
-      [onCollapsedChange]
+      [onCollapsedChange, canComment]
     );
 
     const handleCommentSubmit = useCallback(
@@ -680,10 +724,11 @@ export const Composer = forwardRef(
           data-collapsed={isCollapsed ? "" : undefined}
           onFocus={handleFocus}
           onBlur={handleBlur}
-          disabled={disabled}
+          disabled={disabled || !canComment}
           defaultAttachments={defaultAttachments}
           pasteFilesAsAttachments={showAttachments}
           preventUnsavedChanges={preventUnsavedComposerChanges}
+          roomId={roomId}
         >
           <ComposerEditorContainer
             defaultValue={defaultValue}

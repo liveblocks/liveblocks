@@ -1,3 +1,5 @@
+import type { LiveblocksHttpApi } from "./api-client";
+import { createApiClient } from "./api-client";
 import { createAuthManager } from "./auth-manager";
 import { isIdle } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
@@ -14,14 +16,8 @@ import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import type { NoInfr } from "./lib/NoInfer";
 import type { Resolve } from "./lib/Resolve";
-import type {
-  GetInboxNotificationsOptions,
-  GetInboxNotificationsSinceOptions,
-  GetUserThreadsOptions,
-  GetUserThreadsSinceOptions,
-} from "./notifications";
-import { createNotificationsApi } from "./notifications";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
+import { TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type {
   BaseMetadata,
@@ -159,37 +155,15 @@ export type InternalSyncStatus = SyncStatus | "has-local-changes";
  * will probably happen if you do.
  */
 export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
-  readonly currentUserIdStore: Store<string | null>;
+  readonly currentUserIdStore: Store<string | undefined>;
   readonly mentionSuggestionsCache: Map<string, string[]>;
   readonly resolveMentionSuggestions: ClientOptions<U>["resolveMentionSuggestions"];
   readonly usersStore: BatchStore<U["info"] | undefined, string>;
   readonly roomsInfoStore: BatchStore<DRI | undefined, string>;
   readonly getRoomIds: () => string[];
-  readonly getUserThreads_experimental: (
-    options: GetUserThreadsOptions<M>
-  ) => Promise<{
-    threads: ThreadData<M>[];
-    inboxNotifications: InboxNotificationData[];
-    nextCursor: string | null;
-    requestedAt: Date;
-  }>;
-  readonly getUserThreadsSince_experimental: (
-    options: GetUserThreadsSinceOptions
-  ) => Promise<{
-    inboxNotifications: {
-      updated: InboxNotificationData[];
-      deleted: InboxNotificationDeleteInfo[];
-    };
-    threads: {
-      updated: ThreadData<M>[];
-      deleted: ThreadDeleteInfo[];
-    };
-    requestedAt: Date;
-  }>;
-
+  readonly httpClient: LiveblocksHttpApi<M>;
   // Type-level helper
   as<M2 extends BaseMetadata>(): Client<U, M2>;
-
   // Tracking pending changes globally
   createSyncSource(): SyncSource;
 };
@@ -212,7 +186,7 @@ export type NotificationsApi<M extends BaseMetadata> = {
    * const data = await client.getInboxNotifications();  // Fetch initial page (of 20 inbox notifications)
    * const data = await client.getInboxNotifications({ cursor: nextCursor });  // Fetch next page (= next 20 inbox notifications)
    */
-  getInboxNotifications(options?: GetInboxNotificationsOptions): Promise<{
+  getInboxNotifications(options?: { cursor?: string }): Promise<{
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<M>[];
     nextCursor: string | null;
@@ -238,9 +212,10 @@ export type NotificationsApi<M extends BaseMetadata> = {
    *   requestedAt,
    * } = await client.getInboxNotificationsSince({ since: result.requestedAt }});
    */
-  getInboxNotificationsSince(
-    options: GetInboxNotificationsSinceOptions
-  ): Promise<{
+  getInboxNotificationsSince(options: {
+    since: Date;
+    signal?: AbortSignal;
+  }): Promise<{
     inboxNotifications: {
       updated: InboxNotificationData[];
       deleted: InboxNotificationDeleteInfo[];
@@ -546,7 +521,22 @@ export function createClient<U extends BaseUserMeta = DU>(
   );
   const baseUrl = getBaseUrl(clientOptions.baseUrl);
 
-  const authManager = createAuthManager(options);
+  const currentUserIdStore = createStore<string | undefined>(undefined);
+
+  const authManager = createAuthManager(options, (token) => {
+    const userId = token.k === TokenKind.SECRET_LEGACY ? token.id : token.uid;
+    currentUserIdStore.set(() => userId);
+  });
+
+  const fetchPolyfill =
+    clientOptions.polyfills?.fetch ||
+    /* istanbul ignore next */ globalThis.fetch?.bind(globalThis);
+
+  const httpClient = createApiClient({
+    baseUrl,
+    fetchPolyfill,
+    authManager,
+  });
 
   type RoomDetails = {
     room: OpaqueRoom;
@@ -649,6 +639,7 @@ export function createClient<U extends BaseUserMeta = DU>(
         baseUrl,
         unstable_fallbackToHTTP: !!clientOptions.unstable_fallbackToHTTP,
         unstable_streamData: !!clientOptions.unstable_streamData,
+        roomHttpClient: httpClient as LiveblocksHttpApi<M>,
         createSyncSource,
       }
     );
@@ -695,6 +686,9 @@ export function createClient<U extends BaseUserMeta = DU>(
   function logout() {
     authManager.reset();
 
+    // Reset the current user id store when the client is logged out
+    currentUserIdStore.set(() => undefined);
+
     // Reconnect all rooms that aren't idle, if any. This ensures that those
     // rooms will get reauthorized now that the auth cache is reset. If that
     // fails, they might disconnect.
@@ -704,19 +698,6 @@ export function createClient<U extends BaseUserMeta = DU>(
       }
     }
   }
-
-  const currentUserIdStore = createStore<string | null>(null);
-
-  const fetchPolyfill =
-    clientOptions.polyfills?.fetch ||
-    /* istanbul ignore next */ globalThis.fetch?.bind(globalThis);
-
-  const notificationsAPI = createNotificationsApi({
-    baseUrl,
-    fetchPolyfill,
-    authManager,
-    currentUserIdStore,
-  });
 
   const resolveUsers = clientOptions.resolveUsers;
   const warnIfNoResolveUsers = createDevelopmentWarning(
@@ -846,7 +827,16 @@ export function createClient<U extends BaseUserMeta = DU>(
 
       logout,
 
-      ...notificationsAPI,
+      // Public inbox notifications API
+      getInboxNotifications: httpClient.getInboxNotifications,
+      getInboxNotificationsSince: httpClient.getInboxNotificationsSince,
+      getUnreadInboxNotificationsCount:
+        httpClient.getUnreadInboxNotificationsCount,
+      markAllInboxNotificationsAsRead:
+        httpClient.markAllInboxNotificationsAsRead,
+      markInboxNotificationAsRead: httpClient.markInboxNotificationAsRead,
+      deleteAllInboxNotifications: httpClient.deleteAllInboxNotifications,
+      deleteInboxNotification: httpClient.deleteInboxNotification,
 
       // Advanced resolvers APIs
       resolvers: {
@@ -870,16 +860,9 @@ export function createClient<U extends BaseUserMeta = DU>(
         getRoomIds() {
           return Array.from(roomsById.keys());
         },
-
-        // "All" threads (= "user" threads)
-        getUserThreads_experimental:
-          notificationsAPI.getUserThreads_experimental,
-        getUserThreadsSince_experimental:
-          notificationsAPI.getUserThreadsSince_experimental,
-
+        httpClient,
         // Type-level helper only, it's effectively only an identity-function at runtime
         as: <M2 extends BaseMetadata>() => client as Client<U, M2>,
-
         createSyncSource,
       },
     },
