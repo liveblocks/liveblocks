@@ -8,8 +8,9 @@ export { AnchoredThreads } from "./comments/AnchoredThreads";
 export { FloatingComposer } from "./comments/FloatingComposer";
 export { FloatingThreads } from "./comments/FloatingThreads";
 export { useLiveblocksExtension } from "./LiveblocksExtension";
+export { MentionExtension } from "./mentions/MentionExtension";
+export { MentionNode } from "./mentions/MentionNode";
 export { HistoryVersionPreview } from "./version-history/HistoryVersionPreview";
-
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     comments: {

@@ -19,6 +19,7 @@ import { Doc } from "yjs";
 
 import { CommentsExtension } from "./comments/CommentsExtension";
 import { MentionExtension } from "./mentions/MentionExtension";
+import { MentionNode } from "./mentions/MentionNode";
 import { LIVEBLOCKS_COMMENT_MARK_TYPE } from "./types";
 
 const providersMap = new Map<
@@ -245,6 +246,7 @@ export const useLiveblocksExtension = (): Extension => {
         extensions.push(CommentsExtension);
       }
       if (this.options.mentions) {
+        extensions.push(MentionNode);
         extensions.push(
           MentionExtension.configure({
             onCreateMention,
