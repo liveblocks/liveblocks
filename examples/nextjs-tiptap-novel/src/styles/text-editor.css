@@ -206,3 +206,14 @@ h3 .tiptap-code {
 .tiptap-youtube {
   border: 0;
 }
+
+.collaboration-cursor__label {
+  font-weight: 500;
+  font-family: var(--font-sans);
+  z-index: 10000;
+}
+
+/* Fixes Tailwind Prose bug with hidden cursor in code blocks */
+.prose :where(pre):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
+  overflow-x: visible;
+}
