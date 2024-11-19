@@ -31,9 +31,9 @@ const docMap = new Map<string, Doc>();
 
 type LiveblocksExtensionOptions = {
   field?: string;
-  comments: boolean; // | CommentsConfiguration
-  mentions: boolean; // | MentionsConfiguration
-  offlineSupport_experimental: boolean;
+  comments?: boolean; // | CommentsConfiguration
+  mentions?: boolean; // | MentionsConfiguration
+  offlineSupport_experimental?: boolean;
   initialContent?: Content;
 };
 
@@ -166,10 +166,12 @@ export const useLiveblocksExtension = (
     if (!isEditorReady || !yjsProvider || !options.initialContent || !editor)
       return;
 
+    // As noted in the tiptap documentation, you may not set initial content with collaboration.
+    // The docs provide the following workaround:
     const ydoc = (yjsProvider as LiveblocksYjsProvider).getYDoc();
     const hasContentSet = ydoc.getMap("liveblocks_config").get("hasContentSet");
     if (!hasContentSet) {
-      ydoc.getMap("liveblocks_config").set("initialContentLoaded", true);
+      ydoc.getMap("liveblocks_config").set("hasContentSet", true);
       editor.commands.setContent(options.initialContent);
     }
   }, [isEditorReady, yjsProvider, options.initialContent, editor]);
@@ -213,9 +215,8 @@ export const useLiveblocksExtension = (
     onCreate() {
       setEditor(this.editor);
       if (this.editor.options.content) {
-        console.log(
-          "Found initial content option: ",
-          this.editor.options.content
+        console.warn(
+          "[Liveblocks] Initial content must be set in the useLiveblocksExtension hook option. Remove content from your editor options."
         );
       }
       if (
