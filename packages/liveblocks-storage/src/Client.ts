@@ -94,7 +94,7 @@ export class Client<M extends Mutations> {
         // XXX Ultimately, we should not directly send this Op into the socket,
         // we'll have to maybe throttle these, and also we should never send
         // these out after we've gotten disconnected. Details for now, though!
-        const msg = op;
+        const msg: ClientMsg = { type: "OpClientMsg", op };
         this.#_log?.("OUT", msg);
         this.#socket?.send(msg);
 
@@ -125,7 +125,12 @@ export class Client<M extends Mutations> {
 
   #handleServerMsg(msg: ServerMsg): void {
     this.#_log?.("IN", msg);
-    this.applyDeltas([msg]);
+    if (msg.type === "DeltaServerMsg") {
+      this.applyDeltas([msg.delta]);
+    } else {
+      // Unknown (maybe future?) message
+      // Let's ignore it
+    }
   }
 
   applyDeltas(deltas: readonly Delta[]): void {
