@@ -85,7 +85,7 @@ function connectClientAndServer(
  * This is a SYMMETRIC test, because the client and the server use the same
  * mutators implementation.
  */
-export function oneClientSetup<M extends Mutations>(
+export async function oneClientSetup<M extends Mutations>(
   mutations: M,
   serverMutations?: Mutations
 ) {
@@ -94,20 +94,28 @@ export function oneClientSetup<M extends Mutations>(
 
   const { sync, disconnect } = connectClientAndServer(client, server);
 
+  // Allow client/server handshake to happen 🤝
+  {
+    await sync(server); // <- FirstServerMsg
+    await sync(client); // -> CatchMeUpClientMsg
+    await sync(server); // <- DeltaServerMsg (full)
+  }
+
   return { client, server, sync, disconnect };
 }
 
-export function twoClientsSetup<M extends Mutations>(
+export async function twoClientsSetup<M extends Mutations>(
   mutations: M,
   serverMutations?: Mutations
 ) {
-  const { server, clients, sync } = manyClientsSetup(
+  const { server, clients, sync } = await manyClientsSetup(
     2,
     mutations,
     serverMutations ?? mutations
   );
   const client1 = clients[0]!.client;
   const client2 = clients[1]!.client;
+
   return { client1, client2, server, sync };
 }
 
@@ -117,7 +125,7 @@ type ClientControl<M extends Mutations> = {
   disconnect(): Promise<void>;
 };
 
-export function manyClientsSetup<M extends Mutations>(
+export async function manyClientsSetup<M extends Mutations>(
   numClients: number,
   mutations: M,
   serverMutations?: Mutations
@@ -181,6 +189,13 @@ export function manyClientsSetup<M extends Mutations>(
         await ctl.sync(ctl.client);
       }
     }
+  }
+
+  // Allow client/server handshake to happen 🤝
+  {
+    await sync(server); // <- FirstServerMsg
+    await sync(); // -> CatchMeUpClientMsg
+    //               <- DeltaServerMsg (full)
   }
 
   return { clients, server, sync };

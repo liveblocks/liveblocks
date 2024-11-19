@@ -15,19 +15,40 @@ export type Op = readonly [id: OpId, name: string, args: readonly Json[]];
 
 export type Delta = readonly [
   // XXX Maybe support multiple ops being acknowledged by the same delta?
-  id: OpId,
+  id: OpId, // XXX Should we move OpId out of Delta and into DeltaServerMsg?
   rem: readonly string[],
   add: readonly (string | Json)[], // Alternated kv pairs, e.g. [key1,value1,key2,value2,etc...]
 ]; // Eventually, we'll need to compress this
 
-// NOTE Look into making serialization/deserialization more lightweight.
+//
+// NOTE
+// Using "type": "DeltaServerMsg" for now, just for clarity. We can make this
+// way more compact later.
+// Look into making serialization/deserialization more lightweight.
 // ProtoBuf / thrift / BSON maybe later?
+//
 
+export type CatchMeUpClientMsg = { type: "CatchMeUpClientMsg"; since: number };
 export type OpClientMsg = { type: "OpClientMsg"; op: Op };
-export type ClientMsg = OpClientMsg;
+export type ClientMsg = CatchMeUpClientMsg | OpClientMsg;
 
-export type DeltaServerMsg = { type: "DeltaServerMsg"; delta: Delta };
-export type ServerMsg = DeltaServerMsg;
+export type FirstServerMsg = {
+  type: "FirstServerMsg";
+  actor: number;
+  sessionKey: string;
+  stateClock: 1; // Add for real soon!
+};
+export type DeltaServerMsg = {
+  type: "DeltaServerMsg";
+  delta: Delta;
+
+  // Normally a delta will describe a partial change. However, for an initial
+  // storage update `full: true` will be true, which means the delta will
+  // contain the full document (not a partial delta)
+  full?: boolean;
+  stateClock: 1; // Add this for real soon!
+};
+export type ServerMsg = FirstServerMsg | DeltaServerMsg;
 
 export type Mutation = (
   root: LayeredCache,

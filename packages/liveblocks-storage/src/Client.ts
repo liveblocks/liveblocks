@@ -6,6 +6,7 @@ import type { ChangeReturnType, OmitFirstArg } from "./ts-toolkit.js";
 import type {
   ClientMsg,
   Delta,
+  FirstServerMsg,
   Mutation,
   Mutations,
   Op,
@@ -33,14 +34,19 @@ function getClientId() {
   return curr;
 }
 
+type Session = {
+  readonly actor: number;
+  readonly sessionKey: string;
+  readonly socket: Socket<ClientMsg, ServerMsg>;
+  caughtUp: boolean;
+};
+
 const DEBUG = false;
 
 export class Client<M extends Mutations> {
   #_debugClientId = getClientId();
   #_log?: (...args: unknown[]) => void;
 
-  // #currentSession: Session; ??
-  // #actor?: number;
   #store: Store;
   mutate: BoundMutations<M>;
 
@@ -50,7 +56,19 @@ export class Client<M extends Mutations> {
   // ops.
   #pendingOps: Map<OpId, Op>;
 
-  #socket: Socket<ClientMsg, ServerMsg> | null = null;
+  // The last known server state clock this client has caught up with. Should
+  // be persisted together with the local offline state, and pending ops. This
+  // number should be sent to the server in the CatchMeUpClientMsg to let the
+  // server decide whether to send a full or partial delta.
+  #serverStateClock: number = 0;
+
+  // State in the client changes as follows:
+  // - Initial (no socket, no session, not caught up)
+  // - Socket established, but we don't have a Session yet
+  // - Session established (= actor ID and server clock known)
+  // - Caught up, client received initial full doc (or delta), and can (re)send
+  //   pending ops
+  #session: Session | null = null;
 
   #events: {
     readonly onMutationError: EventSource<Error>;
@@ -93,10 +111,13 @@ export class Client<M extends Mutations> {
 
         // XXX Ultimately, we should not directly send this Op into the socket,
         // we'll have to maybe throttle these, and also we should never send
-        // these out after we've gotten disconnected. Details for now, though!
-        const msg: ClientMsg = { type: "OpClientMsg", op };
-        this.#_log?.("OUT", msg);
-        this.#socket?.send(msg);
+        // these out after we've gotten disconnected, or before we're caught
+        // up to the server state. Details for now, though!
+        if (this.#session?.caughtUp) {
+          const msg: ClientMsg = { type: "OpClientMsg", op };
+          this.#_log?.("OUT", msg);
+          this.#session?.socket.send(msg);
+        }
 
         return id;
       }) as any;
@@ -108,32 +129,73 @@ export class Client<M extends Mutations> {
   }
 
   connect(socket: Socket<ClientMsg, ServerMsg>): Callback<void> {
-    if (this.#socket) raise("Already connected");
+    if (this.#session) raise("Already connected");
 
     // Start listening to incoming ClientMsg messages on this socket
-    const disconnect = socket.recv.subscribe((msg) =>
-      this.#handleServerMsg(msg)
-    );
+    const disconnect = socket.recv.subscribe((msg) => {
+      // The very first message we receive after connecting to the server
+      // should be the FirstServerMsg, which we need to complete the connection
+      // setup. After this, we have a Session, and we're ready to exchange
+      // messages.
+      if (!this.#session) {
+        if (msg.type !== "FirstServerMsg")
+          raise("Expected the first message to be a FirstServerMsg");
 
-    this.#socket = socket;
+        this.#session = {
+          actor: msg.actor,
+          sessionKey: msg.sessionKey,
+          socket,
+          caughtUp: false,
+        };
+
+        // Client responds with handshake, by optionally sending a initial sync
+        // message
+        if (msg.stateClock > this.#serverStateClock) {
+          // Request an initial state fetch now
+          socket.send({
+            type: "CatchMeUpClientMsg",
+            since: this.#serverStateClock,
+          });
+        }
+
+        return;
+      }
+
+      if (msg.type === "FirstServerMsg") {
+        if (!this.#session)
+          raise("Unexpected message - session already established");
+        return;
+      }
+
+      this.#handleServerMsg(this.#session, msg);
+    });
+
     return () => {
       // Tear down pipes
-      this.#socket = null;
+      this.#session = null;
       disconnect();
     };
   }
 
-  #handleServerMsg(msg: ServerMsg): void {
+  #handleServerMsg(
+    curr: Session,
+    msg: Exclude<ServerMsg, FirstServerMsg>
+  ): void {
     this.#_log?.("IN", msg);
     if (msg.type === "DeltaServerMsg") {
-      this.applyDeltas([msg.delta]);
+      this.applyDeltas([msg.delta], msg.full ?? false);
+
+      // TODO Think about this conditional?
+      if (msg.full) {
+        curr.caughtUp = true;
+      }
     } else {
       // Unknown (maybe future?) message
       // Let's ignore it
     }
   }
 
-  applyDeltas(deltas: readonly Delta[]): void {
+  applyDeltas(deltas: readonly Delta[], full: boolean): void {
     // First, let's immediately remove acknowledged pending local Ops
     // Acknowledge the incoming opId by removing it from the pending ops list.
     // If this opId is not found, it's from another client.
@@ -144,6 +206,14 @@ export class Client<M extends Mutations> {
       this.#pendingOps.delete(opId);
     }
     this.#_log?.("(after) pendingOps size =", this.#pendingOps.size);
+
+    if (full) {
+      // Normally a delta will describe a partial change. However, for an
+      // initial storage update `full: true` will be true, which means the
+      // delta will contain the full document (not a partial delta), so let's
+      // throw away all local changes, before applying the delta.
+      this.#store.reset();
+    }
 
     this.#store.applyDeltas(deltas);
 

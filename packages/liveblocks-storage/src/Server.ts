@@ -6,6 +6,7 @@ import type {
   Delta,
   Mutations,
   Op,
+  OpId,
   ServerMsg,
   Socket,
 } from "./types.js";
@@ -23,6 +24,7 @@ export type Session = {
 const DEBUG = false;
 
 export class Server {
+  // #stateClock: number = 0;
   #nextActor = 1;
   #sessions: Set<Session>;
   #store: Store;
@@ -31,6 +33,7 @@ export class Server {
   constructor(mutations: Mutations) {
     this.#sessions = new Set();
     this.#store = new Store(mutations);
+    // this.#stateClock = 0;
 
     if (DEBUG) this.debug();
   }
@@ -46,11 +49,9 @@ export class Server {
   }
 
   connect(socket: Socket<ServerMsg, ClientMsg>): Callback<void> {
-    const newSession = {
-      actor: this.#nextActor++,
-      sessionKey: nanoid(8),
-      socket,
-    };
+    const actor = this.#nextActor++;
+    const sessionKey = nanoid(8);
+    const newSession = { actor, sessionKey, socket };
 
     // Start listening to incoming ClientMsg messages on this socket
     const disconnect = socket.recv.subscribe((msg) =>
@@ -58,6 +59,14 @@ export class Server {
     );
 
     this.#sessions.add(newSession);
+
+    // Announce to client its actor ID and the current state clock
+    newSession.socket.send({
+      type: "FirstServerMsg",
+      actor,
+      sessionKey,
+      stateClock: 1,
+    });
 
     return () => {
       // Tear down pipes
@@ -67,23 +76,51 @@ export class Server {
   }
 
   // TODO We could inline this inside the connect() closure above
-  #handleClientMsg(curr: Session, message: ClientMsg): void {
-    this.#_log?.(`IN (from ${curr.actor})`, message);
+  #handleClientMsg(curr: Session, msg: ClientMsg): void {
+    this.#_log?.(`IN (from ${curr.actor})`, msg);
 
-    const op: Op = message;
-    const result = this.#tryApplyOp(op);
+    if (msg.type === "OpClientMsg") {
+      const op = msg.op;
+      const result = this.#tryApplyOp(op);
 
-    if (result.ok) {
-      // Fan-out delta to all connected clients
-      for (const session of this.#sessions) {
-        this.#_log?.(`OUT (to ${session.actor})`, result.delta);
-        session.socket.send(result.delta);
+      if (result.ok) {
+        // Fan-out delta to all connected clients
+        for (const session of this.#sessions) {
+          this.#_log?.(`OUT (to ${session.actor})`, result.delta);
+          session.socket.send({
+            type: "DeltaServerMsg",
+            delta: result.delta,
+            stateClock: 1,
+          });
+        }
+      } else {
+        // Send error/ack back to origin
+        const ack: Delta = [op[0], [], []];
+        this.#_log?.(`OUT (to ${curr.actor})`, ack);
+        curr.socket.send({ type: "DeltaServerMsg", delta: ack, stateClock: 1 });
       }
+    } else if (msg.type === "CatchMeUpClientMsg") {
+      const kvstream: (string | Json)[] = [];
+      for (const [key, value] of this.#store.rootEntries()) {
+        if (value === undefined) {
+          kvstream.push(key);
+          kvstream.push(value);
+        }
+      }
+
+      curr.socket.send({
+        type: "DeltaServerMsg",
+        delta: [
+          "NO REAL OP ID HERE, WE SHOULD REMOVE THIS FIELD" as OpId,
+          [],
+          kvstream,
+        ],
+        full: true,
+        stateClock: 1,
+      });
     } else {
-      // Send error/ack back to origin
-      const ack: Delta = [op[0], [], []];
-      this.#_log?.(`OUT (to ${curr.actor})`, ack);
-      curr.socket.send(ack);
+      // Unexpected client message
+      // TODO Terminate the connection
     }
   }
 

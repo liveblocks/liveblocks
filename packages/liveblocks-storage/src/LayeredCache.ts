@@ -91,7 +91,7 @@ export class LayeredCache {
 
   *entries(): IterableIterator<[key: string, value: Json]> {
     if (this.#layers.length === 0) {
-      yield* this.#root.entries();
+      yield* this.rootEntries();
     } else {
       const keys = new Set(
         chain(this.#root.keys(), ...this.#layers.map((layer) => layer.keys()))
@@ -103,6 +103,10 @@ export class LayeredCache {
         }
       }
     }
+  }
+
+  rootEntries(): IterableIterator<[key: string, value: Json]> {
+    return this.#root.entries();
   }
 
   *[Symbol.iterator](): IterableIterator<[key: string, value: Json]> {

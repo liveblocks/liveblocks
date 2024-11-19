@@ -26,6 +26,15 @@ export class Store {
     this.#cache.snapshot();
   }
 
+  reset(): void {
+    this.#cache = new LayeredCache();
+    this.#cache.snapshot();
+  }
+
+  rootEntries(): IterableIterator<[key: string, value: Json]> {
+    return this.#cache.rootEntries();
+  }
+
   /**
    * Used by unit tests only to observe the cache contents.
    * @internal
