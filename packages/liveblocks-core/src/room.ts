@@ -989,6 +989,7 @@ export type YjsSyncStatus = "loading" | "synchronizing" | "synchronized";
  */
 export interface IYjsProvider {
   synced: boolean;
+  getYDoc: () => any;
   getStatus: () => YjsSyncStatus;
   on(event: "sync", listener: (synced: boolean) => void): void;
   on(event: "status", listener: (status: YjsSyncStatus) => void): void;

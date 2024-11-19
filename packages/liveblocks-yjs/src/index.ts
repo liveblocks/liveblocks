@@ -265,6 +265,10 @@ export class LiveblocksYjsProvider<
     return this.indexeddbProvider.clearData();
   }
 
+  getYDoc(): Y.Doc {
+    return this.rootDoc;
+  }
+
   // Some provider implementations expect to be able to call connect/disconnect, implement as noop
   disconnect(): void {
     // This is a noop for liveblocks as connections are managed by the room
