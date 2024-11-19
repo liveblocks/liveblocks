@@ -5,7 +5,7 @@ import { useCreateThread } from "@liveblocks/react";
 import type { ComposerProps, ComposerSubmitComment } from "@liveblocks/react-ui";
 import { Composer } from "@liveblocks/react-ui";
 import { type Editor, useEditorState } from "@tiptap/react";
-import type { ComponentRef, FormEvent } from "react";
+import type { ComponentRef, FormEvent, KeyboardEvent } from "react";
 import React, { forwardRef, useCallback, useEffect, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
 
@@ -27,7 +27,7 @@ export const FloatingComposer = forwardRef<
   FloatingComposerProps
 >(function FloatingComposer(props, forwardedRef) {
   const createThread = useCreateThread();
-  const { editor } = props;
+  const { editor, onComposerSubmit, onKeyDown } = props;
   const { showComposer } = useEditorState({
     editor,
     selector: (ctx) => ({
@@ -91,20 +91,33 @@ export const FloatingComposer = forwardRef<
 
   // Submit a new thread and update the comment highlight to show a completed highlight
   const handleComposerSubmit = useCallback(
-    ({ body }: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => {
+    (comment: ComposerSubmitComment, event: FormEvent<HTMLFormElement>) => {
+      onComposerSubmit?.(comment, event);
+      if (event.defaultPrevented) return;
+
       if (!editor) {
         return;
       }
       event.preventDefault();
 
       const thread = createThread({
-        body,
+        body: comment.body,
+        attachments: comment.attachments,
+        metadata: props.metadata ?? {},
       });
       editor.commands.addComment(thread.id);
 
     },
-    [editor, createThread]
+    [onComposerSubmit, editor, createThread, props.metadata]
   );
+
+  const handleKeyDown = useCallback((event: KeyboardEvent<HTMLFormElement>) => {
+    if (event.key === "Escape" && editor) {
+      editor.commands.focus();
+    }
+    onKeyDown?.(event);
+  }, [editor, onKeyDown]);
+
 
   if (!showComposer || !editor) {
     return null;
@@ -123,6 +136,7 @@ export const FloatingComposer = forwardRef<
       <Composer
         ref={forwardedRef}
         {...props}
+        onKeyDown={handleKeyDown}
         onComposerSubmit={handleComposerSubmit}
         onClick={(e) => {
           // Don't send up a click event from emoji popout and close the composer
