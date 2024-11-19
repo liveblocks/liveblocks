@@ -19,7 +19,6 @@ export default function TiptapEditor() {
         class: "outline-none flex-1 transition-all",
       },
     },
-    content:
     extensions: [
       StarterKit.configure({
         history: false,
