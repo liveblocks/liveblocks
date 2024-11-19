@@ -15,7 +15,12 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 47 (2024-11-22)
 
+## Documentation
+- Better info on [default permissions with access tokens](https://liveblocks.io/docs/authentication/access-token#Default-permissions).
+
 ## Contributors
+
+ctnicholas
 
 # Week 46 (2024-11-15)
 
