@@ -11,7 +11,7 @@
 import * as fc from "fast-check";
 import { expect, test } from "vitest";
 
-import { del, inc, put } from "./mutations.config.js";
+import { del, inc, put, putAndFail } from "./mutations.config.js";
 import { manyClientsSetup } from "./utils.js";
 
 const key = () =>
@@ -30,6 +30,11 @@ const randomMutation = () =>
     fc.record({
       client: clientIndex(),
       name: fc.constant("put"),
+      args: fc.tuple(key(), fc.jsonValue()),
+    }),
+    fc.record({
+      client: clientIndex(),
+      name: fc.constant("putAndFail"),
       args: fc.tuple(key(), fc.jsonValue()),
     }),
     fc.record({
@@ -55,6 +60,7 @@ test("no matter what happens, storage always synchronizes to be the same", () =>
       async (sequence) => {
         const { server, clients, sync } = await manyClientsSetup(3, {
           put,
+          putAndFail,
           inc,
           del,
         });
@@ -73,7 +79,9 @@ test("no matter what happens, storage always synchronizes to be the same", () =>
 
             // @ts-expect-error too dynamic
             // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-            client.mutate[cmd.name](...cmd.args);
+            try {
+              client.mutate[cmd.name](...cmd.args);
+            } catch {}
           }
         }
 
