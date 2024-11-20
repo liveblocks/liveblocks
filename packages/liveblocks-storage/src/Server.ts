@@ -114,7 +114,7 @@ export class Server {
     } else if (msg.type === "CatchUpClientMsg") {
       const kvstream: (string | Json)[] = [];
 
-      for (const [key, value] of this.#store.rootEntries()) {
+      for (const [key, value] of this.#store.cache) {
         if (value !== undefined) {
           kvstream.push(key);
           kvstream.push(value);
