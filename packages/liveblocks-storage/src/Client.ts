@@ -1,7 +1,7 @@
+import { LayeredCache } from "./LayeredCache.js";
 import type { Callback, EventSource, Observable } from "./lib/EventSource.js";
 import { makeEventSource } from "./lib/EventSource.js";
 import type { Json } from "./lib/Json.js";
-import { Store } from "./Store.js";
 import type { ChangeReturnType, OmitFirstArg } from "./ts-toolkit.js";
 import type {
   ClientMsg,
@@ -47,14 +47,15 @@ export class Client<M extends Mutations> {
   #_debugClientId = getClientId();
   #_log?: (...args: unknown[]) => void;
 
-  #store: Store;
-  mutate: BoundMutations<M>;
+  readonly #mutations: Mutations;
+  readonly #cache: LayeredCache;
+  readonly mutate: BoundMutations<M>;
 
   // The pending ops list is a sequence of mutations that need to happen.
   // We rely on the fact that Map iteration will return elements in
   // *insertion order*, but it also allows us to efficiently remove acknowledgd
   // ops.
-  #pendingOps: Map<OpId, Op>;
+  readonly #pendingOps: Map<OpId, Op>;
 
   // The last known server state clock this client has caught up with. Should
   // be persisted together with the local offline state, and pending ops. This
@@ -70,7 +71,7 @@ export class Client<M extends Mutations> {
   //   pending ops
   #session: Session | null = null;
 
-  #events: {
+  readonly #events: {
     readonly onMutationError: EventSource<Error>;
     readonly onChange: EventSource<void>;
   };
@@ -96,8 +97,9 @@ export class Client<M extends Mutations> {
   }
 
   constructor(mutations: M) {
-    this.#store = new Store(mutations);
-    this.#store.cache.startTransaction();
+    this.#mutations = mutations;
+    this.#cache = new LayeredCache();
+    this.#cache.startTransaction();
     this.#pendingOps = new Map();
 
     // Bind all given mutation functions to this instance
@@ -117,7 +119,7 @@ export class Client<M extends Mutations> {
       this.mutate[name as keyof M] = ((...args: Json[]): OpId => {
         const id = opId();
         const op: Op = [id, name, args];
-        this.#store.runMutatorOptimistically(op);
+        this.#runMutatorOptimistically(op);
         this.#pendingOps.set(id, op);
 
         // XXX Ultimately, we should not directly send this Op into the socket,
@@ -236,7 +238,7 @@ export class Client<M extends Mutations> {
       }
     }
 
-    const cache = this.#store.cache;
+    const cache = this.#cache;
     if (full) {
       // Normally a delta will describe a partial change. However, for an
       // initial storage update `full: true` will be true, which means the
@@ -266,13 +268,35 @@ export class Client<M extends Mutations> {
     // Apply all local pending ops
     for (const pendingOp of this.#pendingOps.values()) {
       try {
-        this.#store.runMutatorOptimistically(pendingOp);
+        this.#runMutatorOptimistically(pendingOp);
       } catch (err) {
         this.#events.onMutationError.notify(err as Error);
       }
     }
   }
 
+  /**
+   * Executes the described mutator in a transaction. This is called whenever
+   * a mutation is optimistically run for the first time, or when a local
+   * mutation is replayed ("rebased") after an incoming authoritative delta
+   * from the Server.
+   */
+  #runMutatorOptimistically(op: Op): void {
+    const [_, name, args] = op;
+    const mutationFn =
+      this.#mutations[name] ?? raise(`Mutation not found: '${name}'`);
+
+    const cache = this.#cache;
+    cache.startTransaction();
+    try {
+      mutationFn(cache, ...args);
+      cache.commit();
+    } catch (e) {
+      cache.rollback();
+      throw e;
+    }
+  }
+
   // For convenience in unit tests only --------------------------------
-  get data(): Record<string, Json> { return Object.fromEntries(this.#store.cache); } // prettier-ignore
+  get data(): Record<string, Json> { return Object.fromEntries(this.#cache); } // prettier-ignore
 }
