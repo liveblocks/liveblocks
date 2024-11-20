@@ -105,7 +105,7 @@ export interface ComposerEditorComponents {
   Link: ComponentType<ComposerEditorLinkProps>;
 
   /**
-   * The component used to display the floating toolbar.
+   * The component used to display a floating toolbar attached to the selection.
    */
   FloatingToolbar?: ComponentType<ComposerEditorFloatingToolbarProps>;
 }
@@ -193,7 +193,14 @@ export type ComposerAttachFilesProps = ComponentPropsWithSlot<"button">;
 
 export interface ComposerTextFormatToggleProps
   extends ComponentPropsWithSlot<"button"> {
+  /**
+   * The text format to toggle.
+   */
   format: ComposerBodyTextFormat;
+
+  /**
+   * The event handler called when the format is toggled.
+   */
   onFormatChange?: (format: ComposerBodyTextFormat) => void;
 }
 

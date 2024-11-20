@@ -805,6 +805,12 @@ The components displayed within the editor.
     The component used to display links. Defaults to the link’s `children`
     property.
   </PropertiesListItem>
+  <PropertiesListItem
+    name="FloatingToolbar"
+    type="ComponentType<ComposerEditorFloatingToolbarProps>"
+  >
+    The component used to display a floating toolbar attached to the selection.
+  </PropertiesListItem>
 </PropertiesList>
 
 ###### Mention [#primitives-Composer.Editor-Mention]
@@ -878,6 +884,33 @@ The component used to display links.
   </PropertiesListItem>
 </PropertiesList>
 
+###### FloatingToolbar [#primitives-Composer.Editor-FloatingToolbar]
+
+Displays a floating toolbar attached to the selection within `Composer.Editor`.
+
+```tsx
+<Composer.Editor
+  components={{
+    FloatingToolbar: () => (
+      <Composer.FloatingToolbar>
+        <Composer.TextFormatToggle format="bold">
+          Bold
+        </Composer.TextFormatToggle>
+        <Composer.TextFormatToggle format="italic">
+          Italic
+        </Composer.TextFormatToggle>
+      </Composer.FloatingToolbar>
+    ),
+  }}
+/>
+```
+
+<PropertiesList>
+  <PropertiesListItem name="textFormats" type="ComposerBodyTextActiveFormats">
+    Which text formats are currently active and which aren't.
+  </PropertiesListItem>
+</PropertiesList>
+
 ##### Composer.Mention [#primitives-Composer.Mention]
 
 Displays mentions within `Composer.Editor`.
@@ -905,7 +938,7 @@ Displays mentions within `Composer.Editor`.
 Contains suggestions within `Composer.Editor`.
 
 ```tsx
-<Composer.Suggestions>{/* … */}<Composer.Suggestions>
+<Composer.Suggestions>{/* ... */}<Composer.Suggestions>
 ```
 
 <PropertiesList>
@@ -984,6 +1017,47 @@ A button to submit the composer.
 ```
 
 <PropertiesList>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropertiesListItem>
+</PropertiesList>
+
+##### Composer.FloatingToolbar [#primitives-Composer.FloatingToolbar]
+
+Displays a floating toolbar attached to the selection within `Composer.Editor`.
+
+```tsx
+<Composer.FloatingToolbar>
+  <Composer.TextFormatToggle format="bold">Bold</Composer.TextFormatToggle>
+  <Composer.TextFormatToggle format="italic">Italic</Composer.TextFormatToggle>
+</Composer.FloatingToolbar>
+```
+
+<PropertiesList>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropertiesListItem>
+</PropertiesList>
+
+##### Composer.TextFormatToggle
+
+A toggle button which toggles a specific text format.
+
+```tsx
+<Composer.TextFormatToggle format="bold">Bold</Composer.TextFormatToggle>
+```
+
+<PropertiesList>
+  <PropertiesListItem name="format" type="ComposerBodyTextFormat" required>
+    The text format to toggle.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onFormatChange"
+    type="function"
+    detailedType="(format: ComposerBodyTextFormat) => void"
+  >
+    The event handler called when the format is toggled.
+  </PropertiesListItem>
   <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
     Replace the rendered element by the one passed as a child.
   </PropertiesListItem>
@@ -1430,6 +1504,16 @@ function MyComposerAttachments() {
   </PropertiesListItem>
   <PropertiesListItem name="blur" type="function" detailedType="() => void">
     Blur the editor programmatically.
+  </PropertiesListItem>
+  <PropertiesListItem name="textFormats" type="ComposerBodyTextActiveFormats">
+    Which text formats are currently active and which aren't.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="toggleTextFormat"
+    type="function"
+    detailedType="(format: ComposerBodyTextFormat) => void"
+  >
+    Remove an attachment by its ID.
   </PropertiesListItem>
   <PropertiesListItem
     name="createMention"

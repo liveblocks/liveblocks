@@ -58,6 +58,16 @@ export type ComposerContext = {
   blur: () => void;
 
   /**
+   * Which text formats are currently active and which aren't.
+   */
+  textFormats: ComposerBodyTextActiveFormats;
+
+  /**
+   * Toggle a specific text format.
+   */
+  toggleTextFormat: (format: ComposerBodyTextFormat) => void;
+
+  /**
    * Start creating a mention at the current selection.
    */
   createMention: () => void;
@@ -81,16 +91,6 @@ export type ComposerContext = {
    * Remove an attachment by its ID.
    */
   removeAttachment: (attachmentId: string) => void;
-
-  /**
-   * Which text formats are currently active and which aren't.
-   */
-  textFormats: ComposerBodyTextActiveFormats;
-
-  /**
-   * Toggle a specific text format.
-   */
-  toggleTextFormat: (format: ComposerBodyTextFormat) => void;
 };
 
 export type ComposerEditorContext = {

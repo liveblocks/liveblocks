@@ -429,7 +429,6 @@ function ComposerEditorFloatingToolbarWrapper({
  * <Composer.FloatingToolbar>
  *   <Composer.TextFormatToggle format="bold">Bold</Composer.TextFormatToggle>
  *   <Composer.TextFormatToggle format="italic">Italic</Composer.TextFormatToggle>
- *   <Composer.TextFormatToggle format="strikethrough">Strikethrough</Composer.TextFormatToggle>
  * </Composer.FloatingToolbar>
  */
 const ComposerFloatingToolbar = forwardRef<
