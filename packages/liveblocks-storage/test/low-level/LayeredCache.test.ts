@@ -361,6 +361,70 @@ test("nesting snapshots", () => {
   expect(fmt(cache)).toEqual({ a: 1 });
 });
 
+test("resetting", () => {
+  const cache = new LayeredCache();
+  cache.reset();
+
+  expect(size(cache)).toEqual(0);
+  expect(fmt(cache)).toEqual({});
+});
+
+test("resetting (outside transaction)", () => {
+  const cache = new LayeredCache();
+
+  cache.set("a", 1);
+  expect(size(cache)).toEqual(1);
+  expect(fmt(cache)).toEqual({ a: 1 });
+
+  cache.reset();
+  expect(size(cache)).toEqual(0);
+  expect(fmt(cache)).toEqual({});
+});
+
+test("resetting (inside transaction)", () => {
+  const cache = new LayeredCache();
+
+  cache.set("a", 1);
+  expect(size(cache)).toEqual(1);
+  expect(fmt(cache)).toEqual({ a: 1 });
+
+  cache.startTransaction();
+  cache.set("a", 1);
+
+  cache.reset(); // Implicit rollback...
+  expect(size(cache)).toEqual(0);
+  expect(fmt(cache)).toEqual({});
+
+  // ...means doing another rollback here would fail
+  expect(() => cache.rollback()).toThrow("No transaction to roll back");
+});
+
+test("resetting (inside nested transactions)", () => {
+  const cache = new LayeredCache();
+
+  cache.set("a", 1);
+  expect(size(cache)).toEqual(1);
+  expect(fmt(cache)).toEqual({ a: 1 });
+
+  cache.startTransaction();
+  cache.set("a", 2);
+
+  expect(size(cache)).toEqual(1);
+  expect(fmt(cache)).toEqual({ a: 2 });
+
+  cache.startTransaction();
+  cache.set("a", 3);
+  expect(size(cache)).toEqual(1);
+  expect(fmt(cache)).toEqual({ a: 3 });
+
+  cache.reset(); // Implicit rollback...
+  expect(size(cache)).toEqual(0);
+  expect(fmt(cache)).toEqual({});
+
+  // ...means doing another rollback here would fail
+  expect(() => cache.rollback()).toThrow("No transaction to roll back");
+});
+
 test("getNumber", () => {
   const cache = new LayeredCache();
   cache.set("abc", 123);
