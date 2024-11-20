@@ -1,6 +1,6 @@
+import { LayeredCache } from "./LayeredCache.js";
 import type { Callback } from "./lib/EventSource.js";
 import type { Json } from "./lib/Json.js";
-import { Store } from "./Store.js";
 import type {
   ClientMsg,
   Delta,
@@ -10,7 +10,11 @@ import type {
   ServerMsg,
   Socket,
 } from "./types.js";
-import { nanoid } from "./utils.js";
+import { nanoid, raise } from "./utils.js";
+
+type Result<T, E> =
+  | { readonly ok: true; readonly value: T }
+  | { readonly ok: false; readonly error: E };
 
 export type Session = {
   readonly actor: number;
@@ -24,16 +28,18 @@ export type Session = {
 const DEBUG = false;
 
 export class Server {
-  #store: Store;
+  readonly #mutations: Mutations;
+  readonly #cache: LayeredCache;
 
   // #stateClock: number = 0;
   #nextActor = 1;
-  #sessions: Set<Session>;
+  readonly #sessions: Set<Session>;
   #_log?: (...args: unknown[]) => void;
 
   constructor(mutations: Mutations) {
+    this.#mutations = mutations;
     this.#sessions = new Set();
-    this.#store = new Store(mutations);
+    this.#cache = new LayeredCache();
     // this.#stateClock = 0;
 
     if (DEBUG) this.debug();
@@ -86,14 +92,14 @@ export class Server {
   #handleClientMsg(curr: Session, msg: ClientMsg): void {
     if (msg.type === "OpClientMsg") {
       const op = msg.op;
-      const result = this.#tryApplyOp(op);
+      const result = this.#runMutator(op);
 
       if (result.ok) {
         // Fan-out delta to all connected clients
         for (const session of this.#sessions) {
           this.#send(session, {
             type: "DeltaServerMsg",
-            delta: result.delta,
+            delta: result.value,
             stateClock: 1,
           });
         }
@@ -109,7 +115,7 @@ export class Server {
     } else if (msg.type === "CatchUpClientMsg") {
       const kvstream: (string | Json)[] = [];
 
-      for (const [key, value] of this.#store.cache) {
+      for (const [key, value] of this.#cache) {
         if (value !== undefined) {
           kvstream.push(key);
           kvstream.push(value);
@@ -133,16 +139,28 @@ export class Server {
     session.socket.send(msg);
   }
 
-  #tryApplyOp(
-    op: Op
-  ): { ok: true; delta: Delta } | { ok: false; error: string } {
+  /**
+   * Executes the described mutator in a transaction and return the Delta on
+   * success. The Delta will be sent as an authoritative delta to all connected
+   * clients.
+   */
+  #runMutator(op: Op): Result<Delta, string> {
+    const [id, name, args] = op;
+    const mutationFn =
+      this.#mutations[name] ?? raise(`Mutation not found: '${name}'`);
+
+    this.#cache.startTransaction();
     try {
-      return { ok: true, delta: this.#store.runMutator(op) };
+      mutationFn(this.#cache, ...args);
+      const delta = this.#cache.delta(id);
+      this.#cache.commit();
+      return { ok: true, value: delta };
     } catch (e) {
+      this.#cache.rollback();
       return { ok: false, error: (e as Error).message || String(e) };
     }
   }
 
   // For convenience in unit tests only --------------------------------
-  get data(): Record<string, Json> { return Object.fromEntries(this.#store.cache); } // prettier-ignore
+  get data(): Record<string, Json> { return Object.fromEntries(this.#cache); } // prettier-ignore
 }
