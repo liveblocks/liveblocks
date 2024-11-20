@@ -989,6 +989,10 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     const handleChange = useCallback(
       (value: SlateDescendant[]) => {
         validate(value as SlateElement[]);
+
+        // Our multi-component setup requires us to instantiate the editor in `Composer.Form`
+        // but we can only listen to changes here in `Composer.Editor` via `Slate`, so we use
+        // an event source to notify `Composer.Form` of changes.
         editorChangeEventSource.notify();
       },
       [validate, editorChangeEventSource]
