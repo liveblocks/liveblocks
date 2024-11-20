@@ -117,6 +117,15 @@ export class LayeredCache {
   // Transaction API
   // ----------------------------------------------------
 
+  /**
+   * Rolls back all transactions, and resets the LayeredCache to its initial,
+   * empty, state.
+   */
+  reset(): void {
+    this.#layers.length = 0;
+    this.#root.clear();
+  }
+
   startTransaction(): void {
     this.#layers.unshift(new Map());
   }
