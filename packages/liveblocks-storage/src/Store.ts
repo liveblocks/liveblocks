@@ -1,5 +1,3 @@
-import type { Json } from "~/lib/Json.js";
-
 import { LayeredCache } from "./LayeredCache.js";
 import type { Delta, Mutations, Op } from "./types.js";
 import { raise } from "./utils.js";
@@ -17,14 +15,6 @@ export class Store {
   // XXX Exposing the LayeredCache here is a smell!
   get cache(): LayeredCache {
     return this.#cache;
-  }
-
-  /**
-   * Used by unit tests only to observe the cache contents.
-   * @internal
-   */
-  toObject(): Record<string, Json> {
-    return Object.fromEntries(this.#cache);
   }
 
   /**

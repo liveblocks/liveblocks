@@ -24,10 +24,11 @@ export type Session = {
 const DEBUG = false;
 
 export class Server {
+  #store: Store;
+
   // #stateClock: number = 0;
   #nextActor = 1;
   #sessions: Set<Session>;
-  #store: Store;
   #_log?: (...args: unknown[]) => void;
 
   constructor(mutations: Mutations) {
@@ -143,5 +144,5 @@ export class Server {
   }
 
   // For convenience in unit tests only --------------------------------
-  get data(): Record<string, Json> { return this.#store.toObject(); } // prettier-ignore
+  get data(): Record<string, Json> { return Object.fromEntries(this.#store.cache); } // prettier-ignore
 }
