@@ -114,9 +114,7 @@ export class Client<M extends Mutations> {
         // these out after we've gotten disconnected, or before we're caught
         // up to the server state. Details for now, though!
         if (this.#session?.caughtUp) {
-          const msg: ClientMsg = { type: "OpClientMsg", op };
-          this.#_log?.("OUT", msg);
-          this.#session?.socket.send(msg);
+          this.#send({ type: "OpClientMsg", op });
         }
 
         return id;
@@ -133,6 +131,8 @@ export class Client<M extends Mutations> {
 
     // Start listening to incoming ClientMsg messages on this socket
     const disconnect = socket.recv.subscribe((msg) => {
+      this.#_log?.("IN", msg);
+
       // The very first message we receive after connecting to the server
       // should be the FirstServerMsg, which we need to complete the connection
       // setup. After this, we have a Session, and we're ready to exchange
@@ -152,7 +152,7 @@ export class Client<M extends Mutations> {
         // message
         if (msg.stateClock > this.#serverStateClock) {
           // Request an initial state fetch now
-          socket.send({
+          this.#send({
             type: "CatchMeUpClientMsg",
             since: this.#serverStateClock,
           });
@@ -181,7 +181,6 @@ export class Client<M extends Mutations> {
     curr: Session,
     msg: Exclude<ServerMsg, FirstServerMsg>
   ): void {
-    this.#_log?.("IN", msg);
     if (msg.type === "DeltaServerMsg") {
       this.applyDeltas([msg.delta], msg.full ?? false);
 
@@ -193,6 +192,11 @@ export class Client<M extends Mutations> {
       // Unknown (maybe future?) message
       // Let's ignore it
     }
+  }
+
+  #send(msg: ClientMsg): void {
+    this.#_log?.("OUT", msg);
+    this.#session?.socket.send(msg);
   }
 
   applyDeltas(deltas: readonly Delta[], full: boolean): void {

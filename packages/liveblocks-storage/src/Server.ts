@@ -54,14 +54,15 @@ export class Server {
     const newSession = { actor, sessionKey, socket };
 
     // Start listening to incoming ClientMsg messages on this socket
-    const disconnect = socket.recv.subscribe((msg) =>
-      this.#handleClientMsg(newSession, msg)
-    );
+    const disconnect = socket.recv.subscribe((msg) => {
+      this.#_log?.(`IN (from ${actor})`, msg);
+      this.#handleClientMsg(newSession, msg);
+    });
 
     this.#sessions.add(newSession);
 
     // Announce to client its actor ID and the current state clock
-    newSession.socket.send({
+    this.#send(newSession, {
       type: "FirstServerMsg",
       actor,
       sessionKey,
@@ -77,8 +78,6 @@ export class Server {
 
   // TODO We could inline this inside the connect() closure above
   #handleClientMsg(curr: Session, msg: ClientMsg): void {
-    this.#_log?.(`IN (from ${curr.actor})`, msg);
-
     if (msg.type === "OpClientMsg") {
       const op = msg.op;
       const result = this.#tryApplyOp(op);
@@ -86,8 +85,7 @@ export class Server {
       if (result.ok) {
         // Fan-out delta to all connected clients
         for (const session of this.#sessions) {
-          this.#_log?.(`OUT (to ${session.actor})`, result.delta);
-          session.socket.send({
+          this.#send(session, {
             type: "DeltaServerMsg",
             delta: result.delta,
             stateClock: 1,
@@ -96,8 +94,11 @@ export class Server {
       } else {
         // Send error/ack back to origin
         const ack: Delta = [op[0], [], []];
-        this.#_log?.(`OUT (to ${curr.actor})`, ack);
-        curr.socket.send({ type: "DeltaServerMsg", delta: ack, stateClock: 1 });
+        this.#send(curr, {
+          type: "DeltaServerMsg",
+          delta: ack,
+          stateClock: 1,
+        });
       }
     } else if (msg.type === "CatchMeUpClientMsg") {
       const kvstream: (string | Json)[] = [];
@@ -108,7 +109,7 @@ export class Server {
         }
       }
 
-      curr.socket.send({
+      this.#send(curr, {
         type: "DeltaServerMsg",
         delta: [
           "NO REAL OP ID HERE, WE SHOULD REMOVE THIS FIELD" as OpId,
@@ -122,6 +123,11 @@ export class Server {
       // Unexpected client message
       // TODO Terminate the connection
     }
+  }
+
+  #send(session: Session, msg: ServerMsg): void {
+    this.#_log?.(`OUT (to ${session.actor})`, msg);
+    session.socket.send(msg);
   }
 
   #tryApplyOp(
