@@ -9,6 +9,8 @@ export { useLiveblocksExtension } from "./BlockNoteLiveblocksExtension";
 export { AnchoredThreads } from "./comments/AnchoredThreads";
 export { FloatingComposer } from "./comments/FloatingComposer";
 export { FloatingThreads } from "./comments/FloatingThreads";
-export { withLiveblocks } from "./schema";
+export { withLiveblocksEditorOptions } from "./initialization/liveblocksEditorOptions";
+export { withLiveblocksSchema } from "./initialization/schema";
+export { useCreateBlockNoteWithLiveblocks } from "./initialization/useCreateBlockNoteWithLiveblocks";
 export { HistoryVersionPreview } from "./version-history/HistoryVersionPreview";
 

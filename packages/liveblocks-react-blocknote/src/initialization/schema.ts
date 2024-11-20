@@ -22,13 +22,18 @@ const mentionSpec = createInlineContentSpecFromTipTapNode(MentionNode, {
  * 
  * This makes sure BlockNote knows about Liveblocks mentions and that you can read/write mentions via the BlockNote API
  */
-export const withLiveblocks = <
+export const withLiveblocksSchema = <
   B extends BlockSchema,
   I extends InlineContentSchema,
   S extends StyleSchema
 >(
-  schema: BlockNoteSchema<B, I, S>
+  schema: BlockNoteSchema<B, I, S>,
+  liveblocksOptions: Partial<{mentions: boolean }> = {}
 ) => {
+  if (!liveblocksOptions.mentions) {
+    return schema;
+  }
+  
   return BlockNoteSchema.create({
     blockSpecs: schema.blockSpecs,
     inlineContentSpecs: {

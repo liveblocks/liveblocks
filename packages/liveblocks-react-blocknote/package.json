@@ -41,28 +41,18 @@
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
   "dependencies": {
-    "@floating-ui/react-dom": "^2.1.2",
     "@liveblocks/client": "2.12.1-test1",
     "@liveblocks/core": "2.12.1-test1",
     "@liveblocks/react": "2.12.1-test1",
     "@liveblocks/react-tiptap": "2.12.1-test1",
     "@liveblocks/react-ui": "2.12.1-test1",
     "@liveblocks/yjs": "2.12.1-test1",
-    "@tiptap/core": "^2.7.2",
-    "@tiptap/react": "^2.7.2",
-    "@tiptap/suggestion": "^2.7.2",
-    "use-sync-external-store": "^1.2.2",
-    "y-prosemirror": "^1.2.12",
-    "yjs": "^13.6.18"
+    "@tiptap/core": "^2.7.2"
   },
   "peerDependencies": {
     "@blocknote/core": "^0.19.1",
-    "@tiptap/extension-collaboration": "^2.7.2",
-    "@tiptap/extension-collaboration-cursor": "^2.7.2",
+    "@blocknote/react": "^0.19.1",
     "@tiptap/core": "^2.7.2",
-    "@tiptap/pm": "^2.7.2",
-    "@tiptap/react": "^2.7.2",
-    "@tiptap/suggestion": "^2.7.2",
     "react": "^16.14.0 || ^17 || ^18",
     "react-dom": "^16.14.0 || ^17 || ^18"
   },
@@ -98,6 +88,7 @@
   "homepage": "https://liveblocks.io",
   "keywords": [
     "blocknote",
+    "prosemirror",
     "tiptap",
     "react",
     "comments",

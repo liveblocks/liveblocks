@@ -72,7 +72,7 @@ const LiveblocksCollab = Collaboration.extend({
   },
 });
 
-export const useLiveblocksExtension = (): Extension => {
+export const useLiveblocksExtension = (): Extension<LiveblocksExtensionOptions, any> => {
   const room = useRoom();
 
   // TODO: we don't need these things if comments isn't turned on...
