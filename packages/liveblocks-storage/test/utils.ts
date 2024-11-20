@@ -51,9 +51,7 @@ function connectClientAndServer(
   const disconnect1 = server.connect(serverSocket);
   const disconnect2 = client.connect(clientSocket);
 
-  async function disconnect() {
-    await sync(client); // First send all messages from the client to the server
-    await sync(server); // Then receive all messages from the server
+  function disconnect() {
     disconnect1();
     disconnect2();
   }
@@ -62,11 +60,11 @@ function connectClientAndServer(
    * Ensures all messages between client and server get exchanged, and waits
    * until that has happened.
    */
-  async function sync(side: Client<any> | Server) {
-    if (side === client) {
+  async function sync(side?: Client<any> | Server) {
+    if (side === undefined || side === client) {
       await c2sPipe.flush();
     }
-    if (side === server) {
+    if (side === undefined || side === server) {
       await s2cPipe.flush();
     }
   }
@@ -89,19 +87,19 @@ export async function oneClientSetup<M extends Mutations>(
   mutations: M,
   serverMutations?: Mutations
 ) {
-  const client = new Client(mutations);
-  const server = new Server(serverMutations ?? mutations);
+  const {
+    clients,
+    server,
+    sync,
+    reconnect: reconnect_,
+    disconnect: disconnect_,
+  } = await manyClientsSetup(1, mutations, serverMutations ?? mutations);
 
-  const { sync, disconnect } = connectClientAndServer(client, server);
-
-  // Allow client/server handshake to happen 🤝
-  {
-    await sync(server); // <- FirstServerMsg
-    await sync(client); // -> CatchMeUpClientMsg
-    await sync(server); // <- DeltaServerMsg (full)
-  }
-
-  return { client, server, sync, disconnect };
+  const ctl = clients[0]!;
+  const { client } = ctl;
+  const reconnect = () => reconnect_(client);
+  const disconnect = () => disconnect_(client);
+  return { client, server, sync, disconnect, reconnect };
 }
 
 export async function twoClientsSetup<M extends Mutations>(
@@ -121,8 +119,8 @@ export async function twoClientsSetup<M extends Mutations>(
 
 type ClientControl<M extends Mutations> = {
   client: Client<M>;
-  sync(side: Client<M> | Server): Promise<void>;
-  disconnect(): Promise<void>;
+  sync: (side?: Client<M> | Server) => Promise<void>;
+  disconnect: () => void;
 };
 
 export async function manyClientsSetup<M extends Mutations>(
@@ -191,6 +189,26 @@ export async function manyClientsSetup<M extends Mutations>(
     }
   }
 
+  function disconnect(client: Client<M>) {
+    for (const ctl of clients) {
+      if (ctl.client === client) {
+        ctl.disconnect();
+      }
+    }
+  }
+
+  async function reconnect(client: Client<M>) {
+    disconnect(client); // Will be a no-op when not connected
+
+    const newCtl = connectClientAndServer(client, server);
+    for (const ctl of clients) {
+      if (ctl.client === client) {
+        ctl.sync = newCtl.sync;
+        ctl.disconnect = newCtl.disconnect;
+      }
+    }
+  }
+
   // Allow client/server handshake to happen 🤝
   {
     await sync(server); // <- FirstServerMsg
@@ -198,7 +216,7 @@ export async function manyClientsSetup<M extends Mutations>(
     //               <- DeltaServerMsg (full)
   }
 
-  return { clients, server, sync };
+  return { clients, server, sync, disconnect, reconnect };
 }
 
 /**
