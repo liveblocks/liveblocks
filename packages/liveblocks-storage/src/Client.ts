@@ -274,5 +274,5 @@ export class Client<M extends Mutations> {
   }
 
   // For convenience in unit tests only --------------------------------
-  get data(): Record<string, Json> { return this.#store.toObject(); } // prettier-ignore
+  get data(): Record<string, Json> { return Object.fromEntries(this.#store.cache); } // prettier-ignore
 }

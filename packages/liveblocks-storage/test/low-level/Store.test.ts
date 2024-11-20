@@ -4,13 +4,14 @@ import { Store } from "~/Store.js";
 import { opId } from "~/utils.js";
 
 import * as mutations from "../mutations.config.js";
+import { fmt } from "../utils.js";
 
 test("can be mutated locally", () => {
   const store = new Store(mutations);
   expect(() => store.applyOp([opId(), "non-existing", []], false)).toThrow(
     "Mutation not found: 'non-existing'"
   );
-  expect(store.toObject()).toEqual({});
+  expect(fmt(store.cache)).toEqual({});
 });
 
 test("can be mutated locally", () => {
@@ -20,7 +21,7 @@ test("can be mutated locally", () => {
   store.applyOp([opId(), "put", ["c", 3]], false);
   store.applyOp([opId(), "inc", ["c"]], false);
 
-  expect(store.toObject()).toEqual({ a: 1, b: 2, c: 4 });
+  expect(fmt(store.cache)).toEqual({ a: 1, b: 2, c: 4 });
 });
 
 test("mutations can fail", () => {
@@ -28,7 +29,7 @@ test("mutations can fail", () => {
   expect(() => store.applyOp([opId(), "dec", ["a"]], false)).toThrow(
     "Cannot decrement beyond 0"
   );
-  expect(store.toObject()).toEqual({});
+  expect(fmt(store.cache)).toEqual({});
 });
 
 test("all mutators should be executed atomically", () => {
@@ -42,5 +43,5 @@ test("all mutators should be executed atomically", () => {
     // Ignore
   }
   store.applyOp([opId(), "dupe", ["a", "c"]], false);
-  expect(store.toObject()).toEqual({ a: 1, b: 3, c: 1 });
+  expect(fmt(store.cache)).toEqual({ a: 1, b: 3, c: 1 });
 });
