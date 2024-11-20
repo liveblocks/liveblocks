@@ -117,7 +117,7 @@ export class Client<M extends Mutations> {
       this.mutate[name as keyof M] = ((...args: Json[]): OpId => {
         const id = opId();
         const op: Op = [id, name, args];
-        this.#store.applyOp(op, false);
+        this.#store.runMutatorOptimistically(op);
         this.#pendingOps.set(id, op);
 
         // XXX Ultimately, we should not directly send this Op into the socket,
@@ -266,7 +266,7 @@ export class Client<M extends Mutations> {
     // Apply all local pending ops
     for (const pendingOp of this.#pendingOps.values()) {
       try {
-        this.#store.applyOp(pendingOp, false);
+        this.#store.runMutatorOptimistically(pendingOp);
       } catch (err) {
         this.#events.onMutationError.notify(err as Error);
       }
