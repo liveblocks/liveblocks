@@ -34,8 +34,21 @@ const randomMutation = () =>
     fc.tuple(clientIdx(), fc.constant("dec"), fc.tuple(key())),
     fc.tuple(clientIdx(), fc.constant("del"), fc.tuple(key())),
 
+    fc.tuple(fc.constant(-1), fc.constant("sync")),
     fc.tuple(clientIdx(), fc.constant("sync")),
-    fc.tuple(fc.constant(-1), fc.constant("sync"))
+    fc.tuple(clientIdx(), fc.constant("reconnect"))
+
+    // TODO Figure out how to test disconnections here nicely. The tricky part
+    // here is that we cannot "just" inject this here, because:
+    // 1. When followed by a "sync", it would cause a broken pipe error.
+    // 2. Before the end of the test, we should synchronize everything, which
+    //    cannot happen when disconnected.
+    //
+    // Testing disconnections should still be extremely important though! It's
+    // just that it MUST be followed up with at least one "reconnect" somewhere
+    // further down the sequence.
+    //
+    // fc.tuple(clientIdx(), fc.constant("disconnect"))
   );
 
 test("no matter what happens, storage always synchronizes to be the same", () =>
@@ -44,9 +57,20 @@ test("no matter what happens, storage always synchronizes to be the same", () =>
       fc.array(randomMutation(), { minLength: 1, maxLength: 30 }),
 
       async (sequence) => {
-        const { server, clients, sync } = await manyClientsSetup(3, mutations);
+        const { server, clients, sync, disconnect, reconnect } =
+          await manyClientsSetup(3, mutations);
 
         for (const [idx, name, args] of sequence) {
+          if (name === "disconnect") {
+            disconnect(clients[idx]!.client);
+            continue;
+          }
+
+          if (name === "reconnect") {
+            await reconnect(clients[idx]!.client);
+            continue;
+          }
+
           // Special command for randomizing syncs
           if (name === "sync") {
             if (idx === -1) {
@@ -54,17 +78,18 @@ test("no matter what happens, storage always synchronizes to be the same", () =>
             } else {
               await sync(clients[idx]!.client);
             }
-          } else {
-            // A normal, synchronous, mutation in one of the clients
-            const client = clients[idx]!.client;
+            continue;
+          }
 
-            try {
-              // @ts-expect-error too dynamic
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-              client.mutate[name](...args);
-            } catch {
-              // Ignore
-            }
+          // A normal, synchronous, mutation in one of the clients
+          const client = clients[idx]!.client;
+
+          try {
+            // @ts-expect-error too dynamic
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+            client.mutate[name](...args);
+          } catch {
+            // Ignore
           }
         }
 
@@ -82,7 +107,7 @@ test("no matter what happens, storage always synchronizes to be the same", () =>
         expect(client3.data).toEqual(expected);
       }
     ),
-    { numRuns: 50 }
+    { numRuns: 70 }
   ));
 
 describe("regression historically found by counter-examples", () => {
