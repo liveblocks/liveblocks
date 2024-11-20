@@ -18,18 +18,11 @@ export class Store {
   }
 
   /**
-   * Executes the given Op on the local cache, and return the Delta.
-   *
-   * On the Server, this is the method called when an incoming Op is processed.
-   * The returned value will get fanned out to all connected clients.
-   *
-   * On the Client, this is called whenever a local mutation is done, or when
-   * a local mutation is replayed after an authoritative delta from the Server.
+   * Executes the described mutator in a transaction and return the Delta on
+   * success. The Delta will be sent as an authoritative delta to all connected
+   * clients.
    */
-  // XXX Rename to runMutator?
-  applyOp(op: Op, returnDelta: true): Delta;
-  applyOp(op: Op, returnDelta: false): undefined;
-  applyOp(op: Op, returnDelta: boolean): Delta | undefined {
+  runMutator(op: Op): Delta {
     const [id, name, args] = op;
     const mutationFn =
       this.#mutations[name] ?? raise(`Mutation not found: '${name}'`);
@@ -37,11 +30,30 @@ export class Store {
     this.#cache.startTransaction();
     try {
       mutationFn(this.#cache, ...args);
-      // XXX Computing the full Delta is overhead that's not needed by the client.
-      // XXX Probably better to avoid computing it on the Client for performance reasons.
-      const delta = returnDelta ? this.#cache.delta(id) : undefined;
+      const delta = this.#cache.delta(id);
       this.#cache.commit();
       return delta;
+    } catch (e) {
+      this.#cache.rollback();
+      throw e;
+    }
+  }
+
+  /**
+   * Executes the described mutator in a transaction. This is called whenever
+   * a mutation is optimistically run for the first time, or when a local
+   * mutation is replayed ("rebased") after an incoming authoritative delta
+   * from the Server.
+   */
+  runMutatorOptimistically(op: Op): void {
+    const [_, name, args] = op;
+    const mutationFn =
+      this.#mutations[name] ?? raise(`Mutation not found: '${name}'`);
+
+    this.#cache.startTransaction();
+    try {
+      mutationFn(this.#cache, ...args);
+      this.#cache.commit();
     } catch (e) {
       this.#cache.rollback();
       throw e;

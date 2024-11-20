@@ -137,7 +137,7 @@ export class Server {
     op: Op
   ): { ok: true; delta: Delta } | { ok: false; error: string } {
     try {
-      return { ok: true, delta: this.#store.applyOp(op, true) };
+      return { ok: true, delta: this.#store.runMutator(op) };
     } catch (e) {
       return { ok: false, error: (e as Error).message || String(e) };
     }
