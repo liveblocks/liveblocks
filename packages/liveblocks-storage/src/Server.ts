@@ -53,12 +53,6 @@ export class Server {
       );
   }
 
-  /** @internal Only used by unit tests */
-  // XXX This method should be removed from the Server!!!!!!!!!!!!!!!!!!!
-  applyOp(op: Op): Delta {
-    return this.#store.applyOp(op, true);
-  }
-
   connect(socket: Socket<ServerMsg, ClientMsg>): Callback<void> {
     const actor = this.#nextActor++;
     const sessionKey = nanoid(8);
