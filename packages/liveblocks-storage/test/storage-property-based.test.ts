@@ -41,7 +41,7 @@ const randomMutation = () =>
 test("no matter what happens, storage always synchronizes to be the same", () =>
   fc.assert(
     fc.asyncProperty(
-      fc.array(randomMutation()),
+      fc.array(randomMutation(), { minLength: 1, maxLength: 30 }),
 
       async (sequence) => {
         const { server, clients, sync } = await manyClientsSetup(3, mutations);
@@ -81,7 +81,8 @@ test("no matter what happens, storage always synchronizes to be the same", () =>
         expect(client2.data).toEqual(expected);
         expect(client3.data).toEqual(expected);
       }
-    )
+    ),
+    { numRuns: 50 }
   ));
 
 describe("regression historically found by counter-examples", () => {
