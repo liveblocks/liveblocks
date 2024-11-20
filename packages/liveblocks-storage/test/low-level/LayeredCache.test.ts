@@ -107,9 +107,9 @@ test("entries", () => {
   ]);
 });
 
-test("has (after snapshot)", () => {
+test("has (inside a transaction)", () => {
   const cache = new LayeredCache();
-  cache.snapshot();
+  cache.startTransaction();
   expect(cache.has("k")).toEqual(false);
 
   cache.set("k", "v");
@@ -127,9 +127,9 @@ test("has (after snapshot)", () => {
   expect(cache.has("foo")).toEqual(false);
 });
 
-test("get (after snapshot)", () => {
+test("get (inside a transaction)", () => {
   const cache = new LayeredCache();
-  cache.snapshot();
+  cache.startTransaction();
   expect(cache.get("fuuu")).toBe(undefined);
 
   cache.set("k", "v");
@@ -146,9 +146,9 @@ test("get (after snapshot)", () => {
   expect(cache.get("k")).toBe(undefined);
 });
 
-test("keys (after snapshot)", () => {
+test("keys (inside a transaction)", () => {
   const cache = new LayeredCache();
-  cache.snapshot();
+  cache.startTransaction();
   cache.set("a", 1);
   cache.delete("a");
   cache.set("a", 42);
@@ -156,9 +156,9 @@ test("keys (after snapshot)", () => {
   expect(Array.from(cache.keys())).toEqual(["a", "b"]);
 });
 
-test("values (after snapshot)", () => {
+test("values (inside a transaction)", () => {
   const cache = new LayeredCache();
-  cache.snapshot();
+  cache.startTransaction();
   cache.set("a", 1);
   cache.delete("a");
   cache.set("a", 42);
@@ -166,9 +166,9 @@ test("values (after snapshot)", () => {
   expect(Array.from(cache.values())).toEqual([42, 2]);
 });
 
-test("entries (after snapshot)", () => {
+test("entries (inside a transaction)", () => {
   const cache = new LayeredCache();
-  cache.snapshot();
+  cache.startTransaction();
   cache.set("a", 1);
   cache.delete("a");
   cache.set("a", 42);
@@ -213,19 +213,19 @@ test("it supports iteration", () => {
 
 test("committing before snapshotting fails", () => {
   const cache = new LayeredCache();
-  expect(() => cache.commit()).toThrow("No snapshot to commit");
+  expect(() => cache.commit()).toThrow("No transaction to commit");
 });
 
 test("rolling back before snapshotting fails", () => {
   const cache = new LayeredCache();
-  expect(() => cache.rollback()).toThrow("No snapshot to roll back");
+  expect(() => cache.rollback()).toThrow("No transaction to roll back");
 });
 
-test("adding new keys in a snapshot are committed atomically", () => {
+test("adding new keys in a transaction are committed atomically", () => {
   const cache = new LayeredCache();
   cache.set("a", 1);
 
-  cache.snapshot();
+  cache.startTransaction();
   expect(fmt(cache)).toEqual({ a: 1 });
   cache.set("b", 2);
   expect(fmt(cache)).toEqual({ a: 1, b: 2 });
@@ -241,14 +241,14 @@ test("deleting keys happens atomically", () => {
   cache.set("a", 1);
   cache.set("b", 2);
 
-  cache.snapshot();
+  cache.startTransaction();
   cache.delete("a");
   cache.delete("b");
   expect(fmt(cache)).toEqual({});
   cache.rollback();
   expect(fmt(cache)).toEqual({ a: 1, b: 2 });
 
-  cache.snapshot();
+  cache.startTransaction();
   cache.delete("a");
   cache.delete("b");
   expect(fmt(cache)).toEqual({});
@@ -256,11 +256,11 @@ test("deleting keys happens atomically", () => {
   expect(fmt(cache)).toEqual({});
 });
 
-test("adding new keys in a snapshot are committed atomically", () => {
+test("adding new keys in a transaction are committed atomically", () => {
   const cache = new LayeredCache();
   cache.set("a", 1);
 
-  cache.snapshot();
+  cache.startTransaction();
   expect(fmt(cache)).toEqual({ a: 1 });
   cache.delete("a");
   cache.delete("a");
@@ -274,13 +274,13 @@ test("adding new keys in a snapshot are committed atomically", () => {
   expect(fmt(cache)).toEqual({ a: 42 });
 });
 
-test("rolling back to last snapshot", () => {
+test("rolling back transaction", () => {
   const cache = new LayeredCache();
   cache.set("a", 1);
   cache.set("b", 2);
   expect(fmt(cache)).toEqual({ a: 1, b: 2 });
 
-  cache.snapshot();
+  cache.startTransaction();
   cache.set("a", 42);
   cache.set("c", 3);
   cache.set("d", 4);
@@ -292,20 +292,20 @@ test("rolling back to last snapshot", () => {
   expect(fmt(cache)).toEqual({ a: 1, b: 2 });
 });
 
-test("delta without snapshot will always be empty", () => {
+test("getting delta without a transaction makes no sense and will error", () => {
   const cache = new LayeredCache();
   cache.set("a", 1);
   const id = opId();
-  expect(Array.from(cache.delta(id))).toEqual([id, [], []]);
+  expect(() => cache.delta(id)).toThrow("No transaction to get delta for");
 });
 
-test("delta from last snapshot", () => {
+test("delta in current transaction", () => {
   const id = opId();
 
   const cache = new LayeredCache();
   cache.set("a", 1);
 
-  cache.snapshot();
+  cache.startTransaction();
   cache.set("b", 2);
   cache.set("c", 3);
   cache.delete("c");
@@ -319,7 +319,7 @@ test("delta from last snapshot", () => {
     ["b", 4, "y", 5],
   ]);
 
-  cache.snapshot();
+  cache.startTransaction();
   expect(Array.from(cache.delta(id))).toEqual([id, [], []]);
   cache.delete("x");
   cache.set("b", 42);
@@ -337,19 +337,19 @@ test("nesting snapshots", () => {
   const cache = new LayeredCache();
   cache.set("a", 1);
 
-  cache.snapshot();
+  cache.startTransaction();
   cache.delete("a");
   cache.set("b", 2);
   expect(fmt(cache)).toEqual({ b: 2 });
 
-  cache.snapshot();
+  cache.startTransaction();
   cache.set("b", 3);
   cache.set("z", 42);
   cache.commit();
   expect(fmt(cache)).toEqual({ b: 3, z: 42 });
 
-  cache.snapshot();
-  cache.snapshot();
+  cache.startTransaction();
+  cache.startTransaction();
   expect(fmt(cache)).toEqual({ b: 3, z: 42 });
   cache.rollback();
   cache.rollback();

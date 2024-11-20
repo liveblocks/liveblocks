@@ -23,12 +23,12 @@ export class Store {
     this.#mutations = mutations;
 
     this.#cache = new LayeredCache();
-    this.#cache.snapshot();
+    this.#cache.startTransaction();
   }
 
   reset(): void {
     this.#cache = new LayeredCache();
-    this.#cache.snapshot();
+    this.#cache.startTransaction();
   }
 
   rootEntries(): IterableIterator<[key: string, value: Json]> {
@@ -51,7 +51,7 @@ export class Store {
   applyDeltas(deltas: readonly Delta[]): void {
     const cache = this.#cache;
 
-    // Roll back to snapshot
+    // Roll back current transaction
     cache.rollback();
 
     for (const delta of deltas) {
@@ -65,8 +65,8 @@ export class Store {
       }
     }
 
-    // Start a new snapshot
-    cache.snapshot();
+    // Start a new transaction
+    cache.startTransaction();
   }
 
   /**
@@ -86,7 +86,7 @@ export class Store {
     const mutationFn =
       this.#mutations[name] ?? raise(`Mutation not found: '${name}'`);
 
-    this.#cache.snapshot();
+    this.#cache.startTransaction();
     try {
       mutationFn(this.#cache, ...args);
       // XXX Computing the full Delta is overhead that's not needed by the client.

@@ -117,34 +117,23 @@ export class LayeredCache {
   // Transaction API
   // ----------------------------------------------------
 
-  snapshot(): void {
+  startTransaction(): void {
     this.#layers.unshift(new Map());
   }
 
-  *#iterDelta(): IterableIterator<[key: string, value: Json | undefined]> {
-    const layer = this.#layers[0];
-    if (!layer) return;
-
-    for (const [key, value] of layer) {
-      if (value === TOMBSTONE) {
-        yield [key, undefined];
-      } else {
-        yield [key, value];
-      }
-    }
-  }
-
   /**
-   * Computes a Delta since the last snapshot.
+   * Computes a Delta within the current transaction.
    */
   delta(opId: OpId): Delta {
-    const deleted: string[] = [];
+    const layer = this.#layers[0] ?? raise("No transaction to get delta for");
 
+    const deleted: string[] = [];
     // For efficient packing, we'll codify all k,v pairs in a single array
     // [key1, value1, key2, value2, key3, value3, ...]
     const updated: (string | Json)[] = [];
-    for (const [key, value] of this.#iterDelta()) {
-      if (value === undefined) {
+
+    for (const [key, value] of layer) {
+      if (value === TOMBSTONE) {
         deleted.push(key);
       } else {
         updated.push(key);
@@ -156,7 +145,7 @@ export class LayeredCache {
   }
 
   commit(): void {
-    const layer = this.#layers.shift() ?? raise("No snapshot to commit");
+    const layer = this.#layers.shift() ?? raise("No transaction to commit");
     for (const [key, value] of layer) {
       if (value === TOMBSTONE) {
         this.delete(key);
@@ -167,6 +156,6 @@ export class LayeredCache {
   }
 
   rollback(): void {
-    this.#layers.shift() ?? raise("No snapshot to roll back");
+    this.#layers.shift() ?? raise("No transaction to roll back");
   }
 }
