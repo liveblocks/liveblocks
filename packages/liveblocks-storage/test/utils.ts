@@ -24,7 +24,7 @@ export function size(cache: LayeredCache): number {
   return Array.from(cache.keys()).length;
 }
 
-function connectClientAndServer(
+async function connectClientAndServer(
   /* eslint-disable @typescript-eslint/no-explicit-any */
   client: Client<any>,
   server: Server
@@ -70,6 +70,13 @@ function connectClientAndServer(
   }
 
   onTestFinished(() => disconnect());
+
+  // Allow client/server handshake to happen 🤝
+  {
+    await sync(server); // <- FirstServerMsg
+    await sync(); // -> CatchUpClientMsg
+    //               <- DeltaServerMsg (full)
+  }
 
   return { sync, disconnect };
 }
@@ -134,7 +141,7 @@ export async function manyClientsSetup<M extends Mutations>(
 
   for (let i = 1; i <= numClients; i++) {
     const client = new Client(mutations);
-    const { sync, disconnect } = connectClientAndServer(client, server);
+    const { sync, disconnect } = await connectClientAndServer(client, server);
     clients.push({ client, sync, disconnect });
   }
 
@@ -200,20 +207,13 @@ export async function manyClientsSetup<M extends Mutations>(
   async function reconnect(client: Client<M>) {
     disconnect(client); // Will be a no-op when not connected
 
-    const newCtl = connectClientAndServer(client, server);
+    const newCtl = await connectClientAndServer(client, server);
     for (const ctl of clients) {
       if (ctl.client === client) {
         ctl.sync = newCtl.sync;
         ctl.disconnect = newCtl.disconnect;
       }
     }
-  }
-
-  // Allow client/server handshake to happen 🤝
-  {
-    await sync(server); // <- FirstServerMsg
-    await sync(); // -> CatchMeUpClientMsg
-    //               <- DeltaServerMsg (full)
   }
 
   return { clients, server, sync, disconnect, reconnect };

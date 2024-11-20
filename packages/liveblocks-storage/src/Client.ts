@@ -58,7 +58,7 @@ export class Client<M extends Mutations> {
 
   // The last known server state clock this client has caught up with. Should
   // be persisted together with the local offline state, and pending ops. This
-  // number should be sent to the server in the CatchMeUpClientMsg to let the
+  // number should be sent to the server in the CatchUpClientMsg to let the
   // server decide whether to send a full or partial delta.
   #serverStateClock: number = 0;
 
@@ -82,7 +82,17 @@ export class Client<M extends Mutations> {
 
   debug(): void {
     this.#_log = (...args) =>
-      console.log(`[client ${this.#_debugClientId}]`, ...args);
+      console.log(
+        `[client ${this.#_debugClientId}]`,
+        ...args.map((x) =>
+          typeof x === "string"
+            ? x
+            : JSON.stringify(x, null, 2)
+                .split("\n")
+                .map((line) => line.trimLeft())
+                .join(" ")
+        )
+      );
   }
 
   constructor(mutations: M) {
@@ -153,7 +163,7 @@ export class Client<M extends Mutations> {
         if (msg.stateClock > this.#serverStateClock) {
           // Request an initial state fetch now
           this.#send({
-            type: "CatchMeUpClientMsg",
+            type: "CatchUpClientMsg",
             since: this.#serverStateClock,
           });
         }
@@ -187,6 +197,12 @@ export class Client<M extends Mutations> {
       // TODO Think about this conditional?
       if (msg.full) {
         curr.caughtUp = true;
+
+        // If we just got caught up, take the moment to (re)send all pending
+        // ops to the server.
+        for (const op of this.#pendingOps) {
+          this.#send({ type: "OpClientMsg", op });
+        }
       }
     } else {
       // Unknown (maybe future?) message
@@ -203,13 +219,12 @@ export class Client<M extends Mutations> {
     // First, let's immediately remove acknowledged pending local Ops
     // Acknowledge the incoming opId by removing it from the pending ops list.
     // If this opId is not found, it's from another client.
-    this.#_log?.("deltas =", deltas);
-    this.#_log?.("(before) pendingOps size =", this.#pendingOps.size);
     for (const [opId] of deltas) {
-      this.#_log?.(`looping over ${opId}`);
-      this.#pendingOps.delete(opId);
+      const deleted = this.#pendingOps.delete(opId);
+      if (deleted) {
+        this.#_log?.(`Acknowledged pending op ${opId}`);
+      }
     }
-    this.#_log?.("(after) pendingOps size =", this.#pendingOps.size);
 
     if (full) {
       // Normally a delta will describe a partial change. However, for an

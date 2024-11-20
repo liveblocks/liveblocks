@@ -32,7 +32,7 @@ export class Store {
   }
 
   rootEntries(): IterableIterator<[key: string, value: Json]> {
-    return this.#cache.rootEntries();
+    return this.#cache.entries();
   }
 
   /**

@@ -39,7 +39,18 @@ export class Server {
   }
 
   debug(): void {
-    this.#_log = (...args) => console.log("[server]", ...args);
+    this.#_log = (...args) =>
+      console.log(
+        "[server]",
+        ...args.map((x) =>
+          typeof x === "string"
+            ? x
+            : JSON.stringify(x, null, 2)
+                .split("\n")
+                .map((line) => line.trimLeft())
+                .join(" ")
+        )
+      );
   }
 
   /** @internal Only used by unit tests */
@@ -100,10 +111,11 @@ export class Server {
           stateClock: 1,
         });
       }
-    } else if (msg.type === "CatchMeUpClientMsg") {
+    } else if (msg.type === "CatchUpClientMsg") {
       const kvstream: (string | Json)[] = [];
+
       for (const [key, value] of this.#store.rootEntries()) {
-        if (value === undefined) {
+        if (value !== undefined) {
           kvstream.push(key);
           kvstream.push(value);
         }
@@ -111,11 +123,7 @@ export class Server {
 
       this.#send(curr, {
         type: "DeltaServerMsg",
-        delta: [
-          "NO REAL OP ID HERE, WE SHOULD REMOVE THIS FIELD" as OpId,
-          [],
-          kvstream,
-        ],
+        delta: ["🤝" as OpId, [], kvstream],
         full: true,
         stateClock: 1,
       });
