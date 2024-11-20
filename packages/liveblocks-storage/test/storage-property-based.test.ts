@@ -9,47 +9,33 @@
  */
 
 import * as fc from "fast-check";
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 
-import { del, inc, put, putAndFail } from "./mutations.config.js";
-import { manyClientsSetup } from "./utils.js";
+import { dec, inc } from "./mutations.config.js";
+import * as mutations from "./mutations.config.js";
+import { manyClientsSetup, oneClientSetup } from "./utils.js";
 
 const key = () =>
-  // fc.string()
   fc.oneof(
     fc.constant("a"),
     fc.constant("b"),
     fc.constant("c"),
-    fc.constant("foo")
+    fc.constant("foo"),
+    fc.constant("toString")
   );
 
-const clientIndex = () => fc.nat().map((n) => (n % 3) as 0 | 1 | 2);
+const clientIdx = () => fc.nat().map((n) => (n % 3) as 0 | 1 | 2);
 
 const randomMutation = () =>
   fc.oneof(
-    fc.record({
-      client: clientIndex(),
-      name: fc.constant("put"),
-      args: fc.tuple(key(), fc.jsonValue()),
-    }),
-    fc.record({
-      client: clientIndex(),
-      name: fc.constant("putAndFail"),
-      args: fc.tuple(key(), fc.jsonValue()),
-    }),
-    fc.record({
-      client: clientIndex(),
-      name: fc.constant("inc"),
-      args: fc.tuple(key()),
-    }),
-    fc.record({
-      client: clientIndex(),
-      name: fc.constant("del"),
-      args: fc.tuple(key()),
-    }),
+    fc.tuple(clientIdx(), fc.constant("put"), fc.tuple(key(), fc.jsonValue())),
+    fc.tuple(clientIdx(), fc.constant("putAndFail"), fc.tuple(key(), fc.jsonValue())), // prettier-ignore
+    fc.tuple(clientIdx(), fc.constant("inc"), fc.tuple(key())),
+    fc.tuple(clientIdx(), fc.constant("dec"), fc.tuple(key())),
+    fc.tuple(clientIdx(), fc.constant("del"), fc.tuple(key())),
 
-    fc.record({ client: clientIndex(), name: fc.constant("sync") }),
-    fc.record({ client: fc.constant(-1), name: fc.constant("sync") })
+    fc.tuple(clientIdx(), fc.constant("sync")),
+    fc.tuple(fc.constant(-1), fc.constant("sync"))
   );
 
 test("no matter what happens, storage always synchronizes to be the same", () =>
@@ -58,30 +44,27 @@ test("no matter what happens, storage always synchronizes to be the same", () =>
       fc.array(randomMutation()),
 
       async (sequence) => {
-        const { server, clients, sync } = await manyClientsSetup(3, {
-          put,
-          putAndFail,
-          inc,
-          del,
-        });
+        const { server, clients, sync } = await manyClientsSetup(3, mutations);
 
-        for (const cmd of sequence) {
+        for (const [idx, name, args] of sequence) {
           // Special command for randomizing syncs
-          if (cmd.name === "sync") {
-            if (cmd.client === -1) {
+          if (name === "sync") {
+            if (idx === -1) {
               await sync(server);
             } else {
-              await sync(clients[cmd.client]!.client);
+              await sync(clients[idx]!.client);
             }
           } else {
             // A normal, synchronous, mutation in one of the clients
-            const client = clients[cmd.client]!.client;
+            const client = clients[idx]!.client;
 
-            // @ts-expect-error too dynamic
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
             try {
-              client.mutate[cmd.name](...cmd.args);
-            } catch {}
+              // @ts-expect-error too dynamic
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+              client.mutate[name](...args);
+            } catch {
+              // Ignore
+            }
           }
         }
 
@@ -100,3 +83,52 @@ test("no matter what happens, storage always synchronizes to be the same", () =>
       }
     )
   ));
+
+describe("regression historically found by counter-examples", () => {
+  test("dec, inc bug", async () => {
+    const { client, server, sync } = await oneClientSetup(mutations);
+
+    expect(client.data).toEqual({});
+    expect(server.data).toEqual({});
+
+    expect(() => client.mutate.dec("a")).toThrow(); // ⚡
+    client.mutate.inc("a"); // 1
+
+    expect(client.data).toEqual({ a: 1 });
+    expect(server.data).toEqual({});
+
+    await sync(client);
+
+    expect(client.data).toEqual({ a: 1 });
+    expect(server.data).toEqual({ a: 1 });
+
+    await sync(server);
+
+    expect(client.data).toEqual({ a: 1 });
+    expect(server.data).toEqual({ a: 1 });
+  });
+
+  test("inc, dec, dec bug", async () => {
+    const { client, server, sync } = await oneClientSetup({ inc, dec });
+
+    expect(client.data).toEqual({});
+    expect(server.data).toEqual({});
+
+    client.mutate.inc("a"); // 1
+    client.mutate.dec("a"); // 0
+    expect(() => client.mutate.dec("a")).toThrow(); // ⚡
+
+    expect(client.data).toEqual({ a: 0 });
+    expect(server.data).toEqual({});
+
+    await sync(client);
+
+    expect(client.data).toEqual({ a: 0 });
+    expect(server.data).toEqual({ a: 0 });
+
+    await sync(server);
+
+    expect(client.data).toEqual({ a: 0 });
+    expect(server.data).toEqual({ a: 0 });
+  });
+});
