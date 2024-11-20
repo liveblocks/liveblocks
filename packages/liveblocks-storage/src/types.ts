@@ -27,9 +27,9 @@ export type Delta = readonly [
 // Serialize/deserialize using CBOR later to make it more lightweight?
 //
 
-export type CatchMeUpClientMsg = { type: "CatchMeUpClientMsg"; since: number };
+export type CatchUpClientMsg = { type: "CatchUpClientMsg"; since: number };
 export type OpClientMsg = { type: "OpClientMsg"; op: Op };
-export type ClientMsg = CatchMeUpClientMsg | OpClientMsg;
+export type ClientMsg = CatchUpClientMsg | OpClientMsg;
 
 export type FirstServerMsg = {
   type: "FirstServerMsg";
