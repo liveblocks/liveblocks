@@ -24,8 +24,7 @@ export type Delta = readonly [
 // NOTE
 // Using "type": "DeltaServerMsg" for now, just for clarity. We can make this
 // way more compact later.
-// Look into making serialization/deserialization more lightweight.
-// ProtoBuf / thrift / BSON maybe later?
+// Serialize/deserialize using CBOR later to make it more lightweight?
 //
 
 export type CatchMeUpClientMsg = { type: "CatchMeUpClientMsg"; since: number };
