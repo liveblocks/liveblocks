@@ -59,6 +59,20 @@ test("disconnect after sync is a no-op", async () => {
   expect(server.data).toEqual({ a: 1 });
 });
 
+test.fails(
+  "trying to sync after disconnect should fail with a broken pipe (= meta test of testing utility)",
+  async () => {
+    const { client, sync, disconnect } = await oneClientSetup({
+      inc,
+    });
+
+    disconnect();
+    await expect(() => sync(client)).rejects.toThrow(
+      "Can't send to broken pipe"
+    );
+  }
+);
+
 test("offline mutations are synced with server after reconnect", async () => {
   const { client, server, sync, disconnect, reconnect } = await oneClientSetup({
     inc,
