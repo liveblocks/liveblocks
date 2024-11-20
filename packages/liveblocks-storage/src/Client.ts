@@ -89,7 +89,7 @@ export class Client<M extends Mutations> {
             ? x
             : JSON.stringify(x, null, 2)
                 .split("\n")
-                .map((line) => line.trimLeft())
+                .map((line) => line.trimStart())
                 .join(" ")
         )
       );

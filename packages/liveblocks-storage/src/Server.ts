@@ -47,7 +47,7 @@ export class Server {
             ? x
             : JSON.stringify(x, null, 2)
                 .split("\n")
-                .map((line) => line.trimLeft())
+                .map((line) => line.trimStart())
                 .join(" ")
         )
       );
