@@ -106,8 +106,8 @@ export class Client<M extends Mutations> {
       this.mutate[name as keyof M] = ((...args: Json[]): OpId => {
         const id = opId();
         const op: Op = [id, name, args];
-        this.#pendingOps.set(id, op);
         this.#store.applyOp(op, false);
+        this.#pendingOps.set(id, op);
 
         // XXX Ultimately, we should not directly send this Op into the socket,
         // we'll have to maybe throttle these, and also we should never send
