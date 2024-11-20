@@ -1,3 +1,4 @@
+import type { Json } from "./lib/Json.js";
 import type { OpId } from "./types.js";
 
 export function raise(message: string): never {
@@ -11,6 +12,16 @@ export function* chain<T>(
     if (iterable) {
       yield* iterable;
     }
+  }
+}
+
+export function* iterPairs(
+  items: readonly (string | Json)[]
+): IterableIterator<[key: string, value: Json]> {
+  for (let i = 0; i < items.length; i += 2) {
+    const key = items[i]!;
+    const value = items[i + 1]!;
+    yield [key as string, value];
   }
 }
 

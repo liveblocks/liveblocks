@@ -4,35 +4,19 @@ import { LayeredCache } from "./LayeredCache.js";
 import type { Delta, Mutations, Op } from "./types.js";
 import { raise } from "./utils.js";
 
-function* iterPairs(
-  items: readonly (string | Json)[]
-): IterableIterator<[key: string, value: Json]> {
-  for (let i = 0; i < items.length; i += 2) {
-    const key = items[i]!;
-    const value = items[i + 1]!;
-    yield [key as string, value];
-  }
-}
-
 export class Store {
   // TODO Possibly combine LayeredCache and merge it with Store?
-  #cache: LayeredCache;
-  #mutations: Mutations;
+  readonly #cache: LayeredCache;
+  readonly #mutations: Mutations;
 
   constructor(mutations: Mutations) {
     this.#mutations = mutations;
-
     this.#cache = new LayeredCache();
-    this.#cache.startTransaction();
   }
 
-  reset(): void {
-    this.#cache = new LayeredCache();
-    this.#cache.startTransaction();
-  }
-
-  rootEntries(): IterableIterator<[key: string, value: Json]> {
-    return this.#cache.entries();
+  // XXX Exposing the LayeredCache here is a smell!
+  get cache(): LayeredCache {
+    return this.#cache;
   }
 
   /**
@@ -41,32 +25,6 @@ export class Store {
    */
   toObject(): Record<string, Json> {
     return Object.fromEntries(this.#cache);
-  }
-
-  /**
-   * Authoritative delta from the server. When such delta is received, all
-   * locally pending Ops that have not yet been acknowledged will be "replayed"
-   * on top of the new state.
-   */
-  applyDeltas(deltas: readonly Delta[]): void {
-    const cache = this.#cache;
-
-    // Roll back current transaction
-    cache.rollback();
-
-    for (const delta of deltas) {
-      // Apply authoritative delta
-      const [, deletions, updates] = delta;
-      for (const key of deletions) {
-        cache.delete(key);
-      }
-      for (const [key, value] of iterPairs(updates)) {
-        cache.set(key, value);
-      }
-    }
-
-    // Start a new transaction
-    cache.startTransaction();
   }
 
   /**

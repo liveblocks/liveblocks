@@ -14,7 +14,7 @@ import type {
   ServerMsg,
   Socket,
 } from "./types.js";
-import { opId, raise } from "./utils.js";
+import { iterPairs, opId, raise } from "./utils.js";
 
 type BoundMutations<M extends Record<string, Mutation>> = {
   [K in keyof M]: ChangeReturnType<OmitFirstArg<M[K]>, OpId>;
@@ -97,6 +97,7 @@ export class Client<M extends Mutations> {
 
   constructor(mutations: M) {
     this.#store = new Store(mutations);
+    this.#store.cache.startTransaction();
     this.#pendingOps = new Map();
 
     // Bind all given mutation functions to this instance
@@ -219,6 +220,11 @@ export class Client<M extends Mutations> {
     this.#session?.socket.send(msg);
   }
 
+  /**
+   * Authoritative delta from the server. When such delta is received, all
+   * locally pending Ops that have not yet been acknowledged will be "replayed"
+   * on top of the new state.
+   */
   applyDeltas(deltas: readonly Delta[], full: boolean): void {
     // First, let's immediately remove acknowledged pending local Ops
     // Acknowledge the incoming opId by removing it from the pending ops list.
@@ -230,15 +236,32 @@ export class Client<M extends Mutations> {
       }
     }
 
+    const cache = this.#store.cache;
     if (full) {
       // Normally a delta will describe a partial change. However, for an
       // initial storage update `full: true` will be true, which means the
       // delta will contain the full document (not a partial delta), so let's
       // throw away all local changes, before applying the delta.
-      this.#store.reset();
+      cache.reset();
+      cache.startTransaction();
+    } else {
+      // Roll back current transaction
+      cache.rollback();
     }
 
-    this.#store.applyDeltas(deltas);
+    for (const delta of deltas) {
+      // Apply authoritative delta
+      const [, deletions, updates] = delta;
+      for (const key of deletions) {
+        cache.delete(key);
+      }
+      for (const [key, value] of iterPairs(updates)) {
+        cache.set(key, value);
+      }
+    }
+
+    // Start a new transaction
+    cache.startTransaction();
 
     // Apply all local pending ops
     for (const pendingOp of this.#pendingOps.values()) {
