@@ -136,6 +136,10 @@ export class Client<M extends Mutations> {
     }
   }
 
+  get actor(): number | undefined {
+    return this.#session?.actor;
+  }
+
   connect(socket: Socket<ClientMsg, ServerMsg>): Callback<void> {
     if (this.#session) raise("Already connected");
 
@@ -200,7 +204,7 @@ export class Client<M extends Mutations> {
 
         // If we just got caught up, take the moment to (re)send all pending
         // ops to the server.
-        for (const op of this.#pendingOps) {
+        for (const op of this.#pendingOps.values()) {
           this.#send({ type: "OpClientMsg", op });
         }
       }
