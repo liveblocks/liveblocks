@@ -15,7 +15,6 @@ import {
   useRoomOrNull,
   useRoomPermissions,
 } from "@liveblocks/react/_private";
-import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
   ComponentPropsWithoutRef,
   ComponentType,
@@ -23,7 +22,6 @@ import type {
   FormEvent,
   ForwardedRef,
   MouseEvent,
-  PointerEvent,
   PropsWithChildren,
   ReactNode,
   RefAttributes,
@@ -64,6 +62,7 @@ import type {
   ComposerEditorProps,
   ComposerFormProps,
   ComposerSubmitComment,
+  ComposerTextFormatToggleProps,
 } from "../primitives/Composer/types";
 import { useComposerAttachmentsDropArea } from "../primitives/Composer/utils";
 import { MENTION_CHARACTER } from "../slate/plugins/mentions";
@@ -94,8 +93,7 @@ interface EmojiEditorActionProps extends EditorActionProps {
   onPickerOpenChange?: EmojiPickerProps["onOpenChange"];
 }
 
-interface TextFormatToggleProps extends TogglePrimitive.ToggleProps {
-  format: ComposerBodyTextFormat;
+interface TextFormatToggleProps extends ComposerTextFormatToggleProps {
   shortcut?: ReactNode;
 }
 
@@ -376,33 +374,10 @@ function TextFormatToggle({
   children,
   ...props
 }: TextFormatToggleProps) {
-  const { textFormats, toggleTextFormat } = useComposer();
   const $ = useOverrides();
   const label = useMemo(() => {
     return $.COMPOSER_TOGGLE_TEXT_FORMAT(format);
   }, [$, format]);
-
-  const handlePointerDown = useCallback(
-    (event: PointerEvent<HTMLButtonElement>) => {
-      event.preventDefault();
-      event.stopPropagation();
-    },
-    []
-  );
-
-  const handleClick = useCallback(
-    (event: MouseEvent<HTMLButtonElement>) => {
-      const wasDefaultPrevented = event.isDefaultPrevented();
-
-      event.preventDefault();
-      event.stopPropagation();
-
-      if (!wasDefaultPrevented) {
-        toggleTextFormat(format);
-      }
-    },
-    [format, toggleTextFormat]
-  );
 
   return (
     <ShortcutTooltip
@@ -410,16 +385,9 @@ function TextFormatToggle({
       shortcut={shortcut}
       sideOffset={FLOATING_ELEMENT_SIDE_OFFSET + 2}
     >
-      <TogglePrimitive.Root asChild pressed={textFormats[format]} {...props}>
-        <Button
-          aria-label={label}
-          active={textFormats[format]}
-          onPointerDown={handlePointerDown}
-          onClick={handleClick}
-        >
-          {children}
-        </Button>
-      </TogglePrimitive.Root>
+      <ComposerPrimitive.TextFormatToggle format={format} asChild {...props}>
+        <Button aria-label={label}>{children}</Button>
+      </ComposerPrimitive.TextFormatToggle>
     </ShortcutTooltip>
   );
 }

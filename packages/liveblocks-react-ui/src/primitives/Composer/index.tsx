@@ -1670,7 +1670,15 @@ const ComposerTextFormatToggle = forwardRef<
   ComposerTextFormatToggleProps
 >(
   (
-    { children, format, onFormatChange, onClick, asChild, ...props },
+    {
+      children,
+      format,
+      onFormatChange,
+      onClick,
+      onPointerDown,
+      asChild,
+      ...props
+    },
     forwardedRef
   ) => {
     const Component = asChild ? Slot : "button";
@@ -1688,11 +1696,22 @@ const ComposerTextFormatToggle = forwardRef<
       [format, onClick, onFormatChange, toggleTextFormat]
     );
 
+    const handlePointerDown = useCallback(
+      (event: PointerEvent<HTMLButtonElement>) => {
+        onPointerDown?.(event);
+
+        event.preventDefault();
+        event.stopPropagation();
+      },
+      [onPointerDown]
+    );
+
     return (
       <TogglePrimitive.Root
         asChild
         pressed={textFormats[format]}
         onClick={handleClick}
+        onPointerDown={handlePointerDown}
         {...props}
       >
         <Component {...props} ref={forwardedRef}>

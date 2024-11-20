@@ -255,7 +255,7 @@
     }
   }
 
-  &:where([data-active]) {
+  &:where([aria-pressed="true"]) {
     &:where([data-variant="default"]) {
       color: var(--lb-foreground-secondary);
     }

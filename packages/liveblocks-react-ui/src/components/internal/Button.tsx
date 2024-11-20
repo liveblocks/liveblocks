@@ -9,7 +9,6 @@ export interface ButtonProps extends ComponentProps<"button"> {
   variant?: "default" | "outline" | "primary";
   size?: "default" | "large";
   disableable?: boolean;
-  active?: boolean;
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -18,7 +17,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       variant = "default",
       size = "default",
       disableable = true,
-      active,
       className,
       ...props
     },
@@ -34,7 +32,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         )}
         data-variant={variant}
         data-size={size}
-        data-active={active ? "" : undefined}
         {...props}
         ref={forwardedRef}
       />
