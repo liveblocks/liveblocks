@@ -4,7 +4,7 @@ import * as mutations from "./mutations.config.js";
 import { oneClientSetup, twoClientsSetup } from "./utils.js";
 
 describe("Single Client/Server sync test", () => {
-  test.only("basic client and server sync", async () => {
+  test("basic client and server sync", async () => {
     const { client, server, sync } = await oneClientSetup(mutations);
 
     expect(client.data).toEqual({});
