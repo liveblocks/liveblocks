@@ -86,29 +86,18 @@ test("offline mutations are synced with server after reconnect", async () => {
 
   await reconnect();
 
-  expect(client.data).toEqual({ a: 1 });
-  expect(server.data).toEqual({ a: 1 });
-});
-
-test("offline mutations are synced with server after reconnect (extra sync should not make a difference)", async () => {
-  const { client, server, sync, disconnect, reconnect } = await oneClientSetup({
-    inc,
-  });
-
-  disconnect();
-  client.mutate.inc("a");
-
+  // Client caught up with server + schedules pending Op
   expect(client.data).toEqual({ a: 1 });
   expect(server.data).toEqual({});
 
-  await reconnect();
-  await sync(); // Same as previous test, but now also do an extra sync step here
+  // Exchange pending op
+  await sync();
 
   expect(client.data).toEqual({ a: 1 });
   expect(server.data).toEqual({ a: 1 });
 });
 
-test.only("client catches up with server after every (re)connect", async () => {
+test("client catches up with server after every (re)connect", async () => {
   const { client, server, sync, disconnect, reconnect } = await oneClientSetup({
     inc,
     put,
@@ -137,13 +126,48 @@ test.only("client catches up with server after every (re)connect", async () => {
   expect(client.data).toEqual({ a: 3 });
   expect(server.data).toEqual({ a: 1 });
 
+  // Client caught up with server + sends pending Op
   await reconnect();
 
   expect(client.data).toEqual({ a: 3 });
   expect(server.data).toEqual({ a: 1 });
 
+  // Deliver pending op
   await sync();
 
   expect(client.data).toEqual({ a: 3 });
   expect(server.data).toEqual({ a: 3 });
+});
+
+test("mutations should never run more than once on the server", async () => {
+  const { client, server, sync, disconnect, reconnect } = await oneClientSetup({
+    inc,
+  });
+  expect(client.actor).toEqual(1);
+
+  client.mutate.inc("a"); // Op1
+  await sync(client); // Deliver Op1 to server, but do NOT send its ack back to client yet
+
+  disconnect();
+  client.mutate.inc("a"); // Op2
+
+  expect(client.data).toEqual({ a: 2 }); // Client still thinks Op1 and Op2 are pending
+  expect(server.data).toEqual({ a: 1 }); // Even though server has already acked Op1
+
+  await reconnect(); // Reconnected as actor 2 now + caught up with server
+  expect(client.actor).toEqual(2);
+
+  // Client caught up with server count of 1, plus momentarily applies Op1 and
+  // Op2 locally on top of that causing a brief flash of 3
+  expect(client.data).toEqual({ a: 3 });
+  expect(server.data).toEqual({ a: 1 });
+
+  await sync(client); // Client now resends Op1 + Op2 to server
+
+  expect(client.data).toEqual({ a: 3 });
+  expect(server.data).toEqual({ a: 2 }); // Server should ignore Op1 (already confirmed), and only apply Op2
+
+  await sync(server); // Delivers ack of Op1 + Op2 to client
+  expect(client.data).toEqual({ a: 2 });
+  expect(server.data).toEqual({ a: 2 });
 });
