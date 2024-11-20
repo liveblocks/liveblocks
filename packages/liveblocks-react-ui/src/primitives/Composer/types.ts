@@ -257,3 +257,5 @@ export interface ComposerEditorLinkWrapperProps
 }
 
 export type FloatingPosition = "top" | "bottom";
+
+export type FloatingAlignment = "start" | "center" | "end";

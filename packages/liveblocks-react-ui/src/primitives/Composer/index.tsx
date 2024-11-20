@@ -1,20 +1,5 @@
 "use client";
 
-import type {
-  DetectOverflowOptions,
-  UseFloatingOptions,
-} from "@floating-ui/react-dom";
-import {
-  autoUpdate,
-  flip,
-  hide,
-  inline,
-  limitShift,
-  offset,
-  shift,
-  size,
-  useFloating,
-} from "@floating-ui/react-dom";
 import {
   type CommentAttachment,
   type CommentBody,
@@ -79,10 +64,6 @@ import {
 } from "slate-react";
 
 import { useLiveblocksUIConfig } from "../../config";
-import {
-  FLOATING_ELEMENT_COLLISION_PADDING,
-  FLOATING_ELEMENT_SIDE_OFFSET,
-} from "../../constants";
 import { withAutoFormatting } from "../../slate/plugins/auto-formatting";
 import { withAutoLinks } from "../../slate/plugins/auto-links";
 import { withCustomLinks } from "../../slate/plugins/custom-links";
@@ -154,10 +135,13 @@ import type {
 import {
   commentBodyToComposerBody,
   composerBodyToCommentBody,
-  getPlacementFromPosition,
-  getSideAndAlignFromPlacement,
+  getSideAndAlignFromFloatingPlacement,
   useComposerAttachmentsDropArea,
   useComposerAttachmentsManager,
+  useContentZIndex,
+  useFloatingWithOptions,
+  useOnComposerEditorChange,
+  useOnComposerEditorChangeWithEventSource,
 } from "./utils";
 
 const MENTION_SUGGESTIONS_POSITION: FloatingPosition = "top";
@@ -259,47 +243,8 @@ function ComposerEditorMentionSuggestionsWrapper({
 }: ComposerEditorMentionSuggestionsWrapperProps) {
   const editor = useSlateStatic();
   const { isFocused } = useComposer();
-  const { editorChangeEventSource } = useComposerEditorContext();
-  const [content, setContent] = useState<HTMLDivElement | null>(null);
-  const [contentZIndex, setContentZIndex] = useState<string>();
-  const contentRef = useCallback(setContent, [setContent]);
   const { portalContainer } = useLiveblocksUIConfig();
-  const floatingOptions: UseFloatingOptions = useMemo(() => {
-    const detectOverflowOptions: DetectOverflowOptions = {
-      padding: FLOATING_ELEMENT_COLLISION_PADDING,
-    };
-
-    return {
-      strategy: "fixed",
-      placement: getPlacementFromPosition(position, dir),
-      middleware: [
-        flip({ ...detectOverflowOptions, crossAxis: false }),
-        hide(detectOverflowOptions),
-        shift({
-          ...detectOverflowOptions,
-          limiter: limitShift(),
-        }),
-        size({
-          ...detectOverflowOptions,
-          apply({ availableWidth, availableHeight, elements }) {
-            elements.floating.style.setProperty(
-              "--lb-composer-suggestions-available-width",
-              `${availableWidth}px`
-            );
-            elements.floating.style.setProperty(
-              "--lb-composer-suggestions-available-height",
-              `${availableHeight}px`
-            );
-          },
-        }),
-      ],
-      whileElementsMounted: (...args) => {
-        return autoUpdate(...args, {
-          animationFrame: true,
-        });
-      },
-    };
-  }, [position, dir]);
+  const [contentRef, contentZIndex] = useContentZIndex();
   const isOpen = Boolean(isFocused && mentionDraft?.range && userIds);
   const {
     refs: { setReference, setFloating },
@@ -308,26 +253,16 @@ function ComposerEditorMentionSuggestionsWrapper({
     placement,
     x,
     y,
-  } = useFloating({
-    ...floatingOptions,
+  } = useFloatingWithOptions({
+    position,
+    dir,
+    alignment: "start",
     open: isOpen,
   });
 
-  // Copy `z-index` from content to wrapper.
-  // Inspired by https://github.com/radix-ui/primitives/blob/main/packages/react/popper/src/Popper.tsx
-  useLayoutEffect(() => {
-    if (content) {
-      setContentZIndex(window.getComputedStyle(content).zIndex);
-    }
-  }, [content]);
-
-  useLayoutEffect(() => {
-    const unsubscribe = editorChangeEventSource.subscribe(() => {
-      setMentionDraft(getMentionDraftAtSelection(editor));
-    });
-
-    return unsubscribe;
-  }, [editor, editorChangeEventSource, setMentionDraft]);
+  useOnComposerEditorChange(() => {
+    setMentionDraft(getMentionDraftAtSelection(editor));
+  });
 
   useLayoutEffect(() => {
     if (!mentionDraft) {
@@ -390,36 +325,8 @@ function ComposerEditorFloatingToolbarWrapper({
 }: ComposerEditorFloatingToolbarWrapperProps) {
   const editor = useSlateStatic();
   const { isFocused, textFormats } = useComposer();
-  const { editorChangeEventSource } = useComposerEditorContext();
-  const [content, setContent] = useState<HTMLDivElement | null>(null);
-  const [contentZIndex, setContentZIndex] = useState<string>();
-  const contentRef = useCallback(setContent, [setContent]);
   const { portalContainer } = useLiveblocksUIConfig();
-  const floatingOptions: UseFloatingOptions = useMemo(() => {
-    const detectOverflowOptions: DetectOverflowOptions = {
-      padding: FLOATING_ELEMENT_COLLISION_PADDING,
-    };
-
-    return {
-      strategy: "fixed",
-      placement: getPlacementFromPosition(position, dir, true),
-      middleware: [
-        inline(detectOverflowOptions),
-        offset({ mainAxis: FLOATING_ELEMENT_SIDE_OFFSET }),
-        flip({ ...detectOverflowOptions, crossAxis: false }),
-        hide(detectOverflowOptions),
-        shift({
-          ...detectOverflowOptions,
-          limiter: limitShift(),
-        }),
-      ],
-      whileElementsMounted: (...args) => {
-        return autoUpdate(...args, {
-          animationFrame: true,
-        });
-      },
-    };
-  }, [position, dir]);
+  const [contentRef, contentZIndex] = useContentZIndex();
   const [isPointerDown, setPointerDown] = useState(false);
   const isOpen = Boolean(
     isFocused && !isPointerDown && hasFloatingToolbarRange
@@ -431,15 +338,13 @@ function ComposerEditorFloatingToolbarWrapper({
     placement,
     x,
     y,
-  } = useFloating({ ...floatingOptions, open: isOpen });
-
-  // Copy `z-index` from content to wrapper.
-  // Inspired by https://github.com/radix-ui/primitives/blob/main/packages/react/popper/src/Popper.tsx
-  useLayoutEffect(() => {
-    if (content) {
-      setContentZIndex(window.getComputedStyle(content).zIndex);
-    }
-  }, [content]);
+  } = useFloatingWithOptions({
+    type: "range",
+    position,
+    dir,
+    alignment: "center",
+    open: isOpen,
+  });
 
   useLayoutEffect(() => {
     if (!isFocused) {
@@ -458,40 +363,31 @@ function ComposerEditorFloatingToolbarWrapper({
     };
   }, [isFocused]);
 
-  useLayoutEffect(() => {
-    const unsubscribe = editorChangeEventSource.subscribe(() => {
-      // Detach from previous selection range (if any) to avoid sudden jumps
-      setReference(null);
+  useOnComposerEditorChange(() => {
+    // Detach from previous selection range (if any) to avoid sudden jumps
+    setReference(null);
 
-      // Then, wait for the next render to ensure the selection is updated
-      requestAnimationFrame(() => {
-        const domSelection = window.getSelection();
+    // Then, wait for the next render to ensure the selection is updated
+    requestAnimationFrame(() => {
+      const domSelection = window.getSelection();
 
-        // Finally, show the toolbar if there's a selection range
-        if (
-          !editor.selection ||
-          SlateRange.isCollapsed(editor.selection) ||
-          !domSelection ||
-          !domSelection.rangeCount
-        ) {
-          setHasFloatingToolbarRange(false);
-          setReference(null);
-        } else {
-          setHasFloatingToolbarRange(true);
+      // Finally, show the toolbar if there's a selection range
+      if (
+        !editor.selection ||
+        SlateRange.isCollapsed(editor.selection) ||
+        !domSelection ||
+        !domSelection.rangeCount
+      ) {
+        setHasFloatingToolbarRange(false);
+        setReference(null);
+      } else {
+        setHasFloatingToolbarRange(true);
 
-          const domRange = domSelection.getRangeAt(0);
-          setReference(domRange);
-        }
-      });
+        const domRange = domSelection.getRangeAt(0);
+        setReference(domRange);
+      }
     });
-
-    return unsubscribe;
-  }, [
-    setReference,
-    editor,
-    editorChangeEventSource,
-    setHasFloatingToolbarRange,
-  ]);
+  });
 
   return (
     <Persist>
@@ -539,7 +435,7 @@ function ComposerEditorFloatingToolbarWrapper({
 const ComposerFloatingToolbar = forwardRef<
   HTMLDivElement,
   ComposerFloatingToolbarProps
->(({ children, onPointerDown, asChild, ...props }, forwardedRef) => {
+>(({ children, onPointerDown, style, asChild, ...props }, forwardedRef) => {
   const [isPresent] = usePersist();
   const ref = useRef<HTMLDivElement>(null);
   const {
@@ -550,7 +446,7 @@ const ComposerFloatingToolbar = forwardRef<
   } = useComposerFloatingToolbarContext(COMPOSER_FLOATING_TOOLBAR_NAME);
   const mergedRefs = useRefs(forwardedRef, contentRef, ref);
   const [side, align] = useMemo(
-    () => getSideAndAlignFromPlacement(placement),
+    () => getSideAndAlignFromFloatingPlacement(placement),
     [placement]
   );
   const Component = asChild ? Slot : "div";
@@ -577,6 +473,13 @@ const ComposerFloatingToolbar = forwardRef<
       data-state={isPresent ? "open" : "closed"}
       data-side={side}
       data-align={align}
+      style={{
+        display: "flex",
+        flexDirection: "row",
+        maxWidth: "var(--lb-composer-floating-available-width)",
+        overflowX: "auto",
+        ...style,
+      }}
       ref={mergedRefs}
     >
       {children}
@@ -718,7 +621,7 @@ const ComposerSuggestions = forwardRef<
   } = useComposerSuggestionsContext(COMPOSER_SUGGESTIONS_NAME);
   const mergedRefs = useRefs(forwardedRef, contentRef, ref);
   const [side, align] = useMemo(
-    () => getSideAndAlignFromPlacement(placement),
+    () => getSideAndAlignFromFloatingPlacement(placement),
     [placement]
   );
   const Component = asChild ? Slot : "div";
@@ -734,7 +637,7 @@ const ComposerSuggestions = forwardRef<
       style={{
         display: "flex",
         flexDirection: "column",
-        maxHeight: "var(--lb-composer-suggestions-available-height)",
+        maxHeight: "var(--lb-composer-floating-available-height)",
         overflowY: "auto",
         ...style,
       }}
@@ -1582,13 +1485,9 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       [editor]
     );
 
-    useEffect(() => {
-      const unsubscribe = editorChangeEventSource.subscribe(() => {
-        setTextFormats(getMarks(editor));
-      });
-
-      return unsubscribe;
-    }, [editor, editorChangeEventSource]);
+    useOnComposerEditorChangeWithEventSource(editorChangeEventSource, () => {
+      setTextFormats(getMarks(editor));
+    });
 
     return (
       <ComposerEditorContext.Provider
