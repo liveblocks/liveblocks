@@ -8,6 +8,7 @@ export { AnchoredThreads } from "./comments/AnchoredThreads";
 export { FloatingComposer } from "./comments/FloatingComposer";
 export { FloatingThreads } from "./comments/FloatingThreads";
 export { useLiveblocksExtension } from "./LiveblocksExtension";
+export { useIsEditorReady } from "./LiveblocksExtension";
 export { HistoryVersionPreview } from "./version-history/HistoryVersionPreview";
 
 declare module "@tiptap/core" {

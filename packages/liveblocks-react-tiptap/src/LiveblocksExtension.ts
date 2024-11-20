@@ -9,12 +9,13 @@ import {
   getUmbrellaStoreForClient,
 } from "@liveblocks/react/_private";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
-import type { AnyExtension } from "@tiptap/core";
+import type { AnyExtension, Content, Editor } from "@tiptap/core";
 import { Extension, getMarkType } from "@tiptap/core";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
 import type { Mark as PMMark } from "@tiptap/pm/model";
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { Doc } from "yjs";
 
 import { CommentsExtension } from "./comments/CommentsExtension";
@@ -30,8 +31,17 @@ const docMap = new Map<string, Doc>();
 
 type LiveblocksExtensionOptions = {
   field?: string;
-  comments: boolean; // | CommentsConfiguration
-  mentions: boolean; // | MentionsConfiguration
+  comments?: boolean; // | CommentsConfiguration
+  mentions?: boolean; // | MentionsConfiguration
+  offlineSupport_experimental?: boolean;
+  initialContent?: Content;
+};
+
+const DEFAULT_OPTIONS = {
+  field: "default",
+  comments: true,
+  mentions: true,
+  offlineSupport_experimental: false,
 };
 
 const LiveblocksCollab = Collaboration.extend({
@@ -71,7 +81,57 @@ const LiveblocksCollab = Collaboration.extend({
   },
 });
 
-export const useLiveblocksExtension = (): Extension => {
+function useYjsProvider() {
+  const room = useRoom();
+
+  const subscribe = useCallback(
+    (onStoreChange: () => void) => {
+      return room[kInternal].yjsProviderDidChange.subscribe(onStoreChange);
+    },
+    [room]
+  );
+
+  const getSnapshot = useCallback(() => {
+    return room[kInternal].getYjsProvider();
+  }, [room]);
+
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+}
+
+/**
+ * Returns whether the editor has loaded the initial text contents from the
+ * server and is ready to be used.
+ */
+export function useIsEditorReady(): boolean {
+  const yjsProvider = useYjsProvider();
+
+  const getSnapshot = useCallback(() => {
+    const status = yjsProvider?.getStatus();
+    return status === "synchronizing" || status === "synchronized";
+  }, [yjsProvider]);
+
+  const subscribe = useCallback(
+    (callback: () => void) => {
+      if (yjsProvider === undefined) return () => {};
+      yjsProvider.on("status", callback);
+      return () => {
+        yjsProvider.off("status", callback);
+      };
+    },
+    [yjsProvider]
+  );
+
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+}
+
+export const useLiveblocksExtension = (
+  opts?: LiveblocksExtensionOptions
+): Extension => {
+  const options = {
+    ...DEFAULT_OPTIONS,
+    ...opts,
+  };
+  const [editor, setEditor] = useState<Editor | null>(null);
   const room = useRoom();
 
   // TODO: we don't need these things if comments isn't turned on...
@@ -82,9 +142,26 @@ export const useLiveblocksExtension = (): Extension => {
       // handleThreadDelete(error.context.threadId);
     }
   });
+  const isEditorReady = useIsEditorReady();
   const client = useClient();
   const store = getUmbrellaStoreForClient(client);
   const roomId = room.id;
+  const yjsProvider = useYjsProvider();
+
+  // If the user provided initialContent, wait for ready and then set it
+  useEffect(() => {
+    if (!isEditorReady || !yjsProvider || !options.initialContent || !editor)
+      return;
+
+    // As noted in the tiptap documentation, you may not set initial content with collaboration.
+    // The docs provide the following workaround:
+    const ydoc = (yjsProvider as LiveblocksYjsProvider).getYDoc();
+    const hasContentSet = ydoc.getMap("liveblocks_config").get("hasContentSet");
+    if (!hasContentSet) {
+      ydoc.getMap("liveblocks_config").set("hasContentSet", true);
+      editor.commands.setContent(options.initialContent);
+    }
+  }, [isEditorReady, yjsProvider, options.initialContent, editor]);
 
   const reportTextEditorType = useCallback(
     (field: string) => {
@@ -113,7 +190,7 @@ export const useLiveblocksExtension = (): Extension => {
     [room]
   );
   return Extension.create<
-    LiveblocksExtensionOptions,
+    never,
     {
       unsubs: (() => void)[];
       doc: Doc;
@@ -123,8 +200,14 @@ export const useLiveblocksExtension = (): Extension => {
     name: "liveblocksExtension",
 
     onCreate() {
+      setEditor(this.editor);
+      if (this.editor.options.content) {
+        console.warn(
+          "[Liveblocks] Initial content must be set in the useLiveblocksExtension hook option. Remove content from your editor options."
+        );
+      }
       if (
-        this.options.mentions &&
+        options.mentions &&
         this.editor.extensionManager.extensions.find(
           (e) => e.name.toLowerCase() === "mention"
         )
@@ -155,7 +238,7 @@ export const useLiveblocksExtension = (): Extension => {
           }
         })
       );
-      if (this.options.comments) {
+      if (options.comments) {
         const commentMarkType = getMarkType(
           LIVEBLOCKS_COMMENT_MARK_TYPE,
           this.editor.schema
@@ -205,7 +288,7 @@ export const useLiveblocksExtension = (): Extension => {
         );
       }
 
-      reportTextEditorType(this.options.field ?? "default");
+      reportTextEditorType(options.field ?? DEFAULT_OPTIONS.field);
     },
     onDestroy() {
       this.storage.unsubs.forEach((unsub) => unsub());
@@ -214,7 +297,12 @@ export const useLiveblocksExtension = (): Extension => {
       if (!providersMap.has(room.id)) {
         const doc = new Doc();
         docMap.set(room.id, doc);
-        providersMap.set(room.id, new LiveblocksYjsProvider(room, doc));
+        providersMap.set(
+          room.id,
+          new LiveblocksYjsProvider(room, doc, {
+            offlineSupport_experimental: options.offlineSupport_experimental,
+          })
+        );
       }
       return {
         doc: docMap.get(room.id)!,
@@ -222,29 +310,21 @@ export const useLiveblocksExtension = (): Extension => {
         unsubs: [],
       };
     },
-
-    addOptions() {
-      return {
-        field: "default",
-        mentions: true,
-        comments: true,
-      };
-    },
     addExtensions() {
       const extensions: AnyExtension[] = [
         LiveblocksCollab.configure({
           document: this.storage.doc,
-          field: this.options.field,
+          field: options.field,
         }),
         CollaborationCursor.configure({
           provider: this.storage.provider, //todo change the ! to an assert
         }),
       ];
 
-      if (this.options.comments) {
+      if (options.comments) {
         extensions.push(CommentsExtension);
       }
-      if (this.options.mentions) {
+      if (options.mentions) {
         extensions.push(
           MentionExtension.configure({
             onCreateMention,
