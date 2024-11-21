@@ -21,7 +21,6 @@ import { Editor, EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorView } from "prosemirror-view";
 import { CommentIcon } from "@/icons";
-import { useInitialDocument } from "@/lib/hooks";
 import { DocumentSpinner } from "@/primitives/Spinner";
 import { useIsMobile } from "@/utils";
 import { CustomTaskItem } from "./CustomTaskItem";
@@ -40,9 +39,6 @@ export function TextEditor() {
 
 // Collaborative text editor with simple rich text and live cursors
 function TiptapEditor() {
-  const initialDocument = useInitialDocument();
-  console.log(initialDocument);
-
   const liveblocks = useLiveblocksExtension({
     offlineSupport_experimental: true,
   });
@@ -50,6 +46,7 @@ function TiptapEditor() {
   // Set up editor with plugins, and place user info into Yjs awareness and cursors
   const editor = useEditor({
     immediatelyRender: false,
+    // Start read-only, enable in `<DisplayToolbar />` after `canWrite` is loaded
     editable: false,
     editorProps: {
       attributes: {
@@ -58,7 +55,9 @@ function TiptapEditor() {
       },
     },
     extensions: [
+      // Add collaboration
       liveblocks,
+
       StarterKit.configure({
         blockquote: {
           HTMLAttributes: {
