@@ -12,7 +12,7 @@ import type {
 import { getFiles } from "../../utils/data-transfer";
 import { isPlainText, isText } from "../utils/is-text";
 import { selectionContainsInlines } from "../utils/selection-contains-inlines";
-import { isUrl } from "./links";
+import { isUrl, URL_REGEX_GLOBAL } from "./links";
 
 // Based on: https://github.com/ianstormtaylor/slate/blob/main/site/examples/paste-html.tsx
 
@@ -242,7 +242,7 @@ export function withPaste(
           return;
         }
       } catch {
-        // Fallback to plain text behavior
+        // Go back to the list of conditions if something went wrong
       }
     }
 
@@ -277,7 +277,67 @@ export function withPaste(
       }
     }
 
-    // 5. If none of the conditions were met, we let Slate decide what to do
+    // 5. If the pasted plain text contains URLs, create links for them
+    if (plainText.match(URL_REGEX_GLOBAL)) {
+      try {
+        // Split lines into paragraphs
+        const paragraphs = plainText.split(/\r\n|\r|\n/);
+
+        const nodes: ComposerBodyParagraph[] = paragraphs.map((paragraph) => {
+          // Find all URLs and their positions in the paragraph
+          const matches = [...paragraph.matchAll(URL_REGEX_GLOBAL)];
+          const children: ComposerBodyInlineElement[] = [];
+          let lastIndex = 0;
+
+          // Interleave text and link nodes
+          for (const match of matches) {
+            const url = match[0]!;
+            const startIndex = match.index!;
+
+            // Add the text before the URL (if any)
+            if (startIndex > lastIndex) {
+              children.push({
+                text: paragraph.slice(lastIndex, startIndex),
+              });
+            }
+
+            // Add the URL as a link
+            children.push({
+              type: "link",
+              url,
+              children: [{ text: url }],
+            });
+
+            lastIndex = startIndex + url.length;
+          }
+
+          // Add the remaining text after the last URL (if any)
+          if (lastIndex < paragraph.length) {
+            children.push({
+              text: paragraph.slice(lastIndex),
+            });
+          }
+
+          // If no URLs were found, create a plain text node
+          if (children.length === 0) {
+            children.push({ text: paragraph });
+          }
+
+          return {
+            type: "paragraph",
+            children,
+          };
+        });
+
+        Transforms.insertFragment(editor, nodes);
+
+        return;
+      } catch {
+        // Go back to the list of conditions if something went wrong
+      }
+    }
+
+    // 6. If none of the conditions were met, we let Slate decide what to do
     insertData(data);
   };
 
