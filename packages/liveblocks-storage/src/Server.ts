@@ -86,7 +86,6 @@ export class Server {
     };
   }
 
-  // TODO We could inline this inside the connect() closure above
   #handleClientMsg(curr: Session, msg: ClientMsg): void {
     if (msg.type === "OpClientMsg") {
       const op = msg.op;
@@ -98,7 +97,7 @@ export class Server {
           this.#send(session, {
             type: "DeltaServerMsg",
             serverClock: this.#stateClock,
-            opId: op[0],
+            opId: msg.opId,
             delta: result.value,
           });
         }
@@ -108,7 +107,7 @@ export class Server {
         this.#send(curr, {
           type: "DeltaServerMsg",
           serverClock: this.#stateClock,
-          opId: op[0],
+          opId: msg.opId,
           delta: ack,
         });
       }
@@ -145,7 +144,7 @@ export class Server {
    * clients.
    */
   #runMutator(op: Op): Result<Delta, string> {
-    const [_, name, args] = op;
+    const [name, args] = op;
     const mutationFn =
       this.#mutations[name] ?? raise(`Mutation not found: '${name}'`);
 

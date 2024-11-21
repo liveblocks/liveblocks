@@ -14,10 +14,15 @@ import type {
   ServerMsg,
   Socket,
 } from "./types.js";
-import { iterPairs, nextAlphabetId, raise } from "./utils.js";
+import {
+  iterPairs,
+  nextAlphabetId,
+  generateRandomOpId,
+  raise,
+} from "./utils.js";
 
 type BoundMutations<M extends Record<string, Mutation>> = {
-  [K in keyof M]: ChangeReturnType<OmitFirstArg<M[K]>, OpId>;
+  [K in keyof M]: ChangeReturnType<OmitFirstArg<M[K]>, [id: OpId, op: Op]>;
 };
 
 type Session = {
@@ -114,21 +119,21 @@ export class Client<M extends Mutations> {
     for (const name of Object.keys(mutations)) {
       /* eslint-disable @typescript-eslint/no-unsafe-assignment */
       /* eslint-disable @typescript-eslint/no-explicit-any */
-      this.mutate[name as keyof M] = ((...args: Json[]): OpId => {
-        const id = opId();
-        const op: Op = [id, name, args];
+      this.mutate[name as keyof M] = ((...args: Json[]): [OpId, Op] => {
+        const opId = generateRandomOpId();
+        const op: Op = [name, args];
         this.#runMutatorOptimistically(op);
-        this.#pendingOps.set(id, op);
+        this.#pendingOps.set(opId, op);
 
         // XXX Ultimately, we should not directly send this Op into the socket,
         // we'll have to maybe throttle these, and also we should never send
         // these out after we've gotten disconnected, or before we're caught
         // up to the server state. Details for now, though!
         if (this.#session?.caughtUp) {
-          this.#send({ type: "OpClientMsg", op });
+          this.#send({ type: "OpClientMsg", opId, op });
         }
 
-        return id;
+        return [opId, op];
       }) as any;
       /* eslint-enable @typescript-eslint/no-explicit-any */
       /* eslint-enable @typescript-eslint/no-unsafe-assignment */
@@ -202,8 +207,8 @@ export class Client<M extends Mutations> {
 
     // If we just got caught up, take the moment to (re)send all pending
     // ops to the server.
-    for (const op of this.#pendingOps.values()) {
-      this.#send({ type: "OpClientMsg", op });
+    for (const [opId, op] of this.#pendingOps) {
+      this.#send({ type: "OpClientMsg", opId, op });
     }
   }
 
@@ -306,7 +311,7 @@ export class Client<M extends Mutations> {
    * from the Server.
    */
   #runMutatorOptimistically(op: Op): void {
-    const [_, name, args] = op;
+    const [name, args] = op;
     const mutationFn =
       this.#mutations[name] ?? raise(`Mutation not found: '${name}'`);
 

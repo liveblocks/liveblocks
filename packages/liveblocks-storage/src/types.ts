@@ -11,7 +11,20 @@ export type Socket<Out, In> = {
 // XXX OpId should really be a Lamport timestamp, ie a [actor, clock] tuple
 export type OpId = Brand<string, "OpId">;
 
-export type Op = readonly [id: OpId, name: string, args: readonly Json[]];
+export type Op = readonly [name: string, args: readonly Json[]];
+
+export type PendingOp = {
+  /**
+   * The actor ID that was used to first send this Op to the server. Not set
+   * until the client actually sends the Op out for first time. At that point,
+   * the Op gets bound to that actor. If later the client reconnects and gets
+   * a new session with a different actor ID, the Op will remain bound to the
+   * original actor it was sent with, because its identity must remain stable.
+   */
+  actor?: number;
+  readonly clientClock: number;
+  readonly op: Op;
+};
 
 export type Delta = readonly [
   /** Keys to remove */
@@ -32,7 +45,7 @@ export type Delta = readonly [
 //
 
 export type CatchUpClientMsg = { type: "CatchUpClientMsg"; since: number };
-export type OpClientMsg = { type: "OpClientMsg"; op: Op };
+export type OpClientMsg = { type: "OpClientMsg"; opId: OpId; op: Op };
 export type ClientMsg = CatchUpClientMsg | OpClientMsg;
 
 export type FirstServerMsg = {
