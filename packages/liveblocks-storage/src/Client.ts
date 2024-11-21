@@ -6,7 +6,7 @@ import type { ChangeReturnType, OmitFirstArg } from "./ts-toolkit.js";
 import type {
   ClientMsg,
   Delta,
-  FirstServerMsg,
+  WelcomeServerMsg,
   Mutation,
   Mutations,
   Op,
@@ -155,12 +155,12 @@ export class Client<M extends Mutations> {
       this.#_log?.("IN", msg);
 
       // The very first message we receive after connecting to the server
-      // should be the FirstServerMsg, which we need to complete the connection
+      // should be the WelcomeServerMsg, which we need to complete the connection
       // setup. After this, we have a Session, and we're ready to exchange
       // messages.
       if (!this.#session) {
-        if (msg.type !== "FirstServerMsg")
-          raise("Expected the first message to be a FirstServerMsg");
+        if (msg.type !== "WelcomeServerMsg")
+          raise("Expected the first message to be a WelcomeServerMsg");
 
         this.#session = {
           actor: msg.actor,
@@ -188,7 +188,7 @@ export class Client<M extends Mutations> {
       }
 
       /* v8 ignore start */
-      if (msg.type === "FirstServerMsg") {
+      if (msg.type === "WelcomeServerMsg") {
         if (!this.#session)
           raise("Unexpected message - session already established");
         return;
@@ -233,7 +233,7 @@ export class Client<M extends Mutations> {
 
   #handleServerMsg(
     _curr: Session,
-    msg: Exclude<ServerMsg, FirstServerMsg>
+    msg: Exclude<ServerMsg, WelcomeServerMsg>
   ): void {
     switch (msg.type) {
       case "DeltaServerMsg":

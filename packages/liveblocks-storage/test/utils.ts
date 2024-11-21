@@ -76,12 +76,12 @@ async function connectClientAndServer(
     // Strictly allow only the messages necessary for the initial handshake 🤝
     // ...but not any more messages than that.
     //
-    // Client                     Server
-    //    | <---- FirstServerMsg ---- |
-    //    | --- CatchUpClientMsg ---> |
-    //    | <---- DeltaServerMsg ---- |
+    //  Client                              Server
+    //    |       <------ WelcomeServerMsg ---|
+    //    |--- CatchUpClientMsg ------>       |
+    //    |       <-- InitialSyncServerMsg ---|
     //
-    await s2cPipe.flushWhile((msg) => msg.type === "FirstServerMsg");
+    await s2cPipe.flushWhile((msg) => msg.type === "WelcomeServerMsg");
     await c2sPipe.flushWhile((msg) => msg.type === "CatchUpClientMsg");
     await s2cPipe.flushWhile((msg) => msg.type === "InitialSyncServerMsg");
   }

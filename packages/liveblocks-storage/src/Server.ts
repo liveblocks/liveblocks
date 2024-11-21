@@ -80,7 +80,7 @@ export class Server {
 
     // Announce to client its actor ID and the current state clock
     this.#send(newSession, {
-      type: "FirstServerMsg",
+      type: "WelcomeServerMsg",
       actor,
       sessionKey,
       serverClock: this.#stateClock,

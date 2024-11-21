@@ -54,9 +54,17 @@ export type OpClientMsg = {
 };
 export type ClientMsg = CatchUpClientMsg | OpClientMsg;
 
-export type FirstServerMsg = {
-  type: "FirstServerMsg";
+export type WelcomeServerMsg = {
+  type: "WelcomeServerMsg";
+  /**
+   * The assigned unique ID for this session. (If a client reconnects, they
+   * will get a new actor ID.)
+   */
   actor: number;
+  /**
+   * A unique key to identify this session. Will be unique and only known to
+   * this client. Sometimes also known as `nonce`.
+   */
   sessionKey: string;
   /**
    * The server's current logical clock value (incremented any time the store changes).
@@ -102,7 +110,10 @@ export type DeltaServerMsg = {
    */
   fullCC?: true;
 };
-export type ServerMsg = FirstServerMsg | InitialSyncServerMsg | DeltaServerMsg;
+export type ServerMsg =
+  | WelcomeServerMsg
+  | InitialSyncServerMsg
+  | DeltaServerMsg;
 
 export type Mutation = (
   root: LayeredCache,
