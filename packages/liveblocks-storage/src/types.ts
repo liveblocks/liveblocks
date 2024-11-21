@@ -7,9 +7,15 @@ export type Socket<Out, In> = {
   recv: Observable<In>;
 };
 
-// XXX OpId should really be a Lamport timestamp, ie a [actor, clock] tuple
+/**
+ * A unique Op ID for this Op. Lamport clock consisting of the original actor
+ * ID that first sent the Op to the server and a client clock.
+ */
 export type OpId = readonly [
-  actor: number, // The *original* actor, not per se the *current* actor
+  /** The *original* actor that first sent the Op to the server. Stays bound to
+   * that actor, even if the current client's session already has a newer actor
+   * ID. */
+  actor: number,
   clock: number,
 ];
 
@@ -46,12 +52,25 @@ export type Delta = readonly [
 // Serialize/deserialize using CBOR later to make it more lightweight?
 //
 
-export type CatchUpClientMsg = { type: "CatchUpClientMsg"; since: number };
+export type CatchUpClientMsg = {
+  type: "CatchUpClientMsg";
+  /**
+   * Tells the server the last clock value this client knows about. The server
+   * can respond with a partial or full initial sync (up to the server to
+   * decide).
+   */
+  since: number;
+};
+
 export type OpClientMsg = {
   type: "OpClientMsg";
+  /** The unique Op ID for this Op. Lamport clock consisting of the original
+   * actor ID that first sent the Op to the server and a client clock. */
   opId: OpId;
+  /** The Op (= name + args), describing the mutator to run on the server. */
   op: Op;
 };
+
 export type ClientMsg = CatchUpClientMsg | OpClientMsg;
 
 export type WelcomeServerMsg = {
@@ -72,6 +91,7 @@ export type WelcomeServerMsg = {
    */
   serverClock: number;
 };
+
 export type InitialSyncServerMsg = {
   type: "InitialSyncServerMsg";
   /** The current server clock */
@@ -88,6 +108,7 @@ export type InitialSyncServerMsg = {
    */
   fullCC?: true;
 };
+
 export type DeltaServerMsg = {
   type: "DeltaServerMsg";
   /** The new server clock after the update. */
@@ -110,6 +131,7 @@ export type DeltaServerMsg = {
    */
   fullCC?: true;
 };
+
 export type ServerMsg =
   | WelcomeServerMsg
   | InitialSyncServerMsg

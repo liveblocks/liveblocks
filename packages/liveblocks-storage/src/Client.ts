@@ -1,12 +1,12 @@
+import { makeEventSource } from "~/lib/EventSource.js";
+import type { Json } from "~/lib/Json.js";
+import type { ChangeReturnType, OmitFirstArg } from "~/lib/ts-toolkit.js";
+
 import { LayeredCache } from "./LayeredCache.js";
 import type { Callback, EventSource, Observable } from "./lib/EventSource.js";
-import { makeEventSource } from "./lib/EventSource.js";
-import type { Json } from "./lib/Json.js";
-import type { ChangeReturnType, OmitFirstArg } from "./ts-toolkit.js";
 import type {
   ClientMsg,
   Delta,
-  WelcomeServerMsg,
   Mutation,
   Mutations,
   Op,
@@ -14,6 +14,7 @@ import type {
   PendingOp,
   ServerMsg,
   Socket,
+  WelcomeServerMsg,
 } from "./types.js";
 import { iterPairs, nextAlphabetId, raise } from "./utils.js";
 
@@ -154,48 +155,46 @@ export class Client<M extends Mutations> {
     const disconnect = socket.recv.subscribe((msg) => {
       this.#_log?.("IN", msg);
 
-      // The very first message we receive after connecting to the server
-      // should be the WelcomeServerMsg, which we need to complete the connection
-      // setup. After this, we have a Session, and we're ready to exchange
-      // messages.
-      if (!this.#session) {
-        if (msg.type !== "WelcomeServerMsg")
-          raise("Expected the first message to be a WelcomeServerMsg");
+      switch (msg.type) {
+        case "WelcomeServerMsg": {
+          if (this.#session) {
+            return raise("Saw welcome message, but session already exists");
+          }
 
-        this.#session = {
-          actor: msg.actor,
-          sessionKey: msg.sessionKey,
-          socket,
-          caughtUp: false,
-        };
+          // The very first message we receive after connecting to the server
+          // is the WelcomeServerMsg. After this, we have a Session, and we're
+          // ready to exchange messages.
+          this.#session = {
+            actor: msg.actor,
+            sessionKey: msg.sessionKey,
+            socket,
+            caughtUp: false,
+          };
 
-        // Client responds with handshake, by optionally sending a initial sync
-        // message
-        if (msg.serverClock > this.#lastKnownServerClock) {
-          // Only request a catch up with the server if we're behind. Otherwise
-          // we already know the server state.
-          this.#send({
-            type: "CatchUpClientMsg",
-            since: this.#lastKnownServerClock,
-          });
-        } else {
-          // Otherwise we're already caught up, we don't even need a data exchange
-          this.#_log?.("Already up to date, no need to request catch up");
-          this.#markCaughtUp();
+          // Client responds with handshake, by optionally sending a initial sync
+          // message
+          if (msg.serverClock > this.#lastKnownServerClock) {
+            // Only request a catch up with the server if we're behind. Otherwise
+            // we already know the server state.
+            this.#send({
+              type: "CatchUpClientMsg",
+              since: this.#lastKnownServerClock,
+            });
+          } else {
+            // Otherwise we're already caught up, we don't even need a data exchange
+            this.#_log?.("Already up to date, no need to request catch up");
+            this.#markCaughtUp();
+          }
+          return;
         }
 
-        return;
+        default: {
+          return this.#handleServerMsg(
+            this.#session ?? raise("Session already established?"),
+            msg
+          );
+        }
       }
-
-      /* v8 ignore start */
-      if (msg.type === "WelcomeServerMsg") {
-        if (!this.#session)
-          raise("Unexpected message - session already established");
-        return;
-      }
-      /* v8 ignore stop */
-
-      this.#handleServerMsg(this.#session, msg);
     });
 
     return () => {
