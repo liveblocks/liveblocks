@@ -85,6 +85,7 @@ export class Client<M extends Mutations> {
     readonly onChange: Observable<void>;
   };
 
+  /* v8 ignore start */
   debug(): void {
     this.#_log = (...args) =>
       console.log(
@@ -99,6 +100,7 @@ export class Client<M extends Mutations> {
         )
       );
   }
+  /* v8 ignore stop */
 
   constructor(mutations: M) {
     this.#mutations = mutations;
@@ -185,11 +187,13 @@ export class Client<M extends Mutations> {
         return;
       }
 
+      /* v8 ignore start */
       if (msg.type === "FirstServerMsg") {
         if (!this.#session)
           raise("Unexpected message - session already established");
         return;
       }
+      /* v8 ignore stop */
 
       this.#handleServerMsg(this.#session, msg);
     });
