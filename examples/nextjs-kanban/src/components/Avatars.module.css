@@ -1,0 +1,50 @@
+.avatars {
+  display: flex;
+  justify-content: flex-end;
+  padding: 1px 4px;
+}
+
+.avatar {
+  display: flex;
+  flex-shrink: 0;
+  place-content: center;
+  position: relative;
+  border: 4px solid var(--color-background);
+  border-radius: 9999px;
+  width: 36px;
+  height: 36px;
+  background-color: #9ca3af;
+  margin-left: -9px;
+}
+
+@media (max-width: 640px) {
+  .avatar {
+    border-color: var(--color-panel);
+  }
+}
+
+.avatar:before {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: 100%;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  padding: 5px 10px;
+  color: white;
+  font-size: 0.75rem;
+  border-radius: 8px;
+  margin-top: 10px;
+  z-index: 1;
+  background: black;
+  white-space: nowrap;
+}
+
+.avatar:hover:before {
+  opacity: 1;
+}
+
+.avatar_picture {
+  width: 100%;
+  height: 100%;
+  border-radius: 9999px;
+}
