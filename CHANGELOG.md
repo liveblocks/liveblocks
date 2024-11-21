@@ -1,4 +1,6 @@
-## 2.12.2 (Not published yet)
+## Not published yet
+
+## 2.12.2
 
 ### `@liveblocks/react-tiptap`
 
