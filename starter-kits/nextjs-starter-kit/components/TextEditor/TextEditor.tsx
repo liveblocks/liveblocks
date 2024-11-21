@@ -149,7 +149,7 @@ function TiptapEditor() {
   const disableToolbar = !editor || !canWrite;
 
   // If canWrite changes, sync to Tiptap, as we're defaulting to false in the config
-  if (editor?.isEditable !== canWrite) {
+  if (editor && editor?.isEditable !== canWrite) {
     editor?.setEditable(canWrite);
   }
 
