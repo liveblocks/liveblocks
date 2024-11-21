@@ -328,6 +328,12 @@ export function withPaste(
           };
         });
 
+        // If there's a range selection, delete its content before inserting the new nodes
+        if (selection && !SlateRange.isCollapsed(selection)) {
+          Transforms.delete(editor, { at: selection });
+        }
+
+        // Insert the new nodes
         Transforms.insertFragment(editor, nodes);
 
         return;
