@@ -648,7 +648,7 @@
   text-decoration-color: var(--lb-foreground-moderate);
   text-underline-offset: 2px;
 
-  &:where([href]):where(:hover, :focus-visible) {
+  &:where([href]):where(:hover, :focus-visible, [data-selected]) {
     color: var(--lb-accent);
     text-decoration-color: var(--lb-accent-moderate);
   }

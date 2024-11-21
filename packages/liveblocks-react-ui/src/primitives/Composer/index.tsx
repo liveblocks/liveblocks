@@ -584,11 +584,14 @@ const ComposerMention = forwardRef<HTMLSpanElement, ComposerMentionProps>(
 const ComposerLink = forwardRef<HTMLAnchorElement, ComposerLinkProps>(
   ({ children, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "a";
+    const { isFocused } = useComposer();
+    const isSelected = useSelected();
 
     return (
       <Component
         target="_blank"
         rel="noopener noreferrer nofollow"
+        data-selected={(isFocused && isSelected) || undefined}
         {...props}
         ref={forwardedRef}
       >
