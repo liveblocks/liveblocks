@@ -123,9 +123,10 @@ export class Server {
 
       this.#send(curr, {
         type: "DeltaServerMsg",
-        delta: ["🤝" as OpId, [], kvstream],
-        full: true,
         serverClock: this.#stateClock,
+        delta: ["🤝" as OpId, [], kvstream],
+        isInitialSync: true,
+        fullCC: true,
       });
     } else {
       // Unexpected client message

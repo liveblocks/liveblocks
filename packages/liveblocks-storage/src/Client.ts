@@ -188,7 +188,8 @@ export class Client<M extends Mutations> {
           });
         } else {
           // Otherwise we're already caught up, we don't even need a data exchange
-          this.#session.caughtUp = true;
+          this.#_log?.("Already up to date, no need to request catch up");
+          this.#markCaughtUp();
         }
 
         return;
@@ -210,27 +211,29 @@ export class Client<M extends Mutations> {
     };
   }
 
+  #markCaughtUp(): void {
+    this.#session!.caughtUp = true;
+
+    // If we just got caught up, take the moment to (re)send all pending
+    // ops to the server.
+    for (const op of this.#pendingOps.values()) {
+      this.#send({ type: "OpClientMsg", op });
+    }
+  }
+
   #handleServerMsg(
-    curr: Session,
+    _curr: Session,
     msg: Exclude<ServerMsg, FirstServerMsg>
   ): void {
     if (msg.type === "DeltaServerMsg") {
-      this.applyDeltas([msg.delta], msg.full ?? false);
+      this.applyDeltas([msg.delta], msg.fullCC ?? false);
 
       if (this.#lastKnownServerClock < msg.serverClock) {
         this.#lastKnownServerClock = msg.serverClock;
       }
 
-      // TODO Think about this conditional? Shouldn't we be caught up any time
-      // we receive a Delta message, no matter if it's full or partial? I think so!
-      if (msg.full) {
-        curr.caughtUp = true;
-
-        // If we just got caught up, take the moment to (re)send all pending
-        // ops to the server.
-        for (const op of this.#pendingOps.values()) {
-          this.#send({ type: "OpClientMsg", op });
-        }
+      if (msg.isInitialSync) {
+        this.#markCaughtUp();
       }
     } else {
       // Unknown (maybe future?) message
