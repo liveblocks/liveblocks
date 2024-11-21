@@ -5,13 +5,16 @@ module.exports = {
   root: true,
   // plugins: ["eslint-plugin-rulesdir"],
   extends: ["@liveblocks/eslint-config"],
-  // rules: {},
-  // overrides: [
-  //   {
-  //     files: ["test/**"],
-  //
-  //     // Special config for test files
-  //     rules: {},
-  //   },
-  // ],
+
+  rules: {},
+  overrides: [
+    {
+      files: ["test/**"],
+
+      // Special config for test files
+      rules: {
+        "no-empty": "off",
+      },
+    },
+  ],
 };
