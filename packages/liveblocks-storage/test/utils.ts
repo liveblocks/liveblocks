@@ -83,9 +83,7 @@ async function connectClientAndServer(
     //
     await s2cPipe.flushWhile((msg) => msg.type === "FirstServerMsg");
     await c2sPipe.flushWhile((msg) => msg.type === "CatchUpClientMsg");
-    await s2cPipe.flushWhile(
-      (msg) => msg.type === "DeltaServerMsg" && msg.isInitialSync === true
-    );
+    await s2cPipe.flushWhile((msg) => msg.type === "InitialSyncServerMsg");
   }
 
   return { sync, disconnect };

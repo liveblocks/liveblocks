@@ -225,17 +225,26 @@ export class Client<M extends Mutations> {
     _curr: Session,
     msg: Exclude<ServerMsg, FirstServerMsg>
   ): void {
-    if (msg.type === "DeltaServerMsg") {
-      this.applyDeltas([msg.delta], msg.fullCC ?? false);
+    switch (msg.type) {
+      case "DeltaServerMsg":
+      case "InitialSyncServerMsg": {
+        this.applyDeltas(
+          msg.type === "InitialSyncServerMsg" ? [] : [msg.opId],
+          [msg.delta],
+          msg.fullCC ?? false
+        );
 
-      if (this.#lastKnownServerClock < msg.serverClock) {
-        this.#lastKnownServerClock = msg.serverClock;
+        if (this.#lastKnownServerClock < msg.serverClock) {
+          this.#lastKnownServerClock = msg.serverClock;
+        }
+
+        if (msg.type === "InitialSyncServerMsg") {
+          this.#markCaughtUp();
+        }
+        break;
       }
 
-      if (msg.isInitialSync) {
-        this.#markCaughtUp();
-      }
-    } else {
+      default:
       // Unknown (maybe future?) message
       // Let's ignore it
     }
@@ -251,11 +260,15 @@ export class Client<M extends Mutations> {
    * locally pending Ops that have not yet been acknowledged will be "replayed"
    * on top of the new state.
    */
-  applyDeltas(deltas: readonly Delta[], full: boolean): void {
+  applyDeltas(
+    opIds: readonly OpId[],
+    deltas: readonly Delta[],
+    full: boolean
+  ): void {
     // First, let's immediately remove acknowledged pending local Ops
     // Acknowledge the incoming opId by removing it from the pending ops list.
     // If this opId is not found, it's from another client.
-    for (const [opId] of deltas) {
+    for (const opId of opIds) {
       const deleted = this.#pendingOps.delete(opId);
       if (deleted) {
         this.#_log?.(`Acknowledged pending op ${opId}`);
@@ -277,7 +290,8 @@ export class Client<M extends Mutations> {
 
     for (const delta of deltas) {
       // Apply authoritative delta
-      const [, deletions, updates] = delta;
+      const deletions = delta[0];
+      const updates = delta[1];
       for (const key of deletions) {
         cache.delete(key);
       }

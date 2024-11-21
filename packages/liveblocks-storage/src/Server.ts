@@ -6,7 +6,6 @@ import type {
   Delta,
   Mutations,
   Op,
-  OpId,
   ServerMsg,
   Socket,
 } from "./types.js";
@@ -98,17 +97,19 @@ export class Server {
         for (const session of this.#sessions) {
           this.#send(session, {
             type: "DeltaServerMsg",
-            delta: result.value,
             serverClock: this.#stateClock,
+            opId: op[0],
+            delta: result.value,
           });
         }
       } else {
         // Send error/ack back to origin
-        const ack: Delta = [op[0], [], []];
+        const ack: Delta = [[], []];
         this.#send(curr, {
           type: "DeltaServerMsg",
-          delta: ack,
           serverClock: this.#stateClock,
+          opId: op[0],
+          delta: ack,
         });
       }
     } else if (msg.type === "CatchUpClientMsg") {
@@ -122,10 +123,9 @@ export class Server {
       }
 
       this.#send(curr, {
-        type: "DeltaServerMsg",
+        type: "InitialSyncServerMsg",
         serverClock: this.#stateClock,
-        delta: ["🤝" as OpId, [], kvstream],
-        isInitialSync: true,
+        delta: [[], kvstream],
         fullCC: true,
       });
     } else {
@@ -145,14 +145,14 @@ export class Server {
    * clients.
    */
   #runMutator(op: Op): Result<Delta, string> {
-    const [id, name, args] = op;
+    const [_, name, args] = op;
     const mutationFn =
       this.#mutations[name] ?? raise(`Mutation not found: '${name}'`);
 
     this.#cache.startTransaction();
     try {
       mutationFn(this.#cache, ...args);
-      const delta = this.#cache.delta(id);
+      const delta = this.#cache.delta();
       this.#cache.commit();
       this.#stateClock++;
       return { ok: true, value: delta };
