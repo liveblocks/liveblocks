@@ -318,8 +318,6 @@ test("when client mutation errors it should rollback transaction", () => {
   onTestFinished(unsub);
 
   try {
-    // XXX This differs from Guillaume's implementation, see
-    // https://liveblocks.slack.com/archives/D03656FN1SL/p1731920545843919
     client.mutate.putAndFail("A", "A");
   } catch {}
   expect(client.data).toEqual({});
@@ -334,8 +332,6 @@ test("errors in client mutations should be thrown, not caught", () => {
   onTestFinished(unsub);
 
   try {
-    // XXX This differs from Guillaume's implementation, see
-    // https://liveblocks.slack.com/archives/D03656FN1SL/p1731920545843919
     client.mutate.fail();
   } catch {}
 
