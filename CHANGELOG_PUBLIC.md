@@ -19,7 +19,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ### `@liveblocks/react-tiptap`
 
-- Add new options for [`useLiveblocksExtension()`](https://liveblocks.io/docs/api-reference/liveblocks-react-tiptap#useLiveblocksExtension) to allow setting
+- Add new options for [`useLiveblocksExtension`](https://liveblocks.io/docs/api-reference/liveblocks-react-tiptap#useLiveblocksExtension) to allow setting
   initial content, experimental offline support, and the field name.
 - Update floating composer to support `onComposerSubmit` handler and closing the
   composer with the escape key.
