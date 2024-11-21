@@ -31,7 +31,7 @@ export class Server {
   readonly #mutations: Mutations;
   readonly #cache: LayeredCache;
 
-  // #stateClock: number = 0;
+  #stateClock: number = 0;
   #nextActor = 1;
   readonly #sessions: Set<Session>;
   #_log?: (...args: unknown[]) => void;
@@ -40,7 +40,6 @@ export class Server {
     this.#mutations = mutations;
     this.#sessions = new Set();
     this.#cache = new LayeredCache();
-    // this.#stateClock = 0;
 
     if (DEBUG) this.debug();
   }
@@ -78,7 +77,7 @@ export class Server {
       type: "FirstServerMsg",
       actor,
       sessionKey,
-      stateClock: 1,
+      serverClock: this.#stateClock,
     });
 
     return () => {
@@ -100,7 +99,7 @@ export class Server {
           this.#send(session, {
             type: "DeltaServerMsg",
             delta: result.value,
-            stateClock: 1,
+            serverClock: this.#stateClock,
           });
         }
       } else {
@@ -109,7 +108,7 @@ export class Server {
         this.#send(curr, {
           type: "DeltaServerMsg",
           delta: ack,
-          stateClock: 1,
+          serverClock: this.#stateClock,
         });
       }
     } else if (msg.type === "CatchUpClientMsg") {
@@ -126,7 +125,7 @@ export class Server {
         type: "DeltaServerMsg",
         delta: ["🤝" as OpId, [], kvstream],
         full: true,
-        stateClock: 1,
+        serverClock: this.#stateClock,
       });
     } else {
       // Unexpected client message
@@ -154,6 +153,7 @@ export class Server {
       mutationFn(this.#cache, ...args);
       const delta = this.#cache.delta(id);
       this.#cache.commit();
+      this.#stateClock++;
       return { ok: true, value: delta };
     } catch (e) {
       this.#cache.rollback();
@@ -163,4 +163,5 @@ export class Server {
 
   // For convenience in unit tests only --------------------------------
   get data(): Record<string, Json> { return Object.fromEntries(this.#cache); } // prettier-ignore
+  get clock(): number { return this.#stateClock; } // prettier-ignore
 }
