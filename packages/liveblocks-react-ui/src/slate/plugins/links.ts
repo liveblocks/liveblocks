@@ -41,16 +41,12 @@ import { filterActiveMarks } from "../utils/marks";
  * - example.com (missing scheme)
  */
 export const URL_REGEX =
-  /((https?:\/\/(www\.)?)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9().@:%_+~#?&//=]*)/g;
+  /((https?:\/\/(www\.)?)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9().@:%_+~#?&//=]*)/;
 export const URL_REGEX_GLOBAL = new RegExp(URL_REGEX, "g");
+const LEADING_PUNCTUATION_REGEX = /^[.,;!?()/#$%^&*:{}=\-_`~]+/;
 
 export function isUrl(string: string) {
-  try {
-    new URL(string);
-    return true;
-  } catch (_) {
-    return false;
-  }
+  return URL_REGEX.test(string);
 }
 
 export function withLinks(editor: Editor): Editor {
@@ -96,26 +92,42 @@ export function withLinks(editor: Editor): Editor {
     if (selection && SlateRange.isCollapsed(selection) && text === " ") {
       const before = getMatchRange(editor, selection);
       const beforeText = before && Editor.string(editor, before);
-      const selectionInline = getSelectionInline(editor);
 
-      // Check if the text before the space is a URL and not already a link
-      if (
-        beforeText &&
-        isUrl(beforeText) &&
-        (selectionInline ? !isComposerBodyLink(selectionInline) : true)
-      ) {
-        // Delete the plain text URL and replace it with a link element
-        Transforms.delete(editor, { at: before });
-        Transforms.insertFragment(editor, [
-          {
-            type: "link",
-            url: beforeText,
-            children: [{ text: beforeText }],
+      if (beforeText) {
+        const selectionInline = getSelectionInline(editor);
+        const isInsideLink = selectionInline
+          ? isComposerBodyLink(selectionInline)
+          : false;
+        // Remove any leading punctuation and create an updated range afterwards
+        const beforeTextWithoutLeadingPunctuation = beforeText.replace(
+          LEADING_PUNCTUATION_REGEX,
+          ""
+        );
+        const beforeWithoutLeadingPunctuation = {
+          ...before,
+          anchor: {
+            ...before.anchor,
+            offset:
+              before.anchor.offset +
+              (beforeText.length - beforeTextWithoutLeadingPunctuation.length),
           },
-          {
-            text: "",
-          },
-        ]);
+        };
+
+        // Check if the text before the space is a URL and not already a link
+        if (isUrl(beforeTextWithoutLeadingPunctuation) && !isInsideLink) {
+          // Delete the plain text URL and replace it with a link element
+          Transforms.delete(editor, { at: beforeWithoutLeadingPunctuation });
+          Transforms.insertFragment(editor, [
+            {
+              type: "link",
+              url: beforeTextWithoutLeadingPunctuation,
+              children: [{ text: beforeTextWithoutLeadingPunctuation }],
+            },
+            {
+              text: "",
+            },
+          ]);
+        }
       }
     }
 
