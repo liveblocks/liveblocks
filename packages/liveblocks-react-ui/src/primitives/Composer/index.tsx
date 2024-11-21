@@ -65,9 +65,8 @@ import {
 
 import { useLiveblocksUIConfig } from "../../config";
 import { withAutoFormatting } from "../../slate/plugins/auto-formatting";
-import { withAutoLinks } from "../../slate/plugins/auto-links";
-import { withCustomLinks } from "../../slate/plugins/custom-links";
 import { withEmptyClearFormatting } from "../../slate/plugins/empty-clear-formatting";
+import { withLinks } from "../../slate/plugins/links";
 import type { MentionDraft } from "../../slate/plugins/mentions";
 import {
   getMentionDraftAtSelection,
@@ -83,8 +82,7 @@ import { isEmpty as isEditorEmpty } from "../../slate/utils/is-empty";
 import { getMarks, leaveMarkEdge, toggleMark } from "../../slate/utils/marks";
 import type {
   ComposerBody as ComposerBodyData,
-  ComposerBodyAutoLink,
-  ComposerBodyCustomLink,
+  ComposerBodyLink,
   ComposerBodyMention,
   ComposerBodyTextActiveFormats,
   ComposerBodyTextFormat,
@@ -175,15 +173,13 @@ function createComposerEditor({
 }) {
   return withNormalize(
     withMentions(
-      withCustomLinks(
-        withAutoLinks(
-          withAutoFormatting(
-            withEmptyClearFormatting(
-              withPaste(withHistory(withReact(createEditor())), {
-                createAttachments,
-                pasteFilesAsAttachments,
-              })
-            )
+      withLinks(
+        withAutoFormatting(
+          withEmptyClearFormatting(
+            withPaste(withHistory(withReact(createEditor())), {
+              createAttachments,
+              pasteFilesAsAttachments,
+            })
           )
         )
       )
@@ -502,14 +498,11 @@ function ComposerEditorElement({
           {...(props as RenderElementSpecificProps<ComposerBodyMention>)}
         />
       );
-    case "auto-link":
-    case "custom-link":
+    case "link":
       return (
         <ComposerEditorLinkWrapper
           Link={Link}
-          {...(props as RenderElementSpecificProps<
-            ComposerBodyAutoLink | ComposerBodyCustomLink
-          >)}
+          {...(props as RenderElementSpecificProps<ComposerBodyLink>)}
         />
       );
     case "paragraph":

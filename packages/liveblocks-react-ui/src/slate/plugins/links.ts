@@ -1,7 +1,7 @@
 import type { Editor } from "slate";
 import { Element, Node, Range, Transforms } from "slate";
 
-import type { ComposerBodyCustomLink } from "../../types";
+import type { ComposerBodyLink } from "../../types";
 import { isPlainText, isText } from "../utils/is-text";
 import { filterActiveMarks } from "../utils/marks";
 import { selectionContainsInlines } from "../utils/selection-contains-inlines";
@@ -15,21 +15,21 @@ function isUrl(string: string) {
   }
 }
 
-export function withCustomLinks(editor: Editor): Editor {
+export function withLinks(editor: Editor): Editor {
   const { isInline, normalizeNode, insertData } = editor;
 
   editor.isInline = (element) => {
-    return element.type === "custom-link" ? true : isInline(element);
+    return element.type === "link" ? true : isInline(element);
   };
 
   editor.normalizeNode = (entry) => {
     const [node, path] = entry;
 
+    // Prevent rich text within links by removing all marks of inner text nodes
     if (isText(node)) {
       const parentNode = Node.parent(editor, path);
 
-      // Prevent rich text within custom links by removing all marks of inner text nodes
-      if (isComposerBodyCustomLink(parentNode)) {
+      if (isComposerBodyLink(parentNode)) {
         if (!isPlainText(node)) {
           const marks = filterActiveMarks(node);
 
@@ -38,10 +38,20 @@ export function withCustomLinks(editor: Editor): Editor {
       }
     }
 
+    // Prevent nested or empty links
+    if (isComposerBodyLink(node)) {
+      if (
+        node.children.length === 0 ||
+        (node.children.length === 1 && node.children[0]?.text === "")
+      ) {
+        Transforms.removeNodes(editor, { at: path });
+      }
+    }
+
     normalizeNode(entry);
   };
 
-  // Create custom links when pasting URLs while some text is selected
+  // Create links when pasting URLs while some text is selected
   editor.insertData = (data) => {
     const { selection } = editor;
     const pastedText = data.getData("text/plain");
@@ -59,11 +69,11 @@ export function withCustomLinks(editor: Editor): Editor {
         if (isUrl(pastedText)) {
           // Check if the selection only contains (rich and/or plain) text nodes
           if (!selectionContainsInlines(editor, (node) => !isText(node))) {
-            // If all conditions are met, wrap the selected nodes in a custom link
-            Transforms.wrapNodes<ComposerBodyCustomLink>(
+            // If all conditions are met, wrap the selected nodes in a link
+            Transforms.wrapNodes<ComposerBodyLink>(
               editor,
               {
-                type: "custom-link",
+                type: "link",
                 url: pastedText,
                 children: [],
               },
@@ -87,8 +97,6 @@ export function withCustomLinks(editor: Editor): Editor {
   return editor;
 }
 
-export function isComposerBodyCustomLink(
-  node: Node
-): node is ComposerBodyCustomLink {
-  return Element.isElement(node) && node.type === "custom-link";
+export function isComposerBodyLink(node: Node): node is ComposerBodyLink {
+  return Element.isElement(node) && node.type === "link";
 }

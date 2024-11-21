@@ -15,8 +15,7 @@ import type {
 import type { MentionDraft } from "../../slate/plugins/mentions";
 import type {
   ComponentPropsWithSlot,
-  ComposerBodyAutoLink,
-  ComposerBodyCustomLink,
+  ComposerBodyLink,
   ComposerBodyMention,
   ComposerBodyTextActiveFormats,
   ComposerBodyTextFormat,
@@ -257,9 +256,7 @@ export interface ComposerEditorMentionWrapperProps
 }
 
 export interface ComposerEditorLinkWrapperProps
-  extends RenderElementSpecificProps<
-    ComposerBodyAutoLink | ComposerBodyCustomLink
-  > {
+  extends RenderElementSpecificProps<ComposerBodyLink> {
   Link: ComponentType<ComposerEditorLinkProps>;
 }
 

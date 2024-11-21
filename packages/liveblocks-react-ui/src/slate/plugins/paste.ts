@@ -3,10 +3,9 @@ import { Transforms } from "slate";
 import { jsx } from "slate-hyperscript";
 
 import type {
-  ComposerBodyAutoLink,
   ComposerBodyBlockElement,
-  ComposerBodyCustomLink,
   ComposerBodyInlineElement,
+  ComposerBodyLink,
   ComposerBodyParagraph,
   ComposerBodyText,
 } from "../../types";
@@ -28,30 +27,16 @@ type DeserializedNode =
   | Descendant[]
   | DeserializedNode[];
 
-function areUrlsEqual(a: string, b: string) {
-  try {
-    const urlA = new URL(a);
-    const urlB = new URL(b);
-
-    return urlA.origin === urlB.origin && urlA.pathname === urlB.pathname;
-  } catch {
-    return false;
-  }
-}
-
 const createParagraphElement = (): OmitTextChildren<ComposerBodyParagraph> => ({
   type: "paragraph",
 });
 
 const ELEMENT_TAGS = {
-  A: (
-    element
-  ): OmitTextChildren<ComposerBodyCustomLink | ComposerBodyAutoLink> => {
+  A: (element): OmitTextChildren<ComposerBodyLink> => {
     const href = element.getAttribute("href");
-    const innerText = element.innerText;
 
     return {
-      type: href && areUrlsEqual(href, innerText) ? "auto-link" : "custom-link",
+      type: "link",
       url: href ?? "",
     };
   },
