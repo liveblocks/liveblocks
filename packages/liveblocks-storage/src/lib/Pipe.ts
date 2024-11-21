@@ -23,12 +23,13 @@ export type Pipe<T> = {
 
   // Control pipe by delivering all buffered messages in the pipe
   flush(): Promise<void>;
+  flushWhile(predicate: (data: T) => boolean): Promise<void>;
 };
 
 export function makePipe<T>(): Pipe<T> {
   let mode: "auto" | "manual" = "auto";
 
-  const buffer: string[] = [];
+  const buffer: T[] = [];
   const output: EventSource<T> = makeEventSource<T>();
 
   // Please note that `.send()` is a synchronous API. This can be deceiving,
@@ -36,7 +37,7 @@ export function makePipe<T>(): Pipe<T> {
   // That's why it's important to close every test with an
   // `await pipe.flush()`, and await all those promises!
   function send(input: T) {
-    buffer.push(JSON.stringify(input));
+    buffer.push(input);
 
     if (mode === "auto") {
       void flush();
@@ -50,11 +51,11 @@ export function makePipe<T>(): Pipe<T> {
 
   let pendingFlush$: Promise<void> | null = null;
 
-  async function flushNow() {
+  async function flushNow(predicate: (data: T) => boolean) {
     if (pendingFlush$) raise("Internal corruption");
 
-    let data: string | undefined;
-    while ((data = buffer.shift()) !== undefined) {
+    while (buffer.length > 0 && predicate(buffer[0]!)) {
+      const data = buffer.shift();
       // Add artificial delay between each loop?
       await delay();
 
@@ -62,7 +63,7 @@ export function makePipe<T>(): Pipe<T> {
         raise("Can't send to broken pipe");
       }
       try {
-        output.notify(JSON.parse(data) as T);
+        output.notify(JSON.parse(JSON.stringify(data)) as T);
       } catch {
         // Ignore
       }
@@ -70,8 +71,12 @@ export function makePipe<T>(): Pipe<T> {
   }
 
   function flush() {
+    return flushWhile(() => true);
+  }
+
+  function flushWhile(predicate: (data: T) => boolean) {
     if (!pendingFlush$) {
-      pendingFlush$ = flushNow().finally(() => {
+      pendingFlush$ = flushNow(predicate).finally(() => {
         // Clear the pending flush eventually, so a new flush can happen
         pendingFlush$ = null;
       });
@@ -96,5 +101,6 @@ export function makePipe<T>(): Pipe<T> {
     setAuto,
     setManual,
     flush,
+    flushWhile,
   };
 }

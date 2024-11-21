@@ -71,11 +71,21 @@ async function connectClientAndServer(
 
   onTestFinished(() => disconnect());
 
-  // Allow client/server handshake to happen 🤝
   {
-    await sync(server); // <- FirstServerMsg
-    await sync(); // -> CatchUpClientMsg
-    //               <- DeltaServerMsg (full)
+    //
+    // Strictly allow only the messages necessary for the initial handshake 🤝
+    // ...but not any more messages than that.
+    //
+    // Client                     Server
+    //    | <---- FirstServerMsg ---- |
+    //    | --- CatchUpClientMsg ---> |
+    //    | <---- DeltaServerMsg ---- |
+    //
+    await s2cPipe.flushWhile((msg) => msg.type === "FirstServerMsg");
+    await c2sPipe.flushWhile((msg) => msg.type === "CatchUpClientMsg");
+    await s2cPipe.flushWhile(
+      (msg) => msg.type === "DeltaServerMsg" && msg.isInitialSync === true
+    );
   }
 
   return { sync, disconnect };
@@ -113,15 +123,12 @@ export async function twoClientsSetup<M extends Mutations>(
   mutations: M,
   serverMutations?: Mutations
 ) {
-  const { server, clients, sync } = await manyClientsSetup(
-    2,
-    mutations,
-    serverMutations ?? mutations
-  );
+  const { server, clients, sync, disconnect, reconnect } =
+    await manyClientsSetup(2, mutations, serverMutations ?? mutations);
   const client1 = clients[0]!.client;
   const client2 = clients[1]!.client;
 
-  return { client1, client2, server, sync };
+  return { client1, client2, server, sync, disconnect, reconnect };
 }
 
 type ClientControl<M extends Mutations> = {
