@@ -94,18 +94,45 @@ export class Server {
   }
 
   #handleClientMsg(curr: Session, msg: ClientMsg): void {
-    if (msg.type === "OpClientMsg") {
-      const op = msg.op;
+    switch (msg.type) {
+      case "OpClientMsg": {
+        const op = msg.op;
 
-      // Only run the Op if we've never seen it before
-      {
-        const [origActor, clock] = msg.opId;
-        const highest = this.#clocksPerActor.get(origActor);
-        if (highest === undefined || highest < clock) {
-          this.#clocksPerActor.set(origActor, clock);
+        // Only run the Op if we've never seen it before
+        {
+          const [origActor, clock] = msg.opId;
+          const highest = this.#clocksPerActor.get(origActor);
+          if (highest === undefined || highest < clock) {
+            this.#clocksPerActor.set(origActor, clock);
+          } else {
+            // Ignore it. We've already seen this one (or a later one).
+            // Send error/ack back to origin
+            const ack: Delta = [[], []];
+            this.#send(curr, {
+              type: "DeltaServerMsg",
+              serverClock: this.#stateClock,
+              opId: msg.opId,
+              delta: ack,
+            });
+            return;
+          }
+        }
+
+        const result = this.#runMutator(op);
+
+        if (result.ok) {
+          // Fan-out delta to all connected clients
+          for (const session of this.#sessions) {
+            this.#send(session, {
+              type: "DeltaServerMsg",
+              serverClock: this.#stateClock,
+              opId: msg.opId,
+              delta: result.value,
+            });
+          }
         } else {
-          // Ignore it. We've already seen this one (or a later one).
           // Send error/ack back to origin
+          // XXX Send back error here!
           const ack: Delta = [[], []];
           this.#send(curr, {
             type: "DeltaServerMsg",
@@ -113,52 +140,36 @@ export class Server {
             opId: msg.opId,
             delta: ack,
           });
-          return;
         }
+        return;
       }
 
-      const result = this.#runMutator(op);
+      case "CatchUpClientMsg": {
+        const kvstream: (string | Json)[] = [];
 
-      if (result.ok) {
-        // Fan-out delta to all connected clients
-        for (const session of this.#sessions) {
-          this.#send(session, {
-            type: "DeltaServerMsg",
-            serverClock: this.#stateClock,
-            opId: msg.opId,
-            delta: result.value,
-          });
+        for (const [key, value] of this.#cache) {
+          if (value !== undefined) {
+            kvstream.push(key);
+            kvstream.push(value);
+          }
         }
-      } else {
-        // Send error/ack back to origin
-        // XXX Send back error here!
-        const ack: Delta = [[], []];
+
         this.#send(curr, {
-          type: "DeltaServerMsg",
+          type: "InitialSyncServerMsg",
           serverClock: this.#stateClock,
-          opId: msg.opId,
-          delta: ack,
+          delta: [[], kvstream],
+          fullCC: true,
         });
-      }
-    } else if (msg.type === "CatchUpClientMsg") {
-      const kvstream: (string | Json)[] = [];
-
-      for (const [key, value] of this.#cache) {
-        if (value !== undefined) {
-          kvstream.push(key);
-          kvstream.push(value);
-        }
+        return;
       }
 
-      this.#send(curr, {
-        type: "InitialSyncServerMsg",
-        serverClock: this.#stateClock,
-        delta: [[], kvstream],
-        fullCC: true,
-      });
-    } else {
-      // Unexpected client message
-      // TODO Terminate the connection
+      /* v8 ignore start */
+      default: {
+        // Unexpected client message
+        // TODO Terminate the connection?
+        return;
+      }
+      /* v8 ignore stop */
     }
   }
 
