@@ -14,25 +14,11 @@ import type {
   ServerMsg,
   Socket,
 } from "./types.js";
-import { iterPairs, opId, raise } from "./utils.js";
+import { iterPairs, nextAlphabetId, raise } from "./utils.js";
 
 type BoundMutations<M extends Record<string, Mutation>> = {
   [K in keyof M]: ChangeReturnType<OmitFirstArg<M[K]>, OpId>;
 };
-
-let nextId = "A";
-
-function getClientId() {
-  const curr = nextId;
-  if (nextId.endsWith("Z")) {
-    nextId = "A".repeat(nextId.length + 1);
-  } else {
-    nextId =
-      nextId.slice(0, -1) +
-      String.fromCharCode(nextId[nextId.length - 1]!.charCodeAt(0) + 1);
-  }
-  return curr;
-}
 
 type Session = {
   readonly actor: number;
@@ -54,7 +40,7 @@ type Session = {
 const DEBUG = false;
 
 export class Client<M extends Mutations> {
-  #_debugClientId = getClientId();
+  #_debugClientId = nextAlphabetId();
   #_log?: (...args: unknown[]) => void;
 
   readonly #mutations: Mutations;

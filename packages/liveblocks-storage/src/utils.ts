@@ -1,8 +1,21 @@
 import type { Json } from "./lib/Json.js";
-import type { OpId } from "./types.js";
 
 export function raise(message: string): never {
   throw new Error(message);
+}
+
+let nextId = "A";
+
+export function nextAlphabetId(): string {
+  const curr = nextId;
+  if (nextId.endsWith("Z")) {
+    nextId = "A".repeat(nextId.length + 1);
+  } else {
+    nextId =
+      nextId.slice(0, -1) +
+      String.fromCharCode(nextId[nextId.length - 1]!.charCodeAt(0) + 1);
+  }
+  return curr;
 }
 
 export function* chain<T>(
