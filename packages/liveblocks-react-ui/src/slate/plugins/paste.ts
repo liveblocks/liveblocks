@@ -193,6 +193,7 @@ export function withPaste(
 
   editor.insertData = (data) => {
     const { selection } = editor;
+    const plainText = data.getData("text/plain");
 
     // 1. If there are files, create attachments from them
     if (data.types.includes("Files") && pasteFilesAsAttachments) {
@@ -205,14 +206,43 @@ export function withPaste(
       }
     }
 
-    // 2. If there's Slate data, immediately let Slate handle it
+    // 2. If a URL is being pasted on a plain text selection, create a link with the selection
+    if (selection && !SlateRange.isCollapsed(selection)) {
+      // Check if the selection is contained in a single block
+      if (selection.anchor.path[0] === selection.focus.path[0]) {
+        // Check if the pasted text is a valid URL
+        if (isUrl(plainText)) {
+          // Check if the selection only contains (rich and/or plain) text nodes
+          if (!selectionContainsInlines(editor, (node) => !isText(node))) {
+            // If all conditions are met, wrap the selected nodes in a link
+            Transforms.wrapNodes<ComposerBodyLink>(
+              editor,
+              {
+                type: "link",
+                url: plainText,
+                children: [],
+              },
+              {
+                at: selection,
+                split: true,
+                match: isPlainText,
+              }
+            );
+
+            return;
+          }
+        }
+      }
+    }
+
+    // 3. If there's Slate data, immediately let Slate handle it
     if (data.types.includes("application/x-slate-fragment")) {
       insertData(data);
 
       return;
     }
 
-    // 3. If there's HTML, deserialize rich text from it
+    // 4. If there's HTML, deserialize rich text from it
     if (data.types.includes("text/html")) {
       const html = data.getData("text/html");
 
@@ -243,37 +273,6 @@ export function withPaste(
         }
       } catch {
         // Go back to the list of conditions if something went wrong
-      }
-    }
-
-    const plainText = data.getData("text/plain");
-
-    // 4. If a URL is being pasted on a plain text selection, create a link with the selection
-    if (selection && !SlateRange.isCollapsed(selection)) {
-      // Check if the selection is contained in a single block
-      if (selection.anchor.path[0] === selection.focus.path[0]) {
-        // Check if the pasted text is a valid URL
-        if (isUrl(plainText)) {
-          // Check if the selection only contains (rich and/or plain) text nodes
-          if (!selectionContainsInlines(editor, (node) => !isText(node))) {
-            // If all conditions are met, wrap the selected nodes in a link
-            Transforms.wrapNodes<ComposerBodyLink>(
-              editor,
-              {
-                type: "link",
-                url: plainText,
-                children: [],
-              },
-              {
-                at: selection,
-                split: true,
-                match: isPlainText,
-              }
-            );
-
-            return;
-          }
-        }
       }
     }
 
