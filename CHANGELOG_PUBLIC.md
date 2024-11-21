@@ -15,12 +15,33 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 47 (2024-11-22)
 
+## v2.12.2
+
+### `@liveblocks/react-tiptap`
+
+- Add new options for `useLiveblocksExtension()` to allow setting
+  initialContent, experimental offline support, and the field name
+- Update floating composer to support onComposerSubmit handler and closing the
+  composer with the escape key
+
+### `@liveblocks/zustand`
+
+- Add support for Zustand v5
+
+## 2.12.1
+
+### `@liveblocks/react-ui`
+
+- Prevent unsupported attachment previews from loading infinitely.
+- Refactored `Thread` and `Comment` component to be used outside of the
+  `RoomProvider` component.
+
 ## Documentation
 - Better info on [default permissions with access tokens](https://liveblocks.io/docs/authentication/access-token#Default-permissions).
 
 ## Contributors
 
-ctnicholas
+ctnicholas, jrowny, sugardarius, marcbouchenoire, nimeshnayaju
 
 # Week 46 (2024-11-15)
 
