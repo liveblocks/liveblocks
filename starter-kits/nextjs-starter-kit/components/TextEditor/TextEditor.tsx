@@ -1,7 +1,7 @@
 "use client";
 
-import { ClientSideSuspense } from "@liveblocks/react";
-import { useSelf, useThreads } from "@liveblocks/react/suspense";
+import { useSelf } from "@liveblocks/react";
+import { ClientSideSuspense, useThreads } from "@liveblocks/react/suspense";
 import {
   AnchoredThreads,
   FloatingComposer,
@@ -21,6 +21,7 @@ import { Editor, EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorView } from "prosemirror-view";
 import { CommentIcon } from "@/icons";
+import { useInitialDocument } from "@/lib/hooks";
 import { DocumentSpinner } from "@/primitives/Spinner";
 import { useIsMobile } from "@/utils";
 import { CustomTaskItem } from "./CustomTaskItem";
@@ -39,14 +40,17 @@ export function TextEditor() {
 
 // Collaborative text editor with simple rich text and live cursors
 function TiptapEditor() {
-  const liveblocks = useLiveblocksExtension();
+  const initialDocument = useInitialDocument();
+  console.log(initialDocument);
 
-  // Check if user has write access in current room
-  const canWrite = useSelf((me) => me.canWrite);
+  const liveblocks = useLiveblocksExtension({
+    offlineSupport_experimental: true,
+  });
 
   // Set up editor with plugins, and place user info into Yjs awareness and cursors
   const editor = useEditor({
-    editable: canWrite,
+    immediatelyRender: false,
+    editable: false,
     editorProps: {
       attributes: {
         // Add styles to editor element
@@ -143,11 +147,7 @@ function TiptapEditor() {
 
   return (
     <div className={styles.container}>
-      {canWrite ? (
-        <div className={styles.editorHeader}>
-          {editor ? <Toolbar editor={editor} /> : null}
-        </div>
-      ) : null}
+      <DisplayToolbar editor={editor} />
       <div className={styles.editorPanel}>
         {editor ? <SelectionMenu editor={editor} /> : null}
         <div className={styles.editorContainerOffset}>
@@ -155,12 +155,34 @@ function TiptapEditor() {
             <EditorContent editor={editor} />
             <FloatingComposer editor={editor} style={{ width: 350 }} />
             <div className={styles.threads}>
-              <Threads editor={editor} />
+              <ClientSideSuspense fallback={null}>
+                <Threads editor={editor} />
+              </ClientSideSuspense>
             </div>
           </div>
         </div>
       </div>
       {editor ? <WordCount editor={editor} /> : null}
+    </div>
+  );
+}
+
+function DisplayToolbar({ editor }: { editor: Editor | null }) {
+  // Check if user has write access in current room
+  const canWrite = useSelf((me) => me.canWrite) || false;
+  const disableToolbar = !editor || !canWrite;
+
+  // If canWrite changes, sync to Tiptap, as we're defaulting to false in the config
+  if (editor?.isEditable !== canWrite) {
+    editor?.setEditable(canWrite);
+  }
+
+  return (
+    <div
+      className={styles.editorHeader}
+      data-disabled={disableToolbar || undefined}
+    >
+      <Toolbar editor={editor} />
     </div>
   );
 }

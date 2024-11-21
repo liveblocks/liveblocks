@@ -4,7 +4,7 @@ import { Button } from "@/primitives/Button";
 import styles from "./Toolbar.module.css";
 
 type Props = {
-  editor: Editor;
+  editor: Editor | null;
 };
 
 export function ToolbarInline({ editor }: Props) {
@@ -13,9 +13,9 @@ export function ToolbarInline({ editor }: Props) {
       <Button
         variant="subtle"
         className={styles.toolbarButton}
-        onClick={() => editor.chain().focus().toggleBold().run()}
-        disabled={!editor.can().chain().focus().toggleBold().run()}
-        data-active={editor.isActive("bold") ? "is-active" : undefined}
+        onClick={() => editor?.chain().focus().toggleBold().run()}
+        disabled={!editor?.can().chain().focus().toggleBold().run()}
+        data-active={editor?.isActive("bold") ? "is-active" : undefined}
         aria-label="Bold"
       >
         <BoldIcon />
@@ -24,9 +24,9 @@ export function ToolbarInline({ editor }: Props) {
       <Button
         variant="subtle"
         className={styles.toolbarButton}
-        onClick={() => editor.chain().focus().toggleItalic().run()}
-        disabled={!editor.can().chain().focus().toggleItalic().run()}
-        data-active={editor.isActive("italic") ? "is-active" : undefined}
+        onClick={() => editor?.chain().focus().toggleItalic().run()}
+        disabled={!editor?.can().chain().focus().toggleItalic().run()}
+        data-active={editor?.isActive("italic") ? "is-active" : undefined}
         aria-label="Italic"
       >
         <ItalicIcon />
@@ -35,9 +35,9 @@ export function ToolbarInline({ editor }: Props) {
       <Button
         variant="subtle"
         className={styles.toolbarButton}
-        onClick={() => editor.chain().focus().toggleStrike().run()}
-        disabled={!editor.can().chain().focus().toggleStrike().run()}
-        data-active={editor.isActive("strike") ? "is-active" : undefined}
+        onClick={() => editor?.chain().focus().toggleStrike().run()}
+        disabled={!editor?.can().chain().focus().toggleStrike().run()}
+        data-active={editor?.isActive("strike") ? "is-active" : undefined}
         aria-label="Strikethrough"
       >
         <StrikethroughIcon />
