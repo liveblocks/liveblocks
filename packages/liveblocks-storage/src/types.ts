@@ -14,11 +14,15 @@ export type OpId = Brand<string, "OpId">;
 export type Op = readonly [id: OpId, name: string, args: readonly Json[]];
 
 export type Delta = readonly [
-  // XXX Maybe support multiple ops being acknowledged by the same delta?
-  id: OpId, // XXX Should we move OpId out of Delta and into DeltaServerMsg?
+  /** Keys to remove */
   rem: readonly string[],
-  add: readonly (string | Json)[], // Alternated kv pairs, e.g. [key1,value1,key2,value2,etc...]
-]; // Eventually, we'll need to compress this
+
+  /**
+   * Keys to add, stored in a single array of alternating keys and values.
+   * e.g. [key1,value1,key2,value2,etc...]
+   */
+  add: readonly (string | Json)[],
+];
 
 //
 // NOTE
@@ -45,6 +49,12 @@ export type DeltaServerMsg = {
   type: "DeltaServerMsg";
   /** The new server clock after the update. */
   serverClock: number;
+  /**
+   * The original opId that created this mutation. This can be used to
+   * acknowledge a mutation has been processed (so the client won't need to
+   * resend it).
+   */
+  opId: OpId;
   /**
    * The delta for the client to apply. By default, this is a partial delta.
    * The server can also decide to send a full carbon copy (CC) of its state
