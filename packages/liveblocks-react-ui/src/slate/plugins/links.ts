@@ -1,7 +1,13 @@
-import type { Editor } from "slate";
-import { Element, Node, Transforms } from "slate";
+import {
+  Editor,
+  Element as SlateElement,
+  Node as SlateNode,
+  Range as SlateRange,
+  Transforms,
+} from "slate";
 
 import type { ComposerBodyLink } from "../../types";
+import { getMatchRange } from "../utils/get-match-range";
 import { isPlainText, isText } from "../utils/is-text";
 import { filterActiveMarks } from "../utils/marks";
 
@@ -36,39 +42,6 @@ import { filterActiveMarks } from "../utils/marks";
 export const URL_REGEX =
   /((https?:\/\/(www\.)?)|(www\.))[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9().@:%_+~#?&//=]*)/g;
 export const URL_REGEX_GLOBAL = new RegExp(URL_REGEX, "g");
-export const PUNCTUATION_OR_SPACE_REGEX = /[.,;!?\s()]/;
-export const PARENTHESES_REGEX = /[()]/;
-
-/**
- * Get the "logical length" of a URL, taking into account
- * things like opening/closing parentheses
- */
-function getUrlLogicalLength(url: string): number {
-  if (!PARENTHESES_REGEX.test(url)) {
-    return url.length;
-  }
-
-  let logicalLength = 0;
-  let parenthesesCount = 0;
-
-  for (const character of url) {
-    if (character === "(") {
-      parenthesesCount++;
-    }
-
-    if (character === ")") {
-      parenthesesCount--;
-
-      if (parenthesesCount < 0) {
-        break;
-      }
-    }
-
-    logicalLength++;
-  }
-
-  return logicalLength;
-}
 
 export function isUrl(string: string) {
   try {
@@ -80,7 +53,7 @@ export function isUrl(string: string) {
 }
 
 export function withLinks(editor: Editor): Editor {
-  const { isInline, normalizeNode } = editor;
+  const { isInline, normalizeNode, insertText } = editor;
 
   editor.isInline = (element) => {
     return element.type === "link" ? true : isInline(element);
@@ -91,7 +64,7 @@ export function withLinks(editor: Editor): Editor {
 
     // Prevent rich text within links by removing all marks of inner text nodes
     if (isText(node)) {
-      const parentNode = Node.parent(editor, path);
+      const parentNode = SlateNode.parent(editor, path);
 
       if (isComposerBodyLink(parentNode)) {
         if (!isPlainText(node)) {
@@ -115,11 +88,36 @@ export function withLinks(editor: Editor): Editor {
     normalizeNode(entry);
   };
 
-  // TODO: Create links after typing them
+  editor.insertText = (text, options) => {
+    const { selection } = editor;
+
+    // Create links when typing a space following a URL
+    if (selection && SlateRange.isCollapsed(selection) && text === " ") {
+      const before = getMatchRange(editor, selection);
+      const beforeText = before && Editor.string(editor, before);
+
+      if (beforeText && isUrl(beforeText)) {
+        // Delete the plain text URL and replace it with a link element
+        Transforms.delete(editor, { at: before });
+        Transforms.insertFragment(editor, [
+          {
+            type: "link",
+            url: beforeText,
+            children: [{ text: beforeText }],
+          },
+          {
+            text: "",
+          },
+        ]);
+      }
+    }
+
+    insertText(text, options);
+  };
 
   return editor;
 }
 
-export function isComposerBodyLink(node: Node): node is ComposerBodyLink {
-  return Element.isElement(node) && node.type === "link";
+export function isComposerBodyLink(node: SlateNode): node is ComposerBodyLink {
+  return SlateElement.isElement(node) && node.type === "link";
 }
