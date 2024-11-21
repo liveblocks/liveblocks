@@ -88,9 +88,7 @@ test("no matter what happens, storage always synchronizes to be the same", () =>
             // @ts-expect-error too dynamic
             // eslint-disable-next-line @typescript-eslint/no-unsafe-call
             client.mutate[name](...args);
-          } catch {
-            // Ignore
-          }
+          } catch {}
         }
 
         // Allow at least two round-trips of synchronizations
