@@ -1,6 +1,6 @@
 import type { Json } from "~/lib/Json.js";
 
-import type { Delta, OpId } from "./types.js";
+import type { Delta } from "./types.js";
 import { chain, raise } from "./utils.js";
 
 const TOMBSTONE = Symbol();
@@ -129,7 +129,7 @@ export class LayeredCache {
   /**
    * Computes a Delta within the current transaction.
    */
-  delta(opId: OpId): Delta {
+  delta(): Delta {
     const layer = this.#layers[0] ?? raise("No transaction to get delta for");
 
     const deleted: string[] = [];
@@ -146,7 +146,7 @@ export class LayeredCache {
       }
     }
 
-    return [opId, deleted, updated];
+    return [deleted, updated];
   }
 
   commit(): void {

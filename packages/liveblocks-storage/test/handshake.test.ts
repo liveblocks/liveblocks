@@ -98,9 +98,6 @@ test("client catches up with server after every (re)connect", async () => {
   expect(client.data).toEqual({ a: 3 });
   expect(server.data).toEqual({ a: 1 });
 
-  client.debug();
-  server.debug();
-
   // Client reconnects, handshakes, and catches up with server
   await reconnect();
 

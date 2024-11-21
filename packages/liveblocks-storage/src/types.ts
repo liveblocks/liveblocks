@@ -45,6 +45,22 @@ export type FirstServerMsg = {
    */
   serverClock: number;
 };
+export type InitialSyncServerMsg = {
+  type: "InitialSyncServerMsg";
+  /** The current server clock */
+  serverClock: number;
+  /**
+   * The delta for the client to apply. By default, this is a partial delta.
+   * The server can also decide to send a full carbon copy (CC) of its state
+   * instead of a delta.
+   */
+  delta: Delta;
+  /**
+   * By default, a delta describes a partial state update. The server can also
+   * decide to send a full carbon copy (CC) of its state instead of a delta.
+   */
+  fullCC?: true;
+};
 export type DeltaServerMsg = {
   type: "DeltaServerMsg";
   /** The new server clock after the update. */
@@ -62,17 +78,12 @@ export type DeltaServerMsg = {
    */
   delta: Delta;
   /**
-   * Will be set to true if this is the server's response to a "catch up"
-   * request from the client.
-   */
-  isInitialSync?: true;
-  /**
    * By default, a delta describes a partial state update. The server can also
    * decide to send a full carbon copy (CC) of its state instead of a delta.
    */
   fullCC?: true;
 };
-export type ServerMsg = FirstServerMsg | DeltaServerMsg;
+export type ServerMsg = FirstServerMsg | InitialSyncServerMsg | DeltaServerMsg;
 
 export type Mutation = (
   root: LayeredCache,

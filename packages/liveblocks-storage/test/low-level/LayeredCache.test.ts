@@ -1,7 +1,6 @@
 import { expect, test } from "vitest";
 
 import { LayeredCache } from "~/LayeredCache.js";
-import { opId } from "~/utils.js";
 
 import { fmt, size } from "../utils.js";
 
@@ -295,13 +294,10 @@ test("rolling back transaction", () => {
 test("getting delta without a transaction makes no sense and will error", () => {
   const cache = new LayeredCache();
   cache.set("a", 1);
-  const id = opId();
-  expect(() => cache.delta(id)).toThrow("No transaction to get delta for");
+  expect(() => cache.delta()).toThrow("No transaction to get delta for");
 });
 
 test("delta in current transaction", () => {
-  const id = opId();
-
   const cache = new LayeredCache();
   cache.set("a", 1);
 
@@ -313,21 +309,19 @@ test("delta in current transaction", () => {
   cache.set("b", 4);
   cache.set("y", 5);
 
-  expect(Array.from(cache.delta(id))).toEqual([
-    id,
+  expect(Array.from(cache.delta())).toEqual([
     ["c", "d"],
     ["b", 4, "y", 5],
   ]);
 
   cache.startTransaction();
-  expect(Array.from(cache.delta(id))).toEqual([id, [], []]);
+  expect(Array.from(cache.delta())).toEqual([[], []]);
   cache.delete("x");
   cache.set("b", 42);
-  expect(Array.from(cache.delta(id))).toEqual([id, ["x"], ["b", 42]]);
+  expect(Array.from(cache.delta())).toEqual([["x"], ["b", 42]]);
   cache.commit();
 
-  expect(Array.from(cache.delta(id))).toEqual([
-    id,
+  expect(Array.from(cache.delta())).toEqual([
     ["c", "d", "x"],
     ["b", 42, "y", 5],
   ]);
