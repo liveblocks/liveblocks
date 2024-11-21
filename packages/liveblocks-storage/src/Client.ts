@@ -11,18 +11,14 @@ import type {
   Mutations,
   Op,
   OpId,
+  PendingOp,
   ServerMsg,
   Socket,
 } from "./types.js";
-import {
-  iterPairs,
-  nextAlphabetId,
-  generateRandomOpId,
-  raise,
-} from "./utils.js";
+import { iterPairs, nextAlphabetId, raise } from "./utils.js";
 
 type BoundMutations<M extends Record<string, Mutation>> = {
-  [K in keyof M]: ChangeReturnType<OmitFirstArg<M[K]>, [id: OpId, op: Op]>;
+  [K in keyof M]: ChangeReturnType<OmitFirstArg<M[K]>, void>;
 };
 
 type Session = {
@@ -52,11 +48,16 @@ export class Client<M extends Mutations> {
   readonly #cache: LayeredCache;
   readonly mutate: BoundMutations<M>;
 
-  // The pending ops list is a sequence of mutations that need to happen.
-  // We rely on the fact that Map iteration will return elements in
-  // *insertion order*, but it also allows us to efficiently remove acknowledgd
-  // ops.
-  readonly #pendingOps: Map<OpId, Op>;
+  /**
+   * Pending local Ops that have been queued up optimistically.
+   * If they have an `actor` field, it means they have been sent to the server
+   * before. If they don't have an `actor` field yet, it will be populated as
+   * soon as the Op is first sent out.
+   */
+  readonly #pendingOps: PendingOp[];
+
+  /** The client's logical Op clock. */
+  #clientClock: number = 0;
 
   /**
    * The last known server state clock this client has caught up with. Should
@@ -103,7 +104,7 @@ export class Client<M extends Mutations> {
     this.#mutations = mutations;
     this.#cache = new LayeredCache();
     this.#cache.startTransaction();
-    this.#pendingOps = new Map();
+    this.#pendingOps = [];
 
     // Bind all given mutation functions to this instance
     this.#events = {
@@ -119,21 +120,19 @@ export class Client<M extends Mutations> {
     for (const name of Object.keys(mutations)) {
       /* eslint-disable @typescript-eslint/no-unsafe-assignment */
       /* eslint-disable @typescript-eslint/no-explicit-any */
-      this.mutate[name as keyof M] = ((...args: Json[]): [OpId, Op] => {
-        const opId = generateRandomOpId();
+      this.mutate[name as keyof M] = ((...args: Json[]): void => {
         const op: Op = [name, args];
         this.#runMutatorOptimistically(op);
-        this.#pendingOps.set(opId, op);
+        const pendingOp: PendingOp = { clock: this.#clientClock++, op };
+        this.#pendingOps.push(pendingOp);
 
         // XXX Ultimately, we should not directly send this Op into the socket,
         // we'll have to maybe throttle these, and also we should never send
         // these out after we've gotten disconnected, or before we're caught
         // up to the server state. Details for now, though!
         if (this.#session?.caughtUp) {
-          this.#send({ type: "OpClientMsg", opId, op });
+          this.#sendPendingOp(pendingOp);
         }
-
-        return [opId, op];
       }) as any;
       /* eslint-enable @typescript-eslint/no-explicit-any */
       /* eslint-enable @typescript-eslint/no-unsafe-assignment */
@@ -207,9 +206,25 @@ export class Client<M extends Mutations> {
 
     // If we just got caught up, take the moment to (re)send all pending
     // ops to the server.
-    for (const [opId, op] of this.#pendingOps) {
-      this.#send({ type: "OpClientMsg", opId, op });
+    for (const pending of this.#pendingOps) {
+      this.#sendPendingOp(pending);
     }
+  }
+
+  #sendPendingOp(pending: PendingOp): void {
+    const session = this.#session ?? raise("No session");
+
+    // Bound pending Op to session now if it hasn't happened yet
+    if (pending.actor === undefined) {
+      pending.actor = session.actor;
+    }
+
+    // Send it to the server
+    this.#send({
+      type: "OpClientMsg",
+      opId: [pending.actor, pending.clock],
+      op: pending.op,
+    });
   }
 
   #handleServerMsg(
@@ -252,17 +267,22 @@ export class Client<M extends Mutations> {
    * on top of the new state.
    */
   applyDeltas(
-    opIds: readonly OpId[],
+    acks: readonly OpId[],
     deltas: readonly Delta[],
     full: boolean
   ): void {
     // First, let's immediately remove acknowledged pending local Ops
     // Acknowledge the incoming opId by removing it from the pending ops list.
     // If this opId is not found, it's from another client.
-    for (const opId of opIds) {
-      const deleted = this.#pendingOps.delete(opId);
-      if (deleted) {
-        this.#_log?.(`Acknowledged pending op ${opId}`);
+    for (const ackedOp of acks) {
+      const [actor, clock] = ackedOp;
+      // XXX Optimize this loop
+      const idx = this.#pendingOps.findIndex(
+        (pendingOp) => pendingOp.actor === actor && pendingOp.clock === clock
+      );
+      if (idx >= 0) {
+        this.#pendingOps.splice(idx, 1);
+        this.#_log?.(`Acked (${actor},${clock})`);
       }
     }
 
@@ -295,9 +315,9 @@ export class Client<M extends Mutations> {
     cache.startTransaction();
 
     // Apply all local pending ops
-    for (const pendingOp of this.#pendingOps.values()) {
+    for (const pending of this.#pendingOps) {
       try {
-        this.#runMutatorOptimistically(pendingOp);
+        this.#runMutatorOptimistically(pending.op);
       } catch (err) {
         this.#events.onMutationError.notify(err as Error);
       }

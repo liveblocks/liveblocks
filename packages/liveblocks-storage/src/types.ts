@@ -1,7 +1,6 @@
 import type { LayeredCache } from "./LayeredCache.js";
 import type { Observable } from "./lib/EventSource.js";
 import type { Json } from "./lib/Json.js";
-import type { Brand } from "./ts-toolkit.js";
 
 export type Socket<Out, In> = {
   send: (data: Out) => void;
@@ -9,7 +8,10 @@ export type Socket<Out, In> = {
 };
 
 // XXX OpId should really be a Lamport timestamp, ie a [actor, clock] tuple
-export type OpId = Brand<string, "OpId">;
+export type OpId = readonly [
+  actor: number, // The *original* actor, not per se the *current* actor
+  clock: number,
+];
 
 export type Op = readonly [name: string, args: readonly Json[]];
 
@@ -22,7 +24,7 @@ export type PendingOp = {
    * original actor it was sent with, because its identity must remain stable.
    */
   actor?: number;
-  readonly clientClock: number;
+  readonly clock: number;
   readonly op: Op;
 };
 
@@ -45,7 +47,11 @@ export type Delta = readonly [
 //
 
 export type CatchUpClientMsg = { type: "CatchUpClientMsg"; since: number };
-export type OpClientMsg = { type: "OpClientMsg"; opId: OpId; op: Op };
+export type OpClientMsg = {
+  type: "OpClientMsg";
+  opId: OpId;
+  op: Op;
+};
 export type ClientMsg = CatchUpClientMsg | OpClientMsg;
 
 export type FirstServerMsg = {

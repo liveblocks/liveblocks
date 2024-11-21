@@ -1,5 +1,4 @@
 import type { Json } from "./lib/Json.js";
-import type { OpId } from "./types.js";
 
 export function raise(message: string): never {
   throw new Error(message);
@@ -56,8 +55,3 @@ export const nanoid = (t = 21): string =>
                 : "-"),
       ""
     );
-
-// XXX This should become a Lamport timestamp eventually!
-export function generateRandomOpId(): OpId {
-  return nanoid(7) as OpId;
-}
