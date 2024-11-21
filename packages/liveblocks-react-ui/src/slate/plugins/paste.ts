@@ -1,5 +1,5 @@
 import type { Descendant, Editor, Node as SlateNode } from "slate";
-import { Transforms } from "slate";
+import { Range as SlateRange, Transforms } from "slate";
 import { jsx } from "slate-hyperscript";
 
 import type {
@@ -10,6 +10,9 @@ import type {
   ComposerBodyText,
 } from "../../types";
 import { getFiles } from "../../utils/data-transfer";
+import { isPlainText, isText } from "../utils/is-text";
+import { selectionContainsInlines } from "../utils/selection-contains-inlines";
+import { isUrl } from "./links";
 
 // Based on: https://github.com/ianstormtaylor/slate/blob/main/site/examples/paste-html.tsx
 
@@ -189,7 +192,9 @@ export function withPaste(
   const { insertData } = editor;
 
   editor.insertData = (data) => {
-    // Create attachments from files when pasting
+    const { selection } = editor;
+
+    // 1. If there are files, create attachments from them
     if (data.types.includes("Files") && pasteFilesAsAttachments) {
       const files = getFiles(data);
 
@@ -200,11 +205,15 @@ export function withPaste(
       }
     }
 
-    // Deserialize rich text from HTML when pasting (unless there's also Slate data)
-    if (
-      data.types.includes("text/html") &&
-      !data.types.includes("application/x-slate-fragment")
-    ) {
+    // 2. If there's Slate data, immediately let Slate handle it
+    if (data.types.includes("application/x-slate-fragment")) {
+      insertData(data);
+
+      return;
+    }
+
+    // 3. If there's HTML, deserialize rich text from it
+    if (data.types.includes("text/html")) {
       const html = data.getData("text/html");
 
       try {
@@ -233,11 +242,42 @@ export function withPaste(
           return;
         }
       } catch {
-        // Fallback to default `insertData` behavior
+        // Fallback to plain text behavior
       }
     }
 
-    // Default `insertData` behavior
+    const plainText = data.getData("text/plain");
+
+    // 4. If a URL is being pasted on a plain text selection, create a link with the selection
+    if (selection && !SlateRange.isCollapsed(selection)) {
+      // Check if the selection is contained in a single block
+      if (selection.anchor.path[0] === selection.focus.path[0]) {
+        // Check if the pasted text is a valid URL
+        if (isUrl(plainText)) {
+          // Check if the selection only contains (rich and/or plain) text nodes
+          if (!selectionContainsInlines(editor, (node) => !isText(node))) {
+            // If all conditions are met, wrap the selected nodes in a link
+            Transforms.wrapNodes<ComposerBodyLink>(
+              editor,
+              {
+                type: "link",
+                url: plainText,
+                children: [],
+              },
+              {
+                at: selection,
+                split: true,
+                match: isPlainText,
+              }
+            );
+
+            return;
+          }
+        }
+      }
+    }
+
+    // 5. If none of the conditions were met, we let Slate decide what to do
     insertData(data);
   };
 

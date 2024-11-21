@@ -171,6 +171,7 @@ function createComposerEditor({
   createAttachments: (files: File[]) => void;
   pasteFilesAsAttachments?: boolean;
 }) {
+  // The order of plugins is important
   return withNormalize(
     withMentions(
       withLinks(
