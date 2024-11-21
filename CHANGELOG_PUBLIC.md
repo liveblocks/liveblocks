@@ -19,14 +19,14 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ### `@liveblocks/react-tiptap`
 
-- Add new options for `useLiveblocksExtension()` to allow setting
-  initialContent, experimental offline support, and the field name
-- Update floating composer to support onComposerSubmit handler and closing the
-  composer with the escape key
+- Add new options for [`useLiveblocksExtension()`](https://liveblocks.io/docs/api-reference/liveblocks-react-tiptap#useLiveblocksExtension) to allow setting
+  initial content, experimental offline support, and the field name.
+- Update floating composer to support `onComposerSubmit` handler and closing the
+  composer with the escape key.
 
 ### `@liveblocks/zustand`
 
-- Add support for Zustand v5
+- Add support for Zustand v5.
 
 ## 2.12.1
 
@@ -38,6 +38,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Documentation
 - Better info on [default permissions with access tokens](https://liveblocks.io/docs/authentication/access-token#Default-permissions).
+- Updated API reference for [`useLiveblocksExtension`](https://liveblocks.io/docs/api-reference/liveblocks-react-tiptap#useLiveblocksExtension).
 
 ## Contributors
 
