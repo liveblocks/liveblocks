@@ -1,4 +1,4 @@
-import create from "zustand";
+import { create } from "zustand";
 import { createClient } from "@liveblocks/client";
 import { liveblocks } from "@liveblocks/zustand";
 import type { WithLiveblocks } from "@liveblocks/zustand";

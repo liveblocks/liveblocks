@@ -5,7 +5,7 @@ import {
 } from "@liveblocks/zustand";
 import { devtools, persist } from "zustand/middleware";
 
-import create from "zustand";
+import { create } from "zustand";
 
 import { expectError, expectType } from "tsd";
 
