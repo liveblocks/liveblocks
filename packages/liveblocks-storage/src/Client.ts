@@ -38,6 +38,16 @@ type Session = {
   readonly actor: number;
   readonly sessionKey: string;
   readonly socket: Socket<ClientMsg, ServerMsg>;
+  /**
+   * Whether the session is caught up with the server.
+   *
+   * Note that this is a property on the session, not on the client itself! Any
+   * time the client reconnects, it needs to catch up with the server again
+   * first, to ensure no deltas were missed.
+   *
+   * Only once the session is caught up it's okay to start (re)sending Ops to
+   * the server.
+   */
   caughtUp: boolean;
 };
 
@@ -57,11 +67,13 @@ export class Client<M extends Mutations> {
   // ops.
   readonly #pendingOps: Map<OpId, Op>;
 
-  // The last known server state clock this client has caught up with. Should
-  // be persisted together with the local offline state, and pending ops. This
-  // number should be sent to the server in the CatchUpClientMsg to let the
-  // server decide whether to send a full or partial delta.
-  #serverStateClock: number = 0;
+  /**
+   * The last known server state clock this client has caught up with. Should
+   * be persisted together with the local offline state, and pending ops. This
+   * number should be sent to the server in the CatchUpClientMsg to let the
+   * server decide whether to send a full or partial delta.
+   */
+  #lastKnownServerClock: number = 0;
 
   // State in the client changes as follows:
   // - Initial (no socket, no session, not caught up)
@@ -167,12 +179,16 @@ export class Client<M extends Mutations> {
 
         // Client responds with handshake, by optionally sending a initial sync
         // message
-        if (msg.stateClock > this.#serverStateClock) {
-          // Request an initial state fetch now
+        if (msg.serverClock > this.#lastKnownServerClock) {
+          // Only request a catch up with the server if we're behind. Otherwise
+          // we already know the server state.
           this.#send({
             type: "CatchUpClientMsg",
-            since: this.#serverStateClock,
+            since: this.#lastKnownServerClock,
           });
+        } else {
+          // Otherwise we're already caught up, we don't even need a data exchange
+          this.#session.caughtUp = true;
         }
 
         return;
@@ -201,7 +217,12 @@ export class Client<M extends Mutations> {
     if (msg.type === "DeltaServerMsg") {
       this.applyDeltas([msg.delta], msg.full ?? false);
 
-      // TODO Think about this conditional?
+      if (this.#lastKnownServerClock < msg.serverClock) {
+        this.#lastKnownServerClock = msg.serverClock;
+      }
+
+      // TODO Think about this conditional? Shouldn't we be caught up any time
+      // we receive a Delta message, no matter if it's full or partial? I think so!
       if (msg.full) {
         curr.caughtUp = true;
 

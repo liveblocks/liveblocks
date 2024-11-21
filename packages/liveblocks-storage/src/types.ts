@@ -35,7 +35,11 @@ export type FirstServerMsg = {
   type: "FirstServerMsg";
   actor: number;
   sessionKey: string;
-  stateClock: 1; // Add for real soon!
+  /**
+   * The server's current logical clock value (incremented any time the store changes).
+   * Clients can use this value to determine if they're behind and need to catch up.
+   */
+  serverClock: number;
 };
 export type DeltaServerMsg = {
   type: "DeltaServerMsg";
@@ -45,7 +49,8 @@ export type DeltaServerMsg = {
   // storage update `full: true` will be true, which means the delta will
   // contain the full document (not a partial delta)
   full?: boolean;
-  stateClock: 1; // Add this for real soon!
+  /** The new server clock after the update. */
+  serverClock: number;
 };
 export type ServerMsg = FirstServerMsg | DeltaServerMsg;
 
