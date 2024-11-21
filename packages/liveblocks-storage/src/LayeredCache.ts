@@ -8,8 +8,8 @@ const TOMBSTONE = Symbol();
 type TombStone = typeof TOMBSTONE;
 
 export class LayeredCache {
-  #root: Map<string, Json>;
-  #layers: Map<string, Json | TombStone>[];
+  readonly #root: Map<string, Json>;
+  readonly #layers: Map<string, Json | TombStone>[];
 
   constructor() {
     this.#root = new Map();
