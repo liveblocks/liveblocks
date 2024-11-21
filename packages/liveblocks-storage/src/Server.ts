@@ -48,6 +48,7 @@ export class Server {
     if (DEBUG) this.debug();
   }
 
+  /* v8 ignore start */
   debug(): void {
     this.#_log = (...args) =>
       console.log(
@@ -62,6 +63,7 @@ export class Server {
         )
       );
   }
+  /* v8 ignore stop */
 
   connect(socket: Socket<ServerMsg, ClientMsg>): Callback<void> {
     const actor = this.#nextActor++;
