@@ -43,14 +43,24 @@ export type FirstServerMsg = {
 };
 export type DeltaServerMsg = {
   type: "DeltaServerMsg";
-  delta: Delta;
-
-  // Normally a delta will describe a partial change. However, for an initial
-  // storage update `full: true` will be true, which means the delta will
-  // contain the full document (not a partial delta)
-  full?: boolean;
   /** The new server clock after the update. */
   serverClock: number;
+  /**
+   * The delta for the client to apply. By default, this is a partial delta.
+   * The server can also decide to send a full carbon copy (CC) of its state
+   * instead of a delta.
+   */
+  delta: Delta;
+  /**
+   * Will be set to true if this is the server's response to a "catch up"
+   * request from the client.
+   */
+  isInitialSync?: true;
+  /**
+   * By default, a delta describes a partial state update. The server can also
+   * decide to send a full carbon copy (CC) of its state instead of a delta.
+   */
+  fullCC?: true;
 };
 export type ServerMsg = FirstServerMsg | DeltaServerMsg;
 
