@@ -82,7 +82,6 @@ export type EventEmitter<T> = (event: T) => void;
  *
  */
 export function makeEventSource<T>(): EventSource<T> {
-  const _onetimeObservers = new Set<Callback<T>>();
   const _observers = new Set<Callback<T>>();
   let _buffer: T[] | null = null;
 
@@ -108,8 +107,11 @@ export function makeEventSource<T>(): EventSource<T> {
   }
 
   function subscribeOnce(callback: Callback<T>): UnsubscribeCallback {
-    _onetimeObservers.add(callback);
-    return () => _onetimeObservers.delete(callback);
+    const unsub = subscribe((event: T) => {
+      unsub();
+      return callback(event);
+    });
+    return unsub;
   }
 
   async function waitUntil(predicate?: (event: T) => boolean): Promise<T> {
@@ -132,19 +134,15 @@ export function makeEventSource<T>(): EventSource<T> {
   }
 
   function notify(event: T) {
-    _onetimeObservers.forEach((callback) => callback(event));
-    _onetimeObservers.clear();
-
     _observers.forEach((callback) => callback(event));
   }
 
   function _forceClear() {
-    _onetimeObservers.clear();
     _observers.clear();
   }
 
   function count() {
-    return _onetimeObservers.size + _observers.size;
+    return _observers.size;
   }
 
   return {
