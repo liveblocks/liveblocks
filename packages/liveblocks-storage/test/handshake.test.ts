@@ -222,40 +222,78 @@ test("offline mutations are synced with server after reconnect", async () => {
   expect(server.data).toEqual({ a: 1 });
 });
 
-// XXX Look into why this fails!
-test.fails(
-  "mutations should never run more than once on the server",
-  async () => {
-    const { client, server, sync, disconnect, reconnect } =
-      await oneClientSetup({
-        inc,
-      });
-    expect(client.actor).toEqual(1);
+test("mutations should never run more than once on the server (happy path)", async () => {
+  const { client, server, sync, disconnect, reconnect } = await oneClientSetup({
+    inc,
+  });
+  expect(client.actor).toEqual(1);
+  expect(server.clock).toEqual(0);
 
-    client.mutate.inc("a"); // Op1
-    await sync(client); // Deliver Op1 to server, but do NOT send its ack back to client yet
+  client.mutate.inc("a"); // Op1
+  disconnect();
+  client.mutate.inc("a"); // Op2
+  await reconnect();
+  client.mutate.inc("a"); // Op3
+  await reconnect();
 
-    disconnect();
-    client.mutate.inc("a"); // Op2
+  expect(client.data).toEqual({ a: 3 });
+  expect(server.data).toEqual({});
+  expect(server.clock).toEqual(0);
 
-    expect(client.data).toEqual({ a: 2 }); // Client still thinks Op1 and Op2 are pending
-    expect(server.data).toEqual({ a: 1 }); // Even though server has already acked Op1
+  await sync();
 
-    await reconnect(); // Reconnected as actor 2 now + caught up with server
-    expect(client.actor).toEqual(2);
+  expect(client.data).toEqual({ a: 3 });
+  expect(server.data).toEqual({ a: 3 });
+  expect(server.clock).toEqual(3);
 
-    // Client caught up with server count of 1, plus momentarily applies Op1 and
-    // Op2 locally on top of that causing a brief flash of 3
-    expect(client.data).toEqual({ a: 3 });
-    expect(server.data).toEqual({ a: 1 });
+  client.mutate.inc("a"); // Op4
+  await reconnect();
 
-    await sync(client); // Client now resends Op1 + Op2 to server
+  expect(client.actor).toEqual(4);
 
-    expect(client.data).toEqual({ a: 3 });
-    expect(server.data).toEqual({ a: 2 }); // Server should ignore Op1 (already confirmed), and only apply Op2
+  client.mutate.inc("a"); // Op5
+  await sync();
 
-    await sync(server); // Delivers ack of Op1 + Op2 to client
-    expect(client.data).toEqual({ a: 2 });
-    expect(server.data).toEqual({ a: 2 });
-  }
-);
+  expect(client.data).toEqual({ a: 5 });
+  expect(server.data).toEqual({ a: 5 });
+  expect(server.clock).toEqual(5);
+});
+
+test("mutations should never run more than once on the server (unhappy path with short flash of incorrect data)", async () => {
+  const { client, server, sync, disconnect, reconnect } = await oneClientSetup({
+    inc,
+  });
+  expect(client.actor).toEqual(1);
+  expect(server.clock).toEqual(0);
+
+  client.mutate.inc("a"); // Op1
+  await sync(client); // Deliver Op1 to server, but do NOT send its ack back to client yet
+
+  disconnect();
+  client.mutate.inc("a"); // Op2
+
+  expect(client.data).toEqual({ a: 2 }); // Client still thinks Op1 and Op2 are pending
+  expect(server.data).toEqual({ a: 1 }); // Even though server has already acked Op1
+  expect(server.clock).toEqual(1);
+
+  await reconnect(); // Reconnected as actor 2 now + caught up with server
+  expect(client.actor).toEqual(2);
+  expect(server.clock).toEqual(1);
+
+  // Client caught up with server count of 1, plus momentarily applies Op1 and
+  // Op2 locally on top of that causing a brief flash of 3
+  expect(client.data).toEqual({ a: 3 }); // ❗ Even though only 2 incs, it can still briefly show 3
+  expect(server.data).toEqual({ a: 1 });
+  expect(server.clock).toEqual(1);
+
+  await sync(client); // Client now resends Op1 + Op2 to server
+
+  expect(client.data).toEqual({ a: 3 });
+  expect(server.data).toEqual({ a: 2 }); // Server should ignore Op1 (already confirmed), and only apply Op2
+  expect(server.clock).toEqual(2);
+
+  await sync(server); // Delivers ack of Op1 + Op2 to client
+  expect(client.data).toEqual({ a: 2 });
+  expect(server.data).toEqual({ a: 2 });
+  expect(server.clock).toEqual(2);
+});

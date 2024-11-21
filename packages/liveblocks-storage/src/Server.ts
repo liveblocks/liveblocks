@@ -30,6 +30,11 @@ export class Server {
   readonly #mutations: Mutations;
   readonly #cache: LayeredCache;
 
+  // Keep track of the highest clock value we've seen from any (previous)
+  // actor. This should be persisted and reloaded along with the cache data
+  // itself when loading.
+  readonly #clocksPerActor: Map<number, number> = new Map();
+
   #stateClock: number = 0;
   #nextActor = 1;
   readonly #sessions: Set<Session>;
@@ -89,6 +94,27 @@ export class Server {
   #handleClientMsg(curr: Session, msg: ClientMsg): void {
     if (msg.type === "OpClientMsg") {
       const op = msg.op;
+
+      // Only run the Op if we've never seen it before
+      {
+        const [origActor, clock] = msg.opId;
+        const highest = this.#clocksPerActor.get(origActor);
+        if (highest === undefined || highest < clock) {
+          this.#clocksPerActor.set(origActor, clock);
+        } else {
+          // Ignore it. We've already seen this one (or a later one).
+          // Send error/ack back to origin
+          const ack: Delta = [[], []];
+          this.#send(curr, {
+            type: "DeltaServerMsg",
+            serverClock: this.#stateClock,
+            opId: msg.opId,
+            delta: ack,
+          });
+          return;
+        }
+      }
+
       const result = this.#runMutator(op);
 
       if (result.ok) {
@@ -103,6 +129,7 @@ export class Server {
         }
       } else {
         // Send error/ack back to origin
+        // XXX Send back error here!
         const ack: Delta = [[], []];
         this.#send(curr, {
           type: "DeltaServerMsg",
