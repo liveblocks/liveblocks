@@ -29,7 +29,7 @@ describe("nested map", () => {
     nmap.set("x", "y", "z");
 
     // Iterating happens over triplets
-    expect([...nmap]).toEqual([
+    expect(Array.from(nmap)).toEqual([
       ["a", "b", "see"],
       ["a", "p", "q"],
       ["x", "y", "z"],
@@ -62,18 +62,70 @@ describe("nested map", () => {
     expect(nmap.has("y", "x")).toBe(false);
   });
 
+  test("count", () => {
+    const nmap = new NestedMap();
+    nmap.set("a", "b", "c");
+    nmap.set("a", "p", "q");
+    nmap.set("x", "y", "z");
+
+    expect(nmap.count("a")).toBe(2);
+    expect(nmap.count("x")).toBe(1);
+    expect(nmap.count("non-existing")).toBe(0);
+  });
+
+  test("keys", () => {
+    const nmap = new NestedMap();
+    nmap.set("a", "b", "c");
+    nmap.set("a", "p", "q");
+    nmap.set("x", "y", "z");
+
+    expect(Array.from(nmap.keys())).toEqual(["a", "x"]);
+  });
+
   test("delete", () => {
     const nmap = new NestedMap();
     nmap.set("a", "b", "c");
     nmap.set("a", "b", "see");
-    nmap.delete("a", "b");
     nmap.set("a", "p", "q");
+    nmap.delete("a", "b");
     nmap.set("x", "y", "z");
 
     expect(nmap.get("a", "p")).toEqual("q");
     expect(nmap.get("x", "y")).toEqual("z");
     expect(nmap.get("a", "c")).toEqual(undefined);
     expect(nmap.get("y", "x")).toEqual(undefined);
+
+    nmap.delete("x", "y");
+    expect(nmap.get("x", "y")).toEqual(undefined);
+  });
+
+  test("deleteAll", () => {
+    const nmap = new NestedMap();
+    nmap.set("a", "b", "c");
+    nmap.set("a", "b", "see");
+    nmap.set("a", "p", "q");
+    nmap.set("x", "y", "z");
+    expect(nmap.size).toEqual(3);
+    nmap.deleteAll("a");
+    expect(nmap.size).toEqual(1);
+
+    expect(nmap.get("a", "b")).toEqual(undefined);
+    expect(nmap.get("a", "c")).toEqual(undefined);
+    expect(nmap.get("a", "p")).toEqual(undefined);
+    expect(nmap.get("a", "y")).toEqual(undefined);
+    expect(nmap.get("x", "y")).toEqual("z");
+    expect(nmap.get("y", "x")).toEqual(undefined);
+  });
+
+  test("clear", () => {
+    const nmap = new NestedMap();
+    nmap.set("a", "b", "c");
+    nmap.set("a", "b", "see");
+    nmap.set("a", "p", "q");
+    nmap.set("x", "y", "z");
+    expect(nmap.size).toEqual(3);
+    nmap.clear();
+    expect(nmap.size).toEqual(0);
   });
 
   test("size", () => {
@@ -84,6 +136,64 @@ describe("nested map", () => {
     nmap.set("x", "y", "z");
 
     expect(nmap.size).toBe(3);
+  });
+
+  test("keysAt", () => {
+    const nmap = new NestedMap();
+    nmap.set("a", "b", "c");
+    nmap.set("a", "p", "q");
+    nmap.set("a", "b", "see");
+    nmap.set("x", "y", "z");
+
+    expect(Array.from(nmap.keysAt("a"))).toEqual(["b", "p"]);
+    expect(Array.from(nmap.keysAt("x"))).toEqual(["y"]);
+    expect(Array.from(nmap.keysAt("non-existing"))).toEqual([]);
+  });
+
+  test("valuesAt", () => {
+    const nmap = new NestedMap();
+    nmap.set("a", "b", "c");
+    nmap.set("a", "p", "q");
+    nmap.set("a", "b", "see");
+    nmap.set("x", "y", "z");
+
+    expect(Array.from(nmap.valuesAt("a"))).toEqual(["see", "q"]);
+    expect(Array.from(nmap.valuesAt("x"))).toEqual(["z"]);
+    expect(Array.from(nmap.valuesAt("non-existing"))).toEqual([]);
+  });
+
+  test("entriesAt", () => {
+    const nmap = new NestedMap();
+    nmap.set("a", "b", "c");
+    nmap.set("a", "p", "q");
+    nmap.set("a", "b", "see");
+    nmap.set("x", "y", "z");
+
+    expect(Array.from(nmap.entriesAt("a"))).toEqual([
+      ["b", "see"],
+      ["p", "q"],
+    ]);
+    expect(Array.from(nmap.entriesAt("x"))).toEqual([["y", "z"]]);
+    expect(Array.from(nmap.entriesAt("non-existing"))).toEqual([]);
+  });
+
+  test("filterAt", () => {
+    const nmap = new NestedMap();
+    nmap.set("a", "b", "c");
+    nmap.set("a", "p", "q");
+    nmap.set("a", "b", "see");
+    nmap.set("x", "y", "z");
+
+    expect(Array.from(nmap.filterAt("non", "existing"))).toEqual([]);
+    expect(Array.from(nmap.filterAt("a", ["a", "b", "p", "q"]))).toEqual([
+      ["b", "see"],
+      ["p", "q"],
+    ]);
+    expect(Array.from(nmap.filterAt("a", ["q", "p", "a", "b"]))).toEqual([
+      ["p", "q"],
+      ["b", "see"],
+    ]);
+    expect(Array.from(nmap.filterAt("x", "y"))).toEqual([["y", "z"]]);
   });
 });
 
