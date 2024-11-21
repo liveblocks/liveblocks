@@ -1,7 +1,53 @@
 import { expect, test } from "vitest";
 
-import { inc, put } from "./mutations.config.js";
-import { oneClientSetup } from "./utils.js";
+import { fail, inc, put } from "./mutations.config.js";
+import { oneClientSetup, twoClientsSetup } from "./utils.js";
+
+test("server state increases with every change", async () => {
+  const { client, server, sync } = await oneClientSetup({
+    inc,
+  });
+
+  client.mutate.inc("a");
+  expect(server.clock).toEqual(0);
+
+  await sync(client);
+  expect(server.clock).toEqual(1);
+});
+
+test("server state won’t increase when mutation fails", async () => {
+  const { client, server, sync } = await oneClientSetup(
+    { inc, notOnServer: inc, failOnServer: inc },
+    { inc, failOnServer: fail }
+  );
+
+  expect(server.clock).toEqual(0);
+  client.mutate.inc("a");
+  try {
+    client.mutate.notOnServer("a");
+  } catch {}
+  try {
+    client.mutate.failOnServer("a");
+  } catch {}
+  client.mutate.inc("a");
+
+  await sync(client);
+  expect(server.clock).toEqual(2);
+});
+
+test("only reconnecting will not increase the server clock", async () => {
+  const { server, reconnect } = await oneClientSetup({
+    inc,
+  });
+
+  expect(server.clock).toEqual(0);
+
+  await reconnect();
+  expect(server.clock).toEqual(0);
+
+  await reconnect();
+  expect(server.clock).toEqual(0);
+});
 
 test("basic reconnect without data", async () => {
   const { client, server, disconnect, reconnect } = await oneClientSetup({});
@@ -23,6 +69,88 @@ test("basic reconnect without data", async () => {
 
   expect(client.data).toEqual({});
   expect(server.data).toEqual({});
+});
+
+test("client catches up with server after every (re)connect", async () => {
+  const { client, server, sync, disconnect, reconnect } = await oneClientSetup({
+    inc,
+    put,
+  });
+
+  client.mutate.put("a", 1);
+  await sync();
+
+  expect(server.clock).toEqual(1);
+  expect(client.data).toEqual({ a: 1 });
+  expect(server.data).toEqual({ a: 1 });
+
+  client.mutate.inc("a");
+
+  expect(client.data).toEqual({ a: 2 });
+  expect(server.data).toEqual({ a: 1 });
+
+  // Force-disconnects the socket pipes, loosing any messages that were already
+  // travelling on the wire
+  disconnect();
+
+  client.mutate.inc("a");
+  expect(server.clock).toEqual(1);
+  expect(client.data).toEqual({ a: 3 });
+  expect(server.data).toEqual({ a: 1 });
+
+  client.debug();
+  server.debug();
+
+  // Client reconnects, handshakes, and catches up with server
+  await reconnect();
+
+  expect(server.clock).toEqual(1);
+  expect(client.data).toEqual({ a: 3 });
+  expect(server.data).toEqual({ a: 1 });
+
+  // Deliver the client's pending ops
+  await sync();
+
+  expect(client.data).toEqual({ a: 3 });
+  expect(server.data).toEqual({ a: 3 });
+});
+
+test("client catches up with server after every (re)connect with initial server state", async () => {
+  const { client1, client2, server, sync, reconnect, disconnect } =
+    await twoClientsSetup({ inc, put });
+
+  // Set initial state
+  disconnect(client1);
+  client2.mutate.put("a", 2);
+  await sync();
+
+  expect(server.clock).toEqual(1);
+  expect(server.data).toEqual({ a: 2 });
+  expect(client1.data).toEqual({});
+  expect(client2.data).toEqual({ a: 2 });
+
+  // Let client1 reconnect
+  client1.mutate.put("a", 1);
+  await reconnect(client1); // Handshake only, not yet sending the Ops
+
+  expect(server.clock).toEqual(1);
+  expect(server.data).toEqual({ a: 2 });
+  expect(client1.data).toEqual({ a: 1 });
+  expect(client2.data).toEqual({ a: 2 });
+
+  await sync(client1); // Send pending Ops
+
+  expect(server.clock).toEqual(2);
+  expect(server.data).toEqual({ a: 1 });
+  expect(client1.data).toEqual({ a: 1 });
+  expect(client2.data).toEqual({ a: 2 });
+
+  await sync();
+
+  expect(server.clock).toEqual(2);
+  expect(server.data).toEqual({ a: 1 });
+  expect(client1.data).toEqual({ a: 1 });
+  expect(client2.data).toEqual({ a: 1 });
 });
 
 test("reconnect after sync is a no-op", async () => {
@@ -95,48 +223,6 @@ test("offline mutations are synced with server after reconnect", async () => {
 
   expect(client.data).toEqual({ a: 1 });
   expect(server.data).toEqual({ a: 1 });
-});
-
-test("client catches up with server after every (re)connect", async () => {
-  const { client, server, sync, disconnect, reconnect } = await oneClientSetup({
-    inc,
-    put,
-  });
-
-  client.mutate.put("a", 1);
-  await sync();
-
-  expect(client.data).toEqual({ a: 1 });
-  expect(server.data).toEqual({ a: 1 });
-
-  client.mutate.inc("a");
-
-  expect(client.data).toEqual({ a: 2 });
-  expect(server.data).toEqual({ a: 1 });
-
-  // Force-disconnects the socket pipes, loosing any messages that were already
-  // travelling on the wire
-  disconnect();
-
-  expect(client.data).toEqual({ a: 2 });
-  expect(server.data).toEqual({ a: 1 });
-
-  client.mutate.inc("a");
-
-  expect(client.data).toEqual({ a: 3 });
-  expect(server.data).toEqual({ a: 1 });
-
-  // Client caught up with server + sends pending Op
-  await reconnect();
-
-  expect(client.data).toEqual({ a: 3 });
-  expect(server.data).toEqual({ a: 1 });
-
-  // Deliver pending op
-  await sync();
-
-  expect(client.data).toEqual({ a: 3 });
-  expect(server.data).toEqual({ a: 3 });
 });
 
 // XXX Look into why this fails!
