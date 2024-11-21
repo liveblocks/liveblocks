@@ -46,7 +46,7 @@ function TiptapEditor() {
   // Set up editor with plugins, and place user info into Yjs awareness and cursors
   const editor = useEditor({
     immediatelyRender: false,
-    // Start read-only, enable in `<DisplayToolbar />` after `canWrite` is loaded
+    // Start read-only, updated after `canWrite` is loaded
     editable: false,
     editorProps: {
       attributes: {
@@ -144,9 +144,23 @@ function TiptapEditor() {
     ],
   });
 
+  // Check if user has write access in current room
+  const canWrite = useSelf((me) => me.canWrite) || false;
+  const disableToolbar = !editor || !canWrite;
+
+  // If canWrite changes, sync to Tiptap, as we're defaulting to false in the config
+  if (editor?.isEditable !== canWrite) {
+    editor?.setEditable(canWrite);
+  }
+
   return (
     <div className={styles.container}>
-      <DisplayToolbar editor={editor} />
+      <div
+        className={styles.editorHeader}
+        data-disabled={disableToolbar || undefined}
+      >
+        <Toolbar editor={editor} />
+      </div>
       <div className={styles.editorPanel}>
         {editor ? <SelectionMenu editor={editor} /> : null}
         <div className={styles.editorContainerOffset}>
@@ -162,26 +176,6 @@ function TiptapEditor() {
         </div>
       </div>
       {editor ? <WordCount editor={editor} /> : null}
-    </div>
-  );
-}
-
-function DisplayToolbar({ editor }: { editor: Editor | null }) {
-  // Check if user has write access in current room
-  const canWrite = useSelf((me) => me.canWrite) || false;
-  const disableToolbar = !editor || !canWrite;
-
-  // If canWrite changes, sync to Tiptap, as we're defaulting to false in the config
-  if (editor?.isEditable !== canWrite) {
-    editor?.setEditable(canWrite);
-  }
-
-  return (
-    <div
-      className={styles.editorHeader}
-      data-disabled={disableToolbar || undefined}
-    >
-      <Toolbar editor={editor} />
     </div>
   );
 }
