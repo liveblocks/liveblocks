@@ -8,6 +8,7 @@ import {
 
 import type { ComposerBodyLink } from "../../types";
 import { getMatchRange } from "../utils/get-match-range";
+import { getSelectionInline } from "../utils/get-selection-node";
 import { isPlainText, isText } from "../utils/is-text";
 import { filterActiveMarks } from "../utils/marks";
 
@@ -95,8 +96,14 @@ export function withLinks(editor: Editor): Editor {
     if (selection && SlateRange.isCollapsed(selection) && text === " ") {
       const before = getMatchRange(editor, selection);
       const beforeText = before && Editor.string(editor, before);
+      const selectionInline = getSelectionInline(editor);
 
-      if (beforeText && isUrl(beforeText)) {
+      // Check if the text before the space is a URL and not already a link
+      if (
+        beforeText &&
+        isUrl(beforeText) &&
+        (selectionInline ? !isComposerBodyLink(selectionInline) : true)
+      ) {
         // Delete the plain text URL and replace it with a link element
         Transforms.delete(editor, { at: before });
         Transforms.insertFragment(editor, [
