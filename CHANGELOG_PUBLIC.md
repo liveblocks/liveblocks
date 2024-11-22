@@ -13,6 +13,42 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
 
+# Week 47 (2024-11-22)
+
+## v2.12.2
+
+### `@liveblocks/react-tiptap`
+
+- Add new options for [`useLiveblocksExtension`](https://liveblocks.io/docs/api-reference/liveblocks-react-tiptap#useLiveblocksExtension) to allow setting
+  initial content, experimental offline support, and the field name.
+- Update floating composer to support `onComposerSubmit` handler and closing the
+  composer with the escape key.
+
+### `@liveblocks/zustand`
+
+- Add support for Zustand v5.
+
+## v2.12.1
+
+### `@liveblocks/react-ui`
+
+- Prevent unsupported attachment previews from loading infinitely.
+- Refactored `Thread` and `Comment` component to be used outside of the
+  `RoomProvider` component.
+
+## Documentation
+
+- Better info on [default permissions with access tokens](https://liveblocks.io/docs/authentication/access-token#Default-permissions).
+- Updated API reference for [`useLiveblocksExtension`](https://liveblocks.io/docs/api-reference/liveblocks-react-tiptap#useLiveblocksExtension).
+
+## Examples
+
+- Added offline support for Tiptap text documents in the [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit).
+
+## Contributors
+
+ctnicholas, jrowny, sugardarius, marcbouchenoire, nimeshnayaju
+
 # Week 46 (2024-11-15)
 
 ## v2.12.0
