@@ -21,7 +21,7 @@ export function fmt(
 }
 
 export function size(cache: LayeredCache): number {
-  return Array.from(cache.keys()).length;
+  return cache.count();
 }
 
 async function connectClientAndServer(

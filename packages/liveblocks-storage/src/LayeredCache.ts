@@ -1,18 +1,21 @@
 import type { Json } from "~/lib/Json.js";
+import { NestedMap } from "~/lib/NestedMap.js";
 
-import type { Delta } from "./types.js";
+import type { Delta, NodeId } from "./types.js";
 import { chain, raise } from "./utils.js";
 
 const TOMBSTONE = Symbol();
 
 type TombStone = typeof TOMBSTONE;
 
+const ROOT = "root" as NodeId;
+
 export class LayeredCache {
-  readonly #root: Map<string, Json>;
-  readonly #layers: Map<string, Json | TombStone>[];
+  readonly #root: NestedMap<NodeId, string, Json>;
+  readonly #layers: NestedMap<NodeId, string, Json | TombStone>[];
 
   constructor() {
-    this.#root = new Map();
+    this.#root = new NestedMap();
     this.#layers = [];
   }
 
@@ -29,18 +32,35 @@ export class LayeredCache {
   // "Multi-layer" cache idea
   // ----------------------------------------------------
 
+  /**
+   * Returns the number of items in the cache.
+   * Unlike Map.size, LayeredCache.count() is a slow operation that requires
+   * iterating over every entry.
+   * XXX Make faster!
+   */
+  count(): number {
+    let total = 0;
+    for (const _ of this) {
+      ++total;
+    }
+    return total;
+  }
+
   has(key: string): boolean {
     for (const layer of this.#layers) {
-      const value = layer.get(key);
+      // XXX Lift "root" out
+      const value = layer.get(ROOT, key);
       if (value === undefined) continue;
       return value !== TOMBSTONE;
     }
-    return this.#root.has(key);
+    // XXX Lift "root" out
+    return this.#root.has(ROOT, key);
   }
 
   get(key: string): Json | undefined {
     for (const layer of this.#layers) {
-      const value = layer.get(key);
+      // XXX Lift "root" out
+      const value = layer.get(ROOT, key);
       if (value === undefined) continue;
       if (value === TOMBSTONE) {
         return undefined;
@@ -48,7 +68,8 @@ export class LayeredCache {
         return value;
       }
     }
-    return this.#root.get(key);
+    // XXX Lift "root" out
+    return this.#root.get(ROOT, key);
   }
 
   set(key: string, value: Json): void {
@@ -57,21 +78,25 @@ export class LayeredCache {
     }
 
     const layer = this.#layers[0] ?? this.#root;
-    layer.set(key, value);
+    // XXX Lift "root" out
+    layer.set(ROOT, key, value);
   }
 
   delete(key: string): void {
     const layer = this.#layers[0];
     if (layer) {
-      layer.set(key, TOMBSTONE);
+      // XXX Lift "root" out
+      layer.set(ROOT, key, TOMBSTONE);
     } else {
-      this.#root.delete(key);
+      // XXX Lift "root" out
+      this.#root.delete(ROOT, key);
     }
   }
 
   *keys(): IterableIterator<string> {
     if (this.#layers.length === 0) {
-      yield* this.#root.keys();
+      // XXX Lift "root" out
+      yield* this.#root.keysAt(ROOT);
     } else {
       for (const [key] of this.entries()) {
         yield key;
@@ -81,7 +106,7 @@ export class LayeredCache {
 
   *values(): IterableIterator<Json> {
     if (this.#layers.length === 0) {
-      yield* this.#root.values();
+      yield* this.#root.valuesAt(ROOT);
     } else {
       for (const [, value] of this.entries()) {
         yield value;
@@ -91,10 +116,15 @@ export class LayeredCache {
 
   *entries(): IterableIterator<[key: string, value: Json]> {
     if (this.#layers.length === 0) {
-      yield* this.#root.entries();
+      // XXX Lift "root" out + actually return ALL entries! Not just the root ones
+      yield* this.#root.entriesAt(ROOT);
     } else {
       const keys = new Set(
-        chain(this.#root.keys(), ...this.#layers.map((layer) => layer.keys()))
+        chain(
+          // XXX Lift "root" out + actually return ALL entries! Not just the root ones
+          this.#root.keysAt(ROOT),
+          ...this.#layers.map((layer) => layer.keysAt(ROOT))
+        )
       );
       for (const key of keys) {
         const value = this.get(key);
@@ -123,7 +153,7 @@ export class LayeredCache {
   }
 
   startTransaction(): void {
-    this.#layers.unshift(new Map());
+    this.#layers.unshift(new NestedMap());
   }
 
   /**
@@ -132,17 +162,18 @@ export class LayeredCache {
   delta(): Delta {
     const layer = this.#layers[0] ?? raise("No transaction to get delta for");
 
-    const deleted: string[] = [];
+    const deleted: Record<NodeId, string[]> = {};
     // For efficient packing, we'll codify all k,v pairs in a single array
     // [key1, value1, key2, value2, key3, value3, ...]
-    const updated: (string | Json)[] = [];
+    const updated: Record<NodeId, Record<string, Json>> = {};
 
-    for (const [key, value] of layer) {
+    for (const [nodeId, key, value] of layer) {
       if (value === TOMBSTONE) {
-        deleted.push(key);
+        if (!deleted[nodeId]) deleted[nodeId] = [];
+        deleted[nodeId]!.push(key);
       } else {
-        updated.push(key);
-        updated.push(value);
+        if (!updated[nodeId]) updated[nodeId] = {};
+        updated[nodeId]![key] = value;
       }
     }
 
@@ -151,7 +182,7 @@ export class LayeredCache {
 
   commit(): void {
     const layer = this.#layers.shift() ?? raise("No transaction to commit");
-    for (const [key, value] of layer) {
+    for (const [_nodeId, key, value] of layer) {
       if (value === TOMBSTONE) {
         this.delete(key);
       } else {
