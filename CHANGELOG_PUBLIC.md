@@ -37,10 +37,12 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
   `RoomProvider` component.
 
 ## Documentation
+
 - Better info on [default permissions with access tokens](https://liveblocks.io/docs/authentication/access-token#Default-permissions).
 - Updated API reference for [`useLiveblocksExtension`](https://liveblocks.io/docs/api-reference/liveblocks-react-tiptap#useLiveblocksExtension).
 
 ## Examples
+
 - Added offline support for Tiptap text documents in the [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit).
 
 ## Contributors
