@@ -17,27 +17,27 @@ test("set string", () => {
   const client = new Client({ put });
   expect(client.data).toEqual({});
 
-  client.mutate.put("A", "A");
+  client.mutate.put("a", "a");
 
-  expect(client.data).toEqual({ A: "A" });
+  expect(client.data).toEqual({ a: "a" });
 });
 
 test("set number", () => {
   const client = new Client({ put });
   expect(client.data).toEqual({});
 
-  client.mutate.put("A", 0);
+  client.mutate.put("a", 0);
 
-  expect(client.data).toEqual({ A: 0 });
+  expect(client.data).toEqual({ a: 0 });
 });
 
 test("set object", () => {
   const client = new Client({ put });
   expect(client.data).toEqual({});
 
-  client.mutate.put("A", { foo: "bar" });
+  client.mutate.put("a", { foo: "bar" });
 
-  expect(client.data).toEqual({ A: { foo: "bar" } });
+  expect(client.data).toEqual({ a: { foo: "bar" } });
 });
 
 // test("set LiveObject", () => {
@@ -131,13 +131,13 @@ test("del", () => {
   const client = new Client({ put, del });
   expect(client.data).toEqual({});
 
-  client.mutate.put("A", "A");
-  expect(client.data).toEqual({ A: "A" });
+  client.mutate.put("a", "a");
+  expect(client.data).toEqual({ a: "a" });
 
-  client.mutate.del("A");
+  client.mutate.del("a");
   expect(client.data).toEqual({});
 
-  client.mutate.del("A"); // Deleting again is a no-op
+  client.mutate.del("a"); // Deleting again is a no-op
   expect(client.data).toEqual({});
 });
 
@@ -154,18 +154,18 @@ test("del", () => {
 //   clientA.disconnect();
 //   clientB.disconnect();
 //
-//   clientA.mutate.set("A", "A");
-//   clientB.mutate.set("A", "B");
+//   clientA.mutate.set("a", "a");
+//   clientB.mutate.set("a", "b");
 //
-//   expect(clientA.toImmutable()).toStrictEqual({ A: "A" });
-//   expect(clientB.toImmutable()).toStrictEqual({ A: "B" });
+//   expect(clientA.toImmutable()).toStrictEqual({ a: "a" });
+//   expect(clientB.toImmutable()).toStrictEqual({ a: "b" });
 //   expect(server.toImmutable()).toStrictEqual({});
 //
 //   clientA.reconnect();
 //
-//   expect(clientA.toImmutable()).toStrictEqual({ A: "A" });
-//   expect(clientB.toImmutable()).toStrictEqual({ A: "B" });
-//   expect(server.toImmutable()).toStrictEqual({ A: "A" });
+//   expect(clientA.toImmutable()).toStrictEqual({ a: "a" });
+//   expect(clientB.toImmutable()).toStrictEqual({ a: "b" });
+//   expect(server.toImmutable()).toStrictEqual({ a: "a" });
 //
 //   clientB.reconnect();
 //
@@ -414,70 +414,70 @@ test.skip("onChange notifications", async () => {
   expect(client2.data).toEqual({});
 });
 
-// test("nested LiveObject", () => {
-//   const client = new ClientStorage({
-//     mutations: {
-//       setLiveObject,
-//     },
-//     storage: {},
-//     actor: 0,
-//     onLocalMutation: () => {},
-//   });
-//
-//   client.mutate.setLiveObject("child", "foo", "bar");
-//
-//   expect(client.toImmutable()).toStrictEqual({
-//     child: {
-//       foo: "bar",
-//     },
-//   });
-// });
+/// test("nested LiveObject", () => {
+///   const client = new ClientStorage({
+///     mutations: {
+///       setLiveObject,
+///     },
+///     storage: {},
+///     actor: 0,
+///     onLocalMutation: () => {},
+///   });
+///
+///   client.mutate.setLiveObject("child", "foo", "bar");
+///
+///   expect(client.toImmutable()).toStrictEqual({
+///     child: {
+///       foo: "bar",
+///     },
+///   });
+/// });
 
-// // Testing internals until we implement LiveStructure reference recycling
-// test("mutation failure should clear nodes created during transaction", () => {
-//   const client = new Client({
-//     mutations: {
-//       raiseAfterSetLiveObject,
-//     },
-//     storage: {},
-//     actor: 0,
-//     onLocalMutation: () => {},
-//   });
-//
-//   client.mutate.raiseAfterSetLiveObject("child", "foo", "bar");
-//
-//   expect(client.toImmutable()).toStrictEqual({});
-//
-//   client.__internals.getTransactionNodesCount();
-// });
+/// // Testing internals until we implement LiveStructure reference recycling
+/// test("mutation failure should clear nodes created during transaction", () => {
+///   const client = new Client({
+///     mutations: {
+///       raiseAfterSetLiveObject,
+///     },
+///     storage: {},
+///     actor: 0,
+///     onLocalMutation: () => {},
+///   });
+///
+///   client.mutate.raiseAfterSetLiveObject("child", "foo", "bar");
+///
+///   expect(client.toImmutable()).toStrictEqual({});
+///
+///   client.__internals.getTransactionNodesCount();
+/// });
 
-// test.skip("set on root update", () => {
-//   const updates: StorageUpdate[][] = [];
-//
-//   const client = new ClientStorage({
-//     mutations: {
-//       set,
-//     },
-//     storage: {},
-//     actor: 0,
-//     onLocalMutation: () => {},
-//     onStorageChange: (storageUpdate) => updates.push(storageUpdate),
-//   });
-//
-//   client.mutate.set("A", 1);
-//
-//   expect(client.toImmutable()).toStrictEqual({ A: 1 });
-//   expect(updates).toEqual([
-//     [
-//       {
-//         type: "LiveObject",
-//         node: client.root,
-//         updates: {
-//           A: {
-//             type: "update",
-//           },
-//         },
-//       },
-//     ],
-//   ]);
-// });
+/// test.skip("set on root update", () => {
+///   const updates: StorageUpdate[][] = [];
+///
+///   const client = new ClientStorage({
+///     mutations: {
+///       set,
+///     },
+///     storage: {},
+///     actor: 0,
+///     onLocalMutation: () => {},
+///     onStorageChange: (storageUpdate) => updates.push(storageUpdate),
+///   });
+///
+///   client.mutate.set("A", 1);
+///
+///   expect(client.toImmutable()).toStrictEqual({ A: 1 });
+///   expect(updates).toEqual([
+///     [
+///       {
+///         type: "LiveObject",
+///         node: client.root,
+///         updates: {
+///           A: {
+///             type: "update",
+///           },
+///         },
+///       },
+///     ],
+///   ]);
+/// });

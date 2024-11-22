@@ -79,7 +79,11 @@ describe("nested map", () => {
     nmap.set("a", "p", "q");
     nmap.set("x", "y", "z");
 
-    expect(Array.from(nmap.keys())).toEqual(["a", "x"]);
+    expect(Array.from(nmap.keys())).toEqual([
+      ["a", "b"],
+      ["a", "p"],
+      ["x", "y"],
+    ]);
   });
 
   test("delete", () => {

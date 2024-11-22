@@ -1,11 +1,14 @@
 import type { LayeredCache } from "./LayeredCache.js";
 import type { Observable } from "./lib/EventSource.js";
 import type { Json } from "./lib/Json.js";
+import type { Brand } from "./lib/ts-toolkit.js";
 
 export type Socket<Out, In> = {
   send: (data: Out) => void;
   recv: Observable<In>;
 };
+
+export type NodeId = Brand<string, "NodeId">;
 
 /**
  * A unique Op ID for this Op. Lamport clock consisting of the original actor
@@ -36,13 +39,17 @@ export type PendingOp = {
 
 export type Delta = readonly [
   /** Keys to remove */
-  rem: readonly string[],
+  rem: { readonly [nodeId: NodeId]: readonly string[] },
 
   /**
    * Keys to add, stored in a single array of alternating keys and values.
    * e.g. [key1,value1,key2,value2,etc...]
    */
-  add: readonly (string | Json)[],
+  add: {
+    readonly [nodeId: NodeId]: {
+      readonly [key: string]: Json;
+    };
+  },
 ];
 
 //

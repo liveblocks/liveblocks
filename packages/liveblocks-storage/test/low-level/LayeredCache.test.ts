@@ -310,20 +310,23 @@ test("delta in current transaction", () => {
   cache.set("y", 5);
 
   expect(Array.from(cache.delta())).toEqual([
-    ["c", "d"],
-    ["b", 4, "y", 5],
+    { root: ["c", "d"] },
+    { root: { b: 4, y: 5 } },
   ]);
 
   cache.startTransaction();
-  expect(Array.from(cache.delta())).toEqual([[], []]);
+  expect(Array.from(cache.delta())).toEqual([{}, {}]);
   cache.delete("x");
   cache.set("b", 42);
-  expect(Array.from(cache.delta())).toEqual([["x"], ["b", 42]]);
+  expect(Array.from(cache.delta())).toEqual([
+    { root: ["x"] },
+    { root: { b: 42 } },
+  ]);
   cache.commit();
 
   expect(Array.from(cache.delta())).toEqual([
-    ["c", "d", "x"],
-    ["b", 42, "y", 5],
+    { root: ["c", "d", "x"] },
+    { root: { b: 42, y: 5 } },
   ]);
 });
 

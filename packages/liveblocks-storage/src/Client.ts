@@ -1,3 +1,5 @@
+import { assert } from "vitest";
+
 import { makeEventSource } from "~/lib/EventSource.js";
 import type { Json } from "~/lib/Json.js";
 import type { ChangeReturnType, OmitFirstArg } from "~/lib/ts-toolkit.js";
@@ -16,7 +18,7 @@ import type {
   Socket,
   WelcomeServerMsg,
 } from "./types.js";
-import { iterPairs, nextAlphabetId, raise } from "./utils.js";
+import { nextAlphabetId, raise } from "./utils.js";
 
 type BoundMutations<M extends Record<string, Mutation>> = {
   [K in keyof M]: ChangeReturnType<OmitFirstArg<M[K]>, void>;
@@ -306,11 +308,23 @@ export class Client<M extends Mutations> {
       // Apply authoritative delta
       const deletions = delta[0];
       const updates = delta[1];
-      for (const key of deletions) {
-        cache.delete(key);
+      for (const [nodeId, keys] of Object.entries(deletions)) {
+        assert(
+          nodeId === "root",
+          "ONLY ROOT SUPPORTED FOR NOW, but got: " + nodeId
+        );
+        for (const key of keys) {
+          cache.delete(key);
+        }
       }
-      for (const [key, value] of iterPairs(updates)) {
-        cache.set(key, value);
+      for (const [nodeId, updates2] of Object.entries(updates)) {
+        assert(
+          nodeId === "root",
+          "ONLY ROOT SUPPORTED FOR NOW, but got: " + nodeId
+        );
+        for (const [key, value] of Object.entries(updates2)) {
+          cache.set(key, value);
+        }
       }
     }
 

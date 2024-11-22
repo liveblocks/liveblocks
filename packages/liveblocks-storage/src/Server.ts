@@ -5,6 +5,7 @@ import type {
   ClientMsg,
   Delta,
   Mutations,
+  NodeId,
   Op,
   ServerMsg,
   Socket,
@@ -107,7 +108,7 @@ export class Server {
           } else {
             // Ignore it. We've already seen this one (or a later one).
             // Send error/ack back to origin
-            const ack: Delta = [[], []];
+            const ack: Delta = [{}, {}];
             this.#send(curr, {
               type: "DeltaServerMsg",
               serverClock: this.#stateClock,
@@ -133,7 +134,7 @@ export class Server {
         } else {
           // Send error/ack back to origin
           // XXX Send back error here!
-          const ack: Delta = [[], []];
+          const ack: Delta = [{}, {}];
           this.#send(curr, {
             type: "DeltaServerMsg",
             serverClock: this.#stateClock,
@@ -145,19 +146,19 @@ export class Server {
       }
 
       case "CatchUpClientMsg": {
-        const kvstream: (string | Json)[] = [];
+        const kvstream: Record<string, Json> = {};
 
         for (const [key, value] of this.#cache) {
           if (value !== undefined) {
-            kvstream.push(key);
-            kvstream.push(value);
+            kvstream[key] = value;
           }
         }
 
         this.#send(curr, {
           type: "InitialSyncServerMsg",
           serverClock: this.#stateClock,
-          delta: [[], kvstream],
+          // XXX Lift "root" out
+          delta: [{}, { ["root" as NodeId]: kvstream }],
           fullCC: true,
         });
         return;
