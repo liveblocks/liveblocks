@@ -213,6 +213,8 @@ function ComposerEditorLinkWrapper({
   element,
   children,
 }: ComposerEditorLinkWrapperProps) {
+  const { isFocused } = useComposer();
+  const isSelected = useSelected();
   const href = useMemo(
     () => toAbsoluteUrl(element.url) ?? element.url,
     [element.url]
@@ -220,7 +222,9 @@ function ComposerEditorLinkWrapper({
 
   return (
     <span {...attributes}>
-      <Link href={href}>{children}</Link>
+      <Link href={href} isSelected={isFocused && isSelected}>
+        {children}
+      </Link>
     </span>
   );
 }

@@ -36,6 +36,11 @@ export interface ComposerEditorMentionProps {
 
 export interface ComposerEditorLinkProps {
   /**
+   * Whether the mention is selected.
+   */
+  isSelected: boolean;
+
+  /**
    * The link's absolute URL.
    *
    * @example "https://example.com"
