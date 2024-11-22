@@ -47,6 +47,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
+    "@types/better-sqlite3": "^7.6.12",
     "@types/ws": "^8.5.10",
     "@vitest/coverage-v8": "^2.1.4",
     "vite-tsconfig-paths": "^5.1.0",
@@ -57,5 +58,8 @@
     "url": "https://github.com/liveblocks/liveblocks.git",
     "directory": "packages/liveblocks-storage"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "dependencies": {
+    "better-sqlite3": "^11.5.0"
+  }
 }
