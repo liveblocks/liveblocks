@@ -177,6 +177,11 @@ export type ComposerProps<M extends BaseMetadata = DM> = Omit<
     showAttachments?: boolean;
 
     /**
+     * Whether to show formatting controls (e.g. a floating toolbar with formatting toggles when selecting text)
+     */
+    showFormattingControls?: boolean;
+
+    /**
      * Whether the composer is disabled.
      */
     disabled?: ComposerFormProps["disabled"];
@@ -212,6 +217,7 @@ interface ComposerEditorContainerProps
     ComposerProps,
     | "defaultValue"
     | "showAttachments"
+    | "showFormattingControls"
     | "showAttribution"
     | "overrides"
     | "actions"
@@ -538,15 +544,15 @@ function ComposerAttachments({
   );
 }
 
-const editorComponents: ComposerEditorComponents = {
+const editorRequiredComponents: ComposerEditorComponents = {
   Mention: ComposerMention,
   MentionSuggestions: ComposerMentionSuggestions,
-  FloatingToolbar: ComposerFloatingToolbar,
   Link: ComposerLink,
 };
 
 function ComposerEditorContainer({
   showAttachments = true,
+  showFormattingControls = true,
   showAttribution,
   defaultValue,
   isCollapsed,
@@ -562,6 +568,14 @@ function ComposerEditorContainer({
   const { isEmpty } = useComposer();
   const { hasMaxAttachments } = useComposerAttachmentsContext();
   const $ = useOverrides(overrides);
+  const components = useMemo(() => {
+    return {
+      ...editorRequiredComponents,
+      FloatingToolbar: showFormattingControls
+        ? ComposerFloatingToolbar
+        : undefined,
+    };
+  }, [showFormattingControls]);
 
   const [isDraggingOver, dropAreaProps] = useComposerAttachmentsDropArea({
     disabled: disabled || hasMaxAttachments,
@@ -587,7 +601,7 @@ function ComposerEditorContainer({
         placeholder={$.COMPOSER_PLACEHOLDER}
         defaultValue={defaultValue}
         autoFocus={autoFocus}
-        components={editorComponents}
+        components={components}
         disabled={disabled}
         dir={$.dir}
       />
@@ -678,6 +692,7 @@ export const Composer = forwardRef(
       autoFocus,
       disabled,
       showAttachments = true,
+      showFormattingControls = true,
       showAttribution,
       roomId: _roomId,
       ...props
@@ -853,6 +868,7 @@ export const Composer = forwardRef(
             isCollapsed={isCollapsed}
             showAttachments={showAttachments}
             showAttribution={showAttribution}
+            showFormattingControls={showFormattingControls}
             hasResolveMentionSuggestions={hasResolveMentionSuggestions}
             onEmptyChange={setEmptyRef}
             onEmojiPickerOpenChange={setEmojiPickerOpenRef}

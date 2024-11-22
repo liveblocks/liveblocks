@@ -104,6 +104,13 @@ about this change in our
     Whether to show attachments.
   </PropertiesListItem>
   <PropertiesListItem
+    name="showComposerFormattingControls"
+    type="boolean"
+    defaultValue="true"
+  >
+    Whether to show the composer's formattng controls.
+  </PropertiesListItem>
+  <PropertiesListItem
     name="showResolveAction"
     type="boolean"
     defaultValue="true"
@@ -351,6 +358,9 @@ Learn more about mutation hooks under
   <PropertiesListItem name="defaultValue" type="CommentBody">
     The composer’s initial value.
   </PropertiesListItem>
+  <PropertiesListItem name="defaultAttachments" type="CommentAttachment[]">
+    The composer's initial attachments.
+  </PropertiesListItem>
   <PropertiesListItem name="collapsed" type="boolean">
     Whether the composer is collapsed. Setting a value will make the composer
     controlled.
@@ -361,6 +371,17 @@ Learn more about mutation hooks under
     detailedType="(collapsed: boolean) => void"
   >
     The event handler called when the collapsed state of the composer changes.
+  </PropertiesListItem>
+  <PropertiesListItem name="showAttachments" type="boolean" defaultValue="true">
+    Whether to show and allow adding attachments.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="showFormattingControls"
+    type="boolean"
+    defaultValue="true"
+  >
+    Whether to show formatting controls (e.g. a floating toolbar with formatting
+    toggles when selecting text)
   </PropertiesListItem>
   <PropertiesListItem name="defaultCollapsed" type="boolean">
     Whether the composer is initially collapsed. Setting a value will make the
@@ -470,6 +491,16 @@ function Component() {
   </PropertiesListItem>
   <PropertiesListItem name="showReactions" type="boolean" defaultValue="true">
     Whether to show reactions.
+  </PropertiesListItem>
+  <PropertiesListItem name="showAttachments" type="boolean" defaultValue="true">
+    Whether to show attachments.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="showComposerFormattingControls"
+    type="boolean"
+    defaultValue="true"
+  >
+    Whether to show the composer's formattng controls when editing the comment.
   </PropertiesListItem>
   <PropertiesListItem name="indentContent" type="boolean" defaultValue="true">
     Whether to indent the comment’s content.

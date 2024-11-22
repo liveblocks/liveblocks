@@ -62,6 +62,7 @@ import { download } from "../utils/download";
 import { useRefs } from "../utils/use-refs";
 import { useVisibleCallback } from "../utils/use-visible";
 import { useWindowFocus } from "../utils/use-window-focus";
+import type { ComposerProps } from "./Composer";
 import { Composer } from "./Composer";
 import {
   FileAttachment,
@@ -109,6 +110,11 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
    * Whether to show attachments.
    */
   showAttachments?: boolean;
+
+  /**
+   * Whether to show the composer's formattng controls when editing the comment.
+   */
+  showComposerFormattingControls?: ComposerProps["showFormattingControls"];
 
   /**
    * Whether to indent the comment's content.
@@ -516,6 +522,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
       showActions = "hover",
       showReactions = true,
       showAttachments = true,
+      showComposerFormattingControls = true,
       onAuthorClick,
       onMentionClick,
       onAttachmentClick,
@@ -785,6 +792,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                 autoFocus
                 showAttribution={false}
                 showAttachments={showAttachments}
+                showFormattingControls={showComposerFormattingControls}
                 actions={
                   <>
                     <Tooltip
