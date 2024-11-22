@@ -28,7 +28,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 - Add support for Zustand v5.
 
-## 2.12.1
+## v2.12.1
 
 ### `@liveblocks/react-ui`
 
