@@ -4,6 +4,8 @@ import { RoomProvider } from "@liveblocks/react/suspense";
 import { ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import { getRoomId } from "../config";
+import { LiveList } from "@liveblocks/client";
+import { nanoid } from "nanoid";
 
 export function Room({
   pageId,
@@ -22,6 +24,8 @@ export function Room({
       }}
       initialStorage={{
         title: "Untitled document",
+        postIds: new LiveList([nanoid()]),
+        publicPreview: false,
       }}
     >
       {children}

@@ -1,3 +1,5 @@
+import { LiveList } from "@liveblocks/client";
+
 declare global {
   interface Liveblocks {
     UserMeta: {
@@ -10,6 +12,8 @@ declare global {
     };
     Storage: {
       title: string;
+      postIds: LiveList<string>;
+      publicPreview: boolean;
     };
   }
 }

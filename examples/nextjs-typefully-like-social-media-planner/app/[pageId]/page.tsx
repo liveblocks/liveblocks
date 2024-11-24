@@ -1,6 +1,7 @@
-import { TweetPanel } from "../components/TweetPanel";
+import { PostPanel } from "../components/PostPanel";
 import { Room } from "./Room";
 import { Avatars } from "../components/Avatars";
+import { TogglePreview } from "../components/TogglePreview";
 
 // Force the page to be dynamic and allow streaming responses up to 30 seconds for AI
 export const dynamic = "force-dynamic";
@@ -15,13 +16,14 @@ export default async function Page({ params }: any) {
       {/* Sticky header */}
       <div className="sticky top-0 left-0 right-0 h-[60px] flex items-center justify-between px-4 z-20">
         <Avatars />
-        <div>
+        <div className="flex gap-3">
+          <TogglePreview />
           <button>Publish</button>
         </div>
       </div>
 
       <div className="mx-auto w-full max-w-[600px] px-4">
-        <TweetPanel />
+        <PostPanel />
       </div>
 
       <LiveblocksBadge />
