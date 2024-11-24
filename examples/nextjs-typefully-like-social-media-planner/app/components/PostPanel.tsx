@@ -37,6 +37,10 @@ function Post({ id }: { id: string }) {
   const editor = useEditor({
     extensions: [liveblocks, StarterKit],
     immediatelyRender: false,
+
+    // TODO add mentions from social media
+    // https://tiptap.dev/docs/examples/advanced/mentions
+    // https://tiptap.dev/docs/editor/extensions/nodes/mention
   });
 
   const { insertPostAfter, removePost } = usePostIds();
