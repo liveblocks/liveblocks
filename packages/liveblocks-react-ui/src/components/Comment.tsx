@@ -112,7 +112,7 @@ export interface CommentProps extends ComponentPropsWithoutRef<"div"> {
   showAttachments?: boolean;
 
   /**
-   * Whether to show the composer's formattng controls when editing the comment.
+   * Whether to show the composer's formatting controls when editing the comment.
    */
   showComposerFormattingControls?: ComposerProps["showFormattingControls"];
 

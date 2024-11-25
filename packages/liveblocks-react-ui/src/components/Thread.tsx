@@ -74,7 +74,7 @@ export interface ThreadProps<M extends BaseMetadata = DM>
   showReactions?: CommentProps["showReactions"];
 
   /**
-   * Whether to show the composer's formattng controls.
+   * Whether to show the composer's formatting controls.
    */
   showComposerFormattingControls?: ComposerProps["showFormattingControls"];
 
