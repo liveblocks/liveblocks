@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 
-import { fail, inc, put } from "./mutations.config.js";
+import { del, dupe, fail, inc, put } from "./mutations.config.js";
 import { oneClientSetup, twoClientsSetup } from "./utils.js";
 
 test("server state increases with every change", async () => {
@@ -165,6 +165,47 @@ test("reconnect after sync is a no-op", async () => {
 
   expect(client.data).toEqual({ a: 1 });
   expect(server.data).toEqual({ a: 1 });
+});
+
+test("reconnect catches up with server first", async () => {
+  const { client1, client2, server, sync, reconnect, disconnect } =
+    await twoClientsSetup({ put, del, dupe });
+
+  client1.mutate.put("a", 1);
+  await sync();
+  disconnect(client1);
+
+  expect(client1.data).toEqual({ a: 1 });
+  expect(client2.data).toEqual({ a: 1 });
+  expect(server.data).toEqual({ a: 1 });
+
+  // Client1 wants to dupe a: 1 -> b: 1
+  client1.mutate.dupe("a", "b");
+
+  // Meanwhile, client2 is making quite a few changes
+  client2.mutate.dupe("a", "b");
+  client2.mutate.del("a");
+  client2.mutate.put("a", 88);
+  client2.mutate.put("c", 3);
+  await sync(client2);
+
+  expect(client1.data).toEqual({ a: 1, b: 1 });
+  expect(client2.data).toEqual({ a: 88, b: 1, c: 3 });
+  expect(server.data).toEqual({ a: 88, b: 1, c: 3 });
+
+  // Will trigger a partial sync from clock 1 to clock 5
+  await reconnect(client1);
+
+  expect(client1.data).toEqual({ a: 88, b: 88, c: 3 });
+  expect(client2.data).toEqual({ a: 88, b: 1, c: 3 });
+  expect(server.data).toEqual({ a: 88, b: 1, c: 3 });
+
+  await sync(client1);
+  await sync(server);
+
+  expect(client1.data).toEqual({ a: 88, b: 88, c: 3 });
+  expect(client2.data).toEqual({ a: 88, b: 88, c: 3 });
+  expect(server.data).toEqual({ a: 88, b: 88, c: 3 });
 });
 
 test("disconnect after sync is a no-op", async () => {
