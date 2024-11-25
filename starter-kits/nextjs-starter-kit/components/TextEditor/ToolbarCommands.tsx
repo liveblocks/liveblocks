@@ -4,7 +4,7 @@ import { Button } from "@/primitives/Button";
 import styles from "./Toolbar.module.css";
 
 type Props = {
-  editor: Editor;
+  editor: Editor | null;
 };
 
 export function ToolbarCommands({ editor }: Props) {
@@ -13,9 +13,9 @@ export function ToolbarCommands({ editor }: Props) {
       <Button
         className={styles.toolbarButton}
         variant="subtle"
-        onClick={() => editor.chain().undo().run()}
-        disabled={!editor.can().chain().undo().run()}
-        data-active={editor.isActive("bulletList") ? "is-active" : undefined}
+        onClick={() => editor?.chain().undo().run()}
+        disabled={!editor?.can().chain().undo().run()}
+        data-active={editor?.isActive("bulletList") ? "is-active" : undefined}
         aria-label="Undo"
       >
         <UndoIcon />
@@ -24,9 +24,9 @@ export function ToolbarCommands({ editor }: Props) {
       <Button
         className={styles.toolbarButton}
         variant="subtle"
-        onClick={() => editor.chain().redo().run()}
-        disabled={!editor.can().chain().redo().run()}
-        data-active={editor.isActive("orderedList") ? "is-active" : undefined}
+        onClick={() => editor?.chain().redo().run()}
+        disabled={!editor?.can().chain().redo().run()}
+        data-active={editor?.isActive("orderedList") ? "is-active" : undefined}
         aria-label="Redo"
       >
         <RedoIcon />
