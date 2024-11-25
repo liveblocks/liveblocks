@@ -74,15 +74,15 @@ export class LayeredCache {
 
   set(key: string, value: Json): void {
     if (value === undefined) {
-      return this.delete(key);
+      this.delete(key);
+    } else {
+      const layer = this.#layers[0] ?? this.#root;
+      // XXX Lift "root" out
+      layer.set(ROOT, key, value);
     }
-
-    const layer = this.#layers[0] ?? this.#root;
-    // XXX Lift "root" out
-    layer.set(ROOT, key, value);
   }
 
-  delete(key: string): void {
+  delete(key: string): boolean {
     const layer = this.#layers[0];
     if (layer) {
       // XXX Lift "root" out
@@ -91,6 +91,8 @@ export class LayeredCache {
       // XXX Lift "root" out
       this.#root.delete(ROOT, key);
     }
+    // TODO Maybe make this return false if not deleted?
+    return true;
   }
 
   *keys(): IterableIterator<string> {
