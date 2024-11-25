@@ -9,7 +9,7 @@ import { Button } from "@/primitives/Button";
 import styles from "./Toolbar.module.css";
 
 type Props = {
-  editor: Editor;
+  editor: Editor | null;
 };
 
 export function ToolbarBlock({ editor }: Props) {
@@ -18,9 +18,9 @@ export function ToolbarBlock({ editor }: Props) {
       <Button
         className={styles.toolbarButton}
         variant="subtle"
-        onClick={() => editor.chain().focus().toggleBulletList().run()}
-        disabled={!editor.can().chain().focus().toggleBulletList().run()}
-        data-active={editor.isActive("bulletList") ? "is-active" : undefined}
+        onClick={() => editor?.chain().focus().toggleBulletList().run()}
+        disabled={!editor?.can().chain().focus().toggleBulletList().run()}
+        data-active={editor?.isActive("bulletList") ? "is-active" : undefined}
         aria-label="Unordered list"
       >
         <ListUnorderedIcon />
@@ -29,9 +29,9 @@ export function ToolbarBlock({ editor }: Props) {
       <Button
         className={styles.toolbarButton}
         variant="subtle"
-        onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        disabled={!editor.can().chain().focus().toggleOrderedList().run()}
-        data-active={editor.isActive("orderedList") ? "is-active" : undefined}
+        onClick={() => editor?.chain().focus().toggleOrderedList().run()}
+        disabled={!editor?.can().chain().focus().toggleOrderedList().run()}
+        data-active={editor?.isActive("orderedList") ? "is-active" : undefined}
         aria-label="Ordered list"
       >
         <ListOrderedIcon />
@@ -40,9 +40,9 @@ export function ToolbarBlock({ editor }: Props) {
       <Button
         className={styles.toolbarButton}
         variant="subtle"
-        onClick={() => editor.chain().focus().toggleBlockquote().run()}
-        disabled={!editor.can().chain().focus().toggleBlockquote().run()}
-        data-active={editor.isActive("blockquote") ? "is-active" : undefined}
+        onClick={() => editor?.chain().focus().toggleBlockquote().run()}
+        disabled={!editor?.can().chain().focus().toggleBlockquote().run()}
+        data-active={editor?.isActive("blockquote") ? "is-active" : undefined}
         aria-label="Blockquote"
       >
         <BlockquoteIcon />
@@ -51,9 +51,9 @@ export function ToolbarBlock({ editor }: Props) {
       <Button
         className={styles.toolbarButton}
         variant="subtle"
-        onClick={() => editor.chain().focus().toggleTaskList().run()}
-        disabled={!editor.can().chain().focus().toggleTaskList().run()}
-        data-active={editor.isActive("taskList") ? "is-active" : undefined}
+        onClick={() => editor?.chain().focus().toggleTaskList().run()}
+        disabled={!editor?.can().chain().focus().toggleTaskList().run()}
+        data-active={editor?.isActive("taskList") ? "is-active" : undefined}
         aria-label="Task list"
       >
         <CheckboxIcon style={{ width: "16px" }} />

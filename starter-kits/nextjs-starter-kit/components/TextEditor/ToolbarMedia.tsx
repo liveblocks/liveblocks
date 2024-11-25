@@ -7,12 +7,12 @@ import { Popover } from "@/primitives/Popover";
 import styles from "./Toolbar.module.css";
 
 type Props = {
-  editor: Editor;
+  editor: Editor | null;
 };
 
 export function ToolbarMedia({ editor }: Props) {
   function addImage(url: string) {
-    if (!url.length) {
+    if (!url.length || !editor) {
       return;
     }
 
@@ -20,7 +20,7 @@ export function ToolbarMedia({ editor }: Props) {
   }
 
   function addYouTube(url: string) {
-    if (!url.length) {
+    if (!url.length || !editor) {
       return;
     }
 
@@ -32,9 +32,9 @@ export function ToolbarMedia({ editor }: Props) {
       <Button
         className={styles.toolbarButton}
         variant="subtle"
-        onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-        disabled={!editor.can().chain().focus().toggleCodeBlock().run()}
-        data-active={editor.isActive("codeBlock") ? "is-active" : undefined}
+        onClick={() => editor?.chain().focus().toggleCodeBlock().run()}
+        disabled={!editor?.can().chain().focus().toggleCodeBlock().run()}
+        data-active={editor?.isActive("codeBlock") ? "is-active" : undefined}
         aria-label="Code block"
       >
         <CodeBlockIcon />
@@ -44,8 +44,8 @@ export function ToolbarMedia({ editor }: Props) {
         <Button
           className={styles.toolbarButton}
           variant="subtle"
-          disabled={!editor.can().chain().setImage({ src: "" }).run()}
-          data-active={editor.isActive("image") ? "is-active" : undefined}
+          disabled={!editor?.can().chain().setImage({ src: "" }).run()}
+          data-active={editor?.isActive("image") ? "is-active" : undefined}
           aria-label="Image"
         >
           <ImageIcon />
@@ -58,8 +58,8 @@ export function ToolbarMedia({ editor }: Props) {
         <Button
           className={styles.toolbarButton}
           variant="subtle"
-          disabled={!editor.can().chain().setImage({ src: "" }).run()}
-          data-active={editor.isActive("youtube") ? "is-active" : undefined}
+          disabled={!editor?.can().chain().setImage({ src: "" }).run()}
+          data-active={editor?.isActive("youtube") ? "is-active" : undefined}
           aria-label="YouTube"
         >
           <YouTubeIcon />

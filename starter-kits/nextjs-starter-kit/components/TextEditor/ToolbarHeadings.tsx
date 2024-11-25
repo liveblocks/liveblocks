@@ -11,7 +11,7 @@ const toolbarHeadings = [
 ];
 
 type Props = {
-  editor: Editor;
+  editor: Editor | null;
 };
 
 export function ToolbarHeadings({ editor }: Props) {
@@ -54,7 +54,11 @@ export function ToolbarHeadings({ editor }: Props) {
   );
 }
 
-function getCurrentHeading(editor: Editor) {
+function getCurrentHeading(editor: Editor | null) {
+  if (!editor) {
+    return "p";
+  }
+
   if (editor.isActive("heading", { level: 1 })) {
     return "h1";
   }

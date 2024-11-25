@@ -1,4 +1,13 @@
-## 2.12.2 (Not published yet)
+## Not published yet
+
+## 2.12.2
+
+### `@liveblocks/react-tiptap`
+
+- Add new options for `useLiveblocksExtension()` to allow setting
+  initialContent, experimental offline support, and the field name
+- Update floating composer to support onComposerSubmit handler and closing the
+  composer with the escape key
 
 ### `@liveblocks/zustand`
 
