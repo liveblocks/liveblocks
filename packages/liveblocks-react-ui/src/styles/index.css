@@ -302,7 +302,7 @@
 }
 
 .lb-composer-suggestions-list-item {
-  scroll-margin-block: $lb-elevation-list-padding;
+  scroll-margin-block: $lb-elevation-padding;
 }
 
 /*************************************
@@ -808,7 +808,7 @@
 
 .lb-composer-floating-toolbar {
   display: flex;
-  padding: $lb-elevation-list-padding;
+  padding: $lb-elevation-padding;
   user-select: none;
 }
 
@@ -1714,7 +1714,7 @@
 
 .lb-dropdown,
 .lb-composer-suggestions {
-  padding: $lb-elevation-list-padding;
+  padding: $lb-elevation-padding;
 }
 
 .lb-dropdown-item,
@@ -1728,7 +1728,7 @@
 .lb-dropdown-item,
 .lb-composer-suggestions-list-item,
 .lb-emoji-picker-emoji {
-  border-radius: calc(var(--lb-radius) - 0.75 * $lb-elevation-list-padding);
+  border-radius: calc(var(--lb-radius) - 0.75 * $lb-elevation-padding);
   color: var(--lb-foreground-secondary);
   outline: none;
   cursor: pointer;
