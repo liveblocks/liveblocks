@@ -78,6 +78,21 @@ function createQueries(db: Database) {
 
   const versions = {
     clear: db.prepare<[], void>("DELETE FROM versions"),
+
+    upsertKeyValue: db.prepare<
+      [nid: string, key: string, clock: number, jval: string],
+      void
+    >(
+      `INSERT INTO versions (nid, key, clock, jval)
+       VALUES (?, ?, ?, ?)
+       ON CONFLICT (nid, key, clock) DO UPDATE SET jval = excluded.jval`
+    ),
+
+    deleteKey: db.prepare<[nid: string, key: string, clock: number], void>(
+      `INSERT INTO versions (nid, key, clock, jval)
+       VALUES (?, ?, ?, NULL)
+       ON CONFLICT (nid, key, clock) DO UPDATE SET jval = excluded.jval`
+    ),
   };
 
   return {
@@ -92,12 +107,26 @@ function createQueries(db: Database) {
 
 type Queries = ReturnType<typeof createQueries>;
 
+export interface Transaction {
+  has(key: string): boolean;
+  get(key: string): Json | undefined;
+  set(key: string, value: Json): void;
+  delete(key: string): void;
+}
+
 export class SQLCache {
   readonly #q: Queries;
-  #clock: number = 0;
+  #clock: number;
+  #pendingClock: number;
 
   constructor() {
     this.#q = createQueries(createDB());
+    this.#clock = 0; // TBD Derive this value from the DB data
+    this.#pendingClock = this.#clock;
+  }
+
+  get clock(): number {
+    return this.#pendingClock;
   }
 
   // ----------------------------------------------------
@@ -129,16 +158,19 @@ export class SQLCache {
     return jval !== undefined ? (JSON.parse(jval) as Json) : undefined;
   }
 
-  set(key: string, value: Json): void {
+  #set(key: string, value: Json): void {
     if (value === undefined) {
-      this.delete(key);
+      this.#delete(key);
     } else {
-      this.#q.storage.upsertKeyValue.run(ROOT, key, JSON.stringify(value));
+      const jval = JSON.stringify(value);
+      this.#q.storage.upsertKeyValue.run(ROOT, key, jval);
+      this.#q.versions.upsertKeyValue.run(ROOT, key, this.#pendingClock, jval);
     }
   }
 
-  delete(key: string): void {
+  #delete(key: string): void {
     this.#q.storage.deleteKey.run(ROOT, key);
+    this.#q.versions.deleteKey.run(ROOT, key, this.#pendingClock);
   }
 
   *keys(): IterableIterator<string> {
@@ -164,34 +196,54 @@ export class SQLCache {
   // ----------------------------------------------------
 
   /**
-   * Rolls back all transactions, and resets the LayeredCache to its initial,
-   * empty, state.
-   */
-  reset(): void {
-    try {
-      this.rollback();
-    } catch {
-      // Ignore
-    }
-
-    this.startTransaction();
-    try {
-      this.#q.storage.clear.run();
-      this.#q.versions.clear.run();
-      this.commit();
-    } catch (e) {
-      this.commit();
-    }
-  }
-
-  /**
    * Computes a Delta within the current transaction.
    */
   delta(): Delta {
     raise("DELTA not implemented yet");
   }
 
-  startTransaction(): void { this.#q.begin.run(); } // prettier-ignore
-  commit(): void { this.#q.commit.run(); } // prettier-ignore
-  rollback(): void { this.#q.rollback.run(); } // prettier-ignore
+  mutate(callback: (tx: Transaction) => unknown): void {
+    this.#startNextVersion();
+    try {
+      let dirty = false;
+
+      const tx: Transaction = {
+        has: (key: string) => this.has(key),
+        get: (key: string) => this.get(key),
+        set: (key: string, value: Json) => {
+          dirty = true;
+          return this.#set(key, value);
+        },
+        delete: (key: string) => {
+          dirty = true;
+          return this.#delete(key);
+        },
+      };
+
+      callback(tx);
+      if (dirty) {
+        this.#commitVersion();
+      } else {
+        this.#rollbackVersion();
+      }
+    } catch (e) {
+      this.#rollbackVersion();
+      throw e;
+    }
+  }
+
+  #startNextVersion(): void {
+    this.#q.begin.run();
+    this.#pendingClock = this.#clock + 1;
+  }
+
+  #commitVersion(): void {
+    this.#q.commit.run();
+    this.#clock = this.#pendingClock;
+  }
+
+  #rollbackVersion(): void {
+    this.#q.rollback.run();
+    this.#pendingClock = this.#clock;
+  }
 }
