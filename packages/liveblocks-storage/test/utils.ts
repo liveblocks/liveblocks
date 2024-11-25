@@ -3,9 +3,7 @@
 import { onTestFinished } from "vitest";
 
 import { Client, Server } from "~/index.js";
-import type { LayeredCache } from "~/LayeredCache.js";
 import { makePipe } from "~/lib/Pipe.js";
-import type { SQLCache } from "~/SQLCache.js";
 import type { ClientMsg, Mutations, ServerMsg, Socket } from "~/types.js";
 
 async function connectClientAndServer(

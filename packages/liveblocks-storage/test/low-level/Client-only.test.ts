@@ -3,7 +3,6 @@ import { expect, onTestFinished, test, vi } from "vitest";
 import { Client } from "~/Client.js";
 
 import {
-  clear,
   del,
   dupe,
   fail,
@@ -387,11 +386,7 @@ test("errors thrown by deferred client mutations (ie after rebase) should not be
 test.skip("onChange notifications", async () => {
   const fn = vi.fn();
 
-  const { client1, client2, sync } = await twoClientsSetup({
-    put,
-    dupe,
-    clear,
-  });
+  const { client1, client2, sync } = await twoClientsSetup({ put, dupe });
   const unsub = client1.events.onChange.subscribe(fn);
   onTestFinished(unsub);
 
@@ -402,7 +397,7 @@ test.skip("onChange notifications", async () => {
   // XXX fn() should have been called with Delta: [[], ['a', 42]] (remote)
 
   client1.mutate.dupe("a", "b");
-  client2.mutate.clear();
+  // client2.mutate.clear();
 
   // XXX fn() should have been called with Delta: [[], ['b', 42]] (local)
 
