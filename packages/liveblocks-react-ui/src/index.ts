@@ -41,4 +41,8 @@ export type {
 export { useOverrides } from "./overrides";
 export type { ComposerSubmitComment } from "./primitives";
 export { Timestamp } from "./primitives/Timestamp";
-export type { CommentAttachmentArgs, ComposerBodyTextFormat } from "./types";
+export type {
+  CommentAttachmentArgs,
+  ComposerBodyMark,
+  ComposerBodyMarks,
+} from "./types";

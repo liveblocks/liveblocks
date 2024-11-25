@@ -61,12 +61,12 @@ import type {
   ComposerEditorMentionSuggestionsProps,
   ComposerEditorProps,
   ComposerFormProps,
+  ComposerMarkToggleProps,
   ComposerSubmitComment,
-  ComposerTextFormatToggleProps,
 } from "../primitives/Composer/types";
 import { useComposerAttachmentsDropArea } from "../primitives/Composer/utils";
 import { MENTION_CHARACTER } from "../slate/plugins/mentions";
-import type { ComposerBodyTextFormat } from "../types";
+import type { ComposerBodyMark } from "../types";
 import { classNames } from "../utils/class-names";
 import { useControllableState } from "../utils/use-controllable-state";
 import { useLayoutEffect } from "../utils/use-layout-effect";
@@ -93,7 +93,7 @@ interface EmojiEditorActionProps extends EditorActionProps {
   onPickerOpenChange?: EmojiPickerProps["onOpenChange"];
 }
 
-interface TextFormatToggleProps extends ComposerTextFormatToggleProps {
+interface MarkToggleProps extends ComposerMarkToggleProps {
   shortcut?: ReactNode;
 }
 
@@ -374,16 +374,11 @@ function ComposerMentionSuggestions({
   ) : null;
 }
 
-function TextFormatToggle({
-  format,
-  shortcut,
-  children,
-  ...props
-}: TextFormatToggleProps) {
+function MarkToggle({ mark, shortcut, children, ...props }: MarkToggleProps) {
   const $ = useOverrides();
   const label = useMemo(() => {
-    return $.COMPOSER_TOGGLE_TEXT_FORMAT(format);
-  }, [$, format]);
+    return $.COMPOSER_TOGGLE_MARK(mark);
+  }, [$, mark]);
 
   return (
     <ShortcutTooltip
@@ -391,21 +386,21 @@ function TextFormatToggle({
       shortcut={shortcut}
       sideOffset={FLOATING_ELEMENT_SIDE_OFFSET + 2}
     >
-      <ComposerPrimitive.TextFormatToggle format={format} asChild {...props}>
+      <ComposerPrimitive.MarkToggle mark={mark} asChild {...props}>
         <Button aria-label={label}>{children}</Button>
-      </ComposerPrimitive.TextFormatToggle>
+      </ComposerPrimitive.MarkToggle>
     </ShortcutTooltip>
   );
 }
 
-type TextFormatToggles = {
-  [K in ComposerBodyTextFormat]: ComponentType<PropsWithChildren>;
+type MarkToggles = {
+  [K in ComposerBodyMark]: ComponentType<PropsWithChildren>;
 };
 
-const textFormatToggles: TextFormatToggles = {
+const markToggles: MarkToggles = {
   bold: () => (
-    <TextFormatToggle
-      format="bold"
+    <MarkToggle
+      mark="bold"
       shortcut={
         <>
           <ShortcutTooltipKey name="mod" />
@@ -414,11 +409,11 @@ const textFormatToggles: TextFormatToggles = {
       }
     >
       <BoldIcon />
-    </TextFormatToggle>
+    </MarkToggle>
   ),
   italic: () => (
-    <TextFormatToggle
-      format="italic"
+    <MarkToggle
+      mark="italic"
       shortcut={
         <>
           <ShortcutTooltipKey name="mod" />
@@ -427,11 +422,11 @@ const textFormatToggles: TextFormatToggles = {
       }
     >
       <ItalicIcon />
-    </TextFormatToggle>
+    </MarkToggle>
   ),
   strikethrough: () => (
-    <TextFormatToggle
-      format="strikethrough"
+    <MarkToggle
+      mark="strikethrough"
       shortcut={
         <>
           <ShortcutTooltipKey name="mod" />
@@ -441,11 +436,11 @@ const textFormatToggles: TextFormatToggles = {
       }
     >
       <StrikethroughIcon />
-    </TextFormatToggle>
+    </MarkToggle>
   ),
   code: () => (
-    <TextFormatToggle
-      format="code"
+    <MarkToggle
+      mark="code"
       shortcut={
         <>
           <ShortcutTooltipKey name="mod" />
@@ -454,18 +449,18 @@ const textFormatToggles: TextFormatToggles = {
       }
     >
       <CodeIcon />
-    </TextFormatToggle>
+    </MarkToggle>
   ),
 };
 
-const textFormatTogglesList = Object.entries(textFormatToggles).map(
-  ([format, Toggle]) => <Toggle key={format} />
-);
+const markTogglesList = Object.entries(markToggles).map(([mark, Toggle]) => (
+  <Toggle key={mark} />
+));
 
 function ComposerFloatingToolbar() {
   return (
     <ComposerPrimitive.FloatingToolbar className="lb-root lb-portal lb-elevation lb-composer-floating-toolbar">
-      {textFormatTogglesList}
+      {markTogglesList}
     </ComposerPrimitive.FloatingToolbar>
   );
 }

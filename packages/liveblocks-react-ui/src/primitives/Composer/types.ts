@@ -17,9 +17,8 @@ import type {
   ComponentPropsWithSlot,
   ComposerBodyAutoLink,
   ComposerBodyCustomLink,
+  ComposerBodyMark,
   ComposerBodyMention,
-  ComposerBodyTextActiveFormats,
-  ComposerBodyTextFormat,
   Direction,
 } from "../../types";
 
@@ -63,12 +62,7 @@ export type ComposerEditorMentionSuggestionsProps = {
   selectedUserId?: string;
 };
 
-export type ComposerEditorFloatingToolbarProps = {
-  /**
-   * Which text formats are currently active and which aren't.
-   */
-  textFormats: ComposerBodyTextActiveFormats;
-};
+export type ComposerEditorFloatingToolbarProps = Record<string, never>;
 
 export type ComposerMentionProps = ComponentPropsWithSlot<"span">;
 
@@ -191,17 +185,17 @@ export type ComposerSubmitProps = ComponentPropsWithSlot<"button">;
 
 export type ComposerAttachFilesProps = ComponentPropsWithSlot<"button">;
 
-export interface ComposerTextFormatToggleProps
+export interface ComposerMarkToggleProps
   extends ComponentPropsWithSlot<"button"> {
   /**
-   * The text format to toggle.
+   * The text mark to toggle.
    */
-  format: ComposerBodyTextFormat;
+  mark: ComposerBodyMark;
 
   /**
-   * The event handler called when the format is toggled.
+   * The event handler called when the mark is toggled.
    */
-  onFormatChange?: (format: ComposerBodyTextFormat) => void;
+  onValueChange?: (mark: ComposerBodyMark) => void;
 }
 
 export interface ComposerAttachmentsDropAreaProps

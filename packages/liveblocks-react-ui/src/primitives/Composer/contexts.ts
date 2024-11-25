@@ -6,10 +6,7 @@ import type { Dispatch, Ref, SetStateAction } from "react";
 import { createContext, useContext } from "react";
 import type { Editor as SlateEditor, Element as SlateElement } from "slate";
 
-import type {
-  ComposerBodyTextActiveFormats,
-  ComposerBodyTextFormat,
-} from "../../types";
+import type { ComposerBodyMark, ComposerBodyMarks } from "../../types";
 
 export type ComposerContext = {
   /**
@@ -58,14 +55,14 @@ export type ComposerContext = {
   blur: () => void;
 
   /**
-   * Which text formats are currently active and which aren't.
+   * Which text marks are currently active and which aren't.
    */
-  textFormats: ComposerBodyTextActiveFormats;
+  marks: ComposerBodyMarks;
 
   /**
-   * Toggle a specific text format.
+   * Toggle a specific text mark.
    */
-  toggleTextFormat: (format: ComposerBodyTextFormat) => void;
+  toggleMark: (mark: ComposerBodyMark) => void;
 
   /**
    * Start creating a mention at the current selection.

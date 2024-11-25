@@ -80,14 +80,18 @@ import { withNormalize } from "../../slate/plugins/normalize";
 import { withPaste } from "../../slate/plugins/paste";
 import { getDOMRange } from "../../slate/utils/get-dom-range";
 import { isEmpty as isEditorEmpty } from "../../slate/utils/is-empty";
-import { getMarks, leaveMarkEdge, toggleMark } from "../../slate/utils/marks";
+import {
+  getMarks,
+  leaveMarkEdge,
+  toggleMark as toggleEditorMark,
+} from "../../slate/utils/marks";
 import type {
   ComposerBody as ComposerBodyData,
   ComposerBodyAutoLink,
   ComposerBodyCustomLink,
+  ComposerBodyMark,
+  ComposerBodyMarks,
   ComposerBodyMention,
-  ComposerBodyTextActiveFormats,
-  ComposerBodyTextFormat,
 } from "../../types";
 import { isKey } from "../../utils/is-key";
 import { Persist, useAnimationPersist, usePersist } from "../../utils/Persist";
@@ -124,12 +128,12 @@ import type {
   ComposerFloatingToolbarProps,
   ComposerFormProps,
   ComposerLinkProps,
+  ComposerMarkToggleProps,
   ComposerMentionProps,
   ComposerSubmitProps,
   ComposerSuggestionsListItemProps,
   ComposerSuggestionsListProps,
   ComposerSuggestionsProps,
-  ComposerTextFormatToggleProps,
   FloatingPosition,
 } from "./types";
 import {
@@ -158,7 +162,7 @@ const COMPOSER_SUBMIT_NAME = "ComposerSubmit";
 const COMPOSER_EDITOR_NAME = "ComposerEditor";
 const COMPOSER_ATTACH_FILES_NAME = "ComposerAttachFiles";
 const COMPOSER_ATTACHMENTS_DROP_AREA_NAME = "ComposerAttachmentsDropArea";
-const COMPOSER_TEXT_FORMAT_TOGGLE_NAME = "ComposerTextFormatToggle";
+const COMPOSER_MARK_TOGGLE_NAME = "ComposerMarkToggle";
 const COMPOSER_FORM_NAME = "ComposerForm";
 
 const emptyCommentBody: CommentBody = {
@@ -324,7 +328,7 @@ function ComposerEditorFloatingToolbarWrapper({
   setHasFloatingToolbarRange,
 }: ComposerEditorFloatingToolbarWrapperProps) {
   const editor = useSlateStatic();
-  const { isFocused, textFormats } = useComposer();
+  const { isFocused } = useComposer();
   const { portalContainer } = useLiveblocksUIConfig();
   const [contentRef, contentZIndex] = useContentZIndex();
   const [isPointerDown, setPointerDown] = useState(false);
@@ -414,7 +418,7 @@ function ComposerEditorFloatingToolbarWrapper({
               zIndex: contentZIndex,
             }}
           >
-            <FloatingToolbar textFormats={textFormats} />
+            <FloatingToolbar />
           </Portal>
         </ComposerFloatingToolbarContext.Provider>
       ) : null}
@@ -427,8 +431,8 @@ function ComposerEditorFloatingToolbarWrapper({
  *
  * @example
  * <Composer.FloatingToolbar>
- *   <Composer.TextFormatToggle format="bold">Bold</Composer.TextFormatToggle>
- *   <Composer.TextFormatToggle format="italic">Italic</Composer.TextFormatToggle>
+ *   <Composer.MarkToggle mark="bold">Bold</Composer.MarkToggle>
+ *   <Composer.MarkToggle mark="italic">Italic</Composer.MarkToggle>
  * </Composer.FloatingToolbar>
  */
 const ComposerFloatingToolbar = forwardRef<
@@ -993,25 +997,25 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
           // Toggle bold on Command/Control + B
           if (isKey(event, "b", { mod: true })) {
             event.preventDefault();
-            toggleMark(editor, "bold");
+            toggleEditorMark(editor, "bold");
           }
 
           // Toggle italic on Command/Control + I
           if (isKey(event, "i", { mod: true })) {
             event.preventDefault();
-            toggleMark(editor, "italic");
+            toggleEditorMark(editor, "italic");
           }
 
           // Toggle strikethrough on Command/Control + Shift + S
           if (isKey(event, "s", { mod: true, shift: true })) {
             event.preventDefault();
-            toggleMark(editor, "strikethrough");
+            toggleEditorMark(editor, "strikethrough");
           }
 
           // Toggle code on Command/Control + E
           if (isKey(event, "e", { mod: true })) {
             event.preventDefault();
-            toggleMark(editor, "code");
+            toggleEditorMark(editor, "code");
           }
         }
       },
@@ -1242,8 +1246,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const canSubmit = useMemo(() => {
       return !isEmpty && !isUploadingAttachments;
     }, [isEmpty, isUploadingAttachments]);
-    const [textFormats, setTextFormats] =
-      useState<ComposerBodyTextActiveFormats>(getMarks);
+    const [marks, setMarks] = useState<ComposerBodyMarks>(getMarks);
 
     const ref = useRef<HTMLFormElement>(null);
     const mergedRefs = useRefs(forwardedRef, ref);
@@ -1477,15 +1480,15 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       event.stopPropagation();
     }, []);
 
-    const toggleTextFormat = useCallback(
-      (format: ComposerBodyTextFormat) => {
-        toggleMark(editor, format);
+    const toggleMark = useCallback(
+      (mark: ComposerBodyMark) => {
+        toggleEditorMark(editor, mark);
       },
       [editor]
     );
 
     useOnComposerEditorChangeWithEventSource(editorChangeEventSource, () => {
-      setTextFormats(getMarks(editor));
+      setMarks(getMarks(editor));
     });
 
     return (
@@ -1523,8 +1526,8 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
               attachments,
               attachFiles,
               removeAttachment,
-              toggleTextFormat,
-              textFormats,
+              toggleMark,
+              marks,
             }}
           >
             <Component {...props} onSubmit={handleSubmit} ref={mergedRefs}>
@@ -1657,22 +1660,22 @@ const ComposerAttachmentsDropArea = forwardRef<
 );
 
 /**
- * A toggle button which toggles a specific text format.
+ * A toggle button which toggles a specific text mark.
  *
  * @example
- * <Composer.TextFormatToggle format="bold">
+ * <Composer.MarkToggle mark="bold">
  *   Bold
- * </Composer.TextFormatToggle>
+ * </Composer.MarkToggle>
  */
-const ComposerTextFormatToggle = forwardRef<
+const ComposerMarkToggle = forwardRef<
   HTMLButtonElement,
-  ComposerTextFormatToggleProps
+  ComposerMarkToggleProps
 >(
   (
     {
       children,
-      format,
-      onFormatChange,
+      mark,
+      onValueChange,
       onClick,
       onPointerDown,
       asChild,
@@ -1681,18 +1684,18 @@ const ComposerTextFormatToggle = forwardRef<
     forwardedRef
   ) => {
     const Component = asChild ? Slot : "button";
-    const { textFormats, toggleTextFormat } = useComposer();
+    const { marks, toggleMark } = useComposer();
 
     const handleClick = useCallback(
       (event: MouseEvent<HTMLButtonElement>) => {
         onClick?.(event);
 
         if (!event.isDefaultPrevented()) {
-          toggleTextFormat(format);
-          onFormatChange?.(format);
+          toggleMark(mark);
+          onValueChange?.(mark);
         }
       },
-      [format, onClick, onFormatChange, toggleTextFormat]
+      [mark, onClick, onValueChange, toggleMark]
     );
 
     const handlePointerDown = useCallback(
@@ -1708,7 +1711,7 @@ const ComposerTextFormatToggle = forwardRef<
     return (
       <TogglePrimitive.Root
         asChild
-        pressed={textFormats[format]}
+        pressed={marks[mark]}
         onClick={handleClick}
         onPointerDown={handlePointerDown}
         {...props}
@@ -1733,7 +1736,7 @@ if (process.env.NODE_ENV !== "production") {
   ComposerSuggestions.displayName = COMPOSER_SUGGESTIONS_NAME;
   ComposerSuggestionsList.displayName = COMPOSER_SUGGESTIONS_LIST_NAME;
   ComposerSuggestionsListItem.displayName = COMPOSER_SUGGESTIONS_LIST_ITEM_NAME;
-  ComposerTextFormatToggle.displayName = COMPOSER_TEXT_FORMAT_TOGGLE_NAME;
+  ComposerMarkToggle.displayName = COMPOSER_MARK_TOGGLE_NAME;
 }
 
 // NOTE: Every export from this file will be available publicly as Composer.*
@@ -1744,10 +1747,10 @@ export {
   ComposerFloatingToolbar as FloatingToolbar,
   ComposerForm as Form,
   ComposerLink as Link,
+  ComposerMarkToggle as MarkToggle,
   ComposerMention as Mention,
   ComposerSubmit as Submit,
   ComposerSuggestions as Suggestions,
   ComposerSuggestionsList as SuggestionsList,
   ComposerSuggestionsListItem as SuggestionsListItem,
-  ComposerTextFormatToggle as TextFormatToggle,
 };

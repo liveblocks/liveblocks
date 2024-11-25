@@ -924,23 +924,13 @@ Displays a floating toolbar attached to the selection within `Composer.Editor`.
   components={{
     FloatingToolbar: () => (
       <Composer.FloatingToolbar>
-        <Composer.TextFormatToggle format="bold">
-          Bold
-        </Composer.TextFormatToggle>
-        <Composer.TextFormatToggle format="italic">
-          Italic
-        </Composer.TextFormatToggle>
+        <Composer.MarkToggle mark="bold">Bold</Composer.MarkToggle>
+        <Composer.MarkToggle mark="italic">Italic</Composer.MarkToggle>
       </Composer.FloatingToolbar>
     ),
   }}
 />
 ```
-
-<PropertiesList>
-  <PropertiesListItem name="textFormats" type="ComposerBodyTextActiveFormats">
-    Which text formats are currently active and which aren't.
-  </PropertiesListItem>
-</PropertiesList>
 
 ##### Composer.Mention [#primitives-Composer.Mention]
 
@@ -1059,8 +1049,8 @@ Displays a floating toolbar attached to the selection within `Composer.Editor`.
 
 ```tsx
 <Composer.FloatingToolbar>
-  <Composer.TextFormatToggle format="bold">Bold</Composer.TextFormatToggle>
-  <Composer.TextFormatToggle format="italic">Italic</Composer.TextFormatToggle>
+  <Composer.MarkToggle mark="bold">Bold</Composer.MarkToggle>
+  <Composer.MarkToggle mark="italic">Italic</Composer.MarkToggle>
 </Composer.FloatingToolbar>
 ```
 
@@ -1070,24 +1060,24 @@ Displays a floating toolbar attached to the selection within `Composer.Editor`.
   </PropertiesListItem>
 </PropertiesList>
 
-##### Composer.TextFormatToggle
+##### Composer.MarkToggle
 
-A toggle button which toggles a specific text format.
+A toggle button which toggles a specific text mark.
 
 ```tsx
-<Composer.TextFormatToggle format="bold">Bold</Composer.TextFormatToggle>
+<Composer.MarkToggle mark="bold">Bold</Composer.MarkToggle>
 ```
 
 <PropertiesList>
-  <PropertiesListItem name="format" type="ComposerBodyTextFormat" required>
-    The text format to toggle.
+  <PropertiesListItem name="mark" type="ComposerBodyMark" required>
+    The text mark to toggle.
   </PropertiesListItem>
   <PropertiesListItem
-    name="onFormatChange"
+    name="onValueChange"
     type="function"
-    detailedType="(format: ComposerBodyTextFormat) => void"
+    detailedType="(mark: ComposerBodyMark) => void"
   >
-    The event handler called when the format is toggled.
+    The event handler called when the mark is toggled.
   </PropertiesListItem>
   <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
     Replace the rendered element by the one passed as a child.
@@ -1536,13 +1526,13 @@ function MyComposerAttachments() {
   <PropertiesListItem name="blur" type="function" detailedType="() => void">
     Blur the editor programmatically.
   </PropertiesListItem>
-  <PropertiesListItem name="textFormats" type="ComposerBodyTextActiveFormats">
-    Which text formats are currently active and which aren't.
+  <PropertiesListItem name="marks" type="ComposerBodyTextActiveFormats">
+    Which text marks are currently active and which aren't.
   </PropertiesListItem>
   <PropertiesListItem
-    name="toggleTextFormat"
+    name="toggleMark"
     type="function"
-    detailedType="(format: ComposerBodyTextFormat) => void"
+    detailedType="(mark: ComposerBodyMark) => void"
   >
     Remove an attachment by its ID.
   </PropertiesListItem>
