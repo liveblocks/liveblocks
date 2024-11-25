@@ -9,12 +9,6 @@ export function del(root: LiveObject, key: string): void {
   root.delete(key);
 }
 
-export function clear(root: LiveObject): void {
-  for (const key of root.keys()) {
-    root.delete(key);
-  }
-}
-
 export function putRandom(root: LiveObject, key: string): void {
   root.set(key, Math.floor(Math.random() * 1_000_000));
 }
@@ -37,7 +31,7 @@ export function dupe(root: LiveObject, src: string, target: string): void {
 }
 
 export function inc(root: LiveObject, key: string): void {
-  const count = root.getNumber(key) ?? 0;
+  const count = getNumber(root, key) ?? 0;
   root.set(key, count + 1);
 }
 
@@ -47,9 +41,16 @@ export function putAndInc(root: LiveObject, key: string, value: number): void {
 }
 
 export function dec(root: LiveObject, key: string): void {
-  const count = root.getNumber(key) ?? 0;
+  const count = getNumber(root, key) ?? 0;
   if (count <= 0) {
     throw new Error("Cannot decrement beyond 0");
   }
   root.set(key, count - 1);
+}
+
+// --- Helpers ---------------------------------------------------------------
+
+function getNumber(root: LiveObject, key: string): number | undefined {
+  const value = root.get(key);
+  return typeof value === "number" ? value : undefined;
 }
