@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import Image from "next/image";
 
 type Props = {
   children: ReactNode;
@@ -11,10 +12,16 @@ type Props = {
 
 export function PostUI({ user, children }: Props) {
   return (
-    <div className="flex gap-2 group w-full">
+    <div className="flex gap-2 w-full group">
       <div className="flex flex-col items-center gap-1 pb-1">
         <div className="bg-gray-200 w-10 h-10 rounded-full overflow-hidden shrink-0">
-          <img className="h-full w-full" src={user.avatar} />
+          <Image
+            className="h-full w-full"
+            src={user.avatar}
+            width={40}
+            height={40}
+            alt="Avatar"
+          />
         </div>
         <div className="w-[3px] bg-gray-200/80 h-full flex-grow group-last:hidden flex-1" />
       </div>

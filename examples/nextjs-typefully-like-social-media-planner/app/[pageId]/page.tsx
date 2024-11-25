@@ -14,19 +14,19 @@ export default async function Page({ params }: any) {
   return (
     <Room pageId={pageId}>
       {/* Sticky header */}
-      <div className="sticky top-0 left-0 right-0 h-[60px] flex items-center justify-between px-4 z-20">
-        <Avatars />
-        <div className="flex gap-3">
-          <TogglePreview />
-          <button>Publish</button>
-        </div>
-      </div>
+      {/*<div className="sticky top-0 left-0 right-0 h-[60px] flex items-center justify-between px-4 z-20">*/}
+      {/*  <Avatars />*/}
+      {/*  <div className="flex gap-3">*/}
+      {/*    <TogglePreview />*/}
+      {/*    <button>Publish</button>*/}
+      {/*  </div>*/}
+      {/*</div>*/}
 
-      <div className="mx-auto w-full max-w-[600px] px-4">
+      <div className="mx-auto pt-20 w-full max-w-[442px] px-4">
         <PostPanel />
       </div>
 
-      <LiveblocksBadge />
+      {/*<LiveblocksBadge />*/}
     </Room>
   );
 }
