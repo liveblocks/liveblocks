@@ -1,4 +1,3 @@
-import type { LayeredCache } from "./LayeredCache.js";
 import type { Observable } from "./lib/EventSource.js";
 import type { Json } from "./lib/Json.js";
 import type { Brand } from "./lib/ts-toolkit.js";
@@ -144,8 +143,17 @@ export type ServerMsg =
   | InitialSyncServerMsg
   | DeltaServerMsg;
 
+export interface Transaction {
+  has(key: string): boolean;
+  get(key: string): Json | undefined;
+  getNumber(key: string): number | undefined;
+  keys(): IterableIterator<string>;
+  set(key: string, value: Json): void;
+  delete(key: string): void;
+}
+
 export type Mutation = (
-  root: LayeredCache,
+  root: Transaction,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ...args: readonly any[]
 ) => void;

@@ -1,6 +1,6 @@
-import { LayeredCache } from "./LayeredCache.js";
 import type { Callback } from "./lib/EventSource.js";
 import type { Json } from "./lib/Json.js";
+import { SQLCache } from "./SQLCache.js";
 import type {
   ClientMsg,
   Delta,
@@ -29,14 +29,13 @@ const DEBUG = false;
 
 export class Server {
   readonly #mutations: Mutations;
-  readonly #cache: LayeredCache;
+  readonly #cache: SQLCache;
 
   // Keep track of the highest clock value we've seen from any (previous)
   // actor. This should be persisted and reloaded along with the cache data
   // itself when loading.
   readonly #clocksPerActor: Map<number, number> = new Map();
 
-  #stateClock: number = 0;
   #nextActor = 1;
   readonly #sessions: Set<Session>;
   #_log?: (...args: unknown[]) => void;
@@ -44,7 +43,7 @@ export class Server {
   constructor(mutations: Mutations) {
     this.#mutations = mutations;
     this.#sessions = new Set();
-    this.#cache = new LayeredCache();
+    this.#cache = new SQLCache();
 
     if (DEBUG) this.debug();
   }
@@ -84,7 +83,7 @@ export class Server {
       type: "WelcomeServerMsg",
       actor,
       sessionKey,
-      serverClock: this.#stateClock,
+      serverClock: this.#cache.clock,
     });
 
     return () => {
@@ -111,7 +110,7 @@ export class Server {
             const ack: Delta = [{}, {}];
             this.#send(curr, {
               type: "DeltaServerMsg",
-              serverClock: this.#stateClock,
+              serverClock: this.#cache.clock,
               opId: msg.opId,
               delta: ack,
             });
@@ -126,7 +125,7 @@ export class Server {
           for (const session of this.#sessions) {
             this.#send(session, {
               type: "DeltaServerMsg",
-              serverClock: this.#stateClock,
+              serverClock: this.#cache.clock,
               opId: msg.opId,
               delta: result.value,
             });
@@ -137,7 +136,7 @@ export class Server {
           const ack: Delta = [{}, {}];
           this.#send(curr, {
             type: "DeltaServerMsg",
-            serverClock: this.#stateClock,
+            serverClock: this.#cache.clock,
             opId: msg.opId,
             delta: ack,
           });
@@ -156,7 +155,7 @@ export class Server {
 
         this.#send(curr, {
           type: "InitialSyncServerMsg",
-          serverClock: this.#stateClock,
+          serverClock: this.#cache.clock,
           // XXX Lift "root" out
           delta: [{}, { ["root" as NodeId]: kvstream }],
           fullCC: true,
@@ -189,20 +188,17 @@ export class Server {
     const mutationFn =
       this.#mutations[name] ?? raise(`Mutation not found: '${name}'`);
 
-    this.#cache.startTransaction();
     try {
-      mutationFn(this.#cache, ...args);
-      const delta = this.#cache.delta();
-      this.#cache.commit();
-      this.#stateClock++;
-      return { ok: true, value: delta };
+      return {
+        ok: true,
+        value: this.#cache.mutate((tx) => mutationFn(tx, ...args)),
+      };
     } catch (e) {
-      this.#cache.rollback();
       return { ok: false, error: (e as Error).message || String(e) };
     }
   }
 
   // For convenience in unit tests only --------------------------------
   get data(): Record<string, Json> { return Object.fromEntries(this.#cache); } // prettier-ignore
-  get clock(): number { return this.#stateClock; } // prettier-ignore
+  get clock(): number { return this.#cache.clock; } // prettier-ignore
 }
