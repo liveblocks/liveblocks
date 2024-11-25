@@ -3,8 +3,7 @@ import sqlite3 from "better-sqlite3";
 
 import type { Json } from "~/lib/Json.js";
 
-import type { Delta, NodeId } from "./types.js";
-import { raise } from "./utils.js";
+import type { Delta, NodeId, Transaction } from "./types.js";
 
 const ROOT = "root" as NodeId;
 
@@ -93,6 +92,32 @@ function createQueries(db: Database) {
        VALUES (?, ?, ?, NULL)
        ON CONFLICT (nid, key, clock) DO UPDATE SET jval = excluded.jval`
     ),
+
+    selectAll: db
+      .prepare<
+        [],
+        [nid: string, key: string, clock: number, jval: string]
+      >("SELECT nid, key, clock, jval FROM versions")
+      .raw(),
+
+    selectSince: db
+      .prepare<
+        [clock: number],
+        [nid: string, key: string, jval: string | null]
+      >(
+        `WITH winners AS (
+           SELECT
+             nid,
+             key,
+             jval,
+             RANK() OVER (PARTITION BY nid, key ORDER BY clock DESC) as rnk
+           FROM versions
+           WHERE clock > ?
+         )
+
+         SELECT nid, key, jval FROM winners WHERE rnk = 1`
+      )
+      .raw(),
   };
 
   return {
@@ -106,13 +131,6 @@ function createQueries(db: Database) {
 }
 
 type Queries = ReturnType<typeof createQueries>;
-
-export interface Transaction {
-  has(key: string): boolean;
-  get(key: string): Json | undefined;
-  set(key: string, value: Json): void;
-  delete(key: string): void;
-}
 
 export class SQLCache {
   readonly #q: Queries;
@@ -196,13 +214,25 @@ export class SQLCache {
   // ----------------------------------------------------
 
   /**
-   * Computes a Delta within the current transaction.
+   * Computes a Delta since the given clock value.
    */
-  delta(): Delta {
-    raise("DELTA not implemented yet");
+  delta(since: number): Delta {
+    const removed: { [nid: string]: string[] } = {};
+    const updated: { [nid: string]: { [key: string]: Json } } = {};
+    for (const [nid, key, jval] of this.#q.versions.selectSince.iterate(
+      since
+    )) {
+      if (jval === null) {
+        (removed[nid] ??= []).push(key);
+      } else {
+        (updated[nid] ??= {})[key] = JSON.parse(jval) as Json;
+      }
+    }
+    return [removed, updated];
   }
 
-  mutate(callback: (tx: Transaction) => unknown): void {
+  mutate(callback: (tx: Transaction) => unknown): Delta {
+    const origClock = this.clock;
     this.#startNextVersion();
     try {
       let dirty = false;
@@ -210,6 +240,8 @@ export class SQLCache {
       const tx: Transaction = {
         has: (key: string) => this.has(key),
         get: (key: string) => this.get(key),
+        getNumber: (key: string) => this.getNumber(key),
+        keys: () => this.keys(),
         set: (key: string, value: Json) => {
           dirty = true;
           return this.#set(key, value);
@@ -223,8 +255,11 @@ export class SQLCache {
       callback(tx);
       if (dirty) {
         this.#commitVersion();
+        const delta = this.delta(origClock);
+        return delta;
       } else {
         this.#rollbackVersion();
+        return [{}, {}];
       }
     } catch (e) {
       this.#rollbackVersion();
