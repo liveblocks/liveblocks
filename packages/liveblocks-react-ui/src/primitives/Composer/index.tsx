@@ -249,7 +249,8 @@ function ComposerEditorMentionSuggestionsWrapper({
   const { isFocused } = useComposer();
   const { portalContainer } = useLiveblocksUIConfig();
   const [contentRef, contentZIndex] = useContentZIndex();
-  const isOpen = Boolean(isFocused && mentionDraft?.range && userIds);
+  const isOpen =
+    isFocused && mentionDraft?.range !== undefined && userIds !== undefined;
   const {
     refs: { setReference, setFloating },
     strategy,
@@ -309,7 +310,7 @@ function ComposerEditorMentionSuggestionsWrapper({
             }}
           >
             <MentionSuggestions
-              userIds={userIds!}
+              userIds={userIds}
               selectedUserId={selectedUserId}
             />
           </Portal>
