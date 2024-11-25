@@ -4,6 +4,7 @@ import type { ChangeReturnType, OmitFirstArg } from "~/lib/ts-toolkit.js";
 
 import { LayeredCache } from "./LayeredCache.js";
 import type { Callback, EventSource, Observable } from "./lib/EventSource.js";
+import { LiveObject } from "./LiveObject.js";
 import type {
   ClientMsg,
   Delta,
@@ -347,7 +348,7 @@ export class Client<M extends Mutations> {
     const cache = this.#cache;
     cache.startTransaction();
     try {
-      mutationFn(cache, ...args);
+      mutationFn(new LiveObject(cache), ...args);
       cache.commit();
     } catch (e) {
       cache.rollback();
@@ -357,10 +358,6 @@ export class Client<M extends Mutations> {
 
   // For convenience in unit tests only --------------------------------
   get data(): Record<string, Record<string, Json>> {
-    const obj: Record<string, Record<string, Json>> = {};
-    for (const [nid, key, value] of this.#cache) {
-      (obj[nid] ??= {})[key] = value;
-    }
-    return obj;
+    return this.#cache.data;
   }
 }

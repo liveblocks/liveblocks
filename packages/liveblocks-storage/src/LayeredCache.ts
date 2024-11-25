@@ -1,7 +1,7 @@
 import type { Json } from "~/lib/Json.js";
 import { NestedMap } from "~/lib/NestedMap.js";
 
-import type { Delta, NodeId } from "./types.js";
+import type { Delta, NodeId, Transaction } from "./types.js";
 import { raise } from "./utils.js";
 
 const TOMBSTONE = Symbol();
@@ -10,7 +10,7 @@ type TombStone = typeof TOMBSTONE;
 
 // const ROOT = "root" as NodeId;
 
-export class LayeredCache {
+export class LayeredCache implements Transaction {
   readonly #root: NestedMap<NodeId, string, Json>;
   readonly #layers: NestedMap<NodeId, string, Json | TombStone>[];
 
@@ -20,31 +20,8 @@ export class LayeredCache {
   }
 
   // ----------------------------------------------------
-  // "Convenience" accessors to make implementing mutations easier
-  // ----------------------------------------------------
-
-  getNumber(nodeId: NodeId, key: string): number | undefined {
-    const value = this.get(nodeId, key);
-    return typeof value === "number" ? value : undefined;
-  }
-
-  // ----------------------------------------------------
   // "Multi-layer" cache idea
   // ----------------------------------------------------
-
-  /**
-   * Returns the number of items in the cache.
-   * Unlike Map.size, LayeredCache.count() is a slow operation that requires
-   * iterating over every entry.
-   * XXX Make faster!
-   */
-  count(): number {
-    let total = 0;
-    for (const _ of this) {
-      ++total;
-    }
-    return total;
-  }
 
   has(nodeId: NodeId, key: string): boolean {
     for (const layer of this.#layers) {
@@ -88,57 +65,48 @@ export class LayeredCache {
     return true;
   }
 
-  *keys(): IterableIterator<[nodeId: NodeId, key: string]> {
+  *keys(nodeId: NodeId): IterableIterator<string> {
     if (this.#layers.length === 0) {
-      yield* this.#root.keys();
+      yield* this.#root.keysAt(nodeId);
     } else {
-      for (const [nodeId, key] of this.entries()) {
-        yield [nodeId, key];
+      for (const [key] of this.entries(nodeId)) {
+        yield key;
       }
     }
   }
 
-  *entries(): IterableIterator<[nodeId: NodeId, key: string, value: Json]> {
+  *entries(nodeId: NodeId): IterableIterator<[key: string, value: Json]> {
     if (this.#layers.length === 0) {
-      const arr = Array.from(this.#root);
-      // yield* this.#root;
-      yield* arr;
+      yield* this.#root.entriesAt(nodeId);
       return;
     }
 
     const seen = new Set<string>();
 
-    function seenBefore(nodeId: NodeId, key: string): boolean {
-      const fullKey = `${nodeId}:${key}`;
-      if (seen.has(fullKey)) {
+    function seenBefore(key: string): boolean {
+      if (seen.has(key)) {
         return true;
       } else {
-        seen.add(fullKey);
+        seen.add(key);
         return false;
       }
     }
 
     for (const layer of this.#layers) {
-      for (const [nodeId, key, value] of layer) {
-        if (!seenBefore(nodeId, key)) {
+      for (const [key, value] of layer.entriesAt(nodeId)) {
+        if (!seenBefore(key)) {
           if (value !== TOMBSTONE) {
-            yield [nodeId, key, value];
+            yield [key, value];
           }
         }
       }
     }
 
-    for (const [nodeId, key, value] of this.#root) {
-      if (!seenBefore(nodeId, key)) {
-        yield [nodeId, key, value];
+    for (const [key, value] of this.#root.entriesAt(nodeId)) {
+      if (!seenBefore(key)) {
+        yield [key, value];
       }
     }
-  }
-
-  *[Symbol.iterator](): IterableIterator<
-    [nodeId: NodeId, key: string, value: Json]
-  > {
-    yield* this.entries();
   }
 
   // ----------------------------------------------------
@@ -198,6 +166,53 @@ export class LayeredCache {
   }
 
   // For convenience in unit tests only --------------------------------
+  *[Symbol.iterator](): IterableIterator<
+    [nodeId: NodeId, key: string, value: Json]
+  > {
+    const seen = new Set<string>();
+
+    function seenBefore(key: string): boolean {
+      if (seen.has(key)) {
+        return true;
+      } else {
+        seen.add(key);
+        return false;
+      }
+    }
+
+    for (const layer of this.#layers) {
+      for (const nid of layer.topLevelKeys()) {
+        if (!seenBefore(nid)) {
+          for (const [key, val] of this.entries(nid)) {
+            yield [nid, key, val];
+          }
+        }
+      }
+    }
+
+    for (const nid of this.#root.topLevelKeys()) {
+      if (!seenBefore(nid)) {
+        for (const [key, val] of this.entries(nid)) {
+          yield [nid, key, val];
+        }
+      }
+    }
+  }
+
+  /**
+   * Returns the number of items in the cache.
+   * Unlike Map.size, LayeredCache.count() is a slow operation that requires
+   * iterating over every entry.
+   * XXX Make faster!
+   */
+  get count(): number {
+    let total = 0;
+    for (const _ of this) {
+      ++total;
+    }
+    return total;
+  }
+
   get data(): Record<string, Record<string, Json>> {
     const obj: Record<string, Record<string, Json>> = {};
     for (const [nid, key, value] of this) {

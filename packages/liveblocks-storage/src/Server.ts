@@ -206,7 +206,7 @@ export class Server {
     try {
       return {
         ok: true,
-        value: this.#cache.mutate((tx) => mutationFn(tx, ...args)),
+        value: this.#cache.mutate((root) => mutationFn(root, ...args)),
       };
     } catch (e) {
       return { ok: false, error: (e as Error).message || String(e) };
@@ -215,11 +215,7 @@ export class Server {
 
   // For convenience in unit tests only --------------------------------
   get data(): Record<string, Record<string, Json>> {
-    const obj: Record<string, Record<string, Json>> = {};
-    for (const [nid, key, value] of this.#cache) {
-      (obj[nid] ??= {})[key] = value;
-    }
-    return obj;
+    return this.#cache.data;
   }
   get clock(): number { return this.#cache.clock; } // prettier-ignore
 }
