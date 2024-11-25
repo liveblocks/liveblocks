@@ -98,17 +98,6 @@ export class LayeredCache {
     }
   }
 
-  // XXX Values is a useless abstraction
-  // *values(): IterableIterator<Json> {
-  //   if (this.#layers.length === 0) {
-  //     yield* this.#root.valuesAt(ROOT);
-  //   } else {
-  //     for (const [, value] of this.entries()) {
-  //       yield value;
-  //     }
-  //   }
-  // }
-
   *entries(): IterableIterator<[nodeId: NodeId, key: string, value: Json]> {
     if (this.#layers.length === 0) {
       const arr = Array.from(this.#root);
