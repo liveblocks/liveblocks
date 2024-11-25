@@ -176,19 +176,25 @@ export class SQLCache {
     return jval !== undefined ? (JSON.parse(jval) as Json) : undefined;
   }
 
-  #set(key: string, value: Json): void {
+  #set(key: string, value: Json): boolean {
     if (value === undefined) {
-      this.#delete(key);
+      return this.#delete(key);
     } else {
       const jval = JSON.stringify(value);
       this.#q.storage.upsertKeyValue.run(ROOT, key, jval);
       this.#q.versions.upsertKeyValue.run(ROOT, key, this.#pendingClock, jval);
+      return true;
     }
   }
 
-  #delete(key: string): void {
-    this.#q.storage.deleteKey.run(ROOT, key);
-    this.#q.versions.deleteKey.run(ROOT, key, this.#pendingClock);
+  #delete(key: string): boolean {
+    const result = this.#q.storage.deleteKey.run(ROOT, key);
+    if (result.changes > 0) {
+      this.#q.versions.deleteKey.run(ROOT, key, this.#pendingClock);
+      return true;
+    } else {
+      return false;
+    }
   }
 
   *keys(): IterableIterator<string> {
@@ -216,7 +222,18 @@ export class SQLCache {
   /**
    * Computes a Delta since the given clock value.
    */
-  delta(since: number): Delta {
+  fullDelta(): Delta {
+    const updated: { [nid: string]: { [key: string]: Json } } = {};
+    for (const [nid, key, jval] of this.#q.storage.selectAll.iterate()) {
+      (updated[nid] ??= {})[key] = JSON.parse(jval) as Json;
+    }
+    return [{}, updated];
+  }
+
+  /**
+   * Computes a Delta since the given clock value.
+   */
+  deltaSince(since: number): Delta {
     const removed: { [nid: string]: string[] } = {};
     const updated: { [nid: string]: { [key: string]: Json } } = {};
     for (const [nid, key, jval] of this.#q.versions.selectSince.iterate(
@@ -233,51 +250,52 @@ export class SQLCache {
 
   mutate(callback: (tx: Transaction) => unknown): Delta {
     const origClock = this.clock;
-    this.#startNextVersion();
+
+    let dirty = false;
+    const tx: Transaction = {
+      has: (key: string) => this.has(key),
+      get: (key: string) => this.get(key),
+      getNumber: (key: string) => this.getNumber(key),
+      keys: () => this.keys(),
+      set: (key: string, value: Json) => {
+        const updated = this.#set(key, value);
+        dirty ||= updated;
+        return updated;
+      },
+      delete: (key: string) => {
+        const deleted = this.#delete(key);
+        dirty ||= deleted;
+        return deleted;
+      },
+    };
+
+    this.#startTransaction();
     try {
-      let dirty = false;
-
-      const tx: Transaction = {
-        has: (key: string) => this.has(key),
-        get: (key: string) => this.get(key),
-        getNumber: (key: string) => this.getNumber(key),
-        keys: () => this.keys(),
-        set: (key: string, value: Json) => {
-          dirty = true;
-          return this.#set(key, value);
-        },
-        delete: (key: string) => {
-          dirty = true;
-          return this.#delete(key);
-        },
-      };
-
       callback(tx);
       if (dirty) {
-        this.#commitVersion();
-        const delta = this.delta(origClock);
-        return delta;
+        this.#commit();
+        return this.deltaSince(origClock);
       } else {
-        this.#rollbackVersion();
+        this.#rollback();
         return [{}, {}];
       }
     } catch (e) {
-      this.#rollbackVersion();
+      this.#rollback();
       throw e;
     }
   }
 
-  #startNextVersion(): void {
+  #startTransaction(): void {
     this.#q.begin.run();
     this.#pendingClock = this.#clock + 1;
   }
 
-  #commitVersion(): void {
+  #commit(): void {
     this.#q.commit.run();
     this.#clock = this.#pendingClock;
   }
 
-  #rollbackVersion(): void {
+  #rollback(): void {
     this.#q.rollback.run();
     this.#pendingClock = this.#clock;
   }
