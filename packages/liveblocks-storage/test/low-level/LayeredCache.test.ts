@@ -92,19 +92,6 @@ test("keys", () => {
   ]);
 });
 
-// XXX Values is a useless abstraction
-// test("values", () => {
-//   const cache = new LayeredCache();
-//   cache.set("rt", "a", 1);
-//   cache.delete("rt", "a");
-//   cache.set("rt", "a", 42);
-//   cache.set("rt", "b", 2);
-//   expect(Array.from(cache.values())).toEqual([
-//     ["rt", 42],
-//     ["rt", 2],
-//   ]);
-// });
-
 test("entries", () => {
   const cache = new LayeredCache();
   cache.set("r1", "a", 1);
@@ -173,17 +160,6 @@ test("keys (inside a transaction)", () => {
     ["r", "b"],
   ]);
 });
-
-// XXX Values is a useless abstraction
-// test("values (inside a transaction)", () => {
-//   const cache = new LayeredCache();
-//   cache.startTransaction();
-//   cache.set("r", "a", 1);
-//   cache.delete("r", "a");
-//   cache.set("r", "a", 42);
-//   cache.set("r", "b", 2);
-//   expect(Array.from(cache.values())).toEqual([42, 2]);
-// });
 
 test("entries (inside a transaction)", () => {
   const cache = new LayeredCache();
