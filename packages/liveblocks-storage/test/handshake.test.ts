@@ -81,13 +81,13 @@ test("client catches up with server after every (re)connect", async () => {
   await sync();
 
   expect(server.clock).toEqual(1);
-  expect(client.data).toEqual({ a: 1 });
-  expect(server.data).toEqual({ a: 1 });
+  expect(client.data).toEqual({ root: { a: 1 } });
+  expect(server.data).toEqual({ root: { a: 1 } });
 
   client.mutate.inc("a");
 
-  expect(client.data).toEqual({ a: 2 });
-  expect(server.data).toEqual({ a: 1 });
+  expect(client.data).toEqual({ root: { a: 2 } });
+  expect(server.data).toEqual({ root: { a: 1 } });
 
   // Force-disconnects the socket pipes, loosing any messages that were already
   // travelling on the wire
@@ -95,21 +95,21 @@ test("client catches up with server after every (re)connect", async () => {
 
   client.mutate.inc("a");
   expect(server.clock).toEqual(1);
-  expect(client.data).toEqual({ a: 3 });
-  expect(server.data).toEqual({ a: 1 });
+  expect(client.data).toEqual({ root: { a: 3 } });
+  expect(server.data).toEqual({ root: { a: 1 } });
 
   // Client reconnects, handshakes, and catches up with server
   await reconnect();
 
   expect(server.clock).toEqual(1);
-  expect(client.data).toEqual({ a: 3 });
-  expect(server.data).toEqual({ a: 1 });
+  expect(client.data).toEqual({ root: { a: 3 } });
+  expect(server.data).toEqual({ root: { a: 1 } });
 
   // Deliver the client's pending ops
   await sync();
 
-  expect(client.data).toEqual({ a: 3 });
-  expect(server.data).toEqual({ a: 3 });
+  expect(client.data).toEqual({ root: { a: 3 } });
+  expect(server.data).toEqual({ root: { a: 3 } });
 });
 
 test("client catches up with server after every (re)connect with initial server state", async () => {
@@ -122,32 +122,32 @@ test("client catches up with server after every (re)connect with initial server 
   await sync();
 
   expect(server.clock).toEqual(1);
-  expect(server.data).toEqual({ a: 2 });
+  expect(server.data).toEqual({ root: { a: 2 } });
   expect(client1.data).toEqual({});
-  expect(client2.data).toEqual({ a: 2 });
+  expect(client2.data).toEqual({ root: { a: 2 } });
 
   // Let client1 reconnect
   client1.mutate.put("a", 1);
   await reconnect(client1); // Handshake only, not yet sending the Ops
 
   expect(server.clock).toEqual(1);
-  expect(server.data).toEqual({ a: 2 });
-  expect(client1.data).toEqual({ a: 1 });
-  expect(client2.data).toEqual({ a: 2 });
+  expect(server.data).toEqual({ root: { a: 2 } });
+  expect(client1.data).toEqual({ root: { a: 1 } });
+  expect(client2.data).toEqual({ root: { a: 2 } });
 
   await sync(client1); // Send pending Ops
 
   expect(server.clock).toEqual(2);
-  expect(server.data).toEqual({ a: 1 });
-  expect(client1.data).toEqual({ a: 1 });
-  expect(client2.data).toEqual({ a: 2 });
+  expect(server.data).toEqual({ root: { a: 1 } });
+  expect(client1.data).toEqual({ root: { a: 1 } });
+  expect(client2.data).toEqual({ root: { a: 2 } });
 
   await sync();
 
   expect(server.clock).toEqual(2);
-  expect(server.data).toEqual({ a: 1 });
-  expect(client1.data).toEqual({ a: 1 });
-  expect(client2.data).toEqual({ a: 1 });
+  expect(server.data).toEqual({ root: { a: 1 } });
+  expect(client1.data).toEqual({ root: { a: 1 } });
+  expect(client2.data).toEqual({ root: { a: 1 } });
 });
 
 test("reconnect after sync is a no-op", async () => {
@@ -158,13 +158,13 @@ test("reconnect after sync is a no-op", async () => {
   client.mutate.inc("a");
   await sync();
 
-  expect(client.data).toEqual({ a: 1 });
-  expect(server.data).toEqual({ a: 1 });
+  expect(client.data).toEqual({ root: { a: 1 } });
+  expect(server.data).toEqual({ root: { a: 1 } });
 
   await reconnect();
 
-  expect(client.data).toEqual({ a: 1 });
-  expect(server.data).toEqual({ a: 1 });
+  expect(client.data).toEqual({ root: { a: 1 } });
+  expect(server.data).toEqual({ root: { a: 1 } });
 });
 
 test("reconnect catches up with server first", async () => {
@@ -175,9 +175,9 @@ test("reconnect catches up with server first", async () => {
   await sync();
   disconnect(client1);
 
-  expect(client1.data).toEqual({ a: 1 });
-  expect(client2.data).toEqual({ a: 1 });
-  expect(server.data).toEqual({ a: 1 });
+  expect(client1.data).toEqual({ root: { a: 1 } });
+  expect(client2.data).toEqual({ root: { a: 1 } });
+  expect(server.data).toEqual({ root: { a: 1 } });
 
   // Client1 wants to dupe a: 1 -> b: 1
   client1.mutate.dupe("a", "b");
@@ -189,23 +189,23 @@ test("reconnect catches up with server first", async () => {
   client2.mutate.put("c", 3);
   await sync(client2);
 
-  expect(client1.data).toEqual({ a: 1, b: 1 });
-  expect(client2.data).toEqual({ a: 88, b: 1, c: 3 });
-  expect(server.data).toEqual({ a: 88, b: 1, c: 3 });
+  expect(client1.data).toEqual({ root: { a: 1, b: 1 } });
+  expect(client2.data).toEqual({ root: { a: 88, b: 1, c: 3 } });
+  expect(server.data).toEqual({ root: { a: 88, b: 1, c: 3 } });
 
   // Will trigger a partial sync from clock 1 to clock 5
   await reconnect(client1);
 
-  expect(client1.data).toEqual({ a: 88, b: 88, c: 3 });
-  expect(client2.data).toEqual({ a: 88, b: 1, c: 3 });
-  expect(server.data).toEqual({ a: 88, b: 1, c: 3 });
+  expect(client1.data).toEqual({ root: { a: 88, b: 88, c: 3 } });
+  expect(client2.data).toEqual({ root: { a: 88, b: 1, c: 3 } });
+  expect(server.data).toEqual({ root: { a: 88, b: 1, c: 3 } });
 
   await sync(client1);
   await sync(server);
 
-  expect(client1.data).toEqual({ a: 88, b: 88, c: 3 });
-  expect(client2.data).toEqual({ a: 88, b: 88, c: 3 });
-  expect(server.data).toEqual({ a: 88, b: 88, c: 3 });
+  expect(client1.data).toEqual({ root: { a: 88, b: 88, c: 3 } });
+  expect(client2.data).toEqual({ root: { a: 88, b: 88, c: 3 } });
+  expect(server.data).toEqual({ root: { a: 88, b: 88, c: 3 } });
 });
 
 test("disconnect after sync is a no-op", async () => {
@@ -216,13 +216,13 @@ test("disconnect after sync is a no-op", async () => {
   client.mutate.inc("a");
   await sync();
 
-  expect(client.data).toEqual({ a: 1 });
-  expect(server.data).toEqual({ a: 1 });
+  expect(client.data).toEqual({ root: { a: 1 } });
+  expect(server.data).toEqual({ root: { a: 1 } });
 
   disconnect();
 
-  expect(client.data).toEqual({ a: 1 });
-  expect(server.data).toEqual({ a: 1 });
+  expect(client.data).toEqual({ root: { a: 1 } });
+  expect(server.data).toEqual({ root: { a: 1 } });
 });
 
 test.fails(
@@ -247,20 +247,20 @@ test("offline mutations are synced with server after reconnect", async () => {
   disconnect();
   client.mutate.inc("a");
 
-  expect(client.data).toEqual({ a: 1 });
+  expect(client.data).toEqual({ root: { a: 1 } });
   expect(server.data).toEqual({});
 
   await reconnect();
 
   // Client caught up with server + schedules pending Op
-  expect(client.data).toEqual({ a: 1 });
+  expect(client.data).toEqual({ root: { a: 1 } });
   expect(server.data).toEqual({});
 
   // Exchange pending op
   await sync();
 
-  expect(client.data).toEqual({ a: 1 });
-  expect(server.data).toEqual({ a: 1 });
+  expect(client.data).toEqual({ root: { a: 1 } });
+  expect(server.data).toEqual({ root: { a: 1 } });
 });
 
 test("mutations should never run more than once on the server (happy path)", async () => {
@@ -277,14 +277,14 @@ test("mutations should never run more than once on the server (happy path)", asy
   client.mutate.inc("a"); // Op3
   await reconnect();
 
-  expect(client.data).toEqual({ a: 3 });
+  expect(client.data).toEqual({ root: { a: 3 } });
   expect(server.data).toEqual({});
   expect(server.clock).toEqual(0);
 
   await sync();
 
-  expect(client.data).toEqual({ a: 3 });
-  expect(server.data).toEqual({ a: 3 });
+  expect(client.data).toEqual({ root: { a: 3 } });
+  expect(server.data).toEqual({ root: { a: 3 } });
   expect(server.clock).toEqual(3);
 
   client.mutate.inc("a"); // Op4
@@ -295,8 +295,8 @@ test("mutations should never run more than once on the server (happy path)", asy
   client.mutate.inc("a"); // Op5
   await sync();
 
-  expect(client.data).toEqual({ a: 5 });
-  expect(server.data).toEqual({ a: 5 });
+  expect(client.data).toEqual({ root: { a: 5 } });
+  expect(server.data).toEqual({ root: { a: 5 } });
   expect(server.clock).toEqual(5);
 });
 
@@ -313,8 +313,8 @@ test("mutations should never run more than once on the server (unhappy path with
   disconnect();
   client.mutate.inc("a"); // Op2
 
-  expect(client.data).toEqual({ a: 2 }); // Client still thinks Op1 and Op2 are pending
-  expect(server.data).toEqual({ a: 1 }); // Even though server has already acked Op1
+  expect(client.data).toEqual({ root: { a: 2 } }); // Client still thinks Op1 and Op2 are pending
+  expect(server.data).toEqual({ root: { a: 1 } }); // Even though server has already acked Op1
   expect(server.clock).toEqual(1);
 
   await reconnect(); // Reconnected as actor 2 now + caught up with server
@@ -323,18 +323,18 @@ test("mutations should never run more than once on the server (unhappy path with
 
   // Client caught up with server count of 1, plus momentarily applies Op1 and
   // Op2 locally on top of that causing a brief flash of 3
-  expect(client.data).toEqual({ a: 3 }); // ❗ Even though only 2 incs, it can still briefly show 3
-  expect(server.data).toEqual({ a: 1 });
+  expect(client.data).toEqual({ root: { a: 3 } }); // ❗ Even though only 2 incs, it can still briefly show 3
+  expect(server.data).toEqual({ root: { a: 1 } });
   expect(server.clock).toEqual(1);
 
   await sync(client); // Client now resends Op1 + Op2 to server
 
-  expect(client.data).toEqual({ a: 3 });
-  expect(server.data).toEqual({ a: 2 }); // Server should ignore Op1 (already confirmed), and only apply Op2
+  expect(client.data).toEqual({ root: { a: 3 } });
+  expect(server.data).toEqual({ root: { a: 2 } }); // Server should ignore Op1 (already confirmed), and only apply Op2
   expect(server.clock).toEqual(2);
 
   await sync(server); // Delivers ack of Op1 + Op2 to client
-  expect(client.data).toEqual({ a: 2 });
-  expect(server.data).toEqual({ a: 2 });
+  expect(client.data).toEqual({ root: { a: 2 } });
+  expect(server.data).toEqual({ root: { a: 2 } });
   expect(server.clock).toEqual(2);
 });

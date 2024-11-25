@@ -16,16 +16,6 @@ export function nextAlphabetId(): string {
   return curr;
 }
 
-export function* chain<T>(
-  ...iterables: (Iterable<T> | undefined)[]
-): IterableIterator<T> {
-  for (const iterable of iterables) {
-    if (iterable) {
-      yield* iterable;
-    }
-  }
-}
-
 // Inlined version of 3.3.7 of nanoid.js
 // https://www.npmjs.com/package/nanoid/v/3.3.7?activeTab=code
 export const nanoid = (t = 21): string =>

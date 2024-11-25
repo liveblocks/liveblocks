@@ -2,13 +2,13 @@ import type { Json } from "~/lib/Json.js";
 import { NestedMap } from "~/lib/NestedMap.js";
 
 import type { Delta, NodeId } from "./types.js";
-import { chain, raise } from "./utils.js";
+import { raise } from "./utils.js";
 
 const TOMBSTONE = Symbol();
 
 type TombStone = typeof TOMBSTONE;
 
-const ROOT = "root" as NodeId;
+// const ROOT = "root" as NodeId;
 
 export class LayeredCache {
   readonly #root: NestedMap<NodeId, string, Json>;
@@ -23,8 +23,8 @@ export class LayeredCache {
   // "Convenience" accessors to make implementing mutations easier
   // ----------------------------------------------------
 
-  getNumber(key: string): number | undefined {
-    const value = this.get(key);
+  getNumber(nodeId: NodeId, key: string): number | undefined {
+    const value = this.get(nodeId, key);
     return typeof value === "number" ? value : undefined;
   }
 
@@ -46,21 +46,18 @@ export class LayeredCache {
     return total;
   }
 
-  has(key: string): boolean {
+  has(nodeId: NodeId, key: string): boolean {
     for (const layer of this.#layers) {
-      // XXX Lift "root" out
-      const value = layer.get(ROOT, key);
+      const value = layer.get(nodeId, key);
       if (value === undefined) continue;
       return value !== TOMBSTONE;
     }
-    // XXX Lift "root" out
-    return this.#root.has(ROOT, key);
+    return this.#root.has(nodeId, key);
   }
 
-  get(key: string): Json | undefined {
+  get(nodeId: NodeId, key: string): Json | undefined {
     for (const layer of this.#layers) {
-      // XXX Lift "root" out
-      const value = layer.get(ROOT, key);
+      const value = layer.get(nodeId, key);
       if (value === undefined) continue;
       if (value === TOMBSTONE) {
         return undefined;
@@ -68,76 +65,90 @@ export class LayeredCache {
         return value;
       }
     }
-    // XXX Lift "root" out
-    return this.#root.get(ROOT, key);
+    return this.#root.get(nodeId, key);
   }
 
-  set(key: string, value: Json): void {
+  set(nodeId: NodeId, key: string, value: Json): void {
     if (value === undefined) {
-      this.delete(key);
+      this.delete(nodeId, key);
     } else {
       const layer = this.#layers[0] ?? this.#root;
-      // XXX Lift "root" out
-      layer.set(ROOT, key, value);
+      layer.set(nodeId, key, value);
     }
   }
 
-  delete(key: string): boolean {
+  delete(nodeId: NodeId, key: string): boolean {
     const layer = this.#layers[0];
     if (layer) {
-      // XXX Lift "root" out
-      layer.set(ROOT, key, TOMBSTONE);
+      layer.set(nodeId, key, TOMBSTONE);
     } else {
-      // XXX Lift "root" out
-      this.#root.delete(ROOT, key);
+      this.#root.delete(nodeId, key);
     }
     // TODO Maybe make this return false if not deleted?
     return true;
   }
 
-  *keys(): IterableIterator<string> {
+  *keys(): IterableIterator<[nodeId: NodeId, key: string]> {
     if (this.#layers.length === 0) {
-      // XXX Lift "root" out
-      yield* this.#root.keysAt(ROOT);
+      yield* this.#root.keys();
     } else {
-      for (const [key] of this.entries()) {
-        yield key;
+      for (const [nodeId, key] of this.entries()) {
+        yield [nodeId, key];
       }
     }
   }
 
-  *values(): IterableIterator<Json> {
+  // XXX Values is a useless abstraction
+  // *values(): IterableIterator<Json> {
+  //   if (this.#layers.length === 0) {
+  //     yield* this.#root.valuesAt(ROOT);
+  //   } else {
+  //     for (const [, value] of this.entries()) {
+  //       yield value;
+  //     }
+  //   }
+  // }
+
+  *entries(): IterableIterator<[nodeId: NodeId, key: string, value: Json]> {
     if (this.#layers.length === 0) {
-      yield* this.#root.valuesAt(ROOT);
-    } else {
-      for (const [, value] of this.entries()) {
-        yield value;
+      const arr = Array.from(this.#root);
+      // yield* this.#root;
+      yield* arr;
+      return;
+    }
+
+    const seen = new Set<string>();
+
+    function seenBefore(nodeId: NodeId, key: string): boolean {
+      const fullKey = `${nodeId}:${key}`;
+      if (seen.has(fullKey)) {
+        return true;
+      } else {
+        seen.add(fullKey);
+        return false;
       }
     }
-  }
 
-  *entries(): IterableIterator<[key: string, value: Json]> {
-    if (this.#layers.length === 0) {
-      // XXX Lift "root" out + actually return ALL entries! Not just the root ones
-      yield* this.#root.entriesAt(ROOT);
-    } else {
-      const keys = new Set(
-        chain(
-          // XXX Lift "root" out + actually return ALL entries! Not just the root ones
-          this.#root.keysAt(ROOT),
-          ...this.#layers.map((layer) => layer.keysAt(ROOT))
-        )
-      );
-      for (const key of keys) {
-        const value = this.get(key);
-        if (value !== undefined) {
-          yield [key, value];
+    for (const layer of this.#layers) {
+      for (const [nodeId, key, value] of layer) {
+        if (!seenBefore(nodeId, key)) {
+          if (value !== TOMBSTONE) {
+            yield [nodeId, key, value];
+          }
         }
       }
     }
+
+    for (const [nodeId, key, value] of this.#root) {
+      if (!seenBefore(nodeId, key)) {
+        yield [nodeId, key, value];
+      }
+    }
   }
 
-  *[Symbol.iterator](): IterableIterator<[key: string, value: Json]> {
+  *[Symbol.iterator](): IterableIterator<
+    [nodeId: NodeId, key: string, value: Json]
+  > {
     yield* this.entries();
   }
 
@@ -184,16 +195,25 @@ export class LayeredCache {
 
   commit(): void {
     const layer = this.#layers.shift() ?? raise("No transaction to commit");
-    for (const [_nodeId, key, value] of layer) {
+    for (const [nodeId, key, value] of layer) {
       if (value === TOMBSTONE) {
-        this.delete(key);
+        this.delete(nodeId, key);
       } else {
-        this.set(key, value);
+        this.set(nodeId, key, value);
       }
     }
   }
 
   rollback(): void {
     this.#layers.shift() ?? raise("No transaction to roll back");
+  }
+
+  // For convenience in unit tests only --------------------------------
+  get data(): Record<string, Record<string, Json>> {
+    const obj: Record<string, Record<string, Json>> = {};
+    for (const [nid, key, value] of this) {
+      (obj[nid] ??= {})[key] = value;
+    }
+    return obj;
   }
 }
