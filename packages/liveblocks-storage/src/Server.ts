@@ -144,12 +144,24 @@ export class Server {
       }
 
       case "CatchUpClientMsg": {
-        // We can easily return the delta-since, or the full document state at
-        // this point. We just need to decide on the best heuristic for doing
-        // one or the other here.
+        //
+        // The client is requesting a "catch up" with the server. The last
+        // server clock they saw was `msg.since`. The server now has two
+        // possible responses:
+        // 1. It can send the full document.
+        // 2. It can send a partial delta since the given version.
+        //
+        // We just need to decide on the best heuristic for doing one or the
+        // other here.
         //
         // TODO Decide on heuristic/conditional
-        if (msg.since === 0 || msg.since > 100) {
+        // For example, do:
+        //   e.g. msg.since === 0 || msg.since > 100
+        //
+        // Or, based on which of those two outputs produces the smallest
+        // message.
+        //
+        if (msg.since === 0) {
           this.#send(curr, {
             type: "InitialSyncServerMsg",
             serverClock: this.#cache.clock,

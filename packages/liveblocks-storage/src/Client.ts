@@ -159,9 +159,11 @@ export class Client<M extends Mutations> {
 
       switch (msg.type) {
         case "WelcomeServerMsg": {
+          /* v8 ignore start */
           if (this.#session) {
             return raise("Saw welcome message, but session already exists");
           }
+          /* v8 ignore stop */
 
           // The very first message we receive after connecting to the server
           // is the WelcomeServerMsg. After this, we have a Session, and we're
