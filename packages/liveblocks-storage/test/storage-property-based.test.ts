@@ -118,18 +118,18 @@ describe("regression historically found by counter-examples", () => {
     expect(() => client.mutate.dec("a")).toThrow(); // ⚡
     client.mutate.inc("a"); // 1
 
-    expect(client.data).toEqual({ a: 1 });
+    expect(client.data).toEqual({ root: { a: 1 } });
     expect(server.data).toEqual({});
 
     await sync(client);
 
-    expect(client.data).toEqual({ a: 1 });
-    expect(server.data).toEqual({ a: 1 });
+    expect(client.data).toEqual({ root: { a: 1 } });
+    expect(server.data).toEqual({ root: { a: 1 } });
 
     await sync(server);
 
-    expect(client.data).toEqual({ a: 1 });
-    expect(server.data).toEqual({ a: 1 });
+    expect(client.data).toEqual({ root: { a: 1 } });
+    expect(server.data).toEqual({ root: { a: 1 } });
   });
 
   test("inc, dec, dec bug", async () => {
@@ -142,17 +142,17 @@ describe("regression historically found by counter-examples", () => {
     client.mutate.dec("a"); // 0
     expect(() => client.mutate.dec("a")).toThrow(); // ⚡
 
-    expect(client.data).toEqual({ a: 0 });
+    expect(client.data).toEqual({ root: { a: 0 } });
     expect(server.data).toEqual({});
 
     await sync(client);
 
-    expect(client.data).toEqual({ a: 0 });
-    expect(server.data).toEqual({ a: 0 });
+    expect(client.data).toEqual({ root: { a: 0 } });
+    expect(server.data).toEqual({ root: { a: 0 } });
 
     await sync(server);
 
-    expect(client.data).toEqual({ a: 0 });
-    expect(server.data).toEqual({ a: 0 });
+    expect(client.data).toEqual({ root: { a: 0 } });
+    expect(server.data).toEqual({ root: { a: 0 } });
   });
 });

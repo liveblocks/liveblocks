@@ -1,5 +1,3 @@
-import { assert } from "vitest";
-
 import { makeEventSource } from "~/lib/EventSource.js";
 import type { Json } from "~/lib/Json.js";
 import type { ChangeReturnType, OmitFirstArg } from "~/lib/ts-toolkit.js";
@@ -311,21 +309,13 @@ export class Client<M extends Mutations> {
       const deletions = delta[0];
       const updates = delta[1];
       for (const [nodeId, keys] of Object.entries(deletions)) {
-        assert(
-          nodeId === "root",
-          "ONLY ROOT SUPPORTED FOR NOW, but got: " + nodeId
-        );
         for (const key of keys) {
-          cache.delete(key);
+          cache.delete(nodeId, key);
         }
       }
       for (const [nodeId, updates2] of Object.entries(updates)) {
-        assert(
-          nodeId === "root",
-          "ONLY ROOT SUPPORTED FOR NOW, but got: " + nodeId
-        );
         for (const [key, value] of Object.entries(updates2)) {
-          cache.set(key, value);
+          cache.set(nodeId, key, value);
         }
       }
     }
@@ -366,5 +356,11 @@ export class Client<M extends Mutations> {
   }
 
   // For convenience in unit tests only --------------------------------
-  get data(): Record<string, Json> { return Object.fromEntries(this.#cache); } // prettier-ignore
+  get data(): Record<string, Record<string, Json>> {
+    const obj: Record<string, Record<string, Json>> = {};
+    for (const [nid, key, value] of this.#cache) {
+      (obj[nid] ??= {})[key] = value;
+    }
+    return obj;
+  }
 }

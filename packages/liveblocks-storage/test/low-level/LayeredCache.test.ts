@@ -2,212 +2,234 @@ import { expect, test } from "vitest";
 
 import { LayeredCache } from "~/LayeredCache.js";
 
-import { fmt, size } from "../utils.js";
+import { size } from "../utils.js";
 
 test("empty", () => {
   const cache = new LayeredCache();
   expect(size(cache)).toEqual(0);
-  expect(fmt(cache)).toEqual({});
+  expect(cache.data).toEqual({});
 });
 
 test("setting keys", () => {
   const cache = new LayeredCache();
-  cache.set("a", 1);
-  cache.set("b", "hi");
-  cache.set("c", null);
+  cache.set("root", "a", 1);
+  cache.set("root", "b", "hi");
+  cache.set("root", "c", null);
   expect(size(cache)).toEqual(3);
-  expect(fmt(cache)).toEqual({
-    a: 1,
-    b: "hi",
-    c: null,
+  expect(cache.data).toEqual({
+    root: {
+      a: 1,
+      b: "hi",
+      c: null,
+    },
   });
 });
 
 test("setting to undefined is the same as removing a key", () => {
   const cache = new LayeredCache();
-  cache.set("a", 1);
-  cache.set("b", "hi");
+  cache.set("root", "a", 1);
+  cache.set("root", "b", "hi");
   // @ts-expect-error `undefined` isn't JSON
-  cache.set("d", undefined);
+  cache.set("root", "d", undefined);
   // @ts-expect-error `undefined` isn't JSON
-  cache.set("a", undefined);
+  cache.set("root", "a", undefined);
 
   expect(size(cache)).toEqual(1);
-  expect(fmt(cache)).toEqual({
-    b: "hi",
+  expect(cache.data).toEqual({
+    root: {
+      b: "hi",
+    },
   });
-  expect(Array.from(cache.keys())).toEqual(["b"]);
+  expect(Array.from(cache.keys())).toEqual([["root", "b"]]);
 });
 
 test("has", () => {
   const cache = new LayeredCache();
-  expect(cache.has("k")).toEqual(false);
+  expect(cache.has("r", "k")).toEqual(false);
 
-  cache.set("k", "v");
-  expect(cache.has("k")).toEqual(true);
+  cache.set("r", "k", "v");
+  expect(cache.has("r", "k")).toEqual(true);
 
   // @ts-expect-error - undefined isn't JSON
-  cache.set("k", undefined);
-  expect(cache.has("k")).toEqual(false);
+  cache.set("r", "k", undefined);
+  expect(cache.has("r", "k")).toEqual(false);
 
-  cache.delete("foo");
-  expect(cache.has("foo")).toEqual(false);
-  cache.set("foo", false);
-  expect(cache.has("foo")).toEqual(true);
-  cache.delete("foo");
-  expect(cache.has("foo")).toEqual(false);
+  cache.delete("r", "foo");
+  expect(cache.has("r", "foo")).toEqual(false);
+  cache.set("r", "foo", false);
+  expect(cache.has("r", "foo")).toEqual(true);
+  cache.delete("r", "foo");
+  expect(cache.has("r", "foo")).toEqual(false);
 });
 
 test("get", () => {
   const cache = new LayeredCache();
-  expect(cache.get("k")).toBe(undefined);
+  expect(cache.get("root", "k")).toBe(undefined);
 
-  cache.set("k", "v");
-  expect(cache.get("k")).toBe("v");
+  cache.set("root", "k", "v");
+  expect(cache.get("root", "k")).toBe("v");
 
-  cache.set("k", 123);
-  expect(cache.get("k")).toBe(123);
+  cache.set("root", "k", 123);
+  expect(cache.get("root", "k")).toBe(123);
 
-  cache.set("k", null);
-  expect(cache.get("k")).toBe(null);
+  cache.set("root", "k", null);
+  expect(cache.get("root", "k")).toBe(null);
 
   // @ts-expect-error - undefined isn't JSON
-  cache.set("k", undefined);
-  expect(cache.get("k")).toBe(undefined);
+  cache.set("root", "k", undefined);
+  expect(cache.get("root", "k")).toBe(undefined);
 });
 
 test("keys", () => {
   const cache = new LayeredCache();
-  cache.set("a", 1);
-  cache.delete("a");
-  cache.set("a", 42);
-  cache.set("b", 2);
-  expect(Array.from(cache.keys())).toEqual(["a", "b"]);
+  cache.set("root", "a", 1);
+  cache.delete("root", "a");
+  cache.set("root", "a", 42);
+  cache.set("root", "b", 2);
+  expect(Array.from(cache.keys())).toEqual([
+    ["root", "a"],
+    ["root", "b"],
+  ]);
 });
 
-test("values", () => {
-  const cache = new LayeredCache();
-  cache.set("a", 1);
-  cache.delete("a");
-  cache.set("a", 42);
-  cache.set("b", 2);
-  expect(Array.from(cache.values())).toEqual([42, 2]);
-});
+// XXX Values is a useless abstraction
+// test("values", () => {
+//   const cache = new LayeredCache();
+//   cache.set("rt", "a", 1);
+//   cache.delete("rt", "a");
+//   cache.set("rt", "a", 42);
+//   cache.set("rt", "b", 2);
+//   expect(Array.from(cache.values())).toEqual([
+//     ["rt", 42],
+//     ["rt", 2],
+//   ]);
+// });
 
 test("entries", () => {
   const cache = new LayeredCache();
-  cache.set("a", 1);
-  cache.delete("a");
-  cache.set("a", 42);
-  cache.set("b", 2);
+  cache.set("r1", "a", 1);
+  cache.delete("r1", "a");
+  cache.set("r1", "a", 42);
+  cache.set("r1", "b", 2);
+
+  cache.set("r2", "a", 0);
+  cache.delete("r2", "a");
+  cache.set("r2", "b", 9);
   expect(Array.from(cache.entries())).toEqual([
-    ["a", 42],
-    ["b", 2],
+    ["r1", "a", 42],
+    ["r1", "b", 2],
+    ["r2", "b", 9],
   ]);
 });
 
 test("has (inside a transaction)", () => {
   const cache = new LayeredCache();
   cache.startTransaction();
-  expect(cache.has("k")).toEqual(false);
+  expect(cache.has("r", "k")).toEqual(false);
 
-  cache.set("k", "v");
-  expect(cache.has("k")).toEqual(true);
+  cache.set("r", "k", "v");
+  expect(cache.has("r", "k")).toEqual(true);
 
   // @ts-expect-error - undefined isn't JSON
-  cache.set("k", undefined);
-  expect(cache.has("k")).toEqual(false);
+  cache.set("r", "k", undefined);
+  expect(cache.has("r", "k")).toEqual(false);
 
-  cache.delete("foo");
-  expect(cache.has("foo")).toEqual(false);
-  cache.set("foo", false);
-  expect(cache.has("foo")).toEqual(true);
-  cache.delete("foo");
-  expect(cache.has("foo")).toEqual(false);
+  cache.delete("r", "foo");
+  expect(cache.has("r", "foo")).toEqual(false);
+  cache.set("r", "foo", false);
+  expect(cache.has("r", "foo")).toEqual(true);
+  cache.delete("r", "foo");
+  expect(cache.has("r", "foo")).toEqual(false);
 });
 
 test("get (inside a transaction)", () => {
   const cache = new LayeredCache();
   cache.startTransaction();
-  expect(cache.get("fuuu")).toBe(undefined);
+  expect(cache.get("r", "fuuu")).toBe(undefined);
 
-  cache.set("k", "v");
-  expect(cache.get("k")).toBe("v");
+  cache.set("r", "k", "v");
+  expect(cache.get("r", "k")).toBe("v");
 
-  cache.set("k", 123);
-  expect(cache.get("k")).toBe(123);
+  cache.set("r", "k", 123);
+  expect(cache.get("r", "k")).toBe(123);
 
-  cache.set("k", null);
-  expect(cache.get("k")).toBe(null);
+  cache.set("r", "k", null);
+  expect(cache.get("r", "k")).toBe(null);
 
   // @ts-expect-error - undefined isn't JSON
-  cache.set("k", undefined);
-  expect(cache.get("k")).toBe(undefined);
+  cache.set("r", "k", undefined);
+  expect(cache.get("r", "k")).toBe(undefined);
 });
 
 test("keys (inside a transaction)", () => {
   const cache = new LayeredCache();
   cache.startTransaction();
-  cache.set("a", 1);
-  cache.delete("a");
-  cache.set("a", 42);
-  cache.set("b", 2);
-  expect(Array.from(cache.keys())).toEqual(["a", "b"]);
+  cache.set("r", "a", 1);
+  cache.delete("r", "a");
+  cache.set("r", "a", 42);
+  cache.set("r", "b", 2);
+  expect(Array.from(cache.keys())).toEqual([
+    ["r", "a"],
+    ["r", "b"],
+  ]);
 });
 
-test("values (inside a transaction)", () => {
-  const cache = new LayeredCache();
-  cache.startTransaction();
-  cache.set("a", 1);
-  cache.delete("a");
-  cache.set("a", 42);
-  cache.set("b", 2);
-  expect(Array.from(cache.values())).toEqual([42, 2]);
-});
+// XXX Values is a useless abstraction
+// test("values (inside a transaction)", () => {
+//   const cache = new LayeredCache();
+//   cache.startTransaction();
+//   cache.set("r", "a", 1);
+//   cache.delete("r", "a");
+//   cache.set("r", "a", 42);
+//   cache.set("r", "b", 2);
+//   expect(Array.from(cache.values())).toEqual([42, 2]);
+// });
 
 test("entries (inside a transaction)", () => {
   const cache = new LayeredCache();
   cache.startTransaction();
-  cache.set("a", 1);
-  cache.delete("a");
-  cache.set("a", 42);
-  cache.set("b", 2);
+  cache.set("r", "a", 1);
+  cache.delete("r", "a");
+  cache.set("r", "a", 42);
+  cache.set("r", "b", 2);
   expect(Array.from(cache.entries())).toEqual([
-    ["a", 42],
-    ["b", 2],
+    ["r", "a", 42],
+    ["r", "b", 2],
   ]);
 });
 
 test("get", () => {
   const cache = new LayeredCache();
-  cache.set("k", "a");
-  cache.set("k", "v");
-  cache.set("abc", 123);
-  cache.set("def", 123);
-  cache.set("foo", null);
-  cache.delete("def");
-  cache.delete("bla");
+  cache.set("r", "k", "a");
+  cache.set("r", "k", "v");
+  cache.set("r", "abc", 123);
+  cache.set("r", "def", 123);
+  cache.set("r", "foo", null);
+  cache.delete("r", "def");
+  cache.delete("r", "bla");
 
   expect(size(cache)).toEqual(3);
-  expect(fmt(cache)).toEqual({ k: "v", abc: 123, foo: null });
-  expect(cache.get("k")).toEqual("v");
-  expect(cache.get("abc")).toEqual(123);
-  expect(cache.get("foo")).toEqual(null);
-  expect(cache.get("def")).toEqual(undefined);
-  expect(cache.get("bla")).toEqual(undefined);
-  expect(cache.get("xyz")).toEqual(undefined);
+  expect(cache.data).toEqual({ r: { k: "v", abc: 123, foo: null } });
+  expect(cache.get("r", "k")).toEqual("v");
+  expect(cache.get("r", "abc")).toEqual(123);
+  expect(cache.get("r", "foo")).toEqual(null);
+  expect(cache.get("r", "def")).toEqual(undefined);
+  expect(cache.get("r", "bla")).toEqual(undefined);
+  expect(cache.get("r", "xyz")).toEqual(undefined);
 });
 
 test("it supports iteration", () => {
   const cache = new LayeredCache();
-  cache.set("a", "a");
-  cache.set("b", "b");
-  cache.set("c", "c");
-  cache.delete("b");
-  cache.delete("d");
+  cache.set("r", "a", "a");
+  cache.set("r", "b", "b");
+  cache.set("r", "c", "c");
+  cache.delete("r", "b");
+  cache.delete("r", "d");
 
-  const obj = Object.fromEntries(cache);
-  expect(obj).toEqual({ a: "a", c: "c" });
+  expect(Array.from(cache)).toEqual([
+    ["r", "a", "a"],
+    ["r", "c", "c"],
+  ]);
 });
 
 test("committing before snapshotting fails", () => {
@@ -222,140 +244,137 @@ test("rolling back before snapshotting fails", () => {
 
 test("adding new keys in a transaction are committed atomically", () => {
   const cache = new LayeredCache();
-  cache.set("a", 1);
+  cache.set("r", "a", 1);
 
   cache.startTransaction();
-  expect(fmt(cache)).toEqual({ a: 1 });
-  cache.set("b", 2);
-  expect(fmt(cache)).toEqual({ a: 1, b: 2 });
-  cache.set("c", 3);
-  expect(fmt(cache)).toEqual({ a: 1, b: 2, c: 3 });
+  expect(cache.data).toEqual({ r: { a: 1 } });
+  cache.set("r", "b", 2);
+  expect(cache.data).toEqual({ r: { a: 1, b: 2 } });
+  cache.set("r", "c", 3);
+  expect(cache.data).toEqual({ r: { a: 1, b: 2, c: 3 } });
   cache.commit();
 
-  expect(fmt(cache)).toEqual({ a: 1, b: 2, c: 3 });
+  expect(cache.data).toEqual({ r: { a: 1, b: 2, c: 3 } });
 });
 
 test("deleting keys happens atomically", () => {
   const cache = new LayeredCache();
-  cache.set("a", 1);
-  cache.set("b", 2);
+  cache.set("r", "a", 1);
+  cache.set("r", "b", 2);
 
   cache.startTransaction();
-  cache.delete("a");
-  cache.delete("b");
-  expect(fmt(cache)).toEqual({});
+  cache.delete("r", "a");
+  cache.delete("r", "b");
+  expect(cache.data).toEqual({});
   cache.rollback();
-  expect(fmt(cache)).toEqual({ a: 1, b: 2 });
+  expect(cache.data).toEqual({ r: { a: 1, b: 2 } });
 
   cache.startTransaction();
-  cache.delete("a");
-  cache.delete("b");
-  expect(fmt(cache)).toEqual({});
+  cache.delete("r", "a");
+  cache.delete("r", "b");
+  expect(cache.data).toEqual({});
   cache.commit();
-  expect(fmt(cache)).toEqual({});
+  expect(cache.data).toEqual({});
 });
 
 test("adding new keys in a transaction are committed atomically", () => {
   const cache = new LayeredCache();
-  cache.set("a", 1);
+  cache.set("r", "a", 1);
 
   cache.startTransaction();
-  expect(fmt(cache)).toEqual({ a: 1 });
-  cache.delete("a");
-  cache.delete("a");
-  cache.delete("a");
-  cache.delete("a");
-  expect(fmt(cache)).toEqual({});
-  cache.set("a", 42);
-  expect(fmt(cache)).toEqual({ a: 42 });
+  expect(cache.data).toEqual({ r: { a: 1 } });
+  cache.delete("r", "a");
+  cache.delete("r", "a");
+  cache.delete("r", "a");
+  cache.delete("r", "a");
+  expect(cache.data).toEqual({});
+  cache.set("r", "a", 42);
+  expect(cache.data).toEqual({ r: { a: 42 } });
   cache.commit();
 
-  expect(fmt(cache)).toEqual({ a: 42 });
+  expect(cache.data).toEqual({ r: { a: 42 } });
 });
 
 test("rolling back transaction", () => {
   const cache = new LayeredCache();
-  cache.set("a", 1);
-  cache.set("b", 2);
-  expect(fmt(cache)).toEqual({ a: 1, b: 2 });
+  cache.set("r", "a", 1);
+  cache.set("r", "b", 2);
+  expect(cache.data).toEqual({ r: { a: 1, b: 2 } });
 
   cache.startTransaction();
-  cache.set("a", 42);
-  cache.set("c", 3);
-  cache.set("d", 4);
-  cache.delete("b");
-  cache.delete("z");
-  expect(fmt(cache)).toEqual({ a: 42, c: 3, d: 4 });
+  cache.set("r", "a", 42);
+  cache.set("r", "c", 3);
+  cache.set("r", "d", 4);
+  cache.delete("r", "b");
+  cache.delete("r", "z");
+  expect(cache.data).toEqual({ r: { a: 42, c: 3, d: 4 } });
 
   cache.rollback();
-  expect(fmt(cache)).toEqual({ a: 1, b: 2 });
+  expect(cache.data).toEqual({ r: { a: 1, b: 2 } });
 });
 
 test("getting delta without a transaction makes no sense and will error", () => {
   const cache = new LayeredCache();
-  cache.set("a", 1);
+  cache.set("r", "a", 1);
   expect(() => cache.delta()).toThrow("No transaction to get delta for");
 });
 
 test("delta in current transaction", () => {
   const cache = new LayeredCache();
-  cache.set("a", 1);
+  cache.set("r", "a", 1);
 
   cache.startTransaction();
-  cache.set("b", 2);
-  cache.set("c", 3);
-  cache.delete("c");
-  cache.delete("d");
-  cache.set("b", 4);
-  cache.set("y", 5);
+  cache.set("r", "b", 2);
+  cache.set("r", "c", 3);
+  cache.delete("r", "c");
+  cache.delete("r", "d");
+  cache.set("r", "b", 4);
+  cache.set("r", "y", 5);
 
   expect(Array.from(cache.delta())).toEqual([
-    { root: ["c", "d"] },
-    { root: { b: 4, y: 5 } },
+    { r: ["c", "d"] },
+    { r: { b: 4, y: 5 } },
   ]);
 
   cache.startTransaction();
   expect(Array.from(cache.delta())).toEqual([{}, {}]);
-  cache.delete("x");
-  cache.set("b", 42);
-  expect(Array.from(cache.delta())).toEqual([
-    { root: ["x"] },
-    { root: { b: 42 } },
-  ]);
+  cache.delete("r", "x");
+  cache.set("r", "b", 42);
+  expect(Array.from(cache.delta())).toEqual([{ r: ["x"] }, { r: { b: 42 } }]);
   cache.commit();
 
   expect(Array.from(cache.delta())).toEqual([
-    { root: ["c", "d", "x"] },
-    { root: { b: 42, y: 5 } },
+    { r: ["c", "d", "x"] },
+    { r: { b: 42, y: 5 } },
   ]);
 });
 
 test("nesting snapshots", () => {
   const cache = new LayeredCache();
-  cache.set("a", 1);
+  cache.set("r", "a", 1);
 
   cache.startTransaction();
-  cache.delete("a");
-  cache.set("b", 2);
-  expect(fmt(cache)).toEqual({ b: 2 });
+  cache.delete("r", "a");
+  cache.set("r", "b", 2);
+  expect(cache.data).toEqual({ r: { b: 2 } });
 
   cache.startTransaction();
-  cache.set("b", 3);
-  cache.set("z", 42);
+  cache.set("r", "b", 3);
+  cache.set("r", "z", 42);
   cache.commit();
-  expect(fmt(cache)).toEqual({ b: 3, z: 42 });
+  expect(cache.data).toEqual({ r: { b: 3, z: 42 } });
 
   cache.startTransaction();
   cache.startTransaction();
-  expect(fmt(cache)).toEqual({ b: 3, z: 42 });
+  expect(cache.data).toEqual({ r: { b: 3, z: 42 } });
   cache.rollback();
   cache.rollback();
-  expect(fmt(cache)).toEqual({ b: 3, z: 42 });
+  expect(cache.data).toEqual({ r: { b: 3, z: 42 } });
 
-  cache.set("b", 555);
+  cache.set("r", "b", 555);
   cache.rollback();
 
-  expect(fmt(cache)).toEqual({ a: 1 });
+  expect(cache.data).toEqual({ r: { a: 1 } });
 });
 
 test("resetting", () => {
@@ -363,34 +382,34 @@ test("resetting", () => {
   cache.reset();
 
   expect(size(cache)).toEqual(0);
-  expect(fmt(cache)).toEqual({});
+  expect(cache.data).toEqual({});
 });
 
 test("resetting (outside transaction)", () => {
   const cache = new LayeredCache();
 
-  cache.set("a", 1);
+  cache.set("r", "a", 1);
   expect(size(cache)).toEqual(1);
-  expect(fmt(cache)).toEqual({ a: 1 });
+  expect(cache.data).toEqual({ r: { a: 1 } });
 
   cache.reset();
   expect(size(cache)).toEqual(0);
-  expect(fmt(cache)).toEqual({});
+  expect(cache.data).toEqual({});
 });
 
 test("resetting (inside transaction)", () => {
   const cache = new LayeredCache();
 
-  cache.set("a", 1);
+  cache.set("r", "a", 1);
   expect(size(cache)).toEqual(1);
-  expect(fmt(cache)).toEqual({ a: 1 });
+  expect(cache.data).toEqual({ r: { a: 1 } });
 
   cache.startTransaction();
-  cache.set("a", 1);
+  cache.set("r", "a", 1);
 
   cache.reset(); // Implicit rollback...
   expect(size(cache)).toEqual(0);
-  expect(fmt(cache)).toEqual({});
+  expect(cache.data).toEqual({});
 
   // ...means doing another rollback here would fail
   expect(() => cache.rollback()).toThrow("No transaction to roll back");
@@ -399,24 +418,24 @@ test("resetting (inside transaction)", () => {
 test("resetting (inside nested transactions)", () => {
   const cache = new LayeredCache();
 
-  cache.set("a", 1);
+  cache.set("r", "a", 1);
   expect(size(cache)).toEqual(1);
-  expect(fmt(cache)).toEqual({ a: 1 });
+  expect(cache.data).toEqual({ r: { a: 1 } });
 
   cache.startTransaction();
-  cache.set("a", 2);
+  cache.set("r", "a", 2);
 
   expect(size(cache)).toEqual(1);
-  expect(fmt(cache)).toEqual({ a: 2 });
+  expect(cache.data).toEqual({ r: { a: 2 } });
 
   cache.startTransaction();
-  cache.set("a", 3);
+  cache.set("r", "a", 3);
   expect(size(cache)).toEqual(1);
-  expect(fmt(cache)).toEqual({ a: 3 });
+  expect(cache.data).toEqual({ r: { a: 3 } });
 
   cache.reset(); // Implicit rollback...
   expect(size(cache)).toEqual(0);
-  expect(fmt(cache)).toEqual({});
+  expect(cache.data).toEqual({});
 
   // ...means doing another rollback here would fail
   expect(() => cache.rollback()).toThrow("No transaction to roll back");
@@ -424,13 +443,13 @@ test("resetting (inside nested transactions)", () => {
 
 test("getNumber", () => {
   const cache = new LayeredCache();
-  cache.set("abc", 123);
-  cache.set("foo", "bar");
+  cache.set("r", "abc", 123);
+  cache.set("r", "foo", "bar");
 
   expect(size(cache)).toEqual(2);
-  expect(cache.get("foo")).toEqual("bar");
-  expect(cache.get("abc")).toEqual(123);
+  expect(cache.get("r", "foo")).toEqual("bar");
+  expect(cache.get("r", "abc")).toEqual(123);
 
-  expect(cache.getNumber("abc")).toEqual(123);
-  expect(cache.getNumber("foo")).toEqual(undefined);
+  expect(cache.getNumber("r", "abc")).toEqual(123);
+  expect(cache.getNumber("r", "foo")).toEqual(undefined);
 });

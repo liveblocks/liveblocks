@@ -3,23 +3,10 @@
 import { onTestFinished } from "vitest";
 
 import { Client, Server } from "~/index.js";
-import { LayeredCache } from "~/LayeredCache.js";
-import type { Json } from "~/lib/Json.js";
+import type { LayeredCache } from "~/LayeredCache.js";
 import { makePipe } from "~/lib/Pipe.js";
-import { SQLCache } from "~/SQLCache.js";
+import type { SQLCache } from "~/SQLCache.js";
 import type { ClientMsg, Mutations, ServerMsg, Socket } from "~/types.js";
-
-export function fmt(
-  /* eslint-disable @typescript-eslint/no-explicit-any */
-  value: Client<any> | Server | LayeredCache | SQLCache
-  /* eslint-enable @typescript-eslint/no-explicit-any */
-): Record<string, Json> {
-  if (value instanceof LayeredCache || value instanceof SQLCache) {
-    return Object.fromEntries(value);
-  } else {
-    return value.data;
-  }
-}
 
 export function size(cache: LayeredCache | SQLCache): number {
   return cache.count();

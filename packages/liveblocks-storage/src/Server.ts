@@ -214,6 +214,12 @@ export class Server {
   }
 
   // For convenience in unit tests only --------------------------------
-  get data(): Record<string, Json> { return Object.fromEntries(this.#cache); } // prettier-ignore
+  get data(): Record<string, Record<string, Json>> {
+    const obj: Record<string, Record<string, Json>> = {};
+    for (const [nid, key, value] of this.#cache) {
+      (obj[nid] ??= {})[key] = value;
+    }
+    return obj;
+  }
   get clock(): number { return this.#cache.clock; } // prettier-ignore
 }

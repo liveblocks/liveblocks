@@ -1,13 +1,12 @@
 import type { Observable } from "./lib/EventSource.js";
 import type { Json } from "./lib/Json.js";
-import type { Brand } from "./lib/ts-toolkit.js";
 
 export type Socket<Out, In> = {
   send: (data: Out) => void;
   recv: Observable<In>;
 };
 
-export type NodeId = Brand<string, "NodeId">;
+export type NodeId = string; // TODO Maybe brand later?
 
 /**
  * A unique Op ID for this Op. Lamport clock consisting of the original actor
@@ -144,12 +143,12 @@ export type ServerMsg =
   | DeltaServerMsg;
 
 export interface Transaction {
-  has(key: string): boolean;
-  get(key: string): Json | undefined;
-  getNumber(key: string): number | undefined;
-  keys(): IterableIterator<string>;
-  set(key: string, value: Json): void;
-  delete(key: string): boolean;
+  has(nodeId: NodeId, key: string): boolean;
+  get(nodeId: NodeId, key: string): Json | undefined;
+  getNumber(nodeId: NodeId, key: string): number | undefined;
+  keys(): IterableIterator<[nodeId: NodeId, key: string]>;
+  set(nodeId: NodeId, key: string, value: Json): void;
+  delete(nodeId: NodeId, key: string): boolean;
 }
 
 export type Mutation = (

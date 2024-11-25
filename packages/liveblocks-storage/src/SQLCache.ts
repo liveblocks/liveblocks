@@ -5,7 +5,7 @@ import type { Json } from "~/lib/Json.js";
 
 import type { Delta, NodeId, Transaction } from "./types.js";
 
-const ROOT = "root" as NodeId;
+// const ROOT = "root" as NodeId;
 
 function createDB() {
   const db = sqlite3(":memory:");
@@ -151,8 +151,8 @@ export class SQLCache {
   // "Convenience" accessors to make implementing mutations easier
   // ----------------------------------------------------
 
-  getNumber(key: string): number | undefined {
-    const value = this.get(key);
+  getNumber(nodeId: NodeId, key: string): number | undefined {
+    const value = this.get(nodeId, key);
     return typeof value === "number" ? value : undefined;
   }
 
@@ -167,51 +167,55 @@ export class SQLCache {
     return this.#q.storage.countAll.get()!;
   }
 
-  has(key: string): boolean {
-    return !!this.#q.storage.exists.get(ROOT, key);
+  has(nodeId: NodeId, key: string): boolean {
+    return !!this.#q.storage.exists.get(nodeId, key);
   }
 
-  get(key: string): Json | undefined {
-    const jval = this.#q.storage.selectKey.get(ROOT, key);
+  get(nodeId: NodeId, key: string): Json | undefined {
+    const jval = this.#q.storage.selectKey.get(nodeId, key);
     return jval !== undefined ? (JSON.parse(jval) as Json) : undefined;
   }
 
-  #set(key: string, value: Json): boolean {
+  #set(nodeId: NodeId, key: string, value: Json): boolean {
     if (value === undefined) {
-      return this.#delete(key);
+      return this.#delete(nodeId, key);
     } else {
       const jval = JSON.stringify(value);
-      this.#q.storage.upsertKeyValue.run(ROOT, key, jval);
-      this.#q.versions.upsertKeyValue.run(ROOT, key, this.#pendingClock, jval);
+      this.#q.storage.upsertKeyValue.run(nodeId, key, jval);
+      this.#q.versions.upsertKeyValue.run(
+        nodeId,
+        key,
+        this.#pendingClock,
+        jval
+      );
       return true;
     }
   }
 
-  #delete(key: string): boolean {
-    const result = this.#q.storage.deleteKey.run(ROOT, key);
+  #delete(nodeId: NodeId, key: string): boolean {
+    const result = this.#q.storage.deleteKey.run(nodeId, key);
     if (result.changes > 0) {
-      this.#q.versions.deleteKey.run(ROOT, key, this.#pendingClock);
+      this.#q.versions.deleteKey.run(nodeId, key, this.#pendingClock);
       return true;
     } else {
       return false;
     }
   }
 
-  *keys(): IterableIterator<string> {
-    const rows = this.#q.storage.selectAllKeys.iterate();
-    for (const [_nid, key] of rows) {
-      yield key;
-    }
+  keys(): IterableIterator<[nodeId: NodeId, key: string]> {
+    return this.#q.storage.selectAllKeys.iterate();
   }
 
-  *entries(): IterableIterator<[key: string, value: Json]> {
+  *entries(): IterableIterator<[nodeId: NodeId, key: string, value: Json]> {
     const rows = this.#q.storage.selectAll.iterate();
-    for (const [_nid, key, jval] of rows) {
-      yield [key, JSON.parse(jval)];
+    for (const [nid, key, jval] of rows) {
+      yield [nid, key, JSON.parse(jval)];
     }
   }
 
-  [Symbol.iterator](): IterableIterator<[key: string, value: Json]> {
+  [Symbol.iterator](): IterableIterator<
+    [nodeId: NodeId, key: string, value: Json]
+  > {
     return this.entries();
   }
 
@@ -253,17 +257,17 @@ export class SQLCache {
 
     let dirty = false;
     const tx: Transaction = {
-      has: (key: string) => this.has(key),
-      get: (key: string) => this.get(key),
-      getNumber: (key: string) => this.getNumber(key),
+      has: (nodeId: NodeId, key: string) => this.has(nodeId, key),
+      get: (nodeId: NodeId, key: string) => this.get(nodeId, key),
+      getNumber: (nodeId: NodeId, key: string) => this.getNumber(nodeId, key),
       keys: () => this.keys(),
-      set: (key: string, value: Json) => {
-        const updated = this.#set(key, value);
+      set: (nodeId: NodeId, key: string, value: Json) => {
+        const updated = this.#set(nodeId, key, value);
         dirty ||= updated;
         return updated;
       },
-      delete: (key: string) => {
-        const deleted = this.#delete(key);
+      delete: (nodeId: NodeId, key: string) => {
+        const deleted = this.#delete(nodeId, key);
         dirty ||= deleted;
         return deleted;
       },
@@ -298,5 +302,14 @@ export class SQLCache {
   #rollback(): void {
     this.#q.rollback.run();
     this.#pendingClock = this.#clock;
+  }
+
+  // For convenience in unit tests only --------------------------------
+  get data(): Record<string, Record<string, Json>> {
+    const obj: Record<string, Record<string, Json>> = {};
+    for (const [nid, key, value] of this) {
+      (obj[nid] ??= {})[key] = value;
+    }
+    return obj;
   }
 }

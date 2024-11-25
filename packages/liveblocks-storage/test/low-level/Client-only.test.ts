@@ -19,7 +19,7 @@ test("set string", () => {
 
   client.mutate.put("a", "a");
 
-  expect(client.data).toEqual({ a: "a" });
+  expect(client.data).toEqual({ root: { a: "a" } });
 });
 
 test("set number", () => {
@@ -28,7 +28,7 @@ test("set number", () => {
 
   client.mutate.put("a", 0);
 
-  expect(client.data).toEqual({ a: 0 });
+  expect(client.data).toEqual({ root: { a: 0 } });
 });
 
 test("set object", () => {
@@ -37,7 +37,7 @@ test("set object", () => {
 
   client.mutate.put("a", { foo: "bar" });
 
-  expect(client.data).toEqual({ a: { foo: "bar" } });
+  expect(client.data).toEqual({ root: { a: { foo: "bar" } } });
 });
 
 // test("set LiveObject", () => {
@@ -132,7 +132,7 @@ test("del", () => {
   expect(client.data).toEqual({});
 
   client.mutate.put("a", "a");
-  expect(client.data).toEqual({ a: "a" });
+  expect(client.data).toEqual({ root: { a: "a" } });
 
   client.mutate.del("a");
   expect(client.data).toEqual({});
@@ -307,7 +307,7 @@ test("get value during transaction should come from transaction cache", () => {
   const client = new Client({ putAndInc });
 
   client.mutate.putAndInc("A", 0);
-  expect(client.data).toEqual({ A: 1 });
+  expect(client.data).toEqual({ root: { A: 1 } });
 });
 
 test("when client mutation errors it should rollback transaction", () => {
@@ -363,7 +363,7 @@ test("errors thrown by deferred client mutations (ie after rebase) should not be
   client1.mutate.dupe("a", "b");
   await sync(client1);
 
-  expect(client1.data).toEqual({ a: 1, b: 1 });
+  expect(client1.data).toEqual({ root: { a: 1, b: 1 } });
   expect(client2.data).toEqual({});
 
   await sync();
