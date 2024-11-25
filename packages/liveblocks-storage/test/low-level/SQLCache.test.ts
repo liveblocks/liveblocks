@@ -319,7 +319,7 @@ test("it supports iteration", () => {
   expect(obj).toEqual({ a: "a", c: "c" });
 });
 
-test("getNumber", () => {
+test("convenience: getNumber", () => {
   const cache = new SQLCache();
   cache.mutate((tx) => {
     tx.set("abc", 123);
@@ -332,4 +332,52 @@ test("getNumber", () => {
 
   expect(cache.getNumber("abc")).toEqual(123);
   expect(cache.getNumber("foo")).toEqual(undefined);
+});
+
+test("taking deltas", () => {
+  const cache = new SQLCache();
+
+  // v1
+  cache.mutate((tx) => {
+    tx.set("abc", 1);
+    tx.set("foo", "bar");
+  });
+
+  // v2
+  cache.mutate((tx) => {
+    tx.delete("foo");
+    tx.delete("henk");
+  });
+
+  // v3
+  cache.mutate((tx) => tx.set("henk", 7));
+
+  // v4
+  cache.mutate((tx) => tx.set("abc", 6));
+
+  // v5
+  cache.mutate((tx) => tx.delete("abc"));
+
+  expect(size(cache)).toEqual(1);
+  expect(cache.get("abc")).toEqual(undefined);
+  expect(cache.get("foo")).toEqual(undefined);
+  expect(cache.get("henk")).toEqual(7);
+
+  expect(cache.deltaSince(0)[1]).toEqual(cache.fullDelta()[1]);
+
+  expect(cache.deltaSince(5)).toEqual([{}, {}]);
+  expect(cache.deltaSince(4)).toEqual([{ root: ["abc"] }, {}]);
+  expect(cache.deltaSince(3)).toEqual([{ root: ["abc"] }, {}]);
+  expect(cache.deltaSince(2)).toEqual([
+    { root: ["abc"] },
+    { root: { henk: 7 } },
+  ]);
+  expect(cache.deltaSince(1)).toEqual([
+    { root: ["abc", "foo"] },
+    { root: { henk: 7 } },
+  ]);
+  expect(cache.deltaSince(0)).toEqual([
+    { root: ["abc", "foo"] },
+    { root: { henk: 7 } },
+  ]);
 });

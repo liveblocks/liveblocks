@@ -5,7 +5,6 @@ import type {
   ClientMsg,
   Delta,
   Mutations,
-  NodeId,
   Op,
   ServerMsg,
   Socket,
@@ -145,21 +144,25 @@ export class Server {
       }
 
       case "CatchUpClientMsg": {
-        const kvstream: Record<string, Json> = {};
-
-        for (const [key, value] of this.#cache) {
-          if (value !== undefined) {
-            kvstream[key] = value;
-          }
+        // We can easily return the delta-since, or the full document state at
+        // this point. We just need to decide on the best heuristic for doing
+        // one or the other here.
+        //
+        // TODO Decide on heuristic/conditional
+        if (msg.since === 0 || msg.since > 100) {
+          this.#send(curr, {
+            type: "InitialSyncServerMsg",
+            serverClock: this.#cache.clock,
+            delta: this.#cache.fullDelta(),
+            fullCC: true,
+          });
+        } else {
+          this.#send(curr, {
+            type: "InitialSyncServerMsg",
+            serverClock: this.#cache.clock,
+            delta: this.#cache.deltaSince(msg.since),
+          });
         }
-
-        this.#send(curr, {
-          type: "InitialSyncServerMsg",
-          serverClock: this.#cache.clock,
-          // XXX Lift "root" out
-          delta: [{}, { ["root" as NodeId]: kvstream }],
-          fullCC: true,
-        });
         return;
       }
 

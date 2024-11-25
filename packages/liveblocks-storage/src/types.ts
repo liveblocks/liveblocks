@@ -149,7 +149,7 @@ export interface Transaction {
   getNumber(key: string): number | undefined;
   keys(): IterableIterator<string>;
   set(key: string, value: Json): void;
-  delete(key: string): void;
+  delete(key: string): boolean;
 }
 
 export type Mutation = (
