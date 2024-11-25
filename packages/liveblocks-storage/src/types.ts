@@ -1,5 +1,6 @@
 import type { Observable } from "./lib/EventSource.js";
 import type { Json } from "./lib/Json.js";
+import type { LiveObject } from "./LiveObject.js";
 
 export type Socket<Out, In> = {
   send: (data: Out) => void;
@@ -145,14 +146,14 @@ export type ServerMsg =
 export interface Transaction {
   has(nodeId: NodeId, key: string): boolean;
   get(nodeId: NodeId, key: string): Json | undefined;
-  getNumber(nodeId: NodeId, key: string): number | undefined;
-  keys(): IterableIterator<[nodeId: NodeId, key: string]>;
+  keys(nodeId: NodeId): IterableIterator<string>;
+  // values(nodeId: NodeId): IterableIterator<Json>;
   set(nodeId: NodeId, key: string, value: Json): void;
   delete(nodeId: NodeId, key: string): boolean;
 }
 
 export type Mutation = (
-  root: Transaction,
+  root: LiveObject,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ...args: readonly any[]
 ) => void;

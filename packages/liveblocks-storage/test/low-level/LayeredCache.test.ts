@@ -2,20 +2,22 @@ import { expect, test } from "vitest";
 
 import { LayeredCache } from "~/LayeredCache.js";
 
-import { size } from "../utils.js";
-
 test("empty", () => {
   const cache = new LayeredCache();
-  expect(size(cache)).toEqual(0);
+  expect(cache.count).toEqual(0);
   expect(cache.data).toEqual({});
 });
 
 test("setting keys", () => {
   const cache = new LayeredCache();
+  expect(cache.count).toEqual(0);
   cache.set("root", "a", 1);
+  expect(cache.count).toEqual(1);
+
+  cache.set("root", "b", "hello");
   cache.set("root", "b", "hi");
   cache.set("root", "c", null);
-  expect(size(cache)).toEqual(3);
+  expect(cache.count).toEqual(3);
   expect(cache.data).toEqual({
     root: {
       a: 1,
@@ -34,13 +36,13 @@ test("setting to undefined is the same as removing a key", () => {
   // @ts-expect-error `undefined` isn't JSON
   cache.set("root", "a", undefined);
 
-  expect(size(cache)).toEqual(1);
+  expect(cache.count).toEqual(1);
   expect(cache.data).toEqual({
     root: {
       b: "hi",
     },
   });
-  expect(Array.from(cache.keys())).toEqual([["root", "b"]]);
+  expect(Array.from(cache.keys("root"))).toEqual(["b"]);
 });
 
 test("has", () => {
@@ -86,10 +88,7 @@ test("keys", () => {
   cache.delete("root", "a");
   cache.set("root", "a", 42);
   cache.set("root", "b", 2);
-  expect(Array.from(cache.keys())).toEqual([
-    ["root", "a"],
-    ["root", "b"],
-  ]);
+  expect(Array.from(cache.keys("root"))).toEqual(["a", "b"]);
 });
 
 test("entries", () => {
@@ -102,11 +101,11 @@ test("entries", () => {
   cache.set("r2", "a", 0);
   cache.delete("r2", "a");
   cache.set("r2", "b", 9);
-  expect(Array.from(cache.entries())).toEqual([
-    ["r1", "a", 42],
-    ["r1", "b", 2],
-    ["r2", "b", 9],
+  expect(Array.from(cache.entries("r1"))).toEqual([
+    ["a", 42],
+    ["b", 2],
   ]);
+  expect(Array.from(cache.entries("r2"))).toEqual([["b", 9]]);
 });
 
 test("has (inside a transaction)", () => {
@@ -155,10 +154,7 @@ test("keys (inside a transaction)", () => {
   cache.delete("r", "a");
   cache.set("r", "a", 42);
   cache.set("r", "b", 2);
-  expect(Array.from(cache.keys())).toEqual([
-    ["r", "a"],
-    ["r", "b"],
-  ]);
+  expect(Array.from(cache.keys("r"))).toEqual(["a", "b"]);
 });
 
 test("entries (inside a transaction)", () => {
@@ -168,9 +164,9 @@ test("entries (inside a transaction)", () => {
   cache.delete("r", "a");
   cache.set("r", "a", 42);
   cache.set("r", "b", 2);
-  expect(Array.from(cache.entries())).toEqual([
-    ["r", "a", 42],
-    ["r", "b", 2],
+  expect(Array.from(cache.entries("r"))).toEqual([
+    ["a", 42],
+    ["b", 2],
   ]);
 });
 
@@ -184,7 +180,7 @@ test("get", () => {
   cache.delete("r", "def");
   cache.delete("r", "bla");
 
-  expect(size(cache)).toEqual(3);
+  expect(cache.count).toEqual(3);
   expect(cache.data).toEqual({ r: { k: "v", abc: 123, foo: null } });
   expect(cache.get("r", "k")).toEqual("v");
   expect(cache.get("r", "abc")).toEqual(123);
@@ -357,7 +353,7 @@ test("resetting", () => {
   const cache = new LayeredCache();
   cache.reset();
 
-  expect(size(cache)).toEqual(0);
+  expect(cache.count).toEqual(0);
   expect(cache.data).toEqual({});
 });
 
@@ -365,11 +361,11 @@ test("resetting (outside transaction)", () => {
   const cache = new LayeredCache();
 
   cache.set("r", "a", 1);
-  expect(size(cache)).toEqual(1);
+  expect(cache.count).toEqual(1);
   expect(cache.data).toEqual({ r: { a: 1 } });
 
   cache.reset();
-  expect(size(cache)).toEqual(0);
+  expect(cache.count).toEqual(0);
   expect(cache.data).toEqual({});
 });
 
@@ -377,14 +373,14 @@ test("resetting (inside transaction)", () => {
   const cache = new LayeredCache();
 
   cache.set("r", "a", 1);
-  expect(size(cache)).toEqual(1);
+  expect(cache.count).toEqual(1);
   expect(cache.data).toEqual({ r: { a: 1 } });
 
   cache.startTransaction();
   cache.set("r", "a", 1);
 
   cache.reset(); // Implicit rollback...
-  expect(size(cache)).toEqual(0);
+  expect(cache.count).toEqual(0);
   expect(cache.data).toEqual({});
 
   // ...means doing another rollback here would fail
@@ -395,37 +391,24 @@ test("resetting (inside nested transactions)", () => {
   const cache = new LayeredCache();
 
   cache.set("r", "a", 1);
-  expect(size(cache)).toEqual(1);
+  expect(cache.count).toEqual(1);
   expect(cache.data).toEqual({ r: { a: 1 } });
 
   cache.startTransaction();
   cache.set("r", "a", 2);
 
-  expect(size(cache)).toEqual(1);
+  expect(cache.count).toEqual(1);
   expect(cache.data).toEqual({ r: { a: 2 } });
 
   cache.startTransaction();
   cache.set("r", "a", 3);
-  expect(size(cache)).toEqual(1);
+  expect(cache.count).toEqual(1);
   expect(cache.data).toEqual({ r: { a: 3 } });
 
   cache.reset(); // Implicit rollback...
-  expect(size(cache)).toEqual(0);
+  expect(cache.count).toEqual(0);
   expect(cache.data).toEqual({});
 
   // ...means doing another rollback here would fail
   expect(() => cache.rollback()).toThrow("No transaction to roll back");
-});
-
-test("getNumber", () => {
-  const cache = new LayeredCache();
-  cache.set("r", "abc", 123);
-  cache.set("r", "foo", "bar");
-
-  expect(size(cache)).toEqual(2);
-  expect(cache.get("r", "foo")).toEqual("bar");
-  expect(cache.get("r", "abc")).toEqual(123);
-
-  expect(cache.getNumber("r", "abc")).toEqual(123);
-  expect(cache.getNumber("r", "foo")).toEqual(undefined);
 });

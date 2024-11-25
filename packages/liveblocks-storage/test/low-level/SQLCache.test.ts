@@ -2,14 +2,10 @@ import { expect, test } from "vitest";
 
 import { SQLCache } from "~/SQLCache.js";
 
-import { size } from "../utils.js";
-
 test("empty", () => {
   const cache = new SQLCache();
-  expect(size(cache)).toEqual(0);
+  expect(cache.count).toEqual(0);
   expect(cache.data).toEqual({});
-  expect(cache.get("r", "foo")).toEqual(undefined);
-  expect(cache.has("r", "foo")).toEqual(false);
 });
 
 test("clock advances on every new transaction that is started", () => {
@@ -17,7 +13,7 @@ test("clock advances on every new transaction that is started", () => {
   expect(cache.clock).toEqual(0);
   cache.mutate((tx) => {
     expect(cache.clock).toEqual(1);
-    tx.set("r", "a", 1);
+    tx.set("a", 1);
     expect(cache.clock).toEqual(1);
   });
   expect(cache.clock).toEqual(1);
@@ -29,7 +25,7 @@ test("clock reverts after every failed transaction", () => {
   try {
     cache.mutate((tx) => {
       expect(cache.clock).toEqual(1);
-      tx.set("r", "a", 1);
+      tx.set("a", 1);
       throw new Error("Oops");
     });
   } catch {}
@@ -43,7 +39,7 @@ test("clock will not advance if nothing was written", () => {
     expect(cache.clock).toEqual(1);
     // no-op transaction
     if (0) {
-      tx.set("r", "a", "I will never be executed");
+      tx.set("a", "I will never be executed");
     }
   });
   expect(cache.clock).toEqual(0);
@@ -51,35 +47,35 @@ test("clock will not advance if nothing was written", () => {
 
 test("setting keys (simple values)", () => {
   const cache = new SQLCache();
-  expect(size(cache)).toEqual(0);
+  expect(cache.count).toEqual(0);
   cache.mutate((tx) => {
-    tx.set("r", "a", 1);
+    tx.set("a", 1);
   });
-  expect(size(cache)).toEqual(1);
-  expect(cache.data).toEqual({ r: { a: 1 } });
+  expect(cache.count).toEqual(1);
+  expect(cache.data).toEqual({ root: { a: 1 } });
 });
 
 test("setting keys (simple values)", () => {
   const cache = new SQLCache();
   cache.mutate((tx) => {
-    tx.set("r", "a", 1);
-    tx.set("r", "b", "hi");
-    tx.set("r", "c", null);
+    tx.set("a", 1);
+    tx.set("b", "hi");
+    tx.set("c", null);
   });
-  expect(size(cache)).toEqual(3);
+  expect(cache.count).toEqual(3);
   expect(cache.data).toEqual({
-    r: { a: 1, b: "hi", c: null },
+    root: { a: 1, b: "hi", c: null },
   });
 });
 
 test("setting keys (nested JSON values)", () => {
   const cache = new SQLCache();
   cache.mutate((tx) => {
-    tx.set("r", "a", [1, true, [{ x: false }, {}]]);
+    tx.set("a", [1, true, [{ x: false }, {}]]);
   });
-  expect(size(cache)).toEqual(1);
+  expect(cache.count).toEqual(1);
   expect(cache.data).toEqual({
-    r: {
+    root: {
       a: [1, true, [{ x: false }, {}]],
     },
   });
@@ -88,258 +84,237 @@ test("setting keys (nested JSON values)", () => {
 test("deleting keys", () => {
   const cache = new SQLCache();
   cache.mutate((tx) => {
-    tx.set("r", "a", 1);
-    tx.set("r", "b", "hi");
-    tx.delete("r", "x");
-    tx.delete("r", "b");
+    tx.set("a", 1);
+    tx.set("b", "hi");
+    tx.delete("x");
+    tx.delete("b");
   });
 
-  expect(size(cache)).toEqual(1);
+  expect(cache.count).toEqual(1);
   expect(cache.data).toEqual({
-    r: { a: 1 },
+    root: { a: 1 },
   });
 });
 
 test("deleting keys happens atomically", () => {
   const cache = new SQLCache();
   cache.mutate((tx) => {
-    tx.set("r", "a", 1);
-    tx.set("r", "b", "hi");
+    tx.set("a", 1);
+    tx.set("b", "hi");
   });
-  expect(cache.data).toEqual({ r: { a: 1, b: "hi" } });
+  expect(cache.data).toEqual({ root: { a: 1, b: "hi" } });
 
   expect(() =>
     cache.mutate((tx) => {
-      tx.set("r", "a", 42);
-      tx.delete("r", "x");
-      expect(cache.data).toEqual({ r: { a: 42, b: "hi" } });
-      tx.delete("r", "b");
-      expect(cache.data).toEqual({ r: { a: 42 } });
+      tx.set("a", 42);
+      tx.delete("x");
+      expect(cache.data).toEqual({ root: { a: 42, b: "hi" } });
+      tx.delete("b");
+      expect(cache.data).toEqual({ root: { a: 42 } });
       throw new Error("abort this transaction");
     })
   ).toThrow("abort this transaction");
 
-  expect(cache.data).toEqual({ r: { a: 1, b: "hi" } });
+  expect(cache.data).toEqual({ root: { a: 1, b: "hi" } });
 });
 
 test("setting to undefined is the same as removing a key", () => {
   const cache = new SQLCache();
   cache.mutate((tx) => {
-    tx.set("r", "a", 1);
-    tx.set("r", "b", "hi");
+    tx.set("a", 1);
+    tx.set("b", "hi");
     // @ts-expect-error `undefined` isn't JSON
-    tx.set("r", "d", undefined);
+    tx.set("d", undefined);
     // @ts-expect-error `undefined` isn't JSON
-    tx.set("r", "a", undefined);
+    tx.set("a", undefined);
   });
 
-  expect(size(cache)).toEqual(1);
-  expect(cache.data).toEqual({ r: { b: "hi" } });
+  expect(cache.count).toEqual(1);
+  expect(cache.data).toEqual({ root: { b: "hi" } });
 });
 
 test("has", () => {
   const cache = new SQLCache();
-  expect(cache.has("r", "k")).toEqual(false);
+  expect(cache.data).toEqual({});
 
   cache.mutate((tx) => {
-    tx.set("r", "k", "v");
-    expect(tx.has("r", "k")).toEqual(true);
+    tx.set("k", "v");
+    expect(tx.has("k")).toEqual(true);
 
     // @ts-expect-error - undefined isn't JSON
-    tx.set("r", "k", undefined);
-    expect(tx.has("r", "k")).toEqual(false);
+    tx.set("k", undefined);
+    expect(tx.has("k")).toEqual(false);
 
-    tx.delete("r", "foo");
-    expect(tx.has("r", "foo")).toEqual(false);
-    tx.set("r", "foo", false);
-    expect(tx.has("r", "foo")).toEqual(true);
-    tx.delete("r", "foo");
-    expect(tx.has("r", "foo")).toEqual(false);
+    tx.delete("foo");
+    expect(tx.has("foo")).toEqual(false);
+    tx.set("foo", false);
+    expect(tx.has("foo")).toEqual(true);
+    tx.delete("foo");
+    expect(tx.has("foo")).toEqual(false);
   });
 });
 
 test("get (simple values)", () => {
   const cache = new SQLCache();
-  expect(cache.get("r", "k")).toEqual(undefined);
 
   cache.mutate((tx) => {
-    tx.set("r", "k", "v");
-    expect(tx.get("r", "k")).toEqual("v");
+    tx.set("k", "v");
+    expect(tx.get("k")).toEqual("v");
 
-    tx.set("r", "k", 123);
-    expect(tx.get("r", "k")).toEqual(123);
+    tx.set("k", 123);
+    expect(tx.get("k")).toEqual(123);
 
-    tx.set("r", "k", null);
-    expect(tx.get("r", "k")).toEqual(null);
+    tx.set("k", null);
+    expect(tx.get("k")).toEqual(null);
 
     // @ts-expect-error - undefined isn't JSON
-    tx.set("r", "k", undefined);
-    expect(tx.get("r", "k")).toEqual(undefined);
+    tx.set("k", undefined);
+    expect(tx.get("k")).toEqual(undefined);
   });
 });
 
 test("get (nested JSON values)", () => {
   const cache = new SQLCache();
-  expect(cache.get("r", "k")).toEqual(undefined);
 
   cache.mutate((tx) => {
-    tx.set("r", "k", [1, true, [{ x: false }, {}]]);
-    expect(tx.get("r", "k")).toEqual([1, true, [{ x: false }, {}]]);
+    tx.set("k", [1, true, [{ x: false }, {}]]);
+    expect(tx.get("k")).toEqual([1, true, [{ x: false }, {}]]);
   });
+
+  expect(cache.data).toEqual({ root: { k: [1, true, [{ x: false }, {}]] } });
 });
 
 test("keys", () => {
   const cache = new SQLCache();
   cache.mutate((tx) => {
-    tx.set("r", "a", 1);
-    tx.delete("r", "a");
-    tx.set("r", "a", 42);
-    tx.set("r", "b", 2);
+    tx.set("a", 1);
+    tx.delete("a");
+    tx.set("a", 42);
+    tx.set("b", 2);
   });
-  expect(Array.from(cache.keys())).toEqual([
-    ["r", "a"],
-    ["r", "b"],
-  ]);
+  expect(Array.from(cache.keys("root"))).toEqual(["a", "b"]);
 });
 
 test("entries", () => {
   const cache = new SQLCache();
   cache.mutate((tx) => {
-    tx.set("r", "a", 1);
-    tx.delete("r", "a");
-    tx.set("r", "a", 42);
-    tx.set("r", "b", 2);
+    tx.set("a", 1);
+    tx.delete("a");
+    tx.set("a", 42);
+    tx.set("b", 2);
   });
-  expect(Array.from(cache.entries())).toEqual([
-    ["r", "a", 42],
-    ["r", "b", 2],
+  expect(Array.from(cache.entries("root"))).toEqual([
+    ["a", 42],
+    ["b", 2],
   ]);
-});
-
-test("has (inside a transaction)", () => {
-  const cache = new SQLCache();
-  expect(cache.has("r", "k")).toEqual(false);
-
-  cache.mutate((tx) => {
-    tx.set("r", "k", "v");
-    expect(tx.has("r", "k")).toEqual(true);
-
-    // @ts-expect-error - undefined isn't JSON
-    tx.set("r", "k", undefined);
-    expect(tx.has("r", "k")).toEqual(false);
-
-    tx.delete("r", "foo");
-    expect(tx.has("r", "foo")).toEqual(false);
-    tx.set("r", "foo", false);
-    expect(tx.has("r", "foo")).toEqual(true);
-    tx.delete("r", "foo");
-    expect(tx.has("r", "foo")).toEqual(false);
-
-    tx.set("r", "foo", "bar");
-  });
-
-  expect(cache.has("r", "foo")).toEqual(true);
 });
 
 test("get (inside a transaction)", () => {
   const cache = new SQLCache();
-  expect(cache.get("r", "fuuu")).toEqual(undefined);
 
   cache.mutate((tx) => {
-    tx.set("r", "k", "v");
-    expect(tx.get("r", "k")).toEqual("v");
+    tx.set("k", "v");
+    expect(tx.get("k")).toEqual("v");
 
-    tx.set("r", "k", 123);
-    expect(tx.get("r", "k")).toEqual(123);
+    tx.set("k", 123);
+    expect(tx.get("k")).toEqual(123);
 
-    tx.set("r", "k", null);
-    expect(tx.get("r", "k")).toEqual(null);
+    tx.set("k", null);
+    expect(tx.get("k")).toEqual(null);
 
     // @ts-expect-error - undefined isn't JSON
-    tx.set("r", "k", undefined);
-    expect(tx.get("r", "k")).toEqual(undefined);
+    tx.set("k", undefined);
+    expect(tx.get("k")).toEqual(undefined);
   });
 });
 
 test("keys (inside a transaction)", () => {
   const cache = new SQLCache();
   cache.mutate((tx) => {
-    tx.set("r", "a", 1);
-    tx.delete("r", "a");
-    tx.set("r", "a", 42);
-    tx.set("r", "b", 2);
+    tx.set("a", 1);
+    tx.delete("a");
+    tx.set("a", 42);
+    tx.set("b", 2);
   });
-  expect(Array.from(cache.keys())).toEqual([
-    ["r", "a"],
-    ["r", "b"],
-  ]);
+  expect(Array.from(cache.keys("root"))).toEqual(["a", "b"]);
 });
 
 test("entries (inside a transaction)", () => {
   const cache = new SQLCache();
   cache.mutate((tx) => {
-    tx.set("r", "a", 1);
-    tx.delete("r", "a");
-    tx.set("r", "a", 42);
-    tx.set("r", "b", 2);
+    tx.set("a", 1);
+    tx.delete("a");
+    tx.set("a", 42);
+    tx.set("b", 2);
   });
-  expect(Array.from(cache.entries())).toEqual([
-    ["r", "a", 42],
-    ["r", "b", 2],
+  expect(Array.from(cache.entries("root"))).toEqual([
+    ["a", 42],
+    ["b", 2],
   ]);
 });
 
 test("get", () => {
   const cache = new SQLCache();
   cache.mutate((tx) => {
-    tx.set("r", "k", "a");
-    tx.set("r", "k", "v");
-    tx.set("r", "abc", 123);
-    tx.set("r", "def", 123);
-    tx.set("r", "foo", null);
-    tx.delete("r", "def");
-    tx.delete("r", "bla");
+    tx.set("k", "a");
+    tx.set("k", "v");
+    tx.set("abc", 123);
+    tx.set("def", 123);
+    tx.set("foo", null);
+    expect(cache.data).toEqual({
+      root: { k: "v", abc: 123, def: 123, foo: null },
+    });
+    tx.delete("def");
+    tx.delete("bla");
+    expect(cache.data).toEqual({ root: { k: "v", abc: 123, foo: null } });
   });
 
-  expect(size(cache)).toEqual(3);
-  expect(cache.data).toEqual({ r: { k: "v", abc: 123, foo: null } });
-  expect(cache.get("r", "k")).toEqual("v");
-  expect(cache.get("r", "abc")).toEqual(123);
-  expect(cache.get("r", "foo")).toEqual(null);
-  expect(cache.get("r", "def")).toEqual(undefined);
-  expect(cache.get("r", "bla")).toEqual(undefined);
-  expect(cache.get("r", "xyz")).toEqual(undefined);
+  expect(cache.count).toEqual(3);
+  expect(cache.data).toEqual({ root: { k: "v", abc: 123, foo: null } });
 });
 
-test("it supports iteration", () => {
+test("get after rollback", () => {
   const cache = new SQLCache();
   cache.mutate((tx) => {
-    tx.set("r", "a", "a");
-    tx.set("r", "b", "b");
-    tx.set("r", "c", "c");
-    tx.delete("r", "b");
-    tx.delete("r", "d");
+    tx.set("k", "a");
+    tx.set("k", "v");
+    tx.set("abc", 123);
+  });
+  expect(cache.data).toEqual({
+    root: { k: "v", abc: 123 },
   });
 
-  expect(Array.from(cache)).toEqual([
-    ["r", "a", "a"],
-    ["r", "c", "c"],
+  try {
+    cache.mutate((tx) => {
+      tx.set("def", 123);
+      tx.set("foo", null);
+      expect(cache.data).toEqual({
+        root: { k: "v", abc: 123, def: 123, foo: null },
+      });
+      throw new Error("Oops");
+    });
+  } catch {}
+  expect(cache.data).toEqual({
+    root: { k: "v", abc: 123 },
+  });
+
+  expect(cache.count).toEqual(2);
+});
+
+test("reading all rows", () => {
+  const cache = new SQLCache();
+  cache.mutate((tx) => {
+    tx.set("a", "a");
+    tx.set("b", "b");
+    tx.set("c", "c");
+    tx.delete("b");
+    tx.delete("d");
+  });
+
+  expect(Array.from(cache.rows())).toEqual([
+    ["root", "a", "a"],
+    ["root", "c", "c"],
   ]);
-});
-
-test("convenience: getNumber", () => {
-  const cache = new SQLCache();
-  cache.mutate((tx) => {
-    tx.set("r", "abc", 123);
-    tx.set("r", "foo", "bar");
-  });
-
-  expect(size(cache)).toEqual(2);
-  expect(cache.get("r", "foo")).toEqual("bar");
-  expect(cache.get("r", "abc")).toEqual(123);
-
-  expect(cache.getNumber("r", "abc")).toEqual(123);
-  expect(cache.getNumber("r", "foo")).toEqual(undefined);
 });
 
 test("taking deltas", () => {
@@ -347,42 +322,43 @@ test("taking deltas", () => {
 
   // v1
   cache.mutate((tx) => {
-    tx.set("r", "abc", 1);
-    tx.set("r", "foo", "bar");
+    tx.set("abc", 1);
+    tx.set("foo", "bar");
   });
 
   // v2
   cache.mutate((tx) => {
-    tx.delete("r", "foo");
-    tx.delete("r", "henk");
+    tx.delete("foo");
+    tx.delete("henk");
   });
 
   // v3
-  cache.mutate((tx) => tx.set("r", "henk", 7));
+  cache.mutate((tx) => tx.set("henk", 7));
 
   // v4
-  cache.mutate((tx) => tx.set("r", "abc", 6));
+  cache.mutate((tx) => tx.set("abc", 6));
 
   // v5
-  cache.mutate((tx) => tx.delete("r", "abc"));
+  cache.mutate((tx) => tx.delete("abc"));
 
-  expect(size(cache)).toEqual(1);
-  expect(cache.get("r", "abc")).toEqual(undefined);
-  expect(cache.get("r", "foo")).toEqual(undefined);
-  expect(cache.get("r", "henk")).toEqual(7);
+  expect(cache.count).toEqual(1);
+  expect(cache.data).toEqual({ root: { henk: 7 } });
 
   expect(cache.deltaSince(0)[1]).toEqual(cache.fullDelta()[1]);
 
   expect(cache.deltaSince(5)).toEqual([{}, {}]);
-  expect(cache.deltaSince(4)).toEqual([{ r: ["abc"] }, {}]);
-  expect(cache.deltaSince(3)).toEqual([{ r: ["abc"] }, {}]);
-  expect(cache.deltaSince(2)).toEqual([{ r: ["abc"] }, { r: { henk: 7 } }]);
+  expect(cache.deltaSince(4)).toEqual([{ root: ["abc"] }, {}]);
+  expect(cache.deltaSince(3)).toEqual([{ root: ["abc"] }, {}]);
+  expect(cache.deltaSince(2)).toEqual([
+    { root: ["abc"] },
+    { root: { henk: 7 } },
+  ]);
   expect(cache.deltaSince(1)).toEqual([
-    { r: ["abc", "foo"] },
-    { r: { henk: 7 } },
+    { root: ["abc", "foo"] },
+    { root: { henk: 7 } },
   ]);
   expect(cache.deltaSince(0)).toEqual([
-    { r: ["abc", "foo"] },
-    { r: { henk: 7 } },
+    { root: ["abc", "foo"] },
+    { root: { henk: 7 } },
   ]);
 });

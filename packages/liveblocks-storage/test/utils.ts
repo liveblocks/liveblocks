@@ -8,10 +8,6 @@ import { makePipe } from "~/lib/Pipe.js";
 import type { SQLCache } from "~/SQLCache.js";
 import type { ClientMsg, Mutations, ServerMsg, Socket } from "~/types.js";
 
-export function size(cache: LayeredCache | SQLCache): number {
-  return cache.count();
-}
-
 async function connectClientAndServer(
   /* eslint-disable @typescript-eslint/no-explicit-any */
   client: Client<any>,

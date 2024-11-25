@@ -27,6 +27,10 @@ export class NestedMap<K1, K2, V> {
     return this.#map.get(key1)?.size ?? 0;
   }
 
+  topLevelKeys(): IterableIterator<K1> {
+    return this.#map.keys();
+  }
+
   *keys(): IterableIterator<[K1, K2]> {
     for (const [key1, nested] of this.#map) {
       for (const key2 of nested.keys()) {

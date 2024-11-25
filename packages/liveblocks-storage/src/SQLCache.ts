@@ -3,6 +3,7 @@ import sqlite3 from "better-sqlite3";
 
 import type { Json } from "~/lib/Json.js";
 
+import { LiveObject } from "./LiveObject.js";
 import type { Delta, NodeId, Transaction } from "./types.js";
 
 // const ROOT = "root" as NodeId;
@@ -51,8 +52,15 @@ function createQueries(db: Database) {
       >("SELECT jval FROM storage WHERE nid = ? AND key = ?")
       .pluck(),
 
-    selectAllKeys: db
-      .prepare<[], [nid: string, key: string]>("SELECT nid, key FROM storage")
+    selectKeysByNodeId: db
+      .prepare<[nid: string], string>("SELECT key FROM storage WHERE nid = ?")
+      .pluck(),
+
+    selectAllByNodeId: db
+      .prepare<
+        [nid: string],
+        [key: string, jval: string]
+      >("SELECT key, jval FROM storage WHERE nid = ?")
       .raw(),
 
     selectAll: db
@@ -148,30 +156,14 @@ export class SQLCache {
   }
 
   // ----------------------------------------------------
-  // "Convenience" accessors to make implementing mutations easier
-  // ----------------------------------------------------
-
-  getNumber(nodeId: NodeId, key: string): number | undefined {
-    const value = this.get(nodeId, key);
-    return typeof value === "number" ? value : undefined;
-  }
-
-  // ----------------------------------------------------
   // "Multi-layer" cache idea
   // ----------------------------------------------------
 
-  /**
-   * Returns the number of items in the cache.
-   */
-  count(): number {
-    return this.#q.storage.countAll.get()!;
-  }
-
-  has(nodeId: NodeId, key: string): boolean {
+  #has(nodeId: NodeId, key: string): boolean {
     return !!this.#q.storage.exists.get(nodeId, key);
   }
 
-  get(nodeId: NodeId, key: string): Json | undefined {
+  #get(nodeId: NodeId, key: string): Json | undefined {
     const jval = this.#q.storage.selectKey.get(nodeId, key);
     return jval !== undefined ? (JSON.parse(jval) as Json) : undefined;
   }
@@ -202,21 +194,15 @@ export class SQLCache {
     }
   }
 
-  keys(): IterableIterator<[nodeId: NodeId, key: string]> {
-    return this.#q.storage.selectAllKeys.iterate();
+  keys(nodeId: NodeId): IterableIterator<string> {
+    return this.#q.storage.selectKeysByNodeId.iterate(nodeId);
   }
 
-  *entries(): IterableIterator<[nodeId: NodeId, key: string, value: Json]> {
-    const rows = this.#q.storage.selectAll.iterate();
-    for (const [nid, key, jval] of rows) {
-      yield [nid, key, JSON.parse(jval)];
+  *entries(nodeId: NodeId): IterableIterator<[key: string, value: Json]> {
+    const rows = this.#q.storage.selectAllByNodeId.iterate(nodeId);
+    for (const [key, jval] of rows) {
+      yield [key, JSON.parse(jval)];
     }
-  }
-
-  [Symbol.iterator](): IterableIterator<
-    [nodeId: NodeId, key: string, value: Json]
-  > {
-    return this.entries();
   }
 
   // ----------------------------------------------------
@@ -228,8 +214,8 @@ export class SQLCache {
    */
   fullDelta(): Delta {
     const updated: { [nid: string]: { [key: string]: Json } } = {};
-    for (const [nid, key, jval] of this.#q.storage.selectAll.iterate()) {
-      (updated[nid] ??= {})[key] = JSON.parse(jval) as Json;
+    for (const [nid, key, value] of this.rows()) {
+      (updated[nid] ??= {})[key] = value;
     }
     return [{}, updated];
   }
@@ -252,15 +238,14 @@ export class SQLCache {
     return [removed, updated];
   }
 
-  mutate(callback: (tx: Transaction) => unknown): Delta {
+  mutate(callback: (root: LiveObject) => unknown): Delta {
     const origClock = this.clock;
 
     let dirty = false;
     const tx: Transaction = {
-      has: (nodeId: NodeId, key: string) => this.has(nodeId, key),
-      get: (nodeId: NodeId, key: string) => this.get(nodeId, key),
-      getNumber: (nodeId: NodeId, key: string) => this.getNumber(nodeId, key),
-      keys: () => this.keys(),
+      has: (nodeId: NodeId, key: string) => this.#has(nodeId, key),
+      get: (nodeId: NodeId, key: string) => this.#get(nodeId, key),
+      keys: (nodeId: NodeId) => this.keys(nodeId),
       set: (nodeId: NodeId, key: string, value: Json) => {
         const updated = this.#set(nodeId, key, value);
         dirty ||= updated;
@@ -275,7 +260,7 @@ export class SQLCache {
 
     this.#startTransaction();
     try {
-      callback(tx);
+      callback(new LiveObject(tx));
       if (dirty) {
         this.#commit();
         return this.deltaSince(origClock);
@@ -305,11 +290,20 @@ export class SQLCache {
   }
 
   // For convenience in unit tests only --------------------------------
-  get data(): Record<string, Record<string, Json>> {
-    const obj: Record<string, Record<string, Json>> = {};
-    for (const [nid, key, value] of this) {
-      (obj[nid] ??= {})[key] = value;
+  *rows(): IterableIterator<[nid: string, key: string, value: Json]> {
+    for (const [nid, key, jval] of this.#q.storage.selectAll.iterate()) {
+      yield [nid, key, JSON.parse(jval)];
     }
-    return obj;
+  }
+
+  /**
+   * Returns the number of items in the cache.
+   */
+  get count(): number {
+    return this.#q.storage.countAll.get()!;
+  }
+
+  get data(): Record<string, Record<string, Json>> {
+    return this.fullDelta()[1];
   }
 }
