@@ -7,11 +7,6 @@ meta:
 
 A quick overview of the Text Editor packages for Tiptap.
 
-<Banner title="Package still in beta">
-  Our Tiptap package is currently in beta and has not been publicly released
-  yet.
-</Banner>
-
 ## Concepts
 
 Liveblocks Tiptap allows you add collaboration to any
@@ -187,6 +182,49 @@ Inline mentions also trigger
 [`TextMention`](/docs/platform/webhooks#TextMention-notification) notification
 webhook events. Learn more about
 [sending email notifications](/docs/products/notifications/email-notifications).
+
+## Multiple editors
+
+It’s possible to use multiple Tiptap editors on a single page, and each editor
+having its own collaboration and extensions. You can enable this by giving each
+editor a unique `field` value.
+
+```tsx
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension({
+    field: "editor-one",
+  });
+
+  // ...
+}
+```
+
+Learn more about
+[using multiple editors](/docs/api-reference/liveblocks-react-tiptap#Multiple-editors).
+
+## Offline support
+
+Liveblocks Tiptap has an experimental option that enables offline support.
+Offline support means that once a document has been opened, it’s saved locally
+on the browser, and can be shown instantly without a loading screen. Enable this
+by passing a `offlineSupport_experimental ` value.
+
+```tsx
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension({
+    offlineSupport_experimental: true,
+  });
+
+  // ...
+}
+```
+
+Learn more about
+[offline support](/docs/api-reference/liveblocks-react-tiptap#Offline-support).
 
 {/* TODO: Mention Node.js package + AI agents when it's complete */}
 
