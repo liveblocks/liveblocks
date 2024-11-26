@@ -46,9 +46,7 @@ export class Client<M extends Mutations> {
   #_debugClientId = nextAlphabetId();
   #_log?: (...args: unknown[]) => void;
 
-  readonly #mutations: Mutations;
   readonly #cache: LayeredCache;
-  readonly mutate: BoundMutations<M>;
 
   /**
    * Pending local Ops that have been queued up optimistically.
@@ -86,6 +84,9 @@ export class Client<M extends Mutations> {
     // XXX onChange event should have Delta + local/remote as payload
     readonly onChange: Observable<void>;
   };
+
+  readonly #mutations: Mutations;
+  readonly mutate: BoundMutations<M>;
 
   /* v8 ignore start */
   debug(): void {
@@ -348,7 +349,7 @@ export class Client<M extends Mutations> {
     const cache = this.#cache;
     cache.startTransaction();
     try {
-      mutationFn(new LiveObject(cache), ...args);
+      mutationFn(LiveObject.loadRoot(cache), ...args);
       cache.commit();
     } catch (e) {
       cache.rollback();

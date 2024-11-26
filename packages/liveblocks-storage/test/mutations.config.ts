@@ -1,5 +1,6 @@
 import type { Json } from "~/lib/Json.js";
-import type { LiveObject } from "~/LiveObject.js";
+import { isLiveStructure } from "~/lib/Lson.js";
+import { LiveObject } from "~/LiveObject.js";
 
 export function put(root: LiveObject, key: string, value: Json): void {
   root.set(key, value);
@@ -27,6 +28,9 @@ export function dupe(root: LiveObject, src: string, target: string): void {
   if (value === undefined) {
     throw new Error(`No such key '${src}'`);
   }
+  if (isLiveStructure(value)) {
+    throw new Error("Cannot dupe a Live structure, only JSON values");
+  }
   root.set(target, value);
 }
 
@@ -46,6 +50,23 @@ export function dec(root: LiveObject, key: string): void {
     throw new Error("Cannot decrement beyond 0");
   }
   root.set(key, count - 1);
+}
+
+export function setLiveObject(
+  root: LiveObject,
+  key1: string,
+  key2: string,
+  value: Json
+): void {
+  root.set(key1, new LiveObject({ [key2]: value }));
+}
+
+export function putLiveObject(
+  root: LiveObject,
+  key: string,
+  value: Json
+): void {
+  root.set(key, new LiveObject({ [key]: value }));
 }
 
 // --- Helpers ---------------------------------------------------------------

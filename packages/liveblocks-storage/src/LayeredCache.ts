@@ -11,12 +11,17 @@ type TombStone = typeof TOMBSTONE;
 // const ROOT = "root" as NodeId;
 
 export class LayeredCache implements Transaction {
+  #nextId: number = 1;
   readonly #root: NestedMap<NodeId, string, Json>;
   readonly #layers: NestedMap<NodeId, string, Json | TombStone>[];
 
   constructor() {
     this.#root = new NestedMap();
     this.#layers = [];
+  }
+
+  nextId(): string {
+    return `tmp:${this.#nextId++}`;
   }
 
   // ----------------------------------------------------

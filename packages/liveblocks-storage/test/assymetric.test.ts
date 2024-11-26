@@ -1,23 +1,29 @@
 /**
- * Assymmetric storage is when client and server has different implementations
+ * Asymmetric storage is when client and server has different implementations
  * for the same mutations.
  */
 
 import { expect, test } from "vitest";
 
-import { fail, inc, put, putAndInc } from "./mutations.config.js";
+import {
+  fail,
+  inc,
+  put,
+  putAndInc,
+  putLiveObject,
+} from "./mutations.config.js";
 import { oneClientSetup, twoClientsSetup } from "./utils.js";
 
-test("assymmetric mutators (different behavior will sync)", async () => {
+test("asymmetric mutators (different behavior will sync)", async () => {
   const { client, server, sync } = await oneClientSetup(
-    { assymetricPut: put }, // Client will only set
-    { assymetricPut: putAndInc } // Server implementation will also increment
+    { asymetricPut: put }, // Client will only set
+    { asymetricPut: putAndInc } // Server implementation will also increment
   );
 
   expect(client.data).toEqual({});
   expect(server.data).toEqual({});
 
-  client.mutate.assymetricPut("a", 1);
+  client.mutate.asymetricPut("a", 1);
 
   expect(client.data).toEqual({ root: { a: 1 } });
   expect(server.data).toEqual({});
@@ -33,10 +39,10 @@ test("assymmetric mutators (different behavior will sync)", async () => {
   expect(server.data).toEqual({ root: { a: 2 } });
 });
 
-test("assymmetric mutators (rollback)", async () => {
+test("asymmetric mutators (rollback)", async () => {
   const { client, server, sync } = await oneClientSetup(
-    { put, assymmetricInc: inc }, // Client will not fail
-    { put, assymmetricInc: fail } // Inc fails on the server
+    { put, asymmetricInc: inc }, // Client will not fail
+    { put, asymmetricInc: fail } // Inc fails on the server
   );
 
   expect(client.data).toEqual({});
@@ -47,7 +53,7 @@ test("assymmetric mutators (rollback)", async () => {
   expect(client.data).toEqual({ root: { a: 2 } });
   expect(server.data).toEqual({});
 
-  client.mutate.assymmetricInc("a"); // Will fail on the server
+  client.mutate.asymmetricInc("a"); // Will fail on the server
 
   expect(client.data).toEqual({ root: { a: 3 } });
   expect(server.data).toEqual({});
@@ -69,10 +75,10 @@ test("assymmetric mutators (rollback)", async () => {
   expect(server.data).toEqual({ root: { a: 2, b: 1 } });
 });
 
-test("assymmetric mutators (rollback) (2 clients)", async () => {
+test("asymmetric mutators (rollback) (2 clients)", async () => {
   const { client1, client2, server, sync } = await twoClientsSetup(
-    { put, assymmetricInc: inc }, // Client will not fail
-    { put, assymmetricInc: fail } // Inc fails on the server
+    { put, asymmetricInc: inc }, // Client will not fail
+    { put, asymmetricInc: fail } // Inc fails on the server
   );
 
   expect(client1.data).toEqual({});
@@ -85,7 +91,7 @@ test("assymmetric mutators (rollback) (2 clients)", async () => {
   expect(client2.data).toEqual({});
   expect(server.data).toEqual({});
 
-  client1.mutate.assymmetricInc("a"); // Will fail on the server
+  client1.mutate.asymmetricInc("a"); // Will fail on the server
 
   expect(client1.data).toEqual({ root: { a: 3 } });
   expect(client2.data).toEqual({});
@@ -109,4 +115,79 @@ test("assymmetric mutators (rollback) (2 clients)", async () => {
   expect(client1.data).toEqual({ root: { a: 2, b: 1 } });
   expect(client2.data).toEqual({ root: { a: 2, b: 1 } });
   expect(server.data).toEqual({ root: { a: 2, b: 1 } });
+});
+
+test("asymmetric mutators (client adds JSON object, server as LiveObject)", async () => {
+  const { client, server, sync } = await oneClientSetup(
+    { asym: put }, // Client mutations
+    { asym: putLiveObject } // Server mutations (different!)
+  );
+
+  client.mutate.asym("a", 1);
+  await sync(client);
+
+  expect(client.data).toEqual({ root: { a: 1 } });
+  expect(server.data).toEqual({
+    root: { a: { $ref: "1:1" } },
+    "1:1": { a: 1 },
+  });
+
+  await sync(server);
+
+  client.mutate.asym("b", 2);
+  await sync(client);
+
+  expect(client.data).toEqual({
+    root: { a: { $ref: "1:1" }, b: 2 },
+    "1:1": { a: 1 },
+  });
+  expect(server.data).toEqual({
+    root: { a: { $ref: "1:1" }, b: { $ref: "2:1" } },
+    "1:1": { a: 1 },
+    "2:1": { b: 2 },
+  });
+
+  await sync();
+
+  expect(client.data).toEqual({
+    root: { a: { $ref: "1:1" }, b: { $ref: "2:1" } },
+    "1:1": { a: 1 },
+    "2:1": { b: 2 },
+  });
+  expect(server.data).toEqual({
+    root: { a: { $ref: "1:1" }, b: { $ref: "2:1" } },
+    "1:1": { a: 1 },
+    "2:1": { b: 2 },
+  });
+});
+
+test("asymmetric mutators (client adds LiveObject, server as JSON object)", async () => {
+  const { client, server, sync } = await oneClientSetup(
+    { asym: putLiveObject },
+    { asym: put }
+  );
+
+  client.mutate.asym("a", 1);
+  await sync(client);
+
+  expect(client.data).toEqual({
+    root: { a: { $ref: "tmp:1" } },
+    "tmp:1": { a: 1 },
+  });
+  expect(server.data).toEqual({ root: { a: 1 } });
+
+  client.mutate.asym("b", 2);
+  await sync(client);
+
+  expect(client.data).toEqual({
+    root: { a: { $ref: "tmp:1" }, b: { $ref: "tmp:2" } },
+    "tmp:1": { a: 1 },
+    "tmp:2": { b: 2 },
+  });
+  expect(server.data).toEqual({ root: { a: 1, b: 2 } });
+
+  await sync();
+
+  expect(client.data).toEqual({ root: { a: 1, b: 2 } });
+  expect(server.data).toEqual({ root: { a: 1, b: 2 } });
 });

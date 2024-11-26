@@ -9,6 +9,7 @@ import {
   put,
   putAndFail,
   putAndInc,
+  setLiveObject,
 } from "../mutations.config.js";
 import { twoClientsSetup } from "../utils.js";
 
@@ -39,21 +40,21 @@ test("set object", () => {
   expect(client.data).toEqual({ root: { a: { foo: "bar" } } });
 });
 
-// test("set LiveObject", () => {
-//   const { clientA, assertStorage } = storageIntegrationTest({
-//     initialStorage: () => ({}),
-//     mutations: {
-//       setLiveObject,
-//     },
-//   });
-//
-//   assertStorage({});
-//
-//   clientA.mutate.setLiveObject("child", "foo", "bar");
-//
-//   assertStorage({ child: { foo: "bar" } });
-// });
-//
+test("set LiveObject", () => {
+  const client = new Client({ setLiveObject });
+
+  expect(client.data).toEqual({});
+
+  client.mutate.setLiveObject("child", "foo", "bar");
+  client.mutate.setLiveObject("child2", "a", 1);
+
+  expect(client.data).toEqual({
+    root: { child: { $ref: "tmp:1" }, child2: { $ref: "tmp:2" } },
+    "tmp:1": { foo: "bar" },
+    "tmp:2": { a: 1 },
+  });
+});
+
 // test("set LiveList", () => {
 //   const { clientA, assertStorage } = storageIntegrationTest({
 //     initialStorage: () => ({}),
