@@ -100,54 +100,63 @@ describe("Multi-client storage synchronization tests", () => {
   test("live structure creation and synchronization of node ids", async () => {
     const { client1, client2, server, sync } = await twoClientsSetup(mutations);
 
-    expect(client1.data).toEqual({});
-    expect(client2.data).toEqual({});
+    expect(client1.actor).toEqual(1);
+    expect(client2.actor).toEqual(2);
 
-    client1.mutate.setLiveObject("child", "foo", "bar");
-    client2.mutate.setLiveObject("child2", "a", 1);
+    client1.mutate.del("a"); // op0 no-op, just to advance the op clock a bit
+    client1.mutate.del("a"); // op1
+    client1.mutate.del("a"); // op2
+    client1.mutate.del("a"); // op3
+    client1.mutate.del("a"); // op4
+    client1.mutate.setLiveObject("c1", "a", 11); // op5
+    client2.mutate.setLiveObject("c2", "b", 22); // op1 (of actor 2)
 
     expect(client1.data).toEqual({
-      root: { child: { $ref: "tmp:1" } },
-      "tmp:1": { foo: "bar" },
+      root: { c1: { $ref: "5:1" } },
+      "5:1": { a: 11 },
     });
     expect(client2.data).toEqual({
-      root: { child2: { $ref: "tmp:1" } },
-      "tmp:1": { a: 1 },
+      root: { c2: { $ref: "0:1" } },
+      "0:1": { b: 22 },
     });
     expect(server.data).toEqual({});
 
     await sync(client1);
     expect(server.data).toEqual({
-      root: { child: { $ref: "1:1" } },
-      "1:1": { foo: "bar" },
-    });
+      root: { c1: { $ref: "1:1" } }, // ❗ XXX This should get assigned "1:5:1"
+      "1:1": { a: 11 }, //                                              /  |  \
+    }); //                                                         actor   |   seq/key
+    //                                                                  opclock
 
     await sync(server);
     expect(client1.data).toEqual({
-      root: { child: { $ref: "1:1" } },
-      "1:1": { foo: "bar" },
+      root: { c1: { $ref: "1:1" } },
+      "1:1": { a: 11 },
     });
     expect(client2.data).toEqual({
-      root: { child: { $ref: "1:1" }, child2: { $ref: "tmp:2" } },
-      "1:1": { foo: "bar" },
-      "tmp:2": { a: 1 },
+      root: {
+        c1: { $ref: "1:1" },
+        c2: { $ref: "0:7" }, // ❗ XXX This should get assigned "2:0:1"
+      }, //                                                     /  |  \
+      "1:1": { a: 11 }, //                                 actor   |   seq/key
+      "0:7": { b: 22 }, //                                      opclock
     });
 
     await sync();
     expect(client1.data).toEqual({
-      root: { child: { $ref: "1:1" }, child2: { $ref: "2:1" } },
-      "1:1": { foo: "bar" },
-      "2:1": { a: 1 },
+      root: { c1: { $ref: "1:1" }, c2: { $ref: "2:1" } },
+      "1:1": { a: 11 },
+      "2:1": { b: 22 },
     });
     expect(client2.data).toEqual({
-      root: { child: { $ref: "1:1" }, child2: { $ref: "2:1" } },
-      "1:1": { foo: "bar" },
-      "2:1": { a: 1 },
+      root: { c1: { $ref: "1:1" }, c2: { $ref: "2:1" } },
+      "1:1": { a: 11 },
+      "2:1": { b: 22 },
     });
     expect(server.data).toEqual({
-      root: { child: { $ref: "1:1" }, child2: { $ref: "2:1" } },
-      "1:1": { foo: "bar" },
-      "2:1": { a: 1 },
+      root: { c1: { $ref: "1:1" }, c2: { $ref: "2:1" } },
+      "1:1": { a: 11 },
+      "2:1": { b: 22 },
     });
   });
 });

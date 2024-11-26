@@ -49,9 +49,9 @@ test("set LiveObject", () => {
   client.mutate.setLiveObject("child2", "a", 1);
 
   expect(client.data).toEqual({
-    root: { child: { $ref: "tmp:1" }, child2: { $ref: "tmp:2" } },
-    "tmp:1": { foo: "bar" },
-    "tmp:2": { a: 1 },
+    root: { child: { $ref: "0:1" }, child2: { $ref: "1:2" } },
+    "0:1": { foo: "bar" },
+    "1:2": { a: 1 },
   });
 });
 

@@ -171,8 +171,8 @@ test("asymmetric mutators (client adds LiveObject, server as JSON object)", asyn
   await sync(client);
 
   expect(client.data).toEqual({
-    root: { a: { $ref: "tmp:1" } },
-    "tmp:1": { a: 1 },
+    root: { a: { $ref: "0:1" } },
+    "0:1": { a: 1 },
   });
   expect(server.data).toEqual({ root: { a: 1 } });
 
@@ -180,9 +180,9 @@ test("asymmetric mutators (client adds LiveObject, server as JSON object)", asyn
   await sync(client);
 
   expect(client.data).toEqual({
-    root: { a: { $ref: "tmp:1" }, b: { $ref: "tmp:2" } },
-    "tmp:1": { a: 1 },
-    "tmp:2": { b: 2 },
+    root: { a: { $ref: "0:1" }, b: { $ref: "1:2" } },
+    "0:1": { a: 1 },
+    "1:2": { b: 2 },
   });
   expect(server.data).toEqual({ root: { a: 1, b: 2 } });
 

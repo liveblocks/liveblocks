@@ -127,8 +127,8 @@ export class Client<M extends Mutations> {
       /* eslint-disable @typescript-eslint/no-explicit-any */
       this.mutate[name as keyof M] = ((...args: Json[]): void => {
         const op: Op = [name, args];
-        this.#runMutatorOptimistically(op);
         const pendingOp: PendingOp = { clock: this.#clientClock++, op };
+        this.#runMutatorOptimistically(pendingOp);
         this.#pendingOps.push(pendingOp);
 
         // XXX Ultimately, we should not directly send this Op into the socket,
@@ -328,7 +328,7 @@ export class Client<M extends Mutations> {
     // Apply all local pending ops
     for (const pending of this.#pendingOps) {
       try {
-        this.#runMutatorOptimistically(pending.op);
+        this.#runMutatorOptimistically(pending);
       } catch (err) {
         this.#events.onMutationError.notify(err as Error);
       }
@@ -341,12 +341,14 @@ export class Client<M extends Mutations> {
    * mutation is replayed ("rebased") after an incoming authoritative delta
    * from the Server.
    */
-  #runMutatorOptimistically(op: Op): void {
+  #runMutatorOptimistically(pending: PendingOp): void {
+    const { clock, op } = pending;
     const [name, args] = op;
     const mutationFn =
       this.#mutations[name] ?? raise(`Mutation not found: '${name}'`);
 
     const cache = this.#cache;
+    cache.prefix_HACK = clock;
     cache.startTransaction();
     try {
       mutationFn(LiveObject.loadRoot(cache), ...args);
