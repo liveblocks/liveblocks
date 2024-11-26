@@ -6,7 +6,8 @@
   enabled by default in the default components and can also be custom built with
   new primitives (`Composer.FloatingToolbar` and `Composer.MarkToggle`) and new
   APIs (`const { marks, toggleMark } = useComposer()`).
-- Set line height for comment bodies in default styles.
+- Add new `--lb-line-height` token to control the line height of main elements
+  (e.g. comment bodies in comments and composers).
 
 ## 2.12.2
 

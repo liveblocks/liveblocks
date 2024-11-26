@@ -15,8 +15,9 @@
   --lb-foreground: #111;
 
   /** 
-   * Advanced
-   */
+  * Advanced
+  */
+  --lb-line-height: 1.5;
   --lb-icon-size: 20px;
   --lb-icon-weight: 1.5px;
   --lb-avatar-radius: 50%;
@@ -613,7 +614,7 @@
 
   &,
   * {
-    line-height: 1.5;
+    line-height: var(--lb-line-height);
   }
 
   :where(p) {
