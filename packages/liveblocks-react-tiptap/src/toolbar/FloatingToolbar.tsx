@@ -12,9 +12,10 @@ import {
   type UseFloatingOptions,
 } from "@floating-ui/react-dom";
 import { type Editor, isTextSelection, useEditorState } from "@tiptap/react";
-import type { ComponentProps } from "react";
+import type { ComponentProps, PointerEvent as ReactPointerEvent } from "react";
 import React, {
   forwardRef,
+  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -33,7 +34,7 @@ export const FLOATING_TOOLBAR_COLLISION_PADDING = 10;
 export const FLOATING_TOOLBAR_SIDE_OFFSET = 6;
 
 export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
-  ({ position = "top", editor, ...props }, forwardedRef) => {
+  ({ position = "top", editor, onPointerDown, ...props }, forwardedRef) => {
     const [isPointerDown, setPointerDown] = useState(false);
     const isFocused =
       useEditorState({
@@ -90,19 +91,7 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
             limiter: limitShift(),
           }),
           offset(FLOATING_TOOLBAR_SIDE_OFFSET),
-          size({
-            ...detectOverflowOptions,
-            apply({ availableWidth, availableHeight, elements }) {
-              elements.floating.style.setProperty(
-                "--lb-composer-floating-available-width",
-                `${availableWidth}px`
-              );
-              elements.floating.style.setProperty(
-                "--lb-composer-floating-available-height",
-                `${availableHeight}px`
-              );
-            },
-          }),
+          size(detectOverflowOptions),
         ],
         whileElementsMounted: (...args) => {
           return autoUpdate(...args, {
@@ -122,6 +111,16 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
       ...floatingOptions,
       open: isOpen,
     });
+
+    const handlePointerDown = useCallback(
+      (event: ReactPointerEvent<HTMLDivElement>) => {
+        onPointerDown?.(event);
+
+        event.preventDefault();
+        event.stopPropagation();
+      },
+      [onPointerDown]
+    );
 
     useEffect(() => {
       if (!editor || !isEditable) {
@@ -187,7 +186,7 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
           minWidth: "max-content",
         }}
       >
-        <div ref={forwardedRef} {...props}>
+        <div ref={forwardedRef} onPointerDown={handlePointerDown} {...props}>
           Floating Toolbar
         </div>
       </div>,
