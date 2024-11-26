@@ -28,13 +28,22 @@ type FloatingPosition = "top" | "bottom";
 export interface FloatingToolbarProps extends ComponentProps<"div"> {
   editor: Editor | null;
   position?: FloatingPosition;
+  offset?: number;
 }
 
 export const FLOATING_TOOLBAR_COLLISION_PADDING = 10;
-export const FLOATING_TOOLBAR_SIDE_OFFSET = 6;
 
 export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
-  ({ position = "top", editor, onPointerDown, ...props }, forwardedRef) => {
+  (
+    {
+      position = "top",
+      offset: sideOffset = 6,
+      editor,
+      onPointerDown,
+      ...props
+    },
+    forwardedRef
+  ) => {
     const [isPointerDown, setPointerDown] = useState(false);
     const isFocused =
       useEditorState({
@@ -90,7 +99,7 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
             ...detectOverflowOptions,
             limiter: limitShift(),
           }),
-          offset(FLOATING_TOOLBAR_SIDE_OFFSET),
+          offset(sideOffset),
           size(detectOverflowOptions),
         ],
         whileElementsMounted: (...args) => {
@@ -99,7 +108,7 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
           });
         },
       };
-    }, [position]);
+    }, [position, sideOffset]);
 
     const {
       refs: { setReference, setFloating },
@@ -127,14 +136,23 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
         return;
       }
 
-      const handlePointerDown = () => setPointerDown(true);
-      const handlePointerUp = () => setPointerDown(false);
+      const handlePointerDown = (event: PointerEvent) => {
+        // Ignore outer pointer events
+        if (editor.view.dom.contains(event.target as Node)) {
+          setPointerDown(true);
+        }
+      };
+      const handlePointerUp = () => {
+        setPointerDown(false);
+      };
 
       document.addEventListener("pointerdown", handlePointerDown);
+      document.addEventListener("pointercancel", handlePointerUp);
       document.addEventListener("pointerup", handlePointerUp);
 
       return () => {
         document.removeEventListener("pointerdown", handlePointerDown);
+        document.removeEventListener("pointercancel", handlePointerUp);
         document.removeEventListener("pointerup", handlePointerUp);
       };
     }, [editor, isEditable]);
@@ -160,13 +178,32 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
         }
       };
 
-      editor.on("selectionUpdate", updateSelectionReference);
+      editor.on("transaction", updateSelectionReference);
       updateSelectionReference();
 
       return () => {
-        editor.off("selectionUpdate", updateSelectionReference);
+        editor.off("transaction", updateSelectionReference);
       };
     }, [editor, isOpen, setReference]);
+
+    useEffect(() => {
+      if (!editor) {
+        return;
+      }
+
+      const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.key === "Escape") {
+          // TODO: Close the floating toolbar
+          editor.commands.focus();
+        }
+      };
+
+      editor.view.dom.addEventListener("keydown", handleKeyDown);
+
+      return () => {
+        editor.view.dom.removeEventListener("keydown", handleKeyDown);
+      };
+    }, [editor, isOpen]);
 
     if (!editor || !isOpen) {
       return null;
