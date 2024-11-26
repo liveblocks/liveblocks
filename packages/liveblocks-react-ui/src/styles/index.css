@@ -816,6 +816,25 @@
   gap: $lb-elevation-padding;
   padding: $lb-elevation-padding;
   user-select: none;
+
+  /* Invisibly increase the buttons' hit target size */
+  :where(.lb-button) {
+    &::before {
+      content: "";
+      position: absolute;
+      inset: calc(-1 * $lb-elevation-padding);
+      z-index: -1;
+      border-radius: inherit;
+    }
+
+    &:where(:not(:first-of-type))::before {
+      inset-inline-start: calc(-0.5 * $lb-elevation-padding);
+    }
+
+    &:where(:not(:last-of-type))::before {
+      inset-inline-end: calc(-0.5 * $lb-elevation-padding);
+    }
+  }
 }
 
 /*************************************
