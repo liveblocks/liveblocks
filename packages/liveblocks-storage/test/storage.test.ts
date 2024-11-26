@@ -96,4 +96,58 @@ describe("Multi-client storage synchronization tests", () => {
     // expect(new Set([b1, b2, b3]).size).toEqual(3);
     expect(new Set([b1, b2, b3]).size).toBeGreaterThan(1);
   });
+
+  test("live structure creation and synchronization of node ids", async () => {
+    const { client1, client2, server, sync } = await twoClientsSetup(mutations);
+
+    expect(client1.data).toEqual({});
+    expect(client2.data).toEqual({});
+
+    client1.mutate.setLiveObject("child", "foo", "bar");
+    client2.mutate.setLiveObject("child2", "a", 1);
+
+    expect(client1.data).toEqual({
+      root: { child: { $ref: "tmp:1" } },
+      "tmp:1": { foo: "bar" },
+    });
+    expect(client2.data).toEqual({
+      root: { child2: { $ref: "tmp:1" } },
+      "tmp:1": { a: 1 },
+    });
+    expect(server.data).toEqual({});
+
+    await sync(client1);
+    expect(server.data).toEqual({
+      root: { child: { $ref: "1:1" } },
+      "1:1": { foo: "bar" },
+    });
+
+    await sync(server);
+    expect(client1.data).toEqual({
+      root: { child: { $ref: "1:1" } },
+      "1:1": { foo: "bar" },
+    });
+    expect(client2.data).toEqual({
+      root: { child: { $ref: "1:1" }, child2: { $ref: "tmp:2" } },
+      "1:1": { foo: "bar" },
+      "tmp:2": { a: 1 },
+    });
+
+    await sync();
+    expect(client1.data).toEqual({
+      root: { child: { $ref: "1:1" }, child2: { $ref: "2:1" } },
+      "1:1": { foo: "bar" },
+      "2:1": { a: 1 },
+    });
+    expect(client2.data).toEqual({
+      root: { child: { $ref: "1:1" }, child2: { $ref: "2:1" } },
+      "1:1": { foo: "bar" },
+      "2:1": { a: 1 },
+    });
+    expect(server.data).toEqual({
+      root: { child: { $ref: "1:1" }, child2: { $ref: "2:1" } },
+      "1:1": { foo: "bar" },
+      "2:1": { a: 1 },
+    });
+  });
 });

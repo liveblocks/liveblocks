@@ -6,8 +6,6 @@ import type { Json } from "~/lib/Json.js";
 import { LiveObject } from "./LiveObject.js";
 import type { Delta, NodeId, Transaction } from "./types.js";
 
-// const ROOT = "root" as NodeId;
-
 function createDB() {
   const db = sqlite3(":memory:");
   db.pragma("journal_mode = WAL");
@@ -144,6 +142,7 @@ export class SQLCache {
   readonly #q: Queries;
   #clock: number;
   #pendingClock: number;
+  #nextNodeId: number = 1;
 
   constructor() {
     this.#q = createQueries(createDB());
@@ -243,6 +242,7 @@ export class SQLCache {
 
     let dirty = false;
     const tx: Transaction = {
+      nextId: (): string => `${this.#pendingClock}:${this.#nextNodeId++}`,
       has: (nodeId: NodeId, key: string) => this.#has(nodeId, key),
       get: (nodeId: NodeId, key: string) => this.#get(nodeId, key),
       keys: (nodeId: NodeId) => this.keys(nodeId),
@@ -260,7 +260,7 @@ export class SQLCache {
 
     this.#startTransaction();
     try {
-      callback(new LiveObject(tx));
+      callback(LiveObject.loadRoot(tx));
       if (dirty) {
         this.#commit();
         return this.deltaSince(origClock);
@@ -277,6 +277,7 @@ export class SQLCache {
   #startTransaction(): void {
     this.#q.begin.run();
     this.#pendingClock = this.#clock + 1;
+    this.#nextNodeId = 1;
   }
 
   #commit(): void {

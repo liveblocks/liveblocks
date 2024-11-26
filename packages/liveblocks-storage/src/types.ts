@@ -144,6 +144,7 @@ export type ServerMsg =
   | DeltaServerMsg;
 
 export interface Transaction {
+  nextId(): string;
   has(nodeId: NodeId, key: string): boolean;
   get(nodeId: NodeId, key: string): Json | undefined;
   keys(nodeId: NodeId): IterableIterator<string>;
