@@ -15,6 +15,20 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 48 (2024-11-29)
 
+## Website
+
+- New blog post: [Easy collaborative text editing with Liveblocks Tiptap](http://luveblocks.io/blog/easy-collaborative-text-editing-with-liveblocks-tiptap).
+
+## Examples
+
+- New example: [Novel AI editor](https://liveblocks.io/examples/novel-ai-editor).
+
+## Documentation
+
+- Info on [using multiple Tiptap editors](https://liveblocks.io/docs/api-reference/liveblocks-react-tiptap#Multiple-editors).
+- Info on [offline support for Tiptap](https://liveblocks.io/docs/api-reference/liveblocks-react-tiptap#Offline-support).
+- Removed `beta` warnings from Tiptap docs.
+
 ## Contributors
 
 # Week 47 (2024-11-22)
