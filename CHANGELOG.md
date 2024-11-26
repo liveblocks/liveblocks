@@ -1,4 +1,12 @@
-## Not published yet
+## 2.13.0 (Not published yet)
+
+### `@liveblocks/react-ui`
+
+- Add a formatting toolbar to `Composer` which appears when selecting text. It’s
+  enabled by default in the default components and can also be custom built with
+  new primitives (`Composer.FloatingToolbar` and `Composer.MarkToggle`) and new
+  APIs (`const { marks, toggleMark } = useComposer()`).
+- Set line height for comment bodies in default styles.
 
 ## 2.12.2
 
