@@ -17,7 +17,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Website
 
-- New blog post: [Easy collaborative text editing with Liveblocks Tiptap](http://luveblocks.io/blog/easy-collaborative-text-editing-with-liveblocks-tiptap).
+- New blog post: [Easy collaborative text editing with Liveblocks Tiptap](http://liveblocks.io/blog/easy-collaborative-text-editing-with-liveblocks-tiptap).
 
 ## Examples
 
