@@ -15,13 +15,17 @@ export class LayeredCache implements Transaction {
   readonly #root: NestedMap<NodeId, string, Json>;
   readonly #layers: NestedMap<NodeId, string, Json | TombStone>[];
 
+  // XXX This is a hack because it is mutated from the outside! This really
+  // should not belong on the Transaction API itself!
+  prefix_HACK: string | number = "tmp";
+
   constructor() {
     this.#root = new NestedMap();
     this.#layers = [];
   }
 
   nextId(): string {
-    return `tmp:${this.#nextId++}`;
+    return `${this.prefix_HACK}:${this.#nextId++}`;
   }
 
   // ----------------------------------------------------
