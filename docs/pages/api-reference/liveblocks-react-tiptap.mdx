@@ -834,12 +834,12 @@ function TextEditor() {
 <PropertiesList>
   <PropertiesListItem name="initialContent" type="Content">
     The initial content for the editor, if it’s never been set. [Learn
-    more](#setting-initial-content).
+    more](#Setting-initial-content).
   </PropertiesListItem>
   <PropertiesListItem name="field" type="string">
     The name of this text editor’s field. Allows you to use multiple editors on
     one page, if each has a separate field value. [Learn
-    more](#multiple-editors).
+    more](#Multiple-editors).
   </PropertiesListItem>
   <PropertiesListItem
     name="offlineSupport_experimental"
@@ -847,7 +847,8 @@ function TextEditor() {
     type="boolean"
   >
     Experimental. Enable offline support using IndexedDB. This means the after
-    the first load, documents will be stored locally and load instantly.
+    the first load, documents will be stored locally and load instantly. [Learn
+    more](#Offline-support).
   </PropertiesListItem>
   <PropertiesListItem name="comments" defaultValue="true" type="boolean">
     Enable comments in the editor.
@@ -879,8 +880,8 @@ function TextEditor() {
 
 #### Multiple editors
 
-It’s possible to use multiple editors on one page by passing values to the field
-property. Think of it like an ID for the current editor.
+It’s possible to use multiple editors on one page by passing values to the
+`field` property. Think of it like an ID for the current editor.
 
 ```tsx
 import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
@@ -931,6 +932,78 @@ function TextEditor({ field }: { field: string }) {
     </div>
   );
 }
+```
+
+#### Offline support [@badge=experimental]
+
+It’s possible to enable offline support in your editor with an experimental
+option. This means that once a document has been opened, it’s saved locally on
+the browser, and can be shown instantly without a loading screen. As soon as
+Liveblocks connects, any remote changes will be synchronized, without any load
+spinner. Enable this by passing a `offlineSupport_experimental ` value.
+
+```tsx
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension({
+    offlineSupport_experimental: true,
+  });
+
+  // ...
+}
+```
+
+To make sure that your editor loads instantly, you must structure your app
+carefully to avoid any Liveblocks hooks and [`ClientSideSuspense`][] components
+from triggering a loading screen. For example, if you’re displaying threads in
+your editor with [`useThreads`][], you must place this inside a separate
+component and wrap it in [`ClientSideSuspense`][].
+
+```tsx
+"use client";
+
+import { ClientSideSuspense, useThreads } from "@liveblocks/react/suspense";
+import {
+  useLiveblocksExtension,
+  AnchoredThreads,
+  FloatingComposer,
+} from "@liveblocks/react-tiptap";
+import { Editor, EditorContent, useEditor } from "@tiptap/react";
+
+export function TiptapEditor() {
+  const liveblocks = useLiveblocksExtension({
+    offlineSupport_experimental: true,
+  });
+
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+    immediatelyRender: false,
+  });
+
+  return (
+    <>
+      <EditorContent editor={editor} />
+      <FloatingComposer editor={editor} style={{ width: 350 }} />
+      // +++
+      <ClientSideSuspense fallback={null}>
+        <Threads editor={editor} />
+      </ClientSideSuspense>
+      // +++
+    </>
+  );
+}
+
+// +++
+function Threads({ editor }: { editor: Editor }) {
+  const { threads } = useThreads();
+
+  return <AnchoredThreads editor={editor} threads={threads} />;
+}
+// +++
 ```
 
 ### useIsEditorReady
