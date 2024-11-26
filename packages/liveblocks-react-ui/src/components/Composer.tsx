@@ -387,7 +387,9 @@ function MarkToggle({ mark, shortcut, children, ...props }: MarkToggleProps) {
       sideOffset={FLOATING_ELEMENT_SIDE_OFFSET + 2}
     >
       <ComposerPrimitive.MarkToggle mark={mark} asChild {...props}>
-        <Button aria-label={label}>{children}</Button>
+        <Button aria-label={label} variant="toggle">
+          {children}
+        </Button>
       </ComposerPrimitive.MarkToggle>
     </ShortcutTooltip>
   );

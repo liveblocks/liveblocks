@@ -255,13 +255,17 @@
     }
   }
 
-  &:where([aria-pressed="true"]) {
-    &:where([data-variant="default"]) {
-      color: var(--lb-foreground-secondary);
-    }
+  &:where([data-variant="toggle"]) {
+    color: var(--lb-foreground-tertiary);
 
-    :where(.lb-icon *) {
-      stroke-width: calc(1.25 * var(--lb-icon-weight));
+    &:where([aria-pressed="true"]) {
+      --lb-button-background: var(--lb-foreground-subtle);
+
+      color: var(--lb-foreground-secondary);
+
+      :where(.lb-icon *) {
+        stroke-width: calc(1.25 * var(--lb-icon-weight));
+      }
     }
   }
 }
@@ -808,6 +812,8 @@
 
 .lb-composer-floating-toolbar {
   display: flex;
+  flex-direction: row;
+  gap: $lb-elevation-padding;
   padding: $lb-elevation-padding;
   user-select: none;
 }

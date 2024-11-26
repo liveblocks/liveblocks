@@ -333,9 +333,7 @@ function ComposerEditorFloatingToolbarWrapper({
   const { portalContainer } = useLiveblocksUIConfig();
   const [contentRef, contentZIndex] = useContentZIndex();
   const [isPointerDown, setPointerDown] = useState(false);
-  const isOpen = Boolean(
-    isFocused && !isPointerDown && hasFloatingToolbarRange
-  );
+  const isOpen = isFocused && !isPointerDown && hasFloatingToolbarRange;
   const {
     refs: { setReference, setFloating },
     strategy,
