@@ -9,6 +9,7 @@ export { FloatingComposer } from "./comments/FloatingComposer";
 export { FloatingThreads } from "./comments/FloatingThreads";
 export { useLiveblocksExtension } from "./LiveblocksExtension";
 export { useIsEditorReady } from "./LiveblocksExtension";
+export { FloatingToolbar } from "./toolbar/FloatingToolbar";
 export { HistoryVersionPreview } from "./version-history/HistoryVersionPreview";
 
 declare module "@tiptap/core" {
