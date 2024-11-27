@@ -1671,15 +1671,7 @@ const ComposerMarkToggle = forwardRef<
   ComposerMarkToggleProps
 >(
   (
-    {
-      children,
-      mark,
-      onValueChange,
-      onClick,
-      onPointerDown,
-      asChild,
-      ...props
-    },
+    { children, mark, onValueChange, onClick, asChild, ...props },
     forwardedRef
   ) => {
     const Component = asChild ? Slot : "button";
@@ -1697,22 +1689,11 @@ const ComposerMarkToggle = forwardRef<
       [mark, onClick, onValueChange, toggleMark]
     );
 
-    const handlePointerDown = useCallback(
-      (event: PointerEvent<HTMLButtonElement>) => {
-        onPointerDown?.(event);
-
-        event.preventDefault();
-        event.stopPropagation();
-      },
-      [onPointerDown]
-    );
-
     return (
       <TogglePrimitive.Root
         asChild
         pressed={marks[mark]}
         onClick={handleClick}
-        onPointerDown={handlePointerDown}
         {...props}
       >
         <Component {...props} ref={forwardedRef}>
