@@ -97,6 +97,7 @@ import { isKey } from "../../utils/is-key";
 import { Persist, useAnimationPersist, usePersist } from "../../utils/Persist";
 import { Portal } from "../../utils/Portal";
 import { requestSubmit } from "../../utils/request-submit";
+import { useEventSource } from "../../utils/use-event-source";
 import { useId } from "../../utils/use-id";
 import { useIndex } from "../../utils/use-index";
 import { useInitial } from "../../utils/use-initial";
@@ -144,8 +145,6 @@ import {
   useComposerAttachmentsManager,
   useContentZIndex,
   useFloatingWithOptions,
-  useOnComposerEditorChange,
-  useOnComposerEditorChangeWithEventSource,
 } from "./utils";
 
 const MENTION_SUGGESTIONS_POSITION: FloatingPosition = "top";
@@ -245,6 +244,7 @@ function ComposerEditorMentionSuggestionsWrapper({
   MentionSuggestions,
 }: ComposerEditorMentionSuggestionsWrapperProps) {
   const editor = useSlateStatic();
+  const { editorChangeEventSource } = useComposerEditorContext();
   const { isFocused } = useComposer();
   const { portalContainer } = useLiveblocksUIConfig();
   const [contentRef, contentZIndex] = useContentZIndex();
@@ -264,7 +264,7 @@ function ComposerEditorMentionSuggestionsWrapper({
     open: isOpen,
   });
 
-  useOnComposerEditorChange(() => {
+  useEventSource(editorChangeEventSource, () => {
     setMentionDraft(getMentionDraftAtSelection(editor));
   });
 
@@ -328,6 +328,7 @@ function ComposerEditorFloatingToolbarWrapper({
   setHasFloatingToolbarRange,
 }: ComposerEditorFloatingToolbarWrapperProps) {
   const editor = useSlateStatic();
+  const { editorChangeEventSource } = useComposerEditorContext();
   const { isFocused } = useComposer();
   const { portalContainer } = useLiveblocksUIConfig();
   const [contentRef, contentZIndex] = useContentZIndex();
@@ -365,7 +366,7 @@ function ComposerEditorFloatingToolbarWrapper({
     };
   }, [isFocused]);
 
-  useOnComposerEditorChange(() => {
+  useEventSource(editorChangeEventSource, () => {
     // Detach from previous selection range (if any) to avoid sudden jumps
     setReference(null);
 
@@ -1484,7 +1485,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       [editor]
     );
 
-    useOnComposerEditorChangeWithEventSource(editorChangeEventSource, () => {
+    useEventSource(editorChangeEventSource, () => {
       setMarks(getMarks(editor));
     });
 
