@@ -6,7 +6,9 @@ import { getSession } from "../../example";
 // https://liveblocks.io/docs/authentication
 
 const liveblocks = new Liveblocks({
-  secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
+  secret: process.env.LIVEBLOCKS_SECRET_KEY_DEV as string,
+  // @ts-expect-error
+  baseUrl: "https://dev.dev-liveblocks5948.workers.dev/",
 });
 
 export const dynamic = "force-dynamic";

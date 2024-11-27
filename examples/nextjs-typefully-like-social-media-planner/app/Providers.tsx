@@ -8,6 +8,8 @@ import { getRoomInfo } from "./actions/liveblocks";
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <LiveblocksProvider
+      // @ts-expect-error
+      baseUrl="https://dev.dev-liveblocks5948.workers.dev/"
       authEndpoint={authWithRandomUser("/api/liveblocks-auth")}
       // Get users' info from their ID
       resolveUsers={async ({ userIds }) => {
