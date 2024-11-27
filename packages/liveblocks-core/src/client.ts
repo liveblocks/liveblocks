@@ -424,6 +424,7 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
 
   /**
    * A function that returns user info from user IDs.
+   * You should return a list of user objects of the same size, in the same order.
    */
   resolveUsers?: (
     args: ResolveUsersArgs
