@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/core",
-  "version": "2.12.2",
+  "version": "2.12.3-emails1",
   "description": "Private internals for Liveblocks. DO NOT import directly from this package!",
   "type": "commonjs",
   "main": "./dist/index.js",
