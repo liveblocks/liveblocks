@@ -11,8 +11,13 @@ import {
   useFloating,
   type UseFloatingOptions,
 } from "@floating-ui/react-dom";
+import { useRefs } from "@liveblocks/react-ui/_private";
 import { type Editor, isTextSelection, useEditorState } from "@tiptap/react";
-import type { ComponentProps, PointerEvent as ReactPointerEvent } from "react";
+import type {
+  ComponentProps,
+  PointerEvent as ReactPointerEvent,
+  ReactNode,
+} from "react";
 import React, {
   forwardRef,
   useCallback,
@@ -29,13 +34,22 @@ export interface FloatingToolbarProps extends ComponentProps<"div"> {
   editor: Editor | null;
   position?: FloatingPosition;
   offset?: number;
+  leading?: ReactNode;
+  trailing?: ReactNode;
 }
 
 export const FLOATING_TOOLBAR_COLLISION_PADDING = 10;
 
+function DefaultFloatingToolbarChildren() {
+  return <>Main</>;
+}
+
 export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
   (
     {
+      children,
+      leading,
+      trailing,
       position = "top",
       offset: sideOffset = 6,
       editor,
@@ -109,7 +123,6 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
         },
       };
     }, [position, sideOffset]);
-
     const {
       refs: { setReference, setFloating },
       strategy,
@@ -120,6 +133,7 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
       ...floatingOptions,
       open: isOpen,
     });
+    const mergedRefs = useRefs(forwardedRef, setFloating);
 
     const handlePointerDown = useCallback(
       (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -212,7 +226,7 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
     return createPortal(
       <div
         className="lb-root lb-portal lb-elevation lb-tiptap-floating lb-tiptap-floating-toolbar"
-        ref={setFloating}
+        ref={mergedRefs}
         style={{
           position: strategy,
           top: 0,
@@ -222,10 +236,12 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
             : "translate3d(0, -200%, 0)",
           minWidth: "max-content",
         }}
+        onPointerDown={handlePointerDown}
+        {...props}
       >
-        <div ref={forwardedRef} onPointerDown={handlePointerDown} {...props}>
-          Floating Toolbar
-        </div>
+        {leading}
+        {children ?? <DefaultFloatingToolbarChildren />}
+        {trailing}
       </div>,
       document.body
     );
