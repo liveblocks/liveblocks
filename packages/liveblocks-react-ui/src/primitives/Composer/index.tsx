@@ -201,13 +201,12 @@ function ComposerEditorMentionWrapper({
   children,
   element,
 }: ComposerEditorMentionWrapperProps) {
-  const { isFocused } = useComposer();
   const isSelected = useSelected();
 
   return (
     <span {...attributes}>
       {element.id ? (
-        <Mention userId={element.id} isSelected={isFocused && isSelected} />
+        <Mention userId={element.id} isSelected={isSelected} />
       ) : null}
       {children}
     </span>
@@ -569,12 +568,11 @@ function ComposerEditorPlaceholder({
 const ComposerMention = forwardRef<HTMLSpanElement, ComposerMentionProps>(
   ({ children, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "span";
-    const { isFocused } = useComposer();
     const isSelected = useSelected();
 
     return (
       <Component
-        data-selected={(isFocused && isSelected) || undefined}
+        data-selected={isSelected || undefined}
         {...props}
         ref={forwardedRef}
       >
