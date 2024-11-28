@@ -8,6 +8,13 @@ declare global {
         color: string;
       };
     };
+    ActivitiesData: {
+      $fileUploaded: {
+        file: string;
+        size: number;
+        success: boolean;
+      };
+    };
   }
 }
 
