@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import * as Switch from "@radix-ui/react-switch";
+// TODO update import
+import { cn } from "../../../emails/_utils/cn";
 
 function SubmitButton({ onClick }: { onClick: () => void }) {
   return (
@@ -33,7 +35,10 @@ export function ChannelNotificationsSettings() {
       <div className="mb-6">
         <div className="flex items-center">
           <Switch.Root
-            className="w-11 h-6 bg-gray-200 rounded-full relative inline-flex items-center"
+            className={cn(
+              "w-11 h-6 rounded-full relative inline-flex items-center transition-colors",
+              emailNotifications ? "bg-green-500" : "bg-gray-200"
+            )}
             id="emailNotifications"
             name="emailNotifications"
             checked={emailNotifications}
