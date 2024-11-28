@@ -244,7 +244,7 @@ function ComposerEditorMentionSuggestionsWrapper({
   MentionSuggestions,
 }: ComposerEditorMentionSuggestionsWrapperProps) {
   const editor = useSlateStatic();
-  const { editorChangeEventSource } = useComposerEditorContext();
+  const { onEditorChange } = useComposerEditorContext();
   const { isFocused } = useComposer();
   const { portalContainer } = useLiveblocksUIConfig();
   const [contentRef, contentZIndex] = useContentZIndex();
@@ -264,7 +264,7 @@ function ComposerEditorMentionSuggestionsWrapper({
     open: isOpen,
   });
 
-  useObservable(editorChangeEventSource, () => {
+  useObservable(onEditorChange, () => {
     setMentionDraft(getMentionDraftAtSelection(editor));
   });
 
@@ -328,7 +328,7 @@ function ComposerEditorFloatingToolbarWrapper({
   setHasFloatingToolbarRange,
 }: ComposerEditorFloatingToolbarWrapperProps) {
   const editor = useSlateStatic();
-  const { editorChangeEventSource } = useComposerEditorContext();
+  const { onEditorChange } = useComposerEditorContext();
   const { isFocused } = useComposer();
   const { portalContainer } = useLiveblocksUIConfig();
   const [contentRef, contentZIndex] = useContentZIndex();
@@ -366,7 +366,7 @@ function ComposerEditorFloatingToolbarWrapper({
     };
   }, [isFocused]);
 
-  useObservable(editorChangeEventSource, () => {
+  useObservable(onEditorChange, () => {
     // Detach from previous selection range (if any) to avoid sudden jumps
     setReference(null);
 
@@ -827,7 +827,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     forwardedRef
   ) => {
     const client = useClientOrNull();
-    const { editor, validate, setFocused, editorChangeEventSource, roomId } =
+    const { editor, validate, setFocused, onEditorChange, roomId } =
       useComposerEditorContext();
     const {
       submit,
@@ -897,9 +897,9 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
         // Our multi-component setup requires us to instantiate the editor in `Composer.Form`
         // but we can only listen to changes here in `Composer.Editor` via `Slate`, so we use
         // an event source to notify `Composer.Form` of changes.
-        editorChangeEventSource.notify();
+        onEditorChange.notify();
       },
-      [validate, editorChangeEventSource]
+      [validate, onEditorChange]
     );
 
     const createMention = useCallback(
@@ -1299,9 +1299,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
         pasteFilesAsAttachments,
       })
     );
-    const editorChangeEventSource = useInitial(
-      makeEventSource
-    ) as EventSource<void>;
+    const onEditorChange = useInitial(makeEventSource) as EventSource<void>;
 
     const validate = useCallback(
       (value: SlateElement[]) => {
@@ -1485,7 +1483,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       [editor]
     );
 
-    useObservable(editorChangeEventSource, () => {
+    useObservable(onEditorChange, () => {
       setMarks(getMarks(editor));
     });
 
@@ -1495,7 +1493,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
           editor,
           validate,
           setFocused,
-          editorChangeEventSource,
+          onEditorChange,
           roomId,
         }}
       >
