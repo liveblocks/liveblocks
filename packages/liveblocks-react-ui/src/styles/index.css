@@ -15,8 +15,9 @@
   --lb-foreground: #111;
 
   /** 
-   * Advanced
-   */
+  * Advanced
+  */
+  --lb-line-height: 1.5;
   --lb-icon-size: 20px;
   --lb-icon-weight: 1.5px;
   --lb-avatar-radius: 50%;
@@ -254,6 +255,20 @@
       padding-inline: calc(0.7 * var(--lb-spacing));
     }
   }
+
+  &:where([data-variant="toggle"]) {
+    color: var(--lb-foreground-tertiary);
+
+    &:where([aria-pressed="true"]) {
+      --lb-button-background: var(--lb-foreground-subtle);
+
+      color: var(--lb-foreground-secondary);
+
+      :where(.lb-icon *) {
+        stroke-width: calc(1.25 * var(--lb-icon-weight));
+      }
+    }
+  }
 }
 
 .lb-button-icon {
@@ -292,7 +307,7 @@
 }
 
 .lb-composer-suggestions-list-item {
-  scroll-margin-block: $lb-elevation-list-padding;
+  scroll-margin-block: $lb-elevation-padding;
 }
 
 /*************************************
@@ -597,16 +612,23 @@
 :is(.lb-comment-body, .lb-composer-editor) {
   color: var(--lb-foreground-secondary);
 
+  &,
+  * {
+    line-height: var(--lb-line-height);
+  }
+
   :where(p) {
     margin-block-start: 0.25em;
     margin-block-end: 0.25em;
 
+    /* Cancel out the impact of line-height on margins/paddings */
     &:where(:first-of-type) {
-      margin-block-start: 0;
+      margin-block-start: calc((1lh - 1em) / -2);
     }
 
+    /* Cancel out the impact of line-height on margins/paddings */
     &:where(:last-of-type) {
-      margin-block-end: 0;
+      margin-block-end: calc((1lh - 1em) / -2);
     }
   }
 
@@ -783,6 +805,37 @@
   color: var(--lb-accent-foreground);
   font-weight: 500;
   pointer-events: none;
+}
+
+/*************************************
+ *         Floating Toolbar          *
+ *************************************/
+
+.lb-composer-floating-toolbar {
+  display: flex;
+  flex-direction: row;
+  gap: $lb-elevation-padding;
+  padding: $lb-elevation-padding;
+  user-select: none;
+
+  /* Invisibly increase the buttons' hit target size */
+  :where(.lb-button) {
+    &::before {
+      content: "";
+      position: absolute;
+      inset: calc(-1 * $lb-elevation-padding);
+      z-index: -1;
+      border-radius: inherit;
+    }
+
+    &:where(:not(:first-of-type))::before {
+      inset-inline-start: calc(-0.5 * $lb-elevation-padding);
+    }
+
+    &:where(:not(:last-of-type))::before {
+      inset-inline-end: calc(-0.5 * $lb-elevation-padding);
+    }
+  }
 }
 
 /*************************************
@@ -1687,7 +1740,7 @@
 
 .lb-dropdown,
 .lb-composer-suggestions {
-  padding: $lb-elevation-list-padding;
+  padding: $lb-elevation-padding;
 }
 
 .lb-dropdown-item,
@@ -1701,7 +1754,7 @@
 .lb-dropdown-item,
 .lb-composer-suggestions-list-item,
 .lb-emoji-picker-emoji {
-  border-radius: calc(var(--lb-radius) - 0.75 * $lb-elevation-list-padding);
+  border-radius: calc(var(--lb-radius) - 0.75 * $lb-elevation-padding);
   color: var(--lb-foreground-secondary);
   outline: none;
   cursor: pointer;
@@ -1731,6 +1784,7 @@
 
 .lb-dropdown,
 .lb-composer-suggestions,
+.lb-composer-floating-toolbar,
 .lb-tooltip,
 .lb-emoji-picker {
   animation-duration: var(--lb-transition-duration);
@@ -1742,7 +1796,8 @@
     .lb-dropdown,
     .lb-emoji-picker,
     .lb-tooltip:where([data-state="delayed-open"]),
-    .lb-composer-suggestions
+    .lb-composer-suggestions,
+    .lb-composer-floating-toolbar
   ) {
   &:where([data-side="top"]) {
     animation-name: lb-animation-slide-up;
@@ -1753,7 +1808,13 @@
   }
 }
 
-:is(.lb-dropdown, .lb-emoji-picker, .lb-tooltip, .lb-composer-suggestions) {
+:is(
+    .lb-dropdown,
+    .lb-emoji-picker,
+    .lb-tooltip,
+    .lb-composer-suggestions,
+    .lb-composer-floating-toolbar
+  ) {
   &:where([data-state="closed"]) {
     animation-name: lb-animation-disappear;
   }

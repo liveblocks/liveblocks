@@ -1,4 +1,22 @@
-## Not published yet
+## 2.14.0 (Not yet published)
+
+### `@liveblocks-emails`
+
+- Add new functions to support text mention notification event for Lexical and
+  Tiptap text editors.
+
+## 2.13.0
+
+### `@liveblocks/react-ui`
+
+- Add a formatting toolbar to `Composer` which appears when selecting text. It’s
+  enabled by default in the default components and can also be custom built with
+  new primitives (`Composer.FloatingToolbar` and `Composer.MarkToggle`) and new
+  APIs (`const { marks, toggleMark } = useComposer()`).
+- Add new `--lb-line-height` token to control the line height of main elements
+  (e.g. comment bodies in comments and composers).
+- Remove `Timestamp` export mistakenly added to `@liveblocks/react-ui`, it
+  should be imported from `@liveblocks/react-ui/primitives` instead.
 
 ## 2.12.2
 

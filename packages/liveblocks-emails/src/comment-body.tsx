@@ -143,6 +143,7 @@ export type ConvertCommentBodyAsReactOptions<U extends BaseUserMeta = DU> = {
   components?: Partial<ConvertCommentBodyAsReactComponents<U>>;
   /**
    * A function that returns user info from user IDs.
+   * You should return a list of user objects of the same size, in the same order.
    */
   resolveUsers?: (
     args: ResolveUsersArgs
@@ -276,6 +277,7 @@ export type ConvertCommentBodyAsHtmlOptions<U extends BaseUserMeta = DU> = {
   styles?: Partial<ConvertCommentBodyAsHtmlStyles>;
   /**
    * A function that returns user info from user IDs.
+   * You should return a list of user objects of the same size, in the same order.
    */
   resolveUsers?: (
     args: ResolveUsersArgs
