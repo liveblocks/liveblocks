@@ -171,8 +171,10 @@ export class WebhookHandler {
         ) {
           return;
         } else {
+          // Using JSON.stringify because `notification.data.kind`
+          // is considered as `never` now because of the type guard.
           throw new Error(
-            `Unknown notification kind: ${notification.data.kind}`
+            `Unknown notification kind: ${JSON.stringify(notification.data.kind)}`
           );
         }
       }
