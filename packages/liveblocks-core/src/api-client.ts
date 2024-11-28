@@ -43,6 +43,7 @@ import type {
 } from "./protocol/InboxNotifications";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type { HistoryVersion } from "./protocol/VersionHistory";
+import type { ChannelNotificationSettings } from "./types/ChannelNotificationSettings";
 import type { TextEditorType } from "./types/Others";
 import type { Patchable } from "./types/Patchable";
 import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";
@@ -357,6 +358,10 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
   deleteAllInboxNotifications(): Promise<void>;
 
   deleteInboxNotification(inboxNotificationId: string): Promise<void>;
+
+  getChannelNotificationSettings(options?: {
+    signal: AbortSignal;
+  }): Promise<ChannelNotificationSettings>;
 }
 
 export interface LiveblocksHttpApi<M extends BaseMetadata>
@@ -1341,6 +1346,22 @@ export function createApiClient<M extends BaseMetadata>({
     );
   }
 
+  /* -------------------------------------------------------------------------------------------------
+   * Channel notifications settings (project-level)
+   * -------------------------------------------------------------------------------------------------
+   */
+  async function getChannelNotificationSettings(options?: {
+    signal?: AbortSignal;
+  }): Promise<ChannelNotificationSettings> {
+    return httpClient.get<ChannelNotificationSettings>(
+      url`/v2/c/channel-notification-settings`,
+      // Is it the right requested scope?
+      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      undefined,
+      { signal: options?.signal }
+    );
+  }
+
   async function getUserThreads_experimental(options?: {
     cursor?: string;
     query?: {
@@ -1464,6 +1485,7 @@ export function createApiClient<M extends BaseMetadata>({
     markInboxNotificationAsRead,
     deleteAllInboxNotifications,
     deleteInboxNotification,
+    getChannelNotificationSettings,
     // User threads
     getUserThreads_experimental,
     getUserThreadsSince_experimental,

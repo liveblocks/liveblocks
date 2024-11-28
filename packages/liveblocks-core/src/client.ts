@@ -43,6 +43,7 @@ import {
   makeAuthDelegateForRoom,
   makeCreateSocketDelegateForRoom,
 } from "./room";
+import type { ChannelNotificationSettings } from "./types/ChannelNotificationSettings";
 import type { OptionalPromise } from "./types/OptionalPromise";
 
 const MIN_THROTTLE = 16;
@@ -266,6 +267,14 @@ export type NotificationsApi<M extends BaseMetadata> = {
    * await client.deleteInboxNotification("in_xxx");
    */
   deleteInboxNotification(inboxNotificationId: string): Promise<void>;
+
+  /**
+   * Gets channel notifications settings for a user for a project.
+   *
+   * @example
+   * const channelNotificationSettings = await client.getChannelNotificationSettings();
+   */
+  getChannelNotificationSettings(): Promise<ChannelNotificationSettings>;
 };
 
 /**
@@ -839,6 +848,9 @@ export function createClient<U extends BaseUserMeta = DU>(
       markInboxNotificationAsRead: httpClient.markInboxNotificationAsRead,
       deleteAllInboxNotifications: httpClient.deleteAllInboxNotifications,
       deleteInboxNotification: httpClient.deleteInboxNotification,
+
+      // Public channel notification settings API
+      getChannelNotificationSettings: httpClient.getChannelNotificationSettings,
 
       // Advanced resolvers APIs
       resolvers: {
