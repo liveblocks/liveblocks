@@ -13,12 +13,7 @@ import {
 } from "@floating-ui/react-dom";
 import { useRefs } from "@liveblocks/react-ui/_private";
 import { type Editor, isTextSelection, useEditorState } from "@tiptap/react";
-import type {
-  ComponentProps,
-  ComponentType,
-  PointerEvent as ReactPointerEvent,
-  ReactNode,
-} from "react";
+import type { ComponentProps, PointerEvent as ReactPointerEvent } from "react";
 import React, {
   forwardRef,
   useCallback,
@@ -29,38 +24,26 @@ import React, {
 } from "react";
 import { createPortal } from "react-dom";
 
+import { classNames } from "../classnames";
+import {
+  applyToolbarSlot,
+  type ToolbarSlot,
+  type ToolbarSlotProps,
+} from "./Toolbar";
+
 type FloatingPosition = "top" | "bottom";
-
-interface FloatingToolbarSlotProps {
-  editor: Editor;
-}
-
-type FloatingToolbarSlot = ReactNode | ComponentType<FloatingToolbarSlotProps>;
 
 export interface FloatingToolbarProps
   extends Omit<ComponentProps<"div">, "children"> {
   editor: Editor | null;
   position?: FloatingPosition;
   offset?: number;
-  children?: FloatingToolbarSlot;
-  leading?: FloatingToolbarSlot;
-  trailing?: FloatingToolbarSlot;
+  children?: ToolbarSlot;
+  leading?: ToolbarSlot;
+  trailing?: ToolbarSlot;
 }
 
 export const FLOATING_TOOLBAR_COLLISION_PADDING = 10;
-
-function applySlot(
-  slot: FloatingToolbarSlot,
-  props: FloatingToolbarSlotProps
-): ReactNode {
-  if (typeof slot === "function") {
-    const Component = slot;
-
-    return <Component {...props} />;
-  }
-
-  return slot;
-}
 
 function DefaultFloatingToolbarChildren() {
   return <>Main</>;
@@ -69,13 +52,14 @@ function DefaultFloatingToolbarChildren() {
 export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
   (
     {
-      children = <DefaultFloatingToolbarChildren />,
+      children = DefaultFloatingToolbarChildren,
       leading,
       trailing,
       position = "top",
       offset: sideOffset = 6,
       editor,
       onPointerDown,
+      className,
       ...props
     },
     forwardedRef
@@ -245,11 +229,16 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
       return null;
     }
 
-    const slotProps: FloatingToolbarSlotProps = { editor };
+    const slotProps: ToolbarSlotProps = { editor };
 
     return createPortal(
       <div
-        className="lb-root lb-portal lb-elevation lb-tiptap-floating lb-tiptap-floating-toolbar"
+        role="toolbar"
+        aria-label="Floating toolbar"
+        className={classNames(
+          "lb-root lb-portal lb-elevation lb-tiptap-floating lb-tiptap-floating-toolbar lb-tiptap-toolbar",
+          className
+        )}
         ref={mergedRefs}
         style={{
           position: strategy,
@@ -263,9 +252,9 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
         onPointerDown={handlePointerDown}
         {...props}
       >
-        {applySlot(leading, slotProps)}
-        {applySlot(children, slotProps)}
-        {applySlot(trailing, slotProps)}
+        {applyToolbarSlot(leading, slotProps)}
+        {applyToolbarSlot(children, slotProps)}
+        {applyToolbarSlot(trailing, slotProps)}
       </div>,
       document.body
     );
