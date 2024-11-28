@@ -897,7 +897,7 @@ will indicate that there’s no email to send in this case.
 Takes a
 [text mention notification webhook event](/docs/platform/webhooks#TextMention-notification)
 and returns an unread text mention with its surrounding text as React nodes. It
-can also returns `null` if the text mention do not exists anymore or has been
+can also return `null` if the text mention does not exist anymore or has been
 already been read. You can also
 [resolve user & room data](#prepare-text-mention-notification-email-as-react-resolving-data)
 and
@@ -932,7 +932,7 @@ if (isTextMentionNotificationEvent(event)) {
 // ...
 ```
 
-It's designed to be used in a webhook event, which requires a
+It’s designed to be used in a webhook event, which requires a
 [`Liveblocks`](/docs/api-reference/liveblocks-node#Liveblocks-client) Node.js
 client and a
 [`WebhookHandler`](/docs/api-reference/liveblocks-node#WebhookHandler). Check
@@ -1005,7 +1005,7 @@ export async function POST(request: Request) {
     type="TextMentionNotificationEmailDataAsReact | null"
   >
     Returns text mention information, and a formatted React content ready for
-    use in emails. Returns `null` if the text mention do not exists anymore or
+    use in emails. Returns `null` if the text mention does not exist anymore or
     has been already been read.
 
     ```js title="Unread text mention"
@@ -1176,8 +1176,8 @@ console.log(emailData.mention.reactContent);
 
 Takes a
 [text mention notification webhook event](/docs/platform/webhooks#TextMention-notification)
-and returns an unread text mention with its surrounding text as a HTML string.
-It can also returns `null` if the text mention do not exists anymore or has been
+and returns an unread text mention with its surrounding text as an HTML string.
+It can also return `null` if the text mention does not exist anymore or has been
 already been read. You can also
 [resolve user & room data](#prepare-text-mention-notification-email-as-html-resolving-data)
 and
@@ -1212,7 +1212,7 @@ if (isTextMentionNotificationEvent(event)) {
 // ...
 ```
 
-It's designed to be used in a webhook event, which requires a
+It’s designed to be used in a webhook event, which requires a
 [`Liveblocks`](/docs/api-reference/liveblocks-node#Liveblocks-client) Node.js
 client and a
 [`WebhookHandler`](/docs/api-reference/liveblocks-node#WebhookHandler). Check
@@ -1284,9 +1284,9 @@ export async function POST(request: Request) {
     name="value"
     type="TextMentionNotificationEmailDataAsHtml | null"
   >
-    Returns text mention information, and a formatted HTML content ready for
-    use in emails. Returns `null` if the text mention do not exists anymore or
-    has been already been read.
+    Returns text mention information, and formatted HTML content ready for
+    use in emails. Returns `null` if the text mention does not exist anymore or
+    has already been read.
 
     ```js title="Unread text mention"
     {
