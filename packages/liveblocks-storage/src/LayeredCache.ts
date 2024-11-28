@@ -63,6 +63,12 @@ export class LayeredCache implements Transaction {
     }
   }
 
+  setLiveRef(_nodeId: NodeId, _key: string, _ref: NodeId): void {
+    throw new Error("Not implemented on the client yet");
+    // const layer = this.#layers[0] ?? this.#root;
+    // layer.set(nodeId, key, value);
+  }
+
   delete(nodeId: NodeId, key: string): boolean {
     const layer = this.#layers[0];
     if (layer) {

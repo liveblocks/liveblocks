@@ -39,13 +39,13 @@ export class LiveObject {
     const nodeId = pool.nextId();
     this.#ctx = { nodeId, pool };
 
-    for (const [key, lsonValue] of Object.entries(initialValue)) {
-      let value = lsonValue;
+    for (const [key, value] of Object.entries(initialValue)) {
       if (value !== undefined) {
         if (isLiveStructure(value)) {
-          value = { $ref: value._attach(pool) };
+          this.#ctx.pool.setLiveRef(this.#ctx.nodeId, key, value._attach(pool));
+        } else {
+          this.#ctx.pool.set(this.#ctx.nodeId, key, value);
         }
-        this.#ctx.pool.set(this.#ctx.nodeId, key, value);
       }
     }
 
