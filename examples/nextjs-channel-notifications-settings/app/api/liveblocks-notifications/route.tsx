@@ -5,6 +5,8 @@ import {
   isTextMentionNotificationEvent,
   WebhookHandler,
   Liveblocks,
+  WebhookEvent,
+  CustomNotificationEvent,
 } from "@liveblocks/node";
 import { Text } from "@react-email/components";
 import { render } from "@react-email/render";
@@ -13,6 +15,13 @@ import UnreadMentionEmail from "../../../emails/UnreadMention";
 import UnreadRepliesEmail from "../../../emails/UnreadReplies";
 
 import { USER_INFO } from "../dummy-users";
+
+// to be implemented in `@liveblocks/node`
+const isCustomNotificationEvent = (
+  event: WebhookEvent
+): event is CustomNotificationEvent => {
+  return event.type === "notification" && event.data.kind.startsWith("$");
+};
 
 // Add your Resend API key from https://resend.com/api-keys
 const resend = new Resend(process.env.RESEND_API_KEY as string);
@@ -48,6 +57,7 @@ export async function POST(request: Request) {
   }
 
   if (isThreadNotificationEvent(event)) {
+    console.log("thread notification event");
     if (event.data.channel === "email") {
       let emailData;
       try {
@@ -150,10 +160,14 @@ export async function POST(request: Request) {
       return new Response(null, { status: 200 });
     }
   } else if (isTextMentionNotificationEvent(event)) {
+    console.log("text mention notification event");
     // Send text mention kind notification email
     return new Response(null, { status: 200 });
+  } else if (isCustomNotificationEvent(event)) {
+    // send custom notification kind email
+    console.log("custom notification event");
+    return new Response(null, { status: 200 });
   }
-
   return new Response("Event type not used", {
     status: 200,
   });
