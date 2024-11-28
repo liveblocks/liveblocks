@@ -4,6 +4,9 @@ import { WebhookHandler } from "@liveblocks/node";
 // Add your Liveblocks secret key from the dashboard
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY as string,
+  // XXX
+  // @ts-expect-error
+  baseUrl: "https://dev.dev-liveblocks5948.workers.dev/",
 });
 
 // Add your webhook secret key from a project's webhooks dashboard
