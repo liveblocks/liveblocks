@@ -4,7 +4,7 @@ import { SQLCache } from "~/SQLCache.js";
 
 test("empty", () => {
   const cache = new SQLCache();
-  expect(cache.count).toEqual(1);
+  expect(cache.count).toEqual(0);
   expect(cache.data).toEqual({});
 });
 
@@ -47,7 +47,7 @@ test("clock will not advance if nothing was written", () => {
 
 test("setting keys (simple values)", () => {
   const cache = new SQLCache();
-  expect(cache.count).toEqual(1);
+  expect(cache.count).toEqual(0);
   cache.mutate((tx) => {
     tx.set("a", 1);
   });
@@ -62,7 +62,7 @@ test("setting keys (simple values)", () => {
     tx.set("b", "hi");
     tx.set("c", null);
   });
-  expect(cache.count).toEqual(1);
+  expect(cache.count).toEqual(3);
   expect(cache.data).toEqual({
     root: { a: 1, b: "hi", c: null },
   });
@@ -269,7 +269,7 @@ test("get", () => {
     expect(cache.data).toEqual({ root: { k: "v", abc: 123, foo: null } });
   });
 
-  expect(cache.count).toEqual(1);
+  expect(cache.count).toEqual(3);
   expect(cache.data).toEqual({ root: { k: "v", abc: 123, foo: null } });
 });
 
@@ -298,7 +298,7 @@ test("get after rollback", () => {
     root: { k: "v", abc: 123 },
   });
 
-  expect(cache.count).toEqual(1);
+  expect(cache.count).toEqual(2);
 });
 
 test("reading all rows", () => {

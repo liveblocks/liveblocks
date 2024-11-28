@@ -117,7 +117,7 @@ test("asymmetric mutators (rollback) (2 clients)", async () => {
   expect(server.data).toEqual({ root: { a: 2, b: 1 } });
 });
 
-test.only("asymmetric mutators (client adds JSON object, server as LiveObject)", async () => {
+test("asymmetric mutators (client adds JSON object, server as LiveObject)", async () => {
   const { client, server, sync } = await oneClientSetup(
     { asym: put }, // Client mutations
     { asym: putLiveObject } // Server mutations (different!)
