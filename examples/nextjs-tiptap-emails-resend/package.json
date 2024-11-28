@@ -1,5 +1,5 @@
 {
-  "name": "@liveblocks-examples/nextjs-tiptap",
+  "name": "@liveblocks-examples/nextjs-tiptap-emails-resend",
   "description": "This example shows how to send text mention notification emails with Tiptap, Liveblocks, React Email, Resend, and Next.js.",
   "license": "Apache-2.0",
   "private": true,
