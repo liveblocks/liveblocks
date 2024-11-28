@@ -18,7 +18,10 @@ export default function VersionsDialog({ editor }: { editor: Editor | null }) {
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={setOpen}>
-      <Dialog.Trigger className="inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground w-8 h-8">
+      <Dialog.Trigger
+        title="version history"
+        className="inline-flex relative items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground w-8 h-8"
+      >
         <svg
           xmlns="http://www.w3.org/2000/svg"
           x="0px"
@@ -41,14 +44,22 @@ export default function VersionsDialog({ editor }: { editor: Editor | null }) {
           <Dialog.Description className="sr-only">
             Previous versions of this document
           </Dialog.Description>
-          {editor && <Versions onVersionRestore={onVersionRestore} editor={editor} />}
+          {editor && (
+            <Versions onVersionRestore={onVersionRestore} editor={editor} />
+          )}
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
   );
 }
 
-function Versions({ onVersionRestore, editor }: { onVersionRestore: () => void, editor: Editor }) {
+function Versions({
+  onVersionRestore,
+  editor,
+}: {
+  onVersionRestore: () => void;
+  editor: Editor;
+}) {
   const [selectedVersionId, setSelectedVersionId] = useState<string>();
   const { versions, isLoading } = useHistoryVersions();
   const selectedVersion = useMemo(
@@ -56,7 +67,9 @@ function Versions({ onVersionRestore, editor }: { onVersionRestore: () => void, 
     [selectedVersionId, versions]
   );
 
-  return isLoading ? <Loading /> : versions?.length === 0 ? (
+  return isLoading ? (
+    <Loading />
+  ) : versions?.length === 0 ? (
     <div className="flex h-full items-center justify-center p-6 text-muted-foreground">
       No versions yet
     </div>
@@ -65,7 +78,11 @@ function Versions({ onVersionRestore, editor }: { onVersionRestore: () => void, 
       <div className="flex-1 h-full min-w-0">
         {selectedVersion ? (
           <HistoryVersionPreview
-            className="w-full h-full" onVersionRestore={onVersionRestore} version={selectedVersion} editor={editor} />
+            className="w-full h-full"
+            onVersionRestore={onVersionRestore}
+            version={selectedVersion}
+            editor={editor}
+          />
         ) : (
           <div className="flex h-full items-center justify-center p-6 text-muted-foreground">
             No version selected
