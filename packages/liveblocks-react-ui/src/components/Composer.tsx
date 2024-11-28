@@ -17,22 +17,35 @@ import {
 } from "@liveblocks/react/_private";
 import type {
   ComponentPropsWithoutRef,
+  ComponentType,
   FocusEvent,
   FormEvent,
   ForwardedRef,
   MouseEvent,
+  PropsWithChildren,
   ReactNode,
   RefAttributes,
   SyntheticEvent,
 } from "react";
-import React, { createContext, forwardRef, useCallback, useRef } from "react";
+import React, {
+  createContext,
+  forwardRef,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
 import { useLiveblocksUIConfig } from "../config";
+import { FLOATING_ELEMENT_SIDE_OFFSET } from "../constants";
 import { AttachmentIcon } from "../icons/Attachment";
+import { BoldIcon } from "../icons/Bold";
+import { CodeIcon } from "../icons/Code";
 import { EmojiIcon } from "../icons/Emoji";
+import { ItalicIcon } from "../icons/Italic";
 import { MentionIcon } from "../icons/Mention";
 import { SendIcon } from "../icons/Send";
+import { StrikethroughIcon } from "../icons/Strikethrough";
 import type { ComposerOverrides, GlobalOverrides } from "../overrides";
 import { useOverrides } from "../overrides";
 import * as ComposerPrimitive from "../primitives/Composer";
@@ -48,10 +61,12 @@ import type {
   ComposerEditorMentionSuggestionsProps,
   ComposerEditorProps,
   ComposerFormProps,
+  ComposerMarkToggleProps,
   ComposerSubmitComment,
 } from "../primitives/Composer/types";
 import { useComposerAttachmentsDropArea } from "../primitives/Composer/utils";
 import { MENTION_CHARACTER } from "../slate/plugins/mentions";
+import type { ComposerBodyMark } from "../types";
 import { classNames } from "../utils/class-names";
 import { useControllableState } from "../utils/use-controllable-state";
 import { useLayoutEffect } from "../utils/use-layout-effect";
@@ -76,6 +91,10 @@ interface EditorActionProps extends ComponentPropsWithoutRef<"button"> {
 
 interface EmojiEditorActionProps extends EditorActionProps {
   onPickerOpenChange?: EmojiPickerProps["onOpenChange"];
+}
+
+interface MarkToggleProps extends ComposerMarkToggleProps {
+  shortcut?: ReactNode;
 }
 
 type ComposerCreateThreadProps<M extends BaseMetadata> = {
@@ -158,6 +177,11 @@ export type ComposerProps<M extends BaseMetadata = DM> = Omit<
     showAttachments?: boolean;
 
     /**
+     * Whether to show formatting controls (e.g. a floating toolbar with formatting toggles when selecting text)
+     */
+    showFormattingControls?: boolean;
+
+    /**
      * Whether the composer is disabled.
      */
     disabled?: ComposerFormProps["disabled"];
@@ -193,6 +217,7 @@ interface ComposerEditorContainerProps
     ComposerProps,
     | "defaultValue"
     | "showAttachments"
+    | "showFormattingControls"
     | "showAttribution"
     | "overrides"
     | "actions"
@@ -235,7 +260,7 @@ function ComposerInsertMentionEditorAction({
     <Tooltip content={tooltipLabel ?? label}>
       <Button
         className={classNames("lb-composer-editor-action", className)}
-        onMouseDown={preventDefault}
+        onPointerDown={preventDefault}
         onClick={handleClick}
         aria-label={label}
         {...props}
@@ -269,7 +294,7 @@ function ComposerInsertEmojiEditorAction({
         <EmojiPickerTrigger asChild>
           <Button
             className={classNames("lb-composer-editor-action", className)}
-            onMouseDown={preventDefault}
+            onPointerDown={preventDefault}
             onClick={stopPropagation}
             aria-label={label}
             {...props}
@@ -301,7 +326,7 @@ function ComposerAttachFilesEditorAction({
       <ComposerPrimitive.AttachFiles asChild>
         <Button
           className={classNames("lb-composer-editor-action", className)}
-          onMouseDown={preventDefault}
+          onPointerDown={preventDefault}
           onClick={stopPropagation}
           aria-label={label}
           {...props}
@@ -347,6 +372,99 @@ function ComposerMentionSuggestions({
       </ComposerPrimitive.SuggestionsList>
     </ComposerPrimitive.Suggestions>
   ) : null;
+}
+
+function MarkToggle({ mark, shortcut, children, ...props }: MarkToggleProps) {
+  const $ = useOverrides();
+  const label = useMemo(() => {
+    return $.COMPOSER_TOGGLE_MARK(mark);
+  }, [$, mark]);
+
+  return (
+    <ShortcutTooltip
+      content={label}
+      shortcut={shortcut}
+      sideOffset={FLOATING_ELEMENT_SIDE_OFFSET + 2}
+    >
+      <ComposerPrimitive.MarkToggle mark={mark} asChild {...props}>
+        <Button aria-label={label} variant="toggle">
+          {children}
+        </Button>
+      </ComposerPrimitive.MarkToggle>
+    </ShortcutTooltip>
+  );
+}
+
+type MarkToggles = {
+  [K in ComposerBodyMark]: ComponentType<PropsWithChildren>;
+};
+
+const markToggles: MarkToggles = {
+  bold: () => (
+    <MarkToggle
+      mark="bold"
+      shortcut={
+        <>
+          <ShortcutTooltipKey name="mod" />
+          <span>B</span>
+        </>
+      }
+    >
+      <BoldIcon />
+    </MarkToggle>
+  ),
+  italic: () => (
+    <MarkToggle
+      mark="italic"
+      shortcut={
+        <>
+          <ShortcutTooltipKey name="mod" />
+          <span>I</span>
+        </>
+      }
+    >
+      <ItalicIcon />
+    </MarkToggle>
+  ),
+  strikethrough: () => (
+    <MarkToggle
+      mark="strikethrough"
+      shortcut={
+        <>
+          <ShortcutTooltipKey name="mod" />
+          <ShortcutTooltipKey name="shift" />
+          <span>S</span>
+        </>
+      }
+    >
+      <StrikethroughIcon />
+    </MarkToggle>
+  ),
+  code: () => (
+    <MarkToggle
+      mark="code"
+      shortcut={
+        <>
+          <ShortcutTooltipKey name="mod" />
+          <span>E</span>
+        </>
+      }
+    >
+      <CodeIcon />
+    </MarkToggle>
+  ),
+};
+
+const markTogglesList = Object.entries(markToggles).map(([mark, Toggle]) => (
+  <Toggle key={mark} />
+));
+
+function ComposerFloatingToolbar() {
+  return (
+    <ComposerPrimitive.FloatingToolbar className="lb-root lb-portal lb-elevation lb-composer-floating-toolbar">
+      {markTogglesList}
+    </ComposerPrimitive.FloatingToolbar>
+  );
 }
 
 function ComposerLink({ href, children }: ComposerEditorLinkProps) {
@@ -423,7 +541,7 @@ function ComposerAttachments({
   );
 }
 
-const editorComponents: ComposerEditorComponents = {
+const editorRequiredComponents: ComposerEditorComponents = {
   Mention: ComposerMention,
   MentionSuggestions: ComposerMentionSuggestions,
   Link: ComposerLink,
@@ -431,6 +549,7 @@ const editorComponents: ComposerEditorComponents = {
 
 function ComposerEditorContainer({
   showAttachments = true,
+  showFormattingControls = true,
   showAttribution,
   defaultValue,
   isCollapsed,
@@ -446,6 +565,14 @@ function ComposerEditorContainer({
   const { isEmpty } = useComposer();
   const { hasMaxAttachments } = useComposerAttachmentsContext();
   const $ = useOverrides(overrides);
+  const components = useMemo(() => {
+    return {
+      ...editorRequiredComponents,
+      FloatingToolbar: showFormattingControls
+        ? ComposerFloatingToolbar
+        : undefined,
+    };
+  }, [showFormattingControls]);
 
   const [isDraggingOver, dropAreaProps] = useComposerAttachmentsDropArea({
     disabled: disabled || hasMaxAttachments,
@@ -471,7 +598,7 @@ function ComposerEditorContainer({
         placeholder={$.COMPOSER_PLACEHOLDER}
         defaultValue={defaultValue}
         autoFocus={autoFocus}
-        components={editorComponents}
+        components={components}
         disabled={disabled}
         dir={$.dir}
       />
@@ -507,7 +634,7 @@ function ComposerEditorContainer({
                 >
                   <ComposerPrimitive.Submit asChild>
                     <Button
-                      onMouseDown={preventDefault}
+                      onPointerDown={preventDefault}
                       onClick={stopPropagation}
                       className="lb-composer-action"
                       variant="primary"
@@ -562,6 +689,7 @@ export const Composer = forwardRef(
       autoFocus,
       disabled,
       showAttachments = true,
+      showFormattingControls = true,
       showAttribution,
       roomId: _roomId,
       ...props
@@ -737,6 +865,7 @@ export const Composer = forwardRef(
             isCollapsed={isCollapsed}
             showAttachments={showAttachments}
             showAttribution={showAttribution}
+            showFormattingControls={showFormattingControls}
             hasResolveMentionSuggestions={hasResolveMentionSuggestions}
             onEmptyChange={setEmptyRef}
             onEmojiPickerOpenChange={setEmojiPickerOpenRef}

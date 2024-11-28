@@ -1,3 +1,4 @@
+export type { ComposerBodyMark, ComposerBodyMarks } from "../types";
 export * as Comment from "./Comment";
 export type {
   CommentBodyComponents,
@@ -14,12 +15,15 @@ export type {
   ComposerAttachFilesProps,
   ComposerAttachmentsDropAreaProps,
   ComposerEditorComponents,
+  ComposerEditorFloatingToolbarProps,
   ComposerEditorLinkProps,
   ComposerEditorMentionProps,
   ComposerEditorMentionSuggestionsProps,
   ComposerEditorProps,
+  ComposerFloatingToolbarProps,
   ComposerFormProps,
   ComposerLinkProps,
+  ComposerMarkToggleProps,
   ComposerMentionProps,
   ComposerSubmitComment,
   ComposerSubmitProps,

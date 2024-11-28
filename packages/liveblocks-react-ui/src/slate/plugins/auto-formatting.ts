@@ -1,14 +1,13 @@
 import type { EditorMarks } from "slate";
 import {
   Editor as SlateEditor,
-  Range,
+  Range as SlateRange,
   Transforms as SlateTransforms,
 } from "slate";
 
 import { getCharacterBefore } from "../utils/get-character";
 import { getMatchRange } from "../utils/get-match-range";
 import { isEmptyString } from "../utils/is-empty-string";
-import { isSelectionCollapsed } from "../utils/is-selection-collapsed";
 
 interface MarkFormatter {
   type: "mark";
@@ -56,7 +55,7 @@ function formatMark<T extends SlateEditor>(
   const match = getMatchRange(editor, editor.selection!, [formatter.character]);
 
   // Check if the match exists and is not empty
-  if (!match || Range.isCollapsed(match)) {
+  if (!match || SlateRange.isCollapsed(match)) {
     return false;
   }
 
@@ -108,7 +107,7 @@ export function withAutoFormatting<T extends SlateEditor>(editor: T): T {
   const { insertText } = editor;
 
   editor.insertText = (text, options) => {
-    if (!isSelectionCollapsed(editor.selection)) {
+    if (!editor.selection || !SlateRange.isCollapsed(editor.selection)) {
       return insertText(text, options);
     }
 

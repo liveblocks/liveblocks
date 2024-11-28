@@ -10,7 +10,6 @@ import type { ComposerBodyMention } from "../../types";
 import { getCharacterAfter, getCharacterBefore } from "../utils/get-character";
 import { getMatchRange } from "../utils/get-match-range";
 import { isEmptyString } from "../utils/is-empty-string";
-import { isSelectionCollapsed } from "../utils/is-selection-collapsed";
 
 export const MENTION_CHARACTER = "@";
 
@@ -24,7 +23,7 @@ export function getMentionDraftAtSelection(
 ): MentionDraft | undefined {
   const { selection } = editor;
 
-  if (!isSelectionCollapsed(selection)) {
+  if (!selection || !SlateRange.isCollapsed(selection)) {
     return;
   }
 
@@ -97,7 +96,7 @@ export function insertMentionCharacter(editor: SlateEditor) {
   const shouldInsertSpaceAfter =
     afterCharacter && !isEmptyString(afterCharacter.text);
 
-  if (isSelectionCollapsed(editor.selection)) {
+  if (!SlateRange.isCollapsed(editor.selection)) {
     const text =
       (shouldInsertSpaceBefore ? " " : "") +
       MENTION_CHARACTER +
@@ -147,7 +146,7 @@ export function withMentions<T extends SlateEditor>(editor: T): T {
   editor.deleteBackward = (unit) => {
     const { selection } = editor;
 
-    if (isSelectionCollapsed(selection)) {
+    if (selection && SlateRange.isCollapsed(selection)) {
       const [mention] = SlateEditor.nodes(editor, {
         at:
           unit === "character"
