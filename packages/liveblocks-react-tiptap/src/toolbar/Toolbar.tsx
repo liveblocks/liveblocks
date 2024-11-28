@@ -7,6 +7,7 @@ import {
   StrikethroughIcon,
   TooltipProvider,
 } from "@liveblocks/react-ui/_private";
+import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type { ChainedCommands, Editor } from "@tiptap/react";
 import type { ComponentProps, ComponentType, ReactNode } from "react";
 import React, { forwardRef } from "react";
@@ -67,12 +68,9 @@ const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
 const ToolbarToggle = forwardRef<HTMLButtonElement, ToolbarToggleProps>(
   ({ active, ...props }, forwardedRef) => {
     return (
-      <ToolbarButton
-        aria-pressed={active}
-        data-active={active}
-        ref={forwardedRef}
-        {...props}
-      />
+      <TogglePrimitive.Root asChild pressed={active}>
+        <ToolbarButton ref={forwardedRef} {...props} />
+      </TogglePrimitive.Root>
     );
   }
 );
