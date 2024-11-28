@@ -359,9 +359,7 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
 
   deleteInboxNotification(inboxNotificationId: string): Promise<void>;
 
-  getChannelNotificationSettings(options?: {
-    signal: AbortSignal;
-  }): Promise<ChannelNotificationSettings>;
+  getChannelNotificationSettings(): Promise<ChannelNotificationSettings>;
 }
 
 export interface LiveblocksHttpApi<M extends BaseMetadata>
@@ -1350,15 +1348,12 @@ export function createApiClient<M extends BaseMetadata>({
    * Channel notifications settings (project-level)
    * -------------------------------------------------------------------------------------------------
    */
-  async function getChannelNotificationSettings(options?: {
-    signal?: AbortSignal;
-  }): Promise<ChannelNotificationSettings> {
+  async function getChannelNotificationSettings(): Promise<ChannelNotificationSettings> {
     return httpClient.get<ChannelNotificationSettings>(
       url`/v2/c/channel-notification-settings`,
       // Is it the right requested scope?
       await authManager.getAuthValue({ requestedScope: "comments:read" }),
-      undefined,
-      { signal: options?.signal }
+      undefined
     );
   }
 
