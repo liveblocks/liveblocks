@@ -1,4 +1,26 @@
-## 2.12.2 (Not published yet)
+## Not yet published
+
+## 2.13.0
+
+### `@liveblocks/react-ui`
+
+- Add a formatting toolbar to `Composer` which appears when selecting text. It’s
+  enabled by default in the default components and can also be custom built with
+  new primitives (`Composer.FloatingToolbar` and `Composer.MarkToggle`) and new
+  APIs (`const { marks, toggleMark } = useComposer()`).
+- Add new `--lb-line-height` token to control the line height of main elements
+  (e.g. comment bodies in comments and composers).
+- Remove `Timestamp` export mistakenly added to `@liveblocks/react-ui`, it
+  should be imported from `@liveblocks/react-ui/primitives` instead.
+
+## 2.12.2
+
+### `@liveblocks/react-tiptap`
+
+- Add new options for `useLiveblocksExtension()` to allow setting
+  initialContent, experimental offline support, and the field name
+- Update floating composer to support onComposerSubmit handler and closing the
+  composer with the escape key
 
 ### `@liveblocks/zustand`
 

@@ -1,4 +1,4 @@
-export type { ComposerBodyTextFormat } from "../types";
+export type { ComposerBodyMark, ComposerBodyMarks } from "../types";
 export * as Comment from "./Comment";
 export type {
   CommentBodyComponents,
@@ -23,12 +23,12 @@ export type {
   ComposerFloatingToolbarProps,
   ComposerFormProps,
   ComposerLinkProps,
+  ComposerMarkToggleProps,
   ComposerMentionProps,
   ComposerSubmitComment,
   ComposerSubmitProps,
   ComposerSuggestionsListItemProps,
   ComposerSuggestionsListProps,
-  ComposerTextFormatToggleProps,
 } from "./Composer/types";
 export { AttachmentTooLargeError } from "./Composer/utils";
 export * as EmojiPicker from "./EmojiPicker";

@@ -79,13 +79,17 @@ import { withNormalize } from "../../slate/plugins/normalize";
 import { withPaste } from "../../slate/plugins/paste";
 import { getDOMRange } from "../../slate/utils/get-dom-range";
 import { isEmpty as isEditorEmpty } from "../../slate/utils/is-empty";
-import { getMarks, leaveMarkEdge, toggleMark } from "../../slate/utils/marks";
+import {
+  getMarks,
+  leaveMarkEdge,
+  toggleMark as toggleEditorMark,
+} from "../../slate/utils/marks";
 import type {
   ComposerBody as ComposerBodyData,
   ComposerBodyLink,
+  ComposerBodyMark,
+  ComposerBodyMarks,
   ComposerBodyMention,
-  ComposerBodyTextActiveFormats,
-  ComposerBodyTextFormat,
 } from "../../types";
 import { isKey } from "../../utils/is-key";
 import { Persist, useAnimationPersist, usePersist } from "../../utils/Persist";
@@ -95,6 +99,7 @@ import { useId } from "../../utils/use-id";
 import { useIndex } from "../../utils/use-index";
 import { useInitial } from "../../utils/use-initial";
 import { useLayoutEffect } from "../../utils/use-layout-effect";
+import { useObservable } from "../../utils/use-observable";
 import { useRefs } from "../../utils/use-refs";
 import { toAbsoluteUrl } from "../Comment/utils";
 import {
@@ -122,12 +127,12 @@ import type {
   ComposerFloatingToolbarProps,
   ComposerFormProps,
   ComposerLinkProps,
+  ComposerMarkToggleProps,
   ComposerMentionProps,
   ComposerSubmitProps,
   ComposerSuggestionsListItemProps,
   ComposerSuggestionsListProps,
   ComposerSuggestionsProps,
-  ComposerTextFormatToggleProps,
   FloatingPosition,
 } from "./types";
 import {
@@ -138,8 +143,6 @@ import {
   useComposerAttachmentsManager,
   useContentZIndex,
   useFloatingWithOptions,
-  useOnComposerEditorChange,
-  useOnComposerEditorChangeWithEventSource,
 } from "./utils";
 
 const MENTION_SUGGESTIONS_POSITION: FloatingPosition = "top";
@@ -156,7 +159,7 @@ const COMPOSER_SUBMIT_NAME = "ComposerSubmit";
 const COMPOSER_EDITOR_NAME = "ComposerEditor";
 const COMPOSER_ATTACH_FILES_NAME = "ComposerAttachFiles";
 const COMPOSER_ATTACHMENTS_DROP_AREA_NAME = "ComposerAttachmentsDropArea";
-const COMPOSER_TEXT_FORMAT_TOGGLE_NAME = "ComposerTextFormatToggle";
+const COMPOSER_MARK_TOGGLE_NAME = "ComposerMarkToggle";
 const COMPOSER_FORM_NAME = "ComposerForm";
 
 const emptyCommentBody: CommentBody = {
@@ -194,13 +197,12 @@ function ComposerEditorMentionWrapper({
   children,
   element,
 }: ComposerEditorMentionWrapperProps) {
-  const { isFocused } = useComposer();
   const isSelected = useSelected();
 
   return (
     <span {...attributes}>
       {element.id ? (
-        <Mention userId={element.id} isSelected={isFocused && isSelected} />
+        <Mention userId={element.id} isSelected={isSelected} />
       ) : null}
       {children}
     </span>
@@ -213,7 +215,6 @@ function ComposerEditorLinkWrapper({
   element,
   children,
 }: ComposerEditorLinkWrapperProps) {
-  const { isFocused } = useComposer();
   const isSelected = useSelected();
   const href = useMemo(
     () => toAbsoluteUrl(element.url) ?? element.url,
@@ -222,7 +223,7 @@ function ComposerEditorLinkWrapper({
 
   return (
     <span {...attributes}>
-      <Link href={href} isSelected={isFocused && isSelected}>
+      <Link href={href} isSelected={isSelected}>
         {children}
       </Link>
     </span>
@@ -243,10 +244,12 @@ function ComposerEditorMentionSuggestionsWrapper({
   MentionSuggestions,
 }: ComposerEditorMentionSuggestionsWrapperProps) {
   const editor = useSlateStatic();
+  const { onEditorChange } = useComposerEditorContext();
   const { isFocused } = useComposer();
   const { portalContainer } = useLiveblocksUIConfig();
   const [contentRef, contentZIndex] = useContentZIndex();
-  const isOpen = Boolean(isFocused && mentionDraft?.range && userIds);
+  const isOpen =
+    isFocused && mentionDraft?.range !== undefined && userIds !== undefined;
   const {
     refs: { setReference, setFloating },
     strategy,
@@ -261,7 +264,7 @@ function ComposerEditorMentionSuggestionsWrapper({
     open: isOpen,
   });
 
-  useOnComposerEditorChange(() => {
+  useObservable(onEditorChange, () => {
     setMentionDraft(getMentionDraftAtSelection(editor));
   });
 
@@ -306,7 +309,7 @@ function ComposerEditorMentionSuggestionsWrapper({
             }}
           >
             <MentionSuggestions
-              userIds={userIds!}
+              userIds={userIds}
               selectedUserId={selectedUserId}
             />
           </Portal>
@@ -325,13 +328,12 @@ function ComposerEditorFloatingToolbarWrapper({
   setHasFloatingToolbarRange,
 }: ComposerEditorFloatingToolbarWrapperProps) {
   const editor = useSlateStatic();
-  const { isFocused, textFormats } = useComposer();
+  const { onEditorChange } = useComposerEditorContext();
+  const { isFocused } = useComposer();
   const { portalContainer } = useLiveblocksUIConfig();
   const [contentRef, contentZIndex] = useContentZIndex();
   const [isPointerDown, setPointerDown] = useState(false);
-  const isOpen = Boolean(
-    isFocused && !isPointerDown && hasFloatingToolbarRange
-  );
+  const isOpen = isFocused && !isPointerDown && hasFloatingToolbarRange;
   const {
     refs: { setReference, setFloating },
     strategy,
@@ -364,7 +366,7 @@ function ComposerEditorFloatingToolbarWrapper({
     };
   }, [isFocused]);
 
-  useOnComposerEditorChange(() => {
+  useObservable(onEditorChange, () => {
     // Detach from previous selection range (if any) to avoid sudden jumps
     setReference(null);
 
@@ -415,7 +417,7 @@ function ComposerEditorFloatingToolbarWrapper({
               zIndex: contentZIndex,
             }}
           >
-            <FloatingToolbar textFormats={textFormats} />
+            <FloatingToolbar />
           </Portal>
         </ComposerFloatingToolbarContext.Provider>
       ) : null}
@@ -428,8 +430,8 @@ function ComposerEditorFloatingToolbarWrapper({
  *
  * @example
  * <Composer.FloatingToolbar>
- *   <Composer.TextFormatToggle format="bold">Bold</Composer.TextFormatToggle>
- *   <Composer.TextFormatToggle format="italic">Italic</Composer.TextFormatToggle>
+ *   <Composer.MarkToggle mark="bold">Bold</Composer.MarkToggle>
+ *   <Composer.MarkToggle mark="italic">Italic</Composer.MarkToggle>
  * </Composer.FloatingToolbar>
  */
 const ComposerFloatingToolbar = forwardRef<
@@ -564,12 +566,11 @@ function ComposerEditorPlaceholder({
 const ComposerMention = forwardRef<HTMLSpanElement, ComposerMentionProps>(
   ({ children, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "span";
-    const { isFocused } = useComposer();
     const isSelected = useSelected();
 
     return (
       <Component
-        data-selected={(isFocused && isSelected) || undefined}
+        data-selected={isSelected || undefined}
         {...props}
         ref={forwardedRef}
       >
@@ -588,14 +589,13 @@ const ComposerMention = forwardRef<HTMLSpanElement, ComposerMentionProps>(
 const ComposerLink = forwardRef<HTMLAnchorElement, ComposerLinkProps>(
   ({ children, asChild, ...props }, forwardedRef) => {
     const Component = asChild ? Slot : "a";
-    const { isFocused } = useComposer();
     const isSelected = useSelected();
 
     return (
       <Component
         target="_blank"
         rel="noopener noreferrer nofollow"
-        data-selected={(isFocused && isSelected) || undefined}
+        data-selected={isSelected || undefined}
         {...props}
         ref={forwardedRef}
       >
@@ -826,7 +826,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     forwardedRef
   ) => {
     const client = useClientOrNull();
-    const { editor, validate, setFocused, editorChangeEventSource, roomId } =
+    const { editor, validate, setFocused, onEditorChange, roomId } =
       useComposerEditorContext();
     const {
       submit,
@@ -896,9 +896,9 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
         // Our multi-component setup requires us to instantiate the editor in `Composer.Form`
         // but we can only listen to changes here in `Composer.Editor` via `Slate`, so we use
         // an event source to notify `Composer.Form` of changes.
-        editorChangeEventSource.notify();
+        onEditorChange.notify();
       },
-      [validate, editorChangeEventSource]
+      [validate, onEditorChange]
     );
 
     const createMention = useCallback(
@@ -994,25 +994,25 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
           // Toggle bold on Command/Control + B
           if (isKey(event, "b", { mod: true })) {
             event.preventDefault();
-            toggleMark(editor, "bold");
+            toggleEditorMark(editor, "bold");
           }
 
           // Toggle italic on Command/Control + I
           if (isKey(event, "i", { mod: true })) {
             event.preventDefault();
-            toggleMark(editor, "italic");
+            toggleEditorMark(editor, "italic");
           }
 
           // Toggle strikethrough on Command/Control + Shift + S
           if (isKey(event, "s", { mod: true, shift: true })) {
             event.preventDefault();
-            toggleMark(editor, "strikethrough");
+            toggleEditorMark(editor, "strikethrough");
           }
 
           // Toggle code on Command/Control + E
           if (isKey(event, "e", { mod: true })) {
             event.preventDefault();
-            toggleMark(editor, "code");
+            toggleEditorMark(editor, "code");
           }
         }
       },
@@ -1243,8 +1243,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const canSubmit = useMemo(() => {
       return !isEmpty && !isUploadingAttachments;
     }, [isEmpty, isUploadingAttachments]);
-    const [textFormats, setTextFormats] =
-      useState<ComposerBodyTextActiveFormats>(getMarks);
+    const [marks, setMarks] = useState<ComposerBodyMarks>(getMarks);
 
     const ref = useRef<HTMLFormElement>(null);
     const mergedRefs = useRefs(forwardedRef, ref);
@@ -1299,9 +1298,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
         pasteFilesAsAttachments,
       })
     );
-    const editorChangeEventSource = useInitial(
-      makeEventSource
-    ) as EventSource<void>;
+    const onEditorChange = useInitial(makeEventSource) as EventSource<void>;
 
     const validate = useCallback(
       (value: SlateElement[]) => {
@@ -1478,15 +1475,15 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       event.stopPropagation();
     }, []);
 
-    const toggleTextFormat = useCallback(
-      (format: ComposerBodyTextFormat) => {
-        toggleMark(editor, format);
+    const toggleMark = useCallback(
+      (mark: ComposerBodyMark) => {
+        toggleEditorMark(editor, mark);
       },
       [editor]
     );
 
-    useOnComposerEditorChangeWithEventSource(editorChangeEventSource, () => {
-      setTextFormats(getMarks(editor));
+    useObservable(onEditorChange, () => {
+      setMarks(getMarks(editor));
     });
 
     return (
@@ -1495,7 +1492,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
           editor,
           validate,
           setFocused,
-          editorChangeEventSource,
+          onEditorChange,
           roomId,
         }}
       >
@@ -1524,8 +1521,8 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
               attachments,
               attachFiles,
               removeAttachment,
-              toggleTextFormat,
-              textFormats,
+              toggleMark,
+              marks,
             }}
           >
             <Component {...props} onSubmit={handleSubmit} ref={mergedRefs}>
@@ -1658,60 +1655,41 @@ const ComposerAttachmentsDropArea = forwardRef<
 );
 
 /**
- * A toggle button which toggles a specific text format.
+ * A toggle button which toggles a specific text mark.
  *
  * @example
- * <Composer.TextFormatToggle format="bold">
+ * <Composer.MarkToggle mark="bold">
  *   Bold
- * </Composer.TextFormatToggle>
+ * </Composer.MarkToggle>
  */
-const ComposerTextFormatToggle = forwardRef<
+const ComposerMarkToggle = forwardRef<
   HTMLButtonElement,
-  ComposerTextFormatToggleProps
+  ComposerMarkToggleProps
 >(
   (
-    {
-      children,
-      format,
-      onFormatChange,
-      onClick,
-      onPointerDown,
-      asChild,
-      ...props
-    },
+    { children, mark, onValueChange, onClick, asChild, ...props },
     forwardedRef
   ) => {
     const Component = asChild ? Slot : "button";
-    const { textFormats, toggleTextFormat } = useComposer();
+    const { marks, toggleMark } = useComposer();
 
     const handleClick = useCallback(
       (event: MouseEvent<HTMLButtonElement>) => {
         onClick?.(event);
 
         if (!event.isDefaultPrevented()) {
-          toggleTextFormat(format);
-          onFormatChange?.(format);
+          toggleMark(mark);
+          onValueChange?.(mark);
         }
       },
-      [format, onClick, onFormatChange, toggleTextFormat]
-    );
-
-    const handlePointerDown = useCallback(
-      (event: PointerEvent<HTMLButtonElement>) => {
-        onPointerDown?.(event);
-
-        event.preventDefault();
-        event.stopPropagation();
-      },
-      [onPointerDown]
+      [mark, onClick, onValueChange, toggleMark]
     );
 
     return (
       <TogglePrimitive.Root
         asChild
-        pressed={textFormats[format]}
+        pressed={marks[mark]}
         onClick={handleClick}
-        onPointerDown={handlePointerDown}
         {...props}
       >
         <Component {...props} ref={forwardedRef}>
@@ -1734,7 +1712,7 @@ if (process.env.NODE_ENV !== "production") {
   ComposerSuggestions.displayName = COMPOSER_SUGGESTIONS_NAME;
   ComposerSuggestionsList.displayName = COMPOSER_SUGGESTIONS_LIST_NAME;
   ComposerSuggestionsListItem.displayName = COMPOSER_SUGGESTIONS_LIST_ITEM_NAME;
-  ComposerTextFormatToggle.displayName = COMPOSER_TEXT_FORMAT_TOGGLE_NAME;
+  ComposerMarkToggle.displayName = COMPOSER_MARK_TOGGLE_NAME;
 }
 
 // NOTE: Every export from this file will be available publicly as Composer.*
@@ -1745,10 +1723,10 @@ export {
   ComposerFloatingToolbar as FloatingToolbar,
   ComposerForm as Form,
   ComposerLink as Link,
+  ComposerMarkToggle as MarkToggle,
   ComposerMention as Mention,
   ComposerSubmit as Submit,
   ComposerSuggestions as Suggestions,
   ComposerSuggestionsList as SuggestionsList,
   ComposerSuggestionsListItem as SuggestionsListItem,
-  ComposerTextFormatToggle as TextFormatToggle,
 };

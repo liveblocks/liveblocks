@@ -6,7 +6,7 @@ import { createContext, useContext, useMemo } from "react";
 import * as React from "react";
 
 import { Emoji } from "./components/internal/Emoji";
-import type { ComposerBodyTextFormat, Direction } from "./types";
+import type { ComposerBodyMark, Direction } from "./types";
 import { pluralize } from "./utils/pluralize";
 
 export interface LocalizationOverrides {
@@ -53,7 +53,7 @@ export interface ComposerOverrides {
   COMPOSER_REMOVE_ATTACHMENT: string;
   COMPOSER_PLACEHOLDER: string;
   COMPOSER_SEND: string;
-  COMPOSER_TOGGLE_TEXT_FORMAT: (format: ComposerBodyTextFormat) => string;
+  COMPOSER_TOGGLE_MARK: (mark: ComposerBodyMark) => string;
 }
 
 export interface ThreadOverrides {
@@ -125,7 +125,7 @@ export const defaultOverrides: Overrides = {
   COMPOSER_REMOVE_ATTACHMENT: "Remove attachment",
   COMPOSER_PLACEHOLDER: "Write a comment…",
   COMPOSER_SEND: "Send",
-  COMPOSER_TOGGLE_TEXT_FORMAT: (format) => {
+  COMPOSER_TOGGLE_MARK: (format) => {
     switch (format) {
       case "bold":
         return "Bold";
@@ -136,7 +136,7 @@ export const defaultOverrides: Overrides = {
       case "code":
         return "Inline code";
       default:
-        return assertNever(format, "Unexpected text format");
+        return assertNever(format, "Unexpected mark");
     }
   },
   COMMENT_EDITED: "(edited)",

@@ -50,10 +50,10 @@ export type ComposerBodyText = {
   text: string;
 };
 
-export type ComposerBodyTextFormat = keyof Omit<ComposerBodyText, "text">;
+export type ComposerBodyMark = keyof Omit<ComposerBodyText, "text">;
 
-export type ComposerBodyTextActiveFormats = {
-  [K in ComposerBodyTextFormat]: boolean;
+export type ComposerBodyMarks = {
+  [K in ComposerBodyMark]: boolean;
 };
 
 export type ComposerBodyEmptyText = {

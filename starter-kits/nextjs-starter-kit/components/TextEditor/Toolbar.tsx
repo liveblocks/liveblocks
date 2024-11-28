@@ -10,7 +10,7 @@ import { ToolbarThread } from "./ToolbarThread";
 import styles from "./Toolbar.module.css";
 
 type Props = {
-  editor: Editor;
+  editor: Editor | null;
 };
 
 export function Toolbar({ editor }: Props) {

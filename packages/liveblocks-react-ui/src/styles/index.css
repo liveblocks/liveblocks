@@ -17,6 +17,7 @@
   /** 
    * Advanced
    */
+  --lb-line-height: 1.5;
   --lb-icon-size: 20px;
   --lb-icon-weight: 1.5px;
   --lb-avatar-radius: 50%;
@@ -255,13 +256,17 @@
     }
   }
 
-  &:where([aria-pressed="true"]) {
-    &:where([data-variant="default"]) {
-      color: var(--lb-foreground-secondary);
-    }
+  &:where([data-variant="toggle"]) {
+    color: var(--lb-foreground-tertiary);
 
-    :where(.lb-icon *) {
-      stroke-width: calc(1.25 * var(--lb-icon-weight));
+    &:where([aria-pressed="true"]) {
+      --lb-button-background: var(--lb-foreground-subtle);
+
+      color: var(--lb-foreground-secondary);
+
+      :where(.lb-icon *) {
+        stroke-width: calc(1.25 * var(--lb-icon-weight));
+      }
     }
   }
 }
@@ -302,7 +307,7 @@
 }
 
 .lb-composer-suggestions-list-item {
-  scroll-margin-block: $lb-elevation-list-padding;
+  scroll-margin-block: $lb-elevation-padding;
 }
 
 /*************************************
@@ -609,7 +614,7 @@
 
   &,
   * {
-    line-height: 1.5;
+    line-height: var(--lb-line-height);
   }
 
   :where(p) {
@@ -808,8 +813,29 @@
 
 .lb-composer-floating-toolbar {
   display: flex;
-  padding: $lb-elevation-list-padding;
+  flex-direction: row;
+  gap: $lb-elevation-padding;
+  padding: $lb-elevation-padding;
   user-select: none;
+
+  /* Invisibly increase the buttons' hit target size */
+  :where(.lb-button) {
+    &::before {
+      content: "";
+      position: absolute;
+      inset: calc(-1 * $lb-elevation-padding);
+      z-index: -1;
+      border-radius: inherit;
+    }
+
+    &:where(:not(:first-of-type))::before {
+      inset-inline-start: calc(-0.5 * $lb-elevation-padding);
+    }
+
+    &:where(:not(:last-of-type))::before {
+      inset-inline-end: calc(-0.5 * $lb-elevation-padding);
+    }
+  }
 }
 
 /*************************************
@@ -1714,7 +1740,7 @@
 
 .lb-dropdown,
 .lb-composer-suggestions {
-  padding: $lb-elevation-list-padding;
+  padding: $lb-elevation-padding;
 }
 
 .lb-dropdown-item,
@@ -1728,7 +1754,7 @@
 .lb-dropdown-item,
 .lb-composer-suggestions-list-item,
 .lb-emoji-picker-emoji {
-  border-radius: calc(var(--lb-radius) - 0.75 * $lb-elevation-list-padding);
+  border-radius: calc(var(--lb-radius) - 0.75 * $lb-elevation-padding);
   color: var(--lb-foreground-secondary);
   outline: none;
   cursor: pointer;

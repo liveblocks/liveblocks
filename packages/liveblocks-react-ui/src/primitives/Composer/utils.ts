@@ -22,7 +22,6 @@ import type {
   CommentBodyMention,
   CommentLocalAttachment,
   CommentMixedAttachment,
-  EventSource,
 } from "@liveblocks/core";
 import { HttpError, kInternal, makeEventSource } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
@@ -54,11 +53,7 @@ import {
   isCommentBodyMention,
   isCommentBodyText,
 } from "../Comment/utils";
-import {
-  useComposer,
-  useComposerAttachmentsContext,
-  useComposerEditorContext,
-} from "./contexts";
+import { useComposer, useComposerAttachmentsContext } from "./contexts";
 import type { FloatingAlignment, FloatingPosition } from "./types";
 
 export function composerBodyMentionToCommentBodyMention(
@@ -195,27 +190,6 @@ export function getSideAndAlignFromFloatingPlacement(placement: Placement) {
   const [side, align = "center"] = placement.split("-");
 
   return [side, align] as const;
-}
-
-export function useOnComposerEditorChangeWithEventSource(
-  editorChangeEventSource: EventSource<void>,
-  callback: () => void
-) {
-  const latestCallback = useLatest(callback);
-
-  useEffect(() => {
-    const unsubscribe = editorChangeEventSource.subscribe(() =>
-      latestCallback.current()
-    );
-
-    return unsubscribe;
-  }, [editorChangeEventSource, latestCallback]);
-}
-
-export function useOnComposerEditorChange(callback: () => void) {
-  const { editorChangeEventSource } = useComposerEditorContext();
-
-  useOnComposerEditorChangeWithEventSource(editorChangeEventSource, callback);
 }
 
 // Copy `z-index` from content to wrapper.
