@@ -225,14 +225,31 @@
 .lb-tiptap-toolbar {
   --lb-tiptap-toolbar-spacing: calc(0.25 * var(--lb-spacing));
 
+  position: relative;
   display: flex;
   flex-direction: row;
   gap: var(--lb-tiptap-toolbar-spacing);
+  align-items: center;
   padding: var(--lb-tiptap-toolbar-spacing);
+  background: var(--lb-background);
 }
 
 .lb-tiptap-floating-toolbar {
   --lb-tiptap-toolbar-spacing: $lb-elevation-padding;
+}
+
+.lb-tiptap-toolbar-separator {
+  position: relative;
+  align-self: stretch;
+  inline-size: 1px;
+  margin-inline: 1px;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 10% 0;
+    background: var(--lb-foreground-subtle);
+  }
 }
 
 /*************************************
