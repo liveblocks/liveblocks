@@ -17,7 +17,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    id: "tatum-paolo@example.com",
+    id: "tatum.paolo@example.com",
     info: {
       name: "Tatum Paolo",
       color: "#F0D885",
@@ -25,7 +25,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    id: "anjali-wanda@example.com",
+    id: "anjali.wanda@example.com",
     info: {
       name: "Anjali Wanda",
       color: "#85EED6",
@@ -33,7 +33,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    id: "jody-hekla@example.com",
+    id: "jody.hekla@example.com",
     info: {
       name: "Jody Hekla",
       color: "#85BBF0",
@@ -41,7 +41,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    id: "emil-joyce@example.com",
+    id: "emil.joyce@example.com",
     info: {
       name: "Emil Joyce",
       color: "#8594F0",
@@ -49,7 +49,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    id: "jory-quispe@example.com",
+    id: "jory.quispe@example.com",
     info: {
       name: "Jory Quispe",
       color: "#85DBF0",
@@ -57,7 +57,7 @@ const USER_INFO: Liveblocks["UserMeta"][] = [
     },
   },
   {
-    id: "quinn-elton@example.com",
+    id: "quinn.elton@example.com",
     info: {
       name: "Quinn Elton",
       color: "#87EE85",
