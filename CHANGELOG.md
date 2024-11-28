@@ -8,6 +8,8 @@
   APIs (`const { marks, toggleMark } = useComposer()`).
 - Add new `--lb-line-height` token to control the line height of main elements
   (e.g. comment bodies in comments and composers).
+- Remove `Timestamp` export mistakenly added to `@liveblocks/react-ui`, it
+  should be imported from `@liveblocks/react-ui/primitives` instead.
 
 ## 2.12.2
 
