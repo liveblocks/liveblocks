@@ -11,11 +11,30 @@ function createDB() {
   db.pragma("journal_mode = WAL");
 
   db.exec(
-    `CREATE TABLE IF NOT EXISTS storage (
-       nid    TEXT NOT NULL,
+    // Notes:
+    // - "Internal" ID, used for linking only, but not exposed in the protocol
+    // - "External" ID, communicated in our protocol
+    `CREATE TABLE IF NOT EXISTS nodeinfo (
+       id     INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+       nid    TEXT NOT NULL UNIQUE,
+       type   INTEGER NOT NULL  -- 0=LiveObj, 1=LiveList, 2=LiveMap
+     )`
+  );
+
+  db.exec(
+    // Ensures a "root" node exists, and is a LiveObject, always.
+    `INSERT INTO nodeinfo (nid, type) VALUES ('root', 0)
+       ON CONFLICT (nid) DO UPDATE SET type = 0`
+  );
+
+  db.exec(
+    `CREATE TABLE IF NOT EXISTS nodetree (
+       id     INTEGER NOT NULL,
        key    TEXT NOT NULL,
        jval   TEXT NOT NULL,
-       PRIMARY KEY (nid, key)
+       ref    INTEGER NOT NULL UNIQUE,
+       PRIMARY KEY (id, key),
+       CHECK ((jval IS NOT NULL) != (ref IS NOT NULL))
      )`
   );
 
@@ -23,7 +42,7 @@ function createDB() {
   //   `CREATE TABLE IF NOT EXISTS versions (
   //      nid    TEXT NOT NULL,
   //      key    TEXT NOT NULL,
-  //      clock  INTEGER UNSIGNED NOT NULL,
+  //      clock  INTEGER NOT NULL,
   //      jval   TEXT,
   //      PRIMARY KEY (nid, key, clock DESC)
   //    )`
