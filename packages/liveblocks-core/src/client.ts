@@ -432,6 +432,7 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
 
   /**
    * A function that returns room info from room IDs.
+   * You should return a list of room info objects of the same size, in the same order.
    */
   resolveRoomsInfo?: (
     args: ResolveRoomsInfoArgs
