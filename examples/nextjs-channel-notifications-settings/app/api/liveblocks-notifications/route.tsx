@@ -48,101 +48,106 @@ export async function POST(request: Request) {
   }
 
   if (isThreadNotificationEvent(event)) {
-    let emailData;
-    try {
-      emailData = await prepareThreadNotificationEmailAsReact(
-        liveblocks,
-        event,
-        {
-          resolveUsers: async ({ userIds }) => {
-            const indices = [...USER_INFO.keys()];
-            const users = new Map();
+    if (event.data.channel === "email") {
+      let emailData;
+      try {
+        emailData = await prepareThreadNotificationEmailAsReact(
+          liveblocks,
+          event,
+          {
+            resolveUsers: async ({ userIds }) => {
+              const indices = [...USER_INFO.keys()];
+              const users = new Map();
 
-            for (const index of indices) {
-              users.set(`user-${index}`, USER_INFO[index]);
-            }
+              for (const index of indices) {
+                users.set(`user-${index}`, USER_INFO[index]);
+              }
 
-            return userIds.map((userId) => users.get(userId)).filter(Boolean);
-          },
-          resolveRoomInfo: ({ roomId }) => {
-            return {
-              name: roomId,
-              url: `http://localhost:3000/?exampleId=${roomId}`,
-            };
-          },
-          components: {
-            Paragraph: ({ children }) => (
-              <Text className="text-sm text-black m-0 mb-4">{children}</Text>
-            ),
-            Mention: ({ element, user }) => (
-              <span className="text-email-accent font-medium">
-                @{user?.name ?? element.id}
-              </span>
-            ),
-          },
-        }
-      );
-    } catch (err) {
-      console.error(err);
-      return new Response("Something went wrong", { status: 400 });
-    }
-
-    if (emailData !== null) {
-      const company = {
-        name: "My Liveblocks App",
-        url: "http://localhost:3000",
-      };
-      const room = {
-        name: emailData.roomInfo.name,
-        url: emailData.roomInfo.url,
-      };
-
-      let email, subject;
-
-      switch (emailData.type) {
-        case "unreadReplies": {
-          email = (
-            <UnreadRepliesEmail
-              company={company}
-              room={room}
-              comments={emailData.comments}
-            />
-          );
-          subject = `You have ${emailData.comments.length} unread notifications.`;
-          break;
-        }
-        case "unreadMention": {
-          email = (
-            <UnreadMentionEmail
-              company={company}
-              room={room}
-              comment={emailData.comment}
-            />
-          );
-          subject = "You have one unread notification.";
-          break;
-        }
+              return userIds.map((userId) => users.get(userId)).filter(Boolean);
+            },
+            resolveRoomInfo: ({ roomId }) => {
+              return {
+                name: roomId,
+                url: `http://localhost:3000/?exampleId=${roomId}`,
+              };
+            },
+            components: {
+              Paragraph: ({ children }) => (
+                <Text className="text-sm text-black m-0 mb-4">{children}</Text>
+              ),
+              Mention: ({ element, user }) => (
+                <span className="text-email-accent font-medium">
+                  @{user?.name ?? element.id}
+                </span>
+              ),
+            },
+          }
+        );
+      } catch (err) {
+        console.error(err);
+        return new Response("Something went wrong", { status: 400 });
       }
 
-      const html = await render(email, { pretty: true });
+      if (emailData !== null) {
+        const company = {
+          name: "My Liveblocks App",
+          url: "http://localhost:3000",
+        };
+        const room = {
+          name: emailData.roomInfo.name,
+          url: emailData.roomInfo.url,
+        };
 
-      const { error } = await resend.emails.send({
-        from: "Liveblocks <hello@dev.notifications.liveblocks.io>",
-        // XXX
-        // CHANGE WITH YOUR EMAIL
-        to: "aurelien.dupaysdexemple+channel@liveblocks.io",
-        subject,
-        html,
-      });
+        let email, subject;
 
-      if (error) {
-        console.log(error);
-        return new Response(JSON.stringify(error), {
-          status: 500,
+        switch (emailData.type) {
+          case "unreadReplies": {
+            email = (
+              <UnreadRepliesEmail
+                company={company}
+                room={room}
+                comments={emailData.comments}
+              />
+            );
+            subject = `You have ${emailData.comments.length} unread notifications.`;
+            break;
+          }
+          case "unreadMention": {
+            email = (
+              <UnreadMentionEmail
+                company={company}
+                room={room}
+                comment={emailData.comment}
+              />
+            );
+            subject = "You have one unread notification.";
+            break;
+          }
+        }
+
+        const html = await render(email, { pretty: true });
+
+        const { error } = await resend.emails.send({
+          from: "Liveblocks <hello@dev.notifications.liveblocks.io>",
+          // XXX
+          // CHANGE WITH YOUR EMAIL
+          to: "aurelien.dupaysdexemple+channel@liveblocks.io",
+          subject,
+          html,
         });
-      }
 
-      return new Response("No email to send", { status: 200 });
+        if (error) {
+          console.log(error);
+          return new Response(JSON.stringify(error), {
+            status: 500,
+          });
+        }
+
+        return new Response("No email to send", { status: 200 });
+      }
+    } else if (event.data.channel === "slack") {
+      // send slack notification
+      return new Response(null, { status: 200 });
     }
   } else if (isTextMentionNotificationEvent(event)) {
     // Send text mention kind notification email
