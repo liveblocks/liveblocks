@@ -1,4 +1,8 @@
-import { Liveblocks } from "@liveblocks/node";
+import {
+  Liveblocks,
+  isTextMentionNotificationEvent,
+  isThreadNotificationEvent,
+} from "@liveblocks/node";
 import { WebhookHandler } from "@liveblocks/node";
 
 // Add your Liveblocks secret key from the dashboard
@@ -30,9 +34,12 @@ export async function POST(request: Request) {
     return new Response("Could not verify webhook call", { status: 400 });
   }
 
-  if (event.type === "notification") {
-    // Do stuff
-    return new Response("", { status: 200 });
+  if (isThreadNotificationEvent(event)) {
+    // send notification email for thread kind
+    return new Response(null, { status: 200 });
+  } else if (isTextMentionNotificationEvent(event)) {
+    // send notification email for text mention kind
+    return new Response(null, { status: 200 });
   }
 
   return new Response("Event type not used", { status: 400 });
