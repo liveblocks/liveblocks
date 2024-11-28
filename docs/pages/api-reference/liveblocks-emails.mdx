@@ -761,7 +761,13 @@ export async function POST(request: Request) {
     more](#prepare-thread-notification-email-as-html-resolving-data).
   </PropertiesListItem>
   <PropertiesListItem name="options.styles" type="object">
-    [Learn more](#prepare-thread-notification-email-as-html-styling-components).
+    Pass CSS properties to style the different HTML elements in the comment
+    bodies. Five elements can be styled: `paragraph`, `code`, `strong`, `link`,
+    `mention`. [Learn
+    more](#prepare-thread-notification-email-as-html-styling-elements).
+  </PropertiesListItem>
+  <PropertiesListItem name="options.styles.container" type="CSSProperties">
+    Inline styles to apply to the comment body container.
   </PropertiesListItem>
   <PropertiesListItem name="options.styles.paragraph" type="CSSProperties">
     Inline styles to apply to the paragraph block.
@@ -772,11 +778,11 @@ export async function POST(request: Request) {
   <PropertiesListItem name="options.styles.strong" type="CSSProperties">
     Inline styles to apply to the strong element.
   </PropertiesListItem>
-  <PropertiesListItem name="options.styles.link" type="CSSProperties">
-    Inline styles to apply to the link element.
-  </PropertiesListItem>
   <PropertiesListItem name="options.styles.mention" type="CSSProperties">
     Inline styles to apply to the mention element.
+  </PropertiesListItem>
+  <PropertiesListItem name="options.styles.link" type="CSSProperties">
+    Inline styles to apply to the link element.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -826,7 +832,7 @@ console.log(emailData.roomInfo);
 
 Each element in the comment body can be styled with custom CSS properties, if
 you would like to change the appearance. Five elements are available:
-`paragraph`, `stront`, `code`, `link`, `mention`.
+`paragraph`, `code`, `strong`, `mention`, `link`.
 
 ```tsx
 const emailData = await prepareThreadNotificationEmailAsHtml(
@@ -1343,22 +1349,25 @@ export async function POST(request: Request) {
   </PropertiesListItem>
   <PropertiesListItem name="options.styles" type="object">
     Pass CSS properties to style the different HTML elements in the mention
-    content. Four elements can be styled: `container`, `strong`, `code`, and,
-    `mention`. [Learn
-    more](#prepare-text-mention-notification-email-as-react-styling-elements).
+    content. Four elements can be styled: `paragraph`, `code`, `strong`,
+    `mention`, and, `link`. [Learn
+    more](#prepare-text-mention-notification-email-as-html-styling-elements).
   </PropertiesListItem>
-  <PropertiesListItem name="options.styles.container" type="CSSProperties">
+  <PropertiesListItem name="options.styles.paragraph" type="CSSProperties">
     Inline styles to apply to the mention container container. It's a `<div />`
     element under the hood.
-  </PropertiesListItem>
-  <PropertiesListItem name="options.styles.strong" type="CSSProperties">
-    Inline styles to apply to the strong element.
   </PropertiesListItem>
   <PropertiesListItem name="options.styles.code" type="CSSProperties">
     Inline styles to apply to the code element.
   </PropertiesListItem>
+  <PropertiesListItem name="options.styles.strong" type="CSSProperties">
+    Inline styles to apply to the strong element.
+  </PropertiesListItem>
   <PropertiesListItem name="options.styles.mention" type="CSSProperties">
     Inline styles to apply to the mention element.
+  </PropertiesListItem>
+  <PropertiesListItem name="options.styles.link" type="CSSProperties">
+    Inline styles to apply to the link element.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -1408,7 +1417,7 @@ console.log(emailData.roomInfo);
 
 Each element in the comment body can be styled with custom CSS properties, if
 you would like to change the appearance. Five elements are available:
-`container`, `strong`, `code`, and, `mention`.
+`paragraph`, `code`, `strong`, `mention`, and `link`.
 
 ```tsx
 const emailData = await prepareTextMentionNotificationEmailAsHtml(
@@ -1417,7 +1426,7 @@ const emailData = await prepareTextMentionNotificationEmailAsHtml(
   {
     // +++
     styles: {
-      container: { margin: "12px 0" },
+      paragraph: { margin: "12px 0" },
 
       mention: {
         fontWeight: "bold",
