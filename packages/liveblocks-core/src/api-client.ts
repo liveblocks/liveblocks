@@ -360,6 +360,10 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
   deleteInboxNotification(inboxNotificationId: string): Promise<void>;
 
   getChannelNotificationSettings(): Promise<ChannelNotificationSettings>;
+
+  updateChannelNotificationSettings(
+    settings: Partial<ChannelNotificationSettings>
+  ): Promise<ChannelNotificationSettings>;
 }
 
 export interface LiveblocksHttpApi<M extends BaseMetadata>
@@ -1345,7 +1349,7 @@ export function createApiClient<M extends BaseMetadata>({
   }
 
   /* -------------------------------------------------------------------------------------------------
-   * Channel notifications settings (project-level)
+   * Channel notifications settings (Project level)
    * -------------------------------------------------------------------------------------------------
    */
   async function getChannelNotificationSettings(): Promise<ChannelNotificationSettings> {
@@ -1357,6 +1361,21 @@ export function createApiClient<M extends BaseMetadata>({
     );
   }
 
+  async function updateChannelNotificationSettings(
+    settings: Partial<ChannelNotificationSettings>
+  ): Promise<ChannelNotificationSettings> {
+    return httpClient.post<ChannelNotificationSettings>(
+      url`/v2/c/channel-notification-settings`,
+      // Is it the right requested scope?
+      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      settings
+    );
+  }
+
+  /* -------------------------------------------------------------------------------------------------
+   * User threads
+   * -------------------------------------------------------------------------------------------------
+   */
   async function getUserThreads_experimental(options?: {
     cursor?: string;
     query?: {
@@ -1456,7 +1475,9 @@ export function createApiClient<M extends BaseMetadata>({
     // Room notifications
     markRoomInboxNotificationAsRead,
     updateNotificationSettings,
+    // Channel notification settings
     getNotificationSettings,
+    updateChannelNotificationSettings,
     // Room text editor
     createTextMention,
     deleteTextMention,
