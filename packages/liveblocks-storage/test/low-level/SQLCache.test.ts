@@ -317,49 +317,48 @@ test("reading all rows", () => {
   ]);
 });
 
-// XXX Re-enable again later
-// test.skip("taking deltas", () => {
-//   const cache = new SQLCache();
-//
-//   // v1
-//   cache.mutate((tx) => {
-//     tx.set("abc", 1);
-//     tx.set("foo", "bar");
-//   });
-//
-//   // v2
-//   cache.mutate((tx) => {
-//     tx.delete("foo");
-//     tx.delete("henk");
-//   });
-//
-//   // v3
-//   cache.mutate((tx) => tx.set("henk", 7));
-//
-//   // v4
-//   cache.mutate((tx) => tx.set("abc", 6));
-//
-//   // v5
-//   cache.mutate((tx) => tx.delete("abc"));
-//
-//   expect(cache.count).toEqual(1);
-//   expect(cache.data).toEqual({ root: { henk: 7 } });
-//
-//   expect(cache.deltaSince(0)[1]).toEqual(cache.fullDelta()[1]);
-//
-//   expect(cache.deltaSince(5)).toEqual([{}, {}]);
-//   expect(cache.deltaSince(4)).toEqual([{ root: ["abc"] }, {}]);
-//   expect(cache.deltaSince(3)).toEqual([{ root: ["abc"] }, {}]);
-//   expect(cache.deltaSince(2)).toEqual([
-//     { root: ["abc"] },
-//     { root: { henk: 7 } },
-//   ]);
-//   expect(cache.deltaSince(1)).toEqual([
-//     { root: ["abc", "foo"] },
-//     { root: { henk: 7 } },
-//   ]);
-//   expect(cache.deltaSince(0)).toEqual([
-//     { root: ["abc", "foo"] },
-//     { root: { henk: 7 } },
-//   ]);
-// });
+test("taking deltas", () => {
+  const cache = new SQLCache();
+
+  // v1
+  cache.mutate((tx) => {
+    tx.set("abc", 1);
+    tx.set("foo", "bar");
+  });
+
+  // v2
+  cache.mutate((tx) => {
+    tx.delete("foo");
+    tx.delete("henk");
+  });
+
+  // v3
+  cache.mutate((tx) => tx.set("henk", 7));
+
+  // v4
+  cache.mutate((tx) => tx.set("abc", 6));
+
+  // v5
+  cache.mutate((tx) => tx.delete("abc"));
+
+  expect(cache.count).toEqual(1);
+  expect(cache.data).toEqual({ root: { henk: 7 } });
+
+  expect(cache.deltaSince(0)[1]).toEqual(cache.fullDelta()[1]);
+
+  expect(cache.deltaSince(5)).toEqual([{}, {}]);
+  expect(cache.deltaSince(4)).toEqual([{ root: ["abc"] }, {}]);
+  expect(cache.deltaSince(3)).toEqual([{ root: ["abc"] }, {}]);
+  expect(cache.deltaSince(2)).toEqual([
+    { root: ["abc"] },
+    { root: { henk: 7 } },
+  ]);
+  expect(cache.deltaSince(1)).toEqual([
+    { root: ["abc", "foo"] },
+    { root: { henk: 7 } },
+  ]);
+  expect(cache.deltaSince(0)).toEqual([
+    { root: ["abc", "foo"] },
+    { root: { henk: 7 } },
+  ]);
+});

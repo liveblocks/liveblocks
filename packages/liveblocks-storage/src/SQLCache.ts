@@ -19,15 +19,15 @@ function createDB() {
      )`
   );
 
-  // db.exec(
-  //   `CREATE TABLE IF NOT EXISTS versions (
-  //      nid    TEXT NOT NULL,
-  //      key    TEXT NOT NULL,
-  //      clock  INTEGER UNSIGNED NOT NULL,
-  //      jval   TEXT,
-  //      PRIMARY KEY (nid, key, clock DESC)
-  //    )`
-  // );
+  db.exec(
+    `CREATE TABLE IF NOT EXISTS versions (
+       nid    TEXT NOT NULL,
+       key    TEXT NOT NULL,
+       clock  INT UNSIGNED NOT NULL,
+       jval   TEXT,
+       PRIMARY KEY (nid, key, clock DESC)
+     )`
+  );
 
   return db;
 }
@@ -81,50 +81,50 @@ function createQueries(db: Database) {
     clear: db.prepare<[], void>("DELETE FROM storage"),
   };
 
-  // const versions = {
-  //   clear: db.prepare<[], void>("DELETE FROM versions"),
-  //
-  //   upsertKeyValue: db.prepare<
-  //     [nid: string, key: string, clock: number, jval: string],
-  //     void
-  //   >(
-  //     `INSERT INTO versions (nid, key, clock, jval)
-  //      VALUES (?, ?, ?, ?)
-  //      ON CONFLICT (nid, key, clock) DO UPDATE SET jval = excluded.jval`
-  //   ),
-  //
-  //   deleteKey: db.prepare<[nid: string, key: string, clock: number], void>(
-  //     `INSERT INTO versions (nid, key, clock, jval)
-  //      VALUES (?, ?, ?, NULL)
-  //      ON CONFLICT (nid, key, clock) DO UPDATE SET jval = excluded.jval`
-  //   ),
-  //
-  //   selectAll: db
-  //     .prepare<
-  //       [],
-  //       [nid: string, key: string, clock: number, jval: string]
-  //     >("SELECT nid, key, clock, jval FROM versions")
-  //     .raw(),
-  //
-  //   selectSince: db
-  //     .prepare<
-  //       [clock: number],
-  //       [nid: string, key: string, jval: string | null]
-  //     >(
-  //       `WITH winners AS (
-  //          SELECT
-  //            nid,
-  //            key,
-  //            jval,
-  //            RANK() OVER (PARTITION BY nid, key ORDER BY clock DESC) as rnk
-  //          FROM versions
-  //          WHERE clock > ?
-  //        )
-  //
-  //        SELECT nid, key, jval FROM winners WHERE rnk = 1`
-  //     )
-  //     .raw(),
-  // };
+  const versions = {
+    clear: db.prepare<[], void>("DELETE FROM versions"),
+
+    upsertKeyValue: db.prepare<
+      [nid: string, key: string, clock: number, jval: string],
+      void
+    >(
+      `INSERT INTO versions (nid, key, clock, jval)
+       VALUES (?, ?, ?, ?)
+       ON CONFLICT (nid, key, clock) DO UPDATE SET jval = excluded.jval`
+    ),
+
+    deleteKey: db.prepare<[nid: string, key: string, clock: number], void>(
+      `INSERT INTO versions (nid, key, clock, jval)
+       VALUES (?, ?, ?, NULL)
+       ON CONFLICT (nid, key, clock) DO UPDATE SET jval = excluded.jval`
+    ),
+
+    selectAll: db
+      .prepare<
+        [],
+        [nid: string, key: string, clock: number, jval: string]
+      >("SELECT nid, key, clock, jval FROM versions")
+      .raw(),
+
+    selectSince: db
+      .prepare<
+        [clock: number],
+        [nid: string, key: string, jval: string | null]
+      >(
+        `WITH winners AS (
+           SELECT
+             nid,
+             key,
+             jval,
+             RANK() OVER (PARTITION BY nid, key ORDER BY clock DESC) as rnk
+           FROM versions
+           WHERE clock > ?
+         )
+
+         SELECT nid, key, jval FROM winners WHERE rnk = 1`
+      )
+      .raw(),
+  };
 
   return {
     begin: db.prepare<[], void>("BEGIN"),
@@ -132,7 +132,7 @@ function createQueries(db: Database) {
     rollback: db.prepare<[], void>("ROLLBACK"),
 
     storage,
-    // versions,
+    versions,
   };
 }
 
@@ -173,7 +173,12 @@ export class SQLCache {
     } else {
       const jval = JSON.stringify(value);
       this.#q.storage.upsertKeyValue.run(nodeId, key, jval);
-      // this.#q.versions.upsertKeyValue.run(nodeId, key, this.#pendingClock, jval);
+      this.#q.versions.upsertKeyValue.run(
+        nodeId,
+        key,
+        this.#pendingClock,
+        jval
+      );
       return true;
     }
   }
@@ -181,7 +186,7 @@ export class SQLCache {
   #delete(nodeId: NodeId, key: string): boolean {
     const result = this.#q.storage.deleteKey.run(nodeId, key);
     if (result.changes > 0) {
-      // this.#q.versions.deleteKey.run(nodeId, key, this.#pendingClock);
+      this.#q.versions.deleteKey.run(nodeId, key, this.#pendingClock);
       return true;
     } else {
       return false;
@@ -217,50 +222,39 @@ export class SQLCache {
   /**
    * Computes a Delta since the given clock value.
    */
-  // deltaSince(since: number): Delta {
-  //   const removed: { [nid: string]: string[] } = {};
-  //   const updated: { [nid: string]: { [key: string]: Json } } = {};
-  //   for (const [nid, key, jval] of this.#q.versions.selectSince.iterate(
-  //     since
-  //   )) {
-  //     if (jval === null) {
-  //       (removed[nid] ??= []).push(key);
-  //     } else {
-  //       (updated[nid] ??= {})[key] = JSON.parse(jval) as Json;
-  //     }
-  //   }
-  //   return [removed, updated];
-  // }
+  deltaSince(since: number): Delta {
+    const removed: { [nid: string]: string[] } = {};
+    const updated: { [nid: string]: { [key: string]: Json } } = {};
+    for (const [nid, key, jval] of this.#q.versions.selectSince.iterate(
+      since
+    )) {
+      if (jval === null) {
+        (removed[nid] ??= []).push(key);
+      } else {
+        (updated[nid] ??= {})[key] = JSON.parse(jval) as Json;
+      }
+    }
+    return [removed, updated];
+  }
 
   mutate(callback: (root: LiveObject) => unknown): Delta {
-    // const origClock = this.clock;
+    const origClock = this.clock;
 
     let dirty = false;
-    const deleted: Record<string, string[]> = {};
-    const updated: Record<string, Record<string, Json>> = {};
-
     const tx: Transaction = {
       nextId: (): string => `${this.#pendingClock}:${this.#nextNodeId++}`,
       has: (nodeId: NodeId, key: string) => this.#has(nodeId, key),
       get: (nodeId: NodeId, key: string) => this.#get(nodeId, key),
       keys: (nodeId: NodeId) => this.keys(nodeId),
       set: (nodeId: NodeId, key: string, value: Json) => {
-        const wasUpdated = this.#set(nodeId, key, value);
-        dirty ||= wasUpdated;
-        if (wasUpdated) {
-          // (deleted[nodeId] ??= {}).remove(key);
-          (updated[nodeId] ??= {})[key] = value;
-        }
-        return wasUpdated;
+        const updated = this.#set(nodeId, key, value);
+        dirty ||= updated;
+        return updated;
       },
       delete: (nodeId: NodeId, key: string) => {
-        const wasDeleted = this.#delete(nodeId, key);
-        dirty ||= wasDeleted;
-        if (wasDeleted) {
-          (deleted[nodeId] ??= []).push(key);
-          delete (updated[nodeId] ??= {})[key];
-        }
-        return wasDeleted;
+        const deleted = this.#delete(nodeId, key);
+        dirty ||= deleted;
+        return deleted;
       },
     };
 
@@ -269,8 +263,7 @@ export class SQLCache {
       callback(LiveObject.loadRoot(tx));
       if (dirty) {
         this.#commit();
-        return [deleted, updated];
-        // return this.deltaSince(origClock);
+        return this.deltaSince(origClock);
       } else {
         this.#rollback();
         return [{}, {}];
