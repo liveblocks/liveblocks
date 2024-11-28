@@ -258,6 +258,13 @@ export type {
   SyncSource,
 } from "./room";
 export type { GetThreadsOptions, UploadAttachmentOptions } from "./room";
+export type {
+  ChannelNotificationSetting,
+  ChannelNotificationSettings,
+  CustomNotificationKind,
+  NotificationChannel,
+  NotificationKind,
+} from "./types/ChannelNotificationSettings";
 export type { Immutable } from "./types/Immutable";
 export type {
   IWebSocket,
