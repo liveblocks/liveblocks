@@ -1,30 +1,22 @@
 "use client";
 
-import type {
-  DetectOverflowOptions,
-  UseFloatingOptions,
-} from "@floating-ui/react-dom";
-import {
-  autoUpdate,
-  flip,
-  hide,
-  limitShift,
-  shift,
-  size,
-  useFloating,
-} from "@floating-ui/react-dom";
 import {
   type CommentAttachment,
   type CommentBody,
   type CommentLocalAttachment,
   createCommentAttachmentId,
+  type EventSource,
+  kInternal,
+  makeEventSource,
 } from "@liveblocks/core";
 import {
+  useClientOrNull,
   useMentionSuggestions,
   useRoomOrNull,
   useSyncSource,
 } from "@liveblocks/react/_private";
 import { Slot, Slottable } from "@radix-ui/react-slot";
+import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
   AriaAttributes,
   ChangeEvent,
@@ -52,6 +44,7 @@ import {
   createEditor,
   Editor as SlateEditor,
   insertText as insertSlateText,
+  Range as SlateRange,
   Transforms as SlateTransforms,
 } from "slate";
 import { withHistory } from "slate-history";
@@ -71,7 +64,6 @@ import {
 } from "slate-react";
 
 import { useLiveblocksUIConfig } from "../../config";
-import { FLOATING_ELEMENT_COLLISION_PADDING } from "../../constants";
 import { withAutoFormatting } from "../../slate/plugins/auto-formatting";
 import { withAutoLinks } from "../../slate/plugins/auto-links";
 import { withCustomLinks } from "../../slate/plugins/custom-links";
@@ -88,11 +80,17 @@ import { withNormalize } from "../../slate/plugins/normalize";
 import { withPaste } from "../../slate/plugins/paste";
 import { getDOMRange } from "../../slate/utils/get-dom-range";
 import { isEmpty as isEditorEmpty } from "../../slate/utils/is-empty";
-import { leaveMarkEdge, toggleMark } from "../../slate/utils/marks";
+import {
+  getMarks,
+  leaveMarkEdge,
+  toggleMark as toggleEditorMark,
+} from "../../slate/utils/marks";
 import type {
   ComposerBody as ComposerBodyData,
   ComposerBodyAutoLink,
   ComposerBodyCustomLink,
+  ComposerBodyMark,
+  ComposerBodyMarks,
   ComposerBodyMention,
 } from "../../types";
 import { isKey } from "../../utils/is-key";
@@ -103,16 +101,19 @@ import { useId } from "../../utils/use-id";
 import { useIndex } from "../../utils/use-index";
 import { useInitial } from "../../utils/use-initial";
 import { useLayoutEffect } from "../../utils/use-layout-effect";
+import { useObservable } from "../../utils/use-observable";
 import { useRefs } from "../../utils/use-refs";
 import { toAbsoluteUrl } from "../Comment/utils";
 import {
   ComposerAttachmentsContext,
   ComposerContext,
   ComposerEditorContext,
+  ComposerFloatingToolbarContext,
   ComposerSuggestionsContext,
   useComposer,
   useComposerAttachmentsContext,
   useComposerEditorContext,
+  useComposerFloatingToolbarContext,
   useComposerSuggestionsContext,
 } from "./contexts";
 import type {
@@ -120,32 +121,39 @@ import type {
   ComposerAttachmentsDropAreaProps,
   ComposerEditorComponents,
   ComposerEditorElementProps,
+  ComposerEditorFloatingToolbarWrapperProps,
   ComposerEditorLinkWrapperProps,
   ComposerEditorMentionSuggestionsWrapperProps,
   ComposerEditorMentionWrapperProps,
   ComposerEditorProps,
+  ComposerFloatingToolbarProps,
   ComposerFormProps,
   ComposerLinkProps,
+  ComposerMarkToggleProps,
   ComposerMentionProps,
   ComposerSubmitProps,
   ComposerSuggestionsListItemProps,
   ComposerSuggestionsListProps,
   ComposerSuggestionsProps,
-  SuggestionsPosition,
+  FloatingPosition,
 } from "./types";
 import {
   commentBodyToComposerBody,
   composerBodyToCommentBody,
-  getPlacementFromPosition,
-  getSideAndAlignFromPlacement,
+  getSideAndAlignFromFloatingPlacement,
   useComposerAttachmentsDropArea,
   useComposerAttachmentsManager,
+  useContentZIndex,
+  useFloatingWithOptions,
 } from "./utils";
 
-const MENTION_SUGGESTIONS_POSITION: SuggestionsPosition = "top";
+const MENTION_SUGGESTIONS_POSITION: FloatingPosition = "top";
+
+const FLOATING_TOOLBAR_POSITION: FloatingPosition = "top";
 
 const COMPOSER_MENTION_NAME = "ComposerMention";
 const COMPOSER_LINK_NAME = "ComposerLink";
+const COMPOSER_FLOATING_TOOLBAR_NAME = "ComposerFloatingToolbar";
 const COMPOSER_SUGGESTIONS_NAME = "ComposerSuggestions";
 const COMPOSER_SUGGESTIONS_LIST_NAME = "ComposerSuggestionsList";
 const COMPOSER_SUGGESTIONS_LIST_ITEM_NAME = "ComposerSuggestionsListItem";
@@ -153,6 +161,7 @@ const COMPOSER_SUBMIT_NAME = "ComposerSubmit";
 const COMPOSER_EDITOR_NAME = "ComposerEditor";
 const COMPOSER_ATTACH_FILES_NAME = "ComposerAttachFiles";
 const COMPOSER_ATTACHMENTS_DROP_AREA_NAME = "ComposerAttachmentsDropArea";
+const COMPOSER_MARK_TOGGLE_NAME = "ComposerMarkToggle";
 const COMPOSER_FORM_NAME = "ComposerForm";
 
 const emptyCommentBody: CommentBody = {
@@ -228,53 +237,19 @@ function ComposerEditorMentionSuggestionsWrapper({
   selectedUserId,
   setSelectedUserId,
   mentionDraft,
+  setMentionDraft,
   onItemSelect,
   position = MENTION_SUGGESTIONS_POSITION,
   dir,
   MentionSuggestions,
 }: ComposerEditorMentionSuggestionsWrapperProps) {
   const editor = useSlateStatic();
+  const { onEditorChange } = useComposerEditorContext();
   const { isFocused } = useComposer();
-  const [content, setContent] = useState<HTMLDivElement | null>(null);
-  const [contentZIndex, setContentZIndex] = useState<string>();
-  const contentRef = useCallback(setContent, [setContent]);
   const { portalContainer } = useLiveblocksUIConfig();
-  const floatingOptions: UseFloatingOptions = useMemo(() => {
-    const detectOverflowOptions: DetectOverflowOptions = {
-      padding: FLOATING_ELEMENT_COLLISION_PADDING,
-    };
-
-    return {
-      strategy: "fixed",
-      placement: getPlacementFromPosition(position, dir),
-      middleware: [
-        flip({ ...detectOverflowOptions, crossAxis: false }),
-        hide(detectOverflowOptions),
-        shift({
-          ...detectOverflowOptions,
-          limiter: limitShift(),
-        }),
-        size({
-          ...detectOverflowOptions,
-          apply({ availableWidth, availableHeight, elements }) {
-            elements.floating.style.setProperty(
-              "--lb-composer-suggestions-available-width",
-              `${availableWidth}px`
-            );
-            elements.floating.style.setProperty(
-              "--lb-composer-suggestions-available-height",
-              `${availableHeight}px`
-            );
-          },
-        }),
-      ],
-      whileElementsMounted: (...args) => {
-        return autoUpdate(...args, {
-          animationFrame: true,
-        });
-      },
-    };
-  }, [position, dir]);
+  const [contentRef, contentZIndex] = useContentZIndex();
+  const isOpen =
+    isFocused && mentionDraft?.range !== undefined && userIds !== undefined;
   const {
     refs: { setReference, setFloating },
     strategy,
@@ -282,34 +257,31 @@ function ComposerEditorMentionSuggestionsWrapper({
     placement,
     x,
     y,
-  } = useFloating(floatingOptions);
+  } = useFloatingWithOptions({
+    position,
+    dir,
+    alignment: "start",
+    open: isOpen,
+  });
 
-  // Copy `z-index` from content to wrapper.
-  // Inspired by https://github.com/radix-ui/primitives/blob/main/packages/react/popper/src/Popper.tsx
-  useLayoutEffect(() => {
-    if (content) {
-      setContentZIndex(window.getComputedStyle(content).zIndex);
-    }
-  }, [content]);
+  useObservable(onEditorChange, () => {
+    setMentionDraft(getMentionDraftAtSelection(editor));
+  });
 
   useLayoutEffect(() => {
     if (!mentionDraft) {
+      setReference(null);
+
       return;
     }
 
     const domRange = getDOMRange(editor, mentionDraft.range);
-
-    if (domRange) {
-      setReference({
-        getBoundingClientRect: () => domRange.getBoundingClientRect(),
-        getClientRects: () => domRange.getClientRects(),
-      });
-    }
+    setReference(domRange ?? null);
   }, [setReference, editor, mentionDraft]);
 
   return (
     <Persist>
-      {mentionDraft?.range && isFocused && userIds ? (
+      {isOpen ? (
         <ComposerSuggestionsContext.Provider
           value={{
             id,
@@ -346,6 +318,176 @@ function ComposerEditorMentionSuggestionsWrapper({
     </Persist>
   );
 }
+
+function ComposerEditorFloatingToolbarWrapper({
+  id,
+  position = FLOATING_TOOLBAR_POSITION,
+  dir,
+  FloatingToolbar,
+  hasFloatingToolbarRange,
+  setHasFloatingToolbarRange,
+}: ComposerEditorFloatingToolbarWrapperProps) {
+  const editor = useSlateStatic();
+  const { onEditorChange } = useComposerEditorContext();
+  const { isFocused } = useComposer();
+  const { portalContainer } = useLiveblocksUIConfig();
+  const [contentRef, contentZIndex] = useContentZIndex();
+  const [isPointerDown, setPointerDown] = useState(false);
+  const isOpen = isFocused && !isPointerDown && hasFloatingToolbarRange;
+  const {
+    refs: { setReference, setFloating },
+    strategy,
+    isPositioned,
+    placement,
+    x,
+    y,
+  } = useFloatingWithOptions({
+    type: "range",
+    position,
+    dir,
+    alignment: "center",
+    open: isOpen,
+  });
+
+  useLayoutEffect(() => {
+    if (!isFocused) {
+      return;
+    }
+
+    const handlePointerDown = () => setPointerDown(true);
+    const handlePointerUp = () => setPointerDown(false);
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("pointerup", handlePointerUp);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("pointerup", handlePointerUp);
+    };
+  }, [isFocused]);
+
+  useObservable(onEditorChange, () => {
+    // Detach from previous selection range (if any) to avoid sudden jumps
+    setReference(null);
+
+    // Then, wait for the next render to ensure the selection is updated
+    requestAnimationFrame(() => {
+      const domSelection = window.getSelection();
+
+      // Finally, show the toolbar if there's a selection range
+      if (
+        !editor.selection ||
+        SlateRange.isCollapsed(editor.selection) ||
+        !domSelection ||
+        !domSelection.rangeCount
+      ) {
+        setHasFloatingToolbarRange(false);
+        setReference(null);
+      } else {
+        setHasFloatingToolbarRange(true);
+
+        const domRange = domSelection.getRangeAt(0);
+        setReference(domRange);
+      }
+    });
+  });
+
+  return (
+    <Persist>
+      {isOpen ? (
+        <ComposerFloatingToolbarContext.Provider
+          value={{
+            id,
+            placement,
+            dir,
+            ref: contentRef,
+          }}
+        >
+          <Portal
+            ref={setFloating}
+            container={portalContainer}
+            style={{
+              position: strategy,
+              top: 0,
+              left: 0,
+              transform: isPositioned
+                ? `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`
+                : "translate3d(0, -200%, 0)",
+              minWidth: "max-content",
+              zIndex: contentZIndex,
+            }}
+          >
+            <FloatingToolbar />
+          </Portal>
+        </ComposerFloatingToolbarContext.Provider>
+      ) : null}
+    </Persist>
+  );
+}
+
+/**
+ * Displays a floating toolbar attached to the selection within `Composer.Editor`.
+ *
+ * @example
+ * <Composer.FloatingToolbar>
+ *   <Composer.MarkToggle mark="bold">Bold</Composer.MarkToggle>
+ *   <Composer.MarkToggle mark="italic">Italic</Composer.MarkToggle>
+ * </Composer.FloatingToolbar>
+ */
+const ComposerFloatingToolbar = forwardRef<
+  HTMLDivElement,
+  ComposerFloatingToolbarProps
+>(({ children, onPointerDown, style, asChild, ...props }, forwardedRef) => {
+  const [isPresent] = usePersist();
+  const ref = useRef<HTMLDivElement>(null);
+  const {
+    id,
+    ref: contentRef,
+    placement,
+    dir,
+  } = useComposerFloatingToolbarContext(COMPOSER_FLOATING_TOOLBAR_NAME);
+  const mergedRefs = useRefs(forwardedRef, contentRef, ref);
+  const [side, align] = useMemo(
+    () => getSideAndAlignFromFloatingPlacement(placement),
+    [placement]
+  );
+  const Component = asChild ? Slot : "div";
+  useAnimationPersist(ref);
+
+  const handlePointerDown = useCallback(
+    (event: PointerEvent<HTMLDivElement>) => {
+      onPointerDown?.(event);
+
+      event.preventDefault();
+      event.stopPropagation();
+    },
+    [onPointerDown]
+  );
+
+  return (
+    <Component
+      dir={dir}
+      role="toolbar"
+      id={id}
+      aria-label="Floating toolbar"
+      {...props}
+      onPointerDown={handlePointerDown}
+      data-state={isPresent ? "open" : "closed"}
+      data-side={side}
+      data-align={align}
+      style={{
+        display: "flex",
+        flexDirection: "row",
+        maxWidth: "var(--lb-composer-floating-available-width)",
+        overflowX: "auto",
+        ...style,
+      }}
+      ref={mergedRefs}
+    >
+      {children}
+    </Component>
+  );
+});
 
 function ComposerEditorElement({
   Mention,
@@ -480,7 +622,7 @@ const ComposerSuggestions = forwardRef<
   } = useComposerSuggestionsContext(COMPOSER_SUGGESTIONS_NAME);
   const mergedRefs = useRefs(forwardedRef, contentRef, ref);
   const [side, align] = useMemo(
-    () => getSideAndAlignFromPlacement(placement),
+    () => getSideAndAlignFromFloatingPlacement(placement),
     [placement]
   );
   const Component = asChild ? Slot : "div";
@@ -496,7 +638,7 @@ const ComposerSuggestions = forwardRef<
       style={{
         display: "flex",
         flexDirection: "column",
-        maxHeight: "var(--lb-composer-suggestions-available-height)",
+        maxHeight: "var(--lb-composer-floating-available-height)",
         overflowY: "auto",
         ...style,
       }}
@@ -684,10 +826,13 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     },
     forwardedRef
   ) => {
-    const { editor, validate, setFocused, roomId } = useComposerEditorContext();
+    const client = useClientOrNull();
+    const { editor, validate, setFocused, onEditorChange, roomId } =
+      useComposerEditorContext();
     const {
       submit,
       focus,
+      blur,
       select,
       canSubmit,
       isDisabled: isComposerDisabled,
@@ -698,11 +843,18 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     const initialEditorValue = useMemo(() => {
       return commentBodyToComposerBody(initialBody);
     }, [initialBody]);
-    const { Link, Mention, MentionSuggestions } = useMemo(
+    const { Link, Mention, MentionSuggestions, FloatingToolbar } = useMemo(
       () => ({ ...defaultEditorComponents, ...components }),
       [components]
     );
 
+    const [hasFloatingToolbarRange, setHasFloatingToolbarRange] =
+      useState(false);
+    // If used with LiveblocksProvider but without resolveMentionSuggestions,
+    // we can skip the mention suggestions logic entirely
+    const hasResolveMentionSuggestions = client
+      ? client[kInternal].resolveMentionSuggestions !== undefined
+      : true;
     const [mentionDraft, setMentionDraft] = useState<MentionDraft>();
     const mentionSuggestions = useMentionSuggestions(
       roomId,
@@ -715,6 +867,10 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       setSelectedMentionSuggestionIndex,
     ] = useIndex(0, mentionSuggestions?.length ?? 0);
     const id = useId();
+    const floatingToolbarId = useMemo(
+      () => `liveblocks-floating-toolbar-${id}`,
+      [id]
+    );
     const suggestionsListId = useMemo(
       () => `liveblocks-suggestions-list-${id}`,
       [id]
@@ -724,6 +880,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
         userId ? `liveblocks-suggestions-list-item-${id}-${userId}` : undefined,
       [id]
     );
+
     const renderElement = useCallback(
       (props: RenderElementProps) => {
         return (
@@ -737,9 +894,12 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       (value: SlateDescendant[]) => {
         validate(value as SlateElement[]);
 
-        setMentionDraft(getMentionDraftAtSelection(editor));
+        // Our multi-component setup requires us to instantiate the editor in `Composer.Form`
+        // but we can only listen to changes here in `Composer.Editor` via `Slate`, so we use
+        // an event source to notify `Composer.Form` of changes.
+        onEditorChange.notify();
       },
-      [editor, validate]
+      [validate, onEditorChange]
     );
 
     const createMention = useCallback(
@@ -802,10 +962,18 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
             setSelectedMentionSuggestionIndex(0);
           }
         } else {
+          if (hasFloatingToolbarRange) {
+            // Close the floating toolbar on Escape
+            if (isKey(event, "Escape")) {
+              event.preventDefault();
+              setHasFloatingToolbarRange(false);
+            }
+          }
+
           // Blur the editor on Escape
           if (isKey(event, "Escape")) {
             event.preventDefault();
-            ReactEditor.blur(editor);
+            blur();
           }
 
           // Submit the editor on Enter
@@ -827,39 +995,41 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
           // Toggle bold on Command/Control + B
           if (isKey(event, "b", { mod: true })) {
             event.preventDefault();
-            toggleMark(editor, "bold");
+            toggleEditorMark(editor, "bold");
           }
 
           // Toggle italic on Command/Control + I
           if (isKey(event, "i", { mod: true })) {
             event.preventDefault();
-            toggleMark(editor, "italic");
+            toggleEditorMark(editor, "italic");
           }
 
           // Toggle strikethrough on Command/Control + Shift + S
           if (isKey(event, "s", { mod: true, shift: true })) {
             event.preventDefault();
-            toggleMark(editor, "strikethrough");
+            toggleEditorMark(editor, "strikethrough");
           }
 
           // Toggle code on Command/Control + E
           if (isKey(event, "e", { mod: true })) {
             event.preventDefault();
-            toggleMark(editor, "code");
+            toggleEditorMark(editor, "code");
           }
         }
       },
       [
-        createMention,
-        editor,
-        canSubmit,
+        onKeyDown,
         mentionDraft,
         mentionSuggestions,
-        selectedMentionSuggestionIndex,
-        onKeyDown,
+        hasFloatingToolbarRange,
+        editor,
         setNextSelectedMentionSuggestionIndex,
         setPreviousSelectedMentionSuggestionIndex,
+        selectedMentionSuggestionIndex,
+        createMention,
         setSelectedMentionSuggestionIndex,
+        blur,
+        canSubmit,
         submit,
       ]
     );
@@ -901,7 +1071,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       [setSelectedMentionSuggestionIndex, mentionSuggestions]
     );
 
-    const propsWhileSuggesting: AriaAttributes = useMemo(
+    const additionalProps: AriaAttributes = useMemo(
       () =>
         mentionDraft
           ? {
@@ -913,12 +1083,19 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
                 selectedMentionSuggestionUserId
               ),
             }
-          : {},
+          : hasFloatingToolbarRange
+            ? {
+                "aria-haspopup": true,
+                "aria-controls": floatingToolbarId,
+              }
+            : {},
       [
         mentionDraft,
         suggestionsListId,
         suggestionsListItemId,
         selectedMentionSuggestionUserId,
+        hasFloatingToolbarRange,
+        floatingToolbarId,
       ]
     );
 
@@ -927,7 +1104,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
     }, [editor]);
 
     // Manually focus the editor when `autoFocus` is true
-    useEffect(() => {
+    useLayoutEffect(() => {
       if (autoFocus) {
         focus();
       }
@@ -935,7 +1112,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
 
     // Manually add a selection in the editor if the selection
     // is still empty after being focused
-    useEffect(() => {
+    useLayoutEffect(() => {
       if (isFocused && editor.selection === null) {
         select();
       }
@@ -954,7 +1131,7 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
           aria-label="Composer editor"
           data-focused={isFocused || undefined}
           data-disabled={isDisabled || undefined}
-          {...propsWhileSuggesting}
+          {...additionalProps}
           {...props}
           readOnly={isDisabled}
           disabled={isDisabled}
@@ -965,17 +1142,29 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
           renderLeaf={ComposerEditorLeaf}
           renderPlaceholder={ComposerEditorPlaceholder}
         />
-        <ComposerEditorMentionSuggestionsWrapper
-          dir={dir}
-          mentionDraft={mentionDraft}
-          selectedUserId={selectedMentionSuggestionUserId}
-          setSelectedUserId={setSelectedMentionSuggestionUserId}
-          userIds={mentionSuggestions}
-          id={suggestionsListId}
-          itemId={suggestionsListItemId}
-          onItemSelect={createMention}
-          MentionSuggestions={MentionSuggestions}
-        />
+        {hasResolveMentionSuggestions && (
+          <ComposerEditorMentionSuggestionsWrapper
+            dir={dir}
+            mentionDraft={mentionDraft}
+            setMentionDraft={setMentionDraft}
+            selectedUserId={selectedMentionSuggestionUserId}
+            setSelectedUserId={setSelectedMentionSuggestionUserId}
+            userIds={mentionSuggestions}
+            id={suggestionsListId}
+            itemId={suggestionsListItemId}
+            onItemSelect={createMention}
+            MentionSuggestions={MentionSuggestions}
+          />
+        )}
+        {FloatingToolbar && (
+          <ComposerEditorFloatingToolbarWrapper
+            dir={dir}
+            id={floatingToolbarId}
+            hasFloatingToolbarRange={hasFloatingToolbarRange}
+            setHasFloatingToolbarRange={setHasFloatingToolbarRange}
+            FloatingToolbar={FloatingToolbar}
+          />
+        )}
       </Slate>
     );
   }
@@ -1055,6 +1244,8 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     const canSubmit = useMemo(() => {
       return !isEmpty && !isUploadingAttachments;
     }, [isEmpty, isUploadingAttachments]);
+    const [marks, setMarks] = useState<ComposerBodyMarks>(getMarks);
+
     const ref = useRef<HTMLFormElement>(null);
     const mergedRefs = useRefs(forwardedRef, ref);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1108,6 +1299,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
         pasteFilesAsAttachments,
       })
     );
+    const onEditorChange = useInitial(makeEventSource) as EventSource<void>;
 
     const validate = useCallback(
       (value: SlateElement[]) => {
@@ -1140,10 +1332,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
     }, [editor]);
 
     const select = useCallback(() => {
-      SlateTransforms.select(editor, {
-        anchor: SlateEditor.end(editor, []),
-        focus: SlateEditor.end(editor, []),
-      });
+      SlateTransforms.select(editor, SlateEditor.end(editor, []));
     }, [editor]);
 
     const focus = useCallback(
@@ -1287,12 +1476,24 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       event.stopPropagation();
     }, []);
 
+    const toggleMark = useCallback(
+      (mark: ComposerBodyMark) => {
+        toggleEditorMark(editor, mark);
+      },
+      [editor]
+    );
+
+    useObservable(onEditorChange, () => {
+      setMarks(getMarks(editor));
+    });
+
     return (
       <ComposerEditorContext.Provider
         value={{
           editor,
           validate,
           setFocused,
+          onEditorChange,
           roomId,
         }}
       >
@@ -1321,6 +1522,8 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
               attachments,
               attachFiles,
               removeAttachment,
+              toggleMark,
+              marks,
             }}
           >
             <Component {...props} onSubmit={handleSubmit} ref={mergedRefs}>
@@ -1452,10 +1655,57 @@ const ComposerAttachmentsDropArea = forwardRef<
   }
 );
 
+/**
+ * A toggle button which toggles a specific text mark.
+ *
+ * @example
+ * <Composer.MarkToggle mark="bold">
+ *   Bold
+ * </Composer.MarkToggle>
+ */
+const ComposerMarkToggle = forwardRef<
+  HTMLButtonElement,
+  ComposerMarkToggleProps
+>(
+  (
+    { children, mark, onValueChange, onClick, asChild, ...props },
+    forwardedRef
+  ) => {
+    const Component = asChild ? Slot : "button";
+    const { marks, toggleMark } = useComposer();
+
+    const handleClick = useCallback(
+      (event: MouseEvent<HTMLButtonElement>) => {
+        onClick?.(event);
+
+        if (!event.isDefaultPrevented()) {
+          toggleMark(mark);
+          onValueChange?.(mark);
+        }
+      },
+      [mark, onClick, onValueChange, toggleMark]
+    );
+
+    return (
+      <TogglePrimitive.Root
+        asChild
+        pressed={marks[mark]}
+        onClick={handleClick}
+        {...props}
+      >
+        <Component {...props} ref={forwardedRef}>
+          {children}
+        </Component>
+      </TogglePrimitive.Root>
+    );
+  }
+);
+
 if (process.env.NODE_ENV !== "production") {
   ComposerAttachFiles.displayName = COMPOSER_ATTACH_FILES_NAME;
   ComposerAttachmentsDropArea.displayName = COMPOSER_ATTACHMENTS_DROP_AREA_NAME;
   ComposerEditor.displayName = COMPOSER_EDITOR_NAME;
+  ComposerFloatingToolbar.displayName = COMPOSER_FLOATING_TOOLBAR_NAME;
   ComposerForm.displayName = COMPOSER_FORM_NAME;
   ComposerMention.displayName = COMPOSER_MENTION_NAME;
   ComposerLink.displayName = COMPOSER_LINK_NAME;
@@ -1463,6 +1713,7 @@ if (process.env.NODE_ENV !== "production") {
   ComposerSuggestions.displayName = COMPOSER_SUGGESTIONS_NAME;
   ComposerSuggestionsList.displayName = COMPOSER_SUGGESTIONS_LIST_NAME;
   ComposerSuggestionsListItem.displayName = COMPOSER_SUGGESTIONS_LIST_ITEM_NAME;
+  ComposerMarkToggle.displayName = COMPOSER_MARK_TOGGLE_NAME;
 }
 
 // NOTE: Every export from this file will be available publicly as Composer.*
@@ -1470,8 +1721,10 @@ export {
   ComposerAttachFiles as AttachFiles,
   ComposerAttachmentsDropArea as AttachmentsDropArea,
   ComposerEditor as Editor,
+  ComposerFloatingToolbar as FloatingToolbar,
   ComposerForm as Form,
   ComposerLink as Link,
+  ComposerMarkToggle as MarkToggle,
   ComposerMention as Mention,
   ComposerSubmit as Submit,
   ComposerSuggestions as Suggestions,

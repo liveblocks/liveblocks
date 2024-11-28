@@ -1,22 +1,46 @@
-import { Editor as SlateEditor } from "slate";
+import type { EditorMarks, Text } from "slate";
+import { Editor as SlateEditor, Range as SlateRange } from "slate";
 
-import type { ComposerBodyMarks } from "../../types";
 import { getCharacterAfter, getCharacterBefore } from "./get-character";
-import { isSelectionCollapsed } from "./is-selection-collapsed";
 
-export function isMarkActive(editor: SlateEditor, format: ComposerBodyMarks) {
+const defaultMarks: Required<EditorMarks> = {
+  bold: false,
+  italic: false,
+  strikethrough: false,
+  code: false,
+};
+
+export function isMarkActive(editor: SlateEditor, mark: keyof EditorMarks) {
   const marks = SlateEditor.marks(editor);
 
-  return marks ? marks[format] === true : false;
+  return marks ? marks[mark] === true : false;
 }
 
-export function toggleMark(editor: SlateEditor, format: ComposerBodyMarks) {
-  const isActive = isMarkActive(editor, format);
+export function getMarks(editor?: SlateEditor) {
+  if (!editor) {
+    return { ...defaultMarks };
+  }
+
+  const marks = SlateEditor.marks(editor);
+
+  return { ...defaultMarks, ...marks };
+}
+
+export function filterActiveMarks(
+  value: Text | EditorMarks | null | undefined
+) {
+  return Object.keys(value ?? {}).filter(
+    (key) => key !== "text"
+  ) as (keyof EditorMarks)[];
+}
+
+export function toggleMark(editor: SlateEditor, mark: keyof EditorMarks) {
+  const isActive = isMarkActive(editor, mark);
 
   if (isActive) {
-    SlateEditor.removeMark(editor, format);
+    SlateEditor.removeMark(editor, mark);
   } else {
-    SlateEditor.addMark(editor, format, true);
+    SlateEditor.addMark(editor, mark, true);
   }
 }
 
@@ -31,7 +55,7 @@ export function removeMarks(editor: SlateEditor) {
 }
 
 export function leaveMarkEdge(editor: SlateEditor, edge: "start" | "end") {
-  if (isSelectionCollapsed(editor.selection)) {
+  if (editor.selection && SlateRange.isCollapsed(editor.selection)) {
     const marks = Object.keys(SlateEditor.marks(editor) ?? {});
 
     if (marks.length > 0) {
