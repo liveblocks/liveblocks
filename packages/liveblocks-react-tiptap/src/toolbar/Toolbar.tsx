@@ -1,5 +1,13 @@
-import { Button, EmojiIcon } from "@liveblocks/react-ui/_private";
-import type { Editor } from "@tiptap/react";
+import {
+  BoldIcon,
+  Button,
+  CodeIcon,
+  ItalicIcon,
+  ShortcutTooltip,
+  StrikethroughIcon,
+  TooltipProvider,
+} from "@liveblocks/react-ui/_private";
+import type { ChainedCommands, Editor } from "@tiptap/react";
 import type { ComponentProps, ComponentType, ReactNode } from "react";
 import React, { forwardRef } from "react";
 
@@ -20,6 +28,8 @@ interface ToolbarProps extends Omit<ComponentProps<"div">, "children"> {
 
 interface ToolbarButtonProps extends ComponentProps<"button"> {
   icon?: ReactNode;
+  name: string;
+  shortcut?: string;
 }
 
 interface ToolbarToggleProps extends ToolbarButtonProps {
@@ -41,27 +51,27 @@ export function applyToolbarSlot(
   return slot;
 }
 
-// TODO: Toolbar.Button = type="button"
-// TODO: Toolbar.Toggle = aria-pressed
-// TODO: Toolbar.Separator = <div role="separator" aria-orientation="vertical" />
-
 const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
-  (_, forwardedRef) => {
+  ({ icon, children, name, shortcut, ...props }, forwardedRef) => {
     return (
-      <Button type="button" ref={forwardedRef}>
-        Button
-      </Button>
+      <ShortcutTooltip content={name} shortcut={shortcut}>
+        <Button type="button" ref={forwardedRef} {...props}>
+          {icon}
+          {children && <span className="lb-button-label">{children}</span>}
+        </Button>
+      </ShortcutTooltip>
     );
   }
 );
 
 const ToolbarToggle = forwardRef<HTMLButtonElement, ToolbarToggleProps>(
-  ({ active }, forwardedRef) => {
+  ({ active, ...props }, forwardedRef) => {
     return (
       <ToolbarButton
         aria-pressed={active}
         data-active={active}
         ref={forwardedRef}
+        {...props}
       />
     );
   }
@@ -80,6 +90,9 @@ const ToolbarSeparator = forwardRef<HTMLDivElement, ToolbarSeparatorProps>(
   }
 );
 
+type ExtendedChainedCommands<T extends string> = ChainedCommands &
+  Record<T, () => ChainedCommands>;
+
 export function DefaultToolbarContent({ editor }: ToolbarSlotProps) {
   const supportsBold = "toggleBold" in editor.commands;
   const supportsItalic = "toggleItalic" in editor.commands;
@@ -88,14 +101,100 @@ export function DefaultToolbarContent({ editor }: ToolbarSlotProps) {
 
   return (
     <>
-      <Button>
-        <EmojiIcon />
-        <span className="lb-button-label">Hello</span>
-      </Button>
-      {supportsBold && "Bold"}
-      {supportsItalic && "Italic"}
-      {supportsStrike && "Strikethrough"}
-      {supportsCode && "Inline code"}
+      Section
+      <ToolbarSeparator />
+      {supportsBold && (
+        <ToolbarToggle
+          name="Bold"
+          icon={<BoldIcon />}
+          shortcut="Mod-B"
+          onClick={() =>
+            (editor.chain().focus() as ExtendedChainedCommands<"toggleBold">)
+              .toggleBold()
+              .run()
+          }
+          disabled={
+            !(
+              editor
+                .can()
+                .chain()
+                .focus() as ExtendedChainedCommands<"toggleBold">
+            )
+              .toggleBold()
+              .run()
+          }
+          active={editor.isActive("bold")}
+        />
+      )}
+      {supportsItalic && (
+        <ToolbarToggle
+          name="Italic"
+          icon={<ItalicIcon />}
+          shortcut="Mod-I"
+          onClick={() =>
+            (editor.chain().focus() as ExtendedChainedCommands<"toggleItalic">)
+              .toggleItalic()
+              .run()
+          }
+          disabled={
+            !(
+              editor
+                .can()
+                .chain()
+                .focus() as ExtendedChainedCommands<"toggleItalic">
+            )
+              .toggleItalic()
+              .run()
+          }
+          active={editor.isActive("italic")}
+        />
+      )}
+      {supportsStrike && (
+        <ToolbarToggle
+          name="Strikethrough"
+          icon={<StrikethroughIcon />}
+          shortcut="Mod-Shift-S"
+          onClick={() =>
+            (editor.chain().focus() as ExtendedChainedCommands<"toggleStrike">)
+              .toggleStrike()
+              .run()
+          }
+          disabled={
+            !(
+              editor
+                .can()
+                .chain()
+                .focus() as ExtendedChainedCommands<"toggleStrike">
+            )
+              .toggleStrike()
+              .run()
+          }
+          active={editor.isActive("strike")}
+        />
+      )}
+      {supportsCode && (
+        <ToolbarToggle
+          name="Inline code"
+          icon={<CodeIcon />}
+          shortcut="Mod-E"
+          onClick={() =>
+            (editor.chain().focus() as ExtendedChainedCommands<"toggleCode">)
+              .toggleCode()
+              .run()
+          }
+          disabled={
+            !(
+              editor
+                .can()
+                .chain()
+                .focus() as ExtendedChainedCommands<"toggleCode">
+            )
+              .toggleCode()
+              .run()
+          }
+          active={editor.isActive("code")}
+        />
+      )}
       <ToolbarSeparator />
       Section
     </>
@@ -122,18 +221,20 @@ export const Toolbar = Object.assign(
       const slotProps: ToolbarSlotProps = { editor };
 
       return (
-        <div
-          ref={forwardedRef}
-          role="toolbar"
-          aria-label="Toolbar"
-          aria-orientation="horizontal"
-          className={classNames("lb-root lb-tiptap-toolbar", className)}
-          {...props}
-        >
-          {applyToolbarSlot(leading, slotProps)}
-          {applyToolbarSlot(children, slotProps)}
-          {applyToolbarSlot(trailing, slotProps)}
-        </div>
+        <TooltipProvider>
+          <div
+            ref={forwardedRef}
+            role="toolbar"
+            aria-label="Toolbar"
+            aria-orientation="horizontal"
+            className={classNames("lb-root lb-tiptap-toolbar", className)}
+            {...props}
+          >
+            {applyToolbarSlot(leading, slotProps)}
+            {applyToolbarSlot(children, slotProps)}
+            {applyToolbarSlot(trailing, slotProps)}
+          </div>
+        </TooltipProvider>
       );
     }
   ),

@@ -37,7 +37,7 @@
  *************************************/
 
 .lb-lexical-suggestions {
-  padding: $lb-elevation-list-padding;
+  padding: $lb-elevation-padding;
   animation-duration: var(--lb-transition-duration);
   animation-timing-function: var(--lb-transition-easing);
   will-change: transform, opacity;
@@ -47,14 +47,14 @@
   display: flex;
   align-items: center;
   padding: calc(0.25 * var(--lb-spacing)) calc(0.5 * var(--lb-spacing));
-  border-radius: calc(var(--lb-radius) - 0.75 * $lb-elevation-list-padding);
+  border-radius: calc(var(--lb-radius) - 0.75 * $lb-elevation-padding);
   color: var(--lb-foreground-secondary);
   outline: none;
   font-size: 0.875rem;
   cursor: pointer;
   user-select: none;
   transition-property: background, color, opacity;
-  scroll-margin-block: $lb-elevation-list-padding;
+  scroll-margin-block: $lb-elevation-padding;
 }
 
 :is(.lb-lexical-suggestions-list-item) {

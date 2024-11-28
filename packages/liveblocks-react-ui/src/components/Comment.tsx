@@ -75,12 +75,7 @@ import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
 import { Emoji } from "./internal/Emoji";
 import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker";
 import { List } from "./internal/List";
-import {
-  ShortcutTooltip,
-  ShortcutTooltipKey,
-  Tooltip,
-  TooltipProvider,
-} from "./internal/Tooltip";
+import { ShortcutTooltip, Tooltip, TooltipProvider } from "./internal/Tooltip";
 import { User } from "./internal/User";
 
 const REACTIONS_TRUNCATE = 5;
@@ -808,7 +803,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                     </Tooltip>
                     <ShortcutTooltip
                       content={$.COMMENT_EDIT_COMPOSER_SAVE}
-                      shortcut={<ShortcutTooltipKey name="enter" />}
+                      shortcut="Enter"
                     >
                       <ComposerPrimitive.Submit asChild>
                         <Button

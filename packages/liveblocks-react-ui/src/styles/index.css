@@ -213,7 +213,8 @@
               :enabled:hover,
               :enabled:focus-visible,
               [aria-expanded="true"],
-              [aria-selected="true"]
+              [aria-selected="true"],
+              [aria-pressed]
             )
         )
     ) {
@@ -256,7 +257,7 @@
     }
   }
 
-  &:where([data-variant="toggle"]) {
+  &:where([aria-pressed]) {
     color: var(--lb-foreground-tertiary);
 
     &:where([aria-pressed="true"]) {

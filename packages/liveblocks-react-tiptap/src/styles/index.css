@@ -37,7 +37,7 @@
  *************************************/
 
 .lb-tiptap-suggestions {
-  padding: $lb-elevation-list-padding;
+  padding: $lb-elevation-padding;
   animation-duration: var(--lb-transition-duration);
   animation-timing-function: var(--lb-transition-easing);
   will-change: transform, opacity;
@@ -47,14 +47,14 @@
   display: flex;
   align-items: center;
   padding: calc(0.25 * var(--lb-spacing)) calc(0.5 * var(--lb-spacing));
-  border-radius: calc(var(--lb-radius) - 0.75 * $lb-elevation-list-padding);
+  border-radius: calc(var(--lb-radius) - 0.75 * $lb-elevation-padding);
   color: var(--lb-foreground-secondary);
   outline: none;
   font-size: 0.875rem;
   cursor: pointer;
   user-select: none;
   transition-property: background, color, opacity;
-  scroll-margin-block: $lb-elevation-list-padding;
+  scroll-margin-block: $lb-elevation-padding;
 }
 
 :is(.lb-tiptap-suggestions-list-item) {
@@ -209,13 +209,34 @@
   inline-size: var(--lb-tiptap-floating-size);
 }
 
+/*************************************
+ *         Active selection          *
+ *************************************/
+
 .lb-tiptap-active-selection {
   background: var(--lb-selection, rgb(0 0 255 / 20%));
   pointer-events: none;
 }
 
 /*************************************
- *         Collab Cursors            *
+ *              Toolbar              *
+ *************************************/
+
+.lb-tiptap-toolbar {
+  --lb-tiptap-toolbar-spacing: calc(0.25 * var(--lb-spacing));
+
+  display: flex;
+  flex-direction: row;
+  gap: var(--lb-tiptap-toolbar-spacing);
+  padding: var(--lb-tiptap-toolbar-spacing);
+}
+
+.lb-tiptap-floating-toolbar {
+  --lb-tiptap-toolbar-spacing: $lb-elevation-padding;
+}
+
+/*************************************
+ *          Collab Cursors           *
  *************************************/
 
 /* Give a remote user a caret */

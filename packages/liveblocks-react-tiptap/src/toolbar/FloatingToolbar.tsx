@@ -11,7 +11,7 @@ import {
   useFloating,
   type UseFloatingOptions,
 } from "@floating-ui/react-dom";
-import { useRefs } from "@liveblocks/react-ui/_private";
+import { TooltipProvider, useRefs } from "@liveblocks/react-ui/_private";
 import { type Editor, isTextSelection, useEditorState } from "@tiptap/react";
 import type { ComponentProps, PointerEvent as ReactPointerEvent } from "react";
 import React, {
@@ -229,31 +229,33 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
     const slotProps: ToolbarSlotProps = { editor };
 
     return createPortal(
-      <div
-        role="toolbar"
-        aria-label="Floating toolbar"
-        aria-orientation="horizontal"
-        className={classNames(
-          "lb-root lb-portal lb-elevation lb-tiptap-floating lb-tiptap-floating-toolbar lb-tiptap-toolbar",
-          className
-        )}
-        ref={mergedRefs}
-        style={{
-          position: strategy,
-          top: 0,
-          left: 0,
-          transform: isPositioned
-            ? `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`
-            : "translate3d(0, -200%, 0)",
-          minWidth: "max-content",
-        }}
-        onPointerDown={handlePointerDown}
-        {...props}
-      >
-        {applyToolbarSlot(leading, slotProps)}
-        {applyToolbarSlot(children, slotProps)}
-        {applyToolbarSlot(trailing, slotProps)}
-      </div>,
+      <TooltipProvider>
+        <div
+          role="toolbar"
+          aria-label="Floating toolbar"
+          aria-orientation="horizontal"
+          className={classNames(
+            "lb-root lb-portal lb-elevation lb-tiptap-floating lb-tiptap-floating-toolbar lb-tiptap-toolbar",
+            className
+          )}
+          ref={mergedRefs}
+          style={{
+            position: strategy,
+            top: 0,
+            left: 0,
+            transform: isPositioned
+              ? `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`
+              : "translate3d(0, -200%, 0)",
+            minWidth: "max-content",
+          }}
+          onPointerDown={handlePointerDown}
+          {...props}
+        >
+          {applyToolbarSlot(leading, slotProps)}
+          {applyToolbarSlot(children, slotProps)}
+          {applyToolbarSlot(trailing, slotProps)}
+        </div>
+      </TooltipProvider>,
       document.body
     );
   }

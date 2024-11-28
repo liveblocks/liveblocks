@@ -76,12 +76,7 @@ import { Avatar } from "./internal/Avatar";
 import { Button } from "./internal/Button";
 import type { EmojiPickerProps } from "./internal/EmojiPicker";
 import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker";
-import {
-  ShortcutTooltip,
-  ShortcutTooltipKey,
-  Tooltip,
-  TooltipProvider,
-} from "./internal/Tooltip";
+import { ShortcutTooltip, Tooltip, TooltipProvider } from "./internal/Tooltip";
 import { User } from "./internal/User";
 
 interface EditorActionProps extends ComponentPropsWithoutRef<"button"> {
@@ -94,7 +89,7 @@ interface EmojiEditorActionProps extends EditorActionProps {
 }
 
 interface MarkToggleProps extends ComposerMarkToggleProps {
-  shortcut?: ReactNode;
+  shortcut?: string;
 }
 
 type ComposerCreateThreadProps<M extends BaseMetadata> = {
@@ -387,9 +382,7 @@ function MarkToggle({ mark, shortcut, children, ...props }: MarkToggleProps) {
       sideOffset={FLOATING_ELEMENT_SIDE_OFFSET + 2}
     >
       <ComposerPrimitive.MarkToggle mark={mark} asChild {...props}>
-        <Button aria-label={label} variant="toggle">
-          {children}
-        </Button>
+        <Button aria-label={label}>{children}</Button>
       </ComposerPrimitive.MarkToggle>
     </ShortcutTooltip>
   );
@@ -401,55 +394,22 @@ type MarkToggles = {
 
 const markToggles: MarkToggles = {
   bold: () => (
-    <MarkToggle
-      mark="bold"
-      shortcut={
-        <>
-          <ShortcutTooltipKey name="mod" />
-          <span>B</span>
-        </>
-      }
-    >
+    <MarkToggle mark="bold" shortcut="Mod-B">
       <BoldIcon />
     </MarkToggle>
   ),
   italic: () => (
-    <MarkToggle
-      mark="italic"
-      shortcut={
-        <>
-          <ShortcutTooltipKey name="mod" />
-          <span>I</span>
-        </>
-      }
-    >
+    <MarkToggle mark="italic" shortcut="Mod-I">
       <ItalicIcon />
     </MarkToggle>
   ),
   strikethrough: () => (
-    <MarkToggle
-      mark="strikethrough"
-      shortcut={
-        <>
-          <ShortcutTooltipKey name="mod" />
-          <ShortcutTooltipKey name="shift" />
-          <span>S</span>
-        </>
-      }
-    >
+    <MarkToggle mark="strikethrough" shortcut="Mod-Shift-S">
       <StrikethroughIcon />
     </MarkToggle>
   ),
   code: () => (
-    <MarkToggle
-      mark="code"
-      shortcut={
-        <>
-          <ShortcutTooltipKey name="mod" />
-          <span>E</span>
-        </>
-      }
-    >
+    <MarkToggle mark="code" shortcut="Mod-E">
       <CodeIcon />
     </MarkToggle>
   ),
@@ -628,10 +588,7 @@ function ComposerEditorContainer({
           <div className="lb-composer-actions">
             {actions ?? (
               <>
-                <ShortcutTooltip
-                  content={$.COMPOSER_SEND}
-                  shortcut={<ShortcutTooltipKey name="enter" />}
-                >
+                <ShortcutTooltip content={$.COMPOSER_SEND} shortcut="Enter">
                   <ComposerPrimitive.Submit asChild>
                     <Button
                       onPointerDown={preventDefault}
