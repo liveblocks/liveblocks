@@ -16,6 +16,7 @@ import { Avatars } from "@/components/Avatars";
 import { SelectionMenu } from "@/components/SelectionMenu";
 import { DocumentSpinner } from "@/components/Spinner";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { InboxNotificationsPopover } from "@/components/InboxNotificationsPopover";
 import { useThreads } from "@liveblocks/react/suspense";
 import { CommentIcon } from "@/icons";
 import styles from "./TextEditor.module.css";
@@ -58,7 +59,10 @@ export function Editor() {
     <div className={styles.container}>
       <div className={styles.editorHeader}>
         <ThemeToggle />
-        <Avatars />
+        <div className={styles.editorHeaderRight}>
+          <InboxNotificationsPopover />
+          <Avatars />
+        </div>
       </div>
       <div className={styles.editorPanel}>
         {editor ? <SelectionMenu editor={editor} /> : null}

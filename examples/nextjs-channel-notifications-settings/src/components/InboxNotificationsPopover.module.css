@@ -1,0 +1,53 @@
+.inboxNotificationsPopoverButton {
+  padding: var(--space-4);
+}
+
+.inboxNotificationsPopoverButton svg {
+  height: 20px;
+  width: 20px;
+}
+
+.inboxNotificationUnreadCount {
+  position: absolute;
+  top: 0;
+  right: 0;
+  transform: translateX(50%) translateY(50%);
+  font-size: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  background-color: #3b82f6;
+  color: white;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+}
+
+.inboxNotificationsPopoverContent {
+  border-radius: var(--radius-lg);
+  border: solid 1px var(--color-border);
+  background-color: rgb(var(--color-white));
+  color: rgb(var(--color-gray-100));
+  width: 500px;
+  min-height: 200px;
+  overflow: hidden;
+  font-size: 14px;
+  z-index: 20;
+  box-shadow:
+    0 1px 3px 0 rgb(0 0 0 / 0.1),
+    0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.inboxContent {
+  max-height: 500px;
+  overflow: auto;
+}
+
+.inboxContentEmpty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  color: var(--color-accent);
+}
