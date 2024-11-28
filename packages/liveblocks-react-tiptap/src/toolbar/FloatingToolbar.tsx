@@ -27,6 +27,7 @@ import { createPortal } from "react-dom";
 import { classNames } from "../classnames";
 import {
   applyToolbarSlot,
+  DefaultToolbarContent,
   type ToolbarSlot,
   type ToolbarSlotProps,
 } from "./Toolbar";
@@ -45,14 +46,10 @@ export interface FloatingToolbarProps
 
 export const FLOATING_TOOLBAR_COLLISION_PADDING = 10;
 
-function DefaultFloatingToolbarChildren() {
-  return <>Main</>;
-}
-
 export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
   (
     {
-      children = DefaultFloatingToolbarChildren,
+      children = DefaultToolbarContent,
       leading,
       trailing,
       position = "top",
@@ -235,6 +232,7 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
       <div
         role="toolbar"
         aria-label="Floating toolbar"
+        aria-orientation="horizontal"
         className={classNames(
           "lb-root lb-portal lb-elevation lb-tiptap-floating lb-tiptap-floating-toolbar lb-tiptap-toolbar",
           className

@@ -34,40 +34,73 @@ export function applyToolbarSlot(
 // TODO: Toolbar.Toggle = aria-pressed
 // TODO: Toolbar.Separator = <div role="separator" aria-orientation="vertical" />
 
-function DefaultFloatingToolbarChildren() {
-  return <>Main</>;
-}
-
-export const Toolbar = forwardRef<HTMLDivElement, ToolbarProps>(
-  (
-    {
-      leading,
-      trailing,
-      children = DefaultFloatingToolbarChildren,
-      editor,
-      className,
-      ...props
-    },
-    forwardedRef
-  ) => {
-    if (!editor) {
-      return null;
-    }
-
-    const slotProps: ToolbarSlotProps = { editor };
-
+const ToolbarSeparator = forwardRef<HTMLDivElement, ComponentProps<"div">>(
+  ({ className, ...props }) => {
     return (
       <div
-        ref={forwardedRef}
-        role="toolbar"
-        aria-label="Toolbar"
-        className={classNames("lb-root lb-tiptap-toolbar", className)}
+        role="separator"
+        aria-orientation="vertical"
+        className={classNames("lb-tiptap-toolbar-separator", className)}
         {...props}
-      >
-        {applyToolbarSlot(leading, slotProps)}
-        {applyToolbarSlot(children, slotProps)}
-        {applyToolbarSlot(trailing, slotProps)}
-      </div>
+      />
     );
+  }
+);
+
+export function DefaultToolbarContent({ editor }: ToolbarSlotProps) {
+  const supportsBold = "toggleBold" in editor.commands;
+  const supportsItalic = "toggleItalic" in editor.commands;
+  const supportsStrike = "toggleStrike" in editor.commands;
+  const supportsCode = "toggleCode" in editor.commands;
+
+  return (
+    <>
+      {supportsBold && "Bold"}
+      {supportsItalic && "Italic"}
+      {supportsStrike && "Strikethrough"}
+      {supportsCode && "Inline code"}
+      <ToolbarSeparator />
+      Section
+    </>
+  );
+}
+
+export const Toolbar = Object.assign(
+  forwardRef<HTMLDivElement, ToolbarProps>(
+    (
+      {
+        leading,
+        trailing,
+        children = DefaultToolbarContent,
+        editor,
+        className,
+        ...props
+      },
+      forwardedRef
+    ) => {
+      if (!editor) {
+        return null;
+      }
+
+      const slotProps: ToolbarSlotProps = { editor };
+
+      return (
+        <div
+          ref={forwardedRef}
+          role="toolbar"
+          aria-label="Toolbar"
+          aria-orientation="horizontal"
+          className={classNames("lb-root lb-tiptap-toolbar", className)}
+          {...props}
+        >
+          {applyToolbarSlot(leading, slotProps)}
+          {applyToolbarSlot(children, slotProps)}
+          {applyToolbarSlot(trailing, slotProps)}
+        </div>
+      );
+    }
+  ),
+  {
+    Separator: ToolbarSeparator,
   }
 );
