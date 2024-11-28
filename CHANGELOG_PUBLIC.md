@@ -31,6 +31,8 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Contributors
 
+ctnicholas
+
 # Week 47 (2024-11-22)
 
 ## v2.12.2
