@@ -161,20 +161,20 @@ export class Server {
         // Or, based on which of those two outputs produces the smallest
         // message.
         //
-        // if (msg.since === 0) {
-        this.#send(curr, {
-          type: "InitialSyncServerMsg",
-          serverClock: this.#cache.clock,
-          delta: this.#cache.fullDelta(),
-          fullCC: true,
-        });
-        // } else {
-        // this.#send(curr, {
-        //   type: "InitialSyncServerMsg",
-        //   serverClock: this.#cache.clock,
-        //   delta: this.#cache.deltaSince(msg.since),
-        // });
-        // }
+        if (msg.since === 0) {
+          this.#send(curr, {
+            type: "InitialSyncServerMsg",
+            serverClock: this.#cache.clock,
+            delta: this.#cache.fullDelta(),
+            fullCC: true,
+          });
+        } else {
+          this.#send(curr, {
+            type: "InitialSyncServerMsg",
+            serverClock: this.#cache.clock,
+            delta: this.#cache.deltaSince(msg.since),
+          });
+        }
         return;
       }
 
