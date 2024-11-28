@@ -865,11 +865,12 @@ console.log(emailData.comment.htmlBody);
 
 ## Text Mention notification emails [#text-mention-notification-emails]
 
-These functions help your create emails to notify users when they are mentioned
-in a [Text Editor](/docs/products/text-editor) document and when they did not
-have seen it. They fetch a text mention and its surrounding text (to give more
-context) only if the notification has not already been read, and help you style
-the mention content with either
+These functions help you create emails to notify users when they have an _unread
+mention_ in a [Text Editor](/docs/products/text-editor) document. In this case,
+a mention is not related to comments, but is instead an inline mention inside
+the text editor itself. If the mention has not been read, the functions fetch a
+text mention and its surrounding text, giving you more context, and helping you
+style the mention content with either
 [React](#prepare-text-mention-notification-as-react) or
 [HTML](#prepare-text-mention-notification-as-html).
 
@@ -883,7 +884,7 @@ the mention content with either
 </Figure>
 
 The functions helps to determine if the mention still exists in the document and
-ndicate that there is no email to send in this case.
+will indicate that there’s no email to send in this case.
 
 <Banner type="warning" title="Limited multiple text editors support">
   For now the functions documented below do not support multiple text editors.
