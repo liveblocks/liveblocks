@@ -14,37 +14,47 @@ function createDB() {
     // Notes:
     // - "Internal" ID, used for linking only, but not exposed in the protocol
     // - "External" ID, communicated in our protocol
-    `CREATE TABLE IF NOT EXISTS nodeinfo (
-       id     INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-       nid    TEXT NOT NULL UNIQUE,
-       type   INTEGER NOT NULL  -- 0=LiveObj, 1=LiveList, 2=LiveMap
+    `CREATE TABLE IF NOT EXISTS nodes (
+       internal_id  INTEGER NOT NULL PRIMARY KEY,
+       node_id      TEXT NOT NULL,
+       type         INTEGER NOT NULL,  -- 0=LiveObj, 1=LiveList, 2=LiveMap
+
+       UNIQUE (node_id)
      )`
   );
 
   db.exec(
     // Ensures a "root" node exists, and is a LiveObject, always.
-    `INSERT INTO nodeinfo (nid, type) VALUES ('root', 0)
-       ON CONFLICT (nid) DO UPDATE SET type = 0`
+    `INSERT INTO nodes (node_id, type) VALUES ('root', 0)
+       ON CONFLICT (node_id) DO UPDATE SET type = 0`
   );
 
   db.exec(
     `CREATE TABLE IF NOT EXISTS nodetree (
-       id     INTEGER NOT NULL,
-       key    TEXT NOT NULL,
-       jval   TEXT NOT NULL,
-       ref    INTEGER NOT NULL UNIQUE,
-       PRIMARY KEY (id, key),
-       CHECK ((jval IS NOT NULL) != (ref IS NOT NULL))
+       internal_id  INTEGER NOT NULL,
+       key          TEXT NOT NULL,
+       jval         TEXT,
+       live_ref     INTEGER,
+
+       PRIMARY KEY (internal_id, key),
+       UNIQUE (live_ref)
+
+       -- XXX Add this check!
+       -- CHECK ((jval IS NOT NULL) != (live_ref IS NOT NULL))
+
+       -- XXX Use these foreign keys!
+       -- FOREIGN KEY (internal_id) REFERENCES nodes (internal_id)
+       -- FOREIGN KEY (live_ref) REFERENCES nodes (internal_id)
      )`
   );
 
   // db.exec(
   //   `CREATE TABLE IF NOT EXISTS versions (
-  //      nid    TEXT NOT NULL,
-  //      key    TEXT NOT NULL,
-  //      clock  INTEGER NOT NULL,
-  //      jval   TEXT,
-  //      PRIMARY KEY (nid, key, clock DESC)
+  //      node_id  TEXT NOT NULL,
+  //      key      TEXT NOT NULL,
+  //      clock    INTEGER NOT NULL,
+  //      jval     TEXT,
+  //      PRIMARY KEY (node_id, key, clock DESC)
   //    )`
   // );
 
@@ -52,95 +62,126 @@ function createDB() {
 }
 
 function createQueries(db: Database) {
-  const storage = {
-    countAll: db.prepare<[], number>("SELECT COUNT(*) FROM storage").pluck(),
+  const nodes = {
+    countAll: db.prepare<[], number>("SELECT COUNT(*) FROM nodes").pluck(),
 
-    exists: db
+    selectInternalIdByNodeId: db
       .prepare<
-        [nid: string, key: string],
-        number // EXISTS doesn't return a boolean
-      >("SELECT EXISTS(SELECT 1 FROM storage WHERE nid = ? AND key = ?)")
+        [node_id: string],
+        number
+      >("SELECT internal_id FROM nodes WHERE node_id = ?")
       .pluck(),
 
-    selectKey: db
+    clear: db.prepare<[], void>("DELETE FROM nodes"),
+  };
+
+  const nodeTree = {
+    selectValueByNodeId: db
       .prepare<
-        [nid: string, key: string],
+        [nodeId: string, key: string],
         string
-      >("SELECT jval FROM storage WHERE nid = ? AND key = ?")
+      >("SELECT jval FROM nodetree WHERE internal_id = (SELECT internal_id FROM nodes WHERE node_id = ? LIMIT 1) AND key = ?")
       .pluck(),
 
     selectKeysByNodeId: db
-      .prepare<[nid: string], string>("SELECT key FROM storage WHERE nid = ?")
+      .prepare<
+        [nodeId: string],
+        string
+      >("SELECT key FROM nodetree WHERE internal_id = (SELECT internal_id FROM nodes WHERE node_id = ? LIMIT 1)")
       .pluck(),
 
     selectAllByNodeId: db
       .prepare<
-        [nid: string],
+        [nodeId: string],
         [key: string, jval: string]
-      >("SELECT key, jval FROM storage WHERE nid = ?")
+      >("SELECT key, jval FROM nodetree WHERE internal_id = (SELECT internal_id FROM nodes WHERE node_id = ? LIMIT 1)")
       .raw(),
 
     selectAll: db
       .prepare<
         [],
-        [nid: string, key: string, jval: string]
-      >("SELECT nid, key, jval FROM storage")
+        [
+          nodeId: string,
+          key: string,
+          jval: string | null,
+          liveRef: string | null,
+        ]
+      >(
+        `
+          SELECT n.node_id, t.key, t.jval, r.node_id
+          FROM nodes n
+          LEFT JOIN nodetree t ON t.internal_id = n.internal_id
+          LEFT JOIN nodes r ON r.internal_id = t.live_ref
+        `
+      )
       .raw(),
 
-    upsertKeyValue: db.prepare<[nid: string, key: string, jval: string], void>(
-      `INSERT INTO storage (nid, key, jval)
-       VALUES (?, ?, ?)
-       ON CONFLICT (nid, key) DO UPDATE SET jval = excluded.jval`
+    upsertKeyValue: db.prepare<
+      [internal_id: number, key: string, jval: string],
+      void
+    >(
+      `INSERT INTO nodetree (internal_id, key, jval, live_ref)
+       VALUES (?, ?, ?, NULL)
+       ON CONFLICT (internal_id, key) DO UPDATE SET jval = excluded.jval, live_ref = excluded.live_ref`
     ),
 
-    deleteKey: db.prepare<[nid: string, key: string], void>(
-      "DELETE FROM storage WHERE nid = ? AND key = ?"
+    upsertKeyLiveRef: db.prepare<
+      [internal_id: number, key: string, ref_internal_id: number],
+      void
+    >(
+      `INSERT INTO nodetree (internal_id, key, jval, live_ref)
+       VALUES (?, ?, NULL, ?)
+       ON CONFLICT (internal_id, key) DO UPDATE SET jval = excluded.jval, live_ref = excluded.live_ref`
     ),
 
-    clear: db.prepare<[], void>("DELETE FROM storage"),
+    deleteKey: db.prepare<[nodeId: string, key: string], void>(
+      "DELETE FROM nodetree WHERE internal_id = (SELECT internal_id FROM nodes WHERE node_id = ?) AND key = ?"
+    ),
+
+    clear: db.prepare<[], void>("DELETE FROM nodetree"),
   };
 
   // const versions = {
   //   clear: db.prepare<[], void>("DELETE FROM versions"),
   //
   //   upsertKeyValue: db.prepare<
-  //     [nid: string, key: string, clock: number, jval: string],
+  //     [nodeId: string, key: string, clock: number, jval: string],
   //     void
   //   >(
-  //     `INSERT INTO versions (nid, key, clock, jval)
+  //     `INSERT INTO versions (node_id, key, clock, jval)
   //      VALUES (?, ?, ?, ?)
-  //      ON CONFLICT (nid, key, clock) DO UPDATE SET jval = excluded.jval`
+  //      ON CONFLICT (node_id, key, clock) DO UPDATE SET jval = excluded.jval`
   //   ),
   //
-  //   deleteKey: db.prepare<[nid: string, key: string, clock: number], void>(
-  //     `INSERT INTO versions (nid, key, clock, jval)
+  //   deleteKey: db.prepare<[nodeId: string, key: string, clock: number], void>(
+  //     `INSERT INTO versions (node_id, key, clock, jval)
   //      VALUES (?, ?, ?, NULL)
-  //      ON CONFLICT (nid, key, clock) DO UPDATE SET jval = excluded.jval`
+  //      ON CONFLICT (node_id, key, clock) DO UPDATE SET jval = excluded.jval`
   //   ),
   //
   //   selectAll: db
   //     .prepare<
   //       [],
-  //       [nid: string, key: string, clock: number, jval: string]
-  //     >("SELECT nid, key, clock, jval FROM versions")
+  //       [nodeId: string, key: string, clock: number, jval: string]
+  //     >("SELECT node_id, key, clock, jval FROM versions")
   //     .raw(),
   //
   //   selectSince: db
   //     .prepare<
   //       [clock: number],
-  //       [nid: string, key: string, jval: string | null]
+  //       [nodeId: string, key: string, jval: string | null]
   //     >(
   //       `WITH winners AS (
   //          SELECT
-  //            nid,
+  //            node_id,
   //            key,
   //            jval,
-  //            RANK() OVER (PARTITION BY nid, key ORDER BY clock DESC) as rnk
+  //            RANK() OVER (PARTITION BY node_id, key ORDER BY clock DESC) as rnk
   //          FROM versions
   //          WHERE clock > ?
   //        )
   //
-  //        SELECT nid, key, jval FROM winners WHERE rnk = 1`
+  //        SELECT node_id, key, jval FROM winners WHERE rnk = 1`
   //     )
   //     .raw(),
   // };
@@ -150,7 +191,8 @@ function createQueries(db: Database) {
     commit: db.prepare<[], void>("COMMIT"),
     rollback: db.prepare<[], void>("ROLLBACK"),
 
-    storage,
+    nodes,
+    nodeTree,
     // versions,
   };
 }
@@ -178,11 +220,11 @@ export class SQLCache {
   // ----------------------------------------------------
 
   #has(nodeId: NodeId, key: string): boolean {
-    return !!this.#q.storage.exists.get(nodeId, key);
+    return this.#get(nodeId, key) !== undefined;
   }
 
   #get(nodeId: NodeId, key: string): Json | undefined {
-    const jval = this.#q.storage.selectKey.get(nodeId, key);
+    const jval = this.#q.nodeTree.selectValueByNodeId.get(nodeId, key);
     return jval !== undefined ? (JSON.parse(jval) as Json) : undefined;
   }
 
@@ -191,15 +233,27 @@ export class SQLCache {
       return this.#delete(nodeId, key);
     } else {
       const jval = JSON.stringify(value);
-      this.#q.storage.upsertKeyValue.run(nodeId, key, jval);
+      const internalId = this.#q.nodes.selectInternalIdByNodeId.get(nodeId);
+      if (internalId === undefined) return false;
+      this.#q.nodeTree.upsertKeyValue.run(internalId, key, jval);
       // this.#q.versions.upsertKeyValue.run(nodeId, key, this.#pendingClock, jval);
       return true;
     }
   }
 
+  #setLiveRef(nodeId: NodeId, key: string, ref: NodeId): boolean {
+    const internalId = this.#q.nodes.selectInternalIdByNodeId.get(nodeId);
+    const refInternalId = this.#q.nodes.selectInternalIdByNodeId.get(ref);
+    if (internalId === undefined || refInternalId === undefined) return false;
+    this.#q.nodeTree.upsertKeyLiveRef.run(internalId, key, refInternalId);
+    // this.#q.versions.upsertKeyValue.run(nodeId, key, this.#pendingClock, jval);
+    return true;
+  }
+
   #delete(nodeId: NodeId, key: string): boolean {
-    const result = this.#q.storage.deleteKey.run(nodeId, key);
+    const result = this.#q.nodeTree.deleteKey.run(nodeId, key);
     if (result.changes > 0) {
+      // XXX Maybe also remove the entry from the nodes index at the end of the transaction to clean up?
       // this.#q.versions.deleteKey.run(nodeId, key, this.#pendingClock);
       return true;
     } else {
@@ -208,11 +262,11 @@ export class SQLCache {
   }
 
   keys(nodeId: NodeId): IterableIterator<string> {
-    return this.#q.storage.selectKeysByNodeId.iterate(nodeId);
+    return this.#q.nodeTree.selectKeysByNodeId.iterate(nodeId);
   }
 
   *entries(nodeId: NodeId): IterableIterator<[key: string, value: Json]> {
-    const rows = this.#q.storage.selectAllByNodeId.iterate(nodeId);
+    const rows = this.#q.nodeTree.selectAllByNodeId.iterate(nodeId);
     for (const [key, jval] of rows) {
       yield [key, JSON.parse(jval)];
     }
@@ -226,9 +280,9 @@ export class SQLCache {
    * Computes a Delta since the given clock value.
    */
   fullDelta(): Delta {
-    const updated: { [nid: string]: { [key: string]: Json } } = {};
-    for (const [nid, key, value] of this.rows()) {
-      (updated[nid] ??= {})[key] = value;
+    const updated: { [nodeId: string]: { [key: string]: Json } } = {};
+    for (const [nodeId, key, value] of this.rows()) {
+      (updated[nodeId] ??= {})[key] = value;
     }
     return [{}, updated];
   }
@@ -237,15 +291,15 @@ export class SQLCache {
    * Computes a Delta since the given clock value.
    */
   // deltaSince(since: number): Delta {
-  //   const removed: { [nid: string]: string[] } = {};
-  //   const updated: { [nid: string]: { [key: string]: Json } } = {};
-  //   for (const [nid, key, jval] of this.#q.versions.selectSince.iterate(
+  //   const removed: { [nodeId: string]: string[] } = {};
+  //   const updated: { [nodeId: string]: { [key: string]: Json } } = {};
+  //   for (const [nodeId, key, jval] of this.#q.versions.selectSince.iterate(
   //     since
   //   )) {
   //     if (jval === null) {
-  //       (removed[nid] ??= []).push(key);
+  //       (removed[nodeId] ??= []).push(key);
   //     } else {
-  //       (updated[nid] ??= {})[key] = JSON.parse(jval) as Json;
+  //       (updated[nodeId] ??= {})[key] = JSON.parse(jval) as Json;
   //     }
   //   }
   //   return [removed, updated];
@@ -269,6 +323,15 @@ export class SQLCache {
         if (wasUpdated) {
           // (deleted[nodeId] ??= {}).remove(key);
           (updated[nodeId] ??= {})[key] = value;
+        }
+        return wasUpdated;
+      },
+      setLiveRef: (nodeId: NodeId, key: string, ref: NodeId) => {
+        const wasUpdated = this.#setLiveRef(nodeId, key, ref);
+        dirty ||= wasUpdated;
+        if (wasUpdated) {
+          // (deleted[nodeId] ??= {}).remove(key);
+          (updated[nodeId] ??= {})[key] = { $ref: ref };
         }
         return wasUpdated;
       },
@@ -317,9 +380,17 @@ export class SQLCache {
   }
 
   // For convenience in unit tests only --------------------------------
-  *rows(): IterableIterator<[nid: string, key: string, value: Json]> {
-    for (const [nid, key, jval] of this.#q.storage.selectAll.iterate()) {
-      yield [nid, key, JSON.parse(jval)];
+  *rows(): IterableIterator<[nodeId: string, key: string, value: Json]> {
+    for (const [
+      nodeId,
+      key,
+      jval,
+      liveRef,
+    ] of this.#q.nodeTree.selectAll.iterate()) {
+      console.log("iterrrrr", nodeId, key, jval, liveRef);
+      const value =
+        jval !== null ? (JSON.parse(jval) as Json) : { $ref: liveRef! };
+      yield [nodeId, key, value];
     }
   }
 
@@ -327,7 +398,7 @@ export class SQLCache {
    * Returns the number of items in the cache.
    */
   get count(): number {
-    return this.#q.storage.countAll.get()!;
+    return this.#q.nodes.countAll.get()!;
   }
 
   get data(): Record<string, Record<string, Json>> {

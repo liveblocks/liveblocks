@@ -150,6 +150,7 @@ export interface Transaction {
   keys(nodeId: NodeId): IterableIterator<string>;
   // values(nodeId: NodeId): IterableIterator<Json>;
   set(nodeId: NodeId, key: string, value: Json): void;
+  setLiveRef(nodeId: NodeId, key: string, ref: NodeId): void;
   delete(nodeId: NodeId, key: string): boolean;
 }
 
