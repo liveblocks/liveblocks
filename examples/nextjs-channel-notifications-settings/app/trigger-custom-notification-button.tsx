@@ -1,9 +1,11 @@
 "use client";
 
 import { useRoom } from "@liveblocks/react";
+import { useToast } from "./use-toast";
 
 export function TriggerCustomNotificationButton() {
   const room = useRoom();
+  const { toast } = useToast();
 
   // Keep it simple for now
   const onClick = async (
@@ -28,6 +30,10 @@ export function TriggerCustomNotificationButton() {
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }
+
+      toast({
+        title: "Custom notification triggered ✅",
+      });
     } catch (err) {
       console.error(err);
     }
