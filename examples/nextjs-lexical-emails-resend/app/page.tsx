@@ -13,7 +13,9 @@ import Editor from "./lexical/editor";
 // https://liveblocks.io/docs/guides/how-to-use-liveblocks-with-nextjs-app-directory
 
 export default function Page() {
-  const roomId = useExampleRoomId("liveblocks:lexical-examples:nextjs");
+  const roomId = useExampleRoomId(
+    "liveblocks:examples:nextjs-lexical-emails-resend"
+  );
 
   return (
     <LiveblocksProvider

@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
   });
 
   // Use a naming pattern to allow access to rooms with a wildcard
-  session.allow(`liveblocks:tiptap-examples:*`, session.FULL_ACCESS);
+  session.allow(`liveblocks:examples:*`, session.FULL_ACCESS);
 
   // Authorize the user and return the result
   const { status, body } = await session.authorize();
