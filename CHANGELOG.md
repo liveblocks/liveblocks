@@ -1,4 +1,6 @@
-## 2.13.0 (Not published yet)
+## Not yet published
+
+## 2.13.0
 
 ### `@liveblocks/react-ui`
 
