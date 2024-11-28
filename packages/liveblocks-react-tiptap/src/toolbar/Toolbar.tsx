@@ -1,3 +1,4 @@
+import { Button, EmojiIcon } from "@liveblocks/react-ui/_private";
 import type { Editor } from "@tiptap/react";
 import type { ComponentProps, ComponentType, ReactNode } from "react";
 import React, { forwardRef } from "react";
@@ -17,6 +18,16 @@ interface ToolbarProps extends Omit<ComponentProps<"div">, "children"> {
   trailing?: ToolbarSlot;
 }
 
+interface ToolbarButtonProps extends ComponentProps<"button"> {
+  icon?: ReactNode;
+}
+
+interface ToolbarToggleProps extends ToolbarButtonProps {
+  active: boolean;
+}
+
+type ToolbarSeparatorProps = ComponentProps<"div">;
+
 export function applyToolbarSlot(
   slot: ToolbarSlot,
   props: ToolbarSlotProps
@@ -34,7 +45,29 @@ export function applyToolbarSlot(
 // TODO: Toolbar.Toggle = aria-pressed
 // TODO: Toolbar.Separator = <div role="separator" aria-orientation="vertical" />
 
-const ToolbarSeparator = forwardRef<HTMLDivElement, ComponentProps<"div">>(
+const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
+  (_, forwardedRef) => {
+    return (
+      <Button type="button" ref={forwardedRef}>
+        Button
+      </Button>
+    );
+  }
+);
+
+const ToolbarToggle = forwardRef<HTMLButtonElement, ToolbarToggleProps>(
+  ({ active }, forwardedRef) => {
+    return (
+      <ToolbarButton
+        aria-pressed={active}
+        data-active={active}
+        ref={forwardedRef}
+      />
+    );
+  }
+);
+
+const ToolbarSeparator = forwardRef<HTMLDivElement, ToolbarSeparatorProps>(
   ({ className, ...props }) => {
     return (
       <div
@@ -55,6 +88,10 @@ export function DefaultToolbarContent({ editor }: ToolbarSlotProps) {
 
   return (
     <>
+      <Button>
+        <EmojiIcon />
+        <span className="lb-button-label">Hello</span>
+      </Button>
       {supportsBold && "Bold"}
       {supportsItalic && "Italic"}
       {supportsStrike && "Strikethrough"}
@@ -101,6 +138,8 @@ export const Toolbar = Object.assign(
     }
   ),
   {
+    Button: ToolbarButton,
+    Toggle: ToolbarToggle,
     Separator: ToolbarSeparator,
   }
 );
