@@ -40,6 +40,7 @@ export type {
   YDocUpdatedEvent,
 } from "./webhooks";
 export {
+  isCustomNotificationEvent,
   isTextMentionNotificationEvent,
   isThreadNotificationEvent,
   WebhookHandler,
