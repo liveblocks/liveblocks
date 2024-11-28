@@ -1,4 +1,9 @@
-## Not yet published
+## 2.14.0 (Not yet published)
+
+### `@liveblocks-emails`
+
+- Add new functions to support text mention notification event for Lexical and
+  Tiptap text editors.
 
 ## 2.13.0
 
