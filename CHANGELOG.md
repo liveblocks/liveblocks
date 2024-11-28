@@ -1,4 +1,9 @@
-## Not published yet
+## 2.13.0 (Not published yet)
+
+### `@liveblocks/react-ui`
+
+- Remove `Timestamp` export mistakenly added to `@liveblocks/react-ui`, it
+  should be imported from `@liveblocks/react-ui/primitives` instead.
 
 ## 2.12.2
 
