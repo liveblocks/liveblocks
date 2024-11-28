@@ -1,6 +1,6 @@
 import { Liveblocks } from "@liveblocks/node";
 import { NextRequest, NextResponse } from "next/server";
-import { USER_INFO } from "../dummy-users";
+import { getRandomUser } from "../database";
 
 /**
  * Authenticating your Liveblocks application
@@ -16,15 +16,13 @@ export async function POST(request: NextRequest) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
   }
 
-  // Get the current user's unique id from your database
-  const userIndex = Math.floor(Math.random() * USER_INFO.length);
+  // Get the current user's unique id and info from your database
+  const user = getRandomUser();
 
   // Create a session for the current user (access token auth)
-  const session = liveblocks.prepareSession(`user-${userIndex}`, {
-    userInfo: USER_INFO[userIndex],
+  const session = liveblocks.prepareSession(`${user.id}`, {
+    userInfo: user.info,
   });
-
-  const { room } = await request.json();
 
   // Use a naming pattern to allow access to rooms with a wildcard
   session.allow(`liveblocks:lexical-examples:*`, session.FULL_ACCESS);

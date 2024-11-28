@@ -9,7 +9,7 @@ import { Text } from "@react-email/components";
 import { render } from "@react-email/render";
 
 import UnreadTextMention from "../../../emails/UnreadTextMention";
-import { USER_INFO } from "../dummy-users";
+import { getUsers } from "../database";
 
 // Add your Resend API key from https://resend.com/api-keys
 const resend = new Resend(process.env.RESEND_API_KEY as string);
@@ -51,14 +51,8 @@ export async function POST(request: Request) {
         event,
         {
           resolveUsers: async ({ userIds }) => {
-            const indices = [...USER_INFO.keys()];
-            const users = new Map();
-
-            for (const index of indices) {
-              users.set(`user-${index}`, USER_INFO[index]);
-            }
-
-            return userIds.map((userId) => users.get(userId)).filter(Boolean);
+            const users = getUsers(userIds);
+            return users.map((user) => user?.info || undefined);
           },
           resolveRoomInfo: ({ roomId }) => {
             return {
