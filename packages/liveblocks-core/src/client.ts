@@ -275,6 +275,21 @@ export type NotificationsApi<M extends BaseMetadata> = {
    * const channelNotificationSettings = await client.getChannelNotificationSettings();
    */
   getChannelNotificationSettings(): Promise<ChannelNotificationSettings>;
+
+  /**
+   * Update channel notifications for a user for a project.
+   *
+   * @example
+   * await client.updateChannelNotificationSettings({
+   *  email: {
+   *    thread: true,
+   *    textMention: false,
+   *  }
+   * })
+   */
+  updateChannelNotificationSettings(
+    settings: Partial<ChannelNotificationSettings>
+  ): Promise<ChannelNotificationSettings>;
 };
 
 /**
@@ -851,6 +866,8 @@ export function createClient<U extends BaseUserMeta = DU>(
 
       // Public channel notification settings API
       getChannelNotificationSettings: httpClient.getChannelNotificationSettings,
+      updateChannelNotificationSettings:
+        httpClient.updateChannelNotificationSettings,
 
       // Advanced resolvers APIs
       resolvers: {
