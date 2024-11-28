@@ -3,6 +3,7 @@ import { Editor, Element, Node, Path, Range, Transforms } from "slate";
 
 import type { ComposerBodyAutoLink } from "../../types";
 import { isPlainText, isText } from "../utils/is-text";
+import { filterActiveMarks } from "../utils/marks";
 import { isComposerBodyCustomLink } from "./custom-links";
 
 /**
@@ -38,7 +39,7 @@ export function withAutoLinks(editor: Editor): Editor {
 
         // Prevent rich text within auto links by removing all marks of inner text nodes
         if (!isPlainText(node)) {
-          const marks = Object.keys(node).filter((key) => key !== "text");
+          const marks = filterActiveMarks(node);
 
           Transforms.unsetNodes(editor, marks, { at: path });
         }

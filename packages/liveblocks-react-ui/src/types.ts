@@ -21,6 +21,11 @@ export type ComposerBodyInlineElement =
   | ComposerBodyAutoLink
   | ComposerBodyCustomLink;
 
+export type ComposerBodyInlineNonTextElement = Exclude<
+  ComposerBodyInlineElement,
+  ComposerBodyText
+>;
+
 export type ComposerBodyParagraph = {
   type: "paragraph";
   children: ComposerBodyInlineElement[];
@@ -52,7 +57,11 @@ export type ComposerBodyText = {
   text: string;
 };
 
-export type ComposerBodyMarks = keyof Omit<ComposerBodyText, "text">;
+export type ComposerBodyMark = keyof Omit<ComposerBodyText, "text">;
+
+export type ComposerBodyMarks = {
+  [K in ComposerBodyMark]: boolean;
+};
 
 export type ComposerBodyEmptyText = {
   text: "";
