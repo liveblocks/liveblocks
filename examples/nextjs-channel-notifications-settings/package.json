@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@liveblocks/client": "^2.12.2",
+    "@liveblocks/emails": "^2.12.2",
     "@liveblocks/node": "^2.12.2",
     "@liveblocks/react": "^2.12.2",
     "@liveblocks/react-tiptap": "^2.12.2",
