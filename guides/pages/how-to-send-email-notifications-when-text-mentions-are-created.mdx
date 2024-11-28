@@ -8,7 +8,7 @@ meta:
 
 Liveblocks allows you to embed a text editing experience with
 [Text Editor](/docs/products/text-editor). Using our webhooks and REST API, it’s
-possible get unread text mention to send an email to users when they’re
+possible get unread text mentions and use them to email users when they’re
 mentioned in a document. Notifications can also be displayed in your app using
 [`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications)
 and the
@@ -26,9 +26,9 @@ component.
 
 <Banner title="Supported text editors">
 
-In this guide we'll use only
-[Lexical](/docs/api-reference/liveblocks-react-lexical) text editor. The one of
-the two we support officialy at Liveblocks along with
+In this guide we’ll use only
+[Lexical](/docs/api-reference/liveblocks-react-lexical) text editor, though the
+process is very similar for
 [Tiptap](/docs/api-reference/liveblocks-react-tiptap).
 
 </Banner>
@@ -50,9 +50,9 @@ more specifically, we’ll be looking at how to:
 
 This guide assumes you already have a Liveblocks Text Editor project set up. If
 you don’t have one yet, you can
-[get started with Lexical](docs/get-started/nextjs-lexical), and come back after
-you’re set up. You could also use our
-[basic LExical example](/examples/collaborative-text-editor/nextjs-lexical)
+[get started with Lexical](/docs/get-started/text-editor/lexical), and come back
+after you’re set up. You could also use our
+[basic Lexical example](/examples/collaborative-text-editor/nextjs-lexical)
 which has this set up already.
 
 </Banner>
@@ -367,7 +367,6 @@ import {
   WebhookHandler,
   isTextMentionNotificationEvent,
 } from "@liveblocks/node";
-
 // +++
 import { prepareTextMentionNotificationEmailAsReact } from "@liveblocks/emails";
 // +++
@@ -439,7 +438,8 @@ export async function POST(request: Request) {
 
 ## Create the emails
 
-Next, we need to create the emails with React.
+Next, we need to create the emails with React, using `emailData` to build the
+content.
 
 ```tsx
 import {
@@ -563,10 +563,10 @@ emailData = await prepareTextMentionNotificationEmailAsReact(
 
 ## Customizing text mention and surrounding text components
 
-We can also edit
-[`prepareTextMentionNotificationEmailAsReact`](/docs/api-reference/liveblocks-emails#prepare-text-mention-notification-email-as-react)
-to allow for custom components for the text mention and its surrounding text,
-for example we can customize the container, color mentions and so.
+We can also edit `prepareTextMentionNotificationEmailAsReact` to allow for
+[custom components](/docs/api-reference/liveblocks-emails#prepare-text-mention-notification-email-as-react-customizing-components)
+for the text mention and its surrounding text, for example we can customize the
+container, color mentions, and modify fonts.
 
 ```tsx
 // ...
@@ -600,6 +600,10 @@ emailData = await prepareTextMentionNotificationEmailAsReact(
       // `user` is the optional data returned from `resolveUsers`
       Mention: ({ element, user }) => (
         <span style={{ color: "red" }}>@{user?.name ?? element.id}</span>
+      ),
+
+      Text: ({ children }) => (
+        <p style={{ fontSize: "16px", fontStyle: "italic" }}>{children}</p>
       ),
     },
     // +++

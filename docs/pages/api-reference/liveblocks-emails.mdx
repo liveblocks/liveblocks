@@ -1151,6 +1151,7 @@ const emailData = await prepareThreadNotificationEmailAsReact(
     components: {
       // `react-email` components are supported
       Container: ({ children }) => <Section>{children}</Section>,
+
       Text: ({ children }) => (
         <Text className="text-sm text-black m-0 mb-4">{children}</Text>
       ),
