@@ -1,6 +1,12 @@
+import type {
+  CustomNotificationKind,
+  NotificationChannel,
+} from "@liveblocks/core";
 import * as base64 from "@stablelib/base64";
 import * as sha256 from "fast-sha256";
 import type { IncomingHttpHeaders } from "http";
+
+import { isString } from "./utils";
 
 export class WebhookHandler {
   private secretBuffer: Buffer;
@@ -161,7 +167,7 @@ export class WebhookHandler {
         if (
           notification.data.kind === "thread" ||
           notification.data.kind === "textMention" ||
-          notification.data.kind.startsWith("$")
+          isCustomKind(notification.data.kind)
         ) {
           return;
         } else {
@@ -207,6 +213,10 @@ type WebhookRequest = {
    * @example '{"type":"storageUpdated","data":{"roomId":"my-room-id","appId":"my-app-id","updatedAt":"2021-03-01T12:00:00.000Z"}}'
    */
   rawBody: string;
+};
+
+const isCustomKind = (value: unknown): value is `$${string}` => {
+  return isString(value) && value.startsWith("$");
 };
 
 type WebhookEvent =
@@ -473,7 +483,7 @@ type ThreadMarkedAsUnresolvedEvent = {
 type ThreadNotificationEvent = {
   type: "notification";
   data: {
-    channel: "email";
+    channel: NotificationChannel;
     kind: "thread";
     projectId: string;
     roomId: string;
@@ -491,7 +501,7 @@ type ThreadNotificationEvent = {
 type TextMentionNotificationEvent = {
   type: "notification";
   data: {
-    channel: "email";
+    channel: NotificationChannel;
     kind: "textMention";
     projectId: string;
     roomId: string;
@@ -506,13 +516,11 @@ type TextMentionNotificationEvent = {
   };
 };
 
-type CustomKind = `$${string}`;
-
 type CustomNotificationEvent = {
   type: "notification";
   data: {
-    channel: "email";
-    kind: CustomKind;
+    channel: NotificationChannel;
+    kind: CustomNotificationKind;
     projectId: string;
     roomId: string | null;
     userId: string;
@@ -601,5 +609,5 @@ export function isTextMentionNotificationEvent(
 export function isCustomNotificationEvent(
   event: WebhookEvent
 ): event is CustomNotificationEvent {
-  return event.type === "notification" && event.data.kind.startsWith("$");
+  return event.type === "notification" && isCustomKind(event.data.kind);
 }
