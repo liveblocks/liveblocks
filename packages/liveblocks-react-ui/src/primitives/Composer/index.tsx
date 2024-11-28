@@ -97,11 +97,11 @@ import { isKey } from "../../utils/is-key";
 import { Persist, useAnimationPersist, usePersist } from "../../utils/Persist";
 import { Portal } from "../../utils/Portal";
 import { requestSubmit } from "../../utils/request-submit";
-import { useEventSource } from "../../utils/use-event-source";
 import { useId } from "../../utils/use-id";
 import { useIndex } from "../../utils/use-index";
 import { useInitial } from "../../utils/use-initial";
 import { useLayoutEffect } from "../../utils/use-layout-effect";
+import { useObservable } from "../../utils/use-observable";
 import { useRefs } from "../../utils/use-refs";
 import { toAbsoluteUrl } from "../Comment/utils";
 import {
@@ -264,7 +264,7 @@ function ComposerEditorMentionSuggestionsWrapper({
     open: isOpen,
   });
 
-  useEventSource(editorChangeEventSource, () => {
+  useObservable(editorChangeEventSource, () => {
     setMentionDraft(getMentionDraftAtSelection(editor));
   });
 
@@ -366,7 +366,7 @@ function ComposerEditorFloatingToolbarWrapper({
     };
   }, [isFocused]);
 
-  useEventSource(editorChangeEventSource, () => {
+  useObservable(editorChangeEventSource, () => {
     // Detach from previous selection range (if any) to avoid sudden jumps
     setReference(null);
 
@@ -1485,7 +1485,7 @@ const ComposerForm = forwardRef<HTMLFormElement, ComposerFormProps>(
       [editor]
     );
 
-    useEventSource(editorChangeEventSource, () => {
+    useObservable(editorChangeEventSource, () => {
       setMarks(getMarks(editor));
     });
 
