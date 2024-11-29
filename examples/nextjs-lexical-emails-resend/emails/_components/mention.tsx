@@ -38,7 +38,7 @@ export function Mention({
             className="rounded-full bg-black/5"
             width={28}
             height={28}
-            src={author.info.picture}
+            src={author.info.avatar}
           />
         </Column>
         <Column className="text-black">

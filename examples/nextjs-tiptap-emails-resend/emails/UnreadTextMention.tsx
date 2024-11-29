@@ -8,7 +8,6 @@ import { Layout } from "./_components/layout";
 import { Header } from "./_components/header";
 import { Headline } from "./_components/headline";
 import { Mention } from "./_components/mention";
-import type { BaseUserMeta } from "@liveblocks/client";
 
 const UNKNOWN_ROOM = "Unknown room" as const;
 
@@ -35,7 +34,7 @@ const previewProps: UnreadTextMentionProps = {
       info: {
         name: "Charlie Layne",
         color: "#D583F0",
-        picture: "https://liveblocks.io/avatars/avatar-1.png",
+        avatar: "https://liveblocks.io/avatars/avatar-1.png",
       },
     },
     reactContent: (
