@@ -8,6 +8,7 @@ import type {
 import type {
   AsyncResult,
   BaseRoomInfo,
+  ChannelNotificationSettings,
   DM,
   DU,
   InboxNotificationData,
@@ -40,6 +41,7 @@ import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
 import type {
+  ChannelNotificationSettingsAsyncResult,
   InboxNotificationsAsyncResult,
   LiveblocksContextBundle,
   RoomInfoAsyncResult,
@@ -299,10 +301,26 @@ function makeLiveblocksExtrasForClient(client: OpaqueClient) {
     { maxStaleTimeMs: config.USER_THREADS_MAX_STALE_TIME }
   );
 
+  const channelNotificationSettingsPoller = makePoller(
+    async (signal) => {
+      try {
+        return await store.refreshChannelNotificationSettings(signal);
+      } catch (err) {
+        console.warn(
+          `Polling new channel notification settings failed: ${String(err)}`
+        );
+        throw err;
+      }
+    },
+    config.CHANNEL_NOTIFICATION_SETTINGS_INTERVAL,
+    { maxStaleTimeMs: config.CHANNEL_NOTIFICATION_SETTINGS_MAX_TIME }
+  );
+
   return {
     store,
     notificationsPoller,
     userThreadsPoller,
+    channelNotificationSettingsPoller,
   };
 }
 
@@ -602,6 +620,81 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
     getter,
     selector
   );
+}
+
+function useUpdateChannelNotificationSettings_withClient(
+  client: OpaqueClient
+): (settings: Partial<ChannelNotificationSettings>) => void {
+  return React.useCallback(
+    (settings: Partial<ChannelNotificationSettings>): void => {
+      const { store } = getLiveblocksExtrasForClient(client);
+      const optimisticUpdateId = store.addOptimisticUpdate({
+        type: "update-channel-notification-settings",
+        settings,
+      });
+
+      client.updateChannelNotificationSettings(settings).then(
+        (settings) => {
+          // Replace the optimistic update by the real thing
+          store.updateChannelNotificationSettings(settings, optimisticUpdateId);
+        },
+        () => {
+          // Remove optimistic update when it fails
+          store.removeOptimisticUpdate(optimisticUpdateId);
+        }
+      );
+    },
+    [client]
+  );
+}
+
+function useChannelNotificationSettings_withClient(
+  client: OpaqueClient
+): [
+  ChannelNotificationSettingsAsyncResult,
+  (settings: Partial<ChannelNotificationSettings>) => void,
+] {
+  const updateChannelNotificationSettings =
+    useUpdateChannelNotificationSettings_withClient(client);
+
+  const { store, channelNotificationSettingsPoller: poller } =
+    getLiveblocksExtrasForClient(client);
+
+  useEffect(() => {
+    void store.waitUntilChannelNotificationsSettingsLoaded();
+    // NOTE: Deliberately *not* using a dependency array here!
+    //
+    // It is important to call waitUntil on *every* render.
+    // This is harmless though, on most renders, except:
+    // 1. The very first render, in which case we'll want to trigger the initial page fetch.
+    // 2. All other subsequent renders now "just" return the same promise (a quick operation).
+    // 3. If ever the promise would fail, then after 5 seconds it would reset, and on the very
+    //    *next* render after that, a *new* fetch/promise will get created.
+  });
+
+  useEffect(() => {
+    poller.inc();
+    poller.pollNowIfStale();
+    return () => {
+      poller.dec();
+    };
+  }, [poller]);
+
+  const getter = useCallback(
+    () => store.getChannelNotificationSettingsLoadingState(),
+    [store]
+  );
+  const settings = useSyncExternalStoreWithSelector(
+    store.subscribe,
+    getter,
+    getter,
+    identity,
+    shallow2
+  );
+
+  return useMemo(() => {
+    return [settings, updateChannelNotificationSettings];
+  }, [settings, updateChannelNotificationSettings]);
 }
 
 function useUser_withClient<U extends BaseUserMeta>(
@@ -1086,6 +1179,27 @@ function useUnreadInboxNotificationsCountSuspense() {
   return useUnreadInboxNotificationsCountSuspense_withClient(useClient());
 }
 
+/**
+ * Returns the channel notifications settings for the current user.
+ *
+ * @example
+ * const [{ settings }, updateSettings] = useChannelNotificationSettings()
+ */
+function useChannelNotificationSettings() {
+  return useChannelNotificationSettings_withClient(useClient());
+}
+
+/**
+ * Returns a function that updates the user's channel notification
+ * settings for a project.
+ *
+ * @example
+ * const updateChannelNotificationSettings = useUpdateChannelNotificationSettings()
+ */
+function useUpdateChannelNotificationSettings() {
+  return useUpdateChannelNotificationSettings_withClient(useClient());
+}
+
 function useUser<U extends BaseUserMeta>(userId: string) {
   const client = useClient<U>();
   return useUser_withClient(client, userId);
@@ -1277,6 +1391,8 @@ export {
   useSyncStatus,
   useUnreadInboxNotificationsCount,
   useUnreadInboxNotificationsCountSuspense,
+  useChannelNotificationSettings,
+  useUpdateChannelNotificationSettings,
   _useUserThreads_experimental as useUserThreads_experimental,
   _useUserThreadsSuspense_experimental as useUserThreadsSuspense_experimental,
 };
