@@ -25,6 +25,7 @@ import React, {
 import { createPortal } from "react-dom";
 
 import { classNames } from "../classnames";
+import { EditorProvider } from "../context";
 import {
   applyToolbarSlot,
   DefaultToolbarContent,
@@ -230,31 +231,33 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
 
     return createPortal(
       <TooltipProvider>
-        <div
-          role="toolbar"
-          aria-label="Floating toolbar"
-          aria-orientation="horizontal"
-          className={classNames(
-            "lb-root lb-portal lb-elevation lb-tiptap-floating lb-tiptap-floating-toolbar lb-tiptap-toolbar",
-            className
-          )}
-          ref={mergedRefs}
-          style={{
-            position: strategy,
-            top: 0,
-            left: 0,
-            transform: isPositioned
-              ? `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`
-              : "translate3d(0, -200%, 0)",
-            minWidth: "max-content",
-          }}
-          onPointerDown={handlePointerDown}
-          {...props}
-        >
-          {applyToolbarSlot(leading, slotProps)}
-          {applyToolbarSlot(children, slotProps)}
-          {applyToolbarSlot(trailing, slotProps)}
-        </div>
+        <EditorProvider editor={editor}>
+          <div
+            role="toolbar"
+            aria-label="Floating toolbar"
+            aria-orientation="horizontal"
+            className={classNames(
+              "lb-root lb-portal lb-elevation lb-tiptap-floating lb-tiptap-floating-toolbar lb-tiptap-toolbar",
+              className
+            )}
+            ref={mergedRefs}
+            style={{
+              position: strategy,
+              top: 0,
+              left: 0,
+              transform: isPositioned
+                ? `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`
+                : "translate3d(0, -200%, 0)",
+              minWidth: "max-content",
+            }}
+            onPointerDown={handlePointerDown}
+            {...props}
+          >
+            {applyToolbarSlot(leading, slotProps)}
+            {applyToolbarSlot(children, slotProps)}
+            {applyToolbarSlot(trailing, slotProps)}
+          </div>
+        </EditorProvider>
       </TooltipProvider>,
       document.body
     );

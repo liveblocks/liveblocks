@@ -13,6 +13,10 @@ import type { ComponentProps, ComponentType, ReactNode } from "react";
 import React, { forwardRef } from "react";
 
 import { classNames } from "../classnames";
+import { EditorProvider, useCurrentEditor } from "../context";
+
+type ExtendedChainedCommands<T extends string> = ChainedCommands &
+  Record<T, () => ChainedCommands>;
 
 export interface ToolbarSlotProps {
   editor: Editor;
@@ -88,10 +92,11 @@ const ToolbarSeparator = forwardRef<HTMLDivElement, ToolbarSeparatorProps>(
   }
 );
 
-type ExtendedChainedCommands<T extends string> = ChainedCommands &
-  Record<T, () => ChainedCommands>;
-
-export function DefaultToolbarContent({ editor }: ToolbarSlotProps) {
+function ToolbarSectionInline() {
+  const editor = useCurrentEditor(
+    "ToolbarSectionInline",
+    "Toolbar or FloatingToolbar"
+  );
   const supportsBold = "toggleBold" in editor.commands;
   const supportsItalic = "toggleItalic" in editor.commands;
   const supportsStrike = "toggleStrike" in editor.commands;
@@ -99,8 +104,6 @@ export function DefaultToolbarContent({ editor }: ToolbarSlotProps) {
 
   return (
     <>
-      Section
-      <ToolbarSeparator />
       {supportsBold && (
         <ToolbarToggle
           name="Bold"
@@ -193,6 +196,16 @@ export function DefaultToolbarContent({ editor }: ToolbarSlotProps) {
           active={editor.isActive("code")}
         />
       )}
+    </>
+  );
+}
+
+export function DefaultToolbarContent() {
+  return (
+    <>
+      Section
+      <ToolbarSeparator />
+      <ToolbarSectionInline />
       <ToolbarSeparator />
       Section
     </>
@@ -220,18 +233,20 @@ export const Toolbar = Object.assign(
 
       return (
         <TooltipProvider>
-          <div
-            ref={forwardedRef}
-            role="toolbar"
-            aria-label="Toolbar"
-            aria-orientation="horizontal"
-            className={classNames("lb-root lb-tiptap-toolbar", className)}
-            {...props}
-          >
-            {applyToolbarSlot(leading, slotProps)}
-            {applyToolbarSlot(children, slotProps)}
-            {applyToolbarSlot(trailing, slotProps)}
-          </div>
+          <EditorProvider editor={editor}>
+            <div
+              ref={forwardedRef}
+              role="toolbar"
+              aria-label="Toolbar"
+              aria-orientation="horizontal"
+              className={classNames("lb-root lb-tiptap-toolbar", className)}
+              {...props}
+            >
+              {applyToolbarSlot(leading, slotProps)}
+              {applyToolbarSlot(children, slotProps)}
+              {applyToolbarSlot(trailing, slotProps)}
+            </div>
+          </EditorProvider>
         </TooltipProvider>
       );
     }
@@ -240,5 +255,6 @@ export const Toolbar = Object.assign(
     Button: ToolbarButton,
     Toggle: ToolbarToggle,
     Separator: ToolbarSeparator,
+    SectionInline: ToolbarSectionInline,
   }
 );
