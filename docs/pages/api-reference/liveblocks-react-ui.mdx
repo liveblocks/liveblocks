@@ -1419,9 +1419,6 @@ import { useCreateThread } from "@liveblocks/react/suspense";
 
 function MyComposer() {
   const createThread = useCreateThread();
-  // +++
-  const { createMention } = useComposer();
-  // +++
 
   return (
     <Composer.Form
@@ -1433,11 +1430,23 @@ function MyComposer() {
         });
       }}
     >
+      <Editor />
+    </Composer.Form>
+  );
+}
+
+function Editor() {
+  // +++
+  const { createMention } = useComposer();
+  // +++
+
+  return (
+    <>
       <Composer.Editor components={/* Your custom component parts */} />
       // +++
       <button onClick={createMention}>Add mention</button>
       // +++
-    </Composer.Form>
+    </>
   );
 }
 ```
