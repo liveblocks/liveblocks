@@ -28,7 +28,7 @@ import { classNames } from "../classnames";
 import { EditorProvider } from "../context";
 import {
   applyToolbarSlot,
-  DefaultToolbarContent,
+  Toolbar,
   type ToolbarSlot,
   type ToolbarSlotProps,
 } from "./Toolbar";
@@ -47,10 +47,20 @@ export interface FloatingToolbarProps
 
 export const FLOATING_TOOLBAR_COLLISION_PADDING = 10;
 
+function DefaultFloatingToolbarContent() {
+  return (
+    <>
+      <Toolbar.SectionInline />
+      <Toolbar.Separator />
+      <Toolbar.SectionCollaboration />
+    </>
+  );
+}
+
 export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
   (
     {
-      children = DefaultToolbarContent,
+      children = DefaultFloatingToolbarContent,
       leading,
       trailing,
       position = "top",

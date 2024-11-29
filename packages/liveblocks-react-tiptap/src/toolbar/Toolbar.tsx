@@ -391,7 +391,7 @@ function ToolbarSectionCollaboration() {
   );
 }
 
-export function DefaultToolbarContent({ editor }: ToolbarSlotProps) {
+function DefaultToolbarContent({ editor }: ToolbarSlotProps) {
   const supportsTextAlign = "setTextAlign" in editor.commands;
 
   return (
