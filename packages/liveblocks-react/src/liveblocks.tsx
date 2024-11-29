@@ -697,6 +697,26 @@ function useChannelNotificationSettings_withClient(
   }, [settings, updateChannelNotificationSettings]);
 }
 
+function useChannelNotificationSettingsSuspense_withClient(
+  client: OpaqueClient
+) {
+  const store = getLiveblocksExtrasForClient(client).store;
+
+  // Suspend until there are at least some inbox notifications
+  use(store.waitUntilChannelNotificationsSettingsLoaded());
+
+  // We're in a Suspense world here, and as such, the useChannelNotificationSettings()
+  // hook is expected to only return success results when we're here.
+  const [settings, updateChannelNotificationSettings] =
+    useChannelNotificationSettings_withClient(client);
+  assert(!settings.error, "Did not expect error");
+  assert(!settings.isLoading, "Did not expect loading");
+
+  return useMemo(() => {
+    return [settings, updateChannelNotificationSettings];
+  }, [settings, updateChannelNotificationSettings]);
+}
+
 function useUser_withClient<U extends BaseUserMeta>(
   client: Client<U>,
   userId: string
@@ -1190,6 +1210,16 @@ function useChannelNotificationSettings() {
 }
 
 /**
+ * Returns the channel notifications settings for the current user.
+ *
+ * @example
+ * const [{ settings }, updateSettings] = useChannelNotificationSettings()
+ */
+function useChannelNotificationSettingsSuspense() {
+  return useChannelNotificationSettingsSuspense_withClient(useClient());
+}
+
+/**
  * Returns a function that updates the user's channel notification
  * settings for a project.
  *
@@ -1392,6 +1422,7 @@ export {
   useUnreadInboxNotificationsCount,
   useUnreadInboxNotificationsCountSuspense,
   useChannelNotificationSettings,
+  useChannelNotificationSettingsSuspense,
   useUpdateChannelNotificationSettings,
   _useUserThreads_experimental as useUserThreads_experimental,
   _useUserThreadsSuspense_experimental as useUserThreadsSuspense_experimental,
