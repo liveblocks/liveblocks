@@ -1174,6 +1174,28 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
   useInboxNotificationThread(inboxNotificationId: string): ThreadData<M>;
 
   /**
+   * Returns the channel notifications settings for the current user.
+   *
+   * @example
+   * const [{ settings }, updateSettings] = useChannelNotificationSettings()
+   */
+  useChannelNotificationSettings(): [
+    ChannelNotificationSettingsAsyncResult,
+    (settings: Partial<ChannelNotificationSettings>) => void,
+  ];
+
+  /**
+   * Returns a function that updates the user's channel notification
+   * settings for a project.
+   *
+   * @example
+   * const updateChannelNotificationSettings = useUpdateChannelNotificationSettings()
+   */
+  useUpdateChannelNotificationSettings(): (
+    settings: Partial<ChannelNotificationSettings>
+  ) => void;
+
+  /**
    * Returns the current Liveblocks sync status, and triggers a re-render
    * whenever it changes. Can be used to render a "Saving..." indicator, or for
    * preventing that a browser tab can be closed until all changes have been
@@ -1236,6 +1258,17 @@ export type LiveblocksContextBundle<
              * const { count } = useUnreadInboxNotificationsCount();
              */
             useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountAsyncSuccess;
+
+            /**
+             * Returns the channel notifications settings for the current user.
+             *
+             * @example
+             * const [{ settings }, updateSettings] = useChannelNotificationSettings()
+             */
+            useChannelNotificationSettings(): [
+              ChannelNotificationSettingsAsyncResult,
+              (settings: Partial<ChannelNotificationSettings>) => void,
+            ];
 
             /**
              * @experimental
