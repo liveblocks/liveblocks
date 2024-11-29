@@ -15,8 +15,10 @@ import React, { forwardRef } from "react";
 import { classNames } from "../classnames";
 import { EditorProvider, useCurrentEditor } from "../context";
 
-type ExtendedChainedCommands<T extends string> = ChainedCommands &
-  Record<T, () => ChainedCommands>;
+type ExtendedChainedCommands<
+  T extends string,
+  A extends any[] = [],
+> = ChainedCommands & Record<T, (...args: A) => ChainedCommands>;
 
 export interface ToolbarSlotProps {
   editor: Editor;
@@ -92,13 +94,122 @@ const ToolbarSeparator = forwardRef<HTMLDivElement, ToolbarSeparatorProps>(
   }
 );
 
+function ToolbarSectionHistory() {
+  const editor = useCurrentEditor(
+    "SectionHistory",
+    "Toolbar or FloatingToolbar"
+  );
+
+  return (
+    <>
+      <ToolbarButton
+        name="Undo"
+        icon={<BoldIcon />}
+        shortcut="Mod-Z"
+        onClick={() => editor.chain().focus().undo().run()}
+        disabled={!editor.can().chain().focus().undo().run()}
+      />
+      <ToolbarButton
+        name="Redo"
+        icon={<BoldIcon />}
+        shortcut="Mod-Shift-Z"
+        onClick={() => editor.chain().focus().redo().run()}
+        disabled={!editor.can().chain().focus().redo().run()}
+      />
+    </>
+  );
+}
+
+function ToolbarSectionAlignment() {
+  const editor = useCurrentEditor(
+    "SectionAlignment",
+    "Toolbar or FloatingToolbar"
+  );
+  const supportsTextAlign = "setTextAlign" in editor.commands;
+
+  type TextAlignChainedCommands = ExtendedChainedCommands<
+    "setTextAlign",
+    [{ align: string }]
+  >;
+
+  return supportsTextAlign ? (
+    <>
+      <ToolbarToggle
+        name="Align left"
+        icon={<BoldIcon />}
+        shortcut="Mod-Shift-L"
+        onClick={() =>
+          (editor.chain().focus() as TextAlignChainedCommands)
+            .setTextAlign({ align: "left" })
+            .run()
+        }
+        disabled={
+          !(editor.can().chain().focus() as TextAlignChainedCommands)
+            .setTextAlign({ align: "left" })
+            .run()
+        }
+        active={editor.isActive({ textAlign: "left" })}
+      />
+      <ToolbarToggle
+        name="Align center"
+        icon={<BoldIcon />}
+        shortcut="Mod-Shift-E"
+        onClick={() =>
+          (editor.chain().focus() as TextAlignChainedCommands)
+            .setTextAlign({ align: "center" })
+            .run()
+        }
+        disabled={
+          !(editor.can().chain().focus() as TextAlignChainedCommands)
+            .setTextAlign({ align: "center" })
+            .run()
+        }
+        active={editor.isActive({ textAlign: "center" })}
+      />
+      <ToolbarToggle
+        name="Align right"
+        icon={<BoldIcon />}
+        shortcut="Mod-Shift-R"
+        onClick={() =>
+          (editor.chain().focus() as TextAlignChainedCommands)
+            .setTextAlign({ align: "right" })
+            .run()
+        }
+        disabled={
+          !(editor.can().chain().focus() as TextAlignChainedCommands)
+            .setTextAlign({ align: "right" })
+            .run()
+        }
+        active={editor.isActive({ textAlign: "right" })}
+      />
+      <ToolbarToggle
+        name="Justify"
+        icon={<BoldIcon />}
+        shortcut="Mod-Shift-J"
+        onClick={() =>
+          (editor.chain().focus() as TextAlignChainedCommands)
+            .setTextAlign({ align: "justify" })
+            .run()
+        }
+        disabled={
+          !(editor.can().chain().focus() as TextAlignChainedCommands)
+            .setTextAlign({ align: "justify" })
+            .run()
+        }
+        active={editor.isActive({ textAlign: "justify" })}
+      />
+    </>
+  ) : null;
+}
+
 function ToolbarSectionInline() {
   const editor = useCurrentEditor(
-    "ToolbarSectionInline",
+    "SectionInline",
     "Toolbar or FloatingToolbar"
   );
   const supportsBold = "toggleBold" in editor.commands;
   const supportsItalic = "toggleItalic" in editor.commands;
+  const supportsUnderline = "toggleUnderline" in editor.commands;
   const supportsStrike = "toggleStrike" in editor.commands;
   const supportsCode = "toggleCode" in editor.commands;
 
@@ -150,11 +261,61 @@ function ToolbarSectionInline() {
           active={editor.isActive("italic")}
         />
       )}
+      {supportsItalic && (
+        <ToolbarToggle
+          name="Italic"
+          icon={<ItalicIcon />}
+          shortcut="Mod-I"
+          onClick={() =>
+            (editor.chain().focus() as ExtendedChainedCommands<"toggleItalic">)
+              .toggleItalic()
+              .run()
+          }
+          disabled={
+            !(
+              editor
+                .can()
+                .chain()
+                .focus() as ExtendedChainedCommands<"toggleItalic">
+            )
+              .toggleItalic()
+              .run()
+          }
+          active={editor.isActive("italic")}
+        />
+      )}
+      {supportsUnderline && (
+        <ToolbarToggle
+          name="Underline"
+          icon={<StrikethroughIcon />}
+          shortcut="Mod-U"
+          onClick={() =>
+            (
+              editor
+                .chain()
+                .focus() as ExtendedChainedCommands<"toggleUnderline">
+            )
+              .toggleUnderline()
+              .run()
+          }
+          disabled={
+            !(
+              editor
+                .can()
+                .chain()
+                .focus() as ExtendedChainedCommands<"toggleUnderline">
+            )
+              .toggleUnderline()
+              .run()
+          }
+          active={editor.isActive("underline")}
+        />
+      )}
       {supportsStrike && (
         <ToolbarToggle
-          name="Strikethrough"
+          name="Strike"
           icon={<StrikethroughIcon />}
-          shortcut="Mod-Shift-S"
+          shortcut="Mod-U"
           onClick={() =>
             (editor.chain().focus() as ExtendedChainedCommands<"toggleStrike">)
               .toggleStrike()
@@ -202,7 +363,7 @@ function ToolbarSectionInline() {
 
 function ToolbarSectionCollaboration() {
   const editor = useCurrentEditor(
-    "ToolbarSectionCollaboration",
+    "SectionCollaboration",
     "Toolbar or FloatingToolbar"
   );
   const supportsThread = "addPendingComment" in editor.commands;
@@ -230,11 +391,19 @@ function ToolbarSectionCollaboration() {
   );
 }
 
-export function DefaultToolbarContent() {
+export function DefaultToolbarContent({ editor }: ToolbarSlotProps) {
+  const supportsTextAlign = "setTextAlign" in editor.commands;
+
   return (
     <>
-      Section
+      <ToolbarSectionHistory />
       <ToolbarSeparator />
+      {supportsTextAlign ? (
+        <>
+          <ToolbarSectionAlignment />
+          <ToolbarSeparator />
+        </>
+      ) : null}
       <ToolbarSectionInline />
       <ToolbarSeparator />
       <ToolbarSectionCollaboration />
@@ -285,6 +454,9 @@ export const Toolbar = Object.assign(
     Button: ToolbarButton,
     Toggle: ToolbarToggle,
     Separator: ToolbarSeparator,
+    SectionHistory: ToolbarSectionHistory,
+    SectionAlignment: ToolbarSectionAlignment,
     SectionInline: ToolbarSectionInline,
+    SectionCollaboration: ToolbarSectionCollaboration,
   }
 );
