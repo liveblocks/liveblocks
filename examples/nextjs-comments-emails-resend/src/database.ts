@@ -73,7 +73,7 @@ export function getUser(id: string) {
   return USER_INFO.find((u) => u.id === id) || null;
 }
 
-export async function getUsers(ids: string[]) {
+export function getUsers(ids: string[]) {
   return ids.map((id) => getUser(id));
 }
 
