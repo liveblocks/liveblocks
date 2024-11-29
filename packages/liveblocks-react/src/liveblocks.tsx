@@ -344,6 +344,9 @@ function makeLiveblocksContextBundle<
   const useDeleteAllInboxNotifications = () =>
     useDeleteAllInboxNotifications_withClient(client);
 
+  const useUpdateChannelNotificationSettings = () =>
+    useUpdateChannelNotificationSettings_withClient(client);
+
   // NOTE: This version of the LiveblocksProvider does _not_ take any props.
   // This is because we already have a client bound to it.
   function LiveblocksProvider(props: PropsWithChildren) {
@@ -371,6 +374,10 @@ function makeLiveblocksContextBundle<
     useDeleteInboxNotification,
     useDeleteAllInboxNotifications,
 
+    useChannelNotificationSettings: () =>
+      useChannelNotificationSettings_withClient(client),
+    useUpdateChannelNotificationSettings,
+
     useInboxNotificationThread,
     useUserThreads_experimental,
 
@@ -391,6 +398,10 @@ function makeLiveblocksContextBundle<
       useDeleteAllInboxNotifications,
 
       useInboxNotificationThread,
+
+      useChannelNotificationSettings: () =>
+        useChannelNotificationSettingsSuspense_withClient(client),
+      useUpdateChannelNotificationSettings,
 
       useUserThreads_experimental: useUserThreadsSuspense_experimental,
 
@@ -699,7 +710,10 @@ function useChannelNotificationSettings_withClient(
 
 function useChannelNotificationSettingsSuspense_withClient(
   client: OpaqueClient
-) {
+): [
+  ChannelNotificationSettingsAsyncResult,
+  (settings: Partial<ChannelNotificationSettings>) => void,
+] {
   const store = getLiveblocksExtrasForClient(client).store;
 
   // Suspend until there are at least some inbox notifications
