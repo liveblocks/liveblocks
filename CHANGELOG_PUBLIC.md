@@ -15,6 +15,14 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 48 (2024-11-29)
 
+## 2.13.0
+
+### `@liveblocks/react-ui`
+
+- Add a formatting toolbar to `Composer` which appears when selecting text. It’s enabled by default in the default components and can also be custom built with new primitives (`Composer.FloatingToolbar` and `Composer.MarkToggle`) and new APIs (`const { marks, toggleMark } = useComposer()`).
+- Add new `--lb-line-height` token to control the line height of main elements (e.g. comment bodies in comments and composers).
+- Remove `Timestamp` export mistakenly added to `@liveblocks/react-ui`, it should be imported from `@liveblocks/react-ui/primitives` instead.
+
 ## Website
 
 - New blog post: [Easy collaborative text editing with Liveblocks Tiptap](http://liveblocks.io/blog/easy-collaborative-text-editing-with-liveblocks-tiptap).
@@ -28,10 +36,11 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 - Info on [using multiple Tiptap editors](https://liveblocks.io/docs/api-reference/liveblocks-react-tiptap#Multiple-editors).
 - Info on [offline support for Tiptap](https://liveblocks.io/docs/api-reference/liveblocks-react-tiptap#Offline-support).
 - Removed `beta` warnings from Tiptap docs.
+- Improved `resolveUsers` and `resolveRoomsInfo` docs.
 
 ## Contributors
 
-ctnicholas
+ctnicholas, marcbouchenoire, flowflorent
 
 # Week 47 (2024-11-22)
 
