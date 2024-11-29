@@ -2,6 +2,7 @@ import type {
   AsyncResult,
   BaseMetadata,
   BaseUserMeta,
+  ChannelNotificationSettings,
   Client,
   CommentData,
   CommentReaction,
@@ -41,6 +42,7 @@ import { autobind } from "./lib/autobind";
 import type { ReadonlyThreadDB } from "./ThreadDB";
 import { ThreadDB } from "./ThreadDB";
 import type {
+  ChannelNotificationSettingsAsyncResult,
   InboxNotificationsAsyncResult,
   RoomNotificationSettingsAsyncResult,
   ThreadsAsyncResult,
@@ -62,7 +64,8 @@ type OptimisticUpdate<M extends BaseMetadata> =
   | MarkAllInboxNotificationsAsReadOptimisticUpdate
   | DeleteInboxNotificationOptimisticUpdate
   | DeleteAllInboxNotificationsOptimisticUpdate
-  | UpdateNotificationSettingsOptimisticUpdate;
+  | UpdateNotificationSettingsOptimisticUpdate
+  | UpdateChannelNotificationSettingsOptimisticUpdate;
 
 type CreateThreadOptimisticUpdate<M extends BaseMetadata> = {
   type: "create-thread";
@@ -171,6 +174,12 @@ type UpdateNotificationSettingsOptimisticUpdate = {
   id: string;
   roomId: string;
   settings: Partial<RoomNotificationSettings>;
+};
+
+type UpdateChannelNotificationSettingsOptimisticUpdate = {
+  type: "update-channel-notification-settings";
+  id: string;
+  settings: Partial<ChannelNotificationSettings>;
 };
 
 type PaginationState = {
@@ -540,6 +549,12 @@ type InternalState<M extends BaseMetadata> = Readonly<{
   notificationsById: Record<string, InboxNotificationData>;
   settingsByRoomId: Record<string, RoomNotificationSettings>;
   versionsByRoomId: Record<string, Record<string, HistoryVersion>>;
+
+  // Using a empty object `{}` (aka. `Record<string, never>`) to mark this property
+  // as an empty state while first loading
+  channelNotificationSettings:
+    | ChannelNotificationSettings
+    | Record<string, never>;
 }>;
 
 /**
@@ -572,6 +587,21 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
   notificationsById: Record<string, InboxNotificationData>;
 
   /**
+   * Channel notifications settings
+   * e.g.
+   *  {
+   *    email: {
+   *      thread: true,
+   *      textMention: false,
+   *      $customKind: true | false,
+   *    }
+   *  }
+   */
+  channelNotificationSettings:
+    | ChannelNotificationSettings
+    | Record<string, never>;
+
+  /**
    * Notification settings by room ID.
    * e.g. { 'room-abc': { threads: "all" },
    *        'room-def': { threads: "replies_and_mentions" },
@@ -601,6 +631,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // Notifications
   private _notificationsLastRequestedAt: Date | null = null; // Keeps track of when we successfully requested an inbox notifications update for the last time. Will be `null` as long as the first successful fetch hasn't happened yet.
   private _notifications: PaginatedResource;
+
+  // Channel Notification Settings
+  private _channelNotificationSettings: SinglePageResource;
 
   // Room Threads
   private _roomThreadsLastRequestedAtByRoom = new Map<string, Date>();
@@ -645,6 +678,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this._store.set((store) => ({ ...store }))
     );
 
+    const channelNotificationSettingsFetcher = async (): Promise<void> => {
+      const result = await this._client.getChannelNotificationSettings();
+      this.updateChannelNotificationSettingsCache(result);
+    };
+
+    this._channelNotificationSettings = new SinglePageResource(
+      channelNotificationSettingsFetcher
+    );
+
     this._rawThreadsDB = new ThreadDB();
     this._store = createStore<InternalState<M>>({
       optimisticUpdates: [],
@@ -652,6 +694,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       notificationsById: {},
       settingsByRoomId: {},
       versionsByRoomId: {},
+      channelNotificationSettings: {},
     });
 
     // Auto-bind all of this class’ methods here, so we can use stable
@@ -908,6 +951,65 @@ export class UmbrellaStore<M extends BaseMetadata> {
     callback: (currentState: InternalState<M>) => InternalState<M>
   ): void {
     return this._store.set(callback);
+  }
+
+  private updateChannelNotificationSettingsCache(
+    settings: ChannelNotificationSettings
+  ) {
+    this._store.set((state) => {
+      const { channelNotificationSettings, ...rest } = state;
+      return {
+        ...rest,
+        channelNotificationSettings: {
+          ...channelNotificationSettings,
+          ...settings,
+        },
+      };
+    });
+  }
+
+  /**
+   * Get the loading state for Channel Notification Settings
+   */
+  public getChannelNotificationSettingsLoadingState(): ChannelNotificationSettingsAsyncResult {
+    const asyncResult = this._channelNotificationSettings.get();
+    if (asyncResult.isLoading || asyncResult.error) {
+      return asyncResult;
+    }
+
+    return {
+      isLoading: false,
+      settings: nn(this.get().channelNotificationSettings),
+    };
+  }
+
+  /**
+   * Refresh Channel Notification Settings
+   * from poller
+   */
+  public async refreshChannelNotificationSettings(
+    signal: AbortSignal
+  ): Promise<void> {
+    const result = await this._client.getChannelNotificationSettings({
+      signal,
+    });
+
+    this.updateChannelNotificationSettingsCache(result);
+  }
+
+  /**
+   * Updates channel notification settings with a new value, replacing the
+   * corresponding optimistic update.
+   */
+  public updateChannelNotificationSettings(
+    settings: ChannelNotificationSettings,
+    optimisticUpdateId: string
+  ): void {
+    // Batch 1️⃣ + 2️⃣
+    this._store.batch(() => {
+      this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
+      this.updateChannelNotificationSettingsCache(settings); // 2️⃣
+    });
   }
 
   /**
@@ -1300,6 +1402,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this._notifications.waitUntilLoaded();
   }
 
+  public waitUntilChannelNotificationsSettingsLoaded() {
+    return this._channelNotificationSettings.waitUntilLoaded();
+  }
+
   private updateRoomPermissions(permissions: Record<string, Permission[]>) {
     const permissionsByRoom = { ...this._store.get().permissionsByRoom };
 
@@ -1598,6 +1704,7 @@ function internalToExternalState<M extends BaseMetadata>(
   const computed = {
     notificationsById: { ...state.notificationsById },
     settingsByRoomId: { ...state.settingsByRoomId },
+    channelNotificationSettings: state.channelNotificationSettings,
   };
 
   for (const optimisticUpdate of state.optimisticUpdates) {
@@ -1787,6 +1894,19 @@ function internalToExternalState<M extends BaseMetadata>(
           ...settings,
           ...optimisticUpdate.settings,
         };
+        break;
+      }
+
+      case "update-channel-notification-settings": {
+        const settings = computed.channelNotificationSettings;
+        computed.channelNotificationSettings = {
+          email: {
+            ...settings.email,
+            ...optimisticUpdate.settings,
+          },
+        };
+
+        break;
       }
     }
   }
@@ -1806,6 +1926,7 @@ function internalToExternalState<M extends BaseMetadata>(
     settingsByRoomId: computed.settingsByRoomId,
     threadsDB,
     versionsByRoomId: state.versionsByRoomId,
+    channelNotificationSettings: state.channelNotificationSettings,
   };
 }
 

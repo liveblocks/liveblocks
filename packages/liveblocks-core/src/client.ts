@@ -274,7 +274,9 @@ export type NotificationsApi<M extends BaseMetadata> = {
    * @example
    * const channelNotificationSettings = await client.getChannelNotificationSettings();
    */
-  getChannelNotificationSettings(): Promise<ChannelNotificationSettings>;
+  getChannelNotificationSettings(options?: {
+    signal?: AbortSignal;
+  }): Promise<ChannelNotificationSettings>;
 
   /**
    * Update channel notifications for a user for a project.

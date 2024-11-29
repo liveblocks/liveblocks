@@ -19,6 +19,7 @@ import type {
   AsyncResult,
   AsyncSuccess,
   BaseMetadata,
+  ChannelNotificationSettings,
   Client,
   CommentAttachment,
   CommentBody,
@@ -176,6 +177,9 @@ export type InboxNotificationsAsyncResult = PagedAsyncResult<InboxNotificationDa
 
 export type UnreadInboxNotificationsCountAsyncSuccess = AsyncSuccess<number, "count">; // prettier-ignore
 export type UnreadInboxNotificationsCountAsyncResult = AsyncResult<number, "count">; // prettier-ignore
+
+export type ChannelNotificationSettingsAsyncSuccess = AsyncSuccess<ChannelNotificationSettings | Record<string, never>, "settings"> // prettier-ignore
+export type ChannelNotificationSettingsAsyncResult = AsyncResult<ChannelNotificationSettings | Record<string, never>, "settings"> // prettier-ignore
 
 export type RoomNotificationSettingsAsyncSuccess = AsyncSuccess<RoomNotificationSettings, "settings">; // prettier-ignore
 export type RoomNotificationSettingsAsyncResult = AsyncResult<RoomNotificationSettings, "settings">; // prettier-ignore
