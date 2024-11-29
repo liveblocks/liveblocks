@@ -2,10 +2,14 @@ import {
   BoldIcon,
   Button,
   CodeIcon,
+  CommentIcon,
   ItalicIcon,
+  RedoIcon,
   ShortcutTooltip,
   StrikethroughIcon,
   TooltipProvider,
+  UnderlineIcon,
+  UndoIcon,
 } from "@liveblocks/react-ui/_private";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type { ChainedCommands, Editor } from "@tiptap/react";
@@ -104,14 +108,14 @@ function ToolbarSectionHistory() {
     <>
       <ToolbarButton
         name="Undo"
-        icon={<BoldIcon />}
+        icon={<UndoIcon />}
         shortcut="Mod-Z"
         onClick={() => editor.chain().focus().undo().run()}
         disabled={!editor.can().chain().focus().undo().run()}
       />
       <ToolbarButton
         name="Redo"
-        icon={<BoldIcon />}
+        icon={<RedoIcon />}
         shortcut="Mod-Shift-Z"
         onClick={() => editor.chain().focus().redo().run()}
         disabled={!editor.can().chain().focus().redo().run()}
@@ -261,33 +265,10 @@ function ToolbarSectionInline() {
           active={editor.isActive("italic")}
         />
       )}
-      {supportsItalic && (
-        <ToolbarToggle
-          name="Italic"
-          icon={<ItalicIcon />}
-          shortcut="Mod-I"
-          onClick={() =>
-            (editor.chain().focus() as ExtendedChainedCommands<"toggleItalic">)
-              .toggleItalic()
-              .run()
-          }
-          disabled={
-            !(
-              editor
-                .can()
-                .chain()
-                .focus() as ExtendedChainedCommands<"toggleItalic">
-            )
-              .toggleItalic()
-              .run()
-          }
-          active={editor.isActive("italic")}
-        />
-      )}
       {supportsUnderline && (
         <ToolbarToggle
           name="Underline"
-          icon={<StrikethroughIcon />}
+          icon={<UnderlineIcon />}
           shortcut="Mod-U"
           onClick={() =>
             (
@@ -373,7 +354,7 @@ function ToolbarSectionCollaboration() {
       {supportsThread && (
         <ToolbarToggle
           name="Add comment"
-          icon={<CodeIcon />}
+          icon={<CommentIcon />}
           onClick={() =>
             (
               editor
