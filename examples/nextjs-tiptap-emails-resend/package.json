@@ -5,7 +5,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:email": "email dev",
     "build": "next build",
+    "build:email": "email build",
     "start": "next start",
     "lint": "next lint"
   },
