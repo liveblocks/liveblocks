@@ -623,12 +623,12 @@
 
     /* Cancel out the impact of line-height on margins/paddings */
     &:where(:first-of-type) {
-      margin-block-start: calc((1lh - 1em) / -2);
+      margin-block-start: calc(0.125em + (1lh - 1em) / -2);
     }
 
     /* Cancel out the impact of line-height on margins/paddings */
     &:where(:last-of-type) {
-      margin-block-end: calc((1lh - 1em) / -2);
+      margin-block-end: calc(0.125em + (1lh - 1em) / -2);
     }
   }
 
