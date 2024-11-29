@@ -200,6 +200,36 @@ function ToolbarSectionInline() {
   );
 }
 
+function ToolbarSectionCollaboration() {
+  const editor = useCurrentEditor(
+    "ToolbarSectionCollaboration",
+    "Toolbar or FloatingToolbar"
+  );
+  const supportsThread = "addPendingComment" in editor.commands;
+
+  return (
+    <>
+      {supportsThread && (
+        <ToolbarToggle
+          name="Add comment"
+          icon={<CodeIcon />}
+          onClick={() =>
+            (
+              editor
+                .chain()
+                .focus() as ExtendedChainedCommands<"addPendingComment">
+            )
+              .addPendingComment()
+              .run()
+          }
+          disabled={editor.isActive("lb-comment")}
+          active={editor.isActive("lb-comment")}
+        />
+      )}
+    </>
+  );
+}
+
 export function DefaultToolbarContent() {
   return (
     <>
@@ -207,7 +237,7 @@ export function DefaultToolbarContent() {
       <ToolbarSeparator />
       <ToolbarSectionInline />
       <ToolbarSeparator />
-      Section
+      <ToolbarSectionCollaboration />
     </>
   );
 }
