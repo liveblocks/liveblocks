@@ -37,6 +37,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 - Info on [offline support for Tiptap](https://liveblocks.io/docs/api-reference/liveblocks-react-tiptap#Offline-support).
 - Removed `beta` warnings from Tiptap docs.
 - Improved `resolveUsers` and `resolveRoomsInfo` docs.
+- Fix [custom composer behavior](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Custom-composer-behavior) code snippet.
 
 ## Contributors
 
