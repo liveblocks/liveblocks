@@ -1,5 +1,12 @@
 ## Not yet published
 
+## 2.13.1
+
+### `@liveblocks/react-ui`
+
+- Improve the spacing consequences of `--lb-line-height` (introduced in 2.13.0)
+  in some contexts.
+
 ## 2.13.0
 
 ### `@liveblocks/react-ui`
