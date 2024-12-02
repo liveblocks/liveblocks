@@ -1,5 +1,4 @@
 import type { Lson, LsonObject } from "./lib/Lson.js";
-import { isLiveStructure } from "./lib/Lson.js";
 import type { Pool } from "./types.js";
 
 export class LiveObject {

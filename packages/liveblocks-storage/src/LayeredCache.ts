@@ -6,12 +6,18 @@ import { raise } from "./utils.js";
 
 const TOMBSTONE = Symbol();
 
+const kValue: unique symbol = Symbol();
+
+export type ValueOrRef =
+  // XXX Add { $ref: NodeId } later
+  { [kValue]: Json; xxx?: Date };
+
 type TombStone = typeof TOMBSTONE;
 
 export class LayeredCache implements Pool {
   #nextId: number = 1;
-  readonly #root: NestedMap<NodeId, string, Json>;
-  readonly #layers: NestedMap<NodeId, string, Json | TombStone>[];
+  readonly #root: NestedMap<NodeId, string, ValueOrRef>;
+  readonly #layers: NestedMap<NodeId, string, ValueOrRef | TombStone>[];
 
   // XXX This is a hack because it is mutated from the outside! This really
   // should not belong on the Transaction API itself!
@@ -34,7 +40,7 @@ export class LayeredCache implements Pool {
     return this.getChild(nodeId, key) !== undefined;
   }
 
-  getChild(nodeId: NodeId, key: string): Json | undefined {
+  getValueOrRef(nodeId: NodeId, key: string): ValueOrRef | undefined {
     for (const layer of this.#layers) {
       const value = layer.get(nodeId, key);
       if (value === undefined) continue;
@@ -47,12 +53,28 @@ export class LayeredCache implements Pool {
     return this.#root.get(nodeId, key);
   }
 
+  getJson(valueOrRef: undefined): undefined;
+  getJson(valueOrRef: ValueOrRef): Json;
+  getJson(valueOrRef: ValueOrRef | undefined): Json | undefined;
+  getJson(cv: ValueOrRef | undefined): Json | undefined {
+    if (cv === undefined) return undefined;
+    return cv[kValue];
+  }
+
+  getChild(nodeId: NodeId, key: string): Json | undefined {
+    return this.getJson(this.getValueOrRef(nodeId, key));
+  }
+
+  setValueOrRef(nodeId: NodeId, key: string, value: ValueOrRef): void {
+    const layer = this.#layers[0] ?? this.#root;
+    layer.set(nodeId, key, value);
+  }
+
   setChild(nodeId: NodeId, key: string, value: Json): void {
     if (value === undefined) {
       this.deleteChild(nodeId, key);
     } else {
-      const layer = this.#layers[0] ?? this.#root;
-      layer.set(nodeId, key, value);
+      return this.setValueOrRef(nodeId, key, { [kValue]: value });
     }
   }
 
@@ -71,13 +93,15 @@ export class LayeredCache implements Pool {
     if (this.#layers.length === 0) {
       yield* this.#root.keysAt(nodeId);
     } else {
-      for (const [key] of this.entries(nodeId)) {
+      for (const [key] of this.entries__(nodeId)) {
         yield key;
       }
     }
   }
 
-  *entries(nodeId: NodeId): IterableIterator<[key: string, value: Json]> {
+  private *entries__(
+    nodeId: NodeId
+  ): IterableIterator<[key: string, value: ValueOrRef]> {
     if (this.#layers.length === 0) {
       yield* this.#root.entriesAt(nodeId);
       return;
@@ -108,6 +132,12 @@ export class LayeredCache implements Pool {
       if (!seenBefore(key)) {
         yield [key, value];
       }
+    }
+  }
+
+  *entries(nodeId: NodeId): IterableIterator<[key: string, value: Json]> {
+    for (const [key, valueOrRef] of this.entries__(nodeId)) {
+      yield [key, this.getJson(valueOrRef)];
     }
   }
 
@@ -145,7 +175,7 @@ export class LayeredCache implements Pool {
         deleted[nodeId]!.push(key);
       } else {
         if (!updated[nodeId]) updated[nodeId] = {};
-        updated[nodeId]![key] = value;
+        updated[nodeId]![key] = value[kValue];
       }
     }
 
@@ -158,7 +188,7 @@ export class LayeredCache implements Pool {
       if (value === TOMBSTONE) {
         this.deleteChild(nodeId, key);
       } else {
-        this.setChild(nodeId, key, value);
+        this.setValueOrRef(nodeId, key, value);
       }
     }
   }
@@ -169,7 +199,7 @@ export class LayeredCache implements Pool {
 
   // For convenience in unit tests only --------------------------------
   *[Symbol.iterator](): IterableIterator<
-    [nodeId: NodeId, key: string, value: Json]
+    [nodeId: NodeId, key: string, value: ValueOrRef]
   > {
     const seen = new Set<string>();
 
@@ -185,7 +215,7 @@ export class LayeredCache implements Pool {
     for (const layer of this.#layers) {
       for (const nid of layer.topLevelKeys()) {
         if (!seenBefore(nid)) {
-          for (const [key, val] of this.entries(nid)) {
+          for (const [key, val] of this.entries__(nid)) {
             yield [nid, key, val];
           }
         }
@@ -194,7 +224,7 @@ export class LayeredCache implements Pool {
 
     for (const nid of this.#root.topLevelKeys()) {
       if (!seenBefore(nid)) {
-        for (const [key, val] of this.entries(nid)) {
+        for (const [key, val] of this.entries__(nid)) {
           yield [nid, key, val];
         }
       }
@@ -218,7 +248,7 @@ export class LayeredCache implements Pool {
   get data(): Record<string, Record<string, Json>> {
     const obj: Record<string, Record<string, Json>> = {};
     for (const [nid, key, value] of this) {
-      (obj[nid] ??= {})[key] = value;
+      (obj[nid] ??= {})[key] = value[kValue];
     }
     return obj;
   }
