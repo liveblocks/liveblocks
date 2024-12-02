@@ -313,7 +313,7 @@ function makeLiveblocksExtrasForClient(client: OpaqueClient) {
       }
     },
     config.CHANNEL_NOTIFICATION_SETTINGS_INTERVAL,
-    { maxStaleTimeMs: config.CHANNEL_NOTIFICATION_SETTINGS_MAX_TIME }
+    { maxStaleTimeMs: config.CHANNEL_NOTIFICATION_SETTINGS_MAX_STALE_TIME }
   );
 
   return {
