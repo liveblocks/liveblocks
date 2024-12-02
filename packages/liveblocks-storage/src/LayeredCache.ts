@@ -1,7 +1,6 @@
 import type { Json } from "~/lib/Json.js";
 import { NestedMap } from "~/lib/NestedMap.js";
 
-import { LiveObject } from "./LiveObject.js";
 import type { Delta, NodeId, Pool } from "./types.js";
 import { raise } from "./utils.js";
 
