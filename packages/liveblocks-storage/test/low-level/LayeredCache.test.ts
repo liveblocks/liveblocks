@@ -190,20 +190,6 @@ test("get", () => {
   expect(cache.getChild("r", "xyz")).toEqual(undefined);
 });
 
-test("it supports iteration", () => {
-  const cache = new LayeredCache();
-  cache.setChild("r", "a", "a");
-  cache.setChild("r", "b", "b");
-  cache.setChild("r", "c", "c");
-  cache.deleteChild("r", "b");
-  cache.deleteChild("r", "d");
-
-  expect(Array.from(cache)).toEqual([
-    ["r", "a", "a"],
-    ["r", "c", "c"],
-  ]);
-});
-
 test("committing before snapshotting fails", () => {
   const cache = new LayeredCache();
   expect(() => cache.commit()).toThrow("No transaction to commit");

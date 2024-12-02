@@ -1,16 +1,17 @@
 import type { Json } from "~/lib/Json.js";
+import type { LiveStructure, Lson } from "~/lib/Lson.js";
+import { isLiveStructure } from "~/lib/Lson.js";
 import { NestedMap } from "~/lib/NestedMap.js";
 
+import { LiveObject } from "./LiveObject.js";
 import type { Delta, NodeId, Pool } from "./types.js";
 import { raise } from "./utils.js";
 
 const TOMBSTONE = Symbol();
 
-const kValue: unique symbol = Symbol();
-
 export type ValueOrRef =
-  // XXX Add { $ref: NodeId } later
-  { [kValue]: Json; xxx?: Date };
+  | { $val: Json; $ref?: never }
+  | { $ref: NodeId; $val?: never };
 
 type TombStone = typeof TOMBSTONE;
 
@@ -53,16 +54,22 @@ export class LayeredCache implements Pool {
     return this.#root.get(nodeId, key);
   }
 
-  getJson(valueOrRef: undefined): undefined;
-  getJson(valueOrRef: ValueOrRef): Json;
-  getJson(valueOrRef: ValueOrRef | undefined): Json | undefined;
-  getJson(cv: ValueOrRef | undefined): Json | undefined {
-    if (cv === undefined) return undefined;
-    return cv[kValue];
+  getNode(nodeId: NodeId): LiveStructure {
+    // XXX Cache these node instances in a Map
+    return LiveObject._load(nodeId, this);
   }
 
-  getChild(nodeId: NodeId, key: string): Json | undefined {
-    return this.getJson(this.getValueOrRef(nodeId, key));
+  getLson(valueOrRef: undefined): undefined;
+  getLson(valueOrRef: ValueOrRef): Lson;
+  getLson(valueOrRef: ValueOrRef | undefined): Lson | undefined;
+  getLson(cv: ValueOrRef | undefined): Lson | undefined {
+    if (cv === undefined) return undefined;
+    if (cv.$val !== undefined) return cv.$val;
+    return this.getNode(cv.$ref);
+  }
+
+  getChild(nodeId: NodeId, key: string): Lson | undefined {
+    return this.getLson(this.getValueOrRef(nodeId, key));
   }
 
   setValueOrRef(nodeId: NodeId, key: string, value: ValueOrRef): void {
@@ -70,11 +77,14 @@ export class LayeredCache implements Pool {
     layer.set(nodeId, key, value);
   }
 
-  setChild(nodeId: NodeId, key: string, value: Json): void {
+  setChild(nodeId: NodeId, key: string, value: Lson): void {
     if (value === undefined) {
       this.deleteChild(nodeId, key);
+    } else if (isLiveStructure(value)) {
+      const $ref = value._attach(this);
+      return this.setValueOrRef(nodeId, key, { $ref });
     } else {
-      return this.setValueOrRef(nodeId, key, { [kValue]: value });
+      return this.setValueOrRef(nodeId, key, { $val: value });
     }
   }
 
@@ -135,9 +145,9 @@ export class LayeredCache implements Pool {
     }
   }
 
-  *entries(nodeId: NodeId): IterableIterator<[key: string, value: Json]> {
+  *entries(nodeId: NodeId): IterableIterator<[key: string, value: Lson]> {
     for (const [key, valueOrRef] of this.entries__(nodeId)) {
-      yield [key, this.getJson(valueOrRef)];
+      yield [key, this.getLson(valueOrRef)];
     }
   }
 
@@ -175,7 +185,10 @@ export class LayeredCache implements Pool {
         deleted[nodeId]!.push(key);
       } else {
         if (!updated[nodeId]) updated[nodeId] = {};
-        updated[nodeId]![key] = value[kValue];
+
+        // XXX Fix this payload at the protocol level next!
+        updated[nodeId]![key] =
+          value.$val !== undefined ? value.$val : { $ref: value.$ref };
       }
     }
 
@@ -198,9 +211,7 @@ export class LayeredCache implements Pool {
   }
 
   // For convenience in unit tests only --------------------------------
-  *[Symbol.iterator](): IterableIterator<
-    [nodeId: NodeId, key: string, value: ValueOrRef]
-  > {
+  *#iter(): IterableIterator<[nodeId: NodeId, key: string, value: ValueOrRef]> {
     const seen = new Set<string>();
 
     function seenBefore(key: string): boolean {
@@ -239,7 +250,7 @@ export class LayeredCache implements Pool {
    */
   get count(): number {
     let total = 0;
-    for (const _ of this) {
+    for (const _ of this.#iter()) {
       ++total;
     }
     return total;
@@ -247,8 +258,9 @@ export class LayeredCache implements Pool {
 
   get data(): Record<string, Record<string, Json>> {
     const obj: Record<string, Record<string, Json>> = {};
-    for (const [nid, key, value] of this) {
-      (obj[nid] ??= {})[key] = value[kValue];
+    for (const [nid, key, value] of this.#iter()) {
+      (obj[nid] ??= {})[key] =
+        value.$val !== undefined ? value.$val : { $ref: value.$ref };
     }
     return obj;
   }
