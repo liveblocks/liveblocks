@@ -1,5 +1,6 @@
 import type {
   BaseMetadata,
+  ChannelNotificationSettings,
   CommentData,
   InboxNotificationData,
   Permission,
@@ -216,6 +217,32 @@ export function mockUpdateRoomNotificationSettings(
 ) {
   return rest.post(
     "https://api.liveblocks.io/v2/c/rooms/:roomId/notification-settings",
+    resolver
+  );
+}
+
+export function mockGetChannelNotificationSettings(
+  resolver: ResponseResolver<
+    RestRequest<never, never>,
+    RestContext,
+    ChannelNotificationSettings
+  >
+) {
+  return rest.get(
+    "https://api.liveblocks.io/v2/c/channel-notification-settings",
+    resolver
+  );
+}
+
+export function mockUpdateChannelNotificationSettings(
+  resolver: ResponseResolver<
+    RestRequest<never, never>,
+    RestContext,
+    ChannelNotificationSettings
+  >
+) {
+  return rest.post(
+    "https://api.liveblocks.io/v2/c/channel-notification-settings",
     resolver
   );
 }
