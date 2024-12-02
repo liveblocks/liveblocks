@@ -7,8 +7,7 @@
     "packages/*",
     "tools/*",
     "schema-lang/*",
-    "e2e/next-sandbox",
-    "examples/nextjs-tiptap-emails-resend"
+    "e2e/next-sandbox"
   ],
   "scripts": {
     "build": "turbo run build",
