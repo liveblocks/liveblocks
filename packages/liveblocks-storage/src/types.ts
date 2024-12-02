@@ -143,11 +143,13 @@ export type ServerMsg =
   | InitialSyncServerMsg
   | DeltaServerMsg;
 
-export interface Transaction {
+/** @internal */
+export interface Pool {
   nextId(): string;
-  has(nodeId: NodeId, key: string): boolean;
+  // getRoot(): LiveObject;
+  // has(nodeId: NodeId, key: string): boolean;
   get(nodeId: NodeId, key: string): Json | undefined;
-  keys(nodeId: NodeId): IterableIterator<string>;
+  // keys(nodeId: NodeId): IterableIterator<string>;
   // values(nodeId: NodeId): IterableIterator<Json>;
   set(nodeId: NodeId, key: string, value: Json): void;
   delete(nodeId: NodeId, key: string): boolean;

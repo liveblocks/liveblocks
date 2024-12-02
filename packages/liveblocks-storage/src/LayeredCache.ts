@@ -1,16 +1,14 @@
 import type { Json } from "~/lib/Json.js";
 import { NestedMap } from "~/lib/NestedMap.js";
 
-import type { Delta, NodeId, Transaction } from "./types.js";
+import type { Delta, NodeId, Pool } from "./types.js";
 import { raise } from "./utils.js";
 
 const TOMBSTONE = Symbol();
 
 type TombStone = typeof TOMBSTONE;
 
-// const ROOT = "root" as NodeId;
-
-export class LayeredCache implements Transaction {
+export class LayeredCache implements Pool {
   #nextId: number = 1;
   readonly #root: NestedMap<NodeId, string, Json>;
   readonly #layers: NestedMap<NodeId, string, Json | TombStone>[];
