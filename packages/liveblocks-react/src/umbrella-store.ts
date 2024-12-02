@@ -686,6 +686,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this._channelNotificationSettings = new SinglePageResource(
       channelNotificationSettingsFetcher
     );
+    this._channelNotificationSettings.observable.subscribe(() =>
+      // Note that the store itself does not change, but it's only vehicle at
+      // the moment to trigger a re-render, so we'll do a no-op update here.
+      this._store.set((store) => ({ ...store }))
+    );
 
     this._rawThreadsDB = new ThreadDB();
     this._store = createStore<InternalState<M>>({
