@@ -128,8 +128,8 @@ test("asymmetric mutators (client adds JSON object, server as LiveObject)", asyn
 
   expect(client.data).toEqual({ root: { a: 1 } });
   expect(server.data).toEqual({
-    root: { a: { $ref: "1:1" } },
-    "1:1": { a: 1 },
+    root: { a: { $ref: "O1:1" } },
+    "O1:1": { a: 1 },
   });
 
   await sync(server);
@@ -138,26 +138,26 @@ test("asymmetric mutators (client adds JSON object, server as LiveObject)", asyn
   await sync(client);
 
   expect(client.data).toEqual({
-    root: { a: { $ref: "1:1" }, b: 2 },
-    "1:1": { a: 1 },
+    root: { a: { $ref: "O1:1" }, b: 2 },
+    "O1:1": { a: 1 },
   });
   expect(server.data).toEqual({
-    root: { a: { $ref: "1:1" }, b: { $ref: "2:1" } },
-    "1:1": { a: 1 },
-    "2:1": { b: 2 },
+    root: { a: { $ref: "O1:1" }, b: { $ref: "O2:1" } },
+    "O1:1": { a: 1 },
+    "O2:1": { b: 2 },
   });
 
   await sync();
 
   expect(client.data).toEqual({
-    root: { a: { $ref: "1:1" }, b: { $ref: "2:1" } },
-    "1:1": { a: 1 },
-    "2:1": { b: 2 },
+    root: { a: { $ref: "O1:1" }, b: { $ref: "O2:1" } },
+    "O1:1": { a: 1 },
+    "O2:1": { b: 2 },
   });
   expect(server.data).toEqual({
-    root: { a: { $ref: "1:1" }, b: { $ref: "2:1" } },
-    "1:1": { a: 1 },
-    "2:1": { b: 2 },
+    root: { a: { $ref: "O1:1" }, b: { $ref: "O2:1" } },
+    "O1:1": { a: 1 },
+    "O2:1": { b: 2 },
   });
 });
 
@@ -171,8 +171,8 @@ test("asymmetric mutators (client adds LiveObject, server as JSON object)", asyn
   await sync(client);
 
   expect(client.data).toEqual({
-    root: { a: { $ref: "0:1" } },
-    "0:1": { a: 1 },
+    root: { a: { $ref: "O0:1" } },
+    "O0:1": { a: 1 },
   });
   expect(server.data).toEqual({ root: { a: 1 } });
 
@@ -180,9 +180,9 @@ test("asymmetric mutators (client adds LiveObject, server as JSON object)", asyn
   await sync(client);
 
   expect(client.data).toEqual({
-    root: { a: { $ref: "0:1" }, b: { $ref: "1:2" } },
-    "0:1": { a: 1 },
-    "1:2": { b: 2 },
+    root: { a: { $ref: "O0:1" }, b: { $ref: "O1:2" } },
+    "O0:1": { a: 1 },
+    "O1:2": { b: 2 },
   });
   expect(server.data).toEqual({ root: { a: 1, b: 2 } });
 
