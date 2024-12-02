@@ -240,7 +240,6 @@ export class SQLCache {
     const pool: Pool = {
       nextId: <P extends string>(prefix: P): `${P}${number}:${number}` =>
         `${prefix}${this.#pendingClock}:${this.#nextNodeId++}`,
-      getRoot: (): LiveObject => LiveObject._load("root", pool),
       getChild: (nodeId: NodeId, key: string) => this.#get(nodeId, key),
       setChild: (nodeId: NodeId, key: string, value: Json) => {
         const updated = this.#set(nodeId, key, value);
@@ -256,7 +255,7 @@ export class SQLCache {
 
     this.#startTransaction();
     try {
-      callback(pool.getRoot());
+      callback(LiveObject._load("root", pool));
       if (dirty) {
         this.#commit();
         return this.deltaSince(origClock);

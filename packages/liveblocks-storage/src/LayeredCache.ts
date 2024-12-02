@@ -31,10 +31,6 @@ export class LayeredCache implements Pool {
   // "Multi-layer" cache idea
   // ----------------------------------------------------
 
-  getRoot(): LiveObject {
-    return LiveObject._load("root", this);
-  }
-
   hasChild(nodeId: NodeId, key: string): boolean {
     return this.getChild(nodeId, key) !== undefined;
   }
