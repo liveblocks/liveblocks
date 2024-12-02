@@ -1357,7 +1357,6 @@ export function createApiClient<M extends BaseMetadata>({
   }): Promise<ChannelNotificationSettings> {
     return httpClient.get<ChannelNotificationSettings>(
       url`/v2/c/channel-notification-settings`,
-      // Is it the right requested scope?
       await authManager.getAuthValue({ requestedScope: "comments:read" }),
       undefined,
       { signal: options?.signal }
@@ -1369,7 +1368,6 @@ export function createApiClient<M extends BaseMetadata>({
   ): Promise<ChannelNotificationSettings> {
     return httpClient.post<ChannelNotificationSettings>(
       url`/v2/c/channel-notification-settings`,
-      // Is it the right requested scope?
       await authManager.getAuthValue({ requestedScope: "comments:read" }),
       settings
     );
