@@ -145,14 +145,14 @@ export type ServerMsg =
 
 /** @internal */
 export interface Pool {
-  nextId(): string;
-  // getRoot(): LiveObject;
+  nextId<P extends string>(prefix: P): `${P}${number}:${number}`;
+  getRoot(): LiveObject;
   // has(nodeId: NodeId, key: string): boolean;
-  get(nodeId: NodeId, key: string): Json | undefined;
+  getChild(parentId: NodeId, key: string): Json | undefined;
   // keys(nodeId: NodeId): IterableIterator<string>;
   // values(nodeId: NodeId): IterableIterator<Json>;
-  set(nodeId: NodeId, key: string, value: Json): void;
-  delete(nodeId: NodeId, key: string): boolean;
+  setChild(parentId: NodeId, key: string, value: Json): void;
+  deleteChild(parentId: NodeId, key: string): boolean;
 }
 
 export type Mutation = (

@@ -158,10 +158,6 @@ export class SQLCache {
   // "Multi-layer" cache idea
   // ----------------------------------------------------
 
-  #has(nodeId: NodeId, key: string): boolean {
-    return !!this.#q.storage.exists.get(nodeId, key);
-  }
-
   #get(nodeId: NodeId, key: string): Json | undefined {
     const jval = this.#q.storage.selectKey.get(nodeId, key);
     return jval !== undefined ? (JSON.parse(jval) as Json) : undefined;
@@ -193,9 +189,9 @@ export class SQLCache {
     }
   }
 
-  keys(nodeId: NodeId): IterableIterator<string> {
-    return this.#q.storage.selectKeysByNodeId.iterate(nodeId);
-  }
+  // keys(nodeId: NodeId): IterableIterator<string> {
+  //   return this.#q.storage.selectKeysByNodeId.iterate(nodeId);
+  // }
 
   *entries(nodeId: NodeId): IterableIterator<[key: string, value: Json]> {
     const rows = this.#q.storage.selectAllByNodeId.iterate(nodeId);
@@ -243,15 +239,14 @@ export class SQLCache {
     let dirty = false;
     const pool: Pool = {
       nextId: (): string => `${this.#pendingClock}:${this.#nextNodeId++}`,
-      has: (nodeId: NodeId, key: string) => this.#has(nodeId, key),
-      get: (nodeId: NodeId, key: string) => this.#get(nodeId, key),
-      keys: (nodeId: NodeId) => this.keys(nodeId),
-      set: (nodeId: NodeId, key: string, value: Json) => {
+      getRoot: (): LiveObject => LiveObject._load("root", pool),
+      getChild: (nodeId: NodeId, key: string) => this.#get(nodeId, key),
+      setChild: (nodeId: NodeId, key: string, value: Json) => {
         const updated = this.#set(nodeId, key, value);
         dirty ||= updated;
         return updated;
       },
-      delete: (nodeId: NodeId, key: string) => {
+      deleteChild: (nodeId: NodeId, key: string) => {
         const deleted = this.#delete(nodeId, key);
         dirty ||= deleted;
         return deleted;
@@ -260,7 +255,7 @@ export class SQLCache {
 
     this.#startTransaction();
     try {
-      callback(LiveObject.loadRoot(pool));
+      callback(pool.getRoot());
       if (dirty) {
         this.#commit();
         return this.deltaSince(origClock);

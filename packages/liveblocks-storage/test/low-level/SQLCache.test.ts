@@ -192,7 +192,7 @@ test("keys", () => {
     root.set("a", 42);
     root.set("b", 2);
   });
-  expect(Array.from(cache.keys("root"))).toEqual(["a", "b"]);
+  expect(cache.data).toEqual({ root: { a: 42, b: 2 } });
 });
 
 test("entries", () => {
@@ -236,7 +236,7 @@ test("keys (inside a transaction)", () => {
     root.set("a", 42);
     root.set("b", 2);
   });
-  expect(Array.from(cache.keys("root"))).toEqual(["a", "b"]);
+  expect(cache.data).toEqual({ root: { a: 42, b: 2 } });
 });
 
 test("entries (inside a transaction)", () => {

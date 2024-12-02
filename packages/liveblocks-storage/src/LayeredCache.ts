@@ -1,6 +1,7 @@
 import type { Json } from "~/lib/Json.js";
 import { NestedMap } from "~/lib/NestedMap.js";
 
+import { LiveObject } from "./LiveObject.js";
 import type { Delta, NodeId, Pool } from "./types.js";
 import { raise } from "./utils.js";
 
@@ -22,24 +23,23 @@ export class LayeredCache implements Pool {
     this.#layers = [];
   }
 
-  nextId(): string {
-    return `${this.prefix_HACK}:${this.#nextId++}`;
+  nextId<P extends string>(prefix: P): `${P}${number}:${number}` {
+    return `${prefix}${this.prefix_HACK as number}:${this.#nextId++}`;
   }
 
   // ----------------------------------------------------
   // "Multi-layer" cache idea
   // ----------------------------------------------------
 
-  has(nodeId: NodeId, key: string): boolean {
-    for (const layer of this.#layers) {
-      const value = layer.get(nodeId, key);
-      if (value === undefined) continue;
-      return value !== TOMBSTONE;
-    }
-    return this.#root.has(nodeId, key);
+  getRoot(): LiveObject {
+    return LiveObject._load("root", this);
   }
 
-  get(nodeId: NodeId, key: string): Json | undefined {
+  hasChild(nodeId: NodeId, key: string): boolean {
+    return this.getChild(nodeId, key) !== undefined;
+  }
+
+  getChild(nodeId: NodeId, key: string): Json | undefined {
     for (const layer of this.#layers) {
       const value = layer.get(nodeId, key);
       if (value === undefined) continue;
@@ -52,16 +52,16 @@ export class LayeredCache implements Pool {
     return this.#root.get(nodeId, key);
   }
 
-  set(nodeId: NodeId, key: string, value: Json): void {
+  setChild(nodeId: NodeId, key: string, value: Json): void {
     if (value === undefined) {
-      this.delete(nodeId, key);
+      this.deleteChild(nodeId, key);
     } else {
       const layer = this.#layers[0] ?? this.#root;
       layer.set(nodeId, key, value);
     }
   }
 
-  delete(nodeId: NodeId, key: string): boolean {
+  deleteChild(nodeId: NodeId, key: string): boolean {
     const layer = this.#layers[0];
     if (layer) {
       layer.set(nodeId, key, TOMBSTONE);
@@ -161,9 +161,9 @@ export class LayeredCache implements Pool {
     const layer = this.#layers.shift() ?? raise("No transaction to commit");
     for (const [nodeId, key, value] of layer) {
       if (value === TOMBSTONE) {
-        this.delete(nodeId, key);
+        this.deleteChild(nodeId, key);
       } else {
-        this.set(nodeId, key, value);
+        this.setChild(nodeId, key, value);
       }
     }
   }
