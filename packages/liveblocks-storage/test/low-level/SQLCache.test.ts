@@ -184,17 +184,6 @@ test("get (nested JSON values)", () => {
   expect(cache.data).toEqual({ root: { k: [1, true, [{ x: false }, {}]] } });
 });
 
-test("keys", () => {
-  const cache = new SQLCache();
-  cache.mutate((root) => {
-    root.set("a", 1);
-    root.delete("a");
-    root.set("a", 42);
-    root.set("b", 2);
-  });
-  expect(cache.data).toEqual({ root: { a: 42, b: 2 } });
-});
-
 test("entries", () => {
   const cache = new SQLCache();
   cache.mutate((root) => {
@@ -226,17 +215,6 @@ test("get (inside a transaction)", () => {
     root.set("k", undefined);
     expect(root.get("k")).toEqual(undefined);
   });
-});
-
-test("keys (inside a transaction)", () => {
-  const cache = new SQLCache();
-  cache.mutate((root) => {
-    root.set("a", 1);
-    root.delete("a");
-    root.set("a", 42);
-    root.set("b", 2);
-  });
-  expect(cache.data).toEqual({ root: { a: 42, b: 2 } });
 });
 
 test("entries (inside a transaction)", () => {

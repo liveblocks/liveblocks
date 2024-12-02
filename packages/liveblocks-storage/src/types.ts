@@ -146,10 +146,9 @@ export type ServerMsg =
 /** @internal */
 export interface Pool {
   nextId<P extends string>(prefix: P): `${P}${number}:${number}`;
-  getRoot(): LiveObject;
-  getChild(parentId: NodeId, key: string): Json | undefined;
-  setChild(parentId: NodeId, key: string, value: Json): void;
-  deleteChild(parentId: NodeId, key: string): boolean;
+  getChild(nodeId: NodeId, key: string): Json | undefined;
+  setChild(nodeId: NodeId, key: string, value: Json): void;
+  deleteChild(nodeId: NodeId, key: string): boolean;
 }
 
 export type Mutation = (
