@@ -1,5 +1,6 @@
 import type { Observable } from "./lib/EventSource.js";
 import type { Json } from "./lib/Json.js";
+import type { Lson } from "./lib/Lson.js";
 import type { LiveObject } from "./LiveObject.js";
 
 export type Socket<Out, In> = {
@@ -146,8 +147,8 @@ export type ServerMsg =
 /** @internal */
 export interface Pool {
   nextId<P extends string>(prefix: P): `${P}${number}:${number}`;
-  getChild(nodeId: NodeId, key: string): Json | undefined;
-  setChild(nodeId: NodeId, key: string, value: Json): void;
+  getChild(nodeId: NodeId, key: string): Lson | undefined;
+  setChild(nodeId: NodeId, key: string, value: Lson): void;
   deleteChild(nodeId: NodeId, key: string): boolean;
 }
 
