@@ -238,7 +238,8 @@ export class SQLCache {
 
     let dirty = false;
     const pool: Pool = {
-      nextId: (): string => `${this.#pendingClock}:${this.#nextNodeId++}`,
+      nextId: <P extends string>(prefix: P): `${P}${number}:${number}` =>
+        `${prefix}${this.#pendingClock}:${this.#nextNodeId++}`,
       getRoot: (): LiveObject => LiveObject._load("root", pool),
       getChild: (nodeId: NodeId, key: string) => this.#get(nodeId, key),
       setChild: (nodeId: NodeId, key: string, value: Json) => {

@@ -147,10 +147,7 @@ export type ServerMsg =
 export interface Pool {
   nextId<P extends string>(prefix: P): `${P}${number}:${number}`;
   getRoot(): LiveObject;
-  // has(nodeId: NodeId, key: string): boolean;
   getChild(parentId: NodeId, key: string): Json | undefined;
-  // keys(nodeId: NodeId): IterableIterator<string>;
-  // values(nodeId: NodeId): IterableIterator<Json>;
   setChild(parentId: NodeId, key: string, value: Json): void;
   deleteChild(parentId: NodeId, key: string): boolean;
 }

@@ -112,51 +112,51 @@ describe("Multi-client storage synchronization tests", () => {
     client2.mutate.setLiveObject("c2", "b", 22); // op1 (of actor 2)
 
     expect(client1.data).toEqual({
-      root: { c1: { $ref: "5:1" } },
-      "5:1": { a: 11 },
+      root: { c1: { $ref: "O5:1" } },
+      "O5:1": { a: 11 },
     });
     expect(client2.data).toEqual({
-      root: { c2: { $ref: "0:1" } },
-      "0:1": { b: 22 },
+      root: { c2: { $ref: "O0:1" } },
+      "O0:1": { b: 22 },
     });
     expect(server.data).toEqual({});
 
     await sync(client1);
     expect(server.data).toEqual({
-      root: { c1: { $ref: "1:1" } }, // ❗ XXX This should get assigned "1:5:1"
-      "1:1": { a: 11 }, //                                              /  |  \
-    }); //                                                         actor   |   seq/key
-    //                                                                  opclock
+      root: { c1: { $ref: "O1:1" } }, // ❗ XXX This should get assigned "O1:5:1"
+      "O1:1": { a: 11 }, //                                               /  |  \
+    }); //                                                           actor   |   seq/key
+    //                                                                    opclock
 
     await sync(server);
     expect(client1.data).toEqual({
-      root: { c1: { $ref: "1:1" } },
-      "1:1": { a: 11 },
+      root: { c1: { $ref: "O1:1" } },
+      "O1:1": { a: 11 },
     });
     expect(client2.data).toEqual({
       root: {
-        c1: { $ref: "1:1" },
-        c2: { $ref: "0:7" }, // ❗ XXX This should get assigned "2:0:1"
-      }, //                                                     /  |  \
-      "1:1": { a: 11 }, //                                 actor   |   seq/key
-      "0:7": { b: 22 }, //                                      opclock
+        c1: { $ref: "O1:1" },
+        c2: { $ref: "O0:7" }, // ❗ XXX This should get assigned "O2:0:1"
+      }, //                                                       /  |  \
+      "O1:1": { a: 11 }, //                                  actor   |   seq/key
+      "O0:7": { b: 22 }, //                                       opclock
     });
 
     await sync();
     expect(client1.data).toEqual({
-      root: { c1: { $ref: "1:1" }, c2: { $ref: "2:1" } },
-      "1:1": { a: 11 },
-      "2:1": { b: 22 },
+      root: { c1: { $ref: "O1:1" }, c2: { $ref: "O2:1" } },
+      "O1:1": { a: 11 },
+      "O2:1": { b: 22 },
     });
     expect(client2.data).toEqual({
-      root: { c1: { $ref: "1:1" }, c2: { $ref: "2:1" } },
-      "1:1": { a: 11 },
-      "2:1": { b: 22 },
+      root: { c1: { $ref: "O1:1" }, c2: { $ref: "O2:1" } },
+      "O1:1": { a: 11 },
+      "O2:1": { b: 22 },
     });
     expect(server.data).toEqual({
-      root: { c1: { $ref: "1:1" }, c2: { $ref: "2:1" } },
-      "1:1": { a: 11 },
-      "2:1": { b: 22 },
+      root: { c1: { $ref: "O1:1" }, c2: { $ref: "O2:1" } },
+      "O1:1": { a: 11 },
+      "O2:1": { b: 22 },
     });
   });
 });
