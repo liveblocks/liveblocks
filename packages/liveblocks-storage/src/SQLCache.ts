@@ -2,6 +2,7 @@ import type { Database } from "better-sqlite3";
 import sqlite3 from "better-sqlite3";
 
 import type { Json } from "~/lib/Json.js";
+import { isLiveStructure, Lson } from "~/lib/Lson.js";
 
 import { LiveObject } from "./LiveObject.js";
 import type { Delta, NodeId, Pool } from "./types.js";
@@ -158,24 +159,38 @@ export class SQLCache {
   // "Multi-layer" cache idea
   // ----------------------------------------------------
 
-  #get(nodeId: NodeId, key: string): Json | undefined {
+  #get(nodeId: NodeId, key: string): Lson | undefined {
     const jval = this.#q.storage.selectKey.get(nodeId, key);
     return jval !== undefined ? (JSON.parse(jval) as Json) : undefined;
   }
 
-  #set(nodeId: NodeId, key: string, value: Json): boolean {
+  #set(pool: Pool, nodeId: NodeId, key: string, value: Lson): boolean {
     if (value === undefined) {
       return this.#delete(nodeId, key);
     } else {
-      const jval = JSON.stringify(value);
-      this.#q.storage.upsertKeyValue.run(nodeId, key, jval);
-      this.#q.versions.upsertKeyValue.run(
-        nodeId,
-        key,
-        this.#pendingClock,
-        jval
-      );
-      return true;
+      if (isLiveStructure(value)) {
+        const $ref = value._attach(pool);
+
+        const jval = JSON.stringify({ $ref });
+        this.#q.storage.upsertKeyValue.run(nodeId, key, jval);
+        this.#q.versions.upsertKeyValue.run(
+          nodeId,
+          key,
+          this.#pendingClock,
+          jval
+        );
+        return true;
+      } else {
+        const jval = JSON.stringify(value);
+        this.#q.storage.upsertKeyValue.run(nodeId, key, jval);
+        this.#q.versions.upsertKeyValue.run(
+          nodeId,
+          key,
+          this.#pendingClock,
+          jval
+        );
+        return true;
+      }
     }
   }
 
@@ -242,7 +257,7 @@ export class SQLCache {
         `${prefix}${this.#pendingClock}:${this.#nextNodeId++}`,
       getChild: (nodeId: NodeId, key: string) => this.#get(nodeId, key),
       setChild: (nodeId: NodeId, key: string, value: Json) => {
-        const updated = this.#set(nodeId, key, value);
+        const updated = this.#set(pool, nodeId, key, value);
         dirty ||= updated;
         return updated;
       },
@@ -299,7 +314,7 @@ export class SQLCache {
     return this.#q.storage.countAll.get()!;
   }
 
-  get data(): Record<string, Record<string, Json>> {
-    return this.fullDelta()[1];
+  get table(): [id: string, key: string, value: Json][] {
+    return Array.from(this.rows());
   }
 }

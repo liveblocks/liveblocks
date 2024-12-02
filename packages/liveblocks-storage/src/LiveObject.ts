@@ -30,21 +30,23 @@ export class LiveObject {
 
   // Commit current local initial state and write it into the pool
   /** @internal */
-  private _attach(pool: Pool): string {
-    if (this.#ctx.pool) {
-      throw new Error(`LiveObject is already attached as ${this.#ctx.nodeId}`);
+  public _attach(pool: Pool): string {
+    if (this.#ctx.pool !== undefined) {
+      if (this.#ctx.pool === pool) {
+        throw new Error(
+          `LiveObject already attached to this pool as ${this.#ctx.nodeId}`
+        );
+      } else {
+        throw new Error("LiveObject already attached to different tree");
+      }
     }
 
     const { initialValue } = this.#ctx;
     const nodeId = pool.nextId(LiveObject.PREFIX);
     this.#ctx = { nodeId, pool };
 
-    for (const [key, lsonValue] of Object.entries(initialValue)) {
-      let value = lsonValue;
+    for (const [key, value] of Object.entries(initialValue)) {
       if (value !== undefined) {
-        if (isLiveStructure(value)) {
-          value = { $ref: value._attach(pool) };
-        }
         this.#ctx.pool.setChild(this.#ctx.nodeId, key, value);
       }
     }
@@ -66,9 +68,6 @@ export class LiveObject {
 
   set(key: string, value: Lson): void {
     if (this.#ctx.pool) {
-      if (isLiveStructure(value)) {
-        value = { $ref: value._attach(this.#ctx.pool) };
-      }
       this.#ctx.pool.setChild(this.#ctx.nodeId, key, value);
     } else {
       this.#ctx.initialValue[key] = value;
