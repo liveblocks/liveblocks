@@ -53,7 +53,7 @@ test("setting keys (simple values)", () => {
     root.set("a", 1);
   });
   expect(cache.count).toEqual(1);
-  expect(cache.table).toEqual([["root", "a", 1]]);
+  expect(cache.table).toEqual([["root", "a", 1, null]]);
 });
 
 test("setting keys (simple values)", () => {
@@ -65,9 +65,9 @@ test("setting keys (simple values)", () => {
   });
   expect(cache.count).toEqual(3);
   expect(cache.table).toEqual([
-    ["root", "a", 1],
-    ["root", "b", "hi"],
-    ["root", "c", null],
+    ["root", "a", 1, null],
+    ["root", "b", "hi", null],
+    ["root", "c", null, null],
   ]);
 });
 
@@ -77,7 +77,9 @@ test("setting keys (nested JSON values)", () => {
     root.set("a", [1, true, [{ x: false }, {}]]);
   });
   expect(cache.count).toEqual(1);
-  expect(cache.table).toEqual([["root", "a", [1, true, [{ x: false }, {}]]]]);
+  expect(cache.table).toEqual([
+    ["root", "a", [1, true, [{ x: false }, {}]], null],
+  ]);
 });
 
 test("setting keys (LiveObject)", () => {
@@ -87,9 +89,9 @@ test("setting keys (LiveObject)", () => {
     root.set("b", new LiveObject({}));
   });
   expect(cache.table).toEqual([
-    ["O1:1", "foo", "bar"],
-    ["root", "a", { $ref: "O1:1" }],
-    ["root", "b", { $ref: "O1:2" }],
+    ["O1:1", "foo", "bar", null],
+    ["root", "a", undefined, "O1:1"],
+    ["root", "b", undefined, "O1:2"],
   ]);
 });
 
@@ -123,7 +125,7 @@ test("deleting keys", () => {
   });
 
   expect(cache.count).toEqual(1);
-  expect(cache.table).toEqual([["root", "a", 1]]);
+  expect(cache.table).toEqual([["root", "a", 1, null]]);
 });
 
 test("deleting keys happens atomically", () => {
@@ -133,8 +135,8 @@ test("deleting keys happens atomically", () => {
     root.set("b", "hi");
   });
   expect(cache.table).toEqual([
-    ["root", "a", 1],
-    ["root", "b", "hi"],
+    ["root", "a", 1, null],
+    ["root", "b", "hi", null],
   ]);
 
   expect(() =>
@@ -142,18 +144,18 @@ test("deleting keys happens atomically", () => {
       root.set("a", 42);
       root.delete("x");
       expect(cache.table).toEqual([
-        ["root", "a", 42],
-        ["root", "b", "hi"],
+        ["root", "a", 42, null],
+        ["root", "b", "hi", null],
       ]);
       root.delete("b");
-      expect(cache.table).toEqual([["root", "a", 42]]);
+      expect(cache.table).toEqual([["root", "a", 42, null]]);
       throw new Error("abort this transaction");
     })
   ).toThrow("abort this transaction");
 
   expect(cache.table).toEqual([
-    ["root", "a", 1],
-    ["root", "b", "hi"],
+    ["root", "a", 1, null],
+    ["root", "b", "hi", null],
   ]);
 });
 
@@ -169,7 +171,7 @@ test("setting to undefined is the same as removing a key", () => {
   });
 
   expect(cache.count).toEqual(1);
-  expect(cache.table).toEqual([["root", "b", "hi"]]);
+  expect(cache.table).toEqual([["root", "b", "hi", null]]);
 });
 
 test("has", () => {
@@ -220,7 +222,9 @@ test("get (nested JSON values)", () => {
     expect(root.get("k")).toEqual([1, true, [{ x: false }, {}]]);
   });
 
-  expect(cache.table).toEqual([["root", "k", [1, true, [{ x: false }, {}]]]]);
+  expect(cache.table).toEqual([
+    ["root", "k", [1, true, [{ x: false }, {}]], null],
+  ]);
 });
 
 test("entries", () => {
@@ -279,25 +283,25 @@ test("get", () => {
     root.set("def", 123);
     root.set("foo", null);
     expect(cache.table).toEqual([
-      ["root", "k", "v"],
-      ["root", "abc", 123],
-      ["root", "def", 123],
-      ["root", "foo", null],
+      ["root", "k", "v", null],
+      ["root", "abc", 123, null],
+      ["root", "def", 123, null],
+      ["root", "foo", null, null],
     ]);
     root.delete("def");
     root.delete("bla");
     expect(cache.table).toEqual([
-      ["root", "k", "v"],
-      ["root", "abc", 123],
-      ["root", "foo", null],
+      ["root", "k", "v", null],
+      ["root", "abc", 123, null],
+      ["root", "foo", null, null],
     ]);
   });
 
   expect(cache.count).toEqual(3);
   expect(cache.table).toEqual([
-    ["root", "k", "v"],
-    ["root", "abc", 123],
-    ["root", "foo", null],
+    ["root", "k", "v", null],
+    ["root", "abc", 123, null],
+    ["root", "foo", null, null],
   ]);
 });
 
@@ -309,8 +313,8 @@ test("get after rollback", () => {
     root.set("abc", 123);
   });
   expect(cache.table).toEqual([
-    ["root", "k", "v"],
-    ["root", "abc", 123],
+    ["root", "k", "v", null],
+    ["root", "abc", 123, null],
   ]);
 
   try {
@@ -318,17 +322,17 @@ test("get after rollback", () => {
       root.set("def", 123);
       root.set("foo", null);
       expect(cache.table).toEqual([
-        ["root", "k", "v"],
-        ["root", "abc", 123],
-        ["root", "def", 123],
+        ["root", "k", "v", null],
+        ["root", "abc", 123, null],
+        ["root", "def", 123, null],
         ["root", "foo", null],
       ]);
       throw new Error("Oops");
     });
   } catch {}
   expect(cache.table).toEqual([
-    ["root", "k", "v"],
-    ["root", "abc", 123],
+    ["root", "k", "v", null],
+    ["root", "abc", 123, null],
   ]);
 
   expect(cache.count).toEqual(2);
@@ -345,8 +349,8 @@ test("reading all rows", () => {
   });
 
   expect(Array.from(cache.rows())).toEqual([
-    ["root", "a", "a"],
-    ["root", "c", "c"],
+    ["root", "a", "a", null],
+    ["root", "c", "c", null],
   ]);
 });
 
@@ -375,7 +379,7 @@ test("taking deltas", () => {
   cache.mutate((root) => root.delete("abc"));
 
   expect(cache.count).toEqual(1);
-  expect(cache.table).toEqual([["root", "henk", 7]]);
+  expect(cache.table).toEqual([["root", "henk", 7, null]]);
 
   expect(cache.deltaSince(0)[1]).toEqual(cache.fullDelta()[1]);
 

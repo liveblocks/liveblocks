@@ -16,8 +16,15 @@ function createDB() {
     `CREATE TABLE IF NOT EXISTS storage (
        nid    TEXT NOT NULL,
        key    TEXT NOT NULL,
-       jval   TEXT NOT NULL,
-       PRIMARY KEY (nid, key)
+       jval   TEXT NULL,
+       ref    TEXT NULL,
+
+       PRIMARY KEY (nid, key),
+       UNIQUE (ref),
+       CHECK (
+         -- jval XOR ref
+         (jval IS NULL) != (ref IS NULL)
+       )
      )`
   );
 
@@ -27,6 +34,7 @@ function createDB() {
        key    TEXT NOT NULL,
        clock  INT UNSIGNED NOT NULL,
        jval   TEXT,
+       ref    TEXT,
        PRIMARY KEY (nid, key, clock DESC)
      )`
   );
@@ -48,9 +56,9 @@ function createQueries(db: Database) {
     selectKey: db
       .prepare<
         [nid: string, key: string],
-        string
-      >("SELECT jval FROM storage WHERE nid = ? AND key = ?")
-      .pluck(),
+        [jval: string, ref: null] | [jval: null, ref: string]
+      >("SELECT jval, ref FROM storage WHERE nid = ? AND key = ?")
+      .raw(),
 
     selectKeysByNodeId: db
       .prepare<[nid: string], string>("SELECT key FROM storage WHERE nid = ?")
@@ -59,21 +67,28 @@ function createQueries(db: Database) {
     selectAllByNodeId: db
       .prepare<
         [nid: string],
-        [key: string, jval: string]
-      >("SELECT key, jval FROM storage WHERE nid = ?")
+        [key: string, jval: string, ref: string]
+      >("SELECT key, jval, ref FROM storage WHERE nid = ?")
       .raw(),
 
     selectAll: db
       .prepare<
         [],
-        [nid: string, key: string, jval: string]
-      >("SELECT nid, key, jval FROM storage")
+        | [nid: string, key: string, jval: string, ref: null]
+        | [nid: string, key: string, jval: null, ref: string]
+      >("SELECT nid, key, jval, ref FROM storage")
       .raw(),
 
     upsertKeyValue: db.prepare<[nid: string, key: string, jval: string], void>(
-      `INSERT INTO storage (nid, key, jval)
-       VALUES (?, ?, ?)
-       ON CONFLICT (nid, key) DO UPDATE SET jval = excluded.jval`
+      `INSERT INTO storage (nid, key, jval, ref)
+       VALUES (?, ?, ?, NULL)
+       ON CONFLICT (nid, key) DO UPDATE SET jval = excluded.jval, ref = excluded.ref`
+    ),
+
+    upsertKeyRef: db.prepare<[nid: string, key: string, ref: string], void>(
+      `INSERT INTO storage (nid, key, jval, ref)
+       VALUES (?, ?, NULL, ?)
+       ON CONFLICT (nid, key) DO UPDATE SET jval = excluded.jval, ref = excluded.ref`
     ),
 
     deleteKey: db.prepare<[nid: string, key: string], void>(
@@ -90,40 +105,51 @@ function createQueries(db: Database) {
       [nid: string, key: string, clock: number, jval: string],
       void
     >(
-      `INSERT INTO versions (nid, key, clock, jval)
-       VALUES (?, ?, ?, ?)
-       ON CONFLICT (nid, key, clock) DO UPDATE SET jval = excluded.jval`
+      `INSERT INTO versions (nid, key, clock, jval, ref)
+       VALUES (?, ?, ?, ?, NULL)
+       ON CONFLICT (nid, key, clock) DO UPDATE SET jval = excluded.jval, ref = excluded.ref`
+    ),
+
+    upsertKeyRef: db.prepare<
+      [nid: string, key: string, clock: number, ref: string],
+      void
+    >(
+      `INSERT INTO versions (nid, key, clock, jval, ref)
+       VALUES (?, ?, ?, NULL, ?)
+       ON CONFLICT (nid, key, clock) DO UPDATE SET jval = excluded.jval, ref = excluded.ref`
     ),
 
     deleteKey: db.prepare<[nid: string, key: string, clock: number], void>(
-      `INSERT INTO versions (nid, key, clock, jval)
-       VALUES (?, ?, ?, NULL)
-       ON CONFLICT (nid, key, clock) DO UPDATE SET jval = excluded.jval`
+      `INSERT INTO versions (nid, key, clock, jval, ref)
+       VALUES (?, ?, ?, NULL, NULL)
+       ON CONFLICT (nid, key, clock) DO UPDATE SET jval = excluded.jval, ref = excluded.ref`
     ),
 
     selectAll: db
       .prepare<
         [],
-        [nid: string, key: string, clock: number, jval: string]
-      >("SELECT nid, key, clock, jval FROM versions")
+        [nid: string, key: string, clock: number, jval: string, ref: string]
+      >("SELECT nid, key, clock, jval, ref FROM versions")
       .raw(),
 
     selectSince: db
       .prepare<
         [clock: number],
-        [nid: string, key: string, jval: string | null]
+        | [nid: string, key: string, jval: string, ref: null]
+        | [nid: string, key: string, jval: null, ref: string]
       >(
         `WITH winners AS (
            SELECT
              nid,
              key,
              jval,
+             ref,
              RANK() OVER (PARTITION BY nid, key ORDER BY clock DESC) as rnk
            FROM versions
            WHERE clock > ?
          )
 
-         SELECT nid, key, jval FROM winners WHERE rnk = 1`
+         SELECT nid, key, jval, ref FROM winners WHERE rnk = 1`
       )
       .raw(),
   };
@@ -161,18 +187,15 @@ export class SQLCache {
   // ----------------------------------------------------
 
   #get(pool: Pool, nodeId: NodeId, key: string): Lson | undefined {
-    const jval = this.#q.storage.selectKey.get(nodeId, key);
-    const value = jval !== undefined ? (JSON.parse(jval) as Json) : undefined;
-    if (
-      typeof value === "object" &&
-      value !== null &&
-      "$ref" in value &&
-      value.$ref !== undefined
-    ) {
-      // XXX Read from actual ref column soon
-      return LiveObject._load(value.$ref as string, pool);
+    const row = this.#q.storage.selectKey.get(nodeId, key);
+    if (row === undefined) return undefined;
+
+    const [jval, ref] = row;
+    if (jval === null) {
+      return LiveObject._load(ref, pool);
+    } else {
+      return JSON.parse(jval) as Json;
     }
-    return value;
   }
 
   #set(pool: Pool, nodeId: NodeId, key: string, value: Lson): boolean {
@@ -180,16 +203,9 @@ export class SQLCache {
       return this.#delete(nodeId, key);
     } else {
       if (isLiveStructure(value)) {
-        const $ref = value._attach(pool);
-
-        const jval = JSON.stringify({ $ref });
-        this.#q.storage.upsertKeyValue.run(nodeId, key, jval);
-        this.#q.versions.upsertKeyValue.run(
-          nodeId,
-          key,
-          this.#pendingClock,
-          jval
-        );
+        const ref = value._attach(pool);
+        this.#q.storage.upsertKeyRef.run(nodeId, key, ref);
+        this.#q.versions.upsertKeyRef.run(nodeId, key, this.#pendingClock, ref);
         return true;
       } else {
         const jval = JSON.stringify(value);
@@ -236,15 +252,9 @@ export class SQLCache {
   fullDelta(): Delta {
     const values: { [nid: string]: { [key: string]: Json } } = {};
     const refs: { [nid: string]: { [key: string]: string } } = {};
-    for (const [nid, key, value] of this.rows()) {
-      if (
-        typeof value === "object" &&
-        value !== null &&
-        "$ref" in value &&
-        value.$ref !== undefined
-      ) {
-        // XXX Read this from separate column soon
-        (refs[nid] ??= {})[key] = value.$ref as string;
+    for (const [nid, key, value, ref] of this.rows()) {
+      if (ref !== null) {
+        (refs[nid] ??= {})[key] = ref;
       } else {
         (values[nid] ??= {})[key] = value;
       }
@@ -259,23 +269,16 @@ export class SQLCache {
     const removed: { [nid: string]: string[] } = {};
     const values: { [nid: string]: { [key: string]: Json } } = {};
     const refs: { [nid: string]: { [key: string]: string } } = {};
-    for (const [nid, key, jval] of this.#q.versions.selectSince.iterate(
+    for (const [nid, key, jval, ref] of this.#q.versions.selectSince.iterate(
       since
     )) {
-      if (jval === null) {
+      if (jval === null && ref === null) {
         (removed[nid] ??= []).push(key);
-      } else {
+      } else if (ref === null) {
         const value = JSON.parse(jval) as Json;
-        if (
-          typeof value === "object" &&
-          value !== null &&
-          "$ref" in value &&
-          value.$ref !== undefined
-        ) {
-          (refs[nid] ??= {})[key] = value.$ref as string;
-        } else {
-          (values[nid] ??= {})[key] = value;
-        }
+        (values[nid] ??= {})[key] = value;
+      } else {
+        (refs[nid] ??= {})[key] = ref;
       }
     }
     return [removed, values, refs];
@@ -334,9 +337,16 @@ export class SQLCache {
   }
 
   // For convenience in unit tests only --------------------------------
-  *rows(): IterableIterator<[nid: string, key: string, value: Json]> {
-    for (const [nid, key, jval] of this.#q.storage.selectAll.iterate()) {
-      yield [nid, key, JSON.parse(jval)];
+  *rows(): IterableIterator<
+    | [nid: string, key: string, value: Json, ref: null]
+    | [nid: string, key: string, value: undefined, ref: string]
+  > {
+    for (const [nid, key, jval, ref] of this.#q.storage.selectAll.iterate()) {
+      if (jval === null) {
+        yield [nid, key, undefined, ref];
+      } else {
+        yield [nid, key, JSON.parse(jval), null];
+      }
     }
   }
 
@@ -347,7 +357,12 @@ export class SQLCache {
     return this.#q.storage.countAll.get()!;
   }
 
-  get table(): [id: string, key: string, value: Json][] {
+  get table(): [
+    id: string,
+    key: string,
+    value: Json | undefined,
+    ref: string | null,
+  ][] {
     return Array.from(this.rows());
   }
 }
