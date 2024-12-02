@@ -4,7 +4,6 @@ import type { ChangeReturnType, OmitFirstArg } from "~/lib/ts-toolkit.js";
 
 import { LayeredCache } from "./LayeredCache.js";
 import type { Callback, EventSource, Observable } from "./lib/EventSource.js";
-import { LiveObject } from "./LiveObject.js";
 import type {
   ClientMsg,
   Delta,
@@ -312,12 +311,12 @@ export class Client<M extends Mutations> {
       const updates = delta[1];
       for (const [nodeId, keys] of Object.entries(deletions)) {
         for (const key of keys) {
-          cache.delete(nodeId, key);
+          cache.deleteChild(nodeId, key);
         }
       }
       for (const [nodeId, updates2] of Object.entries(updates)) {
         for (const [key, value] of Object.entries(updates2)) {
-          cache.set(nodeId, key, value);
+          cache.setChild(nodeId, key, value);
         }
       }
     }
@@ -351,7 +350,7 @@ export class Client<M extends Mutations> {
     cache.prefix_HACK = clock;
     cache.startTransaction();
     try {
-      mutationFn(LiveObject.loadRoot(cache), ...args);
+      mutationFn(cache.getRoot(), ...args);
       cache.commit();
     } catch (e) {
       cache.rollback();
