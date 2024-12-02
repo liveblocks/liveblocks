@@ -215,7 +215,7 @@ export class Server {
 
   // For convenience in unit tests only --------------------------------
   get data(): Record<string, Record<string, Json>> {
-    return this.#cache.data;
+    return this.#cache.fullDelta()[1];
   }
   get clock(): number { return this.#cache.clock; } // prettier-ignore
 }
