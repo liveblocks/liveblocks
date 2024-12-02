@@ -4,7 +4,7 @@ import sqlite3 from "better-sqlite3";
 import type { Json } from "~/lib/Json.js";
 
 import { LiveObject } from "./LiveObject.js";
-import type { Delta, NodeId, Transaction } from "./types.js";
+import type { Delta, NodeId, Pool } from "./types.js";
 
 function createDB() {
   const db = sqlite3(":memory:");
@@ -241,7 +241,7 @@ export class SQLCache {
     const origClock = this.clock;
 
     let dirty = false;
-    const tx: Transaction = {
+    const pool: Pool = {
       nextId: (): string => `${this.#pendingClock}:${this.#nextNodeId++}`,
       has: (nodeId: NodeId, key: string) => this.#has(nodeId, key),
       get: (nodeId: NodeId, key: string) => this.#get(nodeId, key),
@@ -260,7 +260,7 @@ export class SQLCache {
 
     this.#startTransaction();
     try {
-      callback(LiveObject.loadRoot(tx));
+      callback(LiveObject.loadRoot(pool));
       if (dirty) {
         this.#commit();
         return this.deltaSince(origClock);

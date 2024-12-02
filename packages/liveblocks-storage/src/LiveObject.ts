@@ -1,12 +1,12 @@
 import type { Lson, LsonObject } from "./lib/Lson.js";
 import { isLiveStructure } from "./lib/Lson.js";
-import type { Transaction } from "./types.js";
+import type { Pool } from "./types.js";
 
 export class LiveObject {
   #ctx:
     | {
         nodeId: string; // XXX This should not be the permanent way to do this!
-        pool: Transaction; // XXX This should not be the permanent way to do this!
+        pool: Pool; // XXX This should not be the permanent way to do this!
         initialValue?: never;
       }
     | {
@@ -19,18 +19,18 @@ export class LiveObject {
     this.#ctx = { initialValue };
   }
 
-  static loadRoot(pool: Transaction): LiveObject {
+  static loadRoot(pool: Pool): LiveObject {
     return LiveObject._load("root", pool);
   }
 
-  static _load(nodeId: string, pool: Transaction): LiveObject {
+  static _load(nodeId: string, pool: Pool): LiveObject {
     const l = new LiveObject({});
     l.#ctx = { nodeId, pool };
     return l;
   }
 
   // Commit current local initial state and write it into the pool
-  private _attach(pool: Transaction): string {
+  private _attach(pool: Pool): string {
     if (this.#ctx.pool) {
       throw new Error(`LiveObject is already attached as ${this.#ctx.nodeId}`);
     }
