@@ -31,10 +31,10 @@ describe("Lexical editor", () => {
       const flattenNodes = flattenLexicalTree(docStateRoot2.children);
       expect(flattenNodes).toEqual([
         {
-          type: "paragraph",
-          group: "line-break",
+          type: "linebreak",
+          group: "linebreak",
           attributes: {
-            __type: "line-break",
+            __type: "linebreak",
             __format: 0,
             __indent: 0,
             __dir: null,
@@ -75,10 +75,10 @@ describe("Lexical editor", () => {
           text: "?",
         },
         {
-          type: "paragraph",
-          group: "line-break",
+          type: "linebreak",
+          group: "linebreak",
           attributes: {
-            __type: "line-break",
+            __type: "linebreak",
             __format: 0,
             __indent: 0,
             __dir: null,

@@ -121,10 +121,10 @@ export const docStateRoot2: SerializedLexicalRootNode = {
   type: "root",
   children: [
     {
-      type: "paragraph",
-      group: "line-break",
+      type: "linebreak",
+      group: "linebreak",
       attributes: {
-        __type: "line-break",
+        __type: "linebreak",
         __format: 0,
         __indent: 0,
         __dir: null,
@@ -178,10 +178,10 @@ export const docStateRoot2: SerializedLexicalRootNode = {
       ],
     },
     {
-      type: "paragraph",
-      group: "line-break",
+      type: "linebreak",
+      group: "linebreak",
       attributes: {
-        __type: "line-break",
+        __type: "linebreak",
         __format: 0,
         __indent: 0,
         __dir: null,

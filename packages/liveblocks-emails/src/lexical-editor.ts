@@ -37,7 +37,7 @@ export interface SerializedLexicalMentionNode
 
 export interface SerializedLexicalLineBreakNode
   extends SerializedBaseLexicalNode {
-  group: "line-break";
+  group: "linebreak";
 }
 
 export type SerializedLexicalNode =
@@ -76,11 +76,11 @@ function createSerializedLexicalMapNode(
 
   // Y.Map in Lexical stores all attributes defined in Lexical TextNode and LineBreakNode class.
   const attributes = Object.fromEntries(item.entries());
-  if (type === "line-break") {
+  if (type === "linebreak") {
     return {
       type,
       attributes,
-      group: "line-break",
+      group: "linebreak",
     };
   }
 
@@ -252,7 +252,7 @@ export const flattenLexicalTree = (
 ): SerializedLexicalNode[] => {
   let flattenNodes: SerializedLexicalNode[] = [];
   for (const node of nodes) {
-    if (["text", "line-break", "decorator"].includes(node.group)) {
+    if (["text", "linebreak", "decorator"].includes(node.group)) {
       flattenNodes = [...flattenNodes, node];
     } else if (node.group === "element") {
       flattenNodes = [...flattenNodes, ...flattenLexicalTree(node.children)];
@@ -260,6 +260,18 @@ export const flattenLexicalTree = (
   }
 
   return flattenNodes;
+};
+
+const isSerializedLineBreakNode = (
+  node: SerializedLexicalNode
+): node is SerializedLexicalLineBreakNode => {
+  return node.group === "linebreak";
+};
+
+const isSerializedElementNode = (
+  node: SerializedLexicalNode
+): node is SerializedLexicalElementNode<Readonly<SerializedLexicalNode>> => {
+  return node.group === "element";
 };
 
 const isMentionNodeType = (type: string): type is "lb-mention" => {
@@ -341,7 +353,7 @@ export function findLexicalMentionNodeWithContext({
     const node = nodes[i]!;
 
     // Stop if nodes are line breaks or element
-    if (["line-break", "element"].includes(node.group)) {
+    if (isSerializedLineBreakNode(node) || isSerializedElementNode(node)) {
       break;
     }
 
@@ -358,7 +370,7 @@ export function findLexicalMentionNodeWithContext({
     const node = nodes[i]!;
 
     // Stop if nodes are line breaks or element
-    if (["line-break", "element"].includes(node.group)) {
+    if (isSerializedLineBreakNode(node) || isSerializedElementNode(node)) {
       break;
     }
 
