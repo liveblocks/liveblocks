@@ -960,7 +960,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   private updateChannelNotificationSettingsCache(
     settings: ChannelNotificationSettings
-  ) {
+  ): void {
     this._store.set((state) => {
       const { channelNotificationSettings, ...rest } = state;
       return {
@@ -1904,12 +1904,23 @@ function internalToExternalState<M extends BaseMetadata>(
 
       case "update-channel-notification-settings": {
         const settings = computed.channelNotificationSettings;
-        computed.channelNotificationSettings = {
-          email: {
-            ...settings.email,
-            ...optimisticUpdate.settings,
-          },
-        };
+
+        // Casting properly because:
+        //  At init channel notification settings are equals to `{}`.
+        //  After first load then settings take the real shape of `ChannelNotificationSettings`.
+        //  And we update with a partial `ChannelNotificationSettings`.
+        //
+        // So optimistically when an update happens we return always an object
+        // shaped on the type `ChannelNotificationSettings`. But we're forced to cast
+        // because of we need to wait the first load of channel notification settings and
+        // channel notification settings can contains custom notification kinds (e.g `$whatever`)
+        // in the augmentation (e.g `liveblocks.config.ts`).
+        const updatedSettings = {
+          ...settings,
+          ...optimisticUpdate.settings,
+        } as ChannelNotificationSettings | Record<string, never>;
+
+        computed.channelNotificationSettings = updatedSettings;
 
         break;
       }
@@ -1931,7 +1942,7 @@ function internalToExternalState<M extends BaseMetadata>(
     settingsByRoomId: computed.settingsByRoomId,
     threadsDB,
     versionsByRoomId: state.versionsByRoomId,
-    channelNotificationSettings: state.channelNotificationSettings,
+    channelNotificationSettings: computed.channelNotificationSettings,
   };
 }
 
