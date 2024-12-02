@@ -2,7 +2,8 @@ import type { Database } from "better-sqlite3";
 import sqlite3 from "better-sqlite3";
 
 import type { Json } from "~/lib/Json.js";
-import { isLiveStructure, Lson } from "~/lib/Lson.js";
+import type { Lson } from "~/lib/Lson.js";
+import { isLiveStructure } from "~/lib/Lson.js";
 
 import { LiveObject } from "./LiveObject.js";
 import type { Delta, NodeId, Pool } from "./types.js";
