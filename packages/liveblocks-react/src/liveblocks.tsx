@@ -716,7 +716,7 @@ function useChannelNotificationSettingsSuspense_withClient(
 ] {
   const store = getLiveblocksExtrasForClient(client).store;
 
-  // Suspend until there are at least some inbox notifications
+  // Suspend until there are at least some channel notification settings
   use(store.waitUntilChannelNotificationsSettingsLoaded());
 
   // We're in a Suspense world here, and as such, the useChannelNotificationSettings()
