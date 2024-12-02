@@ -66,6 +66,12 @@ export interface SerializedTiptapLineBreakNode
   content?: undefined;
 }
 
+export interface SerializedTiptapHardBreakNode
+  extends SerializedTiptapBaseNode {
+  type: "hardBreak";
+  content?: undefined;
+}
+
 export interface SerializedTiptapParagraphNode
   extends SerializedTiptapBaseNode {
   type: "paragraph";
@@ -75,6 +81,7 @@ export interface SerializedTiptapParagraphNode
 export type SerializedTiptapNode =
   | SerializedTiptapParagraphNode
   | SerializedTiptapLineBreakNode
+  | SerializedTiptapHardBreakNode
   | SerializedTiptapMentionNode
   | SerializedTiptapTextNode;
 
@@ -122,6 +129,12 @@ const isSerializedLineBreakNode = (
   return node.type === "paragraph" && typeof node.content === "undefined";
 };
 
+const isSerializedHardBreakNode = (
+  node: SerializedTiptapNode
+): node is SerializedTiptapHardBreakNode => {
+  return node.type === "hardBreak" && typeof node.content === "undefined";
+};
+
 const isSerializedTextNode = (
   node: SerializedTiptapNode
 ): node is SerializedTiptapTextNode => {
@@ -152,6 +165,7 @@ export const flattenTiptapTree = (
   for (const node of nodes) {
     if (
       isSerializedLineBreakNode(node) ||
+      isSerializedHardBreakNode(node) ||
       isSerializedTextNode(node) ||
       isSerializedMentionNode(node)
     ) {
@@ -222,7 +236,11 @@ export function findTiptapMentionNodeWithContext({
     const node = nodes[i]!;
 
     // Stop if nodes are line breaks or paragraph
-    if (isSerializedLineBreakNode(node) || isSerializedParagraphNode(node)) {
+    if (
+      isSerializedLineBreakNode(node) ||
+      isSerializedHardBreakNode(node) ||
+      isSerializedParagraphNode(node)
+    ) {
       break;
     }
 
@@ -234,7 +252,11 @@ export function findTiptapMentionNodeWithContext({
     const node = nodes[i]!;
 
     // Stop if nodes are line breaks or paragraph
-    if (isSerializedLineBreakNode(node) || isSerializedParagraphNode(node)) {
+    if (
+      isSerializedLineBreakNode(node) ||
+      isSerializedHardBreakNode(node) ||
+      isSerializedParagraphNode(node)
+    ) {
       break;
     }
 
