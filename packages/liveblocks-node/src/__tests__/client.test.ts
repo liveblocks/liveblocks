@@ -1506,4 +1506,60 @@ describe("client", () => {
       }
     }
   });
+
+  test("should delete user's channel notification settings", async () => {
+    const userId = "adri";
+
+    server.use(
+      http.delete(
+        `${DEFAULT_BASE_URL}/v2/users/:userId/channel-notification-settings`,
+        () => {
+          return HttpResponse.json(undefined, { status: 204 });
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    await expect(
+      client.deleteChannelNotificationSettings({ userId })
+    ).resolves.toBeUndefined();
+  });
+
+  test("should throw a LiveblocksError when deleteChannelNotificationSettings receives an error response", async () => {
+    const userId = "jonathan";
+    const error = {
+      error: "USER_NOT_FOUND",
+      message: "User not found",
+    };
+
+    server.use(
+      http.delete(
+        `${DEFAULT_BASE_URL}/v2/users/:userId/channel-notification-settings`,
+        () => {
+          return HttpResponse.json(error, { status: 404 });
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    // This should throw a LiveblocksError
+    try {
+      // Attempt to get, which should fail and throw an error.
+      await client.deleteChannelNotificationSettings({
+        userId,
+      });
+
+      // If it doesn't throw, fail the test.
+      expect(true).toBe(false);
+    } catch (err) {
+      expect(err instanceof LiveblocksError).toBe(true);
+      if (err instanceof LiveblocksError) {
+        expect(err.status).toBe(404);
+        expect(err.message).toBe(JSON.stringify(error));
+        expect(err.name).toBe("LiveblocksError");
+      }
+    }
+  });
 });
