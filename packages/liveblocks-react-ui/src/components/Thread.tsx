@@ -343,9 +343,9 @@ export const Thread = forwardRef(
                             }
                           >
                             {thread.resolved ? (
-                              <ResolvedIcon className="lb-button-icon" />
+                              <ResolvedIcon />
                             ) : (
-                              <ResolveIcon className="lb-button-icon" />
+                              <ResolveIcon />
                             )}
                           </Button>
                         </TogglePrimitive.Root>

@@ -244,8 +244,12 @@
   }
 
   &:where(:has(.lb-button-label)) {
-    gap: calc(0.25 * var(--lb-spacing));
-    padding-inline: calc(0.5 * var(--lb-spacing));
+    gap: calc(0.175 * var(--lb-spacing));
+    padding-inline: calc(0.55 * var(--lb-spacing));
+
+    &:where(:has(.lb-icon)) {
+      padding-inline-start: calc(0.4 * var(--lb-spacing));
+    }
   }
 
   &:where([data-size="large"]) {
@@ -254,10 +258,14 @@
     &:where(:has(.lb-button-label)) {
       gap: calc(0.35 * var(--lb-spacing));
       padding-inline: calc(0.7 * var(--lb-spacing));
+
+      &:where(:has(.lb-icon)) {
+        padding-inline-start: calc(0.6 * var(--lb-spacing));
+      }
     }
   }
 
-  &:where([aria-pressed]) {
+  &:where([data-variant="toolbar"]) {
     color: var(--lb-foreground-tertiary);
 
     &:where([aria-pressed="true"]) {
@@ -270,14 +278,19 @@
       }
     }
   }
-}
 
-.lb-button-icon {
-  --lb-icon-background: var(--lb-button-background);
+  :where(.lb-icon) {
+    --lb-icon-background: var(--lb-button-background);
+  }
 }
 
 .lb-button-label {
+  display: inline-flex;
+  align-items: center;
+  block-size: var(--lb-icon-size);
   font-weight: 500;
+  font-size: calc(0.7 * var(--lb-icon-size));
+  line-height: 1;
 }
 
 /*************************************

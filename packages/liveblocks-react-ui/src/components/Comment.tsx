@@ -730,7 +730,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                           onClick={stopPropagation}
                           aria-label={$.COMMENT_ADD_REACTION}
                         >
-                          <EmojiAddIcon className="lb-button-icon" />
+                          <EmojiAddIcon />
                         </Button>
                       </EmojiPickerTrigger>
                     </Tooltip>
@@ -768,7 +768,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                           onClick={stopPropagation}
                           aria-label={$.COMMENT_MORE}
                         >
-                          <EllipsisIcon className="lb-button-icon" />
+                          <EllipsisIcon />
                         </Button>
                       </DropdownTrigger>
                     </Tooltip>
@@ -798,7 +798,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                         className="lb-composer-action"
                         onClick={handleEditCancel}
                       >
-                        <CrossIcon className="lb-button-icon" />
+                        <CrossIcon />
                       </Button>
                     </Tooltip>
                     <ShortcutTooltip
@@ -812,7 +812,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                           onClick={stopPropagation}
                           aria-label={$.COMMENT_EDIT_COMPOSER_SAVE}
                         >
-                          <CheckIcon className="lb-button-icon" />
+                          <CheckIcon />
                         </Button>
                       </ComposerPrimitive.Submit>
                     </ShortcutTooltip>
@@ -888,7 +888,7 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                             onClick={stopPropagation}
                             aria-label={$.COMMENT_ADD_REACTION}
                           >
-                            <EmojiAddIcon className="lb-button-icon" />
+                            <EmojiAddIcon />
                           </Button>
                         </EmojiPickerTrigger>
                       </Tooltip>

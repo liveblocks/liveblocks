@@ -363,7 +363,7 @@ const InboxNotificationLayout = forwardRef<
                           onPointerUp={preventDefaultAndStopPropagation}
                           aria-label={$.INBOX_NOTIFICATION_MORE}
                         >
-                          <EllipsisIcon className="lb-button-icon" />
+                          <EllipsisIcon />
                         </Button>
                       </DropdownTrigger>
                     </Tooltip>

@@ -260,7 +260,7 @@ function ComposerInsertMentionEditorAction({
         aria-label={label}
         {...props}
       >
-        <MentionIcon className="lb-button-icon" />
+        <MentionIcon />
       </Button>
     </Tooltip>
   );
@@ -294,7 +294,7 @@ function ComposerInsertEmojiEditorAction({
             aria-label={label}
             {...props}
           >
-            <EmojiIcon className="lb-button-icon" />
+            <EmojiIcon />
           </Button>
         </EmojiPickerTrigger>
       </Tooltip>
@@ -326,7 +326,7 @@ function ComposerAttachFilesEditorAction({
           aria-label={label}
           {...props}
         >
-          <AttachmentIcon className="lb-button-icon" />
+          <AttachmentIcon />
         </Button>
       </ComposerPrimitive.AttachFiles>
     </Tooltip>
@@ -382,7 +382,9 @@ function MarkToggle({ mark, shortcut, children, ...props }: MarkToggleProps) {
       sideOffset={FLOATING_ELEMENT_SIDE_OFFSET + 2}
     >
       <ComposerPrimitive.MarkToggle mark={mark} asChild {...props}>
-        <Button aria-label={label}>{children}</Button>
+        <Button aria-label={label} variant="toolbar">
+          {children}
+        </Button>
       </ComposerPrimitive.MarkToggle>
     </ShortcutTooltip>
   );

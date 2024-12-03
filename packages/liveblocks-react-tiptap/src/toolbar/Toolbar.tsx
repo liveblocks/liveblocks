@@ -66,7 +66,7 @@ const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
   ({ icon, children, name, shortcut, ...props }, forwardedRef) => {
     return (
       <ShortcutTooltip content={name} shortcut={shortcut}>
-        <Button type="button" ref={forwardedRef} {...props}>
+        <Button type="button" variant="toolbar" ref={forwardedRef} {...props}>
           {icon}
           {children && <span className="lb-button-label">{children}</span>}
         </Button>
@@ -352,8 +352,8 @@ function ToolbarSectionCollaboration() {
   return (
     <>
       {supportsThread && (
-        <ToolbarToggle
-          name="Add comment"
+        <ToolbarButton
+          name="Add a comment"
           icon={<CommentIcon />}
           onClick={() =>
             (
@@ -364,9 +364,9 @@ function ToolbarSectionCollaboration() {
               .addPendingComment()
               .run()
           }
-          disabled={editor.isActive("lb-comment")}
-          active={editor.isActive("lb-comment")}
-        />
+        >
+          Comment
+        </ToolbarButton>
       )}
     </>
   );
@@ -374,6 +374,7 @@ function ToolbarSectionCollaboration() {
 
 function DefaultToolbarContent({ editor }: ToolbarSlotProps) {
   const supportsTextAlign = "setTextAlign" in editor.commands;
+  const supportsThread = "addPendingComment" in editor.commands;
 
   return (
     <>
@@ -386,8 +387,12 @@ function DefaultToolbarContent({ editor }: ToolbarSlotProps) {
         </>
       ) : null}
       <ToolbarSectionInline />
-      <ToolbarSeparator />
-      <ToolbarSectionCollaboration />
+      {supportsThread ? (
+        <>
+          <ToolbarSeparator />
+          <ToolbarSectionCollaboration />
+        </>
+      ) : null}
     </>
   );
 }
