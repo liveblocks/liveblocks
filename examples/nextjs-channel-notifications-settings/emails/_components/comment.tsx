@@ -41,7 +41,7 @@ export function Comment({
             className="rounded-full bg-black/5"
             width={28}
             height={28}
-            src={author.info.avatar}
+            src={author.info.picture}
           />
         </Column>
         <Column className="text-black">
