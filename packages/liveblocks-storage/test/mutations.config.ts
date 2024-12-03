@@ -1,5 +1,4 @@
 import type { Json } from "~/lib/Json.js";
-import { isLiveStructure } from "~/lib/Lson.js";
 import { LiveObject } from "~/LiveObject.js";
 
 export function put(root: LiveObject, key: string, value: Json): void {

@@ -3,6 +3,7 @@ import type { LiveStructure, Lson } from "~/lib/Lson.js";
 import { isLiveStructure } from "~/lib/Lson.js";
 import { NestedMap } from "~/lib/NestedMap.js";
 
+import { DefaultMap } from "./lib/DefaultMap.js";
 import { LiveObject } from "./LiveObject.js";
 import type { Delta, NodeId, Pool } from "./types.js";
 import { raise } from "./utils.js";
@@ -19,6 +20,7 @@ export class LayeredCache implements Pool {
   #nextId: number = 1;
   readonly #root: NestedMap<NodeId, string, ValueOrRef>;
   readonly #layers: NestedMap<NodeId, string, ValueOrRef | TombStone>[];
+  readonly #poolCache: DefaultMap<NodeId, LiveStructure>;
 
   // XXX This is a hack because it is mutated from the outside! This really
   // should not belong on the Transaction API itself!
@@ -27,6 +29,10 @@ export class LayeredCache implements Pool {
   constructor() {
     this.#root = new NestedMap();
     this.#layers = [];
+
+    this.#poolCache = new DefaultMap((nodeId: NodeId) =>
+      LiveObject._load(nodeId, this)
+    );
   }
 
   nextId<P extends string>(prefix: P): `${P}${number}:${number}` {
@@ -54,18 +60,21 @@ export class LayeredCache implements Pool {
     return this.#root.get(nodeId, key);
   }
 
-  getNode(nodeId: NodeId): LiveStructure {
-    // XXX Cache these node instances in a Map
-    return LiveObject._load(nodeId, this);
-  }
-
   getLson(valueOrRef: undefined): undefined;
   getLson(valueOrRef: ValueOrRef): Lson;
   getLson(valueOrRef: ValueOrRef | undefined): Lson | undefined;
   getLson(cv: ValueOrRef | undefined): Lson | undefined {
     if (cv === undefined) return undefined;
     if (cv.$val !== undefined) return cv.$val;
-    return this.getNode(cv.$ref);
+    return this.#poolCache.getOrCreate(cv.$ref);
+  }
+
+  getRoot(): LiveObject {
+    return this.getNode("root");
+  }
+
+  getNode(nodeId: NodeId): LiveObject {
+    return this.#poolCache.getOrCreate(nodeId);
   }
 
   getChild(nodeId: NodeId, key: string): Lson | undefined {
