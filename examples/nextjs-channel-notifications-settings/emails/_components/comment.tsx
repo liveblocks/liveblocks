@@ -1,6 +1,6 @@
 import { CommentEmailAsReactData } from "@liveblocks/emails";
 import { Section, Row, Column, Img, Button } from "@react-email/components";
-import { cn } from "../_utils/cn";
+import { cn } from "../../utils/cn";
 
 type CommentProps = CommentEmailAsReactData & {
   isHighlighted?: boolean;

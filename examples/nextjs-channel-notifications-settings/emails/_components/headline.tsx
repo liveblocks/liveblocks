@@ -1,5 +1,5 @@
 import { Text } from "@react-email/components";
-import { cn } from "../_utils/cn";
+import { cn } from "../../utils/cn";
 import type { HeadlineParts } from "../_utils/comments";
 
 export function Headline({
