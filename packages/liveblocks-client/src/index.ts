@@ -30,7 +30,6 @@ export type {
   CommentLocalAttachment,
   CommentMixedAttachment,
   CommentReaction,
-  CustomNotificationKind,
   EnsureJson,
   History,
   HistoryVersion,

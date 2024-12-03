@@ -1,17 +1,18 @@
+import type { DAD } from "../globals/augmentation";
+
 // Will later support other pre-defined channels
 // like `Slack` or `Teams`
 export type NotificationChannel = "email";
 
-export type CustomNotificationKind = `$${string}`;
-export type NotificationKind =
+export type NotificationKind<K extends keyof DAD = keyof DAD> =
   | "thread"
   | "textMention"
-  | CustomNotificationKind;
+  | K;
 
 export type ChannelNotificationSetting = {
   [K in NotificationKind]: boolean;
 };
 
 export type ChannelsNotificationSettings = {
-  [K in NotificationChannel]: ChannelNotificationSetting;
+  [C in NotificationChannel]: ChannelNotificationSetting;
 };
