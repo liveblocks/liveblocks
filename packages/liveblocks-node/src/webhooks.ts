@@ -1,7 +1,4 @@
-import type {
-  CustomNotificationKind,
-  NotificationChannel,
-} from "@liveblocks/core";
+import type { NotificationChannel } from "@liveblocks/core";
 import * as base64 from "@stablelib/base64";
 import * as sha256 from "fast-sha256";
 import type { IncomingHttpHeaders } from "http";
@@ -217,7 +214,14 @@ type WebhookRequest = {
   rawBody: string;
 };
 
-const isCustomKind = (value: unknown): value is `$${string}` => {
+/**
+ * @internal
+ * When receiving an event we cannot define the `kind`
+ * as member of the augmentation
+ */
+type CustomKind = `$${string}`;
+
+const isCustomKind = (value: unknown): value is CustomKind => {
   return isString(value) && value.startsWith("$");
 };
 
@@ -522,7 +526,7 @@ type CustomNotificationEvent = {
   type: "notification";
   data: {
     channel: NotificationChannel;
-    kind: CustomNotificationKind;
+    kind: CustomKind;
     projectId: string;
     roomId: string | null;
     userId: string;
