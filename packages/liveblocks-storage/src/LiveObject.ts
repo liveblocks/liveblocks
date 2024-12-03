@@ -1,23 +1,27 @@
 import type { Lson, LsonObject } from "./lib/Lson.js";
 import type { Pool } from "./types.js";
 
+type Ctx = View | Local;
+
+type View = {
+  nodeId: string;
+  pool: Pool;
+  local?: never;
+};
+
+type Local = {
+  local: LsonObject;
+  nodeId?: never;
+  pool?: never;
+};
+
 export class LiveObject {
   static PREFIX = "O" as const;
 
-  #ctx:
-    | {
-        nodeId: string; // XXX This should not be the permanent way to do this!
-        pool: Pool; // XXX This should not be the permanent way to do this!
-        initialValue?: never;
-      }
-    | {
-        initialValue: LsonObject;
-        nodeId?: never;
-        pool?: never;
-      };
+  #ctx: Ctx;
 
-  constructor(initialValue: LsonObject) {
-    this.#ctx = { initialValue };
+  constructor(data: LsonObject) {
+    this.#ctx = { local: data };
   }
 
   /** @internal */
@@ -40,11 +44,11 @@ export class LiveObject {
       }
     }
 
-    const { initialValue } = this.#ctx;
+    const { local } = this.#ctx;
     const nodeId = pool.nextId(LiveObject.PREFIX);
     this.#ctx = { nodeId, pool };
 
-    for (const [key, value] of Object.entries(initialValue)) {
+    for (const [key, value] of Object.entries(local)) {
       if (value !== undefined) {
         this.#ctx.pool.setChild(this.#ctx.nodeId, key, value);
       }
@@ -61,7 +65,7 @@ export class LiveObject {
     if (this.#ctx.pool) {
       return this.#ctx.pool.getChild(this.#ctx.nodeId, key);
     } else {
-      return this.#ctx.initialValue[key];
+      return this.#ctx.local[key];
     }
   }
 
@@ -69,7 +73,7 @@ export class LiveObject {
     if (this.#ctx.pool) {
       this.#ctx.pool.setChild(this.#ctx.nodeId, key, value);
     } else {
-      this.#ctx.initialValue[key] = value;
+      this.#ctx.local[key] = value;
     }
   }
 
@@ -77,7 +81,7 @@ export class LiveObject {
     if (this.#ctx.pool) {
       this.#ctx.pool.deleteChild(this.#ctx.nodeId, key);
     } else {
-      delete this.#ctx.initialValue[key];
+      delete this.#ctx.local[key];
     }
   }
 }
