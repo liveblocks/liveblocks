@@ -153,6 +153,13 @@ export type { BaseActivitiesData } from "./protocol/BaseActivitiesData";
 export type { BaseRoomInfo } from "./protocol/BaseRoomInfo";
 export type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 export type {
+  ChannelNotificationSetting,
+  ChannelNotificationSettings,
+  CustomNotificationKind,
+  NotificationChannel,
+  NotificationKind,
+} from "./protocol/ChannelNotificationSettings";
+export type {
   BroadcastEventClientMsg,
   ClientMsg,
   FetchStorageClientMsg,
@@ -258,13 +265,6 @@ export type {
   SyncSource,
 } from "./room";
 export type { GetThreadsOptions, UploadAttachmentOptions } from "./room";
-export type {
-  ChannelNotificationSetting,
-  ChannelNotificationSettings,
-  CustomNotificationKind,
-  NotificationChannel,
-  NotificationKind,
-} from "./types/ChannelNotificationSettings";
 export type { Immutable } from "./types/Immutable";
 export type {
   IWebSocket,

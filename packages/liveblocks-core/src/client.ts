@@ -43,7 +43,7 @@ import {
   makeAuthDelegateForRoom,
   makeCreateSocketDelegateForRoom,
 } from "./room";
-import type { ChannelNotificationSettings } from "./types/ChannelNotificationSettings";
+import type { ChannelNotificationSettings } from "./protocol/ChannelNotificationSettings";
 import type { OptionalPromise } from "./types/OptionalPromise";
 
 const MIN_THROTTLE = 16;
