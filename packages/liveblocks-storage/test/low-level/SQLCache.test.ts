@@ -399,6 +399,7 @@ test("taking deltas", () => {
   ]);
 });
 
+// XXX Make pass!
 test.fails("taking deltas with refs", () => {
   const cache = new SQLCache();
 
