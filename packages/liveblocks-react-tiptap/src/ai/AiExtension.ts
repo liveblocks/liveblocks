@@ -20,14 +20,24 @@ export const AiExtension = Extension.create<never, AiExtensionStorage>({
   addCommands() {
     return {
       askAi: () => () => {
+        // If the selection is collapsed, select the whole current block
         if (this.editor.state.selection.empty) {
-          // TODO: Select the whole current block instead of doing nothing
+          const { $from } = this.editor.state.selection;
+          const start = $from.start();
+          const end = $from.end();
+          this.editor.commands.setTextSelection({ from: start, to: end });
+        }
+
+        // And if the selection is still empty, stop here
+        if (this.editor.state.selection.empty) {
           return false;
         }
+
         this.storage.askAiSelection = new TextSelection(
           this.editor.state.selection.$anchor,
           this.editor.state.selection.$head
         );
+
         this.editor.commands.blur();
         return true;
       },
