@@ -13,8 +13,8 @@ import { ErrorBoundary } from "react-error-boundary";
 
 import MockWebSocket from "./_MockWebSocket";
 import {
-  mockGetChannelNotificationSettings,
-  mockUpdateChannelNotificationSettings,
+  mockGetChannelsNotificationSettings,
+  mockUpdateChannelsNotificationSettings,
 } from "./_restMocks";
 import { createContextsForTest } from "./_utils";
 
@@ -33,10 +33,10 @@ afterEach(() => {
 
 afterAll(() => server.close());
 
-describe("useChannelNotificationSettings", () => {
-  test("should fetch channel notification settings and be referentially stable", async () => {
+describe("useChannelsNotificationSettings", () => {
+  test("should fetch channels notification settings and be referentially stable", async () => {
     server.use(
-      mockGetChannelNotificationSettings(async (_req, res, ctx) => {
+      mockGetChannelsNotificationSettings(async (_req, res, ctx) => {
         return res(
           ctx.json({
             email: {
@@ -49,11 +49,11 @@ describe("useChannelNotificationSettings", () => {
     );
 
     const {
-      liveblocks: { LiveblocksProvider, useChannelNotificationSettings },
+      liveblocks: { LiveblocksProvider, useChannelsNotificationSettings },
     } = createContextsForTest();
 
     const { result, unmount, rerender } = renderHook(
-      () => useChannelNotificationSettings(),
+      () => useChannelsNotificationSettings(),
       {
         wrapper: ({ children }) => (
           <LiveblocksProvider>{children}</LiveblocksProvider>
@@ -83,9 +83,9 @@ describe("useChannelNotificationSettings", () => {
     unmount();
   });
 
-  test("should update channel notification settings optimistically and revert the updates if error response from server", async () => {
+  test("should update channels notification settings optimistically and revert the updates if error response from server", async () => {
     server.use(
-      mockGetChannelNotificationSettings(async (_req, res, ctx) => {
+      mockGetChannelsNotificationSettings(async (_req, res, ctx) => {
         return res(
           ctx.json({
             email: {
@@ -95,17 +95,17 @@ describe("useChannelNotificationSettings", () => {
           })
         );
       }),
-      mockUpdateChannelNotificationSettings((_req, res, ctx) => {
+      mockUpdateChannelsNotificationSettings((_req, res, ctx) => {
         return res(ctx.status(500));
       })
     );
 
     const {
-      liveblocks: { LiveblocksProvider, useChannelNotificationSettings },
+      liveblocks: { LiveblocksProvider, useChannelsNotificationSettings },
     } = createContextsForTest();
 
     const { result, unmount } = renderHook(
-      () => useChannelNotificationSettings(),
+      () => useChannelsNotificationSettings(),
       {
         wrapper: ({ children }) => (
           <LiveblocksProvider>{children}</LiveblocksProvider>
@@ -135,7 +135,7 @@ describe("useChannelNotificationSettings", () => {
       });
     });
 
-    // Channel notification settings should be updated optimistically
+    // Channels notification settings should be updated optimistically
     expect(result.current[0]).toEqual({
       isLoading: false,
       settings: {
@@ -147,7 +147,7 @@ describe("useChannelNotificationSettings", () => {
     });
 
     await waitFor(() =>
-      // Channel notification settings should be reverted to the original value after the error response from the server
+      // Channels notification settings should be reverted to the original value after the error response from the server
       expect(result.current[0]).toEqual({
         isLoading: false,
         settings: {
@@ -163,7 +163,7 @@ describe("useChannelNotificationSettings", () => {
   });
 });
 
-describe("useChannelNotificationSettings: error", () => {
+describe("useChannelsNotificationSettings: error", () => {
   beforeEach(() => {
     jest.useFakeTimers();
   });
@@ -174,21 +174,21 @@ describe("useChannelNotificationSettings: error", () => {
   });
 
   test("should include an error object in the returned value if initial fetch throws an error", async () => {
-    let getChannelNotificationSettingsCount = 0;
+    let getChannelsNotificationSettingsCount = 0;
     server.use(
-      mockGetChannelNotificationSettings(async (_req, res, ctx) => {
-        getChannelNotificationSettingsCount++;
+      mockGetChannelsNotificationSettings(async (_req, res, ctx) => {
+        getChannelsNotificationSettingsCount++;
         // Mock an error response from the server for the initial fetch
         return res(ctx.status(500));
       })
     );
 
     const {
-      liveblocks: { LiveblocksProvider, useChannelNotificationSettings },
+      liveblocks: { LiveblocksProvider, useChannelsNotificationSettings },
     } = createContextsForTest();
 
     const { result, unmount } = renderHook(
-      () => useChannelNotificationSettings(),
+      () => useChannelsNotificationSettings(),
       {
         wrapper: ({ children }) => (
           <LiveblocksProvider>{children}</LiveblocksProvider>
@@ -199,24 +199,24 @@ describe("useChannelNotificationSettings: error", () => {
     expect(result.current[0]).toEqual({ isLoading: true });
 
     // Wait for the first attempt to fetch channel notification settings
-    await waitFor(() => expect(getChannelNotificationSettingsCount).toBe(1));
+    await waitFor(() => expect(getChannelsNotificationSettingsCount).toBe(1));
 
     // The first retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
-    await waitFor(() => expect(getChannelNotificationSettingsCount).toBe(2));
+    await waitFor(() => expect(getChannelsNotificationSettingsCount).toBe(2));
 
     // The second retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getChannelNotificationSettingsCount).toBe(3));
+    await waitFor(() => expect(getChannelsNotificationSettingsCount).toBe(3));
 
     // The third retry should be made after 10s
     await jest.advanceTimersByTimeAsync(10_000);
-    await waitFor(() => expect(getChannelNotificationSettingsCount).toBe(4));
+    await waitFor(() => expect(getChannelsNotificationSettingsCount).toBe(4));
 
     // The fourth retry should be made after 15s
     await jest.advanceTimersByTimeAsync(15_000);
-    await waitFor(() => expect(getChannelNotificationSettingsCount).toBe(5));
+    await waitFor(() => expect(getChannelsNotificationSettingsCount).toBe(5));
 
     await waitFor(() =>
       expect(result.current[0]).toEqual({
@@ -230,11 +230,11 @@ describe("useChannelNotificationSettings: error", () => {
     expect(result.current[0]).toEqual({ isLoading: true });
 
     // A new fetch request for the threads should have been made after the initial render
-    await waitFor(() => expect(getChannelNotificationSettingsCount).toBe(6));
+    await waitFor(() => expect(getChannelsNotificationSettingsCount).toBe(6));
 
     // The first retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getChannelNotificationSettingsCount).toBe(7));
+    await waitFor(() => expect(getChannelsNotificationSettingsCount).toBe(7));
     expect(result.current[0]).toEqual({ isLoading: true });
 
     // and so on...
@@ -244,11 +244,11 @@ describe("useChannelNotificationSettings: error", () => {
 
   test("should clear error state after a successful error retry", async () => {
     let shouldReturnErrorResponse = true;
-    let getChannelNotificationSettingsCount = 0;
+    let getChannelsNotificationSettingsCount = 0;
 
     server.use(
-      mockGetChannelNotificationSettings(async (_req, res, ctx) => {
-        getChannelNotificationSettingsCount++;
+      mockGetChannelsNotificationSettings(async (_req, res, ctx) => {
+        getChannelsNotificationSettingsCount++;
         if (shouldReturnErrorResponse) {
           // Mock an error response from the server for the initial fetch
           return res(ctx.status(500));
@@ -266,11 +266,11 @@ describe("useChannelNotificationSettings: error", () => {
     );
 
     const {
-      liveblocks: { LiveblocksProvider, useChannelNotificationSettings },
+      liveblocks: { LiveblocksProvider, useChannelsNotificationSettings },
     } = createContextsForTest();
 
     const { result, unmount } = renderHook(
-      () => useChannelNotificationSettings(),
+      () => useChannelsNotificationSettings(),
       {
         wrapper: ({ children }) => (
           <LiveblocksProvider>{children}</LiveblocksProvider>
@@ -281,24 +281,24 @@ describe("useChannelNotificationSettings: error", () => {
     expect(result.current[0]).toEqual({ isLoading: true });
 
     // Wait for the first attempt to fetch channel notification settings
-    await waitFor(() => expect(getChannelNotificationSettingsCount).toBe(1));
+    await waitFor(() => expect(getChannelsNotificationSettingsCount).toBe(1));
 
     // The first retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
-    await waitFor(() => expect(getChannelNotificationSettingsCount).toBe(2));
+    await waitFor(() => expect(getChannelsNotificationSettingsCount).toBe(2));
 
     // The second retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getChannelNotificationSettingsCount).toBe(3));
+    await waitFor(() => expect(getChannelsNotificationSettingsCount).toBe(3));
 
     // The third retry should be made after 10s
     await jest.advanceTimersByTimeAsync(10_000);
-    await waitFor(() => expect(getChannelNotificationSettingsCount).toBe(4));
+    await waitFor(() => expect(getChannelsNotificationSettingsCount).toBe(4));
 
     // The fourth retry should be made after 15s
     await jest.advanceTimersByTimeAsync(15_000);
-    await waitFor(() => expect(getChannelNotificationSettingsCount).toBe(5));
+    await waitFor(() => expect(getChannelsNotificationSettingsCount).toBe(5));
 
     await waitFor(() =>
       expect(result.current[0]).toEqual({
@@ -312,7 +312,7 @@ describe("useChannelNotificationSettings: error", () => {
     expect(result.current[0]).toEqual({ isLoading: true });
 
     // A new fetch request for the threads should have been made after the initial render
-    await waitFor(() => expect(getChannelNotificationSettingsCount).toBe(6));
+    await waitFor(() => expect(getChannelsNotificationSettingsCount).toBe(6));
 
     // Switch the mock endpoint to return a successful response after 4 seconds
     shouldReturnErrorResponse = false;
@@ -331,17 +331,17 @@ describe("useChannelNotificationSettings: error", () => {
         },
       })
     );
-    expect(getChannelNotificationSettingsCount).toBe(7);
+    expect(getChannelsNotificationSettingsCount).toBe(7);
 
     unmount();
   });
 
-  test("should poll channel notification settings every 5 mins", async () => {
-    let getChannelNotificationSettingsCount = 0;
+  test("should poll channels notification settings every 5 mins", async () => {
+    let getChannelsNotificationSettingsCount = 0;
     server.use(
-      mockGetChannelNotificationSettings(async (_req, res, ctx) => {
-        getChannelNotificationSettingsCount++;
-        if (getChannelNotificationSettingsCount === 1) {
+      mockGetChannelsNotificationSettings(async (_req, res, ctx) => {
+        getChannelsNotificationSettingsCount++;
+        if (getChannelsNotificationSettingsCount === 1) {
           return res(
             ctx.json({
               email: {
@@ -350,7 +350,7 @@ describe("useChannelNotificationSettings: error", () => {
               },
             })
           );
-        } else if (getChannelNotificationSettingsCount === 2) {
+        } else if (getChannelsNotificationSettingsCount === 2) {
           return res(
             ctx.json({
               email: {
@@ -373,11 +373,11 @@ describe("useChannelNotificationSettings: error", () => {
     );
 
     const {
-      liveblocks: { LiveblocksProvider, useChannelNotificationSettings },
+      liveblocks: { LiveblocksProvider, useChannelsNotificationSettings },
     } = createContextsForTest();
 
     const { result, unmount } = renderHook(
-      () => useChannelNotificationSettings(),
+      () => useChannelsNotificationSettings(),
       {
         wrapper: ({ children }) => (
           <LiveblocksProvider>{children}</LiveblocksProvider>
@@ -400,7 +400,7 @@ describe("useChannelNotificationSettings: error", () => {
       })
     );
 
-    expect(getChannelNotificationSettingsCount).toBe(1);
+    expect(getChannelsNotificationSettingsCount).toBe(1);
 
     // Advance by 5 minute so that and verify that the first poll is triggered
     jest.advanceTimersByTime(60_000 * 5);
@@ -415,7 +415,7 @@ describe("useChannelNotificationSettings: error", () => {
         },
       })
     );
-    expect(getChannelNotificationSettingsCount).toBe(2);
+    expect(getChannelsNotificationSettingsCount).toBe(2);
 
     // Advance by another 5 minute so that and verify that the second poll is triggered
     jest.advanceTimersByTime(60_000 * 5);
@@ -430,16 +430,16 @@ describe("useChannelNotificationSettings: error", () => {
         },
       })
     );
-    expect(getChannelNotificationSettingsCount).toBe(3);
+    expect(getChannelsNotificationSettingsCount).toBe(3);
 
     unmount();
   });
 });
 
-describe("useChannelNotificationSettings - Suspense", () => {
+describe("useChannelsNotificationSettings - Suspense", () => {
   test("should be referentially stable", async () => {
     server.use(
-      mockGetChannelNotificationSettings(async (_req, res, ctx) => {
+      mockGetChannelsNotificationSettings(async (_req, res, ctx) => {
         return res(
           ctx.json({
             email: {
@@ -453,12 +453,12 @@ describe("useChannelNotificationSettings - Suspense", () => {
 
     const {
       liveblocks: {
-        suspense: { LiveblocksProvider, useChannelNotificationSettings },
+        suspense: { LiveblocksProvider, useChannelsNotificationSettings },
       },
     } = createContextsForTest();
 
     const { result, unmount, rerender } = renderHook(
-      () => useChannelNotificationSettings(),
+      () => useChannelsNotificationSettings(),
       {
         wrapper: ({ children }) => (
           <LiveblocksProvider>
@@ -492,7 +492,7 @@ describe("useChannelNotificationSettings - Suspense", () => {
   });
 });
 
-describe("useChannelNotificationSettings - Suspense: error", () => {
+describe("useChannelsNotificationSettings - Suspense: error", () => {
   beforeEach(() => {
     jest.useFakeTimers();
   });
@@ -503,10 +503,10 @@ describe("useChannelNotificationSettings - Suspense: error", () => {
   });
 
   test("should trigger error boundary if initial fetch throws an error", async () => {
-    let getChannelNotificationSettingsCount = 0;
+    let getChannelsNotificationSettingsCount = 0;
     server.use(
-      mockGetChannelNotificationSettings(async (_req, res, ctx) => {
-        getChannelNotificationSettingsCount++;
+      mockGetChannelsNotificationSettings(async (_req, res, ctx) => {
+        getChannelsNotificationSettingsCount++;
         // Mock an error response from the server for the initial fetch
         return res(ctx.status(500));
       })
@@ -514,12 +514,12 @@ describe("useChannelNotificationSettings - Suspense: error", () => {
 
     const {
       liveblocks: {
-        suspense: { LiveblocksProvider, useChannelNotificationSettings },
+        suspense: { LiveblocksProvider, useChannelsNotificationSettings },
       },
     } = createContextsForTest();
 
     const { result, unmount } = renderHook(
-      () => useChannelNotificationSettings(),
+      () => useChannelsNotificationSettings(),
       {
         wrapper: ({ children }) => (
           <LiveblocksProvider>
@@ -546,24 +546,24 @@ describe("useChannelNotificationSettings - Suspense: error", () => {
     expect(result.current).toEqual(null);
 
     // Wait for the first attempt to fetch channel notification settings
-    await waitFor(() => expect(getChannelNotificationSettingsCount).toBe(1));
+    await waitFor(() => expect(getChannelsNotificationSettingsCount).toBe(1));
 
     // The first retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
-    await waitFor(() => expect(getChannelNotificationSettingsCount).toBe(2));
+    await waitFor(() => expect(getChannelsNotificationSettingsCount).toBe(2));
 
     // The second retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getChannelNotificationSettingsCount).toBe(3));
+    await waitFor(() => expect(getChannelsNotificationSettingsCount).toBe(3));
 
     // The third retry should be made after 10s
     await jest.advanceTimersByTimeAsync(10_000);
-    await waitFor(() => expect(getChannelNotificationSettingsCount).toBe(4));
+    await waitFor(() => expect(getChannelsNotificationSettingsCount).toBe(4));
 
     // The fourth retry should be made after 15s
     await jest.advanceTimersByTimeAsync(15_000);
-    await waitFor(() => expect(getChannelNotificationSettingsCount).toBe(5));
+    await waitFor(() => expect(getChannelsNotificationSettingsCount).toBe(5));
 
     await waitFor(() =>
       // Check if the error boundary's fallback is displayed
@@ -578,10 +578,10 @@ describe("useChannelNotificationSettings - Suspense: error", () => {
   });
 
   test("should retry with exponential backoff on error and clear error boundary", async () => {
-    let getChannelNotificationSettingsCount = 0;
+    let getChannelsNotificationSettingsCount = 0;
     server.use(
-      mockGetChannelNotificationSettings(async (_req, res, ctx) => {
-        getChannelNotificationSettingsCount++;
+      mockGetChannelsNotificationSettings(async (_req, res, ctx) => {
+        getChannelsNotificationSettingsCount++;
         // Mock an error response from the server for the initial fetch
         return res(ctx.status(500));
       })
@@ -589,12 +589,12 @@ describe("useChannelNotificationSettings - Suspense: error", () => {
 
     const {
       liveblocks: {
-        suspense: { LiveblocksProvider, useChannelNotificationSettings },
+        suspense: { LiveblocksProvider, useChannelsNotificationSettings },
       },
     } = createContextsForTest();
 
     const { result, unmount } = renderHook(
-      () => useChannelNotificationSettings(),
+      () => useChannelsNotificationSettings(),
       {
         wrapper: ({ children }) => (
           <LiveblocksProvider>
@@ -621,24 +621,24 @@ describe("useChannelNotificationSettings - Suspense: error", () => {
     expect(result.current).toEqual(null);
 
     // Wait for the first attempt to fetch channel notification settings
-    await waitFor(() => expect(getChannelNotificationSettingsCount).toBe(1));
+    await waitFor(() => expect(getChannelsNotificationSettingsCount).toBe(1));
 
     // The first retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
     // A new fetch request for the threads should have been made after the first retry
-    await waitFor(() => expect(getChannelNotificationSettingsCount).toBe(2));
+    await waitFor(() => expect(getChannelsNotificationSettingsCount).toBe(2));
 
     // The second retry should be made after 5s
     await jest.advanceTimersByTimeAsync(5_000);
-    await waitFor(() => expect(getChannelNotificationSettingsCount).toBe(3));
+    await waitFor(() => expect(getChannelsNotificationSettingsCount).toBe(3));
 
     // The third retry should be made after 10s
     await jest.advanceTimersByTimeAsync(10_000);
-    await waitFor(() => expect(getChannelNotificationSettingsCount).toBe(4));
+    await waitFor(() => expect(getChannelsNotificationSettingsCount).toBe(4));
 
     // The fourth retry should be made after 15s
     await jest.advanceTimersByTimeAsync(15_000);
-    await waitFor(() => expect(getChannelNotificationSettingsCount).toBe(5));
+    await waitFor(() => expect(getChannelsNotificationSettingsCount).toBe(5));
 
     await waitFor(() =>
       // Check if the error boundary's fallback is displayed

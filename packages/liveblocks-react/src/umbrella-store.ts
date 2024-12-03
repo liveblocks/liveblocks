@@ -2,7 +2,7 @@ import type {
   AsyncResult,
   BaseMetadata,
   BaseUserMeta,
-  ChannelNotificationSettings,
+  ChannelsNotificationSettings,
   Client,
   CommentData,
   CommentReaction,
@@ -42,7 +42,7 @@ import { autobind } from "./lib/autobind";
 import type { ReadonlyThreadDB } from "./ThreadDB";
 import { ThreadDB } from "./ThreadDB";
 import type {
-  ChannelNotificationSettingsAsyncResult,
+  ChannelsNotificationSettingsAsyncResult,
   InboxNotificationsAsyncResult,
   RoomNotificationSettingsAsyncResult,
   ThreadsAsyncResult,
@@ -65,7 +65,7 @@ type OptimisticUpdate<M extends BaseMetadata> =
   | DeleteInboxNotificationOptimisticUpdate
   | DeleteAllInboxNotificationsOptimisticUpdate
   | UpdateNotificationSettingsOptimisticUpdate
-  | UpdateChannelNotificationSettingsOptimisticUpdate;
+  | UpdateChannelsNotificationSettingsOptimisticUpdate;
 
 type CreateThreadOptimisticUpdate<M extends BaseMetadata> = {
   type: "create-thread";
@@ -176,10 +176,10 @@ type UpdateNotificationSettingsOptimisticUpdate = {
   settings: Partial<RoomNotificationSettings>;
 };
 
-type UpdateChannelNotificationSettingsOptimisticUpdate = {
-  type: "update-channel-notification-settings";
+type UpdateChannelsNotificationSettingsOptimisticUpdate = {
+  type: "update-channels-notification-settings";
   id: string;
-  settings: Partial<ChannelNotificationSettings>;
+  settings: Partial<ChannelsNotificationSettings>;
 };
 
 type PaginationState = {
@@ -552,8 +552,8 @@ type InternalState<M extends BaseMetadata> = Readonly<{
 
   // Using a empty object `{}` (aka. `Record<string, never>`) to mark this property
   // as an empty state while first loading
-  channelNotificationSettings:
-    | ChannelNotificationSettings
+  channelsNotificationSettings:
+    | ChannelsNotificationSettings
     | Record<string, never>;
 }>;
 
@@ -587,7 +587,7 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
   notificationsById: Record<string, InboxNotificationData>;
 
   /**
-   * Channel notifications settings
+   * Channels notifications settings
    * e.g.
    *  {
    *    email: {
@@ -595,10 +595,15 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
    *      textMention: false,
    *      $customKind: true | false,
    *    }
+   *    slack: {
+   *      thread: true,
+   *      textMention: false,
+   *      $customKind: true | false,
+   *    }
    *  }
    */
-  channelNotificationSettings:
-    | ChannelNotificationSettings
+  channelsNotificationSettings:
+    | ChannelsNotificationSettings
     | Record<string, never>;
 
   /**
@@ -632,8 +637,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
   private _notificationsLastRequestedAt: Date | null = null; // Keeps track of when we successfully requested an inbox notifications update for the last time. Will be `null` as long as the first successful fetch hasn't happened yet.
   private _notifications: PaginatedResource;
 
-  // Channel Notification Settings
-  private _channelNotificationSettings: SinglePageResource;
+  // Channels Notification Settings
+  private _channelsNotificationSettings: SinglePageResource;
 
   // Room Threads
   private _roomThreadsLastRequestedAtByRoom = new Map<string, Date>();
@@ -678,15 +683,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this._store.set((store) => ({ ...store }))
     );
 
-    const channelNotificationSettingsFetcher = async (): Promise<void> => {
-      const result = await this._client.getChannelNotificationSettings();
-      this.updateChannelNotificationSettingsCache(result);
+    const channelsNotificationSettingsFetcher = async (): Promise<void> => {
+      const result = await this._client.getChannelsNotificationSettings();
+      this.updateChannelsNotificationSettingsCache(result);
     };
 
-    this._channelNotificationSettings = new SinglePageResource(
-      channelNotificationSettingsFetcher
+    this._channelsNotificationSettings = new SinglePageResource(
+      channelsNotificationSettingsFetcher
     );
-    this._channelNotificationSettings.observable.subscribe(() =>
+    this._channelsNotificationSettings.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
       this._store.set((store) => ({ ...store }))
@@ -699,7 +704,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       notificationsById: {},
       settingsByRoomId: {},
       versionsByRoomId: {},
-      channelNotificationSettings: {},
+      channelsNotificationSettings: {},
     });
 
     // Auto-bind all of this class’ methods here, so we can use stable
@@ -958,15 +963,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this._store.set(callback);
   }
 
-  private updateChannelNotificationSettingsCache(
-    settings: ChannelNotificationSettings
+  private updateChannelsNotificationSettingsCache(
+    settings: ChannelsNotificationSettings
   ): void {
     this._store.set((state) => {
-      const { channelNotificationSettings, ...rest } = state;
+      const { channelsNotificationSettings, ...rest } = state;
       return {
         ...rest,
-        channelNotificationSettings: {
-          ...channelNotificationSettings,
+        channelsNotificationSettings: {
+          ...channelsNotificationSettings,
           ...settings,
         },
       };
@@ -974,10 +979,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   /**
-   * Get the loading state for Channel Notification Settings
+   * Get the loading state for Channels Notification Settings
    */
-  public getChannelNotificationSettingsLoadingState(): ChannelNotificationSettingsAsyncResult {
-    const asyncResult = this._channelNotificationSettings.get();
+  public getChannelsNotificationSettingsLoadingState(): ChannelsNotificationSettingsAsyncResult {
+    const asyncResult = this._channelsNotificationSettings.get();
     if (asyncResult.isLoading || asyncResult.error) {
       return asyncResult;
     }
@@ -985,42 +990,42 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return {
       isLoading: false,
       // Casting properly because:
-      //  At init channel notification settings are equals to `{}`.
-      //  After first load then settings take the real shape of `ChannelNotificationSettings`
+      //  At init channels notification settings are equals to `{}`.
+      //  After first load then settings take the real shape of `ChannelsNotificationSettings`
       //
       // So developers shouldn't receive `settings` equals to `{}` after first load.
       settings: nn(
-        this.get().channelNotificationSettings
-      ) as ChannelNotificationSettings,
+        this.get().channelsNotificationSettings
+      ) as ChannelsNotificationSettings,
     };
   }
 
   /**
-   * Refresh Channel Notification Settings
+   * Refresh Channels Notification Settings
    * from poller
    */
-  public async refreshChannelNotificationSettings(
+  public async refreshChannelsNotificationSettings(
     signal: AbortSignal
   ): Promise<void> {
-    const result = await this._client.getChannelNotificationSettings({
+    const result = await this._client.getChannelsNotificationSettings({
       signal,
     });
 
-    this.updateChannelNotificationSettingsCache(result);
+    this.updateChannelsNotificationSettingsCache(result);
   }
 
   /**
-   * Updates channel notification settings with a new value, replacing the
+   * Updates channels notification settings with a new value, replacing the
    * corresponding optimistic update.
    */
-  public updateChannelNotificationSettings(
-    settings: ChannelNotificationSettings,
+  public updateChannelsNotificationSettings(
+    settings: ChannelsNotificationSettings,
     optimisticUpdateId: string
   ): void {
     // Batch 1️⃣ + 2️⃣
     this._store.batch(() => {
       this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
-      this.updateChannelNotificationSettingsCache(settings); // 2️⃣
+      this.updateChannelsNotificationSettingsCache(settings); // 2️⃣
     });
   }
 
@@ -1414,8 +1419,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this._notifications.waitUntilLoaded();
   }
 
-  public waitUntilChannelNotificationsSettingsLoaded() {
-    return this._channelNotificationSettings.waitUntilLoaded();
+  public waitUntilChannelsNotificationsSettingsLoaded() {
+    return this._channelsNotificationSettings.waitUntilLoaded();
   }
 
   private updateRoomPermissions(permissions: Record<string, Permission[]>) {
@@ -1716,7 +1721,7 @@ function internalToExternalState<M extends BaseMetadata>(
   const computed = {
     notificationsById: { ...state.notificationsById },
     settingsByRoomId: { ...state.settingsByRoomId },
-    channelNotificationSettings: state.channelNotificationSettings,
+    channelsNotificationSettings: state.channelsNotificationSettings,
   };
 
   for (const optimisticUpdate of state.optimisticUpdates) {
@@ -1909,25 +1914,25 @@ function internalToExternalState<M extends BaseMetadata>(
         break;
       }
 
-      case "update-channel-notification-settings": {
-        const settings = computed.channelNotificationSettings;
+      case "update-channels-notification-settings": {
+        const settings = computed.channelsNotificationSettings;
 
         // Casting properly because:
-        //  At init channel notification settings are equals to `{}`.
-        //  After first load then settings take the real shape of `ChannelNotificationSettings`.
-        //  And we update with a partial `ChannelNotificationSettings`.
+        //  At init channels notification settings are equals to `{}`.
+        //  After first load then settings take the real shape of `ChannelsNotificationSettings`.
+        //  And we update with a partial `ChannelsNotificationSettings`.
         //
         // So optimistically when an update happens we return always an object
-        // shaped on the type `ChannelNotificationSettings`. But we're forced to cast
-        // because of we need to wait the first load of channel notification settings and
-        // channel notification settings can contains custom notification kinds (e.g `$whatever`)
+        // shaped on the type `ChannelsNotificationSettings`. But we're forced to cast
+        // because of we need to wait the first load of channels notification settings and
+        // channels notification settings can contains custom notification kinds (e.g `$whatever`)
         // in the augmentation (e.g `liveblocks.config.ts`).
         const updatedSettings = {
           ...settings,
           ...optimisticUpdate.settings,
-        } as ChannelNotificationSettings;
+        } as ChannelsNotificationSettings;
 
-        computed.channelNotificationSettings = updatedSettings;
+        computed.channelsNotificationSettings = updatedSettings;
 
         break;
       }
@@ -1949,7 +1954,7 @@ function internalToExternalState<M extends BaseMetadata>(
     settingsByRoomId: computed.settingsByRoomId,
     threadsDB,
     versionsByRoomId: state.versionsByRoomId,
-    channelNotificationSettings: computed.channelNotificationSettings,
+    channelsNotificationSettings: computed.channelsNotificationSettings,
   };
 }
 

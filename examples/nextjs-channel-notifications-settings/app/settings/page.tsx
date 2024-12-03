@@ -1,7 +1,7 @@
 "use client";
 
 import { LiveblocksProvider } from "@liveblocks/react";
-import { ChannelNotificationsSettings } from "./_components/channel-notifications-settings";
+import { ChannelsNotificationsSettings } from "./_components/channels-notifications-settings";
 
 export default function SettingsPage() {
   return (
@@ -37,7 +37,7 @@ export default function SettingsPage() {
       }}
     >
       <div className="flex flex-col w-full items-center justify-center h-screen">
-        <ChannelNotificationsSettings />
+        <ChannelsNotificationsSettings />
       </div>
     </LiveblocksProvider>
   );
