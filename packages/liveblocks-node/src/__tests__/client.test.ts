@@ -1375,4 +1375,65 @@ describe("client", () => {
       })
     ).resolves.toBeUndefined();
   });
+
+  test("should get user's channel notification settings", async () => {
+    const userId = "florent";
+
+    const settings = {
+      email: {
+        thread: true,
+        textMention: false,
+      },
+    };
+
+    server.use(
+      http.get(
+        `${DEFAULT_BASE_URL}/v2/users/:userId/channel-notification-settings`,
+        () => {
+          return HttpResponse.json(settings, { status: 200 });
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    await expect(
+      client.getChannelNotificationSettings({ userId })
+    ).resolves.toEqual(settings);
+  });
+
+  test("should throw a LiveblocksError when getChannelNotificationSettings receives an error response", async () => {
+    const userId = "dracula";
+    const error = {
+      error: "USER_NOT_FOUND",
+      message: "User not found",
+    };
+
+    server.use(
+      http.get(
+        `${DEFAULT_BASE_URL}/v2/users/:userId/channel-notification-settings`,
+        () => {
+          return HttpResponse.json(error, { status: 404 });
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    // This should throw a LiveblocksError
+    try {
+      // Attempt to get, which should fail and throw an error.
+      await client.getChannelNotificationSettings({ userId });
+
+      // If it doesn't throw, fail the test.
+      expect(true).toBe(false);
+    } catch (err) {
+      expect(err instanceof LiveblocksError).toBe(true);
+      if (err instanceof LiveblocksError) {
+        expect(err.status).toBe(404);
+        expect(err.message).toBe(JSON.stringify(error));
+        expect(err.name).toBe("LiveblocksError");
+      }
+    }
+  });
 });
