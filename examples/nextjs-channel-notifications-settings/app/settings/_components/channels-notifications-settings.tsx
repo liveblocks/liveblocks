@@ -27,13 +27,15 @@ export function ChannelsNotificationsSettings() {
   const handleChangeEmailChannel = (checked: boolean): void => {
     const payload: ChannelsNotificationSettings = checked
       ? {
-          email: { thread: true, textMention: true },
+          email: { thread: true, textMention: true, $fileUploaded: true },
         }
       : {
-          email: { thread: false, textMention: false },
+          email: { thread: false, textMention: false, $fileUploaded: false },
         };
     updateChannelNotificationSettings(payload);
-  }; // Thinking of this maybe it would be worth to have a deep partial
+  };
+  // Thinking of this maybe it would be worth to have a deep partial
+  // e.g updateChannelNotificationSettings({ email: { thread: false }})
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6 w-[600px]">

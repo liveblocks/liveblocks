@@ -155,7 +155,6 @@ export type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 export type {
   ChannelNotificationSetting,
   ChannelsNotificationSettings,
-  CustomNotificationKind,
   NotificationChannel,
   NotificationKind,
 } from "./protocol/ChannelsNotificationSettings";
