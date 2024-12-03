@@ -19,7 +19,7 @@ import type {
   AsyncResult,
   AsyncSuccess,
   BaseMetadata,
-  ChannelNotificationSettings,
+  ChannelsNotificationSettings,
   Client,
   CommentAttachment,
   CommentBody,
@@ -178,8 +178,8 @@ export type InboxNotificationsAsyncResult = PagedAsyncResult<InboxNotificationDa
 export type UnreadInboxNotificationsCountAsyncSuccess = AsyncSuccess<number, "count">; // prettier-ignore
 export type UnreadInboxNotificationsCountAsyncResult = AsyncResult<number, "count">; // prettier-ignore
 
-export type ChannelNotificationSettingsAsyncSuccess = AsyncSuccess<ChannelNotificationSettings, "settings"> // prettier-ignore
-export type ChannelNotificationSettingsAsyncResult = AsyncResult<ChannelNotificationSettings, "settings"> // prettier-ignore
+export type ChannelsNotificationSettingsAsyncSuccess = AsyncSuccess<ChannelsNotificationSettings, "settings"> // prettier-ignore
+export type ChannelsNotificationSettingsAsyncResult = AsyncResult<ChannelsNotificationSettings, "settings"> // prettier-ignore
 
 export type RoomNotificationSettingsAsyncSuccess = AsyncSuccess<RoomNotificationSettings, "settings">; // prettier-ignore
 export type RoomNotificationSettingsAsyncResult = AsyncResult<RoomNotificationSettings, "settings">; // prettier-ignore
@@ -1174,25 +1174,25 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
   useInboxNotificationThread(inboxNotificationId: string): ThreadData<M>;
 
   /**
-   * Returns the channel notifications settings for the current user.
+   * Returns the channels notification settings for the current user.
    *
    * @example
-   * const [{ settings }, updateSettings] = useChannelNotificationSettings()
+   * const [{ settings }, updateChannelsNotificationSettings] = useChannelsNotificationSettings()
    */
-  useChannelNotificationSettings(): [
-    ChannelNotificationSettingsAsyncResult,
-    (settings: Partial<ChannelNotificationSettings>) => void,
+  useChannelsNotificationSettings(): [
+    ChannelsNotificationSettingsAsyncResult,
+    (settings: Partial<ChannelsNotificationSettings>) => void,
   ];
 
   /**
-   * Returns a function that updates the user's channel notification
+   * Returns a function that updates the user's channels notification
    * settings for a project.
    *
    * @example
-   * const updateChannelNotificationSettings = useUpdateChannelNotificationSettings()
+   * const updateChannelsNotificationSettings = useUpdateChannelsNotificationSettings()
    */
-  useUpdateChannelNotificationSettings(): (
-    settings: Partial<ChannelNotificationSettings>
+  useUpdateChannelsNotificationSettings(): (
+    settings: Partial<ChannelsNotificationSettings>
   ) => void;
 
   /**
@@ -1260,14 +1260,14 @@ export type LiveblocksContextBundle<
             useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountAsyncSuccess;
 
             /**
-             * Returns the channel notifications settings for the current user.
+             * Returns the channels notification settings for the current user.
              *
              * @example
-             * const [{ settings }, updateSettings] = useChannelNotificationSettings()
+             * const [{ settings }, updateChannelsNotificationSettings] = useChannelsNotificationSettings()
              */
-            useChannelNotificationSettings(): [
-              ChannelNotificationSettingsAsyncResult,
-              (settings: Partial<ChannelNotificationSettings>) => void,
+            useChannelsNotificationSettings(): [
+              ChannelsNotificationSettingsAsyncResult,
+              (settings: Partial<ChannelsNotificationSettings>) => void,
             ];
 
             /**

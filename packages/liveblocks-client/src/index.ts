@@ -10,7 +10,7 @@ export type {
   BaseUserMeta,
   BroadcastOptions,
   ChannelNotificationSetting,
-  ChannelNotificationSettings,
+  ChannelsNotificationSettings,
   Client,
   ClientOptions,
   CommentAttachment,

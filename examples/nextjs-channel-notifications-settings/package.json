@@ -1,6 +1,6 @@
 {
-  "name": "@liveblocks-examples/nextjs-channel-notifications-settings",
-  "description": "This example shows how to build a collaborative text editor with Liveblocks, TipTap, and Next.js.",
+  "name": "@liveblocks-examples/nextjs-channels-notifications-settings",
+  "description": "This example shows how to build a user channels notification settings experience.",
   "license": "Apache-2.0",
   "private": true,
   "scripts": {

@@ -19,7 +19,7 @@ import type { QueryParams, URLSafeString } from "./lib/url";
 import { url, urljoin } from "./lib/url";
 import { raise } from "./lib/utils";
 import type { Permission } from "./protocol/AuthToken";
-import type { ChannelNotificationSettings } from "./protocol/ChannelNotificationSettings";
+import type { ChannelsNotificationSettings } from "./protocol/ChannelsNotificationSettings";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import type {
   BaseMetadata,
@@ -359,11 +359,11 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
 
   deleteInboxNotification(inboxNotificationId: string): Promise<void>;
 
-  getChannelNotificationSettings(): Promise<ChannelNotificationSettings>;
+  getChannelsNotificationSettings(): Promise<ChannelsNotificationSettings>;
 
-  updateChannelNotificationSettings(
-    settings: Partial<ChannelNotificationSettings>
-  ): Promise<ChannelNotificationSettings>;
+  updateChannelsNotificationSettings(
+    settings: Partial<ChannelsNotificationSettings>
+  ): Promise<ChannelsNotificationSettings>;
 }
 
 export interface LiveblocksHttpApi<M extends BaseMetadata>
@@ -1349,25 +1349,25 @@ export function createApiClient<M extends BaseMetadata>({
   }
 
   /* -------------------------------------------------------------------------------------------------
-   * Channel notifications settings (Project level)
+   * Channels notifications settings (Project level)
    * -------------------------------------------------------------------------------------------------
    */
-  async function getChannelNotificationSettings(options?: {
+  async function getChannelsNotificationSettings(options?: {
     signal?: AbortSignal;
-  }): Promise<ChannelNotificationSettings> {
-    return httpClient.get<ChannelNotificationSettings>(
-      url`/v2/c/channel-notification-settings`,
+  }): Promise<ChannelsNotificationSettings> {
+    return httpClient.get<ChannelsNotificationSettings>(
+      url`/v2/c/channels-notification-settings`,
       await authManager.getAuthValue({ requestedScope: "comments:read" }),
       undefined,
       { signal: options?.signal }
     );
   }
 
-  async function updateChannelNotificationSettings(
-    settings: Partial<ChannelNotificationSettings>
-  ): Promise<ChannelNotificationSettings> {
-    return httpClient.post<ChannelNotificationSettings>(
-      url`/v2/c/channel-notification-settings`,
+  async function updateChannelsNotificationSettings(
+    settings: Partial<ChannelsNotificationSettings>
+  ): Promise<ChannelsNotificationSettings> {
+    return httpClient.post<ChannelsNotificationSettings>(
+      url`/v2/c/channels-notification-settings`,
       await authManager.getAuthValue({ requestedScope: "comments:read" }),
       settings
     );
@@ -1478,7 +1478,7 @@ export function createApiClient<M extends BaseMetadata>({
     updateNotificationSettings,
     // Channel notification settings
     getNotificationSettings,
-    updateChannelNotificationSettings,
+    updateChannelsNotificationSettings,
     // Room text editor
     createTextMention,
     deleteTextMention,
@@ -1502,7 +1502,7 @@ export function createApiClient<M extends BaseMetadata>({
     markInboxNotificationAsRead,
     deleteAllInboxNotifications,
     deleteInboxNotification,
-    getChannelNotificationSettings,
+    getChannelsNotificationSettings,
     // User threads
     getUserThreads_experimental,
     getUserThreadsSince_experimental,

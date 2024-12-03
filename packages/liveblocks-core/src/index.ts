@@ -154,11 +154,11 @@ export type { BaseRoomInfo } from "./protocol/BaseRoomInfo";
 export type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 export type {
   ChannelNotificationSetting,
-  ChannelNotificationSettings,
+  ChannelsNotificationSettings,
   CustomNotificationKind,
   NotificationChannel,
   NotificationKind,
-} from "./protocol/ChannelNotificationSettings";
+} from "./protocol/ChannelsNotificationSettings";
 export type {
   BroadcastEventClientMsg,
   ClientMsg,

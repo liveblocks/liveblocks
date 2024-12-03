@@ -12,6 +12,6 @@ export type ChannelNotificationSetting = {
   [K in NotificationKind]: boolean;
 };
 
-export type ChannelNotificationSettings = {
+export type ChannelsNotificationSettings = {
   [K in NotificationChannel]: ChannelNotificationSetting;
 };

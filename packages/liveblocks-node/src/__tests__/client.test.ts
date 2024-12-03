@@ -1,5 +1,5 @@
 import type {
-  ChannelNotificationSettings,
+  ChannelsNotificationSettings,
   CommentData,
   CommentUserReaction,
   RoomNotificationSettings,
@@ -1377,10 +1377,10 @@ describe("client", () => {
     ).resolves.toBeUndefined();
   });
 
-  test("should get user's channel notification settings", async () => {
+  test("should get user's channels notification settings", async () => {
     const userId = "florent";
 
-    const settings: ChannelNotificationSettings = {
+    const settings: ChannelsNotificationSettings = {
       email: {
         thread: true,
         textMention: false,
@@ -1389,7 +1389,7 @@ describe("client", () => {
 
     server.use(
       http.get(
-        `${DEFAULT_BASE_URL}/v2/users/:userId/channel-notification-settings`,
+        `${DEFAULT_BASE_URL}/v2/users/:userId/channels-notification-settings`,
         () => {
           return HttpResponse.json(settings, { status: 200 });
         }
@@ -1399,11 +1399,11 @@ describe("client", () => {
     const client = new Liveblocks({ secret: "sk_xxx" });
 
     await expect(
-      client.getChannelNotificationSettings({ userId })
+      client.getChannelsNotificationSettings({ userId })
     ).resolves.toEqual(settings);
   });
 
-  test("should throw a LiveblocksError when getChannelNotificationSettings receives an error response", async () => {
+  test("should throw a LiveblocksError when getChannelsNotificationSettings receives an error response", async () => {
     const userId = "dracula";
     const error = {
       error: "USER_NOT_FOUND",
@@ -1412,7 +1412,7 @@ describe("client", () => {
 
     server.use(
       http.get(
-        `${DEFAULT_BASE_URL}/v2/users/:userId/channel-notification-settings`,
+        `${DEFAULT_BASE_URL}/v2/users/:userId/channels-notification-settings`,
         () => {
           return HttpResponse.json(error, { status: 404 });
         }
@@ -1424,7 +1424,7 @@ describe("client", () => {
     // This should throw a LiveblocksError
     try {
       // Attempt to get, which should fail and throw an error.
-      await client.getChannelNotificationSettings({ userId });
+      await client.getChannelsNotificationSettings({ userId });
 
       // If it doesn't throw, fail the test.
       expect(true).toBe(false);
@@ -1438,9 +1438,9 @@ describe("client", () => {
     }
   });
 
-  test("should update user's channel notification settings", async () => {
+  test("should update user's channels notification settings", async () => {
     const userId = "nimesh";
-    const settings: Partial<ChannelNotificationSettings> = {
+    const settings: Partial<ChannelsNotificationSettings> = {
       email: {
         textMention: false,
         thread: false,
@@ -1449,7 +1449,7 @@ describe("client", () => {
 
     server.use(
       http.post(
-        `${DEFAULT_BASE_URL}/v2/users/:userId/channel-notification-settings`,
+        `${DEFAULT_BASE_URL}/v2/users/:userId/channels-notification-settings`,
         () => {
           return HttpResponse.json(settings, { status: 200 });
         }
@@ -1459,13 +1459,13 @@ describe("client", () => {
     const client = new Liveblocks({ secret: "sk_xxx" });
 
     await expect(
-      client.updateChannelNotificationSettings({ userId, data: settings })
+      client.updateChannelsNotificationSettings({ userId, data: settings })
     ).resolves.toEqual(settings);
   });
 
-  test("should throw a LiveblocksError when updateChannelNotificationSettings receives an error response", async () => {
+  test("should throw a LiveblocksError when updateChannelsNotificationSettings receives an error response", async () => {
     const userId = "mina";
-    const settings: Partial<ChannelNotificationSettings> = {
+    const settings: Partial<ChannelsNotificationSettings> = {
       email: {
         textMention: false,
         thread: false,
@@ -1478,7 +1478,7 @@ describe("client", () => {
 
     server.use(
       http.post(
-        `${DEFAULT_BASE_URL}/v2/users/:userId/channel-notification-settings`,
+        `${DEFAULT_BASE_URL}/v2/users/:userId/channels-notification-settings`,
         () => {
           return HttpResponse.json(error, { status: 404 });
         }
@@ -1490,7 +1490,7 @@ describe("client", () => {
     // This should throw a LiveblocksError
     try {
       // Attempt to get, which should fail and throw an error.
-      await client.updateChannelNotificationSettings({
+      await client.updateChannelsNotificationSettings({
         userId,
         data: settings,
       });
@@ -1507,12 +1507,12 @@ describe("client", () => {
     }
   });
 
-  test("should delete user's channel notification settings", async () => {
+  test("should delete user's channels notification settings", async () => {
     const userId = "adri";
 
     server.use(
       http.delete(
-        `${DEFAULT_BASE_URL}/v2/users/:userId/channel-notification-settings`,
+        `${DEFAULT_BASE_URL}/v2/users/:userId/channels-notification-settings`,
         () => {
           return HttpResponse.json(undefined, { status: 204 });
         }
@@ -1522,11 +1522,11 @@ describe("client", () => {
     const client = new Liveblocks({ secret: "sk_xxx" });
 
     await expect(
-      client.deleteChannelNotificationSettings({ userId })
+      client.deleteChannelsNotificationSettings({ userId })
     ).resolves.toBeUndefined();
   });
 
-  test("should throw a LiveblocksError when deleteChannelNotificationSettings receives an error response", async () => {
+  test("should throw a LiveblocksError when deleteChannelsNotificationSettings receives an error response", async () => {
     const userId = "jonathan";
     const error = {
       error: "USER_NOT_FOUND",
@@ -1535,7 +1535,7 @@ describe("client", () => {
 
     server.use(
       http.delete(
-        `${DEFAULT_BASE_URL}/v2/users/:userId/channel-notification-settings`,
+        `${DEFAULT_BASE_URL}/v2/users/:userId/channels-notification-settings`,
         () => {
           return HttpResponse.json(error, { status: 404 });
         }
@@ -1547,7 +1547,7 @@ describe("client", () => {
     // This should throw a LiveblocksError
     try {
       // Attempt to get, which should fail and throw an error.
-      await client.deleteChannelNotificationSettings({
+      await client.deleteChannelsNotificationSettings({
         userId,
       });
 

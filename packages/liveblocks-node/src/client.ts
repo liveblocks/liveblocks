@@ -6,7 +6,7 @@
 import type {
   BaseMetadata,
   BaseUserMeta,
-  ChannelNotificationSettings,
+  ChannelsNotificationSettings,
   CommentBody,
   CommentData,
   CommentDataPlain,
@@ -1647,38 +1647,38 @@ export class Liveblocks {
   }
 
   /**
-   * Get channel notification settings for a user for a project.
-   * @param params.userId The user ID to get the channel notifications settings for.
+   * Get channels notification settings for a user for a project.
+   * @param params.userId The user ID to get the channels notifications settings for.
    */
-  public async getChannelNotificationSettings(params: {
+  public async getChannelsNotificationSettings(params: {
     userId: string;
-  }): Promise<ChannelNotificationSettings> {
+  }): Promise<ChannelsNotificationSettings> {
     const { userId } = params;
 
     const res = await this.get(
-      url`/v2/users/${userId}/channel-notification-settings`
+      url`/v2/users/${userId}/channels-notification-settings`
     );
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
 
-    return (await res.json()) as ChannelNotificationSettings;
+    return (await res.json()) as ChannelsNotificationSettings;
   }
 
   /**
-   * Update the user's channel notification settings.
-   * @param params.userId The user ID to update the channel notification settings for.
-   * @param params.data The new channel notification settings for the user.
+   * Update the user's channels notification settings.
+   * @param params.userId The user ID to update the channels notification settings for.
+   * @param params.data The new channels notification settings for the user.
    */
-  public async updateChannelNotificationSettings(params: {
+  public async updateChannelsNotificationSettings(params: {
     userId: string;
-    data: Partial<ChannelNotificationSettings>;
-  }): Promise<ChannelNotificationSettings> {
+    data: Partial<ChannelsNotificationSettings>;
+  }): Promise<ChannelsNotificationSettings> {
     const { userId, data } = params;
 
     const res = await this.post(
-      url`/v2/users/${userId}/channel-notification-settings`,
+      url`/v2/users/${userId}/channels-notification-settings`,
       data
     );
 
@@ -1687,19 +1687,19 @@ export class Liveblocks {
       throw new LiveblocksError(res.status, text);
     }
 
-    return (await res.json()) as ChannelNotificationSettings;
+    return (await res.json()) as ChannelsNotificationSettings;
   }
 
   /**
-   * Delete the user's channel notification settings
-   * @param params.userId The user ID to update the channel notification settings for.
+   * Delete the user's channels notification settings
+   * @param params.userId The user ID to update the channels notification settings for.
    */
-  public async deleteChannelNotificationSettings(params: {
+  public async deleteChannelsNotificationSettings(params: {
     userId: string;
   }): Promise<void> {
     const { userId } = params;
     const res = await this.delete(
-      url`/v2/users/${userId}/channel-notification-settings`
+      url`/v2/users/${userId}/channels-notification-settings`
     );
     if (!res.ok) {
       const text = await res.text();

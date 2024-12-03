@@ -19,7 +19,7 @@ import type { Resolve } from "./lib/Resolve";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
 import { TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
-import type { ChannelNotificationSettings } from "./protocol/ChannelNotificationSettings";
+import type { ChannelsNotificationSettings } from "./protocol/ChannelsNotificationSettings";
 import type {
   BaseMetadata,
   ThreadData,
@@ -269,29 +269,29 @@ export type NotificationsApi<M extends BaseMetadata> = {
   deleteInboxNotification(inboxNotificationId: string): Promise<void>;
 
   /**
-   * Gets channel notifications settings for a user for a project.
+   * Gets channels notifications settings for a user for a project.
    *
    * @example
-   * const channelNotificationSettings = await client.getChannelNotificationSettings();
+   * const channelsNotificationSettings = await client.getChannelsNotificationSettings();
    */
-  getChannelNotificationSettings(options?: {
+  getChannelsNotificationSettings(options?: {
     signal?: AbortSignal;
-  }): Promise<ChannelNotificationSettings>;
+  }): Promise<ChannelsNotificationSettings>;
 
   /**
-   * Update channel notifications for a user for a project.
+   * Update channels notifications for a user for a project.
    *
    * @example
-   * await client.updateChannelNotificationSettings({
+   * await client.updateChannelsNotificationSettings({
    *  email: {
    *    thread: true,
    *    textMention: false,
    *  }
    * })
    */
-  updateChannelNotificationSettings(
-    settings: Partial<ChannelNotificationSettings>
-  ): Promise<ChannelNotificationSettings>;
+  updateChannelsNotificationSettings(
+    settings: Partial<ChannelsNotificationSettings>
+  ): Promise<ChannelsNotificationSettings>;
 };
 
 /**
@@ -867,9 +867,10 @@ export function createClient<U extends BaseUserMeta = DU>(
       deleteInboxNotification: httpClient.deleteInboxNotification,
 
       // Public channel notification settings API
-      getChannelNotificationSettings: httpClient.getChannelNotificationSettings,
-      updateChannelNotificationSettings:
-        httpClient.updateChannelNotificationSettings,
+      getChannelsNotificationSettings:
+        httpClient.getChannelsNotificationSettings,
+      updateChannelsNotificationSettings:
+        httpClient.updateChannelsNotificationSettings,
 
       // Advanced resolvers APIs
       resolvers: {

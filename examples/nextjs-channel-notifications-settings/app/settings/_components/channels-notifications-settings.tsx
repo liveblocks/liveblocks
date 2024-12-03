@@ -1,19 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import type { ChannelNotificationSettings } from "@liveblocks/core";
-import { useChannelNotificationSettings } from "@liveblocks/react";
+import type { ChannelsNotificationSettings } from "@liveblocks/core";
+import { useChannelsNotificationSettings } from "@liveblocks/react";
 import * as Switch from "@radix-ui/react-switch";
 import { cn } from "../../../utils/cn";
 
-export function ChannelNotificationsSettings() {
+export function ChannelsNotificationsSettings() {
   // TODO: add pre-defined channels
   const [slackNotifications, setSlackNotifications] = useState(false);
   // TODO: add augmentation
   const [$customNotifications, set$customNotifications] = useState(false);
 
   const [{ isLoading, error, settings }, updateChannelNotificationSettings] =
-    useChannelNotificationSettings();
+    useChannelsNotificationSettings();
 
   if (isLoading) return null;
   if (error) return null; // or throw/capture error
@@ -25,7 +25,7 @@ export function ChannelNotificationsSettings() {
   );
 
   const handleChangeEmailChannel = (checked: boolean): void => {
-    const payload: ChannelNotificationSettings = checked
+    const payload: ChannelsNotificationSettings = checked
       ? {
           email: { thread: true, textMention: true },
         }

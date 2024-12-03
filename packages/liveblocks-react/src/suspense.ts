@@ -25,7 +25,7 @@ export {
   useMarkInboxNotificationAsRead,
   useDeleteAllInboxNotifications,
   useDeleteInboxNotification,
-  useUpdateChannelNotificationSettings,
+  useUpdateChannelsNotificationSettings,
   useSyncStatus,
 } from "./liveblocks";
 export {
@@ -81,7 +81,7 @@ export {
 } from "./room";
 export {
   useInboxNotificationsSuspense as useInboxNotifications,
-  useChannelNotificationSettingsSuspense as useChannelNotificationSettings,
+  useChannelsNotificationSettingsSuspense as useChannelsNotificationSettings,
   useRoomInfoSuspense as useRoomInfo,
   useUnreadInboxNotificationsCountSuspense as useUnreadInboxNotificationsCount,
   useUserSuspense as useUser,
