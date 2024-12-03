@@ -984,7 +984,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     return {
       isLoading: false,
-      settings: nn(this.get().channelNotificationSettings),
+      // Casting properly because:
+      //  At init channel notification settings are equals to `{}`.
+      //  After first load then settings take the real shape of `ChannelNotificationSettings`
+      //
+      // So developers shouldn't receive `settings` equals to `{}` after first load.
+      settings: nn(
+        this.get().channelNotificationSettings
+      ) as ChannelNotificationSettings,
     };
   }
 
@@ -1918,7 +1925,7 @@ function internalToExternalState<M extends BaseMetadata>(
         const updatedSettings = {
           ...settings,
           ...optimisticUpdate.settings,
-        } as ChannelNotificationSettings | Record<string, never>;
+        } as ChannelNotificationSettings;
 
         computed.channelNotificationSettings = updatedSettings;
 
