@@ -26,14 +26,17 @@ import { createPortal } from "react-dom";
 
 import { classNames } from "../classnames";
 import { EditorProvider } from "../context";
+import type {
+  AiExtensionStorage,
+  CommentsExtensionStorage,
+  FloatingPosition,
+} from "../types";
 import {
   applyToolbarSlot,
   Toolbar,
   type ToolbarSlot,
   type ToolbarSlotProps,
 } from "./Toolbar";
-
-type FloatingPosition = "top" | "bottom";
 
 export interface FloatingToolbarProps
   extends Omit<ComponentProps<"div">, "children"> {

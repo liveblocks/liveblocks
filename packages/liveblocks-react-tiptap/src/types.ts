@@ -35,9 +35,14 @@ export type AiExtensionStorage = {
   askAiSelection: TextSelection | null;
 };
 
+export type LiveblocksExtensionStorage = AiExtensionStorage &
+  CommentsExtensionStorage;
+
 export type ThreadPluginState = {
   threadPositions: Map<string, { from: number; to: number }>;
   selectedThreadId: string | null;
   selectedThreadPos: number | null;
   decorations: DecorationSet;
 };
+
+export type FloatingPosition = "top" | "bottom";

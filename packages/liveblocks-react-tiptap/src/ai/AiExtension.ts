@@ -28,6 +28,7 @@ export const AiExtension = Extension.create<never, AiExtensionStorage>({
           this.editor.state.selection.$anchor,
           this.editor.state.selection.$head
         );
+        this.editor.commands.blur();
         return true;
       },
     };

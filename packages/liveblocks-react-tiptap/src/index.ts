@@ -4,6 +4,7 @@ import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 
+export { AskAiToolbar } from "./ai/AskAiToolbar";
 export { AnchoredThreads } from "./comments/AnchoredThreads";
 export { FloatingComposer } from "./comments/FloatingComposer";
 export { FloatingThreads } from "./comments/FloatingThreads";
@@ -24,6 +25,7 @@ declare module "@tiptap/core" {
       addPendingComment: () => ReturnType;
     };
     ai: {
+      // TODO: Add an argument to start a specific task immediately (e.g. askAi('summarize'))?
       askAi: () => ReturnType;
     };
   }
