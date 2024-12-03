@@ -20,7 +20,6 @@ import type {
 import React, {
   forwardRef,
   useCallback,
-  useEffect,
   useLayoutEffect,
   useMemo,
 } from "react";
@@ -29,6 +28,7 @@ import { createPortal } from "react-dom";
 import { classNames } from "../classnames";
 import { EditorProvider } from "../context";
 import type { AiExtensionStorage, FloatingPosition } from "../types";
+import { compareTextSelections, getDomRangeFromTextSelection } from "../utils";
 
 export interface AskAiToolbarProps
   extends Omit<ComponentProps<"div">, "children"> {
@@ -51,17 +51,16 @@ export const AskAiToolbar = forwardRef<HTMLDivElement, AskAiToolbarProps>(
     },
     forwardedRef
   ) => {
-    const isOpen =
+    const askAiSelection =
       useEditorState({
         editor,
         selector: (ctx) => {
-          console.log(ctx.editor?.storage.liveblocksAi);
-          return !!(
+          return (
             ctx.editor?.storage.liveblocksAi as AiExtensionStorage | undefined
           )?.askAiSelection;
         },
-        equalityFn: Object.is,
-      }) ?? false;
+        equalityFn: compareTextSelections,
+      }) ?? undefined;
     const floatingOptions: UseFloatingOptions = useMemo(() => {
       const detectOverflowOptions: DetectOverflowOptions = {
         padding: ASK_AI_TOOLBAR_COLLISION_PADDING,
@@ -88,6 +87,7 @@ export const AskAiToolbar = forwardRef<HTMLDivElement, AskAiToolbarProps>(
         },
       };
     }, [position, sideOffset]);
+    const isOpen = askAiSelection !== undefined;
     const {
       refs: { setReference, setFloating },
       strategy,
@@ -100,28 +100,19 @@ export const AskAiToolbar = forwardRef<HTMLDivElement, AskAiToolbarProps>(
     });
     const mergedRefs = useRefs(forwardedRef, setFloating);
 
-    const updateRef = useCallback(() => {
+    useLayoutEffect(() => {
       if (!editor || !isOpen) {
         return;
       }
-      const el = editor.view.dom.querySelector(".lb-tiptap-active-selection");
-      if (el) {
-        setReference(el);
-      }
-    }, [setReference, editor, isOpen]);
 
-    // Remote cursor updates and other edits can cause the ref to break
-    useEffect(() => {
-      if (!editor || !isOpen) {
-        return;
-      }
-      editor.on("transaction", updateRef);
-      return () => {
-        editor.off("transaction", updateRef);
-      };
-    }, [editor, updateRef, isOpen]);
+      if (!askAiSelection) {
+        setReference(null);
+      } else {
+        const domRange = getDomRangeFromTextSelection(askAiSelection, editor);
 
-    useLayoutEffect(updateRef, [updateRef]);
+        setReference(domRange);
+      }
+    }, [askAiSelection, editor, isOpen, setReference]);
 
     const handleKeyDown = useCallback(
       (event: ReactKeyboardEvent<HTMLDivElement>) => {
