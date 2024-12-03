@@ -55,15 +55,18 @@ test("set LiveObject", () => {
   });
 });
 
-// XXX Make pass!
-test.fails("using .get() should always return the same Live instance", () => {
+test("using .get() should always return the same Live instance", () => {
   const client = new Client({
     setLiveObject,
 
     // We can inline a mutation in this test, because we're not sending
     // anything to a server here anyway
     customTest: (root) => {
-      if (root.get("a") !== root.get("a")) {
+      const obj1 = root.get("a");
+      const obj2 = root.get("a");
+
+      // Should be the same object!
+      if (obj1 !== obj2) {
         throw new Error('Expected .get("a") to return a stable result');
       }
     },

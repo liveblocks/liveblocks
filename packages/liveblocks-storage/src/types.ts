@@ -151,6 +151,7 @@ export type ServerMsg =
 /** @internal */
 export interface Pool {
   nextId<P extends string>(prefix: P): `${P}${number}:${number}`;
+  getRoot(): LiveObject;
   getNode(nodeId: NodeId): LiveStructure;
   getChild(nodeId: NodeId, key: string): Lson | undefined;
   setChild(nodeId: NodeId, key: string, value: Lson): void;

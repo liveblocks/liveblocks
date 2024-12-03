@@ -4,7 +4,6 @@ import type { ChangeReturnType, OmitFirstArg } from "~/lib/ts-toolkit.js";
 
 import { LayeredCache } from "./LayeredCache.js";
 import type { Callback, EventSource, Observable } from "./lib/EventSource.js";
-import { LiveObject } from "./LiveObject.js";
 import type {
   ClientMsg,
   Delta,
@@ -355,7 +354,7 @@ export class Client<M extends Mutations> {
     cache.startTransaction();
     try {
       const pool = cache;
-      mutationFn(LiveObject._load("root", pool), ...args);
+      mutationFn(pool.getRoot(), ...args);
       cache.commit();
     } catch (e) {
       cache.rollback();
