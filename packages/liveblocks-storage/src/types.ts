@@ -38,17 +38,17 @@ export type PendingOp = {
 };
 
 export type Delta = readonly [
-  /** Keys to remove */
-  rem: { readonly [nodeId: NodeId]: readonly string[] },
+  /** Keys to remove from nodes */
+  remKeys: { readonly [nodeId: NodeId]: readonly string[] },
 
-  /** Keys to add new values */
+  /** New values */
   addValues: {
     readonly [nodeId: NodeId]: {
       readonly [key: string]: Json;
     };
   },
 
-  /** Keys to add new refs */
+  /** New refs */
   addRefs: {
     readonly [nodeId: NodeId]: {
       readonly [key: string]: string;

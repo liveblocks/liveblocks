@@ -54,6 +54,13 @@ function createQueries(db: Database) {
       >("SELECT EXISTS(SELECT 1 FROM storage WHERE nid = ? AND key = ?)")
       .pluck(),
 
+    selectRefByKey: db
+      .prepare<
+        [nid: string, key: string],
+        string
+      >("SELECT ref FROM storage WHERE nid = ? AND key = ? AND ref IS NOT NULL")
+      .pluck(),
+
     selectKey: db
       .prepare<
         [nid: string, key: string],
@@ -70,6 +77,14 @@ function createQueries(db: Database) {
         [nid: string],
         [key: string, jval: string, ref: string]
       >("SELECT key, jval, ref FROM storage WHERE nid = ?")
+      .raw(),
+
+    selectAllRefsByNodeId: db
+      .prepare<
+        [nid: string],
+        string
+      >("SELECT ref FROM storage WHERE nid = ? AND ref IS NOT NULL")
+      .pluck()
       .raw(),
 
     selectAll: db
@@ -92,7 +107,7 @@ function createQueries(db: Database) {
        ON CONFLICT (nid, key) DO UPDATE SET jval = excluded.jval, ref = excluded.ref`
     ),
 
-    deleteKey: db.prepare<[nid: string, key: string], void>(
+    deleteByKey: db.prepare<[nid: string, key: string], void>(
       "DELETE FROM storage WHERE nid = ? AND key = ?"
     ),
 
@@ -120,7 +135,7 @@ function createQueries(db: Database) {
        ON CONFLICT (nid, key, clock) DO UPDATE SET jval = excluded.jval, ref = excluded.ref`
     ),
 
-    deleteKey: db.prepare<[nid: string, key: string, clock: number], void>(
+    deleteByKey: db.prepare<[nid: string, key: string, clock: number], void>(
       `INSERT INTO versions (nid, key, clock, jval, ref)
        VALUES (?, ?, ?, NULL, NULL)
        ON CONFLICT (nid, key, clock) DO UPDATE SET jval = excluded.jval, ref = excluded.ref`
@@ -129,7 +144,13 @@ function createQueries(db: Database) {
     selectAll: db
       .prepare<
         [],
-        [nid: string, key: string, clock: number, jval: string, ref: string]
+        [
+          nid: string,
+          key: string,
+          clock: number,
+          jval: string | null,
+          ref: string | null,
+        ]
       >("SELECT nid, key, clock, jval, ref FROM versions")
       .raw(),
 
@@ -183,10 +204,6 @@ export class SQLCache {
     return this.#pendingClock;
   }
 
-  // ----------------------------------------------------
-  // "Multi-layer" cache idea
-  // ----------------------------------------------------
-
   #get(pool: Pool, nodeId: NodeId, key: string): Lson | undefined {
     const row = this.#q.storage.selectKey.get(nodeId, key);
     if (row === undefined) return undefined;
@@ -229,10 +246,30 @@ export class SQLCache {
     }
   }
 
+  /**
+   * Recursively delete the entire node tree under a given node ID.
+   */
+  #deleteTree(nodeId: NodeId): void {
+    const nestedRefs = this.#q.storage.selectAllRefsByNodeId.all(nodeId);
+    for (const ref of nestedRefs) {
+      this.#deleteTree(ref);
+    }
+
+    for (const key of this.#q.storage.selectKeysByNodeId.all(nodeId)) {
+      this.#q.storage.deleteByKey.run(nodeId, key);
+      this.#q.versions.deleteByKey.run(nodeId, key, this.#pendingClock);
+    }
+  }
+
   #delete(nodeId: NodeId, key: string): boolean {
-    const result = this.#q.storage.deleteKey.run(nodeId, key);
+    const ref = this.#q.storage.selectRefByKey.get(nodeId, key);
+    if (ref !== undefined) {
+      this.#deleteTree(ref);
+    }
+
+    const result = this.#q.storage.deleteByKey.run(nodeId, key);
     if (result.changes > 0) {
-      this.#q.versions.deleteKey.run(nodeId, key, this.#pendingClock);
+      this.#q.versions.deleteByKey.run(nodeId, key, this.#pendingClock);
       return true;
     } else {
       return false;
@@ -363,6 +400,30 @@ export class SQLCache {
     }
   }
 
+  *versionsRows(): IterableIterator<
+    [
+      nid: string,
+      key: string,
+      clock: number,
+      value: Json | undefined,
+      ref: string | null,
+    ]
+  > {
+    for (const [
+      nid,
+      key,
+      clock,
+      jval,
+      ref,
+    ] of this.#q.versions.selectAll.iterate()) {
+      if (jval === null) {
+        yield [nid, key, clock, undefined, ref];
+      } else {
+        yield [nid, key, clock, JSON.parse(jval), ref];
+      }
+    }
+  }
+
   /**
    * Returns the number of items in the cache.
    */
@@ -370,6 +431,7 @@ export class SQLCache {
     return this.#q.storage.countAll.get()!;
   }
 
+  /** @internal For unit testing only */
   get table(): [
     id: string,
     key: string,
@@ -377,5 +439,16 @@ export class SQLCache {
     ref: string | null,
   ][] {
     return Array.from(this.rows());
+  }
+
+  /** @internal For unit testing only */
+  get versionsTable(): [
+    id: string,
+    key: string,
+    clock: number,
+    value: Json | undefined,
+    ref: string | null,
+  ][] {
+    return Array.from(this.versionsRows());
   }
 }
