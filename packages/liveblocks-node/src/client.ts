@@ -6,6 +6,7 @@
 import type {
   BaseMetadata,
   BaseUserMeta,
+  ChannelNotificationSettings,
   CommentBody,
   CommentData,
   CommentDataPlain,
@@ -1643,6 +1644,26 @@ export class Liveblocks {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
     }
+  }
+
+  /**
+   * Get channel notification settings for a user for a project.
+   * @param params.userId The user ID for which to get the channel notifications settings.
+   */
+  public async getChannelNotificationSettings(params: {
+    userId: string;
+  }): Promise<ChannelNotificationSettings> {
+    const { userId } = params;
+
+    const res = await this.get(
+      url`/v2/users/${userId}/channel-notification-settings`
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    return (await res.json()) as ChannelNotificationSettings;
   }
 }
 
