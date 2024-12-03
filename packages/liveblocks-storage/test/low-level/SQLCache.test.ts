@@ -379,19 +379,86 @@ test("taking deltas", () => {
 
   expect(cache.deltaSince(0)[1]).toEqual(cache.fullDelta()[1]);
 
-  expect(cache.deltaSince(5)).toEqual([{}, {}]);
-  expect(cache.deltaSince(4)).toEqual([{ root: ["abc"] }, {}]);
-  expect(cache.deltaSince(3)).toEqual([{ root: ["abc"] }, {}]);
+  expect(cache.deltaSince(5)).toEqual([{}, {}, {}]);
+  expect(cache.deltaSince(4)).toEqual([{ root: ["abc"] }, {}, {}]);
+  expect(cache.deltaSince(3)).toEqual([{ root: ["abc"] }, {}, {}]);
   expect(cache.deltaSince(2)).toEqual([
     { root: ["abc"] },
     { root: { henk: 7 } },
+    {},
   ]);
   expect(cache.deltaSince(1)).toEqual([
     { root: ["abc", "foo"] },
     { root: { henk: 7 } },
+    {},
   ]);
   expect(cache.deltaSince(0)).toEqual([
     { root: ["abc", "foo"] },
     { root: { henk: 7 } },
+    {},
+  ]);
+});
+
+test.fails("taking deltas with refs", () => {
+  const cache = new SQLCache();
+
+  // v1
+  cache.mutate((root) => {
+    root.set("a", 1);
+    root.set(
+      "b",
+      new LiveObject({ c: new LiveObject({ d: new LiveObject({}) }) })
+    );
+  });
+
+  // v2
+  cache.mutate((root) => {
+    root.delete("a");
+    root.delete("c");
+  });
+
+  // v3
+  cache.mutate((root) => {
+    const b = root.get("b") as LiveObject;
+    expect(b).toEqual({});
+    b.set("c", { x: 9 });
+    b.delete("d");
+    b.delete("e");
+    b.set("f", 7);
+  });
+
+  // v4
+  cache.mutate((root) => root.set("b", 6));
+
+  expect(cache.count).toEqual(4);
+  expect(cache.table).toEqual([
+    // XXX Check this! When LiveObjects are no longer referenced, we should
+    //     remove all traces of it! (These should get translated into deletions
+    //     in the Delta)
+    ["O1:2", "d", { $ref: "O1:3" }],
+    ["O1:1", "c", { x: 9 }],
+    ["root", "b", 6],
+    ["O1:1", "f", 7],
+  ]);
+
+  expect(cache.deltaSince(0)[1]).toEqual(cache.fullDelta()[1]);
+
+  expect(cache.deltaSince(5)).toEqual([{}, {}, {}]);
+  expect(cache.deltaSince(4)).toEqual([{ root: ["abc"] }, {}, {}]);
+  expect(cache.deltaSince(3)).toEqual([{ root: ["abc"] }, {}, {}]);
+  expect(cache.deltaSince(2)).toEqual([
+    { root: ["abc"] },
+    { root: { henk: 7 } },
+    {},
+  ]);
+  expect(cache.deltaSince(1)).toEqual([
+    { root: ["abc", "foo"] },
+    { root: { henk: 7 } },
+    {},
+  ]);
+  expect(cache.deltaSince(0)).toEqual([
+    { root: ["abc", "foo"] },
+    { root: { henk: 7 } },
+    {},
   ]);
 });

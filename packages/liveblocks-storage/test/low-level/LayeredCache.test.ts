@@ -292,18 +292,24 @@ test("delta in current transaction", () => {
   expect(Array.from(cache.delta())).toEqual([
     { r: ["c", "d"] },
     { r: { b: 4, y: 5 } },
+    {},
   ]);
 
   cache.startTransaction();
-  expect(Array.from(cache.delta())).toEqual([{}, {}]);
+  expect(Array.from(cache.delta())).toEqual([{}, {}, {}]);
   cache.deleteChild("r", "x");
   cache.setChild("r", "b", 42);
-  expect(Array.from(cache.delta())).toEqual([{ r: ["x"] }, { r: { b: 42 } }]);
+  expect(Array.from(cache.delta())).toEqual([
+    { r: ["x"] },
+    { r: { b: 42 } },
+    {},
+  ]);
   cache.commit();
 
   expect(Array.from(cache.delta())).toEqual([
     { r: ["c", "d", "x"] },
     { r: { b: 42, y: 5 } },
+    {},
   ]);
 });
 

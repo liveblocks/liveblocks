@@ -306,18 +306,21 @@ export class Client<M extends Mutations> {
       cache.rollback();
     }
 
-    for (const delta of deltas) {
+    for (const [deletions, updates, refs] of deltas) {
       // Apply authoritative delta
-      const deletions = delta[0];
-      const updates = delta[1];
       for (const [nodeId, keys] of Object.entries(deletions)) {
         for (const key of keys) {
           cache.deleteChild(nodeId, key);
         }
       }
-      for (const [nodeId, updates2] of Object.entries(updates)) {
-        for (const [key, value] of Object.entries(updates2)) {
-          cache.setChild(nodeId, key, value);
+      for (const [nodeId, updatesForNode] of Object.entries(updates)) {
+        for (const [key, value] of Object.entries(updatesForNode)) {
+          cache.setValueOrRef(nodeId, key, { $val: value });
+        }
+      }
+      for (const [nodeId, refsForNode] of Object.entries(refs)) {
+        for (const [key, ref] of Object.entries(refsForNode)) {
+          cache.setValueOrRef(nodeId, key, { $ref: ref });
         }
       }
     }

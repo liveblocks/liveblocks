@@ -175,24 +175,23 @@ export class LayeredCache implements Pool {
     const layer = this.#layers[0] ?? raise("No transaction to get delta for");
 
     const deleted: Record<NodeId, string[]> = {};
-    // For efficient packing, we'll codify all k,v pairs in a single array
-    // [key1, value1, key2, value2, key3, value3, ...]
-    const updated: Record<NodeId, Record<string, Json>> = {};
+    const values: Record<NodeId, Record<string, Json>> = {};
+    const refs: Record<NodeId, Record<string, string>> = {};
 
     for (const [nodeId, key, value] of layer) {
       if (value === TOMBSTONE) {
         if (!deleted[nodeId]) deleted[nodeId] = [];
         deleted[nodeId]!.push(key);
+      } else if (value.$ref !== undefined) {
+        if (!refs[nodeId]) refs[nodeId] = {};
+        refs[nodeId]![key] = value.$ref;
       } else {
-        if (!updated[nodeId]) updated[nodeId] = {};
-
-        // XXX Fix this payload at the protocol level next!
-        updated[nodeId]![key] =
-          value.$val !== undefined ? value.$val : { $ref: value.$ref };
+        if (!values[nodeId]) values[nodeId] = {};
+        values[nodeId]![key] = value.$val;
       }
     }
 
-    return [deleted, updated];
+    return [deleted, values, refs];
   }
 
   commit(): void {
