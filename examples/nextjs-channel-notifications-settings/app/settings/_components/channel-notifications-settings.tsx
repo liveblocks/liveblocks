@@ -1,29 +1,38 @@
 "use client";
 
 import { useState } from "react";
+import type { ChannelNotificationSettings } from "@liveblocks/core";
+import { useChannelNotificationSettings } from "@liveblocks/react";
 import * as Switch from "@radix-ui/react-switch";
 import { cn } from "../../../utils/cn";
 
-function SubmitButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      type="submit"
-      className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-      onClick={onClick}
-    >
-      Save changes
-    </button>
-  );
-}
-
 export function ChannelNotificationsSettings() {
-  // TODO it will be replaced by the new hook
-  const [emailNotifications, setEmailNotifications] = useState(true);
+  // TODO: add pre-defined channels
   const [slackNotifications, setSlackNotifications] = useState(false);
+  // TODO: add augmentation
   const [$customNotifications, set$customNotifications] = useState(false);
 
-  const handleSubmit = (): void => {
-    // TODO CALL update
+  const [{ isLoading, error, settings }, updateChannelNotificationSettings] =
+    useChannelNotificationSettings();
+
+  if (isLoading) return null;
+  if (error) return null; // or throw/capture error
+
+  // Make an util here?
+  const isEmailChannelEnabledFor = Object.keys(settings.email).every(
+    // @ts-expect-error
+    (key) => settings[key] === true
+  );
+
+  const handleChangeEmailChannel = (checked: boolean): void => {
+    const payload: ChannelNotificationSettings = checked
+      ? {
+          email: { thread: true, textMention: true },
+        }
+      : {
+          email: { thread: false, textMention: false },
+        };
+    updateChannelNotificationSettings(payload);
   };
 
   return (
@@ -39,12 +48,12 @@ export function ChannelNotificationsSettings() {
           <Switch.Root
             className={cn(
               "w-11 h-6 rounded-full relative inline-flex items-center transition-colors",
-              emailNotifications ? "bg-green-500" : "bg-gray-200"
+              settings.email ? "bg-green-500" : "bg-gray-200"
             )}
             id="emailNotifications"
             name="emailNotifications"
-            checked={emailNotifications}
-            onCheckedChange={setEmailNotifications}
+            checked={isEmailChannelEnabledFor}
+            onCheckedChange={handleChangeEmailChannel}
           >
             <Switch.Thumb className="w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-100 will-change-transform data-[state=checked]:translate-x-[22px]" />
           </Switch.Root>
@@ -99,9 +108,6 @@ export function ChannelNotificationsSettings() {
             Receive $customNotifications notifications
           </label>
         </div>
-      </div>
-      <div className="flex justify-end">
-        <SubmitButton onClick={handleSubmit} />
       </div>
     </div>
   );
