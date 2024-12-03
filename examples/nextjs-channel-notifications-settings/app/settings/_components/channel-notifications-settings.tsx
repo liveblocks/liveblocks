@@ -33,7 +33,7 @@ export function ChannelNotificationsSettings() {
           email: { thread: false, textMention: false },
         };
     updateChannelNotificationSettings(payload);
-  };
+  }; // Thinking of this maybe it would be worth to have a deep partial
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6 w-[600px]">
