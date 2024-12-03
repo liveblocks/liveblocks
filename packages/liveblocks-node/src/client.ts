@@ -1648,7 +1648,7 @@ export class Liveblocks {
 
   /**
    * Get channel notification settings for a user for a project.
-   * @param params.userId The user ID for which to get the channel notifications settings.
+   * @param params.userId The user ID to get the channel notifications settings for.
    */
   public async getChannelNotificationSettings(params: {
     userId: string;
@@ -1668,8 +1668,8 @@ export class Liveblocks {
 
   /**
    * Update the user's channel notification settings.
-   * @param params.userId Then user ID fto update the channel notification settings for.
-   * @param params.data The new channel notification settings for the user
+   * @param params.userId The user ID to update the channel notification settings for.
+   * @param params.data The new channel notification settings for the user.
    */
   public async updateChannelNotificationSettings(params: {
     userId: string;
@@ -1688,6 +1688,23 @@ export class Liveblocks {
     }
 
     return (await res.json()) as ChannelNotificationSettings;
+  }
+
+  /**
+   * Delete the user's channel notification settings
+   * @param params.userId The user ID to update the channel notification settings for.
+   */
+  public async deleteChannelNotificationSettings(params: {
+    userId: string;
+  }): Promise<void> {
+    const { userId } = params;
+    const res = await this.delete(
+      url`/v2/users/${userId}/channel-notification-settings`
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
   }
 }
 
