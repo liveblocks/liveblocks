@@ -19,6 +19,7 @@ import type { QueryParams, URLSafeString } from "./lib/url";
 import { url, urljoin } from "./lib/url";
 import { raise } from "./lib/utils";
 import type { Permission } from "./protocol/AuthToken";
+import type { ChannelNotificationSettings } from "./protocol/ChannelNotificationSettings";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import type {
   BaseMetadata,
@@ -43,7 +44,6 @@ import type {
 } from "./protocol/InboxNotifications";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import type { HistoryVersion } from "./protocol/VersionHistory";
-import type { ChannelNotificationSettings } from "./protocol/ChannelNotificationSettings";
 import type { TextEditorType } from "./types/Others";
 import type { Patchable } from "./types/Patchable";
 import type { RoomNotificationSettings } from "./types/RoomNotificationSettings";

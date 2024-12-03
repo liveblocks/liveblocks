@@ -19,6 +19,7 @@ import type { Resolve } from "./lib/Resolve";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
 import { TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
+import type { ChannelNotificationSettings } from "./protocol/ChannelNotificationSettings";
 import type {
   BaseMetadata,
   ThreadData,
@@ -43,7 +44,6 @@ import {
   makeAuthDelegateForRoom,
   makeCreateSocketDelegateForRoom,
 } from "./room";
-import type { ChannelNotificationSettings } from "./protocol/ChannelNotificationSettings";
 import type { OptionalPromise } from "./types/OptionalPromise";
 
 const MIN_THROTTLE = 16;
