@@ -1665,6 +1665,30 @@ export class Liveblocks {
 
     return (await res.json()) as ChannelNotificationSettings;
   }
+
+  /**
+   * Update the user's channel notification settings.
+   * @param params.userId Then user ID fto update the channel notification settings for.
+   * @param params.data The new channel notification settings for the user
+   */
+  public async updateChannelNotificationSettings(params: {
+    userId: string;
+    data: Partial<ChannelNotificationSettings>;
+  }): Promise<ChannelNotificationSettings> {
+    const { userId, data } = params;
+
+    const res = await this.post(
+      url`/v2/users/${userId}/channel-notification-settings`,
+      data
+    );
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    return (await res.json()) as ChannelNotificationSettings;
+  }
 }
 
 export class LiveblocksError extends Error {
