@@ -2,9 +2,10 @@ import type { Database } from "better-sqlite3";
 import sqlite3 from "better-sqlite3";
 
 import type { Json } from "~/lib/Json.js";
-import type { Lson } from "~/lib/Lson.js";
+import type { LiveStructure, Lson } from "~/lib/Lson.js";
 import { isLiveStructure } from "~/lib/Lson.js";
 
+import { DefaultMap } from "./lib/DefaultMap.js";
 import { LiveObject } from "./LiveObject.js";
 import type { Delta, NodeId, Pool } from "./types.js";
 
@@ -192,18 +193,25 @@ export class SQLCache {
 
     const [jval, ref] = row;
     if (jval === null) {
-      return LiveObject._load(ref, pool);
+      return pool.getNode(ref);
     } else {
       return JSON.parse(jval) as Json;
     }
   }
 
-  #set(pool: Pool, nodeId: NodeId, key: string, value: Lson): boolean {
+  #set(
+    pool: Pool,
+    poolCache: DefaultMap<NodeId, LiveStructure>,
+    nodeId: NodeId,
+    key: string,
+    value: Lson
+  ): boolean {
     if (value === undefined) {
       return this.#delete(nodeId, key);
     } else {
       if (isLiveStructure(value)) {
         const ref = value._attach(pool);
+        poolCache.set(ref, value);
         this.#q.storage.upsertKeyRef.run(nodeId, key, ref);
         this.#q.versions.upsertKeyRef.run(nodeId, key, this.#pendingClock, ref);
         return true;
@@ -288,12 +296,21 @@ export class SQLCache {
     const origClock = this.clock;
 
     let dirty = false;
+    const poolCache = new DefaultMap<NodeId, LiveStructure>((nodeId: NodeId) =>
+      LiveObject._load(nodeId, pool)
+    );
     const pool: Pool = {
       nextId: <P extends string>(prefix: P): `${P}${number}:${number}` =>
         `${prefix}${this.#pendingClock}:${this.#nextNodeId++}`,
+      getNode: (nodeId: NodeId) => {
+        const x = poolCache.get(nodeId);
+        const rv = poolCache.getOrCreate(nodeId);
+        console.log({ nodeId, x, rv });
+        return rv;
+      },
       getChild: (nodeId: NodeId, key: string) => this.#get(pool, nodeId, key),
       setChild: (nodeId: NodeId, key: string, value: Json) => {
-        const updated = this.#set(pool, nodeId, key, value);
+        const updated = this.#set(pool, poolCache, nodeId, key, value);
         dirty ||= updated;
         return updated;
       },
