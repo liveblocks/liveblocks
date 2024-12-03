@@ -7,9 +7,9 @@ import { ySyncPluginKey } from "y-prosemirror";
 
 import type { CommentsExtensionStorage, ThreadPluginState } from "../types";
 import {
-  ACTIVE_SELECTION_PLUGIN,
   LIVEBLOCKS_COMMENT_MARK_TYPE,
   ThreadPluginActions,
+  THREADS_ACTIVE_SELECTION_PLUGIN,
   THREADS_PLUGIN_KEY,
 } from "../types";
 
@@ -271,7 +271,7 @@ export const CommentsExtension = Extension.create<
   addProseMirrorPlugins() {
     return [
       new Plugin({
-        key: ACTIVE_SELECTION_PLUGIN,
+        key: THREADS_ACTIVE_SELECTION_PLUGIN,
         props: {
           decorations: ({ doc }) => {
             const active = this.storage.pendingCommentSelection !== null;

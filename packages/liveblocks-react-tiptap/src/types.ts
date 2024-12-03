@@ -11,11 +11,14 @@ export const LIVEBLOCKS_MENTION_NOTIFIER_KEY = new PluginKey(
 );
 export const LIVEBLOCKS_MENTION_TYPE = "liveblocksMention";
 
-export const ACTIVE_SELECTION_PLUGIN = new PluginKey(
-  "lb-active-selection-plugin"
+export const THREADS_ACTIVE_SELECTION_PLUGIN = new PluginKey(
+  "lb-threads-active-selection-plugin"
 );
 export const THREADS_PLUGIN_KEY = new PluginKey<ThreadPluginState>(
   "lb-threads-plugin"
+);
+export const AI_ACTIVE_SELECTION_PLUGIN = new PluginKey(
+  "lb-ai-active-selection-plugin"
 );
 
 export const LIVEBLOCKS_COMMENT_MARK_TYPE = "liveblocksCommentMark";
@@ -27,6 +30,10 @@ export type CommentsExtensionStorage = {
 export const enum ThreadPluginActions {
   SET_SELECTED_THREAD_ID = "SET_SELECTED_THREAD_ID",
 }
+
+export type AiExtensionStorage = {
+  askAiSelection: TextSelection | null;
+};
 
 export type ThreadPluginState = {
   threadPositions: Map<string, { from: number; to: number }>;

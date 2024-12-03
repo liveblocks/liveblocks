@@ -47,12 +47,25 @@ export interface FloatingToolbarProps
 
 export const FLOATING_TOOLBAR_COLLISION_PADDING = 10;
 
-function DefaultFloatingToolbarContent() {
+function DefaultFloatingToolbarContent({ editor }: ToolbarSlotProps) {
+  const supportsThread = "addPendingComment" in editor.commands;
+  const supportsAi = "askAi" in editor.commands;
+
   return (
     <>
+      {supportsAi ? (
+        <>
+          <Toolbar.SectionAi />
+          <Toolbar.Separator />
+        </>
+      ) : null}
       <Toolbar.SectionInline />
-      <Toolbar.Separator />
-      <Toolbar.SectionCollaboration />
+      {supportsThread ? (
+        <>
+          <Toolbar.Separator />
+          <Toolbar.SectionCollaboration />
+        </>
+      ) : null}
     </>
   );
 }

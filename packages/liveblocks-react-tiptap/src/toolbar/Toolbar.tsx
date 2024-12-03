@@ -372,14 +372,42 @@ function ToolbarSectionCollaboration() {
   );
 }
 
+function ToolbarSectionAi() {
+  const editor = useCurrentEditor("SectionAi", "Toolbar or FloatingToolbar");
+  const supportsAi = "askAi" in editor.commands;
+
+  return (
+    <>
+      {supportsAi && (
+        <ToolbarButton
+          name="Ask AI"
+          icon={<CommentIcon />}
+          onClick={() =>
+            (editor.chain().focus() as ExtendedChainedCommands<"askAi">).askAi()
+          }
+        >
+          Ask AI
+        </ToolbarButton>
+      )}
+    </>
+  );
+}
+
 function DefaultToolbarContent({ editor }: ToolbarSlotProps) {
   const supportsTextAlign = "setTextAlign" in editor.commands;
   const supportsThread = "addPendingComment" in editor.commands;
+  const supportsAi = "askAi" in editor.commands;
 
   return (
     <>
       <ToolbarSectionHistory />
       <ToolbarSeparator />
+      {supportsAi ? (
+        <>
+          <ToolbarSectionAi />
+          <ToolbarSeparator />
+        </>
+      ) : null}
       {supportsTextAlign ? (
         <>
           <ToolbarSectionAlignment />
@@ -444,5 +472,6 @@ export const Toolbar = Object.assign(
     SectionAlignment: ToolbarSectionAlignment,
     SectionInline: ToolbarSectionInline,
     SectionCollaboration: ToolbarSectionCollaboration,
+    SectionAi: ToolbarSectionAi,
   }
 );

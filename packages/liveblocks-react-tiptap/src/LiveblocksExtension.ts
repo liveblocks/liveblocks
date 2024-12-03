@@ -18,6 +18,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { Doc } from "yjs";
 
+import { AiExtension } from "./ai/AiExtension";
 import { CommentsExtension } from "./comments/CommentsExtension";
 import { MentionExtension } from "./mentions/MentionExtension";
 import { LIVEBLOCKS_COMMENT_MARK_TYPE } from "./types";
@@ -33,6 +34,7 @@ type LiveblocksExtensionOptions = {
   field?: string;
   comments?: boolean; // | CommentsConfiguration
   mentions?: boolean; // | MentionsConfiguration
+  ai?: boolean;
   offlineSupport_experimental?: boolean;
   initialContent?: Content;
 };
@@ -41,6 +43,7 @@ const DEFAULT_OPTIONS = {
   field: "default",
   comments: true,
   mentions: true,
+  ai: true,
   offlineSupport_experimental: false,
 };
 
@@ -331,6 +334,9 @@ export const useLiveblocksExtension = (
             onDeleteMention,
           })
         );
+      }
+      if (options.ai) {
+        extensions.push(AiExtension);
       }
 
       return extensions;

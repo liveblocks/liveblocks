@@ -23,5 +23,8 @@ declare module "@tiptap/core" {
       selectThread: (id: string | null) => ReturnType;
       addPendingComment: () => ReturnType;
     };
+    ai: {
+      askAi: () => ReturnType;
+    };
   }
 }
