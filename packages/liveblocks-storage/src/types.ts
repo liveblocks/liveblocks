@@ -41,13 +41,17 @@ export type Delta = readonly [
   /** Keys to remove */
   rem: { readonly [nodeId: NodeId]: readonly string[] },
 
-  /**
-   * Keys to add, stored in a single array of alternating keys and values.
-   * e.g. [key1,value1,key2,value2,etc...]
-   */
-  add: {
+  /** Keys to add new values */
+  addValues: {
     readonly [nodeId: NodeId]: {
       readonly [key: string]: Json;
+    };
+  },
+
+  /** Keys to add new refs */
+  addRefs: {
+    readonly [nodeId: NodeId]: {
+      readonly [key: string]: string;
     };
   },
 ];

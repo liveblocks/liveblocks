@@ -106,7 +106,7 @@ export class Server {
           } else {
             // Ignore it. We've already seen this one (or a later one).
             // Send error/ack back to origin
-            const ack: Delta = [{}, {}];
+            const ack: Delta = [{}, {}, {}];
             this.#send(curr, {
               type: "DeltaServerMsg",
               serverClock: this.#cache.clock,
@@ -132,7 +132,7 @@ export class Server {
         } else {
           // Send error/ack back to origin
           // XXX Send back error here!
-          const ack: Delta = [{}, {}];
+          const ack: Delta = [{}, {}, {}];
           this.#send(curr, {
             type: "DeltaServerMsg",
             serverClock: this.#cache.clock,
@@ -214,8 +214,22 @@ export class Server {
   }
 
   // For convenience in unit tests only --------------------------------
-  get data(): Record<string, Record<string, Json>> {
-    return this.#cache.fullDelta()[1];
+  get data(): Record<string, Record<string, Json | { $ref: string }>> {
+    const obj: Record<string, Record<string, Json | { $ref: string }>> = {};
+    const [, values, refs] = this.#cache.fullDelta();
+    for (const [nodeId, valuesForNode] of Object.entries(values)) {
+      obj[nodeId] ??= {};
+      for (const [key, value] of Object.entries(valuesForNode)) {
+        obj[nodeId]![key] = value;
+      }
+    }
+    for (const [nodeId, refsForNode] of Object.entries(refs)) {
+      obj[nodeId] ??= {};
+      for (const [key, ref] of Object.entries(refsForNode)) {
+        obj[nodeId]![key] = { $ref: ref };
+      }
+    }
+    return obj;
   }
   get clock(): number { return this.#cache.clock; } // prettier-ignore
 }

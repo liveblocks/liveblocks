@@ -160,9 +160,19 @@ export class SQLCache {
   // "Multi-layer" cache idea
   // ----------------------------------------------------
 
-  #get(nodeId: NodeId, key: string): Lson | undefined {
+  #get(pool: Pool, nodeId: NodeId, key: string): Lson | undefined {
     const jval = this.#q.storage.selectKey.get(nodeId, key);
-    return jval !== undefined ? (JSON.parse(jval) as Json) : undefined;
+    const value = jval !== undefined ? (JSON.parse(jval) as Json) : undefined;
+    if (
+      typeof value === "object" &&
+      value !== null &&
+      "$ref" in value &&
+      value.$ref !== undefined
+    ) {
+      // XXX Read from actual ref column soon
+      return LiveObject._load(value.$ref as string, pool);
+    }
+    return value;
   }
 
   #set(pool: Pool, nodeId: NodeId, key: string, value: Lson): boolean {
@@ -224,11 +234,22 @@ export class SQLCache {
    * Computes a Delta since the given clock value.
    */
   fullDelta(): Delta {
-    const updated: { [nid: string]: { [key: string]: Json } } = {};
+    const values: { [nid: string]: { [key: string]: Json } } = {};
+    const refs: { [nid: string]: { [key: string]: string } } = {};
     for (const [nid, key, value] of this.rows()) {
-      (updated[nid] ??= {})[key] = value;
+      if (
+        typeof value === "object" &&
+        value !== null &&
+        "$ref" in value &&
+        value.$ref !== undefined
+      ) {
+        // XXX Read this from separate column soon
+        (refs[nid] ??= {})[key] = value.$ref as string;
+      } else {
+        (values[nid] ??= {})[key] = value;
+      }
     }
-    return [{}, updated];
+    return [{}, values, refs];
   }
 
   /**
@@ -236,17 +257,28 @@ export class SQLCache {
    */
   deltaSince(since: number): Delta {
     const removed: { [nid: string]: string[] } = {};
-    const updated: { [nid: string]: { [key: string]: Json } } = {};
+    const values: { [nid: string]: { [key: string]: Json } } = {};
+    const refs: { [nid: string]: { [key: string]: string } } = {};
     for (const [nid, key, jval] of this.#q.versions.selectSince.iterate(
       since
     )) {
       if (jval === null) {
         (removed[nid] ??= []).push(key);
       } else {
-        (updated[nid] ??= {})[key] = JSON.parse(jval) as Json;
+        const value = JSON.parse(jval) as Json;
+        if (
+          typeof value === "object" &&
+          value !== null &&
+          "$ref" in value &&
+          value.$ref !== undefined
+        ) {
+          (refs[nid] ??= {})[key] = value.$ref as string;
+        } else {
+          (values[nid] ??= {})[key] = value;
+        }
       }
     }
-    return [removed, updated];
+    return [removed, values, refs];
   }
 
   mutate(callback: (root: LiveObject) => unknown): Delta {
@@ -256,7 +288,7 @@ export class SQLCache {
     const pool: Pool = {
       nextId: <P extends string>(prefix: P): `${P}${number}:${number}` =>
         `${prefix}${this.#pendingClock}:${this.#nextNodeId++}`,
-      getChild: (nodeId: NodeId, key: string) => this.#get(nodeId, key),
+      getChild: (nodeId: NodeId, key: string) => this.#get(pool, nodeId, key),
       setChild: (nodeId: NodeId, key: string, value: Json) => {
         const updated = this.#set(pool, nodeId, key, value);
         dirty ||= updated;
@@ -277,7 +309,7 @@ export class SQLCache {
         return this.deltaSince(origClock);
       } else {
         this.#rollback();
-        return [{}, {}];
+        return [{}, {}, {}];
       }
     } catch (e) {
       this.#rollback();
