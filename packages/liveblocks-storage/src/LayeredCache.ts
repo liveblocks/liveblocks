@@ -210,6 +210,7 @@ export class LayeredCache implements Pool {
   }
 
   // For convenience in unit tests only --------------------------------
+  /** @internal - For unit tests only */
   *#iter(): IterableIterator<[nodeId: NodeId, key: string, value: ValueOrRef]> {
     const seen = new Set<string>();
 
@@ -241,12 +242,7 @@ export class LayeredCache implements Pool {
     }
   }
 
-  /**
-   * Returns the number of items in the cache.
-   * Unlike Map.size, LayeredCache.count() is a slow operation that requires
-   * iterating over every entry.
-   * XXX Make faster!
-   */
+  /** @internal - For unit tests only */
   get count(): number {
     let total = 0;
     for (const _ of this.#iter()) {
@@ -255,6 +251,7 @@ export class LayeredCache implements Pool {
     return total;
   }
 
+  /** @internal - For unit tests only */
   get data(): Record<string, Record<string, Json>> {
     const obj: Record<string, Record<string, Json>> = {};
     for (const [nid, key, value] of this.#iter()) {
