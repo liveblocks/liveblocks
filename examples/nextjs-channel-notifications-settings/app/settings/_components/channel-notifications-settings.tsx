@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import * as Switch from "@radix-ui/react-switch";
-// TODO update import
-import { cn } from "../../../emails/_utils/cn";
+import { cn } from "../../../utils/cn";
 
 function SubmitButton({ onClick }: { onClick: () => void }) {
   return (
