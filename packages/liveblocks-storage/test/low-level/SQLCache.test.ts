@@ -95,8 +95,7 @@ test("setting keys (LiveObject)", () => {
   ]);
 });
 
-// XXX Make pass!
-test.fails("attaching the same LiveObject under multiple roots fails", () => {
+test("attaching the same LiveObject under multiple roots fails", () => {
   const cache = new SQLCache();
   cache.mutate((root) => {
     const x = new LiveObject({ foo: "bar" });
@@ -109,10 +108,10 @@ test.fails("attaching the same LiveObject under multiple roots fails", () => {
       "LiveObject already attached to this pool as O1:1"
     );
   });
-  expect(cache.table).toEqual({
-    root: { a: { $ref: "O1:1" } },
-    "O1:1": { foo: "bar" },
-  });
+  expect(cache.table).toEqual([
+    ["O1:1", "foo", "bar", null],
+    ["root", "a", undefined, "O1:1"],
+  ]);
 });
 
 test("deleting keys", () => {

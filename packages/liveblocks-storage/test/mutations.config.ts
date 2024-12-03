@@ -28,9 +28,6 @@ export function dupe(root: LiveObject, src: string, target: string): void {
   if (value === undefined) {
     throw new Error(`No such key '${src}'`);
   }
-  if (isLiveStructure(value)) {
-    throw new Error("Cannot dupe a Live structure, only JSON values");
-  }
   root.set(target, value);
 }
 

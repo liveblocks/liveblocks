@@ -55,6 +55,43 @@ test("set LiveObject", () => {
   });
 });
 
+// XXX Make pass!
+test.fails("using .get() should always return the same Live instance", () => {
+  const client = new Client({
+    setLiveObject,
+
+    // We can inline a mutation in this test, because we're not sending
+    // anything to a server here anyway
+    customTest: (root) => {
+      if (root.get("a") !== root.get("a")) {
+        throw new Error('Expected .get("a") to return a stable result');
+      }
+    },
+  });
+
+  client.mutate.setLiveObject("a", "foo", "bar");
+  client.mutate.customTest();
+
+  expect(client.data).toEqual({
+    root: { a: { $ref: "O0:1" } },
+    "O0:1": { foo: "bar" },
+  });
+});
+
+test("attaching the same LiveObject under multiple roots fails", () => {
+  const client = new Client({ dupe, setLiveObject });
+
+  client.mutate.setLiveObject("a", "foo", "bar");
+  expect(() => client.mutate.dupe("a", "b")).toThrow(
+    "LiveObject already attached to this pool as O0:1"
+  );
+
+  expect(client.data).toEqual({
+    root: { a: { $ref: "O0:1" } },
+    "O0:1": { foo: "bar" },
+  });
+});
+
 // test("set LiveList", () => {
 //   const { clientA, assertStorage } = storageIntegrationTest({
 //     initialStorage: () => ({}),
