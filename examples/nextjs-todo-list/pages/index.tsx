@@ -7,9 +7,9 @@ import {
   useMutation as useOriginalMutation,
 } from "@liveblocks/react/suspense";
 import "@liveblocks/react";
-import { LiveList, LiveObject } from "@liveblocks/client";
 import { useRouter } from "next/router";
 import { ClientSideSuspense } from "@liveblocks/react";
+import * as config from "../liveblocks.config";
 
 /* prettier-ignore */
 /* Demo helper, please ignore 🙈 */ function useMutations<T>(config: T): {
@@ -53,18 +53,7 @@ function Example() {
   const updateMyPresence = useUpdateMyPresence();
   const todos = useStorage((root) => root.todos);
 
-  const addTodo = useMutation(({ storage }, text) => {
-    storage.get("todos").push(new LiveObject({ text }));
-  }, []);
-
-  const toggleTodo = useMutation(({ storage }, index) => {
-    const todo = storage.get("todos").get(index);
-    todo?.set("checked", !todo.get("checked"));
-  }, []);
-
-  const deleteTodo = useMutation(({ storage }, index) => {
-    storage.get("todos").delete(index);
-  }, []);
+  const { addTodo, toggleTodo, deleteTodo } = useMutations(config);
 
   return (
     <div className="container">
@@ -122,13 +111,7 @@ export default function Page() {
   const roomId = useExampleRoomId("nextjs-todo-list");
 
   return (
-    <RoomProvider
-      id={roomId}
-      initialPresence={{
-        isTyping: false,
-      }}
-      initialStorage={{ todos: new LiveList([]) }}
-    >
+    <RoomProvider id={roomId} initialPresence={{ isTyping: false }}>
       <ClientSideSuspense fallback={<Loading />}>
         <Example />
       </ClientSideSuspense>
