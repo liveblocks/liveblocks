@@ -11,6 +11,7 @@ import type { BatchStore } from "./lib/batch";
 import { Batch, createBatchStore } from "./lib/batch";
 import type { Store } from "./lib/create-store";
 import { createStore } from "./lib/create-store";
+import type { DeepPartial } from "./lib/DeepPartial";
 import type { Observable } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
@@ -290,7 +291,7 @@ export type NotificationsApi<M extends BaseMetadata> = {
    * })
    */
   updateChannelsNotificationSettings(
-    settings: Partial<ChannelsNotificationSettings>
+    settings: DeepPartial<ChannelsNotificationSettings>
   ): Promise<ChannelsNotificationSettings>;
 };
 

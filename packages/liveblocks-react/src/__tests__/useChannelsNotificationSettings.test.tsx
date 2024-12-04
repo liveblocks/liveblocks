@@ -83,6 +83,81 @@ describe("useChannelsNotificationSettings", () => {
     unmount();
   });
 
+  test("should update channels notification settings partially", async () => {
+    server.use(
+      mockGetChannelsNotificationSettings(async (_req, res, ctx) => {
+        return res(
+          ctx.json({
+            email: {
+              thread: true,
+              textMention: false,
+            },
+          })
+        );
+      }),
+      mockUpdateChannelsNotificationSettings((_req, res, ctx) => {
+        return res(
+          ctx.json({
+            email: {
+              thread: false,
+              textMention: false,
+            },
+          })
+        );
+      })
+    );
+
+    const {
+      liveblocks: { LiveblocksProvider, useChannelsNotificationSettings },
+    } = createContextsForTest();
+
+    const { result, unmount } = renderHook(
+      () => useChannelsNotificationSettings(),
+      {
+        wrapper: ({ children }) => (
+          <LiveblocksProvider>{children}</LiveblocksProvider>
+        ),
+      }
+    );
+
+    expect(result.current[0]).toEqual({ isLoading: true });
+
+    await waitFor(() =>
+      expect(result.current[0]).toEqual({
+        isLoading: false,
+        settings: {
+          email: {
+            thread: true,
+            textMention: false,
+          },
+        },
+      })
+    );
+
+    const updateChannelNotificationSettings = result.current[1];
+
+    act(() => {
+      updateChannelNotificationSettings({
+        email: { thread: false },
+      });
+    });
+
+    await waitFor(() =>
+      // Channels notification settings response from the server should be updated accordingly
+      expect(result.current[0]).toEqual({
+        isLoading: false,
+        settings: {
+          email: {
+            thread: false,
+            textMention: false,
+          },
+        },
+      })
+    );
+
+    unmount();
+  });
+
   test("should update channels notification settings optimistically and revert the updates if error response from server", async () => {
     server.use(
       mockGetChannelsNotificationSettings(async (_req, res, ctx) => {
