@@ -3,14 +3,31 @@ import {
   useHistory,
   useOthers,
   RoomProvider,
-  useStorage,
-  useMutation,
+  useMutation as useOriginalMutation,
+  useStorage as useOriginalStorage,
   useSelf,
 } from "@liveblocks/react/suspense";
 import { LiveMap, LiveObject } from "@liveblocks/client";
-import { shallow, ClientSideSuspense } from "@liveblocks/react";
+import { shallow, ClientSideSuspense, useMyPresence } from "@liveblocks/react";
 import styles from "../styles/index.module.css";
 import { useRouter } from "next/router";
+
+/* prettier-ignore */
+/* Demo helper, please ignore 🙈 */ function useMutations<T>(config: T): {
+/* Demo helper, please ignore 🙈 */   [K in keyof T]: T[K] extends (first: any, ...args: infer A) => infer R
+/* Demo helper, please ignore 🙈 */     ? (...args: A) => R
+/* Demo helper, please ignore 🙈 */     : never;
+/* Demo helper, please ignore 🙈 */ } {
+/* Demo helper, please ignore 🙈 */   return config as any;
+/* Demo helper, please ignore 🙈 */ }
+
+/* prettier-ignore */
+/* Demo helper, please ignore 🙈 */ function useStorage<T>(
+/* Demo helper, please ignore 🙈 */     selector: (root: Liveblocks["StorageV2"]) => T,
+/* Demo helper, please ignore 🙈 */     isEqual?: (a: T, b: T) => boolean
+/* Demo helper, please ignore 🙈 */   ): T {
+/* Demo helper, please ignore 🙈 */     return useOriginalStorage(selector as any, isEqual);
+/* Demo helper, please ignore 🙈 */   }
 
 export default function Room() {
   const roomId = useExampleRoomId("nextjs-whiteboard");
