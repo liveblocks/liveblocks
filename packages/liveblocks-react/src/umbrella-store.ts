@@ -7,6 +7,7 @@ import type {
   CommentData,
   CommentReaction,
   CommentUserReaction,
+  DeepPartial,
   DistributiveOmit,
   EventSource,
   HistoryVersion,
@@ -179,7 +180,7 @@ type UpdateNotificationSettingsOptimisticUpdate = {
 type UpdateChannelsNotificationSettingsOptimisticUpdate = {
   type: "update-channels-notification-settings";
   id: string;
-  settings: Partial<ChannelsNotificationSettings>;
+  settings: DeepPartial<ChannelsNotificationSettings>;
 };
 
 type PaginationState = {

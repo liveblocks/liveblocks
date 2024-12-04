@@ -24,6 +24,7 @@ import type {
   CommentAttachment,
   CommentBody,
   CommentData,
+  DeepPartial,
   DRI,
   HistoryVersion,
   InboxNotificationData,
@@ -1180,7 +1181,7 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
    */
   useChannelsNotificationSettings(): [
     ChannelsNotificationSettingsAsyncResult,
-    (settings: Partial<ChannelsNotificationSettings>) => void,
+    (settings: DeepPartial<ChannelsNotificationSettings>) => void,
   ];
 
   /**
@@ -1191,7 +1192,7 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
    * const updateChannelsNotificationSettings = useUpdateChannelsNotificationSettings()
    */
   useUpdateChannelsNotificationSettings(): (
-    settings: Partial<ChannelsNotificationSettings>
+    settings: DeepPartial<ChannelsNotificationSettings>
   ) => void;
 
   /**
@@ -1266,7 +1267,7 @@ export type LiveblocksContextBundle<
              */
             useChannelsNotificationSettings(): [
               ChannelsNotificationSettingsAsyncResult,
-              (settings: Partial<ChannelsNotificationSettings>) => void,
+              (settings: DeepPartial<ChannelsNotificationSettings>) => void,
             ];
 
             /**

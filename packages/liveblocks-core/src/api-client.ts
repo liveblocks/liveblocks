@@ -13,6 +13,7 @@ import { Batch, createBatchStore } from "./lib/batch";
 import { chunk } from "./lib/chunk";
 import { createCommentId, createThreadId } from "./lib/createIds";
 import type { DateToString } from "./lib/DateToString";
+import type { DeepPartial } from "./lib/DeepPartial";
 import type { Json, JsonObject } from "./lib/Json";
 import { objectToQuery } from "./lib/objectToQuery";
 import type { QueryParams, URLSafeString } from "./lib/url";
@@ -362,7 +363,7 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
   getChannelsNotificationSettings(): Promise<ChannelsNotificationSettings>;
 
   updateChannelsNotificationSettings(
-    settings: Partial<ChannelsNotificationSettings>
+    settings: DeepPartial<ChannelsNotificationSettings>
   ): Promise<ChannelsNotificationSettings>;
 }
 
@@ -1364,7 +1365,7 @@ export function createApiClient<M extends BaseMetadata>({
   }
 
   async function updateChannelsNotificationSettings(
-    settings: Partial<ChannelsNotificationSettings>
+    settings: DeepPartial<ChannelsNotificationSettings>
   ): Promise<ChannelsNotificationSettings> {
     return httpClient.post<ChannelsNotificationSettings>(
       url`/v2/c/channels-notification-settings`,
