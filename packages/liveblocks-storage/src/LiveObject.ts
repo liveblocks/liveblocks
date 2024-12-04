@@ -1,5 +1,8 @@
+import type { JsonObject } from "./lib/Json.js";
 import type { Lson, LsonObject } from "./lib/Lson.js";
+import { isLiveStructure } from "./lib/Lson.js";
 import type { Pool } from "./types.js";
+import { mapValues, raise } from "./utils.js";
 
 type Ctx = View | Local;
 
@@ -21,7 +24,7 @@ export class LiveObject {
   #ctx: Ctx;
 
   constructor(data: LsonObject) {
-    this.#ctx = { local: data };
+    this.#ctx = { local: data ?? raise("Missing initial value") };
   }
 
   /** @internal */
@@ -70,6 +73,7 @@ export class LiveObject {
   }
 
   set(key: string, value: Lson): void {
+    this.invalidate();
     if (this.#ctx.pool) {
       this.#ctx.pool.setChild(this.#ctx.nodeId, key, value);
     } else {
@@ -78,10 +82,40 @@ export class LiveObject {
   }
 
   delete(key: string): void {
+    this.invalidate();
     if (this.#ctx.pool) {
       this.#ctx.pool.deleteChild(this.#ctx.nodeId, key);
     } else {
       delete this.#ctx.local[key];
     }
+  }
+
+  #_toImmutable(): JsonObject {
+    if (this.#ctx.pool) {
+      raise("Implement me");
+    } else {
+      return mapValues(this.#ctx.local, (value) =>
+        isLiveStructure(value) ? value.toImmutable() : value
+      );
+    }
+  }
+
+  // --------------------------------------------------------------------
+  // The following should be the same for all Live structures!
+  // --------------------------------------------------------------------
+  #_immCache: JsonObject | undefined;
+  invalidate(): void {
+    this.#_immCache = undefined;
+    if (this.#ctx.pool) {
+      // this.#ctx.pool.getParent(this.#ctx.nodeId).invalidate();
+    } else {
+      // raise("Implement me");
+    }
+  }
+  toImmutable(): JsonObject {
+    if (this.#_immCache === undefined) {
+      this.#_immCache = this.#_toImmutable();
+    }
+    return this.#_immCache;
   }
 }
