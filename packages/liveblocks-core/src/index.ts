@@ -153,7 +153,7 @@ export type { BaseActivitiesData } from "./protocol/BaseActivitiesData";
 export type { BaseRoomInfo } from "./protocol/BaseRoomInfo";
 export type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 export type {
-  ChannelNotificationSetting,
+  ChannelNotificationSettings,
   ChannelsNotificationSettings,
   NotificationChannel,
   NotificationKind,
