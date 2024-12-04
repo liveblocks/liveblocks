@@ -48,7 +48,7 @@ export function ChannelsNotificationsSettings() {
   const handleChange$fileUploadedKind = (checked: boolean): void => {
     updateChannelNotificationSettings({
       email: {
-        $fileUploaded: checked,
+        $fileUploaded: true,
       },
     });
   };

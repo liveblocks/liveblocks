@@ -107,7 +107,6 @@ export {
   createInboxNotificationId,
   createThreadId,
 } from "./lib/createIds";
-export type { DeepPartial } from "./lib/DeepPartial";
 export {
   deprecate,
   deprecateIf,
@@ -158,6 +157,7 @@ export type {
   ChannelsNotificationSettings,
   NotificationChannel,
   NotificationKind,
+  PartialChannelsNotificationSettings,
 } from "./protocol/ChannelsNotificationSettings";
 export type {
   BroadcastEventClientMsg,

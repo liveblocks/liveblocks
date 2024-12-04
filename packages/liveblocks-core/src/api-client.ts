@@ -13,14 +13,16 @@ import { Batch, createBatchStore } from "./lib/batch";
 import { chunk } from "./lib/chunk";
 import { createCommentId, createThreadId } from "./lib/createIds";
 import type { DateToString } from "./lib/DateToString";
-import type { DeepPartial } from "./lib/DeepPartial";
 import type { Json, JsonObject } from "./lib/Json";
 import { objectToQuery } from "./lib/objectToQuery";
 import type { QueryParams, URLSafeString } from "./lib/url";
 import { url, urljoin } from "./lib/url";
 import { raise } from "./lib/utils";
 import type { Permission } from "./protocol/AuthToken";
-import type { ChannelsNotificationSettings } from "./protocol/ChannelsNotificationSettings";
+import type {
+  ChannelsNotificationSettings,
+  PartialChannelsNotificationSettings,
+} from "./protocol/ChannelsNotificationSettings";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import type {
   BaseMetadata,
@@ -363,7 +365,7 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
   getChannelsNotificationSettings(): Promise<ChannelsNotificationSettings>;
 
   updateChannelsNotificationSettings(
-    settings: DeepPartial<ChannelsNotificationSettings>
+    settings: PartialChannelsNotificationSettings
   ): Promise<ChannelsNotificationSettings>;
 }
 
@@ -1365,7 +1367,7 @@ export function createApiClient<M extends BaseMetadata>({
   }
 
   async function updateChannelsNotificationSettings(
-    settings: DeepPartial<ChannelsNotificationSettings>
+    settings: PartialChannelsNotificationSettings
   ): Promise<ChannelsNotificationSettings> {
     return httpClient.post<ChannelsNotificationSettings>(
       url`/v2/c/channels-notification-settings`,

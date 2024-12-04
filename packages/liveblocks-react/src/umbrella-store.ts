@@ -7,7 +7,6 @@ import type {
   CommentData,
   CommentReaction,
   CommentUserReaction,
-  DeepPartial,
   DistributiveOmit,
   EventSource,
   HistoryVersion,
@@ -15,6 +14,7 @@ import type {
   InboxNotificationDeleteInfo,
   Observable,
   OpaqueClient,
+  PartialChannelsNotificationSettings,
   Patchable,
   Permission,
   Resolve,
@@ -180,7 +180,7 @@ type UpdateNotificationSettingsOptimisticUpdate = {
 type UpdateChannelsNotificationSettingsOptimisticUpdate = {
   type: "update-channels-notification-settings";
   id: string;
-  settings: DeepPartial<ChannelsNotificationSettings>;
+  settings: PartialChannelsNotificationSettings;
 };
 
 type PaginationState = {

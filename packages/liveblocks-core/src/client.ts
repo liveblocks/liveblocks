@@ -11,7 +11,6 @@ import type { BatchStore } from "./lib/batch";
 import { Batch, createBatchStore } from "./lib/batch";
 import type { Store } from "./lib/create-store";
 import { createStore } from "./lib/create-store";
-import type { DeepPartial } from "./lib/DeepPartial";
 import type { Observable } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
@@ -20,7 +19,10 @@ import type { Resolve } from "./lib/Resolve";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
 import { TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
-import type { ChannelsNotificationSettings } from "./protocol/ChannelsNotificationSettings";
+import type {
+  ChannelsNotificationSettings,
+  PartialChannelsNotificationSettings,
+} from "./protocol/ChannelsNotificationSettings";
 import type {
   BaseMetadata,
   ThreadData,
@@ -291,7 +293,7 @@ export type NotificationsApi<M extends BaseMetadata> = {
    * })
    */
   updateChannelsNotificationSettings(
-    settings: DeepPartial<ChannelsNotificationSettings>
+    settings: PartialChannelsNotificationSettings
   ): Promise<ChannelsNotificationSettings>;
 };
 
