@@ -17,12 +17,20 @@ export type NotificationKind<K extends keyof DAD = keyof DAD> =
   | "textMention"
   | K;
 
-export type ChannelNotificationSettings = {
+/**
+ * A channel notification setting is a set of notification kinds.
+ * One setting can have multiple kinds (+ augmentation)
+ */
+export type ChannelNotificationSetting = {
   [K in NotificationKind]: boolean;
 };
 
+/**
+ * Channels notification settings are a set of channel notification setting.
+ * One channel for one setting.
+ */
 export type ChannelsNotificationSettings = {
-  [C in NotificationChannel]: ChannelNotificationSettings;
+  [C in NotificationChannel]: ChannelNotificationSetting;
 };
 
 /**
@@ -40,7 +48,7 @@ type DeepPartialWithAugmentation<T> = T extends object
 
 /**
  * Partial channels notification settings
- * with augmentation preserved
+ * with augmentation preserved gracefully
  */
 export type PartialChannelsNotificationSettings =
   DeepPartialWithAugmentation<ChannelsNotificationSettings>;
