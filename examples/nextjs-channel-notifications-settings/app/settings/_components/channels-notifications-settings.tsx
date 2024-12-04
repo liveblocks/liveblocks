@@ -9,8 +9,6 @@ import { cn } from "../../../utils/cn";
 export function ChannelsNotificationsSettings() {
   // TODO: add pre-defined channels
   const [slackNotifications, setSlackNotifications] = useState(false);
-  // TODO: add augmentation
-  const [$customNotifications, set$customNotifications] = useState(false);
 
   const [{ isLoading, error, settings }, updateChannelNotificationSettings] =
     useChannelsNotificationSettings();
@@ -19,13 +17,13 @@ export function ChannelsNotificationsSettings() {
   if (error) return null; // or throw/capture error
 
   // Make an util here?
-  const isEmailChannelEnabledFor = Object.keys(settings.email).every(
+  const isEmailChannelEnabled = Object.keys(settings.email).every(
     // @ts-expect-error
     (key) => settings[key] === true
   );
 
   const handleChangeEmailChannel = (checked: boolean): void => {
-    const payload: ChannelsNotificationSettings = checked
+    const payload: Partial<ChannelsNotificationSettings> = checked
       ? {
           email: { thread: true, textMention: true, $fileUploaded: true },
         }
@@ -36,6 +34,60 @@ export function ChannelsNotificationsSettings() {
   };
   // Thinking of this maybe it would be worth to have a deep partial
   // e.g updateChannelNotificationSettings({ email: { thread: false }})
+
+  const handleChangeThreadKind = (checked: boolean): void => {
+    const payload: Partial<ChannelsNotificationSettings> = checked
+      ? {
+          email: {
+            ...settings.email,
+            thread: true,
+          },
+        }
+      : {
+          email: {
+            ...settings.email,
+            thread: false,
+          },
+        };
+
+    updateChannelNotificationSettings(payload);
+  };
+
+  const handleChangeTextMentionKind = (checked: boolean): void => {
+    const payload: Partial<ChannelsNotificationSettings> = checked
+      ? {
+          email: {
+            ...settings.email,
+            textMention: true,
+          },
+        }
+      : {
+          email: {
+            ...settings.email,
+            textMention: false,
+          },
+        };
+
+    updateChannelNotificationSettings(payload);
+  };
+
+  const handleChange$fileUploadedKind = (checked: boolean): void => {
+    const payload: Partial<ChannelsNotificationSettings> = checked
+      ? {
+          email: {
+            ...settings.email,
+            $fileUploaded: true,
+          },
+        }
+      : {
+          email: {
+            ...settings.email,
+            $fileUploaded: false,
+          },
+        };
+
+    updateChannelNotificationSettings(payload);
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6 w-[600px]">
@@ -50,11 +102,11 @@ export function ChannelsNotificationsSettings() {
           <Switch.Root
             className={cn(
               "w-11 h-6 rounded-full relative inline-flex items-center transition-colors",
-              settings.email ? "bg-green-500" : "bg-gray-200"
+              isEmailChannelEnabled ? "bg-green-500" : "bg-gray-200"
             )}
             id="emailNotifications"
             name="emailNotifications"
-            checked={isEmailChannelEnabledFor}
+            checked={isEmailChannelEnabled}
             onCheckedChange={handleChangeEmailChannel}
           >
             <Switch.Thumb className="w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-100 will-change-transform data-[state=checked]:translate-x-[22px]" />
@@ -63,51 +115,101 @@ export function ChannelsNotificationsSettings() {
             htmlFor="emailNotifications"
             className="ml-3 text-sm font-medium text-gray-700"
           >
-            Receive email notifications
+            Receive email (all kind) notifications
           </label>
         </div>
       </div>
+
       <div className="mb-6">
+        <div className="flex items-center">
+          <Switch.Root
+            className={cn(
+              "w-11 h-6 rounded-full relative inline-flex items-center transition-colors",
+              settings.email.thread ? "bg-green-500" : "bg-gray-200"
+            )}
+            id="threadNotifications"
+            name="threadNotifications"
+            checked={settings.email.thread}
+            onCheckedChange={handleChangeThreadKind}
+          >
+            <Switch.Thumb className="w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-100 will-change-transform data-[state=checked]:translate-x-[22px]" />
+          </Switch.Root>
+          <label
+            htmlFor="threadNotifications"
+            className="ml-3 text-sm font-medium text-gray-700"
+          >
+            Receive thread kind email notifications
+          </label>
+        </div>
+      </div>
+
+      <div className="mb-6">
+        <div className="flex items-center">
+          <Switch.Root
+            className={cn(
+              "w-11 h-6 rounded-full relative inline-flex items-center transition-colors",
+              settings.email.thread ? "bg-green-500" : "bg-gray-200"
+            )}
+            id="textMentionNotifications"
+            name="textMentionNotifications"
+            checked={settings.email.textMention}
+            onCheckedChange={handleChangeTextMentionKind}
+          >
+            <Switch.Thumb className="w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-100 will-change-transform data-[state=checked]:translate-x-[22px]" />
+          </Switch.Root>
+          <label
+            htmlFor="textMentionNotifications"
+            className="ml-3 text-sm font-medium text-gray-700"
+          >
+            Receive text mention kind email notifications
+          </label>
+        </div>
+      </div>
+
+      <div className="mb-6">
+        <div className="flex items-center">
+          <Switch.Root
+            className={cn(
+              "w-11 h-6 rounded-full relative inline-flex items-center transition-colors",
+              settings.email ? "bg-green-500" : "bg-gray-200"
+            )}
+            id="$customNotifications"
+            name="$customNotifications"
+            checked={settings.email.$fileUploaded}
+            onCheckedChange={handleChange$fileUploadedKind}
+          >
+            <Switch.Thumb className="w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-100 will-change-transform data-[state=checked]:translate-x-[22px]" />
+          </Switch.Root>
+          <label
+            htmlFor="$customNotifications"
+            className="ml-3 text-sm font-medium text-gray-700"
+          >
+            Receive $fileUploaded (custom) kind notifications
+          </label>
+        </div>
+      </div>
+
+      <hr />
+
+      <div className="mb-6 mt-6">
         <div className="flex items-center">
           <Switch.Root
             className={cn(
               "w-11 h-6 rounded-full relative inline-flex items-center transition-colors",
               slackNotifications ? "bg-green-500" : "bg-gray-200"
             )}
-            id="emailNotifications"
-            name="emailNotifications"
+            id="slackNotifications"
+            name="slackNotifications"
             checked={slackNotifications}
             onCheckedChange={setSlackNotifications}
           >
             <Switch.Thumb className="w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-100 will-change-transform data-[state=checked]:translate-x-[22px]" />
           </Switch.Root>
           <label
-            htmlFor="emailNotifications"
+            htmlFor="slackNotifications"
             className="ml-3 text-sm font-medium text-gray-700"
           >
             Receive Slack notifications
-          </label>
-        </div>
-      </div>
-      <div className="mb-6">
-        <div className="flex items-center">
-          <Switch.Root
-            className={cn(
-              "w-11 h-6 rounded-full relative inline-flex items-center transition-colors",
-              $customNotifications ? "bg-green-500" : "bg-gray-200"
-            )}
-            id="emailNotifications"
-            name="emailNotifications"
-            checked={$customNotifications}
-            onCheckedChange={set$customNotifications}
-          >
-            <Switch.Thumb className="w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-100 will-change-transform data-[state=checked]:translate-x-[22px]" />
-          </Switch.Root>
-          <label
-            htmlFor="emailNotifications"
-            className="ml-3 text-sm font-medium text-gray-700"
-          >
-            Receive $customNotifications notifications
           </label>
         </div>
       </div>
