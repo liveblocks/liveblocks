@@ -33,3 +33,24 @@ export const nanoid = (t = 21): string =>
                 : "-"),
       ""
     );
+
+/**
+ * Creates a new object by mapping a function over all values. Keys remain the
+ * same. Think Array.prototype.map(), but for values in an object.
+ */
+export function mapValues<V, O extends Record<string, unknown>>(
+  obj: O,
+  mapFn: (value: O[keyof O], key: keyof O) => V
+): { [K in keyof O]: V } {
+  const result = {} as { [K in keyof O]: V };
+  for (const pair of Object.entries(obj)) {
+    const key: keyof O = pair[0];
+    if (key === "__proto__") {
+      // Avoid setting dangerous __proto__ keys
+      continue;
+    }
+    const value = pair[1] as O[keyof O];
+    result[key] = mapFn(value, key);
+  }
+  return result;
+}
