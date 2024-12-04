@@ -281,11 +281,14 @@
 
   :where(.lb-icon) {
     --lb-icon-background: var(--lb-button-background);
+
+    flex: none;
   }
 }
 
 .lb-button-label {
   display: inline-flex;
+  flex: none;
   align-items: center;
   block-size: var(--lb-icon-size);
   font-weight: 500;
