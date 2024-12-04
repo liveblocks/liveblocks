@@ -2,6 +2,7 @@ import { expect, test } from "vitest";
 
 import { LiveObject } from "~/LiveObject.js";
 import { SQLCache } from "~/SQLCache.js";
+import { raise } from "~/utils.js";
 
 test("empty", () => {
   const cache = new SQLCache();
@@ -126,6 +127,41 @@ test("attaching a LiveObject from another pool should fail", () => {
     ["O1:1", "foo", "bar", null],
     ["root", "a", undefined, "O1:1"],
   ]);
+});
+
+test("cannot mutate LiveObject outside of a transaction", () => {
+  const x = new LiveObject({ foo: "bar" });
+
+  const cache = new SQLCache();
+  cache.mutate((root) => root.set("a", x));
+
+  expect(() => x.set("b", 1)).toThrow(
+    "Can only mutate LiveObjects within a mutation"
+  );
+
+  // The added "b" key should not get written to storage!
+  expect(cache.table).toEqual([
+    ["O1:1", "foo", "bar", null],
+    ["root", "a", undefined, "O1:1"],
+  ]);
+});
+
+test("cannot mutate LiveObject outside of a transaction (also not after failure)", () => {
+  const x = new LiveObject({ foo: "bar" });
+
+  const cache = new SQLCache();
+  try {
+    cache.mutate((root) => {
+      root.set("a", x);
+      raise("oops");
+    });
+  } catch {}
+
+  expect(() => x.set("b", 1)).toThrow(
+    "Can only mutate LiveObjects within a mutation"
+  );
+
+  expect(cache.table).toEqual([]);
 });
 
 test("deleting keys", () => {
