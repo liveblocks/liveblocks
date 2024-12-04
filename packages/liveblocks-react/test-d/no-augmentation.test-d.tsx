@@ -3,6 +3,7 @@ React; // To silence tsd warning
 
 import {
   BaseMetadata,
+  ChannelsNotificationSettings,
   Json,
   LiveList,
   LiveObject,
@@ -835,3 +836,24 @@ import { expectAssignable, expectError, expectType } from "tsd";
   const status = suspense.useSyncStatus();
   expectType<"synchronizing" | "synchronized">(status);
 }
+
+// ---------------------------------------------------------
+// the useChannelsNotificationSettings() hook
+{
+  const [{ isLoading, error, settings }, update] =
+    classic.useChannelsNotificationSettings();
+  expectType<boolean>(isLoading);
+  expectType<Error | undefined>(error);
+  expectType<ChannelsNotificationSettings | undefined>(settings);
+  expectType<void>(update({})); // empty {} because of partial definition
+}
+// the useChannelsNotificationSettings() hook suspense
+{
+  const [{ isLoading, error, settings }, update] =
+    suspense.useChannelsNotificationSettings();
+  expectType<boolean>(isLoading);
+  expectType<Error | undefined>(error);
+  expectType<ChannelsNotificationSettings | undefined>(settings);
+  expectType<void>(update({})); // empty {} because of partial definition
+}
+// ---------------------------------------------------------
