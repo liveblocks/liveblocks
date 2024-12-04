@@ -333,9 +333,12 @@ export class SQLCache {
     const origClock = this.clock;
 
     let dirty = false;
+    let canWriteToPool = true;
+
     const poolCache = new DefaultMap<NodeId, LiveStructure>((nodeId: NodeId) =>
       LiveObject._load(nodeId, pool)
     );
+
     const pool: Pool = {
       nextId: <P extends string>(prefix: P): `${P}${number}:${number}` =>
         `${prefix}${this.#pendingClock}:${this.#nextNodeId++}`,
@@ -343,20 +346,29 @@ export class SQLCache {
       getNode: (nodeId: NodeId) => poolCache.getOrCreate(nodeId),
       getChild: (nodeId: NodeId, key: string) => this.#get(pool, nodeId, key),
       setChild: (nodeId: NodeId, key: string, value: Json) => {
+        ensureInMutation();
         const updated = this.#set(pool, poolCache, nodeId, key, value);
         dirty ||= updated;
         return updated;
       },
       deleteChild: (nodeId: NodeId, key: string) => {
+        ensureInMutation();
         const deleted = this.#delete(nodeId, key);
         dirty ||= deleted;
         return deleted;
       },
     };
 
+    function ensureInMutation() {
+      if (!canWriteToPool)
+        throw new Error("Can only mutate LiveObjects within a mutation");
+    }
+
     this.#startTransaction();
     try {
+      canWriteToPool = true;
       callback(pool.getRoot());
+      canWriteToPool = false;
       if (dirty) {
         this.#commit();
         return this.deltaSince(origClock);
@@ -365,6 +377,7 @@ export class SQLCache {
         return [{}, {}, {}];
       }
     } catch (e) {
+      canWriteToPool = false;
       this.#rollback();
       throw e;
     }
