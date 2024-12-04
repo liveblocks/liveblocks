@@ -1440,7 +1440,7 @@ describe("client", () => {
 
   test("should update user's channels notification settings", async () => {
     const userId = "nimesh";
-    const settings: Partial<ChannelsNotificationSettings> = {
+    const settings: ChannelsNotificationSettings = {
       email: {
         textMention: false,
         thread: false,
@@ -1463,9 +1463,39 @@ describe("client", () => {
     ).resolves.toEqual(settings);
   });
 
+  test("should update user's channels notification settings partially", async () => {
+    const userId = "adri";
+    const settings: ChannelsNotificationSettings = {
+      email: {
+        textMention: true,
+        thread: true,
+      },
+    };
+
+    server.use(
+      http.post(
+        `${DEFAULT_BASE_URL}/v2/users/:userId/channels-notification-settings`,
+        () => {
+          return HttpResponse.json(settings, { status: 200 });
+        }
+      )
+    );
+
+    const client = new Liveblocks({ secret: "sk_xxx" });
+
+    await expect(
+      client.updateChannelsNotificationSettings({
+        userId,
+        data: {
+          email: { textMention: true },
+        },
+      })
+    ).resolves.toEqual(settings);
+  });
+
   test("should throw a LiveblocksError when updateChannelsNotificationSettings receives an error response", async () => {
     const userId = "mina";
-    const settings: Partial<ChannelsNotificationSettings> = {
+    const settings: ChannelsNotificationSettings = {
       email: {
         textMention: false,
         thread: false,
