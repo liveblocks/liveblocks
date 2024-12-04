@@ -7,10 +7,10 @@ import {
   useStorage as useOriginalStorage,
   useSelf,
 } from "@liveblocks/react/suspense";
-import { LiveMap, LiveObject } from "@liveblocks/client";
 import { shallow, ClientSideSuspense, useMyPresence } from "@liveblocks/react";
 import styles from "../styles/index.module.css";
 import { useRouter } from "next/router";
+import * as config from "../liveblocks.config";
 
 /* prettier-ignore */
 /* Demo helper, please ignore 🙈 */ function useMutations<T>(config: T): {
@@ -32,11 +32,7 @@ import { useRouter } from "next/router";
 export default function Room() {
   const roomId = useExampleRoomId("nextjs-whiteboard");
   return (
-    <RoomProvider
-      id={roomId}
-      initialPresence={{ selectedShape: null }}
-      initialStorage={{ shapes: new LiveMap() }}
-    >
+    <RoomProvider id={roomId} initialPresence={{ selectedShape: null }}>
       <div className={styles.container}>
         <ClientSideSuspense fallback={<Loading />}>
           <Canvas />
@@ -55,28 +51,11 @@ function Canvas() {
 
   const history = useHistory();
 
-  const insertRectangle = useMutation(({ storage, setMyPresence }) => {
-    const shapeId = Date.now().toString();
-    const shape = new LiveObject({
-      x: getRandomInt(300),
-      y: getRandomInt(300),
-      fill: getRandomColor(),
-    });
-    storage.get("shapes").set(shapeId, shape);
-    setMyPresence({ selectedShape: shapeId }, { addToHistory: true });
-  }, []);
+  const [presence, setMyPresence] = useMyPresence();
 
-  const deleteRectangle = useMutation(({ storage, self, setMyPresence }) => {
-    const shapeId = self.presence.selectedShape;
-    if (!shapeId) {
-      return;
-    }
+  const { insertRectangle, deleteRectangle, setXY } = useMutations(config);
 
-    storage.get("shapes").delete(shapeId);
-    setMyPresence({ selectedShape: null });
-  }, []);
-
-  const onShapePointerDown = useMutation(
+  const onShapePointerDown = useOriginalMutation(
     ({ setMyPresence }, e: PointerEvent<HTMLDivElement>, shapeId: string) => {
       history.pause();
       e.stopPropagation();
@@ -87,7 +66,7 @@ function Canvas() {
     [history]
   );
 
-  const onCanvasPointerUp = useMutation(
+  const onCanvasPointerUp = useOriginalMutation(
     ({ setMyPresence }) => {
       if (!isDragging) {
         setMyPresence({ selectedShape: null }, { addToHistory: true });
@@ -99,8 +78,8 @@ function Canvas() {
     [isDragging, history]
   );
 
-  const onCanvasPointerMove = useMutation(
-    ({ storage, self }, e: PointerEvent<HTMLDivElement>) => {
+  const onCanvasPointerMove = useOriginalMutation(
+    ({ self }, e: PointerEvent<HTMLDivElement>) => {
       e.preventDefault();
       if (!isDragging) {
         return;
@@ -111,14 +90,7 @@ function Canvas() {
         return;
       }
 
-      const shape = storage.get("shapes").get(shapeId);
-
-      if (shape) {
-        shape.update({
-          x: e.clientX - 50,
-          y: e.clientY - 50,
-        });
-      }
+      setXY(shapeId, e.clientX - 50, e.clientY - 50);
     },
     [isDragging]
   );
@@ -141,8 +113,25 @@ function Canvas() {
         })}
       </div>
       <div className={styles.toolbar}>
-        <button onClick={() => insertRectangle()}>Rectangle</button>
-        <button onClick={() => deleteRectangle()}>Delete</button>
+        <button
+          onClick={() => {
+            const shapeId = Date.now().toString();
+            const x = getRandomInt(300);
+            const y = getRandomInt(300);
+            const fill = getRandomColor();
+            insertRectangle(shapeId, x, y, fill);
+            setMyPresence({ selectedShape: shapeId }, { addToHistory: true });
+          }}
+        >
+          Rectangle
+        </button>
+        <button
+          onClick={() =>
+            presence.selectedShape && deleteRectangle(presence.selectedShape)
+          }
+        >
+          Delete
+        </button>
         <button onClick={() => history.undo()}>Undo</button>
         <button onClick={() => history.redo()}>Redo</button>
       </div>
