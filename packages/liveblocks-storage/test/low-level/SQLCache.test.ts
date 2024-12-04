@@ -114,6 +114,20 @@ test("attaching the same LiveObject under multiple roots fails", () => {
   ]);
 });
 
+test("attaching a LiveObject from another pool should fail", () => {
+  const x = new LiveObject({ foo: "bar" });
+
+  const cache = new SQLCache();
+  cache.mutate((root) => root.set("a", x));
+  expect(() => cache.mutate((root) => root.set("a", x))).toThrow(
+    "LiveObject already attached to different tree"
+  );
+  expect(cache.table).toEqual([
+    ["O1:1", "foo", "bar", null],
+    ["root", "a", undefined, "O1:1"],
+  ]);
+});
+
 test("deleting keys", () => {
   const cache = new SQLCache();
   cache.mutate((root) => {
