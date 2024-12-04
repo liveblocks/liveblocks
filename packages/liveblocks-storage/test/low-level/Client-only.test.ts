@@ -55,6 +55,13 @@ test("set LiveObject", () => {
   });
 });
 
+// XXX Make pass!
+test.fails("using .toImmutable() should return the same value", () => {
+  const client = new Client({ setLiveObject });
+  client.mutate.setLiveObject("a", "foo", "bar");
+  expect(client.root).toEqual({ a: { foo: "bar" } });
+});
+
 test("using .get() should always return the same Live instance", () => {
   const client = new Client({
     setLiveObject,
