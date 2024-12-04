@@ -18,6 +18,11 @@ test("new LiveObject with empty record", () => {
   expect(obj.toImmutable()).toEqual({});
 });
 
+test("get with local data", () => {
+  const obj = new LiveObject({ a: 1 });
+  expect(obj.get("a")).toEqual(1);
+});
+
 test("toImmutable with nested LiveObjects", () => {
   const input = {
     a: 42,
