@@ -9,7 +9,7 @@ export type {
   BaseMetadata,
   BaseUserMeta,
   BroadcastOptions,
-  ChannelNotificationSettings,
+  ChannelNotificationSetting,
   ChannelsNotificationSettings,
   Client,
   ClientOptions,
