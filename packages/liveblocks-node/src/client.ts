@@ -14,6 +14,7 @@ import type {
   CommentUserReactionPlain,
   DAD,
   DE,
+  DeepPartial,
   DM,
   DS,
   DU,
@@ -1673,7 +1674,7 @@ export class Liveblocks {
    */
   public async updateChannelsNotificationSettings(params: {
     userId: string;
-    data: Partial<ChannelsNotificationSettings>;
+    data: DeepPartial<ChannelsNotificationSettings>;
   }): Promise<ChannelsNotificationSettings> {
     const { userId, data } = params;
 
