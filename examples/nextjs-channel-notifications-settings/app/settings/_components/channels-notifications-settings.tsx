@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import type { ChannelsNotificationSettings } from "@liveblocks/core";
 import { useChannelsNotificationSettings } from "@liveblocks/react";
 import * as Switch from "@radix-ui/react-switch";
 import { cn } from "../../../utils/cn";
@@ -16,77 +15,42 @@ export function ChannelsNotificationsSettings() {
   if (isLoading) return null;
   if (error) return null; // or throw/capture error
 
-  // Make an util here?
+  // Todo: make an util here
   const isEmailChannelEnabled = Object.keys(settings.email).every(
     // @ts-expect-error
     (key) => settings[key] === true
   );
 
   const handleChangeEmailChannel = (checked: boolean): void => {
-    const payload: Partial<ChannelsNotificationSettings> = checked
-      ? {
-          email: { thread: true, textMention: true, $fileUploaded: true },
-        }
-      : {
-          email: { thread: false, textMention: false, $fileUploaded: false },
-        };
-    updateChannelNotificationSettings(payload);
+    updateChannelNotificationSettings({
+      email: {
+        thread: checked,
+        textMention: checked,
+        $fileUploaded: checked,
+      },
+    });
   };
-  // Thinking of this maybe it would be worth to have a deep partial
-  // e.g updateChannelNotificationSettings({ email: { thread: false }})
 
   const handleChangeThreadKind = (checked: boolean): void => {
-    const payload: Partial<ChannelsNotificationSettings> = checked
-      ? {
-          email: {
-            ...settings.email,
-            thread: true,
-          },
-        }
-      : {
-          email: {
-            ...settings.email,
-            thread: false,
-          },
-        };
-
-    updateChannelNotificationSettings(payload);
+    updateChannelNotificationSettings({
+      email: { thread: checked },
+    });
   };
 
   const handleChangeTextMentionKind = (checked: boolean): void => {
-    const payload: Partial<ChannelsNotificationSettings> = checked
-      ? {
-          email: {
-            ...settings.email,
-            textMention: true,
-          },
-        }
-      : {
-          email: {
-            ...settings.email,
-            textMention: false,
-          },
-        };
-
-    updateChannelNotificationSettings(payload);
+    updateChannelNotificationSettings({
+      email: {
+        textMention: checked,
+      },
+    });
   };
 
   const handleChange$fileUploadedKind = (checked: boolean): void => {
-    const payload: Partial<ChannelsNotificationSettings> = checked
-      ? {
-          email: {
-            ...settings.email,
-            $fileUploaded: true,
-          },
-        }
-      : {
-          email: {
-            ...settings.email,
-            $fileUploaded: false,
-          },
-        };
-
-    updateChannelNotificationSettings(payload);
+    updateChannelNotificationSettings({
+      email: {
+        $fileUploaded: checked,
+      },
+    });
   };
 
   return (
