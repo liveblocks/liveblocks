@@ -15,7 +15,13 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 49 (2024-12-06)
 
+## Dashboard
+
+- Multiple Tiptap editors are now supported in a room's Text Editor view.
+
 ## Contributors
+
+ctnicholas, pierrelevaillant
 
 # Week 48 (2024-11-29)
 
