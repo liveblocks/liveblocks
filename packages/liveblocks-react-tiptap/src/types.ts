@@ -1,6 +1,7 @@
 import type { TextSelection } from "@tiptap/pm/state";
 import { PluginKey } from "@tiptap/pm/state";
 import type { DecorationSet } from "@tiptap/pm/view";
+import type { ChainedCommands } from "@tiptap/react";
 
 export const LIVEBLOCKS_MENTION_KEY = new PluginKey("lb-plugin-mention");
 export const LIVEBLOCKS_MENTION_PASTE_KEY = new PluginKey(
@@ -46,3 +47,8 @@ export type ThreadPluginState = {
 };
 
 export type FloatingPosition = "top" | "bottom";
+
+export type ExtendedChainedCommands<
+  T extends string,
+  A extends any[] = [],
+> = ChainedCommands & Record<T, (...args: A) => ChainedCommands>;

@@ -253,6 +253,51 @@
 }
 
 /*************************************
+ *            AI Toolbar             *
+ *************************************/
+
+.lb-tiptap-ai-toolbar {
+  --lb-tiptap-ai-toolbar-padding: calc(0.625 * var(--lb-spacing));
+
+  inline-size: 350px;
+}
+
+.lb-tiptap-ai-toolbar-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  :where(.lb-icon) {
+    position: absolute;
+    inset-inline-start: var(--lb-tiptap-ai-toolbar-padding);
+    color: var(--lb-foreground-moderate);
+    pointer-events: none;
+  }
+}
+
+.lb-tiptap-ai-toolbar-input {
+  all: unset;
+  box-sizing: inherit;
+  inline-size: 100%;
+  padding: var(--lb-tiptap-ai-toolbar-padding);
+  padding-inline-start: calc(
+    var(--lb-icon-size) + var(--lb-tiptap-ai-toolbar-padding) + 0.375 *
+      var(--lb-spacing)
+  );
+  background: transparent;
+  outline: none;
+  appearance: textfield;
+
+  &::placeholder {
+    color: var(--lb-foreground-moderate);
+  }
+}
+
+.lb-tiptap-ai-toolbar-dropdown {
+  inline-size: 250px;
+}
+
+/*************************************
  *          Collab Cursors           *
  *************************************/
 

@@ -340,7 +340,7 @@ const InboxNotificationLayout = forwardRef<
                             onSelect={handleMarkAsRead}
                             onClick={stopPropagation}
                           >
-                            <CheckIcon className="lb-dropdown-item-icon" />
+                            <CheckIcon />
                             {$.INBOX_NOTIFICATION_MARK_AS_READ}
                           </DropdownItem>
                         ) : null}
@@ -348,7 +348,7 @@ const InboxNotificationLayout = forwardRef<
                           onSelect={handleDelete}
                           onClick={stopPropagation}
                         >
-                          <DeleteIcon className="lb-dropdown-item-icon" />
+                          <DeleteIcon />
                           {$.INBOX_NOTIFICATION_DELETE}
                         </DropdownItem>
                       </>

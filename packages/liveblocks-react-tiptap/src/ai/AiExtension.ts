@@ -41,6 +41,10 @@ export const AiExtension = Extension.create<never, AiExtensionStorage>({
         this.editor.commands.blur();
         return true;
       },
+      closeAi: () => () => {
+        this.storage.askAiSelection = null;
+        return true;
+      },
     };
   },
 

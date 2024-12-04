@@ -259,7 +259,7 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
             aria-label="Floating toolbar"
             aria-orientation="horizontal"
             className={classNames(
-              "lb-root lb-portal lb-elevation lb-tiptap-floating lb-tiptap-floating-toolbar lb-tiptap-toolbar",
+              "lb-root lb-portal lb-elevation lb-tiptap-floating-toolbar lb-tiptap-toolbar",
               className
             )}
             ref={mergedRefs}

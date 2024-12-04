@@ -3,6 +3,7 @@ import {
   Button,
   CodeIcon,
   CommentIcon,
+  EmojiIcon,
   ItalicIcon,
   RedoIcon,
   ShortcutTooltip,
@@ -12,17 +13,13 @@ import {
   UndoIcon,
 } from "@liveblocks/react-ui/_private";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
-import type { ChainedCommands, Editor } from "@tiptap/react";
+import type { Editor } from "@tiptap/react";
 import type { ComponentProps, ComponentType, ReactNode } from "react";
 import React, { forwardRef } from "react";
 
 import { classNames } from "../classnames";
 import { EditorProvider, useCurrentEditor } from "../context";
-
-type ExtendedChainedCommands<
-  T extends string,
-  A extends any[] = [],
-> = ChainedCommands & Record<T, (...args: A) => ChainedCommands>;
+import type { ExtendedChainedCommands } from "../types";
 
 export interface ToolbarSlotProps {
   editor: Editor;
@@ -381,7 +378,7 @@ function ToolbarSectionAi() {
       {supportsAi && (
         <ToolbarButton
           name="Ask AI"
-          icon={<CommentIcon />}
+          icon={<EmojiIcon />}
           onClick={() =>
             (editor.chain().focus() as ExtendedChainedCommands<"askAi">).askAi()
           }

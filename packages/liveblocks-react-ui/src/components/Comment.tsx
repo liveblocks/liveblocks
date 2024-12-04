@@ -747,14 +747,14 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                           onSelect={handleEdit}
                           onClick={stopPropagation}
                         >
-                          <EditIcon className="lb-dropdown-item-icon" />
+                          <EditIcon />
                           {$.COMMENT_EDIT}
                         </DropdownItem>
                         <DropdownItem
                           onSelect={handleDelete}
                           onClick={stopPropagation}
                         >
-                          <DeleteIcon className="lb-dropdown-item-icon" />
+                          <DeleteIcon />
                           {$.COMMENT_DELETE}
                         </DropdownItem>
                       </>

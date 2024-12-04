@@ -27,6 +27,8 @@ declare module "@tiptap/core" {
     ai: {
       // TODO: Add an argument to start a specific task immediately (e.g. askAi('summarize'))?
       askAi: () => ReturnType;
+      /** @internal */
+      closeAi: () => ReturnType;
     };
   }
 }
