@@ -14,7 +14,6 @@ import type {
   CommentUserReactionPlain,
   DAD,
   DE,
-  DeepPartial,
   DM,
   DS,
   DU,
@@ -25,6 +24,7 @@ import type {
   KDAD,
   LsonObject,
   OptionalTupleUnless,
+  PartialChannelsNotificationSettings,
   PartialUnless,
   Patchable,
   PlainLsonObject,
@@ -1674,7 +1674,7 @@ export class Liveblocks {
    */
   public async updateChannelsNotificationSettings(params: {
     userId: string;
-    data: DeepPartial<ChannelsNotificationSettings>;
+    data: PartialChannelsNotificationSettings;
   }): Promise<ChannelsNotificationSettings> {
     const { userId, data } = params;
 

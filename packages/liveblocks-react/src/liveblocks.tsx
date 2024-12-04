@@ -8,12 +8,11 @@ import type {
 import type {
   AsyncResult,
   BaseRoomInfo,
-  ChannelsNotificationSettings,
-  DeepPartial,
   DM,
   DU,
   InboxNotificationData,
   OpaqueClient,
+  PartialChannelsNotificationSettings,
   SyncStatus,
 } from "@liveblocks/core";
 import {
@@ -636,9 +635,9 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
 
 function useUpdateChannelsNotificationSettings_withClient(
   client: OpaqueClient
-): (settings: DeepPartial<ChannelsNotificationSettings>) => void {
+): (settings: PartialChannelsNotificationSettings) => void {
   return React.useCallback(
-    (settings: DeepPartial<ChannelsNotificationSettings>): void => {
+    (settings: PartialChannelsNotificationSettings): void => {
       const { store } = getLiveblocksExtrasForClient(client);
       const optimisticUpdateId = store.addOptimisticUpdate({
         type: "update-channels-notification-settings",
@@ -667,7 +666,7 @@ function useChannelsNotificationSettings_withClient(
   client: OpaqueClient
 ): [
   ChannelsNotificationSettingsAsyncResult,
-  (settings: DeepPartial<ChannelsNotificationSettings>) => void,
+  (settings: PartialChannelsNotificationSettings) => void,
 ] {
   const updateChannelsNotificationSettings =
     useUpdateChannelsNotificationSettings_withClient(client);
@@ -716,7 +715,7 @@ function useChannelsNotificationSettingsSuspense_withClient(
   client: OpaqueClient
 ): [
   ChannelsNotificationSettingsAsyncResult,
-  (settings: DeepPartial<ChannelsNotificationSettings>) => void,
+  (settings: PartialChannelsNotificationSettings) => void,
 ] {
   const store = getLiveblocksExtrasForClient(client).store;
 
