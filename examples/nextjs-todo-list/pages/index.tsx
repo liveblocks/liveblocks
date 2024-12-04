@@ -3,13 +3,30 @@ import {
   RoomProvider,
   useOthers,
   useUpdateMyPresence,
-  useStorage,
-  useMutation,
+  useStorage as useOriginalStorage,
+  useMutation as useOriginalMutation,
 } from "@liveblocks/react/suspense";
 import "@liveblocks/react";
 import { LiveList, LiveObject } from "@liveblocks/client";
 import { useRouter } from "next/router";
 import { ClientSideSuspense } from "@liveblocks/react";
+
+/* prettier-ignore */
+/* Demo helper, please ignore 🙈 */ function useMutations<T>(config: T): {
+/* Demo helper, please ignore 🙈 */   [K in keyof T]: T[K] extends (first: any, ...args: infer A) => infer R
+/* Demo helper, please ignore 🙈 */     ? (...args: A) => R
+/* Demo helper, please ignore 🙈 */     : never;
+/* Demo helper, please ignore 🙈 */ } {
+/* Demo helper, please ignore 🙈 */   return config as any;
+/* Demo helper, please ignore 🙈 */ }
+
+/* prettier-ignore */
+/* Demo helper, please ignore 🙈 */ function useStorage<T>(
+/* Demo helper, please ignore 🙈 */     selector: (root: Liveblocks["StorageV2"]) => T,
+/* Demo helper, please ignore 🙈 */     isEqual?: (a: T, b: T) => boolean
+/* Demo helper, please ignore 🙈 */   ): T {
+/* Demo helper, please ignore 🙈 */     return useOriginalStorage(selector as any, isEqual);
+/* Demo helper, please ignore 🙈 */   }
 
 function WhoIsHere() {
   const userCount = useOthers((others) => others.length);
