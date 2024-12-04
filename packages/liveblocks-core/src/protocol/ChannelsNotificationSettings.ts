@@ -13,10 +13,10 @@ export type NotificationKind<K extends keyof DAD = keyof DAD> =
   | "textMention"
   | K;
 
-export type ChannelNotificationSetting = {
+export type ChannelNotificationSettings = {
   [K in NotificationKind]: boolean;
 };
 
 export type ChannelsNotificationSettings = {
-  [C in NotificationChannel]: ChannelNotificationSetting;
+  [C in NotificationChannel]: ChannelNotificationSettings;
 };
