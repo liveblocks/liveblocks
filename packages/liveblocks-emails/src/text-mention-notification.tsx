@@ -91,7 +91,7 @@ export const extractTextMentionNotificationData = async ({
   // @ts-expect-error - Hidden property
   const textEditor = room.experimental_textEditor as RoomTextEditor | undefined;
   if (!textEditor) {
-    console.warn(`Room "${room.id}" do not have any text editor associated`);
+    console.warn(`Room "${room.id}" does not a text editor associated with it`);
     return null;
   }
 

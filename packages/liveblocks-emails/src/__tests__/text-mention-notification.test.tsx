@@ -133,6 +133,9 @@ describe("text mention notification", () => {
     });
 
     it("should extract `null` - no text editor associated", async () => {
+      const warnMock2 = jest.fn();
+      jest.spyOn(console, "warn").mockImplementation(warnMock2);
+
       const mentionId = generateInboxNotificationId();
       const inboxNotification = makeTextMentionInboxNotification({
         mentionId,
@@ -165,6 +168,11 @@ describe("text mention notification", () => {
       });
 
       expect(extracted).toBeNull();
+      expect(warnMock2).toHaveBeenCalledWith(
+        `Room "${ROOM_ID_TEST}" does not a text editor associated with it`
+      );
+
+      warnMock2.mockRestore();
     });
 
     it("should extract a text mention notification data", async () => {
