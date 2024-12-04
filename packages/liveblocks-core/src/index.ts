@@ -107,6 +107,7 @@ export {
   createInboxNotificationId,
   createThreadId,
 } from "./lib/createIds";
+export type { DeepPartial } from "./lib/DeepPartial";
 export {
   deprecate,
   deprecateIf,
