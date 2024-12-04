@@ -1,7 +1,12 @@
 import * as React from "react";
 React; // To silence tsd warning
 
-import { LiveList, LiveMap, LiveObject } from "@liveblocks/core";
+import {
+  ChannelsNotificationSettings,
+  LiveList,
+  LiveMap,
+  LiveObject,
+} from "@liveblocks/core";
 import * as classic from "@liveblocks/react";
 import * as suspense from "@liveblocks/react/suspense";
 import { expectAssignable, expectError, expectType } from "tsd";
@@ -946,3 +951,24 @@ declare global {
   const status = suspense.useSyncStatus();
   expectType<"synchronizing" | "synchronized">(status);
 }
+
+// ---------------------------------------------------------
+// the useChannelsNotificationSettings() hook
+{
+  const [{ isLoading, error, settings }, update] =
+    classic.useChannelsNotificationSettings();
+  expectType<boolean>(isLoading);
+  expectType<Error | undefined>(error);
+  expectType<ChannelsNotificationSettings | undefined>(settings);
+  expectType<void>(update({})); // empty {} because of partial definition
+}
+// the useChannelsNotificationSettings() hook suspense
+{
+  const [{ isLoading, error, settings }, update] =
+    suspense.useChannelsNotificationSettings();
+  expectType<boolean>(isLoading);
+  expectType<Error | undefined>(error);
+  expectType<ChannelsNotificationSettings | undefined>(settings);
+  expectType<void>(update({})); // empty {} because of partial definition
+}
+// ---------------------------------------------------------
