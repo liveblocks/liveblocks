@@ -52,3 +52,14 @@ type DeepPartialWithAugmentation<T> = T extends object
  */
 export type PartialChannelsNotificationSettings =
   DeepPartialWithAugmentation<ChannelsNotificationSettings>;
+
+/**
+ *
+ * Utility to check if a channel notification setting
+ * is enabled for every notification kinds.
+ */
+export function isChannelNotificationSettingEnabled(
+  setting: ChannelNotificationSetting
+): boolean {
+  return Object.values(setting).every((enabled) => enabled === true);
+}

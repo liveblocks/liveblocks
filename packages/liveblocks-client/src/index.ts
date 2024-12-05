@@ -69,6 +69,7 @@ export type {
 export {
   createClient,
   getMentionedIdsFromCommentBody,
+  isChannelNotificationSettingEnabled,
   LiveList,
   LiveMap,
   LiveObject,

@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useChannelsNotificationSettings } from "@liveblocks/react";
+import {
+  useChannelsNotificationSettings,
+  isChannelNotificationSettingEnabled,
+} from "@liveblocks/react";
 import * as Switch from "@radix-ui/react-switch";
 import { cn } from "../../../utils/cn";
 
@@ -15,10 +18,8 @@ export function ChannelsNotificationsSettings() {
   if (isLoading) return null;
   if (error) return null; // or throw/capture error
 
-  // Todo: make an util here
-  const isEmailChannelEnabled = Object.keys(settings.email).every(
-    // @ts-expect-error
-    (key) => settings[key] === true
+  const isEmailChannelEnabled = isChannelNotificationSettingEnabled(
+    settings.email
   );
 
   const handleChangeEmailChannel = (checked: boolean): void => {
@@ -48,7 +49,7 @@ export function ChannelsNotificationsSettings() {
   const handleChange$fileUploadedKind = (checked: boolean): void => {
     updateChannelNotificationSettings({
       email: {
-        $fileUploaded: true,
+        $fileUploaded: checked,
       },
     });
   };
