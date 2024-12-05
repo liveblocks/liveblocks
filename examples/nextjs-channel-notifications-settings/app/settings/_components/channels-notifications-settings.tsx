@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   useChannelsNotificationSettings,
   isChannelNotificationSettingEnabled,
@@ -9,9 +8,6 @@ import * as Switch from "@radix-ui/react-switch";
 import { cn } from "../../../utils/cn";
 
 export function ChannelsNotificationsSettings() {
-  // TODO: add pre-defined channels
-  const [slackNotifications, setSlackNotifications] = useState(false);
-
   const [{ isLoading, error, settings }, updateChannelNotificationSettings] =
     useChannelsNotificationSettings();
 
@@ -20,6 +16,12 @@ export function ChannelsNotificationsSettings() {
 
   const isEmailChannelEnabled = isChannelNotificationSettingEnabled(
     settings.email
+  );
+  const isSlackChannelEnabled = isChannelNotificationSettingEnabled(
+    settings.slack
+  );
+  const isTeamsChannelEnabled = isChannelNotificationSettingEnabled(
+    settings.teams
   );
 
   const handleChangeEmailChannel = (checked: boolean): void => {
@@ -32,13 +34,33 @@ export function ChannelsNotificationsSettings() {
     });
   };
 
-  const handleChangeThreadKind = (checked: boolean): void => {
+  const handleChangeSlackChannel = (checked: boolean): void => {
+    updateChannelNotificationSettings({
+      slack: {
+        thread: checked,
+        textMention: checked,
+        $fileUploaded: checked,
+      },
+    });
+  };
+
+  const handleChangeTeamsChannel = (checked: boolean): void => {
+    updateChannelNotificationSettings({
+      teams: {
+        thread: checked,
+        textMention: checked,
+        $fileUploaded: checked,
+      },
+    });
+  };
+
+  const handleChangeEmailChannelThreadKind = (checked: boolean): void => {
     updateChannelNotificationSettings({
       email: { thread: checked },
     });
   };
 
-  const handleChangeTextMentionKind = (checked: boolean): void => {
+  const handleChangeEmailChannelTextMentionKind = (checked: boolean): void => {
     updateChannelNotificationSettings({
       email: {
         textMention: checked,
@@ -46,7 +68,9 @@ export function ChannelsNotificationsSettings() {
     });
   };
 
-  const handleChange$fileUploadedKind = (checked: boolean): void => {
+  const handleChangeEmailChannel$fileUploadedKind = (
+    checked: boolean
+  ): void => {
     updateChannelNotificationSettings({
       email: {
         $fileUploaded: checked,
@@ -95,7 +119,7 @@ export function ChannelsNotificationsSettings() {
             id="threadNotifications"
             name="threadNotifications"
             checked={settings.email.thread}
-            onCheckedChange={handleChangeThreadKind}
+            onCheckedChange={handleChangeEmailChannelThreadKind}
           >
             <Switch.Thumb className="w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-100 will-change-transform data-[state=checked]:translate-x-[22px]" />
           </Switch.Root>
@@ -118,7 +142,7 @@ export function ChannelsNotificationsSettings() {
             id="textMentionNotifications"
             name="textMentionNotifications"
             checked={settings.email.textMention}
-            onCheckedChange={handleChangeTextMentionKind}
+            onCheckedChange={handleChangeEmailChannelTextMentionKind}
           >
             <Switch.Thumb className="w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-100 will-change-transform data-[state=checked]:translate-x-[22px]" />
           </Switch.Root>
@@ -141,7 +165,7 @@ export function ChannelsNotificationsSettings() {
             id="$customNotifications"
             name="$customNotifications"
             checked={settings.email.$fileUploaded}
-            onCheckedChange={handleChange$fileUploadedKind}
+            onCheckedChange={handleChangeEmailChannel$fileUploadedKind}
           >
             <Switch.Thumb className="w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-100 will-change-transform data-[state=checked]:translate-x-[22px]" />
           </Switch.Root>
@@ -161,12 +185,12 @@ export function ChannelsNotificationsSettings() {
           <Switch.Root
             className={cn(
               "w-11 h-6 rounded-full relative inline-flex items-center transition-colors",
-              slackNotifications ? "bg-green-500" : "bg-gray-200"
+              isSlackChannelEnabled ? "bg-green-500" : "bg-gray-200"
             )}
             id="slackNotifications"
             name="slackNotifications"
-            checked={slackNotifications}
-            onCheckedChange={setSlackNotifications}
+            checked={isSlackChannelEnabled}
+            onCheckedChange={handleChangeSlackChannel}
           >
             <Switch.Thumb className="w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-100 will-change-transform data-[state=checked]:translate-x-[22px]" />
           </Switch.Root>
@@ -174,7 +198,32 @@ export function ChannelsNotificationsSettings() {
             htmlFor="slackNotifications"
             className="ml-3 text-sm font-medium text-gray-700"
           >
-            Receive Slack notifications
+            Receive Slack notifications (all kind)
+          </label>
+        </div>
+      </div>
+
+      <hr />
+
+      <div className="mb-6 mt-6">
+        <div className="flex items-center">
+          <Switch.Root
+            className={cn(
+              "w-11 h-6 rounded-full relative inline-flex items-center transition-colors",
+              isTeamsChannelEnabled ? "bg-green-500" : "bg-gray-200"
+            )}
+            id="teamsNotifications"
+            name="teamsNotifications"
+            checked={isTeamsChannelEnabled}
+            onCheckedChange={handleChangeTeamsChannel}
+          >
+            <Switch.Thumb className="w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-100 will-change-transform data-[state=checked]:translate-x-[22px]" />
+          </Switch.Root>
+          <label
+            htmlFor="teamsNotifications"
+            className="ml-3 text-sm font-medium text-gray-700"
+          >
+            Receive Teams notifications (all kind)
           </label>
         </div>
       </div>
