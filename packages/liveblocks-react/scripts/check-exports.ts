@@ -30,7 +30,11 @@ const ALLOW_NO_FACTORY = [
   "ClientSideSuspense",
   "createLiveblocksContext", // the factories themselves, obviously
   "createRoomContext", // the factories themselves, obviously
+
+  // Re-exported from `@liveblocks/client` so they cannot be returned by
+  // the factories. So it makes no sense to warn about these.
   "shallow",
+  "isChannelNotificationSettingEnabled",
 
   // TODO: These are all exported types, which cannot be returned by the
   // factories, so it makes no sense to warn about these. We should auto-detect
