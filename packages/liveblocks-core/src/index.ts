@@ -159,6 +159,7 @@ export type {
   NotificationKind,
   PartialChannelsNotificationSettings,
 } from "./protocol/ChannelsNotificationSettings";
+export { isChannelNotificationSettingEnabled } from "./protocol/ChannelsNotificationSettings";
 export type {
   BroadcastEventClientMsg,
   ClientMsg,
