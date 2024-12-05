@@ -43,6 +43,14 @@ describe("useChannelsNotificationSettings", () => {
               thread: true,
               textMention: false,
             },
+            slack: {
+              thread: true,
+              textMention: false,
+            },
+            teams: {
+              thread: true,
+              textMention: false,
+            },
           })
         );
       })
@@ -71,6 +79,14 @@ describe("useChannelsNotificationSettings", () => {
             thread: true,
             textMention: false,
           },
+          slack: {
+            thread: true,
+            textMention: false,
+          },
+          teams: {
+            thread: true,
+            textMention: false,
+          },
         },
       })
     );
@@ -89,6 +105,14 @@ describe("useChannelsNotificationSettings", () => {
         return res(
           ctx.json({
             email: {
+              thread: true,
+              textMention: false,
+            },
+            slack: {
+              thread: true,
+              textMention: false,
+            },
+            teams: {
               thread: true,
               textMention: false,
             },
@@ -130,6 +154,14 @@ describe("useChannelsNotificationSettings", () => {
             thread: true,
             textMention: false,
           },
+          slack: {
+            thread: true,
+            textMention: false,
+          },
+          teams: {
+            thread: true,
+            textMention: false,
+          },
         },
       })
     );
@@ -151,6 +183,14 @@ describe("useChannelsNotificationSettings", () => {
             thread: false,
             textMention: false,
           },
+          slack: {
+            thread: true,
+            textMention: false,
+          },
+          teams: {
+            thread: true,
+            textMention: false,
+          },
         },
       })
     );
@@ -164,6 +204,14 @@ describe("useChannelsNotificationSettings", () => {
         return res(
           ctx.json({
             email: {
+              thread: true,
+              textMention: false,
+            },
+            slack: {
+              thread: true,
+              textMention: false,
+            },
+            teams: {
               thread: true,
               textMention: false,
             },
@@ -198,6 +246,14 @@ describe("useChannelsNotificationSettings", () => {
             thread: true,
             textMention: false,
           },
+          slack: {
+            thread: true,
+            textMention: false,
+          },
+          teams: {
+            thread: true,
+            textMention: false,
+          },
         },
       })
     );
@@ -218,6 +274,14 @@ describe("useChannelsNotificationSettings", () => {
           thread: false,
           textMention: false,
         },
+        slack: {
+          thread: true,
+          textMention: false,
+        },
+        teams: {
+          thread: true,
+          textMention: false,
+        },
       },
     });
 
@@ -227,6 +291,14 @@ describe("useChannelsNotificationSettings", () => {
         isLoading: false,
         settings: {
           email: {
+            thread: true,
+            textMention: false,
+          },
+          slack: {
+            thread: true,
+            textMention: false,
+          },
+          teams: {
             thread: true,
             textMention: false,
           },
@@ -335,6 +407,14 @@ describe("useChannelsNotificationSettings: error", () => {
               thread: true,
               textMention: false,
             },
+            slack: {
+              thread: true,
+              textMention: false,
+            },
+            teams: {
+              thread: true,
+              textMention: false,
+            },
           })
         );
       })
@@ -403,6 +483,14 @@ describe("useChannelsNotificationSettings: error", () => {
             thread: true,
             textMention: false,
           },
+          slack: {
+            thread: true,
+            textMention: false,
+          },
+          teams: {
+            thread: true,
+            textMention: false,
+          },
         },
       })
     );
@@ -423,12 +511,28 @@ describe("useChannelsNotificationSettings: error", () => {
                 thread: false,
                 textMention: true,
               },
+              slack: {
+                thread: false,
+                textMention: true,
+              },
+              teams: {
+                thread: false,
+                textMention: true,
+              },
             })
           );
         } else if (getChannelsNotificationSettingsCount === 2) {
           return res(
             ctx.json({
               email: {
+                thread: false,
+                textMention: false,
+              },
+              slack: {
+                thread: false,
+                textMention: false,
+              },
+              teams: {
                 thread: false,
                 textMention: false,
               },
@@ -439,6 +543,14 @@ describe("useChannelsNotificationSettings: error", () => {
         return res(
           ctx.json({
             email: {
+              thread: true,
+              textMention: false,
+            },
+            slack: {
+              thread: true,
+              textMention: false,
+            },
+            teams: {
               thread: true,
               textMention: false,
             },
@@ -471,6 +583,14 @@ describe("useChannelsNotificationSettings: error", () => {
             thread: false,
             textMention: true,
           },
+          slack: {
+            thread: false,
+            textMention: true,
+          },
+          teams: {
+            thread: false,
+            textMention: true,
+          },
         },
       })
     );
@@ -487,6 +607,14 @@ describe("useChannelsNotificationSettings: error", () => {
             thread: false,
             textMention: false,
           },
+          slack: {
+            thread: false,
+            textMention: false,
+          },
+          teams: {
+            thread: false,
+            textMention: false,
+          },
         },
       })
     );
@@ -499,6 +627,14 @@ describe("useChannelsNotificationSettings: error", () => {
         isLoading: false,
         settings: {
           email: {
+            thread: true,
+            textMention: false,
+          },
+          slack: {
+            thread: true,
+            textMention: false,
+          },
+          teams: {
             thread: true,
             textMention: false,
           },
@@ -518,6 +654,14 @@ describe("useChannelsNotificationSettings - Suspense", () => {
         return res(
           ctx.json({
             email: {
+              thread: true,
+              textMention: false,
+            },
+            slack: {
+              thread: true,
+              textMention: false,
+            },
+            teams: {
               thread: true,
               textMention: false,
             },
@@ -550,6 +694,14 @@ describe("useChannelsNotificationSettings - Suspense", () => {
         isLoading: false,
         settings: {
           email: {
+            thread: true,
+            textMention: false,
+          },
+          slack: {
+            thread: true,
+            textMention: false,
+          },
+          teams: {
             thread: true,
             textMention: false,
           },

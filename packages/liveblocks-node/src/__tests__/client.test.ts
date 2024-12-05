@@ -1385,6 +1385,14 @@ describe("client", () => {
         thread: true,
         textMention: false,
       },
+      slack: {
+        thread: true,
+        textMention: false,
+      },
+      teams: {
+        thread: true,
+        textMention: false,
+      },
     };
 
     server.use(
@@ -1445,6 +1453,14 @@ describe("client", () => {
         textMention: false,
         thread: false,
       },
+      slack: {
+        thread: false,
+        textMention: false,
+      },
+      teams: {
+        thread: false,
+        textMention: false,
+      },
     };
 
     server.use(
@@ -1467,6 +1483,14 @@ describe("client", () => {
     const userId = "adri";
     const settings: ChannelsNotificationSettings = {
       email: {
+        textMention: true,
+        thread: true,
+      },
+      slack: {
+        textMention: true,
+        thread: true,
+      },
+      teams: {
         textMention: true,
         thread: true,
       },
@@ -1497,6 +1521,14 @@ describe("client", () => {
     const userId = "mina";
     const settings: ChannelsNotificationSettings = {
       email: {
+        textMention: false,
+        thread: false,
+      },
+      slack: {
+        textMention: false,
+        thread: false,
+      },
+      teams: {
         textMention: false,
         thread: false,
       },
