@@ -122,8 +122,9 @@ function ToolbarSectionHistory() {
 
 function ToolbarSectionInline() {
   const [editor] = useLexicalComposerContext();
+  const supportsTextFormat = editor._commands.has(FORMAT_TEXT_COMMAND);
 
-  return (
+  return supportsTextFormat ? (
     <>
       <ToolbarToggle
         name="Bold"
@@ -169,34 +170,49 @@ function ToolbarSectionInline() {
         active={false}
       />
     </>
-  );
+  ) : null;
 }
 
 function ToolbarSectionCollaboration() {
   const [editor] = useLexicalComposerContext();
+  const supportsThread = editor._commands.has(OPEN_FLOATING_COMPOSER_COMMAND);
+
   return (
     <>
-      <ToolbarButton
-        name="Add a comment"
-        icon={<CommentIcon />}
-        onClick={() =>
-          editor.dispatchCommand(OPEN_FLOATING_COMPOSER_COMMAND, undefined)
-        }
-      >
-        Comment
-      </ToolbarButton>
+      {supportsThread ? (
+        <ToolbarButton
+          name="Add a comment"
+          icon={<CommentIcon />}
+          onClick={() =>
+            editor.dispatchCommand(OPEN_FLOATING_COMPOSER_COMMAND, undefined)
+          }
+        >
+          Comment
+        </ToolbarButton>
+      ) : null}
     </>
   );
 }
 
-function DefaultToolbarContent() {
+function DefaultToolbarContent({ editor }: ToolbarSlotProps) {
+  const supportsTextFormat = editor._commands.has(FORMAT_TEXT_COMMAND);
+  const supportsThread = editor._commands.has(OPEN_FLOATING_COMPOSER_COMMAND);
+
   return (
     <>
       <ToolbarSectionHistory />
-      <ToolbarSeparator />
-      <ToolbarSectionInline />
-      <ToolbarSeparator />
-      <ToolbarSectionCollaboration />
+      {supportsTextFormat ? (
+        <>
+          <ToolbarSeparator />
+          <ToolbarSectionInline />
+        </>
+      ) : null}
+      {supportsThread ? (
+        <>
+          <ToolbarSeparator />
+          <ToolbarSectionCollaboration />
+        </>
+      ) : null}
     </>
   );
 }

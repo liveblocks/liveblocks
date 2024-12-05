@@ -13,7 +13,7 @@ import {
 } from "@floating-ui/react-dom";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { TooltipProvider, useRefs } from "@liveblocks/react-ui/_private";
-import { $getSelection, $isRangeSelection } from "lexical";
+import { $getSelection, $isRangeSelection, FORMAT_TEXT_COMMAND } from "lexical";
 import type { ComponentProps, PointerEvent as ReactPointerEvent } from "react";
 import React, {
   forwardRef,
@@ -25,6 +25,7 @@ import React, {
 import { createPortal } from "react-dom";
 
 import { classNames } from "../classnames";
+import { OPEN_FLOATING_COMPOSER_COMMAND } from "../comments/floating-composer";
 import { createDOMRange } from "../create-dom-range";
 import type { FloatingPosition } from "../types";
 import { useIsFocused } from "../use-is-focused";
@@ -46,12 +47,19 @@ export interface FloatingToolbarProps
 
 export const FLOATING_TOOLBAR_COLLISION_PADDING = 10;
 
-function DefaultFloatingToolbarContent() {
+function DefaultFloatingToolbarContent({ editor }: ToolbarSlotProps) {
+  const supportsTextFormat = editor._commands.has(FORMAT_TEXT_COMMAND);
+  const supportsThread = editor._commands.has(OPEN_FLOATING_COMPOSER_COMMAND);
+
   return (
     <>
-      <Toolbar.SectionInline />
-      <Toolbar.Separator />
-      <Toolbar.SectionCollaboration />
+      {supportsTextFormat ? <Toolbar.SectionInline /> : null}
+      {supportsThread ? (
+        <>
+          <Toolbar.Separator />
+          <Toolbar.SectionCollaboration />
+        </>
+      ) : null}
     </>
   );
 }
