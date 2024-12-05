@@ -259,6 +259,7 @@ function DefaultToolbarContent({ editor }: ToolbarSlotProps) {
 }
 
 // TODO: Double-check keyboard shortcuts
+// TODO: Somehow the non-floating toolbar only shows the undo/redo buttons
 
 export const Toolbar = Object.assign(
   forwardRef<HTMLDivElement, ToolbarProps>(

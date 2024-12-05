@@ -5,11 +5,11 @@ import { useLayoutEffect, useState } from "react";
 
 export function useIsFocused(editor: LexicalEditor) {
   const [isFocused, setFocused] = useState(() => {
-    return editor._rootElement === document.activeElement;
+    return editor.getRootElement() === document.activeElement;
   });
 
   useLayoutEffect(() => {
-    setFocused(editor._rootElement === document.activeElement);
+    setFocused(editor.getRootElement() === document.activeElement);
 
     return mergeRegister(
       editor.registerCommand(
