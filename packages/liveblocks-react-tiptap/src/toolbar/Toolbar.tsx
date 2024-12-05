@@ -83,9 +83,10 @@ const ToolbarToggle = forwardRef<HTMLButtonElement, ToolbarToggleProps>(
 );
 
 const ToolbarSeparator = forwardRef<HTMLDivElement, ToolbarSeparatorProps>(
-  ({ className, ...props }) => {
+  ({ className, ...props }, forwardedRef) => {
     return (
       <div
+        ref={forwardedRef}
         role="separator"
         aria-orientation="vertical"
         className={classNames("lb-tiptap-toolbar-separator", className)}
