@@ -203,3 +203,37 @@
 .lb-lexical-floating-composer {
   inline-size: var(--lb-lexical-floating-size);
 }
+
+/*************************************
+ *              Toolbar              *
+ *************************************/
+
+.lb-lexical-toolbar {
+  --lb-lexical-toolbar-spacing: calc(0.25 * var(--lb-spacing));
+
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  gap: var(--lb-lexical-toolbar-spacing);
+  align-items: center;
+  padding: var(--lb-lexical-toolbar-spacing);
+  background: var(--lb-background);
+}
+
+.lb-lexical-floating-toolbar {
+  --lb-lexical-toolbar-spacing: $lb-elevation-padding;
+}
+
+.lb-lexical-toolbar-separator {
+  position: relative;
+  align-self: stretch;
+  inline-size: 1px;
+  margin-inline: 1px;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 10% 0;
+    background: var(--lb-foreground-subtle);
+  }
+}

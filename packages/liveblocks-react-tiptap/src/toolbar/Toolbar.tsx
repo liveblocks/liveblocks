@@ -27,7 +27,7 @@ export interface ToolbarSlotProps {
 
 export type ToolbarSlot = ReactNode | ComponentType<ToolbarSlotProps>;
 
-interface ToolbarProps extends Omit<ComponentProps<"div">, "children"> {
+export interface ToolbarProps extends Omit<ComponentProps<"div">, "children"> {
   editor: Editor | null;
   children?: ToolbarSlot;
   leading?: ToolbarSlot;

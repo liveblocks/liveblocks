@@ -20,5 +20,9 @@ export {
   useEditorStatus,
   useIsEditorReady,
 } from "./liveblocks-plugin-provider";
+export type { FloatingToolbarProps } from "./toolbar/floating-toolbar";
+export { FloatingToolbar } from "./toolbar/floating-toolbar";
+export type { ToolbarProps } from "./toolbar/toolbar";
+export { Toolbar } from "./toolbar/toolbar";
 export type { HistoryVersionPreviewProps } from "./version-history/history-version-preview";
 export { HistoryVersionPreview } from "./version-history/history-version-preview";
