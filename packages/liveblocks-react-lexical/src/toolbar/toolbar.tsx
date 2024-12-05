@@ -14,9 +14,12 @@ import {
 } from "@liveblocks/react-ui/_private";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import {
+  $getSelection,
+  $isRangeSelection,
   FORMAT_TEXT_COMMAND,
   type LexicalEditor,
   REDO_COMMAND,
+  type TextFormatType,
   UNDO_COMMAND,
 } from "lexical";
 import type { ComponentProps, ComponentType, ReactNode } from "react";
@@ -120,6 +123,18 @@ function ToolbarSectionHistory() {
   );
 }
 
+function isFormatActive(editor: LexicalEditor, format: TextFormatType) {
+  return editor.getEditorState().read(() => {
+    const selection = $getSelection();
+
+    if (!$isRangeSelection(selection) || selection.isCollapsed()) {
+      return false;
+    }
+
+    return selection.hasFormat(format);
+  });
+}
+
 function ToolbarSectionInline() {
   const [editor] = useLexicalComposerContext();
   const supportsTextFormat = editor._commands.has(FORMAT_TEXT_COMMAND);
@@ -131,8 +146,7 @@ function ToolbarSectionInline() {
         icon={<BoldIcon />}
         shortcut="Mod-B"
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")}
-        disabled={false}
-        active={false}
+        active={isFormatActive(editor, "bold")}
       />
 
       <ToolbarToggle
@@ -140,16 +154,14 @@ function ToolbarSectionInline() {
         icon={<ItalicIcon />}
         shortcut="Mod-I"
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic")}
-        disabled={false}
-        active={false}
+        active={isFormatActive(editor, "italic")}
       />
       <ToolbarToggle
         name="Underline"
         icon={<UnderlineIcon />}
         shortcut="Mod-U"
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline")}
-        disabled={false}
-        active={false}
+        active={isFormatActive(editor, "underline")}
       />
       <ToolbarToggle
         name="Strike"
@@ -158,16 +170,14 @@ function ToolbarSectionInline() {
         onClick={() =>
           editor.dispatchCommand(FORMAT_TEXT_COMMAND, "strikethrough")
         }
-        disabled={false}
-        active={false}
+        active={isFormatActive(editor, "strikethrough")}
       />
       <ToolbarToggle
         name="Inline code"
         icon={<CodeIcon />}
         shortcut="Mod-E"
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "code")}
-        disabled={false}
-        active={false}
+        active={isFormatActive(editor, "code")}
       />
     </>
   ) : null;
@@ -217,8 +227,6 @@ function DefaultToolbarContent({ editor }: ToolbarSlotProps) {
   );
 }
 
-// TODO: `active`/`disabled` states for every default control
-// TODO: Verify which commands are available
 // TODO: Double-check keyboard shortcuts
 
 export const Toolbar = Object.assign(
