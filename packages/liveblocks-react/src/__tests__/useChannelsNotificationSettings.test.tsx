@@ -51,6 +51,10 @@ describe("useChannelsNotificationSettings", () => {
               thread: true,
               textMention: false,
             },
+            webPush: {
+              thread: true,
+              textMention: false,
+            },
           })
         );
       })
@@ -87,6 +91,10 @@ describe("useChannelsNotificationSettings", () => {
             thread: true,
             textMention: false,
           },
+          webPush: {
+            thread: true,
+            textMention: false,
+          },
         },
       })
     );
@@ -113,6 +121,10 @@ describe("useChannelsNotificationSettings", () => {
               textMention: false,
             },
             teams: {
+              thread: true,
+              textMention: false,
+            },
+            webPush: {
               thread: true,
               textMention: false,
             },
@@ -162,6 +174,10 @@ describe("useChannelsNotificationSettings", () => {
             thread: true,
             textMention: false,
           },
+          webPush: {
+            thread: true,
+            textMention: false,
+          },
         },
       })
     );
@@ -191,6 +207,10 @@ describe("useChannelsNotificationSettings", () => {
             thread: true,
             textMention: false,
           },
+          webPush: {
+            thread: true,
+            textMention: false,
+          },
         },
       })
     );
@@ -212,6 +232,10 @@ describe("useChannelsNotificationSettings", () => {
               textMention: false,
             },
             teams: {
+              thread: true,
+              textMention: false,
+            },
+            webPush: {
               thread: true,
               textMention: false,
             },
@@ -254,6 +278,10 @@ describe("useChannelsNotificationSettings", () => {
             thread: true,
             textMention: false,
           },
+          webPush: {
+            thread: true,
+            textMention: false,
+          },
         },
       })
     );
@@ -282,6 +310,10 @@ describe("useChannelsNotificationSettings", () => {
           thread: true,
           textMention: false,
         },
+        webPush: {
+          thread: true,
+          textMention: false,
+        },
       },
     });
 
@@ -299,6 +331,10 @@ describe("useChannelsNotificationSettings", () => {
             textMention: false,
           },
           teams: {
+            thread: true,
+            textMention: false,
+          },
+          webPush: {
             thread: true,
             textMention: false,
           },
@@ -415,6 +451,10 @@ describe("useChannelsNotificationSettings: error", () => {
               thread: true,
               textMention: false,
             },
+            webPush: {
+              thread: true,
+              textMention: false,
+            },
           })
         );
       })
@@ -491,6 +531,10 @@ describe("useChannelsNotificationSettings: error", () => {
             thread: true,
             textMention: false,
           },
+          webPush: {
+            thread: true,
+            textMention: false,
+          },
         },
       })
     );
@@ -519,6 +563,10 @@ describe("useChannelsNotificationSettings: error", () => {
                 thread: false,
                 textMention: true,
               },
+              webPush: {
+                thread: false,
+                textMention: true,
+              },
             })
           );
         } else if (getChannelsNotificationSettingsCount === 2) {
@@ -533,6 +581,10 @@ describe("useChannelsNotificationSettings: error", () => {
                 textMention: false,
               },
               teams: {
+                thread: false,
+                textMention: false,
+              },
+              webPush: {
                 thread: false,
                 textMention: false,
               },
@@ -551,6 +603,10 @@ describe("useChannelsNotificationSettings: error", () => {
               textMention: false,
             },
             teams: {
+              thread: true,
+              textMention: false,
+            },
+            webPush: {
               thread: true,
               textMention: false,
             },
@@ -591,6 +647,10 @@ describe("useChannelsNotificationSettings: error", () => {
             thread: false,
             textMention: true,
           },
+          webPush: {
+            thread: false,
+            textMention: true,
+          },
         },
       })
     );
@@ -615,6 +675,10 @@ describe("useChannelsNotificationSettings: error", () => {
             thread: false,
             textMention: false,
           },
+          webPush: {
+            thread: false,
+            textMention: false,
+          },
         },
       })
     );
@@ -635,6 +699,10 @@ describe("useChannelsNotificationSettings: error", () => {
             textMention: false,
           },
           teams: {
+            thread: true,
+            textMention: false,
+          },
+          webPush: {
             thread: true,
             textMention: false,
           },
@@ -662,6 +730,10 @@ describe("useChannelsNotificationSettings - Suspense", () => {
               textMention: false,
             },
             teams: {
+              thread: true,
+              textMention: false,
+            },
+            webPush: {
               thread: true,
               textMention: false,
             },
@@ -702,6 +774,10 @@ describe("useChannelsNotificationSettings - Suspense", () => {
             textMention: false,
           },
           teams: {
+            thread: true,
+            textMention: false,
+          },
+          webPush: {
             thread: true,
             textMention: false,
           },

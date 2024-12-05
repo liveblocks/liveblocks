@@ -3,7 +3,7 @@ import type { DAD } from "../globals/augmentation";
 /**
  * Pre-defined notification channels support list.
  */
-export type NotificationChannel = "email" | "slack" | "teams";
+export type NotificationChannel = "email" | "slack" | "teams" | "webPush";
 
 /**
  * `K` represents custom notification kinds

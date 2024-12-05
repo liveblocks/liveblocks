@@ -1393,6 +1393,10 @@ describe("client", () => {
         thread: true,
         textMention: false,
       },
+      webPush: {
+        thread: true,
+        textMention: false,
+      },
     };
 
     server.use(
@@ -1461,6 +1465,10 @@ describe("client", () => {
         thread: false,
         textMention: false,
       },
+      webPush: {
+        thread: false,
+        textMention: false,
+      },
     };
 
     server.use(
@@ -1493,6 +1501,10 @@ describe("client", () => {
       teams: {
         textMention: true,
         thread: true,
+      },
+      webPush: {
+        thread: true,
+        textMention: true,
       },
     };
 
@@ -1531,6 +1543,10 @@ describe("client", () => {
       teams: {
         textMention: false,
         thread: false,
+      },
+      webPush: {
+        thread: false,
+        textMention: false,
       },
     };
     const error = {
