@@ -1,10 +1,9 @@
 import type { DAD } from "../globals/augmentation";
 
 /**
- * Will later support other pre-defined channels
- * like `Slack` or `Teams`
+ * Pre-defined notification channels support list.
  */
-export type NotificationChannel = "email";
+export type NotificationChannel = "email" | "slack" | "teams";
 
 /**
  * `K` represents custom notification kinds

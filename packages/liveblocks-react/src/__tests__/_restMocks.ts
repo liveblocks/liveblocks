@@ -3,6 +3,7 @@ import type {
   ChannelsNotificationSettings,
   CommentData,
   InboxNotificationData,
+  PartialChannelsNotificationSettings,
   Permission,
   RoomNotificationSettings,
   ThreadData,
@@ -238,7 +239,7 @@ export function mockUpdateChannelsNotificationSettings(
   resolver: ResponseResolver<
     RestRequest<never, never>,
     RestContext,
-    ChannelsNotificationSettings
+    PartialChannelsNotificationSettings
   >
 ) {
   return rest.post(
