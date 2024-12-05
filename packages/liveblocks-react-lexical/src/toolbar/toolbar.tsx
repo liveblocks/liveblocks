@@ -1,4 +1,5 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { mergeRegister } from "@lexical/utils";
 import {
   BoldIcon,
   Button,
@@ -16,6 +17,9 @@ import * as TogglePrimitive from "@radix-ui/react-toggle";
 import {
   $getSelection,
   $isRangeSelection,
+  CAN_REDO_COMMAND,
+  CAN_UNDO_COMMAND,
+  COMMAND_PRIORITY_CRITICAL,
   FORMAT_TEXT_COMMAND,
   type LexicalEditor,
   REDO_COMMAND,
@@ -23,7 +27,7 @@ import {
   UNDO_COMMAND,
 } from "lexical";
 import type { ComponentProps, ComponentType, ReactNode } from "react";
-import React, { forwardRef } from "react";
+import React, { forwardRef, useEffect, useState } from "react";
 
 import { classNames } from "../classnames";
 import { OPEN_FLOATING_COMPOSER_COMMAND } from "../comments/floating-composer";
@@ -104,6 +108,31 @@ const ToolbarSeparator = forwardRef<HTMLDivElement, ToolbarSeparatorProps>(
 
 function ToolbarSectionHistory() {
   const [editor] = useLexicalComposerContext();
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
+
+  useEffect(() => {
+    const unregister = mergeRegister(
+      editor.registerCommand<boolean>(
+        CAN_UNDO_COMMAND,
+        (payload) => {
+          setCanUndo(payload);
+          return false;
+        },
+        COMMAND_PRIORITY_CRITICAL
+      ),
+      editor.registerCommand<boolean>(
+        CAN_REDO_COMMAND,
+        (payload) => {
+          setCanRedo(payload);
+          return false;
+        },
+        COMMAND_PRIORITY_CRITICAL
+      )
+    );
+
+    return unregister;
+  }, [editor]);
 
   return (
     <>
@@ -112,12 +141,14 @@ function ToolbarSectionHistory() {
         icon={<UndoIcon />}
         shortcut="Mod-Z"
         onClick={() => editor.dispatchCommand(UNDO_COMMAND, undefined)}
+        disabled={!canUndo}
       />
       <ToolbarButton
         name="Redo"
         icon={<RedoIcon />}
         shortcut="Mod-Shift-Z"
         onClick={() => editor.dispatchCommand(REDO_COMMAND, undefined)}
+        disabled={!canRedo}
       />
     </>
   );
