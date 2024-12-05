@@ -226,6 +226,10 @@ export const CommentsExtension = Extension.create<
         );
         return true;
       },
+      closePendingComment: () => () => {
+        this.storage.pendingCommentSelection = null;
+        return true;
+      },
       selectThread: (id: string | null) => () => {
         this.editor.view.dispatch(
           this.editor.state.tr.setMeta(THREADS_PLUGIN_KEY, {

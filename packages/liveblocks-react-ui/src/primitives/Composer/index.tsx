@@ -972,7 +972,6 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
 
           // Blur the editor on Escape
           if (isKey(event, "Escape")) {
-            event.preventDefault();
             blur();
           }
 

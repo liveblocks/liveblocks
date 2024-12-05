@@ -22,7 +22,10 @@ import type { ComponentRef, FormEvent, KeyboardEvent } from "react";
 import React, { forwardRef, useCallback, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
 
-import type { CommentsExtensionStorage } from "../types";
+import type {
+  CommentsExtensionStorage,
+  ExtendedChainedCommands,
+} from "../types";
 import { compareTextSelections, getDomRangeFromTextSelection } from "../utils";
 
 export type FloatingComposerProps<M extends BaseMetadata = DM> = Omit<
@@ -121,10 +124,17 @@ export const FloatingComposer = forwardRef<
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLFormElement>) => {
-      if (event.key === "Escape" && editor) {
-        editor.commands.focus();
-      }
       onKeyDown?.(event);
+
+      if (event.isDefaultPrevented() || !editor) {
+        return;
+      }
+
+      if (event.key === "Escape") {
+        (editor.chain() as ExtendedChainedCommands<"closePendingComment">)
+          .closePendingComment()
+          .run();
+      }
     },
     [editor, onKeyDown]
   );

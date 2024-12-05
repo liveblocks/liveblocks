@@ -23,6 +23,8 @@ declare module "@tiptap/core" {
       addComment: (id: string) => ReturnType;
       selectThread: (id: string | null) => ReturnType;
       addPendingComment: () => ReturnType;
+      /** @internal */
+      closePendingComment: () => ReturnType;
     };
     ai: {
       // TODO: Add an argument to start a specific task immediately (e.g. askAi('summarize'))?
