@@ -23,7 +23,7 @@ export function useIsFocused(editor: LexicalEditor) {
       editor.registerCommand(
         BLUR_COMMAND,
         () => {
-          setFocused(true);
+          setFocused(false);
           return false;
         },
         COMMAND_PRIORITY_LOW
