@@ -194,8 +194,6 @@ function DefaultToolbarContent() {
     <>
       <ToolbarSectionHistory />
       <ToolbarSeparator />
-      {/* <ToolbarSectionAlignment />
-      <ToolbarSeparator /> */}
       <ToolbarSectionInline />
       <ToolbarSeparator />
       <ToolbarSectionCollaboration />
@@ -246,7 +244,6 @@ export const Toolbar = Object.assign(
     Toggle: ToolbarToggle,
     Separator: ToolbarSeparator,
     SectionHistory: ToolbarSectionHistory,
-    // SectionAlignment: ToolbarSectionAlignment,
     SectionInline: ToolbarSectionInline,
     SectionCollaboration: ToolbarSectionCollaboration,
   }

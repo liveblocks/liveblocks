@@ -122,88 +122,6 @@ function ToolbarSectionHistory() {
   );
 }
 
-function ToolbarSectionAlignment() {
-  const editor = useCurrentEditor(
-    "SectionAlignment",
-    "Toolbar or FloatingToolbar"
-  );
-  const supportsTextAlign = "setTextAlign" in editor.commands;
-
-  type TextAlignChainedCommands = ExtendedChainedCommands<
-    "setTextAlign",
-    [{ align: string }]
-  >;
-
-  return supportsTextAlign ? (
-    <>
-      <ToolbarToggle
-        name="Align left"
-        icon={<BoldIcon />}
-        shortcut="Mod-Shift-L"
-        onClick={() =>
-          (editor.chain().focus() as TextAlignChainedCommands)
-            .setTextAlign({ align: "left" })
-            .run()
-        }
-        disabled={
-          !(editor.can().chain().focus() as TextAlignChainedCommands)
-            .setTextAlign({ align: "left" })
-            .run()
-        }
-        active={editor.isActive({ textAlign: "left" })}
-      />
-      <ToolbarToggle
-        name="Align center"
-        icon={<BoldIcon />}
-        shortcut="Mod-Shift-E"
-        onClick={() =>
-          (editor.chain().focus() as TextAlignChainedCommands)
-            .setTextAlign({ align: "center" })
-            .run()
-        }
-        disabled={
-          !(editor.can().chain().focus() as TextAlignChainedCommands)
-            .setTextAlign({ align: "center" })
-            .run()
-        }
-        active={editor.isActive({ textAlign: "center" })}
-      />
-      <ToolbarToggle
-        name="Align right"
-        icon={<BoldIcon />}
-        shortcut="Mod-Shift-R"
-        onClick={() =>
-          (editor.chain().focus() as TextAlignChainedCommands)
-            .setTextAlign({ align: "right" })
-            .run()
-        }
-        disabled={
-          !(editor.can().chain().focus() as TextAlignChainedCommands)
-            .setTextAlign({ align: "right" })
-            .run()
-        }
-        active={editor.isActive({ textAlign: "right" })}
-      />
-      <ToolbarToggle
-        name="Justify"
-        icon={<BoldIcon />}
-        shortcut="Mod-Shift-J"
-        onClick={() =>
-          (editor.chain().focus() as TextAlignChainedCommands)
-            .setTextAlign({ align: "justify" })
-            .run()
-        }
-        disabled={
-          !(editor.can().chain().focus() as TextAlignChainedCommands)
-            .setTextAlign({ align: "justify" })
-            .run()
-        }
-        active={editor.isActive({ textAlign: "justify" })}
-      />
-    </>
-  ) : null;
-}
-
 function ToolbarSectionInline() {
   const editor = useCurrentEditor(
     "SectionInline",
@@ -392,7 +310,6 @@ function ToolbarSectionAi() {
 }
 
 function DefaultToolbarContent({ editor }: ToolbarSlotProps) {
-  const supportsTextAlign = "setTextAlign" in editor.commands;
   const supportsThread = "addPendingComment" in editor.commands;
   const supportsAi = "askAi" in editor.commands;
 
@@ -403,12 +320,6 @@ function DefaultToolbarContent({ editor }: ToolbarSlotProps) {
       {supportsAi ? (
         <>
           <ToolbarSectionAi />
-          <ToolbarSeparator />
-        </>
-      ) : null}
-      {supportsTextAlign ? (
-        <>
-          <ToolbarSectionAlignment />
           <ToolbarSeparator />
         </>
       ) : null}
@@ -467,7 +378,6 @@ export const Toolbar = Object.assign(
     Toggle: ToolbarToggle,
     Separator: ToolbarSeparator,
     SectionHistory: ToolbarSectionHistory,
-    SectionAlignment: ToolbarSectionAlignment,
     SectionInline: ToolbarSectionInline,
     SectionCollaboration: ToolbarSectionCollaboration,
     SectionAi: ToolbarSectionAi,
