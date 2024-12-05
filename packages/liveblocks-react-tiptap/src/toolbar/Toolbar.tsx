@@ -377,7 +377,7 @@ function ToolbarSectionAi() {
     <>
       {supportsAi && (
         <ToolbarButton
-          name="Ask AI"
+          name="Ask AI anything…"
           icon={<EmojiIcon />}
           onClick={() =>
             (editor.chain().focus() as ExtendedChainedCommands<"askAi">).askAi()

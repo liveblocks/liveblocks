@@ -83,7 +83,7 @@ interface DropdownItemProps extends PropsWithChildren {
 
 function DropdownItem({ children, icon }: DropdownItemProps) {
   const handleSelect = useCallback(() => {
-    console.log("click");
+    console.log("Click");
   }, []);
 
   const handleClick = useCallback((event: MouseEvent<HTMLDivElement>) => {
