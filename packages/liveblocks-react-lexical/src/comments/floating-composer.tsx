@@ -219,11 +219,14 @@ const FloatingComposerImpl = forwardRef<
   );
 
   function handleKeyDown(event: KeyboardEvent<HTMLFormElement>) {
+    onKeyDown?.(event);
+
+    if (event.isDefaultPrevented()) return;
+
     if (event.key === "Escape") {
       onRangeChange(null);
       editor.focus();
     }
-    onKeyDown?.(event);
   }
 
   return (
