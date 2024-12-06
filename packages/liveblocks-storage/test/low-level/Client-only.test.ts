@@ -1,6 +1,7 @@
 import { expect, onTestFinished, test, vi } from "vitest";
 
 import { Client } from "~/Client.js";
+import type { MutationContext as M } from "~/types.js";
 
 import {
   del,
@@ -12,6 +13,18 @@ import {
   setLiveObject,
 } from "../mutations.config.js";
 import { twoClientsSetup } from "../utils.js";
+
+export function putAndInc_experimental(
+  { rootProxy: root }: M,
+  key: string,
+  value: number
+): void {
+  root[key] = value;
+  root[key] = (root[key] as number) + 1;
+  // root.nothin = null;
+  // root.lastTouched = new LiveObject({});
+  // root.lastTouched.set(...)
+}
 
 test("set string", () => {
   const client = new Client({ put });
@@ -59,7 +72,7 @@ test("set LiveObject", () => {
 test.fails("using .toImmutable() should return the same value", () => {
   const client = new Client({ setLiveObject });
   client.mutate.setLiveObject("a", "foo", "bar");
-  expect(client.root).toEqual({ a: { foo: "bar" } });
+  expect(client.root.toImmutable()).toEqual({ a: { foo: "bar" } });
 });
 
 test("using .get() should always return the same Live instance", () => {
@@ -68,7 +81,7 @@ test("using .get() should always return the same Live instance", () => {
 
     // We can inline a mutation in this test, because we're not sending
     // anything to a server here anyway
-    customTest: (root) => {
+    customTest: ({ root }) => {
       const obj1 = root.get("a");
       const obj2 = root.get("a");
 
@@ -355,6 +368,15 @@ test("get value during transaction should come from transaction cache", () => {
 
   client.mutate.putAndInc("A", 0);
   expect(client.data).toEqual({ root: { A: 1 } });
+});
+
+test.only("test with a Proxy for root", () => {
+  const client = new Client({ putAndInc_experimental });
+
+  client.mutate.putAndInc_experimental("A", 0);
+  client.mutate.putAndInc_experimental("B", 42);
+
+  expect(client.data).toEqual({ root: { A: 1, B: 43 } });
 });
 
 test("when client mutation errors it should rollback transaction", () => {

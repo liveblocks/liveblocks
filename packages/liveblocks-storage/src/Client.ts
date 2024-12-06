@@ -4,7 +4,6 @@ import type { ChangeReturnType, OmitFirstArg } from "~/lib/ts-toolkit.js";
 
 import { LayeredCache } from "./LayeredCache.js";
 import type { Callback, EventSource, Observable } from "./lib/EventSource.js";
-import type { LsonObject } from "./lib/Lson.js";
 import type { LiveObject } from "./LiveObject.js";
 import type {
   ClientMsg,
@@ -356,7 +355,8 @@ export class Client<M extends Mutations> {
     cache.startTransaction();
     try {
       const pool = cache;
-      mutationFn(pool.getRoot(), ...args);
+      const root = pool.getRoot();
+      mutationFn({ root, rootProxy: root.makeProxy() }, ...args);
       cache.commit();
     } catch (e) {
       cache.rollback();
@@ -365,8 +365,8 @@ export class Client<M extends Mutations> {
   }
 
   // For convenience in unit tests only --------------------------------
-  get root(): LsonObject {
-    return this.#cache.getRoot().toImmutable();
+  get root(): LiveObject {
+    return this.#cache.getRoot();
   }
 
   get data(): Record<string, Record<string, Json>> {
