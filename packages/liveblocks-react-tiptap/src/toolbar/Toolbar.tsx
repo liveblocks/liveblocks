@@ -210,7 +210,7 @@ function ToolbarSectionInline() {
       )}
       {supportsStrike && (
         <ToolbarToggle
-          name="Strike"
+          name="Strikethrough"
           icon={<StrikethroughIcon />}
           shortcut="Mod-U"
           onClick={() =>

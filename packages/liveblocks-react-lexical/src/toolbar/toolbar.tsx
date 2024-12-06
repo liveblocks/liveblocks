@@ -195,9 +195,8 @@ function ToolbarSectionInline() {
         active={isFormatActive(editor, "underline")}
       />
       <ToolbarToggle
-        name="Strike"
+        name="Strikethrough"
         icon={<StrikethroughIcon />}
-        shortcut="Mod-U"
         onClick={() =>
           editor.dispatchCommand(FORMAT_TEXT_COMMAND, "strikethrough")
         }
@@ -206,7 +205,6 @@ function ToolbarSectionInline() {
       <ToolbarToggle
         name="Inline code"
         icon={<CodeIcon />}
-        shortcut="Mod-E"
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "code")}
         active={isFormatActive(editor, "code")}
       />
@@ -258,7 +256,6 @@ function DefaultToolbarContent({ editor }: ToolbarSlotProps) {
   );
 }
 
-// TODO: Double-check keyboard shortcuts
 // TODO: Somehow the non-floating toolbar only shows the undo/redo buttons
 
 export const Toolbar = Object.assign(
