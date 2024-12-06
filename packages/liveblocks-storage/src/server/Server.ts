@@ -210,7 +210,9 @@ export class Server {
     try {
       return {
         ok: true,
-        value: this.#cache.mutate((root) => mutationFn(root, ...args)),
+        value: this.#cache.mutate((root) =>
+          mutationFn({ root, rootProxy: root.makeProxy() }, ...args)
+        ),
       };
     } catch (e) {
       return {
