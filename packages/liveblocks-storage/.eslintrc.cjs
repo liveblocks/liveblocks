@@ -6,7 +6,10 @@ module.exports = {
   // plugins: ["eslint-plugin-rulesdir"],
   extends: ["@liveblocks/eslint-config"],
 
-  rules: {},
+  rules: {
+    "@typescript-eslint/no-this-alias": "off",
+  },
+
   overrides: [
     {
       files: ["test/**"],
