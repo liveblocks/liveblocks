@@ -12,13 +12,15 @@ export interface ButtonProps extends ComponentProps<"button"> {
   icon?: ReactNode;
 }
 
-export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+export const CustomButton = forwardRef<
+  HTMLButtonElement,
+  Omit<ButtonProps, "icon">
+>(
   (
     {
       variant = "default",
       size = "default",
       disableable = true,
-      icon,
       className,
       children,
       ...props
@@ -38,9 +40,19 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {...props}
         ref={forwardedRef}
       >
+        {children}
+      </button>
+    );
+  }
+);
+
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ icon, children, ...props }, forwardedRef) => {
+    return (
+      <CustomButton {...props} ref={forwardedRef}>
         {icon ? <span className="lb-icon-container">{icon}</span> : null}
         {children ? <span className="lb-button-label">{children}</span> : null}
-      </button>
+      </CustomButton>
     );
   }
 );

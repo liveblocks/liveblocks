@@ -70,7 +70,7 @@ import {
   separateMediaAttachments,
 } from "./internal/Attachment";
 import { Avatar } from "./internal/Avatar";
-import { Button } from "./internal/Button";
+import { Button, CustomButton } from "./internal/Button";
 import { Dropdown, DropdownItem, DropdownTrigger } from "./internal/Dropdown";
 import { Emoji } from "./internal/Emoji";
 import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker";
@@ -238,7 +238,7 @@ const CommentReactionButton = forwardRef<
 >(({ reaction, overrides, className, ...props }, forwardedRef) => {
   const $ = useOverrides(overrides);
   return (
-    <Button
+    <CustomButton
       className={classNames("lb-comment-reaction", className)}
       variant="outline"
       aria-label={$.COMMENT_REACTION_DESCRIPTION(
@@ -250,7 +250,7 @@ const CommentReactionButton = forwardRef<
     >
       <Emoji className="lb-comment-reaction-emoji" emoji={reaction.emoji} />
       <span className="lb-comment-reaction-count">{reaction.users.length}</span>
-    </Button>
+    </CustomButton>
   );
 });
 
