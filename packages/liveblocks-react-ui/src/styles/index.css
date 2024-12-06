@@ -326,15 +326,23 @@
   :where(.lb-icon-container) {
     margin-inline-start: calc(-0.125 * var(--lb-spacing));
     margin-inline-end: calc(0.375 * var(--lb-spacing));
+  }
+
+  :where(.lb-icon-container, .lb-dropdown-subitem-chevron) {
     color: var(--lb-foreground-moderate);
     transition-property: color;
   }
 }
 
 .lb-dropdown-item:where(:is([data-highlighted], [data-selected])) {
-  :where(.lb-icon-container) {
+  :where(.lb-icon-container, .lb-dropdown-subitem-chevron) {
     color: var(--lb-foreground-tertiary);
   }
+}
+
+.lb-dropdown-subitem-chevron {
+  margin-inline-start: auto;
+  margin-inline-end: calc(-0.25 * var(--lb-spacing));
 }
 
 /*************************************

@@ -9,6 +9,7 @@ import {
 } from "@floating-ui/react-dom";
 import {
   CheckIcon,
+  ChevronRightIcon,
   EmojiIcon,
   TooltipProvider,
   useRefs,
@@ -114,7 +115,7 @@ function DropdownSubItem({ children, icon }: DropdownItemProps) {
       {children ? (
         <span className="lb-dropdown-item-label">{children}</span>
       ) : null}
-      {/* TODO: Add a chevron icon */}
+      <ChevronRightIcon className="lb-dropdown-subitem-chevron" />
     </DropdownMenu.SubTrigger>
   );
 }

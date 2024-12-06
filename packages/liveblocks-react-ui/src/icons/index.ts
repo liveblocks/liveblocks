@@ -3,6 +3,8 @@ export { ArrowUpIcon } from "./ArrowUp";
 export { AttachmentIcon } from "./Attachment";
 export { BoldIcon } from "./Bold";
 export { CheckIcon } from "./Check";
+export { ChevronLeftIcon } from "./ChevronLeft";
+export { ChevronRightIcon } from "./ChevronRight";
 export { CodeIcon } from "./Code";
 export { CommentIcon } from "./Comment";
 export { CrossIcon } from "./Cross";
