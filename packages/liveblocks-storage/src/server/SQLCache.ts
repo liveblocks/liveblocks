@@ -1,13 +1,12 @@
 import type { Database } from "better-sqlite3";
 import sqlite3 from "better-sqlite3";
 
+import { DefaultMap } from "~/lib/DefaultMap.js";
 import type { Json } from "~/lib/Json.js";
 import type { LiveStructure, Lson } from "~/lib/Lson.js";
 import { isLiveStructure } from "~/lib/Lson.js";
-
-import { DefaultMap } from "./lib/DefaultMap.js";
-import { LiveObject } from "./LiveObject.js";
-import type { Delta, NodeId, Pool } from "./types.js";
+import { LiveObject } from "~/LiveObject.js";
+import type { Delta, NodeId, Pool } from "~/types.js";
 
 function createDB() {
   const db = sqlite3(":memory:");

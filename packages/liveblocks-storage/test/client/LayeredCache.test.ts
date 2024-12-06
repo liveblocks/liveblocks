@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 
-import { LayeredCache } from "~/LayeredCache.js";
+import { LayeredCache } from "~/client/LayeredCache.js";
 
 test("empty", () => {
   const cache = new LayeredCache();

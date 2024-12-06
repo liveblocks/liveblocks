@@ -1,5 +1,5 @@
 import fc from "fast-check";
-import { describe, expect, test, vi } from "vitest";
+import { expect, test, vi } from "vitest";
 
 import { makeEventSource } from "~/lib/EventSource.js";
 
@@ -16,236 +16,237 @@ const anything = () =>
     withSparseArray: true,
   });
 
-describe("EventSource", () => {
-  test("normal usage", () => {
-    fc.assert(
-      fc.property(
-        anything(),
+test("normal usage", () => {
+  fc.assert(
+    fc.property(
+      anything(),
 
-        (payload) => {
-          const callback = vi.fn();
-          const hub = makeEventSource();
+      (payload) => {
+        const callback = vi.fn();
+        const hub = makeEventSource();
 
-          hub.observable.subscribe(callback);
-          hub.notify(payload);
-          hub.notify(payload);
-          hub.notify(payload);
+        hub.observable.subscribe(callback);
+        hub.notify(payload);
+        hub.notify(payload);
+        hub.notify(payload);
 
-          expect(callback).toHaveBeenCalledTimes(3);
-          for (const [arg] of callback.mock.calls) {
-            expect(arg).toBe(payload);
-          }
+        expect(callback).toHaveBeenCalledTimes(3);
+        for (const [arg] of callback.mock.calls) {
+          expect(arg).toBe(payload);
         }
-      )
-    );
-  });
+      }
+    )
+  );
+});
 
-  test("registering multiple callbacks", () => {
-    fc.assert(
-      fc.property(
-        anything(),
+test("registering multiple callbacks", () => {
+  fc.assert(
+    fc.property(
+      anything(),
 
-        (payload) => {
-          const callback1 = vi.fn();
-          const callback2 = vi.fn();
-          const hub = makeEventSource();
+      (payload) => {
+        const callback1 = vi.fn();
+        const callback2 = vi.fn();
+        const hub = makeEventSource();
 
-          hub.observable.subscribe(callback1);
-          hub.notify(payload);
+        hub.observable.subscribe(callback1);
+        hub.notify(payload);
 
-          hub.observable.subscribe(callback2);
-          hub.notify(payload);
-          hub.notify(payload);
+        hub.observable.subscribe(callback2);
+        hub.notify(payload);
+        hub.notify(payload);
 
-          expect(callback1).toHaveBeenCalledTimes(3);
-          for (const [arg] of callback1.mock.calls) {
-            expect(arg).toBe(payload);
-          }
-
-          expect(callback2).toHaveBeenCalledTimes(2);
-          for (const [arg] of callback2.mock.calls) {
-            expect(arg).toBe(payload);
-          }
+        expect(callback1).toHaveBeenCalledTimes(3);
+        for (const [arg] of callback1.mock.calls) {
+          expect(arg).toBe(payload);
         }
-      )
-    );
-  });
 
-  test("getting counts", () => {
-    const callback1 = vi.fn();
-    const callback2 = vi.fn();
-    const callback3 = vi.fn();
-    const hub = makeEventSource();
-
-    // No callbacks registered yet
-    expect(hub.count()).toBe(0);
-
-    const unsub1 = hub.observable.subscribe(callback1);
-    expect(hub.count()).toBe(1);
-
-    const unsub2a = hub.observable.subscribe(callback2);
-    expect(hub.count()).toBe(2);
-
-    // Registering the same exact callback multiple times has no effect
-    // on the count
-    const unsub2b = hub.observable.subscribe(callback2);
-    expect(hub.count()).toBe(2);
-
-    const unsub3 = hub.observable.subscribeOnce(callback3);
-    expect(hub.count()).toBe(3);
-
-    unsub1();
-    unsub2a();
-    unsub2b();
-    expect(hub.count()).toBe(1);
-
-    unsub3();
-    expect(hub.count()).toBe(0);
-
-    // Calling unsub more often will not have an effect
-    unsub1();
-    unsub2a();
-    unsub2b();
-    unsub3();
-    expect(hub.count()).toBe(0);
-  });
-
-  test("subscribing once", () => {
-    fc.assert(
-      fc.property(
-        anything(),
-
-        (payload) => {
-          const callback = vi.fn();
-          const hub = makeEventSource();
-
-          const dereg1 = hub.observable.subscribeOnce(callback);
-          hub.notify(payload);
-          hub.notify(payload);
-          hub.notify(payload);
-
-          expect(callback).toHaveBeenCalledTimes(1); // Called only once, not three times
-          for (const [arg] of callback.mock.calls) {
-            expect(arg).toBe(payload);
-          }
-
-          // Deregistering has no effect
-          dereg1();
-          hub.notify(payload);
-          expect(callback).toHaveBeenCalledTimes(1); // Called only once, not three times
+        expect(callback2).toHaveBeenCalledTimes(2);
+        for (const [arg] of callback2.mock.calls) {
+          expect(arg).toBe(payload);
         }
-      )
-    );
-  });
+      }
+    )
+  );
+});
 
-  test("deregisering usage", () => {
-    fc.assert(
-      fc.property(
-        anything(),
+test("getting counts", () => {
+  const callback1 = vi.fn();
+  const callback2 = vi.fn();
+  const callback3 = vi.fn();
+  const hub = makeEventSource();
 
-        (payload) => {
-          const callback1 = vi.fn();
-          const callback2 = vi.fn();
-          const hub = makeEventSource();
+  // No callbacks registered yet
+  expect(hub.count()).toBe(0);
 
-          const dereg1 = hub.observable.subscribe(callback1);
+  const unsub1 = hub.observable.subscribe(callback1);
+  expect(hub.count()).toBe(1);
 
-          // Registering the same function instance multiple times has no
-          // observable effect
-          const dereg2a = hub.observable.subscribe(callback2);
-          const dereg2b = hub.observable.subscribe(callback2);
+  const unsub2a = hub.observable.subscribe(callback2);
+  expect(hub.count()).toBe(2);
 
-          hub.notify(payload);
-          hub.notify(payload);
+  // Registering the same exact callback multiple times has no effect
+  // on the count
+  const unsub2b = hub.observable.subscribe(callback2);
+  expect(hub.count()).toBe(2);
 
-          expect(callback1).toHaveBeenCalledTimes(2); // Both get updates
-          expect(callback2).toHaveBeenCalledTimes(2);
+  const unsub3 = hub.observable.subscribeOnce(callback3);
+  expect(hub.count()).toBe(3);
 
-          // Deregister callback1
-          dereg1();
+  unsub1();
+  unsub2a();
+  unsub2b();
+  expect(hub.count()).toBe(1);
 
-          hub.notify(payload);
-          hub.notify(payload);
-          hub.notify(payload);
+  unsub3();
+  expect(hub.count()).toBe(0);
 
-          expect(callback1).toHaveBeenCalledTimes(2); // Callback1 stopped getting updates
-          expect(callback2).toHaveBeenCalledTimes(5); // Callback2 still receives updates
+  // Calling unsub more often will not have an effect
+  unsub1();
+  unsub2a();
+  unsub2b();
+  unsub3();
+  expect(hub.count()).toBe(0);
+});
 
-          // Deregister callback2
-          dereg2a();
+test("subscribing once", () => {
+  fc.assert(
+    fc.property(
+      anything(),
 
-          hub.notify(payload);
-          hub.notify(payload);
-          hub.notify(payload);
+      (payload) => {
+        const callback = vi.fn();
+        const hub = makeEventSource();
 
-          expect(callback1).toHaveBeenCalledTimes(2); // Callback1 already stopped getting updates before
-          expect(callback2).toHaveBeenCalledTimes(5); // Callback2 now also stopped getting them
+        const dereg1 = hub.observable.subscribeOnce(callback);
+        hub.notify(payload);
+        hub.notify(payload);
+        hub.notify(payload);
 
-          // Deregister callback2 again (has no effect)
-          dereg2b();
-
-          hub.notify(payload);
-          hub.notify(payload);
-          hub.notify(payload);
-
-          expect(callback1).toHaveBeenCalledTimes(2); // Callback1 already stopped getting updates before
-          expect(callback2).toHaveBeenCalledTimes(5); // Callback2 already stopped getting updates before
+        expect(callback).toHaveBeenCalledTimes(1); // Called only once, not three times
+        for (const [arg] of callback.mock.calls) {
+          expect(arg).toBe(payload);
         }
-      )
-    );
-  });
 
-  test("awaiting events", async () => {
-    const src = makeEventSource();
-    const promise$ = src.waitUntil();
+        // Deregistering has no effect
+        dereg1();
+        hub.notify(payload);
+        expect(callback).toHaveBeenCalledTimes(1); // Called only once, not three times
+      }
+    )
+  );
+});
 
-    // Now notify, so the promise will resolve
-    src.notify(0);
-    src.notify(1);
-    src.notify(2);
+test("deregisering usage", () => {
+  fc.assert(
+    fc.property(
+      anything(),
 
-    await expect(promise$).resolves.toBe(0);
-  });
+      (payload) => {
+        const callback1 = vi.fn();
+        const callback2 = vi.fn();
+        const hub = makeEventSource();
 
-  test("awaiting events conditionally", async () => {
-    const src = makeEventSource<number>();
-    const promise$ = src.waitUntil((n) => n % 2 === 1);
+        const dereg1 = hub.observable.subscribe(callback1);
 
-    // Now notify, so the promise will resolve
-    src.notify(2);
-    src.notify(4);
-    src.notify(6);
-    src.notify(7); // First odd number, so we'll wait until this one!
-    src.notify(8);
+        // Registering the same function instance multiple times has no
+        // observable effect
+        const dereg2a = hub.observable.subscribe(callback2);
+        const dereg2b = hub.observable.subscribe(callback2);
 
-    await expect(promise$).resolves.toBe(7);
-  });
+        hub.notify(payload);
+        hub.notify(payload);
 
-  test("pausing/continuing event delivery", () => {
-    fc.assert(
-      fc.property(
-        anything(),
+        expect(callback1).toHaveBeenCalledTimes(2); // Both get updates
+        expect(callback2).toHaveBeenCalledTimes(2);
 
-        (payload) => {
-          const callback = vi.fn();
-          const hub = makeEventSource();
+        // Deregister callback1
+        dereg1();
 
-          const unsub = hub.observable.subscribe(callback);
+        hub.notify(payload);
+        hub.notify(payload);
+        hub.notify(payload);
 
-          hub.pause();
-          hub.notify(payload);
-          hub.notify(payload);
-          hub.notify(payload);
+        expect(callback1).toHaveBeenCalledTimes(2); // Callback1 stopped getting updates
+        expect(callback2).toHaveBeenCalledTimes(5); // Callback2 still receives updates
 
-          expect(callback).not.toHaveBeenCalled(); // No events get delivered until unpaused
+        // Deregister callback2
+        dereg2a();
 
-          hub.unpause();
-          expect(callback).toHaveBeenCalledTimes(3); // Buffered events get delivered
+        hub.notify(payload);
+        hub.notify(payload);
+        hub.notify(payload);
 
-          // Deregister callback
-          unsub();
-        }
-      )
-    );
-  });
+        expect(callback1).toHaveBeenCalledTimes(2); // Callback1 already stopped getting updates before
+        expect(callback2).toHaveBeenCalledTimes(5); // Callback2 now also stopped getting them
+
+        // Deregister callback2 again (has no effect)
+        dereg2b();
+
+        hub.notify(payload);
+        hub.notify(payload);
+        hub.notify(payload);
+
+        expect(callback1).toHaveBeenCalledTimes(2); // Callback1 already stopped getting updates before
+        expect(callback2).toHaveBeenCalledTimes(5); // Callback2 already stopped getting updates before
+      }
+    )
+  );
+});
+
+test("awaiting events", async () => {
+  const src = makeEventSource();
+  const promise$ = src.waitUntil();
+
+  // Now notify, so the promise will resolve
+  src.notify(0);
+  src.notify(1);
+  src.notify(2);
+
+  await expect(promise$).resolves.toBe(0);
+});
+
+test("awaiting events conditionally", async () => {
+  const src = makeEventSource<number>();
+  const promise$ = src.waitUntil((n) => n % 2 === 1);
+
+  // Now notify, so the promise will resolve
+  src.notify(2);
+  src.notify(4);
+  src.notify(6);
+  src.notify(7); // First odd number, so we'll wait until this one!
+  src.notify(8);
+
+  await expect(promise$).resolves.toBe(7);
+});
+
+test("pausing/continuing event delivery", () => {
+  fc.assert(
+    fc.property(
+      anything(),
+
+      (payload) => {
+        const callback = vi.fn();
+        const hub = makeEventSource();
+
+        const unsub = hub.observable.subscribe(callback);
+
+        hub.pause();
+        hub.notify(payload);
+        hub.notify(payload);
+        hub.notify(payload);
+
+        expect(callback).not.toHaveBeenCalled(); // No events get delivered until unpaused
+
+        hub.unpause();
+        expect(callback).toHaveBeenCalledTimes(3); // Buffered events get delivered
+
+        // Unpausing multiple times has no effect
+        hub.unpause();
+
+        // Deregister callback
+        unsub();
+      }
+    )
+  );
 });

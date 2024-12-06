@@ -8,6 +8,7 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "html"],
       include: ["src/**"],
+      exclude: ["src/ts-toolkit.ts", "src/types.ts", "src/version.ts"],
 
       // Require 100% test coverage
       // lines: 100,

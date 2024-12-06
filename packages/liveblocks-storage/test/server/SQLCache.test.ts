@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 
 import { LiveObject } from "~/LiveObject.js";
-import { SQLCache } from "~/SQLCache.js";
+import { SQLCache } from "~/server/SQLCache.js";
 import { raise } from "~/utils.js";
 
 test("empty", () => {

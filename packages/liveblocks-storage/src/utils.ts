@@ -45,10 +45,12 @@ export function mapValues<V, O extends Record<string, unknown>>(
   const result = {} as { [K in keyof O]: V };
   for (const pair of Object.entries(obj)) {
     const key: keyof O = pair[0];
+    /* v8 ignore start */
     if (key === "__proto__") {
       // Avoid setting dangerous __proto__ keys
       continue;
     }
+    /* v8 ignore stop */
     const value = pair[1] as O[keyof O];
     result[key] = mapFn(value, key);
   }

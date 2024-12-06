@@ -1,12 +1,11 @@
+import { DefaultMap } from "~/lib/DefaultMap.js";
 import type { Json } from "~/lib/Json.js";
 import type { LiveStructure, Lson } from "~/lib/Lson.js";
 import { isLiveStructure } from "~/lib/Lson.js";
 import { NestedMap } from "~/lib/NestedMap.js";
-
-import { DefaultMap } from "./lib/DefaultMap.js";
-import { LiveObject } from "./LiveObject.js";
-import type { Delta, NodeId, Pool } from "./types.js";
-import { raise } from "./utils.js";
+import { LiveObject } from "~/LiveObject.js";
+import type { Delta, NodeId, Pool } from "~/types.js";
+import { raise } from "~/utils.js";
 
 const TOMBSTONE = Symbol();
 

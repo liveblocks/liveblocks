@@ -1,11 +1,9 @@
+import { LayeredCache } from "~/client/LayeredCache.js";
+import type { Callback, EventSource, Observable } from "~/lib/EventSource.js";
 import { makeEventSource } from "~/lib/EventSource.js";
 import type { Json } from "~/lib/Json.js";
+import type { LsonObject } from "~/lib/Lson.js";
 import type { ChangeReturnType, OmitFirstArg } from "~/lib/ts-toolkit.js";
-
-import { LayeredCache } from "./LayeredCache.js";
-import type { Callback, EventSource, Observable } from "./lib/EventSource.js";
-import type { LsonObject } from "./lib/Lson.js";
-import type { LiveObject } from "./LiveObject.js";
 import type {
   ClientMsg,
   Delta,
@@ -17,8 +15,8 @@ import type {
   ServerMsg,
   Socket,
   WelcomeServerMsg,
-} from "./types.js";
-import { nextAlphabetId, raise } from "./utils.js";
+} from "~/types.js";
+import { nextAlphabetId, raise } from "~/utils.js";
 
 type BoundMutations<M extends Record<string, Mutation>> = {
   [K in keyof M]: ChangeReturnType<OmitFirstArg<M[K]>, void>;
@@ -143,6 +141,7 @@ export class Client<M extends Mutations> {
       /* eslint-enable @typescript-eslint/no-explicit-any */
       /* eslint-enable @typescript-eslint/no-unsafe-assignment */
 
+      /* v8 ignore next */
       if (DEBUG) this.debug();
     }
   }
@@ -152,10 +151,12 @@ export class Client<M extends Mutations> {
   }
 
   connect(socket: Socket<ClientMsg, ServerMsg>): Callback<void> {
+    /* v8 ignore next */
     if (this.#session) raise("Already connected");
 
     // Start listening to incoming ClientMsg messages on this socket
     const disconnect = socket.recv.subscribe((msg) => {
+      /* v8 ignore next */
       this.#_log?.("IN", msg);
 
       switch (msg.type) {
@@ -187,6 +188,7 @@ export class Client<M extends Mutations> {
             });
           } else {
             // Otherwise we're already caught up, we don't even need a data exchange
+            /* v8 ignore next */
             this.#_log?.("Already up to date, no need to request catch up");
             this.#markCaughtUp();
           }
@@ -195,6 +197,7 @@ export class Client<M extends Mutations> {
 
         default: {
           return this.#handleServerMsg(
+            /* v8 ignore next */
             this.#session ?? raise("Session already established?"),
             msg
           );
@@ -220,6 +223,7 @@ export class Client<M extends Mutations> {
   }
 
   #sendPendingOp(pending: PendingOp): void {
+    /* v8 ignore next */
     const session = this.#session ?? raise("No session");
 
     // Bound pending Op to session now if it hasn't happened yet
@@ -258,6 +262,7 @@ export class Client<M extends Mutations> {
         break;
       }
 
+      /* v8 ignore next */
       default:
       // Unknown (maybe future?) message
       // Let's ignore it
@@ -265,6 +270,7 @@ export class Client<M extends Mutations> {
   }
 
   #send(msg: ClientMsg): void {
+    /* v8 ignore next */
     this.#_log?.("OUT", msg);
     this.#session?.socket.send(msg);
   }
@@ -290,6 +296,7 @@ export class Client<M extends Mutations> {
       );
       if (idx >= 0) {
         this.#pendingOps.splice(idx, 1);
+        /* v8 ignore next */
         this.#_log?.(`Acked (${actor},${clock})`);
       }
     }
@@ -349,6 +356,7 @@ export class Client<M extends Mutations> {
     const { clock, op } = pending;
     const [name, args] = op;
     const mutationFn =
+      /* v8 ignore next */
       this.#mutations[name] ?? raise(`Mutation not found: '${name}'`);
 
     const cache = this.#cache;

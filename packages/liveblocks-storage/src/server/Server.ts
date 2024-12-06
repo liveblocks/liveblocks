@@ -1,6 +1,5 @@
-import type { Callback } from "./lib/EventSource.js";
-import type { Json } from "./lib/Json.js";
-import { SQLCache } from "./SQLCache.js";
+import type { Callback } from "~/lib/EventSource.js";
+import type { Json } from "~/lib/Json.js";
 import type {
   ClientMsg,
   Delta,
@@ -8,8 +7,10 @@ import type {
   Op,
   ServerMsg,
   Socket,
-} from "./types.js";
-import { nanoid, raise } from "./utils.js";
+} from "~/types.js";
+import { nanoid, raise } from "~/utils.js";
+
+import { SQLCache } from "./SQLCache.js";
 
 type Result<T, E> =
   | { readonly ok: true; readonly value: T }
@@ -44,6 +45,7 @@ export class Server {
     this.#sessions = new Set();
     this.#cache = new SQLCache();
 
+    /* v8 ignore next */
     if (DEBUG) this.debug();
   }
 
@@ -71,6 +73,7 @@ export class Server {
 
     // Start listening to incoming ClientMsg messages on this socket
     const disconnect = socket.recv.subscribe((msg) => {
+      /* v8 ignore next */
       this.#_log?.(`IN (from ${actor})`, msg);
       this.#handleClientMsg(newSession, msg);
     });
@@ -189,6 +192,7 @@ export class Server {
   }
 
   #send(session: Session, msg: ServerMsg): void {
+    /* v8 ignore next */
     this.#_log?.(`OUT (to ${session.actor})`, msg);
     session.socket.send(msg);
   }
@@ -209,7 +213,12 @@ export class Server {
         value: this.#cache.mutate((root) => mutationFn(root, ...args)),
       };
     } catch (e) {
-      return { ok: false, error: (e as Error).message || String(e) };
+      return {
+        ok: false,
+        error:
+          /* v8 ignore next */
+          (e as Error).message || String(e),
+      };
     }
   }
 
