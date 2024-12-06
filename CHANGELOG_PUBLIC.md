@@ -15,7 +15,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 49 (2024-12-06)
 
-## 2.13.1
+## v2.13.1
 
 ### `@liveblocks/react-ui`
 
@@ -31,7 +31,7 @@ ctnicholas, pierrelevaillant, marcbouchenoire
 
 # Week 48 (2024-11-29)
 
-## 2.13.0
+## v2.13.0
 
 ### `@liveblocks/react-ui`
 
