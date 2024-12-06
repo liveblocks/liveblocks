@@ -1,5 +1,5 @@
 import type { Observable } from "./lib/EventSource.js";
-import type { Json } from "./lib/Json.js";
+import type { Json, JsonObject } from "./lib/Json.js";
 import type { LiveStructure, Lson } from "./lib/Lson.js";
 import type { LiveObject } from "./LiveObject.js";
 
@@ -158,8 +158,13 @@ export interface Pool {
   deleteChild(nodeId: NodeId, key: string): boolean;
 }
 
+export type MutationContext = {
+  root: LiveObject;
+  rootProxy: JsonObject;
+};
+
 export type Mutation = (
-  root: LiveObject,
+  mctx: MutationContext,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ...args: readonly any[]
 ) => void;
