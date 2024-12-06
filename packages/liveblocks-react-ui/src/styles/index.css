@@ -345,6 +345,15 @@
   margin-inline-end: calc(-0.25 * var(--lb-spacing));
 }
 
+/* If a dropdown has at least one icon, all items should be aligned has if they had an icon */
+.lb-dropdown:where(:has(.lb-icon-container))
+  :where(.lb-dropdown-item:not(:has(.lb-icon-container)))
+  :where(.lb-dropdown-item-label) {
+  margin-inline-start: calc(
+    var(--lb-icon-size) + (0.375 - 0.125) * var(--lb-spacing)
+  );
+}
+
 /*************************************
  *       Composer suggestions        *
  *************************************/
