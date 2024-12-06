@@ -1,9 +1,8 @@
-import { LayeredCache } from "~/client/LayeredCache.js";
 import type { Callback, EventSource, Observable } from "~/lib/EventSource.js";
 import { makeEventSource } from "~/lib/EventSource.js";
 import type { Json } from "~/lib/Json.js";
-import type { LsonObject } from "~/lib/Lson.js";
 import type { ChangeReturnType, OmitFirstArg } from "~/lib/ts-toolkit.js";
+import type { LiveObject } from "~/LiveObject.js";
 import type {
   ClientMsg,
   Delta,
@@ -17,6 +16,8 @@ import type {
   WelcomeServerMsg,
 } from "~/types.js";
 import { nextAlphabetId, raise } from "~/utils.js";
+
+import { LayeredCache } from "./LayeredCache.js";
 
 type BoundMutations<M extends Record<string, Mutation>> = {
   [K in keyof M]: ChangeReturnType<OmitFirstArg<M[K]>, void>;
@@ -364,7 +365,8 @@ export class Client<M extends Mutations> {
     cache.startTransaction();
     try {
       const pool = cache;
-      mutationFn(pool.getRoot(), ...args);
+      const root = pool.getRoot();
+      mutationFn({ root, rootProxy: root.makeProxy() }, ...args);
       cache.commit();
     } catch (e) {
       cache.rollback();
@@ -373,8 +375,8 @@ export class Client<M extends Mutations> {
   }
 
   // For convenience in unit tests only --------------------------------
-  get root(): LsonObject {
-    return this.#cache.getRoot().toImmutable();
+  get root(): LiveObject {
+    return this.#cache.getRoot();
   }
 
   get data(): Record<string, Record<string, Json>> {
