@@ -1,6 +1,6 @@
 import { expect, onTestFinished, test, vi } from "vitest";
 
-import { Client } from "~/Client.js";
+import { Client } from "~/client/Client.js";
 
 import {
   del,

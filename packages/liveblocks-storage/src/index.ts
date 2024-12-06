@@ -1,3 +1,3 @@
-export * from "./Client.js";
+export * from "./client/Client.js";
 export * from "./LiveObject.js";
-export * from "./Server.js";
+export * from "./server/Server.js";

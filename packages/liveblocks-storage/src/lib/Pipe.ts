@@ -52,6 +52,7 @@ export function makePipe<T>(): Pipe<T> {
   let pendingFlush$: Promise<void> | null = null;
 
   async function flushNow(predicate: (data: T) => boolean) {
+    /* v8 ignore next */
     if (pendingFlush$) raise("Internal corruption");
 
     while (buffer.length > 0 && predicate(buffer[0]!)) {
@@ -59,9 +60,11 @@ export function makePipe<T>(): Pipe<T> {
       // Add artificial delay between each loop?
       await delay();
 
+      /* v8 ignore start */
       if (output.count() === 0) {
         raise("Can't send to broken pipe");
       }
+      /* v8 ignore stop */
       try {
         output.notify(JSON.parse(JSON.stringify(data)) as T);
       } catch {

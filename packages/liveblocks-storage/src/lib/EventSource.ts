@@ -137,9 +137,11 @@ export function makeEventSource<T>(): EventSource<T> {
     _observers.forEach((callback) => callback(event));
   }
 
+  /* v8 ignore start */
   function _forceClear() {
     _observers.clear();
   }
+  /* v8 ignore stop */
 
   function count() {
     return _observers.size;

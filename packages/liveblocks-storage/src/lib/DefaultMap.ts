@@ -23,9 +23,11 @@ export class DefaultMap<K, V> extends Map<K, V> {
   }
 
   get #factoryFn() {
+    /* v8 ignore start */
     if (this.#_factoryFn === undefined) {
       throw new Error("DefaultMap used without a factory function");
     }
+    /* v8 ignore stop */
     return this.#_factoryFn;
   }
 
