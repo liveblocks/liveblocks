@@ -23,6 +23,9 @@ export function ChannelsNotificationsSettings() {
   const isTeamsChannelEnabled = isChannelNotificationSettingEnabled(
     settings.teams
   );
+  const isWebPushChannelEnabled = isChannelNotificationSettingEnabled(
+    settings.webPush
+  );
 
   const handleChangeEmailChannel = (checked: boolean): void => {
     updateChannelNotificationSettings({
@@ -47,6 +50,16 @@ export function ChannelsNotificationsSettings() {
   const handleChangeTeamsChannel = (checked: boolean): void => {
     updateChannelNotificationSettings({
       teams: {
+        thread: checked,
+        textMention: checked,
+        $fileUploaded: checked,
+      },
+    });
+  };
+
+  const handleChangeWebPushChannel = (checked: boolean): void => {
+    updateChannelNotificationSettings({
+      webPush: {
         thread: checked,
         textMention: checked,
         $fileUploaded: checked,
@@ -224,6 +237,31 @@ export function ChannelsNotificationsSettings() {
             className="ml-3 text-sm font-medium text-gray-700"
           >
             Receive Teams notifications (all kind)
+          </label>
+        </div>
+      </div>
+
+      <hr />
+
+      <div className="mb-6 mt-6">
+        <div className="flex items-center">
+          <Switch.Root
+            className={cn(
+              "w-11 h-6 rounded-full relative inline-flex items-center transition-colors",
+              isWebPushChannelEnabled ? "bg-green-500" : "bg-gray-200"
+            )}
+            id="webPushNotifications"
+            name="webPushNotifications"
+            checked={isWebPushChannelEnabled}
+            onCheckedChange={handleChangeWebPushChannel}
+          >
+            <Switch.Thumb className="w-5 h-5 bg-white rounded-full shadow-md transform transition-transform duration-100 will-change-transform data-[state=checked]:translate-x-[22px]" />
+          </Switch.Root>
+          <label
+            htmlFor="webPushNotifications"
+            className="ml-3 text-sm font-medium text-gray-700"
+          >
+            Receive web push notifications (all kind)
           </label>
         </div>
       </div>
