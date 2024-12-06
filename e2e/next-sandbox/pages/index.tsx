@@ -90,6 +90,15 @@ export default function Home() {
         </li>
 
         <li>
+          <div>Channels Notification Settings</div>
+          <ul>
+            <Link href="/channels-notification-settings?room=e2e-channels-notif-settings&user=13">
+              <a>Classic (as user 13)</a>
+            </Link>
+          </ul>
+        </li>
+
+        <li>
           <Link href="/offline?room=e2e-offline">
             <a>Offline</a>
           </Link>
