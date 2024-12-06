@@ -1,6 +1,7 @@
 import { Webhook } from "svix";
 
 import {
+  isCustomNotificationEvent,
   isTextMentionNotificationEvent,
   isThreadNotificationEvent,
   type WebhookEvent,
@@ -635,6 +636,67 @@ describe("Type guards", () => {
       'should check if the "$name" event is a text mention notification event - ($expected)',
       ({ event, expected }) => {
         expect(isTextMentionNotificationEvent(event)).toBe(expected);
+      }
+    );
+  });
+
+  describe("isCustomNotificationEvent", () => {
+    it.each<{ name: string; event: WebhookEvent; expected: boolean }>([
+      {
+        name: "notification/textMention",
+        event: {
+          type: "notification",
+          data: {
+            kind: "textMention",
+            channel: "email",
+            projectId: "605a50b01a36d5ea7a2e9104",
+            roomId: "examples-hero-21-07-2022",
+            inboxNotificationId: "605a50b01a36d5ea7a2e9104",
+            mentionId: "605a50b01a36d5ea7a2e9104",
+            userId: "userId",
+            createdAt: "2023-01-27T20:33:23.737Z",
+          },
+        },
+        expected: false,
+      },
+      {
+        name: "notification/thread",
+        event: {
+          type: "notification",
+          data: {
+            kind: "thread",
+            channel: "email",
+            projectId: "605a50b01a36d5ea7a2e9104",
+            roomId: "examples-hero-21-07-2022",
+            inboxNotificationId: "605a50b01a36d5ea7a2e9104",
+            threadId: "605a50b01a36d5ea7a2e9104",
+            userId: "userId",
+            createdAt: "2023-01-27T20:33:23.737Z",
+          },
+        },
+        expected: false,
+      },
+      {
+        name: "notification/$customKind",
+        event: {
+          type: "notification",
+          data: {
+            kind: "$fileUploaded",
+            channel: "email",
+            projectId: "605a50b01a36d5ea7a2e9104",
+            roomId: "examples-hero-21-07-2022",
+            userId: "user-0",
+            subjectId: "subject-0",
+            inboxNotificationId: "605a50b01a36d5ea7a2e9104",
+            createdAt: "2023-01-27T20:33:23.737Z",
+          },
+        },
+        expected: true,
+      },
+    ])(
+      'should check if the "$name" event is a custom kind notification event - ($expected)',
+      ({ event, expected }) => {
+        expect(isCustomNotificationEvent(event)).toBe(expected);
       }
     );
   });

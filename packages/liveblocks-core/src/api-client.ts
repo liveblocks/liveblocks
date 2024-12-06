@@ -19,6 +19,10 @@ import type { QueryParams, URLSafeString } from "./lib/url";
 import { url, urljoin } from "./lib/url";
 import { raise } from "./lib/utils";
 import type { Permission } from "./protocol/AuthToken";
+import type {
+  ChannelsNotificationSettings,
+  PartialChannelsNotificationSettings,
+} from "./protocol/ChannelsNotificationSettings";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import type {
   BaseMetadata,
@@ -357,6 +361,12 @@ export interface NotificationHttpApi<M extends BaseMetadata> {
   deleteAllInboxNotifications(): Promise<void>;
 
   deleteInboxNotification(inboxNotificationId: string): Promise<void>;
+
+  getChannelsNotificationSettings(): Promise<ChannelsNotificationSettings>;
+
+  updateChannelsNotificationSettings(
+    settings: PartialChannelsNotificationSettings
+  ): Promise<ChannelsNotificationSettings>;
 }
 
 export interface LiveblocksHttpApi<M extends BaseMetadata>
@@ -1341,6 +1351,35 @@ export function createApiClient<M extends BaseMetadata>({
     );
   }
 
+  /* -------------------------------------------------------------------------------------------------
+   * Channels notifications settings (Project level)
+   * -------------------------------------------------------------------------------------------------
+   */
+  async function getChannelsNotificationSettings(options?: {
+    signal?: AbortSignal;
+  }): Promise<ChannelsNotificationSettings> {
+    return httpClient.get<ChannelsNotificationSettings>(
+      url`/v2/c/channels-notification-settings`,
+      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      undefined,
+      { signal: options?.signal }
+    );
+  }
+
+  async function updateChannelsNotificationSettings(
+    settings: PartialChannelsNotificationSettings
+  ): Promise<ChannelsNotificationSettings> {
+    return httpClient.post<ChannelsNotificationSettings>(
+      url`/v2/c/channels-notification-settings`,
+      await authManager.getAuthValue({ requestedScope: "comments:read" }),
+      settings
+    );
+  }
+
+  /* -------------------------------------------------------------------------------------------------
+   * User threads
+   * -------------------------------------------------------------------------------------------------
+   */
   async function getUserThreads_experimental(options?: {
     cursor?: string;
     query?: {
@@ -1440,7 +1479,9 @@ export function createApiClient<M extends BaseMetadata>({
     // Room notifications
     markRoomInboxNotificationAsRead,
     updateNotificationSettings,
+    // Channel notification settings
     getNotificationSettings,
+    updateChannelsNotificationSettings,
     // Room text editor
     createTextMention,
     deleteTextMention,
@@ -1464,6 +1505,7 @@ export function createApiClient<M extends BaseMetadata>({
     markInboxNotificationAsRead,
     deleteAllInboxNotifications,
     deleteInboxNotification,
+    getChannelsNotificationSettings,
     // User threads
     getUserThreads_experimental,
     getUserThreadsSince_experimental,

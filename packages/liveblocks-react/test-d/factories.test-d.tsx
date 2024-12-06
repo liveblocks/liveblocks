@@ -1,7 +1,12 @@
 import React from "react";
 React; // To silence tsd warning
 
-import type { Json, Room, User } from "@liveblocks/client";
+import type {
+  ChannelsNotificationSettings,
+  Json,
+  Room,
+  User,
+} from "@liveblocks/client";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import { createClient } from "@liveblocks/client";
 import { createLiveblocksContext, createRoomContext } from "@liveblocks/react";
@@ -1071,3 +1076,24 @@ ctx.useErrorListener((err) => {
   const status = ctx.suspense.useSyncStatus();
   expectType<"synchronizing" | "synchronized">(status);
 }
+
+// ---------------------------------------------------------
+// the useChannelsNotificationSettings() hook
+{
+  const [{ isLoading, error, settings }, update] =
+    lbctx.useChannelsNotificationSettings();
+  expectType<boolean>(isLoading);
+  expectType<Error | undefined>(error);
+  expectType<ChannelsNotificationSettings | undefined>(settings);
+  expectType<void>(update({})); // empty {} because of partial definition
+}
+// the useChannelsNotificationSettings() hook suspense
+{
+  const [{ isLoading, error, settings }, update] =
+    lbctx.suspense.useChannelsNotificationSettings();
+  expectType<boolean>(isLoading);
+  expectType<Error | undefined>(error);
+  expectType<ChannelsNotificationSettings | undefined>(settings);
+  expectType<void>(update({})); // empty {} because of partial definition
+}
+// ---------------------------------------------------------
