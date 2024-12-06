@@ -729,9 +729,8 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                           className="lb-comment-action"
                           onClick={stopPropagation}
                           aria-label={$.COMMENT_ADD_REACTION}
-                        >
-                          <EmojiAddIcon />
-                        </Button>
+                          icon={<EmojiAddIcon />}
+                        />
                       </EmojiPickerTrigger>
                     </Tooltip>
                   </EmojiPicker>
@@ -746,15 +745,15 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                         <DropdownItem
                           onSelect={handleEdit}
                           onClick={stopPropagation}
+                          icon={<EditIcon />}
                         >
-                          <EditIcon />
                           {$.COMMENT_EDIT}
                         </DropdownItem>
                         <DropdownItem
                           onSelect={handleDelete}
                           onClick={stopPropagation}
+                          icon={<DeleteIcon />}
                         >
-                          <DeleteIcon />
                           {$.COMMENT_DELETE}
                         </DropdownItem>
                       </>
@@ -767,9 +766,8 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                           disabled={!comment.body}
                           onClick={stopPropagation}
                           aria-label={$.COMMENT_MORE}
-                        >
-                          <EllipsisIcon />
-                        </Button>
+                          icon={<EllipsisIcon />}
+                        />
                       </DropdownTrigger>
                     </Tooltip>
                   </Dropdown>
@@ -797,9 +795,8 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                       <Button
                         className="lb-composer-action"
                         onClick={handleEditCancel}
-                      >
-                        <CrossIcon />
-                      </Button>
+                        icon={<CrossIcon />}
+                      />
                     </Tooltip>
                     <ShortcutTooltip
                       content={$.COMMENT_EDIT_COMPOSER_SAVE}
@@ -811,9 +808,8 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                           className="lb-composer-action"
                           onClick={stopPropagation}
                           aria-label={$.COMMENT_EDIT_COMPOSER_SAVE}
-                        >
-                          <CheckIcon />
-                        </Button>
+                          icon={<CheckIcon />}
+                        />
                       </ComposerPrimitive.Submit>
                     </ShortcutTooltip>
                   </>
@@ -887,9 +883,8 @@ export const Comment = forwardRef<HTMLDivElement, CommentProps>(
                             variant="outline"
                             onClick={stopPropagation}
                             aria-label={$.COMMENT_ADD_REACTION}
-                          >
-                            <EmojiAddIcon />
-                          </Button>
+                            icon={<EmojiAddIcon />}
+                          />
                         </EmojiPickerTrigger>
                       </Tooltip>
                     </EmojiPicker>

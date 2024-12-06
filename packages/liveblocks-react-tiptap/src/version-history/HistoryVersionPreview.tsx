@@ -109,11 +109,9 @@ export const HistoryVersionPreview = forwardRef<
               variant="primary"
               size="large"
               className="lb-history-version-preview-action"
+              icon={<RestoreIcon />}
             >
-              <RestoreIcon />
-              <span className="lb-button-label">
-                {$.HISTORY_VERSION_PREVIEW_RESTORE}
-              </span>
+              {$.HISTORY_VERSION_PREVIEW_RESTORE}
             </Button>
           </div>
         </div>

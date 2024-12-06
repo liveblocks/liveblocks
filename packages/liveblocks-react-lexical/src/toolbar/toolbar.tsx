@@ -73,9 +73,14 @@ const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
   ({ icon, children, name, shortcut, ...props }, forwardedRef) => {
     return (
       <ShortcutTooltip content={name} shortcut={shortcut}>
-        <Button type="button" variant="toolbar" ref={forwardedRef} {...props}>
-          {icon}
-          {children && <span className="lb-button-label">{children}</span>}
+        <Button
+          type="button"
+          variant="toolbar"
+          ref={forwardedRef}
+          icon={icon}
+          {...props}
+        >
+          {children}
         </Button>
       </ShortcutTooltip>
     );

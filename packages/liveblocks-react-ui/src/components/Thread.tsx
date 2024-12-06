@@ -341,13 +341,14 @@ export const Thread = forwardRef(
                                 ? $.THREAD_UNRESOLVE
                                 : $.THREAD_RESOLVE
                             }
-                          >
-                            {thread.resolved ? (
-                              <ResolvedIcon />
-                            ) : (
-                              <ResolveIcon />
-                            )}
-                          </Button>
+                            icon={
+                              thread.resolved ? (
+                                <ResolvedIcon />
+                              ) : (
+                                <ResolveIcon />
+                              )
+                            }
+                          />
                         </TogglePrimitive.Root>
                       </Tooltip>
                     ) : null

@@ -153,11 +153,14 @@
  *               Icon                *
  *************************************/
 
+.lb-icon-container,
 .lb-icon {
-  --lb-icon-background: var(--lb-dynamic-background);
-
   inline-size: var(--lb-icon-size);
   block-size: var(--lb-icon-size);
+}
+
+.lb-icon {
+  --lb-icon-background: var(--lb-dynamic-background);
 
   * {
     stroke-width: var(--lb-icon-weight);
@@ -247,7 +250,7 @@
     gap: calc(0.175 * var(--lb-spacing));
     padding-inline: calc(0.55 * var(--lb-spacing));
 
-    &:where(:has(.lb-icon)) {
+    &:where(:has(.lb-icon-container)) {
       padding-inline-start: calc(0.4 * var(--lb-spacing));
     }
   }
@@ -259,7 +262,7 @@
       gap: calc(0.35 * var(--lb-spacing));
       padding-inline: calc(0.7 * var(--lb-spacing));
 
-      &:where(:has(.lb-icon)) {
+      &:where(:has(.lb-icon-container)) {
         padding-inline-start: calc(0.6 * var(--lb-spacing));
       }
     }
@@ -279,10 +282,12 @@
     }
   }
 
+  :where(.lb-icon-container) {
+    flex: none;
+  }
+
   :where(.lb-icon) {
     --lb-icon-background: var(--lb-button-background);
-
-    flex: none;
   }
 }
 
@@ -318,7 +323,7 @@
 }
 
 .lb-dropdown-item {
-  :where(.lb-icon) {
+  :where(.lb-icon-container) {
     margin-inline-start: calc(-0.125 * var(--lb-spacing));
     margin-inline-end: calc(0.375 * var(--lb-spacing));
     color: var(--lb-foreground-moderate);
@@ -327,7 +332,7 @@
 }
 
 .lb-dropdown-item:where(:is([data-highlighted], [data-selected])) {
-  :where(.lb-icon) {
+  :where(.lb-icon-container) {
     color: var(--lb-foreground-tertiary);
   }
 }

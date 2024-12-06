@@ -89,6 +89,7 @@ interface EmojiEditorActionProps extends EditorActionProps {
 }
 
 interface MarkToggleProps extends ComposerMarkToggleProps {
+  icon?: ReactNode;
   shortcut?: string;
 }
 
@@ -258,10 +259,9 @@ function ComposerInsertMentionEditorAction({
         onPointerDown={preventDefault}
         onClick={handleClick}
         aria-label={label}
+        icon={<MentionIcon />}
         {...props}
-      >
-        <MentionIcon />
-      </Button>
+      />
     </Tooltip>
   );
 }
@@ -292,10 +292,9 @@ function ComposerInsertEmojiEditorAction({
             onPointerDown={preventDefault}
             onClick={stopPropagation}
             aria-label={label}
+            icon={<EmojiIcon />}
             {...props}
-          >
-            <EmojiIcon />
-          </Button>
+          />
         </EmojiPickerTrigger>
       </Tooltip>
     </EmojiPicker>
@@ -324,10 +323,9 @@ function ComposerAttachFilesEditorAction({
           onPointerDown={preventDefault}
           onClick={stopPropagation}
           aria-label={label}
+          icon={<AttachmentIcon />}
           {...props}
-        >
-          <AttachmentIcon />
-        </Button>
+        />
       </ComposerPrimitive.AttachFiles>
     </Tooltip>
   );
@@ -369,7 +367,13 @@ function ComposerMentionSuggestions({
   ) : null;
 }
 
-function MarkToggle({ mark, shortcut, children, ...props }: MarkToggleProps) {
+function MarkToggle({
+  mark,
+  icon,
+  shortcut,
+  children,
+  ...props
+}: MarkToggleProps) {
   const $ = useOverrides();
   const label = useMemo(() => {
     return $.COMPOSER_TOGGLE_MARK(mark);
@@ -382,7 +386,7 @@ function MarkToggle({ mark, shortcut, children, ...props }: MarkToggleProps) {
       sideOffset={FLOATING_ELEMENT_SIDE_OFFSET + 2}
     >
       <ComposerPrimitive.MarkToggle mark={mark} asChild {...props}>
-        <Button aria-label={label} variant="toolbar">
+        <Button aria-label={label} variant="toolbar" icon={icon}>
           {children}
         </Button>
       </ComposerPrimitive.MarkToggle>
@@ -395,26 +399,18 @@ type MarkToggles = {
 };
 
 const markToggles: MarkToggles = {
-  bold: () => (
-    <MarkToggle mark="bold" shortcut="Mod-B">
-      <BoldIcon />
-    </MarkToggle>
-  ),
+  bold: () => <MarkToggle mark="bold" shortcut="Mod-B" icon={<BoldIcon />} />,
   italic: () => (
-    <MarkToggle mark="italic" shortcut="Mod-I">
-      <ItalicIcon />
-    </MarkToggle>
+    <MarkToggle mark="italic" shortcut="Mod-I" icon={<ItalicIcon />} />
   ),
   strikethrough: () => (
-    <MarkToggle mark="strikethrough" shortcut="Mod-Shift-S">
-      <StrikethroughIcon />
-    </MarkToggle>
+    <MarkToggle
+      mark="strikethrough"
+      shortcut="Mod-Shift-S"
+      icon={<StrikethroughIcon />}
+    />
   ),
-  code: () => (
-    <MarkToggle mark="code" shortcut="Mod-E">
-      <CodeIcon />
-    </MarkToggle>
-  ),
+  code: () => <MarkToggle mark="code" shortcut="Mod-E" icon={<CodeIcon />} />,
 };
 
 const markTogglesList = Object.entries(markToggles).map(([mark, Toggle]) => (
@@ -598,9 +594,8 @@ function ComposerEditorContainer({
                       className="lb-composer-action"
                       variant="primary"
                       aria-label={$.COMPOSER_SEND}
-                    >
-                      <SendIcon />
-                    </Button>
+                      icon={<SendIcon />}
+                    />
                   </ComposerPrimitive.Submit>
                 </ShortcutTooltip>
               </>

@@ -92,8 +92,10 @@ function DropdownItem({ children, icon }: DropdownItemProps) {
       onSelect={handleSelect}
       onClick={handleClick}
     >
-      {icon}
-      {children}
+      {icon ? <span className="lb-icon-container">{icon}</span> : null}
+      {children ? (
+        <span className="lb-dropdown-item-label">{children}</span>
+      ) : null}
     </DropdownMenu.Item>
   );
 }
@@ -108,9 +110,11 @@ function DropdownSubItem({ children, icon }: DropdownItemProps) {
       className="lb-dropdown-item lb-dropdown-subitem"
       onClick={handleClick}
     >
-      {icon}
-      {children}
-      {}
+      {icon ? <span className="lb-icon-container">{icon}</span> : null}
+      {children ? (
+        <span className="lb-dropdown-item-label">{children}</span>
+      ) : null}
+      {/* TODO: Add a chevron icon */}
     </DropdownMenu.SubTrigger>
   );
 }

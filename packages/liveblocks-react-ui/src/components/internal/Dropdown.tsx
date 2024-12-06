@@ -22,6 +22,11 @@ export interface DropdownProps
   content: ReactNode;
 }
 
+interface DropdownItemProps
+  extends DropdownMenuPrimitive.DropdownMenuItemProps {
+  icon?: ReactNode;
+}
+
 export function Dropdown({
   children,
   content,
@@ -59,19 +64,21 @@ export function Dropdown({
   );
 }
 
-export const DropdownItem = forwardRef<
-  HTMLDivElement,
-  DropdownMenuPrimitive.DropdownMenuItemProps
->(({ children, className, ...props }, forwardedRef) => {
-  return (
-    <DropdownMenuPrimitive.DropdownMenuItem
-      className={classNames("lb-dropdown-item", className)}
-      {...props}
-      ref={forwardedRef}
-    >
-      {children}
-    </DropdownMenuPrimitive.DropdownMenuItem>
-  );
-});
+export const DropdownItem = forwardRef<HTMLDivElement, DropdownItemProps>(
+  ({ children, className, icon, ...props }, forwardedRef) => {
+    return (
+      <DropdownMenuPrimitive.DropdownMenuItem
+        className={classNames("lb-dropdown-item", className)}
+        {...props}
+        ref={forwardedRef}
+      >
+        {icon ? <span className="lb-icon-container">{icon}</span> : null}
+        {children ? (
+          <span className="lb-dropdown-item-label">{children}</span>
+        ) : null}
+      </DropdownMenuPrimitive.DropdownMenuItem>
+    );
+  }
+);
 
 export { DropdownMenuTrigger as DropdownTrigger } from "@radix-ui/react-dropdown-menu";
