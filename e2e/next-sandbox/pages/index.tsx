@@ -98,6 +98,13 @@ export default function Home() {
               </Link>
             </li>
           </ul>
+          <ul>
+            <li>
+              <Link href="/channels-notification-settings/with-suspense?room=e2e-channels-notif-settings-sus&user=13">
+                <a>With suspense (as user 13)</a>
+              </Link>
+            </li>
+          </ul>
         </li>
 
         <li>

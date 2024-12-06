@@ -1,5 +1,11 @@
-import { createLiveblocksContext, createRoomContext } from "@liveblocks/react";
+import {
+  ClientSideSuspense,
+  createLiveblocksContext,
+  createRoomContext,
+} from "@liveblocks/react";
 import * as React from "react";
+import type { FallbackProps } from "react-error-boundary";
+import { ErrorBoundary } from "react-error-boundary";
 
 import { getRoomFromUrl, getUserFromUrl, Row } from "../../utils";
 import Button from "../../utils/Button";
@@ -28,20 +34,45 @@ const client = createLiveblocksClient({
   },
 });
 
-const { LiveblocksProvider, useChannelsNotificationSettings } =
-  createLiveblocksContext(client);
+const {
+  suspense: { LiveblocksProvider, useChannelsNotificationSettings },
+} = createLiveblocksContext(client);
 
-const { RoomProvider, useSelf } = createRoomContext(client);
+const {
+  suspense: { RoomProvider, useSelf },
+} = createRoomContext(client);
+
+function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
+  return (
+    <div style={{ border: "2px solid red", color: "red" }}>
+      <p>Oops, an unexpected error happened.</p>
+      <pre>{String(error)}</pre>
+      <button onClick={resetErrorBoundary}>Retry</button>
+    </div>
+  );
+}
 
 function WithLiveblocksProvider(props: React.PropsWithChildren) {
-  return <LiveblocksProvider>{props.children}</LiveblocksProvider>;
+  return (
+    <LiveblocksProvider>
+      <ErrorBoundary FallbackComponent={ErrorFallback}>
+        <ClientSideSuspense fallback="Loading...">
+          {props.children}
+        </ClientSideSuspense>
+      </ErrorBoundary>
+    </LiveblocksProvider>
+  );
 }
 
 function WithRoomProvider(props: React.PropsWithChildren) {
   const roomId = getRoomFromUrl();
   return (
     <RoomProvider id={roomId} initialPresence={{} as never}>
-      {props.children}
+      <ErrorBoundary FallbackComponent={ErrorFallback}>
+        <ClientSideSuspense fallback="Loading...">
+          {props.children}
+        </ClientSideSuspense>
+      </ErrorBoundary>
     </RoomProvider>
   );
 }
@@ -91,6 +122,7 @@ function Channel({
     </div>
   );
 }
+
 function Settings() {
   const [{ isLoading, error, settings }, updateSettings] =
     useChannelsNotificationSettings();
