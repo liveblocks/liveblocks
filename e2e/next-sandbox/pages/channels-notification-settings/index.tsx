@@ -196,9 +196,6 @@ export default function SandboxPage() {
       </WithRoomProvider>
       <hr />
       <Settings />
-      {/* <SlackChannel />
-      <TeamsChannel />
-      <WebPushChannel /> */}
     </WithLiveblocksProvider>
   );
 }
