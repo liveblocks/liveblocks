@@ -25,6 +25,10 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 - Multiple Tiptap editors are now supported in a room's Text Editor view.
 
+## Documentation
+
+- Improved [custom composer behavior](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Custom-composer-behavior) code example.
+
 ## Contributors
 
 ctnicholas, pierrelevaillant, marcbouchenoire
