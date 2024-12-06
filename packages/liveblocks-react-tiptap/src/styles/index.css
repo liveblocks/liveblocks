@@ -259,7 +259,7 @@
 .lb-tiptap-ai-toolbar {
   --lb-tiptap-ai-toolbar-padding: calc(0.625 * var(--lb-spacing));
 
-  inline-size: 350px;
+  inline-size: var(--lb-tiptap-editor-width);
 }
 
 .lb-tiptap-ai-toolbar-input-container {

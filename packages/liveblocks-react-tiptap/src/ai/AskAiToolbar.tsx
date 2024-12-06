@@ -1,13 +1,9 @@
 import {
   autoUpdate,
   type DetectOverflowOptions,
-  flip,
   hide,
-  inline,
-  limitShift,
+  type Middleware,
   offset,
-  shift,
-  size,
   useFloating,
   type UseFloatingOptions,
 } from "@floating-ui/react-dom";
@@ -127,6 +123,39 @@ function DropdownLabel({ children }: PropsWithChildren) {
   );
 }
 
+/**
+ * A custom Floating UI middleware to position/scale the toolbar:
+ * - Vertically: relative to the reference (e.g. selection)
+ * - Horizontally: relative to the editor
+ * - Width: relative to the editor
+ */
+function tiptapFloating(editor: Editor | null): Middleware {
+  return {
+    name: "tiptap",
+    options: editor,
+    fn({ elements }) {
+      if (!editor) {
+        return {};
+      }
+
+      const editorRect = editor.view.dom.getBoundingClientRect();
+
+      elements.floating.style.setProperty(
+        "--lb-tiptap-editor-width",
+        `${editorRect.width}px`
+      );
+      elements.floating.style.setProperty(
+        "--lb-tiptap-editor-height",
+        `${editorRect.height}px`
+      );
+
+      return {
+        x: editorRect.x,
+      };
+    },
+  };
+}
+
 export const AskAiToolbar = forwardRef<HTMLDivElement, AskAiToolbarProps>(
   (
     {
@@ -157,15 +186,9 @@ export const AskAiToolbar = forwardRef<HTMLDivElement, AskAiToolbarProps>(
         strategy: "fixed",
         placement: position,
         middleware: [
-          inline(detectOverflowOptions),
-          flip({ ...detectOverflowOptions, crossAxis: false }),
+          tiptapFloating(editor),
           hide(detectOverflowOptions),
-          shift({
-            ...detectOverflowOptions,
-            limiter: limitShift(),
-          }),
           offset(sideOffset),
-          size(detectOverflowOptions),
         ],
         whileElementsMounted: (...args) => {
           return autoUpdate(...args, {
@@ -173,7 +196,7 @@ export const AskAiToolbar = forwardRef<HTMLDivElement, AskAiToolbarProps>(
           });
         },
       };
-    }, [position, sideOffset]);
+    }, [editor, position, sideOffset]);
     const isOpen = askAiSelection !== undefined;
     const {
       refs: { setReference, setFloating },
@@ -246,6 +269,7 @@ export const AskAiToolbar = forwardRef<HTMLDivElement, AskAiToolbarProps>(
               sideOffset={8}
               align="start"
               collisionPadding={ASK_AI_TOOLBAR_COLLISION_PADDING}
+              avoidCollisions={false}
               className="lb-root lb-portal lb-elevation lb-dropdown lb-tiptap-ai-toolbar-dropdown"
             >
               <DropdownLabel>Modify selection</DropdownLabel>
