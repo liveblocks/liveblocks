@@ -4,7 +4,7 @@ declare global {
       id: string;
       info: {
         name: string;
-        picture: string;
+        avatar: string;
         color: string;
       };
     };

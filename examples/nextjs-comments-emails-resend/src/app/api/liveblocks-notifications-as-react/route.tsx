@@ -52,7 +52,7 @@ export async function POST(request: Request) {
         event,
         {
           resolveUsers: async ({ userIds }) => {
-            const users = await getUsers(userIds);
+            const users = getUsers(userIds);
             return users.map((user) => user?.info || {});
           },
           resolveRoomInfo: ({ roomId }) => {
