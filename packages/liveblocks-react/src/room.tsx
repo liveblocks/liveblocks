@@ -785,12 +785,12 @@ function useReportTextEditor(editor: TextEditorType, rootKey: string): void {
     const unsubscribe = room.events.status.subscribe((status: Status): void => {
       if (status === "connected") {
         isReported.current = true;
-        room[kInternal].reportTextEditor(editor, rootKey);
+        void room[kInternal].reportTextEditor(editor, rootKey);
       }
     });
 
     return unsubscribe;
-  }, [room]);
+  }, [room, editor, rootKey]);
 }
 
 /**
