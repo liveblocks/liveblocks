@@ -15,13 +15,19 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 49 (2024-12-06)
 
+## 2.13.1
+
+### `@liveblocks/react-ui`
+
+- Improve the spacing consequences of `--lb-line-height` (introduced in 2.13.0) in some contexts.
+
 ## Dashboard
 
 - Multiple Tiptap editors are now supported in a room's Text Editor view.
 
 ## Contributors
 
-ctnicholas, pierrelevaillant
+ctnicholas, pierrelevaillant, marcbouchenoire
 
 # Week 48 (2024-11-29)
 
