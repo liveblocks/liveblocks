@@ -3,6 +3,7 @@ import {
   useClient,
   useCommentsErrorListener,
   useRoom,
+  useStatus,
 } from "@liveblocks/react";
 import {
   CreateThreadError,
@@ -163,12 +164,14 @@ export const useLiveblocksExtension = (
     }
   }, [isEditorReady, yjsProvider, options.initialContent, editor]);
 
-  const reportTextEditorType = useCallback(
-    (field: string) => {
+  const status = useStatus();
+
+  useEffect(() => {
+    if (status === "connected") {
+      const field = options.field ?? DEFAULT_OPTIONS.field;
       room[kInternal].reportTextEditor(TextEditorType.TipTap, field);
-    },
-    [room]
-  );
+    }
+  }, [room, options.field, status]);
   const onCreateMention = useCallback(
     (userId: string, notificationId: string) => {
       try {
@@ -287,8 +290,6 @@ export const useLiveblocksExtension = (
           })
         );
       }
-
-      reportTextEditorType(options.field ?? DEFAULT_OPTIONS.field);
     },
     onDestroy() {
       this.storage.unsubs.forEach((unsub) => unsub());

@@ -3,7 +3,7 @@ import { CollaborationPlugin } from "@lexical/react/LexicalCollaborationPlugin";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { Provider } from "@lexical/yjs";
 import { kInternal, nn, TextEditorType } from "@liveblocks/core";
-import { useClient, useRoom, useSelf } from "@liveblocks/react";
+import { useClient, useRoom, useSelf, useStatus } from "@liveblocks/react";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import type { MutableRefObject } from "react";
 import React, {
@@ -72,7 +72,7 @@ export function useEditorStatus(): EditorStatus {
 
   const subscribe = useCallback(
     (onStoreChange: () => void) => {
-      if (provider === undefined) return () => {};
+      if (provider === undefined) return () => { };
       provider.on("status", onStoreChange);
       return () => {
         provider.off("status", onStoreChange);
@@ -105,7 +105,7 @@ export function useIsEditorReady(): boolean {
 
   const subscribe = useCallback(
     (callback: () => void) => {
-      if (yjsProvider === undefined) return () => {};
+      if (yjsProvider === undefined) return () => { };
       yjsProvider.on("status", callback);
       return () => {
         yjsProvider.off("status", callback);
@@ -162,6 +162,7 @@ export const LiveblocksPlugin = ({
     client[kInternal].resolveMentionSuggestions !== undefined;
   const [editor] = useLexicalComposerContext();
   const room = useRoom();
+  const status = useStatus();
   const previousRoomIdRef = useRef<string | null>(null);
 
   if (!editor.hasNodes([ThreadMarkNode, MentionNode])) {
@@ -206,9 +207,11 @@ export const LiveblocksPlugin = ({
   }, []);
 
   useEffect(() => {
-    // Report that this is lexical and root is the rootKey
-    room[kInternal].reportTextEditor(TextEditorType.Lexical, "root");
-  }, [room]);
+    if (status === "connected") {
+      // Report that this is lexical and root is the rootKey
+      room[kInternal].reportTextEditor(TextEditorType.Lexical, "root");
+    }
+  }, [room, status]);
 
   // Get user info or allow override from props
   const self = useSelf();
