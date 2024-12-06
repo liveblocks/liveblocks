@@ -109,7 +109,7 @@ export class LiveObject {
     if (this.#ctx.pool) {
       // this.#ctx.pool.getParent(this.#ctx.nodeId).invalidate();
     } else {
-      raise("Implement me");
+      // raise("Implement me");
     }
   }
   toImmutable(): JsonObject {
@@ -117,37 +117,5 @@ export class LiveObject {
       this.#_immCache = this.#_toImmutable();
     }
     return this.#_immCache;
-  }
-
-  /**
-   * Proxy to make Live structure mutations look like normal JavaScript
-   * mutations, for familiarity.
-   */
-  makeProxy(): JsonObject {
-    const liveObj = this;
-    return new Proxy(
-      {} as JsonObject, // We're creating a proxy for a pojo here
-      {
-        get(_target, prop: string) {
-          if (typeof prop === "symbol") raise("Getting symbols not supported");
-          return liveObj.get(prop); // XXX TODO If this is a LiveObject, return its proxy
-        },
-
-        set(_target, prop, value) {
-          if (typeof prop === "symbol") return false; // Throws TypeError
-          if (typeof value === "object" && value !== null) {
-            raise(`Cannot set property '${prop}': not a valid LSON value`);
-          }
-          liveObj.set(prop, value as Lson);
-          return true;
-        },
-
-        deleteProperty(_target, prop) {
-          if (typeof prop === "symbol") return false; // Throws TypeError
-          liveObj.delete(prop);
-          return true;
-        },
-      }
-    );
   }
 }
