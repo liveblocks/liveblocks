@@ -42,6 +42,10 @@ describe("Lexical editor", () => {
           },
         },
         {
+          group: "element-marker",
+          marker: "start",
+        },
+        {
           type: "text",
           group: "text",
           attributes: {
@@ -73,6 +77,10 @@ describe("Lexical editor", () => {
             __detail: 0,
           },
           text: "?",
+        },
+        {
+          group: "element-marker",
+          marker: "end",
         },
         {
           type: "linebreak",

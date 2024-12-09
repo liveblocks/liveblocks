@@ -1,4 +1,4 @@
-import type { Json, JsonObject } from "@liveblocks/core";
+import { type Json, type JsonObject } from "@liveblocks/core";
 import * as Y from "yjs";
 
 import { isMentionNodeAttributeId, isString } from "./lib/utils";
@@ -263,6 +263,10 @@ const isSerializedElementNode = (
   return node.group === "element" && node.children !== undefined;
 };
 
+const isEmptySerializedElementNode = (node: SerializedLexicalNode): boolean => {
+  return isSerializedElementNode(node) && node.children.length === 0;
+};
+
 const isMentionNodeType = (type: string): type is "lb-mention" => {
   return type === "lb-mention";
 };
@@ -284,16 +288,58 @@ export const isSerializedMentionNode = (
   );
 };
 
+/**
+ * Internal type helper when flattening nodes.
+ * It helps to better extract mention node with context by marking
+ * start and ends of paragraph and by handling specific use cases such as
+ * using twice the `enter` key which will create an empty paragraph
+ * at the first `enter`:
+ *
+ *  "
+ *  Hey @charlie what's up?
+ *  _enter_once_
+ *  _enter_twice_
+ *  "
+ */
+export interface FlattenedLexicalElementNodeMarker {
+  group: "element-marker";
+  marker: "start" | "end";
+}
+
+const isFlattenedLexicalElementNodeMarker = (
+  node: SerializedLexicalNode | FlattenedLexicalElementNodeMarker
+): node is FlattenedLexicalElementNodeMarker => {
+  return node.group === "element-marker";
+};
+
+export type FlattenedSerializedLexicalNodes = Array<
+  SerializedLexicalNode | FlattenedLexicalElementNodeMarker
+>;
+
 /** @internal - export for testing only */
 export const flattenLexicalTree = (
   nodes: SerializedLexicalNode[]
-): SerializedLexicalNode[] => {
-  let flattenNodes: SerializedLexicalNode[] = [];
+): FlattenedSerializedLexicalNodes => {
+  let flattenNodes: FlattenedSerializedLexicalNodes = [];
   for (const node of nodes) {
-    if (["text", "linebreak", "decorator"].includes(node.group)) {
+    if (
+      ["text", "linebreak", "decorator"].includes(node.group) ||
+      isEmptySerializedElementNode(node)
+    ) {
       flattenNodes = [...flattenNodes, node];
     } else if (node.group === "element") {
-      flattenNodes = [...flattenNodes, ...flattenLexicalTree(node.children)];
+      flattenNodes = [
+        ...flattenNodes,
+        {
+          group: "element-marker",
+          marker: "start",
+        },
+        ...flattenLexicalTree(node.children),
+        {
+          group: "element-marker",
+          marker: "end",
+        },
+      ];
     }
   }
 
@@ -357,8 +403,12 @@ export function findLexicalMentionNodeWithContext({
   for (let i = mentionNodeIndex - 1; i >= 0; i--) {
     const node = nodes[i]!;
 
-    // Stop if nodes are line breaks or element
-    if (isSerializedLineBreakNode(node) || isSerializedElementNode(node)) {
+    // Stop if nodes are markers, line breaks or empty elements
+    if (
+      isFlattenedLexicalElementNodeMarker(node) ||
+      isSerializedLineBreakNode(node) ||
+      isEmptySerializedElementNode(node)
+    ) {
       break;
     }
 
@@ -374,8 +424,12 @@ export function findLexicalMentionNodeWithContext({
   for (let i = mentionNodeIndex + 1; i < nodes.length; i++) {
     const node = nodes[i]!;
 
-    // Stop if nodes are line breaks or element
-    if (isSerializedLineBreakNode(node) || isSerializedElementNode(node)) {
+    // Stop if nodes are markers, line breaks or empty elements
+    if (
+      isFlattenedLexicalElementNodeMarker(node) ||
+      isSerializedLineBreakNode(node) ||
+      isEmptySerializedElementNode(node)
+    ) {
       break;
     }
 
