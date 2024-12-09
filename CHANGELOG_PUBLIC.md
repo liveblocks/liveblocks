@@ -15,7 +15,23 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 50 (2024-12-13)
 
+## v2.13.2
+
+### `@liveblocks/react-lexical`
+
+- Fix report text editor function's call. Now we wait for the room's status to
+  be `connected` to report the text editor instead of reporting directly after
+  room creation / loading.
+
+### `@liveblocks/react-tiptap`
+
+- Fix report text editor function's call. Now we wait for the room's status to
+  be `connected` to report the text editor instead of reporting directly after
+  room creation / loading.
+
 ## Contributors
+
+sugardarius
 
 # Week 49 (2024-12-06)
 
