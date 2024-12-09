@@ -407,8 +407,7 @@ export function findLexicalMentionNodeWithContext({
     // Stop if nodes are markers, line breaks or empty elements
     if (
       isFlattenedLexicalElementNodeMarker(node) ||
-      isSerializedLineBreakNode(node) ||
-      isEmptySerializedElementNode(node)
+      isSerializedLineBreakNode(node)
     ) {
       break;
     }
@@ -428,8 +427,7 @@ export function findLexicalMentionNodeWithContext({
     // Stop if nodes are markers, line breaks or empty elements
     if (
       isFlattenedLexicalElementNodeMarker(node) ||
-      isSerializedLineBreakNode(node) ||
-      isEmptySerializedElementNode(node)
+      isSerializedLineBreakNode(node)
     ) {
       break;
     }
