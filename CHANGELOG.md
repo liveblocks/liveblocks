@@ -1,4 +1,6 @@
-## 2.13.2 (Not yet published)
+## Not yet published
+
+## 2.13.2
 
 ### `@liveblocks/react-lexical`
 
