@@ -4,6 +4,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import type { Provider } from "@lexical/yjs";
 import { kInternal, nn, TextEditorType } from "@liveblocks/core";
 import { useClient, useRoom, useSelf } from "@liveblocks/react";
+import { useReportTextEditor } from "@liveblocks/react/_private";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import type { MutableRefObject } from "react";
 import React, {
@@ -205,10 +206,7 @@ export const LiveblocksPlugin = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    // Report that this is lexical and root is the rootKey
-    room[kInternal].reportTextEditor(TextEditorType.Lexical, "root");
-  }, [room]);
+  useReportTextEditor(TextEditorType.Lexical, "root");
 
   // Get user info or allow override from props
   const self = useSelf();
