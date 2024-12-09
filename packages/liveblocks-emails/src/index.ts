@@ -13,12 +13,31 @@ export type {
   ConvertCommentBodyAsHtmlStyles,
   ConvertCommentBodyAsReactComponents,
 } from "./comment-body";
+export type { ResolveRoomInfoArgs } from "./lib/types";
+export type {
+  ConvertTextEditorNodesAsHtmlStyles,
+  ConvertTextEditorNodesAsReactComponents,
+  TextEditorContainerComponentProps,
+  TextEditorMentionComponentProps,
+  TextEditorTextComponentProps,
+} from "./liveblocks-text-editor";
+export type {
+  MentionEmailAsHtmlData,
+  MentionEmailAsReactData,
+  PrepareTextMentionNotificationEmailAsHtmlOptions,
+  PrepareTextMentionNotificationEmailAsReactOptions,
+  TextMentionNotificationEmailDataAsHtml,
+  TextMentionNotificationEmailDataAsReact,
+} from "./text-mention-notification";
+export {
+  prepareTextMentionNotificationEmailAsHtml,
+  prepareTextMentionNotificationEmailAsReact,
+} from "./text-mention-notification";
 export type {
   CommentEmailAsHtmlData,
   CommentEmailAsReactData,
   PrepareThreadNotificationEmailAsHtmlOptions,
   PrepareThreadNotificationEmailAsReactOptions,
-  ResolveRoomInfoArgs,
   ThreadNotificationEmailDataAsHtml,
   ThreadNotificationEmailDataAsReact,
 } from "./thread-notification";
