@@ -246,22 +246,11 @@ export function getSerializedLexicalState({
   return state;
 }
 
-/** @internal - export for testing only */
-export const flattenLexicalTree = (
-  nodes: SerializedLexicalNode[]
-): SerializedLexicalNode[] => {
-  let flattenNodes: SerializedLexicalNode[] = [];
-  for (const node of nodes) {
-    if (["text", "linebreak", "decorator"].includes(node.group)) {
-      flattenNodes = [...flattenNodes, node];
-    } else if (node.group === "element") {
-      flattenNodes = [...flattenNodes, ...flattenLexicalTree(node.children)];
-    }
-  }
-
-  return flattenNodes;
-};
-
+/**
+ * Linebreaks in the `Lexical` world are equivalent to
+ * hard breaks (like we can have in `tiptap`).
+ * They are created by using keys like `shift+enter` or `mod+enter`.
+ */
 const isSerializedLineBreakNode = (
   node: SerializedLexicalNode
 ): node is SerializedLexicalLineBreakNode => {
@@ -271,7 +260,7 @@ const isSerializedLineBreakNode = (
 const isSerializedElementNode = (
   node: SerializedLexicalNode
 ): node is SerializedLexicalElementNode<Readonly<SerializedLexicalNode>> => {
-  return node.group === "element";
+  return node.group === "element" && node.children !== undefined;
 };
 
 const isMentionNodeType = (type: string): type is "lb-mention" => {
@@ -293,6 +282,22 @@ export const isSerializedMentionNode = (
     isMentionNodeAttributeId(attributes.__id) &&
     isString(attributes.__userId)
   );
+};
+
+/** @internal - export for testing only */
+export const flattenLexicalTree = (
+  nodes: SerializedLexicalNode[]
+): SerializedLexicalNode[] => {
+  let flattenNodes: SerializedLexicalNode[] = [];
+  for (const node of nodes) {
+    if (["text", "linebreak", "decorator"].includes(node.group)) {
+      flattenNodes = [...flattenNodes, node];
+    } else if (node.group === "element") {
+      flattenNodes = [...flattenNodes, ...flattenLexicalTree(node.children)];
+    }
+  }
+
+  return flattenNodes;
 };
 
 /**

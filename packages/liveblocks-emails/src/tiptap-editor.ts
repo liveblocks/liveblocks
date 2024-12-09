@@ -66,6 +66,11 @@ export interface SerializedTiptapLineBreakNode
   content?: undefined;
 }
 
+/**
+ * Hard breaks are created by using keys like
+ * `shift+enter` or `mod+enter`
+ */
+
 export interface SerializedTiptapHardBreakNode
   extends SerializedTiptapBaseNode {
   type: "hardBreak";
