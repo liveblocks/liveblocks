@@ -60,7 +60,7 @@ export interface SerializedTiptapMentionNode extends SerializedTiptapBaseNode {
   };
 }
 
-export interface SerializedTiptapLineBreakNode
+export interface SerializedTiptapEmptyParagraphNode
   extends SerializedTiptapBaseNode {
   type: "paragraph";
   content?: undefined;
@@ -84,7 +84,7 @@ export interface SerializedTiptapParagraphNode
 
 export type SerializedTiptapNode =
   | SerializedTiptapParagraphNode
-  | SerializedTiptapLineBreakNode
+  | SerializedTiptapEmptyParagraphNode
   | SerializedTiptapHardBreakNode
   | SerializedTiptapMentionNode
   | SerializedTiptapTextNode;
@@ -127,9 +127,9 @@ export function getSerializedTiptapState({
   return state as SerializedTiptapRootNode;
 }
 
-const isEmptySerializedParagraphNode = (
+const isSerializedEmptyParagraphNode = (
   node: SerializedTiptapNode
-): node is SerializedTiptapLineBreakNode => {
+): node is SerializedTiptapEmptyParagraphNode => {
   return node.type === "paragraph" && typeof node.content === "undefined";
 };
 
@@ -197,7 +197,7 @@ export const flattenTiptapTree = (
 
   for (const node of nodes) {
     if (
-      isEmptySerializedParagraphNode(node) ||
+      isSerializedEmptyParagraphNode(node) ||
       isSerializedHardBreakNode(node) ||
       isSerializedTextNode(node) ||
       isSerializedMentionNode(node)
@@ -283,7 +283,7 @@ export function findTiptapMentionNodeWithContext({
     // Stop if nodes are markers, hard breaks or empty paragraph
     if (
       isFlattenedTiptapParagraphNodeMarker(node) ||
-      isEmptySerializedParagraphNode(node) ||
+      isSerializedEmptyParagraphNode(node) ||
       isSerializedHardBreakNode(node)
     ) {
       break;
@@ -299,7 +299,7 @@ export function findTiptapMentionNodeWithContext({
     // Stop if nodes are markers, hard breaks or empty paragraph
     if (
       isFlattenedTiptapParagraphNodeMarker(node) ||
-      isEmptySerializedParagraphNode(node) ||
+      isSerializedEmptyParagraphNode(node) ||
       isSerializedHardBreakNode(node)
     ) {
       break;
