@@ -788,11 +788,8 @@ function useReportTextEditor(editor: TextEditorType, rootKey: string): void {
     const unsubscribe = room.events.status.subscribe((status: Status): void => {
       if (status === "connected" && !isReported.current) {
         isReported.current = true;
-        room[kInternal].reportTextEditor(editor, rootKey).catch((err) => {
-          console.warn(
-            `Text editor reporting for room '${room.id}' failed: ${String(err)}`
-          );
-        });
+        // We not catch because this method never throw (e.g `rawPost`)
+        void room[kInternal].reportTextEditor(editor, rootKey);
       }
     });
 
