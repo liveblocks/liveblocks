@@ -772,12 +772,15 @@ function useStatus(): Status {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
-/** @private - this an internal API do not rely on it */
+/** @private - Internal API, do not rely on it. */
 function useReportTextEditor(editor: TextEditorType, rootKey: string): void {
   const isReported = React.useRef<boolean>(false);
   const room = useRoom();
 
   React.useEffect(() => {
+    // We use a "locker" reference to avoid to spam / harass our backend
+    // and to not add / remove subscribers in case when the text editor type
+    // has been already reported.
     if (isReported.current) {
       return;
     }
