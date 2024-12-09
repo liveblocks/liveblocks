@@ -70,7 +70,6 @@ export interface SerializedTiptapLineBreakNode
  * Hard breaks are created by using keys like
  * `shift+enter` or `mod+enter`
  */
-
 export interface SerializedTiptapHardBreakNode
   extends SerializedTiptapBaseNode {
   type: "hardBreak";
@@ -128,7 +127,7 @@ export function getSerializedTiptapState({
   return state as SerializedTiptapRootNode;
 }
 
-const isSerializedLineBreakNode = (
+const isEmptySerializedParagraphNode = (
   node: SerializedTiptapNode
 ): node is SerializedTiptapLineBreakNode => {
   return node.type === "paragraph" && typeof node.content === "undefined";
@@ -161,22 +160,62 @@ const isSerializedParagraphNode = (
   return node.type === "paragraph" && typeof node.content !== "undefined";
 };
 
+/**
+ * Internal type helper when flattening nodes.
+ * It helps to better extract mention node with context by marking
+ * start and ends of paragraph and by handling specific use cases such as
+ * using twice the `enter` key which will create an empty paragraph
+ * at the first `enter`:
+ *
+ *  "
+ *  Hey @charlie what's up?
+ *  _enter_once_
+ *  _enter_twice_
+ *  "
+ */
+interface FlattenedTiptapParagraphNodeMarker {
+  type: "paragraph-marker";
+  marker: "start" | "end";
+}
+
+const isFlattenedTiptapParagraphNodeMarker = (
+  node: SerializedTiptapNode | FlattenedTiptapParagraphNodeMarker
+): node is FlattenedTiptapParagraphNodeMarker => {
+  return node.type === "paragraph-marker";
+};
+
+/** @internal */
+type FlattenedSerializedTiptapNodes = Array<
+  SerializedTiptapNode | FlattenedTiptapParagraphNodeMarker
+>;
+
 /** @internal - export for testing only */
 export const flattenTiptapTree = (
   nodes: SerializedTiptapNode[]
-): SerializedTiptapNode[] => {
-  let flattenNodes: SerializedTiptapNode[] = [];
+): FlattenedSerializedTiptapNodes => {
+  let flattenNodes: FlattenedSerializedTiptapNodes = [];
 
   for (const node of nodes) {
     if (
-      isSerializedLineBreakNode(node) ||
+      isEmptySerializedParagraphNode(node) ||
       isSerializedHardBreakNode(node) ||
       isSerializedTextNode(node) ||
       isSerializedMentionNode(node)
     ) {
       flattenNodes = [...flattenNodes, node];
     } else if (isSerializedParagraphNode(node)) {
-      flattenNodes = [...flattenNodes, ...flattenTiptapTree(node.content)];
+      flattenNodes = [
+        ...flattenNodes,
+        {
+          type: "paragraph-marker",
+          marker: "start",
+        },
+        ...flattenTiptapTree(node.content),
+        {
+          type: "paragraph-marker",
+          marker: "end",
+        },
+      ];
     }
   }
 
@@ -214,6 +253,7 @@ export function findTiptapMentionNodeWithContext({
     const node = nodes[i]!;
 
     if (
+      !isFlattenedTiptapParagraphNodeMarker(node) &&
       isSerializedMentionNode(node) &&
       node.attrs.notificationId === mentionId &&
       node.attrs.id === mentionedUserId
@@ -240,11 +280,11 @@ export function findTiptapMentionNodeWithContext({
   for (let i = mentionNodeIndex - 1; i >= 0; i--) {
     const node = nodes[i]!;
 
-    // Stop if nodes are line breaks or paragraph
+    // Stop if nodes are markers, hard breaks or empty paragraph
     if (
-      isSerializedLineBreakNode(node) ||
-      isSerializedHardBreakNode(node) ||
-      isSerializedParagraphNode(node)
+      isFlattenedTiptapParagraphNodeMarker(node) ||
+      isEmptySerializedParagraphNode(node) ||
+      isSerializedHardBreakNode(node)
     ) {
       break;
     }
@@ -256,11 +296,11 @@ export function findTiptapMentionNodeWithContext({
   for (let i = mentionNodeIndex + 1; i < nodes.length; i++) {
     const node = nodes[i]!;
 
-    // Stop if nodes are line breaks or paragraph
+    // Stop if nodes are markers, hard breaks or empty paragraph
     if (
-      isSerializedLineBreakNode(node) ||
-      isSerializedHardBreakNode(node) ||
-      isSerializedParagraphNode(node)
+      isFlattenedTiptapParagraphNodeMarker(node) ||
+      isEmptySerializedParagraphNode(node) ||
+      isSerializedHardBreakNode(node)
     ) {
       break;
     }

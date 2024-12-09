@@ -32,6 +32,10 @@ describe("tiptap editor", () => {
       expect(flattenNodes).toEqual([
         { type: "paragraph" },
         {
+          type: "paragraph-marker",
+          marker: "start",
+        },
+        {
           type: "text",
           text: "Hey this a tip tap ",
         },
@@ -63,6 +67,10 @@ describe("tiptap editor", () => {
         {
           type: "text",
           text: " fun right?",
+        },
+        {
+          type: "paragraph-marker",
+          marker: "end",
         },
         { type: "paragraph" },
       ]);
