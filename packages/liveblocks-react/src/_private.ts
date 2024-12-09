@@ -16,6 +16,7 @@ export {
   useMarkRoomThreadAsResolved,
   useMarkRoomThreadAsUnresolved,
   useRemoveRoomCommentReaction,
+  useReportTextEditor,
   useRoomAttachmentUrl,
   useRoomPermissions,
 } from "./room";

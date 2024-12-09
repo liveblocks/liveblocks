@@ -32,6 +32,7 @@ import type {
   OpaqueClient,
   Poller,
   RoomEventMessage,
+  TextEditorType,
   ToImmutable,
 } from "@liveblocks/core";
 import {
@@ -769,6 +770,31 @@ function useStatus(): Status {
   const getSnapshot = room.getStatus;
   const getServerSnapshot = room.getStatus;
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
+
+/** @private - Internal API, do not rely on it. */
+function useReportTextEditor(editor: TextEditorType, rootKey: string): void {
+  const isReported = React.useRef<boolean>(false);
+  const room = useRoom();
+
+  React.useEffect(() => {
+    // We use a "locker" reference to avoid to spam / harass our backend
+    // and to not add / remove subscribers in case when the text editor type
+    // has been already reported.
+    if (isReported.current) {
+      return;
+    }
+
+    const unsubscribe = room.events.status.subscribe((status: Status): void => {
+      if (status === "connected" && !isReported.current) {
+        isReported.current = true;
+        // We do not catch because this method never throw (e.g `rawPost`)
+        void room[kInternal].reportTextEditor(editor, rootKey);
+      }
+    });
+
+    return unsubscribe;
+  }, [room, editor, rootKey]);
 }
 
 /**
@@ -3172,6 +3198,7 @@ export {
   useRedo,
   useRemoveReaction,
   useRemoveRoomCommentReaction,
+  useReportTextEditor,
   _useRoom as useRoom,
   useRoomAttachmentUrl,
   _useRoomNotificationSettings as useRoomNotificationSettings,

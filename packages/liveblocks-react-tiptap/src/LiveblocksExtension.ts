@@ -7,6 +7,7 @@ import {
 import {
   CreateThreadError,
   getUmbrellaStoreForClient,
+  useReportTextEditor,
 } from "@liveblocks/react/_private";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import type { AnyExtension, Content, Editor } from "@tiptap/core";
@@ -163,12 +164,11 @@ export const useLiveblocksExtension = (
     }
   }, [isEditorReady, yjsProvider, options.initialContent, editor]);
 
-  const reportTextEditorType = useCallback(
-    (field: string) => {
-      room[kInternal].reportTextEditor(TextEditorType.TipTap, field);
-    },
-    [room]
+  useReportTextEditor(
+    TextEditorType.TipTap,
+    options.field ?? DEFAULT_OPTIONS.field
   );
+
   const onCreateMention = useCallback(
     (userId: string, notificationId: string) => {
       try {
@@ -287,8 +287,6 @@ export const useLiveblocksExtension = (
           })
         );
       }
-
-      reportTextEditorType(options.field ?? DEFAULT_OPTIONS.field);
     },
     onDestroy() {
       this.storage.unsubs.forEach((unsub) => unsub());
