@@ -1,4 +1,4 @@
-import { type Json, type JsonObject } from "@liveblocks/core";
+import type { Json, JsonObject } from "@liveblocks/core";
 import * as Y from "yjs";
 
 import { isMentionNodeAttributeId, isString } from "./lib/utils";
@@ -301,7 +301,7 @@ export const isSerializedMentionNode = (
  *  _enter_twice_
  *  "
  */
-export interface FlattenedLexicalElementNodeMarker {
+interface FlattenedLexicalElementNodeMarker {
   group: "element-marker";
   marker: "start" | "end";
 }
@@ -312,7 +312,8 @@ const isFlattenedLexicalElementNodeMarker = (
   return node.group === "element-marker";
 };
 
-export type FlattenedSerializedLexicalNodes = Array<
+/** @internal */
+type FlattenedSerializedLexicalNodes = Array<
   SerializedLexicalNode | FlattenedLexicalElementNodeMarker
 >;
 
