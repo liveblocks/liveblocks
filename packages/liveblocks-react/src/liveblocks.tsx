@@ -12,6 +12,7 @@ import type {
   DU,
   InboxNotificationData,
   OpaqueClient,
+  PartialChannelsNotificationSettings,
   SyncStatus,
 } from "@liveblocks/core";
 import {
@@ -40,6 +41,7 @@ import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
 import type {
+  ChannelsNotificationSettingsAsyncResult,
   InboxNotificationsAsyncResult,
   LiveblocksContextBundle,
   RoomInfoAsyncResult,
@@ -299,10 +301,26 @@ function makeLiveblocksExtrasForClient(client: OpaqueClient) {
     { maxStaleTimeMs: config.USER_THREADS_MAX_STALE_TIME }
   );
 
+  const channelNotificationSettingsPoller = makePoller(
+    async (signal) => {
+      try {
+        return await store.refreshChannelsNotificationSettings(signal);
+      } catch (err) {
+        console.warn(
+          `Polling new channel notification settings failed: ${String(err)}`
+        );
+        throw err;
+      }
+    },
+    config.CHANNEL_NOTIFICATION_SETTINGS_INTERVAL,
+    { maxStaleTimeMs: config.CHANNEL_NOTIFICATION_SETTINGS_MAX_STALE_TIME }
+  );
+
   return {
     store,
     notificationsPoller,
     userThreadsPoller,
+    channelNotificationSettingsPoller,
   };
 }
 
@@ -325,6 +343,9 @@ function makeLiveblocksContextBundle<
 
   const useDeleteAllInboxNotifications = () =>
     useDeleteAllInboxNotifications_withClient(client);
+
+  const useUpdateChannelsNotificationSettings = () =>
+    useUpdateChannelsNotificationSettings_withClient(client);
 
   // NOTE: This version of the LiveblocksProvider does _not_ take any props.
   // This is because we already have a client bound to it.
@@ -353,6 +374,10 @@ function makeLiveblocksContextBundle<
     useDeleteInboxNotification,
     useDeleteAllInboxNotifications,
 
+    useChannelsNotificationSettings: () =>
+      useChannelsNotificationSettings_withClient(client),
+    useUpdateChannelsNotificationSettings,
+
     useInboxNotificationThread,
     useUserThreads_experimental,
 
@@ -373,6 +398,10 @@ function makeLiveblocksContextBundle<
       useDeleteAllInboxNotifications,
 
       useInboxNotificationThread,
+
+      useChannelsNotificationSettings: () =>
+        useChannelsNotificationSettingsSuspense_withClient(client),
+      useUpdateChannelsNotificationSettings,
 
       useUserThreads_experimental: useUserThreadsSuspense_experimental,
 
@@ -602,6 +631,107 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
     getter,
     selector
   );
+}
+
+function useUpdateChannelsNotificationSettings_withClient(
+  client: OpaqueClient
+): (settings: PartialChannelsNotificationSettings) => void {
+  return React.useCallback(
+    (settings: PartialChannelsNotificationSettings): void => {
+      const { store } = getLiveblocksExtrasForClient(client);
+      const optimisticUpdateId = store.addOptimisticUpdate({
+        type: "update-channels-notification-settings",
+        settings,
+      });
+
+      client.updateChannelsNotificationSettings(settings).then(
+        (settings) => {
+          // Replace the optimistic update by the real thing
+          store.updateChannelsNotificationSettings(
+            settings,
+            optimisticUpdateId
+          );
+        },
+        () => {
+          // Remove optimistic update when it fails
+          store.removeOptimisticUpdate(optimisticUpdateId);
+        }
+      );
+    },
+    [client]
+  );
+}
+
+function useChannelsNotificationSettings_withClient(
+  client: OpaqueClient
+): [
+  ChannelsNotificationSettingsAsyncResult,
+  (settings: PartialChannelsNotificationSettings) => void,
+] {
+  const updateChannelsNotificationSettings =
+    useUpdateChannelsNotificationSettings_withClient(client);
+
+  const { store, channelNotificationSettingsPoller: poller } =
+    getLiveblocksExtrasForClient(client);
+
+  useEffect(() => {
+    void store.waitUntilChannelsNotificationsSettingsLoaded();
+    // NOTE: Deliberately *not* using a dependency array here!
+    //
+    // It is important to call waitUntil on *every* render.
+    // This is harmless though, on most renders, except:
+    // 1. The very first render, in which case we'll want to trigger the initial page fetch.
+    // 2. All other subsequent renders now "just" return the same promise (a quick operation).
+    // 3. If ever the promise would fail, then after 5 seconds it would reset, and on the very
+    //    *next* render after that, a *new* fetch/promise will get created.
+  });
+
+  useEffect(() => {
+    poller.inc();
+    poller.pollNowIfStale();
+    return () => {
+      poller.dec();
+    };
+  }, [poller]);
+
+  const getter = useCallback(
+    () => store.getChannelsNotificationSettingsLoadingState(),
+    [store]
+  );
+  const settings = useSyncExternalStoreWithSelector(
+    store.subscribe,
+    getter,
+    getter,
+    identity,
+    shallow2
+  );
+
+  return useMemo(() => {
+    return [settings, updateChannelsNotificationSettings];
+  }, [settings, updateChannelsNotificationSettings]);
+}
+
+function useChannelsNotificationSettingsSuspense_withClient(
+  client: OpaqueClient
+): [
+  ChannelsNotificationSettingsAsyncResult,
+  (settings: PartialChannelsNotificationSettings) => void,
+] {
+  const store = getLiveblocksExtrasForClient(client).store;
+
+  // Suspend until there are at least some channel notification settings
+  use(store.waitUntilChannelsNotificationsSettingsLoaded());
+
+  // We're in a Suspense world here, and as such, the useChannelsNotificationSettings()
+  // hook is expected to only return success results when we're here.
+  const [settings, updateChannelsNotificationSettings] =
+    useChannelsNotificationSettings_withClient(client);
+  assert(!settings.error, "Did not expect error");
+  assert(!settings.isLoading, "Did not expect loading");
+
+  return useMemo(() => {
+    return [settings, updateChannelsNotificationSettings];
+  }, [settings, updateChannelsNotificationSettings]);
 }
 
 function useUser_withClient<U extends BaseUserMeta>(
@@ -1086,6 +1216,37 @@ function useUnreadInboxNotificationsCountSuspense() {
   return useUnreadInboxNotificationsCountSuspense_withClient(useClient());
 }
 
+/**
+ * Returns the channels notification settings for the current user.
+ *
+ * @example
+ * const [{ settings }, updateChannelsNotificationSettings] = useChannelsNotificationSettings()
+ */
+function useChannelsNotificationSettings() {
+  return useChannelsNotificationSettings_withClient(useClient());
+}
+
+/**
+ * Returns the channels notification settings for the current user.
+ *
+ * @example
+ * const [{ settings }, updateChannelsNotificationSettings] = useChannelsNotificationSettings()
+ */
+function useChannelsNotificationSettingsSuspense() {
+  return useChannelsNotificationSettingsSuspense_withClient(useClient());
+}
+
+/**
+ * Returns a function that updates the user's channels notification
+ * settings for a project.
+ *
+ * @example
+ * const updateChannelsNotificationSettings = useUpdateChannelsNotificationSettings()
+ */
+function useUpdateChannelsNotificationSettings() {
+  return useUpdateChannelsNotificationSettings_withClient(useClient());
+}
+
 function useUser<U extends BaseUserMeta>(userId: string) {
   const client = useClient<U>();
   return useUser_withClient(client, userId);
@@ -1277,6 +1438,9 @@ export {
   useSyncStatus,
   useUnreadInboxNotificationsCount,
   useUnreadInboxNotificationsCountSuspense,
+  useChannelsNotificationSettings,
+  useChannelsNotificationSettingsSuspense,
+  useUpdateChannelsNotificationSettings,
   _useUserThreads_experimental as useUserThreads_experimental,
   _useUserThreadsSuspense_experimental as useUserThreadsSuspense_experimental,
 };
