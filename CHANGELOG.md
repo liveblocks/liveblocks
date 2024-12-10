@@ -1,5 +1,14 @@
 ## Not yet published
 
+## 2.14.0
+
+### `@liveblocks/emails`
+
+- Add new functions `prepareTextMentionNotificationEmailAsHtml` and
+  `prepareTextMentionNotificationEmailAsReact` to support text mention
+  notification event for Lexical and Tiptap text editors and prepare data into
+  email-ready formats.
+
 ## 2.13.2
 
 ### `@liveblocks/react-lexical`
