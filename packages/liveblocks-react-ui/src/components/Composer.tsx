@@ -6,12 +6,12 @@ import type {
   CommentMixedAttachment,
   DM,
 } from "@liveblocks/core";
-import { kInternal, Permission } from "@liveblocks/core";
-import { useClient } from "@liveblocks/react";
+import { Permission } from "@liveblocks/core";
 import {
   useCreateRoomComment,
   useCreateRoomThread,
   useEditRoomComment,
+  useResolveMentionSuggestions,
   useRoomOrNull,
   useRoomPermissions,
 } from "@liveblocks/react/_private";
@@ -696,7 +696,6 @@ export const Composer = forwardRef(
     }: ComposerProps<M>,
     forwardedRef: ForwardedRef<HTMLFormElement>
   ) => {
-    const client = useClient();
     const room = useRoomOrNull();
 
     const roomId = _roomId !== undefined ? _roomId : room?.id;
@@ -711,7 +710,7 @@ export const Composer = forwardRef(
     const editComment = useEditRoomComment(roomId);
     const { preventUnsavedComposerChanges } = useLiveblocksUIConfig();
     const hasResolveMentionSuggestions =
-      client[kInternal].resolveMentionSuggestions !== undefined;
+      useResolveMentionSuggestions() !== undefined;
     const isEmptyRef = useRef(true);
     const isEmojiPickerOpenRef = useRef(false);
     const $ = useOverrides(overrides);

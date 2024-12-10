@@ -1,4 +1,22 @@
-## Not yet published
+## 2.14.1 (Not yet published)
+
+### `@liveblocks/react`
+
+- Add a set of private hooks to act as protection layer around direct calls to
+  our `PrivateRoomApi` (e.g `kInternal`), avoid code duplication and use one
+  single source of truth.
+
+### `@liveblocks/react-lexical`
+
+- Use new private hooks in plugins.
+
+### `@liveblocks/react-tiptap`
+
+- Use new private hooks in extensions.
+
+### `@liveblocks/react-ui`
+
+- Use new private hooks in components.
 
 ## 2.14.0
 

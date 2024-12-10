@@ -1,4 +1,4 @@
-import { type IUserInfo, kInternal, TextEditorType } from "@liveblocks/core";
+import { type IUserInfo, TextEditorType } from "@liveblocks/core";
 import {
   useClient,
   useCommentsErrorListener,
@@ -7,7 +7,10 @@ import {
 import {
   CreateThreadError,
   getUmbrellaStoreForClient,
+  useCreateTextMention,
+  useDeleteTextMention,
   useReportTextEditor,
+  useYjsProvider,
 } from "@liveblocks/react/_private";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import type { AnyExtension, Content, Editor } from "@tiptap/core";
@@ -82,26 +85,10 @@ const LiveblocksCollab = Collaboration.extend({
   },
 });
 
-function useYjsProvider() {
-  const room = useRoom();
-
-  const subscribe = useCallback(
-    (onStoreChange: () => void) => {
-      return room[kInternal].yjsProviderDidChange.subscribe(onStoreChange);
-    },
-    [room]
-  );
-
-  const getSnapshot = useCallback(() => {
-    return room[kInternal].getYjsProvider();
-  }, [room]);
-
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-}
-
 /**
  * Returns whether the editor has loaded the initial text contents from the
  * server and is ready to be used.
+ *
  */
 export function useIsEditorReady(): boolean {
   const yjsProvider = useYjsProvider();
@@ -169,26 +156,9 @@ export const useLiveblocksExtension = (
     options.field ?? DEFAULT_OPTIONS.field
   );
 
-  const onCreateMention = useCallback(
-    (userId: string, notificationId: string) => {
-      try {
-        room[kInternal].createTextMention(userId, notificationId);
-      } catch (err) {
-        console.warn(err);
-      }
-    },
-    [room]
-  );
-  const onDeleteMention = useCallback(
-    (notificationId: string) => {
-      try {
-        room[kInternal].deleteTextMention(notificationId);
-      } catch (err) {
-        console.warn(err);
-      }
-    },
-    [room]
-  );
+  const createTextMention = useCreateTextMention();
+  const deleteTextMention = useDeleteTextMention();
+
   return Extension.create<
     never,
     {
@@ -325,8 +295,8 @@ export const useLiveblocksExtension = (
       if (options.mentions) {
         extensions.push(
           MentionExtension.configure({
-            onCreateMention,
-            onDeleteMention,
+            onCreateMention: createTextMention,
+            onDeleteMention: deleteTextMention,
           })
         );
       }

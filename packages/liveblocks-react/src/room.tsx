@@ -28,12 +28,14 @@ import type {
   DS,
   DU,
   EnterOptions,
+  IYjsProvider,
   LiveblocksError,
   OpaqueClient,
   Poller,
   RoomEventMessage,
   TextEditorType,
   ToImmutable,
+  UnsubscribeCallback,
 } from "@liveblocks/core";
 import {
   assert,
@@ -795,6 +797,67 @@ function useReportTextEditor(editor: TextEditorType, rootKey: string): void {
 
     return unsubscribe;
   }, [room, editor, rootKey]);
+}
+
+/** @private - Internal API, do not rely on it. */
+function useYjsProvider(): IYjsProvider | undefined {
+  const room = useRoom();
+
+  const subscribe = React.useCallback(
+    (onStoreChange: () => void): UnsubscribeCallback => {
+      return room[kInternal].yjsProviderDidChange.subscribe(onStoreChange);
+    },
+    [room]
+  );
+
+  const getSnapshot = React.useCallback((): IYjsProvider | undefined => {
+    return room[kInternal].getYjsProvider();
+  }, [room]);
+
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+}
+
+/** @private - Internal API, do not rely on it. */
+function useCreateTextMention(): (userId: string, mentionId: string) => void {
+  const room = useRoom();
+  return React.useCallback(
+    (userId: string, mentionId: string): void => {
+      room[kInternal]
+        .createTextMention(userId, mentionId)
+        .catch((err): void => {
+          console.error(
+            `Cannot create text mention for user '${userId}' and mention '${mentionId}'`,
+            err
+          );
+        });
+    },
+    [room]
+  );
+}
+
+/** @private - Internal API, do not rely on it. */
+function useDeleteTextMention(): (mentionId: string) => void {
+  const room = useRoom();
+  return React.useCallback(
+    (mentionId: string): void => {
+      room[kInternal].deleteTextMention(mentionId).catch((err): void => {
+        console.error(`Cannot delete text mention '${mentionId}'`, err);
+      });
+    },
+    [room]
+  );
+}
+
+/** @private - Internal API, do not rely on it. */
+function useResolveMentionSuggestions() {
+  const client = useClient();
+  return client[kInternal].resolveMentionSuggestions;
+}
+
+/** @private - Internal API, do not rely on it. */
+function useMentionSuggestionsCache() {
+  const client = useClient();
+  return client[kInternal].mentionSuggestionsCache;
 }
 
 /**
@@ -3161,10 +3224,12 @@ export {
   useCreateComment,
   useCreateRoomComment,
   useCreateRoomThread,
+  useCreateTextMention,
   _useCreateThread as useCreateThread,
   useDeleteComment,
   useDeleteRoomComment,
   useDeleteRoomThread,
+  useDeleteTextMention,
   _useDeleteThread as useDeleteThread,
   useEditComment,
   useEditRoomComment,
@@ -3184,6 +3249,7 @@ export {
   useMarkThreadAsRead,
   useMarkThreadAsResolved,
   useMarkThreadAsUnresolved,
+  useMentionSuggestionsCache,
   _useMutation as useMutation,
   _useMyPresence as useMyPresence,
   _useOther as useOther,
@@ -3199,6 +3265,7 @@ export {
   useRemoveReaction,
   useRemoveRoomCommentReaction,
   useReportTextEditor,
+  useResolveMentionSuggestions,
   _useRoom as useRoom,
   useRoomAttachmentUrl,
   _useRoomNotificationSettings as useRoomNotificationSettings,
@@ -3218,4 +3285,5 @@ export {
   useUndo,
   _useUpdateMyPresence as useUpdateMyPresence,
   useUpdateRoomNotificationSettings,
+  useYjsProvider,
 };
