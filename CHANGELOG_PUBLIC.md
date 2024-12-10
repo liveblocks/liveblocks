@@ -29,9 +29,13 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
   be `connected` to report the text editor instead of reporting directly after
   room creation / loading.
 
+## Website
+
+New blog post: [What's new in Liveblocks: November 2024](https://liveblocks.io/blog/posts/whats-new-in-liveblocks-november-edition-2024).
+
 ## Contributors
 
-sugardarius
+sugardarius, ctnicholas
 
 # Week 49 (2024-12-06)
 
