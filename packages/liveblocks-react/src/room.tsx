@@ -849,11 +849,9 @@ function useDeleteTextMention(): (mentionId: string) => void {
 }
 
 /** @private - Internal API, do not rely on it. */
-function useIsResolveMentionSuggestionsDefined(): boolean {
+function useResolveMentionSuggestions() {
   const client = useClient();
-  return React.useMemo((): boolean => {
-    return client[kInternal].resolveMentionSuggestions !== undefined;
-  }, [client]);
+  return client[kInternal].resolveMentionSuggestions;
 }
 
 /**
@@ -3238,7 +3236,6 @@ export {
   _useHistoryVersions as useHistoryVersions,
   _useHistoryVersionsSuspense as useHistoryVersionsSuspense,
   _useIsInsideRoom as useIsInsideRoom,
-  useIsResolveMentionSuggestionsDefined,
   useLostConnectionListener,
   useMarkRoomThreadAsRead,
   useMarkRoomThreadAsResolved,
@@ -3261,6 +3258,7 @@ export {
   useRemoveReaction,
   useRemoveRoomCommentReaction,
   useReportTextEditor,
+  useResolveMentionSuggestions,
   _useRoom as useRoom,
   useRoomAttachmentUrl,
   _useRoomNotificationSettings as useRoomNotificationSettings,

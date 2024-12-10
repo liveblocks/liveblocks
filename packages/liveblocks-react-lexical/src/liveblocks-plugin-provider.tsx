@@ -5,8 +5,8 @@ import type { Provider } from "@lexical/yjs";
 import { nn, TextEditorType } from "@liveblocks/core";
 import { useRoom, useSelf } from "@liveblocks/react";
 import {
-  useIsResolveMentionSuggestionsDefined,
   useReportTextEditor,
+  useResolveMentionSuggestions,
   useYjsProvider,
 } from "@liveblocks/react/_private";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
@@ -146,7 +146,7 @@ export const LiveblocksPlugin = ({
   children,
 }: LiveblocksPluginProps): JSX.Element => {
   const isResolveMentionSuggestionsDefined =
-    useIsResolveMentionSuggestionsDefined();
+    useResolveMentionSuggestions() !== undefined;
   const [editor] = useLexicalComposerContext();
   const room = useRoom();
   const previousRoomIdRef = useRef<string | null>(null);
