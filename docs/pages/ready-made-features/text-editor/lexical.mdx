@@ -15,8 +15,8 @@ features. Each [collaborative room](/docs/concepts/how-liveblocks-works#Rooms)
 in your application can store one document each, and these documents are
 persisted on the cloud, visible on [your dashboard](/dashboard), and are
 integrated into other Liveblocks products such as
-[Comments](/docs/products/comments) and
-[Notifications](/docs/products/notifications).
+[Comments](/docs/ready-made-features/comments) and
+[Notifications](/docs/ready-made-features/notifications).
 
 ## Users and mentions
 
@@ -86,10 +86,10 @@ userInfo: {
 
 ## Annotations and comments
 
-Add [Comments](/docs/products/comments) to your text editor, allowing others to
-select words in the editor, and leave annotations. Each annotation creates a
-[thread](/docs/products/comments/concepts#Threads), and inside each you can
-reply, use emoji reactions, mention others, and more.
+Add [Comments](/docs/ready-made-features/comments) to your text editor, allowing
+others to select words in the editor, and leave annotations. Each annotation
+creates a [thread](/docs/ready-made-features/comments/concepts#Threads), and
+inside each you can reply, use emoji reactions, mention others, and more.
 
 <Figure>
   <Image
@@ -121,7 +121,8 @@ for the current selection with `OPEN_FLOATING_COMPOSER_COMMAND`.
 </button>
 ```
 
-Add [`useThreads`](/docs/products/comments/hooks#threads-hook) alongside
+Add [`useThreads`](/docs/ready-made-features/comments/hooks#threads-hook)
+alongside
 [`FloatingThreads`](/docs/api-reference/liveblocks-react-lexical#FloatingThreads)
 and
 [`Anchoredthreads`](/docs/api-reference/liveblocks-react-lexical#AnchoredThreads)
@@ -146,10 +147,10 @@ alongside the editor which is great on desktop.
 
 ## Notifications
 
-Add a [Notifications](/docs/products/notifications) UI to your application, and
-automatically notify users when they’ve been mentioned. Notifications also
-allows you to trigger sending emails, Slack, or any other kind of notification,
-using our webhooks.
+Add a [Notifications](/docs/ready-made-features/notifications) UI to your
+application, and automatically notify users when they’ve been mentioned.
+Notifications also allows you to trigger sending emails, Slack, or any other
+kind of notification, using our webhooks.
 
 <Figure>
   <Image
@@ -185,7 +186,7 @@ export function CollaborativeApp() {
 Inline mentions also trigger
 [`TextMention`](/docs/platform/webhooks#TextMention-notification) notification
 webhook events. Learn more about
-[sending email notifications](/docs/products/notifications/email-notifications).
+[sending email notifications](/docs/ready-made-features/notifications/email-notifications).
 
 ## AI agents and editing on the server
 

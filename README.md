@@ -28,16 +28,18 @@ editing, comments, and notifications into your application.**
 
 <img src="./assets/concepts/products.png" alt="Liveblocks products"   />
 
-### Products
+### Ready-made features
 
 Liveblocks is a fully integrated solution built around core products, each
 enabling a different facet of collaborative experiences:
-[Comments](/docs/products/comments),
-[Notifications](/docs/products/notifications),
-[Text Editor](/docs/products/text-editor), and
-[Realtime APIs](/docs/products/realtime-apis). You can decide what products you
+[Comments](/docs/ready-made-features/comments),
+[Notifications](/docs/ready-made-features/notifications),
+[Text Editor](/docs/ready-made-features/text-editor), and
+[Presence](/docs/ready-made-features/presence). You can decide what products you
 want to use based on your requirements and collaborative experiences you’re
-looking to build.
+looking to build. You can also build a custom real-time app using
+[Sync Datastore](/docs/platform/sync-datastore) which supports two different
+sync engines.
 
 ### Packages and SDKs
 
