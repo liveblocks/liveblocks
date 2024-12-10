@@ -14,10 +14,10 @@ function createDB() {
 
   db.exec(
     `CREATE TABLE IF NOT EXISTS storage (
-       nid    TEXT NOT NULL,
-       key    TEXT NOT NULL,
-       jval   TEXT NULL,
-       ref    TEXT NULL,
+       nid   TEXT NOT NULL,
+       key   TEXT NOT NULL,
+       jval  TEXT NULL,
+       ref   TEXT NULL,
 
        PRIMARY KEY (nid, key),
        UNIQUE (ref),
@@ -198,11 +198,6 @@ function createQueries(db: Database) {
     record: db.prepare<[nid: string, clock: number], void>(
       "INSERT INTO versions_derefs (nid, clock) VALUES (?, ?)"
     ),
-
-    selectSince: db
-      .prepare<[nid: string]>("SELECT nid FROM versions_derefs WHERE clock > ?")
-      .pluck()
-      .raw(),
   };
 
   return {
