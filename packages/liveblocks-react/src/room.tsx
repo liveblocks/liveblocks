@@ -854,6 +854,12 @@ function useResolveMentionSuggestions() {
   return client[kInternal].resolveMentionSuggestions;
 }
 
+/** @private - Internal API, do not rely on it. */
+function useMentionSuggestionsCache() {
+  const client = useClient();
+  return client[kInternal].mentionSuggestionsCache;
+}
+
 /**
  * Returns the current storage status for the Room, and triggers
  * a re-render whenever it changes. Can be used to render a "Saving..."
@@ -3243,6 +3249,7 @@ export {
   useMarkThreadAsRead,
   useMarkThreadAsResolved,
   useMarkThreadAsUnresolved,
+  useMentionSuggestionsCache,
   _useMutation as useMutation,
   _useMyPresence as useMyPresence,
   _useOther as useOther,

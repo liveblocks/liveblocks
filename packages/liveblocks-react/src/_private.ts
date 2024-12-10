@@ -17,6 +17,7 @@ export {
   useMarkRoomThreadAsRead,
   useMarkRoomThreadAsResolved,
   useMarkRoomThreadAsUnresolved,
+  useMentionSuggestionsCache,
   useRemoveRoomCommentReaction,
   useReportTextEditor,
   useResolveMentionSuggestions,

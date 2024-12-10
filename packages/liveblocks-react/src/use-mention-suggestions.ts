@@ -1,8 +1,10 @@
-import { kInternal, stringify } from "@liveblocks/core";
+import { stringify } from "@liveblocks/core";
 import React from "react";
 
-import { useClient } from "./liveblocks";
-import { useResolveMentionSuggestions } from "./room";
+import {
+  useMentionSuggestionsCache,
+  useResolveMentionSuggestions,
+} from "./room";
 
 const MENTION_SUGGESTIONS_DEBOUNCE = 500;
 
@@ -13,17 +15,14 @@ const MENTION_SUGGESTIONS_DEBOUNCE = 500;
  * and race conditions as there can only be one search at a time.
  */
 export function useMentionSuggestions(roomId: string, search?: string) {
-  const client = useClient();
-
   const [mentionSuggestions, setMentionSuggestions] =
     React.useState<string[]>();
   const lastInvokedAt = React.useRef<number>();
 
   const resolveMentionSuggestions = useResolveMentionSuggestions();
+  const mentionSuggestionsCache = useMentionSuggestionsCache();
 
   React.useEffect(() => {
-    const mentionSuggestionsCache = client[kInternal].mentionSuggestionsCache;
-
     if (search === undefined || !resolveMentionSuggestions) {
       return;
     }
@@ -76,7 +75,7 @@ export function useMentionSuggestions(roomId: string, search?: string) {
       isCanceled = true;
       window.clearTimeout(debounceTimeout);
     };
-  }, [client, search, roomId, resolveMentionSuggestions]);
+  }, [search, roomId, resolveMentionSuggestions, mentionSuggestionsCache]);
 
   return mentionSuggestions;
 }
