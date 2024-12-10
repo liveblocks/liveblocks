@@ -4,7 +4,10 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import type { Provider } from "@lexical/yjs";
 import { kInternal, nn, TextEditorType } from "@liveblocks/core";
 import { useClient, useRoom, useSelf } from "@liveblocks/react";
-import { useReportTextEditor } from "@liveblocks/react/_private";
+import {
+  useReportTextEditor,
+  useYjsProvider,
+} from "@liveblocks/react/_private";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import type { MutableRefObject } from "react";
 import React, {
@@ -40,23 +43,6 @@ export type EditorStatus =
   | "synchronizing"
   /* The editor state is sync with Liveblocks servers */
   | "synchronized";
-
-function useYjsProvider() {
-  const room = useRoom();
-
-  const subscribe = useCallback(
-    (onStoreChange: () => void) => {
-      return room[kInternal].yjsProviderDidChange.subscribe(onStoreChange);
-    },
-    [room]
-  );
-
-  const getSnapshot = useCallback(() => {
-    return room[kInternal].getYjsProvider();
-  }, [room]);
-
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-}
 
 /**
  * Get the storage status.

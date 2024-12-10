@@ -19,6 +19,7 @@ export {
   useReportTextEditor,
   useRoomAttachmentUrl,
   useRoomPermissions,
+  useYjsProvider,
 } from "./room";
 export { useMentionSuggestions } from "./use-mention-suggestions";
 export { useSyncSource } from "./use-sync-source";

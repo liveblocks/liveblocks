@@ -8,6 +8,7 @@ import {
   CreateThreadError,
   getUmbrellaStoreForClient,
   useReportTextEditor,
+  useYjsProvider,
 } from "@liveblocks/react/_private";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import type { AnyExtension, Content, Editor } from "@tiptap/core";
@@ -82,26 +83,11 @@ const LiveblocksCollab = Collaboration.extend({
   },
 });
 
-function useYjsProvider() {
-  const room = useRoom();
-
-  const subscribe = useCallback(
-    (onStoreChange: () => void) => {
-      return room[kInternal].yjsProviderDidChange.subscribe(onStoreChange);
-    },
-    [room]
-  );
-
-  const getSnapshot = useCallback(() => {
-    return room[kInternal].getYjsProvider();
-  }, [room]);
-
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-}
-
 /**
  * Returns whether the editor has loaded the initial text contents from the
  * server and is ready to be used.
+ *
+ * @deprecated Prefer `useIsEditorReady` or `useSyncStatus` (from @liveblocks/react)
  */
 export function useIsEditorReady(): boolean {
   const yjsProvider = useYjsProvider();
