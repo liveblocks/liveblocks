@@ -13,6 +13,39 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
 
+# Week 50 (2024-12-13)
+
+## 2.14.0
+
+### `@liveblocks/emails`
+
+- Add new functions `prepareTextMentionNotificationEmailAsHtml` and
+  `prepareTextMentionNotificationEmailAsReact` to support text mention
+  notification event for Lexical and Tiptap text editors and prepare data into
+  email-ready formats.
+
+## v2.13.2
+
+### `@liveblocks/react-lexical`
+
+- Fix report text editor function's call. Now we wait for the room's status to
+  be `connected` to report the text editor instead of reporting directly after
+  room creation / loading.
+
+### `@liveblocks/react-tiptap`
+
+- Fix report text editor function's call. Now we wait for the room's status to
+  be `connected` to report the text editor instead of reporting directly after
+  room creation / loading.
+
+## Website
+
+- New blog post: [What's new in Liveblocks: November 2024](https://liveblocks.io/blog/whats-new-in-liveblocks-november-edition-2024).
+
+## Contributors
+
+sugardarius, ctnicholas
+
 # Week 49 (2024-12-06)
 
 ## v2.13.1
