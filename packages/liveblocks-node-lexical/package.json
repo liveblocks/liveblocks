@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/node-lexical",
-  "version": "2.13.2",
+  "version": "2.13.3-emails2",
   "description": "A server-side utility that lets you modify lexical documents hosted in Liveblocks.",
   "license": "Apache-2.0",
   "type": "commonjs",
@@ -34,8 +34,8 @@
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
   "dependencies": {
-    "@liveblocks/core": "2.13.2",
-    "@liveblocks/node": "2.13.2",
+    "@liveblocks/core": "2.13.3-emails2",
+    "@liveblocks/node": "2.13.3-emails2",
     "yjs": "^13.6.18"
   },
   "peerDependencies": {
