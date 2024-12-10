@@ -6,7 +6,8 @@ import type { Json } from "~/lib/Json.js";
 import type { LiveStructure, Lson } from "~/lib/Lson.js";
 import { isLiveStructure } from "~/lib/Lson.js";
 import { LiveObject } from "~/LiveObject.js";
-import type { Delta, NodeId, Pool } from "~/types.js";
+import type { Pool } from "~/Pool.js";
+import type { Delta, NodeId } from "~/types.js";
 
 function createDB() {
   const db = sqlite3(":memory:");

@@ -1,7 +1,7 @@
 import type { JsonObject } from "./lib/Json.js";
 import type { Lson, LsonObject } from "./lib/Lson.js";
 import { isLiveStructure } from "./lib/Lson.js";
-import type { Pool } from "./types.js";
+import type { Pool } from "./Pool.js";
 import { mapValues, raise } from "./utils.js";
 
 type Ctx = View | Local;
