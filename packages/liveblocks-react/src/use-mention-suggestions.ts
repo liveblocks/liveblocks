@@ -2,6 +2,7 @@ import { kInternal, stringify } from "@liveblocks/core";
 import React from "react";
 
 import { useClient } from "./liveblocks";
+import { useResolveMentionSuggestions } from "./room";
 
 const MENTION_SUGGESTIONS_DEBOUNCE = 500;
 
@@ -18,10 +19,10 @@ export function useMentionSuggestions(roomId: string, search?: string) {
     React.useState<string[]>();
   const lastInvokedAt = React.useRef<number>();
 
+  const resolveMentionSuggestions = useResolveMentionSuggestions();
+
   React.useEffect(() => {
     const mentionSuggestionsCache = client[kInternal].mentionSuggestionsCache;
-    const resolveMentionSuggestions =
-      client[kInternal].resolveMentionSuggestions;
 
     if (search === undefined || !resolveMentionSuggestions) {
       return;
@@ -75,7 +76,7 @@ export function useMentionSuggestions(roomId: string, search?: string) {
       isCanceled = true;
       window.clearTimeout(debounceTimeout);
     };
-  }, [client, search, roomId]);
+  }, [client, search, roomId, resolveMentionSuggestions]);
 
   return mentionSuggestions;
 }
