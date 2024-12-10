@@ -31,7 +31,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Website
 
-New blog post: [What's new in Liveblocks: November 2024](https://liveblocks.io/blog/posts/whats-new-in-liveblocks-november-edition-2024).
+New blog post: [What's new in Liveblocks: November 2024](https://liveblocks.io/blog/whats-new-in-liveblocks-november-edition-2024).
 
 ## Contributors
 
