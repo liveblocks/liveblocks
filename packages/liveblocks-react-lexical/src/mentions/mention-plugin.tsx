@@ -9,10 +9,10 @@ import {
   useFloating,
 } from "@floating-ui/react-dom";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { kInternal } from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
 import {
   useCreateTextMention,
+  useDeleteTextMention,
   useMentionSuggestions,
 } from "@liveblocks/react/_private";
 import type { EditorState, NodeKey, NodeMutation, TextNode } from "lexical";
@@ -168,6 +168,7 @@ export function MentionPlugin() {
 
   const suggestions = useMentionSuggestions(room.id, matchingString);
   const createTextMention = useCreateTextMention();
+  const deleteTextMention = useDeleteTextMention();
 
   useEffect(() => {
     function $handleMutation(
@@ -193,11 +194,7 @@ export function MentionPlugin() {
             if (node === null) return;
 
             if (!$isMentionNode(node)) return;
-
-            room[kInternal].deleteTextMention(node.getId()).catch((err) => {
-              // TODO: Handle error
-              console.error(err);
-            });
+            deleteTextMention(node.getId());
           });
         }
       }
@@ -217,7 +214,7 @@ export function MentionPlugin() {
         $handleMutation(mutations, payload);
       }
     );
-  }, [editor, room, createTextMention]);
+  }, [editor, createTextMention, deleteTextMention]);
 
   useEffect(() => {
     function $onStateRead() {

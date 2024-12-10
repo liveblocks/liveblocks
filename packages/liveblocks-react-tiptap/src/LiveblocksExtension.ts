@@ -1,4 +1,4 @@
-import { type IUserInfo, kInternal, TextEditorType } from "@liveblocks/core";
+import { type IUserInfo, TextEditorType } from "@liveblocks/core";
 import {
   useClient,
   useCommentsErrorListener,
@@ -8,6 +8,7 @@ import {
   CreateThreadError,
   getUmbrellaStoreForClient,
   useCreateTextMention,
+  useDeleteTextMention,
   useReportTextEditor,
   useYjsProvider,
 } from "@liveblocks/react/_private";
@@ -156,17 +157,7 @@ export const useLiveblocksExtension = (
   );
 
   const createTextMention = useCreateTextMention();
-
-  const onDeleteMention = useCallback(
-    (notificationId: string) => {
-      try {
-        room[kInternal].deleteTextMention(notificationId);
-      } catch (err) {
-        console.warn(err);
-      }
-    },
-    [room]
-  );
+  const deleteTextMention = useDeleteTextMention();
 
   return Extension.create<
     never,
@@ -305,7 +296,7 @@ export const useLiveblocksExtension = (
         extensions.push(
           MentionExtension.configure({
             onCreateMention: createTextMention,
-            onDeleteMention,
+            onDeleteMention: deleteTextMention,
           })
         );
       }

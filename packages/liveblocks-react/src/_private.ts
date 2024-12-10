@@ -11,6 +11,7 @@ export {
   useCreateTextMention,
   useDeleteRoomComment,
   useDeleteRoomThread,
+  useDeleteTextMention,
   useEditRoomComment,
   useEditRoomThreadMetadata,
   useMarkRoomThreadAsRead,

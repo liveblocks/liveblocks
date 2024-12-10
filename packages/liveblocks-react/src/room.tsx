@@ -835,6 +835,18 @@ function useCreateTextMention(): (userId: string, mentionId: string) => void {
   );
 }
 
+/** @private - Internal API, do not rely on it. */
+function useDeleteTextMention(): (mentionId: string) => void {
+  const room = useRoom();
+  return React.useCallback(
+    (mentionId: string): void => {
+      room[kInternal].deleteTextMention(mentionId).catch((err): void => {
+        console.error(`Cannot delete text mention '${mentionId}'`, err);
+      });
+    },
+    [room]
+  );
+}
 /**
  * Returns the current storage status for the Room, and triggers
  * a re-render whenever it changes. Can be used to render a "Saving..."
@@ -3204,6 +3216,7 @@ export {
   useDeleteComment,
   useDeleteRoomComment,
   useDeleteRoomThread,
+  useDeleteTextMention,
   _useDeleteThread as useDeleteThread,
   useEditComment,
   useEditRoomComment,
