@@ -7,7 +7,8 @@ import { raise } from "~/utils.js";
 test("empty", () => {
   const cache = new SQLCache();
   expect(cache.count).toEqual(0);
-  expect(cache.table).toEqual([]);
+  expect(cache.tables.storage).toEqual([]);
+  expect(cache.tables.versions).toEqual([]);
 });
 
 test("clock advances on every new transaction that is started", () => {
@@ -54,7 +55,7 @@ test("setting keys (simple values)", () => {
     root.set("a", 1);
   });
   expect(cache.count).toEqual(1);
-  expect(cache.table).toEqual([["root", "a", 1, null]]);
+  expect(cache.tables.storage).toEqual([["root", "a", 1, null]]);
 });
 
 test("setting keys (simple values)", () => {
@@ -65,7 +66,7 @@ test("setting keys (simple values)", () => {
     root.set("c", null);
   });
   expect(cache.count).toEqual(3);
-  expect(cache.table).toEqual([
+  expect(cache.tables.storage).toEqual([
     ["root", "a", 1, null],
     ["root", "b", "hi", null],
     ["root", "c", null, null],
@@ -78,7 +79,7 @@ test("setting keys (nested JSON values)", () => {
     root.set("a", [1, true, [{ x: false }, {}]]);
   });
   expect(cache.count).toEqual(1);
-  expect(cache.table).toEqual([
+  expect(cache.tables.storage).toEqual([
     ["root", "a", [1, true, [{ x: false }, {}]], null],
   ]);
 });
@@ -89,7 +90,7 @@ test("setting keys (LiveObject)", () => {
     root.set("a", new LiveObject({ foo: "bar" }));
     root.set("b", new LiveObject({}));
   });
-  expect(cache.table).toEqual([
+  expect(cache.tables.storage).toEqual([
     ["O1:1", "foo", "bar", null],
     ["root", "a", undefined, "O1:1"],
     ["root", "b", undefined, "O1:2"],
@@ -109,7 +110,7 @@ test("attaching the same LiveObject under multiple roots fails", () => {
       "LiveObject already attached to this pool as O1:1"
     );
   });
-  expect(cache.table).toEqual([
+  expect(cache.tables.storage).toEqual([
     ["O1:1", "foo", "bar", null],
     ["root", "a", undefined, "O1:1"],
   ]);
@@ -123,7 +124,7 @@ test("attaching a LiveObject from another pool should fail", () => {
   expect(() => cache.mutate((root) => root.set("a", x))).toThrow(
     "LiveObject already attached to different tree"
   );
-  expect(cache.table).toEqual([
+  expect(cache.tables.storage).toEqual([
     ["O1:1", "foo", "bar", null],
     ["root", "a", undefined, "O1:1"],
   ]);
@@ -140,7 +141,7 @@ test("cannot mutate LiveObject outside of a transaction", () => {
   );
 
   // The added "b" key should not get written to storage!
-  expect(cache.table).toEqual([
+  expect(cache.tables.storage).toEqual([
     ["O1:1", "foo", "bar", null],
     ["root", "a", undefined, "O1:1"],
   ]);
@@ -161,7 +162,7 @@ test("cannot mutate LiveObject outside of a transaction (also not after failure)
     "Can only mutate LiveObjects within a mutation"
   );
 
-  expect(cache.table).toEqual([]);
+  expect(cache.tables.storage).toEqual([]);
 });
 
 test("deleting keys", () => {
@@ -174,7 +175,7 @@ test("deleting keys", () => {
   });
 
   expect(cache.count).toEqual(1);
-  expect(cache.table).toEqual([["root", "a", 1, null]]);
+  expect(cache.tables.storage).toEqual([["root", "a", 1, null]]);
 });
 
 test("deleting keys happens atomically", () => {
@@ -183,7 +184,7 @@ test("deleting keys happens atomically", () => {
     root.set("a", 1);
     root.set("b", "hi");
   });
-  expect(cache.table).toEqual([
+  expect(cache.tables.storage).toEqual([
     ["root", "a", 1, null],
     ["root", "b", "hi", null],
   ]);
@@ -192,17 +193,17 @@ test("deleting keys happens atomically", () => {
     cache.mutate((root) => {
       root.set("a", 42);
       root.delete("x");
-      expect(cache.table).toEqual([
+      expect(cache.tables.storage).toEqual([
         ["root", "a", 42, null],
         ["root", "b", "hi", null],
       ]);
       root.delete("b");
-      expect(cache.table).toEqual([["root", "a", 42, null]]);
+      expect(cache.tables.storage).toEqual([["root", "a", 42, null]]);
       throw new Error("abort this transaction");
     })
   ).toThrow("abort this transaction");
 
-  expect(cache.table).toEqual([
+  expect(cache.tables.storage).toEqual([
     ["root", "a", 1, null],
     ["root", "b", "hi", null],
   ]);
@@ -220,12 +221,12 @@ test("setting to undefined is the same as removing a key", () => {
   });
 
   expect(cache.count).toEqual(1);
-  expect(cache.table).toEqual([["root", "b", "hi", null]]);
+  expect(cache.tables.storage).toEqual([["root", "b", "hi", null]]);
 });
 
 test("has", () => {
   const cache = new SQLCache();
-  expect(cache.table).toEqual([]);
+  expect(cache.tables.storage).toEqual([]);
 
   cache.mutate((root) => {
     root.set("k", "v");
@@ -271,7 +272,7 @@ test("get (nested JSON values)", () => {
     expect(root.get("k")).toEqual([1, true, [{ x: false }, {}]]);
   });
 
-  expect(cache.table).toEqual([
+  expect(cache.tables.storage).toEqual([
     ["root", "k", [1, true, [{ x: false }, {}]], null],
   ]);
 });
@@ -331,7 +332,7 @@ test("get", () => {
     root.set("abc", 123);
     root.set("def", 123);
     root.set("foo", null);
-    expect(cache.table).toEqual([
+    expect(cache.tables.storage).toEqual([
       ["root", "k", "v", null],
       ["root", "abc", 123, null],
       ["root", "def", 123, null],
@@ -339,7 +340,7 @@ test("get", () => {
     ]);
     root.delete("def");
     root.delete("bla");
-    expect(cache.table).toEqual([
+    expect(cache.tables.storage).toEqual([
       ["root", "k", "v", null],
       ["root", "abc", 123, null],
       ["root", "foo", null, null],
@@ -347,7 +348,7 @@ test("get", () => {
   });
 
   expect(cache.count).toEqual(3);
-  expect(cache.table).toEqual([
+  expect(cache.tables.storage).toEqual([
     ["root", "k", "v", null],
     ["root", "abc", 123, null],
     ["root", "foo", null, null],
@@ -361,7 +362,7 @@ test("get after rollback", () => {
     root.set("k", "v");
     root.set("abc", 123);
   });
-  expect(cache.table).toEqual([
+  expect(cache.tables.storage).toEqual([
     ["root", "k", "v", null],
     ["root", "abc", 123, null],
   ]);
@@ -370,7 +371,7 @@ test("get after rollback", () => {
     cache.mutate((root) => {
       root.set("def", 123);
       root.set("foo", null);
-      expect(cache.table).toEqual([
+      expect(cache.tables.storage).toEqual([
         ["root", "k", "v", null],
         ["root", "abc", 123, null],
         ["root", "def", 123, null],
@@ -379,7 +380,7 @@ test("get after rollback", () => {
       throw new Error("Oops");
     });
   } catch {}
-  expect(cache.table).toEqual([
+  expect(cache.tables.storage).toEqual([
     ["root", "k", "v", null],
     ["root", "abc", 123, null],
   ]);
@@ -428,7 +429,7 @@ test("taking deltas", () => {
   cache.mutate((root) => root.delete("abc"));
 
   expect(cache.count).toEqual(1);
-  expect(cache.table).toEqual([["root", "henk", 7, null]]);
+  expect(cache.tables.storage).toEqual([["root", "henk", 7, null]]);
 
   expect(cache.deltaSince(0)[1]).toEqual(cache.fullDelta()[1]);
 
@@ -458,11 +459,11 @@ test("deltas with nested LiveObjects", () => {
   // v1
   cache.mutate((root) => {
     root.set("a", "hi");
-    root.set("b", "hi");
+    root.set("d", "hi");
   });
-  expect(cache.table).toEqual([
+  expect(cache.tables.storage).toEqual([
     ["root", "a", "hi", null],
-    ["root", "b", "hi", null],
+    ["root", "d", "hi", null],
   ]);
 
   // v2
@@ -472,40 +473,27 @@ test("deltas with nested LiveObjects", () => {
       new LiveObject({ b: new LiveObject({ c: new LiveObject({}) }) })
     );
   });
-  expect(cache.table).toEqual([
+  expect(cache.tables.storage).toEqual([
     ["root", "a", undefined, "O2:1"],
-    ["root", "b", "hi", null],
+    ["root", "d", "hi", null],
     ["O2:2", "c", undefined, "O2:3"],
     ["O2:1", "b", undefined, "O2:2"],
   ]);
 
   // v3
   cache.mutate((root) => {
-    root.delete("a");
-    root.delete("b");
+    root.delete("a"); // deletes whole nested tree
+    root.delete("d"); // deletes just one JSON value
   });
-  expect(cache.table).toEqual([]);
+  expect(cache.tables.storage).toEqual([]);
 
-  expect(cache.deltaSince(2)).toEqual([
-    { root: ["a", "b"], "O2:1": ["b"], "O2:2": ["c"] },
-    {},
-    {},
-  ]);
+  expect(cache.deltaSince(2)).toEqual([{ root: ["a", "d"] }, {}, {}]);
+  expect(cache.deltaSince(1)).toEqual([{ root: ["a", "d"] }, {}, {}]);
 
-  expect(cache.deltaSince(1)).toEqual([
-    {
-      root: ["a", "b"],
-      "O2:1": ["b"],
-      "O2:2": ["c"],
-    },
-    {},
-    {},
-  ]);
-
-  expect(cache.versionsTable).toEqual([
+  expect(cache.tables.versions).toEqual([
     // V1
     ["root", "a", 1, "hi", null],
-    ["root", "b", 1, "hi", null],
+    ["root", "d", 1, "hi", null],
 
     // V2
     ["O2:2", "c", 2, undefined, "O2:3"],
@@ -516,7 +504,7 @@ test("deltas with nested LiveObjects", () => {
     ["O2:2", "c", 3, undefined, null],
     ["O2:1", "b", 3, undefined, null],
     ["root", "a", 3, undefined, null],
-    ["root", "b", 3, undefined, null],
+    ["root", "d", 3, undefined, null],
   ]);
 
   expect(cache.fullDelta()).toEqual([{}, {}, {}]);

@@ -23,7 +23,8 @@ function createDB() {
        UNIQUE (ref),
        CHECK (
          -- jval XOR ref
-         (jval IS NULL) != (ref IS NULL)
+         (jval IS NOT NULL) +
+         (ref IS NOT NULL) = 1
        )
      )`
   );
@@ -36,6 +37,21 @@ function createDB() {
        jval   TEXT,
        ref    TEXT,
        PRIMARY KEY (nid, key, clock DESC)
+
+       CHECK (
+         -- At most one of (jval, ref) is allowed to be non-NULL
+         (jval IS NOT NULL) +
+         (ref IS NOT NULL) <= 1
+       )
+     )`
+  );
+
+  // Track all nodes that are deleted (dereferenced) in each version
+  db.exec(
+    `CREATE TABLE IF NOT EXISTS versions_derefs (
+       nid    TEXT NOT NULL,
+       clock  INT UNSIGNED NOT NULL,
+       PRIMARY KEY (nid, clock DESC)
      )`
   );
 
@@ -109,13 +125,9 @@ function createQueries(db: Database) {
     deleteByKey: db.prepare<[nid: string, key: string], void>(
       "DELETE FROM storage WHERE nid = ? AND key = ?"
     ),
-
-    clear: db.prepare<[], void>("DELETE FROM storage"),
   };
 
   const versions = {
-    clear: db.prepare<[], void>("DELETE FROM versions"),
-
     upsertKeyValue: db.prepare<
       [nid: string, key: string, clock: number, jval: string],
       void
@@ -155,7 +167,7 @@ function createQueries(db: Database) {
 
     selectSince: db
       .prepare<
-        [clock: number],
+        [clock: number, clock: number],
         | [nid: string, key: string, jval: string, ref: null]
         | [nid: string, key: string, jval: null, ref: string]
       >(
@@ -168,10 +180,24 @@ function createQueries(db: Database) {
              RANK() OVER (PARTITION BY nid, key ORDER BY clock DESC) as rnk
            FROM versions
            WHERE clock > ?
+             AND nid NOT IN (
+               SELECT nid FROM versions_derefs WHERE clock > ?
+             )
          )
 
          SELECT nid, key, jval, ref FROM winners WHERE rnk = 1`
       )
+      .raw(),
+  };
+
+  const derefs = {
+    record: db.prepare<[nid: string, clock: number], void>(
+      "INSERT INTO versions_derefs (nid, clock) VALUES (?, ?)"
+    ),
+
+    selectSince: db
+      .prepare<[nid: string]>("SELECT nid FROM versions_derefs WHERE clock > ?")
+      .pluck()
       .raw(),
   };
 
@@ -182,6 +208,7 @@ function createQueries(db: Database) {
 
     storage,
     versions,
+    derefs,
   };
 }
 
@@ -225,9 +252,15 @@ export class SQLCache {
     if (value === undefined) {
       return this.#delete(nodeId, key);
     } else {
+      const oldref = this.#q.storage.selectRefByKey.get(nodeId, key) ?? null;
+      if (oldref !== null) {
+        this.#q.derefs.record.run(oldref, this.#pendingClock);
+      }
+
       if (isLiveStructure(value)) {
         const ref = value._attach(pool);
         poolCache.set(ref, value);
+
         this.#q.storage.upsertKeyRef.run(nodeId, key, ref);
         this.#q.versions.upsertKeyRef.run(nodeId, key, this.#pendingClock, ref);
         return true;
@@ -255,6 +288,10 @@ export class SQLCache {
     }
 
     for (const key of this.#q.storage.selectKeysByNodeId.all(nodeId)) {
+      const oldref = this.#q.storage.selectRefByKey.get(nodeId, key);
+      if (oldref !== undefined) {
+        this.#q.derefs.record.run(oldref, this.#pendingClock);
+      }
       this.#q.storage.deleteByKey.run(nodeId, key);
       this.#q.versions.deleteByKey.run(nodeId, key, this.#pendingClock);
     }
@@ -266,6 +303,10 @@ export class SQLCache {
       this.#deleteTree(ref);
     }
 
+    const oldref = this.#q.storage.selectRefByKey.get(nodeId, key);
+    if (oldref !== undefined) {
+      this.#q.derefs.record.run(oldref, this.#pendingClock);
+    }
     const result = this.#q.storage.deleteByKey.run(nodeId, key);
     if (result.changes > 0) {
       this.#q.versions.deleteByKey.run(nodeId, key, this.#pendingClock);
@@ -314,6 +355,7 @@ export class SQLCache {
     const values: { [nid: string]: { [key: string]: Json } } = {};
     const refs: { [nid: string]: { [key: string]: string } } = {};
     for (const [nid, key, jval, ref] of this.#q.versions.selectSince.iterate(
+      since,
       since
     )) {
       if (jval === null && ref === null) {
@@ -444,7 +486,16 @@ export class SQLCache {
   }
 
   /** @internal For unit testing only */
-  get table(): [
+  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+  get tables() {
+    const that = this;
+    return {
+      get storage() { return that.#storageTable() }, // prettier-ignore
+      get versions() { return that.#versionsTable() }, // prettier-ignore
+    };
+  }
+
+  #storageTable(): [
     id: string,
     key: string,
     value: Json | undefined,
@@ -454,7 +505,7 @@ export class SQLCache {
   }
 
   /** @internal For unit testing only */
-  get versionsTable(): [
+  #versionsTable(): [
     id: string,
     key: string,
     clock: number,
