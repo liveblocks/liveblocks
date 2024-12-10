@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     return new NextResponse("Missing or invalid userIds", { status: 400 });
   }
 
-  const users = await getUsers(userIds);
+  const users = getUsers(userIds);
   const userInfos = users.map((user) => user?.info || null);
   return NextResponse.json(userInfos);
 }
