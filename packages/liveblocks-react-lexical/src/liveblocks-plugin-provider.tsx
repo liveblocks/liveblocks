@@ -2,9 +2,10 @@ import { autoUpdate, useFloating } from "@floating-ui/react-dom";
 import { CollaborationPlugin } from "@lexical/react/LexicalCollaborationPlugin";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { Provider } from "@lexical/yjs";
-import { kInternal, nn, TextEditorType } from "@liveblocks/core";
-import { useClient, useRoom, useSelf } from "@liveblocks/react";
+import { nn, TextEditorType } from "@liveblocks/core";
+import { useRoom, useSelf } from "@liveblocks/react";
 import {
+  useIsResolveMentionSuggestionsDefined,
   useReportTextEditor,
   useYjsProvider,
 } from "@liveblocks/react/_private";
@@ -144,9 +145,8 @@ export type LiveblocksPluginProps = {
 export const LiveblocksPlugin = ({
   children,
 }: LiveblocksPluginProps): JSX.Element => {
-  const client = useClient();
-  const hasResolveMentionSuggestions =
-    client[kInternal].resolveMentionSuggestions !== undefined;
+  const isResolveMentionSuggestionsDefined =
+    useIsResolveMentionSuggestionsDefined();
   const [editor] = useLexicalComposerContext();
   const room = useRoom();
   const previousRoomIdRef = useRef<string | null>(null);
@@ -272,7 +272,7 @@ export const LiveblocksPlugin = ({
         />
       )}
 
-      {hasResolveMentionSuggestions && <MentionPlugin />}
+      {isResolveMentionSuggestionsDefined && <MentionPlugin />}
       <CommentPluginProvider>{children}</CommentPluginProvider>
     </>
   );

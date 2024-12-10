@@ -847,6 +847,15 @@ function useDeleteTextMention(): (mentionId: string) => void {
     [room]
   );
 }
+
+/** @private - Internal API, do not rely on it. */
+function useIsResolveMentionSuggestionsDefined(): boolean {
+  const client = useClient();
+  return React.useMemo((): boolean => {
+    return client[kInternal].resolveMentionSuggestions !== undefined;
+  }, [client]);
+}
+
 /**
  * Returns the current storage status for the Room, and triggers
  * a re-render whenever it changes. Can be used to render a "Saving..."
@@ -3229,6 +3238,7 @@ export {
   _useHistoryVersions as useHistoryVersions,
   _useHistoryVersionsSuspense as useHistoryVersionsSuspense,
   _useIsInsideRoom as useIsInsideRoom,
+  useIsResolveMentionSuggestionsDefined,
   useLostConnectionListener,
   useMarkRoomThreadAsRead,
   useMarkRoomThreadAsResolved,
