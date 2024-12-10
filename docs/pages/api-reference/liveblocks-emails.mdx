@@ -886,12 +886,27 @@ style the mention content with either
 The functions helps to determine if the mention still exists in the document and
 will indicate that there’s no email to send in this case.
 
-<Banner type="warning" title="Multiple text editors with Tiptap">
-  Tiptap optionally allows you to [render multiple editors per
-  page](/docs/products/text-editor/tiptap#Multiple-editors), instead of just
-  one. For now, these functions only support one editor per room, but we’ll be
-  looking to add support for more later.
-</Banner>
+### Limitations
+
+Before you get started, there are some limitations with text mentions that you
+should be aware of.
+
+#### Mentions in plugins
+
+If a user is mentioned in a plugin or extension, a text mention notification is
+not sent. This is because Liveblocks doesn’t know the exact schema of your
+editor and all its plugins, and we can’t extract the data correctly. This means
+that _only mentions in paragraph blocks are sent_, and mentions in lists,
+checkboxes, etc., are not, as they are all powered by plugins. We’re
+investigating solutions for this, and we’d like to
+[hear from you](/contact/support) if you have any thoughts.
+
+#### Multiple Tiptap editors
+
+Tiptap optionally allows you to
+[render multiple editors per page](/docs/products/text-editor/tiptap#Multiple-editors),
+instead of just one. For now, these functions only support one editor per room,
+but we’ll be looking to add support for more later.
 
 ### prepareTextMentionNotificationEmailAsReact [#prepare-text-mention-notification-email-as-react]
 
