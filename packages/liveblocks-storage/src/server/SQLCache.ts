@@ -52,7 +52,7 @@ function createDB() {
     `CREATE TABLE IF NOT EXISTS versions_derefs (
        nid    TEXT NOT NULL,
        clock  INT UNSIGNED NOT NULL,
-       PRIMARY KEY (nid, clock DESC)
+       PRIMARY KEY (nid, clock)
 
        CHECK (clock > 0),
        CHECK (nid != 'root')
@@ -177,19 +177,18 @@ function createQueries(db: Database) {
       >(
         `WITH winners AS (
            SELECT
-             nid,
-             key,
-             jval,
-             ref,
-             RANK() OVER (PARTITION BY nid, key ORDER BY clock DESC) as rnk
-           FROM versions
-           WHERE clock > ?
-             AND nid NOT IN (
-               SELECT nid FROM versions_derefs WHERE clock > ?
-             )
+             v.nid,
+             v.key,
+             v.jval,
+             v.ref,
+             ROW_NUMBER() OVER (PARTITION BY v.nid, v.key ORDER BY v.clock DESC) as rowno
+           FROM versions v
+           LEFT JOIN versions_derefs d ON v.nid = d.nid AND d.clock > ?
+           WHERE v.clock > ? AND d.nid IS NULL
+           --                    ^^^^^^^^^^^^^ Must not be deleted already
          )
 
-         SELECT nid, key, jval, ref FROM winners WHERE rnk = 1`
+         SELECT nid, key, jval, ref FROM winners WHERE rowno = 1`
       )
       .raw(),
   };
