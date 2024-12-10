@@ -38,6 +38,7 @@ function createDB() {
        ref    TEXT,
        PRIMARY KEY (nid, key, clock DESC)
 
+       CHECK (clock > 0),
        CHECK (
          -- At most one of (jval, ref) is allowed to be non-NULL
          (jval IS NOT NULL) +
@@ -52,6 +53,9 @@ function createDB() {
        nid    TEXT NOT NULL,
        clock  INT UNSIGNED NOT NULL,
        PRIMARY KEY (nid, clock DESC)
+
+       CHECK (clock > 0),
+       CHECK (nid != 'root')
      )`
   );
 
