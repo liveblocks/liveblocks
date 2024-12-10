@@ -430,8 +430,8 @@ please [contact us](https://liveblocks.io/contact/sales).
 ## v2.2.0
 
 We are making `resolved` a first-class citizen property on
-[threads](https://liveblocks.io/docs/products/comments/concepts#Threads), for
-more information about this change please read our
+[threads](https://liveblocks.io/docs/ready-made-features/comments/concepts#Threads),
+for more information about this change please read our
 [Upgrade Guide for 2.2](https://liveblocks.io/docs/platform/upgrading/2.2).
 
 ### `@liveblocks/react`

@@ -14,10 +14,10 @@ The most important Comments hook is
 [`useThreads`](/docs/api-reference/liveblocks-react#useThreads), which retrieves
 a list of each thread in the current room. This can be used to render a list of
 threads, either using the
-[default components](/docs/products/comments/default-components), or
-[primitives](/docs/products/comments/primitives). Here’s an example of it used
-with the default [`Thread`](/docs/api-reference/liveblocks-react-ui#Thread)
-component.
+[default components](/docs/ready-made-features/comments/default-components), or
+[primitives](/docs/ready-made-features/comments/primitives). Here’s an example
+of it used with the default
+[`Thread`](/docs/api-reference/liveblocks-react-ui#Thread) component.
 
 ```tsx
 import { useThreads } from "../liveblocks.config";
@@ -124,7 +124,7 @@ function Component({ comment }: { CommentData }) {
 Whereas others, such as
 [`useCreateThread`](/docs/api-reference/liveblocks-react#useCreateThread), have
 more complex behaviour and are designed to work alongside
-[primitives](/docs/products/comments/primitives).
+[primitives](/docs/ready-made-features/comments/primitives).
 
 ```tsx highlight="10,18-21"
 import {

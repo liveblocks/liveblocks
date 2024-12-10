@@ -160,8 +160,8 @@ const client = createClient({
     detailedType='async? (args: ResolveUsersArgs) => (UserMeta["info"] | undefined)[] | undefined'
   >
     A function that resolves user information in
-    [Comments](/docs/products/comments). Return an array of `UserMeta["info"]`
-    objects in the same order they arrived. [Learn
+    [Comments](/docs/ready-made-features/comments). Return an array of
+    `UserMeta["info"]` objects in the same order they arrived. [Learn
     more](#createClientResolveUsers).
   </PropertiesListItem>
   <PropertiesListItem
@@ -169,16 +169,17 @@ const client = createClient({
     detailedType="async? (args: ResolveRoomsInfoArgs) => (RoomInfo | undefined)[] | undefined"
   >
     A function that resolves room information in
-    [Comments](/docs/products/comments). Return an array of `RoomInfo` objects
-    in the same order they arrived. [Learn more](#createClientResolveRoomsInfo).
+    [Comments](/docs/ready-made-features/comments). Return an array of
+    `RoomInfo` objects in the same order they arrived. [Learn
+    more](#createClientResolveRoomsInfo).
   </PropertiesListItem>
   <PropertiesListItem
     name="resolveMentionSuggestions"
     detailedType="async? (args: ResolveMentionSuggestionsArgs) => string[]"
   >
     A function that resolves mention suggestions in
-    [Comments](/docs/products/comments). Return an array of user IDs. [Learn
-    more](#createClientResolveMentionSuggestions).
+    [Comments](/docs/ready-made-features/comments). Return an array of user IDs.
+    [Learn more](#createClientResolveMentionSuggestions).
   </PropertiesListItem>
   <PropertiesListItem name="polyfills">
     Place polyfills for `atob`, `fetch`, and `WebSocket` inside here. Useful
@@ -253,7 +254,7 @@ const client = createClient({
 ```
 
 `room` is the room ID that the user is connecting to. When using
-[Notifications](/docs/products/comments/notifications), `room` can be
+[Notifications](/docs/ready-made-features/comments/notifications), `room` can be
 `undefined`, as the client is requesting a token that grants access to multiple
 rooms, rather than a specific room.
 
@@ -349,7 +350,8 @@ More specifically, this option triggers when:
 
 - There are unsaved changes after calling any hooks or methods, in all of our
   products.
-- There are unsaved changes in a [Text Editor](/docs/products/text-editor).
+- There are unsaved changes in a
+  [Text Editor](/docs/ready-made-features/text-editor).
 - There’s an unsubmitted comment in the
   [Composer](/docs/api-reference/liveblocks-react-ui#Composer).
 - The user has made changes and is currently offline.
@@ -415,11 +417,11 @@ value of at least a few minutes, to avoid unnecessary disconnections.
 
 ### resolveUsers [#createClientResolveUsers]
 
-[Comments](/docs/products/comments) stores user IDs in its system, but no other
-user information. To display user information in Comments components, such as a
-user’s name or avatar, you need to resolve these IDs into user objects. This
-function receives a list of user IDs and you should return a list of user
-objects of the same size, in the same order.
+[Comments](/docs/ready-made-features/comments) stores user IDs in its system,
+but no other user information. To display user information in Comments
+components, such as a user’s name or avatar, you need to resolve these IDs into
+user objects. This function receives a list of user IDs and you should return a
+list of user objects of the same size, in the same order.
 
 ```tsx
 import { createClient } from "@liveblocks/client";
@@ -500,9 +502,9 @@ function Component() {
 
 ### resolveRoomsInfo [#createClientResolveRoomsInfo]
 
-When using [Notifications](/docs/products/comments/notifications) with
-[Comments](/docs/products/comments), room IDs will be used to contextualize
-notifications (e.g. “Chris mentioned you in _room-id_”) in the
+When using [Notifications](/docs/ready-made-features/comments/notifications)
+with [Comments](/docs/ready-made-features/comments), room IDs will be used to
+contextualize notifications (e.g. “Chris mentioned you in _room-id_”) in the
 [`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
 component. To replace room IDs with more fitting names (e.g. document names,
 “Chris mentioned you in _Document A_”), you can provide a resolver function to
@@ -542,8 +544,8 @@ you might need to call your backend for example. In that case, providing it via
 
 ### resolveMentionSuggestions [#createClientResolveMentionSuggestions]
 
-To enable creating mentions in [Comments](/docs/products/comments), you can
-provide a resolver function to the `resolveMentionSuggestions` option in
+To enable creating mentions in [Comments](/docs/ready-made-features/comments),
+you can provide a resolver function to the `resolveMentionSuggestions` option in
 [`createClient`](#createClient). These mentions will be displayed in the
 [`Composer`](/docs/api-reference/liveblocks-react-ui#Composer) component.
 
@@ -821,9 +823,10 @@ Room returned by [`client.enterRoom`][] (or [`client.getRoom`][]).
 
 ### Room.getPresence
 
-Return the current user’s Presence. [Presence](/docs/products/presence) is used
-to store custom properties on each user that exist until the user disconnects.
-An example use would be storing a user’s cursor coordinates.
+Return the current user’s Presence.
+[Presence](/docs/ready-made-features/presence) is used to store custom
+properties on each user that exist until the user disconnects. An example use
+would be storing a user’s cursor coordinates.
 
 ```ts
 const presence = room.getPresence();
@@ -859,9 +862,9 @@ declare global {
 
 ### Room.updatePresence
 
-Updates the current user’s [Presence](/docs/products/presence). Only pass the
-properties you wish to update—any changes will be merged into the current
-presence. The entire presence object will not be replaced.
+Updates the current user’s [Presence](/docs/ready-made-features/presence). Only
+pass the properties you wish to update—any changes will be merged into the
+current presence. The entire presence object will not be replaced.
 
 ```ts
 room.updatePresence({ typing: true });
@@ -3217,8 +3220,8 @@ whiteboard, or cells in a spreadsheet.
 
 Storage provides three different conflict-free data structures, which you can
 use to build your application. All structures are permanent and persist when all
-users have left the room, unlike [Presence](/docs/products/presence) which is
-temporary.
+users have left the room, unlike [Presence](/docs/ready-made-features/presence)
+which is temporary.
 
 - [`LiveObject`][] - Similar to JavaScript object. Use this for storing records
   with fixed key names and where the values don’t necessarily have the same

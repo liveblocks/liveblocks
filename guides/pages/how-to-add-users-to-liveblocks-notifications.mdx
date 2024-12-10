@@ -7,11 +7,11 @@ meta:
 ---
 
 After following the get started guide for Notifications, and sending
-notifications with [Comments](/docs/products/comments) or
-[Text editor](/docs/products/text-editor), you’ll notice that each user is
-currently “Anonymous”, and that there’s no way to mention or tag other users. To
-enable these features, we need to tell Notifications where to find your users’
-information.
+notifications with [Comments](/docs/ready-made-features/comments) or
+[Text editor](/docs/ready-made-features/text-editor), you’ll notice that each
+user is currently “Anonymous”, and that there’s no way to mention or tag other
+users. To enable these features, we need to tell Notifications where to find
+your users’ information.
 
 <Figure>
   <Image
@@ -39,8 +39,9 @@ your app, as this is necessary for Notifications.
 
 Make sure to follow the metadata step in the guide, and attach the name of your
 user, along with the URL of their avatar, as these properties will both be used
-in the [default components](/docs/products/notifications#Components). Here’s an
-example using access token authentication, with an email address as a user’s ID.
+in the [default components](/docs/ready-made-features/notifications#Components).
+Here’s an example using access token authentication, with an email address as a
+user’s ID.
 
 ```ts title="Metadata in access tokens"
 const session = liveblocks.prepareSession("marc@example.com", {

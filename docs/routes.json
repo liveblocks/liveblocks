@@ -333,99 +333,89 @@
     ]
   },
   {
-    "title": "Products",
+    "title": "Ready-made features",
     "routes": [
       {
         "title": "Comments",
-        "path": "/products/comments",
+        "path": "/ready-made-features/comments",
         "routes": [
           {
             "title": "Concepts",
-            "path": "/products/comments/concepts"
+            "path": "/ready-made-features/comments/concepts"
           },
           {
             "title": "Users and mentions",
-            "path": "/products/comments/users-and-mentions"
+            "path": "/ready-made-features/comments/users-and-mentions"
           },
           {
             "title": "Default components",
-            "path": "/products/comments/default-components"
+            "path": "/ready-made-features/comments/default-components"
           },
           {
             "title": "Hooks",
-            "path": "/products/comments/hooks"
+            "path": "/ready-made-features/comments/hooks"
           },
           {
             "title": "Metadata",
-            "path": "/products/comments/metadata"
+            "path": "/ready-made-features/comments/metadata"
           },
           {
             "title": "Primitives",
-            "path": "/products/comments/primitives"
+            "path": "/ready-made-features/comments/primitives"
           },
           {
             "title": "Styling and customization",
-            "path": "/products/comments/styling-and-customization"
+            "path": "/ready-made-features/comments/styling-and-customization"
           },
           {
             "title": "Email notifications",
-            "path": "/products/comments/email-notifications"
+            "path": "/ready-made-features/comments/email-notifications"
           }
         ]
       },
       {
         "title": "Notifications",
-        "path": "/products/notifications",
+        "path": "/ready-made-features/notifications",
         "routes": [
           {
             "title": "Concepts",
-            "path": "/products/notifications/concepts"
+            "path": "/ready-made-features/notifications/concepts"
           },
           {
             "title": "Default components",
-            "path": "/products/notifications/default-components"
+            "path": "/ready-made-features/notifications/default-components"
           },
           {
             "title": "Hooks",
-            "path": "/products/notifications/hooks"
+            "path": "/ready-made-features/notifications/hooks"
           },
           {
             "title": "Styling and customization",
-            "path": "/products/notifications/styling-and-customization"
+            "path": "/ready-made-features/notifications/styling-and-customization"
           },
           {
             "title": "Email notifications",
-            "path": "/products/notifications/email-notifications"
+            "path": "/ready-made-features/notifications/email-notifications"
           }
         ]
       },
       {
         "title": "Text Editor",
-        "path": "/products/text-editor",
+        "path": "/ready-made-features/text-editor",
         "routes": [
           {
             "title": "Tiptap",
-            "path": "/products/text-editor/tiptap"
+            "path": "/ready-made-features/text-editor/tiptap"
           },
           {
             "title": "Lexical",
-            "path": "/products/text-editor/lexical"
+            "path": "/ready-made-features/text-editor/lexical"
           }
         ]
       },
       {
-        "title": "Realtime APIs",
-        "path": "/products/realtime-apis",
-        "routes": [
-          {
-            "title": "Liveblocks Yjs",
-            "path": "/products/realtime-apis/liveblocks-yjs"
-          },
-          {
-            "title": "Liveblocks Storage",
-            "path": "/products/realtime-apis/liveblocks-storage"
-          }
-        ]
+        "title": "Presence",
+        "path": "/ready-made-features/presence"
       }
     ]
   },
@@ -566,6 +556,20 @@
   {
     "title": "Platform",
     "routes": [
+      {
+        "title": "Sync datastore",
+        "path": "/platform/sync-datastore",
+        "routes": [
+          {
+            "title": "Liveblocks Yjs",
+            "path": "/platform/sync-datastore/liveblocks-yjs"
+          },
+          {
+            "title": "Liveblocks Storage",
+            "path": "/platform/sync-datastore/liveblocks-storage"
+          }
+        ]
+      },
       {
         "title": "WebSocket infrastructure",
         "path": "/platform/websocket-infrastructure"
