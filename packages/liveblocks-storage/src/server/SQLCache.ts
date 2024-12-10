@@ -351,6 +351,10 @@ export class SQLCache {
    * Computes a Delta since the given clock value.
    */
   deltaSince(since: number): Delta {
+    if (since === 0) {
+      return this.fullDelta();
+    }
+
     const removed: { [nid: string]: string[] } = {};
     const values: { [nid: string]: { [key: string]: Json } } = {};
     const refs: { [nid: string]: { [key: string]: string } } = {};

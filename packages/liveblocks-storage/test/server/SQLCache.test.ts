@@ -446,11 +446,7 @@ test("taking deltas", () => {
     { root: { henk: 7 } },
     {},
   ]);
-  expect(cache.deltaSince(0)).toEqual([
-    { root: ["abc", "foo"] },
-    { root: { henk: 7 } },
-    {},
-  ]);
+  expect(cache.deltaSince(0)).toEqual([{}, { root: { henk: 7 } }, {}]);
 });
 
 test("deltas with nested LiveObjects", () => {
@@ -482,6 +478,7 @@ test("deltas with nested LiveObjects", () => {
 
   // v3
   cache.mutate((root) => {
+    // Effectively removes everything
     root.delete("a"); // deletes whole nested tree
     root.delete("d"); // deletes just one JSON value
   });
@@ -509,7 +506,5 @@ test("deltas with nested LiveObjects", () => {
 
   expect(cache.fullDelta()).toEqual([{}, {}, {}]);
 
-  // The line below fails, even though it _should_ work
-  // XXX Make pass!
-  // expect(cache.deltaSince(0)).toEqual([{}, {}, {}]);
+  expect(cache.deltaSince(0)).toEqual([{}, {}, {}]);
 });
