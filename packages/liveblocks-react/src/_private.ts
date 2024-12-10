@@ -8,6 +8,7 @@ export {
   useAddRoomCommentReaction,
   useCreateRoomComment,
   useCreateRoomThread,
+  useCreateTextMention,
   useDeleteRoomComment,
   useDeleteRoomThread,
   useEditRoomComment,

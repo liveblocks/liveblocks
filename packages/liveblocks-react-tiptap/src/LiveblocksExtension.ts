@@ -7,6 +7,7 @@ import {
 import {
   CreateThreadError,
   getUmbrellaStoreForClient,
+  useCreateTextMention,
   useReportTextEditor,
   useYjsProvider,
 } from "@liveblocks/react/_private";
@@ -154,16 +155,8 @@ export const useLiveblocksExtension = (
     options.field ?? DEFAULT_OPTIONS.field
   );
 
-  const onCreateMention = useCallback(
-    (userId: string, notificationId: string) => {
-      try {
-        room[kInternal].createTextMention(userId, notificationId);
-      } catch (err) {
-        console.warn(err);
-      }
-    },
-    [room]
-  );
+  const createTextMention = useCreateTextMention();
+
   const onDeleteMention = useCallback(
     (notificationId: string) => {
       try {
@@ -174,6 +167,7 @@ export const useLiveblocksExtension = (
     },
     [room]
   );
+
   return Extension.create<
     never,
     {
@@ -310,7 +304,7 @@ export const useLiveblocksExtension = (
       if (options.mentions) {
         extensions.push(
           MentionExtension.configure({
-            onCreateMention,
+            onCreateMention: createTextMention,
             onDeleteMention,
           })
         );

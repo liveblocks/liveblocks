@@ -817,6 +817,24 @@ function useYjsProvider(): IYjsProvider | undefined {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
+/** @private - Internal API, do not rely on it. */
+function useCreateTextMention(): (userId: string, mentionId: string) => void {
+  const room = useRoom();
+  return React.useCallback(
+    (userId: string, mentionId: string): void => {
+      room[kInternal]
+        .createTextMention(userId, mentionId)
+        .catch((err): void => {
+          console.error(
+            `Cannot create text mention for user '${userId}' and mention '${mentionId}'`,
+            err
+          );
+        });
+    },
+    [room]
+  );
+}
+
 /**
  * Returns the current storage status for the Room, and triggers
  * a re-render whenever it changes. Can be used to render a "Saving..."
@@ -3181,6 +3199,7 @@ export {
   useCreateComment,
   useCreateRoomComment,
   useCreateRoomThread,
+  useCreateTextMention,
   _useCreateThread as useCreateThread,
   useDeleteComment,
   useDeleteRoomComment,
