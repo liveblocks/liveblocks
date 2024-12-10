@@ -87,7 +87,6 @@ const LiveblocksCollab = Collaboration.extend({
  * Returns whether the editor has loaded the initial text contents from the
  * server and is ready to be used.
  *
- * @deprecated Prefer `useIsEditorReady` or `useSyncStatus` (from @liveblocks/react)
  */
 export function useIsEditorReady(): boolean {
   const yjsProvider = useYjsProvider();
