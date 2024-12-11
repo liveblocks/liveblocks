@@ -32,6 +32,9 @@ jobs:
 
           echo Triggering deployment for nextjs-comments-canvas
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_yFy3klLqgmfMNMZI6FVhBj5w5UIl/hS0RaUAXGw; echo
+          
+          echo Triggering deployment for nextjs-comments-emails-resend
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_Ht9CiMBXOz7fYMoPGvW0BiSXDeJa/zjNQ0VUNX6; echo
 
           echo Triggering deployment for nextjs-comments-notifications
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_NeiWF6wVsvMmaLaje9MfWNelU0Ms/HU8HBQCHF4; echo
@@ -59,6 +62,9 @@ jobs:
 
           echo Triggering deployment for nextjs-lexical
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_qeKoPfUCRuI6jvBqV556q8V29YtA/IpvamWQh6G; echo
+          
+          echo Triggering deployment for nextjs-lexical-emails-resend
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_ty91zX0hZ71c1KmNKGyT3iGSP4Wr/SbFf4Ans0B; echo
           
           echo Triggering deployment for nextjs-linear-like-issue-tracker
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_ilOh5HbvxiAu723gnCAMBksCr3CH/3tTZc8ffgM; echo
@@ -98,6 +104,9 @@ jobs:
           
           echo Triggering deployment for nextjs-tiptap-advanced
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_J8TT5NanEfJYgWrASs0hqsR6nGa3/QPgzsSe4NF; echo
+          
+          echo Triggering deployment for nextjs-tiptap-emails-resend
+          curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_HmPx17FgTo7OY0XkBYnAzttKGm5R/kEYZ6eqhsA; echo
           
           echo Triggering deployment for nextjs-tiptap-novel
           curl -s -X POST https://api.vercel.com/v1/integrations/deploy/prj_uoZ7A0CmwcswPxUqnCy51ds0GXaA/0W5pGVEbOJ; echo
