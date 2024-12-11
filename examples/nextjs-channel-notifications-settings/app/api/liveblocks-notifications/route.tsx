@@ -158,6 +158,12 @@ export async function POST(request: Request) {
     } else if (event.data.channel === "slack") {
       // send slack notification
       return new Response(null, { status: 200 });
+    } else if (event.data.channel === "teams") {
+      // send teams notification
+      return new Response(null, { status: 200 });
+    } else if (event.data.channel === "webPush") {
+      // send web push notification
+      return new Response(null, { status: 200 });
     }
   } else if (isTextMentionNotificationEvent(event)) {
     console.log("text mention notification event");
