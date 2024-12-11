@@ -74,6 +74,11 @@ export interface ThreadProps<M extends BaseMetadata = DM>
   showReactions?: CommentProps["showReactions"];
 
   /**
+   * Whether to show the composer's formatting controls.
+   */
+  showComposerFormattingControls?: ComposerProps["showFormattingControls"];
+
+  /**
    * Whether to indent the comments' content.
    */
   indentCommentContent?: CommentProps["indentContent"];
@@ -159,6 +164,7 @@ export const Thread = forwardRef(
       showReactions = true,
       showComposer = "collapsed",
       showAttachments = true,
+      showComposerFormattingControls = true,
       onResolvedChange,
       onCommentEdit,
       onCommentDelete,
@@ -297,6 +303,9 @@ export const Thread = forwardRef(
                   showActions={showActions}
                   showReactions={showReactions}
                   showAttachments={showAttachments}
+                  showComposerFormattingControls={
+                    showComposerFormattingControls
+                  }
                   onCommentEdit={onCommentEdit}
                   onCommentDelete={handleCommentDelete}
                   onAuthorClick={onAuthorClick}
@@ -372,6 +381,7 @@ export const Thread = forwardRef(
               threadId={thread.id}
               defaultCollapsed={showComposer === "collapsed" ? true : undefined}
               showAttachments={showAttachments}
+              showFormattingControls={showComposerFormattingControls}
               onComposerSubmit={onComposerSubmit}
               overrides={{
                 COMPOSER_PLACEHOLDER: $.THREAD_COMPOSER_PLACEHOLDER,

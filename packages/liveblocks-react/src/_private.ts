@@ -1,11 +1,9 @@
 // Private APIs
 
-// Used in @liveblocks/react-lexical
-export { getUmbrellaStoreForClient } from "./liveblocks";
-export { CreateThreadError } from "./room";
-
-// Used in @liveblocks/react-ui and @liveblocks/react-lexical
 export { useRoomOrNull } from "./contexts";
+export { getUmbrellaStoreForClient } from "./liveblocks";
+export { useClientOrNull } from "./liveblocks";
+export { CreateThreadError } from "./room";
 export {
   useAddRoomCommentReaction,
   useCreateRoomComment,
@@ -18,6 +16,7 @@ export {
   useMarkRoomThreadAsResolved,
   useMarkRoomThreadAsUnresolved,
   useRemoveRoomCommentReaction,
+  useReportTextEditor,
   useRoomAttachmentUrl,
   useRoomPermissions,
 } from "./room";

@@ -1,4 +1,47 @@
-## Not published yet
+## Not yet published
+
+## 2.14.0
+
+### `@liveblocks/emails`
+
+- Add new functions `prepareTextMentionNotificationEmailAsHtml` and
+  `prepareTextMentionNotificationEmailAsReact` to support text mention
+  notification event for Lexical and Tiptap text editors and prepare data into
+  email-ready formats.
+
+## 2.13.2
+
+### `@liveblocks/react-lexical`
+
+- Fix report text editor function's call. Now we wait for the room's status to
+  be `connected` to report the text editor instead of reporting directly after
+  room creation / loading.
+
+### `@liveblocks/react-tiptap`
+
+- Fix report text editor function's call. Now we wait for the room's status to
+  be `connected` to report the text editor instead of reporting directly after
+  room creation / loading.
+
+## 2.13.1
+
+### `@liveblocks/react-ui`
+
+- Improve the spacing consequences of `--lb-line-height` (introduced in 2.13.0)
+  in some contexts.
+
+## 2.13.0
+
+### `@liveblocks/react-ui`
+
+- Add a formatting toolbar to `Composer` which appears when selecting text. It’s
+  enabled by default in the default components and can also be custom built with
+  new primitives (`Composer.FloatingToolbar` and `Composer.MarkToggle`) and new
+  APIs (`const { marks, toggleMark } = useComposer()`).
+- Add new `--lb-line-height` token to control the line height of main elements
+  (e.g. comment bodies in comments and composers).
+- Remove `Timestamp` export mistakenly added to `@liveblocks/react-ui`, it
+  should be imported from `@liveblocks/react-ui/primitives` instead.
 
 ## 2.12.2
 

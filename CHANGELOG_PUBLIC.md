@@ -13,6 +13,56 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
 
+# Week 49 (2024-12-06)
+
+## v2.13.1
+
+### `@liveblocks/react-ui`
+
+- Improve the spacing consequences of `--lb-line-height` (introduced in 2.13.0) in some contexts.
+
+## Dashboard
+
+- Multiple Tiptap editors are now supported in a room's Text Editor view.
+
+## Documentation
+
+- Improved [custom composer behavior](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Custom-composer-behavior) code example.
+
+## Contributors
+
+ctnicholas, pierrelevaillant, marcbouchenoire
+
+# Week 48 (2024-11-29)
+
+## v2.13.0
+
+### `@liveblocks/react-ui`
+
+- Add a formatting toolbar to `Composer` which appears when selecting text. It’s enabled by default in the default components and can also be custom built with new primitives (`Composer.FloatingToolbar` and `Composer.MarkToggle`) and new APIs (`const { marks, toggleMark } = useComposer()`).
+- Add new `--lb-line-height` token to control the line height of main elements (e.g. comment bodies in comments and composers).
+- Remove `Timestamp` export mistakenly added to `@liveblocks/react-ui`, it should be imported from `@liveblocks/react-ui/primitives` instead.
+
+## Website
+
+- New blog post: [Easy collaborative text editing with Liveblocks Tiptap](http://liveblocks.io/blog/easy-collaborative-text-editing-with-liveblocks-tiptap).
+
+## Examples
+
+- New example: [Novel AI editor](https://liveblocks.io/examples/novel-ai-editor).
+
+## Documentation
+
+- Info on [using multiple Tiptap editors](https://liveblocks.io/docs/api-reference/liveblocks-react-tiptap#Multiple-editors).
+- Info on [offline support for Tiptap](https://liveblocks.io/docs/api-reference/liveblocks-react-tiptap#Offline-support).
+- Removed `beta` warnings from Tiptap docs.
+- Improved `resolveUsers` and `resolveRoomsInfo` docs.
+- Fix [custom composer behavior](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Custom-composer-behavior) code snippet.
+
+## Contributors
+
+ctnicholas, marcbouchenoire, flowflorent
+
 # Week 47 (2024-11-22)
 
 ## v2.12.2

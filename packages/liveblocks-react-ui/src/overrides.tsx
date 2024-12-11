@@ -1,11 +1,12 @@
 "use client";
 
+import { assertNever } from "@liveblocks/core";
 import type { PropsWithChildren, ReactNode } from "react";
 import { createContext, useContext, useMemo } from "react";
 import * as React from "react";
 
 import { Emoji } from "./components/internal/Emoji";
-import type { Direction } from "./types";
+import type { ComposerBodyMark, Direction } from "./types";
 import { pluralize } from "./utils/pluralize";
 
 export interface LocalizationOverrides {
@@ -52,6 +53,7 @@ export interface ComposerOverrides {
   COMPOSER_REMOVE_ATTACHMENT: string;
   COMPOSER_PLACEHOLDER: string;
   COMPOSER_SEND: string;
+  COMPOSER_TOGGLE_MARK: (mark: ComposerBodyMark) => string;
 }
 
 export interface ThreadOverrides {
@@ -123,6 +125,20 @@ export const defaultOverrides: Overrides = {
   COMPOSER_REMOVE_ATTACHMENT: "Remove attachment",
   COMPOSER_PLACEHOLDER: "Write a comment…",
   COMPOSER_SEND: "Send",
+  COMPOSER_TOGGLE_MARK: (format) => {
+    switch (format) {
+      case "bold":
+        return "Bold";
+      case "italic":
+        return "Italic";
+      case "strikethrough":
+        return "Strikethrough";
+      case "code":
+        return "Inline code";
+      default:
+        return assertNever(format, "Unexpected mark");
+    }
+  },
   COMMENT_EDITED: "(edited)",
   COMMENT_DELETED: "This comment has been deleted.",
   COMMENT_MORE: "More",
