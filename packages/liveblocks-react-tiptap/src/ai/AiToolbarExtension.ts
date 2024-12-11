@@ -4,16 +4,19 @@ import { Plugin, TextSelection } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { ySyncPluginKey } from "y-prosemirror";
 
-import type { AiExtensionStorage } from "../types";
-import { AI_ACTIVE_SELECTION_PLUGIN } from "../types";
+import type { AiToolbarExtensionStorage } from "../types";
+import { AI_TOOLBAR_SELECTION_PLUGIN } from "../types";
 
-export const AiExtension = Extension.create<never, AiExtensionStorage>({
-  name: "liveblocksAi",
+export const AiToolbarExtension = Extension.create<
+  never,
+  AiToolbarExtensionStorage
+>({
+  name: "liveblocksAiToolbar",
   priority: 95,
 
   addStorage() {
     return {
-      askAiSelection: null,
+      aiToolbarSelection: null,
     };
   },
 
@@ -33,7 +36,7 @@ export const AiExtension = Extension.create<never, AiExtensionStorage>({
           return false;
         }
 
-        this.storage.askAiSelection = new TextSelection(
+        this.storage.aiToolbarSelection = new TextSelection(
           this.editor.state.selection.$anchor,
           this.editor.state.selection.$head
         );
@@ -42,7 +45,7 @@ export const AiExtension = Extension.create<never, AiExtensionStorage>({
         return true;
       },
       closeAi: () => () => {
-        this.storage.askAiSelection = null;
+        this.storage.aiToolbarSelection = null;
         return true;
       },
     };
@@ -56,27 +59,31 @@ export const AiExtension = Extension.create<never, AiExtensionStorage>({
     { transaction }: { transaction: Transaction } // TODO: remove this after submitting PR to tiptap
   ) {
     // ignore changes made by yjs
-    if (!this.storage.askAiSelection || transaction.getMeta(ySyncPluginKey)) {
+    if (
+      !this.storage.aiToolbarSelection ||
+      transaction.getMeta(ySyncPluginKey)
+    ) {
       return;
     }
-    this.storage.askAiSelection = null;
+    this.storage.aiToolbarSelection = null;
   },
-  // TODO: this.storage.askAiSelection needs to be a Yjs Relative Position that gets translated back to absolute position.
+  // TODO: this.storage.aiToolbarSelection needs to be a Yjs Relative Position that gets translated back to absolute position.
   // Commit: eba949d32d6010a3d8b3f7967d73d4deb015b02a has code that can help with this.
   addProseMirrorPlugins() {
     return [
       new Plugin({
-        key: AI_ACTIVE_SELECTION_PLUGIN,
+        key: AI_TOOLBAR_SELECTION_PLUGIN,
         props: {
           decorations: ({ doc }) => {
-            const active = this.storage.askAiSelection !== null;
+            const active = this.storage.aiToolbarSelection !== null;
             if (!active) {
               return DecorationSet.create(doc, []);
             }
-            const { from, to } = this.storage.askAiSelection as TextSelection;
+            const { from, to } = this.storage
+              .aiToolbarSelection as TextSelection;
             const decorations: Decoration[] = [
               Decoration.inline(from, to, {
-                class: "lb-root lb-tiptap-active-selection",
+                class: "lb-root lb-selection lb-tiptap-ai-selection",
               }),
             ];
             return DecorationSet.create(doc, decorations);

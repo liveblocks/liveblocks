@@ -306,7 +306,7 @@ function ActiveSelectionPortal({
               backgroundColor: "var(--lb-selection, rgba(0, 0, 255, 0.2))",
               pointerEvents: "none",
             }}
-            className="lb-lexical-active-selection"
+            className="lb-selection lb-lexical-active-selection"
           />
         ))}
       </span>

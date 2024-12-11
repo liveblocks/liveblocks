@@ -18,8 +18,8 @@ export const THREADS_ACTIVE_SELECTION_PLUGIN = new PluginKey(
 export const THREADS_PLUGIN_KEY = new PluginKey<ThreadPluginState>(
   "lb-threads-plugin"
 );
-export const AI_ACTIVE_SELECTION_PLUGIN = new PluginKey(
-  "lb-ai-active-selection-plugin"
+export const AI_TOOLBAR_SELECTION_PLUGIN = new PluginKey(
+  "lb-ai-toolbar-selection-plugin"
 );
 
 export const LIVEBLOCKS_COMMENT_MARK_TYPE = "liveblocksCommentMark";
@@ -32,11 +32,11 @@ export const enum ThreadPluginActions {
   SET_SELECTED_THREAD_ID = "SET_SELECTED_THREAD_ID",
 }
 
-export type AiExtensionStorage = {
-  askAiSelection: TextSelection | null;
+export type AiToolbarExtensionStorage = {
+  aiToolbarSelection: TextSelection | null;
 };
 
-export type LiveblocksExtensionStorage = AiExtensionStorage &
+export type LiveblocksExtensionStorage = AiToolbarExtensionStorage &
   CommentsExtensionStorage;
 
 export type ThreadPluginState = {

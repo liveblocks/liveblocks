@@ -286,7 +286,7 @@ export const CommentsExtension = Extension.create<
               .pendingCommentSelection as TextSelection;
             const decorations: Decoration[] = [
               Decoration.inline(from, to, {
-                class: "lb-root lb-tiptap-active-selection",
+                class: "lb-root lb-selection lb-tiptap-active-selection",
               }),
             ];
             return DecorationSet.create(doc, decorations);

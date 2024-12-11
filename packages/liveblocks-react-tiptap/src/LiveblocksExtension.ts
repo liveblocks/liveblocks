@@ -18,7 +18,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { Doc } from "yjs";
 
-import { AiExtension } from "./ai/AiExtension";
+import { AiToolbarExtension } from "./ai/AiToolbarExtension";
 import { CommentsExtension } from "./comments/CommentsExtension";
 import { MentionExtension } from "./mentions/MentionExtension";
 import { LIVEBLOCKS_COMMENT_MARK_TYPE } from "./types";
@@ -336,7 +336,7 @@ export const useLiveblocksExtension = (
         );
       }
       if (options.ai) {
-        extensions.push(AiExtension);
+        extensions.push(AiToolbarExtension);
       }
 
       return extensions;

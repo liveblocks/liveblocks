@@ -32,17 +32,17 @@ import { createPortal } from "react-dom";
 
 import { classNames } from "../classnames";
 import { EditorProvider } from "../context";
-import type { AiExtensionStorage, FloatingPosition } from "../types";
+import type { AiToolbarExtensionStorage, FloatingPosition } from "../types";
 import { compareTextSelections, getDomRangeFromTextSelection } from "../utils";
 
-export interface AskAiToolbarProps
+export interface AiToolbarProps
   extends Omit<ComponentProps<"div">, "children"> {
   editor: Editor | null;
   position?: FloatingPosition;
   offset?: number;
 }
 
-export const ASK_AI_TOOLBAR_COLLISION_PADDING = 10;
+export const AI_TOOLBAR_COLLISION_PADDING = 10;
 
 //   const handleInputChange = useCallback(
 //     (event: ChangeEvent<HTMLInputElement>) => {
@@ -161,7 +161,7 @@ function tiptapFloating(editor: Editor | null): Middleware {
   };
 }
 
-export const AskAiToolbar = forwardRef<HTMLDivElement, AskAiToolbarProps>(
+export const AiToolbar = forwardRef<HTMLDivElement, AiToolbarProps>(
   (
     {
       position = "bottom",
@@ -172,19 +172,21 @@ export const AskAiToolbar = forwardRef<HTMLDivElement, AskAiToolbarProps>(
     },
     forwardedRef
   ) => {
-    const askAiSelection =
+    const aiToolbarSelection =
       useEditorState({
         editor,
         selector: (ctx) => {
           return (
-            ctx.editor?.storage.liveblocksAi as AiExtensionStorage | undefined
-          )?.askAiSelection;
+            ctx.editor?.storage.liveblocksAiToolbar as
+              | AiToolbarExtensionStorage
+              | undefined
+          )?.aiToolbarSelection;
         },
         equalityFn: compareTextSelections,
       }) ?? undefined;
     const floatingOptions: UseFloatingOptions = useMemo(() => {
       const detectOverflowOptions: DetectOverflowOptions = {
-        padding: ASK_AI_TOOLBAR_COLLISION_PADDING,
+        padding: AI_TOOLBAR_COLLISION_PADDING,
       };
 
       return {
@@ -202,7 +204,7 @@ export const AskAiToolbar = forwardRef<HTMLDivElement, AskAiToolbarProps>(
         },
       };
     }, [editor, position, sideOffset]);
-    const isOpen = askAiSelection !== undefined;
+    const isOpen = aiToolbarSelection !== undefined;
     const {
       refs: { setReference, setFloating },
       strategy,
@@ -220,14 +222,17 @@ export const AskAiToolbar = forwardRef<HTMLDivElement, AskAiToolbarProps>(
         return;
       }
 
-      if (!askAiSelection) {
+      if (!aiToolbarSelection) {
         setReference(null);
       } else {
-        const domRange = getDomRangeFromTextSelection(askAiSelection, editor);
+        const domRange = getDomRangeFromTextSelection(
+          aiToolbarSelection,
+          editor
+        );
 
         setReference(domRange);
       }
-    }, [askAiSelection, editor, isOpen, setReference]);
+    }, [aiToolbarSelection, editor, isOpen, setReference]);
 
     if (!editor || !isOpen) {
       return null;
@@ -273,7 +278,7 @@ export const AskAiToolbar = forwardRef<HTMLDivElement, AskAiToolbarProps>(
               side="bottom"
               sideOffset={8}
               align="start"
-              collisionPadding={ASK_AI_TOOLBAR_COLLISION_PADDING}
+              collisionPadding={AI_TOOLBAR_COLLISION_PADDING}
               avoidCollisions={false}
               className="lb-root lb-portal lb-elevation lb-dropdown lb-tiptap-ai-toolbar-dropdown"
             >
@@ -291,7 +296,7 @@ export const AskAiToolbar = forwardRef<HTMLDivElement, AskAiToolbarProps>(
                 <DropdownMenu.Portal>
                   <DropdownMenu.SubContent
                     className="lb-root lb-portal lb-elevation lb-dropdown"
-                    collisionPadding={ASK_AI_TOOLBAR_COLLISION_PADDING}
+                    collisionPadding={AI_TOOLBAR_COLLISION_PADDING}
                   >
                     <DropdownItem>Arabic</DropdownItem>
                     <DropdownItem>Bengali</DropdownItem>
@@ -316,7 +321,7 @@ export const AskAiToolbar = forwardRef<HTMLDivElement, AskAiToolbarProps>(
                 <DropdownMenu.Portal>
                   <DropdownMenu.SubContent
                     className="lb-root lb-portal lb-elevation lb-dropdown"
-                    collisionPadding={ASK_AI_TOOLBAR_COLLISION_PADDING}
+                    collisionPadding={AI_TOOLBAR_COLLISION_PADDING}
                   >
                     <DropdownItem>Professional</DropdownItem>
                     <DropdownItem>Straightforward</DropdownItem>

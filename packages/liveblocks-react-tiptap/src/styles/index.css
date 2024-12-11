@@ -256,6 +256,11 @@
  *            AI Toolbar             *
  *************************************/
 
+.lb-tiptap-ai-selection {
+  background: var(--lb-selection, rgb(0 0 255 / 20%));
+  pointer-events: none;
+}
+
 .lb-tiptap-ai-toolbar {
   --lb-tiptap-ai-toolbar-padding: calc(0.625 * var(--lb-spacing));
 
