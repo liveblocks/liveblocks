@@ -46,16 +46,16 @@ export type EventSource<T> = Observable<T> & {
    */
   observable: Observable<T>;
   /**
-   * Clears all registered event listeners. None of the registered functions
-   * will ever get called again.
+   * Disposes of this event source.
+   *
+   * Will clears all registered event listeners. None of the registered
+   * functions will ever get called again.
    *
    * WARNING!
    * Be careful when using this API, because the subscribers may not have any
    * idea they won't be notified anymore.
-   *
-   * @internal
    */
-  _forceClear(): void;
+  [Symbol.dispose](): void;
 };
 
 export type EventEmitter<T> = (event: T) => void;
@@ -103,7 +103,11 @@ export function makeEventSource<T>(): EventSource<T> {
 
   function subscribe(callback: Callback<T>): UnsubscribeCallback {
     _observers.add(callback);
-    return () => _observers.delete(callback);
+    const unsub = () => _observers.delete(callback);
+
+    // // @ts-expect-error Call unsubscribe when the subscription goes out of scope
+    // unsub[Symbol.dispose] = unsub;
+    return unsub;
   }
 
   function subscribeOnce(callback: Callback<T>): UnsubscribeCallback {
@@ -137,10 +141,6 @@ export function makeEventSource<T>(): EventSource<T> {
     _observers.forEach((callback) => callback(event));
   }
 
-  function _forceClear() {
-    _observers.clear();
-  }
-
   function count() {
     return _observers.size;
   }
@@ -150,12 +150,18 @@ export function makeEventSource<T>(): EventSource<T> {
     notify: notifyOrBuffer,
     subscribe,
     subscribeOnce,
-    _forceClear,
     count,
 
     waitUntil,
     pause,
     unpause,
+
+    [Symbol.dispose]: (): void => {
+      _observers.clear();
+      if (_buffer !== null) {
+        _buffer.length = 0;
+      }
+    },
 
     // Publicly exposable subscription API
     observable: {
