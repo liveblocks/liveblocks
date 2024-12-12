@@ -6,8 +6,8 @@ import { Icon } from "../components/internal/Icon";
 export function TranslateIcon(props: ComponentProps<"svg">) {
   return (
     <Icon {...props}>
-      <path d="m10.5 16 .75-1.5M16 16l-.75-1.5m-4 0 2-4 2 4m-4 0h4M11 6.5H4m3.5-2-1-1m3.5 7c-2.544-.404-3.796-1.525-4.331-4" />
-      <path d="M5 10.5c2.544-.404 3.796-1.525 4.331-4" />
+      <path d="m10.5 16.5.818-1.636M16.5 16.5l-.818-1.636m-4.364 0L13.5 10.5l2.182 4.364m-4.364 0h4.364M10.5 6h-7M7 4 6 3m4 8c-2.936-.505-4.382-1.906-5-5" />
+      <path d="M4 11c2.936-.48 4.382-2.053 5-5" />
     </Icon>
   );
 }
