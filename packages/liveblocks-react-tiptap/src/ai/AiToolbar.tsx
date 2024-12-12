@@ -12,6 +12,7 @@ import {
   CheckIcon,
   EmojiIcon,
   SendIcon,
+  ShortcutTooltip,
   TooltipProvider,
   useRefs,
 } from "@liveblocks/react-ui/_private";
@@ -195,12 +196,14 @@ function AiToolbarContent() {
           <span className="lb-tiptap-ai-toolbar-icon-container">
             <EmojiIcon />
           </span>
-          <Button
-            className="lb-tiptap-ai-toolbar-action"
-            variant="primary"
-            aria-label="TODO:"
-            icon={<SendIcon />}
-          />
+          <ShortcutTooltip content="Ask AI" shortcut="Enter">
+            <Button
+              className="lb-tiptap-ai-toolbar-action"
+              variant="primary"
+              aria-label="Ask AI"
+              icon={<SendIcon />}
+            />
+          </ShortcutTooltip>
         </div>
       </div>
       <div
