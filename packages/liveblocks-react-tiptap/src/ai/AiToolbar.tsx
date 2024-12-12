@@ -8,26 +8,13 @@ import {
   type UseFloatingOptions,
 } from "@floating-ui/react-dom";
 import {
-  CheckIcon,
-  ChevronRightIcon,
   EmojiIcon,
   TooltipProvider,
   useRefs,
 } from "@liveblocks/react-ui/_private";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { type Editor, useEditorState } from "@tiptap/react";
-import type {
-  ComponentProps,
-  MouseEvent,
-  PropsWithChildren,
-  ReactNode,
-} from "react";
-import React, {
-  forwardRef,
-  useCallback,
-  useLayoutEffect,
-  useMemo,
-} from "react";
+import type { ComponentProps } from "react";
+import React, { forwardRef, useLayoutEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 
 import { classNames } from "../classnames";
@@ -73,60 +60,6 @@ export const AI_TOOLBAR_COLLISION_PADDING = 10;
 //   const handleInputBlur = useCallback(() => {
 //     (editor.chain() as ExtendedChainedCommands<"closeAi">).closeAi().run();
 //   }, [editor]);
-
-interface DropdownItemProps extends PropsWithChildren {
-  icon?: ReactNode;
-}
-
-function DropdownItem({ children, icon }: DropdownItemProps) {
-  const handleSelect = useCallback(() => {
-    console.log("Click");
-  }, []);
-
-  const handleClick = useCallback((event: MouseEvent<HTMLDivElement>) => {
-    event.stopPropagation();
-  }, []);
-
-  return (
-    <DropdownMenu.Item
-      className="lb-dropdown-item"
-      onSelect={handleSelect}
-      onClick={handleClick}
-    >
-      {icon ? <span className="lb-icon-container">{icon}</span> : null}
-      {children ? (
-        <span className="lb-dropdown-item-label">{children}</span>
-      ) : null}
-    </DropdownMenu.Item>
-  );
-}
-
-function DropdownSubItem({ children, icon }: DropdownItemProps) {
-  const handleClick = useCallback((event: MouseEvent<HTMLDivElement>) => {
-    event.stopPropagation();
-  }, []);
-
-  return (
-    <DropdownMenu.SubTrigger
-      className="lb-dropdown-item lb-dropdown-subitem"
-      onClick={handleClick}
-    >
-      {icon ? <span className="lb-icon-container">{icon}</span> : null}
-      {children ? (
-        <span className="lb-dropdown-item-label">{children}</span>
-      ) : null}
-      <ChevronRightIcon className="lb-dropdown-subitem-chevron" />
-    </DropdownMenu.SubTrigger>
-  );
-}
-
-function DropdownLabel({ children }: PropsWithChildren) {
-  return (
-    <DropdownMenu.Label className="lb-dropdown-label">
-      {children}
-    </DropdownMenu.Label>
-  );
-}
 
 /**
  * A custom Floating UI middleware to position/scale the toolbar:
@@ -216,6 +149,7 @@ export const AiToolbar = forwardRef<HTMLDivElement, AiToolbarProps>(
       open: isOpen,
     });
     const mergedRefs = useRefs(forwardedRef, setFloating);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     useLayoutEffect(() => {
       if (!editor || !isOpen) {
@@ -234,6 +168,16 @@ export const AiToolbar = forwardRef<HTMLDivElement, AiToolbarProps>(
       }
     }, [aiToolbarSelection, editor, isOpen, setReference]);
 
+    useLayoutEffect(() => {
+      if (!editor || !isOpen || !inputRef.current) {
+        return;
+      }
+
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 0);
+    }, [editor, isOpen]);
+
     if (!editor || !isOpen) {
       return null;
     }
@@ -241,100 +185,37 @@ export const AiToolbar = forwardRef<HTMLDivElement, AiToolbarProps>(
     return createPortal(
       <TooltipProvider>
         <EditorProvider editor={editor}>
-          <DropdownMenu.Root open modal={false}>
-            <DropdownMenu.Trigger asChild type={undefined}>
-              <div
-                role="toolbar"
-                aria-label="Ask AI toolbar"
-                aria-orientation="horizontal"
-                className={classNames(
-                  "lb-root lb-portal lb-elevation lb-tiptap-ai-toolbar",
-                  className
-                )}
-                ref={mergedRefs}
-                style={{
-                  position: strategy,
-                  top: 0,
-                  left: 0,
-                  transform: isPositioned
-                    ? `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`
-                    : "translate3d(0, -200%, 0)",
-                  minWidth: "max-content",
-                }}
-                {...props}
-              >
-                <div className="lb-tiptap-ai-toolbar-input-container">
-                  <input
-                    type="text"
-                    className="lb-tiptap-ai-toolbar-input"
-                    placeholder="Ask AI anything…"
-                    autoFocus
-                  />
-                  <EmojiIcon />
-                </div>
-              </div>
-            </DropdownMenu.Trigger>
-            <DropdownMenu.Content
-              side="bottom"
-              sideOffset={8}
-              align="start"
-              collisionPadding={AI_TOOLBAR_COLLISION_PADDING}
-              avoidCollisions={false}
-              className="lb-root lb-portal lb-elevation lb-dropdown lb-tiptap-ai-toolbar-dropdown"
-            >
-              <DropdownLabel>Modify selection</DropdownLabel>
-              <DropdownItem icon={<CheckIcon />}>Improve writing</DropdownItem>
-              <DropdownItem icon={<CheckIcon />}>Fix mistakes</DropdownItem>
-              <DropdownItem icon={<CheckIcon />}>Simplify</DropdownItem>
-              <DropdownItem icon={<CheckIcon />}>Add more detail</DropdownItem>
-              <DropdownLabel>Generate</DropdownLabel>
-              <DropdownItem icon={<CheckIcon />}>Summarize</DropdownItem>
-              <DropdownMenu.Sub>
-                <DropdownSubItem icon={<CheckIcon />}>
-                  Translate into…
-                </DropdownSubItem>
-                <DropdownMenu.Portal>
-                  <DropdownMenu.SubContent
-                    className="lb-root lb-portal lb-elevation lb-dropdown"
-                    collisionPadding={AI_TOOLBAR_COLLISION_PADDING}
-                  >
-                    <DropdownItem>Arabic</DropdownItem>
-                    <DropdownItem>Bengali</DropdownItem>
-                    <DropdownItem>Chinese</DropdownItem>
-                    <DropdownItem>Dutch</DropdownItem>
-                    <DropdownItem>English</DropdownItem>
-                    <DropdownItem>French</DropdownItem>
-                    <DropdownItem>German</DropdownItem>
-                    <DropdownItem>Hindi</DropdownItem>
-                    <DropdownItem>Japanese</DropdownItem>
-                    <DropdownItem>Korean</DropdownItem>
-                    <DropdownItem>Nepali</DropdownItem>
-                    <DropdownItem>Portuguese</DropdownItem>
-                    <DropdownItem>Spanish</DropdownItem>
-                  </DropdownMenu.SubContent>
-                </DropdownMenu.Portal>
-              </DropdownMenu.Sub>
-              <DropdownMenu.Sub>
-                <DropdownSubItem icon={<CheckIcon />}>
-                  Change style to…
-                </DropdownSubItem>
-                <DropdownMenu.Portal>
-                  <DropdownMenu.SubContent
-                    className="lb-root lb-portal lb-elevation lb-dropdown"
-                    collisionPadding={AI_TOOLBAR_COLLISION_PADDING}
-                  >
-                    <DropdownItem>Professional</DropdownItem>
-                    <DropdownItem>Straightforward</DropdownItem>
-                    <DropdownItem>Friendly</DropdownItem>
-                    <DropdownItem>Poetic</DropdownItem>
-                    <DropdownItem>Passive aggressive</DropdownItem>
-                    <DropdownItem>Pirate</DropdownItem>
-                  </DropdownMenu.SubContent>
-                </DropdownMenu.Portal>
-              </DropdownMenu.Sub>
-              <DropdownItem icon={<CheckIcon />}>Explain</DropdownItem>
-            </DropdownMenu.Content>
-          </DropdownMenu.Root>
+          <div
+            role="toolbar"
+            aria-label="Ask AI toolbar"
+            aria-orientation="horizontal"
+            className={classNames(
+              "lb-root lb-portal lb-elevation lb-tiptap-ai-toolbar",
+              className
+            )}
+            ref={mergedRefs}
+            style={{
+              position: strategy,
+              top: 0,
+              left: 0,
+              transform: isPositioned
+                ? `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`
+                : "translate3d(0, -200%, 0)",
+              minWidth: "max-content",
+            }}
+            {...props}
+          >
+            <div className="lb-tiptap-ai-toolbar-input-container">
+              <input
+                ref={inputRef}
+                type="text"
+                className="lb-tiptap-ai-toolbar-input"
+                placeholder="Ask AI anything…"
+                autoFocus
+              />
+              <EmojiIcon />
+            </div>
+          </div>
         </EditorProvider>
       </TooltipProvider>,
       document.body
