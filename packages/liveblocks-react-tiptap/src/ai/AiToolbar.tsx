@@ -42,7 +42,11 @@ import { createPortal } from "react-dom";
 
 import { classNames } from "../classnames";
 import { EditorProvider } from "../context";
-import type { AiToolbarExtensionStorage, FloatingPosition } from "../types";
+import type {
+  AiToolbarExtensionStorage,
+  ExtendedChainedCommands,
+  FloatingPosition,
+} from "../types";
 import { compareTextSelections, getDomRangeFromTextSelection } from "../utils";
 
 export interface AiToolbarProps
@@ -53,36 +57,6 @@ export interface AiToolbarProps
 }
 
 export const AI_TOOLBAR_COLLISION_PADDING = 10;
-
-//   const handleInputChange = useCallback(
-//     (event: ChangeEvent<HTMLInputElement>) => {
-//       setInputValue(event.target.value);
-//     },
-//     []
-//   );
-
-//   const handleInputKeyDown = useCallback(
-//     (event: ReactKeyboardEvent<HTMLInputElement>) => {
-//       if (!editor) {
-//         return;
-//       }
-
-//       if (
-//         event.key === "Escape" ||
-//         (inputValue === "" && event.key === "Backspace")
-//       ) {
-//         (editor.chain() as ExtendedChainedCommands<"closeAi">)
-//           .closeAi()
-//           .focus()
-//           .run();
-//       }
-//     },
-//     [editor, inputValue]
-//   );
-
-//   const handleInputBlur = useCallback(() => {
-//     (editor.chain() as ExtendedChainedCommands<"closeAi">).closeAi().run();
-//   }, [editor]);
 
 /**
  * A custom Floating UI middleware to position/scale the toolbar:
@@ -136,7 +110,7 @@ function DropdownItem({ children, icon }: DropdownItemProps) {
   );
 }
 
-function AiToolbarContent() {
+function AiToolbarContent({ editor }: { editor: Editor }) {
   const promptRef = useRef<HTMLTextAreaElement>(null);
   const [prompt, setPrompt] = useState("");
   const hasDropdownItems = useCommandState(
@@ -162,14 +136,26 @@ function AiToolbarContent() {
         if (event.shiftKey) {
           // If the shift key is pressed, add a new line
           setPrompt((prompt) => prompt + "\n");
-        } else if ("TODO") {
+        } else if ("TODO:") {
           // If there's a selected dropdown item, select it
         } else {
           // Submit the custom prompt
         }
+      } else if (
+        event.key === "Escape" ||
+        (event.key === "Backspace" && prompt === "")
+      ) {
+        // Close the toolbar on escape or backspace only when the prompt is empty
+        event.preventDefault();
+        event.stopPropagation();
+
+        (editor.chain() as ExtendedChainedCommands<"closeAi">)
+          .closeAi()
+          .focus()
+          .run();
       }
     },
-    []
+    [prompt, editor]
   );
 
   const handlePromptChange = useCallback(
@@ -337,7 +323,7 @@ export const AiToolbar = forwardRef<HTMLDivElement, AiToolbarProps>(
             }}
             {...props}
           >
-            <AiToolbarContent />
+            <AiToolbarContent editor={editor} />
           </Command>
         </EditorProvider>
       </TooltipProvider>,
