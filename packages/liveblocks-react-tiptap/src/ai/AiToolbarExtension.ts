@@ -23,6 +23,11 @@ export const AiToolbarExtension = Extension.create<
   addCommands() {
     return {
       askAi: () => () => {
+        // If there's no selection yet, put the selection at the start of the document
+        if (this.editor.state.selection.$from.depth === 0) {
+          this.editor.chain().focus().setTextSelection(0).run();
+        }
+
         // If the selection is collapsed, select the whole current block
         if (this.editor.state.selection.empty) {
           const { $from } = this.editor.state.selection;
