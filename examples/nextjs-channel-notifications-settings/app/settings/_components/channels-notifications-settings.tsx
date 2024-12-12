@@ -24,7 +24,8 @@ export function ChannelsNotificationsSettings() {
     settings.teams
   );
   const isWebPushChannelEnabled = isChannelNotificationSettingEnabled(
-    settings.webPush
+    // @ts-expect-error because of bad casing coming from the backend
+    settings.webPush ?? settings.push
   );
 
   const handleChangeEmailChannel = (checked: boolean): void => {
@@ -150,7 +151,7 @@ export function ChannelsNotificationsSettings() {
           <Switch.Root
             className={cn(
               "w-11 h-6 rounded-full relative inline-flex items-center transition-colors",
-              settings.email.thread ? "bg-green-500" : "bg-gray-200"
+              settings.email.textMention ? "bg-green-500" : "bg-gray-200"
             )}
             id="textMentionNotifications"
             name="textMentionNotifications"
@@ -173,7 +174,7 @@ export function ChannelsNotificationsSettings() {
           <Switch.Root
             className={cn(
               "w-11 h-6 rounded-full relative inline-flex items-center transition-colors",
-              settings.email ? "bg-green-500" : "bg-gray-200"
+              settings.email.$fileUploaded ? "bg-green-500" : "bg-gray-200"
             )}
             id="$customNotifications"
             name="$customNotifications"
