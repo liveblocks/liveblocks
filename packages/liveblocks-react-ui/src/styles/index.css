@@ -316,6 +316,7 @@
   font-weight: 600;
   font-size: 0.675em;
   text-transform: uppercase;
+  pointer-events: none;
 
   &:where(:first-child) {
     padding-block-start: var(--lb-spacing);

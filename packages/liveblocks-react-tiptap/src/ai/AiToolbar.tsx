@@ -14,14 +14,21 @@ import {
   useRefs,
 } from "@liveblocks/react-ui/_private";
 import { type Editor, useEditorState } from "@tiptap/react";
-import { Command } from "cmdk";
-import type { ComponentProps, PropsWithChildren, ReactNode } from "react";
+import { Command, useCommandState } from "cmdk";
+import type {
+  ChangeEvent,
+  ComponentProps,
+  KeyboardEvent,
+  PropsWithChildren,
+  ReactNode,
+} from "react";
 import React, {
   forwardRef,
   useCallback,
   useLayoutEffect,
   useMemo,
   useRef,
+  useState,
 } from "react";
 import { createPortal } from "react-dom";
 
@@ -121,6 +128,90 @@ function DropdownItem({ children, icon }: DropdownItemProps) {
   );
 }
 
+function AiToolbarContent() {
+  const promptRef = useRef<HTMLTextAreaElement>(null);
+  const [prompt, setPrompt] = useState("");
+  const resultsCount = useCommandState(
+    (state) => state.filtered.count
+  ) as number;
+
+  useLayoutEffect(() => {
+    if (!promptRef.current) {
+      return;
+    }
+
+    setTimeout(() => {
+      promptRef.current?.focus();
+    }, 0);
+  }, []);
+
+  const handlePromptKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLTextAreaElement>) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        event.stopPropagation();
+
+        if (event.shiftKey) {
+          // If the shift key is pressed, add a new line
+          setPrompt((prompt) => prompt + "\n");
+        } else if ("TODO") {
+          // If there's a selected dropdown item, select it
+        } else {
+          // Submit the custom prompt
+        }
+      }
+    },
+    []
+  );
+
+  const handlePromptChange = useCallback(
+    (event: ChangeEvent<HTMLTextAreaElement>) => {
+      setPrompt(event.target.value);
+    },
+    []
+  );
+
+  return (
+    <>
+      <div className="lb-elevation lb-tiptap-ai-toolbar-prompt-container">
+        <Command.Input asChild>
+          <textarea
+            ref={promptRef}
+            className="lb-tiptap-ai-toolbar-prompt"
+            placeholder="Ask AI anything…"
+            value={prompt}
+            onChange={handlePromptChange}
+            onKeyDown={handlePromptKeyDown}
+            autoFocus
+          />
+        </Command.Input>
+        <EmojiIcon />
+      </div>
+      <div className="lb-elevation lb-dropdown lb-tiptap-ai-toolbar-dropdown">
+        {resultsCount}
+        <Command.List>
+          <Command.Group
+            heading={<span className="lb-dropdown-label">Generate</span>}
+          >
+            <DropdownItem icon={<CheckIcon />}>Improve writing</DropdownItem>
+            <DropdownItem icon={<CheckIcon />}>Fix mistakes</DropdownItem>
+            <DropdownItem icon={<CheckIcon />}>Simplify</DropdownItem>
+            <DropdownItem icon={<CheckIcon />}>Add more detail</DropdownItem>
+          </Command.Group>
+          <Command.Group
+            heading={
+              <span className="lb-dropdown-label">Modify selection</span>
+            }
+          >
+            <DropdownItem icon={<CheckIcon />}>Summarize</DropdownItem>
+            <DropdownItem icon={<CheckIcon />}>Explain</DropdownItem>
+          </Command.Group>
+        </Command.List>
+      </div>
+    </>
+  );
+}
+
 export const AiToolbar = forwardRef<HTMLDivElement, AiToolbarProps>(
   (
     {
@@ -176,7 +267,6 @@ export const AiToolbar = forwardRef<HTMLDivElement, AiToolbarProps>(
       open: isOpen,
     });
     const mergedRefs = useRefs(forwardedRef, setFloating);
-    const promptRef = useRef<HTMLTextAreaElement>(null);
 
     useLayoutEffect(() => {
       if (!editor || !isOpen) {
@@ -194,16 +284,6 @@ export const AiToolbar = forwardRef<HTMLDivElement, AiToolbarProps>(
         setReference(domRange);
       }
     }, [aiToolbarSelection, editor, isOpen, setReference]);
-
-    useLayoutEffect(() => {
-      if (!editor || !isOpen || !promptRef.current) {
-        return;
-      }
-
-      setTimeout(() => {
-        promptRef.current?.focus();
-      }, 0);
-    }, [editor, isOpen]);
 
     if (!editor || !isOpen) {
       return null;
@@ -232,41 +312,7 @@ export const AiToolbar = forwardRef<HTMLDivElement, AiToolbarProps>(
             }}
             {...props}
           >
-            <div className="lb-elevation lb-tiptap-ai-toolbar-prompt-container">
-              <Command.Input asChild>
-                <textarea
-                  ref={promptRef}
-                  className="lb-tiptap-ai-toolbar-prompt"
-                  placeholder="Ask AI anything…"
-                  autoFocus
-                />
-              </Command.Input>
-              <EmojiIcon />
-            </div>
-            <div className="lb-elevation lb-dropdown lb-tiptap-ai-toolbar-dropdown">
-              <Command.List>
-                <Command.Group
-                  heading={<span className="lb-dropdown-label">Generate</span>}
-                >
-                  <DropdownItem icon={<CheckIcon />}>
-                    Improve writing
-                  </DropdownItem>
-                  <DropdownItem icon={<CheckIcon />}>Fix mistakes</DropdownItem>
-                  <DropdownItem icon={<CheckIcon />}>Simplify</DropdownItem>
-                  <DropdownItem icon={<CheckIcon />}>
-                    Add more detail
-                  </DropdownItem>
-                </Command.Group>
-                <Command.Group
-                  heading={
-                    <span className="lb-dropdown-label">Modify selection</span>
-                  }
-                >
-                  <DropdownItem icon={<CheckIcon />}>Summarize</DropdownItem>
-                  <DropdownItem icon={<CheckIcon />}>Explain</DropdownItem>
-                </Command.Group>
-              </Command.List>
-            </div>
+            <AiToolbarContent />
           </Command>
         </EditorProvider>
       </TooltipProvider>,

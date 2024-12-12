@@ -295,7 +295,6 @@
   background: transparent;
   outline: none;
   resize: none;
-  appearance: textfield;
 
   &::placeholder {
     color: var(--lb-foreground-moderate);
