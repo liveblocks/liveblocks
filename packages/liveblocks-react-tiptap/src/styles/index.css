@@ -290,6 +290,7 @@
 .lb-tiptap-ai-toolbar-prompt {
   all: unset;
   background: transparent;
+  color: var(--lb-foreground);
   outline: none;
   resize: none;
 
