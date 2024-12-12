@@ -20,6 +20,7 @@ import React, {
   useEffect,
   useLayoutEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { createPortal } from "react-dom";
@@ -45,6 +46,7 @@ export interface FloatingToolbarProps
 }
 
 export const FLOATING_TOOLBAR_COLLISION_PADDING = 10;
+const FLOATING_TOOLBAR_OPEN_DELAY = 50;
 
 function DefaultFloatingToolbarContent({ editor }: ToolbarSlotProps) {
   const supportsThread = "addPendingComment" in editor.commands;
@@ -122,7 +124,26 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
           );
         },
       }) ?? false;
+
     const isOpen = isFocused && !isPointerDown && hasSelectionRange;
+    const [delayedIsOpen, setDelayedIsOpen] = useState(isOpen);
+    const delayedIsOpenTimeoutRef = useRef<number>();
+
+    // Delay the opening of the toolbar to avoid flickering issues
+    useEffect(() => {
+      if (isOpen) {
+        delayedIsOpenTimeoutRef.current = window.setTimeout(() => {
+          setDelayedIsOpen(true);
+        }, FLOATING_TOOLBAR_OPEN_DELAY);
+      } else {
+        setDelayedIsOpen(false);
+      }
+
+      return () => {
+        window.clearTimeout(delayedIsOpenTimeoutRef.current);
+      };
+    }, [isOpen]);
+
     const floatingOptions: UseFloatingOptions = useMemo(() => {
       const detectOverflowOptions: DetectOverflowOptions = {
         padding: FLOATING_TOOLBAR_COLLISION_PADDING,
@@ -157,7 +178,7 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
       isPositioned,
     } = useFloating({
       ...floatingOptions,
-      open: isOpen,
+      open: delayedIsOpen,
     });
     const mergedRefs = useRefs(forwardedRef, setFloating);
 
@@ -195,7 +216,7 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
     }, [editor, isEditable]);
 
     useLayoutEffect(() => {
-      if (!editor || !isOpen) {
+      if (!editor || !delayedIsOpen) {
         return;
       }
 
@@ -221,7 +242,7 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
       return () => {
         editor.off("transaction", updateSelectionReference);
       };
-    }, [editor, isOpen, setReference]);
+    }, [editor, delayedIsOpen, setReference]);
 
     useEffect(() => {
       if (!editor) {
@@ -240,9 +261,9 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
       return () => {
         editor.view.dom.removeEventListener("keydown", handleKeyDown);
       };
-    }, [editor, isOpen]);
+    }, [editor]);
 
-    if (!editor || !isOpen) {
+    if (!editor || !delayedIsOpen) {
       return null;
     }
 
