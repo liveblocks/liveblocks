@@ -334,7 +334,12 @@
   }
 }
 
-.lb-dropdown-item:where(:is([data-highlighted], [data-selected])) {
+.lb-dropdown-item:where(
+    :is(
+        [data-highlighted]:not([data-highlighted="false"]),
+        [data-selected]:not([data-selected="false"])
+      )
+  ) {
   :where(.lb-icon-container, .lb-dropdown-subitem-chevron) {
     color: var(--lb-foreground-tertiary);
   }
@@ -757,7 +762,7 @@
   padding: var(--lb-spacing);
   outline: none;
 
-  &:where([data-disabled]) {
+  &:where([data-disabled]:not([data-disabled="false"])) {
     opacity: 0.5;
     cursor: not-allowed;
   }
@@ -774,7 +779,7 @@
 .lb-composer-mention {
   @include invisible-selection;
 
-  &:where([data-selected]) {
+  &:where([data-selected]:not([data-selected="false"])) {
     background: var(--lb-accent);
     color: var(--lb-accent-foreground);
   }
@@ -1644,7 +1649,12 @@
   background: var(--lb-dynamic-background);
   transition-property: background;
 
-  &:where(:hover, :focus-visible, :focus-within, [data-selected]) {
+  &:where(
+      :hover,
+      :focus-visible,
+      :focus-within,
+      [data-selected]:not([data-selected="false"])
+    ) {
     --lb-dynamic-background: var(--lb-background-foreground-faint);
   }
 }
@@ -1830,12 +1840,15 @@
     .lb-composer-suggestions-list-item,
     .lb-emoji-picker-emoji
   ) {
-  &:where([data-highlighted], [data-selected]) {
+  &:where(
+      [data-highlighted]:not([data-highlighted="false"]),
+      [data-selected]:not([data-selected="false"])
+    ) {
     background: var(--lb-foreground-subtle);
     transition-duration: calc(var(--lb-transition-duration) / 2);
   }
 
-  &:where(:disabled, [data-disabled]) {
+  &:where(:disabled, [data-disabled]:not([data-disabled="false"])) {
     opacity: 0.5;
     cursor: not-allowed;
   }

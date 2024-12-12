@@ -58,12 +58,15 @@
 }
 
 :is(.lb-lexical-suggestions-list-item) {
-  &:where([data-highlighted], [data-selected]) {
+  &:where(
+      [data-highlighted]:not([data-highlighted="false"]),
+      [data-selected]:not([data-selected="false"])
+    ) {
     background: var(--lb-foreground-subtle);
     transition-duration: calc(var(--lb-transition-duration) / 2);
   }
 
-  &:where(:disabled, [data-disabled]) {
+  &:where(:disabled, [data-disabled]:not([data-disabled="false"])) {
     opacity: 0.5;
     cursor: not-allowed;
   }
@@ -107,7 +110,7 @@
 
   @include invisible-selection;
 
-  &:where([data-selected]) {
+  &:where([data-selected]:not([data-selected="false"])) {
     background: var(--lb-accent);
     color: var(--lb-accent-foreground);
   }

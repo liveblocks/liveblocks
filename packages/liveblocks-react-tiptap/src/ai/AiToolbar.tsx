@@ -8,13 +8,21 @@ import {
   type UseFloatingOptions,
 } from "@floating-ui/react-dom";
 import {
+  CheckIcon,
   EmojiIcon,
   TooltipProvider,
   useRefs,
 } from "@liveblocks/react-ui/_private";
 import { type Editor, useEditorState } from "@tiptap/react";
-import type { ComponentProps } from "react";
-import React, { forwardRef, useLayoutEffect, useMemo, useRef } from "react";
+import { Command } from "cmdk";
+import type { ComponentProps, PropsWithChildren, ReactNode } from "react";
+import React, {
+  forwardRef,
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+} from "react";
 import { createPortal } from "react-dom";
 
 import { classNames } from "../classnames";
@@ -23,7 +31,7 @@ import type { AiToolbarExtensionStorage, FloatingPosition } from "../types";
 import { compareTextSelections, getDomRangeFromTextSelection } from "../utils";
 
 export interface AiToolbarProps
-  extends Omit<ComponentProps<"div">, "children"> {
+  extends Omit<ComponentProps<"div">, "children" | "value" | "defaultValue"> {
   editor: Editor | null;
   position?: FloatingPosition;
   offset?: number;
@@ -94,6 +102,25 @@ function tiptapFloating(editor: Editor | null): Middleware {
   };
 }
 
+interface DropdownItemProps extends PropsWithChildren {
+  icon?: ReactNode;
+}
+
+function DropdownItem({ children, icon }: DropdownItemProps) {
+  const handleSelect = useCallback(() => {
+    console.log("Click");
+  }, []);
+
+  return (
+    <Command.Item className="lb-dropdown-item" onSelect={handleSelect}>
+      {icon ? <span className="lb-icon-container">{icon}</span> : null}
+      {children ? (
+        <span className="lb-dropdown-item-label">{children}</span>
+      ) : null}
+    </Command.Item>
+  );
+}
+
 export const AiToolbar = forwardRef<HTMLDivElement, AiToolbarProps>(
   (
     {
@@ -149,7 +176,7 @@ export const AiToolbar = forwardRef<HTMLDivElement, AiToolbarProps>(
       open: isOpen,
     });
     const mergedRefs = useRefs(forwardedRef, setFloating);
-    const inputRef = useRef<HTMLInputElement>(null);
+    const promptRef = useRef<HTMLTextAreaElement>(null);
 
     useLayoutEffect(() => {
       if (!editor || !isOpen) {
@@ -169,12 +196,12 @@ export const AiToolbar = forwardRef<HTMLDivElement, AiToolbarProps>(
     }, [aiToolbarSelection, editor, isOpen, setReference]);
 
     useLayoutEffect(() => {
-      if (!editor || !isOpen || !inputRef.current) {
+      if (!editor || !isOpen || !promptRef.current) {
         return;
       }
 
       setTimeout(() => {
-        inputRef.current?.focus();
+        promptRef.current?.focus();
       }, 0);
     }, [editor, isOpen]);
 
@@ -185,12 +212,12 @@ export const AiToolbar = forwardRef<HTMLDivElement, AiToolbarProps>(
     return createPortal(
       <TooltipProvider>
         <EditorProvider editor={editor}>
-          <div
+          <Command
             role="toolbar"
-            aria-label="Ask AI toolbar"
+            label="AI toolbar"
             aria-orientation="horizontal"
             className={classNames(
-              "lb-root lb-portal lb-elevation lb-tiptap-ai-toolbar",
+              "lb-root lb-portal lb-tiptap-ai-toolbar",
               className
             )}
             ref={mergedRefs}
@@ -205,17 +232,42 @@ export const AiToolbar = forwardRef<HTMLDivElement, AiToolbarProps>(
             }}
             {...props}
           >
-            <div className="lb-tiptap-ai-toolbar-input-container">
-              <input
-                ref={inputRef}
-                type="text"
-                className="lb-tiptap-ai-toolbar-input"
-                placeholder="Ask AI anything…"
-                autoFocus
-              />
+            <div className="lb-elevation lb-tiptap-ai-toolbar-prompt-container">
+              <Command.Input asChild>
+                <textarea
+                  ref={promptRef}
+                  className="lb-tiptap-ai-toolbar-prompt"
+                  placeholder="Ask AI anything…"
+                  autoFocus
+                />
+              </Command.Input>
               <EmojiIcon />
             </div>
-          </div>
+            <div className="lb-elevation lb-dropdown lb-tiptap-ai-toolbar-dropdown">
+              <Command.List>
+                <Command.Group
+                  heading={<span className="lb-dropdown-label">Generate</span>}
+                >
+                  <DropdownItem icon={<CheckIcon />}>
+                    Improve writing
+                  </DropdownItem>
+                  <DropdownItem icon={<CheckIcon />}>Fix mistakes</DropdownItem>
+                  <DropdownItem icon={<CheckIcon />}>Simplify</DropdownItem>
+                  <DropdownItem icon={<CheckIcon />}>
+                    Add more detail
+                  </DropdownItem>
+                </Command.Group>
+                <Command.Group
+                  heading={
+                    <span className="lb-dropdown-label">Modify selection</span>
+                  }
+                >
+                  <DropdownItem icon={<CheckIcon />}>Summarize</DropdownItem>
+                  <DropdownItem icon={<CheckIcon />}>Explain</DropdownItem>
+                </Command.Group>
+              </Command.List>
+            </div>
+          </Command>
         </EditorProvider>
       </TooltipProvider>,
       document.body
