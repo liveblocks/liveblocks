@@ -265,7 +265,7 @@
 }
 
 .lb-tiptap-ai-toolbar {
-  --lb-tiptap-ai-toolbar-padding: calc(0.625 * var(--lb-spacing));
+  --lb-tiptap-ai-toolbar-padding: calc(0.5 * var(--lb-spacing));
 
   inline-size: var(--lb-tiptap-editor-width);
 }
@@ -306,9 +306,7 @@
   box-sizing: inherit;
   inline-size: 100%;
   min-inline-size: 0;
-  min-block-size: calc(
-    $lb-button-size + 2 * var(--lb-tiptap-ai-toolbar-padding)
-  );
+  min-block-size: calc(1lh + 2 * var(--lb-tiptap-ai-toolbar-padding));
   max-block-size: calc(6lh + 2 * var(--lb-tiptap-ai-toolbar-padding));
   padding: var(--lb-tiptap-ai-toolbar-padding);
   padding-inline-start: calc(
@@ -316,11 +314,10 @@
       var(--lb-spacing)
   );
   padding-inline-end: calc(
-    $lb-button-size + var(--lb-tiptap-ai-toolbar-padding) + 0.375 *
-      var(--lb-spacing)
+    1lh + var(--lb-tiptap-ai-toolbar-padding) + 0.375 * var(--lb-spacing)
   );
   font: inherit;
-  line-height: inherit;
+  line-height: $lb-button-size;
   letter-spacing: inherit;
   white-space: pre-wrap;
   scroll-padding-block: var(--lb-tiptap-ai-toolbar-padding);
