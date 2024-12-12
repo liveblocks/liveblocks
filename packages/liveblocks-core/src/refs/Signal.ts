@@ -39,7 +39,7 @@ export function merge<T>(target: T, patch: Partial<T>): T {
 /* eslint-disable no-restricted-syntax */
 interface ReadonlySignal<T> {
   name: string;
-  numSubscribers: number;
+  hasWatchers: boolean;
   get(): T;
   subscribe(callback: () => void): () => void;
 }
@@ -72,8 +72,8 @@ export class Signal<T> implements ReadonlySignal<T> {
     globalThis.console.log("💥 Disposing signal!");
   }
 
-  get numSubscribers(): number {
-    return this.#event.count();
+  get hasWatchers(): boolean {
+    return this.#event.count() > 0;
   }
 
   get(): T {
@@ -168,8 +168,8 @@ export class DerivedSignal<T> implements ReadonlySignal<T> {
     globalThis.console.log("💥 Disposing derived signal!");
   }
 
-  get numSubscribers(): number {
-    return this.#event.count();
+  get hasWatchers(): boolean {
+    return this.#event.count() > 0;
   }
 
   #recompute(): void {
@@ -238,12 +238,11 @@ export class DerivedSignal<T> implements ReadonlySignal<T> {
   }
 
   subscribe(callback: () => void): UnsubscribeCallback {
-    const hadSubscribers = this.#event.count() > 0;
-
+    const hadWatchersBefore = this.hasWatchers;
     const unsub = this.#event.subscribe(callback);
 
     // If this is the first subscriber, link the Signal up to the parent!
-    if (!hadSubscribers) {
+    if (!hadWatchersBefore) {
       this.#hookup();
     }
 
@@ -252,7 +251,7 @@ export class DerivedSignal<T> implements ReadonlySignal<T> {
 
       // If this was the last subscriber unlinking, also unlink this
       // signal from its parent, so it can be garbage collected.
-      if (this.#event.count() === 0) {
+      if (!this.hasWatchers) {
         this.#unlinkFromParents?.();
       }
     };
