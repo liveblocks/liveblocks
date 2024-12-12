@@ -10,10 +10,15 @@ import {
 import {
   Button,
   CheckIcon,
+  EditIcon,
   EmojiIcon,
+  LengthenIcon,
+  QuestionMarkIcon,
   SendIcon,
   ShortcutTooltip,
+  ShortenIcon,
   TooltipProvider,
+  TranslateIcon,
   useRefs,
 } from "@liveblocks/react-ui/_private";
 import { type Editor, useEditorState } from "@tiptap/react";
@@ -214,18 +219,18 @@ function AiToolbarContent() {
           <Command.Group
             heading={<span className="lb-dropdown-label">Generate</span>}
           >
-            <DropdownItem icon={<CheckIcon />}>Improve writing</DropdownItem>
+            <DropdownItem icon={<EditIcon />}>Improve writing</DropdownItem>
             <DropdownItem icon={<CheckIcon />}>Fix mistakes</DropdownItem>
-            <DropdownItem icon={<CheckIcon />}>Simplify</DropdownItem>
-            <DropdownItem icon={<CheckIcon />}>Add more detail</DropdownItem>
+            <DropdownItem icon={<ShortenIcon />}>Simplify</DropdownItem>
+            <DropdownItem icon={<LengthenIcon />}>Add more detail</DropdownItem>
           </Command.Group>
           <Command.Group
             heading={
               <span className="lb-dropdown-label">Modify selection</span>
             }
           >
-            <DropdownItem icon={<CheckIcon />}>Summarize</DropdownItem>
-            <DropdownItem icon={<CheckIcon />}>Explain</DropdownItem>
+            <DropdownItem icon={<TranslateIcon />}>Translate</DropdownItem>
+            <DropdownItem icon={<QuestionMarkIcon />}>Explain</DropdownItem>
           </Command.Group>
         </Command.List>
       </div>
