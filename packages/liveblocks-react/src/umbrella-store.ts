@@ -1927,10 +1927,11 @@ function internalToExternalState<M extends BaseMetadata>(
 
       case "update-channels-notification-settings": {
         const settings = computed.channelsNotificationSettings;
-        const updatedSettings = applyDeepOptimisticChannelsNotificationSettings(
-          settings,
-          optimisticUpdate.settings
-        );
+        const updatedSettings =
+          applyDeepOptimisticChannelsNotificationSettingsUpdate(
+            settings,
+            optimisticUpdate.settings
+          );
 
         computed.channelsNotificationSettings = updatedSettings;
 
@@ -2214,13 +2215,13 @@ export function applyAddReaction<M extends BaseMetadata>(
 
 /**
  *
- * @internal
+ * @internal - exported for internal test only
  *
  * Applies a deep optimistic update for channels notification settings
  * and remove potential `undefined` properties from the final outcoming object
  * because we update with a deep partial `ChannelsNotificationSettings`.
  */
-function applyDeepOptimisticChannelsNotificationSettings(
+export function applyDeepOptimisticChannelsNotificationSettingsUpdate(
   existingSettings: ChannelsNotificationSettings,
   incomingSettings: PartialChannelsNotificationSettings
 ): ChannelsNotificationSettings {
