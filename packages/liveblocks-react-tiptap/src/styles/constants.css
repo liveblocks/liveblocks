@@ -1,3 +1,4 @@
+$lb-button-size: calc(2 * 0.25 * var(--lb-spacing) + var(--lb-icon-size));
 $lb-elevation-padding: 4px;
 $lb-tiptap-anchored-threads-shadow:
   0 0 0 1px rgb(0 0 0 / 4%),

@@ -8,8 +8,10 @@ import {
   type UseFloatingOptions,
 } from "@floating-ui/react-dom";
 import {
+  Button,
   CheckIcon,
   EmojiIcon,
+  SendIcon,
   TooltipProvider,
   useRefs,
 } from "@liveblocks/react-ui/_private";
@@ -131,9 +133,9 @@ function DropdownItem({ children, icon }: DropdownItemProps) {
 function AiToolbarContent() {
   const promptRef = useRef<HTMLTextAreaElement>(null);
   const [prompt, setPrompt] = useState("");
-  const resultsCount = useCommandState(
-    (state) => state.filtered.count
-  ) as number;
+  const hasDropdownItems = useCommandState(
+    (state) => state.filtered.count > 0
+  ) as boolean;
 
   useLayoutEffect(() => {
     if (!promptRef.current) {
@@ -173,7 +175,10 @@ function AiToolbarContent() {
 
   return (
     <>
-      <div className="lb-elevation lb-tiptap-ai-toolbar-prompt-container">
+      <div
+        className="lb-elevation lb-tiptap-ai-toolbar-prompt-container"
+        data-value={prompt}
+      >
         <Command.Input asChild>
           <textarea
             ref={promptRef}
@@ -182,13 +187,26 @@ function AiToolbarContent() {
             value={prompt}
             onChange={handlePromptChange}
             onKeyDown={handlePromptKeyDown}
+            rows={1}
             autoFocus
           />
         </Command.Input>
-        <EmojiIcon />
+        <div className="lb-tiptap-ai-toolbar-decorations">
+          <span className="lb-tiptap-ai-toolbar-icon-container">
+            <EmojiIcon />
+          </span>
+          <Button
+            className="lb-tiptap-ai-toolbar-action"
+            variant="primary"
+            aria-label="TODO:"
+            icon={<SendIcon />}
+          />
+        </div>
       </div>
-      <div className="lb-elevation lb-dropdown lb-tiptap-ai-toolbar-dropdown">
-        {resultsCount}
+      <div
+        className="lb-elevation lb-dropdown lb-tiptap-ai-toolbar-dropdown"
+        data-hidden={!hasDropdownItems ? "" : undefined}
+      >
         <Command.List>
           <Command.Group
             heading={<span className="lb-dropdown-label">Generate</span>}
@@ -308,7 +326,6 @@ export const AiToolbar = forwardRef<HTMLDivElement, AiToolbarProps>(
               transform: isPositioned
                 ? `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`
                 : "translate3d(0, -200%, 0)",
-              minWidth: "max-content",
             }}
             {...props}
           >

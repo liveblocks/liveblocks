@@ -1811,6 +1811,10 @@
 .lb-composer-suggestions {
   overflow-block: auto;
   padding: $lb-elevation-padding;
+
+  &:where([data-hidden]) {
+    opacity: 0;
+  }
 }
 
 .lb-dropdown-item,

@@ -272,26 +272,22 @@
 
 .lb-tiptap-ai-toolbar-prompt-container {
   position: relative;
-  display: flex;
-  align-items: center;
+  z-index: auto;
+  display: grid;
 
-  :where(.lb-icon) {
-    position: absolute;
-    inset-inline-start: var(--lb-tiptap-ai-toolbar-padding);
-    color: var(--lb-foreground-moderate);
-    pointer-events: none;
+  &::before {
+    /* The space is important when handling new lines */
+    content: attr(data-value) " ";
+    visibility: hidden;
   }
+}
+
+.lb-tiptap-ai-toolbar-icon-container {
+  color: var(--lb-foreground-moderate);
 }
 
 .lb-tiptap-ai-toolbar-prompt {
   all: unset;
-  box-sizing: inherit;
-  inline-size: 100%;
-  padding: var(--lb-tiptap-ai-toolbar-padding);
-  padding-inline-start: calc(
-    var(--lb-icon-size) + var(--lb-tiptap-ai-toolbar-padding) + 0.375 *
-      var(--lb-spacing)
-  );
   background: transparent;
   outline: none;
   resize: none;
@@ -299,6 +295,48 @@
   &::placeholder {
     color: var(--lb-foreground-moderate);
   }
+}
+
+.lb-tiptap-ai-toolbar-prompt,
+.lb-tiptap-ai-toolbar-prompt-container::before {
+  z-index: 1;
+
+  /* Overlap the textarea and its value to auto-size it */
+  grid-area: 1 / 1 / 2 / 2;
+  box-sizing: inherit;
+  inline-size: 100%;
+  min-inline-size: 0;
+  min-block-size: calc(
+    $lb-button-size + 2 * var(--lb-tiptap-ai-toolbar-padding)
+  );
+  max-block-size: calc(6lh + 2 * var(--lb-tiptap-ai-toolbar-padding));
+  padding: var(--lb-tiptap-ai-toolbar-padding);
+  padding-inline-start: calc(
+    var(--lb-icon-size) + var(--lb-tiptap-ai-toolbar-padding) + 0.375 *
+      var(--lb-spacing)
+  );
+  padding-inline-end: calc(
+    $lb-button-size + var(--lb-tiptap-ai-toolbar-padding) + 0.375 *
+      var(--lb-spacing)
+  );
+  font: inherit;
+  line-height: inherit;
+  letter-spacing: inherit;
+  white-space: pre-wrap;
+  scroll-padding-block: var(--lb-tiptap-ai-toolbar-padding);
+}
+
+.lb-tiptap-ai-toolbar-decorations {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  z-index: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  inline-size: 100%;
+  block-size: calc($lb-button-size + 2 * var(--lb-tiptap-ai-toolbar-padding));
+  padding: var(--lb-tiptap-ai-toolbar-padding);
 }
 
 .lb-tiptap-ai-toolbar-dropdown {
