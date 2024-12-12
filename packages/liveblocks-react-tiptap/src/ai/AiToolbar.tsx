@@ -118,12 +118,13 @@ function AiToolbarContent({ editor }: { editor: Editor }) {
   ) as boolean;
 
   useLayoutEffect(() => {
-    if (!promptRef.current) {
-      return;
-    }
-
     setTimeout(() => {
-      promptRef.current?.focus();
+      if (!promptRef.current) {
+        return;
+      }
+
+      promptRef.current.focus();
+      promptRef.current.select();
     }, 0);
   }, []);
 
