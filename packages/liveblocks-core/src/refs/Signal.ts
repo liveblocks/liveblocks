@@ -1,5 +1,6 @@
 /* eslint-disable */
 import type {
+  Callback,
   EventSource,
   Observable,
   UnsubscribeCallback,
@@ -38,10 +39,10 @@ export function merge<T>(target: T, patch: Partial<T>): T {
 
 /* eslint-disable no-restricted-syntax */
 interface ReadonlySignal<T> {
-  name: string;
+  name: string; // XXX Remove this after debugging
   hasWatchers: boolean;
   get(): T;
-  subscribe(callback: () => void): () => void;
+  subscribe(callback: Callback<void>): UnsubscribeCallback;
 }
 
 let signalId = 1;
@@ -90,7 +91,7 @@ export class Signal<T> implements ReadonlySignal<T> {
     }
   }
 
-  subscribe(callback: () => void): () => void {
+  subscribe(callback: Callback<void>): UnsubscribeCallback {
     return this.#event.subscribe(callback);
   }
 }
@@ -237,7 +238,7 @@ export class DerivedSignal<T> implements ReadonlySignal<T> {
     };
   }
 
-  subscribe(callback: () => void): UnsubscribeCallback {
+  subscribe(callback: Callback<void>): UnsubscribeCallback {
     const hadWatchersBefore = this.hasWatchers;
     const unsub = this.#event.subscribe(callback);
 
