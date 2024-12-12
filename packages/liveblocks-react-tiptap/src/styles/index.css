@@ -274,6 +274,7 @@
   position: relative;
   z-index: auto;
   display: grid;
+  line-height: $lb-button-size;
 
   &::before {
     /* The space is important when handling new lines */
@@ -299,8 +300,6 @@
 
 .lb-tiptap-ai-toolbar-prompt,
 .lb-tiptap-ai-toolbar-prompt-container::before {
-  z-index: 1;
-
   /* Overlap the textarea and its value to auto-size it */
   grid-area: 1 / 1 / 2 / 2;
   box-sizing: inherit;
@@ -317,7 +316,6 @@
     1lh + var(--lb-tiptap-ai-toolbar-padding) + 0.375 * var(--lb-spacing)
   );
   font: inherit;
-  line-height: $lb-button-size;
   letter-spacing: inherit;
   white-space: pre-wrap;
   scroll-padding-block: var(--lb-tiptap-ai-toolbar-padding);
@@ -327,13 +325,17 @@
   position: absolute;
   inset-inline: 0;
   inset-block-end: 0;
-  z-index: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
   inline-size: 100%;
-  block-size: calc($lb-button-size + 2 * var(--lb-tiptap-ai-toolbar-padding));
+  block-size: calc(1lh + 2 * var(--lb-tiptap-ai-toolbar-padding));
   padding: var(--lb-tiptap-ai-toolbar-padding);
+  pointer-events: none;
+
+  :where(.lb-button) {
+    pointer-events: auto;
+  }
 }
 
 .lb-tiptap-ai-toolbar-dropdown {
