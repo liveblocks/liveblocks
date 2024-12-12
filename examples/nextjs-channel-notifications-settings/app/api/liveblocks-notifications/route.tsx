@@ -1,5 +1,8 @@
 import { Resend } from "resend";
-import { prepareThreadNotificationEmailAsReact } from "@liveblocks/emails";
+import {
+  prepareThreadNotificationEmailAsReact,
+  prepareTextMentionNotificationEmailAsReact,
+} from "@liveblocks/emails";
 import {
   isThreadNotificationEvent,
   isTextMentionNotificationEvent,
@@ -12,6 +15,7 @@ import { render } from "@react-email/render";
 
 import UnreadMentionEmail from "../../../emails/UnreadMention";
 import UnreadRepliesEmail from "../../../emails/UnreadReplies";
+import UnreadTextMention from "../../../emails/UnreadTextMention";
 
 import { USER_INFO } from "../dummy-users";
 
@@ -159,12 +163,114 @@ export async function POST(request: Request) {
     }
   } else if (isTextMentionNotificationEvent(event)) {
     console.log("text mention notification event");
-    // Send text mention kind notification email
-    return new Response(null, { status: 200 });
+    if (event.data.channel === "email") {
+      let emailData;
+
+      try {
+        emailData = await prepareTextMentionNotificationEmailAsReact(
+          liveblocks,
+          event,
+          {
+            resolveUsers: async ({ userIds }) => {
+              const indices = [...USER_INFO.keys()];
+              const users = new Map();
+
+              for (const index of indices) {
+                users.set(`user-${index}`, USER_INFO[index]);
+              }
+
+              return userIds.map((userId) => users.get(userId)).filter(Boolean);
+            },
+            resolveRoomInfo: ({ roomId }) => {
+              return {
+                name: roomId,
+                url: `http://localhost:3000/?exampleId=${roomId}`,
+              };
+            },
+            // And the magic to use `react-email` components happens here 🥳
+            // Or you can use your own components if you're not using `react-email`
+            // to customize mentions' components.
+            components: {
+              Container: ({ children }) => (
+                <Text className="text-sm text-black m-0">{children}</Text>
+              ),
+              Mention: ({ element, user }) => (
+                <span className="text-email-accent font-medium">
+                  @{user?.name ?? element.userId}
+                </span>
+              ),
+            },
+          }
+        );
+      } catch (err) {
+        console.error(err);
+        return new Response("Something went wrong", { status: 400 });
+      }
+
+      if (emailData !== null) {
+        const company = {
+          name: "My Liveblocks App",
+          url: "https://my-liveblocks-app.com",
+        };
+        const room = {
+          name: emailData.roomInfo.name,
+          url: emailData.roomInfo.url,
+        };
+
+        const subject = "You have one unread notification";
+        // Render your email's HTML
+        const html = await render(
+          <UnreadTextMention
+            company={company}
+            room={room}
+            mention={emailData.mention}
+          />
+        );
+
+        // Render your email's HTML
+        const { error } = await resend.emails.send({
+          from: "My Liveblocks App <hello@my-liveblocks-app.com>",
+          to: "<some_user_email>@acme.inc",
+          subject,
+          html,
+        });
+
+        if (error) {
+          console.log(error);
+          return new Response(JSON.stringify(error), {
+            status: 500,
+          });
+        }
+
+        return new Response(null, { status: 200 });
+      }
+
+      return new Response("No email to send", { status: 200 });
+    } else if (event.data.channel === "slack") {
+      // send slack notification
+      return new Response(null, { status: 200 });
+    } else if (event.data.channel === "teams") {
+      // send teams notification
+      return new Response(null, { status: 200 });
+    } else if (event.data.channel === "webPush") {
+      // send web push notification
+      return new Response(null, { status: 200 });
+    }
   } else if (isCustomNotificationEvent(event)) {
-    // send custom notification kind email
     console.log("custom notification event");
-    return new Response(null, { status: 200 });
+    if (event.data.channel === "email") {
+      // send custom notification kind email
+      return new Response(null, { status: 200 });
+    } else if (event.data.channel === "slack") {
+      // send slack notification
+      return new Response(null, { status: 200 });
+    } else if (event.data.channel === "teams") {
+      // send teams notification
+      return new Response(null, { status: 200 });
+    } else if (event.data.channel === "webPush") {
+      // send web push notification
+      return new Response(null, { status: 200 });
+    }
   }
   return new Response("Event type not used", {
     status: 200,
