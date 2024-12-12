@@ -3,10 +3,9 @@ import { prepareThreadNotificationEmailAsReact } from "@liveblocks/emails";
 import {
   isThreadNotificationEvent,
   isTextMentionNotificationEvent,
+  isCustomNotificationEvent,
   WebhookHandler,
   Liveblocks,
-  WebhookEvent,
-  CustomNotificationEvent,
 } from "@liveblocks/node";
 import { Text } from "@react-email/components";
 import { render } from "@react-email/render";
@@ -15,13 +14,6 @@ import UnreadMentionEmail from "../../../emails/UnreadMention";
 import UnreadRepliesEmail from "../../../emails/UnreadReplies";
 
 import { USER_INFO } from "../dummy-users";
-
-// to be implemented in `@liveblocks/node`
-const isCustomNotificationEvent = (
-  event: WebhookEvent
-): event is CustomNotificationEvent => {
-  return event.type === "notification" && event.data.kind.startsWith("$");
-};
 
 // Add your Resend API key from https://resend.com/api-keys
 const resend = new Resend(process.env.RESEND_API_KEY as string);
