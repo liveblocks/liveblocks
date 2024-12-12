@@ -1722,7 +1722,17 @@ function internalToExternalState<M extends BaseMetadata>(
   const computed = {
     notificationsById: { ...state.notificationsById },
     settingsByRoomId: { ...state.settingsByRoomId },
-    channelsNotificationSettings: state.channelsNotificationSettings,
+    // Casting properly because:
+    //  At init channels notification settings are equals to `{}`.
+    //  After first load then settings take the real shape of `ChannelsNotificationSettings`.
+    //
+    // So optimistically when an update happens we return always an object
+    // shaped on the type `ChannelsNotificationSettings`. But we're forced to cast
+    // because of we need to wait the first load of channels notification settings and
+    // channels notification settings can contain custom notification kinds (e.g `$whatever`)
+    // in the augmentation (e.g `liveblocks.config.ts`).
+    channelsNotificationSettings:
+      state.channelsNotificationSettings as ChannelsNotificationSettings,
   };
 
   for (const optimisticUpdate of state.optimisticUpdates) {
@@ -1917,21 +1927,10 @@ function internalToExternalState<M extends BaseMetadata>(
 
       case "update-channels-notification-settings": {
         const settings = computed.channelsNotificationSettings;
-
-        // Casting properly because:
-        //  At init channels notification settings are equals to `{}`.
-        //  After first load then settings take the real shape of `ChannelsNotificationSettings`.
-        //  And we update with a partial `ChannelsNotificationSettings`.
-        //
-        // So optimistically when an update happens we return always an object
-        // shaped on the type `ChannelsNotificationSettings`. But we're forced to cast
-        // because of we need to wait the first load of channels notification settings and
-        // channels notification settings can contains custom notification kinds (e.g `$whatever`)
-        // in the augmentation (e.g `liveblocks.config.ts`).
-        const updatedSettings = {
-          ...settings,
-          ...optimisticUpdate.settings,
-        } as ChannelsNotificationSettings;
+        const updatedSettings = applyDeepOptimisticChannelsNotificationSettings(
+          settings,
+          optimisticUpdate.settings
+        );
 
         computed.channelsNotificationSettings = updatedSettings;
 
@@ -2211,6 +2210,41 @@ export function applyAddReaction<M extends BaseMetadata>(
     ),
     comments: updatedComments,
   };
+}
+
+/**
+ *
+ * @internal
+ *
+ * Applies a deep optimistic update for channels notification settings
+ * and remove potential `undefined` properties from the final outcoming object
+ * because we update with a deep partial `ChannelsNotificationSettings`.
+ */
+function applyDeepOptimisticChannelsNotificationSettings(
+  existingSettings: ChannelsNotificationSettings,
+  incomingSettings: PartialChannelsNotificationSettings
+): ChannelsNotificationSettings {
+  const outcomingSettings = { ...existingSettings };
+
+  for (const channelKey of Object.keys(incomingSettings)) {
+    const key = channelKey as keyof ChannelsNotificationSettings;
+    const channelUpdates = incomingSettings[key];
+
+    if (channelUpdates && typeof channelUpdates === "object") {
+      const realChannelUpdates = Object.fromEntries(
+        Object.entries(channelUpdates).filter(
+          ([_, value]) => value !== undefined
+        )
+      );
+
+      outcomingSettings[key] = {
+        ...outcomingSettings[key],
+        ...realChannelUpdates,
+      };
+    }
+  }
+
+  return outcomingSettings;
 }
 
 /** @internal Exported for unit tests only. */
