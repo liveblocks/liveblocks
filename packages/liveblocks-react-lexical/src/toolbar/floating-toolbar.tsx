@@ -138,11 +138,8 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
         return;
       }
 
-      const handlePointerDown = (event: PointerEvent) => {
-        // Ignore outer pointer events
-        if (editor.getRootElement()?.contains(event.target as Node)) {
-          setPointerDown(true);
-        }
+      const handlePointerDown = () => {
+        setPointerDown(true);
       };
       const handlePointerUp = () => {
         setPointerDown(false);
