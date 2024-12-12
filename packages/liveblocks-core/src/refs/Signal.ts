@@ -37,16 +37,11 @@ export function merge<T>(target: T, patch: Partial<T>): T {
 }
 
 /* eslint-disable no-restricted-syntax */
-interface LazyValue<T> {
-  readonly name: string;
-  readonly value: T;
-}
-
 interface ReadonlySignal<T> {
   name: string;
   numSubscribers: number;
-  readonly value: T;
-  subscribe(callback: (value: LazyValue<T>) => void): () => void;
+  get(): T;
+  subscribe(callback: () => void): () => void;
 }
 
 let signalId = 1;
@@ -54,15 +49,14 @@ let signalId = 1;
 export class Signal<T> implements ReadonlySignal<T> {
   public name: string = `Signal${signalId++}`;
 
-  #fingerprint: number = 0;
   #equals: (a: T, b: T) => boolean;
   #value: T;
-  #event: EventSource<this>;
+  #event: EventSource<void>;
 
   constructor(value: T, equals?: (a: T, b: T) => boolean) {
     this.#equals = equals ?? Object.is;
     this.#value = value;
-    this.#event = makeEventSource<this>();
+    this.#event = makeEventSource<void>();
   }
 
   [Symbol.dispose](): void {
@@ -82,23 +76,21 @@ export class Signal<T> implements ReadonlySignal<T> {
     return this.#event.count();
   }
 
-  get fingerprint(): number {
-    return this.#fingerprint;
-  }
-
-  get value(): T {
+  get(): T {
     return this.#value;
   }
 
-  set value(value: T) {
-    if (!this.#equals(this.#value, value)) {
-      this.#value = value;
-      this.#fingerprint++;
-      this.#event.notify(this);
+  set(newValue: T | ((oldValue: T) => T)): void {
+    if (typeof newValue === "function") {
+      newValue = (newValue as (oldValue: T) => T)(this.#value);
+    }
+    if (!this.#equals(this.#value, newValue)) {
+      this.#value = newValue;
+      this.#event.notify();
     }
   }
 
-  subscribe(callback: (value: LazyValue<T>) => void): () => void {
+  subscribe(callback: () => void): () => void {
     return this.#event.subscribe(callback);
   }
 }
@@ -115,11 +107,11 @@ export class DerivedSignal<T> implements ReadonlySignal<T> {
   #equals: (a: T, b: T) => boolean;
   #value: T;
   #dirty: boolean;
-  #event: EventSource<this>;
+  #event: EventSource<void>;
 
   #parents: readonly ReadonlySignal<unknown>[];
   #transform: (...values: unknown[]) => T;
-  #unlink?: () => void;
+  #unlinkFromParents?: () => void;
 
   private constructor(
     parents: ReadonlySignal<unknown>[],
@@ -129,7 +121,7 @@ export class DerivedSignal<T> implements ReadonlySignal<T> {
     this.#equals = equals ?? Object.is;
     this.#dirty = true;
     this.#value = PLACEHOLDER as unknown as T;
-    this.#event = makeEventSource<this>();
+    this.#event = makeEventSource<void>();
     this.#parents = parents;
     this.#transform = transform;
   }
@@ -161,7 +153,7 @@ export class DerivedSignal<T> implements ReadonlySignal<T> {
   }
 
   [Symbol.dispose](): void {
-    this.#unlink?.();
+    this.#unlinkFromParents?.();
     this.#event[Symbol.dispose]();
 
     // @ts-expect-error make disposed object completely unusable
@@ -181,7 +173,7 @@ export class DerivedSignal<T> implements ReadonlySignal<T> {
   }
 
   #recompute(): void {
-    const derived = this.#transform(...this.#parents.map((p) => p.value));
+    const derived = this.#transform(...this.#parents.map((p) => p.get()));
 
     //
     // We just recomputed the value! But what to do with the dirty flag?
@@ -196,16 +188,16 @@ export class DerivedSignal<T> implements ReadonlySignal<T> {
     // to know when a source changes. In that case, the best we can do is to
     // mark the value as dirty. This will force a recompute on the next read.
     //
-    this.#dirty = this.#unlink === undefined;
+    this.#dirty = this.#unlinkFromParents === undefined;
 
     // Only emit a change to watchers if the value actually changed
     if (!this.#equals(this.#value, derived)) {
       this.#value = derived;
-      this.#event.notify(this);
+      this.#event.notify();
     }
   }
 
-  get value(): T {
+  get(): T {
     if (this.#dirty) {
       this.#recompute();
     }
@@ -219,17 +211,17 @@ export class DerivedSignal<T> implements ReadonlySignal<T> {
       );
       return [
         parent.name,
-        parent.subscribe((p) => {
+        parent.subscribe(() => {
           globalThis.console.info(
-            `🔄 [inside '${this.name}'] Parent signal '${p.name}' changed!`
+            `🔄 [inside '${this.name}'] Parent signal '${parent.name}' changed!`
           );
           this.#dirty = true;
         }),
       ] as const;
     });
 
-    this.#unlink = () => {
-      this.#unlink = undefined;
+    this.#unlinkFromParents = () => {
+      this.#unlinkFromParents = undefined;
 
       this.#dirty = true;
       for (const [parentName, unsub] of unsubs) {
@@ -245,7 +237,7 @@ export class DerivedSignal<T> implements ReadonlySignal<T> {
     };
   }
 
-  subscribe(callback: (value: LazyValue<T>) => void): UnsubscribeCallback {
+  subscribe(callback: () => void): UnsubscribeCallback {
     const hadSubscribers = this.#event.count() > 0;
 
     const unsub = this.#event.subscribe(callback);
@@ -261,7 +253,7 @@ export class DerivedSignal<T> implements ReadonlySignal<T> {
       // If this was the last subscriber unlinking, also unlink this
       // signal from its parent, so it can be garbage collected.
       if (this.#event.count() === 0) {
-        this.#unlink?.();
+        this.#unlinkFromParents?.();
       }
     };
   }
@@ -308,61 +300,64 @@ export class DerivedSignal<T> implements ReadonlySignal<T> {
     (todos, times) => todos.length * times
   );
   count.name = "count";
-  const isEven = DerivedSignal.from(count, (n) => {
-    const rv = n % 2 === 0;
-    log(`isEven RECOMPUTED based off of ${n} to be:`, rv);
+
+  const isEven = DerivedSignal.from(count, (count) => {
+    const rv = count % 2 === 0;
+    log(`isEven RECOMPUTED based off of ${count} to be:`, rv);
     return rv;
   });
   isEven.name = "isEven";
 
-  const todosSub = todos.subscribe((x) =>
-    log(`List changed: ${x.value.join(", ")}`)
+  const todosSub = todos.subscribe(() =>
+    log(`List changed: ${todos.get().join(", ")}`)
   );
-  const countSub = count.subscribe((n) => log(`Count changed: ${n.value}`));
-  const isEvenSub = isEven.subscribe((b) => log(`isEven changed: ${b.value}`));
+  const countSub = count.subscribe(() => log(`Count changed: ${count.get()}`));
+  const isEvenSub = isEven.subscribe(() =>
+    log(`isEven changed: ${isEven.get()}`)
+  );
 
   log({
-    todos: todos.value,
-    multiplier: multiplier.value,
-    count: count.value,
-    isEven: isEven.value,
-    isEven2: isEven.value,
-    isEven3: isEven.value,
-    isEven4: isEven.value,
-    isEven5: isEven.value,
-    isEven6: isEven.value,
+    todos: todos.get(),
+    multiplier: multiplier.get(),
+    count: count.get(),
+    isEven: isEven.get(),
+    isEven2: isEven.get(),
+    isEven3: isEven.get(),
+    isEven4: isEven.get(),
+    isEven5: isEven.get(),
+    isEven6: isEven.get(),
   });
 
-  // todos.value = [...todos.value, "Do laundry"];
-  // multiplier.value = 1;
-  // todos.value = todos.value.splice(1);
-  // multiplier.value = 2;
+  todos.set([...todos.get(), "Do laundry"]);
+  multiplier.set(1);
+  todos.set((todos) => todos.splice(1));
+  multiplier.set(2);
 
   log({
-    todos: todos.value,
-    multiplier: multiplier.value,
-    count: count.value,
-    isEven: isEven.value,
-    isEven2: isEven.value,
-    isEven3: isEven.value,
-    isEven4: isEven.value,
-    isEven5: isEven.value,
-    isEven6: isEven.value,
+    todos: todos.get(),
+    multiplier: multiplier.get(),
+    count: count.get(),
+    isEven: isEven.get(),
+    isEven2: isEven.get(),
+    isEven3: isEven.get(),
+    isEven4: isEven.get(),
+    isEven5: isEven.get(),
+    isEven6: isEven.get(),
   });
 
-  multiplier.value = 3;
+  multiplier.set(3);
 
   log({
-    todos: todos.value,
-    multiplier: multiplier.value,
-    count: count.value,
-    isEven: isEven.value,
-    isEven2: isEven.value,
+    todos: todos.get(),
+    multiplier: multiplier.get(),
+    count: count.get(),
+    isEven: isEven.get(),
+    isEven2: isEven.get(),
   });
 
-  console.log("x", isEven.value);
-  todos.value = todos.value.slice(1);
-  console.log("y", isEven.value);
+  console.log("x", isEven.get());
+  todos.set((todos) => todos.slice(1));
+  console.log("y", isEven.get());
 
   // x();
   countSub();
