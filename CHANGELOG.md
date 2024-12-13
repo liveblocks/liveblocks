@@ -2,19 +2,19 @@
 
 ### `@liveblocks/react`
 
-- Internal refactoring.
+- Internal refactorings and code cleanup.
 
 ### `@liveblocks/react-lexical`
 
-- Internal refactoring.
+- Internal refactorings and code cleanup.
 
 ### `@liveblocks/react-tiptap`
 
-- Internal refactoring.
+- Internal refactorings and code cleanup.
 
 ### `@liveblocks/react-ui`
 
-- Internal refactoring.
+- Internal refactorings and code cleanup.
 
 ## 2.14.0
 
