@@ -28,7 +28,7 @@ import type {
   InboxNotificationData,
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
-import { ValueRef } from "./refs/ValueRef";
+import { Signal } from "./refs/Signal";
 import type {
   OpaqueRoom,
   OptionalTupleUnless,
@@ -755,16 +755,16 @@ export function createClient<U extends BaseUserMeta = DU>(
 
   // ----------------------------------------------------------------
 
-  const syncStatusSources: ValueRef<InternalSyncStatus>[] = [];
-  const syncStatusRef = new ValueRef<InternalSyncStatus>("synchronized");
+  const syncStatusSources: Signal<InternalSyncStatus>[] = [];
+  const syncStatusSignal = new Signal<InternalSyncStatus>("synchronized");
 
   function getSyncStatus(): SyncStatus {
-    const status = syncStatusRef.get();
+    const status = syncStatusSignal.get();
     return status === "synchronizing" ? status : "synchronized";
   }
 
   function recompute() {
-    syncStatusRef.set(
+    syncStatusSignal.set(
       syncStatusSources.some((src) => src.get() === "synchronizing")
         ? "synchronizing"
         : syncStatusSources.some((src) => src.get() === "has-local-changes")
@@ -774,7 +774,7 @@ export function createClient<U extends BaseUserMeta = DU>(
   }
 
   function createSyncSource(): SyncSource {
-    const source = new ValueRef<InternalSyncStatus>("synchronized");
+    const source = new Signal<InternalSyncStatus>("synchronized");
     syncStatusSources.push(source);
 
     const unsub = source.subscribe(() => recompute());
@@ -809,7 +809,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     const maybePreventClose = (e: BeforeUnloadEvent) => {
       if (
         clientOptions.preventUnsavedChanges &&
-        syncStatusRef.get() !== "synchronized"
+        syncStatusSignal.get() !== "synchronized"
       ) {
         e.preventDefault();
       }
@@ -849,7 +849,7 @@ export function createClient<U extends BaseUserMeta = DU>(
 
       getSyncStatus,
       events: {
-        syncStatus: syncStatusRef.observable,
+        syncStatus: syncStatusSignal,
       },
 
       // Internal
