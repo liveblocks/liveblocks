@@ -6,4 +6,5 @@ export type RoomInfo = {
 export type CompanyInfo = {
   name: string;
   url: string;
+  logoUrl: string;
 };
