@@ -319,3 +319,55 @@ export class DerivedSignal<T> extends ReadonlySignal<T> {
     };
   }
 }
+
+/**
+ * A ExternalSignal is a bit like Signal, except its state is managed in
+ * a mutable object. This means that when the state is mutated, its reference
+ * won't change.
+ *
+ * Similar to how useSyncExternalState() works in React, there is a way to read
+ * the current state at any point in time synchronously, and a way to update
+ * its reference.
+ */
+
+export class MutableSignal<T> extends ReadonlySignal<T> {
+  //
+  // NOTE: Maybe it could be as simple as this???????????
+  // NOTE: If only it did not freeze() it!
+  //
+  // export class MutableSignal<T> extends Signal<T> {
+  //   constructor(value: T) {
+  //     super(value, () => false);
+  //   }
+  //
+  //   mutate(callback: (state: T) => void): void {
+  //     const mutableState = this.get();
+  //     callback(mutableState);
+  //     super.set(mutableState);
+  //   }
+  // }
+
+  #state: T;
+
+  constructor(initialState: T) {
+    super();
+    this.#state = initialState;
+  }
+
+  [Symbol.dispose](): void {
+    super[Symbol.dispose]();
+
+    // @ts-expect-error make disposed object completely unusable
+    this.#state = null;
+  }
+
+  get(): T {
+    return this.#state;
+  }
+
+  mutate(callback: (state: T) => void): void {
+    callback(this.#state);
+    this.markSinksDirty();
+    this.notify();
+  }
+}
