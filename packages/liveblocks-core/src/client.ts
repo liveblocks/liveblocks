@@ -777,7 +777,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     const source = new ValueRef<InternalSyncStatus>("synchronized");
     syncStatusSources.push(source);
 
-    const unsub = source.didInvalidate.subscribe(() => recompute());
+    const unsub = source.subscribe(() => recompute());
 
     function setSyncStatus(status: InternalSyncStatus) {
       source.set(status);
@@ -849,7 +849,7 @@ export function createClient<U extends BaseUserMeta = DU>(
 
       getSyncStatus,
       events: {
-        syncStatus: syncStatusRef.didInvalidate,
+        syncStatus: syncStatusRef.observable,
       },
 
       // Internal

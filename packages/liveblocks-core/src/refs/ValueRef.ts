@@ -45,7 +45,7 @@ export class DerivedRef<
     this._refs = otherRefs;
     this._refs.forEach((ref) => {
       // TODO: We should also _unsubscribe_ these at some point... how? Require an explicit .destroy() call?
-      ref.didInvalidate.subscribe(() => this.invalidate());
+      ref.subscribe(() => this.invalidate());
     });
 
     this._transform = transformFn;

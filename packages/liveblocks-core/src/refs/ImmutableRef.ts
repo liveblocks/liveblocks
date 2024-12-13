@@ -1,4 +1,9 @@
-import type { EventSource, Observable } from "../lib/EventSource";
+import type {
+  Callback,
+  EventSource,
+  Observable,
+  UnsubscribeCallback,
+} from "../lib/EventSource";
 import { makeEventSource } from "../lib/EventSource";
 
 /**
@@ -50,10 +55,6 @@ export abstract class ImmutableRef<T> {
     this._ev = makeEventSource<void>();
   }
 
-  get didInvalidate(): Observable<void> {
-    return this._ev.observable;
-  }
-
   /** @internal */
   protected abstract _toImmutable(): Readonly<T>;
 
@@ -66,5 +67,13 @@ export abstract class ImmutableRef<T> {
 
   get(): Readonly<T> {
     return this._cache ?? (this._cache = this._toImmutable());
+  }
+
+  get observable(): Observable<void> {
+    return this._ev.observable;
+  }
+
+  subscribe(callback: Callback<void>): UnsubscribeCallback {
+    return this._ev.observable.subscribe(callback);
   }
 }
