@@ -148,8 +148,8 @@ function Settings() {
         onUpdate={() =>
           updateSettings({
             email: {
-              thread: true,
-              textMention: true,
+              thread: false,
+              textMention: false,
             },
           })
         }
@@ -161,8 +161,8 @@ function Settings() {
         onUpdate={() =>
           updateSettings({
             slack: {
-              thread: true,
-              textMention: true,
+              thread: false,
+              textMention: false,
             },
           })
         }
@@ -174,8 +174,8 @@ function Settings() {
         onUpdate={() =>
           updateSettings({
             teams: {
-              thread: true,
-              textMention: true,
+              thread: false,
+              textMention: false,
             },
           })
         }
@@ -187,8 +187,8 @@ function Settings() {
         onUpdate={() =>
           updateSettings({
             webPush: {
-              thread: true,
-              textMention: true,
+              thread: false,
+              textMention: false,
             },
           })
         }

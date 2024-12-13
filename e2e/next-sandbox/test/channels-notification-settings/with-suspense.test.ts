@@ -4,7 +4,8 @@ import { test } from "@playwright/test";
 import { genRoomId, preparePage, waitForJson } from "../utils";
 
 const SLOW = { timeout: 20_000 };
-const TEST_URL = "http://localhost:3007/channels-notification-settings";
+const TEST_URL =
+  "http://localhost:3007/channels-notification-settings/with-suspense";
 
 test.describe("Channels notification settings", () => {
   const user1 = 13; // Aurélien
