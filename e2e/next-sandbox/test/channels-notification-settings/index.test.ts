@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 import { genRoomId, preparePage, waitForJson } from "../utils";
 
@@ -24,5 +24,27 @@ test.describe("Channels notification settings", () => {
     // wait until page is loaded
     await waitForJson(page, "#name", "Aurélien D. D.", SLOW);
     await waitForJson(page, "#isLoading", false, SLOW);
+    await waitForJson(page, "#error", JSON.stringify(undefined), SLOW);
+
+    for (const channel of ["email", "slack", "teams", "webPush"]) {
+      await expect(page.locator(`#${channel}ThreadKind`)).toContainText("Yes");
+      await expect(page.locator(`#${channel}TextMentionKind`)).toContainText(
+        "Yes"
+      );
+    }
+  });
+
+  test("update channels notification settings", async () => {
+    for (const channel of ["email", "slack", "teams", "webPush"]) {
+      await page.click(`#${channel}_update_channel`);
+
+      await waitForJson(page, "#isLoading", false, SLOW);
+      await waitForJson(page, "#error", JSON.stringify(undefined), SLOW);
+
+      await expect(page.locator(`#${channel}ThreadKind`)).toContainText("No");
+      await expect(page.locator(`#${channel}TextMentionKind`)).toContainText(
+        "No"
+      );
+    }
   });
 });
