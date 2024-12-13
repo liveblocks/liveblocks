@@ -3,6 +3,7 @@
 import type {
   Callback,
   EventSource,
+  Observable,
   UnsubscribeCallback,
 } from "../lib/EventSource";
 import { makeEventSource } from "../lib/EventSource";
@@ -13,7 +14,7 @@ import { merge } from "./ImmutableRef";
 
 let signalId = 1;
 
-abstract class ReadonlySignal<T> {
+abstract class ReadonlySignal<T> implements Observable<void> {
   public name: string = `Signal${signalId++}`; // XXX Remove this after debugging
 
   protected equals: (a: T, b: T) => boolean;
@@ -46,6 +47,18 @@ abstract class ReadonlySignal<T> {
 
   subscribe(callback: Callback<void>): UnsubscribeCallback {
     return this.#eventSource.subscribe(callback);
+  }
+
+  subscribeOnce(callback: Callback<void>): UnsubscribeCallback {
+    const unsub = this.subscribe(() => {
+      unsub();
+      return callback();
+    });
+    return unsub;
+  }
+
+  waitUntil(): never {
+    throw new Error("waitUntil not supported on Signals");
   }
 }
 
