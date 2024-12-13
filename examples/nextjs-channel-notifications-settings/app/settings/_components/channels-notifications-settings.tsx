@@ -24,8 +24,7 @@ export function ChannelsNotificationsSettings() {
     settings.teams
   );
   const isWebPushChannelEnabled = isChannelNotificationSettingEnabled(
-    // @ts-expect-error because of bad casing coming from the backend
-    settings.webPush ?? settings.push
+    settings.webPush
   );
 
   const handleChangeEmailChannel = (checked: boolean): void => {
