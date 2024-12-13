@@ -19,10 +19,12 @@ abstract class ReadonlySignal<T> implements Observable<void> {
 
   protected equals: (a: T, b: T) => boolean;
   #eventSource: EventSource<void>;
+  #sinks: Set<DerivedSignal<unknown>>;
 
   constructor(equals?: (a: T, b: T) => boolean) {
     this.equals = equals ?? Object.is;
     this.#eventSource = makeEventSource<void>();
+    this.#sinks = new Set();
   }
 
   [Symbol.dispose](): void {
@@ -60,6 +62,20 @@ abstract class ReadonlySignal<T> implements Observable<void> {
   waitUntil(): never {
     throw new Error("waitUntil not supported on Signals");
   }
+
+  markSinksDirty(): void {
+    for (const sink of this.#sinks) {
+      sink.markDirty();
+    }
+  }
+
+  addSink(sink: DerivedSignal<unknown>): void {
+    this.#sinks.add(sink);
+  }
+
+  removeSink(sink: DerivedSignal<unknown>): void {
+    this.#sinks.delete(sink);
+  }
 }
 
 // NOTE: This class is pretty similar to the Signal.State proposal
@@ -68,7 +84,7 @@ export class Signal<T> extends ReadonlySignal<T> {
 
   constructor(value: T, equals?: (a: T, b: T) => boolean) {
     super(equals);
-    this.#value = value;
+    this.#value = freeze(value);
   }
 
   [Symbol.dispose](): void {
@@ -87,7 +103,8 @@ export class Signal<T> extends ReadonlySignal<T> {
       newValue = (newValue as (oldValue: T) => T)(this.#value);
     }
     if (!this.equals(this.#value, newValue)) {
-      this.#value = newValue;
+      this.#value = freeze(newValue);
+      this.markSinksDirty();
       this.notify();
     }
   }
@@ -106,7 +123,7 @@ export class PatchableSignal<J extends JsonObject> extends Signal<J> {
    * Patches the current object.
    */
   patch(patch: Partial<J>): void {
-    super.set((old) => freeze(merge(old, patch)));
+    super.set((old) => merge(old, patch));
   }
 }
 
@@ -114,17 +131,18 @@ export class PatchableSignal<J extends JsonObject> extends Signal<J> {
  * Placeholder for a deferred computation that has yet to happen on-demand in
  * the future.
  */
-const PLACEHOLDER = Symbol();
+const INITIAL = Symbol();
 
 // NOTE: This class is pretty similar to the Signal.Computed proposal
 export class DerivedSignal<T> extends ReadonlySignal<T> {
-  #value: T;
-  #dirty: boolean;
+  #prevValue: T;
+  #dirty: boolean; // When true, the value in #value may not be up-to-date and needs re-checking
   #event: EventSource<void>;
 
   #parents: readonly ReadonlySignal<unknown>[];
   #transform: (...values: unknown[]) => T;
-  #unlinkFromParents?: () => void;
+
+  #unlinkFromParents?: UnsubscribeCallback;
 
   // Overload 1
   static from<Ts extends [unknown, ...unknown[]], V>(...args: [...signals: { [K in keyof Ts]: ReadonlySignal<Ts[K]> }, transform: (...values: Ts) => V]): DerivedSignal<V>; // prettier-ignore
@@ -165,18 +183,25 @@ export class DerivedSignal<T> extends ReadonlySignal<T> {
   ) {
     super(equals);
     this.#dirty = true;
-    this.#value = PLACEHOLDER as unknown as T;
+    this.#prevValue = INITIAL as unknown as T;
     this.#event = makeEventSource<void>();
     this.#parents = parents;
     this.#transform = transform;
+
+    for (const parent of parents) {
+      parent.addSink(this as DerivedSignal<unknown>);
+    }
   }
 
   [Symbol.dispose](): void {
-    this.#unlinkFromParents?.();
+    for (const parent of this.#parents) {
+      parent.removeSink(this as DerivedSignal<unknown>);
+    }
+
     this.#event[Symbol.dispose]();
 
     // @ts-expect-error make disposed object completely unusable
-    this.#value = null;
+    this.#prevValue = INITIAL;
     // @ts-expect-error make disposed object completely unusable
     this.#event = null;
     // @ts-expect-error make disposed object completely unusable
@@ -185,67 +210,57 @@ export class DerivedSignal<T> extends ReadonlySignal<T> {
     this.#transform = null;
   }
 
+  get isDirty(): boolean {
+    return this.#dirty;
+  }
+
   get hasWatchers(): boolean {
     return this.#event.count() > 0;
   }
 
-  #recompute(): void {
+  #recompute(): boolean {
     const derived = this.#transform(...this.#parents.map((p) => p.get()));
-
-    //
-    // We just recomputed the value! But what to do with the dirty flag?
-    // It depends! If we are linked up to the parent signal, we can guarantee
-    // that the parent will inform us about updates to the source values.
-    //
-    // In that case, we can safely mark the derived value as clean, because if
-    // any of the parents will update, it will get marked as dirty
-    // automatically.
-    //
-    // If, however, we are not linked up to the parent signal, we have no way
-    // to know when a source changes. In that case, the best we can do is to
-    // mark the value as dirty. This will force a recompute on the next read.
-    //
-    this.#dirty = this.#unlinkFromParents === undefined;
+    this.#dirty = false;
 
     // Only emit a change to watchers if the value actually changed
-    if (!this.equals(this.#value, derived)) {
-      this.#value = derived;
-      this.#event.notify();
+    if (!this.equals(this.#prevValue, derived)) {
+      this.#prevValue = derived;
+      return true;
     }
+    return false;
+  }
+
+  markDirty(): void {
+    this.#dirty = true;
+    this.markSinksDirty();
   }
 
   get(): T {
     if (this.#dirty) {
       this.#recompute();
     }
-    return this.#value;
+    return this.#prevValue;
   }
 
-  #hookup(): void {
+  #linkUpToParents(): void {
+    this.#unlinkFromParents?.();
+
     const unsubs = this.#parents.map((parent) => {
-      globalThis.console.log(
-        `🔗 Linking derived signal '${this.name}' to parent signal '${parent.name}'!`
-      );
-      return [
-        parent.name,
-        parent.subscribe(() => {
-          globalThis.console.info(
-            `🔄 [inside '${this.name}'] Parent signal '${parent.name}' changed!`
-          );
-          this.#dirty = true;
-        }),
-      ] as const;
+      return parent.subscribe(() => {
+        // Re-evaluate the current derived signal's value and if needed,
+        // notify sinks. At this point, all sinks should already have been
+        // marked dirty, so we won't have to do that again here now.
+        const updated = this.#recompute();
+        if (updated) {
+          this.#event.notify();
+        }
+      });
     });
 
     this.#unlinkFromParents = () => {
       this.#unlinkFromParents = undefined;
-
-      this.#dirty = true;
-      for (const [parentName, unsub] of unsubs) {
+      for (const unsub of unsubs) {
         try {
-          globalThis.console.log(
-            `🔗 Unlinking derived signal '${this.name}' from parent '${parentName}'!`
-          );
           unsub();
         } catch {
           // Ignore
@@ -255,103 +270,21 @@ export class DerivedSignal<T> extends ReadonlySignal<T> {
   }
 
   subscribe(callback: Callback<void>): UnsubscribeCallback {
-    const hadWatchersBefore = this.hasWatchers;
-    const unsub = this.#event.subscribe(callback);
-
-    // If this is the first subscriber, link the Signal up to the parent!
-    if (!hadWatchersBefore) {
-      this.#hookup();
+    // A DerivedSignal can be pulled on-demand with .get(), but if it's being
+    // subscribed to, then we need to set up a watcher on all of its parents as
+    // well.
+    if (!this.hasWatchers) {
+      this.#linkUpToParents();
     }
 
+    const unsub = this.#event.subscribe(callback);
     return () => {
       unsub();
 
-      // If this was the last subscriber unlinking, also unlink this
-      // signal from its parent, so it can be garbage collected.
+      // If the last watcher unsubscribed, unlink this Signal from its parents'
       if (!this.hasWatchers) {
         this.#unlinkFromParents?.();
       }
     };
   }
-}
-
-// XXX Move this test code to a real test
-{
-  const log = globalThis.console.log;
-
-  const multiplier = new Signal(0);
-  multiplier.name = "multiplier";
-  const todos = new Signal(["Ha", "Buy milk", "Clean the house"]);
-  todos.name = "todos";
-  const count = DerivedSignal.from(
-    todos,
-    multiplier,
-    (todos, times) => todos.length * times
-  );
-  count.name = "count";
-
-  const isEven = DerivedSignal.from(count, (count) => {
-    const rv = count % 2 === 0;
-    log(`isEven RECOMPUTED based off of ${count} to be:`, rv);
-    return rv;
-  });
-  isEven.name = "isEven";
-
-  const todosSub = todos.subscribe(() =>
-    log(`List changed: ${todos.get().join(", ")}`)
-  );
-  const countSub = count.subscribe(() => log(`Count changed: ${count.get()}`));
-  const isEvenSub = isEven.subscribe(() =>
-    log(`isEven changed: ${isEven.get()}`)
-  );
-
-  log({
-    todos: todos.get(),
-    multiplier: multiplier.get(),
-    count: count.get(),
-    isEven: isEven.get(),
-    isEven2: isEven.get(),
-    isEven3: isEven.get(),
-    isEven4: isEven.get(),
-    isEven5: isEven.get(),
-    isEven6: isEven.get(),
-  });
-
-  todos.set([...todos.get(), "Do laundry"]);
-  multiplier.set(1);
-  todos.set((todos) => todos.splice(1));
-  multiplier.set(2);
-
-  log({
-    todos: todos.get(),
-    multiplier: multiplier.get(),
-    count: count.get(),
-    isEven: isEven.get(),
-    isEven2: isEven.get(),
-    isEven3: isEven.get(),
-    isEven4: isEven.get(),
-    isEven5: isEven.get(),
-    isEven6: isEven.get(),
-  });
-
-  multiplier.set(3);
-
-  log({
-    todos: todos.get(),
-    multiplier: multiplier.get(),
-    count: count.get(),
-    isEven: isEven.get(),
-    isEven2: isEven.get(),
-  });
-
-  console.log("x", isEven.get());
-  todos.set((todos) => todos.slice());
-  console.log("y", isEven.get());
-
-  // x();
-  countSub();
-  todosSub();
-  isEvenSub();
-
-  log("done");
 }

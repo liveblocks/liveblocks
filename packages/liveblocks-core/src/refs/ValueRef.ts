@@ -1,28 +1,4 @@
-import { freeze } from "../lib/freeze";
 import { ImmutableRef } from "./ImmutableRef";
-
-// XXX Remove when unused now
-export class ValueRef<T> extends ImmutableRef<T> {
-  /** @internal */
-  private _value: Readonly<T>;
-
-  constructor(initialValue: T) {
-    super();
-    this._value = freeze(initialValue);
-  }
-
-  /** @internal */
-  _toImmutable(): Readonly<T> {
-    return this._value;
-  }
-
-  set(newValue: T): void {
-    if (this._value !== newValue) {
-      this._value = freeze(newValue);
-      this.notify();
-    }
-  }
-}
 
 export class DerivedRef<
   T,
