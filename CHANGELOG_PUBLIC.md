@@ -38,11 +38,14 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
   be `connected` to report the text editor instead of reporting directly after
   room creation / loading.
 
-
 ## Examples
 
 - New example: [Text Editor Emails (Tiptap)](https://liveblocks.io/examples/collaborative-text-editor-emails/nextjs-tiptap-emails-resend).
 - New example: [Text Editor Emails (Lexical)](https://liveblocks.io/examples/collaborative-text-editor-emails/nextjs-lexical-emails-resend).
+
+## Documentation
+
+- Improved [thread metadata page](https://liveblocks.io/docs/products/comments/metadata).
 
 ## Website
 
