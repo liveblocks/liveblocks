@@ -15,12 +15,12 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 50 (2024-12-13)
 
-## 2.14.0
+## v2.14.0
 
 ### `@liveblocks/emails`
 
-- Add new functions `prepareTextMentionNotificationEmailAsHtml` and
-  `prepareTextMentionNotificationEmailAsReact` to support text mention
+- Add new functions [`prepareTextMentionNotificationEmailAsHtml`](https://liveblocks.io/docs/api-reference/liveblocks-emails#prepare-text-mention-notification-email-as-react) and
+  [`prepareTextMentionNotificationEmailAsReact`](https://liveblocks.io/docs/api-reference/liveblocks-emails#prepare-text-mention-notification-email-as-react) to support text mention
   notification event for Lexical and Tiptap text editors and prepare data into
   email-ready formats.
 
