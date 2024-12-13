@@ -21,6 +21,7 @@ const previewProps: UnreadTextMentionProps = {
   company: {
     name: "Acme Inc.",
     url: "https://liveblocks.io/comments",
+    logoUrl: "https://liveblocks.io/apple-touch-icon.png",
   },
   room: {
     name: "User Research Strategy",

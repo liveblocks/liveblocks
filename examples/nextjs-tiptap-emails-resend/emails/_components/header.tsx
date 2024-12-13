@@ -6,10 +6,9 @@ export function Header(company: CompanyInfo) {
     <Row className="mb-10">
       <Column className="w-10">
         <Link href={company.url} target="_blank">
-          {/* TODO: Update img name by creating a new one for this specific example to work without to deploy this example. */}
           <Img
-            src="https://liveblocks.io/apple-touch-icon.png"
-            alt="Company logo"
+            src={company.logoUrl}
+            alt={`${company.name} logo`}
             className="rounded-md"
             width={28}
             height={28}
