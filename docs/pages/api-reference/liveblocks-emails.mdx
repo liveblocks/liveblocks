@@ -93,6 +93,26 @@ export async function POST(request: Request) {
 **We’ll only show the highlighted part below**, as it’s assumed you’ve set this
 already, and your file contains `liveblocks` and `event`.
 
+### End-to-end guides
+
+We have two guides that take you through every step of setting up your email
+notifications, including setting up webhooks:
+
+- [How to send email notifications of unread comments](/docs/guides/how-to-send-email-notifications-of-unread-comments).
+- [How to send email notifications for unread text editor mentions ](/docs/guides/how-to-send-email-notifications-for-unread-text-editor-mentions).
+
+### Ready-made email templates
+
+We have a number of examples that show you how to set up emails with your
+Comments or Text Editor application. Each [Resend](https://resend.com) example
+has full ready-made email templates inside, which are a great starting point for
+your application.
+
+- [Comments + Resend](/examples/comments-emails/nextjs-comments-emails-resend).
+- [Comments + SendGrid](/examples/comments-emails/nextjs-comments-emails-sendgrid).
+- [Text Editor/Tiptap + Resend](/examples/collaborative-text-editor-emails/nextjs-tiptap-emails-resend).
+- [Text Editor/Lexical + Resend](/examples/collaborative-text-editor-emails/nextjs-lexical-emails-resend).
+
 ## Thread notification emails [#thread-notification-emails]
 
 These functions help you create emails to notify users of _unread comments_ in
@@ -109,6 +129,14 @@ been read, and help you style each comment’s body with either
     height={830}
   />
 </Figure>
+
+<Banner>
+
+This screenshot shows a ready-made template from our
+[Comments + Resend](/examples/comments-emails/nextjs-comments-emails-resend)
+example.
+
+</Banner>
 
 The function also helps you distinguish between _unread mentions_ and _unread
 replies_.
@@ -882,6 +910,14 @@ style the mention content with either
     height={470}
   />
 </Figure>
+
+<Banner>
+
+This screenshot shows a ready-made template from our
+[Text Editor + Resend](/examples/collaborative-text-editor-emails/nextjs-tiptap-emails-resend)
+examples.
+
+</Banner>
 
 The functions helps to determine if the mention still exists in the document and
 will indicate that there’s no email to send in this case. Currently, only
