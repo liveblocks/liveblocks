@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 
-import { genRoomId, preparePage, waitForJson } from "../utils";
+import { genRoomId, getJson, preparePage, waitForJson } from "../utils";
 
 const SLOW = { timeout: 20_000 };
 const TEST_URL = "http://localhost:3007/channels-notification-settings";
@@ -28,8 +28,8 @@ test.describe("Channels notification settings", () => {
 
     for (const channel of ["email", "slack", "teams", "webPush"]) {
       const [old1, old2] = await Promise.all([
-        page.locator(`#${channel}ThreadKind`).innerText(),
-        page.locator(`#${channel}TextMentionKind`).innerText(),
+        getJson(page, `#${channel}ThreadKind`),
+        getJson(page, `#${channel}TextMentionKind`),
       ]);
 
       await page.locator(`#${channel}_update_channel`).click();
@@ -38,10 +38,10 @@ test.describe("Channels notification settings", () => {
       await waitForJson(page, "#error", JSON.stringify(undefined), SLOW);
 
       await expect(page.locator(`#${channel}ThreadKind`)).toContainText(
-        old1 === '"Yes"' ? '"No"' : '"Yes"'
+        old1 === "Yes" ? "No" : "Yes"
       );
       await expect(page.locator(`#${channel}ThreadKind`)).toContainText(
-        old2 === '"Yes"' ? '"No"' : '"Yes"'
+        old2 === "Yes" ? "No" : "Yes"
       );
     }
   });
