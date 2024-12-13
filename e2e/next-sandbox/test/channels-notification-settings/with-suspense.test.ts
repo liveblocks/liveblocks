@@ -24,6 +24,8 @@ test.describe("Channels notification settings", () => {
 
   test.afterEach(async () => await page.close());
 
+  // skipping on CI because of waiting on the backend to be deliver
+  // on `main` branch on `dev`
   // This test fails sometime on CI but not in local.
   skipOnCI("update channels notification settings", async () => {
     // wait until page is loaded
