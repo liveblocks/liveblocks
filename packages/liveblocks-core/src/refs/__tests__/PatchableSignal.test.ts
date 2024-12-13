@@ -1,4 +1,4 @@
-import { PatchableRef } from "../PatchableRef";
+import { PatchableSignal } from "../Signal";
 
 type P = {
   x: number;
@@ -8,20 +8,20 @@ type P = {
 
 describe('Read-only "patchable" ref cache', () => {
   it("empty", () => {
-    const ref = new PatchableRef({ x: 0, y: 0, z: undefined });
+    const ref = new PatchableSignal({ x: 0, y: 0, z: undefined });
     expect(ref.get()).toStrictEqual({ x: 0, y: 0 });
   });
 
   describe("tracking", () => {
     it("patching", () => {
-      const ref = new PatchableRef<P>({ x: 0, y: 0 });
+      const ref = new PatchableSignal<P>({ x: 0, y: 0 });
       ref.patch({ y: 1, z: 2 });
 
       expect(ref.get()).toStrictEqual({ x: 0, y: 1, z: 2 });
     });
 
     it("patching me with undefineds deletes keys", () => {
-      const ref = new PatchableRef<P>({ x: 1, y: 2 });
+      const ref = new PatchableSignal<P>({ x: 1, y: 2 });
 
       ref.patch({ x: undefined });
       expect(ref.get()).toStrictEqual({ y: 2 });
@@ -36,7 +36,7 @@ describe('Read-only "patchable" ref cache', () => {
 
   describe("caching", () => {
     it("caches immutable results", () => {
-      const ref = new PatchableRef<P>({ x: 0, y: 0 });
+      const ref = new PatchableSignal<P>({ x: 0, y: 0 });
 
       const me1 = ref.get();
       const me2 = ref.get();
