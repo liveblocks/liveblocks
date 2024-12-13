@@ -58,7 +58,7 @@ export abstract class ImmutableRef<T> {
   /** @internal */
   protected abstract _toImmutable(): Readonly<T>;
 
-  protected invalidate(): void {
+  protected notify(): void {
     if (this._cache !== null) {
       this._cache = null;
       this._ev.notify();

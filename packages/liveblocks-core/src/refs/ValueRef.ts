@@ -18,7 +18,7 @@ export class ValueRef<T> extends ImmutableRef<T> {
   set(newValue: T): void {
     if (this._value !== newValue) {
       this._value = freeze(newValue);
-      this.invalidate();
+      this.notify();
     }
   }
 }
@@ -45,7 +45,7 @@ export class DerivedRef<
     this._refs = otherRefs;
     this._refs.forEach((ref) => {
       // TODO: We should also _unsubscribe_ these at some point... how? Require an explicit .destroy() call?
-      ref.subscribe(() => this.invalidate());
+      ref.subscribe(() => this.notify());
     });
 
     this._transform = transformFn;

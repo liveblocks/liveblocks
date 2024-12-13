@@ -83,7 +83,7 @@ export class OthersRef<
     this._connections = new Map();
     this._presences = new Map();
     this._users = new Map();
-    this.invalidate();
+    this.notify();
   }
 
   /** @internal */
@@ -117,7 +117,7 @@ export class OthersRef<
     if (this._users.has(connectionId)) {
       this._users.delete(connectionId);
     }
-    this.invalidate();
+    this.notify();
   }
 
   /**

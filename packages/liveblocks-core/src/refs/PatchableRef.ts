@@ -29,7 +29,7 @@ export class PatchableRef<J extends JsonObject> extends ImmutableRef<J> {
     const newData = merge(oldData, patch);
     if (oldData !== newData) {
       this._data = freeze(newData);
-      this.invalidate();
+      this.notify();
     }
   }
 }
