@@ -58,8 +58,6 @@ export type EventSource<T> = Observable<T> & {
   [Symbol.dispose](): void;
 };
 
-export type EventEmitter<T> = (event: T) => void;
-
 /**
  * makeEventSource allows you to generate a subscribe/notify pair of functions
  * to make subscribing easy and to get notified about events.
