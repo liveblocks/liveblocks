@@ -28,7 +28,7 @@ export class DerivedRef<
   Is extends readonly [ImmutableRef<unknown>, ...ImmutableRef<unknown>[]],
   Vs extends readonly [unknown, ...unknown[]] = {
     [K in keyof Is]: Is[K] extends ImmutableRef<unknown>
-      ? Is[K]["current"]
+      ? ReturnType<Is[K]["get"]>
       : never;
   },
 > extends ImmutableRef<T> {
@@ -54,7 +54,7 @@ export class DerivedRef<
   /** @internal */
   _toImmutable(): Readonly<T> {
     return this._transform(
-      ...(this._refs.map((ref) => ref.current) as unknown as Vs)
+      ...(this._refs.map((ref) => ref.get()) as unknown as Vs)
     );
   }
 }

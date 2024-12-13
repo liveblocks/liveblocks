@@ -64,7 +64,7 @@ export abstract class ImmutableRef<T> {
     }
   }
 
-  get current(): Readonly<T> {
+  get(): Readonly<T> {
     return this._cache ?? (this._cache = this._toImmutable());
   }
 }

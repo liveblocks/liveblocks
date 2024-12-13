@@ -759,15 +759,15 @@ export function createClient<U extends BaseUserMeta = DU>(
   const syncStatusRef = new ValueRef<InternalSyncStatus>("synchronized");
 
   function getSyncStatus(): SyncStatus {
-    const status = syncStatusRef.current;
+    const status = syncStatusRef.get();
     return status === "synchronizing" ? status : "synchronized";
   }
 
   function recompute() {
     syncStatusRef.set(
-      syncStatusSources.some((src) => src.current === "synchronizing")
+      syncStatusSources.some((src) => src.get() === "synchronizing")
         ? "synchronizing"
-        : syncStatusSources.some((src) => src.current === "has-local-changes")
+        : syncStatusSources.some((src) => src.get() === "has-local-changes")
           ? "has-local-changes"
           : "synchronized"
     );
@@ -788,7 +788,7 @@ export function createClient<U extends BaseUserMeta = DU>(
       const index = syncStatusSources.findIndex((item) => item === source);
       if (index > -1) {
         const [ref] = syncStatusSources.splice(index, 1);
-        const wasStillPending = ref.current !== "synchronized";
+        const wasStillPending = ref.get() !== "synchronized";
         if (wasStillPending) {
           // We only have to recompute if it was still pending. Otherwise it
           // could not have an effect on the global state anyway.
@@ -809,7 +809,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     const maybePreventClose = (e: BeforeUnloadEvent) => {
       if (
         clientOptions.preventUnsavedChanges &&
-        syncStatusRef.current !== "synchronized"
+        syncStatusRef.get() !== "synchronized"
       ) {
         e.preventDefault();
       }

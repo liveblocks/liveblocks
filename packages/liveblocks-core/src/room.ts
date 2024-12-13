@@ -1468,7 +1468,7 @@ export function createRoom<
         // Because context.me.current is a readonly object, we'll have to
         // make a copy here. Otherwise, type errors happen later when
         // "patching" my presence.
-        { ...context.myPresence.current },
+        { ...context.myPresence.get() },
     };
 
     // NOTE: There was a flush here before, but I don't think it's really
@@ -1560,7 +1560,7 @@ export function createRoom<
     },
 
     assertStorageIsWritable: () => {
-      const scopes = context.dynamicSessionInfo.current?.scopes;
+      const scopes = context.dynamicSessionInfo.get()?.scopes;
       if (scopes === undefined) {
         // If we aren't connected yet, assume we can write
         return;
@@ -1629,7 +1629,7 @@ export function createRoom<
 
   function sendMessages(messages: ClientMsg<P, E>[]) {
     const serializedPayload = JSON.stringify(messages);
-    const nonce = context.dynamicSessionInfo.current?.nonce;
+    const nonce = context.dynamicSessionInfo.get()?.nonce;
     if (config.unstable_fallbackToHTTP && nonce) {
       // if our message contains UTF-8, we can't simply use length. See: https://stackoverflow.com/questions/23318037/size-of-json-object-in-kbs-mbs
       // if this turns out to be expensive, we could just guess with a lower value.
@@ -1674,7 +1674,7 @@ export function createRoom<
 
   let _lastSelf: Readonly<User<P, U>> | undefined;
   function notifySelfChanged(batchedUpdatesWrapper: (cb: () => void) => void) {
-    const currSelf = self.current;
+    const currSelf = self.get();
     if (currSelf !== null && currSelf !== _lastSelf) {
       batchedUpdatesWrapper(() => {
         eventHub.self.notify(currSelf);
@@ -1703,7 +1703,7 @@ export function createRoom<
       context.root = LiveObject._fromItems<S>(message.items, pool);
     }
 
-    const canWrite = self.current?.canWrite ?? true;
+    const canWrite = self.get()?.canWrite ?? true;
 
     // Populate missing top-level keys using `initialStorage`
     const stackSizeBefore = context.undoStack.length;
@@ -1784,7 +1784,7 @@ export function createRoom<
 
     batchedUpdatesWrapper(() => {
       if (othersUpdates !== undefined && othersUpdates.length > 0) {
-        const others = context.others.current;
+        const others = context.others.get();
         for (const event of othersUpdates) {
           eventHub.others.notify({ ...event, others });
         }
@@ -1792,7 +1792,7 @@ export function createRoom<
 
       if (updates.presence ?? false) {
         notifySelfChanged(doNotBatchUpdates);
-        eventHub.myPresence.notify(context.myPresence.current);
+        eventHub.myPresence.notify(context.myPresence.get());
       }
 
       if (storageUpdates !== undefined && storageUpdates.size > 0) {
@@ -1804,7 +1804,7 @@ export function createRoom<
   }
 
   function getConnectionId() {
-    const info = context.dynamicSessionInfo.current;
+    const info = context.dynamicSessionInfo.get();
     if (info) {
       return info.actor;
     }
@@ -1852,7 +1852,7 @@ export function createRoom<
         };
 
         for (const key in op.data) {
-          reverse.data[key] = context.myPresence.current[key];
+          reverse.data[key] = context.myPresence.get()[key];
         }
 
         context.myPresence.patch(op.data);
@@ -1999,7 +1999,7 @@ export function createRoom<
         continue;
       }
       context.buffer.presenceUpdates.data[key] = overrideValue;
-      oldValues[key] = context.myPresence.current[key];
+      oldValues[key] = context.myPresence.get()[key];
     }
 
     context.myPresence.patch(patch);
@@ -2131,7 +2131,7 @@ export function createRoom<
     // TODO: Consider storing it on the backend
     context.buffer.messages.push({
       type: ClientMsgCode.UPDATE_PRESENCE,
-      data: context.myPresence.current,
+      data: context.myPresence.get(),
       targetActor: message.actor,
     });
     flushNowOrSoon();
@@ -2227,7 +2227,7 @@ export function createRoom<
           }
 
           case ServerMsgCode.BROADCASTED_EVENT: {
-            const others = context.others.current;
+            const others = context.others.get();
             eventHub.customEvent.notify({
               connectionId: message.actor,
               user:
@@ -2709,7 +2709,7 @@ export function createRoom<
   }
 
   function isPresenceReady() {
-    return self.current !== null;
+    return self.get() !== null;
   }
 
   async function waitUntilPresenceReady(): Promise<void> {
@@ -2992,9 +2992,9 @@ export function createRoom<
         createTextVersion,
 
         // Support for the Liveblocks browser extension
-        getSelf_forDevTools: () => selfAsTreeNode.current,
+        getSelf_forDevTools: () => selfAsTreeNode.get(),
         getOthers_forDevTools: (): readonly DevTools.UserTreeNode[] =>
-          others_forDevTools.current,
+          others_forDevTools.get(),
 
         // prettier-ignore
         simulate: {
@@ -3051,11 +3051,11 @@ export function createRoom<
 
       // Core
       getStatus: () => managedSocket.getStatus(),
-      getSelf: () => self.current,
+      getSelf: () => self.get(),
 
       // Presence
-      getPresence: () => context.myPresence.current,
-      getOthers: () => context.others.current,
+      getPresence: () => context.myPresence.get(),
+      getOthers: () => context.others.get(),
 
       // Comments
       getThreads,

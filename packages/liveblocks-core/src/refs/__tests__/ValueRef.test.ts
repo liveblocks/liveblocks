@@ -5,7 +5,7 @@ import { DerivedRef, ValueRef } from "../ValueRef";
 describe("Value ref cache", () => {
   it("empty", () => {
     const ref = new ValueRef({});
-    expect(ref.current).toStrictEqual({});
+    expect(ref.get()).toStrictEqual({});
   });
 
   it("setting works with any value", () => {
@@ -16,10 +16,10 @@ describe("Value ref cache", () => {
 
         (init, newVal) => {
           const ref = new ValueRef<unknown>(init);
-          expect(ref.current).toStrictEqual(init);
+          expect(ref.get()).toStrictEqual(init);
 
           ref.set(newVal);
-          expect(ref.current).toStrictEqual(newVal);
+          expect(ref.get()).toStrictEqual(newVal);
         }
       )
     );
@@ -34,7 +34,7 @@ describe("Value ref cache", () => {
         (init, newVal) => {
           // Freezes in constructor
           const ref = new ValueRef<unknown>(init);
-          expect(ref.current).toStrictEqual(init);
+          expect(ref.get()).toStrictEqual(init);
           expect(() => {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
@@ -43,7 +43,7 @@ describe("Value ref cache", () => {
 
           // Freezes in setter
           ref.set(newVal);
-          expect(ref.current).toStrictEqual(newVal);
+          expect(ref.get()).toStrictEqual(newVal);
           expect(() => {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
@@ -67,12 +67,12 @@ describe("Derived ref cache", () => {
       (x, y, suffix) => x.repeat(y) + suffix
     );
 
-    expect(ref.current).toStrictEqual("hihihi!");
+    expect(ref.get()).toStrictEqual("hihihi!");
     count.set(5);
-    expect(ref.current).toStrictEqual("hihihihihi!");
+    expect(ref.get()).toStrictEqual("hihihihihi!");
 
     greeting.set("👋");
     suffix.set(" ✨");
-    expect(ref.current).toStrictEqual("👋👋👋👋👋 ✨");
+    expect(ref.get()).toStrictEqual("👋👋👋👋👋 ✨");
   });
 });
