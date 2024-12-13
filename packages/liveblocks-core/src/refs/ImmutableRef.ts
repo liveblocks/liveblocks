@@ -41,6 +41,7 @@ export function merge<T>(target: T, patch: Partial<T>): T {
  *
  * TODO: Document usage.
  */
+// XXX Remove when unused now
 export abstract class ImmutableRef<T> {
   /** @internal */
   private _cache:

@@ -75,10 +75,9 @@ import type {
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
 import type { HistoryVersion } from "./protocol/VersionHistory";
-import type { ImmutableRef } from "./refs/ImmutableRef";
 import { OthersRef } from "./refs/OthersRef";
-import { PatchableRef } from "./refs/PatchableRef";
-import { DerivedRef, ValueRef } from "./refs/ValueRef";
+import { DerivedSignal, PatchableSignal, Signal } from "./refs/Signal";
+import { DerivedRef } from "./refs/ValueRef";
 import type * as DevTools from "./types/DevToolsTreeNode";
 import type {
   IWebSocket,
@@ -1120,9 +1119,9 @@ type RoomState<
   //   and the scopes (dynamic)
   // - The presence is provided by the client's initialPresence configuration (presence)
   //
-  readonly staticSessionInfo: ValueRef<StaticSessionInfo | null>;
-  readonly dynamicSessionInfo: ValueRef<DynamicSessionInfo | null>;
-  readonly myPresence: PatchableRef<P>;
+  readonly staticSessionInfoSig: Signal<StaticSessionInfo | null>;
+  readonly dynamicSessionInfoSig: Signal<DynamicSessionInfo | null>;
+  readonly myPresence: PatchableSignal<P>;
   readonly others: OthersRef<P, U>;
 
   idFactory: IdFactory | null;
@@ -1357,9 +1356,9 @@ export function createRoom<
       storageOperations: [],
     },
 
-    staticSessionInfo: new ValueRef(null),
-    dynamicSessionInfo: new ValueRef(null),
-    myPresence: new PatchableRef(initialPresence),
+    staticSessionInfoSig: new Signal<StaticSessionInfo | null>(null),
+    dynamicSessionInfoSig: new Signal<DynamicSessionInfo | null>(null),
+    myPresence: new PatchableSignal(initialPresence),
     others: new OthersRef<P, U>(),
 
     initialStorage,
@@ -1403,13 +1402,13 @@ export function createRoom<
 
         if (authValue.type === "secret") {
           const token = authValue.token.parsed;
-          context.staticSessionInfo.set({
+          context.staticSessionInfoSig.set({
             userId: token.k === TokenKind.SECRET_LEGACY ? token.id : token.uid,
             userInfo:
               token.k === TokenKind.SECRET_LEGACY ? token.info : token.ui,
           });
         } else {
-          context.staticSessionInfo.set({
+          context.staticSessionInfoSig.set({
             userId: undefined,
             userInfo: undefined,
           });
@@ -1560,7 +1559,7 @@ export function createRoom<
     },
 
     assertStorageIsWritable: () => {
-      const scopes = context.dynamicSessionInfo.get()?.scopes;
+      const scopes = context.dynamicSessionInfoSig.get()?.scopes;
       if (scopes === undefined) {
         // If we aren't connected yet, assume we can write
         return;
@@ -1629,7 +1628,7 @@ export function createRoom<
 
   function sendMessages(messages: ClientMsg<P, E>[]) {
     const serializedPayload = JSON.stringify(messages);
-    const nonce = context.dynamicSessionInfo.get()?.nonce;
+    const nonce = context.dynamicSessionInfoSig.get()?.nonce;
     if (config.unstable_fallbackToHTTP && nonce) {
       // if our message contains UTF-8, we can't simply use length. See: https://stackoverflow.com/questions/23318037/size-of-json-object-in-kbs-mbs
       // if this turns out to be expensive, we could just guess with a lower value.
@@ -1651,9 +1650,9 @@ export function createRoom<
     managedSocket.send(serializedPayload);
   }
 
-  const self = new DerivedRef(
-    context.staticSessionInfo as ImmutableRef<StaticSessionInfo | null>,
-    context.dynamicSessionInfo as ImmutableRef<DynamicSessionInfo | null>,
+  const self = DerivedSignal.from(
+    context.staticSessionInfoSig,
+    context.dynamicSessionInfoSig,
     context.myPresence,
     (staticSession, dynamicSession, myPresence): User<P, U> | null => {
       if (staticSession === null || dynamicSession === null) {
@@ -1684,9 +1683,8 @@ export function createRoom<
   }
 
   // For use in DevTools
-  const selfAsTreeNode = new DerivedRef(
-    self as ImmutableRef<User<P, U> | null>,
-    (me) => (me !== null ? userToTreeNode("Me", me) : null)
+  const selfAsTreeNode = DerivedSignal.from(self, (me) =>
+    me !== null ? userToTreeNode("Me", me) : null
   );
 
   function createOrUpdateRootFromMessage(
@@ -1804,7 +1802,7 @@ export function createRoom<
   }
 
   function getConnectionId() {
-    const info = context.dynamicSessionInfo.get();
+    const info = context.dynamicSessionInfoSig.get();
     if (info) {
       return info.actor;
     }
@@ -2076,7 +2074,7 @@ export function createRoom<
     batchedUpdatesWrapper: (cb: () => void) => void
   ): InternalOthersEvent<P, U> {
     // The server will inform the client about its assigned actor ID and scopes
-    context.dynamicSessionInfo.set({
+    context.dynamicSessionInfoSig.set({
       actor: message.actor,
       nonce: message.nonce,
       scopes: message.scopes,

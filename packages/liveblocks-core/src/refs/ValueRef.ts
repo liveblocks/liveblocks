@@ -1,6 +1,7 @@
 import { freeze } from "../lib/freeze";
 import { ImmutableRef } from "./ImmutableRef";
 
+// XXX Remove when unused now
 export class ValueRef<T> extends ImmutableRef<T> {
   /** @internal */
   private _value: Readonly<T>;

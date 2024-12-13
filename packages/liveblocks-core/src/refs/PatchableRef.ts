@@ -7,6 +7,7 @@ import { ImmutableRef, merge } from "./ImmutableRef";
  * Managed immutable cache for read-only-accessing an object that can be
  * patched.
  */
+// XXX Remove when unused now
 export class PatchableRef<J extends JsonObject> extends ImmutableRef<J> {
   /** @internal */
   private _data: Readonly<J>;
