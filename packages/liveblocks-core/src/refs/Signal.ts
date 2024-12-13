@@ -1,3 +1,4 @@
+// XXX REMOVE THIS ESLINT SUPPRESSION
 /* eslint-disable */
 import type {
   Callback,
@@ -261,6 +262,7 @@ export class DerivedSignal<T> extends ReadonlySignal<T> {
   }
 }
 
+// XXX Move this test code to a real test
 {
   const log = globalThis.console.log;
 
