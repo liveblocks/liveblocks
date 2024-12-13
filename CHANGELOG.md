@@ -2,21 +2,19 @@
 
 ### `@liveblocks/react`
 
-- Add a set of private hooks to act as protection layer around direct calls to
-  our `PrivateRoomApi` (e.g `kInternal`), avoid code duplication and use one
-  single source of truth.
+- Internal refactoring.
 
 ### `@liveblocks/react-lexical`
 
-- Use new private hooks in plugins.
+- Internal refactoring.
 
 ### `@liveblocks/react-tiptap`
 
-- Use new private hooks in extensions.
+- Internal refactoring.
 
 ### `@liveblocks/react-ui`
 
-- Use new private hooks in components.
+- Internal refactoring.
 
 ## 2.14.0
 
