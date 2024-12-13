@@ -31,16 +31,6 @@ export type EventSource<T> = Observable<T> & {
    */
   count(): number;
   /**
-   * Pauses event delivery until unpaused. Any .notify() calls made while
-   * paused will get buffered into memory and emitted later.
-   */
-  pause(): void;
-  /**
-   * Emits all in-memory buffered events, and unpauses. Any .notify() calls
-   * made after this will be synchronously delivered again.
-   */
-  unpause(): void;
-  /**
    * Observable instance, which can be used to subscribe to this event source
    * in a readonly fashion. Safe to publicly expose.
    */
@@ -57,6 +47,21 @@ export type EventSource<T> = Observable<T> & {
    */
   [Symbol.dispose](): void;
 };
+
+export type BufferableEventSource<T> = EventSource<T> & {
+  /**
+   * Pauses event delivery until unpaused. Any .notify() calls made while
+   * paused will get buffered into memory and emitted later.
+   */
+  pause(): void;
+  /**
+   * Emits all in-memory buffered events, and unpauses. Any .notify() calls
+   * made after this will be synchronously delivered again.
+   */
+  unpause(): void;
+};
+
+export type EventEmitter<T> = (event: T) => void;
 
 /**
  * makeEventSource allows you to generate a subscribe/notify pair of functions
@@ -81,23 +86,6 @@ export type EventSource<T> = Observable<T> & {
  */
 export function makeEventSource<T>(): EventSource<T> {
   const _observers = new Set<Callback<T>>();
-  let _buffer: T[] | null = null;
-
-  function pause(): void {
-    _buffer = [];
-  }
-
-  function unpause(): void {
-    if (_buffer === null) {
-      // Already unpaused
-      return;
-    }
-
-    for (const event of _buffer) {
-      notify(event);
-    }
-    _buffer = null;
-  }
 
   function subscribe(callback: Callback<T>): UnsubscribeCallback {
     _observers.add(callback);
@@ -127,14 +115,6 @@ export function makeEventSource<T>(): EventSource<T> {
     }).finally(() => unsub?.());
   }
 
-  function notifyOrBuffer(event: T) {
-    if (_buffer !== null) {
-      _buffer.push(event);
-    } else {
-      notify(event);
-    }
-  }
-
   function notify(event: T) {
     _observers.forEach((callback) => callback(event));
   }
@@ -145,20 +125,15 @@ export function makeEventSource<T>(): EventSource<T> {
 
   return {
     // Private/internal control over event emission
-    notify: notifyOrBuffer,
+    notify,
     subscribe,
     subscribeOnce,
     count,
 
     waitUntil,
-    pause,
-    unpause,
 
     [Symbol.dispose]: (): void => {
       _observers.clear();
-      if (_buffer !== null) {
-        _buffer.length = 0;
-      }
     },
 
     // Publicly exposable subscription API
@@ -166,6 +141,49 @@ export function makeEventSource<T>(): EventSource<T> {
       subscribe,
       subscribeOnce,
       waitUntil,
+    },
+  };
+}
+
+export function makeBufferableEventSource<T>(): BufferableEventSource<T> {
+  const eventSource = makeEventSource<T>();
+  let _buffer: T[] | null = null;
+
+  function pause(): void {
+    _buffer = [];
+  }
+
+  function unpause(): void {
+    if (_buffer === null) {
+      // Already unpaused
+      return;
+    }
+
+    for (const event of _buffer) {
+      eventSource.notify(event);
+    }
+    _buffer = null;
+  }
+
+  function notifyOrBuffer(event: T) {
+    if (_buffer !== null) {
+      _buffer.push(event);
+    } else {
+      eventSource.notify(event);
+    }
+  }
+
+  return {
+    ...eventSource,
+    notify: notifyOrBuffer,
+    pause,
+    unpause,
+
+    [Symbol.dispose]: (): void => {
+      eventSource[Symbol.dispose]();
+      if (_buffer !== null) {
+        _buffer.length = 0;
+      }
     },
   };
 }
