@@ -148,8 +148,8 @@ function Settings() {
         onUpdate={() =>
           updateSettings({
             email: {
-              thread: false,
-              textMention: false,
+              thread: settings ? !settings.email.thread : false,
+              textMention: settings ? !settings.email.textMention : false,
             },
           })
         }
@@ -161,8 +161,8 @@ function Settings() {
         onUpdate={() =>
           updateSettings({
             slack: {
-              thread: false,
-              textMention: false,
+              thread: settings ? !settings.slack.thread : false,
+              textMention: settings ? !settings.slack.textMention : false,
             },
           })
         }
@@ -174,8 +174,8 @@ function Settings() {
         onUpdate={() =>
           updateSettings({
             teams: {
-              thread: false,
-              textMention: false,
+              thread: settings ? !settings.teams.thread : false,
+              textMention: settings ? !settings.teams.textMention : false,
             },
           })
         }
@@ -187,8 +187,8 @@ function Settings() {
         onUpdate={() =>
           updateSettings({
             webPush: {
-              thread: false,
-              textMention: false,
+              thread: settings ? !settings.webPush.thread : false,
+              textMention: settings ? !settings.webPush.textMention : false,
             },
           })
         }
