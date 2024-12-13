@@ -4,7 +4,8 @@ import { compact, compactObject } from "../lib/utils";
 import { canComment, canWriteStorage } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { User } from "../types/User";
-import { ImmutableRef, merge } from "./ImmutableRef";
+import { ImmutableRef } from "./ImmutableRef";
+import { merge } from "./Signal";
 
 type Connection<U extends BaseUserMeta> = {
   readonly connectionId: number;
