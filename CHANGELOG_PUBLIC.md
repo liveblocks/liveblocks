@@ -50,11 +50,11 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Website
 
+- New blog post: [What's new in Liveblocks: November 2024](https://liveblocks.io/blog/whats-new-in-liveblocks-november-edition-2024).
 - Revamped the [Liveblocks blog](https://liveblocks.io/blog):
   - Added the ability to switch between categories to find relevant posts.
   - Added the ability to search posts and filter results using tags.
   - Updated the layout with a table of contents, writer information, and featured posts.
-- New blog post: [What's new in Liveblocks: November 2024](https://liveblocks.io/blog/whats-new-in-liveblocks-november-edition-2024).
 
 ## Contributors
 
