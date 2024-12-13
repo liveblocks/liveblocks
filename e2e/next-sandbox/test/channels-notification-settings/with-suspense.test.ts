@@ -3,7 +3,7 @@ import { test } from "@playwright/test";
 
 import { genRoomId, preparePage, waitForJson } from "../utils";
 
-const SLOW = { timeout: 40_000 };
+const SLOW = { timeout: 20_000 };
 const TEST_URL =
   "http://localhost:3007/channels-notification-settings/with-suspense";
 
