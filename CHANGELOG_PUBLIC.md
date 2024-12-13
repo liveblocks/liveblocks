@@ -50,7 +50,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Website
 
-- Revamped blog design:
+- Revamped the [Liveblocks blog](https://liveblocks.io/blog):
   - Added the ability to switch between categories to find relevant posts.
   - Added the ability to search posts and filter results using tags.
   - Updated the layout with a table of contents, writer information, and featured posts.
