@@ -2,79 +2,66 @@
 import type {
   Callback,
   EventSource,
-  Observable,
   UnsubscribeCallback,
 } from "../lib/EventSource";
 import { makeEventSource } from "../lib/EventSource";
-
-/**
- * Patches a target object by "merging in" the provided fields. Patch
- * fields that are explicitly-undefined will delete keys from the target
- * object. Will return a new object.
- *
- * Important guarantee:
- * If the patch effectively did not mutate the target object because the
- * patch fields have the same value as the original, then the original
- * object reference will be returned.
- */
-export function merge<T>(target: T, patch: Partial<T>): T {
-  let updated = false;
-  const newValue = { ...target };
-
-  Object.keys(patch).forEach((k) => {
-    const key = k as keyof T;
-    const val = patch[key];
-    if (newValue[key] !== val) {
-      if (val === undefined) {
-        delete newValue[key];
-      } else {
-        newValue[key] = val as T[keyof T];
-      }
-      updated = true;
-    }
-  });
-
-  return updated ? newValue : target;
-}
-
-/* eslint-disable no-restricted-syntax */
-interface ReadonlySignal<T> {
-  name: string; // XXX Remove this after debugging
-  hasWatchers: boolean;
-  get(): T;
-  subscribe(callback: Callback<void>): UnsubscribeCallback;
-}
+import { freeze } from "../lib/freeze";
+import type { JsonObject } from "../lib/Json";
+import { compactObject, raise } from "../lib/utils";
+import { merge } from "./ImmutableRef";
 
 let signalId = 1;
 
-export class Signal<T> implements ReadonlySignal<T> {
-  public name: string = `Signal${signalId++}`;
+abstract class ReadonlySignal<T> {
+  public name: string = `Signal${signalId++}`; // XXX Remove this after debugging
 
-  #equals: (a: T, b: T) => boolean;
-  #value: T;
-  #event: EventSource<void>;
+  protected equals: (a: T, b: T) => boolean;
+  #eventSource: EventSource<void>;
 
-  constructor(value: T, equals?: (a: T, b: T) => boolean) {
-    this.#equals = equals ?? Object.is;
-    this.#value = value;
-    this.#event = makeEventSource<void>();
+  constructor(equals?: (a: T, b: T) => boolean) {
+    this.equals = equals ?? Object.is;
+    this.#eventSource = makeEventSource<void>();
   }
 
   [Symbol.dispose](): void {
-    this.#event[Symbol.dispose]();
+    this.#eventSource[Symbol.dispose]();
 
     // @ts-expect-error make disposed object completely unusable
-    this.#equals = null;
+    this.#eventSource = null;
     // @ts-expect-error make disposed object completely unusable
-    this.#value = null;
-    // @ts-expect-error make disposed object completely unusable
-    this.#event = null;
-
-    globalThis.console.log("💥 Disposing signal!");
+    this.equals = null;
   }
 
+  // Concrete subclasses implement this method in different ways
+  abstract get(): T;
+
   get hasWatchers(): boolean {
-    return this.#event.count() > 0;
+    return this.#eventSource.count() > 0;
+  }
+
+  protected notify(): void {
+    this.#eventSource.notify();
+  }
+
+  subscribe(callback: Callback<void>): UnsubscribeCallback {
+    return this.#eventSource.subscribe(callback);
+  }
+}
+
+// NOTE: This class is pretty similar to the Signal.State proposal
+export class Signal<T> extends ReadonlySignal<T> {
+  #value: T;
+
+  constructor(value: T, equals?: (a: T, b: T) => boolean) {
+    super(equals);
+    this.#value = value;
+  }
+
+  [Symbol.dispose](): void {
+    super[Symbol.dispose]();
+
+    // @ts-expect-error make disposed object completely unusable
+    this.#value = null;
   }
 
   get(): T {
@@ -85,14 +72,27 @@ export class Signal<T> implements ReadonlySignal<T> {
     if (typeof newValue === "function") {
       newValue = (newValue as (oldValue: T) => T)(this.#value);
     }
-    if (!this.#equals(this.#value, newValue)) {
+    if (!this.equals(this.#value, newValue)) {
       this.#value = newValue;
-      this.#event.notify();
+      this.notify();
     }
   }
+}
 
-  subscribe(callback: Callback<void>): UnsubscribeCallback {
-    return this.#event.subscribe(callback);
+export class PatchableSignal<J extends JsonObject> extends Signal<J> {
+  constructor(data: J) {
+    super(freeze(compactObject(data)));
+  }
+
+  set(): void {
+    throw new Error("Don't call .set() directly, use .patch()");
+  }
+
+  /**
+   * Patches the current object.
+   */
+  patch(patch: Partial<J>): void {
+    super.set((old) => freeze(merge(old, patch)));
   }
 }
 
@@ -102,10 +102,8 @@ export class Signal<T> implements ReadonlySignal<T> {
  */
 const PLACEHOLDER = Symbol();
 
-export class DerivedSignal<T> implements ReadonlySignal<T> {
-  public name: string = `DerivedSignal${signalId++}`;
-
-  #equals: (a: T, b: T) => boolean;
+// NOTE: This class is pretty similar to the Signal.Computed proposal
+export class DerivedSignal<T> extends ReadonlySignal<T> {
   #value: T;
   #dirty: boolean;
   #event: EventSource<void>;
@@ -114,43 +112,49 @@ export class DerivedSignal<T> implements ReadonlySignal<T> {
   #transform: (...values: unknown[]) => T;
   #unlinkFromParents?: () => void;
 
+  // Overload 1
+  static from<Ts extends [unknown, ...unknown[]], V>(...args: [...signals: { [K in keyof Ts]: ReadonlySignal<Ts[K]> }, transform: (...values: Ts) => V]): DerivedSignal<V>; // prettier-ignore
+  // Overload 2
+  static from<Ts extends [unknown, ...unknown[]], V>(...args: [...signals: { [K in keyof Ts]: ReadonlySignal<Ts[K]> }, transform: (...values: Ts) => V, equals: (a: V, b: V) => boolean]): DerivedSignal<V>; // prettier-ignore
+  static from<Ts extends [unknown, ...unknown[]], V>(
+    // prettier-ignore
+    ...args: [
+      ...signals: { [K in keyof Ts]: ReadonlySignal<Ts[K]> },
+      transform: (...values: Ts) => V,
+      equals?: (a: V, b: V) => boolean,
+    ]
+  ): DerivedSignal<V> {
+    const last = args.pop();
+    if (typeof last !== "function")
+      raise("Invalid .from() call, last argument expected to be a function");
+
+    if (typeof args[args.length - 1] === "function") {
+      // Overload 2
+      const equals = last as (a: V, b: V) => boolean;
+      const transform = args.pop() as (...values: unknown[]) => V;
+      return new DerivedSignal(
+        args as ReadonlySignal<unknown>[],
+        transform,
+        equals
+      );
+    } else {
+      // Overload 1
+      const transform = last as (...values: unknown[]) => V;
+      return new DerivedSignal(args as ReadonlySignal<unknown>[], transform);
+    }
+  }
+
   private constructor(
     parents: ReadonlySignal<unknown>[],
     transform: (...values: unknown[]) => T,
     equals?: (a: T, b: T) => boolean
   ) {
-    this.#equals = equals ?? Object.is;
+    super(equals);
     this.#dirty = true;
     this.#value = PLACEHOLDER as unknown as T;
     this.#event = makeEventSource<void>();
     this.#parents = parents;
     this.#transform = transform;
-  }
-
-  static from<Ts extends [unknown, ...unknown[]], V>(
-    ...args: [
-      ...signals: { [K in keyof Ts]: ReadonlySignal<Ts[K]> },
-      transform: (...values: Ts) => V,
-    ]
-  ): DerivedSignal<V> {
-    const transform = args.pop() as (...values: unknown[]) => V;
-    return new DerivedSignal(args as ReadonlySignal<unknown>[], transform);
-  }
-
-  static fromWithEquals<Ts extends [unknown, ...unknown[]], V>(
-    ...args: [
-      ...signals: { [K in keyof Ts]: ReadonlySignal<Ts[K]> },
-      transform: (...values: Ts) => V,
-      equals: (a: V, b: V) => boolean,
-    ]
-  ): DerivedSignal<V> {
-    const equals = args.pop() as (a: V, b: V) => boolean;
-    const transform = args.pop() as (...values: unknown[]) => V;
-    return new DerivedSignal(
-      args as ReadonlySignal<unknown>[],
-      transform,
-      equals
-    );
   }
 
   [Symbol.dispose](): void {
@@ -165,8 +169,6 @@ export class DerivedSignal<T> implements ReadonlySignal<T> {
     this.#parents = null;
     // @ts-expect-error make disposed object completely unusable
     this.#transform = null;
-
-    globalThis.console.log("💥 Disposing derived signal!");
   }
 
   get hasWatchers(): boolean {
@@ -192,7 +194,7 @@ export class DerivedSignal<T> implements ReadonlySignal<T> {
     this.#dirty = this.#unlinkFromParents === undefined;
 
     // Only emit a change to watchers if the value actually changed
-    if (!this.#equals(this.#value, derived)) {
+    if (!this.equals(this.#value, derived)) {
       this.#value = derived;
       this.#event.notify();
     }
@@ -258,34 +260,6 @@ export class DerivedSignal<T> implements ReadonlySignal<T> {
     };
   }
 }
-
-// {
-//   function hashIntegers(arr: number[]) {
-//     // Validate input
-//     if (!Array.isArray(arr) || arr.length > 10) {
-//       throw new Error("Input must be an array with up to 10 positive integers");
-//     }
-//
-//     // Use a prime-based multiplication approach
-//     const primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29];
-//
-//     return arr
-//       .map((num, index) => {
-//         // Validate each number
-//         if (!Number.isInteger(num) || num <= 0) {
-//           throw new Error("All elements must be positive integers");
-//         }
-//         // Multiply each number by a unique prime raised to its index
-//         return num * Math.pow(primes[index], num);
-//       })
-//       .reduce((a, b) => a ^ b, 0) // XOR for additional mixing
-//       .toString(16); // Convert to hex for compact representation
-//   }
-//
-//   // Examples
-//   console.log(hashIntegers([1, 1, 2, 2, 1, 1])); // Different from hashIntegers([3, 2, 1])
-//   console.log(hashIntegers([3, 2, 1, 4, 1, 2237])); // Different from hashIntegers([3, 2, 1])
-// }
 
 {
   const log = globalThis.console.log;
@@ -356,7 +330,7 @@ export class DerivedSignal<T> implements ReadonlySignal<T> {
   });
 
   console.log("x", isEven.get());
-  todos.set((todos) => todos.slice(1));
+  todos.set((todos) => todos.slice());
   console.log("y", isEven.get());
 
   // x();
@@ -365,44 +339,4 @@ export class DerivedSignal<T> implements ReadonlySignal<T> {
   isEvenSub();
 
   log("done");
-}
-
-/* eslint-enable no-restricted-syntax */
-
-/**
- * Base class that implements an immutable cache.
- *
- * TODO: Document usage.
- */
-export abstract class ImmutableRef<T> {
-  /** @internal */
-  private _cache:
-    | Readonly<T>
-    | undefined // `undefined` initially
-    | null; // `null` after explicit invalidate()
-
-  /** @internal */
-  private _ev: EventSource<void>;
-
-  constructor() {
-    this._ev = makeEventSource<void>();
-  }
-
-  get didInvalidate(): Observable<void> {
-    return this._ev.observable;
-  }
-
-  /** @internal */
-  protected abstract _toImmutable(): Readonly<T>;
-
-  protected invalidate(): void {
-    if (this._cache !== null) {
-      this._cache = null;
-      this._ev.notify();
-    }
-  }
-
-  get current(): Readonly<T> {
-    return this._cache ?? (this._cache = this._toImmutable());
-  }
 }
