@@ -1,4 +1,20 @@
-## Not yet published
+## 2.14.1 (Not yet published)
+
+### `@liveblocks/react`
+
+- Internal refactorings and code cleanup.
+
+### `@liveblocks/react-lexical`
+
+- Internal refactorings and code cleanup.
+
+### `@liveblocks/react-tiptap`
+
+- Internal refactorings and code cleanup.
+
+### `@liveblocks/react-ui`
+
+- Internal refactorings and code cleanup.
 
 ## 2.14.0
 

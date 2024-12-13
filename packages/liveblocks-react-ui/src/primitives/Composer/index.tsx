@@ -6,12 +6,12 @@ import {
   type CommentLocalAttachment,
   createCommentAttachmentId,
   type EventSource,
-  kInternal,
   makeEventSource,
 } from "@liveblocks/core";
 import {
   useClientOrNull,
   useMentionSuggestions,
+  useResolveMentionSuggestions,
   useRoomOrNull,
   useSyncSource,
 } from "@liveblocks/react/_private";
@@ -852,8 +852,9 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       useState(false);
     // If used with LiveblocksProvider but without resolveMentionSuggestions,
     // we can skip the mention suggestions logic entirely
+    const resolveMentionSuggestions = useResolveMentionSuggestions();
     const hasResolveMentionSuggestions = client
-      ? client[kInternal].resolveMentionSuggestions !== undefined
+      ? resolveMentionSuggestions
       : true;
     const [mentionDraft, setMentionDraft] = useState<MentionDraft>();
     const mentionSuggestions = useMentionSuggestions(
