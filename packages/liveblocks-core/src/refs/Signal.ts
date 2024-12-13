@@ -231,8 +231,10 @@ export class DerivedSignal<T> extends ReadonlySignal<T> {
   }
 
   markDirty(): void {
-    this.#dirty = true;
-    this.markSinksDirty();
+    if (!this.#dirty) {
+      this.#dirty = true;
+      this.markSinksDirty();
+    }
   }
 
   get(): T {
