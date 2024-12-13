@@ -45,6 +45,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Documentation
 
+- New guide: [How to send emaail notifications for unread text editor mentions](https://liveblocks.io/docs/guides/how-to-send-email-notifications-for-unread-text-editor-mentions).
 - Improved [thread metadata page](https://liveblocks.io/docs/products/comments/metadata).
 
 ## Website
