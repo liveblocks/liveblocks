@@ -2,9 +2,13 @@ import { autoUpdate, useFloating } from "@floating-ui/react-dom";
 import { CollaborationPlugin } from "@lexical/react/LexicalCollaborationPlugin";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { Provider } from "@lexical/yjs";
-import { kInternal, nn, TextEditorType } from "@liveblocks/core";
-import { useClient, useRoom, useSelf } from "@liveblocks/react";
-import { useReportTextEditor } from "@liveblocks/react/_private";
+import { nn, TextEditorType } from "@liveblocks/core";
+import { useRoom, useSelf } from "@liveblocks/react";
+import {
+  useReportTextEditor,
+  useResolveMentionSuggestions,
+  useYjsProvider,
+} from "@liveblocks/react/_private";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import type { MutableRefObject } from "react";
 import React, {
@@ -40,23 +44,6 @@ export type EditorStatus =
   | "synchronizing"
   /* The editor state is sync with Liveblocks servers */
   | "synchronized";
-
-function useYjsProvider() {
-  const room = useRoom();
-
-  const subscribe = useCallback(
-    (onStoreChange: () => void) => {
-      return room[kInternal].yjsProviderDidChange.subscribe(onStoreChange);
-    },
-    [room]
-  );
-
-  const getSnapshot = useCallback(() => {
-    return room[kInternal].getYjsProvider();
-  }, [room]);
-
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-}
 
 /**
  * Get the storage status.
@@ -158,9 +145,8 @@ export type LiveblocksPluginProps = {
 export const LiveblocksPlugin = ({
   children,
 }: LiveblocksPluginProps): JSX.Element => {
-  const client = useClient();
-  const hasResolveMentionSuggestions =
-    client[kInternal].resolveMentionSuggestions !== undefined;
+  const isResolveMentionSuggestionsDefined =
+    useResolveMentionSuggestions() !== undefined;
   const [editor] = useLexicalComposerContext();
   const room = useRoom();
   const previousRoomIdRef = useRef<string | null>(null);
@@ -286,7 +272,7 @@ export const LiveblocksPlugin = ({
         />
       )}
 
-      {hasResolveMentionSuggestions && <MentionPlugin />}
+      {isResolveMentionSuggestionsDefined && <MentionPlugin />}
       <CommentPluginProvider>{children}</CommentPluginProvider>
     </>
   );
