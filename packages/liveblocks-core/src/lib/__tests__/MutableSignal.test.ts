@@ -1,6 +1,6 @@
 import fc from "fast-check";
 
-import { DerivedSignal, MutableSignal } from "../Signal";
+import { batch, DerivedSignal, MutableSignal, Signal } from "../Signal";
 
 const anyObject = fc
   .anything()
@@ -94,6 +94,48 @@ it("when chained, derived signals will think the value changed", () => {
 
   expect(count.get()).toEqual(3);
   expect(str.get()).toEqual("apple,banana,cherry");
+});
+
+it("when batched, derived signals will only update the value changed", () => {
+  const evaled = jest.fn();
+  const watcher = jest.fn();
+
+  const fruits = new MutableSignal<string[]>([]);
+  const count = new Signal<number>(0);
+  const list = DerivedSignal.from(fruits, count, (arr, n) => {
+    evaled();
+    return arr.flatMap((x) => Array<string>(n).fill(x));
+  });
+
+  expect(list.isDirty).toEqual(true);
+  expect(evaled).toHaveBeenCalledTimes(0);
+
+  expect(list.get()).toEqual([]);
+
+  expect(evaled).toHaveBeenCalledTimes(1);
+  evaled.mockClear();
+
+  const unsub = list.subscribe(watcher);
+
+  // Without batching...
+  fruits.mutate((f) => f.push("🍎"));
+  count.set(3);
+
+  expect(evaled).toHaveBeenCalledTimes(2); // ...it's called 2 times
+  expect(list.get()).toEqual(["🍎", "🍎", "🍎"]);
+
+  evaled.mockClear();
+
+  // But with batching...
+  batch(() => {
+    fruits.mutate((f) => f.push("🍍"));
+    count.set(2);
+  });
+
+  expect(evaled).toHaveBeenCalledTimes(1); // ...it's called only once
+  expect(list.get()).toEqual(["🍎", "🍎", "🍍", "🍍"]);
+
+  unsub();
 });
 
 test("[prop] whatever value you initialize it with is what comes out", () => {
