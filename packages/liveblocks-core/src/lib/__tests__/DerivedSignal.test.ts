@@ -306,7 +306,7 @@ it("batch signal notifications and re-evaluations are as efficient as possible",
 
   // Value did not change, so reference did not change either
   const after = sorted.get();
-  expect(after).toEqual(before);
+  expect(after).toBe(before);
 
   batch(() => {
     // Same values, but in different signals
@@ -317,7 +317,7 @@ it("batch signal notifications and re-evaluations are as efficient as possible",
 
   // Derived value still did not change, since sorted result is the same
   const after2 = sorted.get();
-  expect(after2).toEqual(before);
+  expect(after2).toBe(before);
 
   const fn = jest.fn(); // Callback when sorted changes
   const unsub = sorted.subscribe(fn);
