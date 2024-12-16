@@ -37,8 +37,8 @@ export class OthersSignal<
   U extends BaseUserMeta,
 > extends MutableSignal<readonly User<P, U>[]> {
   // To track "others"
-  private _connections: Map</* connectionId */ number, Connection<U>>;
-  private _presences: Map</* connectionId */ number, P>;
+  private readonly _connections: Map</* connectionId */ number, Connection<U>>;
+  private readonly _presences: Map</* connectionId */ number, P>;
 
   //
   // --------------------------------------------------------------
@@ -50,7 +50,7 @@ export class OthersSignal<
   // abstraction/helper. Manually maintaining these caches should no longer be
   // necessary.
   //
-  private _users: Map</* connectionId */ number, User<P, U>>;
+  private readonly _users: Map</* connectionId */ number, User<P, U>>;
   //
   // --------------------------------------------------------------
   //
@@ -68,9 +68,9 @@ export class OthersSignal<
     return this._connections.keys();
   }
 
-  #cache?: readonly User<P, U>[];
+  private _cache?: readonly User<P, U>[];
   get(): readonly User<P, U>[] {
-    return (this.#cache ??= compact(
+    return (this._cache ??= compact(
       Array.from(this._presences.keys()).map((connectionId) =>
         this.getUser(Number(connectionId))
       )
@@ -82,7 +82,7 @@ export class OthersSignal<
       this._connections.clear();
       this._presences.clear();
       this._users.clear();
-      this.#cache = undefined;
+      this._cache = undefined;
     });
   }
 
@@ -114,7 +114,7 @@ export class OthersSignal<
   /** @internal */
   _invalidateUser(connectionId: number): void {
     this._users.delete(connectionId);
-    this.#cache = undefined;
+    this._cache = undefined;
   }
 
   /**

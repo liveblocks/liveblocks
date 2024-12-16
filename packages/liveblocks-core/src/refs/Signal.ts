@@ -1,5 +1,3 @@
-// XXX REMOVE THIS ESLINT SUPPRESSION
-/* eslint-disable */
 import type {
   Callback,
   EventSource,
@@ -42,14 +40,14 @@ export function merge<T>(target: T, patch: Partial<T>): T {
 }
 
 abstract class ReadableSignal<T> implements Observable<void> {
-  protected equals: (a: T, b: T) => boolean;
-  #eventSource: EventSource<void>;
-  #sinks: Set<DerivedSignal<unknown>>;
+  protected readonly equals: (a: T, b: T) => boolean;
+  private readonly eventSource: EventSource<void>;
+  private readonly sinks: Set<DerivedSignal<unknown>>;
 
   constructor(equals?: (a: T, b: T) => boolean) {
     this.equals = equals ?? Object.is;
-    this.#eventSource = makeEventSource<void>();
-    this.#sinks = new Set();
+    this.eventSource = makeEventSource<void>();
+    this.sinks = new Set();
 
     // Auto-bind common methods
     this.get = this.get.bind(this);
@@ -58,27 +56,27 @@ abstract class ReadableSignal<T> implements Observable<void> {
   }
 
   [Symbol.dispose](): void {
-    this.#eventSource[Symbol.dispose]();
+    this.eventSource[Symbol.dispose]();
 
     // @ts-expect-error make disposed object completely unusable
-    this.#eventSource = null;
+    this.eventSource = "(disposed)";
     // @ts-expect-error make disposed object completely unusable
-    this.equals = null;
+    this.equals = "(disposed)";
   }
 
   // Concrete subclasses implement this method in different ways
   abstract get(): T;
 
   get hasWatchers(): boolean {
-    return this.#eventSource.count() > 0;
+    return this.eventSource.count() > 0;
   }
 
   protected notify(): void {
-    this.#eventSource.notify();
+    this.eventSource.notify();
   }
 
   subscribe(callback: Callback<void>): UnsubscribeCallback {
-    return this.#eventSource.subscribe(callback);
+    return this.eventSource.subscribe(callback);
   }
 
   subscribeOnce(callback: Callback<void>): UnsubscribeCallback {
@@ -94,46 +92,45 @@ abstract class ReadableSignal<T> implements Observable<void> {
   }
 
   markSinksDirty(): void {
-    for (const sink of this.#sinks) {
+    for (const sink of this.sinks) {
       sink.markDirty();
     }
   }
 
   addSink(sink: DerivedSignal<unknown>): void {
-    this.#sinks.add(sink);
+    this.sinks.add(sink);
   }
 
   removeSink(sink: DerivedSignal<unknown>): void {
-    this.#sinks.delete(sink);
+    this.sinks.delete(sink);
   }
 }
 
 // NOTE: This class is pretty similar to the Signal.State proposal
 export class Signal<T> extends ReadableSignal<T> {
-  #value: T;
+  private value: T;
 
   constructor(value: T, equals?: (a: T, b: T) => boolean) {
     super(equals);
-    this.#value = freeze(value);
+    this.value = freeze(value);
   }
 
   [Symbol.dispose](): void {
     super[Symbol.dispose]();
-
     // @ts-expect-error make disposed object completely unusable
-    this.#value = null;
+    this.value = "(disposed)";
   }
 
   get(): T {
-    return this.#value;
+    return this.value;
   }
 
   set(newValue: T | ((oldValue: T) => T)): void {
     if (typeof newValue === "function") {
-      newValue = (newValue as (oldValue: T) => T)(this.#value);
+      newValue = (newValue as (oldValue: T) => T)(this.value);
     }
-    if (!this.equals(this.#value, newValue)) {
-      this.#value = freeze(newValue);
+    if (!this.equals(this.value, newValue)) {
+      this.value = freeze(newValue);
       this.markSinksDirty();
       this.notify();
     }
@@ -165,14 +162,13 @@ const INITIAL = Symbol();
 
 // NOTE: This class is pretty similar to the Signal.Computed proposal
 export class DerivedSignal<T> extends ReadableSignal<T> {
-  #prevValue: T;
-  #dirty: boolean; // When true, the value in #value may not be up-to-date and needs re-checking
-  #event: EventSource<void>;
+  private prevValue: T;
+  private dirty: boolean; // When true, the value in #value may not be up-to-date and needs re-checking
 
-  #parents: readonly ReadableSignal<unknown>[];
-  #transform: (...values: unknown[]) => T;
+  private readonly parents: readonly ReadableSignal<unknown>[];
+  private readonly transform: (...values: unknown[]) => T;
 
-  #unlinkFromParents?: UnsubscribeCallback;
+  private unlinkFromParents?: UnsubscribeCallback;
 
   // Overload 1
   static from<Ts extends [unknown, ...unknown[]], V>(...args: [...signals: { [K in keyof Ts]: ReadableSignal<Ts[K]> }, transform: (...values: Ts) => V]): DerivedSignal<V>; // prettier-ignore
@@ -212,11 +208,10 @@ export class DerivedSignal<T> extends ReadableSignal<T> {
     equals?: (a: T, b: T) => boolean
   ) {
     super(equals);
-    this.#dirty = true;
-    this.#prevValue = INITIAL as unknown as T;
-    this.#event = makeEventSource<void>();
-    this.#parents = parents;
-    this.#transform = transform;
+    this.dirty = true;
+    this.prevValue = INITIAL as unknown as T;
+    this.parents = parents;
+    this.transform = transform;
 
     for (const parent of parents) {
       parent.addSink(this as DerivedSignal<unknown>);
@@ -224,73 +219,65 @@ export class DerivedSignal<T> extends ReadableSignal<T> {
   }
 
   [Symbol.dispose](): void {
-    for (const parent of this.#parents) {
+    for (const parent of this.parents) {
       parent.removeSink(this as DerivedSignal<unknown>);
     }
 
-    this.#event[Symbol.dispose]();
-
     // @ts-expect-error make disposed object completely unusable
-    this.#prevValue = INITIAL;
+    this.prevValue = "(disposed)";
     // @ts-expect-error make disposed object completely unusable
-    this.#event = null;
+    this.parents = "(disposed)";
     // @ts-expect-error make disposed object completely unusable
-    this.#parents = null;
-    // @ts-expect-error make disposed object completely unusable
-    this.#transform = null;
+    this.transform = "(disposed)";
   }
 
   get isDirty(): boolean {
-    return this.#dirty;
+    return this.dirty;
   }
 
-  get hasWatchers(): boolean {
-    return this.#event.count() > 0;
-  }
-
-  #recompute(): boolean {
-    const derived = this.#transform(...this.#parents.map((p) => p.get()));
-    this.#dirty = false;
+  private recompute(): boolean {
+    const derived = this.transform(...this.parents.map((p) => p.get()));
+    this.dirty = false;
 
     // Only emit a change to watchers if the value actually changed
-    if (!this.equals(this.#prevValue, derived)) {
-      this.#prevValue = derived;
+    if (!this.equals(this.prevValue, derived)) {
+      this.prevValue = derived;
       return true;
     }
     return false;
   }
 
   markDirty(): void {
-    if (!this.#dirty) {
-      this.#dirty = true;
+    if (!this.dirty) {
+      this.dirty = true;
       this.markSinksDirty();
     }
   }
 
   get(): T {
-    if (this.#dirty) {
-      this.#recompute();
+    if (this.dirty) {
+      this.recompute();
     }
-    return this.#prevValue;
+    return this.prevValue;
   }
 
-  #linkUpToParents(): void {
-    this.#unlinkFromParents?.();
+  private linkUpToParents(): void {
+    this.unlinkFromParents?.();
 
-    const unsubs = this.#parents.map((parent) => {
+    const unsubs = this.parents.map((parent) => {
       return parent.subscribe(() => {
         // Re-evaluate the current derived signal's value and if needed,
         // notify sinks. At this point, all sinks should already have been
         // marked dirty, so we won't have to do that again here now.
-        const updated = this.#recompute();
+        const updated = this.recompute();
         if (updated) {
-          this.#event.notify();
+          this.notify();
         }
       });
     });
 
-    this.#unlinkFromParents = () => {
-      this.#unlinkFromParents = undefined;
+    this.unlinkFromParents = () => {
+      this.unlinkFromParents = undefined;
       for (const unsub of unsubs) {
         try {
           unsub();
@@ -306,16 +293,16 @@ export class DerivedSignal<T> extends ReadableSignal<T> {
     // subscribed to, then we need to set up a watcher on all of its parents as
     // well.
     if (!this.hasWatchers) {
-      this.#linkUpToParents();
+      this.linkUpToParents();
     }
 
-    const unsub = this.#event.subscribe(callback);
+    const unsub = super.subscribe(callback);
     return () => {
       unsub();
 
       // If the last watcher unsubscribed, unlink this Signal from its parents'
       if (!this.hasWatchers) {
-        this.#unlinkFromParents?.();
+        this.unlinkFromParents?.();
       }
     };
   }
@@ -330,22 +317,21 @@ export class DerivedSignal<T> extends ReadableSignal<T> {
  * its reference.
  */
 export class MutableSignal<T extends object> extends ReadableSignal<T> {
-  #state: T;
+  private readonly state: T;
 
   constructor(initialState: T) {
     super();
-    this.#state = initialState;
+    this.state = initialState;
   }
 
   [Symbol.dispose](): void {
     super[Symbol.dispose]();
-
     // @ts-expect-error make disposed object completely unusable
-    this.#state = null;
+    this.state = "(disposed)";
   }
 
   get(): T {
-    return this.#state;
+    return this.state;
   }
 
   /**
@@ -356,7 +342,7 @@ export class MutableSignal<T extends object> extends ReadableSignal<T> {
    * was not changed.
    */
   mutate(callback: (state: T) => unknown): void {
-    const result = callback(this.#state);
+    const result = callback(this.state);
     if (result !== null && typeof result === "object" && "then" in result) {
       raise("MutableSignal.mutate() does not support async callbacks");
     }
