@@ -41,16 +41,6 @@ export function entries<
 }
 
 /**
- * Drop-in replacement for Object.fromEntries() that retains better types.
- */
-export function fromEntries<
-  O extends { [key: string]: unknown },
-  K extends keyof O,
->(entries: [K, O[K]][]): O {
-  return Object.fromEntries(entries) as O;
-}
-
-/**
  * Drop-in replacement for Object.keys() that retains better types.
  */
 export function keys<O extends { [key: string]: unknown }, K extends keyof O>(
