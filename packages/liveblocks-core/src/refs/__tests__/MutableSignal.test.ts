@@ -109,8 +109,7 @@ test("[prop] whatever value you initialize it with is what comes out", () => {
   );
 });
 
-// XXX Make pass!
-test.failing("[prop] mutating works with any value", () => {
+test("[prop] mutating works with any value", () => {
   fc.assert(
     fc.property(
       anyObject,
@@ -120,8 +119,17 @@ test.failing("[prop] mutating works with any value", () => {
         const signal = new MutableSignal(init);
         expect(signal.get()).toBe(init);
 
-        signal.mutate(() => newVal);
-        expect(signal.get()).toBe(newVal);
+        signal.mutate((x) => {
+          // @ts-expect-error deliberately mutate
+          x.whatever = newVal;
+        });
+        expect(signal.get()).toBe(init);
+
+        // But the mutation happened
+        expect(
+          // @ts-expect-error deliberately access
+          signal.get().whatever
+        ).toBe(newVal);
       }
     )
   );
