@@ -321,15 +321,13 @@ export class DerivedSignal<T> extends ReadableSignal<T> {
 }
 
 /**
- * A ExternalSignal is a bit like Signal, except its state is managed in
- * a mutable object. This means that when the state is mutated, its reference
- * won't change.
+ * A MutableSignal is a bit like Signal, except its state is managed by
+ * a single value whose reference does not change but is mutated.
  *
  * Similar to how useSyncExternalState() works in React, there is a way to read
  * the current state at any point in time synchronously, and a way to update
  * its reference.
  */
-
 export class MutableSignal<T> extends ReadableSignal<T> {
   #state: T;
 
@@ -349,9 +347,27 @@ export class MutableSignal<T> extends ReadableSignal<T> {
     return this.#state;
   }
 
-  mutate(callback: (state: T) => void): void {
-    callback(this.#state);
-    this.markSinksDirty();
-    this.notify();
+  /**
+   * Invokes a callback function that is allowed to mutate the given state
+   * value. Do not change the value outside of the callback.
+   *
+   * If the callback returns `false`, it's assumed that the state was not
+   * changed.
+   */
+  mutate(callback: (state: T) => unknown): void {
+    const result = callback(this.#state);
+    if (result !== null && typeof result === "object" && "then" in result) {
+      raise("MutableSignal.mutate() does not support async callbacks");
+    }
+
+    if (result !== false) {
+      this.markSinksDirty();
+      this.notify();
+    }
   }
+
+  // XXX Add a batch API here as well
+  // XXX Think about whether batch would only belong on this class or on the Signal
+  //     class as well?
+  // XXX DRY up the 'Store' class
 }
