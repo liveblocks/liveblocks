@@ -43,7 +43,7 @@ export function merge<T>(target: T, patch: Partial<T>): T {
 
 let signalId = 1;
 
-abstract class ReadonlySignal<T> implements Observable<void> {
+abstract class ReadableSignal<T> implements Observable<void> {
   public name: string = `Signal${signalId++}`; // XXX Remove this after debugging
 
   protected equals: (a: T, b: T) => boolean;
@@ -108,7 +108,7 @@ abstract class ReadonlySignal<T> implements Observable<void> {
 }
 
 // NOTE: This class is pretty similar to the Signal.State proposal
-export class Signal<T> extends ReadonlySignal<T> {
+export class Signal<T> extends ReadableSignal<T> {
   #value: T;
 
   constructor(value: T, equals?: (a: T, b: T) => boolean) {
@@ -163,24 +163,24 @@ export class PatchableSignal<J extends JsonObject> extends Signal<J> {
 const INITIAL = Symbol();
 
 // NOTE: This class is pretty similar to the Signal.Computed proposal
-export class DerivedSignal<T> extends ReadonlySignal<T> {
+export class DerivedSignal<T> extends ReadableSignal<T> {
   #prevValue: T;
   #dirty: boolean; // When true, the value in #value may not be up-to-date and needs re-checking
   #event: EventSource<void>;
 
-  #parents: readonly ReadonlySignal<unknown>[];
+  #parents: readonly ReadableSignal<unknown>[];
   #transform: (...values: unknown[]) => T;
 
   #unlinkFromParents?: UnsubscribeCallback;
 
   // Overload 1
-  static from<Ts extends [unknown, ...unknown[]], V>(...args: [...signals: { [K in keyof Ts]: ReadonlySignal<Ts[K]> }, transform: (...values: Ts) => V]): DerivedSignal<V>; // prettier-ignore
+  static from<Ts extends [unknown, ...unknown[]], V>(...args: [...signals: { [K in keyof Ts]: ReadableSignal<Ts[K]> }, transform: (...values: Ts) => V]): DerivedSignal<V>; // prettier-ignore
   // Overload 2
-  static from<Ts extends [unknown, ...unknown[]], V>(...args: [...signals: { [K in keyof Ts]: ReadonlySignal<Ts[K]> }, transform: (...values: Ts) => V, equals: (a: V, b: V) => boolean]): DerivedSignal<V>; // prettier-ignore
+  static from<Ts extends [unknown, ...unknown[]], V>(...args: [...signals: { [K in keyof Ts]: ReadableSignal<Ts[K]> }, transform: (...values: Ts) => V, equals: (a: V, b: V) => boolean]): DerivedSignal<V>; // prettier-ignore
   static from<Ts extends [unknown, ...unknown[]], V>(
     // prettier-ignore
     ...args: [
-      ...signals: { [K in keyof Ts]: ReadonlySignal<Ts[K]> },
+      ...signals: { [K in keyof Ts]: ReadableSignal<Ts[K]> },
       transform: (...values: Ts) => V,
       equals?: (a: V, b: V) => boolean,
     ]
@@ -194,19 +194,19 @@ export class DerivedSignal<T> extends ReadonlySignal<T> {
       const equals = last as (a: V, b: V) => boolean;
       const transform = args.pop() as (...values: unknown[]) => V;
       return new DerivedSignal(
-        args as ReadonlySignal<unknown>[],
+        args as ReadableSignal<unknown>[],
         transform,
         equals
       );
     } else {
       // Overload 1
       const transform = last as (...values: unknown[]) => V;
-      return new DerivedSignal(args as ReadonlySignal<unknown>[], transform);
+      return new DerivedSignal(args as ReadableSignal<unknown>[], transform);
     }
   }
 
   private constructor(
-    parents: ReadonlySignal<unknown>[],
+    parents: ReadableSignal<unknown>[],
     transform: (...values: unknown[]) => T,
     equals?: (a: T, b: T) => boolean
   ) {
@@ -330,7 +330,7 @@ export class DerivedSignal<T> extends ReadonlySignal<T> {
  * its reference.
  */
 
-export class MutableSignal<T> extends ReadonlySignal<T> {
+export class MutableSignal<T> extends ReadableSignal<T> {
   //
   // NOTE: Maybe it could be as simple as this???????????
   // NOTE: If only it did not freeze() it!
