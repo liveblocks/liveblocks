@@ -276,7 +276,7 @@ it("batch signal updates so derived signals will only be notified once", () => {
   unsub2();
 });
 
-it.only("batch signal notifications and re-evaluations are as efficient as possible", () => {
+it("batch signal notifications and re-evaluations are as efficient as possible", () => {
   const x = new Signal(1);
   const y = new Signal(2);
   const z = new Signal(3);
