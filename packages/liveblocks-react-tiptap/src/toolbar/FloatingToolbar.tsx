@@ -13,7 +13,11 @@ import {
 } from "@floating-ui/react-dom";
 import { TooltipProvider, useRefs } from "@liveblocks/react-ui/_private";
 import { type Editor, isTextSelection, useEditorState } from "@tiptap/react";
-import type { ComponentProps, PointerEvent as ReactPointerEvent } from "react";
+import type {
+  ComponentProps,
+  FocusEvent as ReactFocusEvent,
+  PointerEvent as ReactPointerEvent,
+} from "react";
 import React, {
   forwardRef,
   useCallback,
@@ -81,18 +85,16 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
       offset: sideOffset = 6,
       editor,
       onPointerDown,
+      onFocus,
+      onBlur,
       className,
       ...props
     },
     forwardedRef
   ) => {
+    const toolbarRef = useRef<HTMLDivElement>(null);
     const [isPointerDown, setPointerDown] = useState(false);
-    const isFocused =
-      useEditorState({
-        editor,
-        equalityFn: Object.is,
-        selector: (ctx) => ctx.editor?.isFocused ?? false,
-      }) ?? false;
+    const [isFocused, setFocused] = useState(false);
     const isEditable =
       useEditorState({
         editor,
@@ -128,6 +130,74 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
     const isOpen = isFocused && !isPointerDown && hasSelectionRange;
     const [delayedIsOpen, setDelayedIsOpen] = useState(isOpen);
     const delayedIsOpenTimeoutRef = useRef<number>();
+
+    // Don't close when the focus moves from the editor to the toolbar
+    useEffect(() => {
+      if (!editor) {
+        return;
+      }
+
+      const handleFocus = () => {
+        setFocused(true);
+      };
+
+      const handleBlur = (event: FocusEvent) => {
+        if (
+          event.relatedTarget &&
+          toolbarRef.current?.contains(event.relatedTarget as Node)
+        ) {
+          return;
+        }
+
+        if (event.relatedTarget === editor.view.dom) {
+          return;
+        }
+
+        setFocused(false);
+      };
+
+      editor.view.dom.addEventListener("focus", handleFocus);
+      editor.view.dom.addEventListener("blur", handleBlur);
+
+      return () => {
+        editor.view.dom.removeEventListener("focus", handleFocus);
+        editor.view.dom.removeEventListener("blur", handleBlur);
+      };
+    }, [editor]);
+
+    const handleFocus = useCallback(
+      (event: ReactFocusEvent<HTMLDivElement>) => {
+        onFocus?.(event);
+
+        if (!event.isDefaultPrevented()) {
+          setFocused(true);
+        }
+      },
+      [onFocus]
+    );
+
+    // Close the toolbar when the it loses focus to something else than the editor
+    const handleBlur = useCallback(
+      (event: ReactFocusEvent<HTMLDivElement>) => {
+        onBlur?.(event);
+
+        if (!event.isDefaultPrevented()) {
+          if (
+            event.relatedTarget &&
+            toolbarRef.current?.contains(event.relatedTarget as Node)
+          ) {
+            return;
+          }
+
+          if (event.relatedTarget === editor?.view.dom) {
+            return;
+          }
+
+          setFocused(false);
+        }
+      },
+      [onBlur, editor]
+    );
 
     // Delay the opening of the toolbar to avoid flickering issues
     useEffect(() => {
@@ -180,13 +250,12 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
       ...floatingOptions,
       open: delayedIsOpen,
     });
-    const mergedRefs = useRefs(forwardedRef, setFloating);
+    const mergedRefs = useRefs(forwardedRef, toolbarRef, setFloating);
 
     const handlePointerDown = useCallback(
       (event: ReactPointerEvent<HTMLDivElement>) => {
         onPointerDown?.(event);
 
-        event.preventDefault();
         event.stopPropagation();
       },
       [onPointerDown]
@@ -291,6 +360,8 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
               minWidth: "max-content",
             }}
             onPointerDown={handlePointerDown}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
             {...props}
           >
             {applyToolbarSlot(leading, slotProps)}
