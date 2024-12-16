@@ -331,22 +331,6 @@ export class DerivedSignal<T> extends ReadableSignal<T> {
  */
 
 export class MutableSignal<T> extends ReadableSignal<T> {
-  //
-  // NOTE: Maybe it could be as simple as this???????????
-  // NOTE: If only it did not freeze() it!
-  //
-  // export class MutableSignal<T> extends Signal<T> {
-  //   constructor(value: T) {
-  //     super(value, () => false);
-  //   }
-  //
-  //   mutate(callback: (state: T) => void): void {
-  //     const mutableState = this.get();
-  //     callback(mutableState);
-  //     super.set(mutableState);
-  //   }
-  // }
-
   #state: T;
 
   constructor(initialState: T) {
