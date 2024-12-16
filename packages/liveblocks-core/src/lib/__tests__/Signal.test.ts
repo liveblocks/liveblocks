@@ -1,7 +1,7 @@
 import fc from "fast-check";
 
 import { shallow } from "../../lib/shallow";
-import { Signal } from "../Signal";
+import { batch, Signal } from "../Signal";
 
 test("empty", () => {
   expect(new Signal({}).get()).toStrictEqual({});
@@ -49,6 +49,46 @@ it("signals only notify watchers when their value changes", () => {
 
   counter.set((n) => n + 1);
 
+  unsub();
+});
+
+it("without batching three signal updates will lead to three notifications", () => {
+  const fn = jest.fn();
+  const x = new Signal(1);
+
+  const unsub = x.subscribe(fn);
+  expect(fn).not.toHaveBeenCalled();
+
+  expect(x.get()).toEqual(1);
+
+  x.set(2);
+  x.set(3);
+  x.set(7);
+
+  expect(x.get()).toEqual(7);
+
+  expect(fn).toHaveBeenCalledTimes(3);
+  unsub();
+});
+
+it("batched signal updates notify only once", () => {
+  const fn = jest.fn();
+  const x = new Signal(1);
+
+  const unsub = x.subscribe(fn);
+  expect(fn).not.toHaveBeenCalled();
+
+  expect(x.get()).toEqual(1);
+
+  batch(() => {
+    x.set(2);
+    x.set(3);
+    x.set(7);
+  });
+
+  expect(x.get()).toEqual(7);
+
+  expect(fn).toHaveBeenCalledTimes(1); // Not 3 (!)
   unsub();
 });
 

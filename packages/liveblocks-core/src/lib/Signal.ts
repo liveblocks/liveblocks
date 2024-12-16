@@ -9,6 +9,66 @@ import { freeze } from "../lib/freeze";
 import type { JsonObject } from "../lib/Json";
 import { compactObject, raise } from "../lib/utils";
 
+const kSinks = Symbol("kSinks");
+const kNotify = Symbol("kNotify");
+
+//
+// Before the batch is run, all sinks (recursively all the way down) are marked
+// dirty. This already is enough if all we ever used were .get() calls.
+//
+// However, to ensure active subscription notifications also work, we need to
+// keep track of which Signals to notify. Any time the value of a Signal
+// changes, it will trigger an event to all subscribers, but in addition, it
+// will also
+//
+// That's different from what an "active batch" keeps track of.
+//
+// While a batch is active, it keeps track of all the sinks that will have to
+// be notified, because values _actually_ changed.
+//
+//
+//
+let activeBatch: {
+  toNotify: Set<AbstractSignal<any>>;
+} | null = null;
+
+/**
+ * Runs a callback function which can change multiple signals. At the end
+ * of the batch, all derived signals will be notified.
+ *
+ * Nesting batches has no effect, the outermost batch will be the one
+ * that triggers the notification.
+ */
+export function batch(callback: Callback<void>): void {
+  if (activeBatch !== null) {
+    // Already inside another batch, just run this inner callback
+    callback();
+    return;
+  }
+
+  activeBatch = {
+    toNotify: new Set(),
+  };
+  try {
+    callback();
+  } finally {
+    for (const signal of activeBatch.toNotify) {
+      signal[kNotify]();
+    }
+    activeBatch = null;
+  }
+}
+
+/**
+ * Ensures that the signal will be notified at the end of the current batch.
+ * This should only be called within a batch callback. It's safe to call this
+ * while notifications are being rolled out.
+ */
+function enqueueNotify(signal: AbstractSignal<any>) {
+  if (!activeBatch) raise("Expected to be in an active batch");
+  activeBatch.toNotify.add(signal);
+}
+
 /**
  * Patches a target object by "merging in" the provided fields. Patch
  * fields that are explicitly-undefined will delete keys from the target
@@ -55,12 +115,12 @@ abstract class AbstractSignal<T> implements ISignal<T>, Observable<void> {
   /** @internal */
   private readonly eventSource: EventSource<void>;
   /** @internal */
-  private readonly sinks: Set<DerivedSignal<unknown>>;
+  public readonly [kSinks]: Set<DerivedSignal<unknown>>;
 
   constructor(equals?: (a: T, b: T) => boolean) {
     this.equals = equals ?? Object.is;
     this.eventSource = makeEventSource<void>();
-    this.sinks = new Set();
+    this[kSinks] = new Set();
 
     // Bind common methods to self
     this.get = this.get.bind(this);
@@ -81,11 +141,25 @@ abstract class AbstractSignal<T> implements ISignal<T>, Observable<void> {
   abstract get(): T;
 
   get hasWatchers(): boolean {
-    return this.eventSource.count() > 0;
+    if (this.eventSource.count() > 0) return true;
+
+    for (const sink of this[kSinks]) {
+      if (sink.hasWatchers) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
-  protected notify(): void {
+  public [kNotify](): void {
     this.eventSource.notify();
+
+    // While the active batch chain is being notified, add more elements to
+    // the active batch
+    for (const sink of this[kSinks]) {
+      enqueueNotify(sink);
+    }
   }
 
   subscribe(callback: Callback<void>): UnsubscribeCallback {
@@ -105,17 +179,17 @@ abstract class AbstractSignal<T> implements ISignal<T>, Observable<void> {
   }
 
   markSinksDirty(): void {
-    for (const sink of this.sinks) {
+    for (const sink of this[kSinks]) {
       sink.markDirty();
     }
   }
 
   addSink(sink: DerivedSignal<unknown>): void {
-    this.sinks.add(sink);
+    this[kSinks].add(sink);
   }
 
   removeSink(sink: DerivedSignal<unknown>): void {
-    this.sinks.delete(sink);
+    this[kSinks].delete(sink);
   }
 }
 
@@ -139,14 +213,16 @@ export class Signal<T> extends AbstractSignal<T> {
   }
 
   set(newValue: T | ((oldValue: T) => T)): void {
-    if (typeof newValue === "function") {
-      newValue = (newValue as (oldValue: T) => T)(this.value);
-    }
-    if (!this.equals(this.value, newValue)) {
-      this.value = freeze(newValue);
-      this.markSinksDirty();
-      this.notify();
-    }
+    batch(() => {
+      if (typeof newValue === "function") {
+        newValue = (newValue as (oldValue: T) => T)(this.value);
+      }
+      if (!this.equals(this.value, newValue)) {
+        this.value = freeze(newValue);
+        this.markSinksDirty();
+        enqueueNotify(this);
+      }
+    });
   }
 }
 
@@ -180,8 +256,6 @@ export class DerivedSignal<T> extends AbstractSignal<T> {
 
   private readonly parents: readonly ISignal<unknown>[];
   private readonly transform: (...values: unknown[]) => T;
-
-  private unlinkFromParents?: UnsubscribeCallback;
 
   // Overload 1
   static from<Ts extends [unknown, ...unknown[]], V>(...args: [...signals: { [K in keyof Ts]: ISignal<Ts[K]> }, transform: (...values: Ts) => V]): DerivedSignal<V>; // prettier-ignore
@@ -270,50 +344,26 @@ export class DerivedSignal<T> extends AbstractSignal<T> {
     return this.prevValue;
   }
 
-  private linkUpToParents(): void {
-    this.unlinkFromParents?.();
-
-    const unsubs = this.parents.map((parent) => {
-      return parent.subscribe(() => {
-        // Re-evaluate the current derived signal's value and if needed,
-        // notify sinks. At this point, all sinks should already have been
-        // marked dirty, so we won't have to do that again here now.
-        const updated = this.recompute();
-        if (updated) {
-          this.notify();
-        }
-      });
-    });
-
-    this.unlinkFromParents = () => {
-      this.unlinkFromParents = undefined;
-      for (const unsub of unsubs) {
-        try {
-          unsub();
-        } catch {
-          // Ignore
-        }
-      }
-    };
-  }
-
-  subscribe(callback: Callback<void>): UnsubscribeCallback {
-    // A DerivedSignal can be pulled on-demand with .get(), but if it's being
-    // subscribed to, then we need to set up a watcher on all of its parents as
-    // well.
+  /**
+   * Called by the Signal system if one or more of the dependent signals have
+   * changed. In the case of a DerivedSignal, we'll only want to re-evaluate
+   * the actual value if it's being watched, or any of their sinks are being
+   * watched actively.
+   */
+  public [kNotify](): void {
     if (!this.hasWatchers) {
-      this.linkUpToParents();
+      // If there are no watchers for this signal, we don't need to
+      // re-evaluate. We can postpone re-evaluation until the next .get() call.
+      return;
     }
 
-    const unsub = super.subscribe(callback);
-    return () => {
-      unsub();
-
-      // If the last watcher unsubscribed, unlink this Signal from its parents'
-      if (!this.hasWatchers) {
-        this.unlinkFromParents?.();
-      }
-    };
+    // Re-evaluate the current derived signal's value and if needed,
+    // notify sinks. At this point, all sinks should already have been
+    // marked dirty, so we won't have to do that again here now.
+    const updated = this.recompute();
+    if (updated) {
+      super[kNotify](); // Actually notify subscribers
+    }
   }
 }
 
@@ -351,14 +401,16 @@ export class MutableSignal<T extends object> extends AbstractSignal<T> {
    * was not changed.
    */
   mutate(callback: (state: T) => unknown): void {
-    const result = callback(this.state);
-    if (result !== null && typeof result === "object" && "then" in result) {
-      raise("MutableSignal.mutate() does not support async callbacks");
-    }
+    batch(() => {
+      const result = callback(this.state);
+      if (result !== null && typeof result === "object" && "then" in result) {
+        raise("MutableSignal.mutate() does not support async callbacks");
+      }
 
-    if (result !== false) {
-      this.markSinksDirty();
-      this.notify();
-    }
+      if (result !== false) {
+        this.markSinksDirty();
+        enqueueNotify(this);
+      }
+    });
   }
 }

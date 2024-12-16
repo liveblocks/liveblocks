@@ -1,5 +1,5 @@
 import { shallow } from "../../lib/shallow";
-import { DerivedSignal, Signal } from "../Signal";
+import { batch, DerivedSignal, Signal } from "../Signal";
 
 it("compute signal from other signals", () => {
   const greeting = new Signal("hi");
@@ -245,42 +245,41 @@ it("signals only notify watchers when their value changes (with shallow)", () =>
   unsub();
 });
 
-it.failing(
-  "batch signal updates so derived signals will only be notified once",
-  () => {
-    function batch(callback: () => void) {
-      // TODO Implement this
-      callback();
-    }
+it("batch signal updates so derived signals will only be notified once", () => {
+  const fn1 = jest.fn(); // Callback when z changes
+  const fn2 = jest.fn(); // Callback when zz changes
 
-    const fn = jest.fn();
+  const x = new Signal(1);
+  const y = new Signal(2);
+  const z = DerivedSignal.from(x, y, (x, y) => x * y);
+  const zz = DerivedSignal.from(x, z, (x, z) => x - z * 10);
 
-    const x = new Signal(1);
-    const y = new Signal(2);
-    const z = DerivedSignal.from(x, y, (x, y) => x * y);
+  const unsub1 = z.subscribe(fn1);
+  const unsub2 = zz.subscribe(fn2);
+  expect(fn1).not.toHaveBeenCalled();
 
-    const unsub = z.subscribe(fn);
-    expect(fn).not.toHaveBeenCalled();
+  expect(z.get()).toEqual(2);
+  expect(zz.get()).toEqual(-19);
 
-    expect(z.get()).toEqual(2);
+  batch(() => {
+    x.set(7);
+    y.set(3);
+  });
 
-    batch(() => {
-      x.set(7);
-      y.set(3);
-    });
+  expect(z.get()).toEqual(21);
+  expect(zz.get()).toEqual(-203);
 
-    expect(z.get()).toEqual(21);
+  //
+  // NOTE: The following assertion currently fails without batching support
+  // Currently this will get 2 updates! First 14, then 21.
+  //
+  // The purpose of batching should be twofold:
+  // - Delay notification of z until the end of the batch
+  // - Only invoke the z computation once, even if multiple signals have changed
+  //
+  expect(fn1).toHaveBeenCalledTimes(1);
+  expect(fn2).toHaveBeenCalledTimes(1);
 
-    //
-    // NOTE: The following assertion currently fails without batching support
-    // Currently this will get 2 updates! First 14, then 21.
-    //
-    // The purpose of batching should be twofold:
-    // - Delay notification of z until the end of the batch
-    // - Only invoke the z computation once, even if multiple signals have changed
-    //
-    expect(fn).toHaveBeenCalledTimes(1);
-
-    unsub();
-  }
-);
+  unsub1();
+  unsub2();
+});
