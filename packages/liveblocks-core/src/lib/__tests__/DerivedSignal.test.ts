@@ -269,17 +269,80 @@ it("batch signal updates so derived signals will only be notified once", () => {
   expect(z.get()).toEqual(21);
   expect(zz.get()).toEqual(-203);
 
-  //
-  // NOTE: The following assertion currently fails without batching support
-  // Currently this will get 2 updates! First 14, then 21.
-  //
-  // The purpose of batching should be twofold:
-  // - Delay notification of z until the end of the batch
-  // - Only invoke the z computation once, even if multiple signals have changed
-  //
-  expect(fn1).toHaveBeenCalledTimes(1);
-  expect(fn2).toHaveBeenCalledTimes(1);
+  expect(fn1).toHaveBeenCalledTimes(1); // Not 2 (!)
+  expect(fn2).toHaveBeenCalledTimes(1); // Not 3 (!)
 
   unsub1();
   unsub2();
+});
+
+it.only("batch signal notifications and re-evaluations are as efficient as possible", () => {
+  const x = new Signal(1);
+  const y = new Signal(2);
+  const z = new Signal(3);
+  const abc = DerivedSignal.from(x, y, z, (x, y, z) => [x, y, z], shallow);
+  const sorted = DerivedSignal.from(abc, (abc) => abc.sort(), shallow);
+
+  expect(sorted.isDirty).toEqual(true);
+  expect(sorted.get()).toEqual([1, 2, 3]);
+  expect(sorted.isDirty).toEqual(false);
+
+  batch(() => {
+    x.set(7);
+    y.set(3);
+    z.set(0);
+  });
+
+  expect(sorted.isDirty).toEqual(true);
+  expect(sorted.get()).toEqual([0, 3, 7]);
+  expect(sorted.isDirty).toEqual(false);
+
+  const before = sorted.get();
+  batch(() => {
+    x.set(7);
+    y.set(3);
+    z.set(0);
+  });
+
+  // Value did not change, so reference did not change either
+  const after = sorted.get();
+  expect(after).toEqual(before);
+
+  batch(() => {
+    // Same values, but in different signals
+    x.set(3);
+    y.set(0);
+    z.set(7);
+  });
+
+  // Derived value still did not change, since sorted result is the same
+  const after2 = sorted.get();
+  expect(after2).toEqual(before);
+
+  const fn = jest.fn(); // Callback when sorted changes
+  const unsub = sorted.subscribe(fn);
+  expect(fn).not.toHaveBeenCalled();
+
+  batch(() => {
+    x.set(0);
+    y.set(3);
+    z.set(7);
+  });
+
+  // Also, it does not notify watchers
+  expect(fn).not.toHaveBeenCalled();
+
+  batch(() => {
+    x.set(0);
+    x.set(0);
+    x.set(1);
+    y.set(2);
+    z.set(3);
+  });
+
+  // However, if we make an actual change, it will
+  expect(fn).toHaveBeenCalledTimes(1);
+  expect(sorted.get()).toEqual([1, 2, 3]);
+
+  unsub();
 });
