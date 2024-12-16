@@ -41,11 +41,7 @@ export function merge<T>(target: T, patch: Partial<T>): T {
   return updated ? newValue : target;
 }
 
-let signalId = 1;
-
 abstract class ReadableSignal<T> implements Observable<void> {
-  public name: string = `Signal${signalId++}`; // XXX Remove this after debugging
-
   protected equals: (a: T, b: T) => boolean;
   #eventSource: EventSource<void>;
   #sinks: Set<DerivedSignal<unknown>>;

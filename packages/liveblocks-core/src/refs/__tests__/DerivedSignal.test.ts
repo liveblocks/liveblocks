@@ -90,11 +90,8 @@ it("derived signals re-evaluate when sources change (without listeners)", () => 
 
 it("derived signals re-evaluate when sources change (with listeners)", () => {
   const counter = new Signal(0);
-  counter.name = "counter";
   const isEven = DerivedSignal.from(counter, (n) => (n & 1) === 0);
-  isEven.name = "isEven";
   const parity = DerivedSignal.from(isEven, (even) => (even ? "even" : "odd"));
-  parity.name = "parity";
 
   const unsub = parity.subscribe(() => {});
 
