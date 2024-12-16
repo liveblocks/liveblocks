@@ -14,7 +14,11 @@ import {
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { TooltipProvider, useRefs } from "@liveblocks/react-ui/_private";
 import { $getSelection, $isRangeSelection, FORMAT_TEXT_COMMAND } from "lexical";
-import type { ComponentProps, PointerEvent as ReactPointerEvent } from "react";
+import type {
+  ComponentProps,
+  FocusEvent as ReactFocusEvent,
+  PointerEvent as ReactPointerEvent,
+} from "react";
 import React, {
   forwardRef,
   useCallback,
@@ -29,7 +33,6 @@ import { classNames } from "../classnames";
 import { OPEN_FLOATING_COMPOSER_COMMAND } from "../comments/floating-composer";
 import { createDOMRange } from "../create-dom-range";
 import type { FloatingPosition } from "../types";
-import { useIsFocused } from "../use-is-focused";
 import {
   applyToolbarSlot,
   Toolbar,
@@ -75,20 +78,93 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
       position = "top",
       offset: sideOffset = 6,
       onPointerDown,
+      onFocus,
+      onBlur,
       className,
       ...props
     },
     forwardedRef
   ) => {
+    const toolbarRef = useRef<HTMLDivElement>(null);
     const [isPointerDown, setPointerDown] = useState(false);
     const [editor] = useLexicalComposerContext();
-    const isFocused = useIsFocused(editor);
+    const [isFocused, setFocused] = useState(false);
     const isEditable = editor.isEditable();
     const [hasSelectionRange, setHasSelectionRange] = useState(false);
 
     const isOpen = isFocused && !isPointerDown && hasSelectionRange;
     const [delayedIsOpen, setDelayedIsOpen] = useState(isOpen);
     const delayedIsOpenTimeoutRef = useRef<number>();
+
+    // Don't close when the focus moves from the editor to the toolbar
+    useEffect(() => {
+      const editorRoot = editor._rootElement;
+
+      if (!editorRoot) {
+        return;
+      }
+
+      const handleFocus = () => {
+        setFocused(true);
+      };
+
+      const handleBlur = (event: FocusEvent) => {
+        if (
+          event.relatedTarget &&
+          toolbarRef.current?.contains(event.relatedTarget as Node)
+        ) {
+          return;
+        }
+
+        if (event.relatedTarget === editor._rootElement) {
+          return;
+        }
+
+        setFocused(false);
+      };
+
+      editorRoot.addEventListener("focus", handleFocus);
+      editorRoot.addEventListener("blur", handleBlur);
+
+      return () => {
+        editorRoot.removeEventListener("focus", handleFocus);
+        editorRoot.removeEventListener("blur", handleBlur);
+      };
+    }, [editor]);
+
+    const handleFocus = useCallback(
+      (event: ReactFocusEvent<HTMLDivElement>) => {
+        onFocus?.(event);
+
+        if (!event.isDefaultPrevented()) {
+          setFocused(true);
+        }
+      },
+      [onFocus]
+    );
+
+    // Close the toolbar when the it loses focus to something else than the editor
+    const handleBlur = useCallback(
+      (event: ReactFocusEvent<HTMLDivElement>) => {
+        onBlur?.(event);
+
+        if (!event.isDefaultPrevented()) {
+          if (
+            event.relatedTarget &&
+            toolbarRef.current?.contains(event.relatedTarget as Node)
+          ) {
+            return;
+          }
+
+          if (event.relatedTarget === editor?._rootElement) {
+            return;
+          }
+
+          setFocused(false);
+        }
+      },
+      [onBlur, editor]
+    );
 
     // Delay the opening of the toolbar to avoid flickering issues
     useEffect(() => {
@@ -141,13 +217,12 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
       ...floatingOptions,
       open: delayedIsOpen,
     });
-    const mergedRefs = useRefs(forwardedRef, setFloating);
+    const mergedRefs = useRefs(forwardedRef, toolbarRef, setFloating);
 
     const handlePointerDown = useCallback(
       (event: ReactPointerEvent<HTMLDivElement>) => {
         onPointerDown?.(event);
 
-        event.preventDefault();
         event.stopPropagation();
       },
       [onPointerDown]
@@ -254,11 +329,14 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
             minWidth: "max-content",
           }}
           onPointerDown={handlePointerDown}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           {...props}
         >
           {applyToolbarSlot(leading, slotProps)}
           {applyToolbarSlot(children, slotProps)}
           {applyToolbarSlot(trailing, slotProps)}
+          <input type="text" placeholder="test" />
         </div>
       </TooltipProvider>,
       document.body
