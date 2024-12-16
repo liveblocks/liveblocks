@@ -1,10 +1,10 @@
 import { freeze } from "../lib/freeze";
 import type { JsonObject } from "../lib/Json";
+import { DerivedSignal, merge, MutableSignal } from "../lib/Signal";
 import { compact, compactObject } from "../lib/utils";
 import { canComment, canWriteStorage } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { User } from "../types/User";
-import { DerivedSignal, merge, MutableSignal } from "./Signal";
 
 type Connection<U extends BaseUserMeta> = {
   readonly connectionId: number;

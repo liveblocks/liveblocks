@@ -34,6 +34,7 @@ import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
 import { asPos } from "./lib/position";
+import { DerivedSignal, PatchableSignal, Signal } from "./lib/Signal";
 import {
   compact,
   deepClone,
@@ -76,7 +77,6 @@ import type {
 import { ServerMsgCode } from "./protocol/ServerMsg";
 import type { HistoryVersion } from "./protocol/VersionHistory";
 import { ManagedOthers } from "./refs/ManagedOthers";
-import { DerivedSignal, PatchableSignal, Signal } from "./refs/Signal";
 import type * as DevTools from "./types/DevToolsTreeNode";
 import type {
   IWebSocket,
