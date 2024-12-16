@@ -140,6 +140,7 @@ export {
   b64decode,
   compactObject,
   entries,
+  fromEntries,
   isPlainObject,
   keys,
   mapValues,
