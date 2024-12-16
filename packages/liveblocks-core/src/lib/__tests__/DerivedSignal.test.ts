@@ -25,24 +25,29 @@ it("compute signal from other signals", () => {
 });
 
 it("compute signal from many other signals", () => {
-  const jokes$ = new Signal(["joke1", "joke2"]);
-  const allGreat$ = new Signal(false);
-  const multiplier$ = new Signal(1); // Number of laughs per joke
+  const jokesSignal = new Signal(["joke1", "joke2"]);
+  const allGreatSignal = new Signal(false);
+  const multiplierSignal = new Signal(1); // Number of laughs per joke
 
-  const laughs$ = DerivedSignal.from(jokes$, multiplier$, (jokes, multiplier) =>
-    jokes.flatMap(() => Array.from({ length: multiplier }, () => "ha"))
+  const laughsSignal = DerivedSignal.from(
+    jokesSignal,
+    multiplierSignal,
+    (jokes, multiplier) =>
+      jokes.flatMap(() => Array.from({ length: multiplier }, () => "ha"))
   );
 
-  const greatLaughs$ = DerivedSignal.from(
-    laughs$,
-    allGreat$,
+  const greatLaughsSignal = DerivedSignal.from(
+    laughsSignal,
+    allGreatSignal,
     (laughs, allGreat) =>
       allGreat ? laughs.map((laugh) => laugh.toUpperCase()) : laughs
   );
 
-  expect(laughs$.get()).toEqual(["ha", "ha"]);
-  multiplier$.set(1);
-  expect(greatLaughs$.get()).toEqual(["ha", "ha"]);
+  expect(laughsSignal.get()).toEqual(["ha", "ha"]);
+  multiplierSignal.set(3);
+  expect(greatLaughsSignal.get()).toEqual(["ha", "ha", "ha", "ha", "ha", "ha"]);
+  allGreatSignal.set(true);
+  expect(greatLaughsSignal.get()).toEqual(["HA", "HA", "HA", "HA", "HA", "HA"]);
 });
 
 it("derived signal chaining", () => {
