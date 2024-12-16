@@ -1,4 +1,5 @@
 import type { DAD } from "../globals/augmentation";
+import { values } from "../lib/utils";
 
 /**
  * Pre-defined notification channels support list.
@@ -60,5 +61,5 @@ export type PartialChannelsNotificationSettings =
 export function isChannelNotificationSettingEnabled(
   setting: ChannelNotificationSetting
 ): boolean {
-  return Object.values(setting).every((enabled) => enabled === true);
+  return values(setting).every((enabled) => enabled === true);
 }
