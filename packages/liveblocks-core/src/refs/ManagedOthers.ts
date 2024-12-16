@@ -4,7 +4,7 @@ import { compact, compactObject } from "../lib/utils";
 import { canComment, canWriteStorage } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { User } from "../types/User";
-import { merge, MutableSignal } from "./Signal";
+import { DerivedSignal, merge, MutableSignal } from "./Signal";
 
 type Connection<U extends BaseUserMeta> = {
   readonly connectionId: number;
@@ -32,64 +32,60 @@ function makeUser<P extends JsonObject, U extends BaseUserMeta>(
   );
 }
 
-export class OthersSignal<
-  P extends JsonObject,
-  U extends BaseUserMeta,
-> extends MutableSignal<readonly User<P, U>[]> {
-  // To track "others"
-  private readonly _connections: Map</* connectionId */ number, Connection<U>>;
-  private readonly _presences: Map</* connectionId */ number, P>;
+export class ManagedOthers<P extends JsonObject, U extends BaseUserMeta> {
+  // Track mutable state internally, but signal to the outside when the
+  // observable derived state changes only
+  private readonly internal: MutableSignal<{
+    connections: Map</* connectionId */ number, Connection<U>>;
+    presences: Map</* connectionId */ number, P>;
+  }>;
+  private readonly userCache: Map</* connectionId */ number, User<P, U>>;
 
-  //
-  // --------------------------------------------------------------
-  //
-  // CACHES
-  // All of these are derived/cached data. Never set these directly.
-  //
-  // XXX Refactor this internal cache away using the ImmutableRef
-  // abstraction/helper. Manually maintaining these caches should no longer be
-  // necessary.
-  //
-  private readonly _users: Map</* connectionId */ number, User<P, U>>;
-  //
-  // --------------------------------------------------------------
-  //
+  // The "clean" signal that is exposed to the outside world
+  public readonly signal: DerivedSignal<readonly User<P, U>[]>;
 
   constructor() {
-    super([]);
+    this.internal = new MutableSignal({
+      connections: new Map</* connectionId */ number, Connection<U>>(),
+      presences: new Map</* connectionId */ number, P>(),
+    });
+
+    this.signal = DerivedSignal.from(
+      this.internal,
+      (_ignore): readonly User<P, U>[] =>
+        compact(
+          Array.from(this.internal.get().presences.keys()).map((connectionId) =>
+            this.getUser(Number(connectionId))
+          )
+        )
+    );
 
     // Others
-    this._connections = new Map();
-    this._presences = new Map();
-    this._users = new Map();
+    this.userCache = new Map();
+  }
+
+  // Shorthand for .signal.get()
+  get(): readonly User<P, U>[] {
+    return this.signal.get();
   }
 
   public connectionIds(): IterableIterator<number> {
-    return this._connections.keys();
-  }
-
-  private _cache?: readonly User<P, U>[];
-  get(): readonly User<P, U>[] {
-    return (this._cache ??= compact(
-      Array.from(this._presences.keys()).map((connectionId) =>
-        this.getUser(Number(connectionId))
-      )
-    ));
+    return this.internal.get().connections.keys();
   }
 
   clearOthers(): void {
-    this.mutate(() => {
-      this._connections.clear();
-      this._presences.clear();
-      this._users.clear();
-      this._cache = undefined;
+    this.internal.mutate((state) => {
+      state.connections.clear();
+      state.presences.clear();
+      this.userCache.clear();
     });
   }
 
   /** @internal */
   _getUser(connectionId: number): User<P, U> | undefined {
-    const conn = this._connections.get(connectionId);
-    const presence = this._presences.get(connectionId);
+    const state = this.internal.get();
+    const conn = state.connections.get(connectionId);
+    const presence = state.presences.get(connectionId);
     if (conn !== undefined && presence !== undefined) {
       return makeUser(conn, presence);
     }
@@ -97,14 +93,14 @@ export class OthersSignal<
   }
 
   getUser(connectionId: number): User<P, U> | undefined {
-    const cachedUser = this._users.get(connectionId);
+    const cachedUser = this.userCache.get(connectionId);
     if (cachedUser) {
       return cachedUser;
     }
 
     const computedUser = this._getUser(connectionId);
     if (computedUser) {
-      this._users.set(connectionId, computedUser);
+      this.userCache.set(connectionId, computedUser);
       return computedUser;
     }
 
@@ -113,8 +109,7 @@ export class OthersSignal<
 
   /** @internal */
   _invalidateUser(connectionId: number): void {
-    this._users.delete(connectionId);
-    this._cache = undefined;
+    this.userCache.delete(connectionId);
   }
 
   /**
@@ -127,8 +122,8 @@ export class OthersSignal<
     metaUserInfo: U["info"],
     scopes: string[]
   ): void {
-    this.mutate(() => {
-      this._connections.set(
+    this.internal.mutate((state) => {
+      state.connections.set(
         connectionId,
         freeze({
           connectionId,
@@ -137,7 +132,7 @@ export class OthersSignal<
           scopes,
         })
       );
-      if (!this._presences.has(connectionId)) {
+      if (!state.presences.has(connectionId)) {
         return false;
       }
       return this._invalidateUser(connectionId);
@@ -149,9 +144,9 @@ export class OthersSignal<
    * the presence information.
    */
   removeConnection(connectionId: number): void {
-    this.mutate(() => {
-      this._connections.delete(connectionId);
-      this._presences.delete(connectionId);
+    this.internal.mutate((state) => {
+      state.connections.delete(connectionId);
+      state.presences.delete(connectionId);
       this._invalidateUser(connectionId);
     });
   }
@@ -161,9 +156,9 @@ export class OthersSignal<
    * its known presence data is overwritten.
    */
   setOther(connectionId: number, presence: P): void {
-    this.mutate(() => {
-      this._presences.set(connectionId, freeze(compactObject(presence)));
-      if (!this._connections.has(connectionId)) {
+    this.internal.mutate((state) => {
+      state.presences.set(connectionId, freeze(compactObject(presence)));
+      if (!state.connections.has(connectionId)) {
         return false;
       }
       return this._invalidateUser(connectionId);
@@ -176,8 +171,8 @@ export class OthersSignal<
    * full .setOther() call first.
    */
   patchOther(connectionId: number, patch: Partial<P>): void {
-    this.mutate(() => {
-      const oldPresence = this._presences.get(connectionId);
+    this.internal.mutate((state) => {
+      const oldPresence = state.presences.get(connectionId);
       if (oldPresence === undefined) {
         return false;
       }
@@ -187,7 +182,7 @@ export class OthersSignal<
         return false;
       }
 
-      this._presences.set(connectionId, freeze(newPresence));
+      state.presences.set(connectionId, freeze(newPresence));
       return this._invalidateUser(connectionId);
     });
   }

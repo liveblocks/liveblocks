@@ -39,9 +39,19 @@ export function merge<T>(target: T, patch: Partial<T>): T {
   return updated ? newValue : target;
 }
 
-abstract class ReadableSignal<T> implements Observable<void> {
+export interface ISignal<T> {
+  get(): T;
+  subscribe(callback: Callback<void>): UnsubscribeCallback;
+  addSink(sink: DerivedSignal<unknown>): void;
+  removeSink(sink: DerivedSignal<unknown>): void;
+}
+
+abstract class AbstractSignal<T> implements ISignal<T>, Observable<void> {
+  /** @internal */
   protected readonly equals: (a: T, b: T) => boolean;
+  /** @internal */
   private readonly eventSource: EventSource<void>;
+  /** @internal */
   private readonly sinks: Set<DerivedSignal<unknown>>;
 
   constructor(equals?: (a: T, b: T) => boolean) {
@@ -107,7 +117,7 @@ abstract class ReadableSignal<T> implements Observable<void> {
 }
 
 // NOTE: This class is pretty similar to the Signal.State proposal
-export class Signal<T> extends ReadableSignal<T> {
+export class Signal<T> extends AbstractSignal<T> {
   private value: T;
 
   constructor(value: T, equals?: (a: T, b: T) => boolean) {
@@ -161,23 +171,23 @@ export class PatchableSignal<J extends JsonObject> extends Signal<J> {
 const INITIAL = Symbol();
 
 // NOTE: This class is pretty similar to the Signal.Computed proposal
-export class DerivedSignal<T> extends ReadableSignal<T> {
+export class DerivedSignal<T> extends AbstractSignal<T> {
   private prevValue: T;
   private dirty: boolean; // When true, the value in #value may not be up-to-date and needs re-checking
 
-  private readonly parents: readonly ReadableSignal<unknown>[];
+  private readonly parents: readonly ISignal<unknown>[];
   private readonly transform: (...values: unknown[]) => T;
 
   private unlinkFromParents?: UnsubscribeCallback;
 
   // Overload 1
-  static from<Ts extends [unknown, ...unknown[]], V>(...args: [...signals: { [K in keyof Ts]: ReadableSignal<Ts[K]> }, transform: (...values: Ts) => V]): DerivedSignal<V>; // prettier-ignore
+  static from<Ts extends [unknown, ...unknown[]], V>(...args: [...signals: { [K in keyof Ts]: ISignal<Ts[K]> }, transform: (...values: Ts) => V]): DerivedSignal<V>; // prettier-ignore
   // Overload 2
-  static from<Ts extends [unknown, ...unknown[]], V>(...args: [...signals: { [K in keyof Ts]: ReadableSignal<Ts[K]> }, transform: (...values: Ts) => V, equals: (a: V, b: V) => boolean]): DerivedSignal<V>; // prettier-ignore
+  static from<Ts extends [unknown, ...unknown[]], V>(...args: [...signals: { [K in keyof Ts]: ISignal<Ts[K]> }, transform: (...values: Ts) => V, equals: (a: V, b: V) => boolean]): DerivedSignal<V>; // prettier-ignore
   static from<Ts extends [unknown, ...unknown[]], V>(
     // prettier-ignore
     ...args: [
-      ...signals: { [K in keyof Ts]: ReadableSignal<Ts[K]> },
+      ...signals: { [K in keyof Ts]: ISignal<Ts[K]> },
       transform: (...values: Ts) => V,
       equals?: (a: V, b: V) => boolean,
     ]
@@ -190,20 +200,16 @@ export class DerivedSignal<T> extends ReadableSignal<T> {
       // Overload 2
       const equals = last as (a: V, b: V) => boolean;
       const transform = args.pop() as (...values: unknown[]) => V;
-      return new DerivedSignal(
-        args as ReadableSignal<unknown>[],
-        transform,
-        equals
-      );
+      return new DerivedSignal(args as ISignal<unknown>[], transform, equals);
     } else {
       // Overload 1
       const transform = last as (...values: unknown[]) => V;
-      return new DerivedSignal(args as ReadableSignal<unknown>[], transform);
+      return new DerivedSignal(args as ISignal<unknown>[], transform);
     }
   }
 
   private constructor(
-    parents: ReadableSignal<unknown>[],
+    parents: ISignal<unknown>[],
     transform: (...values: unknown[]) => T,
     equals?: (a: T, b: T) => boolean
   ) {
@@ -316,7 +322,7 @@ export class DerivedSignal<T> extends ReadableSignal<T> {
  * the current state at any point in time synchronously, and a way to update
  * its reference.
  */
-export class MutableSignal<T extends object> extends ReadableSignal<T> {
+export class MutableSignal<T extends object> extends AbstractSignal<T> {
   private readonly state: T;
 
   constructor(initialState: T) {
