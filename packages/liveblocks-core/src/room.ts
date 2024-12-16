@@ -75,9 +75,8 @@ import type {
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
 import type { HistoryVersion } from "./protocol/VersionHistory";
-import { OthersRef } from "./refs/OthersRef";
+import { OthersSignal } from "./refs/OthersRef";
 import { DerivedSignal, PatchableSignal, Signal } from "./refs/Signal";
-import { DerivedRef } from "./refs/ValueRef";
 import type * as DevTools from "./types/DevToolsTreeNode";
 import type {
   IWebSocket,
@@ -1122,7 +1121,7 @@ type RoomState<
   readonly staticSessionInfoSig: Signal<StaticSessionInfo | null>;
   readonly dynamicSessionInfoSig: Signal<DynamicSessionInfo | null>;
   readonly myPresence: PatchableSignal<P>;
-  readonly others: OthersRef<P, U>;
+  readonly others: OthersSignal<P, U>;
 
   idFactory: IdFactory | null;
   initialStorage: S;
@@ -1359,7 +1358,7 @@ export function createRoom<
     staticSessionInfoSig: new Signal<StaticSessionInfo | null>(null),
     dynamicSessionInfoSig: new Signal<DynamicSessionInfo | null>(null),
     myPresence: new PatchableSignal(initialPresence),
-    others: new OthersRef<P, U>(),
+    others: new OthersSignal<P, U>(),
 
     initialStorage,
     idFactory: null,
@@ -2735,7 +2734,7 @@ export function createRoom<
   }
 
   // Derived cached state for use in DevTools
-  const others_forDevTools = new DerivedRef(context.others, (others) =>
+  const others_forDevTools = DerivedSignal.from(context.others, (others) =>
     others.map((other, index) => userToTreeNode(`Other ${index}`, other))
   );
 

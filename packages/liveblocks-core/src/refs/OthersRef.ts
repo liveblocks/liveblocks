@@ -4,8 +4,7 @@ import { compact, compactObject } from "../lib/utils";
 import { canComment, canWriteStorage } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { User } from "../types/User";
-import { ImmutableRef } from "./ImmutableRef";
-import { merge } from "./Signal";
+import { merge, MutableSignal } from "./Signal";
 
 type Connection<U extends BaseUserMeta> = {
   readonly connectionId: number;
@@ -33,10 +32,10 @@ function makeUser<P extends JsonObject, U extends BaseUserMeta>(
   );
 }
 
-export class OthersRef<
+export class OthersSignal<
   P extends JsonObject,
   U extends BaseUserMeta,
-> extends ImmutableRef<readonly User<P, U>[]> {
+> extends MutableSignal<readonly User<P, U>[]> {
   // To track "others"
   private _connections: Map</* connectionId */ number, Connection<U>>;
   private _presences: Map</* connectionId */ number, P>;
@@ -57,7 +56,7 @@ export class OthersRef<
   //
 
   constructor() {
-    super();
+    super([]);
 
     // Others
     this._connections = new Map();
@@ -69,22 +68,22 @@ export class OthersRef<
     return this._connections.keys();
   }
 
-  /** @internal */
-  _toImmutable(): readonly User<P, U>[] {
-    const users = compact(
+  #cache?: readonly User<P, U>[];
+  get(): readonly User<P, U>[] {
+    return (this.#cache ??= compact(
       Array.from(this._presences.keys()).map((connectionId) =>
         this.getUser(Number(connectionId))
       )
-    );
-
-    return users;
+    ));
   }
 
   clearOthers(): void {
-    this._connections = new Map();
-    this._presences = new Map();
-    this._users = new Map();
-    this.notify();
+    this.mutate(() => {
+      this._connections.clear();
+      this._presences.clear();
+      this._users.clear();
+      this.#cache = undefined;
+    });
   }
 
   /** @internal */
@@ -94,7 +93,6 @@ export class OthersRef<
     if (conn !== undefined && presence !== undefined) {
       return makeUser(conn, presence);
     }
-
     return undefined;
   }
 
@@ -115,10 +113,8 @@ export class OthersRef<
 
   /** @internal */
   _invalidateUser(connectionId: number): void {
-    if (this._users.has(connectionId)) {
-      this._users.delete(connectionId);
-    }
-    this.notify();
+    this._users.delete(connectionId);
+    this.#cache = undefined;
   }
 
   /**
@@ -131,18 +127,21 @@ export class OthersRef<
     metaUserInfo: U["info"],
     scopes: string[]
   ): void {
-    this._connections.set(
-      connectionId,
-      freeze({
+    this.mutate(() => {
+      this._connections.set(
         connectionId,
-        id: metaUserId,
-        info: metaUserInfo,
-        scopes,
-      })
-    );
-    if (this._presences.has(connectionId)) {
-      this._invalidateUser(connectionId);
-    }
+        freeze({
+          connectionId,
+          id: metaUserId,
+          info: metaUserInfo,
+          scopes,
+        })
+      );
+      if (!this._presences.has(connectionId)) {
+        return false;
+      }
+      return this._invalidateUser(connectionId);
+    });
   }
 
   /**
@@ -150,9 +149,11 @@ export class OthersRef<
    * the presence information.
    */
   removeConnection(connectionId: number): void {
-    this._connections.delete(connectionId);
-    this._presences.delete(connectionId);
-    this._invalidateUser(connectionId);
+    this.mutate(() => {
+      this._connections.delete(connectionId);
+      this._presences.delete(connectionId);
+      this._invalidateUser(connectionId);
+    });
   }
 
   /**
@@ -160,10 +161,13 @@ export class OthersRef<
    * its known presence data is overwritten.
    */
   setOther(connectionId: number, presence: P): void {
-    this._presences.set(connectionId, freeze(compactObject(presence)));
-    if (this._connections.has(connectionId)) {
-      this._invalidateUser(connectionId);
-    }
+    this.mutate(() => {
+      this._presences.set(connectionId, freeze(compactObject(presence)));
+      if (!this._connections.has(connectionId)) {
+        return false;
+      }
+      return this._invalidateUser(connectionId);
+    });
   }
 
   /**
@@ -172,15 +176,19 @@ export class OthersRef<
    * full .setOther() call first.
    */
   patchOther(connectionId: number, patch: Partial<P>): void {
-    const oldPresence = this._presences.get(connectionId);
-    if (oldPresence === undefined) {
-      return;
-    }
+    this.mutate(() => {
+      const oldPresence = this._presences.get(connectionId);
+      if (oldPresence === undefined) {
+        return false;
+      }
 
-    const newPresence = merge(oldPresence, patch);
-    if (oldPresence !== newPresence) {
+      const newPresence = merge(oldPresence, patch);
+      if (oldPresence === newPresence) {
+        return false;
+      }
+
       this._presences.set(connectionId, freeze(newPresence));
-      this._invalidateUser(connectionId);
-    }
+      return this._invalidateUser(connectionId);
+    });
   }
 }
