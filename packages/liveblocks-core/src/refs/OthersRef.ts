@@ -46,7 +46,7 @@ export class OthersSignal<
   // CACHES
   // All of these are derived/cached data. Never set these directly.
   //
-  // TODO Refactor this internal cache away using the ImmutableRef
+  // XXX Refactor this internal cache away using the ImmutableRef
   // abstraction/helper. Manually maintaining these caches should no longer be
   // necessary.
   //
