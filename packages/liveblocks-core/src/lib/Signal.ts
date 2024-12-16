@@ -62,7 +62,7 @@ abstract class AbstractSignal<T> implements ISignal<T>, Observable<void> {
     this.eventSource = makeEventSource<void>();
     this.sinks = new Set();
 
-    // Auto-bind common methods
+    // Bind common methods to self
     this.get = this.get.bind(this);
     this.subscribe = this.subscribe.bind(this);
     this.subscribeOnce = this.subscribeOnce.bind(this);
