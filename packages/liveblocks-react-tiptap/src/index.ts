@@ -1,5 +1,6 @@
 import { detectDupes } from "@liveblocks/core";
 
+import type { AiCommands, CommentsCommands } from "./types";
 import { PKG_FORMAT, PKG_NAME, PKG_VERSION } from "./version";
 
 detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
@@ -16,21 +17,7 @@ export { HistoryVersionPreview } from "./version-history/HistoryVersionPreview";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
-    comments: {
-      /**
-       * Add a comment
-       */
-      addComment: (id: string) => ReturnType;
-      selectThread: (id: string | null) => ReturnType;
-      addPendingComment: () => ReturnType;
-      /** @internal */
-      closePendingComment: () => ReturnType;
-    };
-    ai: {
-      // TODO: Add an argument to start a specific task immediately (e.g. askAi('summarize'))?
-      askAi: () => ReturnType;
-      /** @internal */
-      closeAi: () => ReturnType;
-    };
+    comments: CommentsCommands<ReturnType>;
+    ai: AiCommands<ReturnType>;
   }
 }

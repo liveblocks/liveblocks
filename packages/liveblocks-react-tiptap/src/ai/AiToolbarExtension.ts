@@ -16,43 +16,85 @@ export const AiToolbarExtension = Extension.create<
 
   addStorage() {
     return {
-      aiToolbarSelection: null,
+      state: {
+        type: "closed",
+        selection: null,
+      },
     };
   },
 
   addCommands() {
     return {
-      askAi: () => () => {
-        // If there's no selection yet, put the selection at the start of the document
-        if (this.editor.state.selection.$from.depth === 0) {
-          this.editor.chain().focus().setTextSelection(0).run();
+      askAi: (prompt) => () => {
+        if (this.storage.state.type === "closed") {
+          // If there's no selection yet, put the selection at the start of the document
+          if (this.editor.state.selection.$from.depth === 0) {
+            this.editor.chain().focus().setTextSelection(0).run();
+          }
+
+          // If the selection is collapsed, select the whole current block
+          if (this.editor.state.selection.empty) {
+            const { $from } = this.editor.state.selection;
+            const start = $from.start();
+            const end = $from.end();
+            this.editor.commands.setTextSelection({ from: start, to: end });
+          }
+
+          // And if the selection is still empty, stop here
+          if (this.editor.state.selection.empty) {
+            return false;
+          }
+
+          this.editor.commands.blur();
         }
 
-        // If the selection is collapsed, select the whole current block
-        if (this.editor.state.selection.empty) {
-          const { $from } = this.editor.state.selection;
-          const start = $from.start();
-          const end = $from.end();
-          this.editor.commands.setTextSelection({ from: start, to: end });
+        const selection =
+          this.storage.state.selection ??
+          new TextSelection(
+            this.editor.state.selection.$anchor,
+            this.editor.state.selection.$head
+          );
+
+        if (prompt) {
+          this.storage.state = {
+            type: "thinking",
+            selection,
+            prompt,
+          };
+        } else {
+          this.storage.state = {
+            type: "asking",
+            selection,
+            prompt:
+              this.storage.state.type === "closed"
+                ? ""
+                : this.storage.state.prompt,
+          };
         }
 
-        // And if the selection is still empty, stop here
-        if (this.editor.state.selection.empty) {
-          return false;
-        }
-
-        this.storage.aiToolbarSelection = new TextSelection(
-          this.editor.state.selection.$anchor,
-          this.editor.state.selection.$head
-        );
-
-        this.editor.commands.blur();
         return true;
       },
       closeAi: () => () => {
-        this.storage.aiToolbarSelection = null;
+        this.storage.state = {
+          type: "closed",
+          selection: null,
+        };
+
         return true;
       },
+      setAiPrompt:
+        (prompt: string | ((previousPrompt: string) => string)) => () => {
+          if (this.storage.state.type === "closed") {
+            return false;
+          }
+
+          this.storage.state.prompt =
+            typeof prompt === "function"
+              ? prompt(this.storage.state.prompt)
+              : prompt;
+
+          return true;
+        },
     };
   },
 
@@ -64,15 +106,12 @@ export const AiToolbarExtension = Extension.create<
     { transaction }: { transaction: Transaction } // TODO: remove this after submitting PR to tiptap
   ) {
     // ignore changes made by yjs
-    if (
-      !this.storage.aiToolbarSelection ||
-      transaction.getMeta(ySyncPluginKey)
-    ) {
+    if (!this.storage.selection || transaction.getMeta(ySyncPluginKey)) {
       return;
     }
-    this.storage.aiToolbarSelection = null;
+    this.storage.selection = null;
   },
-  // TODO: this.storage.aiToolbarSelection needs to be a Yjs Relative Position that gets translated back to absolute position.
+  // TODO: this.storage.selection needs to be a Yjs Relative Position that gets translated back to absolute position.
   // Commit: eba949d32d6010a3d8b3f7967d73d4deb015b02a has code that can help with this.
   addProseMirrorPlugins() {
     return [
@@ -80,12 +119,11 @@ export const AiToolbarExtension = Extension.create<
         key: AI_TOOLBAR_SELECTION_PLUGIN,
         props: {
           decorations: ({ doc }) => {
-            const active = this.storage.aiToolbarSelection !== null;
+            const active = this.storage.state.selection !== null;
             if (!active) {
               return DecorationSet.create(doc, []);
             }
-            const { from, to } = this.storage
-              .aiToolbarSelection as TextSelection;
+            const { from, to } = this.storage.state.selection as TextSelection;
             const decorations: Decoration[] = [
               Decoration.inline(from, to, {
                 class: "lb-root lb-selection lb-tiptap-ai-selection",

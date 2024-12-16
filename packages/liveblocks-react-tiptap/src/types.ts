@@ -1,7 +1,7 @@
 import type { TextSelection } from "@tiptap/pm/state";
 import { PluginKey } from "@tiptap/pm/state";
 import type { DecorationSet } from "@tiptap/pm/view";
-import type { ChainedCommands } from "@tiptap/react";
+import type { ChainedCommands, SingleCommands } from "@tiptap/react";
 
 export const LIVEBLOCKS_MENTION_KEY = new PluginKey("lb-plugin-mention");
 export const LIVEBLOCKS_MENTION_PASTE_KEY = new PluginKey(
@@ -32,8 +32,29 @@ export const enum ThreadPluginActions {
   SET_SELECTED_THREAD_ID = "SET_SELECTED_THREAD_ID",
 }
 
+export type AiToolbarState =
+  | {
+      type: "closed";
+      selection: null;
+    }
+  | {
+      type: "asking";
+      selection: TextSelection;
+      prompt: string;
+    }
+  | {
+      type: "thinking";
+      selection: TextSelection;
+      prompt: string;
+    }
+  | {
+      type: "reviewing";
+      selection: TextSelection;
+      prompt: string;
+    };
+
 export type AiToolbarExtensionStorage = {
-  aiToolbarSelection: TextSelection | null;
+  state: AiToolbarState;
 };
 
 export type LiveblocksExtensionStorage = AiToolbarExtensionStorage &
@@ -48,7 +69,33 @@ export type ThreadPluginState = {
 
 export type FloatingPosition = "top" | "bottom";
 
+export type ExtendedCommands<
+  T extends string,
+  A extends any[] = [],
+> = SingleCommands & Record<T, (...args: A) => boolean>;
+
 export type ExtendedChainedCommands<
   T extends string,
   A extends any[] = [],
 > = ChainedCommands & Record<T, (...args: A) => ChainedCommands>;
+
+export type CommentsCommands<ReturnType> = {
+  /**
+   * Add a comment
+   */
+  addComment: (id: string) => ReturnType;
+  selectThread: (id: string | null) => ReturnType;
+  addPendingComment: () => ReturnType;
+  /** @internal */
+  closePendingComment: () => ReturnType;
+};
+
+export type AiCommands<ReturnType> = {
+  askAi: (prompt?: string) => ReturnType;
+  /** @internal */
+  closeAi: () => ReturnType;
+  /** @internal */
+  setAiPrompt: (
+    prompt: string | ((previousPrompt: string) => string)
+  ) => ReturnType;
+};
