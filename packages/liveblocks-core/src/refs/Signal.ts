@@ -328,7 +328,7 @@ export class DerivedSignal<T> extends ReadableSignal<T> {
  * the current state at any point in time synchronously, and a way to update
  * its reference.
  */
-export class MutableSignal<T> extends ReadableSignal<T> {
+export class MutableSignal<T extends object> extends ReadableSignal<T> {
   #state: T;
 
   constructor(initialState: T) {
@@ -351,8 +351,8 @@ export class MutableSignal<T> extends ReadableSignal<T> {
    * Invokes a callback function that is allowed to mutate the given state
    * value. Do not change the value outside of the callback.
    *
-   * If the callback returns `false`, it's assumed that the state was not
-   * changed.
+   * If the callback explicitly returns `false`, it's assumed that the state
+   * was not changed.
    */
   mutate(callback: (state: T) => unknown): void {
     const result = callback(this.#state);

@@ -2,33 +2,69 @@ import fc from "fast-check";
 
 import { DerivedSignal, MutableSignal } from "../Signal";
 
+const anyObject = fc
+  .anything()
+  .filter((x): x is object => x !== null && typeof x === "object");
+
 test("empty", () => {
   expect(new MutableSignal({}).get()).toStrictEqual({});
   expect(new MutableSignal([1, 2, 3]).get()).toStrictEqual([1, 2, 3]);
-  expect(new MutableSignal(123).get()).toBe(123);
-  expect(new MutableSignal(undefined).get()).toBe(undefined);
-  expect(new MutableSignal(null).get()).toBe(null);
 });
 
 it("signals always notify watchers whenever mutated (because we cannot tell if their value has changed)", () => {
   const fn = jest.fn();
 
-  const counter = new MutableSignal(0);
+  type S = { counter: 0 };
+
+  const counter = new MutableSignal<S>({ counter: 0 });
+
+  const inc = (state: S) => state.counter++;
+
+  const makeOdd = (state: S) => {
+    if ((state.counter & 1) === 0) {
+      state.counter++;
+      return true;
+    } else {
+      return false;
+    }
+  };
 
   const unsub = counter.subscribe(fn);
   expect(fn).not.toHaveBeenCalled();
 
-  expect(counter.get()).toEqual(0);
+  expect(counter.get()).toEqual({ counter: 0 });
   expect(fn).not.toHaveBeenCalled();
 
-  counter.mutate(() => 0);
-  expect(counter.get()).toEqual(0);
-  expect(fn).not.toHaveBeenCalled();
+  counter.mutate(inc);
+  expect(counter.get()).toEqual({ counter: 1 });
+  expect(fn).toHaveBeenCalledTimes(1);
 
-  counter.mutate((n) => n + 1);
-  expect(counter.get()).toEqual(1);
+  counter.mutate(makeOdd); // Won't update the state
+  expect(counter.get()).toEqual({ counter: 1 });
+  expect(fn).toHaveBeenCalledTimes(1);
+
+  counter.mutate(inc);
+  expect(counter.get()).toEqual({ counter: 2 });
+  expect(fn).toHaveBeenCalledTimes(2);
+
+  counter.mutate(makeOdd); // Not it _will_ update the state
+  expect(counter.get()).toEqual({ counter: 3 });
+  expect(fn).toHaveBeenCalledTimes(3);
+
+  counter.mutate(makeOdd); // Won't update the state
+  expect(counter.get()).toEqual({ counter: 3 });
+  expect(fn).toHaveBeenCalledTimes(3);
 
   unsub();
+});
+
+it("signals throw when used with an async mutation function", () => {
+  type S = { counter: 0 };
+  const counter = new MutableSignal<S>({ counter: 0 });
+  const asyncInc = (state: S) => Promise.resolve(state.counter++);
+  expect(() => counter.mutate(asyncInc)).toThrow(
+    "does not support async callbacks"
+  );
 });
 
 it("when chained, derived signals will think the value changed", () => {
@@ -63,7 +99,7 @@ it("when chained, derived signals will think the value changed", () => {
 test("[prop] whatever value you initialize it with is what comes out", () => {
   fc.assert(
     fc.property(
-      fc.anything(),
+      anyObject,
 
       (value) => {
         const signal = new MutableSignal(value);
@@ -77,7 +113,7 @@ test("[prop] whatever value you initialize it with is what comes out", () => {
 test.failing("[prop] mutating works with any value", () => {
   fc.assert(
     fc.property(
-      fc.anything(),
+      anyObject,
       fc.anything(),
 
       (init, newVal) => {
