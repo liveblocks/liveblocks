@@ -89,11 +89,7 @@ export function makeEventSource<T>(): EventSource<T> {
 
   function subscribe(callback: Callback<T>): UnsubscribeCallback {
     _observers.add(callback);
-    const unsub = () => _observers.delete(callback);
-
-    // // @ts-expect-error Call unsubscribe when the subscription goes out of scope
-    // unsub[Symbol.dispose] = unsub;
-    return unsub;
+    return () => _observers.delete(callback);
   }
 
   function subscribeOnce(callback: Callback<T>): UnsubscribeCallback {
