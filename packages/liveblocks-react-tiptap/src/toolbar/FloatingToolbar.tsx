@@ -95,6 +95,7 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
     const toolbarRef = useRef<HTMLDivElement>(null);
     const [isPointerDown, setPointerDown] = useState(false);
     const [isFocused, setFocused] = useState(false);
+    const [isManuallyClosed, setManuallyClosed] = useState(false);
     const isEditable =
       useEditorState({
         editor,
@@ -127,9 +128,29 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
         },
       }) ?? false;
 
-    const isOpen = isFocused && !isPointerDown && hasSelectionRange;
+    const isOpen =
+      isFocused && !isPointerDown && hasSelectionRange && !isManuallyClosed;
     const [delayedIsOpen, setDelayedIsOpen] = useState(isOpen);
     const delayedIsOpenTimeoutRef = useRef<number>();
+
+    // Reset the manually closed state when there's another change
+    useEffect(() => {
+      if (!editor) {
+        return;
+      }
+
+      setManuallyClosed(false);
+
+      const handleSelectionChange = () => {
+        setManuallyClosed(false);
+      };
+
+      editor.on("selectionUpdate", handleSelectionChange);
+
+      return () => {
+        editor.off("selectionUpdate", handleSelectionChange);
+      };
+    }, [isFocused, hasSelectionRange, editor]);
 
     // Don't close when the focus moves from the editor to the toolbar
     useEffect(() => {
@@ -314,14 +335,21 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
     }, [editor, delayedIsOpen, setReference]);
 
     useEffect(() => {
-      if (!editor) {
+      if (!editor || !delayedIsOpen) {
         return;
       }
 
       const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.target !== editor.view.dom && event.defaultPrevented) {
+          return;
+        }
+
         if (event.key === "Escape") {
-          // TODO: Close the floating toolbar
+          event.preventDefault();
+          event.stopPropagation();
+
           editor.commands.focus();
+          setManuallyClosed(true);
         }
       };
 
@@ -330,7 +358,7 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
       return () => {
         editor.view.dom.removeEventListener("keydown", handleKeyDown);
       };
-    }, [editor]);
+    }, [editor, delayedIsOpen]);
 
     if (!editor || !delayedIsOpen) {
       return null;

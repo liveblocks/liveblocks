@@ -89,18 +89,25 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
     const [isPointerDown, setPointerDown] = useState(false);
     const [editor] = useLexicalComposerContext();
     const [isFocused, setFocused] = useState(false);
+    const [isManuallyClosed, setManuallyClosed] = useState(false);
     const isEditable = editor.isEditable();
     const [hasSelectionRange, setHasSelectionRange] = useState(false);
 
-    const isOpen = isFocused && !isPointerDown && hasSelectionRange;
+    const isOpen =
+      isFocused && !isPointerDown && hasSelectionRange && !isManuallyClosed;
     const [delayedIsOpen, setDelayedIsOpen] = useState(isOpen);
     const delayedIsOpenTimeoutRef = useRef<number>();
 
+    // Reset the manually closed state when there's another change
+    useEffect(() => {
+      setManuallyClosed(false);
+    }, [isFocused, hasSelectionRange, editor]);
+
     // Don't close when the focus moves from the editor to the toolbar
     useEffect(() => {
-      const editorRoot = editor._rootElement;
+      const root = editor.getRootElement();
 
-      if (!editorRoot) {
+      if (!root) {
         return;
       }
 
@@ -116,19 +123,19 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
           return;
         }
 
-        if (event.relatedTarget === editor._rootElement) {
+        if (event.relatedTarget === editor.getRootElement()) {
           return;
         }
 
         setFocused(false);
       };
 
-      editorRoot.addEventListener("focus", handleFocus);
-      editorRoot.addEventListener("blur", handleBlur);
+      root.addEventListener("focus", handleFocus);
+      root.addEventListener("blur", handleBlur);
 
       return () => {
-        editorRoot.removeEventListener("focus", handleFocus);
-        editorRoot.removeEventListener("blur", handleBlur);
+        root.removeEventListener("focus", handleFocus);
+        root.removeEventListener("blur", handleBlur);
       };
     }, [editor]);
 
@@ -156,7 +163,7 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
             return;
           }
 
-          if (event.relatedTarget === editor?._rootElement) {
+          if (event.relatedTarget === editor?.getRootElement()) {
             return;
           }
 
@@ -257,6 +264,8 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
           // Ignore selection updates related to collaboration
           if (tags.has("collaboration")) return;
 
+          setManuallyClosed(false);
+
           const selection = $getSelection();
           if (!$isRangeSelection(selection) || selection.isCollapsed()) {
             setHasSelectionRange(false);
@@ -285,13 +294,21 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
     useEffect(() => {
       const root = editor.getRootElement();
 
-      if (!root) {
+      if (!root || !delayedIsOpen) {
         return;
       }
 
       const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.target !== root && event.defaultPrevented) {
+          return;
+        }
+
         if (event.key === "Escape") {
-          // TODO: Close the floating toolbar
+          event.preventDefault();
+          event.stopPropagation();
+
+          editor.focus();
+          setManuallyClosed(true);
         }
       };
 
@@ -300,7 +317,7 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
       return () => {
         root.removeEventListener("keydown", handleKeyDown);
       };
-    }, [editor]);
+    }, [editor, delayedIsOpen]);
 
     if (!delayedIsOpen) {
       return null;
