@@ -54,6 +54,11 @@ abstract class ReadableSignal<T> implements Observable<void> {
     this.equals = equals ?? Object.is;
     this.#eventSource = makeEventSource<void>();
     this.#sinks = new Set();
+
+    // Auto-bind common methods
+    this.get = this.get.bind(this);
+    this.subscribe = this.subscribe.bind(this);
+    this.subscribeOnce = this.subscribeOnce.bind(this);
   }
 
   [Symbol.dispose](): void {
