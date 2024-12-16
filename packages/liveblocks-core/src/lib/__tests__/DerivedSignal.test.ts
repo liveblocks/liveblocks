@@ -244,3 +244,43 @@ it("signals only notify watchers when their value changes (with shallow)", () =>
 
   unsub();
 });
+
+it.failing(
+  "batch signal updates so derived signals will only be notified once",
+  () => {
+    function batch(callback: () => void) {
+      // TODO Implement this
+      callback();
+    }
+
+    const fn = jest.fn();
+
+    const x = new Signal(1);
+    const y = new Signal(2);
+    const z = DerivedSignal.from(x, y, (x, y) => x * y);
+
+    const unsub = z.subscribe(fn);
+    expect(fn).not.toHaveBeenCalled();
+
+    expect(z.get()).toEqual(2);
+
+    batch(() => {
+      x.set(7);
+      y.set(3);
+    });
+
+    expect(z.get()).toEqual(21);
+
+    //
+    // NOTE: The following assertion currently fails without batching support
+    // Currently this will get 2 updates! First 14, then 21.
+    //
+    // The purpose of batching should be twofold:
+    // - Delay notification of z until the end of the batch
+    // - Only invoke the z computation once, even if multiple signals have changed
+    //
+    expect(fn).toHaveBeenCalledTimes(1);
+
+    unsub();
+  }
+);
