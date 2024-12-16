@@ -139,7 +139,9 @@ export type { Brand, DistributiveOmit } from "./lib/utils";
 export {
   b64decode,
   compactObject,
+  entries,
   isPlainObject,
+  keys,
   mapValues,
   memoizeOnSuccess,
   raise,

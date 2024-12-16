@@ -30,7 +30,9 @@ import {
   compactObject,
   console,
   createStore,
+  entries,
   HttpError,
+  keys,
   kInternal,
   makeEventSource,
   mapValues,
@@ -2227,15 +2229,13 @@ export function applyDeepOptimisticChannelsNotificationSettingsUpdate(
 ): ChannelsNotificationSettings {
   const outcomingSettings = { ...existingSettings };
 
-  for (const channelKey of Object.keys(incomingSettings)) {
-    const key = channelKey as keyof ChannelsNotificationSettings;
+  for (const channelKey of keys(incomingSettings)) {
+    const key = channelKey;
     const channelUpdates = incomingSettings[key];
 
     if (channelUpdates && typeof channelUpdates === "object") {
       const realChannelUpdates = Object.fromEntries(
-        Object.entries(channelUpdates).filter(
-          ([_, value]) => value !== undefined
-        )
+        entries(channelUpdates).filter(([_, value]) => value !== undefined)
       );
 
       outcomingSettings[key] = {
