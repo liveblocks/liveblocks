@@ -21,25 +21,28 @@
   </a>
 </p>
 
-**[Liveblocks](https://liveblocks.io) is the platform for adding collaborative
-editing, comments, and notifications into your application.**
+**[Liveblocks](https://liveblocks.io) provides customizable pre-built features
+that boost user engagement by adding collaboration to your product. All without
+derailing your roadmap.**
 
 **[Get started now](https://liveblocks.io/signup)**
 
-<img src="./assets/concepts/products.png" alt="Liveblocks products"   />
+<img src="./assets/concepts/ready-made-features.png" alt="Liveblocks ready-made features"   />
 
 ### Ready-made features
 
-Liveblocks is a fully integrated solution built around core products, each
-enabling a different facet of collaborative experiences:
+Liveblocks provides ready‑to‑use features through customizable pre‑built
+components that can easily be dropped into your product to boost growth:
 [Comments](/docs/ready-made-features/comments),
-[Notifications](/docs/ready-made-features/notifications),
-[Text Editor](/docs/ready-made-features/text-editor), and
-[Presence](/docs/ready-made-features/presence). You can decide what products you
-want to use based on your requirements and collaborative experiences you’re
-looking to build. You can also build a custom real-time app using
-[Sync Datastore](/docs/platform/sync-datastore) which supports two different
-sync engines.
+[Text Editor](/docs/ready-made-features/text-editor),
+[Presence](/docs/ready-made-features/presence), and
+[Notifications](/docs/ready-made-features/notifications). You can decide
+features you want to use based on your requirements and collaborative
+experiences you’re looking to add.
+
+If you have more advanced needs, you can also leverage Liveblocks to
+[host and scale local-first sync engines](/docs/platform/sync-datastore) such as
+Liveblocks Storage and Yjs.
 
 ### Packages and SDKs
 
@@ -51,12 +54,14 @@ notifications, and more.
 - [`@liveblocks/client`](https://liveblocks.io/docs/api-reference/liveblocks-client)
 - [`@liveblocks/react`](https://liveblocks.io/docs/api-reference/liveblocks-react)
 - [`@liveblocks/react-ui`](https://liveblocks.io/docs/api-reference/liveblocks-react-ui)
+- [`@liveblocks/react-tiptap`](https://liveblocks.io/docs/api-reference/liveblocks-react-tiptap)
 - [`@liveblocks/react-lexical`](https://liveblocks.io/docs/api-reference/liveblocks-react-lexical)
 - [`@liveblocks/node-lexical`](https://liveblocks.io/docs/api-reference/liveblocks-node-lexical)
 - [`@liveblocks/redux`](https://liveblocks.io/docs/api-reference/liveblocks-redux)
 - [`@liveblocks/zustand`](https://liveblocks.io/docs/api-reference/liveblocks-zustand)
 - [`@liveblocks/yjs`](https://liveblocks.io/docs/api-reference/liveblocks-yjs)
 - [`@liveblocks/node`](https://liveblocks.io/docs/api-reference/liveblocks-node)
+- [`@liveblocks/emais`](https://liveblocks.io/docs/api-reference/liveblocks-emails)
 
 ## Developers
 
