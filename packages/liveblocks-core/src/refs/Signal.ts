@@ -9,6 +9,9 @@ import { freeze } from "../lib/freeze";
 import type { JsonObject } from "../lib/Json";
 import { compactObject, raise } from "../lib/utils";
 
+// XXX Add a batch API here as well?
+// XXX DRY up the 'Store' class
+
 /**
  * Patches a target object by "merging in" the provided fields. Patch
  * fields that are explicitly-undefined will delete keys from the target
@@ -46,6 +49,9 @@ export interface ISignal<T> {
   removeSink(sink: DerivedSignal<unknown>): void;
 }
 
+/**
+ * Base functionality every Signal implementation needs.
+ */
 abstract class AbstractSignal<T> implements ISignal<T>, Observable<void> {
   /** @internal */
   protected readonly equals: (a: T, b: T) => boolean;
@@ -358,9 +364,4 @@ export class MutableSignal<T extends object> extends AbstractSignal<T> {
       this.notify();
     }
   }
-
-  // XXX Add a batch API here as well
-  // XXX Think about whether batch would only belong on this class or on the Signal
-  //     class as well?
-  // XXX DRY up the 'Store' class
 }
