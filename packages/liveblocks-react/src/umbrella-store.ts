@@ -536,12 +536,14 @@ export class SinglePageResource {
 // XXX Internal state 1 = optimistic updates
 type InternalState1<M extends BaseMetadata> = readonly OptimisticUpdate<M>[];
 
+// XXX Internal state 3 = notifications by ID
+type InternalState3 = Readonly<{
+  notificationsById: Record<string, InboxNotificationData>;
+}>;
+
 // XXX Internal state 2 = everything else (for now!)
 type InternalState2 = Readonly<{
   permissionsByRoom: Record<string, Set<Permission>>;
-
-  // TODO: Ideally we would have a similar NotificationsDB, like we have ThreadDB
-  notificationsById: Record<string, InboxNotificationData>;
   settingsByRoomId: Record<string, RoomNotificationSettings>;
   versionsByRoomId: Record<string, Record<string, HistoryVersion>>;
 }>;
@@ -617,6 +619,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   _internalState1: Signal<InternalState1<M>>; // XXX Split this into multiple signals eventually
   _internalState2: Signal<InternalState2>; // XXX Split this into multiple signals eventually
+  _internalState3: Signal<InternalState3>; // XXX Split this into multiple signals eventually
   externalState: DerivedSignal<UmbrellaStoreState<M>>;
 
   // Notifications
@@ -669,18 +672,21 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this._internalState1 = new Signal<InternalState1<M>>([]);
     this._internalState2 = new Signal<InternalState2>({
       permissionsByRoom: {},
-      notificationsById: {},
       settingsByRoomId: {},
       versionsByRoomId: {},
+    });
+    this._internalState3 = new Signal<InternalState3>({
+      notificationsById: {},
     });
 
     this.externalState = DerivedSignal.from(
       this._internalState1,
       this._internalState2,
+      this._internalState3,
       this._rawThreadsDB.signal,
 
-      (state1, state2, rawThreadsDB): UmbrellaStoreState<M> =>
-        internalToExternalState(state1, state2, rawThreadsDB)
+      (state1, state2, state3, rawThreadsDB): UmbrellaStoreState<M> =>
+        internalToExternalState(state1, state2, state3, rawThreadsDB)
     );
 
     // Auto-bind all of this class’ methods here, so we can use stable
@@ -853,7 +859,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       cache: Readonly<Record<string, InboxNotificationData>>
     ) => Readonly<Record<string, InboxNotificationData>>
   ): void {
-    this._internalState2.set((state) => {
+    this._internalState3.set((state) => {
       const inboxNotifications = mapFn(state.notificationsById);
       return inboxNotifications !== state.notificationsById
         ? { ...state, notificationsById: inboxNotifications }
@@ -918,6 +924,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this._internalState2.set(callback);
   }
 
+  public force_set3(
+    callback: (currentState: InternalState3) => InternalState3
+  ): void {
+    return this._internalState3.set(callback);
+  }
+
   /**
    * Updates an existing inbox notification with a new value, replacing the
    * corresponding optimistic update.
@@ -945,11 +957,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
           return cache;
         }
 
-        const inboxNotifications = {
+        return {
           ...cache,
           [inboxNotificationId]: callback(existing),
         };
-        return inboxNotifications;
       });
     });
   }
@@ -1602,12 +1613,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
 function internalToExternalState<M extends BaseMetadata>(
   state1: InternalState1<M>,
   state2: InternalState2,
+  state3: InternalState3,
   rawThreadsDB: ThreadDB<M>
 ): UmbrellaStoreState<M> {
   const threadsDB = rawThreadsDB.clone();
 
   const computed = {
-    notificationsById: { ...state2.notificationsById },
+    notificationsById: { ...state3.notificationsById },
     settingsByRoomId: { ...state2.settingsByRoomId },
   };
 
