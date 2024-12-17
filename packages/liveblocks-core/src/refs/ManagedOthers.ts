@@ -35,33 +35,33 @@ function makeUser<P extends JsonObject, U extends BaseUserMeta>(
 export class ManagedOthers<P extends JsonObject, U extends BaseUserMeta> {
   // Track mutable state internally, but signal to the outside when the
   // observable derived state changes only
-  private readonly internal: MutableSignal<{
+  readonly #internal: MutableSignal<{
     connections: Map</* connectionId */ number, Connection<U>>;
     presences: Map</* connectionId */ number, P>;
   }>;
-  private readonly userCache: Map</* connectionId */ number, User<P, U>>;
+  readonly #userCache: Map</* connectionId */ number, User<P, U>>;
 
   // The "clean" signal that is exposed to the outside world
   public readonly signal: DerivedSignal<readonly User<P, U>[]>;
 
   constructor() {
-    this.internal = new MutableSignal({
+    this.#internal = new MutableSignal({
       connections: new Map</* connectionId */ number, Connection<U>>(),
       presences: new Map</* connectionId */ number, P>(),
     });
 
     this.signal = DerivedSignal.from(
-      this.internal,
+      this.#internal,
       (_ignore): readonly User<P, U>[] =>
         compact(
-          Array.from(this.internal.get().presences.keys()).map((connectionId) =>
-            this.getUser(Number(connectionId))
+          Array.from(this.#internal.get().presences.keys()).map(
+            (connectionId) => this.getUser(Number(connectionId))
           )
         )
     );
 
     // Others
-    this.userCache = new Map();
+    this.#userCache = new Map();
   }
 
   // Shorthand for .signal.get()
@@ -70,20 +70,19 @@ export class ManagedOthers<P extends JsonObject, U extends BaseUserMeta> {
   }
 
   public connectionIds(): IterableIterator<number> {
-    return this.internal.get().connections.keys();
+    return this.#internal.get().connections.keys();
   }
 
   clearOthers(): void {
-    this.internal.mutate((state) => {
+    this.#internal.mutate((state) => {
       state.connections.clear();
       state.presences.clear();
-      this.userCache.clear();
+      this.#userCache.clear();
     });
   }
 
-  /** @internal */
-  _getUser(connectionId: number): User<P, U> | undefined {
-    const state = this.internal.get();
+  #_getUser(connectionId: number): User<P, U> | undefined {
+    const state = this.#internal.get();
     const conn = state.connections.get(connectionId);
     const presence = state.presences.get(connectionId);
     if (conn !== undefined && presence !== undefined) {
@@ -93,23 +92,22 @@ export class ManagedOthers<P extends JsonObject, U extends BaseUserMeta> {
   }
 
   getUser(connectionId: number): User<P, U> | undefined {
-    const cachedUser = this.userCache.get(connectionId);
+    const cachedUser = this.#userCache.get(connectionId);
     if (cachedUser) {
       return cachedUser;
     }
 
-    const computedUser = this._getUser(connectionId);
+    const computedUser = this.#_getUser(connectionId);
     if (computedUser) {
-      this.userCache.set(connectionId, computedUser);
+      this.#userCache.set(connectionId, computedUser);
       return computedUser;
     }
 
     return undefined;
   }
 
-  /** @internal */
-  _invalidateUser(connectionId: number): void {
-    this.userCache.delete(connectionId);
+  #invalidateUser(connectionId: number): void {
+    this.#userCache.delete(connectionId);
   }
 
   /**
@@ -122,7 +120,7 @@ export class ManagedOthers<P extends JsonObject, U extends BaseUserMeta> {
     metaUserInfo: U["info"],
     scopes: string[]
   ): void {
-    this.internal.mutate((state) => {
+    this.#internal.mutate((state) => {
       state.connections.set(
         connectionId,
         freeze({
@@ -135,7 +133,7 @@ export class ManagedOthers<P extends JsonObject, U extends BaseUserMeta> {
       if (!state.presences.has(connectionId)) {
         return false;
       }
-      return this._invalidateUser(connectionId);
+      return this.#invalidateUser(connectionId);
     });
   }
 
@@ -144,10 +142,10 @@ export class ManagedOthers<P extends JsonObject, U extends BaseUserMeta> {
    * the presence information.
    */
   removeConnection(connectionId: number): void {
-    this.internal.mutate((state) => {
+    this.#internal.mutate((state) => {
       state.connections.delete(connectionId);
       state.presences.delete(connectionId);
-      this._invalidateUser(connectionId);
+      this.#invalidateUser(connectionId);
     });
   }
 
@@ -156,12 +154,12 @@ export class ManagedOthers<P extends JsonObject, U extends BaseUserMeta> {
    * its known presence data is overwritten.
    */
   setOther(connectionId: number, presence: P): void {
-    this.internal.mutate((state) => {
+    this.#internal.mutate((state) => {
       state.presences.set(connectionId, freeze(compactObject(presence)));
       if (!state.connections.has(connectionId)) {
         return false;
       }
-      return this._invalidateUser(connectionId);
+      return this.#invalidateUser(connectionId);
     });
   }
 
@@ -171,7 +169,7 @@ export class ManagedOthers<P extends JsonObject, U extends BaseUserMeta> {
    * full .setOther() call first.
    */
   patchOther(connectionId: number, patch: Partial<P>): void {
-    this.internal.mutate((state) => {
+    this.#internal.mutate((state) => {
       const oldPresence = state.presences.get(connectionId);
       if (oldPresence === undefined) {
         return false;
@@ -183,7 +181,7 @@ export class ManagedOthers<P extends JsonObject, U extends BaseUserMeta> {
       }
 
       state.presences.set(connectionId, freeze(newPresence));
-      return this._invalidateUser(connectionId);
+      return this.#invalidateUser(connectionId);
     });
   }
 }

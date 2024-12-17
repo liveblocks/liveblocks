@@ -127,13 +127,10 @@ type ParentInfo =
 
 export abstract class AbstractCrdt {
   //                  ^^^^^^^^^^^^ TODO: Make this an interface
-  /** @internal */
-  private __pool?: ManagedPool;
-  /** @internal */
-  private __id?: string;
+  #pool?: ManagedPool;
+  #id?: string;
 
-  /** @internal */
-  private _parent: ParentInfo = NoParent;
+  #parent: ParentInfo = NoParent;
 
   /** @internal */
   _getParentKeyOrThrow(): string {
@@ -171,21 +168,21 @@ export abstract class AbstractCrdt {
 
   /** @internal */
   protected get _pool(): ManagedPool | undefined {
-    return this.__pool;
+    return this.#pool;
   }
 
   get roomId(): string | null {
-    return this.__pool ? this.__pool.roomId : null;
+    return this.#pool ? this.#pool.roomId : null;
   }
 
   /** @internal */
   get _id(): string | undefined {
-    return this.__id;
+    return this.#id;
   }
 
   /** @internal */
   get parent(): ParentInfo {
-    return this._parent;
+    return this.#parent;
   }
 
   /** @internal */
@@ -228,13 +225,13 @@ export abstract class AbstractCrdt {
           throw new Error("Cannot set parent: node already has a parent");
         } else {
           // Ignore
-          this._parent = HasParent(newParentNode, newParentKey);
+          this.#parent = HasParent(newParentNode, newParentKey);
           return;
         }
 
       case "Orphaned":
       case "NoParent": {
-        this._parent = HasParent(newParentNode, newParentKey);
+        this.#parent = HasParent(newParentNode, newParentKey);
         return;
       }
 
@@ -245,14 +242,14 @@ export abstract class AbstractCrdt {
 
   /** @internal */
   _attach(id: string, pool: ManagedPool): void {
-    if (this.__id || this.__pool) {
+    if (this.#id || this.#pool) {
       throw new Error("Cannot attach node: already attached");
     }
 
     pool.addNode(id, crdtAsLiveNode(this));
 
-    this.__id = id;
-    this.__pool = pool;
+    this.#id = id;
+    this.#pool = pool;
   }
 
   /** @internal */
@@ -260,18 +257,18 @@ export abstract class AbstractCrdt {
 
   /** @internal */
   _detach(): void {
-    if (this.__pool && this.__id) {
-      this.__pool.deleteNode(this.__id);
+    if (this.#pool && this.#id) {
+      this.#pool.deleteNode(this.#id);
     }
 
     switch (this.parent.type) {
       case "HasParent": {
-        this._parent = Orphaned(this.parent.key, this.parent.pos);
+        this.#parent = Orphaned(this.parent.key, this.parent.pos);
         break;
       }
 
       case "NoParent": {
-        this._parent = NoParent;
+        this.#parent = NoParent;
         break;
       }
 
@@ -284,7 +281,7 @@ export abstract class AbstractCrdt {
         assertNever(this.parent, "Unknown state");
     }
 
-    this.__pool = undefined;
+    this.#pool = undefined;
   }
 
   /** @internal */
@@ -300,20 +297,12 @@ export abstract class AbstractCrdt {
   /** @internal */
   abstract _serialize(): SerializedCrdt;
 
-  /**
-   * @internal
-   *
-   * This caches the result of the last .toImmutable() call for this Live node.
-   */
-  private _cachedImmutable?: Immutable;
+  /** This caches the result of the last .toImmutable() call for this Live node. */
+  #cachedImmutable?: Immutable;
 
-  /** @internal */
-  private _cachedTreeNodeKey?: string | number;
-  /**
-   * @internal
-   * This caches the result of the last .toTreeNode() call for this Live node.
-   */
-  private _cachedTreeNode?: DevTools.LsonTreeNode;
+  #cachedTreeNodeKey?: string | number;
+  /** This caches the result of the last .toTreeNode() call for this Live node. */
+  #cachedTreeNode?: DevTools.LsonTreeNode;
 
   /**
    * @internal
@@ -324,11 +313,11 @@ export abstract class AbstractCrdt {
    */
   invalidate(): void {
     if (
-      this._cachedImmutable !== undefined ||
-      this._cachedTreeNode !== undefined
+      this.#cachedImmutable !== undefined ||
+      this.#cachedTreeNode !== undefined
     ) {
-      this._cachedImmutable = undefined;
-      this._cachedTreeNode = undefined;
+      this.#cachedImmutable = undefined;
+      this.#cachedTreeNode = undefined;
 
       if (this.parent.type === "HasParent") {
         this.parent.node.invalidate();
@@ -345,13 +334,13 @@ export abstract class AbstractCrdt {
    * Return an snapshot of this Live tree for use in DevTools.
    */
   toTreeNode(key: string): DevTools.LsonTreeNode {
-    if (this._cachedTreeNode === undefined || this._cachedTreeNodeKey !== key) {
-      this._cachedTreeNodeKey = key;
-      this._cachedTreeNode = this._toTreeNode(key);
+    if (this.#cachedTreeNode === undefined || this.#cachedTreeNodeKey !== key) {
+      this.#cachedTreeNodeKey = key;
+      this.#cachedTreeNode = this._toTreeNode(key);
     }
 
     // Return cached version
-    return this._cachedTreeNode;
+    return this.#cachedTreeNode;
   }
 
   /** @internal */
@@ -361,12 +350,12 @@ export abstract class AbstractCrdt {
    * Return an immutable snapshot of this Live node and its children.
    */
   toImmutable(): Immutable {
-    if (this._cachedImmutable === undefined) {
-      this._cachedImmutable = this._toImmutable();
+    if (this.#cachedImmutable === undefined) {
+      this.#cachedImmutable = this._toImmutable();
     }
 
     // Return cached version
-    return this._cachedImmutable;
+    return this.#cachedImmutable;
   }
 
   /**
