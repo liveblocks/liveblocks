@@ -145,14 +145,14 @@ const AiToolbarDropdownCustomItem = forwardRef<
 const AiToolbarDropdownItem = forwardRef<
   HTMLDivElement,
   AiToolbarDropdownItemProps
->(({ prompt, ...props }, forwardedRef) => {
+>(({ prompt: manualPrompt, ...props }, forwardedRef) => {
   const editor = useCurrentEditor("DropdownItem", "AiToolbar");
 
   const handleSelect = useCallback(
     (prompt: string) => {
-      editor.commands.askAi(prompt);
+      editor.commands.askAi(manualPrompt ?? prompt);
     },
-    [editor]
+    [editor, manualPrompt]
   );
 
   return (
@@ -160,7 +160,6 @@ const AiToolbarDropdownItem = forwardRef<
       {...props}
       onSelect={handleSelect}
       ref={forwardedRef}
-      value={prompt}
     />
   );
 });
