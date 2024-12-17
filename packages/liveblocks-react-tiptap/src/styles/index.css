@@ -360,6 +360,39 @@
   white-space: pre-wrap;
 }
 
+.lb-tiptap-ai-toolbar-halo {
+  --lb-tiptap-ai-toolbar-halo-blur: 20px;
+  --lb-tiptap-ai-toolbar-halo-outset: 8px;
+
+  position: absolute;
+  inset: calc(-1 * var(--lb-tiptap-ai-toolbar-halo-outset));
+  z-index: -1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  border-radius: calc(
+    var(--lb-radius) + var(--lb-tiptap-ai-toolbar-halo-outset)
+  );
+  filter: blur(var(--lb-tiptap-ai-toolbar-halo-blur));
+  pointer-events: none;
+  animation: lb-animation-appear 0.5s ease-in-out backwards;
+
+  &::before {
+    content: "";
+    position: absolute;
+    aspect-ratio: 1;
+    inline-size: 200%;
+    background: conic-gradient(
+      transparent 135deg,
+      var(--lb-accent) 180deg,
+      transparent 225deg
+    );
+    transform-origin: center;
+    animation: lb-animation-spin 8s linear infinite;
+  }
+}
+
 .lb-tiptap-ai-toolbar-loading {
   flex: 1 0 auto;
   min-inline-size: 0;

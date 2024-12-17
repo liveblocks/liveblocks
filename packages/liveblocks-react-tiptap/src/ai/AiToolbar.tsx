@@ -337,7 +337,7 @@ function AiToolbarThinking({ editor }: { editor: Editor }) {
   useEffect(() => {
     setTimeout(() => {
       (editor.commands as AiCommands<boolean>).reviewAi();
-    }, 3000);
+    }, 50000);
   }, [editor]);
 
   const handleCancel = useCallback(() => {
@@ -345,27 +345,30 @@ function AiToolbarThinking({ editor }: { editor: Editor }) {
   }, [editor]);
 
   return (
-    <div className="lb-elevation lb-tiptap-ai-toolbar">
-      <div className="lb-tiptap-ai-toolbar-content">
-        <span className="lb-icon-container lb-tiptap-ai-toolbar-icon-container">
-          <EmojiIcon />
-        </span>
-        <span className="lb-tiptap-ai-toolbar-loading">
-          Thinking about {prompt}
-        </span>
-        <div className="lb-tiptap-ai-toolbar-actions">
-          <ShortcutTooltip content="Cancel">
-            <Button
-              className="lb-tiptap-ai-toolbar-action"
-              variant="primary"
-              aria-label="Cancel"
-              icon={<UndoIcon />}
-              onClick={handleCancel}
-            />
-          </ShortcutTooltip>
+    <>
+      <div className="lb-elevation lb-tiptap-ai-toolbar">
+        <div className="lb-tiptap-ai-toolbar-content">
+          <span className="lb-icon-container lb-tiptap-ai-toolbar-icon-container">
+            <EmojiIcon />
+          </span>
+          <span className="lb-tiptap-ai-toolbar-loading">
+            Thinking about {prompt}
+          </span>
+          <div className="lb-tiptap-ai-toolbar-actions">
+            <ShortcutTooltip content="Cancel">
+              <Button
+                className="lb-tiptap-ai-toolbar-action"
+                variant="primary"
+                aria-label="Cancel"
+                icon={<UndoIcon />}
+                onClick={handleCancel}
+              />
+            </ShortcutTooltip>
+          </div>
         </div>
       </div>
-    </div>
+      <div className="lb-tiptap-ai-toolbar-halo" />
+    </>
   );
 }
 
