@@ -1,6 +1,6 @@
 import { freeze } from "../lib/freeze";
 import type { JsonObject } from "../lib/Json";
-import { DerivedSignal, merge, MutableSignal } from "../lib/Signal";
+import { DerivedSignal, merge, MutableSignal } from "../lib/signals";
 import { compact, compactObject } from "../lib/utils";
 import { canComment, canWriteStorage } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";

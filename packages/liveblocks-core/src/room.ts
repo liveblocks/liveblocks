@@ -34,7 +34,7 @@ import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
 import { asPos } from "./lib/position";
-import { DerivedSignal, PatchableSignal, Signal } from "./lib/Signal";
+import { DerivedSignal, PatchableSignal, Signal } from "./lib/signals";
 import {
   compact,
   deepClone,
