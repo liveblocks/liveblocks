@@ -1604,7 +1604,7 @@ function internalToExternalState<M extends BaseMetadata>(
   state2: InternalState2,
   state3: InternalState3,
   state4: InternalState4,
-  _state5: InternalState5,
+  _state5: InternalState5, // XXX Here we can see that state5 isn't really dependent on, and was triggering needless renders when updated
   rawThreadsDB: ThreadDB<M>
 ): UmbrellaStoreState<M> {
   const threadsDB = rawThreadsDB.clone();
