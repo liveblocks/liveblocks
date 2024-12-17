@@ -1,5 +1,9 @@
+// Duplicated from https://github.com/liveblocks/liveblocks/blob/main/shared/tsconfig.common.json
 {
   "compilerOptions": {
+    // Default compilation target for any code that runs in the browser
+    "target": "es2022",
+
     // For all packages, let TypeScript use the following standardized way to
     // resolve modules
     "moduleResolution": "node",

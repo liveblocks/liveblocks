@@ -1,20 +1,17 @@
-## 2.14.1 (Not yet published)
+## 2.15.0 (Not yet published)
 
-### `@liveblocks/react`
+### All packages
 
-- Internal refactorings and code cleanup.
+- The published target for all Liveblocks packages is now ES2022 (up from
+  ES2020). This should have a positive impact on your bundle size[\*].
 
-### `@liveblocks/react-lexical`
+- Various internal refactorings and code cleanup.
 
-- Internal refactorings and code cleanup.
-
-### `@liveblocks/react-tiptap`
-
-- Internal refactorings and code cleanup.
-
-### `@liveblocks/react-ui`
-
-- Internal refactorings and code cleanup.
+[\*] If you bundle for the browser, this should not be a problem, as all major
+browsers support ES2022. If however you're specifically targeting very old
+browsers (mostly IE), then you may need to configure your bundler (Webpack,
+rollup, esbuild, etc) to also down-compile code from dependencies inside
+`node_modules` for you, if you aren't already.
 
 ## 2.14.0
 
