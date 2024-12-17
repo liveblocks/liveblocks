@@ -126,11 +126,14 @@ describe("applyThreadDeltaUpdates", () => {
   });
 
   it("should return existing threads unchanged when no updates are provided", () => {
+    const fn = jest.fn();
     const db = new ThreadDB();
+    const unsub = db.signal.subscribe(fn);
+
     db.upsert(thread1);
     db.upsert(thread2);
 
-    expect(db.signal).toEqual(2);
+    expect(fn).toHaveBeenCalledTimes(2);
     expect(db.findMany(undefined, {}, "asc")).toEqual([thread1, thread2]);
 
     const updates = {
@@ -142,7 +145,9 @@ describe("applyThreadDeltaUpdates", () => {
 
     expect(db.findMany(undefined, {}, "asc")).toEqual([thread1, thread2]);
 
-    // Even the version did not change!
-    expect(db.signal).toEqual(2);
+    // Nothing was updated!
+    expect(fn).toHaveBeenCalledTimes(2);
+
+    unsub();
   });
 });

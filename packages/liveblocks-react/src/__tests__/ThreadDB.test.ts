@@ -116,7 +116,9 @@ describe("ThreadDB", () => {
   });
 
   test("upsert if newer", () => {
+    const fn = jest.fn();
     const db = new ThreadDB();
+    const unsub = db.signal.subscribe(fn);
 
     const v1 = dummyThreadData({
       id: "th_abc",
@@ -132,19 +134,23 @@ describe("ThreadDB", () => {
     db.upsertIfNewer(v3); // First update to the later version (v3)
     expect(db.findMany("room1", {}, "asc")).toEqual([v3]);
 
-    expect(db.signal).toEqual(2);
+    expect(fn).toHaveBeenCalledTimes(2);
 
     // Now that v3 is the latest, updating to v1 or v2 should no longer work
     db.upsertIfNewer(v1);
     db.upsertIfNewer(v2);
 
-    expect(db.signal).toEqual(2); // Did not update!
+    expect(fn).toHaveBeenCalledTimes(2); // Did not update!
 
     expect(db.findMany("room1", {}, "asc")).toEqual([v3]);
+
+    unsub();
   });
 
   test("upsert should never overwrite already-deleted threads", () => {
+    const fn = jest.fn();
     const db = new ThreadDB();
+    const unsub = db.signal.subscribe(fn);
 
     const v1 = dummyThreadData({
       id: "th_abc",
@@ -153,25 +159,29 @@ describe("ThreadDB", () => {
     });
 
     db.upsert(v1);
+    expect(fn).toHaveBeenCalledTimes(1);
     expect(db.findMany("room1", {}, "asc")).toEqual([v1]);
-    expect(db.signal).toEqual(1);
 
     // Now v1 is already deleted, these should no longer mutate the DB
     const v2 = { ...v1, deletedAt: new Date() };
     db.upsert(v2);
+    expect(fn).toHaveBeenCalledTimes(2);
     expect(db.findMany("room1", {}, "asc")).toEqual([]);
-    expect(db.signal).toEqual(2);
 
     // Now try to "put back" the old version - it should not work
     db.upsert(v1);
 
     // Did not do anything
+    expect(fn).toHaveBeenCalledTimes(2);
     expect(db.findMany("room1", {}, "asc")).toEqual([]);
-    expect(db.signal).toEqual(2);
+
+    unsub();
   });
 
   test("upsert if newer should never update deleted threads", () => {
+    const fn = jest.fn();
     const db = new ThreadDB();
+    const unsub = db.signal.subscribe(fn);
 
     const v1 = dummyThreadData({
       id: "th_abc",
@@ -184,7 +194,7 @@ describe("ThreadDB", () => {
     db.upsertIfNewer({ ...v1, deletedAt: new Date() });
     expect(db.findMany("room1", {}, "asc")).toEqual([]);
 
-    expect(db.signal).toEqual(1);
+    expect(fn).toHaveBeenCalledTimes(1);
 
     // Now that v1 is already deleted, these should no longer mutate the DB
     db.upsertIfNewer(v2);
@@ -192,7 +202,9 @@ describe("ThreadDB", () => {
 
     // Did not do anything
     expect(db.findMany("room1", {}, "asc")).toEqual([]);
-    expect(db.signal).toEqual(1);
+    expect(fn).toHaveBeenCalledTimes(1);
+
+    unsub();
   });
 
   test("cloning the db", () => {
