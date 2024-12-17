@@ -46,7 +46,7 @@ export interface ToolbarProps extends Omit<ComponentProps<"div">, "children"> {
 
 interface ToolbarButtonProps extends ComponentProps<"button"> {
   icon?: ReactNode;
-  name: string;
+  label: string;
   shortcut?: string;
 }
 
@@ -70,9 +70,9 @@ export function applyToolbarSlot(
 }
 
 const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
-  ({ icon, children, name, shortcut, ...props }, forwardedRef) => {
+  ({ icon, children, label, shortcut, ...props }, forwardedRef) => {
     return (
-      <ShortcutTooltip content={name} shortcut={shortcut}>
+      <ShortcutTooltip content={label} shortcut={shortcut}>
         <Button
           type="button"
           variant="toolbar"
@@ -142,14 +142,14 @@ function ToolbarSectionHistory() {
   return (
     <>
       <ToolbarButton
-        name="Undo"
+        label="Undo"
         icon={<UndoIcon />}
         shortcut="Mod-Z"
         onClick={() => editor.dispatchCommand(UNDO_COMMAND, undefined)}
         disabled={!canUndo}
       />
       <ToolbarButton
-        name="Redo"
+        label="Redo"
         icon={<RedoIcon />}
         shortcut="Mod-Shift-Z"
         onClick={() => editor.dispatchCommand(REDO_COMMAND, undefined)}
@@ -178,7 +178,7 @@ function ToolbarSectionInline() {
   return supportsTextFormat ? (
     <>
       <ToolbarToggle
-        name="Bold"
+        label="Bold"
         icon={<BoldIcon />}
         shortcut="Mod-B"
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")}
@@ -186,21 +186,21 @@ function ToolbarSectionInline() {
       />
 
       <ToolbarToggle
-        name="Italic"
+        label="Italic"
         icon={<ItalicIcon />}
         shortcut="Mod-I"
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic")}
         active={isFormatActive(editor, "italic")}
       />
       <ToolbarToggle
-        name="Underline"
+        label="Underline"
         icon={<UnderlineIcon />}
         shortcut="Mod-U"
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline")}
         active={isFormatActive(editor, "underline")}
       />
       <ToolbarToggle
-        name="Strikethrough"
+        label="Strikethrough"
         icon={<StrikethroughIcon />}
         onClick={() =>
           editor.dispatchCommand(FORMAT_TEXT_COMMAND, "strikethrough")
@@ -208,7 +208,7 @@ function ToolbarSectionInline() {
         active={isFormatActive(editor, "strikethrough")}
       />
       <ToolbarToggle
-        name="Inline code"
+        label="Inline code"
         icon={<CodeIcon />}
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "code")}
         active={isFormatActive(editor, "code")}
@@ -225,7 +225,7 @@ function ToolbarSectionCollaboration() {
     <>
       {supportsThread ? (
         <ToolbarButton
-          name="Add a comment"
+          label="Add a comment"
           icon={<CommentIcon />}
           onClick={() =>
             editor.dispatchCommand(OPEN_FLOATING_COMPOSER_COMMAND, undefined)

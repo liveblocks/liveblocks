@@ -29,7 +29,6 @@ import type {
   ChangeEvent,
   ComponentProps,
   KeyboardEvent as ReactKeyboardEvent,
-  PropsWithChildren,
   ReactNode,
   RefObject,
 } from "react";
@@ -53,14 +52,28 @@ import type {
 } from "../types";
 import { compareTextSelections, getDomRangeFromTextSelection } from "../utils";
 
+export const AI_TOOLBAR_COLLISION_PADDING = 10;
+
 export interface AiToolbarProps
-  extends Omit<ComponentProps<"div">, "children" | "value" | "defaultValue"> {
+  extends Omit<ComponentProps<"div">, "value" | "defaultValue"> {
   editor: Editor | null;
   position?: FloatingPosition;
   offset?: number;
 }
 
-export const AI_TOOLBAR_COLLISION_PADDING = 10;
+interface AiToolbarDropdownGroupProps extends ComponentProps<"div"> {
+  label: string;
+}
+
+interface AiToolbarDropdownCustomItemProps
+  extends ComponentProps<typeof Command.Item> {
+  icon?: ReactNode;
+}
+
+interface AiToolbarDropdownItemProps extends ComponentProps<"div"> {
+  prompt?: string;
+  icon?: ReactNode;
+}
 
 /**
  * A custom Floating UI middleware to position/scale the toolbar:
@@ -95,36 +108,64 @@ function tiptapFloating(editor: Editor | null): Middleware {
   };
 }
 
-interface DropdownItemProps extends PropsWithChildren {
-  icon?: ReactNode;
-  onSelect?: () => void;
-}
-
-interface DropdownPromptItemProps extends Omit<DropdownItemProps, "onSelect"> {
-  prompt: string;
-}
-
-function DropdownItem({ children, icon, onSelect }: DropdownItemProps) {
+const AiToolbarDropdownGroup = forwardRef<
+  HTMLDivElement,
+  AiToolbarDropdownGroupProps
+>(({ children, label, ...props }, forwardedRef) => {
   return (
-    <Command.Item className="lb-dropdown-item" onSelect={onSelect}>
+    <Command.Group
+      heading={<span className="lb-dropdown-label">{label}</span>}
+      {...props}
+      ref={forwardedRef}
+    >
+      {children}
+    </Command.Group>
+  );
+});
+
+const AiToolbarDropdownCustomItem = forwardRef<
+  HTMLDivElement,
+  AiToolbarDropdownCustomItemProps
+>(({ children, onSelect, icon, ...props }, forwardedRef) => {
+  return (
+    <Command.Item
+      className="lb-dropdown-item"
+      onSelect={onSelect}
+      {...props}
+      ref={forwardedRef}
+    >
       {icon ? <span className="lb-icon-container">{icon}</span> : null}
       {children ? (
         <span className="lb-dropdown-item-label">{children}</span>
       ) : null}
     </Command.Item>
   );
-}
+});
 
-function DropdownPromptItem({ prompt, ...props }: DropdownPromptItemProps) {
+const AiToolbarDropdownItem = forwardRef<
+  HTMLDivElement,
+  AiToolbarDropdownItemProps
+>(({ prompt, ...props }, forwardedRef) => {
   const editor = useCurrentEditor("DropdownItem", "AiToolbar");
 
-  const handleSelect = useCallback(() => {
-    editor.commands.askAi(prompt);
-  }, [editor, prompt]);
+  const handleSelect = useCallback(
+    (prompt: string) => {
+      editor.commands.askAi(prompt);
+    },
+    [editor]
+  );
 
-  return <DropdownItem onSelect={handleSelect} {...props} />;
-}
+  return (
+    <AiToolbarDropdownCustomItem
+      {...props}
+      onSelect={handleSelect}
+      ref={forwardedRef}
+      value={prompt}
+    />
+  );
+});
 
+// TODO: Rename
 function AiToolbarPromptTextArea({
   editor,
   prompt,
@@ -239,7 +280,13 @@ function AiToolbarPromptTextArea({
   );
 }
 
-function AiToolbarAsking({ editor }: { editor: Editor }) {
+function AiToolbarAsking({
+  editor,
+  children,
+}: {
+  editor: Editor;
+  children?: ReactNode;
+}) {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const hasDropdownItems = useCommandState(
     (state) => state.filtered.count > 0
@@ -273,45 +320,7 @@ function AiToolbarAsking({ editor }: { editor: Editor }) {
         className="lb-elevation lb-dropdown lb-tiptap-ai-toolbar-dropdown"
         data-hidden={isDropdownHidden ? "" : undefined}
       >
-        <Command.List ref={dropdownRef}>
-          <Command.Group
-            heading={<span className="lb-dropdown-label">Generate</span>}
-          >
-            <DropdownPromptItem icon={<EditIcon />} prompt="Improve writing">
-              Improve writing
-            </DropdownPromptItem>
-            <DropdownPromptItem icon={<CheckIcon />} prompt="Fix mistakes">
-              Fix mistakes
-            </DropdownPromptItem>
-            <DropdownPromptItem
-              icon={<ShortenIcon />}
-              prompt="Simplify the text"
-            >
-              Simplify
-            </DropdownPromptItem>
-            <DropdownPromptItem
-              icon={<LengthenIcon />}
-              prompt="Add more detail"
-            >
-              Add more detail
-            </DropdownPromptItem>
-          </Command.Group>
-          <Command.Group
-            heading={
-              <span className="lb-dropdown-label">Modify selection</span>
-            }
-          >
-            <DropdownPromptItem
-              icon={<TranslateIcon />}
-              prompt="Translate to English"
-            >
-              Translate
-            </DropdownPromptItem>
-            <DropdownPromptItem icon={<QuestionMarkIcon />} prompt="Explain">
-              Explain
-            </DropdownPromptItem>
-          </Command.Group>
-        </Command.List>
+        <Command.List ref={dropdownRef}>{children}</Command.List>
       </div>
     </>
   );
@@ -416,175 +425,219 @@ function AiToolbarReviewing({ editor }: { editor: Editor }) {
         data-hidden={isDropdownHidden ? "" : undefined}
       >
         <Command.List ref={dropdownRef}>
-          <DropdownItem icon={<CheckIcon />}>Replace selection</DropdownItem>
-          <DropdownItem icon={<CheckIcon />}>Insert below</DropdownItem>
-          <DropdownItem icon={<UndoIcon />} onSelect={handleRetry}>
+          <AiToolbarDropdownCustomItem icon={<CheckIcon />}>
+            Replace selection
+          </AiToolbarDropdownCustomItem>
+          <AiToolbarDropdownCustomItem icon={<CheckIcon />}>
+            Insert below
+          </AiToolbarDropdownCustomItem>
+          <AiToolbarDropdownCustomItem
+            icon={<UndoIcon />}
+            onSelect={handleRetry}
+          >
             Try again
-          </DropdownItem>
-          <DropdownItem icon={<CrossIcon />} onSelect={handleDiscard}>
+          </AiToolbarDropdownCustomItem>
+          <AiToolbarDropdownCustomItem
+            icon={<CrossIcon />}
+            onSelect={handleDiscard}
+          >
             Discard
-          </DropdownItem>
+          </AiToolbarDropdownCustomItem>
         </Command.List>
       </div>
     </>
   );
 }
 
-export const AiToolbar = forwardRef<HTMLDivElement, AiToolbarProps>(
-  (
-    {
-      position = "bottom",
-      offset: sideOffset = 6,
-      editor,
-      className,
-      ...props
-    },
-    forwardedRef
-  ) => {
-    const state =
-      useEditorState({
+const defaultDropdownItems = (
+  <>
+    <AiToolbarDropdownGroup label="Generate">
+      <AiToolbarDropdownItem icon={<EditIcon />}>
+        Improve writing
+      </AiToolbarDropdownItem>
+      <AiToolbarDropdownItem icon={<CheckIcon />}>
+        Fix mistakes
+      </AiToolbarDropdownItem>
+      <AiToolbarDropdownItem icon={<ShortenIcon />}>
+        Simplify the text
+      </AiToolbarDropdownItem>
+      <AiToolbarDropdownItem icon={<LengthenIcon />}>
+        Add more detail
+      </AiToolbarDropdownItem>
+    </AiToolbarDropdownGroup>
+    <AiToolbarDropdownGroup label="Modify selection">
+      <AiToolbarDropdownItem icon={<TranslateIcon />}>
+        Translate to English
+      </AiToolbarDropdownItem>
+      <AiToolbarDropdownItem icon={<QuestionMarkIcon />}>
+        Explain
+      </AiToolbarDropdownItem>
+    </AiToolbarDropdownGroup>
+  </>
+);
+
+export const AiToolbar = Object.assign(
+  forwardRef<HTMLDivElement, AiToolbarProps>(
+    (
+      {
+        position = "bottom",
+        offset: sideOffset = 6,
         editor,
-        selector: (ctx) => {
-          return (
-            ctx.editor?.storage.liveblocksAiToolbar as
-              | AiToolbarExtensionStorage
-              | undefined
-          )?.state;
-        },
-        equalityFn: Object.is,
-      }) ?? "closed";
-    const selection =
-      useEditorState({
-        editor,
-        selector: (ctx) => {
-          return (
-            ctx.editor?.storage.liveblocksAiToolbar as
-              | AiToolbarExtensionStorage
-              | undefined
-          )?.selection;
-        },
-        equalityFn: compareTextSelections,
-      }) ?? undefined;
-    const floatingOptions: UseFloatingOptions = useMemo(() => {
-      const detectOverflowOptions: DetectOverflowOptions = {
-        padding: AI_TOOLBAR_COLLISION_PADDING,
-      };
+        className,
+        children = defaultDropdownItems,
+        ...props
+      },
+      forwardedRef
+    ) => {
+      const state =
+        useEditorState({
+          editor,
+          selector: (ctx) => {
+            return (
+              ctx.editor?.storage.liveblocksAiToolbar as
+                | AiToolbarExtensionStorage
+                | undefined
+            )?.state;
+          },
+          equalityFn: Object.is,
+        }) ?? "closed";
+      const selection =
+        useEditorState({
+          editor,
+          selector: (ctx) => {
+            return (
+              ctx.editor?.storage.liveblocksAiToolbar as
+                | AiToolbarExtensionStorage
+                | undefined
+            )?.selection;
+          },
+          equalityFn: compareTextSelections,
+        }) ?? undefined;
+      const floatingOptions: UseFloatingOptions = useMemo(() => {
+        const detectOverflowOptions: DetectOverflowOptions = {
+          padding: AI_TOOLBAR_COLLISION_PADDING,
+        };
 
-      return {
-        strategy: "fixed",
-        placement: position,
-        middleware: [
-          tiptapFloating(editor),
-          hide(detectOverflowOptions),
-          offset(sideOffset),
-        ],
-        whileElementsMounted: (...args) => {
-          return autoUpdate(...args, {
-            animationFrame: true,
-          });
-        },
-      };
-    }, [editor, position, sideOffset]);
-    const isOpen = selection !== undefined;
-    const {
-      refs: { setReference, setFloating },
-      strategy,
-      x,
-      y,
-      isPositioned,
-    } = useFloating({
-      ...floatingOptions,
-      open: isOpen,
-    });
-    const toolbarRef = useRef<HTMLDivElement>(null);
-    const mergedRefs = useRefs(forwardedRef, toolbarRef, setFloating);
+        return {
+          strategy: "fixed",
+          placement: position,
+          middleware: [
+            tiptapFloating(editor),
+            hide(detectOverflowOptions),
+            offset(sideOffset),
+          ],
+          whileElementsMounted: (...args) => {
+            return autoUpdate(...args, {
+              animationFrame: true,
+            });
+          },
+        };
+      }, [editor, position, sideOffset]);
+      const isOpen = selection !== undefined;
+      const {
+        refs: { setReference, setFloating },
+        strategy,
+        x,
+        y,
+        isPositioned,
+      } = useFloating({
+        ...floatingOptions,
+        open: isOpen,
+      });
+      const toolbarRef = useRef<HTMLDivElement>(null);
+      const mergedRefs = useRefs(forwardedRef, toolbarRef, setFloating);
 
-    useEffect(() => {
-      if (editor && !selection && state !== "closed") {
-        (editor.commands as AiCommands<boolean>).closeAi();
-      }
-    }, [state, selection, editor]);
-
-    useLayoutEffect(() => {
-      if (!editor || !isOpen) {
-        return;
-      }
-
-      setReference(null);
-
-      setTimeout(() => {
-        if (!selection) {
-          setReference(null);
-        } else {
-          const domRange = getDomRangeFromTextSelection(selection, editor);
-
-          setReference(domRange);
+      useEffect(() => {
+        if (editor && !selection && state !== "closed") {
+          (editor.commands as AiCommands<boolean>).closeAi();
         }
-      }, 0);
-    }, [selection, editor, isOpen, setReference]);
+      }, [state, selection, editor]);
 
-    useEffect(() => {
+      useLayoutEffect(() => {
+        if (!editor || !isOpen) {
+          return;
+        }
+
+        setReference(null);
+
+        setTimeout(() => {
+          if (!selection) {
+            setReference(null);
+          } else {
+            const domRange = getDomRangeFromTextSelection(selection, editor);
+
+            setReference(domRange);
+          }
+        }, 0);
+      }, [selection, editor, isOpen, setReference]);
+
+      useEffect(() => {
+        if (!editor || !isOpen) {
+          return;
+        }
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+          if (!event.defaultPrevented && event.key === "Escape") {
+            event.preventDefault();
+            event.stopPropagation();
+
+            (editor.chain() as ExtendedChainedCommands<"closeAi">)
+              .closeAi()
+              .focus()
+              .run();
+          }
+        };
+
+        document.addEventListener("keydown", handleKeyDown);
+
+        return () => {
+          document.removeEventListener("keydown", handleKeyDown);
+        };
+      }, [editor, isOpen]);
+
       if (!editor || !isOpen) {
-        return;
+        return null;
       }
 
-      const handleKeyDown = (event: KeyboardEvent) => {
-        if (!event.defaultPrevented && event.key === "Escape") {
-          event.preventDefault();
-          event.stopPropagation();
-
-          (editor.chain() as ExtendedChainedCommands<"closeAi">)
-            .closeAi()
-            .focus()
-            .run();
-        }
-      };
-
-      document.addEventListener("keydown", handleKeyDown);
-
-      return () => {
-        document.removeEventListener("keydown", handleKeyDown);
-      };
-    }, [editor, isOpen]);
-
-    if (!editor || !isOpen) {
-      return null;
+      return createPortal(
+        <TooltipProvider>
+          <EditorProvider editor={editor}>
+            <Command
+              key={state}
+              role="toolbar"
+              label="AI toolbar"
+              aria-orientation="horizontal"
+              className={classNames(
+                "lb-root lb-portal lb-tiptap-ai-toolbar-container",
+                className
+              )}
+              ref={mergedRefs}
+              style={{
+                position: strategy,
+                top: 0,
+                left: 0,
+                transform: isPositioned
+                  ? `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`
+                  : "translate3d(0, -200%, 0)",
+              }}
+              {...props}
+            >
+              {state === "asking" ? (
+                <AiToolbarAsking editor={editor} children={children} />
+              ) : state === "thinking" ? (
+                <AiToolbarThinking editor={editor} />
+              ) : state === "reviewing" ? (
+                <AiToolbarReviewing editor={editor} />
+              ) : null}
+            </Command>
+          </EditorProvider>
+        </TooltipProvider>,
+        document.body
+      );
     }
-
-    return createPortal(
-      <TooltipProvider>
-        <EditorProvider editor={editor}>
-          <Command
-            key={state}
-            role="toolbar"
-            label="AI toolbar"
-            aria-orientation="horizontal"
-            className={classNames(
-              "lb-root lb-portal lb-tiptap-ai-toolbar-container",
-              className
-            )}
-            ref={mergedRefs}
-            style={{
-              position: strategy,
-              top: 0,
-              left: 0,
-              transform: isPositioned
-                ? `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`
-                : "translate3d(0, -200%, 0)",
-            }}
-            {...props}
-          >
-            {state === "asking" ? (
-              <AiToolbarAsking editor={editor} />
-            ) : state === "thinking" ? (
-              <AiToolbarThinking editor={editor} />
-            ) : state === "reviewing" ? (
-              <AiToolbarReviewing editor={editor} />
-            ) : null}
-          </Command>
-        </EditorProvider>
-      </TooltipProvider>,
-      document.body
-    );
+  ),
+  {
+    DropdownGroup: AiToolbarDropdownGroup,
+    DropdownItem: AiToolbarDropdownItem,
   }
 );

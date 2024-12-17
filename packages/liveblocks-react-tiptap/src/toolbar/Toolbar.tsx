@@ -36,7 +36,7 @@ export interface ToolbarProps extends Omit<ComponentProps<"div">, "children"> {
 
 interface ToolbarButtonProps extends ComponentProps<"button"> {
   icon?: ReactNode;
-  name: string;
+  label: string;
   shortcut?: string;
 }
 
@@ -60,9 +60,9 @@ export function applyToolbarSlot(
 }
 
 const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
-  ({ icon, children, name, shortcut, ...props }, forwardedRef) => {
+  ({ icon, children, label, shortcut, ...props }, forwardedRef) => {
     return (
-      <ShortcutTooltip content={name} shortcut={shortcut}>
+      <ShortcutTooltip content={label} shortcut={shortcut}>
         <Button
           type="button"
           variant="toolbar"
@@ -110,14 +110,14 @@ function ToolbarSectionHistory() {
   return (
     <>
       <ToolbarButton
-        name="Undo"
+        label="Undo"
         icon={<UndoIcon />}
         shortcut="Mod-Z"
         onClick={() => editor.chain().focus().undo().run()}
         disabled={!editor.can().chain().focus().undo().run()}
       />
       <ToolbarButton
-        name="Redo"
+        label="Redo"
         icon={<RedoIcon />}
         shortcut="Mod-Shift-Z"
         onClick={() => editor.chain().focus().redo().run()}
@@ -142,7 +142,7 @@ function ToolbarSectionInline() {
     <>
       {supportsBold && (
         <ToolbarToggle
-          name="Bold"
+          label="Bold"
           icon={<BoldIcon />}
           shortcut="Mod-B"
           onClick={() =>
@@ -165,7 +165,7 @@ function ToolbarSectionInline() {
       )}
       {supportsItalic && (
         <ToolbarToggle
-          name="Italic"
+          label="Italic"
           icon={<ItalicIcon />}
           shortcut="Mod-I"
           onClick={() =>
@@ -188,7 +188,7 @@ function ToolbarSectionInline() {
       )}
       {supportsUnderline && (
         <ToolbarToggle
-          name="Underline"
+          label="Underline"
           icon={<UnderlineIcon />}
           shortcut="Mod-U"
           onClick={() =>
@@ -215,7 +215,7 @@ function ToolbarSectionInline() {
       )}
       {supportsStrike && (
         <ToolbarToggle
-          name="Strikethrough"
+          label="Strikethrough"
           icon={<StrikethroughIcon />}
           shortcut="Mod-U"
           onClick={() =>
@@ -238,7 +238,7 @@ function ToolbarSectionInline() {
       )}
       {supportsCode && (
         <ToolbarToggle
-          name="Inline code"
+          label="Inline code"
           icon={<CodeIcon />}
           shortcut="Mod-E"
           onClick={() =>
@@ -274,7 +274,7 @@ function ToolbarSectionCollaboration() {
     <>
       {supportsThread && (
         <ToolbarButton
-          name="Add a comment"
+          label="Add a comment"
           icon={<CommentIcon />}
           onClick={() =>
             (
@@ -301,7 +301,7 @@ function ToolbarSectionAi() {
     <>
       {supportsAi && (
         <ToolbarButton
-          name="Ask AI anything…"
+          label="Ask AI anything…"
           icon={<SparklesIcon />}
           onClick={() =>
             (editor.chain().focus() as ExtendedChainedCommands<"askAi">).askAi()
