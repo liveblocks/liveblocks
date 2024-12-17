@@ -26,7 +26,6 @@ import {
 import { type Editor, useEditorState } from "@tiptap/react";
 import { Command, useCommandState } from "cmdk";
 import type {
-  ChangeEvent,
   ComponentProps,
   KeyboardEvent as ReactKeyboardEvent,
   ReactNode,
@@ -227,8 +226,8 @@ function AiToolbarPromptTextArea({
   };
 
   const handlePromptChange = useCallback(
-    (event: ChangeEvent<HTMLTextAreaElement>) => {
-      (editor.commands as AiCommands<boolean>).setAiPrompt(event.target.value);
+    (prompt: string) => {
+      (editor.commands as AiCommands<boolean>).setAiPrompt(prompt);
     },
     [editor]
   );
@@ -250,13 +249,15 @@ function AiToolbarPromptTextArea({
         className="lb-tiptap-ai-toolbar-prompt-container"
         data-value={prompt}
       >
-        <Command.Input asChild>
+        <Command.Input
+          value={prompt}
+          onValueChange={handlePromptChange}
+          asChild
+        >
           <textarea
             ref={promptRef}
             className="lb-tiptap-ai-toolbar-prompt"
             placeholder="Ask AI anything…"
-            value={prompt}
-            onChange={handlePromptChange}
             onKeyDown={handlePromptKeyDown}
             rows={1}
             autoFocus
@@ -315,17 +316,21 @@ function AiToolbarAsking({
           isDropdownHidden={isDropdownHidden}
         />
       </div>
-      <div
+      <Command.List
         className="lb-elevation lb-dropdown lb-tiptap-ai-toolbar-dropdown"
         data-hidden={isDropdownHidden ? "" : undefined}
+        ref={dropdownRef}
       >
-        <Command.List ref={dropdownRef}>{children}</Command.List>
-      </div>
+        {children}
+      </Command.List>
     </>
   );
 }
 
 function AiToolbarThinking({ editor }: { editor: Editor }) {
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined
+  );
   const prompt =
     useEditorState({
       editor,
@@ -343,9 +348,13 @@ function AiToolbarThinking({ editor }: { editor: Editor }) {
   // TODO: On success, go to reviewing state (and pass the prompt to previousPrompt)
 
   useEffect(() => {
-    setTimeout(() => {
+    timeoutRef.current = setTimeout(() => {
       (editor.commands as AiCommands<boolean>).reviewAi();
     }, 50000);
+
+    return () => {
+      clearTimeout(timeoutRef.current);
+    };
   }, [editor]);
 
   const handleCancel = useCallback(() => {
@@ -419,31 +428,27 @@ function AiToolbarReviewing({ editor }: { editor: Editor }) {
           isDropdownHidden={isDropdownHidden}
         />
       </div>
-      <div
+      <Command.List
         className="lb-elevation lb-dropdown lb-tiptap-ai-toolbar-dropdown"
         data-hidden={isDropdownHidden ? "" : undefined}
+        ref={dropdownRef}
       >
-        <Command.List ref={dropdownRef}>
-          <AiToolbarDropdownCustomItem icon={<CheckIcon />}>
-            Replace selection
-          </AiToolbarDropdownCustomItem>
-          <AiToolbarDropdownCustomItem icon={<CheckIcon />}>
-            Insert below
-          </AiToolbarDropdownCustomItem>
-          <AiToolbarDropdownCustomItem
-            icon={<UndoIcon />}
-            onSelect={handleRetry}
-          >
-            Try again
-          </AiToolbarDropdownCustomItem>
-          <AiToolbarDropdownCustomItem
-            icon={<CrossIcon />}
-            onSelect={handleDiscard}
-          >
-            Discard
-          </AiToolbarDropdownCustomItem>
-        </Command.List>
-      </div>
+        <AiToolbarDropdownCustomItem icon={<CheckIcon />}>
+          Replace selection
+        </AiToolbarDropdownCustomItem>
+        <AiToolbarDropdownCustomItem icon={<CheckIcon />}>
+          Insert below
+        </AiToolbarDropdownCustomItem>
+        <AiToolbarDropdownCustomItem icon={<UndoIcon />} onSelect={handleRetry}>
+          Try again
+        </AiToolbarDropdownCustomItem>
+        <AiToolbarDropdownCustomItem
+          icon={<CrossIcon />}
+          onSelect={handleDiscard}
+        >
+          Discard
+        </AiToolbarDropdownCustomItem>
+      </Command.List>
     </>
   );
 }

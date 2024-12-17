@@ -330,7 +330,7 @@
     margin-inline-end: calc(0.375 * var(--lb-spacing));
   }
 
-  :where(.lb-icon-container, .lb-dropdown-subitem-chevron) {
+  :where(.lb-icon-container, .lb-dropdown-item-chevron) {
     color: var(--lb-foreground-moderate);
     transition-property: color;
   }
@@ -342,12 +342,12 @@
         [data-selected]:not([data-selected="false"])
       )
   ) {
-  :where(.lb-icon-container, .lb-dropdown-subitem-chevron) {
+  :where(.lb-icon-container, .lb-dropdown-item-chevron) {
     color: var(--lb-foreground-tertiary);
   }
 }
 
-.lb-dropdown-subitem-chevron {
+.lb-dropdown-item-chevron {
   margin-inline-start: auto;
   margin-inline-end: calc(-0.25 * var(--lb-spacing));
 }
@@ -1810,8 +1810,11 @@
 
 .lb-dropdown,
 .lb-composer-suggestions {
-  overflow-block: auto;
   padding: $lb-elevation-padding;
+
+  /* overflow-block: auto; doesn't work as expected */
+  /* stylelint-disable-next-line plugin/use-logical-properties-and-values */
+  overflow-y: auto;
 
   &:where([data-hidden]) {
     opacity: 0;
@@ -1835,10 +1838,6 @@
   cursor: pointer;
   user-select: none;
   transition-property: background, color, opacity;
-}
-
-.lb-dropdown-subitem {
-  cursor: default;
 }
 
 :is(
