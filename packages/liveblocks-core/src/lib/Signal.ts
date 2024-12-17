@@ -14,30 +14,52 @@ const kNotify = Symbol("kNotify");
 
 //
 // Before the batch is run, all sinks (recursively all the way down) are marked
-// dirty. This already is enough if all we ever used were .get() calls.
+// dirty. This already is enough if we only ever use .get() calls.
 //
 // However, to ensure active subscription notifications also work, we need to
 // keep track of which Signals to notify. Any time the value of a Signal
-// changes, it will trigger an event to all subscribers, but in addition, it
-// will also
+// changes, the Signal itself will notify its own subscribers, but "sinks" are
+// not "normal" subscribers.
 //
-// That's different from what an "active batch" keeps track of.
+// By treating sinks slightly differently, we can keep track of sink uniqueness
+// across the entire signal network, ensuring a sink will only be notified once
+// if more than one of its dependent Signals have changed.
 //
-// While a batch is active, it keeps track of all the sinks that will have to
-// be notified, because values _actually_ changed.
+// For example:
 //
+//      A
+//    /   \
+//   B     C
+//    \   /
+//      D - - - - ( has 1 normal subscriber )
 //
+// Here, B and C are sinks of A, and D is a sink of both B and C.
+//
+// Here's what will happen when A changes:
+//
+// - If A changes, then all sinks (B, C, and D) will be marked dirty.
+//
+// - Because some of A's sinks are being watched (in this case, D has at least
+//   one subscriber), A will notify B and C that its value has changed.
+//
+// - Both B and C re-evaluate and may or may not have changed. Three
+//   possibilities:
+//   1. Neither B and C have changed → D will *NOT* be notified
+//   2. Either B or C has changed    → D *will* be notified
+//   3. Both B and C have changed    → D *will* be notified (but only once!)
+//
+// - If in the previous step D has been notified, it will re-evaluate. If it
+//   has changed itself, it will notify its normal subscriber.
 //
 let activeBatch: {
   toNotify: Set<AbstractSignal<any>>;
 } | null = null;
 
 /**
- * Runs a callback function which can change multiple signals. At the end
- * of the batch, all derived signals will be notified.
+ * Runs a callback function that is allowed to change multiple signals. At the
+ * end of the batch, all changed signals will be notified (at most once).
  *
- * Nesting batches has no effect, the outermost batch will be the one
- * that triggers the notification.
+ * Nesting batches is supported.
  */
 export function batch(callback: Callback<void>): void {
   if (activeBatch !== null) {
