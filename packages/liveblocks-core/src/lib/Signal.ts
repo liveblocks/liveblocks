@@ -130,14 +130,13 @@ export interface ISignal<T> {
 abstract class AbstractSignal<T> implements ISignal<T>, Observable<void> {
   /** @internal */
   protected readonly equals: (a: T, b: T) => boolean;
-  /** @internal */
-  private readonly eventSource: EventSource<void>;
+  readonly #eventSource: EventSource<void>;
   /** @internal */
   public readonly [kSinks]: Set<DerivedSignal<unknown>>;
 
   constructor(equals?: (a: T, b: T) => boolean) {
     this.equals = equals ?? Object.is;
-    this.eventSource = makeEventSource<void>();
+    this.#eventSource = makeEventSource<void>();
     this[kSinks] = new Set();
 
     // Bind common methods to self
@@ -147,10 +146,10 @@ abstract class AbstractSignal<T> implements ISignal<T>, Observable<void> {
   }
 
   [Symbol.dispose](): void {
-    this.eventSource[Symbol.dispose]();
+    this.#eventSource[Symbol.dispose]();
 
     // @ts-expect-error make disposed object completely unusable
-    this.eventSource = "(disposed)";
+    this.#eventSource = "(disposed)";
     // @ts-expect-error make disposed object completely unusable
     this.equals = "(disposed)";
   }
@@ -159,7 +158,7 @@ abstract class AbstractSignal<T> implements ISignal<T>, Observable<void> {
   abstract get(): T;
 
   get hasWatchers(): boolean {
-    if (this.eventSource.count() > 0) return true;
+    if (this.#eventSource.count() > 0) return true;
 
     for (const sink of this[kSinks]) {
       if (sink.hasWatchers) {
@@ -171,7 +170,7 @@ abstract class AbstractSignal<T> implements ISignal<T>, Observable<void> {
   }
 
   public [kTrigger](): void {
-    this.eventSource.notify();
+    this.#eventSource.notify();
 
     // While Signals are being triggered in the current rolldown, we can
     // enqueue more signals to trigger (which will get added to the current
@@ -182,7 +181,7 @@ abstract class AbstractSignal<T> implements ISignal<T>, Observable<void> {
   }
 
   subscribe(callback: Callback<void>): UnsubscribeCallback {
-    return this.eventSource.subscribe(callback);
+    return this.#eventSource.subscribe(callback);
   }
 
   subscribeOnce(callback: Callback<void>): UnsubscribeCallback {
@@ -214,30 +213,30 @@ abstract class AbstractSignal<T> implements ISignal<T>, Observable<void> {
 
 // NOTE: This class is pretty similar to the Signal.State proposal
 export class Signal<T> extends AbstractSignal<T> {
-  private value: T;
+  #value: T;
 
   constructor(value: T, equals?: (a: T, b: T) => boolean) {
     super(equals);
-    this.value = freeze(value);
+    this.#value = freeze(value);
   }
 
   [Symbol.dispose](): void {
     super[Symbol.dispose]();
     // @ts-expect-error make disposed object completely unusable
-    this.value = "(disposed)";
+    this.#value = "(disposed)";
   }
 
   get(): T {
-    return this.value;
+    return this.#value;
   }
 
   set(newValue: T | ((oldValue: T) => T)): void {
     batch(() => {
       if (typeof newValue === "function") {
-        newValue = (newValue as (oldValue: T) => T)(this.value);
+        newValue = (newValue as (oldValue: T) => T)(this.#value);
       }
-      if (!this.equals(this.value, newValue)) {
-        this.value = freeze(newValue);
+      if (!this.equals(this.#value, newValue)) {
+        this.#value = freeze(newValue);
         this.markSinksDirty();
         enqueueTrigger(this);
       }
@@ -270,11 +269,11 @@ const INITIAL = Symbol();
 
 // NOTE: This class is pretty similar to the Signal.Computed proposal
 export class DerivedSignal<T> extends AbstractSignal<T> {
-  private prevValue: T;
-  private dirty: boolean; // When true, the value in #value may not be up-to-date and needs re-checking
+  #prevValue: T;
+  #dirty: boolean; // When true, the value in #value may not be up-to-date and needs re-checking
 
-  private readonly parents: readonly ISignal<unknown>[];
-  private readonly transform: (...values: unknown[]) => T;
+  readonly #parents: readonly ISignal<unknown>[];
+  readonly #transform: (...values: unknown[]) => T;
 
   // Overload 1
   static from<Ts extends [unknown, ...unknown[]], V>(...args: [...signals: { [K in keyof Ts]: ISignal<Ts[K]> }, transform: (...values: Ts) => V]): DerivedSignal<V>; // prettier-ignore
@@ -310,10 +309,10 @@ export class DerivedSignal<T> extends AbstractSignal<T> {
     equals?: (a: T, b: T) => boolean
   ) {
     super(equals);
-    this.dirty = true;
-    this.prevValue = INITIAL as unknown as T;
-    this.parents = parents;
-    this.transform = transform;
+    this.#dirty = true;
+    this.#prevValue = INITIAL as unknown as T;
+    this.#parents = parents;
+    this.#transform = transform;
 
     for (const parent of parents) {
       parent.addSink(this as DerivedSignal<unknown>);
@@ -321,46 +320,46 @@ export class DerivedSignal<T> extends AbstractSignal<T> {
   }
 
   [Symbol.dispose](): void {
-    for (const parent of this.parents) {
+    for (const parent of this.#parents) {
       parent.removeSink(this as DerivedSignal<unknown>);
     }
 
     // @ts-expect-error make disposed object completely unusable
-    this.prevValue = "(disposed)";
+    this.#prevValue = "(disposed)";
     // @ts-expect-error make disposed object completely unusable
-    this.parents = "(disposed)";
+    this.#parents = "(disposed)";
     // @ts-expect-error make disposed object completely unusable
-    this.transform = "(disposed)";
+    this.#transform = "(disposed)";
   }
 
   get isDirty(): boolean {
-    return this.dirty;
+    return this.#dirty;
   }
 
-  private recompute(): boolean {
-    const derived = this.transform(...this.parents.map((p) => p.get()));
-    this.dirty = false;
+  #recompute(): boolean {
+    const derived = this.#transform(...this.#parents.map((p) => p.get()));
+    this.#dirty = false;
 
     // Only emit a change to watchers if the value actually changed
-    if (!this.equals(this.prevValue, derived)) {
-      this.prevValue = derived;
+    if (!this.equals(this.#prevValue, derived)) {
+      this.#prevValue = derived;
       return true;
     }
     return false;
   }
 
   markDirty(): void {
-    if (!this.dirty) {
-      this.dirty = true;
+    if (!this.#dirty) {
+      this.#dirty = true;
       this.markSinksDirty();
     }
   }
 
   get(): T {
-    if (this.dirty) {
-      this.recompute();
+    if (this.#dirty) {
+      this.#recompute();
     }
-    return this.prevValue;
+    return this.#prevValue;
   }
 
   /**
@@ -379,7 +378,7 @@ export class DerivedSignal<T> extends AbstractSignal<T> {
     // Re-evaluate the current derived signal's value and if needed,
     // notify sinks. At this point, all sinks should already have been
     // marked dirty, so we won't have to do that again here now.
-    const updated = this.recompute();
+    const updated = this.#recompute();
     if (updated) {
       super[kTrigger](); // Actually notify subscribers
     }
@@ -395,21 +394,21 @@ export class DerivedSignal<T> extends AbstractSignal<T> {
  * its reference.
  */
 export class MutableSignal<T extends object> extends AbstractSignal<T> {
-  private readonly state: T;
+  readonly #state: T;
 
   constructor(initialState: T) {
     super();
-    this.state = initialState;
+    this.#state = initialState;
   }
 
   [Symbol.dispose](): void {
     super[Symbol.dispose]();
     // @ts-expect-error make disposed object completely unusable
-    this.state = "(disposed)";
+    this.#state = "(disposed)";
   }
 
   get(): T {
-    return this.state;
+    return this.#state;
   }
 
   /**
@@ -421,7 +420,7 @@ export class MutableSignal<T extends object> extends AbstractSignal<T> {
    */
   mutate(callback: (state: T) => unknown): void {
     batch(() => {
-      const result = callback(this.state);
+      const result = callback(this.#state);
       if (result !== null && typeof result === "object" && "then" in result) {
         raise("MutableSignal.mutate() does not support async callbacks");
       }

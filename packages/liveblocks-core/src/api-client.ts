@@ -1530,12 +1530,12 @@ export function getBearerTokenFromAuthValue(authValue: AuthValue): string {
  * backend.
  */
 class HttpClient {
-  private _baseUrl: string;
-  private _fetchPolyfill: typeof fetch;
+  #baseUrl: string;
+  #fetchPolyfill: typeof fetch;
 
   constructor(baseUrl: string, fetchPolyfill: typeof fetch) {
-    this._baseUrl = baseUrl;
-    this._fetchPolyfill = fetchPolyfill;
+    this.#baseUrl = baseUrl;
+    this.#fetchPolyfill = fetchPolyfill;
   }
 
   // ------------------------------------------------------------------
@@ -1555,7 +1555,7 @@ class HttpClient {
    *   5. ...but silently return `{}` if that parsing fails
    *   6. Throw HttpError if response is an error
    */
-  private async rawFetch(
+  async #rawFetch(
     endpoint: URLSafeString,
     authValue: AuthValue,
     options?: RequestInit,
@@ -1565,8 +1565,8 @@ class HttpClient {
       raise("This client can only be used to make /v2/c/* requests");
     }
 
-    const url = urljoin(this._baseUrl, endpoint, params);
-    return await this._fetchPolyfill(url, {
+    const url = urljoin(this.#baseUrl, endpoint, params);
+    return await this.#fetchPolyfill(url, {
       ...options,
       headers: {
         // These headers are default, but can be overriden by custom headers
@@ -1596,13 +1596,13 @@ class HttpClient {
    *   5. ...but silently return `{}` if that parsing fails (🤔)
    *   6. Throw HttpError if response is an error
    */
-  private async fetch<T extends JsonObject>(
+  async #fetch<T extends JsonObject>(
     endpoint: URLSafeString,
     authValue: AuthValue,
     options?: RequestInit,
     params?: QueryParams
   ): Promise<T> {
-    const response = await this.rawFetch(endpoint, authValue, options, params);
+    const response = await this.#rawFetch(endpoint, authValue, options, params);
 
     if (!response.ok) {
       let error: HttpError;
@@ -1637,7 +1637,7 @@ class HttpClient {
     params?: QueryParams,
     options?: Omit<RequestInit, "body" | "method" | "headers">
   ): Promise<Response> {
-    return await this.rawFetch(endpoint, authValue, options, params);
+    return await this.#rawFetch(endpoint, authValue, options, params);
   }
 
   /**
@@ -1650,7 +1650,7 @@ class HttpClient {
     authValue: AuthValue,
     body?: JsonObject
   ): Promise<Response> {
-    return await this.rawFetch(endpoint, authValue, {
+    return await this.#rawFetch(endpoint, authValue, {
       method: "POST",
       body: JSON.stringify(body),
     });
@@ -1665,7 +1665,7 @@ class HttpClient {
     endpoint: URLSafeString,
     authValue: AuthValue
   ): Promise<Response> {
-    return await this.rawFetch(endpoint, authValue, { method: "DELETE" });
+    return await this.#rawFetch(endpoint, authValue, { method: "DELETE" });
   }
 
   /**
@@ -1678,7 +1678,7 @@ class HttpClient {
     params?: QueryParams,
     options?: Omit<RequestInit, "body" | "method" | "headers">
   ): Promise<T> {
-    return await this.fetch<T>(endpoint, authValue, options, params);
+    return await this.#fetch<T>(endpoint, authValue, options, params);
   }
 
   /**
@@ -1692,7 +1692,7 @@ class HttpClient {
     options?: Omit<RequestInit, "body" | "method" | "headers">,
     params?: QueryParams
   ): Promise<T> {
-    return await this.fetch<T>(
+    return await this.#fetch<T>(
       endpoint,
       authValue,
       {
@@ -1712,7 +1712,7 @@ class HttpClient {
     endpoint: URLSafeString,
     authValue: AuthValue
   ): Promise<T> {
-    return await this.fetch<T>(endpoint, authValue, { method: "DELETE" });
+    return await this.#fetch<T>(endpoint, authValue, { method: "DELETE" });
   }
 
   /**
@@ -1726,7 +1726,7 @@ class HttpClient {
     params?: QueryParams,
     options?: Omit<RequestInit, "body" | "method" | "headers">
   ): Promise<T> {
-    return await this.fetch<T>(
+    return await this.#fetch<T>(
       endpoint,
       authValue,
       {

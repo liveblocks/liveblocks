@@ -47,7 +47,7 @@ type Connection = {
 };
 
 export class MockWebSocketServer {
-  private newConnectionCallbacks = makeEventSource<Connection>();
+  #newConnectionCallbacks = makeEventSource<Connection>();
   public current: MockWebSocket | undefined;
   public connections: Map<MockWebSocket, Emitters> = new Map();
 
@@ -141,7 +141,7 @@ export class MockWebSocketServer {
 
       // ...then proceed to call the rest of the callbacks, which will be
       // executed on every new connection
-      this.newConnectionCallbacks.notify({
+      this.#newConnectionCallbacks.notify({
         client: clientSocket,
         server: serverSocket,
       });
@@ -156,8 +156,8 @@ export class MockWebSocketServer {
    * those behaviors.
    */
   public onConnection(callback: (conn: Connection) => void): void {
-    this.newConnectionCallbacks[Symbol.dispose]();
-    this.newConnectionCallbacks.subscribe(callback);
+    this.#newConnectionCallbacks[Symbol.dispose]();
+    this.#newConnectionCallbacks.subscribe(callback);
   }
 
   /**
@@ -182,10 +182,10 @@ export class MockWebSocket {
    * This is a convenience accessor if you're only interested in controlling
    * behavior for this particular client/server socket pair.
    */
-  private _serverSocket: ServerSocket | undefined;
+  #serverSocket: ServerSocket | undefined;
 
-  private _listeners: ServerEvents | undefined;
-  private unsubs: {
+  #maybeListeners: ServerEvents | undefined;
+  #unsubs: {
     open: WeakMap<Listener | MessageListener | CloseListener, () => void>;
     close: WeakMap<Listener | MessageListener | CloseListener, () => void>;
     message: WeakMap<Listener | MessageListener | CloseListener, () => void>;
@@ -208,7 +208,7 @@ export class MockWebSocket {
    * server.
    */
   constructor(url: string = "ws://ignored") {
-    this.unsubs = {
+    this.#unsubs = {
       open: new WeakMap(),
       close: new WeakMap(),
       message: new WeakMap(),
@@ -222,8 +222,8 @@ export class MockWebSocket {
     serverSocket: ServerSocket,
     listeners: ServerEvents
   ) {
-    this._serverSocket = serverSocket;
-    this._listeners = listeners;
+    this.#serverSocket = serverSocket;
+    this.#maybeListeners = listeners;
 
     // onOpen (from server)
     listeners.onOpen.subscribeOnce(() => {
@@ -253,17 +253,17 @@ export class MockWebSocket {
    * Returns the server-side socket on the opposite end of the connection.
    */
   public get server(): ServerSocket {
-    if (this._serverSocket === undefined) {
+    if (this.#serverSocket === undefined) {
       throw new Error("No server attached yet");
     }
-    return this._serverSocket;
+    return this.#serverSocket;
   }
 
-  private get listeners(): ServerEvents {
-    if (this._listeners === undefined) {
+  get #listeners(): ServerEvents {
+    if (this.#maybeListeners === undefined) {
       throw new Error("No server attached yet");
     }
-    return this._listeners;
+    return this.#maybeListeners;
   }
 
   //
@@ -281,17 +281,17 @@ export class MockWebSocket {
   addEventListener(type: "open" | "close" | "message" | "error", listener: Listener | MessageListener | CloseListener): void {
     let unsub: (() => void) | undefined;
     if (type === "open") {
-      unsub = this.listeners.onOpen.subscribe(listener as Listener);
+      unsub = this.#listeners.onOpen.subscribe(listener as Listener);
     } else if (type === "close") {
-      unsub = this.listeners.onClose.subscribe(listener as CloseListener);
+      unsub = this.#listeners.onClose.subscribe(listener as CloseListener);
     } else if (type === "message") {
-      unsub = this.listeners.onMessage.subscribe(listener as MessageListener);
+      unsub = this.#listeners.onMessage.subscribe(listener as MessageListener);
     } else if (type === "error") {
-      unsub = this.listeners.onError.subscribe(listener as Listener);
+      unsub = this.#listeners.onError.subscribe(listener as Listener);
     }
 
     if (unsub) {
-      this.unsubs[type].set(listener, unsub);
+      this.#unsubs[type].set(listener, unsub);
     }
   }
 
@@ -300,7 +300,7 @@ export class MockWebSocket {
   removeEventListener(type: "open" | "error", listener: Listener): void; // prettier-ignore
   // prettier-ignore
   removeEventListener(type: "open" | "close" | "message" | "error", listener: Listener | MessageListener | CloseListener): void {
-    const unsub = this.unsubs[type].get(listener);
+    const unsub = this.#unsubs[type].get(listener);
     if (unsub !== undefined) {
       unsub();
     }

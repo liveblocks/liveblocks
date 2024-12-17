@@ -87,44 +87,38 @@ export class Session {
   public readonly FULL_ACCESS = FULL_ACCESS;
   public readonly READ_ACCESS = READ_ACCESS;
 
-  /** @internal */
-  private _postFn: PostFn;
-  /** @internal */
-  private _userId: string;
-  /** @internal */
-  private _userInfo?: IUserInfo;
-  /** @internal */
-  private _sealed = false;
-  /** @internal */
-  private readonly _permissions: Map<string, Set<Permission>> = new Map();
+  #postFn: PostFn;
+  #userId: string;
+  #userInfo?: IUserInfo;
+  #sealed = false;
+  readonly #permissions: Map<string, Set<Permission>> = new Map();
 
   /** @internal */
   constructor(postFn: PostFn, userId: string, userInfo?: IUserInfo) {
     assertNonEmpty(userId, "userId"); // TODO: Check if this is a legal userId value too
 
-    this._postFn = postFn;
-    this._userId = userId;
-    this._userInfo = userInfo;
+    this.#postFn = postFn;
+    this.#userId = userId;
+    this.#userInfo = userInfo;
   }
 
-  /** @internal */
-  private getOrCreate(roomId: string): Set<Permission> {
-    if (this._sealed) {
+  #getOrCreate(roomId: string): Set<Permission> {
+    if (this.#sealed) {
       throw new Error("You can no longer change these permissions.");
     }
 
-    let perms = this._permissions.get(roomId);
+    let perms = this.#permissions.get(roomId);
     if (perms) {
       return perms;
     } else {
-      if (this._permissions.size >= MAX_PERMS_PER_SET) {
+      if (this.#permissions.size >= MAX_PERMS_PER_SET) {
         throw new Error(
           "You cannot add permissions for more than 10 rooms in a single token"
         );
       }
 
       perms = new Set<Permission>();
-      this._permissions.set(roomId, perms);
+      this.#permissions.set(roomId, perms);
       return perms;
     }
   }
@@ -141,7 +135,7 @@ export class Session {
       throw new Error("Permission list cannot be empty");
     }
 
-    const existingPerms = this.getOrCreate(roomIdOrPattern);
+    const existingPerms = this.#getOrCreate(roomIdOrPattern);
     for (const perm of newPerms) {
       if (!isPermission(perm as string)) {
         throw new Error(`Not a valid permission: ${perm}`);
@@ -153,23 +147,23 @@ export class Session {
 
   /** @internal - For unit tests only */
   public hasPermissions(): boolean {
-    return this._permissions.size > 0;
+    return this.#permissions.size > 0;
   }
 
   /** @internal - For unit tests only */
   public seal(): void {
-    if (this._sealed) {
+    if (this.#sealed) {
       throw new Error(
         "You cannot reuse Session instances. Please create a new session every time."
       );
     }
-    this._sealed = true;
+    this.#sealed = true;
   }
 
   /** @internal - For unit tests only */
   public serializePermissions(): JsonObject {
     return Object.fromEntries(
-      Array.from(this._permissions.entries()).map(([pat, perms]) => [
+      Array.from(this.#permissions.entries()).map(([pat, perms]) => [
         pat,
         Array.from(perms),
       ])
@@ -190,13 +184,13 @@ export class Session {
     }
 
     try {
-      const resp = await this._postFn(url`/v2/authorize-user`, {
+      const resp = await this.#postFn(url`/v2/authorize-user`, {
         // Required
-        userId: this._userId,
+        userId: this.#userId,
         permissions: this.serializePermissions(),
 
         // Optional metadata
-        userInfo: this._userInfo,
+        userInfo: this.#userInfo,
       });
 
       return {

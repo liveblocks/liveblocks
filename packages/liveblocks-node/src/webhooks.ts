@@ -6,8 +6,8 @@ import type { IncomingHttpHeaders } from "http";
 import { isString } from "./utils";
 
 export class WebhookHandler {
-  private secretBuffer: Buffer;
-  private static secretPrefix = "whsec_";
+  #secretBuffer: Buffer;
+  static #secretPrefix = "whsec_";
 
   constructor(
     /**
@@ -19,11 +19,11 @@ export class WebhookHandler {
     if (!secret) throw new Error("Secret is required");
     if (typeof secret !== "string") throw new Error("Secret must be a string");
 
-    if (secret.startsWith(WebhookHandler.secretPrefix) === false)
+    if (secret.startsWith(WebhookHandler.#secretPrefix) === false)
       throw new Error("Invalid secret, must start with whsec_");
 
-    const secretKey = secret.slice(WebhookHandler.secretPrefix.length);
-    this.secretBuffer = Buffer.from(secretKey, "base64");
+    const secretKey = secret.slice(WebhookHandler.#secretPrefix.length);
+    this.#secretBuffer = Buffer.from(secretKey, "base64");
   }
 
   /**
@@ -32,7 +32,8 @@ export class WebhookHandler {
   public verifyRequest(request: WebhookRequest): WebhookEvent {
     const { headers, rawBody } = request;
 
-    const { webhookId, timestamp, rawSignatures } = this.verifyHeaders(headers);
+    const { webhookId, timestamp, rawSignatures } =
+      this.#verifyHeaders(headers);
 
     if (typeof rawBody !== "string") {
       throw new Error(
@@ -40,9 +41,9 @@ export class WebhookHandler {
       );
     }
 
-    this.verifyTimestamp(timestamp);
+    this.#verifyTimestamp(timestamp);
 
-    const signature = this.sign(`${webhookId}.${timestamp}.${rawBody}`);
+    const signature = this.#sign(`${webhookId}.${timestamp}.${rawBody}`);
 
     const expectedSignatures = rawSignatures
       .split(" ")
@@ -61,7 +62,7 @@ export class WebhookHandler {
 
     const event: WebhookEvent = JSON.parse(rawBody) as WebhookEvent;
 
-    this.verifyWebhookEventType(event);
+    this.#verifyWebhookEventType(event);
 
     return event;
   }
@@ -69,7 +70,7 @@ export class WebhookHandler {
   /**
    * Verifies the headers and returns the webhookId, timestamp and rawSignatures
    */
-  private verifyHeaders(headers: IncomingHttpHeaders | Headers) {
+  #verifyHeaders(headers: IncomingHttpHeaders | Headers) {
     const usingNativeHeaders =
       typeof Headers !== "undefined" && headers instanceof Headers;
     const normalizedHeaders = usingNativeHeaders
@@ -101,16 +102,16 @@ export class WebhookHandler {
    * @param content
    * @returns `string`
    */
-  private sign(content: string): string {
+  #sign(content: string): string {
     const encoder = new TextEncoder();
     const toSign = encoder.encode(content);
-    return base64.encode(sha256.hmac(this.secretBuffer, toSign));
+    return base64.encode(sha256.hmac(this.#secretBuffer, toSign));
   }
 
   /**
    * Verifies that the timestamp is not too old or in the future
    */
-  private verifyTimestamp(timestampHeader: string) {
+  #verifyTimestamp(timestampHeader: string) {
     const now = Math.floor(Date.now() / 1000);
     const timestamp = parseInt(timestampHeader, 10);
 
@@ -133,9 +134,7 @@ export class WebhookHandler {
    * Ensures that the event is a known event type
    * or throws and prompts the user to upgrade to a higher version of @liveblocks/node
    */
-  private verifyWebhookEventType(
-    event: WebhookEvent
-  ): asserts event is WebhookEvent {
+  #verifyWebhookEventType(event: WebhookEvent): asserts event is WebhookEvent {
     if (
       event &&
       event.type &&
