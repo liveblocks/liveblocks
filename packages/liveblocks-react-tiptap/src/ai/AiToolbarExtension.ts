@@ -16,17 +16,17 @@ export const AiToolbarExtension = Extension.create<
 
   addStorage() {
     return {
-      state: {
-        type: "closed",
-        selection: null,
-      },
+      state: "closed",
+      selection: undefined,
+      prompt: undefined,
+      previousPrompt: undefined,
     };
   },
 
   addCommands() {
     return {
       askAi: (prompt) => () => {
-        if (this.storage.state.type === "closed") {
+        if (this.storage.state === "closed") {
           // If there's no selection yet, put the selection at the start of the document
           if (this.editor.state.selection.$from.depth === 0) {
             this.editor.chain().focus().setTextSelection(0).run();
@@ -40,61 +40,71 @@ export const AiToolbarExtension = Extension.create<
             this.editor.commands.setTextSelection({ from: start, to: end });
           }
 
-          // And if the selection is still empty, stop here
-          if (this.editor.state.selection.empty) {
-            return false;
-          }
-
           this.editor.commands.blur();
         }
 
         const selection =
-          this.storage.state.selection ??
+          this.storage.selection ??
           new TextSelection(
             this.editor.state.selection.$anchor,
             this.editor.state.selection.$head
           );
 
-        if (prompt) {
-          this.storage.state = {
-            type: "thinking",
-            selection,
-            prompt,
-          };
-        } else {
-          this.storage.state = {
-            type: "asking",
-            selection,
-            prompt:
-              this.storage.state.type === "closed"
-                ? ""
-                : this.storage.state.prompt,
-          };
+        this.storage.state = prompt ? "thinking" : "asking";
+        this.storage.selection = selection;
+        this.storage.prompt = prompt ?? this.storage.prompt ?? "";
+
+        return true;
+      },
+      retryAskAi: () => () => {
+        if (this.storage.state !== "reviewing") {
+          return false;
         }
+
+        this.storage.state = "thinking";
+        this.storage.prompt = this.storage.previousPrompt ?? "";
+        this.storage.previousPrompt = undefined;
+
+        return true;
+      },
+      cancelAskAi: () => () => {
+        if (this.storage.state !== "thinking") {
+          return false;
+        }
+
+        this.storage.state = "asking";
+
+        return true;
+      },
+      reviewAi: () => () => {
+        if (this.storage.state !== "thinking") {
+          return false;
+        }
+
+        this.storage.state = "reviewing";
+        this.storage.previousPrompt = this.storage.prompt;
+        this.storage.prompt = "";
 
         return true;
       },
       closeAi: () => () => {
-        this.storage.state = {
-          type: "closed",
-          selection: null,
-        };
+        this.storage.state = "closed";
+        this.storage.selection = undefined;
+        this.storage.prompt = undefined;
+        this.storage.previousPrompt = undefined;
 
         return true;
       },
-      setAiPrompt:
-        (prompt: string | ((previousPrompt: string) => string)) => () => {
-          if (this.storage.state.type === "closed") {
-            return false;
-          }
+      setAiPrompt: (prompt) => () => {
+        if (this.storage.state === "closed") {
+          return false;
+        }
 
-          this.storage.state.prompt =
-            typeof prompt === "function"
-              ? prompt(this.storage.state.prompt)
-              : prompt;
+        this.storage.prompt =
+          typeof prompt === "function" ? prompt(this.storage.prompt) : prompt;
 
-          return true;
-        },
+        return true;
+      },
     };
   },
 
@@ -109,7 +119,7 @@ export const AiToolbarExtension = Extension.create<
     if (!this.storage.selection || transaction.getMeta(ySyncPluginKey)) {
       return;
     }
-    this.storage.selection = null;
+    this.storage.selection = undefined;
   },
   // TODO: this.storage.selection needs to be a Yjs Relative Position that gets translated back to absolute position.
   // Commit: eba949d32d6010a3d8b3f7967d73d4deb015b02a has code that can help with this.
@@ -119,11 +129,11 @@ export const AiToolbarExtension = Extension.create<
         key: AI_TOOLBAR_SELECTION_PLUGIN,
         props: {
           decorations: ({ doc }) => {
-            const active = this.storage.state.selection !== null;
+            const active = this.storage.selection !== undefined;
             if (!active) {
               return DecorationSet.create(doc, []);
             }
-            const { from, to } = this.storage.state.selection as TextSelection;
+            const { from, to } = this.storage.selection as TextSelection;
             const decorations: Decoration[] = [
               Decoration.inline(from, to, {
                 class: "lb-root lb-selection lb-tiptap-ai-selection",

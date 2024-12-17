@@ -10,6 +10,7 @@ import {
 import {
   Button,
   CheckIcon,
+  CrossIcon,
   EditIcon,
   EmojiIcon,
   LengthenIcon,
@@ -19,6 +20,7 @@ import {
   ShortenIcon,
   TooltipProvider,
   TranslateIcon,
+  UndoIcon,
   useRefs,
 } from "@liveblocks/react-ui/_private";
 import { type Editor, useEditorState } from "@tiptap/react";
@@ -26,13 +28,15 @@ import { Command, useCommandState } from "cmdk";
 import type {
   ChangeEvent,
   ComponentProps,
-  KeyboardEvent,
+  KeyboardEvent as ReactKeyboardEvent,
   PropsWithChildren,
   ReactNode,
+  RefObject,
 } from "react";
 import React, {
   forwardRef,
   useCallback,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -44,7 +48,6 @@ import { EditorProvider, useCurrentEditor } from "../context";
 import type {
   AiCommands,
   AiToolbarExtensionStorage,
-  AiToolbarState,
   ExtendedChainedCommands,
   FloatingPosition,
 } from "../types";
@@ -94,20 +97,16 @@ function tiptapFloating(editor: Editor | null): Middleware {
 
 interface DropdownItemProps extends PropsWithChildren {
   icon?: ReactNode;
+  onSelect?: () => void;
 }
 
-function DropdownItem({ children, icon }: DropdownItemProps) {
-  const editor = useCurrentEditor("DropdownItem", "AiToolbar");
-  const supportsAi = "askAi" in editor.commands;
+interface DropdownPromptItemProps extends Omit<DropdownItemProps, "onSelect"> {
+  prompt: string;
+}
 
-  const handleSelect = useCallback(() => {
-    if (supportsAi) {
-      editor.commands.askAi("TODO");
-    }
-  }, [editor, supportsAi]);
-
+function DropdownItem({ children, icon, onSelect }: DropdownItemProps) {
   return (
-    <Command.Item className="lb-dropdown-item" onSelect={handleSelect}>
+    <Command.Item className="lb-dropdown-item" onSelect={onSelect}>
       {icon ? <span className="lb-icon-container">{icon}</span> : null}
       {children ? (
         <span className="lb-dropdown-item-label">{children}</span>
@@ -116,18 +115,26 @@ function DropdownItem({ children, icon }: DropdownItemProps) {
   );
 }
 
-function AiToolbarContent({
+function DropdownPromptItem({ prompt, ...props }: DropdownPromptItemProps) {
+  const editor = useCurrentEditor("DropdownItem", "AiToolbar");
+
+  const handleSelect = useCallback(() => {
+    editor.commands.askAi(prompt);
+  }, [editor, prompt]);
+
+  return <DropdownItem onSelect={handleSelect} {...props} />;
+}
+
+function AiToolbarPromptTextArea({
   editor,
-  state,
+  prompt,
+  dropdownRef,
 }: {
   editor: Editor;
-  state: Exclude<AiToolbarState, { type: "closed" }>;
+  prompt: string;
+  dropdownRef: RefObject<HTMLDivElement>;
 }) {
   const promptRef = useRef<HTMLTextAreaElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const hasDropdownItems = useCommandState(
-    (state) => state.filtered.count > 0
-  ) as boolean;
 
   useLayoutEffect(() => {
     setTimeout(() => {
@@ -140,7 +147,9 @@ function AiToolbarContent({
     }, 0);
   }, []);
 
-  const handlePromptKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+  const handlePromptKeyDown = (
+    event: ReactKeyboardEvent<HTMLTextAreaElement>
+  ) => {
     if (event.key === "Enter") {
       event.preventDefault();
       event.stopPropagation();
@@ -150,26 +159,19 @@ function AiToolbarContent({
         (editor.commands as AiCommands<boolean>).setAiPrompt(
           (prompt) => prompt + "\n"
         );
-      } else if ("TODO:") {
-        // If there's a selected dropdown item, select it
-        (
-          dropdownRef.current?.querySelector(
-            "[role='option'][data-selected='true']"
-          ) as HTMLElement | null
-        )?.click();
       } else {
-        // Submit the custom prompt
-        (editor.commands as AiCommands<boolean>).askAi(state.prompt);
-      }
-    } else if (event.key === "Escape") {
-      // Close the toolbar on escape
-      event.preventDefault();
-      event.stopPropagation();
+        const selectedDropdownItem = dropdownRef.current?.querySelector(
+          "[role='option'][data-selected='true']"
+        ) as HTMLElement | null;
 
-      (editor.chain() as ExtendedChainedCommands<"closeAi">)
-        .closeAi()
-        .focus()
-        .run();
+        if (selectedDropdownItem) {
+          // If there's a selected dropdown item, select it
+          selectedDropdownItem.click();
+        } else {
+          // Otherwise, submit the custom prompt
+          (editor.commands as AiCommands<boolean>).askAi(prompt);
+        }
+      }
     }
   };
 
@@ -180,37 +182,74 @@ function AiToolbarContent({
     [editor]
   );
 
+  const handleSendClick = useCallback(() => {
+    (editor.commands as AiCommands<boolean>).askAi(prompt);
+  }, [editor, prompt]);
+
   return (
-    <>
+    <div className="lb-tiptap-ai-toolbar-content">
+      <span className="lb-icon-container lb-tiptap-ai-toolbar-icon-container">
+        <EmojiIcon />
+      </span>
       <div
-        className="lb-elevation lb-tiptap-ai-toolbar-prompt-container"
-        data-value={state.prompt}
+        className="lb-tiptap-ai-toolbar-prompt-container"
+        data-value={prompt}
       >
         <Command.Input asChild>
           <textarea
             ref={promptRef}
             className="lb-tiptap-ai-toolbar-prompt"
             placeholder="Ask AI anything…"
-            value={state.prompt}
+            value={prompt}
             onChange={handlePromptChange}
             onKeyDown={handlePromptKeyDown}
             rows={1}
             autoFocus
           />
         </Command.Input>
-        <div className="lb-tiptap-ai-toolbar-decorations">
-          <span className="lb-tiptap-ai-toolbar-icon-container">
-            <EmojiIcon />
-          </span>
-          <ShortcutTooltip content="Ask AI" shortcut="Enter">
-            <Button
-              className="lb-tiptap-ai-toolbar-action"
-              variant="primary"
-              aria-label="Ask AI"
-              icon={<SendIcon />}
-            />
-          </ShortcutTooltip>
-        </div>
+      </div>
+      <div className="lb-tiptap-ai-toolbar-actions">
+        <ShortcutTooltip content="Ask AI" shortcut="Enter">
+          <Button
+            className="lb-tiptap-ai-toolbar-action"
+            variant="primary"
+            aria-label="Ask AI"
+            icon={<SendIcon />}
+            disabled={!prompt}
+            onClick={handleSendClick}
+          />
+        </ShortcutTooltip>
+      </div>
+    </div>
+  );
+}
+
+function AiToolbarAsking({ editor }: { editor: Editor }) {
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const hasDropdownItems = useCommandState(
+    (state) => state.filtered.count > 0
+  ) as boolean;
+  const prompt =
+    useEditorState({
+      editor,
+      selector: (ctx) => {
+        return (
+          ctx.editor?.storage.liveblocksAiToolbar as
+            | AiToolbarExtensionStorage
+            | undefined
+        )?.prompt;
+      },
+      equalityFn: Object.is,
+    }) ?? "";
+
+  return (
+    <>
+      <div className="lb-elevation lb-tiptap-ai-toolbar">
+        <AiToolbarPromptTextArea
+          editor={editor}
+          dropdownRef={dropdownRef}
+          prompt={prompt}
+        />
       </div>
       <div
         className="lb-elevation lb-dropdown lb-tiptap-ai-toolbar-dropdown"
@@ -220,18 +259,39 @@ function AiToolbarContent({
           <Command.Group
             heading={<span className="lb-dropdown-label">Generate</span>}
           >
-            <DropdownItem icon={<EditIcon />}>Improve writing</DropdownItem>
-            <DropdownItem icon={<CheckIcon />}>Fix mistakes</DropdownItem>
-            <DropdownItem icon={<ShortenIcon />}>Simplify</DropdownItem>
-            <DropdownItem icon={<LengthenIcon />}>Add more detail</DropdownItem>
+            <DropdownPromptItem icon={<EditIcon />} prompt="Improve writing">
+              Improve writing
+            </DropdownPromptItem>
+            <DropdownPromptItem icon={<CheckIcon />} prompt="Fix mistakes">
+              Fix mistakes
+            </DropdownPromptItem>
+            <DropdownPromptItem
+              icon={<ShortenIcon />}
+              prompt="Simplify the text"
+            >
+              Simplify
+            </DropdownPromptItem>
+            <DropdownPromptItem
+              icon={<LengthenIcon />}
+              prompt="Add more detail"
+            >
+              Add more detail
+            </DropdownPromptItem>
           </Command.Group>
           <Command.Group
             heading={
               <span className="lb-dropdown-label">Modify selection</span>
             }
           >
-            <DropdownItem icon={<TranslateIcon />}>Translate</DropdownItem>
-            <DropdownItem icon={<QuestionMarkIcon />}>Explain</DropdownItem>
+            <DropdownPromptItem
+              icon={<TranslateIcon />}
+              prompt="Translate to English"
+            >
+              Translate
+            </DropdownPromptItem>
+            <DropdownPromptItem icon={<QuestionMarkIcon />} prompt="Explain">
+              Explain
+            </DropdownPromptItem>
           </Command.Group>
         </Command.List>
       </div>
@@ -239,16 +299,111 @@ function AiToolbarContent({
   );
 }
 
-function compareAiToolbarStates(
-  a: AiToolbarState | null | undefined,
-  b: AiToolbarState | null | undefined
-) {
-  if (!a || !b) {
-    return false;
-  }
+function AiToolbarThinking({ editor }: { editor: Editor }) {
+  const prompt =
+    useEditorState({
+      editor,
+      selector: (ctx) => {
+        return (
+          ctx.editor?.storage.liveblocksAiToolbar as
+            | AiToolbarExtensionStorage
+            | undefined
+        )?.prompt;
+      },
+      equalityFn: Object.is,
+    }) ?? "";
 
-  // TODO: Compare other properties
-  return a.type === b.type && compareTextSelections(a.selection, b.selection);
+  // TODO: On error, go back to asking state (with error message, cancelAskAi(error))
+  // TODO: On success, go to reviewing state (and pass the prompt to previousPrompt)
+
+  useEffect(() => {
+    setTimeout(() => {
+      (editor.commands as AiCommands<boolean>).reviewAi();
+    }, 3000);
+  }, [editor]);
+
+  const handleCancel = useCallback(() => {
+    (editor.commands as AiCommands<boolean>).cancelAskAi();
+  }, [editor]);
+
+  return (
+    <div className="lb-elevation lb-tiptap-ai-toolbar">
+      <div className="lb-tiptap-ai-toolbar-content">
+        <span className="lb-icon-container lb-tiptap-ai-toolbar-icon-container">
+          <EmojiIcon />
+        </span>
+        <span className="lb-tiptap-ai-toolbar-loading">
+          Thinking about {prompt}
+        </span>
+        <div className="lb-tiptap-ai-toolbar-actions">
+          <ShortcutTooltip content="Cancel">
+            <Button
+              className="lb-tiptap-ai-toolbar-action"
+              variant="primary"
+              aria-label="Cancel"
+              icon={<SendIcon />}
+              onClick={handleCancel}
+            />
+          </ShortcutTooltip>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AiToolbarReviewing({ editor }: { editor: Editor }) {
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const hasDropdownItems = useCommandState(
+    (state) => state.filtered.count > 0
+  ) as boolean;
+  const prompt =
+    useEditorState({
+      editor,
+      selector: (ctx) => {
+        return (
+          ctx.editor?.storage.liveblocksAiToolbar as
+            | AiToolbarExtensionStorage
+            | undefined
+        )?.prompt;
+      },
+      equalityFn: Object.is,
+    }) ?? "";
+
+  const handleRetry = useCallback(() => {
+    (editor.commands as AiCommands<boolean>).retryAskAi();
+  }, [editor]);
+
+  const handleDiscard = useCallback(() => {
+    (editor.commands as AiCommands<boolean>).closeAi();
+  }, [editor]);
+
+  return (
+    <>
+      <div className="lb-elevation lb-tiptap-ai-toolbar">
+        <div className="lb-tiptap-ai-toolbar-output">Output</div>
+        <AiToolbarPromptTextArea
+          editor={editor}
+          dropdownRef={dropdownRef}
+          prompt={prompt}
+        />
+      </div>
+      <div
+        className="lb-elevation lb-dropdown lb-tiptap-ai-toolbar-dropdown"
+        data-hidden={!hasDropdownItems ? "" : undefined}
+      >
+        <Command.List ref={dropdownRef}>
+          <DropdownItem icon={<CheckIcon />}>Replace selection</DropdownItem>
+          <DropdownItem icon={<CheckIcon />}>Insert below</DropdownItem>
+          <DropdownItem icon={<UndoIcon />} onSelect={handleRetry}>
+            Try again
+          </DropdownItem>
+          <DropdownItem icon={<CrossIcon />} onSelect={handleDiscard}>
+            Discard
+          </DropdownItem>
+        </Command.List>
+      </div>
+    </>
+  );
 }
 
 export const AiToolbar = forwardRef<HTMLDivElement, AiToolbarProps>(
@@ -262,20 +417,30 @@ export const AiToolbar = forwardRef<HTMLDivElement, AiToolbarProps>(
     },
     forwardedRef
   ) => {
-    const state = useEditorState({
-      editor,
-      selector: (ctx) => {
-        return (
-          ctx.editor?.storage.liveblocksAiToolbar as
-            | AiToolbarExtensionStorage
-            | undefined
-        )?.state;
-      },
-      equalityFn: compareAiToolbarStates,
-    }) ?? {
-      type: "closed",
-      selection: null,
-    };
+    const state =
+      useEditorState({
+        editor,
+        selector: (ctx) => {
+          return (
+            ctx.editor?.storage.liveblocksAiToolbar as
+              | AiToolbarExtensionStorage
+              | undefined
+          )?.state;
+        },
+        equalityFn: Object.is,
+      }) ?? "closed";
+    const selection =
+      useEditorState({
+        editor,
+        selector: (ctx) => {
+          return (
+            ctx.editor?.storage.liveblocksAiToolbar as
+              | AiToolbarExtensionStorage
+              | undefined
+          )?.selection;
+        },
+        equalityFn: compareTextSelections,
+      }) ?? undefined;
     const floatingOptions: UseFloatingOptions = useMemo(() => {
       const detectOverflowOptions: DetectOverflowOptions = {
         padding: AI_TOOLBAR_COLLISION_PADDING,
@@ -296,7 +461,7 @@ export const AiToolbar = forwardRef<HTMLDivElement, AiToolbarProps>(
         },
       };
     }, [editor, position, sideOffset]);
-    const isOpen = state.type !== "closed";
+    const isOpen = selection !== undefined;
     const {
       refs: { setReference, setFloating },
       strategy,
@@ -307,21 +472,56 @@ export const AiToolbar = forwardRef<HTMLDivElement, AiToolbarProps>(
       ...floatingOptions,
       open: isOpen,
     });
-    const mergedRefs = useRefs(forwardedRef, setFloating);
+    const toolbarRef = useRef<HTMLDivElement>(null);
+    const mergedRefs = useRefs(forwardedRef, toolbarRef, setFloating);
+
+    useEffect(() => {
+      if (editor && !selection && state !== "closed") {
+        (editor.commands as AiCommands<boolean>).closeAi();
+      }
+    }, [state, selection, editor]);
 
     useLayoutEffect(() => {
       if (!editor || !isOpen) {
         return;
       }
 
-      if (!state.selection) {
-        setReference(null);
-      } else {
-        const domRange = getDomRangeFromTextSelection(state.selection, editor);
+      setReference(null);
 
-        setReference(domRange);
+      setTimeout(() => {
+        if (!selection) {
+          setReference(null);
+        } else {
+          const domRange = getDomRangeFromTextSelection(selection, editor);
+
+          setReference(domRange);
+        }
+      }, 0);
+    }, [selection, editor, isOpen, setReference]);
+
+    useEffect(() => {
+      if (!editor || !isOpen) {
+        return;
       }
-    }, [state.selection, editor, isOpen, setReference]);
+
+      const handleKeyDown = (event: KeyboardEvent) => {
+        if (!event.defaultPrevented && event.key === "Escape") {
+          event.preventDefault();
+          event.stopPropagation();
+
+          (editor.chain() as ExtendedChainedCommands<"closeAi">)
+            .closeAi()
+            .focus()
+            .run();
+        }
+      };
+
+      document.addEventListener("keydown", handleKeyDown);
+
+      return () => {
+        document.removeEventListener("keydown", handleKeyDown);
+      };
+    }, [editor, isOpen]);
 
     if (!editor || !isOpen) {
       return null;
@@ -331,11 +531,12 @@ export const AiToolbar = forwardRef<HTMLDivElement, AiToolbarProps>(
       <TooltipProvider>
         <EditorProvider editor={editor}>
           <Command
+            key={state}
             role="toolbar"
             label="AI toolbar"
             aria-orientation="horizontal"
             className={classNames(
-              "lb-root lb-portal lb-tiptap-ai-toolbar",
+              "lb-root lb-portal lb-tiptap-ai-toolbar-container",
               className
             )}
             ref={mergedRefs}
@@ -349,12 +550,13 @@ export const AiToolbar = forwardRef<HTMLDivElement, AiToolbarProps>(
             }}
             {...props}
           >
-            <div>
-              STATE: {state.type}
-              {" - "}
-              {state.type === "thinking" ? state.prompt : "no prompt"}
-            </div>
-            <AiToolbarContent editor={editor} state={state} />
+            {state === "asking" ? (
+              <AiToolbarAsking editor={editor} />
+            ) : state === "thinking" ? (
+              <AiToolbarThinking editor={editor} />
+            ) : state === "reviewing" ? (
+              <AiToolbarReviewing editor={editor} />
+            ) : null}
           </Command>
         </EditorProvider>
       </TooltipProvider>,

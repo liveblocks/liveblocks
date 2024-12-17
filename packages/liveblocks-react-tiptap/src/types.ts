@@ -32,30 +32,19 @@ export const enum ThreadPluginActions {
   SET_SELECTED_THREAD_ID = "SET_SELECTED_THREAD_ID",
 }
 
-export type AiToolbarState =
+export type AiToolbarExtensionStorage =
   | {
-      type: "closed";
-      selection: null;
+      state: "closed";
+      selection: undefined;
+      prompt: undefined;
+      previousPrompt: undefined;
     }
   | {
-      type: "asking";
+      state: "asking" | "thinking" | "reviewing";
       selection: TextSelection;
       prompt: string;
-    }
-  | {
-      type: "thinking";
-      selection: TextSelection;
-      prompt: string;
-    }
-  | {
-      type: "reviewing";
-      selection: TextSelection;
-      prompt: string;
+      previousPrompt: string | undefined;
     };
-
-export type AiToolbarExtensionStorage = {
-  state: AiToolbarState;
-};
 
 export type LiveblocksExtensionStorage = AiToolbarExtensionStorage &
   CommentsExtensionStorage;
@@ -93,9 +82,13 @@ export type CommentsCommands<ReturnType> = {
 export type AiCommands<ReturnType> = {
   askAi: (prompt?: string) => ReturnType;
   /** @internal */
+  cancelAskAi: () => ReturnType;
+  /** @internal */
+  retryAskAi: () => ReturnType;
+  /** @internal */
+  reviewAi: () => ReturnType;
+  /** @internal */
   closeAi: () => ReturnType;
   /** @internal */
-  setAiPrompt: (
-    prompt: string | ((previousPrompt: string) => string)
-  ) => ReturnType;
+  setAiPrompt: (prompt: string | ((prompt: string) => string)) => ReturnType;
 };

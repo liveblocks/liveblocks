@@ -264,16 +264,49 @@
   pointer-events: none;
 }
 
-.lb-tiptap-ai-toolbar {
+.lb-tiptap-ai-toolbar-container {
   --lb-tiptap-ai-toolbar-padding: calc(0.5 * var(--lb-spacing));
+  --lb-tiptap-ai-toolbar-height: calc(
+    $lb-button-size + 2 * var(--lb-tiptap-ai-toolbar-padding)
+  );
 
   inline-size: var(--lb-tiptap-editor-width);
+  min-block-size: var(--lb-tiptap-ai-toolbar-height);
+  outline: none;
+}
+
+.lb-tiptap-ai-toolbar {
+  display: flex;
+  flex-direction: column;
+  color: var(--lb-foreground);
+}
+
+.lb-tiptap-ai-toolbar-output {
+  border-block-end: 1px solid var(--lb-foreground-subtle);
+}
+
+.lb-tiptap-ai-toolbar-content {
+  display: flex;
+  justify-content: space-between;
+  inline-size: 100%;
+}
+
+.lb-tiptap-ai-toolbar-output,
+.lb-tiptap-ai-toolbar-content {
+  max-block-size: calc(10lh + 2 * var(--lb-tiptap-ai-toolbar-padding));
+  padding: var(--lb-tiptap-ai-toolbar-padding);
+
+  /* overflow-block: auto; doesn't work as expected */
+  /* stylelint-disable-next-line plugin/use-logical-properties-and-values */
+  overflow-y: auto;
 }
 
 .lb-tiptap-ai-toolbar-prompt-container {
   position: relative;
   z-index: auto;
   display: grid;
+  flex: 1 0 auto;
+  margin-block: calc(-1 * var(--lb-tiptap-ai-toolbar-padding));
   line-height: $lb-button-size;
 
   &::before {
@@ -283,8 +316,23 @@
   }
 }
 
+.lb-tiptap-ai-toolbar-icon-container,
+.lb-tiptap-ai-toolbar-actions {
+  position: sticky;
+  inset-block-end: 0;
+  display: flex;
+  flex: none;
+  align-self: end;
+  block-size: $lb-button-size;
+}
+
 .lb-tiptap-ai-toolbar-icon-container {
+  align-items: center;
   color: var(--lb-foreground-moderate);
+}
+
+.lb-tiptap-ai-toolbar-actions {
+  gap: var(--lb-tiptap-ai-toolbar-padding);
 }
 
 .lb-tiptap-ai-toolbar-prompt {
@@ -306,37 +354,16 @@
   box-sizing: inherit;
   inline-size: 100%;
   min-inline-size: 0;
-  min-block-size: calc(1lh + 2 * var(--lb-tiptap-ai-toolbar-padding));
-  max-block-size: calc(6lh + 2 * var(--lb-tiptap-ai-toolbar-padding));
   padding: var(--lb-tiptap-ai-toolbar-padding);
-  padding-inline-start: calc(
-    var(--lb-icon-size) + var(--lb-tiptap-ai-toolbar-padding) + 0.375 *
-      var(--lb-spacing)
-  );
-  padding-inline-end: calc(
-    1lh + var(--lb-tiptap-ai-toolbar-padding) + 0.375 * var(--lb-spacing)
-  );
   font: inherit;
   letter-spacing: inherit;
   white-space: pre-wrap;
-  scroll-padding-block: var(--lb-tiptap-ai-toolbar-padding);
 }
 
-.lb-tiptap-ai-toolbar-decorations {
-  position: absolute;
-  inset-inline: 0;
-  inset-block-end: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  inline-size: 100%;
-  block-size: calc(1lh + 2 * var(--lb-tiptap-ai-toolbar-padding));
-  padding: var(--lb-tiptap-ai-toolbar-padding);
-  pointer-events: none;
-
-  :where(.lb-button) {
-    pointer-events: auto;
-  }
+.lb-tiptap-ai-toolbar-loading {
+  flex: 1 0 auto;
+  min-inline-size: 0;
+  padding-inline: var(--lb-tiptap-ai-toolbar-padding);
 }
 
 .lb-tiptap-ai-toolbar-dropdown {
