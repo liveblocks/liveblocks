@@ -934,7 +934,6 @@ function App() {
     </LiveblocksProvider>
   );
 }
-
 ```
 
 ### createLiveblocksContext
@@ -1000,7 +999,7 @@ const client = useClient();
 Makes a [`Room`][] available in the component hierarchy below. Joins the room
 when the component is mounted, and automatically leaves the room when the
 component is unmounted. When using
-[Realtime APIs](/docs/ready-made-features/realtime-apis), initial Presence
+[Sync Datastore](/docs/ready-made-features/sync-datastore), initial Presence
 values for each user, and Storage values for the room can be set.
 
 ```tsx
@@ -1669,8 +1668,8 @@ const currentUser = useSelf((me) => me.presence.cursor);
 The benefit of using a selector is that it will only update your component if
 that particular selection changes. For full details, see [how selectors work][].
 
-👉 A [Suspense version][] of this hook is also available, which will never return
-`null`.
+👉 A [Suspense version][] of this hook is also available, which will never
+return `null`.
 
 ### useOthers [@badge=RoomProvider]
 
@@ -1697,8 +1696,8 @@ const typingUsers = useOthers(
 );
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never return
-`null`.
+👉 A [Suspense version][] of this hook is also available, which will never
+return `null`.
 
 One caveat with this API is that selecting a subset of data for each user
 quickly becomes tricky. When you want to select and get updates for only a
@@ -1737,7 +1736,8 @@ arguments.
 ### useOthersMapped [@badge=RoomProvider]
 
 Extract data using a [selector][] for every user in the room, and subscribe to
-all changes to the selected data. A [Suspense version][] of this hook is also available.
+all changes to the selected data. A [Suspense version][] of this hook is also
+available.
 
 The key difference with [`useOthers`][] is that the selector (and the optional
 comparison function) work at the _item_ level, like doing a `.map()` over the
@@ -1807,8 +1807,8 @@ useOthers((others) => others.map((other) => other.connectionId), shallow);
 ### useOther [@badge=RoomProvider]
 
 Extract data using a [selector][] for one specific user in the room, and
-subscribe to all changes to the selected data. A [Suspense version][] of this hook
-is also available.
+subscribe to all changes to the selected data. A [Suspense version][] of this
+hook is also available.
 
 ```tsx
 // ✅ Rerenders when this specific user’s isTyping changes (but not when their cursor changes)
@@ -1859,8 +1859,8 @@ function Cursor({ connectionId }) {
 3. Makes sure each cursor remains associated to the same connection.
 4. Makes sure each cursor rerenders whenever _its_ data changes only.
 
-👉 A [Suspense version][] of this hook is also available, which will never return
-`null`.
+👉 A [Suspense version][] of this hook is also available, which will never
+return `null`.
 
 ## Broadcast
 
@@ -2520,9 +2520,9 @@ return (
 );
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never return
-a loading state and will throw error to the nearest ErrorBoundary if initial load
-failed.
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw error to the nearest ErrorBoundary if
+initial load failed.
 
 ### useThreadSubscription [@badge=RoomProvider]
 
@@ -2684,8 +2684,8 @@ import { useAttachmentUrl } from "@liveblocks/react/suspense";
 const { url, error, isLoading } = useAttachmentUrl("at_xxx");
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never return
-a loading state and will throw when there’s an error.
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw when there’s an error.
 
 ## Notifications
 
@@ -2792,9 +2792,9 @@ return (
 );
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never return
-a loading state and will throw error to the nearest ErrorBoundary if initial load
-failed.
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw error to the nearest ErrorBoundary if
+initial load failed.
 
 ### useUnreadInboxNotificationsCount [@badge=LiveblocksProvider]
 
@@ -2806,8 +2806,8 @@ import { useUnreadInboxNotificationsCount } from "@liveblocks/react/suspense";
 const { count, error, isLoading } = useUnreadInboxNotificationsCount();
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never return
-a loading state and will throw when there’s an error.
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw when there’s an error.
 
 ### useMarkInboxNotificationAsRead [@badge=LiveblocksProvider]
 
@@ -2939,8 +2939,8 @@ import { useUser } from "@liveblocks/react/suspense";
 const { user, error, isLoading } = useUser("user-id");
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never return
-a loading state and will throw when there’s an error.
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw when there’s an error.
 
 <Banner title="Providing a resolver function">
 
@@ -2959,8 +2959,8 @@ import { useRoomInfo } from "@liveblocks/react/suspense";
 const { info, error, isLoading } = useRoomInfo("room-id");
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never return
-a loading state and will throw when there’s an error.
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw when there’s an error.
 
 <Banner title="Providing a resolver function">
 
@@ -3373,11 +3373,11 @@ And the following timeline:
   rerender, seeing the updated value.
 
 [`createclient`]: /docs/api-reference/liveblocks-client#createClient
-[`createRoomContext`]: /docs/api-reference/liveblocks-react#createRoomContext
+[`createroomcontext`]: /docs/api-reference/liveblocks-react#createRoomContext
 [`livelist`]: /docs/api-reference/liveblocks-client#LiveList
 [`livemap`]: /docs/api-reference/liveblocks-client#LiveMap
 [`liveobject`]: /docs/api-reference/liveblocks-client#LiveObject
-[`lostConnectionTimeout`]:
+[`lostconnectiontimeout`]:
   /docs/api-reference/liveblocks-client#createClientLostConnectionTimeout
 [`room.history`]: /docs/api-reference/liveblocks-client#Room.history
 [`roomprovider`]: /docs/api-reference/liveblocks-react#RoomProvider

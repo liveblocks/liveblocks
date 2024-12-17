@@ -1080,7 +1080,7 @@ const client = createClient(/* options */);
 // ✅ After
 <LiveblocksProvider /* options */>
   <App />
-</LiveblocksProvider>
+</LiveblocksProvider>;
 ```
 
 For full upgrade instructions and codemods, see the
@@ -1185,7 +1185,7 @@ For full upgrade instructions and codemods, see the
   - New page product page for
     [Liveblocks Notifications](https://liveblocks.io/notifications)
   - New page product page for
-    [Liveblocks Realtime APIs](https://liveblocks.io/realtime-apis)
+    [Liveblocks Sync Datastore](https://liveblocks.io/sync-datastore)
   - Improved [pricing page](https://liveblocks.io)
   - New navigation
 - New blog post:

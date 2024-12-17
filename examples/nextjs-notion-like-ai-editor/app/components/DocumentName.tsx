@@ -18,7 +18,7 @@ import {
 import TextareaAutosize from "react-textarea-autosize";
 import { usePageLinks } from "../hooks/usePageLinks";
 
-// Title is stored in Liveblocks Storage, part of Realtime APIs
+// Title is stored in Liveblocks Storage
 export function DocumentName() {
   const title = useStorage((root) => root.title);
   const [editor] = useLexicalComposerContext();
@@ -68,7 +68,7 @@ export function DocumentName() {
       value={title}
       onChange={handleChange}
       onKeyDown={handleKeyDown}
-      className="outline-none px-8 block w-full resize-none overflow-hidden"
+      className="block w-full resize-none overflow-hidden px-8 outline-none"
     />
   );
 }
