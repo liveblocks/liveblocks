@@ -591,7 +591,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
   #syncSource: SyncSource;
 
   // Raw threads DB (without any optimistic updates applied)
-  #rawThreadsDB: ThreadDB<M>;
+  /** @internal - accessed in unit tests */
+  private _rawThreadsDB: ThreadDB<M>;
   #prevVersion: number = -1;
 
   #store: Store<InternalState<M>>;
@@ -644,7 +645,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this.#store.set((store) => ({ ...store }))
     );
 
-    this.#rawThreadsDB = new ThreadDB();
+    this._rawThreadsDB = new ThreadDB();
     this.#store = createStore<InternalState<M>>({
       optimisticUpdates: [],
       permissionsByRoom: {},
@@ -664,13 +665,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // until the next .set() call invalidates it.
     const rawState = this.#store.get();
     if (
-      this.#prevVersion !== this.#rawThreadsDB.version || // Note: Version check is only needed temporarily, until we can get rid of the Zustand-like update model
+      this.#prevVersion !== this._rawThreadsDB.version || // Note: Version check is only needed temporarily, until we can get rid of the Zustand-like update model
       this.#prevState !== rawState ||
       this.#stateCached === null
     ) {
-      this.#stateCached = internalToExternalState(rawState, this.#rawThreadsDB);
+      this.#stateCached = internalToExternalState(rawState, this._rawThreadsDB);
       this.#prevState = rawState;
-      this.#prevVersion = this.#rawThreadsDB.version;
+      this.#prevVersion = this._rawThreadsDB.version;
     }
     return this.#stateCached;
   }
@@ -830,7 +831,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // Direct low-level cache mutations ------------------------------------------------- {{{
 
   #mutateThreadsDB(mutate: (db: ThreadDB<M>) => void): void {
-    const db = this.#rawThreadsDB;
+    const db = this._rawThreadsDB;
     const old = db.version;
     mutate(db);
 
@@ -1129,7 +1130,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this.removeOptimisticUpdate(optimisticUpdateId);
 
       // If the associated thread is not found, we cannot create a comment under it
-      const existingThread = this.#rawThreadsDB.get(newComment.threadId);
+      const existingThread = this._rawThreadsDB.get(newComment.threadId);
       if (!existingThread) {
         return;
       }
