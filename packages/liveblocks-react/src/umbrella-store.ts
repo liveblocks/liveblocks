@@ -618,11 +618,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // - External state with optimistic updates applied (= UmbrellaStoreState type)
   //
 
-  _internalState1: Signal<InternalState1<M>>; // XXX Split this into multiple signals eventually
-  _internalState2: Signal<InternalState2>; // XXX Split this into multiple signals eventually
-  _internalState3: Signal<InternalState3>; // XXX Split this into multiple signals eventually
-  _internalState4: Signal<InternalState4>; // XXX Split this into multiple signals eventually
-  _internalState5: Signal<InternalState5>; // XXX Split this into multiple signals eventually
+  _internalState1: Signal<InternalState1<M>>; // XXX Rename
+  _internalState2: Signal<InternalState2>; // XXX Rename
+  _internalState3: Signal<InternalState3>; // XXX Rename
+  _internalState4: Signal<InternalState4>; // XXX Rename
+  _internalState5: Signal<InternalState5>; // XXX This shouldn't even have to be on the Umbrella Store :)
   externalState: DerivedSignal<UmbrellaStoreState<M>>;
 
   // Notifications
@@ -685,11 +685,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this._internalState2,
       this._internalState3,
       this._internalState4,
-      this._internalState5,
       this._rawThreadsDB.signal,
 
-      (s1, s2, s3, s4, s5, rawThreadsDB): UmbrellaStoreState<M> =>
-        internalToExternalState(s1, s2, s3, s4, s5, rawThreadsDB)
+      (s1, s2, s3, s4, rawThreadsDB): UmbrellaStoreState<M> =>
+        internalToExternalState(s1, s2, s3, s4, rawThreadsDB)
     );
 
     // Auto-bind all of this class’ methods here, so we can use stable
@@ -1602,7 +1601,6 @@ function internalToExternalState<M extends BaseMetadata>(
   state2: InternalState2,
   state3: InternalState3,
   state4: InternalState4,
-  _state5: InternalState5, // XXX Here we can see that state5 isn't really dependent on, and was triggering needless renders when updated
   rawThreadsDB: ThreadDB<M>
 ): UmbrellaStoreState<M> {
   const threadsDB = rawThreadsDB.clone();
