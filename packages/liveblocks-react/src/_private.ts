@@ -26,4 +26,5 @@ export {
   useYjsProvider,
 } from "./room";
 export { useMentionSuggestions } from "./use-mention-suggestions";
+export { useSignal } from "./use-signal";
 export { useSyncSource } from "./use-sync-source";
