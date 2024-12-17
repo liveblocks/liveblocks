@@ -912,7 +912,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // ---------------------------------------------------------------------------------- }}}
 
   /** @internal - Only call this method from unit tests. */
-  public force_set(
+  public force_set2(
     callback: (currentState: InternalState2) => InternalState2
   ): void {
     return this._internalState2.set(callback);

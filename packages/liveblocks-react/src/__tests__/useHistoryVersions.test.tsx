@@ -165,7 +165,7 @@ describe("useHistoryVersions", () => {
       umbrellaStore,
     } = createContextsForTest();
 
-    umbrellaStore.force_set((state) => ({
+    umbrellaStore.force_set2((state) => ({
       ...state,
       versionsByRoomId: {
         "room-1": {

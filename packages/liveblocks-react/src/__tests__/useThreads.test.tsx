@@ -1457,7 +1457,7 @@ describe("useThreads", () => {
     const db = umbrellaStore._rawThreadsDB;
     db.upsert(thread1);
     db.upsert(thread2WithDeletedAt);
-    umbrellaStore.force_set((state) => ({ ...state }));
+    umbrellaStore.force_set2((state) => ({ ...state }));
 
     const { result, unmount } = renderHook(
       () => useThreads({ query: { metadata: {} } }),

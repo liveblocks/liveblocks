@@ -288,7 +288,7 @@ describe("useInboxNotifications", () => {
     umbrellaStore._rawThreadsDB.upsert(thread1);
     // @ts-expect-error Accessing a private field directly
     umbrellaStore._rawThreadsDB.upsert(thread2);
-    umbrellaStore.force_set((state) => ({
+    umbrellaStore.force_set2((state) => ({
       ...state,
       notificationsById: {
         // Explicitly set the order to be reversed to test that the hook sorts the notifications
