@@ -536,17 +536,20 @@ export class SinglePageResource {
 // XXX Internal state 1 = optimistic updates
 type InternalState1<M extends BaseMetadata> = readonly OptimisticUpdate<M>[];
 
+// XXX Internal state 2 = versions by room ID
+type InternalState2 = Readonly<{
+  // XXX Remove this nesting
+  versionsByRoomId: Record<string, Record<string, HistoryVersion>>;
+}>;
+
 // XXX Internal state 3 = notifications by ID
 type InternalState3 = Record<string, InboxNotificationData>;
 
 // XXX Internal state 4 = settings by room ID
 type InternalState4 = Record<string, RoomNotificationSettings>;
 
-// XXX Internal state 2 = everything else (for now!)
-type InternalState2 = Readonly<{
-  permissionsByRoom: Record<string, Set<Permission>>;
-  versionsByRoomId: Record<string, Record<string, HistoryVersion>>;
-}>;
+// XXX Internal state 5 = permissions by room ID
+type InternalState5 = Record<string, Set<Permission>>;
 
 /**
  * Externally observable state of the store, which will have:
@@ -585,6 +588,7 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
    *      }
    */
   settingsByRoomId: Record<string, RoomNotificationSettings>;
+
   /**
    * Versions by roomId
    * e.g. { 'room-abc': {versions: "all versions"}}
@@ -621,6 +625,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   _internalState2: Signal<InternalState2>; // XXX Split this into multiple signals eventually
   _internalState3: Signal<InternalState3>; // XXX Split this into multiple signals eventually
   _internalState4: Signal<InternalState4>; // XXX Split this into multiple signals eventually
+  _internalState5: Signal<InternalState5>; // XXX Split this into multiple signals eventually
   externalState: DerivedSignal<UmbrellaStoreState<M>>;
 
   // Notifications
@@ -674,21 +679,22 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this._rawThreadsDB = new ThreadDB();
     this._internalState1 = new Signal<InternalState1<M>>([]);
     this._internalState2 = new Signal<InternalState2>({
-      permissionsByRoom: {},
       versionsByRoomId: {},
     });
     this._internalState3 = new Signal<InternalState3>({});
     this._internalState4 = new Signal<InternalState4>({});
+    this._internalState5 = new Signal<InternalState5>({});
 
     this.externalState = DerivedSignal.from(
       this._internalState1,
       this._internalState2,
       this._internalState3,
       this._internalState4,
+      this._internalState5,
       this._rawThreadsDB.signal,
 
-      (state1, state2, state3, state4, rawThreadsDB): UmbrellaStoreState<M> =>
-        internalToExternalState(state1, state2, state3, state4, rawThreadsDB)
+      (s1, s2, s3, s4, s5, rawThreadsDB): UmbrellaStoreState<M> =>
+        internalToExternalState(s1, s2, s3, s4, s5, rawThreadsDB)
     );
 
     // Auto-bind all of this class’ methods here, so we can use stable
@@ -845,7 +851,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   public _getPermissions(roomId: string): Set<Permission> | undefined {
-    return this._internalState2.get().permissionsByRoom[roomId];
+    return this._internalState5.get()[roomId];
   }
 
   // Direct low-level cache mutations ------------------------------------------------- {{{
@@ -1317,7 +1323,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   #updateRoomPermissions(permissions: Record<string, Permission[]>) {
     const permissionsByRoom = {
-      ...this._internalState2.get().permissionsByRoom,
+      ...this._internalState5.get(),
     };
 
     Object.entries(permissions).forEach(([roomId, newPermissions]) => {
@@ -1330,9 +1336,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
       permissionsByRoom[roomId] = existingPermissions;
     });
 
-    this._internalState2.set((state) => ({
-      ...state,
-      permissionsByRoom,
+    this._internalState5.set((_state) => ({
+      ...permissionsByRoom,
     }));
   }
 
@@ -1611,6 +1616,7 @@ function internalToExternalState<M extends BaseMetadata>(
   state2: InternalState2,
   state3: InternalState3,
   state4: InternalState4,
+  _state5: InternalState5,
   rawThreadsDB: ThreadDB<M>
 ): UmbrellaStoreState<M> {
   const threadsDB = rawThreadsDB.clone();
