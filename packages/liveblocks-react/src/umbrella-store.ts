@@ -17,7 +17,6 @@ import type {
   Permission,
   Resolve,
   RoomNotificationSettings,
-  Store,
   SyncSource,
   ThreadData,
   ThreadDataWithDeleteInfo,
@@ -25,15 +24,16 @@ import type {
 } from "@liveblocks/core";
 import {
   autoRetry,
+  batch,
   compactObject,
   console,
-  createStore,
   HttpError,
   kInternal,
   makeEventSource,
   mapValues,
   nanoid,
   nn,
+  Signal,
   stringify,
 } from "@liveblocks/core";
 
@@ -591,11 +591,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
   #syncSource: SyncSource;
 
   // Raw threads DB (without any optimistic updates applied)
-  /** @internal - accessed in unit tests */
+  /** @internal - Accessed in unit tests */
   private _rawThreadsDB: ThreadDB<M>;
   #prevVersion: number = -1;
 
-  #store: Store<InternalState<M>>;
+  #store: Signal<InternalState<M>>;
   #prevState: InternalState<M> | null = null;
   #stateCached: UmbrellaStoreState<M> | null = null;
 
@@ -646,7 +646,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     );
 
     this._rawThreadsDB = new ThreadDB();
-    this.#store = createStore<InternalState<M>>({
+    this.#store = new Signal<InternalState<M>>({
       optimisticUpdates: [],
       permissionsByRoom: {},
       notificationsById: {},
@@ -674,10 +674,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this.#prevVersion = this._rawThreadsDB.version;
     }
     return this.#stateCached;
-  }
-
-  public batch(callback: () => void): void {
-    return this.#store.batch(callback);
   }
 
   public getFullState(): UmbrellaStoreState<M> {
@@ -925,7 +921,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     ) => Readonly<InboxNotificationData>
   ): void {
     // Batch 1️⃣ + 2️⃣
-    this.#store.batch(() => {
+    batch(() => {
       this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
 
       // 2️⃣
@@ -957,7 +953,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     ) => Readonly<InboxNotificationData>
   ): void {
     // Batch 1️⃣ + 2️⃣
-    this.#store.batch(() => {
+    batch(() => {
       this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
       this.#updateInboxNotificationsCache((cache) => mapValues(cache, mapFn)); // 2️⃣
     });
@@ -972,7 +968,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     optimisticUpdateId: string
   ): void {
     // Batch 1️⃣ + 2️⃣
-    this.#store.batch(() => {
+    batch(() => {
       this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
 
       // 2️⃣
@@ -990,7 +986,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
    */
   public deleteAllInboxNotifications(optimisticUpdateId: string): void {
     // Batch 1️⃣ + 2️⃣
-    this.#store.batch(() => {
+    batch(() => {
       this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
       this.#updateInboxNotificationsCache(() => ({})); // 2️⃣ empty the cache
     });
@@ -1004,7 +1000,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     thread: Readonly<ThreadDataWithDeleteInfo<M>>
   ): void {
     // Batch 1️⃣ + 2️⃣
-    this.#store.batch(() => {
+    batch(() => {
       this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣j
       this.#mutateThreadsDB((db) => db.upsert(thread)); // 2️⃣
     });
@@ -1029,7 +1025,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     updatedAt?: Date // TODO We could look this up from the optimisticUpdate instead?
   ): void {
     // Batch 1️⃣ + 2️⃣
-    this.#store.batch(() => {
+    batch(() => {
       if (optimisticUpdateId !== null) {
         this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
       }
@@ -1125,7 +1121,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     optimisticUpdateId: string
   ): void {
     // Batch 1️⃣ + 2️⃣ + 3️⃣
-    this.#store.batch(() => {
+    batch(() => {
       // 1️⃣
       this.removeOptimisticUpdate(optimisticUpdateId);
 
@@ -1195,7 +1191,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     inboxNotification?: InboxNotificationData
   ): void {
     // Batch 1️⃣ + 2️⃣
-    this.#store.batch(() => {
+    batch(() => {
       // 1️⃣
       this.#mutateThreadsDB((db) => db.upsertIfNewer(thread));
 
@@ -1226,7 +1222,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     deletedInboxNotifications: InboxNotificationDeleteInfo[] = []
   ): void {
     // Batch 1️⃣ + 2️⃣
-    this.#store.batch(() => {
+    batch(() => {
       // 1️⃣
       this.#mutateThreadsDB((db) =>
         applyThreadDeltaUpdates(db, { newThreads: threads, deletedThreads })
@@ -1252,7 +1248,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     settings: Readonly<RoomNotificationSettings>
   ): void {
     // Batch 1️⃣ + 2️⃣
-    this.#store.batch(() => {
+    batch(() => {
       this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
       this.#setNotificationSettings(roomId, settings); // 2️⃣
     });

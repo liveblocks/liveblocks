@@ -314,10 +314,6 @@ import type { Json } from "./lib/Json";
 import type * as DevTools from "./types/DevToolsTreeNode";
 export type { DevTools };
 
-// Store
-export type { Store } from "./lib/create-store";
-export { createStore } from "./lib/create-store";
-
 // Deprecated APIs
 /** @deprecated Use HttpError instead. */
 export const CommentsApiError = HttpError;

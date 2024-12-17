@@ -200,7 +200,7 @@ function makeMutationContext<
 }
 
 function getCurrentUserId(client: Client): string {
-  const userId = client[kInternal].currentUserIdStore.get();
+  const userId = client[kInternal].currentUserId.get();
   if (userId === undefined) {
     return "anonymous";
   }
