@@ -3,7 +3,7 @@ import type {
   ThreadData,
   ThreadDataWithDeleteInfo,
 } from "@liveblocks/core";
-import { SortedList } from "@liveblocks/core";
+import { MutableSignal, SortedList } from "@liveblocks/core";
 
 import { makeThreadsFilter } from "./lib/querying";
 import type { ThreadsQuery } from "./types";
@@ -55,7 +55,11 @@ export class ThreadDB<M extends BaseMetadata> {
   #byId: Map<string, ThreadDataWithDeleteInfo<M>>;
   #asc: SortedList<ThreadData<M>>;
   #desc: SortedList<ThreadData<M>>;
-  #version: number; // The version is auto-incremented on every mutation and can be used as a reliable indicator to tell if the contents of the thread pool has changed
+
+  // The version is auto-incremented on every mutation and can be used as
+  // a reliable indicator to tell if the contents of the thread pool has
+  // changed
+  public signal: MutableSignal<this>;
 
   constructor() {
     this.#asc = SortedList.from<ThreadData<M>>([], (t1, t2) => {
@@ -71,7 +75,8 @@ export class ThreadDB<M extends BaseMetadata> {
     });
 
     this.#byId = new Map();
-    this.#version = 0;
+
+    this.signal = new MutableSignal(this);
   }
 
   //
@@ -83,13 +88,8 @@ export class ThreadDB<M extends BaseMetadata> {
     newPool.#byId = new Map(this.#byId);
     newPool.#asc = this.#asc.clone();
     newPool.#desc = this.#desc.clone();
-    newPool.#version = this.#version;
+    newPool.signal = new MutableSignal(newPool);
     return newPool;
-  }
-
-  /** Gets the transaction count for this DB. Increments any time the DB is modified. */
-  public get version() {
-    return this.#version;
   }
 
   /** Returns an existing thread by ID. Will never return a deleted thread. */
@@ -125,7 +125,12 @@ export class ThreadDB<M extends BaseMetadata> {
       this.#desc.add(thread);
     }
     this.#byId.set(id, thread);
-    this.#version++;
+
+    // XXX Wrap this method in it?
+    // Trigger a signal update
+    this.signal.mutate(() => {
+      /* just update */
+    });
   }
 
   /** Like .upsert(), except it won't update if a thread by this ID already exists. */

@@ -27,6 +27,7 @@ import {
   batch,
   compactObject,
   console,
+  DerivedSignal,
   HttpError,
   kInternal,
   makeEventSource,
@@ -593,11 +594,26 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // Raw threads DB (without any optimistic updates applied)
   /** @internal - Accessed in unit tests */
   private _rawThreadsDB: ThreadDB<M>;
-  #prevVersion: number = -1;
 
-  #internalState: Signal<InternalState<M>>;
-  #prevInternalState: InternalState<M> | null = null;
-  #stateCached: UmbrellaStoreState<M> | null = null;
+  //
+  // Internally, the UmbrellaStore keeps track of a few source signals that can
+  // be set and mutated individually. When any of those are mutated then the
+  // clean "external state" is recomputed.
+  //
+  // Inputs (can be mutated):
+  // - Thread DB
+  // - Permissions by room
+  // - Notifications by ID
+  // - Settings by room ID
+  // - Versions by room ID
+  // - Optimistic updates
+  //
+  // Outputs (computed):
+  // - External state with optimistic updates applied (= UmbrellaStoreState type)
+  //
+
+  _internalState: Signal<InternalState<M>>; // XXX Split this into multiple signals eventually
+  externalState: DerivedSignal<UmbrellaStoreState<M>>;
 
   // Notifications
   #notificationsLastRequestedAt: Date | null = null; // Keeps track of when we successfully requested an inbox notifications update for the last time. Will be `null` as long as the first successful fetch hasn't happened yet.
@@ -642,11 +658,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.#notifications.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
-      this.#internalState.set((store) => ({ ...store }))
+      this._internalState.set((store) => ({ ...store }))
     );
 
     this._rawThreadsDB = new ThreadDB();
-    this.#internalState = new Signal<InternalState<M>>({
+    this._internalState = new Signal<InternalState<M>>({
       optimisticUpdates: [],
       permissionsByRoom: {},
       notificationsById: {},
@@ -654,26 +670,25 @@ export class UmbrellaStore<M extends BaseMetadata> {
       versionsByRoomId: {},
     });
 
+    this.externalState = DerivedSignal.from(
+      this._internalState,
+      this._rawThreadsDB.signal,
+
+      (rawState, rawThreadsDB): UmbrellaStoreState<M> =>
+        internalToExternalState(rawState, rawThreadsDB)
+    );
+
     // Auto-bind all of this class’ methods here, so we can use stable
     // references to them (most important for use in useSyncExternalStore)
     autobind(this);
   }
 
   private get(): UmbrellaStoreState<M> {
-    // Don't return the raw internal state immediately! Return a new computed
-    // cached state (with optimistic updates applied) instead, and cache that
-    // until the next .set() call invalidates it.
-    const rawState = this.#internalState.get();
-    if (
-      this.#prevVersion !== this._rawThreadsDB.version || // Note: Version check is only needed temporarily, until we can get rid of the Zustand-like update model
-      this.#prevInternalState !== rawState ||
-      this.#stateCached === null
-    ) {
-      this.#stateCached = internalToExternalState(rawState, this._rawThreadsDB);
-      this.#prevInternalState = rawState;
-      this.#prevVersion = this._rawThreadsDB.version;
-    }
-    return this.#stateCached;
+    return this.externalState.get();
+  }
+
+  public subscribe(callback: () => void): () => void {
+    return this.externalState.subscribe(callback);
   }
 
   public getFullState(): UmbrellaStoreState<M> {
@@ -816,25 +831,16 @@ export class UmbrellaStore<M extends BaseMetadata> {
     };
   }
 
-  public subscribe(callback: () => void): () => void {
-    return this.#internalState.subscribe(callback);
-  }
-
   public _getPermissions(roomId: string): Set<Permission> | undefined {
-    return this.#internalState.get().permissionsByRoom[roomId];
+    return this._internalState.get().permissionsByRoom[roomId];
   }
 
   // Direct low-level cache mutations ------------------------------------------------- {{{
 
   #mutateThreadsDB(mutate: (db: ThreadDB<M>) => void): void {
-    const db = this._rawThreadsDB;
-    const old = db.version;
-    mutate(db);
-
-    // Trigger a re-render only if anything changed in the DB
-    if (old !== db.version) {
-      this.#internalState.set((state) => ({ ...state }));
-    }
+    batch(() => {
+      mutate(this._rawThreadsDB);
+    });
   }
 
   #updateInboxNotificationsCache(
@@ -842,7 +848,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       cache: Readonly<Record<string, InboxNotificationData>>
     ) => Readonly<Record<string, InboxNotificationData>>
   ): void {
-    this.#internalState.set((state) => {
+    this._internalState.set((state) => {
       const inboxNotifications = mapFn(state.notificationsById);
       return inboxNotifications !== state.notificationsById
         ? { ...state, notificationsById: inboxNotifications }
@@ -854,7 +860,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     roomId: string,
     settings: RoomNotificationSettings
   ): void {
-    this.#internalState.set((state) => ({
+    this._internalState.set((state) => ({
       ...state,
       settingsByRoomId: {
         ...state.settingsByRoomId,
@@ -864,7 +870,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   #updateRoomVersions(roomId: string, versions: HistoryVersion[]): void {
-    this.#internalState.set((state) => {
+    this._internalState.set((state) => {
       const versionsById = Object.fromEntries(
         versions.map((version) => [version.id, version])
       );
@@ -888,7 +894,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       cache: readonly OptimisticUpdate<M>[]
     ) => readonly OptimisticUpdate<M>[]
   ): void {
-    this.#internalState.set((state) => {
+    this._internalState.set((state) => {
       const optimisticUpdates = mapFn(state.optimisticUpdates);
       this.#syncSource.setSyncStatus(
         optimisticUpdates.length > 0 ? "synchronizing" : "synchronized"
@@ -903,7 +909,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   public force_set(
     callback: (currentState: InternalState<M>) => InternalState<M>
   ): void {
-    return this.#internalState.set(callback);
+    return this._internalState.set(callback);
   }
 
   /**
@@ -1298,7 +1304,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   #updateRoomPermissions(permissions: Record<string, Permission[]>) {
     const permissionsByRoom = {
-      ...this.#internalState.get().permissionsByRoom,
+      ...this._internalState.get().permissionsByRoom,
     };
 
     Object.entries(permissions).forEach(([roomId, newPermissions]) => {
@@ -1311,7 +1317,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       permissionsByRoom[roomId] = existingPermissions;
     });
 
-    this.#internalState.set((state) => ({
+    this._internalState.set((state) => ({
       ...state,
       permissionsByRoom,
     }));
@@ -1362,7 +1368,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     paginatedResource.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
-      this.#internalState.set((store) => ({ ...store }))
+      this._internalState.set((store) => ({ ...store }))
     );
 
     this.#roomThreads.set(queryKey, paginatedResource);
@@ -1433,7 +1439,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     paginatedResource.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
-      this.#internalState.set((store) => ({ ...store }))
+      this._internalState.set((store) => ({ ...store }))
     );
 
     this.#userThreads.set(queryKey, paginatedResource);
@@ -1504,7 +1510,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     resource.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
-      this.#internalState.set((store) => ({ ...store }))
+      this._internalState.set((store) => ({ ...store }))
     );
 
     this.#roomVersions.set(queryKey, resource);
@@ -1562,7 +1568,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     resource.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
-      this.#internalState.set((store) => ({ ...store }))
+      this._internalState.set((store) => ({ ...store }))
     );
 
     this.#roomNotificationSettings.set(queryKey, resource);

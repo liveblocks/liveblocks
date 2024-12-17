@@ -130,7 +130,7 @@ describe("applyThreadDeltaUpdates", () => {
     db.upsert(thread1);
     db.upsert(thread2);
 
-    expect(db.version).toEqual(2);
+    expect(db.signal).toEqual(2);
     expect(db.findMany(undefined, {}, "asc")).toEqual([thread1, thread2]);
 
     const updates = {
@@ -143,6 +143,6 @@ describe("applyThreadDeltaUpdates", () => {
     expect(db.findMany(undefined, {}, "asc")).toEqual([thread1, thread2]);
 
     // Even the version did not change!
-    expect(db.version).toEqual(2);
+    expect(db.signal).toEqual(2);
   });
 });
