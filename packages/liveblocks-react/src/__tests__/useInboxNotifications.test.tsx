@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 
-import { batch, HttpError, nanoid, wait } from "@liveblocks/core";
+import { HttpError, nanoid, wait } from "@liveblocks/core";
 import {
   act,
   fireEvent,
@@ -284,19 +284,15 @@ describe("useInboxNotifications", () => {
       umbrellaStore,
     } = createContextsForTest();
 
-    // @ts-expect-error Accessing a private field directly
-    umbrellaStore._rawThreadsDB.upsert(thread1);
-    // @ts-expect-error Accessing a private field directly
-    umbrellaStore._rawThreadsDB.upsert(thread2);
+    umbrellaStore.threadsDB.upsert(thread1);
+    umbrellaStore.threadsDB.upsert(thread2);
 
-    batch(() => {
-      umbrellaStore.force_set3((prev) => ({
-        ...prev,
-        // Explicitly set the order to be reversed to test that the hook sorts the notifications
-        [oldInboxNotification.id]: oldInboxNotification,
-        [newInboxNotification.id]: newInboxNotification,
-      }));
-    });
+    umbrellaStore.force_set_notifications((prev) => ({
+      ...prev,
+      // Explicitly set the order to be reversed to test that the hook sorts the notifications
+      [oldInboxNotification.id]: oldInboxNotification,
+      [newInboxNotification.id]: newInboxNotification,
+    }));
 
     const { result, unmount } = renderHook(() => useInboxNotifications(), {
       wrapper: ({ children }) => (
