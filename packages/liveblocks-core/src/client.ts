@@ -16,6 +16,7 @@ import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import type { NoInfr } from "./lib/NoInfer";
 import type { Resolve } from "./lib/Resolve";
+import { Signal } from "./lib/Signal";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
 import { TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
@@ -32,7 +33,6 @@ import type {
   InboxNotificationData,
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
-import { ValueRef } from "./refs/ValueRef";
 import type {
   OpaqueRoom,
   OptionalTupleUnless,
@@ -784,29 +784,29 @@ export function createClient<U extends BaseUserMeta = DU>(
 
   // ----------------------------------------------------------------
 
-  const syncStatusSources: ValueRef<InternalSyncStatus>[] = [];
-  const syncStatusRef = new ValueRef<InternalSyncStatus>("synchronized");
+  const syncStatusSources: Signal<InternalSyncStatus>[] = [];
+  const syncStatusSignal = new Signal<InternalSyncStatus>("synchronized");
 
   function getSyncStatus(): SyncStatus {
-    const status = syncStatusRef.current;
+    const status = syncStatusSignal.get();
     return status === "synchronizing" ? status : "synchronized";
   }
 
   function recompute() {
-    syncStatusRef.set(
-      syncStatusSources.some((src) => src.current === "synchronizing")
+    syncStatusSignal.set(
+      syncStatusSources.some((src) => src.get() === "synchronizing")
         ? "synchronizing"
-        : syncStatusSources.some((src) => src.current === "has-local-changes")
+        : syncStatusSources.some((src) => src.get() === "has-local-changes")
           ? "has-local-changes"
           : "synchronized"
     );
   }
 
   function createSyncSource(): SyncSource {
-    const source = new ValueRef<InternalSyncStatus>("synchronized");
+    const source = new Signal<InternalSyncStatus>("synchronized");
     syncStatusSources.push(source);
 
-    const unsub = source.didInvalidate.subscribe(() => recompute());
+    const unsub = source.subscribe(() => recompute());
 
     function setSyncStatus(status: InternalSyncStatus) {
       source.set(status);
@@ -817,7 +817,7 @@ export function createClient<U extends BaseUserMeta = DU>(
       const index = syncStatusSources.findIndex((item) => item === source);
       if (index > -1) {
         const [ref] = syncStatusSources.splice(index, 1);
-        const wasStillPending = ref.current !== "synchronized";
+        const wasStillPending = ref.get() !== "synchronized";
         if (wasStillPending) {
           // We only have to recompute if it was still pending. Otherwise it
           // could not have an effect on the global state anyway.
@@ -838,7 +838,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     const maybePreventClose = (e: BeforeUnloadEvent) => {
       if (
         clientOptions.preventUnsavedChanges &&
-        syncStatusRef.current !== "synchronized"
+        syncStatusSignal.get() !== "synchronized"
       ) {
         e.preventDefault();
       }
@@ -884,7 +884,7 @@ export function createClient<U extends BaseUserMeta = DU>(
 
       getSyncStatus,
       events: {
-        syncStatus: syncStatusRef.didInvalidate,
+        syncStatus: syncStatusSignal,
       },
 
       // Internal
