@@ -125,7 +125,7 @@ export class ThreadDB<M extends BaseMetadata> {
       this.#desc.add(thread);
     }
     this.#byId.set(id, thread);
-    this.#touch();
+    this.#version++;
   }
 
   /** Like .upsert(), except it won't update if a thread by this ID already exists. */
@@ -173,13 +173,5 @@ export class ThreadDB<M extends BaseMetadata> {
     }
     crit.push(makeThreadsFilter(query));
     return Array.from(index.filter((t) => crit.every((pred) => pred(t))));
-  }
-
-  //
-  // Private APIs
-  //
-
-  #touch() {
-    ++this.#version;
   }
 }
