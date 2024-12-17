@@ -290,12 +290,6 @@ describe("useInboxNotifications", () => {
     umbrellaStore._rawThreadsDB.upsert(thread2);
 
     batch(() => {
-      umbrellaStore.force_set2((state) => ({
-        ...state,
-        queries: {
-          INBOX_NOTIFICATIONS: { isLoading: false, data: undefined },
-        },
-      }));
       umbrellaStore.force_set3((prev) => ({
         ...prev,
         // Explicitly set the order to be reversed to test that the hook sorts the notifications

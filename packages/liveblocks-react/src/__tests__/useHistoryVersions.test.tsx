@@ -167,19 +167,17 @@ describe("useHistoryVersions", () => {
 
     umbrellaStore.force_set2((state) => ({
       ...state,
-      versionsByRoomId: {
-        "room-1": {
-          version_1: {
-            type: "historyVersion",
-            kind: "yjs",
-            createdAt: new Date(),
-            id: "version_1",
-            authors: [
-              {
-                id: "user-1",
-              },
-            ],
-          },
+      "room-1": {
+        version_1: {
+          type: "historyVersion",
+          kind: "yjs",
+          createdAt: new Date(),
+          id: "version_1",
+          authors: [
+            {
+              id: "user-1",
+            },
+          ],
         },
       },
     }));

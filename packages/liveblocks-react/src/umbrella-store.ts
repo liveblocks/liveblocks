@@ -1310,23 +1310,21 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   #updateRoomPermissions(permissions: Record<string, Permission[]>) {
-    const permissionsByRoom = {
-      ...this._internalState5.get(),
-    };
+    this._internalState5.set((prev) => {
+      const permissionsByRoom = { ...prev };
 
-    Object.entries(permissions).forEach(([roomId, newPermissions]) => {
-      // Get the existing set of permissions for the room and only ever add permission to this set
-      const existingPermissions = permissionsByRoom[roomId] ?? new Set();
-      // Add the new permissions to the set of existing permissions
-      newPermissions.forEach((permission) =>
-        existingPermissions.add(permission)
-      );
-      permissionsByRoom[roomId] = existingPermissions;
+      Object.entries(permissions).forEach(([roomId, newPermissions]) => {
+        // Get the existing set of permissions for the room and only ever add permission to this set
+        const existingPermissions = permissionsByRoom[roomId] ?? new Set();
+        // Add the new permissions to the set of existing permissions
+        newPermissions.forEach((permission) =>
+          existingPermissions.add(permission)
+        );
+        permissionsByRoom[roomId] = existingPermissions;
+      });
+
+      return permissionsByRoom;
     });
-
-    this._internalState5.set((_state) => ({
-      ...permissionsByRoom,
-    }));
   }
 
   public waitUntilRoomThreadsLoaded(
