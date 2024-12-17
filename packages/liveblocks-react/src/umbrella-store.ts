@@ -642,7 +642,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   #notifications: PaginatedResource;
 
   // Channels Notification Settings
-  private _channelsNotificationSettings: SinglePageResource;
+  #channelsNotificationSettings: SinglePageResource;
 
   // Room Threads
   #roomThreadsLastRequestedAtByRoom = new Map<string, Date>();
@@ -688,13 +688,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     const channelsNotificationSettingsFetcher = async (): Promise<void> => {
       const result = await this.#client.getChannelsNotificationSettings();
-      this.updateChannelsNotificationSettingsCache(result);
+      this.#updateChannelsNotificationSettingsCache(result);
     };
 
-    this._channelsNotificationSettings = new SinglePageResource(
+    this.#channelsNotificationSettings = new SinglePageResource(
       channelsNotificationSettingsFetcher
     );
-    this._channelsNotificationSettings.observable.subscribe(() =>
+    this.#channelsNotificationSettings.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
       this.#store.set((store) => ({ ...store }))
@@ -966,7 +966,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this.#store.set(callback);
   }
 
-  private updateChannelsNotificationSettingsCache(
+  #updateChannelsNotificationSettingsCache(
     settings: ChannelsNotificationSettings
   ): void {
     this.#store.set((state) => {
@@ -985,7 +985,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * Get the loading state for Channels Notification Settings
    */
   public getChannelsNotificationSettingsLoadingState(): ChannelsNotificationSettingsAsyncResult {
-    const asyncResult = this._channelsNotificationSettings.get();
+    const asyncResult = this.#channelsNotificationSettings.get();
     if (asyncResult.isLoading || asyncResult.error) {
       return asyncResult;
     }
@@ -1014,7 +1014,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       signal,
     });
 
-    this.updateChannelsNotificationSettingsCache(result);
+    this.#updateChannelsNotificationSettingsCache(result);
   }
 
   /**
@@ -1028,7 +1028,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // Batch 1️⃣ + 2️⃣
     this.#store.batch(() => {
       this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
-      this.updateChannelsNotificationSettingsCache(settings); // 2️⃣
+      this.#updateChannelsNotificationSettingsCache(settings); // 2️⃣
     });
   }
 
@@ -1423,7 +1423,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   public waitUntilChannelsNotificationsSettingsLoaded() {
-    return this._channelsNotificationSettings.waitUntilLoaded();
+    return this.#channelsNotificationSettings.waitUntilLoaded();
   }
 
   #updateRoomPermissions(permissions: Record<string, Permission[]>) {
