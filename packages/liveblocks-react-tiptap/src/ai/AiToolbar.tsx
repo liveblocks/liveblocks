@@ -129,23 +129,34 @@ function AiToolbarPromptTextArea({
   editor,
   prompt,
   dropdownRef,
+  isDropdownHidden,
 }: {
   editor: Editor;
   prompt: string;
   dropdownRef: RefObject<HTMLDivElement>;
+  isDropdownHidden: boolean;
 }) {
   const promptRef = useRef<HTMLTextAreaElement>(null);
+  const isPromptEmpty = useMemo(() => prompt.trim() === "", [prompt]);
 
-  useLayoutEffect(() => {
-    setTimeout(() => {
-      if (!promptRef.current) {
-        return;
-      }
+  useLayoutEffect(
+    () => {
+      setTimeout(() => {
+        const promptTextArea = promptRef.current;
 
-      promptRef.current.focus();
-      promptRef.current.select();
-    }, 0);
-  }, []);
+        if (!promptTextArea) {
+          return;
+        }
+
+        promptTextArea.focus();
+        promptTextArea.setSelectionRange(
+          promptTextArea.value.length,
+          promptTextArea.value.length
+        );
+      }, 0);
+    },
+    [] // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
   const handlePromptKeyDown = (
     event: ReactKeyboardEvent<HTMLTextAreaElement>
@@ -164,10 +175,10 @@ function AiToolbarPromptTextArea({
           "[role='option'][data-selected='true']"
         ) as HTMLElement | null;
 
-        if (selectedDropdownItem) {
+        if (!isDropdownHidden && selectedDropdownItem) {
           // If there's a selected dropdown item, select it
           selectedDropdownItem.click();
-        } else {
+        } else if (!isPromptEmpty) {
           // Otherwise, submit the custom prompt
           (editor.commands as AiCommands<boolean>).askAi(prompt);
         }
@@ -183,8 +194,12 @@ function AiToolbarPromptTextArea({
   );
 
   const handleSendClick = useCallback(() => {
+    if (isPromptEmpty) {
+      return;
+    }
+
     (editor.commands as AiCommands<boolean>).askAi(prompt);
-  }, [editor, prompt]);
+  }, [editor, prompt, isPromptEmpty]);
 
   return (
     <div className="lb-tiptap-ai-toolbar-content">
@@ -215,7 +230,7 @@ function AiToolbarPromptTextArea({
             variant="primary"
             aria-label="Ask AI"
             icon={<SendIcon />}
-            disabled={!prompt}
+            disabled={isPromptEmpty}
             onClick={handleSendClick}
           />
         </ShortcutTooltip>
@@ -241,6 +256,8 @@ function AiToolbarAsking({ editor }: { editor: Editor }) {
       },
       equalityFn: Object.is,
     }) ?? "";
+  const isPromptMultiline = useMemo(() => prompt.includes("\n"), [prompt]);
+  const isDropdownHidden = isPromptMultiline || !hasDropdownItems;
 
   return (
     <>
@@ -249,11 +266,12 @@ function AiToolbarAsking({ editor }: { editor: Editor }) {
           editor={editor}
           dropdownRef={dropdownRef}
           prompt={prompt}
+          isDropdownHidden={isDropdownHidden}
         />
       </div>
       <div
         className="lb-elevation lb-dropdown lb-tiptap-ai-toolbar-dropdown"
-        data-hidden={!hasDropdownItems ? "" : undefined}
+        data-hidden={isDropdownHidden ? "" : undefined}
       >
         <Command.List ref={dropdownRef}>
           <Command.Group
@@ -341,7 +359,7 @@ function AiToolbarThinking({ editor }: { editor: Editor }) {
               className="lb-tiptap-ai-toolbar-action"
               variant="primary"
               aria-label="Cancel"
-              icon={<SendIcon />}
+              icon={<UndoIcon />}
               onClick={handleCancel}
             />
           </ShortcutTooltip>
@@ -368,6 +386,8 @@ function AiToolbarReviewing({ editor }: { editor: Editor }) {
       },
       equalityFn: Object.is,
     }) ?? "";
+  const isPromptMultiline = useMemo(() => prompt.includes("\n"), [prompt]);
+  const isDropdownHidden = isPromptMultiline || !hasDropdownItems;
 
   const handleRetry = useCallback(() => {
     (editor.commands as AiCommands<boolean>).retryAskAi();
@@ -385,11 +405,12 @@ function AiToolbarReviewing({ editor }: { editor: Editor }) {
           editor={editor}
           dropdownRef={dropdownRef}
           prompt={prompt}
+          isDropdownHidden={isDropdownHidden}
         />
       </div>
       <div
         className="lb-elevation lb-dropdown lb-tiptap-ai-toolbar-dropdown"
-        data-hidden={!hasDropdownItems ? "" : undefined}
+        data-hidden={isDropdownHidden ? "" : undefined}
       >
         <Command.List ref={dropdownRef}>
           <DropdownItem icon={<CheckIcon />}>Replace selection</DropdownItem>
