@@ -1,4 +1,11 @@
-## 2.14.1 (Not yet published)
+## 2.15.0 (Not yet published)
+
+### All packages
+
+Bumped compilation target from ES2020 to ES2022 for all packages. This only
+impacts the code that we publish to NPM. If you bundle for lower targets that
+should not be a problem, as your bundler should still recompile things for you
+to your desired target.
 
 ### `@liveblocks/react`
 
