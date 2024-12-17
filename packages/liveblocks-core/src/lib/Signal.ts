@@ -10,7 +10,7 @@ import type { JsonObject } from "../lib/Json";
 import { compactObject, raise } from "../lib/utils";
 
 const kSinks = Symbol("kSinks");
-const kNotify = Symbol("kNotify");
+const kTrigger = Symbol("kTrigger");
 
 //
 // Before the batch is run, all sinks (recursively all the way down) are marked
@@ -40,20 +40,18 @@ const kNotify = Symbol("kNotify");
 // - If A changes, then all sinks (B, C, and D) will be marked dirty.
 //
 // - Because some of A's sinks are being watched (in this case, D has at least
-//   one subscriber), A will notify B and C that its value has changed.
+//   one subscriber), A will trigger B and C that its value has changed.
 //
 // - Both B and C re-evaluate and may or may not have changed. Three
 //   possibilities:
-//   1. Neither B and C have changed → D will *NOT* be notified
-//   2. Either B or C has changed    → D *will* be notified
-//   3. Both B and C have changed    → D *will* be notified (but only once!)
+//   1. Neither B and C have changed → D will *NOT* be triggered
+//   2. Either B or C has changed    → D *will* be triggered
+//   3. Both B and C have changed    → D *will* be triggered (but only once!)
 //
-// - If in the previous step D has been notified, it will re-evaluate. If it
+// - If in the previous step D has been triggered, it will re-evaluate. If it
 //   has changed itself, it will notify its normal subscriber.
 //
-let activeBatch: {
-  toNotify: Set<AbstractSignal<any>>;
-} | null = null;
+let signalsToTrigger: Set<AbstractSignal<any>> | null = null;
 
 /**
  * Runs a callback function that is allowed to change multiple signals. At the
@@ -62,22 +60,20 @@ let activeBatch: {
  * Nesting batches is supported.
  */
 export function batch(callback: Callback<void>): void {
-  if (activeBatch !== null) {
+  if (signalsToTrigger !== null) {
     // Already inside another batch, just run this inner callback
     callback();
     return;
   }
 
-  activeBatch = {
-    toNotify: new Set(),
-  };
+  signalsToTrigger = new Set();
   try {
     callback();
   } finally {
-    for (const signal of activeBatch.toNotify) {
-      signal[kNotify]();
+    for (const signal of signalsToTrigger) {
+      signal[kTrigger]();
     }
-    activeBatch = null;
+    signalsToTrigger = null;
   }
 }
 
@@ -86,9 +82,9 @@ export function batch(callback: Callback<void>): void {
  * This should only be called within a batch callback. It's safe to call this
  * while notifications are being rolled out.
  */
-function enqueueNotify(signal: AbstractSignal<any>) {
-  if (!activeBatch) raise("Expected to be in an active batch");
-  activeBatch.toNotify.add(signal);
+function enqueueTrigger(signal: AbstractSignal<any>) {
+  if (!signalsToTrigger) raise("Expected to be in an active batch");
+  signalsToTrigger.add(signal);
 }
 
 /**
@@ -174,13 +170,14 @@ abstract class AbstractSignal<T> implements ISignal<T>, Observable<void> {
     return false;
   }
 
-  public [kNotify](): void {
+  public [kTrigger](): void {
     this.eventSource.notify();
 
-    // While the active batch chain is being notified, add more elements to
-    // the active batch
+    // While Signals are being triggered in the current rolldown, we can
+    // enqueue more signals to trigger (which will get added to the current
+    // rolldown)
     for (const sink of this[kSinks]) {
-      enqueueNotify(sink);
+      enqueueTrigger(sink);
     }
   }
 
@@ -242,7 +239,7 @@ export class Signal<T> extends AbstractSignal<T> {
       if (!this.equals(this.value, newValue)) {
         this.value = freeze(newValue);
         this.markSinksDirty();
-        enqueueNotify(this);
+        enqueueTrigger(this);
       }
     });
   }
@@ -372,7 +369,7 @@ export class DerivedSignal<T> extends AbstractSignal<T> {
    * the actual value if it's being watched, or any of their sinks are being
    * watched actively.
    */
-  public [kNotify](): void {
+  public [kTrigger](): void {
     if (!this.hasWatchers) {
       // If there are no watchers for this signal, we don't need to
       // re-evaluate. We can postpone re-evaluation until the next .get() call.
@@ -384,7 +381,7 @@ export class DerivedSignal<T> extends AbstractSignal<T> {
     // marked dirty, so we won't have to do that again here now.
     const updated = this.recompute();
     if (updated) {
-      super[kNotify](); // Actually notify subscribers
+      super[kTrigger](); // Actually notify subscribers
     }
   }
 }
@@ -431,7 +428,7 @@ export class MutableSignal<T extends object> extends AbstractSignal<T> {
 
       if (result !== false) {
         this.markSinksDirty();
-        enqueueNotify(this);
+        enqueueTrigger(this);
       }
     });
   }
