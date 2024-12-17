@@ -84,6 +84,7 @@ export async function POST(request: Request) {
       const company = {
         name: "My Liveblocks App",
         url: "https://my-liveblocks-app.com",
+        logoUrl: "https://liveblocks.io/apple-touch-icon.png",
       };
       const room = {
         name: emailData.roomInfo.name,

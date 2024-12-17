@@ -43,43 +43,24 @@ Metadata can be set using the default components, React hooks, or by editing
 thread using the REST APIs. But before making any changes, it’s recommended to
 set your metadata type in your config file.
 
-```ts file="liveblocks.config.ts" highlight="19-24,34"
-import { createClient } from "@liveblocks/client";
-import { createRoomContext } from "@liveblocks/react";
+```ts file="liveblocks.config.ts"
+declare global {
+  interface Liveblocks {
+    // +++
+    ThreadMetadata: {
+      priority: string;
+      pinned: boolean;
+      timestamp: number;
+    };
+    // +++
 
-const client = createClient({
-  // ...
-  resolveUsers({ userIds }) {
     // ...
-  },
-  resolveMentionSuggestions({ text, roomId }) {
-    // ...
-  },
-});
-
-type Presence = {};
-type Storage = {};
-type UserMeta = {};
-type RoomEvent = {};
-
-// Set your custom metadata properties
-export type ThreadMetadata = {
-  priority: string;
-  pinned: boolean;
-  timestamp: number;
-};
-
-export const {
-  RoomProvider,
-  // ...
-} = createRoomContext<
-  Presence,
-  Storage
-  UserMeta,
-  RoomEvent,
-  ThreadMetadata,
->(client);
+  }
+}
 ```
+
+Learn more about
+[typing your data](/docs/api-reference/liveblocks-react#Typing-your-data).
 
 ### Composer component
 
@@ -98,23 +79,23 @@ thread, with optional metadata, when its form is submitted.
 
 When using it to create a thread, you can
 [pass custom metadata](/docs/api-reference/liveblocks-react-ui#Adding-thread-metadata),
-which will be attached to the thread. You can also import your `ThreadMetadata`
-type from your config file to take advantage of TypeScript.
+which will be attached to the thread.
 
-```tsx highlight="7-14"
+```tsx
 import { Composer } from "@liveblocks/react-ui";
-import { ThreadMetadata } from "../liveblocks.config";
 
 // Creates a new thread with custom metadata
 function Component() {
   return (
-    <Composer<ThreadMetadata>
+    <Composer
+      // +++
       metadata={{
         // Custom metadata here
         priority: "URGENT",
         pinned: false,
         timestamp: 1703073188013,
       }}
+      // +++
     />
   );
 }

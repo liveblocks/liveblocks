@@ -13,6 +13,53 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
 
+# Week 50 (2024-12-13)
+
+## v2.14.0
+
+### `@liveblocks/emails`
+
+- Add new functions [`prepareTextMentionNotificationEmailAsHtml`](https://liveblocks.io/docs/api-reference/liveblocks-emails#prepare-text-mention-notification-email-as-html) and
+  [`prepareTextMentionNotificationEmailAsReact`](https://liveblocks.io/docs/api-reference/liveblocks-emails#prepare-text-mention-notification-email-as-react) to support text mention
+  notification event for Lexical and Tiptap text editors and prepare data into
+  email-ready formats.
+
+## v2.13.2
+
+### `@liveblocks/react-lexical`
+
+- Fix report text editor function's call. Now we wait for the room's status to
+  be `connected` to report the text editor instead of reporting directly after
+  room creation / loading.
+
+### `@liveblocks/react-tiptap`
+
+- Fix report text editor function's call. Now we wait for the room's status to
+  be `connected` to report the text editor instead of reporting directly after
+  room creation / loading.
+
+## Examples
+
+- New example: [Text Editor Emails (Tiptap)](https://liveblocks.io/examples/collaborative-text-editor-emails/nextjs-tiptap-emails-resend).
+- New example: [Text Editor Emails (Lexical)](https://liveblocks.io/examples/collaborative-text-editor-emails/nextjs-lexical-emails-resend).
+
+## Documentation
+
+- New guide: [How to send email notifications for unread text editor mentions](https://liveblocks.io/docs/guides/how-to-send-email-notifications-for-unread-text-editor-mentions).
+- Improved [thread metadata page](https://liveblocks.io/docs/products/comments/metadata).
+
+## Website
+
+- New blog post: [What's new in Liveblocks: November 2024](https://liveblocks.io/blog/whats-new-in-liveblocks-november-edition-2024).
+- Revamped the [Liveblocks blog](https://liveblocks.io/blog):
+  - Added the ability to switch between categories to find relevant posts.
+  - Added the ability to search posts and filter results using tags.
+  - Updated the layout with a table of contents, writer information, and featured posts.
+
+## Contributors
+
+sugardarius, ctnicholas
+
 # Week 49 (2024-12-06)
 
 ## v2.13.1
