@@ -1,7 +1,7 @@
 import { assertNever } from "./lib/assert";
 import { controlledPromise } from "./lib/controlledPromise";
 import type { Observable } from "./lib/EventSource";
-import { makeEventSource } from "./lib/EventSource";
+import { makeBufferableEventSource, makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { BuiltinEvent, Patchable, Target } from "./lib/fsm";
 import { FSM } from "./lib/fsm";
@@ -379,7 +379,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
 ) {
   // Create observable event sources, which this machine will call into when
   // specific events happen
-  const onMessage = makeEventSource<IWebSocketMessageEvent>();
+  const onMessage = makeBufferableEventSource<IWebSocketMessageEvent>();
   onMessage.pause(); // Pause all message delivery until status is OPEN
 
   // Emitted whenever the server deliberately closes the connection for
