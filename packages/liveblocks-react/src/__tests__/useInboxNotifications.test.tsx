@@ -296,13 +296,11 @@ describe("useInboxNotifications", () => {
           INBOX_NOTIFICATIONS: { isLoading: false, data: undefined },
         },
       }));
-      umbrellaStore.force_set3((state) => ({
-        ...state,
-        notificationsById: {
-          // Explicitly set the order to be reversed to test that the hook sorts the notifications
-          [oldInboxNotification.id]: oldInboxNotification,
-          [newInboxNotification.id]: newInboxNotification,
-        },
+      umbrellaStore.force_set3((prev) => ({
+        ...prev,
+        // Explicitly set the order to be reversed to test that the hook sorts the notifications
+        [oldInboxNotification.id]: oldInboxNotification,
+        [newInboxNotification.id]: newInboxNotification,
       }));
     });
 

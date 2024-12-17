@@ -537,9 +537,7 @@ export class SinglePageResource {
 type InternalState1<M extends BaseMetadata> = readonly OptimisticUpdate<M>[];
 
 // XXX Internal state 3 = notifications by ID
-type InternalState3 = Readonly<{
-  notificationsById: Record<string, InboxNotificationData>;
-}>;
+type InternalState3 = Record<string, InboxNotificationData>;
 
 // XXX Internal state 2 = everything else (for now!)
 type InternalState2 = Readonly<{
@@ -661,6 +659,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
       const nextCursor = result.nextCursor;
       return nextCursor;
     };
+
+    // XXX Looks like this should also be a Signal!
     this.#notifications = new PaginatedResource(inboxFetcher);
     this.#notifications.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
@@ -675,9 +675,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       settingsByRoomId: {},
       versionsByRoomId: {},
     });
-    this._internalState3 = new Signal<InternalState3>({
-      notificationsById: {},
-    });
+    this._internalState3 = new Signal<InternalState3>({});
 
     this.externalState = DerivedSignal.from(
       this._internalState1,
@@ -859,12 +857,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       cache: Readonly<Record<string, InboxNotificationData>>
     ) => Readonly<Record<string, InboxNotificationData>>
   ): void {
-    this._internalState3.set((state) => {
-      const inboxNotifications = mapFn(state.notificationsById);
-      return inboxNotifications !== state.notificationsById
-        ? { ...state, notificationsById: inboxNotifications }
-        : state;
-    });
+    this._internalState3.set((prev) => mapFn(prev));
   }
 
   #setNotificationSettings(
@@ -918,12 +911,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // ---------------------------------------------------------------------------------- }}}
 
   /** @internal - Only call this method from unit tests. */
+  // XXX Rename this!
   public force_set2(
     callback: (currentState: InternalState2) => InternalState2
   ): void {
     return this._internalState2.set(callback);
   }
 
+  // XXX Rename this!
   public force_set3(
     callback: (currentState: InternalState3) => InternalState3
   ): void {
@@ -1619,7 +1614,7 @@ function internalToExternalState<M extends BaseMetadata>(
   const threadsDB = rawThreadsDB.clone();
 
   const computed = {
-    notificationsById: { ...state3.notificationsById },
+    notificationsById: { ...state3 },
     settingsByRoomId: { ...state2.settingsByRoomId },
   };
 
