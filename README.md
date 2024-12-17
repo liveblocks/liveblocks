@@ -61,7 +61,7 @@ notifications, and more.
 - [`@liveblocks/zustand`](https://liveblocks.io/docs/api-reference/liveblocks-zustand)
 - [`@liveblocks/yjs`](https://liveblocks.io/docs/api-reference/liveblocks-yjs)
 - [`@liveblocks/node`](https://liveblocks.io/docs/api-reference/liveblocks-node)
-- [`@liveblocks/emais`](https://liveblocks.io/docs/api-reference/liveblocks-emails)
+- [`@liveblocks/emails`](https://liveblocks.io/docs/api-reference/liveblocks-emails)
 
 ## Developers
 
