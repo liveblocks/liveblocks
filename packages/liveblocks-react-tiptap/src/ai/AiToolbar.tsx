@@ -585,10 +585,14 @@ export const AiToolbar = Object.assign(
             event.preventDefault();
             event.stopPropagation();
 
-            (editor.chain() as ExtendedChainedCommands<"closeAi">)
-              .closeAi()
-              .focus()
-              .run();
+            if (state === "thinking") {
+              (editor.commands as AiCommands<boolean>).cancelAskAi();
+            } else {
+              (editor.chain() as ExtendedChainedCommands<"closeAi">)
+                .closeAi()
+                .focus()
+                .run();
+            }
           }
         };
 
@@ -597,7 +601,7 @@ export const AiToolbar = Object.assign(
         return () => {
           document.removeEventListener("keydown", handleKeyDown);
         };
-      }, [editor, isOpen]);
+      }, [editor, isOpen, state]);
 
       if (!editor || !isOpen) {
         return null;
