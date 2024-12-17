@@ -1653,7 +1653,7 @@ export class Liveblocks {
   }): Promise<ChannelsNotificationSettings> {
     const { userId } = params;
 
-    const res = await this.get(
+    const res = await this.#get(
       url`/v2/users/${userId}/channels-notification-settings`
     );
     if (!res.ok) {
@@ -1675,7 +1675,7 @@ export class Liveblocks {
   }): Promise<ChannelsNotificationSettings> {
     const { userId, data } = params;
 
-    const res = await this.post(
+    const res = await this.#post(
       url`/v2/users/${userId}/channels-notification-settings`,
       data
     );
@@ -1696,7 +1696,7 @@ export class Liveblocks {
     userId: string;
   }): Promise<void> {
     const { userId } = params;
-    const res = await this.delete(
+    const res = await this.#delete(
       url`/v2/users/${userId}/channels-notification-settings`
     );
     if (!res.ok) {
