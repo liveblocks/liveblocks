@@ -48,6 +48,7 @@
     "@liveblocks/react-ui": "2.13.0",
     "@liveblocks/yjs": "2.13.0",
     "@radix-ui/react-dropdown-menu": "^2.1.2",
+    "@radix-ui/react-select": "^2.1.2",
     "@radix-ui/react-toggle": "^1.1.0",
     "@tiptap/core": "^2.7.2",
     "@tiptap/react": "^2.7.2",

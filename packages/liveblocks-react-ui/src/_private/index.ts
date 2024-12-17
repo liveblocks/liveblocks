@@ -9,4 +9,5 @@ export {
 } from "../components/internal/Tooltip";
 export { User } from "../components/internal/User";
 export * from "../icons";
+export { capitalize } from "../utils/capitalize";
 export { useRefs } from "../utils/use-refs";

@@ -1,6 +1,7 @@
 import {
   BoldIcon,
   Button,
+  capitalize,
   CodeIcon,
   CommentIcon,
   ItalicIcon,
@@ -12,14 +13,18 @@ import {
   UnderlineIcon,
   UndoIcon,
 } from "@liveblocks/react-ui/_private";
+import * as SelectPrimitive from "@radix-ui/react-select";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type { Editor } from "@tiptap/react";
 import type { ComponentProps, ComponentType, ReactNode } from "react";
-import React, { forwardRef } from "react";
+import React, { forwardRef, useMemo, useState } from "react";
 
 import { classNames } from "../classnames";
 import { EditorProvider, useCurrentEditor } from "../context";
 import type { ExtendedChainedCommands } from "../types";
+
+export const FLOATING_ELEMENT_SIDE_OFFSET = 6;
+export const FLOATING_ELEMENT_COLLISION_PADDING = 10;
 
 export interface ToolbarSlotProps {
   editor: Editor;
@@ -42,6 +47,17 @@ interface ToolbarButtonProps extends ComponentProps<"button"> {
 
 interface ToolbarToggleProps extends ToolbarButtonProps {
   active: boolean;
+}
+
+interface ToolbarSelectOption {
+  value: string;
+  label?: string;
+  icon?: ReactNode;
+}
+
+interface ToolbarSelectProps extends ComponentProps<"button"> {
+  label: string;
+  options: ToolbarSelectOption[];
 }
 
 type ToolbarSeparatorProps = ComponentProps<"div">;
@@ -83,6 +99,52 @@ const ToolbarToggle = forwardRef<HTMLButtonElement, ToolbarToggleProps>(
       <TogglePrimitive.Root asChild pressed={active}>
         <ToolbarButton ref={forwardedRef} {...props} />
       </TogglePrimitive.Root>
+    );
+  }
+);
+
+const ToolbarSelect = forwardRef<HTMLButtonElement, ToolbarSelectProps>(
+  ({ options, ...props }, forwardedRef) => {
+    const [value, setValue] = useState<string>();
+    const formattedValue = useMemo(() => {
+      const option = options.find((option) => option.value === value);
+
+      return option ? option.label ?? capitalize(option.value) : undefined;
+    }, [value, options]);
+
+    return (
+      <SelectPrimitive.Root value={value} onValueChange={setValue}>
+        <ShortcutTooltip content="Turn into…">
+          <SelectPrimitive.Trigger asChild {...props} ref={forwardedRef}>
+            <Button type="button" variant="toolbar">
+              {formattedValue ?? "Select…"}
+            </Button>
+          </SelectPrimitive.Trigger>
+        </ShortcutTooltip>
+        <SelectPrimitive.Portal>
+          <SelectPrimitive.Content
+            position="popper"
+            sideOffset={FLOATING_ELEMENT_SIDE_OFFSET}
+            collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
+            className="lb-dropdown"
+          >
+            {options.map((option) => (
+              <SelectPrimitive.Item
+                key={option.value}
+                value={option.value}
+                className="lb-dropdown-item"
+              >
+                {option.icon ? (
+                  <span className="lb-icon-container">{option.icon}</span>
+                ) : null}
+                <span className="lb-dropdown-item-label">
+                  {option.label ?? capitalize(option.value)}
+                </span>
+              </SelectPrimitive.Item>
+            ))}
+          </SelectPrimitive.Content>
+        </SelectPrimitive.Portal>
+      </SelectPrimitive.Root>
     );
   }
 );
@@ -140,6 +202,17 @@ function ToolbarSectionInline() {
 
   return (
     <>
+      <ToolbarSelect
+        label="Turn into"
+        options={[
+          {
+            value: "Text",
+          },
+          {
+            value: "Heading 1",
+          },
+        ]}
+      />
       {supportsBold && (
         <ToolbarToggle
           label="Bold"
