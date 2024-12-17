@@ -108,6 +108,7 @@ import {
 } from "./types/errors";
 import type { UmbrellaStore, UmbrellaStoreState } from "./umbrella-store";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
+import { useSignal } from "./use-signal";
 
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
@@ -2628,13 +2629,9 @@ function useAttachmentUrlSuspense(attachmentId: string) {
 function useRoomPermissions(roomId: string) {
   const client = useClient();
   const store = getRoomExtrasForClient(client).store;
-
-  return (
-    useSyncExternalStore(
-      store.subscribe,
-      React.useCallback(() => store._getPermissions(roomId), [store, roomId]),
-      React.useCallback(() => store._getPermissions(roomId), [store, roomId])
-    ) ?? new Set()
+  return useSignal(
+    store.permissionHintsByRoomId,
+    (hints) => hints[roomId] ?? new Set()
   );
 }
 

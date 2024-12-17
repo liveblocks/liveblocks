@@ -1,6 +1,24 @@
 import type { ISignal } from "@liveblocks/core";
-import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
+import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
-export function useSignal<T>(signal: ISignal<T>): T {
-  return useSyncExternalStore(signal.subscribe, signal.get, signal.get);
+const identity = <T>(value: T): T => value;
+
+export function useSignal<T>(signal: ISignal<T>): T;
+export function useSignal<T, V>(
+  signal: ISignal<T>,
+  selector: (value: T) => V,
+  isEqual?: (a: V, b: V) => boolean
+): V;
+export function useSignal<T, V>(
+  signal: ISignal<T>,
+  selector?: (value: T) => V,
+  isEqual?: (a: V, b: V) => boolean
+): T | V {
+  return useSyncExternalStoreWithSelector(
+    signal.subscribe,
+    signal.get,
+    signal.get,
+    selector ?? (identity as (value: T) => V),
+    isEqual
+  );
 }
