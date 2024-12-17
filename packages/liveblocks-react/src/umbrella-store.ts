@@ -536,11 +536,8 @@ export class SinglePageResource {
 // XXX Internal state 1 = optimistic updates
 type InternalState1<M extends BaseMetadata> = readonly OptimisticUpdate<M>[];
 
-// XXX Internal state 2 = versions by room ID
-type InternalState2 = Readonly<{
-  // XXX Remove this nesting
-  versionsByRoomId: Record<string, Record<string, HistoryVersion>>;
-}>;
+// XXX Internal state 2 = versions by room ID then version ID
+type InternalState2 = Record<string, Record<string, HistoryVersion>>;
 
 // XXX Internal state 3 = notifications by ID
 type InternalState3 = Record<string, InboxNotificationData>;
@@ -678,9 +675,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     this._rawThreadsDB = new ThreadDB();
     this._internalState1 = new Signal<InternalState1<M>>([]);
-    this._internalState2 = new Signal<InternalState2>({
-      versionsByRoomId: {},
-    });
+    this._internalState2 = new Signal<InternalState2>({});
     this._internalState3 = new Signal<InternalState3>({});
     this._internalState4 = new Signal<InternalState4>({});
     this._internalState5 = new Signal<InternalState5>({});
@@ -881,21 +876,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   #updateRoomVersions(roomId: string, versions: HistoryVersion[]): void {
-    this._internalState2.set((state) => {
-      const versionsById = Object.fromEntries(
-        versions.map((version) => [version.id, version])
-      );
-
+    this._internalState2.set((prev) => {
+      const newVersions: Record<string, HistoryVersion> = { ...prev[roomId] };
+      for (const version of versions) {
+        newVersions[version.id] = version;
+      }
       return {
-        ...state,
-        versionsByRoomId: {
-          ...state.versionsByRoomId,
-          [roomId]: {
-            // Merge with existing versions for the room, or start with an empty object
-            ...(state.versionsByRoomId[roomId] ?? {}),
-            ...versionsById,
-          },
-        },
+        ...prev,
+        [roomId]: newVersions,
       };
     });
   }
@@ -1831,7 +1819,7 @@ function internalToExternalState<M extends BaseMetadata>(
     notificationsById: computed.notificationsById,
     settingsByRoomId: computed.settingsByRoomId,
     threadsDB,
-    versionsByRoomId: state2.versionsByRoomId,
+    versionsByRoomId: state2,
   };
 }
 
