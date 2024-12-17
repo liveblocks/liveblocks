@@ -533,8 +533,11 @@ export class SinglePageResource {
   }
 }
 
-type InternalState<M extends BaseMetadata> = Readonly<{
-  optimisticUpdates: readonly OptimisticUpdate<M>[];
+// XXX Internal state 1 = optimistic updates
+type InternalState1<M extends BaseMetadata> = readonly OptimisticUpdate<M>[];
+
+// XXX Internal state 2 = everything else (for now!)
+type InternalState2 = Readonly<{
   permissionsByRoom: Record<string, Set<Permission>>;
 
   // TODO: Ideally we would have a similar NotificationsDB, like we have ThreadDB
@@ -612,7 +615,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // - External state with optimistic updates applied (= UmbrellaStoreState type)
   //
 
-  _internalState: Signal<InternalState<M>>; // XXX Split this into multiple signals eventually
+  _internalState1: Signal<InternalState1<M>>; // XXX Split this into multiple signals eventually
+  _internalState2: Signal<InternalState2>; // XXX Split this into multiple signals eventually
   externalState: DerivedSignal<UmbrellaStoreState<M>>;
 
   // Notifications
@@ -658,12 +662,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.#notifications.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
-      this._internalState.set((store) => ({ ...store }))
+      this._internalState2.set((store) => ({ ...store }))
     );
 
     this._rawThreadsDB = new ThreadDB();
-    this._internalState = new Signal<InternalState<M>>({
-      optimisticUpdates: [],
+    this._internalState1 = new Signal<InternalState1<M>>([]);
+    this._internalState2 = new Signal<InternalState2>({
       permissionsByRoom: {},
       notificationsById: {},
       settingsByRoomId: {},
@@ -671,11 +675,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
     });
 
     this.externalState = DerivedSignal.from(
-      this._internalState,
+      this._internalState1,
+      this._internalState2,
       this._rawThreadsDB.signal,
 
-      (rawState, rawThreadsDB): UmbrellaStoreState<M> =>
-        internalToExternalState(rawState, rawThreadsDB)
+      (state1, state2, rawThreadsDB): UmbrellaStoreState<M> =>
+        internalToExternalState(state1, state2, rawThreadsDB)
     );
 
     // Auto-bind all of this class’ methods here, so we can use stable
@@ -832,7 +837,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   public _getPermissions(roomId: string): Set<Permission> | undefined {
-    return this._internalState.get().permissionsByRoom[roomId];
+    return this._internalState2.get().permissionsByRoom[roomId];
   }
 
   // Direct low-level cache mutations ------------------------------------------------- {{{
@@ -848,7 +853,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       cache: Readonly<Record<string, InboxNotificationData>>
     ) => Readonly<Record<string, InboxNotificationData>>
   ): void {
-    this._internalState.set((state) => {
+    this._internalState2.set((state) => {
       const inboxNotifications = mapFn(state.notificationsById);
       return inboxNotifications !== state.notificationsById
         ? { ...state, notificationsById: inboxNotifications }
@@ -860,7 +865,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     roomId: string,
     settings: RoomNotificationSettings
   ): void {
-    this._internalState.set((state) => ({
+    this._internalState2.set((state) => ({
       ...state,
       settingsByRoomId: {
         ...state.settingsByRoomId,
@@ -870,7 +875,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   #updateRoomVersions(roomId: string, versions: HistoryVersion[]): void {
-    this._internalState.set((state) => {
+    this._internalState2.set((state) => {
       const versionsById = Object.fromEntries(
         versions.map((version) => [version.id, version])
       );
@@ -894,12 +899,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
       cache: readonly OptimisticUpdate<M>[]
     ) => readonly OptimisticUpdate<M>[]
   ): void {
-    this._internalState.set((state) => {
-      const optimisticUpdates = mapFn(state.optimisticUpdates);
+    this._internalState1.set((curr) => {
+      const optimisticUpdates = mapFn(curr);
+      // XXX Make this a subscriber instead of mutating here directly
       this.#syncSource.setSyncStatus(
         optimisticUpdates.length > 0 ? "synchronizing" : "synchronized"
       );
-      return { ...state, optimisticUpdates };
+      return optimisticUpdates;
     });
   }
 
@@ -907,9 +913,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   /** @internal - Only call this method from unit tests. */
   public force_set(
-    callback: (currentState: InternalState<M>) => InternalState<M>
+    callback: (currentState: InternalState2) => InternalState2
   ): void {
-    return this._internalState.set(callback);
+    return this._internalState2.set(callback);
   }
 
   /**
@@ -1304,7 +1310,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   #updateRoomPermissions(permissions: Record<string, Permission[]>) {
     const permissionsByRoom = {
-      ...this._internalState.get().permissionsByRoom,
+      ...this._internalState2.get().permissionsByRoom,
     };
 
     Object.entries(permissions).forEach(([roomId, newPermissions]) => {
@@ -1317,7 +1323,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       permissionsByRoom[roomId] = existingPermissions;
     });
 
-    this._internalState.set((state) => ({
+    this._internalState2.set((state) => ({
       ...state,
       permissionsByRoom,
     }));
@@ -1368,7 +1374,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     paginatedResource.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
-      this._internalState.set((store) => ({ ...store }))
+      this._internalState2.set((store) => ({ ...store }))
     );
 
     this.#roomThreads.set(queryKey, paginatedResource);
@@ -1439,7 +1445,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     paginatedResource.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
-      this._internalState.set((store) => ({ ...store }))
+      this._internalState2.set((store) => ({ ...store }))
     );
 
     this.#userThreads.set(queryKey, paginatedResource);
@@ -1510,7 +1516,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     resource.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
-      this._internalState.set((store) => ({ ...store }))
+      this._internalState2.set((store) => ({ ...store }))
     );
 
     this.#roomVersions.set(queryKey, resource);
@@ -1568,7 +1574,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     resource.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
-      this._internalState.set((store) => ({ ...store }))
+      this._internalState2.set((store) => ({ ...store }))
     );
 
     this.#roomNotificationSettings.set(queryKey, resource);
@@ -1594,17 +1600,18 @@ export class UmbrellaStore<M extends BaseMetadata> {
  * a stable way, removes internal fields that should not be exposed publicly.
  */
 function internalToExternalState<M extends BaseMetadata>(
-  state: InternalState<M>,
+  state1: InternalState1<M>,
+  state2: InternalState2,
   rawThreadsDB: ThreadDB<M>
 ): UmbrellaStoreState<M> {
   const threadsDB = rawThreadsDB.clone();
 
   const computed = {
-    notificationsById: { ...state.notificationsById },
-    settingsByRoomId: { ...state.settingsByRoomId },
+    notificationsById: { ...state2.notificationsById },
+    settingsByRoomId: { ...state2.settingsByRoomId },
   };
 
-  for (const optimisticUpdate of state.optimisticUpdates) {
+  for (const optimisticUpdate of state1) {
     switch (optimisticUpdate.type) {
       case "create-thread": {
         threadsDB.upsert(optimisticUpdate.thread);
@@ -1809,7 +1816,7 @@ function internalToExternalState<M extends BaseMetadata>(
     notificationsById: computed.notificationsById,
     settingsByRoomId: computed.settingsByRoomId,
     threadsDB,
-    versionsByRoomId: state.versionsByRoomId,
+    versionsByRoomId: state2.versionsByRoomId,
   };
 }
 
