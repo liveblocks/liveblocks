@@ -129,14 +129,14 @@ function patterns<TState extends string>(
 }
 
 class SafeContext<TContext extends object> {
-  private curr: Readonly<TContext>;
+  #curr: Readonly<TContext>;
 
   constructor(initialContext: TContext) {
-    this.curr = initialContext;
+    this.#curr = initialContext;
   }
 
   get current(): Readonly<TContext> {
-    return this.curr;
+    return this.#curr;
   }
 
   /**
@@ -150,10 +150,10 @@ class SafeContext<TContext extends object> {
     let allowed = true;
 
     const patchableContext = {
-      ...this.curr,
+      ...this.#curr,
       patch(patch: Partial<TContext>): void {
         if (allowed) {
-          self.curr = Object.assign({}, self.curr, patch);
+          self.#curr = Object.assign({}, self.#curr, patch);
 
           // Also patch the temporary mutable context helper itself, in case
           // there are multiple calls in a succession that need
@@ -197,19 +197,19 @@ export class FSM<
 
   // Indicates whether this state machine is still being configured, has
   // started, or has terminated
-  private runningState: RunningState;
+  #runningState: RunningState;
 
-  private readonly currentContext: SafeContext<TContext>;
+  readonly #currentContext: SafeContext<TContext>;
 
-  private states: Set<TState>;
-  private currentStateOrNull: TState | null;
+  #states: Set<TState>;
+  #currentStateOrNull: TState | null;
 
-  private allowedTransitions: Map<
+  #allowedTransitions: Map<
     TState,
     Map<TEvent["type"], TargetFn<TContext, TEvent, TState>>
   >;
 
-  private readonly eventHub: {
+  readonly #eventHub: {
     readonly didReceiveEvent: EventSource<TEvent | BuiltinEvent>;
     readonly willTransition: EventSource<{ from: TState; to: TState }>;
     readonly didIgnoreEvent: EventSource<TEvent | BuiltinEvent>;
@@ -241,20 +241,20 @@ export class FSM<
   // will contain the exit handler for `foo.bar.qux` (at the top), then
   // `foo.bar.*`, then `foo.*`, and finally, `*`.
   //
-  private cleanupStack: (CleanupFn<TContext> | null)[];
+  #cleanupStack: (CleanupFn<TContext> | null)[];
 
-  private enterFns: Map<TState | Wildcard<TState>, EnterFn<TContext>>;
+  #enterFns: Map<TState | Wildcard<TState>, EnterFn<TContext>>;
 
   // Used to provide better error messages
-  private knownEventTypes: Set<string>;
+  #knownEventTypes: Set<string>;
 
   /**
    * Returns the initial state, which is defined by the first call made to
    * .addState().
    */
-  private get initialState(): TState {
+  get #initialState(): TState {
     // Return the first state ever defined as the initial state
-    const result = this.states.values()[Symbol.iterator]().next();
+    const result = this.#states.values()[Symbol.iterator]().next();
     if (result.done) {
       throw new Error("No states defined yet");
     } else {
@@ -263,27 +263,27 @@ export class FSM<
   }
 
   public get currentState(): TState {
-    if (this.currentStateOrNull === null) {
-      if (this.runningState === RunningState.NOT_STARTED_YET) {
+    if (this.#currentStateOrNull === null) {
+      if (this.#runningState === RunningState.NOT_STARTED_YET) {
         throw new Error("Not started yet");
       } else {
         throw new Error("Already stopped");
       }
     }
-    return this.currentStateOrNull;
+    return this.#currentStateOrNull;
   }
 
   /**
    * Starts the machine by entering the initial state.
    */
   public start(): this {
-    if (this.runningState !== RunningState.NOT_STARTED_YET) {
+    if (this.#runningState !== RunningState.NOT_STARTED_YET) {
       throw new Error("State machine has already started");
     }
 
-    this.runningState = RunningState.STARTED;
-    this.currentStateOrNull = this.initialState;
-    this.enter(null);
+    this.#runningState = RunningState.STARTED;
+    this.#currentStateOrNull = this.#initialState;
+    this.#enter(null);
     return this;
   }
 
@@ -292,25 +292,25 @@ export class FSM<
    * handlers for the current state, but not enter a new state.
    */
   public stop(): void {
-    if (this.runningState !== RunningState.STARTED) {
+    if (this.#runningState !== RunningState.STARTED) {
       throw new Error("Cannot stop a state machine that hasn't started yet");
     }
-    this.exit(null);
-    this.runningState = RunningState.STOPPED;
-    this.currentStateOrNull = null;
+    this.#exit(null);
+    this.#runningState = RunningState.STOPPED;
+    this.#currentStateOrNull = null;
   }
 
   constructor(initialContext: Readonly<TContext>) {
     this.id = nextId++;
-    this.runningState = RunningState.NOT_STARTED_YET;
-    this.currentStateOrNull = null;
-    this.states = new Set();
-    this.enterFns = new Map();
-    this.cleanupStack = [];
-    this.knownEventTypes = new Set();
-    this.allowedTransitions = new Map();
-    this.currentContext = new SafeContext(initialContext);
-    this.eventHub = {
+    this.#runningState = RunningState.NOT_STARTED_YET;
+    this.#currentStateOrNull = null;
+    this.#states = new Set();
+    this.#enterFns = new Map();
+    this.#cleanupStack = [];
+    this.#knownEventTypes = new Set();
+    this.#allowedTransitions = new Map();
+    this.#currentContext = new SafeContext(initialContext);
+    this.#eventHub = {
       didReceiveEvent: makeEventSource(),
       willTransition: makeEventSource(),
       didIgnoreEvent: makeEventSource(),
@@ -318,26 +318,26 @@ export class FSM<
       didEnterState: makeEventSource(),
     };
     this.events = {
-      didReceiveEvent: this.eventHub.didReceiveEvent.observable,
-      willTransition: this.eventHub.willTransition.observable,
-      didIgnoreEvent: this.eventHub.didIgnoreEvent.observable,
-      willExitState: this.eventHub.willExitState.observable,
-      didEnterState: this.eventHub.didEnterState.observable,
+      didReceiveEvent: this.#eventHub.didReceiveEvent.observable,
+      willTransition: this.#eventHub.willTransition.observable,
+      didIgnoreEvent: this.#eventHub.didIgnoreEvent.observable,
+      willExitState: this.#eventHub.willExitState.observable,
+      didEnterState: this.#eventHub.didEnterState.observable,
     };
   }
 
   public get context(): Readonly<TContext> {
-    return this.currentContext.current;
+    return this.#currentContext.current;
   }
 
   /**
    * Define an explicit finite state in the state machine.
    */
   public addState(state: TState): this {
-    if (this.runningState !== RunningState.NOT_STARTED_YET) {
+    if (this.#runningState !== RunningState.NOT_STARTED_YET) {
       throw new Error("Already started");
     }
-    this.states.add(state);
+    this.#states.add(state);
     return this;
   }
 
@@ -345,9 +345,9 @@ export class FSM<
     nameOrPattern: TState | Wildcard<TState>,
     enterFn: EnterFn<TContext>
   ): this {
-    if (this.runningState !== RunningState.NOT_STARTED_YET) {
+    if (this.#runningState !== RunningState.NOT_STARTED_YET) {
       throw new Error("Already started");
-    } else if (this.enterFns.has(nameOrPattern)) {
+    } else if (this.#enterFns.has(nameOrPattern)) {
       throw new Error(
         // TODO We _currently_ don't support multiple .onEnters() for the same
         // state, but this is not a fundamental limitation. Just not
@@ -356,7 +356,7 @@ export class FSM<
       );
     }
 
-    this.enterFns.set(nameOrPattern, enterFn);
+    this.#enterFns.set(nameOrPattern, enterFn);
     return this;
   }
 
@@ -399,17 +399,17 @@ export class FSM<
       const timeoutId = maxTimeout
         ? setTimeout(() => {
             const reason = new Error("Timed out");
-            this.transition({ type: "ASYNC_ERROR", reason }, onError);
+            this.#transition({ type: "ASYNC_ERROR", reason }, onError);
           }, maxTimeout)
         : undefined;
 
       let done = false;
-      void promiseFn(this.currentContext.current, signal).then(
+      void promiseFn(this.#currentContext.current, signal).then(
         // On OK
         (data: T) => {
           if (!signal.aborted) {
             done = true;
-            this.transition({ type: "ASYNC_OK", data }, onOK);
+            this.#transition({ type: "ASYNC_OK", data }, onOK);
           }
         },
 
@@ -417,7 +417,7 @@ export class FSM<
         (reason: unknown) => {
           if (!signal.aborted) {
             done = true;
-            this.transition({ type: "ASYNC_ERROR", reason }, onError);
+            this.#transition({ type: "ASYNC_ERROR", reason }, onError);
           }
         }
       );
@@ -431,20 +431,18 @@ export class FSM<
     });
   }
 
-  private getStatesMatching(
-    nameOrPattern: TState | Wildcard<TState>
-  ): TState[] {
+  #getStatesMatching(nameOrPattern: TState | Wildcard<TState>): TState[] {
     const matches: TState[] = [];
 
     // We're trying to match a group pattern here, i.e. `foo.*` (which might
     // match `foo.bar` and `foo.qux` states)
     if (nameOrPattern === "*") {
-      for (const state of this.states) {
+      for (const state of this.#states) {
         matches.push(state);
       }
     } else if (nameOrPattern.endsWith(".*")) {
       const prefix = nameOrPattern.slice(0, -1); // Strip only the "*", keep the "."
-      for (const state of this.states) {
+      for (const state of this.#states) {
         if (state.startsWith(prefix)) {
           matches.push(state);
         }
@@ -452,7 +450,7 @@ export class FSM<
     } else {
       // Just a single, explicit state name
       const name = nameOrPattern as TState;
-      if (this.states.has(name)) {
+      if (this.#states.has(name)) {
         matches.push(name);
       }
     }
@@ -482,15 +480,15 @@ export class FSM<
       [E in TEvent as E["type"]]?: Target<TContext, E, TState> | null;
     }
   ): this {
-    if (this.runningState !== RunningState.NOT_STARTED_YET) {
+    if (this.#runningState !== RunningState.NOT_STARTED_YET) {
       throw new Error("Already started");
     }
 
-    for (const srcState of this.getStatesMatching(nameOrPattern)) {
-      let map = this.allowedTransitions.get(srcState);
+    for (const srcState of this.#getStatesMatching(nameOrPattern)) {
+      let map = this.#allowedTransitions.get(srcState);
       if (map === undefined) {
         map = new Map();
-        this.allowedTransitions.set(srcState, map);
+        this.#allowedTransitions.set(srcState, map);
       }
 
       for (const [type, target_] of Object.entries(mapping)) {
@@ -504,7 +502,7 @@ export class FSM<
           | Target<TContext, TEvent, TState>
           | null
           | undefined;
-        this.knownEventTypes.add(type);
+        this.#knownEventTypes.add(type);
 
         if (target !== undefined) {
           const targetFn = typeof target === "function" ? target : () => target;
@@ -533,10 +531,10 @@ export class FSM<
     return this.onEnter(stateOrPattern, () => {
       const ms =
         typeof after === "function"
-          ? after(this.currentContext.current)
+          ? after(this.#currentContext.current)
           : after;
       const timeoutID = setTimeout(() => {
-        this.transition({ type: "TIMER" }, target);
+        this.#transition({ type: "TIMER" }, target);
       }, ms);
 
       return () => {
@@ -545,10 +543,10 @@ export class FSM<
     });
   }
 
-  private getTargetFn(
+  #getTargetFn(
     eventName: TEvent["type"]
   ): TargetFn<TContext, TEvent, TState> | undefined {
-    return this.allowedTransitions.get(this.currentState)?.get(eventName);
+    return this.#allowedTransitions.get(this.currentState)?.get(eventName);
   }
 
   /**
@@ -561,13 +559,13 @@ export class FSM<
    * `foo.bar.qux` to `bla.bla`, then the level is 3.
    * If `null`, it will exit all levels.
    */
-  private exit(levels: number | null) {
-    this.eventHub.willExitState.notify(this.currentState);
+  #exit(levels: number | null) {
+    this.#eventHub.willExitState.notify(this.currentState);
 
-    this.currentContext.allowPatching((patchableContext) => {
-      levels = levels ?? this.cleanupStack.length;
+    this.#currentContext.allowPatching((patchableContext) => {
+      levels = levels ?? this.#cleanupStack.length;
       for (let i = 0; i < levels; i++) {
-        this.cleanupStack.pop()?.(patchableContext);
+        this.#cleanupStack.pop()?.(patchableContext);
       }
     });
   }
@@ -576,25 +574,25 @@ export class FSM<
    * Enters the current state, and executes any necessary onEnter handlers.
    * Call this directly _after_ setting the current state to the next state.
    */
-  private enter(levels: number | null) {
+  #enter(levels: number | null) {
     const enterPatterns = patterns(
       this.currentState,
       levels ?? this.currentState.split(".").length + 1
     );
 
-    this.currentContext.allowPatching((patchableContext) => {
+    this.#currentContext.allowPatching((patchableContext) => {
       for (const pattern of enterPatterns) {
-        const enterFn = this.enterFns.get(pattern);
+        const enterFn = this.#enterFns.get(pattern);
         const cleanupFn = enterFn?.(patchableContext);
         if (typeof cleanupFn === "function") {
-          this.cleanupStack.push(cleanupFn);
+          this.#cleanupStack.push(cleanupFn);
         } else {
-          this.cleanupStack.push(null);
+          this.#cleanupStack.push(null);
         }
       }
     });
 
-    this.eventHub.didEnterState.notify(this.currentState);
+    this.#eventHub.didEnterState.notify(this.currentState);
   }
 
   /**
@@ -603,11 +601,11 @@ export class FSM<
    */
   public send(event: TEvent): void {
     // Throw if the event is unknown, which may likely be a configuration error
-    if (!this.knownEventTypes.has(event.type)) {
+    if (!this.#knownEventTypes.has(event.type)) {
       throw new Error(`Invalid event ${JSON.stringify(event.type)}`);
     }
 
-    if (this.runningState === RunningState.STOPPED) {
+    if (this.#runningState === RunningState.STOPPED) {
       // Ignore all events sent to the machine after it has stopped. This is
       // similar to how we ignore events sent to the machine after it
       // transitioned to a phase in which the event won't be handled: it would
@@ -617,30 +615,30 @@ export class FSM<
       return;
     }
 
-    const targetFn = this.getTargetFn(event.type);
+    const targetFn = this.#getTargetFn(event.type);
     if (targetFn !== undefined) {
-      return this.transition(event, targetFn);
+      return this.#transition(event, targetFn);
     } else {
       // Ignore the event otherwise
-      this.eventHub.didIgnoreEvent.notify(event);
+      this.#eventHub.didIgnoreEvent.notify(event);
     }
   }
 
-  private transition<E extends TEvent | BuiltinEvent>(
+  #transition<E extends TEvent | BuiltinEvent>(
     event: E,
     target: Target<TContext, E, TState>
   ) {
-    this.eventHub.didReceiveEvent.notify(event);
+    this.#eventHub.didReceiveEvent.notify(event);
 
     const oldState = this.currentState;
 
     const targetFn = typeof target === "function" ? target : () => target;
-    const nextTarget = targetFn(event, this.currentContext.current);
+    const nextTarget = targetFn(event, this.#currentContext.current);
     let nextState: TState;
     let effects: Effect<TContext, E>[] | undefined = undefined;
     if (nextTarget === null) {
       // Do not transition
-      this.eventHub.didIgnoreEvent.notify(event);
+      this.#eventHub.didIgnoreEvent.notify(event);
       return;
     }
 
@@ -653,21 +651,21 @@ export class FSM<
         : [nextTarget.effect];
     }
 
-    if (!this.states.has(nextState)) {
+    if (!this.#states.has(nextState)) {
       throw new Error(`Invalid next state name: ${JSON.stringify(nextState)}`);
     }
 
-    this.eventHub.willTransition.notify({ from: oldState, to: nextState });
+    this.#eventHub.willTransition.notify({ from: oldState, to: nextState });
 
     const [up, down] = distance(this.currentState, nextState);
     if (up > 0) {
-      this.exit(up);
+      this.#exit(up);
     }
 
-    this.currentStateOrNull = nextState; // NOTE: Could stay the same, but... there could be an action to execute here
+    this.#currentStateOrNull = nextState; // NOTE: Could stay the same, but... there could be an action to execute here
     if (effects !== undefined) {
       const effectsToRun = effects;
-      this.currentContext.allowPatching((patchableContext) => {
+      this.#currentContext.allowPatching((patchableContext) => {
         for (const effect of effectsToRun) {
           if (typeof effect === "function") {
             // May mutate context
@@ -680,7 +678,7 @@ export class FSM<
     }
 
     if (down > 0) {
-      this.enter(down);
+      this.#enter(down);
     }
   }
 }

@@ -19,7 +19,7 @@ enum WebSocketErrorCodes {
 export default class MockWebSocket {
   public readyState: number;
 
-  private static nextActor = 0;
+  static #nextActor = 0;
   public static readonly instances: MockWebSocket[] = [];
 
   public readonly isMock = true;
@@ -36,7 +36,7 @@ export default class MockWebSocket {
 
   constructor(public url: string) {
     MockWebSocket.instances.push(this);
-    const actor = MockWebSocket.nextActor++;
+    const actor = MockWebSocket.#nextActor++;
 
     this.readyState = 0 /* CONNECTING */;
 
@@ -63,7 +63,7 @@ export default class MockWebSocket {
 
   public static reset() {
     MockWebSocket.instances.length = 0;
-    MockWebSocket.nextActor = 0;
+    MockWebSocket.#nextActor = 0;
   }
 
   addEventListener(event: "open", callback: (event: Event) => void): void;
