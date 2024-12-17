@@ -2,10 +2,16 @@
 
 ### All packages
 
-Bumped compilation target from ES2020 to ES2022 for all packages. This only
-impacts the code that we publish to NPM. If you bundle for lower targets that
-should not be a problem, as your bundler should still recompile things for you
-to your desired target.
+The published code for all of our Liveblocks packages is now ES2022 (up from
+ES2020). Simply upgrading will have a positive impact on your bundle size.
+
+If you ship Liveblocks code to the browser, this should not be a problem\*, as
+all major browsers support ES2022.
+
+[\*] If however you're specifically targeting very old browsers (mostly IE),
+then you may need to configure your bundler (Webpack, rollup, esbuild, etc) to
+also down-compile code from dependencies inside `node_modules` for you, if you
+aren't already.
 
 ### `@liveblocks/react`
 
