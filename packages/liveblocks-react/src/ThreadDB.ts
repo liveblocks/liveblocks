@@ -107,29 +107,26 @@ export class ThreadDB<M extends BaseMetadata> {
 
   /** Adds or updates a thread in the DB. If the newly given thread is a deleted one, it will get deleted. */
   public upsert(thread: ThreadDataWithDeleteInfo<M>): void {
-    thread = sanitizeThread(thread);
-
-    const id = thread.id;
-
-    const toRemove = this.#byId.get(id);
-    if (toRemove) {
-      // Don't do anything if the existing thread is already deleted!
-      if (toRemove.deletedAt) return;
-
-      this.#asc.remove(toRemove);
-      this.#desc.remove(toRemove);
-    }
-
-    if (!thread.deletedAt) {
-      this.#asc.add(thread);
-      this.#desc.add(thread);
-    }
-    this.#byId.set(id, thread);
-
-    // XXX Wrap this method in it?
-    // Trigger a signal update
     this.signal.mutate(() => {
-      /* just update */
+      thread = sanitizeThread(thread);
+
+      const id = thread.id;
+
+      const toRemove = this.#byId.get(id);
+      if (toRemove) {
+        // Don't do anything if the existing thread is already deleted!
+        if (toRemove.deletedAt) return false;
+
+        this.#asc.remove(toRemove);
+        this.#desc.remove(toRemove);
+      }
+
+      if (!thread.deletedAt) {
+        this.#asc.add(thread);
+        this.#desc.add(thread);
+      }
+      this.#byId.set(id, thread);
+      return true;
     });
   }
 
