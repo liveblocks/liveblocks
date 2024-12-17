@@ -12,12 +12,12 @@ import {
   CheckIcon,
   CrossIcon,
   EditIcon,
-  EmojiIcon,
   LengthenIcon,
   QuestionMarkIcon,
   SendIcon,
   ShortcutTooltip,
   ShortenIcon,
+  SparklesIcon,
   TooltipProvider,
   TranslateIcon,
   UndoIcon,
@@ -204,7 +204,7 @@ function AiToolbarPromptTextArea({
   return (
     <div className="lb-tiptap-ai-toolbar-content">
       <span className="lb-icon-container lb-tiptap-ai-toolbar-icon-container">
-        <EmojiIcon />
+        <SparklesIcon />
       </span>
       <div
         className="lb-tiptap-ai-toolbar-prompt-container"
@@ -349,7 +349,7 @@ function AiToolbarThinking({ editor }: { editor: Editor }) {
       <div className="lb-elevation lb-tiptap-ai-toolbar">
         <div className="lb-tiptap-ai-toolbar-content">
           <span className="lb-icon-container lb-tiptap-ai-toolbar-icon-container">
-            <EmojiIcon />
+            <SparklesIcon />
           </span>
           <span className="lb-tiptap-ai-toolbar-loading">
             Thinking about {prompt}

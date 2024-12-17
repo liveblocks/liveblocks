@@ -3,10 +3,10 @@ import {
   Button,
   CodeIcon,
   CommentIcon,
-  EmojiIcon,
   ItalicIcon,
   RedoIcon,
   ShortcutTooltip,
+  SparklesIcon,
   StrikethroughIcon,
   TooltipProvider,
   UnderlineIcon,
@@ -302,7 +302,7 @@ function ToolbarSectionAi() {
       {supportsAi && (
         <ToolbarButton
           name="Ask AI anything…"
-          icon={<EmojiIcon />}
+          icon={<SparklesIcon />}
           onClick={() =>
             (editor.chain().focus() as ExtendedChainedCommands<"askAi">).askAi()
           }

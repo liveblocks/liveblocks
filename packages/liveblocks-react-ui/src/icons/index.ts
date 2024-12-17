@@ -24,6 +24,7 @@ export { RestoreIcon } from "./Restore";
 export { SearchIcon } from "./Search";
 export { SendIcon } from "./Send";
 export { ShortenIcon } from "./Shorten";
+export { SparklesIcon } from "./Sparkles";
 export { SpinnerIcon } from "./Spinner";
 export { StrikethroughIcon } from "./Strikethrough";
 export { TranslateIcon } from "./Translate";
