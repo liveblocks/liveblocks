@@ -650,15 +650,17 @@ export class UmbrellaStore<M extends BaseMetadata> {
   //
   // XXX APIs like getRoomThreadsLoadingState should really also be modeled as output signals.
   //
-  readonly #externalState1_both: DerivedSignal<UmbrellaStoreState1_Both<M>>;
-  readonly #externalState1_threads: DerivedSignal<
-    UmbrellaStoreState1_Threads<M>
-  >;
-  readonly #externalState1_notifications: DerivedSignal<
-    UmbrellaStoreState1_Notifications<M>
-  >;
-  readonly #externalState2: DerivedSignal<UmbrellaStoreState2_settingsByRoomId>;
-  readonly #externalState3: DerivedSignal<UmbrellaStoreState3_versionsByRoomId>;
+  readonly outputs: {
+    readonly externalState1_both: DerivedSignal<UmbrellaStoreState1_Both<M>>;
+    readonly externalState1_threads: DerivedSignal<
+      UmbrellaStoreState1_Threads<M>
+    >;
+    readonly externalState1_notifications: DerivedSignal<
+      UmbrellaStoreState1_Notifications<M>
+    >;
+    readonly externalState2: DerivedSignal<UmbrellaStoreState2_settingsByRoomId>;
+    readonly externalState3: DerivedSignal<UmbrellaStoreState3_versionsByRoomId>;
+  };
 
   // Notifications
   #notificationsLastRequestedAt: Date | null = null; // Keeps track of when we successfully requested an inbox notifications update for the last time. Will be `null` as long as the first successful fetch hasn't happened yet.
@@ -718,27 +720,27 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // should be able to extract it out of the UmbrellaStore.
     this.permissionHintsByRoomId = new Signal<PermissionHintsByRoomId>({});
 
-    this.#externalState1_both = DerivedSignal.from(
+    const externalState1_both = DerivedSignal.from(
       this.optimisticUpdates,
       this.notificationsById,
       this.baseThreadsDB.signal,
       (ou, no, thDB) => internalToExternalState1(thDB, ou, no)
     );
 
-    this.#externalState1_threads = DerivedSignal.from(
-      this.#externalState1_both,
+    const externalState1_threads = DerivedSignal.from(
+      externalState1_both,
       (s) => ({ threadsDB: s.threadsDB })
     );
 
-    this.#externalState1_notifications = DerivedSignal.from(
-      this.#externalState1_both,
+    const externalState1_notifications = DerivedSignal.from(
+      externalState1_both,
       (s) => ({
         sortedNotifications: s.sortedNotifications,
         notificationsById: s.notificationsById,
       })
     );
 
-    this.#externalState2 = DerivedSignal.from(
+    const externalState2 = DerivedSignal.from(
       this.optimisticUpdates,
       this.settingsByRoomId,
       (ou, st) => internalToExternalState2(ou, st)
@@ -747,10 +749,18 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // NOTE: Not much of a "derived" state: it's just the same as the input
     // This is a smell. We should be able to extract it out of the
     // UmbrellaStore must like the permission hints signal.
-    this.#externalState3 = DerivedSignal.from(
+    const externalState3 = DerivedSignal.from(
       this.historyVersionsByRoomId,
       (hv) => hv
     );
+
+    this.outputs = {
+      externalState1_both,
+      externalState1_threads,
+      externalState1_notifications,
+      externalState2,
+      externalState3,
+    };
 
     // Auto-bind all of this class’ methods here, so we can use stable
     // references to them (most important for use in useSyncExternalStore)
@@ -758,43 +768,43 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   public get1_both(): UmbrellaStoreState1_Both<M> {
-    return this.#externalState1_both.get();
+    return this.outputs.externalState1_both.get();
   }
 
   public subscribe1_both(callback: () => void): () => void {
-    return this.#externalState1_both.subscribe(callback);
+    return this.outputs.externalState1_both.subscribe(callback);
   }
 
   public get1_threads(): UmbrellaStoreState1_Threads<M> {
-    return this.#externalState1_threads.get();
+    return this.outputs.externalState1_threads.get();
   }
 
   public subscribe1(callback: () => void): () => void {
-    return this.#externalState1_threads.subscribe(callback);
+    return this.outputs.externalState1_threads.subscribe(callback);
   }
 
   public get1_notifications(): UmbrellaStoreState1_Notifications<M> {
-    return this.#externalState1_notifications.get();
+    return this.outputs.externalState1_notifications.get();
   }
 
   public subscribe1_notifications(callback: () => void): () => void {
-    return this.#externalState1_notifications.subscribe(callback);
+    return this.outputs.externalState1_notifications.subscribe(callback);
   }
 
   public get2(): UmbrellaStoreState2_settingsByRoomId {
-    return this.#externalState2.get();
+    return this.outputs.externalState2.get();
   }
 
   public subscribe2(callback: () => void): () => void {
-    return this.#externalState2.subscribe(callback);
+    return this.outputs.externalState2.subscribe(callback);
   }
 
   public get3(): UmbrellaStoreState3_versionsByRoomId {
-    return this.#externalState3.get();
+    return this.outputs.externalState3.get();
   }
 
   public subscribe3(callback: () => void): () => void {
-    return this.#externalState3.subscribe(callback);
+    return this.outputs.externalState3.subscribe(callback);
   }
 
   /**
