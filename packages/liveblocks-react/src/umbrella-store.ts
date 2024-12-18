@@ -695,6 +695,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     this.baseThreadsDB = new ThreadDB();
     this.optimisticUpdates = new Signal<readonly OptimisticUpdate<M>[]>([]);
+
     this.baseVersionsByRoomId = new Signal<VersionsByRoomId>({});
     this.baseNotificationsById = new Signal<NotificationsById>({});
     this.baseSettingsByRoomId = new Signal<SettingsByRoomId>({});
@@ -742,6 +743,16 @@ export class UmbrellaStore<M extends BaseMetadata> {
       settingsByRoomId,
       versionsByRoomId,
     };
+
+    // Automatically update the global sync status as an effect whenever there
+    // are any optimistic updates
+    this.optimisticUpdates.subscribe(() =>
+      this.#syncSource.setSyncStatus(
+        this.optimisticUpdates.get().length > 0
+          ? "synchronizing"
+          : "synchronized"
+      )
+    );
 
     // Auto-bind all of this class’ methods here, so we can use stable
     // references to them (most important for use in useSyncExternalStore)
@@ -969,20 +980,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
       cache: readonly OptimisticUpdate<M>[]
     ) => readonly OptimisticUpdate<M>[]
   ): void {
-    this.optimisticUpdates.set((curr) => {
-      const optimisticUpdates = mapFn(curr);
-      // XXX Make this a subscriber instead of mutating here directly
-      this.#syncSource.setSyncStatus(
-        optimisticUpdates.length > 0 ? "synchronizing" : "synchronized"
-      );
-      return optimisticUpdates;
-    });
+    this.optimisticUpdates.set(mapFn);
   }
 
   // ---------------------------------------------------------------------------------- }}}
 
   /** @internal - Only call this method from unit tests. */
-  // XXX Rename this!
   public force_set_versions(
     callback: (currentState: VersionsByRoomId) => VersionsByRoomId
   ): void {
