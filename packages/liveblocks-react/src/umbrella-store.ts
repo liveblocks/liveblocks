@@ -549,7 +549,7 @@ type QueryKey = string;
  * - Optimistic updates applied
  * - All deleted threads removed from the threads list
  */
-export type UmbrellaStoreState<M extends BaseMetadata> = {
+export type UmbrellaStoreState1<M extends BaseMetadata> = {
   /**
    * Keep track of loading and error status of all the queries made by the client.
    * e.g. 'room-abc-{"color":"red"}'  - ok
@@ -641,7 +641,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // XXX TODO APIs like getRoomThreadsLoadingState should really also be
   // modeled as output signals.
   //
-  readonly #externalState: DerivedSignal<UmbrellaStoreState<M>>;
+  readonly #externalState1: DerivedSignal<UmbrellaStoreState1<M>>;
 
   // Notifications
   #notificationsLastRequestedAt: Date | null = null; // Keeps track of when we successfully requested an inbox notifications update for the last time. Will be `null` as long as the first successful fetch hasn't happened yet.
@@ -698,14 +698,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.settingsByRoomId = new Signal<SettingsByRoomId>({});
     this.permissionHintsByRoomId = new Signal<PermissionHintsByRoomId>({});
 
-    this.#externalState = DerivedSignal.from(
+    this.#externalState1 = DerivedSignal.from(
       this.optimisticUpdates,
       this.historyVersionsByRoomId,
       this.notificationsById,
       this.settingsByRoomId,
       this.baseThreadsDB.signal,
 
-      (ou, hv, no, st, thDB): UmbrellaStoreState<M> =>
+      (ou, hv, no, st, thDB): UmbrellaStoreState1<M> =>
         internalToExternalState(thDB, ou, hv, no, st)
     );
 
@@ -714,12 +714,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
     autobind(this);
   }
 
-  public get(): UmbrellaStoreState<M> {
-    return this.#externalState.get();
+  public get1(): UmbrellaStoreState1<M> {
+    return this.#externalState1.get();
   }
 
-  public subscribe(callback: () => void): () => void {
-    return this.#externalState.subscribe(callback);
+  public subscribe1(callback: () => void): () => void {
+    return this.#externalState1.subscribe(callback);
   }
 
   /**
@@ -743,7 +743,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return asyncResult;
     }
 
-    const threads = this.get().threadsDB.findMany(roomId, query ?? {}, "asc");
+    const threads = this.get1().threadsDB.findMany(roomId, query ?? {}, "asc");
 
     const page = asyncResult.data;
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
@@ -772,7 +772,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return asyncResult;
     }
 
-    const threads = this.get().threadsDB.findMany(
+    const threads = this.get1().threadsDB.findMany(
       undefined, // Do _not_ filter by roomId
       query ?? {},
       "desc"
@@ -801,7 +801,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      inboxNotifications: this.get().cleanedNotifications,
+      inboxNotifications: this.get1().cleanedNotifications,
       hasFetchedAll: page.hasFetchedAll,
       isFetchingMore: page.isFetchingMore,
       fetchMoreError: page.fetchMoreError,
@@ -828,7 +828,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      settings: nn(this.get().settingsByRoomId[roomId]),
+      settings: nn(this.get1().settingsByRoomId[roomId]),
     };
   }
 
@@ -1632,7 +1632,7 @@ function internalToExternalState<M extends BaseMetadata>(
   versionsByRoomId: VersionsByRoomId, // XXX This isn't even used and converted, it's just returned! Better to use this signal directly then, instead of exposing it through UmbrellaStoreState
   rawNotificationsById: NotificationsById,
   rawSettingsByRoomId: SettingsByRoomId
-): UmbrellaStoreState<M> {
+): UmbrellaStoreState1<M> {
   const threadsDB = baseThreadsDB.clone();
 
   const computed = {
