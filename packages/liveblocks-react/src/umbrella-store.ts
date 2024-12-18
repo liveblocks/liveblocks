@@ -565,7 +565,7 @@ export type UmbrellaStoreState1<M extends BaseMetadata> = {
   /**
    * All inbox notifications in a sorted array, optimistic updates applied.
    */
-  cleanedNotifications: InboxNotificationData[];
+  sortedNotifications: InboxNotificationData[];
 
   /**
    * Inbox notifications by ID.
@@ -833,7 +833,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      inboxNotifications: this.get1().cleanedNotifications,
+      inboxNotifications: this.get1().sortedNotifications,
       hasFetchedAll: page.hasFetchedAll,
       isFetchingMore: page.isFetchingMore,
       fetchMoreError: page.fetchMoreError,
@@ -1842,7 +1842,7 @@ function internalToExternalState1<M extends BaseMetadata>(
   }
 
   // TODO Maybe consider also removing these from the inboxNotificationsById registry?
-  const cleanedNotifications =
+  const sortedNotifications =
     // Sort so that the most recent notifications are first
     Object.values(notificationsById)
       .filter((ibn) =>
@@ -1851,7 +1851,7 @@ function internalToExternalState1<M extends BaseMetadata>(
       .sort((a, b) => b.notifiedAt.getTime() - a.notifiedAt.getTime());
 
   return {
-    cleanedNotifications,
+    sortedNotifications,
     notificationsById,
     threadsDB,
   };
