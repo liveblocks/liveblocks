@@ -696,6 +696,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.historyVersionsByRoomId = new Signal<VersionsByRoomId>({});
     this.notificationsById = new Signal<NotificationsById>({});
     this.settingsByRoomId = new Signal<SettingsByRoomId>({});
+
+    // NOTE: Permission hints has no DerivedSignals depending on it, so we
+    // should be able to extract it out of the UmbrellaStore.
     this.permissionHintsByRoomId = new Signal<PermissionHintsByRoomId>({});
 
     this.#externalState1 = DerivedSignal.from(
@@ -711,9 +714,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
       (ou, st) => internalToExternalState2(ou, st)
     );
 
+    // NOTE: Not much of a "derived" state: it's just the same as the input
+    // This is a smell. We should be able to extract it out of the
+    // UmbrellaStore must like the permission hints signal.
     this.#externalState3 = DerivedSignal.from(
       this.historyVersionsByRoomId,
-      (hv) => internalToExternalState3(hv)
+      (hv) => hv
     );
 
     // Auto-bind all of this class’ methods here, so we can use stable
@@ -1876,16 +1882,6 @@ function internalToExternalState2(
     }
   }
   return settingsByRoomId;
-}
-
-/**
- * Applies optimistic updates, removes deleted threads, sorts results in
- * a stable way, removes internal fields that should not be exposed publicly.
- */
-function internalToExternalState3(
-  versionsByRoomId: VersionsByRoomId // XXX This isn't even used and converted, it's just returned! Better to use this signal directly then, instead of exposing it through UmbrellaStoreState
-): UmbrellaStoreState3_versionsByRoomId {
-  return versionsByRoomId;
 }
 
 export function applyThreadDeltaUpdates<M extends BaseMetadata>(
