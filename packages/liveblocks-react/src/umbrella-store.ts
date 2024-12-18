@@ -572,7 +572,9 @@ export type UmbrellaStoreState1<M extends BaseMetadata> = {
    * e.g. `in_${string}`
    */
   notificationsById: Record<string, InboxNotificationData>;
+};
 
+export type UmbrellaStoreState2 = {
   /**
    * Notification settings by room ID.
    * e.g. { 'room-abc': { threads: "all" },
@@ -642,6 +644,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // modeled as output signals.
   //
   readonly #externalState1: DerivedSignal<UmbrellaStoreState1<M>>;
+  readonly #externalState2: DerivedSignal<UmbrellaStoreState2>;
 
   // Notifications
   #notificationsLastRequestedAt: Date | null = null; // Keeps track of when we successfully requested an inbox notifications update for the last time. Will be `null` as long as the first successful fetch hasn't happened yet.
@@ -705,8 +708,17 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this.settingsByRoomId,
       this.baseThreadsDB.signal,
 
-      (ou, hv, no, st, thDB): UmbrellaStoreState1<M> =>
-        internalToExternalState(thDB, ou, hv, no, st)
+      (ou, hv, no, st, thDB) => internalToExternalState1(thDB, ou, hv, no, st)
+    );
+
+    this.#externalState2 = DerivedSignal.from(
+      this.optimisticUpdates,
+      this.historyVersionsByRoomId,
+      this.notificationsById,
+      this.settingsByRoomId,
+      this.baseThreadsDB.signal,
+
+      (ou, hv, no, st, thDB) => internalToExternalState2(thDB, ou, hv, no, st)
     );
 
     // Auto-bind all of this class’ methods here, so we can use stable
@@ -720,6 +732,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   public subscribe1(callback: () => void): () => void {
     return this.#externalState1.subscribe(callback);
+  }
+
+  public get2(): UmbrellaStoreState2 {
+    return this.#externalState2.get();
+  }
+
+  public subscribe2(callback: () => void): () => void {
+    return this.#externalState2.subscribe(callback);
   }
 
   /**
@@ -828,7 +848,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      settings: nn(this.get1().settingsByRoomId[roomId]),
+      settings: nn(this.get2().settingsByRoomId[roomId]),
     };
   }
 
@@ -1626,18 +1646,17 @@ export class UmbrellaStore<M extends BaseMetadata> {
  * Applies optimistic updates, removes deleted threads, sorts results in
  * a stable way, removes internal fields that should not be exposed publicly.
  */
-function internalToExternalState<M extends BaseMetadata>(
+function internalToExternalState1<M extends BaseMetadata>(
   baseThreadsDB: ThreadDB<M>,
   optimisticUpdates: readonly OptimisticUpdate<M>[],
-  versionsByRoomId: VersionsByRoomId, // XXX This isn't even used and converted, it's just returned! Better to use this signal directly then, instead of exposing it through UmbrellaStoreState
+  _versionsByRoomId: VersionsByRoomId, // XXX This isn't even used and converted, it's just returned! Better to use this signal directly then, instead of exposing it through UmbrellaStoreState
   rawNotificationsById: NotificationsById,
-  rawSettingsByRoomId: SettingsByRoomId
+  _rawSettingsByRoomId: SettingsByRoomId
 ): UmbrellaStoreState1<M> {
   const threadsDB = baseThreadsDB.clone();
 
   const computed = {
     notificationsById: { ...rawNotificationsById },
-    settingsByRoomId: { ...rawSettingsByRoomId },
   };
 
   for (const optimisticUpdate of optimisticUpdates) {
@@ -1814,7 +1833,42 @@ function internalToExternalState<M extends BaseMetadata>(
         computed.notificationsById = {};
         break;
       }
+    }
+  }
 
+  // TODO Maybe consider also removing these from the inboxNotificationsById registry?
+  const cleanedNotifications =
+    // Sort so that the most recent notifications are first
+    Object.values(computed.notificationsById)
+      .filter((ibn) =>
+        ibn.kind === "thread" ? threadsDB.get(ibn.threadId) !== undefined : true
+      )
+      .sort((a, b) => b.notifiedAt.getTime() - a.notifiedAt.getTime());
+
+  return {
+    cleanedNotifications,
+    notificationsById: computed.notificationsById,
+    threadsDB,
+  };
+}
+
+/**
+ * Applies optimistic updates, removes deleted threads, sorts results in
+ * a stable way, removes internal fields that should not be exposed publicly.
+ */
+function internalToExternalState2<M extends BaseMetadata>(
+  _baseThreadsDB: ThreadDB<M>,
+  optimisticUpdates: readonly OptimisticUpdate<M>[],
+  versionsByRoomId: VersionsByRoomId, // XXX This isn't even used and converted, it's just returned! Better to use this signal directly then, instead of exposing it through UmbrellaStoreState
+  _rawNotificationsById: NotificationsById,
+  rawSettingsByRoomId: SettingsByRoomId
+): UmbrellaStoreState2 {
+  const computed = {
+    settingsByRoomId: { ...rawSettingsByRoomId },
+  };
+
+  for (const optimisticUpdate of optimisticUpdates) {
+    switch (optimisticUpdate.type) {
       case "update-notification-settings": {
         const settings = computed.settingsByRoomId[optimisticUpdate.roomId];
 
@@ -1831,20 +1885,8 @@ function internalToExternalState<M extends BaseMetadata>(
     }
   }
 
-  // TODO Maybe consider also removing these from the inboxNotificationsById registry?
-  const cleanedNotifications =
-    // Sort so that the most recent notifications are first
-    Object.values(computed.notificationsById)
-      .filter((ibn) =>
-        ibn.kind === "thread" ? threadsDB.get(ibn.threadId) !== undefined : true
-      )
-      .sort((a, b) => b.notifiedAt.getTime() - a.notifiedAt.getTime());
-
   return {
-    cleanedNotifications,
-    notificationsById: computed.notificationsById,
     settingsByRoomId: computed.settingsByRoomId,
-    threadsDB,
     versionsByRoomId,
   };
 }
