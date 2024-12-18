@@ -555,13 +555,13 @@ type SettingsByRoomId = Record<RoomId, RoomNotificationSettings>;
 
 type PermissionHintsByRoomId = Record<RoomId, Set<Permission>>;
 
-/**
- * Externally observable state of the store, which will have:
- * - Optimistic updates applied
- * - All deleted threads removed from the threads list
- */
-// XXX Define Both in terms of Threads and Notifications, not the other way around
-export type UmbrellaStoreState1_Both<M extends BaseMetadata> = {
+export type CleanThredifications<M extends BaseMetadata> =
+  // Threads + Notifications = Thredifications
+  CleanThreads<M> &
+    //
+    CleanNotifications;
+
+export type CleanThreads<M extends BaseMetadata> = {
   /**
    * Keep track of loading and error status of all the queries made by the client.
    * e.g. 'room-abc-{"color":"red"}'  - ok
@@ -573,7 +573,9 @@ export type UmbrellaStoreState1_Both<M extends BaseMetadata> = {
   // value if either the threads change or a (thread) optimistic update is
   // changed.
   threadsDB: ReadonlyThreadDB<M>;
+};
 
+export type CleanNotifications = {
   /**
    * All inbox notifications in a sorted array, optimistic updates applied.
    */
@@ -585,16 +587,6 @@ export type UmbrellaStoreState1_Both<M extends BaseMetadata> = {
    */
   notificationsById: Record<string, InboxNotificationData>;
 };
-
-export type UmbrellaStoreState1_Threads<M extends BaseMetadata> = Pick<
-  UmbrellaStoreState1_Both<M>,
-  "threadsDB"
->;
-
-export type UmbrellaStoreState1_Notifications<M extends BaseMetadata> = Pick<
-  UmbrellaStoreState1_Both<M>,
-  "sortedNotifications" | "notificationsById"
->;
 
 export class UmbrellaStore<M extends BaseMetadata> {
   #client: Client<BaseUserMeta, M>;
@@ -639,17 +631,16 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // Output signals.
   // (Readonly, clean, consistent. With optimistic updates applied.)
   //
+  // Note that the output of thredifications signal is the same as the ones for
+  // threads and notifications separately, but the thredifications signal will
+  // be updated whenever either of them change.
+  //
   // XXX APIs like getRoomThreadsLoadingState should really also be modeled as output signals.
   //
   readonly outputs: {
-    // XXX Rename to "clean" maybe?
-    readonly externalState1_both: DerivedSignal<UmbrellaStoreState1_Both<M>>;
-    readonly externalState1_threads: DerivedSignal<
-      UmbrellaStoreState1_Threads<M>
-    >;
-    readonly externalState1_notifications: DerivedSignal<
-      UmbrellaStoreState1_Notifications<M>
-    >;
+    readonly thredifications: DerivedSignal<CleanThredifications<M>>;
+    readonly threads: DerivedSignal<CleanThreads<M>>;
+    readonly notifications: DerivedSignal<CleanNotifications>;
     readonly settingsByRoomId: DerivedSignal<SettingsByRoomId>;
     readonly versionsByRoomId: DerivedSignal<VersionsByRoomId>;
   };
@@ -712,30 +703,28 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // should be able to extract it out of the UmbrellaStore.
     this.permissionHintsByRoomId = new Signal<PermissionHintsByRoomId>({});
 
-    const externalState1_both = DerivedSignal.from(
-      this.optimisticUpdates,
-      this.baseNotificationsById,
+    const thredifications = DerivedSignal.from(
       this.baseThreadsDB.signal,
-      (ou, no, thDB) => internalToExternalState1(thDB, ou, no)
+      this.baseNotificationsById,
+      this.optimisticUpdates,
+      (ts, ns, updates) =>
+        applyOptimisticUpdates_forThredifications(ts, ns, updates)
     );
 
-    const externalState1_threads = DerivedSignal.from(
-      externalState1_both,
-      (s) => ({ threadsDB: s.threadsDB })
-    );
+    const threads = DerivedSignal.from(thredifications, (s) => ({
+      threadsDB: s.threadsDB,
+    }));
 
-    const externalState1_notifications = DerivedSignal.from(
-      externalState1_both,
-      (s) => ({
-        sortedNotifications: s.sortedNotifications,
-        notificationsById: s.notificationsById,
-      })
-    );
+    const notifications = DerivedSignal.from(thredifications, (s) => ({
+      sortedNotifications: s.sortedNotifications,
+      notificationsById: s.notificationsById,
+    }));
 
     const settingsByRoomId = DerivedSignal.from(
-      this.optimisticUpdates,
       this.baseSettingsByRoomId,
-      (ou, st) => internalToExternalState2(ou, st)
+      this.optimisticUpdates,
+      (settings, updates) =>
+        applyOptimisticUpdates_forSettings(settings, updates)
     );
 
     // XXX Not much of a "derived" state: it's just the same as the input
@@ -747,9 +736,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
     );
 
     this.outputs = {
-      externalState1_both,
-      externalState1_threads,
-      externalState1_notifications,
+      thredifications,
+      threads,
+      notifications,
       settingsByRoomId,
       versionsByRoomId,
     };
@@ -759,28 +748,28 @@ export class UmbrellaStore<M extends BaseMetadata> {
     autobind(this);
   }
 
-  public get1_both(): UmbrellaStoreState1_Both<M> {
-    return this.outputs.externalState1_both.get();
+  public get1_both(): CleanThredifications<M> {
+    return this.outputs.thredifications.get();
   }
 
   public subscribe1_both(callback: () => void): () => void {
-    return this.outputs.externalState1_both.subscribe(callback);
+    return this.outputs.thredifications.subscribe(callback);
   }
 
-  public get1_threads(): UmbrellaStoreState1_Threads<M> {
-    return this.outputs.externalState1_threads.get();
+  public get1_threads(): CleanThreads<M> {
+    return this.outputs.threads.get();
   }
 
   public subscribe1_threads(callback: () => void): () => void {
-    return this.outputs.externalState1_threads.subscribe(callback);
+    return this.outputs.threads.subscribe(callback);
   }
 
-  public get1_notifications(): UmbrellaStoreState1_Notifications<M> {
-    return this.outputs.externalState1_notifications.get();
+  public get1_notifications(): CleanNotifications {
+    return this.outputs.notifications.get();
   }
 
   public subscribe1_notifications(callback: () => void): () => void {
-    return this.outputs.externalState1_notifications.subscribe(callback);
+    return this.outputs.notifications.subscribe(callback);
   }
 
   public get2(): SettingsByRoomId {
@@ -1708,11 +1697,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
  * Applies optimistic updates, removes deleted threads, sorts results in
  * a stable way, removes internal fields that should not be exposed publicly.
  */
-function internalToExternalState1<M extends BaseMetadata>(
+function applyOptimisticUpdates_forThredifications<M extends BaseMetadata>(
   baseThreadsDB: ThreadDB<M>,
-  optimisticUpdates: readonly OptimisticUpdate<M>[],
-  rawNotificationsById: NotificationsById
-): UmbrellaStoreState1_Both<M> {
+  rawNotificationsById: NotificationsById,
+  optimisticUpdates: readonly OptimisticUpdate<M>[]
+): CleanThredifications<M> {
   const threadsDB = baseThreadsDB.clone();
   let notificationsById = { ...rawNotificationsById };
 
@@ -1910,11 +1899,11 @@ function internalToExternalState1<M extends BaseMetadata>(
  * Applies optimistic updates, removes deleted threads, sorts results in
  * a stable way, removes internal fields that should not be exposed publicly.
  */
-function internalToExternalState2(
-  optimisticUpdates: readonly OptimisticUpdate<BaseMetadata>[],
-  rawSettingsByRoomId: SettingsByRoomId
+function applyOptimisticUpdates_forSettings(
+  baseSettingsByRoomId: SettingsByRoomId,
+  optimisticUpdates: readonly OptimisticUpdate<BaseMetadata>[]
 ): SettingsByRoomId {
-  const settingsByRoomId = { ...rawSettingsByRoomId };
+  const settingsByRoomId = { ...baseSettingsByRoomId };
 
   for (const optimisticUpdate of optimisticUpdates) {
     switch (optimisticUpdate.type) {
