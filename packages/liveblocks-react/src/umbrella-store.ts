@@ -582,7 +582,7 @@ export type UmbrellaStoreState2 = {
    *        'room-xyz': { threads: "none" },
    *      }
    */
-  settingsByRoomId: Record<string, RoomNotificationSettings>;
+  settingsByRoomId: Record<RoomId, RoomNotificationSettings>;
 };
 
 export type UmbrellaStoreState3 = {
@@ -590,7 +590,7 @@ export type UmbrellaStoreState3 = {
    * Versions by roomId
    * e.g. { 'room-abc': {versions: "all versions"}}
    */
-  versionsByRoomId: Record<string, Record<string, HistoryVersion>>;
+  versionsByRoomId: Record<RoomId, Record<string, HistoryVersion>>;
 };
 
 export class UmbrellaStore<M extends BaseMetadata> {
@@ -666,7 +666,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   #roomVersionsLastRequestedAtByRoom = new Map<RoomId, Date>();
 
   // Room notification settings
-  #roomNotificationSettings: Map<string, SinglePageResource> = new Map();
+  #roomNotificationSettings: Map<QueryKey, SinglePageResource> = new Map();
 
   constructor(client: OpaqueClient) {
     this.#client = client[kInternal].as<M>();
