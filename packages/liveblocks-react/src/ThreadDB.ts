@@ -31,7 +31,7 @@ function sanitizeThread<M extends BaseMetadata>(
 
 export type ReadonlyThreadDB<M extends BaseMetadata> = Omit<
   ThreadDB<M>,
-  "upsert" | "delete"
+  "upsert" | "delete" | "signal"
 >;
 
 /**
@@ -56,9 +56,7 @@ export class ThreadDB<M extends BaseMetadata> {
   #asc: SortedList<ThreadData<M>>;
   #desc: SortedList<ThreadData<M>>;
 
-  // The version is auto-incremented on every mutation and can be used as
-  // a reliable indicator to tell if the contents of the thread pool has
-  // changed
+  // This signal will be notified on every mutation
   public signal: MutableSignal<this>;
 
   constructor() {
@@ -88,7 +86,6 @@ export class ThreadDB<M extends BaseMetadata> {
     newPool.#byId = new Map(this.#byId);
     newPool.#asc = this.#asc.clone();
     newPool.#desc = this.#desc.clone();
-    newPool.signal = new MutableSignal(newPool);
     return newPool;
   }
 
