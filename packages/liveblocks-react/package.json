@@ -62,8 +62,7 @@
   },
   "dependencies": {
     "@liveblocks/client": "2.14.0",
-    "@liveblocks/core": "2.14.0",
-    "use-sync-external-store": "^1.2.2"
+    "@liveblocks/core": "2.14.0"
   },
   "peerDependencies": {
     "react": "^18 || ^19 || ^19.0.0-rc"
@@ -74,7 +73,6 @@
     "@liveblocks/query-parser": "^0.0.4",
     "@testing-library/jest-dom": "6.4.6",
     "@testing-library/react": "14.1.2",
-    "@types/use-sync-external-store": "^0.0.6",
     "date-fns": "^3.6.0",
     "eslint-plugin-react-hooks": "^4.6.2",
     "itertools": "^2.3.2",

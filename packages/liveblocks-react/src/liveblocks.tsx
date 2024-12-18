@@ -29,9 +29,9 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useSyncExternalStore,
+  useSyncExternalStoreWithSelector,
 } from "react";
-import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
-import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import { config } from "./config";
 import { useIsInsideRoom } from "./contexts";

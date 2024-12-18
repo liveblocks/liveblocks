@@ -33,8 +33,8 @@ import React, {
   useCallback,
   useMemo,
   useRef,
+  useSyncExternalStore,
 } from "react";
-import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
 import { useLiveblocksUIConfig } from "../config";
 import { FLOATING_ELEMENT_SIDE_OFFSET } from "../constants";

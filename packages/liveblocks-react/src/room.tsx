@@ -49,7 +49,7 @@ import {
   ServerMsgCode,
 } from "@liveblocks/core";
 import * as React from "react";
-import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
+import { useSyncExternalStoreWithSelector } from "react";
 
 import { config } from "./config";
 import { RoomContext, useIsInsideRoom, useRoomOrNull } from "./contexts";

@@ -87,8 +87,7 @@
     "slate": "^0.110.2",
     "slate-history": "^0.110.3",
     "slate-hyperscript": "^0.100.0",
-    "slate-react": "^0.110.3",
-    "use-sync-external-store": "^1.2.2"
+    "slate-react": "^0.110.3"
   },
   "peerDependencies": {
     "react": "^16.14.0 || ^17 || ^18 || ^19 || ^19.0.0-rc"
@@ -100,7 +99,6 @@
     "@rollup/plugin-typescript": "^11.1.2",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.1.1",
-    "@types/use-sync-external-store": "^0.0.6",
     "emojibase": "^15.3.0",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",

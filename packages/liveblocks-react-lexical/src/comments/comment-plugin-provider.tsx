@@ -23,8 +23,13 @@ import {
 } from "lexical";
 import type { PropsWithChildren } from "react";
 import * as React from "react";
-import { createContext, useCallback, useEffect, useState } from "react";
-import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
+import {
+  createContext,
+  useCallback,
+  useEffect,
+  useState,
+  useSyncExternalStoreWithSelector,
+} from "react";
 
 import $getThreadMarkIds from "./get-thread-mark-ids";
 import {
