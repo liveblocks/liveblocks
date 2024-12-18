@@ -3,7 +3,7 @@
   "license": "Apache-2.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint --fix",
@@ -37,26 +37,29 @@
     "clsx": "^1.2.1",
     "date-fns": "^3.3.1",
     "nanoid": "^4.0.0",
-    "next": "^14.1.4",
-    "next-auth": "5.0.0-beta.16",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "next": "15.1.1",
+    "next-auth": "^5.0.0-beta.25",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
     "swr": "^2.2.5",
-    "tldraw": "^3.4.1"
+    "tldraw": "^3.6.1"
   },
   "devDependencies": {
     "@types/base-64": "^1.0.0",
     "@types/node": "^18.11.9",
-    "@types/react": "^18.3.3",
+    "@types/react": "19.0.2",
     "@typescript-eslint/eslint-plugin": "^6.3.0",
     "@typescript-eslint/parser": "^6.3.0",
     "eslint": "^8.47.0",
-    "eslint-config-next": "^13.4.13",
+    "eslint-config-next": "15.1.1",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-import": "^2.28.0",
     "eslint-plugin-prettier": "^5.0.0",
     "eslint-plugin-unused-imports": "^3.0.0",
     "prettier": "^3.0.1",
     "typescript": "^5.4.3"
+  },
+  "overrides": {
+    "@types/react": "19.0.2"
   }
 }
