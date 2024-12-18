@@ -695,7 +695,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     autobind(this);
   }
 
-  public getFullState(): UmbrellaStoreState<M> {
+  public get(): UmbrellaStoreState<M> {
     return this.#externalState.get();
   }
 
@@ -724,11 +724,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return asyncResult;
     }
 
-    const threads = this.getFullState().threadsDB.findMany(
-      roomId,
-      query ?? {},
-      "asc"
-    );
+    const threads = this.get().threadsDB.findMany(roomId, query ?? {}, "asc");
 
     const page = asyncResult.data;
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
@@ -757,7 +753,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return asyncResult;
     }
 
-    const threads = this.getFullState().threadsDB.findMany(
+    const threads = this.get().threadsDB.findMany(
       undefined, // Do _not_ filter by roomId
       query ?? {},
       "desc"
@@ -786,7 +782,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      inboxNotifications: this.getFullState().cleanedNotifications,
+      inboxNotifications: this.get().cleanedNotifications,
       hasFetchedAll: page.hasFetchedAll,
       isFetchingMore: page.isFetchingMore,
       fetchMoreError: page.fetchMoreError,
@@ -813,7 +809,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      settings: nn(this.getFullState().settingsByRoomId[roomId]),
+      settings: nn(this.get().settingsByRoomId[roomId]),
     };
   }
 

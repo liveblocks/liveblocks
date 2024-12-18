@@ -695,7 +695,7 @@ function RoomProviderInner<
       const { thread, inboxNotification } = info;
 
       const existingThread = store
-        .getFullState()
+        .get()
         .threadsDB.getEvenIfDeleted(message.threadId);
 
       switch (message.type) {
@@ -1498,7 +1498,7 @@ function useDeleteRoomThread(roomId: string): (threadId: string) => void {
 
       const userId = getCurrentUserId(client);
 
-      const existing = store.getFullState().threadsDB.get(threadId);
+      const existing = store.get().threadsDB.get(threadId);
       if (existing?.comments?.[0]?.userId !== userId) {
         throw new Error("Only the thread creator can delete the thread");
       }
@@ -1672,9 +1672,7 @@ function useEditRoomComment(
       const editedAt = new Date();
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-      const existing = store
-        .getFullState()
-        .threadsDB.getEvenIfDeleted(threadId);
+      const existing = store.get().threadsDB.getEvenIfDeleted(threadId);
 
       if (existing === undefined) {
         console.warn(
@@ -1933,7 +1931,7 @@ function useMarkRoomThreadAsRead(roomId: string) {
     (threadId: string) => {
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
       const inboxNotification = Object.values(
-        store.getFullState().notificationsById
+        store.get().notificationsById
       ).find(
         (inboxNotification) =>
           inboxNotification.kind === "thread" &&
@@ -2124,8 +2122,8 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
 
   return useSyncExternalStoreWithSelector(
     store.subscribe,
-    store.getFullState,
-    store.getFullState,
+    store.get,
+    store.get,
     selector
   );
 }

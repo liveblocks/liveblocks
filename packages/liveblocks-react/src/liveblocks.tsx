@@ -571,7 +571,7 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
 ): ThreadData<M> {
   const { store } = getLiveblocksExtrasForClient<M>(client);
 
-  const getter = store.getFullState;
+  const getter = store.get;
 
   const selector = useCallback(
     (state: ReturnType<typeof getter>) => {

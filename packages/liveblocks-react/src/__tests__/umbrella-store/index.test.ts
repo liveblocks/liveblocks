@@ -34,7 +34,7 @@ describe("Umbrella Store", () => {
     const store = new UmbrellaStore(NO_CLIENT);
 
     // Sync getters
-    expect(store.getFullState()).toEqual(empty);
+    expect(store.get()).toEqual(empty);
 
     // Sync async-results getters
     expect(store.getInboxNotificationsLoadingState()).toEqual(loading);
@@ -48,7 +48,7 @@ describe("Umbrella Store", () => {
     const store = new UmbrellaStore(NO_CLIENT);
 
     // IMPORTANT! Strict equality expected!
-    expect(store.getFullState()).toBe(store.getFullState());
+    expect(store.get()).toBe(store.get());
 
     // Sync async-results getter
     // TODO Add check here for strict-equality of the OK-state, which currently isn't strictly-equal and the selectors/isEqual functions are still "working around" that
