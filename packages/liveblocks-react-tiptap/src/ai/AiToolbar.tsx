@@ -23,7 +23,6 @@ import {
   UndoIcon,
   useRefs,
 } from "@liveblocks/react-ui/_private";
-import type { TextSelection } from "@tiptap/pm/state";
 import { type Editor, useEditorState } from "@tiptap/react";
 import { Command, useCommandState } from "cmdk";
 import type {
@@ -463,21 +462,12 @@ function AiToolbarReviewing({
 
 function AiToolbarContainer({
   editor,
-  selection,
+  state,
   children,
-}: PropsWithChildren<{ editor: Editor; selection: TextSelection }>) {
-  const state =
-    useEditorState({
-      editor,
-      selector: (ctx) => {
-        return (
-          ctx.editor?.storage.liveblocksAiToolbar as
-            | AiToolbarExtensionStorage
-            | undefined
-        )?.state;
-      },
-      equalityFn: Object.is,
-    }) ?? "closed";
+}: PropsWithChildren<{
+  editor: Editor;
+  state: AiToolbarExtensionStorage["state"];
+}>) {
   const prompt =
     useEditorState({
       editor,
@@ -496,12 +486,6 @@ function AiToolbarContainer({
     (state) => state.filtered.count > 0
   ) as boolean;
   const isDropdownHidden = isPromptMultiline || !hasDropdownItems;
-
-  useEffect(() => {
-    if (editor && !selection && state !== "closed") {
-      (editor.commands as AiCommands<boolean>).closeAi();
-    }
-  }, [state, editor, selection]);
 
   useEffect(() => {
     if (!editor) {
@@ -615,6 +599,18 @@ export const AiToolbar = Object.assign(
       },
       forwardedRef
     ) => {
+      const state =
+        useEditorState({
+          editor,
+          selector: (ctx) => {
+            return (
+              ctx.editor?.storage.liveblocksAiToolbar as
+                | AiToolbarExtensionStorage
+                | undefined
+            )?.state;
+          },
+          equalityFn: Object.is,
+        }) ?? "closed";
       const selection =
         useEditorState({
           editor,
@@ -661,6 +657,16 @@ export const AiToolbar = Object.assign(
       const toolbarRef = useRef<HTMLDivElement>(null);
       const mergedRefs = useRefs(forwardedRef, toolbarRef, setFloating);
 
+      useEffect(() => {
+        if (!editor) {
+          return;
+        }
+
+        if (!selection && state !== "closed") {
+          (editor.commands as AiCommands<boolean>).closeAi();
+        }
+      }, [state, editor, selection]);
+
       useLayoutEffect(() => {
         if (!editor || !isOpen) {
           return;
@@ -705,7 +711,7 @@ export const AiToolbar = Object.assign(
               }}
               {...props}
             >
-              <AiToolbarContainer editor={editor} selection={selection}>
+              <AiToolbarContainer editor={editor} state={state}>
                 {children}
               </AiToolbarContainer>
             </Command>
