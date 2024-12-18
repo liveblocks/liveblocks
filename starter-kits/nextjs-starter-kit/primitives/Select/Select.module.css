@@ -69,6 +69,10 @@
   user-select: none;
 }
 
+.item:hover {
+  background: var(--color-surface);
+}
+
 .itemInfo {
   display: flex;
   flex-direction: column;
