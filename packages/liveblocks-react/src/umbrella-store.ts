@@ -1647,10 +1647,7 @@ function internalToExternalState1<M extends BaseMetadata>(
   rawNotificationsById: NotificationsById
 ): UmbrellaStoreState1<M> {
   const threadsDB = baseThreadsDB.clone();
-
-  const computed = {
-    notificationsById: { ...rawNotificationsById },
-  };
+  let notificationsById = { ...rawNotificationsById };
 
   for (const optimisticUpdate of optimisticUpdates) {
     switch (optimisticUpdate.type) {
@@ -1701,9 +1698,7 @@ function internalToExternalState1<M extends BaseMetadata>(
 
         threadsDB.upsert(applyUpsertComment(thread, optimisticUpdate.comment));
 
-        const inboxNotification = Object.values(
-          computed.notificationsById
-        ).find(
+        const inboxNotification = Object.values(notificationsById).find(
           (notification) =>
             notification.kind === "thread" &&
             notification.threadId === thread.id
@@ -1713,7 +1708,7 @@ function internalToExternalState1<M extends BaseMetadata>(
           break;
         }
 
-        computed.notificationsById[inboxNotification.id] = {
+        notificationsById[inboxNotification.id] = {
           ...inboxNotification,
           notifiedAt: optimisticUpdate.comment.createdAt,
           readAt: optimisticUpdate.comment.createdAt,
@@ -1788,30 +1783,29 @@ function internalToExternalState1<M extends BaseMetadata>(
       }
 
       case "mark-inbox-notification-as-read": {
-        const ibn =
-          computed.notificationsById[optimisticUpdate.inboxNotificationId];
+        const ibn = notificationsById[optimisticUpdate.inboxNotificationId];
 
         // If the inbox notification doesn't exist in the cache, we do not apply the update
         if (ibn === undefined) {
           break;
         }
 
-        computed.notificationsById[optimisticUpdate.inboxNotificationId] = {
+        notificationsById[optimisticUpdate.inboxNotificationId] = {
           ...ibn,
           readAt: optimisticUpdate.readAt,
         };
         break;
       }
       case "mark-all-inbox-notifications-as-read": {
-        for (const id in computed.notificationsById) {
-          const ibn = computed.notificationsById[id];
+        for (const id in notificationsById) {
+          const ibn = notificationsById[id];
 
           // If the inbox notification doesn't exist in the cache, we do not apply the update
           if (ibn === undefined) {
             break;
           }
 
-          computed.notificationsById[id] = {
+          notificationsById[id] = {
             ...ibn,
             readAt: optimisticUpdate.readAt,
           };
@@ -1819,11 +1813,11 @@ function internalToExternalState1<M extends BaseMetadata>(
         break;
       }
       case "delete-inbox-notification": {
-        delete computed.notificationsById[optimisticUpdate.inboxNotificationId];
+        delete notificationsById[optimisticUpdate.inboxNotificationId];
         break;
       }
       case "delete-all-inbox-notifications": {
-        computed.notificationsById = {};
+        notificationsById = {};
         break;
       }
     }
@@ -1832,7 +1826,7 @@ function internalToExternalState1<M extends BaseMetadata>(
   // TODO Maybe consider also removing these from the inboxNotificationsById registry?
   const cleanedNotifications =
     // Sort so that the most recent notifications are first
-    Object.values(computed.notificationsById)
+    Object.values(notificationsById)
       .filter((ibn) =>
         ibn.kind === "thread" ? threadsDB.get(ibn.threadId) !== undefined : true
       )
@@ -1840,7 +1834,7 @@ function internalToExternalState1<M extends BaseMetadata>(
 
   return {
     cleanedNotifications,
-    notificationsById: computed.notificationsById,
+    notificationsById,
     threadsDB,
   };
 }
@@ -1854,21 +1848,19 @@ function internalToExternalState2<M extends BaseMetadata>(
   versionsByRoomId: VersionsByRoomId, // XXX This isn't even used and converted, it's just returned! Better to use this signal directly then, instead of exposing it through UmbrellaStoreState
   rawSettingsByRoomId: SettingsByRoomId
 ): UmbrellaStoreState2 {
-  const computed = {
-    settingsByRoomId: { ...rawSettingsByRoomId },
-  };
+  const settingsByRoomId = { ...rawSettingsByRoomId };
 
   for (const optimisticUpdate of optimisticUpdates) {
     switch (optimisticUpdate.type) {
       case "update-notification-settings": {
-        const settings = computed.settingsByRoomId[optimisticUpdate.roomId];
+        const settings = settingsByRoomId[optimisticUpdate.roomId];
 
         // If the inbox notification doesn't exist in the cache, we do not apply the update
         if (settings === undefined) {
           break;
         }
 
-        computed.settingsByRoomId[optimisticUpdate.roomId] = {
+        settingsByRoomId[optimisticUpdate.roomId] = {
           ...settings,
           ...optimisticUpdate.settings,
         };
@@ -1877,7 +1869,7 @@ function internalToExternalState2<M extends BaseMetadata>(
   }
 
   return {
-    settingsByRoomId: computed.settingsByRoomId,
+    settingsByRoomId,
     versionsByRoomId,
   };
 }
