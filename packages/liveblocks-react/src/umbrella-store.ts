@@ -832,7 +832,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      versions: Object.values(this.get().versionsByRoomId[roomId] ?? {}),
+      versions: Object.values(this.historyVersionsByRoomId.get()[roomId] ?? {}),
     };
   }
 
