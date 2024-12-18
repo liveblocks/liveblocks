@@ -106,7 +106,7 @@ import {
   RemoveReactionError,
   UpdateNotificationSettingsError,
 } from "./types/errors";
-import type { UmbrellaStore, UmbrellaStoreState1 } from "./umbrella-store";
+import type { UmbrellaStore } from "./umbrella-store";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
 import { useSignal } from "./use-signal";
 
@@ -695,7 +695,7 @@ function RoomProviderInner<
       const { thread, inboxNotification } = info;
 
       const existingThread = store
-        .get1()
+        .get1_threads()
         .threadsDB.getEvenIfDeleted(message.threadId);
 
       switch (message.type) {
@@ -1504,7 +1504,7 @@ function useDeleteRoomThread(roomId: string): (threadId: string) => void {
 
       const userId = getCurrentUserId(client);
 
-      const existing = store.get1().threadsDB.get(threadId);
+      const existing = store.get1_threads().threadsDB.get(threadId);
       if (existing?.comments?.[0]?.userId !== userId) {
         throw new Error("Only the thread creator can delete the thread");
       }
@@ -1678,7 +1678,9 @@ function useEditRoomComment(
       const editedAt = new Date();
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-      const existing = store.get1().threadsDB.getEvenIfDeleted(threadId);
+      const existing = store
+        .get1_threads()
+        .threadsDB.getEvenIfDeleted(threadId);
 
       if (existing === undefined) {
         console.warn(
@@ -1937,7 +1939,7 @@ function useMarkRoomThreadAsRead(roomId: string) {
     (threadId: string) => {
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
       const inboxNotification = Object.values(
-        store.get1().notificationsById
+        store.get1_notifications().notificationsById
       ).find(
         (inboxNotification) =>
           inboxNotification.kind === "thread" &&
@@ -2105,8 +2107,10 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
   const client = useClient();
   const { store } = getRoomExtrasForClient(client);
 
+  const getter = store.get1_both;
+
   const selector = React.useCallback(
-    (state: UmbrellaStoreState1<BaseMetadata>): ThreadSubscription => {
+    (state: ReturnType<typeof getter>): ThreadSubscription => {
       const notification = state.sortedNotifications.find(
         (inboxNotification) =>
           inboxNotification.kind === "thread" &&
@@ -2126,11 +2130,13 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
     [threadId]
   );
 
+  // XXX Turn this into a useSignal
   return useSyncExternalStoreWithSelector(
-    store.subscribe1,
-    store.get1,
-    store.get1,
-    selector
+    store.subscribe1_both,
+    getter,
+    getter,
+    selector,
+    shallow
   );
 }
 
@@ -2187,6 +2193,7 @@ function useRoomNotificationSettings(): [
     [store, room.id]
   );
 
+  // XXX Turn this into a useSignal
   const settings = useSyncExternalStoreWithSelector(
     store.subscribe2,
     getter,

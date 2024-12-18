@@ -3,8 +3,11 @@ import { kInternal } from "@liveblocks/core";
 import { ThreadDB } from "../../ThreadDB";
 import { UmbrellaStore } from "../../umbrella-store";
 
-const empty1 = {
+const empty1t = {
   threadsDB: expect.any(ThreadDB),
+} as const;
+
+const empty1n = {
   sortedNotifications: [],
   notificationsById: {},
 } as const;
@@ -32,7 +35,8 @@ describe("Umbrella Store", () => {
     const store = new UmbrellaStore(NO_CLIENT);
 
     // Sync getters
-    expect(store.get1()).toEqual(empty1);
+    expect(store.get1_threads()).toEqual(empty1t);
+    expect(store.get1_notifications()).toEqual(empty1n);
     expect(store.get2()).toEqual({}); // settings by room ID
     expect(store.get3()).toEqual({}); // versions by room ID
 
@@ -48,7 +52,8 @@ describe("Umbrella Store", () => {
     const store = new UmbrellaStore(NO_CLIENT);
 
     // IMPORTANT! Strict equality expected!
-    expect(store.get1()).toBe(store.get1());
+    expect(store.get1_threads()).toBe(store.get1_threads());
+    expect(store.get1_notifications()).toBe(store.get1_notifications());
 
     // Sync async-results getter
     // TODO Add check here for strict-equality of the OK-state, which currently isn't strictly-equal and the selectors/isEqual functions are still "working around" that

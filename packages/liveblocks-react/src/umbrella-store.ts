@@ -549,7 +549,8 @@ type QueryKey = string;
  * - Optimistic updates applied
  * - All deleted threads removed from the threads list
  */
-export type UmbrellaStoreState1<M extends BaseMetadata> = {
+// XXX Define Both in terms of Threads and Notifications, not the other way around
+export type UmbrellaStoreState1_Both<M extends BaseMetadata> = {
   /**
    * Keep track of loading and error status of all the queries made by the client.
    * e.g. 'room-abc-{"color":"red"}'  - ok
@@ -573,6 +574,16 @@ export type UmbrellaStoreState1<M extends BaseMetadata> = {
    */
   notificationsById: Record<string, InboxNotificationData>;
 };
+
+export type UmbrellaStoreState1_Threads<M extends BaseMetadata> = Pick<
+  UmbrellaStoreState1_Both<M>,
+  "threadsDB"
+>;
+
+export type UmbrellaStoreState1_Notifications<M extends BaseMetadata> = Pick<
+  UmbrellaStoreState1_Both<M>,
+  "sortedNotifications" | "notificationsById"
+>;
 
 /**
  * Notification settings by room ID.
@@ -639,7 +650,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
   //
   // XXX APIs like getRoomThreadsLoadingState should really also be modeled as output signals.
   //
-  readonly #externalState1: DerivedSignal<UmbrellaStoreState1<M>>;
+  readonly #externalState1_both: DerivedSignal<UmbrellaStoreState1_Both<M>>;
+  readonly #externalState1_threads: DerivedSignal<
+    UmbrellaStoreState1_Threads<M>
+  >;
+  readonly #externalState1_notifications: DerivedSignal<
+    UmbrellaStoreState1_Notifications<M>
+  >;
   readonly #externalState2: DerivedSignal<UmbrellaStoreState2_settingsByRoomId>;
   readonly #externalState3: DerivedSignal<UmbrellaStoreState3_versionsByRoomId>;
 
@@ -701,11 +718,24 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // should be able to extract it out of the UmbrellaStore.
     this.permissionHintsByRoomId = new Signal<PermissionHintsByRoomId>({});
 
-    this.#externalState1 = DerivedSignal.from(
+    this.#externalState1_both = DerivedSignal.from(
       this.optimisticUpdates,
       this.notificationsById,
       this.baseThreadsDB.signal,
       (ou, no, thDB) => internalToExternalState1(thDB, ou, no)
+    );
+
+    this.#externalState1_threads = DerivedSignal.from(
+      this.#externalState1_both,
+      (s) => ({ threadsDB: s.threadsDB })
+    );
+
+    this.#externalState1_notifications = DerivedSignal.from(
+      this.#externalState1_both,
+      (s) => ({
+        sortedNotifications: s.sortedNotifications,
+        notificationsById: s.notificationsById,
+      })
     );
 
     this.#externalState2 = DerivedSignal.from(
@@ -727,12 +757,28 @@ export class UmbrellaStore<M extends BaseMetadata> {
     autobind(this);
   }
 
-  public get1(): UmbrellaStoreState1<M> {
-    return this.#externalState1.get();
+  public get1_both(): UmbrellaStoreState1_Both<M> {
+    return this.#externalState1_both.get();
+  }
+
+  public subscribe1_both(callback: () => void): () => void {
+    return this.#externalState1_both.subscribe(callback);
+  }
+
+  public get1_threads(): UmbrellaStoreState1_Threads<M> {
+    return this.#externalState1_threads.get();
   }
 
   public subscribe1(callback: () => void): () => void {
-    return this.#externalState1.subscribe(callback);
+    return this.#externalState1_threads.subscribe(callback);
+  }
+
+  public get1_notifications(): UmbrellaStoreState1_Notifications<M> {
+    return this.#externalState1_notifications.get();
+  }
+
+  public subscribe1_notifications(callback: () => void): () => void {
+    return this.#externalState1_notifications.subscribe(callback);
   }
 
   public get2(): UmbrellaStoreState2_settingsByRoomId {
@@ -772,7 +818,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return asyncResult;
     }
 
-    const threads = this.get1().threadsDB.findMany(roomId, query ?? {}, "asc");
+    const threads = this.get1_threads().threadsDB.findMany(
+      roomId,
+      query ?? {},
+      "asc"
+    );
 
     const page = asyncResult.data;
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
@@ -801,7 +851,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return asyncResult;
     }
 
-    const threads = this.get1().threadsDB.findMany(
+    const threads = this.get1_threads().threadsDB.findMany(
       undefined, // Do _not_ filter by roomId
       query ?? {},
       "desc"
@@ -830,7 +880,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      inboxNotifications: this.get1().sortedNotifications,
+      inboxNotifications: this.get1_notifications().sortedNotifications,
       hasFetchedAll: page.hasFetchedAll,
       isFetchingMore: page.isFetchingMore,
       fetchMoreError: page.fetchMoreError,
@@ -1660,7 +1710,7 @@ function internalToExternalState1<M extends BaseMetadata>(
   baseThreadsDB: ThreadDB<M>,
   optimisticUpdates: readonly OptimisticUpdate<M>[],
   rawNotificationsById: NotificationsById
-): UmbrellaStoreState1<M> {
+): UmbrellaStoreState1_Both<M> {
   const threadsDB = baseThreadsDB.clone();
   let notificationsById = { ...rawNotificationsById };
 

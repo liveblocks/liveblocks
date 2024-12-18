@@ -577,7 +577,7 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
 ): ThreadData<M> {
   const { store } = getLiveblocksExtrasForClient<M>(client);
 
-  const getter = store.get1;
+  const getter = store.get1_both;
 
   const selector = useCallback(
     (state: ReturnType<typeof getter>) => {
@@ -603,7 +603,7 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
   );
 
   return useSyncExternalStoreWithSelector(
-    store.subscribe1, // Re-evaluate if we need to update any time the notification changes over time
+    store.subscribe1_both, // Re-evaluate if we need to update any time the notification changes over time
     getter,
     getter,
     selector
