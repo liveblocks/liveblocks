@@ -69,7 +69,7 @@ export function DocumentHeaderName({
         <input
           autoFocus
           className={styles.nameInput}
-          onBlur={handleRenamingCancel}
+          onBlur={handleRenamingSave}
           onChange={handleNameChange}
           onKeyDown={handleNameKeyDown}
           value={draftName}
