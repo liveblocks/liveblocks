@@ -387,21 +387,21 @@
     inline-size: 200%;
     block-size: 100%;
     background: repeating-linear-gradient(
-      /* 30deg, */ 90deg,
+      90deg,
       transparent 0%,
       transparent 10%,
       var(--lb-accent) 25%,
       transparent 40%,
       transparent 50%
     );
-    animation: lb-animation-ai-toolbar-halo-horizontal 4s linear infinite both;
+    animation: lb-animation-ai-toolbar-halo-horizontal 4s -2s linear infinite both;
   }
 
   &::after {
     inline-size: 100%;
     block-size: 200%;
     background: repeating-linear-gradient(
-      /* -4deg, */ 0deg,
+      0deg,
       transparent 0%,
       transparent 10%,
       var(--lb-accent) 25%,

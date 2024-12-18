@@ -38,6 +38,7 @@ import React, {
   useLayoutEffect,
   useMemo,
   useRef,
+  useState,
 } from "react";
 import { createPortal } from "react-dom";
 
@@ -105,6 +106,53 @@ function tiptapFloating(editor: Editor | null): Middleware {
       };
     },
   };
+}
+
+interface TextStreamOptions {
+  interval?: number;
+  characters?: number;
+  onComplete?: () => void;
+}
+
+function useTextStream(text: string, options: TextStreamOptions = {}) {
+  const interval = options.interval ?? 100;
+  const characters = options.characters ?? 20;
+  const onComplete = options.onComplete;
+  const [stream, setStream] = useState("");
+  const latestOnComplete = useRef(onComplete);
+
+  useEffect(() => {
+    latestOnComplete.current = onComplete;
+  }, [onComplete]);
+
+  useEffect(() => {
+    setStream("");
+
+    if (!text) {
+      return;
+    }
+
+    const intervalId = setInterval(
+      () => {
+        setStream((current) => {
+          const nextLength = Math.min(current.length + characters, text.length);
+
+          if (nextLength === text.length) {
+            clearInterval(intervalId);
+
+            latestOnComplete.current?.();
+          }
+
+          return text.slice(0, nextLength);
+        });
+      },
+      interval + (Math.random() * 2 - 1) * interval * 0.2
+    );
+
+    return () => clearInterval(intervalId);
+  }, [text, interval, characters]);
+
+  return stream;
 }
 
 const AiToolbarDropdownGroup = forwardRef<
@@ -328,8 +376,13 @@ function AiToolbarAsking({
 }
 
 function AiToolbarThinking({ editor }: { editor: Editor }) {
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
-    undefined
+  const stream = useTextStream(
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis laoreet erat vitae libero bibendum blandit. Ut nec leo et massa congue laoreet et nec nunc. Praesent a hendrerit orci, sit amet feugiat sapien. Aenean vitae aliquam libero. Suspendisse posuere scelerisque mauris tristique placerat. Maecenas id ipsum justo. Nulla quis nibh est. Nulla facilisi. Quisque vitae libero ut tellus vestibulum sagittis in eget libero. Nulla enim mauris, tempor at egestas eu, porttitor vitae purus. Ut ultrices tincidunt rutrum.",
+    {
+      onComplete: () => {
+        (editor.commands as AiCommands<boolean>).reviewAi();
+      },
+    }
   );
   const prompt =
     useEditorState({
@@ -345,17 +398,6 @@ function AiToolbarThinking({ editor }: { editor: Editor }) {
     }) ?? "";
 
   // TODO: On error, go back to asking state (with error message, cancelAskAi(error))
-  // TODO: On success, go to reviewing state (and pass the prompt to previousPrompt)
-
-  useEffect(() => {
-    timeoutRef.current = setTimeout(() => {
-      (editor.commands as AiCommands<boolean>).reviewAi();
-    }, 50000);
-
-    return () => {
-      clearTimeout(timeoutRef.current);
-    };
-  }, [editor]);
 
   const handleCancel = useCallback(() => {
     (editor.commands as AiCommands<boolean>).cancelAskAi();
@@ -364,6 +406,7 @@ function AiToolbarThinking({ editor }: { editor: Editor }) {
   return (
     <>
       <div className="lb-elevation lb-tiptap-ai-toolbar">
+        <div className="lb-tiptap-ai-toolbar-output">{stream}</div>
         <div className="lb-tiptap-ai-toolbar-content">
           <span className="lb-icon-container lb-tiptap-ai-toolbar-icon-container">
             <SparklesIcon />
@@ -420,7 +463,16 @@ function AiToolbarReviewing({ editor }: { editor: Editor }) {
   return (
     <>
       <div className="lb-elevation lb-tiptap-ai-toolbar">
-        <div className="lb-tiptap-ai-toolbar-output">Output</div>
+        <div className="lb-tiptap-ai-toolbar-output">
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis laoreet
+          erat vitae libero bibendum blandit. Ut nec leo et massa congue laoreet
+          et nec nunc. Praesent a hendrerit orci, sit amet feugiat sapien.
+          Aenean vitae aliquam libero. Suspendisse posuere scelerisque mauris
+          tristique placerat. Maecenas id ipsum justo. Nulla quis nibh est.
+          Nulla facilisi. Quisque vitae libero ut tellus vestibulum sagittis in
+          eget libero. Nulla enim mauris, tempor at egestas eu, porttitor vitae
+          purus. Ut ultrices tincidunt rutrum.
+        </div>
         <AiToolbarPromptTextArea
           editor={editor}
           dropdownRef={dropdownRef}
