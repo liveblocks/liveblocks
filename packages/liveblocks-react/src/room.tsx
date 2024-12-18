@@ -1339,7 +1339,7 @@ function useThreads<M extends BaseMetadata>(
     return () => poller.dec();
   }, [poller]);
 
-  // TODO(vincent+nimesh) There is a disconnect between this getter and subscriber! It's unclear
+  // XXX There is a disconnect between this getter and subscriber! It's unclear
   // why the getRoomThreadsLoadingState getter should be paired with subscribe1
   // and not subscribe2 from the outside! (The reason is that
   // getRoomThreadsLoadingState internally uses `get1` not `get2`.) This is
@@ -2150,19 +2150,19 @@ function useRoomNotificationSettings(): [
     };
   }, [poller]);
 
-  // TODO(vincent+nimesh) There is a disconnect between this getter and
-  // subscriber! It's unclear why the getNotificationSettingsLoadingState
-  // getter should be paired with subscribe2 and not subscribe1 from the
-  // outside! (The reason is that getNotificationSettingsLoadingState
-  // internally uses `get2` not `get1`.) This is strong evidence that
-  // getNotificationSettingsLoadingState itself wants to be a Signal! Once we
-  // make it a Signal, we can simply use `useSignal()` here! ❤️
+  // XXX There is a disconnect between this getter and subscriber! It's unclear
+  // why the getNotificationSettingsLoadingState getter should be paired with
+  // subscribe2 and not subscribe1 from the outside! (The reason is that
+  // getNotificationSettingsLoadingState internally uses `get2` not `get1`.)
+  // This is strong evidence that getNotificationSettingsLoadingState itself
+  // wants to be a Signal! Once we make it a Signal, we can simply use
+  // `useSignal()` here! ❤️
   const getter = useCallback(
     () => store.getNotificationSettingsLoadingState(room.id),
     [store, room.id]
   );
 
-  // TODO(vincent+nimesh) Turn this into a useSignal
+  // XXX Turn this into a useSignal
   const settings = useSyncExternalStoreWithSelector(
     store.subscribe2,
     getter,
@@ -2287,7 +2287,7 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
     //    *next* render after that, a *new* fetch/promise will get created.
   );
 
-  // TODO(vincent+nimesh) There is a disconnect between this getter and subscriber! It's unclear
+  // XXX There is a disconnect between this getter and subscriber! It's unclear
   // why the getRoomVersionsLoadingState getter should be paired with
   // subscribe3 and not subscribe1 from the outside! (The reason is that
   // getRoomVersionsLoadingState internally uses `get3` not `get1`.) This is

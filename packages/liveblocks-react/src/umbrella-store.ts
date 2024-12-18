@@ -635,7 +635,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // threads and notifications separately, but the threadifications signal will
   // be updated whenever either of them change.
   //
-  // TODO(vincent+nimesh) APIs like getRoomThreadsLoadingState should really also be modeled as output signals.
+  // XXX APIs like getRoomThreadsLoadingState should really also be modeled as output signals.
   //
   readonly outputs: {
     readonly threadifications: DerivedSignal<CleanThreadifications<M>>;
@@ -685,7 +685,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return nextCursor;
     };
 
-    // TODO(vincent+nimesh) Looks like this should also be a Signal!
+    // XXX Looks like this should also be a Signal!
     this.#notifications = new PaginatedResource(inboxFetcher);
     this.#notifications.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
@@ -728,8 +728,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
         applyOptimisticUpdates_forSettings(settings, updates)
     );
 
-    // TODO(vincent+nimesh) Not much of a "derived" state: it's just the same
-    // as the input This is a smell. We should be able to extract it out of the
+    // XXX Not much of a "derived" state: it's just the same as the input
+    // This is a smell. We should be able to extract it out of the
     // UmbrellaStore must like the permission hints signal.
     const versionsByRoomId = DerivedSignal.from(
       this.baseVersionsByRoomId,
@@ -891,7 +891,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   // NOTE: This will read the async result, but WILL NOT start loading at the moment!
-  // TODO(vincent+nimesh) This should really be a derived Signal!
+  // XXX This should really be a derived Signal!
   public getNotificationSettingsLoadingState(
     roomId: string
   ): RoomNotificationSettingsAsyncResult {
@@ -1454,7 +1454,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       paginatedResource = new PaginatedResource(threadsFetcher);
     }
 
-    // TODO(vincent+nimesh) Looks like this should also be a Signal!
+    // XXX Looks like this should also be a Signal!
     paginatedResource.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
@@ -1526,7 +1526,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       paginatedResource = new PaginatedResource(threadsFetcher);
     }
 
-    // TODO(vincent+nimesh) Looks like this should also be a Signal!
+    // XXX Looks like this should also be a Signal!
     paginatedResource.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
@@ -1538,10 +1538,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return paginatedResource.waitUntilLoaded();
   }
 
-  // TODO(vincent+nimesh) We should really be going over all call sites, and replace this call
+  // XXX We should really be going over all call sites, and replace this call
   // with a more specific invalidation!
   private invalidateEntireStore() {
-    // TODO(vincent+nimesh) Of course this now looks stupid, but it's the exact equivalent of
+    // XXX Of course this now looks stupid, but it's the exact equivalent of
     // what we're been doing all along
     batch(() => {
       this.baseVersionsByRoomId.set((store) => ({ ...store }));
@@ -1612,7 +1612,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       resource = new SinglePageResource(versionsFetcher);
     }
 
-    // TODO(vincent+nimesh) Looks like this should also be a Signal!
+    // XXX Looks like this should also be a Signal!
     resource.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
@@ -1671,7 +1671,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       resource = new SinglePageResource(notificationSettingsFetcher);
     }
 
-    // TODO(vincent+nimesh) Looks like this should also be a Signal!
+    // XXX Looks like this should also be a Signal!
     resource.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
