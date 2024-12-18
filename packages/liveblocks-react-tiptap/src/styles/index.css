@@ -264,15 +264,19 @@
   pointer-events: none;
 }
 
+.lb-tiptap-ai-toolbar-portal {
+  inline-size: var(--lb-tiptap-editor-width);
+  outline: none;
+}
+
 .lb-tiptap-ai-toolbar-container {
   --lb-tiptap-ai-toolbar-padding: calc(0.5 * var(--lb-spacing));
   --lb-tiptap-ai-toolbar-height: calc(
     $lb-button-size + 2 * var(--lb-tiptap-ai-toolbar-padding)
   );
 
-  inline-size: var(--lb-tiptap-editor-width);
+  position: relative;
   min-block-size: var(--lb-tiptap-ai-toolbar-height);
-  outline: none;
 }
 
 .lb-tiptap-ai-toolbar {
@@ -361,7 +365,7 @@
 }
 
 .lb-tiptap-ai-toolbar-halo {
-  --lb-tiptap-ai-toolbar-halo-blur: 16px;
+  --lb-tiptap-ai-toolbar-halo-blur: 20px;
   --lb-tiptap-ai-toolbar-halo-outset: 8px;
 
   position: absolute;
@@ -373,14 +377,15 @@
   );
   filter: blur(var(--lb-tiptap-ai-toolbar-halo-blur));
   pointer-events: none;
-  animation: lb-animation-appear 0.5s ease-in-out backwards;
+  transition-duration: 1s;
+  transition-property: opacity;
 
   &::before,
   &::after {
     content: "";
     position: absolute;
     inset: 0;
-    opacity: 0.2;
+    opacity: 0.25;
   }
 
   &::before {
@@ -409,6 +414,10 @@
       transparent 50%
     );
     animation: lb-animation-ai-toolbar-halo-vertical 3s -1s linear infinite both;
+  }
+
+  &:where(:not([data-active])) {
+    opacity: 0.5;
   }
 }
 
