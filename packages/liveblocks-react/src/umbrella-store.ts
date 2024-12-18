@@ -574,24 +574,26 @@ export type UmbrellaStoreState1<M extends BaseMetadata> = {
   notificationsById: Record<string, InboxNotificationData>;
 };
 
-export type UmbrellaStoreState2 = {
-  /**
-   * Notification settings by room ID.
-   * e.g. { 'room-abc': { threads: "all" },
-   *        'room-def': { threads: "replies_and_mentions" },
-   *        'room-xyz': { threads: "none" },
-   *      }
-   */
-  settingsByRoomId: Record<RoomId, RoomNotificationSettings>;
-};
+/**
+ * Notification settings by room ID.
+ * e.g. { 'room-abc': { threads: "all" },
+ *        'room-def': { threads: "replies_and_mentions" },
+ *        'room-xyz': { threads: "none" },
+ *      }
+ */
+export type UmbrellaStoreState2_settingsByRoomId = Record<
+  RoomId,
+  RoomNotificationSettings
+>;
 
-export type UmbrellaStoreState3 = {
-  /**
-   * Versions by roomId
-   * e.g. { 'room-abc': {versions: "all versions"}}
-   */
-  versionsByRoomId: Record<RoomId, Record<string, HistoryVersion>>;
-};
+/**
+ * Versions by roomId
+ * e.g. { 'room-abc': {versions: "all versions"}}
+ */
+export type UmbrellaStoreState3_versionsByRoomId = Record<
+  RoomId,
+  Record<string, HistoryVersion>
+>;
 
 export class UmbrellaStore<M extends BaseMetadata> {
   #client: Client<BaseUserMeta, M>;
@@ -638,8 +640,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // XXX APIs like getRoomThreadsLoadingState should really also be modeled as output signals.
   //
   readonly #externalState1: DerivedSignal<UmbrellaStoreState1<M>>;
-  readonly #externalState2: DerivedSignal<UmbrellaStoreState2>;
-  readonly #externalState3: DerivedSignal<UmbrellaStoreState3>;
+  readonly #externalState2: DerivedSignal<UmbrellaStoreState2_settingsByRoomId>;
+  readonly #externalState3: DerivedSignal<UmbrellaStoreState3_versionsByRoomId>;
 
   // Notifications
   #notificationsLastRequestedAt: Date | null = null; // Keeps track of when we successfully requested an inbox notifications update for the last time. Will be `null` as long as the first successful fetch hasn't happened yet.
@@ -727,7 +729,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this.#externalState1.subscribe(callback);
   }
 
-  public get2(): UmbrellaStoreState2 {
+  public get2(): UmbrellaStoreState2_settingsByRoomId {
     return this.#externalState2.get();
   }
 
@@ -735,7 +737,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this.#externalState2.subscribe(callback);
   }
 
-  public get3(): UmbrellaStoreState3 {
+  public get3(): UmbrellaStoreState3_versionsByRoomId {
     return this.#externalState3.get();
   }
 
@@ -850,7 +852,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      settings: nn(this.get2().settingsByRoomId[roomId]),
+      settings: nn(this.get2()[roomId]),
     };
   }
 
@@ -872,7 +874,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      versions: Object.values(this.get3().versionsByRoomId[roomId] ?? {}),
+      versions: Object.values(this.get3()[roomId] ?? {}),
     };
   }
 
@@ -1853,7 +1855,7 @@ function internalToExternalState1<M extends BaseMetadata>(
 function internalToExternalState2(
   optimisticUpdates: readonly OptimisticUpdate<BaseMetadata>[],
   rawSettingsByRoomId: SettingsByRoomId
-): UmbrellaStoreState2 {
+): UmbrellaStoreState2_settingsByRoomId {
   const settingsByRoomId = { ...rawSettingsByRoomId };
 
   for (const optimisticUpdate of optimisticUpdates) {
@@ -1873,10 +1875,7 @@ function internalToExternalState2(
       }
     }
   }
-
-  return {
-    settingsByRoomId,
-  };
+  return settingsByRoomId;
 }
 
 /**
@@ -1885,10 +1884,8 @@ function internalToExternalState2(
  */
 function internalToExternalState3(
   versionsByRoomId: VersionsByRoomId // XXX This isn't even used and converted, it's just returned! Better to use this signal directly then, instead of exposing it through UmbrellaStoreState
-): UmbrellaStoreState3 {
-  return {
-    versionsByRoomId,
-  };
+): UmbrellaStoreState3_versionsByRoomId {
+  return versionsByRoomId;
 }
 
 export function applyThreadDeltaUpdates<M extends BaseMetadata>(

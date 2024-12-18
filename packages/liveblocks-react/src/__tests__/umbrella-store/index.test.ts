@@ -9,14 +9,6 @@ const empty1 = {
   notificationsById: {},
 } as const;
 
-const empty2 = {
-  settingsByRoomId: {},
-} as const;
-
-const empty3 = {
-  versionsByRoomId: {},
-} as const;
-
 function makeSyncSource() {
   return {
     setPending: () => {},
@@ -41,8 +33,8 @@ describe("Umbrella Store", () => {
 
     // Sync getters
     expect(store.get1()).toEqual(empty1);
-    expect(store.get2()).toEqual(empty2);
-    expect(store.get3()).toEqual(empty3);
+    expect(store.get2()).toEqual({}); // settings by room ID
+    expect(store.get3()).toEqual({}); // versions by room ID
 
     // Sync async-results getters
     expect(store.getInboxNotificationsLoadingState()).toEqual(loading);
