@@ -628,10 +628,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // (Can be mutated directly.)
   //
   readonly baseThreadsDB: ThreadDB<M>; // Exposes its signal under `.signal` prop
+  readonly baseNotificationsById: Signal<NotificationsById>;
+  readonly baseSettingsByRoomId: Signal<SettingsByRoomId>;
   readonly optimisticUpdates: Signal<readonly OptimisticUpdate<M>[]>;
-  readonly historyVersionsByRoomId: Signal<VersionsByRoomId>;
-  readonly notificationsById: Signal<NotificationsById>;
-  readonly settingsByRoomId: Signal<SettingsByRoomId>;
+
+  readonly baseVersionsByRoomId: Signal<VersionsByRoomId>;
   readonly permissionHintsByRoomId: Signal<PermissionHintsByRoomId>;
 
   //
@@ -641,6 +642,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // XXX APIs like getRoomThreadsLoadingState should really also be modeled as output signals.
   //
   readonly outputs: {
+    // XXX Rename to "clean" maybe?
     readonly externalState1_both: DerivedSignal<UmbrellaStoreState1_Both<M>>;
     readonly externalState1_threads: DerivedSignal<
       UmbrellaStoreState1_Threads<M>
@@ -702,9 +704,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     this.baseThreadsDB = new ThreadDB();
     this.optimisticUpdates = new Signal<readonly OptimisticUpdate<M>[]>([]);
-    this.historyVersionsByRoomId = new Signal<VersionsByRoomId>({});
-    this.notificationsById = new Signal<NotificationsById>({});
-    this.settingsByRoomId = new Signal<SettingsByRoomId>({});
+    this.baseVersionsByRoomId = new Signal<VersionsByRoomId>({});
+    this.baseNotificationsById = new Signal<NotificationsById>({});
+    this.baseSettingsByRoomId = new Signal<SettingsByRoomId>({});
 
     // NOTE: Permission hints has no DerivedSignals depending on it, so we
     // should be able to extract it out of the UmbrellaStore.
@@ -712,7 +714,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     const externalState1_both = DerivedSignal.from(
       this.optimisticUpdates,
-      this.notificationsById,
+      this.baseNotificationsById,
       this.baseThreadsDB.signal,
       (ou, no, thDB) => internalToExternalState1(thDB, ou, no)
     );
@@ -732,15 +734,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     const externalState2 = DerivedSignal.from(
       this.optimisticUpdates,
-      this.settingsByRoomId,
+      this.baseSettingsByRoomId,
       (ou, st) => internalToExternalState2(ou, st)
     );
 
-    // NOTE: Not much of a "derived" state: it's just the same as the input
+    // XXX Not much of a "derived" state: it's just the same as the input
     // This is a smell. We should be able to extract it out of the
     // UmbrellaStore must like the permission hints signal.
     const externalState3 = DerivedSignal.from(
-      this.historyVersionsByRoomId,
+      this.baseVersionsByRoomId,
       (hv) => hv
     );
 
@@ -769,7 +771,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this.outputs.externalState1_threads.get();
   }
 
-  public subscribe1(callback: () => void): () => void {
+  public subscribe1_threads(callback: () => void): () => void {
     return this.outputs.externalState1_threads.subscribe(callback);
   }
 
@@ -947,21 +949,21 @@ export class UmbrellaStore<M extends BaseMetadata> {
       cache: Readonly<Record<string, InboxNotificationData>>
     ) => Readonly<Record<string, InboxNotificationData>>
   ): void {
-    this.notificationsById.set((prev) => mapFn(prev));
+    this.baseNotificationsById.set((prev) => mapFn(prev));
   }
 
   #setNotificationSettings(
     roomId: string,
     settings: RoomNotificationSettings
   ): void {
-    this.settingsByRoomId.set((state) => ({
+    this.baseSettingsByRoomId.set((state) => ({
       ...state,
       [roomId]: settings,
     }));
   }
 
   #updateRoomVersions(roomId: string, versions: HistoryVersion[]): void {
-    this.historyVersionsByRoomId.set((prev) => {
+    this.baseVersionsByRoomId.set((prev) => {
       const newVersions: Record<string, HistoryVersion> = { ...prev[roomId] };
       for (const version of versions) {
         newVersions[version.id] = version;
@@ -996,7 +998,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     callback: (currentState: VersionsByRoomId) => VersionsByRoomId
   ): void {
     batch(() => {
-      this.historyVersionsByRoomId.set(callback);
+      this.baseVersionsByRoomId.set(callback);
       this.invalidateEntireStore();
     });
   }
@@ -1006,7 +1008,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     callback: (currentState: NotificationsById) => NotificationsById
   ): void {
     batch(() => {
-      this.notificationsById.set(callback);
+      this.baseNotificationsById.set(callback);
       this.invalidateEntireStore();
     });
   }
@@ -1550,11 +1552,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // XXX Of course this now looks stupid, but it's the exact equivalent of
     // what we're been doing all along
     batch(() => {
-      this.historyVersionsByRoomId.set((store) => ({ ...store }));
-      this.notificationsById.set((store) => ({ ...store }));
+      this.baseVersionsByRoomId.set((store) => ({ ...store }));
+      this.baseNotificationsById.set((store) => ({ ...store }));
       this.optimisticUpdates.set((store) => [...store]);
       this.permissionHintsByRoomId.set((store) => ({ ...store }));
-      this.settingsByRoomId.set((store) => ({ ...store }));
+      this.baseSettingsByRoomId.set((store) => ({ ...store }));
     });
   }
 

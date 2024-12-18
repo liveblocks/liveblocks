@@ -1376,7 +1376,7 @@ function useThreads<M extends BaseMetadata>(
   );
 
   const state = useSyncExternalStoreWithSelector(
-    store.subscribe1,
+    store.subscribe1_threads,
     getter,
     getter,
     identity,

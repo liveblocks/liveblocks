@@ -419,7 +419,7 @@ function useInboxNotifications_withClient<T>(
   // is strong evidence that getInboxNotificationsLoadingState itself wants to
   // be a Signal! Once we make it a Signal, we can simply use `useSignal()` here! ❤️
   return useSyncExternalStoreWithSelector(
-    store.subscribe1,
+    store.subscribe1_threads,
     store.getInboxNotificationsLoadingState,
     store.getInboxNotificationsLoadingState,
     selector,
@@ -963,7 +963,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
   );
 
   return useSyncExternalStoreWithSelector(
-    store.subscribe1,
+    store.subscribe1_threads,
     getter,
     getter,
     identity,
