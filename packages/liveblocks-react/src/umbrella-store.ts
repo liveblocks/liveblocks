@@ -688,7 +688,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.#notifications.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
-      this.historyVersionsByRoomId.set((store) => ({ ...store }))
+      this.invalidateEntireStore()
     );
 
     this.baseThreadsDB = new ThreadDB();
@@ -912,17 +912,23 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   /** @internal - Only call this method from unit tests. */
   // XXX Rename this!
-  public force_set2(
+  public force_set_versions(
     callback: (currentState: VersionsByRoomId) => VersionsByRoomId
   ): void {
-    return this.historyVersionsByRoomId.set(callback);
+    batch(() => {
+      this.historyVersionsByRoomId.set(callback);
+      this.invalidateEntireStore();
+    });
   }
 
   /** @internal - Only call this method from unit tests. */
   public force_set_notifications(
     callback: (currentState: NotificationsById) => NotificationsById
   ): void {
-    return this.notificationsById.set(callback);
+    batch(() => {
+      this.notificationsById.set(callback);
+      this.invalidateEntireStore();
+    });
   }
 
   /**
@@ -1378,7 +1384,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     paginatedResource.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
-      this.historyVersionsByRoomId.set((store) => ({ ...store }))
+      this.invalidateEntireStore()
     );
 
     this.#roomThreads.set(queryKey, paginatedResource);
@@ -1450,12 +1456,26 @@ export class UmbrellaStore<M extends BaseMetadata> {
     paginatedResource.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
-      this.historyVersionsByRoomId.set((store) => ({ ...store }))
+      this.invalidateEntireStore()
     );
 
     this.#userThreads.set(queryKey, paginatedResource);
 
     return paginatedResource.waitUntilLoaded();
+  }
+
+  // XXX We should really be going over all call sites, and replace this call
+  // with a more specific invalidation!
+  private invalidateEntireStore() {
+    // XXX Of course this now looks stupid, but it's the exact equivalent of
+    // what we're been doing all along
+    batch(() => {
+      this.historyVersionsByRoomId.set((store) => ({ ...store }));
+      this.notificationsById.set((store) => ({ ...store }));
+      this.optimisticUpdates.set((store) => [...store]);
+      this.permissionHintsByRoomId.set((store) => ({ ...store }));
+      this.settingsByRoomId.set((store) => ({ ...store }));
+    });
   }
 
   public async fetchUserThreadsDeltaUpdate(signal: AbortSignal) {
@@ -1522,7 +1542,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     resource.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
-      this.historyVersionsByRoomId.set((store) => ({ ...store }))
+      this.invalidateEntireStore()
     );
 
     this.#roomVersions.set(queryKey, resource);
@@ -1581,7 +1601,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     resource.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
-      this.historyVersionsByRoomId.set((store) => ({ ...store }))
+      this.invalidateEntireStore()
     );
 
     this.#roomNotificationSettings.set(queryKey, resource);
