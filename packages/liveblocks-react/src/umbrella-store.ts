@@ -541,6 +541,9 @@ type SettingsByRoomId = Record<string, RoomNotificationSettings>;
 
 type PermissionHintsByRoomId = Record<string, Set<Permission>>;
 
+type RoomId = string;
+type QueryKey = string;
+
 /**
  * Externally observable state of the store, which will have:
  * - Optimistic updates applied
@@ -622,16 +625,16 @@ export class UmbrellaStore<M extends BaseMetadata> {
   #notifications: PaginatedResource;
 
   // Room Threads
-  #roomThreadsLastRequestedAtByRoom = new Map<string, Date>();
-  #roomThreads: Map<string, PaginatedResource> = new Map();
+  #roomThreadsLastRequestedAtByRoom = new Map<RoomId, Date>();
+  #roomThreads: Map<QueryKey, PaginatedResource> = new Map();
 
   // User Threads
   #userThreadsLastRequestedAt: Date | null = null;
-  #userThreads: Map<string, PaginatedResource> = new Map();
+  #userThreads: Map<QueryKey, PaginatedResource> = new Map();
 
   // Room versions
-  #roomVersions: Map<string, SinglePageResource> = new Map();
-  #roomVersionsLastRequestedAtByRoom = new Map<string, Date>();
+  #roomVersions: Map<QueryKey, SinglePageResource> = new Map();
+  #roomVersionsLastRequestedAtByRoom = new Map<RoomId, Date>();
 
   // Room notification settings
   #roomNotificationSettings: Map<string, SinglePageResource> = new Map();
