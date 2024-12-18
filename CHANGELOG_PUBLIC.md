@@ -15,7 +15,21 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 51 (2024-12-20)
 
+## Website
+
+- New blog post: [A better way to email your users about unread content](https://liveblocks.io/blog/a-better-way-to-email-your-users-about-unread-content).
+
+## Examples
+
+- Adjusted email templates to allow switching the logo more easily.
+
+## Documentation
+
+- Added links to email templates in guides and API reference.
+
 ## Contributors
+
+ctnicholas
 
 # Week 50 (2024-12-13)
 
