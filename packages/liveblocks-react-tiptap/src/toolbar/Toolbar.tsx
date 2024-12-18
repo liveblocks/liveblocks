@@ -5,6 +5,7 @@ import {
   CodeIcon,
   CommentIcon,
   ItalicIcon,
+  QuestionMarkIcon,
   RedoIcon,
   ShortcutTooltip,
   SparklesIcon,
@@ -373,15 +374,30 @@ function ToolbarSectionAi() {
   return (
     <>
       {supportsAi && (
-        <ToolbarButton
-          label="Ask AI anything…"
-          icon={<SparklesIcon />}
-          onClick={() =>
-            (editor.chain().focus() as ExtendedChainedCommands<"askAi">).askAi()
-          }
-        >
-          Ask AI
-        </ToolbarButton>
+        <>
+          <ToolbarButton
+            label="Ask AI anything…"
+            icon={<SparklesIcon />}
+            onClick={() =>
+              (
+                editor.chain().focus() as ExtendedChainedCommands<"askAi">
+              ).askAi()
+            }
+          >
+            Ask AI
+          </ToolbarButton>
+          <ToolbarButton
+            label="Explain"
+            icon={<QuestionMarkIcon />}
+            onClick={() =>
+              (
+                editor.chain().focus() as ExtendedChainedCommands<"askAi">
+              ).askAi("Explain")
+            }
+          >
+            Explain
+          </ToolbarButton>
+        </>
       )}
     </>
   );
