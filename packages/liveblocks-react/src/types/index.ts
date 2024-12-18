@@ -204,22 +204,6 @@ export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
      * only on the client side.
      */
     autoConnect?: boolean;
-
-    /**
-     * If you're on React 17 or lower, pass in a reference to
-     * `ReactDOM.unstable_batchedUpdates` or
-     * `ReactNative.unstable_batchedUpdates` here.
-     *
-     * @example
-     * import { unstable_batchedUpdates } from "react-dom";
-     *
-     * <RoomProvider ... unstable_batchedUpdates={unstable_batchedUpdates} />
-     *
-     * This will prevent you from running into the so-called "stale props"
-     * and/or "zombie child" problem that React 17 and lower can suffer from.
-     * Not necessary when you're on React v18 or later.
-     */
-    unstable_batchedUpdates?: (cb: () => void) => void;
   }
 
   // Initial presence is only mandatory if the custom type requires it to be

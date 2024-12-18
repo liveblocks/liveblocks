@@ -42,8 +42,6 @@ import {
   console,
   createCommentId,
   createThreadId,
-  deprecateIf,
-  errorIf,
   HttpError,
   kInternal,
   makeEventSource,
@@ -111,25 +109,6 @@ import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-
 
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
-
-const missing_unstable_batchedUpdates = (
-  reactVersion: number,
-  roomId: string
-) =>
-  `We noticed you’re using React ${reactVersion}. Please pass unstable_batchedUpdates at the RoomProvider level until you’re ready to upgrade to React 18:
-
-    import { unstable_batchedUpdates } from "react-dom";  // or "react-native"
-
-    <RoomProvider id=${JSON.stringify(
-      roomId
-    )} ... unstable_batchedUpdates={unstable_batchedUpdates}>
-      ...
-    </RoomProvider>
-
-Why? Please see https://liveblocks.io/docs/platform/troubleshooting#stale-props-zombie-child for more information`;
-
-const superfluous_unstable_batchedUpdates =
-  "You don’t need to pass unstable_batchedUpdates to RoomProvider anymore, since you’re on React 18+ already.";
 
 function useSyncExternalStore<Snapshot>(
   s: (onStoreChange: () => void) => () => void,
@@ -643,17 +622,6 @@ function RoomProviderInner<
     if (!isString(roomId)) {
       throw new Error("RoomProvider id property should be a string.");
     }
-
-    const majorReactVersion = parseInt(React.version) || 1;
-    const oldReactVersion = majorReactVersion < 18;
-    errorIf(
-      oldReactVersion && props.unstable_batchedUpdates === undefined,
-      missing_unstable_batchedUpdates(majorReactVersion, roomId)
-    );
-    deprecateIf(
-      !oldReactVersion && props.unstable_batchedUpdates !== undefined,
-      superfluous_unstable_batchedUpdates
-    );
   }
 
   // Note: We'll hold on to the initial value given here, and ignore any
@@ -661,7 +629,6 @@ function RoomProviderInner<
   const frozenProps = useInitial({
     initialPresence: props.initialPresence,
     initialStorage: props.initialStorage,
-    unstable_batchedUpdates: props.unstable_batchedUpdates,
     autoConnect: props.autoConnect ?? typeof window !== "undefined",
   }) as EnterOptions<P, S>;
 
