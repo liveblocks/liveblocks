@@ -27,6 +27,9 @@ const KEYS = {
   " ": () => {
     return { title: "Space", key: "␣" };
   },
+  Escape: () => {
+    return { title: "Escape", key: "⎋" };
+  },
 } as const;
 
 export interface TooltipProps

@@ -6,7 +6,7 @@ import React, { forwardRef } from "react";
 import { classNames } from "../../utils/class-names";
 
 export interface ButtonProps extends ComponentProps<"button"> {
-  variant?: "default" | "toolbar" | "outline" | "primary";
+  variant?: "default" | "toolbar" | "outline" | "primary" | "secondary";
   size?: "default" | "large";
   disableable?: boolean;
   icon?: ReactNode;

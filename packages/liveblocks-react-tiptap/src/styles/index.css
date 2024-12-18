@@ -413,9 +413,15 @@
 }
 
 .lb-tiptap-ai-toolbar-loading {
+  display: flex;
   flex: 1 0 auto;
+  align-items: center;
   min-inline-size: 0;
   padding-inline: var(--lb-tiptap-ai-toolbar-padding);
+  color: var(--lb-foreground-moderate);
+  pointer-events: none;
+  user-select: none;
+  animation: lb-animation-shimmer 8s linear infinite;
 }
 
 .lb-tiptap-ai-toolbar-dropdown {

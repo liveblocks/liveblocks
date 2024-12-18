@@ -255,19 +255,6 @@
     }
   }
 
-  &:where([data-size="large"]) {
-    padding: calc(0.5 * var(--lb-spacing));
-
-    &:where(:has(.lb-button-label)) {
-      gap: calc(0.35 * var(--lb-spacing));
-      padding-inline: calc(0.7 * var(--lb-spacing));
-
-      &:where(:has(.lb-icon-container)) {
-        padding-inline-start: calc(0.6 * var(--lb-spacing));
-      }
-    }
-  }
-
   &:where([data-variant="toolbar"]) {
     color: var(--lb-foreground-tertiary);
 
@@ -278,6 +265,36 @@
 
       :where(.lb-icon *) {
         stroke-width: calc(1.25 * var(--lb-icon-weight));
+      }
+    }
+  }
+
+  &:where([data-variant="secondary"]) {
+    --lb-button-background: var(--lb-foreground-subtle);
+
+    color: var(--lb-foreground-tertiary);
+
+    &:where(
+        :enabled:hover,
+        :enabled:focus-visible,
+        [aria-expanded="true"],
+        [aria-selected="true"]
+      ) {
+      --lb-button-background: var(--lb-foreground);
+
+      color: var(--lb-dynamic-background);
+    }
+  }
+
+  &:where([data-size="large"]) {
+    padding: calc(0.5 * var(--lb-spacing));
+
+    &:where(:has(.lb-button-label)) {
+      gap: calc(0.35 * var(--lb-spacing));
+      padding-inline: calc(0.7 * var(--lb-spacing));
+
+      &:where(:has(.lb-icon-container)) {
+        padding-inline-start: calc(0.6 * var(--lb-spacing));
       }
     }
   }

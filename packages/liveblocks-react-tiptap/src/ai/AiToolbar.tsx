@@ -412,13 +412,13 @@ function AiToolbarThinking({ editor }: { editor: Editor }) {
             <SparklesIcon />
           </span>
           <span className="lb-tiptap-ai-toolbar-loading">
-            Thinking about {prompt}
+            Thinking… ({prompt})
           </span>
           <div className="lb-tiptap-ai-toolbar-actions">
-            <ShortcutTooltip content="Cancel">
+            <ShortcutTooltip content="Cancel" shortcut="Escape">
               <Button
                 className="lb-tiptap-ai-toolbar-action"
-                variant="primary"
+                variant="secondary"
                 aria-label="Cancel"
                 icon={<UndoIcon />}
                 onClick={handleCancel}
