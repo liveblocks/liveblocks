@@ -139,7 +139,7 @@ export function DocumentsList({
               { value: "all", title: "All" },
               { value: "text", title: "Text" },
               { value: "whiteboard", title: "Whiteboard" },
-              { value: "spreadsheet", title: "Spreadsheet", disabled: true },
+              { value: "canvas", title: "Canvas" },
             ]}
             onChange={(value: "all" | DocumentType) => {
               setDocumentType(value);
@@ -147,7 +147,17 @@ export function DocumentsList({
             }}
             className={styles.headerSelect}
           />
-          {createDocumentButton}
+          <DocumentCreatePopover
+            align="end"
+            userId={session.user.info.id}
+            groupIds={group?.id ? [group.id] : undefined}
+            draft={filter === "drafts" || filter === "all"}
+            sideOffset={12}
+          >
+            <Button icon={<PlusIcon />}>
+              {group?.id ? "New document" : "New draft"}
+            </Button>
+          </DocumentCreatePopover>{" "}
         </div>
       </div>
 
