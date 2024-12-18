@@ -611,17 +611,36 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // - Versions by room ID
   // - Optimistic updates
   //
-  // Outputs (computed):
-  // - External state with optimistic updates applied (= UmbrellaStoreState type)
   //
-
+  //   Mutate inputs...                                             ...observe clean/consistent output!
+  //
+  //            .-> Base ThreadDB ---------+                 +----> Clean threads
+  //           /                           |                 |
+  //   mutate ----> Base Notifications -+  |                 | +--> Clean notifications
+  //           \                        |  |      Apply      | |
+  //            `-> OptimisticUpdates --+--+--> Optimistic --+-+--> Select threads
+  //                                             Updates
+  //                       ^
+  //                       |                        ^                  ^
+  //                    Signal                      |                  |
+  //                      or                   DerivedSignal      DerivedSignals
+  //                  MutableSignal
+  //
   readonly optimisticUpdates: Signal<readonly OptimisticUpdate<M>[]>;
   readonly historyVersionsByRoomId: Signal<VersionsByRoomId>;
   readonly notificationsById: Signal<NotificationsById>;
   readonly settingsByRoomId: Signal<SettingsByRoomId>;
   readonly permissionHintsByRoomId: Signal<PermissionHintsByRoomId>;
 
+  //
   // The "clean" external state, with optimistic updates applied
+  //
+  // Outputs (computed):
+  // - External state with optimistic updates applied (= UmbrellaStoreState type)
+  //
+  // XXX TODO APIs like getRoomThreadsLoadingState should really also be
+  // modeled as output signals.
+  //
   readonly #externalState: DerivedSignal<UmbrellaStoreState<M>>;
 
   // Notifications
