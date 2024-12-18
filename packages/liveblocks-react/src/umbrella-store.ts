@@ -713,16 +713,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     this.#externalState2 = DerivedSignal.from(
       this.optimisticUpdates,
-      this.historyVersionsByRoomId,
       this.settingsByRoomId,
-      (ou, hv, st) => internalToExternalState2(ou, hv, st)
+      (ou, st) => internalToExternalState2(ou, st)
     );
 
     this.#externalState3 = DerivedSignal.from(
-      this.optimisticUpdates,
       this.historyVersionsByRoomId,
-      this.settingsByRoomId,
-      (ou, hv, st) => internalToExternalState3(ou, hv, st)
+      (hv) => internalToExternalState3(hv)
     );
 
     // Auto-bind all of this class’ methods here, so we can use stable
@@ -1861,9 +1858,8 @@ function internalToExternalState1<M extends BaseMetadata>(
  * Applies optimistic updates, removes deleted threads, sorts results in
  * a stable way, removes internal fields that should not be exposed publicly.
  */
-function internalToExternalState2<M extends BaseMetadata>(
-  optimisticUpdates: readonly OptimisticUpdate<M>[],
-  _versionsByRoomId: VersionsByRoomId, // XXX This isn't even used and converted, it's just returned! Better to use this signal directly then, instead of exposing it through UmbrellaStoreState
+function internalToExternalState2(
+  optimisticUpdates: readonly OptimisticUpdate<BaseMetadata>[],
   rawSettingsByRoomId: SettingsByRoomId
 ): UmbrellaStoreState2 {
   const settingsByRoomId = { ...rawSettingsByRoomId };
@@ -1895,10 +1891,8 @@ function internalToExternalState2<M extends BaseMetadata>(
  * Applies optimistic updates, removes deleted threads, sorts results in
  * a stable way, removes internal fields that should not be exposed publicly.
  */
-function internalToExternalState3<M extends BaseMetadata>(
-  _optimisticUpdates: readonly OptimisticUpdate<M>[],
-  versionsByRoomId: VersionsByRoomId, // XXX This isn't even used and converted, it's just returned! Better to use this signal directly then, instead of exposing it through UmbrellaStoreState
-  _rawSettingsByRoomId: SettingsByRoomId
+function internalToExternalState3(
+  versionsByRoomId: VersionsByRoomId // XXX This isn't even used and converted, it's just returned! Better to use this signal directly then, instead of exposing it through UmbrellaStoreState
 ): UmbrellaStoreState3 {
   return {
     versionsByRoomId,
