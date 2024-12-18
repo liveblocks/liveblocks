@@ -1363,6 +1363,12 @@ function useThreads<M extends BaseMetadata>(
     return () => poller.dec();
   }, [poller]);
 
+  // XXX There is a disconnect between this getter and subscriber! It's unclear
+  // why the getRoomThreadsLoadingState getter should be paired with subscribe1
+  // and not subscribe2 from the outside! (The reason is that
+  // getRoomThreadsLoadingState internally uses `get1` not `get2`.) This is
+  // strong evidence that getRoomThreadsLoadingState itself wants to be
+  // a Signal! Once we make it a Signal, we can simply use `useSignal()` here! ❤️
   const getter = React.useCallback(
     () => store.getRoomThreadsLoadingState(room.id, options.query),
     [store, room.id, options.query]
@@ -2169,13 +2175,20 @@ function useRoomNotificationSettings(): [
     };
   }, [poller]);
 
+  // XXX There is a disconnect between this getter and subscriber! It's unclear
+  // why the getNotificationSettingsLoadingState getter should be paired with
+  // subscribe2 and not subscribe1 from the outside! (The reason is that
+  // getNotificationSettingsLoadingState internally uses `get2` not `get1`.)
+  // This is strong evidence that getNotificationSettingsLoadingState itself
+  // wants to be a Signal! Once we make it a Signal, we can simply use
+  // `useSignal()` here! ❤️
   const getter = React.useCallback(
     () => store.getNotificationSettingsLoadingState(room.id),
     [store, room.id]
   );
 
   const settings = useSyncExternalStoreWithSelector(
-    store.subscribe1,
+    store.subscribe2,
     getter,
     getter,
     identity,
@@ -2298,8 +2311,14 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
     //    *next* render after that, a *new* fetch/promise will get created.
   );
 
+  // XXX There is a disconnect between this getter and subscriber! It's unclear
+  // why the getRoomVersionsLoadingState getter should be paired with
+  // subscribe2 and not subscribe1 from the outside! (The reason is that
+  // getRoomVersionsLoadingState internally uses `get2` not `get1`.) This is
+  // strong evidence that getRoomVersionsLoadingState itself wants to be
+  // a Signal! Once we make it a Signal, we can simply use `useSignal()` here! ❤️
   const state = useSyncExternalStoreWithSelector(
-    store.subscribe1,
+    store.subscribe2,
     getter,
     getter,
     identity,

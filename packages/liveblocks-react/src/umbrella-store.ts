@@ -830,6 +830,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   // NOTE: This will read the async result, but WILL NOT start loading at the moment!
+  // XXX This should really be a derived Signal!
   public getNotificationSettingsLoadingState(
     roomId: string
   ): RoomNotificationSettingsAsyncResult {
