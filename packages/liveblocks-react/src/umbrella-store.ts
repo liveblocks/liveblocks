@@ -607,28 +607,27 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // be set and mutated individually. When any of those are mutated then the
   // clean "external state" is recomputed.
   //
-  // Inputs (can be mutated):
-  // - Thread DB
-  // - Permissions by room
-  // - Notifications by ID
-  // - Settings by room ID
-  // - Versions by room ID
-  // - Optimistic updates
-  //
-  //
   //   Mutate inputs...                                             ...observe clean/consistent output!
   //
-  //            .-> Base ThreadDB ---------+                 +----> Clean threads
+  //            .-> Base ThreadDB ---------+                 +----> Clean threads by ID       (Part 1)
   //           /                           |                 |
-  //   mutate ----> Base Notifications -+  |                 | +--> Clean notifications
-  //           \                        |  |      Apply      | |
-  //            `-> OptimisticUpdates --+--+--> Optimistic --+-+--> Select threads
-  //                                             Updates
+  //   mutate ----> Base Notifications --+ |                 | +--> Clean notifications       (Part 1)
+  //          \                          | |                 | |    & notifications by ID
+  //         | \                         | |      Apply      | |
+  //         |   `-> OptimisticUpdates --+--+--> Optimistic --+-+--> Notification Settings    (Part 2)
+  //          \                          |        Updates       |
+  //           `------- etc etc ---------+                      +--> History Versions         (Part 3)
   //                       ^
+  //                       |
   //                       |                        ^                  ^
   //                    Signal                      |                  |
   //                      or                   DerivedSignal      DerivedSignals
   //                  MutableSignal
+  //
+
+  //
+  // Input signals.
+  // (Can be mutated directly.)
   //
   readonly optimisticUpdates: Signal<readonly OptimisticUpdate<M>[]>;
   readonly historyVersionsByRoomId: Signal<VersionsByRoomId>;
@@ -637,13 +636,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
   readonly permissionHintsByRoomId: Signal<PermissionHintsByRoomId>;
 
   //
-  // The "clean" external state, with optimistic updates applied
+  // Output signals.
+  // (Readonly, clean, consistent. With optimistic updates applied.)
   //
-  // Outputs (computed):
-  // - External state with optimistic updates applied (= UmbrellaStoreState type)
-  //
-  // XXX TODO APIs like getRoomThreadsLoadingState should really also be
-  // modeled as output signals.
+  // XXX APIs like getRoomThreadsLoadingState should really also be modeled as output signals.
   //
   readonly #externalState1: DerivedSignal<UmbrellaStoreState1<M>>;
   readonly #externalState2: DerivedSignal<UmbrellaStoreState2>;
