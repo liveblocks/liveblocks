@@ -412,12 +412,13 @@ function useInboxNotifications_withClient<T>(
     };
   }, [poller]);
 
-  // XXX There is a disconnect between this getter and subscriber! It's unclear
-  // why the getInboxNotificationsLoadingState getter should be paired with
-  // subscribe1 and not subscribe2 from the outside! (The reason is that
-  // getInboxNotificationsLoadingState internally uses `get1` not `get2`.) This
-  // is strong evidence that getInboxNotificationsLoadingState itself wants to
-  // be a Signal! Once we make it a Signal, we can simply use `useSignal()` here! ❤️
+  // TODO(vincent+nimesh) There is a disconnect between this getter and
+  // subscriber! It's unclear why the getInboxNotificationsLoadingState getter
+  // should be paired with subscribe1 and not subscribe2 from the outside! (The
+  // reason is that getInboxNotificationsLoadingState internally uses `get1`
+  // not `get2`.) This is strong evidence that
+  // getInboxNotificationsLoadingState itself wants to be a Signal! Once we
+  // make it a Signal, we can simply use `useSignal()` here! ❤️
   return useSyncExternalStoreWithSelector(
     store.subscribe1_threads,
     store.getInboxNotificationsLoadingState,
@@ -951,11 +952,11 @@ function useUserThreads_experimental<M extends BaseMetadata>(
     };
   }, [poller]);
 
-  // XXX There is a disconnect between this getter and subscriber! It's unclear
-  // why the getUserThreadsLoadingState getter should be paired with subscribe1
-  // and not subscribe2 from the outside! (The reason is that
-  // getUserThreadsLoadingState  internally uses `get1` not `get2`.) This is
-  // strong evidence that getUserThreadsLoadingState itself wants to be
+  // TODO(vincent+nimesh) There is a disconnect between this getter and
+  // subscriber! It's unclear why the getUserThreadsLoadingState getter should
+  // be paired with subscribe1 and not subscribe2 from the outside! (The reason
+  // is that getUserThreadsLoadingState  internally uses `get1` not `get2`.)
+  // This is strong evidence that getUserThreadsLoadingState itself wants to be
   // a Signal! Once we make it a Signal, we can simply use `useSignal()` here! ❤️
   const getter = useCallback(
     () => store.getUserThreadsLoadingState(options.query),
