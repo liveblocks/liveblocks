@@ -4,9 +4,9 @@ import { ThreadDB } from "../../ThreadDB";
 import { UmbrellaStore } from "../../umbrella-store";
 
 const empty1 = {
-  cleanedNotifications: [],
-  notificationsById: {},
   threadsDB: expect.any(ThreadDB),
+  sortedNotifications: [],
+  notificationsById: {},
 } as const;
 
 const empty2 = {
