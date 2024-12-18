@@ -117,6 +117,9 @@ export function merge<T>(target: T, patch: Partial<T>): T {
   return updated ? newValue : target;
 }
 
+export type SignalType<S extends ISignal<any>> =
+  S extends ISignal<infer T> ? T : never;
+
 export interface ISignal<T> {
   get(): T;
   subscribe(callback: Callback<void>): UnsubscribeCallback;

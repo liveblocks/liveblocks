@@ -33,6 +33,7 @@ import type {
   OpaqueClient,
   Poller,
   RoomEventMessage,
+  SignalType,
   TextEditorType,
   ToImmutable,
   UnsubscribeCallback,
@@ -2107,10 +2108,10 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
   const client = useClient();
   const { store } = getRoomExtrasForClient(client);
 
-  const getter = store.get1_both;
+  const signal = store.outputs.externalState1_both;
 
   const selector = React.useCallback(
-    (state: ReturnType<typeof getter>): ThreadSubscription => {
+    (state: SignalType<typeof signal>): ThreadSubscription => {
       const notification = state.sortedNotifications.find(
         (inboxNotification) =>
           inboxNotification.kind === "thread" &&
@@ -2130,14 +2131,7 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
     [threadId]
   );
 
-  // XXX Turn this into a useSignal
-  return useSyncExternalStoreWithSelector(
-    store.subscribe1_both,
-    getter,
-    getter,
-    selector,
-    shallow
-  );
+  return useSignal(signal, selector, shallow);
 }
 
 /**

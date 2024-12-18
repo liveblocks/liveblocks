@@ -131,7 +131,7 @@ export { makePoller } from "./lib/Poller";
 export { asPos, makePosition } from "./lib/position";
 export type { Resolve } from "./lib/Resolve";
 export { shallow } from "./lib/shallow";
-export type { ISignal } from "./lib/signals";
+export type { ISignal, SignalType } from "./lib/signals";
 export { batch, DerivedSignal, MutableSignal, Signal } from "./lib/signals";
 export { SortedList } from "./lib/SortedList";
 export { stringify } from "./lib/stringify";
