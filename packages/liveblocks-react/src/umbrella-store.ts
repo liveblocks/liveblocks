@@ -533,16 +533,27 @@ export class SinglePageResource {
   }
 }
 
-type VersionsByRoomId = Record<string, Record<string, HistoryVersion>>;
+type RoomId = string;
+type QueryKey = string;
+
+/**
+ * Versions by roomId
+ * e.g. { 'room-abc': {versions: "all versions"}}
+ */
+type VersionsByRoomId = Record<RoomId, Record<string, HistoryVersion>>;
 
 type NotificationsById = Record<string, InboxNotificationData>;
 
-type SettingsByRoomId = Record<string, RoomNotificationSettings>;
+/**
+ * Notification settings by room ID.
+ * e.g. { 'room-abc': { threads: "all" },
+ *        'room-def': { threads: "replies_and_mentions" },
+ *        'room-xyz': { threads: "none" },
+ *      }
+ */
+type SettingsByRoomId = Record<RoomId, RoomNotificationSettings>;
 
-type PermissionHintsByRoomId = Record<string, Set<Permission>>;
-
-type RoomId = string;
-type QueryKey = string;
+type PermissionHintsByRoomId = Record<RoomId, Set<Permission>>;
 
 /**
  * Externally observable state of the store, which will have:
@@ -583,27 +594,6 @@ export type UmbrellaStoreState1_Threads<M extends BaseMetadata> = Pick<
 export type UmbrellaStoreState1_Notifications<M extends BaseMetadata> = Pick<
   UmbrellaStoreState1_Both<M>,
   "sortedNotifications" | "notificationsById"
->;
-
-/**
- * Notification settings by room ID.
- * e.g. { 'room-abc': { threads: "all" },
- *        'room-def': { threads: "replies_and_mentions" },
- *        'room-xyz': { threads: "none" },
- *      }
- */
-export type UmbrellaStoreState2_settingsByRoomId = Record<
-  RoomId,
-  RoomNotificationSettings
->;
-
-/**
- * Versions by roomId
- * e.g. { 'room-abc': {versions: "all versions"}}
- */
-export type UmbrellaStoreState3_versionsByRoomId = Record<
-  RoomId,
-  Record<string, HistoryVersion>
 >;
 
 export class UmbrellaStore<M extends BaseMetadata> {
@@ -658,8 +648,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
     readonly externalState1_notifications: DerivedSignal<
       UmbrellaStoreState1_Notifications<M>
     >;
-    readonly externalState2: DerivedSignal<UmbrellaStoreState2_settingsByRoomId>;
-    readonly externalState3: DerivedSignal<UmbrellaStoreState3_versionsByRoomId>;
+    readonly externalState2: DerivedSignal<SettingsByRoomId>;
+    readonly externalState3: DerivedSignal<VersionsByRoomId>;
   };
 
   // Notifications
@@ -791,7 +781,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this.outputs.externalState1_notifications.subscribe(callback);
   }
 
-  public get2(): UmbrellaStoreState2_settingsByRoomId {
+  public get2(): SettingsByRoomId {
     return this.outputs.externalState2.get();
   }
 
@@ -799,7 +789,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this.outputs.externalState2.subscribe(callback);
   }
 
-  public get3(): UmbrellaStoreState3_versionsByRoomId {
+  public get3(): VersionsByRoomId {
     return this.outputs.externalState3.get();
   }
 
@@ -1921,7 +1911,7 @@ function internalToExternalState1<M extends BaseMetadata>(
 function internalToExternalState2(
   optimisticUpdates: readonly OptimisticUpdate<BaseMetadata>[],
   rawSettingsByRoomId: SettingsByRoomId
-): UmbrellaStoreState2_settingsByRoomId {
+): SettingsByRoomId {
   const settingsByRoomId = { ...rawSettingsByRoomId };
 
   for (const optimisticUpdate of optimisticUpdates) {
