@@ -703,22 +703,16 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     this.#externalState1 = DerivedSignal.from(
       this.optimisticUpdates,
-      this.historyVersionsByRoomId,
       this.notificationsById,
-      this.settingsByRoomId,
       this.baseThreadsDB.signal,
-
-      (ou, hv, no, st, thDB) => internalToExternalState1(thDB, ou, hv, no, st)
+      (ou, no, thDB) => internalToExternalState1(thDB, ou, no)
     );
 
     this.#externalState2 = DerivedSignal.from(
       this.optimisticUpdates,
       this.historyVersionsByRoomId,
-      this.notificationsById,
       this.settingsByRoomId,
-      this.baseThreadsDB.signal,
-
-      (ou, hv, no, st, thDB) => internalToExternalState2(thDB, ou, hv, no, st)
+      (ou, hv, st) => internalToExternalState2(ou, hv, st)
     );
 
     // Auto-bind all of this class’ methods here, so we can use stable
@@ -1650,9 +1644,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 function internalToExternalState1<M extends BaseMetadata>(
   baseThreadsDB: ThreadDB<M>,
   optimisticUpdates: readonly OptimisticUpdate<M>[],
-  _versionsByRoomId: VersionsByRoomId, // XXX This isn't even used and converted, it's just returned! Better to use this signal directly then, instead of exposing it through UmbrellaStoreState
-  rawNotificationsById: NotificationsById,
-  _rawSettingsByRoomId: SettingsByRoomId
+  rawNotificationsById: NotificationsById
 ): UmbrellaStoreState1<M> {
   const threadsDB = baseThreadsDB.clone();
 
@@ -1858,10 +1850,8 @@ function internalToExternalState1<M extends BaseMetadata>(
  * a stable way, removes internal fields that should not be exposed publicly.
  */
 function internalToExternalState2<M extends BaseMetadata>(
-  _baseThreadsDB: ThreadDB<M>,
   optimisticUpdates: readonly OptimisticUpdate<M>[],
   versionsByRoomId: VersionsByRoomId, // XXX This isn't even used and converted, it's just returned! Better to use this signal directly then, instead of exposing it through UmbrellaStoreState
-  _rawNotificationsById: NotificationsById,
   rawSettingsByRoomId: SettingsByRoomId
 ): UmbrellaStoreState2 {
   const computed = {
