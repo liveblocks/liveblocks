@@ -1453,7 +1453,7 @@ describe("useThreads", () => {
       umbrellaStore,
     } = createContextsForTest();
 
-    const db = umbrellaStore.threadsDB;
+    const db = umbrellaStore.baseThreadsDB;
     db.upsert(thread1);
     db.upsert(thread2WithDeletedAt);
     umbrellaStore.force_set2((state) => ({ ...state }));

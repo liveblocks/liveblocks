@@ -57,7 +57,7 @@ export class ThreadDB<M extends BaseMetadata> {
   #desc: SortedList<ThreadData<M>>;
 
   // This signal will be notified on every mutation
-  public signal: MutableSignal<this>;
+  public readonly signal: MutableSignal<this>;
 
   constructor() {
     this.#asc = SortedList.from<ThreadData<M>>([], (t1, t2) => {

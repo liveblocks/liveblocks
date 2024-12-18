@@ -593,8 +593,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
   #client: Client<BaseUserMeta, M>;
   #syncSource: SyncSource;
 
-  // Raw threads DB (without any optimistic updates applied)
-  readonly threadsDB: ThreadDB<M>;
+  // Base threads DB (without any optimistic updates applied)
+  // This is different from `this.get().threadsDB`, which has optimistic
+  // updates applied!
+  readonly baseThreadsDB: ThreadDB<M>;
 
   //
   // Internally, the UmbrellaStore keeps track of a few source signals that can
@@ -618,7 +620,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
   readonly notificationsById: Signal<NotificationsById>;
   readonly settingsByRoomId: Signal<SettingsByRoomId>;
   readonly permissionHintsByRoomId: Signal<PermissionHintsByRoomId>;
-  externalState: DerivedSignal<UmbrellaStoreState<M>>;
+
+  // The "clean" external state, with optimistic updates applied
+  readonly #externalState: DerivedSignal<UmbrellaStoreState<M>>;
 
   // Notifications
   #notificationsLastRequestedAt: Date | null = null; // Keeps track of when we successfully requested an inbox notifications update for the last time. Will be `null` as long as the first successful fetch hasn't happened yet.
@@ -668,19 +672,19 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this.historyVersionsByRoomId.set((store) => ({ ...store }))
     );
 
-    this.threadsDB = new ThreadDB();
+    this.baseThreadsDB = new ThreadDB();
     this.optimisticUpdates = new Signal<readonly OptimisticUpdate<M>[]>([]);
     this.historyVersionsByRoomId = new Signal<VersionsByRoomId>({});
     this.notificationsById = new Signal<NotificationsById>({});
     this.settingsByRoomId = new Signal<SettingsByRoomId>({});
     this.permissionHintsByRoomId = new Signal<PermissionHintsByRoomId>({});
 
-    this.externalState = DerivedSignal.from(
+    this.#externalState = DerivedSignal.from(
       this.optimisticUpdates,
       this.historyVersionsByRoomId,
       this.notificationsById,
       this.settingsByRoomId,
-      this.threadsDB.signal,
+      this.baseThreadsDB.signal,
 
       (ou, hv, no, st, thDB): UmbrellaStoreState<M> =>
         internalToExternalState(thDB, ou, hv, no, st)
@@ -691,16 +695,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
     autobind(this);
   }
 
-  private get(): UmbrellaStoreState<M> {
-    return this.externalState.get();
+  public getFullState(): UmbrellaStoreState<M> {
+    return this.#externalState.get();
   }
 
   public subscribe(callback: () => void): () => void {
-    return this.externalState.subscribe(callback);
-  }
-
-  public getFullState(): UmbrellaStoreState<M> {
-    return this.get();
+    return this.#externalState.subscribe(callback);
   }
 
   /**
@@ -813,7 +813,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      settings: nn(this.get().settingsByRoomId[roomId]),
+      settings: nn(this.getFullState().settingsByRoomId[roomId]),
     };
   }
 
@@ -843,7 +843,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   #mutateThreadsDB(mutate: (db: ThreadDB<M>) => void): void {
     batch(() => {
-      mutate(this.threadsDB);
+      mutate(this.baseThreadsDB);
     });
   }
 
@@ -1129,7 +1129,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this.removeOptimisticUpdate(optimisticUpdateId);
 
       // If the associated thread is not found, we cannot create a comment under it
-      const existingThread = this.threadsDB.get(newComment.threadId);
+      const existingThread = this.baseThreadsDB.get(newComment.threadId);
       if (!existingThread) {
         return;
       }
@@ -1592,13 +1592,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
  * a stable way, removes internal fields that should not be exposed publicly.
  */
 function internalToExternalState<M extends BaseMetadata>(
-  rawThreadsDB: ThreadDB<M>,
+  baseThreadsDB: ThreadDB<M>,
   optimisticUpdates: readonly OptimisticUpdate<M>[],
   versionsByRoomId: VersionsByRoomId, // XXX This isn't even used and converted, it's just returned! Better to use this signal directly then, instead of exposing it through UmbrellaStoreState
   rawNotificationsById: NotificationsById,
   rawSettingsByRoomId: SettingsByRoomId
 ): UmbrellaStoreState<M> {
-  const threadsDB = rawThreadsDB.clone();
+  const threadsDB = baseThreadsDB.clone();
 
   const computed = {
     notificationsById: { ...rawNotificationsById },
