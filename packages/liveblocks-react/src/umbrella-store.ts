@@ -650,8 +650,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
     readonly externalState1_notifications: DerivedSignal<
       UmbrellaStoreState1_Notifications<M>
     >;
-    readonly externalState2: DerivedSignal<SettingsByRoomId>;
-    readonly externalState3: DerivedSignal<VersionsByRoomId>;
+    readonly settingsByRoomId: DerivedSignal<SettingsByRoomId>;
+    readonly versionsByRoomId: DerivedSignal<VersionsByRoomId>;
   };
 
   // Notifications
@@ -732,7 +732,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       })
     );
 
-    const externalState2 = DerivedSignal.from(
+    const settingsByRoomId = DerivedSignal.from(
       this.optimisticUpdates,
       this.baseSettingsByRoomId,
       (ou, st) => internalToExternalState2(ou, st)
@@ -741,7 +741,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // XXX Not much of a "derived" state: it's just the same as the input
     // This is a smell. We should be able to extract it out of the
     // UmbrellaStore must like the permission hints signal.
-    const externalState3 = DerivedSignal.from(
+    const versionsByRoomId = DerivedSignal.from(
       this.baseVersionsByRoomId,
       (hv) => hv
     );
@@ -750,8 +750,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
       externalState1_both,
       externalState1_threads,
       externalState1_notifications,
-      externalState2,
-      externalState3,
+      settingsByRoomId,
+      versionsByRoomId,
     };
 
     // Auto-bind all of this class’ methods here, so we can use stable
@@ -784,19 +784,19 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   public get2(): SettingsByRoomId {
-    return this.outputs.externalState2.get();
+    return this.outputs.settingsByRoomId.get();
   }
 
   public subscribe2(callback: () => void): () => void {
-    return this.outputs.externalState2.subscribe(callback);
+    return this.outputs.settingsByRoomId.subscribe(callback);
   }
 
   public get3(): VersionsByRoomId {
-    return this.outputs.externalState3.get();
+    return this.outputs.versionsByRoomId.get();
   }
 
   public subscribe3(callback: () => void): () => void {
-    return this.outputs.externalState3.subscribe(callback);
+    return this.outputs.versionsByRoomId.subscribe(callback);
   }
 
   /**
