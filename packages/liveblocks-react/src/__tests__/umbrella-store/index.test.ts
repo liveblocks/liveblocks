@@ -11,6 +11,9 @@ const empty1 = {
 
 const empty2 = {
   settingsByRoomId: {},
+} as const;
+
+const empty3 = {
   versionsByRoomId: {},
 } as const;
 
@@ -39,6 +42,7 @@ describe("Umbrella Store", () => {
     // Sync getters
     expect(store.get1()).toEqual(empty1);
     expect(store.get2()).toEqual(empty2);
+    expect(store.get3()).toEqual(empty3);
 
     // Sync async-results getters
     expect(store.getInboxNotificationsLoadingState()).toEqual(loading);

@@ -2313,12 +2313,12 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
 
   // XXX There is a disconnect between this getter and subscriber! It's unclear
   // why the getRoomVersionsLoadingState getter should be paired with
-  // subscribe2 and not subscribe1 from the outside! (The reason is that
-  // getRoomVersionsLoadingState internally uses `get2` not `get1`.) This is
+  // subscribe3 and not subscribe1 from the outside! (The reason is that
+  // getRoomVersionsLoadingState internally uses `get3` not `get1`.) This is
   // strong evidence that getRoomVersionsLoadingState itself wants to be
   // a Signal! Once we make it a Signal, we can simply use `useSignal()` here! ❤️
   const state = useSyncExternalStoreWithSelector(
-    store.subscribe2,
+    store.subscribe3,
     getter,
     getter,
     identity,
