@@ -597,11 +597,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
   #client: Client<BaseUserMeta, M>;
   #syncSource: SyncSource;
 
-  // Base threads DB (without any optimistic updates applied)
-  // This is different from `this.get().threadsDB`, which has optimistic
-  // updates applied!
-  readonly baseThreadsDB: ThreadDB<M>;
-
   //
   // Internally, the UmbrellaStore keeps track of a few source signals that can
   // be set and mutated individually. When any of those are mutated then the
@@ -629,6 +624,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // Input signals.
   // (Can be mutated directly.)
   //
+  readonly baseThreadsDB: ThreadDB<M>; // Exposes its signal under `.signal` prop
   readonly optimisticUpdates: Signal<readonly OptimisticUpdate<M>[]>;
   readonly historyVersionsByRoomId: Signal<VersionsByRoomId>;
   readonly notificationsById: Signal<NotificationsById>;
