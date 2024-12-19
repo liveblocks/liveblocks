@@ -30,5 +30,5 @@ export default async function idTokenBasedAuth(
       issuedBy: "/api/auth/id-token",
     },
   });
-  return res.status(response.status).end(response.body);
+  res.status(response.status).end(response.body);
 }
