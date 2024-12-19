@@ -668,7 +668,7 @@ function RoomProviderInner<
         store.deleteThread(message.threadId, null);
         return;
       }
-      const { thread, inboxNotification } = info;
+      const { thread, inboxNotification: maybeNotification } = info;
 
       const existingThread = store
         .get1_threads()
@@ -684,10 +684,17 @@ function RoomProviderInner<
           // If the thread doesn't exist in the local cache, we do not update it with the server data as an optimistic update could have deleted the thread locally.
           if (!existingThread) break;
 
-          store.updateThreadAndNotification(thread, inboxNotification);
+          store.updateThreadifications(
+            [thread],
+            maybeNotification ? [maybeNotification] : []
+          );
           break;
+
         case ServerMsgCode.COMMENT_CREATED:
-          store.updateThreadAndNotification(thread, inboxNotification);
+          store.updateThreadifications(
+            [thread],
+            maybeNotification ? [maybeNotification] : []
+          );
           break;
         default:
           break;
@@ -2346,7 +2353,7 @@ function useUpdateRoomNotificationSettings() {
       room.updateNotificationSettings(settings).then(
         (settings) => {
           // Replace the optimistic update by the real thing
-          store.updateRoomNotificationSettings_confirmOptimisticUpdate(
+          store.updateRoomNotificationSettings(
             room.id,
             optimisticUpdateId,
             settings

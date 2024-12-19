@@ -1261,30 +1261,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
     );
   }
 
-  public updateThreadAndNotification(
-    thread: ThreadData<M>,
-    inboxNotification?: InboxNotificationData
-  ): void {
-    // Batch 1️⃣ + 2️⃣
-    batch(() => {
-      // 1️⃣
-      this.baseThreadsDB.upsertIfNewer(thread);
-
-      // 2️⃣
-      if (inboxNotification !== undefined) {
-        this.baseNotificationsById.set((cache) => ({
-          ...cache,
-          [inboxNotification.id]: inboxNotification,
-        }));
-      }
-    });
-  }
-
   public updateThreadifications(
     threads: ThreadData<M>[],
-    inboxNotifications: InboxNotificationData[],
+    notifications: InboxNotificationData[],
     deletedThreads: ThreadDeleteInfo[] = [],
-    deletedInboxNotifications: InboxNotificationDeleteInfo[] = []
+    deletedNotifications: InboxNotificationDeleteInfo[] = []
   ): void {
     // Batch 1️⃣ + 2️⃣
     batch(() => {
@@ -1298,8 +1279,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
       // XXX Ideally we would have a similar this.baseNotificationsById.applyDelta() method
       this.baseNotificationsById.set((cache) =>
         applyNotificationsUpdates(cache, {
-          newInboxNotifications: inboxNotifications,
-          deletedNotifications: deletedInboxNotifications,
+          newInboxNotifications: notifications,
+          deletedNotifications,
         })
       );
     });
@@ -1309,7 +1290,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * Updates existing notification setting for a room with a new value,
    * replacing the corresponding optimistic update.
    */
-  public updateRoomNotificationSettings_confirmOptimisticUpdate(
+  public updateRoomNotificationSettings(
     roomId: string,
     optimisticUpdateId: string,
     settings: Readonly<RoomNotificationSettings>
@@ -1901,7 +1882,7 @@ export function applyNotificationsUpdates(
   const updatedInboxNotifications = { ...existingInboxNotifications };
 
   // Add new notifications or update existing notifications if the existing notification is older than the new notification.
-  updates.newInboxNotifications.forEach((notification) => {
+  for (const notification of updates.newInboxNotifications) {
     const existingNotification = updatedInboxNotifications[notification.id];
     // If the notification already exists, we need to compare the two notifications to determine which one is newer.
     if (existingNotification) {
@@ -1911,16 +1892,16 @@ export function applyNotificationsUpdates(
       );
 
       // If the existing notification is newer than the new notification, we do not update the existing notification.
-      if (result === 1) return;
+      if (result === 1) continue;
     }
 
     // If the new notification is newer than the existing notification, we update the existing notification.
     updatedInboxNotifications[notification.id] = notification;
-  });
+  }
 
-  updates.deletedNotifications.forEach(
-    ({ id }) => delete updatedInboxNotifications[id]
-  );
+  for (const { id } of updates.deletedNotifications) {
+    delete updatedInboxNotifications[id];
+  }
 
   return updatedInboxNotifications;
 }
