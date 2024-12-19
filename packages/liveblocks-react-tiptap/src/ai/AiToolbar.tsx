@@ -157,6 +157,22 @@ function useTextStream(text: string, options: TextStreamOptions = {}) {
   return stream;
 }
 
+function CollaborationCursor({ children }: PropsWithChildren) {
+  return (
+    <span
+      className="collaboration-cursor__caret"
+      style={{ borderColor: "var(--lb-accent)" }}
+    >
+      <div
+        className="collaboration-cursor__label"
+        style={{ backgroundColor: "var(--lb-accent)" }}
+      >
+        {children}
+      </div>
+    </span>
+  );
+}
+
 const AiToolbarDropdownGroup = forwardRef<
   HTMLDivElement,
   AiToolbarDropdownGroupProps
@@ -398,6 +414,7 @@ function AiToolbarThinking({
   const stream = useTextStream(
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis laoreet erat vitae libero bibendum blandit. Ut nec leo et massa congue laoreet et nec nunc. Praesent a hendrerit orci, sit amet feugiat sapien. Aenean vitae aliquam libero. Suspendisse posuere scelerisque mauris tristique placerat. Maecenas id ipsum justo. Nulla quis nibh est. Nulla facilisi. Quisque vitae libero ut tellus vestibulum sagittis in eget libero. Nulla enim mauris, tempor at egestas eu, porttitor vitae purus. Ut ultrices tincidunt rutrum.",
     {
+      interval: 200,
       onComplete: () => {
         (editor.commands as AiCommands<boolean>).reviewAi();
       },
@@ -412,7 +429,15 @@ function AiToolbarThinking({
 
   return (
     <>
-      <div className="lb-tiptap-ai-toolbar-output">{stream}</div>
+      <div className="lb-tiptap-ai-toolbar-output">
+        {stream}
+        <CollaborationCursor>
+          <div className="lb-icon-container">
+            <SparklesIcon />
+          </div>
+          {aiName}
+        </CollaborationCursor>
+      </div>
       <div className="lb-tiptap-ai-toolbar-content">
         <span className="lb-icon-container lb-tiptap-ai-toolbar-icon-container">
           <SparklesIcon />

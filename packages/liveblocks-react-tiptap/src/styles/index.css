@@ -287,6 +287,23 @@
 
 .lb-tiptap-ai-toolbar-output {
   border-block-end: 1px solid var(--lb-foreground-subtle);
+
+  /* stylelint-disable-next-line selector-class-pattern */
+  :where(.collaboration-cursor__label) {
+    display: flex;
+    gap: 0.1875em;
+    align-items: center;
+
+    :where(.lb-icon-container) {
+      margin-inline-start: -0.125em;
+
+      &,
+      & svg {
+        inline-size: 1em;
+        block-size: 1em;
+      }
+    }
+  }
 }
 
 .lb-tiptap-ai-toolbar-content {
