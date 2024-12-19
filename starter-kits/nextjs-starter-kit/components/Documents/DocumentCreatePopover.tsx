@@ -73,6 +73,7 @@ export function DocumentCreatePopover({
               createNewDocument("Untitled", "canvas");
             }}
             variant="subtle"
+            disabled={disableButtons}
           >
             Canvas
           </Button>
@@ -82,6 +83,7 @@ export function DocumentCreatePopover({
               createNewDocument("Untitled", "issue");
             }}
             variant="subtle"
+            disabled={disableButtons}
           >
             Issue
           </Button>
