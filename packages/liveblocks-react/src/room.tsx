@@ -42,6 +42,7 @@ import {
   console,
   createCommentId,
   createThreadId,
+  errorIf,
   HttpError,
   kInternal,
   makeEventSource,
@@ -622,6 +623,13 @@ function RoomProviderInner<
     if (!isString(roomId)) {
       throw new Error("RoomProvider id property should be a string.");
     }
+
+    const majorReactVersion = parseInt(React.version) || 1;
+    const requiredVersion = 18;
+    errorIf(
+      majorReactVersion < requiredVersion,
+      `React ${requiredVersion} or higher is required (you’re on ${React.version})`
+    );
   }
 
   // Note: We'll hold on to the initial value given here, and ignore any
