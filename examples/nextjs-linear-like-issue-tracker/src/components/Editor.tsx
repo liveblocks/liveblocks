@@ -9,14 +9,12 @@ import {
   FloatingThreads,
   liveblocksConfig,
   LiveblocksPlugin,
-  useIsEditorReady,
 } from "@liveblocks/react-lexical";
 import { EditorTitle } from "@/components/EditorTitle";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { ListNode, ListItemNode } from "@lexical/list";
 import { ClientSideSuspense, useThreads } from "@liveblocks/react/suspense";
 import { EditorFloatingToolbar } from "@/components/EditorFloatingToolbar";
-import { ReactNode } from "react";
 import { LinkNode } from "@lexical/link";
 import { CodeNode } from "@lexical/code";
 import { HorizontalRuleNode } from "@lexical/react/LexicalHorizontalRuleNode";
@@ -47,47 +45,38 @@ const initialConfig = liveblocksConfig({
 });
 
 export function Editor({
-  contentFallback,
   storageFallback,
 }: {
-  contentFallback: ReactNode;
   storageFallback: ImmutableStorage;
 }) {
-  const ready = useIsEditorReady();
-
   return (
     <LexicalComposer initialConfig={initialConfig}>
       <div className="">
         <div className="my-6">
           <ClientSideSuspense
             fallback={
-              <div className="block w-full text-2xl font-bold my-6">
-                {storageFallback.meta.title}
-              </div>
+              null
+              // <div className="block w-full text-2xl font-bold my-6">
+              //   {storageFallback.meta.title}
+              // </div>
             }
           >
             <EditorTitle />
           </ClientSideSuspense>
         </div>
         <div className="relative">
-          <LiveblocksPlugin>
-            {!ready ? (
-              <div className="select-none cursor-wait editor-styles">
-                {contentFallback}
-              </div>
-            ) : (
-              <RichTextPlugin
-                contentEditable={
-                  <ContentEditable className="outline-none editor-styles" />
-                }
-                placeholder={
-                  <div className="absolute top-0 left-0 pointer-events-none text-neutral-500 whitespace-nowrap">
-                    Start typing here…
-                  </div>
-                }
-                ErrorBoundary={LexicalErrorBoundary}
-              />
-            )}
+          <LiveblocksPlugin offlineSupport_experimental={true}>
+            <RichTextPlugin
+              contentEditable={
+                <ContentEditable className="outline-none editor-styles" />
+              }
+              placeholder={
+                <div className="absolute top-0 left-0 pointer-events-none text-neutral-500 whitespace-nowrap">
+                  Start typing here…
+                </div>
+              }
+              ErrorBoundary={LexicalErrorBoundary}
+            />
             <ClientSideSuspense fallback={null}>
               <TextEditorThreads />
             </ClientSideSuspense>
