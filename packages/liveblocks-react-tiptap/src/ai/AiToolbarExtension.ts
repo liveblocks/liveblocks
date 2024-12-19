@@ -8,7 +8,7 @@ import type { AiToolbarExtensionStorage } from "../types";
 import { AI_TOOLBAR_SELECTION_PLUGIN } from "../types";
 
 export const AiToolbarExtension = Extension.create<
-  never,
+  { name?: string },
   AiToolbarExtensionStorage
 >({
   name: "liveblocksAiToolbar",
@@ -16,6 +16,7 @@ export const AiToolbarExtension = Extension.create<
 
   addStorage() {
     return {
+      name: this.options.name,
       state: "closed",
       selection: undefined,
       prompt: undefined,

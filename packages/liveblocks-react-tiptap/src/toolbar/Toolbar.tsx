@@ -20,9 +20,13 @@ import type { Editor } from "@tiptap/react";
 import type { ComponentProps, ComponentType, ReactNode } from "react";
 import React, { forwardRef, useMemo, useState } from "react";
 
+import { DEFAULT_AI_NAME } from "../ai/AiToolbar";
 import { classNames } from "../classnames";
 import { EditorProvider, useCurrentEditor } from "../context";
-import type { ExtendedChainedCommands } from "../types";
+import type {
+  AiToolbarExtensionStorage,
+  ExtendedChainedCommands,
+} from "../types";
 
 export const FLOATING_ELEMENT_SIDE_OFFSET = 6;
 export const FLOATING_ELEMENT_COLLISION_PADDING = 10;
@@ -370,13 +374,19 @@ function ToolbarSectionCollaboration() {
 function ToolbarSectionAi() {
   const editor = useCurrentEditor("SectionAi", "Toolbar or FloatingToolbar");
   const supportsAi = "askAi" in editor.commands;
+  const aiName =
+    (
+      editor.storage.liveblocksAiToolbar as
+        | AiToolbarExtensionStorage
+        | undefined
+    )?.name ?? DEFAULT_AI_NAME;
 
   return (
     <>
       {supportsAi && (
         <>
           <ToolbarButton
-            label="Ask AI anything…"
+            label={`Ask ${aiName} anything…`}
             icon={<SparklesIcon />}
             onClick={() =>
               (
@@ -384,7 +394,7 @@ function ToolbarSectionAi() {
               ).askAi()
             }
           >
-            Ask AI
+            Ask {aiName}
           </ToolbarButton>
           <ToolbarButton
             label="Explain"

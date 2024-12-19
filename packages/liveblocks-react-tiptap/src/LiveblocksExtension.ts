@@ -18,6 +18,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { Doc } from "yjs";
 
+import { DEFAULT_AI_NAME } from "./ai/AiToolbar";
 import { AiToolbarExtension } from "./ai/AiToolbarExtension";
 import { CommentsExtension } from "./comments/CommentsExtension";
 import { MentionExtension } from "./mentions/MentionExtension";
@@ -30,20 +31,29 @@ const providersMap = new Map<
 
 const docMap = new Map<string, Doc>();
 
+type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
+
+interface AiConfiguration {
+  name?: string;
+}
+
 type LiveblocksExtensionOptions = {
   field?: string;
   comments?: boolean; // | CommentsConfiguration
   mentions?: boolean; // | MentionsConfiguration
-  ai?: boolean;
+  ai?: boolean | AiConfiguration;
   offlineSupport_experimental?: boolean;
   initialContent?: Content;
 };
 
-const DEFAULT_OPTIONS = {
+const DEFAULT_AI_CONFIGURATION: AiConfiguration = {
+  name: DEFAULT_AI_NAME,
+};
+const DEFAULT_OPTIONS: WithRequired<LiveblocksExtensionOptions, "field"> = {
   field: "default",
   comments: true,
   mentions: true,
-  ai: true,
+  ai: DEFAULT_AI_CONFIGURATION,
   offlineSupport_experimental: false,
 };
 
@@ -336,7 +346,11 @@ export const useLiveblocksExtension = (
         );
       }
       if (options.ai) {
-        extensions.push(AiToolbarExtension);
+        extensions.push(
+          AiToolbarExtension.configure(
+            options.ai === true ? DEFAULT_AI_CONFIGURATION : options.ai
+          )
+        );
       }
 
       return extensions;

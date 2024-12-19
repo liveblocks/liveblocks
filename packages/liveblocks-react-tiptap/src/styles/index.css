@@ -421,14 +421,14 @@
   }
 }
 
-.lb-tiptap-ai-toolbar-loading {
+.lb-tiptap-ai-toolbar-thinking {
   display: flex;
   flex: 1 0 auto;
   align-items: center;
   min-inline-size: 0;
   padding-inline: var(--lb-tiptap-ai-toolbar-padding);
   color: var(--lb-foreground-moderate);
-  pointer-events: none;
+  cursor: wait;
   user-select: none;
   animation: lb-animation-shimmer 8s linear infinite;
 }

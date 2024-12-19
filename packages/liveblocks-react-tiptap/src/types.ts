@@ -35,12 +35,14 @@ export const enum ThreadPluginActions {
 export type AiToolbarExtensionStorage =
   | {
       state: "closed";
+      name: string;
       selection: undefined;
       prompt: undefined;
       previousPrompt: undefined;
     }
   | {
       state: "asking" | "thinking" | "reviewing";
+      name: string;
       selection: TextSelection;
       prompt: string;
       previousPrompt: string | undefined;

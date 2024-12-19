@@ -54,6 +54,7 @@ import type {
 import { compareTextSelections, getDomRangeFromTextSelection } from "../utils";
 
 export const AI_TOOLBAR_COLLISION_PADDING = 10;
+export const DEFAULT_AI_NAME = "AI";
 
 export interface AiToolbarProps
   extends Omit<ComponentProps<"div">, "value" | "defaultValue"> {
@@ -253,6 +254,9 @@ function AiToolbarPromptContent({
   dropdownRef: RefObject<HTMLDivElement>;
   isDropdownHidden: boolean;
 }) {
+  const aiName =
+    (editor.storage.liveblocksAiToolbar as AiToolbarExtensionStorage).name ??
+    DEFAULT_AI_NAME;
   const promptRef = useRef<HTMLTextAreaElement>(null);
   const isPromptEmpty = useMemo(() => prompt.trim() === "", [prompt]);
 
@@ -335,7 +339,7 @@ function AiToolbarPromptContent({
           <textarea
             ref={promptRef}
             className="lb-tiptap-ai-toolbar-prompt"
-            placeholder="Ask AI anything…"
+            placeholder={`Ask ${aiName} anything…`}
             onKeyDown={handlePromptKeyDown}
             rows={1}
             autoFocus
@@ -343,11 +347,11 @@ function AiToolbarPromptContent({
         </Command.Input>
       </div>
       <div className="lb-tiptap-ai-toolbar-actions">
-        <ShortcutTooltip content="Ask AI" shortcut="Enter">
+        <ShortcutTooltip content={`Ask ${aiName}`} shortcut="Enter">
           <Button
             className="lb-tiptap-ai-toolbar-action"
             variant="primary"
-            aria-label="Ask AI"
+            aria-label={`Ask ${aiName}`}
             icon={<SendIcon />}
             disabled={isPromptEmpty}
             onClick={handleSendClick}
@@ -388,6 +392,9 @@ function AiToolbarThinking({
   editor: Editor;
   prompt: string;
 }) {
+  const aiName =
+    (editor.storage.liveblocksAiToolbar as AiToolbarExtensionStorage).name ??
+    DEFAULT_AI_NAME;
   const stream = useTextStream(
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis laoreet erat vitae libero bibendum blandit. Ut nec leo et massa congue laoreet et nec nunc. Praesent a hendrerit orci, sit amet feugiat sapien. Aenean vitae aliquam libero. Suspendisse posuere scelerisque mauris tristique placerat. Maecenas id ipsum justo. Nulla quis nibh est. Nulla facilisi. Quisque vitae libero ut tellus vestibulum sagittis in eget libero. Nulla enim mauris, tempor at egestas eu, porttitor vitae purus. Ut ultrices tincidunt rutrum.",
     {
@@ -410,7 +417,9 @@ function AiToolbarThinking({
         <span className="lb-icon-container lb-tiptap-ai-toolbar-icon-container">
           <SparklesIcon />
         </span>
-        <div className="lb-tiptap-ai-toolbar-loading">Thinking… ({prompt})</div>
+        <div className="lb-tiptap-ai-toolbar-thinking">
+          {aiName} is thinking… ({prompt})
+        </div>
         <div className="lb-tiptap-ai-toolbar-actions">
           <ShortcutTooltip content="Cancel" shortcut="Escape">
             <Button
