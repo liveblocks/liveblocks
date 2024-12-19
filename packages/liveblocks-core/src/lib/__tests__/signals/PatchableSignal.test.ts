@@ -1,4 +1,4 @@
-import { PatchableSignal } from "../Signal";
+import { PatchableSignal } from "../../signals";
 
 type P = {
   x: number;

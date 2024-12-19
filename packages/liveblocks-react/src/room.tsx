@@ -33,6 +33,7 @@ import type {
   OpaqueClient,
   Poller,
   RoomEventMessage,
+  SignalType,
   TextEditorType,
   ToImmutable,
   UnsubscribeCallback,
@@ -113,8 +114,9 @@ import {
   RemoveReactionError,
   UpdateNotificationSettingsError,
 } from "./types/errors";
-import type { UmbrellaStore, UmbrellaStoreState } from "./umbrella-store";
+import type { UmbrellaStore } from "./umbrella-store";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
+import { useSignal } from "./use-signal";
 import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
 
 const noop = () => {};
@@ -181,7 +183,7 @@ function makeMutationContext<
 }
 
 function getCurrentUserId(client: Client): string {
-  const userId = client[kInternal].currentUserIdStore.get();
+  const userId = client[kInternal].currentUserId.get();
   if (userId === undefined) {
     return "anonymous";
   }
@@ -669,7 +671,7 @@ function RoomProviderInner<
       const { thread, inboxNotification } = info;
 
       const existingThread = store
-        .getFullState()
+        .get1_threads()
         .threadsDB.getEvenIfDeleted(message.threadId);
 
       switch (message.type) {
@@ -1337,13 +1339,19 @@ function useThreads<M extends BaseMetadata>(
     return () => poller.dec();
   }, [poller]);
 
+  // TODO(vincent+nimesh) There is a disconnect between this getter and subscriber! It's unclear
+  // why the getRoomThreadsLoadingState getter should be paired with subscribe1
+  // and not subscribe2 from the outside! (The reason is that
+  // getRoomThreadsLoadingState internally uses `get1` not `get2`.) This is
+  // strong evidence that getRoomThreadsLoadingState itself wants to be
+  // a Signal! Once we make it a Signal, we can simply use `useSignal()` here! ❤️
   const getter = useCallback(
     () => store.getRoomThreadsLoadingState(room.id, options.query),
     [store, room.id, options.query]
   );
 
   const state = useSyncExternalStoreWithSelector(
-    store.subscribe,
+    store.subscribe1_threads,
     getter,
     getter,
     identity,
@@ -1472,7 +1480,7 @@ function useDeleteRoomThread(roomId: string): (threadId: string) => void {
 
       const userId = getCurrentUserId(client);
 
-      const existing = store.getFullState().threadsDB.get(threadId);
+      const existing = store.get1_threads().threadsDB.get(threadId);
       if (existing?.comments?.[0]?.userId !== userId) {
         throw new Error("Only the thread creator can delete the thread");
       }
@@ -1647,7 +1655,7 @@ function useEditRoomComment(
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
       const existing = store
-        .getFullState()
+        .get1_threads()
         .threadsDB.getEvenIfDeleted(threadId);
 
       if (existing === undefined) {
@@ -1907,7 +1915,7 @@ function useMarkRoomThreadAsRead(roomId: string) {
     (threadId: string) => {
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
       const inboxNotification = Object.values(
-        store.getFullState().notificationsById
+        store.get1_notifications().notificationsById
       ).find(
         (inboxNotification) =>
           inboxNotification.kind === "thread" &&
@@ -2075,9 +2083,11 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
   const client = useClient();
   const { store } = getRoomExtrasForClient(client);
 
+  const signal = store.outputs.threadifications;
+
   const selector = useCallback(
-    (state: UmbrellaStoreState<BaseMetadata>): ThreadSubscription => {
-      const notification = state.cleanedNotifications.find(
+    (state: SignalType<typeof signal>): ThreadSubscription => {
+      const notification = state.sortedNotifications.find(
         (inboxNotification) =>
           inboxNotification.kind === "thread" &&
           inboxNotification.threadId === threadId
@@ -2096,12 +2106,7 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
     [threadId]
   );
 
-  return useSyncExternalStoreWithSelector(
-    store.subscribe,
-    store.getFullState,
-    store.getFullState,
-    selector
-  );
+  return useSignal(signal, selector, shallow);
 }
 
 /**
@@ -2145,13 +2150,21 @@ function useRoomNotificationSettings(): [
     };
   }, [poller]);
 
+  // TODO(vincent+nimesh) There is a disconnect between this getter and
+  // subscriber! It's unclear why the getNotificationSettingsLoadingState
+  // getter should be paired with subscribe2 and not subscribe1 from the
+  // outside! (The reason is that getNotificationSettingsLoadingState
+  // internally uses `get2` not `get1`.) This is strong evidence that
+  // getNotificationSettingsLoadingState itself wants to be a Signal! Once we
+  // make it a Signal, we can simply use `useSignal()` here! ❤️
   const getter = useCallback(
     () => store.getNotificationSettingsLoadingState(room.id),
     [store, room.id]
   );
 
+  // TODO(vincent+nimesh) Turn this into a useSignal
   const settings = useSyncExternalStoreWithSelector(
-    store.subscribe,
+    store.subscribe2,
     getter,
     getter,
     identity,
@@ -2274,8 +2287,14 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
     //    *next* render after that, a *new* fetch/promise will get created.
   );
 
+  // TODO(vincent+nimesh) There is a disconnect between this getter and subscriber! It's unclear
+  // why the getRoomVersionsLoadingState getter should be paired with
+  // subscribe3 and not subscribe1 from the outside! (The reason is that
+  // getRoomVersionsLoadingState internally uses `get3` not `get1`.) This is
+  // strong evidence that getRoomVersionsLoadingState itself wants to be
+  // a Signal! Once we make it a Signal, we can simply use `useSignal()` here! ❤️
   const state = useSyncExternalStoreWithSelector(
-    store.subscribe,
+    store.subscribe3,
     getter,
     getter,
     identity,
@@ -2603,13 +2622,9 @@ function useAttachmentUrlSuspense(attachmentId: string) {
 function useRoomPermissions(roomId: string) {
   const client = useClient();
   const store = getRoomExtrasForClient(client).store;
-
-  return (
-    useSyncExternalStore(
-      store.subscribe,
-      useCallback(() => store._getPermissions(roomId), [store, roomId]),
-      useCallback(() => store._getPermissions(roomId), [store, roomId])
-    ) ?? new Set()
+  return useSignal(
+    store.permissionHintsByRoomId,
+    (hints) => hints[roomId] ?? new Set()
   );
 }
 

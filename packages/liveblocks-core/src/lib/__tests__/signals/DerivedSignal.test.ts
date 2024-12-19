@@ -1,5 +1,5 @@
-import { shallow } from "../../lib/shallow";
-import { batch, DerivedSignal, Signal } from "../Signal";
+import { shallow } from "../../../lib/shallow";
+import { batch, DerivedSignal, Signal } from "../../../lib/signals";
 
 it("compute signal from other signals", () => {
   const greeting = new Signal("hi");

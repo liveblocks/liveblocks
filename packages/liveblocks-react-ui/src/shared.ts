@@ -1,15 +1,8 @@
 import { kInternal } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
-import { useSyncExternalStore } from "react";
+import { useSignal } from "@liveblocks/react/_private";
 
 export function useCurrentUserId(): string | null {
   const client = useClient();
-  const currentUserIdStore = client[kInternal].currentUserIdStore;
-  return (
-    useSyncExternalStore(
-      currentUserIdStore.subscribe,
-      currentUserIdStore.get,
-      currentUserIdStore.get
-    ) ?? null
-  );
+  return useSignal(client[kInternal].currentUserId) ?? null;
 }

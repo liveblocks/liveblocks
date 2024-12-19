@@ -1,6 +1,6 @@
 import fc from "fast-check";
 
-import { batch, DerivedSignal, MutableSignal, Signal } from "../Signal";
+import { batch, DerivedSignal, MutableSignal, Signal } from "../../signals";
 
 const anyObject = fc
   .anything()

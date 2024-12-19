@@ -214,10 +214,10 @@ export const useLiveblocksExtension = (
         );
         this.storage.unsubs.push(
           // Subscribe to threads so we can update comment marks if they become resolved/deleted
-          store.subscribe(() => {
+          store.outputs.threads.subscribe(() => {
             const threadMap = new Map(
-              store
-                .getFullState()
+              store.outputs.threads
+                .get()
                 .threadsDB.findMany(roomId, { resolved: false }, "asc")
                 .map((thread) => [thread.id, true])
             );
