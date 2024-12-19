@@ -298,6 +298,13 @@
 .lb-tiptap-ai-toolbar-output {
   border-block-end: 1px solid var(--lb-foreground-subtle);
 
+  &::before {
+    content: "\FEFF";
+    display: inline-block;
+    vertical-align: middle;
+    user-select: none;
+  }
+
   /* stylelint-disable-next-line selector-class-pattern */
   :where(.collaboration-cursor__label) {
     display: flex;
