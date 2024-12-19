@@ -10,24 +10,24 @@ export default class yDocHandler extends Observable<unknown> {
   private doc: Y.Doc;
   private updateRoomDoc: (update: Uint8Array) => void;
   private fetchRoomDoc: (vector: string) => void;
-  private useV2Updates: boolean;
+  private useV2Encoding: boolean;
 
   constructor({
     doc,
     isRoot,
     updateDoc,
     fetchDoc,
-    useV2Updates,
+    useV2Encoding,
   }: {
     doc: Y.Doc;
     isRoot: boolean;
     updateDoc: (update: Uint8Array, guid?: string) => void;
     fetchDoc: (vector: string, guid?: string) => void;
-    useV2Updates: boolean;
+    useV2Encoding: boolean;
   }) {
     super();
     this.doc = doc;
-    this.useV2Updates = useV2Updates;
+    this.useV2Encoding = useV2Encoding;
     // this.doc.load(); // this just emits a load event, it doesn't actually load anything
     this.doc.on("update", this.updateHandler);
     this.updateRoomDoc = (update: Uint8Array) => {
@@ -60,7 +60,7 @@ export default class yDocHandler extends Observable<unknown> {
         // Use server state to calculate a diff and send it
         try {
           // send v1 or v2update according to client option
-          const encodeUpdate = this.useV2Updates
+          const encodeUpdate = this.useV2Encoding
             ? Y.encodeStateAsUpdateV2
             : Y.encodeStateAsUpdate;
           const localUpdate = encodeUpdate(

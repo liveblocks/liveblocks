@@ -30,7 +30,7 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 type ProviderOptions = {
   autoloadSubdocs?: boolean;
   offlineSupport_experimental?: boolean;
-  useV2Updates_experimental?: boolean;
+  useV2Encoding_experimental?: boolean;
 };
 
 export class LiveblocksYjsProvider<
@@ -71,7 +71,7 @@ export class LiveblocksYjsProvider<
       isRoot: true,
       updateDoc: this.updateDoc,
       fetchDoc: this.fetchDoc,
-      useV2Updates: this.options.useV2Updates_experimental ?? false,
+      useV2Encoding: this.options.useV2Encoding_experimental ?? false,
     });
 
     // TODO: Display a warning if a YjsProvider is already attached to the room
@@ -200,14 +200,14 @@ export class LiveblocksYjsProvider<
       this.room.updateYDoc(
         Base64.fromUint8Array(update),
         guid,
-        this.useV2Updates
+        this.useV2Encoding
       );
       this.emit("status", [this.getStatus()]);
     }
   };
 
   private fetchDoc = (vector: string, guid?: string) => {
-    this.room.fetchYDoc(vector, guid, this.useV2Updates);
+    this.room.fetchYDoc(vector, guid, this.useV2Encoding);
   };
 
   private createSubdocHandler = (subdoc: Y.Doc): void => {
@@ -221,7 +221,7 @@ export class LiveblocksYjsProvider<
       isRoot: false,
       updateDoc: this.updateDoc,
       fetchDoc: this.fetchDoc,
-      useV2Updates: this.options.useV2Updates_experimental ?? false,
+      useV2Encoding: this.options.useV2Encoding_experimental ?? false,
     });
     this.subdocHandlers.set(subdoc.guid, handler);
   };
@@ -245,8 +245,8 @@ export class LiveblocksYjsProvider<
     }
   };
 
-  get useV2Updates(): boolean {
-    return this.options.useV2Updates_experimental ?? false;
+  get useV2Encoding(): boolean {
+    return this.options.useV2Encoding_experimental ?? false;
   }
 
   // The sync'd property is required by some provider implementations
