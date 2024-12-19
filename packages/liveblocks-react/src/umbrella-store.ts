@@ -472,7 +472,7 @@ export class PaginatedResource {
   }
 }
 
-export class SinglePageResource {
+class SinglePageResource {
   public readonly observable: Observable<void>;
   #eventSource: EventSource<void>;
   #fetchPage: () => Promise<void>;
