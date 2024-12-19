@@ -555,8 +555,8 @@ type SettingsByRoomId = Record<RoomId, RoomNotificationSettings>;
 
 type PermissionHintsByRoomId = Record<RoomId, Set<Permission>>;
 
-export type CleanThredifications<M extends BaseMetadata> =
-  // Threads + Notifications = Thredifications
+export type CleanThreadifications<M extends BaseMetadata> =
+  // Threads + Notifications = Threadifications
   CleanThreads<M> &
     //
     CleanNotifications;
@@ -631,14 +631,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // Output signals.
   // (Readonly, clean, consistent. With optimistic updates applied.)
   //
-  // Note that the output of thredifications signal is the same as the ones for
-  // threads and notifications separately, but the thredifications signal will
+  // Note that the output of threadifications signal is the same as the ones for
+  // threads and notifications separately, but the threadifications signal will
   // be updated whenever either of them change.
   //
   // TODO(vincent+nimesh) APIs like getRoomThreadsLoadingState should really also be modeled as output signals.
   //
   readonly outputs: {
-    readonly thredifications: DerivedSignal<CleanThredifications<M>>;
+    readonly threadifications: DerivedSignal<CleanThreadifications<M>>;
     readonly threads: DerivedSignal<CleanThreads<M>>;
     readonly notifications: DerivedSignal<CleanNotifications>;
     readonly settingsByRoomId: DerivedSignal<SettingsByRoomId>;
@@ -704,19 +704,19 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // should be able to extract it out of the UmbrellaStore.
     this.permissionHintsByRoomId = new Signal<PermissionHintsByRoomId>({});
 
-    const thredifications = DerivedSignal.from(
+    const threadifications = DerivedSignal.from(
       this.baseThreadsDB.signal,
       this.baseNotificationsById,
       this.optimisticUpdates,
       (ts, ns, updates) =>
-        applyOptimisticUpdates_forThredifications(ts, ns, updates)
+        applyOptimisticUpdates_forThreadifications(ts, ns, updates)
     );
 
-    const threads = DerivedSignal.from(thredifications, (s) => ({
+    const threads = DerivedSignal.from(threadifications, (s) => ({
       threadsDB: s.threadsDB,
     }));
 
-    const notifications = DerivedSignal.from(thredifications, (s) => ({
+    const notifications = DerivedSignal.from(threadifications, (s) => ({
       sortedNotifications: s.sortedNotifications,
       notificationsById: s.notificationsById,
     }));
@@ -737,7 +737,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     );
 
     this.outputs = {
-      thredifications,
+      threadifications,
       threads,
       notifications,
       settingsByRoomId,
@@ -759,12 +759,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
     autobind(this);
   }
 
-  public get1_both(): CleanThredifications<M> {
-    return this.outputs.thredifications.get();
+  public get1_both(): CleanThreadifications<M> {
+    return this.outputs.threadifications.get();
   }
 
   public subscribe1_both(callback: () => void): () => void {
-    return this.outputs.thredifications.subscribe(callback);
+    return this.outputs.threadifications.subscribe(callback);
   }
 
   public get1_threads(): CleanThreads<M> {
@@ -1700,11 +1700,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
  * Applies optimistic updates, removes deleted threads, sorts results in
  * a stable way, removes internal fields that should not be exposed publicly.
  */
-function applyOptimisticUpdates_forThredifications<M extends BaseMetadata>(
+function applyOptimisticUpdates_forThreadifications<M extends BaseMetadata>(
   baseThreadsDB: ThreadDB<M>,
   rawNotificationsById: NotificationsById,
   optimisticUpdates: readonly OptimisticUpdate<M>[]
-): CleanThredifications<M> {
+): CleanThreadifications<M> {
   const threadsDB = baseThreadsDB.clone();
   let notificationsById = { ...rawNotificationsById };
 

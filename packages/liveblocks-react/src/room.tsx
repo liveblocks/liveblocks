@@ -2108,7 +2108,7 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
   const client = useClient();
   const { store } = getRoomExtrasForClient(client);
 
-  const signal = store.outputs.thredifications;
+  const signal = store.outputs.threadifications;
 
   const selector = React.useCallback(
     (state: SignalType<typeof signal>): ThreadSubscription => {
