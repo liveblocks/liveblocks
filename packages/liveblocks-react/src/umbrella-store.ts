@@ -449,7 +449,11 @@ export class PaginatedResource {
       })
     );
 
-    // TODO for later: Maybe move this into the .then() above too?
+    // NOTE: However tempting it may be, we cannot simply move this block into
+    // the promise definition above, how tempting that may be. The reason is
+    // that we should not call notify() before the UsablePromise is actually in
+    // resolved status. While still inside the .then() block, the UsablePromise
+    // is still in pending status.
     promise.then(
       () => this.#eventSource.notify(),
       () => {
@@ -514,7 +518,11 @@ export class SinglePageResource {
 
     const promise = usify(initialFetcher);
 
-    // TODO for later: Maybe move this into the .then() above too?
+    // NOTE: However tempting it may be, we cannot simply move this block into
+    // the promise definition above, how tempting that may be. The reason is
+    // that we should not call notify() before the UsablePromise is actually in
+    // resolved status. While still inside the .then() block, the UsablePromise
+    // is still in pending status.
     promise.then(
       () => this.#eventSource.notify(),
       () => {
