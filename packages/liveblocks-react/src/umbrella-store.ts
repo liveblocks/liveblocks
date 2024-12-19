@@ -1285,16 +1285,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   public updateThreadsAndNotifications(
     threads: ThreadData<M>[],
-    inboxNotifications: InboxNotificationData[]
-  ): void;
-  public updateThreadsAndNotifications(
-    threads: ThreadData<M>[],
-    inboxNotifications: InboxNotificationData[],
-    deletedThreads: ThreadDeleteInfo[],
-    deletedInboxNotifications: InboxNotificationDeleteInfo[]
-  ): void;
-  public updateThreadsAndNotifications(
-    threads: ThreadData<M>[],
     inboxNotifications: InboxNotificationData[],
     deletedThreads: ThreadDeleteInfo[] = [],
     deletedInboxNotifications: InboxNotificationDeleteInfo[] = []
@@ -1302,12 +1292,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // Batch 1️⃣ + 2️⃣
     batch(() => {
       // 1️⃣
-      applyThreadDeltaUpdates(this.baseThreadsDB, {
+      this.baseThreadsDB.applyDelta({
         newThreads: threads,
         deletedThreads,
       });
 
       // 2️⃣
+      // XXX Ideally we would have a similar this.baseNotificationsById.applyDelta() method
       this.baseNotificationsById.set((cache) =>
         applyNotificationsUpdates(cache, {
           newInboxNotifications: inboxNotifications,
@@ -1907,25 +1898,6 @@ function applyOptimisticUpdates_forSettings(
     }
   }
   return settingsByRoomId;
-}
-
-export function applyThreadDeltaUpdates<M extends BaseMetadata>(
-  db: ThreadDB<M>,
-  updates: {
-    newThreads: ThreadData<M>[];
-    deletedThreads: ThreadDeleteInfo[];
-  }
-): void {
-  // Add new threads or update existing threads if the existing thread is older than the new thread.
-  updates.newThreads.forEach((thread) => db.upsertIfNewer(thread));
-
-  // Mark threads in the deletedThreads list as deleted
-  updates.deletedThreads.forEach(({ id, deletedAt }) => {
-    const existing = db.getEvenIfDeleted(id);
-    if (!existing) return;
-
-    db.delete(id, deletedAt);
-  });
 }
 
 export function applyNotificationsUpdates(
