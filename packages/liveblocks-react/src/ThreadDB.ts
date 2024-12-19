@@ -1,11 +1,10 @@
-import {
+import type {
   BaseMetadata,
-  batch,
   ThreadData,
   ThreadDataWithDeleteInfo,
   ThreadDeleteInfo,
 } from "@liveblocks/core";
-import { MutableSignal, SortedList } from "@liveblocks/core";
+import { batch, MutableSignal, SortedList } from "@liveblocks/core";
 
 import { makeThreadsFilter } from "./lib/querying";
 import type { ThreadsQuery } from "./types";
