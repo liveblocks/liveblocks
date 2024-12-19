@@ -1,7 +1,7 @@
 import type { Json } from "@liveblocks/client";
 import { raise } from "@liveblocks/core";
 import type { Reducer } from "react";
-import React, { useReducer } from "react";
+import { useReducer, useRef } from "react";
 
 import { FAKE_USERS } from "../pages/api/_utils";
 
@@ -62,7 +62,7 @@ export function randomIndices(array: { length: number }): [number, number] {
 }
 
 export function useRenderCount() {
-  const ref = React.useRef(0);
+  const ref = useRef(0);
   return ++ref.current;
 }
 
