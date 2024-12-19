@@ -175,9 +175,8 @@ abstract class AbstractSignal<T> implements ISignal<T>, Observable<void> {
   public [kTrigger](): void {
     this.#eventSource.notify();
 
-    // While Signals are being triggered in the current rolldown, we can
-    // enqueue more signals to trigger (which will get added to the current
-    // rolldown)
+    // While Signals are being triggered in the current unroll, we can enqueue
+    // more signals to trigger (which will get added to the current unroll)
     for (const sink of this[kSinks]) {
       enqueueTrigger(sink);
     }
