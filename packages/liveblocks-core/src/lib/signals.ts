@@ -117,6 +117,9 @@ export function merge<T>(target: T, patch: Partial<T>): T {
   return updated ? newValue : target;
 }
 
+export type SignalType<S extends ISignal<any>> =
+  S extends ISignal<infer T> ? T : never;
+
 export interface ISignal<T> {
   get(): T;
   subscribe(callback: Callback<void>): UnsubscribeCallback;
@@ -418,9 +421,9 @@ export class MutableSignal<T extends object> extends AbstractSignal<T> {
    * If the callback explicitly returns `false`, it's assumed that the state
    * was not changed.
    */
-  mutate(callback: (state: T) => unknown): void {
+  mutate(callback?: (state: T) => unknown): void {
     batch(() => {
-      const result = callback(this.#state);
+      const result = callback ? callback(this.#state) : true;
       if (result !== null && typeof result === "object" && "then" in result) {
         raise("MutableSignal.mutate() does not support async callbacks");
       }

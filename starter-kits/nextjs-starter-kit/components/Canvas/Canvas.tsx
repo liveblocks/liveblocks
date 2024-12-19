@@ -34,6 +34,7 @@ function LiveblocksCanvas() {
           editor.updateInstanceState({ isReadonly: !canWrite });
         }}
         autoFocus
+        inferDarkMode
       />
     </div>
   );

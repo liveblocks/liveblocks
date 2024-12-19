@@ -196,7 +196,8 @@ describe("useCreateComment", () => {
           version: 1,
           content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
         },
-    }));
+      })
+    );
 
     expect(result.current.subscription).toEqual({
       status: "subscribed",
