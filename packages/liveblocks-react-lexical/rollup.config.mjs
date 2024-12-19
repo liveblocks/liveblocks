@@ -88,6 +88,54 @@ export function clean({ directory }) {
   };
 }
 
+/**
+ * Generates a scale of [50,100...900] colors based on a contrast
+ * variable, which indicates the lowest percentage of the scale.
+ *
+ *   ╔═════════╗                                  ╔═════════╗
+ *   ║  from   ║                                  ║   to    ║
+ *   ╚═════════╝                                  ╚═════════╝
+ *
+ *     0% ●────────────────────────────────────────────● 100%
+ *        ● ─ ─ ─ ─●───┬───┬───┬───┬───┬───┬───┬───┬───●
+ *       ┌───────┴─┴───┴───┤   │   │   │   │   │   │
+ *       │ contrast = 15%  │   │   │   │   │   │   │
+ *       └───────┬─┬───┬───┤   │   │   │   │   │   │
+ *               ◇ ◇   ◇   ◇   ◇   ◇   ◇   ◇   ◇   ◇
+ *             50 100 200 300 400 500 600 700 800 900
+ *
+ *     0% ●────────────────────────────────────────────● 100%
+ *        ● ─ ─ ─ ─ ─ ─ ─ ─ ●──┬──┬──┬──┬──┬──┬──┬──┬──●
+ *                 ┌──────┴─┴──┴──┴──┤  │  │  │  │  │
+ *                 │ contrast = 40%  │  │  │  │  │  │
+ *                 └──────┬─┬──┬──┬──┤  │  │  │  │  │
+ *                        ◇ ◇  ◇  ◇  ◇  ◇  ◇  ◇  ◇  ◇
+ *
+ * @param {string} from - The starting color in the scale.
+ * @param {string} to - The ending color in the scale.
+ * @param {string} contrast - The lowest percentage of the scale.
+ * @param {string} increment - The increment for the scale step (e.g., 50, 100, ... 900).
+ * @returns {string} The generated CSS color-mix function for the specified scale step.
+ */
+function colorMixScale(from, to, contrast, increment) {
+  const unit = `(100% - ${contrast}) / 9`;
+  let percentage;
+
+  if (Number(increment) === 50) {
+    percentage = `calc(100% - ${contrast} + (${unit}) / 2)`;
+  } else {
+    const index = Math.floor(Number(increment) / 100) - 1;
+
+    percentage = `calc(100% - ${
+      index === 0
+        ? contrast
+        : `(${contrast} + ${index === 1 ? unit : `${index} * (${unit})`})`
+    })`;
+  }
+
+  return `color-mix(in srgb, ${to}, ${from} ${percentage})`;
+}
+
 let didStyles = false;
 
 /**
@@ -107,6 +155,11 @@ export function styles({ files }) {
         require("stylelint"),
         require("postcss-import"),
         require("postcss-advanced-variables"),
+        require("postcss-functions")({
+          functions: {
+            "color-mix-scale": colorMixScale,
+          },
+        }),
         require("postcss-nesting"),
         require("postcss-combine-duplicated-selectors"),
         require("postcss-sort-media-queries"),
