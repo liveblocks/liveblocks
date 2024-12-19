@@ -360,21 +360,20 @@
 
 .lb-tiptap-ai-toolbar-icon-container,
 .lb-tiptap-ai-toolbar-actions {
-  position: sticky;
-  inset-block-end: 0;
   display: flex;
   flex: none;
-  align-self: end;
   block-size: $lb-button-size;
 }
 
 .lb-tiptap-ai-toolbar-icon-container {
   align-items: center;
+  align-self: start;
   color: var(--lb-foreground-moderate);
 }
 
 .lb-tiptap-ai-toolbar-actions {
   gap: var(--lb-tiptap-ai-toolbar-padding);
+  align-self: end;
 }
 
 .lb-tiptap-ai-toolbar-prompt {
