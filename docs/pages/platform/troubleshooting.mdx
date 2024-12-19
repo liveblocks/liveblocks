@@ -44,8 +44,15 @@ globalThis.process = { env: { NODE_ENV: "production" } };
 
 ### Why we’re asking you to pass unstable_batchedUpdates [#stale-props-zombie-child]
 
-> [!NOTE] The latest version of Liveblocks no longer supports React 17 and
-> lower.
+<Banner title="The best solution is to upgrade to React 18">
+
+The last version of Liveblocks that supports the old React 17 version is 2.14.0.
+To upgrade Liveblocks to 2.15 or higher, first upgrade React to 18.
+
+Passing in `unstable_batchedUpdates` is no longer necessary on the latest
+version of Liveblocks.
+
+</Banner>
 
 If you’re **on React 17 or lower**, there is a well-known problem that all state
 management libraries need to deal with at some point, known as the
