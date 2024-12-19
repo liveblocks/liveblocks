@@ -13,6 +13,31 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
 
+# Week 51 (2024-12-20)
+
+## Website
+
+- New blog post: [A better way to email your users about unread content](https://liveblocks.io/blog/a-better-way-to-email-your-users-about-unread-content).
+
+## Examples
+
+- Adjusted email templates to allow switching the logo more easily.
+- Next.js Starter Kit improvements:
+  - Renaming a document updates it immediately for everyone else.
+  - Clicking outside of the rename input saves the new name.
+  - Added tldraw's dark mode.
+  - Added option to filter for canvas in the room listing.
+  - Upgraded Liveblocks.
+  - Fixed a z-index problem and added a hover style.
+
+## Documentation
+
+- Added links to email templates in guides and API reference.
+
+## Contributors
+
+ctnicholas
+
 # Week 50 (2024-12-13)
 
 ## v2.14.0
