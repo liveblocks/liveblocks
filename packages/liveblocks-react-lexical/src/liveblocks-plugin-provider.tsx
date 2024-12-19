@@ -106,7 +106,7 @@ export function useIsEditorReady(): boolean {
 }
 
 export type LiveblocksPluginProps = {
-  offlineSupport_experimental: boolean;
+  offlineSupport_experimental?: boolean;
   children?: React.ReactNode;
 };
 
