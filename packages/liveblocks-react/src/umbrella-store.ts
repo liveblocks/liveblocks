@@ -674,10 +674,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     const inboxFetcher = async (cursor?: string) => {
       const result = await this.#client.getInboxNotifications({ cursor });
 
-      this.updateThreadsAndNotifications(
-        result.threads,
-        result.inboxNotifications
-      );
+      this.updateThreadifications(result.threads, result.inboxNotifications);
 
       // We initialize the `_lastRequestedNotificationsAt` date using the server timestamp after we've loaded the first page of inbox notifications.
       if (this.#notificationsLastRequestedAt === null) {
@@ -1283,7 +1280,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     });
   }
 
-  public updateThreadsAndNotifications(
+  public updateThreadifications(
     threads: ThreadData<M>[],
     inboxNotifications: InboxNotificationData[],
     deletedThreads: ThreadDeleteInfo[] = [],
@@ -1354,7 +1351,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this.#notificationsLastRequestedAt = result.requestedAt;
     }
 
-    this.updateThreadsAndNotifications(
+    this.updateThreadifications(
       result.threads.updated,
       result.inboxNotifications.updated,
       result.threads.deleted,
@@ -1394,10 +1391,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
         cursor,
         query,
       });
-      this.updateThreadsAndNotifications(
-        result.threads,
-        result.inboxNotifications
-      );
+      this.updateThreadifications(result.threads, result.inboxNotifications);
 
       this.#updatePermissionHints(result.permissionHints);
 
@@ -1453,7 +1447,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       signal,
     });
 
-    this.updateThreadsAndNotifications(
+    this.updateThreadifications(
       updates.threads.updated,
       updates.inboxNotifications.updated,
       updates.threads.deleted,
@@ -1478,10 +1472,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
         cursor,
         query,
       });
-      this.updateThreadsAndNotifications(
-        result.threads,
-        result.inboxNotifications
-      );
+      this.updateThreadifications(result.threads, result.inboxNotifications);
 
       this.#updatePermissionHints(result.permissionHints);
 
@@ -1541,7 +1532,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this.#notificationsLastRequestedAt = result.requestedAt;
     }
 
-    this.updateThreadsAndNotifications(
+    this.updateThreadifications(
       result.threads.updated,
       result.inboxNotifications.updated,
       result.threads.deleted,
