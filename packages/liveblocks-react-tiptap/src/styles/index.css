@@ -235,6 +235,10 @@
   align-items: center;
   padding: var(--lb-tiptap-toolbar-spacing);
   background: var(--lb-background);
+
+  > * {
+    flex: none;
+  }
 }
 
 .lb-tiptap-floating-toolbar {
