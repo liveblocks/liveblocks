@@ -295,9 +295,13 @@
   color: var(--lb-foreground);
 }
 
-.lb-tiptap-ai-toolbar-output {
+.lb-tiptap-ai-toolbar-output-container {
+  display: flex;
+  flex-direction: column-reverse;
   border-block-end: 1px solid var(--lb-foreground-subtle);
+}
 
+.lb-tiptap-ai-toolbar-output {
   &::before {
     content: "\FEFF";
     display: inline-block;
@@ -329,9 +333,9 @@
   inline-size: 100%;
 }
 
-.lb-tiptap-ai-toolbar-output,
+.lb-tiptap-ai-toolbar-output-container,
 .lb-tiptap-ai-toolbar-content {
-  max-block-size: calc(10lh + 2 * var(--lb-tiptap-ai-toolbar-padding));
+  max-block-size: calc(4lh + 2 * var(--lb-tiptap-ai-toolbar-padding));
   padding: var(--lb-tiptap-ai-toolbar-padding);
 
   /* overflow-block: auto; doesn't work as expected */

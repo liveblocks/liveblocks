@@ -429,14 +429,16 @@ function AiToolbarThinking({
 
   return (
     <>
-      <div className="lb-tiptap-ai-toolbar-output">
-        {stream}
-        <CollaborationCursor>
-          <div className="lb-icon-container">
-            <SparklesIcon />
-          </div>
-          {aiName}
-        </CollaborationCursor>
+      <div className="lb-tiptap-ai-toolbar-output-container">
+        <div className="lb-tiptap-ai-toolbar-output">
+          {stream}
+          <CollaborationCursor>
+            <div className="lb-icon-container">
+              <SparklesIcon />
+            </div>
+            {aiName}
+          </CollaborationCursor>
+        </div>
       </div>
       <div className="lb-tiptap-ai-toolbar-content">
         <span className="lb-icon-container lb-tiptap-ai-toolbar-icon-container">
@@ -474,15 +476,17 @@ function AiToolbarReviewing({
 }) {
   return (
     <>
-      <div className="lb-tiptap-ai-toolbar-output">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis laoreet
-        erat vitae libero bibendum blandit. Ut nec leo et massa congue laoreet
-        et nec nunc. Praesent a hendrerit orci, sit amet feugiat sapien. Aenean
-        vitae aliquam libero. Suspendisse posuere scelerisque mauris tristique
-        placerat. Maecenas id ipsum justo. Nulla quis nibh est. Nulla facilisi.
-        Quisque vitae libero ut tellus vestibulum sagittis in eget libero. Nulla
-        enim mauris, tempor at egestas eu, porttitor vitae purus. Ut ultrices
-        tincidunt rutrum.
+      <div className="lb-tiptap-ai-toolbar-output-container">
+        <div className="lb-tiptap-ai-toolbar-output">
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis laoreet
+          erat vitae libero bibendum blandit. Ut nec leo et massa congue laoreet
+          et nec nunc. Praesent a hendrerit orci, sit amet feugiat sapien.
+          Aenean vitae aliquam libero. Suspendisse posuere scelerisque mauris
+          tristique placerat. Maecenas id ipsum justo. Nulla quis nibh est.
+          Nulla facilisi. Quisque vitae libero ut tellus vestibulum sagittis in
+          eget libero. Nulla enim mauris, tempor at egestas eu, porttitor vitae
+          purus. Ut ultrices tincidunt rutrum.
+        </div>
       </div>
       <AiToolbarPromptContent
         editor={editor}
