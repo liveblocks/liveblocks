@@ -22,6 +22,13 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 ## Examples
 
 - Adjusted email templates to allow switching the logo more easily.
+- Next.js Starter Kit improvements:
+  - Renaming a document updates it immediately for everyone else.
+  - Clicking outside of the rename input saves the new name.
+  - Added tldraw's dark mode.
+  - Added option to filter for canvas in the room listing.
+  - Upgraded Liveblocks.
+  - Fixed a z-index problem and added a hover style.
 
 ## Documentation
 
