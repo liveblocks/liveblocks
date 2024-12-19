@@ -3,9 +3,9 @@
   "extends": "../../shared/tsconfig.common.json",
 
   "compilerOptions": {
-    "target": "es2020",
     "module": "es2020",
     "lib": ["dom", "es2021"],
+    "skipLibCheck": true,
 
     // Allow importing JSON files
     "resolveJsonModule": true,

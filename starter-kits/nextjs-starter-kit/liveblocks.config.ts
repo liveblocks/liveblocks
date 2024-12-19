@@ -29,9 +29,9 @@ declare global {
       info: Pick<User, "name" | "avatar" | "color">;
     };
     // Custom events, for useBroadcastEvent, useEventListener
-    RoomEvent: {
-      type: "SHARE_DIALOG_UPDATE";
-    };
+    RoomEvent:
+      | { type: "SHARE_DIALOG_UPDATE" }
+      | { type: "DOCUMENT_NAME_UPDATE" };
     // Custom metadata set on threads, for useThreads, useCreateThread, etc.
     ThreadMetadata: {
       highlightId: string;

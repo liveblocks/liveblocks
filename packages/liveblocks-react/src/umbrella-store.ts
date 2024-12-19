@@ -17,7 +17,6 @@ import type {
   Permission,
   Resolve,
   RoomNotificationSettings,
-  Store,
   SyncSource,
   ThreadData,
   ThreadDataWithDeleteInfo,
@@ -25,15 +24,17 @@ import type {
 } from "@liveblocks/core";
 import {
   autoRetry,
+  batch,
   compactObject,
   console,
-  createStore,
+  DerivedSignal,
   HttpError,
   kInternal,
   makeEventSource,
   mapValues,
   nanoid,
   nn,
+  Signal,
   stringify,
 } from "@liveblocks/core";
 
@@ -328,30 +329,30 @@ const ASYNC_LOADING = Object.freeze({ isLoading: true });
  */
 export class PaginatedResource {
   public readonly observable: Observable<void>;
-  private _eventSource: EventSource<void>;
-  private _fetchPage: (cursor?: string) => Promise<string | null>;
-  private _paginationState: PaginationState | null; // Should be null while in loading or error state!
-  private _pendingFetchMore: Promise<void> | null;
+  #eventSource: EventSource<void>;
+  #fetchPage: (cursor?: string) => Promise<string | null>;
+  #paginationState: PaginationState | null; // Should be null while in loading or error state!
+  #pendingFetchMore: Promise<void> | null;
 
   constructor(fetchPage: (cursor?: string) => Promise<string | null>) {
-    this._paginationState = null;
-    this._fetchPage = fetchPage;
-    this._eventSource = makeEventSource<void>();
-    this._pendingFetchMore = null;
-    this.observable = this._eventSource.observable;
+    this.#paginationState = null;
+    this.#fetchPage = fetchPage;
+    this.#eventSource = makeEventSource<void>();
+    this.#pendingFetchMore = null;
+    this.observable = this.#eventSource.observable;
 
     autobind(this);
   }
 
-  private patchPaginationState(patch: PaginationStatePatch): void {
-    const state = this._paginationState;
+  #patchPaginationState(patch: PaginationStatePatch): void {
+    const state = this.#paginationState;
     if (state === null) return;
-    this._paginationState = { ...state, ...patch };
-    this._eventSource.notify();
+    this.#paginationState = { ...state, ...patch };
+    this.#eventSource.notify();
   }
 
-  private async _fetchMore(): Promise<void> {
-    const state = this._paginationState;
+  async #fetchMore(): Promise<void> {
+    const state = this.#paginationState;
     if (!state?.cursor) {
       // Do nothing if we don't have a cursor to work with. It means:
       // - We don't have a cursor yet (we haven't loaded the first page yet); or
@@ -360,16 +361,16 @@ export class PaginatedResource {
       return;
     }
 
-    this.patchPaginationState({ isFetchingMore: true });
+    this.#patchPaginationState({ isFetchingMore: true });
     try {
-      const nextCursor = await this._fetchPage(state.cursor);
-      this.patchPaginationState({
+      const nextCursor = await this.#fetchPage(state.cursor);
+      this.#patchPaginationState({
         cursor: nextCursor,
         fetchMoreError: undefined,
         isFetchingMore: false,
       });
     } catch (err) {
-      this.patchPaginationState({
+      this.#patchPaginationState({
         isFetchingMore: false,
         fetchMoreError: err as Error,
       });
@@ -381,18 +382,18 @@ export class PaginatedResource {
     // 1) the pagination state has not be initialized
     // 2) the cursor is null, i.e., there are no more pages to fetch
     // 3) a request to fetch more is currently in progress
-    const state = this._paginationState;
+    const state = this.#paginationState;
     if (state?.cursor === null) {
       return noop;
     }
 
     // Case (3)
-    if (!this._pendingFetchMore) {
-      this._pendingFetchMore = this._fetchMore().finally(() => {
-        this._pendingFetchMore = null;
+    if (!this.#pendingFetchMore) {
+      this.#pendingFetchMore = this.#fetchMore().finally(() => {
+        this.#pendingFetchMore = null;
       });
     }
-    return this._pendingFetchMore;
+    return this.#pendingFetchMore;
   }
 
   public get(): AsyncResult<{
@@ -401,7 +402,7 @@ export class PaginatedResource {
     hasFetchedAll: boolean;
     isFetchingMore: boolean;
   }> {
-    const usable = this._cachedPromise;
+    const usable = this.#cachedPromise;
     if (usable === null || usable.status === "pending") {
       return ASYNC_LOADING;
     }
@@ -410,7 +411,7 @@ export class PaginatedResource {
       return { isLoading: false, error: usable.reason };
     }
 
-    const state = this._paginationState!;
+    const state = this.#paginationState!;
     return {
       isLoading: false,
       data: {
@@ -422,17 +423,17 @@ export class PaginatedResource {
     };
   }
 
-  private _cachedPromise: UsablePromise<void> | null = null;
+  #cachedPromise: UsablePromise<void> | null = null;
 
   public waitUntilLoaded(): UsablePromise<void> {
-    if (this._cachedPromise) {
-      return this._cachedPromise;
+    if (this.#cachedPromise) {
+      return this.#cachedPromise;
     }
 
     // Wrap the request to load room threads (and notifications) in an auto-retry function so that if the request fails,
     // we retry for at most 5 times with incremental backoff delays. If all retries fail, the auto-retry function throws an error
     const initialFetcher = autoRetry(
-      () => this._fetchPage(/* cursor */ undefined),
+      () => this.#fetchPage(/* cursor */ undefined),
       5,
       [5000, 5000, 10000, 15000]
     );
@@ -440,7 +441,7 @@ export class PaginatedResource {
     const promise = usify(
       initialFetcher.then((cursor) => {
         // Initial fetch completed
-        this._paginationState = {
+        this.#paginationState = {
           cursor,
           isFetchingMore: false,
           fetchMoreError: undefined,
@@ -450,38 +451,38 @@ export class PaginatedResource {
 
     // TODO for later: Maybe move this into the .then() above too?
     promise.then(
-      () => this._eventSource.notify(),
+      () => this.#eventSource.notify(),
       () => {
-        this._eventSource.notify();
+        this.#eventSource.notify();
 
         // Wait for 5 seconds before removing the request from the cache
         setTimeout(() => {
-          this._cachedPromise = null;
-          this._eventSource.notify();
+          this.#cachedPromise = null;
+          this.#eventSource.notify();
         }, 5_000);
       }
     );
 
-    this._cachedPromise = promise;
+    this.#cachedPromise = promise;
     return promise;
   }
 }
 
 export class SinglePageResource {
   public readonly observable: Observable<void>;
-  private _eventSource: EventSource<void>;
-  private _fetchPage: () => Promise<void>;
+  #eventSource: EventSource<void>;
+  #fetchPage: () => Promise<void>;
 
   constructor(fetchPage: () => Promise<void>) {
-    this._fetchPage = fetchPage;
-    this._eventSource = makeEventSource<void>();
-    this.observable = this._eventSource.observable;
+    this.#fetchPage = fetchPage;
+    this.#eventSource = makeEventSource<void>();
+    this.observable = this.#eventSource.observable;
 
     autobind(this);
   }
 
   public get(): AsyncResult<undefined> {
-    const usable = this._cachedPromise;
+    const usable = this.#cachedPromise;
     if (usable === null || usable.status === "pending") {
       return ASYNC_LOADING;
     }
@@ -496,17 +497,17 @@ export class SinglePageResource {
     };
   }
 
-  private _cachedPromise: UsablePromise<void> | null = null;
+  #cachedPromise: UsablePromise<void> | null = null;
 
   public waitUntilLoaded(): UsablePromise<void> {
-    if (this._cachedPromise) {
-      return this._cachedPromise;
+    if (this.#cachedPromise) {
+      return this.#cachedPromise;
     }
 
     // Wrap the request to load room threads (and notifications) in an auto-retry function so that if the request fails,
     // we retry for at most 5 times with incremental backoff delays. If all retries fail, the auto-retry function throws an error
     const initialFetcher = autoRetry(
-      () => this._fetchPage(),
+      () => this.#fetchPage(),
       5,
       [5000, 5000, 10000, 15000]
     );
@@ -515,39 +516,52 @@ export class SinglePageResource {
 
     // TODO for later: Maybe move this into the .then() above too?
     promise.then(
-      () => this._eventSource.notify(),
+      () => this.#eventSource.notify(),
       () => {
-        this._eventSource.notify();
+        this.#eventSource.notify();
 
         // Wait for 5 seconds before removing the request from the cache
         setTimeout(() => {
-          this._cachedPromise = null;
-          this._eventSource.notify();
+          this.#cachedPromise = null;
+          this.#eventSource.notify();
         }, 5_000);
       }
     );
 
-    this._cachedPromise = promise;
+    this.#cachedPromise = promise;
     return promise;
   }
 }
 
-type InternalState<M extends BaseMetadata> = Readonly<{
-  optimisticUpdates: readonly OptimisticUpdate<M>[];
-  permissionsByRoom: Record<string, Set<Permission>>;
-
-  // TODO: Ideally we would have a similar NotificationsDB, like we have ThreadDB
-  notificationsById: Record<string, InboxNotificationData>;
-  settingsByRoomId: Record<string, RoomNotificationSettings>;
-  versionsByRoomId: Record<string, Record<string, HistoryVersion>>;
-}>;
+type RoomId = string;
+type QueryKey = string;
 
 /**
- * Externally observable state of the store, which will have:
- * - Optimistic updates applied
- * - All deleted threads removed from the threads list
+ * Versions by roomId
+ * e.g. { 'room-abc': {versions: "all versions"}}
  */
-export type UmbrellaStoreState<M extends BaseMetadata> = {
+type VersionsByRoomId = Record<RoomId, Record<string, HistoryVersion>>;
+
+type NotificationsById = Record<string, InboxNotificationData>;
+
+/**
+ * Notification settings by room ID.
+ * e.g. { 'room-abc': { threads: "all" },
+ *        'room-def': { threads: "replies_and_mentions" },
+ *        'room-xyz': { threads: "none" },
+ *      }
+ */
+type SettingsByRoomId = Record<RoomId, RoomNotificationSettings>;
+
+type PermissionHintsByRoomId = Record<RoomId, Set<Permission>>;
+
+export type CleanThreadifications<M extends BaseMetadata> =
+  // Threads + Notifications = Threadifications
+  CleanThreads<M> &
+    //
+    CleanNotifications;
+
+export type CleanThreads<M extends BaseMetadata> = {
   /**
    * Keep track of loading and error status of all the queries made by the client.
    * e.g. 'room-abc-{"color":"red"}'  - ok
@@ -559,71 +573,103 @@ export type UmbrellaStoreState<M extends BaseMetadata> = {
   // value if either the threads change or a (thread) optimistic update is
   // changed.
   threadsDB: ReadonlyThreadDB<M>;
+};
 
+export type CleanNotifications = {
   /**
    * All inbox notifications in a sorted array, optimistic updates applied.
    */
-  cleanedNotifications: InboxNotificationData[];
+  sortedNotifications: InboxNotificationData[];
 
   /**
    * Inbox notifications by ID.
    * e.g. `in_${string}`
    */
   notificationsById: Record<string, InboxNotificationData>;
-
-  /**
-   * Notification settings by room ID.
-   * e.g. { 'room-abc': { threads: "all" },
-   *        'room-def': { threads: "replies_and_mentions" },
-   *        'room-xyz': { threads: "none" },
-   *      }
-   */
-  settingsByRoomId: Record<string, RoomNotificationSettings>;
-  /**
-   * Versions by roomId
-   * e.g. { 'room-abc': {versions: "all versions"}}
-   */
-  versionsByRoomId: Record<string, Record<string, HistoryVersion>>;
 };
 
 export class UmbrellaStore<M extends BaseMetadata> {
-  private _client: Client<BaseUserMeta, M>;
-  private _syncSource: SyncSource;
+  #client: Client<BaseUserMeta, M>;
+  #syncSource: SyncSource;
 
-  // Raw threads DB (without any optimistic updates applied)
-  private _rawThreadsDB: ThreadDB<M>;
-  private _prevVersion: number = -1;
+  //
+  // Internally, the UmbrellaStore keeps track of a few source signals that can
+  // be set and mutated individually. When any of those are mutated then the
+  // clean "external state" is recomputed.
+  //
+  //   Mutate inputs...                                             ...observe clean/consistent output!
+  //
+  //            .-> Base ThreadDB ---------+                 +----> Clean threads by ID       (Part 1)
+  //           /                           |                 |
+  //   mutate ----> Base Notifications --+ |                 | +--> Clean notifications       (Part 1)
+  //          \                          | |                 | |    & notifications by ID
+  //         | \                         | |      Apply      | |
+  //         |   `-> OptimisticUpdates --+--+--> Optimistic --+-+--> Notification Settings    (Part 2)
+  //          \                          |        Updates       |
+  //           `------- etc etc ---------+                      +--> History Versions         (Part 3)
+  //                       ^
+  //                       |
+  //                       |                        ^                  ^
+  //                    Signal                      |                  |
+  //                      or                   DerivedSignal      DerivedSignals
+  //                  MutableSignal
+  //
 
-  private _store: Store<InternalState<M>>;
-  private _prevState: InternalState<M> | null = null;
-  private _stateCached: UmbrellaStoreState<M> | null = null;
+  //
+  // Input signals.
+  // (Can be mutated directly.)
+  //
+  readonly baseThreadsDB: ThreadDB<M>; // Exposes its signal under `.signal` prop
+  readonly baseNotificationsById: Signal<NotificationsById>;
+  readonly baseSettingsByRoomId: Signal<SettingsByRoomId>;
+  readonly optimisticUpdates: Signal<readonly OptimisticUpdate<M>[]>;
+
+  readonly baseVersionsByRoomId: Signal<VersionsByRoomId>;
+  readonly permissionHintsByRoomId: Signal<PermissionHintsByRoomId>;
+
+  //
+  // Output signals.
+  // (Readonly, clean, consistent. With optimistic updates applied.)
+  //
+  // Note that the output of threadifications signal is the same as the ones for
+  // threads and notifications separately, but the threadifications signal will
+  // be updated whenever either of them change.
+  //
+  // TODO(vincent+nimesh) APIs like getRoomThreadsLoadingState should really also be modeled as output signals.
+  //
+  readonly outputs: {
+    readonly threadifications: DerivedSignal<CleanThreadifications<M>>;
+    readonly threads: DerivedSignal<CleanThreads<M>>;
+    readonly notifications: DerivedSignal<CleanNotifications>;
+    readonly settingsByRoomId: DerivedSignal<SettingsByRoomId>;
+    readonly versionsByRoomId: DerivedSignal<VersionsByRoomId>;
+  };
 
   // Notifications
-  private _notificationsLastRequestedAt: Date | null = null; // Keeps track of when we successfully requested an inbox notifications update for the last time. Will be `null` as long as the first successful fetch hasn't happened yet.
-  private _notifications: PaginatedResource;
+  #notificationsLastRequestedAt: Date | null = null; // Keeps track of when we successfully requested an inbox notifications update for the last time. Will be `null` as long as the first successful fetch hasn't happened yet.
+  #notifications: PaginatedResource;
 
   // Room Threads
-  private _roomThreadsLastRequestedAtByRoom = new Map<string, Date>();
-  private _roomThreads: Map<string, PaginatedResource> = new Map();
+  #roomThreadsLastRequestedAtByRoom = new Map<RoomId, Date>();
+  #roomThreads: Map<QueryKey, PaginatedResource> = new Map();
 
   // User Threads
-  private _userThreadsLastRequestedAt: Date | null = null;
-  private _userThreads: Map<string, PaginatedResource> = new Map();
+  #userThreadsLastRequestedAt: Date | null = null;
+  #userThreads: Map<QueryKey, PaginatedResource> = new Map();
 
   // Room versions
-  private _roomVersions: Map<string, SinglePageResource> = new Map();
-  private _roomVersionsLastRequestedAtByRoom = new Map<string, Date>();
+  #roomVersions: Map<QueryKey, SinglePageResource> = new Map();
+  #roomVersionsLastRequestedAtByRoom = new Map<RoomId, Date>();
 
   // Room notification settings
-  private _roomNotificationSettings: Map<string, SinglePageResource> =
-    new Map();
+  #roomNotificationSettings: Map<QueryKey, SinglePageResource> = new Map();
 
   constructor(client: OpaqueClient) {
-    this._client = client[kInternal].as<M>();
-    this._syncSource = this._client[kInternal].createSyncSource();
+    this.#client = client[kInternal].as<M>();
+    this.#syncSource = this.#client[kInternal].createSyncSource();
 
     const inboxFetcher = async (cursor?: string) => {
-      const result = await this._client.getInboxNotifications({ cursor });
+      const result = await this.#client.getInboxNotifications({ cursor });
 
       this.updateThreadsAndNotifications(
         result.threads,
@@ -631,57 +677,126 @@ export class UmbrellaStore<M extends BaseMetadata> {
       );
 
       // We initialize the `_lastRequestedNotificationsAt` date using the server timestamp after we've loaded the first page of inbox notifications.
-      if (this._notificationsLastRequestedAt === null) {
-        this._notificationsLastRequestedAt = result.requestedAt;
+      if (this.#notificationsLastRequestedAt === null) {
+        this.#notificationsLastRequestedAt = result.requestedAt;
       }
 
       const nextCursor = result.nextCursor;
       return nextCursor;
     };
-    this._notifications = new PaginatedResource(inboxFetcher);
-    this._notifications.observable.subscribe(() =>
+
+    // TODO(vincent+nimesh) Looks like this should also be a Signal!
+    this.#notifications = new PaginatedResource(inboxFetcher);
+    this.#notifications.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
-      this._store.set((store) => ({ ...store }))
+      this.invalidateEntireStore()
     );
 
-    this._rawThreadsDB = new ThreadDB();
-    this._store = createStore<InternalState<M>>({
-      optimisticUpdates: [],
-      permissionsByRoom: {},
-      notificationsById: {},
-      settingsByRoomId: {},
-      versionsByRoomId: {},
-    });
+    this.baseThreadsDB = new ThreadDB();
+    this.optimisticUpdates = new Signal<readonly OptimisticUpdate<M>[]>([]);
+
+    this.baseVersionsByRoomId = new Signal<VersionsByRoomId>({});
+    this.baseNotificationsById = new Signal<NotificationsById>({});
+    this.baseSettingsByRoomId = new Signal<SettingsByRoomId>({});
+
+    // NOTE: Permission hints has no DerivedSignals depending on it, so we
+    // should be able to extract it out of the UmbrellaStore.
+    this.permissionHintsByRoomId = new Signal<PermissionHintsByRoomId>({});
+
+    const threadifications = DerivedSignal.from(
+      this.baseThreadsDB.signal,
+      this.baseNotificationsById,
+      this.optimisticUpdates,
+      (ts, ns, updates) =>
+        applyOptimisticUpdates_forThreadifications(ts, ns, updates)
+    );
+
+    const threads = DerivedSignal.from(threadifications, (s) => ({
+      threadsDB: s.threadsDB,
+    }));
+
+    const notifications = DerivedSignal.from(threadifications, (s) => ({
+      sortedNotifications: s.sortedNotifications,
+      notificationsById: s.notificationsById,
+    }));
+
+    const settingsByRoomId = DerivedSignal.from(
+      this.baseSettingsByRoomId,
+      this.optimisticUpdates,
+      (settings, updates) =>
+        applyOptimisticUpdates_forSettings(settings, updates)
+    );
+
+    // TODO(vincent+nimesh) Not much of a "derived" state: it's just the same
+    // as the input This is a smell. We should be able to extract it out of the
+    // UmbrellaStore must like the permission hints signal.
+    const versionsByRoomId = DerivedSignal.from(
+      this.baseVersionsByRoomId,
+      (hv) => hv
+    );
+
+    this.outputs = {
+      threadifications,
+      threads,
+      notifications,
+      settingsByRoomId,
+      versionsByRoomId,
+    };
+
+    // Automatically update the global sync status as an effect whenever there
+    // are any optimistic updates
+    this.optimisticUpdates.subscribe(() =>
+      this.#syncSource.setSyncStatus(
+        this.optimisticUpdates.get().length > 0
+          ? "synchronizing"
+          : "synchronized"
+      )
+    );
 
     // Auto-bind all of this class’ methods here, so we can use stable
     // references to them (most important for use in useSyncExternalStore)
     autobind(this);
   }
 
-  private get(): UmbrellaStoreState<M> {
-    // Don't return the raw internal state immediately! Return a new computed
-    // cached state (with optimistic updates applied) instead, and cache that
-    // until the next .set() call invalidates it.
-    const rawState = this._store.get();
-    if (
-      this._prevVersion !== this._rawThreadsDB.version || // Note: Version check is only needed temporarily, until we can get rid of the Zustand-like update model
-      this._prevState !== rawState ||
-      this._stateCached === null
-    ) {
-      this._stateCached = internalToExternalState(rawState, this._rawThreadsDB);
-      this._prevState = rawState;
-      this._prevVersion = this._rawThreadsDB.version;
-    }
-    return this._stateCached;
+  public get1_both(): CleanThreadifications<M> {
+    return this.outputs.threadifications.get();
   }
 
-  public batch(callback: () => void): void {
-    return this._store.batch(callback);
+  public subscribe1_both(callback: () => void): () => void {
+    return this.outputs.threadifications.subscribe(callback);
   }
 
-  public getFullState(): UmbrellaStoreState<M> {
-    return this.get();
+  public get1_threads(): CleanThreads<M> {
+    return this.outputs.threads.get();
+  }
+
+  public subscribe1_threads(callback: () => void): () => void {
+    return this.outputs.threads.subscribe(callback);
+  }
+
+  public get1_notifications(): CleanNotifications {
+    return this.outputs.notifications.get();
+  }
+
+  public subscribe1_notifications(callback: () => void): () => void {
+    return this.outputs.notifications.subscribe(callback);
+  }
+
+  public get2(): SettingsByRoomId {
+    return this.outputs.settingsByRoomId.get();
+  }
+
+  public subscribe2(callback: () => void): () => void {
+    return this.outputs.settingsByRoomId.subscribe(callback);
+  }
+
+  public get3(): VersionsByRoomId {
+    return this.outputs.versionsByRoomId.get();
+  }
+
+  public subscribe3(callback: () => void): () => void {
+    return this.outputs.versionsByRoomId.subscribe(callback);
   }
 
   /**
@@ -695,7 +810,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): ThreadsAsyncResult<M> {
     const queryKey = makeRoomThreadsQueryKey(roomId, query);
 
-    const paginatedResource = this._roomThreads.get(queryKey);
+    const paginatedResource = this.#roomThreads.get(queryKey);
     if (paginatedResource === undefined) {
       return ASYNC_LOADING;
     }
@@ -705,7 +820,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return asyncResult;
     }
 
-    const threads = this.getFullState().threadsDB.findMany(
+    const threads = this.get1_threads().threadsDB.findMany(
       roomId,
       query ?? {},
       "asc"
@@ -728,7 +843,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): ThreadsAsyncResult<M> {
     const queryKey = makeUserThreadsQueryKey(query);
 
-    const paginatedResource = this._userThreads.get(queryKey);
+    const paginatedResource = this.#userThreads.get(queryKey);
     if (paginatedResource === undefined) {
       return ASYNC_LOADING;
     }
@@ -738,7 +853,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return asyncResult;
     }
 
-    const threads = this.getFullState().threadsDB.findMany(
+    const threads = this.get1_threads().threadsDB.findMany(
       undefined, // Do _not_ filter by roomId
       query ?? {},
       "desc"
@@ -758,7 +873,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   // NOTE: This will read the async result, but WILL NOT start loading at the moment!
   public getInboxNotificationsLoadingState(): InboxNotificationsAsyncResult {
-    const asyncResult = this._notifications.get();
+    const asyncResult = this.#notifications.get();
     if (asyncResult.isLoading || asyncResult.error) {
       return asyncResult;
     }
@@ -767,7 +882,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      inboxNotifications: this.getFullState().cleanedNotifications,
+      inboxNotifications: this.get1_notifications().sortedNotifications,
       hasFetchedAll: page.hasFetchedAll,
       isFetchingMore: page.isFetchingMore,
       fetchMoreError: page.fetchMoreError,
@@ -776,12 +891,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   // NOTE: This will read the async result, but WILL NOT start loading at the moment!
+  // TODO(vincent+nimesh) This should really be a derived Signal!
   public getNotificationSettingsLoadingState(
     roomId: string
   ): RoomNotificationSettingsAsyncResult {
     const queryKey = makeNotificationSettingsQueryKey(roomId);
 
-    const resource = this._roomNotificationSettings.get(queryKey);
+    const resource = this.#roomNotificationSettings.get(queryKey);
     if (resource === undefined) {
       return ASYNC_LOADING;
     }
@@ -794,7 +910,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      settings: nn(this.get().settingsByRoomId[roomId]),
+      settings: nn(this.get2()[roomId]),
     };
   }
 
@@ -803,7 +919,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): AsyncResult<HistoryVersion[], "versions"> {
     const queryKey = makeVersionsQueryKey(roomId);
 
-    const resource = this._roomVersions.get(queryKey);
+    const resource = this.#roomVersions.get(queryKey);
     if (resource === undefined) {
       return ASYNC_LOADING;
     }
@@ -816,98 +932,77 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      versions: Object.values(this.get().versionsByRoomId[roomId] ?? {}),
+      versions: Object.values(this.get3()[roomId] ?? {}),
     };
-  }
-
-  public subscribe(callback: () => void): () => void {
-    return this._store.subscribe(callback);
-  }
-
-  public _getPermissions(roomId: string): Set<Permission> | undefined {
-    return this._store.get().permissionsByRoom[roomId];
   }
 
   // Direct low-level cache mutations ------------------------------------------------- {{{
 
-  private mutateThreadsDB(mutate: (db: ThreadDB<M>) => void): void {
-    const db = this._rawThreadsDB;
-    const old = db.version;
-    mutate(db);
-
-    // Trigger a re-render only if anything changed in the DB
-    if (old !== db.version) {
-      this._store.set((state) => ({ ...state }));
-    }
+  #mutateThreadsDB(mutate: (db: ThreadDB<M>) => void): void {
+    batch(() => {
+      mutate(this.baseThreadsDB);
+    });
   }
 
-  private updateInboxNotificationsCache(
+  #updateInboxNotificationsCache(
     mapFn: (
       cache: Readonly<Record<string, InboxNotificationData>>
     ) => Readonly<Record<string, InboxNotificationData>>
   ): void {
-    this._store.set((state) => {
-      const inboxNotifications = mapFn(state.notificationsById);
-      return inboxNotifications !== state.notificationsById
-        ? { ...state, notificationsById: inboxNotifications }
-        : state;
-    });
+    this.baseNotificationsById.set((prev) => mapFn(prev));
   }
 
-  private setNotificationSettings(
+  #setNotificationSettings(
     roomId: string,
     settings: RoomNotificationSettings
   ): void {
-    this._store.set((state) => ({
+    this.baseSettingsByRoomId.set((state) => ({
       ...state,
-      settingsByRoomId: {
-        ...state.settingsByRoomId,
-        [roomId]: settings,
-      },
+      [roomId]: settings,
     }));
   }
 
-  private updateRoomVersions(roomId: string, versions: HistoryVersion[]): void {
-    this._store.set((state) => {
-      const versionsById = Object.fromEntries(
-        versions.map((version) => [version.id, version])
-      );
-
+  #updateRoomVersions(roomId: string, versions: HistoryVersion[]): void {
+    this.baseVersionsByRoomId.set((prev) => {
+      const newVersions: Record<string, HistoryVersion> = { ...prev[roomId] };
+      for (const version of versions) {
+        newVersions[version.id] = version;
+      }
       return {
-        ...state,
-        versionsByRoomId: {
-          ...state.versionsByRoomId,
-          [roomId]: {
-            // Merge with existing versions for the room, or start with an empty object
-            ...(state.versionsByRoomId[roomId] ?? {}),
-            ...versionsById,
-          },
-        },
+        ...prev,
+        [roomId]: newVersions,
       };
     });
   }
 
-  private updateOptimisticUpdatesCache(
+  #updateOptimisticUpdatesCache(
     mapFn: (
       cache: readonly OptimisticUpdate<M>[]
     ) => readonly OptimisticUpdate<M>[]
   ): void {
-    this._store.set((state) => {
-      const optimisticUpdates = mapFn(state.optimisticUpdates);
-      this._syncSource.setSyncStatus(
-        optimisticUpdates.length > 0 ? "synchronizing" : "synchronized"
-      );
-      return { ...state, optimisticUpdates };
-    });
+    this.optimisticUpdates.set(mapFn);
   }
 
   // ---------------------------------------------------------------------------------- }}}
 
   /** @internal - Only call this method from unit tests. */
-  public force_set(
-    callback: (currentState: InternalState<M>) => InternalState<M>
+  public force_set_versions(
+    callback: (currentState: VersionsByRoomId) => VersionsByRoomId
   ): void {
-    return this._store.set(callback);
+    batch(() => {
+      this.baseVersionsByRoomId.set(callback);
+      this.invalidateEntireStore();
+    });
+  }
+
+  /** @internal - Only call this method from unit tests. */
+  public force_set_notifications(
+    callback: (currentState: NotificationsById) => NotificationsById
+  ): void {
+    batch(() => {
+      this.baseNotificationsById.set(callback);
+      this.invalidateEntireStore();
+    });
   }
 
   /**
@@ -925,11 +1020,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
     ) => Readonly<InboxNotificationData>
   ): void {
     // Batch 1️⃣ + 2️⃣
-    this._store.batch(() => {
+    batch(() => {
       this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
 
       // 2️⃣
-      this.updateInboxNotificationsCache((cache) => {
+      this.#updateInboxNotificationsCache((cache) => {
         const existing = cache[inboxNotificationId];
         if (!existing) {
           // If the inbox notification doesn't exist in the cache, we do not
@@ -937,11 +1032,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
           return cache;
         }
 
-        const inboxNotifications = {
+        return {
           ...cache,
           [inboxNotificationId]: callback(existing),
         };
-        return inboxNotifications;
       });
     });
   }
@@ -957,9 +1051,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
     ) => Readonly<InboxNotificationData>
   ): void {
     // Batch 1️⃣ + 2️⃣
-    this._store.batch(() => {
+    batch(() => {
       this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
-      this.updateInboxNotificationsCache((cache) => mapValues(cache, mapFn)); // 2️⃣
+      this.#updateInboxNotificationsCache((cache) => mapValues(cache, mapFn)); // 2️⃣
     });
   }
 
@@ -972,11 +1066,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
     optimisticUpdateId: string
   ): void {
     // Batch 1️⃣ + 2️⃣
-    this._store.batch(() => {
+    batch(() => {
       this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
 
       // 2️⃣
-      this.updateInboxNotificationsCache((cache) => {
+      this.#updateInboxNotificationsCache((cache) => {
         // Delete it
         const { [inboxNotificationId]: removed, ...newCache } = cache;
         return removed === undefined ? cache : newCache;
@@ -990,9 +1084,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
    */
   public deleteAllInboxNotifications(optimisticUpdateId: string): void {
     // Batch 1️⃣ + 2️⃣
-    this._store.batch(() => {
+    batch(() => {
       this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
-      this.updateInboxNotificationsCache(() => ({})); // 2️⃣ empty the cache
+      this.#updateInboxNotificationsCache(() => ({})); // 2️⃣ empty the cache
     });
   }
 
@@ -1004,9 +1098,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
     thread: Readonly<ThreadDataWithDeleteInfo<M>>
   ): void {
     // Batch 1️⃣ + 2️⃣
-    this._store.batch(() => {
+    batch(() => {
       this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣j
-      this.mutateThreadsDB((db) => db.upsert(thread)); // 2️⃣
+      this.#mutateThreadsDB((db) => db.upsert(thread)); // 2️⃣
     });
   }
 
@@ -1020,7 +1114,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * - The thread ID in the cache was updated more recently than the optimistic
    *   update's timestamp (if given)
    */
-  private updateThread(
+  #updateThread(
     threadId: string,
     optimisticUpdateId: string | null,
     callback: (
@@ -1029,13 +1123,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
     updatedAt?: Date // TODO We could look this up from the optimisticUpdate instead?
   ): void {
     // Batch 1️⃣ + 2️⃣
-    this._store.batch(() => {
+    batch(() => {
       if (optimisticUpdateId !== null) {
         this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
       }
 
       // 2️⃣
-      this.mutateThreadsDB((db) => {
+      this.#mutateThreadsDB((db) => {
         const existing = db.get(threadId);
         if (!existing) return;
         if (!!updatedAt && existing.updatedAt > updatedAt) return;
@@ -1055,7 +1149,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     },
     updatedAt: Date // TODO We could look this up from the optimisticUpdate instead?
   ): void {
-    return this.updateThread(
+    return this.#updateThread(
       threadId,
       optimisticUpdateId,
       (thread) => ({ ...thread, ...compactObject(patch) }),
@@ -1070,7 +1164,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     reaction: CommentUserReaction,
     createdAt: Date // TODO We could look this up from the optimisticUpdate instead?
   ): void {
-    this.updateThread(
+    this.#updateThread(
       threadId,
       optimisticUpdateId,
       (thread) => applyAddReaction(thread, commentId, reaction),
@@ -1086,7 +1180,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     userId: string,
     removedAt: Date
   ): void {
-    this.updateThread(
+    this.#updateThread(
       threadId,
       optimisticUpdateId,
       (thread) =>
@@ -1107,7 +1201,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     threadId: string,
     optimisticUpdateId: string | null
   ): void {
-    return this.updateThread(
+    return this.#updateThread(
       threadId,
       optimisticUpdateId,
 
@@ -1125,23 +1219,23 @@ export class UmbrellaStore<M extends BaseMetadata> {
     optimisticUpdateId: string
   ): void {
     // Batch 1️⃣ + 2️⃣ + 3️⃣
-    this._store.batch(() => {
+    batch(() => {
       // 1️⃣
       this.removeOptimisticUpdate(optimisticUpdateId);
 
       // If the associated thread is not found, we cannot create a comment under it
-      const existingThread = this._rawThreadsDB.get(newComment.threadId);
+      const existingThread = this.baseThreadsDB.get(newComment.threadId);
       if (!existingThread) {
         return;
       }
 
       // 2️⃣ Update the thread instance by adding a comment under it
-      this.mutateThreadsDB((db) =>
+      this.#mutateThreadsDB((db) =>
         db.upsert(applyUpsertComment(existingThread, newComment))
       );
 
       // 3️⃣ Update the associated inbox notification (if any)
-      this.updateInboxNotificationsCache((cache) => {
+      this.#updateInboxNotificationsCache((cache) => {
         const existingNotification = Object.values(cache).find(
           (notification) =>
             notification.kind === "thread" &&
@@ -1171,7 +1265,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     optimisticUpdateId: string,
     editedComment: CommentData
   ): void {
-    return this.updateThread(threadId, optimisticUpdateId, (thread) =>
+    return this.#updateThread(threadId, optimisticUpdateId, (thread) =>
       applyUpsertComment(thread, editedComment)
     );
   }
@@ -1182,7 +1276,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     commentId: string,
     deletedAt: Date
   ): void {
-    return this.updateThread(
+    return this.#updateThread(
       threadId,
       optimisticUpdateId,
       (thread) => applyDeleteComment(thread, commentId, deletedAt),
@@ -1195,13 +1289,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
     inboxNotification?: InboxNotificationData
   ): void {
     // Batch 1️⃣ + 2️⃣
-    this._store.batch(() => {
+    batch(() => {
       // 1️⃣
-      this.mutateThreadsDB((db) => db.upsertIfNewer(thread));
+      this.#mutateThreadsDB((db) => db.upsertIfNewer(thread));
 
       // 2️⃣
       if (inboxNotification !== undefined) {
-        this.updateInboxNotificationsCache((cache) => ({
+        this.#updateInboxNotificationsCache((cache) => ({
           ...cache,
           [inboxNotification.id]: inboxNotification,
         }));
@@ -1226,14 +1320,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
     deletedInboxNotifications: InboxNotificationDeleteInfo[] = []
   ): void {
     // Batch 1️⃣ + 2️⃣
-    this._store.batch(() => {
+    batch(() => {
       // 1️⃣
-      this.mutateThreadsDB((db) =>
+      this.#mutateThreadsDB((db) =>
         applyThreadDeltaUpdates(db, { newThreads: threads, deletedThreads })
       );
 
       // 2️⃣
-      this.updateInboxNotificationsCache((cache) =>
+      this.#updateInboxNotificationsCache((cache) =>
         applyNotificationsUpdates(cache, {
           newInboxNotifications: inboxNotifications,
           deletedNotifications: deletedInboxNotifications,
@@ -1252,9 +1346,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
     settings: Readonly<RoomNotificationSettings>
   ): void {
     // Batch 1️⃣ + 2️⃣
-    this._store.batch(() => {
+    batch(() => {
       this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
-      this.setNotificationSettings(roomId, settings); // 2️⃣
+      this.#setNotificationSettings(roomId, settings); // 2️⃣
     });
   }
 
@@ -1263,29 +1357,29 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): string {
     const id = nanoid();
     const newUpdate: OptimisticUpdate<M> = { ...optimisticUpdate, id };
-    this.updateOptimisticUpdatesCache((cache) => [...cache, newUpdate]);
+    this.#updateOptimisticUpdatesCache((cache) => [...cache, newUpdate]);
     return id;
   }
 
   public removeOptimisticUpdate(optimisticUpdateId: string): void {
-    this.updateOptimisticUpdatesCache((cache) =>
+    this.#updateOptimisticUpdatesCache((cache) =>
       cache.filter((ou) => ou.id !== optimisticUpdateId)
     );
   }
 
   public async fetchNotificationsDeltaUpdate(signal: AbortSignal) {
-    const lastRequestedAt = this._notificationsLastRequestedAt;
+    const lastRequestedAt = this.#notificationsLastRequestedAt;
     if (lastRequestedAt === null) {
       return;
     }
 
-    const result = await this._client.getInboxNotificationsSince({
+    const result = await this.#client.getInboxNotificationsSince({
       since: lastRequestedAt,
       signal,
     });
 
     if (lastRequestedAt < result.requestedAt) {
-      this._notificationsLastRequestedAt = result.requestedAt;
+      this.#notificationsLastRequestedAt = result.requestedAt;
     }
 
     this.updateThreadsAndNotifications(
@@ -1297,26 +1391,25 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   public waitUntilNotificationsLoaded(): UsablePromise<void> {
-    return this._notifications.waitUntilLoaded();
+    return this.#notifications.waitUntilLoaded();
   }
 
-  private updateRoomPermissions(permissions: Record<string, Permission[]>) {
-    const permissionsByRoom = { ...this._store.get().permissionsByRoom };
+  #updatePermissionHints(newHints: Record<string, Permission[]>) {
+    this.permissionHintsByRoomId.set((prev) => {
+      const permissionsByRoom = { ...prev };
 
-    Object.entries(permissions).forEach(([roomId, newPermissions]) => {
-      // Get the existing set of permissions for the room and only ever add permission to this set
-      const existingPermissions = permissionsByRoom[roomId] ?? new Set();
-      // Add the new permissions to the set of existing permissions
-      newPermissions.forEach((permission) =>
-        existingPermissions.add(permission)
-      );
-      permissionsByRoom[roomId] = existingPermissions;
+      for (const [roomId, newPermissions] of Object.entries(newHints)) {
+        // Get the existing set of permissions for the room and only ever add permission to this set
+        const existing = permissionsByRoom[roomId] ?? new Set();
+        // Add the new permissions to the set of existing permissions
+        for (const permission of newPermissions) {
+          existing.add(permission);
+        }
+        permissionsByRoom[roomId] = existing;
+      }
+
+      return permissionsByRoom;
     });
-
-    this._store.set((state) => ({
-      ...state,
-      permissionsByRoom,
-    }));
   }
 
   public waitUntilRoomThreadsLoaded(
@@ -1324,7 +1417,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     query: ThreadsQuery<M> | undefined
   ) {
     const threadsFetcher = async (cursor?: string) => {
-      const result = await this._client[kInternal].httpClient.getThreads({
+      const result = await this.#client[kInternal].httpClient.getThreads({
         roomId,
         cursor,
         query,
@@ -1334,10 +1427,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
         result.inboxNotifications
       );
 
-      this.updateRoomPermissions(result.permissionHints);
+      this.#updatePermissionHints(result.permissionHints);
 
       const lastRequestedAt =
-        this._roomThreadsLastRequestedAtByRoom.get(roomId);
+        this.#roomThreadsLastRequestedAtByRoom.get(roomId);
 
       /**
        * We set the `lastRequestedAt` value for the room to the timestamp returned by the current request if:
@@ -1349,25 +1442,26 @@ export class UmbrellaStore<M extends BaseMetadata> {
         lastRequestedAt === undefined ||
         lastRequestedAt > result.requestedAt
       ) {
-        this._roomThreadsLastRequestedAtByRoom.set(roomId, result.requestedAt);
+        this.#roomThreadsLastRequestedAtByRoom.set(roomId, result.requestedAt);
       }
 
       return result.nextCursor;
     };
 
     const queryKey = makeRoomThreadsQueryKey(roomId, query);
-    let paginatedResource = this._roomThreads.get(queryKey);
+    let paginatedResource = this.#roomThreads.get(queryKey);
     if (paginatedResource === undefined) {
       paginatedResource = new PaginatedResource(threadsFetcher);
     }
 
+    // TODO(vincent+nimesh) Looks like this should also be a Signal!
     paginatedResource.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
-      this._store.set((store) => ({ ...store }))
+      this.invalidateEntireStore()
     );
 
-    this._roomThreads.set(queryKey, paginatedResource);
+    this.#roomThreads.set(queryKey, paginatedResource);
 
     return paginatedResource.waitUntilLoaded();
   }
@@ -1376,12 +1470,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
     roomId: string,
     signal: AbortSignal
   ) {
-    const lastRequestedAt = this._roomThreadsLastRequestedAtByRoom.get(roomId);
+    const lastRequestedAt = this.#roomThreadsLastRequestedAtByRoom.get(roomId);
     if (lastRequestedAt === undefined) {
       return;
     }
 
-    const updates = await this._client[kInternal].httpClient.getThreadsSince({
+    const updates = await this.#client[kInternal].httpClient.getThreadsSince({
       roomId,
       since: lastRequestedAt,
       signal,
@@ -1394,11 +1488,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
       updates.inboxNotifications.deleted
     );
 
-    this.updateRoomPermissions(updates.permissionHints);
+    this.#updatePermissionHints(updates.permissionHints);
 
     if (lastRequestedAt < updates.requestedAt) {
       // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
-      this._roomThreadsLastRequestedAtByRoom.set(roomId, updates.requestedAt);
+      this.#roomThreadsLastRequestedAtByRoom.set(roomId, updates.requestedAt);
     }
   }
 
@@ -1406,7 +1500,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     const queryKey = makeUserThreadsQueryKey(query);
 
     const threadsFetcher = async (cursor?: string) => {
-      const result = await this._client[
+      const result = await this.#client[
         kInternal
       ].httpClient.getUserThreads_experimental({
         cursor,
@@ -1417,39 +1511,54 @@ export class UmbrellaStore<M extends BaseMetadata> {
         result.inboxNotifications
       );
 
-      this.updateRoomPermissions(result.permissionHints);
+      this.#updatePermissionHints(result.permissionHints);
 
       // We initialize the `_userThreadsLastRequestedAt` date using the server timestamp after we've loaded the first page of inbox notifications.
-      if (this._userThreadsLastRequestedAt === null) {
-        this._userThreadsLastRequestedAt = result.requestedAt;
+      if (this.#userThreadsLastRequestedAt === null) {
+        this.#userThreadsLastRequestedAt = result.requestedAt;
       }
 
       return result.nextCursor;
     };
 
-    let paginatedResource = this._userThreads.get(queryKey);
+    let paginatedResource = this.#userThreads.get(queryKey);
     if (paginatedResource === undefined) {
       paginatedResource = new PaginatedResource(threadsFetcher);
     }
 
+    // TODO(vincent+nimesh) Looks like this should also be a Signal!
     paginatedResource.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
-      this._store.set((store) => ({ ...store }))
+      this.invalidateEntireStore()
     );
 
-    this._userThreads.set(queryKey, paginatedResource);
+    this.#userThreads.set(queryKey, paginatedResource);
 
     return paginatedResource.waitUntilLoaded();
   }
 
+  // TODO(vincent+nimesh) We should really be going over all call sites, and replace this call
+  // with a more specific invalidation!
+  private invalidateEntireStore() {
+    // TODO(vincent+nimesh) Of course this now looks stupid, but it's the exact equivalent of
+    // what we're been doing all along
+    batch(() => {
+      this.baseVersionsByRoomId.set((store) => ({ ...store }));
+      this.baseNotificationsById.set((store) => ({ ...store }));
+      this.optimisticUpdates.set((store) => [...store]);
+      this.permissionHintsByRoomId.set((store) => ({ ...store }));
+      this.baseSettingsByRoomId.set((store) => ({ ...store }));
+    });
+  }
+
   public async fetchUserThreadsDeltaUpdate(signal: AbortSignal) {
-    const lastRequestedAt = this._userThreadsLastRequestedAt;
+    const lastRequestedAt = this.#userThreadsLastRequestedAt;
     if (lastRequestedAt === null) {
       return;
     }
 
-    const result = await this._client[
+    const result = await this.#client[
       kInternal
     ].httpClient.getUserThreadsSince_experimental({
       since: lastRequestedAt,
@@ -1457,7 +1566,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     });
 
     if (lastRequestedAt < result.requestedAt) {
-      this._notificationsLastRequestedAt = result.requestedAt;
+      this.#notificationsLastRequestedAt = result.requestedAt;
     }
 
     this.updateThreadsAndNotifications(
@@ -1467,15 +1576,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
       result.inboxNotifications.deleted
     );
 
-    this.updateRoomPermissions(result.permissionHints);
+    this.#updatePermissionHints(result.permissionHints);
   }
 
   public waitUntilRoomVersionsLoaded(roomId: string) {
     const queryKey = makeVersionsQueryKey(roomId);
-    let resource = this._roomVersions.get(queryKey);
+    let resource = this.#roomVersions.get(queryKey);
     if (resource === undefined) {
       const versionsFetcher = async () => {
-        const room = this._client.getRoom(roomId);
+        const room = this.#client.getRoom(roomId);
         if (room === null) {
           throw new HttpError(
             `Room '${roomId}' is not available on client`,
@@ -1484,16 +1593,16 @@ export class UmbrellaStore<M extends BaseMetadata> {
         }
 
         const result = await room[kInternal].listTextVersions();
-        this.updateRoomVersions(roomId, result.versions);
+        this.#updateRoomVersions(roomId, result.versions);
 
         const lastRequestedAt =
-          this._roomVersionsLastRequestedAtByRoom.get(roomId);
+          this.#roomVersionsLastRequestedAtByRoom.get(roomId);
 
         if (
           lastRequestedAt === undefined ||
           lastRequestedAt > result.requestedAt
         ) {
-          this._roomVersionsLastRequestedAtByRoom.set(
+          this.#roomVersionsLastRequestedAtByRoom.set(
             roomId,
             result.requestedAt
           );
@@ -1503,13 +1612,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
       resource = new SinglePageResource(versionsFetcher);
     }
 
+    // TODO(vincent+nimesh) Looks like this should also be a Signal!
     resource.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
-      this._store.set((store) => ({ ...store }))
+      this.invalidateEntireStore()
     );
 
-    this._roomVersions.set(queryKey, resource);
+    this.#roomVersions.set(queryKey, resource);
 
     return resource.waitUntilLoaded();
   }
@@ -1518,13 +1628,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
     roomId: string,
     signal: AbortSignal
   ) {
-    const lastRequestedAt = this._roomVersionsLastRequestedAtByRoom.get(roomId);
+    const lastRequestedAt = this.#roomVersionsLastRequestedAtByRoom.get(roomId);
     if (lastRequestedAt === undefined) {
       return;
     }
 
     const room = nn(
-      this._client.getRoom(roomId),
+      this.#client.getRoom(roomId),
       `Room with id ${roomId} is not available on client`
     );
 
@@ -1533,20 +1643,20 @@ export class UmbrellaStore<M extends BaseMetadata> {
       signal,
     });
 
-    this.updateRoomVersions(roomId, updates.versions);
+    this.#updateRoomVersions(roomId, updates.versions);
 
     if (lastRequestedAt < updates.requestedAt) {
       // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
-      this._roomVersionsLastRequestedAtByRoom.set(roomId, updates.requestedAt);
+      this.#roomVersionsLastRequestedAtByRoom.set(roomId, updates.requestedAt);
     }
   }
 
   public waitUntilRoomNotificationSettingsLoaded(roomId: string) {
     const queryKey = makeNotificationSettingsQueryKey(roomId);
-    let resource = this._roomNotificationSettings.get(queryKey);
+    let resource = this.#roomNotificationSettings.get(queryKey);
     if (resource === undefined) {
       const notificationSettingsFetcher = async () => {
-        const room = this._client.getRoom(roomId);
+        const room = this.#client.getRoom(roomId);
         if (room === null) {
           throw new HttpError(
             `Room '${roomId}' is not available on client`,
@@ -1555,19 +1665,20 @@ export class UmbrellaStore<M extends BaseMetadata> {
         }
 
         const result = await room.getNotificationSettings();
-        this.setNotificationSettings(roomId, result);
+        this.#setNotificationSettings(roomId, result);
       };
 
       resource = new SinglePageResource(notificationSettingsFetcher);
     }
 
+    // TODO(vincent+nimesh) Looks like this should also be a Signal!
     resource.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
-      this._store.set((store) => ({ ...store }))
+      this.invalidateEntireStore()
     );
 
-    this._roomNotificationSettings.set(queryKey, resource);
+    this.#roomNotificationSettings.set(queryKey, resource);
 
     return resource.waitUntilLoaded();
   }
@@ -1577,11 +1688,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
     signal: AbortSignal
   ) {
     const room = nn(
-      this._client.getRoom(roomId),
+      this.#client.getRoom(roomId),
       `Room with id ${roomId} is not available on client`
     );
     const result = await room.getNotificationSettings({ signal });
-    this.setNotificationSettings(roomId, result);
+    this.#setNotificationSettings(roomId, result);
   }
 }
 
@@ -1589,18 +1700,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
  * Applies optimistic updates, removes deleted threads, sorts results in
  * a stable way, removes internal fields that should not be exposed publicly.
  */
-function internalToExternalState<M extends BaseMetadata>(
-  state: InternalState<M>,
-  rawThreadsDB: ThreadDB<M>
-): UmbrellaStoreState<M> {
-  const threadsDB = rawThreadsDB.clone();
+function applyOptimisticUpdates_forThreadifications<M extends BaseMetadata>(
+  baseThreadsDB: ThreadDB<M>,
+  rawNotificationsById: NotificationsById,
+  optimisticUpdates: readonly OptimisticUpdate<M>[]
+): CleanThreadifications<M> {
+  const threadsDB = baseThreadsDB.clone();
+  let notificationsById = { ...rawNotificationsById };
 
-  const computed = {
-    notificationsById: { ...state.notificationsById },
-    settingsByRoomId: { ...state.settingsByRoomId },
-  };
-
-  for (const optimisticUpdate of state.optimisticUpdates) {
+  for (const optimisticUpdate of optimisticUpdates) {
     switch (optimisticUpdate.type) {
       case "create-thread": {
         threadsDB.upsert(optimisticUpdate.thread);
@@ -1649,9 +1757,7 @@ function internalToExternalState<M extends BaseMetadata>(
 
         threadsDB.upsert(applyUpsertComment(thread, optimisticUpdate.comment));
 
-        const inboxNotification = Object.values(
-          computed.notificationsById
-        ).find(
+        const inboxNotification = Object.values(notificationsById).find(
           (notification) =>
             notification.kind === "thread" &&
             notification.threadId === thread.id
@@ -1661,7 +1767,7 @@ function internalToExternalState<M extends BaseMetadata>(
           break;
         }
 
-        computed.notificationsById[inboxNotification.id] = {
+        notificationsById[inboxNotification.id] = {
           ...inboxNotification,
           notifiedAt: optimisticUpdate.comment.createdAt,
           readAt: optimisticUpdate.comment.createdAt,
@@ -1736,30 +1842,29 @@ function internalToExternalState<M extends BaseMetadata>(
       }
 
       case "mark-inbox-notification-as-read": {
-        const ibn =
-          computed.notificationsById[optimisticUpdate.inboxNotificationId];
+        const ibn = notificationsById[optimisticUpdate.inboxNotificationId];
 
         // If the inbox notification doesn't exist in the cache, we do not apply the update
         if (ibn === undefined) {
           break;
         }
 
-        computed.notificationsById[optimisticUpdate.inboxNotificationId] = {
+        notificationsById[optimisticUpdate.inboxNotificationId] = {
           ...ibn,
           readAt: optimisticUpdate.readAt,
         };
         break;
       }
       case "mark-all-inbox-notifications-as-read": {
-        for (const id in computed.notificationsById) {
-          const ibn = computed.notificationsById[id];
+        for (const id in notificationsById) {
+          const ibn = notificationsById[id];
 
           // If the inbox notification doesn't exist in the cache, we do not apply the update
           if (ibn === undefined) {
             break;
           }
 
-          computed.notificationsById[id] = {
+          notificationsById[id] = {
             ...ibn,
             readAt: optimisticUpdate.readAt,
           };
@@ -1767,46 +1872,60 @@ function internalToExternalState<M extends BaseMetadata>(
         break;
       }
       case "delete-inbox-notification": {
-        delete computed.notificationsById[optimisticUpdate.inboxNotificationId];
+        delete notificationsById[optimisticUpdate.inboxNotificationId];
         break;
       }
       case "delete-all-inbox-notifications": {
-        computed.notificationsById = {};
+        notificationsById = {};
         break;
-      }
-
-      case "update-notification-settings": {
-        const settings = computed.settingsByRoomId[optimisticUpdate.roomId];
-
-        // If the inbox notification doesn't exist in the cache, we do not apply the update
-        if (settings === undefined) {
-          break;
-        }
-
-        computed.settingsByRoomId[optimisticUpdate.roomId] = {
-          ...settings,
-          ...optimisticUpdate.settings,
-        };
       }
     }
   }
 
   // TODO Maybe consider also removing these from the inboxNotificationsById registry?
-  const cleanedNotifications =
+  const sortedNotifications =
     // Sort so that the most recent notifications are first
-    Object.values(computed.notificationsById)
+    Object.values(notificationsById)
       .filter((ibn) =>
         ibn.kind === "thread" ? threadsDB.get(ibn.threadId) !== undefined : true
       )
       .sort((a, b) => b.notifiedAt.getTime() - a.notifiedAt.getTime());
 
   return {
-    cleanedNotifications,
-    notificationsById: computed.notificationsById,
-    settingsByRoomId: computed.settingsByRoomId,
+    sortedNotifications,
+    notificationsById,
     threadsDB,
-    versionsByRoomId: state.versionsByRoomId,
   };
+}
+
+/**
+ * Applies optimistic updates, removes deleted threads, sorts results in
+ * a stable way, removes internal fields that should not be exposed publicly.
+ */
+function applyOptimisticUpdates_forSettings(
+  baseSettingsByRoomId: SettingsByRoomId,
+  optimisticUpdates: readonly OptimisticUpdate<BaseMetadata>[]
+): SettingsByRoomId {
+  const settingsByRoomId = { ...baseSettingsByRoomId };
+
+  for (const optimisticUpdate of optimisticUpdates) {
+    switch (optimisticUpdate.type) {
+      case "update-notification-settings": {
+        const settings = settingsByRoomId[optimisticUpdate.roomId];
+
+        // If the inbox notification doesn't exist in the cache, we do not apply the update
+        if (settings === undefined) {
+          break;
+        }
+
+        settingsByRoomId[optimisticUpdate.roomId] = {
+          ...settings,
+          ...optimisticUpdate.settings,
+        };
+      }
+    }
+  }
+  return settingsByRoomId;
 }
 
 export function applyThreadDeltaUpdates<M extends BaseMetadata>(
