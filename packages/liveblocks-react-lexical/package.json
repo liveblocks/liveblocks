@@ -54,8 +54,8 @@
     "@lexical/utils": "0.16.1",
     "@lexical/yjs": "0.16.1",
     "lexical": "0.16.1",
-    "react": "^16.14.0 || ^17 || ^18 || ^19 || ^19.0.0-rc",
-    "react-dom": "^16.14.0 || ^17 || ^18 || ^19 || ^19.0.0-rc"
+    "react": "^18 || ^19 || ^19.0.0-rc",
+    "react-dom": "^18 || ^19 || ^19.0.0-rc"
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",

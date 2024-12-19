@@ -59,8 +59,8 @@
     "@tiptap/pm": "^2.7.2",
     "@tiptap/react": "^2.7.2",
     "@tiptap/suggestion": "^2.7.2",
-    "react": "^16.14.0 || ^17 || ^18",
-    "react-dom": "^16.14.0 || ^17 || ^18"
+    "react": "^18 || ^19 || ^19.0.0-rc",
+    "react-dom": "^18 || ^19 || ^19.0.0-rc"
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
