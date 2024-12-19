@@ -15,8 +15,7 @@ import type {
 import type { MentionDraft } from "../../slate/plugins/mentions";
 import type {
   ComponentPropsWithSlot,
-  ComposerBodyAutoLink,
-  ComposerBodyCustomLink,
+  ComposerBodyLink,
   ComposerBodyMark,
   ComposerBodyMention,
   Direction,
@@ -35,6 +34,11 @@ export interface ComposerEditorMentionProps {
 }
 
 export interface ComposerEditorLinkProps {
+  /**
+   * Whether the mention is selected.
+   */
+  isSelected: boolean;
+
   /**
    * The link's absolute URL.
    *
@@ -251,9 +255,7 @@ export interface ComposerEditorMentionWrapperProps
 }
 
 export interface ComposerEditorLinkWrapperProps
-  extends RenderElementSpecificProps<
-    ComposerBodyAutoLink | ComposerBodyCustomLink
-  > {
+  extends RenderElementSpecificProps<ComposerBodyLink> {
   Link: ComponentType<ComposerEditorLinkProps>;
 }
 
