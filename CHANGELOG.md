@@ -15,7 +15,7 @@ rollup, esbuild, etc) to also down-compile code from dependencies inside
 
 ### `@liveblocks/react-lexical`
 
-- Added `offlineSupport_experimental` option to `LiveblocksPlugin`.
+- Add `offlineSupport_experimental` option to `LiveblocksPlugin`.
 
 ## 2.14.0
 
