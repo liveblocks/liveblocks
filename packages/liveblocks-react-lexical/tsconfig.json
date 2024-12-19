@@ -18,5 +18,6 @@
 
     // TODO: Try to get rid of these overrides
     "noUncheckedIndexedAccess": false // OVERWRITTEN to relax a bit
-  }
+  },
+  "include": ["**/*.ts", "**/*.tsx", "rollup.config.mjs"]
 }

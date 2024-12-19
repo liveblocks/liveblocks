@@ -94,5 +94,11 @@ module.exports = {
         "@typescript-eslint/no-floating-promises": "off",
       },
     },
+    {
+      files: ["rollup.config.mjs"],
+      env: {
+        node: true,
+      },
+    },
   ],
 };

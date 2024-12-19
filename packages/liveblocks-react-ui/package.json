@@ -63,8 +63,8 @@
     "README.md"
   ],
   "scripts": {
-    "dev": "rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript --watch",
-    "build": "rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
+    "dev": "rollup --config rollup.config.mjs --watch",
+    "build": "rollup --config rollup.config.mjs",
     "start": "npm run dev",
     "format": "eslint --fix src/; stylelint --fix src/styles/; prettier --write src/",
     "lint": "eslint src/; stylelint src/styles/",
@@ -97,7 +97,6 @@
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
     "@rollup/plugin-replace": "^5.0.5",
-    "@rollup/plugin-typescript": "^11.1.2",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.1.1",
     "@types/use-sync-external-store": "^0.0.6",
