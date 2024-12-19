@@ -111,14 +111,6 @@ import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
 
-function useSyncExternalStore<Snapshot>(
-  s: (onStoreChange: () => void) => () => void,
-  gs: () => Snapshot,
-  gss: undefined | null | (() => Snapshot)
-): Snapshot {
-  return useSyncExternalStoreWithSelector(s, gs, gss, identity);
-}
-
 const STABLE_EMPTY_LIST = Object.freeze([]);
 
 // Don't try to inline this. This function is intended to be a stable
@@ -746,7 +738,7 @@ function useStatus(): Status {
   const subscribe = room.events.status.subscribe;
   const getSnapshot = room.getStatus;
   const getServerSnapshot = room.getStatus;
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return React.useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
 /** @private - Internal API, do not rely on it. */
@@ -789,7 +781,7 @@ function useYjsProvider(): IYjsProvider | undefined {
     return room[kInternal].getYjsProvider();
   }, [room]);
 
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  return React.useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
 /** @private - Internal API, do not rely on it. */
@@ -862,7 +854,7 @@ function useStorageStatusImmediate(): StorageStatus {
   const subscribe = room.events.storageStatus.subscribe;
   const getSnapshot = room.getStorageStatus;
   const getServerSnapshot = room.getStorageStatus;
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return React.useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
 function useStorageStatusSmooth(): StorageStatus {
@@ -1033,7 +1025,7 @@ function useCanUndo(): boolean {
   const room = useRoom();
   const subscribe = room.events.history.subscribe;
   const canUndo = room.history.canUndo;
-  return useSyncExternalStore(subscribe, canUndo, canUndo);
+  return React.useSyncExternalStore(subscribe, canUndo, canUndo);
 }
 
 /**
@@ -1043,7 +1035,7 @@ function useCanRedo(): boolean {
   const room = useRoom();
   const subscribe = room.events.history.subscribe;
   const canRedo = room.history.canRedo;
-  return useSyncExternalStore(subscribe, canRedo, canRedo);
+  return React.useSyncExternalStore(subscribe, canRedo, canRedo);
 }
 
 function useSelf<P extends JsonObject, U extends BaseUserMeta>(): User<
@@ -1089,7 +1081,11 @@ function useMyPresence<P extends JsonObject>(): [
   const room = useRoom<P, never, never, never, never>();
   const subscribe = room.events.myPresence.subscribe;
   const getSnapshot = room.getPresence;
-  const presence = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  const presence = React.useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getSnapshot
+  );
   const setPresence = room.updatePresence;
   return [presence, setPresence];
 }
@@ -1221,7 +1217,7 @@ function useMutableStorageRoot<S extends LsonObject>(): LiveObject<S> | null {
   const subscribe = room.events.storageDidLoad.subscribeOnce;
   const getSnapshot = room.getStorageSnapshot;
   const getServerSnapshot = alwaysNull;
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return React.useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
 // NOTE: This API exists for backward compatible reasons
@@ -2582,7 +2578,7 @@ function useAttachmentUrlSuspense(attachmentId: string) {
     throw attachmentUrlState.error;
   }
 
-  const state = useSyncExternalStore(
+  const state = React.useSyncExternalStore(
     attachmentUrlsStore.subscribe,
     getAttachmentUrlState,
     getAttachmentUrlState
@@ -2605,7 +2601,7 @@ function useRoomPermissions(roomId: string) {
   const store = getRoomExtrasForClient(client).store;
 
   return (
-    useSyncExternalStore(
+    React.useSyncExternalStore(
       store.subscribe,
       React.useCallback(() => store._getPermissions(roomId), [store, roomId]),
       React.useCallback(() => store._getPermissions(roomId), [store, roomId])
