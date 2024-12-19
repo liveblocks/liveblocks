@@ -549,7 +549,11 @@ function AiToolbarContainer({
         <div
           className="lb-tiptap-ai-toolbar-halo"
           data-active={state === "thinking" ? "" : undefined}
-        />
+          aria-hidden
+        >
+          <div className="lb-tiptap-ai-toolbar-halo-horizontal" />
+          <div className="lb-tiptap-ai-toolbar-halo-vertical" />
+        </div>
       </div>
       {state === "asking" || state === "reviewing" ? (
         <Command.List

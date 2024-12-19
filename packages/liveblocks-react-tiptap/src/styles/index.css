@@ -365,7 +365,7 @@
 }
 
 .lb-tiptap-ai-toolbar-halo {
-  --lb-tiptap-ai-toolbar-halo-blur: 20px;
+  --lb-tiptap-ai-toolbar-halo-blur: 16px;
   --lb-tiptap-ai-toolbar-halo-outset: 8px;
 
   position: absolute;
@@ -380,44 +380,105 @@
   transition-duration: 1s;
   transition-property: opacity;
 
+  &:where(:not([data-active])) {
+    opacity: 0.5;
+  }
+}
+
+:is(
+    .lb-tiptap-ai-toolbar-halo-horizontal,
+    .lb-tiptap-ai-toolbar-halo-vertical
+  ) {
+  position: absolute;
+  inset: 0;
+
   &::before,
   &::after {
     content: "";
     position: absolute;
     inset: 0;
     opacity: 0.25;
+    animation-timing-function: cubic-bezier(0.455, 0.03, 0.515, 0.955);
+    animation-iteration-count: infinite;
   }
+}
 
+.lb-tiptap-ai-toolbar-halo-horizontal {
   &::before {
     inline-size: 200%;
     block-size: 100%;
-    background: repeating-linear-gradient(
-      90deg,
-      transparent 0%,
-      transparent 10%,
-      var(--lb-accent) 25%,
-      transparent 40%,
-      transparent 50%
+    background: linear-gradient(
+      30deg,
+      transparent 20%,
+      var(--lb-accent) 50%,
+      transparent 80%
     );
-    animation: lb-animation-ai-toolbar-halo-horizontal 4s -2s linear infinite both;
+    background-position: top left;
+    background-size: 50% 100%;
+    animation-name: lb-animation-ai-toolbar-halo-horizontal;
+    animation-duration: 8s;
+    animation-direction: alternate;
   }
 
   &::after {
-    inline-size: 100%;
-    block-size: 200%;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent 0%,
-      transparent 10%,
-      var(--lb-accent) 25%,
-      transparent 40%,
-      transparent 50%
+    inset-inline-start: -50%;
+    inline-size: 400%;
+    block-size: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent 20%,
+      var(--lb-accent) 50%,
+      transparent 80%
     );
-    animation: lb-animation-ai-toolbar-halo-vertical 3s -1s linear infinite both;
+    background-position: top left;
+    background-size: 800px 100%;
+    background-repeat: space;
+    animation-name: lb-animation-ai-toolbar-halo-horizontal;
+    animation-duration: 6s;
+    animation-delay: -2s;
+    animation-direction: alternate-reverse;
+  }
+}
+
+.lb-tiptap-ai-toolbar-halo-vertical {
+  opacity: 0;
+
+  &::before {
+    inset-block-start: -50%;
+    inline-size: 100%;
+    block-size: 400%;
+    background: linear-gradient(
+      1deg,
+      transparent 40%,
+      var(--lb-accent) 50%,
+      transparent 60%
+    );
+    background-position: top left;
+    background-size: 100% 600px;
+    background-repeat: round;
+    animation-name: lb-animation-ai-toolbar-halo-vertical;
+    animation-duration: 4s;
+    animation-delay: -2s;
+    animation-direction: alternate-reverse;
   }
 
-  &:where(:not([data-active])) {
-    opacity: 0.5;
+  &::after {
+    inset-block-start: -50%;
+    inline-size: 100%;
+    block-size: 400%;
+    background: linear-gradient(
+      -2deg,
+      transparent 40%,
+      var(--lb-accent) 50%,
+      transparent 60%
+    );
+    background-position: top left;
+    background-size: 100% 400px;
+    background-repeat: round;
+    animation-name: lb-animation-ai-toolbar-halo-vertical;
+    animation-duration: 3s;
+    animation-delay: -1s;
+    animation-direction: alternate;
   }
 }
 
