@@ -13,6 +13,10 @@ browsers (mostly IE), then you may need to configure your bundler (Webpack,
 rollup, esbuild, etc) to also down-compile code from dependencies inside
 `node_modules` for you, if you aren't already.
 
+### `@liveblocks/react-lexical`
+
+- Added `offlineSupport_experimental` option to `LiveblocksPlugin`.
+
 ## 2.14.0
 
 ### `@liveblocks/emails`
