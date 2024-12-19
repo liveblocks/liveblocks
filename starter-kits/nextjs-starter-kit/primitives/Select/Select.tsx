@@ -1,27 +1,28 @@
 import * as RadixSelect from "@radix-ui/react-select";
 import clsx from "clsx";
 import { CSSProperties, useCallback, useEffect, useState } from "react";
-import { CheckIcon, SelectIcon } from "../../icons";
+import { CheckIcon, SelectIcon } from "@/icons";
 import styles from "./Select.module.css";
 
-interface Item extends RadixSelect.SelectItemProps {
-  value: string;
+interface Item<TValues extends string> extends RadixSelect.SelectItemProps {
+  value: TValues;
   title?: string;
   description?: string;
 }
 
-interface Props extends Omit<RadixSelect.SelectProps, "onValueChange"> {
+interface Props<TValues extends string>
+  extends Omit<RadixSelect.SelectProps, "onValueChange"> {
   variant?: "regular" | "subtle";
   initialValue?: string;
   value?: string;
-  items: Item[];
+  items: Item<TValues>[];
   onChange?: RadixSelect.SelectProps["onValueChange"];
   placeholder?: RadixSelect.SelectValueProps["placeholder"];
   aboveOverlay?: boolean;
   className?: RadixSelect.SelectTriggerProps["className"];
 }
 
-export function Select({
+export function Select<TValues extends string = string>({
   variant = "regular",
   initialValue,
   value,
@@ -31,7 +32,7 @@ export function Select({
   aboveOverlay,
   className,
   ...props
-}: Props) {
+}: Props<TValues>) {
   const [internalValue, setInternalValue] = useState(initialValue);
 
   const handleValueChange = useCallback(

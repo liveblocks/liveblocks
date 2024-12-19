@@ -76,6 +76,15 @@ export function DocumentCreatePopover({
           >
             Canvas
           </Button>
+          <Button
+            icon={<PlusIcon />}
+            onClick={() => {
+              createNewDocument("Untitled", "issue");
+            }}
+            variant="subtle"
+          >
+            Issue
+          </Button>
         </div>
       }
       modal

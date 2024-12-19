@@ -133,13 +133,14 @@ export function DocumentsList({
           {group?.name ?? capitalize(filter)}
         </h1>
         <div className={styles.headerActions}>
-          <Select
+          <Select<"all" | DocumentType>
             initialValue="all"
             items={[
               { value: "all", title: "All" },
               { value: "text", title: "Text" },
               { value: "whiteboard", title: "Whiteboard" },
               { value: "canvas", title: "Canvas" },
+              { value: "issue", title: "Issue" },
             ]}
             onChange={(value: "all" | DocumentType) => {
               setDocumentType(value);
