@@ -485,20 +485,15 @@ class SinglePageResource {
     autobind(this);
   }
 
-  public get(): AsyncResult<undefined> {
+  public get(): AsyncResult<void> {
     const usable = this.#cachedPromise;
     if (usable === null || usable.status === "pending") {
       return ASYNC_LOADING;
-    }
-
-    if (usable.status === "rejected") {
+    } else if (usable.status === "rejected") {
       return { isLoading: false, error: usable.reason };
+    } else {
+      return { isLoading: false, data: undefined };
     }
-
-    return {
-      isLoading: false,
-      data: undefined,
-    };
   }
 
   #cachedPromise: UsablePromise<void> | null = null;
@@ -946,20 +941,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   // Direct low-level cache mutations ------------------------------------------------- {{{
 
-  #mutateThreadsDB(mutate: (db: ThreadDB<M>) => void): void {
-    batch(() => {
-      mutate(this.baseThreadsDB);
-    });
-  }
-
-  #updateInboxNotificationsCache(
-    mapFn: (
-      cache: Readonly<Record<string, InboxNotificationData>>
-    ) => Readonly<Record<string, InboxNotificationData>>
-  ): void {
-    this.baseNotificationsById.set((prev) => mapFn(prev));
-  }
-
   #setNotificationSettings(
     roomId: string,
     settings: RoomNotificationSettings
@@ -981,14 +962,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
         [roomId]: newVersions,
       };
     });
-  }
-
-  #updateOptimisticUpdatesCache(
-    mapFn: (
-      cache: readonly OptimisticUpdate<M>[]
-    ) => readonly OptimisticUpdate<M>[]
-  ): void {
-    this.optimisticUpdates.set(mapFn);
   }
 
   // ---------------------------------------------------------------------------------- }}}
@@ -1032,7 +1005,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
 
       // 2️⃣
-      this.#updateInboxNotificationsCache((cache) => {
+      this.baseNotificationsById.set((cache) => {
         const existing = cache[inboxNotificationId];
         if (!existing) {
           // If the inbox notification doesn't exist in the cache, we do not
@@ -1061,7 +1034,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // Batch 1️⃣ + 2️⃣
     batch(() => {
       this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
-      this.#updateInboxNotificationsCache((cache) => mapValues(cache, mapFn)); // 2️⃣
+      this.baseNotificationsById.set((cache) => mapValues(cache, mapFn)); // 2️⃣
     });
   }
 
@@ -1078,7 +1051,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
 
       // 2️⃣
-      this.#updateInboxNotificationsCache((cache) => {
+      this.baseNotificationsById.set((cache) => {
         // Delete it
         const { [inboxNotificationId]: removed, ...newCache } = cache;
         return removed === undefined ? cache : newCache;
@@ -1094,7 +1067,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // Batch 1️⃣ + 2️⃣
     batch(() => {
       this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
-      this.#updateInboxNotificationsCache(() => ({})); // 2️⃣ empty the cache
+      this.baseNotificationsById.set(() => ({})); // 2️⃣ empty the cache
     });
   }
 
@@ -1108,7 +1081,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // Batch 1️⃣ + 2️⃣
     batch(() => {
       this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣j
-      this.#mutateThreadsDB((db) => db.upsert(thread)); // 2️⃣
+      this.baseThreadsDB.upsert(thread); // 2️⃣
     });
   }
 
@@ -1137,13 +1110,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
       }
 
       // 2️⃣
-      this.#mutateThreadsDB((db) => {
+      {
+        const db = this.baseThreadsDB;
         const existing = db.get(threadId);
         if (!existing) return;
         if (!!updatedAt && existing.updatedAt > updatedAt) return;
 
         db.upsert(callback(existing));
-      });
+      }
     });
   }
 
@@ -1238,12 +1212,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
       }
 
       // 2️⃣ Update the thread instance by adding a comment under it
-      this.#mutateThreadsDB((db) =>
-        db.upsert(applyUpsertComment(existingThread, newComment))
-      );
+      this.baseThreadsDB.upsert(applyUpsertComment(existingThread, newComment));
 
       // 3️⃣ Update the associated inbox notification (if any)
-      this.#updateInboxNotificationsCache((cache) => {
+      this.baseNotificationsById.set((cache) => {
         const existingNotification = Object.values(cache).find(
           (notification) =>
             notification.kind === "thread" &&
@@ -1299,11 +1271,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // Batch 1️⃣ + 2️⃣
     batch(() => {
       // 1️⃣
-      this.#mutateThreadsDB((db) => db.upsertIfNewer(thread));
+      this.baseThreadsDB.upsertIfNewer(thread);
 
       // 2️⃣
       if (inboxNotification !== undefined) {
-        this.#updateInboxNotificationsCache((cache) => ({
+        this.baseNotificationsById.set((cache) => ({
           ...cache,
           [inboxNotification.id]: inboxNotification,
         }));
@@ -1330,12 +1302,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // Batch 1️⃣ + 2️⃣
     batch(() => {
       // 1️⃣
-      this.#mutateThreadsDB((db) =>
-        applyThreadDeltaUpdates(db, { newThreads: threads, deletedThreads })
-      );
+      applyThreadDeltaUpdates(this.baseThreadsDB, {
+        newThreads: threads,
+        deletedThreads,
+      });
 
       // 2️⃣
-      this.#updateInboxNotificationsCache((cache) =>
+      this.baseNotificationsById.set((cache) =>
         applyNotificationsUpdates(cache, {
           newInboxNotifications: inboxNotifications,
           deletedNotifications: deletedInboxNotifications,
@@ -1365,12 +1338,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): string {
     const id = nanoid();
     const newUpdate: OptimisticUpdate<M> = { ...optimisticUpdate, id };
-    this.#updateOptimisticUpdatesCache((cache) => [...cache, newUpdate]);
+    this.optimisticUpdates.set((cache) => [...cache, newUpdate]);
     return id;
   }
 
   public removeOptimisticUpdate(optimisticUpdateId: string): void {
-    this.#updateOptimisticUpdatesCache((cache) =>
+    this.optimisticUpdates.set((cache) =>
       cache.filter((ou) => ou.id !== optimisticUpdateId)
     );
   }
