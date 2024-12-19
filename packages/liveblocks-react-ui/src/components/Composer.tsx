@@ -31,6 +31,7 @@ import React, {
   createContext,
   forwardRef,
   useCallback,
+  useLayoutEffect,
   useMemo,
   useRef,
   useSyncExternalStore,
@@ -69,7 +70,6 @@ import { MENTION_CHARACTER } from "../slate/plugins/mentions";
 import type { ComposerBodyMark } from "../types";
 import { classNames } from "../utils/class-names";
 import { useControllableState } from "../utils/use-controllable-state";
-import { useLayoutEffect } from "../utils/use-layout-effect";
 import { FileAttachment } from "./internal/Attachment";
 import { Attribution } from "./internal/Attribution";
 import { Avatar } from "./internal/Avatar";

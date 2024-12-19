@@ -29,6 +29,7 @@ import type { DragEvent } from "react";
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useState,
   useSyncExternalStore,
@@ -54,7 +55,6 @@ import { getFiles } from "../../utils/data-transfer";
 import { exists } from "../../utils/exists";
 import { useInitial } from "../../utils/use-initial";
 import { useLatest } from "../../utils/use-latest";
-import { useLayoutEffect } from "../../utils/use-layout-effect";
 import {
   isCommentBodyLink,
   isCommentBodyMention,
