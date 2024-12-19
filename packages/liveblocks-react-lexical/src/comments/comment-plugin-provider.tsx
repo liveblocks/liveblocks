@@ -13,6 +13,7 @@ import {
 import {
   CreateThreadError,
   getUmbrellaStoreForClient,
+  useSyncExternalStoreWithSelector,
 } from "@liveblocks/react/_private";
 import type { BaseSelection, NodeKey, NodeMutation } from "lexical";
 import {
@@ -23,13 +24,7 @@ import {
 } from "lexical";
 import type { PropsWithChildren } from "react";
 import * as React from "react";
-import {
-  createContext,
-  useCallback,
-  useEffect,
-  useState,
-  useSyncExternalStoreWithSelector,
-} from "react";
+import { createContext, useCallback, useEffect, useState } from "react";
 
 import $getThreadMarkIds from "./get-thread-mark-ids";
 import {

@@ -30,7 +30,6 @@ import React, {
   useEffect,
   useMemo,
   useSyncExternalStore,
-  useSyncExternalStoreWithSelector,
 } from "react";
 
 import { config } from "./config";
@@ -54,6 +53,7 @@ import type {
   UseUserThreadsOptions,
 } from "./types";
 import { UmbrellaStore } from "./umbrella-store";
+import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
 
 /**
  * Raw access to the React context where the LiveblocksProvider stores the

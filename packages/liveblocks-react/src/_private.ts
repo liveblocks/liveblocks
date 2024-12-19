@@ -26,4 +26,5 @@ export {
   useYjsProvider,
 } from "./room";
 export { useMentionSuggestions } from "./use-mention-suggestions";
+export { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
 export { useSyncSource } from "./use-sync-source";

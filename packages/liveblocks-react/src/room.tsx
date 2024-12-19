@@ -49,7 +49,6 @@ import {
   ServerMsgCode,
 } from "@liveblocks/core";
 import * as React from "react";
-import { useSyncExternalStoreWithSelector } from "react";
 
 import { config } from "./config";
 import { RoomContext, useIsInsideRoom, useRoomOrNull } from "./contexts";
@@ -106,6 +105,7 @@ import {
 } from "./types/errors";
 import type { UmbrellaStore, UmbrellaStoreState } from "./umbrella-store";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
+import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
 
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
