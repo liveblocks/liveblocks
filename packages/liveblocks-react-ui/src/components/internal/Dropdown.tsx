@@ -2,7 +2,7 @@
 
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import type { ReactNode } from "react";
-import React, { forwardRef } from "react";
+import { forwardRef } from "react";
 
 import { useLiveblocksUIConfig } from "../../config";
 import {

@@ -5,7 +5,7 @@ import {
 } from "@liveblocks/react-ui";
 import { type Editor, useEditorState } from "@tiptap/react";
 import type { ComponentPropsWithoutRef, ComponentType } from "react";
-import React, {
+import {
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -142,7 +142,6 @@ export function AnchoredThreads({
     // disable exhaustive deps because we don't want an infinite loop
     // eslint-disable-next-line react-hooks/exhaustive-deps 
   }, [pluginState, threads]);
-
 
   useLayoutEffect(handlePositionThreads, [handlePositionThreads]);
 

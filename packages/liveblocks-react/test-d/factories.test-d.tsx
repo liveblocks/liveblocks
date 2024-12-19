@@ -1,6 +1,3 @@
-import React from "react";
-React; // To silence tsd warning
-
 import type { Json, Room, User } from "@liveblocks/client";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import { createClient } from "@liveblocks/client";

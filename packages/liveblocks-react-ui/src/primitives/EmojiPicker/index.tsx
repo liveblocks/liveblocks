@@ -2,13 +2,15 @@
 
 import { Slot } from "@radix-ui/react-slot";
 import type { ChangeEvent, KeyboardEvent, SyntheticEvent } from "react";
-import React, {
+import {
   forwardRef,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
+  useTransition,
 } from "react";
 import type {
   CalculateViewLocationParams,
@@ -24,8 +26,6 @@ import {
   cancelIdleCallback,
   requestIdleCallback,
 } from "../../utils/request-idle-callback";
-import { useLayoutEffect } from "../../utils/use-layout-effect";
-import { useTransition } from "../../utils/use-transition";
 import { visuallyHidden } from "../../utils/visually-hidden";
 import { Emoji as EmojiPrimitive } from "../internal/Emoji";
 import { EmojiPickerContext, useEmojiPicker } from "./contexts";

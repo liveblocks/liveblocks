@@ -1,6 +1,3 @@
-import * as React from "react";
-React; // To silence tsd warning
-
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/core";
 import * as classic from "@liveblocks/react";
 import * as suspense from "@liveblocks/react/suspense";

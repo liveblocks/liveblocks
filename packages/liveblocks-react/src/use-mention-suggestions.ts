@@ -1,5 +1,5 @@
 import { stringify } from "@liveblocks/core";
-import React from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   useMentionSuggestionsCache,
@@ -15,14 +15,13 @@ const MENTION_SUGGESTIONS_DEBOUNCE = 500;
  * and race conditions as there can only be one search at a time.
  */
 export function useMentionSuggestions(roomId: string, search?: string) {
-  const [mentionSuggestions, setMentionSuggestions] =
-    React.useState<string[]>();
-  const lastInvokedAt = React.useRef<number>();
+  const [mentionSuggestions, setMentionSuggestions] = useState<string[]>();
+  const lastInvokedAt = useRef<number>();
 
   const resolveMentionSuggestions = useResolveMentionSuggestions();
   const mentionSuggestionsCache = useMentionSuggestionsCache();
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (search === undefined || !resolveMentionSuggestions) {
       return;
     }

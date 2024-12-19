@@ -9,7 +9,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { setupServer } from "msw/node";
-import React, { Suspense } from "react";
+import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
 import MockWebSocket from "./_MockWebSocket";

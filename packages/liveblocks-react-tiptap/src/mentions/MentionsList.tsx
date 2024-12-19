@@ -1,17 +1,27 @@
-import { autoUpdate, flip, hide, limitShift, offset, shift, size, useFloating } from "@floating-ui/react-dom";
+import {
+  autoUpdate,
+  flip,
+  hide,
+  limitShift,
+  offset,
+  shift,
+  size,
+  useFloating,
+} from "@floating-ui/react-dom";
 import { createInboxNotificationId } from "@liveblocks/core";
 import { useRoom, useUser } from "@liveblocks/react";
 import { useMentionSuggestions } from "@liveblocks/react/_private";
 import { useOverrides } from "@liveblocks/react-ui";
 import type { HTMLAttributes, MouseEvent } from "react";
-import React, {
-  forwardRef, useEffect, useImperativeHandle,
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
   useLayoutEffect,
   useState,
-} from "react"
+} from "react";
 
 import { Avatar } from "./Avatar";
-
 
 export interface UserProps
   extends Omit<HTMLAttributes<HTMLSpanElement>, "children"> {

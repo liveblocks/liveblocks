@@ -8,7 +8,7 @@ import type {
   MouseEventHandler,
   PointerEvent,
 } from "react";
-import React, { memo, useCallback, useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 
 import { CrossIcon } from "../../icons/Cross";
 import { SpinnerIcon } from "../../icons/Spinner";

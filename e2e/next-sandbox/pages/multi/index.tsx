@@ -1,6 +1,6 @@
 import { LiveList } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
-import React from "react";
+import { useState } from "react";
 
 import { getRoomFromUrl, Row, styles, useRenderCount } from "../../utils";
 import Button from "../../utils/Button";
@@ -31,7 +31,7 @@ const initialPresence = (): Presence => ({});
 const initialStorage = (): Storage => ({ items: new LiveList([]) });
 
 export default function Home() {
-  const [numColumns, setNumColumns] = React.useState(1);
+  const [numColumns, setNumColumns] = useState(1);
   return (
     <>
       <h3 style={{ display: "flex", gap: 12, alignItems: "center" }}>
@@ -89,8 +89,8 @@ type RoomProviderBlockProps = {
 };
 
 function RoomProviderBlock({ index }: RoomProviderBlockProps) {
-  const [roomId, setRoomId] = React.useState(getRoomFromUrl());
-  const [mounted, setMounted] = React.useState(false);
+  const [roomId, setRoomId] = useState(getRoomFromUrl());
+  const [mounted, setMounted] = useState(false);
   return (
     <div>
       <input
@@ -147,7 +147,7 @@ type PickerProps = {
 };
 
 function Picker({ index }: PickerProps) {
-  const [nest, setNest] = React.useState(false);
+  const [nest, setNest] = useState(false);
   return nest ? (
     <RoomProviderBlock index={`${index}_1`} />
   ) : (

@@ -22,13 +22,7 @@ import {
 } from "@liveblocks/react-ui/_private";
 import type { LexicalEditor } from "lexical";
 import type { ComponentPropsWithoutRef } from "react";
-import React, {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-} from "react";
+import { forwardRef, useCallback, useEffect, useMemo, useRef } from "react";
 import type { Transaction, YEvent } from "yjs";
 import { applyUpdate, Doc } from "yjs";
 

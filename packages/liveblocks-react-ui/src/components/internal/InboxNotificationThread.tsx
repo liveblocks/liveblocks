@@ -6,7 +6,6 @@ import type {
 } from "@liveblocks/core";
 import { getMentionedIdsFromCommentBody } from "@liveblocks/core";
 import type { ComponentProps } from "react";
-import React from "react";
 
 import {
   type CommentOverrides,

@@ -9,7 +9,6 @@ import type {
 } from "lexical";
 import { $applyNodeReplacement, DecoratorNode } from "lexical";
 import type { JSX } from "react";
-import * as React from "react";
 
 import { Mention } from "./mention-component";
 import { User } from "./user";

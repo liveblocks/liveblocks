@@ -27,4 +27,5 @@ export {
 } from "./room";
 export { useMentionSuggestions } from "./use-mention-suggestions";
 export { useSignal } from "./use-signal";
+export { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
 export { useSyncSource } from "./use-sync-source";

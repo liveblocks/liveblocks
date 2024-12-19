@@ -23,8 +23,13 @@ import {
   $isTextNode,
 } from "lexical";
 import type { PropsWithChildren } from "react";
-import * as React from "react";
-import { createContext, useCallback, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
 import $getThreadMarkIds from "./get-thread-mark-ids";
 import {
@@ -307,7 +312,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
  * @returns true if the associated annotation for the thread is selected, false otherwise.
  */
 export function useIsThreadActive(threadId: string): boolean {
-  const isActive = React.useContext(IsActiveThreadContext);
+  const isActive = useContext(IsActiveThreadContext);
   if (isActive === null) {
     throw new Error(
       "useIsThreadActive must be used within LiveblocksPlugin. For more information: https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#useIsThreadActive"

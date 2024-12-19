@@ -2,10 +2,10 @@ import "./styles.css";
 import "@liveblocks/react-ui/styles.css";
 
 import type { AppProps } from "next/app";
-import React from "react";
+import { StrictMode, useEffect } from "react";
 
 function MyApp({ Component, pageProps }: AppProps) {
-  React.useEffect(() => {
+  useEffect(() => {
     const body = document.body;
     body.style.padding = "10px 20px";
 
@@ -14,12 +14,12 @@ function MyApp({ Component, pageProps }: AppProps) {
   }, []);
 
   return (
-    <React.StrictMode>
+    <StrictMode>
       <div style={{ float: "right", fontSize: 10, color: "gray" }}>
         Server: {process.env.NEXT_PUBLIC_LIVEBLOCKS_BASE_URL}
       </div>
       <Component {...pageProps} />
-    </React.StrictMode>
+    </StrictMode>
   );
 }
 export default MyApp;

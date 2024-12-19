@@ -1,6 +1,6 @@
 import type { Node } from "@tiptap/pm/model";
 import { NodeViewWrapper } from "@tiptap/react";
-import React, { forwardRef } from "react";
+import { forwardRef } from "react";
 
 import { classNames } from "../classnames";
 import { User } from "./MentionsList";

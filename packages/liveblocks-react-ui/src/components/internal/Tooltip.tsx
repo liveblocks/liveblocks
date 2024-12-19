@@ -2,7 +2,7 @@
 
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import type { ComponentProps, ReactNode } from "react";
-import React, { forwardRef, useMemo } from "react";
+import { forwardRef, useMemo } from "react";
 
 import { useLiveblocksUIConfig } from "../../config";
 import {

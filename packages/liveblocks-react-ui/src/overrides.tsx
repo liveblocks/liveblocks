@@ -3,7 +3,6 @@
 import { assertNever } from "@liveblocks/core";
 import type { PropsWithChildren, ReactNode } from "react";
 import { createContext, useContext, useMemo } from "react";
-import * as React from "react";
 
 import { Emoji } from "./components/internal/Emoji";
 import type { ComposerBodyMark, Direction } from "./types";

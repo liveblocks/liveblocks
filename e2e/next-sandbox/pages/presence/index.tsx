@@ -1,6 +1,6 @@
 import type { Json } from "@liveblocks/react";
 import { createRoomContext } from "@liveblocks/react";
-import React from "react";
+import { useState } from "react";
 
 import { getRoomFromUrl, Row, styles, useRenderCount } from "../../utils";
 import Button from "../../utils/Button";
@@ -28,7 +28,7 @@ const {
 >(client);
 
 export default function Home() {
-  const [isVisible, setIsVisible] = React.useState(true);
+  const [isVisible, setIsVisible] = useState(true);
 
   const roomId = getRoomFromUrl();
   return (
@@ -127,7 +127,7 @@ function PresenceSandbox() {
 
 function EventSandbox() {
   const broadcast = useBroadcastEvent();
-  const [received, setReceived] = React.useState<Json[]>([]);
+  const [received, setReceived] = useState<Json[]>([]);
 
   useEventListener(({ event }) => {
     setReceived((x) => [...x, event]);

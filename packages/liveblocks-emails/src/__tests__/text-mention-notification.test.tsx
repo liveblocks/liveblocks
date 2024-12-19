@@ -1,6 +1,5 @@
 import { Liveblocks } from "@liveblocks/node";
 import { http, HttpResponse } from "msw";
-import React from "react";
 
 import type {
   ConvertTextEditorNodesAsHtmlStyles,

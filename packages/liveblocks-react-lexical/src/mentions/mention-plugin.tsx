@@ -30,12 +30,7 @@ import {
   KEY_BACKSPACE_COMMAND,
 } from "lexical";
 import type { ReactNode } from "react";
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useState,
-} from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { Avatar } from "./avatar";

@@ -4,7 +4,8 @@ import {
   RoomProvider,
 } from "@liveblocks/react";
 import { Composer } from "@liveblocks/react-ui";
-import * as React from "react";
+import type { ComponentProps } from "react";
+import { useState } from "react";
 
 import { getRoomFromUrl } from "../../utils";
 import Button from "../../utils/Button";
@@ -25,7 +26,7 @@ function getTestVariantFromUrl(): TestVariant {
   return (variant as TestVariant) ?? "default";
 }
 
-function getComposerPropsFromUrl(): React.ComponentProps<typeof Composer> {
+function getComposerPropsFromUrl(): ComponentProps<typeof Composer> {
   const variant = getTestVariantFromUrl();
 
   switch (variant) {
@@ -86,8 +87,8 @@ export default function Home() {
 
 function Sandbox() {
   const props = getComposerPropsFromUrl();
-  const [key, setKey] = React.useState(0);
-  const [output, setOutput] = React.useState<string>();
+  const [key, setKey] = useState(0);
+  const [output, setOutput] = useState<string>();
 
   return (
     <>

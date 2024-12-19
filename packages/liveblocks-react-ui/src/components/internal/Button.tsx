@@ -1,7 +1,7 @@
 "use client";
 
 import type { ComponentProps } from "react";
-import React, { forwardRef } from "react";
+import { forwardRef } from "react";
 
 import { classNames } from "../../utils/class-names";
 

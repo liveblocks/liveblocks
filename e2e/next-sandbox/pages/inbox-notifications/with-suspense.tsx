@@ -10,7 +10,8 @@ import {
   InboxNotificationList,
   Thread,
 } from "@liveblocks/react-ui";
-import * as React from "react";
+import type { PropsWithChildren } from "react";
+import { useState } from "react";
 import type { FallbackProps } from "react-error-boundary";
 import { ErrorBoundary } from "react-error-boundary";
 
@@ -68,7 +69,7 @@ function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   );
 }
 
-function WithRoomProvider(props: React.PropsWithChildren) {
+function WithRoomProvider(props: PropsWithChildren) {
   const roomId = getRoomFromUrl();
   return (
     <RoomProvider id={roomId} initialPresence={{} as never}>
@@ -81,7 +82,7 @@ function WithRoomProvider(props: React.PropsWithChildren) {
   );
 }
 
-function WithLiveblocksProvider(props: React.PropsWithChildren) {
+function WithLiveblocksProvider(props: PropsWithChildren) {
   return (
     <LiveblocksProvider>
       <ErrorBoundary FallbackComponent={ErrorFallback}>
@@ -129,7 +130,7 @@ function useInboxNotificationsForThisPage() {
   // there could be a lot of existing inbox notifications, from different test
   // runs, or from the same user but from different rooms.
   const roomId = getRoomFromUrl();
-  const [pageLoadTimestamp] = React.useState(() => Date.now());
+  const [pageLoadTimestamp] = useState(() => Date.now());
 
   return inboxNotifications.filter(
     (ibn) =>

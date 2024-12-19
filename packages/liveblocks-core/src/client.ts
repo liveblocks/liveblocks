@@ -94,16 +94,6 @@ export type EnterOptions<P extends JsonObject = DP, S extends LsonObject = DS> =
      * the authentication endpoint or connect via WebSocket.
      */
     autoConnect?: boolean;
-
-    /**
-     * Only necessary when you’re using Liveblocks with React v17 or lower.
-     *
-     * If so, pass in a reference to `ReactDOM.unstable_batchedUpdates` here.
-     * This will allow Liveblocks to circumvent the so-called "zombie child
-     * problem". To learn more, see
-     * https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child
-     */
-    unstable_batchedUpdates?: (cb: () => void) => void;
   }
 
   // Initial presence is only mandatory if the custom type requires it to be
@@ -635,7 +625,6 @@ export function createClient<U extends BaseUserMeta = DU>(
           authenticate: makeAuthDelegateForRoom(roomId, authManager),
         },
         enableDebugLogging: clientOptions.enableDebugLogging,
-        unstable_batchedUpdates: options?.unstable_batchedUpdates,
         baseUrl,
         unstable_fallbackToHTTP: !!clientOptions.unstable_fallbackToHTTP,
         unstable_streamData: !!clientOptions.unstable_streamData,

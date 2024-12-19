@@ -1,4 +1,3 @@
-
 import {
   autoUpdate,
   flip,
@@ -15,7 +14,7 @@ import {
   type ThreadProps,
 } from "@liveblocks/react-ui";
 import { type Editor, useEditorState } from "@tiptap/react";
-import React, {
+import {
   type ComponentType,
   type HTMLAttributes,
   type KeyboardEvent,
@@ -58,7 +57,6 @@ export function FloatingThreads({
   editor,
   ...props
 }: FloatingThreadsProps) {
-
   const Thread = components?.Thread ?? DefaultThread;
 
   const { pluginState } = useEditorState({
@@ -78,7 +76,6 @@ export function FloatingThreads({
   }) ?? { pluginState: undefined };
 
   const [activeThread, setActiveThread] = useState<ThreadData | null>(null);
-
 
   useEffect(() => {
     if (!editor || !pluginState) {
@@ -192,7 +189,7 @@ function FloatingThreadPortal({
     editor.on("transaction", updateRef)
     return () => {
       editor.off("transaction", updateRef);
-    }
+    };
   }, [editor, updateRef]);
 
   useLayoutEffect(updateRef, [updateRef]);
@@ -247,4 +244,3 @@ function ThreadWrapper({
 
   return <Thread thread={thread} onKeyDown={handleKeyDown} {...threadProps} />;
 }
-

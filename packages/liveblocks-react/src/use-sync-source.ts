@@ -1,6 +1,6 @@
 import type { SyncSource } from "@liveblocks/core";
 import { kInternal } from "@liveblocks/core";
-import React from "react";
+import { useEffect, useState } from "react";
 
 import { useClient } from "./liveblocks";
 
@@ -10,9 +10,9 @@ import { useClient } from "./liveblocks";
 export function useSyncSource(): SyncSource | undefined {
   const client = useClient();
   const createSyncSource = client[kInternal].createSyncSource;
-  const [syncSource, setSyncSource] = React.useState<SyncSource | undefined>();
+  const [syncSource, setSyncSource] = useState<SyncSource | undefined>();
 
-  React.useEffect(() => {
+  useEffect(() => {
     // Create new sync source on mount
     const newSyncSource = createSyncSource();
     setSyncSource(newSyncSource);

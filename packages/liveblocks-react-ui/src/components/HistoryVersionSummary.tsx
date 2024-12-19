@@ -2,7 +2,7 @@
 
 import type { HistoryVersion } from "@liveblocks/core";
 import type { ComponentPropsWithoutRef } from "react";
-import React, { forwardRef } from "react";
+import { forwardRef } from "react";
 
 import { useOverrides } from "../overrides";
 import { Timestamp } from "../primitives";

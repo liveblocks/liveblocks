@@ -1,7 +1,7 @@
 "use client";
 
 import type { PropsWithChildren } from "react";
-import React, { createContext, useContext, useMemo } from "react";
+import { createContext, useContext, useMemo } from "react";
 
 import { type Components, ComponentsProvider } from "./components";
 import type { Overrides } from "./overrides";

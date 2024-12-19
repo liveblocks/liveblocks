@@ -1,4 +1,4 @@
-import React, { forwardRef } from "react";
+import { forwardRef } from "react";
 
 import type { EmojiProps as EmojiPrimitiveProps } from "../../primitives/internal/Emoji";
 import { Emoji as EmojiPrimitive } from "../../primitives/internal/Emoji";

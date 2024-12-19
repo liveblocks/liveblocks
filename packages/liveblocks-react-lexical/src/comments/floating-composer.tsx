@@ -25,7 +25,7 @@ import {
   createCommand,
 } from "lexical";
 import type { ComponentRef, FormEvent, KeyboardEvent, ReactNode } from "react";
-import React, {
+import {
   forwardRef,
   useCallback,
   useEffect,

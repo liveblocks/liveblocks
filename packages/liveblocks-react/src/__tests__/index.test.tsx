@@ -3,7 +3,6 @@ import { ClientMsgCode, ServerMsgCode, wait } from "@liveblocks/core";
 import { render } from "@testing-library/react";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
-import * as React from "react";
 
 import { createRoomContext } from "../room";
 import {

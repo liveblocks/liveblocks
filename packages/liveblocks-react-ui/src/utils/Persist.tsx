@@ -2,18 +2,18 @@
 
 import { nn } from "@liveblocks/core";
 import type { ReactNode, RefObject } from "react";
-import React, {
+import {
   Children,
   createContext,
   isValidElement,
   useCallback,
   useContext,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
 
 import { flushSync } from "./flush-sync";
-import { useLayoutEffect } from "./use-layout-effect";
 
 // Persist is an overly simplified version of Framer Motion's AnimatePresence,
 // mostly mimicking its usePresence API: https://github.com/framer/motion/blob/main/packages/framer-motion/src/components/AnimatePresence/use-presence.ts

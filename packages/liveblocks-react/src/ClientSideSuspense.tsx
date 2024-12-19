@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import * as React from "react";
+import { Suspense, useEffect, useState } from "react";
 
 type Props = {
   fallback: ReactNode;
@@ -24,21 +24,21 @@ type Props = {
  *
  */
 export function ClientSideSuspense(props: Props) {
-  const [mounted, setMounted] = React.useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     // Effects are never executed on the server side. The point of this is to
     // delay the flipping of this boolean until after hydration has happened.
     setMounted(true);
   }, []);
 
   return (
-    <React.Suspense fallback={props.fallback}>
+    <Suspense fallback={props.fallback}>
       {mounted
         ? typeof props.children === "function"
           ? props.children()
           : props.children
         : props.fallback}
-    </React.Suspense>
+    </Suspense>
   );
 }

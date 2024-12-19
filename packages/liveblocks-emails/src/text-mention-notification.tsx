@@ -9,7 +9,7 @@ import type {
   Liveblocks,
   TextMentionNotificationEvent,
 } from "@liveblocks/node";
-import type React from "react";
+import type { ReactNode } from "react";
 
 import type { LexicalMentionNodeWithContext } from "./lexical-editor";
 import {
@@ -234,7 +234,7 @@ export type MentionEmailAsReactData<U extends BaseUserMeta = DU> = Omit<
   "userId" | "textEditorNodes"
 > & {
   author: U;
-  reactContent: React.ReactNode;
+  reactContent: ReactNode;
 };
 
 export type MentionEmailAsHtmlData<U extends BaseUserMeta = DU> = Omit<

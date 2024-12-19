@@ -13,7 +13,7 @@ import type {
   ReactNode,
   SetStateAction,
 } from "react";
-import React, {
+import {
   createContext,
   forwardRef,
   useContext,
@@ -220,11 +220,8 @@ const Item = forwardRef<HTMLDivElement | null, ItemProps>(
   }
 );
 
-function useHighlightedIndex(): [
-  number,
-  React.Dispatch<React.SetStateAction<number>>,
-] {
-  const context = React.useContext(HighlightedIndexContext);
+function useHighlightedIndex(): [number, Dispatch<SetStateAction<number>>] {
+  const context = useContext(HighlightedIndexContext);
   if (context === null) {
     throw new Error(
       "useHighlightedIndex must be used within a HighlightedIndexProvider"

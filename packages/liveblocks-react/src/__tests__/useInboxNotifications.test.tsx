@@ -10,7 +10,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { setupServer } from "msw/node";
-import React, { Suspense } from "react";
+import { Suspense } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 
 import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";

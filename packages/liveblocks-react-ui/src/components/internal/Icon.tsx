@@ -1,5 +1,4 @@
 import type { ComponentProps } from "react";
-import React from "react";
 
 import { classNames } from "../../utils/class-names";
 

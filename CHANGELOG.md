@@ -1,5 +1,11 @@
 ## 2.15.0 (Not yet published)
 
+### `@liveblocks/react`
+
+- **Breaking**: Drop support for React 17 (and 16). If you’re unable to upgrade
+  React to 18 or higher, you can still continue to use Liveblocks 2.14.0, which
+  is the last version to support React <18.
+
 ### All packages
 
 - The published target for all Liveblocks packages is now ES2022 (up from

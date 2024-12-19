@@ -1,5 +1,6 @@
 import type { ISignal } from "@liveblocks/core";
-import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
+
+import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
 
 const identity = <T>(value: T): T => value;
 

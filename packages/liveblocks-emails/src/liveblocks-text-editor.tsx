@@ -13,7 +13,7 @@ import {
   type OptionalPromise,
   type ResolveUsersArgs,
 } from "@liveblocks/core";
-import React from "react";
+import type { ComponentType, ReactNode } from "react";
 
 import type {
   LexicalMentionNodeWithContext,
@@ -310,7 +310,7 @@ export type TextEditorContainerComponentProps = {
   /**
    * The nodes of the text editor
    */
-  children: React.ReactNode;
+  children: ReactNode;
 };
 
 export type TextEditorMentionComponentProps<U extends BaseUserMeta = DU> = {
@@ -338,17 +338,17 @@ export type ConvertTextEditorNodesAsReactComponents<
    *
    * The component used to act as a container to wrap text editor nodes,
    */
-  Container: React.ComponentType<TextEditorContainerComponentProps>;
+  Container: ComponentType<TextEditorContainerComponentProps>;
 
   /**
    * The component used to display mentions.
    */
-  Mention: React.ComponentType<TextEditorMentionComponentProps<U>>;
+  Mention: ComponentType<TextEditorMentionComponentProps<U>>;
 
   /**
    * The component used to display text nodes.
    */
-  Text: React.ComponentType<TextEditorTextComponentProps>;
+  Text: ComponentType<TextEditorTextComponentProps>;
 };
 
 const baseComponents: ConvertTextEditorNodesAsReactComponents<BaseUserMeta> = {
@@ -362,7 +362,7 @@ const baseComponents: ConvertTextEditorNodesAsReactComponents<BaseUserMeta> = {
   Text: ({ element }) => {
     // Note: construction following the schema 👇
     // <code><s><em><strong>{element.text}</strong></s></em></code>
-    let children: React.ReactNode = element.text;
+    let children: ReactNode = element.text;
 
     if (element.bold) {
       children = <strong>{children}</strong>;
@@ -407,7 +407,7 @@ export type ConvertTextEditorNodesAsReactOptions<U extends BaseUserMeta = DU> =
 export async function convertTextEditorNodesAsReact(
   nodes: LiveblocksTextEditorNode[],
   options?: ConvertTextEditorNodesAsReactOptions<BaseUserMeta>
-): Promise<React.ReactNode> {
+): Promise<ReactNode> {
   const Components = {
     ...baseComponents,
     ...options?.components,

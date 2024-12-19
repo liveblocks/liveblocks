@@ -24,7 +24,7 @@ import type {
   ReactNode,
   SyntheticEvent,
 } from "react";
-import React, { forwardRef, useCallback, useMemo, useState } from "react";
+import { forwardRef, useCallback, useMemo, useState } from "react";
 
 import type { GlobalComponents } from "../components";
 import { useComponents } from "../components";

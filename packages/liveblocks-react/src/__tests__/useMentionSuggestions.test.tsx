@@ -1,7 +1,6 @@
 import type { ResolveMentionSuggestionsArgs } from "@liveblocks/core";
 import { nanoid } from "@liveblocks/core";
 import { renderHook, waitFor } from "@testing-library/react";
-import React from "react";
 
 import { useMentionSuggestions } from "../use-mention-suggestions";
 import { act, createContextsForTest } from "./_utils";

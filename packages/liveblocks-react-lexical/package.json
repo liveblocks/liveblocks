@@ -47,7 +47,6 @@
     "@liveblocks/react": "2.14.0",
     "@liveblocks/react-ui": "2.14.0",
     "@liveblocks/yjs": "2.14.0",
-    "use-sync-external-store": "^1.2.2",
     "yjs": "^13.6.18"
   },
   "peerDependencies": {
@@ -55,8 +54,8 @@
     "@lexical/utils": "0.16.1",
     "@lexical/yjs": "0.16.1",
     "lexical": "0.16.1",
-    "react": "^16.14.0 || ^17 || ^18 || ^19 || ^19.0.0-rc",
-    "react-dom": "^16.14.0 || ^17 || ^18 || ^19 || ^19.0.0-rc"
+    "react": "^18 || ^19 || ^19.0.0-rc",
+    "react-dom": "^18 || ^19 || ^19.0.0-rc"
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
@@ -65,7 +64,6 @@
     "@rollup/plugin-replace": "^5.0.5",
     "@rollup/plugin-typescript": "^11.1.2",
     "@testing-library/jest-dom": "^5.16.5",
-    "@types/use-sync-external-store": "^0.0.6",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "msw": "^0.27.1",

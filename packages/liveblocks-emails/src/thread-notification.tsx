@@ -14,7 +14,7 @@ import {
   getMentionedIdsFromCommentBody,
 } from "@liveblocks/core";
 import type { Liveblocks, ThreadNotificationEvent } from "@liveblocks/node";
-import type React from "react";
+import type { ReactNode } from "react";
 
 import type {
   ConvertCommentBodyAsHtmlStyles,
@@ -223,7 +223,7 @@ export type CommentEmailAsReactData<U extends BaseUserMeta = DU> = Omit<
   "userId" | "rawBody"
 > & {
   author: U;
-  reactBody: React.ReactNode;
+  reactBody: ReactNode;
 };
 
 type ThreadNotificationEmailUnreadRepliesData<
