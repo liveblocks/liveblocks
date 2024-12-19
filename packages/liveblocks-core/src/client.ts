@@ -21,6 +21,10 @@ import type { CustomAuthenticationResult } from "./protocol/Authentication";
 import { TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type {
+  ChannelsNotificationSettings,
+  PartialChannelsNotificationSettings,
+} from "./protocol/ChannelsNotificationSettings";
+import type {
   BaseMetadata,
   ThreadData,
   ThreadDeleteInfo,
@@ -266,6 +270,31 @@ export type NotificationsApi<M extends BaseMetadata> = {
    * await client.deleteInboxNotification("in_xxx");
    */
   deleteInboxNotification(inboxNotificationId: string): Promise<void>;
+
+  /**
+   * Gets channels notifications settings for a user for a project.
+   *
+   * @example
+   * const channelsNotificationSettings = await client.getChannelsNotificationSettings();
+   */
+  getChannelsNotificationSettings(options?: {
+    signal?: AbortSignal;
+  }): Promise<ChannelsNotificationSettings>;
+
+  /**
+   * Update channels notifications for a user for a project.
+   *
+   * @example
+   * await client.updateChannelsNotificationSettings({
+   *  email: {
+   *    thread: true,
+   *    textMention: false,
+   *  }
+   * })
+   */
+  updateChannelsNotificationSettings(
+    settings: PartialChannelsNotificationSettings
+  ): Promise<ChannelsNotificationSettings>;
 };
 
 /**
@@ -839,6 +868,12 @@ export function createClient<U extends BaseUserMeta = DU>(
       markInboxNotificationAsRead: httpClient.markInboxNotificationAsRead,
       deleteAllInboxNotifications: httpClient.deleteAllInboxNotifications,
       deleteInboxNotification: httpClient.deleteInboxNotification,
+
+      // Public channel notification settings API
+      getChannelsNotificationSettings:
+        httpClient.getChannelsNotificationSettings,
+      updateChannelsNotificationSettings:
+        httpClient.updateChannelsNotificationSettings,
 
       // Advanced resolvers APIs
       resolvers: {

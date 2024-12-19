@@ -139,7 +139,9 @@ export type { Brand, DistributiveOmit } from "./lib/utils";
 export {
   b64decode,
   compactObject,
+  entries,
   isPlainObject,
+  keys,
   mapValues,
   memoizeOnSuccess,
   raise,
@@ -152,6 +154,14 @@ export { Permission } from "./protocol/AuthToken";
 export type { BaseActivitiesData } from "./protocol/BaseActivitiesData";
 export type { BaseRoomInfo } from "./protocol/BaseRoomInfo";
 export type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
+export type {
+  ChannelNotificationSetting,
+  ChannelsNotificationSettings,
+  NotificationChannel,
+  NotificationKind,
+  PartialChannelsNotificationSettings,
+} from "./protocol/ChannelsNotificationSettings";
+export { isChannelNotificationSettingEnabled } from "./protocol/ChannelsNotificationSettings";
 export type {
   BroadcastEventClientMsg,
   ClientMsg,
