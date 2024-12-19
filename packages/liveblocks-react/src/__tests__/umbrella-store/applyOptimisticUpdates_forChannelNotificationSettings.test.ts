@@ -2,10 +2,11 @@ import type {
   ChannelsNotificationSettings,
   PartialChannelsNotificationSettings,
 } from "@liveblocks/core";
+import { nanoid } from "@liveblocks/core";
 
-import { applyDeepOptimisticChannelsNotificationSettingsUpdate } from "../../umbrella-store";
+import { applyOptimisticUpdates_forChannelNotificationSettings } from "../../umbrella-store";
 
-describe("applyDeepOptimisticChannelsNotificationSettingsUpdate", () => {
+describe("applyOptimisticUpdates_forChannelNotificationSettings", () => {
   const defaultSettings: ChannelsNotificationSettings = {
     email: {
       thread: false,
@@ -30,9 +31,15 @@ describe("applyDeepOptimisticChannelsNotificationSettingsUpdate", () => {
   };
 
   it("should return the same object when no updates are provided", () => {
-    const result = applyDeepOptimisticChannelsNotificationSettingsUpdate(
+    const result = applyOptimisticUpdates_forChannelNotificationSettings(
       defaultSettings,
-      {}
+      [
+        {
+          type: "update-channels-notification-settings",
+          id: nanoid(),
+          settings: {},
+        },
+      ]
     );
     expect(result).toEqual(defaultSettings);
   });
@@ -42,9 +49,15 @@ describe("applyDeepOptimisticChannelsNotificationSettingsUpdate", () => {
       email: { thread: true },
     };
 
-    const result = applyDeepOptimisticChannelsNotificationSettingsUpdate(
+    const result = applyOptimisticUpdates_forChannelNotificationSettings(
       defaultSettings,
-      updates
+      [
+        {
+          type: "update-channels-notification-settings",
+          id: nanoid(),
+          settings: updates,
+        },
+      ]
     );
 
     expect(result.email.thread).toBe(true);
@@ -61,9 +74,15 @@ describe("applyDeepOptimisticChannelsNotificationSettingsUpdate", () => {
       },
     };
 
-    const result = applyDeepOptimisticChannelsNotificationSettingsUpdate(
+    const result = applyOptimisticUpdates_forChannelNotificationSettings(
       defaultSettings,
-      updates
+      [
+        {
+          type: "update-channels-notification-settings",
+          id: nanoid(),
+          settings: updates,
+        },
+      ]
     );
 
     expect(result.email.thread).toBe(true);
@@ -77,9 +96,15 @@ describe("applyDeepOptimisticChannelsNotificationSettingsUpdate", () => {
       slack: { textMention: false },
     };
 
-    const result = applyDeepOptimisticChannelsNotificationSettingsUpdate(
+    const result = applyOptimisticUpdates_forChannelNotificationSettings(
       defaultSettings,
-      updates
+      [
+        {
+          type: "update-channels-notification-settings",
+          id: nanoid(),
+          settings: updates,
+        },
+      ]
     );
 
     expect(result.email.thread).toBe(true);
@@ -97,9 +122,15 @@ describe("applyDeepOptimisticChannelsNotificationSettingsUpdate", () => {
       },
     };
 
-    const result = applyDeepOptimisticChannelsNotificationSettingsUpdate(
+    const result = applyOptimisticUpdates_forChannelNotificationSettings(
       defaultSettings,
-      updates
+      [
+        {
+          type: "update-channels-notification-settings",
+          id: nanoid(),
+          settings: updates,
+        },
+      ]
     );
 
     expect(result.email.thread).toBe(true);
@@ -112,9 +143,15 @@ describe("applyDeepOptimisticChannelsNotificationSettingsUpdate", () => {
       email: {},
     };
 
-    const result = applyDeepOptimisticChannelsNotificationSettingsUpdate(
+    const result = applyOptimisticUpdates_forChannelNotificationSettings(
       defaultSettings,
-      updates
+      [
+        {
+          type: "update-channels-notification-settings",
+          id: nanoid(),
+          settings: updates,
+        },
+      ]
     );
 
     expect(result).toEqual(defaultSettings);
@@ -125,9 +162,15 @@ describe("applyDeepOptimisticChannelsNotificationSettingsUpdate", () => {
       email: { thread: true },
     };
 
-    const result = applyDeepOptimisticChannelsNotificationSettingsUpdate(
+    const result = applyOptimisticUpdates_forChannelNotificationSettings(
       defaultSettings,
-      updates
+      [
+        {
+          type: "update-channels-notification-settings",
+          id: nanoid(),
+          settings: updates,
+        },
+      ]
     );
 
     expect(result.webPush).toEqual(defaultSettings.webPush);
@@ -144,9 +187,15 @@ describe("applyDeepOptimisticChannelsNotificationSettingsUpdate", () => {
       },
     };
 
-    const result = applyDeepOptimisticChannelsNotificationSettingsUpdate(
+    const result = applyOptimisticUpdates_forChannelNotificationSettings(
       defaultSettings,
-      updates
+      [
+        {
+          type: "update-channels-notification-settings",
+          id: nanoid(),
+          settings: updates,
+        },
+      ]
     );
 
     expect(result.email).toEqual({

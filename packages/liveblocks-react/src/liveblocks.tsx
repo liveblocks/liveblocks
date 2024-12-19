@@ -654,7 +654,7 @@ function useUpdateChannelsNotificationSettings_withClient(
       client.updateChannelsNotificationSettings(settings).then(
         (settings) => {
           // Replace the optimistic update by the real thing
-          store.updateChannelsNotificationSettings(
+          store.updateChannelsNotificationSettings_confirmOptimisticUpdate(
             settings,
             optimisticUpdateId
           );
@@ -706,7 +706,7 @@ function useChannelsNotificationSettings_withClient(
     [store]
   );
   const settings = useSyncExternalStoreWithSelector(
-    store.subscribe,
+    store.subscribe4,
     getter,
     getter,
     identity,
