@@ -30,8 +30,8 @@ import React, {
   useLayoutEffect,
   useState,
 } from "react";
+import { useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
 import { classNames } from "../classnames";
 import { compareNodes } from "./anchored-threads";

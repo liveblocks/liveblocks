@@ -1,6 +1,6 @@
 import { kInternal } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
-import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
+import { useSyncExternalStore } from "react";
 
 export function useCurrentUserId(): string | null {
   const client = useClient();

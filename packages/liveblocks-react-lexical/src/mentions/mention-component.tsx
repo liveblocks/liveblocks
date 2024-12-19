@@ -2,8 +2,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import type { NodeKey } from "lexical";
 import { $createNodeSelection, $getNodeByKey, $setSelection } from "lexical";
 import type { ReactNode } from "react";
-import React, { useCallback } from "react";
-import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
+import React, { useCallback, useSyncExternalStore } from "react";
 
 export function Mention({
   nodeKey,

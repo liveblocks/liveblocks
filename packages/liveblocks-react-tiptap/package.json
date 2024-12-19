@@ -50,7 +50,6 @@
     "@tiptap/core": "^2.7.2",
     "@tiptap/react": "^2.7.2",
     "@tiptap/suggestion": "^2.7.2",
-    "use-sync-external-store": "^1.2.2",
     "y-prosemirror": "^1.2.12",
     "yjs": "^13.6.18"
   },
@@ -70,7 +69,6 @@
     "@rollup/plugin-replace": "^5.0.5",
     "@rollup/plugin-typescript": "^11.1.2",
     "@testing-library/jest-dom": "^5.16.5",
-    "@types/use-sync-external-store": "^0.0.6",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "msw": "^0.27.1",

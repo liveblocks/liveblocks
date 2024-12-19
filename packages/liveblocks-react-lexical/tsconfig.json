@@ -5,7 +5,6 @@
   "compilerOptions": {
     "module": "es2020",
     "lib": ["dom", "es2021"],
-
     "skipLibCheck": true,
 
     // Allow importing JSON files

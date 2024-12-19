@@ -42,7 +42,6 @@ import {
   console,
   createCommentId,
   createThreadId,
-  deprecateIf,
   errorIf,
   HttpError,
   kInternal,
@@ -51,7 +50,6 @@ import {
   ServerMsgCode,
 } from "@liveblocks/core";
 import * as React from "react";
-import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import { config } from "./config";
 import { RoomContext, useIsInsideRoom, useRoomOrNull } from "./contexts";
@@ -108,36 +106,10 @@ import {
 } from "./types/errors";
 import type { UmbrellaStore, UmbrellaStoreState } from "./umbrella-store";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
+import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
 
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
-
-const missing_unstable_batchedUpdates = (
-  reactVersion: number,
-  roomId: string
-) =>
-  `We noticed you’re using React ${reactVersion}. Please pass unstable_batchedUpdates at the RoomProvider level until you’re ready to upgrade to React 18:
-
-    import { unstable_batchedUpdates } from "react-dom";  // or "react-native"
-
-    <RoomProvider id=${JSON.stringify(
-      roomId
-    )} ... unstable_batchedUpdates={unstable_batchedUpdates}>
-      ...
-    </RoomProvider>
-
-Why? Please see https://liveblocks.io/docs/platform/troubleshooting#stale-props-zombie-child for more information`;
-
-const superfluous_unstable_batchedUpdates =
-  "You don’t need to pass unstable_batchedUpdates to RoomProvider anymore, since you’re on React 18+ already.";
-
-function useSyncExternalStore<Snapshot>(
-  s: (onStoreChange: () => void) => () => void,
-  gs: () => Snapshot,
-  gss: undefined | null | (() => Snapshot)
-): Snapshot {
-  return useSyncExternalStoreWithSelector(s, gs, gss, identity);
-}
 
 const STABLE_EMPTY_LIST = Object.freeze([]);
 
@@ -645,14 +617,10 @@ function RoomProviderInner<
     }
 
     const majorReactVersion = parseInt(React.version) || 1;
-    const oldReactVersion = majorReactVersion < 18;
+    const requiredVersion = 18;
     errorIf(
-      oldReactVersion && props.unstable_batchedUpdates === undefined,
-      missing_unstable_batchedUpdates(majorReactVersion, roomId)
-    );
-    deprecateIf(
-      !oldReactVersion && props.unstable_batchedUpdates !== undefined,
-      superfluous_unstable_batchedUpdates
+      majorReactVersion < requiredVersion,
+      `React ${requiredVersion} or higher is required (you’re on ${React.version})`
     );
   }
 
@@ -661,7 +629,6 @@ function RoomProviderInner<
   const frozenProps = useInitial({
     initialPresence: props.initialPresence,
     initialStorage: props.initialStorage,
-    unstable_batchedUpdates: props.unstable_batchedUpdates,
     autoConnect: props.autoConnect ?? typeof window !== "undefined",
   }) as EnterOptions<P, S>;
 
@@ -771,7 +738,7 @@ function useStatus(): Status {
   const subscribe = room.events.status.subscribe;
   const getSnapshot = room.getStatus;
   const getServerSnapshot = room.getStatus;
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return React.useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
 /** @private - Internal API, do not rely on it. */
@@ -814,7 +781,7 @@ function useYjsProvider(): IYjsProvider | undefined {
     return room[kInternal].getYjsProvider();
   }, [room]);
 
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  return React.useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
 /** @private - Internal API, do not rely on it. */
@@ -887,7 +854,7 @@ function useStorageStatusImmediate(): StorageStatus {
   const subscribe = room.events.storageStatus.subscribe;
   const getSnapshot = room.getStorageStatus;
   const getServerSnapshot = room.getStorageStatus;
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return React.useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
 function useStorageStatusSmooth(): StorageStatus {
@@ -1058,7 +1025,7 @@ function useCanUndo(): boolean {
   const room = useRoom();
   const subscribe = room.events.history.subscribe;
   const canUndo = room.history.canUndo;
-  return useSyncExternalStore(subscribe, canUndo, canUndo);
+  return React.useSyncExternalStore(subscribe, canUndo, canUndo);
 }
 
 /**
@@ -1068,7 +1035,7 @@ function useCanRedo(): boolean {
   const room = useRoom();
   const subscribe = room.events.history.subscribe;
   const canRedo = room.history.canRedo;
-  return useSyncExternalStore(subscribe, canRedo, canRedo);
+  return React.useSyncExternalStore(subscribe, canRedo, canRedo);
 }
 
 function useSelf<P extends JsonObject, U extends BaseUserMeta>(): User<
@@ -1114,7 +1081,11 @@ function useMyPresence<P extends JsonObject>(): [
   const room = useRoom<P, never, never, never, never>();
   const subscribe = room.events.myPresence.subscribe;
   const getSnapshot = room.getPresence;
-  const presence = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  const presence = React.useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getSnapshot
+  );
   const setPresence = room.updatePresence;
   return [presence, setPresence];
 }
@@ -1246,7 +1217,7 @@ function useMutableStorageRoot<S extends LsonObject>(): LiveObject<S> | null {
   const subscribe = room.events.storageDidLoad.subscribeOnce;
   const getSnapshot = room.getStorageSnapshot;
   const getServerSnapshot = alwaysNull;
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return React.useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
 // NOTE: This API exists for backward compatible reasons
@@ -2607,7 +2578,7 @@ function useAttachmentUrlSuspense(attachmentId: string) {
     throw attachmentUrlState.error;
   }
 
-  const state = useSyncExternalStore(
+  const state = React.useSyncExternalStore(
     attachmentUrlsStore.subscribe,
     getAttachmentUrlState,
     getAttachmentUrlState
@@ -2630,7 +2601,7 @@ function useRoomPermissions(roomId: string) {
   const store = getRoomExtrasForClient(client).store;
 
   return (
-    useSyncExternalStore(
+    React.useSyncExternalStore(
       store.subscribe,
       React.useCallback(() => store._getPermissions(roomId), [store, roomId]),
       React.useCallback(() => store._getPermissions(roomId), [store, roomId])

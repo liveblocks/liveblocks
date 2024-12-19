@@ -13,6 +13,12 @@ browsers (mostly IE), then you may need to configure your bundler (Webpack,
 rollup, esbuild, etc) to also down-compile code from dependencies inside
 `node_modules` for you, if you aren't already.
 
+### `@liveblocks/react`
+
+- **Breaking**: Drop support for React 17. If you're still using React 17, you
+  can continue to use the latest version of `@liveblocks/react` that supports
+  React 17, which is `2.14.0`.
+
 ## 2.14.0
 
 ### `@liveblocks/emails`
