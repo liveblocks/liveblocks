@@ -2,7 +2,7 @@
 
 import { Slot } from "@radix-ui/react-slot";
 import type { ReactNode } from "react";
-import React, { forwardRef, useMemo } from "react";
+import { forwardRef, useMemo } from "react";
 
 import type { ComponentPropsWithSlot } from "../types";
 import { formatFileSize } from "../utils/format-file-size";

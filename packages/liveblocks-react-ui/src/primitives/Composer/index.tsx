@@ -27,7 +27,7 @@ import type {
   PointerEvent,
   SyntheticEvent,
 } from "react";
-import React, {
+import {
   forwardRef,
   useCallback,
   useEffect,

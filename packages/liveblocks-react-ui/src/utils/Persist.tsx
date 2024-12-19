@@ -2,7 +2,7 @@
 
 import { nn } from "@liveblocks/core";
 import type { ReactNode, RefObject } from "react";
-import React, {
+import {
   Children,
   createContext,
   isValidElement,

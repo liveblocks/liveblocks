@@ -27,7 +27,7 @@ import type {
   RefAttributes,
   SyntheticEvent,
 } from "react";
-import React, {
+import {
   createContext,
   forwardRef,
   useCallback,

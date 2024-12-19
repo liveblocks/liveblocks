@@ -23,12 +23,13 @@ import {
   shallow,
 } from "@liveblocks/core";
 import type { PropsWithChildren } from "react";
-import React, {
+import {
   createContext,
   useCallback,
   useContext,
   useEffect,
   useMemo,
+  useState,
   useSyncExternalStore,
 } from "react";
 
@@ -1218,10 +1219,10 @@ function useSyncStatusImmediate_withClient(client: OpaqueClient): SyncStatus {
 
 function useSyncStatusSmooth_withClient(client: OpaqueClient): SyncStatus {
   const getter = client.getSyncStatus;
-  const [status, setStatus] = React.useState(getter);
+  const [status, setStatus] = useState(getter);
   const oldStatus = useLatest(getter());
 
-  React.useEffect(() => {
+  useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>;
     const unsub = client.events.syncStatus.subscribe(() => {
       const newStatus = getter();

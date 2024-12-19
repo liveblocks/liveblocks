@@ -37,7 +37,7 @@ import type {
   ThreadData,
   ToImmutable,
 } from "@liveblocks/core";
-import type { PropsWithChildren } from "react";
+import type { Context, PropsWithChildren, ReactNode } from "react";
 
 import type { CommentsError } from "./errors";
 
@@ -193,7 +193,7 @@ export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
      * The id of the room you want to connect to
      */
     id: string;
-    children: React.ReactNode;
+    children: ReactNode;
 
     /**
      * Whether or not the room should connect to Liveblocks servers
@@ -375,7 +375,7 @@ type RoomContextBundleCommon<
    * it can be necessary if you're building an advanced app where you need to
    * set up a context bridge between two React renderers.
    */
-  RoomContext: React.Context<Room<P, S, U, E, M> | null>;
+  RoomContext: Context<Room<P, S, U, E, M> | null>;
 
   /**
    * Makes a Room available in the component hierarchy below.

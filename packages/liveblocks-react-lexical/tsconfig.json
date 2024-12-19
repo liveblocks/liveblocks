@@ -11,7 +11,7 @@
     "resolveJsonModule": true,
 
     // Transform JSX syntax from input *.tsx files into _jsx() calls in the outputted build
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
 
     // TODO: Try to get rid of these overrides
     "noUncheckedIndexedAccess": false // OVERWRITTEN to relax a bit

@@ -20,6 +20,7 @@ import type {
 } from "@liveblocks/node";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
+import type { ReactNode } from "react";
 import ReactDOMServer from "react-dom/server";
 
 import type { CommentDataWithBody } from "../comment-with-body";
@@ -380,7 +381,7 @@ export const makeUnreadRepliesDataset = (): {
   return { threadId, comment1, comment2, thread, inboxNotification, event };
 };
 
-export const renderToStaticMarkup = (reactNode: React.ReactNode): string =>
+export const renderToStaticMarkup = (reactNode: ReactNode): string =>
   ReactDOMServer.renderToStaticMarkup(reactNode);
 
 // Note: Rendering React comments bodies as a string (e.g static markup)

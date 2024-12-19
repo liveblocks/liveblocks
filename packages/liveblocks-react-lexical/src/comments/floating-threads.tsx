@@ -19,7 +19,7 @@ import {
   COMMAND_PRIORITY_HIGH,
   KEY_ESCAPE_COMMAND,
 } from "lexical";
-import React, {
+import {
   type ComponentType,
   type HTMLAttributes,
   type KeyboardEvent,

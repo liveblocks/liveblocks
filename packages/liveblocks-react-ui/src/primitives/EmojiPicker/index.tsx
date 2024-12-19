@@ -2,7 +2,7 @@
 
 import { Slot } from "@radix-ui/react-slot";
 import type { ChangeEvent, KeyboardEvent, SyntheticEvent } from "react";
-import React, {
+import {
   forwardRef,
   useCallback,
   useEffect,

@@ -49,7 +49,16 @@ import {
   makePoller,
   ServerMsgCode,
 } from "@liveblocks/core";
-import * as React from "react";
+import type { Context } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  version as reactVersion,
+} from "react";
 
 import { config } from "./config";
 import { RoomContext, useIsInsideRoom, useRoomOrNull } from "./contexts";
@@ -114,13 +123,13 @@ const identity: <T>(x: T) => T = (x) => x;
 const STABLE_EMPTY_LIST = Object.freeze([]);
 
 // Don't try to inline this. This function is intended to be a stable
-// reference, to avoid a React.useCallback() wrapper.
+// reference, to avoid a useCallback() wrapper.
 function alwaysEmptyList() {
   return STABLE_EMPTY_LIST;
 }
 
 // Don't try to inline this. This function is intended to be a stable
-// reference, to avoid a React.useCallback() wrapper.
+// reference, to avoid a useCallback() wrapper.
 function alwaysNull() {
   return null;
 }
@@ -383,7 +392,7 @@ function makeRoomContextBundle<
   const shared = createSharedContext<U>(client);
 
   const bundle: RoomContextBundle<P, S, U, E, M> = {
-    RoomContext: RoomContext as React.Context<TRoom | null>,
+    RoomContext: RoomContext as Context<TRoom | null>,
     RoomProvider: RoomProvider_withImplicitLiveblocksProvider,
 
     useRoom,
@@ -441,7 +450,7 @@ function makeRoomContextBundle<
     ...shared.classic,
 
     suspense: {
-      RoomContext: RoomContext as React.Context<TRoom | null>,
+      RoomContext: RoomContext as Context<TRoom | null>,
       RoomProvider: RoomProvider_withImplicitLiveblocksProvider,
 
       useRoom,
@@ -521,36 +530,35 @@ function RoomProvider<
   M extends BaseMetadata,
 >(props: RoomProviderProps<P, S>) {
   const client = useClient<U>();
-  const [cache] = React.useState(
+  const [cache] = useState(
     () => new Map<string, RoomLeavePair<P, S, U, E, M>>()
   );
 
   // Produce a version of client.enterRoom() that when called for the same
   // room ID multiple times, will not keep producing multiple leave
   // functions, but instead return the cached one.
-  const stableEnterRoom: typeof client.enterRoom<P, S, E, M> =
-    React.useCallback(
-      (
-        roomId: string,
-        options: EnterOptions<P, S>
-      ): RoomLeavePair<P, S, U, E, M> => {
-        const cached = cache.get(roomId);
-        if (cached) return cached;
+  const stableEnterRoom: typeof client.enterRoom<P, S, E, M> = useCallback(
+    (
+      roomId: string,
+      options: EnterOptions<P, S>
+    ): RoomLeavePair<P, S, U, E, M> => {
+      const cached = cache.get(roomId);
+      if (cached) return cached;
 
-        const rv = client.enterRoom<P, S, E, M>(roomId, options);
+      const rv = client.enterRoom<P, S, E, M>(roomId, options);
 
-        // Wrap the leave function to also delete the cached value
-        const origLeave = rv.leave;
-        rv.leave = () => {
-          origLeave();
-          cache.delete(roomId);
-        };
+      // Wrap the leave function to also delete the cached value
+      const origLeave = rv.leave;
+      rv.leave = () => {
+        origLeave();
+        cache.delete(roomId);
+      };
 
-        cache.set(roomId, rv);
-        return rv;
-      },
-      [client, cache]
-    );
+      cache.set(roomId, rv);
+      return rv;
+    },
+    [client, cache]
+  );
 
   //
   // RATIONALE:
@@ -616,11 +624,11 @@ function RoomProviderInner<
       throw new Error("RoomProvider id property should be a string.");
     }
 
-    const majorReactVersion = parseInt(React.version) || 1;
+    const majorReactVersion = parseInt(reactVersion) || 1;
     const requiredVersion = 18;
     errorIf(
       majorReactVersion < requiredVersion,
-      `React ${requiredVersion} or higher is required (you’re on ${React.version})`
+      `React ${requiredVersion} or higher is required (you’re on ${reactVersion})`
     );
   }
 
@@ -632,14 +640,14 @@ function RoomProviderInner<
     autoConnect: props.autoConnect ?? typeof window !== "undefined",
   }) as EnterOptions<P, S>;
 
-  const [{ room }, setRoomLeavePair] = React.useState(() =>
+  const [{ room }, setRoomLeavePair] = useState(() =>
     stableEnterRoom(roomId, {
       ...frozenProps,
       autoConnect: false, // Deliberately using false here on the first render, see below
     })
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     const { store } = getRoomExtrasForClient(client);
 
     async function handleCommentEvent(message: CommentsEventServerMsg) {
@@ -689,7 +697,7 @@ function RoomProviderInner<
     );
   }, [client, room]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const pair = stableEnterRoom(roomId, frozenProps);
 
     setRoomLeavePair(pair);
@@ -738,15 +746,15 @@ function useStatus(): Status {
   const subscribe = room.events.status.subscribe;
   const getSnapshot = room.getStatus;
   const getServerSnapshot = room.getStatus;
-  return React.useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
 /** @private - Internal API, do not rely on it. */
 function useReportTextEditor(editor: TextEditorType, rootKey: string): void {
-  const isReported = React.useRef<boolean>(false);
+  const isReported = useRef<boolean>(false);
   const room = useRoom();
 
-  React.useEffect(() => {
+  useEffect(() => {
     // We use a "locker" reference to avoid to spam / harass our backend
     // and to not add / remove subscribers in case when the text editor type
     // has been already reported.
@@ -770,24 +778,24 @@ function useReportTextEditor(editor: TextEditorType, rootKey: string): void {
 function useYjsProvider(): IYjsProvider | undefined {
   const room = useRoom();
 
-  const subscribe = React.useCallback(
+  const subscribe = useCallback(
     (onStoreChange: () => void): UnsubscribeCallback => {
       return room[kInternal].yjsProviderDidChange.subscribe(onStoreChange);
     },
     [room]
   );
 
-  const getSnapshot = React.useCallback((): IYjsProvider | undefined => {
+  const getSnapshot = useCallback((): IYjsProvider | undefined => {
     return room[kInternal].getYjsProvider();
   }, [room]);
 
-  return React.useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
 /** @private - Internal API, do not rely on it. */
 function useCreateTextMention(): (userId: string, mentionId: string) => void {
   const room = useRoom();
-  return React.useCallback(
+  return useCallback(
     (userId: string, mentionId: string): void => {
       room[kInternal]
         .createTextMention(userId, mentionId)
@@ -805,7 +813,7 @@ function useCreateTextMention(): (userId: string, mentionId: string) => void {
 /** @private - Internal API, do not rely on it. */
 function useDeleteTextMention(): (mentionId: string) => void {
   const room = useRoom();
-  return React.useCallback(
+  return useCallback(
     (mentionId: string): void => {
       room[kInternal].deleteTextMention(mentionId).catch((err): void => {
         console.error(`Cannot delete text mention '${mentionId}'`, err);
@@ -854,15 +862,15 @@ function useStorageStatusImmediate(): StorageStatus {
   const subscribe = room.events.storageStatus.subscribe;
   const getSnapshot = room.getStorageStatus;
   const getServerSnapshot = room.getStorageStatus;
-  return React.useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
 function useStorageStatusSmooth(): StorageStatus {
   const room = useRoom();
-  const [status, setStatus] = React.useState(room.getStorageStatus);
+  const [status, setStatus] = useState(room.getStorageStatus);
   const oldStatus = useLatest(room.getStorageStatus());
 
-  React.useEffect(() => {
+  useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>;
     const unsub = room.events.storageStatus.subscribe((newStatus) => {
       if (
@@ -905,7 +913,7 @@ function useBroadcastEvent<E extends Json>(): (
   options?: BroadcastOptions
 ) => void {
   const room = useRoom<never, never, never, E, never>();
-  return React.useCallback(
+  return useCallback(
     (
       event: E,
       options: BroadcastOptions = { shouldQueueEventIfNotReady: false }
@@ -921,7 +929,7 @@ function useOthersListener<P extends JsonObject, U extends BaseUserMeta>(
 ) {
   const room = useRoom<P, never, U, never, never>();
   const savedCallback = useLatest(callback);
-  React.useEffect(
+  useEffect(
     () => room.events.others.subscribe((event) => savedCallback.current(event)),
     [room, savedCallback]
   );
@@ -952,7 +960,7 @@ function useLostConnectionListener(
 ): void {
   const room = useRoom();
   const savedCallback = useLatest(callback);
-  React.useEffect(
+  useEffect(
     () =>
       room.events.lostConnection.subscribe((event) =>
         savedCallback.current(event)
@@ -973,7 +981,7 @@ function useLostConnectionListener(
 function useErrorListener(callback: (err: LiveblocksError) => void): void {
   const room = useRoom();
   const savedCallback = useLatest(callback);
-  React.useEffect(
+  useEffect(
     () => room.events.error.subscribe((e) => savedCallback.current(e)),
     [room, savedCallback]
   );
@@ -986,7 +994,7 @@ function useEventListener<
 >(callback: (data: RoomEventMessage<P, U, E>) => void): void {
   const room = useRoom<P, never, U, E, never>();
   const savedCallback = useLatest(callback);
-  React.useEffect(() => {
+  useEffect(() => {
     const listener = (eventData: RoomEventMessage<P, U, E>) => {
       savedCallback.current(eventData);
     };
@@ -1025,7 +1033,7 @@ function useCanUndo(): boolean {
   const room = useRoom();
   const subscribe = room.events.history.subscribe;
   const canUndo = room.history.canUndo;
-  return React.useSyncExternalStore(subscribe, canUndo, canUndo);
+  return useSyncExternalStore(subscribe, canUndo, canUndo);
 }
 
 /**
@@ -1035,7 +1043,7 @@ function useCanRedo(): boolean {
   const room = useRoom();
   const subscribe = room.events.history.subscribe;
   const canRedo = room.history.canRedo;
-  return React.useSyncExternalStore(subscribe, canRedo, canRedo);
+  return useSyncExternalStore(subscribe, canRedo, canRedo);
 }
 
 function useSelf<P extends JsonObject, U extends BaseUserMeta>(): User<
@@ -1058,7 +1066,7 @@ function useSelf<P extends JsonObject, U extends BaseUserMeta, T>(
   const getSnapshot: () => Snapshot = room.getSelf;
 
   const selector = maybeSelector ?? (identity as (me: User<P, U>) => T);
-  const wrappedSelector = React.useCallback(
+  const wrappedSelector = useCallback(
     (me: Snapshot): Selection => (me !== null ? selector(me) : null),
     [selector]
   );
@@ -1081,11 +1089,7 @@ function useMyPresence<P extends JsonObject>(): [
   const room = useRoom<P, never, never, never, never>();
   const subscribe = room.events.myPresence.subscribe;
   const getSnapshot = room.getPresence;
-  const presence = React.useSyncExternalStore(
-    subscribe,
-    getSnapshot,
-    getSnapshot
-  );
+  const presence = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   const setPresence = room.updatePresence;
   return [presence, setPresence];
 }
@@ -1126,13 +1130,13 @@ function useOthersMapped<P extends JsonObject, U extends BaseUserMeta, T>(
   itemSelector: (other: User<P, U>) => T,
   itemIsEqual?: (prev: T, curr: T) => boolean
 ): ReadonlyArray<readonly [connectionId: number, data: T]> {
-  const wrappedSelector = React.useCallback(
+  const wrappedSelector = useCallback(
     (others: readonly User<P, U>[]) =>
       others.map((other) => [other.connectionId, itemSelector(other)] as const),
     [itemSelector]
   );
 
-  const wrappedIsEqual = React.useCallback(
+  const wrappedIsEqual = useCallback(
     (
       a: ReadonlyArray<readonly [connectionId: number, data: T]>,
       b: ReadonlyArray<readonly [connectionId: number, data: T]>
@@ -1180,7 +1184,7 @@ function useOther<P extends JsonObject, U extends BaseUserMeta, T>(
   selector: (other: User<P, U>) => T,
   isEqual?: (prev: T, curr: T) => boolean
 ): T {
-  const wrappedSelector = React.useCallback(
+  const wrappedSelector = useCallback(
     (others: readonly User<P, U>[]) => {
       // TODO: Make this O(1) instead of O(n)?
       const other = others.find((other) => other.connectionId === connectionId);
@@ -1189,7 +1193,7 @@ function useOther<P extends JsonObject, U extends BaseUserMeta, T>(
     [connectionId, selector]
   );
 
-  const wrappedIsEqual = React.useCallback(
+  const wrappedIsEqual = useCallback(
     (prev: T | NotFound, curr: T | NotFound): boolean => {
       if (prev === NOT_FOUND || curr === NOT_FOUND) {
         return prev === curr;
@@ -1217,7 +1221,7 @@ function useMutableStorageRoot<S extends LsonObject>(): LiveObject<S> | null {
   const subscribe = room.events.storageDidLoad.subscribeOnce;
   const getSnapshot = room.getStorageSnapshot;
   const getServerSnapshot = alwaysNull;
-  return React.useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
 // NOTE: This API exists for backward compatible reasons
@@ -1235,13 +1239,13 @@ function useStorage<S extends LsonObject, T>(
   const room = useRoom<never, S, never, never, never>();
   const rootOrNull = useMutableStorageRoot<S>();
 
-  const wrappedSelector = React.useCallback(
+  const wrappedSelector = useCallback(
     (rootOrNull: Snapshot): Selection =>
       rootOrNull !== null ? selector(rootOrNull) : null,
     [selector]
   );
 
-  const subscribe = React.useCallback(
+  const subscribe = useCallback(
     (onStoreChange: () => void) =>
       rootOrNull !== null
         ? room.subscribe(rootOrNull, onStoreChange, { isDeep: true })
@@ -1249,7 +1253,7 @@ function useStorage<S extends LsonObject, T>(
     [room, rootOrNull]
   );
 
-  const getSnapshot = React.useCallback((): Snapshot => {
+  const getSnapshot = useCallback((): Snapshot => {
     if (rootOrNull === null) {
       return null;
     } else {
@@ -1279,7 +1283,7 @@ function useMutation<
   F extends (context: MutationContext<P, S, U>, ...args: any[]) => any,
 >(callback: F, deps: readonly unknown[]): OmitFirstArg<F> {
   const room = useRoom<P, S, U, E, M>();
-  return React.useMemo(
+  return useMemo(
     () => {
       return ((...args) =>
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -1313,7 +1317,7 @@ function useThreads<M extends BaseMetadata>(
 
   const poller = getOrCreateThreadsPollerForRoomId(room.id);
 
-  React.useEffect(
+  useEffect(
     () => {
       void store.waitUntilRoomThreadsLoaded(room.id, options.query);
     }
@@ -1327,13 +1331,13 @@ function useThreads<M extends BaseMetadata>(
     //    *next* render after that, a *new* fetch/promise will get created.
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     poller.inc();
     poller.pollNowIfStale();
     return () => poller.dec();
   }, [poller]);
 
-  const getter = React.useCallback(
+  const getter = useCallback(
     () => store.getRoomThreadsLoadingState(room.id, options.query),
     [store, room.id, options.query]
   );
@@ -1361,7 +1365,7 @@ function useCommentsErrorListener<M extends BaseMetadata>(
   const savedCallback = useLatest(callback);
   const { commentsErrorEventSource } = getRoomExtrasForClient<M>(client);
 
-  React.useEffect(() => {
+  useEffect(() => {
     return commentsErrorEventSource.subscribe(savedCallback.current);
   }, [savedCallback, commentsErrorEventSource]);
 }
@@ -1380,7 +1384,7 @@ function useCreateRoomThread<M extends BaseMetadata>(
 ): (options: CreateThreadOptions<M>) => ThreadData<M> {
   const client = useClient();
 
-  return React.useCallback(
+  return useCallback(
     (options: CreateThreadOptions<M>): ThreadData<M> => {
       const body = options.body;
       const metadata = options.metadata ?? ({} as M);
@@ -1462,7 +1466,7 @@ function useDeleteThread(): (threadId: string) => void {
 
 function useDeleteRoomThread(roomId: string): (threadId: string) => void {
   const client = useClient();
-  return React.useCallback(
+  return useCallback(
     (threadId: string): void => {
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
 
@@ -1503,7 +1507,7 @@ function useEditThreadMetadata<M extends BaseMetadata>() {
 
 function useEditRoomThreadMetadata<M extends BaseMetadata>(roomId: string) {
   const client = useClient();
-  return React.useCallback(
+  return useCallback(
     (options: EditThreadMetadataOptions<M>): void => {
       if (!options.metadata) {
         return;
@@ -1567,7 +1571,7 @@ function useCreateRoomComment(
   roomId: string
 ): (options: CreateCommentOptions) => CommentData {
   const client = useClient();
-  return React.useCallback(
+  return useCallback(
     ({ threadId, body, attachments }: CreateCommentOptions): CommentData => {
       const commentId = createCommentId();
       const createdAt = new Date();
@@ -1637,7 +1641,7 @@ function useEditRoomComment(
   roomId: string
 ): (options: EditCommentOptions) => void {
   const client = useClient();
-  return React.useCallback(
+  return useCallback(
     ({ threadId, commentId, body, attachments }: EditCommentOptions): void => {
       const editedAt = new Date();
 
@@ -1719,7 +1723,7 @@ function useDeleteComment() {
 function useDeleteRoomComment(roomId: string) {
   const client = useClient();
 
-  return React.useCallback(
+  return useCallback(
     ({ threadId, commentId }: DeleteCommentOptions): void => {
       const deletedAt = new Date();
 
@@ -1771,7 +1775,7 @@ function useAddReaction<M extends BaseMetadata>() {
  */
 function useAddRoomCommentReaction<M extends BaseMetadata>(roomId: string) {
   const client = useClient();
-  return React.useCallback(
+  return useCallback(
     ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
       const createdAt = new Date();
       const userId = getCurrentUserId(client);
@@ -1836,7 +1840,7 @@ function useRemoveReaction() {
  */
 function useRemoveRoomCommentReaction(roomId: string) {
   const client = useClient();
-  return React.useCallback(
+  return useCallback(
     ({ threadId, commentId, emoji }: CommentReactionOptions): void => {
       const userId = getCurrentUserId(client);
 
@@ -1899,7 +1903,7 @@ function useMarkThreadAsRead() {
  */
 function useMarkRoomThreadAsRead(roomId: string) {
   const client = useClient();
-  return React.useCallback(
+  return useCallback(
     (threadId: string) => {
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
       const inboxNotification = Object.values(
@@ -1967,7 +1971,7 @@ function useMarkThreadAsResolved() {
  */
 function useMarkRoomThreadAsResolved(roomId: string) {
   const client = useClient();
-  return React.useCallback(
+  return useCallback(
     (threadId: string) => {
       const updatedAt = new Date();
 
@@ -2022,7 +2026,7 @@ function useMarkThreadAsUnresolved() {
  */
 function useMarkRoomThreadAsUnresolved(roomId: string) {
   const client = useClient();
-  return React.useCallback(
+  return useCallback(
     (threadId: string) => {
       const updatedAt = new Date();
 
@@ -2071,7 +2075,7 @@ function useThreadSubscription(threadId: string): ThreadSubscription {
   const client = useClient();
   const { store } = getRoomExtrasForClient(client);
 
-  const selector = React.useCallback(
+  const selector = useCallback(
     (state: UmbrellaStoreState<BaseMetadata>): ThreadSubscription => {
       const notification = state.cleanedNotifications.find(
         (inboxNotification) =>
@@ -2119,7 +2123,7 @@ function useRoomNotificationSettings(): [
 
   const poller = getOrCreateNotificationsSettingsPollerForRoomId(room.id);
 
-  React.useEffect(
+  useEffect(
     () => {
       void store.waitUntilRoomNotificationSettingsLoaded(room.id);
     }
@@ -2133,7 +2137,7 @@ function useRoomNotificationSettings(): [
     //    *next* render after that, a *new* fetch/promise will get created.
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     poller.inc();
     poller.pollNowIfStale();
     return () => {
@@ -2141,7 +2145,7 @@ function useRoomNotificationSettings(): [
     };
   }, [poller]);
 
-  const getter = React.useCallback(
+  const getter = useCallback(
     () => store.getNotificationSettingsLoadingState(room.id),
     [store, room.id]
   );
@@ -2154,7 +2158,7 @@ function useRoomNotificationSettings(): [
     shallow2
   );
 
-  return React.useMemo(() => {
+  return useMemo(() => {
     return [settings, updateRoomNotificationSettings];
   }, [settings, updateRoomNotificationSettings]);
 }
@@ -2184,7 +2188,7 @@ function useRoomNotificationSettingsSuspense(): [
   assert(!settings.error, "Did not expect error");
   assert(!settings.isLoading, "Did not expect loading");
 
-  return React.useMemo(() => {
+  return useMemo(() => {
     return [settings, updateRoomNotificationSettings];
   }, [settings, updateRoomNotificationSettings]);
 }
@@ -2198,11 +2202,11 @@ function useRoomNotificationSettingsSuspense(): [
 function useHistoryVersionData(
   versionId: string
 ): HistoryVersionDataAsyncResult {
-  const [state, setState] = React.useState<HistoryVersionDataAsyncResult>({
+  const [state, setState] = useState<HistoryVersionDataAsyncResult>({
     isLoading: true,
   });
   const room = useRoom();
-  React.useEffect(() => {
+  useEffect(() => {
     setState({ isLoading: true });
     const load = async () => {
       try {
@@ -2245,18 +2249,18 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
 
   const poller = getOrCreateVersionsPollerForRoomId(room.id);
 
-  React.useEffect(() => {
+  useEffect(() => {
     poller.inc();
     poller.pollNowIfStale();
     return () => poller.dec();
   }, [poller]);
 
-  const getter = React.useCallback(
+  const getter = useCallback(
     () => store.getRoomVersionsLoadingState(room.id),
     [store, room.id]
   );
 
-  React.useEffect(
+  useEffect(
     () => {
       void store.waitUntilRoomVersionsLoaded(room.id);
     }
@@ -2311,7 +2315,7 @@ function useHistoryVersionsSuspense(): HistoryVersionsAsyncSuccess {
 function useUpdateRoomNotificationSettings() {
   const client = useClient();
   const room = useRoom();
-  return React.useCallback(
+  return useCallback(
     (settings: Partial<RoomNotificationSettings>) => {
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
       const optimisticUpdateId = store.addOptimisticUpdate({
@@ -2535,12 +2539,12 @@ function useRoomAttachmentUrl(
   const store =
     client[kInternal].httpClient.getOrCreateAttachmentUrlsStore(roomId);
 
-  const getAttachmentUrlState = React.useCallback(
+  const getAttachmentUrlState = useCallback(
     () => store.getState(attachmentId),
     [store, attachmentId]
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     // NOTE: .get() will trigger any actual fetches, whereas .getState() will not
     void store.get(attachmentId);
   }, [store, attachmentId]);
@@ -2564,7 +2568,7 @@ function useAttachmentUrlSuspense(attachmentId: string) {
   const room = useRoom();
   const { attachmentUrlsStore } = room[kInternal];
 
-  const getAttachmentUrlState = React.useCallback(
+  const getAttachmentUrlState = useCallback(
     () => attachmentUrlsStore.getState(attachmentId),
     [attachmentUrlsStore, attachmentId]
   );
@@ -2578,7 +2582,7 @@ function useAttachmentUrlSuspense(attachmentId: string) {
     throw attachmentUrlState.error;
   }
 
-  const state = React.useSyncExternalStore(
+  const state = useSyncExternalStore(
     attachmentUrlsStore.subscribe,
     getAttachmentUrlState,
     getAttachmentUrlState
@@ -2601,10 +2605,10 @@ function useRoomPermissions(roomId: string) {
   const store = getRoomExtrasForClient(client).store;
 
   return (
-    React.useSyncExternalStore(
+    useSyncExternalStore(
       store.subscribe,
-      React.useCallback(() => store._getPermissions(roomId), [store, roomId]),
-      React.useCallback(() => store._getPermissions(roomId), [store, roomId])
+      useCallback(() => store._getPermissions(roomId), [store, roomId]),
+      useCallback(() => store._getPermissions(roomId), [store, roomId])
     ) ?? new Set()
   );
 }
@@ -2796,7 +2800,7 @@ const _useEventListener: TypedBundle["useEventListener"] = useEventListener;
 
 /**
  * Returns the presence of the current user of the current room, and a function to update it.
- * It is different from the setState function returned by the useState hook from React.
+ * It is different from the setState function returned by the useState hook from
  * You don't need to pass the full presence object to update it.
  *
  * @example
