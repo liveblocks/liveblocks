@@ -236,6 +236,12 @@
   padding: var(--lb-tiptap-toolbar-spacing);
   background: var(--lb-background);
 
+  /* overflow-inline: auto; doesn't work as expected */
+  /* stylelint-disable-next-line plugin/use-logical-properties-and-values */
+  overflow-x: auto;
+
+  @include invisible-scrollbar;
+
   > * {
     flex: none;
   }
