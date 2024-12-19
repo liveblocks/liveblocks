@@ -1,6 +1,9 @@
+import type { NotificationChannel } from "@liveblocks/core";
 import * as base64 from "@stablelib/base64";
 import * as sha256 from "fast-sha256";
 import type { IncomingHttpHeaders } from "http";
+
+import { isString } from "./utils";
 
 export class WebhookHandler {
   #secretBuffer: Buffer;
@@ -160,12 +163,14 @@ export class WebhookHandler {
         if (
           notification.data.kind === "thread" ||
           notification.data.kind === "textMention" ||
-          notification.data.kind.startsWith("$")
+          isCustomKind(notification.data.kind)
         ) {
           return;
         } else {
+          // Using JSON.stringify because `notification.data.kind`
+          // is considered as `never` now because of the type guard.
           throw new Error(
-            `Unknown notification kind: ${notification.data.kind}`
+            `Unknown notification kind: ${JSON.stringify(notification.data.kind)}`
           );
         }
       }
@@ -206,6 +211,17 @@ type WebhookRequest = {
    * @example '{"type":"storageUpdated","data":{"roomId":"my-room-id","appId":"my-app-id","updatedAt":"2021-03-01T12:00:00.000Z"}}'
    */
   rawBody: string;
+};
+
+/**
+ * @internal
+ * When receiving an event we cannot define the `kind`
+ * as member of the augmentation
+ */
+type CustomKind = `$${string}`;
+
+const isCustomKind = (value: unknown): value is CustomKind => {
+  return isString(value) && value.startsWith("$");
 };
 
 type WebhookEvent =
@@ -472,7 +488,7 @@ type ThreadMarkedAsUnresolvedEvent = {
 type ThreadNotificationEvent = {
   type: "notification";
   data: {
-    channel: "email";
+    channel: NotificationChannel;
     kind: "thread";
     projectId: string;
     roomId: string;
@@ -490,7 +506,7 @@ type ThreadNotificationEvent = {
 type TextMentionNotificationEvent = {
   type: "notification";
   data: {
-    channel: "email";
+    channel: NotificationChannel;
     kind: "textMention";
     projectId: string;
     roomId: string;
@@ -505,12 +521,10 @@ type TextMentionNotificationEvent = {
   };
 };
 
-type CustomKind = `$${string}`;
-
 type CustomNotificationEvent = {
   type: "notification";
   data: {
-    channel: "email";
+    channel: NotificationChannel;
     kind: CustomKind;
     projectId: string;
     roomId: string | null;
@@ -585,4 +599,20 @@ export function isTextMentionNotificationEvent(
   event: WebhookEvent
 ): event is TextMentionNotificationEvent {
   return event.type === "notification" && event.data.kind === "textMention";
+}
+
+/**
+ * Type guard to check if a webhook event is a `CustomNotificationEvent`
+ *
+ * The check is made against the event type and event data kind.
+ * You should use this guard to safely check the webhook event you received
+ * when you're expecting a `CustomNotificationEvent`.
+ *
+ * @param event The webhook event received after calling `webhookHandler.verifyRequest()`.
+ * @returns A boolean type predicate.
+ */
+export function isCustomNotificationEvent(
+  event: WebhookEvent
+): event is CustomNotificationEvent {
+  return event.type === "notification" && isCustomKind(event.data.kind);
 }

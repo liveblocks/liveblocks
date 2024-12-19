@@ -39,9 +39,13 @@ describe("Umbrella Store", () => {
     expect(store.get1_notifications()).toEqual(empty1n);
     expect(store.get2()).toEqual({}); // settings by room ID
     expect(store.get3()).toEqual({}); // versions by room ID
+    expect(store.get4()).toEqual({}); // channels notification settings
 
     // Sync async-results getters
     expect(store.getInboxNotificationsLoadingState()).toEqual(loading);
+    expect(store.getChannelsNotificationSettingsLoadingState()).toEqual(
+      loading
+    );
     expect(store.getNotificationSettingsLoadingState("room-a")).toEqual(
       loading
     );
@@ -63,6 +67,10 @@ describe("Umbrella Store", () => {
     // TODO Add check here for strict-equality of the OK-state, which currently isn't strictly-equal and the selectors/isEqual functions are still "working around" that
     expect(store.getNotificationSettingsLoadingState("room-a")).toBe(
       store.getNotificationSettingsLoadingState("room-a")
+    );
+    // TODO Add check here for strict-equality of the OK-state, which currently isn't strictly-equal and the selectors/isEqual functions are still "working around" that
+    expect(store.getChannelsNotificationSettingsLoadingState()).toBe(
+      store.getChannelsNotificationSettingsLoadingState()
     );
     // TODO Add check here for strict-equality of the OK-state, which currently isn't strictly-equal and the selectors/isEqual functions are still "working around" that
     expect(store.getRoomVersionsLoadingState("room-a")).toBe(

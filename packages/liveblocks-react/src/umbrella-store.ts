@@ -2,6 +2,7 @@ import type {
   AsyncResult,
   BaseMetadata,
   BaseUserMeta,
+  ChannelsNotificationSettings,
   Client,
   CommentData,
   CommentReaction,
@@ -13,6 +14,7 @@ import type {
   InboxNotificationDeleteInfo,
   Observable,
   OpaqueClient,
+  PartialChannelsNotificationSettings,
   Patchable,
   Permission,
   Resolve,
@@ -28,7 +30,9 @@ import {
   compactObject,
   console,
   DerivedSignal,
+  entries,
   HttpError,
+  keys,
   kInternal,
   makeEventSource,
   mapValues,
@@ -42,6 +46,7 @@ import { autobind } from "./lib/autobind";
 import type { ReadonlyThreadDB } from "./ThreadDB";
 import { ThreadDB } from "./ThreadDB";
 import type {
+  ChannelsNotificationSettingsAsyncResult,
   InboxNotificationsAsyncResult,
   RoomNotificationSettingsAsyncResult,
   ThreadsAsyncResult,
@@ -63,7 +68,8 @@ type OptimisticUpdate<M extends BaseMetadata> =
   | MarkAllInboxNotificationsAsReadOptimisticUpdate
   | DeleteInboxNotificationOptimisticUpdate
   | DeleteAllInboxNotificationsOptimisticUpdate
-  | UpdateNotificationSettingsOptimisticUpdate;
+  | UpdateNotificationSettingsOptimisticUpdate
+  | UpdateChannelsNotificationSettingsOptimisticUpdate;
 
 type CreateThreadOptimisticUpdate<M extends BaseMetadata> = {
   type: "create-thread";
@@ -172,6 +178,12 @@ type UpdateNotificationSettingsOptimisticUpdate = {
   id: string;
   roomId: string;
   settings: Partial<RoomNotificationSettings>;
+};
+
+type UpdateChannelsNotificationSettingsOptimisticUpdate = {
+  type: "update-channels-notification-settings";
+  id: string;
+  settings: PartialChannelsNotificationSettings;
 };
 
 type PaginationState = {
@@ -575,6 +587,27 @@ export type CleanThreads<M extends BaseMetadata> = {
   threadsDB: ReadonlyThreadDB<M>;
 };
 
+/**
+ * Channels notifications settings
+ * e.g.
+ *  {
+ *    email: {
+ *      thread: true,
+ *      textMention: false,
+ *      $customKind: true | false,
+ *    }
+ *    slack: {
+ *      thread: true,
+ *      textMention: false,
+ *      $customKind: true | false,
+ *    }
+ *  }
+ * e.g. {} when before the first successful fetch.
+ */
+export type BaseChannelsNotificationSettings =
+  | ChannelsNotificationSettings
+  | Record<string, never>;
+
 export type CleanNotifications = {
   /**
    * All inbox notifications in a sorted array, optimistic updates applied.
@@ -607,7 +640,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
   //         |   `-> OptimisticUpdates --+--+--> Optimistic --+-+--> Notification Settings    (Part 2)
   //          \                          |        Updates       |
   //           `------- etc etc ---------+                      +--> History Versions         (Part 3)
-  //                       ^
+  //                       ^                                    |
+  //                       |                                    +--> Channels Notification Settings (Part 4)
+  //                       |
   //                       |
   //                       |                        ^                  ^
   //                    Signal                      |                  |
@@ -627,6 +662,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
   readonly baseVersionsByRoomId: Signal<VersionsByRoomId>;
   readonly permissionHintsByRoomId: Signal<PermissionHintsByRoomId>;
 
+  readonly baseChannelNotificationSettings: Signal<BaseChannelsNotificationSettings>;
+
   //
   // Output signals.
   // (Readonly, clean, consistent. With optimistic updates applied.)
@@ -643,6 +680,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     readonly notifications: DerivedSignal<CleanNotifications>;
     readonly settingsByRoomId: DerivedSignal<SettingsByRoomId>;
     readonly versionsByRoomId: DerivedSignal<VersionsByRoomId>;
+    readonly channelNotificationSettings: DerivedSignal<ChannelsNotificationSettings>;
   };
 
   // Notifications
@@ -663,6 +701,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   // Room notification settings
   #roomNotificationSettings: Map<QueryKey, SinglePageResource> = new Map();
+
+  // Channels Notification Settings
+  #channelsNotificationSettings: SinglePageResource;
 
   constructor(client: OpaqueClient) {
     this.#client = client[kInternal].as<M>();
@@ -693,6 +734,20 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this.invalidateEntireStore()
     );
 
+    const channelsNotificationSettingsFetcher = async (): Promise<void> => {
+      const result = await this.#client.getChannelsNotificationSettings();
+      this.#updateChannelsNotificationSettingsCache(result);
+    };
+
+    this.#channelsNotificationSettings = new SinglePageResource(
+      channelsNotificationSettingsFetcher
+    );
+    this.#channelsNotificationSettings.observable.subscribe(() =>
+      // Note that the store itself does not change, but it's only vehicle at
+      // the moment to trigger a re-render, so we'll do a no-op update here.
+      this.invalidateEntireStore()
+    );
+
     this.baseThreadsDB = new ThreadDB();
     this.optimisticUpdates = new Signal<readonly OptimisticUpdate<M>[]>([]);
 
@@ -703,6 +758,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // NOTE: Permission hints has no DerivedSignals depending on it, so we
     // should be able to extract it out of the UmbrellaStore.
     this.permissionHintsByRoomId = new Signal<PermissionHintsByRoomId>({});
+
+    this.baseChannelNotificationSettings =
+      new Signal<BaseChannelsNotificationSettings>({});
 
     const threadifications = DerivedSignal.from(
       this.baseThreadsDB.signal,
@@ -736,12 +794,23 @@ export class UmbrellaStore<M extends BaseMetadata> {
       (hv) => hv
     );
 
+    const channelNotificationSettings = DerivedSignal.from(
+      this.baseChannelNotificationSettings,
+      this.optimisticUpdates,
+      (baseChannelsNOtificationSettings, updates) =>
+        applyOptimisticUpdates_forChannelNotificationSettings(
+          baseChannelsNOtificationSettings,
+          updates
+        )
+    );
+
     this.outputs = {
       threadifications,
       threads,
       notifications,
       settingsByRoomId,
       versionsByRoomId,
+      channelNotificationSettings,
     };
 
     // Automatically update the global sync status as an effect whenever there
@@ -797,6 +866,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   public subscribe3(callback: () => void): () => void {
     return this.outputs.versionsByRoomId.subscribe(callback);
+  }
+
+  public get4(): ChannelsNotificationSettings {
+    return this.outputs.channelNotificationSettings.get();
+  }
+
+  public subscribe4(callback: () => void): () => void {
+    return this.outputs.channelNotificationSettings.subscribe(callback);
   }
 
   /**
@@ -971,6 +1048,17 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return {
         ...prev,
         [roomId]: newVersions,
+      };
+    });
+  }
+
+  #updateChannelsNotificationSettingsCache(
+    settings: ChannelsNotificationSettings
+  ): void {
+    this.baseChannelNotificationSettings.set((prevState) => {
+      return {
+        ...prevState,
+        ...settings,
       };
     });
   }
@@ -1694,6 +1782,55 @@ export class UmbrellaStore<M extends BaseMetadata> {
     const result = await room.getNotificationSettings({ signal });
     this.#setNotificationSettings(roomId, result);
   }
+
+  /**
+   * -------------------------------------------------------------------------
+   * Channels notification settings
+   * -------------------------------------------------------------------------
+   */
+  public waitUntilChannelsNotificationsSettingsLoaded() {
+    return this.#channelsNotificationSettings.waitUntilLoaded();
+  }
+
+  /**
+   * Get the loading state for Channels Notification Settings
+   */
+  public getChannelsNotificationSettingsLoadingState(): ChannelsNotificationSettingsAsyncResult {
+    const asyncResult = this.#channelsNotificationSettings.get();
+    if (asyncResult.isLoading || asyncResult.error) {
+      return asyncResult;
+    }
+
+    return {
+      isLoading: false,
+      settings: nn(this.get4()),
+    };
+  }
+
+  /**
+   * Refresh Channels Notification Settings from poller
+   */
+  public async refreshChannelsNotificationSettings(signal: AbortSignal) {
+    const result = await this.#client.getChannelsNotificationSettings({
+      signal,
+    });
+    this.#updateChannelsNotificationSettingsCache(result);
+  }
+
+  /**
+   * Updates channels notification settings with a new value, replacing the
+   * corresponding optimistic update.
+   */
+  public updateChannelsNotificationSettings_confirmOptimisticUpdate(
+    settings: ChannelsNotificationSettings,
+    optimisticUpdateId: string
+  ): void {
+    // Batch 1️⃣ + 2️⃣
+    batch(() => {
+      this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
+      this.#updateChannelsNotificationSettingsCache(settings); // 2️⃣
+    });
+  }
 }
 
 /**
@@ -1926,6 +2063,54 @@ function applyOptimisticUpdates_forSettings(
     }
   }
   return settingsByRoomId;
+}
+
+/**
+ *
+ * Applies optimistic update to channels notification settings
+ * in a stable way. It's a deep update, and remove potential `undefined` properties
+ * from the final output object because we update with a deep partial of `ChannelsNotificationSettings`.
+ *
+ * exported for unit tests only.
+ */
+export function applyOptimisticUpdates_forChannelNotificationSettings(
+  baseChannelsNotificationSettings: BaseChannelsNotificationSettings,
+  optimisticUpdates: readonly OptimisticUpdate<BaseMetadata>[]
+): ChannelsNotificationSettings {
+  const outcomingSettings = { ...baseChannelsNotificationSettings };
+
+  for (const optimisticUpdate of optimisticUpdates) {
+    switch (optimisticUpdate.type) {
+      case "update-channels-notification-settings": {
+        const incomingSettings = optimisticUpdate.settings;
+
+        for (const channelKey of keys(incomingSettings)) {
+          const key = channelKey;
+          const channelUpdates = incomingSettings[key];
+
+          if (channelUpdates && typeof channelUpdates === "object") {
+            const realChannelUpdates = Object.fromEntries(
+              entries(channelUpdates).filter(
+                ([_, value]) => value !== undefined
+              )
+            );
+
+            outcomingSettings[key] = {
+              ...outcomingSettings[key],
+              ...realChannelUpdates,
+            };
+          }
+        }
+        break;
+      }
+    }
+  }
+
+  /**
+   * Casting to `ChannelsNotificationSettings` because we have removed potential `undefined` properties
+   * And we return a stable object of type `ChannelsNotificationSettings` in the derived signal.
+   */
+  return outcomingSettings as ChannelsNotificationSettings;
 }
 
 export function applyThreadDeltaUpdates<M extends BaseMetadata>(
