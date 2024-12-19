@@ -106,6 +106,7 @@ export function useIsEditorReady(): boolean {
 }
 
 export type LiveblocksPluginProps = {
+  offlineSupport_experimental: boolean;
   children?: React.ReactNode;
 };
 
@@ -143,6 +144,7 @@ export type LiveblocksPluginProps = {
  * }
  */
 export const LiveblocksPlugin = ({
+  offlineSupport_experimental = false,
   children,
 }: LiveblocksPluginProps): JSX.Element => {
   const isResolveMentionSuggestionsDefined =
@@ -215,7 +217,9 @@ export const LiveblocksPlugin = ({
 
       if (doc === undefined) {
         doc = new Doc();
-        const provider = new LiveblocksYjsProvider(room, doc);
+        const provider = new LiveblocksYjsProvider(room, doc, {
+          offlineSupport_experimental,
+        });
         yjsDocMap.set(id, doc);
         providersMap.set(id, provider);
       }
@@ -225,7 +229,7 @@ export const LiveblocksPlugin = ({
         "Internal error. Should never happen"
       ) as Provider;
     },
-    [room]
+    [room, offlineSupport_experimental]
   );
 
   const root = useRootElement();
