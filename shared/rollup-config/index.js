@@ -230,7 +230,7 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
       treeshake: false,
       plugins: [
         esbuild({
-          target: "es2020",
+          target: "es2022",
           sourceMap: true,
         }),
         preserveDirectives(),
