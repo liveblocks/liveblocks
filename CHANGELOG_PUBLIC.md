@@ -15,7 +15,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 51 (2024-12-20)
 
-## 2.15.0
+## v2.15.0
 
 ### `@liveblocks/react`
 
@@ -53,6 +53,7 @@ rollup, esbuild, etc) to also down-compile code from dependencies inside
 
 ## Documentation
 
+- [Upgrade guide for 2.15](https://liveblocks.io/docs/platform/upgrading/2.15).
 - Added links to email templates in guides and API reference.
 
 ## Contributors
