@@ -14,7 +14,6 @@
   "dependencies": {
     "@floating-ui/react-dom": "^2.1.2",
     "@liveblocks/client": "^2.15.0",
-    "@liveblocks/core": "^2.15.0",
     "@liveblocks/emails": "^2.15.0",
     "@liveblocks/node": "^2.15.0",
     "@liveblocks/react": "^2.15.0",
