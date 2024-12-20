@@ -1,5 +1,4 @@
 import { createLiveblocksContext, createRoomContext } from "@liveblocks/react";
-import * as React from "react";
 
 import { getRoomFromUrl, getUserFromUrl, Row } from "../../utils";
 import Button from "../../utils/Button";
