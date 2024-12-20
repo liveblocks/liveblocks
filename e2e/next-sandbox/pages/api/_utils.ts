@@ -11,6 +11,7 @@ export const FAKE_USERS = [
   "Pierre L.",
   "Steven F.",
   "Vincent D.",
+  "Aurélien D. D.",
 ];
 
 type User = {

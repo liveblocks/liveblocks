@@ -19,6 +19,7 @@ import type {
   AsyncResult,
   AsyncSuccess,
   BaseMetadata,
+  ChannelsNotificationSettings,
   Client,
   CommentAttachment,
   CommentBody,
@@ -27,6 +28,7 @@ import type {
   HistoryVersion,
   InboxNotificationData,
   LiveblocksError,
+  PartialChannelsNotificationSettings,
   PartialUnless,
   Patchable,
   QueryMetadata,
@@ -176,6 +178,8 @@ export type InboxNotificationsAsyncResult = PagedAsyncResult<InboxNotificationDa
 
 export type UnreadInboxNotificationsCountAsyncSuccess = AsyncSuccess<number, "count">; // prettier-ignore
 export type UnreadInboxNotificationsCountAsyncResult = AsyncResult<number, "count">; // prettier-ignore
+
+export type ChannelsNotificationSettingsAsyncResult = AsyncResult<ChannelsNotificationSettings, "settings"> // prettier-ignore
 
 export type RoomNotificationSettingsAsyncSuccess = AsyncSuccess<RoomNotificationSettings, "settings">; // prettier-ignore
 export type RoomNotificationSettingsAsyncResult = AsyncResult<RoomNotificationSettings, "settings">; // prettier-ignore
@@ -1154,6 +1158,28 @@ type LiveblocksContextBundleCommon<M extends BaseMetadata> = {
   useInboxNotificationThread(inboxNotificationId: string): ThreadData<M>;
 
   /**
+   * Returns the channels notification settings for the current user.
+   *
+   * @example
+   * const [{ settings }, updateChannelsNotificationSettings] = useChannelsNotificationSettings()
+   */
+  useChannelsNotificationSettings(): [
+    ChannelsNotificationSettingsAsyncResult,
+    (settings: PartialChannelsNotificationSettings) => void,
+  ];
+
+  /**
+   * Returns a function that updates the user's channels notification
+   * settings for a project.
+   *
+   * @example
+   * const updateChannelsNotificationSettings = useUpdateChannelsNotificationSettings()
+   */
+  useUpdateChannelsNotificationSettings(): (
+    settings: PartialChannelsNotificationSettings
+  ) => void;
+
+  /**
    * Returns the current Liveblocks sync status, and triggers a re-render
    * whenever it changes. Can be used to render a "Saving..." indicator, or for
    * preventing that a browser tab can be closed until all changes have been
@@ -1216,6 +1242,17 @@ export type LiveblocksContextBundle<
              * const { count } = useUnreadInboxNotificationsCount();
              */
             useUnreadInboxNotificationsCount(): UnreadInboxNotificationsCountAsyncSuccess;
+
+            /**
+             * Returns the channels notification settings for the current user.
+             *
+             * @example
+             * const [{ settings }, updateChannelsNotificationSettings] = useChannelsNotificationSettings()
+             */
+            useChannelsNotificationSettings(): [
+              ChannelsNotificationSettingsAsyncResult,
+              (settings: PartialChannelsNotificationSettings) => void,
+            ];
 
             /**
              * @experimental
