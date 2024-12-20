@@ -39,7 +39,7 @@
     "@liveblocks/node": "2.14.0"
   },
   "peerDependencies": {
-    "react": "^16.14.0 || ^17 || ^18 || ^19 || ^19.0.0-rc"
+    "react": "^18 || ^19 || ^19.0.0-rc"
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",

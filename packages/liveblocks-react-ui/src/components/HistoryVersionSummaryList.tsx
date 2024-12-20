@@ -1,7 +1,7 @@
 "use client";
 
 import type { ComponentPropsWithoutRef } from "react";
-import React, { Children, forwardRef } from "react";
+import { Children, forwardRef } from "react";
 
 import { classNames } from "../utils/class-names";
 
