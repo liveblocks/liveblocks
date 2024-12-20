@@ -1573,7 +1573,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   // XXX_vincent We should really be going over all call sites, and replace this call
   // with a more specific invalidation!
-  private invalidateEntireStore() {
+  public invalidateEntireStore() {
     // XXX_vincent Of course this now looks stupid, but it's the exact equivalent of
     // what we're been doing all along
     batch(() => {
