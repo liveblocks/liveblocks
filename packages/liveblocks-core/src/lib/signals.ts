@@ -424,7 +424,7 @@ export class MutableSignal<T extends object> extends AbstractSignal<T> {
    * If the callback explicitly returns `false`, it's assumed that the state
    * was not changed.
    */
-  mutate(callback?: (state: T) => unknown): void {
+  mutate(callback?: (state: T) => void | boolean): void {
     batch(() => {
       const result = callback ? callback(this.#state) : true;
       if (result !== null && typeof result === "object" && "then" in result) {
