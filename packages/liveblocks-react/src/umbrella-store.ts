@@ -590,6 +590,27 @@ export type CleanNotifications = {
   notificationsById: Record<string, InboxNotificationData>;
 };
 
+function createStore_forRoomNotificationSettings() {
+  const signal = new Signal<SettingsByRoomId>({});
+
+  function update(roomId: string, settings: RoomNotificationSettings): void {
+    signal.set((state) => ({
+      ...state,
+      [roomId]: settings,
+    }));
+  }
+
+  return {
+    signal: signal.asReadonly(),
+
+    // Mutations
+    update,
+
+    // XXX Remove this eventually
+    invalidate: () => signal.set((store) => ({ ...store })),
+  };
+}
+
 function createStore_forHistoryVersions() {
   const signal = new Signal<VersionsByRoomId>({});
 
@@ -723,7 +744,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   //
   readonly baseThreadsDB: ThreadDB<M>; // Exposes its signal under `.signal` prop
   readonly baseNotificationsById: Signal<NotificationsById>;
-  readonly baseSettingsByRoomId: Signal<SettingsByRoomId>;
+  readonly roomNotificationSettings: ReturnType<typeof createStore_forRoomNotificationSettings>; // prettier-ignore
   readonly historyVersions: ReturnType<typeof createStore_forHistoryVersions>;
   readonly permissionHints: ReturnType<typeof createStore_forPermissionHints>;
   readonly optimisticUpdates: ReturnType<typeof createStore_forOptimistic<M>>;
@@ -795,9 +816,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     this.baseThreadsDB = new ThreadDB();
 
+    this.roomNotificationSettings = createStore_forRoomNotificationSettings();
     this.historyVersions = createStore_forHistoryVersions();
     this.baseNotificationsById = new Signal<NotificationsById>({});
-    this.baseSettingsByRoomId = new Signal<SettingsByRoomId>({});
 
     const threadifications = DerivedSignal.from(
       this.baseThreadsDB.signal,
@@ -817,7 +838,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }));
 
     const settingsByRoomId = DerivedSignal.from(
-      this.baseSettingsByRoomId,
+      this.roomNotificationSettings.signal,
       this.optimisticUpdates.signal,
       (settings, updates) =>
         applyOptimisticUpdates_forSettings(settings, updates)
@@ -1020,20 +1041,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
       versions: Object.values(this.get3()[roomId] ?? {}),
     };
   }
-
-  // Direct low-level cache mutations ------------------------------------------------- {{{
-
-  #setNotificationSettings(
-    roomId: string,
-    settings: RoomNotificationSettings
-  ): void {
-    this.baseSettingsByRoomId.set((state) => ({
-      ...state,
-      [roomId]: settings,
-    }));
-  }
-
-  // ---------------------------------------------------------------------------------- }}}
 
   /** @internal - Only call this method from unit tests. */
   public force_set_versions(
@@ -1370,7 +1377,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // Batch 1️⃣ + 2️⃣
     batch(() => {
       this.optimisticUpdates.remove(optimisticUpdateId); // 1️⃣
-      this.#setNotificationSettings(roomId, settings); // 2️⃣
+      this.roomNotificationSettings.update(roomId, settings); // 2️⃣
     });
   }
 
@@ -1531,7 +1538,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this.baseNotificationsById.set((store) => ({ ...store }));
       this.optimisticUpdates.invalidate();
       this.permissionHints.invalidate();
-      this.baseSettingsByRoomId.set((store) => ({ ...store }));
+      this.roomNotificationSettings.invalidate();
     });
   }
 
@@ -1648,7 +1655,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
         }
 
         const result = await room.getNotificationSettings();
-        this.#setNotificationSettings(roomId, result);
+        this.roomNotificationSettings.update(roomId, result);
       };
 
       resource = new SinglePageResource(notificationSettingsFetcher);
@@ -1675,7 +1682,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       `Room with id ${roomId} is not available on client`
     );
     const result = await room.getNotificationSettings({ signal });
-    this.#setNotificationSettings(roomId, result);
+    this.roomNotificationSettings.update(roomId, result);
   }
 }
 
