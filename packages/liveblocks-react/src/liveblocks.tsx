@@ -24,15 +24,15 @@ import {
   shallow,
 } from "@liveblocks/core";
 import type { PropsWithChildren } from "react";
-import React, {
+import {
   createContext,
   useCallback,
   useContext,
   useEffect,
   useMemo,
+  useState,
+  useSyncExternalStore,
 } from "react";
-import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
-import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import { config } from "./config";
 import { useIsInsideRoom } from "./contexts";
@@ -56,6 +56,7 @@ import type {
   UseUserThreadsOptions,
 } from "./types";
 import { UmbrellaStore } from "./umbrella-store";
+import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
 
 /**
  * Raw access to the React context where the LiveblocksProvider stores the
@@ -1392,10 +1393,10 @@ function useSyncStatusImmediate_withClient(client: OpaqueClient): SyncStatus {
 
 function useSyncStatusSmooth_withClient(client: OpaqueClient): SyncStatus {
   const getter = client.getSyncStatus;
-  const [status, setStatus] = React.useState(getter);
+  const [status, setStatus] = useState(getter);
   const oldStatus = useLatest(getter());
 
-  React.useEffect(() => {
+  useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>;
     const unsub = client.events.syncStatus.subscribe(() => {
       const newStatus = getter();

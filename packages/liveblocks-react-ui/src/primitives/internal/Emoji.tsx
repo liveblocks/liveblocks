@@ -1,5 +1,5 @@
 import { Slot } from "@radix-ui/react-slot";
-import React, { forwardRef } from "react";
+import { forwardRef } from "react";
 
 import { EMOJI_FONT_FAMILY } from "../../constants";
 import type { ComponentPropsWithSlot } from "../../types";

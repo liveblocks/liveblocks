@@ -1,5 +1,5 @@
 import type { BaseMetadata } from "@liveblocks/client";
-import * as React from "react";
+import { useEffect } from "react";
 
 import type { ThreadsAsyncResult } from "./types";
 
@@ -43,7 +43,7 @@ export function useScrollToCommentOnLoadEffect(
   shouldScrollOnLoad: boolean,
   state: ThreadsAsyncResult<BaseMetadata>
 ) {
-  React.useEffect(
+  useEffect(
     () => {
       handleScrollToCommentOnLoad(shouldScrollOnLoad, state);
     },

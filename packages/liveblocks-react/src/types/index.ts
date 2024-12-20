@@ -39,7 +39,7 @@ import type {
   ThreadData,
   ToImmutable,
 } from "@liveblocks/core";
-import type { PropsWithChildren } from "react";
+import type { Context, PropsWithChildren, ReactNode } from "react";
 
 import type { CommentsError } from "./errors";
 
@@ -197,7 +197,7 @@ export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
      * The id of the room you want to connect to
      */
     id: string;
-    children: React.ReactNode;
+    children: ReactNode;
 
     /**
      * Whether or not the room should connect to Liveblocks servers
@@ -208,22 +208,6 @@ export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
      * only on the client side.
      */
     autoConnect?: boolean;
-
-    /**
-     * If you're on React 17 or lower, pass in a reference to
-     * `ReactDOM.unstable_batchedUpdates` or
-     * `ReactNative.unstable_batchedUpdates` here.
-     *
-     * @example
-     * import { unstable_batchedUpdates } from "react-dom";
-     *
-     * <RoomProvider ... unstable_batchedUpdates={unstable_batchedUpdates} />
-     *
-     * This will prevent you from running into the so-called "stale props"
-     * and/or "zombie child" problem that React 17 and lower can suffer from.
-     * Not necessary when you're on React v18 or later.
-     */
-    unstable_batchedUpdates?: (cb: () => void) => void;
   }
 
   // Initial presence is only mandatory if the custom type requires it to be
@@ -395,7 +379,7 @@ type RoomContextBundleCommon<
    * it can be necessary if you're building an advanced app where you need to
    * set up a context bridge between two React renderers.
    */
-  RoomContext: React.Context<Room<P, S, U, E, M> | null>;
+  RoomContext: Context<Room<P, S, U, E, M> | null>;
 
   /**
    * Makes a Room available in the component hierarchy below.

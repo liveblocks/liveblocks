@@ -1,6 +1,3 @@
-import React from "react";
-React; // To silence tsd warning
-
 import type {
   ChannelsNotificationSettings,
   Json,

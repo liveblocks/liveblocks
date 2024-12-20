@@ -1,6 +1,3 @@
-import * as React from "react";
-React; // To silence tsd warning
-
 import {
   ChannelsNotificationSettings,
   LiveList,

@@ -1,0 +1,49 @@
+---
+meta:
+  title: "Upgrading to 2.15"
+  parentTitle: "Upgrading"
+  description: "Guide to upgrade to Liveblocks version 2.15"
+---
+
+This version of Liveblocks drops support for React versions below 18.
+
+## Does this affect you? [#does-this-affect-you]
+
+If you are **already on React 18 or above**, you do not have to do anything.
+Just enjoy the smaller bundle size and performance improvements!
+
+If **you are on React 16 or 17**, you should upgrade React before upgrading
+Liveblocks to 2.15. See the [instructions below](#how-to-upgrade).
+
+If **you cannot upgrade to React 18 yet** for whatever reason, you can still
+keep using Liveblocks 2.14 which is the last version to support React 17 and
+below.
+
+## How to upgrade? [#how-to-upgrade]
+
+To upgrade Liveblocks to 2.15, first upgrade React to 18 by following the
+[How to Upgrade to React 18](https://react.dev/blog/2022/03/08/react-18-upgrade-guide).
+
+Then, upgrade all Liveblocks packages by running:
+
+```bash
+npx create-liveblocks-app@latest --upgrade
+```
+
+You can now safely remove this line from your codebase:
+
+```diff
+-import { unstable_batchedUpdates } from "react-dom";
+ //                                      ^^^^^^^^^^^ ...or "react-native"!
+
+ <RoomProvider
+   id="my-room"
+   initialPresence={/* ... */}
+   initialStorage={/* ... */}
+-  unstable_batchedUpdates={unstable_batchedUpdates}
+ >
+   <App />
+ </RoomProvider>
+```
+
+That’s it!

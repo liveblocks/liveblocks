@@ -23,7 +23,7 @@ import type {
   RefObject,
   SyntheticEvent,
 } from "react";
-import React, {
+import {
   forwardRef,
   useCallback,
   useEffect,
