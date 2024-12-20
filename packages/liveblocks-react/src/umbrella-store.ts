@@ -695,7 +695,7 @@ function createStore_forNotifications() {
     clear,
     updateAssociatedNotification,
 
-    // XXX Remove this eventually
+    // XXX_vincent Remove this eventually
     force_set: (
       mutationCallback: (lut: NotificationsLUT) => void | undefined | boolean
     ) => signal.mutate(mutationCallback),
@@ -718,7 +718,7 @@ function createStore_forRoomNotificationSettings() {
     // Mutations
     update,
 
-    // XXX Remove this eventually
+    // XXX_vincent Remove this eventually
     invalidate: () => signal.mutate(),
   };
 }
@@ -743,7 +743,7 @@ function createStore_forHistoryVersions() {
     // Mutations
     update,
 
-    // XXX Remove these eventually
+    // XXX_vincent Remove these eventually
     force_set: (callback: (lut: VersionsLUT) => void | boolean) =>
       signal.mutate(callback),
     invalidate: () => signal.mutate(),
@@ -777,7 +777,7 @@ function createStore_forPermissionHints() {
     // Mutations
     update,
 
-    // XXX Remove this eventually
+    // XXX_vincent Remove this eventually
     invalidate: () => signal.set((store) => ({ ...store })),
   };
 }
@@ -816,7 +816,7 @@ function createStore_forOptimistic<M extends BaseMetadata>(
     add,
     remove,
 
-    // XXX Remove this eventually
+    // XXX_vincent Remove this eventually
     invalidate: () => signal.set((store) => [...store]),
   };
 }
@@ -851,7 +851,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // Input signals.
   // (Can be mutated directly.)
   //
-  // XXX Now that we have createStore_forX, we should probably also change
+  // XXX_vincent Now that we have createStore_forX, we should probably also change
   // `threads` to this pattern, ie create a createStore_forThreads helper as
   // well. It almost works like that already anyway!
   readonly threads: ThreadDB<M>; // Exposes its signal under `.signal` prop
@@ -869,7 +869,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // threads and notifications separately, but the threadifications signal will
   // be updated whenever either of them change.
   //
-  // XXX APIs like getRoomThreadsLoadingState should really also be modeled as output signals.
+  // XXX_vincent APIs like getRoomThreadsLoadingState should really also be modeled as output signals.
   //
   readonly outputs: {
     readonly threadifications: DerivedSignal<CleanThreadifications<M>>;
@@ -918,7 +918,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return nextCursor;
     };
 
-    // XXX Looks like this should also be a Signal!
+    // XXX_vincent Looks like this should also be a Signal!
     this.#notifications = new PaginatedResource(inboxFetcher);
     this.#notifications.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
@@ -1112,7 +1112,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   // NOTE: This will read the async result, but WILL NOT start loading at the moment!
-  // XXX This should really be a derived Signal!
+  // XXX_vincent This should really be a derived Signal!
   public getNotificationSettingsLoadingState(
     roomId: string
   ): RoomNotificationSettingsAsyncResult {
@@ -1402,7 +1402,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     deletedNotifications: InboxNotificationDeleteInfo[] = []
   ): void {
     batch(() => {
-      // XXX Make these signatures look the same
+      // XXX_vincent Make these signatures look the same
       this.threads.applyDelta({ newThreads: threads, deletedThreads });
       this.notifications.applyDelta(notifications, deletedNotifications);
     });
@@ -1490,7 +1490,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       paginatedResource = new PaginatedResource(threadsFetcher);
     }
 
-    // XXX Looks like this should also be a Signal!
+    // XXX_vincent Looks like this should also be a Signal!
     paginatedResource.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
@@ -1559,7 +1559,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       paginatedResource = new PaginatedResource(threadsFetcher);
     }
 
-    // XXX Looks like this should also be a Signal!
+    // XXX_vincent Looks like this should also be a Signal!
     paginatedResource.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
@@ -1571,10 +1571,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return paginatedResource.waitUntilLoaded();
   }
 
-  // XXX We should really be going over all call sites, and replace this call
+  // XXX_vincent We should really be going over all call sites, and replace this call
   // with a more specific invalidation!
   private invalidateEntireStore() {
-    // XXX Of course this now looks stupid, but it's the exact equivalent of
+    // XXX_vincent Of course this now looks stupid, but it's the exact equivalent of
     // what we're been doing all along
     batch(() => {
       this.historyVersions.invalidate();
@@ -1645,7 +1645,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       resource = new SinglePageResource(versionsFetcher);
     }
 
-    // XXX Looks like this should also be a Signal!
+    // XXX_vincent Looks like this should also be a Signal!
     resource.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
@@ -1704,7 +1704,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       resource = new SinglePageResource(notificationSettingsFetcher);
     }
 
-    // XXX Looks like this should also be a Signal!
+    // XXX_vincent Looks like this should also be a Signal!
     resource.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.

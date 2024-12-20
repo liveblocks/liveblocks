@@ -413,7 +413,7 @@ function useInboxNotifications_withClient<T>(
     };
   }, [poller]);
 
-  // XXX There is a disconnect between this getter and subscriber! It's unclear
+  // XXX_vincent There is a disconnect between this getter and subscriber! It's unclear
   // why the getInboxNotificationsLoadingState getter should be paired with
   // subscribe1 and not subscribe2 from the outside! (The reason is that
   // getInboxNotificationsLoadingState internally uses `get1` not `get2`.) This
@@ -946,7 +946,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
     };
   }, [poller]);
 
-  // XXX There is a disconnect between this getter and subscriber! It's unclear
+  // XXX_vincent There is a disconnect between this getter and subscriber! It's unclear
   // why the getUserThreadsLoadingState getter should be paired with subscribe1
   // and not subscribe2 from the outside! (The reason is that
   // getUserThreadsLoadingState  internally uses `get1` not `get2`.) This is
