@@ -590,6 +590,113 @@ export type CleanNotifications = {
   notificationsById: Record<string, InboxNotificationData>;
 };
 
+function createStore_forNotifications() {
+  const signal = new Signal<NotificationsById>({});
+
+  // XXX Rename to a good verb
+  function dosomething1(
+    inboxNotificationId: string,
+    callback: (
+      notification: Readonly<InboxNotificationData>
+    ) => Readonly<InboxNotificationData>
+  ) {
+    signal.set((cache) => {
+      const existing = cache[inboxNotificationId];
+      if (!existing) {
+        // If the inbox notification doesn't exist in the cache, we do not
+        // change anything
+        return cache;
+      }
+
+      return {
+        ...cache,
+        [inboxNotificationId]: callback(existing),
+      };
+    });
+  }
+
+  // XXX Rename to a good verb
+  function dosomething2(
+    mapFn: (
+      notification: Readonly<InboxNotificationData>
+    ) => Readonly<InboxNotificationData>
+  ) {
+    return signal.set((cache) => mapValues(cache, mapFn));
+  }
+
+  // XXX Rename to a good verb
+  function dosomething3(inboxNotificationId: string) {
+    // Delete it
+    signal.set((cache) => {
+      const { [inboxNotificationId]: removed, ...newCache } = cache;
+      return removed === undefined ? cache : newCache;
+    });
+  }
+
+  // XXX Rename to a good verb
+  function dosomething4() {
+    // Empty the cache
+    signal.set(() => ({}));
+  }
+
+  // XXX Rename to "applyDelta"
+  function dosomething5(
+    notifications: InboxNotificationData[],
+    deletedNotifications: InboxNotificationDeleteInfo[]
+  ) {
+    signal.set((cache) =>
+      applyNotificationsUpdates(cache, {
+        newInboxNotifications: notifications,
+        deletedNotifications,
+      })
+    );
+  }
+
+  // XXX Rename to a good verb
+  function dosomething6(newComment: CommentData) {
+    signal.set((cache) => {
+      const existingNotification = Object.values(cache).find(
+        (notification) =>
+          notification.kind === "thread" &&
+          notification.threadId === newComment.threadId
+      );
+
+      if (!existingNotification) {
+        // Nothing to update here
+        return cache;
+      }
+
+      // If the thread has an inbox notification associated with it, we update the notification's `notifiedAt` and `readAt` values
+      return {
+        ...cache,
+        [existingNotification.id]: {
+          ...existingNotification,
+          notifiedAt: newComment.createdAt,
+          readAt: newComment.createdAt,
+        },
+      };
+    });
+  }
+
+  return {
+    signal: signal.asReadonly(),
+
+    // Mutations
+    dosomething1,
+    dosomething2,
+    dosomething3,
+    dosomething4,
+    applyDelta: dosomething5,
+    dosomething6,
+
+    // XXX Remove this eventually
+    force_set: (
+      callback: (currentState: NotificationsById) => NotificationsById
+    ) => signal.set(callback),
+    invalidate: () => signal.set((store) => ({ ...store })),
+  };
+}
+
 function createStore_forRoomNotificationSettings() {
   const signal = new Signal<SettingsByRoomId>({});
 
@@ -743,7 +850,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // (Can be mutated directly.)
   //
   readonly baseThreadsDB: ThreadDB<M>; // Exposes its signal under `.signal` prop
-  readonly baseNotificationsById: Signal<NotificationsById>;
+  readonly notifications: ReturnType<typeof createStore_forNotifications>;
   readonly roomNotificationSettings: ReturnType<typeof createStore_forRoomNotificationSettings>; // prettier-ignore
   readonly historyVersions: ReturnType<typeof createStore_forHistoryVersions>;
   readonly permissionHints: ReturnType<typeof createStore_forPermissionHints>;
@@ -816,13 +923,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     this.baseThreadsDB = new ThreadDB();
 
+    this.notifications = createStore_forNotifications();
     this.roomNotificationSettings = createStore_forRoomNotificationSettings();
     this.historyVersions = createStore_forHistoryVersions();
-    this.baseNotificationsById = new Signal<NotificationsById>({});
 
     const threadifications = DerivedSignal.from(
       this.baseThreadsDB.signal,
-      this.baseNotificationsById,
+      this.notifications.signal,
       this.optimisticUpdates.signal,
       (ts, ns, updates) =>
         applyOptimisticUpdates_forThreadifications(ts, ns, updates)
@@ -1057,7 +1164,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     callback: (currentState: NotificationsById) => NotificationsById
   ): void {
     batch(() => {
-      this.baseNotificationsById.set(callback);
+      this.notifications.force_set(callback);
       this.invalidateEntireStore();
     });
   }
@@ -1070,30 +1177,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * the cache.
    */
   public updateInboxNotification(
-    inboxNotificationId: string,
     optimisticUpdateId: string,
+    inboxNotificationId: string,
     callback: (
       notification: Readonly<InboxNotificationData>
     ) => Readonly<InboxNotificationData>
   ): void {
-    // Batch 1️⃣ + 2️⃣
     batch(() => {
-      this.optimisticUpdates.remove(optimisticUpdateId); // 1️⃣
-
-      // 2️⃣
-      this.baseNotificationsById.set((cache) => {
-        const existing = cache[inboxNotificationId];
-        if (!existing) {
-          // If the inbox notification doesn't exist in the cache, we do not
-          // change anything
-          return cache;
-        }
-
-        return {
-          ...cache,
-          [inboxNotificationId]: callback(existing),
-        };
-      });
+      this.optimisticUpdates.remove(optimisticUpdateId);
+      this.notifications.dosomething1(inboxNotificationId, callback);
     });
   }
 
@@ -1107,10 +1199,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
       notification: Readonly<InboxNotificationData>
     ) => Readonly<InboxNotificationData>
   ): void {
-    // Batch 1️⃣ + 2️⃣
     batch(() => {
-      this.optimisticUpdates.remove(optimisticUpdateId); // 1️⃣
-      this.baseNotificationsById.set((cache) => mapValues(cache, mapFn)); // 2️⃣
+      this.optimisticUpdates.remove(optimisticUpdateId);
+      this.notifications.dosomething2(mapFn);
     });
   }
 
@@ -1122,16 +1213,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
     inboxNotificationId: string,
     optimisticUpdateId: string
   ): void {
-    // Batch 1️⃣ + 2️⃣
     batch(() => {
-      this.optimisticUpdates.remove(optimisticUpdateId); // 1️⃣
-
-      // 2️⃣
-      this.baseNotificationsById.set((cache) => {
-        // Delete it
-        const { [inboxNotificationId]: removed, ...newCache } = cache;
-        return removed === undefined ? cache : newCache;
-      });
+      this.optimisticUpdates.remove(optimisticUpdateId);
+      this.notifications.dosomething3(inboxNotificationId);
     });
   }
 
@@ -1140,10 +1224,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * update.
    */
   public deleteAllInboxNotifications(optimisticUpdateId: string): void {
-    // Batch 1️⃣ + 2️⃣
     batch(() => {
-      this.optimisticUpdates.remove(optimisticUpdateId); // 1️⃣
-      this.baseNotificationsById.set(() => ({})); // 2️⃣ empty the cache
+      this.optimisticUpdates.remove(optimisticUpdateId);
+      this.notifications.dosomething4();
     });
   }
 
@@ -1291,28 +1374,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this.baseThreadsDB.upsert(applyUpsertComment(existingThread, newComment));
 
       // 3️⃣ Update the associated inbox notification (if any)
-      this.baseNotificationsById.set((cache) => {
-        const existingNotification = Object.values(cache).find(
-          (notification) =>
-            notification.kind === "thread" &&
-            notification.threadId === newComment.threadId
-        );
-
-        if (!existingNotification) {
-          // Nothing to update here
-          return cache;
-        }
-
-        // If the thread has an inbox notification associated with it, we update the notification's `notifiedAt` and `readAt` values
-        return {
-          ...cache,
-          [existingNotification.id]: {
-            ...existingNotification,
-            notifiedAt: newComment.createdAt,
-            readAt: newComment.createdAt,
-          },
-        };
-      });
+      this.notifications.dosomething6(newComment);
     });
   }
 
@@ -1346,22 +1408,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
     deletedThreads: ThreadDeleteInfo[] = [],
     deletedNotifications: InboxNotificationDeleteInfo[] = []
   ): void {
-    // Batch 1️⃣ + 2️⃣
     batch(() => {
-      // 1️⃣
-      this.baseThreadsDB.applyDelta({
-        newThreads: threads,
-        deletedThreads,
-      });
-
-      // 2️⃣
-      // XXX Ideally we would have a similar this.baseNotificationsById.applyDelta() method
-      this.baseNotificationsById.set((cache) =>
-        applyNotificationsUpdates(cache, {
-          newInboxNotifications: notifications,
-          deletedNotifications,
-        })
-      );
+      // XXX Make these signatures look the same
+      this.baseThreadsDB.applyDelta({ newThreads: threads, deletedThreads });
+      this.notifications.applyDelta(notifications, deletedNotifications);
     });
   }
 
@@ -1535,7 +1585,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // what we're been doing all along
     batch(() => {
       this.historyVersions.invalidate();
-      this.baseNotificationsById.set((store) => ({ ...store }));
+      this.notifications.invalidate();
       this.optimisticUpdates.invalidate();
       this.permissionHints.invalidate();
       this.roomNotificationSettings.invalidate();
