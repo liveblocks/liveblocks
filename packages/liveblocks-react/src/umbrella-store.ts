@@ -813,6 +813,27 @@ function createStore_forPermissionHints() {
   };
 }
 
+function createStore_forChannelsNotificationSettings() {
+  const signal = new Signal<BaseChannelsNotificationSettings>({});
+
+  function update(settings: ChannelsNotificationSettings) {
+    signal.set((prevSettings) => {
+      return {
+        ...prevSettings,
+        ...settings,
+      };
+    });
+  }
+
+  return {
+    signal: signal.asReadonly(),
+    // Mutations
+    update,
+    // XXX_aurelien Remove this eventually,
+    invalidate: () => signal.set((store) => ({ ...store })),
+  };
+}
+
 function createStore_forOptimistic<M extends BaseMetadata>(
   client: Client<BaseUserMeta, M>
 ) {
@@ -892,9 +913,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
   readonly roomNotificationSettings: ReturnType<typeof createStore_forRoomNotificationSettings>; // prettier-ignore
   readonly historyVersions: ReturnType<typeof createStore_forHistoryVersions>;
   readonly permissionHints: ReturnType<typeof createStore_forPermissionHints>;
+  readonly channelNotificationSettings: ReturnType<
+    typeof createStore_forChannelsNotificationSettings
+  >;
   readonly optimisticUpdates: ReturnType<typeof createStore_forOptimistic<M>>;
-
-  readonly baseChannelNotificationSettings: Signal<BaseChannelsNotificationSettings>;
 
   //
   // Output signals.
@@ -967,7 +989,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     const channelsNotificationSettingsFetcher = async (): Promise<void> => {
       const result = await this.#client.getChannelsNotificationSettings();
-      this.#updateChannelsNotificationSettingsCache(result);
+      this.channelNotificationSettings.update(result);
     };
 
     this.#channelsNotificationSettings = new SinglePageResource(
@@ -979,17 +1001,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this.invalidateEntireStore()
     );
 
+    this.channelNotificationSettings =
+      createStore_forChannelsNotificationSettings();
+
     this.threads = new ThreadDB();
 
     this.notifications = createStore_forNotifications();
     this.roomNotificationSettings = createStore_forRoomNotificationSettings();
     this.historyVersions = createStore_forHistoryVersions();
-
-    this.baseChannelNotificationSettings =
-      new Signal<BaseChannelsNotificationSettings>({});
-
-    this.baseChannelNotificationSettings =
-      new Signal<BaseChannelsNotificationSettings>({});
 
     const threadifications = DerivedSignal.from(
       this.threads.signal,
@@ -1027,8 +1046,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
     );
 
     const channelNotificationSettings = DerivedSignal.from(
-      this.baseChannelNotificationSettings,
-      this.optimisticUpdates,
+      this.channelNotificationSettings.signal,
+      this.optimisticUpdates.signal,
       (baseChannelsNotificationSettings, updates) =>
         applyOptimisticUpdates_forChannelNotificationSettings(
           baseChannelsNotificationSettings,
@@ -1233,64 +1252,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
       isLoading: false,
       versions: Object.values(this.get3()[roomId] ?? {}),
     };
-  }
-
-  // Direct low-level cache mutations ------------------------------------------------- {{{
-
-  #mutateThreadsDB(mutate: (db: ThreadDB<M>) => void): void {
-    batch(() => {
-      mutate(this.baseThreadsDB);
-    });
-  }
-
-  #updateInboxNotificationsCache(
-    mapFn: (
-      cache: Readonly<Record<string, InboxNotificationData>>
-    ) => Readonly<Record<string, InboxNotificationData>>
-  ): void {
-    this.baseNotificationsById.set((prev) => mapFn(prev));
-  }
-
-  #setNotificationSettings(
-    roomId: string,
-    settings: RoomNotificationSettings
-  ): void {
-    this.baseSettingsByRoomId.set((state) => ({
-      ...state,
-      [roomId]: settings,
-    }));
-  }
-
-  #updateRoomVersions(roomId: string, versions: HistoryVersion[]): void {
-    this.baseVersionsByRoomId.set((prev) => {
-      const newVersions: Record<string, HistoryVersion> = { ...prev[roomId] };
-      for (const version of versions) {
-        newVersions[version.id] = version;
-      }
-      return {
-        ...prev,
-        [roomId]: newVersions,
-      };
-    });
-  }
-
-  #updateChannelsNotificationSettingsCache(
-    settings: ChannelsNotificationSettings
-  ): void {
-    this.baseChannelNotificationSettings.set((prevState) => {
-      return {
-        ...prevState,
-        ...settings,
-      };
-    });
-  }
-
-  #updateOptimisticUpdatesCache(
-    mapFn: (
-      cache: readonly OptimisticUpdate<M>[]
-    ) => readonly OptimisticUpdate<M>[]
-  ): void {
-    this.optimisticUpdates.set(mapFn);
   }
 
   // ---------------------------------------------------------------------------------- }}}
@@ -1890,7 +1851,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     const result = await this.#client.getChannelsNotificationSettings({
       signal,
     });
-    this.#updateChannelsNotificationSettingsCache(result);
+    this.channelNotificationSettings.update(result);
   }
 
   /**
@@ -1903,8 +1864,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): void {
     // Batch 1️⃣ + 2️⃣
     batch(() => {
-      this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
-      this.#updateChannelsNotificationSettingsCache(settings); // 2️⃣
+      this.optimisticUpdates.remove(optimisticUpdateId); // 1️⃣
+      this.channelNotificationSettings.update(settings); // 2️⃣
     });
   }
 }
