@@ -594,30 +594,22 @@ export type CleanNotifications = {
 function createStore_forNotifications() {
   const signal = new Signal<NotificationsById>({});
 
-  // XXX Really this seems to only be used to "mark all read". Name this more specifically!
-  function updateOne(
-    inboxNotificationId: string,
-    callback: (
-      notification: Readonly<InboxNotificationData>
-    ) => Readonly<InboxNotificationData>
-  ) {
+  function markRead(inboxNotificationId: string, readAt: Date) {
     signal.set((state) => {
       const existing = state[inboxNotificationId];
       if (!existing) {
         // If the inbox notification doesn't exist, we do not change anything
         return state;
       }
-      return { ...state, [inboxNotificationId]: callback(existing) };
+      return {
+        ...state,
+        [inboxNotificationId]: { ...existing, readAt },
+      };
     });
   }
 
-  // XXX Really this seems to only be used to "mark all read". Name this more specifically!
-  function updateAll(
-    mapFn: (
-      notification: Readonly<InboxNotificationData>
-    ) => Readonly<InboxNotificationData>
-  ) {
-    return signal.set((state) => mapValues(state, mapFn));
+  function markAllRead(readAt: Date) {
+    return signal.set((state) => mapValues(state, (n) => ({ ...n, readAt })));
   }
 
   function deleteOne(inboxNotificationId: string) {
@@ -692,8 +684,8 @@ function createStore_forNotifications() {
     signal: signal.asReadonly(),
 
     // Mutations
-    updateAll,
-    updateOne,
+    markAllRead,
+    markRead,
     delete: deleteOne,
     applyDelta,
     clear,
@@ -1188,32 +1180,24 @@ export class UmbrellaStore<M extends BaseMetadata> {
    *
    * This will not update anything if the inbox notification ID isn't found.
    */
-  public updateInboxNotification(
-    optimisticUpdateId: string,
+  public markInboxNotificationRead(
     inboxNotificationId: string,
-    updateFn: (
-      notification: Readonly<InboxNotificationData>
-    ) => Readonly<InboxNotificationData>
+    readAt: Date,
+    optimisticUpdateId: string
   ): void {
     batch(() => {
       this.optimisticUpdates.remove(optimisticUpdateId);
-      this.notifications.updateOne(inboxNotificationId, updateFn);
+      this.notifications.markRead(inboxNotificationId, readAt);
     });
   }
 
-  /**
-   * Updates *all* inbox notifications by running a mapper function over all of
-   * them, replacing the corresponding optimistic update.
-   */
-  public updateAllInboxNotifications(
+  public markAllInboxNotificationsRead(
     optimisticUpdateId: string,
-    updateFn: (
-      notification: Readonly<InboxNotificationData>
-    ) => Readonly<InboxNotificationData>
+    readAt: Date
   ): void {
     batch(() => {
       this.optimisticUpdates.remove(optimisticUpdateId);
-      this.notifications.updateAll(updateFn);
+      this.notifications.markAllRead(readAt);
     });
   }
 

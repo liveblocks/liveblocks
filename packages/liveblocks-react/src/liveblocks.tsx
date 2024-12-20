@@ -479,10 +479,10 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
       client.markInboxNotificationAsRead(inboxNotificationId).then(
         () => {
           // Replace the optimistic update by the real thing
-          store.updateInboxNotification(
+          store.markInboxNotificationRead(
             inboxNotificationId,
-            optimisticUpdateId,
-            (inboxNotification) => ({ ...inboxNotification, readAt })
+            readAt,
+            optimisticUpdateId
           );
         },
         () => {
@@ -507,10 +507,7 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
     client.markAllInboxNotificationsAsRead().then(
       () => {
         // Replace the optimistic update by the real thing
-        store.updateAllInboxNotifications(
-          optimisticUpdateId,
-          (inboxNotification) => ({ ...inboxNotification, readAt })
-        );
+        store.markAllInboxNotificationsRead(optimisticUpdateId, readAt);
       },
       () => {
         // TODO: Broadcast errors to client

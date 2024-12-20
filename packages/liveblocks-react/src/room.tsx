@@ -1947,10 +1947,10 @@ function useMarkRoomThreadAsRead(roomId: string) {
         .then(
           () => {
             // Replace the optimistic update by the real thing
-            store.updateInboxNotification(
+            store.markInboxNotificationRead(
               inboxNotification.id,
-              optimisticUpdateId,
-              (inboxNotification) => ({ ...inboxNotification, readAt: now })
+              now,
+              optimisticUpdateId
             );
           },
           (err: Error) => {
