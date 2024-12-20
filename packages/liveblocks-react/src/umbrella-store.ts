@@ -1,3 +1,4 @@
+// XXX Rename optimisticUpdateId → optimisticId everywhere
 import type {
   AsyncResult,
   BaseMetadata,
