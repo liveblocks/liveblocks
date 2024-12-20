@@ -17,7 +17,6 @@ import type {
   Permission,
   Resolve,
   RoomNotificationSettings,
-  SyncSource,
   ThreadData,
   ThreadDataWithDeleteInfo,
   ThreadDeleteInfo,
@@ -591,9 +590,47 @@ export type CleanNotifications = {
   notificationsById: Record<string, InboxNotificationData>;
 };
 
+function createStore_forOptimistic<M extends BaseMetadata>(
+  client: Client<BaseUserMeta, M>
+) {
+  const signal = new Signal<readonly OptimisticUpdate<M>[]>([]);
+  const syncSource = client[kInternal].createSyncSource();
+
+  // Automatically update the global sync status as an effect whenever there
+  // are any optimistic updates
+  signal.subscribe(() =>
+    syncSource.setSyncStatus(
+      signal.get().length > 0 ? "synchronizing" : "synchronized"
+    )
+  );
+
+  function add(
+    optimisticUpdate: DistributiveOmit<OptimisticUpdate<M>, "id">
+  ): string {
+    const id = nanoid();
+    const newUpdate: OptimisticUpdate<M> = { ...optimisticUpdate, id };
+    signal.set((cache) => [...cache, newUpdate]);
+    return id;
+  }
+
+  function remove(optimisticUpdateId: string): void {
+    signal.set((cache) => cache.filter((ou) => ou.id !== optimisticUpdateId));
+  }
+
+  return {
+    signal: signal.asReadonly(),
+
+    // Mutations
+    add,
+    remove,
+
+    // XXX Remove this eventually
+    invalidate: () => signal.set((store) => [...store]),
+  };
+}
+
 export class UmbrellaStore<M extends BaseMetadata> {
   #client: Client<BaseUserMeta, M>;
-  #syncSource: SyncSource;
 
   //
   // Internally, the UmbrellaStore keeps track of a few source signals that can
@@ -625,7 +662,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   readonly baseThreadsDB: ThreadDB<M>; // Exposes its signal under `.signal` prop
   readonly baseNotificationsById: Signal<NotificationsById>;
   readonly baseSettingsByRoomId: Signal<SettingsByRoomId>;
-  readonly optimisticUpdates: Signal<readonly OptimisticUpdate<M>[]>;
+  readonly optimisticUpdates: ReturnType<typeof createStore_forOptimistic<M>>;
 
   readonly baseVersionsByRoomId: Signal<VersionsByRoomId>;
   readonly permissionHintsByRoomId: Signal<PermissionHintsByRoomId>;
@@ -669,7 +706,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   constructor(client: OpaqueClient) {
     this.#client = client[kInternal].as<M>();
-    this.#syncSource = this.#client[kInternal].createSyncSource();
+
+    this.optimisticUpdates = createStore_forOptimistic<M>(this.#client);
 
     const inboxFetcher = async (cursor?: string) => {
       const result = await this.#client.getInboxNotifications({ cursor });
@@ -694,7 +732,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     );
 
     this.baseThreadsDB = new ThreadDB();
-    this.optimisticUpdates = new Signal<readonly OptimisticUpdate<M>[]>([]);
 
     this.baseVersionsByRoomId = new Signal<VersionsByRoomId>({});
     this.baseNotificationsById = new Signal<NotificationsById>({});
@@ -707,7 +744,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     const threadifications = DerivedSignal.from(
       this.baseThreadsDB.signal,
       this.baseNotificationsById,
-      this.optimisticUpdates,
+      this.optimisticUpdates.signal,
       (ts, ns, updates) =>
         applyOptimisticUpdates_forThreadifications(ts, ns, updates)
     );
@@ -723,7 +760,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     const settingsByRoomId = DerivedSignal.from(
       this.baseSettingsByRoomId,
-      this.optimisticUpdates,
+      this.optimisticUpdates.signal,
       (settings, updates) =>
         applyOptimisticUpdates_forSettings(settings, updates)
     );
@@ -743,16 +780,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
       settingsByRoomId,
       versionsByRoomId,
     };
-
-    // Automatically update the global sync status as an effect whenever there
-    // are any optimistic updates
-    this.optimisticUpdates.subscribe(() =>
-      this.#syncSource.setSyncStatus(
-        this.optimisticUpdates.get().length > 0
-          ? "synchronizing"
-          : "synchronized"
-      )
-    );
 
     // Auto-bind all of this class’ methods here, so we can use stable
     // references to them (most important for use in useSyncExternalStore)
@@ -999,7 +1026,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): void {
     // Batch 1️⃣ + 2️⃣
     batch(() => {
-      this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
+      this.optimisticUpdates.remove(optimisticUpdateId); // 1️⃣
 
       // 2️⃣
       this.baseNotificationsById.set((cache) => {
@@ -1030,7 +1057,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): void {
     // Batch 1️⃣ + 2️⃣
     batch(() => {
-      this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
+      this.optimisticUpdates.remove(optimisticUpdateId); // 1️⃣
       this.baseNotificationsById.set((cache) => mapValues(cache, mapFn)); // 2️⃣
     });
   }
@@ -1045,7 +1072,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): void {
     // Batch 1️⃣ + 2️⃣
     batch(() => {
-      this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
+      this.optimisticUpdates.remove(optimisticUpdateId); // 1️⃣
 
       // 2️⃣
       this.baseNotificationsById.set((cache) => {
@@ -1063,7 +1090,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   public deleteAllInboxNotifications(optimisticUpdateId: string): void {
     // Batch 1️⃣ + 2️⃣
     batch(() => {
-      this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
+      this.optimisticUpdates.remove(optimisticUpdateId); // 1️⃣
       this.baseNotificationsById.set(() => ({})); // 2️⃣ empty the cache
     });
   }
@@ -1077,7 +1104,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): void {
     // Batch 1️⃣ + 2️⃣
     batch(() => {
-      this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣j
+      this.optimisticUpdates.remove(optimisticUpdateId); // 1️⃣j
       this.baseThreadsDB.upsert(thread); // 2️⃣
     });
   }
@@ -1103,7 +1130,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // Batch 1️⃣ + 2️⃣
     batch(() => {
       if (optimisticUpdateId !== null) {
-        this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
+        this.optimisticUpdates.remove(optimisticUpdateId); // 1️⃣
       }
 
       // 2️⃣
@@ -1200,7 +1227,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // Batch 1️⃣ + 2️⃣ + 3️⃣
     batch(() => {
       // 1️⃣
-      this.removeOptimisticUpdate(optimisticUpdateId);
+      this.optimisticUpdates.remove(optimisticUpdateId);
 
       // If the associated thread is not found, we cannot create a comment under it
       const existingThread = this.baseThreadsDB.get(newComment.threadId);
@@ -1297,24 +1324,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): void {
     // Batch 1️⃣ + 2️⃣
     batch(() => {
-      this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
+      this.optimisticUpdates.remove(optimisticUpdateId); // 1️⃣
       this.#setNotificationSettings(roomId, settings); // 2️⃣
     });
-  }
-
-  public addOptimisticUpdate(
-    optimisticUpdate: DistributiveOmit<OptimisticUpdate<M>, "id">
-  ): string {
-    const id = nanoid();
-    const newUpdate: OptimisticUpdate<M> = { ...optimisticUpdate, id };
-    this.optimisticUpdates.set((cache) => [...cache, newUpdate]);
-    return id;
-  }
-
-  public removeOptimisticUpdate(optimisticUpdateId: string): void {
-    this.optimisticUpdates.set((cache) =>
-      cache.filter((ou) => ou.id !== optimisticUpdateId)
-    );
   }
 
   public async fetchNotificationsDeltaUpdate(signal: AbortSignal) {
@@ -1490,8 +1502,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
     batch(() => {
       this.baseVersionsByRoomId.set((store) => ({ ...store }));
       this.baseNotificationsById.set((store) => ({ ...store }));
-      this.optimisticUpdates.set((store) => [...store]);
-      this.permissionHintsByRoomId.set((store) => ({ ...store }));
+      this.optimisticUpdates.invalidate(),
+        this.permissionHintsByRoomId.set((store) => ({ ...store }));
       this.baseSettingsByRoomId.set((store) => ({ ...store }));
     });
   }

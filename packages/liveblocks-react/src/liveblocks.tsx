@@ -470,7 +470,7 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
       const { store } = getLiveblocksExtrasForClient(client);
 
       const readAt = new Date();
-      const optimisticUpdateId = store.addOptimisticUpdate({
+      const optimisticUpdateId = store.optimisticUpdates.add({
         type: "mark-inbox-notification-as-read",
         inboxNotificationId,
         readAt,
@@ -487,7 +487,7 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
         },
         () => {
           // TODO: Broadcast errors to client
-          store.removeOptimisticUpdate(optimisticUpdateId);
+          store.optimisticUpdates.remove(optimisticUpdateId);
         }
       );
     },
@@ -499,7 +499,7 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
   return useCallback(() => {
     const { store } = getLiveblocksExtrasForClient(client);
     const readAt = new Date();
-    const optimisticUpdateId = store.addOptimisticUpdate({
+    const optimisticUpdateId = store.optimisticUpdates.add({
       type: "mark-all-inbox-notifications-as-read",
       readAt,
     });
@@ -514,7 +514,7 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
       },
       () => {
         // TODO: Broadcast errors to client
-        store.removeOptimisticUpdate(optimisticUpdateId);
+        store.optimisticUpdates.remove(optimisticUpdateId);
       }
     );
   }, [client]);
@@ -526,7 +526,7 @@ function useDeleteInboxNotification_withClient(client: OpaqueClient) {
       const { store } = getLiveblocksExtrasForClient(client);
 
       const deletedAt = new Date();
-      const optimisticUpdateId = store.addOptimisticUpdate({
+      const optimisticUpdateId = store.optimisticUpdates.add({
         type: "delete-inbox-notification",
         inboxNotificationId,
         deletedAt,
@@ -542,7 +542,7 @@ function useDeleteInboxNotification_withClient(client: OpaqueClient) {
         },
         () => {
           // TODO: Broadcast errors to client
-          store.removeOptimisticUpdate(optimisticUpdateId);
+          store.optimisticUpdates.remove(optimisticUpdateId);
         }
       );
     },
@@ -554,7 +554,7 @@ function useDeleteAllInboxNotifications_withClient(client: OpaqueClient) {
   return useCallback(() => {
     const { store } = getLiveblocksExtrasForClient(client);
     const deletedAt = new Date();
-    const optimisticUpdateId = store.addOptimisticUpdate({
+    const optimisticUpdateId = store.optimisticUpdates.add({
       type: "delete-all-inbox-notifications",
       deletedAt,
     });
@@ -566,7 +566,7 @@ function useDeleteAllInboxNotifications_withClient(client: OpaqueClient) {
       },
       () => {
         // TODO: Broadcast errors to client
-        store.removeOptimisticUpdate(optimisticUpdateId);
+        store.optimisticUpdates.remove(optimisticUpdateId);
       }
     );
   }, [client]);

@@ -211,6 +211,10 @@ abstract class AbstractSignal<T> implements ISignal<T>, Observable<void> {
   removeSink(sink: DerivedSignal<unknown>): void {
     this[kSinks].delete(sink);
   }
+
+  asReadonly(): ISignal<T> {
+    return this;
+  }
 }
 
 // NOTE: This class is pretty similar to the Signal.State proposal
