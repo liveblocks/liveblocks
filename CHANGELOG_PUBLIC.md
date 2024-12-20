@@ -57,7 +57,7 @@ rollup, esbuild, etc) to also down-compile code from dependencies inside
 
 ## Contributors
 
-ctnicholas
+ctnicholas, nvie
 
 # Week 50 (2024-12-13)
 
