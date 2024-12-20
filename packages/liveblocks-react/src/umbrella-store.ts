@@ -567,7 +567,7 @@ type SettingsLUT = Map<RoomId, RoomNotificationSettings>;
  */
 type SettingsByRoomId = Record<RoomId, RoomNotificationSettings>;
 
-type PermissionHintsByRoomId = Record<RoomId, Set<Permission>>;
+type PermissionHintsLUT = Map<RoomId, Set<Permission>>;
 
 export type CleanThreadifications<M extends BaseMetadata> =
   // Threads + Notifications = Threadifications
@@ -751,23 +751,19 @@ function createStore_forHistoryVersions() {
 }
 
 function createStore_forPermissionHints() {
-  const signal = new Signal<PermissionHintsByRoomId>({});
+  const signal = new MutableSignal<PermissionHintsLUT>(new Map());
 
   function update(newHints: Record<string, Permission[]>) {
-    signal.set((prev) => {
-      const permissionsByRoom = { ...prev };
-
+    signal.mutate((lut) => {
       for (const [roomId, newPermissions] of Object.entries(newHints)) {
         // Get the existing set of permissions for the room and only ever add permission to this set
-        const existing = permissionsByRoom[roomId] ?? new Set();
+        const existing = lut.get(roomId) ?? new Set();
         // Add the new permissions to the set of existing permissions
         for (const permission of newPermissions) {
           existing.add(permission);
         }
-        permissionsByRoom[roomId] = existing;
+        lut.set(roomId, existing);
       }
-
-      return permissionsByRoom;
     });
   }
 
@@ -778,7 +774,7 @@ function createStore_forPermissionHints() {
     update,
 
     // XXX_vincent Remove this eventually
-    invalidate: () => signal.set((store) => ({ ...store })),
+    invalidate: () => signal.mutate(),
   };
 }
 
