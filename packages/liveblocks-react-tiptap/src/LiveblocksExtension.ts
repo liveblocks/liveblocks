@@ -18,8 +18,7 @@ import { Extension, getMarkType } from "@tiptap/core";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
 import type { Mark as PMMark } from "@tiptap/pm/model";
-import { useCallback, useEffect, useState } from "react";
-import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { Doc } from "yjs";
 
 import { CommentsExtension } from "./comments/CommentsExtension";
@@ -215,10 +214,10 @@ export const useLiveblocksExtension = (
         );
         this.storage.unsubs.push(
           // Subscribe to threads so we can update comment marks if they become resolved/deleted
-          store.subscribe(() => {
+          store.outputs.threads.subscribe(() => {
             const threadMap = new Map(
-              store
-                .getFullState()
+              store.outputs.threads
+                .get()
                 .threadsDB.findMany(roomId, { resolved: false }, "asc")
                 .map((thread) => [thread.id, true])
             );

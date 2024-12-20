@@ -7,7 +7,7 @@ import type {
   Room,
 } from "@liveblocks/client";
 import type { OpaqueRoom } from "@liveblocks/core";
-import * as React from "react";
+import { createContext, useContext } from "react";
 
 /**
  * Raw access to the React context where the RoomProvider stores the current
@@ -15,7 +15,7 @@ import * as React from "react";
  *
  * @private This is a private/advanced API. Do not rely on it.
  */
-export const RoomContext = React.createContext<OpaqueRoom | null>(null);
+export const RoomContext = createContext<OpaqueRoom | null>(null);
 
 /** @private */
 export function useRoomOrNull<
@@ -25,7 +25,7 @@ export function useRoomOrNull<
   E extends Json,
   M extends BaseMetadata,
 >(): Room<P, S, U, E, M> | null {
-  return React.useContext(RoomContext) as Room<P, S, U, E, M> | null;
+  return useContext(RoomContext) as Room<P, S, U, E, M> | null;
 }
 
 /**

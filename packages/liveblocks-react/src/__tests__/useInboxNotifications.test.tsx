@@ -10,7 +10,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { setupServer } from "msw/node";
-import React, { Suspense } from "react";
+import { Suspense } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 
 import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
@@ -284,21 +284,14 @@ describe("useInboxNotifications", () => {
       umbrellaStore,
     } = createContextsForTest();
 
-    // @ts-expect-error Accessing a private field directly
-    umbrellaStore._rawThreadsDB.upsert(thread1);
-    // @ts-expect-error Accessing a private field directly
-    umbrellaStore._rawThreadsDB.upsert(thread2);
-    umbrellaStore.force_set((state) => ({
-      ...state,
-      notificationsById: {
-        // Explicitly set the order to be reversed to test that the hook sorts the notifications
-        [oldInboxNotification.id]: oldInboxNotification,
-        [newInboxNotification.id]: newInboxNotification,
-      },
-      queries: {
-        INBOX_NOTIFICATIONS: { isLoading: false, data: undefined },
-      },
-    }));
+    umbrellaStore.threads.upsert(thread1);
+    umbrellaStore.threads.upsert(thread2);
+
+    umbrellaStore.force_set_notifications((lut) => {
+      // Explicitly set the order to be reversed to test that the hook sorts the notifications
+      lut.set(oldInboxNotification.id, oldInboxNotification);
+      lut.set(newInboxNotification.id, newInboxNotification);
+    });
 
     const { result, unmount } = renderHook(() => useInboxNotifications(), {
       wrapper: ({ children }) => (

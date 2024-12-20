@@ -1,12 +1,24 @@
-import { autoUpdate, flip, hide, limitShift, offset, shift, size, useFloating } from "@floating-ui/react-dom";
+import {
+  autoUpdate,
+  flip,
+  hide,
+  limitShift,
+  offset,
+  shift,
+  size,
+  useFloating,
+} from "@floating-ui/react-dom";
 import type { BaseMetadata } from "@liveblocks/client";
 import type { DM } from "@liveblocks/core";
 import { useCreateThread } from "@liveblocks/react";
-import type { ComposerProps, ComposerSubmitComment } from "@liveblocks/react-ui";
+import type {
+  ComposerProps,
+  ComposerSubmitComment,
+} from "@liveblocks/react-ui";
 import { Composer } from "@liveblocks/react-ui";
 import { type Editor, useEditorState } from "@tiptap/react";
 import type { ComponentRef, FormEvent, KeyboardEvent } from "react";
-import React, { forwardRef, useCallback, useEffect, useLayoutEffect } from "react";
+import { forwardRef, useCallback, useEffect, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
 
 import type { CommentsExtensionStorage } from "../types";
@@ -64,7 +76,6 @@ export const FloatingComposer = forwardRef<
     },
   });
 
-
   const updateRef = useCallback(() => {
     if (!editor || !showComposer) {
       return;
@@ -87,7 +98,6 @@ export const FloatingComposer = forwardRef<
   }, [editor, updateRef, showComposer]);
 
   useLayoutEffect(updateRef, [updateRef]);
-
 
   // Submit a new thread and update the comment highlight to show a completed highlight
   const handleComposerSubmit = useCallback(

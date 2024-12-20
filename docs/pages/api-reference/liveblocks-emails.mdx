@@ -7,13 +7,9 @@ alwaysShowAllNavigationLevels: false
 ---
 
 `@liveblocks/emails` provides a set of functions that simplifies sending styled
-emails with [Notifications](/docs/products/notifications) and
+emails with [Notifications](/docs/ready-made-features/notifications) and
 [webhooks](/docs/platform/webhooks). This library is only intended for use in
 your Node.js back end.
-
-<Banner type="warning" title="Package still in beta">
-  This package is currently in beta and has not been publicly released yet.
-</Banner>
 
 ## Requirements
 
@@ -398,9 +394,9 @@ export async function POST(request: Request) {
     detailedType='async? (args: ResolveUsersArgs) => (UserMeta["info"] | undefined)[] | undefined'
   >
     A function that resolves user information in
-    [Comments](/docs/products/comments). Return an array of `UserMeta["info"]`
-    objects in the same order they arrived. Works similarly to the [resolver on
-    the
+    [Comments](/docs/ready-made-features/comments). Return an array of
+    `UserMeta["info"]` objects in the same order they arrived. Works similarly
+    to the [resolver on the
     client](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers).
     [Learn more](#prepare-thread-notification-email-as-react-resolving-data).
   </PropertiesListItem>
@@ -772,9 +768,9 @@ export async function POST(request: Request) {
     detailedType='async? (args: ResolveUsersArgs) => (UserMeta["info"] | undefined)[] | undefined'
   >
     A function that resolves user information in
-    [Comments](/docs/products/comments). Return an array of `UserMeta["info"]`
-    objects in the same order they arrived. Works similarly to the [resolver on
-    the
+    [Comments](/docs/ready-made-features/comments). Return an array of
+    `UserMeta["info"]` objects in the same order they arrived. Works similarly
+    to the [resolver on the
     client](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers).
     [Learn more](#prepare-thread-notification-email-as-html-resolving-data).
   </PropertiesListItem>
@@ -894,11 +890,11 @@ console.log(emailData.comment.htmlBody);
 ## Text Mention notification emails [#text-mention-notification-emails]
 
 These functions help you create emails to notify users when they have an _unread
-mention_ in a [Text Editor](/docs/products/text-editor) document. In this case,
-a mention is not related to comments, but is instead an inline mention inside
-the text editor itself. If the mention has not been read, the functions fetch a
-text mention and its surrounding text, giving you more context, and helping you
-style the mention content with either
+mention_ in a [Text Editor](/docs/ready-made-features/text-editor) document. In
+this case, a mention is not related to comments, but is instead an inline
+mention inside the text editor itself. If the mention has not been read, the
+functions fetch a text mention and its surrounding text, giving you more
+context, and helping you style the mention content with either
 [React](#prepare-text-mention-notification-email-as-react) or
 [HTML](#prepare-text-mention-notification-email-as-html).
 
@@ -942,7 +938,7 @@ investigating solutions for this, and we’d like to
 #### Multiple Tiptap editors
 
 Tiptap optionally allows you to
-[render multiple editors per page](/docs/products/text-editor/tiptap#Multiple-editors),
+[render multiple editors per page](/docs/ready-made-features/text-editor/tiptap#Multiple-editors),
 instead of just one. For now, these functions only support one editor per room,
 but we’ll be looking to add support for more later.
 
@@ -1107,9 +1103,11 @@ export async function POST(request: Request) {
     detailedType='async? (args: ResolveUsersArgs) => (UserMeta["info"] | undefined)[] | undefined'
   >
     A function that resolves user information in
-    [Comments](/docs/products/comments). Return an array of `UserMeta["info"]`
-    objects in the same order they arrived. Works similarly to the [resolver on
-    the client](/docs/products/text-editor/lexical#Users-and-mentions). [Learn
+    [Comments](/docs/ready-made-features/comments). Return an array of
+    `UserMeta["info"]` objects in the same order they arrived. Works similarly
+    to the [resolver on the
+    client](/docs/ready-made-features/text-editor/lexical#Users-and-mentions).
+    [Learn
     more](#prepare-text-mention-notification-email-as-react-resolving-data).
   </PropertiesListItem>
   <PropertiesListItem
@@ -1388,9 +1386,11 @@ export async function POST(request: Request) {
     detailedType='async? (args: ResolveUsersArgs) => (UserMeta["info"] | undefined)[] | undefined'
   >
     A function that resolves user information in
-    [Comments](/docs/products/comments). Return an array of `UserMeta["info"]`
-    objects in the same order they arrived. Works similarly to the [resolver on
-    the client](/docs/products/text-editor/lexical#Users-and-mentions). [Learn
+    [Comments](/docs/ready-made-features/comments). Return an array of
+    `UserMeta["info"]` objects in the same order they arrived. Works similarly
+    to the [resolver on the
+    client](/docs/ready-made-features/text-editor/lexical#Users-and-mentions).
+    [Learn
     more](#prepare-text-mention-notification-email-as-html-resolving-data).
   </PropertiesListItem>
   <PropertiesListItem

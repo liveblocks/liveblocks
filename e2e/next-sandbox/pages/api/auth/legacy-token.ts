@@ -78,5 +78,5 @@ export default async function legacyAuth(
     },
     secret: SECRET_KEY,
   });
-  return res.status(response.status).end(response.body);
+  res.status(response.status).end(response.body);
 }

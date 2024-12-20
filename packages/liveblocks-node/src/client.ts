@@ -162,10 +162,8 @@ type U = DU;
  * Interact with the Liveblocks API from your Node.js backend.
  */
 export class Liveblocks {
-  /** @internal */
-  private readonly _secret: string;
-  /** @internal */
-  private readonly _baseUrl: URL;
+  readonly #secret: string;
+  readonly #baseUrl: URL;
 
   /**
    * Interact with the Liveblocks API from your Node.js backend.
@@ -174,15 +172,14 @@ export class Liveblocks {
     const options_ = options as Record<string, unknown>;
     const secret = options_.secret;
     assertSecretKey(secret, "secret");
-    this._secret = secret;
-    this._baseUrl = new URL(getBaseUrl(options.baseUrl));
+    this.#secret = secret;
+    this.#baseUrl = new URL(getBaseUrl(options.baseUrl));
   }
 
-  /** @internal */
-  private async post(path: URLSafeString, json: Json): Promise<Response> {
-    const url = urljoin(this._baseUrl, path);
+  async #post(path: URLSafeString, json: Json): Promise<Response> {
+    const url = urljoin(this.#baseUrl, path);
     const headers = {
-      Authorization: `Bearer ${this._secret}`,
+      Authorization: `Bearer ${this.#secret}`,
       "Content-Type": "application/json",
     };
     const fetch = await fetchPolyfill();
@@ -194,11 +191,10 @@ export class Liveblocks {
     return res;
   }
 
-  /** @internal */
-  private async put(path: URLSafeString, json: Json): Promise<Response> {
-    const url = urljoin(this._baseUrl, path);
+  async #put(path: URLSafeString, json: Json): Promise<Response> {
+    const url = urljoin(this.#baseUrl, path);
     const headers = {
-      Authorization: `Bearer ${this._secret}`,
+      Authorization: `Bearer ${this.#secret}`,
       "Content-Type": "application/json",
     };
     const fetch = await fetchPolyfill();
@@ -209,37 +205,34 @@ export class Liveblocks {
     });
   }
 
-  /** @internal */
-  private async putBinary(
+  async #putBinary(
     path: URLSafeString,
     body: Uint8Array,
     params?: QueryParams
   ): Promise<Response> {
-    const url = urljoin(this._baseUrl, path, params);
+    const url = urljoin(this.#baseUrl, path, params);
     const headers = {
-      Authorization: `Bearer ${this._secret}`,
+      Authorization: `Bearer ${this.#secret}`,
       "Content-Type": "application/octet-stream",
     };
     const fetch = await fetchPolyfill();
     return await fetch(url, { method: "PUT", headers, body });
   }
 
-  /** @internal */
-  private async delete(path: URLSafeString): Promise<Response> {
-    const url = urljoin(this._baseUrl, path);
+  async #delete(path: URLSafeString): Promise<Response> {
+    const url = urljoin(this.#baseUrl, path);
     const headers = {
-      Authorization: `Bearer ${this._secret}`,
+      Authorization: `Bearer ${this.#secret}`,
     };
     const fetch = await fetchPolyfill();
     const res = await fetch(url, { method: "DELETE", headers });
     return res;
   }
 
-  /** @internal */
-  async get(path: URLSafeString, params?: QueryParams): Promise<Response> {
-    const url = urljoin(this._baseUrl, path, params);
+  async #get(path: URLSafeString, params?: QueryParams): Promise<Response> {
+    const url = urljoin(this.#baseUrl, path, params);
     const headers = {
-      Authorization: `Bearer ${this._secret}`,
+      Authorization: `Bearer ${this.#secret}`,
     };
     const fetch = await fetchPolyfill();
     const res = await fetch(url, { method: "GET", headers });
@@ -274,7 +267,7 @@ export class Liveblocks {
     >
   ): Session {
     const options = rest[0];
-    return new Session(this.post.bind(this), userId, options?.userInfo);
+    return new Session(this.#post.bind(this), userId, options?.userInfo);
   }
 
   /**
@@ -330,7 +323,7 @@ export class Liveblocks {
     // assertStringArrayOrUndefined(groupsIds, "groupIds"); // TODO: Check if this is a legal userId value too
 
     try {
-      const resp = await this.post(path, {
+      const resp = await this.#post(path, {
         userId,
         groupIds,
 
@@ -346,7 +339,7 @@ export class Liveblocks {
       return {
         status: 503 /* Service Unavailable */,
         body: `Call to ${urljoin(
-          this._baseUrl,
+          this.#baseUrl,
           path
         )} failed. See "error" for more information.`,
         error: er as Error | undefined,
@@ -440,7 +433,7 @@ export class Liveblocks {
       query,
     };
 
-    const res = await this.get(path, queryParams);
+    const res = await this.#get(path, queryParams);
 
     if (!res.ok) {
       const text = await res.text();
@@ -493,7 +486,7 @@ export class Liveblocks {
   ): Promise<RoomData> {
     const { defaultAccesses, groupsAccesses, usersAccesses, metadata } = params;
 
-    const res = await this.post(url`/v2/rooms`, {
+    const res = await this.#post(url`/v2/rooms`, {
       id: roomId,
       defaultAccesses,
       groupsAccesses,
@@ -527,7 +520,7 @@ export class Liveblocks {
    * @returns The room with the given id.
    */
   public async getRoom(roomId: string): Promise<RoomData> {
-    const res = await this.get(url`/v2/rooms/${roomId}`);
+    const res = await this.#get(url`/v2/rooms/${roomId}`);
 
     if (!res.ok) {
       const text = await res.text();
@@ -576,7 +569,7 @@ export class Liveblocks {
   ): Promise<RoomData> {
     const { defaultAccesses, groupsAccesses, usersAccesses, metadata } = params;
 
-    const res = await this.post(url`/v2/rooms/${roomId}`, {
+    const res = await this.#post(url`/v2/rooms/${roomId}`, {
       defaultAccesses,
       groupsAccesses,
       usersAccesses,
@@ -608,7 +601,7 @@ export class Liveblocks {
    * @param roomId The id of the room to delete.
    */
   public async deleteRoom(roomId: string): Promise<void> {
-    const res = await this.delete(url`/v2/rooms/${roomId}`);
+    const res = await this.#delete(url`/v2/rooms/${roomId}`);
 
     if (!res.ok) {
       const text = await res.text();
@@ -624,7 +617,7 @@ export class Liveblocks {
   public async getActiveUsers(
     roomId: string
   ): Promise<{ data: RoomUser<U>[] }> {
-    const res = await this.get(url`/v2/rooms/${roomId}/active_users`);
+    const res = await this.#get(url`/v2/rooms/${roomId}/active_users`);
 
     if (!res.ok) {
       const text = await res.text();
@@ -640,7 +633,7 @@ export class Liveblocks {
    * @param message The message to broadcast. It can be any JSON serializable value.
    */
   public async broadcastEvent(roomId: string, message: E): Promise<void> {
-    const res = await this.post(
+    const res = await this.#post(
       url`/v2/rooms/${roomId}/broadcast_event`,
       message
     );
@@ -688,7 +681,7 @@ export class Liveblocks {
     roomId: string,
     format: "plain-lson" | "json" = "plain-lson"
   ): Promise<PlainLsonObject | ToSimplifiedJson<S>> {
-    const res = await this.get(url`/v2/rooms/${roomId}/storage`, { format });
+    const res = await this.#get(url`/v2/rooms/${roomId}/storage`, { format });
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -708,7 +701,7 @@ export class Liveblocks {
     roomId: string,
     document: PlainLsonObject
   ): Promise<PlainLsonObject> {
-    const res = await this.post(url`/v2/rooms/${roomId}/storage`, document);
+    const res = await this.#post(url`/v2/rooms/${roomId}/storage`, document);
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -721,7 +714,7 @@ export class Liveblocks {
    * @param roomId The id of the room to delete the storage from.
    */
   public async deleteStorageDocument(roomId: string): Promise<void> {
-    const res = await this.delete(url`/v2/rooms/${roomId}/storage`);
+    const res = await this.#delete(url`/v2/rooms/${roomId}/storage`);
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -752,7 +745,7 @@ export class Liveblocks {
 
     const path = url`v2/rooms/${roomId}/ydoc`;
 
-    const res = await this.get(path, {
+    const res = await this.#get(path, {
       formatting: format ? "true" : undefined,
       key,
       type,
@@ -779,7 +772,7 @@ export class Liveblocks {
       guid?: string;
     } = {}
   ): Promise<void> {
-    const res = await this.putBinary(url`/v2/rooms/${roomId}/ydoc`, update, {
+    const res = await this.#putBinary(url`/v2/rooms/${roomId}/ydoc`, update, {
       guid: params.guid,
     });
     if (!res.ok) {
@@ -801,7 +794,7 @@ export class Liveblocks {
       guid?: string;
     } = {}
   ): Promise<ArrayBuffer> {
-    const res = await this.get(url`/v2/rooms/${roomId}/ydoc-binary`, {
+    const res = await this.#get(url`/v2/rooms/${roomId}/ydoc-binary`, {
       guid: params.guid,
     });
     if (!res.ok) {
@@ -822,7 +815,7 @@ export class Liveblocks {
    * @returns The created schema.
    */
   public async createSchema(name: string, body: string): Promise<Schema> {
-    const res = await this.post(url`/v2/schemas`, {
+    const res = await this.#post(url`/v2/schemas`, {
       name,
       body,
     });
@@ -849,7 +842,7 @@ export class Liveblocks {
    * @returns The schema with the given id.
    */
   public async getSchema(schemaId: string): Promise<Schema> {
-    const res = await this.get(url`/v2/schemas/${schemaId}`);
+    const res = await this.#get(url`/v2/schemas/${schemaId}`);
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -874,7 +867,7 @@ export class Liveblocks {
    * @returns The updated schema. The version of the schema will be incremented.
    */
   public async updateSchema(schemaId: string, body: string): Promise<Schema> {
-    const res = await this.put(url`/v2/schemas/${schemaId}`, {
+    const res = await this.#put(url`/v2/schemas/${schemaId}`, {
       body,
     });
     if (!res.ok) {
@@ -900,7 +893,7 @@ export class Liveblocks {
    * @param schemaId Id of the schema - this is the combination of the schema name and version of the schema to update. For example, `my-schema@1`.
    */
   public async deleteSchema(schemaId: string): Promise<void> {
-    const res = await this.delete(url`/v2/schemas/${schemaId}`);
+    const res = await this.#delete(url`/v2/schemas/${schemaId}`);
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -913,7 +906,7 @@ export class Liveblocks {
    * @returns
    */
   public async getSchemaByRoomId(roomId: string): Promise<Schema> {
-    const res = await this.get(url`/v2/rooms/${roomId}/schema`);
+    const res = await this.#get(url`/v2/rooms/${roomId}/schema`);
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -943,7 +936,7 @@ export class Liveblocks {
     roomId: string,
     schemaId: string
   ): Promise<{ schema: string }> {
-    const res = await this.post(url`/v2/rooms/${roomId}/schema`, {
+    const res = await this.#post(url`/v2/rooms/${roomId}/schema`, {
       schema: schemaId,
     });
     if (!res.ok) {
@@ -958,7 +951,7 @@ export class Liveblocks {
    * @param roomId The id of the room to detach the schema from.
    */
   public async detachSchemaFromRoom(roomId: string): Promise<void> {
-    const res = await this.delete(url`/v2/rooms/${roomId}/schema`);
+    const res = await this.#delete(url`/v2/rooms/${roomId}/schema`);
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -1021,7 +1014,7 @@ export class Liveblocks {
       query = objectToQuery(params.query);
     }
 
-    const res = await this.get(url`/v2/rooms/${roomId}/threads`, {
+    const res = await this.#get(url`/v2/rooms/${roomId}/threads`, {
       query,
     });
     if (!res.ok) {
@@ -1047,7 +1040,7 @@ export class Liveblocks {
   }): Promise<ThreadData<M>> {
     const { roomId, threadId } = params;
 
-    const res = await this.get(url`/v2/rooms/${roomId}/threads/${threadId}`);
+    const res = await this.#get(url`/v2/rooms/${roomId}/threads/${threadId}`);
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);
@@ -1071,7 +1064,7 @@ export class Liveblocks {
   }): Promise<ThreadParticipants> {
     const { roomId, threadId } = params;
 
-    const res = await this.get(
+    const res = await this.#get(
       url`/v2/rooms/${roomId}/threads/${threadId}/participants`
     );
     if (!res.ok) {
@@ -1096,7 +1089,7 @@ export class Liveblocks {
   }): Promise<CommentData> {
     const { roomId, threadId, commentId } = params;
 
-    const res = await this.get(
+    const res = await this.#get(
       url`/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`
     );
     if (!res.ok) {
@@ -1127,7 +1120,7 @@ export class Liveblocks {
   }): Promise<CommentData> {
     const { roomId, threadId, data } = params;
 
-    const res = await this.post(
+    const res = await this.#post(
       url`/v2/rooms/${roomId}/threads/${threadId}/comments`,
       {
         ...data,
@@ -1161,7 +1154,7 @@ export class Liveblocks {
   }): Promise<CommentData> {
     const { roomId, threadId, commentId, data } = params;
 
-    const res = await this.post(
+    const res = await this.#post(
       url`/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`,
       {
         ...data,
@@ -1189,7 +1182,7 @@ export class Liveblocks {
   }): Promise<void> {
     const { roomId, threadId, commentId } = params;
 
-    const res = await this.delete(
+    const res = await this.#delete(
       url`/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}`
     );
     if (!res.ok) {
@@ -1213,7 +1206,7 @@ export class Liveblocks {
   ): Promise<ThreadData<M>> {
     const { roomId, data } = params;
 
-    const res = await this.post(url`/v2/rooms/${roomId}/threads`, {
+    const res = await this.#post(url`/v2/rooms/${roomId}/threads`, {
       ...data,
       comment: {
         ...data.comment,
@@ -1240,7 +1233,9 @@ export class Liveblocks {
   }): Promise<void> {
     const { roomId, threadId } = params;
 
-    const res = await this.delete(url`/v2/rooms/${roomId}/threads/${threadId}`);
+    const res = await this.#delete(
+      url`/v2/rooms/${roomId}/threads/${threadId}`
+    );
 
     if (!res.ok) {
       const text = await res.text();
@@ -1264,7 +1259,7 @@ export class Liveblocks {
   }): Promise<ThreadData<M>> {
     const { roomId, threadId } = params;
 
-    const res = await this.post(
+    const res = await this.#post(
       url`/v2/rooms/${roomId}/threads/${threadId}/mark-as-resolved`,
       {}
     );
@@ -1293,7 +1288,7 @@ export class Liveblocks {
   }): Promise<ThreadData<M>> {
     const { roomId, threadId } = params;
 
-    const res = await this.post(
+    const res = await this.#post(
       url`/v2/rooms/${roomId}/threads/${threadId}/mark-as-unresolved`,
       {}
     );
@@ -1326,7 +1321,7 @@ export class Liveblocks {
   }): Promise<M> {
     const { roomId, threadId, data } = params;
 
-    const res = await this.post(
+    const res = await this.#post(
       url`/v2/rooms/${roomId}/threads/${threadId}/metadata`,
       {
         ...data,
@@ -1363,7 +1358,7 @@ export class Liveblocks {
     };
   }): Promise<CommentUserReaction> {
     const { roomId, threadId, commentId, data } = params;
-    const res = await this.post(
+    const res = await this.#post(
       url`/v2/rooms/${roomId}/threads/${threadId}/comments/${commentId}/add-reaction`,
       {
         ...data,
@@ -1401,7 +1396,7 @@ export class Liveblocks {
   }): Promise<void> {
     const { roomId, threadId, data } = params;
 
-    const res = await this.post(
+    const res = await this.#post(
       url`/v2/rooms/${roomId}/threads/${threadId}/comments/${params.commentId}/remove-reaction`,
       {
         ...data,
@@ -1426,7 +1421,7 @@ export class Liveblocks {
   }): Promise<InboxNotificationData> {
     const { userId, inboxNotificationId } = params;
 
-    const res = await this.get(
+    const res = await this.#get(
       url`/v2/users/${userId}/inbox-notifications/${inboxNotificationId}`
     );
     if (!res.ok) {
@@ -1478,7 +1473,7 @@ export class Liveblocks {
       query = objectToQuery(params.query);
     }
 
-    const res = await this.get(url`/v2/users/${userId}/inbox-notifications`, {
+    const res = await this.#get(url`/v2/users/${userId}/inbox-notifications`, {
       query,
     });
     if (!res.ok) {
@@ -1506,7 +1501,7 @@ export class Liveblocks {
   }): Promise<RoomNotificationSettings> {
     const { userId, roomId } = params;
 
-    const res = await this.get(
+    const res = await this.#get(
       url`/v2/rooms/${roomId}/users/${userId}/notification-settings`
     );
     if (!res.ok) {
@@ -1530,7 +1525,7 @@ export class Liveblocks {
   }): Promise<RoomNotificationSettings> {
     const { userId, roomId, data } = params;
 
-    const res = await this.post(
+    const res = await this.#post(
       url`/v2/rooms/${roomId}/users/${userId}/notification-settings`,
       data
     );
@@ -1553,7 +1548,7 @@ export class Liveblocks {
   }): Promise<void> {
     const { userId, roomId } = params;
 
-    const res = await this.delete(
+    const res = await this.#delete(
       url`/v2/rooms/${roomId}/users/${userId}/notification-settings`
     );
     if (!res.ok) {
@@ -1573,7 +1568,7 @@ export class Liveblocks {
   }): Promise<RoomData> {
     const { currentRoomId, newRoomId } = params;
 
-    const res = await this.post(
+    const res = await this.#post(
       url`/v2/rooms/${currentRoomId}/update-room-id`,
       {
         newRoomId,
@@ -1601,7 +1596,7 @@ export class Liveblocks {
     subjectId: string;
     activityData: DAD[K];
   }): Promise<void> {
-    const res = await this.post(url`/v2/inbox-notifications/trigger`, params);
+    const res = await this.#post(url`/v2/inbox-notifications/trigger`, params);
 
     if (!res.ok) {
       const text = await res.text();
@@ -1620,7 +1615,7 @@ export class Liveblocks {
   }): Promise<void> {
     const { userId, inboxNotificationId } = params;
 
-    const res = await this.delete(
+    const res = await this.#delete(
       url`/v2/users/${userId}/inbox-notifications/${inboxNotificationId}`
     );
     if (!res.ok) {
@@ -1638,7 +1633,9 @@ export class Liveblocks {
   }): Promise<void> {
     const { userId } = params;
 
-    const res = await this.delete(url`/v2/users/${userId}/inbox-notifications`);
+    const res = await this.#delete(
+      url`/v2/users/${userId}/inbox-notifications`
+    );
     if (!res.ok) {
       const text = await res.text();
       throw new LiveblocksError(res.status, text);

@@ -63,50 +63,50 @@ class BatchCall<O, I> {
  * Batch calls to a function, either by number of calls or by a maximum delay.
  */
 export class Batch<O, I> {
-  private queue: BatchCall<O, I>[] = [];
-  private callback: BatchCallback<O, I>;
-  private size: number;
-  private delay: number;
-  private delayTimeoutId?: ReturnType<typeof setTimeout>;
+  #queue: BatchCall<O, I>[] = [];
+  #callback: BatchCallback<O, I>;
+  #size: number;
+  #delay: number;
+  #delayTimeoutId?: ReturnType<typeof setTimeout>;
   public error = false;
 
   constructor(callback: BatchCallback<O, I>, options: Options) {
-    this.callback = callback;
-    this.size = options.size ?? DEFAULT_SIZE;
-    this.delay = options.delay;
+    this.#callback = callback;
+    this.#size = options.size ?? DEFAULT_SIZE;
+    this.#delay = options.delay;
   }
 
-  private clearDelayTimeout(): void {
-    if (this.delayTimeoutId !== undefined) {
-      clearTimeout(this.delayTimeoutId);
-      this.delayTimeoutId = undefined;
+  #clearDelayTimeout(): void {
+    if (this.#delayTimeoutId !== undefined) {
+      clearTimeout(this.#delayTimeoutId);
+      this.#delayTimeoutId = undefined;
     }
   }
 
-  private schedule() {
-    if (this.queue.length === this.size) {
+  #schedule() {
+    if (this.#queue.length === this.#size) {
       // If the queue is full, flush it immediately.
-      void this.flush();
-    } else if (this.queue.length === 1) {
+      void this.#flush();
+    } else if (this.#queue.length === 1) {
       // If the call is the first in the queue, schedule a flush.
-      this.clearDelayTimeout();
-      this.delayTimeoutId = setTimeout(() => void this.flush(), this.delay);
+      this.#clearDelayTimeout();
+      this.#delayTimeoutId = setTimeout(() => void this.#flush(), this.#delay);
     }
   }
 
-  private async flush(): Promise<void> {
+  async #flush(): Promise<void> {
     // If the queue is empty, don't call the callback.
-    if (this.queue.length === 0) {
+    if (this.#queue.length === 0) {
       return;
     }
 
     // Empty the queue and get its calls.
-    const calls = this.queue.splice(0);
+    const calls = this.#queue.splice(0);
     const inputs = calls.map((call) => call.input);
 
     try {
       // Call the batch callback with the queued arguments.
-      const results = await this.callback(inputs);
+      const results = await this.#callback(inputs);
       this.error = false;
 
       // Resolve or reject each call.
@@ -139,7 +139,7 @@ export class Batch<O, I> {
 
   get(input: I): Promise<O> {
     // Check if there's already an identical call in the queue.
-    const existingCall = this.queue.find(
+    const existingCall = this.#queue.find(
       (call) => stringify(call.input) === stringify(input)
     );
 
@@ -150,16 +150,16 @@ export class Batch<O, I> {
 
     // If no existing call exists, add the call to the queue and schedule a flush.
     const call = new BatchCall<O, I>(input);
-    this.queue.push(call);
-    this.schedule();
+    this.#queue.push(call);
+    this.#schedule();
 
     return call.promise;
   }
 
   clear(): void {
-    this.queue = [];
+    this.#queue = [];
     this.error = false;
-    this.clearDelayTimeout();
+    this.#clearDelayTimeout();
   }
 }
 

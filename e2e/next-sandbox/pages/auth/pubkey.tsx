@@ -8,7 +8,7 @@ import type {
 import { nn } from "@liveblocks/core";
 import { createRoomContext } from "@liveblocks/react";
 import Link from "next/link";
-import React from "react";
+import { useEffect, useState } from "react";
 
 import { getRoomFromUrl } from "../../utils";
 import { createLiveblocksClient } from "../../utils/createClient";
@@ -28,12 +28,12 @@ const { RoomProvider, useMyPresence, useSelf, useOthers, useStatus } =
   );
 
 export default function Home() {
-  React.useEffect(() => {
+  useEffect(() => {
     setText(getRoomFromUrl());
   }, []);
 
-  const [text, setText] = React.useState("");
-  const [roomId, setRoomId] = React.useState<string | null>(null);
+  const [text, setText] = useState("");
+  const [roomId, setRoomId] = useState<string | null>(null);
 
   return (
     <>
@@ -48,23 +48,23 @@ export default function Home() {
         <ul>
           <li>
             <Link href={"/auth/pubkey?room=" + encodeURIComponent(text)}>
-              <a>with pubkey</a>
+              with pubkey
             </Link>{" "}
             👈
           </li>
           <li>
             <Link href={"/auth/acc-token?room=" + encodeURIComponent(text)}>
-              <a>with access token</a>
+              with access token
             </Link>
           </li>
           <li>
             <Link href={"/auth/id-token?room=" + encodeURIComponent(text)}>
-              <a>with ID token</a>
+              with ID token
             </Link>
           </li>
           <li>
             <Link href={"/auth/secret-legacy?room=" + encodeURIComponent(text)}>
-              <a>with legacy token</a>
+              with legacy token
             </Link>
           </li>
         </ul>

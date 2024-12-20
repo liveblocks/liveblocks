@@ -1,4 +1,4 @@
-import React from "react";
+
 import type { ActivityData, InboxNotificationData } from "@liveblocks/core";
 import { expectError, expectType } from "tsd";
 import {

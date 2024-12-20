@@ -26,8 +26,14 @@ import type {
 import { HttpError, kInternal, makeEventSource } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
 import type { DragEvent } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
 
 import {
   FLOATING_ELEMENT_COLLISION_PADDING,
@@ -49,7 +55,6 @@ import { getFiles } from "../../utils/data-transfer";
 import { exists } from "../../utils/exists";
 import { useInitial } from "../../utils/use-initial";
 import { useLatest } from "../../utils/use-latest";
-import { useLayoutEffect } from "../../utils/use-layout-effect";
 import {
   isCommentBodyLink,
   isCommentBodyMention,

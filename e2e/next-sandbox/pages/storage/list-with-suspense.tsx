@@ -1,6 +1,5 @@
 import { LiveList } from "@liveblocks/client";
 import { ClientSideSuspense, createRoomContext } from "@liveblocks/react";
-import React from "react";
 
 import {
   getRoomFromUrl,

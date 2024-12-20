@@ -6,7 +6,6 @@ import type {
   PropsWithChildren,
 } from "react";
 import { createContext, useContext, useMemo } from "react";
-import * as React from "react";
 
 export interface GlobalComponents {
   Anchor: ComponentType<ComponentPropsWithoutRef<"a">> | "a";

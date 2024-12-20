@@ -1,6 +1,6 @@
 import fc from "fast-check";
 
-import { makeEventSource } from "../EventSource";
+import { makeBufferableEventSource, makeEventSource } from "../EventSource";
 
 const anything = () =>
   fc.anything({
@@ -219,7 +219,9 @@ describe("EventSource", () => {
 
     await expect(promise$).resolves.toBe(7);
   });
+});
 
+describe("BufferableEventSource", () => {
   test("pausing/continuing event delivery", () => {
     fc.assert(
       fc.property(
@@ -227,7 +229,7 @@ describe("EventSource", () => {
 
         (payload) => {
           const callback = jest.fn();
-          const hub = makeEventSource();
+          const hub = makeBufferableEventSource();
 
           const unsub = hub.observable.subscribe(callback);
 

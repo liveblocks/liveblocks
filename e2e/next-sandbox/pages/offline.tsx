@@ -1,7 +1,6 @@
 import { LiveList } from "@liveblocks/client";
 import { kInternal } from "@liveblocks/core";
 import { createRoomContext } from "@liveblocks/react";
-import React from "react";
 
 import {
   getRoomFromUrl,

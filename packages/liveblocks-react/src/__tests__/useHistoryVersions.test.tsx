@@ -10,7 +10,7 @@ import {
   type RestRequest,
 } from "msw";
 import { setupServer } from "msw/node";
-import React, { Suspense } from "react";
+import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
 import MockWebSocket from "./_MockWebSocket";
@@ -165,24 +165,22 @@ describe("useHistoryVersions", () => {
       umbrellaStore,
     } = createContextsForTest();
 
-    umbrellaStore.force_set((state) => ({
-      ...state,
-      versionsByRoomId: {
-        "room-1": {
-          version_1: {
-            type: "historyVersion",
-            kind: "yjs",
-            createdAt: new Date(),
-            id: "version_1",
-            authors: [
-              {
-                id: "user-1",
-              },
-            ],
+    umbrellaStore.force_set_versions((lut) => {
+      const room1Versions = new Map();
+      room1Versions.set("version_1", {
+        type: "historyVersion",
+        kind: "yjs",
+        createdAt: new Date(),
+        id: "version_1",
+        authors: [
+          {
+            id: "user-1",
           },
-        },
-      },
-    }));
+        ],
+      });
+
+      lut.set("room-1", room1Versions);
+    });
 
     const { result, unmount } = renderHook(() => useHistoryVersions(), {
       wrapper: ({ children }) => (

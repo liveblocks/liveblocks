@@ -1,9 +1,8 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { NodeKey } from "lexical";
 import { $createNodeSelection, $getNodeByKey, $setSelection } from "lexical";
-import type { ReactNode } from "react";
-import React, { useCallback } from "react";
-import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
+import type { MouseEvent, ReactNode } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
 export function Mention({
   nodeKey,
@@ -15,7 +14,7 @@ export function Mention({
   const [editor] = useLexicalComposerContext();
   const isSelected = useIsNodeSelected(nodeKey);
 
-  function handleClick(event: React.MouseEvent) {
+  function handleClick(event: MouseEvent) {
     editor.update(() => {
       event.stopPropagation();
       event.preventDefault();
