@@ -590,6 +590,36 @@ export type CleanNotifications = {
   notificationsById: Record<string, InboxNotificationData>;
 };
 
+function createStore_forHistoryVersions() {
+  const signal = new Signal<VersionsByRoomId>({});
+
+  function update(roomId: string, versions: HistoryVersion[]): void {
+    signal.set((prev) => {
+      const newVersions: Record<string, HistoryVersion> = { ...prev[roomId] };
+      for (const version of versions) {
+        newVersions[version.id] = version;
+      }
+      return {
+        ...prev,
+        [roomId]: newVersions,
+      };
+    });
+  }
+
+  return {
+    signal: signal.asReadonly(),
+
+    // Mutations
+    update,
+
+    // XXX Remove these eventually
+    force_set: (
+      callback: (currentState: VersionsByRoomId) => VersionsByRoomId
+    ) => signal.set(callback),
+    invalidate: () => signal.set((store) => ({ ...store })),
+  };
+}
+
 function createStore_forPermissionHints() {
   const signal = new Signal<PermissionHintsByRoomId>({});
 
@@ -694,10 +724,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
   readonly baseThreadsDB: ThreadDB<M>; // Exposes its signal under `.signal` prop
   readonly baseNotificationsById: Signal<NotificationsById>;
   readonly baseSettingsByRoomId: Signal<SettingsByRoomId>;
-  readonly optimisticUpdates: ReturnType<typeof createStore_forOptimistic<M>>;
-
-  readonly baseVersionsByRoomId: Signal<VersionsByRoomId>;
+  readonly historyVersions: ReturnType<typeof createStore_forHistoryVersions>;
   readonly permissionHints: ReturnType<typeof createStore_forPermissionHints>;
+  readonly optimisticUpdates: ReturnType<typeof createStore_forOptimistic<M>>;
 
   //
   // Output signals.
@@ -766,7 +795,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     this.baseThreadsDB = new ThreadDB();
 
-    this.baseVersionsByRoomId = new Signal<VersionsByRoomId>({});
+    this.historyVersions = createStore_forHistoryVersions();
     this.baseNotificationsById = new Signal<NotificationsById>({});
     this.baseSettingsByRoomId = new Signal<SettingsByRoomId>({});
 
@@ -798,7 +827,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // This is a smell. We should be able to extract it out of the
     // UmbrellaStore must like the permission hints signal.
     const versionsByRoomId = DerivedSignal.from(
-      this.baseVersionsByRoomId,
+      this.historyVersions.signal,
       (hv) => hv
     );
 
@@ -1004,19 +1033,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }));
   }
 
-  #updateRoomVersions(roomId: string, versions: HistoryVersion[]): void {
-    this.baseVersionsByRoomId.set((prev) => {
-      const newVersions: Record<string, HistoryVersion> = { ...prev[roomId] };
-      for (const version of versions) {
-        newVersions[version.id] = version;
-      }
-      return {
-        ...prev,
-        [roomId]: newVersions,
-      };
-    });
-  }
-
   // ---------------------------------------------------------------------------------- }}}
 
   /** @internal - Only call this method from unit tests. */
@@ -1024,7 +1040,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     callback: (currentState: VersionsByRoomId) => VersionsByRoomId
   ): void {
     batch(() => {
-      this.baseVersionsByRoomId.set(callback);
+      this.historyVersions.force_set(callback);
       this.invalidateEntireStore();
     });
   }
@@ -1511,11 +1527,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // XXX Of course this now looks stupid, but it's the exact equivalent of
     // what we're been doing all along
     batch(() => {
-      this.baseVersionsByRoomId.set((store) => ({ ...store }));
+      this.historyVersions.invalidate();
       this.baseNotificationsById.set((store) => ({ ...store }));
-      this.optimisticUpdates.invalidate(),
-        this.permissionHints.invalidate(),
-        this.baseSettingsByRoomId.set((store) => ({ ...store }));
+      this.optimisticUpdates.invalidate();
+      this.permissionHints.invalidate();
+      this.baseSettingsByRoomId.set((store) => ({ ...store }));
     });
   }
 
@@ -1560,7 +1576,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
         }
 
         const result = await room[kInternal].listTextVersions();
-        this.#updateRoomVersions(roomId, result.versions);
+        this.historyVersions.update(roomId, result.versions);
 
         const lastRequestedAt =
           this.#roomVersionsLastRequestedAtByRoom.get(roomId);
@@ -1610,7 +1626,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       signal,
     });
 
-    this.#updateRoomVersions(roomId, updates.versions);
+    this.historyVersions.update(roomId, updates.versions);
 
     if (lastRequestedAt < updates.requestedAt) {
       // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
