@@ -2088,7 +2088,7 @@ export function applyOptimisticUpdates_forChannelNotificationSettings(
           const key = channelKey;
           const channelUpdates = incomingSettings[key];
 
-          if (channelUpdates && typeof channelUpdates === "object") {
+          if (channelUpdates) {
             const realChannelUpdates = Object.fromEntries(
               entries(channelUpdates).filter(
                 ([_, value]) => value !== undefined
