@@ -540,6 +540,11 @@ type RoomId = string;
 type QueryKey = string;
 
 /**
+ * A lookup table (LUT) for all the history versions.
+ */
+type VersionsLUT = Map<RoomId, Map<string, HistoryVersion>>;
+
+/**
  * Versions by roomId
  * e.g. { 'room-abc': {versions: "all versions"}}
  */
@@ -551,6 +556,11 @@ type VersionsByRoomId = Record<RoomId, Record<string, HistoryVersion>>;
 type NotificationsLUT = Map<string, InboxNotificationData>;
 
 /**
+ * A lookup table (LUT) for all the room notification settings.
+ */
+type SettingsLUT = Map<RoomId, RoomNotificationSettings>;
+
+/**
  * Notification settings by room ID.
  * e.g. { 'room-abc': { threads: "all" },
  *        'room-def': { threads: "replies_and_mentions" },
@@ -558,7 +568,6 @@ type NotificationsLUT = Map<string, InboxNotificationData>;
  *      }
  */
 type SettingsByRoomId = Record<RoomId, RoomNotificationSettings>;
-type SettingsLUT = Map<RoomId, RoomNotificationSettings>;
 
 type PermissionHintsByRoomId = Record<RoomId, Set<Permission>>;
 
@@ -715,18 +724,16 @@ function createStore_forRoomNotificationSettings() {
 }
 
 function createStore_forHistoryVersions() {
-  const signal = new Signal<VersionsByRoomId>({});
+  const signal = new MutableSignal<VersionsLUT>(new Map());
 
   function update(roomId: string, versions: HistoryVersion[]): void {
-    signal.set((prev) => {
-      const newVersions: Record<string, HistoryVersion> = { ...prev[roomId] };
+    signal.mutate((lut) => {
+      // get-or-create
+      const versionsById =
+        lut.get(roomId) ?? (lut.set(roomId, new Map()), lut.get(roomId)!);
       for (const version of versions) {
-        newVersions[version.id] = version;
+        versionsById.set(version.id, version);
       }
-      return {
-        ...prev,
-        [roomId]: newVersions,
-      };
     });
   }
 
@@ -737,10 +744,9 @@ function createStore_forHistoryVersions() {
     update,
 
     // XXX Remove these eventually
-    force_set: (
-      callback: (currentState: VersionsByRoomId) => VersionsByRoomId
-    ) => signal.set(callback),
-    invalidate: () => signal.set((store) => ({ ...store })),
+    force_set: (callback: (lut: VersionsLUT) => void | boolean) =>
+      signal.mutate(callback),
+    invalidate: () => signal.mutate(),
   };
 }
 
@@ -950,12 +956,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
         applyOptimisticUpdates_forSettings(settings, updates)
     );
 
-    // XXX Not much of a "derived" state: it's just the same as the input
-    // This is a smell. We should be able to extract it out of the
-    // UmbrellaStore must like the permission hints signal.
     const versionsByRoomId = DerivedSignal.from(
       this.historyVersions.signal,
-      (hv) => hv
+      (hv) =>
+        Object.fromEntries(
+          [...hv].map(([roomId, versions]) => [
+            roomId,
+            Object.fromEntries(versions),
+          ])
+        )
     );
 
     this.outputs = {
@@ -1150,7 +1159,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   /** @internal - Only call this method from unit tests. */
   public force_set_versions(
-    callback: (currentState: VersionsByRoomId) => VersionsByRoomId
+    callback: (lut: VersionsLUT) => void | boolean
   ): void {
     batch(() => {
       this.historyVersions.force_set(callback);
