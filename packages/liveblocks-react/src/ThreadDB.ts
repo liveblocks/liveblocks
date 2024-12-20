@@ -2,8 +2,9 @@ import type {
   BaseMetadata,
   ThreadData,
   ThreadDataWithDeleteInfo,
+  ThreadDeleteInfo,
 } from "@liveblocks/core";
-import { MutableSignal, SortedList } from "@liveblocks/core";
+import { batch, MutableSignal, SortedList } from "@liveblocks/core";
 
 import { makeThreadsFilter } from "./lib/querying";
 import type { ThreadsQuery } from "./types";
@@ -135,6 +136,25 @@ export class ThreadDB<M extends BaseMetadata> {
     if (!existing || thread.updatedAt >= existing.updatedAt) {
       this.upsert(thread);
     }
+  }
+
+  public applyDelta(updates: {
+    newThreads: ThreadData<M>[];
+    deletedThreads: ThreadDeleteInfo[];
+  }): void {
+    batch(() => {
+      // Add new threads or update existing threads if the existing thread is older than the new thread.
+      for (const thread of updates.newThreads) {
+        this.upsertIfNewer(thread);
+      }
+
+      // Mark threads in the deletedThreads list as deleted
+      for (const { id, deletedAt } of updates.deletedThreads) {
+        const existing = this.getEvenIfDeleted(id);
+        if (!existing) continue;
+        this.delete(id, deletedAt);
+      }
+    });
   }
 
   /**

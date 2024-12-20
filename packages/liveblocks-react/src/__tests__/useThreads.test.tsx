@@ -1453,10 +1453,10 @@ describe("useThreads", () => {
       umbrellaStore,
     } = createContextsForTest();
 
-    const db = umbrellaStore.baseThreadsDB;
+    const db = umbrellaStore.threads;
     db.upsert(thread1);
     db.upsert(thread2WithDeletedAt);
-    umbrellaStore.force_set_versions((state) => ({ ...state }));
+    umbrellaStore.invalidateEntireStore();
 
     const { result, unmount } = renderHook(
       () => useThreads({ query: { metadata: {} } }),
