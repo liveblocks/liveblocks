@@ -1,0 +1,275 @@
+---
+meta:
+  title: "Hooks"
+  parentTitle: "Comments"
+  description: "Get users, threads, and modify comments"
+---
+
+The Comments React hooks can be used to fetch, create, and modify threads on the
+client.
+
+## useThreads hook [#threads-hook]
+
+The most important Comments hook is
+[`useThreads`](/docs/api-reference/liveblocks-react#useThreads), which retrieves
+a list of each thread in the current room. This can be used to render a list of
+threads, either using the
+[default components](/docs/ready-made-features/comments/default-components), or
+[primitives](/docs/ready-made-features/comments/primitives). Here’s an example
+of it used with the default
+[`Thread`](/docs/api-reference/liveblocks-react-ui#Thread) component.
+
+```tsx
+import { useThreads } from "../liveblocks.config";
+
+function Component() {
+  const { threads } = useThreads();
+
+  // [{ type: "thread", id: "th_sf8s6sh...", ... }, ...]
+  console.log(threads);
+
+  return (
+    <>
+      {threads.map((thread) => (
+        <Thread key={thread.id} thread={thread} />
+      ))}
+    </>
+  );
+}
+```
+
+There are two versions of the
+[`useThreads`](/docs/api-reference/liveblocks-react#useThreads) hook, the
+[Suspense version](#suspense-hooks), which we recommend by default, and the
+[regular version](#regular-hooks).
+
+## useUser hook [#user-hook]
+
+The only information Liveblocks stores about users is their user ID, which is
+set when [authenticating with Liveblocks](/docs/authentication). With the
+[`useUser`](/docs/api-reference/liveblocks-react#useUser) hook, you can fetch a
+user’s information from their ID. This is particularly helpful when building
+primitive components, as this allows you fetch their name, avatar, and any other
+custom data you’ve set.
+
+```tsx
+import { useUser } from "../liveblocks.config";
+
+function Component() {
+  const { user } = useUser("olivier@example.com");
+
+  // { name: "Olivier", avatar: "https://...", color: "red" }
+  console.log(user);
+
+  return <img src={user.avatar} alt={user.name} />;
+}
+```
+
+The user data retrieved is set within the
+[`resolveUsers`](/docs/api-reference/liveblocks-client#resolveUsers) function in
+your `liveblocks.config.ts` file.
+
+```ts
+async function resolveUsers({ userIds }) {
+  // ["olivier@example.com"]
+  console.log(userIds);
+
+  return [
+    {
+      name: "Olivier",
+      avatar: "https://example.com/olivier.png",
+      color: "red",
+    },
+  ];
+}
+```
+
+There are two versions of the
+[`useUser`](/docs/api-reference/liveblocks-client#useUser) hook,
+[Suspense](#suspense-hooks), which we recommend by default, and
+[regular](#regular-hooks).
+
+## Mutation hooks [#mutation-hooks]
+
+A number of hooks can be used to mutate comment and thread data, for example:
+
+- Creating threads
+- Deleting comments
+- Adding emoji reactions
+
+Some of these hooks are quite simple, such as
+[`useAddReaction`](/docs/api-reference/liveblocks-react#useAddReaction) which
+adds a reaction to a specified comment.
+
+```tsx highlight="6,9-13"
+import { CommentData } from "@liveblocks/client";
+import { useAddReaction } from "../liveblocks.config.ts";
+
+// A button that adds a "⭐" reaction to a comment
+function Component({ comment }: { CommentData }) {
+  const addReaction = useAddReaction();
+
+  function handleClick() {
+    addReaction({
+      threadId: comment.threadId,
+      commentId: comment.commentId,
+      emoji: "⭐",
+    });
+  }
+
+  return <button onClick={handleClick}>Star ⭐</button>;
+}
+```
+
+Whereas others, such as
+[`useCreateThread`](/docs/api-reference/liveblocks-react#useCreateThread), have
+more complex behaviour and are designed to work alongside
+[primitives](/docs/ready-made-features/comments/primitives).
+
+```tsx highlight="10,18-21"
+import {
+  Composer,
+  ComposerSubmitComment,
+} from "@liveblocks/react-ui/primitives";
+import { useCreateThread } from "../liveblocks.config.ts";
+import { FormEvent } from "react";
+
+// A custom composer that creates a thread on submit
+function MyComposer() {
+  const createThread = useCreateThread();
+
+  function handleComposerSubmit(
+    { body }: ComposerSubmitComment,
+    event: FormEvent<HTMLFormElement>
+  ) {
+    event.preventdefault();
+
+    const thread = createThread({
+      body,
+      metadata: {},
+    });
+  }
+
+  return (
+    <Composer.Form onComposerSubmit={handleComposerSubmit}>
+      <Composer.Editor />
+      <Composer.Submit>Create thread</Composer.Submit>
+    </Composer.Form>
+  );
+}
+```
+
+You can find more information on each mutation hook in our API reference pages:
+
+- [`useCreateThread`](/docs/api-reference/liveblocks-react#useCreateThread)
+- [`useDeleteThread`](/docs/api-reference/liveblocks-react#useDeleteThread)
+- [`useEditThreadMetadata`](/docs/api-reference/liveblocks-react#useEditThreadMetadata)
+- [`useMarkThreadAsResolved`](/docs/api-reference/liveblocks-react#useMarkThreadAsResolved)
+- [`useMarkThreadAsUnresolved`](/docs/api-reference/liveblocks-react#useMarkThreadAsUnresolved)
+- [`useCreateComment`](/docs/api-reference/liveblocks-react#useCreateComment)
+- [`useEditComment`](/docs/api-reference/liveblocks-react#useEditComment)
+- [`useDeleteComment`](/docs/api-reference/liveblocks-react#useDeleteComment)
+- [`useAddReaction`](/docs/api-reference/liveblocks-react#useAddReaction)
+- [`useRemoveReaction`](/docs/api-reference/liveblocks-react#useRemoveReaction)
+
+There’s only one version of these hooks, so it doesn’t make a difference if you
+export them from `suspense` in your config file or not.
+
+## Hook types [#hook-types]
+
+There are two different ways to use the [threads](#threads-hook) and
+[user](#user-hook) hooks; with
+[React Suspense](https://react.dev/reference/react/Suspense), and without it. We
+recommend using the Suspense versions, as they often result in simpler code.
+
+### Suspense hooks [#suspense-hooks]
+
+Using Suspense hooks means that any data retrieved, for example `threads` from
+`useThreads`, will never be `undefined`, and your component will never see an
+error.
+
+```tsx
+import { useThreads } from "../liveblocks.config.ts";
+
+// Suspense: `threads` is always defined
+function MyThreads() {
+  const { threads } = useThreads();
+
+  // [{ type: "thread", id: "th_sf8s6sh...", ... }, ...]
+  console.log(threads);
+}
+```
+
+To catch errors and display a loading screen, you can use
+[`ErrorBoundary`](https://www.npmjs.com/package/react-error-boundary) and
+[`ClientSideSuspense`](/docs/api-reference/liveblocks-react#suspense-avoid-ssr).
+
+```tsx highlight="7-11"
+import { ClientSideSuspense } from "@liveblocks/react";
+import { ErrorBoundary } from "react-error-boundary";
+
+// Handle errors and loading state in the component above
+function Component() {
+  return (
+    <ErrorBoundary fallback={<div>Error</div>}>
+      <ClientSideSuspense fallback={<div>Loading...</div>}>
+        <MyThreads />
+      </ClientSideSuspense>
+    </ErrorBoundary>
+  );
+}
+```
+
+To use Suspense, make sure you’re exporting your hooks from the `suspense`
+property in your config file.
+
+```tsx file="liveblocks.config.ts" highlight="5-7"
+// ...
+
+export const {
+  suspense: {
+    // Export from here to use Suspense hooks
+    useThreads,
+    useUser,
+  },
+} = createRoomContext(client, {});
+```
+
+### Regular hooks [#regular-hooks]
+
+The regular versions of Liveblocks hooks require you to check for `error` and
+`isLoading` properties. You can then handle these states in the same component.
+
+```tsx
+import { useThreads } from "../liveblocks.config.ts";
+
+// Handle errors and loading state in the same component
+function MyThreads() {
+  const { threads, error, isLoading } = useThreads();
+
+  if (error) {
+    return <div>Error</div>;
+  }
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  // Non-Suspense: `threads` is only defined AFTER the `if` checks
+  // [{ type: "thread", id: "th_sf8s6sh...", ... }, ...]
+  console.log(threads);
+}
+```
+
+To use the regular hooks, make sure you’re exporting from the root level in your
+config file.
+
+```tsx file="liveblocks.config.ts" highlight="4-6"
+// ...
+
+export const {
+  // Export from here to use regular hooks
+  useThreads,
+  useUser,
+} = createRoomContext(client, {});
+```

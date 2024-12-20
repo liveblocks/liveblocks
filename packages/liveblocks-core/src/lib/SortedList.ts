@@ -32,12 +32,12 @@ function bisectRight<T>(arr: readonly T[], x: T, lt: (a: T, b: T) => boolean) {
  * [{ id: 1 }, { id: 4 }, { id: 5 }, { id: 9 }])
  */
 export class SortedList<T> {
-  private _data: T[];
-  private _lt: (a: T, b: T) => boolean;
+  #data: T[];
+  #lt: (a: T, b: T) => boolean;
 
   private constructor(alreadySortedList: T[], lt: (a: T, b: T) => boolean) {
-    this._lt = lt;
-    this._data = alreadySortedList;
+    this.#lt = lt;
+    this.#data = alreadySortedList;
   }
 
   public static from<T>(arr: T[], lt: (a: T, b: T) => boolean): SortedList<T> {
@@ -59,15 +59,15 @@ export class SortedList<T> {
    * Clones the sorted list to a new instance.
    */
   public clone(): SortedList<T> {
-    return new SortedList(this._data.slice(), this._lt);
+    return new SortedList(this.#data.slice(), this.#lt);
   }
 
   /**
    * Adds a new item to the sorted list, such that it remains sorted.
    */
   add(value: T): void {
-    const idx = bisectRight(this._data, value, this._lt);
-    this._data.splice(idx, 0, value);
+    const idx = bisectRight(this.#data, value, this.#lt);
+    this.#data.splice(idx, 0, value);
   }
 
   /**
@@ -76,20 +76,20 @@ export class SortedList<T> {
    * removed if the element exists in the sorted list multiple times.
    */
   remove(value: T): boolean {
-    const idx = this._data.indexOf(value);
+    const idx = this.#data.indexOf(value);
     if (idx >= 0) {
-      this._data.splice(idx, 1);
+      this.#data.splice(idx, 1);
       return true;
     }
     return false;
   }
 
   get length(): number {
-    return this._data.length;
+    return this.#data.length;
   }
 
   *filter(predicate: (value: T) => boolean): IterableIterator<T> {
-    for (const item of this._data) {
+    for (const item of this.#data) {
       if (predicate(item)) {
         yield item;
       }
@@ -97,6 +97,6 @@ export class SortedList<T> {
   }
 
   [Symbol.iterator](): IterableIterator<T> {
-    return this._data[Symbol.iterator]();
+    return this.#data[Symbol.iterator]();
   }
 }

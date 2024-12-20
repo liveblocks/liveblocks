@@ -1,0 +1,142 @@
+---
+meta:
+  title: "Default components"
+  parentTitle: "Comments"
+  description: "Ready-to-use customizable components"
+---
+
+The default components included in Comments are a great way to start building
+your application. With these components you can render entire threads, along
+with a comment composer.
+
+- Fully styled commenting components, with an optional dark mode.
+- Customize through CSS variables and class names.
+- Localize and modify strings with overrides.
+- Can be used alongside
+  [primitives](/docs/ready-made-features/comments/primitives).
+
+## Thread
+
+The [`Thread`][] component renders a thread and its contained comments, as well
+a composer for adding new comments to thread.
+
+<Figure>
+  <Image
+    src="/assets/comments/thread.png"
+    alt="Thread"
+    width={768}
+    height={446}
+  />
+</Figure>
+
+### Usage
+
+The best way to get started is to import the [`useThreads`][] hook, and loop
+through each thread in the current room.
+
+```tsx highlight="5,9-11"
+import { Thread } from "@liveblocks/react-ui";
+import { useThreads } from "../liveblocks.config";
+
+function Component() {
+  const { threads } = useThreads();
+
+  return (
+    <>
+      {threads.map((thread) => (
+        <Thread key={thread.id} thread={thread} />
+      ))}
+    </>
+  );
+}
+```
+
+This will render a list containing every thread in the room, each with its own
+composer for adding new comments.
+
+## Composer
+
+The [`Composer`][] component renders a rich-text composer that’s used to create
+new threads. It can also be used to add comments to an existing thread, or to
+edit comments.
+
+<Figure>
+  <Image
+    src="/assets/comments/composer.png"
+    alt="Composer"
+    width={768}
+    height={446}
+  />
+</Figure>
+
+### Usage
+
+Get started by importing the component. By default, it’ll create a new thread
+when the form’s submitted.
+
+```tsx
+import { Composer } from "@liveblocks/react-ui";
+
+// Creates a new thread
+function Component() {
+  return <Composer />;
+}
+```
+
+[`Composer`][] can also be used in other ways:
+
+- [Adding metadata to a new thread](/docs/api-reference/liveblocks-react-ui#Adding-thread-metadata)
+- [Replying to a thread](/docs/api-reference/liveblocks-react-ui#Replying-to-a-thread)
+- [Modifying a comment](/docs/api-reference/liveblocks-react-ui#Modifying-a-comment)
+- [Custom behavior](/docs/api-reference/liveblocks-react-ui#Custom-behavior)
+
+## Comment
+
+The [`Comment`][] component renders a single comment. It’s useful if you’re
+building a custom [Thread](#Thread) component, or if you’re displaying a
+standalone comment.
+
+<Figure>
+  <Image
+    src="/assets/comments/comment.png"
+    alt="Comment"
+    width={768}
+    height={446}
+  />
+</Figure>
+
+### Usage
+
+Start by importing the component, and passing the comment to it.
+
+```tsx highlight="9"
+import { Comment } from "@liveblocks/react-ui";
+import { ThreadData } from "@liveblocks/client";
+
+// Renders a list of comments attached to the specified `thread`
+function MyComment({ thread }: { thread: ThreadData }) {
+  return (
+    <>
+      {thread.comments.map((comment) => (
+        <Comment key={comment.id} comment={comment} />
+      ))}
+    </>
+  );
+}
+```
+
+[`Composer`]: /docs/api-reference/liveblocks-react-ui#Composer
+[`Comment`]: /docs/api-reference/liveblocks-react-ui#Comment
+[`Thread`]: /docs/api-reference/liveblocks-react-ui#Thread
+[`useThreads`]: /docs/api-reference/liveblocks-react#useThreads
+
+## Customization
+
+It’s possible to style and localize the default components:
+
+- Import dark mode styles.
+- Modify the style with CSS variables and class names.
+- Use overrides to change default text used in the components.
+
+Learn more under
+[styling and customization](/docs/ready-made-features/comments/styling-and-customization).

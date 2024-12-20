@@ -1,7 +1,7 @@
 "use client";
 
 import type { ComponentPropsWithoutRef } from "react";
-import React, { Children, forwardRef, useRef } from "react";
+import { Children, forwardRef, useRef } from "react";
 
 import { classNames } from "../utils/class-names";
 import { useVisibleCallback } from "../utils/use-visible";

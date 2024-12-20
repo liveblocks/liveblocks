@@ -23,15 +23,15 @@ import {
   shallow,
 } from "@liveblocks/core";
 import type { PropsWithChildren } from "react";
-import React, {
+import {
   createContext,
   useCallback,
   useContext,
   useEffect,
   useMemo,
+  useState,
+  useSyncExternalStore,
 } from "react";
-import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
-import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import { config } from "./config";
 import { useIsInsideRoom } from "./contexts";
@@ -54,6 +54,7 @@ import type {
   UseUserThreadsOptions,
 } from "./types";
 import { UmbrellaStore } from "./umbrella-store";
+import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
 
 /**
  * Raw access to the React context where the LiveblocksProvider stores the
@@ -412,8 +413,15 @@ function useInboxNotifications_withClient<T>(
     };
   }, [poller]);
 
+  // TODO(vincent+nimesh) There is a disconnect between this getter and
+  // subscriber! It's unclear why the getInboxNotificationsLoadingState getter
+  // should be paired with subscribe1 and not subscribe2 from the outside! (The
+  // reason is that getInboxNotificationsLoadingState internally uses `get1`
+  // not `get2`.) This is strong evidence that
+  // getInboxNotificationsLoadingState itself wants to be a Signal! Once we
+  // make it a Signal, we can simply use `useSignal()` here! ❤️
   return useSyncExternalStoreWithSelector(
-    store.subscribe,
+    store.subscribe1_threads,
     store.getInboxNotificationsLoadingState,
     store.getInboxNotificationsLoadingState,
     selector,
@@ -571,7 +579,7 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
 ): ThreadData<M> {
   const { store } = getLiveblocksExtrasForClient<M>(client);
 
-  const getter = store.getFullState;
+  const getter = store.get1_both;
 
   const selector = useCallback(
     (state: ReturnType<typeof getter>) => {
@@ -597,7 +605,7 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
   );
 
   return useSyncExternalStoreWithSelector(
-    store.subscribe, // Re-evaluate if we need to update any time the notification changes over time
+    store.subscribe1_both, // Re-evaluate if we need to update any time the notification changes over time
     getter,
     getter,
     selector
@@ -945,13 +953,19 @@ function useUserThreads_experimental<M extends BaseMetadata>(
     };
   }, [poller]);
 
+  // TODO(vincent+nimesh) There is a disconnect between this getter and
+  // subscriber! It's unclear why the getUserThreadsLoadingState getter should
+  // be paired with subscribe1 and not subscribe2 from the outside! (The reason
+  // is that getUserThreadsLoadingState  internally uses `get1` not `get2`.)
+  // This is strong evidence that getUserThreadsLoadingState itself wants to be
+  // a Signal! Once we make it a Signal, we can simply use `useSignal()` here! ❤️
   const getter = useCallback(
     () => store.getUserThreadsLoadingState(options.query),
     [store, options.query]
   );
 
   return useSyncExternalStoreWithSelector(
-    store.subscribe,
+    store.subscribe1_threads,
     getter,
     getter,
     identity,
@@ -1218,10 +1232,10 @@ function useSyncStatusImmediate_withClient(client: OpaqueClient): SyncStatus {
 
 function useSyncStatusSmooth_withClient(client: OpaqueClient): SyncStatus {
   const getter = client.getSyncStatus;
-  const [status, setStatus] = React.useState(getter);
+  const [status, setStatus] = useState(getter);
   const oldStatus = useLatest(getter());
 
-  React.useEffect(() => {
+  useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>;
     const unsub = client.events.syncStatus.subscribe(() => {
       const newStatus = getter();

@@ -1,4 +1,4 @@
-import { type IUserInfo, kInternal, TextEditorType } from "@liveblocks/core";
+import { type IUserInfo, TextEditorType } from "@liveblocks/core";
 import {
   useClient,
   useCommentsErrorListener,
@@ -7,6 +7,10 @@ import {
 import {
   CreateThreadError,
   getUmbrellaStoreForClient,
+  useCreateTextMention,
+  useDeleteTextMention,
+  useReportTextEditor,
+  useYjsProvider,
 } from "@liveblocks/react/_private";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import type { AnyExtension, Content, Editor } from "@tiptap/core";
@@ -14,8 +18,7 @@ import { Extension, getMarkType } from "@tiptap/core";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
 import type { Mark as PMMark } from "@tiptap/pm/model";
-import { useCallback, useEffect, useState } from "react";
-import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { Doc } from "yjs";
 
 import { DEFAULT_AI_NAME } from "./ai/AiToolbar";
@@ -94,26 +97,10 @@ const LiveblocksCollab = Collaboration.extend({
   },
 });
 
-function useYjsProvider() {
-  const room = useRoom();
-
-  const subscribe = useCallback(
-    (onStoreChange: () => void) => {
-      return room[kInternal].yjsProviderDidChange.subscribe(onStoreChange);
-    },
-    [room]
-  );
-
-  const getSnapshot = useCallback(() => {
-    return room[kInternal].getYjsProvider();
-  }, [room]);
-
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-}
-
 /**
  * Returns whether the editor has loaded the initial text contents from the
  * server and is ready to be used.
+ *
  */
 export function useIsEditorReady(): boolean {
   const yjsProvider = useYjsProvider();
@@ -176,32 +163,14 @@ export const useLiveblocksExtension = (
     }
   }, [isEditorReady, yjsProvider, options.initialContent, editor]);
 
-  const reportTextEditorType = useCallback(
-    (field: string) => {
-      room[kInternal].reportTextEditor(TextEditorType.TipTap, field);
-    },
-    [room]
+  useReportTextEditor(
+    TextEditorType.TipTap,
+    options.field ?? DEFAULT_OPTIONS.field
   );
-  const onCreateMention = useCallback(
-    (userId: string, notificationId: string) => {
-      try {
-        room[kInternal].createTextMention(userId, notificationId);
-      } catch (err) {
-        console.warn(err);
-      }
-    },
-    [room]
-  );
-  const onDeleteMention = useCallback(
-    (notificationId: string) => {
-      try {
-        room[kInternal].deleteTextMention(notificationId);
-      } catch (err) {
-        console.warn(err);
-      }
-    },
-    [room]
-  );
+
+  const createTextMention = useCreateTextMention();
+  const deleteTextMention = useDeleteTextMention();
+
   return Extension.create<
     never,
     {
@@ -258,10 +227,10 @@ export const useLiveblocksExtension = (
         );
         this.storage.unsubs.push(
           // Subscribe to threads so we can update comment marks if they become resolved/deleted
-          store.subscribe(() => {
+          store.outputs.threads.subscribe(() => {
             const threadMap = new Map(
-              store
-                .getFullState()
+              store.outputs.threads
+                .get()
                 .threadsDB.findMany(roomId, { resolved: false }, "asc")
                 .map((thread) => [thread.id, true])
             );
@@ -300,8 +269,6 @@ export const useLiveblocksExtension = (
           })
         );
       }
-
-      reportTextEditorType(options.field ?? DEFAULT_OPTIONS.field);
     },
     onDestroy() {
       this.storage.unsubs.forEach((unsub) => unsub());
@@ -340,8 +307,8 @@ export const useLiveblocksExtension = (
       if (options.mentions) {
         extensions.push(
           MentionExtension.configure({
-            onCreateMention,
-            onDeleteMention,
+            onCreateMention: createTextMention,
+            onDeleteMention: deleteTextMention,
           })
         );
       }

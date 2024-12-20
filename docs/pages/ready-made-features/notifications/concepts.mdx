@@ -1,0 +1,157 @@
+---
+meta:
+  title: "Concepts"
+  parentTitle: "Notifications"
+  description: "Learn about Notifications"
+---
+
+A quick overview of the concepts used in Liveblocks Notifications.
+
+## Inbox Notifications
+
+In Liveblocks Notifications, everything resolves around _inbox notifications_.
+Each user can receive these notifications, and a list of them can be rendered in
+your application to create a notification tray. Inbox notifications can be sent
+either automatically by other Liveblocks products, or manually by calling a
+function on the server.
+
+<Figure>
+  <Image
+    src="/assets/notifications/custom-notification.jpg"
+    alt="Thread"
+    width={1344}
+    height={896}
+  />
+</Figure>
+
+A user’s inbox notifications can be retrieved by a
+[React hook](/docs/api-reference/liveblocks-react#useInboxNotifications) or
+[individually on your server](/docs/api-reference/liveblocks-node#get-users-userId-inboxNotifications-inboxNotificationId),
+which is helpful after receiving a
+[notification webhook event](/docs/platform/webhooks#NotificationEvent). Here’s
+an example of an inbox notification object for a custom notification.
+
+```ts
+{
+  id: "in_sfj29g...",
+  kind: "$myCustomNotification",
+  subjectId: "myCustomId_dxs9s0",
+  readAt: Date <Fri Dec 16 2023 15:16:25 GMT+0000 (Greenwich Mean Time)>,
+  notifiedAt: Date <Fri Dec 15 2023 14:15:22 GMT+0000 (Greenwich Mean Time)>,
+  activityData: {
+    myCustomProperty: "myCustomValue",
+  }
+}
+```
+
+To build a notification tray, you can use a combination of
+[default components](/docs/ready-made-features/notifications/default-components)
+and [hooks](/docs/ready-made-features/notifications/hooks).
+
+## Project-based
+
+Inbox notifications are
+[project-based](/docs/concepts/how-liveblocks-works#Projects), which means that
+a user can receive notifications that were sent from other
+[rooms](/docs/concepts/how-liveblocks-works#Rooms). This differs to other
+Liveblocks products which are room-based, and rely on users inhabiting the same
+space.
+
+<Figure>
+  <Image
+    src="/assets/notifications/notification-rooms.jpg"
+    alt="Notification rooms"
+    width={1344}
+    height={896}
+  />
+</Figure>
+
+Project-based components require only
+[`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider)
+in React, which is different to other room-based Liveblocks products which also
+require [`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider).
+
+## Notification kinds
+
+Each inbox notification has a `kind`, and this represents the type of
+notification it is. A `kind` is either a custom string prefixed with `$` (e.g.
+`$myCustomNotification`) when sending a custom notification, or specific string
+set by Liveblocks (e.g. `thread`) when it’s sent by a Liveblocks product.
+
+### Custom notifications
+
+A custom notification is a notification that you specify yourself, and can
+contain any content.
+
+<Figure>
+  <Image
+    src="/assets/notifications/custom-notification-both.jpg"
+    alt="Thread"
+    width={1344}
+    height={896}
+  />
+</Figure>
+
+Custom notifications can be sent using
+[`liveblocks.triggerInboxNotification`](/docs/api-reference/liveblocks-node#post-inbox-notifications-trigger)
+on the server, and the `kind` must always begin with a `$`, for example
+`$myCustomNotification`.
+
+### Liveblocks notifications
+
+[Comments](/docs/ready-made-features/comments) can send `thread` notifications
+for you automatically, notifying you of events such as a mention, or a new reply
+in a thread you’re participating in.
+
+<Figure>
+  <Image
+    src="/assets/notifications/notifications-inbox.jpg"
+    alt="Thread"
+    width={1344}
+    height={896}
+  />
+</Figure>
+
+This is enabled by default and the notification `kind` is `thread`. Threads
+leverage Notifications behind-the-scenes to keep track of unread comments so
+viewing a thread will also mark its inbox notification as read, and vice versa.
+
+If you use the default
+[`Thread`](/docs/api-reference/liveblocks-react-ui#Thread) component, it will
+automatically handle marking threads as read when they are viewed and show
+unread indicators when there are unread comments in threads you are
+participating in.
+
+<Figure>
+  <Image
+    src="/assets/comments/thread-unread-indicator.png"
+    alt="Unread indicator in Thread component"
+    width={1456}
+    height={896}
+  />
+</Figure>
+
+## Permissions
+
+### Access tokens
+
+When using [access token authentication](/docs/authentication/access-token),
+Liveblocks disregards the permissions specified in the tokens and returns all
+notifications created for the user. Consequently, a user will receive
+notifications for mentions in comments within rooms they do not have access to.
+
+For greater control over notification permissions, we recommend utilizing
+[ID tokens](/docs/authentication/id-token).
+
+### ID token
+
+When using [ID token authentication](/docs/authentication/id-token), Liveblocks
+reads the permissions set on the room, and uses these to deliver notifications
+that the user is authorized to view.
+
+## Email notifications
+
+It’s possible to send email notifications to your users, listing all their
+unread inbox notifications using a [webhook](/docs/platform/webhook) event that
+Liveblocks provides. Learn more about
+[email notifications](/docs/ready-made-features/notifications/email-notifications).

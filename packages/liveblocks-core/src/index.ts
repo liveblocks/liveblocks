@@ -131,6 +131,8 @@ export { makePoller } from "./lib/Poller";
 export { asPos, makePosition } from "./lib/position";
 export type { Resolve } from "./lib/Resolve";
 export { shallow } from "./lib/shallow";
+export type { ISignal, SignalType } from "./lib/signals";
+export { batch, DerivedSignal, MutableSignal, Signal } from "./lib/signals";
 export { SortedList } from "./lib/SortedList";
 export { stringify } from "./lib/stringify";
 export type { QueryParams, URLSafeString } from "./lib/url";
@@ -311,10 +313,6 @@ import { HttpError } from "./lib/autoRetry";
 import type { Json } from "./lib/Json";
 import type * as DevTools from "./types/DevToolsTreeNode";
 export type { DevTools };
-
-// Store
-export type { Store } from "./lib/create-store";
-export { createStore } from "./lib/create-store";
 
 // Deprecated APIs
 /** @deprecated Use HttpError instead. */

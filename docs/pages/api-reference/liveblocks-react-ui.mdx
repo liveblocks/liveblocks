@@ -62,7 +62,7 @@ button displayed by default.
 
 You can additionally use `thread.resolved` to filter the displayed threads for
 example. Or if you want to create your own `Thread` component using
-[the primitives](/docs/products/comments/primitives), you can use
+[the primitives](/docs/ready-made-features/comments/primitives), you can use
 [`useMarkThreadAsResolved`](/docs/api-reference/liveblocks-react#useMarkThreadAsResolved)
 and
 [`useMarkThreadAsUnresolved`](/docs/api-reference/liveblocks-react#useMarkThreadAsUnresolved)
@@ -1419,9 +1419,6 @@ import { useCreateThread } from "@liveblocks/react/suspense";
 
 function MyComposer() {
   const createThread = useCreateThread();
-  // +++
-  const { createMention } = useComposer();
-  // +++
 
   return (
     <Composer.Form
@@ -1433,11 +1430,23 @@ function MyComposer() {
         });
       }}
     >
+      <Editor />
+    </Composer.Form>
+  );
+}
+
+function Editor() {
+  // +++
+  const { createMention } = useComposer();
+  // +++
+
+  return (
+    <>
       <Composer.Editor components={/* Your custom component parts */} />
       // +++
       <button onClick={createMention}>Add mention</button>
       // +++
-    </Composer.Form>
+    </>
   );
 }
 ```
@@ -1459,13 +1468,15 @@ function MyComposer() {
   const createThread = useCreateThread();
 
   return (
-    <Composer.Form onComposerSubmit={({ body, attachments }) => {
-      const thread = createThread({
-        body,
-        attachments,
-        metadata: {},
-      });
-    }}>
+    <Composer.Form
+      onComposerSubmit={({ body, attachments }) => {
+        const thread = createThread({
+          body,
+          attachments,
+          metadata: {},
+        });
+      }}
+    >
       <Composer.Editor components={/* Your custom component parts */} />
       // +++
       <MyComposerAttachments />
@@ -1487,9 +1498,11 @@ function MyComposerAttachments() {
       {attachments.map((attachment) => (
         <div key={attachment.id}>
           {attachment.name} ({attachment.status})
-          <button onClick={() => removeAttachment(attachment.id)}>Remove</button>
+          <button onClick={() => removeAttachment(attachment.id)}>
+            Remove
+          </button>
         </div>
-      )}
+      ))}
       // +++
     </div>
   );

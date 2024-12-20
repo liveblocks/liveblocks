@@ -6,12 +6,12 @@ import type {
   CommentMixedAttachment,
   DM,
 } from "@liveblocks/core";
-import { kInternal, Permission } from "@liveblocks/core";
-import { useClient } from "@liveblocks/react";
+import { Permission } from "@liveblocks/core";
 import {
   useCreateRoomComment,
   useCreateRoomThread,
   useEditRoomComment,
+  useResolveMentionSuggestions,
   useRoomOrNull,
   useRoomPermissions,
 } from "@liveblocks/react/_private";
@@ -27,14 +27,15 @@ import type {
   RefAttributes,
   SyntheticEvent,
 } from "react";
-import React, {
+import {
   createContext,
   forwardRef,
   useCallback,
+  useLayoutEffect,
   useMemo,
   useRef,
+  useSyncExternalStore,
 } from "react";
-import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
 import { useLiveblocksUIConfig } from "../config";
 import { FLOATING_ELEMENT_SIDE_OFFSET } from "../constants";
@@ -69,7 +70,6 @@ import { MENTION_CHARACTER } from "../slate/plugins/mentions";
 import type { ComposerBodyMark } from "../types";
 import { classNames } from "../utils/class-names";
 import { useControllableState } from "../utils/use-controllable-state";
-import { useLayoutEffect } from "../utils/use-layout-effect";
 import { FileAttachment } from "./internal/Attachment";
 import { Attribution } from "./internal/Attribution";
 import { Avatar } from "./internal/Avatar";
@@ -650,7 +650,6 @@ export const Composer = forwardRef(
     }: ComposerProps<M>,
     forwardedRef: ForwardedRef<HTMLFormElement>
   ) => {
-    const client = useClient();
     const room = useRoomOrNull();
 
     const roomId = _roomId !== undefined ? _roomId : room?.id;
@@ -665,7 +664,7 @@ export const Composer = forwardRef(
     const editComment = useEditRoomComment(roomId);
     const { preventUnsavedComposerChanges } = useLiveblocksUIConfig();
     const hasResolveMentionSuggestions =
-      client[kInternal].resolveMentionSuggestions !== undefined;
+      useResolveMentionSuggestions() !== undefined;
     const isEmptyRef = useRef(true);
     const isEmojiPickerOpenRef = useRef(false);
     const $ = useOverrides(overrides);

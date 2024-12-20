@@ -1,5 +1,3 @@
-// import React from "react";
-
 /**
  * Drop-in replacement for React 19's `use` hook.
  */

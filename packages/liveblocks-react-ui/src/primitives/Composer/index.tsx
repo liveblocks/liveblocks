@@ -6,12 +6,12 @@ import {
   type CommentLocalAttachment,
   createCommentAttachmentId,
   type EventSource,
-  kInternal,
   makeEventSource,
 } from "@liveblocks/core";
 import {
   useClientOrNull,
   useMentionSuggestions,
+  useResolveMentionSuggestions,
   useRoomOrNull,
   useSyncSource,
 } from "@liveblocks/react/_private";
@@ -27,11 +27,13 @@ import type {
   PointerEvent,
   SyntheticEvent,
 } from "react";
-import React, {
+import {
   forwardRef,
   useCallback,
   useEffect,
+  useId,
   useImperativeHandle,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -97,10 +99,8 @@ import { isKey } from "../../utils/is-key";
 import { Persist, useAnimationPersist, usePersist } from "../../utils/Persist";
 import { Portal } from "../../utils/Portal";
 import { requestSubmit } from "../../utils/request-submit";
-import { useId } from "../../utils/use-id";
 import { useIndex } from "../../utils/use-index";
 import { useInitial } from "../../utils/use-initial";
-import { useLayoutEffect } from "../../utils/use-layout-effect";
 import { useObservable } from "../../utils/use-observable";
 import { useRefs } from "../../utils/use-refs";
 import { toAbsoluteUrl } from "../Comment/utils";
@@ -852,8 +852,9 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       useState(false);
     // If used with LiveblocksProvider but without resolveMentionSuggestions,
     // we can skip the mention suggestions logic entirely
+    const resolveMentionSuggestions = useResolveMentionSuggestions();
     const hasResolveMentionSuggestions = client
-      ? client[kInternal].resolveMentionSuggestions !== undefined
+      ? resolveMentionSuggestions
       : true;
     const [mentionDraft, setMentionDraft] = useState<MentionDraft>();
     const mentionSuggestions = useMentionSuggestions(

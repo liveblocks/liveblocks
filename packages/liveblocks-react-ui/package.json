@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/react-ui",
-  "version": "2.13.0",
+  "version": "2.14.0",
   "description": "A set of React pre-built components for the Liveblocks products. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
   "type": "commonjs",
@@ -63,8 +63,8 @@
     "README.md"
   ],
   "scripts": {
-    "dev": "rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript --watch",
-    "build": "rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
+    "dev": "rollup --config rollup.config.mjs --watch",
+    "build": "rollup --config rollup.config.mjs",
     "start": "npm run dev",
     "format": "eslint --fix src/; stylelint --fix src/styles/; prettier --write src/",
     "lint": "eslint src/; stylelint src/styles/",
@@ -75,9 +75,9 @@
   },
   "dependencies": {
     "@floating-ui/react-dom": "^2.1.2",
-    "@liveblocks/client": "2.13.0",
-    "@liveblocks/core": "2.13.0",
-    "@liveblocks/react": "2.13.0",
+    "@liveblocks/client": "2.14.0",
+    "@liveblocks/core": "2.14.0",
+    "@liveblocks/react": "2.14.0",
     "@radix-ui/react-dropdown-menu": "^2.1.2",
     "@radix-ui/react-popover": "^1.1.2",
     "@radix-ui/react-slot": "^1.1.0",
@@ -87,37 +87,22 @@
     "slate": "^0.110.2",
     "slate-history": "^0.110.3",
     "slate-hyperscript": "^0.100.0",
-    "slate-react": "^0.110.3",
-    "use-sync-external-store": "^1.2.2"
+    "slate-react": "^0.110.3"
   },
   "peerDependencies": {
-    "react": "^16.14.0 || ^17 || ^18 || ^19 || ^19.0.0-rc"
+    "react": "^18 || ^19 || ^19.0.0-rc"
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
-    "@rollup/plugin-replace": "^5.0.5",
-    "@rollup/plugin-typescript": "^11.1.2",
+    "@liveblocks/rollup-config": "*",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.1.1",
-    "@types/use-sync-external-store": "^0.0.6",
     "emojibase": "^15.3.0",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "msw": "^0.27.1",
-    "postcss": "^8.4.31",
-    "postcss-advanced-variables": "^3.0.1",
-    "postcss-combine-duplicated-selectors": "^10.0.3",
-    "postcss-functions": "^4.0.2",
-    "postcss-import": "^15.1.0",
-    "postcss-lightningcss": "^1.0.0",
-    "postcss-nesting": "^12.0.1",
-    "postcss-reporter": "^7.0.5",
-    "postcss-sort-media-queries": "^5.2.0",
-    "rollup": "^3.28.0",
-    "rollup-plugin-dts": "^5.3.1",
-    "rollup-plugin-esbuild": "^5.0.0",
-    "rollup-plugin-preserve-directives": "^0.2.0",
+    "rollup": "3.28.0",
     "stylelint": "^15.10.2",
     "stylelint-config-standard": "^34.0.0",
     "stylelint-order": "^6.0.3",

@@ -7,13 +7,9 @@ alwaysShowAllNavigationLevels: false
 ---
 
 `@liveblocks/emails` provides a set of functions that simplifies sending styled
-emails with [Notifications](/docs/products/notifications) and
+emails with [Notifications](/docs/ready-made-features/notifications) and
 [webhooks](/docs/platform/webhooks). This library is only intended for use in
 your Node.js back end.
-
-<Banner type="warning" title="Package still in beta">
-  This package is currently in beta and has not been publicly released yet.
-</Banner>
 
 ## Requirements
 
@@ -93,6 +89,26 @@ export async function POST(request: Request) {
 **We’ll only show the highlighted part below**, as it’s assumed you’ve set this
 already, and your file contains `liveblocks` and `event`.
 
+### End-to-end guides
+
+We have two guides that take you through every step of setting up your email
+notifications, including setting up webhooks:
+
+- [How to send email notifications of unread comments](/docs/guides/how-to-send-email-notifications-of-unread-comments).
+- [How to send email notifications for unread text editor mentions ](/docs/guides/how-to-send-email-notifications-for-unread-text-editor-mentions).
+
+### Ready-made email templates
+
+We have a number of examples that show you how to set up emails with your
+Comments or Text Editor application. Each [Resend](https://resend.com) example
+has full ready-made email templates inside, which are a great starting point for
+your application.
+
+- [Comments + Resend](/examples/comments-emails/nextjs-comments-emails-resend).
+- [Comments + SendGrid](/examples/comments-emails/nextjs-comments-emails-sendgrid).
+- [Text Editor/Tiptap + Resend](/examples/collaborative-text-editor-emails/nextjs-tiptap-emails-resend).
+- [Text Editor/Lexical + Resend](/examples/collaborative-text-editor-emails/nextjs-lexical-emails-resend).
+
 ## Thread notification emails [#thread-notification-emails]
 
 These functions help you create emails to notify users of _unread comments_ in
@@ -109,6 +125,14 @@ been read, and help you style each comment’s body with either
     height={830}
   />
 </Figure>
+
+<Banner>
+
+This screenshot shows a ready-made template from our
+[Comments + Resend](/examples/comments-emails/nextjs-comments-emails-resend)
+example.
+
+</Banner>
 
 The function also helps you distinguish between _unread mentions_ and _unread
 replies_.
@@ -370,9 +394,9 @@ export async function POST(request: Request) {
     detailedType='async? (args: ResolveUsersArgs) => (UserMeta["info"] | undefined)[] | undefined'
   >
     A function that resolves user information in
-    [Comments](/docs/products/comments). Return an array of `UserMeta["info"]`
-    objects in the same order they arrived. Works similarly to the [resolver on
-    the
+    [Comments](/docs/ready-made-features/comments). Return an array of
+    `UserMeta["info"]` objects in the same order they arrived. Works similarly
+    to the [resolver on the
     client](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers).
     [Learn more](#prepare-thread-notification-email-as-react-resolving-data).
   </PropertiesListItem>
@@ -428,7 +452,7 @@ export async function POST(request: Request) {
 
 Similarly to on the client, you can resolve
 [users](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers) and
-[room info](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveRoomInfo),
+[room info](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveRoomsInfo),
 making it easier to render your emails. For example, you can resolve a user’s ID
 into their name, and show their name in the email.
 
@@ -744,9 +768,9 @@ export async function POST(request: Request) {
     detailedType='async? (args: ResolveUsersArgs) => (UserMeta["info"] | undefined)[] | undefined'
   >
     A function that resolves user information in
-    [Comments](/docs/products/comments). Return an array of `UserMeta["info"]`
-    objects in the same order they arrived. Works similarly to the [resolver on
-    the
+    [Comments](/docs/ready-made-features/comments). Return an array of
+    `UserMeta["info"]` objects in the same order they arrived. Works similarly
+    to the [resolver on the
     client](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers).
     [Learn more](#prepare-thread-notification-email-as-html-resolving-data).
   </PropertiesListItem>
@@ -762,9 +786,9 @@ export async function POST(request: Request) {
   </PropertiesListItem>
   <PropertiesListItem name="options.styles" type="object">
     Pass CSS properties to style the different HTML elements in the comment
-    bodies. Five elements can be styled: `container`, `paragraph`, `text`,
-    `link`, `mention`. [Learn
-    more](#prepare-thread-notification-email-as-html-styling-components).
+    bodies. Five elements can be styled: `paragraph`, `code`, `strong`, `link`,
+    `mention`. [Learn
+    more](#prepare-thread-notification-email-as-html-styling-elements).
   </PropertiesListItem>
   <PropertiesListItem name="options.styles.container" type="CSSProperties">
     Inline styles to apply to the comment body container.
@@ -772,14 +796,17 @@ export async function POST(request: Request) {
   <PropertiesListItem name="options.styles.paragraph" type="CSSProperties">
     Inline styles to apply to the paragraph block.
   </PropertiesListItem>
-  <PropertiesListItem name="options.styles.text" type="CSSProperties">
-    Inline styles to apply to the text element.
+  <PropertiesListItem name="options.styles.code" type="CSSProperties">
+    Inline styles to apply to the code element.
   </PropertiesListItem>
-  <PropertiesListItem name="options.styles.link" type="CSSProperties">
-    Inline styles to apply to the link element.
+  <PropertiesListItem name="options.styles.strong" type="CSSProperties">
+    Inline styles to apply to the strong element.
   </PropertiesListItem>
   <PropertiesListItem name="options.styles.mention" type="CSSProperties">
     Inline styles to apply to the mention element.
+  </PropertiesListItem>
+  <PropertiesListItem name="options.styles.link" type="CSSProperties">
+    Inline styles to apply to the link element.
   </PropertiesListItem>
 </PropertiesList>
 
@@ -787,7 +814,7 @@ export async function POST(request: Request) {
 
 Similarly to on the client, you can resolve
 [users](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers) and
-[room info](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveRoomInfo),
+[room info](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveRoomsInfo),
 making it easier to render your emails. For example, you can resolve a user’s ID
 into their name, and show their name in the email.
 
@@ -829,7 +856,7 @@ console.log(emailData.roomInfo);
 
 Each element in the comment body can be styled with custom CSS properties, if
 you would like to change the appearance. Five elements are available:
-`container`, `paragraph`, `text`, `link`, `mention`.
+`paragraph`, `code`, `strong`, `mention`, `link`.
 
 ```tsx
 const emailData = await prepareThreadNotificationEmailAsHtml(
@@ -858,4 +885,617 @@ console.log(emailData);
 
 // The elements in the comment body are now styled
 console.log(emailData.comment.htmlBody);
+```
+
+## Text Mention notification emails [#text-mention-notification-emails]
+
+These functions help you create emails to notify users when they have an _unread
+mention_ in a [Text Editor](/docs/ready-made-features/text-editor) document. In
+this case, a mention is not related to comments, but is instead an inline
+mention inside the text editor itself. If the mention has not been read, the
+functions fetch a text mention and its surrounding text, giving you more
+context, and helping you style the mention content with either
+[React](#prepare-text-mention-notification-email-as-react) or
+[HTML](#prepare-text-mention-notification-email-as-html).
+
+<Figure>
+  <Image
+    src="/assets/emails/new-text-mention-email.png"
+    alt="An email showing a text mention in a text editor document"
+    width={1126}
+    height={470}
+  />
+</Figure>
+
+<Banner>
+
+This screenshot shows a ready-made template from our
+[Text Editor + Resend](/examples/collaborative-text-editor-emails/nextjs-tiptap-emails-resend)
+examples.
+
+</Banner>
+
+The functions helps to determine if the mention still exists in the document and
+will indicate that there’s no email to send in this case. Currently, only
+mentions in paragraph blocks create notifications, as there are limitations
+around retrieving mentions in plugins.
+
+### Limitations
+
+Before you get started, there are some limitations with text mentions that you
+should be aware of.
+
+#### Mentions in plugins
+
+If a user is mentioned in a plugin or extension, a text mention notification is
+not sent. This is because Liveblocks doesn’t know the exact schema of your
+editor and all its plugins, and we can’t extract the data correctly. This means
+that _only mentions in paragraph blocks are sent_, and mentions in lists,
+checkboxes, etc., are not, as they are all powered by plugins. We’re
+investigating solutions for this, and we’d like to
+[hear from you](/contact/support) if you have any thoughts.
+
+#### Multiple Tiptap editors
+
+Tiptap optionally allows you to
+[render multiple editors per page](/docs/ready-made-features/text-editor/tiptap#Multiple-editors),
+instead of just one. For now, these functions only support one editor per room,
+but we’ll be looking to add support for more later.
+
+### prepareTextMentionNotificationEmailAsReact [#prepare-text-mention-notification-email-as-react]
+
+Takes a
+[text mention notification webhook event](/docs/platform/webhooks#TextMention-notification)
+and returns an unread text mention with its surrounding text as React nodes. It
+can also return `null` if the text mention does not exist anymore or has been
+already been read. You can also
+[resolve user & room data](#prepare-text-mention-notification-email-as-react-resolving-data)
+and
+[customize the components](#prepare-text-mention-notification-email-as-react-customizing-components).
+
+```tsx
+import { prepareTextMentionNotificationEmailAsReact } from "@liveblocks/emails";
+import { isTextMentionNotificationEvent } from "@liveblocks/node";
+
+// Get `liveblocks` and `event` (see "Setup" section)
+// ...
+
+if (isTextMentionNotificationEvent(event)) {
+  // +++
+  const emailData = await prepareTextMentionNotificationEmailAsReact(
+    liveblocks,
+    event
+  );
+  // +++
+
+  const email = (
+    <div>
+      <div>
+        @{emailData.mention.author.id} at {emailData.mention.createdAt}
+      </div>
+      <div>{emailData.mention.reactContent}</div>
+    </div>
+  );
+}
+
+// Send your email
+// ...
+```
+
+It’s designed to be used in a webhook event, which requires a
+[`Liveblocks`](/docs/api-reference/liveblocks-node#Liveblocks-client) Node.js
+client and a
+[`WebhookHandler`](/docs/api-reference/liveblocks-node#WebhookHandler). Check
+for the correct webhook event using
+[`isTextMentionNotificationEvent`](/docs/api-reference/liveblocks-node#isTextMentionNotificationEvent)
+before running the function, such as in this Next.js route handler.
+
+```tsx title="Full Next.js route handler example" isCollapsed isCollapsable
+import {
+  isTextMentionNotificationEvent,
+  WebhookHandler,
+} from "@liveblocks/node";
+import { Liveblocks } from "@liveblocks/node";
+// +++
+import { prepareTextMentionNotificationEmailAsReact } from "@liveblocks/emails";
+// +++
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+const webhookHandler = new WebhookHandler(
+  process.env.LIVEBLOCKS_WEBHOOK_SECRET_KEY as string
+);
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // +++
+  if (isTextMentionNotificationEvent(event)) {
+    const emailData = await prepareTextMentionNotificationEmailAsReact(
+      liveblocks,
+      event
+    );
+
+    const email = (
+      <div>
+        <div>
+          @{emailData.mention.author.id} at {emailData.mention.createdAt}
+        </div>
+        <div>{emailData.mention.reactContent}</div>
+      </div>
+    );
+
+    // Send your email
+    // ...
+  }
+  // +++
+
+  return new Response(null, { status: 200 });
+}
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="value"
+    type="TextMentionNotificationEmailDataAsReact | null"
+  >
+    Returns text mention information, and a formatted React content ready for
+    use in emails. Returns `null` if the text mention does not exist anymore or
+    has been already been read.
+
+    ```js title="Unread text mention"
+    {
+      roomInfo: {
+        name: "my room name"
+        url: "https://my-room-url.io"
+      },
+      mention: {
+        id: "in_oiujhdg...",
+        roomId: "my-room-id",
+        createdAt: Date <Fri Dec 15 2023 14:15:22 GMT+0000 (Greenwich Mean Time)>,
+        userId: "user_0"
+
+        // The formatted content, pass it to React `children`
+        reactContent: { /* ... */}
+
+        author: {
+          id: "vincent@example.com",
+          info: { /* Custom user info you have resolved */ }
+        }
+      },
+    }
+    ```
+
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="client" type="Liveblocks" required>
+    A [`Liveblocks`](/docs/api-reference/liveblocks-node#Liveblocks-client)
+    Node.js client.
+  </PropertiesListItem>
+  <PropertiesListItem name="event" type="TextMentionNotificationEvent" required>
+    An object passed from a webhook event, specifically the
+    [`TextMentionNotificationEvent`](/docs/platform/webhooks#TextMention-notification).
+    [Learn more about setting this up](#Setup).
+  </PropertiesListItem>
+  <PropertiesListItem name="options" type="object">
+    A number of options to customize the format of the content, adding user
+    info, room info, and styles.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="options.resolveUsers"
+    detailedType='async? (args: ResolveUsersArgs) => (UserMeta["info"] | undefined)[] | undefined'
+  >
+    A function that resolves user information in
+    [Comments](/docs/ready-made-features/comments). Return an array of
+    `UserMeta["info"]` objects in the same order they arrived. Works similarly
+    to the [resolver on the
+    client](/docs/ready-made-features/text-editor/lexical#Users-and-mentions).
+    [Learn
+    more](#prepare-text-mention-notification-email-as-react-resolving-data).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="options.resolveRoomInfo"
+    detailedType="async? (args: ResolveRoomInfoArgs) => RoomInfo | undefined"
+  >
+    A function that resolves room information. Return a `RoomInfo` object, as
+    matching your types. Works similarly to the [resolver on the
+    client](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveRoomsInfo)
+    but for one room. [Learn
+    more](#prepare-text-mention-notification-email-as-react-resolving-data).
+  </PropertiesListItem>
+  <PropertiesListItem name="options.components" type="object">
+    Pass different React components to customize the elements in the mention
+    content. Three components can be passed to the object: `Container`, `Text`,
+    and `Mention`. [Learn
+    more](#prepare-text-mention-notification-email-as-react-customizing-components).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="options.components.Container"
+    type="({ children: ReactNode }) => ReactNode"
+  >
+    The mention and its surrounding text container
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="options.components.Text"
+    type="({ children: ReactNode }) => ReactNode"
+  >
+    The text element.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="options.components.Mention"
+    detailedType={`({ element: LiveblocksTextEditorMentionNode, user?: UserInfo["info"]" }) => ReactNode`}
+  >
+    The mention element.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Resolving data [#prepare-text-mention-notification-email-as-react-resolving-data]
+
+Similarly to on the client, you can resolve
+[users](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers) and
+[room info](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveRoomsInfo),
+making it easier to render your emails. For example, you can resolve a user’s ID
+into their name, and show their name in the email.
+
+```tsx
+const emailData = await prepareTextMentionNotificationEmailAsReact(
+  liveblocks,
+  webhookEvent,
+  {
+    // +++
+    resolveUsers: async ({ userIds }) => {
+      const usersData = await __getUsersFromDB__(userIds);
+
+      return usersData.map((userData) => ({
+        name: userData.name, // "Nimesh"
+        avatar: userData.avatar.src, // "https://..."
+      }));
+    },
+    resolveRoomInfo({ roomId }) {
+      return {
+        name: roomId, // "my-room-name"
+        url: `https://example.com/${roomId}`,
+      };
+    },
+    // +++
+  }
+);
+
+// { mention: { ... }, ... }
+console.log(emailData);
+
+// { name: "Nimesh", avatar: "https://..." }
+console.log(emailData.mention.author.info);
+
+// { name: "my-room-name", url: "https://example.com/my-room-name" }
+console.log(emailData.roomInfo);
+```
+
+#### Customizing components [#prepare-text-mention-notification-email-as-react-customizing-components]
+
+Each React component in the mention context can be replaced with a custom React
+component, if you wish to apply different styles. Three components are
+available: `Container`, `Text`, and `Mention`.
+
+```tsx
+const emailData = await prepareThreadNotificationEmailAsReact(
+  liveblocks,
+  webhookEvent,
+  {
+    // +++
+    components: {
+      // `react-email` components are supported
+      Container: ({ children }) => <Section>{children}</Section>,
+
+      Text: ({ children }) => (
+        <Text className="text-sm text-black m-0 mb-4">{children}</Text>
+      ),
+
+      // `user` is the optional data returned from `resolveUsers`
+      Mention: ({ element, user }) => (
+        <span style={{ color: "red" }}>@{user?.name ?? element.id}</span>
+      ),
+    },
+    // +++
+  }
+);
+
+// { mention: { ... }, ... }
+console.log(emailData);
+
+// The components are now used in this React content
+console.log(emailData.mention.reactContent);
+``;
+```
+
+### prepareTextMentionNotificationEmailAsHtml [#prepare-text-mention-notification-email-as-html]
+
+Takes a
+[text mention notification webhook event](/docs/platform/webhooks#TextMention-notification)
+and returns an unread text mention with its surrounding text as an HTML string.
+It can also return `null` if the text mention does not exist anymore or has been
+already been read. You can also
+[resolve user & room data](#prepare-text-mention-notification-email-as-html-resolving-data)
+and
+[customize the styles](#prepare-text-mention-notification-email-as-html-styling-elements).
+
+```tsx
+import { prepareTextMentionNotificationEmailAsHtml } from "@liveblocks/emails";
+import { isTextMentionNotificationEvent } from "@liveblocks/node";
+
+// Get `liveblocks` and `event` (see "Setup" section)
+// ...
+
+if (isTextMentionNotificationEvent(event)) {
+  // +++
+  const emailData = await prepareTextMentionNotificationEmailAsHtml(
+    liveblocks,
+    event
+  );
+  // +++
+
+  const email = (
+    <div>
+      <div>
+        @{emailData.mention.author.id} at {emailData.mention.createdAt}
+      </div>
+      <div>{emailData.mention.htmlContent}</div>
+    </div>
+  );
+}
+
+// Send your email
+// ...
+```
+
+It’s designed to be used in a webhook event, which requires a
+[`Liveblocks`](/docs/api-reference/liveblocks-node#Liveblocks-client) Node.js
+client and a
+[`WebhookHandler`](/docs/api-reference/liveblocks-node#WebhookHandler). Check
+for the correct webhook event using
+[`isTextMentionNotificationEvent`](/docs/api-reference/liveblocks-node#isTextMentionNotificationEvent)
+before running the function, such as in this Next.js route handler.
+
+```tsx title="Full Next.js route handler example" isCollapsed isCollapsable
+import {
+  isTextMentionNotificationEvent,
+  WebhookHandler,
+} from "@liveblocks/node";
+import { Liveblocks } from "@liveblocks/node";
+// +++
+import { prepareTextMentionNotificationEmailAsHtml } from "@liveblocks/emails";
+// +++
+
+const liveblocks = new Liveblocks({
+  secret: "{{SECRET_KEY}}",
+});
+
+const webhookHandler = new WebhookHandler(
+  process.env.LIVEBLOCKS_WEBHOOK_SECRET_KEY as string
+);
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  const headers = request.headers;
+
+  // Verify if this is a real webhook request
+  let event;
+  try {
+    event = webhookHandler.verifyRequest({
+      headers: headers,
+      rawBody: JSON.stringify(body),
+    });
+  } catch (err) {
+    console.error(err);
+    return new Response("Could not verify webhook call", { status: 400 });
+  }
+
+  // +++
+  if (isTextMentionNotificationEvent(event)) {
+    const emailData = await prepareTextMentionNotificationEmailAsHtml(
+      liveblocks,
+      event
+    );
+
+    const email = `
+    <div>
+      <div>
+        @${emailData.mention.author.id} at ${emailData.mention.createdAt}
+      </div>
+      <div>${emailData.mention.htmlContent}</div>
+    </div>
+    `;
+
+    // Send your email
+    // ...
+  }
+  // +++
+
+  return new Response(null, { status: 200 });
+}
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem
+    name="value"
+    type="TextMentionNotificationEmailDataAsHtml | null"
+  >
+    Returns text mention information, and formatted HTML content ready for
+    use in emails. Returns `null` if the text mention does not exist anymore or
+    has already been read.
+
+    ```js title="Unread text mention"
+    {
+      roomInfo: {
+        name: "my room name"
+        url: "https://my-room-url.io"
+      },
+      mention: {
+        id: "in_oiujhdg...",
+        roomId: "my-room-id",
+        createdAt: Date <Fri Dec 15 2023 14:15:22 GMT+0000 (Greenwich Mean Time)>,
+        userId: "user_0"
+
+        // The formatted content, as an HTML string
+        htmlContent: { /* ... */}
+
+        author: {
+          id: "vincent@example.com",
+          info: { /* Custom user info you have resolved */ }
+        }
+      },
+    }
+    ```
+
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="client" type="Liveblocks" required>
+    A [`Liveblocks`](/docs/api-reference/liveblocks-node#Liveblocks-client)
+    Node.js client.
+  </PropertiesListItem>
+  <PropertiesListItem name="event" type="TextMentionNotificationEvent" required>
+    An object passed from a webhook event, specifically the
+    [`TextMentionNotificationEvent`](/docs/platform/webhooks#TextMention-notification).
+    [Learn more about setting this up](#Setup).
+  </PropertiesListItem>
+  <PropertiesListItem name="options" type="object">
+    A number of options to customize the format of the content, adding user
+    info, room info, and styles.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="options.resolveUsers"
+    detailedType='async? (args: ResolveUsersArgs) => (UserMeta["info"] | undefined)[] | undefined'
+  >
+    A function that resolves user information in
+    [Comments](/docs/ready-made-features/comments). Return an array of
+    `UserMeta["info"]` objects in the same order they arrived. Works similarly
+    to the [resolver on the
+    client](/docs/ready-made-features/text-editor/lexical#Users-and-mentions).
+    [Learn
+    more](#prepare-text-mention-notification-email-as-html-resolving-data).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="options.resolveRoomInfo"
+    detailedType="async? (args: ResolveRoomInfoArgs) => RoomInfo | undefined"
+  >
+    A function that resolves room information. Return a `RoomInfo` object, as
+    matching your types. Works similarly to the [resolver on the
+    client](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveRoomsInfo)
+    but for one room. [Learn
+    more](#prepare-text-mention-notification-email-as-html-resolving-data).
+  </PropertiesListItem>
+  <PropertiesListItem name="options.styles" type="object">
+    Pass CSS properties to style the different HTML elements in the mention
+    content. Four elements can be styled: `paragraph`, `code`, `strong`,
+    `mention`, and, `link`. [Learn
+    more](#prepare-text-mention-notification-email-as-html-styling-elements).
+  </PropertiesListItem>
+  <PropertiesListItem name="options.styles.paragraph" type="CSSProperties">
+    Inline styles to apply to the mention container container. It's a `<div />`
+    element under the hood.
+  </PropertiesListItem>
+  <PropertiesListItem name="options.styles.code" type="CSSProperties">
+    Inline styles to apply to the code element.
+  </PropertiesListItem>
+  <PropertiesListItem name="options.styles.strong" type="CSSProperties">
+    Inline styles to apply to the strong element.
+  </PropertiesListItem>
+  <PropertiesListItem name="options.styles.mention" type="CSSProperties">
+    Inline styles to apply to the mention element.
+  </PropertiesListItem>
+  <PropertiesListItem name="options.styles.link" type="CSSProperties">
+    Inline styles to apply to the link element.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Resolving data [#prepare-text-mention-notification-email-as-html-resolving-data]
+
+Similarly to on the client, you can resolve
+[users](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveUsers) and
+[room info](/docs/api-reference/liveblocks-react#LiveblocksProviderResolveRoomsInfo),
+making it easier to render your emails. For example, you can resolve a user’s ID
+into their name, and show their name in the email.
+
+```tsx
+const emailData = await prepareTextMentionNotificationEmailAsHtml(
+  liveblocks,
+  webhookEvent,
+  {
+    // +++
+    resolveUsers: async ({ userIds }) => {
+      const usersData = await __getUsersFromDB__(userIds);
+
+      return usersData.map((userData) => ({
+        name: userData.name, // "Nimesh"
+        avatar: userData.avatar.src, // "https://..."
+      }));
+    },
+    resolveRoomInfo({ roomId }) {
+      return {
+        name: roomId, // "my-room-name"
+        url: `https://example.com/${roomId}`,
+      };
+    },
+    // +++
+  }
+);
+
+// { mention: { ... }, ... }
+console.log(emailData);
+
+// { name: "Nimesh", avatar: "https://..." }
+console.log(emailData.mention.author.info);
+
+// { name: "my-room-name", url: "https://example.com/my-room-name" }
+console.log(emailData.roomInfo);
+```
+
+#### Styling elements [#prepare-text-mention-notification-email-as-html-styling-elements]
+
+Each element in the comment body can be styled with custom CSS properties, if
+you would like to change the appearance. Five elements are available:
+`paragraph`, `code`, `strong`, `mention`, and `link`.
+
+```tsx
+const emailData = await prepareTextMentionNotificationEmailAsHtml(
+  liveblocks,
+  webhookEvent,
+  {
+    // +++
+    styles: {
+      paragraph: { margin: "12px 0" },
+
+      mention: {
+        fontWeight: "bold",
+        color: "red",
+      },
+    },
+    // +++
+  }
+);
+
+// { mention: { ... }, ... }
+console.log(emailData);
+
+// The elements in the mention content are now styled
+console.log(emailData.mention.htmlContent);
 ```

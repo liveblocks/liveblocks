@@ -2,7 +2,7 @@
 
 import { useRoomInfo } from "@liveblocks/react";
 import type { ComponentProps } from "react";
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 
 import { classNames } from "../../utils/class-names";
 

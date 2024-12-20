@@ -1,6 +1,5 @@
 import { LiveMap } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
-import React from "react";
 
 import { getRoomFromUrl, Row, styles, useRenderCount } from "../utils";
 import Button from "../utils/Button";

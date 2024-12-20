@@ -1,6 +1,6 @@
 import type { WithLiveblocks } from "@liveblocks/zustand";
 import { liveblocks } from "@liveblocks/zustand";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { create } from "zustand";
 
 import {

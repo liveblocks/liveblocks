@@ -11,7 +11,7 @@ import {
 import type { Content, Editor } from "@tiptap/react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import type { ComponentPropsWithoutRef } from "react";
-import React, { forwardRef, useCallback, useEffect } from "react";
+import { forwardRef, useCallback, useEffect } from "react";
 import { yXmlFragmentToProseMirrorRootNode } from "y-prosemirror";
 import { applyUpdate, Doc } from "yjs";
 

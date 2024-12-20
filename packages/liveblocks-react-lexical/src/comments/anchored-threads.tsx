@@ -6,7 +6,7 @@ import {
 } from "@liveblocks/react-ui";
 import { $getNodeByKey } from "lexical";
 import type { ComponentPropsWithoutRef, ComponentType } from "react";
-import React, {
+import {
   useCallback,
   useContext,
   useEffect,

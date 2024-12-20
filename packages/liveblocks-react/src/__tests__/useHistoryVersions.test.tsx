@@ -10,7 +10,7 @@ import {
   type RestRequest,
 } from "msw";
 import { setupServer } from "msw/node";
-import React, { Suspense } from "react";
+import { Suspense } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
 import MockWebSocket from "./_MockWebSocket";
@@ -165,21 +165,19 @@ describe("useHistoryVersions", () => {
       umbrellaStore,
     } = createContextsForTest();
 
-    umbrellaStore.force_set((state) => ({
+    umbrellaStore.force_set_versions((state) => ({
       ...state,
-      versionsByRoomId: {
-        "room-1": {
-          version_1: {
-            type: "historyVersion",
-            kind: "yjs",
-            createdAt: new Date(),
-            id: "version_1",
-            authors: [
-              {
-                id: "user-1",
-              },
-            ],
-          },
+      "room-1": {
+        version_1: {
+          type: "historyVersion",
+          kind: "yjs",
+          createdAt: new Date(),
+          id: "version_1",
+          authors: [
+            {
+              id: "user-1",
+            },
+          ],
         },
       },
     }));
