@@ -1236,10 +1236,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
     optimisticId: string,
     thread: Readonly<ThreadDataWithDeleteInfo<M>>
   ): void {
-    // Batch 1️⃣ + 2️⃣
     batch(() => {
-      this.optimisticUpdates.remove(optimisticId); // 1️⃣j
-      this.threads.upsert(thread); // 2️⃣
+      this.optimisticUpdates.remove(optimisticId);
+      this.threads.upsert(thread);
     });
   }
 
@@ -1261,21 +1260,16 @@ export class UmbrellaStore<M extends BaseMetadata> {
     ) => Readonly<ThreadDataWithDeleteInfo<M>>,
     updatedAt?: Date // TODO We could look this up from the optimisticUpdate instead?
   ): void {
-    // Batch 1️⃣ + 2️⃣
     batch(() => {
       if (optimisticId !== null) {
-        this.optimisticUpdates.remove(optimisticId); // 1️⃣
+        this.optimisticUpdates.remove(optimisticId);
       }
 
-      // 2️⃣
-      {
-        const db = this.threads;
-        const existing = db.get(threadId);
-        if (!existing) return;
-        if (!!updatedAt && existing.updatedAt > updatedAt) return;
-
-        db.upsert(callback(existing));
-      }
+      const db = this.threads;
+      const existing = db.get(threadId);
+      if (!existing) return;
+      if (!!updatedAt && existing.updatedAt > updatedAt) return;
+      db.upsert(callback(existing));
     });
   }
 
@@ -1417,10 +1411,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
     optimisticId: string,
     settings: Readonly<RoomNotificationSettings>
   ): void {
-    // Batch 1️⃣ + 2️⃣
     batch(() => {
-      this.optimisticUpdates.remove(optimisticId); // 1️⃣
-      this.roomNotificationSettings.update(roomId, settings); // 2️⃣
+      this.optimisticUpdates.remove(optimisticId);
+      this.roomNotificationSettings.update(roomId, settings);
     });
   }
 
