@@ -33,6 +33,7 @@ import {
   MutableSignal,
   nanoid,
   nn,
+  shallow,
   Signal,
   stringify,
 } from "@liveblocks/core";
@@ -567,7 +568,7 @@ type SettingsLUT = Map<RoomId, RoomNotificationSettings>;
  */
 type SettingsByRoomId = Record<RoomId, RoomNotificationSettings>;
 
-type PermissionHintsByRoomId = Record<RoomId, Set<Permission>>;
+type PermissionHintsLUT = Map<RoomId, Set<Permission>>;
 
 export type CleanThreadifications<M extends BaseMetadata> =
   // Threads + Notifications = Threadifications
@@ -581,11 +582,6 @@ export type CleanThreads<M extends BaseMetadata> = {
    * e.g. 'room-abc-{"color":"red"}'  - ok
    * e.g. 'room-abc-{}'               - loading
    */
-
-  // TODO: This should not get exposed via the "full state". Instead, we should
-  // expose it via a cached `.getThreadDB()`, and invalidate this cached
-  // value if either the threads change or a (thread) optimistic update is
-  // changed.
   threadsDB: ReadonlyThreadDB<M>;
 };
 
@@ -617,7 +613,7 @@ function createStore_forNotifications() {
   }
 
   function markAllRead(readAt: Date) {
-    return signal.mutate((lut) => {
+    signal.mutate((lut) => {
       for (const n of lut.values()) {
         n.readAt = readAt;
       }
@@ -682,6 +678,12 @@ function createStore_forNotifications() {
     });
   }
 
+  function upsert(notification: InboxNotificationData) {
+    signal.mutate((lut) => {
+      lut.set(notification.id, notification);
+    });
+  }
+
   return {
     signal: signal.asReadonly(),
 
@@ -692,11 +694,9 @@ function createStore_forNotifications() {
     applyDelta,
     clear,
     updateAssociatedNotification,
+    upsert,
 
     // XXX_vincent Remove this eventually
-    force_set: (
-      mutationCallback: (lut: NotificationsLUT) => void | undefined | boolean
-    ) => signal.mutate(mutationCallback),
     invalidate: () => signal.mutate(),
   };
 }
@@ -741,31 +741,25 @@ function createStore_forHistoryVersions() {
     // Mutations
     update,
 
-    // XXX_vincent Remove these eventually
-    force_set: (callback: (lut: VersionsLUT) => void | boolean) =>
-      signal.mutate(callback),
+    // XXX_vincent Remove this eventually
     invalidate: () => signal.mutate(),
   };
 }
 
 function createStore_forPermissionHints() {
-  const signal = new Signal<PermissionHintsByRoomId>({});
+  const signal = new MutableSignal<PermissionHintsLUT>(new Map());
 
   function update(newHints: Record<string, Permission[]>) {
-    signal.set((prev) => {
-      const permissionsByRoom = { ...prev };
-
+    signal.mutate((lut) => {
       for (const [roomId, newPermissions] of Object.entries(newHints)) {
         // Get the existing set of permissions for the room and only ever add permission to this set
-        const existing = permissionsByRoom[roomId] ?? new Set();
+        const existing = lut.get(roomId) ?? new Set();
         // Add the new permissions to the set of existing permissions
         for (const permission of newPermissions) {
           existing.add(permission);
         }
-        permissionsByRoom[roomId] = existing;
+        lut.set(roomId, existing);
       }
-
-      return permissionsByRoom;
     });
   }
 
@@ -776,7 +770,7 @@ function createStore_forPermissionHints() {
     update,
 
     // XXX_vincent Remove this eventually
-    invalidate: () => signal.set((store) => ({ ...store })),
+    invalidate: () => signal.mutate(),
   };
 }
 
@@ -871,7 +865,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   //
   readonly outputs: {
     readonly threadifications: DerivedSignal<CleanThreadifications<M>>;
-    readonly threads: DerivedSignal<CleanThreads<M>>;
+    readonly threads: DerivedSignal<ReadonlyThreadDB<M>>;
     readonly notifications: DerivedSignal<CleanNotifications>;
     readonly settingsByRoomId: DerivedSignal<SettingsByRoomId>;
     readonly versionsByRoomId: DerivedSignal<VersionsByRoomId>;
@@ -938,14 +932,16 @@ export class UmbrellaStore<M extends BaseMetadata> {
         applyOptimisticUpdates_forThreadifications(ts, ns, updates)
     );
 
-    const threads = DerivedSignal.from(threadifications, (s) => ({
-      threadsDB: s.threadsDB,
-    }));
+    const threads = DerivedSignal.from(threadifications, (s) => s.threadsDB);
 
-    const notifications = DerivedSignal.from(threadifications, (s) => ({
-      sortedNotifications: s.sortedNotifications,
-      notificationsById: s.notificationsById,
-    }));
+    const notifications = DerivedSignal.from(
+      threadifications,
+      (s) => ({
+        sortedNotifications: s.sortedNotifications,
+        notificationsById: s.notificationsById,
+      }),
+      shallow
+    );
 
     const settingsByRoomId = DerivedSignal.from(
       this.roomNotificationSettings.signal,
@@ -986,7 +982,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this.outputs.threadifications.subscribe(callback);
   }
 
-  public get1_threads(): CleanThreads<M> {
+  public get1_threads(): ReadonlyThreadDB<M> {
     return this.outputs.threads.get();
   }
 
@@ -1039,11 +1035,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return asyncResult;
     }
 
-    const threads = this.get1_threads().threadsDB.findMany(
-      roomId,
-      query ?? {},
-      "asc"
-    );
+    const threads = this.get1_threads().findMany(roomId, query ?? {}, "asc");
 
     const page = asyncResult.data;
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
@@ -1072,7 +1064,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return asyncResult;
     }
 
-    const threads = this.get1_threads().threadsDB.findMany(
+    const threads = this.get1_threads().findMany(
       undefined, // Do _not_ filter by roomId
       query ?? {},
       "desc"
@@ -1153,26 +1145,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
       isLoading: false,
       versions: Object.values(this.get3()[roomId] ?? {}),
     };
-  }
-
-  /** @internal - Only call this method from unit tests. */
-  public force_set_versions(
-    callback: (lut: VersionsLUT) => void | boolean
-  ): void {
-    batch(() => {
-      this.historyVersions.force_set(callback);
-      this.invalidateEntireStore();
-    });
-  }
-
-  /** @internal - Only call this method from unit tests. */
-  public force_set_notifications(
-    callback: (lut: NotificationsLUT) => void | undefined | boolean
-  ): void {
-    batch(() => {
-      this.notifications.force_set(callback);
-      this.invalidateEntireStore();
-    });
   }
 
   /**

@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 
-import { HttpError, nanoid, wait } from "@liveblocks/core";
+import { batch, HttpError, nanoid, wait } from "@liveblocks/core";
 import {
   act,
   fireEvent,
@@ -284,13 +284,12 @@ describe("useInboxNotifications", () => {
       umbrellaStore,
     } = createContextsForTest();
 
-    umbrellaStore.threads.upsert(thread1);
-    umbrellaStore.threads.upsert(thread2);
-
-    umbrellaStore.force_set_notifications((lut) => {
-      // Explicitly set the order to be reversed to test that the hook sorts the notifications
-      lut.set(oldInboxNotification.id, oldInboxNotification);
-      lut.set(newInboxNotification.id, newInboxNotification);
+    // Initialize the umbrella store with some data
+    batch(() => {
+      umbrellaStore.threads.upsert(thread1);
+      umbrellaStore.threads.upsert(thread2);
+      umbrellaStore.notifications.upsert(oldInboxNotification);
+      umbrellaStore.notifications.upsert(newInboxNotification);
     });
 
     const { result, unmount } = renderHook(() => useInboxNotifications(), {
