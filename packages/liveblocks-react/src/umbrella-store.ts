@@ -638,10 +638,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
   //          \                          | |                 | |    & notifications by ID
   //         | \                         | |      Apply      | |
   //         |   `-> OptimisticUpdates --+--+--> Optimistic --+-+--> Notification Settings    (Part 2)
-  //          \                          |        Updates       |
-  //           `------- etc etc ---------+                      +--> History Versions         (Part 3)
-  //                       ^                                    |
-  //                       |                                    +--> Channels Notification Settings (Part 4)
+  //          \                          |        Updates    |  |
+  //           `------- etc etc ---------+                   |  +--> History Versions         (Part 3)
+  //                       ^                                 |
+  //                       |                                 +-----> Channels Notification Settings (Part 4)
   //                       |
   //                       |
   //                       |                        ^                  ^
@@ -797,9 +797,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
     const channelNotificationSettings = DerivedSignal.from(
       this.baseChannelNotificationSettings,
       this.optimisticUpdates,
-      (baseChannelsNOtificationSettings, updates) =>
+      (baseChannelsNotificationSettings, updates) =>
         applyOptimisticUpdates_forChannelNotificationSettings(
-          baseChannelsNOtificationSettings,
+          baseChannelsNotificationSettings,
           updates
         )
     );
