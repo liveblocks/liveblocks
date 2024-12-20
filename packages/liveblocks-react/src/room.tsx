@@ -2630,7 +2630,7 @@ function useRoomPermissions(roomId: string) {
   const client = useClient();
   const store = getRoomExtrasForClient(client).store;
   return useSignal(
-    store.permissionHintsByRoomId,
+    store.permissionHints.signal,
     (hints) => hints[roomId] ?? new Set()
   );
 }
