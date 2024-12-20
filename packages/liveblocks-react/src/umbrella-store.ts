@@ -582,11 +582,6 @@ export type CleanThreads<M extends BaseMetadata> = {
    * e.g. 'room-abc-{"color":"red"}'  - ok
    * e.g. 'room-abc-{}'               - loading
    */
-
-  // TODO: This should not get exposed via the "full state". Instead, we should
-  // expose it via a cached `.getThreadDB()`, and invalidate this cached
-  // value if either the threads change or a (thread) optimistic update is
-  // changed.
   threadsDB: ReadonlyThreadDB<M>;
 };
 
@@ -870,7 +865,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   //
   readonly outputs: {
     readonly threadifications: DerivedSignal<CleanThreadifications<M>>;
-    readonly threads: DerivedSignal<CleanThreads<M>>;
+    readonly threads: DerivedSignal<ReadonlyThreadDB<M>>;
     readonly notifications: DerivedSignal<CleanNotifications>;
     readonly settingsByRoomId: DerivedSignal<SettingsByRoomId>;
     readonly versionsByRoomId: DerivedSignal<VersionsByRoomId>;
@@ -937,13 +932,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
         applyOptimisticUpdates_forThreadifications(ts, ns, updates)
     );
 
-    const threads = DerivedSignal.from(
-      threadifications,
-      (s) => ({
-        threadsDB: s.threadsDB,
-      }),
-      shallow
-    );
+    const threads = DerivedSignal.from(threadifications, (s) => s.threadsDB);
 
     const notifications = DerivedSignal.from(
       threadifications,
@@ -993,7 +982,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return this.outputs.threadifications.subscribe(callback);
   }
 
-  public get1_threads(): CleanThreads<M> {
+  public get1_threads(): ReadonlyThreadDB<M> {
     return this.outputs.threads.get();
   }
 
@@ -1046,11 +1035,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return asyncResult;
     }
 
-    const threads = this.get1_threads().threadsDB.findMany(
-      roomId,
-      query ?? {},
-      "asc"
-    );
+    const threads = this.get1_threads().findMany(roomId, query ?? {}, "asc");
 
     const page = asyncResult.data;
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
@@ -1079,7 +1064,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return asyncResult;
     }
 
-    const threads = this.get1_threads().threadsDB.findMany(
+    const threads = this.get1_threads().findMany(
       undefined, // Do _not_ filter by roomId
       query ?? {},
       "desc"

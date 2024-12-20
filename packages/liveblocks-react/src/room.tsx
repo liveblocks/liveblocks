@@ -672,7 +672,7 @@ function RoomProviderInner<
 
       const existingThread = store
         .get1_threads()
-        .threadsDB.getEvenIfDeleted(message.threadId);
+        .getEvenIfDeleted(message.threadId);
 
       switch (message.type) {
         case ServerMsgCode.COMMENT_EDITED:
@@ -1487,7 +1487,7 @@ function useDeleteRoomThread(roomId: string): (threadId: string) => void {
 
       const userId = getCurrentUserId(client);
 
-      const existing = store.get1_threads().threadsDB.get(threadId);
+      const existing = store.get1_threads().get(threadId);
       if (existing?.comments?.[0]?.userId !== userId) {
         throw new Error("Only the thread creator can delete the thread");
       }
@@ -1656,9 +1656,7 @@ function useEditRoomComment(
       const editedAt = new Date();
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-      const existing = store
-        .get1_threads()
-        .threadsDB.getEvenIfDeleted(threadId);
+      const existing = store.get1_threads().getEvenIfDeleted(threadId);
 
       if (existing === undefined) {
         console.warn(
