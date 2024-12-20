@@ -21,7 +21,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 - **Breaking**: Drop support for React 17 (and 16). If you’re unable to upgrade
   React to 18 or higher, you can still continue to use Liveblocks 2.14.0, which
-  is the last version to support React <18.
+  is the last version to support React versions lower than 18.
 
 ### All packages
 
