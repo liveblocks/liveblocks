@@ -558,6 +558,7 @@ type NotificationsLUT = Map<string, InboxNotificationData>;
  *      }
  */
 type SettingsByRoomId = Record<RoomId, RoomNotificationSettings>;
+type SettingsLUT = Map<RoomId, RoomNotificationSettings>;
 
 type PermissionHintsByRoomId = Record<RoomId, Set<Permission>>;
 
@@ -694,13 +695,12 @@ function createStore_forNotifications() {
 }
 
 function createStore_forRoomNotificationSettings() {
-  const signal = new Signal<SettingsByRoomId>({});
+  const signal = new MutableSignal<SettingsLUT>(new Map());
 
   function update(roomId: string, settings: RoomNotificationSettings): void {
-    signal.set((state) => ({
-      ...state,
-      [roomId]: settings,
-    }));
+    signal.mutate((lut) => {
+      lut.set(roomId, settings);
+    });
   }
 
   return {
@@ -710,7 +710,7 @@ function createStore_forRoomNotificationSettings() {
     update,
 
     // XXX Remove this eventually
-    invalidate: () => signal.set((store) => ({ ...store })),
+    invalidate: () => signal.mutate(),
   };
 }
 
@@ -1927,10 +1927,10 @@ function applyOptimisticUpdates_forThreadifications<M extends BaseMetadata>(
  * a stable way, removes internal fields that should not be exposed publicly.
  */
 function applyOptimisticUpdates_forSettings(
-  baseSettingsByRoomId: SettingsByRoomId,
+  settingsLUT: SettingsLUT,
   optimisticUpdates: readonly OptimisticUpdate<BaseMetadata>[]
 ): SettingsByRoomId {
-  const settingsByRoomId = { ...baseSettingsByRoomId };
+  const settingsByRoomId = Object.fromEntries(settingsLUT);
 
   for (const optimisticUpdate of optimisticUpdates) {
     switch (optimisticUpdate.type) {
