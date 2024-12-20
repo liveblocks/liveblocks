@@ -644,7 +644,7 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
 function useUpdateChannelsNotificationSettings_withClient(
   client: OpaqueClient
 ): (settings: PartialChannelsNotificationSettings) => void {
-  return React.useCallback(
+  return useCallback(
     (settings: PartialChannelsNotificationSettings): void => {
       const { store } = getLiveblocksExtrasForClient(client);
       const optimisticUpdateId = store.addOptimisticUpdate({
