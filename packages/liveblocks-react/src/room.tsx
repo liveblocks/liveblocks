@@ -252,10 +252,10 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
 
   function onMutationFailure(
     innerError: Error,
-    optimisticUpdateId: string,
+    optimisticId: string,
     createPublicError: (error: Error) => CommentsError<M>
   ) {
-    store.optimisticUpdates.remove(optimisticUpdateId);
+    store.optimisticUpdates.remove(optimisticId);
 
     if (innerError instanceof HttpError) {
       const error = handleApiError(innerError);
@@ -1432,7 +1432,7 @@ function useCreateRoomThread<M extends BaseMetadata>(
       };
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-      const optimisticUpdateId = store.optimisticUpdates.add({
+      const optimisticId = store.optimisticUpdates.add({
         type: "create-thread",
         thread: newThread,
         roomId,
@@ -1452,12 +1452,12 @@ function useCreateRoomThread<M extends BaseMetadata>(
         .then(
           (thread) => {
             // Replace the optimistic update by the real thing
-            store.createThread(optimisticUpdateId, thread);
+            store.createThread(optimisticId, thread);
           },
           (err: Error) =>
             onMutationFailure(
               err,
-              optimisticUpdateId,
+              optimisticId,
               (err) =>
                 new CreateThreadError(err, {
                   roomId,
@@ -1492,7 +1492,7 @@ function useDeleteRoomThread(roomId: string): (threadId: string) => void {
         throw new Error("Only the thread creator can delete the thread");
       }
 
-      const optimisticUpdateId = store.optimisticUpdates.add({
+      const optimisticId = store.optimisticUpdates.add({
         type: "delete-thread",
         roomId,
         threadId,
@@ -1502,12 +1502,12 @@ function useDeleteRoomThread(roomId: string): (threadId: string) => void {
       client[kInternal].httpClient.deleteThread({ roomId, threadId }).then(
         () => {
           // Replace the optimistic update by the real thing
-          store.deleteThread(threadId, optimisticUpdateId);
+          store.deleteThread(threadId, optimisticId);
         },
         (err: Error) =>
           onMutationFailure(
             err,
-            optimisticUpdateId,
+            optimisticId,
             (err) => new DeleteThreadError(err, { roomId, threadId })
           )
       );
@@ -1533,7 +1533,7 @@ function useEditRoomThreadMetadata<M extends BaseMetadata>(roomId: string) {
       const updatedAt = new Date();
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-      const optimisticUpdateId = store.optimisticUpdates.add({
+      const optimisticId = store.optimisticUpdates.add({
         type: "edit-thread-metadata",
         metadata,
         threadId,
@@ -1547,14 +1547,14 @@ function useEditRoomThreadMetadata<M extends BaseMetadata>(roomId: string) {
             // Replace the optimistic update by the real thing
             store.patchThread(
               threadId,
-              optimisticUpdateId,
+              optimisticId,
               { metadata },
               updatedAt
             ),
           (err: Error) =>
             onMutationFailure(
               err,
-              optimisticUpdateId,
+              optimisticId,
               (error) =>
                 new EditThreadMetadataError(error, {
                   roomId,
@@ -1604,7 +1604,7 @@ function useCreateRoomComment(
       };
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-      const optimisticUpdateId = store.optimisticUpdates.add({
+      const optimisticId = store.optimisticUpdates.add({
         type: "create-comment",
         comment,
       });
@@ -1616,12 +1616,12 @@ function useCreateRoomComment(
         .then(
           (newComment) => {
             // Replace the optimistic update by the real thing
-            store.createComment(newComment, optimisticUpdateId);
+            store.createComment(newComment, optimisticId);
           },
           (err: Error) =>
             onMutationFailure(
               err,
-              optimisticUpdateId,
+              optimisticId,
               (err) =>
                 new CreateCommentError(err, {
                   roomId,
@@ -1683,7 +1683,7 @@ function useEditRoomComment(
         return;
       }
 
-      const optimisticUpdateId = store.optimisticUpdates.add({
+      const optimisticId = store.optimisticUpdates.add({
         type: "edit-comment",
         comment: {
           ...comment,
@@ -1700,12 +1700,12 @@ function useEditRoomComment(
         .then(
           (editedComment) => {
             // Replace the optimistic update by the real thing
-            store.editComment(threadId, optimisticUpdateId, editedComment);
+            store.editComment(threadId, optimisticId, editedComment);
           },
           (err: Error) =>
             onMutationFailure(
               err,
-              optimisticUpdateId,
+              optimisticId,
               (error) =>
                 new EditCommentError(error, {
                   roomId,
@@ -1744,7 +1744,7 @@ function useDeleteRoomComment(roomId: string) {
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
 
-      const optimisticUpdateId = store.optimisticUpdates.add({
+      const optimisticId = store.optimisticUpdates.add({
         type: "delete-comment",
         threadId,
         commentId,
@@ -1759,7 +1759,7 @@ function useDeleteRoomComment(roomId: string) {
             // Replace the optimistic update by the real thing
             store.deleteComment(
               threadId,
-              optimisticUpdateId,
+              optimisticId,
               commentId,
               deletedAt
             );
@@ -1767,7 +1767,7 @@ function useDeleteRoomComment(roomId: string) {
           (err: Error) =>
             onMutationFailure(
               err,
-              optimisticUpdateId,
+              optimisticId,
               (error) =>
                 new DeleteCommentError(error, {
                   roomId,
@@ -1797,7 +1797,7 @@ function useAddRoomCommentReaction<M extends BaseMetadata>(roomId: string) {
 
       const { store, onMutationFailure } = getRoomExtrasForClient<M>(client);
 
-      const optimisticUpdateId = store.optimisticUpdates.add({
+      const optimisticId = store.optimisticUpdates.add({
         type: "add-reaction",
         threadId,
         commentId,
@@ -1815,7 +1815,7 @@ function useAddRoomCommentReaction<M extends BaseMetadata>(roomId: string) {
             // Replace the optimistic update by the real thing
             store.addReaction(
               threadId,
-              optimisticUpdateId,
+              optimisticId,
               commentId,
               addedReaction,
               createdAt
@@ -1824,7 +1824,7 @@ function useAddRoomCommentReaction<M extends BaseMetadata>(roomId: string) {
           (err: Error) =>
             onMutationFailure(
               err,
-              optimisticUpdateId,
+              optimisticId,
               (error) =>
                 new AddReactionError(error, {
                   roomId,
@@ -1862,7 +1862,7 @@ function useRemoveRoomCommentReaction(roomId: string) {
       const removedAt = new Date();
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-      const optimisticUpdateId = store.optimisticUpdates.add({
+      const optimisticId = store.optimisticUpdates.add({
         type: "remove-reaction",
         threadId,
         commentId,
@@ -1878,7 +1878,7 @@ function useRemoveRoomCommentReaction(roomId: string) {
             // Replace the optimistic update by the real thing
             store.removeReaction(
               threadId,
-              optimisticUpdateId,
+              optimisticId,
               commentId,
               emoji,
               userId,
@@ -1888,7 +1888,7 @@ function useRemoveRoomCommentReaction(roomId: string) {
           (err: Error) =>
             onMutationFailure(
               err,
-              optimisticUpdateId,
+              optimisticId,
               (error) =>
                 new RemoveReactionError(error, {
                   roomId,
@@ -1933,7 +1933,7 @@ function useMarkRoomThreadAsRead(roomId: string) {
 
       const now = new Date();
 
-      const optimisticUpdateId = store.optimisticUpdates.add({
+      const optimisticId = store.optimisticUpdates.add({
         type: "mark-inbox-notification-as-read",
         inboxNotificationId: inboxNotification.id,
         readAt: now,
@@ -1950,13 +1950,13 @@ function useMarkRoomThreadAsRead(roomId: string) {
             store.markInboxNotificationRead(
               inboxNotification.id,
               now,
-              optimisticUpdateId
+              optimisticId
             );
           },
           (err: Error) => {
             onMutationFailure(
               err,
-              optimisticUpdateId,
+              optimisticId,
               (error) =>
                 new MarkInboxNotificationAsReadError(error, {
                   inboxNotificationId: inboxNotification.id,
@@ -1991,7 +1991,7 @@ function useMarkRoomThreadAsResolved(roomId: string) {
       const updatedAt = new Date();
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-      const optimisticUpdateId = store.optimisticUpdates.add({
+      const optimisticId = store.optimisticUpdates.add({
         type: "mark-thread-as-resolved",
         threadId,
         updatedAt,
@@ -2004,7 +2004,7 @@ function useMarkRoomThreadAsResolved(roomId: string) {
             // Replace the optimistic update by the real thing
             store.patchThread(
               threadId,
-              optimisticUpdateId,
+              optimisticId,
               { resolved: true },
               updatedAt
             );
@@ -2012,7 +2012,7 @@ function useMarkRoomThreadAsResolved(roomId: string) {
           (err: Error) =>
             onMutationFailure(
               err,
-              optimisticUpdateId,
+              optimisticId,
               (error) =>
                 new MarkThreadAsResolvedError(error, {
                   roomId,
@@ -2046,7 +2046,7 @@ function useMarkRoomThreadAsUnresolved(roomId: string) {
       const updatedAt = new Date();
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-      const optimisticUpdateId = store.optimisticUpdates.add({
+      const optimisticId = store.optimisticUpdates.add({
         type: "mark-thread-as-unresolved",
         threadId,
         updatedAt,
@@ -2059,7 +2059,7 @@ function useMarkRoomThreadAsUnresolved(roomId: string) {
             // Replace the optimistic update by the real thing
             store.patchThread(
               threadId,
-              optimisticUpdateId,
+              optimisticId,
               { resolved: false },
               updatedAt
             );
@@ -2067,7 +2067,7 @@ function useMarkRoomThreadAsUnresolved(roomId: string) {
           (err: Error) =>
             onMutationFailure(
               err,
-              optimisticUpdateId,
+              optimisticId,
               (error) =>
                 new MarkThreadAsUnresolvedError(error, {
                   roomId,
@@ -2344,7 +2344,7 @@ function useUpdateRoomNotificationSettings() {
   return useCallback(
     (settings: Partial<RoomNotificationSettings>) => {
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-      const optimisticUpdateId = store.optimisticUpdates.add({
+      const optimisticId = store.optimisticUpdates.add({
         type: "update-notification-settings",
         roomId: room.id,
         settings,
@@ -2355,14 +2355,14 @@ function useUpdateRoomNotificationSettings() {
           // Replace the optimistic update by the real thing
           store.updateRoomNotificationSettings(
             room.id,
-            optimisticUpdateId,
+            optimisticId,
             settings
           );
         },
         (err: Error) =>
           onMutationFailure(
             err,
-            optimisticUpdateId,
+            optimisticId,
             (error) =>
               new UpdateNotificationSettingsError(error, {
                 roomId: room.id,

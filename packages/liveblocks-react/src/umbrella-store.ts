@@ -1,4 +1,3 @@
-// XXX Rename optimisticUpdateId → optimisticId everywhere
 import type {
   AsyncResult,
   BaseMetadata,
@@ -654,7 +653,6 @@ function createStore_forNotifications() {
     });
   }
 
-  // XXX Rename to a good verb
   function updateAssociatedNotification(newComment: CommentData) {
     signal.set((state) => {
       const existing = Object.values(state).find(
@@ -805,8 +803,8 @@ function createStore_forOptimistic<M extends BaseMetadata>(
     return id;
   }
 
-  function remove(optimisticUpdateId: string): void {
-    signal.set((state) => state.filter((ou) => ou.id !== optimisticUpdateId));
+  function remove(optimisticId: string): void {
+    signal.set((state) => state.filter((ou) => ou.id !== optimisticId));
   }
 
   return {
@@ -1183,20 +1181,20 @@ export class UmbrellaStore<M extends BaseMetadata> {
   public markInboxNotificationRead(
     inboxNotificationId: string,
     readAt: Date,
-    optimisticUpdateId: string
+    optimisticId: string
   ): void {
     batch(() => {
-      this.optimisticUpdates.remove(optimisticUpdateId);
+      this.optimisticUpdates.remove(optimisticId);
       this.notifications.markRead(inboxNotificationId, readAt);
     });
   }
 
   public markAllInboxNotificationsRead(
-    optimisticUpdateId: string,
+    optimisticId: string,
     readAt: Date
   ): void {
     batch(() => {
-      this.optimisticUpdates.remove(optimisticUpdateId);
+      this.optimisticUpdates.remove(optimisticId);
       this.notifications.markAllRead(readAt);
     });
   }
@@ -1207,10 +1205,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
    */
   public deleteInboxNotification(
     inboxNotificationId: string,
-    optimisticUpdateId: string
+    optimisticId: string
   ): void {
     batch(() => {
-      this.optimisticUpdates.remove(optimisticUpdateId);
+      this.optimisticUpdates.remove(optimisticId);
       this.notifications.delete(inboxNotificationId);
     });
   }
@@ -1219,9 +1217,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * Deletes *all* inbox notifications, replacing the corresponding optimistic
    * update.
    */
-  public deleteAllInboxNotifications(optimisticUpdateId: string): void {
+  public deleteAllInboxNotifications(optimisticId: string): void {
     batch(() => {
-      this.optimisticUpdates.remove(optimisticUpdateId);
+      this.optimisticUpdates.remove(optimisticId);
       this.notifications.clear();
     });
   }
@@ -1230,12 +1228,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * Creates an new thread, replacing the corresponding optimistic update.
    */
   public createThread(
-    optimisticUpdateId: string,
+    optimisticId: string,
     thread: Readonly<ThreadDataWithDeleteInfo<M>>
   ): void {
     // Batch 1️⃣ + 2️⃣
     batch(() => {
-      this.optimisticUpdates.remove(optimisticUpdateId); // 1️⃣j
+      this.optimisticUpdates.remove(optimisticId); // 1️⃣j
       this.threads.upsert(thread); // 2️⃣
     });
   }
@@ -1252,7 +1250,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
    */
   #updateThread(
     threadId: string,
-    optimisticUpdateId: string | null,
+    optimisticId: string | null,
     callback: (
       thread: Readonly<ThreadDataWithDeleteInfo<M>>
     ) => Readonly<ThreadDataWithDeleteInfo<M>>,
@@ -1260,8 +1258,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): void {
     // Batch 1️⃣ + 2️⃣
     batch(() => {
-      if (optimisticUpdateId !== null) {
-        this.optimisticUpdates.remove(optimisticUpdateId); // 1️⃣
+      if (optimisticId !== null) {
+        this.optimisticUpdates.remove(optimisticId); // 1️⃣
       }
 
       // 2️⃣
@@ -1278,7 +1276,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   public patchThread(
     threadId: string,
-    optimisticUpdateId: string | null,
+    optimisticId: string | null,
     patch: {
       // Only these fields are currently supported to patch
       metadata?: M;
@@ -1288,7 +1286,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): void {
     return this.#updateThread(
       threadId,
-      optimisticUpdateId,
+      optimisticId,
       (thread) => ({ ...thread, ...compactObject(patch) }),
       updatedAt
     );
@@ -1296,14 +1294,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   public addReaction(
     threadId: string,
-    optimisticUpdateId: string | null,
+    optimisticId: string | null,
     commentId: string,
     reaction: CommentUserReaction,
     createdAt: Date // TODO We could look this up from the optimisticUpdate instead?
   ): void {
     this.#updateThread(
       threadId,
-      optimisticUpdateId,
+      optimisticId,
       (thread) => applyAddReaction(thread, commentId, reaction),
       createdAt
     );
@@ -1311,7 +1309,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   public removeReaction(
     threadId: string,
-    optimisticUpdateId: string | null,
+    optimisticId: string | null,
     commentId: string,
     emoji: string,
     userId: string,
@@ -1319,7 +1317,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): void {
     this.#updateThread(
       threadId,
-      optimisticUpdateId,
+      optimisticId,
       (thread) =>
         applyRemoveReaction(thread, commentId, emoji, userId, removedAt),
       removedAt
@@ -1334,13 +1332,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * - The thread ID isn't found; or
    * - The thread ID was already deleted
    */
-  public deleteThread(
-    threadId: string,
-    optimisticUpdateId: string | null
-  ): void {
+  public deleteThread(threadId: string, optimisticId: string | null): void {
     return this.#updateThread(
       threadId,
-      optimisticUpdateId,
+      optimisticId,
 
       // A deletion is actually an update of the deletedAt property internally
       (thread) => ({ ...thread, updatedAt: new Date(), deletedAt: new Date() })
@@ -1351,14 +1346,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * Creates an existing comment and ensures the associated notification is
    * updated correctly, replacing the corresponding optimistic update.
    */
-  public createComment(
-    newComment: CommentData,
-    optimisticUpdateId: string
-  ): void {
+  public createComment(newComment: CommentData, optimisticId: string): void {
     // Batch 1️⃣ + 2️⃣ + 3️⃣
     batch(() => {
       // 1️⃣
-      this.optimisticUpdates.remove(optimisticUpdateId);
+      this.optimisticUpdates.remove(optimisticId);
 
       // If the associated thread is not found, we cannot create a comment under it
       const existingThread = this.threads.get(newComment.threadId);
@@ -1376,23 +1368,23 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   public editComment(
     threadId: string,
-    optimisticUpdateId: string,
+    optimisticId: string,
     editedComment: CommentData
   ): void {
-    return this.#updateThread(threadId, optimisticUpdateId, (thread) =>
+    return this.#updateThread(threadId, optimisticId, (thread) =>
       applyUpsertComment(thread, editedComment)
     );
   }
 
   public deleteComment(
     threadId: string,
-    optimisticUpdateId: string,
+    optimisticId: string,
     commentId: string,
     deletedAt: Date
   ): void {
     return this.#updateThread(
       threadId,
-      optimisticUpdateId,
+      optimisticId,
       (thread) => applyDeleteComment(thread, commentId, deletedAt),
       deletedAt
     );
@@ -1417,12 +1409,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
    */
   public updateRoomNotificationSettings(
     roomId: string,
-    optimisticUpdateId: string,
+    optimisticId: string,
     settings: Readonly<RoomNotificationSettings>
   ): void {
     // Batch 1️⃣ + 2️⃣
     batch(() => {
-      this.optimisticUpdates.remove(optimisticUpdateId); // 1️⃣
+      this.optimisticUpdates.remove(optimisticId); // 1️⃣
       this.roomNotificationSettings.update(roomId, settings); // 2️⃣
     });
   }
