@@ -640,7 +640,7 @@ function useUpdateChannelsNotificationSettings_withClient(
   return useCallback(
     (settings: PartialChannelsNotificationSettings): void => {
       const { store } = getLiveblocksExtrasForClient(client);
-      const optimisticUpdateId = store.addOptimisticUpdate({
+      const optimisticUpdateId = store.optimisticUpdates.add({
         type: "update-channels-notification-settings",
         settings,
       });
@@ -655,7 +655,7 @@ function useUpdateChannelsNotificationSettings_withClient(
         },
         () => {
           // Remove optimistic update when it fails
-          store.removeOptimisticUpdate(optimisticUpdateId);
+          store.optimisticUpdates.remove(optimisticUpdateId);
         }
       );
     },
