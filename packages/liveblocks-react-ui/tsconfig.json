@@ -18,6 +18,6 @@
     "plugins/**/*",
     "src/**/*",
     "styles/**/*",
-    "rollup.config.ts"
+    "rollup.config.mjs"
   ]
 }
