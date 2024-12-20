@@ -287,12 +287,11 @@ describe("useInboxNotifications", () => {
     umbrellaStore.threads.upsert(thread1);
     umbrellaStore.threads.upsert(thread2);
 
-    umbrellaStore.force_set_notifications((prev) => ({
-      ...prev,
+    umbrellaStore.force_set_notifications((lut) => {
       // Explicitly set the order to be reversed to test that the hook sorts the notifications
-      [oldInboxNotification.id]: oldInboxNotification,
-      [newInboxNotification.id]: newInboxNotification,
-    }));
+      lut.set(oldInboxNotification.id, oldInboxNotification);
+      lut.set(newInboxNotification.id, newInboxNotification);
+    });
 
     const { result, unmount } = renderHook(() => useInboxNotifications(), {
       wrapper: ({ children }) => (

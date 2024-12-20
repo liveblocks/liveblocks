@@ -30,7 +30,7 @@ import {
   HttpError,
   kInternal,
   makeEventSource,
-  mapValues,
+  MutableSignal,
   nanoid,
   nn,
   Signal,
@@ -38,6 +38,7 @@ import {
 } from "@liveblocks/core";
 
 import { autobind } from "./lib/autobind";
+import { find } from "./lib/itertools";
 import type { ReadonlyThreadDB } from "./ThreadDB";
 import { ThreadDB } from "./ThreadDB";
 import type {
@@ -544,7 +545,10 @@ type QueryKey = string;
  */
 type VersionsByRoomId = Record<RoomId, Record<string, HistoryVersion>>;
 
-type NotificationsById = Record<string, InboxNotificationData>;
+/**
+ * A lookup table (LUT) for all the inbox notifications.
+ */
+type NotificationsLUT = Map<string, InboxNotificationData>;
 
 /**
  * Notification settings by room ID.
@@ -591,90 +595,82 @@ export type CleanNotifications = {
 };
 
 function createStore_forNotifications() {
-  const signal = new Signal<NotificationsById>({});
+  const signal = new MutableSignal<NotificationsLUT>(new Map());
 
-  function markRead(inboxNotificationId: string, readAt: Date) {
-    signal.set((state) => {
-      const existing = state[inboxNotificationId];
+  function markRead(notificationId: string, readAt: Date) {
+    signal.mutate((lut) => {
+      const existing = lut.get(notificationId);
       if (!existing) {
-        // If the inbox notification doesn't exist, we do not change anything
-        return state;
+        return false;
       }
-      return {
-        ...state,
-        [inboxNotificationId]: { ...existing, readAt },
-      };
+      lut.set(notificationId, { ...existing, readAt });
+      return true;
     });
   }
 
   function markAllRead(readAt: Date) {
-    return signal.set((state) => mapValues(state, (n) => ({ ...n, readAt })));
-  }
-
-  function deleteOne(inboxNotificationId: string) {
-    // Delete it
-    signal.set((state) => {
-      const { [inboxNotificationId]: removed, ...newState } = state;
-      return removed === undefined ? state : newState;
+    return signal.mutate((lut) => {
+      for (const n of lut.values()) {
+        n.readAt = readAt;
+      }
     });
   }
 
+  function deleteOne(inboxNotificationId: string) {
+    signal.mutate((lut) => lut.delete(inboxNotificationId));
+  }
+
   function clear() {
-    signal.set(() => ({}));
+    signal.mutate((lut) => lut.clear());
   }
 
   function applyDelta(
     newInboxNotifications: InboxNotificationData[],
     deletedNotifications: InboxNotificationDeleteInfo[]
   ) {
-    signal.set((state) => {
-      const newState = { ...state };
+    signal.mutate((lut) => {
+      let mutated = false;
 
       // Add new notifications or update existing notifications if the existing notification is older than the new notification.
       for (const n of newInboxNotifications) {
-        const existing = newState[n.id];
+        const existing = lut.get(n.id);
         // If the notification already exists, we need to compare the two notifications to determine which one is newer.
         if (existing) {
           const result = compareInboxNotifications(existing, n);
-
           // If the existing notification is newer than the new notification, we do not update the existing notification.
           if (result === 1) continue;
         }
 
         // If the new notification is newer than the existing notification, we update the existing notification.
-        newState[n.id] = n;
+        lut.set(n.id, n);
+        mutated = true;
       }
 
       for (const n of deletedNotifications) {
-        delete newState[n.id];
+        lut.delete(n.id);
+        mutated = true;
       }
-
-      return newState;
+      return mutated;
     });
   }
 
   function updateAssociatedNotification(newComment: CommentData) {
-    signal.set((state) => {
-      const existing = Object.values(state).find(
+    signal.mutate((lut) => {
+      const existing = find(
+        lut.values(),
         (notification) =>
           notification.kind === "thread" &&
           notification.threadId === newComment.threadId
       );
-
-      if (!existing) {
-        // Nothing to update here
-        return state;
-      }
+      if (!existing) return false; // Nothing to udate here
 
       // If the thread has an inbox notification associated with it, we update the notification's `notifiedAt` and `readAt` values
-      return {
-        ...state,
-        [existing.id]: {
-          ...existing,
-          notifiedAt: newComment.createdAt,
-          readAt: newComment.createdAt,
-        },
-      };
+      lut.set(existing.id, {
+        ...existing,
+        notifiedAt: newComment.createdAt,
+        readAt: newComment.createdAt,
+      });
+      return true;
     });
   }
 
@@ -691,9 +687,9 @@ function createStore_forNotifications() {
 
     // XXX Remove this eventually
     force_set: (
-      callback: (currentState: NotificationsById) => NotificationsById
-    ) => signal.set(callback),
-    invalidate: () => signal.set((store) => ({ ...store })),
+      mutationCallback: (lut: NotificationsLUT) => void | undefined | boolean
+    ) => signal.mutate(mutationCallback),
+    invalidate: () => signal.mutate(),
   };
 }
 
@@ -1164,7 +1160,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   /** @internal - Only call this method from unit tests. */
   public force_set_notifications(
-    callback: (currentState: NotificationsById) => NotificationsById
+    callback: (lut: NotificationsLUT) => void | undefined | boolean
   ): void {
     batch(() => {
       this.notifications.force_set(callback);
@@ -1730,11 +1726,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
  */
 function applyOptimisticUpdates_forThreadifications<M extends BaseMetadata>(
   baseThreadsDB: ThreadDB<M>,
-  rawNotificationsById: NotificationsById,
+  notificationsLUT: NotificationsLUT,
   optimisticUpdates: readonly OptimisticUpdate<M>[]
 ): CleanThreadifications<M> {
   const threadsDB = baseThreadsDB.clone();
-  let notificationsById = { ...rawNotificationsById };
+  let notificationsById = Object.fromEntries(notificationsLUT);
 
   for (const optimisticUpdate of optimisticUpdates) {
     switch (optimisticUpdate.type) {

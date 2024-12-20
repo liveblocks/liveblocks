@@ -1545,12 +1545,7 @@ function useEditRoomThreadMetadata<M extends BaseMetadata>(roomId: string) {
         .then(
           (metadata) =>
             // Replace the optimistic update by the real thing
-            store.patchThread(
-              threadId,
-              optimisticId,
-              { metadata },
-              updatedAt
-            ),
+            store.patchThread(threadId, optimisticId, { metadata }, updatedAt),
           (err: Error) =>
             onMutationFailure(
               err,
@@ -1757,12 +1752,7 @@ function useDeleteRoomComment(roomId: string) {
         .then(
           () => {
             // Replace the optimistic update by the real thing
-            store.deleteComment(
-              threadId,
-              optimisticId,
-              commentId,
-              deletedAt
-            );
+            store.deleteComment(threadId, optimisticId, commentId, deletedAt);
           },
           (err: Error) =>
             onMutationFailure(
@@ -2353,11 +2343,7 @@ function useUpdateRoomNotificationSettings() {
       room.updateNotificationSettings(settings).then(
         (settings) => {
           // Replace the optimistic update by the real thing
-          store.updateRoomNotificationSettings(
-            room.id,
-            optimisticId,
-            settings
-          );
+          store.updateRoomNotificationSettings(room.id, optimisticId, settings);
         },
         (err: Error) =>
           onMutationFailure(
