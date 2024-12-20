@@ -459,7 +459,7 @@ export class PaginatedResource {
       () => {
         this.#eventSource.notify();
 
-        // Wait for 5 seconds before removing the request from the cache
+        // Wait for 5 seconds before removing the request
         setTimeout(() => {
           this.#cachedPromise = null;
           this.#eventSource.notify();
@@ -523,7 +523,7 @@ class SinglePageResource {
       () => {
         this.#eventSource.notify();
 
-        // Wait for 5 seconds before removing the request from the cache
+        // Wait for 5 seconds before removing the request
         setTimeout(() => {
           this.#cachedPromise = null;
           this.#eventSource.notify();
@@ -594,84 +594,93 @@ export type CleanNotifications = {
 function createStore_forNotifications() {
   const signal = new Signal<NotificationsById>({});
 
-  // XXX Rename to a good verb
-  function dosomething1(
+  // XXX Really this seems to only be used to "mark all read". Name this more specifically!
+  function updateOne(
     inboxNotificationId: string,
     callback: (
       notification: Readonly<InboxNotificationData>
     ) => Readonly<InboxNotificationData>
   ) {
-    signal.set((cache) => {
-      const existing = cache[inboxNotificationId];
+    signal.set((state) => {
+      const existing = state[inboxNotificationId];
       if (!existing) {
-        // If the inbox notification doesn't exist in the cache, we do not
-        // change anything
-        return cache;
+        // If the inbox notification doesn't exist, we do not change anything
+        return state;
       }
-
-      return {
-        ...cache,
-        [inboxNotificationId]: callback(existing),
-      };
+      return { ...state, [inboxNotificationId]: callback(existing) };
     });
   }
 
-  // XXX Rename to a good verb
-  function dosomething2(
+  // XXX Really this seems to only be used to "mark all read". Name this more specifically!
+  function updateAll(
     mapFn: (
       notification: Readonly<InboxNotificationData>
     ) => Readonly<InboxNotificationData>
   ) {
-    return signal.set((cache) => mapValues(cache, mapFn));
+    return signal.set((state) => mapValues(state, mapFn));
   }
 
-  // XXX Rename to a good verb
-  function dosomething3(inboxNotificationId: string) {
+  function deleteOne(inboxNotificationId: string) {
     // Delete it
-    signal.set((cache) => {
-      const { [inboxNotificationId]: removed, ...newCache } = cache;
-      return removed === undefined ? cache : newCache;
+    signal.set((state) => {
+      const { [inboxNotificationId]: removed, ...newState } = state;
+      return removed === undefined ? state : newState;
+    });
+  }
+
+  function clear() {
+    signal.set(() => ({}));
+  }
+
+  function applyDelta(
+    newInboxNotifications: InboxNotificationData[],
+    deletedNotifications: InboxNotificationDeleteInfo[]
+  ) {
+    signal.set((state) => {
+      const newState = { ...state };
+
+      // Add new notifications or update existing notifications if the existing notification is older than the new notification.
+      for (const n of newInboxNotifications) {
+        const existing = newState[n.id];
+        // If the notification already exists, we need to compare the two notifications to determine which one is newer.
+        if (existing) {
+          const result = compareInboxNotifications(existing, n);
+
+          // If the existing notification is newer than the new notification, we do not update the existing notification.
+          if (result === 1) continue;
+        }
+
+        // If the new notification is newer than the existing notification, we update the existing notification.
+        newState[n.id] = n;
+      }
+
+      for (const n of deletedNotifications) {
+        delete newState[n.id];
+      }
+
+      return newState;
     });
   }
 
   // XXX Rename to a good verb
-  function dosomething4() {
-    // Empty the cache
-    signal.set(() => ({}));
-  }
-
-  // XXX Rename to "applyDelta"
-  function dosomething5(
-    notifications: InboxNotificationData[],
-    deletedNotifications: InboxNotificationDeleteInfo[]
-  ) {
-    signal.set((cache) =>
-      applyNotificationsUpdates(cache, {
-        newInboxNotifications: notifications,
-        deletedNotifications,
-      })
-    );
-  }
-
-  // XXX Rename to a good verb
-  function dosomething6(newComment: CommentData) {
-    signal.set((cache) => {
-      const existingNotification = Object.values(cache).find(
+  function updateAssociatedNotification(newComment: CommentData) {
+    signal.set((state) => {
+      const existing = Object.values(state).find(
         (notification) =>
           notification.kind === "thread" &&
           notification.threadId === newComment.threadId
       );
 
-      if (!existingNotification) {
+      if (!existing) {
         // Nothing to update here
-        return cache;
+        return state;
       }
 
       // If the thread has an inbox notification associated with it, we update the notification's `notifiedAt` and `readAt` values
       return {
-        ...cache,
-        [existingNotification.id]: {
-          ...existingNotification,
+        ...state,
+        [existing.id]: {
+          ...existing,
           notifiedAt: newComment.createdAt,
           readAt: newComment.createdAt,
         },
@@ -683,12 +692,12 @@ function createStore_forNotifications() {
     signal: signal.asReadonly(),
 
     // Mutations
-    dosomething1,
-    dosomething2,
-    dosomething3,
-    dosomething4,
-    applyDelta: dosomething5,
-    dosomething6,
+    updateAll,
+    updateOne,
+    delete: deleteOne,
+    applyDelta,
+    clear,
+    updateAssociatedNotification,
 
     // XXX Remove this eventually
     force_set: (
@@ -800,12 +809,12 @@ function createStore_forOptimistic<M extends BaseMetadata>(
   ): string {
     const id = nanoid();
     const newUpdate: OptimisticUpdate<M> = { ...optimisticUpdate, id };
-    signal.set((cache) => [...cache, newUpdate]);
+    signal.set((state) => [...state, newUpdate]);
     return id;
   }
 
   function remove(optimisticUpdateId: string): void {
-    signal.set((cache) => cache.filter((ou) => ou.id !== optimisticUpdateId));
+    signal.set((state) => state.filter((ou) => ou.id !== optimisticUpdateId));
   }
 
   return {
@@ -1177,19 +1186,18 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * Updates an existing inbox notification with a new value, replacing the
    * corresponding optimistic update.
    *
-   * This will not update anything if the inbox notification ID isn't found in
-   * the cache.
+   * This will not update anything if the inbox notification ID isn't found.
    */
   public updateInboxNotification(
     optimisticUpdateId: string,
     inboxNotificationId: string,
-    callback: (
+    updateFn: (
       notification: Readonly<InboxNotificationData>
     ) => Readonly<InboxNotificationData>
   ): void {
     batch(() => {
       this.optimisticUpdates.remove(optimisticUpdateId);
-      this.notifications.dosomething1(inboxNotificationId, callback);
+      this.notifications.updateOne(inboxNotificationId, updateFn);
     });
   }
 
@@ -1199,13 +1207,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
    */
   public updateAllInboxNotifications(
     optimisticUpdateId: string,
-    mapFn: (
+    updateFn: (
       notification: Readonly<InboxNotificationData>
     ) => Readonly<InboxNotificationData>
   ): void {
     batch(() => {
       this.optimisticUpdates.remove(optimisticUpdateId);
-      this.notifications.dosomething2(mapFn);
+      this.notifications.updateAll(updateFn);
     });
   }
 
@@ -1219,7 +1227,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): void {
     batch(() => {
       this.optimisticUpdates.remove(optimisticUpdateId);
-      this.notifications.dosomething3(inboxNotificationId);
+      this.notifications.delete(inboxNotificationId);
     });
   }
 
@@ -1230,7 +1238,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   public deleteAllInboxNotifications(optimisticUpdateId: string): void {
     batch(() => {
       this.optimisticUpdates.remove(optimisticUpdateId);
-      this.notifications.dosomething4();
+      this.notifications.clear();
     });
   }
 
@@ -1253,10 +1261,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * optimistic update.
    *
    * This will not update anything if:
-   * - The thread ID isn't found in the cache; or
-   * - The thread ID was already deleted from the cache; or
-   * - The thread ID in the cache was updated more recently than the optimistic
-   *   update's timestamp (if given)
+   * - The thread ID isn't found; or
+   * - The thread ID was already deleted; or
+   * - The thread ID was updated more recently than the optimistic update's
+   *   timestamp (if given)
    */
   #updateThread(
     threadId: string,
@@ -1339,8 +1347,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * replacing the corresponding optimistic update.
    *
    * This will not update anything if:
-   * - The thread ID isn't found in the cache; or
-   * - The thread ID was already deleted from the cache
+   * - The thread ID isn't found; or
+   * - The thread ID was already deleted
    */
   public deleteThread(
     threadId: string,
@@ -1378,7 +1386,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this.threads.upsert(applyUpsertComment(existingThread, newComment));
 
       // 3️⃣ Update the associated inbox notification (if any)
-      this.notifications.dosomething6(newComment);
+      this.notifications.updateAssociatedNotification(newComment);
     });
   }
 
@@ -1888,7 +1896,7 @@ function applyOptimisticUpdates_forThreadifications<M extends BaseMetadata>(
       case "mark-inbox-notification-as-read": {
         const ibn = notificationsById[optimisticUpdate.inboxNotificationId];
 
-        // If the inbox notification doesn't exist in the cache, we do not apply the update
+        // If the inbox notification doesn't exist, we do not apply the update
         if (ibn === undefined) {
           break;
         }
@@ -1903,7 +1911,7 @@ function applyOptimisticUpdates_forThreadifications<M extends BaseMetadata>(
         for (const id in notificationsById) {
           const ibn = notificationsById[id];
 
-          // If the inbox notification doesn't exist in the cache, we do not apply the update
+          // If the inbox notification doesn't exist, we do not apply the update
           if (ibn === undefined) {
             break;
           }
@@ -1957,7 +1965,7 @@ function applyOptimisticUpdates_forSettings(
       case "update-notification-settings": {
         const settings = settingsByRoomId[optimisticUpdate.roomId];
 
-        // If the inbox notification doesn't exist in the cache, we do not apply the update
+        // If the inbox notification doesn't exist, we do not apply the update
         if (settings === undefined) {
           break;
         }
@@ -1970,40 +1978,6 @@ function applyOptimisticUpdates_forSettings(
     }
   }
   return settingsByRoomId;
-}
-
-export function applyNotificationsUpdates(
-  existingInboxNotifications: Record<string, InboxNotificationData>,
-  updates: {
-    newInboxNotifications: InboxNotificationData[];
-    deletedNotifications: InboxNotificationDeleteInfo[];
-  }
-): Record<string, InboxNotificationData> {
-  const updatedInboxNotifications = { ...existingInboxNotifications };
-
-  // Add new notifications or update existing notifications if the existing notification is older than the new notification.
-  for (const notification of updates.newInboxNotifications) {
-    const existingNotification = updatedInboxNotifications[notification.id];
-    // If the notification already exists, we need to compare the two notifications to determine which one is newer.
-    if (existingNotification) {
-      const result = compareInboxNotifications(
-        existingNotification,
-        notification
-      );
-
-      // If the existing notification is newer than the new notification, we do not update the existing notification.
-      if (result === 1) continue;
-    }
-
-    // If the new notification is newer than the existing notification, we update the existing notification.
-    updatedInboxNotifications[notification.id] = notification;
-  }
-
-  for (const { id } of updates.deletedNotifications) {
-    delete updatedInboxNotifications[id];
-  }
-
-  return updatedInboxNotifications;
 }
 
 /**
