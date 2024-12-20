@@ -544,6 +544,7 @@ function ComposerAttachments({
 const editorRequiredComponents: ComposerEditorComponents = {
   Mention: ComposerMention,
   MentionSuggestions: ComposerMentionSuggestions,
+  FloatingToolbar: ComposerFloatingToolbar,
   Link: ComposerLink,
 };
 
