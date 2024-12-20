@@ -284,8 +284,8 @@ describe("useInboxNotifications", () => {
       umbrellaStore,
     } = createContextsForTest();
 
-    umbrellaStore.baseThreadsDB.upsert(thread1);
-    umbrellaStore.baseThreadsDB.upsert(thread2);
+    umbrellaStore.threads.upsert(thread1);
+    umbrellaStore.threads.upsert(thread2);
 
     umbrellaStore.force_set_notifications((prev) => ({
       ...prev,

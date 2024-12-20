@@ -849,7 +849,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // Input signals.
   // (Can be mutated directly.)
   //
-  readonly baseThreadsDB: ThreadDB<M>; // Exposes its signal under `.signal` prop
+  // XXX Now that we have createStore_forX, we should probably also change
+  // `threads` to this pattern, ie create a createStore_forThreads helper as
+  // well. It almost works like that already anyway!
+  readonly threads: ThreadDB<M>; // Exposes its signal under `.signal` prop
   readonly notifications: ReturnType<typeof createStore_forNotifications>;
   readonly roomNotificationSettings: ReturnType<typeof createStore_forRoomNotificationSettings>; // prettier-ignore
   readonly historyVersions: ReturnType<typeof createStore_forHistoryVersions>;
@@ -921,14 +924,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this.invalidateEntireStore()
     );
 
-    this.baseThreadsDB = new ThreadDB();
+    this.threads = new ThreadDB();
 
     this.notifications = createStore_forNotifications();
     this.roomNotificationSettings = createStore_forRoomNotificationSettings();
     this.historyVersions = createStore_forHistoryVersions();
 
     const threadifications = DerivedSignal.from(
-      this.baseThreadsDB.signal,
+      this.threads.signal,
       this.notifications.signal,
       this.optimisticUpdates.signal,
       (ts, ns, updates) =>
@@ -1240,7 +1243,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // Batch 1️⃣ + 2️⃣
     batch(() => {
       this.optimisticUpdates.remove(optimisticUpdateId); // 1️⃣j
-      this.baseThreadsDB.upsert(thread); // 2️⃣
+      this.threads.upsert(thread); // 2️⃣
     });
   }
 
@@ -1270,7 +1273,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
       // 2️⃣
       {
-        const db = this.baseThreadsDB;
+        const db = this.threads;
         const existing = db.get(threadId);
         if (!existing) return;
         if (!!updatedAt && existing.updatedAt > updatedAt) return;
@@ -1365,13 +1368,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this.optimisticUpdates.remove(optimisticUpdateId);
 
       // If the associated thread is not found, we cannot create a comment under it
-      const existingThread = this.baseThreadsDB.get(newComment.threadId);
+      const existingThread = this.threads.get(newComment.threadId);
       if (!existingThread) {
         return;
       }
 
       // 2️⃣ Update the thread instance by adding a comment under it
-      this.baseThreadsDB.upsert(applyUpsertComment(existingThread, newComment));
+      this.threads.upsert(applyUpsertComment(existingThread, newComment));
 
       // 3️⃣ Update the associated inbox notification (if any)
       this.notifications.dosomething6(newComment);
@@ -1410,7 +1413,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): void {
     batch(() => {
       // XXX Make these signatures look the same
-      this.baseThreadsDB.applyDelta({ newThreads: threads, deletedThreads });
+      this.threads.applyDelta({ newThreads: threads, deletedThreads });
       this.notifications.applyDelta(notifications, deletedNotifications);
     });
   }
