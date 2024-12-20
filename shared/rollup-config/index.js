@@ -1,5 +1,6 @@
 import replace from "@rollup/plugin-replace";
 import fs from "fs";
+import MagicString from "magic-string";
 import { createRequire } from "module";
 import path from "path";
 import postcss from "postcss";
@@ -192,6 +193,51 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
   }
 
   /**
+   * @returns {import('rollup').Plugin}
+   */
+  function removeDuplicateUseClient() {
+    return {
+      name: "remove-duplicate-use-client",
+      renderChunk: {
+        order: "post",
+        handler(code, chunk) {
+          // Only do this for OutputChunks, not OutputAssets
+          if ("modules" in chunk) {
+            const regex = /^(["'])use client\1;?/gm;
+            let match;
+            let index = 0;
+            let magicString;
+
+            while ((match = regex.exec(code)) !== null) {
+              // If there's more than one "use client" directive, remove all duplicates
+              if (index > 0) {
+                const start = match.index;
+                const end = start + match[0].length;
+
+                if (!magicString) {
+                  magicString = new MagicString(code);
+                }
+                magicString.remove(start, end);
+              }
+
+              index++;
+            }
+
+            if (magicString) {
+              return {
+                code: magicString.toString(),
+                map: magicString.generateMap(),
+              };
+            }
+          }
+
+          return null;
+        },
+      },
+    };
+  }
+
+  /**
    * @param {Format} format
    * @returns {import('rollup').RollupOptions}
    */
@@ -234,6 +280,7 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
           sourceMap: true,
         }),
         preserveDirectives(),
+        removeDuplicateUseClient(),
         replace({
           values: {
             __VERSION__: JSON.stringify(pkg.version),

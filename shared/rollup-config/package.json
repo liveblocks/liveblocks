@@ -6,6 +6,7 @@
   "dependencies": {
     "@rollup/plugin-replace": "5.0.5",
     "esbuild": "0.20.2",
+    "magic-string": "^0.30.0",
     "postcss": "8.4.31",
     "postcss-advanced-variables": "3.0.1",
     "postcss-combine-duplicated-selectors": "10.0.3",
