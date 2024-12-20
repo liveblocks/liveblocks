@@ -683,6 +683,12 @@ function createStore_forNotifications() {
     });
   }
 
+  function upsert(notification: InboxNotificationData) {
+    signal.mutate((lut) => {
+      lut.set(notification.id, notification);
+    });
+  }
+
   return {
     signal: signal.asReadonly(),
 
@@ -693,11 +699,9 @@ function createStore_forNotifications() {
     applyDelta,
     clear,
     updateAssociatedNotification,
+    upsert,
 
     // XXX_vincent Remove this eventually
-    force_set: (
-      mutationCallback: (lut: NotificationsLUT) => void | undefined | boolean
-    ) => signal.mutate(mutationCallback),
     invalidate: () => signal.mutate(),
   };
 }
@@ -742,9 +746,7 @@ function createStore_forHistoryVersions() {
     // Mutations
     update,
 
-    // XXX_vincent Remove these eventually
-    force_set: (callback: (lut: VersionsLUT) => void | boolean) =>
-      signal.mutate(callback),
+    // XXX_vincent Remove this eventually
     invalidate: () => signal.mutate(),
   };
 }
@@ -1162,26 +1164,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
       isLoading: false,
       versions: Object.values(this.get3()[roomId] ?? {}),
     };
-  }
-
-  /** @internal - Only call this method from unit tests. */
-  public force_set_versions(
-    callback: (lut: VersionsLUT) => void | boolean
-  ): void {
-    batch(() => {
-      this.historyVersions.force_set(callback);
-      this.invalidateEntireStore();
-    });
-  }
-
-  /** @internal - Only call this method from unit tests. */
-  public force_set_notifications(
-    callback: (lut: NotificationsLUT) => void | undefined | boolean
-  ): void {
-    batch(() => {
-      this.notifications.force_set(callback);
-      this.invalidateEntireStore();
-    });
   }
 
   /**
