@@ -3,10 +3,6 @@ import { kInternal } from "@liveblocks/core";
 import { ThreadDB } from "../../ThreadDB";
 import { UmbrellaStore } from "../../umbrella-store";
 
-const empty1t = {
-  threadsDB: expect.any(ThreadDB),
-} as const;
-
 const empty1n = {
   sortedNotifications: [],
   notificationsById: {},
@@ -35,7 +31,7 @@ describe("Umbrella Store", () => {
     const store = new UmbrellaStore(NO_CLIENT);
 
     // Sync getters
-    expect(store.get1_threads()).toEqual(empty1t);
+    expect(store.get1_threads()).toEqual(expect.any(ThreadDB));
     expect(store.get1_notifications()).toEqual(empty1n);
     expect(store.get2()).toEqual({}); // settings by room ID
     expect(store.get3()).toEqual({}); // versions by room ID
