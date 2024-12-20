@@ -1,4 +1,8 @@
-## 2.15.0 (Not yet published)
+## vNEXT (Not yet published)
+
+- ...
+
+## 2.15.0
 
 ### `@liveblocks/react`
 
