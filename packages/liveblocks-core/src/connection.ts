@@ -1002,7 +1002,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
 
   constructor(
     delegates: Delegates<T>,
-    enableDebugLogging: boolean = false,
+    enableDebugLogging: boolean = true,
     waitForActorId: boolean = true
   ) {
     const { machine, events, cleanups } = createConnectionStateMachine(

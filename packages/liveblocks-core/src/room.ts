@@ -1377,6 +1377,26 @@ export function createRoom<
         : undefined,
   };
 
+  function printPending(cs: string) {
+    if (cs) globalThis.console.log(`[debug] at ${cs}`);
+    if (context.unacknowledgedOps.size === 0) {
+      globalThis.console.log("[debug] no pending ops");
+    } else {
+      globalThis.console.log(
+        `[debug] pending ops (${context.unacknowledgedOps.size}):`
+      );
+      for (const [opId, op] of context.unacknowledgedOps) {
+        globalThis.console.log(
+          "[debug] opid=",
+          opId,
+          "op=",
+          JSON.stringify(op)
+        );
+      }
+    }
+    globalThis.console.log("[debug] storage status", getStorageStatus());
+  }
+
   let lastTokenKey: string | undefined;
   function onStatusDidChange(newStatus: Status) {
     const authValue = managedSocket.authValue;
@@ -1781,6 +1801,8 @@ export function createRoom<
       presence: boolean;
     };
   } {
+    printPending("start of applyOps");
+
     const output = {
       reverse: [] as O[],
       storageUpdates: new Map<string, StorageUpdate>(),
@@ -1836,6 +1858,9 @@ export function createRoom<
           }
 
           const deleted = context.unacknowledgedOps.delete(opId);
+          if (deleted) {
+            globalThis.console.log("[debug] acked", opId);
+          }
           source = deleted ? OpSource.ACK : OpSource.REMOTE;
         }
 
@@ -1866,6 +1891,8 @@ export function createRoom<
         }
       }
     }
+
+    printPending("end of applyOps");
 
     return {
       ops,
@@ -2277,6 +2304,7 @@ export function createRoom<
       for (const op of storageOps) {
         context.unacknowledgedOps.set(nn(op.opId), op);
       }
+      printPending("flushNowOrSoon");
       notifyStorageStatus();
     }
 
@@ -2391,6 +2419,7 @@ export function createRoom<
   let _resolveStoragePromise: (() => void) | null = null;
 
   function processInitialStorage(message: InitialDocumentStateServerMsg) {
+    printPending("initial local ops");
     const unacknowledgedOps = new Map(context.unacknowledgedOps);
     createOrUpdateRootFromMessage(message);
     applyAndSendOps(unacknowledgedOps);
