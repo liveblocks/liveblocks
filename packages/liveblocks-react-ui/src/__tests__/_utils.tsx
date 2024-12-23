@@ -4,7 +4,6 @@ import { createLiveblocksContext, createRoomContext } from "@liveblocks/react";
 import type { RenderHookResult, RenderOptions } from "@testing-library/react";
 import { render, renderHook } from "@testing-library/react";
 import type { ReactElement } from "react";
-import * as React from "react";
 
 import { RoomProvider } from "./_liveblocks.config";
 

@@ -10,6 +10,7 @@ module.exports = {
   extends: [
     "@liveblocks/eslint-config",
     "plugin:react/recommended",
+    "plugin:react/jsx-runtime",
     "plugin:react-hooks/recommended",
   ],
   rules: {

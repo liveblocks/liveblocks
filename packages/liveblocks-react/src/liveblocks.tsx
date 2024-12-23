@@ -23,15 +23,15 @@ import {
   shallow,
 } from "@liveblocks/core";
 import type { PropsWithChildren } from "react";
-import React, {
+import {
   createContext,
   useCallback,
   useContext,
   useEffect,
   useMemo,
+  useState,
+  useSyncExternalStore,
 } from "react";
-import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
-import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import { config } from "./config";
 import { useIsInsideRoom } from "./contexts";
@@ -54,6 +54,7 @@ import type {
   UseUserThreadsOptions,
 } from "./types";
 import { UmbrellaStore } from "./umbrella-store";
+import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
 
 /**
  * Raw access to the React context where the LiveblocksProvider stores the
@@ -412,15 +413,14 @@ function useInboxNotifications_withClient<T>(
     };
   }, [poller]);
 
-  // TODO(vincent+nimesh) There is a disconnect between this getter and
-  // subscriber! It's unclear why the getInboxNotificationsLoadingState getter
-  // should be paired with subscribe1 and not subscribe2 from the outside! (The
-  // reason is that getInboxNotificationsLoadingState internally uses `get1`
-  // not `get2`.) This is strong evidence that
-  // getInboxNotificationsLoadingState itself wants to be a Signal! Once we
-  // make it a Signal, we can simply use `useSignal()` here! ❤️
+  // XXX_vincent There is a disconnect between this getter and subscriber! It's unclear
+  // why the getInboxNotificationsLoadingState getter should be paired with
+  // subscribe1 and not subscribe2 from the outside! (The reason is that
+  // getInboxNotificationsLoadingState internally uses `get1` not `get2`.) This
+  // is strong evidence that getInboxNotificationsLoadingState itself wants to
+  // be a Signal! Once we make it a Signal, we can simply use `useSignal()` here! ❤️
   return useSyncExternalStoreWithSelector(
-    store.subscribe1_threads,
+    store.subscribe1_notifications,
     store.getInboxNotificationsLoadingState,
     store.getInboxNotificationsLoadingState,
     selector,
@@ -470,7 +470,7 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
       const { store } = getLiveblocksExtrasForClient(client);
 
       const readAt = new Date();
-      const optimisticUpdateId = store.addOptimisticUpdate({
+      const optimisticId = store.optimisticUpdates.add({
         type: "mark-inbox-notification-as-read",
         inboxNotificationId,
         readAt,
@@ -479,15 +479,15 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
       client.markInboxNotificationAsRead(inboxNotificationId).then(
         () => {
           // Replace the optimistic update by the real thing
-          store.updateInboxNotification(
+          store.markInboxNotificationRead(
             inboxNotificationId,
-            optimisticUpdateId,
-            (inboxNotification) => ({ ...inboxNotification, readAt })
+            readAt,
+            optimisticId
           );
         },
         () => {
           // TODO: Broadcast errors to client
-          store.removeOptimisticUpdate(optimisticUpdateId);
+          store.optimisticUpdates.remove(optimisticId);
         }
       );
     },
@@ -499,7 +499,7 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
   return useCallback(() => {
     const { store } = getLiveblocksExtrasForClient(client);
     const readAt = new Date();
-    const optimisticUpdateId = store.addOptimisticUpdate({
+    const optimisticId = store.optimisticUpdates.add({
       type: "mark-all-inbox-notifications-as-read",
       readAt,
     });
@@ -507,14 +507,11 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
     client.markAllInboxNotificationsAsRead().then(
       () => {
         // Replace the optimistic update by the real thing
-        store.updateAllInboxNotifications(
-          optimisticUpdateId,
-          (inboxNotification) => ({ ...inboxNotification, readAt })
-        );
+        store.markAllInboxNotificationsRead(optimisticId, readAt);
       },
       () => {
         // TODO: Broadcast errors to client
-        store.removeOptimisticUpdate(optimisticUpdateId);
+        store.optimisticUpdates.remove(optimisticId);
       }
     );
   }, [client]);
@@ -526,7 +523,7 @@ function useDeleteInboxNotification_withClient(client: OpaqueClient) {
       const { store } = getLiveblocksExtrasForClient(client);
 
       const deletedAt = new Date();
-      const optimisticUpdateId = store.addOptimisticUpdate({
+      const optimisticId = store.optimisticUpdates.add({
         type: "delete-inbox-notification",
         inboxNotificationId,
         deletedAt,
@@ -535,14 +532,11 @@ function useDeleteInboxNotification_withClient(client: OpaqueClient) {
       client.deleteInboxNotification(inboxNotificationId).then(
         () => {
           // Replace the optimistic update by the real thing
-          store.deleteInboxNotification(
-            inboxNotificationId,
-            optimisticUpdateId
-          );
+          store.deleteInboxNotification(inboxNotificationId, optimisticId);
         },
         () => {
           // TODO: Broadcast errors to client
-          store.removeOptimisticUpdate(optimisticUpdateId);
+          store.optimisticUpdates.remove(optimisticId);
         }
       );
     },
@@ -554,7 +548,7 @@ function useDeleteAllInboxNotifications_withClient(client: OpaqueClient) {
   return useCallback(() => {
     const { store } = getLiveblocksExtrasForClient(client);
     const deletedAt = new Date();
-    const optimisticUpdateId = store.addOptimisticUpdate({
+    const optimisticId = store.optimisticUpdates.add({
       type: "delete-all-inbox-notifications",
       deletedAt,
     });
@@ -562,11 +556,11 @@ function useDeleteAllInboxNotifications_withClient(client: OpaqueClient) {
     client.deleteAllInboxNotifications().then(
       () => {
         // Replace the optimistic update by the real thing
-        store.deleteAllInboxNotifications(optimisticUpdateId);
+        store.deleteAllInboxNotifications(optimisticId);
       },
       () => {
         // TODO: Broadcast errors to client
-        store.removeOptimisticUpdate(optimisticUpdateId);
+        store.optimisticUpdates.remove(optimisticId);
       }
     );
   }, [client]);
@@ -952,11 +946,11 @@ function useUserThreads_experimental<M extends BaseMetadata>(
     };
   }, [poller]);
 
-  // TODO(vincent+nimesh) There is a disconnect between this getter and
-  // subscriber! It's unclear why the getUserThreadsLoadingState getter should
-  // be paired with subscribe1 and not subscribe2 from the outside! (The reason
-  // is that getUserThreadsLoadingState  internally uses `get1` not `get2`.)
-  // This is strong evidence that getUserThreadsLoadingState itself wants to be
+  // XXX_vincent There is a disconnect between this getter and subscriber! It's unclear
+  // why the getUserThreadsLoadingState getter should be paired with subscribe1
+  // and not subscribe2 from the outside! (The reason is that
+  // getUserThreadsLoadingState  internally uses `get1` not `get2`.) This is
+  // strong evidence that getUserThreadsLoadingState itself wants to be
   // a Signal! Once we make it a Signal, we can simply use `useSignal()` here! ❤️
   const getter = useCallback(
     () => store.getUserThreadsLoadingState(options.query),
@@ -1231,10 +1225,10 @@ function useSyncStatusImmediate_withClient(client: OpaqueClient): SyncStatus {
 
 function useSyncStatusSmooth_withClient(client: OpaqueClient): SyncStatus {
   const getter = client.getSyncStatus;
-  const [status, setStatus] = React.useState(getter);
+  const [status, setStatus] = useState(getter);
   const oldStatus = useLatest(getter());
 
-  React.useEffect(() => {
+  useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>;
     const unsub = client.events.syncStatus.subscribe(() => {
       const newStatus = getter();

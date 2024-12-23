@@ -1,6 +1,6 @@
 import { createRoomContext, useSyncStatus } from "@liveblocks/react";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import * as Y from "yjs";
 
 import { getRoomFromUrl, Row, styles, useRenderCount } from "../../utils";

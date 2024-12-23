@@ -8,7 +8,6 @@ import type {
 import { ServerMsgCode } from "@liveblocks/core";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
-import React from "react";
 
 import { Comment } from "../components/Comment";
 import { Composer } from "../components/Composer";

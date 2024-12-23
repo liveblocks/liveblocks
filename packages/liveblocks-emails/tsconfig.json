@@ -7,10 +7,8 @@
     "lib": ["dom"],
     "skipLibCheck": true,
 
-    // Transform JSX syntax from input *.tsx files into React.createElement()
-    // calls in the *.js build output.
-    // NOTE: We can change this to `react-jsx` once we stop supporting React 16.
-    "jsx": "react"
+    // Transform JSX syntax from input *.tsx files into _jsx() calls in the outputted build
+    "jsx": "react-jsx"
   },
   "include": ["src/**/*"]
 }
