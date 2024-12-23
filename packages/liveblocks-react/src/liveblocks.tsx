@@ -637,9 +637,19 @@ function useUser_withClient<U extends BaseUserMeta>(
   );
 
   // Trigger a fetch if we don't have any data yet (whether initially or after an invalidation)
-  useEffect(() => {
-    void usersStore.enqueue(userId);
-  }, [usersStore, userId, result]);
+  useEffect(
+    () => void usersStore.enqueue(userId)
+
+    // NOTE: Deliberately *not* using a dependency array here!
+    //
+    // It is important to call usersStore.enqueue on *every* render.
+    // This is harmless though, on most renders, except:
+    // 1. The very first render, in which case we'll want to trigger evaluation
+    //    of the userId.
+    // 2. All other subsequent renders now are a no-op (from the implementation
+    //    of .enqueue)
+    // 3. If ever the userId gets invalidated, the user would be fetched again.
+  );
 
   return result;
 }
@@ -710,9 +720,19 @@ function useRoomInfo_withClient(
   );
 
   // Trigger a fetch if we don't have any data yet (whether initially or after an invalidation)
-  useEffect(() => {
-    void roomsInfoStore.enqueue(roomId);
-  }, [roomsInfoStore, roomId, result]);
+  useEffect(
+    () => void roomsInfoStore.enqueue(roomId)
+
+    // NOTE: Deliberately *not* using a dependency array here!
+    //
+    // It is important to call roomsInfoStore.enqueue on *every* render.
+    // This is harmless though, on most renders, except:
+    // 1. The very first render, in which case we'll want to trigger evaluation
+    //    of the roomId.
+    // 2. All other subsequent renders now are a no-op (from the implementation
+    //    of .enqueue)
+    // 3. If ever the roomId gets invalidated, the room info would be fetched again.
+  );
 
   return result;
 }
