@@ -32,7 +32,7 @@ import type {
   ReactNode,
   RefObject,
 } from "react";
-import React, {
+import {
   forwardRef,
   useCallback,
   useEffect,

@@ -1,7 +1,7 @@
 import { nn } from "@liveblocks/core";
 import type { Editor } from "@tiptap/react";
 import type { PropsWithChildren } from "react";
-import React, { createContext, useContext } from "react";
+import { createContext, useContext } from "react";
 
 const EditorContext = createContext<Editor | null>(null);
 

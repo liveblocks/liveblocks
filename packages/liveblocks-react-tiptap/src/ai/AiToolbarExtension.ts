@@ -6,6 +6,7 @@ import { ySyncPluginKey } from "y-prosemirror";
 
 import type { AiToolbarExtensionStorage } from "../types";
 import { AI_TOOLBAR_SELECTION_PLUGIN } from "../types";
+import { DEFAULT_AI_NAME } from "./AiToolbar";
 
 export const AiToolbarExtension = Extension.create<
   { name?: string },
@@ -16,7 +17,7 @@ export const AiToolbarExtension = Extension.create<
 
   addStorage() {
     return {
-      name: this.options.name,
+      name: this.options.name ?? DEFAULT_AI_NAME,
       state: "closed",
       selection: undefined,
       prompt: undefined,

@@ -18,7 +18,7 @@ import type {
   FocusEvent as ReactFocusEvent,
   PointerEvent as ReactPointerEvent,
 } from "react";
-import React, {
+import {
   forwardRef,
   useCallback,
   useEffect,
