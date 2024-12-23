@@ -175,7 +175,7 @@ export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
     return stringify(args);
   }
 
-  function setStateAndNotify(cacheKey: string, state: AsyncResult<O>) {
+  function update(cacheKey: string, state: AsyncResult<O>) {
     signal.mutate((cache) => {
       cache.set(cacheKey, state);
     });
@@ -206,30 +206,30 @@ export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
 
     try {
       // Set the state to loading.
-      setStateAndNotify(cacheKey, { isLoading: true });
+      update(cacheKey, { isLoading: true });
 
       // Wait for the batch to process this call.
       const result = await batch.get(input);
 
       // Set the state to the result.
-      setStateAndNotify(cacheKey, { isLoading: false, data: result });
+      update(cacheKey, { isLoading: false, data: result });
     } catch (error) {
       // // TODO: Differentiate whole batch errors from individual errors.
       // if (batch.error) {
       //   // If the whole batch errored, clear the state.
       //   // TODO: Keep track of retries and only clear the state a few times because it will be retried each time.
       //   //       Also implement exponential backoff to delay retries to avoid hammering `resolveUsers`.
-      //   setStateAndNotify(cacheKey, undefined);
+      //   update(cacheKey, undefined);
       // } else {
       //   // Otherwise, keep individual errors to avoid repeatedly loading the same error.
-      //   setStateAndNotify(cacheKey, {
+      //   update(cacheKey, {
       //     isLoading: false,
       //     error: error as Error,
       //   });
       // }
 
       // If there was an error (for various reasons), set the state to the error.
-      setStateAndNotify(cacheKey, {
+      update(cacheKey, {
         isLoading: false,
         error: error as Error,
       });
@@ -242,11 +242,7 @@ export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
     return cache.get(cacheKey);
   }
 
-  /**
-   * @internal
-   *
-   * Only for testing.
-   */
+  /** @internal - Only for testing */
   function _cacheKeys() {
     const cache = signal.get();
     return [...cache.keys()];
