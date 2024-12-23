@@ -26,28 +26,11 @@ Now that the provider is set up, we can start using the Liveblocks hooks. The
 first we’ll add is [`useOthers`][], a hook that provides us information about
 which _other_ users are connected to the room.
 
-We can re-export this from `liveblocks.config.ts`, exactly like we did for
-`RoomProvider`.
-
-```tsx file="liveblocks.config.ts" highlight="10"
-import { createClient } from "@liveblocks/client";
-import { createRoomContext } from "@liveblocks/react";
-
-const client = createClient({
-  publicApiKey: "{{PUBLIC_KEY}}",
-});
-
-export const {
-  RoomProvider,
-  useOthers, // 👈
-} = createRoomContext(client);
-```
-
 To show how many other users are in the room, import `useOthers` into a
 component and use it as below.
 
 ```tsx highlight="1,4"
-import { RoomProvider, useOthers } from "./liveblocks.config";
+import { RoomProvider, useOthers } from "@liveblocks/react/suspense";
 
 function App() {
   const others = useOthers();
@@ -82,23 +65,16 @@ cursor: { x: 256, y: 367 }
 ```
 
 To start using presence, let’s define a type named `Presence` in
-`liveblocks.config.ts` and use it as a generic argument of `createRoomContext`.
-All of our _presence_ hooks returned by `createRoomContext` will be typed
-correspondingly to the newly defined `Presence` type.
+`liveblocks.config.ts`.
 
 ```tsx file="liveblocks.config.ts" highlight="8-10,12"
-import { createClient } from "@liveblocks/client";
-import { createRoomContext } from "@liveblocks/react";
-
-const client = createClient({
-  publicApiKey: "{{PUBLIC_KEY}}",
-});
-
-type Presence = {
-  cursor: { x: number; y: number } | null;
-};
-
-export const { RoomProvider, useOthers } = createRoomContext<Presence>(client);
+declare global {
+  interface Liveblocks {
+    Presence: {
+      cursor: { x: number; y: number } | null;
+    };
+  }
+}
 ```
 
 Then, define an `initialPresence` value on our `RoomProvider`. We’ll set the
@@ -106,7 +82,7 @@ initial cursor to `null` to represent a user whose cursor is currently
 off-screen.
 
 ```tsx file="index.ts" highlight="7"
-import { RoomProvider, useOthers } from "./liveblocks.config";
+import { RoomProvider, useOthers } from "@liveblocks/react/suspense";
 
 // App
 
@@ -123,28 +99,11 @@ function Index() {
 
 We can add the [`useUpdateMyPresence`][] hook to share this information in
 realtime, and in this case, update the current user cursor position when
-`onPointerMove` is called.
-
-First, re-export `useUpdateMyPresence` like we did with `useOthers`.
-
-```tsx file="liveblocks.config.ts" highlight="6"
-// ...
-
-export const {
-  RoomProvider,
-  useOthers,
-  useUpdateMyPresence, // 👈
-} = createRoomContext<Presence>(client);
-```
-
-To keep this guide concise, we’ll assume that you now understand how to
-re-export your hooks for every new hook.
-
-Next, import `updateMyPresence` and call it with the updated cursor coordinates
-whenever a pointer move event is detected.
+`onPointerMove` is called. Next, import `updateMyPresence` and call it with the
+updated cursor coordinates whenever a pointer move event is detected.
 
 ```tsx
-import { useUpdateMyPresence } from "./liveblocks.config";
+import { useUpdateMyPresence } from "@liveblocks/react/suspense";
 
 function App() {
   const updateMyPresence = useUpdateMyPresence();
@@ -175,7 +134,7 @@ import {
   useOthers,
   useUpdateMyPresence,
   RoomProvider,
-} from "./liveblocks.config";
+} from "@liveblocks/react/suspense";
 
 function App() {
   const others = useOthers();
