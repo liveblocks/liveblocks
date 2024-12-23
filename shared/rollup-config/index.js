@@ -203,27 +203,21 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
         handler(code, chunk) {
           // Only do this for OutputChunks, not OutputAssets
           if ("modules" in chunk) {
+            const magicString = new MagicString(code);
+
+            // Find all "use client" directives
             const regex = /^(["'])use client\1;?/gm;
-            let match;
-            let index = 0;
-            let magicString;
+            const matches = Array.from(code.matchAll(regex));
 
-            while ((match = regex.exec(code)) !== null) {
-              // If there's more than one "use client" directive, remove all duplicates
-              if (index > 0) {
-                const start = match.index;
-                const end = start + match[0].length;
+            if (matches.length > 0) {
+              // Remove all existing "use client" directives
+              matches.forEach((match) => {
+                magicString.remove(match.index, match.index + match[0].length);
+              });
 
-                if (!magicString) {
-                  magicString = new MagicString(code);
-                }
-                magicString.remove(start, end);
-              }
+              // Add a single "use client" directive at the start of the file
+              magicString.prepend('"use client";\n');
 
-              index++;
-            }
-
-            if (magicString) {
               return {
                 code: magicString.toString(),
                 map: magicString.generateMap(),
@@ -279,8 +273,8 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
           target: "es2022",
           sourceMap: true,
         }),
-        preserveDirectives(),
         removeDuplicateUseClient(),
+        preserveDirectives(),
         replace({
           values: {
             __VERSION__: JSON.stringify(pkg.version),
