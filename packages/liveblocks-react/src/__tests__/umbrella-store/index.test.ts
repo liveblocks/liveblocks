@@ -31,10 +31,10 @@ describe("Umbrella Store", () => {
     const store = new UmbrellaStore(NO_CLIENT);
 
     // Sync getters
-    expect(store.get1_threads()).toEqual(expect.any(ThreadDB));
-    expect(store.get1_notifications()).toEqual(empty1n);
-    expect(store.get2()).toEqual({}); // settings by room ID
-    expect(store.get3()).toEqual({}); // versions by room ID
+    expect(store.get_threads()).toEqual(expect.any(ThreadDB));
+    expect(store.get_notifications()).toEqual(empty1n);
+    expect(store.get_settings()).toEqual({}); // settings by room ID
+    expect(store.get_versions()).toEqual({}); // versions by room ID
 
     // Sync async-results getters
     expect(store.getInboxNotificationsLoadingState()).toEqual(loading);
@@ -48,8 +48,8 @@ describe("Umbrella Store", () => {
     const store = new UmbrellaStore(NO_CLIENT);
 
     // IMPORTANT! Strict equality expected!
-    expect(store.get1_threads()).toBe(store.get1_threads());
-    expect(store.get1_notifications()).toBe(store.get1_notifications());
+    expect(store.get_threads()).toBe(store.get_threads());
+    expect(store.get_notifications()).toBe(store.get_notifications());
 
     // Sync async-results getter
     // TODO Add check here for strict-equality of the OK-state, which currently isn't strictly-equal and the selectors/isEqual functions are still "working around" that

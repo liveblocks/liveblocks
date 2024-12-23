@@ -974,43 +974,43 @@ export class UmbrellaStore<M extends BaseMetadata> {
     autobind(this);
   }
 
-  public get1_both(): CleanThreadifications<M> {
+  public get_threadifications(): CleanThreadifications<M> {
     return this.outputs.threadifications.get();
   }
 
-  public subscribe1_both(callback: () => void): () => void {
+  public subscribe_threadifications(callback: () => void): () => void {
     return this.outputs.threadifications.subscribe(callback);
   }
 
-  public get1_threads(): ReadonlyThreadDB<M> {
+  public get_threads(): ReadonlyThreadDB<M> {
     return this.outputs.threads.get();
   }
 
-  public subscribe1_threads(callback: () => void): () => void {
+  public subscribe_threads(callback: () => void): () => void {
     return this.outputs.threads.subscribe(callback);
   }
 
-  public get1_notifications(): CleanNotifications {
+  public get_notifications(): CleanNotifications {
     return this.outputs.notifications.get();
   }
 
-  public subscribe1_notifications(callback: () => void): () => void {
+  public subscribe_notifications(callback: () => void): () => void {
     return this.outputs.notifications.subscribe(callback);
   }
 
-  public get2(): SettingsByRoomId {
+  public get_settings(): SettingsByRoomId {
     return this.outputs.settingsByRoomId.get();
   }
 
-  public subscribe2(callback: () => void): () => void {
+  public subscribe_settings(callback: () => void): () => void {
     return this.outputs.settingsByRoomId.subscribe(callback);
   }
 
-  public get3(): VersionsByRoomId {
+  public get_versions(): VersionsByRoomId {
     return this.outputs.versionsByRoomId.get();
   }
 
-  public subscribe3(callback: () => void): () => void {
+  public subscribe_versions(callback: () => void): () => void {
     return this.outputs.versionsByRoomId.subscribe(callback);
   }
 
@@ -1035,7 +1035,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return asyncResult;
     }
 
-    const threads = this.get1_threads().findMany(roomId, query ?? {}, "asc");
+    const threads = this.get_threads().findMany(roomId, query ?? {}, "asc");
 
     const page = asyncResult.data;
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
@@ -1064,7 +1064,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return asyncResult;
     }
 
-    const threads = this.get1_threads().findMany(
+    const threads = this.get_threads().findMany(
       undefined, // Do _not_ filter by roomId
       query ?? {},
       "desc"
@@ -1093,7 +1093,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      inboxNotifications: this.get1_notifications().sortedNotifications,
+      inboxNotifications: this.get_notifications().sortedNotifications,
       hasFetchedAll: page.hasFetchedAll,
       isFetchingMore: page.isFetchingMore,
       fetchMoreError: page.fetchMoreError,
@@ -1121,7 +1121,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      settings: nn(this.get2()[roomId]),
+      settings: nn(this.get_settings()[roomId]),
     };
   }
 
@@ -1143,7 +1143,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
-      versions: Object.values(this.get3()[roomId] ?? {}),
+      versions: Object.values(this.get_versions()[roomId] ?? {}),
     };
   }
 

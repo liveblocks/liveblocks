@@ -420,7 +420,7 @@ function useInboxNotifications_withClient<T>(
   // is strong evidence that getInboxNotificationsLoadingState itself wants to
   // be a Signal! Once we make it a Signal, we can simply use `useSignal()` here! ❤️
   return useSyncExternalStoreWithSelector(
-    store.subscribe1_notifications,
+    store.subscribe_threads,
     store.getInboxNotificationsLoadingState,
     store.getInboxNotificationsLoadingState,
     selector,
@@ -572,7 +572,7 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
 ): ThreadData<M> {
   const { store } = getLiveblocksExtrasForClient<M>(client);
 
-  const getter = store.get1_both;
+  const getter = store.get_threadifications;
 
   const selector = useCallback(
     (state: ReturnType<typeof getter>) => {
@@ -598,7 +598,7 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
   );
 
   return useSyncExternalStoreWithSelector(
-    store.subscribe1_both, // Re-evaluate if we need to update any time the notification changes over time
+    store.subscribe_threadifications, // Re-evaluate if we need to update any time the notification changes over time
     getter,
     getter,
     selector
@@ -958,7 +958,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
   );
 
   return useSyncExternalStoreWithSelector(
-    store.subscribe1_threads,
+    store.subscribe_threads,
     getter,
     getter,
     identity,
