@@ -572,12 +572,10 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
 ): ThreadData<M> {
   const { store } = getLiveblocksExtrasForClient<M>(client);
 
-  const getter = store.outputs.threadifications.get;
-
   return useSyncExternalStoreWithSelector(
     store.outputs.threadifications.subscribe, // Re-evaluate if we need to update any time the notification changes over time
-    getter,
-    getter,
+    store.outputs.threadifications.get,
+    store.outputs.threadifications.get,
     useCallback(
       (state) => {
         const inboxNotification =
