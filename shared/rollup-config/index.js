@@ -6,7 +6,6 @@ import path from "path";
 import postcss from "postcss";
 import dts from "rollup-plugin-dts";
 import esbuild from "rollup-plugin-esbuild";
-import preserveDirectives from "rollup-plugin-preserve-directives";
 
 /**
  * @typedef {Object} Pkg
@@ -195,9 +194,9 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
   /**
    * @returns {import('rollup').Plugin}
    */
-  function removeDuplicateUseClient() {
+  function preserveUseClient() {
     return {
-      name: "remove-duplicate-use-client",
+      name: "preserve-use-client",
       renderChunk: {
         order: "post",
         handler(code, chunk) {
@@ -273,8 +272,7 @@ export function createConfig({ pkg, entries, styles: styleFiles, external }) {
           target: "es2022",
           sourceMap: true,
         }),
-        removeDuplicateUseClient(),
-        preserveDirectives(),
+        preserveUseClient(),
         replace({
           values: {
             __VERSION__: JSON.stringify(pkg.version),
