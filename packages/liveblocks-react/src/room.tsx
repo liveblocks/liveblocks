@@ -2556,7 +2556,7 @@ function useRoomAttachmentUrl(
 
   useEffect(() => {
     // NOTE: .get() will trigger any actual fetches, whereas .getState() will not
-    void store.get(attachmentId);
+    void store.enqueue(attachmentId);
   }, [store, attachmentId]);
 
   return useSyncExternalStoreWithSelector(
@@ -2585,7 +2585,7 @@ function useAttachmentUrlSuspense(attachmentId: string) {
   const attachmentUrlState = getAttachmentUrlState();
 
   if (!attachmentUrlState || attachmentUrlState.isLoading) {
-    throw attachmentUrlsStore.get(attachmentId);
+    throw attachmentUrlsStore.enqueue(attachmentId);
   }
 
   if (attachmentUrlState.error) {

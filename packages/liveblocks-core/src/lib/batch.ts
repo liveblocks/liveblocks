@@ -14,7 +14,7 @@ export type BatchCallback<O, I> = (
 ) => (O | Error)[] | Promise<(O | Error)[]>;
 
 export type BatchStore<O, I> = Observable<void> & {
-  get: (input: I) => Promise<void>;
+  enqueue: (input: I) => Promise<void>;
   getState: (input: I) => AsyncResult<O> | undefined;
   invalidate: (inputs?: I[]) => void;
 
@@ -31,7 +31,7 @@ export type BatchStore<O, I> = Observable<void> & {
   _cacheKeys: () => string[];
 };
 
-interface Options {
+interface BatchOptions {
   /**
    * How many calls to batch together at most.
    */
@@ -70,7 +70,7 @@ export class Batch<O, I> {
   #delayTimeoutId?: ReturnType<typeof setTimeout>;
   public error = false;
 
-  constructor(callback: BatchCallback<O, I>, options: Options) {
+  constructor(callback: BatchCallback<O, I>, options: BatchOptions) {
     this.#callback = callback;
     this.#size = options.size ?? DEFAULT_SIZE;
     this.#delay = options.delay;
@@ -198,7 +198,7 @@ export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
     eventSource.notify();
   }
 
-  async function get(input: I): Promise<void> {
+  async function enqueue(input: I): Promise<void> {
     const cacheKey = getCacheKey(input);
 
     // If this call already has a state, return early.
@@ -259,7 +259,7 @@ export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
 
   return {
     ...eventSource.observable,
-    get,
+    enqueue,
     getState,
     invalidate,
     getBatch,

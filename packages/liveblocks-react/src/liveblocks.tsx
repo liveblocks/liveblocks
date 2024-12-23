@@ -630,7 +630,7 @@ function useUser_withClient<U extends BaseUserMeta>(
   useEffect(() => {
     // NOTE: .get() will trigger any actual fetches, whereas .getState() will not,
     // and it won't trigger a fetch if we already have data
-    void usersStore.get(userId);
+    void usersStore.enqueue(userId);
   }, [usersStore, userId, result]);
 
   return result;
@@ -649,7 +649,7 @@ function useUserSuspense_withClient<U extends BaseUserMeta>(
   const userState = getUserState();
 
   if (!userState || userState.isLoading) {
-    throw usersStore.get(userId);
+    throw usersStore.enqueue(userId);
   }
 
   if (userState.error) {
@@ -705,7 +705,7 @@ function useRoomInfo_withClient(
   useEffect(() => {
     // NOTE: .get() will trigger any actual fetches, whereas .getState() will not,
     // and it won't trigger a fetch if we already have data
-    void roomsInfoStore.get(roomId);
+    void roomsInfoStore.enqueue(roomId);
   }, [roomsInfoStore, roomId, result]);
 
   return result;
@@ -721,7 +721,7 @@ function useRoomInfoSuspense_withClient(client: OpaqueClient, roomId: string) {
   const roomInfoState = getRoomInfoState();
 
   if (!roomInfoState || roomInfoState.isLoading) {
-    throw roomsInfoStore.get(roomId);
+    throw roomsInfoStore.enqueue(roomId);
   }
 
   if (roomInfoState.error) {
