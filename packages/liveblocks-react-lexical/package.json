@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/react-lexical",
-  "version": "2.15.0",
+  "version": "2.15.1",
   "description": "A lexical react plugin to enable collaboration, comments, live cursors, and more.",
   "license": "Apache-2.0",
   "type": "commonjs",
@@ -42,11 +42,11 @@
   },
   "dependencies": {
     "@floating-ui/react-dom": "^2.1.1",
-    "@liveblocks/client": "2.15.0",
-    "@liveblocks/core": "2.15.0",
-    "@liveblocks/react": "2.15.0",
-    "@liveblocks/react-ui": "2.15.0",
-    "@liveblocks/yjs": "2.15.0",
+    "@liveblocks/client": "2.15.1",
+    "@liveblocks/core": "2.15.1",
+    "@liveblocks/react": "2.15.1",
+    "@liveblocks/react-ui": "2.15.1",
+    "@liveblocks/yjs": "2.15.1",
     "yjs": "^13.6.18"
   },
   "peerDependencies": {
