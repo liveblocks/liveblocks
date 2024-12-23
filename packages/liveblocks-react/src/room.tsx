@@ -1346,12 +1346,22 @@ function useThreads<M extends BaseMetadata>(
     return () => poller.dec();
   }, [poller]);
 
-  // XXX_vincent There is a disconnect between this getter and subscriber! It's unclear
-  // why the getRoomThreadsLoadingState getter should be paired with subscribe1
-  // and not subscribe2 from the outside! (The reason is that
-  // getRoomThreadsLoadingState internally uses `get1` not `get2`.) This is
-  // strong evidence that getRoomThreadsLoadingState itself wants to be
-  // a Signal! Once we make it a Signal, we can simply use `useSignal()` here! ❤️
+  // XXX_vincent There is a disconnect between this getter and subscriber! It's
+  // not clear (unless you read the implementation of
+  // getRoomThreadsLoadingState) why this getter should be paired with
+  // `store.outputs.threads.subscribe`.
+  //
+  // Ideally refactor this to:
+  //
+  //   useSignal(
+  //     store.outputs.loadingThreads,  // exposes { getUserThreads, getRoomThreads }
+  //
+  //     useCallback(
+  //       ({ getRoomThreads }) => getRoomThreads(room.id, options.query),
+  //       [options.query]
+  //     )
+  //   )
+  //
   const getter = useCallback(
     () => store.getRoomThreadsLoadingState(room.id, options.query),
     [store, room.id, options.query]
@@ -2145,19 +2155,27 @@ function useRoomNotificationSettings(): [
     };
   }, [poller]);
 
-  // XXX_vincent There is a disconnect between this getter and subscriber! It's unclear
-  // why the getNotificationSettingsLoadingState getter should be paired with
-  // subscribe2 and not subscribe1 from the outside! (The reason is that
-  // getNotificationSettingsLoadingState internally uses `get2` not `get1`.)
-  // This is strong evidence that getNotificationSettingsLoadingState itself
-  // wants to be a Signal! Once we make it a Signal, we can simply use
-  // `useSignal()` here! ❤️
+  // XXX_vincent There is a disconnect between this getter and subscriber! It's
+  // not clear (unless you read the implementation of
+  // getNotificationSettingsLoadingState) why this getter should be paired with
+  // `store.outputs.settingsByRoomId.subscribe`.
+  //
+  // Ideally refactor this to:
+  //
+  //   useSignal(
+  //     store.outputs.loadingSettings,  // exposes { getSettings }
+  //
+  //     useCallback(
+  //       ({ getSettings }) => getSettings(room.id),
+  //       [options.query]
+  //     )
+  //   )
+  //
   const getter = useCallback(
     () => store.getNotificationSettingsLoadingState(room.id),
     [store, room.id]
   );
 
-  // XXX_vincent Turn this into a useSignal
   const settings = useSyncExternalStoreWithSelector(
     store.outputs.settingsByRoomId.subscribe,
     getter,
@@ -2263,11 +2281,6 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
     return () => poller.dec();
   }, [poller]);
 
-  const getter = useCallback(
-    () => store.getRoomVersionsLoadingState(room.id),
-    [store, room.id]
-  );
-
   useEffect(
     () => {
       void store.waitUntilRoomVersionsLoaded(room.id);
@@ -2282,12 +2295,27 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
     //    *next* render after that, a *new* fetch/promise will get created.
   );
 
-  // XXX_vincent There is a disconnect between this getter and subscriber! It's unclear
-  // why the getRoomVersionsLoadingState getter should be paired with
-  // subscribe3 and not subscribe1 from the outside! (The reason is that
-  // getRoomVersionsLoadingState internally uses `get3` not `get1`.) This is
-  // strong evidence that getRoomVersionsLoadingState itself wants to be
-  // a Signal! Once we make it a Signal, we can simply use `useSignal()` here! ❤️
+  // XXX_vincent There is a disconnect between this getter and subscriber! It's
+  // not clear (unless you read the implementation of
+  // getRoomVersionsLoadingState) why this getter should be paired with
+  // `store.outputs.versionsByRoomId.subscribe`.
+  //
+  // Ideally refactor this to:
+  //
+  //   useSignal(
+  //     store.outputs.loadingVersions,  // exposes { getVersions }
+  //
+  //     useCallback(
+  //       ({ getVersions }) => getVersions(room.id),
+  //       [options.query]
+  //     )
+  //   )
+  //
+  const getter = useCallback(
+    () => store.getRoomVersionsLoadingState(room.id),
+    [store, room.id]
+  );
+
   const state = useSyncExternalStoreWithSelector(
     store.outputs.versionsByRoomId.subscribe,
     getter,

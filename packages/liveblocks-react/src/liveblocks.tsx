@@ -414,12 +414,22 @@ function useInboxNotifications_withClient<T>(
     };
   }, [poller]);
 
-  // XXX_vincent There is a disconnect between this getter and subscriber! It's unclear
-  // why the getInboxNotificationsLoadingState getter should be paired with
-  // subscribe1 and not subscribe2 from the outside! (The reason is that
-  // getInboxNotificationsLoadingState internally uses `get1` not `get2`.) This
-  // is strong evidence that getInboxNotificationsLoadingState itself wants to
-  // be a Signal! Once we make it a Signal, we can simply use `useSignal()` here! ❤️
+  // XXX_vincent There is a disconnect between this getter and subscriber! It's
+  // not clear (unless you read the implementation of
+  // getInboxNotificationsLoadingState) why this getter should be paired with
+  // `store.outputs.notifications.subscribe`.
+  //
+  // Ideally refactor this to:
+  //
+  //   useSignal(
+  //     store.outputs.loadingNotifications,  // exposes { getNotifications }
+  //
+  //     useCallback(
+  //       ({ getNotifications }) => getNotifications(),
+  //       [options.query]
+  //     )
+  //   )
+  //
   return useSyncExternalStoreWithSelector(
     store.outputs.notifications.subscribe,
     store.getInboxNotificationsLoadingState,
@@ -938,12 +948,22 @@ function useUserThreads_experimental<M extends BaseMetadata>(
     };
   }, [poller]);
 
-  // XXX_vincent There is a disconnect between this getter and subscriber! It's unclear
-  // why the getUserThreadsLoadingState getter should be paired with subscribe1
-  // and not subscribe2 from the outside! (The reason is that
-  // getUserThreadsLoadingState  internally uses `get1` not `get2`.) This is
-  // strong evidence that getUserThreadsLoadingState itself wants to be
-  // a Signal! Once we make it a Signal, we can simply use `useSignal()` here! ❤️
+  // XXX_vincent There is a disconnect between this getter and subscriber! It's
+  // not clear (unless you read the implementation of
+  // getUserThreadsLoadingState) why this getter should be paired with
+  // `store.outputs.threads.subscribe`.
+  //
+  // Ideally refactor this to:
+  //
+  //   useSignal(
+  //     store.outputs.loadingThreads,  // exposes { getUserThreads, getRoomThreads }
+  //
+  //     useCallback(
+  //       ({ getUserThreads }) => getUserThreads(options.query),
+  //       [options.query]
+  //     )
+  //   )
+  //
   const getter = useCallback(
     () => store.getUserThreadsLoadingState(options.query),
     [store, options.query]
