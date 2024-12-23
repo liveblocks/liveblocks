@@ -1,6 +1,9 @@
 ## vNEXT (Not yet published)
 
-- ...
+- Fix regression: `useInboxNotifications` didn't rerender correctly under all
+  circumstances
+- Performance fix: avoid unneeded re-renders in `useThreads` and
+  `useInboxNotifications` hooks
 
 ## 2.15.0
 
