@@ -15,7 +15,7 @@ export type BatchCallback<O, I> = (
 
 export type BatchStore<O, I> = Observable<void> & {
   enqueue: (input: I) => Promise<void>;
-  getState: (input: I) => AsyncResult<O> | undefined;
+  getItemState: (input: I) => AsyncResult<O> | undefined;
   invalidate: (inputs?: I[]) => void;
 
   /**
@@ -238,7 +238,7 @@ export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
     }
   }
 
-  function getState(input: I): AsyncResult<O> | undefined {
+  function getItemState(input: I): AsyncResult<O> | undefined {
     const cacheKey = getCacheKey(input);
 
     return cache.get(cacheKey);
@@ -260,7 +260,7 @@ export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
   return {
     ...eventSource.observable,
     enqueue,
-    getState,
+    getItemState,
     invalidate,
     getBatch,
     _cacheKeys,

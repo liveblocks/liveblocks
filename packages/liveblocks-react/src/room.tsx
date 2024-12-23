@@ -2550,12 +2550,11 @@ function useRoomAttachmentUrl(
     client[kInternal].httpClient.getOrCreateAttachmentUrlsStore(roomId);
 
   const getAttachmentUrlState = useCallback(
-    () => store.getState(attachmentId),
+    () => store.getItemState(attachmentId),
     [store, attachmentId]
   );
 
   useEffect(() => {
-    // NOTE: .get() will trigger any actual fetches, whereas .getState() will not
     void store.enqueue(attachmentId);
   }, [store, attachmentId]);
 
@@ -2579,7 +2578,7 @@ function useAttachmentUrlSuspense(attachmentId: string) {
   const { attachmentUrlsStore } = room[kInternal];
 
   const getAttachmentUrlState = useCallback(
-    () => attachmentUrlsStore.getState(attachmentId),
+    () => attachmentUrlsStore.getItemState(attachmentId),
     [attachmentUrlsStore, attachmentId]
   );
   const attachmentUrlState = getAttachmentUrlState();

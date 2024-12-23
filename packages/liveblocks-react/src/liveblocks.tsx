@@ -608,7 +608,7 @@ function useUser_withClient<U extends BaseUserMeta>(
   const usersStore = client[kInternal].usersStore;
 
   const getUserState = useCallback(
-    () => usersStore.getState(userId),
+    () => usersStore.getItemState(userId),
     [usersStore, userId]
   );
 
@@ -628,8 +628,6 @@ function useUser_withClient<U extends BaseUserMeta>(
 
   // Trigger a fetch if we don't have any data yet (whether initially or after an invalidation)
   useEffect(() => {
-    // NOTE: .get() will trigger any actual fetches, whereas .getState() will not,
-    // and it won't trigger a fetch if we already have data
     void usersStore.enqueue(userId);
   }, [usersStore, userId, result]);
 
@@ -643,7 +641,7 @@ function useUserSuspense_withClient<U extends BaseUserMeta>(
   const usersStore = client[kInternal].usersStore;
 
   const getUserState = useCallback(
-    () => usersStore.getState(userId),
+    () => usersStore.getItemState(userId),
     [usersStore, userId]
   );
   const userState = getUserState();
@@ -683,7 +681,7 @@ function useRoomInfo_withClient(
   const roomsInfoStore = client[kInternal].roomsInfoStore;
 
   const getRoomInfoState = useCallback(
-    () => roomsInfoStore.getState(roomId),
+    () => roomsInfoStore.getItemState(roomId),
     [roomsInfoStore, roomId]
   );
 
@@ -703,8 +701,6 @@ function useRoomInfo_withClient(
 
   // Trigger a fetch if we don't have any data yet (whether initially or after an invalidation)
   useEffect(() => {
-    // NOTE: .get() will trigger any actual fetches, whereas .getState() will not,
-    // and it won't trigger a fetch if we already have data
     void roomsInfoStore.enqueue(roomId);
   }, [roomsInfoStore, roomId, result]);
 
@@ -715,7 +711,7 @@ function useRoomInfoSuspense_withClient(client: OpaqueClient, roomId: string) {
   const roomsInfoStore = client[kInternal].roomsInfoStore;
 
   const getRoomInfoState = useCallback(
-    () => roomsInfoStore.getState(roomId),
+    () => roomsInfoStore.getItemState(roomId),
     [roomsInfoStore, roomId]
   );
   const roomInfoState = getRoomInfoState();
