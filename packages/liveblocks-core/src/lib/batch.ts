@@ -1,7 +1,7 @@
 import type { AsyncResult } from "./AsyncResult";
 import { Promise_withResolvers } from "./controlledPromise";
-import type { Observable } from "./EventSource";
-import { makeEventSource } from "./EventSource";
+import type { Callback, UnsubscribeCallback } from "./EventSource";
+import { MutableSignal } from "./signals";
 import { stringify } from "./stringify";
 
 const DEFAULT_SIZE = 50;
@@ -13,7 +13,8 @@ export type BatchCallback<O, I> = (
   inputs: I[]
 ) => (O | Error)[] | Promise<(O | Error)[]>;
 
-export type BatchStore<O, I> = Observable<void> & {
+export type BatchStore<O, I> = {
+  subscribe: (callback: Callback<void>) => UnsubscribeCallback;
   enqueue: (input: I) => Promise<void>;
   getItemState: (input: I) => AsyncResult<O> | undefined;
   invalidate: (inputs?: I[]) => void;
@@ -168,40 +169,37 @@ export class Batch<O, I> {
  * Each call will be cached and get its own state in addition to being batched.
  */
 export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
-  const cache = new Map<string, AsyncResult<O>>();
-  const eventSource = makeEventSource<void>();
+  const signal = new MutableSignal(new Map<string, AsyncResult<O>>());
 
   function getCacheKey(args: I): string {
     return stringify(args);
   }
 
   function setStateAndNotify(cacheKey: string, state: AsyncResult<O>) {
-    // Set or delete the state.
-    cache.set(cacheKey, state);
-
-    // Notify subscribers.
-    eventSource.notify();
+    signal.mutate((cache) => {
+      cache.set(cacheKey, state);
+    });
   }
 
   function invalidate(inputs?: I[]): void {
-    if (Array.isArray(inputs)) {
-      // Invalidate the specific calls.
-      for (const input of inputs) {
-        cache.delete(getCacheKey(input));
+    signal.mutate((cache) => {
+      if (Array.isArray(inputs)) {
+        // Invalidate the specific calls.
+        for (const input of inputs) {
+          cache.delete(getCacheKey(input));
+        }
+      } else {
+        // Invalidate all calls.
+        cache.clear();
       }
-    } else {
-      // Invalidate all calls.
-      cache.clear();
-    }
-
-    // Notify subscribers.
-    eventSource.notify();
+    });
   }
 
   async function enqueue(input: I): Promise<void> {
     const cacheKey = getCacheKey(input);
 
     // If this call already has a state, return early.
+    const cache = signal.get();
     if (cache.has(cacheKey)) {
       return;
     }
@@ -240,7 +238,7 @@ export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
 
   function getItemState(input: I): AsyncResult<O> | undefined {
     const cacheKey = getCacheKey(input);
-
+    const cache = signal.get();
     return cache.get(cacheKey);
   }
 
@@ -250,6 +248,7 @@ export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
    * Only for testing.
    */
   function _cacheKeys() {
+    const cache = signal.get();
     return [...cache.keys()];
   }
 
@@ -258,7 +257,7 @@ export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
   }
 
   return {
-    ...eventSource.observable,
+    subscribe: signal.subscribe,
     enqueue,
     getItemState,
     invalidate,
