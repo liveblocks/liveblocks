@@ -37,6 +37,7 @@ import {
   MutableSignal,
   nanoid,
   nn,
+  shallow,
   Signal,
   stringify,
 } from "@liveblocks/core";
@@ -650,7 +651,7 @@ function createStore_forNotifications() {
   }
 
   function markAllRead(readAt: Date) {
-    return signal.mutate((lut) => {
+    signal.mutate((lut) => {
       for (const n of lut.values()) {
         n.readAt = readAt;
       }
@@ -1018,14 +1019,22 @@ export class UmbrellaStore<M extends BaseMetadata> {
         applyOptimisticUpdates_forThreadifications(ts, ns, updates)
     );
 
-    const threads = DerivedSignal.from(threadifications, (s) => ({
-      threadsDB: s.threadsDB,
-    }));
+    const threads = DerivedSignal.from(
+      threadifications,
+      (s) => ({
+        threadsDB: s.threadsDB,
+      }),
+      shallow
+    );
 
-    const notifications = DerivedSignal.from(threadifications, (s) => ({
-      sortedNotifications: s.sortedNotifications,
-      notificationsById: s.notificationsById,
-    }));
+    const notifications = DerivedSignal.from(
+      threadifications,
+      (s) => ({
+        sortedNotifications: s.sortedNotifications,
+        notificationsById: s.notificationsById,
+      }),
+      shallow
+    );
 
     const settingsByRoomId = DerivedSignal.from(
       this.roomNotificationSettings.signal,
