@@ -22,7 +22,7 @@ export type BatchStore<O, I> = {
   /**
    * @internal
    */
-  getBatch: () => Batch<O, I>;
+  readonly batch: Batch<O, I>;
 
   /**
    * @internal
@@ -252,16 +252,13 @@ export function createBatchStore<O, I>(batch: Batch<O, I>): BatchStore<O, I> {
     return [...cache.keys()];
   }
 
-  function getBatch() {
-    return batch;
-  }
-
   return {
     subscribe: signal.subscribe,
     enqueue,
     getItemState,
     invalidate,
-    getBatch,
+
+    batch,
     _cacheKeys,
   };
 }
