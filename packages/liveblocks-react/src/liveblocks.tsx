@@ -574,34 +574,34 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
 
   const getter = store.outputs.threadifications.get;
 
-  const selector = useCallback(
-    (state: ReturnType<typeof getter>) => {
-      const inboxNotification =
-        state.notificationsById[inboxNotificationId] ??
-        raise(`Inbox notification with ID "${inboxNotificationId}" not found`);
-
-      if (inboxNotification.kind !== "thread") {
-        raise(
-          `Inbox notification with ID "${inboxNotificationId}" is not of kind "thread"`
-        );
-      }
-
-      const thread =
-        state.threadsDB.get(inboxNotification.threadId) ??
-        raise(
-          `Thread with ID "${inboxNotification.threadId}" not found, this inbox notification might not be of kind "thread"`
-        );
-
-      return thread;
-    },
-    [inboxNotificationId]
-  );
-
   return useSyncExternalStoreWithSelector(
     store.outputs.threadifications.subscribe, // Re-evaluate if we need to update any time the notification changes over time
     getter,
     getter,
-    selector
+    useCallback(
+      (state) => {
+        const inboxNotification =
+          state.notificationsById[inboxNotificationId] ??
+          raise(
+            `Inbox notification with ID "${inboxNotificationId}" not found`
+          );
+
+        if (inboxNotification.kind !== "thread") {
+          raise(
+            `Inbox notification with ID "${inboxNotificationId}" is not of kind "thread"`
+          );
+        }
+
+        const thread =
+          state.threadsDB.get(inboxNotification.threadId) ??
+          raise(
+            `Thread with ID "${inboxNotification.threadId}" not found, this inbox notification might not be of kind "thread"`
+          );
+
+        return thread;
+      },
+      [inboxNotificationId]
+    )
   );
 }
 
