@@ -2,6 +2,7 @@ import {
   BoldIcon,
   Button,
   capitalize,
+  ChevronDownIcon,
   CodeIcon,
   CommentIcon,
   ItalicIcon,
@@ -110,6 +111,7 @@ const ToolbarToggle = forwardRef<HTMLButtonElement, ToolbarToggleProps>(
 
 const ToolbarSelect = forwardRef<HTMLButtonElement, ToolbarSelectProps>(
   ({ options, ...props }, forwardedRef) => {
+    // const editor = useCurrentEditor("ToolbarSelect", "Toolbar");
     const [value, setValue] = useState<string>();
     const formattedValue = useMemo(() => {
       const option = options.find((option) => option.value === value);
@@ -117,12 +119,20 @@ const ToolbarSelect = forwardRef<HTMLButtonElement, ToolbarSelectProps>(
       return option ? option.label ?? capitalize(option.value) : undefined;
     }, [value, options]);
 
+    // const parent = useEditorState({
+    //   editor,
+    //   selector: (ctx) => {
+    //     return ctx.editor.state.selection.$from.parent.type;
+    //   },
+    // });
+
     return (
       <SelectPrimitive.Root value={value} onValueChange={setValue}>
         <ShortcutTooltip content="Turn into…">
           <SelectPrimitive.Trigger asChild {...props} ref={forwardedRef}>
             <Button type="button" variant="toolbar">
               {formattedValue ?? "Select…"}
+              <ChevronDownIcon className="lb-dropdown-chevron" />
             </Button>
           </SelectPrimitive.Trigger>
         </ShortcutTooltip>
@@ -131,7 +141,7 @@ const ToolbarSelect = forwardRef<HTMLButtonElement, ToolbarSelectProps>(
             position="popper"
             sideOffset={FLOATING_ELEMENT_SIDE_OFFSET}
             collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
-            className="lb-dropdown"
+            className="lb-root lb-portal lb-elevation lb-dropdown"
           >
             {options.map((option) => (
               <SelectPrimitive.Item

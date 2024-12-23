@@ -326,6 +326,12 @@
   min-inline-size: 200px;
 }
 
+.lb-dropdown-chevron {
+  margin-inline-start: calc(0.175 * var(--lb-spacing));
+  margin-inline-end: calc(-0.25 * var(--lb-spacing));
+  opacity: 0.75;
+}
+
 .lb-dropdown-label {
   padding: calc(0.875 * var(--lb-spacing)) calc(0.625 * var(--lb-spacing))
     calc(0.125 * var(--lb-spacing));
