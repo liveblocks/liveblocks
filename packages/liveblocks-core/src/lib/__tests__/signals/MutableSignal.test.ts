@@ -18,7 +18,7 @@ it("signals always notify watchers whenever mutated (because we cannot tell if t
 
   const counter = new MutableSignal<S>({ counter: 0 });
 
-  const inc = (state: S) => state.counter++;
+  const inc = (state: S) => void state.counter++;
 
   const makeOdd = (state: S) => {
     if ((state.counter & 1) === 0) {
@@ -62,6 +62,7 @@ it("signals throw when used with an async mutation function", () => {
   type S = { counter: 0 };
   const counter = new MutableSignal<S>({ counter: 0 });
   const asyncInc = (state: S) => Promise.resolve(state.counter++);
+  // @ts-expect-error deliberately pass an async function
   expect(() => counter.mutate(asyncInc)).toThrow(
     "does not support async callbacks"
   );
@@ -90,7 +91,7 @@ it("when chained, derived signals will think the value changed", () => {
   expect(count.get()).toEqual(3);
   expect(str.get()).toEqual("cherry,apple,banana");
 
-  fruits.mutate((arr) => arr.sort());
+  fruits.mutate((arr) => void arr.sort());
 
   expect(count.get()).toEqual(3);
   expect(str.get()).toEqual("apple,banana,cherry");
@@ -118,7 +119,7 @@ it("when batched, derived signals will only update the value changed", () => {
   const unsub = list.subscribe(watcher);
 
   // Without batching...
-  fruits.mutate((f) => f.push("🍎"));
+  fruits.mutate((f) => void f.push("🍎"));
   count.set(3);
 
   expect(evaled).toHaveBeenCalledTimes(2); // ...it's called 2 times
@@ -128,7 +129,7 @@ it("when batched, derived signals will only update the value changed", () => {
 
   // But with batching...
   batch(() => {
-    fruits.mutate((f) => f.push("🍍"));
+    fruits.mutate((f) => void f.push("🍍"));
     count.set(2);
   });
 

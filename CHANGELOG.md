@@ -1,4 +1,13 @@
-## 2.15.0 (Not yet published)
+## vNEXT (Not yet published)
+
+## 2.15.1
+
+### All packages
+
+- Fix rollup config to always ensure `"use client"` directives are on top of
+  files after build.
+
+## 2.15.0
 
 ### `@liveblocks/react`
 

@@ -13,6 +13,53 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
 
+# Week 51 (2024-12-20)
+
+## v2.15.0
+
+### `@liveblocks/react`
+
+- **Breaking**: Drop support for React 17 (and 16). If you’re unable to upgrade
+  React to 18 or higher, you can still continue to use Liveblocks 2.14.0, which
+  is the last version to support React versions lower than 18.
+
+### All packages
+
+- The published target for all Liveblocks packages is now ES2022 (up from
+  ES2020). This should have a positive impact on your bundle size[\*].
+
+- Various internal refactorings and code cleanup.
+
+[\*] If you bundle for the browser, this should not be a problem, as all major
+browsers support ES2022. If however you're specifically targeting very old
+browsers (mostly IE), then you may need to configure your bundler (Webpack,
+rollup, esbuild, etc) to also down-compile code from dependencies inside
+`node_modules` for you, if you aren't already.
+
+## Website
+
+- New blog post: [A better way to email your users about unread content](https://liveblocks.io/blog/a-better-way-to-email-your-users-about-unread-content).
+
+## Examples
+
+- Adjusted email templates to allow switching the logo more easily.
+- Next.js Starter Kit improvements:
+  - Renaming a document updates it immediately for everyone else.
+  - Clicking outside of the rename input saves the new name.
+  - Added tldraw's dark mode.
+  - Added option to filter for canvas in the room listing.
+  - Upgraded Liveblocks.
+  - Fixed a z-index problem and added a hover style.
+
+## Documentation
+
+- [Upgrade guide for 2.15](https://liveblocks.io/docs/platform/upgrading/2.15).
+- Added links to email templates in guides and API reference.
+
+## Contributors
+
+ctnicholas, nvie, marcbouchenoire
+
 # Week 50 (2024-12-13)
 
 ## v2.14.0

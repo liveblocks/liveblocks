@@ -17,7 +17,6 @@ import type {
   Permission,
   Resolve,
   RoomNotificationSettings,
-  SyncSource,
   ThreadData,
   ThreadDataWithDeleteInfo,
   ThreadDeleteInfo,
@@ -31,14 +30,16 @@ import {
   HttpError,
   kInternal,
   makeEventSource,
-  mapValues,
+  MutableSignal,
   nanoid,
   nn,
+  shallow,
   Signal,
   stringify,
 } from "@liveblocks/core";
 
 import { autobind } from "./lib/autobind";
+import { find } from "./lib/itertools";
 import type { ReadonlyThreadDB } from "./ThreadDB";
 import { ThreadDB } from "./ThreadDB";
 import type {
@@ -449,13 +450,16 @@ export class PaginatedResource {
       })
     );
 
-    // TODO for later: Maybe move this into the .then() above too?
+    // NOTE: However tempting it may be, we cannot simply move this block into
+    // the promise definition above. The reason is that we should not call
+    // notify() before the UsablePromise is actually in resolved status. While
+    // still inside the .then() block, the UsablePromise is still in pending status.
     promise.then(
       () => this.#eventSource.notify(),
       () => {
         this.#eventSource.notify();
 
-        // Wait for 5 seconds before removing the request from the cache
+        // Wait for 5 seconds before removing the request
         setTimeout(() => {
           this.#cachedPromise = null;
           this.#eventSource.notify();
@@ -468,7 +472,7 @@ export class PaginatedResource {
   }
 }
 
-export class SinglePageResource {
+class SinglePageResource {
   public readonly observable: Observable<void>;
   #eventSource: EventSource<void>;
   #fetchPage: () => Promise<void>;
@@ -481,20 +485,15 @@ export class SinglePageResource {
     autobind(this);
   }
 
-  public get(): AsyncResult<undefined> {
+  public get(): AsyncResult<void> {
     const usable = this.#cachedPromise;
     if (usable === null || usable.status === "pending") {
       return ASYNC_LOADING;
-    }
-
-    if (usable.status === "rejected") {
+    } else if (usable.status === "rejected") {
       return { isLoading: false, error: usable.reason };
+    } else {
+      return { isLoading: false, data: undefined };
     }
-
-    return {
-      isLoading: false,
-      data: undefined,
-    };
   }
 
   #cachedPromise: UsablePromise<void> | null = null;
@@ -514,13 +513,16 @@ export class SinglePageResource {
 
     const promise = usify(initialFetcher);
 
-    // TODO for later: Maybe move this into the .then() above too?
+    // NOTE: However tempting it may be, we cannot simply move this block into
+    // the promise definition above. The reason is that we should not call
+    // notify() before the UsablePromise is actually in resolved status. While
+    // still inside the .then() block, the UsablePromise is still in pending status.
     promise.then(
       () => this.#eventSource.notify(),
       () => {
         this.#eventSource.notify();
 
-        // Wait for 5 seconds before removing the request from the cache
+        // Wait for 5 seconds before removing the request
         setTimeout(() => {
           this.#cachedPromise = null;
           this.#eventSource.notify();
@@ -537,12 +539,25 @@ type RoomId = string;
 type QueryKey = string;
 
 /**
+ * A lookup table (LUT) for all the history versions.
+ */
+type VersionsLUT = Map<RoomId, Map<string, HistoryVersion>>;
+
+/**
  * Versions by roomId
  * e.g. { 'room-abc': {versions: "all versions"}}
  */
 type VersionsByRoomId = Record<RoomId, Record<string, HistoryVersion>>;
 
-type NotificationsById = Record<string, InboxNotificationData>;
+/**
+ * A lookup table (LUT) for all the inbox notifications.
+ */
+type NotificationsLUT = Map<string, InboxNotificationData>;
+
+/**
+ * A lookup table (LUT) for all the room notification settings.
+ */
+type SettingsLUT = Map<RoomId, RoomNotificationSettings>;
 
 /**
  * Notification settings by room ID.
@@ -588,9 +603,225 @@ export type CleanNotifications = {
   notificationsById: Record<string, InboxNotificationData>;
 };
 
+function createStore_forNotifications() {
+  const signal = new MutableSignal<NotificationsLUT>(new Map());
+
+  function markRead(notificationId: string, readAt: Date) {
+    signal.mutate((lut) => {
+      const existing = lut.get(notificationId);
+      if (!existing) {
+        return false;
+      }
+      lut.set(notificationId, { ...existing, readAt });
+      return true;
+    });
+  }
+
+  function markAllRead(readAt: Date) {
+    signal.mutate((lut) => {
+      for (const n of lut.values()) {
+        n.readAt = readAt;
+      }
+    });
+  }
+
+  function deleteOne(inboxNotificationId: string) {
+    signal.mutate((lut) => lut.delete(inboxNotificationId));
+  }
+
+  function clear() {
+    signal.mutate((lut) => lut.clear());
+  }
+
+  function applyDelta(
+    newInboxNotifications: InboxNotificationData[],
+    deletedNotifications: InboxNotificationDeleteInfo[]
+  ) {
+    signal.mutate((lut) => {
+      let mutated = false;
+
+      // Add new notifications or update existing notifications if the existing notification is older than the new notification.
+      for (const n of newInboxNotifications) {
+        const existing = lut.get(n.id);
+        // If the notification already exists, we need to compare the two notifications to determine which one is newer.
+        if (existing) {
+          const result = compareInboxNotifications(existing, n);
+          // If the existing notification is newer than the new notification, we do not update the existing notification.
+          if (result === 1) continue;
+        }
+
+        // If the new notification is newer than the existing notification, we update the existing notification.
+        lut.set(n.id, n);
+        mutated = true;
+      }
+
+      for (const n of deletedNotifications) {
+        lut.delete(n.id);
+        mutated = true;
+      }
+      return mutated;
+    });
+  }
+
+  function updateAssociatedNotification(newComment: CommentData) {
+    signal.mutate((lut) => {
+      const existing = find(
+        lut.values(),
+        (notification) =>
+          notification.kind === "thread" &&
+          notification.threadId === newComment.threadId
+      );
+      if (!existing) return false; // Nothing to udate here
+
+      // If the thread has an inbox notification associated with it, we update the notification's `notifiedAt` and `readAt` values
+      lut.set(existing.id, {
+        ...existing,
+        notifiedAt: newComment.createdAt,
+        readAt: newComment.createdAt,
+      });
+      return true;
+    });
+  }
+
+  return {
+    signal: signal.asReadonly(),
+
+    // Mutations
+    markAllRead,
+    markRead,
+    delete: deleteOne,
+    applyDelta,
+    clear,
+    updateAssociatedNotification,
+
+    // XXX_vincent Remove this eventually
+    force_set: (
+      mutationCallback: (lut: NotificationsLUT) => void | undefined | boolean
+    ) => signal.mutate(mutationCallback),
+    invalidate: () => signal.mutate(),
+  };
+}
+
+function createStore_forRoomNotificationSettings() {
+  const signal = new MutableSignal<SettingsLUT>(new Map());
+
+  function update(roomId: string, settings: RoomNotificationSettings): void {
+    signal.mutate((lut) => {
+      lut.set(roomId, settings);
+    });
+  }
+
+  return {
+    signal: signal.asReadonly(),
+
+    // Mutations
+    update,
+
+    // XXX_vincent Remove this eventually
+    invalidate: () => signal.mutate(),
+  };
+}
+
+function createStore_forHistoryVersions() {
+  const signal = new MutableSignal<VersionsLUT>(new Map());
+
+  function update(roomId: string, versions: HistoryVersion[]): void {
+    signal.mutate((lut) => {
+      // get-or-create
+      const versionsById =
+        lut.get(roomId) ?? (lut.set(roomId, new Map()), lut.get(roomId)!);
+      for (const version of versions) {
+        versionsById.set(version.id, version);
+      }
+    });
+  }
+
+  return {
+    signal: signal.asReadonly(),
+
+    // Mutations
+    update,
+
+    // XXX_vincent Remove these eventually
+    force_set: (callback: (lut: VersionsLUT) => void | boolean) =>
+      signal.mutate(callback),
+    invalidate: () => signal.mutate(),
+  };
+}
+
+function createStore_forPermissionHints() {
+  const signal = new Signal<PermissionHintsByRoomId>({});
+
+  function update(newHints: Record<string, Permission[]>) {
+    signal.set((prev) => {
+      const permissionsByRoom = { ...prev };
+
+      for (const [roomId, newPermissions] of Object.entries(newHints)) {
+        // Get the existing set of permissions for the room and only ever add permission to this set
+        const existing = permissionsByRoom[roomId] ?? new Set();
+        // Add the new permissions to the set of existing permissions
+        for (const permission of newPermissions) {
+          existing.add(permission);
+        }
+        permissionsByRoom[roomId] = existing;
+      }
+
+      return permissionsByRoom;
+    });
+  }
+
+  return {
+    signal: signal.asReadonly(),
+
+    // Mutations
+    update,
+
+    // XXX_vincent Remove this eventually
+    invalidate: () => signal.set((store) => ({ ...store })),
+  };
+}
+
+function createStore_forOptimistic<M extends BaseMetadata>(
+  client: Client<BaseUserMeta, M>
+) {
+  const signal = new Signal<readonly OptimisticUpdate<M>[]>([]);
+  const syncSource = client[kInternal].createSyncSource();
+
+  // Automatically update the global sync status as an effect whenever there
+  // are any optimistic updates
+  signal.subscribe(() =>
+    syncSource.setSyncStatus(
+      signal.get().length > 0 ? "synchronizing" : "synchronized"
+    )
+  );
+
+  function add(
+    optimisticUpdate: DistributiveOmit<OptimisticUpdate<M>, "id">
+  ): string {
+    const id = nanoid();
+    const newUpdate: OptimisticUpdate<M> = { ...optimisticUpdate, id };
+    signal.set((state) => [...state, newUpdate]);
+    return id;
+  }
+
+  function remove(optimisticId: string): void {
+    signal.set((state) => state.filter((ou) => ou.id !== optimisticId));
+  }
+
+  return {
+    signal: signal.asReadonly(),
+
+    // Mutations
+    add,
+    remove,
+
+    // XXX_vincent Remove this eventually
+    invalidate: () => signal.set((store) => [...store]),
+  };
+}
+
 export class UmbrellaStore<M extends BaseMetadata> {
   #client: Client<BaseUserMeta, M>;
-  #syncSource: SyncSource;
 
   //
   // Internally, the UmbrellaStore keeps track of a few source signals that can
@@ -619,13 +850,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // Input signals.
   // (Can be mutated directly.)
   //
-  readonly baseThreadsDB: ThreadDB<M>; // Exposes its signal under `.signal` prop
-  readonly baseNotificationsById: Signal<NotificationsById>;
-  readonly baseSettingsByRoomId: Signal<SettingsByRoomId>;
-  readonly optimisticUpdates: Signal<readonly OptimisticUpdate<M>[]>;
-
-  readonly baseVersionsByRoomId: Signal<VersionsByRoomId>;
-  readonly permissionHintsByRoomId: Signal<PermissionHintsByRoomId>;
+  // XXX_vincent Now that we have createStore_forX, we should probably also change
+  // `threads` to this pattern, ie create a createStore_forThreads helper as
+  // well. It almost works like that already anyway!
+  readonly threads: ThreadDB<M>; // Exposes its signal under `.signal` prop
+  readonly notifications: ReturnType<typeof createStore_forNotifications>;
+  readonly roomNotificationSettings: ReturnType<typeof createStore_forRoomNotificationSettings>; // prettier-ignore
+  readonly historyVersions: ReturnType<typeof createStore_forHistoryVersions>;
+  readonly permissionHints: ReturnType<typeof createStore_forPermissionHints>;
+  readonly optimisticUpdates: ReturnType<typeof createStore_forOptimistic<M>>;
 
   //
   // Output signals.
@@ -635,7 +868,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // threads and notifications separately, but the threadifications signal will
   // be updated whenever either of them change.
   //
-  // TODO(vincent+nimesh) APIs like getRoomThreadsLoadingState should really also be modeled as output signals.
+  // XXX_vincent APIs like getRoomThreadsLoadingState should really also be modeled as output signals.
   //
   readonly outputs: {
     readonly threadifications: DerivedSignal<CleanThreadifications<M>>;
@@ -666,15 +899,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   constructor(client: OpaqueClient) {
     this.#client = client[kInternal].as<M>();
-    this.#syncSource = this.#client[kInternal].createSyncSource();
+
+    this.optimisticUpdates = createStore_forOptimistic<M>(this.#client);
+    this.permissionHints = createStore_forPermissionHints();
 
     const inboxFetcher = async (cursor?: string) => {
       const result = await this.#client.getInboxNotifications({ cursor });
 
-      this.updateThreadsAndNotifications(
-        result.threads,
-        result.inboxNotifications
-      );
+      this.updateThreadifications(result.threads, result.inboxNotifications);
 
       // We initialize the `_lastRequestedNotificationsAt` date using the server timestamp after we've loaded the first page of inbox notifications.
       if (this.#notificationsLastRequestedAt === null) {
@@ -685,7 +917,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return nextCursor;
     };
 
-    // TODO(vincent+nimesh) Looks like this should also be a Signal!
+    // XXX_vincent Looks like this should also be a Signal!
     this.#notifications = new PaginatedResource(inboxFetcher);
     this.#notifications.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
@@ -693,47 +925,53 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this.invalidateEntireStore()
     );
 
-    this.baseThreadsDB = new ThreadDB();
-    this.optimisticUpdates = new Signal<readonly OptimisticUpdate<M>[]>([]);
+    this.threads = new ThreadDB();
 
-    this.baseVersionsByRoomId = new Signal<VersionsByRoomId>({});
-    this.baseNotificationsById = new Signal<NotificationsById>({});
-    this.baseSettingsByRoomId = new Signal<SettingsByRoomId>({});
-
-    // NOTE: Permission hints has no DerivedSignals depending on it, so we
-    // should be able to extract it out of the UmbrellaStore.
-    this.permissionHintsByRoomId = new Signal<PermissionHintsByRoomId>({});
+    this.notifications = createStore_forNotifications();
+    this.roomNotificationSettings = createStore_forRoomNotificationSettings();
+    this.historyVersions = createStore_forHistoryVersions();
 
     const threadifications = DerivedSignal.from(
-      this.baseThreadsDB.signal,
-      this.baseNotificationsById,
-      this.optimisticUpdates,
+      this.threads.signal,
+      this.notifications.signal,
+      this.optimisticUpdates.signal,
       (ts, ns, updates) =>
         applyOptimisticUpdates_forThreadifications(ts, ns, updates)
     );
 
-    const threads = DerivedSignal.from(threadifications, (s) => ({
-      threadsDB: s.threadsDB,
-    }));
+    const threads = DerivedSignal.from(
+      threadifications,
+      (s) => ({
+        threadsDB: s.threadsDB,
+      }),
+      shallow
+    );
 
-    const notifications = DerivedSignal.from(threadifications, (s) => ({
-      sortedNotifications: s.sortedNotifications,
-      notificationsById: s.notificationsById,
-    }));
+    const notifications = DerivedSignal.from(
+      threadifications,
+      (s) => ({
+        sortedNotifications: s.sortedNotifications,
+        notificationsById: s.notificationsById,
+      }),
+      shallow
+    );
 
     const settingsByRoomId = DerivedSignal.from(
-      this.baseSettingsByRoomId,
-      this.optimisticUpdates,
+      this.roomNotificationSettings.signal,
+      this.optimisticUpdates.signal,
       (settings, updates) =>
         applyOptimisticUpdates_forSettings(settings, updates)
     );
 
-    // TODO(vincent+nimesh) Not much of a "derived" state: it's just the same
-    // as the input This is a smell. We should be able to extract it out of the
-    // UmbrellaStore must like the permission hints signal.
     const versionsByRoomId = DerivedSignal.from(
-      this.baseVersionsByRoomId,
-      (hv) => hv
+      this.historyVersions.signal,
+      (hv) =>
+        Object.fromEntries(
+          [...hv].map(([roomId, versions]) => [
+            roomId,
+            Object.fromEntries(versions),
+          ])
+        )
     );
 
     this.outputs = {
@@ -743,16 +981,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
       settingsByRoomId,
       versionsByRoomId,
     };
-
-    // Automatically update the global sync status as an effect whenever there
-    // are any optimistic updates
-    this.optimisticUpdates.subscribe(() =>
-      this.#syncSource.setSyncStatus(
-        this.optimisticUpdates.get().length > 0
-          ? "synchronizing"
-          : "synchronized"
-      )
-    );
 
     // Auto-bind all of this class’ methods here, so we can use stable
     // references to them (most important for use in useSyncExternalStore)
@@ -891,7 +1119,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   // NOTE: This will read the async result, but WILL NOT start loading at the moment!
-  // TODO(vincent+nimesh) This should really be a derived Signal!
+  // XXX_vincent This should really be a derived Signal!
   public getNotificationSettingsLoadingState(
     roomId: string
   ): RoomNotificationSettingsAsyncResult {
@@ -936,71 +1164,22 @@ export class UmbrellaStore<M extends BaseMetadata> {
     };
   }
 
-  // Direct low-level cache mutations ------------------------------------------------- {{{
-
-  #mutateThreadsDB(mutate: (db: ThreadDB<M>) => void): void {
-    batch(() => {
-      mutate(this.baseThreadsDB);
-    });
-  }
-
-  #updateInboxNotificationsCache(
-    mapFn: (
-      cache: Readonly<Record<string, InboxNotificationData>>
-    ) => Readonly<Record<string, InboxNotificationData>>
-  ): void {
-    this.baseNotificationsById.set((prev) => mapFn(prev));
-  }
-
-  #setNotificationSettings(
-    roomId: string,
-    settings: RoomNotificationSettings
-  ): void {
-    this.baseSettingsByRoomId.set((state) => ({
-      ...state,
-      [roomId]: settings,
-    }));
-  }
-
-  #updateRoomVersions(roomId: string, versions: HistoryVersion[]): void {
-    this.baseVersionsByRoomId.set((prev) => {
-      const newVersions: Record<string, HistoryVersion> = { ...prev[roomId] };
-      for (const version of versions) {
-        newVersions[version.id] = version;
-      }
-      return {
-        ...prev,
-        [roomId]: newVersions,
-      };
-    });
-  }
-
-  #updateOptimisticUpdatesCache(
-    mapFn: (
-      cache: readonly OptimisticUpdate<M>[]
-    ) => readonly OptimisticUpdate<M>[]
-  ): void {
-    this.optimisticUpdates.set(mapFn);
-  }
-
-  // ---------------------------------------------------------------------------------- }}}
-
   /** @internal - Only call this method from unit tests. */
   public force_set_versions(
-    callback: (currentState: VersionsByRoomId) => VersionsByRoomId
+    callback: (lut: VersionsLUT) => void | boolean
   ): void {
     batch(() => {
-      this.baseVersionsByRoomId.set(callback);
+      this.historyVersions.force_set(callback);
       this.invalidateEntireStore();
     });
   }
 
   /** @internal - Only call this method from unit tests. */
   public force_set_notifications(
-    callback: (currentState: NotificationsById) => NotificationsById
+    callback: (lut: NotificationsLUT) => void | undefined | boolean
   ): void {
     batch(() => {
-      this.baseNotificationsById.set(callback);
+      this.notifications.force_set(callback);
       this.invalidateEntireStore();
     });
   }
@@ -1009,51 +1188,26 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * Updates an existing inbox notification with a new value, replacing the
    * corresponding optimistic update.
    *
-   * This will not update anything if the inbox notification ID isn't found in
-   * the cache.
+   * This will not update anything if the inbox notification ID isn't found.
    */
-  public updateInboxNotification(
+  public markInboxNotificationRead(
     inboxNotificationId: string,
-    optimisticUpdateId: string,
-    callback: (
-      notification: Readonly<InboxNotificationData>
-    ) => Readonly<InboxNotificationData>
+    readAt: Date,
+    optimisticId: string
   ): void {
-    // Batch 1️⃣ + 2️⃣
     batch(() => {
-      this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
-
-      // 2️⃣
-      this.#updateInboxNotificationsCache((cache) => {
-        const existing = cache[inboxNotificationId];
-        if (!existing) {
-          // If the inbox notification doesn't exist in the cache, we do not
-          // change anything
-          return cache;
-        }
-
-        return {
-          ...cache,
-          [inboxNotificationId]: callback(existing),
-        };
-      });
+      this.optimisticUpdates.remove(optimisticId);
+      this.notifications.markRead(inboxNotificationId, readAt);
     });
   }
 
-  /**
-   * Updates *all* inbox notifications by running a mapper function over all of
-   * them, replacing the corresponding optimistic update.
-   */
-  public updateAllInboxNotifications(
-    optimisticUpdateId: string,
-    mapFn: (
-      notification: Readonly<InboxNotificationData>
-    ) => Readonly<InboxNotificationData>
+  public markAllInboxNotificationsRead(
+    optimisticId: string,
+    readAt: Date
   ): void {
-    // Batch 1️⃣ + 2️⃣
     batch(() => {
-      this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
-      this.#updateInboxNotificationsCache((cache) => mapValues(cache, mapFn)); // 2️⃣
+      this.optimisticUpdates.remove(optimisticId);
+      this.notifications.markAllRead(readAt);
     });
   }
 
@@ -1063,18 +1217,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
    */
   public deleteInboxNotification(
     inboxNotificationId: string,
-    optimisticUpdateId: string
+    optimisticId: string
   ): void {
-    // Batch 1️⃣ + 2️⃣
     batch(() => {
-      this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
-
-      // 2️⃣
-      this.#updateInboxNotificationsCache((cache) => {
-        // Delete it
-        const { [inboxNotificationId]: removed, ...newCache } = cache;
-        return removed === undefined ? cache : newCache;
-      });
+      this.optimisticUpdates.remove(optimisticId);
+      this.notifications.delete(inboxNotificationId);
     });
   }
 
@@ -1082,11 +1229,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * Deletes *all* inbox notifications, replacing the corresponding optimistic
    * update.
    */
-  public deleteAllInboxNotifications(optimisticUpdateId: string): void {
-    // Batch 1️⃣ + 2️⃣
+  public deleteAllInboxNotifications(optimisticId: string): void {
     batch(() => {
-      this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
-      this.#updateInboxNotificationsCache(() => ({})); // 2️⃣ empty the cache
+      this.optimisticUpdates.remove(optimisticId);
+      this.notifications.clear();
     });
   }
 
@@ -1094,13 +1240,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * Creates an new thread, replacing the corresponding optimistic update.
    */
   public createThread(
-    optimisticUpdateId: string,
+    optimisticId: string,
     thread: Readonly<ThreadDataWithDeleteInfo<M>>
   ): void {
-    // Batch 1️⃣ + 2️⃣
     batch(() => {
-      this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣j
-      this.#mutateThreadsDB((db) => db.upsert(thread)); // 2️⃣
+      this.optimisticUpdates.remove(optimisticId);
+      this.threads.upsert(thread);
     });
   }
 
@@ -1109,39 +1254,35 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * optimistic update.
    *
    * This will not update anything if:
-   * - The thread ID isn't found in the cache; or
-   * - The thread ID was already deleted from the cache; or
-   * - The thread ID in the cache was updated more recently than the optimistic
-   *   update's timestamp (if given)
+   * - The thread ID isn't found; or
+   * - The thread ID was already deleted; or
+   * - The thread ID was updated more recently than the optimistic update's
+   *   timestamp (if given)
    */
   #updateThread(
     threadId: string,
-    optimisticUpdateId: string | null,
+    optimisticId: string | null,
     callback: (
       thread: Readonly<ThreadDataWithDeleteInfo<M>>
     ) => Readonly<ThreadDataWithDeleteInfo<M>>,
     updatedAt?: Date // TODO We could look this up from the optimisticUpdate instead?
   ): void {
-    // Batch 1️⃣ + 2️⃣
     batch(() => {
-      if (optimisticUpdateId !== null) {
-        this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
+      if (optimisticId !== null) {
+        this.optimisticUpdates.remove(optimisticId);
       }
 
-      // 2️⃣
-      this.#mutateThreadsDB((db) => {
-        const existing = db.get(threadId);
-        if (!existing) return;
-        if (!!updatedAt && existing.updatedAt > updatedAt) return;
-
-        db.upsert(callback(existing));
-      });
+      const db = this.threads;
+      const existing = db.get(threadId);
+      if (!existing) return;
+      if (!!updatedAt && existing.updatedAt > updatedAt) return;
+      db.upsert(callback(existing));
     });
   }
 
   public patchThread(
     threadId: string,
-    optimisticUpdateId: string | null,
+    optimisticId: string | null,
     patch: {
       // Only these fields are currently supported to patch
       metadata?: M;
@@ -1151,7 +1292,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): void {
     return this.#updateThread(
       threadId,
-      optimisticUpdateId,
+      optimisticId,
       (thread) => ({ ...thread, ...compactObject(patch) }),
       updatedAt
     );
@@ -1159,14 +1300,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   public addReaction(
     threadId: string,
-    optimisticUpdateId: string | null,
+    optimisticId: string | null,
     commentId: string,
     reaction: CommentUserReaction,
     createdAt: Date // TODO We could look this up from the optimisticUpdate instead?
   ): void {
     this.#updateThread(
       threadId,
-      optimisticUpdateId,
+      optimisticId,
       (thread) => applyAddReaction(thread, commentId, reaction),
       createdAt
     );
@@ -1174,7 +1315,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   public removeReaction(
     threadId: string,
-    optimisticUpdateId: string | null,
+    optimisticId: string | null,
     commentId: string,
     emoji: string,
     userId: string,
@@ -1182,7 +1323,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): void {
     this.#updateThread(
       threadId,
-      optimisticUpdateId,
+      optimisticId,
       (thread) =>
         applyRemoveReaction(thread, commentId, emoji, userId, removedAt),
       removedAt
@@ -1194,16 +1335,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * replacing the corresponding optimistic update.
    *
    * This will not update anything if:
-   * - The thread ID isn't found in the cache; or
-   * - The thread ID was already deleted from the cache
+   * - The thread ID isn't found; or
+   * - The thread ID was already deleted
    */
-  public deleteThread(
-    threadId: string,
-    optimisticUpdateId: string | null
-  ): void {
+  public deleteThread(threadId: string, optimisticId: string | null): void {
     return this.#updateThread(
       threadId,
-      optimisticUpdateId,
+      optimisticId,
 
       // A deletion is actually an update of the deletedAt property internally
       (thread) => ({ ...thread, updatedAt: new Date(), deletedAt: new Date() })
@@ -1214,125 +1352,60 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * Creates an existing comment and ensures the associated notification is
    * updated correctly, replacing the corresponding optimistic update.
    */
-  public createComment(
-    newComment: CommentData,
-    optimisticUpdateId: string
-  ): void {
+  public createComment(newComment: CommentData, optimisticId: string): void {
     // Batch 1️⃣ + 2️⃣ + 3️⃣
     batch(() => {
       // 1️⃣
-      this.removeOptimisticUpdate(optimisticUpdateId);
+      this.optimisticUpdates.remove(optimisticId);
 
       // If the associated thread is not found, we cannot create a comment under it
-      const existingThread = this.baseThreadsDB.get(newComment.threadId);
+      const existingThread = this.threads.get(newComment.threadId);
       if (!existingThread) {
         return;
       }
 
       // 2️⃣ Update the thread instance by adding a comment under it
-      this.#mutateThreadsDB((db) =>
-        db.upsert(applyUpsertComment(existingThread, newComment))
-      );
+      this.threads.upsert(applyUpsertComment(existingThread, newComment));
 
       // 3️⃣ Update the associated inbox notification (if any)
-      this.#updateInboxNotificationsCache((cache) => {
-        const existingNotification = Object.values(cache).find(
-          (notification) =>
-            notification.kind === "thread" &&
-            notification.threadId === newComment.threadId
-        );
-
-        if (!existingNotification) {
-          // Nothing to update here
-          return cache;
-        }
-
-        // If the thread has an inbox notification associated with it, we update the notification's `notifiedAt` and `readAt` values
-        return {
-          ...cache,
-          [existingNotification.id]: {
-            ...existingNotification,
-            notifiedAt: newComment.createdAt,
-            readAt: newComment.createdAt,
-          },
-        };
-      });
+      this.notifications.updateAssociatedNotification(newComment);
     });
   }
 
   public editComment(
     threadId: string,
-    optimisticUpdateId: string,
+    optimisticId: string,
     editedComment: CommentData
   ): void {
-    return this.#updateThread(threadId, optimisticUpdateId, (thread) =>
+    return this.#updateThread(threadId, optimisticId, (thread) =>
       applyUpsertComment(thread, editedComment)
     );
   }
 
   public deleteComment(
     threadId: string,
-    optimisticUpdateId: string,
+    optimisticId: string,
     commentId: string,
     deletedAt: Date
   ): void {
     return this.#updateThread(
       threadId,
-      optimisticUpdateId,
+      optimisticId,
       (thread) => applyDeleteComment(thread, commentId, deletedAt),
       deletedAt
     );
   }
 
-  public updateThreadAndNotification(
-    thread: ThreadData<M>,
-    inboxNotification?: InboxNotificationData
-  ): void {
-    // Batch 1️⃣ + 2️⃣
-    batch(() => {
-      // 1️⃣
-      this.#mutateThreadsDB((db) => db.upsertIfNewer(thread));
-
-      // 2️⃣
-      if (inboxNotification !== undefined) {
-        this.#updateInboxNotificationsCache((cache) => ({
-          ...cache,
-          [inboxNotification.id]: inboxNotification,
-        }));
-      }
-    });
-  }
-
-  public updateThreadsAndNotifications(
+  public updateThreadifications(
     threads: ThreadData<M>[],
-    inboxNotifications: InboxNotificationData[]
-  ): void;
-  public updateThreadsAndNotifications(
-    threads: ThreadData<M>[],
-    inboxNotifications: InboxNotificationData[],
-    deletedThreads: ThreadDeleteInfo[],
-    deletedInboxNotifications: InboxNotificationDeleteInfo[]
-  ): void;
-  public updateThreadsAndNotifications(
-    threads: ThreadData<M>[],
-    inboxNotifications: InboxNotificationData[],
+    notifications: InboxNotificationData[],
     deletedThreads: ThreadDeleteInfo[] = [],
-    deletedInboxNotifications: InboxNotificationDeleteInfo[] = []
+    deletedNotifications: InboxNotificationDeleteInfo[] = []
   ): void {
-    // Batch 1️⃣ + 2️⃣
     batch(() => {
-      // 1️⃣
-      this.#mutateThreadsDB((db) =>
-        applyThreadDeltaUpdates(db, { newThreads: threads, deletedThreads })
-      );
-
-      // 2️⃣
-      this.#updateInboxNotificationsCache((cache) =>
-        applyNotificationsUpdates(cache, {
-          newInboxNotifications: inboxNotifications,
-          deletedNotifications: deletedInboxNotifications,
-        })
-      );
+      // XXX_vincent Make these signatures look the same
+      this.threads.applyDelta({ newThreads: threads, deletedThreads });
+      this.notifications.applyDelta(notifications, deletedNotifications);
     });
   }
 
@@ -1340,31 +1413,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * Updates existing notification setting for a room with a new value,
    * replacing the corresponding optimistic update.
    */
-  public updateRoomNotificationSettings_confirmOptimisticUpdate(
+  public updateRoomNotificationSettings(
     roomId: string,
-    optimisticUpdateId: string,
+    optimisticId: string,
     settings: Readonly<RoomNotificationSettings>
   ): void {
-    // Batch 1️⃣ + 2️⃣
     batch(() => {
-      this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
-      this.#setNotificationSettings(roomId, settings); // 2️⃣
+      this.optimisticUpdates.remove(optimisticId);
+      this.roomNotificationSettings.update(roomId, settings);
     });
-  }
-
-  public addOptimisticUpdate(
-    optimisticUpdate: DistributiveOmit<OptimisticUpdate<M>, "id">
-  ): string {
-    const id = nanoid();
-    const newUpdate: OptimisticUpdate<M> = { ...optimisticUpdate, id };
-    this.#updateOptimisticUpdatesCache((cache) => [...cache, newUpdate]);
-    return id;
-  }
-
-  public removeOptimisticUpdate(optimisticUpdateId: string): void {
-    this.#updateOptimisticUpdatesCache((cache) =>
-      cache.filter((ou) => ou.id !== optimisticUpdateId)
-    );
   }
 
   public async fetchNotificationsDeltaUpdate(signal: AbortSignal) {
@@ -1382,7 +1439,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this.#notificationsLastRequestedAt = result.requestedAt;
     }
 
-    this.updateThreadsAndNotifications(
+    this.updateThreadifications(
       result.threads.updated,
       result.inboxNotifications.updated,
       result.threads.deleted,
@@ -1392,24 +1449,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   public waitUntilNotificationsLoaded(): UsablePromise<void> {
     return this.#notifications.waitUntilLoaded();
-  }
-
-  #updatePermissionHints(newHints: Record<string, Permission[]>) {
-    this.permissionHintsByRoomId.set((prev) => {
-      const permissionsByRoom = { ...prev };
-
-      for (const [roomId, newPermissions] of Object.entries(newHints)) {
-        // Get the existing set of permissions for the room and only ever add permission to this set
-        const existing = permissionsByRoom[roomId] ?? new Set();
-        // Add the new permissions to the set of existing permissions
-        for (const permission of newPermissions) {
-          existing.add(permission);
-        }
-        permissionsByRoom[roomId] = existing;
-      }
-
-      return permissionsByRoom;
-    });
   }
 
   public waitUntilRoomThreadsLoaded(
@@ -1422,12 +1461,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
         cursor,
         query,
       });
-      this.updateThreadsAndNotifications(
-        result.threads,
-        result.inboxNotifications
-      );
+      this.updateThreadifications(result.threads, result.inboxNotifications);
 
-      this.#updatePermissionHints(result.permissionHints);
+      this.permissionHints.update(result.permissionHints);
 
       const lastRequestedAt =
         this.#roomThreadsLastRequestedAtByRoom.get(roomId);
@@ -1454,7 +1490,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       paginatedResource = new PaginatedResource(threadsFetcher);
     }
 
-    // TODO(vincent+nimesh) Looks like this should also be a Signal!
+    // XXX_vincent Looks like this should also be a Signal!
     paginatedResource.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
@@ -1481,14 +1517,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
       signal,
     });
 
-    this.updateThreadsAndNotifications(
+    this.updateThreadifications(
       updates.threads.updated,
       updates.inboxNotifications.updated,
       updates.threads.deleted,
       updates.inboxNotifications.deleted
     );
 
-    this.#updatePermissionHints(updates.permissionHints);
+    this.permissionHints.update(updates.permissionHints);
 
     if (lastRequestedAt < updates.requestedAt) {
       // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
@@ -1506,12 +1542,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
         cursor,
         query,
       });
-      this.updateThreadsAndNotifications(
-        result.threads,
-        result.inboxNotifications
-      );
+      this.updateThreadifications(result.threads, result.inboxNotifications);
 
-      this.#updatePermissionHints(result.permissionHints);
+      this.permissionHints.update(result.permissionHints);
 
       // We initialize the `_userThreadsLastRequestedAt` date using the server timestamp after we've loaded the first page of inbox notifications.
       if (this.#userThreadsLastRequestedAt === null) {
@@ -1526,7 +1559,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       paginatedResource = new PaginatedResource(threadsFetcher);
     }
 
-    // TODO(vincent+nimesh) Looks like this should also be a Signal!
+    // XXX_vincent Looks like this should also be a Signal!
     paginatedResource.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
@@ -1538,17 +1571,17 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return paginatedResource.waitUntilLoaded();
   }
 
-  // TODO(vincent+nimesh) We should really be going over all call sites, and replace this call
+  // XXX_vincent We should really be going over all call sites, and replace this call
   // with a more specific invalidation!
-  private invalidateEntireStore() {
-    // TODO(vincent+nimesh) Of course this now looks stupid, but it's the exact equivalent of
+  public invalidateEntireStore() {
+    // XXX_vincent Of course this now looks stupid, but it's the exact equivalent of
     // what we're been doing all along
     batch(() => {
-      this.baseVersionsByRoomId.set((store) => ({ ...store }));
-      this.baseNotificationsById.set((store) => ({ ...store }));
-      this.optimisticUpdates.set((store) => [...store]);
-      this.permissionHintsByRoomId.set((store) => ({ ...store }));
-      this.baseSettingsByRoomId.set((store) => ({ ...store }));
+      this.historyVersions.invalidate();
+      this.notifications.invalidate();
+      this.optimisticUpdates.invalidate();
+      this.permissionHints.invalidate();
+      this.roomNotificationSettings.invalidate();
     });
   }
 
@@ -1569,14 +1602,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this.#notificationsLastRequestedAt = result.requestedAt;
     }
 
-    this.updateThreadsAndNotifications(
+    this.updateThreadifications(
       result.threads.updated,
       result.inboxNotifications.updated,
       result.threads.deleted,
       result.inboxNotifications.deleted
     );
 
-    this.#updatePermissionHints(result.permissionHints);
+    this.permissionHints.update(result.permissionHints);
   }
 
   public waitUntilRoomVersionsLoaded(roomId: string) {
@@ -1593,7 +1626,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
         }
 
         const result = await room[kInternal].listTextVersions();
-        this.#updateRoomVersions(roomId, result.versions);
+        this.historyVersions.update(roomId, result.versions);
 
         const lastRequestedAt =
           this.#roomVersionsLastRequestedAtByRoom.get(roomId);
@@ -1612,7 +1645,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       resource = new SinglePageResource(versionsFetcher);
     }
 
-    // TODO(vincent+nimesh) Looks like this should also be a Signal!
+    // XXX_vincent Looks like this should also be a Signal!
     resource.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
@@ -1643,7 +1676,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       signal,
     });
 
-    this.#updateRoomVersions(roomId, updates.versions);
+    this.historyVersions.update(roomId, updates.versions);
 
     if (lastRequestedAt < updates.requestedAt) {
       // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
@@ -1665,13 +1698,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
         }
 
         const result = await room.getNotificationSettings();
-        this.#setNotificationSettings(roomId, result);
+        this.roomNotificationSettings.update(roomId, result);
       };
 
       resource = new SinglePageResource(notificationSettingsFetcher);
     }
 
-    // TODO(vincent+nimesh) Looks like this should also be a Signal!
+    // XXX_vincent Looks like this should also be a Signal!
     resource.observable.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
@@ -1692,7 +1725,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       `Room with id ${roomId} is not available on client`
     );
     const result = await room.getNotificationSettings({ signal });
-    this.#setNotificationSettings(roomId, result);
+    this.roomNotificationSettings.update(roomId, result);
   }
 }
 
@@ -1702,11 +1735,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
  */
 function applyOptimisticUpdates_forThreadifications<M extends BaseMetadata>(
   baseThreadsDB: ThreadDB<M>,
-  rawNotificationsById: NotificationsById,
+  notificationsLUT: NotificationsLUT,
   optimisticUpdates: readonly OptimisticUpdate<M>[]
 ): CleanThreadifications<M> {
   const threadsDB = baseThreadsDB.clone();
-  let notificationsById = { ...rawNotificationsById };
+  let notificationsById = Object.fromEntries(notificationsLUT);
 
   for (const optimisticUpdate of optimisticUpdates) {
     switch (optimisticUpdate.type) {
@@ -1844,7 +1877,7 @@ function applyOptimisticUpdates_forThreadifications<M extends BaseMetadata>(
       case "mark-inbox-notification-as-read": {
         const ibn = notificationsById[optimisticUpdate.inboxNotificationId];
 
-        // If the inbox notification doesn't exist in the cache, we do not apply the update
+        // If the inbox notification doesn't exist, we do not apply the update
         if (ibn === undefined) {
           break;
         }
@@ -1859,7 +1892,7 @@ function applyOptimisticUpdates_forThreadifications<M extends BaseMetadata>(
         for (const id in notificationsById) {
           const ibn = notificationsById[id];
 
-          // If the inbox notification doesn't exist in the cache, we do not apply the update
+          // If the inbox notification doesn't exist, we do not apply the update
           if (ibn === undefined) {
             break;
           }
@@ -1903,17 +1936,17 @@ function applyOptimisticUpdates_forThreadifications<M extends BaseMetadata>(
  * a stable way, removes internal fields that should not be exposed publicly.
  */
 function applyOptimisticUpdates_forSettings(
-  baseSettingsByRoomId: SettingsByRoomId,
+  settingsLUT: SettingsLUT,
   optimisticUpdates: readonly OptimisticUpdate<BaseMetadata>[]
 ): SettingsByRoomId {
-  const settingsByRoomId = { ...baseSettingsByRoomId };
+  const settingsByRoomId = Object.fromEntries(settingsLUT);
 
   for (const optimisticUpdate of optimisticUpdates) {
     switch (optimisticUpdate.type) {
       case "update-notification-settings": {
         const settings = settingsByRoomId[optimisticUpdate.roomId];
 
-        // If the inbox notification doesn't exist in the cache, we do not apply the update
+        // If the inbox notification doesn't exist, we do not apply the update
         if (settings === undefined) {
           break;
         }
@@ -1926,59 +1959,6 @@ function applyOptimisticUpdates_forSettings(
     }
   }
   return settingsByRoomId;
-}
-
-export function applyThreadDeltaUpdates<M extends BaseMetadata>(
-  db: ThreadDB<M>,
-  updates: {
-    newThreads: ThreadData<M>[];
-    deletedThreads: ThreadDeleteInfo[];
-  }
-): void {
-  // Add new threads or update existing threads if the existing thread is older than the new thread.
-  updates.newThreads.forEach((thread) => db.upsertIfNewer(thread));
-
-  // Mark threads in the deletedThreads list as deleted
-  updates.deletedThreads.forEach(({ id, deletedAt }) => {
-    const existing = db.getEvenIfDeleted(id);
-    if (!existing) return;
-
-    db.delete(id, deletedAt);
-  });
-}
-
-export function applyNotificationsUpdates(
-  existingInboxNotifications: Record<string, InboxNotificationData>,
-  updates: {
-    newInboxNotifications: InboxNotificationData[];
-    deletedNotifications: InboxNotificationDeleteInfo[];
-  }
-): Record<string, InboxNotificationData> {
-  const updatedInboxNotifications = { ...existingInboxNotifications };
-
-  // Add new notifications or update existing notifications if the existing notification is older than the new notification.
-  updates.newInboxNotifications.forEach((notification) => {
-    const existingNotification = updatedInboxNotifications[notification.id];
-    // If the notification already exists, we need to compare the two notifications to determine which one is newer.
-    if (existingNotification) {
-      const result = compareInboxNotifications(
-        existingNotification,
-        notification
-      );
-
-      // If the existing notification is newer than the new notification, we do not update the existing notification.
-      if (result === 1) return;
-    }
-
-    // If the new notification is newer than the existing notification, we update the existing notification.
-    updatedInboxNotifications[notification.id] = notification;
-  });
-
-  updates.deletedNotifications.forEach(
-    ({ id }) => delete updatedInboxNotifications[id]
-  );
-
-  return updatedInboxNotifications;
 }
 
 /**

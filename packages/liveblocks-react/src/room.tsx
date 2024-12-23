@@ -252,10 +252,10 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
 
   function onMutationFailure(
     innerError: Error,
-    optimisticUpdateId: string,
+    optimisticId: string,
     createPublicError: (error: Error) => CommentsError<M>
   ) {
-    store.removeOptimisticUpdate(optimisticUpdateId);
+    store.optimisticUpdates.remove(optimisticId);
 
     if (innerError instanceof HttpError) {
       const error = handleApiError(innerError);
@@ -668,7 +668,7 @@ function RoomProviderInner<
         store.deleteThread(message.threadId, null);
         return;
       }
-      const { thread, inboxNotification } = info;
+      const { thread, inboxNotification: maybeNotification } = info;
 
       const existingThread = store
         .get1_threads()
@@ -684,10 +684,17 @@ function RoomProviderInner<
           // If the thread doesn't exist in the local cache, we do not update it with the server data as an optimistic update could have deleted the thread locally.
           if (!existingThread) break;
 
-          store.updateThreadAndNotification(thread, inboxNotification);
+          store.updateThreadifications(
+            [thread],
+            maybeNotification ? [maybeNotification] : []
+          );
           break;
+
         case ServerMsgCode.COMMENT_CREATED:
-          store.updateThreadAndNotification(thread, inboxNotification);
+          store.updateThreadifications(
+            [thread],
+            maybeNotification ? [maybeNotification] : []
+          );
           break;
         default:
           break;
@@ -1339,7 +1346,7 @@ function useThreads<M extends BaseMetadata>(
     return () => poller.dec();
   }, [poller]);
 
-  // TODO(vincent+nimesh) There is a disconnect between this getter and subscriber! It's unclear
+  // XXX_vincent There is a disconnect between this getter and subscriber! It's unclear
   // why the getRoomThreadsLoadingState getter should be paired with subscribe1
   // and not subscribe2 from the outside! (The reason is that
   // getRoomThreadsLoadingState internally uses `get1` not `get2`.) This is
@@ -1425,7 +1432,7 @@ function useCreateRoomThread<M extends BaseMetadata>(
       };
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-      const optimisticUpdateId = store.addOptimisticUpdate({
+      const optimisticId = store.optimisticUpdates.add({
         type: "create-thread",
         thread: newThread,
         roomId,
@@ -1445,12 +1452,12 @@ function useCreateRoomThread<M extends BaseMetadata>(
         .then(
           (thread) => {
             // Replace the optimistic update by the real thing
-            store.createThread(optimisticUpdateId, thread);
+            store.createThread(optimisticId, thread);
           },
           (err: Error) =>
             onMutationFailure(
               err,
-              optimisticUpdateId,
+              optimisticId,
               (err) =>
                 new CreateThreadError(err, {
                   roomId,
@@ -1485,7 +1492,7 @@ function useDeleteRoomThread(roomId: string): (threadId: string) => void {
         throw new Error("Only the thread creator can delete the thread");
       }
 
-      const optimisticUpdateId = store.addOptimisticUpdate({
+      const optimisticId = store.optimisticUpdates.add({
         type: "delete-thread",
         roomId,
         threadId,
@@ -1495,12 +1502,12 @@ function useDeleteRoomThread(roomId: string): (threadId: string) => void {
       client[kInternal].httpClient.deleteThread({ roomId, threadId }).then(
         () => {
           // Replace the optimistic update by the real thing
-          store.deleteThread(threadId, optimisticUpdateId);
+          store.deleteThread(threadId, optimisticId);
         },
         (err: Error) =>
           onMutationFailure(
             err,
-            optimisticUpdateId,
+            optimisticId,
             (err) => new DeleteThreadError(err, { roomId, threadId })
           )
       );
@@ -1526,7 +1533,7 @@ function useEditRoomThreadMetadata<M extends BaseMetadata>(roomId: string) {
       const updatedAt = new Date();
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-      const optimisticUpdateId = store.addOptimisticUpdate({
+      const optimisticId = store.optimisticUpdates.add({
         type: "edit-thread-metadata",
         metadata,
         threadId,
@@ -1538,16 +1545,11 @@ function useEditRoomThreadMetadata<M extends BaseMetadata>(roomId: string) {
         .then(
           (metadata) =>
             // Replace the optimistic update by the real thing
-            store.patchThread(
-              threadId,
-              optimisticUpdateId,
-              { metadata },
-              updatedAt
-            ),
+            store.patchThread(threadId, optimisticId, { metadata }, updatedAt),
           (err: Error) =>
             onMutationFailure(
               err,
-              optimisticUpdateId,
+              optimisticId,
               (error) =>
                 new EditThreadMetadataError(error, {
                   roomId,
@@ -1597,7 +1599,7 @@ function useCreateRoomComment(
       };
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-      const optimisticUpdateId = store.addOptimisticUpdate({
+      const optimisticId = store.optimisticUpdates.add({
         type: "create-comment",
         comment,
       });
@@ -1609,12 +1611,12 @@ function useCreateRoomComment(
         .then(
           (newComment) => {
             // Replace the optimistic update by the real thing
-            store.createComment(newComment, optimisticUpdateId);
+            store.createComment(newComment, optimisticId);
           },
           (err: Error) =>
             onMutationFailure(
               err,
-              optimisticUpdateId,
+              optimisticId,
               (err) =>
                 new CreateCommentError(err, {
                   roomId,
@@ -1676,7 +1678,7 @@ function useEditRoomComment(
         return;
       }
 
-      const optimisticUpdateId = store.addOptimisticUpdate({
+      const optimisticId = store.optimisticUpdates.add({
         type: "edit-comment",
         comment: {
           ...comment,
@@ -1693,12 +1695,12 @@ function useEditRoomComment(
         .then(
           (editedComment) => {
             // Replace the optimistic update by the real thing
-            store.editComment(threadId, optimisticUpdateId, editedComment);
+            store.editComment(threadId, optimisticId, editedComment);
           },
           (err: Error) =>
             onMutationFailure(
               err,
-              optimisticUpdateId,
+              optimisticId,
               (error) =>
                 new EditCommentError(error, {
                   roomId,
@@ -1737,7 +1739,7 @@ function useDeleteRoomComment(roomId: string) {
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
 
-      const optimisticUpdateId = store.addOptimisticUpdate({
+      const optimisticId = store.optimisticUpdates.add({
         type: "delete-comment",
         threadId,
         commentId,
@@ -1750,17 +1752,12 @@ function useDeleteRoomComment(roomId: string) {
         .then(
           () => {
             // Replace the optimistic update by the real thing
-            store.deleteComment(
-              threadId,
-              optimisticUpdateId,
-              commentId,
-              deletedAt
-            );
+            store.deleteComment(threadId, optimisticId, commentId, deletedAt);
           },
           (err: Error) =>
             onMutationFailure(
               err,
-              optimisticUpdateId,
+              optimisticId,
               (error) =>
                 new DeleteCommentError(error, {
                   roomId,
@@ -1790,7 +1787,7 @@ function useAddRoomCommentReaction<M extends BaseMetadata>(roomId: string) {
 
       const { store, onMutationFailure } = getRoomExtrasForClient<M>(client);
 
-      const optimisticUpdateId = store.addOptimisticUpdate({
+      const optimisticId = store.optimisticUpdates.add({
         type: "add-reaction",
         threadId,
         commentId,
@@ -1808,7 +1805,7 @@ function useAddRoomCommentReaction<M extends BaseMetadata>(roomId: string) {
             // Replace the optimistic update by the real thing
             store.addReaction(
               threadId,
-              optimisticUpdateId,
+              optimisticId,
               commentId,
               addedReaction,
               createdAt
@@ -1817,7 +1814,7 @@ function useAddRoomCommentReaction<M extends BaseMetadata>(roomId: string) {
           (err: Error) =>
             onMutationFailure(
               err,
-              optimisticUpdateId,
+              optimisticId,
               (error) =>
                 new AddReactionError(error, {
                   roomId,
@@ -1855,7 +1852,7 @@ function useRemoveRoomCommentReaction(roomId: string) {
       const removedAt = new Date();
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-      const optimisticUpdateId = store.addOptimisticUpdate({
+      const optimisticId = store.optimisticUpdates.add({
         type: "remove-reaction",
         threadId,
         commentId,
@@ -1871,7 +1868,7 @@ function useRemoveRoomCommentReaction(roomId: string) {
             // Replace the optimistic update by the real thing
             store.removeReaction(
               threadId,
-              optimisticUpdateId,
+              optimisticId,
               commentId,
               emoji,
               userId,
@@ -1881,7 +1878,7 @@ function useRemoveRoomCommentReaction(roomId: string) {
           (err: Error) =>
             onMutationFailure(
               err,
-              optimisticUpdateId,
+              optimisticId,
               (error) =>
                 new RemoveReactionError(error, {
                   roomId,
@@ -1926,7 +1923,7 @@ function useMarkRoomThreadAsRead(roomId: string) {
 
       const now = new Date();
 
-      const optimisticUpdateId = store.addOptimisticUpdate({
+      const optimisticId = store.optimisticUpdates.add({
         type: "mark-inbox-notification-as-read",
         inboxNotificationId: inboxNotification.id,
         readAt: now,
@@ -1940,16 +1937,16 @@ function useMarkRoomThreadAsRead(roomId: string) {
         .then(
           () => {
             // Replace the optimistic update by the real thing
-            store.updateInboxNotification(
+            store.markInboxNotificationRead(
               inboxNotification.id,
-              optimisticUpdateId,
-              (inboxNotification) => ({ ...inboxNotification, readAt: now })
+              now,
+              optimisticId
             );
           },
           (err: Error) => {
             onMutationFailure(
               err,
-              optimisticUpdateId,
+              optimisticId,
               (error) =>
                 new MarkInboxNotificationAsReadError(error, {
                   inboxNotificationId: inboxNotification.id,
@@ -1984,7 +1981,7 @@ function useMarkRoomThreadAsResolved(roomId: string) {
       const updatedAt = new Date();
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-      const optimisticUpdateId = store.addOptimisticUpdate({
+      const optimisticId = store.optimisticUpdates.add({
         type: "mark-thread-as-resolved",
         threadId,
         updatedAt,
@@ -1997,7 +1994,7 @@ function useMarkRoomThreadAsResolved(roomId: string) {
             // Replace the optimistic update by the real thing
             store.patchThread(
               threadId,
-              optimisticUpdateId,
+              optimisticId,
               { resolved: true },
               updatedAt
             );
@@ -2005,7 +2002,7 @@ function useMarkRoomThreadAsResolved(roomId: string) {
           (err: Error) =>
             onMutationFailure(
               err,
-              optimisticUpdateId,
+              optimisticId,
               (error) =>
                 new MarkThreadAsResolvedError(error, {
                   roomId,
@@ -2039,7 +2036,7 @@ function useMarkRoomThreadAsUnresolved(roomId: string) {
       const updatedAt = new Date();
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-      const optimisticUpdateId = store.addOptimisticUpdate({
+      const optimisticId = store.optimisticUpdates.add({
         type: "mark-thread-as-unresolved",
         threadId,
         updatedAt,
@@ -2052,7 +2049,7 @@ function useMarkRoomThreadAsUnresolved(roomId: string) {
             // Replace the optimistic update by the real thing
             store.patchThread(
               threadId,
-              optimisticUpdateId,
+              optimisticId,
               { resolved: false },
               updatedAt
             );
@@ -2060,7 +2057,7 @@ function useMarkRoomThreadAsUnresolved(roomId: string) {
           (err: Error) =>
             onMutationFailure(
               err,
-              optimisticUpdateId,
+              optimisticId,
               (error) =>
                 new MarkThreadAsUnresolvedError(error, {
                   roomId,
@@ -2150,19 +2147,19 @@ function useRoomNotificationSettings(): [
     };
   }, [poller]);
 
-  // TODO(vincent+nimesh) There is a disconnect between this getter and
-  // subscriber! It's unclear why the getNotificationSettingsLoadingState
-  // getter should be paired with subscribe2 and not subscribe1 from the
-  // outside! (The reason is that getNotificationSettingsLoadingState
-  // internally uses `get2` not `get1`.) This is strong evidence that
-  // getNotificationSettingsLoadingState itself wants to be a Signal! Once we
-  // make it a Signal, we can simply use `useSignal()` here! ❤️
+  // XXX_vincent There is a disconnect between this getter and subscriber! It's unclear
+  // why the getNotificationSettingsLoadingState getter should be paired with
+  // subscribe2 and not subscribe1 from the outside! (The reason is that
+  // getNotificationSettingsLoadingState internally uses `get2` not `get1`.)
+  // This is strong evidence that getNotificationSettingsLoadingState itself
+  // wants to be a Signal! Once we make it a Signal, we can simply use
+  // `useSignal()` here! ❤️
   const getter = useCallback(
     () => store.getNotificationSettingsLoadingState(room.id),
     [store, room.id]
   );
 
-  // TODO(vincent+nimesh) Turn this into a useSignal
+  // XXX_vincent Turn this into a useSignal
   const settings = useSyncExternalStoreWithSelector(
     store.subscribe2,
     getter,
@@ -2287,7 +2284,7 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
     //    *next* render after that, a *new* fetch/promise will get created.
   );
 
-  // TODO(vincent+nimesh) There is a disconnect between this getter and subscriber! It's unclear
+  // XXX_vincent There is a disconnect between this getter and subscriber! It's unclear
   // why the getRoomVersionsLoadingState getter should be paired with
   // subscribe3 and not subscribe1 from the outside! (The reason is that
   // getRoomVersionsLoadingState internally uses `get3` not `get1`.) This is
@@ -2337,7 +2334,7 @@ function useUpdateRoomNotificationSettings() {
   return useCallback(
     (settings: Partial<RoomNotificationSettings>) => {
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-      const optimisticUpdateId = store.addOptimisticUpdate({
+      const optimisticId = store.optimisticUpdates.add({
         type: "update-notification-settings",
         roomId: room.id,
         settings,
@@ -2346,16 +2343,12 @@ function useUpdateRoomNotificationSettings() {
       room.updateNotificationSettings(settings).then(
         (settings) => {
           // Replace the optimistic update by the real thing
-          store.updateRoomNotificationSettings_confirmOptimisticUpdate(
-            room.id,
-            optimisticUpdateId,
-            settings
-          );
+          store.updateRoomNotificationSettings(room.id, optimisticId, settings);
         },
         (err: Error) =>
           onMutationFailure(
             err,
-            optimisticUpdateId,
+            optimisticId,
             (error) =>
               new UpdateNotificationSettingsError(error, {
                 roomId: room.id,
@@ -2623,7 +2616,7 @@ function useRoomPermissions(roomId: string) {
   const client = useClient();
   const store = getRoomExtrasForClient(client).store;
   return useSignal(
-    store.permissionHintsByRoomId,
+    store.permissionHints.signal,
     (hints) => hints[roomId] ?? new Set()
   );
 }
