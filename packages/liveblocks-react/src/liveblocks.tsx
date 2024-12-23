@@ -54,6 +54,7 @@ import type {
   UseUserThreadsOptions,
 } from "./types";
 import { UmbrellaStore } from "./umbrella-store";
+import { useSignal } from "./use-signal";
 import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
 
 /**
@@ -571,11 +572,8 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
   inboxNotificationId: string
 ): ThreadData<M> {
   const { store } = getLiveblocksExtrasForClient<M>(client);
-
-  return useSyncExternalStoreWithSelector(
-    store.outputs.threadifications.subscribe, // Re-evaluate if we need to update any time the notification changes over time
-    store.outputs.threadifications.get,
-    store.outputs.threadifications.get,
+  return useSignal(
+    store.outputs.threadifications,
     useCallback(
       (state) => {
         const inboxNotification =
