@@ -670,8 +670,8 @@ function RoomProviderInner<
       }
       const { thread, inboxNotification: maybeNotification } = info;
 
-      const existingThread = store
-        .get_threads()
+      const existingThread = store.outputs.threads
+        .get()
         .getEvenIfDeleted(message.threadId);
 
       switch (message.type) {
@@ -1358,7 +1358,7 @@ function useThreads<M extends BaseMetadata>(
   );
 
   const state = useSyncExternalStoreWithSelector(
-    store.subscribe_threads,
+    store.outputs.threads.subscribe,
     getter,
     getter,
     identity,
@@ -1487,7 +1487,7 @@ function useDeleteRoomThread(roomId: string): (threadId: string) => void {
 
       const userId = getCurrentUserId(client);
 
-      const existing = store.get_threads().get(threadId);
+      const existing = store.outputs.threads.get().get(threadId);
       if (existing?.comments?.[0]?.userId !== userId) {
         throw new Error("Only the thread creator can delete the thread");
       }
@@ -1656,7 +1656,7 @@ function useEditRoomComment(
       const editedAt = new Date();
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-      const existing = store.get_threads().getEvenIfDeleted(threadId);
+      const existing = store.outputs.threads.get().getEvenIfDeleted(threadId);
 
       if (existing === undefined) {
         console.warn(
@@ -1910,7 +1910,7 @@ function useMarkRoomThreadAsRead(roomId: string) {
     (threadId: string) => {
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
       const inboxNotification = Object.values(
-        store.get_notifications().notificationsById
+        store.outputs.notifications.get().notificationsById
       ).find(
         (inboxNotification) =>
           inboxNotification.kind === "thread" &&
@@ -2159,7 +2159,7 @@ function useRoomNotificationSettings(): [
 
   // XXX_vincent Turn this into a useSignal
   const settings = useSyncExternalStoreWithSelector(
-    store.subscribe_settings,
+    store.outputs.settingsByRoomId.subscribe,
     getter,
     getter,
     identity,
@@ -2289,7 +2289,7 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
   // strong evidence that getRoomVersionsLoadingState itself wants to be
   // a Signal! Once we make it a Signal, we can simply use `useSignal()` here! ❤️
   const state = useSyncExternalStoreWithSelector(
-    store.subscribe_versions,
+    store.outputs.versionsByRoomId.subscribe,
     getter,
     getter,
     identity,
