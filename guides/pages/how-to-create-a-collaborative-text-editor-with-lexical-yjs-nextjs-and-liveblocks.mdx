@@ -24,9 +24,9 @@ Yjs, Next.js, and Liveblocks.
 
 We now have an official Lexical package, and we recommend you use this instead
 of following this guide. Read more in our
-[Lexical getting stared guide](/docs/get-started/react-lexical). However, should
-you like to set up Lexical manually with Yjs, without using our full feature
-set, continue reading.
+[Lexical getting stared guide](/docs/get-started/nextjs-lexical). However,
+should you like to set up Lexical manually with Yjs, without using our full
+feature set, continue reading.
 
 </Banner>
 
@@ -144,44 +144,32 @@ Liveblocks client.
 npx create-liveblocks-app@latest --init --framework react
 ```
 
-## Set up the client
-
-Next, we can create the front end client which will be responsible for
-communicating with the back end. You can do this by modifying `createClient` in
-your config file, and passing the location of your endpoint.
-
-```ts
-const client = createClient({
-  authEndpoint: "/api/liveblocks-auth",
-});
-```
-
 ## Join a Liveblocks room
 
 Liveblocks uses the concept of rooms, separate virtual spaces where people
 collaborate. To create a realtime experience, multiple users must be connected
 to the same room. Create a file in the current directory within `/app`, and name
-it `Room.tsx`.
+it `Room.tsx`. Pass the location of your endpoint to `LiveblocksProvider`.
 
 ```tsx file="/app/Room.tsx"
 "use client";
 
 import { ReactNode } from "react";
-import { RoomProvider } from "../liveblocks.config";
-import { ClientSideSuspense } from "@liveblocks/react";
+import {
+  LiveblocksProvider,
+  RoomProvider,
+  ClientSideSuspense,
+} from "@liveblocks/react/suspense";
 
 export function Room({ children }: { children: ReactNode }) {
   return (
-    <RoomProvider
-      id={roomId}
-      initialPresence={{
-        cursor: null,
-      }}
-    >
-      <ClientSideSuspense fallback={<div>Loading…</div>}>
-        {() => children}
-      </ClientSideSuspense>
-    </RoomProvider>
+    <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
+      <RoomProvider id="my-room">
+        <ClientSideSuspense fallback={<div>Loading…</div>}>
+          {children}
+        </ClientSideSuspense>
+      </RoomProvider>
+    </LiveblocksProvider>
   );
 }
 ```
@@ -234,7 +222,6 @@ function initialEditorState(editor: LexicalEditor): void {
 }
 
 // Collaborative text editor with simple rich text
-
 export default function Editor() {
   // Get Liveblocks room
   const room = useRoom();
