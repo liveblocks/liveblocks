@@ -13,6 +13,10 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
 
+# Week 53 (2025-01-03)
+
+## Contributors
+
 # Week 51 (2024-12-20)
 
 ## v2.15.0
