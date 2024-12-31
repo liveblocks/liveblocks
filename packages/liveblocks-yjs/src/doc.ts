@@ -29,7 +29,7 @@ export default class yDocHandler extends Observable<unknown> {
     this.doc = doc;
     this.useV2Encoding = useV2Encoding;
     // this.doc.load(); // this just emits a load event, it doesn't actually load anything
-    this.doc.on("update", this.updateHandler);
+    this.doc.on(useV2Encoding ? "updateV2" : "update", this.updateHandler);
     this.updateRoomDoc = (update: Uint8Array) => {
       updateDoc(update, isRoot ? undefined : this.doc.guid);
     };
