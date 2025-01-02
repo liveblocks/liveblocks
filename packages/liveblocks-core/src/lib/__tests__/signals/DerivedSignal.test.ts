@@ -228,10 +228,6 @@ it("signals only notify watchers when their value changes (with shallow)", () =>
   expect(value1).toBe(value3);
   expect(fn).not.toHaveBeenCalled();
 
-  expect(numEvals).toEqual(0);
-
-  // Get the render counter's value now first, otherwise it won't subscribe correctly
-  renderCounter.get();
   expect(numEvals).toEqual(1);
 
   // Toggling uppercase has no effect when the list is still empty
@@ -454,8 +450,11 @@ it("conditionally reading signals won't unregister old sinks (when using static 
     return cond ? x : y;
   });
 
-  const unsub = z.subscribe(notificationFn);
   expect(evalFn).toHaveBeenCalledTimes(0);
+  expect(notificationFn).toHaveBeenCalledTimes(0);
+
+  const unsub = z.subscribe(notificationFn);
+  expect(evalFn).toHaveBeenCalledTimes(1);
   expect(notificationFn).toHaveBeenCalledTimes(0);
 
   expect(z.get()).toEqual(42);
@@ -488,8 +487,12 @@ it("conditionally reading signals will unregister old sinks (when using dynamic 
     return cond.get() ? x.get() : y.get();
   });
 
-  const unsub = z.subscribe(notificationFn);
   expect(evalFn).toHaveBeenCalledTimes(0);
+  expect(notificationFn).toHaveBeenCalledTimes(0);
+
+  const unsub = z.subscribe(notificationFn);
+
+  expect(evalFn).toHaveBeenCalledTimes(1);
   expect(notificationFn).toHaveBeenCalledTimes(0);
 
   expect(z.get()).toEqual(42);

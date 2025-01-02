@@ -190,6 +190,14 @@ abstract class AbstractSignal<T> implements ISignal<T>, Observable<void> {
   }
 
   subscribe(callback: Callback<void>): UnsubscribeCallback {
+    // If this is the first subscriber, we need to perform an initial .get()
+    // now in case this is a DerivedSignal that has not been evaluated yet. The
+    // reason we need to do this is that the .get() itself will register this
+    // signal as sinks of the dependent signals, so we will actually get
+    // notified here when one of the dependent signals changes.
+    if (this.#eventSource.count() === 0) {
+      this.get();
+    }
     return this.#eventSource.subscribe(callback);
   }
 
