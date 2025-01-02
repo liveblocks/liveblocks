@@ -388,6 +388,61 @@ it("conditionally read from other signal", () => {
   expect(derived.isDirty).toEqual(false);
 });
 
+it("conditionally read nested signals", () => {
+  const fn = jest.fn();
+  const map = new DefaultMap<number, Signal<number>>(() => new Signal(0));
+
+  map.getOrCreate(0).set(7);
+  map.getOrCreate(1).set(3);
+  map.getOrCreate(2).set(1);
+  map.getOrCreate(3).set(8);
+  map.getOrCreate(4).set(42);
+
+  const start = new Signal(0); // Signal to read
+
+  const derived = DerivedSignal.from(() => {
+    fn();
+    let idx = start.get();
+    while (map.has(idx)) {
+      idx = map.get(idx)!.get();
+    }
+    return idx;
+  });
+
+  expect(derived.get()).toEqual(7); // 0 -> 7
+
+  start.set(11);
+  expect(derived.get()).toEqual(11); // 11
+
+  start.set(2);
+  expect(derived.get()).toEqual(8); // 2 -> 1 -> 3 -> 8
+
+  map.getOrCreate(1).set(7);
+  map.getOrCreate(7).set(9);
+  map.getOrCreate(9).set(999);
+  expect(derived.get()).toEqual(999); // 2 -> 1 -> 7 -> 9 -> 999
+
+  start.set(1);
+  expect(derived.get()).toEqual(999); // 1 -> 7 -> 9 -> 999
+
+  fn.mockClear();
+  expect(fn).toHaveBeenCalledTimes(0);
+
+  map.clear(); // No signal is explicitly invalidated, so it won't re-evaluate
+  start.set(1); // Setting start to same value also does not re-evaluate
+  expect(derived.get()).toEqual(999);
+
+  expect(fn).toHaveBeenCalledTimes(0);
+
+  // However, triggering an update resets it
+  start.set(0);
+  expect(derived.get()).toEqual(0);
+  expect(fn).toHaveBeenCalledTimes(1);
+
+  start.set(1234);
+  expect(derived.get()).toEqual(1234);
+});
+
 it("conditionally read from nested signals", () => {
   const map = new DefaultMap<string, Signal<number>>(() => new Signal(0));
   const prefix = new Signal("pre");
