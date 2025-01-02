@@ -443,6 +443,74 @@ it("conditionally read nested signals", () => {
   expect(derived.get()).toEqual(1234);
 });
 
+it("conditionally reading signals won't unregister old sinks (when using static syntax)", () => {
+  const notificationFn = jest.fn();
+  const evalFn = jest.fn();
+  const cond = new Signal(false);
+  const x = new Signal(7);
+  const y = new Signal(42);
+  const z = DerivedSignal.from(cond, x, y, (cond, x, y) => {
+    evalFn();
+    return cond ? x : y;
+  });
+
+  const unsub = z.subscribe(notificationFn);
+  expect(evalFn).toHaveBeenCalledTimes(0);
+  expect(notificationFn).toHaveBeenCalledTimes(0);
+
+  expect(z.get()).toEqual(42);
+  expect(evalFn).toHaveBeenCalledTimes(1);
+  expect(notificationFn).toHaveBeenCalledTimes(0);
+
+  cond.set(true);
+  expect(evalFn).toHaveBeenCalledTimes(2);
+  expect(notificationFn).toHaveBeenCalledTimes(1);
+
+  y.set(43);
+  expect(evalFn).toHaveBeenCalledTimes(3); // Re-evaluation, because static!
+  expect(notificationFn).toHaveBeenCalledTimes(1); // However, since the value did not change, no notification
+
+  x.set(99);
+  expect(evalFn).toHaveBeenCalledTimes(4);
+  expect(notificationFn).toHaveBeenCalledTimes(2);
+
+  unsub();
+});
+
+it("conditionally reading signals will unregister old sinks (when using dynamic syntax)", () => {
+  const notificationFn = jest.fn();
+  const evalFn = jest.fn();
+  const cond = new Signal(false);
+  const x = new Signal(7);
+  const y = new Signal(42);
+  const z = DerivedSignal.from(() => {
+    evalFn();
+    return cond.get() ? x.get() : y.get();
+  });
+
+  const unsub = z.subscribe(notificationFn);
+  expect(evalFn).toHaveBeenCalledTimes(0);
+  expect(notificationFn).toHaveBeenCalledTimes(0);
+
+  expect(z.get()).toEqual(42);
+  expect(evalFn).toHaveBeenCalledTimes(1);
+  expect(notificationFn).toHaveBeenCalledTimes(0);
+
+  cond.set(true);
+  expect(evalFn).toHaveBeenCalledTimes(2);
+  expect(notificationFn).toHaveBeenCalledTimes(1);
+
+  y.set(43);
+  expect(evalFn).toHaveBeenCalledTimes(2); // No re-evaluation, because we're no longer a sink of y!
+  expect(notificationFn).toHaveBeenCalledTimes(1);
+
+  x.set(99);
+  expect(evalFn).toHaveBeenCalledTimes(3);
+  expect(notificationFn).toHaveBeenCalledTimes(2);
+
+  unsub();
+});
+
 it("conditionally read from nested signals", () => {
   const map = new DefaultMap<string, Signal<number>>(() => new Signal(0));
   const prefix = new Signal("pre");
