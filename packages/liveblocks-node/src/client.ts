@@ -6,6 +6,7 @@
 import type {
   BaseMetadata,
   BaseUserMeta,
+  ChannelsNotificationSettings,
   CommentBody,
   CommentData,
   CommentDataPlain,
@@ -23,6 +24,7 @@ import type {
   KDAD,
   LsonObject,
   OptionalTupleUnless,
+  PartialChannelsNotificationSettings,
   PartialUnless,
   Patchable,
   PlainLsonObject,
@@ -1635,6 +1637,67 @@ export class Liveblocks {
 
     const res = await this.#delete(
       url`/v2/users/${userId}/inbox-notifications`
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+  }
+
+  /**
+   * Get channels notification settings for a user for a project.
+   * @param params.userId The user ID to get the channels notifications settings for.
+   */
+  public async getChannelsNotificationSettings(params: {
+    userId: string;
+  }): Promise<ChannelsNotificationSettings> {
+    const { userId } = params;
+
+    const res = await this.#get(
+      url`/v2/users/${userId}/channels-notification-settings`
+    );
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    return (await res.json()) as ChannelsNotificationSettings;
+  }
+
+  /**
+   * Update the user's channels notification settings.
+   * @param params.userId The user ID to update the channels notification settings for.
+   * @param params.data The new channels notification settings for the user.
+   */
+  public async updateChannelsNotificationSettings(params: {
+    userId: string;
+    data: PartialChannelsNotificationSettings;
+  }): Promise<ChannelsNotificationSettings> {
+    const { userId, data } = params;
+
+    const res = await this.#post(
+      url`/v2/users/${userId}/channels-notification-settings`,
+      data
+    );
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new LiveblocksError(res.status, text);
+    }
+
+    return (await res.json()) as ChannelsNotificationSettings;
+  }
+
+  /**
+   * Delete the user's channels notification settings
+   * @param params.userId The user ID to update the channels notification settings for.
+   */
+  public async deleteChannelsNotificationSettings(params: {
+    userId: string;
+  }): Promise<void> {
+    const { userId } = params;
+    const res = await this.#delete(
+      url`/v2/users/${userId}/channels-notification-settings`
     );
     if (!res.ok) {
       const text = await res.text();
