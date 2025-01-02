@@ -165,22 +165,15 @@ describe("useHistoryVersions", () => {
       umbrellaStore,
     } = createContextsForTest();
 
-    umbrellaStore.force_set_versions((lut) => {
-      const room1Versions = new Map();
-      room1Versions.set("version_1", {
+    umbrellaStore.historyVersions.update("room-1", [
+      {
         type: "historyVersion",
         kind: "yjs",
         createdAt: new Date(),
         id: "version_1",
-        authors: [
-          {
-            id: "user-1",
-          },
-        ],
-      });
-
-      lut.set("room-1", room1Versions);
-    });
+        authors: [{ id: "user-1" }],
+      },
+    ]);
 
     const { result, unmount } = renderHook(() => useHistoryVersions(), {
       wrapper: ({ children }) => (

@@ -32,8 +32,8 @@ describe("resolvers", () => {
       });
 
       await Promise.all([
-        client[kInternal].usersStore.get("a"),
-        client[kInternal].usersStore.get("b"),
+        client[kInternal].usersStore.enqueue("a"),
+        client[kInternal].usersStore.enqueue("b"),
       ]);
 
       expect(client[kInternal].usersStore._cacheKeys()).toEqual(['"a"', '"b"']);
@@ -43,7 +43,7 @@ describe("resolvers", () => {
 
       expect(client[kInternal].usersStore._cacheKeys()).toEqual([]);
 
-      await client[kInternal].usersStore.get("a");
+      await client[kInternal].usersStore.enqueue("a");
 
       expect(client[kInternal].usersStore._cacheKeys()).toEqual(['"a"']);
 
@@ -61,8 +61,8 @@ describe("resolvers", () => {
       });
 
       await Promise.all([
-        client[kInternal].usersStore.get("a"),
-        client[kInternal].usersStore.get("b"),
+        client[kInternal].usersStore.enqueue("a"),
+        client[kInternal].usersStore.enqueue("b"),
       ]);
 
       expect(client[kInternal].usersStore._cacheKeys()).toEqual(['"a"', '"b"']);
@@ -73,9 +73,9 @@ describe("resolvers", () => {
       expect(client[kInternal].usersStore._cacheKeys()).toEqual(['"a"']);
 
       await Promise.all([
-        client[kInternal].usersStore.get("a"),
-        client[kInternal].usersStore.get("b"),
-        client[kInternal].usersStore.get("c"),
+        client[kInternal].usersStore.enqueue("a"),
+        client[kInternal].usersStore.enqueue("b"),
+        client[kInternal].usersStore.enqueue("c"),
       ]);
 
       expect(client[kInternal].usersStore._cacheKeys()).toEqual([
@@ -100,8 +100,8 @@ describe("resolvers", () => {
       });
 
       await Promise.all([
-        client[kInternal].roomsInfoStore.get("a"),
-        client[kInternal].roomsInfoStore.get("b"),
+        client[kInternal].roomsInfoStore.enqueue("a"),
+        client[kInternal].roomsInfoStore.enqueue("b"),
       ]);
 
       expect(client[kInternal].roomsInfoStore._cacheKeys()).toEqual([
@@ -114,7 +114,7 @@ describe("resolvers", () => {
 
       expect(client[kInternal].roomsInfoStore._cacheKeys()).toEqual([]);
 
-      await client[kInternal].roomsInfoStore.get("a");
+      await client[kInternal].roomsInfoStore.enqueue("a");
 
       expect(client[kInternal].roomsInfoStore._cacheKeys()).toEqual(['"a"']);
 
@@ -134,8 +134,8 @@ describe("resolvers", () => {
       });
 
       await Promise.all([
-        client[kInternal].roomsInfoStore.get("a"),
-        client[kInternal].roomsInfoStore.get("b"),
+        client[kInternal].roomsInfoStore.enqueue("a"),
+        client[kInternal].roomsInfoStore.enqueue("b"),
       ]);
 
       expect(client[kInternal].roomsInfoStore._cacheKeys()).toEqual([
@@ -149,9 +149,9 @@ describe("resolvers", () => {
       expect(client[kInternal].roomsInfoStore._cacheKeys()).toEqual(['"a"']);
 
       await Promise.all([
-        client[kInternal].roomsInfoStore.get("a"),
-        client[kInternal].roomsInfoStore.get("b"),
-        client[kInternal].roomsInfoStore.get("c"),
+        client[kInternal].roomsInfoStore.enqueue("a"),
+        client[kInternal].roomsInfoStore.enqueue("b"),
+        client[kInternal].roomsInfoStore.enqueue("c"),
       ]);
 
       expect(client[kInternal].roomsInfoStore._cacheKeys()).toEqual([
