@@ -1,5 +1,6 @@
 import { shallow } from "../../../lib/shallow";
 import { batch, DerivedSignal, Signal } from "../../../lib/signals";
+import { DefaultMap } from "../../DefaultMap";
 
 it("compute signal from other signals", () => {
   const greeting = new Signal("hi");
@@ -229,18 +230,22 @@ it("signals only notify watchers when their value changes (with shallow)", () =>
 
   expect(numEvals).toEqual(0);
 
+  // Get the render counter's value now first, otherwise it won't subscribe correctly
+  renderCounter.get();
+  expect(numEvals).toEqual(1);
+
   // Toggling uppercase has no effect when the list is still empty
   uppercase.set(false);
   uppercase.set(true);
-  expect(numEvals).toEqual(0);
+  expect(numEvals).toEqual(1);
 
   // Toggling uppercase has no effect
   fruits.set(["apple", "banana"]);
-  expect(numEvals).toEqual(1);
-  uppercase.set(true); // Was already true, so has no effect
-  expect(numEvals).toEqual(1);
-  uppercase.set(false);
   expect(numEvals).toEqual(2);
+  uppercase.set(true); // Was already true, so has no effect
+  expect(numEvals).toEqual(2);
+  uppercase.set(false);
+  expect(numEvals).toEqual(3);
 
   unsub();
 });
@@ -345,4 +350,106 @@ it("batch signal notifications and re-evaluations are as efficient as possible",
   expect(sorted.get()).toEqual([1, 2, 3]);
 
   unsub();
+});
+
+it("conditionally read from other signal", () => {
+  const index = new Signal(0); // Signal to read
+  const signals = [
+    new Signal("hi"),
+    new Signal("foo"),
+    new Signal("bar"),
+    new Signal("qux"),
+  ];
+
+  const derived = DerivedSignal.from(index, (idx) => signals[idx].get());
+
+  expect(derived.isDirty).toEqual(true);
+  expect(derived.get()).toEqual("hi");
+  expect(derived.get()).toEqual("hi");
+  expect(derived.isDirty).toEqual(false);
+
+  signals[2].set("lol"); // 'bar' -> 'lol'
+
+  // Isn't dirty, because derived did not depend on this value
+  expect(derived.isDirty).toEqual(false);
+
+  expect(derived.get()).toEqual("hi");
+
+  index.set(1); // Change to depend on different signal
+
+  expect(derived.get()).toEqual("foo");
+  expect(derived.isDirty).toEqual(false);
+
+  signals[1].set("baz"); // 'foo' -> 'baz'
+
+  // Now it _is_ dirty, because it depends on this signal now
+  expect(derived.isDirty).toEqual(true);
+  expect(derived.get()).toEqual("baz");
+  expect(derived.isDirty).toEqual(false);
+});
+
+it("conditionally read from nested signals", () => {
+  const map = new DefaultMap<string, Signal<number>>(() => new Signal(0));
+  const prefix = new Signal("pre");
+  const fn = jest.fn();
+
+  const derived = DerivedSignal.from(
+    prefix,
+    (prefix) => {
+      fn();
+      const arr = [];
+      for (const [key, signal] of map.entries()) {
+        if (key.startsWith(prefix)) {
+          arr.push(signal.get());
+        }
+      }
+      return arr;
+    },
+    shallow
+  );
+
+  // Populate map with lots of signals
+  for (let i = 0; i < 10_000; i++) {
+    map.getOrCreate("pre" + i);
+  }
+
+  expect(derived.get().length).toEqual(10_000);
+  expect(fn).toHaveBeenCalledTimes(1);
+  prefix.set("pre444");
+
+  expect(derived.get().toString()).toEqual("0,0,0,0,0,0,0,0,0,0,0");
+
+  expect(fn).toHaveBeenCalledTimes(2);
+
+  // Changing unrelated signals does not trigger re-evaluation
+  map.getOrCreate("pre1234").set(927);
+  map.getOrCreate("pre7623").set(28179);
+  map.getOrCreate("foobar123").set(238);
+  expect(fn).toHaveBeenCalledTimes(2);
+
+  expect(derived.get().toString()).toEqual("0,0,0,0,0,0,0,0,0,0,0");
+  expect(fn).toHaveBeenCalledTimes(2);
+
+  // But changing related signals *does* trigger re-evaluation
+  map.getOrCreate("pre4440").set(908);
+  map.getOrCreate("pre4441").set(1313);
+  map.getOrCreate("pre444").set(43);
+  expect(fn).toHaveBeenCalledTimes(2);
+
+  expect(derived.get().toString()).toEqual("43,908,1313,0,0,0,0,0,0,0,0");
+  expect(fn).toHaveBeenCalledTimes(3);
+
+  // Deletion is tricky though! It's not an explicit value change, just
+  // a reference removal, so this won't be detectable.
+  map.delete("pre4441");
+  map.getOrCreate("another");
+  expect(fn).toHaveBeenCalledTimes(3);
+
+  expect(derived.get().toString()).toEqual("43,908,1313,0,0,0,0,0,0,0,0");
+  expect(fn).toHaveBeenCalledTimes(3);
+
+  // In order to detect the deletion, any of the other signals must change to trigger re-evaluation
+  map.getOrCreate("pre4447").set(18);
+  expect(derived.get().toString()).toEqual("43,908,0,0,0,0,0,18,0,0");
+  expect(fn).toHaveBeenCalledTimes(4);
 });
