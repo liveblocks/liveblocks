@@ -47,11 +47,11 @@ import { classNames } from "../classnames";
 import { EditorProvider, useCurrentEditor } from "../context";
 import type {
   AiCommands,
-  AiToolbarExtensionStorage,
+  AiExtensionStorage,
   ExtendedChainedCommands,
   FloatingPosition,
 } from "../types";
-import { compareTextSelections, getDomRangeFromTextSelection } from "../utils";
+import { compareTextSelections, getDomRangeFromTextSelection, getTextSelectionFromRelativeSelection } from "../utils";
 
 export const AI_TOOLBAR_COLLISION_PADDING = 10;
 export const DEFAULT_AI_NAME = "AI";
@@ -271,7 +271,7 @@ function AiToolbarPromptContent({
   isDropdownHidden: boolean;
 }) {
   const aiName =
-    (editor.storage.liveblocksAiToolbar as AiToolbarExtensionStorage).name ??
+    (editor.storage.liveblocksAi as AiExtensionStorage).name ??
     DEFAULT_AI_NAME;
   const promptRef = useRef<HTMLTextAreaElement>(null);
   const isPromptEmpty = useMemo(() => prompt.trim() === "", [prompt]);
@@ -409,7 +409,7 @@ function AiToolbarThinking({
   prompt: string;
 }) {
   const aiName =
-    (editor.storage.liveblocksAiToolbar as AiToolbarExtensionStorage).name ??
+    (editor.storage.liveblocksAi as AiExtensionStorage).name ??
     DEFAULT_AI_NAME;
   const stream = useTextStream(
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis laoreet erat vitae libero bibendum blandit. Ut nec leo et massa congue laoreet et nec nunc. Praesent a hendrerit orci, sit amet feugiat sapien. Aenean vitae aliquam libero. Suspendisse posuere scelerisque mauris tristique placerat. Maecenas id ipsum justo. Nulla quis nibh est. Nulla facilisi. Quisque vitae libero ut tellus vestibulum sagittis in eget libero. Nulla enim mauris, tempor at egestas eu, porttitor vitae purus. Ut ultrices tincidunt rutrum.",
@@ -504,16 +504,14 @@ function AiToolbarContainer({
   children,
 }: PropsWithChildren<{
   editor: Editor;
-  state: AiToolbarExtensionStorage["state"];
+  state: AiExtensionStorage["state"];
 }>) {
   const prompt =
     useEditorState({
       editor,
       selector: (ctx) => {
         return (
-          ctx.editor?.storage.liveblocksAiToolbar as
-            | AiToolbarExtensionStorage
-            | undefined
+          ctx.editor?.storage.liveblocksAi as AiExtensionStorage
         )?.prompt;
       },
       equalityFn: Object.is,
@@ -646,9 +644,7 @@ export const AiToolbar = Object.assign(
           editor,
           selector: (ctx) => {
             return (
-              ctx.editor?.storage.liveblocksAiToolbar as
-                | AiToolbarExtensionStorage
-                | undefined
+              ctx.editor?.storage.liveblocksAi as AiExtensionStorage
             )?.state;
           },
           equalityFn: Object.is,
@@ -657,11 +653,13 @@ export const AiToolbar = Object.assign(
         useEditorState({
           editor,
           selector: (ctx) => {
-            return (
-              ctx.editor?.storage.liveblocksAiToolbar as
-                | AiToolbarExtensionStorage
-                | undefined
-            )?.selection;
+            const relativeSelection = (
+              ctx.editor?.storage.liveblocksAi as AiExtensionStorage
+            )?.relativeSelection;
+            if (!relativeSelection || !ctx.editor) {
+              return undefined;
+            }
+            return getTextSelectionFromRelativeSelection(relativeSelection, ctx.editor.state);
           },
           equalityFn: compareTextSelections,
         }) ?? undefined;

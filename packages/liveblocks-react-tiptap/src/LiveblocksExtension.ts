@@ -2,9 +2,9 @@ import type {
   BaseUserMeta,
   IUserInfo,
   JsonObject,
-  TextEditorType,
   User,
 } from "@liveblocks/core";
+import { TextEditorType } from "@liveblocks/core";
 import {
   useClient,
   useCommentsErrorListener,
@@ -29,11 +29,12 @@ import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { Doc, PermanentUserData } from "yjs";
 
 import { AiExtension } from "./ai/AiExtension";
-import { DEFAULT_AI_NAME } from "./ai/AiToolbar";
-import { AiToolbarExtension } from "./ai/AiToolbarExtension";
 import { CommentsExtension } from "./comments/CommentsExtension";
 import { MentionExtension } from "./mentions/MentionExtension";
-import type { LiveblocksExtensionOptions } from "./types";
+import type {
+  LiveblocksExtensionOptions,
+  LiveblocksExtensionStorage,
+} from "./types";
 import { LIVEBLOCKS_COMMENT_MARK_TYPE } from "./types";
 
 const providersMap = new Map<
@@ -47,14 +48,10 @@ type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
 
 const pudMap = new Map<string, PermanentUserData>();
 
-const DEFAULT_AI_CONFIGURATION: AiConfiguration = {
-  name: DEFAULT_AI_NAME,
-};
 const DEFAULT_OPTIONS: WithRequired<LiveblocksExtensionOptions, "field"> = {
   field: "default",
   comments: true,
   mentions: true,
-  ai: DEFAULT_AI_CONFIGURATION,
   offlineSupport_experimental: false,
 };
 
@@ -336,13 +333,6 @@ export const useLiveblocksExtension = (
     addStorage() {
       if (!providersMap.has(room.id)) {
         const doc = new Doc();
-        /*
-      const permanentUserData = new PermanentUserData(this.options.doc);
-      permanentUserData.setUserMapping(
-        this.options.doc,
-        this.options.doc.clientID,
-        "Jon"
-      );*/
         docMap.set(room.id, doc);
         pudMap.set(room.id, new PermanentUserData(doc));
         providersMap.set(
@@ -387,20 +377,13 @@ export const useLiveblocksExtension = (
       }
       if (options.ai) {
         extensions.push(
-          AiToolbarExtension.configure(
-            options.ai === true ? DEFAULT_AI_CONFIGURATION : options.ai
-          )
+          AiExtension.configure({
+            ...(options.ai === true ? {} : options.ai),
+            doc: this.storage.doc,
+            pud: this.storage.permanentUserData,
+          })
         );
       }
-
-      console.log("OPTIONS!! ", options);
-      extensions.push(
-        AiExtension.configure({
-          resolveAiPrompt: options.resolveAiPrompt,
-          doc: this.storage.doc,
-          pud: this.storage.permanentUserData,
-        })
-      );
 
       return extensions;
     },

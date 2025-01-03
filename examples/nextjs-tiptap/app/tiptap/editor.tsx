@@ -2,9 +2,8 @@
 
 import NotificationsPopover from "../notifications-popover";
 import { useEditor, EditorContent, Editor } from "@tiptap/react";
-import { useLiveblocksExtension, FloatingComposer, FloatingThreads, AnchoredThreads } from "@liveblocks/react-tiptap";
+import { useLiveblocksExtension, FloatingComposer, FloatingThreads, AnchoredThreads, Toolbar, AiToolbar } from "@liveblocks/react-tiptap";
 import StarterKit from "@tiptap/starter-kit";
-import { Toolbar } from "./Toolbar";
 import { useThreads } from "@liveblocks/react";
 import { useIsMobile } from "./use-is-mobile";
 import VersionsDialog from "../version-history-dialog";
@@ -12,9 +11,7 @@ import VersionsDialog from "../version-history-dialog";
 export default function TiptapEditor() {
   //
   const liveblocks = useLiveblocksExtension({
-    resolveAiPrompt: async (prompt, selectionText) => {
-      return "test";
-    }
+    ai: true
   });
 
   const editor = useEditor({
@@ -44,7 +41,8 @@ export default function TiptapEditor() {
       </div>
       <div className="relative flex flex-row justify-between w-full py-16 xl:pl-[250px] pl-[100px] gap-[50px]">
         <div className="relative flex flex-1 flex-col gap-2">
-          <Toolbar editor={editor} />
+          <Toolbar editor={editor} leading={<AiToolbar editor={editor} />}>
+          </Toolbar>
           <EditorContent editor={editor} />
           <FloatingComposer editor={editor} className="w-[350px]" />
         </div>

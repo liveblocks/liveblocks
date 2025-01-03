@@ -2,7 +2,8 @@ import type { ClientRectObject } from "@floating-ui/react-dom";
 import type { Editor, Range } from "@tiptap/core";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Fragment } from "@tiptap/pm/model";
-import type { EditorState, TextSelection } from "@tiptap/pm/state";
+import type { EditorState } from "@tiptap/pm/state";
+import { TextSelection } from "@tiptap/pm/state";
 import {
   getRelativeSelection,
   relativePositionToAbsolutePosition,
@@ -90,6 +91,16 @@ export const mapFragment = (
 
   return Fragment.from(content);
 };
+
+export function getTextSelectionFromRelativeSelection(
+  relativeSelection: { anchor: RelativePosition; head: RelativePosition },
+  state: EditorState
+): TextSelection | null {
+  const range = getRangeFromRelativeSelections(relativeSelection, state);
+  const $start = state.doc.resolve(range.from);
+  const $end = state.doc.resolve(range.to);
+  return new TextSelection($start, $end);
+}
 
 export function getDomRangeFromTextSelection(
   selection: TextSelection,

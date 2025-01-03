@@ -5,7 +5,7 @@ import {
   ySyncPluginKey,
   yXmlFragmentToProseMirrorFragment,
 } from "y-prosemirror";
-import type { Doc, PermanentUserData, RelativePosition, Snapshot } from "yjs";
+import type { Snapshot } from "yjs";
 import {
   createDocFromSnapshot,
   emptySnapshot,
@@ -13,27 +13,17 @@ import {
   snapshot,
 } from "yjs";
 
-import type { LiveblocksExtensionStorage, YSyncBinding } from "../types";
+import type {
+  AiExtensionOptions,
+  AiExtensionStorage,
+  LiveblocksExtensionStorage,
+  YSyncBinding,
+} from "../types";
 import {
   getRangeFromRelativeSelections,
   getRelativeSelectionFromState,
 } from "../utils";
-
-type AiExtensionOptions = {
-  doc: Doc | undefined;
-  pud: PermanentUserData | undefined;
-  resolveAiPrompt?: (prompt: string, selectionText: string) => Promise<string>;
-};
-
-type AiExtensionStorage = {
-  snapshot: Snapshot | null;
-  prompt: string | null;
-  relativeSelection: {
-    anchor: RelativePosition;
-    head: RelativePosition;
-  } | null;
-  state: null | "thinking" | "waiting_for_input";
-};
+import { DEFAULT_AI_NAME } from "./AiToolbar";
 
 const AiExtension = Extension.create<AiExtensionOptions, AiExtensionStorage>({
   name: "liveblocksAi",
@@ -42,14 +32,17 @@ const AiExtension = Extension.create<AiExtensionOptions, AiExtensionStorage>({
       doc: undefined,
       pud: undefined,
       resolveAiPrompt: undefined,
+      name: DEFAULT_AI_NAME,
     };
   },
   addStorage() {
     return {
-      snapshot: null,
-      prompt: null,
+      snapshot: undefined,
+      prompt: undefined,
       relativeSelection: null,
-      state: null,
+      previousPrompt: undefined,
+      state: "closed",
+      name: this.options.name,
     };
   },
   onCreate() {
@@ -64,7 +57,7 @@ const AiExtension = Extension.create<AiExtensionOptions, AiExtensionStorage>({
       acceptAi:
         () =>
         ({ editor, tr }) => {
-          this.storage.state = null;
+          this.storage.state = "closed";
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           const binding = ySyncPluginKey.getState(
             this.editor.view.state
@@ -95,14 +88,17 @@ const AiExtension = Extension.create<AiExtensionOptions, AiExtensionStorage>({
               .liveblocksExtension as LiveblocksExtensionStorage
           ).provider as LiveblocksYjsProvider;
           provider.unpause();
-          this.storage.snapshot = null;
+          this.storage.snapshot = undefined;
           this.editor.setEditable(true);
           return true;
         },
-      rejectAi:
+      closeAi:
         () =>
         ({ editor, tr }) => {
-          this.storage.state = null;
+          this.storage.state = "closed";
+          this.storage.relativeSelection = null;
+          this.storage.prompt = undefined;
+          this.storage.previousPrompt = undefined;
           if (!this.storage.snapshot) {
             return false;
           }
@@ -142,7 +138,10 @@ const AiExtension = Extension.create<AiExtensionOptions, AiExtensionStorage>({
           ).provider as LiveblocksYjsProvider;
           provider.unpause();
           docFromSnapshot.gc = true;
-          this.storage.snapshot = null;
+
+          this.editor.setEditable(true);
+
+          this.storage.snapshot = undefined;
           this.editor.setEditable(true);
           return true;
         },
@@ -161,7 +160,7 @@ const AiExtension = Extension.create<AiExtensionOptions, AiExtensionStorage>({
           this.storage.snapshot = snapshot(this.options.doc);
           setTimeout(() => {
             if (this.storage.snapshot) {
-              this.storage.state = "waiting_for_input";
+              this.storage.state = "asking"; // waiting for input ?
               this.editor.commands.compareSnapshot(this.storage.snapshot);
             }
           }, 1);
@@ -171,8 +170,8 @@ const AiExtension = Extension.create<AiExtensionOptions, AiExtensionStorage>({
           );
           //return true;
         },
-      doPrompt:
-        (prompt: string, isContinue: boolean = false) =>
+      askAi:
+        (prompt: string | undefined, isContinue: boolean = false) =>
         ({ editor, state }) => {
           if (
             !this.options.doc ||
@@ -180,9 +179,14 @@ const AiExtension = Extension.create<AiExtensionOptions, AiExtensionStorage>({
           ) {
             return false;
           }
-          this.storage.state = "thinking";
-          this.editor.setEditable(false);
           this.storage.relativeSelection = getRelativeSelectionFromState(state);
+          if (!prompt) {
+            this.storage.state = "asking";
+            return true;
+          }
+          this.storage.state = "thinking";
+          this.storage.prompt = prompt;
+          this.editor.setEditable(false);
           const { from, to } = this.editor.state.selection;
           const text = this.editor.state.doc.textBetween(
             isContinue ? 0 : from,
@@ -197,9 +201,8 @@ const AiExtension = Extension.create<AiExtensionOptions, AiExtensionStorage>({
           const executePrompt = async () => {
             await provider.pause();
 
-            console.log("DO PROMPT", prompt);
             const responseText = this.options.resolveAiPrompt
-              ? await this.options.resolveAiPrompt(prompt, text)
+              ? await this.options.resolveAiPrompt(prompt, text) // TODO: why can the prompt be undefined?
               : "not implemented";
             // TODO: handle error
             if (responseText) {
@@ -209,7 +212,7 @@ const AiExtension = Extension.create<AiExtensionOptions, AiExtensionStorage>({
               }, 5_000);
             } else {
               console.log("no response from ai");
-              this.storage.state = null;
+              this.storage.state = "closed";
               this.editor.setEditable(true);
             }
           };
@@ -218,6 +221,32 @@ const AiExtension = Extension.create<AiExtensionOptions, AiExtensionStorage>({
 
           return true;
         },
+      retryAskAi: () => () => {
+        if (this.storage.state !== "reviewing") {
+          return false;
+        }
+        this.storage.prompt = this.storage.previousPrompt ?? "";
+        this.storage.previousPrompt = undefined;
+        this.editor.commands.askAi(this.storage.prompt);
+        return true;
+      },
+      setAiPrompt: (prompt: string | ((prompt: string) => string)) => () => {
+        this.storage.prompt =
+          typeof prompt === "function"
+            ? prompt(this.storage.prompt ?? "")
+            : prompt;
+        return true;
+      },
+      cancelAskAi: () => () => {
+        if (this.storage.state !== "thinking") {
+          return false;
+        }
+
+        // TODO: actually cancel the execution
+        this.storage.state = "asking";
+
+        return true;
+      },
       compareSnapshot: (previous?: Snapshot) => () => {
         if (!this.options.doc) {
           return false;

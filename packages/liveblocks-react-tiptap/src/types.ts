@@ -5,7 +5,13 @@ import { PluginKey } from "@tiptap/pm/state";
 import type { DecorationSet } from "@tiptap/pm/view";
 import type { ChainedCommands, SingleCommands } from "@tiptap/react";
 import type { ProsemirrorMapping } from "y-prosemirror/dist/src/lib";
-import type { Doc, PermanentUserData, XmlFragment } from "yjs";
+import type {
+  Doc,
+  PermanentUserData,
+  RelativePosition,
+  Snapshot,
+  XmlFragment,
+} from "yjs";
 
 export const LIVEBLOCKS_MENTION_KEY = new PluginKey("lb-plugin-mention");
 export const LIVEBLOCKS_MENTION_PASTE_KEY = new PluginKey(
@@ -42,7 +48,7 @@ export type LiveblocksExtensionOptions = {
   initialContent?: Content;
 };
 
-export type BaseExtensionStorage = {
+export type LiveblocksExtensionStorage = {
   unsubs: (() => void)[];
   doc: Doc;
   provider: LiveblocksYjsProvider<any, any, any, any, any>;
@@ -57,25 +63,33 @@ export const enum ThreadPluginActions {
   SET_SELECTED_THREAD_ID = "SET_SELECTED_THREAD_ID",
 }
 
-export type AiToolbarExtensionStorage =
-  | {
-      state: "closed";
-      name: string;
-      selection: undefined;
-      prompt: undefined;
-      previousPrompt: undefined;
-    }
+export type AiExtensionOptions = {
+  name: string;
+  doc: Doc | undefined;
+  pud: PermanentUserData | undefined;
+  resolveAiPrompt?: (prompt: string, selectionText: string) => Promise<string>;
+};
+
+export type AiExtensionStorage =
   | {
       state: "asking" | "thinking" | "reviewing";
       name: string;
-      selection: TextSelection;
+      snapshot: Snapshot | undefined;
       prompt: string;
       previousPrompt: string | undefined;
+      relativeSelection: {
+        anchor: RelativePosition;
+        head: RelativePosition;
+      } | null;
+    }
+  | {
+      state: "closed";
+      name: string;
+      snapshot: undefined;
+      prompt: undefined;
+      previousPrompt: undefined;
+      relativeSelection: null;
     };
-
-export type LiveblocksExtensionStorage = BaseExtensionStorage &
-  AiToolbarExtensionStorage &
-  CommentsExtensionStorage;
 
 export type ThreadPluginState = {
   threadPositions: Map<string, { from: number; to: number }>;
@@ -108,7 +122,9 @@ export type CommentsCommands<ReturnType> = {
 };
 
 export type AiCommands<ReturnType> = {
-  askAi: (prompt?: string) => ReturnType;
+  askAi: (prompt?: string, isContinue?: boolean) => ReturnType;
+  /** @internal */
+  acceptAi: () => ReturnType;
   /** @internal */
   cancelAskAi: () => ReturnType;
   /** @internal */
@@ -119,6 +135,10 @@ export type AiCommands<ReturnType> = {
   closeAi: () => ReturnType;
   /** @internal */
   setAiPrompt: (prompt: string | ((prompt: string) => string)) => ReturnType;
+  /** @internal */
+  applyPrompt: (result: string, isContinue: boolean) => ReturnType;
+  /** @internal */
+  compareSnapshot: (snapshot: Snapshot) => ReturnType;
 };
 
 // these types are not exported from y-prosemirror

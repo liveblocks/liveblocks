@@ -25,7 +25,7 @@ import { DEFAULT_AI_NAME } from "../ai/AiToolbar";
 import { classNames } from "../classnames";
 import { EditorProvider, useCurrentEditor } from "../context";
 import type {
-  AiToolbarExtensionStorage,
+  AiExtensionStorage,
   ExtendedChainedCommands,
 } from "../types";
 
@@ -386,9 +386,9 @@ function ToolbarSectionAi() {
   const supportsAi = "askAi" in editor.commands;
   const aiName =
     (
-      editor.storage.liveblocksAiToolbar as
-        | AiToolbarExtensionStorage
-        | undefined
+      editor.storage.liveblocksAi as
+      | AiExtensionStorage
+      | undefined
     )?.name ?? DEFAULT_AI_NAME;
 
   return (
