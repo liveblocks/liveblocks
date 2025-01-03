@@ -50,29 +50,25 @@ available:
 
 ### Defining initial storage [#initial-storage]
 
-To use storage, first define a type named `Storage` in `liveblocks.config.ts`,
-like we did for `Presence`. In this example we’ll define a [`LiveObject`][]
-called `scientist`, containing first and last name properties.
+To use storage, first define a type named `Storage` in `liveblocks.config.ts`.
+In this example we’ll define a [`LiveObject`][] called `scientist`, containing
+first and last name properties.
 
 ```tsx file="liveblocks.config.ts" highlight="1,4-6,11"
-import { createClient, LiveObject } from "@liveblocks/client";
-// ...
+import { LiveObject } from "@liveblocks/client";
 
-type Storage = {
-  scientist: LiveObject<{ firstName: string; lastName: string }>;
-};
-
-export const {
-  RoomProvider,
-  /* exported hooks */
-} = createRoomContext<Presence, Storage>(client);
+declare global {
+  interface Liveblocks {
+    Storage: { scientist: LiveObject<{ firstName: string; lastName: string }> };
+  }
+}
 ```
 
 Then, define the initial structure within [`RoomProvider`][].
 
-```tsx file="index.ts" highlight="1,11-16"
+```tsx file="index.ts"
 import { LiveObject } from "@liveblocks/client";
-import { RoomProvider } from "./liveblocks.config";
+import { RoomProvider } from "@liveblocks/react/suspense";
 
 /* App */
 
@@ -81,11 +77,13 @@ function Index() {
     <RoomProvider
       id="my-room-id"
       initialPresence={/* ... */}
+      // +++
       initialStorage={{
         scientist: new LiveObject({
           firstName: "Marie",
           lastName: "Curie",
         }),
+        // +++
       }}
     >
       <App />
@@ -101,7 +99,7 @@ Once the default structure is defined, we can then make use of our storage. The
 using a selector function.
 
 ```tsx highlight="4,12,13"
-import { useStorage } from "./liveblocks.config";
+import { useStorage } from "@liveblocks/react";
 
 function App() {
   const scientist = useStorage((root) => root.scientist);
@@ -159,11 +157,15 @@ combine [`useStorage`][] to display the names, and [`useMutation`][] to modify
 them. Note that `useMutation` takes a dependency array, and works similarly to
 `useCallback`.
 
-```tsx file="index.ts" highlight="1,6-9,15,19"
-import { useStorage, useMutation } from "./liveblocks.config";
+```tsx file="index.ts"
+import { useStorage, useMutation } from "@liveblocks/react";
 
 function YourComponent() {
   const scientist = useStorage((root) => root.scientist);
+
+  if (scientist == null) {
+    return <div>Loading...</div>;
+  }
 
   const updateName = useMutation(({ storage }, nameType, newName) => {
     const mutableScientist = storage.get("scientist");
@@ -276,19 +278,7 @@ our documentation.
 ### Using Suspense
 
 If you’d like to use `Suspense` in your application, make sure to re-export our
-hooks from `liveblocks.config.ts` like so.
-
-```tsx file="liveblocks.config.ts" highlight="4-8"
-// ...
-
-export const {
-  suspense: {
-    RoomProvider,
-    useStorage,
-    /* exported hooks */
-  },
-} = createRoomContext<Presence, Storage>(client);
-```
+hooks from `"@liveblocks/react/suspense"`.
 
 And then put a `Suspense` component right below the `RoomProvider`. This version
 of `useStorage` never returns `null`, the loading fallback will be handled by
@@ -297,7 +287,7 @@ of `useStorage` never returns `null`, the loading fallback will be handled by
 ```tsx file="index.ts" highlight="2,28-30"
 import { LiveObject } from "@liveblocks/client";
 import { Suspense } from "react";
-import { RoomProvider, useSelector } from "./liveblocks.config";
+import { RoomProvider, useStorage } from "@liveblocks/react/suspense";
 
 function App() {
   const scientist = useStorage((root) => root.scientist);
@@ -338,7 +328,7 @@ using `useStorage` will never be able to render. To keep the benefits from
 instead of the normal `Suspense` from React like this:
 
 ```tsx file="index.ts" highlight="1,12-14"
-import { ClientSideSuspense } from "@liveblocks/react";
+import { ClientSideSuspense } from "@liveblocks/react/suspense";
 
 // ...
 
