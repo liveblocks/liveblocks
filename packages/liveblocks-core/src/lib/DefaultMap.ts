@@ -36,16 +36,18 @@ export class DefaultMap<K, V> extends Map<K, V> {
    * instead of `undefined`.
    */
   getOrCreate(key: K, defaultFn?: (key: K) => V): V {
-    let value = super.get(key);
-    if (value === undefined) {
+    if (super.has(key)) {
+      // eslint-disable-next-line no-restricted-syntax
+      return super.get(key)!;
+    } else {
       const fn =
         defaultFn ??
         this.#defaultFn ??
         raise("DefaultMap used without a factory function");
 
-      value = fn(key);
+      const value = fn(key);
       this.set(key, value);
+      return value;
     }
-    return value;
   }
 }

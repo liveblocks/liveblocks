@@ -42,6 +42,25 @@ describe("DefaultMap", () => {
     );
   });
 
+  test("getOrCreate method with explicit nullish values", () => {
+    const map = new DefaultMap(() => new Set());
+
+    // @ts-expect-error Deliberately setting 'foo' to undefined
+    map.set("foo", undefined);
+    // @ts-expect-error Deliberately setting 'bar' to null
+    map.set("bar", null);
+
+    // Basic assertions that it's just like a normal Map
+    expect(map.has("foo")).toEqual(true);
+    expect(map.get("foo")).toEqual(undefined);
+    expect(map.has("bar")).toEqual(true);
+    expect(map.get("bar")).toEqual(null);
+
+    expect(map.getOrCreate("foo")).toEqual(undefined); // Not a Set!
+    expect(map.getOrCreate("bar")).toEqual(null); // Not a Set!
+    expect(map.getOrCreate("qux")).toEqual(new Set());
+  });
+
   test("getOrCreate method (w/ specific factory)", () => {
     const map = new DefaultMap((key: string) => new Set([key]));
     map.getOrCreate("foo").add("hello");
@@ -86,6 +105,7 @@ describe("DefaultMap (properties)", () => {
           for (const [key, value] of tuples) {
             expected.set(key, value);
             actual.set(key, value);
+            expect(actual.getOrCreate(key)).toEqual(expected.get(key));
           }
 
           expect(new Map(actual)).toEqual(expected);
