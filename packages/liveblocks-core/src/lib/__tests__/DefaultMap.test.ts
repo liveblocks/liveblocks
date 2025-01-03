@@ -1,3 +1,5 @@
+import * as fc from "fast-check";
+
 import { DefaultMap } from "../DefaultMap";
 
 describe("DefaultMap", () => {
@@ -55,72 +57,61 @@ describe("DefaultMap", () => {
       ])
     );
   });
+});
 
-  test("set (classic)", () => {
-    const m = new DefaultMap<string, number>(() => 0);
-    m.set("foo", 5);
-    m.set("bar", 1);
-    m.set("qux", 0);
-    expect(new Map(m)).toEqual(
-      new Map([
-        ["foo", 5],
-        ["bar", 1],
-        ["qux", 0],
-      ])
+describe("DefaultMap (properties)", () => {
+  test("constructor behaves just like a normal Map", () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.tuple(fc.string(), fc.anything())),
+
+        (tuples) => {
+          const expected = new Map(tuples);
+          const actual = new DefaultMap(() => 0, tuples);
+          expect(new Map(actual)).toEqual(expected);
+        }
+      )
     );
   });
 
-  test("set (with setter function)", () => {
-    const inc = (n: number): number => n + 1;
+  test("setter behaves just like a normal Map setter", () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.tuple(fc.string(), fc.anything())),
 
-    const m = new DefaultMap<string, number>(() => 0);
-    m.set("foo", inc);
-    m.set("foo", inc);
-    m.set("bar", inc);
-    expect(new Map(m)).toEqual(
-      new Map([
-        ["foo", 2],
-        ["bar", 1],
-      ])
+        (tuples) => {
+          const expected = new Map();
+          const actual = new DefaultMap(() => 0 as unknown);
+
+          for (const [key, value] of tuples) {
+            expected.set(key, value);
+            actual.set(key, value);
+          }
+
+          expect(new Map(actual)).toEqual(expected);
+        }
+      )
     );
   });
 
-  test("set (with setter function that deletes)", () => {
-    const inc = (n: number): number => n + 1;
-    const dec = (n: number): number | undefined =>
-      n === 1 ? undefined : n - 1;
+  test("delete behaves just like a normal Map delete", () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.tuple(fc.string(), fc.anything())),
+        fc.array(fc.string()),
 
-    const m = new DefaultMap<string, number>(() => 0);
-    m.set("foo", inc);
-    m.set("foo", inc);
-    m.set("foo", dec);
-    m.set("foo", dec);
+        (tuples, keysToDelete) => {
+          const expected = new Map(tuples);
+          const actual = new DefaultMap(() => 0 as unknown, tuples);
 
-    m.set("bar", inc);
+          for (const key of keysToDelete) {
+            expected.delete(key);
+            actual.delete(key);
+          }
 
-    m.set("qux", inc);
-    m.set("qux", dec);
-    m.set("qux", dec);
-
-    expect(new Map(m)).toEqual(
-      new Map([
-        // NOTE: No entry for "foo"! Not even "0", due to the implementation of
-        // the dec setter function.
-        ["bar", 1],
-        ["qux", -1],
-      ])
-    );
-
-    // Doing it the opposite way would keep the explicit "0" entry
-    m.set("foo", dec);
-    m.set("foo", inc);
-
-    expect(new Map(m)).toEqual(
-      new Map([
-        ["foo", 0],
-        ["bar", 1],
-        ["qux", -1],
-      ])
+          expect(new Map(actual)).toEqual(expected);
+        }
+      )
     );
   });
 });

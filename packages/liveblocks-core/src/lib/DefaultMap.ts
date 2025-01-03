@@ -14,6 +14,10 @@
 export class DefaultMap<K, V> extends Map<K, V> {
   #_factoryFn?: (key: K) => V;
 
+  /**
+   * If the factory function is not provided to the constructor, it has to be
+   * provided in each .getOrCreate() call individually.
+   */
   constructor(
     factoryFn?: (key: K) => V,
     entries?: readonly (readonly [K, V])[] | null
@@ -43,29 +47,5 @@ export class DefaultMap<K, V> extends Map<K, V> {
       this.set(key, value);
     }
     return value;
-  }
-
-  /**
-   * Sets the value at the given key.
-   *
-   * Difference from normal Map: if the second arg is a function, it will be
-   * called with the current value as its argument and the return value will be
-   * set instead. If the returned value is `undefined`, it will remove the key,
-   * meaning the next time the key is accessed it will get re-created by the
-   * factory function.
-   */
-  set(key: K, value: V): this;
-  set(key: K, valueFn: (prev: V) => V | undefined): this;
-  set(key: K, value: V | ((prev: V) => V | undefined)): this {
-    if (typeof value === "function") {
-      value = (value as (prev: V) => V)(this.get(key) ?? this.#factoryFn(key));
-    }
-
-    if (value === undefined) {
-      super.delete(key);
-      return this;
-    } else {
-      return super.set(key, value);
-    }
   }
 }
