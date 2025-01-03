@@ -1,5 +1,8 @@
 import type {
+  AsyncError,
+  AsyncLoading,
   AsyncResult,
+  AsyncSuccess,
   BaseMetadata,
   BaseUserMeta,
   Client,
@@ -11,7 +14,7 @@ import type {
   HistoryVersion,
   InboxNotificationData,
   InboxNotificationDeleteInfo,
-  Observable,
+  ISignal,
   OpaqueClient,
   Patchable,
   Permission,
@@ -20,6 +23,7 @@ import type {
   ThreadData,
   ThreadDataWithDeleteInfo,
   ThreadDeleteInfo,
+  UnsubscribeCallback,
 } from "@liveblocks/core";
 import {
   autoRetry,
@@ -177,8 +181,10 @@ type UpdateNotificationSettingsOptimisticUpdate = {
 
 type PaginationState = {
   cursor: string | null; // If `null`, it's the last page
+  hasFetchedAll: boolean;
   isFetchingMore: boolean;
   fetchMoreError?: Error;
+  fetchMore: () => void;
 };
 
 /**
@@ -187,6 +193,7 @@ type PaginationState = {
 type PaginationStatePatch =
   | { isFetchingMore: true }
   | {
+      hasFetchedAll: boolean;
       isFetchingMore: false;
       cursor: string | null;
       fetchMoreError: undefined;
@@ -259,7 +266,11 @@ function usify<T>(promise: Promise<T>): UsablePromise<T> {
 
 const noop = Promise.resolve();
 
-const ASYNC_LOADING = Object.freeze({ isLoading: true });
+const ASYNC_LOADING: AsyncLoading = Object.freeze({ isLoading: true });
+const ASYNC_ERR = (error: Error): AsyncError =>
+  Object.freeze({ isLoading: false, error });
+const ASYNC_OK = <T>(data: T): AsyncSuccess<T> =>
+  Object.freeze({ isLoading: false, data });
 
 /**
  * The PaginatedResource helper class is responsible for and abstracts away the
@@ -329,49 +340,51 @@ const ASYNC_LOADING = Object.freeze({ isLoading: true });
  * @internal Only exported for unit tests.
  */
 export class PaginatedResource {
-  public readonly observable: Observable<void>;
-  #eventSource: EventSource<void>;
+  readonly #signal: Signal<AsyncResult<PaginationState>>;
+  public readonly signal: ISignal<AsyncResult<PaginationState>>;
+
   #fetchPage: (cursor?: string) => Promise<string | null>;
-  #paginationState: PaginationState | null; // Should be null while in loading or error state!
   #pendingFetchMore: Promise<void> | null;
 
   constructor(fetchPage: (cursor?: string) => Promise<string | null>) {
-    this.#paginationState = null;
+    this.#signal = new Signal<AsyncResult<PaginationState>>(ASYNC_LOADING);
     this.#fetchPage = fetchPage;
-    this.#eventSource = makeEventSource<void>();
     this.#pendingFetchMore = null;
-    this.observable = this.#eventSource.observable;
+    this.signal = this.#signal.asReadonly();
 
     autobind(this);
   }
 
-  #patchPaginationState(patch: PaginationStatePatch): void {
-    const state = this.#paginationState;
-    if (state === null) return;
-    this.#paginationState = { ...state, ...patch };
-    this.#eventSource.notify();
+  get(): AsyncResult<PaginationState> {
+    return this.#signal.get();
+  }
+
+  #patch(patch: PaginationStatePatch): void {
+    const state = this.#signal.get();
+    if (state.data === undefined) return;
+    this.#signal.set(ASYNC_OK({ ...state.data, ...patch }));
   }
 
   async #fetchMore(): Promise<void> {
-    const state = this.#paginationState;
-    if (!state?.cursor) {
-      // Do nothing if we don't have a cursor to work with. It means:
-      // - We don't have a cursor yet (we haven't loaded the first page yet); or
-      // - We don't have a cursor any longer (we're already on the
-      // last page)
+    const state = this.#signal.get();
+    if (!state.data?.cursor || state.data.isFetchingMore) {
+      // Either:
+      // - We don't have a cursor yet (first fetch not happened successfully yet)
+      // - We don't have a cursor any longer (we're on the last page)
       return;
     }
 
-    this.#patchPaginationState({ isFetchingMore: true });
+    this.#patch({ isFetchingMore: true });
     try {
-      const nextCursor = await this.#fetchPage(state.cursor);
-      this.#patchPaginationState({
+      const nextCursor = await this.#fetchPage(state.data.cursor);
+      this.#patch({
         cursor: nextCursor,
+        hasFetchedAll: nextCursor === null,
         fetchMoreError: undefined,
         isFetchingMore: false,
       });
     } catch (err) {
-      this.#patchPaginationState({
+      this.#patch({
         isFetchingMore: false,
         fetchMoreError: err as Error,
       });
@@ -383,10 +396,8 @@ export class PaginatedResource {
     // 1) the pagination state has not be initialized
     // 2) the cursor is null, i.e., there are no more pages to fetch
     // 3) a request to fetch more is currently in progress
-    const state = this.#paginationState;
-    if (state?.cursor === null) {
-      return noop;
-    }
+    const state = this.#signal.get();
+    if (!state.data?.cursor) return noop;
 
     // Case (3)
     if (!this.#pendingFetchMore) {
@@ -395,33 +406,6 @@ export class PaginatedResource {
       });
     }
     return this.#pendingFetchMore;
-  }
-
-  public get(): AsyncResult<{
-    fetchMore: () => void;
-    fetchMoreError?: Error;
-    hasFetchedAll: boolean;
-    isFetchingMore: boolean;
-  }> {
-    const usable = this.#cachedPromise;
-    if (usable === null || usable.status === "pending") {
-      return ASYNC_LOADING;
-    }
-
-    if (usable.status === "rejected") {
-      return { isLoading: false, error: usable.reason };
-    }
-
-    const state = this.#paginationState!;
-    return {
-      isLoading: false,
-      data: {
-        fetchMore: this.fetchMore as () => void,
-        isFetchingMore: state.isFetchingMore,
-        fetchMoreError: state.fetchMoreError,
-        hasFetchedAll: state.cursor === null,
-      },
-    };
   }
 
   #cachedPromise: UsablePromise<void> | null = null;
@@ -433,54 +417,54 @@ export class PaginatedResource {
 
     // Wrap the request to load room threads (and notifications) in an auto-retry function so that if the request fails,
     // we retry for at most 5 times with incremental backoff delays. If all retries fail, the auto-retry function throws an error
-    const initialFetcher = autoRetry(
+    const initialPageFetch$ = autoRetry(
       () => this.#fetchPage(/* cursor */ undefined),
       5,
       [5000, 5000, 10000, 15000]
     );
 
-    const promise = usify(
-      initialFetcher.then((cursor) => {
-        // Initial fetch completed
-        this.#paginationState = {
-          cursor,
-          isFetchingMore: false,
-          fetchMoreError: undefined,
-        };
-      })
-    );
+    const promise = usify(initialPageFetch$);
 
     // NOTE: However tempting it may be, we cannot simply move this block into
     // the promise definition above. The reason is that we should not call
     // notify() before the UsablePromise is actually in resolved status. While
     // still inside the .then() block, the UsablePromise is still in pending status.
     promise.then(
-      () => this.#eventSource.notify(),
-      () => {
-        this.#eventSource.notify();
+      (cursor) => {
+        this.#signal.set(
+          ASYNC_OK({
+            cursor,
+            hasFetchedAll: cursor === null,
+            isFetchingMore: false,
+            fetchMoreError: undefined,
+            fetchMore: this.fetchMore,
+          })
+        );
+      },
+      (err) => {
+        this.#signal.set(ASYNC_ERR(err as Error));
 
         // Wait for 5 seconds before removing the request
         setTimeout(() => {
           this.#cachedPromise = null;
-          this.#eventSource.notify();
+          this.#signal.set(ASYNC_LOADING);
         }, 5_000);
       }
     );
 
-    this.#cachedPromise = promise;
-    return promise;
+    this.#cachedPromise =
+      promise as UsablePromise<unknown> as UsablePromise<void>;
+    return this.#cachedPromise;
   }
 }
 
 class SinglePageResource {
-  public readonly observable: Observable<void>;
   #eventSource: EventSource<void>;
   #fetchPage: () => Promise<void>;
 
   constructor(fetchPage: () => Promise<void>) {
     this.#fetchPage = fetchPage;
     this.#eventSource = makeEventSource<void>();
-    this.observable = this.#eventSource.observable;
 
     autobind(this);
   }
@@ -490,10 +474,14 @@ class SinglePageResource {
     if (usable === null || usable.status === "pending") {
       return ASYNC_LOADING;
     } else if (usable.status === "rejected") {
-      return { isLoading: false, error: usable.reason };
+      return ASYNC_ERR(usable.reason);
     } else {
-      return { isLoading: false, data: undefined };
+      return ASYNC_OK(undefined);
     }
+  }
+
+  subscribe(callback: () => void): UnsubscribeCallback {
+    return this.#eventSource.subscribe(callback);
   }
 
   #cachedPromise: UsablePromise<void> | null = null;
@@ -869,6 +857,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
     readonly notifications: DerivedSignal<CleanNotifications>;
     readonly settingsByRoomId: DerivedSignal<SettingsByRoomId>;
     readonly versionsByRoomId: DerivedSignal<VersionsByRoomId>;
+
+    readonly loadingThreads: DerivedSignal<{
+      getUserThreads: (query: ThreadsQuery<M>) => ThreadsAsyncResult<M>;
+    }>;
   };
 
   // Notifications
@@ -912,7 +904,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     // XXX_vincent Looks like this should also be a Signal!
     this.#notifications = new PaginatedResource(inboxFetcher);
-    this.#notifications.observable.subscribe(() =>
+    this.#notifications.signal.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
       this.invalidateEntireStore()
@@ -961,12 +953,49 @@ export class UmbrellaStore<M extends BaseMetadata> {
         )
     );
 
+    const loadingThreads = DerivedSignal.from(() => {
+      return {
+        getUserThreads: (query: ThreadsQuery<M>): ThreadsAsyncResult<M> => {
+          const queryKey = makeUserThreadsQueryKey(query);
+
+          const paginatedResource = this.#userThreads.get(queryKey);
+          if (paginatedResource === undefined) {
+            return ASYNC_LOADING;
+          }
+
+          const asyncResult = paginatedResource.get();
+          if (asyncResult.isLoading || asyncResult.error) {
+            return asyncResult;
+          }
+
+          const threads = this.outputs.threads.get().findMany(
+            undefined, // Do _not_ filter by roomId
+            query,
+            "desc"
+          );
+
+          const page = asyncResult.data;
+          // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
+          return {
+            isLoading: false,
+            threads,
+            hasFetchedAll: page.hasFetchedAll,
+            isFetchingMore: page.isFetchingMore,
+            fetchMoreError: page.fetchMoreError,
+            fetchMore: page.fetchMore,
+          };
+        },
+      };
+    });
+
     this.outputs = {
       threadifications,
       threads,
       notifications,
       settingsByRoomId,
       versionsByRoomId,
+
+      loadingThreads,
     };
 
     // Auto-bind all of this class’ methods here, so we can use stable
@@ -1418,7 +1447,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }
 
     // XXX_vincent Looks like this should also be a Signal!
-    paginatedResource.observable.subscribe(() =>
+    paginatedResource.signal.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
       this.invalidateEntireStore()
@@ -1487,7 +1516,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }
 
     // XXX_vincent Looks like this should also be a Signal!
-    paginatedResource.observable.subscribe(() =>
+    paginatedResource.signal.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
       this.invalidateEntireStore()
@@ -1573,7 +1602,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }
 
     // XXX_vincent Looks like this should also be a Signal!
-    resource.observable.subscribe(() =>
+    resource.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
       this.invalidateEntireStore()
@@ -1632,7 +1661,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }
 
     // XXX_vincent Looks like this should also be a Signal!
-    resource.observable.subscribe(() =>
+    resource.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
       this.invalidateEntireStore()

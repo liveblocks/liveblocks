@@ -62,14 +62,15 @@ describe("PaginatedResource", () => {
     expect(p.get()).toEqual({
       isLoading: false,
       data: {
+        cursor: "two",
         isFetchingMore: false,
         hasFetchedAll: false,
         fetchMore: expect.any(Function),
       },
     });
 
-    // TODO It would be nice if the exact same object reference every time
-    // expect(p.get() === p.get()).toEqual(true);
+    // Referential equality is maintained!
+    expect(p.get() === p.get()).toEqual(true);
 
     expect(fetcher).toHaveBeenNthCalledWith(1, /* cursor */ undefined);
 
@@ -90,14 +91,15 @@ describe("PaginatedResource", () => {
     expect(p.get()).toEqual({
       isLoading: false,
       data: {
+        cursor: "two",
         isFetchingMore: true,
         hasFetchedAll: false,
         fetchMore: expect.any(Function),
       },
     });
 
-    // TODO It would be nice if the exact same object reference every time
-    // expect(p.get() === p.get()).toEqual(true);
+    // Referential equality is maintained!
+    expect(p.get() === p.get()).toEqual(true);
 
     await f$;
 
@@ -107,14 +109,15 @@ describe("PaginatedResource", () => {
     expect(p.get()).toEqual({
       isLoading: false,
       data: {
+        cursor: "three",
         isFetchingMore: false,
         hasFetchedAll: false,
         fetchMore: expect.any(Function),
       },
     });
 
-    // TODO It would be nice if the exact same object reference every time
-    // expect(p.get() === p.get()).toEqual(true);
+    // Referential equality is maintained!
+    expect(p.get() === p.get()).toEqual(true);
 
     await fetchMore();
 
@@ -124,14 +127,15 @@ describe("PaginatedResource", () => {
     expect(p.get()).toEqual({
       isLoading: false,
       data: {
+        cursor: null,
         isFetchingMore: false,
         hasFetchedAll: true,
         fetchMore: expect.any(Function),
       },
     });
 
-    // TODO It would be nice if the exact same object reference every time
-    // expect(p.get() === p.get()).toEqual(true);
+    // Referential equality is maintained!
+    expect(p.get() === p.get()).toEqual(true);
   });
 
   test("Fetching more - non-happy path, with unreliable fetcher", async () => {
@@ -145,14 +149,15 @@ describe("PaginatedResource", () => {
     expect(p.get()).toEqual({
       isLoading: false,
       data: {
+        cursor: "two",
         isFetchingMore: false,
         hasFetchedAll: false,
         fetchMore: expect.any(Function),
       },
     });
 
-    // TODO It would be nice if the exact same object reference every time
-    // expect(p.get() === p.get()).toEqual(true);
+    // Referential equality is maintained!
+    expect(p.get() === p.get()).toEqual(true);
 
     expect(unreliableFetcher).toHaveBeenNthCalledWith(
       1,
@@ -170,14 +175,15 @@ describe("PaginatedResource", () => {
     expect(p.get()).toEqual({
       isLoading: false,
       data: {
+        cursor: "two",
         isFetchingMore: true,
         hasFetchedAll: false,
         fetchMore: expect.any(Function),
       },
     });
 
-    // TODO It would be nice if the exact same object reference every time
-    // expect(p.get() === p.get()).toEqual(true);
+    // Referential equality is maintained!
+    expect(p.get() === p.get()).toEqual(true);
 
     await f1$; // Should have failed!
 
@@ -186,6 +192,7 @@ describe("PaginatedResource", () => {
     expect(p.get()).toEqual({
       isLoading: false,
       data: {
+        cursor: "two",
         isFetchingMore: false,
         fetchMoreError: expect.any(Error),
         hasFetchedAll: false,
@@ -193,8 +200,8 @@ describe("PaginatedResource", () => {
       },
     });
 
-    // TODO It would be nice if the exact same object reference every time
-    // expect(p.get() === p.get()).toEqual(true);
+    // Referential equality is maintained!
+    expect(p.get() === p.get()).toEqual(true);
 
     // Fetch once more
     const f2$ = fetchMore(); // Will succeed!
@@ -202,6 +209,7 @@ describe("PaginatedResource", () => {
     expect(p.get()).toEqual({
       isLoading: false,
       data: {
+        cursor: "two",
         isFetchingMore: true,
         fetchMoreError: expect.any(Error),
         hasFetchedAll: false,
@@ -217,14 +225,15 @@ describe("PaginatedResource", () => {
     expect(p.get()).toEqual({
       isLoading: false,
       data: {
+        cursor: "three",
         isFetchingMore: false,
         hasFetchedAll: false,
         fetchMore: expect.any(Function),
       },
     });
 
-    // TODO It would be nice if the exact same object reference every time
-    // expect(p.get() === p.get()).toEqual(true);
+    // Referential equality is maintained!
+    expect(p.get() === p.get()).toEqual(true);
   });
 
   test("Worst-case path, with completely broken fetcher, even the initial fetch will fail", async () => {
@@ -262,8 +271,8 @@ describe("PaginatedResource", () => {
       // Awaiting the outer promise will eventually reject
       await expect(w$).rejects.toThrow("Failed after 5 attempts: Error: Crap");
 
-      // TODO It would be nice if the exact same object reference every time
-      // expect(p.get() === p.get()).toEqual(true);
+      // Referential equality is maintained!
+      expect(p.get() === p.get()).toEqual(true);
     } finally {
       jest.useRealTimers();
     }
