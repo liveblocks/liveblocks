@@ -1,5 +1,7 @@
+import { raise } from "./utils";
+
 /**
- * Like ES6 map, but takes a default factory function which will be used
+ * Like ES6 map, but takes a default (factory) function which will be used
  * to create entries for missing keys on the fly.
  *
  * Useful for code like:
@@ -12,25 +14,18 @@
  *
  */
 export class DefaultMap<K, V> extends Map<K, V> {
-  #_factoryFn?: (key: K) => V;
+  #defaultFn?: (key: K) => V;
 
   /**
-   * If the factory function is not provided to the constructor, it has to be
+   * If the default function is not provided to the constructor, it has to be
    * provided in each .getOrCreate() call individually.
    */
   constructor(
-    factoryFn?: (key: K) => V,
+    defaultFn?: (key: K) => V,
     entries?: readonly (readonly [K, V])[] | null
   ) {
     super(entries);
-    this.#_factoryFn = factoryFn;
-  }
-
-  get #factoryFn() {
-    if (this.#_factoryFn === undefined) {
-      throw new Error("DefaultMap used without a factory function");
-    }
-    return this.#_factoryFn;
+    this.#defaultFn = defaultFn;
   }
 
   /**
@@ -40,10 +35,15 @@ export class DefaultMap<K, V> extends Map<K, V> {
    * on the fly using the factory function, and that value will get returned
    * instead of `undefined`.
    */
-  getOrCreate(key: K, factoryFn?: (key: K) => V): V {
+  getOrCreate(key: K, defaultFn?: (key: K) => V): V {
     let value = super.get(key);
     if (value === undefined) {
-      value = factoryFn !== undefined ? factoryFn(key) : this.#factoryFn(key);
+      const fn =
+        defaultFn ??
+        this.#defaultFn ??
+        raise("DefaultMap used without a factory function");
+
+      value = fn(key);
       this.set(key, value);
     }
     return value;
