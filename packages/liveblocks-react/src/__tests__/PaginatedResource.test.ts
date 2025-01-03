@@ -41,7 +41,7 @@ describe("PaginatedResource", () => {
     const fetcher = makeFetcher();
     const p = new PaginatedResource(fetcher);
     expect(p.get()).toEqual({ isLoading: true });
-    expect(fetcher).not.toBeCalled();
+    expect(fetcher).not.toHaveBeenCalled();
   });
 
   test("Getting loading state is always referrentially equal", () => {
@@ -102,7 +102,7 @@ describe("PaginatedResource", () => {
     await f$;
 
     expect(fetcher).toHaveBeenNthCalledWith(2, "two");
-    expect(fetcher).toBeCalledTimes(2);
+    expect(fetcher).toHaveBeenCalledTimes(2);
 
     expect(p.get()).toEqual({
       isLoading: false,
@@ -119,7 +119,7 @@ describe("PaginatedResource", () => {
     await fetchMore();
 
     expect(fetcher).toHaveBeenNthCalledWith(3, "three");
-    expect(fetcher).toBeCalledTimes(3);
+    expect(fetcher).toHaveBeenCalledTimes(3);
 
     expect(p.get()).toEqual({
       isLoading: false,
@@ -182,7 +182,7 @@ describe("PaginatedResource", () => {
     await f1$; // Should have failed!
 
     expect(unreliableFetcher).toHaveBeenNthCalledWith(2, "two");
-    expect(unreliableFetcher).toBeCalledTimes(2);
+    expect(unreliableFetcher).toHaveBeenCalledTimes(2);
     expect(p.get()).toEqual({
       isLoading: false,
       data: {
@@ -212,7 +212,7 @@ describe("PaginatedResource", () => {
     await f2$; // Should have succeeded!
 
     expect(unreliableFetcher).toHaveBeenNthCalledWith(3, "two");
-    expect(unreliableFetcher).toBeCalledTimes(3);
+    expect(unreliableFetcher).toHaveBeenCalledTimes(3);
 
     expect(p.get()).toEqual({
       isLoading: false,
