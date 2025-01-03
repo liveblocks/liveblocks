@@ -10,7 +10,12 @@ import { useIsMobile } from "./use-is-mobile";
 import VersionsDialog from "../version-history-dialog";
 
 export default function TiptapEditor() {
-  const liveblocks = useLiveblocksExtension();
+  //
+  const liveblocks = useLiveblocksExtension({
+    resolveAiPrompt: async (prompt, selectionText) => {
+      return "test";
+    }
+  });
 
   const editor = useEditor({
     editorProps: {
@@ -19,6 +24,7 @@ export default function TiptapEditor() {
         class: "outline-none flex-1 transition-all",
       },
     },
+    enableContentCheck: true,
     extensions: [
       StarterKit.configure({
         history: false,
@@ -26,7 +32,9 @@ export default function TiptapEditor() {
       liveblocks
     ],
   });
-
+  editor?.on("contentError", (error) => {
+    console.log("CONTENT ERROR", error, editor);
+  });
   return (
     <div className="relative min-h-screen flex flex-col">
 

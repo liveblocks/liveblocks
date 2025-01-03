@@ -594,3 +594,19 @@
     transform: translateY(-50%);
   }
 }
+
+/*************************************
+ *            Ai Changes             *
+ *************************************/
+
+.lb-changed-removed {
+  color: rgb(255 255 255 / 13%);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.lb-changed-added {
+  border-block-end: 2px solid rgb(35 131 226 / 15%);
+  background: rgb(35 131 226 / 5.4%);
+  color: rgb(79 167 255);
+}

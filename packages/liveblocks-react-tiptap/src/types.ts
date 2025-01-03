@@ -1,7 +1,11 @@
+import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
+import type { Content } from "@tiptap/core";
 import type { TextSelection } from "@tiptap/pm/state";
 import { PluginKey } from "@tiptap/pm/state";
 import type { DecorationSet } from "@tiptap/pm/view";
 import type { ChainedCommands, SingleCommands } from "@tiptap/react";
+import type { ProsemirrorMapping } from "y-prosemirror/dist/src/lib";
+import type { Doc, PermanentUserData, XmlFragment } from "yjs";
 
 export const LIVEBLOCKS_MENTION_KEY = new PluginKey("lb-plugin-mention");
 export const LIVEBLOCKS_MENTION_PASTE_KEY = new PluginKey(
@@ -23,6 +27,27 @@ export const AI_TOOLBAR_SELECTION_PLUGIN = new PluginKey(
 );
 
 export const LIVEBLOCKS_COMMENT_MARK_TYPE = "liveblocksCommentMark";
+
+export interface AiConfiguration {
+  name?: string;
+  resolveAiPrompt?: (prompt: string, selectionText: string) => Promise<string>;
+}
+
+export type LiveblocksExtensionOptions = {
+  field?: string;
+  comments?: boolean; // | CommentsConfiguration
+  mentions?: boolean; // | MentionsConfiguration
+  ai?: boolean | AiConfiguration;
+  offlineSupport_experimental?: boolean;
+  initialContent?: Content;
+};
+
+export type BaseExtensionStorage = {
+  unsubs: (() => void)[];
+  doc: Doc;
+  provider: LiveblocksYjsProvider<any, any, any, any, any>;
+  permanentUserData: PermanentUserData;
+};
 
 export type CommentsExtensionStorage = {
   pendingCommentSelection: TextSelection | null;
@@ -48,7 +73,8 @@ export type AiToolbarExtensionStorage =
       previousPrompt: string | undefined;
     };
 
-export type LiveblocksExtensionStorage = AiToolbarExtensionStorage &
+export type LiveblocksExtensionStorage = BaseExtensionStorage &
+  AiToolbarExtensionStorage &
   CommentsExtensionStorage;
 
 export type ThreadPluginState = {
@@ -93,4 +119,16 @@ export type AiCommands<ReturnType> = {
   closeAi: () => ReturnType;
   /** @internal */
   setAiPrompt: (prompt: string | ((prompt: string) => string)) => ReturnType;
+};
+
+// these types are not exported from y-prosemirror
+export type YSyncBinding = {
+  doc: Doc;
+  type: XmlFragment;
+  mapping: ProsemirrorMapping;
+  mux: (fn: () => void) => void;
+};
+
+export type YSyncPluginState = {
+  binding: YSyncBinding;
 };

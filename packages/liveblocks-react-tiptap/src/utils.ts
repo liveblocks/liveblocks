@@ -2,9 +2,39 @@ import type { ClientRectObject } from "@floating-ui/react-dom";
 import type { Editor, Range } from "@tiptap/core";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Fragment } from "@tiptap/pm/model";
-import type { TextSelection } from "@tiptap/pm/state";
+import type { EditorState, TextSelection } from "@tiptap/pm/state";
+import {
+  getRelativeSelection,
+  relativePositionToAbsolutePosition,
+  ySyncPluginKey,
+} from "y-prosemirror";
+import type { RelativePosition } from "yjs";
 
+import type { YSyncPluginState } from "./types";
 import { LIVEBLOCKS_MENTION_TYPE } from "./types";
+
+export const getRelativeSelectionFromState = (state: EditorState) => {
+  const pluginState = ySyncPluginKey.getState(state) as YSyncPluginState;
+  if (!pluginState) return null;
+  return getRelativeSelection(pluginState.binding, state);
+};
+
+export const getRangeFromRelativeSelections = (
+  pos: { anchor: RelativePosition; head: RelativePosition },
+  state: EditorState
+) => {
+  const pluginState = ySyncPluginKey.getState(state) as YSyncPluginState;
+  if (!pluginState) return { from: 0, to: 0 };
+  const { doc, type, mapping } = pluginState.binding;
+  const anchor =
+    relativePositionToAbsolutePosition(doc, type, pos.anchor, mapping) ?? 0;
+  const head =
+    relativePositionToAbsolutePosition(doc, type, pos.head, mapping) ?? 0;
+
+  const from = anchor > head ? head : anchor;
+  const to = anchor > head ? anchor : head;
+  return { from, to };
+};
 
 export const getRectFromCoords = (coords: {
   top: number;

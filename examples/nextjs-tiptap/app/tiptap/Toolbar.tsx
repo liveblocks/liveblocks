@@ -1,51 +1,206 @@
-import { Editor } from "@tiptap/react";
+
+import { Editor, useEditorState } from "@tiptap/react";
 import CommentIcon from "./icons/comment-icon";
+import { autoUpdate, ClientRectObject, hide, limitShift, offset, shift, size, useFloating } from "@floating-ui/react-dom";
+import { useCallback, useLayoutEffect } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 type Props = {
   editor: Editor | null;
 };
+export const FLOATING_TOOLBAR_PADDING = 10;
 
+const getRectFromCoords = (coords: {
+  top: number;
+  left: number;
+  right: number;
+  bottom: number;
+}): ClientRectObject => {
+  return {
+    ...coords,
+    x: coords.left,
+    y: coords.top,
+    width: coords.right - coords.left,
+    height: coords.bottom - coords.top,
+  };
+};
+interface AiButtonProps {
+  prompt: string;
+  editor: Editor;
+  children: React.ReactNode;
+}
+
+const AiButton = ({ children, editor, prompt }: AiButtonProps) => (
+  <DropdownMenuItem>
+    <button onClick={() => editor.chain().focus().doPrompt(prompt).run()} className="p-1 text-zinc-200 rounded-md hover:bg-zinc-700 text-sm transition-colors duration-200 focus:outline-none">
+      {children}
+    </button>
+  </DropdownMenuItem>
+);
 
 export function Toolbar({ editor }: Props) {
   if (!editor) {
     return null;
   }
 
-  return (
-    <div className="flex gap-1.5">
-      <button
-        className="flex items-center justify-center cursor-pointer rounded-md h-8 w-8 bg-white text-gray-800 border-none shadow-md hover:text-gray-900 hover:shadow-lg focus:outline-offset-2 active:shadow-sm data-[active=is-active]:bg-gray-300"
-        onClick={() => editor.chain().focus().toggleBold().run()}
-        disabled={!editor.can().chain().focus().toggleBold().run()}
-        data-active={editor.isActive("bold") ? "is-active" : undefined}
-        aria-label="bold"
-      >
-        <BoldIcon />
-      </button>
-      <button className="flex items-center justify-center cursor-pointer rounded-md h-8 w-8 bg-white text-gray-800 border-none shadow-md hover:text-gray-900 hover:shadow-lg focus:outline-offset-2 active:shadow-sm data-[active=is-active]:bg-gray-300"
-        onClick={() => editor.chain().focus().toggleItalic().run()}
-        disabled={!editor.can().chain().focus().toggleItalic().run()}
-        data-active={editor.isActive("italic") ? "is-active" : undefined}
-        aria-label="italic"
-      >
-        <ItalicIcon />
-      </button>
-      <button className="flex items-center justify-center cursor-pointer rounded-md h-8 w-8 bg-white text-gray-800 border-none shadow-md hover:text-gray-900 hover:shadow-lg focus:outline-offset-2 active:shadow-sm data-[active=is-active]:bg-gray-300"
-        onClick={() => editor.chain().focus().toggleStrike().run()}
-        disabled={!editor.can().chain().focus().toggleStrike().run()}
-        data-active={editor.isActive("strike") ? "is-active" : undefined}
-        aria-label="strikethrough"
-      >
-        <StrikethroughIcon />
-      </button>
-      <button className="flex items-center justify-center cursor-pointer rounded-md h-8 w-8 bg-white text-gray-800 border-none shadow-md hover:text-gray-900 hover:shadow-lg focus:outline-offset-2 active:shadow-sm data-[active=is-active]:bg-gray-300"
-        onClick={() => editor.chain().focus().addPendingComment().run()}
+  const { empty, from, aiState } = useEditorState({
+    editor,
+    selector: (ctx) => ({
+      empty: ctx.editor.view.state.selection.empty,
+      from: ctx.editor.view.state.selection.from,
+      aiState: ctx.editor.extensionStorage.liveblocksAi?.state
+    }),
+  }) ?? { empty: true, from: 0, to: 0 };
 
-        data-active={editor.isActive("lb-comment") ? "is-active" : undefined}
-        aria-label="strikethrough"
+  const {
+    refs: { setReference, setFloating },
+    strategy,
+    x,
+    y,
+  } = useFloating({
+    strategy: "fixed",
+    placement: "top-start",
+    middleware: [
+      offset({
+        mainAxis: 10,
+        alignmentAxis: -30,
+      }),
+      hide({ padding: FLOATING_TOOLBAR_PADDING }),
+      shift({
+        padding: FLOATING_TOOLBAR_PADDING,
+        limiter: limitShift(),
+      }),
+      size({ padding: FLOATING_TOOLBAR_PADDING }),
+    ],
+    whileElementsMounted: (...args) => {
+      return autoUpdate(...args, {
+        animationFrame: true,
+      });
+    },
+  });
+
+  const updateRef = useCallback(() => {
+    if (!editor || empty || aiState !== null) {
+      return;
+    }
+    const rect = getRectFromCoords(editor.view.coordsAtPos(from));
+    setReference({
+      getBoundingClientRect: () => rect,
+    });
+  }, [setReference, editor, from, empty]);
+
+  const isVisible = !empty || !!aiState;
+
+  useLayoutEffect(updateRef, [updateRef]);
+
+  return (
+    <div className="flex gap-1 z-50 duration-75 bg-zinc-800 rounded-lg border border-zinc-700 p-0.5 transition-all" ref={setFloating}
+      style={{
+        display: isVisible ? "flex" : "none",
+        position: strategy,
+        top: 0,
+        left: 0,
+        transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`,
+        minWidth: "max-content",
+      }}>
+      {aiState === "thinking" && <div className="flex w-full h-full items-center justify-center flex-1 p-1">
+        <p>Thinking...</p>
+        <img
+          src="https://liveblocks.io/loading.svg"
+          alt="Loading"
+          className="size-8 opacity-20 invert"
+        />
+      </div>}
+      {aiState === "waiting_for_input" && <> <button
+        className="flex items-center justify-center rounded-md h-8 w-20 text-zinc-200 hover:bg-zinc-700 transition-colors duration-200 focus:outline-none data-[active=is-active]:bg-zinc-100 data-[active=is-active]:text-black"
+        onClick={() => editor.commands.acceptAi()}
+        aria-label="accept"
       >
-        <CommentIcon />
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4 mr-1 stroke-emerald-700">
+          <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+        </svg>
+
+        Accept
       </button>
+        <button
+          className="flex items-center justify-center rounded-md h-8 w-20 text-zinc-200 hover:bg-zinc-700 transition-colors duration-200 focus:outline-none data-[active=is-active]:bg-zinc-100 data-[active=is-active]:text-black"
+          onClick={() => editor.commands.rejectAi()}
+          data-active={editor.isActive("bold") ? "is-active" : undefined}
+          aria-label="reject"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="size-4 mr-1 stroke-red-600">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+
+          Reject
+        </button>
+
+      </>}
+      {aiState === null && <><DropdownMenu >
+        <DropdownMenuTrigger className="ml-1">
+          <button className="flex text-zinc-200 rounded-md hover:bg-zinc-700 text-sm transition-colors duration-200 focus:outline-none">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-5 pt-0.5 mr-1">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" />
+            </svg>
+
+            Ask Ai</button></DropdownMenuTrigger>
+        <DropdownMenuContent align="start" alignOffset={-8} sideOffset={8} className="p-1 z-50 bg-zinc-800 rounded-lg border border-zinc-700 text-zinc-200">
+          <DropdownMenuLabel className=" text-zinc-500 pb-1 pl-1 ">Suggested</DropdownMenuLabel>
+
+          <AiButton editor={editor} prompt="Improve writing">Improve writing</AiButton>
+          <AiButton editor={editor} prompt="Fix spelling and grammar">Fix spelling & grammar</AiButton>
+          <AiButton editor={editor} prompt="Translate to French">Translate to French</AiButton>
+          <AiButton editor={editor} prompt="Translate to English">Translate to English</AiButton>
+
+          <DropdownMenuLabel className="border-t border-zinc-700 text-zinc-500 pt-2 pb-1 pl-1 mt-2">Edit</DropdownMenuLabel>
+
+          <AiButton editor={editor} prompt="Make shorter">Make shorter</AiButton>
+          <AiButton editor={editor} prompt="Make longer">Make longer</AiButton>
+
+        </DropdownMenuContent>
+      </DropdownMenu>
+        <button
+          className="flex items-center justify-center rounded-md h-8 w-8 text-zinc-200 hover:bg-zinc-700 transition-colors duration-200 focus:outline-none data-[active=is-active]:bg-zinc-100 data-[active=is-active]:text-black"
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          disabled={!editor.can().chain().focus().toggleBold().run()}
+          data-active={editor.isActive("bold") ? "is-active" : undefined}
+          aria-label="bold"
+        >
+          <BoldIcon />
+        </button>
+        <button
+          className="flex items-center justify-center rounded-md h-8 w-8 text-zinc-200 hover:bg-zinc-700 transition-colors duration-200 focus:outline-none data-[active=is-active]:bg-zinc-100 data-[active=is-active]:text-black"
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          disabled={!editor.can().chain().focus().toggleItalic().run()}
+          data-active={editor.isActive("italic") ? "is-active" : undefined}
+          aria-label="italic"
+        >
+          <ItalicIcon />
+        </button>
+        <button
+          className="flex items-center justify-center rounded-md h-8 w-8 text-zinc-200 hover:bg-zinc-700 transition-colors duration-200 focus:outline-none data-[active=is-active]:bg-zinc-100 data-[active=is-active]:text-black"
+          onClick={() => editor.chain().focus().toggleStrike().run()}
+          disabled={!editor.can().chain().focus().toggleStrike().run()}
+          data-active={editor.isActive("strike") ? "is-active" : undefined}
+          aria-label="strikethrough"
+        >
+          <StrikethroughIcon />
+        </button>
+        <button
+          className="flex items-center justify-center rounded-md h-8 w-8 text-zinc-200 hover:bg-zinc-700 transition-colors duration-200 focus:outline-none data-[active=is-active]:bg-zinc-100 data-[active=is-active]:text-black"
+          onClick={() => editor.chain().focus().addPendingComment().run()}
+          data-active={editor.isActive("lb-comment") ? "is-active" : undefined}
+          aria-label="strikethrough"
+        >
+          <CommentIcon />
+        </button></>}
+
     </div>
   );
 }
