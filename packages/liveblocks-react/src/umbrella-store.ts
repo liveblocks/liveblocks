@@ -834,9 +834,6 @@ function createStore_forOptimistic<M extends BaseMetadata>(
     // Mutations
     add,
     remove,
-
-    // XXX_vincent Remove this eventually
-    invalidate: () => signal.set((store) => [...store]),
   };
 }
 
@@ -1527,7 +1524,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     batch(() => {
       this.historyVersions.invalidate();
       this.notifications.invalidate();
-      this.optimisticUpdates.invalidate();
       this.permissionHints.invalidate();
     });
   }
