@@ -37,7 +37,7 @@ describe("Umbrella Store", () => {
     expect(store.outputs.versionsByRoomId.get()).toEqual({}); // versions by room ID
 
     // Sync async-results getters
-    expect(store.getInboxNotificationsLoadingState()).toEqual(loading);
+    expect(store.outputs.loadingNotifications.get()).toEqual(loading);
     expect(store.getNotificationSettingsLoadingState("room-a")).toEqual(
       loading
     );
@@ -54,9 +54,8 @@ describe("Umbrella Store", () => {
     );
 
     // Sync async-results getter
-    // TODO Add check here for strict-equality of the OK-state, which currently isn't strictly-equal and the selectors/isEqual functions are still "working around" that
-    expect(store.getInboxNotificationsLoadingState()).toBe(
-      store.getInboxNotificationsLoadingState()
+    expect(store.outputs.loadingNotifications.get()).toBe(
+      store.outputs.loadingNotifications.get()
     );
     // TODO Add check here for strict-equality of the OK-state, which currently isn't strictly-equal and the selectors/isEqual functions are still "working around" that
     expect(store.getNotificationSettingsLoadingState("room-a")).toBe(

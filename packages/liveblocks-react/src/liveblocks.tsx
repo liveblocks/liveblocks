@@ -414,29 +414,7 @@ function useInboxNotifications_withClient<T>(
     };
   }, [poller]);
 
-  // XXX_vincent There is a disconnect between this getter and subscriber! It's
-  // not clear (unless you read the implementation of
-  // getInboxNotificationsLoadingState) why this getter should be paired with
-  // `store.outputs.notifications.subscribe`.
-  //
-  // Ideally refactor this to:
-  //
-  //   useSignal(
-  //     store.outputs.loadingNotifications,  // exposes { getNotifications }
-  //
-  //     useCallback(
-  //       ({ getNotifications }) => getNotifications(),
-  //       [options.query]
-  //     )
-  //   )
-  //
-  return useSyncExternalStoreWithSelector(
-    store.outputs.notifications.subscribe,
-    store.getInboxNotificationsLoadingState,
-    store.getInboxNotificationsLoadingState,
-    selector,
-    isEqual
-  );
+  return useSignal(store.outputs.loadingNotifications, selector, isEqual);
 }
 
 function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {

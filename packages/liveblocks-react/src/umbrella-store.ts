@@ -846,6 +846,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     readonly threadifications: DerivedSignal<CleanThreadifications<M>>;
     readonly threads: DerivedSignal<ReadonlyThreadDB<M>>;
     readonly notifications: DerivedSignal<CleanNotifications>;
+    readonly loadingNotifications: DerivedSignal<InboxNotificationsAsyncResult>;
     readonly settingsByRoomId: DerivedSignal<SettingsByRoomId>;
     readonly versionsByRoomId: DerivedSignal<VersionsByRoomId>;
   };
@@ -940,10 +941,30 @@ export class UmbrellaStore<M extends BaseMetadata> {
         )
     );
 
+    const notifications2 = DerivedSignal.from(() => {
+      const asyncResult = this.#notifications.get();
+      if (asyncResult.isLoading || asyncResult.error) {
+        return asyncResult;
+      }
+
+      const page = asyncResult.data;
+      // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
+      return {
+        isLoading: false,
+        inboxNotifications:
+          this.outputs.notifications.get().sortedNotifications,
+        hasFetchedAll: page.hasFetchedAll,
+        isFetchingMore: page.isFetchingMore,
+        fetchMoreError: page.fetchMoreError,
+        fetchMore: page.fetchMore,
+      } as const;
+    });
+
     this.outputs = {
       threadifications,
       threads,
       notifications,
+      loadingNotifications: notifications2,
       settingsByRoomId,
       versionsByRoomId,
     };
@@ -1018,25 +1039,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     return {
       isLoading: false,
       threads,
-      hasFetchedAll: page.hasFetchedAll,
-      isFetchingMore: page.isFetchingMore,
-      fetchMoreError: page.fetchMoreError,
-      fetchMore: page.fetchMore,
-    };
-  }
-
-  // NOTE: This will read the async result, but WILL NOT start loading at the moment!
-  public getInboxNotificationsLoadingState(): InboxNotificationsAsyncResult {
-    const asyncResult = this.#notifications.get();
-    if (asyncResult.isLoading || asyncResult.error) {
-      return asyncResult;
-    }
-
-    const page = asyncResult.data;
-    // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
-    return {
-      isLoading: false,
-      inboxNotifications: this.outputs.notifications.get().sortedNotifications,
       hasFetchedAll: page.hasFetchedAll,
       isFetchingMore: page.isFetchingMore,
       fetchMoreError: page.fetchMoreError,
