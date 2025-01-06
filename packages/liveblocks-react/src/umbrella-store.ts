@@ -954,6 +954,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
             return ASYNC_LOADING;
           }
 
+          // XXX Use an AsyncResult mapper helper somehow
           const asyncResult = paginatedResource.get();
           if (asyncResult.isLoading || asyncResult.error) {
             return asyncResult;
@@ -1010,6 +1011,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return ASYNC_LOADING;
     }
 
+    // XXX Use an AsyncResult mapper helper somehow
     const asyncResult = paginatedResource.get();
     if (asyncResult.isLoading || asyncResult.error) {
       return asyncResult;
@@ -1036,6 +1038,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): ThreadsAsyncResult<M> {
     const queryKey = makeUserThreadsQueryKey(query);
 
+    // XXX Use an AsyncResult mapper helper somehow
     const paginatedResource = this.#userThreads.get(queryKey);
     if (paginatedResource === undefined) {
       return ASYNC_LOADING;
@@ -1095,6 +1098,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return ASYNC_LOADING;
     }
 
+    // XXX Use an AsyncResult mapper helper somehow
     const asyncResult = resource.get();
     if (asyncResult.isLoading || asyncResult.error) {
       return asyncResult;
