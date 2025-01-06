@@ -5,10 +5,42 @@ meta:
 ---
 
 A pattern we’d recommend when using [Next.js](https://nextjs.org) /app directory
-is creating a `Room.tsx` client component in the current route, and using
+is creating a providers client component for
+[`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider)
+and importing it into `layout.tsx`.
+
+```tsx file="app/Providers.tsx"
+import { ReactNode } from "react";
+import { LiveblocksProvider } from "@liveblocks/react/suspense";
+
+export function Providers({ children }: { children: ReactNode }) {
+  return (
+    <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
+      {children}
+    </LiveblocksProvider>
+  );
+}
+```
+
+```tsx file="app/layout.tsx"
+import { ReactNode } from "react";
+import { Providers } from "./Providers";
+
+export default function Layout({ children }: { children: ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        <Providers>{children}</Providers>
+      </body>
+    </html>
+  );
+}
+```
+
+To join rooms, create a `Room.tsx` client component in the current route, using
 `RoomProvider` within here.
 
-```tsx file="Room.tsx"
+```tsx file="app/Room.tsx"
 "use client";
 
 import { ReactNode } from "react";
@@ -31,21 +63,14 @@ export default function Room({ children }: { children: ReactNode }) {
 ```
 
 Doing this avoids an issue when importing `LiveObject/LiveMap/ListList` into
-server components. You can then use `Room.tsx` in your server component, and
+server components. You can then use `Room.tsx` in your page component, and
 everything will work as expected.
 
-```tsx file="layout.tsx"
-import { ReactNode } from "react";
+```tsx file="app/page.tsx"
 import { Room } from "./Room";
 
-export default function Layout({ children }: { children: ReactNode }) {
-  return (
-    <html lang="en">
-      <body>
-        <Room>{children}</Room>
-      </body>
-    </html>
-  );
+export default function Page() {
+  return <Room>{/* Your Liveblocks app */}</Room>;
 }
 ```
 
@@ -60,21 +85,17 @@ import { ReactNode } from "react";
 import { Room } from "./Room";
 import { LiveCanvas } from "./LiveCanvas";
 
-export default function Layout({ children }: { children: ReactNode }) {
+export default function Page({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
-      <body>
-        {/* Room.tsx is a client component that contains RoomProvider */}
-        <Room>
-          {/* This layout is server rendered */}
-          <header style={{ height: "150px" }}>My drawing app</header>
-          <main style={{ width: "100%" }}>
-            {/* LiveCanvas is a client component using Liveblocks features */}
-            <LiveCanvas />
-          </main>
-        </Room>
-      </body>
-    </html>
+    // Room.tsx is a client component that contains RoomProvider
+    <Room>
+      {/* This layout is server rendered */}
+      <header style={{ height: "150px" }}>My drawing app</header>
+      <main style={{ width: "100%" }}>
+        {/* LiveCanvas is a client component using Liveblocks features */}
+        <LiveCanvas />
+      </main>
+    </Room>
   );
 }
 ```

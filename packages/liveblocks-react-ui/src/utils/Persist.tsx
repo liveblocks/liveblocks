@@ -12,8 +12,7 @@ import {
   useRef,
   useState,
 } from "react";
-
-import { flushSync } from "./flush-sync";
+import { flushSync } from "react-dom";
 
 // Persist is an overly simplified version of Framer Motion's AnimatePresence,
 // mostly mimicking its usePresence API: https://github.com/framer/motion/blob/main/packages/framer-motion/src/components/AnimatePresence/use-presence.ts

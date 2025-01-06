@@ -54,93 +54,32 @@ Then run the following command to install the Liveblocks packages:
 npm install @liveblocks/client @liveblocks/react
 ```
 
-### Connect to Liveblocks servers [#connect-liveblocks-servers]
+## Join a Liveblocks room
 
-In order to use Liveblocks, we’ll need to sign up and get an API key.
-[Create an account](/api/auth/signup), then navigate to
-[the dashboard](/dashboard/apikeys) to find your public key (it starts with
-`pk_`).
+Liveblocks uses the concept of rooms, separate virtual spaces where people
+collaborate. To create a realtime experience, multiple users must be connected
+to the same room. Create a file in the current directory within `/app`, and name
+it `Room.tsx`. Pass the location of your endpoint to `LiveblocksProvider`.
 
-<Banner title="Public vs secret key">
+```tsx file="/pages/index.tsx"
+"use client";
 
-With a secret key, you can control who can access the room. it’s more secure but
-you need your own back-end endpoint. For this tutorial, we’ll go with a public
-key. For more info, see the [authentication guide](/docs/authentication).
-
-</Banner>
-
-Let’s now add a new file `liveblocks.config.ts` at the root of your app to
-create a Liveblocks client, using the public key as shown below.
-
-```tsx file="liveblocks.config.ts"
-import { createClient } from "@liveblocks/client";
-
-const client = createClient({
-  publicApiKey: "{{PUBLIC_KEY}}",
-});
-```
-
-### Connect to a Liveblocks room [#connect-liveblocks-room]
-
-Liveblocks uses the concept of _rooms_, separate virtual spaces where people can
-collaborate. To create a collaborative experience, multiple users must be
-connected to the same room.
-
-Instead of using the client directly, we’re going to use [`createRoomContext`][]
-from `@liveblocks/react` to create a [`RoomProvider`][] and hooks to make it
-easy to consume from our components.
-
-```tsx file="liveblocks.config.ts" highlight="2,8-10"
-import { createClient } from "@liveblocks/client";
-import { createRoomContext } from "@liveblocks/react";
-
-const client = createClient({
-  publicApiKey: "{{PUBLIC_KEY}}",
-});
-
-export const {
-  suspense: { RoomProvider },
-} = createRoomContext(client);
-```
-
-You might be wondering why we’re creating our Providers and Hooks with
-`createRoomContext` instead of importing them directly from
-`@liveblocks/client`. This allows TypeScript users to define their Liveblocks
-types once in one unique location—providing a helpful autocompletion experience
-when using those hooks elsewhere.
-
-We can now import the `RoomProvider` directly from our `liveblocks.config.ts`
-file. Every component wrapped inside `RoomProvider` will have access to the
-React hooks we’ll be using to interact with this room.
-
-```tsx file="pages/index.tsx" highlight="1,4"
-import { RoomProvider } from "@/liveblocks.config";
-
-export default function Page() {
-  return <RoomProvider id="nextjs-todo-list">{/* ... */}</RoomProvider>;
-}
-```
-
-You may also notice that we’re exporting the suspense version of our hooks in
-`liveblocks.config.ts`. Because Next.js uses server-side rendering by default,
-we must wrap `RoomProvider` children in our
-[`ClientSideSuspense`](/docs/api-reference/liveblocks-react#suspense-avoid-ssr)
-component. Liveblocks does not connect through WebSocket when running on server,
-so `ClientSideSuspense` ensure its children are not rendered on the server. More
-information can be found
-[here](/docs/api-reference/liveblocks-react#suspense-avoid-ssr).
-
-```tsx file="pages/index.tsx" highlight="1,7-9,14-20"
-import { ClientSideSuspense } from "@liveblocks/react";
-import { RoomProvider } from "@/liveblocks.config";
+import { ReactNode } from "react";
+import {
+  LiveblocksProvider,
+  RoomProvider,
+  ClientSideSuspense,
+} from "@liveblocks/react/suspense";
 
 export default function Page() {
   return (
-    <RoomProvider id="nextjs-todo-list">
-      <ClientSideSuspense fallback={<div>Loading...</div>}>
-        <TodoList />
-      </ClientSideSuspense>
-    </RoomProvider>
+    <LiveblocksProvider publicApiKey={"{{SECRET_KEY}}"}>
+      <RoomProvider id="my-room">
+        <ClientSideSuspense fallback={<div>Loading…</div>}>
+          <ToDoList />
+        </ClientSideSuspense>
+      </RoomProvider>
+    </LiveblocksProvider>
   );
 }
 
@@ -176,29 +115,20 @@ users are currently online.
 </figure>
 
 We’ll be doing this by adding [`useOthers`][], a selector hook that provides us
-information about which _other_ users are online. First, let’s re-export it from
-`liveblocks.config.ts`. Because we’re using `Suspense`, we’ll be exporting all
-our hooks from the `suspense` property.
-
-```tsx file="liveblocks.config.ts" highlight="6"
-//...
-
-export const {
-  suspense: {
-    RoomProvider,
-    useOthers, // 👈
-  },
-} = createRoomContext(client);
-```
+information about which _other_ users are online.
 
 [`useOthers`][] takes a selector function that receives an array, `others`,
 containing information about each user. We can get the current user count from
 the length of that array. Add the following code to `pages/index.tsx`, and open
 your app in multiple windows to see it in action.
 
-```tsx file="pages/index.tsx" highlight="2,4-10,13-17"
-import { ClientSideSuspense } from "@liveblocks/react";
-import { RoomProvider, useOthers } from "@/liveblocks.config";
+```tsx file="pages/index.tsx"
+import {
+  LiveblocksProvider,
+  RoomProvider,
+  ClientSideSuspense,
+  useOthers,
+} from "@liveblocks/react/suspense";
 
 function WhoIsHere() {
   const userCount = useOthers((others) => others.length);
@@ -330,36 +260,27 @@ currently typing or not.
 Let’s define a new type `Presence` with the property `isTyping` in
 `liveblocks.config.ts` to ensure all our presence hooks are typed properly.
 
-We can use the [`useUpdateMyPresence`][] hook to change with the current user’s
-presence. But first, let’s re-export it from `liveblocks.config.ts` like we did
-previously with `useOthers`.
-
-```tsx file="liveblocks.config.ts" highlight="3-5,11,13"
-// ...
-
-type Presence = {
-  isTyping: boolean;
-};
-
-export const {
-  suspense: {
-    RoomProvider,
-    useOthers,
-    useUpdateMyPresence, // 👈
-  },
-} = createRoomContext<Presence>(client); // 👈
+```tsx file="liveblocks.config.ts"
+declare global {
+  interface Liveblocks {
+    // +++
+    Presence: { isTyping: boolean };
+    // +++
+  }
+}
 ```
 
-We can then call `updateMyPresence` whenever we wish to update the user’s
+We can then call [`useUpdateMyPresence`][] whenever we wish to update the user’s
 current presence, in this case whether they’re typing or not.
 
-```tsx highlight="5,7,12-13,18-33" file="pages/index.tsx"
-import { ClientSideSuspense } from "@liveblocks/react";
+```tsx file="pages/index.tsx"
 import {
+  LiveblocksProvider,
   RoomProvider,
+  ClientSideSuspense,
   useOthers,
   useUpdateMyPresence,
-} from "@/liveblocks.config";
+} from "@liveblocks/react/suspense";
 import { useState } from "react";
 
 /* WhoIsHere */
@@ -399,13 +320,14 @@ called `SomeoneIsTyping`, and use this to display a message whilst anyone else
 is typing. To check if anyone is typing, we’re iterating through `others` and
 returning true if `isTyping` is true for any user.
 
-```tsx highlight="12-14,18,31" file="pages/index.tsx"
-import { ClientSideSuspense } from "@liveblocks/react";
+```tsx file="pages/index.tsx"
 import {
+  LiveblocksProvider,
   RoomProvider,
+  ClientSideSuspense,
   useOthers,
   useUpdateMyPresence,
-} from "@/liveblocks.config";
+} from "@liveblocks/react/suspense";
 import { useState } from "react";
 
 /* WhoIsHere */
@@ -441,16 +363,22 @@ function TodoList() {
 We also need to make sure that we pass an `initialPresence` for `isTyping` to
 `RoomProvider`.
 
-```tsx highlight="7" file="pages/index.tsx"
+```tsx file="pages/index.tsx"
 /* WhoIsHere */
 /* SomeoneIsTyping */
 /* TodoList */
 
 export default function Page() {
   return (
-    <RoomProvider id="next-todo-list" initialPresence={{ isTyping: false }}>
-      {/* ... */}
-    </RoomProvider>
+    <LiveblocksProvider publicApiKey={"{{SECRET_KEY}}"}>
+      // +++
+      <RoomProvider id="my-room" initialPresence={{ isTyping: false }}>
+        // +++
+        <ClientSideSuspense fallback={<div>Loading…</div>}>
+          <ToDoList />
+        </ClientSideSuspense>
+      </RoomProvider>
+    </LiveblocksProvider>
   );
 }
 ```
@@ -485,20 +413,20 @@ the `LiveList` will still be consistent for all users in the room.
 First, let's declare a new type `Storage` in `liveblocks.config.ts`, like we did
 for `Presence`. This will ensure that our storage hooks are properly typed.
 
-```tsx file="liveblocks.config.ts" highlight="1,5-7,13"
-import { createClient, LiveList } from "@liveblocks/client";
+```tsx file="liveblocks.config.ts"
+import { LiveList } from "@liveblocks/client";
 
-// ...
+declare global {
+  interface Liveblocks {
+    Presence: { isTyping: boolean };
 
-type Storage = {
-  todos: LiveList<{ text: string }>;
-};
-
-export const {
-  suspense: {
-    /* ... */
-  },
-} = createRoomContext<Presence, Storage>(client); // 👈
+    // +++
+    Storage: {
+      todos: LiveList<{ text: string }>;
+    };
+    // +++
+  }
+}
 ```
 
 Go back to `Page` to initialize the storage with the `initialStorage` prop on
@@ -515,13 +443,19 @@ import { LiveList } from "@liveblocks/client";
 
 export default function Page() {
   return (
-    <RoomProvider
-      id="react-todo-app"
-      initialPresence={{ isTyping: false }}
-      initialStorage={{ todos: new LiveList() }}
-    >
-      {/* ... */}
-    </RoomProvider>
+    <LiveblocksProvider publicApiKey={"{{SECRET_KEY}}"}>
+      <RoomProvider
+        id="my-room"
+        initialPresence={{ isTyping: false }}
+        // +++
+        initialStorage={{ todos: new LiveList() }}
+        // +++
+      >
+        <ClientSideSuspense fallback={<div>Loading…</div>}>
+          <ToDoList />
+        </ClientSideSuspense>
+      </RoomProvider>
+    </LiveblocksProvider>
   );
 }
 ```
@@ -529,36 +463,23 @@ export default function Page() {
 ### Accessing storage [#accessing-liveblocks-storage]
 
 We’re going to use the [`useStorage`][] hook to get the list of todos previously
-created. And once again, we’ll need to first re-export it from your
-`liveblocks.config`.
-
-```tsx file="liveblocks.config.ts" highlight="7"
-// ...
-
-export const {
-  suspense: {
-    RoomProvider,
-    useOthers,
-    useStorage, // 👈
-    useUpdateMyPresence,
-  },
-} = createRoomContext<Presence, Storage>(client);
-```
+created.
 
 `useStorage` allows us to select part of the storage from the `root` level. We
 can find our `todos` `LiveList` at `root.todos`, and we can map through our list
 to display each item.
 
-```tsx highlight="6,17,32-43" file="pages/index.tsx"
-import { ClientSideSuspense } from "@liveblocks/react";
+```tsx file="pages/index.tsx"
 import {
+  LiveblocksProvider,
   RoomProvider,
+  ClientSideSuspense,
   useOthers,
   useUpdateMyPresence,
-  useStorage
-} from "@/liveblocks.config";
-import { useState } from "react";
+  useStorage,
+} from "@liveblocks/react/suspense";
 import { LiveList } from "@liveblocks/client";
+import { useState } from "react";
 
 /* WhoIsHere */
 /* SomeoneIsTyping */
@@ -604,39 +525,25 @@ function TodoList() {
 
 To modify the list, we can use the [`useMutation`][] hook. This is a hook that
 works similarly to `useCallback`, with a dependency array, allowing you to
-create a reusable storage mutation. Before we use this, first we need to
-re-export this from `liveblocks.config.ts`.
-
-```tsx file="liveblocks.config.ts" highlight="6"
-// ...
-
-export const {
-  suspense: {
-    RoomProvider,
-    useMutation, // 👈
-    useOthers,
-    useStorage,
-    useUpdateMyPresence,
-  },
-} = createRoomContext<Presence, Storage>(client);
-```
+create a reusable storage mutation.
 
 `useMutation` gives you access to the storage root, a [`LiveObject`][]. From
 here we can use [`LiveObject.get`][] to retrieve the `todos` list, then use
 [`LiveList.push`][] and [`LiveList.delete`][] to modify our todo list. These
 functions are then passed into the appropriate events.
 
-```tsx highlight="7,20-22,24-26,37,50" file="pages/index.tsx"
-import { ClientSideSuspense } from "@liveblocks/react";
+```tsx file="pages/index.tsx"
 import {
+  LiveblocksProvider,
   RoomProvider,
+  ClientSideSuspense,
   useOthers,
   useUpdateMyPresence,
   useStorage,
-  useMutation
-} from "@/liveblocks.config";
-import { useState } from "react";
+  useMutation,
+} from "@liveblocks/react/suspense";
 import { LiveList } from "@liveblocks/client";
+import { useState } from "react";
 
 /* WhoIsHere */
 /* SomeoneIsTyping */
