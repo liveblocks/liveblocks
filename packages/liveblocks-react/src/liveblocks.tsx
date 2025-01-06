@@ -54,6 +54,7 @@ import type {
   UseUserThreadsOptions,
 } from "./types";
 import { UmbrellaStore } from "./umbrella-store";
+import { useSignal } from "./use-signal";
 import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
 
 /**
@@ -413,14 +414,24 @@ function useInboxNotifications_withClient<T>(
     };
   }, [poller]);
 
-  // XXX_vincent There is a disconnect between this getter and subscriber! It's unclear
-  // why the getInboxNotificationsLoadingState getter should be paired with
-  // subscribe1 and not subscribe2 from the outside! (The reason is that
-  // getInboxNotificationsLoadingState internally uses `get1` not `get2`.) This
-  // is strong evidence that getInboxNotificationsLoadingState itself wants to
-  // be a Signal! Once we make it a Signal, we can simply use `useSignal()` here! ❤️
+  // XXX_vincent There is a disconnect between this getter and subscriber! It's
+  // not clear (unless you read the implementation of
+  // getInboxNotificationsLoadingState) why this getter should be paired with
+  // `store.outputs.notifications.subscribe`.
+  //
+  // Ideally refactor this to:
+  //
+  //   useSignal(
+  //     store.outputs.loadingNotifications,  // exposes { getNotifications }
+  //
+  //     useCallback(
+  //       ({ getNotifications }) => getNotifications(),
+  //       [options.query]
+  //     )
+  //   )
+  //
   return useSyncExternalStoreWithSelector(
-    store.subscribe1_notifications,
+    store.outputs.notifications.subscribe,
     store.getInboxNotificationsLoadingState,
     store.getInboxNotificationsLoadingState,
     selector,
@@ -571,37 +582,32 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
   inboxNotificationId: string
 ): ThreadData<M> {
   const { store } = getLiveblocksExtrasForClient<M>(client);
+  return useSignal(
+    store.outputs.threadifications,
+    useCallback(
+      (state) => {
+        const inboxNotification =
+          state.notificationsById[inboxNotificationId] ??
+          raise(
+            `Inbox notification with ID "${inboxNotificationId}" not found`
+          );
 
-  const getter = store.get1_both;
+        if (inboxNotification.kind !== "thread") {
+          raise(
+            `Inbox notification with ID "${inboxNotificationId}" is not of kind "thread"`
+          );
+        }
 
-  const selector = useCallback(
-    (state: ReturnType<typeof getter>) => {
-      const inboxNotification =
-        state.notificationsById[inboxNotificationId] ??
-        raise(`Inbox notification with ID "${inboxNotificationId}" not found`);
+        const thread =
+          state.threadsDB.get(inboxNotification.threadId) ??
+          raise(
+            `Thread with ID "${inboxNotification.threadId}" not found, this inbox notification might not be of kind "thread"`
+          );
 
-      if (inboxNotification.kind !== "thread") {
-        raise(
-          `Inbox notification with ID "${inboxNotificationId}" is not of kind "thread"`
-        );
-      }
-
-      const thread =
-        state.threadsDB.get(inboxNotification.threadId) ??
-        raise(
-          `Thread with ID "${inboxNotification.threadId}" not found, this inbox notification might not be of kind "thread"`
-        );
-
-      return thread;
-    },
-    [inboxNotificationId]
-  );
-
-  return useSyncExternalStoreWithSelector(
-    store.subscribe1_both, // Re-evaluate if we need to update any time the notification changes over time
-    getter,
-    getter,
-    selector
+        return thread;
+      },
+      [inboxNotificationId]
+    )
   );
 }
 
@@ -612,7 +618,7 @@ function useUser_withClient<U extends BaseUserMeta>(
   const usersStore = client[kInternal].usersStore;
 
   const getUserState = useCallback(
-    () => usersStore.getState(userId),
+    () => usersStore.getItemState(userId),
     [usersStore, userId]
   );
 
@@ -631,11 +637,19 @@ function useUser_withClient<U extends BaseUserMeta>(
   );
 
   // Trigger a fetch if we don't have any data yet (whether initially or after an invalidation)
-  useEffect(() => {
-    // NOTE: .get() will trigger any actual fetches, whereas .getState() will not,
-    // and it won't trigger a fetch if we already have data
-    void usersStore.get(userId);
-  }, [usersStore, userId, result]);
+  useEffect(
+    () => void usersStore.enqueue(userId)
+
+    // NOTE: Deliberately *not* using a dependency array here!
+    //
+    // It is important to call usersStore.enqueue on *every* render.
+    // This is harmless though, on most renders, except:
+    // 1. The very first render, in which case we'll want to trigger evaluation
+    //    of the userId.
+    // 2. All other subsequent renders now are a no-op (from the implementation
+    //    of .enqueue)
+    // 3. If ever the userId gets invalidated, the user would be fetched again.
+  );
 
   return result;
 }
@@ -647,13 +661,13 @@ function useUserSuspense_withClient<U extends BaseUserMeta>(
   const usersStore = client[kInternal].usersStore;
 
   const getUserState = useCallback(
-    () => usersStore.getState(userId),
+    () => usersStore.getItemState(userId),
     [usersStore, userId]
   );
   const userState = getUserState();
 
   if (!userState || userState.isLoading) {
-    throw usersStore.get(userId);
+    throw usersStore.enqueue(userId);
   }
 
   if (userState.error) {
@@ -687,7 +701,7 @@ function useRoomInfo_withClient(
   const roomsInfoStore = client[kInternal].roomsInfoStore;
 
   const getRoomInfoState = useCallback(
-    () => roomsInfoStore.getState(roomId),
+    () => roomsInfoStore.getItemState(roomId),
     [roomsInfoStore, roomId]
   );
 
@@ -706,11 +720,19 @@ function useRoomInfo_withClient(
   );
 
   // Trigger a fetch if we don't have any data yet (whether initially or after an invalidation)
-  useEffect(() => {
-    // NOTE: .get() will trigger any actual fetches, whereas .getState() will not,
-    // and it won't trigger a fetch if we already have data
-    void roomsInfoStore.get(roomId);
-  }, [roomsInfoStore, roomId, result]);
+  useEffect(
+    () => void roomsInfoStore.enqueue(roomId)
+
+    // NOTE: Deliberately *not* using a dependency array here!
+    //
+    // It is important to call roomsInfoStore.enqueue on *every* render.
+    // This is harmless though, on most renders, except:
+    // 1. The very first render, in which case we'll want to trigger evaluation
+    //    of the roomId.
+    // 2. All other subsequent renders now are a no-op (from the implementation
+    //    of .enqueue)
+    // 3. If ever the roomId gets invalidated, the room info would be fetched again.
+  );
 
   return result;
 }
@@ -719,13 +741,13 @@ function useRoomInfoSuspense_withClient(client: OpaqueClient, roomId: string) {
   const roomsInfoStore = client[kInternal].roomsInfoStore;
 
   const getRoomInfoState = useCallback(
-    () => roomsInfoStore.getState(roomId),
+    () => roomsInfoStore.getItemState(roomId),
     [roomsInfoStore, roomId]
   );
   const roomInfoState = getRoomInfoState();
 
   if (!roomInfoState || roomInfoState.isLoading) {
-    throw roomsInfoStore.get(roomId);
+    throw roomsInfoStore.enqueue(roomId);
   }
 
   if (roomInfoState.error) {
@@ -946,19 +968,29 @@ function useUserThreads_experimental<M extends BaseMetadata>(
     };
   }, [poller]);
 
-  // XXX_vincent There is a disconnect between this getter and subscriber! It's unclear
-  // why the getUserThreadsLoadingState getter should be paired with subscribe1
-  // and not subscribe2 from the outside! (The reason is that
-  // getUserThreadsLoadingState  internally uses `get1` not `get2`.) This is
-  // strong evidence that getUserThreadsLoadingState itself wants to be
-  // a Signal! Once we make it a Signal, we can simply use `useSignal()` here! ❤️
+  // XXX_vincent There is a disconnect between this getter and subscriber! It's
+  // not clear (unless you read the implementation of
+  // getUserThreadsLoadingState) why this getter should be paired with
+  // `store.outputs.threads.subscribe`.
+  //
+  // Ideally refactor this to:
+  //
+  //   useSignal(
+  //     store.outputs.loadingThreads,  // exposes { getUserThreads, getRoomThreads }
+  //
+  //     useCallback(
+  //       ({ getUserThreads }) => getUserThreads(options.query),
+  //       [options.query]
+  //     )
+  //   )
+  //
   const getter = useCallback(
     () => store.getUserThreadsLoadingState(options.query),
     [store, options.query]
   );
 
   return useSyncExternalStoreWithSelector(
-    store.subscribe1_threads,
+    store.outputs.threads.subscribe,
     getter,
     getter,
     identity,
