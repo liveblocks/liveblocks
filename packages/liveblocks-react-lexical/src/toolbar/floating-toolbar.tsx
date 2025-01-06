@@ -230,6 +230,7 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
       (event: ReactPointerEvent<HTMLDivElement>) => {
         onPointerDown?.(event);
 
+        event.preventDefault();
         event.stopPropagation();
       },
       [onPointerDown]
