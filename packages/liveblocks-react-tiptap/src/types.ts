@@ -32,24 +32,7 @@ export const enum ThreadPluginActions {
   SET_SELECTED_THREAD_ID = "SET_SELECTED_THREAD_ID",
 }
 
-export type AiToolbarExtensionStorage =
-  | {
-      state: "closed";
-      name: string;
-      selection: undefined;
-      prompt: undefined;
-      previousPrompt: undefined;
-    }
-  | {
-      state: "asking" | "thinking" | "reviewing";
-      name: string;
-      selection: TextSelection;
-      prompt: string;
-      previousPrompt: string | undefined;
-    };
-
-export type LiveblocksExtensionStorage = AiToolbarExtensionStorage &
-  CommentsExtensionStorage;
+export type LiveblocksExtensionStorage = CommentsExtensionStorage;
 
 export type ThreadPluginState = {
   threadPositions: Map<string, { from: number; to: number }>;
@@ -79,18 +62,4 @@ export type CommentsCommands<ReturnType> = {
   addPendingComment: () => ReturnType;
   /** @internal */
   closePendingComment: () => ReturnType;
-};
-
-export type AiCommands<ReturnType> = {
-  askAi: (prompt?: string) => ReturnType;
-  /** @internal */
-  cancelAskAi: () => ReturnType;
-  /** @internal */
-  retryAskAi: () => ReturnType;
-  /** @internal */
-  reviewAi: () => ReturnType;
-  /** @internal */
-  closeAi: () => ReturnType;
-  /** @internal */
-  setAiPrompt: (prompt: string | ((prompt: string) => string)) => ReturnType;
 };

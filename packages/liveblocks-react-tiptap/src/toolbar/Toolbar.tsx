@@ -6,10 +6,8 @@ import {
   CodeIcon,
   CommentIcon,
   ItalicIcon,
-  QuestionMarkIcon,
   RedoIcon,
   ShortcutTooltip,
-  SparklesIcon,
   StrikethroughIcon,
   TooltipProvider,
   UnderlineIcon,
@@ -21,13 +19,9 @@ import type { Editor } from "@tiptap/react";
 import type { ComponentProps, ComponentType, ReactNode } from "react";
 import { forwardRef, useMemo, useState } from "react";
 
-import { DEFAULT_AI_NAME } from "../ai/AiToolbar";
 import { classNames } from "../classnames";
 import { EditorProvider, useCurrentEditor } from "../context";
-import type {
-  AiToolbarExtensionStorage,
-  ExtendedChainedCommands,
-} from "../types";
+import type { ExtendedChainedCommands } from "../types";
 
 export const FLOATING_ELEMENT_SIDE_OFFSET = 6;
 export const FLOATING_ELEMENT_COLLISION_PADDING = 10;
@@ -381,62 +375,13 @@ function ToolbarSectionCollaboration() {
   );
 }
 
-function ToolbarSectionAi() {
-  const editor = useCurrentEditor("SectionAi", "Toolbar or FloatingToolbar");
-  const supportsAi = "askAi" in editor.commands;
-  const aiName =
-    (
-      editor.storage.liveblocksAiToolbar as
-        | AiToolbarExtensionStorage
-        | undefined
-    )?.name ?? DEFAULT_AI_NAME;
-
-  return (
-    <>
-      {supportsAi && (
-        <>
-          <ToolbarButton
-            label={`Ask ${aiName} anything…`}
-            icon={<SparklesIcon />}
-            onClick={() =>
-              (
-                editor.chain().focus() as ExtendedChainedCommands<"askAi">
-              ).askAi()
-            }
-          >
-            Ask {aiName}
-          </ToolbarButton>
-          <ToolbarButton
-            label="Explain"
-            icon={<QuestionMarkIcon />}
-            onClick={() =>
-              (
-                editor.chain().focus() as ExtendedChainedCommands<"askAi">
-              ).askAi("Explain")
-            }
-          >
-            Explain
-          </ToolbarButton>
-        </>
-      )}
-    </>
-  );
-}
-
 function DefaultToolbarContent({ editor }: ToolbarSlotProps) {
   const supportsThread = "addPendingComment" in editor.commands;
-  const supportsAi = "askAi" in editor.commands;
 
   return (
     <>
       <ToolbarSectionHistory />
       <ToolbarSeparator />
-      {supportsAi ? (
-        <>
-          <ToolbarSectionAi />
-          <ToolbarSeparator />
-        </>
-      ) : null}
       <ToolbarSectionInline />
       {supportsThread ? (
         <>
@@ -494,6 +439,5 @@ export const Toolbar = Object.assign(
     SectionHistory: ToolbarSectionHistory,
     SectionInline: ToolbarSectionInline,
     SectionCollaboration: ToolbarSectionCollaboration,
-    SectionAi: ToolbarSectionAi,
   }
 );
