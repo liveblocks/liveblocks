@@ -891,12 +891,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     };
 
     this.#notifications = new PaginatedResource(inboxFetcher);
-    // XXX_vincent Use signal directly here instead of invalidating everything!
-    this.#notifications.signal.subscribe(() =>
-      // Note that the store itself does not change, but it's only vehicle at
-      // the moment to trigger a re-render, so we'll do a no-op update here.
-      this.invalidateEntireStore()
-    );
 
     this.threads = new ThreadDB();
 
