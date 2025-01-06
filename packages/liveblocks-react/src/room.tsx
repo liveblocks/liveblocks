@@ -31,7 +31,6 @@ import type {
   IYjsProvider,
   LiveblocksError,
   OpaqueClient,
-  Poller,
   RoomEventMessage,
   SignalType,
   TextEditorType,
@@ -43,6 +42,7 @@ import {
   console,
   createCommentId,
   createThreadId,
+  DefaultMap,
   errorIf,
   HttpError,
   kInternal,
@@ -272,60 +272,39 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     throw innerError;
   }
 
-  const threadsPollersByRoomId = new Map<string, Poller>();
+  const threadsPollersByRoomId = new DefaultMap((roomId: string) =>
+    makePoller(
+      async (signal) => {
+        try {
+          return await store.fetchRoomThreadsDeltaUpdate(roomId, signal);
+        } catch (err) {
+          console.warn(`Polling new threads for '${roomId}' failed: ${String(err)}`); // prettier-ignore
+          throw err;
+        }
+      },
+      config.ROOM_THREADS_POLL_INTERVAL,
+      { maxStaleTimeMs: config.ROOM_THREADS_MAX_STALE_TIME }
+    )
+  );
 
-  const versionsPollersByRoomId = new Map<string, Poller>();
+  const versionsPollersByRoomId = new DefaultMap((roomId: string) =>
+    makePoller(
+      async (signal) => {
+        try {
+          return await store.fetchRoomVersionsDeltaUpdate(roomId, signal);
+        } catch (err) {
+          console.warn(`Polling new history versions for '${roomId}' failed: ${String(err)}`); // prettier-ignore
+          throw err;
+        }
+      },
+      config.HISTORY_VERSIONS_POLL_INTERVAL,
+      { maxStaleTimeMs: config.HISTORY_VERSIONS_MAX_STALE_TIME }
+    )
+  );
 
-  const roomNotificationSettingsPollersByRoomId = new Map<string, Poller>();
-
-  function getOrCreateThreadsPollerForRoomId(roomId: string) {
-    let poller = threadsPollersByRoomId.get(roomId);
-    if (!poller) {
-      poller = makePoller(
-        async (signal) => {
-          try {
-            return await store.fetchRoomThreadsDeltaUpdate(roomId, signal);
-          } catch (err) {
-            console.warn(`Polling new threads for '${roomId}' failed: ${String(err)}`); // prettier-ignore
-            throw err;
-          }
-        },
-        config.ROOM_THREADS_POLL_INTERVAL,
-        { maxStaleTimeMs: config.ROOM_THREADS_MAX_STALE_TIME }
-      );
-
-      threadsPollersByRoomId.set(roomId, poller);
-    }
-
-    return poller;
-  }
-
-  function getOrCreateVersionsPollerForRoomId(roomId: string) {
-    let poller = versionsPollersByRoomId.get(roomId);
-    if (!poller) {
-      poller = makePoller(
-        async (signal) => {
-          try {
-            return await store.fetchRoomVersionsDeltaUpdate(roomId, signal);
-          } catch (err) {
-            console.warn(`Polling new history versions for '${roomId}' failed: ${String(err)}`); // prettier-ignore
-            throw err;
-          }
-        },
-        config.HISTORY_VERSIONS_POLL_INTERVAL,
-        { maxStaleTimeMs: config.HISTORY_VERSIONS_MAX_STALE_TIME }
-      );
-
-      versionsPollersByRoomId.set(roomId, poller);
-    }
-
-    return poller;
-  }
-
-  function getOrCreateNotificationsSettingsPollerForRoomId(roomId: string) {
-    let poller = roomNotificationSettingsPollersByRoomId.get(roomId);
-    if (!poller) {
-      poller = makePoller(
+  const roomNotificationSettingsPollersByRoomId = new DefaultMap(
+    (roomId: string) =>
+      makePoller(
         async (signal) => {
           try {
             return await store.refreshRoomNotificationSettings(roomId, signal);
@@ -336,21 +315,22 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
         },
         config.NOTIFICATION_SETTINGS_POLL_INTERVAL,
         { maxStaleTimeMs: config.NOTIFICATION_SETTINGS_MAX_STALE_TIME }
-      );
-
-      roomNotificationSettingsPollersByRoomId.set(roomId, poller);
-    }
-
-    return poller;
-  }
+      )
+  );
 
   return {
     store,
     commentsErrorEventSource: commentsErrorEventSource.observable,
     onMutationFailure,
-    getOrCreateThreadsPollerForRoomId,
-    getOrCreateVersionsPollerForRoomId,
-    getOrCreateNotificationsSettingsPollerForRoomId,
+    getOrCreateThreadsPollerForRoomId: threadsPollersByRoomId.getOrCreate.bind(
+      threadsPollersByRoomId
+    ),
+    getOrCreateVersionsPollerForRoomId:
+      versionsPollersByRoomId.getOrCreate.bind(versionsPollersByRoomId),
+    getOrCreateNotificationsSettingsPollerForRoomId:
+      roomNotificationSettingsPollersByRoomId.getOrCreate.bind(
+        roomNotificationSettingsPollersByRoomId
+      ),
   };
 }
 
