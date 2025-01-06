@@ -873,11 +873,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
       };
 
       const resource = new SinglePageResource(notificationSettingsFetcher);
-      // XXX Get rid of this?????????????
       resource.signal.subscribe(() =>
-        // Note that the store itself does not change, but it's only vehicle at
-        // the moment to trigger a re-render, so we'll do a no-op update here.
-        this.invalidateEntireStore()
+        // XXX We should not need to invalidate this other signal!
+        // Instead, if we'd wire up the signals differently, this manual subscription should not be needed here!
+        this.roomNotificationSettings.invalidate()
       );
 
       return resource;
