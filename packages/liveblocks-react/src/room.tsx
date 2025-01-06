@@ -1308,6 +1308,7 @@ function useThreads<M extends BaseMetadata>(
 
   useEffect(
     () => {
+      // XXX_vincent Ideally refactor this like the idea described at the top of the umbrella file!
       void store.waitUntilRoomThreadsLoaded(room.id, options.query);
     }
     // NOTE: Deliberately *not* using a dependency array here!
@@ -1331,16 +1332,7 @@ function useThreads<M extends BaseMetadata>(
   // getRoomThreadsLoadingState) why this getter should be paired with
   // `store.outputs.threads.subscribe`.
   //
-  // Ideally refactor this to:
-  //
-  //   useSignal(
-  //     store.outputs.loadingThreads,  // exposes { getUserThreads, getRoomThreads }
-  //
-  //     useCallback(
-  //       ({ getRoomThreads }) => getRoomThreads(room.id, options.query),
-  //       [options.query]
-  //     )
-  //   )
+  // XXX_vincent Ideally refactor this like the idea described at the top of the umbrella file!
   //
   const getter = useCallback(
     () => store.getRoomThreadsLoadingState(room.id, options.query),
@@ -2115,6 +2107,11 @@ function useRoomNotificationSettings(): [
 
   useEffect(
     () => {
+      //
+      // XXX_vincent Ideally refactor this like the idea described at the top of the umbrella file!
+      // Think:
+      //   store.outputs.settingsByRoomId.getOrCreate(room.id).waitUntilLoaded(),
+      //
       void store.waitUntilRoomNotificationSettingsLoaded(room.id);
     }
     // NOTE: Deliberately *not* using a dependency array here!
@@ -2140,16 +2137,9 @@ function useRoomNotificationSettings(): [
   // getNotificationSettingsLoadingState) why this getter should be paired with
   // `store.outputs.settingsByRoomId.subscribe`.
   //
-  // Ideally refactor this to:
-  //
-  //   useSignal(
-  //     store.outputs.loadingSettings,  // exposes { getSettings }
-  //
-  //     useCallback(
-  //       ({ getSettings }) => getSettings(room.id),
-  //       [options.query]
-  //     )
-  //   )
+  // XXX_vincent Ideally refactor this like the idea described at the top of the umbrella file!
+  // Think:
+  //   useSignal(store.outputs.settingsByRoomId.getOrCreate(room.id).signal)
   //
   const getter = useCallback(
     () => store.getNotificationSettingsLoadingState(room.id),
@@ -2263,6 +2253,7 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
 
   useEffect(
     () => {
+      // XXX_vincent Ideally refactor this like the idea described at the top of the umbrella file!
       void store.waitUntilRoomVersionsLoaded(room.id);
     }
     // NOTE: Deliberately *not* using a dependency array here!
@@ -2280,16 +2271,7 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
   // getRoomVersionsLoadingState) why this getter should be paired with
   // `store.outputs.versionsByRoomId.subscribe`.
   //
-  // Ideally refactor this to:
-  //
-  //   useSignal(
-  //     store.outputs.loadingVersions,  // exposes { getVersions }
-  //
-  //     useCallback(
-  //       ({ getVersions }) => getVersions(room.id),
-  //       [options.query]
-  //     )
-  //   )
+  // XXX_vincent Ideally refactor this like the idea described at the top of the umbrella file!
   //
   const getter = useCallback(
     () => store.getRoomVersionsLoadingState(room.id),

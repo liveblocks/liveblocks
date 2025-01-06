@@ -1,3 +1,55 @@
+//
+// XXX_vincent We should restructure outputs.settingsByRoomId to be a DefaultMap of
+// a WrappedSinglePageResource. The WrappedSinglePageResource is both a derived
+// signal, and a way to waitUntilLoaded().
+//
+// So it is a lot like our existing SinglePageResource class, except that its
+// exposed value ultimately is a derived signal to obtain the AsyncResult.
+//
+// ------------------------------------------------------------------------
+//
+// This way, we would no longer need to do this:
+//
+//   const settings = useSyncExternalStoreWithSelector(
+//     store.outputs.settingsByRoomId.subscribe,
+//     () => store.getNotificationSettingsLoadingState(room.id),
+//     () => store.getNotificationSettingsLoadingState(room.id),
+//     identity,
+//     shallow2
+//   );
+//
+// But we could do this instead:
+//
+//   const settings = useSignal(
+//     store.outputs.settingsByRoomId.getOrCreate(room.id).signal,
+//   );
+//
+// ------------------------------------------------------------------------
+//
+// And similarly:
+//
+//   useEffect(
+//     () => void store.waitUntilRoomNotificationSettingsLoaded(room.id)
+//   )
+//
+// Could become:
+//
+//   useEffect(() =>
+//     store.outputs.settingsByRoomId.getOrCreate(room.id).waitUntilLoaded()
+//   )
+//
+// It would allow us to remove both of these methods:
+// - `getNotificationSettingsLoadingState()`
+// - `waitUntilRoomNotificationSettingsLoaded()`
+//
+// ------------------------------------------------------------------------
+//
+// These signals also whenever one of their sources change:
+//
+// 1. The loading state changes (from a fetch).
+// 2. The base settings themselves are updated (side-effect of a fetch).
+// 3. Any optimistic updates are applied.
+//
 import type {
   AsyncResult,
   BaseMetadata,
@@ -874,8 +926,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
       const resource = new SinglePageResource(notificationSettingsFetcher);
       resource.signal.subscribe(() =>
-        // XXX We should not need to invalidate this other signal!
+        // XXX_vincent We should not need to invalidate this other signal here!
         // Instead, if we'd wire up the signals differently, this manual subscription should not be needed here!
+        // XXX_vincent See comment/idea at the top of this file!
         this.roomNotificationSettings.invalidate()
       );
 
@@ -995,7 +1048,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return ASYNC_LOADING;
     }
 
-    // XXX Use an AsyncResult mapper helper somehow
+    // XXX_vincent Use an AsyncResult mapper helper somehow
     const asyncResult = paginatedResource.get();
     if (asyncResult.isLoading || asyncResult.error) {
       return asyncResult;
@@ -1022,7 +1075,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   ): ThreadsAsyncResult<M> {
     const queryKey = makeUserThreadsQueryKey(query);
 
-    // XXX Use an AsyncResult mapper helper somehow
+    // XXX_vincent Use an AsyncResult mapper helper somehow
     const paginatedResource = this.#userThreads.get(queryKey);
     if (paginatedResource === undefined) {
       return ASYNC_LOADING;
@@ -1056,9 +1109,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
   public getNotificationSettingsLoadingState(
     roomId: string
   ): RoomNotificationSettingsAsyncResult {
+    // XXX_vincent See comment/idea at the top of this file!
     const resource = this.#roomNotificationSettingsQueries.getOrCreate(roomId);
 
-    // XXX Use an AsyncResult mapper helper somehow
+    // XXX_vincent Use an AsyncResult mapper helper somehow
     const asyncResult = resource.get();
     if (asyncResult.isLoading || asyncResult.error) {
       return asyncResult;

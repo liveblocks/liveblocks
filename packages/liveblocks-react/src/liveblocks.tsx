@@ -381,6 +381,8 @@ function useInboxNotifications_withClient<T>(
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
   useEffect(() => {
+    // XXX_vincent Similarly to the idea described at the top of the umbrella file, maybe write this as follows instead?
+    // store.outputs.loadingNotifications.waitUntilLoaded()
     void store.waitUntilNotificationsLoaded();
     // NOTE: Deliberately *not* using a dependency array here!
     //
@@ -937,16 +939,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
   // getUserThreadsLoadingState) why this getter should be paired with
   // `store.outputs.threads.subscribe`.
   //
-  // Ideally refactor this to:
-  //
-  //   useSignal(
-  //     store.outputs.loadingThreads,  // exposes { getUserThreads, getRoomThreads }
-  //
-  //     useCallback(
-  //       ({ getUserThreads }) => getUserThreads(options.query),
-  //       [options.query]
-  //     )
-  //   )
+  // XXX_vincent Ideally refactor this like the idea described at the top of the umbrella file!
   //
   const getter = useCallback(
     () => store.getUserThreadsLoadingState(options.query),
