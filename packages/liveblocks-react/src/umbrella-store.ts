@@ -795,9 +795,6 @@ function createStore_forPermissionHints() {
 
     // Mutations
     update,
-
-    // XXX_vincent Remove this eventually
-    invalidate: () => signal.mutate(),
   };
 }
 
@@ -1527,7 +1524,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
     batch(() => {
       this.historyVersions.invalidate();
       this.notifications.invalidate();
-      this.permissionHints.invalidate();
+      // this.optimisticUpdates.invalidate();
+      // this.permissionHints.invalidate();
+      // this.roomNotificationSettings.invalidate();
     });
   }
 
