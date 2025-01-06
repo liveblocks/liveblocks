@@ -10,7 +10,6 @@ import type {
   CommentReaction,
   CommentUserReaction,
   DistributiveOmit,
-  EventSource,
   HistoryVersion,
   InboxNotificationData,
   InboxNotificationDeleteInfo,
@@ -23,7 +22,6 @@ import type {
   ThreadData,
   ThreadDataWithDeleteInfo,
   ThreadDeleteInfo,
-  UnsubscribeCallback,
 } from "@liveblocks/core";
 import {
   autoRetry,
@@ -33,7 +31,6 @@ import {
   DerivedSignal,
   HttpError,
   kInternal,
-  makeEventSource,
   MutableSignal,
   nanoid,
   nn,
@@ -459,29 +456,21 @@ export class PaginatedResource {
 }
 
 class SinglePageResource {
-  #eventSource: EventSource<void>;
+  readonly #signal: Signal<AsyncResult<void>>;
+  public readonly signal: ISignal<AsyncResult<void>>;
+
   #fetchPage: () => Promise<void>;
 
   constructor(fetchPage: () => Promise<void>) {
+    this.#signal = new Signal<AsyncResult<void>>(ASYNC_LOADING);
+    this.signal = this.#signal.asReadonly();
     this.#fetchPage = fetchPage;
-    this.#eventSource = makeEventSource<void>();
 
     autobind(this);
   }
 
-  public get(): AsyncResult<void> {
-    const usable = this.#cachedPromise;
-    if (usable === null || usable.status === "pending") {
-      return ASYNC_LOADING;
-    } else if (usable.status === "rejected") {
-      return ASYNC_ERR(usable.reason);
-    } else {
-      return ASYNC_OK(undefined);
-    }
-  }
-
-  subscribe(callback: () => void): UnsubscribeCallback {
-    return this.#eventSource.subscribe(callback);
+  get(): AsyncResult<void> {
+    return this.#signal.get();
   }
 
   #cachedPromise: UsablePromise<void> | null = null;
@@ -493,27 +482,29 @@ class SinglePageResource {
 
     // Wrap the request to load room threads (and notifications) in an auto-retry function so that if the request fails,
     // we retry for at most 5 times with incremental backoff delays. If all retries fail, the auto-retry function throws an error
-    const initialFetcher = autoRetry(
+    const initialFetcher$ = autoRetry(
       () => this.#fetchPage(),
       5,
       [5000, 5000, 10000, 15000]
     );
 
-    const promise = usify(initialFetcher);
+    const promise = usify(initialFetcher$);
 
     // NOTE: However tempting it may be, we cannot simply move this block into
     // the promise definition above. The reason is that we should not call
     // notify() before the UsablePromise is actually in resolved status. While
     // still inside the .then() block, the UsablePromise is still in pending status.
     promise.then(
-      () => this.#eventSource.notify(),
       () => {
-        this.#eventSource.notify();
+        this.#signal.set(ASYNC_OK(undefined));
+      },
+      (err) => {
+        this.#signal.set(ASYNC_ERR(err as Error));
 
         // Wait for 5 seconds before removing the request
         setTimeout(() => {
           this.#cachedPromise = null;
-          this.#eventSource.notify();
+          this.#signal.set(ASYNC_LOADING);
         }, 5_000);
       }
     );
@@ -902,8 +893,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return nextCursor;
     };
 
-    // XXX_vincent Looks like this should also be a Signal!
     this.#notifications = new PaginatedResource(inboxFetcher);
+    // XXX_vincent Use signal directly here instead of invalidating everything!
     this.#notifications.signal.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
@@ -1446,7 +1437,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       paginatedResource = new PaginatedResource(threadsFetcher);
     }
 
-    // XXX_vincent Looks like this should also be a Signal!
+    // XXX_vincent Use signal directly here instead of invalidating everything!
     paginatedResource.signal.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
@@ -1515,7 +1506,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       paginatedResource = new PaginatedResource(threadsFetcher);
     }
 
-    // XXX_vincent Looks like this should also be a Signal!
+    // XXX_vincent Use signal directly here instead of invalidating everything!
     paginatedResource.signal.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
@@ -1601,8 +1592,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       resource = new SinglePageResource(versionsFetcher);
     }
 
-    // XXX_vincent Looks like this should also be a Signal!
-    resource.subscribe(() =>
+    resource.signal.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
       this.invalidateEntireStore()
@@ -1660,8 +1650,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       resource = new SinglePageResource(notificationSettingsFetcher);
     }
 
-    // XXX_vincent Looks like this should also be a Signal!
-    resource.subscribe(() =>
+    resource.signal.subscribe(() =>
       // Note that the store itself does not change, but it's only vehicle at
       // the moment to trigger a re-render, so we'll do a no-op update here.
       this.invalidateEntireStore()
