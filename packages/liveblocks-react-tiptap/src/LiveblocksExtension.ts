@@ -24,8 +24,7 @@ import { Extension, getMarkType, Mark } from "@tiptap/core";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
 import type { Mark as PMMark } from "@tiptap/pm/model";
-import { useCallback, useEffect, useState } from "react";
-import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { Doc, PermanentUserData } from "yjs";
 
 import { AiExtension } from "./ai/AiExtension";
