@@ -107,6 +107,7 @@ export {
   createInboxNotificationId,
   createThreadId,
 } from "./lib/createIds";
+export { DefaultMap } from "./lib/DefaultMap";
 export {
   deprecate,
   deprecateIf,
