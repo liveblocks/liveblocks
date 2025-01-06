@@ -35,17 +35,19 @@ describe("Umbrella Store", () => {
     expect(store.outputs.notifications.get()).toEqual(empty1n);
     expect(
       store.outputs.settingsByRoomId.getOrCreate("room-a").signal.get()
-    ).toEqual({
-      isLoading: true,
-    }); // settings by room ID
-    expect(store.outputs.versionsByRoomId.get()).toEqual({}); // versions by room ID
+    ).toEqual(LOADING); // settings by room ID
+    expect(
+      store.outputs.versionsByRoomId.getOrCreate("room-b").signal.get()
+    ).toEqual(LOADING); // versions by room ID
 
     // Sync async-results getters
     expect(store.outputs.loadingNotifications.signal.get()).toEqual(LOADING);
     expect(
-      store.outputs.settingsByRoomId.getOrCreate("room-a").signal.get()
+      store.outputs.settingsByRoomId.getOrCreate("room-c").signal.get()
     ).toEqual(LOADING);
-    expect(store.getRoomVersionsLoadingState("room-a")).toEqual(LOADING);
+    expect(
+      store.outputs.versionsByRoomId.getOrCreate("room-d").signal.get()
+    ).toEqual(LOADING);
   });
 
   it("calling getters multiple times should always return a stable result", () => {
@@ -66,8 +68,8 @@ describe("Umbrella Store", () => {
       store.outputs.settingsByRoomId.getOrCreate("room-abc").signal.get()
     ).toBe(store.outputs.settingsByRoomId.getOrCreate("room-abc").signal.get());
     // TODO Add check here for strict-equality of the OK-state, which currently isn't strictly-equal and the selectors/isEqual functions are still "working around" that
-    expect(store.getRoomVersionsLoadingState("room-a")).toBe(
-      store.getRoomVersionsLoadingState("room-a")
-    );
+    expect(
+      store.outputs.versionsByRoomId.getOrCreate("room-a").signal.get()
+    ).toBe(store.outputs.versionsByRoomId.getOrCreate("room-a").signal.get());
   });
 });

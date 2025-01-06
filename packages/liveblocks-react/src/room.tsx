@@ -2229,10 +2229,9 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
   }, [poller]);
 
   useEffect(
-    () => {
-      // XXX_vincent Ideally refactor this like the idea described at the top of the umbrella file!
-      void store.waitUntilRoomVersionsLoaded(room.id);
-    }
+    () =>
+      void store.outputs.versionsByRoomId.getOrCreate(room.id).waitUntilLoaded()
+
     // NOTE: Deliberately *not* using a dependency array here!
     //
     // It is important to call waitUntil on *every* render.
@@ -2243,27 +2242,7 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
     //    *next* render after that, a *new* fetch/promise will get created.
   );
 
-  // XXX_vincent There is a disconnect between this getter and subscriber! It's
-  // not clear (unless you read the implementation of
-  // getRoomVersionsLoadingState) why this getter should be paired with
-  // `store.outputs.versionsByRoomId.subscribe`.
-  //
-  // XXX_vincent Ideally refactor this like the idea described at the top of the umbrella file!
-  //
-  const getter = useCallback(
-    () => store.getRoomVersionsLoadingState(room.id),
-    [store, room.id]
-  );
-
-  const state = useSyncExternalStoreWithSelector(
-    store.outputs.versionsByRoomId.subscribe,
-    getter,
-    getter,
-    identity,
-    shallow2
-  );
-
-  return state;
+  return useSignal(store.outputs.versionsByRoomId.getOrCreate(room.id).signal);
 }
 
 /**
@@ -2277,7 +2256,7 @@ function useHistoryVersionsSuspense(): HistoryVersionsAsyncSuccess {
   const room = useRoom();
   const store = getRoomExtrasForClient(client).store;
 
-  use(store.waitUntilRoomVersionsLoaded(room.id));
+  use(store.outputs.versionsByRoomId.getOrCreate(room.id).waitUntilLoaded());
 
   const result = useHistoryVersions();
   assert(!result.error, "Did not expect error");

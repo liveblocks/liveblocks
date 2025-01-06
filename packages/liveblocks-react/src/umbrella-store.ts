@@ -1,7 +1,7 @@
 //
-// XXX_vincent We should restructure outputs.settingsByRoomId to be a DefaultMap of
-// a WrappedSinglePageResource. The WrappedSinglePageResource is both a derived
-// signal, and a way to waitUntilLoaded().
+// XXX_vincent We should restructure outputs.versionsByRoomId to be
+// a DefaultMap of a ManagedResource<T>. The ManagedResource<T> is both
+// a derived signal, and a way to waitUntilLoaded().
 //
 // So it is a lot like our existing SinglePageResource class, except that its
 // exposed value ultimately is a derived signal to obtain the AsyncResult.
@@ -10,18 +10,18 @@
 //
 // This way, we would no longer need to do this:
 //
-//   const settings = useSyncExternalStoreWithSelector(
-//     store.outputs.settingsByRoomId.subscribe,
-//     () => store.getNotificationSettingsLoadingState(room.id),
-//     () => store.getNotificationSettingsLoadingState(room.id),
+//   const versions  = useSyncExternalStoreWithSelector(
+//     store.outputs.versionsByRoomId.subscribe,
+//     () => store.getRoomVersionsLoadingState(room.id),
+//     () => store.getRoomVersionsLoadingState(room.id),
 //     identity,
 //     shallow2
 //   );
 //
 // But we could do this instead:
 //
-//   const settings = useSignal(
-//     store.outputs.settingsByRoomId.getOrCreate(room.id).signal,
+//   const versions = useSignal(
+//     store.outputs.versionsByRoomId.getOrCreate(room.id).signal,
 //   );
 //
 // ------------------------------------------------------------------------
@@ -29,18 +29,18 @@
 // And similarly:
 //
 //   useEffect(
-//     () => void store.waitUntilRoomNotificationSettingsLoaded(room.id)
+//     () => void store.waitUntilRoomVersionsLoaded(room.id)
 //   )
 //
 // Could become:
 //
 //   useEffect(() =>
-//     store.outputs.settingsByRoomId.getOrCreate(room.id).waitUntilLoaded()
+//     store.outputs.versionsByRoomId.getOrCreate(room.id).waitUntilLoaded()
 //   )
 //
 // It would allow us to remove both of these methods:
-// - `getNotificationSettingsLoadingState()`
-// - `waitUntilRoomNotificationSettingsLoaded()`
+// - `getRoomVersionsLoadingState()`
+// - `waitUntilRoomVersionsLoaded()`
 //
 // ------------------------------------------------------------------------
 //
@@ -95,6 +95,7 @@ import { find } from "./lib/itertools";
 import type { ReadonlyThreadDB } from "./ThreadDB";
 import { ThreadDB } from "./ThreadDB";
 import type {
+  HistoryVersionsAsyncResult,
   InboxNotificationsAsyncResult,
   RoomNotificationSettingsAsyncResult,
   ThreadsAsyncResult,
@@ -264,10 +265,6 @@ function makeUserThreadsQueryKey(
   query: ThreadsQuery<BaseMetadata> | undefined
 ) {
   return `USER_THREADS:${stringify(query ?? {})}`;
-}
-
-function makeVersionsQueryKey(roomId: string) {
-  return `${roomId}-VERSIONS`;
 }
 
 /**
@@ -568,12 +565,6 @@ type QueryKey = string;
  * A lookup table (LUT) for all the history versions.
  */
 type VersionsLUT = Map<RoomId, Map<string, HistoryVersion>>;
-
-/**
- * Versions by roomId
- * e.g. { 'room-abc': {versions: "all versions"}}
- */
-type VersionsByRoomId = Record<RoomId, Record<string, HistoryVersion>>;
 
 /**
  * A lookup table (LUT) for all the inbox notifications.
@@ -893,7 +884,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
       RoomId,
       ManagedResource<RoomNotificationSettingsAsyncResult>
     >;
-    readonly versionsByRoomId: DerivedSignal<VersionsByRoomId>; // XXX_vincent Turn into a DefaultMap<RoomId, ManagedResource<VersionsByRoomId>>
+    readonly versionsByRoomId: DefaultMap<
+      RoomId,
+      ManagedResource<HistoryVersionsAsyncResult>
+    >;
   };
 
   // Notifications
@@ -909,7 +903,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
   #userThreads: Map<QueryKey, PaginatedResource> = new Map();
 
   // Room versions
-  #roomVersions: Map<QueryKey, SinglePageResource> = new Map();
   #roomVersionsLastRequestedAtByRoom = new Map<RoomId, Date>();
 
   constructor(client: OpaqueClient) {
@@ -961,7 +954,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       shallow
     );
 
-    const versionsByRoomId = DerivedSignal.from(
+    const versionsByRoomId000 = DerivedSignal.from(
       this.historyVersions.signal,
       (hv) =>
         Object.fromEntries(
@@ -1013,15 +1006,60 @@ export class UmbrellaStore<M extends BaseMetadata> {
         const result = resource.get();
         if (result.isLoading || result.error) {
           return result;
+        } else {
+          return ASYNC_OK(
+            "settings",
+            nn(this.roomNotificationSettings.signal.get()[roomId])
+          );
         }
-        return ASYNC_OK(
-          "settings",
-          nn(this.roomNotificationSettings.signal.get()[roomId])
-        );
       }, shallow);
 
       return { signal, waitUntilLoaded: resource.waitUntilLoaded };
     });
+
+    const versionsByRoomId = new DefaultMap(
+      (roomId: RoomId): ManagedResource<HistoryVersionsAsyncResult> => {
+        const resource = new SinglePageResource(async () => {
+          const room = this.#client.getRoom(roomId);
+          if (room === null) {
+            throw new HttpError(
+              `Room '${roomId}' is not available on client`,
+              479
+            );
+          }
+
+          const result = await room[kInternal].listTextVersions();
+          this.historyVersions.update(roomId, result.versions);
+
+          const lastRequestedAt =
+            this.#roomVersionsLastRequestedAtByRoom.get(roomId);
+
+          if (
+            lastRequestedAt === undefined ||
+            lastRequestedAt > result.requestedAt
+          ) {
+            this.#roomVersionsLastRequestedAtByRoom.set(
+              roomId,
+              result.requestedAt
+            );
+          }
+        });
+
+        const signal = DerivedSignal.from((): HistoryVersionsAsyncResult => {
+          const result = resource.get();
+          if (result.isLoading || result.error) {
+            return result;
+          } else {
+            return {
+              isLoading: false,
+              versions: Object.values(versionsByRoomId000.get()[roomId] ?? {}),
+            };
+          }
+        }, shallow);
+
+        return { signal, waitUntilLoaded: resource.waitUntilLoaded };
+      }
+    );
 
     this.outputs = {
       threadifications,
@@ -1030,6 +1068,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       loadingNotifications,
       settingsByRoomId,
       versionsByRoomId,
+      // versionsByRoomId000,
     };
 
     // Auto-bind all of this class’ methods here, so we can use stable
@@ -1106,30 +1145,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
       isFetchingMore: page.isFetchingMore,
       fetchMoreError: page.fetchMoreError,
       fetchMore: page.fetchMore,
-    };
-  }
-
-  public getRoomVersionsLoadingState(
-    roomId: string
-  ): AsyncResult<HistoryVersion[], "versions"> {
-    const queryKey = makeVersionsQueryKey(roomId);
-
-    const resource = this.#roomVersions.get(queryKey);
-    if (resource === undefined) {
-      return ASYNC_LOADING;
-    }
-
-    const asyncResult = resource.get();
-    if (asyncResult.isLoading || asyncResult.error) {
-      return asyncResult;
-    }
-
-    // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
-    return {
-      isLoading: false,
-      versions: Object.values(
-        this.outputs.versionsByRoomId.get()[roomId] ?? {}
-      ),
     };
   }
 
@@ -1554,50 +1569,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     );
 
     this.permissionHints.update(result.permissionHints);
-  }
-
-  public waitUntilRoomVersionsLoaded(roomId: string) {
-    const queryKey = makeVersionsQueryKey(roomId);
-    let resource = this.#roomVersions.get(queryKey);
-    if (resource === undefined) {
-      const versionsFetcher = async () => {
-        const room = this.#client.getRoom(roomId);
-        if (room === null) {
-          throw new HttpError(
-            `Room '${roomId}' is not available on client`,
-            479
-          );
-        }
-
-        const result = await room[kInternal].listTextVersions();
-        this.historyVersions.update(roomId, result.versions);
-
-        const lastRequestedAt =
-          this.#roomVersionsLastRequestedAtByRoom.get(roomId);
-
-        if (
-          lastRequestedAt === undefined ||
-          lastRequestedAt > result.requestedAt
-        ) {
-          this.#roomVersionsLastRequestedAtByRoom.set(
-            roomId,
-            result.requestedAt
-          );
-        }
-      };
-
-      resource = new SinglePageResource(versionsFetcher);
-    }
-
-    resource.signal.subscribe(() =>
-      // Note that the store itself does not change, but it's only vehicle at
-      // the moment to trigger a re-render, so we'll do a no-op update here.
-      this.invalidateEntireStore()
-    );
-
-    this.#roomVersions.set(queryKey, resource);
-
-    return resource.waitUntilLoaded();
   }
 
   public async fetchRoomVersionsDeltaUpdate(
