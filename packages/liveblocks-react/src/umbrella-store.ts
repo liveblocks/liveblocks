@@ -986,6 +986,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this.channelNotificationSettings.update(result);
     };
 
+    this.channelNotificationSettings =
+      createStore_forChannelsNotificationSettings();
+
     this.#channelsNotificationSettings = new SinglePageResource(
       channelsNotificationSettingsFetcher
     );
@@ -994,9 +997,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
       // the moment to trigger a re-render, so we'll do a no-op update here.
       this.invalidateEntireStore()
     );
-
-    this.channelNotificationSettings =
-      createStore_forChannelsNotificationSettings();
 
     this.threads = new ThreadDB();
 
