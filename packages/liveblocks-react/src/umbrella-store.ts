@@ -1065,14 +1065,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     autobind(this);
   }
 
-  public get4(): ChannelsNotificationSettings {
-    return this.outputs.channelNotificationSettings.get();
-  }
-
-  public subscribe4(callback: () => void): () => void {
-    return this.outputs.channelNotificationSettings.subscribe(callback);
-  }
-
   /**
    * Returns the async result of the given query and room id. If the query is success,
    * then it will return the threads that match that provided query and room id.
@@ -1774,7 +1766,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     return {
       isLoading: false,
-      settings: nn(this.get4()),
+      settings: nn(this.outputs.channelNotificationSettings.get()),
     };
   }
 

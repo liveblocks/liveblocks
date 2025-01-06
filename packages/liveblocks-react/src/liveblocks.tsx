@@ -706,7 +706,7 @@ function useChannelsNotificationSettings_withClient(
     [store]
   );
   const settings = useSyncExternalStoreWithSelector(
-    store.subscribe4,
+    store.outputs.channelNotificationSettings.subscribe,
     getter,
     getter,
     identity,

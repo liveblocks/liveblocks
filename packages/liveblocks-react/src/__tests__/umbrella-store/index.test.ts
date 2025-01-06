@@ -35,7 +35,7 @@ describe("Umbrella Store", () => {
     expect(store.outputs.notifications.get()).toEqual(empty1n);
     expect(store.outputs.settingsByRoomId.get()).toEqual({}); // settings by room ID
     expect(store.outputs.versionsByRoomId.get()).toEqual({}); // versions by room ID
-    expect(store.get4()).toEqual({}); // channels notification settings
+    expect(store.outputs.channelNotificationSettings.get()).toEqual({}); // channels notification settings
 
     // Sync async-results getters
     expect(store.getInboxNotificationsLoadingState()).toEqual(loading);
