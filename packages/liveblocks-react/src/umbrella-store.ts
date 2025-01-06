@@ -896,7 +896,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       RoomId,
       ManagedResource<RoomNotificationSettingsAsyncResult>
     >;
-    readonly versionsByRoomId: DerivedSignal<VersionsByRoomId>; // XXX Turn into a DefaultMap<RoomId, ManagedResource<VersionsByRoomId>>
+    readonly versionsByRoomId: DerivedSignal<VersionsByRoomId>; // XXX_vincent Turn into a DefaultMap<RoomId, ManagedResource<VersionsByRoomId>>
   };
 
   // Notifications
