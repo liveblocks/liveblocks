@@ -34,6 +34,7 @@ import {
 
 import { config } from "./config";
 import { useIsInsideRoom } from "./contexts";
+import { ASYNC_OK } from "./lib/AsyncResult";
 import { count } from "./lib/itertools";
 import { shallow2 } from "./lib/shallow2";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
@@ -100,13 +101,13 @@ function selectorFor_useUnreadInboxNotificationsCount(
     return result;
   }
 
-  return {
-    isLoading: false,
-    count: count(
+  return ASYNC_OK(
+    "count",
+    count(
       result.inboxNotifications,
       (n) => n.readAt === null || n.readAt < n.notifiedAt
-    ),
-  };
+    )
+  );
 }
 
 function selectorFor_useUser<U extends BaseUserMeta>(

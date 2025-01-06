@@ -1,8 +1,5 @@
 import type {
-  AsyncError,
-  AsyncLoading,
   AsyncResult,
-  AsyncSuccess,
   BaseMetadata,
   BaseUserMeta,
   Client,
@@ -39,6 +36,7 @@ import {
   stringify,
 } from "@liveblocks/core";
 
+import { ASYNC_ERR, ASYNC_LOADING, ASYNC_OK } from "./lib/AsyncResult";
 import { autobind } from "./lib/autobind";
 import { find } from "./lib/itertools";
 import type { ReadonlyThreadDB } from "./ThreadDB";
@@ -262,12 +260,6 @@ function usify<T>(promise: Promise<T>): UsablePromise<T> {
 }
 
 const noop = Promise.resolve();
-
-const ASYNC_LOADING: AsyncLoading = Object.freeze({ isLoading: true });
-const ASYNC_ERR = (error: Error): AsyncError =>
-  Object.freeze({ isLoading: false, error });
-const ASYNC_OK = <T>(data: T): AsyncSuccess<T> =>
-  Object.freeze({ isLoading: false, data });
 
 /**
  * The PaginatedResource helper class is responsible for and abstracts away the
