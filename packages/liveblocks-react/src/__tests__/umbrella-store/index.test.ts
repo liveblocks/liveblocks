@@ -3,10 +3,6 @@ import { kInternal } from "@liveblocks/core";
 import { ThreadDB } from "../../ThreadDB";
 import { UmbrellaStore } from "../../umbrella-store";
 
-const empty1t = {
-  threadsDB: expect.any(ThreadDB),
-} as const;
-
 const empty1n = {
   sortedNotifications: [],
   notificationsById: {},
@@ -35,10 +31,10 @@ describe("Umbrella Store", () => {
     const store = new UmbrellaStore(NO_CLIENT);
 
     // Sync getters
-    expect(store.get1_threads()).toEqual(empty1t);
-    expect(store.get1_notifications()).toEqual(empty1n);
-    expect(store.get2()).toEqual({}); // settings by room ID
-    expect(store.get3()).toEqual({}); // versions by room ID
+    expect(store.outputs.threads.get()).toEqual(expect.any(ThreadDB));
+    expect(store.outputs.notifications.get()).toEqual(empty1n);
+    expect(store.outputs.settingsByRoomId.get()).toEqual({}); // settings by room ID
+    expect(store.outputs.versionsByRoomId.get()).toEqual({}); // versions by room ID
     expect(store.get4()).toEqual({}); // channels notification settings
 
     // Sync async-results getters
@@ -56,8 +52,10 @@ describe("Umbrella Store", () => {
     const store = new UmbrellaStore(NO_CLIENT);
 
     // IMPORTANT! Strict equality expected!
-    expect(store.get1_threads()).toBe(store.get1_threads());
-    expect(store.get1_notifications()).toBe(store.get1_notifications());
+    expect(store.outputs.threads.get()).toBe(store.outputs.threads.get());
+    expect(store.outputs.notifications.get()).toBe(
+      store.outputs.notifications.get()
+    );
 
     // Sync async-results getter
     // TODO Add check here for strict-equality of the OK-state, which currently isn't strictly-equal and the selectors/isEqual functions are still "working around" that
