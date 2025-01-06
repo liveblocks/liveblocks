@@ -2106,14 +2106,9 @@ function useRoomNotificationSettings(): [
   const poller = getOrCreateNotificationsSettingsPollerForRoomId(room.id);
 
   useEffect(
-    () => {
-      //
-      // XXX_vincent Ideally refactor this like the idea described at the top of the umbrella file!
-      // Think:
-      //   store.outputs.settingsByRoomId.getOrCreate(room.id).waitUntilLoaded(),
-      //
-      void store.waitUntilRoomNotificationSettingsLoaded(room.id);
-    }
+    () =>
+      void store.outputs.settingsByRoomId.getOrCreate(room.id).waitUntilLoaded()
+
     // NOTE: Deliberately *not* using a dependency array here!
     //
     // It is important to call waitUntil on *every* render.
@@ -2132,26 +2127,8 @@ function useRoomNotificationSettings(): [
     };
   }, [poller]);
 
-  // XXX_vincent There is a disconnect between this getter and subscriber! It's
-  // not clear (unless you read the implementation of
-  // getNotificationSettingsLoadingState) why this getter should be paired with
-  // `store.outputs.settingsByRoomId.subscribe`.
-  //
-  // XXX_vincent Ideally refactor this like the idea described at the top of the umbrella file!
-  // Think:
-  //   useSignal(store.outputs.settingsByRoomId.getOrCreate(room.id).signal)
-  //
-  const getter = useCallback(
-    () => store.getNotificationSettingsLoadingState(room.id),
-    [store, room.id]
-  );
-
-  const settings = useSyncExternalStoreWithSelector(
-    store.outputs.settingsByRoomId.subscribe,
-    getter,
-    getter,
-    identity,
-    shallow2
+  const settings = useSignal(
+    store.outputs.settingsByRoomId.getOrCreate(room.id).signal
   );
 
   return useMemo(() => {
@@ -2175,7 +2152,7 @@ function useRoomNotificationSettingsSuspense(): [
   const room = useRoom();
 
   // Suspend until there are at least some inbox notifications
-  use(store.waitUntilRoomNotificationSettingsLoaded(room.id));
+  use(store.outputs.settingsByRoomId.getOrCreate(room.id).waitUntilLoaded());
 
   // We're in a Suspense world here, and as such, the useRoomNotificationSettings()
   // hook is expected to only return success results when we're here.

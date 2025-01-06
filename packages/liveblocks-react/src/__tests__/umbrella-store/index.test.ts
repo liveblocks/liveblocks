@@ -33,14 +33,18 @@ describe("Umbrella Store", () => {
     // Sync getters
     expect(store.outputs.threads.get()).toEqual(expect.any(ThreadDB));
     expect(store.outputs.notifications.get()).toEqual(empty1n);
-    expect(store.outputs.settingsByRoomId.get()).toEqual({}); // settings by room ID
+    expect(
+      store.outputs.settingsByRoomId.getOrCreate("room-a").signal.get()
+    ).toEqual({
+      isLoading: true,
+    }); // settings by room ID
     expect(store.outputs.versionsByRoomId.get()).toEqual({}); // versions by room ID
 
     // Sync async-results getters
     expect(store.outputs.loadingNotifications.get()).toEqual(loading);
-    expect(store.getNotificationSettingsLoadingState("room-a")).toEqual(
-      loading
-    );
+    expect(
+      store.outputs.settingsByRoomId.getOrCreate("room-a").signal.get()
+    ).toEqual(loading);
     expect(store.getRoomVersionsLoadingState("room-a")).toEqual(loading);
   });
 
@@ -58,9 +62,9 @@ describe("Umbrella Store", () => {
       store.outputs.loadingNotifications.get()
     );
     // TODO Add check here for strict-equality of the OK-state, which currently isn't strictly-equal and the selectors/isEqual functions are still "working around" that
-    expect(store.getNotificationSettingsLoadingState("room-a")).toBe(
-      store.getNotificationSettingsLoadingState("room-a")
-    );
+    expect(
+      store.outputs.settingsByRoomId.getOrCreate("room-abc").signal.get()
+    ).toBe(store.outputs.settingsByRoomId.getOrCreate("room-abc").signal.get());
     // TODO Add check here for strict-equality of the OK-state, which currently isn't strictly-equal and the selectors/isEqual functions are still "working around" that
     expect(store.getRoomVersionsLoadingState("room-a")).toBe(
       store.getRoomVersionsLoadingState("room-a")

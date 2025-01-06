@@ -496,6 +496,12 @@ export class PaginatedResource {
   }
 }
 
+// XXX Find better name
+type WrappedSinglePageResource = {
+  signal: ISignal<RoomNotificationSettingsAsyncResult>;
+  waitUntilLoaded: () => UsablePromise<void>;
+};
+
 class SinglePageResource {
   readonly #signal: Signal<AsyncResult<void>>;
   public readonly signal: ISignal<AsyncResult<void>>;
@@ -721,23 +727,24 @@ function createStore_forNotifications() {
   };
 }
 
-function createStore_forRoomNotificationSettings() {
-  const signal = new MutableSignal<SettingsLUT>(new Map());
+function createStore_forRoomNotificationSettings(
+  updates: ISignal<readonly OptimisticUpdate<BaseMetadata>[]>
+) {
+  const baseSignal = new MutableSignal<SettingsLUT>(new Map());
 
   function update(roomId: string, settings: RoomNotificationSettings): void {
-    signal.mutate((lut) => {
+    baseSignal.mutate((lut) => {
       lut.set(roomId, settings);
     });
   }
 
   return {
-    signal: signal.asReadonly(),
+    signal: DerivedSignal.from(baseSignal, updates, (base, updates) =>
+      applyOptimisticUpdates_forSettings(base, updates)
+    ),
 
     // Mutations
     update,
-
-    // XXX_vincent Remove this eventually
-    invalidate: () => signal.mutate(),
   };
 }
 
@@ -888,7 +895,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     readonly threads: DerivedSignal<ReadonlyThreadDB<M>>;
     readonly notifications: DerivedSignal<CleanNotifications>;
     readonly loadingNotifications: DerivedSignal<InboxNotificationsAsyncResult>;
-    readonly settingsByRoomId: DerivedSignal<SettingsByRoomId>;
+    readonly settingsByRoomId: DefaultMap<RoomId, WrappedSinglePageResource>;
     readonly versionsByRoomId: DerivedSignal<VersionsByRoomId>;
   };
 
@@ -907,33 +914,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
   // Room versions
   #roomVersions: Map<QueryKey, SinglePageResource> = new Map();
   #roomVersionsLastRequestedAtByRoom = new Map<RoomId, Date>();
-
-  // Room notification settings
-  #roomNotificationSettingsQueries: DefaultMap<RoomId, SinglePageResource> =
-    new DefaultMap((roomId) => {
-      const notificationSettingsFetcher = async () => {
-        const room = this.#client.getRoom(roomId);
-        if (room === null) {
-          throw new HttpError(
-            `Room '${roomId}' is not available on client`,
-            479
-          );
-        }
-
-        const result = await room.getNotificationSettings();
-        this.roomNotificationSettings.update(roomId, result);
-      };
-
-      const resource = new SinglePageResource(notificationSettingsFetcher);
-      resource.signal.subscribe(() =>
-        // XXX_vincent We should not need to invalidate this other signal here!
-        // Instead, if we'd wire up the signals differently, this manual subscription should not be needed here!
-        // XXX_vincent See comment/idea at the top of this file!
-        this.roomNotificationSettings.invalidate()
-      );
-
-      return resource;
-    });
 
   constructor(client: OpaqueClient) {
     this.#client = client[kInternal].as<M>();
@@ -960,7 +940,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.threads = new ThreadDB();
 
     this.notifications = createStore_forNotifications();
-    this.roomNotificationSettings = createStore_forRoomNotificationSettings();
+    this.roomNotificationSettings = createStore_forRoomNotificationSettings(
+      this.optimisticUpdates.signal
+    );
     this.historyVersions = createStore_forHistoryVersions();
 
     const threadifications = DerivedSignal.from(
@@ -980,13 +962,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
         notificationsById: s.notificationsById,
       }),
       shallow
-    );
-
-    const settingsByRoomId = DerivedSignal.from(
-      this.roomNotificationSettings.signal,
-      this.optimisticUpdates.signal,
-      (settings, updates) =>
-        applyOptimisticUpdates_forSettings(settings, updates)
     );
 
     const versionsByRoomId = DerivedSignal.from(
@@ -1016,6 +991,36 @@ export class UmbrellaStore<M extends BaseMetadata> {
         fetchMoreError: page.fetchMoreError,
         fetchMore: page.fetchMore,
       } as const;
+    });
+
+    // Room notification settings
+    const settingsByRoomId = new DefaultMap((roomId: RoomId) => {
+      const notificationSettingsFetcher = async () => {
+        const room = this.#client.getRoom(roomId);
+        if (room === null) {
+          throw new HttpError(
+            `Room '${roomId}' is not available on client`,
+            479
+          );
+        }
+
+        const result = await room.getNotificationSettings();
+        this.roomNotificationSettings.update(roomId, result);
+      };
+
+      const resource = new SinglePageResource(notificationSettingsFetcher);
+      const signal = DerivedSignal.from(() => {
+        const result = resource.get();
+        if (result.isLoading || result.error) {
+          return result;
+        }
+        return ASYNC_OK(
+          "settings",
+          nn(this.roomNotificationSettings.signal.get()[roomId])
+        );
+      }, shallow);
+
+      return { signal, waitUntilLoaded: resource.waitUntilLoaded };
     });
 
     this.outputs = {
@@ -1101,27 +1106,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
       isFetchingMore: page.isFetchingMore,
       fetchMoreError: page.fetchMoreError,
       fetchMore: page.fetchMore,
-    };
-  }
-
-  // NOTE: This will read the async result, but WILL NOT start loading at the moment!
-  // XXX_vincent This should really be a derived Signal!
-  public getNotificationSettingsLoadingState(
-    roomId: string
-  ): RoomNotificationSettingsAsyncResult {
-    // XXX_vincent See comment/idea at the top of this file!
-    const resource = this.#roomNotificationSettingsQueries.getOrCreate(roomId);
-
-    // XXX_vincent Use an AsyncResult mapper helper somehow
-    const asyncResult = resource.get();
-    if (asyncResult.isLoading || asyncResult.error) {
-      return asyncResult;
-    }
-
-    // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
-    return {
-      isLoading: false,
-      settings: nn(this.outputs.settingsByRoomId.get()[roomId]),
     };
   }
 
@@ -1545,7 +1529,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
       this.notifications.invalidate();
       this.optimisticUpdates.invalidate();
       this.permissionHints.invalidate();
-      this.roomNotificationSettings.invalidate();
     });
   }
 
@@ -1645,12 +1628,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
       // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
       this.#roomVersionsLastRequestedAtByRoom.set(roomId, updates.requestedAt);
     }
-  }
-
-  public waitUntilRoomNotificationSettingsLoaded(roomId: string) {
-    return this.#roomNotificationSettingsQueries
-      .getOrCreate(roomId)
-      .waitUntilLoaded();
   }
 
   public async refreshRoomNotificationSettings(
