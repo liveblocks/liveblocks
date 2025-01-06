@@ -891,7 +891,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     readonly threadifications: DerivedSignal<CleanThreadifications<M>>;
     readonly threads: DerivedSignal<ReadonlyThreadDB<M>>;
     readonly notifications: DerivedSignal<CleanNotifications>;
-    readonly loadingNotifications: DerivedSignal<InboxNotificationsAsyncResult>; // XXX Turn into a ManagedResource<InboxNotificationsAsyncResult>
+    readonly loadingNotifications: ManagedResource<InboxNotificationsAsyncResult>;
     readonly settingsByRoomId: DefaultMap<
       RoomId,
       ManagedResource<RoomNotificationSettingsAsyncResult>
@@ -975,23 +975,27 @@ export class UmbrellaStore<M extends BaseMetadata> {
         )
     );
 
-    const loadingNotifications = DerivedSignal.from(() => {
-      const asyncResult = this.#notifications.get();
-      if (asyncResult.isLoading || asyncResult.error) {
-        return asyncResult;
-      }
+    const loadingNotifications = {
+      signal: DerivedSignal.from(() => {
+        const result = this.#notifications.get();
+        if (result.isLoading || result.error) {
+          return result;
+        }
 
-      const page = asyncResult.data;
-      return {
-        isLoading: false,
-        inboxNotifications:
-          this.outputs.notifications.get().sortedNotifications,
-        hasFetchedAll: page.hasFetchedAll,
-        isFetchingMore: page.isFetchingMore,
-        fetchMoreError: page.fetchMoreError,
-        fetchMore: page.fetchMore,
-      } as const;
-    });
+        const page = result.data;
+        return {
+          isLoading: false,
+          inboxNotifications:
+            this.outputs.notifications.get().sortedNotifications,
+          hasFetchedAll: page.hasFetchedAll,
+          isFetchingMore: page.isFetchingMore,
+          fetchMoreError: page.fetchMoreError,
+          fetchMore: page.fetchMore,
+        } as const;
+      }),
+
+      waitUntilLoaded: this.#notifications.waitUntilLoaded,
+    };
 
     // Room notification settings
     const settingsByRoomId = new DefaultMap((roomId: RoomId) => {
@@ -1393,10 +1397,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
       result.threads.deleted,
       result.inboxNotifications.deleted
     );
-  }
-
-  public waitUntilNotificationsLoaded(): UsablePromise<void> {
-    return this.#notifications.waitUntilLoaded();
   }
 
   public waitUntilRoomThreadsLoaded(

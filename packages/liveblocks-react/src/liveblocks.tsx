@@ -380,10 +380,9 @@ function useInboxNotifications_withClient<T>(
 
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
-  useEffect(() => {
-    // XXX_vincent Similarly to the idea described at the top of the umbrella file, maybe write this as follows instead?
-    // store.outputs.loadingNotifications.waitUntilLoaded()
-    void store.waitUntilNotificationsLoaded();
+  useEffect(
+    () => void store.outputs.loadingNotifications.waitUntilLoaded()
+
     // NOTE: Deliberately *not* using a dependency array here!
     //
     // It is important to call waitUntil on *every* render.
@@ -392,7 +391,7 @@ function useInboxNotifications_withClient<T>(
     // 2. All other subsequent renders now "just" return the same promise (a quick operation).
     // 3. If ever the promise would fail, then after 5 seconds it would reset, and on the very
     //    *next* render after that, a *new* fetch/promise will get created.
-  });
+  );
 
   useEffect(() => {
     poller.inc();
@@ -402,14 +401,18 @@ function useInboxNotifications_withClient<T>(
     };
   }, [poller]);
 
-  return useSignal(store.outputs.loadingNotifications, selector, isEqual);
+  return useSignal(
+    store.outputs.loadingNotifications.signal,
+    selector,
+    isEqual
+  );
 }
 
 function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
   const store = getLiveblocksExtrasForClient(client).store;
 
   // Suspend until there are at least some inbox notifications
-  use(store.waitUntilNotificationsLoaded());
+  use(store.outputs.loadingNotifications.waitUntilLoaded());
 
   // We're in a Suspense world here, and as such, the useInboxNotifications()
   // hook is expected to only return success results when we're here.
@@ -433,7 +436,7 @@ function useUnreadInboxNotificationsCountSuspense_withClient(
   const store = getLiveblocksExtrasForClient(client).store;
 
   // Suspend until there are at least some inbox notifications
-  use(store.waitUntilNotificationsLoaded());
+  use(store.outputs.loadingNotifications.waitUntilLoaded());
 
   const result = useUnreadInboxNotificationsCount_withClient(client);
   assert(!result.isLoading, "Did not expect loading");
