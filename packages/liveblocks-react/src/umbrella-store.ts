@@ -496,9 +496,9 @@ export class PaginatedResource {
   }
 }
 
-// XXX Find better name
-type WrappedSinglePageResource = {
-  signal: ISignal<RoomNotificationSettingsAsyncResult>;
+// TODO Find better name?
+type ManagedResource<T> = {
+  signal: ISignal<T>;
   waitUntilLoaded: () => UsablePromise<void>;
 };
 
@@ -891,9 +891,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
     readonly threadifications: DerivedSignal<CleanThreadifications<M>>;
     readonly threads: DerivedSignal<ReadonlyThreadDB<M>>;
     readonly notifications: DerivedSignal<CleanNotifications>;
-    readonly loadingNotifications: DerivedSignal<InboxNotificationsAsyncResult>;
-    readonly settingsByRoomId: DefaultMap<RoomId, WrappedSinglePageResource>;
-    readonly versionsByRoomId: DerivedSignal<VersionsByRoomId>;
+    readonly loadingNotifications: DerivedSignal<InboxNotificationsAsyncResult>; // XXX Turn into a ManagedResource<InboxNotificationsAsyncResult>
+    readonly settingsByRoomId: DefaultMap<
+      RoomId,
+      ManagedResource<RoomNotificationSettingsAsyncResult>
+    >;
+    readonly versionsByRoomId: DerivedSignal<VersionsByRoomId>; // XXX Turn into a DefaultMap<RoomId, ManagedResource<VersionsByRoomId>>
   };
 
   // Notifications
