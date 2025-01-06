@@ -608,14 +608,14 @@ function createStore_forNotifications() {
   }
 
   function applyDelta(
-    newInboxNotifications: InboxNotificationData[],
+    newNotifications: InboxNotificationData[],
     deletedNotifications: InboxNotificationDeleteInfo[]
   ) {
     signal.mutate((lut) => {
       let mutated = false;
 
       // Add new notifications or update existing notifications if the existing notification is older than the new notification.
-      for (const n of newInboxNotifications) {
+      for (const n of newNotifications) {
         const existing = lut.get(n.id);
         // If the notification already exists, we need to compare the two notifications to determine which one is newer.
         if (existing) {
@@ -1350,8 +1350,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     deletedNotifications: InboxNotificationDeleteInfo[] = []
   ): void {
     batch(() => {
-      // XXX_vincent Make these signatures look the same
-      this.threads.applyDelta({ newThreads: threads, deletedThreads });
+      this.threads.applyDelta(threads, deletedThreads);
       this.notifications.applyDelta(notifications, deletedNotifications);
     });
   }
