@@ -848,10 +848,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     readonly notifications: DerivedSignal<CleanNotifications>;
     readonly settingsByRoomId: DerivedSignal<SettingsByRoomId>;
     readonly versionsByRoomId: DerivedSignal<VersionsByRoomId>;
-
-    readonly loadingThreads: DerivedSignal<{
-      getUserThreads: (query: ThreadsQuery<M>) => ThreadsAsyncResult<M>;
-    }>;
   };
 
   // Notifications
@@ -944,50 +940,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
         )
     );
 
-    const loadingThreads = DerivedSignal.from(() => {
-      return {
-        getUserThreads: (query: ThreadsQuery<M>): ThreadsAsyncResult<M> => {
-          const queryKey = makeUserThreadsQueryKey(query);
-
-          const paginatedResource = this.#userThreads.get(queryKey);
-          if (paginatedResource === undefined) {
-            return ASYNC_LOADING;
-          }
-
-          // XXX Use an AsyncResult mapper helper somehow
-          const asyncResult = paginatedResource.get();
-          if (asyncResult.isLoading || asyncResult.error) {
-            return asyncResult;
-          }
-
-          const threads = this.outputs.threads.get().findMany(
-            undefined, // Do _not_ filter by roomId
-            query,
-            "desc"
-          );
-
-          const page = asyncResult.data;
-          // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
-          return {
-            isLoading: false,
-            threads,
-            hasFetchedAll: page.hasFetchedAll,
-            isFetchingMore: page.isFetchingMore,
-            fetchMoreError: page.fetchMoreError,
-            fetchMore: page.fetchMore,
-          };
-        },
-      };
-    });
-
     this.outputs = {
       threadifications,
       threads,
       notifications,
       settingsByRoomId,
       versionsByRoomId,
-
-      loadingThreads,
     };
 
     // Auto-bind all of this class’ methods here, so we can use stable
