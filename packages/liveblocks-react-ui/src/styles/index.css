@@ -159,6 +159,12 @@
   block-size: var(--lb-icon-size);
 }
 
+.lb-icon-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .lb-icon {
   --lb-icon-background: var(--lb-dynamic-background);
 
