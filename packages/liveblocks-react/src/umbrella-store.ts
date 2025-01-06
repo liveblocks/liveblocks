@@ -25,6 +25,7 @@ import {
   batch,
   compactObject,
   console,
+  DefaultMap,
   DerivedSignal,
   HttpError,
   kInternal,
@@ -211,10 +212,6 @@ function makeUserThreadsQueryKey(
   query: ThreadsQuery<BaseMetadata> | undefined
 ) {
   return `USER_THREADS:${stringify(query ?? {})}`;
-}
-
-function makeNotificationSettingsQueryKey(roomId: string) {
-  return `${roomId}:NOTIFICATION_SETTINGS`;
 }
 
 function makeVersionsQueryKey(roomId: string) {
@@ -860,7 +857,31 @@ export class UmbrellaStore<M extends BaseMetadata> {
   #roomVersionsLastRequestedAtByRoom = new Map<RoomId, Date>();
 
   // Room notification settings
-  #roomNotificationSettings: Map<QueryKey, SinglePageResource> = new Map();
+  #roomNotificationSettingsQueries: DefaultMap<RoomId, SinglePageResource> =
+    new DefaultMap((roomId) => {
+      const notificationSettingsFetcher = async () => {
+        const room = this.#client.getRoom(roomId);
+        if (room === null) {
+          throw new HttpError(
+            `Room '${roomId}' is not available on client`,
+            479
+          );
+        }
+
+        const result = await room.getNotificationSettings();
+        this.roomNotificationSettings.update(roomId, result);
+      };
+
+      const resource = new SinglePageResource(notificationSettingsFetcher);
+      // XXX Get rid of this?????????????
+      resource.signal.subscribe(() =>
+        // Note that the store itself does not change, but it's only vehicle at
+        // the moment to trigger a re-render, so we'll do a no-op update here.
+        this.invalidateEntireStore()
+      );
+
+      return resource;
+    });
 
   constructor(client: OpaqueClient) {
     this.#client = client[kInternal].as<M>();
@@ -1036,12 +1057,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
   public getNotificationSettingsLoadingState(
     roomId: string
   ): RoomNotificationSettingsAsyncResult {
-    const queryKey = makeNotificationSettingsQueryKey(roomId);
-
-    const resource = this.#roomNotificationSettings.get(queryKey);
-    if (resource === undefined) {
-      return ASYNC_LOADING;
-    }
+    const resource = this.#roomNotificationSettingsQueries.getOrCreate(roomId);
 
     // XXX Use an AsyncResult mapper helper somehow
     const asyncResult = resource.get();
@@ -1579,34 +1595,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
   }
 
   public waitUntilRoomNotificationSettingsLoaded(roomId: string) {
-    const queryKey = makeNotificationSettingsQueryKey(roomId);
-    let resource = this.#roomNotificationSettings.get(queryKey);
-    if (resource === undefined) {
-      const notificationSettingsFetcher = async () => {
-        const room = this.#client.getRoom(roomId);
-        if (room === null) {
-          throw new HttpError(
-            `Room '${roomId}' is not available on client`,
-            479
-          );
-        }
-
-        const result = await room.getNotificationSettings();
-        this.roomNotificationSettings.update(roomId, result);
-      };
-
-      resource = new SinglePageResource(notificationSettingsFetcher);
-    }
-
-    resource.signal.subscribe(() =>
-      // Note that the store itself does not change, but it's only vehicle at
-      // the moment to trigger a re-render, so we'll do a no-op update here.
-      this.invalidateEntireStore()
-    );
-
-    this.#roomNotificationSettings.set(queryKey, resource);
-
-    return resource.waitUntilLoaded();
+    return this.#roomNotificationSettingsQueries
+      .getOrCreate(roomId)
+      .waitUntilLoaded();
   }
 
   public async refreshRoomNotificationSettings(
