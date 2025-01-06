@@ -13,3 +13,17 @@ export function find<T>(
   }
   return undefined;
 }
+
+/**
+ * Counts the number of items in an iterable that match the predicate.
+ */
+export function count<T>(
+  it: Iterable<T>,
+  predicate: (value: T) => boolean
+): number {
+  let total = 0;
+  for (const item of it) {
+    if (predicate(item)) total++;
+  }
+  return total;
+}

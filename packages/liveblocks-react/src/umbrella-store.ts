@@ -935,14 +935,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
         )
     );
 
-    const notifications2 = DerivedSignal.from(() => {
+    const loadingNotifications = DerivedSignal.from(() => {
       const asyncResult = this.#notifications.get();
       if (asyncResult.isLoading || asyncResult.error) {
         return asyncResult;
       }
 
       const page = asyncResult.data;
-      // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
       return {
         isLoading: false,
         inboxNotifications:
@@ -958,7 +957,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       threadifications,
       threads,
       notifications,
-      loadingNotifications: notifications2,
+      loadingNotifications,
       settingsByRoomId,
       versionsByRoomId,
     };

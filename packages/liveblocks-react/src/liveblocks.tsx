@@ -10,7 +10,6 @@ import type {
   BaseRoomInfo,
   DM,
   DU,
-  InboxNotificationData,
   OpaqueClient,
   SyncStatus,
 } from "@liveblocks/core";
@@ -35,6 +34,7 @@ import {
 
 import { config } from "./config";
 import { useIsInsideRoom } from "./contexts";
+import { count } from "./lib/itertools";
 import { shallow2 } from "./lib/shallow2";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
@@ -92,23 +92,6 @@ const _bundles = new WeakMap<
   LiveblocksContextBundle<BaseUserMeta, BaseMetadata>
 >();
 
-function selectUnreadInboxNotificationsCount(
-  inboxNotifications: readonly InboxNotificationData[]
-) {
-  let count = 0;
-
-  for (const notification of inboxNotifications) {
-    if (
-      notification.readAt === null ||
-      notification.readAt < notification.notifiedAt
-    ) {
-      count++;
-    }
-  }
-
-  return count;
-}
-
 function selectorFor_useUnreadInboxNotificationsCount(
   result: InboxNotificationsAsyncResult
 ): UnreadInboxNotificationsCountAsyncResult {
@@ -117,10 +100,12 @@ function selectorFor_useUnreadInboxNotificationsCount(
     return result;
   }
 
-  // OK state
   return {
     isLoading: false,
-    count: selectUnreadInboxNotificationsCount(result.inboxNotifications),
+    count: count(
+      result.inboxNotifications,
+      (n) => n.readAt === null || n.readAt < n.notifiedAt
+    ),
   };
 }
 
