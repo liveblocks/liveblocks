@@ -40,6 +40,7 @@ import {
 import { ASYNC_ERR, ASYNC_LOADING, ASYNC_OK } from "./lib/AsyncResult";
 import { autobind } from "./lib/autobind";
 import { find } from "./lib/itertools";
+import { shallow2 } from "./lib/shallow2";
 import type { ReadonlyThreadDB } from "./ThreadDB";
 import { ThreadDB } from "./ThreadDB";
 import type {
@@ -209,10 +210,16 @@ function makeRoomThreadsQueryKey(
   return stringify([roomId, query ?? {}]);
 }
 
-function makeUserThreadsQueryKey(
+export function makeUserThreadsQueryKey(
   query: ThreadsQuery<BaseMetadata> | undefined
 ) {
   return stringify(query ?? {});
+}
+
+function parseUserThreadsQueryKey<M extends BaseMetadata>(
+  queryKey: string
+): ThreadsQuery<M> {
+  return JSON.parse(queryKey) as ThreadsQuery<M>;
 }
 
 /**
@@ -830,6 +837,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
   readonly outputs: {
     readonly threadifications: DerivedSignal<CleanThreadifications<M>>;
     readonly threads: DerivedSignal<ReadonlyThreadDB<M>>;
+    readonly loadingUserThreads: DefaultMap<
+      QueryKey,
+      LoadableResource<ThreadsAsyncResult<M>>
+    >;
     readonly notifications: DerivedSignal<CleanNotifications>;
 
     readonly loadingNotifications: LoadableResource<InboxNotificationsAsyncResult>;
@@ -853,7 +864,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   // User Threads
   #userThreadsLastRequestedAt: Date | null = null;
-  #userThreads: Map<QueryKey, PaginatedResource> = new Map();
 
   // Room versions
   #roomVersionsLastRequestedAtByRoom = new Map<RoomId, Date>();
@@ -905,6 +915,59 @@ export class UmbrellaStore<M extends BaseMetadata> {
         notificationsById: s.notificationsById,
       }),
       shallow
+    );
+
+    const loadingUserThreads = new DefaultMap(
+      (queryKey: QueryKey): LoadableResource<ThreadsAsyncResult<M>> => {
+        const query = parseUserThreadsQueryKey<M>(queryKey);
+
+        const resource = new PaginatedResource(async (cursor?: string) => {
+          const result = await this.#client[
+            kInternal
+          ].httpClient.getUserThreads_experimental({
+            cursor,
+            query,
+          });
+          this.updateThreadifications(
+            result.threads,
+            result.inboxNotifications
+          );
+
+          this.permissionHints.update(result.permissionHints);
+
+          // We initialize the `_userThreadsLastRequestedAt` date using the server timestamp after we've loaded the first page of inbox notifications.
+          if (this.#userThreadsLastRequestedAt === null) {
+            this.#userThreadsLastRequestedAt = result.requestedAt;
+          }
+
+          return result.nextCursor;
+        });
+
+        const signal = DerivedSignal.from((): ThreadsAsyncResult<M> => {
+          const result = resource.get();
+          if (result.isLoading || result.error) {
+            return result;
+          }
+
+          const threads = this.outputs.threads.get().findMany(
+            undefined, // Do _not_ filter by roomId
+            query ?? {},
+            "desc"
+          );
+
+          const page = result.data;
+          return {
+            isLoading: false,
+            threads,
+            hasFetchedAll: page.hasFetchedAll,
+            isFetchingMore: page.isFetchingMore,
+            fetchMoreError: page.fetchMoreError,
+            fetchMore: page.fetchMore,
+          };
+        }, shallow2);
+
+        return { signal, waitUntilLoaded: resource.waitUntilLoaded };
+      }
     );
 
     const loadingNotifications = {
@@ -1007,6 +1070,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.outputs = {
       threadifications,
       threads,
+      loadingUserThreads,
       notifications,
       loadingNotifications,
       settingsByRoomId,
@@ -1043,40 +1107,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     const threads = this.outputs.threads
       .get()
       .findMany(roomId, query ?? {}, "asc");
-
-    const page = result.data;
-    // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
-    return {
-      isLoading: false,
-      threads,
-      hasFetchedAll: page.hasFetchedAll,
-      isFetchingMore: page.isFetchingMore,
-      fetchMoreError: page.fetchMoreError,
-      fetchMore: page.fetchMore,
-    };
-  }
-
-  public getUserThreadsLoadingState(
-    query: ThreadsQuery<M> | undefined
-  ): ThreadsAsyncResult<M> {
-    const queryKey = makeUserThreadsQueryKey(query);
-
-    // XXX_vincent Use an AsyncResult mapper helper somehow
-    const paginatedResource = this.#userThreads.get(queryKey);
-    if (paginatedResource === undefined) {
-      return ASYNC_LOADING;
-    }
-
-    const result = paginatedResource.get();
-    if (result.isLoading || result.error) {
-      return result;
-    }
-
-    const threads = this.outputs.threads.get().findMany(
-      undefined, // Do _not_ filter by roomId
-      query ?? {},
-      "desc"
-    );
 
     const page = result.data;
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
@@ -1431,45 +1461,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
       // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
       this.#roomThreadsLastRequestedAtByRoom.set(roomId, updates.requestedAt);
     }
-  }
-
-  public waitUntilUserThreadsLoaded(query: ThreadsQuery<M> | undefined) {
-    const queryKey = makeUserThreadsQueryKey(query);
-
-    const threadsFetcher = async (cursor?: string) => {
-      const result = await this.#client[
-        kInternal
-      ].httpClient.getUserThreads_experimental({
-        cursor,
-        query,
-      });
-      this.updateThreadifications(result.threads, result.inboxNotifications);
-
-      this.permissionHints.update(result.permissionHints);
-
-      // We initialize the `_userThreadsLastRequestedAt` date using the server timestamp after we've loaded the first page of inbox notifications.
-      if (this.#userThreadsLastRequestedAt === null) {
-        this.#userThreadsLastRequestedAt = result.requestedAt;
-      }
-
-      return result.nextCursor;
-    };
-
-    let paginatedResource = this.#userThreads.get(queryKey);
-    if (paginatedResource === undefined) {
-      paginatedResource = new PaginatedResource(threadsFetcher);
-
-      // XXX_vincent Use signal directly here instead of invalidating everything!
-      paginatedResource.signal.subscribe(() =>
-        // Note that the store itself does not change, but it's only vehicle at
-        // the moment to trigger a re-render, so we'll do a no-op update here.
-        this.invalidateEntireStore()
-      );
-    }
-
-    this.#userThreads.set(queryKey, paginatedResource);
-
-    return paginatedResource.waitUntilLoaded();
   }
 
   // XXX_vincent We should really be going over all call sites, and replace this call

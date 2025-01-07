@@ -36,7 +36,6 @@ import { config } from "./config";
 import { useIsInsideRoom } from "./contexts";
 import { ASYNC_OK } from "./lib/AsyncResult";
 import { count } from "./lib/itertools";
-import { shallow2 } from "./lib/shallow2";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
@@ -54,7 +53,7 @@ import type {
   UseSyncStatusOptions,
   UseUserThreadsOptions,
 } from "./types";
-import { UmbrellaStore } from "./umbrella-store";
+import { makeUserThreadsQueryKey, UmbrellaStore } from "./umbrella-store";
 import { useSignal } from "./use-signal";
 import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
 
@@ -911,14 +910,16 @@ function useUserThreads_experimental<M extends BaseMetadata>(
   }
 ): ThreadsAsyncResult<M> {
   const client = useClient();
-
   const { store, userThreadsPoller: poller } =
     getLiveblocksExtrasForClient<M>(client);
+  const queryKey = makeUserThreadsQueryKey(options.query);
 
   useEffect(
-    () => {
-      void store.waitUntilUserThreadsLoaded(options.query);
-    }
+    () =>
+      void store.outputs.loadingUserThreads
+        .getOrCreate(queryKey)
+        .waitUntilLoaded()
+
     // NOTE: Deliberately *not* using a dependency array here!
     //
     // It is important to call waitUntil on *every* render.
@@ -937,24 +938,8 @@ function useUserThreads_experimental<M extends BaseMetadata>(
     };
   }, [poller]);
 
-  // XXX_vincent There is a disconnect between this getter and subscriber! It's
-  // not clear (unless you read the implementation of
-  // getUserThreadsLoadingState) why this getter should be paired with
-  // `store.outputs.threads.subscribe`.
-  //
-  // XXX_vincent Ideally refactor this like the idea described at the top of the umbrella file!
-  //
-  const getter = useCallback(
-    () => store.getUserThreadsLoadingState(options.query),
-    [store, options.query]
-  );
-
-  return useSyncExternalStoreWithSelector(
-    store.outputs.threads.subscribe,
-    getter,
-    getter,
-    identity,
-    shallow2 // NOTE: Using 2-level-deep shallow check here, because the result of selectThreads() is not stable!
+  return useSignal(
+    store.outputs.loadingUserThreads.getOrCreate(queryKey).signal
   );
 }
 
@@ -981,10 +966,10 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
   }
 ): ThreadsAsyncSuccess<M> {
   const client = useClient();
-
   const { store } = getLiveblocksExtrasForClient<M>(client);
+  const queryKey = makeUserThreadsQueryKey(options.query);
 
-  use(store.waitUntilUserThreadsLoaded(options.query));
+  use(store.outputs.loadingUserThreads.getOrCreate(queryKey).waitUntilLoaded());
 
   const result = useUserThreads_experimental(options);
   assert(!result.error, "Did not expect error");
