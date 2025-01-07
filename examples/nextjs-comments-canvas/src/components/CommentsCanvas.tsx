@@ -16,6 +16,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import styles from "./CommentsCanvas.module.css";
 import { Toolbar } from "./Toolbar";
 import { useMaxZIndex, useNearEdge } from "../hooks";
+import PDF from "./PDF";
 
 export function CommentsCanvas() {
   const { threads } = useThreads();
@@ -56,6 +57,7 @@ export function CommentsCanvas() {
   return (
     <div className={`${styles.wrapper} lb-root`}>
       <div className={styles.threads}>
+        <PDF />
         <DndContext onDragEnd={handleDragEnd} sensors={sensors}>
           {threads.map((thread) => (
             <DraggableThread key={thread.id} thread={thread} />
