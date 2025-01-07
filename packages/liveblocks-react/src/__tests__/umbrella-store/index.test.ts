@@ -24,7 +24,7 @@ const NO_CLIENT = {
   },
 } as any;
 
-const loading = { isLoading: true };
+const LOADING = { isLoading: true };
 
 describe("Umbrella Store", () => {
   it("getters returns the expected shapes", () => {
@@ -41,11 +41,11 @@ describe("Umbrella Store", () => {
     expect(store.outputs.versionsByRoomId.get()).toEqual({}); // versions by room ID
 
     // Sync async-results getters
-    expect(store.outputs.loadingNotifications.signal.get()).toEqual(loading);
+    expect(store.outputs.loadingNotifications.signal.get()).toEqual(LOADING);
     expect(
       store.outputs.settingsByRoomId.getOrCreate("room-a").signal.get()
-    ).toEqual(loading);
-    expect(store.getRoomVersionsLoadingState("room-a")).toEqual(loading);
+    ).toEqual(LOADING);
+    expect(store.getRoomVersionsLoadingState("room-a")).toEqual(LOADING);
   });
 
   it("calling getters multiple times should always return a stable result", () => {
