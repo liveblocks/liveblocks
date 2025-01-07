@@ -32,4 +32,19 @@ describe("stringify", () => {
       })
     );
   });
+
+  it("supports nested objects", () => {
+    expect(stringify([{ a: 2, b: true }])).toEqual(
+      stringify([{ b: true, a: 2 }])
+    );
+    expect(stringify([{ a: 2, b: true, c: [[{ e: -0, d: 0 }]] }])).toEqual(
+      stringify([{ b: true, a: 2, c: [[{ d: 0, e: 0 }]] }])
+    );
+  });
+
+  it("ignores undefined keys", () => {
+    expect(stringify([{ a: 2, b: true }])).toEqual(
+      stringify([{ b: true, c: undefined, a: 2 }])
+    );
+  });
 });
