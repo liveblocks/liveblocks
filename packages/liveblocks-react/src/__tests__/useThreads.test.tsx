@@ -466,6 +466,7 @@ describe("useThreads", () => {
     }
 
     {
+      // Test 3
       const { result, unmount } = renderHook(
         () =>
           useThreads({
@@ -478,7 +479,16 @@ describe("useThreads", () => {
         }
       );
 
-      expect(result.current).toEqual({ isLoading: true });
+      expect(result.current).toEqual(
+        //
+        // NOTE! This query is not loading initially! This is because we
+        // already queried for this combination of queries in Test 1, because
+        //   { metadata: { color: "red", pinned: true } }
+        // is the same query as
+        //   { metadata: { pinned: true, color: "red" } }
+        //
+        expect.objectContaining({ isLoading: false })
+      );
 
       await waitFor(() =>
         expect(result.current).toEqual({
