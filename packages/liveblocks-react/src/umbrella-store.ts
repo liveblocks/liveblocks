@@ -515,7 +515,7 @@ type RoomQueryKey = string;
 /**
  * A lookup table (LUT) for all the history versions.
  */
-type VersionsLUT = Map<RoomId, Map<string, HistoryVersion>>;
+type VersionsLUT = DefaultMap<RoomId, Map<string, HistoryVersion>>;
 
 /**
  * A lookup table (LUT) for all the inbox notifications.
@@ -536,7 +536,7 @@ type SettingsLUT = Map<RoomId, RoomNotificationSettings>;
  */
 type SettingsByRoomId = Record<RoomId, RoomNotificationSettings>;
 
-type PermissionHintsLUT = Map<RoomId, Set<Permission>>;
+type PermissionHintsLUT = DefaultMap<RoomId, Set<Permission>>;
 
 export type CleanThreadifications<M extends BaseMetadata> =
   // Threads + Notifications = Threadifications
@@ -688,13 +688,13 @@ function createStore_forRoomNotificationSettings(
 }
 
 function createStore_forHistoryVersions() {
-  const baseSignal = new MutableSignal<VersionsLUT>(new Map());
+  const baseSignal = new MutableSignal(
+    new DefaultMap(() => new Map()) as VersionsLUT
+  );
 
   function update(roomId: string, versions: HistoryVersion[]): void {
     baseSignal.mutate((lut) => {
-      // get-or-create
-      const versionsById =
-        lut.get(roomId) ?? (lut.set(roomId, new Map()), lut.get(roomId)!);
+      const versionsById = lut.getOrCreate(roomId);
       for (const version of versions) {
         versionsById.set(version.id, version);
       }
@@ -717,18 +717,19 @@ function createStore_forHistoryVersions() {
 }
 
 function createStore_forPermissionHints() {
-  const signal = new MutableSignal<PermissionHintsLUT>(new Map());
+  const signal = new MutableSignal<PermissionHintsLUT>(
+    new DefaultMap(() => new Set())
+  );
 
   function update(newHints: Record<string, Permission[]>) {
     signal.mutate((lut) => {
       for (const [roomId, newPermissions] of Object.entries(newHints)) {
         // Get the existing set of permissions for the room and only ever add permission to this set
-        const existing = lut.get(roomId) ?? new Set();
+        const existing = lut.getOrCreate(roomId);
         // Add the new permissions to the set of existing permissions
         for (const permission of newPermissions) {
           existing.add(permission);
         }
-        lut.set(roomId, existing);
       }
     });
   }
