@@ -5,6 +5,7 @@ import type { Provider } from "@lexical/yjs";
 import { nn, TextEditorType } from "@liveblocks/core";
 import { useRoom, useSelf } from "@liveblocks/react";
 import {
+  useLayoutEffect,
   useReportTextEditor,
   useResolveMentionSuggestions,
   useYjsProvider,
@@ -14,7 +15,6 @@ import type { MutableRefObject, ReactNode } from "react";
 import {
   useCallback,
   useEffect,
-  useLayoutEffect,
   useRef,
   useState,
   useSyncExternalStore,

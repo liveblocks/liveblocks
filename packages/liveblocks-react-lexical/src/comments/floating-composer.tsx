@@ -11,6 +11,7 @@ import {
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { BaseMetadata, DM } from "@liveblocks/core";
 import { useCreateThread } from "@liveblocks/react";
+import { useLayoutEffect } from "@liveblocks/react/_private";
 import type {
   ComposerProps,
   ComposerSubmitComment,
@@ -25,13 +26,7 @@ import {
   createCommand,
 } from "lexical";
 import type { ComponentRef, FormEvent, KeyboardEvent, ReactNode } from "react";
-import {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useState,
-} from "react";
+import { forwardRef, useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { createDOMRange } from "../create-dom-range";
