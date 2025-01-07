@@ -10,6 +10,7 @@ import {
 } from "@liveblocks/core";
 import {
   useClientOrNull,
+  useLayoutEffect,
   useMentionSuggestions,
   useResolveMentionSuggestions,
   useRoomOrNull,
@@ -33,7 +34,6 @@ import {
   useEffect,
   useId,
   useImperativeHandle,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
