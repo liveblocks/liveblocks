@@ -64,7 +64,6 @@ import {
 import { config } from "./config";
 import { RoomContext, useIsInsideRoom, useRoomOrNull } from "./contexts";
 import { isString } from "./lib/guards";
-import { shallow2 } from "./lib/shallow2";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
@@ -115,6 +114,7 @@ import {
   UpdateNotificationSettingsError,
 } from "./types/errors";
 import type { UmbrellaStore } from "./umbrella-store";
+import { makeRoomThreadsQueryKey } from "./umbrella-store";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
 import { useSignal } from "./use-signal";
 import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
@@ -1291,26 +1291,24 @@ function useMutation<
 }
 
 function useThreads<M extends BaseMetadata>(
-  options: UseThreadsOptions<M> = {
-    query: { metadata: {} },
-  }
+  options: UseThreadsOptions<M> = {}
 ): ThreadsAsyncResult<M> {
   const { scrollOnLoad = true } = options;
-  // TODO - query = stable(options.query);
 
   const client = useClient();
   const room = useRoom();
-
   const { store, getOrCreateThreadsPollerForRoomId } =
     getRoomExtrasForClient<M>(client);
+  const queryKey = makeRoomThreadsQueryKey(room.id, options.query);
 
   const poller = getOrCreateThreadsPollerForRoomId(room.id);
 
   useEffect(
-    () => {
-      // XXX_vincent Ideally refactor this like the idea described at the top of the umbrella file!
-      void store.waitUntilRoomThreadsLoaded(room.id, options.query);
-    }
+    () =>
+      void store.outputs.loadingRoomThreads
+        .getOrCreate(queryKey)
+        .waitUntilLoaded()
+
     // NOTE: Deliberately *not* using a dependency array here!
     //
     // It is important to call waitUntil on *every* render.
@@ -1327,29 +1325,12 @@ function useThreads<M extends BaseMetadata>(
     return () => poller.dec();
   }, [poller]);
 
-  // XXX_vincent There is a disconnect between this getter and subscriber! It's
-  // not clear (unless you read the implementation of
-  // getRoomThreadsLoadingState) why this getter should be paired with
-  // `store.outputs.threads.subscribe`.
-  //
-  // XXX_vincent Ideally refactor this like the idea described at the top of the umbrella file!
-  //
-  const getter = useCallback(
-    () => store.getRoomThreadsLoadingState(room.id, options.query),
-    [store, room.id, options.query]
+  const result = useSignal(
+    store.outputs.loadingRoomThreads.getOrCreate(queryKey).signal
   );
 
-  const state = useSyncExternalStoreWithSelector(
-    store.outputs.threads.subscribe,
-    getter,
-    getter,
-    identity,
-    shallow2 // NOTE: Using 2-level-deep shallow check here, because the result of selectThreads() is not stable!
-  );
-
-  useScrollToCommentOnLoadEffect(scrollOnLoad, state);
-
-  return state;
+  useScrollToCommentOnLoadEffect(scrollOnLoad, result);
+  return result;
 }
 
 /**
@@ -2433,16 +2414,15 @@ function useStorageStatusSuspense(
 }
 
 function useThreadsSuspense<M extends BaseMetadata>(
-  options: UseThreadsOptions<M> = {
-    query: { metadata: {} },
-  }
+  options: UseThreadsOptions<M> = {}
 ): ThreadsAsyncSuccess<M> {
   const client = useClient();
   const room = useRoom();
 
   const { store } = getRoomExtrasForClient<M>(client);
+  const queryKey = makeRoomThreadsQueryKey(room.id, options.query);
 
-  use(store.waitUntilRoomThreadsLoaded(room.id, options.query));
+  use(store.outputs.loadingRoomThreads.getOrCreate(queryKey).waitUntilLoaded());
 
   const result = useThreads(options);
   assert(!result.error, "Did not expect error");
