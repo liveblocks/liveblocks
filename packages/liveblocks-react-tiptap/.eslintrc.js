@@ -26,12 +26,6 @@ module.exports = {
           "ImportDeclaration[source.value='react'] ImportSpecifier[imported.name='use']",
         message: "use is only available on React >=19.",
       },
-      {
-        selector:
-          "ImportDeclaration[source.value='react'] ImportSpecifier[imported.name='useLayoutEffect']",
-        message:
-          "useLayoutEffect triggers a warning when executed on the server on React <=18.2.0. Import it from '@liveblocks/react/_private' instead.",
-      },
     ],
 
     // ----------------------------------------------------------------------
