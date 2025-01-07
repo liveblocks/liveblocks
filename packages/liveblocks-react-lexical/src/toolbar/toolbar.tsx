@@ -15,26 +15,23 @@ import {
 } from "@liveblocks/react-ui/_private";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import {
-  $getSelection,
-  $isRangeSelection,
   CAN_REDO_COMMAND,
   CAN_UNDO_COMMAND,
   COMMAND_PRIORITY_CRITICAL,
+  COMMAND_PRIORITY_LOW,
+  createCommand,
   FORMAT_TEXT_COMMAND,
+  type LexicalCommand,
   type LexicalEditor,
   REDO_COMMAND,
-  type TextFormatType,
   UNDO_COMMAND,
 } from "lexical";
 import type { ComponentProps, ComponentType, ReactNode } from "react";
-import { forwardRef, useEffect, useState } from "react";
+import { forwardRef, useCallback, useEffect, useState } from "react";
 
 import { classNames } from "../classnames";
 import { OPEN_FLOATING_COMPOSER_COMMAND } from "../comments/floating-composer";
-import {
-  useInitialCommandsRegisteredRerender,
-  useIsCommandRegistered,
-} from "../is-command-registered";
+import { useIsCommandRegistered } from "../is-command-registered";
 import { isTextFormatActive } from "../is-text-format-active";
 
 export interface ToolbarSlotProps {
@@ -254,6 +251,19 @@ function DefaultToolbarContent() {
   );
 }
 
+const INITIAL_COMMANDS_REGISTERED_COMMAND: LexicalCommand<void> = createCommand(
+  "INITIAL_COMMANDS_REGISTERED_COMMAND"
+);
+
+// Re-renders its surrounding component.
+function useRerender() {
+  const [, setRerender] = useState(false);
+
+  return useCallback(() => {
+    setRerender((toggle) => !toggle);
+  }, [setRerender]);
+}
+
 export const Toolbar = Object.assign(
   forwardRef<HTMLDivElement, ToolbarProps>(
     (
@@ -267,9 +277,45 @@ export const Toolbar = Object.assign(
       forwardedRef
     ) => {
       const [editor] = useLexicalComposerContext();
-      useInitialCommandsRegisteredRerender();
+      const [commandsRegistered, setCommandsRegistered] = useState(false);
+      const rerender = useRerender();
 
       const slotProps: ToolbarSlotProps = { editor };
+
+      // Ensures that `useIsCommandRegistered` returns correct values initially.
+      // It registers a low-priority one-time command to re-render once all initial commands are registered.
+      useEffect(() => {
+        if (commandsRegistered) {
+          return;
+        }
+
+        const unregister = editor.registerCommand(
+          INITIAL_COMMANDS_REGISTERED_COMMAND,
+          () => {
+            setCommandsRegistered(true);
+            return true;
+          },
+          COMMAND_PRIORITY_LOW
+        );
+
+        editor.dispatchCommand(INITIAL_COMMANDS_REGISTERED_COMMAND, undefined);
+
+        return unregister;
+      }, [editor, commandsRegistered]);
+
+      // Re-render when the selection changes to ensure components like toggles are updated.
+      useEffect(() => {
+        const unregister = editor.registerUpdateListener(({ tags }) => {
+          return editor.getEditorState().read(() => {
+            // Ignore selection updates related to collaboration
+            if (tags.has("collaboration")) return;
+
+            rerender();
+          });
+        });
+
+        return unregister;
+      }, [editor, rerender]);
 
       return (
         <TooltipProvider>
