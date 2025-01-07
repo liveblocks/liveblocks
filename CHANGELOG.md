@@ -10,6 +10,8 @@
 ### `@liveblocks/react`
 
 - Fix memory leak in some hooks.
+- Fix bug where querying metadata with `useThreads()` would not always reuse the
+  cache correctly.
 
 ## 2.15.1
 
