@@ -928,7 +928,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
       waitUntilLoaded: this.#notificationsPaginationState.waitUntilLoaded,
     };
 
-    // Room notification settings
     const settingsByRoomId = new DefaultMap((roomId: RoomId) => {
       const resource = new SinglePageResource(async () => {
         const room = this.#client.getRoom(roomId);
