@@ -337,10 +337,6 @@ export class DerivedSignal<T> extends AbstractSignal<T> {
     this.#deps = deps;
     this.#sources = new Set();
     this.#transform = transform;
-
-    // for (const parent of parents) {
-    //   parent.addSink(this as DerivedSignal<unknown>);
-    // }
   }
 
   [Symbol.dispose](): void {

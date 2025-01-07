@@ -10,7 +10,6 @@ import type {
   BaseRoomInfo,
   DM,
   DU,
-  InboxNotificationData,
   OpaqueClient,
   SyncStatus,
 } from "@liveblocks/core";
@@ -35,7 +34,8 @@ import {
 
 import { config } from "./config";
 import { useIsInsideRoom } from "./contexts";
-import { shallow2 } from "./lib/shallow2";
+import { ASYNC_OK } from "./lib/AsyncResult";
+import { count } from "./lib/itertools";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
@@ -53,7 +53,7 @@ import type {
   UseSyncStatusOptions,
   UseUserThreadsOptions,
 } from "./types";
-import { UmbrellaStore } from "./umbrella-store";
+import { makeUserThreadsQueryKey, UmbrellaStore } from "./umbrella-store";
 import { useSignal } from "./use-signal";
 import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
 
@@ -92,23 +92,6 @@ const _bundles = new WeakMap<
   LiveblocksContextBundle<BaseUserMeta, BaseMetadata>
 >();
 
-function selectUnreadInboxNotificationsCount(
-  inboxNotifications: readonly InboxNotificationData[]
-) {
-  let count = 0;
-
-  for (const notification of inboxNotifications) {
-    if (
-      notification.readAt === null ||
-      notification.readAt < notification.notifiedAt
-    ) {
-      count++;
-    }
-  }
-
-  return count;
-}
-
 function selectorFor_useUnreadInboxNotificationsCount(
   result: InboxNotificationsAsyncResult
 ): UnreadInboxNotificationsCountAsyncResult {
@@ -117,11 +100,13 @@ function selectorFor_useUnreadInboxNotificationsCount(
     return result;
   }
 
-  // OK state
-  return {
-    isLoading: false,
-    count: selectUnreadInboxNotificationsCount(result.inboxNotifications),
-  };
+  return ASYNC_OK(
+    "count",
+    count(
+      result.inboxNotifications,
+      (n) => n.readAt === null || n.readAt < n.notifiedAt
+    )
+  );
 }
 
 function selectorFor_useUser<U extends BaseUserMeta>(
@@ -394,8 +379,9 @@ function useInboxNotifications_withClient<T>(
 
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
-  useEffect(() => {
-    void store.waitUntilNotificationsLoaded();
+  useEffect(
+    () => void store.outputs.loadingNotifications.waitUntilLoaded()
+
     // NOTE: Deliberately *not* using a dependency array here!
     //
     // It is important to call waitUntil on *every* render.
@@ -404,7 +390,7 @@ function useInboxNotifications_withClient<T>(
     // 2. All other subsequent renders now "just" return the same promise (a quick operation).
     // 3. If ever the promise would fail, then after 5 seconds it would reset, and on the very
     //    *next* render after that, a *new* fetch/promise will get created.
-  });
+  );
 
   useEffect(() => {
     poller.inc();
@@ -414,26 +400,8 @@ function useInboxNotifications_withClient<T>(
     };
   }, [poller]);
 
-  // XXX_vincent There is a disconnect between this getter and subscriber! It's
-  // not clear (unless you read the implementation of
-  // getInboxNotificationsLoadingState) why this getter should be paired with
-  // `store.outputs.notifications.subscribe`.
-  //
-  // Ideally refactor this to:
-  //
-  //   useSignal(
-  //     store.outputs.loadingNotifications,  // exposes { getNotifications }
-  //
-  //     useCallback(
-  //       ({ getNotifications }) => getNotifications(),
-  //       [options.query]
-  //     )
-  //   )
-  //
-  return useSyncExternalStoreWithSelector(
-    store.outputs.notifications.subscribe,
-    store.getInboxNotificationsLoadingState,
-    store.getInboxNotificationsLoadingState,
+  return useSignal(
+    store.outputs.loadingNotifications.signal,
     selector,
     isEqual
   );
@@ -443,7 +411,7 @@ function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
   const store = getLiveblocksExtrasForClient(client).store;
 
   // Suspend until there are at least some inbox notifications
-  use(store.waitUntilNotificationsLoaded());
+  use(store.outputs.loadingNotifications.waitUntilLoaded());
 
   // We're in a Suspense world here, and as such, the useInboxNotifications()
   // hook is expected to only return success results when we're here.
@@ -467,7 +435,7 @@ function useUnreadInboxNotificationsCountSuspense_withClient(
   const store = getLiveblocksExtrasForClient(client).store;
 
   // Suspend until there are at least some inbox notifications
-  use(store.waitUntilNotificationsLoaded());
+  use(store.outputs.loadingNotifications.waitUntilLoaded());
 
   const result = useUnreadInboxNotificationsCount_withClient(client);
   assert(!result.isLoading, "Did not expect loading");
@@ -942,14 +910,16 @@ function useUserThreads_experimental<M extends BaseMetadata>(
   }
 ): ThreadsAsyncResult<M> {
   const client = useClient();
-
   const { store, userThreadsPoller: poller } =
     getLiveblocksExtrasForClient<M>(client);
+  const queryKey = makeUserThreadsQueryKey(options.query);
 
   useEffect(
-    () => {
-      void store.waitUntilUserThreadsLoaded(options.query);
-    }
+    () =>
+      void store.outputs.loadingUserThreads
+        .getOrCreate(queryKey)
+        .waitUntilLoaded()
+
     // NOTE: Deliberately *not* using a dependency array here!
     //
     // It is important to call waitUntil on *every* render.
@@ -968,33 +938,8 @@ function useUserThreads_experimental<M extends BaseMetadata>(
     };
   }, [poller]);
 
-  // XXX_vincent There is a disconnect between this getter and subscriber! It's
-  // not clear (unless you read the implementation of
-  // getUserThreadsLoadingState) why this getter should be paired with
-  // `store.outputs.threads.subscribe`.
-  //
-  // Ideally refactor this to:
-  //
-  //   useSignal(
-  //     store.outputs.loadingThreads,  // exposes { getUserThreads, getRoomThreads }
-  //
-  //     useCallback(
-  //       ({ getUserThreads }) => getUserThreads(options.query),
-  //       [options.query]
-  //     )
-  //   )
-  //
-  const getter = useCallback(
-    () => store.getUserThreadsLoadingState(options.query),
-    [store, options.query]
-  );
-
-  return useSyncExternalStoreWithSelector(
-    store.outputs.threads.subscribe,
-    getter,
-    getter,
-    identity,
-    shallow2 // NOTE: Using 2-level-deep shallow check here, because the result of selectThreads() is not stable!
+  return useSignal(
+    store.outputs.loadingUserThreads.getOrCreate(queryKey).signal
   );
 }
 
@@ -1021,10 +966,10 @@ function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
   }
 ): ThreadsAsyncSuccess<M> {
   const client = useClient();
-
   const { store } = getLiveblocksExtrasForClient<M>(client);
+  const queryKey = makeUserThreadsQueryKey(options.query);
 
-  use(store.waitUntilUserThreadsLoaded(options.query));
+  use(store.outputs.loadingUserThreads.getOrCreate(queryKey).waitUntilLoaded());
 
   const result = useUserThreads_experimental(options);
   assert(!result.error, "Did not expect error");

@@ -7,6 +7,12 @@
 - Fix `useLayoutEffect` warnings when using React versions lower than 18.3.0 and
   SSR.
 
+### `@liveblocks/react`
+
+- Fix memory leak in some hooks.
+- Fix bug where querying metadata with `useThreads()` would not always reuse the
+  cache correctly.
+
 ## 2.15.1
 
 ### All packages
