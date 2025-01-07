@@ -206,13 +206,13 @@ function makeRoomThreadsQueryKey(
   roomId: string,
   query: ThreadsQuery<BaseMetadata> | undefined
 ) {
-  return `${roomId}-${stringify(query ?? {})}`;
+  return stringify([roomId, query ?? {}]);
 }
 
 function makeUserThreadsQueryKey(
   query: ThreadsQuery<BaseMetadata> | undefined
 ) {
-  return `USER_THREADS:${stringify(query ?? {})}`;
+  return stringify(query ?? {});
 }
 
 /**
