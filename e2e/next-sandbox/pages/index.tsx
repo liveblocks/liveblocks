@@ -111,6 +111,16 @@ export default function Home() {
             </li>
           </ul>
         </li>
+        <li>
+          <Link href="/notification-settings?room=e2e-notification-settings&user=12">
+            Room notification settings
+          </Link>
+        </li>
+        <li>
+          {/* <Link href="/version-history?room=e2e-version-history"> */}
+          Version History (TODO)
+          {/* </Link> */}
+        </li>
 
         <hr />
 

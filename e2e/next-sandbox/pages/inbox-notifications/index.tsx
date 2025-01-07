@@ -12,7 +12,7 @@ import {
 import type { PropsWithChildren } from "react";
 import { useState } from "react";
 
-import { getRoomFromUrl, getUserFromUrl, Row } from "../../utils";
+import { getRoomFromUrl, getUserFromUrl, RenderCount, Row } from "../../utils";
 import Button from "../../utils/Button";
 import { createLiveblocksClient } from "../../utils/createClient";
 import { FAKE_USERS } from "../api/_utils";
@@ -186,7 +186,9 @@ function LeftSide() {
   const { threads } = useThreads();
   return (
     <div id="left">
-      <h3>Threads</h3>
+      <h3>
+        Threads (<RenderCount />)
+      </h3>
       <div
         style={{
           background: "#d8efef",
@@ -213,7 +215,9 @@ function RightSide() {
   const inboxNotifications = useInboxNotificationsForThisPage();
   return (
     <div id="right">
-      <h3>Thread Inbox Notifications (for this room only)</h3>
+      <h3>
+        Thread Inbox Notifications (for this room only, <RenderCount />)
+      </h3>
       <div
         style={{
           background: "#efd8ef",
