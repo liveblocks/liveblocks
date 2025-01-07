@@ -1,6 +1,7 @@
 // Private APIs
 
 export { useRoomOrNull } from "./contexts";
+export { useLayoutEffect } from "./lib/use-layout-effect";
 export { getUmbrellaStoreForClient } from "./liveblocks";
 export { useClientOrNull } from "./liveblocks";
 export { CreateThreadError } from "./room";
