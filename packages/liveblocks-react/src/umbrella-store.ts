@@ -1035,16 +1035,16 @@ export class UmbrellaStore<M extends BaseMetadata> {
     }
 
     // XXX_vincent Use an AsyncResult mapper helper somehow
-    const asyncResult = paginatedResource.get();
-    if (asyncResult.isLoading || asyncResult.error) {
-      return asyncResult;
+    const result = paginatedResource.get();
+    if (result.isLoading || result.error) {
+      return result;
     }
 
     const threads = this.outputs.threads
       .get()
       .findMany(roomId, query ?? {}, "asc");
 
-    const page = asyncResult.data;
+    const page = result.data;
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
@@ -1067,9 +1067,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
       return ASYNC_LOADING;
     }
 
-    const asyncResult = paginatedResource.get();
-    if (asyncResult.isLoading || asyncResult.error) {
-      return asyncResult;
+    const result = paginatedResource.get();
+    if (result.isLoading || result.error) {
+      return result;
     }
 
     const threads = this.outputs.threads.get().findMany(
@@ -1078,7 +1078,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       "desc"
     );
 
-    const page = asyncResult.data;
+    const page = result.data;
     // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
     return {
       isLoading: false,
