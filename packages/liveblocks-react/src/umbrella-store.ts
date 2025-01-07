@@ -898,7 +898,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   // Notifications
   #notificationsLastRequestedAt: Date | null = null; // Keeps track of when we successfully requested an inbox notifications update for the last time. Will be `null` as long as the first successful fetch hasn't happened yet.
-  #notifications: PaginatedResource;
+  #notificationsPaginationState: PaginatedResource;
 
   // Room Threads
   #roomThreadsLastRequestedAtByRoom = new Map<RoomId, Date>();
@@ -918,21 +918,21 @@ export class UmbrellaStore<M extends BaseMetadata> {
     this.optimisticUpdates = createStore_forOptimistic<M>(this.#client);
     this.permissionHints = createStore_forPermissionHints();
 
-    const inboxFetcher = async (cursor?: string) => {
-      const result = await this.#client.getInboxNotifications({ cursor });
+    this.#notificationsPaginationState = new PaginatedResource(
+      async (cursor?: string) => {
+        const result = await this.#client.getInboxNotifications({ cursor });
 
-      this.updateThreadifications(result.threads, result.inboxNotifications);
+        this.updateThreadifications(result.threads, result.inboxNotifications);
 
-      // We initialize the `_lastRequestedNotificationsAt` date using the server timestamp after we've loaded the first page of inbox notifications.
-      if (this.#notificationsLastRequestedAt === null) {
-        this.#notificationsLastRequestedAt = result.requestedAt;
+        // We initialize the `_lastRequestedNotificationsAt` date using the server timestamp after we've loaded the first page of inbox notifications.
+        if (this.#notificationsLastRequestedAt === null) {
+          this.#notificationsLastRequestedAt = result.requestedAt;
+        }
+
+        const nextCursor = result.nextCursor;
+        return nextCursor;
       }
-
-      const nextCursor = result.nextCursor;
-      return nextCursor;
-    };
-
-    this.#notifications = new PaginatedResource(inboxFetcher);
+    );
 
     this.threads = new ThreadDB();
 
@@ -973,8 +973,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
     );
 
     const loadingNotifications = {
-      signal: DerivedSignal.from(() => {
-        const result = this.#notifications.get();
+      signal: DerivedSignal.from((): InboxNotificationsAsyncResult => {
+        const result = this.#notificationsPaginationState.get();
         if (result.isLoading || result.error) {
           return result;
         }
@@ -988,10 +988,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
           isFetchingMore: page.isFetchingMore,
           fetchMoreError: page.fetchMoreError,
           fetchMore: page.fetchMore,
-        } as const;
+        };
       }),
 
-      waitUntilLoaded: this.#notifications.waitUntilLoaded,
+      waitUntilLoaded: this.#notificationsPaginationState.waitUntilLoaded,
     };
 
     // Room notification settings
