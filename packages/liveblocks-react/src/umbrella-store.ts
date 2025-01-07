@@ -996,7 +996,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     // Room notification settings
     const settingsByRoomId = new DefaultMap((roomId: RoomId) => {
-      const notificationSettingsFetcher = async () => {
+      const resource = new SinglePageResource(async () => {
         const room = this.#client.getRoom(roomId);
         if (room === null) {
           throw new HttpError(
@@ -1007,9 +1007,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
         const result = await room.getNotificationSettings();
         this.roomNotificationSettings.update(roomId, result);
-      };
+      });
 
-      const resource = new SinglePageResource(notificationSettingsFetcher);
       const signal = DerivedSignal.from(() => {
         const result = resource.get();
         if (result.isLoading || result.error) {
