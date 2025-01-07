@@ -688,10 +688,10 @@ function createStore_forRoomNotificationSettings(
 }
 
 function createStore_forHistoryVersions() {
-  const signal = new MutableSignal<VersionsLUT>(new Map());
+  const baseSignal = new MutableSignal<VersionsLUT>(new Map());
 
   function update(roomId: string, versions: HistoryVersion[]): void {
-    signal.mutate((lut) => {
+    baseSignal.mutate((lut) => {
       // get-or-create
       const versionsById =
         lut.get(roomId) ?? (lut.set(roomId, new Map()), lut.get(roomId)!);
@@ -702,13 +702,17 @@ function createStore_forHistoryVersions() {
   }
 
   return {
-    signal: signal.asReadonly(),
+    signal: DerivedSignal.from(baseSignal, (hv) =>
+      Object.fromEntries(
+        [...hv].map(([roomId, versions]) => [
+          roomId,
+          Object.fromEntries(versions),
+        ])
+      )
+    ),
 
     // Mutations
     update,
-
-    // XXX_vincent Remove this eventually
-    invalidate: () => signal.mutate(),
   };
 }
 
@@ -902,17 +906,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
       shallow
     );
 
-    const versionsByRoomId000 = DerivedSignal.from(
-      this.historyVersions.signal,
-      (hv) =>
-        Object.fromEntries(
-          [...hv].map(([roomId, versions]) => [
-            roomId,
-            Object.fromEntries(versions),
-          ])
-        )
-    );
-
     const loadingNotifications = {
       signal: DerivedSignal.from((): InboxNotificationsAsyncResult => {
         const result = this.#notificationsPaginationState.get();
@@ -1000,7 +993,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
           } else {
             return {
               isLoading: false,
-              versions: Object.values(versionsByRoomId000.get()[roomId] ?? {}),
+              versions: Object.values(
+                this.historyVersions.signal.get()[roomId] ?? {}
+              ),
             };
           }
         }, shallow);
@@ -1016,7 +1011,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
       loadingNotifications,
       settingsByRoomId,
       versionsByRoomId,
-      // versionsByRoomId000,
     };
 
     // Auto-bind all of this class’ methods here, so we can use stable
@@ -1484,7 +1478,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     // XXX_vincent Of course this now looks stupid, but it's the exact equivalent of
     // what we're been doing all along
     batch(() => {
-      this.historyVersions.invalidate();
+      // this.historyVersions.invalidate();
       this.notifications.invalidate();
       // this.optimisticUpdates.invalidate();
       // this.permissionHints.invalidate();
