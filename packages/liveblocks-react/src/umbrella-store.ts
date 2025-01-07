@@ -442,7 +442,7 @@ export class PaginatedResource {
 }
 
 // TODO Find better name?
-type ManagedResource<T> = {
+type LoadableResource<T> = {
   signal: ISignal<T>;
   waitUntilLoaded: () => UsablePromise<void>;
 };
@@ -831,14 +831,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
     readonly threadifications: DerivedSignal<CleanThreadifications<M>>;
     readonly threads: DerivedSignal<ReadonlyThreadDB<M>>;
     readonly notifications: DerivedSignal<CleanNotifications>;
-    readonly loadingNotifications: ManagedResource<InboxNotificationsAsyncResult>;
+
+    readonly loadingNotifications: LoadableResource<InboxNotificationsAsyncResult>;
     readonly settingsByRoomId: DefaultMap<
       RoomId,
-      ManagedResource<RoomNotificationSettingsAsyncResult>
+      LoadableResource<RoomNotificationSettingsAsyncResult>
     >;
     readonly versionsByRoomId: DefaultMap<
       RoomId,
-      ManagedResource<HistoryVersionsAsyncResult>
+      LoadableResource<HistoryVersionsAsyncResult>
     >;
   };
 
@@ -958,7 +959,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
     });
 
     const versionsByRoomId = new DefaultMap(
-      (roomId: RoomId): ManagedResource<HistoryVersionsAsyncResult> => {
+      (roomId: RoomId): LoadableResource<HistoryVersionsAsyncResult> => {
         const resource = new SinglePageResource(async () => {
           const room = this.#client.getRoom(roomId);
           if (room === null) {
