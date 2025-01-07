@@ -1,5 +1,9 @@
 ## vNEXT (Not yet published)
 
+### `@liveblocks/react`
+
+- Fix memory leak in some hooks
+
 ## 2.15.1
 
 ### All packages

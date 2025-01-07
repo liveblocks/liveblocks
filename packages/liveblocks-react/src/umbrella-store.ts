@@ -1433,14 +1433,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
     let paginatedResource = this.#roomThreads.get(queryKey);
     if (paginatedResource === undefined) {
       paginatedResource = new PaginatedResource(threadsFetcher);
-    }
 
-    // XXX_vincent Use signal directly here instead of invalidating everything!
-    paginatedResource.signal.subscribe(() =>
-      // Note that the store itself does not change, but it's only vehicle at
-      // the moment to trigger a re-render, so we'll do a no-op update here.
-      this.invalidateEntireStore()
-    );
+      // XXX_vincent Use signal directly here instead of invalidating everything!
+      paginatedResource.signal.subscribe(() =>
+        // Note that the store itself does not change, but it's only vehicle at
+        // the moment to trigger a re-render, so we'll do a no-op update here.
+        this.invalidateEntireStore()
+      );
+    }
 
     this.#roomThreads.set(queryKey, paginatedResource);
 
@@ -1502,14 +1502,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
     let paginatedResource = this.#userThreads.get(queryKey);
     if (paginatedResource === undefined) {
       paginatedResource = new PaginatedResource(threadsFetcher);
-    }
 
-    // XXX_vincent Use signal directly here instead of invalidating everything!
-    paginatedResource.signal.subscribe(() =>
-      // Note that the store itself does not change, but it's only vehicle at
-      // the moment to trigger a re-render, so we'll do a no-op update here.
-      this.invalidateEntireStore()
-    );
+      // XXX_vincent Use signal directly here instead of invalidating everything!
+      paginatedResource.signal.subscribe(() =>
+        // Note that the store itself does not change, but it's only vehicle at
+        // the moment to trigger a re-render, so we'll do a no-op update here.
+        this.invalidateEntireStore()
+      );
+    }
 
     this.#userThreads.set(queryKey, paginatedResource);
 
