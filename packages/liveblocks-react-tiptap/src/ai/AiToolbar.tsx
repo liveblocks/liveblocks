@@ -51,7 +51,11 @@ import type {
   ExtendedChainedCommands,
   FloatingPosition,
 } from "../types";
-import { compareTextSelections, getDomRangeFromTextSelection, getTextSelectionFromRelativeSelection } from "../utils";
+import {
+  compareTextSelections,
+  getDomRangeFromTextSelection,
+  getTextSelectionFromRelativeSelection,
+} from "../utils";
 
 export const AI_TOOLBAR_COLLISION_PADDING = 10;
 export const DEFAULT_AI_NAME = "AI";
@@ -61,18 +65,21 @@ export interface AiToolbarProps
   editor: Editor | null;
   position?: FloatingPosition;
   offset?: number;
+  suggestions?: ReactNode;
 }
 
 interface AiToolbarDropdownGroupProps extends ComponentProps<"div"> {
   label: string;
 }
 
-interface AiToolbarDropdownCustomItemProps
+interface AiToolbarDropdownItemProps
   extends ComponentProps<typeof Command.Item> {
   icon?: ReactNode;
 }
 
-interface AiToolbarDropdownItemProps extends ComponentProps<"div"> {
+type AiToolbarSuggestionsGroupProps = AiToolbarDropdownGroupProps;
+
+interface AiToolbarSuggestionProps extends ComponentProps<"div"> {
   prompt?: string;
   icon?: ReactNode;
 }
@@ -188,9 +195,16 @@ const AiToolbarDropdownGroup = forwardRef<
   );
 });
 
-const AiToolbarDropdownCustomItem = forwardRef<
+const AiToolbarSuggestionsGroup = forwardRef<
   HTMLDivElement,
-  AiToolbarDropdownCustomItemProps
+  AiToolbarSuggestionsGroupProps
+>((props, forwardedRef) => {
+  return <AiToolbarDropdownGroup ref={forwardedRef} {...props} />;
+});
+
+const AiToolbarDropdownItem = forwardRef<
+  HTMLDivElement,
+  AiToolbarDropdownItemProps
 >(({ children, onSelect, icon, ...props }, forwardedRef) => {
   return (
     <Command.Item
@@ -207,11 +221,11 @@ const AiToolbarDropdownCustomItem = forwardRef<
   );
 });
 
-const AiToolbarDropdownItem = forwardRef<
+const AiToolbarSuggestion = forwardRef<
   HTMLDivElement,
-  AiToolbarDropdownItemProps
+  AiToolbarSuggestionProps
 >(({ prompt: manualPrompt, ...props }, forwardedRef) => {
-  const editor = useCurrentEditor("DropdownItem", "AiToolbar");
+  const editor = useCurrentEditor("Suggestion", "AiToolbar");
 
   const handleSelect = useCallback(
     (prompt: string) => {
@@ -221,7 +235,7 @@ const AiToolbarDropdownItem = forwardRef<
   );
 
   return (
-    <AiToolbarDropdownCustomItem
+    <AiToolbarDropdownItem
       {...props}
       onSelect={handleSelect}
       ref={forwardedRef}
@@ -229,7 +243,7 @@ const AiToolbarDropdownItem = forwardRef<
   );
 });
 
-function AiToolbarReviewingDropdownItems({ editor }: { editor: Editor }) {
+function AiToolbarReviewingSuggestions({ editor }: { editor: Editor }) {
   const handleRetry = useCallback(() => {
     (editor.commands as AiCommands<boolean>).retryAskAi();
   }, [editor]);
@@ -240,21 +254,18 @@ function AiToolbarReviewingDropdownItems({ editor }: { editor: Editor }) {
 
   return (
     <>
-      <AiToolbarDropdownCustomItem icon={<CheckIcon />}>
+      <AiToolbarDropdownItem icon={<CheckIcon />}>
         Replace selection
-      </AiToolbarDropdownCustomItem>
-      <AiToolbarDropdownCustomItem icon={<CheckIcon />}>
+      </AiToolbarDropdownItem>
+      <AiToolbarDropdownItem icon={<CheckIcon />}>
         Insert below
-      </AiToolbarDropdownCustomItem>
-      <AiToolbarDropdownCustomItem icon={<UndoIcon />} onSelect={handleRetry}>
+      </AiToolbarDropdownItem>
+      <AiToolbarDropdownItem icon={<UndoIcon />} onSelect={handleRetry}>
         Try again
-      </AiToolbarDropdownCustomItem>
-      <AiToolbarDropdownCustomItem
-        icon={<CrossIcon />}
-        onSelect={handleDiscard}
-      >
+      </AiToolbarDropdownItem>
+      <AiToolbarDropdownItem icon={<CrossIcon />} onSelect={handleDiscard}>
         Discard
-      </AiToolbarDropdownCustomItem>
+      </AiToolbarDropdownItem>
     </>
   );
 }
@@ -271,8 +282,7 @@ function AiToolbarPromptContent({
   isDropdownHidden: boolean;
 }) {
   const aiName =
-    (editor.storage.liveblocksAi as AiExtensionStorage).name ??
-    DEFAULT_AI_NAME;
+    (editor.storage.liveblocksAi as AiExtensionStorage).name ?? DEFAULT_AI_NAME;
   const promptRef = useRef<HTMLTextAreaElement>(null);
   const isPromptEmpty = useMemo(() => prompt.trim() === "", [prompt]);
 
@@ -409,8 +419,7 @@ function AiToolbarThinking({
   prompt: string;
 }) {
   const aiName =
-    (editor.storage.liveblocksAi as AiExtensionStorage).name ??
-    DEFAULT_AI_NAME;
+    (editor.storage.liveblocksAi as AiExtensionStorage).name ?? DEFAULT_AI_NAME;
   const stream = useTextStream(
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis laoreet erat vitae libero bibendum blandit. Ut nec leo et massa congue laoreet et nec nunc. Praesent a hendrerit orci, sit amet feugiat sapien. Aenean vitae aliquam libero. Suspendisse posuere scelerisque mauris tristique placerat. Maecenas id ipsum justo. Nulla quis nibh est. Nulla facilisi. Quisque vitae libero ut tellus vestibulum sagittis in eget libero. Nulla enim mauris, tempor at egestas eu, porttitor vitae purus. Ut ultrices tincidunt rutrum.",
     {
@@ -510,9 +519,7 @@ function AiToolbarContainer({
     useEditorState({
       editor,
       selector: (ctx) => {
-        return (
-          ctx.editor?.storage.liveblocksAi as AiExtensionStorage
-        )?.prompt;
+        return (ctx.editor?.storage.liveblocksAi as AiExtensionStorage)?.prompt;
       },
       equalityFn: Object.is,
     }) ?? "";
@@ -589,7 +596,7 @@ function AiToolbarContainer({
           ref={dropdownRef}
         >
           {state === "reviewing" ? (
-            <AiToolbarReviewingDropdownItems editor={editor} />
+            <AiToolbarReviewingSuggestions editor={editor} />
           ) : (
             children
           )}
@@ -599,30 +606,30 @@ function AiToolbarContainer({
   );
 }
 
-const defaultDropdownItems = (
+const defaultSuggestions = (
   <>
-    <AiToolbarDropdownGroup label="Generate">
-      <AiToolbarDropdownItem icon={<EditIcon />}>
+    <AiToolbarSuggestionsGroup label="Generate">
+      <AiToolbarSuggestion icon={<EditIcon />}>
         Improve writing
-      </AiToolbarDropdownItem>
-      <AiToolbarDropdownItem icon={<CheckIcon />}>
+      </AiToolbarSuggestion>
+      <AiToolbarSuggestion icon={<CheckIcon />}>
         Fix mistakes
-      </AiToolbarDropdownItem>
-      <AiToolbarDropdownItem icon={<ShortenIcon />}>
+      </AiToolbarSuggestion>
+      <AiToolbarSuggestion icon={<ShortenIcon />}>
         Simplify the text
-      </AiToolbarDropdownItem>
-      <AiToolbarDropdownItem icon={<LengthenIcon />}>
+      </AiToolbarSuggestion>
+      <AiToolbarSuggestion icon={<LengthenIcon />}>
         Add more detail
-      </AiToolbarDropdownItem>
-    </AiToolbarDropdownGroup>
-    <AiToolbarDropdownGroup label="Modify selection">
-      <AiToolbarDropdownItem icon={<TranslateIcon />}>
+      </AiToolbarSuggestion>
+    </AiToolbarSuggestionsGroup>
+    <AiToolbarSuggestionsGroup label="Modify selection">
+      <AiToolbarSuggestion icon={<TranslateIcon />}>
         Translate to English
-      </AiToolbarDropdownItem>
-      <AiToolbarDropdownItem icon={<QuestionMarkIcon />}>
+      </AiToolbarSuggestion>
+      <AiToolbarSuggestion icon={<QuestionMarkIcon />}>
         Explain
-      </AiToolbarDropdownItem>
-    </AiToolbarDropdownGroup>
+      </AiToolbarSuggestion>
+    </AiToolbarSuggestionsGroup>
   </>
 );
 
@@ -634,7 +641,7 @@ export const AiToolbar = Object.assign(
         offset: sideOffset = 6,
         editor,
         className,
-        children = defaultDropdownItems,
+        suggestions = defaultSuggestions,
         ...props
       },
       forwardedRef
@@ -643,9 +650,8 @@ export const AiToolbar = Object.assign(
         useEditorState({
           editor,
           selector: (ctx) => {
-            return (
-              ctx.editor?.storage.liveblocksAi as AiExtensionStorage
-            )?.state;
+            return (ctx.editor?.storage.liveblocksAi as AiExtensionStorage)
+              ?.state;
           },
           equalityFn: Object.is,
         }) ?? "closed";
@@ -659,7 +665,10 @@ export const AiToolbar = Object.assign(
             if (!relativeSelection || !ctx.editor) {
               return undefined;
             }
-            return getTextSelectionFromRelativeSelection(relativeSelection, ctx.editor.state);
+            return getTextSelectionFromRelativeSelection(
+              relativeSelection,
+              ctx.editor.state
+            );
           },
           equalityFn: compareTextSelections,
         }) ?? undefined;
@@ -752,7 +761,7 @@ export const AiToolbar = Object.assign(
               {...props}
             >
               <AiToolbarContainer editor={editor} state={state}>
-                {children}
+                {suggestions}
               </AiToolbarContainer>
             </Command>
           </EditorProvider>
@@ -762,7 +771,7 @@ export const AiToolbar = Object.assign(
     }
   ),
   {
-    DropdownGroup: AiToolbarDropdownGroup,
-    DropdownItem: AiToolbarDropdownItem,
+    SuggestionsGroup: AiToolbarSuggestionsGroup,
+    Suggestion: AiToolbarSuggestion,
   }
 );
