@@ -1212,9 +1212,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
       {
         signal: DerivedSignal.from(
           (): ChannelsNotificationSettingsAsyncResult => {
-            const asyncResult = this.#channelsNotificationSettings.get();
-            if (asyncResult.isLoading || asyncResult.error) {
-              return asyncResult;
+            const result = this.#channelsNotificationSettings.get();
+            if (result.isLoading || result.error) {
+              return result;
             }
 
             return {
