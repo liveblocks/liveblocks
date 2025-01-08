@@ -9,4 +9,10 @@ module.exports = [
     message:
       "Please don't rely on the WebSocket type directly. Instead use IWebSocket, which is a minimal subset that is also compatible with NodeJS's WebSocket API.",
   },
+  {
+    selector:
+      "ImportDeclaration[source.value='react'] ImportSpecifier[imported.name='useLayoutEffect']",
+    message:
+      "useLayoutEffect triggers a warning when executed on the server on React <=18.2.0. Import it from '@liveblocks/react/_private' instead.",
+  },
 ];

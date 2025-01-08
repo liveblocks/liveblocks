@@ -11,6 +11,7 @@ import {
   useFloating,
   type UseFloatingOptions,
 } from "@floating-ui/react-dom";
+import { useLayoutEffect } from "@liveblocks/react/_private";
 import { TooltipProvider, useRefs } from "@liveblocks/react-ui/_private";
 import { type Editor, isTextSelection, useEditorState } from "@tiptap/react";
 import type {
@@ -22,7 +23,6 @@ import {
   forwardRef,
   useCallback,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -278,6 +278,11 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
         onPointerDown?.(event);
 
         event.stopPropagation();
+
+        // Prevent the toolbar from closing when clicking on the toolbar itself
+        if (event.target === toolbarRef.current) {
+          event.preventDefault();
+        }
       },
       [onPointerDown]
     );

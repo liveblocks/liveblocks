@@ -277,7 +277,7 @@ export const useLiveblocksExtension = (
             const threadMap = new Map(
               store.outputs.threads
                 .get()
-                .threadsDB.findMany(roomId, { resolved: false }, "asc")
+                .findMany(roomId, { resolved: false }, "asc")
                 .map((thread) => [thread.id, true])
             );
             function isComment(mark: PMMark): mark is PMMark & {

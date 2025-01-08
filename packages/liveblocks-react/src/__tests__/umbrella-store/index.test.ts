@@ -3,10 +3,6 @@ import { kInternal } from "@liveblocks/core";
 import { ThreadDB } from "../../ThreadDB";
 import { UmbrellaStore } from "../../umbrella-store";
 
-const empty1t = {
-  threadsDB: expect.any(ThreadDB),
-} as const;
-
 const empty1n = {
   sortedNotifications: [],
   notificationsById: {},
@@ -28,45 +24,52 @@ const NO_CLIENT = {
   },
 } as any;
 
-const loading = { isLoading: true };
+const LOADING = { isLoading: true };
 
 describe("Umbrella Store", () => {
   it("getters returns the expected shapes", () => {
     const store = new UmbrellaStore(NO_CLIENT);
 
     // Sync getters
-    expect(store.get1_threads()).toEqual(empty1t);
-    expect(store.get1_notifications()).toEqual(empty1n);
-    expect(store.get2()).toEqual({}); // settings by room ID
-    expect(store.get3()).toEqual({}); // versions by room ID
+    expect(store.outputs.threads.get()).toEqual(expect.any(ThreadDB));
+    expect(store.outputs.notifications.get()).toEqual(empty1n);
+    expect(
+      store.outputs.settingsByRoomId.getOrCreate("room-a").signal.get()
+    ).toEqual(LOADING); // settings by room ID
+    expect(
+      store.outputs.versionsByRoomId.getOrCreate("room-b").signal.get()
+    ).toEqual(LOADING); // versions by room ID
 
     // Sync async-results getters
-    expect(store.getInboxNotificationsLoadingState()).toEqual(loading);
-    expect(store.getNotificationSettingsLoadingState("room-a")).toEqual(
-      loading
-    );
-    expect(store.getRoomVersionsLoadingState("room-a")).toEqual(loading);
+    expect(store.outputs.loadingNotifications.signal.get()).toEqual(LOADING);
+    expect(
+      store.outputs.settingsByRoomId.getOrCreate("room-c").signal.get()
+    ).toEqual(LOADING);
+    expect(
+      store.outputs.versionsByRoomId.getOrCreate("room-d").signal.get()
+    ).toEqual(LOADING);
   });
 
   it("calling getters multiple times should always return a stable result", () => {
     const store = new UmbrellaStore(NO_CLIENT);
 
     // IMPORTANT! Strict equality expected!
-    expect(store.get1_threads()).toBe(store.get1_threads());
-    expect(store.get1_notifications()).toBe(store.get1_notifications());
+    expect(store.outputs.threads.get()).toBe(store.outputs.threads.get());
+    expect(store.outputs.notifications.get()).toBe(
+      store.outputs.notifications.get()
+    );
 
     // Sync async-results getter
-    // TODO Add check here for strict-equality of the OK-state, which currently isn't strictly-equal and the selectors/isEqual functions are still "working around" that
-    expect(store.getInboxNotificationsLoadingState()).toBe(
-      store.getInboxNotificationsLoadingState()
+    expect(store.outputs.loadingNotifications.signal.get()).toBe(
+      store.outputs.loadingNotifications.signal.get()
     );
     // TODO Add check here for strict-equality of the OK-state, which currently isn't strictly-equal and the selectors/isEqual functions are still "working around" that
-    expect(store.getNotificationSettingsLoadingState("room-a")).toBe(
-      store.getNotificationSettingsLoadingState("room-a")
-    );
+    expect(
+      store.outputs.settingsByRoomId.getOrCreate("room-abc").signal.get()
+    ).toBe(store.outputs.settingsByRoomId.getOrCreate("room-abc").signal.get());
     // TODO Add check here for strict-equality of the OK-state, which currently isn't strictly-equal and the selectors/isEqual functions are still "working around" that
-    expect(store.getRoomVersionsLoadingState("room-a")).toBe(
-      store.getRoomVersionsLoadingState("room-a")
-    );
+    expect(
+      store.outputs.versionsByRoomId.getOrCreate("room-a").signal.get()
+    ).toBe(store.outputs.versionsByRoomId.getOrCreate("room-a").signal.get());
   });
 });

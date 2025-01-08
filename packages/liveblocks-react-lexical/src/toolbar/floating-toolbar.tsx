@@ -32,6 +32,7 @@ import { createPortal } from "react-dom";
 import { classNames } from "../classnames";
 import { OPEN_FLOATING_COMPOSER_COMMAND } from "../comments/floating-composer";
 import { createDOMRange } from "../create-dom-range";
+import { useIsCommandRegistered } from "../is-command-registered";
 import type { FloatingPosition } from "../types";
 import {
   applyToolbarSlot,
@@ -52,9 +53,9 @@ export interface FloatingToolbarProps
 export const FLOATING_TOOLBAR_COLLISION_PADDING = 10;
 const FLOATING_TOOLBAR_OPEN_DELAY = 50;
 
-function DefaultFloatingToolbarContent({ editor }: ToolbarSlotProps) {
-  const supportsTextFormat = editor._commands.has(FORMAT_TEXT_COMMAND);
-  const supportsThread = editor._commands.has(OPEN_FLOATING_COMPOSER_COMMAND);
+function DefaultFloatingToolbarContent() {
+  const supportsTextFormat = useIsCommandRegistered(FORMAT_TEXT_COMMAND);
+  const supportsThread = useIsCommandRegistered(OPEN_FLOATING_COMPOSER_COMMAND);
 
   return (
     <>
@@ -231,6 +232,11 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
         onPointerDown?.(event);
 
         event.stopPropagation();
+
+        // Prevent the toolbar from closing when clicking on the toolbar itself
+        if (event.target === toolbarRef.current) {
+          event.preventDefault();
+        }
       },
       [onPointerDown]
     );
@@ -353,7 +359,6 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
           {applyToolbarSlot(leading, slotProps)}
           {applyToolbarSlot(children, slotProps)}
           {applyToolbarSlot(trailing, slotProps)}
-          <input type="text" placeholder="test" />
         </div>
       </TooltipProvider>,
       document.body

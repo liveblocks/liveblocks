@@ -15,22 +15,24 @@ import {
 } from "@liveblocks/react-ui/_private";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import {
-  $getSelection,
-  $isRangeSelection,
   CAN_REDO_COMMAND,
   CAN_UNDO_COMMAND,
   COMMAND_PRIORITY_CRITICAL,
+  COMMAND_PRIORITY_LOW,
+  createCommand,
   FORMAT_TEXT_COMMAND,
+  type LexicalCommand,
   type LexicalEditor,
   REDO_COMMAND,
-  type TextFormatType,
   UNDO_COMMAND,
 } from "lexical";
 import type { ComponentProps, ComponentType, ReactNode } from "react";
-import { forwardRef, useEffect, useState } from "react";
+import { forwardRef, useCallback, useEffect, useState } from "react";
 
 import { classNames } from "../classnames";
 import { OPEN_FLOATING_COMPOSER_COMMAND } from "../comments/floating-composer";
+import { useIsCommandRegistered } from "../is-command-registered";
+import { isTextFormatActive } from "../is-text-format-active";
 
 export interface ToolbarSlotProps {
   editor: LexicalEditor;
@@ -159,21 +161,9 @@ function ToolbarSectionHistory() {
   );
 }
 
-function isFormatActive(editor: LexicalEditor, format: TextFormatType) {
-  return editor.getEditorState().read(() => {
-    const selection = $getSelection();
-
-    if (!$isRangeSelection(selection) || selection.isCollapsed()) {
-      return false;
-    }
-
-    return selection.hasFormat(format);
-  });
-}
-
 function ToolbarSectionInline() {
   const [editor] = useLexicalComposerContext();
-  const supportsTextFormat = editor._commands.has(FORMAT_TEXT_COMMAND);
+  const supportsTextFormat = useIsCommandRegistered(FORMAT_TEXT_COMMAND);
 
   return supportsTextFormat ? (
     <>
@@ -182,7 +172,7 @@ function ToolbarSectionInline() {
         icon={<BoldIcon />}
         shortcut="Mod-B"
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold")}
-        active={isFormatActive(editor, "bold")}
+        active={isTextFormatActive(editor, "bold")}
       />
 
       <ToolbarToggle
@@ -190,14 +180,14 @@ function ToolbarSectionInline() {
         icon={<ItalicIcon />}
         shortcut="Mod-I"
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic")}
-        active={isFormatActive(editor, "italic")}
+        active={isTextFormatActive(editor, "italic")}
       />
       <ToolbarToggle
         label="Underline"
         icon={<UnderlineIcon />}
         shortcut="Mod-U"
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline")}
-        active={isFormatActive(editor, "underline")}
+        active={isTextFormatActive(editor, "underline")}
       />
       <ToolbarToggle
         label="Strikethrough"
@@ -205,13 +195,13 @@ function ToolbarSectionInline() {
         onClick={() =>
           editor.dispatchCommand(FORMAT_TEXT_COMMAND, "strikethrough")
         }
-        active={isFormatActive(editor, "strikethrough")}
+        active={isTextFormatActive(editor, "strikethrough")}
       />
       <ToolbarToggle
         label="Inline code"
         icon={<CodeIcon />}
         onClick={() => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "code")}
-        active={isFormatActive(editor, "code")}
+        active={isTextFormatActive(editor, "code")}
       />
     </>
   ) : null;
@@ -219,7 +209,7 @@ function ToolbarSectionInline() {
 
 function ToolbarSectionCollaboration() {
   const [editor] = useLexicalComposerContext();
-  const supportsThread = editor._commands.has(OPEN_FLOATING_COMPOSER_COMMAND);
+  const supportsThread = useIsCommandRegistered(OPEN_FLOATING_COMPOSER_COMMAND);
 
   return (
     <>
@@ -238,9 +228,9 @@ function ToolbarSectionCollaboration() {
   );
 }
 
-function DefaultToolbarContent({ editor }: ToolbarSlotProps) {
-  const supportsTextFormat = editor._commands.has(FORMAT_TEXT_COMMAND);
-  const supportsThread = editor._commands.has(OPEN_FLOATING_COMPOSER_COMMAND);
+function DefaultToolbarContent() {
+  const supportsTextFormat = useIsCommandRegistered(FORMAT_TEXT_COMMAND);
+  const supportsThread = useIsCommandRegistered(OPEN_FLOATING_COMPOSER_COMMAND);
 
   return (
     <>
@@ -261,7 +251,18 @@ function DefaultToolbarContent({ editor }: ToolbarSlotProps) {
   );
 }
 
-// TODO: Somehow the non-floating toolbar only shows the undo/redo buttons
+const INITIAL_COMMANDS_REGISTERED_COMMAND: LexicalCommand<void> = createCommand(
+  "INITIAL_COMMANDS_REGISTERED_COMMAND"
+);
+
+// Re-renders its surrounding component.
+function useRerender() {
+  const [, setRerender] = useState(false);
+
+  return useCallback(() => {
+    setRerender((toggle) => !toggle);
+  }, [setRerender]);
+}
 
 export const Toolbar = Object.assign(
   forwardRef<HTMLDivElement, ToolbarProps>(
@@ -276,8 +277,45 @@ export const Toolbar = Object.assign(
       forwardedRef
     ) => {
       const [editor] = useLexicalComposerContext();
+      const [commandsRegistered, setCommandsRegistered] = useState(false);
+      const rerender = useRerender();
 
       const slotProps: ToolbarSlotProps = { editor };
+
+      // Ensures that `useIsCommandRegistered` returns correct values initially.
+      // It registers a low-priority one-time command to re-render once all initial commands are registered.
+      useEffect(() => {
+        if (commandsRegistered) {
+          return;
+        }
+
+        const unregister = editor.registerCommand(
+          INITIAL_COMMANDS_REGISTERED_COMMAND,
+          () => {
+            setCommandsRegistered(true);
+            return true;
+          },
+          COMMAND_PRIORITY_LOW
+        );
+
+        editor.dispatchCommand(INITIAL_COMMANDS_REGISTERED_COMMAND, undefined);
+
+        return unregister;
+      }, [editor, commandsRegistered]);
+
+      // Re-render when the selection changes to ensure components like toggles are updated.
+      useEffect(() => {
+        const unregister = editor.registerUpdateListener(({ tags }) => {
+          return editor.getEditorState().read(() => {
+            // Ignore selection updates related to collaboration
+            if (tags.has("collaboration")) return;
+
+            rerender();
+          });
+        });
+
+        return unregister;
+      }, [editor, rerender]);
 
       return (
         <TooltipProvider>

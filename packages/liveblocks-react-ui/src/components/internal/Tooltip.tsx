@@ -12,24 +12,27 @@ import {
 import { classNames } from "../../utils/class-names";
 import { isApple } from "../../utils/is-apple";
 
+const ALT_KEY = { title: "Alt", key: "⌥" };
+const COMMAND_KEY = { title: "Command", key: "⌘" };
+const CONTROL_KEY = { title: "Ctrl", key: "⌃" };
+const SHIFT_KEY = { title: "Shift", key: "⇧" };
+const ENTER_KEY = { title: "Enter", key: "⏎" };
+const SPACE_KEY = { title: "Space", key: "␣" };
+const ESCAPE_KEY = { title: "Escape", key: "⎋" };
+
 const KEYS = {
-  Alt: () => ({ title: "Alt", key: "⌥" }),
-  Mod: () =>
-    isApple() ? { title: "Command", key: "⌘" } : { title: "Ctrl", key: "⌃" },
-  Control: () => ({ title: "Ctrl", key: "⌃" }),
-  Cmd: () => ({ title: "Command", key: "⌘" }),
-  Shift: () => {
-    return { title: "Shift", key: "⇧" };
-  },
-  Enter: () => {
-    return { title: "Enter", key: "⏎" };
-  },
-  " ": () => {
-    return { title: "Space", key: "␣" };
-  },
-  Escape: () => {
-    return { title: "Escape", key: "⎋" };
-  },
+  alt: () => ALT_KEY,
+  mod: () => (isApple() ? COMMAND_KEY : CONTROL_KEY),
+  control: () => CONTROL_KEY,
+  ctrl: () => CONTROL_KEY,
+  command: () => COMMAND_KEY,
+  cmd: () => COMMAND_KEY,
+  shift: () => SHIFT_KEY,
+  enter: () => ENTER_KEY,
+  " ": () => SPACE_KEY,
+  space: () => SPACE_KEY,
+  escape: () => ESCAPE_KEY,
+  esc: () => ESCAPE_KEY,
 } as const;
 
 export interface TooltipProps
@@ -53,9 +56,14 @@ function getShortcutKbdFromKeymap(keymap: string) {
   return (
     <>
       {keys.map((key, index) => {
-        if (key in KEYS) {
+        const lowerKey = key.toLowerCase();
+
+        if (lowerKey in KEYS) {
           return (
-            <ShortcutTooltipKey key={index} name={key as keyof typeof KEYS} />
+            <ShortcutTooltipKey
+              key={index}
+              name={lowerKey as keyof typeof KEYS}
+            />
           );
         }
 

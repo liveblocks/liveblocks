@@ -1,6 +1,7 @@
 "use client";
 
 import { nn } from "@liveblocks/core";
+import { useLayoutEffect } from "@liveblocks/react/_private";
 import type { ReactNode, RefObject } from "react";
 import {
   Children,
@@ -8,7 +9,6 @@ import {
   isValidElement,
   useCallback,
   useContext,
-  useLayoutEffect,
   useRef,
   useState,
 } from "react";
