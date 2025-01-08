@@ -359,10 +359,6 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
           {applyToolbarSlot(leading, slotProps)}
           {applyToolbarSlot(children, slotProps)}
           {applyToolbarSlot(trailing, slotProps)}
-          <input
-            type="text"
-            placeholder="This input is focusable and clickable"
-          />
         </div>
       </TooltipProvider>,
       document.body
