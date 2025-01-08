@@ -3,6 +3,7 @@
   "compilerOptions": {
     // Default compilation target for any code that runs in the browser
     "target": "es2022",
+    "skipLibCheck": true,
 
     // For all packages, let TypeScript use the following standardized way to
     // resolve modules
@@ -21,7 +22,7 @@
     "allowUnreachableCode": false, // False makes this stricter: errors instead of warns
     "allowUnusedLabels": false, // False makes this stricter: errors instead of warns
     "forceConsistentCasingInFileNames": true,
-    "importsNotUsedAsValues": "error",
+    "verbatimModuleSyntax": true,
     "isolatedModules": true,
     "noImplicitReturns": true,
     "noUncheckedIndexedAccess": true,
