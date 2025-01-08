@@ -57,6 +57,7 @@ function DefaultFloatingToolbarContent({ editor }: ToolbarSlotProps) {
 
   return (
     <>
+      <Toolbar.BlockSelect />
       <Toolbar.SectionInline />
       {supportsThread ? (
         <>

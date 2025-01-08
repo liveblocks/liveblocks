@@ -1,7 +1,6 @@
 import {
   BoldIcon,
   Button,
-  capitalize,
   ChevronDownIcon,
   CodeIcon,
   CommentIcon,
@@ -17,7 +16,7 @@ import * as SelectPrimitive from "@radix-ui/react-select";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type { Editor } from "@tiptap/react";
 import type { ComponentProps, ComponentType, ReactNode } from "react";
-import { forwardRef, useMemo, useState } from "react";
+import { forwardRef, useMemo } from "react";
 
 import { classNames } from "../classnames";
 import { EditorProvider, useCurrentEditor } from "../context";
@@ -49,15 +48,15 @@ interface ToolbarToggleProps extends ToolbarButtonProps {
   active: boolean;
 }
 
-interface ToolbarSelectOption {
-  value: string;
-  label?: string;
+interface ToolbarBlockSelectItem {
+  label: string;
   icon?: ReactNode;
+  isActive: (editor: Editor) => boolean;
+  setActive: (editor: Editor) => void;
 }
 
-interface ToolbarSelectProps extends ComponentProps<"button"> {
-  label: string;
-  options: ToolbarSelectOption[];
+interface ToolbarBlockSelectProps extends ComponentProps<"button"> {
+  items?: ToolbarBlockSelectItem[];
 }
 
 type ToolbarSeparatorProps = ComponentProps<"div">;
@@ -103,60 +102,185 @@ const ToolbarToggle = forwardRef<HTMLButtonElement, ToolbarToggleProps>(
   }
 );
 
-const ToolbarSelect = forwardRef<HTMLButtonElement, ToolbarSelectProps>(
-  ({ options, ...props }, forwardedRef) => {
-    // const editor = useCurrentEditor("ToolbarSelect", "Toolbar");
-    const [value, setValue] = useState<string>();
-    const formattedValue = useMemo(() => {
-      const option = options.find((option) => option.value === value);
-
-      return option ? option.label ?? capitalize(option.value) : undefined;
-    }, [value, options]);
-
-    // const parent = useEditorState({
-    //   editor,
-    //   selector: (ctx) => {
-    //     return ctx.editor.state.selection.$from.parent.type;
-    //   },
-    // });
-
-    return (
-      <SelectPrimitive.Root value={value} onValueChange={setValue}>
-        <ShortcutTooltip content="Turn into…">
-          <SelectPrimitive.Trigger asChild {...props} ref={forwardedRef}>
-            <Button type="button" variant="toolbar">
-              {formattedValue ?? "Select…"}
-              <ChevronDownIcon className="lb-dropdown-chevron" />
-            </Button>
-          </SelectPrimitive.Trigger>
-        </ShortcutTooltip>
-        <SelectPrimitive.Portal>
-          <SelectPrimitive.Content
-            position="popper"
-            sideOffset={FLOATING_ELEMENT_SIDE_OFFSET}
-            collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
-            className="lb-root lb-portal lb-elevation lb-dropdown"
-          >
-            {options.map((option) => (
-              <SelectPrimitive.Item
-                key={option.value}
-                value={option.value}
-                className="lb-dropdown-item"
+function createDefaultBlockSelectItems(
+  editor: Editor
+): ToolbarBlockSelectItem[] {
+  const items: (ToolbarBlockSelectItem | null)[] = [
+    "toggleHeading" in editor.commands
+      ? {
+          label: "Heading 1",
+          isActive: (editor) => editor.isActive("heading", { level: 1 }),
+          setActive: (editor) =>
+            (
+              editor.chain().focus().clearNodes() as ExtendedChainedCommands<
+                "toggleHeading",
+                [{ level: number }]
               >
-                {option.icon ? (
-                  <span className="lb-icon-container">{option.icon}</span>
-                ) : null}
-                <span className="lb-dropdown-item-label">
-                  {option.label ?? capitalize(option.value)}
-                </span>
-              </SelectPrimitive.Item>
-            ))}
-          </SelectPrimitive.Content>
-        </SelectPrimitive.Portal>
-      </SelectPrimitive.Root>
-    );
-  }
-);
+            )
+              .toggleHeading({ level: 1 })
+              .run(),
+        }
+      : null,
+    "toggleHeading" in editor.commands
+      ? {
+          label: "Heading 2",
+          isActive: (editor) => editor.isActive("heading", { level: 2 }),
+          setActive: (editor) =>
+            (
+              editor.chain().focus().clearNodes() as ExtendedChainedCommands<
+                "toggleHeading",
+                [{ level: number }]
+              >
+            )
+              .toggleHeading({ level: 2 })
+              .run(),
+        }
+      : null,
+    "toggleHeading" in editor.commands
+      ? {
+          label: "Heading 3",
+          isActive: (editor) => editor.isActive("heading", { level: 3 }),
+          setActive: (editor) =>
+            (
+              editor.chain().focus().clearNodes() as ExtendedChainedCommands<
+                "toggleHeading",
+                [{ level: number }]
+              >
+            )
+              .toggleHeading({ level: 3 })
+              .run(),
+        }
+      : null,
+    "toggleBulletList" in editor.commands
+      ? {
+          label: "Bullet List",
+          isActive: (editor) => editor.isActive("bulletList"),
+          setActive: (editor) =>
+            (
+              editor
+                .chain()
+                .focus()
+                .clearNodes() as ExtendedChainedCommands<"toggleBulletList">
+            )
+              .toggleBulletList()
+              .run(),
+        }
+      : null,
+    "toggleOrderedList" in editor.commands
+      ? {
+          label: "Numbered List",
+
+          isActive: (editor) => editor.isActive("orderedList"),
+          setActive: (editor) =>
+            (
+              editor
+                .chain()
+                .focus()
+                .clearNodes() as ExtendedChainedCommands<"toggleOrderedList">
+            )
+              .toggleOrderedList()
+              .run(),
+        }
+      : null,
+    "toggleBlockquote" in editor.commands
+      ? {
+          label: "Quote",
+          isActive: (editor) => editor.isActive("blockquote"),
+          setActive: (editor) =>
+            (
+              editor
+                .chain()
+                .focus()
+                .clearNodes() as ExtendedChainedCommands<"toggleBlockquote">
+            )
+              .toggleBlockquote()
+              .run(),
+        }
+      : null,
+    "toggleCodeBlock" in editor.commands
+      ? {
+          label: "Code",
+          isActive: (editor) => editor.isActive("codeBlock"),
+          setActive: (editor) =>
+            (
+              editor
+                .chain()
+                .focus()
+                .clearNodes() as ExtendedChainedCommands<"toggleCodeBlock">
+            )
+              .toggleCodeBlock()
+              .run(),
+        }
+      : null,
+  ];
+
+  return items.filter(Boolean) as ToolbarBlockSelectItem[];
+}
+
+const blockSelectTextItem: ToolbarBlockSelectItem = {
+  label: "Text",
+  isActive: () => false,
+  setActive: (editor) => editor.chain().focus().clearNodes().run(),
+};
+
+const ToolbarBlockSelect = forwardRef<
+  HTMLButtonElement,
+  ToolbarBlockSelectProps
+>(({ items, ...props }, forwardedRef) => {
+  const editor = useCurrentEditor(
+    "ToolbarBlockSelect",
+    "Toolbar or FloatingToolbar"
+  );
+  const resolvedItems = useMemo(() => {
+    const resolvedItems = items ?? createDefaultBlockSelectItems(editor);
+
+    return [blockSelectTextItem, ...resolvedItems];
+  }, [editor, items]);
+  const activeItem =
+    resolvedItems.find((item) => item.isActive(editor)) ?? blockSelectTextItem;
+
+  const handleItemChange = (itemLabel: string) => {
+    const item = resolvedItems.find((item) => item.label === itemLabel);
+    item?.setActive(editor);
+  };
+
+  return (
+    <SelectPrimitive.Root
+      value={activeItem?.label}
+      onValueChange={handleItemChange}
+    >
+      <ShortcutTooltip content="Turn into…">
+        <SelectPrimitive.Trigger asChild {...props} ref={forwardedRef}>
+          <Button type="button" variant="toolbar">
+            {activeItem.label}
+            <ChevronDownIcon className="lb-dropdown-chevron" />
+          </Button>
+        </SelectPrimitive.Trigger>
+      </ShortcutTooltip>
+      <SelectPrimitive.Portal>
+        <SelectPrimitive.Content
+          position="popper"
+          sideOffset={FLOATING_ELEMENT_SIDE_OFFSET}
+          collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
+          className="lb-root lb-portal lb-elevation lb-dropdown"
+        >
+          {resolvedItems.map((item) => (
+            <SelectPrimitive.Item
+              key={item.label}
+              value={item.label}
+              className="lb-dropdown-item"
+            >
+              {item.icon ? (
+                <span className="lb-icon-container">{item.icon}</span>
+              ) : null}
+              <span className="lb-dropdown-item-label">{item.label}</span>
+            </SelectPrimitive.Item>
+          ))}
+        </SelectPrimitive.Content>
+      </SelectPrimitive.Portal>
+    </SelectPrimitive.Root>
+  );
+});
 
 const ToolbarSeparator = forwardRef<HTMLDivElement, ToolbarSeparatorProps>(
   ({ className, ...props }, forwardedRef) => {
@@ -211,17 +335,6 @@ function ToolbarSectionInline() {
 
   return (
     <>
-      <ToolbarSelect
-        label="Turn into"
-        options={[
-          {
-            value: "Text",
-          },
-          {
-            value: "Heading 1",
-          },
-        ]}
-      />
       {supportsBold && (
         <ToolbarToggle
           label="Bold"
@@ -382,6 +495,7 @@ function DefaultToolbarContent({ editor }: ToolbarSlotProps) {
     <>
       <ToolbarSectionHistory />
       <ToolbarSeparator />
+      <ToolbarBlockSelect />
       <ToolbarSectionInline />
       {supportsThread ? (
         <>
@@ -435,6 +549,7 @@ export const Toolbar = Object.assign(
   {
     Button: ToolbarButton,
     Toggle: ToolbarToggle,
+    BlockSelect: ToolbarBlockSelect,
     Separator: ToolbarSeparator,
     SectionHistory: ToolbarSectionHistory,
     SectionInline: ToolbarSectionInline,
