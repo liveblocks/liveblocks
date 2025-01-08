@@ -7,6 +7,7 @@ import {
   useFloating,
   type UseFloatingOptions,
 } from "@floating-ui/react-dom";
+import { useLayoutEffect } from "@liveblocks/react/_private";
 import {
   Button,
   CheckIcon,
@@ -27,6 +28,7 @@ import { type Editor, useEditorState } from "@tiptap/react";
 import { Command, useCommandState } from "cmdk";
 import type {
   ComponentProps,
+  ComponentType,
   KeyboardEvent as ReactKeyboardEvent,
   PropsWithChildren,
   ReactNode,
@@ -36,7 +38,6 @@ import {
   forwardRef,
   useCallback,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -65,7 +66,7 @@ export interface AiToolbarProps
   editor: Editor | null;
   position?: FloatingPosition;
   offset?: number;
-  suggestions?: ReactNode;
+  suggestions?: ReactNode | ComponentType<PropsWithChildren>;
 }
 
 interface AiToolbarDropdownGroupProps extends ComponentProps<"div"> {
@@ -641,7 +642,7 @@ export const AiToolbar = Object.assign(
         offset: sideOffset = 6,
         editor,
         className,
-        suggestions = defaultSuggestions,
+        suggestions: Suggestions = defaultSuggestions,
         ...props
       },
       forwardedRef
@@ -761,7 +762,11 @@ export const AiToolbar = Object.assign(
               {...props}
             >
               <AiToolbarContainer editor={editor} state={state}>
-                {suggestions}
+                {typeof Suggestions === "function" ? (
+                  <Suggestions children={defaultSuggestions} />
+                ) : (
+                  Suggestions
+                )}
               </AiToolbarContainer>
             </Command>
           </EditorProvider>
