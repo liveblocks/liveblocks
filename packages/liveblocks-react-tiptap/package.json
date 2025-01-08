@@ -70,7 +70,7 @@
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "msw": "^0.27.1",
-    "rollup": "3.28.0",
+    "rollup": "3.29.5",
     "stylelint": "^15.10.2",
     "stylelint-config-standard": "^34.0.0",
     "stylelint-order": "^6.0.3",
