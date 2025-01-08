@@ -42,9 +42,8 @@
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
-    "@types/node": "^20.7.1",
     "@types/node-fetch": "^2.6.6",
-    "msw": "^2.0.2",
+    "msw": "^2.7.0",
     "svix": "^0.75.0"
   },
   "bugs": {

@@ -1,11 +1,10 @@
-import {
+import type {
   BaseMetadata,
   ChannelsNotificationSettings,
   Json,
-  LiveList,
-  LiveObject,
   Lson,
 } from "@liveblocks/client";
+import { LiveObject, LiveList } from "@liveblocks/client";
 import * as classic from "@liveblocks/react";
 import * as suspense from "@liveblocks/react/suspense";
 import { expectAssignable, expectError, expectType } from "tsd";
