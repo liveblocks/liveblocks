@@ -650,7 +650,7 @@ function useChannelsNotificationSettings_withClient(
     getLiveblocksExtrasForClient(client);
 
   useEffect(() => {
-    void store.waitUntilChannelsNotificationsSettingsLoaded();
+    void store.outputs.channelNotificationSettings.waitUntilLoaded();
     // NOTE: Deliberately *not* using a dependency array here!
     //
     // It is important to call waitUntil on *every* render.
@@ -669,17 +669,7 @@ function useChannelsNotificationSettings_withClient(
     };
   }, [poller]);
 
-  const getter = useCallback(
-    () => store.getChannelsNotificationSettingsLoadingState(),
-    [store]
-  );
-  const settings = useSyncExternalStoreWithSelector(
-    store.outputs.channelNotificationSettings.subscribe,
-    getter,
-    getter,
-    identity,
-    shallow2
-  );
+  const settings = useSignal(store.outputs.channelNotificationSettings.signal);
 
   return useMemo(() => {
     return [settings, updateChannelsNotificationSettings];
@@ -695,7 +685,7 @@ function useChannelsNotificationSettingsSuspense_withClient(
   const store = getLiveblocksExtrasForClient(client).store;
 
   // Suspend until there are at least some channel notification settings
-  use(store.waitUntilChannelsNotificationsSettingsLoaded());
+  use(store.outputs.channelNotificationSettings.waitUntilLoaded());
 
   // We're in a Suspense world here, and as such, the useChannelsNotificationSettings()
   // hook is expected to only return success results when we're here.

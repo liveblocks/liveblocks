@@ -39,12 +39,11 @@ describe("Umbrella Store", () => {
     expect(
       store.outputs.versionsByRoomId.getOrCreate("room-b").signal.get()
     ).toEqual(LOADING); // versions by room ID
-    expect(store.outputs.channelNotificationSettings.get()).toEqual({}); // channels notification settings
 
     // Sync async-results getters
     expect(store.outputs.loadingNotifications.signal.get()).toEqual(LOADING);
-    expect(store.getChannelsNotificationSettingsLoadingState()).toEqual(
-      loading
+    expect(store.outputs.channelNotificationSettings.signal.get()).toEqual(
+      LOADING
     );
     expect(
       store.outputs.settingsByRoomId.getOrCreate("room-c").signal.get()
@@ -72,8 +71,8 @@ describe("Umbrella Store", () => {
       store.outputs.settingsByRoomId.getOrCreate("room-abc").signal.get()
     ).toBe(store.outputs.settingsByRoomId.getOrCreate("room-abc").signal.get());
     // TODO Add check here for strict-equality of the OK-state, which currently isn't strictly-equal and the selectors/isEqual functions are still "working around" that
-    expect(store.getChannelsNotificationSettingsLoadingState()).toBe(
-      store.getChannelsNotificationSettingsLoadingState()
+    expect(store.outputs.channelNotificationSettings.signal.get()).toBe(
+      store.outputs.channelNotificationSettings.signal.get()
     );
     // TODO Add check here for strict-equality of the OK-state, which currently isn't strictly-equal and the selectors/isEqual functions are still "working around" that
     expect(

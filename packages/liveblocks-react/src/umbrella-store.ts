@@ -775,7 +775,9 @@ function createStore_forPermissionHints() {
   };
 }
 
-function createStore_forChannelsNotificationSettings() {
+function createStore_forChannelsNotificationSettings(
+  updates: ISignal<readonly OptimisticUpdate<BaseMetadata>[]>
+) {
   const signal = new Signal<BaseChannelsNotificationSettings>({});
 
   function update(settings: ChannelsNotificationSettings) {
@@ -788,11 +790,11 @@ function createStore_forChannelsNotificationSettings() {
   }
 
   return {
-    signal: signal.asReadonly(),
+    signal: DerivedSignal.from(signal, updates, (base, updates) =>
+      applyOptimisticUpdates_forChannelNotificationSettings(base, updates)
+    ),
     // Mutations
     update,
-    // XXX_aurelien Remove this eventually,
-    invalidate: () => signal.set((store) => ({ ...store })),
   };
 }
 
@@ -907,7 +909,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       RoomId,
       LoadableResource<HistoryVersionsAsyncResult>
     >;
-    readonly channelNotificationSettings: DerivedSignal<ChannelsNotificationSettings>;
+    readonly channelNotificationSettings: LoadableResource<ChannelsNotificationSettingsAsyncResult>;
   };
 
   // Notifications
@@ -954,15 +956,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
     };
 
     this.channelNotificationSettings =
-      createStore_forChannelsNotificationSettings();
+      createStore_forChannelsNotificationSettings(
+        this.optimisticUpdates.signal
+      );
 
     this.#channelsNotificationSettings = new SinglePageResource(
       channelsNotificationSettingsFetcher
-    );
-    this.#channelsNotificationSettings.observable.subscribe(() =>
-      // Note that the store itself does not change, but it's only vehicle at
-      // the moment to trigger a re-render, so we'll do a no-op update here.
-      this.invalidateEntireStore()
     );
 
     this.threads = new ThreadDB();
@@ -1209,6 +1208,24 @@ export class UmbrellaStore<M extends BaseMetadata> {
       }
     );
 
+    const channelNotificationSettings: LoadableResource<ChannelsNotificationSettingsAsyncResult> =
+      {
+        signal: DerivedSignal.from(
+          (): ChannelsNotificationSettingsAsyncResult => {
+            const asyncResult = this.#channelsNotificationSettings.get();
+            if (asyncResult.isLoading || asyncResult.error) {
+              return asyncResult;
+            }
+
+            return {
+              isLoading: false,
+              settings: nn(this.channelNotificationSettings.signal.get()),
+            };
+          }
+        ),
+        waitUntilLoaded: this.#channelsNotificationSettings.waitUntilLoaded,
+      };
+
     this.outputs = {
       threadifications,
       threads,
@@ -1218,6 +1235,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       loadingNotifications,
       settingsByRoomId,
       versionsByRoomId,
+      channelNotificationSettings,
     };
 
     // Auto-bind all of this class’ methods here, so we can use stable
@@ -1581,30 +1599,6 @@ export class UmbrellaStore<M extends BaseMetadata> {
     );
     const result = await room.getNotificationSettings({ signal });
     this.roomNotificationSettings.update(roomId, result);
-  }
-
-  /**
-   * -------------------------------------------------------------------------
-   * Channels notification settings
-   * -------------------------------------------------------------------------
-   */
-  public waitUntilChannelsNotificationsSettingsLoaded() {
-    return this.#channelsNotificationSettings.waitUntilLoaded();
-  }
-
-  /**
-   * Get the loading state for Channels Notification Settings
-   */
-  public getChannelsNotificationSettingsLoadingState(): ChannelsNotificationSettingsAsyncResult {
-    const asyncResult = this.#channelsNotificationSettings.get();
-    if (asyncResult.isLoading || asyncResult.error) {
-      return asyncResult;
-    }
-
-    return {
-      isLoading: false,
-      settings: nn(this.outputs.channelNotificationSettings.get()),
-    };
   }
 
   /**
