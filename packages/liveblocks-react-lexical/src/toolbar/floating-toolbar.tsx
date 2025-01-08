@@ -232,6 +232,11 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
         onPointerDown?.(event);
 
         event.stopPropagation();
+
+        // Prevent the toolbar from closing when clicking on the toolbar itself
+        if (event.target === toolbarRef.current) {
+          event.preventDefault();
+        }
       },
       [onPointerDown]
     );
@@ -354,7 +359,10 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
           {applyToolbarSlot(leading, slotProps)}
           {applyToolbarSlot(children, slotProps)}
           {applyToolbarSlot(trailing, slotProps)}
-          <input type="text" placeholder="test" />
+          <input
+            type="text"
+            placeholder="This input is focusable and clickable"
+          />
         </div>
       </TooltipProvider>,
       document.body
