@@ -153,7 +153,7 @@ function createDefaultBlockSelectItems(
       : null,
     "toggleBulletList" in editor.commands
       ? {
-          label: "Bullet List",
+          label: "Bullet list",
           isActive: (editor) => editor.isActive("bulletList"),
           setActive: (editor) =>
             (
@@ -168,7 +168,7 @@ function createDefaultBlockSelectItems(
       : null,
     "toggleOrderedList" in editor.commands
       ? {
-          label: "Numbered List",
+          label: "Numbered list",
 
           isActive: (editor) => editor.isActive("orderedList"),
           setActive: (editor) =>
@@ -184,7 +184,7 @@ function createDefaultBlockSelectItems(
       : null,
     "toggleBlockquote" in editor.commands
       ? {
-          label: "Quote",
+          label: "Blockquote",
           isActive: (editor) => editor.isActive("blockquote"),
           setActive: (editor) =>
             (
@@ -199,7 +199,7 @@ function createDefaultBlockSelectItems(
       : null,
     "toggleCodeBlock" in editor.commands
       ? {
-          label: "Code",
+          label: "Code block",
           isActive: (editor) => editor.isActive("codeBlock"),
           setActive: (editor) =>
             (
