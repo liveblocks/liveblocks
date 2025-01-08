@@ -107,3 +107,7 @@ export function Row(props: RowProps) {
     </tr>
   );
 }
+
+export function RenderCount() {
+  return <span>render #{useRenderCount()}</span>;
+}

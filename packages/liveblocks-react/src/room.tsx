@@ -31,7 +31,6 @@ import type {
   IYjsProvider,
   LiveblocksError,
   OpaqueClient,
-  Poller,
   RoomEventMessage,
   SignalType,
   TextEditorType,
@@ -43,6 +42,7 @@ import {
   console,
   createCommentId,
   createThreadId,
+  DefaultMap,
   errorIf,
   HttpError,
   kInternal,
@@ -64,7 +64,6 @@ import {
 import { config } from "./config";
 import { RoomContext, useIsInsideRoom, useRoomOrNull } from "./contexts";
 import { isString } from "./lib/guards";
-import { shallow2 } from "./lib/shallow2";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
@@ -115,6 +114,7 @@ import {
   UpdateNotificationSettingsError,
 } from "./types/errors";
 import type { UmbrellaStore } from "./umbrella-store";
+import { makeRoomThreadsQueryKey } from "./umbrella-store";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
 import { useSignal } from "./use-signal";
 import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
@@ -272,60 +272,39 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     throw innerError;
   }
 
-  const threadsPollersByRoomId = new Map<string, Poller>();
+  const threadsPollersByRoomId = new DefaultMap((roomId: string) =>
+    makePoller(
+      async (signal) => {
+        try {
+          return await store.fetchRoomThreadsDeltaUpdate(roomId, signal);
+        } catch (err) {
+          console.warn(`Polling new threads for '${roomId}' failed: ${String(err)}`); // prettier-ignore
+          throw err;
+        }
+      },
+      config.ROOM_THREADS_POLL_INTERVAL,
+      { maxStaleTimeMs: config.ROOM_THREADS_MAX_STALE_TIME }
+    )
+  );
 
-  const versionsPollersByRoomId = new Map<string, Poller>();
+  const versionsPollersByRoomId = new DefaultMap((roomId: string) =>
+    makePoller(
+      async (signal) => {
+        try {
+          return await store.fetchRoomVersionsDeltaUpdate(roomId, signal);
+        } catch (err) {
+          console.warn(`Polling new history versions for '${roomId}' failed: ${String(err)}`); // prettier-ignore
+          throw err;
+        }
+      },
+      config.HISTORY_VERSIONS_POLL_INTERVAL,
+      { maxStaleTimeMs: config.HISTORY_VERSIONS_MAX_STALE_TIME }
+    )
+  );
 
-  const roomNotificationSettingsPollersByRoomId = new Map<string, Poller>();
-
-  function getOrCreateThreadsPollerForRoomId(roomId: string) {
-    let poller = threadsPollersByRoomId.get(roomId);
-    if (!poller) {
-      poller = makePoller(
-        async (signal) => {
-          try {
-            return await store.fetchRoomThreadsDeltaUpdate(roomId, signal);
-          } catch (err) {
-            console.warn(`Polling new threads for '${roomId}' failed: ${String(err)}`); // prettier-ignore
-            throw err;
-          }
-        },
-        config.ROOM_THREADS_POLL_INTERVAL,
-        { maxStaleTimeMs: config.ROOM_THREADS_MAX_STALE_TIME }
-      );
-
-      threadsPollersByRoomId.set(roomId, poller);
-    }
-
-    return poller;
-  }
-
-  function getOrCreateVersionsPollerForRoomId(roomId: string) {
-    let poller = versionsPollersByRoomId.get(roomId);
-    if (!poller) {
-      poller = makePoller(
-        async (signal) => {
-          try {
-            return await store.fetchRoomVersionsDeltaUpdate(roomId, signal);
-          } catch (err) {
-            console.warn(`Polling new history versions for '${roomId}' failed: ${String(err)}`); // prettier-ignore
-            throw err;
-          }
-        },
-        config.HISTORY_VERSIONS_POLL_INTERVAL,
-        { maxStaleTimeMs: config.HISTORY_VERSIONS_MAX_STALE_TIME }
-      );
-
-      versionsPollersByRoomId.set(roomId, poller);
-    }
-
-    return poller;
-  }
-
-  function getOrCreateNotificationsSettingsPollerForRoomId(roomId: string) {
-    let poller = roomNotificationSettingsPollersByRoomId.get(roomId);
-    if (!poller) {
-      poller = makePoller(
+  const roomNotificationSettingsPollersByRoomId = new DefaultMap(
+    (roomId: string) =>
+      makePoller(
         async (signal) => {
           try {
             return await store.refreshRoomNotificationSettings(roomId, signal);
@@ -336,21 +315,22 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
         },
         config.NOTIFICATION_SETTINGS_POLL_INTERVAL,
         { maxStaleTimeMs: config.NOTIFICATION_SETTINGS_MAX_STALE_TIME }
-      );
-
-      roomNotificationSettingsPollersByRoomId.set(roomId, poller);
-    }
-
-    return poller;
-  }
+      )
+  );
 
   return {
     store,
     commentsErrorEventSource: commentsErrorEventSource.observable,
     onMutationFailure,
-    getOrCreateThreadsPollerForRoomId,
-    getOrCreateVersionsPollerForRoomId,
-    getOrCreateNotificationsSettingsPollerForRoomId,
+    getOrCreateThreadsPollerForRoomId: threadsPollersByRoomId.getOrCreate.bind(
+      threadsPollersByRoomId
+    ),
+    getOrCreateVersionsPollerForRoomId:
+      versionsPollersByRoomId.getOrCreate.bind(versionsPollersByRoomId),
+    getOrCreateNotificationsSettingsPollerForRoomId:
+      roomNotificationSettingsPollersByRoomId.getOrCreate.bind(
+        roomNotificationSettingsPollersByRoomId
+      ),
   };
 }
 
@@ -670,9 +650,9 @@ function RoomProviderInner<
       }
       const { thread, inboxNotification: maybeNotification } = info;
 
-      const existingThread = store
-        .get1_threads()
-        .threadsDB.getEvenIfDeleted(message.threadId);
+      const existingThread = store.outputs.threads
+        .get()
+        .getEvenIfDeleted(message.threadId);
 
       switch (message.type) {
         case ServerMsgCode.COMMENT_EDITED:
@@ -1311,25 +1291,24 @@ function useMutation<
 }
 
 function useThreads<M extends BaseMetadata>(
-  options: UseThreadsOptions<M> = {
-    query: { metadata: {} },
-  }
+  options: UseThreadsOptions<M> = {}
 ): ThreadsAsyncResult<M> {
   const { scrollOnLoad = true } = options;
-  // TODO - query = stable(options.query);
 
   const client = useClient();
   const room = useRoom();
-
   const { store, getOrCreateThreadsPollerForRoomId } =
     getRoomExtrasForClient<M>(client);
+  const queryKey = makeRoomThreadsQueryKey(room.id, options.query);
 
   const poller = getOrCreateThreadsPollerForRoomId(room.id);
 
   useEffect(
-    () => {
-      void store.waitUntilRoomThreadsLoaded(room.id, options.query);
-    }
+    () =>
+      void store.outputs.loadingRoomThreads
+        .getOrCreate(queryKey)
+        .waitUntilLoaded()
+
     // NOTE: Deliberately *not* using a dependency array here!
     //
     // It is important to call waitUntil on *every* render.
@@ -1346,28 +1325,12 @@ function useThreads<M extends BaseMetadata>(
     return () => poller.dec();
   }, [poller]);
 
-  // XXX_vincent There is a disconnect between this getter and subscriber! It's unclear
-  // why the getRoomThreadsLoadingState getter should be paired with subscribe1
-  // and not subscribe2 from the outside! (The reason is that
-  // getRoomThreadsLoadingState internally uses `get1` not `get2`.) This is
-  // strong evidence that getRoomThreadsLoadingState itself wants to be
-  // a Signal! Once we make it a Signal, we can simply use `useSignal()` here! ❤️
-  const getter = useCallback(
-    () => store.getRoomThreadsLoadingState(room.id, options.query),
-    [store, room.id, options.query]
+  const result = useSignal(
+    store.outputs.loadingRoomThreads.getOrCreate(queryKey).signal
   );
 
-  const state = useSyncExternalStoreWithSelector(
-    store.subscribe1_threads,
-    getter,
-    getter,
-    identity,
-    shallow2 // NOTE: Using 2-level-deep shallow check here, because the result of selectThreads() is not stable!
-  );
-
-  useScrollToCommentOnLoadEffect(scrollOnLoad, state);
-
-  return state;
+  useScrollToCommentOnLoadEffect(scrollOnLoad, result);
+  return result;
 }
 
 /**
@@ -1487,7 +1450,7 @@ function useDeleteRoomThread(roomId: string): (threadId: string) => void {
 
       const userId = getCurrentUserId(client);
 
-      const existing = store.get1_threads().threadsDB.get(threadId);
+      const existing = store.outputs.threads.get().get(threadId);
       if (existing?.comments?.[0]?.userId !== userId) {
         throw new Error("Only the thread creator can delete the thread");
       }
@@ -1656,9 +1619,7 @@ function useEditRoomComment(
       const editedAt = new Date();
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-      const existing = store
-        .get1_threads()
-        .threadsDB.getEvenIfDeleted(threadId);
+      const existing = store.outputs.threads.get().getEvenIfDeleted(threadId);
 
       if (existing === undefined) {
         console.warn(
@@ -1912,7 +1873,7 @@ function useMarkRoomThreadAsRead(roomId: string) {
     (threadId: string) => {
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
       const inboxNotification = Object.values(
-        store.get1_notifications().notificationsById
+        store.outputs.notifications.get().notificationsById
       ).find(
         (inboxNotification) =>
           inboxNotification.kind === "thread" &&
@@ -2126,9 +2087,9 @@ function useRoomNotificationSettings(): [
   const poller = getOrCreateNotificationsSettingsPollerForRoomId(room.id);
 
   useEffect(
-    () => {
-      void store.waitUntilRoomNotificationSettingsLoaded(room.id);
-    }
+    () =>
+      void store.outputs.settingsByRoomId.getOrCreate(room.id).waitUntilLoaded()
+
     // NOTE: Deliberately *not* using a dependency array here!
     //
     // It is important to call waitUntil on *every* render.
@@ -2147,25 +2108,8 @@ function useRoomNotificationSettings(): [
     };
   }, [poller]);
 
-  // XXX_vincent There is a disconnect between this getter and subscriber! It's unclear
-  // why the getNotificationSettingsLoadingState getter should be paired with
-  // subscribe2 and not subscribe1 from the outside! (The reason is that
-  // getNotificationSettingsLoadingState internally uses `get2` not `get1`.)
-  // This is strong evidence that getNotificationSettingsLoadingState itself
-  // wants to be a Signal! Once we make it a Signal, we can simply use
-  // `useSignal()` here! ❤️
-  const getter = useCallback(
-    () => store.getNotificationSettingsLoadingState(room.id),
-    [store, room.id]
-  );
-
-  // XXX_vincent Turn this into a useSignal
-  const settings = useSyncExternalStoreWithSelector(
-    store.subscribe2,
-    getter,
-    getter,
-    identity,
-    shallow2
+  const settings = useSignal(
+    store.outputs.settingsByRoomId.getOrCreate(room.id).signal
   );
 
   return useMemo(() => {
@@ -2189,7 +2133,7 @@ function useRoomNotificationSettingsSuspense(): [
   const room = useRoom();
 
   // Suspend until there are at least some inbox notifications
-  use(store.waitUntilRoomNotificationSettingsLoaded(room.id));
+  use(store.outputs.settingsByRoomId.getOrCreate(room.id).waitUntilLoaded());
 
   // We're in a Suspense world here, and as such, the useRoomNotificationSettings()
   // hook is expected to only return success results when we're here.
@@ -2265,15 +2209,10 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
     return () => poller.dec();
   }, [poller]);
 
-  const getter = useCallback(
-    () => store.getRoomVersionsLoadingState(room.id),
-    [store, room.id]
-  );
-
   useEffect(
-    () => {
-      void store.waitUntilRoomVersionsLoaded(room.id);
-    }
+    () =>
+      void store.outputs.versionsByRoomId.getOrCreate(room.id).waitUntilLoaded()
+
     // NOTE: Deliberately *not* using a dependency array here!
     //
     // It is important to call waitUntil on *every* render.
@@ -2284,21 +2223,7 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
     //    *next* render after that, a *new* fetch/promise will get created.
   );
 
-  // XXX_vincent There is a disconnect between this getter and subscriber! It's unclear
-  // why the getRoomVersionsLoadingState getter should be paired with
-  // subscribe3 and not subscribe1 from the outside! (The reason is that
-  // getRoomVersionsLoadingState internally uses `get3` not `get1`.) This is
-  // strong evidence that getRoomVersionsLoadingState itself wants to be
-  // a Signal! Once we make it a Signal, we can simply use `useSignal()` here! ❤️
-  const state = useSyncExternalStoreWithSelector(
-    store.subscribe3,
-    getter,
-    getter,
-    identity,
-    shallow2
-  );
-
-  return state;
+  return useSignal(store.outputs.versionsByRoomId.getOrCreate(room.id).signal);
 }
 
 /**
@@ -2312,7 +2237,7 @@ function useHistoryVersionsSuspense(): HistoryVersionsAsyncSuccess {
   const room = useRoom();
   const store = getRoomExtrasForClient(client).store;
 
-  use(store.waitUntilRoomVersionsLoaded(room.id));
+  use(store.outputs.versionsByRoomId.getOrCreate(room.id).waitUntilLoaded());
 
   const result = useHistoryVersions();
   assert(!result.error, "Did not expect error");
@@ -2489,16 +2414,15 @@ function useStorageStatusSuspense(
 }
 
 function useThreadsSuspense<M extends BaseMetadata>(
-  options: UseThreadsOptions<M> = {
-    query: { metadata: {} },
-  }
+  options: UseThreadsOptions<M> = {}
 ): ThreadsAsyncSuccess<M> {
   const client = useClient();
   const room = useRoom();
 
   const { store } = getRoomExtrasForClient<M>(client);
+  const queryKey = makeRoomThreadsQueryKey(room.id, options.query);
 
-  use(store.waitUntilRoomThreadsLoaded(room.id, options.query));
+  use(store.outputs.loadingRoomThreads.getOrCreate(queryKey).waitUntilLoaded());
 
   const result = useThreads(options);
   assert(!result.error, "Did not expect error");
@@ -2552,13 +2476,12 @@ function useRoomAttachmentUrl(
     client[kInternal].httpClient.getOrCreateAttachmentUrlsStore(roomId);
 
   const getAttachmentUrlState = useCallback(
-    () => store.getState(attachmentId),
+    () => store.getItemState(attachmentId),
     [store, attachmentId]
   );
 
   useEffect(() => {
-    // NOTE: .get() will trigger any actual fetches, whereas .getState() will not
-    void store.get(attachmentId);
+    void store.enqueue(attachmentId);
   }, [store, attachmentId]);
 
   return useSyncExternalStoreWithSelector(
@@ -2581,13 +2504,13 @@ function useAttachmentUrlSuspense(attachmentId: string) {
   const { attachmentUrlsStore } = room[kInternal];
 
   const getAttachmentUrlState = useCallback(
-    () => attachmentUrlsStore.getState(attachmentId),
+    () => attachmentUrlsStore.getItemState(attachmentId),
     [attachmentUrlsStore, attachmentId]
   );
   const attachmentUrlState = getAttachmentUrlState();
 
   if (!attachmentUrlState || attachmentUrlState.isLoading) {
-    throw attachmentUrlsStore.get(attachmentId);
+    throw attachmentUrlsStore.enqueue(attachmentId);
   }
 
   if (attachmentUrlState.error) {
@@ -2609,6 +2532,8 @@ function useAttachmentUrlSuspense(attachmentId: string) {
   } as const;
 }
 
+const NO_PERMISSIONS = new Set();
+
 /**
  * @private For internal use only. Do not rely on this hook.
  */
@@ -2617,7 +2542,7 @@ function useRoomPermissions(roomId: string) {
   const store = getRoomExtrasForClient(client).store;
   return useSignal(
     store.permissionHints.signal,
-    (hints) => hints[roomId] ?? new Set()
+    (hints) => hints.get(roomId) ?? NO_PERMISSIONS
   );
 }
 

@@ -965,7 +965,7 @@ export function createApiClient<M extends BaseMetadata>({
   }
 
   function getAttachmentUrl(options: { roomId: string; attachmentId: string }) {
-    const batch = getOrCreateAttachmentUrlsStore(options.roomId).getBatch();
+    const batch = getOrCreateAttachmentUrlsStore(options.roomId).batch;
     return batch.get(options.attachmentId);
   }
 

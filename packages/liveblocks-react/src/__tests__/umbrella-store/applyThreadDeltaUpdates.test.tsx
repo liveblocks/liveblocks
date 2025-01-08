@@ -33,10 +33,7 @@ describe("applyThreadDeltaUpdates", () => {
   it("should add a new thread if it doesn't exist already", () => {
     const db = new ThreadDB();
 
-    db.applyDelta({
-      newThreads: [thread1],
-      deletedThreads: [],
-    });
+    db.applyDelta([thread1], []);
 
     expect(db.findMany(undefined, {}, "asc")).toEqual([thread1]);
   });
@@ -53,10 +50,7 @@ describe("applyThreadDeltaUpdates", () => {
     db.upsert(thread1);
 
     // Simulate updates with the newer version of thread1
-    db.applyDelta({
-      newThreads: [thread1Updated],
-      deletedThreads: [],
-    });
+    db.applyDelta([thread1Updated], []);
 
     // Expected output should reflect the updated properties of thread1Updated
     expect(db.findMany(undefined, {}, "asc")).toEqual([thread1Updated]);
@@ -66,10 +60,10 @@ describe("applyThreadDeltaUpdates", () => {
     const db = new ThreadDB();
     db.upsert(thread1);
 
-    db.applyDelta({
-      newThreads: [],
-      deletedThreads: [thread1DeleteInfo], // Mark thread1 as deleted
-    });
+    db.applyDelta(
+      [],
+      [thread1DeleteInfo] // Mark thread1 as deleted
+    );
 
     expect(db.findMany(undefined, {}, "asc")).toEqual([]);
     expect(db.getEvenIfDeleted(thread1.id)).toEqual({
@@ -86,10 +80,10 @@ describe("applyThreadDeltaUpdates", () => {
 
     expect(db.findMany(undefined, {}, "asc")).toEqual([thread1]);
 
-    db.applyDelta({
-      newThreads: [],
-      deletedThreads: [thread2DeleteInfo], // Attempt to delete non-existing thread2
-    });
+    db.applyDelta(
+      [],
+      [thread2DeleteInfo] // Attempt to delete non-existing thread2
+    );
 
     // Output should remain unchanged
     expect(db.findMany(undefined, {}, "asc")).toEqual([thread1]);
@@ -101,10 +95,10 @@ describe("applyThreadDeltaUpdates", () => {
 
     expect(db.findMany(undefined, {}, "asc")).toEqual([thread1]);
 
-    db.applyDelta({
-      newThreads: [thread2], // Add thread2
-      deletedThreads: [thread1DeleteInfo], // Delete thread1
-    });
+    db.applyDelta(
+      [thread2], // Add thread2
+      [thread1DeleteInfo] // Delete thread1
+    );
 
     // Thread2 was added, and thread 1 deleted
     expect(db.findMany(undefined, {}, "asc")).toEqual([thread2]);
@@ -127,10 +121,7 @@ describe("applyThreadDeltaUpdates", () => {
     expect(fn).toHaveBeenCalledTimes(2);
     expect(db.findMany(undefined, {}, "asc")).toEqual([thread1, thread2]);
 
-    db.applyDelta({
-      newThreads: [],
-      deletedThreads: [],
-    });
+    db.applyDelta([], []);
 
     expect(db.findMany(undefined, {}, "asc")).toEqual([thread1, thread2]);
 
