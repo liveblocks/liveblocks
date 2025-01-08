@@ -42,8 +42,8 @@ export type ToolbarSlot = ReactNode | ComponentType<ToolbarSlotProps>;
 
 export interface ToolbarProps extends Omit<ComponentProps<"div">, "children"> {
   children?: ToolbarSlot;
-  leading?: ToolbarSlot;
-  trailing?: ToolbarSlot;
+  before?: ToolbarSlot;
+  after?: ToolbarSlot;
 }
 
 interface ToolbarButtonProps extends ComponentProps<"button"> {
@@ -267,13 +267,7 @@ function useRerender() {
 export const Toolbar = Object.assign(
   forwardRef<HTMLDivElement, ToolbarProps>(
     (
-      {
-        leading,
-        trailing,
-        children = DefaultToolbarContent,
-        className,
-        ...props
-      },
+      { before, after, children = DefaultToolbarContent, className, ...props },
       forwardedRef
     ) => {
       const [editor] = useLexicalComposerContext();
@@ -327,9 +321,9 @@ export const Toolbar = Object.assign(
             className={classNames("lb-root lb-lexical-toolbar", className)}
             {...props}
           >
-            {applyToolbarSlot(leading, slotProps)}
+            {applyToolbarSlot(before, slotProps)}
             {applyToolbarSlot(children, slotProps)}
-            {applyToolbarSlot(trailing, slotProps)}
+            {applyToolbarSlot(after, slotProps)}
           </div>
         </TooltipProvider>
       );

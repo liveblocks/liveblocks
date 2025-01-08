@@ -35,8 +35,8 @@ export type ToolbarSlot = ReactNode | ComponentType<ToolbarSlotProps>;
 export interface ToolbarProps extends Omit<ComponentProps<"div">, "children"> {
   editor: Editor | null;
   children?: ToolbarSlot;
-  leading?: ToolbarSlot;
-  trailing?: ToolbarSlot;
+  before?: ToolbarSlot;
+  after?: ToolbarSlot;
 }
 
 interface ToolbarButtonProps extends ComponentProps<"button"> {
@@ -397,8 +397,8 @@ export const Toolbar = Object.assign(
   forwardRef<HTMLDivElement, ToolbarProps>(
     (
       {
-        leading,
-        trailing,
+        before,
+        after,
         children = DefaultToolbarContent,
         editor,
         className,
@@ -423,9 +423,9 @@ export const Toolbar = Object.assign(
               className={classNames("lb-root lb-tiptap-toolbar", className)}
               {...props}
             >
-              {applyToolbarSlot(leading, slotProps)}
+              {applyToolbarSlot(before, slotProps)}
               {applyToolbarSlot(children, slotProps)}
-              {applyToolbarSlot(trailing, slotProps)}
+              {applyToolbarSlot(after, slotProps)}
             </div>
           </EditorProvider>
         </TooltipProvider>

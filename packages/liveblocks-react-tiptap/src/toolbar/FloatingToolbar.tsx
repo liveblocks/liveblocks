@@ -45,8 +45,8 @@ export interface FloatingToolbarProps
   position?: FloatingPosition;
   offset?: number;
   children?: ToolbarSlot;
-  leading?: ToolbarSlot;
-  trailing?: ToolbarSlot;
+  before?: ToolbarSlot;
+  after?: ToolbarSlot;
 }
 
 export const FLOATING_TOOLBAR_COLLISION_PADDING = 10;
@@ -72,8 +72,8 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
   (
     {
       children = DefaultFloatingToolbarContent,
-      leading,
-      trailing,
+      before,
+      after,
       position = "top",
       offset: sideOffset = 6,
       editor,
@@ -390,9 +390,9 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
             onBlur={handleBlur}
             {...props}
           >
-            {applyToolbarSlot(leading, slotProps)}
+            {applyToolbarSlot(before, slotProps)}
             {applyToolbarSlot(children, slotProps)}
-            {applyToolbarSlot(trailing, slotProps)}
+            {applyToolbarSlot(after, slotProps)}
           </div>
         </EditorProvider>
       </TooltipProvider>,
