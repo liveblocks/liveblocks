@@ -49,7 +49,6 @@
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
-    "@types/node": "^20.14.8",
     "msw": "^2.7.0"
   },
   "bugs": {

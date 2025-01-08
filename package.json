@@ -20,6 +20,7 @@
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.15.3",
+    "@types/node": "^18.19.70",
     "dependency-cruiser": "^16.9.0",
     "prettier": "^3.4.2",
     "publint": "^0.2.8",
@@ -31,5 +32,8 @@
   },
   "engines": {
     "node": ">=22.x"
+  },
+  "overrides": {
+    "@types/node": "$@types/node"
   }
 }

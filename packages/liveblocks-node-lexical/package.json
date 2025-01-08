@@ -40,15 +40,14 @@
   },
   "peerDependencies": {
     "@lexical/headless": "0.16.1",
+    "@lexical/markdown": "0.16.1",
     "@lexical/selection": "0.16.1",
     "@lexical/yjs": "0.16.1",
-    "@lexical/markdown": "0.16.1",
     "lexical": "0.16.1"
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
-    "@liveblocks/jest-config": "*",
-    "@types/node": "^20.14.8"
+    "@liveblocks/jest-config": "*"
   },
   "bugs": {
     "url": "https://github.com/liveblocks/liveblocks/issues"
