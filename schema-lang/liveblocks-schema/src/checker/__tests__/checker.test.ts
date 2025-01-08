@@ -21,15 +21,12 @@ describe("checker", () => {
     const reporter = ErrorReporter.fromText(schemaText);
     const output = check(parseDocument(reporter), reporter);
 
-    const range = expect.any(Array);
-
     expect(output).toEqual({
       root: {
         _kind: "ObjectTypeDefinition",
         name: {
           _kind: "TypeName",
           name: "Storage",
-          range,
         },
         isStatic: false,
         leadingComment: null,
@@ -41,20 +38,16 @@ describe("checker", () => {
             name: {
               _kind: "Identifier",
               name: "x",
-              range,
             },
             optional: false,
             type: {
               _kind: "TypeRef",
               asLiveObject: false,
-              range,
               ref: {
                 _kind: "TypeName",
                 name: "IamStatic",
-                range,
               },
             },
-            range,
           },
           {
             _kind: "FieldDef",
@@ -63,7 +56,6 @@ describe("checker", () => {
             name: {
               _kind: "Identifier",
               name: "y",
-              range,
             },
             optional: false,
             type: {
@@ -71,15 +63,11 @@ describe("checker", () => {
               ref: {
                 _kind: "TypeName",
                 name: "IamLive",
-                range,
               },
               asLiveObject: true,
-              range,
             },
-            range,
           },
         ],
-        range,
       },
 
       ast: expect.any(Object),
@@ -93,12 +81,10 @@ describe("checker", () => {
       name: {
         _kind: "TypeName",
         name: "IamStatic",
-        range,
       },
       isStatic: true,
       leadingComment: null,
       fields: [],
-      range,
     });
 
     const y = output.root.fields[1].type as AST.TypeRef;
@@ -107,12 +93,10 @@ describe("checker", () => {
       name: {
         _kind: "TypeName",
         name: "IamLive",
-        range,
       },
       isStatic: false,
       leadingComment: null,
       fields: [],
-      range,
     });
   });
 
