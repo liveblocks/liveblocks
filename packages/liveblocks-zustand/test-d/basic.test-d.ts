@@ -1,8 +1,6 @@
 import { createClient, LiveList } from "@liveblocks/client";
-import {
-  liveblocks as liveblocksMiddleware,
-  WithLiveblocks,
-} from "@liveblocks/zustand";
+import type { WithLiveblocks } from "@liveblocks/zustand";
+import { liveblocks as liveblocksMiddleware } from "@liveblocks/zustand";
 import { devtools, persist } from "zustand/middleware";
 
 import { create } from "zustand";
