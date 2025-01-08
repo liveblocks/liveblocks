@@ -1,0 +1,147 @@
+---
+meta:
+  title: "Default components"
+  parentTitle: "Notifications"
+  description: "Ready-to-use customizable components"
+---
+
+The default components included in Notifications are a great way to start
+building your application. With these components you can render inbox
+notification components.
+
+- Fully styled notification components, with an optional dark mode.
+- Customize through CSS variables and class names.
+- Receive notifications automatically triggered by Liveblocks
+  [Comments](/docs/ready-made-features/comments).
+- Receive fully custom notifications.
+
+## InboxNotification
+
+The [`InboxNotification`][] component renders a single inbox notification.
+
+<Figure>
+  <Image
+    src="/assets/notifications/inbox-notification.png"
+    alt="InboxNotification"
+    width={768}
+    height={446}
+  />
+</Figure>
+
+### Usage
+
+The best way to get started is to import the [`useInboxNotifications`][] hook,
+and loop through each of the current user’s notifications.
+
+```tsx highlight="5,10-13"
+import { InboxNotification } from "@liveblocks/react-ui";
+import { useInboxNotifications } from "../liveblocks.config";
+
+function Component() {
+  const { inboxNotifications } = useInboxNotifications();
+
+  return (
+    <>
+      {inboxNotifications.map((inboxNotification) => (
+        <InboxNotification
+          key={inboxNotification.id}
+          inboxNotification={inboxNotification}
+        />
+      ))}
+    </>
+  );
+}
+```
+
+#### Rendering different components
+
+As well as displaying the default notification component, you can render
+alternate components for different notification `kinds` (the type of
+notification). Below we’re rendering a different component for custom
+`$fileUploaded` notifications.
+
+```tsx highlight="14-18"
+import { InboxNotification } from "@liveblocks/react-ui";
+import { useInboxNotifications } from "../liveblocks.config";
+
+function Component() {
+  const { inboxNotifications } = useInboxNotifications();
+
+  return (
+    <>
+      {inboxNotifications.map((inboxNotification) => (
+        <InboxNotification
+          key={inboxNotification.id}
+          inboxNotification={inboxNotification}
+          kinds={{
+            $fileUploaded: (props) => (
+              <InboxNotification.Custom {...props} title="New file" aside="📁">
+                A new file has been uploaded
+              </InboxNotification.Custom>
+            ),
+          }}
+        />
+      ))}
+    </>
+  );
+}
+```
+
+You can also render any plain JSX you like. Learn more about this under
+[rendering notification kinds differently](/docs/api-reference/liveblocks-react-ui#Rendering-notification-kinds-differently).
+
+## InboxNotificationList
+
+The [`InboxNotificationList`][] component renders your inbox notifications as a
+list.
+
+<Figure>
+  <Image
+    src="/assets/notifications/inbox-notification-list.png"
+    alt="InboxNotificationList"
+    width={768}
+    height={446}
+  />
+</Figure>
+
+### Usage
+
+Wrap your [`InboxNotification`][] components in [`InboxNotificationList`][] to
+render your notifications as an ordered HTML list, `ol > li`.
+
+```tsx highlight="8,15"
+import { InboxNotification, InboxNotificationList } from "@liveblocks/react-ui";
+import { useInboxNotifications } from "../liveblocks.config";
+
+function Component() {
+  const { inboxNotifications } = useInboxNotifications();
+
+  return (
+    <InboxNotificationList>
+      {inboxNotifications.map((inboxNotification) => (
+        <InboxNotification
+          key={inboxNotification.id}
+          inboxNotification={inboxNotification}
+        />
+      ))}
+    </InboxNotificationList>
+  );
+}
+```
+
+[`InboxNotification`]: /docs/api-reference/liveblocks-react-ui#InboxNotification
+[`InboxNotificationList`]:
+  /docs/api-reference/liveblocks-react-ui#InboxNotificationList
+[`useInboxNotifications`]:
+  /docs/api-reference/liveblocks-react#useInboxNotifications
+
+## Customization
+
+It’s possible to style and localize the default components:
+
+- Import dark mode styles.
+- Modify the style with CSS variables and class names.
+- Use overrides to change default text used in the components.
+
+Learn more under
+[styling and customization](/docs/ready-made-features/notifications/styling-and-customization).

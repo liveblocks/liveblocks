@@ -1,20 +1,44 @@
-import type { Placement } from "@floating-ui/react-dom";
+import type {
+  DetectOverflowOptions,
+  Placement,
+  UseFloatingOptions,
+} from "@floating-ui/react-dom";
 import {
-  type CommentAttachment,
-  type CommentBody,
-  type CommentBodyLink,
-  type CommentBodyMention,
-  type CommentLocalAttachment,
-  type CommentMixedAttachment,
-  HttpError,
-  makeEventSource,
-  type OpaqueRoom,
+  autoUpdate,
+  flip,
+  hide,
+  inline,
+  limitShift,
+  offset,
+  shift,
+  size,
+  useFloating,
+} from "@floating-ui/react-dom";
+import type {
+  Client,
+  CommentAttachment,
+  CommentBody,
+  CommentBodyLink,
+  CommentBodyMention,
+  CommentLocalAttachment,
+  CommentMixedAttachment,
 } from "@liveblocks/core";
-import { useRoom } from "@liveblocks/react";
+import { HttpError, kInternal, makeEventSource } from "@liveblocks/core";
+import { useClient } from "@liveblocks/react";
+import { useLayoutEffect } from "@liveblocks/react/_private";
 import type { DragEvent } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
 
+import {
+  FLOATING_ELEMENT_COLLISION_PADDING,
+  FLOATING_ELEMENT_SIDE_OFFSET,
+} from "../../constants";
 import { isComposerBodyAutoLink } from "../../slate/plugins/auto-links";
 import { isComposerBodyCustomLink } from "../../slate/plugins/custom-links";
 import { isComposerBodyMention } from "../../slate/plugins/mentions";
@@ -37,7 +61,7 @@ import {
   isCommentBodyText,
 } from "../Comment/utils";
 import { useComposer, useComposerAttachmentsContext } from "./contexts";
-import type { SuggestionsPosition } from "./types";
+import type { FloatingAlignment, FloatingPosition } from "./types";
 
 export function composerBodyMentionToCommentBodyMention(
   mention: ComposerBodyMention
@@ -176,17 +200,102 @@ export function commentBodyToComposerBody(body: CommentBody): ComposerBody {
     .filter(exists);
 }
 
-export function getPlacementFromPosition(
-  position: SuggestionsPosition,
-  direction: Direction = "ltr"
-): Placement {
-  return `${position}-${direction === "rtl" ? "end" : "start"}`;
+export function getRtlFloatingAlignment(
+  alignment: FloatingAlignment
+): FloatingAlignment {
+  switch (alignment) {
+    case "start":
+      return "end";
+    case "end":
+      return "start";
+    default:
+      return "center";
+  }
 }
 
-export function getSideAndAlignFromPlacement(placement: Placement) {
+export function getSideAndAlignFromFloatingPlacement(placement: Placement) {
   const [side, align = "center"] = placement.split("-");
 
   return [side, align] as const;
+}
+
+// Copy `z-index` from content to wrapper.
+// Inspired by https://github.com/radix-ui/primitives/blob/main/packages/react/popper/src/Popper.tsx
+export function useContentZIndex() {
+  const [content, setContent] = useState<HTMLDivElement | null>(null);
+  const contentRef = useCallback(setContent, [setContent]);
+  const [contentZIndex, setContentZIndex] = useState<string>();
+
+  useLayoutEffect(() => {
+    if (content) {
+      setContentZIndex(window.getComputedStyle(content).zIndex);
+    }
+  }, [content]);
+
+  return [contentRef, contentZIndex] as const;
+}
+
+export function useFloatingWithOptions({
+  type = "bounds",
+  position,
+  alignment,
+  dir,
+  open,
+}: {
+  type?: "bounds" | "range";
+  position: FloatingPosition;
+  alignment: FloatingAlignment;
+  dir: Direction | undefined;
+  open: boolean;
+}) {
+  const floatingOptions: UseFloatingOptions = useMemo(() => {
+    const detectOverflowOptions: DetectOverflowOptions = {
+      padding: FLOATING_ELEMENT_COLLISION_PADDING,
+    };
+
+    const middleware = [
+      type === "range" ? inline(detectOverflowOptions) : null,
+      flip({ ...detectOverflowOptions, crossAxis: false }),
+      hide(detectOverflowOptions),
+      shift({
+        ...detectOverflowOptions,
+        limiter: limitShift(),
+      }),
+      type === "range" ? offset(FLOATING_ELEMENT_SIDE_OFFSET) : null,
+      size({
+        ...detectOverflowOptions,
+        apply({ availableWidth, availableHeight, elements }) {
+          elements.floating.style.setProperty(
+            "--lb-composer-floating-available-width",
+            `${availableWidth}px`
+          );
+          elements.floating.style.setProperty(
+            "--lb-composer-floating-available-height",
+            `${availableHeight}px`
+          );
+        },
+      }),
+    ];
+
+    return {
+      strategy: "fixed",
+      placement:
+        alignment === "center"
+          ? position
+          : (`${position}-${dir === "rtl" ? getRtlFloatingAlignment(alignment) : alignment}` as Placement),
+      middleware,
+      whileElementsMounted: (...args) => {
+        return autoUpdate(...args, {
+          animationFrame: true,
+        });
+      },
+    };
+  }, [alignment, position, dir, type]);
+
+  return useFloating({
+    ...floatingOptions,
+    open,
+  });
 }
 
 export function useComposerAttachmentsDropArea<
@@ -322,6 +431,7 @@ export function useComposerAttachmentsDropArea<
 
 interface ComposerAttachmentsManagerOptions {
   maxFileSize: number;
+  roomId: string;
 }
 
 export class AttachmentTooLargeError extends Error {
@@ -335,7 +445,8 @@ export class AttachmentTooLargeError extends Error {
 }
 
 function createComposerAttachmentsManager(
-  room: OpaqueRoom,
+  client: Client,
+  roomId: string,
   options: ComposerAttachmentsManagerOptions
 ) {
   const attachments: Map<string, CommentMixedAttachment> = new Map();
@@ -353,8 +464,10 @@ function createComposerAttachmentsManager(
     const abortController = new AbortController();
     abortControllers.set(attachment.id, abortController);
 
-    room
-      .uploadAttachment(attachment, {
+    client[kInternal].httpClient
+      .uploadAttachment({
+        roomId,
+        attachment,
         signal: abortController.signal,
       })
       .then(() => {
@@ -476,10 +589,10 @@ export function useComposerAttachmentsManager(
   defaultAttachments: CommentAttachment[],
   options: ComposerAttachmentsManagerOptions
 ) {
-  const room = useRoom();
+  const client = useClient();
   const frozenDefaultAttachments = useInitial(defaultAttachments);
   const frozenAttachmentsManager = useInitial(() =>
-    createComposerAttachmentsManager(room, options)
+    createComposerAttachmentsManager(client, options.roomId, options)
   );
 
   // Initialize default attachments on mount

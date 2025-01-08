@@ -1,0 +1,53 @@
+{
+  "name": "@liveblocks-examples/nextjs-tiptap-emails-resend",
+  "description": "This example shows how to send text mention notification emails with Tiptap, Liveblocks, React Email, Resend, and Next.js.",
+  "license": "Apache-2.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "dev:email": "email dev",
+    "build": "next build",
+    "build:email": "email build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@floating-ui/react-dom": "^2.1.2",
+    "@liveblocks/client": "^2.15.2",
+    "@liveblocks/emails": "^2.15.2",
+    "@liveblocks/node": "^2.15.2",
+    "@liveblocks/react": "^2.15.2",
+    "@liveblocks/react-tiptap": "^2.15.2",
+    "@liveblocks/react-ui": "^2.15.2",
+    "@liveblocks/yjs": "^2.15.2",
+    "@radix-ui/react-dialog": "^1.1.2",
+    "@radix-ui/react-popover": "^1.0.7",
+    "@react-email/components": "0.0.26",
+    "@react-email/render": "1.0.2",
+    "@tiptap/extension-collaboration": "^2.6.6",
+    "@tiptap/extension-collaboration-cursor": "^2.6.6",
+    "@tiptap/extension-mention": "^2.7.1",
+    "@tiptap/pm": "^2.6.6",
+    "@tiptap/react": "^2.6.6",
+    "@tiptap/starter-kit": "^2.6.6",
+    "@tiptap/suggestion": "^2.7.1",
+    "@types/node": "^18.11.18",
+    "@types/react": "^18.0.27",
+    "@types/react-dom": "^18.0.10",
+    "clsx": "^2.1.1",
+    "next": "^14.2.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-email": "3.0.1",
+    "resend": "^4.0.1-alpha.0",
+    "tailwind-merge": "^2.5.4",
+    "tippy.js": "^6.3.7",
+    "typescript": "^5.2.2",
+    "yjs": "^13.6.19"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.14"
+  }
+}

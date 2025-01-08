@@ -3,7 +3,6 @@ import { ClientMsgCode, ServerMsgCode, wait } from "@liveblocks/core";
 import { render } from "@testing-library/react";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
-import * as React from "react";
 
 import { createRoomContext } from "../room";
 import {
@@ -65,7 +64,7 @@ describe("RoomProvider", () => {
       </RoomProvider>
     );
 
-    expect(authEndpointMock).not.toBeCalled();
+    expect(authEndpointMock).not.toHaveBeenCalled();
   });
 
   test("autoConnect equals true should call the auth endpoint", () => {
@@ -82,7 +81,7 @@ describe("RoomProvider", () => {
       </RoomProvider>
     );
 
-    expect(authEndpointMock).toBeCalled();
+    expect(authEndpointMock).toHaveBeenCalled();
   });
 });
 

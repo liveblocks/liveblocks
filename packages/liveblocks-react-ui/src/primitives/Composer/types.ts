@@ -2,8 +2,10 @@ import type { CommentAttachment, CommentBody } from "@liveblocks/core";
 import type {
   ComponentPropsWithoutRef,
   ComponentType,
+  Dispatch,
   FormEvent,
   ReactNode,
+  SetStateAction,
 } from "react";
 import type {
   RenderElementProps,
@@ -15,6 +17,7 @@ import type {
   ComponentPropsWithSlot,
   ComposerBodyAutoLink,
   ComposerBodyCustomLink,
+  ComposerBodyMark,
   ComposerBodyMention,
   Direction,
 } from "../../types";
@@ -59,9 +62,13 @@ export type ComposerEditorMentionSuggestionsProps = {
   selectedUserId?: string;
 };
 
+export type ComposerEditorFloatingToolbarProps = Record<string, never>;
+
 export type ComposerMentionProps = ComponentPropsWithSlot<"span">;
 
 export type ComposerLinkProps = ComponentPropsWithSlot<"a">;
+
+export type ComposerFloatingToolbarProps = ComponentPropsWithSlot<"div">;
 
 export type ComposerSuggestionsProps = ComponentPropsWithSlot<"div">;
 
@@ -90,6 +97,11 @@ export interface ComposerEditorComponents {
    * The component used to display links.
    */
   Link: ComponentType<ComposerEditorLinkProps>;
+
+  /**
+   * The component used to display a floating toolbar attached to the selection.
+   */
+  FloatingToolbar?: ComponentType<ComposerEditorFloatingToolbarProps>;
 }
 
 export interface ComposerEditorProps
@@ -162,11 +174,29 @@ export interface ComposerFormProps extends ComponentPropsWithSlot<"form"> {
    * `false`.
    */
   preventUnsavedChanges?: boolean;
+
+  /**
+   * @internal
+   */
+  roomId?: string;
 }
 
 export type ComposerSubmitProps = ComponentPropsWithSlot<"button">;
 
 export type ComposerAttachFilesProps = ComponentPropsWithSlot<"button">;
+
+export interface ComposerMarkToggleProps
+  extends ComponentPropsWithSlot<"button"> {
+  /**
+   * The text mark to toggle.
+   */
+  mark: ComposerBodyMark;
+
+  /**
+   * The event handler called when the mark is toggled.
+   */
+  onValueChange?: (mark: ComposerBodyMark) => void;
+}
 
 export interface ComposerAttachmentsDropAreaProps
   extends ComponentPropsWithSlot<"div"> {
@@ -195,13 +225,24 @@ export interface ComposerEditorMentionSuggestionsWrapperProps {
   id: string;
   itemId: (userId?: string) => string | undefined;
   mentionDraft?: MentionDraft;
+  setMentionDraft: Dispatch<SetStateAction<MentionDraft | undefined>>;
   userIds?: string[];
   selectedUserId?: string;
   setSelectedUserId: (userId: string) => void;
   MentionSuggestions: ComponentType<ComposerEditorMentionSuggestionsProps>;
   onItemSelect: (userId: string) => void;
-  position?: SuggestionsPosition;
+  position?: FloatingPosition;
   inset?: number;
+}
+
+export interface ComposerEditorFloatingToolbarWrapperProps {
+  dir?: ComposerEditorProps["dir"];
+  id: string;
+  position?: FloatingPosition;
+  inset?: number;
+  hasFloatingToolbarRange: boolean;
+  setHasFloatingToolbarRange: Dispatch<SetStateAction<boolean>>;
+  FloatingToolbar: ComponentType<ComposerEditorFloatingToolbarProps>;
 }
 
 export interface ComposerEditorMentionWrapperProps
@@ -216,4 +257,6 @@ export interface ComposerEditorLinkWrapperProps
   Link: ComponentType<ComposerEditorLinkProps>;
 }
 
-export type SuggestionsPosition = "top" | "bottom";
+export type FloatingPosition = "top" | "bottom";
+
+export type FloatingAlignment = "start" | "center" | "end";

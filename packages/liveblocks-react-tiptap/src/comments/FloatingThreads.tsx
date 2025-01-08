@@ -1,4 +1,3 @@
-
 import {
   autoUpdate,
   flip,
@@ -10,19 +9,19 @@ import {
   useFloating,
 } from "@floating-ui/react-dom";
 import type { BaseMetadata, DM, ThreadData } from "@liveblocks/core";
+import { useLayoutEffect } from "@liveblocks/react/_private";
 import {
   Thread as DefaultThread,
   type ThreadProps,
 } from "@liveblocks/react-ui";
 import { type Editor, useEditorState } from "@tiptap/react";
-import React, {
+import {
   type ComponentType,
   type HTMLAttributes,
   type KeyboardEvent,
   type ReactNode,
   useCallback,
   useEffect,
-  useLayoutEffect,
   useState,
 } from "react";
 import { createPortal } from "react-dom";
@@ -58,7 +57,6 @@ export function FloatingThreads({
   editor,
   ...props
 }: FloatingThreadsProps) {
-
   const Thread = components?.Thread ?? DefaultThread;
 
   const { pluginState } = useEditorState({
@@ -72,13 +70,16 @@ export function FloatingThreads({
     },
     equalityFn: (prev, next) => {
       if (!prev || !next) return false;
-      return prev.pluginState?.selectedThreadPos === next.pluginState?.selectedThreadPos &&
-        prev.pluginState?.selectedThreadId === next.pluginState?.selectedThreadId;
+      return (
+        prev.pluginState?.selectedThreadPos ===
+          next.pluginState?.selectedThreadPos &&
+        prev.pluginState?.selectedThreadId ===
+          next.pluginState?.selectedThreadId
+      );
     },
   }) ?? { pluginState: undefined };
 
   const [activeThread, setActiveThread] = useState<ThreadData | null>(null);
-
 
   useEffect(() => {
     if (!editor || !pluginState) {
@@ -90,8 +91,8 @@ export function FloatingThreads({
       setActiveThread(null);
       return;
     }
-    const active = (threads ?? []).find((thread) =>
-      selectedThreadId === thread.id
+    const active = (threads ?? []).find(
+      (thread) => selectedThreadId === thread.id
     );
     setActiveThread(active ?? null);
   }, [editor, pluginState, threads]);
@@ -111,7 +112,7 @@ export function FloatingThreads({
       container={document.body}
       {...props}
     >
-      {activeThread &&
+      {activeThread && (
         <ThreadWrapper
           key={activeThread.id}
           thread={activeThread}
@@ -119,7 +120,7 @@ export function FloatingThreads({
           onEscapeKeydown={handleEscapeKeydown}
           className="lb-tiptap-floating-threads-thread"
         />
-      }
+      )}
     </FloatingThreadPortal>
   );
 }
@@ -181,7 +182,9 @@ function FloatingThreadPortal({
   });
 
   const updateRef = useCallback(() => {
-    const el = editor.view.dom.querySelector(`[data-lb-thread-id="${thread.id}"]`);
+    const el = editor.view.dom.querySelector(
+      `[data-lb-thread-id="${thread.id}"]`
+    );
     if (el) {
       setReference(el);
     }
@@ -189,10 +192,10 @@ function FloatingThreadPortal({
 
   // Remote cursor updates and other edits can cause the ref to break
   useEffect(() => {
-    editor.on("transaction", updateRef)
+    editor.on("transaction", updateRef);
     return () => {
       editor.off("transaction", updateRef);
-    }
+    };
   }, [editor, updateRef]);
 
   useLayoutEffect(updateRef, [updateRef]);
@@ -247,4 +250,3 @@ function ThreadWrapper({
 
   return <Thread thread={thread} onKeyDown={handleKeyDown} {...threadProps} />;
 }
-

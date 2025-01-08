@@ -6,36 +6,54 @@ import type {
   CommentMixedAttachment,
   DM,
 } from "@liveblocks/core";
-import { kInternal } from "@liveblocks/core";
+import { Permission } from "@liveblocks/core";
 import {
-  useClient,
-  useCreateComment,
-  useCreateThread,
-  useEditComment,
-} from "@liveblocks/react";
+  useCreateRoomComment,
+  useCreateRoomThread,
+  useEditRoomComment,
+  useLayoutEffect,
+  useResolveMentionSuggestions,
+  useRoomOrNull,
+  useRoomPermissions,
+} from "@liveblocks/react/_private";
 import type {
   ComponentPropsWithoutRef,
+  ComponentType,
   FocusEvent,
   FormEvent,
   ForwardedRef,
   MouseEvent,
+  PropsWithChildren,
   ReactNode,
   RefAttributes,
   SyntheticEvent,
 } from "react";
-import React, { forwardRef, useCallback, useRef } from "react";
+import {
+  createContext,
+  forwardRef,
+  useCallback,
+  useMemo,
+  useRef,
+  useSyncExternalStore,
+} from "react";
 
 import { useLiveblocksUIConfig } from "../config";
+import { FLOATING_ELEMENT_SIDE_OFFSET } from "../constants";
 import { AttachmentIcon } from "../icons/Attachment";
+import { BoldIcon } from "../icons/Bold";
+import { CodeIcon } from "../icons/Code";
 import { EmojiIcon } from "../icons/Emoji";
+import { ItalicIcon } from "../icons/Italic";
 import { MentionIcon } from "../icons/Mention";
 import { SendIcon } from "../icons/Send";
+import { StrikethroughIcon } from "../icons/Strikethrough";
 import type { ComposerOverrides, GlobalOverrides } from "../overrides";
 import { useOverrides } from "../overrides";
 import * as ComposerPrimitive from "../primitives/Composer";
 import {
   useComposer,
   useComposerAttachmentsContext,
+  useComposerEditorContext,
 } from "../primitives/Composer/contexts";
 import type {
   ComposerEditorComponents,
@@ -44,13 +62,14 @@ import type {
   ComposerEditorMentionSuggestionsProps,
   ComposerEditorProps,
   ComposerFormProps,
+  ComposerMarkToggleProps,
   ComposerSubmitComment,
 } from "../primitives/Composer/types";
 import { useComposerAttachmentsDropArea } from "../primitives/Composer/utils";
 import { MENTION_CHARACTER } from "../slate/plugins/mentions";
+import type { ComposerBodyMark } from "../types";
 import { classNames } from "../utils/class-names";
 import { useControllableState } from "../utils/use-controllable-state";
-import { useLayoutEffect } from "../utils/use-layout-effect";
 import { FileAttachment } from "./internal/Attachment";
 import { Attribution } from "./internal/Attribution";
 import { Avatar } from "./internal/Avatar";
@@ -72,6 +91,10 @@ interface EditorActionProps extends ComponentPropsWithoutRef<"button"> {
 
 interface EmojiEditorActionProps extends EditorActionProps {
   onPickerOpenChange?: EmojiPickerProps["onOpenChange"];
+}
+
+interface MarkToggleProps extends ComposerMarkToggleProps {
+  shortcut?: ReactNode;
 }
 
 type ComposerCreateThreadProps<M extends BaseMetadata> = {
@@ -154,6 +177,11 @@ export type ComposerProps<M extends BaseMetadata = DM> = Omit<
     showAttachments?: boolean;
 
     /**
+     * Whether to show formatting controls (e.g. a floating toolbar with formatting toggles when selecting text)
+     */
+    showFormattingControls?: boolean;
+
+    /**
      * Whether the composer is disabled.
      */
     disabled?: ComposerFormProps["disabled"];
@@ -177,6 +205,11 @@ export type ComposerProps<M extends BaseMetadata = DM> = Omit<
      * @internal
      */
     showAttribution?: boolean;
+
+    /**
+     * @internal
+     */
+    roomId?: string;
   };
 
 interface ComposerEditorContainerProps
@@ -184,6 +217,7 @@ interface ComposerEditorContainerProps
     ComposerProps,
     | "defaultValue"
     | "showAttachments"
+    | "showFormattingControls"
     | "showAttribution"
     | "overrides"
     | "actions"
@@ -226,7 +260,7 @@ function ComposerInsertMentionEditorAction({
     <Tooltip content={tooltipLabel ?? label}>
       <Button
         className={classNames("lb-composer-editor-action", className)}
-        onMouseDown={preventDefault}
+        onPointerDown={preventDefault}
         onClick={handleClick}
         aria-label={label}
         {...props}
@@ -260,7 +294,7 @@ function ComposerInsertEmojiEditorAction({
         <EmojiPickerTrigger asChild>
           <Button
             className={classNames("lb-composer-editor-action", className)}
-            onMouseDown={preventDefault}
+            onPointerDown={preventDefault}
             onClick={stopPropagation}
             aria-label={label}
             {...props}
@@ -292,7 +326,7 @@ function ComposerAttachFilesEditorAction({
       <ComposerPrimitive.AttachFiles asChild>
         <Button
           className={classNames("lb-composer-editor-action", className)}
-          onMouseDown={preventDefault}
+          onPointerDown={preventDefault}
           onClick={stopPropagation}
           aria-label={label}
           {...props}
@@ -340,6 +374,99 @@ function ComposerMentionSuggestions({
   ) : null;
 }
 
+function MarkToggle({ mark, shortcut, children, ...props }: MarkToggleProps) {
+  const $ = useOverrides();
+  const label = useMemo(() => {
+    return $.COMPOSER_TOGGLE_MARK(mark);
+  }, [$, mark]);
+
+  return (
+    <ShortcutTooltip
+      content={label}
+      shortcut={shortcut}
+      sideOffset={FLOATING_ELEMENT_SIDE_OFFSET + 2}
+    >
+      <ComposerPrimitive.MarkToggle mark={mark} asChild {...props}>
+        <Button aria-label={label} variant="toggle">
+          {children}
+        </Button>
+      </ComposerPrimitive.MarkToggle>
+    </ShortcutTooltip>
+  );
+}
+
+type MarkToggles = {
+  [K in ComposerBodyMark]: ComponentType<PropsWithChildren>;
+};
+
+const markToggles: MarkToggles = {
+  bold: () => (
+    <MarkToggle
+      mark="bold"
+      shortcut={
+        <>
+          <ShortcutTooltipKey name="mod" />
+          <span>B</span>
+        </>
+      }
+    >
+      <BoldIcon />
+    </MarkToggle>
+  ),
+  italic: () => (
+    <MarkToggle
+      mark="italic"
+      shortcut={
+        <>
+          <ShortcutTooltipKey name="mod" />
+          <span>I</span>
+        </>
+      }
+    >
+      <ItalicIcon />
+    </MarkToggle>
+  ),
+  strikethrough: () => (
+    <MarkToggle
+      mark="strikethrough"
+      shortcut={
+        <>
+          <ShortcutTooltipKey name="mod" />
+          <ShortcutTooltipKey name="shift" />
+          <span>S</span>
+        </>
+      }
+    >
+      <StrikethroughIcon />
+    </MarkToggle>
+  ),
+  code: () => (
+    <MarkToggle
+      mark="code"
+      shortcut={
+        <>
+          <ShortcutTooltipKey name="mod" />
+          <span>E</span>
+        </>
+      }
+    >
+      <CodeIcon />
+    </MarkToggle>
+  ),
+};
+
+const markTogglesList = Object.entries(markToggles).map(([mark, Toggle]) => (
+  <Toggle key={mark} />
+));
+
+function ComposerFloatingToolbar() {
+  return (
+    <ComposerPrimitive.FloatingToolbar className="lb-root lb-portal lb-elevation lb-composer-floating-toolbar">
+      {markTogglesList}
+    </ComposerPrimitive.FloatingToolbar>
+  );
+}
+
 function ComposerLink({ href, children }: ComposerEditorLinkProps) {
   return (
     <ComposerPrimitive.Link href={href} className="lb-composer-link">
@@ -364,6 +491,7 @@ function ComposerFileAttachment({
   ...props
 }: ComposerFileAttachmentProps) {
   const { removeAttachment } = useComposer();
+  const { roomId } = useComposerEditorContext();
 
   const handleDeleteClick = useCallback(() => {
     removeAttachment(attachment.id);
@@ -377,6 +505,7 @@ function ComposerFileAttachment({
       onDeleteClick={handleDeleteClick}
       preventFocusOnDelete
       overrides={overrides}
+      roomId={roomId}
     />
   );
 }
@@ -412,7 +541,7 @@ function ComposerAttachments({
   );
 }
 
-const editorComponents: ComposerEditorComponents = {
+const editorRequiredComponents: ComposerEditorComponents = {
   Mention: ComposerMention,
   MentionSuggestions: ComposerMentionSuggestions,
   Link: ComposerLink,
@@ -420,6 +549,7 @@ const editorComponents: ComposerEditorComponents = {
 
 function ComposerEditorContainer({
   showAttachments = true,
+  showFormattingControls = true,
   showAttribution,
   defaultValue,
   isCollapsed,
@@ -435,6 +565,14 @@ function ComposerEditorContainer({
   const { isEmpty } = useComposer();
   const { hasMaxAttachments } = useComposerAttachmentsContext();
   const $ = useOverrides(overrides);
+  const components = useMemo(() => {
+    return {
+      ...editorRequiredComponents,
+      FloatingToolbar: showFormattingControls
+        ? ComposerFloatingToolbar
+        : undefined,
+    };
+  }, [showFormattingControls]);
 
   const [isDraggingOver, dropAreaProps] = useComposerAttachmentsDropArea({
     disabled: disabled || hasMaxAttachments,
@@ -460,7 +598,7 @@ function ComposerEditorContainer({
         placeholder={$.COMPOSER_PLACEHOLDER}
         defaultValue={defaultValue}
         autoFocus={autoFocus}
-        components={editorComponents}
+        components={components}
         disabled={disabled}
         dir={$.dir}
       />
@@ -496,7 +634,7 @@ function ComposerEditorContainer({
                 >
                   <ComposerPrimitive.Submit asChild>
                     <Button
-                      onMouseDown={preventDefault}
+                      onPointerDown={preventDefault}
                       onClick={stopPropagation}
                       className="lb-composer-action"
                       variant="primary"
@@ -522,6 +660,8 @@ function ComposerEditorContainer({
     </div>
   );
 }
+
+export const ComposerRoomIdContext = createContext<string | null>(null);
 
 /**
  * Displays a composer to create comments.
@@ -549,18 +689,28 @@ export const Composer = forwardRef(
       autoFocus,
       disabled,
       showAttachments = true,
+      showFormattingControls = true,
       showAttribution,
+      roomId: _roomId,
       ...props
     }: ComposerProps<M>,
     forwardedRef: ForwardedRef<HTMLFormElement>
   ) => {
-    const client = useClient();
-    const createThread = useCreateThread();
-    const createComment = useCreateComment();
-    const editComment = useEditComment();
+    const room = useRoomOrNull();
+
+    const roomId = _roomId !== undefined ? _roomId : room?.id;
+    if (roomId === undefined) {
+      throw new Error(
+        "Composer must be a descendant of RoomProvider component"
+      );
+    }
+
+    const createThread = useCreateRoomThread(roomId);
+    const createComment = useCreateRoomComment(roomId);
+    const editComment = useEditRoomComment(roomId);
     const { preventUnsavedComposerChanges } = useLiveblocksUIConfig();
     const hasResolveMentionSuggestions =
-      client[kInternal].resolveMentionSuggestions !== undefined;
+      useResolveMentionSuggestions() !== undefined;
     const isEmptyRef = useRef(true);
     const isEmojiPickerOpenRef = useRef(false);
     const $ = useOverrides(overrides);
@@ -572,6 +722,27 @@ export const Composer = forwardRef(
       controlledOnCollapsedChange,
       defaultCollapsed
     );
+
+    const canCommentFallback = useSyncExternalStore(
+      useCallback(
+        (callback) => {
+          if (room === null) return () => {};
+          return room.events.self.subscribeOnce(callback);
+        },
+        [room]
+      ),
+      useCallback(() => {
+        return room?.getSelf()?.canComment ?? true;
+      }, [room]),
+      useCallback(() => true, [])
+    );
+
+    const permissions = useRoomPermissions(roomId);
+    const canComment =
+      permissions.size > 0
+        ? permissions.has(Permission.CommentsWrite) ||
+          permissions.has(Permission.Write)
+        : canCommentFallback;
 
     const setEmptyRef = useCallback((isEmpty: boolean) => {
       isEmptyRef.current = isEmpty;
@@ -589,11 +760,11 @@ export const Composer = forwardRef(
           return;
         }
 
-        if (isEmptyRef.current) {
+        if (isEmptyRef.current && canComment) {
           onCollapsedChange?.(false);
         }
       },
-      [onCollapsedChange, onFocus]
+      [onCollapsedChange, onFocus, canComment]
     );
 
     const handleBlur = useCallback(
@@ -619,11 +790,11 @@ export const Composer = forwardRef(
       (event: MouseEvent<HTMLDivElement>) => {
         event.stopPropagation();
 
-        if (isEmptyRef.current) {
+        if (isEmptyRef.current && canComment) {
           onCollapsedChange?.(false);
         }
       },
-      [onCollapsedChange]
+      [onCollapsedChange, canComment]
     );
 
     const handleCommentSubmit = useCallback(
@@ -680,10 +851,11 @@ export const Composer = forwardRef(
           data-collapsed={isCollapsed ? "" : undefined}
           onFocus={handleFocus}
           onBlur={handleBlur}
-          disabled={disabled}
+          disabled={disabled || !canComment}
           defaultAttachments={defaultAttachments}
           pasteFilesAsAttachments={showAttachments}
           preventUnsavedChanges={preventUnsavedComposerChanges}
+          roomId={roomId}
         >
           <ComposerEditorContainer
             defaultValue={defaultValue}
@@ -692,6 +864,7 @@ export const Composer = forwardRef(
             isCollapsed={isCollapsed}
             showAttachments={showAttachments}
             showAttribution={showAttribution}
+            showFormattingControls={showFormattingControls}
             hasResolveMentionSuggestions={hasResolveMentionSuggestions}
             onEmptyChange={setEmptyRef}
             onEmojiPickerOpenChange={setEmojiPickerOpenRef}

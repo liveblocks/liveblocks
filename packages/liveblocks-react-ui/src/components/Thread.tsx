@@ -6,11 +6,11 @@ import type {
   DM,
   ThreadData,
 } from "@liveblocks/core";
+import { useThreadSubscription } from "@liveblocks/react";
 import {
-  useMarkThreadAsResolved,
-  useMarkThreadAsUnresolved,
-  useThreadSubscription,
-} from "@liveblocks/react";
+  useMarkRoomThreadAsResolved,
+  useMarkRoomThreadAsUnresolved,
+} from "@liveblocks/react/_private";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type {
   ComponentPropsWithoutRef,
@@ -18,7 +18,7 @@ import type {
   RefAttributes,
   SyntheticEvent,
 } from "react";
-import React, {
+import {
   forwardRef,
   Fragment,
   useCallback,
@@ -72,6 +72,11 @@ export interface ThreadProps<M extends BaseMetadata = DM>
    * Whether to show reactions.
    */
   showReactions?: CommentProps["showReactions"];
+
+  /**
+   * Whether to show the composer's formatting controls.
+   */
+  showComposerFormattingControls?: ComposerProps["showFormattingControls"];
 
   /**
    * Whether to indent the comments' content.
@@ -159,6 +164,7 @@ export const Thread = forwardRef(
       showReactions = true,
       showComposer = "collapsed",
       showAttachments = true,
+      showComposerFormattingControls = true,
       onResolvedChange,
       onCommentEdit,
       onCommentDelete,
@@ -173,8 +179,8 @@ export const Thread = forwardRef(
     }: ThreadProps<M>,
     forwardedRef: ForwardedRef<HTMLDivElement>
   ) => {
-    const markThreadAsResolved = useMarkThreadAsResolved();
-    const markThreadAsUnresolved = useMarkThreadAsUnresolved();
+    const markThreadAsResolved = useMarkRoomThreadAsResolved(thread.roomId);
+    const markThreadAsUnresolved = useMarkRoomThreadAsUnresolved(thread.roomId);
     const $ = useOverrides(overrides);
     const firstCommentIndex = useMemo(() => {
       return showDeletedComments
@@ -297,6 +303,9 @@ export const Thread = forwardRef(
                   showActions={showActions}
                   showReactions={showReactions}
                   showAttachments={showAttachments}
+                  showComposerFormattingControls={
+                    showComposerFormattingControls
+                  }
                   onCommentEdit={onCommentEdit}
                   onCommentDelete={handleCommentDelete}
                   onAuthorClick={onAuthorClick}
@@ -372,11 +381,13 @@ export const Thread = forwardRef(
               threadId={thread.id}
               defaultCollapsed={showComposer === "collapsed" ? true : undefined}
               showAttachments={showAttachments}
+              showFormattingControls={showComposerFormattingControls}
               onComposerSubmit={onComposerSubmit}
               overrides={{
                 COMPOSER_PLACEHOLDER: $.THREAD_COMPOSER_PLACEHOLDER,
                 COMPOSER_SEND: $.THREAD_COMPOSER_SEND,
               }}
+              roomId={thread.roomId}
             />
           )}
         </div>

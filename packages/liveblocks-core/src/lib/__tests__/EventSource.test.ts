@@ -1,6 +1,6 @@
 import fc from "fast-check";
 
-import { makeEventSource } from "../EventSource";
+import { makeBufferableEventSource, makeEventSource } from "../EventSource";
 
 const anything = () =>
   fc.anything({
@@ -16,7 +16,7 @@ const anything = () =>
   });
 
 describe("EventSource", () => {
-  it("normal usage", () => {
+  test("normal usage", () => {
     fc.assert(
       fc.property(
         anything(),
@@ -39,7 +39,7 @@ describe("EventSource", () => {
     );
   });
 
-  it("registering multiple callbacks", () => {
+  test("registering multiple callbacks", () => {
     fc.assert(
       fc.property(
         anything(),
@@ -70,7 +70,7 @@ describe("EventSource", () => {
     );
   });
 
-  it("getting counts", () => {
+  test("getting counts", () => {
     const callback1 = jest.fn();
     const callback2 = jest.fn();
     const callback3 = jest.fn();
@@ -109,7 +109,7 @@ describe("EventSource", () => {
     expect(hub.count()).toBe(0);
   });
 
-  it("subscribing once", () => {
+  test("subscribing once", () => {
     fc.assert(
       fc.property(
         anything(),
@@ -137,7 +137,7 @@ describe("EventSource", () => {
     );
   });
 
-  it("deregisering usage", () => {
+  test("deregisering usage", () => {
     fc.assert(
       fc.property(
         anything(),
@@ -194,7 +194,7 @@ describe("EventSource", () => {
     );
   });
 
-  it("awaiting events", async () => {
+  test("awaiting events", async () => {
     const src = makeEventSource();
     const promise$ = src.waitUntil();
 
@@ -206,7 +206,7 @@ describe("EventSource", () => {
     await expect(promise$).resolves.toBe(0);
   });
 
-  it("awaiting events conditionally", async () => {
+  test("awaiting events conditionally", async () => {
     const src = makeEventSource<number>();
     const promise$ = src.waitUntil((n) => n % 2 === 1);
 
@@ -219,15 +219,17 @@ describe("EventSource", () => {
 
     await expect(promise$).resolves.toBe(7);
   });
+});
 
-  it("pausing/continuing event delivery", () => {
+describe("BufferableEventSource", () => {
+  test("pausing/continuing event delivery", () => {
     fc.assert(
       fc.property(
         anything(),
 
         (payload) => {
           const callback = jest.fn();
-          const hub = makeEventSource();
+          const hub = makeBufferableEventSource();
 
           const unsub = hub.observable.subscribe(callback);
 

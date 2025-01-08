@@ -1,7 +1,6 @@
 import type { ResolveMentionSuggestionsArgs } from "@liveblocks/core";
 import { nanoid } from "@liveblocks/core";
 import { renderHook, waitFor } from "@testing-library/react";
-import React from "react";
 
 import { useMentionSuggestions } from "../use-mention-suggestions";
 import { act, createContextsForTest } from "./_utils";
@@ -33,7 +32,7 @@ describe("useMentionSuggestions", () => {
 
     const { result, unmount } = renderHook(
       () => ({
-        mentionSuggestions: useMentionSuggestions("abc"),
+        mentionSuggestions: useMentionSuggestions(roomId, "abc"),
       }),
       {
         wrapper: ({ children }) => (
@@ -64,7 +63,7 @@ describe("useMentionSuggestions", () => {
 
     const { result, rerender, unmount } = renderHook(
       ({ text }: { text: string }) => ({
-        mentionSuggestions: useMentionSuggestions(text),
+        mentionSuggestions: useMentionSuggestions(roomId, text),
       }),
       {
         wrapper: ({ children }) => (
@@ -105,7 +104,7 @@ describe("useMentionSuggestions", () => {
 
     const { result, unmount } = renderHook(
       ({ text }: { text: string }) => ({
-        mentionSuggestions: useMentionSuggestions(text),
+        mentionSuggestions: useMentionSuggestions(roomId, text),
       }),
       {
         wrapper: ({ children }) => (
@@ -141,7 +140,7 @@ describe("useMentionSuggestions", () => {
 
     const { result, rerender, unmount } = renderHook(
       ({ text }: { text: string }) => ({
-        mentionSuggestions: useMentionSuggestions(text),
+        mentionSuggestions: useMentionSuggestions(roomId, text),
       }),
       {
         wrapper: ({ children }) => (
@@ -198,7 +197,7 @@ describe("useMentionSuggestions", () => {
 
     const { result, rerender, unmount } = renderHook(
       ({ text }: { text: string }) => ({
-        mentionSuggestions: useMentionSuggestions(text),
+        mentionSuggestions: useMentionSuggestions(roomId, text),
       }),
       {
         wrapper: ({ children }) => (
@@ -261,7 +260,7 @@ describe("useMentionSuggestions", () => {
 
     const { result, rerender, unmount } = renderHook(
       ({ text }: { text: string }) => ({
-        mentionSuggestions: useMentionSuggestions(text),
+        mentionSuggestions: useMentionSuggestions(roomId, text),
       }),
       {
         wrapper: ({ children }) => (

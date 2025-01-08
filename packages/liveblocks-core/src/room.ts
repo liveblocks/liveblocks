@@ -1,3 +1,4 @@
+import { getBearerTokenFromAuthValue, type RoomHttpApi } from "./api-client";
 import type { AuthManager, AuthValue } from "./auth-manager";
 import type { InternalSyncStatus } from "./client";
 import type {
@@ -7,14 +8,6 @@ import type {
   Status,
 } from "./connection";
 import { ManagedSocket, StopRetrying } from "./connection";
-import {
-  convertToCommentData,
-  convertToCommentUserReaction,
-  convertToInboxNotificationData,
-  convertToInboxNotificationDeleteInfo,
-  convertToThreadData,
-  convertToThreadDeleteInfo,
-} from "./convert-plain-data";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { OpSource } from "./crdts/AbstractCrdt";
 import {
@@ -29,37 +22,26 @@ import { LiveObject } from "./crdts/LiveObject";
 import type { LiveNode, LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
 import type { DE, DM, DP, DS, DU } from "./globals/augmentation";
-import { getBearerTokenFromAuthValue, HttpClient } from "./http-client";
 import { kInternal } from "./internal";
 import { assertNever, nn } from "./lib/assert";
-import { autoRetry, HttpError } from "./lib/autoRetry";
 import type { BatchStore } from "./lib/batch";
-import { Batch, createBatchStore } from "./lib/batch";
-import { chunk } from "./lib/chunk";
 import { Promise_withResolvers } from "./lib/controlledPromise";
-import {
-  createCommentAttachmentId,
-  createCommentId,
-  createThreadId,
-} from "./lib/createIds";
-import type { DateToString } from "./lib/DateToString";
+import { createCommentAttachmentId } from "./lib/createIds";
 import { captureStackTrace } from "./lib/debug";
 import type { Callback, EventSource, Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
-import { objectToQuery } from "./lib/objectToQuery";
 import { asPos } from "./lib/position";
-import type { URLSafeString } from "./lib/url";
-import { url } from "./lib/url";
+import { DerivedSignal, PatchableSignal, Signal } from "./lib/signals";
 import {
   compact,
   deepClone,
   memoizeOnSuccess,
-  raise,
   tryParseJson,
 } from "./lib/utils";
+import type { Permission } from "./protocol/AuthToken";
 import { canComment, canWriteStorage, TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
 import type { ClientMsg, UpdateYDocClientMsg } from "./protocol/ClientMsg";
@@ -69,21 +51,15 @@ import type {
   CommentAttachment,
   CommentBody,
   CommentData,
-  CommentDataPlain,
   CommentLocalAttachment,
   CommentUserReaction,
-  CommentUserReactionPlain,
   QueryMetadata,
   ThreadData,
-  ThreadDataPlain,
   ThreadDeleteInfo,
-  ThreadDeleteInfoPlain,
 } from "./protocol/Comments";
 import type {
   InboxNotificationData,
-  InboxNotificationDataPlain,
   InboxNotificationDeleteInfo,
-  InboxNotificationDeleteInfoPlain,
 } from "./protocol/InboxNotifications";
 import type { Op } from "./protocol/Op";
 import { isAckOp, OpCode } from "./protocol/Op";
@@ -100,10 +76,7 @@ import type {
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
 import type { HistoryVersion } from "./protocol/VersionHistory";
-import type { ImmutableRef } from "./refs/ImmutableRef";
-import { OthersRef } from "./refs/OthersRef";
-import { PatchableRef } from "./refs/PatchableRef";
-import { DerivedRef, ValueRef } from "./refs/ValueRef";
+import { ManagedOthers } from "./refs/ManagedOthers";
 import type * as DevTools from "./types/DevToolsTreeNode";
 import type {
   IWebSocket,
@@ -782,6 +755,7 @@ export type Room<
     inboxNotifications: InboxNotificationData[];
     requestedAt: Date;
     nextCursor: string | null;
+    permissionHints: Record<string, Permission[]>;
   }>;
 
   /**
@@ -802,6 +776,7 @@ export type Room<
       deleted: InboxNotificationDeleteInfo[];
     };
     requestedAt: Date;
+    permissionHints: Record<string, Permission[]>;
   }>;
 
   /**
@@ -1143,10 +1118,10 @@ type RoomState<
   //   and the scopes (dynamic)
   // - The presence is provided by the client's initialPresence configuration (presence)
   //
-  readonly staticSessionInfo: ValueRef<StaticSessionInfo | null>;
-  readonly dynamicSessionInfo: ValueRef<DynamicSessionInfo | null>;
-  readonly myPresence: PatchableRef<P>;
-  readonly others: OthersRef<P, U>;
+  readonly staticSessionInfoSig: Signal<StaticSessionInfo | null>;
+  readonly dynamicSessionInfoSig: Signal<DynamicSessionInfo | null>;
+  readonly myPresence: PatchableSignal<P>;
+  readonly others: ManagedOthers<P, U>;
 
   idFactory: IdFactory | null;
   initialStorage: S;
@@ -1232,7 +1207,7 @@ export type OptionalTupleUnless<C, T extends any[]> =
 export type RoomDelegates = Omit<Delegates<AuthValue>, "canZombie">;
 
 /** @internal */
-export type RoomConfig = {
+export type RoomConfig<M extends BaseMetadata> = {
   delegates: RoomDelegates;
 
   roomId: string;
@@ -1245,15 +1220,7 @@ export type RoomConfig = {
 
   polyfills?: Polyfills;
 
-  /**
-   * Only necessary when you’re using Liveblocks with React v17 or lower.
-   *
-   * If so, pass in a reference to `ReactDOM.unstable_batchedUpdates` here.
-   * This will allow Liveblocks to circumvent the so-called "zombie child
-   * problem". To learn more, see
-   * https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child
-   */
-  unstable_batchedUpdates?: (cb: () => void) => void;
+  roomHttpClient: RoomHttpApi<M>;
 
   baseUrl: string;
   enableDebugLogging?: boolean;
@@ -1314,33 +1281,6 @@ function installBackgroundTabSpy(): [
   return [inBackgroundSince, unsub];
 }
 
-const GET_ATTACHMENT_URLS_BATCH_DELAY = 50;
-const ATTACHMENT_PART_SIZE = 5 * 1024 * 1024; // 5 MB
-const ATTACHMENT_PART_BATCH_SIZE = 5;
-const RETRY_ATTEMPTS = 10;
-const RETRY_DELAYS = [
-  2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000,
-];
-
-function splitFileIntoParts(file: File) {
-  const parts: { partNumber: number; part: Blob }[] = [];
-
-  let start = 0;
-
-  while (start < file.size) {
-    const end = Math.min(start + ATTACHMENT_PART_SIZE, file.size);
-
-    parts.push({
-      partNumber: parts.length + 1,
-      part: file.slice(start, end),
-    });
-
-    start = end;
-  }
-
-  return parts;
-}
-
 /**
  * @internal
  * Initializes a new Room, and returns its public API.
@@ -1353,10 +1293,12 @@ export function createRoom<
   M extends BaseMetadata,
 >(
   options: { initialPresence: P; initialStorage: S },
-  config: RoomConfig
+  config: RoomConfig<M>
 ): Room<P, S, U, E, M> {
   const initialPresence = options.initialPresence; // ?? {};
   const initialStorage = options.initialStorage; // ?? {};
+
+  const httpClient = config.roomHttpClient;
 
   const [inBackgroundSince, uninstallBgTabSpy] = installBackgroundTabSpy();
 
@@ -1403,10 +1345,10 @@ export function createRoom<
       storageOperations: [],
     },
 
-    staticSessionInfo: new ValueRef(null),
-    dynamicSessionInfo: new ValueRef(null),
-    myPresence: new PatchableRef(initialPresence),
-    others: new OthersRef<P, U>(),
+    staticSessionInfoSig: new Signal<StaticSessionInfo | null>(null),
+    dynamicSessionInfoSig: new Signal<DynamicSessionInfo | null>(null),
+    myPresence: new PatchableSignal(initialPresence),
+    others: new ManagedOthers<P, U>(),
 
     initialStorage,
     idFactory: null,
@@ -1435,9 +1377,6 @@ export function createRoom<
         : undefined,
   };
 
-  const doNotBatchUpdates = (cb: () => void): void => cb();
-  const batchUpdates = config.unstable_batchedUpdates ?? doNotBatchUpdates;
-
   let lastTokenKey: string | undefined;
   function onStatusDidChange(newStatus: Status) {
     const authValue = managedSocket.authValue;
@@ -1449,13 +1388,13 @@ export function createRoom<
 
         if (authValue.type === "secret") {
           const token = authValue.token.parsed;
-          context.staticSessionInfo.set({
+          context.staticSessionInfoSig.set({
             userId: token.k === TokenKind.SECRET_LEGACY ? token.id : token.uid,
             userInfo:
               token.k === TokenKind.SECRET_LEGACY ? token.info : token.ui,
           });
         } else {
-          context.staticSessionInfo.set({
+          context.staticSessionInfoSig.set({
             userId: undefined,
             userInfo: undefined,
           });
@@ -1464,10 +1403,8 @@ export function createRoom<
     }
 
     // Forward to the outside world
-    batchUpdates(() => {
-      eventHub.status.notify(newStatus);
-      notifySelfChanged(doNotBatchUpdates);
-    });
+    eventHub.status.notify(newStatus);
+    notifySelfChanged();
   }
 
   let _connectionLossTimerId: TimeoutID | undefined;
@@ -1476,29 +1413,23 @@ export function createRoom<
   function handleConnectionLossEvent(newStatus: Status) {
     if (newStatus === "reconnecting") {
       _connectionLossTimerId = setTimeout(() => {
-        batchUpdates(() => {
-          eventHub.lostConnection.notify("lost");
-          _hasLostConnection = true;
+        eventHub.lostConnection.notify("lost");
+        _hasLostConnection = true;
 
-          // Clear the others
-          context.others.clearOthers();
-          notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
-        });
+        // Clear the others
+        context.others.clearOthers();
+        notify({ others: [{ type: "reset" }] });
       }, config.lostConnectionTimeout);
     } else {
       clearTimeout(_connectionLossTimerId);
 
       if (_hasLostConnection) {
         if (newStatus === "disconnected") {
-          batchUpdates(() => {
-            eventHub.lostConnection.notify("failed");
-          });
+          eventHub.lostConnection.notify("failed");
         } else {
           // Typically the case when going back to "connected", but really take
           // *any* other state change as a recovery sign
-          batchUpdates(() => {
-            eventHub.lostConnection.notify("restored");
-          });
+          eventHub.lostConnection.notify("restored");
         }
 
         _hasLostConnection = false;
@@ -1514,7 +1445,7 @@ export function createRoom<
         // Because context.me.current is a readonly object, we'll have to
         // make a copy here. Otherwise, type errors happen later when
         // "patching" my presence.
-        { ...context.myPresence.current },
+        { ...context.myPresence.get() },
     };
 
     // NOTE: There was a flush here before, but I don't think it's really
@@ -1543,14 +1474,12 @@ export function createRoom<
   managedSocket.events.didConnect.subscribe(onDidConnect);
   managedSocket.events.didDisconnect.subscribe(onDidDisconnect);
   managedSocket.events.onLiveblocksError.subscribe((err) => {
-    batchUpdates(() => {
-      if (process.env.NODE_ENV !== "production") {
-        console.error(
-          `Connection to websocket server closed. Reason: ${err.message} (code: ${err.code}).`
-        );
-      }
-      eventHub.error.notify(err);
-    });
+    if (process.env.NODE_ENV !== "production") {
+      console.error(
+        `Connection to websocket server closed. Reason: ${err.message} (code: ${err.code}).`
+      );
+    }
+    eventHub.error.notify(err);
   });
 
   const pool: ManagedPool = {
@@ -1596,17 +1525,15 @@ export function createRoom<
         }
         activeBatch.reverseOps.unshift(...reverse);
       } else {
-        batchUpdates(() => {
-          addToUndoStack(reverse, doNotBatchUpdates);
-          context.redoStack.length = 0;
-          dispatchOps(ops);
-          notify({ storageUpdates }, doNotBatchUpdates);
-        });
+        addToUndoStack(reverse);
+        context.redoStack.length = 0;
+        dispatchOps(ops);
+        notify({ storageUpdates });
       }
     },
 
     assertStorageIsWritable: () => {
-      const scopes = context.dynamicSessionInfo.current?.scopes;
+      const scopes = context.dynamicSessionInfoSig.get()?.scopes;
       if (scopes === undefined) {
         // If we aren't connected yet, assume we can write
         return;
@@ -1639,114 +1566,50 @@ export function createRoom<
     comments: makeEventSource<CommentsEventServerMsg>(),
   };
 
-  const fetchPolyfill =
-    config.polyfills?.fetch ||
-    /* istanbul ignore next */ globalThis.fetch?.bind(globalThis);
-
-  //
-  // There are effectively two "clients" making requests.
-  //
-  // When making calls with HTTP client 1, it will try to read the current
-  // token from the active WebSocket connection to the room.
-  //
-  // When making calls with HTTP client 2, it will always call
-  // `delegates.authenticate()` to obtain the auth header.
-  //
-  // TODO: Ideally we would consolidate these two.
-  //
-  const httpClient1 = new HttpClient(config.baseUrl, fetchPolyfill, () =>
-    Promise.resolve(managedSocket.authValue ?? raise("Not authorized"))
-  );
-  const httpClient2 = new HttpClient(config.baseUrl, fetchPolyfill, () =>
-    // TODO: Use the right scope
-    delegates.authenticate()
-  );
+  const roomId = config.roomId;
 
   async function createTextMention(userId: string, mentionId: string) {
-    await httpClient1.rawPost(url`/v2/c/rooms/${config.roomId}/text-mentions`, {
-      userId,
-      mentionId,
-    });
+    return httpClient.createTextMention({ roomId, userId, mentionId });
   }
 
   async function deleteTextMention(mentionId: string) {
-    await httpClient1.rawDelete(
-      url`/v2/c/rooms/${config.roomId}/text-mentions/${mentionId}`
-    );
+    return httpClient.deleteTextMention({ roomId, mentionId });
   }
 
   async function reportTextEditor(type: TextEditorType, rootKey: string) {
-    await httpClient2.rawPost(url`/v2/c/rooms/${config.roomId}/text-metadata`, {
-      type,
-      rootKey,
-    });
+    await httpClient.reportTextEditor({ roomId, type, rootKey });
   }
 
   async function listTextVersions() {
-    const result = await httpClient2.get<{
-      versions: DateToString<HistoryVersion>[];
-      meta: {
-        requestedAt: string;
-      };
-    }>(url`/v2/c/rooms/${config.roomId}/versions`);
-
-    return {
-      versions: result.versions.map(({ createdAt, ...version }) => {
-        return {
-          createdAt: new Date(createdAt),
-          ...version,
-        };
-      }),
-      requestedAt: new Date(result.meta.requestedAt),
-    };
+    return httpClient.listTextVersions({ roomId });
   }
 
   async function listTextVersionsSince(options: ListTextVersionsSinceOptions) {
-    const result = await httpClient2.get<{
-      versions: DateToString<HistoryVersion>[];
-      meta: {
-        requestedAt: string;
-      };
-    }>(
-      url`/v2/c/rooms/${config.roomId}/versions/delta`,
-      { since: options.since.toISOString() },
-      { signal: options.signal }
-    );
-
-    return {
-      versions: result.versions.map(({ createdAt, ...version }) => {
-        return {
-          createdAt: new Date(createdAt),
-          ...version,
-        };
-      }),
-      requestedAt: new Date(result.meta.requestedAt),
-    };
+    return httpClient.listTextVersionsSince({
+      roomId,
+      since: options.since,
+      signal: options.signal,
+    });
   }
 
   async function getTextVersion(versionId: string) {
-    return httpClient2.rawGet(
-      url`/v2/c/rooms/${config.roomId}/y-version/${versionId}`
-    );
+    return httpClient.getTextVersion({ roomId, versionId });
   }
 
   async function createTextVersion() {
-    await httpClient2.rawPost(url`/v2/c/rooms/${config.roomId}/version`);
+    return httpClient.createTextVersion({ roomId });
   }
 
   function sendMessages(messages: ClientMsg<P, E>[]) {
     const serializedPayload = JSON.stringify(messages);
-    const nonce = context.dynamicSessionInfo.current?.nonce;
+    const nonce = context.dynamicSessionInfoSig.get()?.nonce;
     if (config.unstable_fallbackToHTTP && nonce) {
       // if our message contains UTF-8, we can't simply use length. See: https://stackoverflow.com/questions/23318037/size-of-json-object-in-kbs-mbs
       // if this turns out to be expensive, we could just guess with a lower value.
       const size = new TextEncoder().encode(serializedPayload).length;
       if (size > MAX_SOCKET_MESSAGE_SIZE) {
-        void httpClient1
-          .rawPost(url`/v2/c/rooms/${config.roomId}/send-message`, {
-            nonce,
-            messages,
-          })
+        void httpClient
+          .sendMessages<P, E>({ roomId, nonce, messages })
           .then((resp) => {
             if (!resp.ok && resp.status === 403) {
               managedSocket.reconnect();
@@ -1761,9 +1624,9 @@ export function createRoom<
     managedSocket.send(serializedPayload);
   }
 
-  const self = new DerivedRef(
-    context.staticSessionInfo as ImmutableRef<StaticSessionInfo | null>,
-    context.dynamicSessionInfo as ImmutableRef<DynamicSessionInfo | null>,
+  const self = DerivedSignal.from(
+    context.staticSessionInfoSig,
+    context.dynamicSessionInfoSig,
     context.myPresence,
     (staticSession, dynamicSession, myPresence): User<P, U> | null => {
       if (staticSession === null || dynamicSession === null) {
@@ -1783,37 +1646,33 @@ export function createRoom<
   );
 
   let _lastSelf: Readonly<User<P, U>> | undefined;
-  function notifySelfChanged(batchedUpdatesWrapper: (cb: () => void) => void) {
-    const currSelf = self.current;
+  function notifySelfChanged() {
+    const currSelf = self.get();
     if (currSelf !== null && currSelf !== _lastSelf) {
-      batchedUpdatesWrapper(() => {
-        eventHub.self.notify(currSelf);
-      });
+      eventHub.self.notify(currSelf);
       _lastSelf = currSelf;
     }
   }
 
   // For use in DevTools
-  const selfAsTreeNode = new DerivedRef(
-    self as ImmutableRef<User<P, U> | null>,
-    (me) => (me !== null ? userToTreeNode("Me", me) : null)
+  const selfAsTreeNode = DerivedSignal.from(self, (me) =>
+    me !== null ? userToTreeNode("Me", me) : null
   );
 
   function createOrUpdateRootFromMessage(
-    message: InitialDocumentStateServerMsg,
-    batchedUpdatesWrapper: (cb: () => void) => void
+    message: InitialDocumentStateServerMsg
   ) {
     if (message.items.length === 0) {
       throw new Error("Internal error: cannot load storage without items");
     }
 
     if (context.root !== undefined) {
-      updateRoot(message.items, batchedUpdatesWrapper);
+      updateRoot(message.items);
     } else {
       context.root = LiveObject._fromItems<S>(message.items, pool);
     }
 
-    const canWrite = self.current?.canWrite ?? true;
+    const canWrite = self.get()?.canWrite ?? true;
 
     // Populate missing top-level keys using `initialStorage`
     const stackSizeBefore = context.undoStack.length;
@@ -1834,10 +1693,7 @@ export function createRoom<
     context.undoStack.length = stackSizeBefore;
   }
 
-  function updateRoot(
-    items: IdTuple<SerializedCrdt>[],
-    batchedUpdatesWrapper: (cb: () => void) => void
-  ) {
+  function updateRoot(items: IdTuple<SerializedCrdt>[]) {
     if (context.root === undefined) {
       return;
     }
@@ -1852,30 +1708,24 @@ export function createRoom<
 
     const result = applyOps(ops, false);
 
-    notify(result.updates, batchedUpdatesWrapper);
+    notify(result.updates);
   }
 
-  function _addToRealUndoStack(
-    historyOps: HistoryOp<P>[],
-    batchedUpdatesWrapper: (cb: () => void) => void
-  ) {
+  function _addToRealUndoStack(historyOps: HistoryOp<P>[]) {
     // If undo stack is too large, we remove the older item
     if (context.undoStack.length >= 50) {
       context.undoStack.shift();
     }
 
     context.undoStack.push(historyOps);
-    onHistoryChange(batchedUpdatesWrapper);
+    onHistoryChange();
   }
 
-  function addToUndoStack(
-    historyOps: HistoryOp<P>[],
-    batchedUpdatesWrapper: (cb: () => void) => void
-  ) {
+  function addToUndoStack(historyOps: HistoryOp<P>[]) {
     if (context.pausedHistory !== null) {
       context.pausedHistory.unshift(...historyOps);
     } else {
-      _addToRealUndoStack(historyOps, batchedUpdatesWrapper);
+      _addToRealUndoStack(historyOps);
     }
   }
 
@@ -1885,36 +1735,31 @@ export function createRoom<
     others?: InternalOthersEvent<P, U>[];
   };
 
-  function notify(
-    updates: NotifyUpdates,
-    batchedUpdatesWrapper: (cb: () => void) => void
-  ) {
+  function notify(updates: NotifyUpdates) {
     const storageUpdates = updates.storageUpdates;
     const othersUpdates = updates.others;
 
-    batchedUpdatesWrapper(() => {
-      if (othersUpdates !== undefined && othersUpdates.length > 0) {
-        const others = context.others.current;
-        for (const event of othersUpdates) {
-          eventHub.others.notify({ ...event, others });
-        }
+    if (othersUpdates !== undefined && othersUpdates.length > 0) {
+      const others = context.others.get();
+      for (const event of othersUpdates) {
+        eventHub.others.notify({ ...event, others });
       }
+    }
 
-      if (updates.presence ?? false) {
-        notifySelfChanged(doNotBatchUpdates);
-        eventHub.myPresence.notify(context.myPresence.current);
-      }
+    if (updates.presence ?? false) {
+      notifySelfChanged();
+      eventHub.myPresence.notify(context.myPresence.get());
+    }
 
-      if (storageUpdates !== undefined && storageUpdates.size > 0) {
-        const updates = Array.from(storageUpdates.values());
-        eventHub.storageBatch.notify(updates);
-      }
-      notifyStorageStatus();
-    });
+    if (storageUpdates !== undefined && storageUpdates.size > 0) {
+      const updates = Array.from(storageUpdates.values());
+      eventHub.storageBatch.notify(updates);
+    }
+    notifyStorageStatus();
   }
 
   function getConnectionId() {
-    const info = context.dynamicSessionInfo.current;
+    const info = context.dynamicSessionInfoSig.get();
     if (info) {
       return info.actor;
     }
@@ -1962,7 +1807,7 @@ export function createRoom<
         };
 
         for (const key in op.data) {
-          reverse.data[key] = context.myPresence.current[key];
+          reverse.data[key] = context.myPresence.get()[key];
         }
 
         context.myPresence.patch(op.data);
@@ -2109,7 +1954,7 @@ export function createRoom<
         continue;
       }
       context.buffer.presenceUpdates.data[key] = overrideValue;
-      oldValues[key] = context.myPresence.current[key];
+      oldValues[key] = context.myPresence.get()[key];
     }
 
     context.myPresence.patch(patch);
@@ -2124,15 +1969,10 @@ export function createRoom<
       context.activeBatch.updates.presence = true;
     } else {
       flushNowOrSoon();
-      batchUpdates(() => {
-        if (options?.addToHistory) {
-          addToUndoStack(
-            [{ type: "presence", data: oldValues }],
-            doNotBatchUpdates
-          );
-        }
-        notify({ presence: true }, doNotBatchUpdates);
-      });
+      if (options?.addToHistory) {
+        addToUndoStack([{ type: "presence", data: oldValues }]);
+      }
+      notify({ presence: true });
     }
   }
 
@@ -2182,17 +2022,16 @@ export function createRoom<
   }
 
   function onRoomStateMessage(
-    message: RoomStateServerMsg<U>,
-    batchedUpdatesWrapper: (cb: () => void) => void
+    message: RoomStateServerMsg<U>
   ): InternalOthersEvent<P, U> {
     // The server will inform the client about its assigned actor ID and scopes
-    context.dynamicSessionInfo.set({
+    context.dynamicSessionInfoSig.set({
       actor: message.actor,
       nonce: message.nonce,
       scopes: message.scopes,
     });
     context.idFactory = makeIdFactory(message.actor);
-    notifySelfChanged(batchedUpdatesWrapper);
+    notifySelfChanged();
 
     for (const connectionId of context.others.connectionIds()) {
       const user = message.users[connectionId];
@@ -2222,10 +2061,8 @@ export function createRoom<
 
   function canUndo() { return context.undoStack.length > 0; } // prettier-ignore
   function canRedo() { return context.redoStack.length > 0; } // prettier-ignore
-  function onHistoryChange(batchedUpdatesWrapper: (cb: () => void) => void) {
-    batchedUpdatesWrapper(() => {
-      eventHub.history.notify({ canUndo: canUndo(), canRedo: canRedo() });
-    });
+  function onHistoryChange() {
+    eventHub.history.notify({ canUndo: canUndo(), canRedo: canRedo() });
   }
 
   function onUserJoinedMessage(
@@ -2241,7 +2078,7 @@ export function createRoom<
     // TODO: Consider storing it on the backend
     context.buffer.messages.push({
       type: ClientMsgCode.UPDATE_PRESENCE,
-      data: context.myPresence.current,
+      data: context.myPresence.get(),
       targetActor: message.actor,
     });
     flushNowOrSoon();
@@ -2272,10 +2109,7 @@ export function createRoom<
     }
   }
 
-  function applyAndSendOps(
-    offlineOps: Map<string, Op>,
-    batchedUpdatesWrapper: (cb: () => void) => void
-  ) {
+  function applyAndSendOps(offlineOps: Map<string, Op>) {
     if (offlineOps.size === 0) {
       return;
     }
@@ -2291,7 +2125,7 @@ export function createRoom<
       ops: result.ops,
     });
 
-    notify(result.updates, batchedUpdatesWrapper);
+    notify(result.updates);
 
     sendMessages(messages);
   }
@@ -2317,127 +2151,124 @@ export function createRoom<
       others: [] as InternalOthersEvent<P, U>[],
     };
 
-    batchUpdates(() => {
-      for (const message of messages) {
-        switch (message.type) {
-          case ServerMsgCode.USER_JOINED: {
-            const userJoinedUpdate = onUserJoinedMessage(message);
-            if (userJoinedUpdate) {
-              updates.others.push(userJoinedUpdate);
-            }
-            break;
+    for (const message of messages) {
+      switch (message.type) {
+        case ServerMsgCode.USER_JOINED: {
+          const userJoinedUpdate = onUserJoinedMessage(message);
+          if (userJoinedUpdate) {
+            updates.others.push(userJoinedUpdate);
           }
+          break;
+        }
 
-          case ServerMsgCode.UPDATE_PRESENCE: {
-            const othersPresenceUpdate = onUpdatePresenceMessage(message);
-            if (othersPresenceUpdate) {
-              updates.others.push(othersPresenceUpdate);
-            }
-            break;
+        case ServerMsgCode.UPDATE_PRESENCE: {
+          const othersPresenceUpdate = onUpdatePresenceMessage(message);
+          if (othersPresenceUpdate) {
+            updates.others.push(othersPresenceUpdate);
           }
+          break;
+        }
 
-          case ServerMsgCode.BROADCASTED_EVENT: {
-            const others = context.others.current;
-            eventHub.customEvent.notify({
-              connectionId: message.actor,
-              user:
-                message.actor < 0
-                  ? null
-                  : others.find((u) => u.connectionId === message.actor) ??
-                    null,
-              event: message.event,
-            });
-            break;
-          }
+        case ServerMsgCode.BROADCASTED_EVENT: {
+          const others = context.others.get();
+          eventHub.customEvent.notify({
+            connectionId: message.actor,
+            user:
+              message.actor < 0
+                ? null
+                : others.find((u) => u.connectionId === message.actor) ?? null,
+            event: message.event,
+          });
+          break;
+        }
 
-          case ServerMsgCode.USER_LEFT: {
-            const event = onUserLeftMessage(message);
-            if (event) {
-              updates.others.push(event);
-            }
-            break;
+        case ServerMsgCode.USER_LEFT: {
+          const event = onUserLeftMessage(message);
+          if (event) {
+            updates.others.push(event);
           }
+          break;
+        }
 
-          case ServerMsgCode.UPDATE_YDOC: {
-            eventHub.ydoc.notify(message);
-            break;
-          }
+        case ServerMsgCode.UPDATE_YDOC: {
+          eventHub.ydoc.notify(message);
+          break;
+        }
 
-          case ServerMsgCode.ROOM_STATE: {
-            updates.others.push(onRoomStateMessage(message, doNotBatchUpdates));
-            break;
-          }
+        case ServerMsgCode.ROOM_STATE: {
+          updates.others.push(onRoomStateMessage(message));
+          break;
+        }
 
-          case ServerMsgCode.INITIAL_STORAGE_STATE: {
-            // createOrUpdateRootFromMessage function could add ops to offlineOperations.
-            // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
-            processInitialStorage(message);
-            break;
-          }
-          // Write event
-          case ServerMsgCode.UPDATE_STORAGE: {
-            const applyResult = applyOps(message.ops, false);
-            for (const [key, value] of applyResult.updates.storageUpdates) {
-              updates.storageUpdates.set(
-                key,
-                mergeStorageUpdates(updates.storageUpdates.get(key), value)
-              );
-            }
-            break;
-          }
-
-          // Receiving a RejectedOps message in the client means that the server is no
-          // longer in sync with the client. Trying to synchronize the client again by
-          // rolling back particular Ops may be hard/impossible. It's fine to not try and
-          // accept the out-of-sync reality and throw an error. We look at this kind of bug
-          // as a developer-owned bug. In production, these errors are not expected to happen.
-          case ServerMsgCode.REJECT_STORAGE_OP: {
-            console.errorWithTitle(
-              "Storage mutation rejection error",
-              message.reason
+        case ServerMsgCode.INITIAL_STORAGE_STATE: {
+          // createOrUpdateRootFromMessage function could add ops to offlineOperations.
+          // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
+          processInitialStorage(message);
+          break;
+        }
+        // Write event
+        case ServerMsgCode.UPDATE_STORAGE: {
+          const applyResult = applyOps(message.ops, false);
+          for (const [key, value] of applyResult.updates.storageUpdates) {
+            updates.storageUpdates.set(
+              key,
+              mergeStorageUpdates(updates.storageUpdates.get(key), value)
             );
+          }
+          break;
+        }
 
-            if (process.env.NODE_ENV !== "production") {
-              const traces: Set<string> = new Set();
-              for (const opId of message.opIds) {
-                const trace = context.opStackTraces?.get(opId);
-                if (trace) {
-                  traces.add(trace);
-                }
+        // Receiving a RejectedOps message in the client means that the server is no
+        // longer in sync with the client. Trying to synchronize the client again by
+        // rolling back particular Ops may be hard/impossible. It's fine to not try and
+        // accept the out-of-sync reality and throw an error. We look at this kind of bug
+        // as a developer-owned bug. In production, these errors are not expected to happen.
+        case ServerMsgCode.REJECT_STORAGE_OP: {
+          console.errorWithTitle(
+            "Storage mutation rejection error",
+            message.reason
+          );
+
+          if (process.env.NODE_ENV !== "production") {
+            const traces: Set<string> = new Set();
+            for (const opId of message.opIds) {
+              const trace = context.opStackTraces?.get(opId);
+              if (trace) {
+                traces.add(trace);
               }
+            }
 
-              if (traces.size > 0) {
-                console.warnWithTitle(
-                  "The following function calls caused the rejected storage mutations:",
-                  `\n\n${Array.from(traces).join("\n\n")}`
-                );
-              }
-
-              throw new Error(
-                `Storage mutations rejected by server: ${message.reason}`
+            if (traces.size > 0) {
+              console.warnWithTitle(
+                "The following function calls caused the rejected storage mutations:",
+                `\n\n${Array.from(traces).join("\n\n")}`
               );
             }
 
-            break;
+            throw new Error(
+              `Storage mutations rejected by server: ${message.reason}`
+            );
           }
 
-          case ServerMsgCode.THREAD_CREATED:
-          case ServerMsgCode.THREAD_DELETED:
-          case ServerMsgCode.THREAD_METADATA_UPDATED:
-          case ServerMsgCode.THREAD_UPDATED:
-          case ServerMsgCode.COMMENT_REACTION_ADDED:
-          case ServerMsgCode.COMMENT_REACTION_REMOVED:
-          case ServerMsgCode.COMMENT_CREATED:
-          case ServerMsgCode.COMMENT_EDITED:
-          case ServerMsgCode.COMMENT_DELETED: {
-            eventHub.comments.notify(message);
-            break;
-          }
+          break;
+        }
+
+        case ServerMsgCode.THREAD_CREATED:
+        case ServerMsgCode.THREAD_DELETED:
+        case ServerMsgCode.THREAD_METADATA_UPDATED:
+        case ServerMsgCode.THREAD_UPDATED:
+        case ServerMsgCode.COMMENT_REACTION_ADDED:
+        case ServerMsgCode.COMMENT_REACTION_REMOVED:
+        case ServerMsgCode.COMMENT_CREATED:
+        case ServerMsgCode.COMMENT_EDITED:
+        case ServerMsgCode.COMMENT_DELETED: {
+          eventHub.comments.notify(message);
+          break;
         }
       }
+    }
 
-      notify(updates, doNotBatchUpdates);
-    });
+    notify(updates);
   }
 
   function flushNowOrSoon() {
@@ -2561,8 +2392,8 @@ export function createRoom<
 
   function processInitialStorage(message: InitialDocumentStateServerMsg) {
     const unacknowledgedOps = new Map(context.unacknowledgedOps);
-    createOrUpdateRootFromMessage(message, doNotBatchUpdates);
-    applyAndSendOps(unacknowledgedOps, doNotBatchUpdates);
+    createOrUpdateRootFromMessage(message);
+    applyAndSendOps(unacknowledgedOps);
     _resolveStoragePromise?.();
     notifyStorageStatus();
     eventHub.storageDidLoad.notify();
@@ -2571,10 +2402,7 @@ export function createRoom<
   async function streamStorage() {
     // TODO: Handle potential race conditions where the room get disconnected while the request is pending
     if (!managedSocket.authValue) return;
-    const result = await httpClient1.rawGet(
-      url`/v2/c/rooms/${config.roomId}/storage`
-    );
-    const items = (await result.json()) as IdTuple<SerializedCrdt>[];
+    const items = await httpClient.streamStorage({ roomId });
     processInitialStorage({ type: ServerMsgCode.INITIAL_STORAGE_STATE, items });
   }
 
@@ -2678,11 +2506,9 @@ export function createRoom<
     context.pausedHistory = null;
     const result = applyOps(historyOps, true);
 
-    batchUpdates(() => {
-      notify(result.updates, doNotBatchUpdates);
-      context.redoStack.push(result.reverse);
-      onHistoryChange(doNotBatchUpdates);
-    });
+    notify(result.updates);
+    context.redoStack.push(result.reverse);
+    onHistoryChange();
 
     for (const op of result.ops) {
       if (op.type !== "presence") {
@@ -2705,11 +2531,9 @@ export function createRoom<
     context.pausedHistory = null;
     const result = applyOps(historyOps, true);
 
-    batchUpdates(() => {
-      notify(result.updates, doNotBatchUpdates);
-      context.undoStack.push(result.reverse);
-      onHistoryChange(doNotBatchUpdates);
-    });
+    notify(result.updates);
+    context.undoStack.push(result.reverse);
+    onHistoryChange();
 
     for (const op of result.ops) {
       if (op.type !== "presence") {
@@ -2734,42 +2558,40 @@ export function createRoom<
 
     let returnValue: T = undefined as unknown as T;
 
-    batchUpdates(() => {
-      context.activeBatch = {
-        ops: [],
-        updates: {
-          storageUpdates: new Map(),
-          presence: false,
-          others: [],
-        },
-        reverseOps: [],
-      };
-      try {
-        returnValue = callback();
-      } finally {
-        // "Pop" the current batch of the state, closing the active batch, but
-        // handling it separately here
-        const currentBatch = context.activeBatch;
-        context.activeBatch = null;
+    context.activeBatch = {
+      ops: [],
+      updates: {
+        storageUpdates: new Map(),
+        presence: false,
+        others: [],
+      },
+      reverseOps: [],
+    };
+    try {
+      returnValue = callback();
+    } finally {
+      // "Pop" the current batch of the state, closing the active batch, but
+      // handling it separately here
+      const currentBatch = context.activeBatch;
+      context.activeBatch = null;
 
-        if (currentBatch.reverseOps.length > 0) {
-          addToUndoStack(currentBatch.reverseOps, doNotBatchUpdates);
-        }
-
-        if (currentBatch.ops.length > 0) {
-          // Only clear the redo stack if something has changed during a batch
-          // Clear the redo stack because batch is always called from a local operation
-          context.redoStack.length = 0;
-        }
-
-        if (currentBatch.ops.length > 0) {
-          dispatchOps(currentBatch.ops);
-        }
-
-        notify(currentBatch.updates, doNotBatchUpdates);
-        flushNowOrSoon();
+      if (currentBatch.reverseOps.length > 0) {
+        addToUndoStack(currentBatch.reverseOps);
       }
-    });
+
+      if (currentBatch.ops.length > 0) {
+        // Only clear the redo stack if something has changed during a batch
+        // Clear the redo stack because batch is always called from a local operation
+        context.redoStack.length = 0;
+      }
+
+      if (currentBatch.ops.length > 0) {
+        dispatchOps(currentBatch.ops);
+      }
+
+      notify(currentBatch.updates);
+      flushNowOrSoon();
+    }
 
     return returnValue;
   }
@@ -2784,7 +2606,7 @@ export function createRoom<
     const historyOps = context.pausedHistory;
     context.pausedHistory = null;
     if (historyOps !== null && historyOps.length > 0) {
-      _addToRealUndoStack(historyOps, batchUpdates);
+      _addToRealUndoStack(historyOps);
     }
   }
 
@@ -2822,7 +2644,7 @@ export function createRoom<
   }
 
   function isPresenceReady() {
-    return self.current !== null;
+    return self.get() !== null;
   }
 
   async function waitUntilPresenceReady(): Promise<void> {
@@ -2850,8 +2672,10 @@ export function createRoom<
   }
 
   // Derived cached state for use in DevTools
-  const others_forDevTools = new DerivedRef(context.others, (others) =>
-    others.map((other, index) => userToTreeNode(`Other ${index}`, other))
+  const others_forDevTools = DerivedSignal.from(
+    context.others.signal,
+    (others) =>
+      others.map((other, index) => userToTreeNode(`Other ${index}`, other))
   );
 
   const events = {
@@ -2875,126 +2699,26 @@ export function createRoom<
   };
 
   async function getThreadsSince(options: GetThreadsSinceOptions) {
-    const result = await httpClient2.get<{
-      data: ThreadDataPlain<M>[];
-      inboxNotifications: InboxNotificationDataPlain[];
-      deletedThreads: ThreadDeleteInfoPlain[];
-      deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
-      meta: {
-        requestedAt: string;
-      };
-    }>(
-      url`/v2/c/rooms/${config.roomId}/threads/delta`,
-      { since: options?.since?.toISOString() },
-      { signal: options.signal }
-    );
-
-    return {
-      threads: {
-        updated: result.data.map(convertToThreadData),
-        deleted: result.deletedThreads.map(convertToThreadDeleteInfo),
-      },
-      inboxNotifications: {
-        updated: result.inboxNotifications.map(convertToInboxNotificationData),
-        deleted: result.deletedInboxNotifications.map(
-          convertToInboxNotificationDeleteInfo
-        ),
-      },
-      requestedAt: new Date(result.meta.requestedAt),
-    };
+    return httpClient.getThreadsSince({
+      roomId,
+      since: options.since,
+      signal: options.signal,
+    });
   }
 
   async function getThreads(options?: GetThreadsOptions<M>) {
-    let query: string | undefined;
-
-    if (options?.query) {
-      query = objectToQuery(options.query);
-    }
-
-    const PAGE_SIZE = 50;
-
-    try {
-      const result = await httpClient2.get<{
-        data: ThreadDataPlain<M>[];
-        inboxNotifications: InboxNotificationDataPlain[];
-        deletedThreads: ThreadDeleteInfoPlain[];
-        deletedInboxNotifications: InboxNotificationDeleteInfoPlain[];
-        meta: {
-          requestedAt: string;
-          nextCursor: string | null;
-        };
-      }>(url`/v2/c/rooms/${config.roomId}/threads`, {
-        cursor: options?.cursor,
-        query,
-        limit: PAGE_SIZE,
-      });
-
-      return {
-        threads: result.data.map(convertToThreadData),
-        inboxNotifications: result.inboxNotifications.map(
-          convertToInboxNotificationData
-        ),
-        nextCursor: result.meta.nextCursor,
-        requestedAt: new Date(result.meta.requestedAt),
-      };
-    } catch (err) {
-      if (err instanceof HttpError && err.status === 404) {
-        // If the room does (not) yet exist, the response will be a 404 error
-        // response which we'll interpret as an empty list of threads.
-        return {
-          threads: [],
-          inboxNotifications: [],
-          nextCursor: null,
-          //
-          // HACK
-          // requestedAt needs to be a *server* timestamp here. However, on
-          // this 404 error response, there is no such timestamp. So out of
-          // pure necessity we'll fall back to a local timestamp instead (and
-          // allow for a possible 6 hour clock difference between client and
-          // server).
-          //
-          requestedAt: new Date(Date.now() - 6 * 60 * 60 * 1000),
-        };
-      }
-
-      throw err;
-    }
+    return httpClient.getThreads({
+      roomId,
+      query: options?.query,
+      cursor: options?.cursor,
+    });
   }
 
   async function getThread(threadId: string) {
-    const response = await httpClient2.rawGet(
-      url`/v2/c/rooms/${config.roomId}/thread-with-notification/${threadId}`
-    );
-
-    if (response.ok) {
-      const json = (await response.json()) as {
-        thread: ThreadDataPlain<M>;
-        inboxNotification?: InboxNotificationDataPlain;
-      };
-
-      return {
-        thread: convertToThreadData(json.thread),
-        inboxNotification: json.inboxNotification
-          ? convertToInboxNotificationData(json.inboxNotification)
-          : undefined,
-      };
-    } else if (response.status === 404) {
-      return {
-        thread: undefined,
-        inboxNotification: undefined,
-      };
-    } else {
-      throw new Error(`There was an error while getting thread ${threadId}.`);
-    }
+    return httpClient.getThread({ roomId, threadId });
   }
 
-  async function createThread({
-    metadata,
-    body,
-    commentId = createCommentId(),
-    threadId = createThreadId(),
-    attachmentIds,
-  }: {
+  async function createThread(options: {
     roomId: string;
     threadId?: string;
     commentId?: string;
@@ -3002,26 +2726,18 @@ export function createRoom<
     body: CommentBody;
     attachmentIds?: string[];
   }) {
-    const thread = await httpClient2.post<ThreadDataPlain<M>>(
-      url`/v2/c/rooms/${config.roomId}/threads`,
-      {
-        id: threadId,
-        comment: {
-          id: commentId,
-          body,
-          attachmentIds,
-        },
-        metadata,
-      }
-    );
-
-    return convertToThreadData(thread);
+    return httpClient.createThread({
+      roomId,
+      threadId: options.threadId,
+      commentId: options.commentId,
+      metadata: options.metadata,
+      body: options.body,
+      attachmentIds: options.attachmentIds,
+    });
   }
 
   async function deleteThread(threadId: string) {
-    await httpClient2.delete(
-      url`/v2/c/rooms/${config.roomId}/threads/${threadId}`
-    );
+    return httpClient.deleteThread({ roomId, threadId });
   }
 
   async function editThreadMetadata({
@@ -3032,67 +2748,48 @@ export function createRoom<
     metadata: Patchable<M>;
     threadId: string;
   }) {
-    return await httpClient2.post<M>(
-      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/metadata`,
-      metadata
-    );
+    return httpClient.editThreadMetadata({ roomId, threadId, metadata });
   }
 
   async function markThreadAsResolved(threadId: string) {
-    await httpClient2.post(
-      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/mark-as-resolved`
-    );
+    return httpClient.markThreadAsResolved({ roomId, threadId });
   }
 
   async function markThreadAsUnresolved(threadId: string) {
-    await httpClient2.post(
-      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/mark-as-unresolved`
-    );
+    return httpClient.markThreadAsUnresolved({
+      roomId,
+      threadId,
+    });
   }
 
-  async function createComment({
-    threadId,
-    commentId = createCommentId(),
-    body,
-    attachmentIds,
-  }: {
+  async function createComment(options: {
     threadId: string;
     commentId?: string;
     body: CommentBody;
     attachmentIds?: string[];
   }) {
-    const comment = await httpClient2.post<CommentDataPlain>(
-      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments`,
-      {
-        id: commentId,
-        body,
-        attachmentIds,
-      }
-    );
-
-    return convertToCommentData(comment);
+    return httpClient.createComment({
+      roomId,
+      threadId: options.threadId,
+      commentId: options.commentId,
+      body: options.body,
+      attachmentIds: options.attachmentIds,
+    });
   }
 
-  async function editComment({
-    threadId,
-    commentId,
-    body,
-    attachmentIds,
-  }: {
+  async function editComment(options: {
     threadId: string;
     commentId: string;
     body: CommentBody;
     attachmentIds?: string[];
   }) {
-    const comment = await httpClient2.post<CommentDataPlain>(
-      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}`,
-      {
-        body,
-        attachmentIds,
-      }
-    );
-
-    return convertToCommentData(comment);
+    return httpClient.editComment({
+      roomId,
+      threadId: options.threadId,
+      commentId: options.commentId,
+      body: options.body,
+      attachmentIds: options.attachmentIds,
+    });
   }
 
   async function deleteComment({
@@ -3103,9 +2800,7 @@ export function createRoom<
     threadId: string;
     commentId: string;
   }) {
-    await httpClient2.delete(
-      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}`
-    );
+    return httpClient.deleteComment({ roomId, threadId, commentId });
   }
 
   async function addReaction({
@@ -3117,12 +2812,7 @@ export function createRoom<
     commentId: string;
     emoji: string;
   }) {
-    const reaction = await httpClient2.post<CommentUserReactionPlain>(
-      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}/reactions`,
-      { emoji }
-    );
-
-    return convertToCommentUserReaction(reaction);
+    return httpClient.addReaction({ roomId, threadId, commentId, emoji });
   }
 
   async function removeReaction({
@@ -3134,9 +2824,12 @@ export function createRoom<
     commentId: string;
     emoji: string;
   }) {
-    await httpClient2.delete<CommentDataPlain>(
-      url`/v2/c/rooms/${config.roomId}/threads/${threadId}/comments/${commentId}/reactions/${emoji}`
-    );
+    return await httpClient.removeReaction({
+      roomId,
+      threadId,
+      commentId,
+      emoji,
+    });
   }
 
   function prepareAttachment(file: File): CommentLocalAttachment {
@@ -3155,235 +2848,37 @@ export function createRoom<
     attachment: CommentLocalAttachment,
     options: UploadAttachmentOptions = {}
   ): Promise<CommentAttachment> {
-    const abortSignal = options.signal;
-    const abortError = abortSignal
-      ? new DOMException(
-          `Upload of attachment ${attachment.id} was aborted.`,
-          "AbortError"
-        )
-      : undefined;
-
-    if (abortSignal?.aborted) {
-      throw abortError;
-    }
-
-    const handleRetryError = (err: Error) => {
-      if (abortSignal?.aborted) {
-        throw abortError;
-      }
-
-      if (err instanceof HttpError && err.status === 413) {
-        throw err;
-      }
-
-      return false;
-    };
-
-    if (attachment.size <= ATTACHMENT_PART_SIZE) {
-      // If the file is small enough, upload it in a single request
-      return autoRetry(
-        () =>
-          httpClient2.putBlob<CommentAttachment>(
-            url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/upload/${encodeURIComponent(attachment.name)}`,
-            attachment.file,
-            { fileSize: attachment.size },
-            { signal: abortSignal }
-          ),
-        RETRY_ATTEMPTS,
-        RETRY_DELAYS,
-        handleRetryError
-      );
-    } else {
-      // Otherwise, upload it in multiple parts
-      let uploadId: string | undefined;
-      const uploadedParts: {
-        etag: string;
-        partNumber: number;
-      }[] = [];
-
-      // Create a multi-part upload
-      const createMultiPartUpload = await autoRetry(
-        () =>
-          httpClient2.post<{
-            uploadId: string;
-            key: string;
-          }>(
-            url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/multipart/${encodeURIComponent(attachment.name)}`,
-            undefined,
-            { signal: abortSignal },
-            { fileSize: attachment.size }
-          ),
-        RETRY_ATTEMPTS,
-        RETRY_DELAYS,
-        handleRetryError
-      );
-
-      try {
-        uploadId = createMultiPartUpload.uploadId;
-
-        const parts = splitFileIntoParts(attachment.file);
-
-        // Check if the upload was aborted
-        if (abortSignal?.aborted) {
-          throw abortError;
-        }
-
-        const batches = chunk(parts, ATTACHMENT_PART_BATCH_SIZE);
-
-        // Batches are uploaded one after the other
-        for (const parts of batches) {
-          const uploadedPartsPromises: Promise<{
-            partNumber: number;
-            etag: string;
-          }>[] = [];
-
-          for (const { part, partNumber } of parts) {
-            uploadedPartsPromises.push(
-              autoRetry(
-                () =>
-                  httpClient2.putBlob<{
-                    partNumber: number;
-                    etag: string;
-                  }>(
-                    url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/multipart/${createMultiPartUpload.uploadId}/${String(partNumber)}`,
-                    part,
-                    undefined,
-                    { signal: abortSignal }
-                  ),
-                RETRY_ATTEMPTS,
-                RETRY_DELAYS,
-                handleRetryError
-              )
-            );
-          }
-
-          // Parts are uploaded in parallel
-          uploadedParts.push(...(await Promise.all(uploadedPartsPromises)));
-        }
-
-        // Check if the upload was aborted
-        if (abortSignal?.aborted) {
-          throw abortError;
-        }
-
-        const sortedUploadedParts = uploadedParts.sort(
-          (a, b) => a.partNumber - b.partNumber
-        );
-
-        return httpClient2.post<CommentAttachment>(
-          url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/multipart/${uploadId}/complete`,
-          { parts: sortedUploadedParts },
-          { signal: abortSignal }
-        );
-      } catch (error) {
-        if (
-          uploadId &&
-          (error as Error)?.name &&
-          ((error as Error).name === "AbortError" ||
-            (error as Error).name === "TimeoutError")
-        ) {
-          try {
-            // Abort the multi-part upload if it was created
-            await httpClient2.rawDelete(
-              url`/v2/c/rooms/${config.roomId}/attachments/${attachment.id}/multipart/${uploadId}`
-            );
-          } catch (error) {
-            // Ignore the error, we are probably offline
-          }
-        }
-
-        throw error;
-      }
-    }
-  }
-
-  async function getAttachmentUrls(attachmentIds: string[]) {
-    const { urls } = await httpClient2.post<{
-      urls: (string | null)[];
-    }>(url`/v2/c/rooms/${config.roomId}/attachments/presigned-urls`, {
-      attachmentIds,
+    return httpClient.uploadAttachment({
+      roomId,
+      attachment,
+      signal: options.signal,
     });
-
-    return urls;
   }
-
-  const batchedGetAttachmentUrls = new Batch<string, string>(
-    async (batchedAttachmentIds) => {
-      const attachmentIds = batchedAttachmentIds.flat();
-
-      const attachmentUrls = await getAttachmentUrls(attachmentIds);
-
-      return attachmentUrls.map(
-        (url) =>
-          url ??
-          new Error("There was an error while getting this attachment's URL")
-      );
-    },
-    { delay: GET_ATTACHMENT_URLS_BATCH_DELAY }
-  );
-  const attachmentUrlsStore = createBatchStore(batchedGetAttachmentUrls);
 
   function getAttachmentUrl(attachmentId: string) {
-    return batchedGetAttachmentUrls.get(attachmentId);
-  }
-
-  async function fetchNotificationsJson<T extends JsonObject>(
-    endpoint: URLSafeString,
-    options?: RequestInit
-  ): Promise<T> {
-    return await httpClient2.get<T>(endpoint, undefined, options);
+    return httpClient.getAttachmentUrl({ roomId, attachmentId });
   }
 
   function getNotificationSettings(
     options?: GetNotificationSettingsOptions
   ): Promise<RoomNotificationSettings> {
-    return fetchNotificationsJson<RoomNotificationSettings>(
-      url`/v2/c/rooms/${config.roomId}/notification-settings`,
-      { signal: options?.signal }
-    );
+    return httpClient.getNotificationSettings({
+      roomId,
+      signal: options?.signal,
+    });
   }
 
   function updateNotificationSettings(
     settings: Partial<RoomNotificationSettings>
   ): Promise<RoomNotificationSettings> {
-    return fetchNotificationsJson<RoomNotificationSettings>(
-      url`/v2/c/rooms/${config.roomId}/notification-settings`,
-      {
-        method: "POST",
-        body: JSON.stringify(settings),
-      }
-    );
+    return httpClient.updateNotificationSettings({ roomId, settings });
   }
-
-  // This method (and the following batch handling) isn't the same as the one in
-  // src/notifications.ts, this one is room-based: /v2/c/rooms/<roomId>/inbox-notifications/read.
-  //
-  // The reason for this is that unlike the room-based Comments ones, the Notifications endpoints
-  // don't work with a public key. Since `markThreadAsRead` needs to mark the related inbox notifications
-  // as read, this room-based method is necessary to keep all Comments features working with a public key.
-  async function markInboxNotificationsAsRead(inboxNotificationIds: string[]) {
-    await fetchNotificationsJson(
-      url`/v2/c/rooms/${config.roomId}/inbox-notifications/read`,
-      {
-        method: "POST",
-        body: JSON.stringify({ inboxNotificationIds }),
-      }
-    );
-  }
-
-  const batchedMarkInboxNotificationsAsRead = new Batch<string, string>(
-    async (batchedInboxNotificationIds) => {
-      const inboxNotificationIds = batchedInboxNotificationIds.flat();
-
-      await markInboxNotificationsAsRead(inboxNotificationIds);
-
-      return inboxNotificationIds;
-    },
-    { delay: 50 }
-  );
 
   async function markInboxNotificationAsRead(inboxNotificationId: string) {
-    await batchedMarkInboxNotificationsAsRead.get(inboxNotificationId);
+    await httpClient.markRoomInboxNotificationAsRead({
+      roomId,
+      inboxNotificationId,
+    });
   }
 
   // Register a global source of pending changes for Storage™, so that the
@@ -3434,9 +2929,9 @@ export function createRoom<
         createTextVersion,
 
         // Support for the Liveblocks browser extension
-        getSelf_forDevTools: () => selfAsTreeNode.current,
+        getSelf_forDevTools: () => selfAsTreeNode.get(),
         getOthers_forDevTools: (): readonly DevTools.UserTreeNode[] =>
-          others_forDevTools.current,
+          others_forDevTools.get(),
 
         // prettier-ignore
         simulate: {
@@ -3445,7 +2940,7 @@ export function createRoom<
           rawSend: (data) => managedSocket.send(data),
         },
 
-        attachmentUrlsStore,
+        attachmentUrlsStore: httpClient.getOrCreateAttachmentUrlsStore(roomId),
       },
 
       id: config.roomId,
@@ -3493,11 +2988,11 @@ export function createRoom<
 
       // Core
       getStatus: () => managedSocket.getStatus(),
-      getSelf: () => self.current,
+      getSelf: () => self.get(),
 
       // Presence
-      getPresence: () => context.myPresence.current,
-      getOthers: () => context.others.current,
+      getPresence: () => context.myPresence.get(),
+      getOthers: () => context.others.get(),
 
       // Comments
       getThreads,

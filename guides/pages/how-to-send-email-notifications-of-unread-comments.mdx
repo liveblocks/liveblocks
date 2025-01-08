@@ -5,10 +5,11 @@ meta:
     "Learn how to automatically send email notifications of unread comments."
 ---
 
-Liveblocks [Comments](/docs/products/comments) allows you to build a commenting
-experience. With our webhooks and REST API, it’s possible to aggregate a list of
-unread comments from the last 30 minutes into a single email, and send it to
-your users. Notifications can also be displayed in your app using
+Liveblocks [Comments](/docs/ready-made-features/comments) allows you to build a
+commenting experience. With our webhooks and REST API, it’s possible to
+aggregate a list of unread comments from the last 30 minutes into a single
+email, and send it to your users. Notifications can also be displayed in your
+app using
 [`useInboxNotifications`](/docs/api-reference/liveblocks-react#useInboxNotifications)
 and the
 [`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
@@ -23,12 +24,13 @@ component.
   />
 </Figure>
 
-<Banner title="Just in case">
+<Banner title="Ready-made email templates">
 
-If you’re looking for a guide on sending an email containing one comment,
-immediately after every single comment is created, then
-[sending emails when comments are created](/docs/guides/how-to-send-email-notifications-when-comments-are-created)
-is for you.
+We have an example containing ready-made email templates, built with React
+Email. This a great starting point for your Comments notification emails:
+[Comments emails example](/examples/comments-emails/nextjs-comments-emails-resend).
+We also have a second example that shows you how to
+[send simple HTML emails](/examples/comments-emails/nextjs-comments-emails-sendgrid).
 
 </Banner>
 
@@ -51,8 +53,8 @@ This guide assumes you already have a Liveblocks Comments project set up. If you
 don’t have one yet, you can
 [get started with Comments](/docs/get-started/comments), and come back after
 you’re set up. You could also use our
-[basic Comments example](/examples/comments/nextjs-comments) which has this set
-up already.
+[Comments emails example](/examples/comments-emails/nextjs-comments-emails-resend)
+which has this set up already, alongside ready-made email templates.
 
 </Banner>
 
@@ -67,7 +69,7 @@ that if there are 4 new comments in a thread you’re participating in, you will
 have a single inbox notification for it, instead of 4 “normal” notifications.
 
 Learn more about Notifications for Comments in the
-[overview page](/docs/products/comments/notifications).
+[overview page](/docs/ready-made-features/comments/notifications).
 
 ## Using webhooks
 
@@ -591,10 +593,10 @@ emailData = await prepareThreadNotificationEmailAsReact(liveblocks, event, {
 
 ## Customizing comment components
 
-We can also edit
-[`prepareThreadNotificationEmailAsReact`](/docs/api-reference/liveblocks-emails#prepare-thread-notification-email-as-react)
-to allow for custom components in comment bodies, for example we can add margin
-around a paragraph, color mentions, and underline links.
+We can also edit `prepareThreadNotificationEmailAsReact` to allow for
+[custom components in comment bodies](/docs/api-reference/liveblocks-emails#prepare-thread-notification-email-as-react-customizing-components),
+for example we can add margin around a paragraph, color mentions, and underline
+links.
 
 ```tsx
 // ...

@@ -1,9 +1,32 @@
 // Private APIs
 
-// Used in @liveblocks/react-lexical
+export { useRoomOrNull } from "./contexts";
+export { useLayoutEffect } from "./lib/use-layout-effect";
 export { getUmbrellaStoreForClient } from "./liveblocks";
+export { useClientOrNull } from "./liveblocks";
 export { CreateThreadError } from "./room";
-
-// Used in @liveblocks/react-ui and @liveblocks/react-lexical
+export {
+  useAddRoomCommentReaction,
+  useCreateRoomComment,
+  useCreateRoomThread,
+  useCreateTextMention,
+  useDeleteRoomComment,
+  useDeleteRoomThread,
+  useDeleteTextMention,
+  useEditRoomComment,
+  useEditRoomThreadMetadata,
+  useMarkRoomThreadAsRead,
+  useMarkRoomThreadAsResolved,
+  useMarkRoomThreadAsUnresolved,
+  useMentionSuggestionsCache,
+  useRemoveRoomCommentReaction,
+  useReportTextEditor,
+  useResolveMentionSuggestions,
+  useRoomAttachmentUrl,
+  useRoomPermissions,
+  useYjsProvider,
+} from "./room";
 export { useMentionSuggestions } from "./use-mention-suggestions";
+export { useSignal } from "./use-signal";
+export { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
 export { useSyncSource } from "./use-sync-source";

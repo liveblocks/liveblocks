@@ -7,14 +7,14 @@ import { Button } from "@/primitives/Button";
 import styles from "./Toolbar.module.css";
 
 type Props = {
-  editor: Editor;
+  editor: Editor | null;
 };
 
 export function ToolbarThread({ editor }: Props) {
   const wrapper = useRef<HTMLDivElement>(null);
 
   const handleClick = useCallback(async () => {
-    editor.chain().focus().addPendingComment().run();
+    editor?.chain().focus().addPendingComment().run();
   }, [editor]);
 
   return (
@@ -23,8 +23,8 @@ export function ToolbarThread({ editor }: Props) {
         variant="subtle"
         className={styles.toolbarButton}
         onClick={handleClick}
-        disabled={editor.isActive("lb-comment")}
-        data-active={editor.isActive("lb-comment") ? "is-active" : undefined}
+        disabled={editor?.isActive("lb-comment")}
+        data-active={editor?.isActive("lb-comment") ? "is-active" : undefined}
         aria-label="Add comment"
       >
         <CommentIcon />

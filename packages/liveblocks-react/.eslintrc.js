@@ -18,29 +18,9 @@ module.exports = {
       },
       {
         selector:
-          "ImportDeclaration[source.value='react'] ImportSpecifier[imported.name='useSyncExternalStore']",
+          "ImportDeclaration[source.value='react'] ImportSpecifier[imported.name='useLayoutEffect']",
         message:
-          "useSyncExternalStore is only available on React >=18. Import it from 'use-sync-external-store/shim/index.js' instead.",
-      },
-      {
-        selector:
-          "ImportDeclaration[source.value='react'] ImportSpecifier[imported.name='useId']",
-        message: "useId is only available on React >=18.",
-      },
-      {
-        selector:
-          "ImportDeclaration[source.value='react'] ImportSpecifier[imported.name='useTransition']",
-        message: "useTransition is only available on React >=18.",
-      },
-      {
-        selector:
-          "ImportDeclaration[source.value='react'] ImportSpecifier[imported.name='useDeferredValue']",
-        message: "useDeferredValue is only available on React >=18.",
-      },
-      {
-        selector:
-          "ImportDeclaration[source.value='react'] ImportSpecifier[imported.name='useInsertionEffect']",
-        message: "useInsertionEffect is only available on React >=18.",
+          "useLayoutEffect triggers a warning when executed on the server on React <=18.2.0. Import it from './lib/use-layout-effect' instead.",
       },
     ],
 

@@ -65,13 +65,6 @@
     "date": "2022-09-01"
   },
   {
-    "title": "How to create a collaborative online whiteboard with React and Liveblocks",
-    "path": "/how-to-create-a-collaborative-online-whiteboard-with-react-and-liveblocks",
-    "topics": ["tutorials"],
-    "technologies": ["react"],
-    "date": "2022-09-01"
-  },
-  {
     "title": "How to create a collaborative online whiteboard with React, Redux, and Liveblocks",
     "path": "/how-to-create-a-collaborative-online-whiteboard-with-react-redux-and-liveblocks",
     "topics": ["tutorials"],
@@ -385,6 +378,14 @@
     "topics": ["comments", "rest-api"],
     "technologies": ["nodejs"],
     "date": "2024-08-28",
+    "featured": true
+  },
+  {
+    "title": "How to send email notifications for unread text editor mentions",
+    "path": "/how-to-send-email-notifications-for-unread-text-editor-mentions",
+    "topics": ["text-editors", "tutorials", "webhooks", "notifications"],
+    "technologies": ["react-ui", "nodejs", "lexical", "tiptap"],
+    "date": "2024-11-29",
     "featured": true
   }
 ]

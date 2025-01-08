@@ -5,7 +5,6 @@ export default defineConfig({
   dts: true,
   splitting: true,
   clean: true,
-  target: "es2015",
   format: ["cjs"],
 
   // Perhaps enable later?

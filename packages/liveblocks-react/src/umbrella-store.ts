@@ -7,39 +7,45 @@ import type {
   CommentReaction,
   CommentUserReaction,
   DistributiveOmit,
-  EventSource,
   HistoryVersion,
   InboxNotificationData,
   InboxNotificationDeleteInfo,
-  Observable,
+  ISignal,
   OpaqueClient,
   Patchable,
+  Permission,
   Resolve,
   RoomNotificationSettings,
-  Store,
-  SyncSource,
   ThreadData,
   ThreadDataWithDeleteInfo,
   ThreadDeleteInfo,
 } from "@liveblocks/core";
 import {
   autoRetry,
+  batch,
   compactObject,
   console,
-  createStore,
+  DefaultMap,
+  DerivedSignal,
   HttpError,
   kInternal,
-  makeEventSource,
-  mapValues,
+  MutableSignal,
   nanoid,
   nn,
+  shallow,
+  Signal,
   stringify,
+  unstringify,
 } from "@liveblocks/core";
 
+import { ASYNC_ERR, ASYNC_LOADING, ASYNC_OK } from "./lib/AsyncResult";
 import { autobind } from "./lib/autobind";
+import { find } from "./lib/itertools";
+import { shallow2 } from "./lib/shallow2";
 import type { ReadonlyThreadDB } from "./ThreadDB";
 import { ThreadDB } from "./ThreadDB";
 import type {
+  HistoryVersionsAsyncResult,
   InboxNotificationsAsyncResult,
   RoomNotificationSettingsAsyncResult,
   ThreadsAsyncResult,
@@ -174,8 +180,10 @@ type UpdateNotificationSettingsOptimisticUpdate = {
 
 type PaginationState = {
   cursor: string | null; // If `null`, it's the last page
+  hasFetchedAll: boolean;
   isFetchingMore: boolean;
   fetchMoreError?: Error;
+  fetchMore: () => void;
 };
 
 /**
@@ -184,6 +192,7 @@ type PaginationState = {
 type PaginationStatePatch =
   | { isFetchingMore: true }
   | {
+      hasFetchedAll: boolean;
       isFetchingMore: false;
       cursor: string | null;
       fetchMoreError: undefined;
@@ -192,28 +201,20 @@ type PaginationStatePatch =
 
 /**
  * Example:
- * generateQueryKey('room-abc', { xyz: 123, abc: "red" })
- * → 'room-abc-{"color":"red","xyz":123}'
+ * makeRoomThreadsQueryKey('room-abc', { xyz: 123, abc: "red" })
+ * → '["room-abc",{"color":"red","xyz":123}]'
  */
-function makeRoomThreadsQueryKey(
+export function makeRoomThreadsQueryKey(
   roomId: string,
   query: ThreadsQuery<BaseMetadata> | undefined
 ) {
-  return `${roomId}-${stringify(query ?? {})}`;
+  return stringify([roomId, query ?? {}]);
 }
 
-function makeUserThreadsQueryKey(
+export function makeUserThreadsQueryKey(
   query: ThreadsQuery<BaseMetadata> | undefined
 ) {
-  return `USER_THREADS:${stringify(query ?? {})}`;
-}
-
-function makeNotificationSettingsQueryKey(roomId: string) {
-  return `${roomId}:NOTIFICATION_SETTINGS`;
-}
-
-function makeVersionsQueryKey(roomId: string) {
-  return `${roomId}-VERSIONS`;
+  return stringify(query ?? {});
 }
 
 /**
@@ -255,8 +256,6 @@ function usify<T>(promise: Promise<T>): UsablePromise<T> {
 }
 
 const noop = Promise.resolve();
-
-const ASYNC_LOADING = Object.freeze({ isLoading: true });
 
 /**
  * The PaginatedResource helper class is responsible for and abstracts away the
@@ -326,49 +325,51 @@ const ASYNC_LOADING = Object.freeze({ isLoading: true });
  * @internal Only exported for unit tests.
  */
 export class PaginatedResource {
-  public readonly observable: Observable<void>;
-  private _eventSource: EventSource<void>;
-  private _fetchPage: (cursor?: string) => Promise<string | null>;
-  private _paginationState: PaginationState | null; // Should be null while in loading or error state!
-  private _pendingFetchMore: Promise<void> | null;
+  readonly #signal: Signal<AsyncResult<PaginationState>>;
+  public readonly signal: ISignal<AsyncResult<PaginationState>>;
+
+  #fetchPage: (cursor?: string) => Promise<string | null>;
+  #pendingFetchMore: Promise<void> | null;
 
   constructor(fetchPage: (cursor?: string) => Promise<string | null>) {
-    this._paginationState = null;
-    this._fetchPage = fetchPage;
-    this._eventSource = makeEventSource<void>();
-    this._pendingFetchMore = null;
-    this.observable = this._eventSource.observable;
+    this.#signal = new Signal<AsyncResult<PaginationState>>(ASYNC_LOADING);
+    this.#fetchPage = fetchPage;
+    this.#pendingFetchMore = null;
+    this.signal = this.#signal.asReadonly();
 
     autobind(this);
   }
 
-  private patchPaginationState(patch: PaginationStatePatch): void {
-    const state = this._paginationState;
-    if (state === null) return;
-    this._paginationState = { ...state, ...patch };
-    this._eventSource.notify();
+  get(): AsyncResult<PaginationState> {
+    return this.#signal.get();
   }
 
-  private async _fetchMore(): Promise<void> {
-    const state = this._paginationState;
-    if (!state?.cursor) {
-      // Do nothing if we don't have a cursor to work with. It means:
-      // - We don't have a cursor yet (we haven't loaded the first page yet); or
-      // - We don't have a cursor any longer (we're already on the
-      // last page)
+  #patch(patch: PaginationStatePatch): void {
+    const state = this.#signal.get();
+    if (state.data === undefined) return;
+    this.#signal.set(ASYNC_OK({ ...state.data, ...patch }));
+  }
+
+  async #fetchMore(): Promise<void> {
+    const state = this.#signal.get();
+    if (!state.data?.cursor || state.data.isFetchingMore) {
+      // Either:
+      // - We don't have a cursor yet (first fetch not happened successfully yet)
+      // - We don't have a cursor any longer (we're on the last page)
       return;
     }
 
-    this.patchPaginationState({ isFetchingMore: true });
+    this.#patch({ isFetchingMore: true });
     try {
-      const nextCursor = await this._fetchPage(state.cursor);
-      this.patchPaginationState({
+      const nextCursor = await this.#fetchPage(state.data.cursor);
+      this.#patch({
         cursor: nextCursor,
+        hasFetchedAll: nextCursor === null,
         fetchMoreError: undefined,
         isFetchingMore: false,
       });
     } catch (err) {
-      this.patchPaginationState({
+      this.#patch({
         isFetchingMore: false,
         fetchMoreError: err as Error,
       });
@@ -380,579 +381,794 @@ export class PaginatedResource {
     // 1) the pagination state has not be initialized
     // 2) the cursor is null, i.e., there are no more pages to fetch
     // 3) a request to fetch more is currently in progress
-    const state = this._paginationState;
-    if (state?.cursor === null) {
-      return noop;
-    }
+    const state = this.#signal.get();
+    if (!state.data?.cursor) return noop;
 
     // Case (3)
-    if (!this._pendingFetchMore) {
-      this._pendingFetchMore = this._fetchMore().finally(() => {
-        this._pendingFetchMore = null;
+    if (!this.#pendingFetchMore) {
+      this.#pendingFetchMore = this.#fetchMore().finally(() => {
+        this.#pendingFetchMore = null;
       });
     }
-    return this._pendingFetchMore;
+    return this.#pendingFetchMore;
   }
 
-  public get(): AsyncResult<{
-    fetchMore: () => void;
-    fetchMoreError?: Error;
-    hasFetchedAll: boolean;
-    isFetchingMore: boolean;
-  }> {
-    const usable = this._cachedPromise;
-    if (usable === null || usable.status === "pending") {
-      return ASYNC_LOADING;
-    }
-
-    if (usable.status === "rejected") {
-      return { isLoading: false, error: usable.reason };
-    }
-
-    const state = this._paginationState!;
-    return {
-      isLoading: false,
-      data: {
-        fetchMore: this.fetchMore as () => void,
-        isFetchingMore: state.isFetchingMore,
-        fetchMoreError: state.fetchMoreError,
-        hasFetchedAll: state.cursor === null,
-      },
-    };
-  }
-
-  private _cachedPromise: UsablePromise<void> | null = null;
+  #cachedPromise: UsablePromise<void> | null = null;
 
   public waitUntilLoaded(): UsablePromise<void> {
-    if (this._cachedPromise) {
-      return this._cachedPromise;
+    if (this.#cachedPromise) {
+      return this.#cachedPromise;
     }
 
     // Wrap the request to load room threads (and notifications) in an auto-retry function so that if the request fails,
     // we retry for at most 5 times with incremental backoff delays. If all retries fail, the auto-retry function throws an error
-    const initialFetcher = autoRetry(
-      () => this._fetchPage(/* cursor */ undefined),
+    const initialPageFetch$ = autoRetry(
+      () => this.#fetchPage(/* cursor */ undefined),
       5,
       [5000, 5000, 10000, 15000]
     );
 
-    const promise = usify(
-      initialFetcher.then((cursor) => {
-        // Initial fetch completed
-        this._paginationState = {
-          cursor,
-          isFetchingMore: false,
-          fetchMoreError: undefined,
-        };
-      })
-    );
+    const promise = usify(initialPageFetch$);
 
-    // TODO for later: Maybe move this into the .then() above too?
+    // NOTE: However tempting it may be, we cannot simply move this block into
+    // the promise definition above. The reason is that we should not call
+    // notify() before the UsablePromise is actually in resolved status. While
+    // still inside the .then() block, the UsablePromise is still in pending status.
     promise.then(
-      () => this._eventSource.notify(),
-      () => {
-        this._eventSource.notify();
+      (cursor) => {
+        this.#signal.set(
+          ASYNC_OK({
+            cursor,
+            hasFetchedAll: cursor === null,
+            isFetchingMore: false,
+            fetchMoreError: undefined,
+            fetchMore: this.fetchMore,
+          })
+        );
+      },
+      (err) => {
+        this.#signal.set(ASYNC_ERR(err as Error));
 
-        // Wait for 5 seconds before removing the request from the cache
+        // Wait for 5 seconds before removing the request
         setTimeout(() => {
-          this._cachedPromise = null;
-          this._eventSource.notify();
+          this.#cachedPromise = null;
+          this.#signal.set(ASYNC_LOADING);
         }, 5_000);
       }
     );
 
-    this._cachedPromise = promise;
-    return promise;
+    this.#cachedPromise =
+      promise as UsablePromise<unknown> as UsablePromise<void>;
+    return this.#cachedPromise;
   }
 }
 
-export class SinglePageResource {
-  public readonly observable: Observable<void>;
-  private _eventSource: EventSource<void>;
-  private _fetchPage: () => Promise<void>;
+// TODO Find better name?
+type LoadableResource<T> = {
+  signal: ISignal<T>;
+  waitUntilLoaded: () => UsablePromise<void>;
+};
+
+class SinglePageResource {
+  readonly #signal: Signal<AsyncResult<void>>;
+  public readonly signal: ISignal<AsyncResult<void>>;
+
+  #fetchPage: () => Promise<void>;
 
   constructor(fetchPage: () => Promise<void>) {
-    this._fetchPage = fetchPage;
-    this._eventSource = makeEventSource<void>();
-    this.observable = this._eventSource.observable;
+    this.#signal = new Signal<AsyncResult<void>>(ASYNC_LOADING);
+    this.signal = this.#signal.asReadonly();
+    this.#fetchPage = fetchPage;
 
     autobind(this);
   }
 
-  public get(): AsyncResult<undefined> {
-    const usable = this._cachedPromise;
-    if (usable === null || usable.status === "pending") {
-      return ASYNC_LOADING;
-    }
-
-    if (usable.status === "rejected") {
-      return { isLoading: false, error: usable.reason };
-    }
-
-    return {
-      isLoading: false,
-      data: undefined,
-    };
+  get(): AsyncResult<void> {
+    return this.#signal.get();
   }
 
-  private _cachedPromise: UsablePromise<void> | null = null;
+  #cachedPromise: UsablePromise<void> | null = null;
 
   public waitUntilLoaded(): UsablePromise<void> {
-    if (this._cachedPromise) {
-      return this._cachedPromise;
+    if (this.#cachedPromise) {
+      return this.#cachedPromise;
     }
 
     // Wrap the request to load room threads (and notifications) in an auto-retry function so that if the request fails,
     // we retry for at most 5 times with incremental backoff delays. If all retries fail, the auto-retry function throws an error
-    const initialFetcher = autoRetry(
-      () => this._fetchPage(),
+    const initialFetcher$ = autoRetry(
+      () => this.#fetchPage(),
       5,
       [5000, 5000, 10000, 15000]
     );
 
-    const promise = usify(initialFetcher);
+    const promise = usify(initialFetcher$);
 
-    // TODO for later: Maybe move this into the .then() above too?
+    // NOTE: However tempting it may be, we cannot simply move this block into
+    // the promise definition above. The reason is that we should not call
+    // notify() before the UsablePromise is actually in resolved status. While
+    // still inside the .then() block, the UsablePromise is still in pending status.
     promise.then(
-      () => this._eventSource.notify(),
       () => {
-        this._eventSource.notify();
+        this.#signal.set(ASYNC_OK(undefined));
+      },
+      (err) => {
+        this.#signal.set(ASYNC_ERR(err as Error));
 
-        // Wait for 5 seconds before removing the request from the cache
+        // Wait for 5 seconds before removing the request
         setTimeout(() => {
-          this._cachedPromise = null;
-          this._eventSource.notify();
+          this.#cachedPromise = null;
+          this.#signal.set(ASYNC_LOADING);
         }, 5_000);
       }
     );
 
-    this._cachedPromise = promise;
+    this.#cachedPromise = promise;
     return promise;
   }
 }
 
-type InternalState<M extends BaseMetadata> = Readonly<{
-  optimisticUpdates: readonly OptimisticUpdate<M>[];
-
-  // TODO: Ideally we would have a similar NotificationsDB, like we have ThreadDB
-  notificationsById: Record<string, InboxNotificationData>;
-  settingsByRoomId: Record<string, RoomNotificationSettings>;
-  versionsByRoomId: Record<string, Record<string, HistoryVersion>>;
-}>;
+type RoomId = string;
+type UserQueryKey = string;
+type RoomQueryKey = string;
 
 /**
- * Externally observable state of the store, which will have:
- * - Optimistic updates applied
- * - All deleted threads removed from the threads list
+ * A lookup table (LUT) for all the history versions.
  */
-export type UmbrellaStoreState<M extends BaseMetadata> = {
+type VersionsLUT = DefaultMap<RoomId, Map<string, HistoryVersion>>;
+
+/**
+ * A lookup table (LUT) for all the inbox notifications.
+ */
+type NotificationsLUT = Map<string, InboxNotificationData>;
+
+/**
+ * A lookup table (LUT) for all the room notification settings.
+ */
+type SettingsLUT = Map<RoomId, RoomNotificationSettings>;
+
+/**
+ * Notification settings by room ID.
+ * e.g. { 'room-abc': { threads: "all" },
+ *        'room-def': { threads: "replies_and_mentions" },
+ *        'room-xyz': { threads: "none" },
+ *      }
+ */
+type SettingsByRoomId = Record<RoomId, RoomNotificationSettings>;
+
+type PermissionHintsLUT = DefaultMap<RoomId, Set<Permission>>;
+
+export type CleanThreadifications<M extends BaseMetadata> =
+  // Threads + Notifications = Threadifications
+  CleanThreads<M> &
+    //
+    CleanNotifications;
+
+export type CleanThreads<M extends BaseMetadata> = {
   /**
    * Keep track of loading and error status of all the queries made by the client.
    * e.g. 'room-abc-{"color":"red"}'  - ok
    * e.g. 'room-abc-{}'               - loading
    */
-
-  // TODO: This should not get exposed via the "full state". Instead, we should
-  // expose it via a cached `.getThreadDB()`, and invalidate this cached
-  // value if either the threads change or a (thread) optimistic update is
-  // changed.
   threadsDB: ReadonlyThreadDB<M>;
+};
 
+export type CleanNotifications = {
   /**
    * All inbox notifications in a sorted array, optimistic updates applied.
    */
-  cleanedNotifications: InboxNotificationData[];
+  sortedNotifications: InboxNotificationData[];
 
   /**
    * Inbox notifications by ID.
    * e.g. `in_${string}`
    */
   notificationsById: Record<string, InboxNotificationData>;
-
-  /**
-   * Notification settings by room ID.
-   * e.g. { 'room-abc': { threads: "all" },
-   *        'room-def': { threads: "replies_and_mentions" },
-   *        'room-xyz': { threads: "none" },
-   *      }
-   */
-  settingsByRoomId: Record<string, RoomNotificationSettings>;
-  /**
-   * Versions by roomId
-   * e.g. { 'room-abc': {versions: "all versions"}}
-   */
-  versionsByRoomId: Record<string, Record<string, HistoryVersion>>;
 };
 
-export class UmbrellaStore<M extends BaseMetadata> {
-  private _client: Client<BaseUserMeta, M>;
-  private _syncSource: SyncSource;
+function createStore_forNotifications() {
+  const signal = new MutableSignal<NotificationsLUT>(new Map());
 
-  // Raw threads DB (without any optimistic updates applied)
-  private _rawThreadsDB: ThreadDB<M>;
-  private _prevVersion: number = -1;
+  function markRead(notificationId: string, readAt: Date) {
+    signal.mutate((lut) => {
+      const existing = lut.get(notificationId);
+      if (!existing) {
+        return false;
+      }
+      lut.set(notificationId, { ...existing, readAt });
+      return true;
+    });
+  }
 
-  private _store: Store<InternalState<M>>;
-  private _prevState: InternalState<M> | null = null;
-  private _stateCached: UmbrellaStoreState<M> | null = null;
+  function markAllRead(readAt: Date) {
+    signal.mutate((lut) => {
+      for (const n of lut.values()) {
+        n.readAt = readAt;
+      }
+    });
+  }
 
-  // Notifications
-  private _notificationsLastRequestedAt: Date | null = null; // Keeps track of when we successfully requested an inbox notifications update for the last time. Will be `null` as long as the first successful fetch hasn't happened yet.
-  private _notifications: PaginatedResource;
+  function deleteOne(inboxNotificationId: string) {
+    signal.mutate((lut) => lut.delete(inboxNotificationId));
+  }
 
-  // Room Threads
-  private _roomThreadsLastRequestedAtByRoom = new Map<string, Date>();
-  private _roomThreads: Map<string, PaginatedResource> = new Map();
+  function clear() {
+    signal.mutate((lut) => lut.clear());
+  }
 
-  // User Threads
-  private _userThreadsLastRequestedAt: Date | null = null;
-  private _userThreads: Map<string, PaginatedResource> = new Map();
+  function applyDelta(
+    newNotifications: InboxNotificationData[],
+    deletedNotifications: InboxNotificationDeleteInfo[]
+  ) {
+    signal.mutate((lut) => {
+      let mutated = false;
 
-  // Room versions
-  private _roomVersions: Map<string, SinglePageResource> = new Map();
-  private _roomVersionsLastRequestedAtByRoom = new Map<string, Date>();
+      // Add new notifications or update existing notifications if the existing notification is older than the new notification.
+      for (const n of newNotifications) {
+        const existing = lut.get(n.id);
+        // If the notification already exists, we need to compare the two notifications to determine which one is newer.
+        if (existing) {
+          const result = compareInboxNotifications(existing, n);
+          // If the existing notification is newer than the new notification, we do not update the existing notification.
+          if (result === 1) continue;
+        }
 
-  // Room notification settings
-  private _roomNotificationSettings: Map<string, SinglePageResource> =
-    new Map();
-
-  constructor(client: OpaqueClient) {
-    this._client = client[kInternal].as<M>();
-    this._syncSource = this._client[kInternal].createSyncSource();
-
-    const inboxFetcher = async (cursor?: string) => {
-      const result = await this._client.getInboxNotifications({ cursor });
-
-      this.updateThreadsAndNotifications(
-        result.threads,
-        result.inboxNotifications
-      );
-
-      // We initialize the `_lastRequestedNotificationsAt` date using the server timestamp after we've loaded the first page of inbox notifications.
-      if (this._notificationsLastRequestedAt === null) {
-        this._notificationsLastRequestedAt = result.requestedAt;
+        // If the new notification is newer than the existing notification, we update the existing notification.
+        lut.set(n.id, n);
+        mutated = true;
       }
 
-      const nextCursor = result.nextCursor;
-      return nextCursor;
-    };
-    this._notifications = new PaginatedResource(inboxFetcher);
-    this._notifications.observable.subscribe(() =>
-      // Note that the store itself does not change, but it's only vehicle at
-      // the moment to trigger a re-render, so we'll do a no-op update here.
-      this._store.set((store) => ({ ...store }))
+      for (const n of deletedNotifications) {
+        lut.delete(n.id);
+        mutated = true;
+      }
+      return mutated;
+    });
+  }
+
+  function updateAssociatedNotification(newComment: CommentData) {
+    signal.mutate((lut) => {
+      const existing = find(
+        lut.values(),
+        (notification) =>
+          notification.kind === "thread" &&
+          notification.threadId === newComment.threadId
+      );
+      if (!existing) return false; // Nothing to udate here
+
+      // If the thread has an inbox notification associated with it, we update the notification's `notifiedAt` and `readAt` values
+      lut.set(existing.id, {
+        ...existing,
+        notifiedAt: newComment.createdAt,
+        readAt: newComment.createdAt,
+      });
+      return true;
+    });
+  }
+
+  function upsert(notification: InboxNotificationData) {
+    signal.mutate((lut) => {
+      lut.set(notification.id, notification);
+    });
+  }
+
+  return {
+    signal: signal.asReadonly(),
+
+    // Mutations
+    markAllRead,
+    markRead,
+    delete: deleteOne,
+    applyDelta,
+    clear,
+    updateAssociatedNotification,
+    upsert,
+  };
+}
+
+function createStore_forRoomNotificationSettings(
+  updates: ISignal<readonly OptimisticUpdate<BaseMetadata>[]>
+) {
+  const baseSignal = new MutableSignal<SettingsLUT>(new Map());
+
+  function update(roomId: string, settings: RoomNotificationSettings): void {
+    baseSignal.mutate((lut) => {
+      lut.set(roomId, settings);
+    });
+  }
+
+  return {
+    signal: DerivedSignal.from(baseSignal, updates, (base, updates) =>
+      applyOptimisticUpdates_forSettings(base, updates)
+    ),
+
+    // Mutations
+    update,
+  };
+}
+
+function createStore_forHistoryVersions() {
+  const baseSignal = new MutableSignal(
+    new DefaultMap(() => new Map()) as VersionsLUT
+  );
+
+  function update(roomId: string, versions: HistoryVersion[]): void {
+    baseSignal.mutate((lut) => {
+      const versionsById = lut.getOrCreate(roomId);
+      for (const version of versions) {
+        versionsById.set(version.id, version);
+      }
+    });
+  }
+
+  return {
+    signal: DerivedSignal.from(baseSignal, (hv) =>
+      Object.fromEntries(
+        [...hv].map(([roomId, versions]) => [
+          roomId,
+          Object.fromEntries(versions),
+        ])
+      )
+    ),
+
+    // Mutations
+    update,
+  };
+}
+
+function createStore_forPermissionHints() {
+  const signal = new MutableSignal<PermissionHintsLUT>(
+    new DefaultMap(() => new Set())
+  );
+
+  function update(newHints: Record<string, Permission[]>) {
+    signal.mutate((lut) => {
+      for (const [roomId, newPermissions] of Object.entries(newHints)) {
+        // Get the existing set of permissions for the room and only ever add permission to this set
+        const existing = lut.getOrCreate(roomId);
+        // Add the new permissions to the set of existing permissions
+        for (const permission of newPermissions) {
+          existing.add(permission);
+        }
+      }
+    });
+  }
+
+  return {
+    signal: signal.asReadonly(),
+
+    // Mutations
+    update,
+  };
+}
+
+function createStore_forOptimistic<M extends BaseMetadata>(
+  client: Client<BaseUserMeta, M>
+) {
+  const signal = new Signal<readonly OptimisticUpdate<M>[]>([]);
+  const syncSource = client[kInternal].createSyncSource();
+
+  // Automatically update the global sync status as an effect whenever there
+  // are any optimistic updates
+  signal.subscribe(() =>
+    syncSource.setSyncStatus(
+      signal.get().length > 0 ? "synchronizing" : "synchronized"
+    )
+  );
+
+  function add(
+    optimisticUpdate: DistributiveOmit<OptimisticUpdate<M>, "id">
+  ): string {
+    const id = nanoid();
+    const newUpdate: OptimisticUpdate<M> = { ...optimisticUpdate, id };
+    signal.set((state) => [...state, newUpdate]);
+    return id;
+  }
+
+  function remove(optimisticId: string): void {
+    signal.set((state) => state.filter((ou) => ou.id !== optimisticId));
+  }
+
+  return {
+    signal: signal.asReadonly(),
+
+    // Mutations
+    add,
+    remove,
+  };
+}
+
+export class UmbrellaStore<M extends BaseMetadata> {
+  #client: Client<BaseUserMeta, M>;
+
+  //
+  // Internally, the UmbrellaStore keeps track of a few source signals that can
+  // be set and mutated individually. When any of those are mutated then the
+  // clean "external state" is recomputed.
+  //
+  //   Mutate inputs...                                             ...observe clean/consistent output!
+  //
+  //            .-> Base ThreadDB ---------+                 +----> Clean threads by ID       (Part 1)
+  //           /                           |                 |
+  //   mutate ----> Base Notifications --+ |                 | +--> Clean notifications       (Part 1)
+  //          \                          | |                 | |    & notifications by ID
+  //         | \                         | |      Apply      | |
+  //         |   `-> OptimisticUpdates --+--+--> Optimistic --+-+--> Notification Settings    (Part 2)
+  //          \                          |        Updates       |
+  //           `------- etc etc ---------+                      +--> History Versions         (Part 3)
+  //                       ^
+  //                       |
+  //                       |                        ^                  ^
+  //                    Signal                      |                  |
+  //                      or                   DerivedSignal      DerivedSignals
+  //                  MutableSignal
+  //
+
+  //
+  // Input signals.
+  // (Can be mutated directly.)
+  //
+  // XXX_vincent Now that we have createStore_forX, we should probably also change
+  // `threads` to this pattern, ie create a createStore_forThreads helper as
+  // well. It almost works like that already anyway!
+  readonly threads: ThreadDB<M>; // Exposes its signal under `.signal` prop
+  readonly notifications: ReturnType<typeof createStore_forNotifications>;
+  readonly roomNotificationSettings: ReturnType<typeof createStore_forRoomNotificationSettings>; // prettier-ignore
+  readonly historyVersions: ReturnType<typeof createStore_forHistoryVersions>;
+  readonly permissionHints: ReturnType<typeof createStore_forPermissionHints>;
+  readonly optimisticUpdates: ReturnType<typeof createStore_forOptimistic<M>>;
+
+  //
+  // Output signals.
+  // (Readonly, clean, consistent. With optimistic updates applied.)
+  //
+  // Note that the output of threadifications signal is the same as the ones for
+  // threads and notifications separately, but the threadifications signal will
+  // be updated whenever either of them change.
+  //
+  readonly outputs: {
+    readonly threadifications: DerivedSignal<CleanThreadifications<M>>;
+    readonly threads: DerivedSignal<ReadonlyThreadDB<M>>;
+    readonly loadingRoomThreads: DefaultMap<
+      RoomQueryKey,
+      LoadableResource<ThreadsAsyncResult<M>>
+    >;
+    readonly loadingUserThreads: DefaultMap<
+      UserQueryKey,
+      LoadableResource<ThreadsAsyncResult<M>>
+    >;
+    readonly notifications: DerivedSignal<CleanNotifications>;
+
+    readonly loadingNotifications: LoadableResource<InboxNotificationsAsyncResult>;
+    readonly settingsByRoomId: DefaultMap<
+      RoomId,
+      LoadableResource<RoomNotificationSettingsAsyncResult>
+    >;
+    readonly versionsByRoomId: DefaultMap<
+      RoomId,
+      LoadableResource<HistoryVersionsAsyncResult>
+    >;
+  };
+
+  // Notifications
+  #notificationsLastRequestedAt: Date | null = null; // Keeps track of when we successfully requested an inbox notifications update for the last time. Will be `null` as long as the first successful fetch hasn't happened yet.
+  #notificationsPaginationState: PaginatedResource;
+
+  // Room Threads
+  #roomThreadsLastRequestedAtByRoom = new Map<RoomId, Date>();
+
+  // User Threads
+  #userThreadsLastRequestedAt: Date | null = null;
+
+  // Room versions
+  #roomVersionsLastRequestedAtByRoom = new Map<RoomId, Date>();
+
+  constructor(client: OpaqueClient) {
+    this.#client = client[kInternal].as<M>();
+
+    this.optimisticUpdates = createStore_forOptimistic<M>(this.#client);
+    this.permissionHints = createStore_forPermissionHints();
+
+    this.#notificationsPaginationState = new PaginatedResource(
+      async (cursor?: string) => {
+        const result = await this.#client.getInboxNotifications({ cursor });
+
+        this.updateThreadifications(result.threads, result.inboxNotifications);
+
+        // We initialize the `_lastRequestedNotificationsAt` date using the server timestamp after we've loaded the first page of inbox notifications.
+        if (this.#notificationsLastRequestedAt === null) {
+          this.#notificationsLastRequestedAt = result.requestedAt;
+        }
+
+        const nextCursor = result.nextCursor;
+        return nextCursor;
+      }
     );
 
-    this._rawThreadsDB = new ThreadDB();
-    this._store = createStore<InternalState<M>>({
-      optimisticUpdates: [],
-      notificationsById: {},
-      settingsByRoomId: {},
-      versionsByRoomId: {},
+    this.threads = new ThreadDB();
+
+    this.notifications = createStore_forNotifications();
+    this.roomNotificationSettings = createStore_forRoomNotificationSettings(
+      this.optimisticUpdates.signal
+    );
+    this.historyVersions = createStore_forHistoryVersions();
+
+    const threadifications = DerivedSignal.from(
+      this.threads.signal,
+      this.notifications.signal,
+      this.optimisticUpdates.signal,
+      (ts, ns, updates) =>
+        applyOptimisticUpdates_forThreadifications(ts, ns, updates)
+    );
+
+    const threads = DerivedSignal.from(threadifications, (s) => s.threadsDB);
+
+    const notifications = DerivedSignal.from(
+      threadifications,
+      (s) => ({
+        sortedNotifications: s.sortedNotifications,
+        notificationsById: s.notificationsById,
+      }),
+      shallow
+    );
+
+    const loadingUserThreads = new DefaultMap(
+      (queryKey: UserQueryKey): LoadableResource<ThreadsAsyncResult<M>> => {
+        const query = unstringify(queryKey) as ThreadsQuery<M>;
+
+        const resource = new PaginatedResource(async (cursor?: string) => {
+          const result = await this.#client[
+            kInternal
+          ].httpClient.getUserThreads_experimental({
+            cursor,
+            query,
+          });
+          this.updateThreadifications(
+            result.threads,
+            result.inboxNotifications
+          );
+
+          this.permissionHints.update(result.permissionHints);
+
+          // We initialize the `_userThreadsLastRequestedAt` date using the server timestamp after we've loaded the first page of inbox notifications.
+          if (this.#userThreadsLastRequestedAt === null) {
+            this.#userThreadsLastRequestedAt = result.requestedAt;
+          }
+
+          return result.nextCursor;
+        });
+
+        const signal = DerivedSignal.from((): ThreadsAsyncResult<M> => {
+          const result = resource.get();
+          if (result.isLoading || result.error) {
+            return result;
+          }
+
+          const threads = this.outputs.threads.get().findMany(
+            undefined, // Do _not_ filter by roomId
+            query ?? {},
+            "desc"
+          );
+
+          const page = result.data;
+          return {
+            isLoading: false,
+            threads,
+            hasFetchedAll: page.hasFetchedAll,
+            isFetchingMore: page.isFetchingMore,
+            fetchMoreError: page.fetchMoreError,
+            fetchMore: page.fetchMore,
+          };
+        }, shallow2);
+
+        return { signal, waitUntilLoaded: resource.waitUntilLoaded };
+      }
+    );
+
+    const loadingRoomThreads = new DefaultMap(
+      (queryKey: RoomQueryKey): LoadableResource<ThreadsAsyncResult<M>> => {
+        const [roomId, query] = unstringify(queryKey) as [
+          roomId: RoomId,
+          query: ThreadsQuery<M>,
+        ];
+
+        const resource = new PaginatedResource(async (cursor?: string) => {
+          const result = await this.#client[kInternal].httpClient.getThreads({
+            roomId,
+            cursor,
+            query,
+          });
+          this.updateThreadifications(
+            result.threads,
+            result.inboxNotifications
+          );
+
+          this.permissionHints.update(result.permissionHints);
+
+          const lastRequestedAt =
+            this.#roomThreadsLastRequestedAtByRoom.get(roomId);
+
+          /**
+           * We set the `lastRequestedAt` value for the room to the timestamp returned by the current request if:
+           * 1. The `lastRequestedAt` value for the room has not been set
+           * OR
+           * 2. The `lastRequestedAt` value for the room is older than the timestamp returned by the current request
+           */
+          if (
+            lastRequestedAt === undefined ||
+            lastRequestedAt > result.requestedAt
+          ) {
+            this.#roomThreadsLastRequestedAtByRoom.set(
+              roomId,
+              result.requestedAt
+            );
+          }
+
+          return result.nextCursor;
+        });
+
+        const signal = DerivedSignal.from((): ThreadsAsyncResult<M> => {
+          const result = resource.get();
+          if (result.isLoading || result.error) {
+            return result;
+          }
+
+          const threads = this.outputs.threads
+            .get()
+            .findMany(roomId, query ?? {}, "asc");
+
+          const page = result.data;
+          return {
+            isLoading: false,
+            threads,
+            hasFetchedAll: page.hasFetchedAll,
+            isFetchingMore: page.isFetchingMore,
+            fetchMoreError: page.fetchMoreError,
+            fetchMore: page.fetchMore,
+          };
+        }, shallow2);
+
+        return { signal, waitUntilLoaded: resource.waitUntilLoaded };
+      }
+    );
+
+    const loadingNotifications = {
+      signal: DerivedSignal.from((): InboxNotificationsAsyncResult => {
+        const result = this.#notificationsPaginationState.get();
+        if (result.isLoading || result.error) {
+          return result;
+        }
+
+        const page = result.data;
+        return {
+          isLoading: false,
+          inboxNotifications:
+            this.outputs.notifications.get().sortedNotifications,
+          hasFetchedAll: page.hasFetchedAll,
+          isFetchingMore: page.isFetchingMore,
+          fetchMoreError: page.fetchMoreError,
+          fetchMore: page.fetchMore,
+        };
+      }),
+
+      waitUntilLoaded: this.#notificationsPaginationState.waitUntilLoaded,
+    };
+
+    const settingsByRoomId = new DefaultMap((roomId: RoomId) => {
+      const resource = new SinglePageResource(async () => {
+        const room = this.#client.getRoom(roomId);
+        if (room === null) {
+          throw new HttpError(
+            `Room '${roomId}' is not available on client`,
+            479
+          );
+        }
+
+        const result = await room.getNotificationSettings();
+        this.roomNotificationSettings.update(roomId, result);
+      });
+
+      const signal = DerivedSignal.from(() => {
+        const result = resource.get();
+        if (result.isLoading || result.error) {
+          return result;
+        } else {
+          return ASYNC_OK(
+            "settings",
+            nn(this.roomNotificationSettings.signal.get()[roomId])
+          );
+        }
+      }, shallow);
+
+      return { signal, waitUntilLoaded: resource.waitUntilLoaded };
     });
+
+    const versionsByRoomId = new DefaultMap(
+      (roomId: RoomId): LoadableResource<HistoryVersionsAsyncResult> => {
+        const resource = new SinglePageResource(async () => {
+          const room = this.#client.getRoom(roomId);
+          if (room === null) {
+            throw new HttpError(
+              `Room '${roomId}' is not available on client`,
+              479
+            );
+          }
+
+          const result = await room[kInternal].listTextVersions();
+          this.historyVersions.update(roomId, result.versions);
+
+          const lastRequestedAt =
+            this.#roomVersionsLastRequestedAtByRoom.get(roomId);
+
+          if (
+            lastRequestedAt === undefined ||
+            lastRequestedAt > result.requestedAt
+          ) {
+            this.#roomVersionsLastRequestedAtByRoom.set(
+              roomId,
+              result.requestedAt
+            );
+          }
+        });
+
+        const signal = DerivedSignal.from((): HistoryVersionsAsyncResult => {
+          const result = resource.get();
+          if (result.isLoading || result.error) {
+            return result;
+          } else {
+            return {
+              isLoading: false,
+              versions: Object.values(
+                this.historyVersions.signal.get()[roomId] ?? {}
+              ),
+            };
+          }
+        }, shallow);
+
+        return { signal, waitUntilLoaded: resource.waitUntilLoaded };
+      }
+    );
+
+    this.outputs = {
+      threadifications,
+      threads,
+      loadingRoomThreads,
+      loadingUserThreads,
+      notifications,
+      loadingNotifications,
+      settingsByRoomId,
+      versionsByRoomId,
+    };
 
     // Auto-bind all of this class’ methods here, so we can use stable
     // references to them (most important for use in useSyncExternalStore)
     autobind(this);
   }
 
-  private get(): UmbrellaStoreState<M> {
-    // Don't return the raw internal state immediately! Return a new computed
-    // cached state (with optimistic updates applied) instead, and cache that
-    // until the next .set() call invalidates it.
-    const rawState = this._store.get();
-    if (
-      this._prevVersion !== this._rawThreadsDB.version || // Note: Version check is only needed temporarily, until we can get rid of the Zustand-like update model
-      this._prevState !== rawState ||
-      this._stateCached === null
-    ) {
-      this._stateCached = internalToExternalState(rawState, this._rawThreadsDB);
-      this._prevState = rawState;
-      this._prevVersion = this._rawThreadsDB.version;
-    }
-    return this._stateCached;
-  }
-
-  public batch(callback: () => void): void {
-    return this._store.batch(callback);
-  }
-
-  public getFullState(): UmbrellaStoreState<M> {
-    return this.get();
-  }
-
-  /**
-   * Returns the async result of the given query and room id. If the query is success,
-   * then it will return the threads that match that provided query and room id.
-   *
-   */
-  public getRoomThreadsLoadingState(
-    roomId: string,
-    query: ThreadsQuery<M> | undefined
-  ): ThreadsAsyncResult<M> {
-    const queryKey = makeRoomThreadsQueryKey(roomId, query);
-
-    const paginatedResource = this._roomThreads.get(queryKey);
-    if (paginatedResource === undefined) {
-      return ASYNC_LOADING;
-    }
-
-    const asyncResult = paginatedResource.get();
-    if (asyncResult.isLoading || asyncResult.error) {
-      return asyncResult;
-    }
-
-    const threads = this.getFullState().threadsDB.findMany(
-      roomId,
-      query ?? {},
-      "asc"
-    );
-
-    const page = asyncResult.data;
-    // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
-    return {
-      isLoading: false,
-      threads,
-      hasFetchedAll: page.hasFetchedAll,
-      isFetchingMore: page.isFetchingMore,
-      fetchMoreError: page.fetchMoreError,
-      fetchMore: page.fetchMore,
-    };
-  }
-
-  public getUserThreadsLoadingState(
-    query: ThreadsQuery<M> | undefined
-  ): ThreadsAsyncResult<M> {
-    const queryKey = makeUserThreadsQueryKey(query);
-
-    const paginatedResource = this._userThreads.get(queryKey);
-    if (paginatedResource === undefined) {
-      return ASYNC_LOADING;
-    }
-
-    const asyncResult = paginatedResource.get();
-    if (asyncResult.isLoading || asyncResult.error) {
-      return asyncResult;
-    }
-
-    const threads = this.getFullState().threadsDB.findMany(
-      undefined, // Do _not_ filter by roomId
-      query ?? {},
-      "desc"
-    );
-
-    const page = asyncResult.data;
-    // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
-    return {
-      isLoading: false,
-      threads,
-      hasFetchedAll: page.hasFetchedAll,
-      isFetchingMore: page.isFetchingMore,
-      fetchMoreError: page.fetchMoreError,
-      fetchMore: page.fetchMore,
-    };
-  }
-
-  // NOTE: This will read the async result, but WILL NOT start loading at the moment!
-  public getInboxNotificationsLoadingState(): InboxNotificationsAsyncResult {
-    const asyncResult = this._notifications.get();
-    if (asyncResult.isLoading || asyncResult.error) {
-      return asyncResult;
-    }
-
-    const page = asyncResult.data;
-    // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
-    return {
-      isLoading: false,
-      inboxNotifications: this.getFullState().cleanedNotifications,
-      hasFetchedAll: page.hasFetchedAll,
-      isFetchingMore: page.isFetchingMore,
-      fetchMoreError: page.fetchMoreError,
-      fetchMore: page.fetchMore,
-    };
-  }
-
-  // NOTE: This will read the async result, but WILL NOT start loading at the moment!
-  public getNotificationSettingsLoadingState(
-    roomId: string
-  ): RoomNotificationSettingsAsyncResult {
-    const queryKey = makeNotificationSettingsQueryKey(roomId);
-
-    const resource = this._roomNotificationSettings.get(queryKey);
-    if (resource === undefined) {
-      return ASYNC_LOADING;
-    }
-
-    const asyncResult = resource.get();
-    if (asyncResult.isLoading || asyncResult.error) {
-      return asyncResult;
-    }
-
-    // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
-    return {
-      isLoading: false,
-      settings: nn(this.get().settingsByRoomId[roomId]),
-    };
-  }
-
-  public getRoomVersionsLoadingState(
-    roomId: string
-  ): AsyncResult<HistoryVersion[], "versions"> {
-    const queryKey = makeVersionsQueryKey(roomId);
-
-    const resource = this._roomVersions.get(queryKey);
-    if (resource === undefined) {
-      return ASYNC_LOADING;
-    }
-
-    const asyncResult = resource.get();
-    if (asyncResult.isLoading || asyncResult.error) {
-      return asyncResult;
-    }
-
-    // TODO Memoize this value to ensure stable result, so we won't have to use the selector and isEqual functions!
-    return {
-      isLoading: false,
-      versions: Object.values(this.get().versionsByRoomId[roomId] ?? {}),
-    };
-  }
-
-  public subscribe(callback: () => void): () => void {
-    return this._store.subscribe(callback);
-  }
-
-  // Direct low-level cache mutations ------------------------------------------------- {{{
-
-  private mutateThreadsDB(mutate: (db: ThreadDB<M>) => void): void {
-    const db = this._rawThreadsDB;
-    const old = db.version;
-    mutate(db);
-
-    // Trigger a re-render only if anything changed in the DB
-    if (old !== db.version) {
-      this._store.set((state) => ({ ...state }));
-    }
-  }
-
-  private updateInboxNotificationsCache(
-    mapFn: (
-      cache: Readonly<Record<string, InboxNotificationData>>
-    ) => Readonly<Record<string, InboxNotificationData>>
-  ): void {
-    this._store.set((state) => {
-      const inboxNotifications = mapFn(state.notificationsById);
-      return inboxNotifications !== state.notificationsById
-        ? { ...state, notificationsById: inboxNotifications }
-        : state;
-    });
-  }
-
-  private setNotificationSettings(
-    roomId: string,
-    settings: RoomNotificationSettings
-  ): void {
-    this._store.set((state) => ({
-      ...state,
-      settingsByRoomId: {
-        ...state.settingsByRoomId,
-        [roomId]: settings,
-      },
-    }));
-  }
-
-  private updateRoomVersions(roomId: string, versions: HistoryVersion[]): void {
-    this._store.set((state) => {
-      const versionsById = Object.fromEntries(
-        versions.map((version) => [version.id, version])
-      );
-
-      return {
-        ...state,
-        versionsByRoomId: {
-          ...state.versionsByRoomId,
-          [roomId]: {
-            // Merge with existing versions for the room, or start with an empty object
-            ...(state.versionsByRoomId[roomId] ?? {}),
-            ...versionsById,
-          },
-        },
-      };
-    });
-  }
-
-  private updateOptimisticUpdatesCache(
-    mapFn: (
-      cache: readonly OptimisticUpdate<M>[]
-    ) => readonly OptimisticUpdate<M>[]
-  ): void {
-    this._store.set((state) => {
-      const optimisticUpdates = mapFn(state.optimisticUpdates);
-      this._syncSource.setSyncStatus(
-        optimisticUpdates.length > 0 ? "synchronizing" : "synchronized"
-      );
-      return { ...state, optimisticUpdates };
-    });
-  }
-
-  // ---------------------------------------------------------------------------------- }}}
-
-  /** @internal - Only call this method from unit tests. */
-  public force_set(
-    callback: (currentState: InternalState<M>) => InternalState<M>
-  ): void {
-    return this._store.set(callback);
-  }
-
   /**
    * Updates an existing inbox notification with a new value, replacing the
    * corresponding optimistic update.
    *
-   * This will not update anything if the inbox notification ID isn't found in
-   * the cache.
+   * This will not update anything if the inbox notification ID isn't found.
    */
-  public updateInboxNotification(
+  public markInboxNotificationRead(
     inboxNotificationId: string,
-    optimisticUpdateId: string,
-    callback: (
-      notification: Readonly<InboxNotificationData>
-    ) => Readonly<InboxNotificationData>
+    readAt: Date,
+    optimisticId: string
   ): void {
-    // Batch 1️⃣ + 2️⃣
-    this._store.batch(() => {
-      this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
-
-      // 2️⃣
-      this.updateInboxNotificationsCache((cache) => {
-        const existing = cache[inboxNotificationId];
-        if (!existing) {
-          // If the inbox notification doesn't exist in the cache, we do not
-          // change anything
-          return cache;
-        }
-
-        const inboxNotifications = {
-          ...cache,
-          [inboxNotificationId]: callback(existing),
-        };
-        return inboxNotifications;
-      });
+    batch(() => {
+      this.optimisticUpdates.remove(optimisticId);
+      this.notifications.markRead(inboxNotificationId, readAt);
     });
   }
 
-  /**
-   * Updates *all* inbox notifications by running a mapper function over all of
-   * them, replacing the corresponding optimistic update.
-   */
-  public updateAllInboxNotifications(
-    optimisticUpdateId: string,
-    mapFn: (
-      notification: Readonly<InboxNotificationData>
-    ) => Readonly<InboxNotificationData>
+  public markAllInboxNotificationsRead(
+    optimisticId: string,
+    readAt: Date
   ): void {
-    // Batch 1️⃣ + 2️⃣
-    this._store.batch(() => {
-      this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
-      this.updateInboxNotificationsCache((cache) => mapValues(cache, mapFn)); // 2️⃣
+    batch(() => {
+      this.optimisticUpdates.remove(optimisticId);
+      this.notifications.markAllRead(readAt);
     });
   }
 
@@ -962,18 +1178,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
    */
   public deleteInboxNotification(
     inboxNotificationId: string,
-    optimisticUpdateId: string
+    optimisticId: string
   ): void {
-    // Batch 1️⃣ + 2️⃣
-    this._store.batch(() => {
-      this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
-
-      // 2️⃣
-      this.updateInboxNotificationsCache((cache) => {
-        // Delete it
-        const { [inboxNotificationId]: removed, ...newCache } = cache;
-        return removed === undefined ? cache : newCache;
-      });
+    batch(() => {
+      this.optimisticUpdates.remove(optimisticId);
+      this.notifications.delete(inboxNotificationId);
     });
   }
 
@@ -981,11 +1190,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * Deletes *all* inbox notifications, replacing the corresponding optimistic
    * update.
    */
-  public deleteAllInboxNotifications(optimisticUpdateId: string): void {
-    // Batch 1️⃣ + 2️⃣
-    this._store.batch(() => {
-      this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
-      this.updateInboxNotificationsCache(() => ({})); // 2️⃣ empty the cache
+  public deleteAllInboxNotifications(optimisticId: string): void {
+    batch(() => {
+      this.optimisticUpdates.remove(optimisticId);
+      this.notifications.clear();
     });
   }
 
@@ -993,13 +1201,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * Creates an new thread, replacing the corresponding optimistic update.
    */
   public createThread(
-    optimisticUpdateId: string,
+    optimisticId: string,
     thread: Readonly<ThreadDataWithDeleteInfo<M>>
   ): void {
-    // Batch 1️⃣ + 2️⃣
-    this._store.batch(() => {
-      this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣j
-      this.mutateThreadsDB((db) => db.upsert(thread)); // 2️⃣
+    batch(() => {
+      this.optimisticUpdates.remove(optimisticId);
+      this.threads.upsert(thread);
     });
   }
 
@@ -1008,39 +1215,35 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * optimistic update.
    *
    * This will not update anything if:
-   * - The thread ID isn't found in the cache; or
-   * - The thread ID was already deleted from the cache; or
-   * - The thread ID in the cache was updated more recently than the optimistic
-   *   update's timestamp (if given)
+   * - The thread ID isn't found; or
+   * - The thread ID was already deleted; or
+   * - The thread ID was updated more recently than the optimistic update's
+   *   timestamp (if given)
    */
-  private updateThread(
+  #updateThread(
     threadId: string,
-    optimisticUpdateId: string | null,
+    optimisticId: string | null,
     callback: (
       thread: Readonly<ThreadDataWithDeleteInfo<M>>
     ) => Readonly<ThreadDataWithDeleteInfo<M>>,
     updatedAt?: Date // TODO We could look this up from the optimisticUpdate instead?
   ): void {
-    // Batch 1️⃣ + 2️⃣
-    this._store.batch(() => {
-      if (optimisticUpdateId !== null) {
-        this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
+    batch(() => {
+      if (optimisticId !== null) {
+        this.optimisticUpdates.remove(optimisticId);
       }
 
-      // 2️⃣
-      this.mutateThreadsDB((db) => {
-        const existing = db.get(threadId);
-        if (!existing) return;
-        if (!!updatedAt && existing.updatedAt > updatedAt) return;
-
-        db.upsert(callback(existing));
-      });
+      const db = this.threads;
+      const existing = db.get(threadId);
+      if (!existing) return;
+      if (!!updatedAt && existing.updatedAt > updatedAt) return;
+      db.upsert(callback(existing));
     });
   }
 
   public patchThread(
     threadId: string,
-    optimisticUpdateId: string | null,
+    optimisticId: string | null,
     patch: {
       // Only these fields are currently supported to patch
       metadata?: M;
@@ -1048,9 +1251,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
     },
     updatedAt: Date // TODO We could look this up from the optimisticUpdate instead?
   ): void {
-    return this.updateThread(
+    return this.#updateThread(
       threadId,
-      optimisticUpdateId,
+      optimisticId,
       (thread) => ({ ...thread, ...compactObject(patch) }),
       updatedAt
     );
@@ -1058,14 +1261,14 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   public addReaction(
     threadId: string,
-    optimisticUpdateId: string | null,
+    optimisticId: string | null,
     commentId: string,
     reaction: CommentUserReaction,
     createdAt: Date // TODO We could look this up from the optimisticUpdate instead?
   ): void {
-    this.updateThread(
+    this.#updateThread(
       threadId,
-      optimisticUpdateId,
+      optimisticId,
       (thread) => applyAddReaction(thread, commentId, reaction),
       createdAt
     );
@@ -1073,15 +1276,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
   public removeReaction(
     threadId: string,
-    optimisticUpdateId: string | null,
+    optimisticId: string | null,
     commentId: string,
     emoji: string,
     userId: string,
     removedAt: Date
   ): void {
-    this.updateThread(
+    this.#updateThread(
       threadId,
-      optimisticUpdateId,
+      optimisticId,
       (thread) =>
         applyRemoveReaction(thread, commentId, emoji, userId, removedAt),
       removedAt
@@ -1093,16 +1296,13 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * replacing the corresponding optimistic update.
    *
    * This will not update anything if:
-   * - The thread ID isn't found in the cache; or
-   * - The thread ID was already deleted from the cache
+   * - The thread ID isn't found; or
+   * - The thread ID was already deleted
    */
-  public deleteThread(
-    threadId: string,
-    optimisticUpdateId: string | null
-  ): void {
-    return this.updateThread(
+  public deleteThread(threadId: string, optimisticId: string | null): void {
+    return this.#updateThread(
       threadId,
-      optimisticUpdateId,
+      optimisticId,
 
       // A deletion is actually an update of the deletedAt property internally
       (thread) => ({ ...thread, updatedAt: new Date(), deletedAt: new Date() })
@@ -1113,125 +1313,59 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * Creates an existing comment and ensures the associated notification is
    * updated correctly, replacing the corresponding optimistic update.
    */
-  public createComment(
-    newComment: CommentData,
-    optimisticUpdateId: string
-  ): void {
+  public createComment(newComment: CommentData, optimisticId: string): void {
     // Batch 1️⃣ + 2️⃣ + 3️⃣
-    this._store.batch(() => {
+    batch(() => {
       // 1️⃣
-      this.removeOptimisticUpdate(optimisticUpdateId);
+      this.optimisticUpdates.remove(optimisticId);
 
       // If the associated thread is not found, we cannot create a comment under it
-      const existingThread = this._rawThreadsDB.get(newComment.threadId);
+      const existingThread = this.threads.get(newComment.threadId);
       if (!existingThread) {
         return;
       }
 
       // 2️⃣ Update the thread instance by adding a comment under it
-      this.mutateThreadsDB((db) =>
-        db.upsert(applyUpsertComment(existingThread, newComment))
-      );
+      this.threads.upsert(applyUpsertComment(existingThread, newComment));
 
       // 3️⃣ Update the associated inbox notification (if any)
-      this.updateInboxNotificationsCache((cache) => {
-        const existingNotification = Object.values(cache).find(
-          (notification) =>
-            notification.kind === "thread" &&
-            notification.threadId === newComment.threadId
-        );
-
-        if (!existingNotification) {
-          // Nothing to update here
-          return cache;
-        }
-
-        // If the thread has an inbox notification associated with it, we update the notification's `notifiedAt` and `readAt` values
-        return {
-          ...cache,
-          [existingNotification.id]: {
-            ...existingNotification,
-            notifiedAt: newComment.createdAt,
-            readAt: newComment.createdAt,
-          },
-        };
-      });
+      this.notifications.updateAssociatedNotification(newComment);
     });
   }
 
   public editComment(
     threadId: string,
-    optimisticUpdateId: string,
+    optimisticId: string,
     editedComment: CommentData
   ): void {
-    return this.updateThread(threadId, optimisticUpdateId, (thread) =>
+    return this.#updateThread(threadId, optimisticId, (thread) =>
       applyUpsertComment(thread, editedComment)
     );
   }
 
   public deleteComment(
     threadId: string,
-    optimisticUpdateId: string,
+    optimisticId: string,
     commentId: string,
     deletedAt: Date
   ): void {
-    return this.updateThread(
+    return this.#updateThread(
       threadId,
-      optimisticUpdateId,
+      optimisticId,
       (thread) => applyDeleteComment(thread, commentId, deletedAt),
       deletedAt
     );
   }
 
-  public updateThreadAndNotification(
-    thread: ThreadData<M>,
-    inboxNotification?: InboxNotificationData
-  ): void {
-    // Batch 1️⃣ + 2️⃣
-    this._store.batch(() => {
-      // 1️⃣
-      this.mutateThreadsDB((db) => db.upsertIfNewer(thread));
-
-      // 2️⃣
-      if (inboxNotification !== undefined) {
-        this.updateInboxNotificationsCache((cache) => ({
-          ...cache,
-          [inboxNotification.id]: inboxNotification,
-        }));
-      }
-    });
-  }
-
-  public updateThreadsAndNotifications(
+  public updateThreadifications(
     threads: ThreadData<M>[],
-    inboxNotifications: InboxNotificationData[]
-  ): void;
-  public updateThreadsAndNotifications(
-    threads: ThreadData<M>[],
-    inboxNotifications: InboxNotificationData[],
-    deletedThreads: ThreadDeleteInfo[],
-    deletedInboxNotifications: InboxNotificationDeleteInfo[]
-  ): void;
-  public updateThreadsAndNotifications(
-    threads: ThreadData<M>[],
-    inboxNotifications: InboxNotificationData[],
+    notifications: InboxNotificationData[],
     deletedThreads: ThreadDeleteInfo[] = [],
-    deletedInboxNotifications: InboxNotificationDeleteInfo[] = []
+    deletedNotifications: InboxNotificationDeleteInfo[] = []
   ): void {
-    // Batch 1️⃣ + 2️⃣
-    this._store.batch(() => {
-      // 1️⃣
-      this.mutateThreadsDB((db) =>
-        applyThreadDeltaUpdates(db, { newThreads: threads, deletedThreads })
-      );
-
-      // 2️⃣
-      this.updateInboxNotificationsCache((cache) =>
-        applyNotificationsUpdates(cache, {
-          newInboxNotifications: inboxNotifications,
-          deletedNotifications: deletedInboxNotifications,
-        })
-      );
+    batch(() => {
+      this.threads.applyDelta(threads, deletedThreads);
+      this.notifications.applyDelta(notifications, deletedNotifications);
     });
   }
 
@@ -1239,261 +1373,108 @@ export class UmbrellaStore<M extends BaseMetadata> {
    * Updates existing notification setting for a room with a new value,
    * replacing the corresponding optimistic update.
    */
-  public updateRoomNotificationSettings_confirmOptimisticUpdate(
+  public updateRoomNotificationSettings(
     roomId: string,
-    optimisticUpdateId: string,
+    optimisticId: string,
     settings: Readonly<RoomNotificationSettings>
   ): void {
-    // Batch 1️⃣ + 2️⃣
-    this._store.batch(() => {
-      this.removeOptimisticUpdate(optimisticUpdateId); // 1️⃣
-      this.setNotificationSettings(roomId, settings); // 2️⃣
+    batch(() => {
+      this.optimisticUpdates.remove(optimisticId);
+      this.roomNotificationSettings.update(roomId, settings);
     });
   }
 
-  public addOptimisticUpdate(
-    optimisticUpdate: DistributiveOmit<OptimisticUpdate<M>, "id">
-  ): string {
-    const id = nanoid();
-    const newUpdate: OptimisticUpdate<M> = { ...optimisticUpdate, id };
-    this.updateOptimisticUpdatesCache((cache) => [...cache, newUpdate]);
-    return id;
-  }
-
-  public removeOptimisticUpdate(optimisticUpdateId: string): void {
-    this.updateOptimisticUpdatesCache((cache) =>
-      cache.filter((ou) => ou.id !== optimisticUpdateId)
-    );
-  }
-
   public async fetchNotificationsDeltaUpdate(signal: AbortSignal) {
-    const lastRequestedAt = this._notificationsLastRequestedAt;
+    const lastRequestedAt = this.#notificationsLastRequestedAt;
     if (lastRequestedAt === null) {
       return;
     }
 
-    const result = await this._client.getInboxNotificationsSince({
+    const result = await this.#client.getInboxNotificationsSince({
       since: lastRequestedAt,
       signal,
     });
 
     if (lastRequestedAt < result.requestedAt) {
-      this._notificationsLastRequestedAt = result.requestedAt;
+      this.#notificationsLastRequestedAt = result.requestedAt;
     }
 
-    this.updateThreadsAndNotifications(
+    this.updateThreadifications(
       result.threads.updated,
       result.inboxNotifications.updated,
       result.threads.deleted,
       result.inboxNotifications.deleted
     );
-  }
-
-  public waitUntilNotificationsLoaded(): UsablePromise<void> {
-    return this._notifications.waitUntilLoaded();
-  }
-
-  public waitUntilRoomThreadsLoaded(
-    roomId: string,
-    query: ThreadsQuery<M> | undefined
-  ) {
-    const threadsFetcher = async (cursor?: string) => {
-      const room = this._client.getRoom(roomId);
-      if (room === null) {
-        throw new HttpError(`Room '${roomId}' is not available on client`, 479);
-      }
-
-      const result = await room.getThreads({ cursor, query });
-      this.updateThreadsAndNotifications(
-        result.threads,
-        result.inboxNotifications
-      );
-
-      const lastRequestedAt =
-        this._roomThreadsLastRequestedAtByRoom.get(roomId);
-
-      /**
-       * We set the `lastRequestedAt` value for the room to the timestamp returned by the current request if:
-       * 1. The `lastRequestedAt` value for the room has not been set
-       * OR
-       * 2. The `lastRequestedAt` value for the room is older than the timestamp returned by the current request
-       */
-      if (
-        lastRequestedAt === undefined ||
-        lastRequestedAt > result.requestedAt
-      ) {
-        this._roomThreadsLastRequestedAtByRoom.set(roomId, result.requestedAt);
-      }
-
-      return result.nextCursor;
-    };
-
-    const queryKey = makeRoomThreadsQueryKey(roomId, query);
-    let paginatedResource = this._roomThreads.get(queryKey);
-    if (paginatedResource === undefined) {
-      paginatedResource = new PaginatedResource(threadsFetcher);
-    }
-
-    paginatedResource.observable.subscribe(() =>
-      // Note that the store itself does not change, but it's only vehicle at
-      // the moment to trigger a re-render, so we'll do a no-op update here.
-      this._store.set((store) => ({ ...store }))
-    );
-
-    this._roomThreads.set(queryKey, paginatedResource);
-
-    return paginatedResource.waitUntilLoaded();
   }
 
   public async fetchRoomThreadsDeltaUpdate(
     roomId: string,
     signal: AbortSignal
   ) {
-    const lastRequestedAt = this._roomThreadsLastRequestedAtByRoom.get(roomId);
+    const lastRequestedAt = this.#roomThreadsLastRequestedAtByRoom.get(roomId);
     if (lastRequestedAt === undefined) {
       return;
     }
 
-    const room = nn(
-      this._client.getRoom(roomId),
-      `Room with id ${roomId} is not available on client`
-    );
-
-    const updates = await room.getThreadsSince({
+    const updates = await this.#client[kInternal].httpClient.getThreadsSince({
+      roomId,
       since: lastRequestedAt,
       signal,
     });
 
-    this.updateThreadsAndNotifications(
+    this.updateThreadifications(
       updates.threads.updated,
       updates.inboxNotifications.updated,
       updates.threads.deleted,
       updates.inboxNotifications.deleted
     );
 
+    this.permissionHints.update(updates.permissionHints);
+
     if (lastRequestedAt < updates.requestedAt) {
       // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
-      this._roomThreadsLastRequestedAtByRoom.set(roomId, updates.requestedAt);
+      this.#roomThreadsLastRequestedAtByRoom.set(roomId, updates.requestedAt);
     }
-  }
-
-  public waitUntilUserThreadsLoaded(query: ThreadsQuery<M> | undefined) {
-    const queryKey = makeUserThreadsQueryKey(query);
-
-    const threadsFetcher = async (cursor?: string) => {
-      const result = await this._client[kInternal].getUserThreads_experimental({
-        cursor,
-        query,
-      });
-      this.updateThreadsAndNotifications(
-        result.threads,
-        result.inboxNotifications
-      );
-
-      // We initialize the `_userThreadsLastRequestedAt` date using the server timestamp after we've loaded the first page of inbox notifications.
-      if (this._userThreadsLastRequestedAt === null) {
-        this._userThreadsLastRequestedAt = result.requestedAt;
-      }
-
-      return result.nextCursor;
-    };
-
-    let paginatedResource = this._userThreads.get(queryKey);
-    if (paginatedResource === undefined) {
-      paginatedResource = new PaginatedResource(threadsFetcher);
-    }
-
-    paginatedResource.observable.subscribe(() =>
-      // Note that the store itself does not change, but it's only vehicle at
-      // the moment to trigger a re-render, so we'll do a no-op update here.
-      this._store.set((store) => ({ ...store }))
-    );
-
-    this._userThreads.set(queryKey, paginatedResource);
-
-    return paginatedResource.waitUntilLoaded();
   }
 
   public async fetchUserThreadsDeltaUpdate(signal: AbortSignal) {
-    const lastRequestedAt = this._userThreadsLastRequestedAt;
+    const lastRequestedAt = this.#userThreadsLastRequestedAt;
     if (lastRequestedAt === null) {
       return;
     }
 
-    const result = await this._client[
+    const result = await this.#client[
       kInternal
-    ].getUserThreadsSince_experimental({
+    ].httpClient.getUserThreadsSince_experimental({
       since: lastRequestedAt,
       signal,
     });
 
     if (lastRequestedAt < result.requestedAt) {
-      this._notificationsLastRequestedAt = result.requestedAt;
+      this.#notificationsLastRequestedAt = result.requestedAt;
     }
 
-    this.updateThreadsAndNotifications(
+    this.updateThreadifications(
       result.threads.updated,
       result.inboxNotifications.updated,
       result.threads.deleted,
       result.inboxNotifications.deleted
     );
-  }
 
-  public waitUntilRoomVersionsLoaded(roomId: string) {
-    const queryKey = makeVersionsQueryKey(roomId);
-    let resource = this._roomVersions.get(queryKey);
-    if (resource === undefined) {
-      const versionsFetcher = async () => {
-        const room = this._client.getRoom(roomId);
-        if (room === null) {
-          throw new HttpError(
-            `Room '${roomId}' is not available on client`,
-            479
-          );
-        }
-
-        const result = await room[kInternal].listTextVersions();
-        this.updateRoomVersions(roomId, result.versions);
-
-        const lastRequestedAt =
-          this._roomVersionsLastRequestedAtByRoom.get(roomId);
-
-        if (
-          lastRequestedAt === undefined ||
-          lastRequestedAt > result.requestedAt
-        ) {
-          this._roomVersionsLastRequestedAtByRoom.set(
-            roomId,
-            result.requestedAt
-          );
-        }
-      };
-
-      resource = new SinglePageResource(versionsFetcher);
-    }
-
-    resource.observable.subscribe(() =>
-      // Note that the store itself does not change, but it's only vehicle at
-      // the moment to trigger a re-render, so we'll do a no-op update here.
-      this._store.set((store) => ({ ...store }))
-    );
-
-    this._roomVersions.set(queryKey, resource);
-
-    return resource.waitUntilLoaded();
+    this.permissionHints.update(result.permissionHints);
   }
 
   public async fetchRoomVersionsDeltaUpdate(
     roomId: string,
     signal: AbortSignal
   ) {
-    const lastRequestedAt = this._roomVersionsLastRequestedAtByRoom.get(roomId);
+    const lastRequestedAt = this.#roomVersionsLastRequestedAtByRoom.get(roomId);
     if (lastRequestedAt === undefined) {
       return;
     }
 
     const room = nn(
-      this._client.getRoom(roomId),
+      this.#client.getRoom(roomId),
       `Room with id ${roomId} is not available on client`
     );
 
@@ -1502,43 +1483,12 @@ export class UmbrellaStore<M extends BaseMetadata> {
       signal,
     });
 
-    this.updateRoomVersions(roomId, updates.versions);
+    this.historyVersions.update(roomId, updates.versions);
 
     if (lastRequestedAt < updates.requestedAt) {
       // Update the `lastRequestedAt` value for the room to the timestamp returned by the current request
-      this._roomVersionsLastRequestedAtByRoom.set(roomId, updates.requestedAt);
+      this.#roomVersionsLastRequestedAtByRoom.set(roomId, updates.requestedAt);
     }
-  }
-
-  public waitUntilRoomNotificationSettingsLoaded(roomId: string) {
-    const queryKey = makeNotificationSettingsQueryKey(roomId);
-    let resource = this._roomNotificationSettings.get(queryKey);
-    if (resource === undefined) {
-      const notificationSettingsFetcher = async () => {
-        const room = this._client.getRoom(roomId);
-        if (room === null) {
-          throw new HttpError(
-            `Room '${roomId}' is not available on client`,
-            479
-          );
-        }
-
-        const result = await room.getNotificationSettings();
-        this.setNotificationSettings(roomId, result);
-      };
-
-      resource = new SinglePageResource(notificationSettingsFetcher);
-    }
-
-    resource.observable.subscribe(() =>
-      // Note that the store itself does not change, but it's only vehicle at
-      // the moment to trigger a re-render, so we'll do a no-op update here.
-      this._store.set((store) => ({ ...store }))
-    );
-
-    this._roomNotificationSettings.set(queryKey, resource);
-
-    return resource.waitUntilLoaded();
   }
 
   public async refreshRoomNotificationSettings(
@@ -1546,11 +1496,11 @@ export class UmbrellaStore<M extends BaseMetadata> {
     signal: AbortSignal
   ) {
     const room = nn(
-      this._client.getRoom(roomId),
+      this.#client.getRoom(roomId),
       `Room with id ${roomId} is not available on client`
     );
     const result = await room.getNotificationSettings({ signal });
-    this.setNotificationSettings(roomId, result);
+    this.roomNotificationSettings.update(roomId, result);
   }
 }
 
@@ -1558,18 +1508,15 @@ export class UmbrellaStore<M extends BaseMetadata> {
  * Applies optimistic updates, removes deleted threads, sorts results in
  * a stable way, removes internal fields that should not be exposed publicly.
  */
-function internalToExternalState<M extends BaseMetadata>(
-  state: InternalState<M>,
-  rawThreadsDB: ThreadDB<M>
-): UmbrellaStoreState<M> {
-  const threadsDB = rawThreadsDB.clone();
+function applyOptimisticUpdates_forThreadifications<M extends BaseMetadata>(
+  baseThreadsDB: ThreadDB<M>,
+  notificationsLUT: NotificationsLUT,
+  optimisticUpdates: readonly OptimisticUpdate<M>[]
+): CleanThreadifications<M> {
+  const threadsDB = baseThreadsDB.clone();
+  let notificationsById = Object.fromEntries(notificationsLUT);
 
-  const computed = {
-    notificationsById: { ...state.notificationsById },
-    settingsByRoomId: { ...state.settingsByRoomId },
-  };
-
-  for (const optimisticUpdate of state.optimisticUpdates) {
+  for (const optimisticUpdate of optimisticUpdates) {
     switch (optimisticUpdate.type) {
       case "create-thread": {
         threadsDB.upsert(optimisticUpdate.thread);
@@ -1618,9 +1565,7 @@ function internalToExternalState<M extends BaseMetadata>(
 
         threadsDB.upsert(applyUpsertComment(thread, optimisticUpdate.comment));
 
-        const inboxNotification = Object.values(
-          computed.notificationsById
-        ).find(
+        const inboxNotification = Object.values(notificationsById).find(
           (notification) =>
             notification.kind === "thread" &&
             notification.threadId === thread.id
@@ -1630,7 +1575,7 @@ function internalToExternalState<M extends BaseMetadata>(
           break;
         }
 
-        computed.notificationsById[inboxNotification.id] = {
+        notificationsById[inboxNotification.id] = {
           ...inboxNotification,
           notifiedAt: optimisticUpdate.comment.createdAt,
           readAt: optimisticUpdate.comment.createdAt,
@@ -1705,30 +1650,29 @@ function internalToExternalState<M extends BaseMetadata>(
       }
 
       case "mark-inbox-notification-as-read": {
-        const ibn =
-          computed.notificationsById[optimisticUpdate.inboxNotificationId];
+        const ibn = notificationsById[optimisticUpdate.inboxNotificationId];
 
-        // If the inbox notification doesn't exist in the cache, we do not apply the update
+        // If the inbox notification doesn't exist, we do not apply the update
         if (ibn === undefined) {
           break;
         }
 
-        computed.notificationsById[optimisticUpdate.inboxNotificationId] = {
+        notificationsById[optimisticUpdate.inboxNotificationId] = {
           ...ibn,
           readAt: optimisticUpdate.readAt,
         };
         break;
       }
       case "mark-all-inbox-notifications-as-read": {
-        for (const id in computed.notificationsById) {
-          const ibn = computed.notificationsById[id];
+        for (const id in notificationsById) {
+          const ibn = notificationsById[id];
 
-          // If the inbox notification doesn't exist in the cache, we do not apply the update
+          // If the inbox notification doesn't exist, we do not apply the update
           if (ibn === undefined) {
             break;
           }
 
-          computed.notificationsById[id] = {
+          notificationsById[id] = {
             ...ibn,
             readAt: optimisticUpdate.readAt,
           };
@@ -1736,99 +1680,60 @@ function internalToExternalState<M extends BaseMetadata>(
         break;
       }
       case "delete-inbox-notification": {
-        delete computed.notificationsById[optimisticUpdate.inboxNotificationId];
+        delete notificationsById[optimisticUpdate.inboxNotificationId];
         break;
       }
       case "delete-all-inbox-notifications": {
-        computed.notificationsById = {};
+        notificationsById = {};
         break;
-      }
-
-      case "update-notification-settings": {
-        const settings = computed.settingsByRoomId[optimisticUpdate.roomId];
-
-        // If the inbox notification doesn't exist in the cache, we do not apply the update
-        if (settings === undefined) {
-          break;
-        }
-
-        computed.settingsByRoomId[optimisticUpdate.roomId] = {
-          ...settings,
-          ...optimisticUpdate.settings,
-        };
       }
     }
   }
 
   // TODO Maybe consider also removing these from the inboxNotificationsById registry?
-  const cleanedNotifications =
+  const sortedNotifications =
     // Sort so that the most recent notifications are first
-    Object.values(computed.notificationsById)
+    Object.values(notificationsById)
       .filter((ibn) =>
         ibn.kind === "thread" ? threadsDB.get(ibn.threadId) !== undefined : true
       )
       .sort((a, b) => b.notifiedAt.getTime() - a.notifiedAt.getTime());
 
   return {
-    cleanedNotifications,
-    notificationsById: computed.notificationsById,
-    settingsByRoomId: computed.settingsByRoomId,
+    sortedNotifications,
+    notificationsById,
     threadsDB,
-    versionsByRoomId: state.versionsByRoomId,
   };
 }
 
-export function applyThreadDeltaUpdates<M extends BaseMetadata>(
-  db: ThreadDB<M>,
-  updates: {
-    newThreads: ThreadData<M>[];
-    deletedThreads: ThreadDeleteInfo[];
-  }
-): void {
-  // Add new threads or update existing threads if the existing thread is older than the new thread.
-  updates.newThreads.forEach((thread) => db.upsertIfNewer(thread));
+/**
+ * Applies optimistic updates, removes deleted threads, sorts results in
+ * a stable way, removes internal fields that should not be exposed publicly.
+ */
+function applyOptimisticUpdates_forSettings(
+  settingsLUT: SettingsLUT,
+  optimisticUpdates: readonly OptimisticUpdate<BaseMetadata>[]
+): SettingsByRoomId {
+  const settingsByRoomId = Object.fromEntries(settingsLUT);
 
-  // Mark threads in the deletedThreads list as deleted
-  updates.deletedThreads.forEach(({ id, deletedAt }) => {
-    const existing = db.getEvenIfDeleted(id);
-    if (!existing) return;
+  for (const optimisticUpdate of optimisticUpdates) {
+    switch (optimisticUpdate.type) {
+      case "update-notification-settings": {
+        const settings = settingsByRoomId[optimisticUpdate.roomId];
 
-    db.delete(id, deletedAt);
-  });
-}
+        // If the inbox notification doesn't exist, we do not apply the update
+        if (settings === undefined) {
+          break;
+        }
 
-export function applyNotificationsUpdates(
-  existingInboxNotifications: Record<string, InboxNotificationData>,
-  updates: {
-    newInboxNotifications: InboxNotificationData[];
-    deletedNotifications: InboxNotificationDeleteInfo[];
-  }
-): Record<string, InboxNotificationData> {
-  const updatedInboxNotifications = { ...existingInboxNotifications };
-
-  // Add new notifications or update existing notifications if the existing notification is older than the new notification.
-  updates.newInboxNotifications.forEach((notification) => {
-    const existingNotification = updatedInboxNotifications[notification.id];
-    // If the notification already exists, we need to compare the two notifications to determine which one is newer.
-    if (existingNotification) {
-      const result = compareInboxNotifications(
-        existingNotification,
-        notification
-      );
-
-      // If the existing notification is newer than the new notification, we do not update the existing notification.
-      if (result === 1) return;
+        settingsByRoomId[optimisticUpdate.roomId] = {
+          ...settings,
+          ...optimisticUpdate.settings,
+        };
+      }
     }
-
-    // If the new notification is newer than the existing notification, we update the existing notification.
-    updatedInboxNotifications[notification.id] = notification;
-  });
-
-  updates.deletedNotifications.forEach(
-    ({ id }) => delete updatedInboxNotifications[id]
-  );
-
-  return updatedInboxNotifications;
+  }
+  return settingsByRoomId;
 }
 
 /**

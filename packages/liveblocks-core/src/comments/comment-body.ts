@@ -127,6 +127,7 @@ export type StringifyCommentBodyOptions<U extends BaseUserMeta = DU> = {
 
   /**
    * A function that returns user info from user IDs.
+   * You should return a list of user objects of the same size, in the same order.
    */
   resolveUsers?: (
     args: ResolveUsersArgs
@@ -310,25 +311,20 @@ function escapeHtml(
 
 // Adapted from https://github.com/Janpot/escape-html-template-tag
 export class HtmlSafeString {
-  private _strings: readonly string[];
-  private _values: readonly (
-    | string
-    | string[]
-    | HtmlSafeString
-    | HtmlSafeString[]
-  )[];
+  #strings: readonly string[];
+  #values: readonly (string | string[] | HtmlSafeString | HtmlSafeString[])[];
 
   constructor(
     strings: readonly string[],
     values: readonly (string | string[] | HtmlSafeString | HtmlSafeString[])[]
   ) {
-    this._strings = strings;
-    this._values = values;
+    this.#strings = strings;
+    this.#values = values;
   }
 
   toString(): string {
-    return this._strings.reduce((result, str, i) => {
-      return result + escapeHtml(nn(this._values[i - 1])) + str;
+    return this.#strings.reduce((result, str, i) => {
+      return result + escapeHtml(nn(this.#values[i - 1])) + str;
     });
   }
 }
@@ -398,8 +394,8 @@ function escapeMarkdown(
 
 // Adapted from https://github.com/Janpot/escape-html-template-tag
 export class MarkdownSafeString {
-  private _strings: readonly string[];
-  private _values: readonly (
+  #strings: readonly string[];
+  #values: readonly (
     | string
     | string[]
     | MarkdownSafeString
@@ -415,13 +411,13 @@ export class MarkdownSafeString {
       | MarkdownSafeString[]
     )[]
   ) {
-    this._strings = strings;
-    this._values = values;
+    this.#strings = strings;
+    this.#values = values;
   }
 
   toString(): string {
-    return this._strings.reduce((result, str, i) => {
-      return result + escapeMarkdown(nn(this._values[i - 1])) + str;
+    return this.#strings.reduce((result, str, i) => {
+      return result + escapeMarkdown(nn(this.#values[i - 1])) + str;
     });
   }
 }

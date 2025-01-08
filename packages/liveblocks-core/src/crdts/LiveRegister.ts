@@ -17,16 +17,15 @@ import { AbstractCrdt } from "./AbstractCrdt";
  * INTERNAL
  */
 export class LiveRegister<TValue extends Json> extends AbstractCrdt {
-  /** @internal */
-  _data: TValue;
+  #data: TValue;
 
   constructor(data: TValue) {
     super();
-    this._data = data;
+    this.#data = data;
   }
 
   get data(): TValue {
-    return this._data;
+    return this.#data;
   }
 
   /** @internal */
@@ -99,13 +98,13 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
       type: "Json",
       id: this._id ?? nanoid(),
       key,
-      payload: this._data,
+      payload: this.#data,
     };
   }
 
   /** @internal */
   _toImmutable(): Immutable {
-    return this._data;
+    return this.#data;
   }
 
   clone(): TValue {

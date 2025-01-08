@@ -1,10 +1,12 @@
 import type { Placement } from "@floating-ui/react-dom";
-import type { CommentMixedAttachment } from "@liveblocks/core";
+import type { CommentMixedAttachment, EventSource } from "@liveblocks/core";
 import { nn } from "@liveblocks/core";
 import type { DropdownMenuProps } from "@radix-ui/react-dropdown-menu";
 import type { Dispatch, Ref, SetStateAction } from "react";
 import { createContext, useContext } from "react";
 import type { Editor as SlateEditor, Element as SlateElement } from "slate";
+
+import type { ComposerBodyMark, ComposerBodyMarks } from "../../types";
 
 export type ComposerContext = {
   /**
@@ -53,6 +55,16 @@ export type ComposerContext = {
   blur: () => void;
 
   /**
+   * Which text marks are currently active and which aren't.
+   */
+  marks: ComposerBodyMarks;
+
+  /**
+   * Toggle a specific text mark.
+   */
+  toggleMark: (mark: ComposerBodyMark) => void;
+
+  /**
    * Start creating a mention at the current selection.
    */
   createMention: () => void;
@@ -82,6 +94,8 @@ export type ComposerEditorContext = {
   validate: (value: SlateElement[]) => void;
   editor: SlateEditor;
   setFocused: Dispatch<SetStateAction<boolean>>;
+  onEditorChange: EventSource<void>;
+  roomId: string;
 };
 
 export type ComposerAttachmentsContext = {
@@ -103,6 +117,13 @@ export type ComposerSuggestionsContext = {
   ref: Ref<HTMLDivElement>;
 };
 
+export type ComposerFloatingToolbarContext = {
+  dir?: DropdownMenuProps["dir"];
+  id: string;
+  placement: Placement;
+  ref: Ref<HTMLDivElement>;
+};
+
 export const ComposerContext = createContext<ComposerContext | null>(null);
 export const ComposerEditorContext =
   createContext<ComposerEditorContext | null>(null);
@@ -110,6 +131,8 @@ export const ComposerAttachmentsContext =
   createContext<ComposerAttachmentsContext | null>(null);
 export const ComposerSuggestionsContext =
   createContext<ComposerSuggestionsContext | null>(null);
+export const ComposerFloatingToolbarContext =
+  createContext<ComposerFloatingToolbarContext | null>(null);
 
 export function useComposerEditorContext() {
   const composerEditorContext = useContext(ComposerEditorContext);
@@ -140,6 +163,19 @@ export function useComposerSuggestionsContext(
 
   return nn(
     composerSuggestionsContext,
+    `${source} can’t be used outside of Composer.Editor.`
+  );
+}
+
+export function useComposerFloatingToolbarContext(
+  source = "useComposerFloatingToolbarContext"
+) {
+  const composerFloatingToolbarContext = useContext(
+    ComposerFloatingToolbarContext
+  );
+
+  return nn(
+    composerFloatingToolbarContext,
     `${source} can’t be used outside of Composer.Editor.`
   );
 }

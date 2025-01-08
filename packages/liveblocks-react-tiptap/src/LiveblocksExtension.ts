@@ -1,4 +1,4 @@
-import { type IUserInfo, kInternal, TextEditorType } from "@liveblocks/core";
+import { type IUserInfo, TextEditorType } from "@liveblocks/core";
 import {
   useClient,
   useCommentsErrorListener,
@@ -7,19 +7,22 @@ import {
 import {
   CreateThreadError,
   getUmbrellaStoreForClient,
+  useCreateTextMention,
+  useDeleteTextMention,
+  useReportTextEditor,
+  useYjsProvider,
 } from "@liveblocks/react/_private";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
-import type { AnyExtension } from "@tiptap/core";
+import type { AnyExtension, Content, Editor } from "@tiptap/core";
 import { Extension, getMarkType } from "@tiptap/core";
 import Collaboration from "@tiptap/extension-collaboration";
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
 import type { Mark as PMMark } from "@tiptap/pm/model";
-import { useCallback } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { Doc } from "yjs";
 
 import { CommentsExtension } from "./comments/CommentsExtension";
 import { MentionExtension } from "./mentions/MentionExtension";
-import { MentionNode } from "./mentions/MentionNode";
 import { LIVEBLOCKS_COMMENT_MARK_TYPE } from "./types";
 
 const providersMap = new Map<
@@ -31,8 +34,17 @@ const docMap = new Map<string, Doc>();
 
 type LiveblocksExtensionOptions = {
   field?: string;
-  comments: boolean; // | CommentsConfiguration
-  mentions: boolean; // | MentionsConfiguration
+  comments?: boolean; // | CommentsConfiguration
+  mentions?: boolean; // | MentionsConfiguration
+  offlineSupport_experimental?: boolean;
+  initialContent?: Content;
+};
+
+const DEFAULT_OPTIONS = {
+  field: "default",
+  comments: true,
+  mentions: true,
+  offlineSupport_experimental: false,
 };
 
 const LiveblocksCollab = Collaboration.extend({
@@ -72,7 +84,41 @@ const LiveblocksCollab = Collaboration.extend({
   },
 });
 
-export const useLiveblocksExtension = (): Extension<LiveblocksExtensionOptions, any> => {
+/**
+ * Returns whether the editor has loaded the initial text contents from the
+ * server and is ready to be used.
+ *
+ */
+export function useIsEditorReady(): boolean {
+  const yjsProvider = useYjsProvider();
+
+  const getSnapshot = useCallback(() => {
+    const status = yjsProvider?.getStatus();
+    return status === "synchronizing" || status === "synchronized";
+  }, [yjsProvider]);
+
+  const subscribe = useCallback(
+    (callback: () => void) => {
+      if (yjsProvider === undefined) return () => {};
+      yjsProvider.on("status", callback);
+      return () => {
+        yjsProvider.off("status", callback);
+      };
+    },
+    [yjsProvider]
+  );
+
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+}
+
+export const useLiveblocksExtension = (
+  opts?: LiveblocksExtensionOptions
+): Extension => {
+  const options = {
+    ...DEFAULT_OPTIONS,
+    ...opts,
+  };
+  const [editor, setEditor] = useState<Editor | null>(null);
   const room = useRoom();
 
   // TODO: we don't need these things if comments isn't turned on...
@@ -83,38 +129,37 @@ export const useLiveblocksExtension = (): Extension<LiveblocksExtensionOptions, 
       // handleThreadDelete(error.context.threadId);
     }
   });
+  const isEditorReady = useIsEditorReady();
   const client = useClient();
   const store = getUmbrellaStoreForClient(client);
   const roomId = room.id;
+  const yjsProvider = useYjsProvider();
 
-  const reportTextEditorType = useCallback(
-    (field: string) => {
-      room[kInternal].reportTextEditor(TextEditorType.TipTap, field);
-    },
-    [room]
+  // If the user provided initialContent, wait for ready and then set it
+  useEffect(() => {
+    if (!isEditorReady || !yjsProvider || !options.initialContent || !editor)
+      return;
+
+    // As noted in the tiptap documentation, you may not set initial content with collaboration.
+    // The docs provide the following workaround:
+    const ydoc = (yjsProvider as LiveblocksYjsProvider).getYDoc();
+    const hasContentSet = ydoc.getMap("liveblocks_config").get("hasContentSet");
+    if (!hasContentSet) {
+      ydoc.getMap("liveblocks_config").set("hasContentSet", true);
+      editor.commands.setContent(options.initialContent);
+    }
+  }, [isEditorReady, yjsProvider, options.initialContent, editor]);
+
+  useReportTextEditor(
+    TextEditorType.TipTap,
+    options.field ?? DEFAULT_OPTIONS.field
   );
-  const onCreateMention = useCallback(
-    (userId: string, notificationId: string) => {
-      try {
-        room[kInternal].createTextMention(userId, notificationId);
-      } catch (err) {
-        console.warn(err);
-      }
-    },
-    [room]
-  );
-  const onDeleteMention = useCallback(
-    (notificationId: string) => {
-      try {
-        room[kInternal].deleteTextMention(notificationId);
-      } catch (err) {
-        console.warn(err);
-      }
-    },
-    [room]
-  );
+
+  const createTextMention = useCreateTextMention();
+  const deleteTextMention = useDeleteTextMention();
+
   return Extension.create<
-    LiveblocksExtensionOptions,
+    never,
     {
       unsubs: (() => void)[];
       doc: Doc;
@@ -124,8 +169,14 @@ export const useLiveblocksExtension = (): Extension<LiveblocksExtensionOptions, 
     name: "liveblocksExtension",
 
     onCreate() {
+      setEditor(this.editor);
+      if (this.editor.options.content) {
+        console.warn(
+          "[Liveblocks] Initial content must be set in the useLiveblocksExtension hook option. Remove content from your editor options."
+        );
+      }
       if (
-        this.options.mentions &&
+        options.mentions &&
         this.editor.extensionManager.extensions.find(
           (e) => e.name.toLowerCase() === "mention"
         )
@@ -156,18 +207,18 @@ export const useLiveblocksExtension = (): Extension<LiveblocksExtensionOptions, 
           }
         })
       );
-      if (this.options.comments) {
+      if (options.comments) {
         const commentMarkType = getMarkType(
           LIVEBLOCKS_COMMENT_MARK_TYPE,
           this.editor.schema
         );
         this.storage.unsubs.push(
           // Subscribe to threads so we can update comment marks if they become resolved/deleted
-          store.subscribe(() => {
+          store.outputs.threads.subscribe(() => {
             const threadMap = new Map(
-              store
-                .getFullState()
-                .threadsDB.findMany(roomId, { resolved: false }, "asc")
+              store.outputs.threads
+                .get()
+                .findMany(roomId, { resolved: false }, "asc")
                 .map((thread) => [thread.id, true])
             );
             function isComment(mark: PMMark): mark is PMMark & {
@@ -205,8 +256,6 @@ export const useLiveblocksExtension = (): Extension<LiveblocksExtensionOptions, 
           })
         );
       }
-
-      reportTextEditorType(this.options.field ?? "default");
     },
     onDestroy() {
       this.storage.unsubs.forEach((unsub) => unsub());
@@ -215,7 +264,12 @@ export const useLiveblocksExtension = (): Extension<LiveblocksExtensionOptions, 
       if (!providersMap.has(room.id)) {
         const doc = new Doc();
         docMap.set(room.id, doc);
-        providersMap.set(room.id, new LiveblocksYjsProvider(room, doc));
+        providersMap.set(
+          room.id,
+          new LiveblocksYjsProvider(room, doc, {
+            offlineSupport_experimental: options.offlineSupport_experimental,
+          })
+        );
       }
       return {
         doc: docMap.get(room.id)!,
@@ -223,34 +277,25 @@ export const useLiveblocksExtension = (): Extension<LiveblocksExtensionOptions, 
         unsubs: [],
       };
     },
-
-    addOptions() {
-      return {
-        field: "default",
-        mentions: true,
-        comments: true,
-      };
-    },
     addExtensions() {
       const extensions: AnyExtension[] = [
         LiveblocksCollab.configure({
           document: this.storage.doc,
-          field: this.options.field,
+          field: options.field,
         }),
         CollaborationCursor.configure({
           provider: this.storage.provider, //todo change the ! to an assert
         }),
       ];
 
-      if (this.options.comments) {
+      if (options.comments) {
         extensions.push(CommentsExtension);
       }
-      if (this.options.mentions) {
-        extensions.push(MentionNode);
+      if (options.mentions) {
         extensions.push(
           MentionExtension.configure({
-            onCreateMention,
-            onDeleteMention,
+            onCreateMention: createTextMention,
+            onDeleteMention: deleteTextMention,
           })
         );
       }

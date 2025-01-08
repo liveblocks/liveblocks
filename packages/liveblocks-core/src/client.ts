@@ -1,3 +1,5 @@
+import type { LiveblocksHttpApi } from "./api-client";
+import { createApiClient } from "./api-client";
 import { createAuthManager } from "./auth-manager";
 import { isIdle } from "./connection";
 import { DEFAULT_BASE_URL } from "./constants";
@@ -7,21 +9,14 @@ import type { DE, DM, DP, DRI, DS, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
 import type { BatchStore } from "./lib/batch";
 import { Batch, createBatchStore } from "./lib/batch";
-import type { Store } from "./lib/create-store";
-import { createStore } from "./lib/create-store";
 import type { Observable } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import type { NoInfr } from "./lib/NoInfer";
 import type { Resolve } from "./lib/Resolve";
-import type {
-  GetInboxNotificationsOptions,
-  GetInboxNotificationsSinceOptions,
-  GetUserThreadsOptions,
-  GetUserThreadsSinceOptions,
-} from "./notifications";
-import { createNotificationsApi } from "./notifications";
+import { Signal } from "./lib/signals";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
+import { TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type {
   BaseMetadata,
@@ -32,7 +27,6 @@ import type {
   InboxNotificationData,
   InboxNotificationDeleteInfo,
 } from "./protocol/InboxNotifications";
-import { ValueRef } from "./refs/ValueRef";
 import type {
   OpaqueRoom,
   OptionalTupleUnless,
@@ -100,16 +94,6 @@ export type EnterOptions<P extends JsonObject = DP, S extends LsonObject = DS> =
      * the authentication endpoint or connect via WebSocket.
      */
     autoConnect?: boolean;
-
-    /**
-     * Only necessary when you’re using Liveblocks with React v17 or lower.
-     *
-     * If so, pass in a reference to `ReactDOM.unstable_batchedUpdates` here.
-     * This will allow Liveblocks to circumvent the so-called "zombie child
-     * problem". To learn more, see
-     * https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child
-     */
-    unstable_batchedUpdates?: (cb: () => void) => void;
   }
 
   // Initial presence is only mandatory if the custom type requires it to be
@@ -159,37 +143,15 @@ export type InternalSyncStatus = SyncStatus | "has-local-changes";
  * will probably happen if you do.
  */
 export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
-  readonly currentUserIdStore: Store<string | null>;
+  readonly currentUserId: Signal<string | undefined>;
   readonly mentionSuggestionsCache: Map<string, string[]>;
   readonly resolveMentionSuggestions: ClientOptions<U>["resolveMentionSuggestions"];
   readonly usersStore: BatchStore<U["info"] | undefined, string>;
   readonly roomsInfoStore: BatchStore<DRI | undefined, string>;
   readonly getRoomIds: () => string[];
-  readonly getUserThreads_experimental: (
-    options: GetUserThreadsOptions<M>
-  ) => Promise<{
-    threads: ThreadData<M>[];
-    inboxNotifications: InboxNotificationData[];
-    nextCursor: string | null;
-    requestedAt: Date;
-  }>;
-  readonly getUserThreadsSince_experimental: (
-    options: GetUserThreadsSinceOptions
-  ) => Promise<{
-    inboxNotifications: {
-      updated: InboxNotificationData[];
-      deleted: InboxNotificationDeleteInfo[];
-    };
-    threads: {
-      updated: ThreadData<M>[];
-      deleted: ThreadDeleteInfo[];
-    };
-    requestedAt: Date;
-  }>;
-
+  readonly httpClient: LiveblocksHttpApi<M>;
   // Type-level helper
   as<M2 extends BaseMetadata>(): Client<U, M2>;
-
   // Tracking pending changes globally
   createSyncSource(): SyncSource;
 };
@@ -212,7 +174,7 @@ export type NotificationsApi<M extends BaseMetadata> = {
    * const data = await client.getInboxNotifications();  // Fetch initial page (of 20 inbox notifications)
    * const data = await client.getInboxNotifications({ cursor: nextCursor });  // Fetch next page (= next 20 inbox notifications)
    */
-  getInboxNotifications(options?: GetInboxNotificationsOptions): Promise<{
+  getInboxNotifications(options?: { cursor?: string }): Promise<{
     inboxNotifications: InboxNotificationData[];
     threads: ThreadData<M>[];
     nextCursor: string | null;
@@ -238,9 +200,10 @@ export type NotificationsApi<M extends BaseMetadata> = {
    *   requestedAt,
    * } = await client.getInboxNotificationsSince({ since: result.requestedAt }});
    */
-  getInboxNotificationsSince(
-    options: GetInboxNotificationsSinceOptions
-  ): Promise<{
+  getInboxNotificationsSince(options: {
+    since: Date;
+    signal?: AbortSignal;
+  }): Promise<{
     inboxNotifications: {
       updated: InboxNotificationData[];
       deleted: InboxNotificationDeleteInfo[];
@@ -449,6 +412,7 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
 
   /**
    * A function that returns user info from user IDs.
+   * You should return a list of user objects of the same size, in the same order.
    */
   resolveUsers?: (
     args: ResolveUsersArgs
@@ -456,6 +420,7 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
 
   /**
    * A function that returns room info from room IDs.
+   * You should return a list of room info objects of the same size, in the same order.
    */
   resolveRoomsInfo?: (
     args: ResolveRoomsInfoArgs
@@ -546,7 +511,22 @@ export function createClient<U extends BaseUserMeta = DU>(
   );
   const baseUrl = getBaseUrl(clientOptions.baseUrl);
 
-  const authManager = createAuthManager(options);
+  const currentUserId = new Signal<string | undefined>(undefined);
+
+  const authManager = createAuthManager(options, (token) => {
+    const userId = token.k === TokenKind.SECRET_LEGACY ? token.id : token.uid;
+    currentUserId.set(() => userId);
+  });
+
+  const fetchPolyfill =
+    clientOptions.polyfills?.fetch ||
+    /* istanbul ignore next */ globalThis.fetch?.bind(globalThis);
+
+  const httpClient = createApiClient({
+    baseUrl,
+    fetchPolyfill,
+    authManager,
+  });
 
   type RoomDetails = {
     room: OpaqueRoom;
@@ -645,10 +625,10 @@ export function createClient<U extends BaseUserMeta = DU>(
           authenticate: makeAuthDelegateForRoom(roomId, authManager),
         },
         enableDebugLogging: clientOptions.enableDebugLogging,
-        unstable_batchedUpdates: options?.unstable_batchedUpdates,
         baseUrl,
         unstable_fallbackToHTTP: !!clientOptions.unstable_fallbackToHTTP,
         unstable_streamData: !!clientOptions.unstable_streamData,
+        roomHttpClient: httpClient as LiveblocksHttpApi<M>,
         createSyncSource,
       }
     );
@@ -695,6 +675,9 @@ export function createClient<U extends BaseUserMeta = DU>(
   function logout() {
     authManager.reset();
 
+    // Reset the current user id store when the client is logged out
+    currentUserId.set(() => undefined);
+
     // Reconnect all rooms that aren't idle, if any. This ensures that those
     // rooms will get reauthorized now that the auth cache is reset. If that
     // fails, they might disconnect.
@@ -704,19 +687,6 @@ export function createClient<U extends BaseUserMeta = DU>(
       }
     }
   }
-
-  const currentUserIdStore = createStore<string | null>(null);
-
-  const fetchPolyfill =
-    clientOptions.polyfills?.fetch ||
-    /* istanbul ignore next */ globalThis.fetch?.bind(globalThis);
-
-  const notificationsAPI = createNotificationsApi({
-    baseUrl,
-    fetchPolyfill,
-    authManager,
-    currentUserIdStore,
-  });
 
   const resolveUsers = clientOptions.resolveUsers;
   const warnIfNoResolveUsers = createDevelopmentWarning(
@@ -772,29 +742,29 @@ export function createClient<U extends BaseUserMeta = DU>(
 
   // ----------------------------------------------------------------
 
-  const syncStatusSources: ValueRef<InternalSyncStatus>[] = [];
-  const syncStatusRef = new ValueRef<InternalSyncStatus>("synchronized");
+  const syncStatusSources: Signal<InternalSyncStatus>[] = [];
+  const syncStatusSignal = new Signal<InternalSyncStatus>("synchronized");
 
   function getSyncStatus(): SyncStatus {
-    const status = syncStatusRef.current;
+    const status = syncStatusSignal.get();
     return status === "synchronizing" ? status : "synchronized";
   }
 
   function recompute() {
-    syncStatusRef.set(
-      syncStatusSources.some((src) => src.current === "synchronizing")
+    syncStatusSignal.set(
+      syncStatusSources.some((src) => src.get() === "synchronizing")
         ? "synchronizing"
-        : syncStatusSources.some((src) => src.current === "has-local-changes")
+        : syncStatusSources.some((src) => src.get() === "has-local-changes")
           ? "has-local-changes"
           : "synchronized"
     );
   }
 
   function createSyncSource(): SyncSource {
-    const source = new ValueRef<InternalSyncStatus>("synchronized");
+    const source = new Signal<InternalSyncStatus>("synchronized");
     syncStatusSources.push(source);
 
-    const unsub = source.didInvalidate.subscribe(() => recompute());
+    const unsub = source.subscribe(() => recompute());
 
     function setSyncStatus(status: InternalSyncStatus) {
       source.set(status);
@@ -805,7 +775,7 @@ export function createClient<U extends BaseUserMeta = DU>(
       const index = syncStatusSources.findIndex((item) => item === source);
       if (index > -1) {
         const [ref] = syncStatusSources.splice(index, 1);
-        const wasStillPending = ref.current !== "synchronized";
+        const wasStillPending = ref.get() !== "synchronized";
         if (wasStillPending) {
           // We only have to recompute if it was still pending. Otherwise it
           // could not have an effect on the global state anyway.
@@ -826,7 +796,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     const maybePreventClose = (e: BeforeUnloadEvent) => {
       if (
         clientOptions.preventUnsavedChanges &&
-        syncStatusRef.current !== "synchronized"
+        syncStatusSignal.get() !== "synchronized"
       ) {
         e.preventDefault();
       }
@@ -846,7 +816,16 @@ export function createClient<U extends BaseUserMeta = DU>(
 
       logout,
 
-      ...notificationsAPI,
+      // Public inbox notifications API
+      getInboxNotifications: httpClient.getInboxNotifications,
+      getInboxNotificationsSince: httpClient.getInboxNotificationsSince,
+      getUnreadInboxNotificationsCount:
+        httpClient.getUnreadInboxNotificationsCount,
+      markAllInboxNotificationsAsRead:
+        httpClient.markAllInboxNotificationsAsRead,
+      markInboxNotificationAsRead: httpClient.markInboxNotificationAsRead,
+      deleteAllInboxNotifications: httpClient.deleteAllInboxNotifications,
+      deleteInboxNotification: httpClient.deleteInboxNotification,
 
       // Advanced resolvers APIs
       resolvers: {
@@ -857,12 +836,12 @@ export function createClient<U extends BaseUserMeta = DU>(
 
       getSyncStatus,
       events: {
-        syncStatus: syncStatusRef.didInvalidate,
+        syncStatus: syncStatusSignal,
       },
 
       // Internal
       [kInternal]: {
-        currentUserIdStore,
+        currentUserId,
         mentionSuggestionsCache,
         resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,
         usersStore,
@@ -870,16 +849,9 @@ export function createClient<U extends BaseUserMeta = DU>(
         getRoomIds() {
           return Array.from(roomsById.keys());
         },
-
-        // "All" threads (= "user" threads)
-        getUserThreads_experimental:
-          notificationsAPI.getUserThreads_experimental,
-        getUserThreadsSince_experimental:
-          notificationsAPI.getUserThreadsSince_experimental,
-
+        httpClient,
         // Type-level helper only, it's effectively only an identity-function at runtime
         as: <M2 extends BaseMetadata>() => client as Client<U, M2>,
-
         createSyncSource,
       },
     },

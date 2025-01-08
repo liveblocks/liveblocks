@@ -2,18 +2,23 @@ import { autoUpdate, useFloating } from "@floating-ui/react-dom";
 import { CollaborationPlugin } from "@lexical/react/LexicalCollaborationPlugin";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { Provider } from "@lexical/yjs";
-import { kInternal, nn, TextEditorType } from "@liveblocks/core";
-import { useClient, useRoom, useSelf } from "@liveblocks/react";
+import { nn, TextEditorType } from "@liveblocks/core";
+import { useRoom, useSelf } from "@liveblocks/react";
+import {
+  useLayoutEffect,
+  useReportTextEditor,
+  useResolveMentionSuggestions,
+  useYjsProvider,
+} from "@liveblocks/react/_private";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
-import type { MutableRefObject } from "react";
-import React, {
+import type { MutableRefObject, ReactNode } from "react";
+import {
   useCallback,
   useEffect,
-  useLayoutEffect,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
-import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { Doc } from "yjs";
 
 import { CommentPluginProvider } from "./comments/comment-plugin-provider";
@@ -39,23 +44,6 @@ export type EditorStatus =
   | "synchronizing"
   /* The editor state is sync with Liveblocks servers */
   | "synchronized";
-
-function useYjsProvider() {
-  const room = useRoom();
-
-  const subscribe = useCallback(
-    (onStoreChange: () => void) => {
-      return room[kInternal].yjsProviderDidChange.subscribe(onStoreChange);
-    },
-    [room]
-  );
-
-  const getSnapshot = useCallback(() => {
-    return room[kInternal].getYjsProvider();
-  }, [room]);
-
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-}
 
 /**
  * Get the storage status.
@@ -118,7 +106,7 @@ export function useIsEditorReady(): boolean {
 }
 
 export type LiveblocksPluginProps = {
-  children?: React.ReactNode;
+  children?: ReactNode;
 };
 
 /**
@@ -157,9 +145,8 @@ export type LiveblocksPluginProps = {
 export const LiveblocksPlugin = ({
   children,
 }: LiveblocksPluginProps): JSX.Element => {
-  const client = useClient();
-  const hasResolveMentionSuggestions =
-    client[kInternal].resolveMentionSuggestions !== undefined;
+  const isResolveMentionSuggestionsDefined =
+    useResolveMentionSuggestions() !== undefined;
   const [editor] = useLexicalComposerContext();
   const room = useRoom();
   const previousRoomIdRef = useRef<string | null>(null);
@@ -205,10 +192,7 @@ export const LiveblocksPlugin = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    // Report that this is lexical and root is the rootKey
-    room[kInternal].reportTextEditor(TextEditorType.Lexical, "root");
-  }, [room]);
+  useReportTextEditor(TextEditorType.Lexical, "root");
 
   // Get user info or allow override from props
   const self = useSelf();
@@ -288,7 +272,7 @@ export const LiveblocksPlugin = ({
         />
       )}
 
-      {hasResolveMentionSuggestions && <MentionPlugin />}
+      {isResolveMentionSuggestionsDefined && <MentionPlugin />}
       <CommentPluginProvider>{children}</CommentPluginProvider>
     </>
   );

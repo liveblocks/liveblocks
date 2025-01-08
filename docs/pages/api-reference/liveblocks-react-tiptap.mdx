@@ -12,10 +12,6 @@ It also adds realtime cursors, document persistence on the cloud, comments, and
 mentions. Read our [get started guides](/docs/get-started/text-editor/tiptap) to
 learn more.
 
-<Banner type="warning" title="Package still in beta">
-  This package is currently in beta and has not been publicly released yet.
-</Banner>
-
 ## Setup
 
 To set up your collaborative Tiptap editor, add
@@ -835,19 +831,93 @@ function TextEditor() {
 }
 ```
 
-Liveblocks Tiptap components should be passed `editor` to enable them.
+<PropertiesList>
+  <PropertiesListItem name="initialContent" type="Content">
+    The initial content for the editor, if it’s never been set. [Learn
+    more](#Setting-initial-content).
+  </PropertiesListItem>
+  <PropertiesListItem name="field" type="string">
+    The name of this text editor’s field. Allows you to use multiple editors on
+    one page, if each has a separate field value. [Learn
+    more](#Multiple-editors).
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="offlineSupport_experimental"
+    defaultValue="false"
+    type="boolean"
+  >
+    Experimental. Enable offline support using IndexedDB. This means the after
+    the first load, documents will be stored locally and load instantly. [Learn
+    more](#Offline-support).
+  </PropertiesListItem>
+  <PropertiesListItem name="comments" defaultValue="true" type="boolean">
+    Enable comments in the editor.
+  </PropertiesListItem>
+  <PropertiesListItem name="mentions" defaultValue="true" type="boolean">
+    Enabled mentions in the editor.
+  </PropertiesListItem>
+</PropertiesList>
+
+#### Setting initial content
+
+Initial content for the editor can be set with `initialContent`. This content
+will only be used if the current editor has never been edited by any users, and
+is ignored otherwise.
 
 ```tsx
-import {
-  useLiveblocksExtension,
-  // +++
-  FloatingComposer,
-  // +++
-} from "@liveblocks/react-tiptap";
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
 
 function TextEditor() {
-  const liveblocks = useLiveblocksExtension();
+  const liveblocks = useLiveblocksExtension({
+    // +++
+    initialContent: "<p>Hello world</p>",
+    // +++
+  });
+
+  // ...
+}
+```
+
+#### Multiple editors
+
+It’s possible to use multiple editors on one page by passing values to the
+`field` property. Think of it like an ID for the current editor.
+
+```tsx
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension({
+    // +++
+    field: "editor-one",
+    // +++
+  });
+
+  // ...
+}
+```
+
+Here’s an example of how multiple editors may be set up.
+
+```tsx
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+import { useEditor, EditorContent } from "@tiptap/react";
+
+function TextEditors() {
+  return (
+    <div>
+      // +++
+      <TextEditor field="one" />
+      <TextEditor field="two" />
+      // +++
+    </div>
+  );
+}
+
+function TextEditor({ field }: { field: string }) {
+  // +++
+  const liveblocks = useLiveblocksExtension({ field });
+  // +++
 
   const editor = useEditor({
     extensions: [
@@ -859,20 +929,124 @@ function TextEditor() {
   return (
     <div>
       <EditorContent editor={editor} />
-      // +++
-      <FloatingComposer editor={editor} style={{ width: "350px" }} />
-      // +++
     </div>
   );
 }
 ```
 
-<Banner title="Resolved threads">
+#### Offline support [@badge=experimental]
 
-Annotations associated with resolved threads are hidden by default on the
-editor.
+It’s possible to enable offline support in your editor with an experimental
+option. This means that once a document has been opened, it’s saved locally on
+the browser, and can be shown instantly without a loading screen. As soon as
+Liveblocks connects, any remote changes will be synchronized, without any load
+spinner. Enable this by passing a `offlineSupport_experimental ` value.
 
-</Banner>
+```tsx
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension({
+    offlineSupport_experimental: true,
+  });
+
+  // ...
+}
+```
+
+To make sure that your editor loads instantly, you must structure your app
+carefully to avoid any Liveblocks hooks and [`ClientSideSuspense`][] components
+from triggering a loading screen. For example, if you’re displaying threads in
+your editor with [`useThreads`][], you must place this inside a separate
+component and wrap it in [`ClientSideSuspense`][].
+
+```tsx
+"use client";
+
+import { ClientSideSuspense, useThreads } from "@liveblocks/react/suspense";
+import {
+  useLiveblocksExtension,
+  AnchoredThreads,
+  FloatingComposer,
+} from "@liveblocks/react-tiptap";
+import { Editor, EditorContent, useEditor } from "@tiptap/react";
+
+export function TiptapEditor() {
+  const liveblocks = useLiveblocksExtension({
+    offlineSupport_experimental: true,
+  });
+
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+    immediatelyRender: false,
+  });
+
+  return (
+    <>
+      <EditorContent editor={editor} />
+      <FloatingComposer editor={editor} style={{ width: 350 }} />
+      // +++
+      <ClientSideSuspense fallback={null}>
+        <Threads editor={editor} />
+      </ClientSideSuspense>
+      // +++
+    </>
+  );
+}
+
+// +++
+function Threads({ editor }: { editor: Editor }) {
+  const { threads } = useThreads();
+
+  return <AnchoredThreads editor={editor} threads={threads} />;
+}
+// +++
+```
+
+### useIsEditorReady
+
+Used to check if the editor content has been loaded or not, helpful for
+displaying a loading skeleton.
+
+```ts
+import { useIsEditorReady } from "@liveblocks/react-tiptap";
+
+const status = useIsEditorReady();
+```
+
+Here’s how it can be used in the context of your editor.
+
+```tsx
+import { useLiveblocksExtension } from "@liveblocks/react-tiptap";
+// +++
+import { useIsEditorReady, useEditor, EditorContent } from "@tiptap/react";
+// +++
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension();
+  // +++
+  const ready = useIsEditorReady();
+  // +++
+
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+  });
+
+  return (
+    <div>
+      // +++
+      {!ready ? <div>Loading...</div> : <EditorContent editor={editor} />}
+      // +++
+    </div>
+  );
+}
+```
 
 ## Stylesheets
 

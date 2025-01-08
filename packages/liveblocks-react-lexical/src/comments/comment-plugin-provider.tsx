@@ -13,6 +13,7 @@ import {
 import {
   CreateThreadError,
   getUmbrellaStoreForClient,
+  useSignal,
 } from "@liveblocks/react/_private";
 import type { BaseSelection, NodeKey, NodeMutation } from "lexical";
 import {
@@ -22,9 +23,13 @@ import {
   $isTextNode,
 } from "lexical";
 import type { PropsWithChildren } from "react";
-import * as React from "react";
-import { createContext, useCallback, useEffect, useState } from "react";
-import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
 import $getThreadMarkIds from "./get-thread-mark-ids";
 import {
@@ -106,17 +111,14 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
   const store = getUmbrellaStoreForClient(client);
 
   const roomId = room.id;
-  const threads = useSyncExternalStoreWithSelector(
-    store.subscribe,
-    store.getFullState,
-    store.getFullState,
+  const threadIds = useSignal(
+    store.outputs.threads,
     useCallback(
-      () =>
-        store
-          .getFullState()
-          .threadsDB.findMany(roomId, { resolved: false }, "asc")
+      (state) =>
+        state
+          .findMany(roomId, { resolved: false }, "asc")
           .map((thread) => thread.id),
-      [roomId, store]
+      [roomId]
     ),
     shallow
   );
@@ -128,7 +130,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     function getThreadMarkElements() {
       const activeElements = new Set<HTMLElement>();
 
-      for (const id of threads) {
+      for (const id of threadIds) {
         const keys = threadToNodes.get(id);
         if (keys === undefined) continue;
 
@@ -159,7 +161,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
         removeClassNamesFromElement(element, ...classNames);
       });
     };
-  }, [context, editor, threadToNodes, threads]);
+  }, [context, editor, threadToNodes, threadIds]);
 
   /**
    * Register a mutation listener that listens for mutations on 'ThreadMarkNode's and updates the map of thread to node keys accordingly.
@@ -218,15 +220,15 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       const selection = $getSelection();
 
       const threadIds = $getThreadIds(selection).filter((id) => {
-        return store
-          .getFullState()
-          .threadsDB.findMany(roomId, { resolved: false }, "asc")
+        return store.outputs.threads
+          .get()
+          .findMany(roomId, { resolved: false }, "asc")
           .some((thread) => thread.id === id);
       });
       setActiveThreads(threadIds);
     }
 
-    const unsubscribeCache = store.subscribe(() => {
+    const unsubscribeCache = store.outputs.threads.subscribe(() => {
       editor.getEditorState().read($onStateRead);
     });
 
@@ -310,7 +312,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
  * @returns true if the associated annotation for the thread is selected, false otherwise.
  */
 export function useIsThreadActive(threadId: string): boolean {
-  const isActive = React.useContext(IsActiveThreadContext);
+  const isActive = useContext(IsActiveThreadContext);
   if (isActive === null) {
     throw new Error(
       "useIsThreadActive must be used within LiveblocksPlugin. For more information: https://liveblocks.io/docs/api-reference/liveblocks-react-lexical#useIsThreadActive"

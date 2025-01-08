@@ -9,9 +9,13 @@ import {
   useFloating,
 } from "@floating-ui/react-dom";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { kInternal } from "@liveblocks/core";
 import { useRoom } from "@liveblocks/react";
-import { useMentionSuggestions } from "@liveblocks/react/_private";
+import {
+  useCreateTextMention,
+  useDeleteTextMention,
+  useLayoutEffect,
+  useMentionSuggestions,
+} from "@liveblocks/react/_private";
 import type { EditorState, NodeKey, NodeMutation, TextNode } from "lexical";
 import {
   $createRangeSelection,
@@ -27,12 +31,7 @@ import {
   KEY_BACKSPACE_COMMAND,
 } from "lexical";
 import type { ReactNode } from "react";
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useState,
-} from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { Avatar } from "./avatar";
@@ -158,13 +157,14 @@ function $getRangeAtMatch(match: RegExpExecArray): globalThis.Range | null {
 
 export function MentionPlugin() {
   const [editor] = useLexicalComposerContext();
+  const room = useRoom();
 
   const [match, setMatch] = useState<RegExpExecArray | null>(null); // Represents the current match of the mention regex. A `null` value means there is no match.
   const matchingString = match?.[3];
 
-  const suggestions = useMentionSuggestions(matchingString);
-
-  const room = useRoom();
+  const suggestions = useMentionSuggestions(room.id, matchingString);
+  const createTextMention = useCreateTextMention();
+  const deleteTextMention = useDeleteTextMention();
 
   useEffect(() => {
     function $handleMutation(
@@ -182,13 +182,7 @@ export function MentionPlugin() {
             if (node === null) return;
 
             if (!$isMentionNode(node)) return;
-
-            room[kInternal]
-              .createTextMention(node.getUserId(), node.getId())
-              .catch((err) => {
-                // TODO: Handle error
-                console.error(err);
-              });
+            createTextMention(node.getUserId(), node.getId());
           });
         } else if (mutation === "destroyed") {
           prevEditorState.read(() => {
@@ -196,11 +190,7 @@ export function MentionPlugin() {
             if (node === null) return;
 
             if (!$isMentionNode(node)) return;
-
-            room[kInternal].deleteTextMention(node.getId()).catch((err) => {
-              // TODO: Handle error
-              console.error(err);
-            });
+            deleteTextMention(node.getId());
           });
         }
       }
@@ -220,7 +210,7 @@ export function MentionPlugin() {
         $handleMutation(mutations, payload);
       }
     );
-  }, [editor, room]);
+  }, [editor, createTextMention, deleteTextMention]);
 
   useEffect(() => {
     function $onStateRead() {

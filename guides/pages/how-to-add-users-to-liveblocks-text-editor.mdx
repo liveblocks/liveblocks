@@ -2,14 +2,14 @@
 meta:
   title: "How to add users to Liveblocks Text Editor"
   description:
-    "Learn how to add your user’s avatars and names to Liveblocks Text Editor using
-    the resolver functions."
+    "Learn how to add your user’s avatars and names to Liveblocks Text Editor
+    using the resolver functions."
 ---
 
-After following the get started guide for Text Editor, you’ll notice that each user
-is currently “Anonymous”, and that there’s no way to mention or tag other users.
-To enable these features, we need to tell Text Editor where to find your users’
-information.
+After following the get started guide for Text Editor, you’ll notice that each
+user is currently “Anonymous”, and that there’s no way to mention or tag other
+users. To enable these features, we need to tell Text Editor where to find your
+users’ information.
 
 <Figure>
   <Image
@@ -38,9 +38,10 @@ The first step is to find an
 your app, as this is necessary for Text Editor.
 
 Make sure to follow the metadata step in the guide, and attach the name of your
-user, the color of their cursor, and their avatar URL, as these properties will both be used
-in the [Text editor](/docs/products/text-editor). Here’s an
-example using access token authentication, with an email address as a user’s ID.
+user, the color of their cursor, and their avatar URL, as these properties will
+both be used in the [Text editor](/docs/ready-made-features/text-editor). Here’s
+an example using access token authentication, with an email address as a user’s
+ID.
 
 ```ts title="Metadata in access tokens"
 const session = liveblocks.prepareSession("marc@example.com", {
@@ -222,8 +223,8 @@ To show each user’s name and color in their cursors, we need to use
 ## Resolving mention suggestions
 
 We can see the users that are connected, but we don’t have a way to search for
-users to mention inline, for example after typing the `@` character. We can create a
-simple search that resolves this data with
+users to mention inline, for example after typing the `@` character. We can
+create a simple search that resolves this data with
 [`resolveMentionSuggestions`](/docs/api-reference/liveblocks-react#resolveMentionSuggestions).
 
 <Figure>
@@ -320,10 +321,10 @@ simple search that resolves this data with
 
 ## Next steps
 
-You’re now ready to start building your Text Editor application! Here’s where you
-can learn more:
+You’re now ready to start building your Text Editor application! Here’s where
+you can learn more:
 
 - [API reference for Lexical React](/docs/api-reference/liveblocks-react-lexical)
 - [API reference for Lexical Node](/docs/api-reference/liveblocks-node-lexical)
 - [Examples](/examples/browse/text-editor)
-- [Overview](/docs/products/text-editor)
+- [Overview](/docs/ready-made-features/text-editor)

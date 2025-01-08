@@ -5,7 +5,7 @@ import type {
   InboxNotificationDataPlain,
   ThreadData,
 } from "@liveblocks/core";
-import { HttpError, nanoid, ServerMsgCode } from "@liveblocks/core";
+import { HttpError, nanoid, Permission, ServerMsgCode } from "@liveblocks/core";
 import type { AST } from "@liveblocks/query-parser";
 import { QueryParser } from "@liveblocks/query-parser";
 import {
@@ -25,7 +25,7 @@ import {
 } from "msw";
 import { setupServer } from "msw/node";
 import type { ReactNode } from "react";
-import React, { Suspense } from "react";
+import { createContext, Suspense, useContext, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
 import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
@@ -94,6 +94,7 @@ function mockGetThreadsSince(
       deletedInboxNotifications: InboxNotificationDataPlain[];
       meta: {
         requestedAt: string;
+        permissionHints: Record<string, Permission[]>;
       };
     }
   >
@@ -128,6 +129,9 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -175,6 +179,9 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -230,6 +237,9 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -299,6 +309,9 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -376,6 +389,9 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -450,6 +466,7 @@ describe("useThreads", () => {
     }
 
     {
+      // Test 3
       const { result, unmount } = renderHook(
         () =>
           useThreads({
@@ -462,7 +479,16 @@ describe("useThreads", () => {
         }
       );
 
-      expect(result.current).toEqual({ isLoading: true });
+      expect(result.current).toEqual(
+        //
+        // NOTE! This query is not loading initially! This is because we
+        // already queried for this combination of queries in Test 1, because
+        //   { metadata: { color: "red", pinned: true } }
+        // is the same query as
+        //   { metadata: { pinned: true, color: "red" } }
+        //
+        expect.objectContaining({ isLoading: false })
+      );
 
       await waitFor(() =>
         expect(result.current).toEqual({
@@ -702,6 +728,9 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -765,6 +794,9 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -831,6 +863,9 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -916,6 +951,9 @@ describe("useThreads", () => {
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: null,
+                permissionHints: {
+                  [roomId]: [Permission.Write],
+                },
               },
             })
           );
@@ -929,6 +967,9 @@ describe("useThreads", () => {
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: null,
+                permissionHints: {
+                  [roomId]: [Permission.Write],
+                },
               },
             })
           );
@@ -997,7 +1038,8 @@ describe("useThreads", () => {
 
     server.use(
       mockGetThreads((req, res, ctx) => {
-        if (req.params.roomId === room1Id) {
+        const roomId = req.params.roomId;
+        if (roomId === room1Id) {
           return res(
             ctx.json({
               data: room1Threads,
@@ -1007,10 +1049,13 @@ describe("useThreads", () => {
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: null,
+                permissionHints: {
+                  [roomId]: [Permission.Write],
+                },
               },
             })
           );
-        } else if (req.params.roomId === room2Id) {
+        } else if (roomId === room2Id) {
           return res(
             ctx.json({
               data: room2Threads,
@@ -1020,6 +1065,9 @@ describe("useThreads", () => {
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: null,
+                permissionHints: {
+                  [roomId]: [Permission.Write],
+                },
               },
             })
           );
@@ -1033,12 +1081,12 @@ describe("useThreads", () => {
       room: { RoomProvider, useThreads },
     } = createContextsForTest();
 
-    const RoomIdDispatchContext = React.createContext<
+    const RoomIdDispatchContext = createContext<
       ((value: string) => void) | null
     >(null);
 
     const Wrapper = ({ children }: { children: ReactNode }) => {
-      const [roomId, setRoomId] = React.useState(room1Id);
+      const [roomId, setRoomId] = useState(room1Id);
 
       return (
         <RoomIdDispatchContext.Provider value={setRoomId}>
@@ -1048,7 +1096,7 @@ describe("useThreads", () => {
     };
 
     const useThreadsContainer = () => {
-      const setRoomId = React.useContext(RoomIdDispatchContext);
+      const setRoomId = useContext(RoomIdDispatchContext);
       const state = useThreads();
       return { state, setRoomId };
     };
@@ -1172,6 +1220,9 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -1235,6 +1286,9 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -1319,6 +1373,9 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -1392,6 +1449,9 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -1403,11 +1463,9 @@ describe("useThreads", () => {
       umbrellaStore,
     } = createContextsForTest();
 
-    // @ts-expect-error Accessing a private field here directly
-    const db = umbrellaStore._rawThreadsDB;
+    const db = umbrellaStore.threads;
     db.upsert(thread1);
     db.upsert(thread2WithDeletedAt);
-    umbrellaStore.force_set((state) => ({ ...state }));
 
     const { result, unmount } = renderHook(
       () => useThreads({ query: { metadata: {} } }),
@@ -1452,6 +1510,9 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -1474,6 +1535,9 @@ describe("useThreads", () => {
               deletedInboxNotifications: [],
               meta: {
                 requestedAt: new Date().toISOString(),
+                permissionHints: {
+                  [roomId]: [Permission.Write],
+                },
               },
             })
           );
@@ -1570,6 +1634,9 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -1637,6 +1704,9 @@ describe("useThreads", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -1659,6 +1729,9 @@ describe("useThreads", () => {
               deletedInboxNotifications: [],
               meta: {
                 requestedAt: new Date().toISOString(),
+                permissionHints: {
+                  [roomId]: [Permission.Write],
+                },
               },
             })
           );
@@ -1746,6 +1819,9 @@ describe("useThreads", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: new Date().toISOString(),
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -1934,6 +2010,9 @@ describe("useThreads: polling", () => {
             meta: {
               requestedAt: now,
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -1948,6 +2027,9 @@ describe("useThreads: polling", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: now,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -2005,6 +2087,10 @@ describe("useThreads: polling", () => {
             deletedInboxNotifications: [],
             meta: {
               requestedAt: now,
+              nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -2055,6 +2141,9 @@ describe("WebSocket events", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -2125,6 +2214,9 @@ describe("WebSocket events", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -2191,6 +2283,9 @@ describe("WebSocket events", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -2269,6 +2364,9 @@ describe("WebSocket events", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -2368,6 +2466,9 @@ describe("useThreadsSuspense", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -2419,6 +2520,9 @@ describe("useThreadsSuspense", () => {
             meta: {
               requestedAt: new Date().toISOString(),
               nextCursor: null,
+              permissionHints: {
+                [roomId]: [Permission.Write],
+              },
             },
           })
         );
@@ -2599,6 +2703,9 @@ describe("useThreads: pagination", () => {
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: "cursor-2",
+                permissionHints: {
+                  [roomId]: [Permission.Write],
+                },
               },
             })
           );
@@ -2615,6 +2722,9 @@ describe("useThreads: pagination", () => {
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: "cursor-3",
+                permissionHints: {
+                  [roomId]: [Permission.Write],
+                },
               },
             })
           );
@@ -2631,6 +2741,9 @@ describe("useThreads: pagination", () => {
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: "cursor-1",
+                permissionHints: {
+                  [roomId]: [Permission.Write],
+                },
               },
             })
           );
@@ -2734,6 +2847,9 @@ describe("useThreads: pagination", () => {
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: null,
+                permissionHints: {
+                  [roomId]: [Permission.Write],
+                },
               },
             })
           );
@@ -2749,6 +2865,9 @@ describe("useThreads: pagination", () => {
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: "cursor-1",
+                permissionHints: {
+                  [roomId]: [Permission.Write],
+                },
               },
             })
           );
@@ -2822,6 +2941,9 @@ describe("useThreads: pagination", () => {
               meta: {
                 requestedAt: new Date().toISOString(),
                 nextCursor: "cursor-1",
+                permissionHints: {
+                  [roomId]: [Permission.Write],
+                },
               },
             })
           );

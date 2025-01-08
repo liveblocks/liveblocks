@@ -1,8 +1,10 @@
-import { kInternal, stringify } from "@liveblocks/core";
-import React from "react";
+import { stringify } from "@liveblocks/core";
+import { useEffect, useRef, useState } from "react";
 
-import { useClient } from "./liveblocks";
-import { useRoom } from "./room";
+import {
+  useMentionSuggestionsCache,
+  useResolveMentionSuggestions,
+} from "./room";
 
 const MENTION_SUGGESTIONS_DEBOUNCE = 500;
 
@@ -12,24 +14,19 @@ const MENTION_SUGGESTIONS_DEBOUNCE = 500;
  * Simplistic debounced search, we don't need to worry too much about deduping
  * and race conditions as there can only be one search at a time.
  */
-export function useMentionSuggestions(search?: string) {
-  const client = useClient();
+export function useMentionSuggestions(roomId: string, search?: string) {
+  const [mentionSuggestions, setMentionSuggestions] = useState<string[]>();
+  const lastInvokedAt = useRef<number>();
 
-  const room = useRoom();
-  const [mentionSuggestions, setMentionSuggestions] =
-    React.useState<string[]>();
-  const lastInvokedAt = React.useRef<number>();
+  const resolveMentionSuggestions = useResolveMentionSuggestions();
+  const mentionSuggestionsCache = useMentionSuggestionsCache();
 
-  React.useEffect(() => {
-    const mentionSuggestionsCache = client[kInternal].mentionSuggestionsCache;
-    const resolveMentionSuggestions =
-      client[kInternal].resolveMentionSuggestions;
-
+  useEffect(() => {
     if (search === undefined || !resolveMentionSuggestions) {
       return;
     }
 
-    const resolveMentionSuggestionsArgs = { text: search, roomId: room.id };
+    const resolveMentionSuggestionsArgs = { text: search, roomId };
     const mentionSuggestionsCacheKey = stringify(resolveMentionSuggestionsArgs);
     let debounceTimeout: number | undefined;
     let isCanceled = false;
@@ -77,7 +74,7 @@ export function useMentionSuggestions(search?: string) {
       isCanceled = true;
       window.clearTimeout(debounceTimeout);
     };
-  }, [client, room.id, search]);
+  }, [search, roomId, resolveMentionSuggestions, mentionSuggestionsCache]);
 
   return mentionSuggestions;
 }

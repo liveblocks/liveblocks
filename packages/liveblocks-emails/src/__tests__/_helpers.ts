@@ -5,6 +5,7 @@ import type {
   DRI,
   DU,
   InboxNotificationData,
+  InboxNotificationTextMentionData,
   InboxNotificationThreadData,
   IUserInfo,
   OptionalPromise,
@@ -12,12 +13,22 @@ import type {
   ThreadData,
 } from "@liveblocks/core";
 import { nanoid } from "@liveblocks/core";
-import type { RoomData, ThreadNotificationEvent } from "@liveblocks/node";
+import type {
+  RoomData,
+  TextMentionNotificationEvent,
+  ThreadNotificationEvent,
+} from "@liveblocks/node";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
+import type { ReactNode } from "react";
 import ReactDOMServer from "react-dom/server";
 
 import type { CommentDataWithBody } from "../comment-with-body";
+import type {
+  MentionEmailBaseData,
+  TextMentionNotificationEmailData,
+  TextMentionNotificationEmailDataAsReact,
+} from "../text-mention-notification";
 import type {
   CommentEmailBaseData,
   ThreadNotificationEmailData,
@@ -370,7 +381,7 @@ export const makeUnreadRepliesDataset = (): {
   return { threadId, comment1, comment2, thread, inboxNotification, event };
 };
 
-export const renderToStaticMarkup = (reactNode: React.ReactNode): string =>
+export const renderToStaticMarkup = (reactNode: ReactNode): string =>
   ReactDOMServer.renderToStaticMarkup(reactNode);
 
 // Note: Rendering React comments bodies as a string (e.g static markup)
@@ -418,4 +429,94 @@ export const commentBodiesAsReactToStaticMarkup = (
     default:
       return null;
   }
+};
+
+export const makeRoomWithTextEditor = ({
+  editor = "lexical",
+}: {
+  editor?: "lexical" | "tiptap";
+} = {}): RoomData => ({
+  ...ROOM_TEST,
+  // @ts-expect-error - Hidden property
+  experimental_textEditor: {
+    type: editor,
+    rootKey: editor === "lexical" ? ["root"] : ["default"],
+  },
+});
+
+export const makeTextMentionNotificationEvent = ({
+  userId,
+  mentionId,
+  inboxNotificationId,
+}: {
+  userId: string;
+  mentionId: string;
+  inboxNotificationId: string;
+}): TextMentionNotificationEvent => ({
+  type: "notification",
+  data: {
+    kind: "textMention",
+    channel: "email",
+    projectId: generateProjectId(),
+    roomId: ROOM_ID_TEST,
+    userId,
+    mentionId,
+    createdAt: new Date().toISOString(),
+    inboxNotificationId,
+  },
+});
+
+export const makeTextMentionInboxNotification = ({
+  mentionId,
+  createdBy,
+  notifiedAt,
+  readAt,
+}: {
+  mentionId: string;
+  createdBy: string;
+  notifiedAt?: Date;
+  readAt?: Date;
+}): InboxNotificationTextMentionData => ({
+  id: generateInboxNotificationId(),
+  kind: "textMention",
+  roomId: ROOM_ID_TEST,
+  mentionId,
+  createdBy,
+  notifiedAt: notifiedAt ?? new Date(),
+  readAt: readAt ?? null,
+});
+
+// Note: Rendering React contents as a string (e.g static markup)
+// to ease testing and avoid unnecessary operations.
+type MentionEmailAsStaticMarkupData<U extends BaseUserMeta> = Omit<
+  MentionEmailBaseData,
+  "userId" | "textEditorNodes"
+> & {
+  author: U;
+  reactContent: string;
+};
+
+type TextMentionNotificationEmailDataAsStaticMarkup =
+  TextMentionNotificationEmailData<
+    BaseUserMeta,
+    MentionEmailAsStaticMarkupData<BaseUserMeta>
+  >;
+
+export const textMentionContentAsReactToStaticMarkup = (
+  emailData: TextMentionNotificationEmailDataAsReact | null
+): TextMentionNotificationEmailDataAsStaticMarkup | null => {
+  if (emailData === null) {
+    return null;
+  }
+
+  const { mention, ...rest } = emailData;
+  const { reactContent, ...restMention } = mention;
+
+  return {
+    mention: {
+      ...restMention,
+      reactContent: renderToStaticMarkup(reactContent),
+    },
+    ...rest,
+  };
 };

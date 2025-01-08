@@ -13,44 +13,268 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
 
+# Week 51 (2024-12-20)
+
+## v2.15.0
+
+### `@liveblocks/react`
+
+- **Breaking**: Drop support for React 17 (and 16). If you’re unable to upgrade
+  React to 18 or higher, you can still continue to use Liveblocks 2.14.0, which
+  is the last version to support React versions lower than 18.
+
+### All packages
+
+- The published target for all Liveblocks packages is now ES2022 (up from
+  ES2020). This should have a positive impact on your bundle size[\*].
+
+- Various internal refactorings and code cleanup.
+
+[\*] If you bundle for the browser, this should not be a problem, as all major
+browsers support ES2022. If however you're specifically targeting very old
+browsers (mostly IE), then you may need to configure your bundler (Webpack,
+rollup, esbuild, etc) to also down-compile code from dependencies inside
+`node_modules` for you, if you aren't already.
+
+## Website
+
+- New blog post: [A better way to email your users about unread content](https://liveblocks.io/blog/a-better-way-to-email-your-users-about-unread-content).
+
+## Examples
+
+- Adjusted email templates to allow switching the logo more easily.
+- Next.js Starter Kit improvements:
+  - Renaming a document updates it immediately for everyone else.
+  - Clicking outside of the rename input saves the new name.
+  - Added tldraw's dark mode.
+  - Added option to filter for canvas in the room listing.
+  - Upgraded Liveblocks.
+  - Fixed a z-index problem and added a hover style.
+
+## Documentation
+
+- [Upgrade guide for 2.15](https://liveblocks.io/docs/platform/upgrading/2.15).
+- Added links to email templates in guides and API reference.
+
+## Contributors
+
+ctnicholas, nvie, marcbouchenoire
+
+# Week 50 (2024-12-13)
+
+## v2.14.0
+
+### `@liveblocks/emails`
+
+- Add new functions [`prepareTextMentionNotificationEmailAsHtml`](https://liveblocks.io/docs/api-reference/liveblocks-emails#prepare-text-mention-notification-email-as-html) and
+  [`prepareTextMentionNotificationEmailAsReact`](https://liveblocks.io/docs/api-reference/liveblocks-emails#prepare-text-mention-notification-email-as-react) to support text mention
+  notification event for Lexical and Tiptap text editors and prepare data into
+  email-ready formats.
+
+## v2.13.2
+
+### `@liveblocks/react-lexical`
+
+- Fix report text editor function's call. Now we wait for the room's status to
+  be `connected` to report the text editor instead of reporting directly after
+  room creation / loading.
+
+### `@liveblocks/react-tiptap`
+
+- Fix report text editor function's call. Now we wait for the room's status to
+  be `connected` to report the text editor instead of reporting directly after
+  room creation / loading.
+
+## Examples
+
+- New example: [Text Editor Emails (Tiptap)](https://liveblocks.io/examples/collaborative-text-editor-emails/nextjs-tiptap-emails-resend).
+- New example: [Text Editor Emails (Lexical)](https://liveblocks.io/examples/collaborative-text-editor-emails/nextjs-lexical-emails-resend).
+
+## Documentation
+
+- New guide: [How to send email notifications for unread text editor mentions](https://liveblocks.io/docs/guides/how-to-send-email-notifications-for-unread-text-editor-mentions).
+- Improved [thread metadata page](https://liveblocks.io/docs/products/comments/metadata).
+
+## Website
+
+- New blog post: [What's new in Liveblocks: November 2024](https://liveblocks.io/blog/whats-new-in-liveblocks-november-edition-2024).
+- Revamped the [Liveblocks blog](https://liveblocks.io/blog):
+  - Added the ability to switch between categories to find relevant posts.
+  - Added the ability to search posts and filter results using tags.
+  - Updated the layout with a table of contents, writer information, and featured posts.
+
+## Contributors
+
+sugardarius, ctnicholas
+
+# Week 49 (2024-12-06)
+
+## v2.13.1
+
+### `@liveblocks/react-ui`
+
+- Improve the spacing consequences of `--lb-line-height` (introduced in 2.13.0)
+  in some contexts.
+
+## Dashboard
+
+- Multiple Tiptap editors are now supported in a room's Text Editor view.
+
+## Documentation
+
+- Improved
+  [custom composer behavior](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Custom-composer-behavior)
+  code example.
+
+## Contributors
+
+ctnicholas, pierrelevaillant, marcbouchenoire
+
+# Week 48 (2024-11-29)
+
+## v2.13.0
+
+### `@liveblocks/react-ui`
+
+- Add a formatting toolbar to `Composer` which appears when selecting text. It’s
+  enabled by default in the default components and can also be custom built with
+  new primitives (`Composer.FloatingToolbar` and `Composer.MarkToggle`) and new
+  APIs (`const { marks, toggleMark } = useComposer()`).
+- Add new `--lb-line-height` token to control the line height of main elements
+  (e.g. comment bodies in comments and composers).
+- Remove `Timestamp` export mistakenly added to `@liveblocks/react-ui`, it
+  should be imported from `@liveblocks/react-ui/primitives` instead.
+
+## Website
+
+- New blog post:
+  [Easy collaborative text editing with Liveblocks Tiptap](http://liveblocks.io/blog/easy-collaborative-text-editing-with-liveblocks-tiptap).
+
+## Examples
+
+- New example:
+  [Novel AI editor](https://liveblocks.io/examples/novel-ai-editor).
+
+## Documentation
+
+- Info on
+  [using multiple Tiptap editors](https://liveblocks.io/docs/api-reference/liveblocks-react-tiptap#Multiple-editors).
+- Info on
+  [offline support for Tiptap](https://liveblocks.io/docs/api-reference/liveblocks-react-tiptap#Offline-support).
+- Removed `beta` warnings from Tiptap docs.
+- Improved `resolveUsers` and `resolveRoomsInfo` docs.
+- Fix
+  [custom composer behavior](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Custom-composer-behavior)
+  code snippet.
+
+## Contributors
+
+ctnicholas, marcbouchenoire, flowflorent
+
+# Week 47 (2024-11-22)
+
+## v2.12.2
+
+### `@liveblocks/react-tiptap`
+
+- Add new options for
+  [`useLiveblocksExtension`](https://liveblocks.io/docs/api-reference/liveblocks-react-tiptap#useLiveblocksExtension)
+  to allow setting initial content, experimental offline support, and the field
+  name.
+- Update floating composer to support `onComposerSubmit` handler and closing the
+  composer with the escape key.
+
+### `@liveblocks/zustand`
+
+- Add support for Zustand v5.
+
+## v2.12.1
+
+### `@liveblocks/react-ui`
+
+- Prevent unsupported attachment previews from loading infinitely.
+- Refactored `Thread` and `Comment` component to be used outside of the
+  `RoomProvider` component.
+
+## Documentation
+
+- Better info on
+  [default permissions with access tokens](https://liveblocks.io/docs/authentication/access-token#Default-permissions).
+- Updated API reference for
+  [`useLiveblocksExtension`](https://liveblocks.io/docs/api-reference/liveblocks-react-tiptap#useLiveblocksExtension).
+
+## Examples
+
+- Added offline support for Tiptap text documents in the
+  [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit).
+
+## Contributors
+
+ctnicholas, jrowny, sugardarius, marcbouchenoire, nimeshnayaju
+
 # Week 46 (2024-11-15)
 
 ## v2.12.0
 
-This release adds support for tracking synchronization status of pending local changes for any part of Liveblocks. Whether you use Storage, Text Editors, Threads, or Notifications. If the client’s sync status is `synchronized`, it means all local pending changes have been persisted by our servers. If there are pending local changes in any part of Liveblocks you’re using, then the client’s sync status will be `synchronizing`.
+This release adds support for tracking synchronization status of pending local
+changes for any part of Liveblocks. Whether you use Storage, Text Editors,
+Threads, or Notifications. If the client’s sync status is `synchronized`, it
+means all local pending changes have been persisted by our servers. If there are
+pending local changes in any part of Liveblocks you’re using, then the client’s
+sync status will be `synchronizing`.
 
-Also, we’re introducing a way to prevent browser tabs from being closed while local changes are not yet synchronized. To opt-in to this protection, enable `preventUnsavedChanges` option on the client:
+Also, we’re introducing a way to prevent browser tabs from being closed while
+local changes are not yet synchronized. To opt-in to this protection, enable
+`preventUnsavedChanges` option on the client:
 
 - In React: `<LiveblocksProvider preventUnsavedChanges />`
 - Otherwise: `createClient({ preventUnsavedChanges: true })`
 
 ### `@liveblocks/client`
 
-- Add new API [`client.getSyncStatus()`](https://liveblocks.io/docs/api-reference/liveblocks-client#Client.getSyncStatus) method.
-- Add new client config option: [`preventUnsavedChanges`](https://liveblocks.io/docs/api-reference/liveblocks-client#prevent-users-losing-unsaved-changes).
+- Add new API
+  [`client.getSyncStatus()`](https://liveblocks.io/docs/api-reference/liveblocks-client#Client.getSyncStatus)
+  method.
+- Add new client config option:
+  [`preventUnsavedChanges`](https://liveblocks.io/docs/api-reference/liveblocks-client#prevent-users-losing-unsaved-changes).
 - Expose `ToImmutable<T>` helper type.
 
 ### `@liveblocks/react`
 
-- Add new hook [`useSyncStatus`](https://liveblocks.io/docs/api-reference/liveblocks-react#useSyncStatus) that can be used to tell whether Liveblocks is synchronizing local changes to the server. Useful to display a "Saving..." spinner in your application, when used with `useSyncStatus({ smooth: true })`.
-- Add new `LiveblocksProvider` prop: [`preventUnsavedChanges`](https://liveblocks.io/docs/api-reference/liveblocks-react#prevent-users-losing-unsaved-changes).
+- Add new hook
+  [`useSyncStatus`](https://liveblocks.io/docs/api-reference/liveblocks-react#useSyncStatus)
+  that can be used to tell whether Liveblocks is synchronizing local changes to
+  the server. Useful to display a "Saving..." spinner in your application, when
+  used with `useSyncStatus({ smooth: true })`.
+- Add new `LiveblocksProvider` prop:
+  [`preventUnsavedChanges`](https://liveblocks.io/docs/api-reference/liveblocks-react#prevent-users-losing-unsaved-changes).
 - Deprecated APIs:
   - `useStorageStatus` is now deprecated in favor of `useSyncStatus`.
 
 ### `@liveblocks/react-ui`
 
-- Take composers into account when the new `preventUnsavedChanges` option is set.
+- Take composers into account when the new `preventUnsavedChanges` option is
+  set.
 
 ### `@liveblocks/react-lexical`
 
-- Add new hook [`useIsEditorReady`](http://liveblocks.io/docs/api-reference/liveblocks-react-lexical#useIsEditorReady) which can be used to show a skeleton UI before the editor has received the initial text from the server.
+- Add new hook
+  [`useIsEditorReady`](http://liveblocks.io/docs/api-reference/liveblocks-react-lexical#useIsEditorReady)
+  which can be used to show a skeleton UI before the editor has received the
+  initial text from the server.
 - Deprecated APIs:
-  - `useEditorStatus` is now deprecated in favor of `useIsEditorReady` (or `useSyncStatus`).
+  - `useEditorStatus` is now deprecated in favor of `useIsEditorReady` (or
+    `useSyncStatus`).
 
 ## Examples
 
-- Added new canvas document type to [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit), powered by [tldraw](https://tldraw.dev/).
-- Added loading `useStatusSync` loading spinners to [Linear-like Issue Tracker](https://liveblocks.io/examples/linear-like-issue-tracker/nextjs-linear-like-issue-tracker) and [Notion-like AI editor](https://liveblocks.io/examples/notion-like-ai-editor/nextjs-notion-like-ai-editor).
+- Added new canvas document type to
+  [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit), powered by
+  [tldraw](https://tldraw.dev/).
+- Added loading `useStatusSync` loading spinners to
+  [Linear-like Issue Tracker](https://liveblocks.io/examples/linear-like-issue-tracker/nextjs-linear-like-issue-tracker)
+  and
+  [Notion-like AI editor](https://liveblocks.io/examples/notion-like-ai-editor/nextjs-notion-like-ai-editor).
 - Added `useIsEditorReady` to Lexical examples.
 
 ## Dashboard
@@ -86,20 +310,35 @@ ctnicholas, nvie, marcbouchenoire, nimeshnayaju, sugardarius
 
 ## Documentation
 
-- [`@liveblocks/react-tiptap`](https://liveblocks.io/docs/api-reference/liveblocks-react-tiptap) API reference.
-- New [Tiptap overview page](https://liveblocks.io/docs/products/text-editor/tiptap).
-- Restructured getting started, adding new guides for using `@liveblocks/react-tiptap` on [Next.js](https://liveblocks.io/docs/get-started/nextjs-tiptap) and [React](https://liveblocks.io/docs/get-started/react-tiptap).
-- [`@liveblocks/emails`](https://liveblocks.io/docs/api-reference/liveblocks-emails) API reference.
-- Updated guide on [sending emails when comments are created](https://liveblocks.io/docs/guides/how-to-send-email-notifications-of-unread-comments).
-- Updated [email notifications overview](https://liveblocks.io/docs/products/comments/email-notifications).
+- [`@liveblocks/react-tiptap`](https://liveblocks.io/docs/api-reference/liveblocks-react-tiptap)
+  API reference.
+- New
+  [Tiptap overview page](https://liveblocks.io/docs/ready-made-features/text-editor/tiptap).
+- Restructured getting started, adding new guides for using
+  `@liveblocks/react-tiptap` on
+  [Next.js](https://liveblocks.io/docs/get-started/nextjs-tiptap) and
+  [React](https://liveblocks.io/docs/get-started/react-tiptap).
+- [`@liveblocks/emails`](https://liveblocks.io/docs/api-reference/liveblocks-emails)
+  API reference.
+- Updated guide on
+  [sending emails when comments are created](https://liveblocks.io/docs/guides/how-to-send-email-notifications-of-unread-comments).
+- Updated
+  [email notifications overview](https://liveblocks.io/docs/ready-made-features/comments/email-notifications).
 
 ## Examples
 
-- New [Next.js Comments + Resend example](https://liveblocks.io/examples/comments-emails/nextjs-comments-emails-resend).
-- New [Next.js Comments + SendGrid example](https://liveblocks.io/examples/comments-emails/nextjs-comments-emails-sendgrid).
-- Updated [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit) to use `@liveblocks/react-tiptap`.
-- Updated [Next.js advanced Tiptap text editor example](https://liveblocks.io/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced) to use `@liveblocks/react-tiptap`.
-- Updated [Next.js Tiptap text editor example](https://liveblocks.io/examples/collaborative-text-editor/nextjs-tiptap) to use `@liveblocks/react-tiptap`.
+- New
+  [Next.js Comments + Resend example](https://liveblocks.io/examples/comments-emails/nextjs-comments-emails-resend).
+- New
+  [Next.js Comments + SendGrid example](https://liveblocks.io/examples/comments-emails/nextjs-comments-emails-sendgrid).
+- Updated [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit) to use
+  `@liveblocks/react-tiptap`.
+- Updated
+  [Next.js advanced Tiptap text editor example](https://liveblocks.io/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced)
+  to use `@liveblocks/react-tiptap`.
+- Updated
+  [Next.js Tiptap text editor example](https://liveblocks.io/examples/collaborative-text-editor/nextjs-tiptap)
+  to use `@liveblocks/react-tiptap`.
 
 ## Contributors
 
@@ -134,12 +373,14 @@ sugardarius, nimeshnayaju, marcbouchenoire, jrowny, ctnicholas
 
 ## Dashboard
 
-- Icons indicating which rooms are public/private on room listing and detail pages.
+- Icons indicating which rooms are public/private on room listing and detail
+  pages.
 - New warning message if all your rooms are publicly accessible.
 
 ## Documentation
 
-- Improved clarity on Notifications being [project-based](http://liveblocks.io/docs/products/notifications/concepts#Project-based).
+- Improved clarity on Notifications being
+  [project-based](http://liveblocks.io/docs/ready-made-features/notifications/concepts#Project-based).
 - Typo fixes.
 
 ## Contributors
@@ -152,11 +393,13 @@ haydenbleasel, ctnicholas, pierrelevaillant, nvie, nimeshnayaju
 
 ### `@liveblocks/client`
 
-- Add new [resolver methods](https://liveblocks.io/docs/api-reference/liveblocks-client#Resolvers) under `client.resolvers.*` to invalidate the cache of
-  `resolveUsers`, `resolveRoomsInfo`, and `resolveMentionSuggestions`.
+- Add new
+  [resolver methods](https://liveblocks.io/docs/api-reference/liveblocks-client#Resolvers)
+  under `client.resolvers.*` to invalidate the cache of `resolveUsers`,
+  `resolveRoomsInfo`, and `resolveMentionSuggestions`.
 - When subscribing to Storage update events using
-  [`room.subscribe(root, ..., { isDeep: true })`](https://liveblocks.io/docs/api-reference/liveblocks-client#listening-for-nested-changes), all LiveList deletion updates
-  will now also include the item that was deleted.
+  [`room.subscribe(root, ..., { isDeep: true })`](https://liveblocks.io/docs/api-reference/liveblocks-client#listening-for-nested-changes),
+  all LiveList deletion updates will now also include the item that was deleted.
 
 ### `@liveblocks/react-ui`
 
@@ -165,7 +408,8 @@ haydenbleasel, ctnicholas, pierrelevaillant, nvie, nimeshnayaju
 
 ## Dashboard
 
-- Removed `Show deleted threads` checkbox from the room detail `Comments` tab to ensure consistent behavior across dashboard and APIs.
+- Removed `Show deleted threads` checkbox from the room detail `Comments` tab to
+  ensure consistent behavior across dashboard and APIs.
 
 ## Documentation
 
@@ -183,13 +427,17 @@ pierrelevaillant, sugardarius, kaf-lamed-beyt, ctnicholas, marcbouchenoire, nvie
 ### `@liveblocks/client`
 
 - Fix regression with metadata filtering on explicitly-`undefined` values.
-- Fix bug where client wasn't always using the newest delta update backend endpoint yet.
+- Fix bug where client wasn't always using the newest delta update backend
+  endpoint yet.
 - Fix type definition of `ThreadData`: `updatedAt` is always set.
 
 ### `@liveblocks/react-ui`
 
-- When [`Composer`](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Composer) is disabled, its actions are now also disabled as expected.
-- Various event propagation improvements in [`Composer`](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Composer).
+- When
+  [`Composer`](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Composer)
+  is disabled, its actions are now also disabled as expected.
+- Various event propagation improvements in
+  [`Composer`](https://liveblocks.io/docs/api-reference/liveblocks-react-ui#Composer).
 
 ## v2.9.0
 
@@ -200,7 +448,8 @@ app.
 
 ### `@liveblocks/react`
 
-- Add pagination support to [`useInboxNotifications`](https://liveblocks.io/docs/api-reference/liveblocks-react#useInboxNotifications).
+- Add pagination support to
+  [`useInboxNotifications`](https://liveblocks.io/docs/api-reference/liveblocks-react#useInboxNotifications).
 
   ```tsx
   const {
@@ -216,7 +465,9 @@ app.
   } = useInboxNotifications();
   ```
 
-- Add pagination support to [`useThreads`](https://liveblocks.io/docs/api-reference/liveblocks-react#useThreads) and `useUserThreads_experimental`.
+- Add pagination support to
+  [`useThreads`](https://liveblocks.io/docs/api-reference/liveblocks-react#useThreads)
+  and `useUserThreads_experimental`.
 
   ```tsx
   const {
@@ -233,7 +484,9 @@ app.
   ```
 
 ## Website
-- New [startups](https://liveblocks.io/startups) page highlighting discounts for startups and nonprofits.
+
+- New [startups](https://liveblocks.io/startups) page highlighting discounts for
+  startups and nonprofits.
 
 ## Contributors
 
@@ -265,8 +518,9 @@ nimeshnayaju, ofoucherot, marcbouchenoire, nvie, pierrelevaillant, stevenfabre
 
 ## Figma Kit
 
-- Add comments attachments to the [Liveblocks Collaboration Kit in Figma](https://www.figma.com/community/file/1387130796111847788/liveblocks-collaboration-kit)
-  
+- Add comments attachments to the
+  [Liveblocks Collaboration Kit in Figma](https://www.figma.com/community/file/1387130796111847788/liveblocks-collaboration-kit)
+
 ## Contributors
 
 marcbouchenoire, sugardarius, pierrelevaillant, nvie
@@ -301,7 +555,8 @@ for more information about this change please read our
 
 ## Website
 
-- New blog post: [Next.js Template Week recap](https://liveblocks.io/blog/nextjs-template-week-recap).
+- New blog post:
+  [Next.js Template Week recap](https://liveblocks.io/blog/nextjs-template-week-recap).
 - Bug fix on the pricing page MAU slider which didn't apply the MAU value set to
   the price of the products.
 
@@ -668,8 +923,8 @@ jrowny, nvie, marcbouchenoire
 ## v2.2.0
 
 We are making `resolved` a first-class citizen property on
-[threads](https://liveblocks.io/docs/products/comments/concepts#Threads), for
-more information about this change please read our
+[threads](https://liveblocks.io/docs/ready-made-features/comments/concepts#Threads),
+for more information about this change please read our
 [Upgrade Guide for 2.2](https://liveblocks.io/docs/platform/upgrading/2.2).
 
 ### `@liveblocks/react`
@@ -854,7 +1109,7 @@ flowflorent, ctnicholas, nvie, stevenfabre, pierrelevaillant, marcbouchenoire
 - Create new guide on
   [how to add users to Liveblocks text editor](https://liveblocks.io/docs/guides/how-to-add-users-to-liveblocks-text-editor).
 - Updated
-  [Lexical product page](https://liveblocks.io/docs/products/text-editor/lexical)
+  [Lexical product page](https://liveblocks.io/docs/ready-made-features/text-editor/lexical)
   with new information.
 - Improved Lexical get started guides.
 - Improved
@@ -919,7 +1174,7 @@ const client = createClient(/* options */);
 // ✅ After
 <LiveblocksProvider /* options */>
   <App />
-</LiveblocksProvider>
+</LiveblocksProvider>;
 ```
 
 For full upgrade instructions and codemods, see the
@@ -990,11 +1245,11 @@ For full upgrade instructions and codemods, see the
   [`LiveblocksProvider`](https://liveblocks.io/docs/api-reference/liveblocks-react#Liveblocks)
   props, details on typing, and more.
 - Added a set of product pages for
-  [Notifications](https://liveblocks.io/docs/products/notifications), with info
-  on concepts, components, hooks, styling, and email notifications.
+  [Notifications](https://liveblocks.io/docs/ready-made-features/notifications),
+  with info on concepts, components, hooks, styling, and email notifications.
 - Added product page for
-  [Lexical](https://liveblocks.io/docs/products/text-editor/lexical) summarising
-  all its features.
+  [Lexical](https://liveblocks.io/docs/ready-made-features/text-editor/lexical)
+  summarising all its features.
 - Restructured and updated existing product pages for our new products.
 - More information on the
   [`NotificationEvent`](https://liveblocks.io/docs/platform/webhooks#NotificationEvent)
@@ -1024,7 +1279,7 @@ For full upgrade instructions and codemods, see the
   - New page product page for
     [Liveblocks Notifications](https://liveblocks.io/notifications)
   - New page product page for
-    [Liveblocks Realtime APIs](https://liveblocks.io/realtime-apis)
+    [Liveblocks Sync Datastore](https://liveblocks.io/sync-datastore)
   - Improved [pricing page](https://liveblocks.io)
   - New navigation
 - New blog post:

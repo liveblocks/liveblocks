@@ -62,7 +62,7 @@ button displayed by default.
 
 You can additionally use `thread.resolved` to filter the displayed threads for
 example. Or if you want to create your own `Thread` component using
-[the primitives](/docs/products/comments/primitives), you can use
+[the primitives](/docs/ready-made-features/comments/primitives), you can use
 [`useMarkThreadAsResolved`](/docs/api-reference/liveblocks-react#useMarkThreadAsResolved)
 and
 [`useMarkThreadAsUnresolved`](/docs/api-reference/liveblocks-react#useMarkThreadAsUnresolved)
@@ -102,6 +102,13 @@ about this change in our
   </PropertiesListItem>
   <PropertiesListItem name="showAttachments" type="boolean" defaultValue="true">
     Whether to show attachments.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="showComposerFormattingControls"
+    type="boolean"
+    defaultValue="true"
+  >
+    Whether to show the composer’s formatting controls.
   </PropertiesListItem>
   <PropertiesListItem
     name="showResolveAction"
@@ -179,7 +186,7 @@ about this change in our
     type="function"
     detailedType="(args: CommentAttachmentArgs, event: MouseEvent<HTMLElement>) => void"
   >
-    The event handler called when clicking on a comment's attachment.
+    The event handler called when clicking on a comment’s attachment.
   </PropertiesListItem>
   <PropertiesListItem
     name="overrides"
@@ -351,6 +358,9 @@ Learn more about mutation hooks under
   <PropertiesListItem name="defaultValue" type="CommentBody">
     The composer’s initial value.
   </PropertiesListItem>
+  <PropertiesListItem name="defaultAttachments" type="CommentAttachment[]">
+    The composer’s initial attachments.
+  </PropertiesListItem>
   <PropertiesListItem name="collapsed" type="boolean">
     Whether the composer is collapsed. Setting a value will make the composer
     controlled.
@@ -361,6 +371,17 @@ Learn more about mutation hooks under
     detailedType="(collapsed: boolean) => void"
   >
     The event handler called when the collapsed state of the composer changes.
+  </PropertiesListItem>
+  <PropertiesListItem name="showAttachments" type="boolean" defaultValue="true">
+    Whether to show and allow adding attachments.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="showFormattingControls"
+    type="boolean"
+    defaultValue="true"
+  >
+    Whether to show formatting controls (e.g. a floating toolbar with formatting
+    toggles when selecting text)
   </PropertiesListItem>
   <PropertiesListItem name="defaultCollapsed" type="boolean">
     Whether the composer is initially collapsed. Setting a value will make the
@@ -471,6 +492,16 @@ function Component() {
   <PropertiesListItem name="showReactions" type="boolean" defaultValue="true">
     Whether to show reactions.
   </PropertiesListItem>
+  <PropertiesListItem name="showAttachments" type="boolean" defaultValue="true">
+    Whether to show attachments.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="showComposerFormattingControls"
+    type="boolean"
+    defaultValue="true"
+  >
+    Whether to show the composer’s formatting controls when editing the comment.
+  </PropertiesListItem>
   <PropertiesListItem name="indentContent" type="boolean" defaultValue="true">
     Whether to indent the comment’s content.
   </PropertiesListItem>
@@ -511,7 +542,7 @@ function Component() {
     type="function"
     detailedType="(args: CommentAttachmentArgs, event: MouseEvent<HTMLElement>) => void"
   >
-    The event handler called when clicking on a comment's attachment.
+    The event handler called when clicking on a comment’s attachment.
   </PropertiesListItem>
   <PropertiesListItem
     name="overrides"
@@ -702,7 +733,7 @@ occurs when the composer is submitted. You must create your own mutations within
 
 <PropertiesList>
   <PropertiesListItem name="defaultAttachments" type="CommentAttachment[]">
-    The composer's initial attachments.
+    The composer’s initial attachments.
   </PropertiesListItem>
   <PropertiesListItem
     name="pasteFilesAsAttachments"
@@ -805,6 +836,12 @@ The components displayed within the editor.
     The component used to display links. Defaults to the link’s `children`
     property.
   </PropertiesListItem>
+  <PropertiesListItem
+    name="FloatingToolbar"
+    type="ComponentType<ComposerEditorFloatingToolbarProps>"
+  >
+    The component used to display a floating toolbar attached to the selection.
+  </PropertiesListItem>
 </PropertiesList>
 
 ###### Mention [#primitives-Composer.Editor-Mention]
@@ -878,6 +915,23 @@ The component used to display links.
   </PropertiesListItem>
 </PropertiesList>
 
+###### FloatingToolbar [#primitives-Composer.Editor-FloatingToolbar]
+
+Displays a floating toolbar attached to the selection within `Composer.Editor`.
+
+```tsx
+<Composer.Editor
+  components={{
+    FloatingToolbar: () => (
+      <Composer.FloatingToolbar>
+        <Composer.MarkToggle mark="bold">Bold</Composer.MarkToggle>
+        <Composer.MarkToggle mark="italic">Italic</Composer.MarkToggle>
+      </Composer.FloatingToolbar>
+    ),
+  }}
+/>
+```
+
 ##### Composer.Mention [#primitives-Composer.Mention]
 
 Displays mentions within `Composer.Editor`.
@@ -905,7 +959,7 @@ Displays mentions within `Composer.Editor`.
 Contains suggestions within `Composer.Editor`.
 
 ```tsx
-<Composer.Suggestions>{/* … */}<Composer.Suggestions>
+<Composer.Suggestions>{/* ... */}<Composer.Suggestions>
 ```
 
 <PropertiesList>
@@ -984,6 +1038,47 @@ A button to submit the composer.
 ```
 
 <PropertiesList>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropertiesListItem>
+</PropertiesList>
+
+##### Composer.FloatingToolbar [#primitives-Composer.FloatingToolbar]
+
+Displays a floating toolbar attached to the selection within `Composer.Editor`.
+
+```tsx
+<Composer.FloatingToolbar>
+  <Composer.MarkToggle mark="bold">Bold</Composer.MarkToggle>
+  <Composer.MarkToggle mark="italic">Italic</Composer.MarkToggle>
+</Composer.FloatingToolbar>
+```
+
+<PropertiesList>
+  <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
+    Replace the rendered element by the one passed as a child.
+  </PropertiesListItem>
+</PropertiesList>
+
+##### Composer.MarkToggle
+
+A toggle button which toggles a specific text mark.
+
+```tsx
+<Composer.MarkToggle mark="bold">Bold</Composer.MarkToggle>
+```
+
+<PropertiesList>
+  <PropertiesListItem name="mark" type="ComposerBodyMark" required>
+    The text mark to toggle.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="onValueChange"
+    type="function"
+    detailedType="(mark: ComposerBodyMark) => void"
+  >
+    The event handler called when the mark is toggled.
+  </PropertiesListItem>
   <PropertiesListItem name="asChild" type="boolean" defaultValue="false">
     Replace the rendered element by the one passed as a child.
   </PropertiesListItem>
@@ -1324,9 +1419,6 @@ import { useCreateThread } from "@liveblocks/react/suspense";
 
 function MyComposer() {
   const createThread = useCreateThread();
-  // +++
-  const { createMention } = useComposer();
-  // +++
 
   return (
     <Composer.Form
@@ -1338,11 +1430,23 @@ function MyComposer() {
         });
       }}
     >
+      <Editor />
+    </Composer.Form>
+  );
+}
+
+function Editor() {
+  // +++
+  const { createMention } = useComposer();
+  // +++
+
+  return (
+    <>
       <Composer.Editor components={/* Your custom component parts */} />
       // +++
       <button onClick={createMention}>Add mention</button>
       // +++
-    </Composer.Form>
+    </>
   );
 }
 ```
@@ -1364,13 +1468,15 @@ function MyComposer() {
   const createThread = useCreateThread();
 
   return (
-    <Composer.Form onComposerSubmit={({ body, attachments }) => {
-      const thread = createThread({
-        body,
-        attachments,
-        metadata: {},
-      });
-    }}>
+    <Composer.Form
+      onComposerSubmit={({ body, attachments }) => {
+        const thread = createThread({
+          body,
+          attachments,
+          metadata: {},
+        });
+      }}
+    >
       <Composer.Editor components={/* Your custom component parts */} />
       // +++
       <MyComposerAttachments />
@@ -1392,9 +1498,11 @@ function MyComposerAttachments() {
       {attachments.map((attachment) => (
         <div key={attachment.id}>
           {attachment.name} ({attachment.status})
-          <button onClick={() => removeAttachment(attachment.id)}>Remove</button>
+          <button onClick={() => removeAttachment(attachment.id)}>
+            Remove
+          </button>
         </div>
-      )}
+      ))}
       // +++
     </div>
   );
@@ -1430,6 +1538,16 @@ function MyComposerAttachments() {
   </PropertiesListItem>
   <PropertiesListItem name="blur" type="function" detailedType="() => void">
     Blur the editor programmatically.
+  </PropertiesListItem>
+  <PropertiesListItem name="marks" type="ComposerBodyMarks">
+    Which text marks are currently active and which aren’t.
+  </PropertiesListItem>
+  <PropertiesListItem
+    name="toggleMark"
+    type="function"
+    detailedType="(mark: ComposerBodyMark) => void"
+  >
+    Remove an attachment by its ID.
   </PropertiesListItem>
   <PropertiesListItem
     name="createMention"
@@ -1882,7 +2000,7 @@ Displays a version summary which includes the author and date.
 
 #### HistoryVersionSummaryList
 
-Displays a list of version summaries for a document's history including authors
+Displays a list of version summaries for a document’s history including authors
 and dates.
 
 ```tsx
@@ -2026,6 +2144,9 @@ these variables within `.lb-root` to globally style your components.
   </PropertiesListItem>
   <PropertiesListItem name="--lb-foreground" defaultValue="#111111">
     The main foreground color.
+  </PropertiesListItem>
+  <PropertiesListItem name="--lb-line-height" defaultValue="1.5">
+    The line height of main elements (e.g. comment bodies).
   </PropertiesListItem>
   <PropertiesListItem name="--lb-icon-size" defaultValue="20px">
     The size of icons.

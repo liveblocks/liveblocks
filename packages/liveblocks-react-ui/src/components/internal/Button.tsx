@@ -1,12 +1,12 @@
 "use client";
 
 import type { ComponentProps } from "react";
-import React, { forwardRef } from "react";
+import { forwardRef } from "react";
 
 import { classNames } from "../../utils/class-names";
 
 export interface ButtonProps extends ComponentProps<"button"> {
-  variant?: "default" | "outline" | "primary";
+  variant?: "default" | "outline" | "toggle" | "primary";
   size?: "default" | "large";
   disableable?: boolean;
 }

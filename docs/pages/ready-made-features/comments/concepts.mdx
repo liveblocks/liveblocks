@@ -1,0 +1,132 @@
+---
+meta:
+  title: "Concepts"
+  parentTitle: "Comments"
+  description: "Learn about threads and comments"
+---
+
+A quick overview of the concepts used in Liveblocks Comments.
+
+## Threads
+
+In Liveblocks Comments, everything revolves around _threads_. In each
+[multiplayer room](/docs/concepts/how-liveblocks-works#Rooms) you can create a
+number of threads. Each individual thread contains a list of _comments_ written
+by your users.
+
+<Figure>
+  <Image
+    src="/assets/comments/comment-thread-room-relation.jpg"
+    srcDark="/assets/comments/comment-thread-room-relation-dark.jpg"
+    alt="Diagram showing a comment, inside a thread, inside a room"
+    width={768}
+    height={480}
+    quality={100}
+  />
+</Figure>
+
+Threads can be retrieved by
+[a React hook](/docs/ready-made-features/comments/hooks#threads-hook) or
+[on your server](/docs/api-reference/liveblocks-node#get-rooms-roomId-threads).
+Here’s an example of a thread object.
+
+```ts
+{
+  type: "thread",
+  id: "th_sf8s6sh...",
+  roomId: "my-room-id",
+  createdAt: Date <Fri Dec 15 2023 14:15:22 GMT+0000 (Greenwich Mean Time)>,
+  resolved: false,
+  comments: [
+    // A list of comments in the thread
+    // ...
+  ],
+  metadata: {
+    // Your custom thread metadata
+    // ...
+  },
+}
+```
+
+Threads can also store
+[custom metadata](/docs/ready-made-features/comments/metadata), which is helpful
+for integrating them into your product.
+
+## Comments
+
+Each comment is created by a user, referenced by their
+[user ID](/docs/ready-made-features/comments/users-and-mentions), and is part of
+a thread. The first comment in a thread is displayed at the top.
+
+<Figure>
+  <Image
+    src="/assets/comments/first-comment-in-thread.jpg"
+    srcDark="/assets/comments/first-comment-in-thread-dark.jpg"
+    alt="thread.comments[0] is the first comment in a thread"
+    width={768}
+    height={480}
+    quality={100}
+  />
+</Figure>
+
+Here’s an example of a single comment inside a thread object.
+
+```ts highlight="8-20"
+{
+  type: "thread",
+  id: "th_sf8s6sh...",
+  roomId: "my-room-id",
+  createdAt: Date <Fri Dec 15 2023 14:15:22 GMT+0000 (Greenwich Mean Time)>,
+  resolved: false,
+  comments: [
+    {
+      type: "comment",
+      threadId: "th_sf8s6sh...",
+      id: "cm_agH76a...",
+      roomId: "my-room-id",
+      userId: "alicia@example.com",
+      createdAt: Date <Fri Dec 15 2023 14:15:22 GMT+0000 (Greenwich Mean Time)>,
+      editedAt: Date <Fri Dec 15 2023 15:07:19 GMT+0000 (Greenwich Mean Time)>,
+      body: {
+        // The comment's text in `CommentBody` format
+        // ...
+      },
+    },
+
+    // Other comments in the thread
+    // ...
+  ],
+  metadata: {
+    // Your custom thread metadata
+    // ...
+  },
+}
+```
+
+A comment’s `body` is in a custom `CommentBody` format, though you most likely
+won’t need to use this, as we render it in React for you. We also provide a
+number of functions that allow you to easily
+[convert a comment’s body into Markdown, HTML, or plain text](/docs/api-reference/liveblocks-node#stringify-comment-body),
+which is especially helpful for creating email notifications.
+
+### Deleted comments
+
+Deleting a comment doesn’t remove the comment object from the thread, instead
+the `comment.body` property is removed, and a `comment.deletedAt` property is
+added, which contains the deletion time. This allows you to handle the deleted
+comment in whichever way you see fit, for example you may like to create a
+“message deleted” placeholder for the comment. Alternatively, the comment can be
+hidden completely.
+
+<Figure>
+  <Image
+    src="/assets/comments/comment-deleted.jpg"
+    srcDark="/assets/comments/comment-deleted-dark.jpg"
+    alt="Image of a thread with one comment highlighting a deleted comment"
+    width={768}
+    height={480}
+    quality={100}
+  />
+</Figure>
+
+A thread is only deleted after all its comments have been deleted.

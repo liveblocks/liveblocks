@@ -102,10 +102,12 @@ export { autoRetry, HttpError } from "./lib/autoRetry";
 export { chunk } from "./lib/chunk";
 export { Promise_withResolvers } from "./lib/controlledPromise";
 export {
+  createCommentAttachmentId,
   createCommentId,
   createInboxNotificationId,
   createThreadId,
 } from "./lib/createIds";
+export { DefaultMap } from "./lib/DefaultMap";
 export {
   deprecate,
   deprecateIf,
@@ -130,8 +132,10 @@ export { makePoller } from "./lib/Poller";
 export { asPos, makePosition } from "./lib/position";
 export type { Resolve } from "./lib/Resolve";
 export { shallow } from "./lib/shallow";
+export type { ISignal, SignalType } from "./lib/signals";
+export { batch, DerivedSignal, MutableSignal, Signal } from "./lib/signals";
 export { SortedList } from "./lib/SortedList";
-export { stringify } from "./lib/stringify";
+export { stringify, unstringify } from "./lib/stringify";
 export type { QueryParams, URLSafeString } from "./lib/url";
 export { url, urljoin } from "./lib/url";
 export type { Brand, DistributiveOmit } from "./lib/utils";
@@ -146,8 +150,8 @@ export {
   wait,
   withTimeout,
 } from "./lib/utils";
-export type { GetUserThreadsOptions } from "./notifications";
 export type { CustomAuthenticationResult } from "./protocol/Authentication";
+export { Permission } from "./protocol/AuthToken";
 export type { BaseActivitiesData } from "./protocol/BaseActivitiesData";
 export type { BaseRoomInfo } from "./protocol/BaseRoomInfo";
 export type { BaseUserMeta, IUserInfo } from "./protocol/BaseUserMeta";
@@ -310,10 +314,6 @@ import { HttpError } from "./lib/autoRetry";
 import type { Json } from "./lib/Json";
 import type * as DevTools from "./types/DevToolsTreeNode";
 export type { DevTools };
-
-// Store
-export type { Store } from "./lib/create-store";
-export { createStore } from "./lib/create-store";
 
 // Deprecated APIs
 /** @deprecated Use HttpError instead. */
