@@ -1221,7 +1221,8 @@ export class UmbrellaStore<M extends BaseMetadata> {
               isLoading: false,
               settings: nn(this.channelNotificationSettings.signal.get()),
             };
-          }
+          },
+          shallow
         ),
         waitUntilLoaded: this.#channelsNotificationSettings.waitUntilLoaded,
       };
