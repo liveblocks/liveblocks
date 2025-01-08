@@ -12,6 +12,7 @@ import {
 import type { BaseMetadata } from "@liveblocks/client";
 import type { DM } from "@liveblocks/core";
 import { useCreateThread } from "@liveblocks/react";
+import { useLayoutEffect } from "@liveblocks/react/_private";
 import type {
   ComposerProps,
   ComposerSubmitComment,
@@ -19,7 +20,7 @@ import type {
 import { Composer } from "@liveblocks/react-ui";
 import { type Editor, useEditorState } from "@tiptap/react";
 import type { ComponentRef, FormEvent, KeyboardEvent } from "react";
-import { forwardRef, useCallback, useLayoutEffect } from "react";
+import { forwardRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 
 import type {
