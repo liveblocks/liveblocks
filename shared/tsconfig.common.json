@@ -19,11 +19,10 @@
 
     // Use better type checking
     "strict": true,
+    "verbatimModuleSyntax": true,
     "allowUnreachableCode": false, // False makes this stricter: errors instead of warns
     "allowUnusedLabels": false, // False makes this stricter: errors instead of warns
     "forceConsistentCasingInFileNames": true,
-    "verbatimModuleSyntax": true,
-    "isolatedModules": true,
     "noImplicitReturns": true,
     "noUncheckedIndexedAccess": true,
     "noUnusedLocals": true,

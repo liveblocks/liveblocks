@@ -20,7 +20,8 @@
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
     "@types/is-git-clean": "1.1.2",
-    "@types/jscodeshift": "0.11.11"
+    "@types/jscodeshift": "0.11.11",
+    "@types/node": "^22.10.5"
   },
   "dependencies": {
     "execa": "4.0.3",

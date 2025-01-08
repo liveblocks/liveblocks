@@ -366,6 +366,7 @@ function makeRoomContextBundle<
     // context consistent internally.
     return (
       <LiveblocksProviderWithClient client={client} allowNesting>
+        {/* @ts-expect-error {...props} is the same type as props */}
         <RoomProvider {...props} />
       </LiveblocksProviderWithClient>
     );
@@ -2551,7 +2552,13 @@ function useRoomPermissions(roomId: string) {
  *
  * This is an internal API, use `createRoomContext` instead.
  */
-export function useRoomContextBundleOrNull() {
+export function useRoomContextBundleOrNull(): RoomContextBundle<
+  JsonObject,
+  LsonObject,
+  BaseUserMeta,
+  Json,
+  BaseMetadata
+> | null {
   const client = useClientOrNull();
   const room = useRoomOrNull<never, never, never, never, never>();
   return client && room ? getOrCreateRoomContextBundle(client) : null;
@@ -2562,7 +2569,13 @@ export function useRoomContextBundleOrNull() {
  *
  * This is an internal API, use `createRoomContext` instead.
  */
-export function useRoomContextBundle() {
+export function useRoomContextBundle(): RoomContextBundle<
+  JsonObject,
+  LsonObject,
+  BaseUserMeta,
+  Json,
+  BaseMetadata
+> {
   const client = useClient();
   return getOrCreateRoomContextBundle(client);
 }

@@ -264,6 +264,7 @@ describe("room", () => {
       {},
       undefined,
       SOCKET_SEQUENCE(
+        // @ts-expect-error We're testing unknown codes
         SOCKET_REFUSES(4242 /* Unknown code */, "An unknown error reason"),
         SOCKET_AUTOCONNECT_AND_ROOM_STATE() // Repeated to infinity
       )
@@ -282,6 +283,7 @@ describe("room", () => {
       {},
       undefined,
       SOCKET_SEQUENCE(
+        // @ts-expect-error We're testing unknown codes
         SOCKET_REFUSES(4342 /* Unknown code */, "An unknown error reason"),
         SOCKET_AUTOCONNECT_AND_ROOM_STATE() // Repeated to infinity
       )

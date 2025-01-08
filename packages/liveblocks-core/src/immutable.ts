@@ -243,7 +243,7 @@ export function patchLiveObject<O extends LsonObject>(
   const updates: Partial<O> = {};
 
   for (const key in next) {
-    patchLiveObjectKey(root, key, prev[key], next[key]);
+    patchLiveObjectKey(root, key, prev[key] as Json, next[key] as Json);
   }
 
   for (const key in prev) {
