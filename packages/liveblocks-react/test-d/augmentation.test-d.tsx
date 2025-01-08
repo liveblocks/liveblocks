@@ -1,9 +1,5 @@
-import {
-  ChannelsNotificationSettings,
-  LiveList,
-  LiveMap,
-  LiveObject,
-} from "@liveblocks/core";
+import type { ChannelsNotificationSettings } from "@liveblocks/core";
+import { LiveList, LiveMap, LiveObject } from "@liveblocks/core";
 import * as classic from "@liveblocks/react";
 import * as suspense from "@liveblocks/react/suspense";
 import { expectAssignable, expectError, expectType } from "tsd";
