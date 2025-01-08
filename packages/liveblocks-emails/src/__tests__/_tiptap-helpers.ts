@@ -32,7 +32,7 @@ export const docUpdate = new Uint8Array([
   110, 32, 114, 105, 103, 104, 116, 63, 1, 197, 164, 177, 247, 3, 1, 39, 30,
 ]);
 
-export const docUpdateBuffer = docUpdate.buffer as ArrayBuffer;
+export const docUpdateBuffer = docUpdate.buffer;
 
 export const MENTIONED_USER_ID = "user-0";
 export const MENTION_ID = "in_8QpppsmEJhJzWQ8Q3B7BP";
