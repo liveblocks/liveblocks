@@ -175,7 +175,7 @@ export class Awareness<
         acc.set(otherClientId, otherPresence || {});
       }
       return acc;
-    }, new Map());
+    }, new Map<number, unknown>());
 
     // add this client's yjs presence to states (local client not represented in others)
     const localPresence = this.room.getSelf()?.presence[Y_PRESENCE_KEY];

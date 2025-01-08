@@ -17,8 +17,10 @@ export function ASYNC_OK<T, F extends string>(
   data?: T
 ): AsyncSuccess<T, F> {
   if (arguments.length === 1) {
+    // @ts-expect-error too dynamic to type
     return Object.freeze({ isLoading: false, data: fieldOrData });
   } else {
+    // @ts-expect-error too dynamic to type
     return Object.freeze({ isLoading: false, [fieldOrData as F]: data });
   }
 }
