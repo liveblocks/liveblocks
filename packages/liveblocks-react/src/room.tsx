@@ -31,7 +31,6 @@ import type {
   IYjsProvider,
   LiveblocksError,
   OpaqueClient,
-  Poller,
   RoomEventMessage,
   SignalType,
   TextEditorType,
@@ -43,6 +42,7 @@ import {
   console,
   createCommentId,
   createThreadId,
+  DefaultMap,
   errorIf,
   HttpError,
   kInternal,
@@ -64,7 +64,6 @@ import {
 import { config } from "./config";
 import { RoomContext, useIsInsideRoom, useRoomOrNull } from "./contexts";
 import { isString } from "./lib/guards";
-import { shallow2 } from "./lib/shallow2";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
@@ -115,6 +114,7 @@ import {
   UpdateNotificationSettingsError,
 } from "./types/errors";
 import type { UmbrellaStore } from "./umbrella-store";
+import { makeRoomThreadsQueryKey } from "./umbrella-store";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
 import { useSignal } from "./use-signal";
 import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
@@ -272,60 +272,39 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     throw innerError;
   }
 
-  const threadsPollersByRoomId = new Map<string, Poller>();
+  const threadsPollersByRoomId = new DefaultMap((roomId: string) =>
+    makePoller(
+      async (signal) => {
+        try {
+          return await store.fetchRoomThreadsDeltaUpdate(roomId, signal);
+        } catch (err) {
+          console.warn(`Polling new threads for '${roomId}' failed: ${String(err)}`); // prettier-ignore
+          throw err;
+        }
+      },
+      config.ROOM_THREADS_POLL_INTERVAL,
+      { maxStaleTimeMs: config.ROOM_THREADS_MAX_STALE_TIME }
+    )
+  );
 
-  const versionsPollersByRoomId = new Map<string, Poller>();
+  const versionsPollersByRoomId = new DefaultMap((roomId: string) =>
+    makePoller(
+      async (signal) => {
+        try {
+          return await store.fetchRoomVersionsDeltaUpdate(roomId, signal);
+        } catch (err) {
+          console.warn(`Polling new history versions for '${roomId}' failed: ${String(err)}`); // prettier-ignore
+          throw err;
+        }
+      },
+      config.HISTORY_VERSIONS_POLL_INTERVAL,
+      { maxStaleTimeMs: config.HISTORY_VERSIONS_MAX_STALE_TIME }
+    )
+  );
 
-  const roomNotificationSettingsPollersByRoomId = new Map<string, Poller>();
-
-  function getOrCreateThreadsPollerForRoomId(roomId: string) {
-    let poller = threadsPollersByRoomId.get(roomId);
-    if (!poller) {
-      poller = makePoller(
-        async (signal) => {
-          try {
-            return await store.fetchRoomThreadsDeltaUpdate(roomId, signal);
-          } catch (err) {
-            console.warn(`Polling new threads for '${roomId}' failed: ${String(err)}`); // prettier-ignore
-            throw err;
-          }
-        },
-        config.ROOM_THREADS_POLL_INTERVAL,
-        { maxStaleTimeMs: config.ROOM_THREADS_MAX_STALE_TIME }
-      );
-
-      threadsPollersByRoomId.set(roomId, poller);
-    }
-
-    return poller;
-  }
-
-  function getOrCreateVersionsPollerForRoomId(roomId: string) {
-    let poller = versionsPollersByRoomId.get(roomId);
-    if (!poller) {
-      poller = makePoller(
-        async (signal) => {
-          try {
-            return await store.fetchRoomVersionsDeltaUpdate(roomId, signal);
-          } catch (err) {
-            console.warn(`Polling new history versions for '${roomId}' failed: ${String(err)}`); // prettier-ignore
-            throw err;
-          }
-        },
-        config.HISTORY_VERSIONS_POLL_INTERVAL,
-        { maxStaleTimeMs: config.HISTORY_VERSIONS_MAX_STALE_TIME }
-      );
-
-      versionsPollersByRoomId.set(roomId, poller);
-    }
-
-    return poller;
-  }
-
-  function getOrCreateNotificationsSettingsPollerForRoomId(roomId: string) {
-    let poller = roomNotificationSettingsPollersByRoomId.get(roomId);
-    if (!poller) {
-      poller = makePoller(
+  const roomNotificationSettingsPollersByRoomId = new DefaultMap(
+    (roomId: string) =>
+      makePoller(
         async (signal) => {
           try {
             return await store.refreshRoomNotificationSettings(roomId, signal);
@@ -336,21 +315,22 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
         },
         config.NOTIFICATION_SETTINGS_POLL_INTERVAL,
         { maxStaleTimeMs: config.NOTIFICATION_SETTINGS_MAX_STALE_TIME }
-      );
-
-      roomNotificationSettingsPollersByRoomId.set(roomId, poller);
-    }
-
-    return poller;
-  }
+      )
+  );
 
   return {
     store,
     commentsErrorEventSource: commentsErrorEventSource.observable,
     onMutationFailure,
-    getOrCreateThreadsPollerForRoomId,
-    getOrCreateVersionsPollerForRoomId,
-    getOrCreateNotificationsSettingsPollerForRoomId,
+    getOrCreateThreadsPollerForRoomId: threadsPollersByRoomId.getOrCreate.bind(
+      threadsPollersByRoomId
+    ),
+    getOrCreateVersionsPollerForRoomId:
+      versionsPollersByRoomId.getOrCreate.bind(versionsPollersByRoomId),
+    getOrCreateNotificationsSettingsPollerForRoomId:
+      roomNotificationSettingsPollersByRoomId.getOrCreate.bind(
+        roomNotificationSettingsPollersByRoomId
+      ),
   };
 }
 
@@ -1311,25 +1291,24 @@ function useMutation<
 }
 
 function useThreads<M extends BaseMetadata>(
-  options: UseThreadsOptions<M> = {
-    query: { metadata: {} },
-  }
+  options: UseThreadsOptions<M> = {}
 ): ThreadsAsyncResult<M> {
   const { scrollOnLoad = true } = options;
-  // TODO - query = stable(options.query);
 
   const client = useClient();
   const room = useRoom();
-
   const { store, getOrCreateThreadsPollerForRoomId } =
     getRoomExtrasForClient<M>(client);
+  const queryKey = makeRoomThreadsQueryKey(room.id, options.query);
 
   const poller = getOrCreateThreadsPollerForRoomId(room.id);
 
   useEffect(
-    () => {
-      void store.waitUntilRoomThreadsLoaded(room.id, options.query);
-    }
+    () =>
+      void store.outputs.loadingRoomThreads
+        .getOrCreate(queryKey)
+        .waitUntilLoaded()
+
     // NOTE: Deliberately *not* using a dependency array here!
     //
     // It is important to call waitUntil on *every* render.
@@ -1346,38 +1325,12 @@ function useThreads<M extends BaseMetadata>(
     return () => poller.dec();
   }, [poller]);
 
-  // XXX_vincent There is a disconnect between this getter and subscriber! It's
-  // not clear (unless you read the implementation of
-  // getRoomThreadsLoadingState) why this getter should be paired with
-  // `store.outputs.threads.subscribe`.
-  //
-  // Ideally refactor this to:
-  //
-  //   useSignal(
-  //     store.outputs.loadingThreads,  // exposes { getUserThreads, getRoomThreads }
-  //
-  //     useCallback(
-  //       ({ getRoomThreads }) => getRoomThreads(room.id, options.query),
-  //       [options.query]
-  //     )
-  //   )
-  //
-  const getter = useCallback(
-    () => store.getRoomThreadsLoadingState(room.id, options.query),
-    [store, room.id, options.query]
+  const result = useSignal(
+    store.outputs.loadingRoomThreads.getOrCreate(queryKey).signal
   );
 
-  const state = useSyncExternalStoreWithSelector(
-    store.outputs.threads.subscribe,
-    getter,
-    getter,
-    identity,
-    shallow2 // NOTE: Using 2-level-deep shallow check here, because the result of selectThreads() is not stable!
-  );
-
-  useScrollToCommentOnLoadEffect(scrollOnLoad, state);
-
-  return state;
+  useScrollToCommentOnLoadEffect(scrollOnLoad, result);
+  return result;
 }
 
 /**
@@ -2134,9 +2087,9 @@ function useRoomNotificationSettings(): [
   const poller = getOrCreateNotificationsSettingsPollerForRoomId(room.id);
 
   useEffect(
-    () => {
-      void store.waitUntilRoomNotificationSettingsLoaded(room.id);
-    }
+    () =>
+      void store.outputs.settingsByRoomId.getOrCreate(room.id).waitUntilLoaded()
+
     // NOTE: Deliberately *not* using a dependency array here!
     //
     // It is important to call waitUntil on *every* render.
@@ -2155,33 +2108,8 @@ function useRoomNotificationSettings(): [
     };
   }, [poller]);
 
-  // XXX_vincent There is a disconnect between this getter and subscriber! It's
-  // not clear (unless you read the implementation of
-  // getNotificationSettingsLoadingState) why this getter should be paired with
-  // `store.outputs.settingsByRoomId.subscribe`.
-  //
-  // Ideally refactor this to:
-  //
-  //   useSignal(
-  //     store.outputs.loadingSettings,  // exposes { getSettings }
-  //
-  //     useCallback(
-  //       ({ getSettings }) => getSettings(room.id),
-  //       [options.query]
-  //     )
-  //   )
-  //
-  const getter = useCallback(
-    () => store.getNotificationSettingsLoadingState(room.id),
-    [store, room.id]
-  );
-
-  const settings = useSyncExternalStoreWithSelector(
-    store.outputs.settingsByRoomId.subscribe,
-    getter,
-    getter,
-    identity,
-    shallow2
+  const settings = useSignal(
+    store.outputs.settingsByRoomId.getOrCreate(room.id).signal
   );
 
   return useMemo(() => {
@@ -2205,7 +2133,7 @@ function useRoomNotificationSettingsSuspense(): [
   const room = useRoom();
 
   // Suspend until there are at least some inbox notifications
-  use(store.waitUntilRoomNotificationSettingsLoaded(room.id));
+  use(store.outputs.settingsByRoomId.getOrCreate(room.id).waitUntilLoaded());
 
   // We're in a Suspense world here, and as such, the useRoomNotificationSettings()
   // hook is expected to only return success results when we're here.
@@ -2282,9 +2210,9 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
   }, [poller]);
 
   useEffect(
-    () => {
-      void store.waitUntilRoomVersionsLoaded(room.id);
-    }
+    () =>
+      void store.outputs.versionsByRoomId.getOrCreate(room.id).waitUntilLoaded()
+
     // NOTE: Deliberately *not* using a dependency array here!
     //
     // It is important to call waitUntil on *every* render.
@@ -2295,36 +2223,7 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
     //    *next* render after that, a *new* fetch/promise will get created.
   );
 
-  // XXX_vincent There is a disconnect between this getter and subscriber! It's
-  // not clear (unless you read the implementation of
-  // getRoomVersionsLoadingState) why this getter should be paired with
-  // `store.outputs.versionsByRoomId.subscribe`.
-  //
-  // Ideally refactor this to:
-  //
-  //   useSignal(
-  //     store.outputs.loadingVersions,  // exposes { getVersions }
-  //
-  //     useCallback(
-  //       ({ getVersions }) => getVersions(room.id),
-  //       [options.query]
-  //     )
-  //   )
-  //
-  const getter = useCallback(
-    () => store.getRoomVersionsLoadingState(room.id),
-    [store, room.id]
-  );
-
-  const state = useSyncExternalStoreWithSelector(
-    store.outputs.versionsByRoomId.subscribe,
-    getter,
-    getter,
-    identity,
-    shallow2
-  );
-
-  return state;
+  return useSignal(store.outputs.versionsByRoomId.getOrCreate(room.id).signal);
 }
 
 /**
@@ -2338,7 +2237,7 @@ function useHistoryVersionsSuspense(): HistoryVersionsAsyncSuccess {
   const room = useRoom();
   const store = getRoomExtrasForClient(client).store;
 
-  use(store.waitUntilRoomVersionsLoaded(room.id));
+  use(store.outputs.versionsByRoomId.getOrCreate(room.id).waitUntilLoaded());
 
   const result = useHistoryVersions();
   assert(!result.error, "Did not expect error");
@@ -2515,16 +2414,15 @@ function useStorageStatusSuspense(
 }
 
 function useThreadsSuspense<M extends BaseMetadata>(
-  options: UseThreadsOptions<M> = {
-    query: { metadata: {} },
-  }
+  options: UseThreadsOptions<M> = {}
 ): ThreadsAsyncSuccess<M> {
   const client = useClient();
   const room = useRoom();
 
   const { store } = getRoomExtrasForClient<M>(client);
+  const queryKey = makeRoomThreadsQueryKey(room.id, options.query);
 
-  use(store.waitUntilRoomThreadsLoaded(room.id, options.query));
+  use(store.outputs.loadingRoomThreads.getOrCreate(queryKey).waitUntilLoaded());
 
   const result = useThreads(options);
   assert(!result.error, "Did not expect error");

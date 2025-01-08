@@ -64,7 +64,7 @@ describe("RoomProvider", () => {
       </RoomProvider>
     );
 
-    expect(authEndpointMock).not.toBeCalled();
+    expect(authEndpointMock).not.toHaveBeenCalled();
   });
 
   test("autoConnect equals true should call the auth endpoint", () => {
@@ -81,7 +81,7 @@ describe("RoomProvider", () => {
       </RoomProvider>
     );
 
-    expect(authEndpointMock).toBeCalled();
+    expect(authEndpointMock).toHaveBeenCalled();
   });
 });
 
