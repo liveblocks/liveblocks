@@ -10,9 +10,9 @@ import { LiveRegister } from "./crdts/LiveRegister";
 import type { LiveNode, Lson, LsonObject, ToJson } from "./crdts/Lson";
 import type { StorageUpdate } from "./crdts/StorageUpdates";
 import * as console from "./lib/fancy-console";
+import { isPlainObject } from "./lib/guards";
 import type { Json, JsonObject } from "./lib/Json";
 import { isJsonObject } from "./lib/Json";
-import { isPlainObject } from "./lib/utils";
 
 function lsonObjectToJson<O extends LsonObject>(
   obj: O
