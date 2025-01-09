@@ -52,9 +52,9 @@
     "yjs": "^13.6.18"
   },
   "peerDependencies": {
-    "@lexical/code": "^0",
-    "@lexical/list": "^0",
+    "@lexical/list": "0.16.1",
     "@lexical/react": "0.16.1",
+    "@lexical/rich-text": "0.16.1",
     "@lexical/selection": "0.16.1",
     "@lexical/utils": "0.16.1",
     "@lexical/yjs": "0.16.1",
@@ -62,20 +62,7 @@
     "react": "^18 || ^19 || ^19.0.0-rc",
     "react-dom": "^18 || ^19 || ^19.0.0-rc"
   },
-  "peerDependenciesMeta": {
-    "@lexical/code": {
-      "optional": true
-    },
-    "@lexical/list": {
-      "optional": true
-    },
-    "@lexical/rich-text": {
-      "optional": true
-    }
-  },
   "devDependencies": {
-    "@lexical/code": "0.16.1",
-    "@lexical/list": "0.16.1",
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
     "@liveblocks/rollup-config": "*",
