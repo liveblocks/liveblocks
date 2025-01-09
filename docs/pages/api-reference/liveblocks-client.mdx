@@ -3253,6 +3253,37 @@ console.log(settings);
   <PropertiesListItem name="settings" type="object" required>
     A deep partial object containing the channels notification settings to
     update.
+
+    ```js title="deep partial 1" isCollapsable isCollapsed
+    {
+      email: { thread: false },
+      slack: { thread: true },
+    }
+    ```
+
+    <div className="-mt-2">
+
+    ```js title="deep partial 2" isCollapsable isCollapsed
+    {
+      email: { thread: false, textMention: true },
+      webPush: { textMention: false },
+    }
+    ```
+
+    </div>
+
+  </PropertiesListItem>
+  <PropertiesListItem name="settings.email" type="ChannelNotificationSetting">
+    The email notification settings.
+  </PropertiesListItem>
+  <PropertiesListItem name="settings.slack" type="ChannelNotificationSetting">
+    The slack notification settings.
+  </PropertiesListItem>
+  <PropertiesListItem name="settings.teams" type="ChannelNotificationSetting">
+    The microsoft teams notification settings.
+  </PropertiesListItem>
+  <PropertiesListItem name="settings.webPush" type="ChannelNotificationSetting">
+    The web push notification settings.
   </PropertiesListItem>
 </PropertiesList>
 
