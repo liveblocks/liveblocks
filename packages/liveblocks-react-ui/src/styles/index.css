@@ -357,9 +357,6 @@
   :where(.lb-icon-container) {
     margin-inline-start: calc(-0.125 * var(--lb-spacing));
     margin-inline-end: calc(0.375 * var(--lb-spacing));
-  }
-
-  :where(.lb-icon-container, .lb-dropdown-item-chevron) {
     color: var(--lb-foreground-moderate);
     transition-property: color;
   }
@@ -371,19 +368,19 @@
         [data-selected]:not([data-selected="false"])
       )
   ) {
-  :where(.lb-icon-container, .lb-dropdown-item-chevron) {
+  :where(.lb-icon-container) {
     color: var(--lb-foreground-tertiary);
   }
 }
 
-.lb-dropdown-item-chevron {
+.lb-dropdown-item-accessory {
   margin-inline-start: auto;
   margin-inline-end: calc(-0.25 * var(--lb-spacing));
 }
 
 /* If a dropdown has at least one icon, all items should be aligned has if they had an icon */
-.lb-dropdown:where(:has(.lb-icon-container))
-  :where(.lb-dropdown-item:not(:has(.lb-icon-container)))
+.lb-dropdown:where(:has(.lb-dropdown-item-icon))
+  :where(.lb-dropdown-item:not(:has(.lb-dropdown-item-icon)))
   :where(.lb-dropdown-item-label) {
   margin-inline-start: calc(
     var(--lb-icon-size) + (0.375 - 0.125) * var(--lb-spacing)

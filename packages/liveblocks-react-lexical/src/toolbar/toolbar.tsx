@@ -424,11 +424,13 @@ const ToolbarBlockSelector = forwardRef<
               value={option.name}
               className="lb-dropdown-item"
             >
-              <SelectPrimitive.ItemText className="lb-dropdown-item-label">
-                {option.name}
-              </SelectPrimitive.ItemText>
+              <span className="lb-dropdown-item-label">
+                <SelectPrimitive.ItemText>
+                  {option.name}
+                </SelectPrimitive.ItemText>
+              </span>
               {option.name === activeOption.name ? (
-                <span className="lb-dropdown-item-chevron">
+                <span className="lb-dropdown-item-accessory lb-icon-container">
                   <CheckIcon />
                 </span>
               ) : null}
