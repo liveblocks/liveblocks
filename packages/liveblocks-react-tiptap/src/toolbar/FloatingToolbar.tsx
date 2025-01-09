@@ -32,6 +32,7 @@ import { createPortal } from "react-dom";
 import { classNames } from "../classnames";
 import { EditorProvider } from "../context";
 import type { FloatingPosition } from "../types";
+import { FloatingToolbarContext } from "./FloatingToolbarContext";
 import {
   applyToolbarSlot,
   Toolbar,
@@ -359,6 +360,10 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
       };
     }, [editor, delayedIsOpen]);
 
+    const close = useCallback(() => {
+      setManuallyClosed(true);
+    }, [setManuallyClosed]);
+
     if (!editor || !delayedIsOpen) {
       return null;
     }
@@ -368,33 +373,35 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
     return createPortal(
       <TooltipProvider>
         <EditorProvider editor={editor}>
-          <div
-            role="toolbar"
-            aria-label="Floating toolbar"
-            aria-orientation="horizontal"
-            className={classNames(
-              "lb-root lb-portal lb-elevation lb-tiptap-floating-toolbar lb-tiptap-toolbar",
-              className
-            )}
-            ref={mergedRefs}
-            style={{
-              position: strategy,
-              top: 0,
-              left: 0,
-              transform: isPositioned
-                ? `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`
-                : "translate3d(0, -200%, 0)",
-              minWidth: "max-content",
-            }}
-            onPointerDown={handlePointerDown}
-            onFocus={handleFocus}
-            onBlur={handleBlur}
-            {...props}
-          >
-            {applyToolbarSlot(before, slotProps)}
-            {applyToolbarSlot(children, slotProps)}
-            {applyToolbarSlot(after, slotProps)}
-          </div>
+          <FloatingToolbarContext.Provider value={{ close }}>
+            <div
+              role="toolbar"
+              aria-label="Floating toolbar"
+              aria-orientation="horizontal"
+              className={classNames(
+                "lb-root lb-portal lb-elevation lb-tiptap-floating-toolbar lb-tiptap-toolbar",
+                className
+              )}
+              ref={mergedRefs}
+              style={{
+                position: strategy,
+                top: 0,
+                left: 0,
+                transform: isPositioned
+                  ? `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`
+                  : "translate3d(0, -200%, 0)",
+                minWidth: "max-content",
+              }}
+              onPointerDown={handlePointerDown}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
+              {...props}
+            >
+              {applyToolbarSlot(before, slotProps)}
+              {applyToolbarSlot(children, slotProps)}
+              {applyToolbarSlot(after, slotProps)}
+            </div>
+          </FloatingToolbarContext.Provider>
         </EditorProvider>
       </TooltipProvider>,
       document.body

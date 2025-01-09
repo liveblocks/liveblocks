@@ -16,11 +16,12 @@ import * as SelectPrimitive from "@radix-ui/react-select";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import type { Editor } from "@tiptap/react";
 import type { ComponentProps, ComponentType, ReactNode } from "react";
-import { forwardRef, useMemo } from "react";
+import { forwardRef, useContext, useMemo } from "react";
 
 import { classNames } from "../classnames";
 import { EditorProvider, useCurrentEditor } from "../context";
 import type { ExtendedChainedCommands } from "../types";
+import { FloatingToolbarContext } from "./FloatingToolbarContext";
 
 export const FLOATING_ELEMENT_SIDE_OFFSET = 6;
 export const FLOATING_ELEMENT_COLLISION_PADDING = 10;
@@ -227,6 +228,7 @@ const ToolbarBlockSelect = forwardRef<
   HTMLButtonElement,
   ToolbarBlockSelectProps
 >(({ items, ...props }, forwardedRef) => {
+  const floatingToolbarContext = useContext(FloatingToolbarContext);
   const editor = useCurrentEditor(
     "ToolbarBlockSelect",
     "Toolbar or FloatingToolbar"
@@ -242,6 +244,9 @@ const ToolbarBlockSelect = forwardRef<
   const handleItemChange = (itemLabel: string) => {
     const item = resolvedItems.find((item) => item.label === itemLabel);
     item?.setActive(editor);
+
+    // If present in a floating toolbar, close it on change
+    floatingToolbarContext?.close();
   };
 
   return (
