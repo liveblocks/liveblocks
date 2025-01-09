@@ -161,7 +161,7 @@ describe("client", () => {
 
   test("should return a list of room when getRooms with query params receives a successful response", async () => {
     const query =
-      'roomId^"liveblocks:" AND metadata["color"]:"blue" AND metadata["size"]:"10"';
+      'roomId^"liveblocks:" metadata["color"]:"blue" metadata["size"]:"10"';
 
     server.use(
       http.get(`${DEFAULT_BASE_URL}/v2/rooms`, (res) => {
@@ -607,18 +607,13 @@ describe("client", () => {
 
   test("should return a filtered list of threads when a query parameter is used for getThreads with a metadata object", async () => {
     const query =
-      'metadata["status"]:"open" AND metadata["priority"]:3 AND metadata["organization"]^"liveblocks:"';
+      'metadata["status"]:"open" metadata["priority"]:3 metadata["organization"]^"liveblocks:"';
     server.use(
       http.get(`${DEFAULT_BASE_URL}/v2/rooms/:roomId/threads`, (res) => {
         const url = new URL(res.request.url);
 
         expect(url.searchParams.get("query")).toEqual(query);
-        return HttpResponse.json(
-          {
-            data: [thread],
-          },
-          { status: 200 }
-        );
+        return HttpResponse.json({ data: [thread] }, { status: 200 });
       })
     );
 
