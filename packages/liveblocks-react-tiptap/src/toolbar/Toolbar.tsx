@@ -1,6 +1,7 @@
 import {
   BoldIcon,
   Button,
+  CheckIcon,
   ChevronDownIcon,
   CodeIcon,
   CommentIcon,
@@ -51,7 +52,6 @@ interface ToolbarToggleProps extends ToolbarButtonProps {
 
 interface ToolbarBlockSelectItem {
   label: string;
-  icon?: ReactNode;
   isActive: (editor: Editor) => boolean;
   setActive: (editor: Editor) => void;
 }
@@ -260,8 +260,10 @@ const ToolbarBlockSelect = forwardRef<
       <ShortcutTooltip content="Turn into…">
         <SelectPrimitive.Trigger asChild {...props} ref={forwardedRef}>
           <Button type="button" variant="toolbar">
-            {activeItem.label}
-            <ChevronDownIcon className="lb-dropdown-chevron" />
+            <SelectPrimitive.Value>{activeItem.label}</SelectPrimitive.Value>
+            <SelectPrimitive.Icon className="lb-dropdown-chevron">
+              <ChevronDownIcon />
+            </SelectPrimitive.Icon>
           </Button>
         </SelectPrimitive.Trigger>
       </ShortcutTooltip>
@@ -278,10 +280,14 @@ const ToolbarBlockSelect = forwardRef<
               value={item.label}
               className="lb-dropdown-item"
             >
-              {item.icon ? (
-                <span className="lb-icon-container">{item.icon}</span>
+              <SelectPrimitive.ItemText className="lb-dropdown-item-label">
+                {item.label}
+              </SelectPrimitive.ItemText>
+              {item.label === activeItem.label ? (
+                <span className="lb-dropdown-item-chevron">
+                  <CheckIcon />
+                </span>
               ) : null}
-              <span className="lb-dropdown-item-label">{item.label}</span>
             </SelectPrimitive.Item>
           ))}
         </SelectPrimitive.Content>
