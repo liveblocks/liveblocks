@@ -1815,6 +1815,59 @@ try {
 }
 ```
 
+### Channels Notification Settings [#channels-notification-settings]
+
+<Banner title="Private beta">
+
+Channels notification settings is currently in private beta. If you would like
+access to the beta, please [contact us](https://liveblocks.io/contact/sales).
+We’d love to hear from you.
+
+</Banner>
+
+#### Liveblocks.getChannelNotificationSettings [#get-users-userId-channels-channelId-notification-settings]
+
+Returns the user's channels notification settings. This a wrapper around the
+[ADD REST API LINK]().
+
+```ts
+const settings = await liveblocks.getChannelNotificationSettings({
+  userId: "guillaume@liveblocks.io",
+});
+
+// { email: { thread: true, ... }, slack: { thread: false, ... }, ... }
+console.log(settings);
+```
+
+#### Liveblocks.updateChannelNotificationSettings [#post-users-userId-channels-channelId-notification-settings]
+
+Updates the user's channels notification settings. This a wrapper around the
+[ADD REST API LINK]().
+
+```ts
+const updatedSettings = liveblocks.updateChannelsNotificationSettings({
+  userId: "steven@liveblocks.io",
+  data: {
+    email: { thread: false },
+    slack: { thread: true },
+  },
+});
+
+// { email: { thread: false, ... }, slack: { thread: true, ... }, ... }
+console.log(updatedSettings);
+```
+
+### Liveblocks.deleteChannelsNotificationSettings [#delete-users-userId-channels-channelId-notification-settings]
+
+Deletes the user's channels notification settings. This a wrapper around the
+[ADD REST API LINK]().
+
+```ts
+await liveblocks.deleteChannelsNotificationSettings({
+  userId: "adri@liveblocks.io",
+});
+```
+
 ---
 
 ## Utilities
