@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-
 import { stringify } from "@liveblocks/core";
 
 export function memoize<TArgs extends unknown[], TReturn>(
