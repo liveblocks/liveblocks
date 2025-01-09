@@ -1,5 +1,5 @@
 import type { BaseMetadata, ThreadData } from "@liveblocks/client";
-import { isStartsWith } from "@liveblocks/core";
+import { isStartsWithOperator } from "@liveblocks/core";
 
 import type { ThreadsQuery } from "../types";
 
@@ -46,7 +46,7 @@ function matchesOperator(
   // here, see comment above.
   op: BaseMetadata[string] | { startsWith: string } | undefined
 ) {
-  if (isStartsWith(op)) {
+  if (isStartsWithOperator(op)) {
     return typeof value === "string" && value.startsWith(op.startsWith);
   } else {
     return value === op;

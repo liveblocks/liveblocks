@@ -13,6 +13,8 @@ export function isPlainObject(
 /**
  * Check if value is of shape { startsWith: string }
  */
-export function isStartsWith(blob: unknown): blob is { startsWith: string } {
+export function isStartsWithOperator(
+  blob: unknown
+): blob is { startsWith: string } {
   return isPlainObject(blob) && typeof blob.startsWith === "string";
 }

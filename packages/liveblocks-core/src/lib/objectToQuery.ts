@@ -1,4 +1,4 @@
-import { isPlainObject, isStartsWith } from "./guards";
+import { isPlainObject, isStartsWithOperator } from "./guards";
 
 /**
  * Converts an object to a query string
@@ -98,7 +98,7 @@ export function objectToQuery(obj: {
     if (isSimpleValue(value)) {
       keyValuePairs.push([key, value]);
     } else if (isPlainObject(value)) {
-      if (isStartsWith(value)) {
+      if (isStartsWithOperator(value)) {
         keyValuePairsWithOperator.push([key, value]);
       } else {
         indexedKeys.push([key, value]);
@@ -122,7 +122,7 @@ export function objectToQuery(obj: {
 
       if (isSimpleValue(nestedValue)) {
         nKeyValuePairs.push([formatFilterKey(key, nestedKey), nestedValue]);
-      } else if (isStartsWith(nestedValue)) {
+      } else if (isStartsWithOperator(nestedValue)) {
         nKeyValuePairsWithOperator.push([
           formatFilterKey(key, nestedKey),
           nestedValue,
