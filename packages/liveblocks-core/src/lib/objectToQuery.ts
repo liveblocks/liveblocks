@@ -19,12 +19,12 @@ import { isPlainObject, isStartsWithOperator } from "./guards";
  * // resolved:true AND metadata["status"]:open AND metadata["priority"]:3 AND metadata["org"]^"liveblocks:"
  * ```
  */
-type SimpleFilterValue = string | number | boolean;
+type SimpleFilterValue = string | number | boolean | null;
 type OperatorFilterValue = { startsWith: string };
 
 type FilterValue = SimpleFilterValue | OperatorFilterValue;
 
-type Filter = NumberFilter | StringFilter | BooleanFilter;
+type Filter = NumberFilter | StringFilter | BooleanFilter | NullFilter;
 
 type NumberFilter = {
   key: string;
@@ -42,6 +42,12 @@ type BooleanFilter = {
   key: string;
   operator: ":";
   value: boolean;
+};
+
+type NullFilter = {
+  key: string;
+  operator: ":";
+  value: null;
 };
 
 /**
@@ -137,14 +143,14 @@ export function objectToQuery(obj: {
   });
 
   return filterList
-    .map(({ key, operator, value }) =>
-      formatFilter(key, operator, formatFilterValue(value))
+    .map(
+      ({ key, operator, value }) => `${key}${operator}${JSON.stringify(value)}`
     )
-    .join(" AND ");
+    .join(" ");
 }
 
 const getFiltersFromKeyValuePairs = (
-  keyValuePairs: [string, string | number | boolean][]
+  keyValuePairs: [string, string | number | boolean | null][]
 ): Filter[] => {
   const filters: Filter[] = [];
   keyValuePairs.forEach(([key, value]) => {
@@ -183,25 +189,11 @@ const isSimpleValue = (value: unknown) => {
   );
 };
 
-const formatFilter = (key: string, operator: ":" | "^", value: string) => {
-  return `${key}${operator}${value}`;
-};
-
 const formatFilterKey = (key: string, nestedKey?: string) => {
   if (nestedKey) {
     return `${key}[${JSON.stringify(nestedKey)}]`;
   }
   return key;
-};
-
-const formatFilterValue = (value: string | number | boolean) => {
-  if (typeof value === "string") {
-    if (isStringEmpty(value)) {
-      throw new Error("Value cannot be empty");
-    }
-    return JSON.stringify(value);
-  }
-  return value.toString();
 };
 
 const isStringEmpty = (value: string) => {
