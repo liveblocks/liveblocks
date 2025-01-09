@@ -62,7 +62,7 @@ function DefaultFloatingToolbarContent() {
     <>
       {supportsTextFormat ? (
         <>
-          <Toolbar.BlockSelect />
+          <Toolbar.BlockSelector />
           <Toolbar.SectionInline />
         </>
       ) : null}

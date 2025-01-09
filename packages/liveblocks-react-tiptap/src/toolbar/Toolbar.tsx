@@ -42,7 +42,7 @@ export interface ToolbarProps extends Omit<ComponentProps<"div">, "children"> {
 
 interface ToolbarButtonProps extends ComponentProps<"button"> {
   icon?: ReactNode;
-  label: string;
+  name: string;
   shortcut?: string;
 }
 
@@ -50,14 +50,14 @@ interface ToolbarToggleProps extends ToolbarButtonProps {
   active: boolean;
 }
 
-interface ToolbarBlockSelectItem {
-  label: string;
+interface ToolbarBlockSelectorOption {
+  name: string;
   isActive: (editor: Editor) => boolean;
   setActive: (editor: Editor) => void;
 }
 
-interface ToolbarBlockSelectProps extends ComponentProps<"button"> {
-  items?: ToolbarBlockSelectItem[];
+interface ToolbarBlockSelectorProps extends ComponentProps<"button"> {
+  options?: ToolbarBlockSelectorOption[];
 }
 
 type ToolbarSeparatorProps = ComponentProps<"div">;
@@ -76,9 +76,9 @@ export function applyToolbarSlot(
 }
 
 const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
-  ({ icon, children, label, shortcut, ...props }, forwardedRef) => {
+  ({ icon, children, name, shortcut, ...props }, forwardedRef) => {
     return (
-      <ShortcutTooltip content={label} shortcut={shortcut}>
+      <ShortcutTooltip content={name} shortcut={shortcut}>
         <Button
           type="button"
           variant="toolbar"
@@ -103,13 +103,13 @@ const ToolbarToggle = forwardRef<HTMLButtonElement, ToolbarToggleProps>(
   }
 );
 
-function createDefaultBlockSelectItems(
+function createDefaultBlockSelectorOptions(
   editor: Editor
-): ToolbarBlockSelectItem[] {
-  const items: (ToolbarBlockSelectItem | null)[] = [
+): ToolbarBlockSelectorOption[] {
+  const options: (ToolbarBlockSelectorOption | null)[] = [
     "toggleHeading" in editor.commands
       ? {
-          label: "Heading 1",
+          name: "Heading 1",
           isActive: (editor) => editor.isActive("heading", { level: 1 }),
           setActive: (editor) =>
             (
@@ -124,7 +124,7 @@ function createDefaultBlockSelectItems(
       : null,
     "toggleHeading" in editor.commands
       ? {
-          label: "Heading 2",
+          name: "Heading 2",
           isActive: (editor) => editor.isActive("heading", { level: 2 }),
           setActive: (editor) =>
             (
@@ -139,7 +139,7 @@ function createDefaultBlockSelectItems(
       : null,
     "toggleHeading" in editor.commands
       ? {
-          label: "Heading 3",
+          name: "Heading 3",
           isActive: (editor) => editor.isActive("heading", { level: 3 }),
           setActive: (editor) =>
             (
@@ -154,7 +154,7 @@ function createDefaultBlockSelectItems(
       : null,
     "toggleBulletList" in editor.commands
       ? {
-          label: "Bullet list",
+          name: "Bullet list",
           isActive: (editor) => editor.isActive("bulletList"),
           setActive: (editor) =>
             (
@@ -169,7 +169,7 @@ function createDefaultBlockSelectItems(
       : null,
     "toggleOrderedList" in editor.commands
       ? {
-          label: "Numbered list",
+          name: "Numbered list",
 
           isActive: (editor) => editor.isActive("orderedList"),
           setActive: (editor) =>
@@ -185,7 +185,7 @@ function createDefaultBlockSelectItems(
       : null,
     "toggleBlockquote" in editor.commands
       ? {
-          label: "Blockquote",
+          name: "Blockquote",
           isActive: (editor) => editor.isActive("blockquote"),
           setActive: (editor) =>
             (
@@ -200,7 +200,7 @@ function createDefaultBlockSelectItems(
       : null,
     "toggleCodeBlock" in editor.commands
       ? {
-          label: "Code block",
+          name: "Code block",
           isActive: (editor) => editor.isActive("codeBlock"),
           setActive: (editor) =>
             (
@@ -215,37 +215,39 @@ function createDefaultBlockSelectItems(
       : null,
   ];
 
-  return items.filter(Boolean) as ToolbarBlockSelectItem[];
+  return options.filter(Boolean) as ToolbarBlockSelectorOption[];
 }
 
-const blockSelectTextItem: ToolbarBlockSelectItem = {
-  label: "Text",
+const blockSelectorTextOption: ToolbarBlockSelectorOption = {
+  name: "Text",
   isActive: () => false,
   setActive: (editor) => editor.chain().focus().clearNodes().run(),
 };
 
-const ToolbarBlockSelect = forwardRef<
+const ToolbarBlockSelector = forwardRef<
   HTMLButtonElement,
-  ToolbarBlockSelectProps
->(({ items, ...props }, forwardedRef) => {
+  ToolbarBlockSelectorProps
+>(({ options, ...props }, forwardedRef) => {
   const floatingToolbarContext = useContext(FloatingToolbarContext);
   const editor = useCurrentEditor(
-    "ToolbarBlockSelect",
+    "BlockSelector",
     "Toolbar or FloatingToolbar"
   );
-  const resolvedItems = useMemo(() => {
-    const resolvedItems = items ?? createDefaultBlockSelectItems(editor);
+  const resolvedOptions = useMemo(() => {
+    const resolvedOptions =
+      options ?? createDefaultBlockSelectorOptions(editor);
 
-    return [blockSelectTextItem, ...resolvedItems];
-  }, [editor, items]);
-  const activeItem =
-    resolvedItems.find((item) => item.isActive(editor)) ?? blockSelectTextItem;
+    return [blockSelectorTextOption, ...resolvedOptions];
+  }, [editor, options]);
+  const activeOption =
+    resolvedOptions.find((option) => option.isActive(editor)) ??
+    blockSelectorTextOption;
 
-  const handleItemChange = (itemLabel: string) => {
-    const item = resolvedItems.find((item) => item.label === itemLabel);
+  const handleOptionChange = (name: string) => {
+    const option = resolvedOptions.find((option) => option.name === name);
 
-    if (item) {
-      item.setActive(editor);
+    if (option) {
+      option.setActive(editor);
 
       // If present in a floating toolbar, close it on change
       floatingToolbarContext?.close();
@@ -254,13 +256,13 @@ const ToolbarBlockSelect = forwardRef<
 
   return (
     <SelectPrimitive.Root
-      value={activeItem?.label}
-      onValueChange={handleItemChange}
+      value={activeOption.name}
+      onValueChange={handleOptionChange}
     >
       <ShortcutTooltip content="Turn into…">
         <SelectPrimitive.Trigger asChild {...props} ref={forwardedRef}>
           <Button type="button" variant="toolbar">
-            <SelectPrimitive.Value>{activeItem.label}</SelectPrimitive.Value>
+            <SelectPrimitive.Value>{activeOption.name}</SelectPrimitive.Value>
             <SelectPrimitive.Icon className="lb-dropdown-chevron">
               <ChevronDownIcon />
             </SelectPrimitive.Icon>
@@ -274,16 +276,16 @@ const ToolbarBlockSelect = forwardRef<
           collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
           className="lb-root lb-portal lb-elevation lb-dropdown"
         >
-          {resolvedItems.map((item) => (
+          {resolvedOptions.map((option) => (
             <SelectPrimitive.Item
-              key={item.label}
-              value={item.label}
+              key={option.name}
+              value={option.name}
               className="lb-dropdown-item"
             >
               <SelectPrimitive.ItemText className="lb-dropdown-item-label">
-                {item.label}
+                {option.name}
               </SelectPrimitive.ItemText>
-              {item.label === activeItem.label ? (
+              {option.name === activeOption.name ? (
                 <span className="lb-dropdown-item-chevron">
                   <CheckIcon />
                 </span>
@@ -319,14 +321,14 @@ function ToolbarSectionHistory() {
   return (
     <>
       <ToolbarButton
-        label="Undo"
+        name="Undo"
         icon={<UndoIcon />}
         shortcut="Mod-Z"
         onClick={() => editor.chain().focus().undo().run()}
         disabled={!editor.can().chain().focus().undo().run()}
       />
       <ToolbarButton
-        label="Redo"
+        name="Redo"
         icon={<RedoIcon />}
         shortcut="Mod-Shift-Z"
         onClick={() => editor.chain().focus().redo().run()}
@@ -351,7 +353,7 @@ function ToolbarSectionInline() {
     <>
       {supportsBold && (
         <ToolbarToggle
-          label="Bold"
+          name="Bold"
           icon={<BoldIcon />}
           shortcut="Mod-B"
           onClick={() =>
@@ -374,7 +376,7 @@ function ToolbarSectionInline() {
       )}
       {supportsItalic && (
         <ToolbarToggle
-          label="Italic"
+          name="Italic"
           icon={<ItalicIcon />}
           shortcut="Mod-I"
           onClick={() =>
@@ -397,7 +399,7 @@ function ToolbarSectionInline() {
       )}
       {supportsUnderline && (
         <ToolbarToggle
-          label="Underline"
+          name="Underline"
           icon={<UnderlineIcon />}
           shortcut="Mod-U"
           onClick={() =>
@@ -424,7 +426,7 @@ function ToolbarSectionInline() {
       )}
       {supportsStrike && (
         <ToolbarToggle
-          label="Strikethrough"
+          name="Strikethrough"
           icon={<StrikethroughIcon />}
           shortcut="Mod-U"
           onClick={() =>
@@ -447,7 +449,7 @@ function ToolbarSectionInline() {
       )}
       {supportsCode && (
         <ToolbarToggle
-          label="Inline code"
+          name="Inline code"
           icon={<CodeIcon />}
           shortcut="Mod-E"
           onClick={() =>
@@ -483,7 +485,7 @@ function ToolbarSectionCollaboration() {
     <>
       {supportsThread && (
         <ToolbarButton
-          label="Add a comment"
+          name="Add a comment"
           icon={<CommentIcon />}
           onClick={() =>
             (
@@ -509,7 +511,7 @@ function DefaultToolbarContent({ editor }: ToolbarSlotProps) {
     <>
       <ToolbarSectionHistory />
       <ToolbarSeparator />
-      <ToolbarBlockSelect />
+      <ToolbarBlockSelector />
       <ToolbarSectionInline />
       {supportsThread ? (
         <>
@@ -563,10 +565,10 @@ export const Toolbar = Object.assign(
   {
     Button: ToolbarButton,
     Toggle: ToolbarToggle,
-    BlockSelect: ToolbarBlockSelect,
     Separator: ToolbarSeparator,
     SectionHistory: ToolbarSectionHistory,
     SectionInline: ToolbarSectionInline,
     SectionCollaboration: ToolbarSectionCollaboration,
+    BlockSelector: ToolbarBlockSelector,
   }
 );
