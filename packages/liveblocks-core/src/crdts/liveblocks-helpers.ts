@@ -1,6 +1,7 @@
 import { assertNever, nn } from "../lib/assert";
+import { isPlainObject } from "../lib/guards";
 import type { Json } from "../lib/Json";
-import { deepClone, entries, isPlainObject } from "../lib/utils";
+import { deepClone, entries } from "../lib/utils";
 import type { CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";

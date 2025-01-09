@@ -1,6 +1,6 @@
 import { StopRetrying } from "./connection";
+import { isPlainObject } from "./lib/guards";
 import type { Json } from "./lib/Json";
-import { isPlainObject } from "./lib/utils";
 import type {
   Authentication,
   CustomAuthenticationResult,

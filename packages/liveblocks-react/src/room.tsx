@@ -63,7 +63,6 @@ import {
 
 import { config } from "./config";
 import { RoomContext, useIsInsideRoom, useRoomOrNull } from "./contexts";
-import { isString } from "./lib/guards";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
@@ -603,7 +602,7 @@ function RoomProviderInner<
       );
     }
 
-    if (!isString(roomId)) {
+    if (typeof roomId !== "string") {
       throw new Error("RoomProvider id property should be a string.");
     }
 
