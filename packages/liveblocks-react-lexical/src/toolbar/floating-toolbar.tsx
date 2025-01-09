@@ -332,8 +332,9 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
     }, [editor, delayedIsOpen]);
 
     const close = useCallback(() => {
+      editor.focus();
       setManuallyClosed(true);
-    }, [setManuallyClosed]);
+    }, [editor, setManuallyClosed]);
 
     if (!delayedIsOpen) {
       return null;
