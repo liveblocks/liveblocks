@@ -1,4 +1,3 @@
-import { $createListNode, $isListNode } from "@lexical/list";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
   $createHeadingNode,
@@ -347,20 +346,6 @@ function createDefaultBlockSelectorOptions(): ToolbarBlockSelectorOption[] {
       },
       setActive: () =>
         $setBlocksType($getSelection(), () => $createHeadingNode("h3")),
-    },
-    {
-      name: "Bullet list",
-      isActive: (activeBlock) =>
-        $isListNode(activeBlock) && activeBlock.getListType() === "bullet",
-      setActive: () =>
-        $setBlocksType($getSelection(), () => $createListNode("bullet")),
-    },
-    {
-      name: "Numbered list",
-      isActive: (activeBlock) =>
-        $isListNode(activeBlock) && activeBlock.getListType() === "number",
-      setActive: () =>
-        $setBlocksType($getSelection(), () => $createListNode("number")),
     },
     {
       name: "Blockquote",
