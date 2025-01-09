@@ -198,21 +198,6 @@ function createDefaultBlockSelectorOptions(
               .run(),
         }
       : null,
-    "toggleCodeBlock" in editor.commands
-      ? {
-          name: "Code block",
-          isActive: (editor) => editor.isActive("codeBlock"),
-          setActive: (editor) =>
-            (
-              editor
-                .chain()
-                .focus()
-                .clearNodes() as ExtendedChainedCommands<"toggleCodeBlock">
-            )
-              .toggleCodeBlock()
-              .run(),
-        }
-      : null,
   ];
 
   return options.filter(Boolean) as ToolbarBlockSelectorOption[];

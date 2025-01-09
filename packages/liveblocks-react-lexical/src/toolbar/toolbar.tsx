@@ -1,3 +1,4 @@
+import { $createListNode, $isListNode } from "@lexical/list";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
   $createHeadingNode,
@@ -307,9 +308,9 @@ function createDefaultBlockSelectorOptions(): ToolbarBlockSelectorOption[] {
   const options: (ToolbarBlockSelectorOption | null)[] = [
     {
       name: "Heading 1",
-      isActive: (activeElement) => {
-        if ($isHeadingNode(activeElement)) {
-          const tag = activeElement.getTag();
+      isActive: (activeBlock) => {
+        if ($isHeadingNode(activeBlock)) {
+          const tag = activeBlock.getTag();
 
           return tag === "h1";
         } else {
@@ -321,9 +322,9 @@ function createDefaultBlockSelectorOptions(): ToolbarBlockSelectorOption[] {
     },
     {
       name: "Heading 2",
-      isActive: (activeElement) => {
-        if ($isHeadingNode(activeElement)) {
-          const tag = activeElement.getTag();
+      isActive: (activeBlock) => {
+        if ($isHeadingNode(activeBlock)) {
+          const tag = activeBlock.getTag();
 
           return tag === "h2";
         } else {
@@ -335,9 +336,9 @@ function createDefaultBlockSelectorOptions(): ToolbarBlockSelectorOption[] {
     },
     {
       name: "Heading 3",
-      isActive: (activeElement) => {
-        if ($isHeadingNode(activeElement)) {
-          const tag = activeElement.getTag();
+      isActive: (activeBlock) => {
+        if ($isHeadingNode(activeBlock)) {
+          const tag = activeBlock.getTag();
 
           return tag === "h3";
         } else {
@@ -346,6 +347,20 @@ function createDefaultBlockSelectorOptions(): ToolbarBlockSelectorOption[] {
       },
       setActive: () =>
         $setBlocksType($getSelection(), () => $createHeadingNode("h3")),
+    },
+    {
+      name: "Bullet list",
+      isActive: (activeBlock) =>
+        $isListNode(activeBlock) && activeBlock.getListType() === "bullet",
+      setActive: () =>
+        $setBlocksType($getSelection(), () => $createListNode("bullet")),
+    },
+    {
+      name: "Numbered list",
+      isActive: (activeBlock) =>
+        $isListNode(activeBlock) && activeBlock.getListType() === "number",
+      setActive: () =>
+        $setBlocksType($getSelection(), () => $createListNode("number")),
     },
     {
       name: "Blockquote",
