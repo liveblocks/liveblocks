@@ -2148,6 +2148,30 @@ if (isTextMentionNotificationEvent(event)) {
 // +++
 ```
 
+### isCustomNotificationEvent [#isCustomNotificationEvent]
+
+Type guard to check if a received webhook event is a
+[`CustomNotificationEvent`](/docs/platform/webhooks#Custom-notification) sent
+from
+[`triggerInboxNotification`](docs/api-reference/liveblocks-node#post-inbox-notifications-trigger).
+Particularly helpful for identifying custom notifications when sending email
+notifications.
+
+```js
+import { isCustomNotificationEvent } from "@liveblocks/node";
+
+const event = webhookHandler.verifyRequest({
+  headers: req.headers,
+  rawBody: req.body,
+});
+
+// +++
+if (isCustomNotificationEvent(event)) {
+  // Handle `CustomNotificationEvent`
+}
+// +++
+```
+
 The check is made against the event type and event data kind.
 
 ## Deprecated
@@ -2170,3 +2194,7 @@ using the `authorize` function in your back end, and adopt
 
 [`room.getothers`]: /docs/api-reference/liveblocks-client#Room.getOthers
 [Permissions REST API]: /docs/authentication/id-token
+
+```
+
+```
