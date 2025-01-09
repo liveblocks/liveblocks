@@ -3208,6 +3208,54 @@ const settings = await room.updateNotificationSettings({
   </PropertiesListItem>
 </PropertiesList>
 
+## Channels Notification Settings [#channels-notification-settings]
+
+### Client.getChannelsNotificationSettings
+
+Returns the current user's channels notification settings.
+
+```ts
+const settings = await client.getChannelsNotificationSettings();
+
+// { email: { thread: true, ... }, slack: { thread: false, ... }, ... }
+console.log(settings);
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="settings" type="ChannelsNotificationSettings">
+    Current user’s channels notification settings.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesListEmpty title="Arguments">_None_</PropertiesListEmpty>
+
+### Client.updateChannelsNotificationSettings
+
+Updates the current user’s channels notification settings.
+
+```ts
+const settings = await client.updateChannelsNotificationSettings({
+  email: { thread: false },
+  slack: { thread: true },
+});
+
+// { email: { thread: false, ... }, slack: { thread: true, ... }, ... }
+console.log(settings);
+```
+
+<PropertiesList title="Returns">
+  <PropertiesListItem name="settings" type="ChannelsNotificationSettings">
+    Current user’s channels notification settings.
+  </PropertiesListItem>
+</PropertiesList>
+
+<PropertiesList title="Arguments">
+  <PropertiesListItem name="settings" type="object" required>
+    A deep partial object containing the channels notification settings to
+    update.
+  </PropertiesListItem>
+</PropertiesList>
+
 ## Storage
 
 Each room contains Storage, a conflict-free data store that multiple users can
