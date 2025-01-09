@@ -136,7 +136,7 @@ export { shallow } from "./lib/shallow";
 export type { ISignal, SignalType } from "./lib/signals";
 export { batch, DerivedSignal, MutableSignal, Signal } from "./lib/signals";
 export { SortedList } from "./lib/SortedList";
-export { stringify, unstringify } from "./lib/stringify";
+export { stringify } from "./lib/stringify";
 export type { QueryParams, URLSafeString } from "./lib/url";
 export { url, urljoin } from "./lib/url";
 export type { Brand, DistributiveOmit } from "./lib/utils";

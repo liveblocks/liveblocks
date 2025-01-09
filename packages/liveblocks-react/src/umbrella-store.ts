@@ -35,7 +35,6 @@ import {
   shallow,
   Signal,
   stringify,
-  unstringify,
 } from "@liveblocks/core";
 
 import { ASYNC_ERR, ASYNC_LOADING, ASYNC_OK } from "./lib/AsyncResult";
@@ -914,7 +913,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     const loadingUserThreads = new DefaultMap(
       (queryKey: UserQueryKey): LoadableResource<ThreadsAsyncResult<M>> => {
-        const query = unstringify(queryKey) as ThreadsQuery<M>;
+        const query = JSON.parse(queryKey) as ThreadsQuery<M>;
 
         const resource = new PaginatedResource(async (cursor?: string) => {
           const result = await this.#client[
@@ -967,7 +966,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     const loadingRoomThreads = new DefaultMap(
       (queryKey: RoomQueryKey): LoadableResource<ThreadsAsyncResult<M>> => {
-        const [roomId, query] = unstringify(queryKey) as [
+        const [roomId, query] = JSON.parse(queryKey) as [
           roomId: RoomId,
           query: ThreadsQuery<M>,
         ];
