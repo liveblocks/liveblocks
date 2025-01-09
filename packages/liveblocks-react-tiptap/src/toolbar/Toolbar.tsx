@@ -243,10 +243,13 @@ const ToolbarBlockSelect = forwardRef<
 
   const handleItemChange = (itemLabel: string) => {
     const item = resolvedItems.find((item) => item.label === itemLabel);
-    item?.setActive(editor);
 
-    // If present in a floating toolbar, close it on change
-    floatingToolbarContext?.close();
+    if (item) {
+      item.setActive(editor);
+
+      // If present in a floating toolbar, close it on change
+      floatingToolbarContext?.close();
+    }
   };
 
   return (

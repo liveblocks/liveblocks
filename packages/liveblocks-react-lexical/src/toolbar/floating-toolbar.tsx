@@ -34,6 +34,7 @@ import { OPEN_FLOATING_COMPOSER_COMMAND } from "../comments/floating-composer";
 import { createDOMRange } from "../create-dom-range";
 import { useIsCommandRegistered } from "../is-command-registered";
 import type { FloatingPosition } from "../types";
+import { FloatingToolbarContext } from "./floating-toolbar-context";
 import {
   applyToolbarSlot,
   Toolbar,
@@ -59,7 +60,12 @@ function DefaultFloatingToolbarContent() {
 
   return (
     <>
-      {supportsTextFormat ? <Toolbar.SectionInline /> : null}
+      {supportsTextFormat ? (
+        <>
+          <Toolbar.BlockSelect />
+          <Toolbar.SectionInline />
+        </>
+      ) : null}
       {supportsThread ? (
         <>
           <Toolbar.Separator />
@@ -325,6 +331,10 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
       };
     }, [editor, delayedIsOpen]);
 
+    const close = useCallback(() => {
+      setManuallyClosed(true);
+    }, [setManuallyClosed]);
+
     if (!delayedIsOpen) {
       return null;
     }
@@ -333,33 +343,35 @@ export const FloatingToolbar = forwardRef<HTMLDivElement, FloatingToolbarProps>(
 
     return createPortal(
       <TooltipProvider>
-        <div
-          role="toolbar"
-          aria-label="Floating toolbar"
-          aria-orientation="horizontal"
-          className={classNames(
-            "lb-root lb-portal lb-elevation lb-lexical-floating-toolbar lb-lexical-toolbar",
-            className
-          )}
-          ref={mergedRefs}
-          style={{
-            position: strategy,
-            top: 0,
-            left: 0,
-            transform: isPositioned
-              ? `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`
-              : "translate3d(0, -200%, 0)",
-            minWidth: "max-content",
-          }}
-          onPointerDown={handlePointerDown}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
-          {...props}
-        >
-          {applyToolbarSlot(before, slotProps)}
-          {applyToolbarSlot(children, slotProps)}
-          {applyToolbarSlot(after, slotProps)}
-        </div>
+        <FloatingToolbarContext.Provider value={{ close }}>
+          <div
+            role="toolbar"
+            aria-label="Floating toolbar"
+            aria-orientation="horizontal"
+            className={classNames(
+              "lb-root lb-portal lb-elevation lb-lexical-floating-toolbar lb-lexical-toolbar",
+              className
+            )}
+            ref={mergedRefs}
+            style={{
+              position: strategy,
+              top: 0,
+              left: 0,
+              transform: isPositioned
+                ? `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`
+                : "translate3d(0, -200%, 0)",
+              minWidth: "max-content",
+            }}
+            onPointerDown={handlePointerDown}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            {...props}
+          >
+            {applyToolbarSlot(before, slotProps)}
+            {applyToolbarSlot(children, slotProps)}
+            {applyToolbarSlot(after, slotProps)}
+          </div>
+        </FloatingToolbarContext.Provider>
       </TooltipProvider>,
       document.body
     );

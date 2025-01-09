@@ -1,8 +1,15 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import {
+  $createHeadingNode,
+  $createQuoteNode,
+  $isHeadingNode,
+} from "@lexical/rich-text";
+import { $setBlocksType } from "@lexical/selection";
 import { mergeRegister } from "@lexical/utils";
 import {
   BoldIcon,
   Button,
+  ChevronDownIcon,
   CodeIcon,
   CommentIcon,
   ItalicIcon,
@@ -13,8 +20,11 @@ import {
   UnderlineIcon,
   UndoIcon,
 } from "@liveblocks/react-ui/_private";
+import * as SelectPrimitive from "@radix-ui/react-select";
 import * as TogglePrimitive from "@radix-ui/react-toggle";
 import {
+  $createParagraphNode,
+  $getSelection,
   CAN_REDO_COMMAND,
   CAN_UNDO_COMMAND,
   COMMAND_PRIORITY_CRITICAL,
@@ -23,16 +33,30 @@ import {
   FORMAT_TEXT_COMMAND,
   type LexicalCommand,
   type LexicalEditor,
+  type LexicalNode,
   REDO_COMMAND,
+  type TextNode,
   UNDO_COMMAND,
 } from "lexical";
 import type { ComponentProps, ComponentType, ReactNode } from "react";
-import { forwardRef, useCallback, useEffect, useState } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import { classNames } from "../classnames";
 import { OPEN_FLOATING_COMPOSER_COMMAND } from "../comments/floating-composer";
+import { getActiveBlockElement } from "../get-active-block-element";
 import { useIsCommandRegistered } from "../is-command-registered";
 import { isTextFormatActive } from "../is-text-format-active";
+import { FloatingToolbarContext } from "./floating-toolbar-context";
+
+export const FLOATING_ELEMENT_SIDE_OFFSET = 6;
+export const FLOATING_ELEMENT_COLLISION_PADDING = 10;
 
 export interface ToolbarSlotProps {
   editor: LexicalEditor;
@@ -57,6 +81,20 @@ interface ToolbarToggleProps extends ToolbarButtonProps {
 }
 
 type ToolbarSeparatorProps = ComponentProps<"div">;
+
+interface ToolbarBlockSelectItem {
+  label: string;
+  icon?: ReactNode;
+  isActive: (
+    activeBlockElement: LexicalNode | TextNode | null,
+    editor: LexicalEditor
+  ) => boolean;
+  setActive: (editor: LexicalEditor) => void;
+}
+
+interface ToolbarBlockSelectProps extends ComponentProps<"button"> {
+  items?: ToolbarBlockSelectItem[];
+}
 
 export function applyToolbarSlot(
   slot: ToolbarSlot,
@@ -238,6 +276,7 @@ function DefaultToolbarContent() {
       {supportsTextFormat ? (
         <>
           <ToolbarSeparator />
+          <ToolbarBlockSelect />
           <ToolbarSectionInline />
         </>
       ) : null}
@@ -263,6 +302,136 @@ function useRerender() {
     setRerender((toggle) => !toggle);
   }, [setRerender]);
 }
+
+function createDefaultBlockSelectItems(): ToolbarBlockSelectItem[] {
+  const items: (ToolbarBlockSelectItem | null)[] = [
+    {
+      label: "Heading 1",
+      isActive: (activeElement) => {
+        if ($isHeadingNode(activeElement)) {
+          const tag = activeElement.getTag();
+
+          return tag === "h1";
+        } else {
+          return false;
+        }
+      },
+      setActive: () =>
+        $setBlocksType($getSelection(), () => $createHeadingNode("h1")),
+    },
+    {
+      label: "Heading 2",
+      isActive: (activeElement) => {
+        if ($isHeadingNode(activeElement)) {
+          const tag = activeElement.getTag();
+
+          return tag === "h2";
+        } else {
+          return false;
+        }
+      },
+      setActive: () =>
+        $setBlocksType($getSelection(), () => $createHeadingNode("h2")),
+    },
+    {
+      label: "Heading 3",
+      isActive: (activeElement) => {
+        if ($isHeadingNode(activeElement)) {
+          const tag = activeElement.getTag();
+
+          return tag === "h3";
+        } else {
+          return false;
+        }
+      },
+      setActive: () =>
+        $setBlocksType($getSelection(), () => $createHeadingNode("h3")),
+    },
+    {
+      label: "Blockquote",
+      isActive: (activeBlock) => activeBlock?.getType() === "quote",
+      setActive: () =>
+        $setBlocksType($getSelection(), () => $createQuoteNode()),
+    },
+  ];
+
+  return items.filter(Boolean) as ToolbarBlockSelectItem[];
+}
+
+const blockSelectTextItem: ToolbarBlockSelectItem = {
+  label: "Text",
+  isActive: () => false,
+  setActive: () =>
+    $setBlocksType($getSelection(), () => $createParagraphNode()),
+};
+
+const ToolbarBlockSelect = forwardRef<
+  HTMLButtonElement,
+  ToolbarBlockSelectProps
+>(({ items, ...props }, forwardedRef) => {
+  const floatingToolbarContext = useContext(FloatingToolbarContext);
+  const [editor] = useLexicalComposerContext();
+  const activeBlockElement = getActiveBlockElement(editor);
+  const resolvedItems = useMemo(() => {
+    const resolvedItems = items ?? createDefaultBlockSelectItems();
+    return [blockSelectTextItem, ...resolvedItems];
+  }, [items]);
+
+  const activeItem = useMemo(
+    () =>
+      resolvedItems.find((item) => item.isActive(activeBlockElement, editor)) ??
+      blockSelectTextItem,
+    [activeBlockElement, editor, resolvedItems]
+  );
+
+  const handleItemChange = (itemLabel: string) => {
+    const item = resolvedItems.find((item) => item.label === itemLabel);
+
+    if (item) {
+      editor.update(() => item.setActive(editor));
+
+      // If present in a floating toolbar, close it on change
+      floatingToolbarContext?.close();
+    }
+  };
+
+  return (
+    <SelectPrimitive.Root
+      value={activeItem?.label}
+      onValueChange={handleItemChange}
+    >
+      <ShortcutTooltip content="Turn into…">
+        <SelectPrimitive.Trigger asChild {...props} ref={forwardedRef}>
+          <Button type="button" variant="toolbar">
+            {activeItem.label}
+            <ChevronDownIcon className="lb-dropdown-chevron" />
+          </Button>
+        </SelectPrimitive.Trigger>
+      </ShortcutTooltip>
+      <SelectPrimitive.Portal>
+        <SelectPrimitive.Content
+          position="popper"
+          sideOffset={FLOATING_ELEMENT_SIDE_OFFSET}
+          collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
+          className="lb-root lb-portal lb-elevation lb-dropdown"
+        >
+          {resolvedItems.map((item) => (
+            <SelectPrimitive.Item
+              key={item.label}
+              value={item.label}
+              className="lb-dropdown-item"
+            >
+              {item.icon ? (
+                <span className="lb-icon-container">{item.icon}</span>
+              ) : null}
+              <span className="lb-dropdown-item-label">{item.label}</span>
+            </SelectPrimitive.Item>
+          ))}
+        </SelectPrimitive.Content>
+      </SelectPrimitive.Portal>
+    </SelectPrimitive.Root>
+  );
+});
 
 export const Toolbar = Object.assign(
   forwardRef<HTMLDivElement, ToolbarProps>(
@@ -336,5 +505,6 @@ export const Toolbar = Object.assign(
     SectionHistory: ToolbarSectionHistory,
     SectionInline: ToolbarSectionInline,
     SectionCollaboration: ToolbarSectionCollaboration,
+    BlockSelect: ToolbarBlockSelect,
   }
 );
