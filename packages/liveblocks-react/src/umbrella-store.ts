@@ -1034,7 +1034,9 @@ export class UmbrellaStore<M extends BaseMetadata> {
 
     const loadingNotifications = {
       signal: DerivedSignal.from((): InboxNotificationsAsyncResult => {
-        const result = this.#notificationsPaginationState.get();
+        const resource = this.#notificationsPaginationState;
+
+        const result = resource.get();
         if (result.isLoading || result.error) {
           return result;
         }
@@ -1116,12 +1118,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
           if (result.isLoading || result.error) {
             return result;
           } else {
-            return {
-              isLoading: false,
-              versions: Object.values(
-                this.historyVersions.signal.get()[roomId] ?? {}
-              ),
-            };
+            return ASYNC_OK(
+              "versions",
+              Object.values(this.historyVersions.signal.get()[roomId] ?? {})
+            );
           }
         }, shallow);
 
