@@ -903,11 +903,7 @@ export function createLiveblocksContext<
  *
  */
 function useUserThreads_experimental<M extends BaseMetadata>(
-  options: UseUserThreadsOptions<M> = {
-    query: {
-      metadata: {},
-    },
-  }
+  options: UseUserThreadsOptions<M> = {}
 ): ThreadsAsyncResult<M> {
   const client = useClient();
   const { store, userThreadsPoller: poller } =
@@ -959,11 +955,7 @@ function useUserThreads_experimental<M extends BaseMetadata>(
  * The final API for that is still TBD.
  */
 function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
-  options: UseUserThreadsOptions<M> = {
-    query: {
-      metadata: {},
-    },
-  }
+  options: UseUserThreadsOptions<M> = {}
 ): ThreadsAsyncSuccess<M> {
   const client = useClient();
   const { store } = getLiveblocksExtrasForClient<M>(client);
