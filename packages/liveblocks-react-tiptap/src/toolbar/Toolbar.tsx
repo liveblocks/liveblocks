@@ -23,7 +23,7 @@ import { EditorProvider, useCurrentEditor } from "../context";
 import type { ExtendedChainedCommands } from "../types";
 import { FloatingToolbarContext } from "./FloatingToolbarContext";
 
-export const FLOATING_ELEMENT_SIDE_OFFSET = 6;
+export const BLOCK_SELECT_SIDE_OFFSET = 10;
 export const FLOATING_ELEMENT_COLLISION_PADDING = 10;
 
 export interface ToolbarSlotProps {
@@ -268,7 +268,7 @@ const ToolbarBlockSelect = forwardRef<
       <SelectPrimitive.Portal>
         <SelectPrimitive.Content
           position="popper"
-          sideOffset={FLOATING_ELEMENT_SIDE_OFFSET}
+          sideOffset={BLOCK_SELECT_SIDE_OFFSET}
           collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
           className="lb-root lb-portal lb-elevation lb-dropdown"
         >
