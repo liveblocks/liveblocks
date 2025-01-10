@@ -13,7 +13,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 -->
 
-# Week 54 (2025-01-10)
+# Week 2 (2025-01-10)
 
 ## 2.15.2
 
