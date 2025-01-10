@@ -212,7 +212,12 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
             const liveblocksStatePart = root.get(key);
             if (liveblocksStatePart === undefined) {
               updates[key] = get()[key];
-              patchLiveObjectKey(root, key, undefined, get()[key]);
+              patchLiveObjectKey(
+                root,
+                key,
+                undefined,
+                get()[key] as Json | undefined
+              );
             } else {
               updates[key] = lsonToJson(
                 liveblocksStatePart
@@ -278,7 +283,12 @@ const middlewareImpl: InnerLiveblocksMiddleware = (config, options) => {
         if (maybeRoom) {
           const room = maybeRoom;
           isPatching = true;
-          updatePresence(room, oldState, newState, presenceMapping);
+          updatePresence(
+            room,
+            oldState as JsonObject,
+            newState as JsonObject,
+            presenceMapping
+          );
 
           room.batch(() => {
             if (storageRoot) {
@@ -326,11 +336,15 @@ function patchState<T>(
     partialState[key] = state[key];
   }
 
-  const patched = legacy_patchImmutableObject(partialState, updates);
+  const patched = legacy_patchImmutableObject(
+    partialState as JsonObject,
+    updates
+  );
 
   const result: Partial<T> = {};
 
   for (const key in mapping) {
+    // @ts-expect-error key is a key of T
     result[key] = patched[key];
   }
 
@@ -408,8 +422,8 @@ function patchLiveblocksStorage<O extends LsonObject, TState>(
     }
 
     if (oldState[key] !== newState[key]) {
-      const oldVal = oldState[key];
-      const newVal = newState[key];
+      const oldVal = oldState[key] as Json | undefined;
+      const newVal = newState[key] as Json | undefined;
       patchLiveObjectKey(root, key, oldVal, newVal);
     }
   }

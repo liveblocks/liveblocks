@@ -145,9 +145,11 @@ function createSerializedLexicalElementNode(
       if (content instanceof Y.XmlText) {
         children.push(createSerializedLexicalElementNode(content));
       } else if (content instanceof Y.Map) {
-        children.push(createSerializedLexicalMapNode(content));
+        children.push(createSerializedLexicalMapNode(content as Y.Map<Json>));
       } else if (content instanceof Y.XmlElement) {
-        children.push(createSerializedLexicalDecoratorNode(content));
+        children.push(
+          createSerializedLexicalDecoratorNode(content as Y.XmlElement)
+        );
       }
     }
     // ContentString is used to store text content of a text node in the Y.js doc.
@@ -197,7 +199,9 @@ export function createSerializedLexicalRootNode(
         if (content instanceof Y.XmlText) {
           children.push(createSerializedLexicalElementNode(content));
         } else if (content instanceof Y.XmlElement) {
-          children.push(createSerializedLexicalDecoratorNode(content));
+          children.push(
+            createSerializedLexicalDecoratorNode(content as Y.XmlElement)
+          );
         }
       }
 

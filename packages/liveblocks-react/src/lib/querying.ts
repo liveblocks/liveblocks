@@ -1,7 +1,7 @@
 import type { BaseMetadata, ThreadData } from "@liveblocks/client";
+import { isStartsWithOperator } from "@liveblocks/core";
 
 import type { ThreadsQuery } from "../types";
-import { isStartsWith, isString } from "./guards";
 
 /**
  * Creates a predicate function that will filter all ThreadData instances that
@@ -46,8 +46,8 @@ function matchesOperator(
   // here, see comment above.
   op: BaseMetadata[string] | { startsWith: string } | undefined
 ) {
-  if (isStartsWith(op)) {
-    return isString(value) && value.startsWith(op.startsWith);
+  if (isStartsWithOperator(op)) {
+    return typeof value === "string" && value.startsWith(op.startsWith);
   } else {
     return value === op;
   }

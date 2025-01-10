@@ -3164,7 +3164,7 @@ function makeClassicSubscribeFn<
   return subscribe;
 }
 
-function isRoomEventName(value: string): value is RoomEventName {
+function isRoomEventName(value: string) {
   return (
     value === "my-presence" ||
     value === "others" ||

@@ -63,7 +63,6 @@ import {
 
 import { config } from "./config";
 import { RoomContext, useIsInsideRoom, useRoomOrNull } from "./contexts";
-import { isString } from "./lib/guards";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
@@ -366,6 +365,7 @@ function makeRoomContextBundle<
     // context consistent internally.
     return (
       <LiveblocksProviderWithClient client={client} allowNesting>
+        {/* @ts-expect-error {...props} is the same type as props */}
         <RoomProvider {...props} />
       </LiveblocksProviderWithClient>
     );
@@ -602,7 +602,7 @@ function RoomProviderInner<
       );
     }
 
-    if (!isString(roomId)) {
+    if (typeof roomId !== "string") {
       throw new Error("RoomProvider id property should be a string.");
     }
 
@@ -2551,7 +2551,13 @@ function useRoomPermissions(roomId: string) {
  *
  * This is an internal API, use `createRoomContext` instead.
  */
-export function useRoomContextBundleOrNull() {
+export function useRoomContextBundleOrNull(): RoomContextBundle<
+  JsonObject,
+  LsonObject,
+  BaseUserMeta,
+  Json,
+  BaseMetadata
+> | null {
   const client = useClientOrNull();
   const room = useRoomOrNull<never, never, never, never, never>();
   return client && room ? getOrCreateRoomContextBundle(client) : null;
@@ -2562,7 +2568,13 @@ export function useRoomContextBundleOrNull() {
  *
  * This is an internal API, use `createRoomContext` instead.
  */
-export function useRoomContextBundle() {
+export function useRoomContextBundle(): RoomContextBundle<
+  JsonObject,
+  LsonObject,
+  BaseUserMeta,
+  Json,
+  BaseMetadata
+> {
   const client = useClient();
   return getOrCreateRoomContextBundle(client);
 }
