@@ -13,8 +13,9 @@ import {
   LiveblocksPlugin,
   useIsEditorReady,
   FloatingThreads,
+  Toolbar,
+  FloatingToolbar,
 } from "@liveblocks/react-lexical";
-import FloatingToolbar from "./floating-toolbar";
 import NotificationsPopover from "../notifications-popover";
 import Loading from "../loading";
 import VersionHistoryDialog from "../version-history-dialog";
@@ -46,6 +47,9 @@ export default function Editor() {
                 <VersionHistoryDialog />
                 <NotificationsPopover />
               </div>
+              <div className="border-b border-border/80 bg-background">
+                <Toolbar className="w-full" />
+              </div>
 
               <div className="relative flex flex-row justify-between w-full py-16 xl:pl-[250px] pl-[100px] gap-[50px]">
                 {/* Editable */}
@@ -63,7 +67,6 @@ export default function Editor() {
                   />
 
                   <FloatingComposer className="w-[350px]" />
-
                   <FloatingToolbar />
                 </div>
 
