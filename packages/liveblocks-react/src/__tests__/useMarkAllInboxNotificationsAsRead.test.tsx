@@ -5,7 +5,7 @@ import { setupServer } from "msw/node";
 import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
 import {
   mockGetInboxNotifications,
-  mockMarkInboxNotificationsAsRead,
+  mockMarkAllInboxNotificationsAsRead,
 } from "./_restMocks";
 import { createContextsForTest } from "./_utils";
 
@@ -50,7 +50,9 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
           })
         )
       ),
-      mockMarkInboxNotificationsAsRead((_req, res, ctx) => res(ctx.status(200)))
+      mockMarkAllInboxNotificationsAsRead((_req, res, ctx) =>
+        res(ctx.status(200))
+      )
     );
 
     const {
@@ -126,7 +128,9 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
           })
         )
       ),
-      mockMarkInboxNotificationsAsRead((_req, res, ctx) => res(ctx.status(500)))
+      mockMarkAllInboxNotificationsAsRead((_req, res, ctx) =>
+        res(ctx.status(500))
+      )
     );
 
     const {
@@ -206,7 +210,7 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
           })
         )
       ),
-      mockMarkInboxNotificationsAsRead((_req, res, ctx) =>
+      mockMarkAllInboxNotificationsAsRead((_req, res, ctx) =>
         res(
           ctx.status(500),
           ctx.json({
