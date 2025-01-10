@@ -34,6 +34,19 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ctnicholas, nvie, marcbouchenoire
 
+# Week 52 (2024-12-27)
+
+## 2.15.1
+
+### All packages
+
+- Fix rollup config to always ensure `"use client"` directives are on top of
+  files after build.
+
+## Contributors
+
+sugardarius
+
 # Week 51 (2024-12-20)
 
 ## v2.15.0
