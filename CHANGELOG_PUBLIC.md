@@ -15,13 +15,24 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 54 (2025-01-10)
 
+## 2.15.2
+
+### All packages
+
+- Fix `useLayoutEffect` warnings when using React versions lower than 18.3.0 and SSR.
+
+### `@liveblocks/react`
+
+- Fix memory leak in some hooks.
+- Fix bug where querying metadata with `useThreads()` would not always reuse the cache correctly.
+
 ## Website
 
 - New blog post: [What’s new in Liveblocks: December 2024](https://liveblocks.io/blog/whats-new-in-liveblocks-december-edition-2024).
 
 ## Contributors
 
-ctnicholas
+ctnicholas, nvie, marcbouchenoire
 
 # Week 51 (2024-12-20)
 
