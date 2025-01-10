@@ -15,7 +15,13 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 54 (2025-01-10)
 
+## Website
+
+- New blog post: [What’s new in Liveblocks: December 2024](https://liveblocks.io/blog/whats-new-in-liveblocks-december-edition-2024).
+
 ## Contributors
+
+ctnicholas
 
 # Week 51 (2024-12-20)
 
