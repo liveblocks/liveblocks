@@ -7,9 +7,6 @@ export function Providers({ children }: PropsWithChildren) {
   return (
     <LiveblocksProvider
       authEndpoint="/api/liveblocks-auth"
-      // XXX
-      // @ts-expect-error
-      baseUrl="https://dev.dev-liveblocks5948.workers.dev/"
       // Get users' info from their ID
       resolveUsers={async ({ userIds }) => {
         const searchParams = new URLSearchParams(
