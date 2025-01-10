@@ -30,11 +30,12 @@ describe("objectToQuery", () => {
         org: {
           startsWith: "liveblocks:",
         },
+        color: null,
       },
     });
 
     expect(query).toEqual(
-      'metadata["status"]:"open" AND metadata["priority"]:3 AND metadata["org"]^"liveblocks:"'
+      'metadata["status"]:"open" metadata["priority"]:3 metadata["color"]:null metadata["org"]^"liveblocks:"'
     );
   });
 
@@ -46,6 +47,7 @@ describe("objectToQuery", () => {
         org: {
           startsWith: "liveblocks:",
         },
+        color: null,
       },
       resolved: true,
       roomId: {
@@ -54,7 +56,7 @@ describe("objectToQuery", () => {
     });
 
     expect(query).toEqual(
-      'resolved:true AND roomId^"engineering:" AND metadata["status"]:"open" AND metadata["priority"]:3 AND metadata["org"]^"liveblocks:"'
+      'resolved:true roomId^"engineering:" metadata["status"]:"open" metadata["priority"]:3 metadata["color"]:null metadata["org"]^"liveblocks:"'
     );
   });
 
@@ -75,7 +77,7 @@ describe("objectToQuery", () => {
     const expectedValue = JSON.stringify(value);
 
     expect(query).toEqual(
-      `org:${expectedValue} AND metadata["org"]:${expectedValue}`
+      `org:${expectedValue} metadata["org"]:${expectedValue}`
     );
   });
 

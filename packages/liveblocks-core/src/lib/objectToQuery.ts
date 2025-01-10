@@ -91,7 +91,7 @@ export function objectToQuery(obj: {
   let filterList: Filter[] = [];
   const entries = Object.entries(obj);
 
-  const keyValuePairs: [string, string | number | boolean][] = [];
+  const keyValuePairs: [string, string | number | boolean | null][] = [];
   const keyValuePairsWithOperator: [string, Record<"startsWith", string>][] =
     [];
   const indexedKeys: [string, Record<string, FilterValue | undefined>][] = [];
@@ -185,7 +185,8 @@ const isSimpleValue = (value: unknown) => {
   return (
     typeof value === "string" ||
     typeof value === "number" ||
-    typeof value === "boolean"
+    typeof value === "boolean" ||
+    value === null
   );
 };
 
