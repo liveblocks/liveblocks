@@ -488,9 +488,13 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
         // Replace the optimistic update by the real thing
         store.markAllInboxNotificationsRead(optimisticId, readAt);
       },
-      () => {
-        // TODO: Broadcast errors to client
+      (err) => {
         store.optimisticUpdates.remove(optimisticId);
+
+        // Broadcast unhandled errors to client
+        if (err instanceof Error) {
+          client[kInternal].notifyError(err);
+        }
       }
     );
   }, [client]);

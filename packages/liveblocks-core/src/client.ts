@@ -10,6 +10,7 @@ import { kInternal } from "./internal";
 import type { BatchStore } from "./lib/batch";
 import { Batch, createBatchStore } from "./lib/batch";
 import type { Observable } from "./lib/EventSource";
+import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import type { NoInfr } from "./lib/NoInfer";
@@ -155,6 +156,7 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
   as<M2 extends BaseMetadata>(): Client<U, M2>;
   // Tracking pending changes globally
   createSyncSource(): SyncSource;
+  notifyError(error: Error): void;
 };
 
 export type NotificationsApi<M extends BaseMetadata> = {
@@ -379,11 +381,9 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
 
   /**
    * All possible client events, subscribable from a single place.
-   *
-   * @private These event sources are private for now, but will become public
-   * once they're stable.
    */
   readonly events: {
+    readonly error: Observable<Error>;
     readonly syncStatus: Observable<void>;
   };
 } & NotificationsApi<M>;
@@ -730,6 +730,8 @@ export function createClient<U extends BaseUserMeta = DU>(
   const syncStatusSources: Signal<InternalSyncStatus>[] = [];
   const syncStatusSignal = new Signal<InternalSyncStatus>("synchronized");
 
+  const errorEventSource = makeEventSource<Error>();
+
   function getSyncStatus(): SyncStatus {
     const status = syncStatusSignal.get();
     return status === "synchronizing" ? status : "synchronized";
@@ -821,6 +823,7 @@ export function createClient<U extends BaseUserMeta = DU>(
 
       getSyncStatus,
       events: {
+        error: errorEventSource,
         syncStatus: syncStatusSignal,
       },
 
@@ -838,6 +841,7 @@ export function createClient<U extends BaseUserMeta = DU>(
         // Type-level helper only, it's effectively only an identity-function at runtime
         as: <M2 extends BaseMetadata>() => client as Client<U, M2>,
         createSyncSource,
+        notifyError: errorEventSource.notify,
       },
     },
     kInternal,
