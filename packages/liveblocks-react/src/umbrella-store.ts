@@ -973,6 +973,20 @@ export class UmbrellaStore<M extends BaseMetadata> {
         ];
 
         const resource = new PaginatedResource(async (cursor?: string) => {
+          const room = this.#client.getRoom(roomId);
+          if (room === null) {
+            throw new HttpError(
+              `Room '${roomId}' is not available on client`,
+              479
+            );
+          }
+
+          if (room.getStatus() !== "connected") {
+            await room.events.status.waitUntil(
+              (status) => status === "connected"
+            );
+          }
+
           const result = await this.#client[kInternal].httpClient.getThreads({
             roomId,
             cursor,
