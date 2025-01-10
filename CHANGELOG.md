@@ -1,5 +1,11 @@
 ## vNEXT (Not yet published)
 
+### `@liveblocks/react`
+
+- Fix loading room threads when a new room is created. Now we wait for the room
+  status to be `connected` before fetching room threads when a new room is
+  created.
+
 ## 2.15.2
 
 ### All packages
