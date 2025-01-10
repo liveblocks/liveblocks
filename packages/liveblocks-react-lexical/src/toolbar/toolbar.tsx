@@ -36,7 +36,6 @@ import {
   type LexicalEditor,
   type LexicalNode,
   REDO_COMMAND,
-  type TextNode,
   UNDO_COMMAND,
 } from "lexical";
 import type { ComponentProps, ComponentType, ReactNode } from "react";
@@ -51,7 +50,7 @@ import {
 
 import { classNames } from "../classnames";
 import { OPEN_FLOATING_COMPOSER_COMMAND } from "../comments/floating-composer";
-import { getActiveBlockElement } from "../get-active-block-element";
+import { getSelectedBlockElement } from "../get-selected-block-element";
 import { useIsCommandRegistered } from "../is-command-registered";
 import { isTextFormatActive } from "../is-text-format-active";
 import { FloatingToolbarContext } from "./floating-toolbar-context";
@@ -86,7 +85,7 @@ type ToolbarSeparatorProps = ComponentProps<"div">;
 interface ToolbarBlockSelectorItem {
   name: string;
   isActive: (
-    activeBlockElement: LexicalNode | TextNode | null,
+    selectedBlockElement: LexicalNode | null,
     editor: LexicalEditor
   ) => boolean;
   setActive: (editor: LexicalEditor) => void;
@@ -307,9 +306,9 @@ function createDefaultBlockSelectorItems(): ToolbarBlockSelectorItem[] {
   const items: (ToolbarBlockSelectorItem | null)[] = [
     {
       name: "Heading 1",
-      isActive: (activeBlock) => {
-        if ($isHeadingNode(activeBlock)) {
-          const tag = activeBlock.getTag();
+      isActive: (selectedBlock) => {
+        if ($isHeadingNode(selectedBlock)) {
+          const tag = selectedBlock.getTag();
 
           return tag === "h1";
         } else {
@@ -321,9 +320,9 @@ function createDefaultBlockSelectorItems(): ToolbarBlockSelectorItem[] {
     },
     {
       name: "Heading 2",
-      isActive: (activeBlock) => {
-        if ($isHeadingNode(activeBlock)) {
-          const tag = activeBlock.getTag();
+      isActive: (selectedBlock) => {
+        if ($isHeadingNode(selectedBlock)) {
+          const tag = selectedBlock.getTag();
 
           return tag === "h2";
         } else {
@@ -335,9 +334,9 @@ function createDefaultBlockSelectorItems(): ToolbarBlockSelectorItem[] {
     },
     {
       name: "Heading 3",
-      isActive: (activeBlock) => {
-        if ($isHeadingNode(activeBlock)) {
-          const tag = activeBlock.getTag();
+      isActive: (selectedBlock) => {
+        if ($isHeadingNode(selectedBlock)) {
+          const tag = selectedBlock.getTag();
 
           return tag === "h3";
         } else {
@@ -349,7 +348,7 @@ function createDefaultBlockSelectorItems(): ToolbarBlockSelectorItem[] {
     },
     {
       name: "Blockquote",
-      isActive: (activeBlock) => activeBlock?.getType() === "quote",
+      isActive: (selectedBlock) => selectedBlock?.getType() === "quote",
       setActive: () =>
         $setBlocksType($getSelection(), () => $createQuoteNode()),
     },
@@ -371,7 +370,7 @@ const ToolbarBlockSelector = forwardRef<
 >(({ items, ...props }, forwardedRef) => {
   const floatingToolbarContext = useContext(FloatingToolbarContext);
   const [editor] = useLexicalComposerContext();
-  const activeBlockElement = getActiveBlockElement(editor);
+  const selectedBlockElement = getSelectedBlockElement(editor);
   const resolvedItems = useMemo(() => {
     const resolvedItems = items ?? createDefaultBlockSelectorItems();
     return [blockSelectorTextItem, ...resolvedItems];
@@ -379,9 +378,10 @@ const ToolbarBlockSelector = forwardRef<
 
   const activeItem = useMemo(
     () =>
-      resolvedItems.find((item) => item.isActive(activeBlockElement, editor)) ??
-      blockSelectorTextItem,
-    [activeBlockElement, editor, resolvedItems]
+      resolvedItems.find((item) =>
+        item.isActive(selectedBlockElement, editor)
+      ) ?? blockSelectorTextItem,
+    [selectedBlockElement, editor, resolvedItems]
   );
 
   const handleItemChange = (name: string) => {
