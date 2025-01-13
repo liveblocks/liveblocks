@@ -262,12 +262,6 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
       return;
     }
 
-    if (innerError instanceof HttpError) {
-      handleApiError(innerError);
-      // TODO: Create public error and notify via notificationsErrorEventSource?
-      return;
-    }
-
     throw innerError;
   }
 
