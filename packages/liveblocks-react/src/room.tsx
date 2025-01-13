@@ -29,7 +29,6 @@ import type {
   DU,
   EnterOptions,
   IYjsProvider,
-  LiveblocksError,
   LiveblocksErrorContext,
   OpaqueClient,
   RoomEventMessage,
@@ -72,6 +71,7 @@ import {
   LiveblocksProviderWithClient,
   useClient,
   useClientOrNull,
+  useErrorListener,
 } from "./liveblocks";
 import type {
   AttachmentUrlAsyncResult,
@@ -383,7 +383,6 @@ function makeRoomContextBundle<
     useBroadcastEvent,
     useOthersListener,
     useLostConnectionListener,
-    useErrorListener,
     useEventListener,
 
     useHistory,
@@ -441,7 +440,6 @@ function makeRoomContextBundle<
       useBroadcastEvent,
       useOthersListener,
       useLostConnectionListener,
-      useErrorListener,
       useEventListener,
 
       useHistory,
@@ -950,25 +948,6 @@ function useLostConnectionListener(
       room.events.lostConnection.subscribe((event) =>
         savedCallback.current(event)
       ),
-    [room, savedCallback]
-  );
-}
-
-/**
- * useErrorListener is a React hook that allows you to respond to potential room
- * connection errors.
- *
- * @example
- * useErrorListener(er => {
- *   console.error(er);
- * })
- */
-// XXX MAKE THIS A LIVEBLOCKS CONTEXT HOOK INSTEAD
-function useErrorListener(callback: (err: LiveblocksError) => void): void {
-  const room = useRoom();
-  const savedCallback = useLatest(callback);
-  useEffect(
-    () => room.events.error.subscribe((e) => savedCallback.current(e)),
     [room, savedCallback]
   );
 }

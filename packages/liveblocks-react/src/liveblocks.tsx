@@ -10,6 +10,7 @@ import type {
   BaseRoomInfo,
   DM,
   DU,
+  LiveblocksError,
   OpaqueClient,
   SyncStatus,
 } from "@liveblocks/core";
@@ -780,6 +781,7 @@ export function createSharedContext<U extends BaseUserMeta>(
       useUser: (userId: string) => useUser_withClient(client, userId),
       useRoomInfo: (roomId: string) => useRoomInfo_withClient(client, roomId),
       useIsInsideRoom,
+      useErrorListener,
       useSyncStatus,
     },
     suspense: {
@@ -788,6 +790,7 @@ export function createSharedContext<U extends BaseUserMeta>(
       useRoomInfo: (roomId: string) =>
         useRoomInfoSuspense_withClient(client, roomId),
       useIsInsideRoom,
+      useErrorListener,
       useSyncStatus,
     },
   };
@@ -1258,6 +1261,25 @@ function useSyncStatus(options?: UseSyncStatusOptions): SyncStatus {
   return useSyncStatus_withClient(useClient(), options);
 }
 
+/**
+ * useErrorListener is a React hook that allows you to respond to any
+ * Liveblocks error, for example room connection errors, errors
+ * creating/editing/deleting threads, etc.
+ *
+ * @example
+ * useErrorListener(err => {
+ *   console.error(err);
+ * })
+ */
+function useErrorListener(callback: (err: LiveblocksError) => void): void {
+  const client = useClient();
+  const savedCallback = useLatest(callback);
+  useEffect(
+    () => client.events.error.subscribe((e) => savedCallback.current(e)),
+    [client, savedCallback]
+  );
+}
+
 // eslint-disable-next-line simple-import-sort/exports
 export {
   _useInboxNotificationThread as useInboxNotificationThread,
@@ -1269,6 +1291,7 @@ export {
   useMarkInboxNotificationAsRead,
   useDeleteAllInboxNotifications,
   useDeleteInboxNotification,
+  useErrorListener,
   useRoomInfo,
   useRoomInfoSuspense,
   useSyncStatus,
