@@ -634,7 +634,11 @@ export type Room<
     readonly self: Observable<User<P, U>>;
     readonly myPresence: Observable<P>;
     readonly others: Observable<OthersEvent<P, U>>;
-    // XXX Remove this source in favor of client.events.error
+    /**
+     * @deprecated This is now an alias to client.events.error, and contains
+     * _any_ Liveblocks error, even ones that are not originating from this
+     * room's instance.
+     */
     readonly error: Observable<LiveblocksError>;
     /**
      * @deprecated Renamed to `storageBatch`. The `storage` event source will
@@ -1226,6 +1230,7 @@ export type RoomConfig<M extends BaseMetadata> = {
   // the createRoom() function if we would simply pass the Client instance to
   // the Room instance, so it can directly call this back on the Client.
   createSyncSource: () => SyncSource;
+  errorEventSource: EventSource<LiveblocksError>;
 };
 
 function userToTreeNode(
@@ -1472,7 +1477,7 @@ export function createRoom<
   managedSocket.events.didDisconnect.subscribe(onDidDisconnect);
   managedSocket.events.onConnError.subscribe(({ message, code }) => {
     const err = LiveblocksError.fromRoomConnection(message, code, roomId);
-    const didNotify = eventHub.error.notify(err);
+    const didNotify = config.errorEventSource.notify(err);
     if (!didNotify) {
       if (process.env.NODE_ENV !== "production") {
         console.error(
@@ -1556,8 +1561,6 @@ export function createRoom<
     self: makeEventSource<User<P, U>>(),
     myPresence: makeEventSource<P>(),
     others: makeEventSource<OthersEvent<P, U>>(),
-    // XXX Remove this source in favor of client.events.error
-    error: makeEventSource<LiveblocksError>(),
     storageBatch: makeEventSource<StorageUpdate[]>(),
     history: makeEventSource<HistoryEvent>(),
     storageDidLoad: makeEventSource<void>(),
@@ -2688,7 +2691,7 @@ export function createRoom<
     others: eventHub.others.observable,
     self: eventHub.self.observable,
     myPresence: eventHub.myPresence.observable,
-    error: eventHub.error.observable,
+    error: config.errorEventSource.observable,
     /** @deprecated */
     storage: eventHub.storageBatch.observable,
     storageBatch: eventHub.storageBatch.observable,
@@ -2946,7 +2949,7 @@ export function createRoom<
       },
 
       id: config.roomId,
-      subscribe: makeClassicSubscribeFn(events),
+      subscribe: makeClassicSubscribeFn(config.roomId, events),
 
       connect: () => managedSocket.connect(),
       reconnect: () => managedSocket.reconnect(),
@@ -3038,7 +3041,10 @@ function makeClassicSubscribeFn<
   U extends BaseUserMeta,
   E extends Json,
   M extends BaseMetadata,
->(events: Room<P, S, U, E, M>["events"]): SubscribeFn<P, S, U, E> {
+>(
+  roomId: string,
+  events: Room<P, S, U, E, M>["events"]
+): SubscribeFn<P, S, U, E> {
   // Set up the "subscribe" wrapper API
   function subscribeToLiveStructureDeeply<L extends LiveStructure>(
     node: L,
@@ -3104,8 +3110,17 @@ function makeClassicSubscribeFn<
           });
         }
 
-        case "error":
-          return events.error.subscribe(callback as Callback<Error>);
+        case "error": {
+          return events.error.subscribe((err) => {
+            // Before 2.16.0, the error event source would only ever emit
+            // errors for this room. Since 2.16.0, the error event source will
+            // emit _any_ Liveblocks error, even ones from outside this room.
+            // This check retains the previous behavior.
+            if (err.roomId === roomId) {
+              return (callback as Callback<Error>)(err);
+            }
+          });
+        }
 
         case "status":
           return events.status.subscribe(callback as Callback<Status>);

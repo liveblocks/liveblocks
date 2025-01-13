@@ -10,6 +10,7 @@ import type { StorageUpdate } from "../crdts/StorageUpdates";
 import { legacy_patchImmutableObject, lsonToJson } from "../immutable";
 import { kInternal } from "../internal";
 import { nn } from "../lib/assert";
+import { makeEventSource } from "../lib/EventSource";
 import * as console from "../lib/fancy-console";
 import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
@@ -22,6 +23,7 @@ import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { RoomConfig, RoomDelegates } from "../room";
 import { createRoom } from "../room";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
+import type { LiveblocksError } from "../types/LiveblocksError";
 import type { User } from "../types/User";
 import {
   AUTH_SUCCESS,
@@ -67,6 +69,7 @@ function createDefaultRoomConfig<M extends BaseMetadata>(): RoomConfig<M> {
     throttleDelay: THROTTLE_DELAY,
     lostConnectionTimeout: 99999,
     baseUrl: DEFAULT_BASE_URL,
+    errorEventSource: makeEventSource<LiveblocksError>(),
     delegates: {
       authenticate: () => {
         return Promise.resolve({ publicApiKey: "pk_123", type: "public" });
@@ -143,26 +146,27 @@ describe("room / auth", () => {
   });
 
   test("when auth-manager throws StopRetrying error - should fail", async () => {
+    const config = {
+      ...makeRoomConfig({
+        authenticate: () => {
+          return new Promise((_resolve) => {
+            throw new StopRetrying("Unauthorized: No access");
+          });
+        },
+        createSocket: mockedCreateSocketDelegate,
+      }),
+    };
     const room = createRoom(
       {
         initialPresence: {},
         initialStorage: {},
       },
-      {
-        ...makeRoomConfig({
-          authenticate: () => {
-            return new Promise((_resolve) => {
-              throw new StopRetrying("Unauthorized: No access");
-            });
-          },
-          createSocket: mockedCreateSocketDelegate,
-        }),
-      }
+      config
     );
     room.connect();
 
     let err = {} as any;
-    room.events.error.subscribeOnce((e) => (err = e));
+    config.errorEventSource.subscribeOnce((e) => (err = e));
 
     await waitUntilStatus(room, "disconnected");
     expect(consoleErrorSpy).toHaveBeenCalledWith("Unauthorized: No access");

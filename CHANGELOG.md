@@ -1,5 +1,9 @@
 ## vNEXT (Not yet published)
 
+### `@liveblocks/react`
+
+Breaking change!
+
 ## 2.15.2
 
 ### All packages

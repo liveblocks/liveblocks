@@ -617,6 +617,7 @@ export function createClient<U extends BaseUserMeta = DU>(
         },
         enableDebugLogging: clientOptions.enableDebugLogging,
         baseUrl,
+        errorEventSource: liveblocksErrorSource,
         unstable_fallbackToHTTP: !!clientOptions.unstable_fallbackToHTTP,
         unstable_streamData: !!clientOptions.unstable_streamData,
         roomHttpClient: httpClient as LiveblocksHttpApi<M>,
