@@ -1471,7 +1471,7 @@ export function createRoom<
   managedSocket.events.didConnect.subscribe(onDidConnect);
   managedSocket.events.didDisconnect.subscribe(onDidDisconnect);
   managedSocket.events.onConnError.subscribe(({ message, code }) => {
-    const err = LiveblocksError.fromConnError(message, code, roomId);
+    const err = LiveblocksError.fromRoomConnection(message, code, roomId);
     const didNotify = eventHub.error.notify(err);
     if (!didNotify) {
       if (process.env.NODE_ENV !== "production") {

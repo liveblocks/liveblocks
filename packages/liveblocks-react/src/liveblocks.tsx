@@ -83,7 +83,7 @@ function identity<T>(x: T): T {
 // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 function broadcastError(client: OpaqueClient, err: Error | unknown) {
   client[kInternal].notifyError(
-    LiveblocksError.fromError(err, {
+    LiveblocksError.fromCommentsAPI(err, {
       roomId: undefined,
       threadId: undefined,
       commentId: undefined,

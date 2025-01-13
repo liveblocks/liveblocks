@@ -1,39 +1,48 @@
 import type { Relax } from "../lib/Relax";
 
+// Shape when originating from a (websocket) connection error
+type ConnectionErrorContext = {
+  code: number;
+  roomId: string;
+};
+
+// Shape when originating from a Comments or Notifications API error
+type CommentsAPIErrorContext = {
+  roomId?: string;
+  threadId?: string;
+  commentId?: string;
+};
+
 type LiveblocksErrorContext = Relax<
-  // When thrown from a socket connection error
-  | {
-      code: number;
-      roomId: string;
-    }
-  // When thrown from trying to mutate Comments or Notifications
-  | {
-      roomId?: string;
-      threadId?: string;
-      commentId?: string;
-      cause?: Error;
-    }
+  | ConnectionErrorContext // from Presence, Storage, or Yjs
+  | CommentsAPIErrorContext // from Comments or Notifications
 >;
 
 export class LiveblocksError extends Error {
-  context: LiveblocksErrorContext;
+  public readonly context: LiveblocksErrorContext;
 
   /** @internal */
-  private constructor(message: string, context: LiveblocksErrorContext) {
-    super(message);
+  private constructor(
+    message: Error | string,
+    context: LiveblocksErrorContext,
+    cause?: Error
+  ) {
+    const msg = typeof message === "string" ? message : String(message);
+    // @ts-expect-error This can be removed once we use lib: ["es2022"] in tsconfig
+    super(msg, { cause });
     this.context = context;
-    if (context.cause) {
-      // @ts-expect-error - Error will have `cause` property eventually
-      this.cause = context.cause;
-    }
   }
 
+  /** Convenience accessor for error.context.code (if available) */
   get code(): LiveblocksErrorContext["code"] { return this.context.code; } // prettier-ignore
+  /** Convenience accessor for error.context.roomId (if available) */
   get roomId(): LiveblocksErrorContext["roomId"] { return this.context.roomId; } // prettier-ignore
+  /** Convenience accessor for error.context.threadId (if available) */
   get threadId(): LiveblocksErrorContext["threadId"] { return this.context.threadId; } // prettier-ignore
+  /** Convenience accessor for error.context.commentId (if available) */
   get commentId(): LiveblocksErrorContext["commentId"] { return this.context.commentId; } // prettier-ignore
 
-  static fromConnError(
+  static fromRoomConnection(
     message: string,
     code: number,
     roomId: string
@@ -45,31 +54,16 @@ export class LiveblocksError extends Error {
    * Creates a LiveblocksError from a generic error, by attaching Liveblocks
    * contextual information like room ID, thread ID, etc.
    */
-  static fromError(
+  static fromCommentsAPI(
+    // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
     error: Error | unknown,
-    context: {
-      roomId: string | undefined;
-      threadId: string | undefined;
-      commentId: string | undefined;
-    }
+    context: CommentsAPIErrorContext
   ): LiveblocksError {
     const err = error instanceof Error ? error : new Error(String(error));
-    return new LiveblocksError(err.message, {
-      ...context,
-      cause: error instanceof Error ? error : undefined,
-    });
+    return new LiveblocksError(
+      err,
+      context,
+      error instanceof Error ? error : undefined
+    );
   }
-
-  // XXX Still need this or not?
-  // static fromCommentsAPI(
-  //   message: string,
-  //   context: {
-  //     roomId?: string;
-  //     threadId?: string;
-  //     commentId?: string;
-  //     cause?: Error;
-  //   }
-  // ): LiveblocksError {
-  //   return new LiveblocksError(message, context);
-  // }
 }
