@@ -271,6 +271,7 @@ export type {
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
 export { WebsocketCloseCodes } from "./types/IWebSocket";
+export type { LiveblocksErrorContext } from "./types/LiveblocksError";
 export { LiveblocksError } from "./types/LiveblocksError";
 export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 export type { OptionalPromise } from "./types/OptionalPromise";

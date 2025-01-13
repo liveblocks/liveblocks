@@ -1,4 +1,5 @@
 import type { Relax } from "../lib/Relax";
+import type { BaseMetadata, CommentBody } from "../protocol/Comments";
 
 // Shape when originating from a (websocket) connection error
 type ConnectionErrorContext = {
@@ -11,9 +12,11 @@ type CommentsAPIErrorContext = {
   roomId?: string;
   threadId?: string;
   commentId?: string;
+  body?: CommentBody;
+  metadata?: BaseMetadata;
 };
 
-type LiveblocksErrorContext = Relax<
+export type LiveblocksErrorContext = Relax<
   | ConnectionErrorContext // from Presence, Storage, or Yjs
   | CommentsAPIErrorContext // from Comments or Notifications
 >;
@@ -23,13 +26,12 @@ export class LiveblocksError extends Error {
 
   /** @internal */
   private constructor(
-    message: Error | string,
+    message: string,
     context: LiveblocksErrorContext,
     cause?: Error
   ) {
-    const msg = typeof message === "string" ? message : String(message);
     // @ts-expect-error This can be removed once we use lib: ["es2022"] in tsconfig
-    super(msg, { cause });
+    super(message, { cause });
     this.context = context;
   }
 
@@ -54,16 +56,11 @@ export class LiveblocksError extends Error {
    * Creates a LiveblocksError from a generic error, by attaching Liveblocks
    * contextual information like room ID, thread ID, etc.
    */
-  static fromCommentsAPI(
-    // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
-    error: Error | unknown,
-    context: CommentsAPIErrorContext
+  static from(
+    message: string,
+    context: LiveblocksErrorContext,
+    cause?: Error
   ): LiveblocksError {
-    const err = error instanceof Error ? error : new Error(String(error));
-    return new LiveblocksError(
-      err,
-      context,
-      error instanceof Error ? error : undefined
-    );
+    return new LiveblocksError(message, context, cause);
   }
 }
