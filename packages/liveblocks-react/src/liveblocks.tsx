@@ -17,6 +17,7 @@ import {
   assert,
   createClient,
   kInternal,
+  LiveblocksError,
   makePoller,
   raise,
   shallow,
@@ -77,6 +78,17 @@ function missingRoomInfoError(roomId: string) {
 
 function identity<T>(x: T): T {
   return x;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
+function broadcastError(client: OpaqueClient, err: Error | unknown) {
+  client[kInternal].notifyError(
+    LiveblocksError.fromError(err, {
+      roomId: undefined,
+      threadId: undefined,
+      commentId: undefined,
+    })
+  );
 }
 
 const _umbrellaStores = new WeakMap<
@@ -490,11 +502,7 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
       },
       (err) => {
         store.optimisticUpdates.remove(optimisticId);
-
-        // Broadcast unhandled errors to client
-        if (err instanceof Error) {
-          client[kInternal].notifyError(err);
-        }
+        broadcastError(client, err);
       }
     );
   }, [client]);
