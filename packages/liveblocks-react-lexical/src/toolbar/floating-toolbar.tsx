@@ -103,7 +103,6 @@ export const FloatingToolbar = Object.assign(
       const [editor] = useLexicalComposerContext();
       const [isFocused, setFocused] = useState(false);
       const [isManuallyClosed, setManuallyClosed] = useState(false);
-      const isEditable = editor.isEditable();
       const [hasSelectionRange, setHasSelectionRange] = useState(false);
 
       const isOpen =
@@ -274,7 +273,7 @@ export const FloatingToolbar = Object.assign(
       );
 
       useEffect(() => {
-        if (!editor || !isEditable) {
+        if (!editor) {
           return;
         }
 
@@ -285,16 +284,22 @@ export const FloatingToolbar = Object.assign(
           setPointerDown(false);
         };
 
-        document.addEventListener("pointerdown", handlePointerDown);
-        document.addEventListener("pointercancel", handlePointerUp);
-        document.addEventListener("pointerup", handlePointerUp);
+        const root = editor.getRootElement();
+
+        if (!root) {
+          return;
+        }
+
+        root.addEventListener("pointerdown", handlePointerDown);
+        root.addEventListener("pointercancel", handlePointerUp);
+        root.addEventListener("pointerup", handlePointerUp);
 
         return () => {
-          document.removeEventListener("pointerdown", handlePointerDown);
-          document.removeEventListener("pointercancel", handlePointerUp);
-          document.removeEventListener("pointerup", handlePointerUp);
+          root.removeEventListener("pointerdown", handlePointerDown);
+          root.removeEventListener("pointercancel", handlePointerUp);
+          root.removeEventListener("pointerup", handlePointerUp);
         };
-      }, [editor, isEditable]);
+      }, [editor]);
 
       useEffect(() => {
         const unregister = editor.registerUpdateListener(({ tags }) => {

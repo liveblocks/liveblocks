@@ -97,12 +97,6 @@ export const FloatingToolbar = Object.assign(
       const [isPointerDown, setPointerDown] = useState(false);
       const [isFocused, setFocused] = useState(false);
       const [isManuallyClosed, setManuallyClosed] = useState(false);
-      const isEditable =
-        useEditorState({
-          editor,
-          equalityFn: Object.is,
-          selector: (ctx) => ctx.editor?.isEditable ?? false,
-        }) ?? false;
       const hasSelectionRange =
         useEditorState({
           editor,
@@ -309,7 +303,7 @@ export const FloatingToolbar = Object.assign(
       );
 
       useEffect(() => {
-        if (!editor || !isEditable) {
+        if (!editor) {
           return;
         }
 
@@ -320,16 +314,16 @@ export const FloatingToolbar = Object.assign(
           setPointerDown(false);
         };
 
-        document.addEventListener("pointerdown", handlePointerDown);
-        document.addEventListener("pointercancel", handlePointerUp);
-        document.addEventListener("pointerup", handlePointerUp);
+        editor.view.dom.addEventListener("pointerdown", handlePointerDown);
+        editor.view.dom.addEventListener("pointercancel", handlePointerUp);
+        editor.view.dom.addEventListener("pointerup", handlePointerUp);
 
         return () => {
-          document.removeEventListener("pointerdown", handlePointerDown);
-          document.removeEventListener("pointercancel", handlePointerUp);
-          document.removeEventListener("pointerup", handlePointerUp);
+          editor.view.dom.removeEventListener("pointerdown", handlePointerDown);
+          editor.view.dom.removeEventListener("pointercancel", handlePointerUp);
+          editor.view.dom.removeEventListener("pointerup", handlePointerUp);
         };
-      }, [editor, isEditable]);
+      }, [editor]);
 
       useLayoutEffect(() => {
         if (!editor || !delayedIsOpen) {
