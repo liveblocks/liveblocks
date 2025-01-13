@@ -1471,12 +1471,14 @@ export function createRoom<
   managedSocket.events.didDisconnect.subscribe(onDidDisconnect);
   managedSocket.events.onConnError.subscribe(({ message, code }) => {
     const err = LiveblocksError.fromConnError(message, code, roomId);
-    if (process.env.NODE_ENV !== "production") {
-      console.error(
-        `Connection to websocket server closed. Reason: ${message} (code: ${code}).`
-      );
+    const didNotify = eventHub.error.notify(err);
+    if (!didNotify) {
+      if (process.env.NODE_ENV !== "production") {
+        console.error(
+          `Connection to websocket server closed. Reason: ${message} (code: ${code}).`
+        );
+      }
     }
-    eventHub.error.notify(err);
   });
 
   const pool: ManagedPool = {
