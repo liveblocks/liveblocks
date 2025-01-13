@@ -4,6 +4,7 @@ import { createContext } from "react";
 
 type FloatingToolbarContext = {
   close: () => void;
+  registerExternal: (id: string) => () => void;
 };
 
 export const FloatingToolbarContext =
