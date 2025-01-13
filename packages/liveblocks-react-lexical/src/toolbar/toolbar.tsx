@@ -38,7 +38,12 @@ import {
   REDO_COMMAND,
   UNDO_COMMAND,
 } from "lexical";
-import type { ComponentProps, ComponentType, ReactNode } from "react";
+import type {
+  ComponentProps,
+  ComponentType,
+  KeyboardEvent,
+  ReactNode,
+} from "react";
 import {
   forwardRef,
   useCallback,
@@ -109,7 +114,27 @@ export function applyToolbarSlot(
 }
 
 const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
-  ({ icon, children, name, shortcut, ...props }, forwardedRef) => {
+  ({ icon, children, name, shortcut, onKeyDown, ...props }, forwardedRef) => {
+    const floatingToolbarContext = useContext(FloatingToolbarContext);
+    const closeFloatingToolbar = floatingToolbarContext?.close;
+
+    const handleKeyDown = useCallback(
+      (event: KeyboardEvent<HTMLButtonElement>) => {
+        onKeyDown?.(event);
+
+        if (
+          !event.isDefaultPrevented() &&
+          closeFloatingToolbar &&
+          event.key === "Escape"
+        ) {
+          closeFloatingToolbar();
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      },
+      [onKeyDown, closeFloatingToolbar]
+    );
+
     return (
       <ShortcutTooltip content={name} shortcut={shortcut}>
         <Button
@@ -118,6 +143,7 @@ const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
           ref={forwardedRef}
           icon={icon}
           {...props}
+          onKeyDown={handleKeyDown}
         >
           {children}
         </Button>
@@ -367,8 +393,9 @@ const blockSelectorTextItem: ToolbarBlockSelectorItem = {
 const ToolbarBlockSelector = forwardRef<
   HTMLButtonElement,
   ToolbarBlockSelectorProps
->(({ items, ...props }, forwardedRef) => {
+>(({ items, onKeyDown, ...props }, forwardedRef) => {
   const floatingToolbarContext = useContext(FloatingToolbarContext);
+  const closeFloatingToolbar = floatingToolbarContext?.close;
   const [editor] = useLexicalComposerContext();
   const selectedBlockElement = getSelectedBlockElement(editor);
   const resolvedItems = useMemo(() => {
@@ -395,13 +422,35 @@ const ToolbarBlockSelector = forwardRef<
     }
   };
 
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLButtonElement>) => {
+      onKeyDown?.(event);
+
+      if (
+        !event.isDefaultPrevented() &&
+        closeFloatingToolbar &&
+        event.key === "Escape"
+      ) {
+        closeFloatingToolbar();
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    },
+    [onKeyDown, closeFloatingToolbar]
+  );
+
   return (
     <SelectPrimitive.Root
       value={activeItem.name}
       onValueChange={handleItemChange}
     >
       <ShortcutTooltip content="Turn into…">
-        <SelectPrimitive.Trigger asChild {...props} ref={forwardedRef}>
+        <SelectPrimitive.Trigger
+          asChild
+          {...props}
+          ref={forwardedRef}
+          onKeyDown={handleKeyDown}
+        >
           <Button type="button" variant="toolbar">
             <SelectPrimitive.Value>{activeItem.name}</SelectPrimitive.Value>
             <SelectPrimitive.Icon className="lb-dropdown-chevron">
