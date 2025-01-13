@@ -635,12 +635,6 @@ export type Room<
     readonly myPresence: Observable<P>;
     readonly others: Observable<OthersEvent<P, U>>;
     /**
-     * @deprecated This is now an alias to client.events.error, and contains
-     * _any_ Liveblocks error, even ones that are not originating from this
-     * room's instance.
-     */
-    readonly error: Observable<LiveblocksError>;
-    /**
      * @deprecated Renamed to `storageBatch`. The `storage` event source will
      * soon be replaced by another/incompatible API.
      */
@@ -2691,7 +2685,6 @@ export function createRoom<
     others: eventHub.others.observable,
     self: eventHub.self.observable,
     myPresence: eventHub.myPresence.observable,
-    error: config.errorEventSource.observable,
     /** @deprecated */
     storage: eventHub.storageBatch.observable,
     storageBatch: eventHub.storageBatch.observable,
@@ -2949,7 +2942,11 @@ export function createRoom<
       },
 
       id: config.roomId,
-      subscribe: makeClassicSubscribeFn(config.roomId, events),
+      subscribe: makeClassicSubscribeFn(
+        config.roomId,
+        events,
+        config.errorEventSource
+      ),
 
       connect: () => managedSocket.connect(),
       reconnect: () => managedSocket.reconnect(),
@@ -3043,7 +3040,8 @@ function makeClassicSubscribeFn<
   M extends BaseMetadata,
 >(
   roomId: string,
-  events: Room<P, S, U, E, M>["events"]
+  events: Room<P, S, U, E, M>["events"],
+  errorEvents: EventSource<LiveblocksError>
 ): SubscribeFn<P, S, U, E> {
   // Set up the "subscribe" wrapper API
   function subscribeToLiveStructureDeeply<L extends LiveStructure>(
@@ -3111,7 +3109,7 @@ function makeClassicSubscribeFn<
         }
 
         case "error": {
-          return events.error.subscribe((err) => {
+          return errorEvents.subscribe((err) => {
             if (err.roomId === roomId) {
               return (callback as Callback<Error>)(err);
             }
