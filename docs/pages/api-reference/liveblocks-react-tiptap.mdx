@@ -80,6 +80,55 @@ Learn more in our [get started guides](/docs/get-started/text-editor/tiptap).
 
 ## Default components
 
+### FloatingToolbar
+
+Displays a floating toolbar near the current Tiptap selection, allowing you to
+change styles. Can be [customized]().
+
+```tsx
+<FloatingToolbar editor={editor} />
+```
+
+[img]
+
+Pass your Tiptap `editor` to use the component. By default, the toolbar has a
+button for creating comment threads, add [`FloatingComposer`][] to enable this.
+Display threads with [`AnchoredThreads`][] or [`FloatingThreads`][].
+
+```tsx
+import {
+  useLiveblocksExtension,
+  // +++
+  FloatingToolbar,
+  // +++
+  FloatingComposer,
+  FloatingThreads,
+} from "@liveblocks/react-tiptap";
+import { useEditor, EditorContent } from "@tiptap/react";
+
+function TextEditor() {
+  const liveblocks = useLiveblocksExtension();
+
+  const editor = useEditor({
+    extensions: [
+      liveblocks,
+      // ...
+    ],
+  });
+
+  return (
+    <div>
+      <EditorContent editor={editor} />
+      // +++
+      <FloatingToolbar editor={editor} />
+      // +++
+      <FloatingComposer editor={editor} style={{ width: "350px" }} />
+      <FloatingThreads editor={editor} style={{ width: "350px" }} />
+    </div>
+  );
+}
+```
+
 ### FloatingComposer
 
 Displays a [`Composer`][] near the current Tiptap selection, allowing you to
@@ -134,8 +183,6 @@ function TextEditor() {
   );
 }
 ```
-
-Display created threads with [`AnchoredThreads`][] or [`FloatingThreads`][].
 
 #### Opening the composer
 
