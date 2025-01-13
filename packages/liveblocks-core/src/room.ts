@@ -634,6 +634,7 @@ export type Room<
     readonly self: Observable<User<P, U>>;
     readonly myPresence: Observable<P>;
     readonly others: Observable<OthersEvent<P, U>>;
+    // XXX Remove this source in favor of client.events.error
     readonly error: Observable<LiveblocksError>;
     /**
      * @deprecated Renamed to `storageBatch`. The `storage` event source will
@@ -1555,6 +1556,7 @@ export function createRoom<
     self: makeEventSource<User<P, U>>(),
     myPresence: makeEventSource<P>(),
     others: makeEventSource<OthersEvent<P, U>>(),
+    // XXX Remove this source in favor of client.events.error
     error: makeEventSource<LiveblocksError>(),
     storageBatch: makeEventSource<StorageUpdate[]>(),
     history: makeEventSource<HistoryEvent>(),

@@ -254,6 +254,7 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
     optimisticId: string,
     createPublicError: (error: Error) => CommentsError<M>
   ) {
+    // XXX Broadcast errors to client
     store.optimisticUpdates.remove(optimisticId);
 
     if (innerError instanceof HttpError) {
@@ -313,6 +314,7 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
 
   return {
     store,
+    // XXX Remove this source in favor of client.events.error
     commentsErrorEventSource: commentsErrorEventSource.observable,
     onMutationFailure,
     getOrCreateThreadsPollerForRoomId: threadsPollersByRoomId.getOrCreate.bind(

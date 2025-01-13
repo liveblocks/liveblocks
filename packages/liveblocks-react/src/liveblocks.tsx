@@ -477,7 +477,7 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
           );
         },
         () => {
-          // TODO: Broadcast errors to client
+          // XXX Broadcast errors to client
           store.optimisticUpdates.remove(optimisticId);
         }
       );
@@ -526,7 +526,7 @@ function useDeleteInboxNotification_withClient(client: OpaqueClient) {
           store.deleteInboxNotification(inboxNotificationId, optimisticId);
         },
         () => {
-          // TODO: Broadcast errors to client
+          // XXX Broadcast errors to client
           store.optimisticUpdates.remove(optimisticId);
         }
       );
@@ -550,7 +550,7 @@ function useDeleteAllInboxNotifications_withClient(client: OpaqueClient) {
         store.deleteAllInboxNotifications(optimisticId);
       },
       () => {
-        // TODO: Broadcast errors to client
+        // XXX Broadcast errors to client
         store.optimisticUpdates.remove(optimisticId);
       }
     );
