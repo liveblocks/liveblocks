@@ -853,9 +853,11 @@ export function createClient<U extends BaseUserMeta = DU>(
           context: LiveblocksErrorContext,
           cause?: Error
         ) => {
-          liveblocksErrorSource.notify(
-            LiveblocksError.from(message, context, cause)
-          );
+          const error = LiveblocksError.from(message, context, cause);
+          const didNotify = liveblocksErrorSource.notify(error);
+          if (!didNotify) {
+            console.error(error.message);
+          }
         },
       },
     },
