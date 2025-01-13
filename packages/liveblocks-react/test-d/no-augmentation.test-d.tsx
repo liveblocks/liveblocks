@@ -182,6 +182,26 @@ import { expectAssignable, expectError, expectType } from "tsd";
 
 // ---------------------------------------------------------
 
+// useErrorListener()
+{
+  classic.useErrorListener((err) => {
+    expectType<string>(err.message);
+    expectType<string | undefined>(err.stack);
+    expectType<number | undefined>(err.code);
+  });
+}
+
+// useErrorListener() (suspense)
+{
+  suspense.useErrorListener((err) => {
+    expectType<string>(err.message);
+    expectType<string | undefined>(err.stack);
+    expectType<number | undefined>(err.code);
+  });
+}
+
+// ---------------------------------------------------------
+
 // useStorageStatus()
 {
   expectType<"not-loaded" | "loading" | "synchronizing" | "synchronized">(
