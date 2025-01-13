@@ -353,7 +353,7 @@ ctx.useOthersListener(({ user, type }) => {
 ctx.useErrorListener((err) => {
   expectType<string>(err.message);
   expectType<string | undefined>(err.stack);
-  expectType<number>(err.code);
+  expectType<number | undefined>(err.code);
 });
 
 // ---------------------------------------------------------
