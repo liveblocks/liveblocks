@@ -43,6 +43,7 @@ import {
   makeAuthDelegateForRoom,
   makeCreateSocketDelegateForRoom,
 } from "./room";
+import type { LiveblocksError } from "./types/LiveblocksError";
 import type { OptionalPromise } from "./types/OptionalPromise";
 
 const MIN_THROTTLE = 16;
@@ -156,7 +157,7 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
   as<M2 extends BaseMetadata>(): Client<U, M2>;
   // Tracking pending changes globally
   createSyncSource(): SyncSource;
-  notifyError(error: Error): void;
+  notifyError(error: LiveblocksError): void;
 };
 
 export type NotificationsApi<M extends BaseMetadata> = {
@@ -383,7 +384,7 @@ export type Client<U extends BaseUserMeta = DU, M extends BaseMetadata = DM> = {
    * All possible client events, subscribable from a single place.
    */
   readonly events: {
-    readonly error: Observable<Error>;
+    readonly error: Observable<LiveblocksError>;
     readonly syncStatus: Observable<void>;
   };
 } & NotificationsApi<M>;
@@ -730,7 +731,7 @@ export function createClient<U extends BaseUserMeta = DU>(
   const syncStatusSources: Signal<InternalSyncStatus>[] = [];
   const syncStatusSignal = new Signal<InternalSyncStatus>("synchronized");
 
-  const errorEventSource = makeEventSource<Error>();
+  const liveblocksErrorSource = makeEventSource<LiveblocksError>();
 
   function getSyncStatus(): SyncStatus {
     const status = syncStatusSignal.get();
@@ -823,7 +824,7 @@ export function createClient<U extends BaseUserMeta = DU>(
 
       getSyncStatus,
       events: {
-        error: errorEventSource,
+        error: liveblocksErrorSource,
         syncStatus: syncStatusSignal,
       },
 
@@ -841,7 +842,7 @@ export function createClient<U extends BaseUserMeta = DU>(
         // Type-level helper only, it's effectively only an identity-function at runtime
         as: <M2 extends BaseMetadata>() => client as Client<U, M2>,
         createSyncSource,
-        notifyError: errorEventSource.notify,
+        notifyError: liveblocksErrorSource.notify,
       },
     },
     kInternal,
