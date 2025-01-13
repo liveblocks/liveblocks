@@ -12,6 +12,7 @@ type Props = {
   editor: Editor | null;
 };
 
+// TODO delete this or take block elements out of selector
 export function ToolbarBlock({ editor }: Props) {
   return (
     <>
