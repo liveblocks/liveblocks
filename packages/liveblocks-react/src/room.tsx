@@ -963,6 +963,7 @@ function useLostConnectionListener(
  *   console.error(er);
  * })
  */
+// XXX MAKE THIS A LIVEBLOCKS CONTEXT HOOK INSTEAD
 function useErrorListener(callback: (err: LiveblocksError) => void): void {
   const room = useRoom();
   const savedCallback = useLatest(callback);
