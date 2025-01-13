@@ -26,9 +26,7 @@ import type {
 import {
   forwardRef,
   useCallback,
-  useContext,
   useEffect,
-  useId,
   useMemo,
   useRef,
   useState,
@@ -38,7 +36,7 @@ import { createPortal } from "react-dom";
 import { classNames } from "../classnames";
 import { EditorProvider } from "../context";
 import type { FloatingPosition } from "../types";
-import { FloatingToolbarContext } from "./FloatingToolbarContext";
+import { FloatingToolbarContext, FloatingToolbarExternal } from "./shared";
 import {
   applyToolbarSlot,
   Toolbar,
@@ -75,39 +73,6 @@ function DefaultFloatingToolbarContent({ editor }: ToolbarSlotProps) {
     </>
   );
 }
-
-const FloatingToolbarExternal = forwardRef<
-  HTMLDivElement,
-  ComponentProps<"div">
->(({ children, style, ...props }, forwardedRef) => {
-  const id = useId();
-  const externalId = useMemo(
-    () => `liveblocks-floating-toolbar-external-${id}`,
-    [id]
-  );
-  const floatingToolbarContext = useContext(FloatingToolbarContext);
-  const registerExternal = floatingToolbarContext?.registerExternal;
-
-  useLayoutEffect(() => {
-    if (!registerExternal) {
-      return;
-    }
-
-    return registerExternal(externalId);
-  }, [registerExternal, externalId]);
-
-  return (
-    <div
-      ref={forwardedRef}
-      style={{ display: "contents", ...style }}
-      data-liveblocks-floating-toolbar-external={id}
-      {...props}
-      id={externalId}
-    >
-      {children}
-    </div>
-  );
-});
 
 export const FloatingToolbar = Object.assign(
   forwardRef<HTMLDivElement, FloatingToolbarProps>(

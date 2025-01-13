@@ -22,7 +22,7 @@ import { forwardRef, useContext, useMemo } from "react";
 import { classNames } from "../classnames";
 import { EditorProvider, useCurrentEditor } from "../context";
 import type { ExtendedChainedCommands } from "../types";
-import { FloatingToolbarContext } from "./FloatingToolbarContext";
+import { FloatingToolbarContext, FloatingToolbarExternal } from "./shared";
 
 export const BLOCK_SELECT_SIDE_OFFSET = 10;
 export const FLOATING_ELEMENT_COLLISION_PADDING = 10;
@@ -254,29 +254,33 @@ const ToolbarBlockSelector = forwardRef<
         </SelectPrimitive.Trigger>
       </ShortcutTooltip>
       <SelectPrimitive.Portal>
-        <SelectPrimitive.Content
-          position="popper"
-          sideOffset={BLOCK_SELECT_SIDE_OFFSET}
-          collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
-          className="lb-root lb-portal lb-elevation lb-dropdown"
-        >
-          {resolvedItems.map((item) => (
-            <SelectPrimitive.Item
-              key={item.name}
-              value={item.name}
-              className="lb-dropdown-item"
-            >
-              <span className="lb-dropdown-item-label">
-                <SelectPrimitive.ItemText>{item.name}</SelectPrimitive.ItemText>
-              </span>
-              {item.name === activeItem.name ? (
-                <span className="lb-dropdown-item-accessory lb-icon-container">
-                  <CheckIcon />
+        <FloatingToolbarExternal>
+          <SelectPrimitive.Content
+            position="popper"
+            sideOffset={BLOCK_SELECT_SIDE_OFFSET}
+            collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
+            className="lb-root lb-portal lb-elevation lb-dropdown"
+          >
+            {resolvedItems.map((item) => (
+              <SelectPrimitive.Item
+                key={item.name}
+                value={item.name}
+                className="lb-dropdown-item"
+              >
+                <span className="lb-dropdown-item-label">
+                  <SelectPrimitive.ItemText>
+                    {item.name}
+                  </SelectPrimitive.ItemText>
                 </span>
-              ) : null}
-            </SelectPrimitive.Item>
-          ))}
-        </SelectPrimitive.Content>
+                {item.name === activeItem.name ? (
+                  <span className="lb-dropdown-item-accessory lb-icon-container">
+                    <CheckIcon />
+                  </span>
+                ) : null}
+              </SelectPrimitive.Item>
+            ))}
+          </SelectPrimitive.Content>
+        </FloatingToolbarExternal>
       </SelectPrimitive.Portal>
     </SelectPrimitive.Root>
   );
