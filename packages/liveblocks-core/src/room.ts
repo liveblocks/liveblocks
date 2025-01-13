@@ -3112,10 +3112,6 @@ function makeClassicSubscribeFn<
 
         case "error": {
           return events.error.subscribe((err) => {
-            // Before 2.16.0, the error event source would only ever emit
-            // errors for this room. Since 2.16.0, the error event source will
-            // emit _any_ Liveblocks error, even ones from outside this room.
-            // This check retains the previous behavior.
             if (err.roomId === roomId) {
               return (callback as Callback<Error>)(err);
             }
