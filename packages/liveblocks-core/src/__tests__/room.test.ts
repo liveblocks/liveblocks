@@ -1959,7 +1959,7 @@ describe("room", () => {
 
       storage.root.set("x", 1);
 
-      expect(storageStatusCallback).toBeCalledWith("synchronizing");
+      expect(storageStatusCallback).toHaveBeenCalledWith("synchronizing");
       expect(room.getStorageStatus()).toBe("synchronizing");
 
       const storageJson = lsonToJson(storage.root);
@@ -1976,7 +1976,7 @@ describe("room", () => {
       await waitUntilStorageUpdate(room);
       expectStorage({ x: 1 });
       expect(room.getStorageStatus()).toBe("synchronized");
-      expect(storageStatusCallback).toBeCalledWith("synchronized");
+      expect(storageStatusCallback).toHaveBeenCalledWith("synchronized");
 
       expect(storageStatusCallback).toHaveBeenCalledTimes(2);
     });
