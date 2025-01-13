@@ -1332,11 +1332,20 @@ contexts.
 <Header />
 ```
 
-### useErrorListener [@badge=LiveblocksProvider]
+### useErrorListener [@badge=Both]
 
-XXX NOTE BEFORE 2.16, this HOOK BEHAVES DIFFERENTLY. DOCUMENT THIS.
+<Banner>
 
-Listen to potential room connection errors.
+This behavior of this hook changed in 2.16. Before, this hook needed to be
+nested under a RoomProvider, and would only notify you about connection errors
+for that room. Since 2.16, this hook will notify you about any Liveblocks error
+(not just connection errors), and for any room.
+
+</Banner>
+
+Listen to potential Liveblocks errors. Examples of errors include room
+connection errors, or errors creating or deleting threads, editing thread
+metadata, etc.
 
 ```ts
 import { useErrorListener } from "@liveblocks/react/suspense";
