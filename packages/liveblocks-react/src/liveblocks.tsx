@@ -17,7 +17,6 @@ import {
   assert,
   createClient,
   kInternal,
-  LiveblocksError,
   makePoller,
   raise,
   shallow,
@@ -78,17 +77,6 @@ function missingRoomInfoError(roomId: string) {
 
 function identity<T>(x: T): T {
   return x;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
-function broadcastError(client: OpaqueClient, err: Error | unknown) {
-  client[kInternal].notifyError(
-    LiveblocksError.fromCommentsAPI(err, {
-      roomId: undefined,
-      threadId: undefined,
-      commentId: undefined,
-    })
-  );
 }
 
 const _umbrellaStores = new WeakMap<
@@ -476,9 +464,14 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
             optimisticId
           );
         },
-        () => {
-          // XXX Broadcast errors to client
+        (err: Error) => {
           store.optimisticUpdates.remove(optimisticId);
+          // XXX Add unit test for this error
+          client[kInternal].emitError(
+            "Could not mark inbox notification as read",
+            { inboxNotificationId },
+            err
+          );
         }
       );
     },
@@ -500,9 +493,14 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
         // Replace the optimistic update by the real thing
         store.markAllInboxNotificationsRead(optimisticId, readAt);
       },
-      (err) => {
+      (err: Error) => {
         store.optimisticUpdates.remove(optimisticId);
-        broadcastError(client, err);
+        client[kInternal].emitError(
+          "Could not mark all inbox notifications as read",
+          // No roomId, threadId, commentId to include for this error
+          {},
+          err
+        );
       }
     );
   }, [client]);
@@ -525,9 +523,14 @@ function useDeleteInboxNotification_withClient(client: OpaqueClient) {
           // Replace the optimistic update by the real thing
           store.deleteInboxNotification(inboxNotificationId, optimisticId);
         },
-        () => {
-          // XXX Broadcast errors to client
+        (err: Error) => {
           store.optimisticUpdates.remove(optimisticId);
+          // XXX Add unit test for this error
+          client[kInternal].emitError(
+            "Could not delete inbox notification",
+            { inboxNotificationId },
+            err
+          );
         }
       );
     },
@@ -549,9 +552,15 @@ function useDeleteAllInboxNotifications_withClient(client: OpaqueClient) {
         // Replace the optimistic update by the real thing
         store.deleteAllInboxNotifications(optimisticId);
       },
-      () => {
-        // XXX Broadcast errors to client
+      (err: Error) => {
         store.optimisticUpdates.remove(optimisticId);
+        // XXX Add unit test for this error
+        client[kInternal].emitError(
+          "Could not delete all inbox notifications",
+          // No roomId, threadId, commentId to include for this error
+          {},
+          err
+        );
       }
     );
   }, [client]);

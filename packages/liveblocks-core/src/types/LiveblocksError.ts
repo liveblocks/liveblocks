@@ -1,5 +1,6 @@
 import type { Relax } from "../lib/Relax";
 import type { BaseMetadata, CommentBody } from "../protocol/Comments";
+import type { Patchable } from "./Patchable";
 
 // Shape when originating from a (websocket) connection error
 type ConnectionErrorContext = {
@@ -12,8 +13,10 @@ type CommentsAPIErrorContext = {
   roomId?: string;
   threadId?: string;
   commentId?: string;
+  inboxNotificationId?: string;
   body?: CommentBody;
-  metadata?: BaseMetadata;
+  metadata?: Patchable<BaseMetadata>;
+  emoji?: string;
 };
 
 export type LiveblocksErrorContext = Relax<

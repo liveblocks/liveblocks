@@ -66,8 +66,6 @@ export {
   useHistoryVersionData,
 } from "./room";
 
-export { useCommentsErrorListener } from "./room";
-
 // Export the classic (non-Suspense) versions of our hooks
 // (This part differs from src/suspense.ts)
 export {

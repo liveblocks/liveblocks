@@ -260,7 +260,10 @@ describe("useMarkAllInboxNotificationsAsRead", () => {
     expect(fn).toHaveBeenCalledWith(expect.any(Error));
     expect(fn).toHaveBeenCalledWith(
       expect.objectContaining({
-        message: expect.stringContaining("whoops, something went wrong"),
+        message: "Could not mark all inbox notifications as read",
+        cause: expect.objectContaining({
+          message: expect.stringContaining("whoops, something went wrong"),
+        }),
       })
     );
 
