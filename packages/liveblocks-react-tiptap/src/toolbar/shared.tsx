@@ -1,5 +1,6 @@
 import { useLayoutEffect } from "@liveblocks/react/_private";
 import {
+  Children,
   type ComponentProps,
   createContext,
   forwardRef,
@@ -37,6 +38,10 @@ export const FloatingToolbarExternal = forwardRef<
 
     return registerExternal(externalId);
   }, [registerExternal, externalId]);
+
+  if (!floatingToolbarContext || Children.count(children) === 0) {
+    return <>{children}</>;
+  }
 
   return (
     <div
