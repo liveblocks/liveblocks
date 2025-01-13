@@ -1,6 +1,7 @@
 import { StopRetrying } from "./connection";
 import { isPlainObject } from "./lib/guards";
 import type { Json } from "./lib/Json";
+import type { Relax } from "./lib/Relax";
 import type {
   Authentication,
   CustomAuthenticationResult,
@@ -29,10 +30,7 @@ type AuthEndpoint =
 
 export type AuthenticationOptions = {
   polyfills?: Polyfills;
-} & (
-  | { publicApiKey: string; authEndpoint?: never }
-  | { publicApiKey?: never; authEndpoint: AuthEndpoint }
-);
+} & Relax<{ publicApiKey: string } | { authEndpoint: AuthEndpoint }>;
 
 export function createAuthManager(
   authOptions: AuthenticationOptions,
