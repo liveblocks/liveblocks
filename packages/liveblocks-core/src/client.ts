@@ -13,6 +13,7 @@ import type { Observable } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import type { NoInfr } from "./lib/NoInfer";
+import type { Relax } from "./lib/Relax";
 import type { Resolve } from "./lib/Resolve";
 import { Signal } from "./lib/signals";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
@@ -473,23 +474,7 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
 
   /** @internal */
   enableDebugLogging?: boolean;
-} & (
-  | { publicApiKey: string; authEndpoint?: never }
-  | { publicApiKey?: never; authEndpoint: AuthEndpoint }
-);
-// ^^^^^^^^^^^^^^^
-// NOTE: Potential upgrade path by introducing a new property:
-//
-//   | { publicApiKey: string; authEndpoint?: never; authUrl?: never }
-//   | { publicApiKey?: never; authEndpoint: AuthEndpoint; authUrl?: never }
-//   | { publicApiKey?: never; authEndpoint?: never; authUrl?: AuthUrl }
-//
-// Where:
-//
-//   export type AuthUrl =
-//     | string
-//     | ((room: string) => Promise<{ token: string }>);
-//
+} & Relax<{ publicApiKey: string } | { authEndpoint: AuthEndpoint }>;
 
 function getBaseUrl(baseUrl?: string | undefined): string {
   if (

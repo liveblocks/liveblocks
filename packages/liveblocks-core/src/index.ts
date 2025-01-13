@@ -131,6 +131,7 @@ export { objectToQuery } from "./lib/objectToQuery";
 export type { Poller } from "./lib/Poller";
 export { makePoller } from "./lib/Poller";
 export { asPos, makePosition } from "./lib/position";
+export type { Relax } from "./lib/Relax";
 export type { Resolve } from "./lib/Resolve";
 export { shallow } from "./lib/shallow";
 export type { ISignal, SignalType } from "./lib/signals";
