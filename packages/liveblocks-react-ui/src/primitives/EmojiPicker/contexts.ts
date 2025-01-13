@@ -3,28 +3,28 @@ import { nn } from "@liveblocks/core";
 import type { Dispatch, KeyboardEvent, SetStateAction } from "react";
 import { createContext, useContext } from "react";
 
+type Relax<T> = DistributiveRelax<T, T extends any ? keyof T : never>;
+type DistributiveRelax<T, Ks extends string | number | symbol> = T extends any
+  ? Resolve<{ [K in keyof T]: T[K] } & { [K in Exclude<Ks, keyof T>]?: never }>
+  : never;
+
 import type {
   EmojiPickerData,
   EmojiPickerInteraction,
   EmojiPickerSelectionDirection,
 } from "./types";
 
-type EmojiPickerContextData =
-  | {
-      data?: never;
-      error?: never;
-      isLoading: true;
-    }
+type EmojiPickerContextData = Relax<
+  | { isLoading: true }
   | {
       data: EmojiPickerData;
-      error?: never;
       isLoading: false;
     }
   | {
-      data?: never;
       error: Error;
       isLoading: false;
-    };
+    }
+>;
 
 export type EmojiPickerContext = Resolve<
   EmojiPickerContextData & {
