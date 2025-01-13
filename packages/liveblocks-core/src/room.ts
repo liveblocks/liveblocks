@@ -1,12 +1,7 @@
 import { getBearerTokenFromAuthValue, type RoomHttpApi } from "./api-client";
 import type { AuthManager, AuthValue } from "./auth-manager";
 import type { InternalSyncStatus } from "./client";
-import type {
-  Delegates,
-  LiveblocksError,
-  LostConnectionEvent,
-  Status,
-} from "./connection";
+import type { Delegates, LostConnectionEvent, Status } from "./connection";
 import { ManagedSocket, StopRetrying } from "./connection";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { OpSource } from "./crdts/AbstractCrdt";
@@ -84,6 +79,7 @@ import type {
   IWebSocketInstance,
   IWebSocketMessageEvent,
 } from "./types/IWebSocket";
+import { LiveblocksError } from "./types/LiveblocksError";
 import type { NodeMap } from "./types/NodeMap";
 import type {
   InternalOthersEvent,
@@ -1473,10 +1469,11 @@ export function createRoom<
   managedSocket.events.statusDidChange.subscribe(handleConnectionLossEvent);
   managedSocket.events.didConnect.subscribe(onDidConnect);
   managedSocket.events.didDisconnect.subscribe(onDidDisconnect);
-  managedSocket.events.onLiveblocksError.subscribe((err) => {
+  managedSocket.events.onConnError.subscribe(({ message, code }) => {
+    const err = LiveblocksError.fromConnError(message, code, roomId);
     if (process.env.NODE_ENV !== "production") {
       console.error(
-        `Connection to websocket server closed. Reason: ${err.message} (code: ${err.code}).`
+        `Connection to websocket server closed. Reason: ${message} (code: ${code}).`
       );
     }
     eventHub.error.notify(err);

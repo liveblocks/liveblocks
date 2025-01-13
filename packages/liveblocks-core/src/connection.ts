@@ -199,16 +199,6 @@ export class StopRetrying extends Error {
   }
 }
 
-export class LiveblocksError extends Error {
-  /** @internal */
-  constructor(
-    message: string,
-    public code: number
-  ) {
-    super(message);
-  }
-}
-
 function nextBackoffDelay(
   currentDelay: number,
   delays: readonly number[]
@@ -363,6 +353,12 @@ function defineConnectivityEvents(machine: FSM<Context, Event, State>) {
 const assign = (patch: Partial<Context>) => (ctx: Patchable<Context>) =>
   ctx.patch(patch);
 
+/**
+ * A ConnectionError is a partial data structure to help build a proper
+ * LiveblocksError down the line.
+ */
+type ConnectionError = { message: string; code: number };
+
 function createConnectionStateMachine<T extends BaseAuthResult>(
   delegates: Delegates<T>,
   options: {
@@ -384,12 +380,11 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
 
   // Emitted whenever the server deliberately closes the connection for
   // a specific Liveblocks reason
-  const onLiveblocksError = makeEventSource<LiveblocksError>();
+  const onConnError = makeEventSource<ConnectionError>();
 
-  function fireErrorEvent(errmsg: string, errcode: number) {
+  function fireErrorEvent(message: string, code: number) {
     return () => {
-      const err = new LiveblocksError(errmsg, errcode);
-      onLiveblocksError.notify(err);
+      onConnError.notify({ message, code });
     };
   }
 
@@ -953,7 +948,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       didConnect,
       didDisconnect,
       onMessage: onMessage.observable,
-      onLiveblocksError: onLiveblocksError.observable,
+      onConnError: onConnError.observable,
     },
   };
 }
@@ -997,7 +992,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
      * Emitted whenever a connection gets closed for a known error reason, e.g.
      * max number of connections, max number of messages, etc.
      */
-    readonly onLiveblocksError: Observable<LiveblocksError>;
+    readonly onConnError: Observable<ConnectionError>;
   };
 
   constructor(
