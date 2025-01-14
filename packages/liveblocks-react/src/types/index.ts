@@ -287,12 +287,13 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
     useIsInsideRoom(): boolean;
 
     /**
-     * useErrorListener is a React hook that allows you to respond to potential room
-     * connection errors.
+     * useErrorListener is a React hook that allows you to respond to any
+     * Liveblocks error, for example room connection errors, errors
+     * creating/editing/deleting threads, etc.
      *
      * @example
-     * useErrorListener(er => {
-     *   console.error(er);
+     * useErrorListener(err => {
+     *   console.error(err);
      * })
      */
     useErrorListener(callback: (err: LiveblocksError) => void): void;
@@ -341,12 +342,13 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
     useIsInsideRoom(): boolean;
 
     /**
-     * useErrorListener is a React hook that allows you to respond to potential room
-     * connection errors.
+     * useErrorListener is a React hook that allows you to respond to any
+     * Liveblocks error, for example room connection errors, errors
+     * creating/editing/deleting threads, etc.
      *
      * @example
-     * useErrorListener(er => {
-     *   console.error(er);
+     * useErrorListener(err => {
+     *   console.error(err);
      * })
      */
     useErrorListener(callback: (err: LiveblocksError) => void): void;
