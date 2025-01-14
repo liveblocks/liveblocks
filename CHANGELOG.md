@@ -12,9 +12,9 @@ filter threads that do not have a `color` attribute in their metadata.
 > [!NOTE]  
 > Although officially never supported before, due to a bug in previous
 > implementations, filtering for metadata absence was sort of possible by using
-> explicit-`undefined`. This is no longer supported. If you relied on this
-> behavior, please ensure you change `undefined` to `null` (which will actually
-> also filter the threads in the backend properly).
+> explicit-`undefined`. This is no longer supported, because it would not
+> properly filter the threads in the backend. If you relied on this behavior,
+> please ensure you change `undefined` to `null`.
 
 ```tsx
 // Filter pinned threads that don't have a `color` set
