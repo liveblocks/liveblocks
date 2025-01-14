@@ -67,7 +67,11 @@ interface ToolbarBlockSelectorItem {
 }
 
 interface ToolbarBlockSelectorProps extends ComponentProps<"button"> {
-  items?: ToolbarBlockSelectorItem[];
+  items?:
+    | ToolbarBlockSelectorItem[]
+    | ((
+        defaultItems: ToolbarBlockSelectorItem[]
+      ) => ToolbarBlockSelectorItem[]);
 }
 
 type ToolbarSeparatorProps = ComponentProps<"div">;
@@ -253,10 +257,15 @@ const ToolbarBlockSelector = forwardRef<
     "BlockSelector",
     "Toolbar or FloatingToolbar"
   );
-  const resolvedItems = useMemo(
-    () => items ?? createDefaultBlockSelectorItems(editor),
-    [editor, items]
-  );
+  const resolvedItems = useMemo(() => {
+    if (Array.isArray(items)) {
+      return items;
+    }
+
+    const defaultItems = createDefaultBlockSelectorItems(editor);
+
+    return items ? items(defaultItems) : defaultItems;
+  }, [editor, items]);
   let defaultItem: ToolbarBlockSelectorItem | undefined;
   let activeItem = editor.isInitialized
     ? resolvedItems.find((item) => {
@@ -312,6 +321,7 @@ const ToolbarBlockSelector = forwardRef<
           {...props}
           ref={forwardedRef}
           onKeyDown={handleKeyDown}
+          disabled={resolvedItems.length === 0}
         >
           <Button type="button" variant="toolbar">
             {activeItem?.name ?? "Turn into…"}

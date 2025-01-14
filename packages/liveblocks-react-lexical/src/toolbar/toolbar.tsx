@@ -101,7 +101,11 @@ interface ToolbarBlockSelectorItem {
 }
 
 interface ToolbarBlockSelectorProps extends ComponentProps<"button"> {
-  items?: ToolbarBlockSelectorItem[];
+  items?:
+    | ToolbarBlockSelectorItem[]
+    | ((
+        defaultItems: ToolbarBlockSelectorItem[]
+      ) => ToolbarBlockSelectorItem[]);
 }
 
 export function applyToolbarSlot(
@@ -405,10 +409,15 @@ const ToolbarBlockSelector = forwardRef<
   const closeFloatingToolbar = floatingToolbarContext?.close;
   const [editor] = useLexicalComposerContext();
   const element = getSelectedBlockElement(editor);
-  const resolvedItems = useMemo(
-    () => items ?? createDefaultBlockSelectorItems(),
-    [items]
-  );
+  const resolvedItems = useMemo(() => {
+    if (Array.isArray(items)) {
+      return items;
+    }
+
+    const defaultItems = createDefaultBlockSelectorItems();
+
+    return items ? items(defaultItems) : defaultItems;
+  }, [items]);
   let defaultItem: ToolbarBlockSelectorItem | undefined;
   let activeItem = resolvedItems.find((item) => {
     if (item.isActive === "default") {
@@ -462,6 +471,7 @@ const ToolbarBlockSelector = forwardRef<
           {...props}
           ref={forwardedRef}
           onKeyDown={handleKeyDown}
+          disabled={resolvedItems.length === 0}
         >
           <Button type="button" variant="toolbar">
             {activeItem?.name ?? "Turn into…"}
