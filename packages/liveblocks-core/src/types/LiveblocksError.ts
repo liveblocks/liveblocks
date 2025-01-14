@@ -46,6 +46,8 @@ export class LiveblocksError extends Error {
   get threadId(): LiveblocksErrorContext["threadId"] { return this.context.threadId; } // prettier-ignore
   /** Convenience accessor for error.context.commentId (if available) */
   get commentId(): LiveblocksErrorContext["commentId"] { return this.context.commentId; } // prettier-ignore
+  /** Convenience accessor for error.context.inboxNotificationId (if available) */
+  get inboxNotificationId(): LiveblocksErrorContext["inboxNotificationId"] { return this.context.inboxNotificationId; } // prettier-ignore
 
   static fromRoomConnection(
     message: string,
