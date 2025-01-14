@@ -355,25 +355,25 @@ ctx.useOthersListener(({ user, type }) => {
   ctx.useErrorListener((err) => {
     expectType<string>(err.message);
     expectType<string | undefined>(err.stack);
-    expectType<number | undefined>(err.code);
+    expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(err.code);
   });
 
   lbctx.useErrorListener((err) => {
     expectType<string>(err.message);
     expectType<string | undefined>(err.stack);
-    expectType<number | undefined>(err.code);
+    expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(err.code);
   });
 
   ctx.suspense.useErrorListener((err) => {
     expectType<string>(err.message);
     expectType<string | undefined>(err.stack);
-    expectType<number | undefined>(err.code);
+    expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(err.code);
   });
 
   lbctx.suspense.useErrorListener((err) => {
     expectType<string>(err.message);
     expectType<string | undefined>(err.stack);
-    expectType<number | undefined>(err.code);
+    expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(err.code);
   });
 }
 

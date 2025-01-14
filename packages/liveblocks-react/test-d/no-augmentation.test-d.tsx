@@ -187,7 +187,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
   classic.useErrorListener((err) => {
     expectType<string>(err.message);
     expectType<string | undefined>(err.stack);
-    expectType<number | undefined>(err.code);
+    expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(err.code);
   });
 }
 
@@ -196,7 +196,7 @@ import { expectAssignable, expectError, expectType } from "tsd";
   suspense.useErrorListener((err) => {
     expectType<string>(err.message);
     expectType<string | undefined>(err.stack);
-    expectType<number | undefined>(err.code);
+    expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(err.code);
   });
 }
 
