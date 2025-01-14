@@ -4,7 +4,8 @@ import {
   registerNestedElementResolver,
   removeClassNamesFromElement,
 } from "@lexical/utils";
-import { shallow } from "@liveblocks/core";
+import type { LiveblocksError } from "@liveblocks/client";
+import { shallow } from "@liveblocks/client";
 import { useClient, useErrorListener, useRoom } from "@liveblocks/react";
 import {
   getUmbrellaStoreForClient,
