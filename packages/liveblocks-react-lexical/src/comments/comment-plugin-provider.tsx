@@ -4,9 +4,8 @@ import {
   registerNestedElementResolver,
   removeClassNamesFromElement,
 } from "@lexical/utils";
-import type { LiveblocksError } from "@liveblocks/client";
 import { shallow } from "@liveblocks/client";
-import { useClient, useRoom } from "@liveblocks/react";
+import { useClient, useRoom, useRoomErrorListener } from "@liveblocks/react";
 import {
   getUmbrellaStoreForClient,
   useSignal,
@@ -97,20 +96,12 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     [editor, threadToNodes]
   );
 
-  // NOTE: Deliberately not using useErrorListener here, because we don't want
-  // to trigger a potential DX warning about this being nested under
-  // a RoomProvider.
-  // XXX Use useRoomErrorListener() once we restore it
-  useEffect(
-    () =>
-      client.events.error.subscribe((err) => {
-        // If thread creation fails, we remove the thread id from the associated nodes and unwrap the nodes if they are no longer associated with any threads
-        if (err.context.type === "CREATE_THREAD_ERROR") {
-          handleThreadDelete(err.context.threadId);
-        }
-      }),
-    [client, handleThreadDelete]
-  );
+  useRoomErrorListener((err) => {
+    // If thread creation fails, we remove the thread id from the associated nodes and unwrap the nodes if they are no longer associated with any threads
+    if (err.context.type === "CREATE_THREAD_ERROR") {
+      handleThreadDelete(err.context.threadId);
+    }
+  });
 
   const store = getUmbrellaStoreForClient(client);
 
