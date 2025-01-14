@@ -20,8 +20,10 @@ useErrorListener((err: LiveblocksError) => {
 ```
 
 It may make sense to lift the `useErrorListener()` hook up to a higher level in
-your app (above the `RoomProvider`) to make this more explicit. (If you nest the
-listener underneath a `RoomProvider`, it will emit a warning to the console.)
+your app (above the `RoomProvider`) to make this more explicit.
+
+If you nest the listener underneath a `RoomProvider`, you probably want to use
+the `useRoomErrorListener()` instead.
 
 ### `@liveblocks/client`
 
