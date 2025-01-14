@@ -48,7 +48,7 @@ export const FloatingComposer = forwardRef<
         ctx.editor?.storage.liveblocksComments as
         | CommentsExtensionStorage
         | undefined
-      )?.pendingComment,
+      )?.pendingComment && !editor?.state.selection.empty,
     }),
     equalityFn: (prev, next) => {
       if (!next) return false;
