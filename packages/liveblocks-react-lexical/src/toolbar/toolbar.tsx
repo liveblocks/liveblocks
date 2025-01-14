@@ -10,7 +10,6 @@ import {
   BoldIcon,
   Button,
   CheckIcon,
-  ChevronDownIcon,
   CodeIcon,
   CommentIcon,
   H1Icon,
@@ -18,6 +17,7 @@ import {
   H3Icon,
   ItalicIcon,
   RedoIcon,
+  SelectButton,
   ShortcutTooltip,
   StrikethroughIcon,
   TextIcon,
@@ -473,12 +473,9 @@ const ToolbarBlockSelector = forwardRef<
           onKeyDown={handleKeyDown}
           disabled={resolvedItems.length === 0}
         >
-          <Button type="button" variant="toolbar">
+          <SelectButton variant="toolbar">
             {activeItem?.name ?? "Turn into…"}
-            <SelectPrimitive.Icon className="lb-dropdown-chevron">
-              <ChevronDownIcon />
-            </SelectPrimitive.Icon>
-          </Button>
+          </SelectButton>
         </SelectPrimitive.Trigger>
       </ShortcutTooltip>
       <SelectPrimitive.Portal>

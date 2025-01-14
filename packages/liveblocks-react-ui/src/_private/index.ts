@@ -1,6 +1,6 @@
 // Private APIs
 
-export { Button } from "../components/internal/Button";
+export { Button, SelectButton } from "../components/internal/Button";
 export { List } from "../components/internal/List";
 export {
   ShortcutTooltip,
