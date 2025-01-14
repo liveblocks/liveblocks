@@ -21,7 +21,7 @@ export const THREADS_PLUGIN_KEY = new PluginKey<ThreadPluginState>(
 export const LIVEBLOCKS_COMMENT_MARK_TYPE = "liveblocksCommentMark";
 
 export type CommentsExtensionStorage = {
-  pendingCommentSelection: TextSelection | null;
+  pendingComment: boolean;
 };
 
 export const enum ThreadPluginActions {
