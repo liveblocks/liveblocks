@@ -994,42 +994,36 @@ const client = useClient();
 
 ### useErrorListener [@badge=LiveblocksProvider]
 
-<Banner>
-
-**The behavior of this hook changed in 2.16.** Before, this hook required a
-RoomProvider, and would only notify about connection errors for that room. Since
-2.16, this hook no longer requires a RoomProvider, and will notify about any
-Liveblocks errors, and for any room. To keep the old behavior, use the
-[`useRoomErrorListener`][] hook instead.
-
-</Banner>
-
 Listen to potential Liveblocks errors. Examples of errors include room
-connection errors, errors creating or deleting threads, editing thread metadata,
-etc.
+connection errors, errors creating threads, and errors deleting notifications.
+Each error has a `message`, a `roomId`, and a `context` object which has
+different values for each error type.
 
-```ts file="simple-example.ts" isCollapsable
-import { toast } from "my-preferred-toast-library";
+```ts
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  toast.error(error.message);
+  // { message: "You don't have access to this room", roomId: "my-room-id", context: { ... }}
+  console.error(error);
 });
 ```
 
-```ts file="full-example.ts" isCollapsable isCollapsed
+There are many different errors, and each can be handled separately by checking
+the value of `error.context.type`. Below we’ve listed each error and the context
+it provides.
+
+```ts title="All error types" isCollapsable isCollapsed
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
   switch (error.context.type) {
     // Can happen if you use Presence, Storage, or Yjs
     case "ROOM_CONNECTION_ERROR": {
-      // const { code } = error.context;
+      const { code } = error.context;
       // -1   = Authentication error
       // 4001 = You don't have access to this room
       // 4005 = Room was full
       // 4006 = Room ID has changed
-      // Any other error code is from the future
       break;
     }
 
@@ -1087,6 +1081,17 @@ useErrorListener((error) => {
   }
 });
 ```
+
+<Banner title="Hook changes in 2.16">
+
+The behavior of this hook changed in 2.16. Previously, this hook had to be in a
+[`RoomProvider`][] context, and would only trigger for connection errors in the
+current room. Since 2.16, this hook only requires a [`LiveblocksProvider`][]
+context, and will notify about any errors, and for any room. For example,
+notifications are not part of rooms, and errors for these will show. To keep the
+old behavior, use the [`useRoomErrorListener`][] hook instead.
+
+</Banner>
 
 ## Room
 
@@ -1751,8 +1756,8 @@ const currentUser = useSelf((me) => me.presence.cursor);
 The benefit of using a selector is that it will only update your component if
 that particular selection changes. For full details, see [how selectors work][].
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return `null`.
+👉 A [Suspense version][] of this hook is also available, which will never return
+`null`.
 
 ### useOthers [@badge=RoomProvider]
 
@@ -1779,8 +1784,8 @@ const typingUsers = useOthers(
 );
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return `null`.
+👉 A [Suspense version][] of this hook is also available, which will never return
+`null`.
 
 One caveat with this API is that selecting a subset of data for each user
 quickly becomes tricky. When you want to select and get updates for only a
@@ -1819,8 +1824,7 @@ arguments.
 ### useOthersMapped [@badge=RoomProvider]
 
 Extract data using a [selector][] for every user in the room, and subscribe to
-all changes to the selected data. A [Suspense version][] of this hook is also
-available.
+all changes to the selected data. A [Suspense version][] of this hook is also available.
 
 The key difference with [`useOthers`][] is that the selector (and the optional
 comparison function) work at the _item_ level, like doing a `.map()` over the
@@ -1890,8 +1894,8 @@ useOthers((others) => others.map((other) => other.connectionId), shallow);
 ### useOther [@badge=RoomProvider]
 
 Extract data using a [selector][] for one specific user in the room, and
-subscribe to all changes to the selected data. A [Suspense version][] of this
-hook is also available.
+subscribe to all changes to the selected data. A [Suspense version][] of this hook
+is also available.
 
 ```tsx
 // ✅ Rerenders when this specific user’s isTyping changes (but not when their cursor changes)
@@ -1942,8 +1946,8 @@ function Cursor({ connectionId }) {
 3. Makes sure each cursor remains associated to the same connection.
 4. Makes sure each cursor rerenders whenever _its_ data changes only.
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return `null`.
+👉 A [Suspense version][] of this hook is also available, which will never return
+`null`.
 
 ## Broadcast
 
@@ -2603,9 +2607,9 @@ return (
 );
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw error to the nearest ErrorBoundary if
-initial load failed.
+👉 A [Suspense version][] of this hook is also available, which will never return
+a loading state and will throw error to the nearest ErrorBoundary if initial load
+failed.
 
 ### useThreadSubscription [@badge=RoomProvider]
 
@@ -2767,8 +2771,8 @@ import { useAttachmentUrl } from "@liveblocks/react/suspense";
 const { url, error, isLoading } = useAttachmentUrl("at_xxx");
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there’s an error.
+👉 A [Suspense version][] of this hook is also available, which will never return
+a loading state and will throw when there’s an error.
 
 ## Notifications
 
@@ -2875,9 +2879,9 @@ return (
 );
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw error to the nearest ErrorBoundary if
-initial load failed.
+👉 A [Suspense version][] of this hook is also available, which will never return
+a loading state and will throw error to the nearest ErrorBoundary if initial load
+failed.
 
 ### useUnreadInboxNotificationsCount [@badge=LiveblocksProvider]
 
@@ -2889,8 +2893,8 @@ import { useUnreadInboxNotificationsCount } from "@liveblocks/react/suspense";
 const { count, error, isLoading } = useUnreadInboxNotificationsCount();
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there’s an error.
+👉 A [Suspense version][] of this hook is also available, which will never return
+a loading state and will throw when there’s an error.
 
 ### useMarkInboxNotificationAsRead [@badge=LiveblocksProvider]
 
@@ -3022,8 +3026,8 @@ import { useUser } from "@liveblocks/react/suspense";
 const { user, error, isLoading } = useUser("user-id");
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there’s an error.
+👉 A [Suspense version][] of this hook is also available, which will never return
+a loading state and will throw when there’s an error.
 
 <Banner title="Providing a resolver function">
 
@@ -3042,8 +3046,8 @@ import { useRoomInfo } from "@liveblocks/react/suspense";
 const { info, error, isLoading } = useRoomInfo("room-id");
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never
-return a loading state and will throw when there’s an error.
+👉 A [Suspense version][] of this hook is also available, which will never return
+a loading state and will throw when there’s an error.
 
 <Banner title="Providing a resolver function">
 
