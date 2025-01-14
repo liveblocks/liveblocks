@@ -219,12 +219,12 @@
   &:where(
       [data-variant="default"]:not(
           :is(
-              :enabled:hover,
-              :enabled:focus-visible,
-              [aria-expanded="true"],
-              [aria-selected="true"],
-              [aria-pressed]
-            )
+            :enabled:hover,
+            :enabled:focus-visible,
+            [aria-expanded="true"],
+            [aria-selected="true"],
+            [aria-pressed]
+          )
         )
     ) {
     background: transparent;
@@ -329,7 +329,7 @@
  *************************************/
 
 .lb-dropdown {
-  min-inline-size: 200px;
+  min-inline-size: 160px;
 }
 
 .lb-dropdown-chevron {
@@ -364,9 +364,9 @@
 
 .lb-dropdown-item:where(
     :is(
-        [data-highlighted]:not([data-highlighted="false"]),
-        [data-selected]:not([data-selected="false"])
-      )
+      [data-highlighted]:not([data-highlighted="false"]),
+      [data-selected]:not([data-selected="false"])
+    )
   ) {
   :where(.lb-icon-container) {
     color: var(--lb-foreground-tertiary);
@@ -1869,10 +1869,10 @@
 }
 
 :is(
-    .lb-dropdown-item,
-    .lb-composer-suggestions-list-item,
-    .lb-emoji-picker-emoji
-  ) {
+  .lb-dropdown-item,
+  .lb-composer-suggestions-list-item,
+  .lb-emoji-picker-emoji
+) {
   &:where(
       [data-highlighted]:not([data-highlighted="false"]),
       [data-selected]:not([data-selected="false"])
@@ -1902,12 +1902,12 @@
 }
 
 :is(
-    .lb-dropdown,
-    .lb-emoji-picker,
-    .lb-tooltip:where([data-state="delayed-open"]),
-    .lb-composer-suggestions,
-    .lb-composer-floating-toolbar
-  ) {
+  .lb-dropdown,
+  .lb-emoji-picker,
+  .lb-tooltip:where([data-state="delayed-open"]),
+  .lb-composer-suggestions,
+  .lb-composer-floating-toolbar
+) {
   &:where([data-side="top"]) {
     animation-name: lb-animation-slide-up;
   }
@@ -1918,12 +1918,12 @@
 }
 
 :is(
-    .lb-dropdown,
-    .lb-emoji-picker,
-    .lb-tooltip,
-    .lb-composer-suggestions,
-    .lb-composer-floating-toolbar
-  ) {
+  .lb-dropdown,
+  .lb-emoji-picker,
+  .lb-tooltip,
+  .lb-composer-suggestions,
+  .lb-composer-floating-toolbar
+) {
   &:where([data-state="closed"]) {
     animation-name: lb-animation-disappear;
   }
