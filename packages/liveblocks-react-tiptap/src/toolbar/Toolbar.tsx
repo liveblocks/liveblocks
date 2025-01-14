@@ -5,10 +5,14 @@ import {
   ChevronDownIcon,
   CodeIcon,
   CommentIcon,
+  H1Icon,
+  H2Icon,
+  H3Icon,
   ItalicIcon,
   RedoIcon,
   ShortcutTooltip,
   StrikethroughIcon,
+  TextIcon,
   TooltipProvider,
   UnderlineIcon,
   UndoIcon,
@@ -57,7 +61,8 @@ interface ToolbarToggleProps extends ToolbarButtonProps {
 
 interface ToolbarBlockSelectorItem {
   name: string;
-  isActive: (editor: Editor) => boolean;
+  icon?: ReactNode;
+  isActive: ((editor: Editor) => boolean) | "default";
   setActive: (editor: Editor) => void;
 }
 
@@ -133,9 +138,16 @@ function createDefaultBlockSelectorItems(
   editor: Editor
 ): ToolbarBlockSelectorItem[] {
   const items: (ToolbarBlockSelectorItem | null)[] = [
+    {
+      name: "Text",
+      icon: <TextIcon />,
+      isActive: "default",
+      setActive: (editor) => editor.chain().focus().clearNodes().run(),
+    },
     "toggleHeading" in editor.commands
       ? {
           name: "Heading 1",
+          icon: <H1Icon />,
           isActive: (editor) => editor.isActive("heading", { level: 1 }),
           setActive: (editor) =>
             (
@@ -151,6 +163,7 @@ function createDefaultBlockSelectorItems(
     "toggleHeading" in editor.commands
       ? {
           name: "Heading 2",
+          icon: <H2Icon />,
           isActive: (editor) => editor.isActive("heading", { level: 2 }),
           setActive: (editor) =>
             (
@@ -166,6 +179,7 @@ function createDefaultBlockSelectorItems(
     "toggleHeading" in editor.commands
       ? {
           name: "Heading 3",
+          icon: <H3Icon />,
           isActive: (editor) => editor.isActive("heading", { level: 3 }),
           setActive: (editor) =>
             (
@@ -229,12 +243,6 @@ function createDefaultBlockSelectorItems(
   return items.filter(Boolean) as ToolbarBlockSelectorItem[];
 }
 
-const blockSelectorTextItem: ToolbarBlockSelectorItem = {
-  name: "Text",
-  isActive: () => false,
-  setActive: (editor) => editor.chain().focus().clearNodes().run(),
-};
-
 const ToolbarBlockSelector = forwardRef<
   HTMLButtonElement,
   ToolbarBlockSelectorProps
@@ -245,14 +253,25 @@ const ToolbarBlockSelector = forwardRef<
     "BlockSelector",
     "Toolbar or FloatingToolbar"
   );
-  const resolvedItems = useMemo(() => {
-    const resolvedItems = items ?? createDefaultBlockSelectorItems(editor);
+  const resolvedItems = useMemo(
+    () => items ?? createDefaultBlockSelectorItems(editor),
+    [editor, items]
+  );
+  let defaultItem: ToolbarBlockSelectorItem | undefined;
+  let activeItem = editor.isInitialized
+    ? resolvedItems.find((item) => {
+        if (item.isActive === "default") {
+          defaultItem = item;
+          return false;
+        }
 
-    return [blockSelectorTextItem, ...resolvedItems];
-  }, [editor, items]);
-  const activeItem =
-    resolvedItems.find((item) => item.isActive(editor)) ??
-    blockSelectorTextItem;
+        return item.isActive(editor);
+      })
+    : undefined;
+
+  if (!activeItem) {
+    activeItem = defaultItem;
+  }
 
   const handleItemChange = (name: string) => {
     const item = resolvedItems.find((item) => item.name === name);
@@ -284,7 +303,7 @@ const ToolbarBlockSelector = forwardRef<
 
   return (
     <SelectPrimitive.Root
-      value={activeItem.name}
+      value={activeItem?.name}
       onValueChange={handleItemChange}
     >
       <ShortcutTooltip content="Turn into…">
@@ -295,7 +314,7 @@ const ToolbarBlockSelector = forwardRef<
           onKeyDown={handleKeyDown}
         >
           <Button type="button" variant="toolbar">
-            <SelectPrimitive.Value>{activeItem.name}</SelectPrimitive.Value>
+            {activeItem?.name ?? "Turn into…"}
             <SelectPrimitive.Icon className="lb-dropdown-chevron">
               <ChevronDownIcon />
             </SelectPrimitive.Icon>
@@ -316,12 +335,17 @@ const ToolbarBlockSelector = forwardRef<
                 value={item.name}
                 className="lb-dropdown-item"
               >
+                {item.icon ? (
+                  <span className="lb-dropdown-item-icon lb-icon-container">
+                    {item.icon}
+                  </span>
+                ) : null}
                 <span className="lb-dropdown-item-label">
                   <SelectPrimitive.ItemText>
                     {item.name}
                   </SelectPrimitive.ItemText>
                 </span>
-                {item.name === activeItem.name ? (
+                {item.name === activeItem?.name ? (
                   <span className="lb-dropdown-item-accessory lb-icon-container">
                     <CheckIcon />
                   </span>
