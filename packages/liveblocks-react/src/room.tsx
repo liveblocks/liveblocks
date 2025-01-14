@@ -233,22 +233,6 @@ function makeRoomExtrasForClient(client: OpaqueClient) {
 
   function onMutationFailure(
     optimisticId: string,
-    message: // Threads
-    | `Could not ${"create new" | "delete"} thread`
-      | `Could not mark thread as ${"resolved" | "unresolved"}`
-
-      // Thread metadata
-      | `Could not ${"edit"} thread metadata`
-
-      // Comments
-      | `Could not ${"create new" | "edit" | "delete"} comment`
-      | `Could not ${"add" | "remove"} reaction`
-
-      // Inbox notifications
-      | `Could not mark ${"inbox notification" | "all inbox notifications"} as ${"read" | "unread"}`
-
-      // Notification settings
-      | `Could not update ${"notification settings"}`,
     context: LiveblocksErrorContext & { roomId: string },
     innerError: Error
   ): void {
@@ -259,7 +243,6 @@ function makeRoomExtrasForClient(client: OpaqueClient) {
     if (innerError instanceof HttpError) {
       const error = handleApiError(innerError);
       client[kInternal].emitError(
-        message,
         context,
         error // XXX Not just innerError directly?
       );
@@ -1381,8 +1364,14 @@ function useCreateRoomThread<M extends BaseMetadata>(
           (err: Error) =>
             onMutationFailure(
               optimisticId,
-              "Could not create new thread",
-              { roomId, threadId, commentId, body, metadata },
+              {
+                type: "CREATE_THREAD_ERROR",
+                roomId,
+                threadId,
+                commentId,
+                body,
+                metadata,
+              },
               err
             )
         );
@@ -1425,8 +1414,7 @@ function useDeleteRoomThread(roomId: string): (threadId: string) => void {
         (err: Error) =>
           onMutationFailure(
             optimisticId,
-            "Could not delete thread",
-            { roomId, threadId },
+            { type: "DELETE_THREAD_ERROR", roomId, threadId },
             err
           )
       );
@@ -1468,8 +1456,12 @@ function useEditRoomThreadMetadata<M extends BaseMetadata>(roomId: string) {
           (err: Error) =>
             onMutationFailure(
               optimisticId,
-              "Could not edit thread metadata",
-              { roomId, threadId, metadata },
+              {
+                type: "EDIT_THREAD_METADATA_ERROR",
+                roomId,
+                threadId,
+                metadata,
+              },
               err
             )
         );
@@ -1531,8 +1523,13 @@ function useCreateRoomComment(
           (err: Error) =>
             onMutationFailure(
               optimisticId,
-              "Could not create new comment",
-              { roomId, threadId, commentId, body },
+              {
+                type: "CREATE_COMMENT_ERROR",
+                roomId,
+                threadId,
+                commentId,
+                body,
+              },
               err
             )
         );
@@ -1608,8 +1605,7 @@ function useEditRoomComment(
           (err: Error) =>
             onMutationFailure(
               optimisticId,
-              "Could not edit comment",
-              { roomId, threadId, commentId, body },
+              { type: "EDIT_COMMENT_ERROR", roomId, threadId, commentId, body },
               err
             )
         );
@@ -1660,8 +1656,7 @@ function useDeleteRoomComment(roomId: string) {
           (err: Error) =>
             onMutationFailure(
               optimisticId,
-              "Could not delete comment",
-              { roomId, threadId, commentId },
+              { type: "DELETE_COMMENT_ERROR", roomId, threadId, commentId },
               err
             )
         );
@@ -1713,8 +1708,13 @@ function useAddRoomCommentReaction<M extends BaseMetadata>(roomId: string) {
           (err: Error) =>
             onMutationFailure(
               optimisticId,
-              "Could not add reaction",
-              { roomId, threadId, commentId, emoji },
+              {
+                type: "ADD_REACTION_ERROR",
+                roomId,
+                threadId,
+                commentId,
+                emoji,
+              },
               err
             )
         );
@@ -1772,8 +1772,13 @@ function useRemoveRoomCommentReaction(roomId: string) {
           (err: Error) =>
             onMutationFailure(
               optimisticId,
-              "Could not remove reaction",
-              { roomId, threadId, commentId, emoji },
+              {
+                type: "REMOVE_REACTION_ERROR",
+                roomId,
+                threadId,
+                commentId,
+                emoji,
+              },
               err
             )
         );
@@ -1835,8 +1840,11 @@ function useMarkRoomThreadAsRead(roomId: string) {
           (err: Error) => {
             onMutationFailure(
               optimisticId,
-              "Could not mark inbox notification as read",
-              { roomId, inboxNotificationId: inboxNotification.id },
+              {
+                type: "MARK_INBOX_NOTIFICATION_AS_READ_ERROR",
+                roomId,
+                inboxNotificationId: inboxNotification.id,
+              },
               err
             );
             return;
@@ -1889,8 +1897,7 @@ function useMarkRoomThreadAsResolved(roomId: string) {
           (err: Error) =>
             onMutationFailure(
               optimisticId,
-              "Could not mark thread as resolved",
-              { roomId, threadId },
+              { type: "MARK_THREAD_AS_RESOLVED_ERROR", roomId, threadId },
               err
             )
         );
@@ -1941,8 +1948,7 @@ function useMarkRoomThreadAsUnresolved(roomId: string) {
           (err: Error) =>
             onMutationFailure(
               optimisticId,
-              "Could not mark thread as unresolved",
-              { roomId, threadId },
+              { type: "MARK_THREAD_AS_UNRESOLVED_ERROR", roomId, threadId },
               err
             )
         );
@@ -2193,8 +2199,7 @@ function useUpdateRoomNotificationSettings() {
         (err: Error) =>
           onMutationFailure(
             optimisticId,
-            "Could not update notification settings",
-            { roomId: room.id },
+            { type: "UPDATE_NOTIFICATION_SETTINGS_ERROR", roomId: room.id },
             err
           )
       );

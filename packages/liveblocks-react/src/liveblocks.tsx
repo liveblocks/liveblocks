@@ -470,8 +470,10 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
           store.optimisticUpdates.remove(optimisticId);
           // XXX Add unit test for this error
           client[kInternal].emitError(
-            "Could not mark inbox notification as read",
-            { inboxNotificationId },
+            {
+              type: "MARK_INBOX_NOTIFICATION_AS_READ_ERROR",
+              inboxNotificationId,
+            },
             err
           );
         }
@@ -498,9 +500,8 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
       (err: Error) => {
         store.optimisticUpdates.remove(optimisticId);
         client[kInternal].emitError(
-          "Could not mark all inbox notifications as read",
           // No roomId, threadId, commentId to include for this error
-          {},
+          { type: "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR" },
           err
         );
       }
@@ -529,8 +530,7 @@ function useDeleteInboxNotification_withClient(client: OpaqueClient) {
           store.optimisticUpdates.remove(optimisticId);
           // XXX Add unit test for this error
           client[kInternal].emitError(
-            "Could not delete inbox notification",
-            { inboxNotificationId },
+            { type: "DELETE_INBOX_NOTIFICATION_ERROR", inboxNotificationId },
             err
           );
         }
@@ -558,9 +558,7 @@ function useDeleteAllInboxNotifications_withClient(client: OpaqueClient) {
         store.optimisticUpdates.remove(optimisticId);
         // XXX Add unit test for this error
         client[kInternal].emitError(
-          "Could not delete all inbox notifications",
-          // No roomId, threadId, commentId to include for this error
-          {},
+          { type: "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR" },
           err
         );
       }

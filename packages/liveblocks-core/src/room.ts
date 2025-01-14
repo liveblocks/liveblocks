@@ -1469,8 +1469,10 @@ export function createRoom<
   managedSocket.events.statusDidChange.subscribe(handleConnectionLossEvent);
   managedSocket.events.didConnect.subscribe(onDidConnect);
   managedSocket.events.didDisconnect.subscribe(onDidDisconnect);
-  managedSocket.events.onConnError.subscribe(({ message, code }) => {
-    const err = LiveblocksError.fromRoomConnection(message, code, roomId);
+  managedSocket.events.onConnectionError.subscribe(({ message, code }) => {
+    const type = "ROOM_CONNECTION_ERROR";
+    // XXX Maybe use LiveblocksError.from() because it will have a more human-friendly error message?
+    const err = new LiveblocksError(message, { type, code, roomId });
     const didNotify = config.errorEventSource.notify(err);
     if (!didNotify) {
       if (process.env.NODE_ENV !== "production") {

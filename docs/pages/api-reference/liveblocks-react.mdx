@@ -1351,37 +1351,32 @@ etc.
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  const { code } = error;
-  if (code) {
-    // It's a room connection error (for Presence, Storage, or Yjs)
-    switch (code) {
-      case -1:
-        // Authentication error
-        break;
+  // Simply show a toast
+  // toast.toast(error.message);
 
-      case 4001:
-        // Could not connect because you don't have access to this room
-        break;
-
-      case 4005:
-        // Could not connect because room was full
-        break;
-
-      case 4006:
-        // The room ID has changed, get the new room ID (use this for redirecting)
-        const newRoomId = error.message;
-        break;
-
-      default:
-        // Unexpected error
-        break;
+  switch (error.context.type) {
+    // Can happen if you use Presence, Storage, or Yjs
+    case "ROOM_CONNECTION_ERROR": {
+      // const { code } = error.context;
+      // -1   = Authentication error
+      // 4001 = You don't have access to this room
+      // 4005 = Room was full
+      // 4006 = Room ID has changed
+      // Any other error code is from the future
+      break;
     }
-  } else {
-    // It's a Comments or Notifications related error
 
-    // The following fields will be available as context to the error when applicable
-    const { roomId, threadId, commentId, inboxNotificationId } = error;
-    console.error(error);
+    case "TODO _ SPLIT THIS _ OUT _ FURTHER ": {
+      // These can happen if you use Comments or Notifications
+      // The following fields will be available as context to the error when applicable
+      const { roomId, threadId, commentId, inboxNotificationId } = error;
+      toast.error(error);
+      break;
+    }
+
+    default:
+      // Ignore any error from the future
+      break;
   }
 });
 ```

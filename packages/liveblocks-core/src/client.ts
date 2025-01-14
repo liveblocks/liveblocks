@@ -158,11 +158,7 @@ export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
   as<M2 extends BaseMetadata>(): Client<U, M2>;
   // Tracking pending changes globally
   createSyncSource(): SyncSource;
-  emitError(
-    message: string,
-    context: LiveblocksErrorContext,
-    cause?: Error
-  ): void;
+  emitError(context: LiveblocksErrorContext, cause?: Error): void;
 };
 
 export type NotificationsApi<M extends BaseMetadata> = {
@@ -848,12 +844,8 @@ export function createClient<U extends BaseUserMeta = DU>(
         // Type-level helper only, it's effectively only an identity-function at runtime
         as: <M2 extends BaseMetadata>() => client as Client<U, M2>,
         createSyncSource,
-        emitError: (
-          message: string,
-          context: LiveblocksErrorContext,
-          cause?: Error
-        ) => {
-          const error = LiveblocksError.from(message, context, cause);
+        emitError: (context: LiveblocksErrorContext, cause?: Error) => {
+          const error = LiveblocksError.from(context, cause);
           const didNotify = liveblocksErrorSource.notify(error);
           if (!didNotify) {
             console.error(error.message);

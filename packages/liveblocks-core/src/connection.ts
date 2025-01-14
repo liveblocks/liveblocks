@@ -380,11 +380,11 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
 
   // Emitted whenever the server deliberately closes the connection for
   // a specific Liveblocks reason
-  const onConnError = makeEventSource<ConnectionError>();
+  const onConnectionError = makeEventSource<ConnectionError>();
 
   function fireErrorEvent(message: string, code: number) {
     return () => {
-      onConnError.notify({ message, code });
+      onConnectionError.notify({ message, code });
     };
   }
 
@@ -948,7 +948,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
       didConnect,
       didDisconnect,
       onMessage: onMessage.observable,
-      onConnError: onConnError.observable,
+      onConnectionError: onConnectionError.observable,
     },
   };
 }
@@ -992,7 +992,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
      * Emitted whenever a connection gets closed for a known error reason, e.g.
      * max number of connections, max number of messages, etc.
      */
-    readonly onConnError: Observable<ConnectionError>;
+    readonly onConnectionError: Observable<ConnectionError>;
   };
 
   constructor(
