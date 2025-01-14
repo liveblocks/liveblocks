@@ -6,7 +6,7 @@ import {
 } from "@lexical/utils";
 import type { LiveblocksError } from "@liveblocks/client";
 import { shallow } from "@liveblocks/client";
-import { useClient, useErrorListener, useRoom } from "@liveblocks/react";
+import { useClient, useRoom } from "@liveblocks/react";
 import {
   getUmbrellaStoreForClient,
   useSignal,
@@ -97,13 +97,20 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     [editor, threadToNodes]
   );
 
-  useErrorListener((error) => {
-    // If thread creation fails, we remove the thread id from the associated nodes and unwrap the nodes if they are no longer associated with any threads
-    // TODO: String testing works for now, but we should consider using error codes instead later
-    if (/Could not create new thread/.test(error.message)) {
-      handleThreadDelete(error.threadId!);
-    }
-  });
+  // NOTE: Deliberately not using useErrorListener here, because we don't want
+  // to trigger a potential DX warning about this being nested under
+  // a RoomProvider.
+  useEffect(
+    () =>
+      client.events.error.subscribe((err) => {
+        // If thread creation fails, we remove the thread id from the associated nodes and unwrap the nodes if they are no longer associated with any threads
+        // TODO: String testing works for now, but we should consider using error codes instead later
+        if (err.threadId && /Could not create new thread/.test(err.message)) {
+          handleThreadDelete(err.threadId);
+        }
+      }),
+    [client, handleThreadDelete]
+  );
 
   const store = getUmbrellaStoreForClient(client);
 
