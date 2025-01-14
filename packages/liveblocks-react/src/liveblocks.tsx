@@ -17,6 +17,7 @@ import type {
 import {
   assert,
   createClient,
+  deprecateIf,
   kInternal,
   makePoller,
   raise,
@@ -34,7 +35,7 @@ import {
 } from "react";
 
 import { config } from "./config";
-import { useIsInsideRoom } from "./contexts";
+import { useIsInsideRoom, useRoomOrNull } from "./contexts";
 import { ASYNC_OK } from "./lib/AsyncResult";
 import { count } from "./lib/itertools";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
@@ -1274,6 +1275,14 @@ function useSyncStatus(options?: UseSyncStatusOptions): SyncStatus {
 function useErrorListener(callback: (err: LiveblocksError) => void): void {
   const client = useClient();
   const savedCallback = useLatest(callback);
+
+  const room = useRoomOrNull();
+  deprecateIf(
+    room !== null,
+    "You're using useErrorListener under a RoomProvider. Its recommended to use it outside of a RoomProvider context, because it will no longer receive just the errors for this room but for any room.",
+    "useErrorListener-under-RoomProvider"
+  );
+
   useEffect(
     () => client.events.error.subscribe((e) => savedCallback.current(e)),
     [client, savedCallback]
