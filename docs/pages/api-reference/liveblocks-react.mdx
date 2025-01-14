@@ -1347,14 +1347,19 @@ Listen to potential Liveblocks errors. Examples of errors include room
 connection errors, errors creating or deleting threads, editing thread metadata,
 etc.
 
-```ts
+```ts file="simple-example.ts" isCollapsable
 import { useErrorListener } from "@liveblocks/react/suspense";
 
 useErrorListener((error) => {
-  // Simply show a toast
+  // Simply show a toast or log the error message
   // toast.toast(error.message);
+});
+```
 
-  // Or...
+```ts file="full-example.ts" isCollapsable isCollapsed
+import { useErrorListener } from "@liveblocks/react/suspense";
+
+useErrorListener((error) => {
   switch (error.context.type) {
     // Can happen if you use Presence, Storage, or Yjs
     case "ROOM_CONNECTION_ERROR": {
