@@ -9,9 +9,10 @@ import {
   InboxNotificationList,
   Thread,
 } from "@liveblocks/react-ui";
-import * as React from "react";
+import type { PropsWithChildren } from "react";
+import { useState } from "react";
 
-import { getRoomFromUrl, getUserFromUrl, Row } from "../../utils";
+import { getRoomFromUrl, getUserFromUrl, RenderCount, Row } from "../../utils";
 import Button from "../../utils/Button";
 import { createLiveblocksClient } from "../../utils/createClient";
 import { FAKE_USERS } from "../api/_utils";
@@ -53,7 +54,7 @@ const { LiveblocksProvider, useInboxNotifications } =
 const { RoomProvider, useSelf, useThreads, useDeleteComment } =
   createRoomContext(client);
 
-function WithRoomProvider(props: React.PropsWithChildren) {
+function WithRoomProvider(props: PropsWithChildren) {
   const roomId = getRoomFromUrl();
   return (
     <RoomProvider id={roomId} initialPresence={{} as never}>
@@ -62,7 +63,7 @@ function WithRoomProvider(props: React.PropsWithChildren) {
   );
 }
 
-function WithLiveblocksProvider(props: React.PropsWithChildren) {
+function WithLiveblocksProvider(props: PropsWithChildren) {
   return <LiveblocksProvider>{props.children}</LiveblocksProvider>;
 }
 
@@ -102,7 +103,7 @@ function useInboxNotificationsForThisPage() {
   // there could be a lot of existing inbox notifications, from different test
   // runs, or from the same user but from different rooms.
   const roomId = getRoomFromUrl();
-  const [pageLoadTimestamp] = React.useState(() => Date.now());
+  const [pageLoadTimestamp] = useState(() => Date.now());
 
   if (isLoading) return null;
   if (error) return error;
@@ -185,7 +186,9 @@ function LeftSide() {
   const { threads } = useThreads();
   return (
     <div id="left">
-      <h3>Threads</h3>
+      <h3>
+        Threads (<RenderCount />)
+      </h3>
       <div
         style={{
           background: "#d8efef",
@@ -212,7 +215,9 @@ function RightSide() {
   const inboxNotifications = useInboxNotificationsForThisPage();
   return (
     <div id="right">
-      <h3>Thread Inbox Notifications (for this room only)</h3>
+      <h3>
+        Thread Inbox Notifications (for this room only, <RenderCount />)
+      </h3>
       <div
         style={{
           background: "#efd8ef",

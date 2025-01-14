@@ -11,6 +11,7 @@ import {
   useCreateRoomComment,
   useCreateRoomThread,
   useEditRoomComment,
+  useLayoutEffect,
   useResolveMentionSuggestions,
   useRoomOrNull,
   useRoomPermissions,
@@ -27,14 +28,14 @@ import type {
   RefAttributes,
   SyntheticEvent,
 } from "react";
-import React, {
+import {
   createContext,
   forwardRef,
   useCallback,
   useMemo,
   useRef,
+  useSyncExternalStore,
 } from "react";
-import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
 import { useLiveblocksUIConfig } from "../config";
 import { FLOATING_ELEMENT_SIDE_OFFSET } from "../constants";
@@ -69,7 +70,6 @@ import { MENTION_CHARACTER } from "../slate/plugins/mentions";
 import type { ComposerBodyMark } from "../types";
 import { classNames } from "../utils/class-names";
 import { useControllableState } from "../utils/use-controllable-state";
-import { useLayoutEffect } from "../utils/use-layout-effect";
 import { FileAttachment } from "./internal/Attachment";
 import { Attribution } from "./internal/Attribution";
 import { Avatar } from "./internal/Avatar";

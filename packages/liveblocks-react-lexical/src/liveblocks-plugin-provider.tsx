@@ -5,20 +5,20 @@ import type { Provider } from "@lexical/yjs";
 import { nn, TextEditorType } from "@liveblocks/core";
 import { useRoom, useSelf } from "@liveblocks/react";
 import {
+  useLayoutEffect,
   useReportTextEditor,
   useResolveMentionSuggestions,
   useYjsProvider,
 } from "@liveblocks/react/_private";
 import { LiveblocksYjsProvider } from "@liveblocks/yjs";
-import type { MutableRefObject } from "react";
-import React, {
+import type { MutableRefObject, ReactNode } from "react";
+import {
   useCallback,
   useEffect,
-  useLayoutEffect,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
-import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 import { Doc } from "yjs";
 
 import { CommentPluginProvider } from "./comments/comment-plugin-provider";
@@ -106,7 +106,7 @@ export function useIsEditorReady(): boolean {
 }
 
 export type LiveblocksPluginProps = {
-  children?: React.ReactNode;
+  children?: ReactNode;
 };
 
 /**

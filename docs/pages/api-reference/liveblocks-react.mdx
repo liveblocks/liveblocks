@@ -360,8 +360,8 @@ function App() {
     detailedType='async? (args: ResolveUsersArgs) => (UserMeta["info"] | undefined)[] | undefined'
   >
     A function that resolves user information in
-    [Comments](/docs/products/comments). Return an array of `UserMeta["info"]`
-    objects in the same order they arrived. [Learn
+    [Comments](/docs/ready-made-features/comments). Return an array of
+    `UserMeta["info"]` objects in the same order they arrived. [Learn
     more](#LiveblocksProviderResolveUsers).
   </PropertiesListItem>
   <PropertiesListItem
@@ -369,8 +369,8 @@ function App() {
     detailedType="async? (args: ResolveRoomsInfoArgs) => (RoomInfo | undefined)[] | undefined"
   >
     A function that resolves room information in
-    [Comments](/docs/products/comments). Return an array of `RoomInfo` objects
-    in the same order they arrived. [Learn
+    [Comments](/docs/ready-made-features/comments). Return an array of
+    `RoomInfo` objects in the same order they arrived. [Learn
     more](#LiveblocksProviderResolveRoomsInfo).
   </PropertiesListItem>
   <PropertiesListItem
@@ -378,8 +378,8 @@ function App() {
     detailedType="async? (args: ResolveMentionSuggestionsArgs) => string[]"
   >
     A function that resolves mention suggestions in
-    [Comments](/docs/products/comments). Return an array of user IDs. [Learn
-    more](#LiveblocksProviderResolveMentionSuggestions).
+    [Comments](/docs/ready-made-features/comments). Return an array of user IDs.
+    [Learn more](#LiveblocksProviderResolveMentionSuggestions).
   </PropertiesListItem>
   <PropertiesListItem name="polyfills">
     Place polyfills for `atob`, `fetch`, and `WebSocket` inside here. Useful
@@ -471,7 +471,7 @@ function App() {
 ```
 
 `room` is the room ID that the user is connecting to. When using
-[Notifications](/docs/products/comments/notifications), `room` can be
+[Notifications](/docs/ready-made-features/comments/notifications), `room` can be
 `undefined`, as the client is requesting a token that grants access to multiple
 rooms, rather than a specific room.
 
@@ -584,7 +584,8 @@ More specifically, this option triggers when:
 
 - There are unsaved changes after calling any hooks or methods, in all of our
   products.
-- There are unsaved changes in a [Text Editor](/docs/products/text-editor).
+- There are unsaved changes in a
+  [Text Editor](/docs/ready-made-features/text-editor).
 - There’s an unsubmitted comment in the
   [Composer](/docs/api-reference/liveblocks-react-ui#Composer).
 - The user has made changes and is currently offline.
@@ -662,11 +663,11 @@ value of at least a few minutes, to avoid unnecessary disconnections.
 
 #### resolveUsers [#LiveblocksProviderResolveUsers]
 
-[Comments](/docs/products/comments) stores user IDs in its system, but no other
-user information. To display user information in Comments components, such as a
-user’s name or avatar, you need to resolve these IDs into user objects. This
-function receives a list of user IDs and you should return a list of user
-objects of the same size, in the same order.
+[Comments](/docs/ready-made-features/comments) stores user IDs in its system,
+but no other user information. To display user information in Comments
+components, such as a user’s name or avatar, you need to resolve these IDs into
+user objects. This function receives a list of user IDs and you should return a
+list of user objects of the same size, in the same order.
 
 ```tsx
 import { LiveblocksProvider } from "@liveblocks/react/suspense";
@@ -779,9 +780,9 @@ function Component() {
 
 #### resolveRoomsInfo [#LiveblocksProviderResolveRoomsInfo]
 
-When using [Notifications](/docs/products/comments/notifications) with
-[Comments](/docs/products/comments), room IDs will be used to contextualize
-notifications (e.g. “Chris mentioned you in _room-id_”) in the
+When using [Notifications](/docs/ready-made-features/comments/notifications)
+with [Comments](/docs/ready-made-features/comments), room IDs will be used to
+contextualize notifications (e.g. “Chris mentioned you in _room-id_”) in the
 [`InboxNotification`](/docs/api-reference/liveblocks-react-ui#InboxNotification)
 component. To replace room IDs with more fitting names (e.g. document names,
 “Chris mentioned you in _Document A_”), you can provide a resolver function to
@@ -827,8 +828,8 @@ you might need to call your backend for example. In that case, providing it via
 
 #### resolveMentionSuggestions [#LiveblocksProviderResolveMentionSuggestions]
 
-To enable creating mentions in [Comments](/docs/products/comments), you can
-provide a resolver function to the `resolveMentionSuggestions` option in
+To enable creating mentions in [Comments](/docs/ready-made-features/comments),
+you can provide a resolver function to the `resolveMentionSuggestions` option in
 [`LiveblocksProvider`](#LiveblocksProvider). These mentions will be displayed in
 the [`Composer`](/docs/api-reference/liveblocks-react-ui#Composer) component.
 
@@ -933,7 +934,6 @@ function App() {
     </LiveblocksProvider>
   );
 }
-
 ```
 
 ### createLiveblocksContext
@@ -999,8 +999,8 @@ const client = useClient();
 Makes a [`Room`][] available in the component hierarchy below. Joins the room
 when the component is mounted, and automatically leaves the room when the
 component is unmounted. When using
-[Realtime APIs](/docs/products/realtime-apis), initial Presence values for each
-user, and Storage values for the room can be set.
+[Sync Datastore](/docs/ready-made-features/sync-datastore), initial Presence
+values for each user, and Storage values for the room can be set.
 
 ```tsx
 import { RoomProvider } from "@liveblocks/react/suspense";
@@ -1486,7 +1486,8 @@ More specifically, this option triggers when:
 
 - There are unsaved changes after calling any hooks or methods, in all of our
   products.
-- There are unsaved changes in a [Text Editor](/docs/products/text-editor).
+- There are unsaved changes in a
+  [Text Editor](/docs/ready-made-features/text-editor).
 - There’s an unsubmitted comment in the
   [Composer](/docs/api-reference/liveblocks-react-ui#Composer).
 - The user has made changes and is currently offline.
@@ -1667,8 +1668,8 @@ const currentUser = useSelf((me) => me.presence.cursor);
 The benefit of using a selector is that it will only update your component if
 that particular selection changes. For full details, see [how selectors work][].
 
-👉 A [Suspense version][] of this hook is also available, which will never return
-`null`.
+👉 A [Suspense version][] of this hook is also available, which will never
+return `null`.
 
 ### useOthers [@badge=RoomProvider]
 
@@ -1695,8 +1696,8 @@ const typingUsers = useOthers(
 );
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never return
-`null`.
+👉 A [Suspense version][] of this hook is also available, which will never
+return `null`.
 
 One caveat with this API is that selecting a subset of data for each user
 quickly becomes tricky. When you want to select and get updates for only a
@@ -1735,7 +1736,8 @@ arguments.
 ### useOthersMapped [@badge=RoomProvider]
 
 Extract data using a [selector][] for every user in the room, and subscribe to
-all changes to the selected data. A [Suspense version][] of this hook is also available.
+all changes to the selected data. A [Suspense version][] of this hook is also
+available.
 
 The key difference with [`useOthers`][] is that the selector (and the optional
 comparison function) work at the _item_ level, like doing a `.map()` over the
@@ -1805,8 +1807,8 @@ useOthers((others) => others.map((other) => other.connectionId), shallow);
 ### useOther [@badge=RoomProvider]
 
 Extract data using a [selector][] for one specific user in the room, and
-subscribe to all changes to the selected data. A [Suspense version][] of this hook
-is also available.
+subscribe to all changes to the selected data. A [Suspense version][] of this
+hook is also available.
 
 ```tsx
 // ✅ Rerenders when this specific user’s isTyping changes (but not when their cursor changes)
@@ -1857,8 +1859,8 @@ function Cursor({ connectionId }) {
 3. Makes sure each cursor remains associated to the same connection.
 4. Makes sure each cursor rerenders whenever _its_ data changes only.
 
-👉 A [Suspense version][] of this hook is also available, which will never return
-`null`.
+👉 A [Suspense version][] of this hook is also available, which will never
+return `null`.
 
 ## Broadcast
 
@@ -1930,8 +1932,8 @@ whiteboard, or cells in a spreadsheet.
 
 Storage provides three different conflict-free data structures, which you can
 use to build your application. All structures are permanent and persist when all
-users have left the room, unlike [Presence](/docs/products/presence) which is
-temporary.
+users have left the room, unlike [Presence](/docs/ready-made-features/presence)
+which is temporary.
 
 - [`LiveObject`][] - Similar to JavaScript object. Use this for storing records
   with fixed key names and where the values don’t necessarily have the same
@@ -2518,9 +2520,9 @@ return (
 );
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never return
-a loading state and will throw error to the nearest ErrorBoundary if initial load
-failed.
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw error to the nearest ErrorBoundary if
+initial load failed.
 
 ### useThreadSubscription [@badge=RoomProvider]
 
@@ -2682,8 +2684,8 @@ import { useAttachmentUrl } from "@liveblocks/react/suspense";
 const { url, error, isLoading } = useAttachmentUrl("at_xxx");
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never return
-a loading state and will throw when there’s an error.
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw when there’s an error.
 
 ## Notifications
 
@@ -2698,10 +2700,11 @@ const { inboxNotifications, error, isLoading } = useInboxNotifications();
 ```
 
 Inbox notifications are
-[project-based](/docs/products/notifications/concepts#Project-based), meaning
-notifications from outside the current room are received. By default, the
-`useInboxNotifications` hook returns up to 50 notifications. To fetch more, the
-hook (along with [`useThreads`][]) provides additional fields for pagination.
+[project-based](/docs/ready-made-features/notifications/concepts#Project-based),
+meaning notifications from outside the current room are received. By default,
+the `useInboxNotifications` hook returns up to 50 notifications. To fetch more,
+the hook (along with [`useThreads`][]) provides additional fields for
+pagination.
 
 ```tsx
 import { useInboxNotifications } from "@liveblocks/react";
@@ -2789,9 +2792,9 @@ return (
 );
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never return
-a loading state and will throw error to the nearest ErrorBoundary if initial load
-failed.
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw error to the nearest ErrorBoundary if
+initial load failed.
 
 ### useUnreadInboxNotificationsCount [@badge=LiveblocksProvider]
 
@@ -2803,8 +2806,8 @@ import { useUnreadInboxNotificationsCount } from "@liveblocks/react/suspense";
 const { count, error, isLoading } = useUnreadInboxNotificationsCount();
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never return
-a loading state and will throw when there’s an error.
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw when there’s an error.
 
 ### useMarkInboxNotificationAsRead [@badge=LiveblocksProvider]
 
@@ -2936,8 +2939,8 @@ import { useUser } from "@liveblocks/react/suspense";
 const { user, error, isLoading } = useUser("user-id");
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never return
-a loading state and will throw when there’s an error.
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw when there’s an error.
 
 <Banner title="Providing a resolver function">
 
@@ -2956,8 +2959,8 @@ import { useRoomInfo } from "@liveblocks/react/suspense";
 const { info, error, isLoading } = useRoomInfo("room-id");
 ```
 
-👉 A [Suspense version][] of this hook is also available, which will never return
-a loading state and will throw when there’s an error.
+👉 A [Suspense version][] of this hook is also available, which will never
+return a loading state and will throw when there’s an error.
 
 <Banner title="Providing a resolver function">
 
@@ -3370,11 +3373,11 @@ And the following timeline:
   rerender, seeing the updated value.
 
 [`createclient`]: /docs/api-reference/liveblocks-client#createClient
-[`createRoomContext`]: /docs/api-reference/liveblocks-react#createRoomContext
+[`createroomcontext`]: /docs/api-reference/liveblocks-react#createRoomContext
 [`livelist`]: /docs/api-reference/liveblocks-client#LiveList
 [`livemap`]: /docs/api-reference/liveblocks-client#LiveMap
 [`liveobject`]: /docs/api-reference/liveblocks-client#LiveObject
-[`lostConnectionTimeout`]:
+[`lostconnectiontimeout`]:
   /docs/api-reference/liveblocks-client#createClientLostConnectionTimeout
 [`room.history`]: /docs/api-reference/liveblocks-client#Room.history
 [`roomprovider`]: /docs/api-reference/liveblocks-react#RoomProvider

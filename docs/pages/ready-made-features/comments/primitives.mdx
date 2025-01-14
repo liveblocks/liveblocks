@@ -1,0 +1,313 @@
+---
+meta:
+  title: "Primitives"
+  parentTitle: "Comments"
+  description: "Construct fully custom components"
+---
+
+The primitive components included in Comments are a great way to build complex,
+completely custom components. These are headless and unstyled, and can be used
+to construct a fully styled comment body and rich-text comment composer.
+
+- Liveblocks functionality, but your own fully custom styles.
+- Build custom components for mentions, suggestions, links, and more.
+- Composable components that work similarly to
+  [Radix UI](https://www.radix-ui.com/) and
+  [Headless UI](https://headlessui.com/).
+- Can be used alongside the
+  [default components](/docs/ready-made-features/comments/default-components).
+
+## Concepts
+
+Each primitive is made up of one or more components, for example
+[`Comment`](/docs/api-reference/liveblocks-react-ui#primitives-Comment) only
+needs `Comment.Body`. This component takes a comment’s body, and turns it into
+readable text, with links and mentions.
+
+```tsx highlight="6"
+import { CommentData } from "@liveblocks/client";
+import { Comment } from "@liveblocks/react-ui/primitives";
+
+// Render a custom comment body
+function MyComment({ comment }: { comment: CommentData }) {
+  return <Comment.Body body={comment.body} />;
+}
+```
+
+### Use regular props
+
+Each primitive accepts regular HTML props, and passes them down to it’s root
+component. For example a `style` prop on `Comment.Body` will be passed down to
+its root `div` component. This means you can use regular `div` properties with
+your component.
+
+```tsx highlight="9-11"
+import { CommentData } from "@liveblocks/client";
+import { Comment } from "@liveblocks/react-ui/primitives";
+
+// Render a custom comment body
+function MyComment({ comment }: { comment: CommentData }) {
+  return (
+    <Comment.Body
+      body={comment.body}
+      className="text-gray-500"
+      style={{ width: "300px" }}
+      onPointerEnter={() => {}}
+    />
+  );
+}
+```
+
+By default, each component uses an appropriate root element, for example
+`Composer.Submit` is a `button`, and `Composer.Form` is a `form`. You can use a
+custom component with
+[`asChild`](/docs/ready-made-features/comments/primitives#Merge-with-your-design-system-components).
+
+### Use custom component parts
+
+Many primitives allow you to customize their parts by passing a `components`
+property. In this example, we’re modifying links in the comment, so that they’re
+purple and bold.
+
+```tsx
+import { CommentData } from "@liveblocks/client";
+import { Comment, CommentBodyLinkProps } from "@liveblocks/react-ui/primitives";
+
+// Render a custom comment body
+function MyComment({ comment }: { comment: CommentData }) {
+  return (
+    <div>
+      <Comment.Body
+        body={comment.body}
+        // +++
+        components={{
+          Link,
+        }}
+        // +++
+      />
+    </div>
+  );
+}
+
+// +++
+// Render a purple link in the comment, e.g. "https://liveblocks.io"
+function Link({ href, children }: CommentBodyLinkProps) {
+  return (
+    <Comment.Link href={href} style={{ color: "purple", fontWeight: 700 }}>
+      {children}
+    </Comment.Link>
+  );
+}
+// +++
+```
+
+### Merge with your design system components
+
+You can also add components directly from your design system. Let’s say you have
+a `DesignSystemLink` that looks like this.
+
+```tsx
+function DesignSystemLink({ url, children }) {
+  return (
+    <a href={url} target="_blank">
+      {children}
+    </a>
+  );
+}
+```
+
+If you were to place this inside `<Comment.Link>`, you’d render two `<a>`
+elements, which is not valid HTML. This occurs because both `<Comment.Link>` and
+`<DesignSystemLink>` render `<a>` elements.
+
+```tsx
+<Comment.Link href={href} style={{ color: "purple " }}>
+  <DesignSystemLink url={href}>{children}</DesignSystemLink>
+</Comment.Link>
+
+// ===================================================================
+
+// ❌ Renders two separate <a> tags
+ <a href="https://liveblocks.io" style="color: purple">
+   <a href="https://liveblocks.io" target="_blank">https://liveblocks.io</a>
+ </a>
+```
+
+However, if you add the `asChild` property to `Comment.Link` it won’t render any
+component, and will instead merge into the child element. This means you can use
+a link element from your design system, and only render a single `<a>` element.
+
+```tsx highlight="1"
+<Comment.Link href={href} style={{ color: "purple " }} asChild>
+  <DesignSystemLink url={href}>{children}</DesignSystemLink>
+</Comment.Link>
+
+// ===================================================================
+
+// ✅ Renders one combined <a> tag
+<a href="https://liveblocks.io" style="color: purple" target="_blank">
+  https://liveblocks.io
+</a>
+```
+
+This is called composability, and virtually all Comments primitives are
+composable with `asChild`; they forward their props and refs, merge their
+classes and styles, and chain their event handlers with the child element.
+
+```tsx
+import { Button } from "@/my-design-system";
+
+// Use the default <button> element
+<Composer.Submit disabled>Send</Composer.Submit>;
+
+// Use an existing custom <Button> component
+<Composer.Submit disabled asChild>
+  <Button variant="primary">Send</Button>
+</Composer.Submit>;
+```
+
+## Composer
+
+The [`Composer`](/docs/api-reference/liveblocks-react-ui#primitives-Composer)
+primitive allows you to build a custom rich-text composer, which can be used for
+creating, or editing, threads and comments. Here’s an example of a composer that
+creates a new thread when it’s submitted.
+
+```tsx
+import { Composer } from "@liveblocks/react-ui/primitives";
+import { useCreateThread } from "../liveblocks.config.ts";
+
+// Render a custom composer that creates a thread on submit
+function MyComposer() {
+  const createThread = useCreateThread();
+
+  return (
+    <Composer.Form
+      onComposerSubmit={({ body }, event) => {
+        event.preventdefault();
+        const thread = createThread({
+          body,
+          metadata: {},
+        });
+      }}
+    >
+      <Composer.Editor components={/* Your custom component parts */} />
+      <Composer.Submit>Create thread</Composer.Submit>
+    </Composer.Form>
+  );
+}
+```
+
+Custom component parts can be used to render custom
+[mentions](/docs/api-reference/liveblocks-react-ui#primitives-Composer.Editor-Mention),
+[links](/docs/api-reference/liveblocks-react-ui#primitives-Composer.Link), and a
+[suggestions selection popover](/docs/api-reference/liveblocks-react-ui#primitives-Composer.Suggestions).
+
+### useComposer
+
+The [`useComposer`](/docs/api-reference/liveblocks-react-ui#useComposer) hook
+can be placed within `<Composer.Form>` to check if the composer input is empty,
+or to submit the form, helpful for creating your own button, or styling the UI.
+
+```tsx highlight="14,17-19"
+import { Composer, useComposer } from "@liveblocks/react-ui/primitives";
+
+function MyComposer() {
+  return (
+    <Composer.Form onComposerSubmit={/* handle submit */}>
+      <Composer.Editor components={/* Your custom component parts */} />
+      <MyComposerButton />
+    </Composer.Form>
+  );
+}
+
+// Button that submits the form, and is disabled when the input is empty
+function MyComposerButton() {
+  const { isEmpty, submit } = useComposer();
+
+  return (
+    <button onClick={submit} disabled={isEmpty}>
+      Create thread
+    </button>
+  );
+}
+```
+
+## Comment
+
+The [`Comment`](/docs/api-reference/liveblocks-react-ui#primitives-Comment)
+primitive is used to render a `comment.body` object as text, mentions, and
+links.
+
+```tsx
+import { Comment } from "@liveblocks/react-ui/primitives";
+import { CommentData } from "@liveblocks/client";
+
+// Render custom comments in a thread.
+function MyComments({ comments }: { comments: CommentData[] }) {
+  return (
+    <>
+      {comments.map((comment) => (
+        <div key={comment.id}>
+          <Comment.Body
+            body={comment.body}
+            components={/* Your custom component parts */}
+          />
+        </div>
+      ))}
+    </>
+  );
+}
+```
+
+The component above would typically be combined with
+[`useThreads`](/docs/api-reference/liveblocks-react#useThreads).
+
+```tsx
+import { useThreads } from "../liveblocks.config";
+
+function MyThreads() {
+  const { threads } = useThreads();
+
+  return (
+    <>
+      {threads.map((thread) => (
+        <MyComments key={thread.id} comments={thread.comments} />
+      ))}
+    </>
+  );
+}
+```
+
+Custom component parts can be used to render
+[mentions](/docs/api-reference/liveblocks-react-ui#primitives-Comment.Mention)
+and
+[links](http://localhost:3001/docs/api-reference/liveblocks-react-ui#primitives-Comment.Link).
+
+## Timestamp
+
+The [`Timestamp`](/docs/api-reference/liveblocks-react-ui#primitives-Timestamp)
+primitive is a quick helper that will convert a date object, or timestamp, into
+a friendly format. For example, it’ll render a format similar to “5 minutes ago”
+for a recent comment, and “22 Dec” for an older comment.
+
+```tsx highlight="12"
+import { Timestamp } from "@liveblocks/react-ui";
+import { useThreads } from "../liveblocks.config";
+
+// Render threads with friendly datetime messages above
+function Component() {
+  const { threads } = useThreads();
+
+  return (
+    <>
+      {threads.map((thread) => (
+        <div key={thread.id}>
+          Thread posted at: <Timestamp date={thread.createdAt} />
+          {/* Render `thread` ... */}
+        </div>
+      ))}
+    </>
+  );
+}
+```

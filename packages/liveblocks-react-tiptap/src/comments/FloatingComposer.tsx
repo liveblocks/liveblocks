@@ -1,12 +1,25 @@
-import { autoUpdate, flip, hide, limitShift, offset, shift, size, useFloating } from "@floating-ui/react-dom";
+import {
+  autoUpdate,
+  flip,
+  hide,
+  limitShift,
+  offset,
+  shift,
+  size,
+  useFloating,
+} from "@floating-ui/react-dom";
 import type { BaseMetadata } from "@liveblocks/client";
 import type { DM } from "@liveblocks/core";
 import { useCreateThread } from "@liveblocks/react";
-import type { ComposerProps, ComposerSubmitComment } from "@liveblocks/react-ui";
+import { useLayoutEffect } from "@liveblocks/react/_private";
+import type {
+  ComposerProps,
+  ComposerSubmitComment,
+} from "@liveblocks/react-ui";
 import { Composer } from "@liveblocks/react-ui";
 import { type Editor, useEditorState } from "@tiptap/react";
 import type { ComponentRef, FormEvent, KeyboardEvent } from "react";
-import React, { forwardRef, useCallback, useEffect, useLayoutEffect } from "react";
+import { forwardRef, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
 
 import type { CommentsExtensionStorage } from "../types";
@@ -31,7 +44,11 @@ export const FloatingComposer = forwardRef<
   const { showComposer } = useEditorState({
     editor,
     selector: (ctx) => ({
-      showComposer: !!(ctx.editor?.storage.liveblocksComments as CommentsExtensionStorage | undefined)?.pendingCommentSelection,
+      showComposer: !!(
+        ctx.editor?.storage.liveblocksComments as
+          | CommentsExtensionStorage
+          | undefined
+      )?.pendingCommentSelection,
     }),
     equalityFn: (prev, next) => {
       if (!next) return false;
@@ -64,7 +81,6 @@ export const FloatingComposer = forwardRef<
     },
   });
 
-
   const updateRef = useCallback(() => {
     if (!editor || !showComposer) {
       return;
@@ -80,14 +96,13 @@ export const FloatingComposer = forwardRef<
     if (!editor || !showComposer) {
       return;
     }
-    editor.on("transaction", updateRef)
+    editor.on("transaction", updateRef);
     return () => {
       editor.off("transaction", updateRef);
-    }
+    };
   }, [editor, updateRef, showComposer]);
 
   useLayoutEffect(updateRef, [updateRef]);
-
 
   // Submit a new thread and update the comment highlight to show a completed highlight
   const handleComposerSubmit = useCallback(
@@ -106,18 +121,19 @@ export const FloatingComposer = forwardRef<
         metadata: props.metadata ?? {},
       });
       editor.commands.addComment(thread.id);
-
     },
     [onComposerSubmit, editor, createThread, props.metadata]
   );
 
-  const handleKeyDown = useCallback((event: KeyboardEvent<HTMLFormElement>) => {
-    if (event.key === "Escape" && editor) {
-      editor.commands.focus();
-    }
-    onKeyDown?.(event);
-  }, [editor, onKeyDown]);
-
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLFormElement>) => {
+      if (event.key === "Escape" && editor) {
+        editor.commands.focus();
+      }
+      onKeyDown?.(event);
+    },
+    [editor, onKeyDown]
+  );
 
   if (!showComposer || !editor) {
     return null;
@@ -126,13 +142,15 @@ export const FloatingComposer = forwardRef<
   return createPortal(
     <div
       className="lb-root lb-portal lb-elevation lb-tiptap-floating lb-tiptap-floating-composer"
-      ref={setFloating} style={{
+      ref={setFloating}
+      style={{
         position: strategy,
         top: 0,
         left: 0,
         transform: `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`,
         minWidth: "max-content",
-      }}>
+      }}
+    >
       <Composer
         ref={forwardedRef}
         {...props}

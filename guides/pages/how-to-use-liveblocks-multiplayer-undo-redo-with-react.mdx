@@ -29,7 +29,7 @@ return functions that allow you to undo and redo the last changes made to your
 app.
 
 ```tsx highlight="4,5,9,10"
-import { useUndo, useRedo } from "./liveblocks.config";
+import { useUndo, useRedo } from "@liveblocks/react/suspense";
 
 function App() {
   const undo = useUndo();
@@ -51,7 +51,7 @@ back to its previous value.
 
 ```tsx highlight="6,9,15,16"
 import { useState } from "react";
-import { useMutation, useUndo } from "./liveblocks.config";
+import { useMutation, useUndo } from "@liveblocks/react/suspense";
 
 function YourComponent() {
   const [text, setText] = useState("");
@@ -95,7 +95,7 @@ that the transition is smooth.
 please.
 
 ```tsx highlight="4,8,9"
-import { useHistory } from "./liveblocks.config";
+import { useHistory } from "@liveblocks/react/suspense";
 
 function App() {
   const { resume, pause } = useHistory();
@@ -118,7 +118,7 @@ To enable this, we can use the `addToHistory` option when updating the user’s
 presence.
 
 ```tsx highlight="4,9"
-import { useUpdateMyPresence } from "./liveblocks.config";
+import { useUpdateMyPresence } from "@liveblocks/react/suspense";
 
 function App() {
   const updateMyPresence = useUpdateMyPresence();
@@ -136,7 +136,7 @@ function App() {
 This also works in mutations with `setMyPresence`.
 
 ```tsx highlight="4"
-import { useMutation } from "./liveblocks.config";
+import { useMutation } from "@liveblocks/react/suspense";
 
 const updateSelected = useMutation(({ setMyPresence }, rectangleId) => {
   setMyPresence({ selected: rectangleId }, { addToHistory: true });

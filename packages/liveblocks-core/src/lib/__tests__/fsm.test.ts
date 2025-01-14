@@ -196,15 +196,15 @@ describe("finite state machine", () => {
         .onEnter("yellow", onEnterYellow)
         .onEnter("green", onEnterGreen);
 
-      expect(onEnterRed).not.toBeCalled();
-      expect(onEnterYellow).not.toBeCalled();
-      expect(onEnterGreen).not.toBeCalled();
+      expect(onEnterRed).not.toHaveBeenCalled();
+      expect(onEnterYellow).not.toHaveBeenCalled();
+      expect(onEnterGreen).not.toHaveBeenCalled();
 
       fsm.start();
 
-      expect(onEnterRed).toBeCalledTimes(1);
-      expect(onEnterYellow).not.toBeCalled();
-      expect(onEnterGreen).not.toBeCalled();
+      expect(onEnterRed).toHaveBeenCalledTimes(1);
+      expect(onEnterYellow).not.toHaveBeenCalled();
+      expect(onEnterGreen).not.toHaveBeenCalled();
     });
 
     test("does not execute onExit/onEnter events when explicitly staying in the same state", () => {
@@ -516,25 +516,25 @@ describe("finite state machine", () => {
       .start();
 
     expect(fsm.currentState).toEqual("one");
-    expect(reset).not.toBeCalled();
-    expect(inced).not.toBeCalled();
+    expect(reset).not.toHaveBeenCalled();
+    expect(inced).not.toHaveBeenCalled();
     fsm.send({ type: "GO" });
-    expect(reset).toBeCalledTimes(1);
-    expect(inced).not.toBeCalled();
+    expect(reset).toHaveBeenCalledTimes(1);
+    expect(inced).not.toHaveBeenCalled();
     fsm.send({ type: "GO" });
-    expect(reset).toBeCalledTimes(1);
+    expect(reset).toHaveBeenCalledTimes(1);
     expect(inced).toHaveBeenLastCalledWith(
       { x: 1, y: 13, patch: expect.any(Function) },
       { type: "GO" }
     );
     fsm.send({ type: "GO" });
-    expect(reset).toBeCalledTimes(1);
+    expect(reset).toHaveBeenCalledTimes(1);
     expect(inced).toHaveBeenLastCalledWith(
       { x: 2, y: 13, patch: expect.any(Function) },
       { type: "GO" }
     );
     fsm.send({ type: "GO" });
-    expect(reset).toBeCalledTimes(1);
+    expect(reset).toHaveBeenCalledTimes(1);
     expect(inced).toHaveBeenLastCalledWith(
       { x: 3, y: 13, patch: expect.any(Function) },
       { type: "GO" }

@@ -18,7 +18,7 @@ import {
   stringifyCommentBody,
   toAbsoluteUrl,
 } from "@liveblocks/core";
-import React from "react";
+import type { ComponentType, ReactNode } from "react";
 
 import { MENTION_CHARACTER } from "./lib/constants";
 import type { CSSProperties } from "./lib/css-properties";
@@ -28,14 +28,14 @@ export type CommentBodyContainerComponentProps = {
   /**
    * The blocks of the comment body
    */
-  children: React.ReactNode;
+  children: ReactNode;
 };
 
 export type CommentBodyParagraphComponentProps = {
   /**
    * The text content of the paragraph.
    */
-  children: React.ReactNode;
+  children: ReactNode;
 };
 
 export type CommentBodyTextComponentProps = {
@@ -74,26 +74,26 @@ export type ConvertCommentBodyAsReactComponents<U extends BaseUserMeta = DU> = {
    *
    * The component used to act as a container to wrap comment body blocks,
    */
-  Container: React.ComponentType<CommentBodyContainerComponentProps>;
+  Container: ComponentType<CommentBodyContainerComponentProps>;
   /**
    * The component used to display paragraphs.
    */
-  Paragraph: React.ComponentType<CommentBodyParagraphComponentProps>;
+  Paragraph: ComponentType<CommentBodyParagraphComponentProps>;
 
   /**
    * The component used to display text elements.
    */
-  Text: React.ComponentType<CommentBodyTextComponentProps>;
+  Text: ComponentType<CommentBodyTextComponentProps>;
 
   /**
    * The component used to display links.
    */
-  Link: React.ComponentType<CommentBodyLinkComponentProps>;
+  Link: ComponentType<CommentBodyLinkComponentProps>;
 
   /**
    * The component used to display mentions.
    */
-  Mention: React.ComponentType<CommentBodyMentionComponentProps<U>>;
+  Mention: ComponentType<CommentBodyMentionComponentProps<U>>;
 };
 
 const baseComponents: ConvertCommentBodyAsReactComponents<BaseUserMeta> = {
@@ -102,7 +102,7 @@ const baseComponents: ConvertCommentBodyAsReactComponents<BaseUserMeta> = {
   Text: ({ element }) => {
     // Note: construction following the schema 👇
     // <code><s><em><strong>{element.text}</strong></s></em></code>
-    let children: React.ReactNode = element.text;
+    let children: ReactNode = element.text;
 
     if (element.bold) {
       children = <strong>{children}</strong>;
@@ -156,7 +156,7 @@ export type ConvertCommentBodyAsReactOptions<U extends BaseUserMeta = DU> = {
 export async function convertCommentBodyAsReact(
   body: CommentBody,
   options?: ConvertCommentBodyAsReactOptions<BaseUserMeta>
-): Promise<React.ReactNode> {
+): Promise<ReactNode> {
   const Components = {
     ...baseComponents,
     ...options?.components,

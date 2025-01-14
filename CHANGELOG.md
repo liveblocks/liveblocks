@@ -1,20 +1,45 @@
-## 2.14.1 (Not yet published)
+## vNEXT (Not yet published)
+
+## 2.15.2
+
+### All packages
+
+- Fix `useLayoutEffect` warnings when using React versions lower than 18.3.0 and
+  SSR.
 
 ### `@liveblocks/react`
 
-- Internal refactorings and code cleanup.
+- Fix memory leak in some hooks.
+- Fix bug where querying metadata with `useThreads()` would not always reuse the
+  cache correctly.
 
-### `@liveblocks/react-lexical`
+## 2.15.1
 
-- Internal refactorings and code cleanup.
+### All packages
 
-### `@liveblocks/react-tiptap`
+- Fix rollup config to always ensure `"use client"` directives are on top of
+  files after build.
 
-- Internal refactorings and code cleanup.
+## 2.15.0
 
-### `@liveblocks/react-ui`
+### `@liveblocks/react`
 
-- Internal refactorings and code cleanup.
+- **Breaking**: Drop support for React 17 (and 16). If you’re unable to upgrade
+  React to 18 or higher, you can still continue to use Liveblocks 2.14.0, which
+  is the last version to support React <18.
+
+### All packages
+
+- The published target for all Liveblocks packages is now ES2022 (up from
+  ES2020). This should have a positive impact on your bundle size[\*].
+
+- Various internal refactorings and code cleanup.
+
+[\*] If you bundle for the browser, this should not be a problem, as all major
+browsers support ES2022. If however you're specifically targeting very old
+browsers (mostly IE), then you may need to configure your bundler (Webpack,
+rollup, esbuild, etc) to also down-compile code from dependencies inside
+`node_modules` for you, if you aren't already.
 
 ## 2.14.0
 
@@ -446,8 +471,8 @@ please [contact us](https://liveblocks.io/contact/sales).
 ## v2.2.0
 
 We are making `resolved` a first-class citizen property on
-[threads](https://liveblocks.io/docs/products/comments/concepts#Threads), for
-more information about this change please read our
+[threads](https://liveblocks.io/docs/ready-made-features/comments/concepts#Threads),
+for more information about this change please read our
 [Upgrade Guide for 2.2](https://liveblocks.io/docs/platform/upgrading/2.2).
 
 ### `@liveblocks/react`

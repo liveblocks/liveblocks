@@ -10,6 +10,7 @@ import {
 } from "@floating-ui/react-dom";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import type { BaseMetadata, DM, ThreadData } from "@liveblocks/core";
+import { useLayoutEffect } from "@liveblocks/react/_private";
 import {
   Thread as DefaultThread,
   type ThreadProps,
@@ -19,7 +20,7 @@ import {
   COMMAND_PRIORITY_HIGH,
   KEY_ESCAPE_COMMAND,
 } from "lexical";
-import React, {
+import {
   type ComponentType,
   type HTMLAttributes,
   type KeyboardEvent,
@@ -27,11 +28,10 @@ import React, {
   useCallback,
   useContext,
   useEffect,
-  useLayoutEffect,
   useState,
 } from "react";
+import { useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
 
 import { classNames } from "../classnames";
 import { compareNodes } from "./anchored-threads";

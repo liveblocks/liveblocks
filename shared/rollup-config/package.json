@@ -1,0 +1,30 @@
+{
+  "name": "@liveblocks/rollup-config",
+  "type": "module",
+  "private": true,
+  "main": "index.js",
+  "dependencies": {
+    "@rollup/plugin-replace": "5.0.5",
+    "esbuild": "0.20.2",
+    "magic-string": "^0.30.0",
+    "postcss": "8.4.31",
+    "postcss-advanced-variables": "3.0.1",
+    "postcss-combine-duplicated-selectors": "10.0.3",
+    "postcss-functions": "4.0.2",
+    "postcss-import": "15.1.0",
+    "postcss-lightningcss": "1.0.0",
+    "postcss-nesting": "12.0.1",
+    "postcss-reporter": "7.0.5",
+    "postcss-sort-media-queries": "5.2.0",
+    "rollup-plugin-dts": "5.3.1",
+    "rollup-plugin-esbuild": "5.0.0"
+  },
+  "peerDependencies": {
+    "stylelint": "^15 || ^16"
+  },
+  "peerDependenciesMeta": {
+    "stylelint": {
+      "optional": true
+    }
+  }
+}

@@ -13,6 +13,7 @@ import { Batch, createBatchStore } from "./lib/batch";
 import { chunk } from "./lib/chunk";
 import { createCommentId, createThreadId } from "./lib/createIds";
 import type { DateToString } from "./lib/DateToString";
+import { DefaultMap } from "./lib/DefaultMap";
 import type { Json, JsonObject } from "./lib/Json";
 import { objectToQuery } from "./lib/objectToQuery";
 import type { QueryParams, URLSafeString } from "./lib/url";
@@ -928,54 +929,43 @@ export function createApiClient<M extends BaseMetadata>({
     }
   }
 
-  const getAttachmentUrlsBatchStoreByRoom: Map<
+  const attachmentUrlsBatchStoresByRoom = new DefaultMap<
     string,
     BatchStore<string, string>
-  > = new Map();
+  >((roomId) => {
+    const batch = new Batch<string, string>(
+      async (batchedAttachmentIds) => {
+        const attachmentIds = batchedAttachmentIds.flat();
+        const { urls } = await httpClient.post<{
+          urls: (string | null)[];
+        }>(
+          url`/v2/c/rooms/${roomId}/attachments/presigned-urls`,
+          await authManager.getAuthValue({
+            requestedScope: "comments:read",
+            roomId,
+          }),
+          { attachmentIds }
+        );
+
+        return urls.map(
+          (url) =>
+            url ??
+            new Error("There was an error while getting this attachment's URL")
+        );
+      },
+      { delay: 50 }
+    );
+    return createBatchStore(batch);
+  });
 
   function getOrCreateAttachmentUrlsStore(
     roomId: string
   ): BatchStore<string, string> {
-    let store = getAttachmentUrlsBatchStoreByRoom.get(roomId);
-    if (store === undefined) {
-      const batch = new Batch<string, string>(
-        async (batchedAttachmentIds) => {
-          const attachmentIds = batchedAttachmentIds.flat();
-          const { urls } = await httpClient.post<{
-            urls: (string | null)[];
-          }>(
-            url`/v2/c/rooms/${roomId}/attachments/presigned-urls`,
-            await authManager.getAuthValue({
-              requestedScope: "comments:read",
-              roomId,
-            }),
-            {
-              attachmentIds,
-            }
-          );
-
-          return urls.map(
-            (url) =>
-              url ??
-              new Error(
-                "There was an error while getting this attachment's URL"
-              )
-          );
-        },
-        {
-          delay: 50,
-        }
-      );
-
-      store = createBatchStore(batch);
-
-      getAttachmentUrlsBatchStoreByRoom.set(roomId, store);
-    }
-    return store;
+    return attachmentUrlsBatchStoresByRoom.getOrCreate(roomId);
   }
 
   function getAttachmentUrl(options: { roomId: string; attachmentId: string }) {
-    const batch = getOrCreateAttachmentUrlsStore(options.roomId).getBatch();
+    const batch = getOrCreateAttachmentUrlsStore(options.roomId).batch;
     return batch.get(options.attachmentId);
   }
 
@@ -1013,16 +1003,9 @@ export function createApiClient<M extends BaseMetadata>({
     );
   }
 
-  const markInboxNotificationsAsReadBatchByRoom: Map<
-    string,
-    Batch<string, string>
-  > = new Map();
-  function getOrCreateMarkInboxNotificationsAsReadBatch(
-    roomId: string
-  ): Batch<string, string> {
-    let batch = markInboxNotificationsAsReadBatchByRoom.get(roomId);
-    if (batch === undefined) {
-      batch = new Batch<string, string>(
+  const markAsReadBatchesByRoom = new DefaultMap<string, Batch<string, string>>(
+    (roomId) =>
+      new Batch<string, string>(
         async (batchedInboxNotificationIds) => {
           const inboxNotificationIds = batchedInboxNotificationIds.flat();
           // This method (and the following batch handling) isn't the same as the one in
@@ -1041,21 +1024,15 @@ export function createApiClient<M extends BaseMetadata>({
           );
           return inboxNotificationIds;
         },
-        {
-          delay: 50,
-        }
-      );
-
-      markInboxNotificationsAsReadBatchByRoom.set(roomId, batch);
-    }
-    return batch;
-  }
+        { delay: 50 }
+      )
+  );
 
   async function markRoomInboxNotificationAsRead(options: {
     roomId: string;
     inboxNotificationId: string;
   }) {
-    const batch = getOrCreateMarkInboxNotificationsAsReadBatch(options.roomId);
+    const batch = markAsReadBatchesByRoom.getOrCreate(options.roomId);
     return batch.get(options.inboxNotificationId);
   }
 
@@ -1488,12 +1465,12 @@ export function getBearerTokenFromAuthValue(authValue: AuthValue): string {
  * backend.
  */
 class HttpClient {
-  private _baseUrl: string;
-  private _fetchPolyfill: typeof fetch;
+  #baseUrl: string;
+  #fetchPolyfill: typeof fetch;
 
   constructor(baseUrl: string, fetchPolyfill: typeof fetch) {
-    this._baseUrl = baseUrl;
-    this._fetchPolyfill = fetchPolyfill;
+    this.#baseUrl = baseUrl;
+    this.#fetchPolyfill = fetchPolyfill;
   }
 
   // ------------------------------------------------------------------
@@ -1513,7 +1490,7 @@ class HttpClient {
    *   5. ...but silently return `{}` if that parsing fails
    *   6. Throw HttpError if response is an error
    */
-  private async rawFetch(
+  async #rawFetch(
     endpoint: URLSafeString,
     authValue: AuthValue,
     options?: RequestInit,
@@ -1523,8 +1500,8 @@ class HttpClient {
       raise("This client can only be used to make /v2/c/* requests");
     }
 
-    const url = urljoin(this._baseUrl, endpoint, params);
-    return await this._fetchPolyfill(url, {
+    const url = urljoin(this.#baseUrl, endpoint, params);
+    return await this.#fetchPolyfill(url, {
       ...options,
       headers: {
         // These headers are default, but can be overriden by custom headers
@@ -1554,13 +1531,13 @@ class HttpClient {
    *   5. ...but silently return `{}` if that parsing fails (🤔)
    *   6. Throw HttpError if response is an error
    */
-  private async fetch<T extends JsonObject>(
+  async #fetch<T extends JsonObject>(
     endpoint: URLSafeString,
     authValue: AuthValue,
     options?: RequestInit,
     params?: QueryParams
   ): Promise<T> {
-    const response = await this.rawFetch(endpoint, authValue, options, params);
+    const response = await this.#rawFetch(endpoint, authValue, options, params);
 
     if (!response.ok) {
       let error: HttpError;
@@ -1595,7 +1572,7 @@ class HttpClient {
     params?: QueryParams,
     options?: Omit<RequestInit, "body" | "method" | "headers">
   ): Promise<Response> {
-    return await this.rawFetch(endpoint, authValue, options, params);
+    return await this.#rawFetch(endpoint, authValue, options, params);
   }
 
   /**
@@ -1608,7 +1585,7 @@ class HttpClient {
     authValue: AuthValue,
     body?: JsonObject
   ): Promise<Response> {
-    return await this.rawFetch(endpoint, authValue, {
+    return await this.#rawFetch(endpoint, authValue, {
       method: "POST",
       body: JSON.stringify(body),
     });
@@ -1623,7 +1600,7 @@ class HttpClient {
     endpoint: URLSafeString,
     authValue: AuthValue
   ): Promise<Response> {
-    return await this.rawFetch(endpoint, authValue, { method: "DELETE" });
+    return await this.#rawFetch(endpoint, authValue, { method: "DELETE" });
   }
 
   /**
@@ -1636,7 +1613,7 @@ class HttpClient {
     params?: QueryParams,
     options?: Omit<RequestInit, "body" | "method" | "headers">
   ): Promise<T> {
-    return await this.fetch<T>(endpoint, authValue, options, params);
+    return await this.#fetch<T>(endpoint, authValue, options, params);
   }
 
   /**
@@ -1650,7 +1627,7 @@ class HttpClient {
     options?: Omit<RequestInit, "body" | "method" | "headers">,
     params?: QueryParams
   ): Promise<T> {
-    return await this.fetch<T>(
+    return await this.#fetch<T>(
       endpoint,
       authValue,
       {
@@ -1670,7 +1647,7 @@ class HttpClient {
     endpoint: URLSafeString,
     authValue: AuthValue
   ): Promise<T> {
-    return await this.fetch<T>(endpoint, authValue, { method: "DELETE" });
+    return await this.#fetch<T>(endpoint, authValue, { method: "DELETE" });
   }
 
   /**
@@ -1684,7 +1661,7 @@ class HttpClient {
     params?: QueryParams,
     options?: Omit<RequestInit, "body" | "method" | "headers">
   ): Promise<T> {
-    return await this.fetch<T>(
+    return await this.#fetch<T>(
       endpoint,
       authValue,
       {

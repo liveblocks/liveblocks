@@ -10,6 +10,7 @@ import {
 } from "@liveblocks/core";
 import {
   useClientOrNull,
+  useLayoutEffect,
   useMentionSuggestions,
   useResolveMentionSuggestions,
   useRoomOrNull,
@@ -27,10 +28,11 @@ import type {
   PointerEvent,
   SyntheticEvent,
 } from "react";
-import React, {
+import {
   forwardRef,
   useCallback,
   useEffect,
+  useId,
   useImperativeHandle,
   useMemo,
   useRef,
@@ -97,10 +99,8 @@ import { isKey } from "../../utils/is-key";
 import { Persist, useAnimationPersist, usePersist } from "../../utils/Persist";
 import { Portal } from "../../utils/Portal";
 import { requestSubmit } from "../../utils/request-submit";
-import { useId } from "../../utils/use-id";
 import { useIndex } from "../../utils/use-index";
 import { useInitial } from "../../utils/use-initial";
-import { useLayoutEffect } from "../../utils/use-layout-effect";
 import { useObservable } from "../../utils/use-observable";
 import { useRefs } from "../../utils/use-refs";
 import { toAbsoluteUrl } from "../Comment/utils";

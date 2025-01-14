@@ -19,6 +19,16 @@ Yjs, Next.js, and Liveblocks.
   </video>
 </Figure>
 
+<Banner title="No longer recommended" type="warning">
+
+We now have an official Tiptap package, and we recommend you use this instead of
+following this guide. Read more in our
+[Lexical getting stared guide](/docs/get-started/nextjs-tiptap). However, should
+you like to set up Tiptap manually with Yjs, without using our full feature set,
+continue reading.
+
+</Banner>
+
 This guide assumes that you’re already familiar with
 [React](https://react.dev/), [Next.js](https://nextjs.org/),
 [TypeScript](https://www.typescriptlang.org/), and
@@ -133,44 +143,32 @@ Liveblocks client.
 npx create-liveblocks-app@latest --init --framework react
 ```
 
-## Set up the client
-
-Next, we can create the front end client which will be responsible for
-communicating with the back end. You can do this by modifying `createClient` in
-your config file, and passing the location of your endpoint.
-
-```ts
-const client = createClient({
-  authEndpoint: "/api/liveblocks-auth",
-});
-```
-
 ## Join a Liveblocks room
 
 Liveblocks uses the concept of rooms, separate virtual spaces where people
 collaborate. To create a realtime experience, multiple users must be connected
 to the same room. Create a file in the current directory within `/app`, and name
-it `Room.tsx`.
+it `Room.tsx`. Pass the location of your endpoint to `LiveblocksProvider`.
 
 ```tsx file="/app/Room.tsx"
 "use client";
 
 import { ReactNode } from "react";
-import { RoomProvider } from "../liveblocks.config";
-import { ClientSideSuspense } from "@liveblocks/react";
+import {
+  LiveblocksProvider,
+  RoomProvider,
+  ClientSideSuspense,
+} from "@liveblocks/react/suspense";
 
 export function Room({ children }: { children: ReactNode }) {
   return (
-    <RoomProvider
-      id={roomId}
-      initialPresence={{
-        cursor: null,
-      }}
-    >
-      <ClientSideSuspense fallback={<div>Loading…</div>}>
-        {() => children}
-      </ClientSideSuspense>
-    </RoomProvider>
+    <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
+      <RoomProvider id="my-room">
+        <ClientSideSuspense fallback={<div>Loading…</div>}>
+          {children}
+        </ClientSideSuspense>
+      </RoomProvider>
+    </LiveblocksProvider>
   );
 }
 ```
@@ -518,7 +516,7 @@ function TiptapEditor({ doc, provider }: EditorProps) {
 ## Create live avatars with Liveblocks hooks
 
 Along with building out your text editor, you can now use other Liveblocks
-features, such as [Presence](/docs/products/presence). The
+features, such as [Presence](/docs/ready-made-features/presence). The
 [`useOthers`](/docs/api-reference/liveblocks-react#useOthers) hook allows us to
 view information about each user currently online, and we can turn this into a
 live avatars component.

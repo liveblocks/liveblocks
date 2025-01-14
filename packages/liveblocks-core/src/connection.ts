@@ -1,7 +1,7 @@
 import { assertNever } from "./lib/assert";
 import { controlledPromise } from "./lib/controlledPromise";
 import type { Observable } from "./lib/EventSource";
-import { makeEventSource } from "./lib/EventSource";
+import { makeBufferableEventSource, makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { BuiltinEvent, Patchable, Target } from "./lib/fsm";
 import { FSM } from "./lib/fsm";
@@ -379,7 +379,7 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
 ) {
   // Create observable event sources, which this machine will call into when
   // specific events happen
-  const onMessage = makeEventSource<IWebSocketMessageEvent>();
+  const onMessage = makeBufferableEventSource<IWebSocketMessageEvent>();
   onMessage.pause(); // Pause all message delivery until status is OPEN
 
   // Emitted whenever the server deliberately closes the connection for
@@ -967,9 +967,8 @@ function createConnectionStateMachine<T extends BaseAuthResult>(
  * from the outside.
  */
 export class ManagedSocket<T extends BaseAuthResult> {
-  /** @internal */
-  private machine: FSM<Context, Event, State>;
-  private cleanups: (() => void)[];
+  #machine: FSM<Context, Event, State>;
+  #cleanups: (() => void)[];
 
   public readonly events: {
     /**
@@ -1010,14 +1009,14 @@ export class ManagedSocket<T extends BaseAuthResult> {
       delegates,
       { waitForActorId, enableDebugLogging }
     );
-    this.machine = machine;
+    this.#machine = machine;
     this.events = events;
-    this.cleanups = cleanups;
+    this.#cleanups = cleanups;
   }
 
   getStatus(): Status {
     try {
-      return toNewConnectionStatus(this.machine);
+      return toNewConnectionStatus(this.#machine);
     } catch {
       return "initial";
     }
@@ -1027,7 +1026,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
    * Returns the current auth authValue.
    */
   get authValue(): T | null {
-    return this.machine.context.authValue as T | null;
+    return this.#machine.context.authValue as T | null;
   }
 
   /**
@@ -1035,7 +1034,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
    * if the machine is idle at the moment, otherwise this is a no-op.
    */
   public connect(): void {
-    this.machine.send({ type: "CONNECT" });
+    this.#machine.send({ type: "CONNECT" });
   }
 
   /**
@@ -1043,7 +1042,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
    * the socket, potentially obtaining a new authValue first, if needed.
    */
   public reconnect(): void {
-    this.machine.send({ type: "RECONNECT" });
+    this.#machine.send({ type: "RECONNECT" });
   }
 
   /**
@@ -1051,7 +1050,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
    * a no-op if there is no active connection.
    */
   public disconnect(): void {
-    this.machine.send({ type: "DISCONNECT" });
+    this.#machine.send({ type: "DISCONNECT" });
   }
 
   /**
@@ -1060,10 +1059,10 @@ export class ManagedSocket<T extends BaseAuthResult> {
    * letting the instance get garbage collected.
    */
   public destroy(): void {
-    this.machine.stop();
+    this.#machine.stop();
 
     let cleanup: (() => void) | undefined;
-    while ((cleanup = this.cleanups.pop())) {
+    while ((cleanup = this.#cleanups.pop())) {
       cleanup();
     }
   }
@@ -1073,7 +1072,7 @@ export class ManagedSocket<T extends BaseAuthResult> {
    * message if this is somehow impossible.
    */
   public send(data: string): void {
-    const socket = this.machine.context?.socket;
+    const socket = this.#machine.context?.socket;
     if (socket === null) {
       console.warn("Cannot send: not connected yet", data);
     } else if (socket.readyState !== 1 /* WebSocket.OPEN */) {
@@ -1088,6 +1087,6 @@ export class ManagedSocket<T extends BaseAuthResult> {
    * Not ideal to keep exposed :(
    */
   public _privateSendMachineEvent(event: Event): void {
-    this.machine.send(event);
+    this.#machine.send(event);
   }
 }

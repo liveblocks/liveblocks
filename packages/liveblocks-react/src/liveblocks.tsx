@@ -10,7 +10,6 @@ import type {
   BaseRoomInfo,
   DM,
   DU,
-  InboxNotificationData,
   OpaqueClient,
   SyncStatus,
 } from "@liveblocks/core";
@@ -23,19 +22,20 @@ import {
   shallow,
 } from "@liveblocks/core";
 import type { PropsWithChildren } from "react";
-import React, {
+import {
   createContext,
   useCallback,
   useContext,
   useEffect,
   useMemo,
+  useState,
+  useSyncExternalStore,
 } from "react";
-import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
-import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector.js";
 
 import { config } from "./config";
 import { useIsInsideRoom } from "./contexts";
-import { shallow2 } from "./lib/shallow2";
+import { ASYNC_OK } from "./lib/AsyncResult";
+import { count } from "./lib/itertools";
 import { useInitial, useInitialUnlessFunction } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
@@ -53,7 +53,9 @@ import type {
   UseSyncStatusOptions,
   UseUserThreadsOptions,
 } from "./types";
-import { UmbrellaStore } from "./umbrella-store";
+import { makeUserThreadsQueryKey, UmbrellaStore } from "./umbrella-store";
+import { useSignal } from "./use-signal";
+import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
 
 /**
  * Raw access to the React context where the LiveblocksProvider stores the
@@ -90,23 +92,6 @@ const _bundles = new WeakMap<
   LiveblocksContextBundle<BaseUserMeta, BaseMetadata>
 >();
 
-function selectUnreadInboxNotificationsCount(
-  inboxNotifications: readonly InboxNotificationData[]
-) {
-  let count = 0;
-
-  for (const notification of inboxNotifications) {
-    if (
-      notification.readAt === null ||
-      notification.readAt < notification.notifiedAt
-    ) {
-      count++;
-    }
-  }
-
-  return count;
-}
-
 function selectorFor_useUnreadInboxNotificationsCount(
   result: InboxNotificationsAsyncResult
 ): UnreadInboxNotificationsCountAsyncResult {
@@ -115,11 +100,13 @@ function selectorFor_useUnreadInboxNotificationsCount(
     return result;
   }
 
-  // OK state
-  return {
-    isLoading: false,
-    count: selectUnreadInboxNotificationsCount(result.inboxNotifications),
-  };
+  return ASYNC_OK(
+    "count",
+    count(
+      result.inboxNotifications,
+      (n) => n.readAt === null || n.readAt < n.notifiedAt
+    )
+  );
 }
 
 function selectorFor_useUser<U extends BaseUserMeta>(
@@ -392,8 +379,9 @@ function useInboxNotifications_withClient<T>(
 
   // Trigger initial loading of inbox notifications if it hasn't started
   // already, but don't await its promise.
-  useEffect(() => {
-    void store.waitUntilNotificationsLoaded();
+  useEffect(
+    () => void store.outputs.loadingNotifications.waitUntilLoaded()
+
     // NOTE: Deliberately *not* using a dependency array here!
     //
     // It is important to call waitUntil on *every* render.
@@ -402,7 +390,7 @@ function useInboxNotifications_withClient<T>(
     // 2. All other subsequent renders now "just" return the same promise (a quick operation).
     // 3. If ever the promise would fail, then after 5 seconds it would reset, and on the very
     //    *next* render after that, a *new* fetch/promise will get created.
-  });
+  );
 
   useEffect(() => {
     poller.inc();
@@ -412,10 +400,8 @@ function useInboxNotifications_withClient<T>(
     };
   }, [poller]);
 
-  return useSyncExternalStoreWithSelector(
-    store.subscribe,
-    store.getInboxNotificationsLoadingState,
-    store.getInboxNotificationsLoadingState,
+  return useSignal(
+    store.outputs.loadingNotifications.signal,
     selector,
     isEqual
   );
@@ -425,7 +411,7 @@ function useInboxNotificationsSuspense_withClient(client: OpaqueClient) {
   const store = getLiveblocksExtrasForClient(client).store;
 
   // Suspend until there are at least some inbox notifications
-  use(store.waitUntilNotificationsLoaded());
+  use(store.outputs.loadingNotifications.waitUntilLoaded());
 
   // We're in a Suspense world here, and as such, the useInboxNotifications()
   // hook is expected to only return success results when we're here.
@@ -449,7 +435,7 @@ function useUnreadInboxNotificationsCountSuspense_withClient(
   const store = getLiveblocksExtrasForClient(client).store;
 
   // Suspend until there are at least some inbox notifications
-  use(store.waitUntilNotificationsLoaded());
+  use(store.outputs.loadingNotifications.waitUntilLoaded());
 
   const result = useUnreadInboxNotificationsCount_withClient(client);
   assert(!result.isLoading, "Did not expect loading");
@@ -463,7 +449,7 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
       const { store } = getLiveblocksExtrasForClient(client);
 
       const readAt = new Date();
-      const optimisticUpdateId = store.addOptimisticUpdate({
+      const optimisticId = store.optimisticUpdates.add({
         type: "mark-inbox-notification-as-read",
         inboxNotificationId,
         readAt,
@@ -472,15 +458,15 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
       client.markInboxNotificationAsRead(inboxNotificationId).then(
         () => {
           // Replace the optimistic update by the real thing
-          store.updateInboxNotification(
+          store.markInboxNotificationRead(
             inboxNotificationId,
-            optimisticUpdateId,
-            (inboxNotification) => ({ ...inboxNotification, readAt })
+            readAt,
+            optimisticId
           );
         },
         () => {
           // TODO: Broadcast errors to client
-          store.removeOptimisticUpdate(optimisticUpdateId);
+          store.optimisticUpdates.remove(optimisticId);
         }
       );
     },
@@ -492,7 +478,7 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
   return useCallback(() => {
     const { store } = getLiveblocksExtrasForClient(client);
     const readAt = new Date();
-    const optimisticUpdateId = store.addOptimisticUpdate({
+    const optimisticId = store.optimisticUpdates.add({
       type: "mark-all-inbox-notifications-as-read",
       readAt,
     });
@@ -500,14 +486,11 @@ function useMarkAllInboxNotificationsAsRead_withClient(client: OpaqueClient) {
     client.markAllInboxNotificationsAsRead().then(
       () => {
         // Replace the optimistic update by the real thing
-        store.updateAllInboxNotifications(
-          optimisticUpdateId,
-          (inboxNotification) => ({ ...inboxNotification, readAt })
-        );
+        store.markAllInboxNotificationsRead(optimisticId, readAt);
       },
       () => {
         // TODO: Broadcast errors to client
-        store.removeOptimisticUpdate(optimisticUpdateId);
+        store.optimisticUpdates.remove(optimisticId);
       }
     );
   }, [client]);
@@ -519,7 +502,7 @@ function useDeleteInboxNotification_withClient(client: OpaqueClient) {
       const { store } = getLiveblocksExtrasForClient(client);
 
       const deletedAt = new Date();
-      const optimisticUpdateId = store.addOptimisticUpdate({
+      const optimisticId = store.optimisticUpdates.add({
         type: "delete-inbox-notification",
         inboxNotificationId,
         deletedAt,
@@ -528,14 +511,11 @@ function useDeleteInboxNotification_withClient(client: OpaqueClient) {
       client.deleteInboxNotification(inboxNotificationId).then(
         () => {
           // Replace the optimistic update by the real thing
-          store.deleteInboxNotification(
-            inboxNotificationId,
-            optimisticUpdateId
-          );
+          store.deleteInboxNotification(inboxNotificationId, optimisticId);
         },
         () => {
           // TODO: Broadcast errors to client
-          store.removeOptimisticUpdate(optimisticUpdateId);
+          store.optimisticUpdates.remove(optimisticId);
         }
       );
     },
@@ -547,7 +527,7 @@ function useDeleteAllInboxNotifications_withClient(client: OpaqueClient) {
   return useCallback(() => {
     const { store } = getLiveblocksExtrasForClient(client);
     const deletedAt = new Date();
-    const optimisticUpdateId = store.addOptimisticUpdate({
+    const optimisticId = store.optimisticUpdates.add({
       type: "delete-all-inbox-notifications",
       deletedAt,
     });
@@ -555,11 +535,11 @@ function useDeleteAllInboxNotifications_withClient(client: OpaqueClient) {
     client.deleteAllInboxNotifications().then(
       () => {
         // Replace the optimistic update by the real thing
-        store.deleteAllInboxNotifications(optimisticUpdateId);
+        store.deleteAllInboxNotifications(optimisticId);
       },
       () => {
         // TODO: Broadcast errors to client
-        store.removeOptimisticUpdate(optimisticUpdateId);
+        store.optimisticUpdates.remove(optimisticId);
       }
     );
   }, [client]);
@@ -570,37 +550,32 @@ function useInboxNotificationThread_withClient<M extends BaseMetadata>(
   inboxNotificationId: string
 ): ThreadData<M> {
   const { store } = getLiveblocksExtrasForClient<M>(client);
+  return useSignal(
+    store.outputs.threadifications,
+    useCallback(
+      (state) => {
+        const inboxNotification =
+          state.notificationsById[inboxNotificationId] ??
+          raise(
+            `Inbox notification with ID "${inboxNotificationId}" not found`
+          );
 
-  const getter = store.getFullState;
+        if (inboxNotification.kind !== "thread") {
+          raise(
+            `Inbox notification with ID "${inboxNotificationId}" is not of kind "thread"`
+          );
+        }
 
-  const selector = useCallback(
-    (state: ReturnType<typeof getter>) => {
-      const inboxNotification =
-        state.notificationsById[inboxNotificationId] ??
-        raise(`Inbox notification with ID "${inboxNotificationId}" not found`);
+        const thread =
+          state.threadsDB.get(inboxNotification.threadId) ??
+          raise(
+            `Thread with ID "${inboxNotification.threadId}" not found, this inbox notification might not be of kind "thread"`
+          );
 
-      if (inboxNotification.kind !== "thread") {
-        raise(
-          `Inbox notification with ID "${inboxNotificationId}" is not of kind "thread"`
-        );
-      }
-
-      const thread =
-        state.threadsDB.get(inboxNotification.threadId) ??
-        raise(
-          `Thread with ID "${inboxNotification.threadId}" not found, this inbox notification might not be of kind "thread"`
-        );
-
-      return thread;
-    },
-    [inboxNotificationId]
-  );
-
-  return useSyncExternalStoreWithSelector(
-    store.subscribe, // Re-evaluate if we need to update any time the notification changes over time
-    getter,
-    getter,
-    selector
+        return thread;
+      },
+      [inboxNotificationId]
+    )
   );
 }
 
@@ -611,7 +586,7 @@ function useUser_withClient<U extends BaseUserMeta>(
   const usersStore = client[kInternal].usersStore;
 
   const getUserState = useCallback(
-    () => usersStore.getState(userId),
+    () => usersStore.getItemState(userId),
     [usersStore, userId]
   );
 
@@ -630,11 +605,19 @@ function useUser_withClient<U extends BaseUserMeta>(
   );
 
   // Trigger a fetch if we don't have any data yet (whether initially or after an invalidation)
-  useEffect(() => {
-    // NOTE: .get() will trigger any actual fetches, whereas .getState() will not,
-    // and it won't trigger a fetch if we already have data
-    void usersStore.get(userId);
-  }, [usersStore, userId, result]);
+  useEffect(
+    () => void usersStore.enqueue(userId)
+
+    // NOTE: Deliberately *not* using a dependency array here!
+    //
+    // It is important to call usersStore.enqueue on *every* render.
+    // This is harmless though, on most renders, except:
+    // 1. The very first render, in which case we'll want to trigger evaluation
+    //    of the userId.
+    // 2. All other subsequent renders now are a no-op (from the implementation
+    //    of .enqueue)
+    // 3. If ever the userId gets invalidated, the user would be fetched again.
+  );
 
   return result;
 }
@@ -646,13 +629,13 @@ function useUserSuspense_withClient<U extends BaseUserMeta>(
   const usersStore = client[kInternal].usersStore;
 
   const getUserState = useCallback(
-    () => usersStore.getState(userId),
+    () => usersStore.getItemState(userId),
     [usersStore, userId]
   );
   const userState = getUserState();
 
   if (!userState || userState.isLoading) {
-    throw usersStore.get(userId);
+    throw usersStore.enqueue(userId);
   }
 
   if (userState.error) {
@@ -686,7 +669,7 @@ function useRoomInfo_withClient(
   const roomsInfoStore = client[kInternal].roomsInfoStore;
 
   const getRoomInfoState = useCallback(
-    () => roomsInfoStore.getState(roomId),
+    () => roomsInfoStore.getItemState(roomId),
     [roomsInfoStore, roomId]
   );
 
@@ -705,11 +688,19 @@ function useRoomInfo_withClient(
   );
 
   // Trigger a fetch if we don't have any data yet (whether initially or after an invalidation)
-  useEffect(() => {
-    // NOTE: .get() will trigger any actual fetches, whereas .getState() will not,
-    // and it won't trigger a fetch if we already have data
-    void roomsInfoStore.get(roomId);
-  }, [roomsInfoStore, roomId, result]);
+  useEffect(
+    () => void roomsInfoStore.enqueue(roomId)
+
+    // NOTE: Deliberately *not* using a dependency array here!
+    //
+    // It is important to call roomsInfoStore.enqueue on *every* render.
+    // This is harmless though, on most renders, except:
+    // 1. The very first render, in which case we'll want to trigger evaluation
+    //    of the roomId.
+    // 2. All other subsequent renders now are a no-op (from the implementation
+    //    of .enqueue)
+    // 3. If ever the roomId gets invalidated, the room info would be fetched again.
+  );
 
   return result;
 }
@@ -718,13 +709,13 @@ function useRoomInfoSuspense_withClient(client: OpaqueClient, roomId: string) {
   const roomsInfoStore = client[kInternal].roomsInfoStore;
 
   const getRoomInfoState = useCallback(
-    () => roomsInfoStore.getState(roomId),
+    () => roomsInfoStore.getItemState(roomId),
     [roomsInfoStore, roomId]
   );
   const roomInfoState = getRoomInfoState();
 
   if (!roomInfoState || roomInfoState.isLoading) {
-    throw roomsInfoStore.get(roomId);
+    throw roomsInfoStore.enqueue(roomId);
   }
 
   if (roomInfoState.error) {
@@ -912,21 +903,19 @@ export function createLiveblocksContext<
  *
  */
 function useUserThreads_experimental<M extends BaseMetadata>(
-  options: UseUserThreadsOptions<M> = {
-    query: {
-      metadata: {},
-    },
-  }
+  options: UseUserThreadsOptions<M> = {}
 ): ThreadsAsyncResult<M> {
   const client = useClient();
-
   const { store, userThreadsPoller: poller } =
     getLiveblocksExtrasForClient<M>(client);
+  const queryKey = makeUserThreadsQueryKey(options.query);
 
   useEffect(
-    () => {
-      void store.waitUntilUserThreadsLoaded(options.query);
-    }
+    () =>
+      void store.outputs.loadingUserThreads
+        .getOrCreate(queryKey)
+        .waitUntilLoaded()
+
     // NOTE: Deliberately *not* using a dependency array here!
     //
     // It is important to call waitUntil on *every* render.
@@ -945,17 +934,8 @@ function useUserThreads_experimental<M extends BaseMetadata>(
     };
   }, [poller]);
 
-  const getter = useCallback(
-    () => store.getUserThreadsLoadingState(options.query),
-    [store, options.query]
-  );
-
-  return useSyncExternalStoreWithSelector(
-    store.subscribe,
-    getter,
-    getter,
-    identity,
-    shallow2 // NOTE: Using 2-level-deep shallow check here, because the result of selectThreads() is not stable!
+  return useSignal(
+    store.outputs.loadingUserThreads.getOrCreate(queryKey).signal
   );
 }
 
@@ -975,17 +955,13 @@ function useUserThreads_experimental<M extends BaseMetadata>(
  * The final API for that is still TBD.
  */
 function useUserThreadsSuspense_experimental<M extends BaseMetadata>(
-  options: UseUserThreadsOptions<M> = {
-    query: {
-      metadata: {},
-    },
-  }
+  options: UseUserThreadsOptions<M> = {}
 ): ThreadsAsyncSuccess<M> {
   const client = useClient();
-
   const { store } = getLiveblocksExtrasForClient<M>(client);
+  const queryKey = makeUserThreadsQueryKey(options.query);
 
-  use(store.waitUntilUserThreadsLoaded(options.query));
+  use(store.outputs.loadingUserThreads.getOrCreate(queryKey).waitUntilLoaded());
 
   const result = useUserThreads_experimental(options);
   assert(!result.error, "Did not expect error");
@@ -1218,10 +1194,10 @@ function useSyncStatusImmediate_withClient(client: OpaqueClient): SyncStatus {
 
 function useSyncStatusSmooth_withClient(client: OpaqueClient): SyncStatus {
   const getter = client.getSyncStatus;
-  const [status, setStatus] = React.useState(getter);
+  const [status, setStatus] = useState(getter);
   const oldStatus = useLatest(getter());
 
-  React.useEffect(() => {
+  useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>;
     const unsub = client.events.syncStatus.subscribe(() => {
       const newStatus = getter();

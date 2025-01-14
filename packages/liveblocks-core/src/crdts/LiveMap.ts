@@ -42,14 +42,12 @@ export class LiveMap<
   TKey extends string,
   TValue extends Lson,
 > extends AbstractCrdt {
-  /** @internal */
-  private _map: Map<TKey, LiveNode>;
-  /** @internal */
-  private unacknowledgedSet: Map<TKey, string>;
+  #map: Map<TKey, LiveNode>;
+  #unacknowledgedSet: Map<TKey, string>;
 
   constructor(entries?: readonly (readonly [TKey, TValue])[] | undefined) {
     super();
-    this.unacknowledgedSet = new Map<TKey, string>();
+    this.#unacknowledgedSet = new Map<TKey, string>();
 
     if (entries) {
       const mappedEntries: [TKey, LiveNode][] = [];
@@ -58,15 +56,13 @@ export class LiveMap<
         node._setParentLink(this, key);
         mappedEntries.push([key, node]);
       }
-      this._map = new Map(mappedEntries);
+      this.#map = new Map(mappedEntries);
     } else {
-      this._map = new Map();
+      this.#map = new Map();
     }
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   _toOps(parentId: string, parentKey: string, pool?: ManagedPool): CreateOp[] {
     if (this._id === undefined) {
       throw new Error("Cannot serialize item is not attached");
@@ -83,16 +79,14 @@ export class LiveMap<
 
     ops.push(op);
 
-    for (const [key, value] of this._map) {
+    for (const [key, value] of this.#map) {
       ops.push(...value._toOps(this._id, key, pool));
     }
 
     return ops;
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   static _deserialize(
     [id, _item]: IdTuple<SerializedMap>,
     parentToChildren: ParentToChildNodeMap,
@@ -109,29 +103,25 @@ export class LiveMap<
     for (const [id, crdt] of children) {
       const child = deserialize([id, crdt], parentToChildren, pool);
       child._setParentLink(map, crdt.parentKey);
-      map._map.set(crdt.parentKey, child);
+      map.#map.set(crdt.parentKey, child);
       map.invalidate();
     }
 
     return map;
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   _attach(id: string, pool: ManagedPool): void {
     super._attach(id, pool);
 
-    for (const [_key, value] of this._map) {
+    for (const [_key, value] of this.#map) {
       if (isLiveNode(value)) {
         value._attach(pool.generateId(), pool);
       }
     }
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   _attachChild(op: CreateOp, source: OpSource): ApplyResult {
     if (this._pool === undefined) {
       throw new Error("Can't attach child if managed pool is not present");
@@ -149,10 +139,10 @@ export class LiveMap<
     }
 
     if (source === OpSource.ACK) {
-      const lastUpdateOpId = this.unacknowledgedSet.get(key);
+      const lastUpdateOpId = this.#unacknowledgedSet.get(key);
       if (lastUpdateOpId === opId) {
         // Acknowlegment from local operation
-        this.unacknowledgedSet.delete(key);
+        this.#unacknowledgedSet.delete(key);
         return { modified: false };
       } else if (lastUpdateOpId !== undefined) {
         // Another local set has overriden the value, so we do nothing
@@ -162,10 +152,10 @@ export class LiveMap<
       // If a remote operation set an item,
       // delete the unacknowledgedSet associated to the key
       // to make sure any future ack can override it
-      this.unacknowledgedSet.delete(key);
+      this.#unacknowledgedSet.delete(key);
     }
 
-    const previousValue = this._map.get(key);
+    const previousValue = this.#map.get(key);
     let reverse: Op[];
     if (previousValue) {
       const thisId = nn(this._id);
@@ -177,7 +167,7 @@ export class LiveMap<
 
     child._setParentLink(this, key);
     child._attach(id, this._pool);
-    this._map.set(key, child);
+    this.#map.set(key, child);
     this.invalidate();
 
     return {
@@ -190,28 +180,24 @@ export class LiveMap<
     };
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   _detach(): void {
     super._detach();
 
-    for (const item of this._map.values()) {
+    for (const item of this.#map.values()) {
       item._detach();
     }
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   _detachChild(child: LiveNode): ApplyResult {
     const id = nn(this._id);
     const parentKey = nn(child._parentKey);
     const reverse = child._toOps(id, parentKey, this._pool);
 
-    for (const [key, value] of this._map) {
+    for (const [key, value] of this.#map) {
       if (value === child) {
-        this._map.delete(key);
+        this.#map.delete(key);
         this.invalidate();
       }
     }
@@ -227,9 +213,7 @@ export class LiveMap<
     return { modified: storageUpdate, reverse };
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   _serialize(): SerializedMap {
     if (this.parent.type !== "HasParent") {
       throw new Error("Cannot serialize LiveMap if parent is missing");
@@ -248,7 +232,7 @@ export class LiveMap<
    * @returns The element associated with the specified key, or undefined if the key can't be found in the LiveMap.
    */
   get(key: TKey): TValue | undefined {
-    const value = this._map.get(key);
+    const value = this.#map.get(key);
     if (value === undefined) {
       return undefined;
     }
@@ -264,7 +248,7 @@ export class LiveMap<
    */
   set(key: TKey, value: TValue): void {
     this._pool?.assertStorageIsWritable();
-    const oldValue = this._map.get(key);
+    const oldValue = this.#map.get(key);
 
     if (oldValue) {
       oldValue._detach();
@@ -273,7 +257,7 @@ export class LiveMap<
     const item = lsonToLiveNode(value);
     item._setParentLink(this, key);
 
-    this._map.set(key, item);
+    this.#map.set(key, item);
     this.invalidate();
 
     if (this._pool && this._id) {
@@ -289,7 +273,7 @@ export class LiveMap<
 
       const ops = item._toOps(this._id, key, this._pool);
 
-      this.unacknowledgedSet.set(key, nn(ops[0].opId));
+      this.#unacknowledgedSet.set(key, nn(ops[0].opId));
 
       this._pool.dispatch(
         item._toOps(this._id, key, this._pool),
@@ -305,7 +289,7 @@ export class LiveMap<
    * Returns the number of elements in the LiveMap.
    */
   get size(): number {
-    return this._map.size;
+    return this.#map.size;
   }
 
   /**
@@ -313,7 +297,7 @@ export class LiveMap<
    * @param key The key of the element to test for presence.
    */
   has(key: TKey): boolean {
-    return this._map.has(key);
+    return this.#map.has(key);
   }
 
   /**
@@ -323,14 +307,14 @@ export class LiveMap<
    */
   delete(key: TKey): boolean {
     this._pool?.assertStorageIsWritable();
-    const item = this._map.get(key);
+    const item = this.#map.get(key);
 
     if (item === undefined) {
       return false;
     }
 
     item._detach();
-    this._map.delete(key);
+    this.#map.delete(key);
     this.invalidate();
 
     if (this._pool && item._id) {
@@ -361,7 +345,7 @@ export class LiveMap<
    * Returns a new Iterator object that contains the [key, value] pairs for each element.
    */
   entries(): IterableIterator<[TKey, TValue]> {
-    const innerIterator = this._map.entries();
+    const innerIterator = this.#map.entries();
 
     return {
       [Symbol.iterator]() {
@@ -401,14 +385,14 @@ export class LiveMap<
    * Returns a new Iterator object that contains the keys for each element.
    */
   keys(): IterableIterator<TKey> {
-    return this._map.keys();
+    return this.#map.keys();
   }
 
   /**
    * Returns a new Iterator object that contains the values for each element.
    */
   values(): IterableIterator<TValue> {
-    const innerIterator = this._map.values();
+    const innerIterator = this.#map.values();
 
     return {
       [Symbol.iterator]() {
@@ -451,7 +435,7 @@ export class LiveMap<
       type: "LiveMap",
       id: this._id ?? nanoid(),
       key,
-      payload: Array.from(this._map.entries()).map(([key, val]) =>
+      payload: Array.from(this.#map.entries()).map(([key, val]) =>
         val.toTreeNode(key)
       ),
     };
@@ -467,7 +451,7 @@ export class LiveMap<
   /** @internal */
   _toImmutable(): ReadonlyMap<TKey, ToImmutable<TValue>> {
     const result: Map<TKey, ToImmutable<TValue>> = new Map();
-    for (const [key, value] of this._map) {
+    for (const [key, value] of this.#map) {
       result.set(key, value.toImmutable() as ToImmutable<TValue>);
     }
     return freeze(result);
@@ -475,7 +459,7 @@ export class LiveMap<
 
   clone(): LiveMap<TKey, TValue> {
     return new LiveMap(
-      Array.from(this._map).map(([key, node]) => [key, node.clone() as TValue])
+      Array.from(this.#map).map(([key, node]) => [key, node.clone() as TValue])
     );
   }
 }

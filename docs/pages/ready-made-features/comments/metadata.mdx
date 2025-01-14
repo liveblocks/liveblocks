@@ -1,0 +1,174 @@
+---
+meta:
+  title: "Metadata"
+  parentTitle: "Comments"
+  description: "Add custom metadata to threads"
+---
+
+In Comments, each thread can be given custom metadata. This is helpful for
+integrating Comments into various applications, for example it can be used to
+store:
+
+- The priority, status, or category of a thread.
+- Coordinates or timestamps related to the thread.
+- Quoted text in a text editor.
+
+## Valid metadata
+
+You can store any `string`, `boolean`, or `number` in thread metadata, for
+example:
+
+```ts
+metadata: {
+  priority: "URGENT",
+  pinned: false,
+  timestamp: 1703073188013,
+}
+```
+
+Setting a property to `null` will remove it.
+
+```ts
+metadata: {
+  timestamp: null,
+}
+```
+
+You can store up to 50 metadata properties per thread, and each property can be
+4000 characters long.
+
+## Setting metadata
+
+Metadata can be set using the default components, React hooks, or by editing
+thread using the REST APIs. But before making any changes, it’s recommended to
+set your metadata type in your config file.
+
+```ts file="liveblocks.config.ts"
+declare global {
+  interface Liveblocks {
+    // +++
+    ThreadMetadata: {
+      priority: string;
+      pinned: boolean;
+      timestamp: number;
+    };
+    // +++
+
+    // ...
+  }
+}
+```
+
+Learn more about
+[typing your data](/docs/api-reference/liveblocks-react#Typing-your-data).
+
+### Composer component
+
+The [`<Composer />`](/docs/api-reference/liveblocks-react-ui#Composer) component
+is used to create threads and comments, and by default it’ll create a new
+thread, with optional metadata, when its form is submitted.
+
+<Figure>
+  <Image
+    src="/assets/comments/composer.png"
+    alt="Composer"
+    width={768}
+    height={446}
+  />
+</Figure>
+
+When using it to create a thread, you can
+[pass custom metadata](/docs/api-reference/liveblocks-react-ui#Adding-thread-metadata),
+which will be attached to the thread.
+
+```tsx
+import { Composer } from "@liveblocks/react-ui";
+
+// Creates a new thread with custom metadata
+function Component() {
+  return (
+    <Composer
+      // +++
+      metadata={{
+        // Custom metadata here
+        priority: "URGENT",
+        pinned: false,
+        timestamp: 1703073188013,
+      }}
+      // +++
+    />
+  );
+}
+```
+
+### Mutation hooks
+
+Two [mutation hooks](/docs/ready-made-features/comments/hooks#mutation-hooks)
+allow you to edit thread metadata:
+[`useEditThreadMetadata`](/docs/api-reference/liveblocks-react#useEditThreadMetadata)
+and
+[`useCreateThread`](http://localhost:3001/docs/api-reference/liveblocks-react#useCreateThread).
+Here’s one way to create a button that sets the `pinned` metadata property to
+`true`.
+
+```tsx highlight="5,10-13"
+import { useEditThreadMetadata } from "../liveblocks.config";
+
+// Button that sets `pinned` metadata to `true`
+function Component() {
+  const editThreadMetadata = useEditThreadMetadata();
+
+  return (
+    <button
+      onClick={() =>
+        editThreadMetadata({
+          threadId: "th_d75sF3...",
+          metadata: { pinned: true },
+        })
+      }
+    >
+      Pin thread
+    </button>
+  );
+}
+```
+
+These hooks are exported from your config file and provide full typing.
+
+### REST APIs
+
+It’s possible to modify metadata from our REST APIs using the
+[`@liveblocks/node`](/docs/api-reference/liveblocks-node) package. Here’s an
+example using
+[`liveblocks.editThreadMetadata`](/docs/api-reference/liveblocks-node#post-rooms-roomId-threads-threadId-metadata).
+
+```ts highlight="12-14"
+import { Liveblocks } from "@liveblocks/node";
+
+// Create a Node.js client
+const liveblocks = new Liveblocks({ secret: "{{SECRET_KEY}}" });
+
+// Edit a thread's `priority` metadata, passing the user ID that made the change
+await liveblocks.editThreadMetadata({
+  roomId: "my-room-id",
+  threadId: "th_d75sF3...",
+
+  data: {
+    metadata: {
+      priority: "IMPORTANT",
+    },
+    userId: "florent@example.com",
+  },
+});
+```
+
+The same result can also be achieved directly through our
+[edit thread metadata](/docs/api-reference/rest-api-endpoints#post-rooms-roomId-threads-threadId-metadata)
+REST API.
+
+```bash
+curl -X POST https://api.liveblocks.io/v2/rooms/my-room-id/threads/th_d75sF3.../metadata \
+  -H "Authorization: Bearer YOUR_SECRET_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"metadata": {"priority": "IMPORTANT"}, "userId": "florent@example.com"}'
+```

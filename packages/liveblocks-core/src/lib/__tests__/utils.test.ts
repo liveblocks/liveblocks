@@ -1,11 +1,11 @@
 import * as fc from "fast-check";
 
+import { isPlainObject } from "../guards";
 import {
   b64decode,
   compact,
   compactObject,
   entries,
-  isPlainObject,
   keys,
   mapValues,
   remove,

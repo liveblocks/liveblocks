@@ -1,0 +1,68 @@
+---
+meta:
+  title: "Styling and customization"
+  parentTitle: "Notifications"
+  description: "CSS variables, dark mode, and more"
+---
+
+Styling Notifications
+[default components](/docs/ready-made-features/notifications/default-components)
+is enabled through a range of means, such as CSS variables, class names, and
+more.
+
+## Default components
+
+To add the default components’ theme, import the
+[default styles](/docs/api-reference/liveblocks-react-ui#Default-styles) CSS
+file.
+
+```ts
+import "@liveblocks/react-ui/styles.css";
+```
+
+You can also import one of two CSS files to enable
+[dark mode](/docs/api-reference/liveblocks-react-ui#Dark-mode), depending on how
+you’d like to enable it.
+
+```ts
+// Dark mode using the system theme with `prefers-color-scheme`
+import "@liveblocks/react-ui/styles/dark/media-query.css";
+```
+
+```ts
+// Dark mode using `className="dark"`, `data-theme="dark"`, or `data-dark="true"`
+import "@liveblocks/react-ui/styles/dark/attributes.css";
+```
+
+### CSS variables
+
+A number of
+[CSS variables](/docs/api-reference/liveblocks-react-ui#CSS-variables) can be
+used to customize colors, spacing, and more. This is our recommended path for
+styling the default components, as you can quickly and easily modify all
+components with just a few variables.
+
+```css
+/* Styles all default components */
+.lb-root {
+  --lb-accent: purple;
+  --lb-spacing: 1em;
+  --lb-radius: 0;
+}
+```
+
+### Class names
+
+Should you need deeper customization,
+[class names](/docs/api-reference/liveblocks-react-ui#Class-names) can be
+styled, some of which provide contextual data attributes.
+
+```css
+.lb-notification {
+  /* Customise notification */
+}
+
+.lb-avatar[data-loading] {
+  /* Customise avatar loading state */
+}
+```

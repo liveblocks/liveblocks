@@ -25,7 +25,7 @@ import {
 } from "msw";
 import { setupServer } from "msw/node";
 import type { ReactNode } from "react";
-import React, { Suspense } from "react";
+import { createContext, Suspense, useContext, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 
 import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
@@ -466,6 +466,7 @@ describe("useThreads", () => {
     }
 
     {
+      // Test 3
       const { result, unmount } = renderHook(
         () =>
           useThreads({
@@ -478,7 +479,16 @@ describe("useThreads", () => {
         }
       );
 
-      expect(result.current).toEqual({ isLoading: true });
+      expect(result.current).toEqual(
+        //
+        // NOTE! This query is not loading initially! This is because we
+        // already queried for this combination of queries in Test 1, because
+        //   { metadata: { color: "red", pinned: true } }
+        // is the same query as
+        //   { metadata: { pinned: true, color: "red" } }
+        //
+        expect.objectContaining({ isLoading: false })
+      );
 
       await waitFor(() =>
         expect(result.current).toEqual({
@@ -1071,12 +1081,12 @@ describe("useThreads", () => {
       room: { RoomProvider, useThreads },
     } = createContextsForTest();
 
-    const RoomIdDispatchContext = React.createContext<
+    const RoomIdDispatchContext = createContext<
       ((value: string) => void) | null
     >(null);
 
     const Wrapper = ({ children }: { children: ReactNode }) => {
-      const [roomId, setRoomId] = React.useState(room1Id);
+      const [roomId, setRoomId] = useState(room1Id);
 
       return (
         <RoomIdDispatchContext.Provider value={setRoomId}>
@@ -1086,7 +1096,7 @@ describe("useThreads", () => {
     };
 
     const useThreadsContainer = () => {
-      const setRoomId = React.useContext(RoomIdDispatchContext);
+      const setRoomId = useContext(RoomIdDispatchContext);
       const state = useThreads();
       return { state, setRoomId };
     };
@@ -1453,11 +1463,9 @@ describe("useThreads", () => {
       umbrellaStore,
     } = createContextsForTest();
 
-    // @ts-expect-error Accessing a private field here directly
-    const db = umbrellaStore._rawThreadsDB;
+    const db = umbrellaStore.threads;
     db.upsert(thread1);
     db.upsert(thread2WithDeletedAt);
-    umbrellaStore.force_set((state) => ({ ...state }));
 
     const { result, unmount } = renderHook(
       () => useThreads({ query: { metadata: {} } }),

@@ -3,7 +3,6 @@ import { nanoid, Permission } from "@liveblocks/core";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { addMinutes } from "date-fns";
 import { setupServer } from "msw/node";
-import React from "react";
 
 import {
   dummyCommentData,
@@ -196,7 +195,8 @@ describe("useCreateComment", () => {
           version: 1,
           content: [{ type: "paragraph", children: [{ text: "Hello" }] }],
         },
-    }));
+      })
+    );
 
     expect(result.current.subscription).toEqual({
       status: "subscribed",

@@ -1,6 +1,6 @@
 import { useUser } from "@liveblocks/react";
 import type { HTMLAttributes } from "react";
-import React, { forwardRef } from "react";
+import { forwardRef } from "react";
 
 import { classNames } from "../classnames";
 
