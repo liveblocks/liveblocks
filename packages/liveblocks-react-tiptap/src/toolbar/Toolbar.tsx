@@ -1,4 +1,5 @@
 import {
+  BlockquoteIcon,
   BoldIcon,
   Button,
   CheckIcon,
@@ -8,6 +9,8 @@ import {
   H2Icon,
   H3Icon,
   ItalicIcon,
+  ListOrderedIcon,
+  ListUnorderedIcon,
   RedoIcon,
   SelectButton,
   ShortcutTooltip,
@@ -199,6 +202,7 @@ function createDefaultBlockSelectorItems(
     "toggleBulletList" in editor.commands
       ? {
           name: "Bullet list",
+          icon: <ListUnorderedIcon />,
           isActive: (editor) => editor.isActive("bulletList"),
           setActive: (editor) =>
             (
@@ -214,7 +218,7 @@ function createDefaultBlockSelectorItems(
     "toggleOrderedList" in editor.commands
       ? {
           name: "Numbered list",
-
+          icon: <ListOrderedIcon />,
           isActive: (editor) => editor.isActive("orderedList"),
           setActive: (editor) =>
             (
@@ -230,6 +234,7 @@ function createDefaultBlockSelectorItems(
     "toggleBlockquote" in editor.commands
       ? {
           name: "Blockquote",
+          icon: <BlockquoteIcon />,
           isActive: (editor) => editor.isActive("blockquote"),
           setActive: (editor) =>
             (

@@ -4,6 +4,7 @@
 
 export {
   AttachmentIcon as Attachment,
+  BlockquoteIcon as Blockquote,
   BoldIcon as Bold,
   CheckIcon as Check,
   CodeIcon as Code,
@@ -16,6 +17,8 @@ export {
   H3Icon as H3,
   ItalicIcon as Italic,
   LengthenIcon as Lengthen,
+  ListOrderedIcon as ListOrdered,
+  ListUnorderedIcon as ListUnordered,
   MentionIcon as Mention,
   QuestionMarkIcon as QuestionMark,
   RedoIcon as Redo,

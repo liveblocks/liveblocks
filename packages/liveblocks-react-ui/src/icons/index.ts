@@ -1,6 +1,7 @@
 export { ArrowDownIcon } from "./ArrowDown";
 export { ArrowUpIcon } from "./ArrowUp";
 export { AttachmentIcon } from "./Attachment";
+export { BlockquoteIcon } from "./Blockquote";
 export { BoldIcon } from "./Bold";
 export { CheckIcon } from "./Check";
 export { ChevronDownIcon } from "./ChevronDown";
@@ -20,6 +21,8 @@ export { H2Icon } from "./H2";
 export { H3Icon } from "./H3";
 export { ItalicIcon } from "./Italic";
 export { LengthenIcon } from "./Lengthen";
+export { ListOrderedIcon } from "./ListOrdered";
+export { ListUnorderedIcon } from "./ListUnordered";
 export { MentionIcon } from "./Mention";
 export { QuestionMarkIcon } from "./QuestionMark";
 export { RedoIcon } from "./Redo";

@@ -7,6 +7,7 @@ import {
 import { $setBlocksType } from "@lexical/selection";
 import { mergeRegister } from "@lexical/utils";
 import {
+  BlockquoteIcon,
   BoldIcon,
   Button,
   CheckIcon,
@@ -392,6 +393,7 @@ function createDefaultBlockSelectorItems(): ToolbarBlockSelectorItem[] {
     },
     {
       name: "Blockquote",
+      icon: <BlockquoteIcon />,
       isActive: (element) => element?.getType() === "quote",
       setActive: () =>
         $setBlocksType($getSelection(), () => $createQuoteNode()),
