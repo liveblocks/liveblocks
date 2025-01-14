@@ -13,10 +13,14 @@ import {
   ChevronDownIcon,
   CodeIcon,
   CommentIcon,
+  H1Icon,
+  H2Icon,
+  H3Icon,
   ItalicIcon,
   RedoIcon,
   ShortcutTooltip,
   StrikethroughIcon,
+  TextIcon,
   TooltipProvider,
   UnderlineIcon,
   UndoIcon,
@@ -89,10 +93,10 @@ type ToolbarSeparatorProps = ComponentProps<"div">;
 
 interface ToolbarBlockSelectorItem {
   name: string;
-  isActive: (
-    selectedBlockElement: LexicalNode | null,
-    editor: LexicalEditor
-  ) => boolean;
+  icon?: ReactNode;
+  isActive:
+    | ((element: LexicalNode | null, editor: LexicalEditor) => boolean)
+    | "default";
   setActive: (editor: LexicalEditor) => void;
 }
 
@@ -331,10 +335,18 @@ function useRerender() {
 function createDefaultBlockSelectorItems(): ToolbarBlockSelectorItem[] {
   const items: (ToolbarBlockSelectorItem | null)[] = [
     {
+      name: "Text",
+      icon: <TextIcon />,
+      isActive: "default",
+      setActive: () =>
+        $setBlocksType($getSelection(), () => $createParagraphNode()),
+    },
+    {
       name: "Heading 1",
-      isActive: (selectedBlock) => {
-        if ($isHeadingNode(selectedBlock)) {
-          const tag = selectedBlock.getTag();
+      icon: <H1Icon />,
+      isActive: (element) => {
+        if ($isHeadingNode(element)) {
+          const tag = element.getTag();
 
           return tag === "h1";
         } else {
@@ -346,9 +358,10 @@ function createDefaultBlockSelectorItems(): ToolbarBlockSelectorItem[] {
     },
     {
       name: "Heading 2",
-      isActive: (selectedBlock) => {
-        if ($isHeadingNode(selectedBlock)) {
-          const tag = selectedBlock.getTag();
+      icon: <H2Icon />,
+      isActive: (element) => {
+        if ($isHeadingNode(element)) {
+          const tag = element.getTag();
 
           return tag === "h2";
         } else {
@@ -360,9 +373,10 @@ function createDefaultBlockSelectorItems(): ToolbarBlockSelectorItem[] {
     },
     {
       name: "Heading 3",
-      isActive: (selectedBlock) => {
-        if ($isHeadingNode(selectedBlock)) {
-          const tag = selectedBlock.getTag();
+      icon: <H3Icon />,
+      isActive: (element) => {
+        if ($isHeadingNode(element)) {
+          const tag = element.getTag();
 
           return tag === "h3";
         } else {
@@ -374,7 +388,7 @@ function createDefaultBlockSelectorItems(): ToolbarBlockSelectorItem[] {
     },
     {
       name: "Blockquote",
-      isActive: (selectedBlock) => selectedBlock?.getType() === "quote",
+      isActive: (element) => element?.getType() === "quote",
       setActive: () =>
         $setBlocksType($getSelection(), () => $createQuoteNode()),
     },
@@ -383,13 +397,6 @@ function createDefaultBlockSelectorItems(): ToolbarBlockSelectorItem[] {
   return items.filter(Boolean) as ToolbarBlockSelectorItem[];
 }
 
-const blockSelectorTextItem: ToolbarBlockSelectorItem = {
-  name: "Text",
-  isActive: () => false,
-  setActive: () =>
-    $setBlocksType($getSelection(), () => $createParagraphNode()),
-};
-
 const ToolbarBlockSelector = forwardRef<
   HTMLButtonElement,
   ToolbarBlockSelectorProps
@@ -397,19 +404,24 @@ const ToolbarBlockSelector = forwardRef<
   const floatingToolbarContext = useContext(FloatingToolbarContext);
   const closeFloatingToolbar = floatingToolbarContext?.close;
   const [editor] = useLexicalComposerContext();
-  const selectedBlockElement = getSelectedBlockElement(editor);
-  const resolvedItems = useMemo(() => {
-    const resolvedItems = items ?? createDefaultBlockSelectorItems();
-    return [blockSelectorTextItem, ...resolvedItems];
-  }, [items]);
-
-  const activeItem = useMemo(
-    () =>
-      resolvedItems.find((item) =>
-        item.isActive(selectedBlockElement, editor)
-      ) ?? blockSelectorTextItem,
-    [selectedBlockElement, editor, resolvedItems]
+  const element = getSelectedBlockElement(editor);
+  const resolvedItems = useMemo(
+    () => items ?? createDefaultBlockSelectorItems(),
+    [items]
   );
+  let defaultItem: ToolbarBlockSelectorItem | undefined;
+  let activeItem = resolvedItems.find((item) => {
+    if (item.isActive === "default") {
+      defaultItem = item;
+      return false;
+    }
+
+    return item.isActive(element, editor);
+  });
+
+  if (!activeItem) {
+    activeItem = defaultItem;
+  }
 
   const handleItemChange = (name: string) => {
     const item = resolvedItems.find((item) => item.name === name);
@@ -441,7 +453,7 @@ const ToolbarBlockSelector = forwardRef<
 
   return (
     <SelectPrimitive.Root
-      value={activeItem.name}
+      value={activeItem?.name}
       onValueChange={handleItemChange}
     >
       <ShortcutTooltip content="Turn into…">
@@ -452,7 +464,7 @@ const ToolbarBlockSelector = forwardRef<
           onKeyDown={handleKeyDown}
         >
           <Button type="button" variant="toolbar">
-            <SelectPrimitive.Value>{activeItem.name}</SelectPrimitive.Value>
+            {activeItem?.name ?? "Turn into…"}
             <SelectPrimitive.Icon className="lb-dropdown-chevron">
               <ChevronDownIcon />
             </SelectPrimitive.Icon>
@@ -473,12 +485,17 @@ const ToolbarBlockSelector = forwardRef<
                 value={item.name}
                 className="lb-dropdown-item"
               >
+                {item.icon ? (
+                  <span className="lb-dropdown-item-icon lb-icon-container">
+                    {item.icon}
+                  </span>
+                ) : null}
                 <span className="lb-dropdown-item-label">
                   <SelectPrimitive.ItemText>
                     {item.name}
                   </SelectPrimitive.ItemText>
                 </span>
-                {item.name === activeItem.name ? (
+                {item.name === activeItem?.name ? (
                   <span className="lb-dropdown-item-accessory lb-icon-container">
                     <CheckIcon />
                   </span>
