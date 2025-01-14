@@ -1217,10 +1217,10 @@ export class UmbrellaStore<M extends BaseMetadata> {
               return result;
             }
 
-            return {
-              isLoading: false,
-              settings: nn(this.channelNotificationSettings.signal.get()),
-            };
+            return ASYNC_OK(
+              "settings",
+              nn(this.channelNotificationSettings.signal.get())
+            );
           },
           shallow
         ),
