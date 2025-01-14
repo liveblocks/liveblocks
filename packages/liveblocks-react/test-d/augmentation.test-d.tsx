@@ -290,6 +290,20 @@ declare global {
     expectType<string>(err.message);
     expectType<string | undefined>(err.stack);
     expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(err.code);
+    expectAssignable<
+      | "ROOM_CONNECTION_ERROR"
+      | `${"CREATE" | "EDIT" | "UPDATE" | "DELETE" | "MARK" | "ADD" | "REMOVE"}${"" | "_ALL"}_${"ROOM" | "COMMENT" | "THREAD" | "THREAD_METADATA" | "REACTION" | "INBOX_NOTIFICATION" | "NOTIFICATION_SETTINGS"}${"" | "S"}${"" | "_AS_RESOLVED" | "_AS_READ" | "_AS_UNRESOLVED"}_ERROR`
+    >(err.context.type);
+    if (err.context.type === "ROOM_CONNECTION_ERROR") {
+      expectAssignable<number>(err.context.code);
+      expectAssignable<number | undefined>(err.code);
+    } else if (err.context.type === "CREATE_THREAD_ERROR") {
+      expectType<string>(err.context.roomId);
+      expectType<string>(err.context.threadId);
+      expectType<string>(err.context.commentId);
+    } else {
+      // Not going to list them all...
+    }
   });
 }
 
@@ -299,6 +313,20 @@ declare global {
     expectType<string>(err.message);
     expectType<string | undefined>(err.stack);
     expectType<-1 | 4001 | 4005 | 4006 | (number & {}) | undefined>(err.code);
+    expectAssignable<
+      | "ROOM_CONNECTION_ERROR"
+      | `${"CREATE" | "EDIT" | "UPDATE" | "DELETE" | "MARK" | "ADD" | "REMOVE"}${"" | "_ALL"}_${"ROOM" | "COMMENT" | "THREAD" | "THREAD_METADATA" | "REACTION" | "INBOX_NOTIFICATION" | "NOTIFICATION_SETTINGS"}${"" | "S"}${"" | "_AS_RESOLVED" | "_AS_READ" | "_AS_UNRESOLVED"}_ERROR`
+    >(err.context.type);
+    if (err.context.type === "ROOM_CONNECTION_ERROR") {
+      expectAssignable<number>(err.context.code);
+      expectAssignable<number | undefined>(err.code);
+    } else if (err.context.type === "CREATE_THREAD_ERROR") {
+      expectType<string>(err.context.roomId);
+      expectType<string>(err.context.threadId);
+      expectType<string>(err.context.commentId);
+    } else {
+      // Not going to list them all...
+    }
   });
 }
 
