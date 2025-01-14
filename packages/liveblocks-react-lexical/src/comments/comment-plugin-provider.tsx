@@ -4,12 +4,10 @@ import {
   registerNestedElementResolver,
   removeClassNamesFromElement,
 } from "@lexical/utils";
-import type { LiveblocksError } from "@liveblocks/core";
 import { shallow } from "@liveblocks/core";
-import { useClient, useRoom } from "@liveblocks/react";
+import { useClient, useErrorListener, useRoom } from "@liveblocks/react";
 import {
   getUmbrellaStoreForClient,
-  useLatest,
   useSignal,
 } from "@liveblocks/react/_private";
 import type { BaseSelection, NodeKey, NodeMutation } from "lexical";
@@ -51,15 +49,6 @@ export type ThreadToNodesMap = Map<string, Set<NodeKey>>;
 export const ThreadToNodesContext = createContext<ThreadToNodesMap | null>(
   null
 );
-
-function useCommentsErrorListener(callback: (error: LiveblocksError) => void) {
-  const client = useClient();
-  const savedCallback = useLatest(callback);
-
-  useEffect(() => {
-    return client.events.error.subscribe(savedCallback.current);
-  }, [client, savedCallback]);
-}
 
 export function CommentPluginProvider({ children }: PropsWithChildren) {
   const [editor, context] = useLexicalComposerContext();
@@ -107,7 +96,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     [editor, threadToNodes]
   );
 
-  useCommentsErrorListener((error) => {
+  useErrorListener((error) => {
     // If thread creation fails, we remove the thread id from the associated nodes and unwrap the nodes if they are no longer associated with any threads
     // TODO: String testing works for now, but we should consider using error codes instead later
     if (/Could not create new thread/.test(error.message)) {
