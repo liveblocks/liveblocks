@@ -992,6 +992,102 @@ import { useClient } from "@liveblocks/react/suspense";
 const client = useClient();
 ```
 
+### useErrorListener [@badge=LiveblocksProvider]
+
+<Banner>
+
+**The behavior of this hook changed in 2.16.** Before, this hook required a
+RoomProvider, and would only notify about connection errors for that room. Since
+2.16, this hook no longer requires a RoomProvider, and will notify about any
+Liveblocks errors, and for any room. To keep the old behavior, use the
+[`useRoomErrorListener`][] hook instead.
+
+</Banner>
+
+Listen to potential Liveblocks errors. Examples of errors include room
+connection errors, errors creating or deleting threads, editing thread metadata,
+etc.
+
+```ts file="simple-example.ts" isCollapsable
+import { toast } from "my-preferred-toast-library";
+import { useErrorListener } from "@liveblocks/react/suspense";
+
+useErrorListener((error) => {
+  toast.error(error.message);
+});
+```
+
+```ts file="full-example.ts" isCollapsable isCollapsed
+import { useErrorListener } from "@liveblocks/react/suspense";
+
+useErrorListener((error) => {
+  switch (error.context.type) {
+    // Can happen if you use Presence, Storage, or Yjs
+    case "ROOM_CONNECTION_ERROR": {
+      // const { code } = error.context;
+      // -1   = Authentication error
+      // 4001 = You don't have access to this room
+      // 4005 = Room was full
+      // 4006 = Room ID has changed
+      // Any other error code is from the future
+      break;
+    }
+
+    // Can happen if you use Comments or Notifications
+    case "CREATE_THREAD_ERROR":
+      const { roomId, threadId, commentId, body, metadata } = error.context;
+      break;
+
+    case "DELETE_THREAD_ERROR":
+      const { roomId, threadId } = error.context;
+      break;
+
+    case "EDIT_THREAD_METADATA_ERROR":
+      const { roomId, threadId, metadata } = error.context;
+      break;
+
+    case "MARK_THREAD_AS_RESOLVED_ERROR":
+    case "MARK_THREAD_AS_UNRESOLVED_ERROR":
+      const { roomId, threadId } = error.context;
+      break;
+
+    case "CREATE_COMMENT_ERROR":
+    case "EDIT_COMMENT_ERROR":
+      const { roomId, threadId, commentId, body } = error.context;
+      break;
+
+    case "DELETE_COMMENT_ERROR":
+      const { roomId, threadId, commentId } = error.context;
+      break;
+
+    case "ADD_REACTION_ERROR":
+    case "REMOVE_REACTION_ERROR":
+      const { roomId, threadId, commentId, emoji } = error.context;
+      break;
+
+    case "MARK_INBOX_NOTIFICATION_AS_READ_ERROR":
+      const { inboxNotificationId, roomId } = error.context;
+      break;
+
+    case "DELETE_INBOX_NOTIFICATION_ERROR":
+      const { roomId } = error.context;
+      break;
+
+    case "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR":
+    case "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR":
+      break;
+
+    case "UPDATE_NOTIFICATION_SETTINGS_ERROR":
+      const { roomId } = error.context;
+      break;
+
+    default:
+      // Ignore any error from the future
+      break;
+  }
+});
+```
+
 ## Room
 
 ### RoomProvider
@@ -1332,100 +1428,17 @@ contexts.
 <Header />
 ```
 
-### useErrorListener [@badge=Both]
+### useRoomErrorListener [@badge=RoomProvider]
 
 <Banner>
 
-The behavior of this hook changed in 2.16. Before, this hook needed to be nested
-under a RoomProvider, and would only notify you about connection errors for that
-room. Since 2.16, this hook will notify you about any Liveblocks error (not just
-connection errors), and for any room.
+Before 2.16, this hook was named `useErrorListener`. However, that name is now
+used for a global error listener, notifying you about errors from _any_ room.
 
 </Banner>
 
-Listen to potential Liveblocks errors. Examples of errors include room
-connection errors, errors creating or deleting threads, editing thread metadata,
-etc.
-
-```ts file="simple-example.ts" isCollapsable
-import { useErrorListener } from "@liveblocks/react/suspense";
-
-useErrorListener((error) => {
-  // Simply show a toast or log the error message
-  // toast.toast(error.message);
-});
-```
-
-```ts file="full-example.ts" isCollapsable isCollapsed
-import { useErrorListener } from "@liveblocks/react/suspense";
-
-useErrorListener((error) => {
-  switch (error.context.type) {
-    // Can happen if you use Presence, Storage, or Yjs
-    case "ROOM_CONNECTION_ERROR": {
-      // const { code } = error.context;
-      // -1   = Authentication error
-      // 4001 = You don't have access to this room
-      // 4005 = Room was full
-      // 4006 = Room ID has changed
-      // Any other error code is from the future
-      break;
-    }
-
-    // Can happen if you use Comments or Notifications
-    case "CREATE_THREAD_ERROR":
-      const { roomId, threadId, commentId, body, metadata } = error.context;
-      break;
-
-    case "DELETE_THREAD_ERROR":
-      const { roomId, threadId } = error.context;
-      break;
-
-    case "EDIT_THREAD_METADATA_ERROR":
-      const { roomId, threadId, metadata } = error.context;
-      break;
-
-    case "MARK_THREAD_AS_RESOLVED_ERROR":
-    case "MARK_THREAD_AS_UNRESOLVED_ERROR":
-      const { roomId, threadId } = error.context;
-      break;
-
-    case "CREATE_COMMENT_ERROR":
-    case "EDIT_COMMENT_ERROR":
-      const { roomId, threadId, commentId, body } = error.context;
-      break;
-
-    case "DELETE_COMMENT_ERROR":
-      const { roomId, threadId, commentId } = error.context;
-      break;
-
-    case "ADD_REACTION_ERROR":
-    case "REMOVE_REACTION_ERROR":
-      const { roomId, threadId, commentId, emoji } = error.context;
-      break;
-
-    case "MARK_INBOX_NOTIFICATION_AS_READ_ERROR":
-      const { inboxNotificationId, roomId } = error.context;
-      break;
-
-    case "DELETE_INBOX_NOTIFICATION_ERROR":
-      const { roomId } = error.context;
-      break;
-
-    case "MARK_ALL_INBOX_NOTIFICATIONS_AS_READ_ERROR":
-    case "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR":
-      break;
-
-    case "UPDATE_NOTIFICATION_SETTINGS_ERROR":
-      const { roomId } = error.context;
-      break;
-
-    default:
-      // Ignore any error from the future
-      break;
-  }
-});
-```
+Like [`useErrorListener`][], but scoped to only notify about errors from the
+current room.
 
 ### useStatus [@badge=RoomProvider]
 
@@ -3460,6 +3473,9 @@ And the following timeline:
 [`useinboxnotifications`]:
   /docs/api-reference/liveblocks-react#useInboxNotifications
 [`usesyncstatus`]: /docs/api-reference/liveblocks-react#useSyncStatus
+[`useerrorlistener`]: /docs/api-reference/liveblocks-react#useErrorListener
+[`useroomerrorlistener`]:
+  /docs/api-reference/liveblocks-react#useRoomErrorListener
 [`room`]: /docs/api-reference/liveblocks-client#Room
 [`shallow`]: /docs/api-reference/liveblocks-react#shallow
 [`resolveusers`]: /docs/api-reference/liveblocks-client#resolveUsers
