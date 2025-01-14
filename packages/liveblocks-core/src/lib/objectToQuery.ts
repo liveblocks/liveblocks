@@ -143,9 +143,7 @@ export function objectToQuery(obj: {
   });
 
   return filterList
-    .map(
-      ({ key, operator, value }) => `${key}${operator}${JSON.stringify(value)}`
-    )
+    .map(({ key, operator, value }) => `${key}${operator}${quote(value)}`)
     .join(" ");
 }
 
@@ -192,7 +190,7 @@ const isSimpleValue = (value: unknown) => {
 
 const formatFilterKey = (key: string, nestedKey?: string) => {
   if (nestedKey) {
-    return `${key}[${JSON.stringify(nestedKey)}]`;
+    return `${key}[${quote(nestedKey)}]`;
   }
   return key;
 };
@@ -200,3 +198,13 @@ const formatFilterKey = (key: string, nestedKey?: string) => {
 const isStringEmpty = (value: string) => {
   return !value || value.toString().trim() === "";
 };
+
+/**
+ * Quotes a string using single quotes when possible, or double-quotes when
+ * needed.
+ */
+export function quote(value: unknown): string {
+  return typeof value !== "string" || value.includes("'")
+    ? JSON.stringify(value)
+    : `'${value}'`;
+}
