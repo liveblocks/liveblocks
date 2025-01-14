@@ -100,13 +100,13 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
   // NOTE: Deliberately not using useErrorListener here, because we don't want
   // to trigger a potential DX warning about this being nested under
   // a RoomProvider.
+  // XXX Use useRoomErrorListener() once we restore it
   useEffect(
     () =>
       client.events.error.subscribe((err) => {
         // If thread creation fails, we remove the thread id from the associated nodes and unwrap the nodes if they are no longer associated with any threads
-        // TODO: String testing works for now, but we should consider using error codes instead later
-        if (err.threadId && /Could not create new thread/.test(err.message)) {
-          handleThreadDelete(err.threadId);
+        if (err.context.type === "CREATE_THREAD_ERROR") {
+          handleThreadDelete(err.context.threadId);
         }
       }),
     [client, handleThreadDelete]
