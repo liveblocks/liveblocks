@@ -2176,7 +2176,8 @@ export function createRoom<
             user:
               message.actor < 0
                 ? null
-                : others.find((u) => u.connectionId === message.actor) ?? null,
+                : (others.find((u) => u.connectionId === message.actor) ??
+                  null),
             event: message.event,
           });
           break;
