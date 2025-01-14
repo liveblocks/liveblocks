@@ -29,6 +29,7 @@ import type {
   DU,
   EnterOptions,
   IYjsProvider,
+  LiveblocksError,
   LiveblocksErrorContext,
   OpaqueClient,
   RoomEventMessage,
@@ -367,6 +368,7 @@ function makeRoomContextBundle<
     useOthersListener,
     useLostConnectionListener,
     useEventListener,
+    useRoomErrorListener,
 
     useHistory,
     useUndo,
@@ -424,6 +426,7 @@ function makeRoomContextBundle<
       useOthersListener,
       useLostConnectionListener,
       useEventListener,
+      useRoomErrorListener,
 
       useHistory,
       useUndo,
@@ -949,6 +952,21 @@ function useEventListener<
 
     return room.events.customEvent.subscribe(listener);
   }, [room, savedCallback]);
+}
+
+/**
+ * useRoomErrorListener is like useErrorListener, except that it will only
+ * notify about errors for this room.
+ */
+function useRoomErrorListener(
+  callback: (error: LiveblocksError) => void
+): void {
+  const room = useRoom();
+  useErrorListener((err) => {
+    if (err.roomId === room.id) {
+      callback(err);
+    }
+  });
 }
 
 /**
@@ -2667,6 +2685,13 @@ const _useEditThreadMetadata: TypedBundle["useEditThreadMetadata"] =
 const _useEventListener: TypedBundle["useEventListener"] = useEventListener;
 
 /**
+ * useRoomErrorListener is like useErrorListener, except that it will only
+ * notify about errors for this room.
+ */
+const _useRoomErrorListener: TypedBundle["useRoomErrorListener"] =
+  useRoomErrorListener;
+
+/**
  * Returns the presence of the current user of the current room, and a function to update it.
  * It is different from the setState function returned by the useState hook from
  * You don't need to pass the full presence object to update it.
@@ -3075,7 +3100,6 @@ export {
   useEditRoomComment,
   useEditRoomThreadMetadata,
   _useEditThreadMetadata as useEditThreadMetadata,
-  useErrorListener,
   _useEventListener as useEventListener,
   useHistory,
   useHistoryVersionData,
@@ -3107,6 +3131,7 @@ export {
   useReportTextEditor,
   useResolveMentionSuggestions,
   _useRoom as useRoom,
+  _useRoomErrorListener as useRoomErrorListener,
   useRoomAttachmentUrl,
   _useRoomNotificationSettings as useRoomNotificationSettings,
   _useRoomNotificationSettingsSuspense as useRoomNotificationSettingsSuspense,

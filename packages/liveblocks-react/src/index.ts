@@ -57,6 +57,7 @@ export {
   useRedo,
   useRemoveReaction,
   useRoom,
+  useRoomErrorListener,
   useStatus,
   useStorageRoot,
   useThreadSubscription,
