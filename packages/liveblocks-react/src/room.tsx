@@ -249,7 +249,7 @@ function makeRoomExtrasForClient(client: OpaqueClient) {
 
       // Notification settings
       | `Could not update ${"notification settings"}`,
-    context: LiveblocksErrorContext,
+    context: LiveblocksErrorContext & { roomId: string },
     innerError: Error
   ): void {
     store.optimisticUpdates.remove(optimisticId);
@@ -1836,7 +1836,7 @@ function useMarkRoomThreadAsRead(roomId: string) {
             onMutationFailure(
               optimisticId,
               "Could not mark inbox notification as read",
-              { inboxNotificationId: inboxNotification.id },
+              { roomId, inboxNotificationId: inboxNotification.id },
               err
             );
             return;
