@@ -130,6 +130,11 @@ export interface ToolbarBlockSelectorItem {
   name: string;
 
   /**
+   * Optionally replace the name used as the label of this item by any content.
+   */
+  label?: ReactNode;
+
+  /**
    * An optional icon displayed in this item.
    */
   icon?: ReactNode;
@@ -573,6 +578,7 @@ const ToolbarBlockSelector = forwardRef<
                 key={item.name}
                 value={item.name}
                 className="lb-dropdown-item"
+                data-name={item.name}
               >
                 {item.icon ? (
                   <span className="lb-dropdown-item-icon lb-icon-container">
@@ -580,9 +586,7 @@ const ToolbarBlockSelector = forwardRef<
                   </span>
                 ) : null}
                 <span className="lb-dropdown-item-label">
-                  <SelectPrimitive.ItemText>
-                    {item.name}
-                  </SelectPrimitive.ItemText>
+                  {item.label ?? item.name}
                 </span>
                 {item.name === activeItem?.name ? (
                   <span className="lb-dropdown-item-accessory lb-icon-container">
