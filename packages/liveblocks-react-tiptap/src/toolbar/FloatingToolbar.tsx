@@ -106,11 +106,11 @@ function DefaultFloatingToolbarContent({ editor }: ToolbarSlotProps) {
  *
  * @example
  * <FloatingToolbar editor={editor}>
- *   <FloatingToolbar.BlockSelector />
- *   <FloatingToolbar.Separator />
- *   <FloatingToolbar.SectionInline />
- *   <FloatingToolbar.Separator />
- *   <FloatingToolbar.Button name="Custom action" onClick={() => { ... }} icon={<Icon.QuestionMark />} />
+ *   <Toolbar.BlockSelector />
+ *   <Toolbar.Separator />
+ *   <Toolbar.SectionInline />
+ *   <Toolbar.Separator />
+ *   <Toolbar.Button name="Custom action" onClick={() => { ... }} icon={<Icon.QuestionMark />} />
  * </FloatingToolbar>
  */
 export const FloatingToolbar = Object.assign(
