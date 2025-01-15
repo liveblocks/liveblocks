@@ -354,13 +354,13 @@ export const FloatingToolbar = Object.assign(
         };
 
         editor.view.dom.addEventListener("pointerdown", handlePointerDown);
-        editor.view.dom.addEventListener("pointercancel", handlePointerUp);
-        editor.view.dom.addEventListener("pointerup", handlePointerUp);
+        document.addEventListener("pointercancel", handlePointerUp);
+        document.addEventListener("pointerup", handlePointerUp);
 
         return () => {
           editor.view.dom.removeEventListener("pointerdown", handlePointerDown);
-          editor.view.dom.removeEventListener("pointercancel", handlePointerUp);
-          editor.view.dom.removeEventListener("pointerup", handlePointerUp);
+          document.removeEventListener("pointercancel", handlePointerUp);
+          document.removeEventListener("pointerup", handlePointerUp);
         };
       }, [editor]);
 
