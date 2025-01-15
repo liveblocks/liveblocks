@@ -5,14 +5,16 @@ import { genRoomId, preparePages, waitForJson } from "../utils";
 
 test.describe.configure({ mode: "parallel" });
 
-const TEST_URL = "http://localhost:3007/ydoc/v2encoding?useV2Encoding=true";
+const TEST_URL = "http://localhost:3007/ydoc/text";
 
 test.describe("Yjs - Text", () => {
   let pages: [Page, Page];
 
   test.beforeEach(async ({}, testInfo) => {
     const room = genRoomId(testInfo);
-    pages = await preparePages(`${TEST_URL}?room=${encodeURIComponent(room)}`);
+    pages = await preparePages(
+      `${TEST_URL}?room=${encodeURIComponent(room)}&useV2Encoding=true`
+    );
   });
 
   test.afterEach(() =>
