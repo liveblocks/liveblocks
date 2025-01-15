@@ -7,7 +7,6 @@ import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import {
   FloatingComposer,
   FloatingThreads,
-  FloatingToolbar,
   liveblocksConfig,
   LiveblocksPlugin,
   useIsEditorReady,
@@ -21,6 +20,7 @@ import { LinkNode } from "@lexical/link";
 import { CodeNode } from "@lexical/code";
 import { HorizontalRuleNode } from "@lexical/react/LexicalHorizontalRuleNode";
 import { ImmutableStorage } from "@/liveblocks.config";
+import { EditorFloatingToolbar } from "./EditorFloatingToolbar";
 
 // Wrap your Lexical config with `liveblocksConfig`
 const initialConfig = liveblocksConfig({
@@ -88,7 +88,7 @@ export function Editor({
                   }
                   ErrorBoundary={LexicalErrorBoundary}
                 />
-                <FloatingToolbar />
+                <EditorFloatingToolbar />
               </>
             )}
             <ClientSideSuspense fallback={null}>
