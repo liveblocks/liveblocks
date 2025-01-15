@@ -367,6 +367,12 @@
   }
 }
 
+.lb-dropdown-item:where(:has(.lb-dropdown-item-accessory)) {
+  :where(.lb-dropdown-item-label) {
+    margin-inline-end: calc(0.375 * var(--lb-spacing));
+  }
+}
+
 .lb-dropdown-item-accessory {
   margin-inline-start: auto;
   margin-inline-end: calc(-0.25 * var(--lb-spacing));
