@@ -38,6 +38,7 @@ import { OPEN_FLOATING_COMPOSER_COMMAND } from "../comments/floating-composer";
 import { createDOMRange } from "../create-dom-range";
 import { useIsCommandRegistered } from "../is-command-registered";
 import type { FloatingPosition } from "../types";
+import { useRootElement } from "../use-root-element";
 import { FloatingToolbarContext, FloatingToolbarExternal } from "./shared";
 import {
   applyToolbarSlot,
@@ -136,6 +137,7 @@ export const FloatingToolbar = Object.assign(
       const externalIds = useInitial<Set<string>>(() => new Set());
       const [isPointerDown, setPointerDown] = useState(false);
       const [editor] = useLexicalComposerContext();
+      const root = useRootElement();
       const [isFocused, setFocused] = useState(false);
       const [isManuallyClosed, setManuallyClosed] = useState(false);
       const [hasSelectionRange, setHasSelectionRange] = useState(false);
@@ -152,8 +154,6 @@ export const FloatingToolbar = Object.assign(
 
       // Don't close when the focus moves from the editor to the toolbar
       useEffect(() => {
-        const root = editor.getRootElement();
-
         if (!root) {
           return;
         }
@@ -170,7 +170,7 @@ export const FloatingToolbar = Object.assign(
             return;
           }
 
-          if (event.relatedTarget === editor.getRootElement()) {
+          if (event.relatedTarget === root) {
             return;
           }
 
@@ -194,7 +194,7 @@ export const FloatingToolbar = Object.assign(
           root.removeEventListener("focus", handleFocus);
           root.removeEventListener("blur", handleBlur);
         };
-      }, [editor, externalIds]);
+      }, [root, externalIds]);
 
       const handleFocus = useCallback(
         (event: ReactFocusEvent<HTMLDivElement>) => {
@@ -220,7 +220,7 @@ export const FloatingToolbar = Object.assign(
               return;
             }
 
-            if (event.relatedTarget === editor?.getRootElement()) {
+            if (event.relatedTarget === root) {
               return;
             }
 
@@ -237,7 +237,7 @@ export const FloatingToolbar = Object.assign(
             setFocused(false);
           }
         },
-        [onBlur, editor, externalIds]
+        [onBlur, root, externalIds]
       );
 
       // Delay the opening of the toolbar to avoid flickering issues
@@ -308,18 +308,12 @@ export const FloatingToolbar = Object.assign(
       );
 
       useEffect(() => {
-        if (!editor) {
-          return;
-        }
-
         const handlePointerDown = () => {
           setPointerDown(true);
         };
         const handlePointerUp = () => {
           setPointerDown(false);
         };
-
-        const root = editor.getRootElement();
 
         if (!root) {
           return;
@@ -334,7 +328,7 @@ export const FloatingToolbar = Object.assign(
           document.removeEventListener("pointercancel", handlePointerUp);
           document.removeEventListener("pointerup", handlePointerUp);
         };
-      }, [editor]);
+      }, [root]);
 
       useEffect(() => {
         const unregister = editor.registerUpdateListener(({ tags }) => {
