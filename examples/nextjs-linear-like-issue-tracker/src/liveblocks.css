@@ -1,7 +1,7 @@
 @import "@liveblocks/react-ui/styles.css";
 @import "@liveblocks/react-lexical/styles.css";
 
-.lb-root {
+.lb-root:not(.lb-tooltip) {
   --lb-accent: theme("colors.accent");
   --lb-background: theme("colors.white");
   --lb-foreground: theme("colors.neutral[900]");
