@@ -80,19 +80,19 @@ export interface ToolbarProps extends Omit<ComponentProps<"div">, "children"> {
   after?: ToolbarSlot;
 }
 
-interface ToolbarButtonProps extends ComponentProps<"button"> {
+export interface ToolbarButtonProps extends ComponentProps<"button"> {
   icon?: ReactNode;
   name: string;
   shortcut?: string;
 }
 
-interface ToolbarToggleProps extends ToolbarButtonProps {
+export interface ToolbarToggleProps extends ToolbarButtonProps {
   active: boolean;
 }
 
-type ToolbarSeparatorProps = ComponentProps<"div">;
+export type ToolbarSeparatorProps = ComponentProps<"div">;
 
-interface ToolbarBlockSelectorItem {
+export interface ToolbarBlockSelectorItem {
   name: string;
   icon?: ReactNode;
   isActive:
@@ -101,7 +101,7 @@ interface ToolbarBlockSelectorItem {
   setActive: (editor: LexicalEditor) => void;
 }
 
-interface ToolbarBlockSelectorProps extends ComponentProps<"button"> {
+export interface ToolbarBlockSelectorProps extends ComponentProps<"button"> {
   items?:
     | ToolbarBlockSelectorItem[]
     | ((
@@ -586,10 +586,10 @@ export const Toolbar = Object.assign(
   {
     Button: ToolbarButton,
     Toggle: ToolbarToggle,
+    BlockSelector: ToolbarBlockSelector,
     Separator: ToolbarSeparator,
     SectionHistory: ToolbarSectionHistory,
     SectionInline: ToolbarSectionInline,
     SectionCollaboration: ToolbarSectionCollaboration,
-    BlockSelector: ToolbarBlockSelector,
   }
 );
