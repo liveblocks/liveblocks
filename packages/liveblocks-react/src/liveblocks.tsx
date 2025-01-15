@@ -467,7 +467,7 @@ function useMarkInboxNotificationAsRead_withClient(client: OpaqueClient) {
         },
         (err: Error) => {
           store.optimisticUpdates.remove(optimisticId);
-          // XXX Add unit test for this error
+          // XXX_vincent Add unit test for this error
           client[kInternal].emitError(
             {
               type: "MARK_INBOX_NOTIFICATION_AS_READ_ERROR",
@@ -527,7 +527,7 @@ function useDeleteInboxNotification_withClient(client: OpaqueClient) {
         },
         (err: Error) => {
           store.optimisticUpdates.remove(optimisticId);
-          // XXX Add unit test for this error
+          // XXX_vincent Add unit test for this error
           client[kInternal].emitError(
             { type: "DELETE_INBOX_NOTIFICATION_ERROR", inboxNotificationId },
             err
@@ -555,7 +555,7 @@ function useDeleteAllInboxNotifications_withClient(client: OpaqueClient) {
       },
       (err: Error) => {
         store.optimisticUpdates.remove(optimisticId);
-        // XXX Add unit test for this error
+        // XXX_vincent Add unit test for this error
         client[kInternal].emitError(
           { type: "DELETE_ALL_INBOX_NOTIFICATIONS_ERROR" },
           err
