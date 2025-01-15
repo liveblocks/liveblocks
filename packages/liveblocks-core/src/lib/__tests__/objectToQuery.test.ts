@@ -1,7 +1,7 @@
 import { QueryParser } from "@liveblocks/query-parser";
 import * as fc from "fast-check";
 
-import { objectToQuery } from "../objectToQuery";
+import { objectToQuery, quote } from "../objectToQuery";
 
 describe("objectToQuery", () => {
   it("should convert a simple key/value pair to a query", () => {
@@ -9,7 +9,7 @@ describe("objectToQuery", () => {
       org: "liveblocks:engineering",
     });
 
-    expect(query).toEqual('org:"liveblocks:engineering"');
+    expect(query).toEqual("org:'liveblocks:engineering'");
   });
 
   it("should convert a nested object with operator to a query", () => {
@@ -19,7 +19,7 @@ describe("objectToQuery", () => {
       },
     });
 
-    expect(query).toEqual('org^"liveblocks:"');
+    expect(query).toEqual("org^'liveblocks:'");
   });
 
   it("should convert an indexed field object to a query", () => {
@@ -30,11 +30,12 @@ describe("objectToQuery", () => {
         org: {
           startsWith: "liveblocks:",
         },
+        color: null,
       },
     });
 
     expect(query).toEqual(
-      'metadata["status"]:"open" AND metadata["priority"]:3 AND metadata["org"]^"liveblocks:"'
+      "metadata['status']:'open' metadata['priority']:3 metadata['color']:null metadata['org']^'liveblocks:'"
     );
   });
 
@@ -46,6 +47,7 @@ describe("objectToQuery", () => {
         org: {
           startsWith: "liveblocks:",
         },
+        color: null,
       },
       resolved: true,
       roomId: {
@@ -54,7 +56,7 @@ describe("objectToQuery", () => {
     });
 
     expect(query).toEqual(
-      'resolved:true AND roomId^"engineering:" AND metadata["status"]:"open" AND metadata["priority"]:3 AND metadata["org"]^"liveblocks:"'
+      "resolved:true roomId^'engineering:' metadata['status']:'open' metadata['priority']:3 metadata['color']:null metadata['org']^'liveblocks:'"
     );
   });
 
@@ -62,8 +64,9 @@ describe("objectToQuery", () => {
     "string",
     "string with spaces",
     "string with special characters: !@#$%^&*()",
-    "'string with single quotes'",
     '"string with double quotes"',
+    "'string with single quotes'",
+    "string with 'single' and \"double\" quotes",
   ])("should work with funky string value: %s", (value) => {
     const query = objectToQuery({
       org: value,
@@ -72,10 +75,10 @@ describe("objectToQuery", () => {
       },
     });
 
-    const expectedValue = JSON.stringify(value);
+    const expectedValue = quote(value);
 
     expect(query).toEqual(
-      `org:${expectedValue} AND metadata["org"]:${expectedValue}`
+      `org:${expectedValue} metadata['org']:${expectedValue}`
     );
   });
 
@@ -124,27 +127,29 @@ describe("objectToQuery", () => {
       )
     ));
 
-  it.each(["'string with single quotes'", '"string with double quotes"'])(
-    "should work with funky key: %s",
-    (key) => {
-      const query = objectToQuery({
-        metadata: {
-          [key]: "value",
-        },
-      });
+  it.each([
+    "'string with single quotes'",
+    '"string with double quotes"',
+    '"string with both \'single\' and "double" quotes"',
+    "`strings with \\`tick\\` quotes`",
+  ])("should work with funky key: %s", (key) => {
+    const query = objectToQuery({
+      metadata: {
+        [key]: "value",
+      },
+    });
 
-      expect(query).toEqual(`metadata[${JSON.stringify(key)}]:"value"`);
-    }
-  );
+    expect(query).toEqual(`metadata[${quote(key)}]:'value'`);
+  });
 
   it("should avoid injections", () => {
-    const query = objectToQuery({ foo: '" OR evil:"' });
+    const query1 = objectToQuery({ foo: '" OR evil:"' });
     //                                 ^^^^^^^^^^^^^ Injection attack with double-quoted strings
 
     const query2 = objectToQuery({ foo: "' OR evil:'" });
     //                                  ^^^^^^^^^^^^^ Injection attack with single-quoted strings
 
-    expect(query).toEqual('foo:"\\" OR evil:\\""');
+    expect(query1).toEqual("foo:'\" OR evil:\"'");
     expect(query2).toEqual("foo:\"' OR evil:'\"");
   });
 });

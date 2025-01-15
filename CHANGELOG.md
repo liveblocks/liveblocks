@@ -1,43 +1,6 @@
 ## vNEXT (Not yet published)
 
-Our error listener APIs will now receive more errors in general, including
-errors from using Comments & Notifications. Previously, these would only receive
-room connection errors (e.g. when using Presence, Storage, or Yjs).
-
-For example, now when creation of a thread fails, deletion of a comment fails,
-marking a notification as read fails, etc.
-
-### `@liveblocks/react`
-
-- **Breaking**: Behavior of `useErrorListener()` has changed.
-
-```ts
-// ❌ Before: required a RoomProvider and would only notify about errors for that room
-// ✅ Now: requires a LiveblocksProvider and will notify about errors for any room
-useErrorListener((err: LiveblocksError) => {
-  /* show toast, or notify Sentry, Datadog, etc */
-});
-```
-
-It may make sense to lift the `useErrorListener()` hook up to a higher level in
-your app (above the `RoomProvider`) to make this more explicit.
-
-If you nest the listener underneath a `RoomProvider`, you probably want to use
-the `useRoomErrorListener()` instead.
-
-### `@liveblocks/client`
-
-The error listener APIs will now receive more errors in general, including
-errors from using Comments & Notifications. Previously, these would only receive
-room connection errors (e.g. when using Presence, Storage, or Yjs).
-
-For example, now when creation of a thread fails, deletion of a comment fails,
-marking a notification as read fails, etc, these can be detected via:
-
-```ts
-// 👌 Same as before, but might now also receive errors related to Comments & Notifications
-room.subscribe("error", (err) => { ... });
-```
+COMBINE THE CHANGELOG ENTRIES
 
 ## 2.15.2
 

@@ -622,7 +622,7 @@ describe("useThreads", () => {
     }
 
     {
-      // Test 8
+      // Test 8: explicit-undefined keys should be ignored
       const { result, unmount } = renderHook(
         () =>
           useThreads({
@@ -631,6 +631,39 @@ describe("useThreads", () => {
                 pinned: true,
                 // NOTE: Explicitly-undefined means color must be absent!
                 color: undefined, // = color must be absent
+              },
+            },
+          }),
+        {
+          wrapper: ({ children }) => (
+            <RoomProvider id={roomId}>{children}</RoomProvider>
+          ),
+        }
+      );
+
+      await waitFor(() =>
+        expect(result.current).toEqual({
+          isLoading: false,
+          threads: [bluePinnedThread, redPinnedThread, uncoloredPinnedThread],
+          fetchMore: expect.any(Function),
+          isFetchingMore: false,
+          hasFetchedAll: true,
+          fetchMoreError: undefined,
+        })
+      );
+
+      unmount();
+    }
+
+    {
+      // Test 9: explicitly filtering by absence using `null` value
+      const { result, unmount } = renderHook(
+        () =>
+          useThreads({
+            query: {
+              metadata: {
+                pinned: true,
+                color: null, // Explicitly filtered for absence of color
               },
             },
           }),
@@ -656,15 +689,13 @@ describe("useThreads", () => {
     }
 
     {
-      // Test 8
+      // Test 10: explicitly filtering by absence using `null` value
       const { result, unmount } = renderHook(
         () =>
           useThreads({
             query: {
-              metadata: {
-                // @ts-expect-error - `null` is not a legal value, try to use it anyway
-                color: null,
-              },
+              // Explicitly filtered for absence of color
+              metadata: { color: null },
             },
           }),
         {
@@ -677,10 +708,7 @@ describe("useThreads", () => {
       await waitFor(() =>
         expect(result.current).toEqual({
           isLoading: false,
-          threads: [
-            // Metadata can never legally be `null` (like specified in the
-            // query above), so no thread will ever match
-          ],
+          threads: [uncoloredPinnedThread],
           fetchMore: expect.any(Function),
           isFetchingMore: false,
           hasFetchedAll: true,
