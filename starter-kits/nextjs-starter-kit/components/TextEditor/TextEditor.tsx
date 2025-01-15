@@ -6,7 +6,6 @@ import {
   AnchoredThreads,
   FloatingComposer,
   FloatingThreads,
-  FloatingToolbar,
   useLiveblocksExtension,
 } from "@liveblocks/react-tiptap";
 import { CharacterCount } from "@tiptap/extension-character-count";
@@ -25,7 +24,7 @@ import { CommentIcon } from "@/icons";
 import { DocumentSpinner } from "@/primitives/Spinner";
 import { useIsMobile } from "@/utils";
 import { CustomTaskItem } from "./CustomTaskItem";
-import { StaticToolbar } from "./StaticToolbar";
+import { SelectionToolbar, StaticToolbar } from "./Toolbars";
 import { WordCount } from "./WordCount";
 import styles from "./TextEditor.module.css";
 
@@ -162,7 +161,7 @@ function TiptapEditor() {
         <StaticToolbar editor={editor} />
       </div>
       <div className={styles.editorPanel}>
-        <FloatingToolbar editor={editor} />
+        <SelectionToolbar editor={editor} />
         <div className={styles.editorContainerOffset}>
           <div className={styles.editorContainer}>
             <EditorContent editor={editor} />

@@ -10,11 +10,11 @@
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@liveblocks/client": "v2.16.0-toolbars2",
-    "@liveblocks/node": "v2.16.0-toolbars2",
-    "@liveblocks/react": "v2.16.0-toolbars2",
-    "@liveblocks/react-tiptap": "v2.16.0-toolbars2",
-    "@liveblocks/react-ui": "v2.16.0-toolbars2",
+    "@liveblocks/client": "v2.16.0-toolbars3",
+    "@liveblocks/node": "v2.16.0-toolbars3",
+    "@liveblocks/react": "v2.16.0-toolbars3",
+    "@liveblocks/react-tiptap": "v2.16.0-toolbars3",
+    "@liveblocks/react-ui": "v2.16.0-toolbars3",
     "@radix-ui/react-dialog": "^1.0.2",
     "@radix-ui/react-popover": "^1.0.2",
     "@radix-ui/react-select": "^1.1.1",

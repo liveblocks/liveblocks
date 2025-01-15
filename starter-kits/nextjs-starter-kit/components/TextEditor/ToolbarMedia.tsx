@@ -1,7 +1,7 @@
 import { Toolbar } from "@liveblocks/react-tiptap";
 import { Editor } from "@tiptap/react";
 import { useState } from "react";
-import { CheckboxIcon, CodeBlockIcon, ImageIcon, YouTubeIcon } from "@/icons";
+import { CodeBlockIcon, ImageIcon, YouTubeIcon } from "@/icons";
 import { Button } from "@/primitives/Button";
 import { Input } from "@/primitives/Input";
 import { Popover } from "@/primitives/Popover";
@@ -57,14 +57,6 @@ export function ToolbarMedia({ editor }: Props) {
           disabled={!editor?.can().chain().setImage({ src: "" }).run()}
         />
       </Popover>
-
-      <Toolbar.Toggle
-        name="Task list"
-        icon={<CheckboxIcon style={{ width: "16px" }} />}
-        active={editor?.isActive("taskList") ?? false}
-        onClick={() => editor?.chain().focus().toggleTaskList().run()}
-        disabled={!editor?.can().chain().focus().toggleTaskList().run()}
-      />
     </>
   );
 }

@@ -1,8 +1,9 @@
-import { Toolbar } from "@liveblocks/react-tiptap";
+import { FloatingToolbar, Toolbar } from "@liveblocks/react-tiptap";
 import { Editor } from "@tiptap/react";
 import { ToolbarMedia } from "@/components/TextEditor/ToolbarMedia";
 import { ToolbarInlineAdvanced } from "./TextInlineAdvanced";
 import { ToolbarAlignment } from "./ToolbarAlignment";
+import { ToolbarBlockSelector } from "./ToolbarBlockSelector";
 
 type Props = {
   editor: Editor | null;
@@ -13,9 +14,7 @@ export function StaticToolbar({ editor }: Props) {
     <Toolbar editor={editor}>
       <Toolbar.SectionHistory />
       <Toolbar.Separator />
-      <Toolbar.BlockSelector
-        items={(defaultBlockItems) => [...defaultBlockItems]}
-      />
+      <ToolbarBlockSelector editor={editor} />
       <Toolbar.Separator />
       <Toolbar.SectionInline />
       <ToolbarInlineAdvanced editor={editor} />
@@ -26,5 +25,17 @@ export function StaticToolbar({ editor }: Props) {
       <Toolbar.Separator />
       <Toolbar.SectionCollaboration />
     </Toolbar>
+  );
+}
+
+export function SelectionToolbar({ editor }: Props) {
+  return (
+    <FloatingToolbar editor={editor}>
+      <ToolbarBlockSelector editor={editor} />
+      <Toolbar.Separator />
+      <Toolbar.SectionInline />
+      <Toolbar.Separator />
+      <Toolbar.SectionCollaboration />
+    </FloatingToolbar>
   );
 }
