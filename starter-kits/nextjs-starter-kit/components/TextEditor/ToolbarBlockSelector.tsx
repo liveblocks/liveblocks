@@ -1,6 +1,7 @@
 import { Toolbar } from "@liveblocks/react-tiptap";
 import { Editor } from "@tiptap/react";
 import { CheckboxIcon } from "@/icons";
+import styles from "./Toolbar.module.css";
 
 type Props = {
   editor: Editor | null;
@@ -9,6 +10,7 @@ type Props = {
 export function ToolbarBlockSelector({ editor }: Props) {
   return (
     <Toolbar.BlockSelector
+      className={styles.blockSelector}
       items={(defaultBlockItems) => [
         ...defaultBlockItems,
         {

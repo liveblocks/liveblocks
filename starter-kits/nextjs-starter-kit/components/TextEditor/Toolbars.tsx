@@ -11,7 +11,7 @@ type Props = {
 
 export function StaticToolbar({ editor }: Props) {
   return (
-    <Toolbar editor={editor}>
+    <Toolbar editor={editor} data-toolbar="static">
       <Toolbar.SectionHistory />
       <Toolbar.Separator />
       <ToolbarBlockSelector editor={editor} />
@@ -30,7 +30,7 @@ export function StaticToolbar({ editor }: Props) {
 
 export function SelectionToolbar({ editor }: Props) {
   return (
-    <FloatingToolbar editor={editor}>
+    <FloatingToolbar editor={editor} data-toolbar="selection">
       <ToolbarBlockSelector editor={editor} />
       <Toolbar.Separator />
       <Toolbar.SectionInline />
