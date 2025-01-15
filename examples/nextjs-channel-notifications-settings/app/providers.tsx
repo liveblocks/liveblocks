@@ -1,11 +1,20 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { LiveblocksProvider } from "@liveblocks/react";
 
+const useExampleUserId = (): string | null => {
+  const params = useSearchParams();
+  const userId = params?.get("userId");
+
+  return userId;
+};
+
 export function Providers({ children }: { children?: React.ReactNode }) {
+  const userId = useExampleUserId();
   return (
     <LiveblocksProvider
-      authEndpoint="/api/liveblocks-auth"
+      authEndpoint={`/api/liveblocks-auth${userId ? `?userId=${userId}` : ""}`}
       // XXX
       // @ts-expect-error
       baseUrl="https://dev.dev-liveblocks5948.workers.dev/"

@@ -19,8 +19,17 @@ export async function POST(request: NextRequest) {
     return new NextResponse("Missing LIVEBLOCKS_SECRET_KEY", { status: 403 });
   }
 
-  // Get the current user's unique id from your database
-  const userIndex = Math.floor(Math.random() * USER_INFO.length);
+  const searchParams = request.nextUrl.searchParams;
+  const userId = searchParams.get("userId");
+
+  let userIndex = 0;
+
+  if (userId !== null) {
+    userIndex = parseInt(userId.replace("user-", ""), 10);
+  } else {
+    // Get the current user's unique id from your database
+    userIndex = Math.floor(Math.random() * USER_INFO.length);
+  }
 
   // Create a session for the current user (access token auth)
   const session = liveblocks.prepareSession(`user-${userIndex}`, {
