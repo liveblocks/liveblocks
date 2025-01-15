@@ -1,0 +1,108 @@
+---
+meta:
+  title: "Upgrading to 2.16"
+  parentTitle: "Upgrading"
+  description: "Guide to upgrade to Liveblocks version 2.16"
+---
+
+To upgrade, run:
+
+```bash
+npx create-liveblocks-app@latest --upgrade
+```
+
+## Does this affect you? [#does-this-affect-you]
+
+If you are using the [`useErrorListener`][] hook from our React package, please
+[read on](#change-1).
+
+If you are using the [`useThreads`][] (or `useUserThreads_experimental`) hook
+from our React package, please [read on](#change-2).
+
+Otherwise, there is nothing to do for you!
+
+## New errors can appear in `useErrorListener` [#change-1]
+
+Starting with 2.16, [`useErrorListener`][] will notify you about new errors.
+Previously, only room connection errors would be reported (possible if you are
+using Presence, Storage, or Yjs). After upgrading, you can also receive errors
+from Comments and Notifications if you are using those products.
+
+We have also decoupled [`useErrorListener`][] from the current room. Previously
+it required to be nested under a `RoomProvider`. Now, you can use it anywhere
+under `LiveblocksProvider`, and it will notify you about errors from all rooms.
+
+**To upgrade:** You don’t have to change anything if you want to know about all
+errors. If you would like to keep the old behavior, you can filter out any
+possible new errors:
+
+```ts
+import { useErrorListener, useRoom } from "liveblocks";
+
+const room = useRoom();
+useErrorListener((error) => {
+  if (
+    error.context.type !== "ROOM_CONNECTION_ERROR" ||
+    error.context.roomId !== room.id
+  ) {
+    // Your previous logic
+  }
+});
+```
+
+For a full list of possible errors, see the [`useErrorListener`][]
+documentation.
+
+## Ability to filter threads by absence of metadata [#change-2]
+
+Starting with 2.16, the [`useThreads`][] (and `useUserThreads_experimental`)
+hooks supports filtering by _absence_ of a metadata field.
+
+```ts
+const threads = useThreads({
+  query: {
+    metadata: {
+      label: "important",
+      color: null, // ✅ Will now return important threads without a `color` field
+    },
+  },
+});
+```
+
+Previously this was not supported, but due to a bug, using an
+explicit-`undefined` would already allow you to do this sort of. However,
+threads weren’t filtered correctly in the backend causing over-fetches.
+
+**To upgrade:** If you relied on this bug, simply change `undefined` to `null`
+now.
+
+Using explicit-`undefined` is now equivalent to not specifying the field in the
+query.
+
+```ts
+const threads = useThreads({
+  query: {
+    metadata: {
+      label: "important",
+      color: undefined,
+    },
+  },
+});
+```
+
+Is now equivalent to:
+
+```ts
+const threads = useThreads({
+  query: {
+    metadata: {
+      label: "important",
+    },
+  },
+});
+```
+
+That’s it!
+
+[`useerrorlistener`]: /docs/api-reference/liveblocks-react#useErrorListener
+[`usethreads`]: /docs/api-reference/liveblocks-react#useThreads

@@ -27,7 +27,6 @@ import {
   console,
   DefaultMap,
   DerivedSignal,
-  HttpError,
   kInternal,
   MutableSignal,
   nanoid,
@@ -1060,10 +1059,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
       const resource = new SinglePageResource(async () => {
         const room = this.#client.getRoom(roomId);
         if (room === null) {
-          throw new HttpError(
-            `Room '${roomId}' is not available on client`,
-            479
-          );
+          throw new Error(`Room '${roomId}' is not available on client`);
         }
 
         const result = await room.getNotificationSettings();
@@ -1090,10 +1086,7 @@ export class UmbrellaStore<M extends BaseMetadata> {
         const resource = new SinglePageResource(async () => {
           const room = this.#client.getRoom(roomId);
           if (room === null) {
-            throw new HttpError(
-              `Room '${roomId}' is not available on client`,
-              479
-            );
+            throw new Error(`Room '${roomId}' is not available on client`);
           }
 
           const result = await room[kInternal].listTextVersions();

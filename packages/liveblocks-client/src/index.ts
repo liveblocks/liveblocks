@@ -38,6 +38,7 @@ export type {
   JsonArray,
   JsonObject,
   JsonScalar,
+  LiveblocksErrorContext,
   LiveListUpdate,
   LiveMapUpdate,
   LiveObjectUpdate,
@@ -65,6 +66,7 @@ export type {
 export {
   createClient,
   getMentionedIdsFromCommentBody,
+  LiveblocksError,
   LiveList,
   LiveMap,
   LiveObject,
