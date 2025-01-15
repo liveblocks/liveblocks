@@ -100,6 +100,21 @@ function DefaultFloatingToolbarContent() {
   );
 }
 
+/**
+ * A floating toolbar attached to the selection and containing actions and values related to the editor.
+ *
+ * @example
+ * <FloatingToolbar />
+ *
+ * @example
+ * <FloatingToolbar>
+ *   <FloatingToolbar.BlockSelector />
+ *   <FloatingToolbar.Separator />
+ *   <FloatingToolbar.SectionInline />
+ *   <FloatingToolbar.Separator />
+ *   <FloatingToolbar.Button name="Custom action" onClick={() => { ... }} icon={<Icon.QuestionMark />} />
+ * </FloatingToolbar>
+ */
 export const FloatingToolbar = Object.assign(
   forwardRef<HTMLDivElement, FloatingToolbarProps>(
     (
@@ -441,6 +456,26 @@ export const FloatingToolbar = Object.assign(
     }
   ),
   {
+    /**
+     * A component that can be wrapped around elements which are rendered outside of the floating
+     * toolbar (e.g. portals) to prevent the toolbar from closing when clicking/focusing within them.
+     *
+     * @example
+     * <FloatingToolbar>
+     *   <Popover.Root>
+     *     <Popover.Trigger asChild>
+     *       <Toolbar.Button>Open popover</Toolbar.Button>
+     *     </Popover.Trigger>
+     *     <Popover.Portal>
+     *       <FloatingToolbar.External>
+     *         <Popover.Content>
+     *           This popover is rendered outside of the floating toolbar, but the toolbar will not close when clicking/focusing within it.
+     *         </Popover.Content>
+     *       </FloatingToolbar.External>
+     *     </Popover.Portal>
+     *   </Popover.Root>
+     * </FloatingToolbar>
+     */
     External: FloatingToolbarExternal,
   }
 );

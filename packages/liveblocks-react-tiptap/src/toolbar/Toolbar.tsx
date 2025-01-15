@@ -680,6 +680,21 @@ function DefaultToolbarContent({ editor }: ToolbarSlotProps) {
   );
 }
 
+/**
+ * A static toolbar containing actions and values related to the editor.
+ *
+ * @example
+ * <Toolbar editor={editor} />
+ *
+ * @example
+ * <Toolbar editor={editor}>
+ *   <Toolbar.BlockSelector />
+ *   <Toolbar.Separator />
+ *   <Toolbar.SectionInline />
+ *   <Toolbar.Separator />
+ *   <Toolbar.Button name="Custom action" onClick={() => { ... }} icon={<Icon.QuestionMark />} />
+ * </Toolbar>
+ */
 export const Toolbar = Object.assign(
   forwardRef<HTMLDivElement, ToolbarProps>(
     (
@@ -720,12 +735,54 @@ export const Toolbar = Object.assign(
     }
   ),
   {
+    /**
+     * A button for triggering actions.
+     *
+     * @example
+     * <Toolbar.Button name="Comment" shortcut="Mod-Shift-E" onClick={() => { ... }}>Comment</Toolbar.Button>
+     *
+     * @example
+     * <Toolbar.Button name="Mention someone" icon={<Icon.Mention />} onClick={() => { ... }} />
+     */
     Button: ToolbarButton,
+
+    /**
+     * A toggle button for values that can be active or inactive.
+     *
+     * @example
+     * <Toolbar.Toggle name="Bold" active={isBold}>Bold</Toolbar.Toggle>
+     *
+     * @example
+     * <Toolbar.Toggle name="Italic" icon={<Icon.Italic />} shortcut="Mod-I" active={isItalic} onClick={() => { ... }} />
+     */
     Toggle: ToolbarToggle,
+
+    /**
+     * A dropdown selector to switch between different block types.
+     *
+     * @example
+     * <Toolbar.BlockSelector />
+     */
     BlockSelector: ToolbarBlockSelector,
+
+    /**
+     * A visual (and accessible) separator to separate sections in a toolbar.
+     */
     Separator: ToolbarSeparator,
+
+    /**
+     * A section containing history actions. (e.g. undo, redo)
+     */
     SectionHistory: ToolbarSectionHistory,
+
+    /**
+     * A section containing inline formatting actions. (e.g. bold, italic, underline, ...)
+     */
     SectionInline: ToolbarSectionInline,
+
+    /**
+     * A section containing collaborative actions. (e.g. adding a comment)
+     */
     SectionCollaboration: ToolbarSectionCollaboration,
   }
 );
