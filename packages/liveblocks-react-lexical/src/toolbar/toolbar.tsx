@@ -60,7 +60,7 @@ import {
 
 import { classNames } from "../classnames";
 import { OPEN_FLOATING_COMPOSER_COMMAND } from "../comments/floating-composer";
-import { getSelectedBlockElement } from "../get-selected-block-element";
+import { getActiveBlockElement } from "../get-active-block-element";
 import { useIsCommandRegistered } from "../is-command-registered";
 import { isTextFormatActive } from "../is-text-format-active";
 import { FloatingToolbarContext, FloatingToolbarExternal } from "./shared";
@@ -410,7 +410,7 @@ const ToolbarBlockSelector = forwardRef<
   const floatingToolbarContext = useContext(FloatingToolbarContext);
   const closeFloatingToolbar = floatingToolbarContext?.close;
   const [editor] = useLexicalComposerContext();
-  const element = getSelectedBlockElement(editor);
+  const element = getActiveBlockElement(editor);
   const resolvedItems = useMemo(() => {
     if (Array.isArray(items)) {
       return items;

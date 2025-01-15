@@ -8,7 +8,7 @@ function isParentRootOrShadowRoot(node: LexicalNode) {
   return parent !== null && $isRootOrShadowRoot(parent);
 }
 
-export function getSelectedBlockElement(editor: LexicalEditor) {
+export function getActiveBlockElement(editor: LexicalEditor) {
   return editor.getEditorState().read(() => {
     const selection = $getSelection();
 
