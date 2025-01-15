@@ -173,21 +173,6 @@ function getCurrentUserId(client: Client): string {
   return userId;
 }
 
-function handleApiError(err: HttpError): Error {
-  const message = `Request failed with status ${err.status}: ${err.message}`;
-
-  // Log details about FORBIDDEN errors
-  if (err.details?.error === "FORBIDDEN") {
-    const detailedMessage = [message, err.details.suggestion, err.details.docs]
-      .filter(Boolean)
-      .join("\n");
-
-    console.error(detailedMessage);
-  }
-
-  return new Error(message);
-}
-
 const _extras = new WeakMap<
   OpaqueClient,
   ReturnType<typeof makeRoomExtrasForClient>
@@ -240,11 +225,20 @@ function makeRoomExtrasForClient(client: OpaqueClient) {
     // All mutation failures are expected to be HTTP errors ultimately - only
     // ever notify the user about those.
     if (innerError instanceof HttpError) {
-      const error = handleApiError(innerError);
-      client[kInternal].emitError(
-        context,
-        error // XXX Not just innerError directly?
-      );
+      // Always log details about 403 Forbidden errors to the console as well
+      if (innerError.status === 403) {
+        const detailedMessage = [
+          innerError.message,
+          innerError.details?.suggestion,
+          innerError.details?.docs,
+        ]
+          .filter(Boolean)
+          .join("\n");
+
+        console.error(detailedMessage);
+      }
+
+      client[kInternal].emitError(context, innerError);
     } else {
       // In this context, a non-HTTP error is unexpected and should be
       // considered a bug we should get fixed. Don't notify the user about it.
