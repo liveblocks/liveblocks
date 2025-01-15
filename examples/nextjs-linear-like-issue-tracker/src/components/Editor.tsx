@@ -7,6 +7,7 @@ import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import {
   FloatingComposer,
   FloatingThreads,
+  FloatingToolbar,
   liveblocksConfig,
   LiveblocksPlugin,
   useIsEditorReady,
@@ -15,7 +16,6 @@ import { EditorTitle } from "@/components/EditorTitle";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { ListNode, ListItemNode } from "@lexical/list";
 import { ClientSideSuspense, useThreads } from "@liveblocks/react/suspense";
-import { EditorFloatingToolbar } from "@/components/EditorFloatingToolbar";
 import { ReactNode } from "react";
 import { LinkNode } from "@lexical/link";
 import { CodeNode } from "@lexical/code";
@@ -92,10 +92,10 @@ export function Editor({
               <TextEditorThreads />
             </ClientSideSuspense>
             <FloatingComposer />
+            <FloatingToolbar />
           </LiveblocksPlugin>
         </div>
       </div>
-      <EditorFloatingToolbar />
     </LexicalComposer>
   );
 }
