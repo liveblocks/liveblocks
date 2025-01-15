@@ -30,7 +30,7 @@ export function EditorFloatingToolbar() {
             if (item.name === "Blockquote") {
               label = (
                 <span className="border-l-[3px] pl-2 border-gray-600">
-                  Quote
+                  Blockquote
                 </span>
               );
             }
