@@ -16,7 +16,9 @@ export function EditorFloatingToolbar() {
             }
 
             if (item.name === "Heading 1") {
-              label = <span className="text-[18px] font-bold">Heading 1</span>;
+              label = (
+                <span className="text-[17.5px] font-bold">Heading 1</span>
+              );
             }
 
             if (item.name === "Heading 2") {
@@ -24,7 +26,7 @@ export function EditorFloatingToolbar() {
             }
 
             if (item.name === "Heading 3") {
-              label = <span className="font-bold">Heading 3</span>;
+              label = <span className="text-[15px] font-bold">Heading 3</span>;
             }
 
             if (item.name === "Blockquote") {
