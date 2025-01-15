@@ -481,12 +481,6 @@ type RoomContextBundleCommon<
   useEventListener(callback: (data: RoomEventMessage<P, U, E>) => void): void;
 
   /**
-   * useRoomErrorListener is like useErrorListener, except that it will only
-   * notify about errors for this room.
-   */
-  useRoomErrorListener(callback: (err: LiveblocksError) => void): void;
-
-  /**
    * Returns the room.history
    */
   useHistory(): History;

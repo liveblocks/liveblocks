@@ -5,7 +5,7 @@ import {
   removeClassNamesFromElement,
 } from "@lexical/utils";
 import { shallow } from "@liveblocks/client";
-import { useClient, useRoom, useRoomErrorListener } from "@liveblocks/react";
+import { useClient, useRoom, useErrorListener } from "@liveblocks/react";
 import {
   getUmbrellaStoreForClient,
   useSignal,
@@ -96,9 +96,12 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     [editor, threadToNodes]
   );
 
-  useRoomErrorListener((err) => {
+  useErrorListener((err) => {
     // If thread creation fails, we remove the thread id from the associated nodes and unwrap the nodes if they are no longer associated with any threads
-    if (err.context.type === "CREATE_THREAD_ERROR") {
+    if (
+      err.context.type === "CREATE_THREAD_ERROR" &&
+      err.context.roomId === room.id
+    ) {
       handleThreadDelete(err.context.threadId);
     }
   });

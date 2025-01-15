@@ -1088,8 +1088,8 @@ The behavior of this hook changed in 2.16. Previously, this hook had to be in a
 [`RoomProvider`][] context, and would only trigger for connection errors in the
 current room. Since 2.16, this hook only requires a [`LiveblocksProvider`][]
 context, and will notify about any errors, and for any room. For example,
-notifications are not part of rooms, and errors for these will show. To keep the
-old behavior, use the [`useRoomErrorListener`][] hook instead.
+notifications are not part of rooms, and errors for these will show. See the
+[upgrade guide for 2.6](/docs/platform/upgrading/2.16) for more details.
 
 </Banner>
 
@@ -1431,26 +1431,6 @@ contexts.
 
 // 👤 Just your avatar
 <Header />
-```
-
-### useRoomErrorListener [@badge=RoomProvider]
-
-<Banner>
-
-Before 2.16, this hook was named `useErrorListener`. However, that name is now
-used for a global error listener, notifying you about errors from _any_ room.
-
-</Banner>
-
-Like [`useErrorListener`][], but scoped to only notify about errors from the
-current room.
-
-```tsx
-import { useRoomErrorListener } from "@liveblocks/react/suspense";
-
-useRoomErrorListener((error) => {
-  // Here error.roomId will always match the current room’s ID
-});
 ```
 
 ### useStatus [@badge=RoomProvider]
@@ -3487,8 +3467,6 @@ And the following timeline:
   /docs/api-reference/liveblocks-react#useInboxNotifications
 [`usesyncstatus`]: /docs/api-reference/liveblocks-react#useSyncStatus
 [`useerrorlistener`]: /docs/api-reference/liveblocks-react#useErrorListener
-[`useroomerrorlistener`]:
-  /docs/api-reference/liveblocks-react#useRoomErrorListener
 [`room`]: /docs/api-reference/liveblocks-client#Room
 [`shallow`]: /docs/api-reference/liveblocks-react#shallow
 [`resolveusers`]: /docs/api-reference/liveblocks-client#resolveUsers

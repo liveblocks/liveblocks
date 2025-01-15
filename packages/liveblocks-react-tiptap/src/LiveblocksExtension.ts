@@ -118,10 +118,13 @@ export const useLiveblocksExtension = (
 
   // TODO: we don't need these things if comments isn't turned on...
   // TODO: we don't have a reference to the editor here, need to figure this out
-  // useCommentsErrorListener((error) => {
+  // useErrorListener((error) => {
   //   // If thread creation fails, we remove the thread id from the associated nodes and unwrap the nodes if they are no longer associated with any threads
-  //   if (error instanceof CreateThreadError) {
-  //     // handleThreadDelete(error.context.threadId);
+  //   if (
+  //     error.context.type === "CREATE_THREAD_ERROR" &&
+  //     error.context.roomId === room.id
+  //   ) {
+  //     handleThreadDelete(error.context.threadId);
   //   }
   // });
 
