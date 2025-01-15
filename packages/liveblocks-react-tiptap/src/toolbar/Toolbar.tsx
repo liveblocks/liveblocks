@@ -46,30 +46,114 @@ export interface ToolbarSlotProps {
 export type ToolbarSlot = ReactNode | ComponentType<ToolbarSlotProps>;
 
 export interface ToolbarProps extends Omit<ComponentProps<"div">, "children"> {
+  /**
+   * The Tiptap editor.
+   */
   editor: Editor | null;
+
+  /**
+   * The content of the toolbar, overriding the default content.
+   * Use the `before` and `after` props if you want to keep and extend the default content.
+   */
   children?: ToolbarSlot;
+
+  /**
+   * The content to display at the start of the toolbar.
+   */
   before?: ToolbarSlot;
+
+  /**
+   * The content to display at the end of the toolbar.
+   */
   after?: ToolbarSlot;
 }
 
 export interface ToolbarButtonProps extends ComponentProps<"button"> {
-  icon?: ReactNode;
+  /**
+   * The name of this button displayed in its tooltip.
+   */
   name: string;
+
+  /**
+   * An optional icon displayed in this button.
+   */
+  icon?: ReactNode;
+
+  /**
+   * An optional keyboard shortcut displayed in this button's tooltip.
+   *
+   * @example
+   * "Mod-Alt-B" → "⌘⌥B" in Apple environments, "⌃⌥B" otherwise
+   * "Ctrl-Shift-Escape" → "⌃⇧⎋"
+   * "Space" → "␣"
+   */
   shortcut?: string;
 }
 
 export interface ToolbarToggleProps extends ToolbarButtonProps {
+  /**
+   * Whether the button is toggled.
+   */
   active: boolean;
 }
 
 export interface ToolbarBlockSelectorItem {
+  /**
+   * The name of this block element, displayed as the label of this item.
+   */
   name: string;
+
+  /**
+   * An optional icon displayed in this item.
+   */
   icon?: ReactNode;
+
+  /**
+   * Whether this block element is currently active.
+   * Set to `"default"` to display this item when no other item is active.
+   */
   isActive: ((editor: Editor) => boolean) | "default";
+
+  /**
+   * A callback invoked when this item is selected.
+   */
   setActive: (editor: Editor) => void;
 }
 
 export interface ToolbarBlockSelectorProps extends ComponentProps<"button"> {
+  /**
+   * The items displayed in this block selector.
+   * When provided as an array, the default items are overridden. To avoid this,
+   * a function can be provided instead and it will receive the default items.
+   *
+   * @example
+   * <Toolbar.BlockSelector
+   *   items={[
+   *     {
+   *       name: "Text",
+   *       isActive: "default",
+   *       setActive: () => { ... },
+   *     },
+   *     {
+   *       name: "Heading 1",
+   *       isActive: () => { ... },
+   *       setActive: () => { ... },
+   *     },
+   *   ]}
+   * />
+   *
+   * @example
+   * <Toolbar.BlockSelector
+   *   items={(defaultItems) => [
+   *     ...defaultItems,
+   *     {
+   *       name: "Custom block",
+   *       isActive: () => { ... },
+   *       setActive: () => { ... },
+   *     },
+   *   ]}
+   * />
+   */
   items?:
     | ToolbarBlockSelectorItem[]
     | ((

@@ -48,10 +48,30 @@ import {
 
 export interface FloatingToolbarProps
   extends Omit<ComponentProps<"div">, "children"> {
+  /**
+   * The vertical position of the floating toolbar.
+   */
   position?: FloatingPosition;
+
+  /**
+   * The vertical offset of the floating toolbar from the selection.
+   */
   offset?: number;
+
+  /**
+   * The content of the floating toolbar, overriding the default content.
+   * Use the `before` and `after` props if you want to keep and extend the default content.
+   */
   children?: ToolbarSlot;
+
+  /**
+   * The content to display at the start of the floating toolbar.
+   */
   before?: ToolbarSlot;
+
+  /**
+   * The content to display at the end of the floating toolbar.
+   */
   after?: ToolbarSlot;
 }
 
