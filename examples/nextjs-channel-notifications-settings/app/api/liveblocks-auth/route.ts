@@ -27,8 +27,6 @@ export async function POST(request: NextRequest) {
     userInfo: USER_INFO[userIndex],
   });
 
-  const { room } = await request.json();
-
   // Use a naming pattern to allow access to rooms with a wildcard
   session.allow(
     `liveblocks:channel-notifications-settings-examples:*`,
