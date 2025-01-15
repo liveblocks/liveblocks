@@ -76,23 +76,25 @@ export function Editor({
                 {contentFallback}
               </div>
             ) : (
-              <RichTextPlugin
-                contentEditable={
-                  <ContentEditable className="outline-none editor-styles" />
-                }
-                placeholder={
-                  <div className="absolute top-0 left-0 pointer-events-none text-neutral-500 whitespace-nowrap">
-                    Start typing here…
-                  </div>
-                }
-                ErrorBoundary={LexicalErrorBoundary}
-              />
+              <>
+                <RichTextPlugin
+                  contentEditable={
+                    <ContentEditable className="outline-none editor-styles" />
+                  }
+                  placeholder={
+                    <div className="absolute top-0 left-0 pointer-events-none text-neutral-500 whitespace-nowrap">
+                      Start typing here…
+                    </div>
+                  }
+                  ErrorBoundary={LexicalErrorBoundary}
+                />
+                <FloatingToolbar />
+              </>
             )}
             <ClientSideSuspense fallback={null}>
               <TextEditorThreads />
             </ClientSideSuspense>
             <FloatingComposer />
-            <FloatingToolbar />
           </LiveblocksPlugin>
         </div>
       </div>
