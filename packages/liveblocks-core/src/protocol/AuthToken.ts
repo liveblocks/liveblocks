@@ -1,5 +1,6 @@
+import { isPlainObject } from "../lib/guards";
 import type { Json } from "../lib/Json";
-import { b64decode, isPlainObject, tryParseJson } from "../lib/utils";
+import { b64decode, tryParseJson } from "../lib/utils";
 import type { IUserInfo } from "./BaseUserMeta";
 
 export enum Permission {

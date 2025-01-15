@@ -3,7 +3,7 @@
   "extends": "../../shared/tsconfig.common.json",
 
   "compilerOptions": {
-    "target": "es5",
+    "target": "es2022",
     "module": "esnext",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,

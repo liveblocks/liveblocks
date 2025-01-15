@@ -11,10 +11,6 @@ emails with [Notifications](/docs/ready-made-features/notifications) and
 [webhooks](/docs/platform/webhooks). This library is only intended for use in
 your Node.js back end.
 
-<Banner type="warning" title="Package still in beta">
-  This package is currently in beta and has not been publicly released yet.
-</Banner>
-
 ## Requirements
 
 `@liveblocks/emails` requires the
@@ -161,7 +157,7 @@ replies mentions the user. A single comment with the latest mention is returned.
 
 ```js
 {
-  type: "unreadMentions",
+  type: "unreadMention",
   roomId: "my-room-id",
   comment: {/* Comment data */},
 }

@@ -416,6 +416,10 @@
       {
         "title": "Presence",
         "path": "/ready-made-features/presence"
+      },
+      {
+        "title": "AI Copilots",
+        "path": "/ready-made-features/ai-copilots"
       }
     ]
   },
@@ -644,7 +648,8 @@
           { "title": "Upgrading to 2.0", "path": "/platform/upgrading/2.0" },
           { "title": "Upgrading to 2.2", "path": "/platform/upgrading/2.2" },
           { "title": "Upgrading to 2.8", "path": "/platform/upgrading/2.8" },
-          { "title": "Upgrading to 2.9", "path": "/platform/upgrading/2.9" }
+          { "title": "Upgrading to 2.9", "path": "/platform/upgrading/2.9" },
+          { "title": "Upgrading to 2.15", "path": "/platform/upgrading/2.15" }
         ]
       },
       {

@@ -1,4 +1,8 @@
-import { useSelf } from "@liveblocks/react/suspense";
+import {
+  useBroadcastEvent,
+  useEventListener,
+  useSelf,
+} from "@liveblocks/react/suspense";
 import clsx from "clsx";
 import {
   ChangeEvent,
@@ -8,12 +12,13 @@ import {
   useState,
 } from "react";
 import { EditIcon } from "@/icons";
+import { getDocument } from "@/lib/actions";
 import { useInitialDocument } from "@/lib/hooks/useInitialDocument";
 import { Tooltip } from "@/primitives/Tooltip";
 import styles from "./DocumentHeaderName.module.css";
 
 interface Props extends ComponentProps<"div"> {
-  onDocumentRename: (name: string) => void;
+  onDocumentRename: (name: string) => Promise<unknown>;
 }
 
 export function DocumentHeaderName({
@@ -22,6 +27,8 @@ export function DocumentHeaderName({
   ...props
 }: Props) {
   const initialDocument = useInitialDocument();
+  const broadcastEvent = useBroadcastEvent();
+
   const isReadOnly = useSelf((me) => !me.canWrite);
   const [draftName, setDraftName] = useState(initialDocument.name);
   const [isRenaming, setRenaming] = useState(false);
@@ -35,10 +42,13 @@ export function DocumentHeaderName({
     setRenaming(false);
   }, [initialDocument]);
 
-  const handleRenamingSave = useCallback(() => {
-    onDocumentRename(draftName);
+  const handleRenamingSave = useCallback(async () => {
     setRenaming(false);
-  }, [draftName, onDocumentRename]);
+    await onDocumentRename(draftName);
+
+    // Send event to others, telling them you've updated the name
+    broadcastEvent({ type: "DOCUMENT_NAME_UPDATE" });
+  }, [draftName, onDocumentRename, broadcastEvent]);
 
   const handleNameChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
@@ -58,6 +68,18 @@ export function DocumentHeaderName({
     [handleRenamingCancel, handleRenamingSave]
   );
 
+  // Listen for others updating the name, and re-fetch the new name if they do
+  useEventListener(async ({ event }) => {
+    if (event.type === "DOCUMENT_NAME_UPDATE") {
+      const { data, error } = await getDocument({
+        documentId: initialDocument.id,
+      });
+      if (!error && data) {
+        setDraftName(data.name);
+      }
+    }
+  });
+
   return (
     <div className={clsx(className, styles.container)} {...props}>
       {isReadOnly ? (
@@ -69,7 +91,7 @@ export function DocumentHeaderName({
         <input
           autoFocus
           className={styles.nameInput}
-          onBlur={handleRenamingCancel}
+          onBlur={handleRenamingSave}
           onChange={handleNameChange}
           onKeyDown={handleNameKeyDown}
           value={draftName}

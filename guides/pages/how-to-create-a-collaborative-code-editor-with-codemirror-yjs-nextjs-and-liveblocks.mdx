@@ -151,44 +151,32 @@ export type TypedLiveblocksProvider = LiveblocksYjsProvider<
 >;
 ```
 
-## Set up the client
-
-Next, we can create the front end client which will be responsible for
-communicating with the back end. You can do this by modifying `createClient` in
-your config file, and passing the location of your endpoint.
-
-```ts
-const client = createClient({
-  authEndpoint: "/api/liveblocks-auth",
-});
-```
-
 ## Join a Liveblocks room
 
 Liveblocks uses the concept of rooms, separate virtual spaces where people
 collaborate. To create a realtime experience, multiple users must be connected
 to the same room. Create a file in the current directory within `/app`, and name
-it `Room.tsx`.
+it `Room.tsx`. Pass the location of your endpoint to `LiveblocksProvider`.
 
 ```tsx file="/app/Room.tsx"
 "use client";
 
 import { ReactNode } from "react";
-import { RoomProvider } from "../liveblocks.config";
-import { ClientSideSuspense } from "@liveblocks/react";
+import {
+  LiveblocksProvider,
+  RoomProvider,
+  ClientSideSuspense,
+} from "@liveblocks/react/suspense";
 
 export function Room({ children }: { children: ReactNode }) {
   return (
-    <RoomProvider
-      id={roomId}
-      initialPresence={{
-        cursor: null,
-      }}
-    >
-      <ClientSideSuspense fallback={<div>Loading…</div>}>
-        {() => children}
-      </ClientSideSuspense>
-    </RoomProvider>
+    <LiveblocksProvider authEndpoint="/api/liveblocks-auth">
+      <RoomProvider id="my-room">
+        <ClientSideSuspense fallback={<div>Loading…</div>}>
+          {children}
+        </ClientSideSuspense>
+      </RoomProvider>
+    </LiveblocksProvider>
   );
 }
 ```

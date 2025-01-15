@@ -39,5 +39,5 @@ export default async function accessTokenAuth(
   );
   session.allow("e2e*", session.FULL_ACCESS);
   const response = await session.authorize();
-  return res.status(response.status).end(response.body);
+  res.status(response.status).end(response.body);
 }

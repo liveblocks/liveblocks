@@ -1,4 +1,32 @@
-## 2.15.0 (Not yet published)
+## vNEXT (Not yet published)
+
+## 2.15.2
+
+### All packages
+
+- Fix `useLayoutEffect` warnings when using React versions lower than 18.3.0 and
+  SSR.
+
+### `@liveblocks/react`
+
+- Fix memory leak in some hooks.
+- Fix bug where querying metadata with `useThreads()` would not always reuse the
+  cache correctly.
+
+## 2.15.1
+
+### All packages
+
+- Fix rollup config to always ensure `"use client"` directives are on top of
+  files after build.
+
+## 2.15.0
+
+### `@liveblocks/react`
+
+- **Breaking**: Drop support for React 17 (and 16). If you’re unable to upgrade
+  React to 18 or higher, you can still continue to use Liveblocks 2.14.0, which
+  is the last version to support React <18.
 
 ### All packages
 

@@ -23,7 +23,7 @@ describe("ManagedSocket", () => {
     await jest.advanceTimersByTimeAsync(4000);
     mgr.disconnect();
 
-    expect(didConnect).not.toBeCalled();
+    expect(didConnect).not.toHaveBeenCalled();
   });
 
   test("authenticate + websocket connection are successes but no ROOM_STATE still means not connected", async () => {
@@ -43,7 +43,7 @@ describe("ManagedSocket", () => {
     await jest.advanceTimersByTimeAsync(4000);
     mgr.disconnect();
 
-    expect(didConnect).not.toBeCalled();
+    expect(didConnect).not.toHaveBeenCalled();
   });
 
   test("authenticate + websocket connection + ROOM_STATE = connected", async () => {
@@ -63,6 +63,6 @@ describe("ManagedSocket", () => {
     await jest.advanceTimersByTimeAsync(4000);
     mgr.disconnect();
 
-    expect(didConnect).toBeCalledTimes(1);
+    expect(didConnect).toHaveBeenCalledTimes(1);
   });
 });

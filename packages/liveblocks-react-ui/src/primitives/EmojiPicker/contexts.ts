@@ -1,4 +1,4 @@
-import type { Resolve } from "@liveblocks/core";
+import type { Relax, Resolve } from "@liveblocks/core";
 import { nn } from "@liveblocks/core";
 import type { Dispatch, KeyboardEvent, SetStateAction } from "react";
 import { createContext, useContext } from "react";
@@ -9,22 +9,17 @@ import type {
   EmojiPickerSelectionDirection,
 } from "./types";
 
-type EmojiPickerContextData =
-  | {
-      data?: never;
-      error?: never;
-      isLoading: true;
-    }
+type EmojiPickerContextData = Relax<
+  | { isLoading: true }
   | {
       data: EmojiPickerData;
-      error?: never;
       isLoading: false;
     }
   | {
-      data?: never;
       error: Error;
       isLoading: false;
-    };
+    }
+>;
 
 export type EmojiPickerContext = Resolve<
   EmojiPickerContextData & {

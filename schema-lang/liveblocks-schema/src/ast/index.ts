@@ -18,10 +18,12 @@ function assertRange(
 ): asserts range is Range {
   assert(
     isRange(range),
-    `Invalid value for range in "${JSON.stringify(
-      currentContext
-    )}".\nExpected: Range\nGot: ${JSON.stringify(range)}`
+    `Invalid value for range in "${JSON.stringify(currentContext)}".\nExpected: Range\nGot: ${JSON.stringify(range)}`
   );
+}
+
+function asNode<N extends Node>(node: N): N {
+  return Object.defineProperty(node, "range", { enumerable: false });
 }
 
 export function isDefinition(node: Node): node is Definition {
@@ -236,17 +238,15 @@ export function arrayType(ofType: Type, range: Range = [0, 0]): ArrayType {
     (() => {
       assert(
         isType(ofType),
-        `Invalid value for "ofType" arg in "ArrayType" call.\nExpected: @Type\nGot:      ${JSON.stringify(
-          ofType
-        )}`
+        `Invalid value for "ofType" arg in "ArrayType" call.\nExpected: @Type\nGot:      ${JSON.stringify(ofType)}`
       );
       assertRange(range, "ArrayType");
     })();
-  return {
+  return asNode({
     _kind: "ArrayType",
     ofType,
     range,
-  };
+  });
 }
 
 export function booleanType(range: Range = [0, 0]): BooleanType {
@@ -254,10 +254,10 @@ export function booleanType(range: Range = [0, 0]): BooleanType {
     (() => {
       assertRange(range, "BooleanType");
     })();
-  return {
+  return asNode({
     _kind: "BooleanType",
     range,
-  };
+  });
 }
 
 export function document(
@@ -270,17 +270,15 @@ export function document(
         Array.isArray(definitions) &&
           definitions.length > 0 &&
           definitions.every((item) => isDefinition(item)),
-        `Invalid value for "definitions" arg in "Document" call.\nExpected: @Definition+\nGot:      ${JSON.stringify(
-          definitions
-        )}`
+        `Invalid value for "definitions" arg in "Document" call.\nExpected: @Definition+\nGot:      ${JSON.stringify(definitions)}`
       );
       assertRange(range, "Document");
     })();
-  return {
+  return asNode({
     _kind: "Document",
     definitions,
     range,
-  };
+  });
 }
 
 export function fieldDef(
@@ -295,37 +293,27 @@ export function fieldDef(
     (() => {
       assert(
         name._kind === "Identifier",
-        `Invalid value for "name" arg in "FieldDef" call.\nExpected: Identifier\nGot:      ${JSON.stringify(
-          name
-        )}`
+        `Invalid value for "name" arg in "FieldDef" call.\nExpected: Identifier\nGot:      ${JSON.stringify(name)}`
       );
       assert(
         typeof optional === "boolean",
-        `Invalid value for "optional" arg in "FieldDef" call.\nExpected: boolean\nGot:      ${JSON.stringify(
-          optional
-        )}`
+        `Invalid value for "optional" arg in "FieldDef" call.\nExpected: boolean\nGot:      ${JSON.stringify(optional)}`
       );
       assert(
         isType(type),
-        `Invalid value for "type" arg in "FieldDef" call.\nExpected: @Type\nGot:      ${JSON.stringify(
-          type
-        )}`
+        `Invalid value for "type" arg in "FieldDef" call.\nExpected: @Type\nGot:      ${JSON.stringify(type)}`
       );
       assert(
         leadingComment === null || typeof leadingComment === "string",
-        `Invalid value for "leadingComment" arg in "FieldDef" call.\nExpected: string?\nGot:      ${JSON.stringify(
-          leadingComment
-        )}`
+        `Invalid value for "leadingComment" arg in "FieldDef" call.\nExpected: string?\nGot:      ${JSON.stringify(leadingComment)}`
       );
       assert(
         trailingComment === null || typeof trailingComment === "string",
-        `Invalid value for "trailingComment" arg in "FieldDef" call.\nExpected: string?\nGot:      ${JSON.stringify(
-          trailingComment
-        )}`
+        `Invalid value for "trailingComment" arg in "FieldDef" call.\nExpected: string?\nGot:      ${JSON.stringify(trailingComment)}`
       );
       assertRange(range, "FieldDef");
     })();
-  return {
+  return asNode({
     _kind: "FieldDef",
     name,
     optional,
@@ -333,7 +321,7 @@ export function fieldDef(
     leadingComment,
     trailingComment,
     range,
-  };
+  });
 }
 
 export function identifier(name: string, range: Range = [0, 0]): Identifier {
@@ -341,17 +329,15 @@ export function identifier(name: string, range: Range = [0, 0]): Identifier {
     (() => {
       assert(
         typeof name === "string",
-        `Invalid value for "name" arg in "Identifier" call.\nExpected: string\nGot:      ${JSON.stringify(
-          name
-        )}`
+        `Invalid value for "name" arg in "Identifier" call.\nExpected: string\nGot:      ${JSON.stringify(name)}`
       );
       assertRange(range, "Identifier");
     })();
-  return {
+  return asNode({
     _kind: "Identifier",
     name,
     range,
-  };
+  });
 }
 
 export function literalType(
@@ -364,17 +350,15 @@ export function literalType(
         typeof value === "string" ||
           typeof value === "number" ||
           typeof value === "boolean",
-        `Invalid value for "value" arg in "LiteralType" call.\nExpected: string | number | boolean\nGot:      ${JSON.stringify(
-          value
-        )}`
+        `Invalid value for "value" arg in "LiteralType" call.\nExpected: string | number | boolean\nGot:      ${JSON.stringify(value)}`
       );
       assertRange(range, "LiteralType");
     })();
-  return {
+  return asNode({
     _kind: "LiteralType",
     value,
     range,
-  };
+  });
 }
 
 export function liveListType(
@@ -385,17 +369,15 @@ export function liveListType(
     (() => {
       assert(
         isType(ofType),
-        `Invalid value for "ofType" arg in "LiveListType" call.\nExpected: @Type\nGot:      ${JSON.stringify(
-          ofType
-        )}`
+        `Invalid value for "ofType" arg in "LiveListType" call.\nExpected: @Type\nGot:      ${JSON.stringify(ofType)}`
       );
       assertRange(range, "LiveListType");
     })();
-  return {
+  return asNode({
     _kind: "LiveListType",
     ofType,
     range,
-  };
+  });
 }
 
 export function liveMapType(
@@ -407,24 +389,20 @@ export function liveMapType(
     (() => {
       assert(
         isType(keyType),
-        `Invalid value for "keyType" arg in "LiveMapType" call.\nExpected: @Type\nGot:      ${JSON.stringify(
-          keyType
-        )}`
+        `Invalid value for "keyType" arg in "LiveMapType" call.\nExpected: @Type\nGot:      ${JSON.stringify(keyType)}`
       );
       assert(
         isType(valueType),
-        `Invalid value for "valueType" arg in "LiveMapType" call.\nExpected: @Type\nGot:      ${JSON.stringify(
-          valueType
-        )}`
+        `Invalid value for "valueType" arg in "LiveMapType" call.\nExpected: @Type\nGot:      ${JSON.stringify(valueType)}`
       );
       assertRange(range, "LiveMapType");
     })();
-  return {
+  return asNode({
     _kind: "LiveMapType",
     keyType,
     valueType,
     range,
-  };
+  });
 }
 
 export function nullType(range: Range = [0, 0]): NullType {
@@ -432,10 +410,10 @@ export function nullType(range: Range = [0, 0]): NullType {
     (() => {
       assertRange(range, "NullType");
     })();
-  return {
+  return asNode({
     _kind: "NullType",
     range,
-  };
+  });
 }
 
 export function numberType(range: Range = [0, 0]): NumberType {
@@ -443,10 +421,10 @@ export function numberType(range: Range = [0, 0]): NumberType {
     (() => {
       assertRange(range, "NumberType");
     })();
-  return {
+  return asNode({
     _kind: "NumberType",
     range,
-  };
+  });
 }
 
 export function objectLiteralType(
@@ -458,17 +436,15 @@ export function objectLiteralType(
       assert(
         Array.isArray(fields) &&
           fields.every((item) => item._kind === "FieldDef"),
-        `Invalid value for "fields" arg in "ObjectLiteralType" call.\nExpected: FieldDef*\nGot:      ${JSON.stringify(
-          fields
-        )}`
+        `Invalid value for "fields" arg in "ObjectLiteralType" call.\nExpected: FieldDef*\nGot:      ${JSON.stringify(fields)}`
       );
       assertRange(range, "ObjectLiteralType");
     })();
-  return {
+  return asNode({
     _kind: "ObjectLiteralType",
     fields,
     range,
-  };
+  });
 }
 
 export function objectTypeDefinition(
@@ -482,39 +458,31 @@ export function objectTypeDefinition(
     (() => {
       assert(
         name._kind === "TypeName",
-        `Invalid value for "name" arg in "ObjectTypeDefinition" call.\nExpected: TypeName\nGot:      ${JSON.stringify(
-          name
-        )}`
+        `Invalid value for "name" arg in "ObjectTypeDefinition" call.\nExpected: TypeName\nGot:      ${JSON.stringify(name)}`
       );
       assert(
         Array.isArray(fields) &&
           fields.every((item) => item._kind === "FieldDef"),
-        `Invalid value for "fields" arg in "ObjectTypeDefinition" call.\nExpected: FieldDef*\nGot:      ${JSON.stringify(
-          fields
-        )}`
+        `Invalid value for "fields" arg in "ObjectTypeDefinition" call.\nExpected: FieldDef*\nGot:      ${JSON.stringify(fields)}`
       );
       assert(
         leadingComment === null || typeof leadingComment === "string",
-        `Invalid value for "leadingComment" arg in "ObjectTypeDefinition" call.\nExpected: string?\nGot:      ${JSON.stringify(
-          leadingComment
-        )}`
+        `Invalid value for "leadingComment" arg in "ObjectTypeDefinition" call.\nExpected: string?\nGot:      ${JSON.stringify(leadingComment)}`
       );
       assert(
         typeof isStatic === "boolean",
-        `Invalid value for "isStatic" arg in "ObjectTypeDefinition" call.\nExpected: boolean\nGot:      ${JSON.stringify(
-          isStatic
-        )}`
+        `Invalid value for "isStatic" arg in "ObjectTypeDefinition" call.\nExpected: boolean\nGot:      ${JSON.stringify(isStatic)}`
       );
       assertRange(range, "ObjectTypeDefinition");
     })();
-  return {
+  return asNode({
     _kind: "ObjectTypeDefinition",
     name,
     fields,
     leadingComment,
     isStatic,
     range,
-  };
+  });
 }
 
 export function stringType(range: Range = [0, 0]): StringType {
@@ -522,10 +490,10 @@ export function stringType(range: Range = [0, 0]): StringType {
     (() => {
       assertRange(range, "StringType");
     })();
-  return {
+  return asNode({
     _kind: "StringType",
     range,
-  };
+  });
 }
 
 export function typeName(name: string, range: Range = [0, 0]): TypeName {
@@ -533,17 +501,15 @@ export function typeName(name: string, range: Range = [0, 0]): TypeName {
     (() => {
       assert(
         typeof name === "string",
-        `Invalid value for "name" arg in "TypeName" call.\nExpected: string\nGot:      ${JSON.stringify(
-          name
-        )}`
+        `Invalid value for "name" arg in "TypeName" call.\nExpected: string\nGot:      ${JSON.stringify(name)}`
       );
       assertRange(range, "TypeName");
     })();
-  return {
+  return asNode({
     _kind: "TypeName",
     name,
     range,
-  };
+  });
 }
 
 export function typeRef(
@@ -555,24 +521,20 @@ export function typeRef(
     (() => {
       assert(
         ref._kind === "TypeName",
-        `Invalid value for "ref" arg in "TypeRef" call.\nExpected: TypeName\nGot:      ${JSON.stringify(
-          ref
-        )}`
+        `Invalid value for "ref" arg in "TypeRef" call.\nExpected: TypeName\nGot:      ${JSON.stringify(ref)}`
       );
       assert(
         typeof asLiveObject === "boolean",
-        `Invalid value for "asLiveObject" arg in "TypeRef" call.\nExpected: boolean\nGot:      ${JSON.stringify(
-          asLiveObject
-        )}`
+        `Invalid value for "asLiveObject" arg in "TypeRef" call.\nExpected: boolean\nGot:      ${JSON.stringify(asLiveObject)}`
       );
       assertRange(range, "TypeRef");
     })();
-  return {
+  return asNode({
     _kind: "TypeRef",
     ref,
     asLiveObject,
     range,
-  };
+  });
 }
 
 export function unionType(
@@ -585,17 +547,15 @@ export function unionType(
         Array.isArray(members) &&
           members.length > 0 &&
           members.every((item) => isNonUnionType(item)),
-        `Invalid value for "members" arg in "UnionType" call.\nExpected: @NonUnionType+\nGot:      ${JSON.stringify(
-          members
-        )}`
+        `Invalid value for "members" arg in "UnionType" call.\nExpected: @NonUnionType+\nGot:      ${JSON.stringify(members)}`
       );
       assertRange(range, "UnionType");
     })();
-  return {
+  return asNode({
     _kind: "UnionType",
     members,
     range,
-  };
+  });
 }
 
 interface Visitor<TContext> {

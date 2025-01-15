@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 
-import { HttpError, nanoid, wait } from "@liveblocks/core";
+import { batch, HttpError, nanoid, wait } from "@liveblocks/core";
 import {
   act,
   fireEvent,
@@ -10,7 +10,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { setupServer } from "msw/node";
-import React, { Suspense } from "react";
+import { Suspense } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 
 import { dummyThreadData, dummyThreadInboxNotificationData } from "./_dummies";
@@ -284,21 +284,13 @@ describe("useInboxNotifications", () => {
       umbrellaStore,
     } = createContextsForTest();
 
-    // @ts-expect-error Accessing a private field directly
-    umbrellaStore._rawThreadsDB.upsert(thread1);
-    // @ts-expect-error Accessing a private field directly
-    umbrellaStore._rawThreadsDB.upsert(thread2);
-    umbrellaStore.force_set((state) => ({
-      ...state,
-      notificationsById: {
-        // Explicitly set the order to be reversed to test that the hook sorts the notifications
-        [oldInboxNotification.id]: oldInboxNotification,
-        [newInboxNotification.id]: newInboxNotification,
-      },
-      queries: {
-        INBOX_NOTIFICATIONS: { isLoading: false, data: undefined },
-      },
-    }));
+    // Initialize the umbrella store with some data
+    batch(() => {
+      umbrellaStore.threads.upsert(thread1);
+      umbrellaStore.threads.upsert(thread2);
+      umbrellaStore.notifications.upsert(oldInboxNotification);
+      umbrellaStore.notifications.upsert(newInboxNotification);
+    });
 
     const { result, unmount } = renderHook(() => useInboxNotifications(), {
       wrapper: ({ children }) => (

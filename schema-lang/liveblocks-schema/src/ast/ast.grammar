@@ -5,6 +5,9 @@
 #
 # This is used to generate the AST TypeScript module.
 #
+Document:
+    definitions  @Definition+
+
 
 @ScalarType:
     | StringType
@@ -53,10 +56,6 @@ ArrayType:
 TypeRef:
     ref           TypeName
     asLiveObject  `boolean`
-
-
-Document:
-    definitions  @Definition+
 
 
 FieldDef:

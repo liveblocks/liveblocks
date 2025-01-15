@@ -9,14 +9,13 @@ import type { DE, DM, DP, DRI, DS, DU } from "./globals/augmentation";
 import { kInternal } from "./internal";
 import type { BatchStore } from "./lib/batch";
 import { Batch, createBatchStore } from "./lib/batch";
-import type { Store } from "./lib/create-store";
-import { createStore } from "./lib/create-store";
 import type { Observable } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import type { NoInfr } from "./lib/NoInfer";
+import type { Relax } from "./lib/Relax";
 import type { Resolve } from "./lib/Resolve";
-import { Signal } from "./lib/Signal";
+import { Signal } from "./lib/signals";
 import type { CustomAuthenticationResult } from "./protocol/Authentication";
 import { TokenKind } from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
@@ -96,16 +95,6 @@ export type EnterOptions<P extends JsonObject = DP, S extends LsonObject = DS> =
      * the authentication endpoint or connect via WebSocket.
      */
     autoConnect?: boolean;
-
-    /**
-     * Only necessary when you’re using Liveblocks with React v17 or lower.
-     *
-     * If so, pass in a reference to `ReactDOM.unstable_batchedUpdates` here.
-     * This will allow Liveblocks to circumvent the so-called "zombie child
-     * problem". To learn more, see
-     * https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child
-     */
-    unstable_batchedUpdates?: (cb: () => void) => void;
   }
 
   // Initial presence is only mandatory if the custom type requires it to be
@@ -155,7 +144,7 @@ export type InternalSyncStatus = SyncStatus | "has-local-changes";
  * will probably happen if you do.
  */
 export type PrivateClientApi<U extends BaseUserMeta, M extends BaseMetadata> = {
-  readonly currentUserIdStore: Store<string | undefined>;
+  readonly currentUserId: Signal<string | undefined>;
   readonly mentionSuggestionsCache: Map<string, string[]>;
   readonly resolveMentionSuggestions: ClientOptions<U>["resolveMentionSuggestions"];
   readonly usersStore: BatchStore<U["info"] | undefined, string>;
@@ -456,23 +445,7 @@ export type ClientOptions<U extends BaseUserMeta = DU> = {
 
   /** @internal */
   enableDebugLogging?: boolean;
-} & (
-  | { publicApiKey: string; authEndpoint?: never }
-  | { publicApiKey?: never; authEndpoint: AuthEndpoint }
-);
-// ^^^^^^^^^^^^^^^
-// NOTE: Potential upgrade path by introducing a new property:
-//
-//   | { publicApiKey: string; authEndpoint?: never; authUrl?: never }
-//   | { publicApiKey?: never; authEndpoint: AuthEndpoint; authUrl?: never }
-//   | { publicApiKey?: never; authEndpoint?: never; authUrl?: AuthUrl }
-//
-// Where:
-//
-//   export type AuthUrl =
-//     | string
-//     | ((room: string) => Promise<{ token: string }>);
-//
+} & Relax<{ publicApiKey: string } | { authEndpoint: AuthEndpoint }>;
 
 function getBaseUrl(baseUrl?: string | undefined): string {
   if (
@@ -523,11 +496,11 @@ export function createClient<U extends BaseUserMeta = DU>(
   );
   const baseUrl = getBaseUrl(clientOptions.baseUrl);
 
-  const currentUserIdStore = createStore<string | undefined>(undefined);
+  const currentUserId = new Signal<string | undefined>(undefined);
 
   const authManager = createAuthManager(options, (token) => {
     const userId = token.k === TokenKind.SECRET_LEGACY ? token.id : token.uid;
-    currentUserIdStore.set(() => userId);
+    currentUserId.set(() => userId);
   });
 
   const fetchPolyfill =
@@ -637,7 +610,6 @@ export function createClient<U extends BaseUserMeta = DU>(
           authenticate: makeAuthDelegateForRoom(roomId, authManager),
         },
         enableDebugLogging: clientOptions.enableDebugLogging,
-        unstable_batchedUpdates: options?.unstable_batchedUpdates,
         baseUrl,
         unstable_fallbackToHTTP: !!clientOptions.unstable_fallbackToHTTP,
         unstable_streamData: !!clientOptions.unstable_streamData,
@@ -689,7 +661,7 @@ export function createClient<U extends BaseUserMeta = DU>(
     authManager.reset();
 
     // Reset the current user id store when the client is logged out
-    currentUserIdStore.set(() => undefined);
+    currentUserId.set(() => undefined);
 
     // Reconnect all rooms that aren't idle, if any. This ensures that those
     // rooms will get reauthorized now that the auth cache is reset. If that
@@ -854,7 +826,7 @@ export function createClient<U extends BaseUserMeta = DU>(
 
       // Internal
       [kInternal]: {
-        currentUserIdStore,
+        currentUserId,
         mentionSuggestionsCache,
         resolveMentionSuggestions: clientOptions.resolveMentionSuggestions,
         usersStore,

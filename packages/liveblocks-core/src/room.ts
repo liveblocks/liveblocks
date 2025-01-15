@@ -34,7 +34,7 @@ import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
 import { asPos } from "./lib/position";
-import { DerivedSignal, PatchableSignal, Signal } from "./lib/Signal";
+import { DerivedSignal, PatchableSignal, Signal } from "./lib/signals";
 import {
   compact,
   deepClone,
@@ -1222,16 +1222,6 @@ export type RoomConfig<M extends BaseMetadata> = {
 
   roomHttpClient: RoomHttpApi<M>;
 
-  /**
-   * Only necessary when you’re using Liveblocks with React v17 or lower.
-   *
-   * If so, pass in a reference to `ReactDOM.unstable_batchedUpdates` here.
-   * This will allow Liveblocks to circumvent the so-called "zombie child
-   * problem". To learn more, see
-   * https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child
-   */
-  unstable_batchedUpdates?: (cb: () => void) => void;
-
   baseUrl: string;
   enableDebugLogging?: boolean;
 
@@ -1387,9 +1377,6 @@ export function createRoom<
         : undefined,
   };
 
-  const doNotBatchUpdates = (cb: () => void): void => cb();
-  const batchUpdates = config.unstable_batchedUpdates ?? doNotBatchUpdates;
-
   let lastTokenKey: string | undefined;
   function onStatusDidChange(newStatus: Status) {
     const authValue = managedSocket.authValue;
@@ -1416,10 +1403,8 @@ export function createRoom<
     }
 
     // Forward to the outside world
-    batchUpdates(() => {
-      eventHub.status.notify(newStatus);
-      notifySelfChanged(doNotBatchUpdates);
-    });
+    eventHub.status.notify(newStatus);
+    notifySelfChanged();
   }
 
   let _connectionLossTimerId: TimeoutID | undefined;
@@ -1428,29 +1413,23 @@ export function createRoom<
   function handleConnectionLossEvent(newStatus: Status) {
     if (newStatus === "reconnecting") {
       _connectionLossTimerId = setTimeout(() => {
-        batchUpdates(() => {
-          eventHub.lostConnection.notify("lost");
-          _hasLostConnection = true;
+        eventHub.lostConnection.notify("lost");
+        _hasLostConnection = true;
 
-          // Clear the others
-          context.others.clearOthers();
-          notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
-        });
+        // Clear the others
+        context.others.clearOthers();
+        notify({ others: [{ type: "reset" }] });
       }, config.lostConnectionTimeout);
     } else {
       clearTimeout(_connectionLossTimerId);
 
       if (_hasLostConnection) {
         if (newStatus === "disconnected") {
-          batchUpdates(() => {
-            eventHub.lostConnection.notify("failed");
-          });
+          eventHub.lostConnection.notify("failed");
         } else {
           // Typically the case when going back to "connected", but really take
           // *any* other state change as a recovery sign
-          batchUpdates(() => {
-            eventHub.lostConnection.notify("restored");
-          });
+          eventHub.lostConnection.notify("restored");
         }
 
         _hasLostConnection = false;
@@ -1495,14 +1474,12 @@ export function createRoom<
   managedSocket.events.didConnect.subscribe(onDidConnect);
   managedSocket.events.didDisconnect.subscribe(onDidDisconnect);
   managedSocket.events.onLiveblocksError.subscribe((err) => {
-    batchUpdates(() => {
-      if (process.env.NODE_ENV !== "production") {
-        console.error(
-          `Connection to websocket server closed. Reason: ${err.message} (code: ${err.code}).`
-        );
-      }
-      eventHub.error.notify(err);
-    });
+    if (process.env.NODE_ENV !== "production") {
+      console.error(
+        `Connection to websocket server closed. Reason: ${err.message} (code: ${err.code}).`
+      );
+    }
+    eventHub.error.notify(err);
   });
 
   const pool: ManagedPool = {
@@ -1548,12 +1525,10 @@ export function createRoom<
         }
         activeBatch.reverseOps.unshift(...reverse);
       } else {
-        batchUpdates(() => {
-          addToUndoStack(reverse, doNotBatchUpdates);
-          context.redoStack.length = 0;
-          dispatchOps(ops);
-          notify({ storageUpdates }, doNotBatchUpdates);
-        });
+        addToUndoStack(reverse);
+        context.redoStack.length = 0;
+        dispatchOps(ops);
+        notify({ storageUpdates });
       }
     },
 
@@ -1671,12 +1646,10 @@ export function createRoom<
   );
 
   let _lastSelf: Readonly<User<P, U>> | undefined;
-  function notifySelfChanged(batchedUpdatesWrapper: (cb: () => void) => void) {
+  function notifySelfChanged() {
     const currSelf = self.get();
     if (currSelf !== null && currSelf !== _lastSelf) {
-      batchedUpdatesWrapper(() => {
-        eventHub.self.notify(currSelf);
-      });
+      eventHub.self.notify(currSelf);
       _lastSelf = currSelf;
     }
   }
@@ -1687,15 +1660,14 @@ export function createRoom<
   );
 
   function createOrUpdateRootFromMessage(
-    message: InitialDocumentStateServerMsg,
-    batchedUpdatesWrapper: (cb: () => void) => void
+    message: InitialDocumentStateServerMsg
   ) {
     if (message.items.length === 0) {
       throw new Error("Internal error: cannot load storage without items");
     }
 
     if (context.root !== undefined) {
-      updateRoot(message.items, batchedUpdatesWrapper);
+      updateRoot(message.items);
     } else {
       context.root = LiveObject._fromItems<S>(message.items, pool);
     }
@@ -1721,10 +1693,7 @@ export function createRoom<
     context.undoStack.length = stackSizeBefore;
   }
 
-  function updateRoot(
-    items: IdTuple<SerializedCrdt>[],
-    batchedUpdatesWrapper: (cb: () => void) => void
-  ) {
+  function updateRoot(items: IdTuple<SerializedCrdt>[]) {
     if (context.root === undefined) {
       return;
     }
@@ -1739,30 +1708,24 @@ export function createRoom<
 
     const result = applyOps(ops, false);
 
-    notify(result.updates, batchedUpdatesWrapper);
+    notify(result.updates);
   }
 
-  function _addToRealUndoStack(
-    historyOps: HistoryOp<P>[],
-    batchedUpdatesWrapper: (cb: () => void) => void
-  ) {
+  function _addToRealUndoStack(historyOps: HistoryOp<P>[]) {
     // If undo stack is too large, we remove the older item
     if (context.undoStack.length >= 50) {
       context.undoStack.shift();
     }
 
     context.undoStack.push(historyOps);
-    onHistoryChange(batchedUpdatesWrapper);
+    onHistoryChange();
   }
 
-  function addToUndoStack(
-    historyOps: HistoryOp<P>[],
-    batchedUpdatesWrapper: (cb: () => void) => void
-  ) {
+  function addToUndoStack(historyOps: HistoryOp<P>[]) {
     if (context.pausedHistory !== null) {
       context.pausedHistory.unshift(...historyOps);
     } else {
-      _addToRealUndoStack(historyOps, batchedUpdatesWrapper);
+      _addToRealUndoStack(historyOps);
     }
   }
 
@@ -1772,32 +1735,27 @@ export function createRoom<
     others?: InternalOthersEvent<P, U>[];
   };
 
-  function notify(
-    updates: NotifyUpdates,
-    batchedUpdatesWrapper: (cb: () => void) => void
-  ) {
+  function notify(updates: NotifyUpdates) {
     const storageUpdates = updates.storageUpdates;
     const othersUpdates = updates.others;
 
-    batchedUpdatesWrapper(() => {
-      if (othersUpdates !== undefined && othersUpdates.length > 0) {
-        const others = context.others.get();
-        for (const event of othersUpdates) {
-          eventHub.others.notify({ ...event, others });
-        }
+    if (othersUpdates !== undefined && othersUpdates.length > 0) {
+      const others = context.others.get();
+      for (const event of othersUpdates) {
+        eventHub.others.notify({ ...event, others });
       }
+    }
 
-      if (updates.presence ?? false) {
-        notifySelfChanged(doNotBatchUpdates);
-        eventHub.myPresence.notify(context.myPresence.get());
-      }
+    if (updates.presence ?? false) {
+      notifySelfChanged();
+      eventHub.myPresence.notify(context.myPresence.get());
+    }
 
-      if (storageUpdates !== undefined && storageUpdates.size > 0) {
-        const updates = Array.from(storageUpdates.values());
-        eventHub.storageBatch.notify(updates);
-      }
-      notifyStorageStatus();
-    });
+    if (storageUpdates !== undefined && storageUpdates.size > 0) {
+      const updates = Array.from(storageUpdates.values());
+      eventHub.storageBatch.notify(updates);
+    }
+    notifyStorageStatus();
   }
 
   function getConnectionId() {
@@ -2011,15 +1969,10 @@ export function createRoom<
       context.activeBatch.updates.presence = true;
     } else {
       flushNowOrSoon();
-      batchUpdates(() => {
-        if (options?.addToHistory) {
-          addToUndoStack(
-            [{ type: "presence", data: oldValues }],
-            doNotBatchUpdates
-          );
-        }
-        notify({ presence: true }, doNotBatchUpdates);
-      });
+      if (options?.addToHistory) {
+        addToUndoStack([{ type: "presence", data: oldValues }]);
+      }
+      notify({ presence: true });
     }
   }
 
@@ -2069,8 +2022,7 @@ export function createRoom<
   }
 
   function onRoomStateMessage(
-    message: RoomStateServerMsg<U>,
-    batchedUpdatesWrapper: (cb: () => void) => void
+    message: RoomStateServerMsg<U>
   ): InternalOthersEvent<P, U> {
     // The server will inform the client about its assigned actor ID and scopes
     context.dynamicSessionInfoSig.set({
@@ -2079,7 +2031,7 @@ export function createRoom<
       scopes: message.scopes,
     });
     context.idFactory = makeIdFactory(message.actor);
-    notifySelfChanged(batchedUpdatesWrapper);
+    notifySelfChanged();
 
     for (const connectionId of context.others.connectionIds()) {
       const user = message.users[connectionId];
@@ -2109,10 +2061,8 @@ export function createRoom<
 
   function canUndo() { return context.undoStack.length > 0; } // prettier-ignore
   function canRedo() { return context.redoStack.length > 0; } // prettier-ignore
-  function onHistoryChange(batchedUpdatesWrapper: (cb: () => void) => void) {
-    batchedUpdatesWrapper(() => {
-      eventHub.history.notify({ canUndo: canUndo(), canRedo: canRedo() });
-    });
+  function onHistoryChange() {
+    eventHub.history.notify({ canUndo: canUndo(), canRedo: canRedo() });
   }
 
   function onUserJoinedMessage(
@@ -2159,10 +2109,7 @@ export function createRoom<
     }
   }
 
-  function applyAndSendOps(
-    offlineOps: Map<string, Op>,
-    batchedUpdatesWrapper: (cb: () => void) => void
-  ) {
+  function applyAndSendOps(offlineOps: Map<string, Op>) {
     if (offlineOps.size === 0) {
       return;
     }
@@ -2178,7 +2125,7 @@ export function createRoom<
       ops: result.ops,
     });
 
-    notify(result.updates, batchedUpdatesWrapper);
+    notify(result.updates);
 
     sendMessages(messages);
   }
@@ -2204,127 +2151,124 @@ export function createRoom<
       others: [] as InternalOthersEvent<P, U>[],
     };
 
-    batchUpdates(() => {
-      for (const message of messages) {
-        switch (message.type) {
-          case ServerMsgCode.USER_JOINED: {
-            const userJoinedUpdate = onUserJoinedMessage(message);
-            if (userJoinedUpdate) {
-              updates.others.push(userJoinedUpdate);
-            }
-            break;
+    for (const message of messages) {
+      switch (message.type) {
+        case ServerMsgCode.USER_JOINED: {
+          const userJoinedUpdate = onUserJoinedMessage(message);
+          if (userJoinedUpdate) {
+            updates.others.push(userJoinedUpdate);
           }
+          break;
+        }
 
-          case ServerMsgCode.UPDATE_PRESENCE: {
-            const othersPresenceUpdate = onUpdatePresenceMessage(message);
-            if (othersPresenceUpdate) {
-              updates.others.push(othersPresenceUpdate);
-            }
-            break;
+        case ServerMsgCode.UPDATE_PRESENCE: {
+          const othersPresenceUpdate = onUpdatePresenceMessage(message);
+          if (othersPresenceUpdate) {
+            updates.others.push(othersPresenceUpdate);
           }
+          break;
+        }
 
-          case ServerMsgCode.BROADCASTED_EVENT: {
-            const others = context.others.get();
-            eventHub.customEvent.notify({
-              connectionId: message.actor,
-              user:
-                message.actor < 0
-                  ? null
-                  : others.find((u) => u.connectionId === message.actor) ??
-                    null,
-              event: message.event,
-            });
-            break;
-          }
+        case ServerMsgCode.BROADCASTED_EVENT: {
+          const others = context.others.get();
+          eventHub.customEvent.notify({
+            connectionId: message.actor,
+            user:
+              message.actor < 0
+                ? null
+                : others.find((u) => u.connectionId === message.actor) ?? null,
+            event: message.event,
+          });
+          break;
+        }
 
-          case ServerMsgCode.USER_LEFT: {
-            const event = onUserLeftMessage(message);
-            if (event) {
-              updates.others.push(event);
-            }
-            break;
+        case ServerMsgCode.USER_LEFT: {
+          const event = onUserLeftMessage(message);
+          if (event) {
+            updates.others.push(event);
           }
+          break;
+        }
 
-          case ServerMsgCode.UPDATE_YDOC: {
-            eventHub.ydoc.notify(message);
-            break;
-          }
+        case ServerMsgCode.UPDATE_YDOC: {
+          eventHub.ydoc.notify(message);
+          break;
+        }
 
-          case ServerMsgCode.ROOM_STATE: {
-            updates.others.push(onRoomStateMessage(message, doNotBatchUpdates));
-            break;
-          }
+        case ServerMsgCode.ROOM_STATE: {
+          updates.others.push(onRoomStateMessage(message));
+          break;
+        }
 
-          case ServerMsgCode.INITIAL_STORAGE_STATE: {
-            // createOrUpdateRootFromMessage function could add ops to offlineOperations.
-            // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
-            processInitialStorage(message);
-            break;
-          }
-          // Write event
-          case ServerMsgCode.UPDATE_STORAGE: {
-            const applyResult = applyOps(message.ops, false);
-            for (const [key, value] of applyResult.updates.storageUpdates) {
-              updates.storageUpdates.set(
-                key,
-                mergeStorageUpdates(updates.storageUpdates.get(key), value)
-              );
-            }
-            break;
-          }
-
-          // Receiving a RejectedOps message in the client means that the server is no
-          // longer in sync with the client. Trying to synchronize the client again by
-          // rolling back particular Ops may be hard/impossible. It's fine to not try and
-          // accept the out-of-sync reality and throw an error. We look at this kind of bug
-          // as a developer-owned bug. In production, these errors are not expected to happen.
-          case ServerMsgCode.REJECT_STORAGE_OP: {
-            console.errorWithTitle(
-              "Storage mutation rejection error",
-              message.reason
+        case ServerMsgCode.INITIAL_STORAGE_STATE: {
+          // createOrUpdateRootFromMessage function could add ops to offlineOperations.
+          // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
+          processInitialStorage(message);
+          break;
+        }
+        // Write event
+        case ServerMsgCode.UPDATE_STORAGE: {
+          const applyResult = applyOps(message.ops, false);
+          for (const [key, value] of applyResult.updates.storageUpdates) {
+            updates.storageUpdates.set(
+              key,
+              mergeStorageUpdates(updates.storageUpdates.get(key), value)
             );
+          }
+          break;
+        }
 
-            if (process.env.NODE_ENV !== "production") {
-              const traces: Set<string> = new Set();
-              for (const opId of message.opIds) {
-                const trace = context.opStackTraces?.get(opId);
-                if (trace) {
-                  traces.add(trace);
-                }
+        // Receiving a RejectedOps message in the client means that the server is no
+        // longer in sync with the client. Trying to synchronize the client again by
+        // rolling back particular Ops may be hard/impossible. It's fine to not try and
+        // accept the out-of-sync reality and throw an error. We look at this kind of bug
+        // as a developer-owned bug. In production, these errors are not expected to happen.
+        case ServerMsgCode.REJECT_STORAGE_OP: {
+          console.errorWithTitle(
+            "Storage mutation rejection error",
+            message.reason
+          );
+
+          if (process.env.NODE_ENV !== "production") {
+            const traces: Set<string> = new Set();
+            for (const opId of message.opIds) {
+              const trace = context.opStackTraces?.get(opId);
+              if (trace) {
+                traces.add(trace);
               }
+            }
 
-              if (traces.size > 0) {
-                console.warnWithTitle(
-                  "The following function calls caused the rejected storage mutations:",
-                  `\n\n${Array.from(traces).join("\n\n")}`
-                );
-              }
-
-              throw new Error(
-                `Storage mutations rejected by server: ${message.reason}`
+            if (traces.size > 0) {
+              console.warnWithTitle(
+                "The following function calls caused the rejected storage mutations:",
+                `\n\n${Array.from(traces).join("\n\n")}`
               );
             }
 
-            break;
+            throw new Error(
+              `Storage mutations rejected by server: ${message.reason}`
+            );
           }
 
-          case ServerMsgCode.THREAD_CREATED:
-          case ServerMsgCode.THREAD_DELETED:
-          case ServerMsgCode.THREAD_METADATA_UPDATED:
-          case ServerMsgCode.THREAD_UPDATED:
-          case ServerMsgCode.COMMENT_REACTION_ADDED:
-          case ServerMsgCode.COMMENT_REACTION_REMOVED:
-          case ServerMsgCode.COMMENT_CREATED:
-          case ServerMsgCode.COMMENT_EDITED:
-          case ServerMsgCode.COMMENT_DELETED: {
-            eventHub.comments.notify(message);
-            break;
-          }
+          break;
+        }
+
+        case ServerMsgCode.THREAD_CREATED:
+        case ServerMsgCode.THREAD_DELETED:
+        case ServerMsgCode.THREAD_METADATA_UPDATED:
+        case ServerMsgCode.THREAD_UPDATED:
+        case ServerMsgCode.COMMENT_REACTION_ADDED:
+        case ServerMsgCode.COMMENT_REACTION_REMOVED:
+        case ServerMsgCode.COMMENT_CREATED:
+        case ServerMsgCode.COMMENT_EDITED:
+        case ServerMsgCode.COMMENT_DELETED: {
+          eventHub.comments.notify(message);
+          break;
         }
       }
+    }
 
-      notify(updates, doNotBatchUpdates);
-    });
+    notify(updates);
   }
 
   function flushNowOrSoon() {
@@ -2449,8 +2393,8 @@ export function createRoom<
 
   function processInitialStorage(message: InitialDocumentStateServerMsg) {
     const unacknowledgedOps = new Map(context.unacknowledgedOps);
-    createOrUpdateRootFromMessage(message, doNotBatchUpdates);
-    applyAndSendOps(unacknowledgedOps, doNotBatchUpdates);
+    createOrUpdateRootFromMessage(message);
+    applyAndSendOps(unacknowledgedOps);
     _resolveStoragePromise?.();
     notifyStorageStatus();
     eventHub.storageDidLoad.notify();
@@ -2565,11 +2509,9 @@ export function createRoom<
     context.pausedHistory = null;
     const result = applyOps(historyOps, true);
 
-    batchUpdates(() => {
-      notify(result.updates, doNotBatchUpdates);
-      context.redoStack.push(result.reverse);
-      onHistoryChange(doNotBatchUpdates);
-    });
+    notify(result.updates);
+    context.redoStack.push(result.reverse);
+    onHistoryChange();
 
     for (const op of result.ops) {
       if (op.type !== "presence") {
@@ -2592,11 +2534,9 @@ export function createRoom<
     context.pausedHistory = null;
     const result = applyOps(historyOps, true);
 
-    batchUpdates(() => {
-      notify(result.updates, doNotBatchUpdates);
-      context.undoStack.push(result.reverse);
-      onHistoryChange(doNotBatchUpdates);
-    });
+    notify(result.updates);
+    context.undoStack.push(result.reverse);
+    onHistoryChange();
 
     for (const op of result.ops) {
       if (op.type !== "presence") {
@@ -2621,42 +2561,40 @@ export function createRoom<
 
     let returnValue: T = undefined as unknown as T;
 
-    batchUpdates(() => {
-      context.activeBatch = {
-        ops: [],
-        updates: {
-          storageUpdates: new Map(),
-          presence: false,
-          others: [],
-        },
-        reverseOps: [],
-      };
-      try {
-        returnValue = callback();
-      } finally {
-        // "Pop" the current batch of the state, closing the active batch, but
-        // handling it separately here
-        const currentBatch = context.activeBatch;
-        context.activeBatch = null;
+    context.activeBatch = {
+      ops: [],
+      updates: {
+        storageUpdates: new Map(),
+        presence: false,
+        others: [],
+      },
+      reverseOps: [],
+    };
+    try {
+      returnValue = callback();
+    } finally {
+      // "Pop" the current batch of the state, closing the active batch, but
+      // handling it separately here
+      const currentBatch = context.activeBatch;
+      context.activeBatch = null;
 
-        if (currentBatch.reverseOps.length > 0) {
-          addToUndoStack(currentBatch.reverseOps, doNotBatchUpdates);
-        }
-
-        if (currentBatch.ops.length > 0) {
-          // Only clear the redo stack if something has changed during a batch
-          // Clear the redo stack because batch is always called from a local operation
-          context.redoStack.length = 0;
-        }
-
-        if (currentBatch.ops.length > 0) {
-          dispatchOps(currentBatch.ops);
-        }
-
-        notify(currentBatch.updates, doNotBatchUpdates);
-        flushNowOrSoon();
+      if (currentBatch.reverseOps.length > 0) {
+        addToUndoStack(currentBatch.reverseOps);
       }
-    });
+
+      if (currentBatch.ops.length > 0) {
+        // Only clear the redo stack if something has changed during a batch
+        // Clear the redo stack because batch is always called from a local operation
+        context.redoStack.length = 0;
+      }
+
+      if (currentBatch.ops.length > 0) {
+        dispatchOps(currentBatch.ops);
+      }
+
+      notify(currentBatch.updates);
+      flushNowOrSoon();
+    }
 
     return returnValue;
   }
@@ -2671,7 +2609,7 @@ export function createRoom<
     const historyOps = context.pausedHistory;
     context.pausedHistory = null;
     if (historyOps !== null && historyOps.length > 0) {
-      _addToRealUndoStack(historyOps, batchUpdates);
+      _addToRealUndoStack(historyOps);
     }
   }
 
@@ -3229,7 +3167,7 @@ function makeClassicSubscribeFn<
   return subscribe;
 }
 
-function isRoomEventName(value: string): value is RoomEventName {
+function isRoomEventName(value: string) {
   return (
     value === "my-presence" ||
     value === "others" ||

@@ -65,13 +65,6 @@
     "date": "2022-09-01"
   },
   {
-    "title": "How to create a collaborative online whiteboard with React and Liveblocks",
-    "path": "/how-to-create-a-collaborative-online-whiteboard-with-react-and-liveblocks",
-    "topics": ["tutorials"],
-    "technologies": ["react"],
-    "date": "2022-09-01"
-  },
-  {
     "title": "How to create a collaborative online whiteboard with React, Redux, and Liveblocks",
     "path": "/how-to-create-a-collaborative-online-whiteboard-with-react-redux-and-liveblocks",
     "topics": ["tutorials"],

@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "use-sync-external-store/shim/index.js";
+import { useSyncExternalStore } from "react";
 
 function subscribe(callback: () => void) {
   window.addEventListener("blur", callback);

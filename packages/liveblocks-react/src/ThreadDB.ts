@@ -2,8 +2,9 @@ import type {
   BaseMetadata,
   ThreadData,
   ThreadDataWithDeleteInfo,
+  ThreadDeleteInfo,
 } from "@liveblocks/core";
-import { SortedList } from "@liveblocks/core";
+import { batch, MutableSignal, SortedList } from "@liveblocks/core";
 
 import { makeThreadsFilter } from "./lib/querying";
 import type { ThreadsQuery } from "./types";
@@ -31,7 +32,7 @@ function sanitizeThread<M extends BaseMetadata>(
 
 export type ReadonlyThreadDB<M extends BaseMetadata> = Omit<
   ThreadDB<M>,
-  "upsert" | "delete"
+  "upsert" | "delete" | "signal"
 >;
 
 /**
@@ -55,7 +56,9 @@ export class ThreadDB<M extends BaseMetadata> {
   #byId: Map<string, ThreadDataWithDeleteInfo<M>>;
   #asc: SortedList<ThreadData<M>>;
   #desc: SortedList<ThreadData<M>>;
-  #version: number; // The version is auto-incremented on every mutation and can be used as a reliable indicator to tell if the contents of the thread pool has changed
+
+  // This signal will be notified on every mutation
+  public readonly signal: MutableSignal<this>;
 
   constructor() {
     this.#asc = SortedList.from<ThreadData<M>>([], (t1, t2) => {
@@ -71,7 +74,8 @@ export class ThreadDB<M extends BaseMetadata> {
     });
 
     this.#byId = new Map();
-    this.#version = 0;
+
+    this.signal = new MutableSignal(this);
   }
 
   //
@@ -83,13 +87,7 @@ export class ThreadDB<M extends BaseMetadata> {
     newPool.#byId = new Map(this.#byId);
     newPool.#asc = this.#asc.clone();
     newPool.#desc = this.#desc.clone();
-    newPool.#version = this.#version;
     return newPool;
-  }
-
-  /** Gets the transaction count for this DB. Increments any time the DB is modified. */
-  public get version() {
-    return this.#version;
   }
 
   /** Returns an existing thread by ID. Will never return a deleted thread. */
@@ -107,25 +105,27 @@ export class ThreadDB<M extends BaseMetadata> {
 
   /** Adds or updates a thread in the DB. If the newly given thread is a deleted one, it will get deleted. */
   public upsert(thread: ThreadDataWithDeleteInfo<M>): void {
-    thread = sanitizeThread(thread);
+    this.signal.mutate(() => {
+      thread = sanitizeThread(thread);
 
-    const id = thread.id;
+      const id = thread.id;
 
-    const toRemove = this.#byId.get(id);
-    if (toRemove) {
-      // Don't do anything if the existing thread is already deleted!
-      if (toRemove.deletedAt) return;
+      const toRemove = this.#byId.get(id);
+      if (toRemove) {
+        // Don't do anything if the existing thread is already deleted!
+        if (toRemove.deletedAt) return false;
 
-      this.#asc.remove(toRemove);
-      this.#desc.remove(toRemove);
-    }
+        this.#asc.remove(toRemove);
+        this.#desc.remove(toRemove);
+      }
 
-    if (!thread.deletedAt) {
-      this.#asc.add(thread);
-      this.#desc.add(thread);
-    }
-    this.#byId.set(id, thread);
-    this.#touch();
+      if (!thread.deletedAt) {
+        this.#asc.add(thread);
+        this.#desc.add(thread);
+      }
+      this.#byId.set(id, thread);
+      return true;
+    });
   }
 
   /** Like .upsert(), except it won't update if a thread by this ID already exists. */
@@ -136,6 +136,25 @@ export class ThreadDB<M extends BaseMetadata> {
     if (!existing || thread.updatedAt >= existing.updatedAt) {
       this.upsert(thread);
     }
+  }
+
+  public applyDelta(
+    newThreads: ThreadData<M>[],
+    deletedThreads: ThreadDeleteInfo[]
+  ): void {
+    batch(() => {
+      // Add new threads or update existing threads if the existing thread is older than the new thread.
+      for (const thread of newThreads) {
+        this.upsertIfNewer(thread);
+      }
+
+      // Mark threads in the deletedThreads list as deleted
+      for (const { id, deletedAt } of deletedThreads) {
+        const existing = this.getEvenIfDeleted(id);
+        if (!existing) continue;
+        this.delete(id, deletedAt);
+      }
+    });
   }
 
   /**
@@ -173,13 +192,5 @@ export class ThreadDB<M extends BaseMetadata> {
     }
     crit.push(makeThreadsFilter(query));
     return Array.from(index.filter((t) => crit.every((pred) => pred(t))));
-  }
-
-  //
-  // Private APIs
-  //
-
-  #touch() {
-    ++this.#version;
   }
 }

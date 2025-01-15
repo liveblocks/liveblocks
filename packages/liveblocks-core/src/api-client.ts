@@ -13,6 +13,7 @@ import { Batch, createBatchStore } from "./lib/batch";
 import { chunk } from "./lib/chunk";
 import { createCommentId, createThreadId } from "./lib/createIds";
 import type { DateToString } from "./lib/DateToString";
+import { DefaultMap } from "./lib/DefaultMap";
 import type { Json, JsonObject } from "./lib/Json";
 import { objectToQuery } from "./lib/objectToQuery";
 import type { QueryParams, URLSafeString } from "./lib/url";
@@ -928,54 +929,43 @@ export function createApiClient<M extends BaseMetadata>({
     }
   }
 
-  const getAttachmentUrlsBatchStoreByRoom: Map<
+  const attachmentUrlsBatchStoresByRoom = new DefaultMap<
     string,
     BatchStore<string, string>
-  > = new Map();
+  >((roomId) => {
+    const batch = new Batch<string, string>(
+      async (batchedAttachmentIds) => {
+        const attachmentIds = batchedAttachmentIds.flat();
+        const { urls } = await httpClient.post<{
+          urls: (string | null)[];
+        }>(
+          url`/v2/c/rooms/${roomId}/attachments/presigned-urls`,
+          await authManager.getAuthValue({
+            requestedScope: "comments:read",
+            roomId,
+          }),
+          { attachmentIds }
+        );
+
+        return urls.map(
+          (url) =>
+            url ??
+            new Error("There was an error while getting this attachment's URL")
+        );
+      },
+      { delay: 50 }
+    );
+    return createBatchStore(batch);
+  });
 
   function getOrCreateAttachmentUrlsStore(
     roomId: string
   ): BatchStore<string, string> {
-    let store = getAttachmentUrlsBatchStoreByRoom.get(roomId);
-    if (store === undefined) {
-      const batch = new Batch<string, string>(
-        async (batchedAttachmentIds) => {
-          const attachmentIds = batchedAttachmentIds.flat();
-          const { urls } = await httpClient.post<{
-            urls: (string | null)[];
-          }>(
-            url`/v2/c/rooms/${roomId}/attachments/presigned-urls`,
-            await authManager.getAuthValue({
-              requestedScope: "comments:read",
-              roomId,
-            }),
-            {
-              attachmentIds,
-            }
-          );
-
-          return urls.map(
-            (url) =>
-              url ??
-              new Error(
-                "There was an error while getting this attachment's URL"
-              )
-          );
-        },
-        {
-          delay: 50,
-        }
-      );
-
-      store = createBatchStore(batch);
-
-      getAttachmentUrlsBatchStoreByRoom.set(roomId, store);
-    }
-    return store;
+    return attachmentUrlsBatchStoresByRoom.getOrCreate(roomId);
   }
 
   function getAttachmentUrl(options: { roomId: string; attachmentId: string }) {
-    const batch = getOrCreateAttachmentUrlsStore(options.roomId).getBatch();
+    const batch = getOrCreateAttachmentUrlsStore(options.roomId).batch;
     return batch.get(options.attachmentId);
   }
 
@@ -1013,16 +1003,9 @@ export function createApiClient<M extends BaseMetadata>({
     );
   }
 
-  const markInboxNotificationsAsReadBatchByRoom: Map<
-    string,
-    Batch<string, string>
-  > = new Map();
-  function getOrCreateMarkInboxNotificationsAsReadBatch(
-    roomId: string
-  ): Batch<string, string> {
-    let batch = markInboxNotificationsAsReadBatchByRoom.get(roomId);
-    if (batch === undefined) {
-      batch = new Batch<string, string>(
+  const markAsReadBatchesByRoom = new DefaultMap<string, Batch<string, string>>(
+    (roomId) =>
+      new Batch<string, string>(
         async (batchedInboxNotificationIds) => {
           const inboxNotificationIds = batchedInboxNotificationIds.flat();
           // This method (and the following batch handling) isn't the same as the one in
@@ -1041,21 +1024,15 @@ export function createApiClient<M extends BaseMetadata>({
           );
           return inboxNotificationIds;
         },
-        {
-          delay: 50,
-        }
-      );
-
-      markInboxNotificationsAsReadBatchByRoom.set(roomId, batch);
-    }
-    return batch;
-  }
+        { delay: 50 }
+      )
+  );
 
   async function markRoomInboxNotificationAsRead(options: {
     roomId: string;
     inboxNotificationId: string;
   }) {
-    const batch = getOrCreateMarkInboxNotificationsAsReadBatch(options.roomId);
+    const batch = markAsReadBatchesByRoom.getOrCreate(options.roomId);
     return batch.get(options.inboxNotificationId);
   }
 

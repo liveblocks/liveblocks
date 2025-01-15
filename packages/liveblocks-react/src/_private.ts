@@ -1,6 +1,7 @@
 // Private APIs
 
 export { useRoomOrNull } from "./contexts";
+export { useLayoutEffect } from "./lib/use-layout-effect";
 export { getUmbrellaStoreForClient } from "./liveblocks";
 export { useClientOrNull } from "./liveblocks";
 export { CreateThreadError } from "./room";
@@ -26,4 +27,6 @@ export {
   useYjsProvider,
 } from "./room";
 export { useMentionSuggestions } from "./use-mention-suggestions";
+export { useSignal } from "./use-signal";
+export { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
 export { useSyncSource } from "./use-sync-source";

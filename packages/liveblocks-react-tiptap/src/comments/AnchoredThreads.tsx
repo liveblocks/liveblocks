@@ -1,17 +1,12 @@
 import type { BaseMetadata, DM, ThreadData } from "@liveblocks/core";
+import { useLayoutEffect } from "@liveblocks/react/_private";
 import {
   Thread as DefaultThread,
   type ThreadProps,
 } from "@liveblocks/react-ui";
 import { type Editor, useEditorState } from "@tiptap/react";
 import type { ComponentPropsWithoutRef, ComponentType } from "react";
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { classNames } from "../classnames";
 import { THREADS_PLUGIN_KEY } from "../types";
@@ -55,7 +50,9 @@ export function AnchoredThreads({
 }: AnchoredThreadsProps) {
   const Thread = components?.Thread ?? DefaultThread;
   const containerRef = useRef<HTMLDivElement>(null);
-  const [orderedThreads, setOrderedThreads] = useState<{ position: { from: number, to: number }, thread: ThreadData }[]>([]);
+  const [orderedThreads, setOrderedThreads] = useState<
+    { position: { from: number; to: number }; thread: ThreadData }[]
+  >([]);
   const [elements, setElements] = useState<Map<string, HTMLElement>>(new Map());
   const [positions, setPositions] = useState<Map<string, number>>(new Map()); // A map of thread ids to their 'top' position in the document
 
@@ -70,8 +67,11 @@ export function AnchoredThreads({
     },
     equalityFn: (prev, next) => {
       if (!prev || !next) return false;
-      return prev.pluginState?.selectedThreadId === next.pluginState?.selectedThreadId &&
-        prev.pluginState?.threadPositions === next.pluginState?.threadPositions; // new map is made each time threadPos updates so shallow equality is fine
+      return (
+        prev.pluginState?.selectedThreadId ===
+          next.pluginState?.selectedThreadId &&
+        prev.pluginState?.threadPositions === next.pluginState?.threadPositions
+      ); // new map is made each time threadPos updates so shallow equality is fine
     },
   }) ?? { pluginState: undefined };
 
@@ -80,17 +80,21 @@ export function AnchoredThreads({
     const container = containerRef.current;
     if (container === null || !editor) return;
 
-    const activeIndex = orderedThreads.findIndex(({ thread }) =>
-      thread.id === pluginState?.selectedThreadId
+    const activeIndex = orderedThreads.findIndex(
+      ({ thread }) => thread.id === pluginState?.selectedThreadId
     );
-    const ascending = activeIndex !== -1 ? orderedThreads.slice(activeIndex) : orderedThreads;
-    const descending = activeIndex !== -1 ? orderedThreads.slice(0, activeIndex) : [];
+    const ascending =
+      activeIndex !== -1 ? orderedThreads.slice(activeIndex) : orderedThreads;
+    const descending =
+      activeIndex !== -1 ? orderedThreads.slice(0, activeIndex) : [];
 
     const newPositions = new Map<string, number>();
 
     // Iterate over each thread and calculate its new position by taking into account the position of the previously positioned threads
     for (const { thread, position } of ascending) {
-      const coords = editor.view.coordsAtPos(Math.min(position.from, editor.view.state.doc.content.size - 1));
+      const coords = editor.view.coordsAtPos(
+        Math.min(position.from, editor.view.state.doc.content.size - 1)
+      );
       const rect = getRectFromCoords(coords);
       let top = rect.top - container.getBoundingClientRect().top;
 
@@ -132,17 +136,26 @@ export function AnchoredThreads({
 
   useEffect(() => {
     if (!pluginState) return;
-    setOrderedThreads(Array.from(pluginState.threadPositions, ([threadId, position]) => ({ threadId, position })).reduce((acc, { threadId, position }) => {
-      const thread = threads.find((thread) => thread.id === threadId && !thread.resolved);
-      if (!thread) return acc;
-      acc.push({ thread, position });
-      return acc;
-    }, [] as { thread: ThreadData, position: { from: number, to: number } }[]));
+    setOrderedThreads(
+      Array.from(pluginState.threadPositions, ([threadId, position]) => ({
+        threadId,
+        position,
+      })).reduce(
+        (acc, { threadId, position }) => {
+          const thread = threads.find(
+            (thread) => thread.id === threadId && !thread.resolved
+          );
+          if (!thread) return acc;
+          acc.push({ thread, position });
+          return acc;
+        },
+        [] as { thread: ThreadData; position: { from: number; to: number } }[]
+      )
+    );
     handlePositionThreads();
     // disable exhaustive deps because we don't want an infinite loop
-    // eslint-disable-next-line react-hooks/exhaustive-deps 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pluginState, threads]);
-
 
   useLayoutEffect(handlePositionThreads, [handlePositionThreads]);
 
@@ -171,11 +184,13 @@ export function AnchoredThreads({
     });
   }, []);
 
-  const onThreadSelect = useCallback((id: string) => {
-    if (!editor) return;
-    editor.commands.selectThread(id);
-  }, [editor]);
-
+  const onThreadSelect = useCallback(
+    (id: string) => {
+      if (!editor) return;
+      editor.commands.selectThread(id);
+    },
+    [editor]
+  );
 
   if (!editor) return null;
 
@@ -190,7 +205,9 @@ export function AnchoredThreads({
       }}
     >
       {orderedThreads.map(({ thread, position }) => {
-        const coords = editor.view.coordsAtPos(Math.min(position.from, editor.state.doc.content.size - 1));
+        const coords = editor.view.coordsAtPos(
+          Math.min(position.from, editor.state.doc.content.size - 1)
+        );
         const rect = getRectFromCoords(coords);
         const offset = editor.options.element.getBoundingClientRect().top;
 

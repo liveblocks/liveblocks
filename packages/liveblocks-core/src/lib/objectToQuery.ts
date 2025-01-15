@@ -1,24 +1,23 @@
+import { isPlainObject, isStartsWithOperator } from "./guards";
+
 /**
  * Converts an object to a query string
  * Example:
  * ```ts
  * const query = objectToQuery({
-      resolved: true,
-      metadata: {
-        status: "open",
-        priority: 3,
-        org: {
-          startsWith: "liveblocks:",
-        },
-      },
-});
-
-console.log(query);
-// resolved:true AND metadata["status"]:open AND metadata["priority"]:3 AND metadata["org"]^"liveblocks:"
-
+ *   resolved: true,
+ *   metadata: {
+ *     status: "open",
+ *     priority: 3,
+ *     org: {
+ *       startsWith: "liveblocks:",
+ *     },
+ *   },
+ * });
+ *
+ * console.log(query);
+ * // resolved:true AND metadata["status"]:open AND metadata["priority"]:3 AND metadata["org"]^"liveblocks:"
  * ```
- *
- *
  */
 type SimpleFilterValue = string | number | boolean;
 type OperatorFilterValue = { startsWith: string };
@@ -98,10 +97,12 @@ export function objectToQuery(obj: {
 
     if (isSimpleValue(value)) {
       keyValuePairs.push([key, value]);
-    } else if (isValueWithOperator(value)) {
-      keyValuePairsWithOperator.push([key, value]);
-    } else if (typeof value === "object" && !("startsWith" in value)) {
-      indexedKeys.push([key, value]);
+    } else if (isPlainObject(value)) {
+      if (isStartsWithOperator(value)) {
+        keyValuePairsWithOperator.push([key, value]);
+      } else {
+        indexedKeys.push([key, value]);
+      }
     }
   });
 
@@ -121,7 +122,7 @@ export function objectToQuery(obj: {
 
       if (isSimpleValue(nestedValue)) {
         nKeyValuePairs.push([formatFilterKey(key, nestedKey), nestedValue]);
-      } else if (isValueWithOperator(nestedValue)) {
+      } else if (isStartsWithOperator(nestedValue)) {
         nKeyValuePairsWithOperator.push([
           formatFilterKey(key, nestedKey),
           nestedValue,
@@ -174,24 +175,12 @@ const getFiltersFromKeyValuePairsWithOperator = (
   return filters;
 };
 
-const isSimpleValue = (value: unknown): value is SimpleFilterValue => {
-  if (
+const isSimpleValue = (value: unknown) => {
+  return (
     typeof value === "string" ||
     typeof value === "number" ||
     typeof value === "boolean"
-  ) {
-    return true;
-  }
-  return false;
-};
-
-const isValueWithOperator = (
-  value: unknown
-): value is { startsWith: string } => {
-  if (typeof value === "object" && value !== null && "startsWith" in value) {
-    return true;
-  }
-  return false;
+  );
 };
 
 const formatFilter = (key: string, operator: ":" | "^", value: string) => {

@@ -139,7 +139,7 @@ export function DocumentsList({
               { value: "all", title: "All" },
               { value: "text", title: "Text" },
               { value: "whiteboard", title: "Whiteboard" },
-              { value: "spreadsheet", title: "Spreadsheet", disabled: true },
+              { value: "canvas", title: "Canvas" },
             ]}
             onChange={(value: "all" | DocumentType) => {
               setDocumentType(value);

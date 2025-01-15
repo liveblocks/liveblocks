@@ -30,6 +30,7 @@ import type {
   PartialUnless,
   Patchable,
   QueryMetadata,
+  Relax,
   Resolve,
   RoomEventMessage,
   StorageStatus,
@@ -37,7 +38,7 @@ import type {
   ThreadData,
   ToImmutable,
 } from "@liveblocks/core";
-import type { PropsWithChildren } from "react";
+import type { Context, PropsWithChildren, ReactNode } from "react";
 
 import type { CommentsError } from "./errors";
 
@@ -143,13 +144,6 @@ export type CommentReactionOptions = {
 
 // -----------------------------------------------------------------------
 
-type NoPaginationFields = {
-  hasFetchedAll?: never;
-  isFetchingMore?: never;
-  fetchMore?: never;
-  fetchMoreError?: never;
-};
-
 type PaginationFields = {
   hasFetchedAll: boolean;
   isFetchingMore: boolean;
@@ -161,10 +155,9 @@ export type PagedAsyncSuccess<T, F extends string> = Resolve<
   AsyncSuccess<T, F> & PaginationFields
 >;
 
-export type PagedAsyncResult<T, F extends string> =
-  | Resolve<AsyncLoading<F> & NoPaginationFields>
-  | Resolve<AsyncError<F> & NoPaginationFields>
-  | PagedAsyncSuccess<T, F>;
+export type PagedAsyncResult<T, F extends string> = Relax<
+  AsyncLoading<F> | AsyncError<F> | PagedAsyncSuccess<T, F>
+>;
 
 // -----------------------------------------------------------------------
 
@@ -193,7 +186,7 @@ export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
      * The id of the room you want to connect to
      */
     id: string;
-    children: React.ReactNode;
+    children: ReactNode;
 
     /**
      * Whether or not the room should connect to Liveblocks servers
@@ -204,22 +197,6 @@ export type RoomProviderProps<P extends JsonObject, S extends LsonObject> =
      * only on the client side.
      */
     autoConnect?: boolean;
-
-    /**
-     * If you're on React 17 or lower, pass in a reference to
-     * `ReactDOM.unstable_batchedUpdates` or
-     * `ReactNative.unstable_batchedUpdates` here.
-     *
-     * @example
-     * import { unstable_batchedUpdates } from "react-dom";
-     *
-     * <RoomProvider ... unstable_batchedUpdates={unstable_batchedUpdates} />
-     *
-     * This will prevent you from running into the so-called "stale props"
-     * and/or "zombie child" problem that React 17 and lower can suffer from.
-     * Not necessary when you're on React v18 or later.
-     */
-    unstable_batchedUpdates?: (cb: () => void) => void;
   }
 
   // Initial presence is only mandatory if the custom type requires it to be
@@ -271,22 +248,14 @@ export type MutationContext<
   ) => void;
 };
 
-export type ThreadSubscription =
+export type ThreadSubscription = Relax<
   // The user is not subscribed to the thread
-  | {
-      status: "not-subscribed";
-      unreadSince?: never;
-    }
+  | { status: "not-subscribed" }
   // The user is subscribed to the thread but has never read it
-  | {
-      status: "subscribed";
-      unreadSince: null;
-    }
+  | { status: "subscribed"; unreadSince: null }
   // The user is subscribed to the thread and has read it
-  | {
-      status: "subscribed";
-      unreadSince: Date;
-    };
+  | { status: "subscribed"; unreadSince: Date }
+>;
 
 export type SharedContextBundle<U extends BaseUserMeta> = {
   classic: {
@@ -391,7 +360,7 @@ type RoomContextBundleCommon<
    * it can be necessary if you're building an advanced app where you need to
    * set up a context bridge between two React renderers.
    */
-  RoomContext: React.Context<Room<P, S, U, E, M> | null>;
+  RoomContext: Context<Room<P, S, U, E, M> | null>;
 
   /**
    * Makes a Room available in the component hierarchy below.
