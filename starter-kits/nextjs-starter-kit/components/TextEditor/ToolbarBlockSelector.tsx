@@ -15,7 +15,7 @@ export function ToolbarBlockSelector({ editor }: Props) {
         ...defaultBlockItems,
         {
           name: "Task list",
-          icon: <CheckboxIcon style={{ width: 18 }} />,
+          icon: <CheckboxIcon style={{ width: 17 }} />,
           isActive: () => editor?.isActive("taskList") ?? false,
           setActive: () => editor?.chain().focus().toggleTaskList().run(),
         },
