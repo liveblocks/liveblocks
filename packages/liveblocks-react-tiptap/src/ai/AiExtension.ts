@@ -19,7 +19,8 @@ import type {
   LiveblocksExtensionStorage,
   YSyncBinding,
 } from "../types";
-import { DEFAULT_AI_NAME } from "./AiToolbar";
+
+const DEFAULT_AI_NAME = "AI";
 
 const AiExtension = Extension.create<AiExtensionOptions, AiExtensionStorage>({
   name: "liveblocksAi",

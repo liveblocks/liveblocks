@@ -377,20 +377,16 @@ export const useLiveblocksExtension = (
       if (options.ai) {
         extensions.push(
           AiExtension.configure({
-            ...(options.ai === true
-              ? {
-                  resolveAiPrompt: async (prompt, selectionText) => {
-                    const result = await room[
-                      kInternal
-                    ].executeContextualPrompt({
-                      prompt,
-                      selectionText,
-                      context: "", // TODO: add doc context
-                    });
-                    return result;
-                  },
-                }
-              : options.ai),
+            resolveAiPrompt: async (prompt, selectionText) => {
+              const result = await room[kInternal].executeContextualPrompt({
+                prompt,
+                selectionText,
+                context: "", // TODO: add doc context
+              });
+
+              return result;
+            },
+            ...(typeof options.ai === "boolean" ? {} : options.ai),
             doc: this.storage.doc,
             pud: this.storage.permanentUserData,
           })

@@ -48,7 +48,6 @@ import type {
 import { getDomRangeFromSelection } from "../utils";
 
 export const AI_TOOLBAR_COLLISION_PADDING = 10;
-export const DEFAULT_AI_NAME = "AI";
 
 export interface AiToolbarProps
   extends Omit<ComponentProps<"div">, "value" | "defaultValue"> {
@@ -208,8 +207,7 @@ function AiToolbarPromptContent({
   dropdownRef: RefObject<HTMLDivElement>;
   isDropdownHidden: boolean;
 }) {
-  const aiName =
-    (editor.storage.liveblocksAi as AiExtensionStorage).name ?? DEFAULT_AI_NAME;
+  const aiName = (editor.storage.liveblocksAi as AiExtensionStorage).name;
   const promptRef = useRef<HTMLTextAreaElement>(null);
   const isPromptEmpty = useMemo(() => prompt.trim() === "", [prompt]);
 
@@ -345,8 +343,7 @@ function AiToolbarThinking({
   editor: Editor;
   prompt: string;
 }) {
-  const aiName =
-    (editor.storage.liveblocksAi as AiExtensionStorage).name ?? DEFAULT_AI_NAME;
+  const aiName = (editor.storage.liveblocksAi as AiExtensionStorage).name;
 
   const handleCancel = useCallback(() => {
     (editor.commands as AiCommands<boolean>).cancelAskAi();

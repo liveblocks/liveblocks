@@ -33,7 +33,6 @@ import type {
 } from "react";
 import { forwardRef, useCallback, useContext, useMemo } from "react";
 
-import { DEFAULT_AI_NAME } from "../ai/AiToolbar";
 import { classNames } from "../classnames";
 import { EditorProvider, useCurrentEditor } from "../context";
 import type { AiExtensionStorage, ExtendedChainedCommands } from "../types";
@@ -671,9 +670,8 @@ function ToolbarSectionCollaboration() {
 function ToolbarSectionAi() {
   const editor = useCurrentEditor("SectionAi", "Toolbar or FloatingToolbar");
   const supportsAi = "askAi" in editor.commands;
-  const aiName =
-    (editor.storage.liveblocksAi as AiExtensionStorage | undefined)?.name ??
-    DEFAULT_AI_NAME;
+  const aiName = (editor.storage.liveblocksAi as AiExtensionStorage | undefined)
+    ?.name;
 
   return (
     <>
