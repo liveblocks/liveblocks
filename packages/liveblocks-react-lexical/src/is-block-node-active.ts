@@ -1,5 +1,5 @@
 import { $findMatchingParent } from "@lexical/utils";
-import type { LexicalEditor, LexicalNode, RangeSelection } from "lexical";
+import type { EditorState, LexicalEditor, LexicalNode } from "lexical";
 import { $getSelection, $isRangeSelection, $isRootOrShadowRoot } from "lexical";
 
 function isParentRootOrShadowRoot(node: LexicalNode) {
@@ -11,15 +11,16 @@ function isParentRootOrShadowRoot(node: LexicalNode) {
 const activeNodesByEditor = new Map<
   string,
   {
-    selection: RangeSelection;
+    state: EditorState;
     nodes: LexicalNode[];
   }
 >();
 
 function getActiveBlockNodes(editor: LexicalEditor) {
   const editorKey = editor.getKey();
+  const currentState = editor.getEditorState();
 
-  return editor.getEditorState().read(() => {
+  return currentState.read(() => {
     const selection = $getSelection();
 
     if (!$isRangeSelection(selection)) {
@@ -28,10 +29,10 @@ function getActiveBlockNodes(editor: LexicalEditor) {
       return [];
     }
 
-    const cachedActiveNodes = activeNodesByEditor.get(editorKey);
+    const cache = activeNodesByEditor.get(editorKey);
 
-    if (cachedActiveNodes?.selection.is(selection)) {
-      return cachedActiveNodes.nodes;
+    if (cache?.state === currentState) {
+      return cache.nodes;
     }
 
     const anchor = selection.anchor.getNode();
@@ -55,7 +56,7 @@ function getActiveBlockNodes(editor: LexicalEditor) {
     }
 
     activeNodesByEditor.set(editorKey, {
-      selection,
+      state: currentState,
       nodes: activeNodes,
     });
 
