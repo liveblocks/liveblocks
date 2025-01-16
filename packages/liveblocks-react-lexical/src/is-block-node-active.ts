@@ -63,6 +63,11 @@ function getActiveBlockNodes(editor: LexicalEditor) {
   });
 }
 
+/**
+ * Checks if a block node is active in the current selection.
+ * If the selection contains multiple block nodes, it will return
+ * `true` only if all of them are of the same type.
+ */
 export function isBlockNodeActive(
   editor: LexicalEditor,
   isActive: (node: LexicalNode) => boolean
