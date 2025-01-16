@@ -1,5 +1,6 @@
 import type { DM } from "../globals/augmentation";
 import type { DateToString } from "../lib/DateToString";
+import type { Relax } from "../lib/Relax";
 
 export type BaseMetadata = Record<
   string,
@@ -84,20 +85,14 @@ export type CommentData = {
   editedAt?: Date;
   reactions: CommentReaction[];
   attachments: CommentAttachment[];
-} & (
-  | { body: CommentBody; deletedAt?: never }
-  | { body?: never; deletedAt: Date }
-);
+} & Relax<{ body: CommentBody } | { deletedAt: Date }>;
 
 export type CommentDataPlain = Omit<
   DateToString<CommentData>,
   "reactions" | "body"
 > & {
   reactions: DateToString<CommentReaction>[];
-} & (
-    | { body: CommentBody; deletedAt?: never }
-    | { body?: never; deletedAt: string }
-  );
+} & Relax<{ body: CommentBody } | { deletedAt: string }>;
 
 export type CommentBodyBlockElement = CommentBodyParagraph;
 

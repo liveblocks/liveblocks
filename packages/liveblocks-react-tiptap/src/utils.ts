@@ -2,7 +2,7 @@ import type { ClientRectObject } from "@floating-ui/react-dom";
 import type { Editor, Range } from "@tiptap/core";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Fragment } from "@tiptap/pm/model";
-import type { TextSelection } from "@tiptap/pm/state";
+import type { Selection } from "@tiptap/pm/state";
 
 import { LIVEBLOCKS_MENTION_TYPE } from "./types";
 
@@ -61,10 +61,7 @@ export const mapFragment = (
   return Fragment.from(content);
 };
 
-export function getDomRangeFromTextSelection(
-  selection: TextSelection,
-  editor: Editor
-) {
+export function getDomRangeFromSelection(selection: Selection, editor: Editor) {
   const { from, to } = selection;
   const fromPos = editor.view.domAtPos(from);
   const endPos = editor.view.domAtPos(to);
@@ -76,9 +73,9 @@ export function getDomRangeFromTextSelection(
   return domRange;
 }
 
-export function compareTextSelections(
-  a: TextSelection | null | undefined,
-  b: TextSelection | null | undefined
+export function compareSelections(
+  a: Selection | null | undefined,
+  b: Selection | null | undefined
 ) {
   if (!a || !b) {
     return false;

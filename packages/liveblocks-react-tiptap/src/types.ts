@@ -25,7 +25,7 @@ export const AI_TOOLBAR_SELECTION_PLUGIN = new PluginKey(
 export const LIVEBLOCKS_COMMENT_MARK_TYPE = "liveblocksCommentMark";
 
 export type CommentsExtensionStorage = {
-  pendingCommentSelection: TextSelection | null;
+  pendingComment: boolean;
 };
 
 export const enum ThreadPluginActions {

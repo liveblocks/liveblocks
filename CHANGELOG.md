@@ -1,5 +1,10 @@
 ## vNEXT (Not yet published)
 
+### `@liveblocks/yjs`
+
+- Add new option `useV2Encoding_experimental` to `LiveblocksYjsProvider` to
+  enable experimental V2 encoding for Yjs.
+
 ## 2.15.2
 
 ### All packages
