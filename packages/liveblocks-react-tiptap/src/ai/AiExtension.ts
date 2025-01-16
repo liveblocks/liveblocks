@@ -19,10 +19,6 @@ import type {
   LiveblocksExtensionStorage,
   YSyncBinding,
 } from "../types";
-import {
-  getRangeFromRelativeSelections,
-  getRelativeSelectionFromState,
-} from "../utils";
 import { DEFAULT_AI_NAME } from "./AiToolbar";
 
 const AiExtension = Extension.create<AiExtensionOptions, AiExtensionStorage>({
@@ -39,7 +35,6 @@ const AiExtension = Extension.create<AiExtensionOptions, AiExtensionStorage>({
     return {
       snapshot: undefined,
       prompt: undefined,
-      relativeSelection: null,
       previousPrompt: undefined,
       state: "closed",
       name: this.options.name,
@@ -96,7 +91,6 @@ const AiExtension = Extension.create<AiExtensionOptions, AiExtensionStorage>({
         () =>
         ({ editor, tr }) => {
           this.storage.state = "closed";
-          this.storage.relativeSelection = null;
           this.storage.prompt = undefined;
           this.storage.previousPrompt = undefined;
           if (!this.storage.snapshot) {
@@ -149,18 +143,15 @@ const AiExtension = Extension.create<AiExtensionOptions, AiExtensionStorage>({
       applyPrompt:
         (result: string, isContinue: boolean = false) =>
         ({ commands, state }) => {
-          if (!this.options.doc || !this.storage.relativeSelection) {
+          if (!this.options.doc) {
             return false;
           }
-          const { from, to } = getRangeFromRelativeSelections(
-            this.storage.relativeSelection,
-            state
-          );
+          const { from, to } = state.selection;
           this.options.doc.gc = false;
           this.storage.snapshot = snapshot(this.options.doc);
           setTimeout(() => {
             if (this.storage.snapshot) {
-              this.storage.state = "asking"; // waiting for input ?
+              this.storage.state = "reviewing"; // waiting for input ?
               this.editor.commands.compareSnapshot(this.storage.snapshot);
             }
           }, 1);
@@ -172,14 +163,13 @@ const AiExtension = Extension.create<AiExtensionOptions, AiExtensionStorage>({
         },
       askAi:
         (prompt: string | undefined, isContinue: boolean = false) =>
-        ({ editor, state }) => {
+        ({ editor }) => {
           if (
             !this.options.doc ||
             (this.editor.state.selection.empty && !isContinue)
           ) {
             return false;
           }
-          this.storage.relativeSelection = getRelativeSelectionFromState(state);
           if (!prompt) {
             this.storage.state = "asking";
             return true;
@@ -209,7 +199,7 @@ const AiExtension = Extension.create<AiExtensionOptions, AiExtensionStorage>({
               //this.editor.commands.insertContent(responseText);
               setTimeout(() => {
                 this.editor.commands.applyPrompt(responseText, isContinue);
-              }, 5_000);
+              }, 1);
             } else {
               console.log("no response from ai");
               this.storage.state = "closed";

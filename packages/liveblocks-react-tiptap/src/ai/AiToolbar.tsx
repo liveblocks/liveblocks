@@ -40,7 +40,6 @@ import {
   useEffect,
   useMemo,
   useRef,
-  useState,
 } from "react";
 import { createPortal } from "react-dom";
 
@@ -53,9 +52,7 @@ import type {
   FloatingPosition,
 } from "../types";
 import {
-  compareTextSelections,
   getDomRangeFromTextSelection,
-  getTextSelectionFromRelativeSelection,
 } from "../utils";
 
 export const AI_TOOLBAR_COLLISION_PADDING = 10;
@@ -118,68 +115,7 @@ function tiptapFloating(editor: Editor | null): Middleware {
   };
 }
 
-interface TextStreamOptions {
-  interval?: number;
-  characters?: number;
-  onComplete?: () => void;
-}
 
-function useTextStream(text: string, options: TextStreamOptions = {}) {
-  const interval = options.interval ?? 100;
-  const characters = options.characters ?? 20;
-  const onComplete = options.onComplete;
-  const [stream, setStream] = useState("");
-  const latestOnComplete = useRef(onComplete);
-
-  useEffect(() => {
-    latestOnComplete.current = onComplete;
-  }, [onComplete]);
-
-  useEffect(() => {
-    setStream("");
-
-    if (!text) {
-      return;
-    }
-
-    const intervalId = setInterval(
-      () => {
-        setStream((current) => {
-          const nextLength = Math.min(current.length + characters, text.length);
-
-          if (nextLength === text.length) {
-            clearInterval(intervalId);
-
-            latestOnComplete.current?.();
-          }
-
-          return text.slice(0, nextLength);
-        });
-      },
-      interval + (Math.random() * 2 - 1) * interval * 0.2
-    );
-
-    return () => clearInterval(intervalId);
-  }, [text, interval, characters]);
-
-  return stream;
-}
-
-function CollaborationCursor({ children }: PropsWithChildren) {
-  return (
-    <span
-      className="collaboration-cursor__caret"
-      style={{ borderColor: "var(--lb-accent)" }}
-    >
-      <div
-        className="collaboration-cursor__label"
-        style={{ backgroundColor: "var(--lb-accent)" }}
-      >
-        {children}
-      </div>
-    </span>
-  );
-}
 
 const AiToolbarDropdownGroup = forwardRef<
   HTMLDivElement,
@@ -252,9 +188,11 @@ function AiToolbarReviewingSuggestions({ editor }: { editor: Editor }) {
   const handleDiscard = useCallback(() => {
     (editor.commands as AiCommands<boolean>).closeAi();
   }, [editor]);
+  console.log("WTF why is this not rendering?");
 
   return (
     <>
+      does this freaking render?
       <AiToolbarDropdownItem icon={<CheckIcon />}>
         Replace selection
       </AiToolbarDropdownItem>
@@ -421,15 +359,7 @@ function AiToolbarThinking({
 }) {
   const aiName =
     (editor.storage.liveblocksAi as AiExtensionStorage).name ?? DEFAULT_AI_NAME;
-  const stream = useTextStream(
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis laoreet erat vitae libero bibendum blandit. Ut nec leo et massa congue laoreet et nec nunc. Praesent a hendrerit orci, sit amet feugiat sapien. Aenean vitae aliquam libero. Suspendisse posuere scelerisque mauris tristique placerat. Maecenas id ipsum justo. Nulla quis nibh est. Nulla facilisi. Quisque vitae libero ut tellus vestibulum sagittis in eget libero. Nulla enim mauris, tempor at egestas eu, porttitor vitae purus. Ut ultrices tincidunt rutrum.",
-    {
-      interval: 200,
-      onComplete: () => {
-        (editor.commands as AiCommands<boolean>).reviewAi();
-      },
-    }
-  );
+
 
   const handleCancel = useCallback(() => {
     (editor.commands as AiCommands<boolean>).cancelAskAi();
@@ -439,17 +369,6 @@ function AiToolbarThinking({
 
   return (
     <>
-      <div className="lb-tiptap-ai-toolbar-output-container">
-        <div className="lb-tiptap-ai-toolbar-output">
-          {stream}
-          <CollaborationCursor>
-            <div className="lb-icon-container">
-              <SparklesIcon />
-            </div>
-            {aiName}
-          </CollaborationCursor>
-        </div>
-      </div>
       <div className="lb-tiptap-ai-toolbar-content">
         <span className="lb-icon-container lb-tiptap-ai-toolbar-icon-container">
           <SparklesIcon />
@@ -486,18 +405,6 @@ function AiToolbarReviewing({
 }) {
   return (
     <>
-      <div className="lb-tiptap-ai-toolbar-output-container">
-        <div className="lb-tiptap-ai-toolbar-output">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis laoreet
-          erat vitae libero bibendum blandit. Ut nec leo et massa congue laoreet
-          et nec nunc. Praesent a hendrerit orci, sit amet feugiat sapien.
-          Aenean vitae aliquam libero. Suspendisse posuere scelerisque mauris
-          tristique placerat. Maecenas id ipsum justo. Nulla quis nibh est.
-          Nulla facilisi. Quisque vitae libero ut tellus vestibulum sagittis in
-          eget libero. Nulla enim mauris, tempor at egestas eu, porttitor vitae
-          purus. Ut ultrices tincidunt rutrum.
-        </div>
-      </div>
       <AiToolbarPromptContent
         editor={editor}
         prompt={prompt}
@@ -526,9 +433,10 @@ function AiToolbarContainer({
     }) ?? "";
   const isPromptMultiline = useMemo(() => prompt.includes("\n"), [prompt]);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const hasDropdownItems = useCommandState(
+  const hasCommandState = useCommandState(
     (state) => state.filtered.count > 0
   ) as boolean;
+  const hasDropdownItems = state === "reviewing" || hasCommandState;
   const isDropdownHidden = isPromptMultiline || !hasDropdownItems;
 
   useEffect(() => {
@@ -571,7 +479,10 @@ function AiToolbarContainer({
               isDropdownHidden={isDropdownHidden}
             />
           ) : state === "thinking" ? (
-            <AiToolbarThinking editor={editor} prompt={prompt} />
+            <AiToolbarThinking
+              editor={editor}
+              prompt={prompt}
+            />
           ) : state === "reviewing" ? (
             <AiToolbarReviewing
               editor={editor}
@@ -597,7 +508,7 @@ function AiToolbarContainer({
           ref={dropdownRef}
         >
           {state === "reviewing" ? (
-            <AiToolbarReviewingSuggestions editor={editor} />
+            <>does thisr edner?<AiToolbarReviewingSuggestions editor={editor} /></>
           ) : (
             children
           )}
@@ -606,6 +517,7 @@ function AiToolbarContainer({
     </>
   );
 }
+
 
 const defaultSuggestions = (
   <>
@@ -656,23 +568,8 @@ export const AiToolbar = Object.assign(
           },
           equalityFn: Object.is,
         }) ?? "closed";
-      const selection =
-        useEditorState({
-          editor,
-          selector: (ctx) => {
-            const relativeSelection = (
-              ctx.editor?.storage.liveblocksAi as AiExtensionStorage
-            )?.relativeSelection;
-            if (!relativeSelection || !ctx.editor) {
-              return undefined;
-            }
-            return getTextSelectionFromRelativeSelection(
-              relativeSelection,
-              ctx.editor.state
-            );
-          },
-          equalityFn: compareTextSelections,
-        }) ?? undefined;
+      console.log("AI STATE!!!!", state);
+      const selection = editor?.state.selection;
       const floatingOptions: UseFloatingOptions = useMemo(() => {
         const detectOverflowOptions: DetectOverflowOptions = {
           padding: AI_TOOLBAR_COLLISION_PADDING,

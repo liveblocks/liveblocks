@@ -4,7 +4,7 @@ import type {
   JsonObject,
   User,
 } from "@liveblocks/core";
-import { TextEditorType } from "@liveblocks/core";
+import { kInternal, TextEditorType } from "@liveblocks/core";
 import {
   useClient,
   useCommentsErrorListener,
@@ -377,7 +377,20 @@ export const useLiveblocksExtension = (
       if (options.ai) {
         extensions.push(
           AiExtension.configure({
-            ...(options.ai === true ? {} : options.ai),
+            ...(options.ai === true
+              ? {
+                  resolveAiPrompt: async (prompt, selectionText) => {
+                    const result = await room[
+                      kInternal
+                    ].executeContextualPrompt({
+                      prompt,
+                      selectionText,
+                      context: "", // TODO: add doc context
+                    });
+                    return result;
+                  },
+                }
+              : options.ai),
             doc: this.storage.doc,
             pud: this.storage.permanentUserData,
           })

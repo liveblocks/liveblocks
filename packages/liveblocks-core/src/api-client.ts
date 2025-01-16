@@ -324,6 +324,17 @@ export interface RoomHttpApi<M extends BaseMetadata> {
     nonce: string | undefined;
     messages: ClientMsg<P, E>[];
   }): Promise<Response>;
+
+  executeContextualPrompt({
+    roomId,
+    selectionText,
+    context,
+  }: {
+    roomId: string;
+    prompt: string;
+    selectionText: string;
+    context: string;
+  }): Promise<string>;
 }
 
 export interface NotificationHttpApi<M extends BaseMetadata> {
@@ -1110,6 +1121,31 @@ export function createApiClient<M extends BaseMetadata>({
       }
     );
   }
+  async function executeContextualPrompt(options: {
+    roomId: string;
+    prompt: string;
+    selectionText: string;
+    context: string;
+  }): Promise<string> {
+    const result = await httpClient.post<{
+      content: { type: "text"; text: string }[];
+    }>(
+      url`/v2/c/rooms/${options.roomId}/ai/contextual-prompt`,
+      await authManager.getAuthValue({
+        requestedScope: "room:read",
+        roomId: options.roomId,
+      }),
+      {
+        prompt: options.prompt,
+        selectionText: options.selectionText,
+        context: options.context,
+      }
+    );
+    if (!result || result.content.length === 0) {
+      throw new Error("No content returned from server");
+    }
+    return result.content[0].text;
+  }
 
   async function listTextVersions(options: { roomId: string }) {
     const result = await httpClient.get<{
@@ -1444,6 +1480,8 @@ export function createApiClient<M extends BaseMetadata>({
     // User threads
     getUserThreads_experimental,
     getUserThreadsSince_experimental,
+    // ai
+    executeContextualPrompt,
   };
 }
 

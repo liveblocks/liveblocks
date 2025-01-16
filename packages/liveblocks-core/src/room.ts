@@ -1045,6 +1045,12 @@ export type PrivateRoomApi = {
   getTextVersion(versionId: string): Promise<Response>;
   createTextVersion(): Promise<void>;
 
+  executeContextualPrompt(options: {
+    prompt: string;
+    selectionText: string;
+    context: string;
+  }): Promise<string>;
+
   // NOTE: These are only used in our e2e test app!
   simulate: {
     explicitClose(event: IWebSocketCloseEvent): void;
@@ -1598,6 +1604,17 @@ export function createRoom<
 
   async function createTextVersion() {
     return httpClient.createTextVersion({ roomId });
+  }
+
+  async function executeContextualPrompt(options: {
+    prompt: string;
+    selectionText: string;
+    context: string;
+  }) {
+    return httpClient.executeContextualPrompt({
+      roomId,
+      ...options,
+    });
   }
 
   function sendMessages(messages: ClientMsg<P, E>[]) {
@@ -2176,7 +2193,8 @@ export function createRoom<
             user:
               message.actor < 0
                 ? null
-                : others.find((u) => u.connectionId === message.actor) ?? null,
+                : (others.find((u) => u.connectionId === message.actor) ??
+                  null),
             event: message.event,
           });
           break;
@@ -2927,6 +2945,8 @@ export function createRoom<
         getTextVersion,
         // create a version
         createTextVersion,
+        // execute contextual prompt
+        executeContextualPrompt,
 
         // Support for the Liveblocks browser extension
         getSelf_forDevTools: () => selfAsTreeNode.get(),

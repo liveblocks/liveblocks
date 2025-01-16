@@ -5,13 +5,7 @@ import { PluginKey } from "@tiptap/pm/state";
 import type { DecorationSet } from "@tiptap/pm/view";
 import type { ChainedCommands, SingleCommands } from "@tiptap/react";
 import type { ProsemirrorMapping } from "y-prosemirror/dist/src/lib";
-import type {
-  Doc,
-  PermanentUserData,
-  RelativePosition,
-  Snapshot,
-  XmlFragment,
-} from "yjs";
+import type { Doc, PermanentUserData, Snapshot, XmlFragment } from "yjs";
 
 export const LIVEBLOCKS_MENTION_KEY = new PluginKey("lb-plugin-mention");
 export const LIVEBLOCKS_MENTION_PASTE_KEY = new PluginKey(
@@ -77,10 +71,6 @@ export type AiExtensionStorage =
       snapshot: Snapshot | undefined;
       prompt: string;
       previousPrompt: string | undefined;
-      relativeSelection: {
-        anchor: RelativePosition;
-        head: RelativePosition;
-      } | null;
     }
   | {
       state: "closed";
@@ -88,7 +78,6 @@ export type AiExtensionStorage =
       snapshot: undefined;
       prompt: undefined;
       previousPrompt: undefined;
-      relativeSelection: null;
     };
 
 export type ThreadPluginState = {

@@ -2,7 +2,7 @@ import type { ClientRectObject } from "@floating-ui/react-dom";
 import type { Editor, Range } from "@tiptap/core";
 import type { Node as ProseMirrorNode } from "@tiptap/pm/model";
 import { Fragment } from "@tiptap/pm/model";
-import type { EditorState } from "@tiptap/pm/state";
+import type { EditorState, Selection } from "@tiptap/pm/state";
 import { TextSelection } from "@tiptap/pm/state";
 import {
   getRelativeSelection,
@@ -25,7 +25,7 @@ export const getRangeFromRelativeSelections = (
   state: EditorState
 ) => {
   const pluginState = ySyncPluginKey.getState(state) as YSyncPluginState;
-  if (!pluginState) return { from: 0, to: 0 };
+  if (!pluginState || !pluginState.binding) return { from: 0, to: 0 };
   const { doc, type, mapping } = pluginState.binding;
   const anchor =
     relativePositionToAbsolutePosition(doc, type, pos.anchor, mapping) ?? 0;
@@ -103,7 +103,7 @@ export function getTextSelectionFromRelativeSelection(
 }
 
 export function getDomRangeFromTextSelection(
-  selection: TextSelection,
+  selection: Selection,
   editor: Editor
 ) {
   const { from, to } = selection;
