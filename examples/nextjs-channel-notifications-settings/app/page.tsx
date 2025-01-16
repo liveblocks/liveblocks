@@ -5,11 +5,13 @@ import { ClientSideSuspense, RoomProvider } from "@liveblocks/react/suspense";
 import { useSearchParams } from "next/navigation";
 import Editor from "./tiptap/editor";
 import { Providers } from "./providers";
+import { useExampleUserId } from "./use-example-user-id";
 
 // Learn how to structure your collaborative Next.js app
 // https://liveblocks.io/docs/guides/how-to-use-liveblocks-with-nextjs-app-directory
 
 export default function Page() {
+  const userId = useExampleUserId();
   const roomId = useExampleRoomId(
     "liveblocks:channel-notifications-settings-examples:nextjs"
   );
@@ -23,7 +25,7 @@ export default function Page() {
         }}
       >
         <ClientSideSuspense fallback={<Loading />}>
-          <Editor />
+          <Editor userId={userId} />
         </ClientSideSuspense>
       </RoomProvider>
     </Providers>

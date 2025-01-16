@@ -16,7 +16,7 @@ import VersionsDialog from "../version-history-dialog";
 import { SettingsButton } from "../settings-button";
 import { TriggerCustomNotificationButton } from "../trigger-custom-notification-button";
 
-export default function TiptapEditor() {
+export default function TiptapEditor({ userId }: { userId: string | null }) {
   const liveblocks = useLiveblocksExtension();
 
   const editor = useEditor({
@@ -40,7 +40,7 @@ export default function TiptapEditor() {
         <VersionsDialog editor={editor} />
         <TriggerCustomNotificationButton />
         <NotificationsPopover />
-        <SettingsButton />
+        <SettingsButton userId={userId} />
       </div>
       <div className="relative flex flex-row justify-between w-full py-16 xl:pl-[250px] pl-[100px] gap-[50px]">
         <div className="relative flex flex-1 flex-col gap-2">

@@ -1,14 +1,7 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
 import { LiveblocksProvider } from "@liveblocks/react";
-
-const useExampleUserId = (): string | null => {
-  const params = useSearchParams();
-  const userId = params?.get("userId");
-
-  return userId;
-};
+import { useExampleUserId } from "./use-example-user-id";
 
 export function Providers({ children }: { children?: React.ReactNode }) {
   const userId = useExampleUserId();
