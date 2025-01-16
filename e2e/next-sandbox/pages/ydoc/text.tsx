@@ -31,6 +31,11 @@ function Sandbox() {
   const smoothSyncStatus = useSyncStatus({ smooth: true });
   const [synced, setSynced] = useState(false);
   const doc = useMemo(() => new Y.Doc(), []);
+  let isV2 = false;
+  if (typeof window !== "undefined") {
+    const q = new URL(window.location.href).searchParams;
+    isV2 = q.get("useV2Encoding") === "true";
+  }
   useEffect(() => {
     if (!room) {
       return;
@@ -38,7 +43,9 @@ function Sandbox() {
     const handler = () => {
       setText(doc.getText("test").toString());
     };
-    const provider = new LiveblocksYjsProvider(room, doc);
+    const provider = new LiveblocksYjsProvider(room, doc, {
+      useV2Encoding_experimental: isV2,
+    });
     provider.on("sync", () => {
       setSynced(true);
     });
@@ -48,7 +55,7 @@ function Sandbox() {
       doc.off("update", handler);
       provider.destroy();
     };
-  }, [doc, room]);
+  }, [doc, room, isV2]);
 
   const clearText = () => {
     const l = doc.getText("test").toString().length;
