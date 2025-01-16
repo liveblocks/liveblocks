@@ -432,15 +432,9 @@ function createDefaultBlockSelectorItems(): ToolbarBlockSelectorItem[] {
       name: "Heading 1",
       icon: <H1Icon />,
       isActive: (editor) => {
-        return isBlockNodeActive(editor, (node) => {
-          if ($isHeadingNode(node)) {
-            const tag = node.getTag();
-
-            return tag === "h1";
-          } else {
-            return false;
-          }
-        });
+        return isBlockNodeActive(editor, (node) =>
+          $isHeadingNode(node) ? node.getTag() === "h1" : false
+        );
       },
       setActive: () =>
         $setBlocksType($getSelection(), () => $createHeadingNode("h1")),
@@ -448,34 +442,20 @@ function createDefaultBlockSelectorItems(): ToolbarBlockSelectorItem[] {
     {
       name: "Heading 2",
       icon: <H2Icon />,
-      isActive: (editor) => {
-        return isBlockNodeActive(editor, (node) => {
-          if ($isHeadingNode(node)) {
-            const tag = node.getTag();
-
-            return tag === "h2";
-          } else {
-            return false;
-          }
-        });
-      },
+      isActive: (editor) =>
+        isBlockNodeActive(editor, (node) =>
+          $isHeadingNode(node) ? node.getTag() === "h2" : false
+        ),
       setActive: () =>
         $setBlocksType($getSelection(), () => $createHeadingNode("h2")),
     },
     {
       name: "Heading 3",
       icon: <H3Icon />,
-      isActive: (editor) => {
-        return isBlockNodeActive(editor, (node) => {
-          if ($isHeadingNode(node)) {
-            const tag = node.getTag();
-
-            return tag === "h3";
-          } else {
-            return false;
-          }
-        });
-      },
+      isActive: (editor) =>
+        isBlockNodeActive(editor, (node) =>
+          $isHeadingNode(node) ? node.getTag() === "h3" : false
+        ),
       setActive: () =>
         $setBlocksType($getSelection(), () => $createHeadingNode("h3")),
     },
