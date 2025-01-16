@@ -82,6 +82,7 @@
   user-select: none;
   margin-left: var(--space-4);
   font-size: var(--size-sm);
+  max-width: 260px
 }
 
 .noCommentsHeader {
@@ -90,13 +91,9 @@
   font-size: var(--size-lg);
 }
 
-.noCommentsButton {
-  float: left;
-  border: 1px solid var(--color-border-contrasted);
-  padding: var(--space-4);
-  margin-top: 3px;
-  margin-right: var(--space-6);
-  border-radius: var(--radius-sm);
+.noCommentsIcon {
+  display: inline;
+  margin-top: -2px;
 }
 
 .noCommentsButton svg {

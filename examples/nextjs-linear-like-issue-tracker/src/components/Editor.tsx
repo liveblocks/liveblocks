@@ -15,12 +15,12 @@ import { EditorTitle } from "@/components/EditorTitle";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { ListNode, ListItemNode } from "@lexical/list";
 import { ClientSideSuspense, useThreads } from "@liveblocks/react/suspense";
-import { EditorFloatingToolbar } from "@/components/EditorFloatingToolbar";
 import { ReactNode } from "react";
 import { LinkNode } from "@lexical/link";
 import { CodeNode } from "@lexical/code";
 import { HorizontalRuleNode } from "@lexical/react/LexicalHorizontalRuleNode";
 import { ImmutableStorage } from "@/liveblocks.config";
+import { EditorFloatingToolbar } from "./EditorFloatingToolbar";
 
 // Wrap your Lexical config with `liveblocksConfig`
 const initialConfig = liveblocksConfig({
@@ -92,10 +92,10 @@ export function Editor({
               <TextEditorThreads />
             </ClientSideSuspense>
             <FloatingComposer />
+            <EditorFloatingToolbar />
           </LiveblocksPlugin>
         </div>
       </div>
-      <EditorFloatingToolbar />
     </LexicalComposer>
   );
 }

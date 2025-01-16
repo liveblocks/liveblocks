@@ -1,25 +1,7 @@
 .toolbar {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  flex-shrink: 1;
   gap: var(--space-2);
-}
-
-.toolbarSection {
-  display: flex;
-  margin-right: var(--space-8);
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.toolbarSection::before {
-  content: "";
-  position: absolute;
-  width: 1px;
-  height: var(--space-10);
-  background: var(--color-border);
-  margin-left: calc(var(--space-4) * -1);
 }
 
 .toolbarButton {
@@ -66,5 +48,10 @@
 }
 
 .headingsSelect {
+  width: 130px;
+}
+
+/* Use set width in static toolbar */
+[data-toolbar="static"] .blockSelector {
   width: 130px;
 }

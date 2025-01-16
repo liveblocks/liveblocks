@@ -1,3 +1,4 @@
+import { Toolbar } from "@liveblocks/react-tiptap";
 import { Editor } from "@tiptap/react";
 import { useState } from "react";
 import { CodeBlockIcon, ImageIcon, YouTubeIcon } from "@/icons";
@@ -29,41 +30,32 @@ export function ToolbarMedia({ editor }: Props) {
 
   return (
     <>
-      <Button
-        className={styles.toolbarButton}
-        variant="subtle"
+      <Toolbar.Toggle
+        name="Code block"
+        icon={<CodeBlockIcon />}
+        active={editor?.isActive("codeBlock") ?? false}
         onClick={() => editor?.chain().focus().toggleCodeBlock().run()}
         disabled={!editor?.can().chain().focus().toggleCodeBlock().run()}
-        data-active={editor?.isActive("codeBlock") ? "is-active" : undefined}
-        aria-label="Code block"
-      >
-        <CodeBlockIcon />
-      </Button>
+      />
 
       <Popover content={<MediaPopover variant="image" onSubmit={addImage} />}>
-        <Button
-          className={styles.toolbarButton}
-          variant="subtle"
+        <Toolbar.Toggle
+          name="Image"
+          icon={<ImageIcon />}
+          active={editor?.isActive("image") ?? false}
           disabled={!editor?.can().chain().setImage({ src: "" }).run()}
-          data-active={editor?.isActive("image") ? "is-active" : undefined}
-          aria-label="Image"
-        >
-          <ImageIcon />
-        </Button>
+        />
       </Popover>
 
       <Popover
         content={<MediaPopover variant="youtube" onSubmit={addYouTube} />}
       >
-        <Button
-          className={styles.toolbarButton}
-          variant="subtle"
+        <Toolbar.Toggle
+          name="YouTube"
+          icon={<YouTubeIcon />}
+          active={editor?.isActive("youtube") ?? false}
           disabled={!editor?.can().chain().setImage({ src: "" }).run()}
-          data-active={editor?.isActive("youtube") ? "is-active" : undefined}
-          aria-label="YouTube"
-        >
-          <YouTubeIcon />
-        </Button>
+        />
       </Popover>
     </>
   );
