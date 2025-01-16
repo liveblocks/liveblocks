@@ -1,7 +1,8 @@
 @import "@liveblocks/react-ui/styles.css";
 @import "@liveblocks/react-lexical/styles.css";
 
-.lb-root:not(.lb-tooltip) {
+/* Adjust default styles, except for tooltips, and in-editor highlights & mentions */
+.lb-root:not(.lb-tooltip, .lb-lexical-thread-mark, .lb-lexical-mention) {
   --lb-accent: theme("colors.accent");
   --lb-background: theme("colors.white");
   --lb-foreground: theme("colors.neutral[900]");
@@ -9,8 +10,9 @@
   font-size: 14px;
 }
 
-.lb-root.lb-lexical-thread-mark, .lb-lexical-mention {
-  font-size: inherit;
+/* Floating toolbar block selector, e.g. Heading 1, Heading 2 */
+.lb-tiptap-block-selector-dropdown {
+  min-width: 130px;
 }
 
 .editor-styles p {
