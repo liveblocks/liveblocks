@@ -8,8 +8,8 @@ function isParentRootOrShadowRoot(node: LexicalNode) {
   return parent !== null && $isRootOrShadowRoot(parent);
 }
 
-const activeNodesByEditor = new Map<
-  string,
+const activeNodesByEditor = new WeakMap<
+  LexicalEditor,
   {
     state: EditorState;
     nodes: LexicalNode[];
@@ -17,19 +17,18 @@ const activeNodesByEditor = new Map<
 >();
 
 function getActiveBlockNodes(editor: LexicalEditor) {
-  const editorKey = editor.getKey();
   const currentState = editor.getEditorState();
 
   return currentState.read(() => {
     const selection = $getSelection();
 
     if (!$isRangeSelection(selection)) {
-      activeNodesByEditor.delete(editorKey);
+      activeNodesByEditor.delete(editor);
 
       return [];
     }
 
-    const cache = activeNodesByEditor.get(editorKey);
+    const cache = activeNodesByEditor.get(editor);
 
     if (cache?.state === currentState) {
       return cache.nodes;
@@ -55,7 +54,7 @@ function getActiveBlockNodes(editor: LexicalEditor) {
         .filter((node) => $isRootOrShadowRoot(node.getParent()));
     }
 
-    activeNodesByEditor.set(editorKey, {
+    activeNodesByEditor.set(editor, {
       state: currentState,
       nodes: activeNodes,
     });
