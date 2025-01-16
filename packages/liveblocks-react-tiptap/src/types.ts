@@ -1,4 +1,3 @@
-import type { TextSelection } from "@tiptap/pm/state";
 import { PluginKey } from "@tiptap/pm/state";
 import type { DecorationSet } from "@tiptap/pm/view";
 import type { ChainedCommands, SingleCommands } from "@tiptap/react";

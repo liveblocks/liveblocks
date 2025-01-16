@@ -110,7 +110,7 @@ const Comment = Mark.create({
         threadPositions,
         selectedThreadPos:
           selectedThreadId !== null
-            ? threadPositions.get(selectedThreadId)?.to ?? null
+            ? (threadPositions.get(selectedThreadId)?.to ?? null)
             : null,
       };
     };
@@ -224,7 +224,7 @@ export const CommentsExtension = Extension.create<
         return true;
       },
       closePendingComment: () => () => {
-        this.storage.pendingCommentSelection = null;
+        this.storage.pendingComment = false;
         return true;
       },
       selectThread: (id: string | null) => () => {
