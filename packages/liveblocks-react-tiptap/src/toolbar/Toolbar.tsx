@@ -428,7 +428,7 @@ const ToolbarBlockSelector = forwardRef<
             position="popper"
             sideOffset={BLOCK_SELECT_SIDE_OFFSET}
             collisionPadding={FLOATING_ELEMENT_COLLISION_PADDING}
-            className="lb-root lb-portal lb-elevation lb-dropdown"
+            className="lb-root lb-portal lb-elevation lb-dropdown lb-select-dropdown lb-tiptap-block-selector-dropdown"
           >
             {resolvedItems.map((item) => (
               <SelectPrimitive.Item
