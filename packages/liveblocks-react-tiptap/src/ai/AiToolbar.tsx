@@ -34,13 +34,7 @@ import type {
   ReactNode,
   RefObject,
 } from "react";
-import {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-} from "react";
+import { forwardRef, useCallback, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 
 import { classNames } from "../classnames";
@@ -51,9 +45,7 @@ import type {
   ExtendedChainedCommands,
   FloatingPosition,
 } from "../types";
-import {
-  getDomRangeFromTextSelection,
-} from "../utils";
+import { getDomRangeFromSelection } from "../utils";
 
 export const AI_TOOLBAR_COLLISION_PADDING = 10;
 export const DEFAULT_AI_NAME = "AI";
@@ -114,8 +106,6 @@ function tiptapFloating(editor: Editor | null): Middleware {
     },
   };
 }
-
-
 
 const AiToolbarDropdownGroup = forwardRef<
   HTMLDivElement,
@@ -358,7 +348,6 @@ function AiToolbarThinking({
   const aiName =
     (editor.storage.liveblocksAi as AiExtensionStorage).name ?? DEFAULT_AI_NAME;
 
-
   const handleCancel = useCallback(() => {
     (editor.commands as AiCommands<boolean>).cancelAskAi();
   }, [editor]);
@@ -477,10 +466,7 @@ function AiToolbarContainer({
               isDropdownHidden={isDropdownHidden}
             />
           ) : state === "thinking" ? (
-            <AiToolbarThinking
-              editor={editor}
-              prompt={prompt}
-            />
+            <AiToolbarThinking editor={editor} prompt={prompt} />
           ) : state === "reviewing" ? (
             <AiToolbarReviewing
               editor={editor}
@@ -515,7 +501,6 @@ function AiToolbarContainer({
     </>
   );
 }
-
 
 const defaultSuggestions = (
   <>
@@ -623,7 +608,7 @@ export const AiToolbar = Object.assign(
           if (!selection) {
             setReference(null);
           } else {
-            const domRange = getDomRangeFromTextSelection(selection, editor);
+            const domRange = getDomRangeFromSelection(selection, editor);
 
             setReference(domRange);
           }
