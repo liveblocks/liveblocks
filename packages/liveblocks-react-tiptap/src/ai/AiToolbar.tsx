@@ -188,11 +188,9 @@ function AiToolbarReviewingSuggestions({ editor }: { editor: Editor }) {
   const handleDiscard = useCallback(() => {
     (editor.commands as AiCommands<boolean>).closeAi();
   }, [editor]);
-  console.log("WTF why is this not rendering?");
 
   return (
     <>
-      does this freaking render?
       <AiToolbarDropdownItem icon={<CheckIcon />}>
         Replace selection
       </AiToolbarDropdownItem>
@@ -508,7 +506,7 @@ function AiToolbarContainer({
           ref={dropdownRef}
         >
           {state === "reviewing" ? (
-            <>does thisr edner?<AiToolbarReviewingSuggestions editor={editor} /></>
+            <AiToolbarReviewingSuggestions editor={editor} />
           ) : (
             children
           )}
