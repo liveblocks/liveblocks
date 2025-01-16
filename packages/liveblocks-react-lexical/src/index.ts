@@ -14,7 +14,7 @@ export {
 } from "./comments/floating-composer";
 export type { FloatingThreadsProps } from "./comments/floating-threads";
 export { FloatingThreads } from "./comments/floating-threads";
-export { getActiveBlockElement } from "./get-active-block-element";
+export { isBlockNodeActive } from "./is-block-node-active";
 export { isTextFormatActive } from "./is-text-format-active";
 export { liveblocksConfig } from "./liveblocks-config";
 export {

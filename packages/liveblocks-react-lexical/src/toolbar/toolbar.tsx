@@ -39,7 +39,6 @@ import {
   FORMAT_TEXT_COMMAND,
   type LexicalCommand,
   type LexicalEditor,
-  type LexicalNode,
   REDO_COMMAND,
   UNDO_COMMAND,
 } from "lexical";
@@ -60,7 +59,7 @@ import {
 
 import { classNames } from "../classnames";
 import { OPEN_FLOATING_COMPOSER_COMMAND } from "../comments/floating-composer";
-import { getActiveBlockElement } from "../get-active-block-element";
+import { isBlockNodeActive } from "../is-block-node-active";
 import { useIsCommandRegistered } from "../is-command-registered";
 import { isTextFormatActive } from "../is-text-format-active";
 import { FloatingToolbarContext, FloatingToolbarExternal } from "./shared";
@@ -143,9 +142,7 @@ export interface ToolbarBlockSelectorItem {
    * Whether this block element is currently active.
    * Set to `"default"` to display this item when no other item is active.
    */
-  isActive:
-    | ((element: LexicalNode | null, editor: LexicalEditor) => boolean)
-    | "default";
+  isActive: ((editor: LexicalEditor) => boolean) | "default";
 
   /**
    * A callback invoked when this item is selected.
@@ -434,14 +431,16 @@ function createDefaultBlockSelectorItems(): ToolbarBlockSelectorItem[] {
     {
       name: "Heading 1",
       icon: <H1Icon />,
-      isActive: (element) => {
-        if ($isHeadingNode(element)) {
-          const tag = element.getTag();
+      isActive: (editor) => {
+        return isBlockNodeActive(editor, (node) => {
+          if ($isHeadingNode(node)) {
+            const tag = node.getTag();
 
-          return tag === "h1";
-        } else {
-          return false;
-        }
+            return tag === "h1";
+          } else {
+            return false;
+          }
+        });
       },
       setActive: () =>
         $setBlocksType($getSelection(), () => $createHeadingNode("h1")),
@@ -449,14 +448,16 @@ function createDefaultBlockSelectorItems(): ToolbarBlockSelectorItem[] {
     {
       name: "Heading 2",
       icon: <H2Icon />,
-      isActive: (element) => {
-        if ($isHeadingNode(element)) {
-          const tag = element.getTag();
+      isActive: (editor) => {
+        return isBlockNodeActive(editor, (node) => {
+          if ($isHeadingNode(node)) {
+            const tag = node.getTag();
 
-          return tag === "h2";
-        } else {
-          return false;
-        }
+            return tag === "h2";
+          } else {
+            return false;
+          }
+        });
       },
       setActive: () =>
         $setBlocksType($getSelection(), () => $createHeadingNode("h2")),
@@ -464,14 +465,16 @@ function createDefaultBlockSelectorItems(): ToolbarBlockSelectorItem[] {
     {
       name: "Heading 3",
       icon: <H3Icon />,
-      isActive: (element) => {
-        if ($isHeadingNode(element)) {
-          const tag = element.getTag();
+      isActive: (editor) => {
+        return isBlockNodeActive(editor, (node) => {
+          if ($isHeadingNode(node)) {
+            const tag = node.getTag();
 
-          return tag === "h3";
-        } else {
-          return false;
-        }
+            return tag === "h3";
+          } else {
+            return false;
+          }
+        });
       },
       setActive: () =>
         $setBlocksType($getSelection(), () => $createHeadingNode("h3")),
@@ -479,7 +482,8 @@ function createDefaultBlockSelectorItems(): ToolbarBlockSelectorItem[] {
     {
       name: "Blockquote",
       icon: <BlockquoteIcon />,
-      isActive: (element) => element?.getType() === "quote",
+      isActive: (editor) =>
+        isBlockNodeActive(editor, (node) => node.getType() === "quote"),
       setActive: () =>
         $setBlocksType($getSelection(), () => $createQuoteNode()),
     },
@@ -495,7 +499,6 @@ const ToolbarBlockSelector = forwardRef<
   const floatingToolbarContext = useContext(FloatingToolbarContext);
   const closeFloatingToolbar = floatingToolbarContext?.close;
   const [editor] = useLexicalComposerContext();
-  const element = getActiveBlockElement(editor);
   const resolvedItems = useMemo(() => {
     if (Array.isArray(items)) {
       return items;
@@ -512,7 +515,7 @@ const ToolbarBlockSelector = forwardRef<
       return false;
     }
 
-    return item.isActive(element, editor);
+    return item.isActive(editor);
   });
 
   if (!activeItem) {
