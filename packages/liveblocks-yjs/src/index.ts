@@ -30,6 +30,7 @@ detectDupes(PKG_NAME, PKG_VERSION, PKG_FORMAT);
 type ProviderOptions = {
   autoloadSubdocs?: boolean;
   offlineSupport_experimental?: boolean;
+  useV2Encoding_experimental?: boolean;
 };
 
 export class LiveblocksYjsProvider<
@@ -71,6 +72,7 @@ export class LiveblocksYjsProvider<
       isRoot: true,
       updateDoc: this.updateDoc,
       fetchDoc: this.fetchDoc,
+      useV2Encoding: this.options.useV2Encoding_experimental ?? false,
     });
 
     // TODO: Display a warning if a YjsProvider is already attached to the room
@@ -97,7 +99,7 @@ export class LiveblocksYjsProvider<
           // don't apply updates that came from the client
           return;
         }
-        const { stateVector, update: updateStr, guid } = message;
+        const { stateVector, update: updateStr, guid, v2 } = message;
         const canWrite = this.room.getSelf()?.canWrite ?? true;
         const update = Base64.toUint8Array(updateStr);
         let foundPendingUpdate = false;
@@ -117,12 +119,14 @@ export class LiveblocksYjsProvider<
               update,
               stateVector,
               readOnly: !canWrite,
+              v2,
             });
           } else {
             this.rootDocHandler.handleServerUpdate({
               update,
               stateVector,
               readOnly: !canWrite,
+              v2,
             });
           }
         }
@@ -201,13 +205,17 @@ export class LiveblocksYjsProvider<
     if (canWrite && !this.isPaused) {
       const updateId = this.getUniqueUpdateId(update);
       this.pending.push(updateId);
-      this.room.updateYDoc(Base64.fromUint8Array(update), guid);
+      this.room.updateYDoc(
+        Base64.fromUint8Array(update),
+        guid,
+        this.useV2Encoding
+      );
       this.emit("status", [this.getStatus()]);
     }
   };
 
   private fetchDoc = (vector: string, guid?: string) => {
-    this.room.fetchYDoc(vector, guid);
+    this.room.fetchYDoc(vector, guid, this.useV2Encoding);
   };
 
   private createSubdocHandler = (subdoc: Y.Doc): void => {
@@ -221,6 +229,7 @@ export class LiveblocksYjsProvider<
       isRoot: false,
       updateDoc: this.updateDoc,
       fetchDoc: this.fetchDoc,
+      useV2Encoding: this.options.useV2Encoding_experimental ?? false,
     });
     this.subdocHandlers.set(subdoc.guid, handler);
   };
@@ -243,6 +252,10 @@ export class LiveblocksYjsProvider<
       handler.syncDoc();
     }
   };
+
+  get useV2Encoding(): boolean {
+    return this.options.useV2Encoding_experimental ?? false;
+  }
 
   // The sync'd property is required by some provider implementations
   get synced(): boolean {

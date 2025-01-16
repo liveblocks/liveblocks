@@ -27,7 +27,7 @@ import type {
   CommentsExtensionStorage,
   ExtendedChainedCommands,
 } from "../types";
-import { compareTextSelections, getDomRangeFromTextSelection } from "../utils";
+import { compareSelections, getDomRangeFromSelection } from "../utils";
 
 export type FloatingComposerProps<M extends BaseMetadata = DM> = Omit<
   ComposerProps<M>,
@@ -50,13 +50,17 @@ export const FloatingComposer = forwardRef<
     useEditorState({
       editor,
       selector: (ctx) => {
+        if (!ctx.editor) return;
+
         return (
-          ctx.editor?.storage.liveblocksComments as
+          ctx.editor.storage.liveblocksComments as
             | CommentsExtensionStorage
             | undefined
-        )?.pendingCommentSelection;
+        )?.pendingComment && !ctx.editor.state.selection.empty
+          ? ctx.editor.state.selection
+          : undefined;
       },
-      equalityFn: compareTextSelections,
+      equalityFn: compareSelections,
     }) ?? undefined;
   const isOpen = pendingCommentSelection !== undefined;
   const {
@@ -93,7 +97,7 @@ export const FloatingComposer = forwardRef<
     if (!pendingCommentSelection) {
       setReference(null);
     } else {
-      const domRange = getDomRangeFromTextSelection(
+      const domRange = getDomRangeFromSelection(
         pendingCommentSelection,
         editor
       );

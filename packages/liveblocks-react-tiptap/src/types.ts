@@ -1,6 +1,5 @@
 import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import type { Content } from "@tiptap/core";
-import type { TextSelection } from "@tiptap/pm/state";
 import { PluginKey } from "@tiptap/pm/state";
 import type { DecorationSet } from "@tiptap/pm/view";
 import type { ChainedCommands, SingleCommands } from "@tiptap/react";
@@ -50,7 +49,7 @@ export type LiveblocksExtensionStorage = {
 };
 
 export type CommentsExtensionStorage = {
-  pendingCommentSelection: TextSelection | null;
+  pendingComment: boolean;
 };
 
 export const enum ThreadPluginActions {

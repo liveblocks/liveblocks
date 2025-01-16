@@ -1,10 +1,14 @@
 import type { DP, DU } from "../globals/augmentation";
 import type { JsonObject } from "../lib/Json";
+import type { Relax } from "../lib/Relax";
 import type { Resolve } from "../lib/Resolve";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { User } from "./User";
 
-export type InternalOthersEvent<P extends JsonObject, U extends BaseUserMeta> =
+export type InternalOthersEvent<
+  P extends JsonObject,
+  U extends BaseUserMeta,
+> = Relax<
   | { type: "leave"; user: User<P, U> }
   | { type: "enter"; user: User<P, U> }
   | {
@@ -12,7 +16,8 @@ export type InternalOthersEvent<P extends JsonObject, U extends BaseUserMeta> =
       user: User<P, U>;
       updates: Partial<P>;
     }
-  | { type: "reset"; user?: never };
+  | { type: "reset" }
+>;
 
 export type OthersEvent<
   P extends JsonObject = DP,

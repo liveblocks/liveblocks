@@ -3,6 +3,7 @@
 import type { ComponentProps, ReactNode } from "react";
 import { forwardRef } from "react";
 
+import { ChevronDownIcon } from "../../icons/ChevronDown";
 import { classNames } from "../../utils/class-names";
 
 export interface ButtonProps extends ComponentProps<"button"> {
@@ -52,6 +53,25 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <CustomButton {...props} ref={forwardedRef}>
         {icon ? <span className="lb-icon-container">{icon}</span> : null}
         {children ? <span className="lb-button-label">{children}</span> : null}
+      </CustomButton>
+    );
+  }
+);
+
+export const SelectButton = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ icon, children, className, ...props }, forwardedRef) => {
+    return (
+      <CustomButton
+        {...props}
+        type="button"
+        className={classNames("lb-select-button", className)}
+        ref={forwardedRef}
+      >
+        {icon ? <span className="lb-icon-container">{icon}</span> : null}
+        {children ? <span className="lb-button-label">{children}</span> : null}
+        <span className="lb-select-button-chevron">
+          <ChevronDownIcon />
+        </span>
       </CustomButton>
     );
   }

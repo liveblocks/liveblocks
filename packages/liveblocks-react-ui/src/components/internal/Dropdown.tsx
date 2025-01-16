@@ -72,7 +72,11 @@ export const DropdownItem = forwardRef<HTMLDivElement, DropdownItemProps>(
         {...props}
         ref={forwardedRef}
       >
-        {icon ? <span className="lb-icon-container">{icon}</span> : null}
+        {icon ? (
+          <span className="lb-dropdown-item-icon lb-icon-container">
+            {icon}
+          </span>
+        ) : null}
         {children ? (
           <span className="lb-dropdown-item-label">{children}</span>
         ) : null}

@@ -30,6 +30,7 @@ import type {
   PartialUnless,
   Patchable,
   QueryMetadata,
+  Relax,
   Resolve,
   RoomEventMessage,
   StorageStatus,
@@ -143,13 +144,6 @@ export type CommentReactionOptions = {
 
 // -----------------------------------------------------------------------
 
-type NoPaginationFields = {
-  hasFetchedAll?: never;
-  isFetchingMore?: never;
-  fetchMore?: never;
-  fetchMoreError?: never;
-};
-
 type PaginationFields = {
   hasFetchedAll: boolean;
   isFetchingMore: boolean;
@@ -161,10 +155,9 @@ export type PagedAsyncSuccess<T, F extends string> = Resolve<
   AsyncSuccess<T, F> & PaginationFields
 >;
 
-export type PagedAsyncResult<T, F extends string> =
-  | Resolve<AsyncLoading<F> & NoPaginationFields>
-  | Resolve<AsyncError<F> & NoPaginationFields>
-  | PagedAsyncSuccess<T, F>;
+export type PagedAsyncResult<T, F extends string> = Relax<
+  AsyncLoading<F> | AsyncError<F> | PagedAsyncSuccess<T, F>
+>;
 
 // -----------------------------------------------------------------------
 
@@ -255,22 +248,14 @@ export type MutationContext<
   ) => void;
 };
 
-export type ThreadSubscription =
+export type ThreadSubscription = Relax<
   // The user is not subscribed to the thread
-  | {
-      status: "not-subscribed";
-      unreadSince?: never;
-    }
+  | { status: "not-subscribed" }
   // The user is subscribed to the thread but has never read it
-  | {
-      status: "subscribed";
-      unreadSince: null;
-    }
+  | { status: "subscribed"; unreadSince: null }
   // The user is subscribed to the thread and has read it
-  | {
-      status: "subscribed";
-      unreadSince: Date;
-    };
+  | { status: "subscribed"; unreadSince: Date }
+>;
 
 export type SharedContextBundle<U extends BaseUserMeta> = {
   classic: {

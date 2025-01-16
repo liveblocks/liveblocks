@@ -2,6 +2,7 @@ import {
   autoUpdate,
   flip,
   hide,
+  inline,
   limitShift,
   offset,
   shift,
@@ -265,9 +266,7 @@ function ActiveSelectionPortal({
   });
 
   useLayoutEffect(() => {
-    setReference({
-      getBoundingClientRect: () => range.getBoundingClientRect(),
-    });
+    setReference(range);
   }, [setReference, range]);
 
   const [editor] = useLexicalComposerContext();
@@ -330,6 +329,7 @@ function FloatingComposerPortal({
     strategy: "fixed",
     placement: "bottom",
     middleware: [
+      inline({ padding: FLOATING_COMPOSER_COLLISION_PADDING }),
       flip({ padding: FLOATING_COMPOSER_COLLISION_PADDING, crossAxis: false }),
       offset(10),
       hide({ padding: FLOATING_COMPOSER_COLLISION_PADDING }),
@@ -347,9 +347,7 @@ function FloatingComposerPortal({
   });
 
   useLayoutEffect(() => {
-    setReference({
-      getBoundingClientRect: () => range.getBoundingClientRect(),
-    });
+    setReference(range);
   }, [range, setReference]);
 
   return createPortal(
