@@ -4,14 +4,9 @@ import {
   registerNestedElementResolver,
   removeClassNamesFromElement,
 } from "@lexical/utils";
-import { shallow } from "@liveblocks/core";
+import { shallow } from "@liveblocks/client";
+import { useClient, useRoom, useErrorListener } from "@liveblocks/react";
 import {
-  useClient,
-  useCommentsErrorListener,
-  useRoom,
-} from "@liveblocks/react";
-import {
-  CreateThreadError,
   getUmbrellaStoreForClient,
   useSignal,
 } from "@liveblocks/react/_private";
@@ -101,10 +96,13 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     [editor, threadToNodes]
   );
 
-  useCommentsErrorListener((error) => {
+  useErrorListener((err) => {
     // If thread creation fails, we remove the thread id from the associated nodes and unwrap the nodes if they are no longer associated with any threads
-    if (error instanceof CreateThreadError) {
-      handleThreadDelete(error.context.threadId);
+    if (
+      err.context.type === "CREATE_THREAD_ERROR" &&
+      err.context.roomId === room.id
+    ) {
+      handleThreadDelete(err.context.threadId);
     }
   });
 

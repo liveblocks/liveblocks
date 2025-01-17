@@ -109,6 +109,25 @@ describe("EventSource", () => {
     expect(hub.count()).toBe(0);
   });
 
+  test("detecting if notifications were sent", () => {
+    const callback1 = jest.fn();
+    const callback2 = jest.fn();
+    const hub = makeEventSource();
+
+    expect(hub.notify("hi")).toBe(false); // No callbacks were invoked
+
+    const unsub1 = hub.observable.subscribe(callback1);
+    const unsub2 = hub.observable.subscribe(callback2);
+
+    expect(hub.notify("hi")).toBe(true); // At least one callback was invoked
+
+    unsub1();
+    expect(hub.notify("hi")).toBe(true);
+
+    unsub2();
+    expect(hub.notify("hi")).toBe(false);
+  });
+
   test("subscribing once", () => {
     fc.assert(
       fc.property(
@@ -222,6 +241,32 @@ describe("EventSource", () => {
 });
 
 describe("BufferableEventSource", () => {
+  test("detecting if notifications were sent", () => {
+    const callback1 = jest.fn();
+    const callback2 = jest.fn();
+    const src = makeBufferableEventSource();
+
+    expect(src.notify("hi")).toBe(false); // No callbacks were invoked
+
+    const unsub1 = src.observable.subscribe(callback1);
+    const unsub2 = src.observable.subscribe(callback2);
+
+    expect(src.notify("hi")).toBe(true); // At least one callback was invoked
+
+    unsub1();
+    expect(src.notify("hi")).toBe(true);
+
+    // Start buffering
+    src.pause();
+    expect(src.notify("hi")).toBe(false);
+    expect(src.notify("hi")).toBe(false);
+    src.unpause();
+    expect(src.notify("hi")).toBe(true);
+
+    unsub2();
+    expect(src.notify("hi")).toBe(false);
+  });
+
   test("pausing/continuing event delivery", () => {
     fc.assert(
       fc.property(

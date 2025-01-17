@@ -10,6 +10,7 @@ import type { StorageUpdate } from "../crdts/StorageUpdates";
 import { legacy_patchImmutableObject, lsonToJson } from "../immutable";
 import { kInternal } from "../internal";
 import { nn } from "../lib/assert";
+import { makeEventSource } from "../lib/EventSource";
 import * as console from "../lib/fancy-console";
 import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
@@ -22,6 +23,7 @@ import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { RoomConfig, RoomDelegates } from "../room";
 import { createRoom } from "../room";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
+import type { LiveblocksError } from "../types/LiveblocksError";
 import type { User } from "../types/User";
 import {
   AUTH_SUCCESS,
@@ -67,6 +69,7 @@ function createDefaultRoomConfig<M extends BaseMetadata>(): RoomConfig<M> {
     throttleDelay: THROTTLE_DELAY,
     lostConnectionTimeout: 99999,
     baseUrl: DEFAULT_BASE_URL,
+    errorEventSource: makeEventSource<LiveblocksError>(),
     delegates: {
       authenticate: () => {
         return Promise.resolve({ publicApiKey: "pk_123", type: "public" });
@@ -116,9 +119,10 @@ function createTestableRoom<
 ) {
   const { wss, delegates } = defineBehavior(authBehavior, socketBehavior);
 
+  const roomConfig = makeRoomConfig(delegates, config);
   const room = createRoom<P, S, U, E, M>(
     { initialPresence, initialStorage: initialStorage ?? ({} as S) },
-    makeRoomConfig(delegates, config)
+    roomConfig
   );
 
   return {
@@ -128,6 +132,7 @@ function createTestableRoom<
      * The fake WebSocket server backend that these unit tests connect to.
      */
     wss,
+    errorEventSource: roomConfig.errorEventSource,
   };
 }
 
@@ -143,26 +148,27 @@ describe("room / auth", () => {
   });
 
   test("when auth-manager throws StopRetrying error - should fail", async () => {
+    const config = {
+      ...makeRoomConfig({
+        authenticate: () => {
+          return new Promise((_resolve) => {
+            throw new StopRetrying("Unauthorized: No access");
+          });
+        },
+        createSocket: mockedCreateSocketDelegate,
+      }),
+    };
     const room = createRoom(
       {
         initialPresence: {},
         initialStorage: {},
       },
-      {
-        ...makeRoomConfig({
-          authenticate: () => {
-            return new Promise((_resolve) => {
-              throw new StopRetrying("Unauthorized: No access");
-            });
-          },
-          createSocket: mockedCreateSocketDelegate,
-        }),
-      }
+      config
     );
     room.connect();
 
     let err = {} as any;
-    room.events.error.subscribeOnce((e) => (err = e));
+    config.errorEventSource.subscribeOnce((e) => (err = e));
 
     await waitUntilStatus(room, "disconnected");
     expect(consoleErrorSpy).toHaveBeenCalledWith("Unauthorized: No access");
@@ -298,7 +304,7 @@ describe("room", () => {
   });
 
   test("should reconnect without getting a new auth token when told by server that room is full (as refusal)", async () => {
-    const { room, delegates } = createTestableRoom(
+    const { room, delegates, errorEventSource } = createTestableRoom(
       {},
       undefined,
       SOCKET_REFUSES(
@@ -309,7 +315,7 @@ describe("room", () => {
     room.connect();
 
     let err = {} as any;
-    room.events.error.subscribeOnce((e) => (err = e));
+    errorEventSource.subscribeOnce((e) => (err = e));
 
     await waitUntilStatus(room, "disconnected");
 
@@ -322,7 +328,7 @@ describe("room", () => {
   });
 
   test("should reconnect without getting a new auth token when told by server that room is full (while connected)", async () => {
-    const { room, wss, delegates } = createTestableRoom(
+    const { room, wss, delegates, errorEventSource } = createTestableRoom(
       {},
       undefined,
       SOCKET_AUTOCONNECT_AND_ROOM_STATE()
@@ -330,7 +336,7 @@ describe("room", () => {
     room.connect();
 
     let err = {} as any;
-    room.events.error.subscribeOnce((e) => (err = e));
+    errorEventSource.subscribeOnce((e) => (err = e));
 
     await waitUntilStatus(room, "connected");
 
@@ -400,7 +406,7 @@ describe("room", () => {
   });
 
   test("should stop trying and disconnect if unauthorized (as refusal)", async () => {
-    const { room, delegates } = createTestableRoom(
+    const { room, delegates, errorEventSource } = createTestableRoom(
       {},
       undefined,
       SOCKET_REFUSES(WebsocketCloseCodes.NOT_ALLOWED, "whatever")
@@ -408,7 +414,7 @@ describe("room", () => {
     room.connect();
 
     let err = {} as any;
-    room.events.error.subscribeOnce((e) => (err = e));
+    errorEventSource.subscribeOnce((e) => (err = e));
 
     await waitUntilStatus(room, "connecting");
     await waitUntilStatus(room, "disconnected");
@@ -421,7 +427,7 @@ describe("room", () => {
   });
 
   test("should stop trying and disconnect if unauthorized (while connected)", async () => {
-    const { room, wss, delegates } = createTestableRoom(
+    const { room, wss, delegates, errorEventSource } = createTestableRoom(
       {},
       undefined,
       SOCKET_AUTOCONNECT_AND_ROOM_STATE()
@@ -429,7 +435,7 @@ describe("room", () => {
     room.connect();
 
     let err = {} as any;
-    room.events.error.subscribeOnce((e) => (err = e));
+    errorEventSource.subscribeOnce((e) => (err = e));
 
     await waitUntilStatus(room, "connected");
 
@@ -451,7 +457,7 @@ describe("room", () => {
   });
 
   test("should disconnect if told by server to not try reconnecting again (as refusal)", async () => {
-    const { room, delegates } = createTestableRoom(
+    const { room, delegates, errorEventSource } = createTestableRoom(
       {},
       undefined,
       SOCKET_SEQUENCE(
@@ -462,7 +468,7 @@ describe("room", () => {
     room.connect();
 
     let err = {} as any;
-    room.events.error.subscribeOnce((e) => (err = e));
+    errorEventSource.subscribeOnce((e) => (err = e));
 
     // Will try to reconnect, then gets refused, then disconnects
     await waitUntilStatus(room, "connecting");
@@ -475,7 +481,7 @@ describe("room", () => {
   });
 
   test("should disconnect if told by server to not try reconnecting again (while connected)", async () => {
-    const { room, wss, delegates } = createTestableRoom(
+    const { room, wss, delegates, errorEventSource } = createTestableRoom(
       {},
       undefined,
       SOCKET_AUTOCONNECT_AND_ROOM_STATE()
@@ -483,7 +489,7 @@ describe("room", () => {
     room.connect();
 
     let err = {} as any;
-    room.events.error.subscribeOnce((e) => (err = e));
+    errorEventSource.subscribeOnce((e) => (err = e));
 
     await waitUntilStatus(room, "connected");
 
@@ -2062,11 +2068,11 @@ describe("room", () => {
     });
 
     test("when error code 40xx (immediately)", async () => {
-      const { room, wss } = createTestableRoom({ x: 0 });
+      const { room, wss, errorEventSource } = createTestableRoom({ x: 0 });
       room.connect();
 
       let err = {} as any;
-      room.events.error.subscribeOnce((e) => (err = e));
+      errorEventSource.subscribeOnce((e) => (err = e));
 
       wss.onConnection((conn) => {
         conn.server.close(
@@ -2093,11 +2099,11 @@ describe("room", () => {
     });
 
     test("when error code 40xx (after delay)", async () => {
-      const { room, wss } = createTestableRoom({ x: 0 });
+      const { room, wss, errorEventSource } = createTestableRoom({ x: 0 });
       room.connect();
 
       let err = {} as any;
-      room.events.error.subscribeOnce((e) => (err = e));
+      errorEventSource.subscribeOnce((e) => (err = e));
 
       // Close the connection 1.111 second after it opened
       wss.onConnection((conn) => {
