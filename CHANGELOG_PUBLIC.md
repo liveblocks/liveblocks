@@ -34,9 +34,13 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 - New blog post: [What’s new in Liveblocks: December 2024](https://liveblocks.io/blog/whats-new-in-liveblocks-december-edition-2024).
 
+## Dashboard
+
+– Allow rate limit configuration for webhook endpoints.
+
 ## Contributors
 
-ctnicholas, nvie, marcbouchenoire
+ctnicholas, nvie, marcbouchenoire, jrowny
 
 # Week 52 (2024-12-27)
 
