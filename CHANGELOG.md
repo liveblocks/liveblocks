@@ -39,6 +39,11 @@ marking a notification as read fails, etc, these can be detected via:
 room.subscribe("error", (err) => { ... });
 ```
 
+### `@liveblocks/yjs`
+
+- Add new option `useV2Encoding_experimental` to `LiveblocksYjsProvider` to
+  enable experimental V2 encoding for Yjs.
+
 ## 2.15.2
 
 ### All packages

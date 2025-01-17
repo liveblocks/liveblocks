@@ -416,6 +416,10 @@
       {
         "title": "Presence",
         "path": "/ready-made-features/presence"
+      },
+      {
+        "title": "AI Copilots",
+        "path": "/ready-made-features/ai-copilots"
       }
     ]
   },

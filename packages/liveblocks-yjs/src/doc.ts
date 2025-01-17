@@ -10,22 +10,26 @@ export default class yDocHandler extends Observable<unknown> {
   private doc: Y.Doc;
   private updateRoomDoc: (update: Uint8Array) => void;
   private fetchRoomDoc: (vector: string) => void;
+  private useV2Encoding: boolean;
 
   constructor({
     doc,
     isRoot,
     updateDoc,
     fetchDoc,
+    useV2Encoding,
   }: {
     doc: Y.Doc;
     isRoot: boolean;
     updateDoc: (update: Uint8Array, guid?: string) => void;
     fetchDoc: (vector: string, guid?: string) => void;
+    useV2Encoding: boolean;
   }) {
     super();
     this.doc = doc;
+    this.useV2Encoding = useV2Encoding;
     // this.doc.load(); // this just emits a load event, it doesn't actually load anything
-    this.doc.on("update", this.updateHandler);
+    this.doc.on(useV2Encoding ? "updateV2" : "update", this.updateHandler);
     this.updateRoomDoc = (update: Uint8Array) => {
       updateDoc(update, isRoot ? undefined : this.doc.guid);
     };
@@ -40,19 +44,26 @@ export default class yDocHandler extends Observable<unknown> {
     update,
     stateVector,
     readOnly,
+    v2,
   }: {
     update: Uint8Array;
     stateVector: string | null;
     readOnly: boolean;
+    v2?: boolean;
   }): void => {
-    // apply update from the server
-    Y.applyUpdate(this.doc, update, "backend");
+    // apply update from the server, updates from the server can be v1 or v2
+    const applyUpdate = v2 ? Y.applyUpdateV2 : Y.applyUpdate;
+    applyUpdate(this.doc, update, "backend");
     // if this update is the result of a fetch, the state vector is included
     if (stateVector) {
       if (!readOnly) {
         // Use server state to calculate a diff and send it
         try {
-          const localUpdate = Y.encodeStateAsUpdate(
+          // send v1 or v2update according to client option
+          const encodeUpdate = this.useV2Encoding
+            ? Y.encodeStateAsUpdateV2
+            : Y.encodeStateAsUpdate;
+          const localUpdate = encodeUpdate(
             this.doc,
             Base64.toUint8Array(stateVector)
           );
