@@ -36,7 +36,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Dashboard
 
-– Allow rate limit configuration for webhook endpoints.
+- Allow rate limit configuration for webhook endpoints.
 
 ## Contributors
 
