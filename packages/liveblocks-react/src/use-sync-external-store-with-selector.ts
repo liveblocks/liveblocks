@@ -69,9 +69,9 @@ export function useSyncExternalStoreWithSelector<Snapshot, Selection>(
           // Even if the selector has changed, the currently rendered selection
           // may be equal to the new selection. We should attempt to reuse the
           // current value if possible, to preserve downstream memoizations.
-          if (inst!.hasValue) {
-            const currentSelection = inst!.value;
-            if (isEqual(currentSelection!, nextSelection)) {
+          if (inst.hasValue) {
+            const currentSelection = inst.value;
+            if (isEqual(currentSelection, nextSelection)) {
               memoizedSelection = currentSelection!;
               return currentSelection;
             }
@@ -126,10 +126,10 @@ export function useSyncExternalStoreWithSelector<Snapshot, Selection>(
   );
 
   useEffect(() => {
-    inst!.hasValue = true;
-    inst!.value = value;
+    inst.hasValue = true;
+    inst.value = value;
   }, [value]);
 
   useDebugValue(value);
-  return value!;
+  return value;
 }

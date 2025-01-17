@@ -1,4 +1,5 @@
-import { BaseMetadata, createClient } from "@liveblocks/client";
+import type { BaseMetadata } from "@liveblocks/client";
+import { createClient } from "@liveblocks/client";
 import type {
   BaseUserMeta,
   Json,

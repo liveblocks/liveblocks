@@ -11,6 +11,7 @@ import {
   useCreateRoomComment,
   useCreateRoomThread,
   useEditRoomComment,
+  useLayoutEffect,
   useResolveMentionSuggestions,
   useRoomOrNull,
   useRoomPermissions,
@@ -31,7 +32,6 @@ import {
   createContext,
   forwardRef,
   useCallback,
-  useLayoutEffect,
   useMemo,
   useRef,
   useSyncExternalStore,
@@ -76,12 +76,7 @@ import { Avatar } from "./internal/Avatar";
 import { Button } from "./internal/Button";
 import type { EmojiPickerProps } from "./internal/EmojiPicker";
 import { EmojiPicker, EmojiPickerTrigger } from "./internal/EmojiPicker";
-import {
-  ShortcutTooltip,
-  ShortcutTooltipKey,
-  Tooltip,
-  TooltipProvider,
-} from "./internal/Tooltip";
+import { ShortcutTooltip, Tooltip, TooltipProvider } from "./internal/Tooltip";
 import { User } from "./internal/User";
 
 interface EditorActionProps extends ComponentPropsWithoutRef<"button"> {
@@ -94,7 +89,8 @@ interface EmojiEditorActionProps extends EditorActionProps {
 }
 
 interface MarkToggleProps extends ComposerMarkToggleProps {
-  shortcut?: ReactNode;
+  icon?: ReactNode;
+  shortcut?: string;
 }
 
 type ComposerCreateThreadProps<M extends BaseMetadata> = {
@@ -263,10 +259,9 @@ function ComposerInsertMentionEditorAction({
         onPointerDown={preventDefault}
         onClick={handleClick}
         aria-label={label}
+        icon={<MentionIcon />}
         {...props}
-      >
-        <MentionIcon className="lb-button-icon" />
-      </Button>
+      />
     </Tooltip>
   );
 }
@@ -297,10 +292,9 @@ function ComposerInsertEmojiEditorAction({
             onPointerDown={preventDefault}
             onClick={stopPropagation}
             aria-label={label}
+            icon={<EmojiIcon />}
             {...props}
-          >
-            <EmojiIcon className="lb-button-icon" />
-          </Button>
+          />
         </EmojiPickerTrigger>
       </Tooltip>
     </EmojiPicker>
@@ -329,10 +323,9 @@ function ComposerAttachFilesEditorAction({
           onPointerDown={preventDefault}
           onClick={stopPropagation}
           aria-label={label}
+          icon={<AttachmentIcon />}
           {...props}
-        >
-          <AttachmentIcon className="lb-button-icon" />
-        </Button>
+        />
       </ComposerPrimitive.AttachFiles>
     </Tooltip>
   );
@@ -374,7 +367,13 @@ function ComposerMentionSuggestions({
   ) : null;
 }
 
-function MarkToggle({ mark, shortcut, children, ...props }: MarkToggleProps) {
+function MarkToggle({
+  mark,
+  icon,
+  shortcut,
+  children,
+  ...props
+}: MarkToggleProps) {
   const $ = useOverrides();
   const label = useMemo(() => {
     return $.COMPOSER_TOGGLE_MARK(mark);
@@ -387,7 +386,7 @@ function MarkToggle({ mark, shortcut, children, ...props }: MarkToggleProps) {
       sideOffset={FLOATING_ELEMENT_SIDE_OFFSET + 2}
     >
       <ComposerPrimitive.MarkToggle mark={mark} asChild {...props}>
-        <Button aria-label={label} variant="toggle">
+        <Button aria-label={label} variant="toolbar" icon={icon}>
           {children}
         </Button>
       </ComposerPrimitive.MarkToggle>
@@ -400,59 +399,18 @@ type MarkToggles = {
 };
 
 const markToggles: MarkToggles = {
-  bold: () => (
-    <MarkToggle
-      mark="bold"
-      shortcut={
-        <>
-          <ShortcutTooltipKey name="mod" />
-          <span>B</span>
-        </>
-      }
-    >
-      <BoldIcon />
-    </MarkToggle>
-  ),
+  bold: () => <MarkToggle mark="bold" shortcut="Mod-B" icon={<BoldIcon />} />,
   italic: () => (
-    <MarkToggle
-      mark="italic"
-      shortcut={
-        <>
-          <ShortcutTooltipKey name="mod" />
-          <span>I</span>
-        </>
-      }
-    >
-      <ItalicIcon />
-    </MarkToggle>
+    <MarkToggle mark="italic" shortcut="Mod-I" icon={<ItalicIcon />} />
   ),
   strikethrough: () => (
     <MarkToggle
       mark="strikethrough"
-      shortcut={
-        <>
-          <ShortcutTooltipKey name="mod" />
-          <ShortcutTooltipKey name="shift" />
-          <span>S</span>
-        </>
-      }
-    >
-      <StrikethroughIcon />
-    </MarkToggle>
+      shortcut="Mod-Shift-S"
+      icon={<StrikethroughIcon />}
+    />
   ),
-  code: () => (
-    <MarkToggle
-      mark="code"
-      shortcut={
-        <>
-          <ShortcutTooltipKey name="mod" />
-          <span>E</span>
-        </>
-      }
-    >
-      <CodeIcon />
-    </MarkToggle>
-  ),
+  code: () => <MarkToggle mark="code" shortcut="Mod-E" icon={<CodeIcon />} />,
 };
 
 const markTogglesList = Object.entries(markToggles).map(([mark, Toggle]) => (
@@ -628,10 +586,7 @@ function ComposerEditorContainer({
           <div className="lb-composer-actions">
             {actions ?? (
               <>
-                <ShortcutTooltip
-                  content={$.COMPOSER_SEND}
-                  shortcut={<ShortcutTooltipKey name="enter" />}
-                >
+                <ShortcutTooltip content={$.COMPOSER_SEND} shortcut="Enter">
                   <ComposerPrimitive.Submit asChild>
                     <Button
                       onPointerDown={preventDefault}
@@ -639,9 +594,8 @@ function ComposerEditorContainer({
                       className="lb-composer-action"
                       variant="primary"
                       aria-label={$.COMPOSER_SEND}
-                    >
-                      <SendIcon />
-                    </Button>
+                      icon={<SendIcon />}
+                    />
                   </ComposerPrimitive.Submit>
                 </ShortcutTooltip>
               </>

@@ -5,6 +5,7 @@ import type { LiveObject } from "../crdts/LiveObject";
 import type { LsonObject } from "../crdts/Lson";
 import type { ToImmutable } from "../crdts/utils";
 import { kInternal } from "../internal";
+import { makeEventSource } from "../lib/EventSource";
 import type { Json, JsonObject } from "../lib/Json";
 import { makePosition } from "../lib/position";
 import { deepClone } from "../lib/utils";
@@ -34,6 +35,7 @@ import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { Room, RoomConfig, RoomDelegates, SyncSource } from "../room";
 import { createRoom } from "../room";
 import { WebsocketCloseCodes } from "../types/IWebSocket";
+import type { LiveblocksError } from "../types/LiveblocksError";
 import {
   ALWAYS_AUTH_WITH_LEGACY_TOKEN,
   defineBehavior,
@@ -120,6 +122,7 @@ function makeRoomConfig<M extends BaseMetadata>(
       WebSocket: MockWebSocket,
     },
     baseUrl: DEFAULT_BASE_URL,
+    errorEventSource: makeEventSource<LiveblocksError>(),
     enableDebugLogging: false,
     roomHttpClient: createApiClient({
       baseUrl: DEFAULT_BASE_URL,

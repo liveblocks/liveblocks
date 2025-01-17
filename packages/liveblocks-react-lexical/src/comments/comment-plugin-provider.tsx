@@ -4,14 +4,9 @@ import {
   registerNestedElementResolver,
   removeClassNamesFromElement,
 } from "@lexical/utils";
-import { shallow } from "@liveblocks/core";
+import { shallow } from "@liveblocks/client";
+import { useClient, useRoom, useErrorListener } from "@liveblocks/react";
 import {
-  useClient,
-  useCommentsErrorListener,
-  useRoom,
-} from "@liveblocks/react";
-import {
-  CreateThreadError,
   getUmbrellaStoreForClient,
   useSignal,
 } from "@liveblocks/react/_private";
@@ -101,10 +96,13 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     [editor, threadToNodes]
   );
 
-  useCommentsErrorListener((error) => {
+  useErrorListener((err) => {
     // If thread creation fails, we remove the thread id from the associated nodes and unwrap the nodes if they are no longer associated with any threads
-    if (error instanceof CreateThreadError) {
-      handleThreadDelete(error.context.threadId);
+    if (
+      err.context.type === "CREATE_THREAD_ERROR" &&
+      err.context.roomId === room.id
+    ) {
+      handleThreadDelete(err.context.threadId);
     }
   });
 
@@ -115,7 +113,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
     store.outputs.threads,
     useCallback(
       (state) =>
-        state.threadsDB
+        state
           .findMany(roomId, { resolved: false }, "asc")
           .map((thread) => thread.id),
       [roomId]
@@ -222,7 +220,7 @@ export function CommentPluginProvider({ children }: PropsWithChildren) {
       const threadIds = $getThreadIds(selection).filter((id) => {
         return store.outputs.threads
           .get()
-          .threadsDB.findMany(roomId, { resolved: false }, "asc")
+          .findMany(roomId, { resolved: false }, "asc")
           .some((thread) => thread.id === id);
       });
       setActiveThreads(threadIds);

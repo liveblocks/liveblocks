@@ -1,31 +1,30 @@
+import { isPlainObject, isStartsWithOperator } from "./guards";
+
 /**
  * Converts an object to a query string
  * Example:
  * ```ts
  * const query = objectToQuery({
-      resolved: true,
-      metadata: {
-        status: "open",
-        priority: 3,
-        org: {
-          startsWith: "liveblocks:",
-        },
-      },
-});
-
-console.log(query);
-// resolved:true AND metadata["status"]:open AND metadata["priority"]:3 AND metadata["org"]^"liveblocks:"
-
+ *   resolved: true,
+ *   metadata: {
+ *     status: "open",
+ *     priority: 3,
+ *     org: {
+ *       startsWith: "liveblocks:",
+ *     },
+ *   },
+ * });
+ *
+ * console.log(query);
+ * // resolved:true AND metadata["status"]:open AND metadata["priority"]:3 AND metadata["org"]^"liveblocks:"
  * ```
- *
- *
  */
-type SimpleFilterValue = string | number | boolean;
+type SimpleFilterValue = string | number | boolean | null;
 type OperatorFilterValue = { startsWith: string };
 
 type FilterValue = SimpleFilterValue | OperatorFilterValue;
 
-type Filter = NumberFilter | StringFilter | BooleanFilter;
+type Filter = NumberFilter | StringFilter | BooleanFilter | NullFilter;
 
 type NumberFilter = {
   key: string;
@@ -43,6 +42,12 @@ type BooleanFilter = {
   key: string;
   operator: ":";
   value: boolean;
+};
+
+type NullFilter = {
+  key: string;
+  operator: ":";
+  value: null;
 };
 
 /**
@@ -86,7 +91,7 @@ export function objectToQuery(obj: {
   let filterList: Filter[] = [];
   const entries = Object.entries(obj);
 
-  const keyValuePairs: [string, string | number | boolean][] = [];
+  const keyValuePairs: [string, string | number | boolean | null][] = [];
   const keyValuePairsWithOperator: [string, Record<"startsWith", string>][] =
     [];
   const indexedKeys: [string, Record<string, FilterValue | undefined>][] = [];
@@ -98,10 +103,12 @@ export function objectToQuery(obj: {
 
     if (isSimpleValue(value)) {
       keyValuePairs.push([key, value]);
-    } else if (isValueWithOperator(value)) {
-      keyValuePairsWithOperator.push([key, value]);
-    } else if (typeof value === "object" && !("startsWith" in value)) {
-      indexedKeys.push([key, value]);
+    } else if (isPlainObject(value)) {
+      if (isStartsWithOperator(value)) {
+        keyValuePairsWithOperator.push([key, value]);
+      } else {
+        indexedKeys.push([key, value]);
+      }
     }
   });
 
@@ -121,7 +128,7 @@ export function objectToQuery(obj: {
 
       if (isSimpleValue(nestedValue)) {
         nKeyValuePairs.push([formatFilterKey(key, nestedKey), nestedValue]);
-      } else if (isValueWithOperator(nestedValue)) {
+      } else if (isStartsWithOperator(nestedValue)) {
         nKeyValuePairsWithOperator.push([
           formatFilterKey(key, nestedKey),
           nestedValue,
@@ -136,14 +143,12 @@ export function objectToQuery(obj: {
   });
 
   return filterList
-    .map(({ key, operator, value }) =>
-      formatFilter(key, operator, formatFilterValue(value))
-    )
-    .join(" AND ");
+    .map(({ key, operator, value }) => `${key}${operator}${quote(value)}`)
+    .join(" ");
 }
 
 const getFiltersFromKeyValuePairs = (
-  keyValuePairs: [string, string | number | boolean][]
+  keyValuePairs: [string, string | number | boolean | null][]
 ): Filter[] => {
   const filters: Filter[] = [];
   keyValuePairs.forEach(([key, value]) => {
@@ -174,47 +179,41 @@ const getFiltersFromKeyValuePairsWithOperator = (
   return filters;
 };
 
-const isSimpleValue = (value: unknown): value is SimpleFilterValue => {
-  if (
+const isSimpleValue = (value: unknown) => {
+  return (
     typeof value === "string" ||
     typeof value === "number" ||
-    typeof value === "boolean"
-  ) {
-    return true;
-  }
-  return false;
-};
-
-const isValueWithOperator = (
-  value: unknown
-): value is { startsWith: string } => {
-  if (typeof value === "object" && value !== null && "startsWith" in value) {
-    return true;
-  }
-  return false;
-};
-
-const formatFilter = (key: string, operator: ":" | "^", value: string) => {
-  return `${key}${operator}${value}`;
+    typeof value === "boolean" ||
+    value === null
+  );
 };
 
 const formatFilterKey = (key: string, nestedKey?: string) => {
   if (nestedKey) {
-    return `${key}[${JSON.stringify(nestedKey)}]`;
+    return `${key}[${quote(nestedKey)}]`;
   }
   return key;
-};
-
-const formatFilterValue = (value: string | number | boolean) => {
-  if (typeof value === "string") {
-    if (isStringEmpty(value)) {
-      throw new Error("Value cannot be empty");
-    }
-    return JSON.stringify(value);
-  }
-  return value.toString();
 };
 
 const isStringEmpty = (value: string) => {
   return !value || value.toString().trim() === "";
 };
+
+/**
+ * Quotes and escapes a string. Prefer to use single quotes when possible, but
+ * falls back to JSON.stringify() (which uses double-quotes) when necessary.
+ */
+export function quote(input: unknown): string {
+  const result = JSON.stringify(input);
+  if (typeof input !== "string") {
+    return result;
+  }
+
+  if (result.includes("'")) {
+    return result;
+  }
+
+  // See if we can turn this string into a single-quoted string, because those
+  // generally are more readable in URLs
+  return `'${result.slice(1, -1).replace(/\\"/g, '"')}'`;
+}

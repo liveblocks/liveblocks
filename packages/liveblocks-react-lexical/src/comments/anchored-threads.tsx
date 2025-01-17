@@ -1,5 +1,7 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import type { BaseMetadata, DM, ThreadData } from "@liveblocks/core";
+import type { BaseMetadata, ThreadData } from "@liveblocks/client";
+import type { DM } from "@liveblocks/core";
+import { useLayoutEffect } from "@liveblocks/react/_private";
 import {
   Thread as DefaultThread,
   type ThreadProps,
@@ -10,14 +12,13 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
 
 import { classNames } from "../classnames";
-import { useRootElement } from "../liveblocks-plugin-provider";
+import { useRootElement } from "../use-root-element";
 import {
   ActiveThreadsContext,
   type ThreadToNodesMap,

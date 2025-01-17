@@ -2,32 +2,22 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 
-type OmitFirstTupleElement<T extends any[]> = T extends [any, ...infer R]
-  ? R
-  : never;
+function replacer(_key: string, value: unknown) {
+  return value !== null && typeof value === "object" && !Array.isArray(value)
+    ? Object.keys(value)
+        .sort()
+        .reduce((sorted, key) => {
+          // @ts-expect-error this is fine
+          sorted[key] = value[key];
+          return sorted;
+        }, {})
+    : value;
+}
 
 /**
- * Like JSON.stringify(), but returns the same value no matter how the keys in
- * objects are ordered.
+ * Like JSON.stringify(), but returns the same value no matter how keys in any
+ * nested objects are ordered.
  */
-export function stringify(
-  object: Parameters<typeof JSON.stringify>[0],
-  ...args: OmitFirstTupleElement<Parameters<typeof JSON.stringify>>
-): string {
-  if (typeof object !== "object" || object === null || Array.isArray(object)) {
-    return JSON.stringify(object, ...args);
-  }
-
-  const sortedObject = Object.keys(object)
-    .sort()
-    .reduce(
-      (sortedObject, key) => {
-        sortedObject[key] = object[key];
-
-        return sortedObject;
-      },
-      {} as Record<string, any>
-    );
-
-  return JSON.stringify(sortedObject, ...args);
+export function stringify(value: unknown): string {
+  return JSON.stringify(value, replacer);
 }

@@ -6,8 +6,6 @@ import type {
   ThreadData,
 } from "@liveblocks/core";
 import { HttpError, nanoid, Permission, ServerMsgCode } from "@liveblocks/core";
-import type { AST } from "@liveblocks/query-parser";
-import { QueryParser } from "@liveblocks/query-parser";
 import {
   act,
   fireEvent,
@@ -35,38 +33,12 @@ import {
   mockGetThread,
   mockGetThreads,
 } from "./_restMocks";
-import { createContextsForTest } from "./_utils";
+import { createContextsForTest, makeThreadFilter } from "./_utils";
 
 const SECONDS = 1000;
 const MINUTES = 60 * SECONDS;
 
 const server = setupServer();
-
-const parser = new QueryParser({
-  fields: {},
-  indexableFields: {
-    metadata: "mixed",
-  },
-});
-
-const getFilter = (
-  clauses: AST.Clause[],
-  indexedFieldKey: string,
-  filterKey: string
-) => {
-  const filter = clauses.find(
-    (clause) =>
-      clause.field._kind === "IndexedField" &&
-      clause.field.base.name === indexedFieldKey &&
-      clause.field.key === filterKey
-  );
-
-  return {
-    key: filter?.field._kind === "IndexedField" ? filter.field.key : "",
-    operator: filter?.operator.op,
-    value: filter?.value.value,
-  };
-};
 
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 
@@ -290,19 +262,10 @@ describe("useThreads", () => {
     server.use(
       mockGetThreads(async (req, res, ctx) => {
         const query = req.url.searchParams.get("query");
-        const parseRes = parser.parse(query ?? "");
-
-        const metadataPinned = getFilter(
-          parseRes.query.clauses,
-          "metadata",
-          "pinned"
-        );
-
+        const pred = query ? makeThreadFilter(query) : () => true;
         return res(
           ctx.json({
-            data: [pinnedThread, unpinnedThread].filter(
-              (thread) => thread.metadata.pinned === metadataPinned.value
-            ),
+            data: [pinnedThread, unpinnedThread].filter(pred),
             inboxNotifications: [],
             deletedThreads: [],
             deletedInboxNotifications: [],
@@ -466,6 +429,7 @@ describe("useThreads", () => {
     }
 
     {
+      // Test 3
       const { result, unmount } = renderHook(
         () =>
           useThreads({
@@ -478,7 +442,16 @@ describe("useThreads", () => {
         }
       );
 
-      expect(result.current).toEqual({ isLoading: true });
+      expect(result.current).toEqual(
+        //
+        // NOTE! This query is not loading initially! This is because we
+        // already queried for this combination of queries in Test 1, because
+        //   { metadata: { color: "red", pinned: true } }
+        // is the same query as
+        //   { metadata: { pinned: true, color: "red" } }
+        //
+        expect.objectContaining({ isLoading: false })
+      );
 
       await waitFor(() =>
         expect(result.current).toEqual({
@@ -612,7 +585,7 @@ describe("useThreads", () => {
     }
 
     {
-      // Test 8
+      // Test 8: explicit-undefined keys should be ignored
       const { result, unmount } = renderHook(
         () =>
           useThreads({
@@ -621,6 +594,39 @@ describe("useThreads", () => {
                 pinned: true,
                 // NOTE: Explicitly-undefined means color must be absent!
                 color: undefined, // = color must be absent
+              },
+            },
+          }),
+        {
+          wrapper: ({ children }) => (
+            <RoomProvider id={roomId}>{children}</RoomProvider>
+          ),
+        }
+      );
+
+      await waitFor(() =>
+        expect(result.current).toEqual({
+          isLoading: false,
+          threads: [bluePinnedThread, redPinnedThread, uncoloredPinnedThread],
+          fetchMore: expect.any(Function),
+          isFetchingMore: false,
+          hasFetchedAll: true,
+          fetchMoreError: undefined,
+        })
+      );
+
+      unmount();
+    }
+
+    {
+      // Test 9: explicitly filtering by absence using `null` value
+      const { result, unmount } = renderHook(
+        () =>
+          useThreads({
+            query: {
+              metadata: {
+                pinned: true,
+                color: null, // Explicitly filtered for absence of color
               },
             },
           }),
@@ -646,15 +652,13 @@ describe("useThreads", () => {
     }
 
     {
-      // Test 8
+      // Test 10: explicitly filtering by absence using `null` value
       const { result, unmount } = renderHook(
         () =>
           useThreads({
             query: {
-              metadata: {
-                // @ts-expect-error - `null` is not a legal value, try to use it anyway
-                color: null,
-              },
+              // Explicitly filtered for absence of color
+              metadata: { color: null },
             },
           }),
         {
@@ -667,10 +671,7 @@ describe("useThreads", () => {
       await waitFor(() =>
         expect(result.current).toEqual({
           isLoading: false,
-          threads: [
-            // Metadata can never legally be `null` (like specified in the
-            // query above), so no thread will ever match
-          ],
+          threads: [uncoloredPinnedThread],
           fetchMore: expect.any(Function),
           isFetchingMore: false,
           hasFetchedAll: true,
@@ -834,19 +835,10 @@ describe("useThreads", () => {
     server.use(
       mockGetThreads(async (req, res, ctx) => {
         const query = req.url.searchParams.get("query");
-        const parseRes = parser.parse(query ?? "");
-
-        const metadataPinned = getFilter(
-          parseRes.query.clauses,
-          "metadata",
-          "pinned"
-        );
-
+        const pred = query ? makeThreadFilter(query) : () => true;
         return res(
           ctx.json({
-            data: [pinnedThread, unpinnedThread].filter(
-              (thread) => thread.metadata.pinned === metadataPinned.value
-            ),
+            data: [pinnedThread, unpinnedThread].filter(pred),
             inboxNotifications: [],
             deletedThreads: [],
             deletedInboxNotifications: [],
@@ -1456,7 +1448,6 @@ describe("useThreads", () => {
     const db = umbrellaStore.threads;
     db.upsert(thread1);
     db.upsert(thread2WithDeletedAt);
-    umbrellaStore.invalidateEntireStore();
 
     const { result, unmount } = renderHook(
       () => useThreads({ query: { metadata: {} } }),

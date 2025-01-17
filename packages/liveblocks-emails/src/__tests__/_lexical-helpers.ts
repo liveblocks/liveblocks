@@ -55,7 +55,7 @@ export const docUpdate = new Uint8Array([
   42, 167, 186, 229, 132, 1, 1, 0, 1, 130, 146, 255, 129, 1, 2, 4, 1, 6, 34,
 ]);
 
-export const docUpdateBuffer = docUpdate.buffer as ArrayBuffer;
+export const docUpdateBuffer = docUpdate.buffer;
 
 export const MENTIONED_USER_ID = "user-4";
 export const MENTION_ID = "in_QQ6EOi7jsH-LNw0C8Lpaf";

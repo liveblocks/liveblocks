@@ -70,12 +70,6 @@ Here’s the full file:
 
 ```ts file="liveblocks.server.config.ts"
 import { createClient } from "@liveblocks/client";
-import type {
-  Presence,
-  Storage,
-  UserMeta,
-  RoomEvent,
-} from "./liveblocks.config";
 import { Liveblocks } from "@liveblocks/node";
 import fetch from "node-fetch";
 import WebSocket from "ws";
@@ -107,7 +101,7 @@ export const serverClient = createClient({
 
 // 6. Creating a typed enter room function
 export const enterRoom = (roomId: string) => {
-  return serverClient.enter<Presence, Storage, UserMeta, RoomEvent>(roomId, {
+  return serverClient.enter(roomId, {
     // Match the options in your browser code
   });
 };
@@ -121,12 +115,11 @@ typed `modifyStorage` function that allows us to join a room, modify storage
 
 ```ts
 import type { LiveObject } from "@liveblocks/client";
-import type { Storage } from "./liveblocks.config";
-import { serverClient, enterRoom } from "./liveblocks.server.config";
+import { enterRoom } from "./liveblocks.server.config";
 
 export async function modifyStorage(
   roomId: string,
-  storageChanges: (root: LiveObject<Storage>) => void
+  storageChanges: (root: LiveObject<Liveblocks["Storage"]>) => void
 ) {
   const roomContext = enterRoom(roomId);
   const { room } = roomContext;
@@ -175,8 +168,7 @@ Remember to account for the service user appearing in your presence. In our
 `userId`, so we’ll filter it out when using others in our application.
 
 ```tsx
-import { shallow } from "@liveblocks/react";
-import { useOthers } from "./liveblocks.config.ts";
+import { shallow, useOthers } from "@liveblocks/react/suspense";
 
 function LiveAvatars() {
   // Others, with the service account filtered out

@@ -138,18 +138,18 @@ export class ThreadDB<M extends BaseMetadata> {
     }
   }
 
-  public applyDelta(updates: {
-    newThreads: ThreadData<M>[];
-    deletedThreads: ThreadDeleteInfo[];
-  }): void {
+  public applyDelta(
+    newThreads: ThreadData<M>[],
+    deletedThreads: ThreadDeleteInfo[]
+  ): void {
     batch(() => {
       // Add new threads or update existing threads if the existing thread is older than the new thread.
-      for (const thread of updates.newThreads) {
+      for (const thread of newThreads) {
         this.upsertIfNewer(thread);
       }
 
       // Mark threads in the deletedThreads list as deleted
-      for (const { id, deletedAt } of updates.deletedThreads) {
+      for (const { id, deletedAt } of deletedThreads) {
         const existing = this.getEvenIfDeleted(id);
         if (!existing) continue;
         this.delete(id, deletedAt);

@@ -53,6 +53,13 @@ const kTrigger = Symbol("kTrigger");
 //
 let signalsToTrigger: Set<AbstractSignal<any>> | null = null;
 
+//
+// If a derived signal is currently being computed, there is a global "signals
+// that have been read" registry that every call to `someSignal.get()` will
+// register itself under.
+//
+let trackedReads: Set<AbstractSignal<any>> | null = null;
+
 /**
  * Runs a callback function that is allowed to change multiple signals. At the
  * end of the batch, all changed signals will be notified (at most once).
@@ -183,6 +190,14 @@ abstract class AbstractSignal<T> implements ISignal<T>, Observable<void> {
   }
 
   subscribe(callback: Callback<void>): UnsubscribeCallback {
+    // If this is the first subscriber, we need to perform an initial .get()
+    // now in case this is a DerivedSignal that has not been evaluated yet. The
+    // reason we need to do this is that the .get() itself will register this
+    // signal as sinks of the dependent signals, so we will actually get
+    // notified here when one of the dependent signals changes.
+    if (this.#eventSource.count() === 0) {
+      this.get();
+    }
     return this.#eventSource.subscribe(callback);
   }
 
@@ -233,6 +248,7 @@ export class Signal<T> extends AbstractSignal<T> {
   }
 
   get(): T {
+    trackedReads?.add(this);
     return this.#value;
   }
 
@@ -278,14 +294,15 @@ export class DerivedSignal<T> extends AbstractSignal<T> {
   #prevValue: T;
   #dirty: boolean; // When true, the value in #value may not be up-to-date and needs re-checking
 
-  readonly #parents: readonly ISignal<unknown>[];
+  #sources: Set<ISignal<unknown>>;
+  readonly #deps: readonly ISignal<unknown>[];
   readonly #transform: (...values: unknown[]) => T;
 
   // Overload 1
-  static from<Ts extends [unknown, ...unknown[]], V>(...args: [...signals: { [K in keyof Ts]: ISignal<Ts[K]> }, transform: (...values: Ts) => V]): DerivedSignal<V>; // prettier-ignore
+  static from<Ts extends unknown[], V>(...args: [...signals: { [K in keyof Ts]: ISignal<Ts[K]> }, transform: (...values: Ts) => V]): DerivedSignal<V>; // prettier-ignore
   // Overload 2
-  static from<Ts extends [unknown, ...unknown[]], V>(...args: [...signals: { [K in keyof Ts]: ISignal<Ts[K]> }, transform: (...values: Ts) => V, equals: (a: V, b: V) => boolean]): DerivedSignal<V>; // prettier-ignore
-  static from<Ts extends [unknown, ...unknown[]], V>(
+  static from<Ts extends unknown[], V>(...args: [...signals: { [K in keyof Ts]: ISignal<Ts[K]> }, transform: (...values: Ts) => V, equals: (a: V, b: V) => boolean]): DerivedSignal<V>; // prettier-ignore
+  static from<Ts extends unknown[], V>(
     // prettier-ignore
     ...args: [
       ...signals: { [K in keyof Ts]: ISignal<Ts[K]> },
@@ -310,30 +327,29 @@ export class DerivedSignal<T> extends AbstractSignal<T> {
   }
 
   private constructor(
-    parents: ISignal<unknown>[],
+    deps: ISignal<unknown>[],
     transform: (...values: unknown[]) => T,
     equals?: (a: T, b: T) => boolean
   ) {
     super(equals);
     this.#dirty = true;
     this.#prevValue = INITIAL as unknown as T;
-    this.#parents = parents;
+    this.#deps = deps;
+    this.#sources = new Set();
     this.#transform = transform;
-
-    for (const parent of parents) {
-      parent.addSink(this as DerivedSignal<unknown>);
-    }
   }
 
   [Symbol.dispose](): void {
-    for (const parent of this.#parents) {
-      parent.removeSink(this as DerivedSignal<unknown>);
+    for (const src of this.#sources) {
+      src.removeSink(this as DerivedSignal<unknown>);
     }
 
     // @ts-expect-error make disposed object completely unusable
     this.#prevValue = "(disposed)";
     // @ts-expect-error make disposed object completely unusable
-    this.#parents = "(disposed)";
+    this.#sources = "(disposed)";
+    // @ts-expect-error make disposed object completely unusable
+    this.#deps = "(disposed)";
     // @ts-expect-error make disposed object completely unusable
     this.#transform = "(disposed)";
   }
@@ -343,7 +359,31 @@ export class DerivedSignal<T> extends AbstractSignal<T> {
   }
 
   #recompute(): boolean {
-    const derived = this.#transform(...this.#parents.map((p) => p.get()));
+    const oldTrackedReads = trackedReads;
+
+    let derived;
+    trackedReads = new Set();
+    try {
+      derived = this.#transform(...this.#deps.map((p) => p.get()));
+    } finally {
+      const oldSources = this.#sources;
+      this.#sources = new Set();
+
+      for (const sig of trackedReads) {
+        this.#sources.add(sig);
+        oldSources.delete(sig);
+      }
+
+      for (const oldSource of oldSources) {
+        oldSource.removeSink(this as DerivedSignal<unknown>);
+      }
+      for (const newSource of this.#sources) {
+        newSource.addSink(this as DerivedSignal<unknown>);
+      }
+
+      trackedReads = oldTrackedReads;
+    }
+
     this.#dirty = false;
 
     // Only emit a change to watchers if the value actually changed
@@ -365,6 +405,7 @@ export class DerivedSignal<T> extends AbstractSignal<T> {
     if (this.#dirty) {
       this.#recompute();
     }
+    trackedReads?.add(this);
     return this.#prevValue;
   }
 
@@ -414,6 +455,7 @@ export class MutableSignal<T extends object> extends AbstractSignal<T> {
   }
 
   get(): T {
+    trackedReads?.add(this);
     return this.#state;
   }
 

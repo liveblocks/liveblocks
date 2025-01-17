@@ -1,12 +1,12 @@
 "use client";
 
+import { useLayoutEffect } from "@liveblocks/react/_private";
 import { Slot } from "@radix-ui/react-slot";
 import type { ChangeEvent, KeyboardEvent, SyntheticEvent } from "react";
 import {
   forwardRef,
   useCallback,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,

@@ -25,11 +25,11 @@ import type {
 } from "@liveblocks/core";
 import { HttpError, kInternal, makeEventSource } from "@liveblocks/core";
 import { useClient } from "@liveblocks/react";
+import { useLayoutEffect } from "@liveblocks/react/_private";
 import type { DragEvent } from "react";
 import {
   useCallback,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useState,
   useSyncExternalStore,

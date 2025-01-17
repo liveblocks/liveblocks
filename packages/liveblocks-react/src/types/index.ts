@@ -30,6 +30,7 @@ import type {
   PartialUnless,
   Patchable,
   QueryMetadata,
+  Relax,
   Resolve,
   RoomEventMessage,
   StorageStatus,
@@ -38,8 +39,6 @@ import type {
   ToImmutable,
 } from "@liveblocks/core";
 import type { Context, PropsWithChildren, ReactNode } from "react";
-
-import type { CommentsError } from "./errors";
 
 export type UseSyncStatusOptions = {
   /**
@@ -143,13 +142,6 @@ export type CommentReactionOptions = {
 
 // -----------------------------------------------------------------------
 
-type NoPaginationFields = {
-  hasFetchedAll?: never;
-  isFetchingMore?: never;
-  fetchMore?: never;
-  fetchMoreError?: never;
-};
-
 type PaginationFields = {
   hasFetchedAll: boolean;
   isFetchingMore: boolean;
@@ -161,10 +153,9 @@ export type PagedAsyncSuccess<T, F extends string> = Resolve<
   AsyncSuccess<T, F> & PaginationFields
 >;
 
-export type PagedAsyncResult<T, F extends string> =
-  | Resolve<AsyncLoading<F> & NoPaginationFields>
-  | Resolve<AsyncError<F> & NoPaginationFields>
-  | PagedAsyncSuccess<T, F>;
+export type PagedAsyncResult<T, F extends string> = Relax<
+  AsyncLoading<F> | AsyncError<F> | PagedAsyncSuccess<T, F>
+>;
 
 // -----------------------------------------------------------------------
 
@@ -255,22 +246,14 @@ export type MutationContext<
   ) => void;
 };
 
-export type ThreadSubscription =
+export type ThreadSubscription = Relax<
   // The user is not subscribed to the thread
-  | {
-      status: "not-subscribed";
-      unreadSince?: never;
-    }
+  | { status: "not-subscribed" }
   // The user is subscribed to the thread but has never read it
-  | {
-      status: "subscribed";
-      unreadSince: null;
-    }
+  | { status: "subscribed"; unreadSince: null }
   // The user is subscribed to the thread and has read it
-  | {
-      status: "subscribed";
-      unreadSince: Date;
-    };
+  | { status: "subscribed"; unreadSince: Date }
+>;
 
 export type SharedContextBundle<U extends BaseUserMeta> = {
   classic: {
@@ -302,6 +285,18 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * const isInsideRoom = useIsInsideRoom();
      */
     useIsInsideRoom(): boolean;
+
+    /**
+     * useErrorListener is a React hook that allows you to respond to any
+     * Liveblocks error, for example room connection errors, errors
+     * creating/editing/deleting threads, etc.
+     *
+     * @example
+     * useErrorListener(err => {
+     *   console.error(err);
+     * })
+     */
+    useErrorListener(callback: (err: LiveblocksError) => void): void;
 
     /**
      * Returns the current Liveblocks sync status, and triggers a re-render
@@ -345,6 +340,18 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * const isInsideRoom = useIsInsideRoom();
      */
     useIsInsideRoom(): boolean;
+
+    /**
+     * useErrorListener is a React hook that allows you to respond to any
+     * Liveblocks error, for example room connection errors, errors
+     * creating/editing/deleting threads, etc.
+     *
+     * @example
+     * useErrorListener(err => {
+     *   console.error(err);
+     * })
+     */
+    useErrorListener(callback: (err: LiveblocksError) => void): void;
 
     /**
      * Returns the current Liveblocks sync status, and triggers a re-render
@@ -454,17 +461,6 @@ type RoomContextBundleCommon<
   useLostConnectionListener(
     callback: (event: LostConnectionEvent) => void
   ): void;
-
-  /**
-   * useErrorListener is a React hook that allows you to respond to potential room
-   * connection errors.
-   *
-   * @example
-   * useErrorListener(er => {
-   *   console.error(er);
-   * })
-   */
-  useErrorListener(callback: (err: LiveblocksError) => void): void;
 
   /**
    * useEventListener is a React hook that allows you to respond to events broadcast
@@ -833,19 +829,6 @@ type RoomContextBundleCommon<
   useThreadSubscription(threadId: string): ThreadSubscription;
 };
 
-/**
- * @private
- *
- * Private methods and variables used in the core internals, but as a user
- * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
- * will probably happen if you do.
- */
-type PrivateRoomContextApi = {
-  useCommentsErrorListener<M extends BaseMetadata>(
-    callback: (err: CommentsError<M>) => void
-  ): void;
-};
-
 export type RoomContextBundle<
   P extends JsonObject,
   S extends LsonObject,
@@ -1087,7 +1070,7 @@ export type RoomContextBundle<
             useAttachmentUrl(attachmentId: string): AttachmentUrlAsyncSuccess;
           }
       >;
-    } & PrivateRoomContextApi
+    }
 >;
 
 /**

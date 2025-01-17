@@ -16,7 +16,6 @@ describe("stringify", () => {
     expect(stringify(2)).toEqual(JSON.stringify(2));
     expect(stringify(true)).toEqual(JSON.stringify(true));
     expect(stringify(null)).toEqual(JSON.stringify(null));
-    expect(stringify(undefined)).toEqual(JSON.stringify(undefined));
   });
 
   it("supports objects in a stable way", () => {
@@ -30,6 +29,24 @@ describe("stringify", () => {
         b: true,
         a: 2,
       })
+    );
+  });
+
+  it("supports nested objects", () => {
+    expect(stringify([{ a: 2, b: true }])).toEqual(
+      stringify([{ b: true, a: 2 }])
+    );
+    expect(stringify([{ a: 2, b: true, c: [[{ e: -0, d: 0 }]] }])).toEqual(
+      stringify([{ b: true, a: 2, c: [[{ d: 0, e: 0 }]] }])
+    );
+  });
+
+  it("explicitly-undefined keys become implicit-undefined", () => {
+    expect(stringify([{ b: true, c: undefined, a: 2 }])).toEqual(
+      '[{"a":2,"b":true}]'
+    );
+    expect(stringify([{ a: 2, b: true }])).toEqual(
+      stringify([{ b: true, c: undefined, a: 2 }])
     );
   });
 });

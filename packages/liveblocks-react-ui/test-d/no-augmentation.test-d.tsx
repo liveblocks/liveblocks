@@ -1,10 +1,7 @@
-
 import type { ActivityData, InboxNotificationData } from "@liveblocks/core";
 import { expectError, expectType } from "tsd";
-import {
-  InboxNotification,
-  InboxNotificationCustomKindProps,
-} from "@liveblocks/react-ui";
+import type { InboxNotificationCustomKindProps } from "@liveblocks/react-ui";
+import { InboxNotification } from "@liveblocks/react-ui";
 
 // TODO: Create type tests for all components/props
 

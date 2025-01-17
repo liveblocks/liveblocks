@@ -13,23 +13,11 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "r",
-            "range": [
-              62,
-              63,
-            ],
           },
           "optional": false,
-          "range": [
-            62,
-            71,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "NumberType",
-            "range": [
-              65,
-              71,
-            ],
           },
         },
         {
@@ -38,23 +26,11 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "g",
-            "range": [
-              73,
-              74,
-            ],
           },
           "optional": false,
-          "range": [
-            73,
-            82,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "NumberType",
-            "range": [
-              76,
-              82,
-            ],
           },
         },
         {
@@ -63,23 +39,11 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "b",
-            "range": [
-              84,
-              85,
-            ],
           },
           "optional": false,
-          "range": [
-            84,
-            93,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "NumberType",
-            "range": [
-              87,
-              93,
-            ],
           },
         },
       ],
@@ -88,15 +52,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
       "name": {
         "_kind": "TypeName",
         "name": "Color",
-        "range": [
-          54,
-          59,
-        ],
       },
-      "range": [
-        49,
-        95,
-      ],
     },
     {
       "_kind": "ObjectTypeDefinition",
@@ -107,23 +63,11 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "cx",
-            "range": [
-              125,
-              127,
-            ],
           },
           "optional": false,
-          "range": [
-            125,
-            135,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "NumberType",
-            "range": [
-              129,
-              135,
-            ],
           },
         },
         {
@@ -132,23 +76,11 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "cy",
-            "range": [
-              144,
-              146,
-            ],
           },
           "optional": false,
-          "range": [
-            144,
-            154,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "NumberType",
-            "range": [
-              148,
-              154,
-            ],
           },
         },
         {
@@ -157,23 +89,11 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "r",
-            "range": [
-              163,
-              164,
-            ],
           },
           "optional": false,
-          "range": [
-            163,
-            172,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "NumberType",
-            "range": [
-              166,
-              172,
-            ],
           },
         },
         {
@@ -182,39 +102,19 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "fill",
-            "range": [
-              181,
-              185,
-            ],
           },
           "optional": true,
-          "range": [
-            181,
-            195,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "ArrayType",
             "ofType": {
               "_kind": "TypeRef",
               "asLiveObject": false,
-              "range": [
-                188,
-                193,
-              ],
               "ref": {
                 "_kind": "TypeName",
                 "name": "Color",
-                "range": [
-                  188,
-                  193,
-                ],
               },
             },
-            "range": [
-              188,
-              195,
-            ],
           },
         },
         {
@@ -223,31 +123,15 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "stroke",
-            "range": [
-              204,
-              210,
-            ],
           },
           "optional": true,
-          "range": [
-            204,
-            218,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "TypeRef",
             "asLiveObject": false,
-            "range": [
-              213,
-              218,
-            ],
             "ref": {
               "_kind": "TypeName",
               "name": "Color",
-              "range": [
-                213,
-                218,
-              ],
             },
           },
         },
@@ -257,16 +141,8 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "third",
-            "range": [
-              227,
-              232,
-            ],
           },
           "optional": true,
-          "range": [
-            227,
-            272,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "ArrayType",
@@ -279,23 +155,11 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
                   "name": {
                     "_kind": "Identifier",
                     "name": "r",
-                    "range": [
-                      237,
-                      238,
-                    ],
                   },
                   "optional": false,
-                  "range": [
-                    237,
-                    246,
-                  ],
                   "trailingComment": null,
                   "type": {
                     "_kind": "NumberType",
-                    "range": [
-                      240,
-                      246,
-                    ],
                   },
                 },
                 {
@@ -304,23 +168,11 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
                   "name": {
                     "_kind": "Identifier",
                     "name": "g",
-                    "range": [
-                      248,
-                      249,
-                    ],
                   },
                   "optional": false,
-                  "range": [
-                    248,
-                    257,
-                  ],
                   "trailingComment": null,
                   "type": {
                     "_kind": "NumberType",
-                    "range": [
-                      251,
-                      257,
-                    ],
                   },
                 },
                 {
@@ -329,35 +181,15 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
                   "name": {
                     "_kind": "Identifier",
                     "name": "b",
-                    "range": [
-                      259,
-                      260,
-                    ],
                   },
                   "optional": false,
-                  "range": [
-                    259,
-                    268,
-                  ],
                   "trailingComment": null,
                   "type": {
                     "_kind": "NumberType",
-                    "range": [
-                      262,
-                      268,
-                    ],
                   },
                 },
               ],
-              "range": [
-                235,
-                270,
-              ],
             },
-            "range": [
-              235,
-              272,
-            ],
           },
         },
       ],
@@ -366,15 +198,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
       "name": {
         "_kind": "TypeName",
         "name": "Circle",
-        "range": [
-          108,
-          114,
-        ],
       },
-      "range": [
-        103,
-        280,
-      ],
     },
     {
       "_kind": "ObjectTypeDefinition",
@@ -384,15 +208,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
       "name": {
         "_kind": "TypeName",
         "name": "Foo",
-        "range": [
-          293,
-          296,
-        ],
       },
-      "range": [
-        288,
-        299,
-      ],
     },
     {
       "_kind": "ObjectTypeDefinition",
@@ -403,23 +219,11 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "version",
-            "range": [
-              378,
-              385,
-            ],
           },
           "optional": false,
-          "range": [
-            378,
-            393,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "NumberType",
-            "range": [
-              387,
-              393,
-            ],
           },
         },
         {
@@ -428,23 +232,11 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "version",
-            "range": [
-              402,
-              409,
-            ],
           },
           "optional": false,
-          "range": [
-            402,
-            467,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "NumberType",
-            "range": [
-              411,
-              467,
-            ],
           },
         },
         {
@@ -453,31 +245,15 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "mycircle",
-            "range": [
-              476,
-              484,
-            ],
           },
           "optional": true,
-          "range": [
-            476,
-            502,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "TypeRef",
             "asLiveObject": true,
-            "range": [
-              487,
-              502,
-            ],
             "ref": {
               "_kind": "TypeName",
               "name": "Bar",
-              "range": [
-                498,
-                501,
-              ],
             },
           },
         },
@@ -487,31 +263,15 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "someField",
-            "range": [
-              603,
-              612,
-            ],
           },
           "optional": false,
-          "range": [
-            603,
-            630,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "TypeRef",
             "asLiveObject": false,
-            "range": [
-              614,
-              630,
-            ],
             "ref": {
               "_kind": "TypeName",
               "name": "_undefinedThing_",
-              "range": [
-                614,
-                630,
-              ],
             },
           },
         },
@@ -521,16 +281,8 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "list",
-            "range": [
-              639,
-              643,
-            ],
           },
           "optional": false,
-          "range": [
-            639,
-            691,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "LiveListType",
@@ -540,20 +292,8 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
                 "_kind": "ArrayType",
                 "ofType": {
                   "_kind": "NumberType",
-                  "range": [
-                    662,
-                    668,
-                  ],
                 },
-                "range": [
-                  662,
-                  670,
-                ],
               },
-              "range": [
-                654,
-                690,
-              ],
               "valueType": {
                 "_kind": "LiveListType",
                 "ofType": {
@@ -563,39 +303,15 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
                     "ofType": {
                       "_kind": "TypeRef",
                       "asLiveObject": false,
-                      "range": [
-                        681,
-                        684,
-                      ],
                       "ref": {
                         "_kind": "TypeName",
                         "name": "Bar",
-                        "range": [
-                          681,
-                          684,
-                        ],
                       },
                     },
-                    "range": [
-                      681,
-                      686,
-                    ],
                   },
-                  "range": [
-                    681,
-                    688,
-                  ],
                 },
-                "range": [
-                  672,
-                  689,
-                ],
               },
             },
-            "range": [
-              645,
-              691,
-            ],
           },
         },
       ],
@@ -604,15 +320,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
       "name": {
         "_kind": "TypeName",
         "name": "Foo",
-        "range": [
-          311,
-          314,
-        ],
       },
-      "range": [
-        306,
-        766,
-      ],
     },
     {
       "_kind": "ObjectTypeDefinition",
@@ -622,15 +330,7 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
       "name": {
         "_kind": "TypeName",
         "name": "abc",
-        "range": [
-          779,
-          782,
-        ],
       },
-      "range": [
-        774,
-        842,
-      ],
     },
     {
       "_kind": "ObjectTypeDefinition",
@@ -641,52 +341,24 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "a",
-            "range": [
-              872,
-              873,
-            ],
           },
           "optional": false,
-          "range": [
-            872,
-            901,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "UnionType",
             "members": [
               {
                 "_kind": "StringType",
-                "range": [
-                  875,
-                  881,
-                ],
               },
               {
                 "_kind": "NumberType",
-                "range": [
-                  884,
-                  890,
-                ],
               },
               {
                 "_kind": "ArrayType",
                 "ofType": {
                   "_kind": "NumberType",
-                  "range": [
-                    893,
-                    899,
-                  ],
                 },
-                "range": [
-                  893,
-                  901,
-                ],
               },
-            ],
-            "range": [
-              875,
-              901,
             ],
           },
         },
@@ -696,16 +368,8 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "b",
-            "range": [
-              910,
-              911,
-            ],
           },
           "optional": false,
-          "range": [
-            910,
-            941,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "ArrayType",
@@ -714,35 +378,15 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
               "members": [
                 {
                   "_kind": "StringType",
-                  "range": [
-                    914,
-                    920,
-                  ],
                 },
                 {
                   "_kind": "NumberType",
-                  "range": [
-                    923,
-                    929,
-                  ],
                 },
                 {
                   "_kind": "NumberType",
-                  "range": [
-                    932,
-                    938,
-                  ],
                 },
-              ],
-              "range": [
-                914,
-                938,
               ],
             },
-            "range": [
-              914,
-              941,
-            ],
           },
         },
         {
@@ -751,52 +395,24 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "c",
-            "range": [
-              988,
-              989,
-            ],
           },
           "optional": false,
-          "range": [
-            988,
-            1024,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "UnionType",
             "members": [
               {
                 "_kind": "StringType",
-                "range": [
-                  992,
-                  998,
-                ],
               },
               {
                 "_kind": "NumberType",
-                "range": [
-                  1001,
-                  1007,
-                ],
               },
               {
                 "_kind": "NumberType",
-                "range": [
-                  1010,
-                  1016,
-                ],
               },
               {
                 "_kind": "NullType",
-                "range": [
-                  1019,
-                  1023,
-                ],
               },
-            ],
-            "range": [
-              992,
-              1023,
             ],
           },
         },
@@ -806,45 +422,21 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "d",
-            "range": [
-              1033,
-              1034,
-            ],
           },
           "optional": false,
-          "range": [
-            1033,
-            1062,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "UnionType",
             "members": [
               {
                 "_kind": "StringType",
-                "range": [
-                  1038,
-                  1044,
-                ],
               },
               {
                 "_kind": "NumberType",
-                "range": [
-                  1047,
-                  1053,
-                ],
               },
               {
                 "_kind": "NullType",
-                "range": [
-                  1057,
-                  1061,
-                ],
               },
-            ],
-            "range": [
-              1037,
-              1061,
             ],
           },
         },
@@ -854,45 +446,21 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "e",
-            "range": [
-              1071,
-              1072,
-            ],
           },
           "optional": false,
-          "range": [
-            1071,
-            1100,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "UnionType",
             "members": [
               {
                 "_kind": "StringType",
-                "range": [
-                  1075,
-                  1081,
-                ],
               },
               {
                 "_kind": "NumberType",
-                "range": [
-                  1085,
-                  1091,
-                ],
               },
               {
                 "_kind": "NullType",
-                "range": [
-                  1094,
-                  1098,
-                ],
               },
-            ],
-            "range": [
-              1075,
-              1099,
             ],
           },
         },
@@ -902,45 +470,21 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "f",
-            "range": [
-              1109,
-              1110,
-            ],
           },
           "optional": false,
-          "range": [
-            1109,
-            1140,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "UnionType",
             "members": [
               {
                 "_kind": "StringType",
-                "range": [
-                  1114,
-                  1120,
-                ],
               },
               {
                 "_kind": "NumberType",
-                "range": [
-                  1124,
-                  1130,
-                ],
               },
               {
                 "_kind": "NullType",
-                "range": [
-                  1133,
-                  1137,
-                ],
               },
-            ],
-            "range": [
-              1114,
-              1138,
             ],
           },
         },
@@ -950,45 +494,21 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "g",
-            "range": [
-              1149,
-              1150,
-            ],
           },
           "optional": false,
-          "range": [
-            1149,
-            1199,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "UnionType",
             "members": [
               {
                 "_kind": "NullType",
-                "range": [
-                  1152,
-                  1156,
-                ],
               },
               {
                 "_kind": "NumberType",
-                "range": [
-                  1159,
-                  1165,
-                ],
               },
               {
                 "_kind": "StringType",
-                "range": [
-                  1168,
-                  1199,
-                ],
               },
-            ],
-            "range": [
-              1152,
-              1199,
             ],
           },
         },
@@ -998,20 +518,8 @@ exports[`syntactic parser large document (snapshot test) 1`] = `
       "name": {
         "_kind": "TypeName",
         "name": "Unions",
-        "range": [
-          855,
-          861,
-        ],
       },
-      "range": [
-        850,
-        1207,
-      ],
     },
-  ],
-  "range": [
-    7,
-    1207,
   ],
 }
 `;
@@ -1029,31 +537,15 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "r",
-            "range": [
-              62,
-              63,
-            ],
           },
           "optional": false,
-          "range": [
-            62,
-            68,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "TypeRef",
             "asLiveObject": false,
-            "range": [
-              65,
-              68,
-            ],
             "ref": {
               "_kind": "TypeName",
               "name": "Int",
-              "range": [
-                65,
-                68,
-              ],
             },
           },
         },
@@ -1063,31 +555,15 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "g",
-            "range": [
-              70,
-              71,
-            ],
           },
           "optional": false,
-          "range": [
-            70,
-            76,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "TypeRef",
             "asLiveObject": false,
-            "range": [
-              73,
-              76,
-            ],
             "ref": {
               "_kind": "TypeName",
               "name": "Int",
-              "range": [
-                73,
-                76,
-              ],
             },
           },
         },
@@ -1097,31 +573,15 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "b",
-            "range": [
-              78,
-              79,
-            ],
           },
           "optional": false,
-          "range": [
-            78,
-            84,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "TypeRef",
             "asLiveObject": false,
-            "range": [
-              81,
-              84,
-            ],
             "ref": {
               "_kind": "TypeName",
               "name": "Int",
-              "range": [
-                81,
-                84,
-              ],
             },
           },
         },
@@ -1131,15 +591,7 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
       "name": {
         "_kind": "TypeName",
         "name": "Color",
-        "range": [
-          54,
-          59,
-        ],
       },
-      "range": [
-        49,
-        86,
-      ],
     },
     {
       "_kind": "ObjectTypeDefinition",
@@ -1150,31 +602,15 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "cx",
-            "range": [
-              116,
-              118,
-            ],
           },
           "optional": false,
-          "range": [
-            116,
-            125,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "TypeRef",
             "asLiveObject": false,
-            "range": [
-              120,
-              125,
-            ],
             "ref": {
               "_kind": "TypeName",
               "name": "Float",
-              "range": [
-                120,
-                125,
-              ],
             },
           },
         },
@@ -1184,31 +620,15 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "cy",
-            "range": [
-              134,
-              136,
-            ],
           },
           "optional": false,
-          "range": [
-            134,
-            143,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "TypeRef",
             "asLiveObject": false,
-            "range": [
-              138,
-              143,
-            ],
             "ref": {
               "_kind": "TypeName",
               "name": "Float",
-              "range": [
-                138,
-                143,
-              ],
             },
           },
         },
@@ -1218,31 +638,15 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "r",
-            "range": [
-              152,
-              153,
-            ],
           },
           "optional": false,
-          "range": [
-            152,
-            160,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "TypeRef",
             "asLiveObject": false,
-            "range": [
-              155,
-              160,
-            ],
             "ref": {
               "_kind": "TypeName",
               "name": "Float",
-              "range": [
-                155,
-                160,
-              ],
             },
           },
         },
@@ -1252,39 +656,19 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "fill",
-            "range": [
-              169,
-              173,
-            ],
           },
           "optional": true,
-          "range": [
-            169,
-            183,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "ArrayType",
             "ofType": {
               "_kind": "TypeRef",
               "asLiveObject": false,
-              "range": [
-                176,
-                181,
-              ],
               "ref": {
                 "_kind": "TypeName",
                 "name": "Color",
-                "range": [
-                  176,
-                  181,
-                ],
               },
             },
-            "range": [
-              176,
-              183,
-            ],
           },
         },
         {
@@ -1293,31 +677,15 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "stroke",
-            "range": [
-              192,
-              198,
-            ],
           },
           "optional": true,
-          "range": [
-            192,
-            206,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "TypeRef",
             "asLiveObject": false,
-            "range": [
-              201,
-              206,
-            ],
             "ref": {
               "_kind": "TypeName",
               "name": "Color",
-              "range": [
-                201,
-                206,
-              ],
             },
           },
         },
@@ -1327,16 +695,8 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "third",
-            "range": [
-              215,
-              220,
-            ],
           },
           "optional": true,
-          "range": [
-            215,
-            251,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "ArrayType",
@@ -1349,31 +709,15 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
                   "name": {
                     "_kind": "Identifier",
                     "name": "r",
-                    "range": [
-                      225,
-                      226,
-                    ],
                   },
                   "optional": false,
-                  "range": [
-                    225,
-                    231,
-                  ],
                   "trailingComment": null,
                   "type": {
                     "_kind": "TypeRef",
                     "asLiveObject": false,
-                    "range": [
-                      228,
-                      231,
-                    ],
                     "ref": {
                       "_kind": "TypeName",
                       "name": "Int",
-                      "range": [
-                        228,
-                        231,
-                      ],
                     },
                   },
                 },
@@ -1383,31 +727,15 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
                   "name": {
                     "_kind": "Identifier",
                     "name": "g",
-                    "range": [
-                      233,
-                      234,
-                    ],
                   },
                   "optional": false,
-                  "range": [
-                    233,
-                    239,
-                  ],
                   "trailingComment": null,
                   "type": {
                     "_kind": "TypeRef",
                     "asLiveObject": false,
-                    "range": [
-                      236,
-                      239,
-                    ],
                     "ref": {
                       "_kind": "TypeName",
                       "name": "Int",
-                      "range": [
-                        236,
-                        239,
-                      ],
                     },
                   },
                 },
@@ -1417,44 +745,20 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
                   "name": {
                     "_kind": "Identifier",
                     "name": "b",
-                    "range": [
-                      241,
-                      242,
-                    ],
                   },
                   "optional": false,
-                  "range": [
-                    241,
-                    247,
-                  ],
                   "trailingComment": null,
                   "type": {
                     "_kind": "TypeRef",
                     "asLiveObject": false,
-                    "range": [
-                      244,
-                      247,
-                    ],
                     "ref": {
                       "_kind": "TypeName",
                       "name": "Int",
-                      "range": [
-                        244,
-                        247,
-                      ],
                     },
                   },
                 },
               ],
-              "range": [
-                223,
-                249,
-              ],
             },
-            "range": [
-              223,
-              251,
-            ],
           },
         },
       ],
@@ -1463,15 +767,7 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
       "name": {
         "_kind": "TypeName",
         "name": "Circle",
-        "range": [
-          99,
-          105,
-        ],
       },
-      "range": [
-        94,
-        259,
-      ],
     },
     {
       "_kind": "ObjectTypeDefinition",
@@ -1481,15 +777,7 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
       "name": {
         "_kind": "TypeName",
         "name": "Foo",
-        "range": [
-          272,
-          275,
-        ],
       },
-      "range": [
-        267,
-        278,
-      ],
     },
     {
       "_kind": "ObjectTypeDefinition",
@@ -1500,31 +788,15 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "version",
-            "range": [
-              357,
-              364,
-            ],
           },
           "optional": false,
-          "range": [
-            357,
-            369,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "TypeRef",
             "asLiveObject": false,
-            "range": [
-              366,
-              369,
-            ],
             "ref": {
               "_kind": "TypeName",
               "name": "Int",
-              "range": [
-                366,
-                369,
-              ],
             },
           },
         },
@@ -1534,31 +806,15 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "version",
-            "range": [
-              378,
-              385,
-            ],
           },
           "optional": false,
-          "range": [
-            378,
-            440,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "TypeRef",
             "asLiveObject": false,
-            "range": [
-              387,
-              440,
-            ],
             "ref": {
               "_kind": "TypeName",
               "name": "Int",
-              "range": [
-                387,
-                440,
-              ],
             },
           },
         },
@@ -1568,31 +824,15 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "mycircle",
-            "range": [
-              449,
-              457,
-            ],
           },
           "optional": true,
-          "range": [
-            449,
-            475,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "TypeRef",
             "asLiveObject": true,
-            "range": [
-              460,
-              475,
-            ],
             "ref": {
               "_kind": "TypeName",
               "name": "Bar",
-              "range": [
-                471,
-                474,
-              ],
             },
           },
         },
@@ -1602,31 +842,15 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "someField",
-            "range": [
-              576,
-              585,
-            ],
           },
           "optional": false,
-          "range": [
-            576,
-            603,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "TypeRef",
             "asLiveObject": false,
-            "range": [
-              587,
-              603,
-            ],
             "ref": {
               "_kind": "TypeName",
               "name": "_undefinedThing_",
-              "range": [
-                587,
-                603,
-              ],
             },
           },
         },
@@ -1636,16 +860,8 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "list",
-            "range": [
-              612,
-              616,
-            ],
           },
           "optional": false,
-          "range": [
-            612,
-            661,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "LiveListType",
@@ -1656,28 +872,12 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
                 "ofType": {
                   "_kind": "TypeRef",
                   "asLiveObject": false,
-                  "range": [
-                    635,
-                    638,
-                  ],
                   "ref": {
                     "_kind": "TypeName",
                     "name": "Int",
-                    "range": [
-                      635,
-                      638,
-                    ],
                   },
                 },
-                "range": [
-                  635,
-                  640,
-                ],
               },
-              "range": [
-                627,
-                660,
-              ],
               "valueType": {
                 "_kind": "LiveListType",
                 "ofType": {
@@ -1687,39 +887,15 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
                     "ofType": {
                       "_kind": "TypeRef",
                       "asLiveObject": false,
-                      "range": [
-                        651,
-                        654,
-                      ],
                       "ref": {
                         "_kind": "TypeName",
                         "name": "Bar",
-                        "range": [
-                          651,
-                          654,
-                        ],
                       },
                     },
-                    "range": [
-                      651,
-                      656,
-                    ],
                   },
-                  "range": [
-                    651,
-                    658,
-                  ],
                 },
-                "range": [
-                  642,
-                  659,
-                ],
               },
             },
-            "range": [
-              618,
-              661,
-            ],
           },
         },
       ],
@@ -1728,15 +904,7 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
       "name": {
         "_kind": "TypeName",
         "name": "Foo",
-        "range": [
-          290,
-          293,
-        ],
       },
-      "range": [
-        285,
-        733,
-      ],
     },
     {
       "_kind": "ObjectTypeDefinition",
@@ -1746,15 +914,7 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
       "name": {
         "_kind": "TypeName",
         "name": "abc",
-        "range": [
-          746,
-          749,
-        ],
       },
-      "range": [
-        741,
-        809,
-      ],
     },
     {
       "_kind": "ObjectTypeDefinition",
@@ -1765,16 +925,8 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "a",
-            "range": [
-              839,
-              840,
-            ],
           },
           "optional": false,
-          "range": [
-            839,
-            862,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "UnionType",
@@ -1782,33 +934,17 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
               {
                 "_kind": "TypeRef",
                 "asLiveObject": false,
-                "range": [
-                  842,
-                  848,
-                ],
                 "ref": {
                   "_kind": "TypeName",
                   "name": "String",
-                  "range": [
-                    842,
-                    848,
-                  ],
                 },
               },
               {
                 "_kind": "TypeRef",
                 "asLiveObject": false,
-                "range": [
-                  851,
-                  854,
-                ],
                 "ref": {
                   "_kind": "TypeName",
                   "name": "Int",
-                  "range": [
-                    851,
-                    854,
-                  ],
                 },
               },
               {
@@ -1816,28 +952,12 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
                 "ofType": {
                   "_kind": "TypeRef",
                   "asLiveObject": false,
-                  "range": [
-                    857,
-                    860,
-                  ],
                   "ref": {
                     "_kind": "TypeName",
                     "name": "Int",
-                    "range": [
-                      857,
-                      860,
-                    ],
                   },
                 },
-                "range": [
-                  857,
-                  862,
-                ],
               },
-            ],
-            "range": [
-              842,
-              862,
             ],
           },
         },
@@ -1847,16 +967,8 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "b",
-            "range": [
-              871,
-              872,
-            ],
           },
           "optional": false,
-          "range": [
-            871,
-            896,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "ArrayType",
@@ -1866,61 +978,29 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
                 {
                   "_kind": "TypeRef",
                   "asLiveObject": false,
-                  "range": [
-                    875,
-                    881,
-                  ],
                   "ref": {
                     "_kind": "TypeName",
                     "name": "String",
-                    "range": [
-                      875,
-                      881,
-                    ],
                   },
                 },
                 {
                   "_kind": "TypeRef",
                   "asLiveObject": false,
-                  "range": [
-                    884,
-                    887,
-                  ],
                   "ref": {
                     "_kind": "TypeName",
                     "name": "Int",
-                    "range": [
-                      884,
-                      887,
-                    ],
                   },
                 },
                 {
                   "_kind": "TypeRef",
                   "asLiveObject": false,
-                  "range": [
-                    890,
-                    893,
-                  ],
                   "ref": {
                     "_kind": "TypeName",
                     "name": "Int",
-                    "range": [
-                      890,
-                      893,
-                    ],
                   },
                 },
-              ],
-              "range": [
-                875,
-                893,
               ],
             },
-            "range": [
-              875,
-              896,
-            ],
           },
         },
         {
@@ -1929,16 +1009,8 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "c",
-            "range": [
-              943,
-              944,
-            ],
           },
           "optional": false,
-          "range": [
-            943,
-            973,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "UnionType",
@@ -1946,62 +1018,30 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
               {
                 "_kind": "TypeRef",
                 "asLiveObject": false,
-                "range": [
-                  947,
-                  953,
-                ],
                 "ref": {
                   "_kind": "TypeName",
                   "name": "String",
-                  "range": [
-                    947,
-                    953,
-                  ],
                 },
               },
               {
                 "_kind": "TypeRef",
                 "asLiveObject": false,
-                "range": [
-                  956,
-                  959,
-                ],
                 "ref": {
                   "_kind": "TypeName",
                   "name": "Int",
-                  "range": [
-                    956,
-                    959,
-                  ],
                 },
               },
               {
                 "_kind": "TypeRef",
                 "asLiveObject": false,
-                "range": [
-                  962,
-                  965,
-                ],
                 "ref": {
                   "_kind": "TypeName",
                   "name": "Int",
-                  "range": [
-                    962,
-                    965,
-                  ],
                 },
               },
               {
                 "_kind": "NullType",
-                "range": [
-                  968,
-                  972,
-                ],
               },
-            ],
-            "range": [
-              947,
-              972,
             ],
           },
         },
@@ -2011,16 +1051,8 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "d",
-            "range": [
-              982,
-              983,
-            ],
           },
           "optional": false,
-          "range": [
-            982,
-            1008,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "UnionType",
@@ -2028,46 +1060,22 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
               {
                 "_kind": "TypeRef",
                 "asLiveObject": false,
-                "range": [
-                  987,
-                  993,
-                ],
                 "ref": {
                   "_kind": "TypeName",
                   "name": "String",
-                  "range": [
-                    987,
-                    993,
-                  ],
                 },
               },
               {
                 "_kind": "TypeRef",
                 "asLiveObject": false,
-                "range": [
-                  996,
-                  999,
-                ],
                 "ref": {
                   "_kind": "TypeName",
                   "name": "Int",
-                  "range": [
-                    996,
-                    999,
-                  ],
                 },
               },
               {
                 "_kind": "NullType",
-                "range": [
-                  1003,
-                  1007,
-                ],
               },
-            ],
-            "range": [
-              986,
-              1007,
             ],
           },
         },
@@ -2077,16 +1085,8 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "e",
-            "range": [
-              1017,
-              1018,
-            ],
           },
           "optional": false,
-          "range": [
-            1017,
-            1043,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "UnionType",
@@ -2094,46 +1094,22 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
               {
                 "_kind": "TypeRef",
                 "asLiveObject": false,
-                "range": [
-                  1021,
-                  1027,
-                ],
                 "ref": {
                   "_kind": "TypeName",
                   "name": "String",
-                  "range": [
-                    1021,
-                    1027,
-                  ],
                 },
               },
               {
                 "_kind": "TypeRef",
                 "asLiveObject": false,
-                "range": [
-                  1031,
-                  1034,
-                ],
                 "ref": {
                   "_kind": "TypeName",
                   "name": "Int",
-                  "range": [
-                    1031,
-                    1034,
-                  ],
                 },
               },
               {
                 "_kind": "NullType",
-                "range": [
-                  1037,
-                  1041,
-                ],
               },
-            ],
-            "range": [
-              1021,
-              1042,
             ],
           },
         },
@@ -2143,16 +1119,8 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "f",
-            "range": [
-              1052,
-              1053,
-            ],
           },
           "optional": false,
-          "range": [
-            1052,
-            1080,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "UnionType",
@@ -2160,46 +1128,22 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
               {
                 "_kind": "TypeRef",
                 "asLiveObject": false,
-                "range": [
-                  1057,
-                  1063,
-                ],
                 "ref": {
                   "_kind": "TypeName",
                   "name": "String",
-                  "range": [
-                    1057,
-                    1063,
-                  ],
                 },
               },
               {
                 "_kind": "TypeRef",
                 "asLiveObject": false,
-                "range": [
-                  1067,
-                  1070,
-                ],
                 "ref": {
                   "_kind": "TypeName",
                   "name": "Int",
-                  "range": [
-                    1067,
-                    1070,
-                  ],
                 },
               },
               {
                 "_kind": "NullType",
-                "range": [
-                  1073,
-                  1077,
-                ],
               },
-            ],
-            "range": [
-              1057,
-              1078,
             ],
           },
         },
@@ -2209,63 +1153,31 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
           "name": {
             "_kind": "Identifier",
             "name": "g",
-            "range": [
-              1089,
-              1090,
-            ],
           },
           "optional": false,
-          "range": [
-            1089,
-            1136,
-          ],
           "trailingComment": null,
           "type": {
             "_kind": "UnionType",
             "members": [
               {
                 "_kind": "NullType",
-                "range": [
-                  1092,
-                  1096,
-                ],
               },
               {
                 "_kind": "TypeRef",
                 "asLiveObject": false,
-                "range": [
-                  1099,
-                  1102,
-                ],
                 "ref": {
                   "_kind": "TypeName",
                   "name": "Int",
-                  "range": [
-                    1099,
-                    1102,
-                  ],
                 },
               },
               {
                 "_kind": "TypeRef",
                 "asLiveObject": false,
-                "range": [
-                  1105,
-                  1136,
-                ],
                 "ref": {
                   "_kind": "TypeName",
                   "name": "String",
-                  "range": [
-                    1105,
-                    1136,
-                  ],
                 },
               },
-            ],
-            "range": [
-              1092,
-              1136,
             ],
           },
         },
@@ -2275,20 +1187,8 @@ exports[`syntactic parser large legacy document (snapshot test) 1`] = `
       "name": {
         "_kind": "TypeName",
         "name": "Unions",
-        "range": [
-          822,
-          828,
-        ],
       },
-      "range": [
-        817,
-        1144,
-      ],
     },
-  ],
-  "range": [
-    7,
-    1144,
   ],
 }
 `;

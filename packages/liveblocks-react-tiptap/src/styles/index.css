@@ -37,7 +37,7 @@
  *************************************/
 
 .lb-tiptap-suggestions {
-  padding: $lb-elevation-list-padding;
+  padding: $lb-elevation-padding;
   animation-duration: var(--lb-transition-duration);
   animation-timing-function: var(--lb-transition-easing);
   will-change: transform, opacity;
@@ -47,23 +47,26 @@
   display: flex;
   align-items: center;
   padding: calc(0.25 * var(--lb-spacing)) calc(0.5 * var(--lb-spacing));
-  border-radius: calc(var(--lb-radius) - 0.75 * $lb-elevation-list-padding);
+  border-radius: calc(var(--lb-radius) - 0.75 * $lb-elevation-padding);
   color: var(--lb-foreground-secondary);
   outline: none;
   font-size: 0.875rem;
   cursor: pointer;
   user-select: none;
   transition-property: background, color, opacity;
-  scroll-margin-block: $lb-elevation-list-padding;
+  scroll-margin-block: $lb-elevation-padding;
 }
 
 :is(.lb-tiptap-suggestions-list-item) {
-  &:where([data-highlighted], [data-selected]) {
+  &:where(
+      [data-highlighted]:not([data-highlighted="false"]),
+      [data-selected]:not([data-selected="false"])
+    ) {
     background: var(--lb-foreground-subtle);
     transition-duration: calc(var(--lb-transition-duration) / 2);
   }
 
-  &:where(:disabled, [data-disabled]) {
+  &:where(:disabled, [data-disabled]:not([data-disabled="false"])) {
     opacity: 0.5;
     cursor: not-allowed;
   }
@@ -209,13 +212,62 @@
   inline-size: var(--lb-tiptap-floating-size);
 }
 
+/*************************************
+ *         Active selection          *
+ *************************************/
+
 .lb-tiptap-active-selection {
   background: var(--lb-selection, rgb(0 0 255 / 20%));
   pointer-events: none;
 }
 
 /*************************************
- *         Collab Cursors            *
+ *              Toolbar              *
+ *************************************/
+
+.lb-tiptap-toolbar {
+  --lb-tiptap-toolbar-spacing: calc(0.25 * var(--lb-spacing));
+
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  gap: var(--lb-tiptap-toolbar-spacing);
+  align-items: center;
+  padding: var(--lb-tiptap-toolbar-spacing);
+  background: var(--lb-background);
+
+  /* overflow-inline: auto; doesn't work as expected */
+  /* stylelint-disable-next-line plugin/use-logical-properties-and-values */
+  overflow-x: auto;
+
+  @include invisible-scrollbar;
+
+  > * {
+    flex: none;
+  }
+}
+
+.lb-tiptap-floating-toolbar {
+  --lb-tiptap-toolbar-spacing: $lb-elevation-padding;
+}
+
+.lb-tiptap-toolbar-separator {
+  position: relative;
+  align-self: stretch;
+  inline-size: 1px;
+  margin-inline: 1px;
+  pointer-events: none;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 10% 0;
+    background: var(--lb-foreground-subtle);
+  }
+}
+
+/*************************************
+ *          Collab Cursors           *
  *************************************/
 
 /* Give a remote user a caret */

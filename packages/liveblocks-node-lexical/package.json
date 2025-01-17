@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/node-lexical",
-  "version": "2.15.1",
+  "version": "2.16.0",
   "description": "A server-side utility that lets you modify lexical documents hosted in Liveblocks.",
   "license": "Apache-2.0",
   "type": "commonjs",
@@ -34,28 +34,27 @@
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
   "dependencies": {
-    "@liveblocks/core": "2.15.1",
-    "@liveblocks/node": "2.15.1",
+    "@liveblocks/core": "2.16.0",
+    "@liveblocks/node": "2.16.0",
     "yjs": "^13.6.18"
   },
   "peerDependencies": {
     "@lexical/headless": "0.16.1",
+    "@lexical/markdown": "0.16.1",
     "@lexical/selection": "0.16.1",
     "@lexical/yjs": "0.16.1",
-    "@lexical/markdown": "0.16.1",
     "lexical": "0.16.1"
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
-    "@liveblocks/jest-config": "*",
-    "@types/node": "^20.14.8"
+    "@liveblocks/jest-config": "*"
   },
   "bugs": {
     "url": "https://github.com/liveblocks/liveblocks/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/liveblocks/liveblocks.git",
+    "url": "git+https://github.com/liveblocks/liveblocks.git",
     "directory": "packages/liveblocks-node"
   },
   "homepage": "https://liveblocks.io",

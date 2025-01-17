@@ -3,18 +3,18 @@ import { ComponentProps } from "react";
 export function CommentIcon(props: ComponentProps<"svg">) {
   return (
     <svg
-      width="20"
-      height="20"
-      viewBox="0 0 20 20"
-      fill="currentColor"
       xmlns="http://www.w3.org/2000/svg"
+      width={20}
+      height={20}
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
       {...props}
     >
-      <path
-        fillRule="evenodd"
-        d="M2 10c0-3.967 3.69-7 8-7 4.31 0 8 3.033 8 7s-3.69 7-8 7a9.165 9.165 0 01-1.504-.123 5.976 5.976 0 01-3.935 1.107.75.75 0 01-.584-1.143 3.478 3.478 0 00.522-1.756C2.979 13.825 2 12.025 2 10z"
-        clipRule="evenodd"
-      />
+      <path d="M10 16a6 6 0 10-5.552-3.72c.094.229.12.482.052.719l-.753 2.636a.5.5 0 00.618.618l2.636-.753a1.1 1.1 0 01.719.052A6.002 6.002 0 0010 16z" />
     </svg>
   );
 }

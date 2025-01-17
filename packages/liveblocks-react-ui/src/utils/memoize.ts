@@ -1,21 +1,21 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-
 import { stringify } from "@liveblocks/core";
 
-export function memoize<T extends (...args: any[]) => any>(fn: T): T {
-  const cache = new Map<string, ReturnType<T>>();
+export function memoize<TArgs extends unknown[], TReturn>(
+  fn: (...args: TArgs) => TReturn
+): (...args: TArgs) => TReturn {
+  const cache = new Map<string, TReturn>();
 
-  return ((...args: Parameters<T>): ReturnType<T> => {
+  return (...args: TArgs): TReturn => {
     const key = JSON.stringify(args.map((arg) => stringify(arg)));
+    const cached = cache.get(key);
 
-    if (cache.has(key)) {
-      return cache.get(key)!;
+    if (cached !== undefined) {
+      return cached;
     }
 
-    const result = fn(...args) as ReturnType<T>;
-
+    const result = fn(...args);
     cache.set(key, result);
 
     return result;
-  }) as T;
+  };
 }

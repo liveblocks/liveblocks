@@ -12,16 +12,27 @@ import {
 import { classNames } from "../../utils/class-names";
 import { isApple } from "../../utils/is-apple";
 
+const ALT_KEY = { title: "Alt", key: "⌥" };
+const COMMAND_KEY = { title: "Command", key: "⌘" };
+const CONTROL_KEY = { title: "Ctrl", key: "⌃" };
+const SHIFT_KEY = { title: "Shift", key: "⇧" };
+const ENTER_KEY = { title: "Enter", key: "⏎" };
+const SPACE_KEY = { title: "Space", key: "␣" };
+const ESCAPE_KEY = { title: "Escape", key: "⎋" };
+
 const KEYS = {
-  alt: () => ({ title: "Alt", key: "⌥" }),
-  mod: () =>
-    isApple() ? { title: "Command", key: "⌘" } : { title: "Ctrl", key: "⌃" },
-  shift: () => {
-    return { title: "Shift", key: "⇧" };
-  },
-  enter: () => {
-    return { title: "Enter", key: "⏎" };
-  },
+  alt: () => ALT_KEY,
+  mod: () => (isApple() ? COMMAND_KEY : CONTROL_KEY),
+  control: () => CONTROL_KEY,
+  ctrl: () => CONTROL_KEY,
+  command: () => COMMAND_KEY,
+  cmd: () => COMMAND_KEY,
+  shift: () => SHIFT_KEY,
+  enter: () => ENTER_KEY,
+  " ": () => SPACE_KEY,
+  space: () => SPACE_KEY,
+  escape: () => ESCAPE_KEY,
+  esc: () => ESCAPE_KEY,
 } as const;
 
 export interface TooltipProps
@@ -32,11 +43,34 @@ export interface TooltipProps
 }
 
 export interface ShortcutTooltipProps extends TooltipProps {
-  shortcut?: ReactNode;
+  shortcut?: string;
 }
 
 export interface ShortcutTooltipKeyProps extends ComponentProps<"abbr"> {
   name: keyof typeof KEYS;
+}
+
+function getShortcutKbdFromKeymap(keymap: string) {
+  const keys = keymap.split("-");
+
+  return (
+    <>
+      {keys.map((key, index) => {
+        const lowerKey = key.toLowerCase();
+
+        if (lowerKey in KEYS) {
+          return (
+            <ShortcutTooltipKey
+              key={index}
+              name={lowerKey as keyof typeof KEYS}
+            />
+          );
+        }
+
+        return <span key={index}>{key}</span>;
+      })}
+    </>
+  );
 }
 
 export const Tooltip = forwardRef<HTMLButtonElement, TooltipProps>(
@@ -73,12 +107,18 @@ export const ShortcutTooltip = forwardRef<
   HTMLButtonElement,
   ShortcutTooltipProps
 >(({ children, content, shortcut, ...props }, forwardedRef) => {
+  const shortcutKbd = useMemo(() => {
+    return shortcut ? getShortcutKbdFromKeymap(shortcut) : null;
+  }, [shortcut]);
+
   return (
     <Tooltip
       content={
         <>
           {content}
-          {shortcut && <kbd className="lb-tooltip-shortcut">{shortcut}</kbd>}
+          {shortcutKbd && (
+            <kbd className="lb-tooltip-shortcut">{shortcutKbd}</kbd>
+          )}
         </>
       }
       {...props}
@@ -89,10 +129,7 @@ export const ShortcutTooltip = forwardRef<
   );
 });
 
-export function ShortcutTooltipKey({
-  name,
-  ...props
-}: ShortcutTooltipKeyProps) {
+function ShortcutTooltipKey({ name, ...props }: ShortcutTooltipKeyProps) {
   const { title, key } = useMemo(() => KEYS[name]?.(), [name]);
 
   return (

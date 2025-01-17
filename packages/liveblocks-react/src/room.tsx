@@ -29,9 +29,8 @@ import type {
   DU,
   EnterOptions,
   IYjsProvider,
-  LiveblocksError,
+  LiveblocksErrorContext,
   OpaqueClient,
-  Poller,
   RoomEventMessage,
   SignalType,
   TextEditorType,
@@ -43,10 +42,10 @@ import {
   console,
   createCommentId,
   createThreadId,
+  DefaultMap,
   errorIf,
   HttpError,
   kInternal,
-  makeEventSource,
   makePoller,
   ServerMsgCode,
 } from "@liveblocks/core";
@@ -63,8 +62,6 @@ import {
 
 import { config } from "./config";
 import { RoomContext, useIsInsideRoom, useRoomOrNull } from "./contexts";
-import { isString } from "./lib/guards";
-import { shallow2 } from "./lib/shallow2";
 import { useInitial } from "./lib/use-initial";
 import { useLatest } from "./lib/use-latest";
 import { use } from "./lib/use-polyfill";
@@ -99,22 +96,8 @@ import type {
   UseStorageStatusOptions,
   UseThreadsOptions,
 } from "./types";
-import {
-  AddReactionError,
-  type CommentsError,
-  CreateCommentError,
-  CreateThreadError,
-  DeleteCommentError,
-  DeleteThreadError,
-  EditCommentError,
-  EditThreadMetadataError,
-  MarkInboxNotificationAsReadError,
-  MarkThreadAsResolvedError,
-  MarkThreadAsUnresolvedError,
-  RemoveReactionError,
-  UpdateNotificationSettingsError,
-} from "./types/errors";
 import type { UmbrellaStore } from "./umbrella-store";
+import { makeRoomThreadsQueryKey } from "./umbrella-store";
 import { useScrollToCommentOnLoadEffect } from "./use-scroll-to-comment-on-load-effect";
 import { useSignal } from "./use-signal";
 import { useSyncExternalStoreWithSelector } from "./use-sync-external-store-with-selector";
@@ -190,21 +173,6 @@ function getCurrentUserId(client: Client): string {
   return userId;
 }
 
-function handleApiError(err: HttpError): Error {
-  const message = `Request failed with status ${err.status}: ${err.message}`;
-
-  // Log details about FORBIDDEN errors
-  if (err.details?.error === "FORBIDDEN") {
-    const detailedMessage = [message, err.details.suggestion, err.details.docs]
-      .filter(Boolean)
-      .join("\n");
-
-    console.error(detailedMessage);
-  }
-
-  return new Error(message);
-}
-
 const _extras = new WeakMap<
   OpaqueClient,
   ReturnType<typeof makeRoomExtrasForClient>
@@ -244,88 +212,73 @@ function getRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
   };
 }
 
-function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
+function makeRoomExtrasForClient(client: OpaqueClient) {
   const store = getUmbrellaStoreForClient(client);
 
-  // Note: This error event source includes both comments and room notifications settings!!
-  const commentsErrorEventSource = makeEventSource<CommentsError<M>>();
-
   function onMutationFailure(
-    innerError: Error,
     optimisticId: string,
-    createPublicError: (error: Error) => CommentsError<M>
-  ) {
+    context: LiveblocksErrorContext & { roomId: string },
+    innerError: Error
+  ): void {
     store.optimisticUpdates.remove(optimisticId);
 
+    // All mutation failures are expected to be HTTP errors ultimately - only
+    // ever notify the user about those.
     if (innerError instanceof HttpError) {
-      const error = handleApiError(innerError);
-      commentsErrorEventSource.notify(createPublicError(error));
-      return;
-    }
+      // Always log details about 403 Forbidden errors to the console as well
+      if (innerError.status === 403) {
+        const detailedMessage = [
+          innerError.message,
+          innerError.details?.suggestion,
+          innerError.details?.docs,
+        ]
+          .filter(Boolean)
+          .join("\n");
 
-    if (innerError instanceof HttpError) {
-      handleApiError(innerError);
-      // TODO: Create public error and notify via notificationsErrorEventSource?
-      return;
-    }
+        console.error(detailedMessage);
+      }
 
-    throw innerError;
+      client[kInternal].emitError(context, innerError);
+    } else {
+      // In this context, a non-HTTP error is unexpected and should be
+      // considered a bug we should get fixed. Don't notify the user about it.
+      throw innerError;
+    }
   }
 
-  const threadsPollersByRoomId = new Map<string, Poller>();
+  const threadsPollersByRoomId = new DefaultMap((roomId: string) =>
+    makePoller(
+      async (signal) => {
+        try {
+          return await store.fetchRoomThreadsDeltaUpdate(roomId, signal);
+        } catch (err) {
+          console.warn(`Polling new threads for '${roomId}' failed: ${String(err)}`); // prettier-ignore
+          throw err;
+        }
+      },
+      config.ROOM_THREADS_POLL_INTERVAL,
+      { maxStaleTimeMs: config.ROOM_THREADS_MAX_STALE_TIME }
+    )
+  );
 
-  const versionsPollersByRoomId = new Map<string, Poller>();
+  const versionsPollersByRoomId = new DefaultMap((roomId: string) =>
+    makePoller(
+      async (signal) => {
+        try {
+          return await store.fetchRoomVersionsDeltaUpdate(roomId, signal);
+        } catch (err) {
+          console.warn(`Polling new history versions for '${roomId}' failed: ${String(err)}`); // prettier-ignore
+          throw err;
+        }
+      },
+      config.HISTORY_VERSIONS_POLL_INTERVAL,
+      { maxStaleTimeMs: config.HISTORY_VERSIONS_MAX_STALE_TIME }
+    )
+  );
 
-  const roomNotificationSettingsPollersByRoomId = new Map<string, Poller>();
-
-  function getOrCreateThreadsPollerForRoomId(roomId: string) {
-    let poller = threadsPollersByRoomId.get(roomId);
-    if (!poller) {
-      poller = makePoller(
-        async (signal) => {
-          try {
-            return await store.fetchRoomThreadsDeltaUpdate(roomId, signal);
-          } catch (err) {
-            console.warn(`Polling new threads for '${roomId}' failed: ${String(err)}`); // prettier-ignore
-            throw err;
-          }
-        },
-        config.ROOM_THREADS_POLL_INTERVAL,
-        { maxStaleTimeMs: config.ROOM_THREADS_MAX_STALE_TIME }
-      );
-
-      threadsPollersByRoomId.set(roomId, poller);
-    }
-
-    return poller;
-  }
-
-  function getOrCreateVersionsPollerForRoomId(roomId: string) {
-    let poller = versionsPollersByRoomId.get(roomId);
-    if (!poller) {
-      poller = makePoller(
-        async (signal) => {
-          try {
-            return await store.fetchRoomVersionsDeltaUpdate(roomId, signal);
-          } catch (err) {
-            console.warn(`Polling new history versions for '${roomId}' failed: ${String(err)}`); // prettier-ignore
-            throw err;
-          }
-        },
-        config.HISTORY_VERSIONS_POLL_INTERVAL,
-        { maxStaleTimeMs: config.HISTORY_VERSIONS_MAX_STALE_TIME }
-      );
-
-      versionsPollersByRoomId.set(roomId, poller);
-    }
-
-    return poller;
-  }
-
-  function getOrCreateNotificationsSettingsPollerForRoomId(roomId: string) {
-    let poller = roomNotificationSettingsPollersByRoomId.get(roomId);
-    if (!poller) {
-      poller = makePoller(
+  const roomNotificationSettingsPollersByRoomId = new DefaultMap(
+    (roomId: string) =>
+      makePoller(
         async (signal) => {
           try {
             return await store.refreshRoomNotificationSettings(roomId, signal);
@@ -336,21 +289,21 @@ function makeRoomExtrasForClient<M extends BaseMetadata>(client: OpaqueClient) {
         },
         config.NOTIFICATION_SETTINGS_POLL_INTERVAL,
         { maxStaleTimeMs: config.NOTIFICATION_SETTINGS_MAX_STALE_TIME }
-      );
-
-      roomNotificationSettingsPollersByRoomId.set(roomId, poller);
-    }
-
-    return poller;
-  }
+      )
+  );
 
   return {
     store,
-    commentsErrorEventSource: commentsErrorEventSource.observable,
     onMutationFailure,
-    getOrCreateThreadsPollerForRoomId,
-    getOrCreateVersionsPollerForRoomId,
-    getOrCreateNotificationsSettingsPollerForRoomId,
+    getOrCreateThreadsPollerForRoomId: threadsPollersByRoomId.getOrCreate.bind(
+      threadsPollersByRoomId
+    ),
+    getOrCreateVersionsPollerForRoomId:
+      versionsPollersByRoomId.getOrCreate.bind(versionsPollersByRoomId),
+    getOrCreateNotificationsSettingsPollerForRoomId:
+      roomNotificationSettingsPollersByRoomId.getOrCreate.bind(
+        roomNotificationSettingsPollersByRoomId
+      ),
   };
 }
 
@@ -386,6 +339,7 @@ function makeRoomContextBundle<
     // context consistent internally.
     return (
       <LiveblocksProviderWithClient client={client} allowNesting>
+        {/* @ts-expect-error {...props} is the same type as props */}
         <RoomProvider {...props} />
       </LiveblocksProviderWithClient>
     );
@@ -405,7 +359,6 @@ function makeRoomContextBundle<
     useBroadcastEvent,
     useOthersListener,
     useLostConnectionListener,
-    useErrorListener,
     useEventListener,
 
     useHistory,
@@ -463,7 +416,6 @@ function makeRoomContextBundle<
       useBroadcastEvent,
       useOthersListener,
       useLostConnectionListener,
-      useErrorListener,
       useEventListener,
 
       useHistory,
@@ -515,8 +467,6 @@ function makeRoomContextBundle<
 
       ...shared.suspense,
     },
-
-    useCommentsErrorListener,
   };
 
   return Object.defineProperty(bundle, kInternal, {
@@ -622,7 +572,7 @@ function RoomProviderInner<
       );
     }
 
-    if (!isString(roomId)) {
+    if (typeof roomId !== "string") {
       throw new Error("RoomProvider id property should be a string.");
     }
 
@@ -670,9 +620,9 @@ function RoomProviderInner<
       }
       const { thread, inboxNotification: maybeNotification } = info;
 
-      const existingThread = store
-        .get1_threads()
-        .threadsDB.getEvenIfDeleted(message.threadId);
+      const existingThread = store.outputs.threads
+        .get()
+        .getEvenIfDeleted(message.threadId);
 
       switch (message.type) {
         case ServerMsgCode.COMMENT_EDITED:
@@ -974,24 +924,6 @@ function useLostConnectionListener(
       room.events.lostConnection.subscribe((event) =>
         savedCallback.current(event)
       ),
-    [room, savedCallback]
-  );
-}
-
-/**
- * useErrorListener is a React hook that allows you to respond to potential room
- * connection errors.
- *
- * @example
- * useErrorListener(er => {
- *   console.error(er);
- * })
- */
-function useErrorListener(callback: (err: LiveblocksError) => void): void {
-  const room = useRoom();
-  const savedCallback = useLatest(callback);
-  useEffect(
-    () => room.events.error.subscribe((e) => savedCallback.current(e)),
     [room, savedCallback]
   );
 }
@@ -1311,25 +1243,24 @@ function useMutation<
 }
 
 function useThreads<M extends BaseMetadata>(
-  options: UseThreadsOptions<M> = {
-    query: { metadata: {} },
-  }
+  options: UseThreadsOptions<M> = {}
 ): ThreadsAsyncResult<M> {
   const { scrollOnLoad = true } = options;
-  // TODO - query = stable(options.query);
 
   const client = useClient();
   const room = useRoom();
-
   const { store, getOrCreateThreadsPollerForRoomId } =
     getRoomExtrasForClient<M>(client);
+  const queryKey = makeRoomThreadsQueryKey(room.id, options.query);
 
   const poller = getOrCreateThreadsPollerForRoomId(room.id);
 
   useEffect(
-    () => {
-      void store.waitUntilRoomThreadsLoaded(room.id, options.query);
-    }
+    () =>
+      void store.outputs.loadingRoomThreads
+        .getOrCreate(queryKey)
+        .waitUntilLoaded()
+
     // NOTE: Deliberately *not* using a dependency array here!
     //
     // It is important to call waitUntil on *every* render.
@@ -1346,43 +1277,12 @@ function useThreads<M extends BaseMetadata>(
     return () => poller.dec();
   }, [poller]);
 
-  // XXX_vincent There is a disconnect between this getter and subscriber! It's unclear
-  // why the getRoomThreadsLoadingState getter should be paired with subscribe1
-  // and not subscribe2 from the outside! (The reason is that
-  // getRoomThreadsLoadingState internally uses `get1` not `get2`.) This is
-  // strong evidence that getRoomThreadsLoadingState itself wants to be
-  // a Signal! Once we make it a Signal, we can simply use `useSignal()` here! ❤️
-  const getter = useCallback(
-    () => store.getRoomThreadsLoadingState(room.id, options.query),
-    [store, room.id, options.query]
+  const result = useSignal(
+    store.outputs.loadingRoomThreads.getOrCreate(queryKey).signal
   );
 
-  const state = useSyncExternalStoreWithSelector(
-    store.subscribe1_threads,
-    getter,
-    getter,
-    identity,
-    shallow2 // NOTE: Using 2-level-deep shallow check here, because the result of selectThreads() is not stable!
-  );
-
-  useScrollToCommentOnLoadEffect(scrollOnLoad, state);
-
-  return state;
-}
-
-/**
- * @private Internal API, do not rely on it.
- */
-function useCommentsErrorListener<M extends BaseMetadata>(
-  callback: (error: CommentsError<M>) => void
-) {
-  const client = useClient();
-  const savedCallback = useLatest(callback);
-  const { commentsErrorEventSource } = getRoomExtrasForClient<M>(client);
-
-  useEffect(() => {
-    return commentsErrorEventSource.subscribe(savedCallback.current);
-  }, [savedCallback, commentsErrorEventSource]);
+  useScrollToCommentOnLoadEffect(scrollOnLoad, result);
+  return result;
 }
 
 function useCreateThread<M extends BaseMetadata>(): (
@@ -1456,16 +1356,16 @@ function useCreateRoomThread<M extends BaseMetadata>(
           },
           (err: Error) =>
             onMutationFailure(
-              err,
               optimisticId,
-              (err) =>
-                new CreateThreadError(err, {
-                  roomId,
-                  threadId,
-                  commentId,
-                  body,
-                  metadata,
-                })
+              {
+                type: "CREATE_THREAD_ERROR",
+                roomId,
+                threadId,
+                commentId,
+                body,
+                metadata,
+              },
+              err
             )
         );
 
@@ -1487,7 +1387,7 @@ function useDeleteRoomThread(roomId: string): (threadId: string) => void {
 
       const userId = getCurrentUserId(client);
 
-      const existing = store.get1_threads().threadsDB.get(threadId);
+      const existing = store.outputs.threads.get().get(threadId);
       if (existing?.comments?.[0]?.userId !== userId) {
         throw new Error("Only the thread creator can delete the thread");
       }
@@ -1506,9 +1406,9 @@ function useDeleteRoomThread(roomId: string): (threadId: string) => void {
         },
         (err: Error) =>
           onMutationFailure(
-            err,
             optimisticId,
-            (err) => new DeleteThreadError(err, { roomId, threadId })
+            { type: "DELETE_THREAD_ERROR", roomId, threadId },
+            err
           )
       );
     },
@@ -1548,14 +1448,14 @@ function useEditRoomThreadMetadata<M extends BaseMetadata>(roomId: string) {
             store.patchThread(threadId, optimisticId, { metadata }, updatedAt),
           (err: Error) =>
             onMutationFailure(
-              err,
               optimisticId,
-              (error) =>
-                new EditThreadMetadataError(error, {
-                  roomId,
-                  threadId,
-                  metadata,
-                })
+              {
+                type: "EDIT_THREAD_METADATA_ERROR",
+                roomId,
+                threadId,
+                metadata,
+              },
+              err
             )
         );
     },
@@ -1615,15 +1515,15 @@ function useCreateRoomComment(
           },
           (err: Error) =>
             onMutationFailure(
-              err,
               optimisticId,
-              (err) =>
-                new CreateCommentError(err, {
-                  roomId,
-                  threadId,
-                  commentId,
-                  body,
-                })
+              {
+                type: "CREATE_COMMENT_ERROR",
+                roomId,
+                threadId,
+                commentId,
+                body,
+              },
+              err
             )
         );
 
@@ -1656,9 +1556,7 @@ function useEditRoomComment(
       const editedAt = new Date();
 
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
-      const existing = store
-        .get1_threads()
-        .threadsDB.getEvenIfDeleted(threadId);
+      const existing = store.outputs.threads.get().getEvenIfDeleted(threadId);
 
       if (existing === undefined) {
         console.warn(
@@ -1699,15 +1597,9 @@ function useEditRoomComment(
           },
           (err: Error) =>
             onMutationFailure(
-              err,
               optimisticId,
-              (error) =>
-                new EditCommentError(error, {
-                  roomId,
-                  threadId,
-                  commentId,
-                  body,
-                })
+              { type: "EDIT_COMMENT_ERROR", roomId, threadId, commentId, body },
+              err
             )
         );
     },
@@ -1756,14 +1648,9 @@ function useDeleteRoomComment(roomId: string) {
           },
           (err: Error) =>
             onMutationFailure(
-              err,
               optimisticId,
-              (error) =>
-                new DeleteCommentError(error, {
-                  roomId,
-                  threadId,
-                  commentId,
-                })
+              { type: "DELETE_COMMENT_ERROR", roomId, threadId, commentId },
+              err
             )
         );
     },
@@ -1813,15 +1700,15 @@ function useAddRoomCommentReaction<M extends BaseMetadata>(roomId: string) {
           },
           (err: Error) =>
             onMutationFailure(
-              err,
               optimisticId,
-              (error) =>
-                new AddReactionError(error, {
-                  roomId,
-                  threadId,
-                  commentId,
-                  emoji,
-                })
+              {
+                type: "ADD_REACTION_ERROR",
+                roomId,
+                threadId,
+                commentId,
+                emoji,
+              },
+              err
             )
         );
     },
@@ -1877,15 +1764,15 @@ function useRemoveRoomCommentReaction(roomId: string) {
           },
           (err: Error) =>
             onMutationFailure(
-              err,
               optimisticId,
-              (error) =>
-                new RemoveReactionError(error, {
-                  roomId,
-                  threadId,
-                  commentId,
-                  emoji,
-                })
+              {
+                type: "REMOVE_REACTION_ERROR",
+                roomId,
+                threadId,
+                commentId,
+                emoji,
+              },
+              err
             )
         );
     },
@@ -1912,7 +1799,7 @@ function useMarkRoomThreadAsRead(roomId: string) {
     (threadId: string) => {
       const { store, onMutationFailure } = getRoomExtrasForClient(client);
       const inboxNotification = Object.values(
-        store.get1_notifications().notificationsById
+        store.outputs.notifications.get().notificationsById
       ).find(
         (inboxNotification) =>
           inboxNotification.kind === "thread" &&
@@ -1945,12 +1832,13 @@ function useMarkRoomThreadAsRead(roomId: string) {
           },
           (err: Error) => {
             onMutationFailure(
-              err,
               optimisticId,
-              (error) =>
-                new MarkInboxNotificationAsReadError(error, {
-                  inboxNotificationId: inboxNotification.id,
-                })
+              {
+                type: "MARK_INBOX_NOTIFICATION_AS_READ_ERROR",
+                roomId,
+                inboxNotificationId: inboxNotification.id,
+              },
+              err
             );
             return;
           }
@@ -2001,13 +1889,9 @@ function useMarkRoomThreadAsResolved(roomId: string) {
           },
           (err: Error) =>
             onMutationFailure(
-              err,
               optimisticId,
-              (error) =>
-                new MarkThreadAsResolvedError(error, {
-                  roomId,
-                  threadId,
-                })
+              { type: "MARK_THREAD_AS_RESOLVED_ERROR", roomId, threadId },
+              err
             )
         );
     },
@@ -2056,13 +1940,9 @@ function useMarkRoomThreadAsUnresolved(roomId: string) {
           },
           (err: Error) =>
             onMutationFailure(
-              err,
               optimisticId,
-              (error) =>
-                new MarkThreadAsUnresolvedError(error, {
-                  roomId,
-                  threadId,
-                })
+              { type: "MARK_THREAD_AS_UNRESOLVED_ERROR", roomId, threadId },
+              err
             )
         );
     },
@@ -2126,9 +2006,9 @@ function useRoomNotificationSettings(): [
   const poller = getOrCreateNotificationsSettingsPollerForRoomId(room.id);
 
   useEffect(
-    () => {
-      void store.waitUntilRoomNotificationSettingsLoaded(room.id);
-    }
+    () =>
+      void store.outputs.settingsByRoomId.getOrCreate(room.id).waitUntilLoaded()
+
     // NOTE: Deliberately *not* using a dependency array here!
     //
     // It is important to call waitUntil on *every* render.
@@ -2147,25 +2027,8 @@ function useRoomNotificationSettings(): [
     };
   }, [poller]);
 
-  // XXX_vincent There is a disconnect between this getter and subscriber! It's unclear
-  // why the getNotificationSettingsLoadingState getter should be paired with
-  // subscribe2 and not subscribe1 from the outside! (The reason is that
-  // getNotificationSettingsLoadingState internally uses `get2` not `get1`.)
-  // This is strong evidence that getNotificationSettingsLoadingState itself
-  // wants to be a Signal! Once we make it a Signal, we can simply use
-  // `useSignal()` here! ❤️
-  const getter = useCallback(
-    () => store.getNotificationSettingsLoadingState(room.id),
-    [store, room.id]
-  );
-
-  // XXX_vincent Turn this into a useSignal
-  const settings = useSyncExternalStoreWithSelector(
-    store.subscribe2,
-    getter,
-    getter,
-    identity,
-    shallow2
+  const settings = useSignal(
+    store.outputs.settingsByRoomId.getOrCreate(room.id).signal
   );
 
   return useMemo(() => {
@@ -2189,7 +2052,7 @@ function useRoomNotificationSettingsSuspense(): [
   const room = useRoom();
 
   // Suspend until there are at least some inbox notifications
-  use(store.waitUntilRoomNotificationSettingsLoaded(room.id));
+  use(store.outputs.settingsByRoomId.getOrCreate(room.id).waitUntilLoaded());
 
   // We're in a Suspense world here, and as such, the useRoomNotificationSettings()
   // hook is expected to only return success results when we're here.
@@ -2265,15 +2128,10 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
     return () => poller.dec();
   }, [poller]);
 
-  const getter = useCallback(
-    () => store.getRoomVersionsLoadingState(room.id),
-    [store, room.id]
-  );
-
   useEffect(
-    () => {
-      void store.waitUntilRoomVersionsLoaded(room.id);
-    }
+    () =>
+      void store.outputs.versionsByRoomId.getOrCreate(room.id).waitUntilLoaded()
+
     // NOTE: Deliberately *not* using a dependency array here!
     //
     // It is important to call waitUntil on *every* render.
@@ -2284,21 +2142,7 @@ function useHistoryVersions(): HistoryVersionsAsyncResult {
     //    *next* render after that, a *new* fetch/promise will get created.
   );
 
-  // XXX_vincent There is a disconnect between this getter and subscriber! It's unclear
-  // why the getRoomVersionsLoadingState getter should be paired with
-  // subscribe3 and not subscribe1 from the outside! (The reason is that
-  // getRoomVersionsLoadingState internally uses `get3` not `get1`.) This is
-  // strong evidence that getRoomVersionsLoadingState itself wants to be
-  // a Signal! Once we make it a Signal, we can simply use `useSignal()` here! ❤️
-  const state = useSyncExternalStoreWithSelector(
-    store.subscribe3,
-    getter,
-    getter,
-    identity,
-    shallow2
-  );
-
-  return state;
+  return useSignal(store.outputs.versionsByRoomId.getOrCreate(room.id).signal);
 }
 
 /**
@@ -2312,7 +2156,7 @@ function useHistoryVersionsSuspense(): HistoryVersionsAsyncSuccess {
   const room = useRoom();
   const store = getRoomExtrasForClient(client).store;
 
-  use(store.waitUntilRoomVersionsLoaded(room.id));
+  use(store.outputs.versionsByRoomId.getOrCreate(room.id).waitUntilLoaded());
 
   const result = useHistoryVersions();
   assert(!result.error, "Did not expect error");
@@ -2347,12 +2191,9 @@ function useUpdateRoomNotificationSettings() {
         },
         (err: Error) =>
           onMutationFailure(
-            err,
             optimisticId,
-            (error) =>
-              new UpdateNotificationSettingsError(error, {
-                roomId: room.id,
-              })
+            { type: "UPDATE_NOTIFICATION_SETTINGS_ERROR", roomId: room.id },
+            err
           )
       );
     },
@@ -2489,16 +2330,15 @@ function useStorageStatusSuspense(
 }
 
 function useThreadsSuspense<M extends BaseMetadata>(
-  options: UseThreadsOptions<M> = {
-    query: { metadata: {} },
-  }
+  options: UseThreadsOptions<M> = {}
 ): ThreadsAsyncSuccess<M> {
   const client = useClient();
   const room = useRoom();
 
   const { store } = getRoomExtrasForClient<M>(client);
+  const queryKey = makeRoomThreadsQueryKey(room.id, options.query);
 
-  use(store.waitUntilRoomThreadsLoaded(room.id, options.query));
+  use(store.outputs.loadingRoomThreads.getOrCreate(queryKey).waitUntilLoaded());
 
   const result = useThreads(options);
   assert(!result.error, "Did not expect error");
@@ -2552,13 +2392,12 @@ function useRoomAttachmentUrl(
     client[kInternal].httpClient.getOrCreateAttachmentUrlsStore(roomId);
 
   const getAttachmentUrlState = useCallback(
-    () => store.getState(attachmentId),
+    () => store.getItemState(attachmentId),
     [store, attachmentId]
   );
 
   useEffect(() => {
-    // NOTE: .get() will trigger any actual fetches, whereas .getState() will not
-    void store.get(attachmentId);
+    void store.enqueue(attachmentId);
   }, [store, attachmentId]);
 
   return useSyncExternalStoreWithSelector(
@@ -2581,13 +2420,13 @@ function useAttachmentUrlSuspense(attachmentId: string) {
   const { attachmentUrlsStore } = room[kInternal];
 
   const getAttachmentUrlState = useCallback(
-    () => attachmentUrlsStore.getState(attachmentId),
+    () => attachmentUrlsStore.getItemState(attachmentId),
     [attachmentUrlsStore, attachmentId]
   );
   const attachmentUrlState = getAttachmentUrlState();
 
   if (!attachmentUrlState || attachmentUrlState.isLoading) {
-    throw attachmentUrlsStore.get(attachmentId);
+    throw attachmentUrlsStore.enqueue(attachmentId);
   }
 
   if (attachmentUrlState.error) {
@@ -2609,6 +2448,8 @@ function useAttachmentUrlSuspense(attachmentId: string) {
   } as const;
 }
 
+const NO_PERMISSIONS = new Set();
+
 /**
  * @private For internal use only. Do not rely on this hook.
  */
@@ -2617,7 +2458,7 @@ function useRoomPermissions(roomId: string) {
   const store = getRoomExtrasForClient(client).store;
   return useSignal(
     store.permissionHints.signal,
-    (hints) => hints[roomId] ?? new Set()
+    (hints) => hints.get(roomId) ?? NO_PERMISSIONS
   );
 }
 
@@ -2626,7 +2467,13 @@ function useRoomPermissions(roomId: string) {
  *
  * This is an internal API, use `createRoomContext` instead.
  */
-export function useRoomContextBundleOrNull() {
+export function useRoomContextBundleOrNull(): RoomContextBundle<
+  JsonObject,
+  LsonObject,
+  BaseUserMeta,
+  Json,
+  BaseMetadata
+> | null {
   const client = useClientOrNull();
   const room = useRoomOrNull<never, never, never, never, never>();
   return client && room ? getOrCreateRoomContextBundle(client) : null;
@@ -2637,7 +2484,13 @@ export function useRoomContextBundleOrNull() {
  *
  * This is an internal API, use `createRoomContext` instead.
  */
-export function useRoomContextBundle() {
+export function useRoomContextBundle(): RoomContextBundle<
+  JsonObject,
+  LsonObject,
+  BaseUserMeta,
+  Json,
+  BaseMetadata
+> {
   const client = useClient();
   return getOrCreateRoomContextBundle(client);
 }
@@ -3191,7 +3044,6 @@ const _useUpdateMyPresence: TypedBundle["useUpdateMyPresence"] =
   useUpdateMyPresence;
 
 export {
-  CreateThreadError,
   RoomContext,
   _RoomProvider as RoomProvider,
   _useAddReaction as useAddReaction,
@@ -3202,8 +3054,6 @@ export {
   _useBroadcastEvent as useBroadcastEvent,
   useCanRedo,
   useCanUndo,
-  // TODO: Move to `liveblocks-react-lexical`
-  useCommentsErrorListener,
   useCreateComment,
   useCreateRoomComment,
   useCreateRoomThread,
@@ -3218,7 +3068,6 @@ export {
   useEditRoomComment,
   useEditRoomThreadMetadata,
   _useEditThreadMetadata as useEditThreadMetadata,
-  useErrorListener,
   _useEventListener as useEventListener,
   useHistory,
   useHistoryVersionData,
