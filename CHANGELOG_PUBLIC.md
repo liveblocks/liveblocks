@@ -22,7 +22,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## Examples
 
-- Update [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit) to use the nbew `FloatingToolbar.
+- Updated [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit) to use the new `FloatingToolbar.
 - Updated many text editor examples to use the new `FloatingToolbar`:
   - [Advanced collaborative text editor (Tiptap)](https://liveblocks.io/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced)`.
   - [Collaborative text editor (Tiptap)](https://liveblocks.io/examples/collaborative-text-editor/nextjs-tiptap).
