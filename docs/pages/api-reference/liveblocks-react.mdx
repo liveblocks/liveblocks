@@ -996,8 +996,9 @@ const client = useClient();
 
 Listen to potential Liveblocks errors. Examples of errors include room
 connection errors, errors creating threads, and errors deleting notifications.
-Each error has a `message`, and a `context` object which has different values
-for each error type. `context` always contains an error `type` and `roomId`.
+Each error has a `message` string, and a `context` object which has different
+values for each error type. `context` always contains an error `type` and
+`roomId`.
 
 ```ts
 import { useErrorListener } from "@liveblocks/react/suspense";
