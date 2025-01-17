@@ -5,7 +5,13 @@ meta:
   description: "Guide to upgrade to Liveblocks version 2.16"
 ---
 
-To upgrade, run:
+We’ve made React changes, affecting how our error listener hook works, and how
+undefined metadata is filtered in Comments.
+
+## How to upgrade
+
+Upgrade to 2.16 by downloading the latest version of each Liveblocks package
+you’re using. The easiest way to do this is to run the following command:
 
 ```bash
 npx create-liveblocks-app@latest --upgrade
@@ -13,39 +19,40 @@ npx create-liveblocks-app@latest --upgrade
 
 ## Does this affect you? [#does-this-affect-you]
 
-If you are using the [`useErrorListener`][] hook from our React package, please
-[read on](#change-1).
+**If you’re using the [`useErrorListener`][] hook**, please read about
+[a behavior change](#change-1).
 
-If you are using the [`useThreads`][] (or `useUserThreads_experimental`) hook
-from our React package, please [read on](#change-2).
+**If you’re using Comments in React**, please read about
+[the change to metadata filtering](#change-2).
 
-Otherwise, there is nothing to do for you!
+Otherwise, no changes will affect you.
 
 ## New errors can appear in `useErrorListener` [#change-1]
 
-Starting with 2.16, [`useErrorListener`][] will notify you about new errors.
-Previously, only room connection errors would be reported (possible if you are
-using Presence, Storage, or Yjs). After upgrading, you can also receive errors
-from Comments and Notifications if you are using those products.
+From 2.16, [`useErrorListener`][] will notify you about new errors. Previously,
+only room connection errors were previously reported, possible if you were using
+Presence, Storage, or Yjs. After upgrading, you can also receive a number of
+errors from Comments and Notifications.
 
-We have also decoupled [`useErrorListener`][] from the current room. Previously
-it required to be nested under a `RoomProvider`. Now, you can use it anywhere
-under `LiveblocksProvider`, and it will notify you about errors from all rooms.
+```tsx
+import { useErrorListener } from "@liveblocks/react";
 
-**To upgrade:** You don’t have to change anything if you want to know about all
-errors. If you would like to keep the old behavior, you can filter out any
-possible new errors:
-
-```ts
-import { useErrorListener, useRoom } from "liveblocks";
-
-const room = useRoom();
 useErrorListener((error) => {
-  if (
-    error.context.type !== "ROOM_CONNECTION_ERROR" ||
-    error.context.roomId !== room.id
-  ) {
-    // Your previous logic
+  switch (error.context.type) {
+    // +++
+    case "CREATE_THREAD_ERROR":
+      const { roomId, threadId, commentId, body, metadata } = error.context;
+      break;
+    // +++
+
+    // +++
+    case "MARK_INBOX_NOTIFICATION_AS_READ_ERROR":
+      const { inboxNotificationId, roomId } = error.context;
+      break;
+    // +++
+
+    // Many other new errors
+    // ...
   }
 });
 ```
@@ -53,56 +60,100 @@ useErrorListener((error) => {
 For a full list of possible errors, see the [`useErrorListener`][]
 documentation.
 
+We have also decoupled [`useErrorListener`][] from the current room. Previously
+it required to be nested under a
+[`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider). Now, you
+can use it anywhere under
+[`LiveblocksProvider`](/docs/api-reference/liveblocks-react#LiveblocksProvider),
+and it will notify you about errors from all rooms.
+
+### To upgrade [#upgrade-change-1]
+
+No changes are necessary to upgrade, however **if you would like to keep the old
+behavior** and only show room connection errors, you can filter out all new
+errors with an early return:
+
+```ts
+import { useErrorListener, useRoom } from "@liveblocks/react";
+
+function App() {
+  // +++
+  const room = useRoom();
+  // +++
+
+  useErrorListener((error) => {
+    // +++
+    if (
+      error.context.roomId !== room.id &&
+      error.context.type !== "ROOM_CONNECTION_ERROR"
+    ) {
+      return;
+    }
+    // +++
+
+    // Your previous logic
+  });
+}
+```
+
 ## Ability to filter threads by absence of metadata [#change-2]
 
-Starting with 2.16, the [`useThreads`][] (and `useUserThreads_experimental`)
-hooks supports filtering by _absence_ of a metadata field.
+From 2.16, the [`useThreads`][] (and `useUserThreads_experimental`) hooks
+supports filtering by _absence_ of a metadata field using `null`.
 
 ```ts
+// ✅ Will now return "important" threads without a `color` field
 const threads = useThreads({
   query: {
     metadata: {
+      // +++
+      color: null,
+      // +++
       label: "important",
-      color: null, // ✅ Will now return important threads without a `color` field
     },
   },
 });
 ```
 
-Previously this was not supported, but due to a bug, using an
-explicit-`undefined` would already allow you to do this sort of. However,
-threads weren’t filtered correctly in the backend causing over-fetches.
+Previously this was not supported, but due to a bug, using an explicit
+`undefined` would already allow you to do this. However, threads weren’t
+filtered correctly in our back end causing over-fetches.
 
-**To upgrade:** If you relied on this bug, simply change `undefined` to `null`
-now.
+### To upgrade [#upgrade-change-2]
 
-Using explicit-`undefined` is now equivalent to not specifying the field in the
-query.
+If you relied on this bug, change `undefined` to `null` in any metadata
+properties. This will keep behavior the same—if you don’t make this chance, then
+your previous filtering will no longer work.
 
-```ts
+```ts title="Before"
 const threads = useThreads({
   query: {
     metadata: {
-      label: "important",
+      // ❌ Before - Will have no effect in 2.16
+      // +++
       color: undefined,
-    },
-  },
-});
-```
-
-Is now equivalent to:
-
-```ts
-const threads = useThreads({
-  query: {
-    metadata: {
+      // +++
       label: "important",
     },
   },
 });
 ```
 
-That’s it!
+```ts title="After"
+const threads = useThreads({
+  query: {
+    metadata: {
+      // ✅ After - Will now find threads without a `color`
+      // +++
+      color: null,
+      // +++
+      label: "important",
+    },
+  },
+});
+```
+
+That’s it for 2.16!
 
 [`useerrorlistener`]: /docs/api-reference/liveblocks-react#useErrorListener
 [`usethreads`]: /docs/api-reference/liveblocks-react#useThreads
