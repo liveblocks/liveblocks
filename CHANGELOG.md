@@ -47,6 +47,11 @@ See the
 [Upgrade Guide for 2.16](https://liveblocks.io/docs/platform/upgrading/2.16) to
 learn how to adapt your code.
 
+#### Bug fixes
+
+- Automatically refresh Comments and Notifications when the browser window
+  regains focus.
+
 ### `@liveblocks/client`
 
 The error listener APIs will now receive more errors in general, including
