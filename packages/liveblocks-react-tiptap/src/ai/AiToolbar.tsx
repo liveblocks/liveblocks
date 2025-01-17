@@ -299,7 +299,7 @@ function AiToolbarCustomPromptContent({
       </span>
       <div
         className="lb-tiptap-ai-toolbar-custom-prompt-container"
-        data-value={prompt}
+        data-value={customPrompt}
       >
         <Command.Input
           value={customPrompt}
@@ -419,10 +419,12 @@ function AiToolbarReviewing({
 function AiToolbarContainer({
   editor,
   state,
+  dropdownRef,
   children,
 }: PropsWithChildren<{
   editor: Editor;
   state: AiExtensionStorage["state"];
+  dropdownRef: RefObject<HTMLDivElement>;
 }>) {
   const phase = state.phase;
   const customPrompt = state.customPrompt;
@@ -430,7 +432,6 @@ function AiToolbarContainer({
     () => customPrompt?.includes("\n"),
     [customPrompt]
   );
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const hasDropdownItems = useCommandState(
     (state) => state.filtered.count > 0
   ) as boolean;
@@ -594,6 +595,7 @@ export const AiToolbar = Object.assign(
       });
       const toolbarRef = useRef<HTMLDivElement>(null);
       const mergedRefs = useRefs(forwardedRef, toolbarRef, setFloating);
+      const dropdownRef = useRef<HTMLDivElement>(null);
 
       useEffect(() => {
         if (!editor) {
@@ -623,6 +625,35 @@ export const AiToolbar = Object.assign(
         }, 0);
       }, [selection, editor, isOpen, setReference]);
 
+      // Close the toolbar when clicking anywhere outside of it
+      useEffect(() => {
+        if (!editor || !isOpen) {
+          return;
+        }
+
+        const handleOutsideEvent = (event: MouseEvent) => {
+          if (!toolbarRef.current || !dropdownRef.current) {
+            return;
+          }
+
+          if (
+            event.target &&
+            !toolbarRef.current.contains(event.target as Node) &&
+            !dropdownRef.current.contains(event.target as Node)
+          ) {
+            (editor.commands as AiCommands<boolean>).$closeAiToolbar();
+          }
+        };
+
+        setTimeout(() => {
+          document.addEventListener("pointerdown", handleOutsideEvent);
+        }, 0);
+
+        return () => {
+          document.removeEventListener("pointerdown", handleOutsideEvent);
+        };
+      }, [editor, isOpen]);
+
       if (!editor || !isOpen) {
         return null;
       }
@@ -649,7 +680,11 @@ export const AiToolbar = Object.assign(
               }}
               {...props}
             >
-              <AiToolbarContainer editor={editor} state={state}>
+              <AiToolbarContainer
+                editor={editor}
+                state={state}
+                dropdownRef={dropdownRef}
+              >
                 {typeof Suggestions === "function" ? (
                   <Suggestions children={defaultSuggestions} />
                 ) : (
