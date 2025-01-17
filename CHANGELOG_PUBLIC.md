@@ -15,7 +15,14 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 # Week 3 (2025-01-17)
 
+## Dashboard
+
+- Allow rate limit configuration for webhook endpoints.
+- Fix download comments attachments action in text editor view from room detail page.
+
 ## Contributors
+
+jrowny, sugardarius
 
 # Week 2 (2025-01-10)
 
@@ -34,13 +41,9 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 - New blog post: [What’s new in Liveblocks: December 2024](https://liveblocks.io/blog/whats-new-in-liveblocks-december-edition-2024).
 
-## Dashboard
-
-- Allow rate limit configuration for webhook endpoints.
-
 ## Contributors
 
-ctnicholas, nvie, marcbouchenoire, jrowny
+ctnicholas, nvie, marcbouchenoire
 
 # Week 52 (2024-12-27)
 
