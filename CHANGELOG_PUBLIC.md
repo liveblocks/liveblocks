@@ -20,9 +20,20 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 - Allow rate limit configuration for webhook endpoints.
 - Fix download comments attachments action in text editor view from room detail page.
 
+## Examples
+
+- Update [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit) to use the nbew `FloatingToolbar.
+- Updated many text editor examples to use the new `FloatingToolbar`:
+  - [Advanced collaborative text editor (Tiptap)](https://liveblocks.io/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced)`.
+  - [Collaborative text editor (Tiptap)](https://liveblocks.io/examples/collaborative-text-editor/nextjs-tiptap).
+  - [Collaborative text editor (Lexical)](https://liveblocks.io/examples/collaborative-text-editor/nextjs-lexical).
+  - [Text editor comments (Tiptap)](https://liveblocks.io/examples/text-editor-comments/nextjs-comments-tiptap).
+  - [Next.js Tiptap editor](https://liveblocks.io/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced).
+  - [Next.js Tiptap editor](https://liveblocks.io/examples/collaborative-text-editor-advanced/nextjs-tiptap-advanced).
+
 ## Contributors
 
-jrowny, sugardarius
+jrowny, sugardarius, ctnicholas, nvie, marcbouchenoire
 
 # Week 2 (2025-01-10)
 
@@ -88,7 +99,7 @@ rollup, esbuild, etc) to also down-compile code from dependencies inside
 ## Examples
 
 - Adjusted email templates to allow switching the logo more easily.
-- Next.js Starter Kit improvements:
+- [Next.js Starter Kit](https://liveblocks.io/nextjs-starter-kit) improvements:
   - Renaming a document updates it immediately for everyone else.
   - Clicking outside of the rename input saves the new name.
   - Added tldraw's dark mode.
