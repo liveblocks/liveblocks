@@ -60,7 +60,7 @@ export type AiExtensionOptions = {
   name: string;
   doc: Doc | undefined;
   pud: PermanentUserData | undefined;
-  resolveAiPrompt?: (prompt: string, selectionText: string) => Promise<string>;
+  resolveAiPrompt: (prompt: string, selectionText: string) => Promise<string>;
 };
 
 export type AiExtensionStorage =

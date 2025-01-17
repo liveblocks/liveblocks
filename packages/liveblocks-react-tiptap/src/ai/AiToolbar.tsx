@@ -20,7 +20,6 @@ import {
   ShortenIcon,
   SparklesIcon,
   TooltipProvider,
-  TranslateIcon,
   UndoIcon,
   useRefs,
 } from "@liveblocks/react-ui/_private";
@@ -417,10 +416,9 @@ function AiToolbarContainer({
     }) ?? "";
   const isPromptMultiline = useMemo(() => prompt.includes("\n"), [prompt]);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const hasCommandState = useCommandState(
+  const hasDropdownItems = useCommandState(
     (state) => state.filtered.count > 0
   ) as boolean;
-  const hasDropdownItems = state === "reviewing" || hasCommandState;
   const isDropdownHidden = isPromptMultiline || !hasDropdownItems;
 
   useEffect(() => {
@@ -501,24 +499,19 @@ function AiToolbarContainer({
 
 const defaultSuggestions = (
   <>
-    <AiToolbarSuggestionsGroup label="Generate">
+    <AiToolbarSuggestionsGroup label="Modify">
       <AiToolbarSuggestion icon={<EditIcon />}>
         Improve writing
       </AiToolbarSuggestion>
       <AiToolbarSuggestion icon={<CheckIcon />}>
         Fix mistakes
       </AiToolbarSuggestion>
-      <AiToolbarSuggestion icon={<ShortenIcon />}>
-        Simplify the text
-      </AiToolbarSuggestion>
+      <AiToolbarSuggestion icon={<ShortenIcon />}>Simplify</AiToolbarSuggestion>
       <AiToolbarSuggestion icon={<LengthenIcon />}>
         Add more detail
       </AiToolbarSuggestion>
     </AiToolbarSuggestionsGroup>
-    <AiToolbarSuggestionsGroup label="Modify selection">
-      <AiToolbarSuggestion icon={<TranslateIcon />}>
-        Translate to English
-      </AiToolbarSuggestion>
+    <AiToolbarSuggestionsGroup label="Generate">
       <AiToolbarSuggestion icon={<QuestionMarkIcon />}>
         Explain
       </AiToolbarSuggestion>
@@ -548,7 +541,6 @@ export const AiToolbar = Object.assign(
           },
           equalityFn: Object.is,
         }) ?? "closed";
-      console.log("AI STATE!!!!", state);
       const selection = editor?.state.selection;
       const floatingOptions: UseFloatingOptions = useMemo(() => {
         const detectOverflowOptions: DetectOverflowOptions = {
