@@ -26,6 +26,7 @@ export {
   useClient,
   useDeleteAllInboxNotifications,
   useDeleteInboxNotification,
+  useErrorListener,
   useInboxNotificationThread,
   useMarkAllInboxNotificationsAsRead,
   useMarkInboxNotificationAsRead,
@@ -48,7 +49,6 @@ export {
   useEditThreadMetadata,
   useMarkThreadAsResolved,
   useMarkThreadAsUnresolved,
-  useErrorListener,
   useEventListener,
   useHistory,
   useIsInsideRoom,
@@ -68,8 +68,6 @@ export {
   useUpdateRoomNotificationSettings,
   useHistoryVersionData,
 } from "./room";
-
-export { useCommentsErrorListener } from "./room";
 
 // Export the classic (non-Suspense) versions of our hooks
 // (This part differs from src/suspense.ts)

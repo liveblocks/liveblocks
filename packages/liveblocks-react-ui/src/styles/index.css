@@ -153,11 +153,20 @@
  *               Icon                *
  *************************************/
 
+.lb-icon-container,
 .lb-icon {
-  --lb-icon-background: var(--lb-dynamic-background);
-
   inline-size: var(--lb-icon-size);
   block-size: var(--lb-icon-size);
+}
+
+.lb-icon-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.lb-icon {
+  --lb-icon-background: var(--lb-dynamic-background);
 
   * {
     stroke-width: var(--lb-icon-weight);
@@ -210,11 +219,12 @@
   &:where(
       [data-variant="default"]:not(
           :is(
-              :enabled:hover,
-              :enabled:focus-visible,
-              [aria-expanded="true"],
-              [aria-selected="true"]
-            )
+            :enabled:hover,
+            :enabled:focus-visible,
+            [aria-expanded="true"],
+            [aria-selected="true"],
+            [aria-pressed]
+          )
         )
     ) {
     background: transparent;
@@ -243,20 +253,15 @@
   }
 
   &:where(:has(.lb-button-label)) {
-    gap: calc(0.25 * var(--lb-spacing));
-    padding-inline: calc(0.5 * var(--lb-spacing));
-  }
+    gap: calc(0.175 * var(--lb-spacing));
+    padding-inline: calc(0.55 * var(--lb-spacing));
 
-  &:where([data-size="large"]) {
-    padding: calc(0.5 * var(--lb-spacing));
-
-    &:where(:has(.lb-button-label)) {
-      gap: calc(0.35 * var(--lb-spacing));
-      padding-inline: calc(0.7 * var(--lb-spacing));
+    &:where(:has(.lb-icon-container)) {
+      padding-inline-start: calc(0.4 * var(--lb-spacing));
     }
   }
 
-  &:where([data-variant="toggle"]) {
+  &:where([data-variant="toolbar"]) {
     color: var(--lb-foreground-tertiary);
 
     &:where([aria-pressed="true"]) {
@@ -269,31 +274,137 @@
       }
     }
   }
-}
 
-.lb-button-icon {
-  --lb-icon-background: var(--lb-button-background);
+  &:where([data-variant="secondary"]) {
+    --lb-button-background: var(--lb-foreground-subtle);
+
+    color: var(--lb-foreground-tertiary);
+
+    &:where(
+        :enabled:hover,
+        :enabled:focus-visible,
+        [aria-expanded="true"],
+        [aria-selected="true"]
+      ) {
+      --lb-button-background: var(--lb-foreground);
+
+      color: var(--lb-dynamic-background);
+    }
+  }
+
+  &:where([data-size="large"]) {
+    padding: calc(0.5 * var(--lb-spacing));
+
+    &:where(:has(.lb-button-label)) {
+      gap: calc(0.35 * var(--lb-spacing));
+      padding-inline: calc(0.7 * var(--lb-spacing));
+
+      &:where(:has(.lb-icon-container)) {
+        padding-inline-start: calc(0.6 * var(--lb-spacing));
+      }
+    }
+  }
+
+  :where(.lb-icon-container) {
+    flex: none;
+  }
+
+  :where(.lb-icon) {
+    --lb-icon-background: var(--lb-button-background);
+  }
 }
 
 .lb-button-label {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  block-size: var(--lb-icon-size);
   font-weight: 500;
+  font-size: calc(0.7 * var(--lb-icon-size));
+  line-height: 1;
 }
 
 /*************************************
  *             Dropdown              *
  *************************************/
 
-.lb-dropdown-item-icon {
-  margin-inline-start: calc(-0.125 * var(--lb-spacing));
-  margin-inline-end: calc(0.375 * var(--lb-spacing));
-  color: var(--lb-foreground-moderate);
-  transition-property: color;
+.lb-dropdown {
+  min-inline-size: 160px;
 }
 
-.lb-dropdown-item:where(:is([data-highlighted], [data-selected])) {
-  :where(.lb-dropdown-item-icon) {
+.lb-dropdown-label {
+  padding: calc(0.875 * var(--lb-spacing)) calc(0.625 * var(--lb-spacing))
+    calc(0.125 * var(--lb-spacing));
+  color: var(--lb-foreground-tertiary);
+  font-weight: 600;
+  font-size: 0.675em;
+  text-transform: uppercase;
+  pointer-events: none;
+  user-select: none;
+
+  &:where(:first-child) {
+    padding-block-start: var(--lb-spacing);
+  }
+}
+
+.lb-dropdown-item {
+  :where(.lb-icon-container) {
+    margin-inline-start: calc(-0.125 * var(--lb-spacing));
+    margin-inline-end: calc(0.375 * var(--lb-spacing));
+    color: var(--lb-foreground-moderate);
+    transition-property: color;
+  }
+}
+
+.lb-dropdown-item:where(
+    :is(
+      [data-highlighted]:not([data-highlighted="false"]),
+      [data-selected]:not([data-selected="false"])
+    )
+  ) {
+  :where(.lb-icon-container) {
     color: var(--lb-foreground-tertiary);
   }
+}
+
+.lb-dropdown-item:where(:has(.lb-dropdown-item-accessory)) {
+  :where(.lb-dropdown-item-label) {
+    margin-inline-end: calc(0.375 * var(--lb-spacing));
+  }
+}
+
+.lb-dropdown-item-accessory {
+  margin-inline-start: auto;
+  margin-inline-end: calc(-0.25 * var(--lb-spacing));
+}
+
+/* If a dropdown has at least one icon, all items should be aligned has if they had an icon */
+.lb-dropdown:where(:has(.lb-dropdown-item-icon))
+  :where(.lb-dropdown-item:not(:has(.lb-dropdown-item-icon)))
+  :where(.lb-dropdown-item-label) {
+  margin-inline-start: calc(
+    var(--lb-icon-size) + (0.375 - 0.125) * var(--lb-spacing)
+  );
+}
+
+/*************************************
+ *              Select               *
+ *************************************/
+
+.lb-select-button {
+  min-inline-size: 0;
+
+  :where(.lb-button-label) {
+    @include truncate;
+
+    flex: 1;
+  }
+}
+
+.lb-select-button-chevron {
+  flex: none;
+  margin-inline-end: calc(-0.25 * var(--lb-spacing));
+  opacity: 0.75;
 }
 
 /*************************************
@@ -387,6 +498,13 @@
   position: relative;
   display: flex;
   align-items: center;
+
+  :where(.lb-icon) {
+    position: absolute;
+    inset-inline-start: var(--lb-emoji-picker-offset-padding);
+    color: var(--lb-foreground-moderate);
+    pointer-events: none;
+  }
 }
 
 .lb-emoji-picker-search {
@@ -409,13 +527,6 @@
   &::-webkit-search-cancel-button {
     display: none;
   }
-}
-
-.lb-emoji-picker-search-icon {
-  position: absolute;
-  inset-inline-start: var(--lb-emoji-picker-offset-padding);
-  color: var(--lb-foreground-moderate);
-  pointer-events: none;
 }
 
 .lb-emoji-picker-content {
@@ -701,7 +812,7 @@
   padding: var(--lb-spacing);
   outline: none;
 
-  &:where([data-disabled]) {
+  &:where([data-disabled]:not([data-disabled="false"])) {
     opacity: 0.5;
     cursor: not-allowed;
   }
@@ -718,7 +829,7 @@
 .lb-composer-mention {
   @include invisible-selection;
 
-  &:where([data-selected]) {
+  &:where([data-selected]:not([data-selected="false"])) {
     background: var(--lb-accent);
     color: var(--lb-accent-foreground);
   }
@@ -1588,7 +1699,12 @@
   background: var(--lb-dynamic-background);
   transition-property: background;
 
-  &:where(:hover, :focus-visible, :focus-within, [data-selected]) {
+  &:where(
+      :hover,
+      :focus-visible,
+      :focus-within,
+      [data-selected]:not([data-selected="false"])
+    ) {
     --lb-dynamic-background: var(--lb-background-foreground-faint);
   }
 }
@@ -1743,6 +1859,14 @@
 .lb-dropdown,
 .lb-composer-suggestions {
   padding: $lb-elevation-padding;
+
+  /* overflow-block: auto; doesn't work as expected */
+  /* stylelint-disable-next-line plugin/use-logical-properties-and-values */
+  overflow-y: auto;
+
+  &:where([data-hidden]) {
+    opacity: 0;
+  }
 }
 
 .lb-dropdown-item,
@@ -1765,16 +1889,19 @@
 }
 
 :is(
-    .lb-dropdown-item,
-    .lb-composer-suggestions-list-item,
-    .lb-emoji-picker-emoji
-  ) {
-  &:where([data-highlighted], [data-selected]) {
+  .lb-dropdown-item,
+  .lb-composer-suggestions-list-item,
+  .lb-emoji-picker-emoji
+) {
+  &:where(
+      [data-highlighted]:not([data-highlighted="false"]),
+      [data-selected]:not([data-selected="false"])
+    ) {
     background: var(--lb-foreground-subtle);
     transition-duration: calc(var(--lb-transition-duration) / 2);
   }
 
-  &:where(:disabled, [data-disabled]) {
+  &:where(:disabled, [data-disabled]:not([data-disabled="false"])) {
     opacity: 0.5;
     cursor: not-allowed;
   }
@@ -1795,12 +1922,12 @@
 }
 
 :is(
-    .lb-dropdown,
-    .lb-emoji-picker,
-    .lb-tooltip:where([data-state="delayed-open"]),
-    .lb-composer-suggestions,
-    .lb-composer-floating-toolbar
-  ) {
+  .lb-dropdown,
+  .lb-emoji-picker,
+  .lb-tooltip:where([data-state="delayed-open"]),
+  .lb-composer-suggestions,
+  .lb-composer-floating-toolbar
+) {
   &:where([data-side="top"]) {
     animation-name: lb-animation-slide-up;
   }
@@ -1811,12 +1938,12 @@
 }
 
 :is(
-    .lb-dropdown,
-    .lb-emoji-picker,
-    .lb-tooltip,
-    .lb-composer-suggestions,
-    .lb-composer-floating-toolbar
-  ) {
+  .lb-dropdown,
+  .lb-emoji-picker,
+  .lb-tooltip,
+  .lb-composer-suggestions,
+  .lb-composer-floating-toolbar
+) {
   &:where([data-state="closed"]) {
     animation-name: lb-animation-disappear;
   }

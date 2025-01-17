@@ -193,5 +193,5 @@ type StringOperators<T> =
  *  - `startsWith` (`^` in query string)
  */
 export type QueryMetadata<M extends BaseMetadata> = {
-  [K in keyof M]: string extends M[K] ? StringOperators<M[K]> : M[K];
+  [K in keyof M]: (string extends M[K] ? StringOperators<M[K]> : M[K]) | null;
 };

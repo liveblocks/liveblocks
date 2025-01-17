@@ -25,6 +25,7 @@ import { CommentPluginProvider } from "./comments/comment-plugin-provider";
 import { ThreadMarkNode } from "./comments/thread-mark-node";
 import { MentionNode } from "./mentions/mention-node";
 import { MentionPlugin } from "./mentions/mention-plugin";
+import { useRootElement } from "./use-root-element";
 
 // TODO: Replace by ref once I understand why useRef is not stable (?!)
 const providersMap = new Map<
@@ -277,20 +278,3 @@ export const LiveblocksPlugin = ({
     </>
   );
 };
-
-export function useRootElement(): HTMLElement | null {
-  const [editor] = useLexicalComposerContext();
-
-  const subscribe = useCallback(
-    (onStoreChange: () => void) => {
-      return editor.registerRootListener(onStoreChange);
-    },
-    [editor]
-  );
-
-  const getSnapshot = useCallback(() => {
-    return editor.getRootElement();
-  }, [editor]);
-
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
-}

@@ -1,62 +1,46 @@
+import { Toolbar } from "@liveblocks/react-tiptap";
 import { Editor } from "@tiptap/react";
 import { useState } from "react";
-import { CodeIcon, CrossIcon, HighlightIcon, LinkIcon } from "@/icons";
+import { CrossIcon, HighlightIcon, LinkIcon } from "@/icons";
 import { Button } from "@/primitives/Button";
 import { Input } from "@/primitives/Input";
 import { Popover } from "@/primitives/Popover";
 import styles from "./Toolbar.module.css";
 
 type Props = {
-  editor: Editor;
+  editor: Editor | null;
 };
 
 export function ToolbarInlineAdvanced({ editor }: Props) {
   function toggleLink(link: string) {
-    editor.chain().focus().toggleLink({ href: link }).run();
+    editor?.chain().focus().toggleLink({ href: link }).run();
   }
 
   return (
     <>
-      <Button
-        variant="subtle"
-        className={styles.toolbarButton}
-        onClick={() => editor.chain().focus().toggleCode().run()}
-        disabled={!editor.can().chain().focus().toggleCode().run()}
-        data-active={editor.isActive("code") ? "is-active" : undefined}
-        aria-label="Code"
-      >
-        <CodeIcon style={{ width: "18px" }} />
-      </Button>
-
-      <Button
-        variant="subtle"
-        className={styles.toolbarButton}
-        onClick={() => editor.chain().focus().toggleHighlight().run()}
-        disabled={!editor.can().chain().focus().toggleHighlight().run()}
-        data-active={editor.isActive("highlight") ? "is-active" : undefined}
-        aria-label="Highlight"
-      >
-        <HighlightIcon style={{ width: "18px" }} />
-      </Button>
+      <Toolbar.Toggle
+        name="Highlight"
+        icon={<HighlightIcon style={{ width: "17.5px" }} />}
+        active={editor?.isActive("highlight") ?? false}
+        onClick={() => editor?.chain().focus().toggleHighlight().run()}
+        disabled={!editor?.can().chain().focus().toggleHighlight().run()}
+      />
 
       <Popover
         content={
           <LinkPopover
             onSubmit={toggleLink}
             onRemoveLink={toggleLink}
-            showRemove={editor.getAttributes("link").href}
+            showRemove={editor?.getAttributes("link").href}
           />
         }
       >
-        <Button
-          variant="subtle"
-          className={styles.toolbarButton}
-          disabled={!editor.can().chain().focus().setLink({ href: "" }).run()}
-          data-active={editor.isActive("link") ? "is-active" : undefined}
-          aria-label="Link"
-        >
-          <LinkIcon style={{ width: "17px" }} />
-        </Button>
+        <Toolbar.Toggle
+          name="Link"
+          icon={<LinkIcon style={{ width: "17px" }} />}
+          active={editor?.isActive("link") ?? false}
+          disabled={!editor?.can().chain().focus().setLink({ href: "" }).run()}
+        />
       </Popover>
     </>
   );

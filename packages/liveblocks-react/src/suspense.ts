@@ -30,6 +30,7 @@ export {
   useDeleteInboxNotification,
   useUpdateChannelsNotificationSettings,
   useSyncStatus,
+  useErrorListener,
 } from "./liveblocks";
 export {
   RoomContext,
@@ -47,7 +48,6 @@ export {
   useEditThreadMetadata,
   useMarkThreadAsResolved,
   useMarkThreadAsUnresolved,
-  useErrorListener,
   useEventListener,
   useHistory,
   useIsInsideRoom,

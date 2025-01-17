@@ -7,9 +7,9 @@ import { ySyncPluginKey } from "y-prosemirror";
 
 import type { CommentsExtensionStorage, ThreadPluginState } from "../types";
 import {
-  ACTIVE_SELECTION_PLUGIN,
   LIVEBLOCKS_COMMENT_MARK_TYPE,
   ThreadPluginActions,
+  THREADS_ACTIVE_SELECTION_PLUGIN,
   THREADS_PLUGIN_KEY,
 } from "../types";
 
@@ -110,7 +110,7 @@ const Comment = Mark.create({
         threadPositions,
         selectedThreadPos:
           selectedThreadId !== null
-            ? threadPositions.get(selectedThreadId)?.to ?? null
+            ? (threadPositions.get(selectedThreadId)?.to ?? null)
             : null,
       };
     };
@@ -223,6 +223,10 @@ export const CommentsExtension = Extension.create<
         this.storage.pendingComment = true;
         return true;
       },
+      closePendingComment: () => () => {
+        this.storage.pendingComment = false;
+        return true;
+      },
       selectThread: (id: string | null) => () => {
         this.editor.view.dispatch(
           this.editor.state.tr.setMeta(THREADS_PLUGIN_KEY, {
@@ -265,7 +269,7 @@ export const CommentsExtension = Extension.create<
   addProseMirrorPlugins() {
     return [
       new Plugin({
-        key: ACTIVE_SELECTION_PLUGIN,
+        key: THREADS_ACTIVE_SELECTION_PLUGIN,
         props: {
           decorations: ({ doc, selection }) => {
             if (!this.storage.pendingComment) {
@@ -274,7 +278,7 @@ export const CommentsExtension = Extension.create<
             const { from, to } = selection;
             const decorations: Decoration[] = [
               Decoration.inline(from, to, {
-                class: "lb-root lb-tiptap-active-selection",
+                class: "lb-root lb-selection lb-tiptap-active-selection",
               }),
             ];
             return DecorationSet.create(doc, decorations);

@@ -47,10 +47,14 @@
     "@liveblocks/react": "2.15.2",
     "@liveblocks/react-ui": "2.15.2",
     "@liveblocks/yjs": "2.15.2",
+    "@radix-ui/react-select": "^2.1.2",
+    "@radix-ui/react-toggle": "^1.1.0",
     "yjs": "^13.6.18"
   },
   "peerDependencies": {
     "@lexical/react": "0.16.1",
+    "@lexical/rich-text": "0.16.1",
+    "@lexical/selection": "0.16.1",
     "@lexical/utils": "0.16.1",
     "@lexical/yjs": "0.16.1",
     "lexical": "0.16.1",

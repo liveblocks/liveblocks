@@ -1,11 +1,6 @@
 import { type IUserInfo, TextEditorType } from "@liveblocks/core";
+import { useClient, useRoom } from "@liveblocks/react";
 import {
-  useClient,
-  useCommentsErrorListener,
-  useRoom,
-} from "@liveblocks/react";
-import {
-  CreateThreadError,
   getUmbrellaStoreForClient,
   useCreateTextMention,
   useDeleteTextMention,
@@ -32,6 +27,8 @@ const providersMap = new Map<
 
 const docMap = new Map<string, Doc>();
 
+type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
+
 type LiveblocksExtensionOptions = {
   field?: string;
   comments?: boolean; // | CommentsConfiguration
@@ -40,7 +37,7 @@ type LiveblocksExtensionOptions = {
   initialContent?: Content;
 };
 
-const DEFAULT_OPTIONS = {
+const DEFAULT_OPTIONS: WithRequired<LiveblocksExtensionOptions, "field"> = {
   field: "default",
   comments: true,
   mentions: true,
@@ -123,12 +120,16 @@ export const useLiveblocksExtension = (
 
   // TODO: we don't need these things if comments isn't turned on...
   // TODO: we don't have a reference to the editor here, need to figure this out
-  useCommentsErrorListener((error) => {
-    // If thread creation fails, we remove the thread id from the associated nodes and unwrap the nodes if they are no longer associated with any threads
-    if (error instanceof CreateThreadError) {
-      // handleThreadDelete(error.context.threadId);
-    }
-  });
+  // useErrorListener((error) => {
+  //   // If thread creation fails, we remove the thread id from the associated nodes and unwrap the nodes if they are no longer associated with any threads
+  //   if (
+  //     error.context.type === "CREATE_THREAD_ERROR" &&
+  //     error.context.roomId === room.id
+  //   ) {
+  //     handleThreadDelete(error.context.threadId);
+  //   }
+  // });
+
   const isEditorReady = useIsEditorReady();
   const client = useClient();
   const store = getUmbrellaStoreForClient(client);

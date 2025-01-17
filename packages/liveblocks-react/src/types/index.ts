@@ -42,8 +42,6 @@ import type {
 } from "@liveblocks/core";
 import type { Context, PropsWithChildren, ReactNode } from "react";
 
-import type { CommentsError } from "./errors";
-
 export type UseSyncStatusOptions = {
   /**
    * When setting smooth, the hook will not update immediately as status
@@ -293,6 +291,18 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
     useIsInsideRoom(): boolean;
 
     /**
+     * useErrorListener is a React hook that allows you to respond to any
+     * Liveblocks error, for example room connection errors, errors
+     * creating/editing/deleting threads, etc.
+     *
+     * @example
+     * useErrorListener(err => {
+     *   console.error(err);
+     * })
+     */
+    useErrorListener(callback: (err: LiveblocksError) => void): void;
+
+    /**
      * Returns the current Liveblocks sync status, and triggers a re-render
      * whenever it changes. Can be used to render a "Saving..." indicator, or for
      * preventing that a browser tab can be closed until all changes have been
@@ -334,6 +344,18 @@ export type SharedContextBundle<U extends BaseUserMeta> = {
      * const isInsideRoom = useIsInsideRoom();
      */
     useIsInsideRoom(): boolean;
+
+    /**
+     * useErrorListener is a React hook that allows you to respond to any
+     * Liveblocks error, for example room connection errors, errors
+     * creating/editing/deleting threads, etc.
+     *
+     * @example
+     * useErrorListener(err => {
+     *   console.error(err);
+     * })
+     */
+    useErrorListener(callback: (err: LiveblocksError) => void): void;
 
     /**
      * Returns the current Liveblocks sync status, and triggers a re-render
@@ -443,17 +465,6 @@ type RoomContextBundleCommon<
   useLostConnectionListener(
     callback: (event: LostConnectionEvent) => void
   ): void;
-
-  /**
-   * useErrorListener is a React hook that allows you to respond to potential room
-   * connection errors.
-   *
-   * @example
-   * useErrorListener(er => {
-   *   console.error(er);
-   * })
-   */
-  useErrorListener(callback: (err: LiveblocksError) => void): void;
 
   /**
    * useEventListener is a React hook that allows you to respond to events broadcast
@@ -822,19 +833,6 @@ type RoomContextBundleCommon<
   useThreadSubscription(threadId: string): ThreadSubscription;
 };
 
-/**
- * @private
- *
- * Private methods and variables used in the core internals, but as a user
- * of Liveblocks, NEVER USE ANY OF THESE DIRECTLY, because bad things
- * will probably happen if you do.
- */
-type PrivateRoomContextApi = {
-  useCommentsErrorListener<M extends BaseMetadata>(
-    callback: (err: CommentsError<M>) => void
-  ): void;
-};
-
 export type RoomContextBundle<
   P extends JsonObject,
   S extends LsonObject,
@@ -1076,7 +1074,7 @@ export type RoomContextBundle<
             useAttachmentUrl(attachmentId: string): AttachmentUrlAsyncSuccess;
           }
       >;
-    } & PrivateRoomContextApi
+    }
 >;
 
 /**

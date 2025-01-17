@@ -868,14 +868,8 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
       setSelectedMentionSuggestionIndex,
     ] = useIndex(0, mentionSuggestions?.length ?? 0);
     const id = useId();
-    const floatingToolbarId = useMemo(
-      () => `liveblocks-floating-toolbar-${id}`,
-      [id]
-    );
-    const suggestionsListId = useMemo(
-      () => `liveblocks-suggestions-list-${id}`,
-      [id]
-    );
+    const floatingToolbarId = `liveblocks-floating-toolbar-${id}`;
+    const suggestionsListId = `liveblocks-suggestions-list-${id}`;
     const suggestionsListItemId = useCallback(
       (userId?: string) =>
         userId ? `liveblocks-suggestions-list-item-${id}-${userId}` : undefined,
@@ -973,7 +967,6 @@ const ComposerEditor = forwardRef<HTMLDivElement, ComposerEditorProps>(
 
           // Blur the editor on Escape
           if (isKey(event, "Escape")) {
-            event.preventDefault();
             blur();
           }
 
