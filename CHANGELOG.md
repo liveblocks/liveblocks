@@ -2,7 +2,7 @@
 
 Our error listener APIs will now receive more errors in general, including
 errors from using Comments & Notifications. Previously, these would only receive
-room connection errors (e.g. when using Presence, Storage, or Yjs).
+room connection errors from Presence, Storage, or Yjs.
 
 For example, now when creation of a thread fails, deletion of a comment fails,
 marking a notification as read fails, etc.
@@ -56,19 +56,12 @@ learn how to adapt your code.
 
 The error listener APIs will now receive more errors in general, including
 errors from using Comments & Notifications. Previously, these would only receive
-room connection errors (e.g. when using Presence, Storage, or Yjs).
+room connection errors from Presence, Storage, or Yjs.
 
 ```ts
 // 👌 Same as before, but might now also receive errors related to Comments & Notifications
 room.subscribe("error", (err) => { ... });
 ```
-
-## 2.16.0
-
-### `@liveblocks/yjs`
-
-- Add new option `useV2Encoding_experimental` to `LiveblocksYjsProvider` to
-  enable experimental V2 encoding for Yjs.
 
 ### `@liveblocks/react-ui`
 
@@ -88,6 +81,11 @@ room.subscribe("error", (err) => { ... });
 ### `@liveblocks/react-lexical`
 
 - Add `isTextFormatActive` and `isBlockNodeActive` utilities.
+
+### `@liveblocks/yjs`
+
+- Add new option `useV2Encoding_experimental` to `LiveblocksYjsProvider` to
+  enable experimental V2 encoding for Yjs.
 
 ## 2.15.2
 
