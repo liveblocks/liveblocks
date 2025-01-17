@@ -132,9 +132,9 @@
 }
 
 :where(
-    .lb-tiptap-thread-mark:not([data-orphan="true"])
-      .lb-tiptap-thread-mark-selected
-  ) {
+  .lb-tiptap-thread-mark:not([data-orphan="true"])
+    .lb-tiptap-thread-mark-selected
+) {
   color: var(--lb-accent);
   text-decoration-line: underline;
   text-decoration-color: var(--lb-accent-moderate);
@@ -344,7 +344,7 @@
   overflow-y: auto;
 }
 
-.lb-tiptap-ai-toolbar-prompt-container {
+.lb-tiptap-ai-toolbar-custom-prompt-container {
   position: relative;
   z-index: auto;
   display: grid;
@@ -377,7 +377,7 @@
   align-self: end;
 }
 
-.lb-tiptap-ai-toolbar-prompt {
+.lb-tiptap-ai-toolbar-custom-prompt {
   all: unset;
   background: transparent;
   color: var(--lb-foreground);
@@ -389,8 +389,8 @@
   }
 }
 
-.lb-tiptap-ai-toolbar-prompt,
-.lb-tiptap-ai-toolbar-prompt-container::before {
+.lb-tiptap-ai-toolbar-custom-prompt,
+.lb-tiptap-ai-toolbar-custom-prompt-container::before {
   /* Overlap the textarea and its value to auto-size it */
   grid-area: 1 / 1 / 2 / 2;
   box-sizing: inherit;
@@ -424,9 +424,9 @@
 }
 
 :is(
-    .lb-tiptap-ai-toolbar-halo-horizontal,
-    .lb-tiptap-ai-toolbar-halo-vertical
-  ) {
+  .lb-tiptap-ai-toolbar-halo-horizontal,
+  .lb-tiptap-ai-toolbar-halo-vertical
+) {
   position: absolute;
   inset: 0;
 

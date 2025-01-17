@@ -45,6 +45,7 @@ import type {
   FloatingPosition,
 } from "../types";
 import { getDomRangeFromSelection } from "../utils";
+import { DEFAULT_STATE } from "./AiExtension";
 
 export const AI_TOOLBAR_COLLISION_PADDING = 10;
 
@@ -154,7 +155,9 @@ const AiToolbarSuggestion = forwardRef<
 
   const handleSelect = useCallback(
     (prompt: string) => {
-      editor.commands.askAi(manualPrompt ?? prompt);
+      (editor.commands as AiCommands<boolean>).$startAiToolbarThinking(
+        manualPrompt ?? prompt
+      );
     },
     [editor, manualPrompt]
   );
@@ -168,21 +171,29 @@ const AiToolbarSuggestion = forwardRef<
   );
 });
 
-function AiToolbarReviewingSuggestions({ editor }: { editor: Editor }) {
+function AiToolbarReviewingSuggestions({
+  editor,
+  prompt,
+}: {
+  editor: Editor;
+  prompt: string;
+}) {
   const handleRetry = useCallback(() => {
-    (editor.commands as AiCommands<boolean>).retryAskAi();
-  }, [editor]);
+    (editor.commands as AiCommands<boolean>).$startAiToolbarThinking(prompt);
+  }, [editor, prompt]);
 
   const handleDiscard = useCallback(() => {
-    (editor.commands as AiCommands<boolean>).closeAi();
+    (editor.commands as AiCommands<boolean>).$closeAiToolbar();
   }, [editor]);
 
   return (
     <>
       <AiToolbarDropdownItem icon={<CheckIcon />}>
+        {/* TODO: Add logic */}
         Replace selection
       </AiToolbarDropdownItem>
       <AiToolbarDropdownItem icon={<CheckIcon />}>
+        {/* TODO: Add logic */}
         Insert below
       </AiToolbarDropdownItem>
       <AiToolbarDropdownItem icon={<UndoIcon />} onSelect={handleRetry}>
@@ -195,34 +206,37 @@ function AiToolbarReviewingSuggestions({ editor }: { editor: Editor }) {
   );
 }
 
-function AiToolbarPromptContent({
+function AiToolbarCustomPromptContent({
   editor,
-  prompt,
+  customPrompt,
   dropdownRef,
   isDropdownHidden,
 }: {
   editor: Editor;
-  prompt: string;
+  customPrompt: string;
   dropdownRef: RefObject<HTMLDivElement>;
   isDropdownHidden: boolean;
 }) {
   const aiName = (editor.storage.liveblocksAi as AiExtensionStorage).name;
-  const promptRef = useRef<HTMLTextAreaElement>(null);
-  const isPromptEmpty = useMemo(() => prompt.trim() === "", [prompt]);
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  const isCustomPromptEmpty = useMemo(
+    () => customPrompt.trim() === "",
+    [customPrompt]
+  );
 
   useLayoutEffect(
     () => {
       setTimeout(() => {
-        const promptTextArea = promptRef.current;
+        const textArea = textAreaRef.current;
 
-        if (!promptTextArea) {
+        if (!textArea) {
           return;
         }
 
-        promptTextArea.focus();
-        promptTextArea.setSelectionRange(
-          promptTextArea.value.length,
-          promptTextArea.value.length
+        textArea.focus();
+        textArea.setSelectionRange(
+          textArea.value.length,
+          textArea.value.length
         );
       }, 0);
     },
@@ -238,8 +252,8 @@ function AiToolbarPromptContent({
 
       if (event.shiftKey) {
         // If the shift key is pressed, add a new line
-        (editor.commands as AiCommands<boolean>).setAiPrompt(
-          (prompt) => prompt + "\n"
+        (editor.commands as AiCommands<boolean>).$updateAiToolbarCustomPrompt(
+          (customPrompt) => customPrompt + "\n"
         );
       } else {
         const selectedDropdownItem = dropdownRef.current?.querySelector(
@@ -249,28 +263,34 @@ function AiToolbarPromptContent({
         if (!isDropdownHidden && selectedDropdownItem) {
           // If there's a selected dropdown item, select it
           selectedDropdownItem.click();
-        } else if (!isPromptEmpty) {
+        } else if (!isCustomPromptEmpty) {
           // Otherwise, submit the custom prompt
-          (editor.commands as AiCommands<boolean>).askAi(prompt);
+          (editor.commands as AiCommands<boolean>).$startAiToolbarThinking(
+            customPrompt
+          );
         }
       }
     }
   };
 
-  const handlePromptChange = useCallback(
-    (prompt: string) => {
-      (editor.commands as AiCommands<boolean>).setAiPrompt(prompt);
+  const handleCustomPromptChange = useCallback(
+    (customPrompt: string) => {
+      (editor.commands as AiCommands<boolean>).$updateAiToolbarCustomPrompt(
+        customPrompt
+      );
     },
     [editor]
   );
 
   const handleSendClick = useCallback(() => {
-    if (isPromptEmpty) {
+    if (isCustomPromptEmpty) {
       return;
     }
 
-    (editor.commands as AiCommands<boolean>).askAi(prompt);
-  }, [editor, prompt, isPromptEmpty]);
+    (editor.commands as AiCommands<boolean>).$startAiToolbarThinking(
+      customPrompt
+    );
+  }, [editor, customPrompt, isCustomPromptEmpty]);
 
   return (
     <div className="lb-tiptap-ai-toolbar-content">
@@ -278,17 +298,17 @@ function AiToolbarPromptContent({
         <SparklesIcon />
       </span>
       <div
-        className="lb-tiptap-ai-toolbar-prompt-container"
+        className="lb-tiptap-ai-toolbar-custom-prompt-container"
         data-value={prompt}
       >
         <Command.Input
-          value={prompt}
-          onValueChange={handlePromptChange}
+          value={customPrompt}
+          onValueChange={handleCustomPromptChange}
           asChild
         >
           <textarea
-            ref={promptRef}
-            className="lb-tiptap-ai-toolbar-prompt"
+            ref={textAreaRef}
+            className="lb-tiptap-ai-toolbar-custom-prompt"
             placeholder={`Ask ${aiName} anything…`}
             onKeyDown={handlePromptKeyDown}
             rows={1}
@@ -303,7 +323,7 @@ function AiToolbarPromptContent({
             variant="primary"
             aria-label={`Ask ${aiName}`}
             icon={<SendIcon />}
-            disabled={isPromptEmpty}
+            disabled={isCustomPromptEmpty}
             onClick={handleSendClick}
           />
         </ShortcutTooltip>
@@ -314,20 +334,20 @@ function AiToolbarPromptContent({
 
 function AiToolbarAsking({
   editor,
-  prompt,
+  customPrompt,
   dropdownRef,
   isDropdownHidden,
 }: {
   editor: Editor;
-  prompt: string;
+  customPrompt: string;
   dropdownRef: RefObject<HTMLDivElement>;
   isDropdownHidden: boolean;
 }) {
   return (
     <>
-      <AiToolbarPromptContent
+      <AiToolbarCustomPromptContent
         editor={editor}
-        prompt={prompt}
+        customPrompt={customPrompt}
         dropdownRef={dropdownRef}
         isDropdownHidden={isDropdownHidden}
       />
@@ -345,10 +365,8 @@ function AiToolbarThinking({
   const aiName = (editor.storage.liveblocksAi as AiExtensionStorage).name;
 
   const handleCancel = useCallback(() => {
-    (editor.commands as AiCommands<boolean>).cancelAskAi();
+    (editor.commands as AiCommands<boolean>).$cancelAiToolbarThinking();
   }, [editor]);
-
-  // TODO: On error, go back to asking state (with error message, cancelAskAi(error))
 
   return (
     <>
@@ -377,20 +395,20 @@ function AiToolbarThinking({
 
 function AiToolbarReviewing({
   editor,
-  prompt,
+  customPrompt,
   dropdownRef,
   isDropdownHidden,
 }: {
   editor: Editor;
-  prompt: string;
+  customPrompt: string;
   dropdownRef: RefObject<HTMLDivElement>;
   isDropdownHidden: boolean;
 }) {
   return (
     <>
-      <AiToolbarPromptContent
+      <AiToolbarCustomPromptContent
         editor={editor}
-        prompt={prompt}
+        customPrompt={customPrompt}
         dropdownRef={dropdownRef}
         isDropdownHidden={isDropdownHidden}
       />
@@ -406,20 +424,17 @@ function AiToolbarContainer({
   editor: Editor;
   state: AiExtensionStorage["state"];
 }>) {
-  const prompt =
-    useEditorState({
-      editor,
-      selector: (ctx) => {
-        return (ctx.editor?.storage.liveblocksAi as AiExtensionStorage)?.prompt;
-      },
-      equalityFn: Object.is,
-    }) ?? "";
-  const isPromptMultiline = useMemo(() => prompt.includes("\n"), [prompt]);
+  const phase = state.phase;
+  const customPrompt = state.customPrompt;
+  const isCustomPromptMultiline = useMemo(
+    () => customPrompt?.includes("\n"),
+    [customPrompt]
+  );
   const dropdownRef = useRef<HTMLDivElement>(null);
   const hasDropdownItems = useCommandState(
     (state) => state.filtered.count > 0
   ) as boolean;
-  const isDropdownHidden = isPromptMultiline || !hasDropdownItems;
+  const isDropdownHidden = isCustomPromptMultiline || !hasDropdownItems;
 
   useEffect(() => {
     if (!editor) {
@@ -431,11 +446,12 @@ function AiToolbarContainer({
         event.preventDefault();
         event.stopPropagation();
 
-        if (state === "thinking") {
-          (editor.commands as AiCommands<boolean>).cancelAskAi();
+        if (phase === "thinking") {
+          (editor.commands as AiCommands<boolean>).$cancelAiToolbarThinking();
         } else {
-          (editor.chain() as ExtendedChainedCommands<"closeAi">)
-            .closeAi()
+          // TODO: Improve typing
+          (editor.chain() as ExtendedChainedCommands<"$closeAiToolbar">)
+            .$closeAiToolbar()
             .focus()
             .run();
         }
@@ -447,25 +463,25 @@ function AiToolbarContainer({
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [editor, state]);
+  }, [editor, phase]);
 
   return (
     <>
       <div className="lb-tiptap-ai-toolbar-container">
         <div className="lb-elevation lb-tiptap-ai-toolbar">
-          {state === "asking" ? (
+          {state.phase === "asking" ? (
             <AiToolbarAsking
               editor={editor}
-              prompt={prompt}
+              customPrompt={state.customPrompt}
               dropdownRef={dropdownRef}
               isDropdownHidden={isDropdownHidden}
             />
-          ) : state === "thinking" ? (
-            <AiToolbarThinking editor={editor} prompt={prompt} />
-          ) : state === "reviewing" ? (
+          ) : state.phase === "thinking" ? (
+            <AiToolbarThinking editor={editor} prompt={state.prompt} />
+          ) : state.phase === "reviewing" ? (
             <AiToolbarReviewing
               editor={editor}
-              prompt={prompt}
+              customPrompt={state.customPrompt}
               dropdownRef={dropdownRef}
               isDropdownHidden={isDropdownHidden}
             />
@@ -473,21 +489,24 @@ function AiToolbarContainer({
         </div>
         <div
           className="lb-tiptap-ai-toolbar-halo"
-          data-active={state === "thinking" ? "" : undefined}
+          data-active={state.phase === "thinking" ? "" : undefined}
           aria-hidden
         >
           <div className="lb-tiptap-ai-toolbar-halo-horizontal" />
           <div className="lb-tiptap-ai-toolbar-halo-vertical" />
         </div>
       </div>
-      {state === "asking" || state === "reviewing" ? (
+      {state.phase === "asking" || state.phase === "reviewing" ? (
         <Command.List
           className="lb-elevation lb-dropdown lb-tiptap-ai-toolbar-dropdown"
           data-hidden={isDropdownHidden ? "" : undefined}
           ref={dropdownRef}
         >
-          {state === "reviewing" ? (
-            <AiToolbarReviewingSuggestions editor={editor} />
+          {state.phase === "reviewing" ? (
+            <AiToolbarReviewingSuggestions
+              editor={editor}
+              prompt={state.prompt}
+            />
           ) : (
             children
           )}
@@ -539,8 +558,8 @@ export const AiToolbar = Object.assign(
             return (ctx.editor?.storage.liveblocksAi as AiExtensionStorage)
               ?.state;
           },
-          equalityFn: Object.is,
-        }) ?? "closed";
+        }) ?? DEFAULT_STATE;
+      const phase = state.phase;
       const selection = editor?.state.selection;
       const floatingOptions: UseFloatingOptions = useMemo(() => {
         const detectOverflowOptions: DetectOverflowOptions = {
@@ -562,7 +581,7 @@ export const AiToolbar = Object.assign(
           },
         };
       }, [editor, position, sideOffset]);
-      const isOpen = selection !== undefined;
+      const isOpen = selection !== undefined && state.phase !== "closed";
       const {
         refs: { setReference, setFloating },
         strategy,
@@ -581,10 +600,10 @@ export const AiToolbar = Object.assign(
           return;
         }
 
-        if (!selection && state !== "closed") {
-          (editor.commands as AiCommands<boolean>).closeAi();
+        if (!selection && phase !== "closed") {
+          (editor.commands as AiCommands<boolean>).$closeAiToolbar();
         }
-      }, [state, editor, selection]);
+      }, [phase, editor, selection]);
 
       useLayoutEffect(() => {
         if (!editor || !isOpen) {

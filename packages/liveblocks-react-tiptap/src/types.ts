@@ -1,10 +1,11 @@
+import type { Relax } from "@liveblocks/core";
 import type { LiveblocksYjsProvider } from "@liveblocks/yjs";
 import type { Content } from "@tiptap/core";
 import { PluginKey } from "@tiptap/pm/state";
 import type { DecorationSet } from "@tiptap/pm/view";
 import type { ChainedCommands, SingleCommands } from "@tiptap/react";
 import type { ProsemirrorMapping } from "y-prosemirror/dist/src/lib";
-import type { Doc, PermanentUserData, Snapshot, XmlFragment } from "yjs";
+import type { Doc, PermanentUserData, XmlFragment } from "yjs";
 
 export const LIVEBLOCKS_MENTION_KEY = new PluginKey("lb-plugin-mention");
 export const LIVEBLOCKS_MENTION_PASTE_KEY = new PluginKey(
@@ -29,6 +30,7 @@ export const LIVEBLOCKS_COMMENT_MARK_TYPE = "liveblocksCommentMark";
 
 export interface AiConfiguration {
   name?: string;
+  // TODO: Should `selectionText` be renamed? In the case of a refinement, it's not selected text but the previous results.
   resolveAiPrompt?: (prompt: string, selectionText: string) => Promise<string>;
 }
 
@@ -63,21 +65,65 @@ export type AiExtensionOptions = {
   resolveAiPrompt: (prompt: string, selectionText: string) => Promise<string>;
 };
 
-export type AiExtensionStorage =
+export type AiToolbarState = Relax<
   | {
-      state: "asking" | "thinking" | "reviewing";
-      name: string;
-      snapshot: Snapshot | undefined;
-      prompt: string;
-      previousPrompt: string | undefined;
+      phase: "closed";
     }
   | {
-      state: "closed";
-      name: string;
-      snapshot: undefined;
-      prompt: undefined;
-      previousPrompt: undefined;
-    };
+      phase: "asking";
+
+      /**
+       * The custom prompt being written in the toolbar.
+       */
+      customPrompt: string;
+
+      /**
+       * A potential error that occurred during the last AI request.
+       */
+      error?: Error;
+    }
+  | {
+      phase: "thinking";
+
+      /**
+       * The custom prompt being written in the toolbar.
+       */
+      customPrompt: string;
+
+      /**
+       * An abort controller to cancel the AI request.
+       */
+      abortController: AbortController;
+
+      /**
+       * The prompt sent to the AI.
+       */
+      prompt: string;
+    }
+  | {
+      phase: "reviewing";
+
+      /**
+       * The custom prompt being written in the toolbar.
+       */
+      customPrompt: string;
+
+      /**
+       * The prompt sent to the AI.
+       */
+      prompt: string;
+
+      /**
+       * The results of the AI request.
+       */
+      results: string;
+    }
+>;
+
+export type AiExtensionStorage = {
+  name: string;
+  state: AiToolbarState;
+};
 
 export type ThreadPluginState = {
   threadPositions: Map<string, { from: number; to: number }>;
@@ -110,23 +156,46 @@ export type CommentsCommands<ReturnType> = {
 };
 
 export type AiCommands<ReturnType> = {
-  askAi: (prompt?: string, isContinue?: boolean) => ReturnType;
-  /** @internal */
-  acceptAi: () => ReturnType;
-  /** @internal */
-  cancelAskAi: () => ReturnType;
-  /** @internal */
-  retryAskAi: () => ReturnType;
-  /** @internal */
-  reviewAi: () => ReturnType;
-  /** @internal */
-  closeAi: () => ReturnType;
-  /** @internal */
-  setAiPrompt: (prompt: string | ((prompt: string) => string)) => ReturnType;
-  /** @internal */
-  applyPrompt: (result: string, isContinue: boolean) => ReturnType;
-  /** @internal */
-  compareSnapshot: (snapshot: Snapshot) => ReturnType;
+  askAi: (prompt?: string) => ReturnType;
+
+  // Internal APIs
+
+  /**
+   * Close the AI toolbar.
+   */
+  $closeAiToolbar: () => ReturnType;
+
+  /**
+   * Open the AI toolbar in the "asking" phase.
+   */
+  $openAiToolbarAsking: () => ReturnType;
+
+  /**
+   * Set (and open if not already open) the AI toolbar in the "thinking" phase with the given prompt.
+   */
+  $startAiToolbarThinking: (prompt: string) => ReturnType;
+
+  /**
+   * Handle the success of the current "thinking" phase.
+   */
+  $handleAiToolbarThinkingSuccess: (results: string) => ReturnType;
+
+  /**
+   * Handle an error of the current "thinking" phase.
+   */
+  $handleAiToolbarThinkingError: (error: Error) => ReturnType;
+
+  /**
+   * Cancel the current "thinking" phase, going back to the "asking" phase.
+   */
+  $cancelAiToolbarThinking: () => ReturnType;
+
+  /**
+   * Update the current custom AI prompt.
+   */
+  $updateAiToolbarCustomPrompt: (
+    customPrompt: string | ((currentCustomPrompt: string) => string)
+  ) => ReturnType;
 };
 
 // these types are not exported from y-prosemirror
