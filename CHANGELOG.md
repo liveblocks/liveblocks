@@ -1,4 +1,4 @@
-## vNEXT (Not yet published)
+## v2.16.0
 
 ### `@liveblocks/yjs`
 
