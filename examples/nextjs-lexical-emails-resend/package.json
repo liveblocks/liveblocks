@@ -33,10 +33,10 @@
     "@types/react-dom": "^18.0.10",
     "clsx": "^2.1.1",
     "lexical": "0.16.1",
-    "next": "^14.2.4",
+    "next": "^14.2.23",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-email": "3.0.1",
+    "react-email": "3.0.6",
     "resend": "^4.0.1-alpha.0",
     "tailwind-merge": "^2.5.4",
     "typescript": "^5.2.2"
