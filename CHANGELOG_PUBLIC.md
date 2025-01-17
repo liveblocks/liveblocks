@@ -17,7 +17,7 @@ nimeshnayaju, nvie, ofoucherot, pierrelevaillant, stevenfabre, sugardarius
 
 ## v2.16.0
 
-We've created new toolbar elements that allow you import a default floating toolbar
+We've created new toolbar elements that allow you to import a default floating toolbar
 in Tiptap and Lexical. It's also possible to use these APIs to build custom or
 static toolbars. We've updated a number of our examples to show how to do this.
 
