@@ -566,7 +566,6 @@ export const AiToolbar = Object.assign(
           },
           equalityFn: Object.is,
         }) ?? "closed";
-      console.log("AI STATE!!!!", state);
       const selection = editor?.state.selection;
       const floatingOptions: UseFloatingOptions = useMemo(() => {
         const detectOverflowOptions: DetectOverflowOptions = {
