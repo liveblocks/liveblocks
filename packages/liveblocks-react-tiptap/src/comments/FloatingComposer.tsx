@@ -2,6 +2,7 @@ import {
   autoUpdate,
   flip,
   hide,
+  inline,
   limitShift,
   offset,
   shift,
@@ -19,10 +20,14 @@ import type {
 import { Composer } from "@liveblocks/react-ui";
 import { type Editor, useEditorState } from "@tiptap/react";
 import type { ComponentRef, FormEvent, KeyboardEvent } from "react";
-import { forwardRef, useCallback, useEffect } from "react";
+import { forwardRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 
-import type { CommentsExtensionStorage } from "../types";
+import type {
+  CommentsExtensionStorage,
+  ExtendedChainedCommands,
+} from "../types";
+import { compareSelections, getDomRangeFromSelection } from "../utils";
 
 export type FloatingComposerProps<M extends BaseMetadata = DM> = Omit<
   ComposerProps<M>,
@@ -41,21 +46,23 @@ export const FloatingComposer = forwardRef<
 >(function FloatingComposer(props, forwardedRef) {
   const createThread = useCreateThread();
   const { editor, onComposerSubmit, onKeyDown } = props;
-  const { showComposer } = useEditorState({
-    editor,
-    selector: (ctx) => ({
-      showComposer: !!(
-        ctx.editor?.storage.liveblocksComments as
-        | CommentsExtensionStorage
-        | undefined
-      )?.pendingComment && !editor?.state.selection.empty,
-    }),
-    equalityFn: (prev, next) => {
-      if (!next) return false;
-      return prev.showComposer === next.showComposer;
-    },
-  }) ?? { showComposer: false };
+  const pendingCommentSelection =
+    useEditorState({
+      editor,
+      selector: (ctx) => {
+        if (!ctx.editor) return;
 
+        return (
+          ctx.editor.storage.liveblocksComments as
+            | CommentsExtensionStorage
+            | undefined
+        )?.pendingComment && !ctx.editor.state.selection.empty
+          ? ctx.editor.state.selection
+          : undefined;
+      },
+      equalityFn: compareSelections,
+    }) ?? undefined;
+  const isOpen = pendingCommentSelection !== undefined;
   const {
     refs: { setReference, setFloating },
     strategy,
@@ -65,6 +72,7 @@ export const FloatingComposer = forwardRef<
     strategy: "fixed",
     placement: "bottom",
     middleware: [
+      inline({ padding: FLOATING_COMPOSER_COLLISION_PADDING }),
       flip({ padding: FLOATING_COMPOSER_COLLISION_PADDING, crossAxis: false }),
       offset(10),
       hide({ padding: FLOATING_COMPOSER_COLLISION_PADDING }),
@@ -81,28 +89,22 @@ export const FloatingComposer = forwardRef<
     },
   });
 
-  const updateRef = useCallback(() => {
-    if (!editor || !showComposer) {
+  useLayoutEffect(() => {
+    if (!editor || !isOpen) {
       return;
     }
-    const el = editor.view.dom.querySelector(".lb-tiptap-active-selection");
-    if (el) {
-      setReference(el);
-    }
-  }, [setReference, editor, showComposer]);
 
-  // Remote cursor updates and other edits can cause the ref to break
-  useEffect(() => {
-    if (!editor || !showComposer) {
-      return;
-    }
-    editor.on("transaction", updateRef);
-    return () => {
-      editor.off("transaction", updateRef);
-    };
-  }, [editor, updateRef, showComposer]);
+    if (!pendingCommentSelection) {
+      setReference(null);
+    } else {
+      const domRange = getDomRangeFromSelection(
+        pendingCommentSelection,
+        editor
+      );
 
-  useLayoutEffect(updateRef, [updateRef]);
+      setReference(domRange);
+    }
+  }, [pendingCommentSelection, editor, isOpen, setReference]);
 
   // Submit a new thread and update the comment highlight to show a completed highlight
   const handleComposerSubmit = useCallback(
@@ -127,15 +129,22 @@ export const FloatingComposer = forwardRef<
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLFormElement>) => {
-      if (event.key === "Escape" && editor) {
-        editor.commands.focus();
-      }
       onKeyDown?.(event);
+
+      if (event.isDefaultPrevented() || !editor) {
+        return;
+      }
+
+      if (event.key === "Escape") {
+        (editor.chain() as ExtendedChainedCommands<"closePendingComment">)
+          .closePendingComment()
+          .run();
+      }
     },
     [editor, onKeyDown]
   );
 
-  if (!showComposer || !editor) {
+  if (!isOpen || !editor) {
     return null;
   }
 

@@ -2,7 +2,6 @@ export * from "./AlignCenter";
 export * from "./AlignJustify";
 export * from "./AlignLeft";
 export * from "./AlignRight";
-export * from "./Blockquote";
 export * from "./Bold";
 export * from "./Check";
 export * from "./Checkbox";

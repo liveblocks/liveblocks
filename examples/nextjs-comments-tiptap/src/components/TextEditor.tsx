@@ -6,6 +6,7 @@ import {
   AnchoredThreads,
   FloatingComposer,
   FloatingThreads,
+  FloatingToolbar,
   useLiveblocksExtension,
 } from "@liveblocks/react-tiptap";
 import { Placeholder } from "@tiptap/extension-placeholder";
@@ -13,7 +14,6 @@ import { EditorContent, useEditor, Editor as TEditor } from "@tiptap/react";
 import StarterKit, { StarterKitOptions } from "@tiptap/starter-kit";
 import { EditorView } from "prosemirror-view";
 import { Avatars } from "@/components/Avatars";
-import { SelectionMenu } from "@/components/SelectionMenu";
 import { DocumentSpinner } from "@/components/Spinner";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useThreads } from "@liveblocks/react/suspense";
@@ -61,7 +61,7 @@ export function Editor() {
         <Avatars />
       </div>
       <div className={styles.editorPanel}>
-        {editor ? <SelectionMenu editor={editor} /> : null}
+        <FloatingToolbar editor={editor} />
         <div className={styles.editorContainerOffset}>
           <div className={styles.editorContainer}>
             <EditorContent editor={editor} />
@@ -135,10 +135,8 @@ function Threads({ editor }: { editor: TEditor | null }) {
       <div className={styles.noComments}>
         <div className={styles.noCommentsHeader}>No comments yet</div>
         <p>
-          <span className={styles.noCommentsButton}>
-            <CommentIcon />
-          </span>
-          Create a comment by selecting text and pressing the comment button.
+          Create a comment by selecting text and pressing the{" "}
+          <CommentIcon className={styles.noCommentsIcon} /> Comment button.
         </p>
       </div>
     );

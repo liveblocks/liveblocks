@@ -18,7 +18,7 @@ import {
 } from "react";
 
 import { classNames } from "../classnames";
-import { useRootElement } from "../liveblocks-plugin-provider";
+import { useRootElement } from "../use-root-element";
 import {
   ActiveThreadsContext,
   type ThreadToNodesMap,

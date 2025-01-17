@@ -27,6 +27,8 @@ const providersMap = new Map<
 
 const docMap = new Map<string, Doc>();
 
+type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
+
 type LiveblocksExtensionOptions = {
   field?: string;
   comments?: boolean; // | CommentsConfiguration
@@ -35,7 +37,7 @@ type LiveblocksExtensionOptions = {
   initialContent?: Content;
 };
 
-const DEFAULT_OPTIONS = {
+const DEFAULT_OPTIONS: WithRequired<LiveblocksExtensionOptions, "field"> = {
   field: "default",
   comments: true,
   mentions: true,

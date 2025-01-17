@@ -58,10 +58,31 @@ room connection errors (e.g. when using Presence, Storage, or Yjs).
 room.subscribe("error", (err) => { ... });
 ```
 
+## 2.16.0
+
 ### `@liveblocks/yjs`
 
 - Add new option `useV2Encoding_experimental` to `LiveblocksYjsProvider` to
   enable experimental V2 encoding for Yjs.
+
+### `@liveblocks/react-ui`
+
+- Most of the icons used in the default components are now usable as
+  `<Icon.* />` via `import { Icon } from "@liveblocks/react-ui"`.
+
+### `@liveblocks/react-lexical` and `@liveblocks/react-tiptap`
+
+- Add `<Toolbar />` and `<FloatingToolbar />` components to simplify building
+  editor toolbars. They come with default controls out-of-the-box based on what
+  the editor they’re attached to supports, but they’re also heavily extendable
+  and customizable. Use inner components like `<Toolbar.Toggle />` and
+  `<Toolbar.Separator />` to extend the defaults with your own actions, or start
+  from scratch while customizing some of the defaults via
+  `<Toolbar.SectionInline />` or `<Toolbar.BlockSelector />` for example.
+
+### `@liveblocks/react-lexical`
+
+- Add `isTextFormatActive` and `isBlockNodeActive` utilities.
 
 ## 2.15.2
 

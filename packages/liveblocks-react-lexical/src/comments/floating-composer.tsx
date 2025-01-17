@@ -2,6 +2,7 @@ import {
   autoUpdate,
   flip,
   hide,
+  inline,
   limitShift,
   offset,
   shift,
@@ -215,11 +216,14 @@ const FloatingComposerImpl = forwardRef<
   );
 
   function handleKeyDown(event: KeyboardEvent<HTMLFormElement>) {
+    onKeyDown?.(event);
+
+    if (event.isDefaultPrevented()) return;
+
     if (event.key === "Escape") {
       onRangeChange(null);
       editor.focus();
     }
-    onKeyDown?.(event);
   }
 
   return (
@@ -263,9 +267,7 @@ function ActiveSelectionPortal({
   });
 
   useLayoutEffect(() => {
-    setReference({
-      getBoundingClientRect: () => range.getBoundingClientRect(),
-    });
+    setReference(range);
   }, [setReference, range]);
 
   const [editor] = useLexicalComposerContext();
@@ -299,7 +301,7 @@ function ActiveSelectionPortal({
               backgroundColor: "var(--lb-selection, rgba(0, 0, 255, 0.2))",
               pointerEvents: "none",
             }}
-            className="lb-lexical-active-selection"
+            className="lb-selection lb-lexical-active-selection"
           />
         ))}
       </span>
@@ -328,6 +330,7 @@ function FloatingComposerPortal({
     strategy: "fixed",
     placement: "bottom",
     middleware: [
+      inline({ padding: FLOATING_COMPOSER_COLLISION_PADDING }),
       flip({ padding: FLOATING_COMPOSER_COLLISION_PADDING, crossAxis: false }),
       offset(10),
       hide({ padding: FLOATING_COMPOSER_COLLISION_PADDING }),
@@ -345,9 +348,7 @@ function FloatingComposerPortal({
   });
 
   useLayoutEffect(() => {
-    setReference({
-      getBoundingClientRect: () => range.getBoundingClientRect(),
-    });
+    setReference(range);
   }, [range, setReference]);
 
   return createPortal(
