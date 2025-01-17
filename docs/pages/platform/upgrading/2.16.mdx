@@ -122,8 +122,8 @@ filtered correctly in our back end causing over-fetches.
 ### To upgrade [#upgrade-change-2]
 
 If you relied on this bug, change `undefined` to `null` in any metadata
-properties. This will keep behavior the same—if you don’t make this chance, then
-your previous filtering will no longer work.
+properties. **This will keep behavior the same**—if you don’t make this change,
+then your previous filtering will no longer work.
 
 ```ts title="Before"
 const threads = useThreads({
