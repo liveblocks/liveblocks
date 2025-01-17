@@ -1,3 +1,4 @@
+/* eslint-disable quotes */
 import { QueryParser } from "@liveblocks/query-parser";
 import * as fc from "fast-check";
 
@@ -126,6 +127,73 @@ describe("objectToQuery", () => {
         }
       )
     ));
+
+  it("previous regressions", () => {
+    const BS = "\\";
+    const SQ = "'";
+    const DQ = '"';
+    const NEWLINE = "\n";
+    expect(BS.length).toEqual(1);
+    expect(NEWLINE.length).toEqual(1);
+    expect(SQ.length).toEqual(1);
+    expect(DQ.length).toEqual(1);
+
+    {
+      const query = objectToQuery({
+        metadata: { foo: BS },
+      });
+      expect(query).toEqual(`metadata['foo']:'${BS}${BS}'`);
+    }
+
+    {
+      const query = objectToQuery({
+        metadata: { foo: BS + NEWLINE },
+      });
+      expect(query).toEqual(`metadata['foo']:'${BS}${BS}${BS}n'`);
+    }
+
+    {
+      const query = objectToQuery({
+        metadata: { foo: BS + "n" },
+      });
+      expect(query).toEqual(`metadata['foo']:'${BS}${BS}n'`);
+    }
+
+    {
+      const query = objectToQuery({
+        metadata: { foo: BS + "x" },
+      });
+      expect(query).toEqual(`metadata['foo']:'${BS}${BS}x'`);
+    }
+
+    {
+      const query = objectToQuery({
+        metadata: { foo: DQ },
+      });
+      expect(query).toEqual(`metadata['foo']:'"'`);
+    }
+
+    {
+      const query = objectToQuery({
+        metadata: { foo: BS + SQ },
+      });
+      expect(query).toEqual(`metadata['foo']:"${BS}${BS}'"`);
+    }
+
+    {
+      const query = objectToQuery({
+        metadata: { foo: BS + DQ },
+      });
+      expect(query).toEqual(`metadata['foo']:'${BS}${BS}"'`);
+    }
+
+    {
+      const query = objectToQuery({
+        metadata: { foo: SQ },
+      });
+      expect(query).toEqual(`metadata['foo']:"'"`);
+    }
+  });
 
   it.each([
     "'string with single quotes'",

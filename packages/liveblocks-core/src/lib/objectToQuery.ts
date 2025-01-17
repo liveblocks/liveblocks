@@ -200,11 +200,20 @@ const isStringEmpty = (value: string) => {
 };
 
 /**
- * Quotes a string using single quotes when possible, or double-quotes when
- * needed.
+ * Quotes and escapes a string. Prefer to use single quotes when possible, but
+ * falls back to JSON.stringify() (which uses double-quotes) when necessary.
  */
-export function quote(value: unknown): string {
-  return typeof value !== "string" || value.includes("'")
-    ? JSON.stringify(value)
-    : `'${value}'`;
+export function quote(input: unknown): string {
+  const result = JSON.stringify(input);
+  if (typeof input !== "string") {
+    return result;
+  }
+
+  if (result.includes("'")) {
+    return result;
+  }
+
+  // See if we can turn this string into a single-quoted string, because those
+  // generally are more readable in URLs
+  return `'${result.slice(1, -1).replace(/\\"/g, '"')}'`;
 }
