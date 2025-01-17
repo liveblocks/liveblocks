@@ -80,10 +80,79 @@ Learn more in our [get started guides](/docs/get-started/text-editor/tiptap).
 
 ## Default components
 
+### Toolbar
+
+#### Toolbar.Button
+
+#### Toolbar.Toggle
+
+#### Toolbar.BlockSelector
+
+#### Toolbar.Separator
+
+Adds a visual, and accessible, separator used to separate sections in the
+toolbar. Can also be placed inside [`FloatingToolbar`][].
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+
+<Toolbar editor={editor} />
+  // +++
+  <Toolbar.SectionHistory />
+  // +++
+</Toolbar>
+```
+
+#### Toolbar.SectionHistory
+
+Adds a section containing _undo_ and _redo_ buttons. Can also be placed inside
+[`FloatingToolbar`][].
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+
+<Toolbar editor={editor} />
+  // +++
+  <Toolbar.SectionHistory />
+  // +++
+</Toolbar>
+```
+
+#### Toolbar.SectionInline
+
+Adds a section containing inline formatting actions such _bold_, _italic_,
+_underline_. Can also be placed inside [`FloatingToolbar`][].
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+
+<Toolbar editor={editor} />
+  // +++
+  <Toolbar.SectionInline />
+  // +++
+</Toolbar>
+```
+
+#### Toolbar.SectionCollaboration
+
+Adds a section containing an _add comment_ button. Can also be placed inside
+[`FloatingToolbar`][].
+
+```tsx
+import { Toolbar } from "@liveblocks/react-tiptap";
+
+<Toolbar editor={editor} />
+  // +++
+  <Toolbar.SectionCollaboration />
+  // +++
+</Toolbar>
+```
+
 ### FloatingToolbar
 
 Displays a floating toolbar near the current Tiptap selection, allowing you to
-change styles. Can be [customized]().
+change styles. You can add JSX before or after, or the toolbar’s options can be
+[customized]().
 
 ```tsx
 <FloatingToolbar editor={editor} />
@@ -148,8 +217,8 @@ defines the vertical distance in pixels from the selection.
 #### Inserting JSX and buttons
 
 You can insert JSX nodes and components `before` the first button and `after`
-the last button using `before` and `after`. Components such as (TODO links)
-[`Toolbar.Button`]() and [`Toolbar.Toggle`]() can be used to create new buttons.
+the last button using `before` and `after`. Components such as
+[`Toolbar.Button`][] and [`Toolbar.Toggle`][] can be used to create new buttons.
 
 ```tsx
 import { Icon, Toolbar } from "@liveblocks/react-tiptap";
@@ -213,9 +282,8 @@ function CustomToolbar({ editor }: { editor: Editor | null }) {
 ```
 
 You can mix these default components with any custom ones of your own. Below the
-(TODO link) [`Toolbar.History`]() component is added alongside some custom
-buttons created with (TODO link) [`Toolbar.Button`]() and (TODO link)
-[`Toolbar.Toggle`]().
+[`Toolbar.SectionHistory`][] component is added alongside some custom buttons
+created with [`Toolbar.Button`][] and [`Toolbar.Toggle`][].
 
 ```tsx
 import { FloatingToolbar, Toolbar } from "@liveblocks/react-tiptap";
@@ -225,7 +293,7 @@ function CustomToolbar({ editor }: { editor: Editor | null }) {
   return (
     <FloatingToolbar editor={editor}>
       // +++
-      <Toolbar.History />
+      <Toolbar.SectionHistory />
       <Toolbar.Separator />
       <Toolbar.Button
         name="Help"
@@ -1237,6 +1305,15 @@ learn how to do this under
 [`Thread`]: /docs/api-reference/liveblocks-react-ui#Thread
 [`Composer`]: /docs/api-reference/liveblocks-react-ui#Composer
 [`useThreads`]: /docs/api-reference/liveblocks-react#useThreads
+[`Toolbar`]: #Toolbar
+[`Toolbar.Button`]: #Toolbar.Button
+[`Toolbar.Toggle`]: #Toolbar.Toggle
+[`Toolbar.BlockSelector`]: #Toolbar.BlockSelector
+[`Toolbar.Separator`]: #Toolbar.Separator
+[`Toolbar.SectionHistory`]: #Toolbar.SectionHistory
+[`Toolbar.SectionInline`]: #Toolbar.SectionInline
+[`Toolbar.SectionCollaboration`]: #Toolbar.SectionCollaboration
+[`FloatingToolbar`]: #FloatingToolbar
 [`FloatingComposer`]: #FloatingComposer
 [`FloatingThreads`]: #FloatingThreads
 [`AnchoredThreads`]: #AnchoredThreads
