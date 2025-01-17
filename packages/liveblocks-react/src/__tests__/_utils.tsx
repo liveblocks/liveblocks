@@ -5,7 +5,9 @@ import type {
   ThreadData,
 } from "@liveblocks/client";
 import { createClient, LiveList, LiveObject } from "@liveblocks/client";
-import { QueryParser, type AST } from "@liveblocks/query-parser";
+import { assertNever, isPlainObject } from "@liveblocks/core";
+import type { AST } from "@liveblocks/query-parser";
+import { QueryParser } from "@liveblocks/query-parser";
 import type { RenderHookResult, RenderOptions } from "@testing-library/react";
 import { render, renderHook } from "@testing-library/react";
 import type { JSXElementConstructor, ReactElement, ReactNode } from "react";
@@ -17,7 +19,6 @@ import {
 import { createRoomContext } from "../room";
 import { RoomProvider } from "./_liveblocks.config";
 import MockWebSocket from "./_MockWebSocket";
-import { assertNever, isPlainObject } from "@liveblocks/core";
 
 /**
  * Testing context for all tests. Sets up a default RoomProvider to wrap all
