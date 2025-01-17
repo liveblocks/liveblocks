@@ -44,6 +44,31 @@ room.subscribe("error", (err) => { ... });
 - Add new option `useV2Encoding_experimental` to `LiveblocksYjsProvider` to
   enable experimental V2 encoding for Yjs.
 
+### `@liveblocks/react`
+
+Filtering threads by metadata using `useThreads({ query })` (or
+`useUserThreads_experimental({ query })`) now supports explicit filtering for
+metadata absence using `null`.
+
+For example, you can now use `{ query: { metadata: { color: null } } }` to
+filter threads that do not have a `color` attribute in their metadata.
+
+> [!NOTE]  
+> Although officially never supported before, due to a bug in previous
+> implementations, filtering for metadata absence was sort of possible by using
+> explicit-`undefined`. This is no longer supported, because it would not
+> properly filter the threads in the backend. If you relied on this behavior,
+> please ensure you change `undefined` to `null`.
+
+```tsx
+// Filter pinned threads that don't have a `color` set
+useThreads({ query: { metadata: { pinned: true, color: null } } });
+
+// These two queries are now equivalent
+useThreads({ query: { metadata: { pinned: true } } });
+useThreads({ query: { metadata: { pinned: true, color: undefined } } });
+```
+
 ## 2.15.2
 
 ### All packages
