@@ -89,7 +89,7 @@ change styles. Can be [customized]().
 <FloatingToolbar editor={editor} />
 ```
 
-[img]
+[TODO img]
 
 Pass your Tiptap `editor` to use the component. By default, the toolbar has a
 button for creating comment threads, add [`FloatingComposer`][] to enable this.
@@ -128,6 +128,125 @@ function TextEditor() {
   );
 }
 ```
+
+#### Changing float position
+
+Using `position` and `offset` you can reposition the toolbar relative to the
+current selection. `position` can be set to `"top"` or `"bottom"`, and `offset`
+defines the vertical distance in pixels from the selection.
+
+```tsx
+<FloatingToolbar
+  editor={editor}
+  // +++
+  position="bottom" // Position can be `top` or `bottom`
+  offset={12} // Distance in px from selection
+  // +++
+/>
+```
+
+#### Inserting JSX and buttons
+
+You can insert JSX nodes and components `before` the first button and `after`
+the last button using `before` and `after`. Components such as (TODO links)
+[`Toolbar.Button`]() and [`Toolbar.Toggle`]() can be used to create new buttons.
+
+```tsx
+import { Icon, Toolbar } from "@liveblocks/react-tiptap";
+
+<FloatingToolbar
+  editor={editor}
+  // +++
+  before={<>I'm at the start</>}
+  after={
+    <Toolbar.Button
+      name="Help"
+      icon={<Icon.QuestionMark />}
+      shortcut="CMD-H"
+      onClick={() => console.log("help")}
+    />
+  }
+  // +++
+/>;
+```
+
+For more complex customization, instead read
+[creating a custom floating toolbar](#creating-a-custom-floating-toolbar).
+
+#### Creating a custom floating toolbar [#creating-a-custom-floating-toolbar]
+
+By passing elements as children, it’s possible to create a fully custom floating
+toolbar.
+
+```tsx highlight="7"
+import { FloatingToolbar } from "@liveblocks/react-tiptap";
+import { Editor } from "@tiptap/react";
+
+function CustomToolbar({ editor }: { editor: Editor | null }) {
+  return (
+    <FloatingToolbar editor={editor}>
+      Hello <strong>world</strong>
+    </FloatingToolbar>
+  );
+}
+```
+
+Each part of our default toolbar is available as blocks which can be slotted
+together. This is how the default floating toolbar is constructed:
+
+```tsx
+import { FloatingToolbar, Toolbar } from "@liveblocks/react-tiptap";
+import { Editor } from "@tiptap/react";
+
+function CustomToolbar({ editor }: { editor: Editor | null }) {
+  return (
+    <FloatingToolbar editor={editor}>
+      // +++
+      <Toolbar.BlockSelector />
+      <Toolbar.SectionInline />
+      <Toolbar.Separator />
+      <Toolbar.SectionCollaboration />
+      // +++
+    </FloatingToolbar>
+  );
+}
+```
+
+You can mix these default components with any custom ones of your own. Below the
+(TODO link) [`Toolbar.History`]() component is added alongside some custom
+buttons created with (TODO link) [`Toolbar.Button`]() and (TODO link)
+[`Toolbar.Toggle`]().
+
+```tsx
+import { FloatingToolbar, Toolbar } from "@liveblocks/react-tiptap";
+import { Editor } from "@tiptap/react";
+
+function CustomToolbar({ editor }: { editor: Editor | null }) {
+  return (
+    <FloatingToolbar editor={editor}>
+      // +++
+      <Toolbar.History />
+      <Toolbar.Separator />
+      <Toolbar.Button
+        name="Help"
+        icon={<Icon.QuestionMark />}
+        shortcut="CMD-H"
+        onClick={() => console.log("help")}
+      />
+      <Toolbar.Toggle
+        name="Highlight"
+        icon={<HighlightIcon />}
+        active={editor?.isActive("highlight") ?? false}
+        onClick={() => editor?.chain().focus().toggleHighlight().run()}
+        disabled={!editor?.can().chain().focus().toggleHighlight().run()}
+      />
+      // +++
+    </FloatingToolbar>
+  );
+}
+```
+
+To learn more about the different components, read more under [`Toolbar`][].
 
 ### FloatingComposer
 
